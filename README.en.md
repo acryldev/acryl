@@ -10,16 +10,17 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/acryldev/acryl">⭐ Support ACRYL</a> ·
   <a href="https://acryl.dev/">Website</a> ·
   <a href="https://acryl.dev/docs">Documentation</a> ·
-  <a href="https://discord.com/invite/r7j5PMWv4">Discord</a> ·
+  <a href="https://discord.gg/9bcTjqCa3">Discord</a> ·
   <a href="https://github.com/acryldev/acryl">GitHub</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/acryldev/acryl"><img src="https://img.shields.io/github/stars/acryldev/acryl?style=flat&amp;label=stars" alt="GitHub stars"></a>
+  <a href="https://github.com/acryldev/acryl"><img src="https://img.shields.io/github/stars/acryldev/acryl?style=social" alt="Star ACRYL on GitHub"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2EA44F?style=flat" alt="MIT License"></a>
-  <a href="https://discord.com/invite/r7j5PMWv4"><img src="https://img.shields.io/badge/Discord-5865F2?style=flat&amp;logo=discord&amp;logoColor=white" alt="Join Discord"></a>
+  <a href="https://discord.gg/9bcTjqCa3"><img src="https://img.shields.io/badge/Discord-5865F2?style=flat&amp;logo=discord&amp;logoColor=white" alt="Join Discord"></a>
   <img src="https://img.shields.io/badge/status-early%20development-F59E0B?style=flat" alt="Early development">
 </p>
 
@@ -273,7 +274,7 @@ The outer ACRYL workspace uses Yarn. The pinned `deepseek-harness/` submodule re
 - Website: [agentcontextrelay.com](https://acryl.dev/)
 - Documentation: [agentcontextrelay.com/docs](https://acryl.dev/docs)
 - Source: [github.com/acryldev/acryl](https://github.com/acryldev/acryl)
-- Discord: [discord.com/invite/r7j5PMWv4](https://discord.com/invite/r7j5PMWv4)
+- Discord: [discord.gg/9bcTjqCa3](https://discord.gg/9bcTjqCa3)
 - Cordis: [github.com/cordiverse/cordis](https://github.com/cordiverse/cordis)
 - DeepSeek Harness: [github.com/deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)
 
@@ -283,7 +284,7 @@ ACRYL welcomes contributors interested in agent interoperability, persistent con
 
 Before contributing, read [`AGENTS.md`](AGENTS.md), the [ACRYL orientation](docs/onboarding/orientation_spec_acryl.md), and the [Cordis specification](docs/cordis/cordis_spec.md).
 
-Join the [Discord community](https://discord.com/invite/r7j5PMWv4) to discuss the project and the ACRYL kickoff.
+Join the [Discord community](https://discord.gg/9bcTjqCa3) to discuss the project and the ACRYL kickoff.
 
 ## License
 
