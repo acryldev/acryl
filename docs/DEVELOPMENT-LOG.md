@@ -26,6 +26,38 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - Standalone ACRYL agent and peer-host architecture approved
+
+**Commit:** [`8f9908786f1cd20c2b8df72b3c40e9fa97c14af4`](https://github.com/acryldev/acryl/commit/8f9908786f1cd20c2b8df72b3c40e9fa97c14af4)
+
+ACRYL now has an approved product milestone for three peer host compositions:
+`acryl` as the canonical command and default terminal agent, `acryl-gui` as
+the Electron convenience launcher, and `acryl-web` as the Web convenience
+launcher. The terminal product is a full interactive agent and operational
+control surface rather than a wrapper around the existing one-shot headless
+runner or an external Terminal.app shell.
+
+The approved architecture reuses the pinned DeepSeek Harness agent spine,
+durable sessions, trajectory, tools, jobs, workflows, compaction, subagents,
+permissions, and existing Codex and Claude Code provider seams. ACRYL-owned
+plugins supply terminal presentation, host-neutral lifecycle and architecture
+control, installation, recovery, and additional interchangeable providers for
+Gemini, OpenCode, and local runtimes. The upstream `deepseek-harness/`
+submodule remains unmodified.
+
+When no process owns the selected profile, `acryl` runs the Cordis composition
+in-process. When the GUI or Web host already owns it, `acryl` attaches through
+an authenticated local control boundary instead of starting a competing
+writable runtime. A minimal bootstrap retains profile selection, ownership,
+Loader startup, and recovery; independently reversible Cordis plugins own the
+higher-level terminal experience.
+
+This checkpoint records approved architecture and scope, not completed product
+implementation. The milestone specification and validation are in
+`specs/018-acryl-control-hosts/`.
+
+---
+
 ## 2026-08-26 - Lean CI and release-candidate automation established
 
 **Commit:** [`2b8636be77d0cbf649b6100adb6c3549e64881a8`](https://github.com/acryldev/acryl/commit/2b8636be77d0cbf649b6100adb6c3549e64881a8)
