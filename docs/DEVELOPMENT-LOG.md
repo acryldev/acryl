@@ -26,6 +26,30 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - Canonical `acryl` command workspace established
+
+**Commit:** [`e12a4172ff21a36be94a29bc53b2016ba8c3f636`](https://github.com/acryldev/acryl/commit/e12a4172ff21a36be94a29bc53b2016ba8c3f636)
+
+The `acryl-tui` workspace now owns the canonical `acryl` executable boundary.
+Its strict parser defaults to the TUI, supports the approved `tui`, `gui`, and
+`web` peer-host commands, accepts explicit profile selection and machine-output
+mode, and rejects ambiguous aliases, duplicate options, and missing values.
+
+OpenTUI `0.5.8` and its required tree-sitter peer are pinned in the outer Yarn
+workspace. The package records the upstream runtime floor (Bun 1.3.0+ or Node
+26.4.0+) without changing the Node 22/24 line used by the DSH control plane and
+Electron product. Build, typecheck, test, and repository layout gates now
+include both new ACRYL workspaces.
+
+Primary implementation and verification:
+
+- `acryl-tui/src/cli/grammar.ts`
+- `acryl-tui/tests/grammar.spec.ts`
+- `corepack yarn workspace acryl-tui check`
+- `corepack yarn check:layout`
+
+---
+
 ## 2026-08-26 - ACRYL profile-ownership foundation added
 
 **Commit:** [`0b70845da4ed4ae721b2d23c20e25485fdc62eb5`](https://github.com/acryldev/acryl/commit/0b70845da4ed4ae721b2d23c20e25485fdc62eb5)
