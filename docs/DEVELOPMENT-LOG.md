@@ -26,6 +26,25 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - ACRYL TUI status region added
+
+**Commit:** [`0d967f8910cb4741c2e12a8c8b1f3e731a2fc671`](https://github.com/acryldev/acryl/commit/0d967f8910cb4741c2e12a8c8b1f3e731a2fc671)
+
+The OpenTUI header now uses one stable, copyable status projection with the
+active mode, owning host kind, profile, generation, selected model, and host
+health. The renderer defaults the not-yet-composed model to `unavailable` and
+health to `healthy`, so it never invents a model identity while the Harness
+agent composition is still pending.
+
+Primary implementation and verification:
+
+- `acryl-tui/src/render/status.ts`
+- `acryl-tui/src/render/app.ts`
+- `acryl-tui/tests/status.spec.ts`
+- `corepack yarn workspace acryl-tui check`
+
+---
+
 ## 2026-08-26 - Direct ACRYL control-host boot established
 
 **Commit:** [`e878d065795a147bef11a9a388435e82f3b6623d`](https://github.com/acryldev/acryl/commit/e878d065795a147bef11a9a388435e82f3b6623d)
