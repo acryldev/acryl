@@ -7,14 +7,14 @@ when exploring the codebase.
 
 - **`CONTEXT.md`** at the repo root, if it exists.
 - **`docs/adr/`** — ADRs that touch the area you are about to work in.
-- **`.specify/memory/constitution.md`** — binding ACR/Cordis laws.
-- **`docs/onboarding/orientation_spec_acr.md`** — product mission.
+- **`.specify/memory/constitution.md`** — binding ACRYL/Cordis laws.
+- **`docs/onboarding/orientation_spec_acryl.md`** — product mission.
 - **`docs/cordis/cordis_spec.md`** — Cordis runtime onboarding.
 - **`docs/cordis/cordis_system_guide_for_coding_agents.md`** — operational
   Context, Fiber, service, injection, effect, event, Tool, Loader, and HMR rules.
-- **`docs/cordis/acr_cordis_alignment_audit.md`** — current project compliance,
+- **`docs/cordis/acryl_cordis_alignment_audit.md`** — current project compliance,
   transitional debt, and pre-implementation gates.
-- **`docs/acr/`** — gap analysis, concept, roadmap, decisions as they appear.
+- **`docs/acryl/`** — gap analysis, concept, roadmap, decisions as they appear.
 
 If `CONTEXT.md` or `docs/adr/` do not exist, proceed silently. The
 `/domain-modeling` skill creates them lazily when terms or decisions actually
@@ -28,7 +28,7 @@ Single-context repo:
 /
 ├── CONTEXT.md                 ← created lazily by domain-modeling
 ├── docs/adr/                  ← created lazily
-├── docs/acr/                  ← ACR architecture artifacts
+├── docs/acryl/                  ← ACRYL architecture artifacts
 ├── docs/cordis/
 ├── docs/onboarding/
 ├── specs/                     ← Spec Kit + Wayfinder

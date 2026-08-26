@@ -154,7 +154,7 @@ export const DESKTOP_BOOT_RECOVERY_SCRIPT = `(() => {
   const endpoints = ${JSON.stringify(ENDPOINTS)};
   const request = ${JSON.stringify(DESKTOP_TERMINAL_OPEN_REQUEST)};
   const text = {
-    terminal: '打开 DSH 终端 / Open DSH Terminal',
+    terminal: '打开 DSH 终端 / Open ACRYL Terminal',
     diagnostics: '导出诊断 / Export Diagnostics',
     rollback: '运行回滚 / Run Rollback',
     confirmRollback: '确认回滚并重启 / Restore and Restart',
@@ -164,12 +164,12 @@ export const DESKTOP_BOOT_RECOVERY_SCRIPT = `(() => {
     createProfile: '新建配置 / New Profile',
     loadingProfiles: '正在读取配置… / Loading Profiles…',
     noProfiles: '没有其他可用配置 / No other Profile is available',
-    rollbackConfirm: '将保存诊断并恢复最近一次成功启动的 Profile 和配置，然后重新启动 DSH Desktop。 / Diagnostics will be saved before restoring the last successful Profile and configuration, then DSH Desktop will restart.',
+    rollbackConfirm: '将保存诊断并恢复最近一次成功启动的 Profile 和配置，然后重新启动 ACRYL。 / Diagnostics will be saved before restoring the last successful Profile and configuration, then ACRYL will restart.',
     working: '正在处理，请稍候… / Working…',
-    restarting: '操作已接受，DSH Desktop 正在重新启动… / Accepted. DSH Desktop is restarting…',
+    restarting: '操作已接受，ACRYL 正在重新启动… / Accepted. ACRYL is restarting…',
     diagnosticsDone: '诊断导出流程已打开。 / The diagnostic export flow opened.',
     creatorOpened: '新建配置窗口已打开。 / The Profile creator opened.',
-    rollbackUnavailable: '没有可用的安全回滚，请切换配置或打开 DSH 终端。 / A safe rollback is unavailable. Switch Profile or open DSH Terminal.',
+    rollbackUnavailable: '没有可用的安全回滚，请切换配置或打开 DSH 终端。 / A safe rollback is unavailable. Switch Profile or open ACRYL Terminal.',
     failed: '操作暂时无法完成，请尝试其他恢复方式。 / The action is temporarily unavailable. Try another recovery option.',
     profilesFailed: '暂时无法读取配置列表。 / Profiles are temporarily unavailable.',
   };
@@ -195,7 +195,7 @@ export const DESKTOP_BOOT_RECOVERY_SCRIPT = `(() => {
     );
     const report = title?.parentElement;
     if (!report) return;
-    const panel = element('section', { 'aria-label': 'DSH Desktop recovery', dataset: { dshDesktopRecovery: '' } });
+    const panel = element('section', { 'aria-label': 'ACRYL recovery', dataset: { dshDesktopRecovery: '' } });
     const actions = element('div', { dataset: { dshRecoveryActions: '' } });
     const status = element('p', { role: 'status', 'aria-live': 'polite', dataset: { dshRecoveryStatus: '' } }, '');
     const controls = [];

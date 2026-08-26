@@ -1,7 +1,7 @@
 # Cordis plugins in this checkout
 
 This folder is the local authoring guide for plugins on the current DSH Desktop
-+ Cordis setup. Read it before adding ACR capabilities.
++ Cordis setup. Read it before adding ACRYL capabilities.
 
 ## Start here
 
@@ -11,7 +11,7 @@ This folder is the local authoring guide for plugins on the current DSH Desktop
 2. [Development Canvas plugin](./development-canvas-plugin.md) — a standalone
    Host/Client package, Desktop slot seam, and unload contract.
 3. [Hello World (short)](./hello-world.md) — condensed companion.
-4. [Constitution](../../.specify/memory/constitution.md) — ACR laws that every
+4. [Constitution](../../.specify/memory/constitution.md) — ACRYL laws that every
    later plugin must obey.
 5. [Desktop plugin services](../../dsh-plugin-desktop/docs/plugin-services.md)
    — the only public Desktop Host seams (`desktopProfiles`, `desktopPnpm`).

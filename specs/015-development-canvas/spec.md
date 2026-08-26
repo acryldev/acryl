@@ -28,7 +28,7 @@ A developer using DSH Desktop in advanced mode sees Development Canvas replace t
 
 ### User Story 2 - Run another coding agent in a PTY tile (Priority: P1)
 
-The Terminal tile is how ACR hosts agents that are not the DSH-native loop: Claude Code, Codex, OpenCode, Gemini CLI, Pi, or a plain shell. The user picks an agent (or shell) from the tile, the Host starts a process, and input/output appear inside the tile. Closing the tile stops the process.
+The Terminal tile is how ACRYL hosts agents that are not the DSH-native loop: Claude Code, Codex, OpenCode, Gemini CLI, Pi, or a plain shell. The user picks an agent (or shell) from the tile, the Host starts a process, and input/output appear inside the tile. Closing the tile stops the process.
 
 **Why this priority**: The orientation spec and the user both require native PTY / CLI agents as first-class actors. A fake terminal that cannot run `claude` does not prove the ADE thesis.
 
@@ -107,4 +107,4 @@ The File tile lets the user open a text file in an editor. The Browser tile load
 
 ## Notes
 
-Inspired by Orca ADE: one scene, many actors, terminals / editor / browser side by side. ACR law: agents are disposable; the canvas/room is persistent. Do not hide PTY ownership in React.
+Inspired by Orca ADE: one scene, many actors, terminals / editor / browser side by side. ACRYL law: agents are disposable; the canvas/room is persistent. Do not hide PTY ownership in React.

@@ -183,7 +183,7 @@ the same canonical configuration. Reload disposes and rematerializes both
 faces without duplicating routes, processes, styles, services, or slot entries.
 
 The existing upstream Plugin Inventory remains read-only and reports only Host
-root Fiber phases. ACR now adds a separate **Lifecycle** tab through the
+root Fiber phases. ACRYL now adds a separate **Lifecycle** tab through the
 Desktop Client plugin. Every Host Loader row is visible there with
 configuration, Host phase, Client-face capability, current Client phase, and a
 mutation-policy explanation.
@@ -201,7 +201,7 @@ offers Enable, Disable, and Reload. All other internal, nested, generated, or
 dependency-critical rows remain visible but protected until they have a stable
 persistence identity and an independently proved recovery path. The same Host
 controller registers `/reload [loader-entry-id]`; no argument reloads every
-currently mounted managed ACR plugin and requests an orderly Desktop restart.
+currently mounted managed ACRYL plugin and requests an orderly Desktop restart.
 A Canvas toggle implemented inside Canvas remains invalid because disabling
 Canvas would remove the only code capable of enabling it again.
 
@@ -528,7 +528,7 @@ pending, failed, or unloading Fibers.
 
 ### Native Cordis Architecture explorer
 
-ACR exposes the runtime model directly under **Settings → Plugins →
+ACRYL exposes the runtime model directly under **Settings → Plugins →
 Architecture**. It is a bounded, read-only projection of the two independent
 Cordis contexts, not a second plugin registry. Each plane reports live Fibers,
 parentage, Loader ownership, `inject` resolution, provided services, and labeled
@@ -584,7 +584,7 @@ The outer workspace uses Yarn. The pinned `deepseek-harness/` submodule keeps it
 
 ## Maintainer reading
 
-- [Visual plugin and registry map](visuals/acr-plugin-registry.html)
+- [Visual plugin and registry map](visuals/acryl-plugin-registry.html)
 - [Desktop service contract](../dsh-plugin-desktop/docs/plugin-services.md)
 - [Package README](../dsh-plugin-desktop/README.md)
 - [Pinned upstream and isolated Yarn workspace](../.agents/notes/implemented/process/2026-08-15-pinned-upstream-and-isolated-yarn-workspace.md)

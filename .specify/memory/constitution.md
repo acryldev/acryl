@@ -1,4 +1,4 @@
-# ACR Constitution
+# ACRYL Constitution
 
 This constitution governs every spec, plan, task, and plugin written in this
 repository. It is the executable policy for Spec Kit, Wayfinder, and Matt
@@ -9,7 +9,7 @@ it is deliberately amended.
 
 ### I. Everything is a plugin
 
-ACR is not a monolith. Product behavior is expressed as Cordis plugins that
+ACRYL is not a monolith. Product behavior is expressed as Cordis plugins that
 provide named services, declare `inject` requirements, emit typed events, and
 register reversible effects. Core product functionality may itself be plugins.
 Do not add a privileged kernel path when a neighboring plugin can sit on a
@@ -17,17 +17,17 @@ documented seam.
 
 ### II. Agents are disposable; the room is persistent
 
-Agent sessions come and go. Project / room context does not. ACR owns
+Agent sessions come and go. Project / room context does not. ACRYL owns
 continuity. Claude, Codex, OpenCode, Pi, Gemini, Goose, and DSH-native loops
 are actors, not owners. Never encode an agent-name switch where a capability
 seam would work.
 
 ### III. Compose DeepSeek Harness; do not fork it
 
-`deepseek-harness/` is a pinned, read-only upstream submodule. Desktop and ACR
+`deepseek-harness/` is a pinned, read-only upstream submodule. Desktop and ACRYL
 work lives outside it. Reuse existing DSH seams (`ctx.sessions`, `ctx.agents`,
 `ctx.subagents`, `ctx.terminals`, `ctx.agentTeams`, `ctx.dynamicCordisRunner`,
-`ctx.approval`) before inventing ACR twins. If a seam is insufficient, write a
+`ctx.approval`) before inventing ACRYL twins. If a seam is insufficient, write a
 CORE EXTENSION PROPOSAL. Do not silently mutate DSH/Cordis semantics.
 
 ### IV. Canonical state is durable and agent-independent
@@ -69,7 +69,7 @@ policy/human approves. Self-extension and self-evolution are different systems.
 - Compatibility mode must keep the upstream default client. Advanced
   presentation is a profile composition, not a second plugin system.
 - Builds, typechecks, unit tests, and Loader smokes stay headless-safe.
-- Submodule pin updates are separate commits from desktop/ACR behavior.
+- Submodule pin updates are separate commits from desktop/ACRYL behavior.
 
 ## Development workflow
 
@@ -85,7 +85,7 @@ policy/human approves. Self-extension and self-evolution are different systems.
 
 This constitution supersedes informal chat decisions. Amendments require:
 
-- an entry in `docs/acr/ACR_DECISIONS.md` (context, alternatives, decision,
+- an entry in `docs/acryl/ACRYL_DECISIONS.md` (context, alternatives, decision,
   evidence, consequences);
 - an updated constitution version line;
 - a note in the active Wayfinder map if the destination or scope changes.

@@ -2,7 +2,7 @@
   "name": "dsh-plugin-development-canvas",
   "version": "0.1.0-dev.0",
   "private": true,
-  "description": "Standalone Cordis Development Canvas plugin for DeepSeek Harness Desktop",
+  "description": "Standalone Cordis Development Canvas plugin for ACRYL",
   "license": "MIT",
   "type": "module",
   "main": "lib/index.js",

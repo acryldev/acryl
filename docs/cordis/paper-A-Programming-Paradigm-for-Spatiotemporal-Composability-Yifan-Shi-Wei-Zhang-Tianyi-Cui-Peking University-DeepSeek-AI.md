@@ -1,11 +1,11 @@
 # A Programming Paradigm for Spatiotemporal Composability
-## Full-paper analysis, mathematical reconstruction in Markdown/LaTeX, and ACR implications
+## Full-paper analysis, mathematical reconstruction in Markdown/LaTeX, and ACRYL implications
 
 **Paper:** Yifan Shi, Wei Zhang, Tianyi Cui — Peking University / DeepSeek-AI  
 **Length:** 88 PDF pages (substantive text through p.79; references pp.80–88)  
 **Math format:** standard Markdown with LaTeX: inline `$...$`, display `$$...$$`.
 
-> This document is a full second-pass analysis of the paper. It follows the paper's actual structure, covers every substantive section, reconstructs the numbered equations (1)–(65) in portable LaTeX, summarizes the main definitions/theorems/algorithms, and then translates the results into concrete architectural implications for ACR.
+> This document is a full second-pass analysis of the paper. It follows the paper's actual structure, covers every substantive section, reconstructs the numbered equations (1)–(65) in portable LaTeX, summarizes the main definitions/theorems/algorithms, and then translates the results into concrete architectural implications for ACRYL.
 
 ---
 
@@ -59,7 +59,7 @@ Component = requirements + provisions + effects-with-undo
 
 The authors then build a dynamic operational calculus around **fibers** (live component instances), prove preservation, temporal composability, spatial ordering/coherence, progress and confluence, and implement the paradigm in **Cordis**. The production case study is **Koishi**, with 4000+ community plugins.
 
-For ACR, the paper is relevant not because it provides an agent runtime directly, but because it provides a possible **composition kernel for a live, self-modifying agent runtime**.
+For ACRYL, the paper is relevant not because it provides an agent runtime directly, but because it provides a possible **composition kernel for a live, self-modifying agent runtime**.
 
 ---
 
@@ -106,7 +106,7 @@ Spatially, VS Code exposes many host-owned extension points, but inter-extension
 
 ### 1.2.2 Self-evolving agent harnesses
 
-This subsection is directly relevant to ACR. The authors explicitly describe future agent harnesses that may continuously generate and deploy modifications to themselves while still serving requests.
+This subsection is directly relevant to ACRYL. The authors explicitly describe future agent harnesses that may continuously generate and deploy modifications to themselves while still serving requests.
 
 Such harnesses may contain:
 
@@ -1647,7 +1647,7 @@ The `armed` guard makes disposal idempotent and stops further effect iteration. 
 
 A crucial limitation is explicit: the implementation **does not mechanically prove** that the supplied inverse is correct. The theory requires a witness; TypeScript trusts component authors for that local obligation.
 
-This distinction matters for ACR. Structural tracking can be enforced; semantic correctness of arbitrary user-supplied inverse code cannot generally be automatically proven.
+This distinction matters for ACRYL. Structural tracking can be enforced; semantic correctness of arbitrary user-supplied inverse code cannot generally be automatically proven.
 
 ## 5.1.2 Coeffect operations — Algorithms 2 and 3
 
@@ -1785,7 +1785,7 @@ The authors are careful about validity: this is one TypeScript ecosystem and obs
 
 # 6. Discussion — pp.67–73
 
-This section contains several of the most practically important caveats for ACR.
+This section contains several of the most practically important caveats for ACRYL.
 
 # 6.1 System boundary
 
@@ -1843,7 +1843,7 @@ Rolling update becomes application-level provider composition: add new provider,
 
 Cross-process providers can preserve the same interface over RPC, but such interfaces should be asynchronous because remote calls may block or fail.
 
-For ACR this is directly useful for model/provider multiplexing, memory backends, tool executors, sandboxes and agent pools.
+For ACRYL this is directly useful for model/provider multiplexing, memory backends, tool executors, sandboxes and agent pools.
 
 # 6.3 Access control and sandboxing
 
@@ -1865,7 +1865,7 @@ However, the paper explicitly states that language-level mediation is **not a sa
 - separate sandboxed process;
 - VM/container/WebAssembly-style boundary.
 
-For ACR this strongly argues for two layers:
+For ACRYL this strongly argues for two layers:
 
 ```text
 capability context = policy/authority model
@@ -1891,7 +1891,7 @@ Spatial composability needs:
 
 Examples of type-side mechanisms include traits/typeclasses/module augmentation. Runtime mediation may use proxies, descriptors, reflection or generated accessors/macros.
 
-This is relevant to ACR because the core concept does **not** require TypeScript, even though Cordis is TypeScript.
+This is relevant to ACRYL because the core concept does **not** require TypeScript, even though Cordis is TypeScript.
 
 # 6.5 Mutual dependencies and component granularity
 
@@ -1918,7 +1918,7 @@ The paper suggests reducing authoring overhead through:
 - convention-based wiring;
 - generated/scaffolded integration components.
 
-For ACR, this suggests keeping the runtime model fine-grained while the product UI/package model can remain coarser.
+For ACRYL, this suggests keeping the runtime model fine-grained while the product UI/package model can remain coarser.
 
 # 6.6 Dependency typing and versioning
 
@@ -1952,7 +1952,7 @@ Replace mere key membership with a compatibility predicate saying the provided i
 
 The paper notes that structural records are relatively straightforward, but behavioral contracts, effects and polymorphism make full language-independent compatibility much harder or undecidable.
 
-This is highly relevant to ACR: a public capability protocol should not rely on a bare string key.
+This is highly relevant to ACRYL: a public capability protocol should not rely on a bare string key.
 
 # 6.7 Co-design with languages and operating systems
 
@@ -2161,7 +2161,7 @@ This section is a compact reference to the formulas reconstructed above.
 
 # 11. Algorithms 1–10 — implementation map
 
-| Algorithm | Purpose | ACR analogue |
+| Algorithm | Purpose | ACRYL analogue |
 |---:|---|---|
 | 1 | effect tracking / composed disposer | universal effect ledger + rollback stack |
 | 2 | coeffect `get/set` | capability registry publication |
@@ -2176,11 +2176,11 @@ This section is a compact reference to the formulas reconstructed above.
 
 ---
 
-# 12. ACR: direct architectural extraction
+# 12. ACRYL: direct architectural extraction
 
-The paper suggests a much cleaner ACR kernel boundary than putting agent integrations directly into the product core.
+The paper suggests a much cleaner ACRYL kernel boundary than putting agent integrations directly into the product core.
 
-## 12.1 Proposed ACR component contract
+## 12.1 Proposed ACRYL component contract
 
 From Eq. (37):
 
@@ -2217,12 +2217,12 @@ component:
 
 The runtime should not accept a component as merely `start()` / `stop()`. It should mediate its environmental effects so teardown is **derived from setup**.
 
-## 12.2 ACR context should be the persistent scene
+## 12.2 ACRYL context should be the persistent scene
 
 The strongest translation of Eq. (31) is:
 
 ```text
-ACR Context
+ACRYL Context
 ├── current hierarchical context
 ├── rollback accumulator(s)
 ├── capability/provider environment
@@ -2232,7 +2232,7 @@ ACR Context
 └── child component/fiber contexts
 ```
 
-This gives a formal version of the ACR intuition:
+This gives a formal version of the ACRYL intuition:
 
 > The scene persists. The actors/providers can change.
 
@@ -2261,7 +2261,7 @@ consumer target changes to Codex
 consumer reloads against one coherent new view
 ```
 
-This is far more principled than embedding named-agent conditionals throughout ACR.
+This is far more principled than embedding named-agent conditionals throughout ACRYL.
 
 ## 12.4 Memory systems as replaceable providers
 
@@ -2322,7 +2322,7 @@ This makes self-modification a **transactional experiment**.
 
 ## 12.7 Continuous Mode = reconciliation, not immortality
 
-A useful reinterpretation of ACR Continuous Mode is:
+A useful reinterpretation of ACRYL Continuous Mode is:
 
 ```text
 persistent context + continuously reconciled replaceable components
@@ -2336,9 +2336,9 @@ one giant process/object graph that must never restart internally
 
 The Cordis model says that continuity belongs to the **context and desired composition**, while individual fibers are expected to come and go.
 
-## 12.8 Effect classes for ACR
+## 12.8 Effect classes for ACRYL
 
-The paper's system-boundary discussion implies ACR should explicitly classify effects.
+The paper's system-boundary discussion implies ACRYL should explicitly classify effects.
 
 ### Reversible
 
@@ -2369,11 +2369,11 @@ transfer money
 send externally observed network message
 ```
 
-An ACR self-evolution transaction should preferably withhold irreversible emissions until the local composition has committed.
+An ACRYL self-evolution transaction should preferably withhold irreversible emissions until the local composition has committed.
 
 ## 12.9 Capabilities + interception = policy plane
 
-Interception can encode ACR policy without modifying providers:
+Interception can encode ACRYL policy without modifying providers:
 
 ```yaml
 capability: workspace.fs@1
@@ -2395,24 +2395,24 @@ policy:
     allow: [git, npm, pnpm, cargo]
 ```
 
-But following Section 6.3, this is not enough for hostile/untrusted code. ACR still needs a real sandbox boundary for generated components.
+But following Section 6.3, this is not enough for hostile/untrusted code. ACRYL still needs a real sandbox boundary for generated components.
 
 ## 12.10 Capability IDs need more than strings
 
-Section 6.6 is a warning for ACR's protocol design.
+Section 6.6 is a warning for ACRYL's protocol design.
 
 A robust key should encode at least namespace and version/contract identity, for example:
 
 ```text
-acr://core/memory.semantic/v1
-acr://core/agent.execution/v2
-acr://omnigraph/code.graph/v1
+acryl://core/memory.semantic/v1
+acryl://core/agent.execution/v2
+acryl://omnigraph/code.graph/v1
 ```
 
 Potential descriptor:
 
 ```yaml
-capability: acr://core/memory.semantic/v1
+capability: acryl://core/memory.semantic/v1
 interface_hash: sha256:...
 version: 1.3.0
 contract:
@@ -2421,7 +2421,7 @@ contract:
     - remember(record) -> RecordId
 ```
 
-Ultimately ACR may want a structural compatibility check, not just nominal key matching.
+Ultimately ACRYL may want a structural compatibility check, not just nominal key matching.
 
 ## 12.11 Dependency cycles should be first-class diagnostics
 
@@ -2433,7 +2433,7 @@ n\prec m
 p_n\cap d_m\neq\varnothing.
 $$
 
-ACR should construct this graph before activation and detect cycles.
+ACRYL should construct this graph before activation and detect cycles.
 
 Instead of letting two plugins silently remain inactive, the UI can explain:
 
@@ -2448,7 +2448,7 @@ Suggested decomposition:
   session-controller-binding
 ```
 
-## 12.12 Service brokers for multi-provider ACR capabilities
+## 12.12 Service brokers for multi-provider ACRYL capabilities
 
 Not every capability should use exclusive binding.
 
@@ -2466,13 +2466,13 @@ A stable broker can survive backing-provider rolling updates, avoiding reload of
 
 ---
 
-# 13. What I would adopt from the paper for ACR now
+# 13. What I would adopt from the paper for ACRYL now
 
 ## Adopt directly
 
 ### 1. Effect ledger / inverse-first mutation API
 
-Every mutation that ACR itself performs should return/register its disposer locally.
+Every mutation that ACRYL itself performs should return/register its disposer locally.
 
 ```ts
 const dispose = ctx.effect(() => {
@@ -2534,7 +2534,7 @@ Use it as a generic policy/capability attenuation mechanism.
 
 ## 14.1 Do not assume every effect is invertible
 
-The paper itself does not. ACR must model external emissions separately.
+The paper itself does not. ACRYL must model external emissions separately.
 
 ## 14.2 Do not make bare key equality the public compatibility protocol
 
@@ -2544,7 +2544,7 @@ Section 6.6 explicitly identifies this as insufficient.
 
 The paper explicitly warns against this.
 
-## 14.4 Do not force the entire ACR application into Cordis before prototyping
+## 14.4 Do not force the entire ACRYL application into Cordis before prototyping
 
 The useful ideas are separable from the exact TypeScript implementation.
 
@@ -2560,22 +2560,22 @@ fiber lifecycle
 reconciler
 ```
 
-and then run real ACR providers through it.
+and then run real ACRYL providers through it.
 
 ## 14.5 Do not ignore independence assumptions
 
 The strongest temporal theorem depends on interleaved effects commuting up to observational equivalence. Real effects on the same ordered/global state may not.
 
-ACR should therefore prefer **fine-grained capability/state ownership** rather than many components mutating one global bag.
+ACRYL should therefore prefer **fine-grained capability/state ownership** rather than many components mutating one global bag.
 
 ---
 
-# 15. Recommended ACR experiment derived from the paper
+# 15. Recommended ACRYL experiment derived from the paper
 
-Build a minimal `acr-compose` kernel and validate it with four hot-swappable provider classes.
+Build a minimal `acryl-compose` kernel and validate it with four hot-swappable provider classes.
 
 ```text
-Persistent ACR Context
+Persistent ACRYL Context
 │
 ├── workspace.fs
 │
@@ -2639,7 +2639,7 @@ $$
 
 ---
 
-# 16. Final assessment for ACR
+# 16. Final assessment for ACRYL
 
 The most important insight is **not** merely "everything is a plugin." Many frameworks already say that.
 
@@ -2647,7 +2647,7 @@ The stronger idea is:
 
 > **Every component declares what it needs, what it provides, and how every environmental mutation can be withdrawn; the runtime owns the composition semantics.**
 
-That moves ACR from a collection of adapters and lifecycle callbacks toward a genuine **live composition runtime**.
+That moves ACRYL from a collection of adapters and lifecycle callbacks toward a genuine **live composition runtime**.
 
 In compressed form:
 
@@ -2688,7 +2688,7 @@ $$
 }
 $$
 
-For ACR, I would summarize the architectural consequence as:
+For ACRYL, I would summarize the architectural consequence as:
 
 > **Persist the scene/context; make every actor, provider, tool, memory system, graph system and extension a reconciled fiber whose effects are bounded and whose dependencies are explicit.**
 

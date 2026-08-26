@@ -47,8 +47,8 @@ describe('DevelopmentCanvasState', () => {
     let n = 0
     const canvas = new DevelopmentCanvasState({ createId: () => `tile_${String(++n)}` })
     const file = canvas.addTile('file')
-    canvas.updateTile(file?.id ?? '', { path: '/tmp/acr-core.ts' })
-    expect(canvas.getSnapshot().tiles.find(tile => tile.id === file?.id)?.title).toBe('acr-core.ts')
+    canvas.updateTile(file?.id ?? '', { path: '/tmp/acryl-core.ts' })
+    expect(canvas.getSnapshot().tiles.find(tile => tile.id === file?.id)?.title).toBe('acryl-core.ts')
     const browser = canvas.addTile('browser')
     canvas.updateTile(browser?.id ?? '', { url: 'https://onorca.dev/docs' })
     expect(canvas.getSnapshot().tiles.find(tile => tile.id === browser?.id)?.title).toBe('onorca.dev')

@@ -11,7 +11,7 @@ describe('resolveDesktopUserDataOverride', () => {
 
   it('resolves an absolute isolated user-data directory', () => {
     expect(resolveDesktopUserDataOverride({
-      DSH_DESKTOP_USER_DATA: '/tmp/dsh-desktop-acr',
-    })).toBe(resolve('/tmp/dsh-desktop-acr'))
+      DSH_DESKTOP_USER_DATA: '/tmp/dsh-desktop-acryl',
+    })).toBe(resolve('/tmp/dsh-desktop-acryl'))
   })
 })

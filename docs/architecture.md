@@ -180,7 +180,7 @@ Launcher 私有的 `desktopRuntime`、`desktopPnpmBootstrap`、Electron executab
 
 ## 维护者深入阅读
 
-- [Plugin 与 registry 可视化](visuals/acr-plugin-registry.html)
+- [Plugin 与 registry 可视化](visuals/acryl-plugin-registry.html)
 - [Desktop service contract](../dsh-plugin-desktop/docs/plugin-services.md)
 - [Package README](../dsh-plugin-desktop/README.md)
 - [Pinned upstream and isolated Yarn workspace](../.agents/notes/implemented/process/2026-08-15-pinned-upstream-and-isolated-yarn-workspace.md)

@@ -1,6 +1,6 @@
 # Development Canvas as a standalone Cordis plugin
 
-Development Canvas follows the same law as the rest of ACR: **everything is a
+Development Canvas follows the same law as the rest of ACRYL: **everything is a
 plugin**. It is not a Desktop subpath, a Desktop child plugin, or unconditional
 logic inside the Electron bootstrap.
 

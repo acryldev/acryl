@@ -30,7 +30,7 @@ function fakeChild(): FakeChild {
 
 function options(spawn: ProfileMaterializerSpawn): ProfileMaterializerOptions {
   return {
-    appExecutable: '/Applications/DSH Desktop.app/Contents/MacOS/DSH Desktop',
+    appExecutable: '/Applications/ACRYL.app/Contents/MacOS/ACRYL',
     clearEnvironmentPath: '/private/clear-env.mjs',
     pnpmBinPath: '/private/pnpm/bin/pnpm.mjs',
     nodeBinDir: '/private/node-bin',
@@ -61,7 +61,7 @@ describe('profile materializer', () => {
     child.emit('close', 0, null)
     const result = await resultPromise
 
-    expect(command).toBe('/Applications/DSH Desktop.app/Contents/MacOS/DSH Desktop')
+    expect(command).toBe('/Applications/ACRYL.app/Contents/MacOS/ACRYL')
     expect(args).toEqual([
       '--import',
       pathToFileURL('/private/clear-env.mjs').href,

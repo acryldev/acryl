@@ -1038,7 +1038,7 @@ export function registerMarketRoutes(
     routes.push(
       ctx.webServer.register({ kind: 'exact', path: ROUTE_OPEN_TERMINAL, handler: async (req, res) => {
         if (req.method !== 'POST' || !mutationAllowed(req, expectedPort)) {
-          sendJson(res, 405, { error: 'opening DSH Terminal requires a local same-origin POST' })
+          sendJson(res, 405, { error: 'opening ACRYL Terminal requires a local same-origin POST' })
           return
         }
         const actions = desktopActionsProvider.get()

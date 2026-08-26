@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/acr-logo.svg" alt="ACR logo" width="128" height="128">
+  <img src="acryl-logo.png" alt="ACRYL logo" width="128" height="128">
 </p>
 
-<h1 align="center">ACR - Agent Context Relay</h1>
+<h1 align="center">ACRYL - Agent Context Relay Yielding Lifecycles</h1>
 
 <p align="center">
   <strong>One persistent development environment. One persistent project context. Any coding agent.</strong><br>
@@ -10,27 +10,27 @@
 </p>
 
 <p align="center">
-  <a href="https://agentcontextrelay.com/">Website</a> ·
-  <a href="https://agentcontextrelay.com/docs">Documentation</a> ·
+  <a href="https://acryl.dev/">Website</a> ·
+  <a href="https://acryl.dev/docs">Documentation</a> ·
   <a href="https://discord.com/invite/r7j5PMWv4">Discord</a> ·
-  <a href="https://github.com/AgentContextRelay/acr">GitHub</a>
+  <a href="https://github.com/acryldev/acryl">GitHub</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/AgentContextRelay/acr"><img src="https://img.shields.io/github/stars/AgentContextRelay/acr?style=flat&amp;label=stars" alt="GitHub stars"></a>
+  <a href="https://github.com/acryldev/acryl"><img src="https://img.shields.io/github/stars/acryldev/acryl?style=flat&amp;label=stars" alt="GitHub stars"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2EA44F?style=flat" alt="MIT License"></a>
   <a href="https://discord.com/invite/r7j5PMWv4"><img src="https://img.shields.io/badge/Discord-5865F2?style=flat&amp;logo=discord&amp;logoColor=white" alt="Join Discord"></a>
   <img src="https://img.shields.io/badge/status-early%20development-F59E0B?style=flat" alt="Early development">
 </p>
 
 > [!IMPORTANT]
-> ACR is in active early development. Interfaces, workflows, and packaging may change while the first public foundation is established.
+> ACRYL is in active early development. Interfaces, workflows, and packaging may change while the first public foundation is established.
 
-## What is ACR?
+## What is ACRYL?
 
-ACR is an agent-agnostic Agentic Development Environment and continuity layer for software work.
+ACRYL is an agent-agnostic Agentic Development Environment and continuity layer for software work.
 
-The project does not belong to Claude Code, Codex, OpenCode, Pi, Gemini CLI, DeepSeek, or any other individual agent. ACR owns the persistent workspace, project context, tasks, artifacts, and handoffs. Coding agents are replaceable workers that enter and leave the same development scene.
+The project does not belong to Claude Code, Codex, OpenCode, Pi, Gemini CLI, DeepSeek, or any other individual agent. ACRYL owns the persistent workspace, project context, tasks, artifacts, and handoffs. Coding agents are replaceable workers that enter and leave the same development scene.
 
 ```text
 Same project
@@ -39,7 +39,7 @@ Same work
 Different agents
 ```
 
-ACR is being designed to support native and external coding agents through capability-based providers, including:
+ACRYL is being designed to support native and external coding agents through capability-based providers, including:
 
 - Claude Code
 - Codex
@@ -49,12 +49,12 @@ ACR is being designed to support native and external coding agents through capab
 - DeepSeek Harness native agents
 - ACP-compatible agents
 - PTY and CLI agents
-- future agents that do not know ACR exists
+- future agents that do not know ACRYL exists
 
 ## Core principles
 
 1. **Agent sessions are disposable. Project context is persistent.**
-2. **ACR owns continuity. Agents perform work.**
+2. **ACRYL owns continuity. Agents perform work.**
 3. **Canonical state is durable and agent-independent.**
 4. **Agent-specific context is a projection, not the source of truth.**
 5. **Everything practical is a plugin or replaceable capability.**
@@ -64,7 +64,7 @@ ACR is being designed to support native and external coding agents through capab
 
 ## Built on Cordis
 
-ACR is built around [Cordis](https://github.com/cordiverse/cordis), the **Meta-Framework of Spatiotemporal Composability**.
+ACRYL is built around [Cordis](https://github.com/cordiverse/cordis), the **Meta-Framework of Spatiotemporal Composability**.
 
 Cordis provides the runtime foundation for:
 
@@ -77,10 +77,10 @@ Cordis provides the runtime foundation for:
 - configuration-driven application profiles
 - hot activation and replacement
 
-This lets ACR treat agents, models, memory systems, code graphs, tools, workflows, terminals, and UI surfaces as composable capabilities rather than hardcoded subsystems.
+This lets ACRYL treat agents, models, memory systems, code graphs, tools, workflows, terminals, and UI surfaces as composable capabilities rather than hardcoded subsystems.
 
 ```text
-                       ACR
+                       ACRYL
                         |
           +-------------+-------------+
           |             |             |
@@ -88,7 +88,7 @@ This lets ACR treat agents, models, memory systems, code graphs, tools, workflow
           |             |             |
           +-------------+-------------+
                         |
-                  ACR capabilities
+                  ACRYL capabilities
                         |
                       Cordis
                         |
@@ -99,15 +99,15 @@ This lets ACR treat agents, models, memory systems, code graphs, tools, workflow
 
 ## DeepSeek Harness lineage
 
-ACR continues important architectural ideas and implementation lessons from [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), especially its use of Cordis, durable session events, capability seams, agent runtime services, tools, subprocesses, PTYs, sandboxing, and Web UI composition.
+ACRYL continues important architectural ideas and implementation lessons from [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), especially its use of Cordis, durable session events, capability seams, agent runtime services, tools, subprocesses, PTYs, sandboxing, and Web UI composition.
 
-DeepSeek Harness is a reference runtime and a reusable substrate, not ACR's product identity. ACR is an independent project with a broader goal: persistent, cross-agent development continuity. The pinned upstream checkout remains unmodified and isolated in `deepseek-harness/`.
+DeepSeek Harness is a reference runtime and a reusable substrate, not ACRYL's product identity. ACRYL is an independent project with a broader goal: persistent, cross-agent development continuity. The pinned upstream checkout remains unmodified and isolated in `deepseek-harness/`.
 
-ACR is not affiliated with, authorized by, or endorsed by DeepSeek.
+ACRYL is not affiliated with, authorized by, or endorsed by DeepSeek.
 
 ## Development Canvas
 
-The Development Canvas is becoming ACR's primary working surface. It replaces the main content area with a composable workspace where users can open:
+The Development Canvas is becoming ACRYL's primary working surface. It replaces the main content area with a composable workspace where users can open:
 
 - native PTY terminals
 - coding-agent sessions
@@ -120,7 +120,7 @@ The canvas follows the same plugin philosophy as the runtime. UI contributions m
 ## Architecture direction
 
 ```text
-Persistent ACR project
+Persistent ACRYL project
         |
         +-- canonical event stream
         +-- durable tasks and artifacts
@@ -149,7 +149,7 @@ dsh-community-fabric/   Community interoperability RFCs and capability contracts
 dsh-community-market/   Community capability-market implementation
 deepseek-harness/       Pinned, read-only upstream source submodule
 docs/                   Architecture, onboarding, Cordis, and product documentation
-assets/                 ACR brand assets
+assets/                 ACRYL brand assets
 ```
 
 ## Run from source
@@ -160,7 +160,7 @@ assets/                 ACR brand assets
 - Corepack
 - Yarn `4.18.0`, pinned by the repository
 
-### Start ACR
+### Start ACRYL
 
 ```sh
 git submodule update --init --recursive
@@ -178,9 +178,9 @@ with npm in this workspace.
 
 - `corepack yarn dev` — recommended local development entry point. It builds
   `dsh-community-market`, builds and starts `dsh-plugin-desktop`, and launches
-  with isolated ACR state: `DSH_HOME=~/.dsh-acr` plus a separate Electron
+  with isolated ACRYL state: `DSH_HOME=~/.dsh-acryl` plus a separate Electron
   `userData` directory. This keeps development profiles and settings away from
-  the installed DSH Desktop application and seeds advanced mode so Development
+  the installed ACRYL application and seeds advanced mode so Development
   Canvas is visible.
 - `corepack yarn dev:local` — explicit spelling of `dev`; use it in notes or
   automation when the isolated-local behavior should be obvious.
@@ -193,7 +193,7 @@ with npm in this workspace.
   and launches the isolated application only after it passes. Use this for a
   verify-then-exercise session.
 - `corepack yarn dev:shared` — builds the market and runs the Desktop package's
-  ordinary development command without the isolated ACR home/user-data wrapper.
+  ordinary development command without the isolated ACRYL home/user-data wrapper.
   Use it only when intentionally exercising the normal shared profile state.
 - `corepack yarn start` — starts the already-built Desktop package without
   rebuilding it and without the local isolation wrapper.
@@ -258,7 +258,7 @@ scripts enter it before invoking its pinned pnpm release:
 - `corepack yarn upstream:build` — runs the upstream Harness build through pnpm.
 
 These wrappers do not authorize edits inside the pinned submodule. Update its
-pin separately from ACR/Desktop behavior changes.
+pin separately from ACRYL/Desktop behavior changes.
 
 ### Verify the repository
 
@@ -266,29 +266,29 @@ pin separately from ACR/Desktop behavior changes.
 corepack yarn check
 ```
 
-The outer ACR workspace uses Yarn. The pinned `deepseek-harness/` submodule remains an independent upstream pnpm workspace and must not be edited from an ACR feature branch.
+The outer ACRYL workspace uses Yarn. The pinned `deepseek-harness/` submodule remains an independent upstream pnpm workspace and must not be edited from an ACRYL feature branch.
 
 ## Project links
 
-- Website: [agentcontextrelay.com](https://agentcontextrelay.com/)
-- Documentation: [agentcontextrelay.com/docs](https://agentcontextrelay.com/docs)
-- Source: [github.com/AgentContextRelay/acr](https://github.com/AgentContextRelay/acr)
+- Website: [agentcontextrelay.com](https://acryl.dev/)
+- Documentation: [agentcontextrelay.com/docs](https://acryl.dev/docs)
+- Source: [github.com/acryldev/acryl](https://github.com/acryldev/acryl)
 - Discord: [discord.com/invite/r7j5PMWv4](https://discord.com/invite/r7j5PMWv4)
 - Cordis: [github.com/cordiverse/cordis](https://github.com/cordiverse/cordis)
 - DeepSeek Harness: [github.com/deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)
 
 ## Contributing
 
-ACR welcomes contributors interested in agent interoperability, persistent context, Cordis plugins, developer tooling, terminals, editors, dynamic UI, security, and self-extensible software.
+ACRYL welcomes contributors interested in agent interoperability, persistent context, Cordis plugins, developer tooling, terminals, editors, dynamic UI, security, and self-extensible software.
 
-Before contributing, read [`AGENTS.md`](AGENTS.md), the [ACR orientation](docs/onboarding/orientation_spec_acr.md), and the [Cordis specification](docs/cordis/cordis_spec.md).
+Before contributing, read [`AGENTS.md`](AGENTS.md), the [ACRYL orientation](docs/onboarding/orientation_spec_acryl.md), and the [Cordis specification](docs/cordis/cordis_spec.md).
 
-Join the [Discord community](https://discord.com/invite/r7j5PMWv4) to discuss the project and the ACR kickoff.
+Join the [Discord community](https://discord.com/invite/r7j5PMWv4) to discuss the project and the ACRYL kickoff.
 
 ## License
 
-ACR is licensed under the [MIT License](LICENSE).
+ACRYL is licensed under the [MIT License](LICENSE).
 
 ## Acknowledgements
 
-ACR builds on the work of the [Cordis](https://github.com/cordiverse/cordis) community and continues architectural inspiration from [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). We are grateful to both projects and to the broader open-source coding-agent ecosystem.
+ACRYL builds on the work of the [Cordis](https://github.com/cordiverse/cordis) community and continues architectural inspiration from [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). We are grateful to both projects and to the broader open-source coding-agent ecosystem.

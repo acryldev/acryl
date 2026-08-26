@@ -33,7 +33,7 @@ Advanced-mode DSH Desktop presents an Orca-inspired tab workspace that replaces 
 - Everything is a plugin: Canvas has its own package, bundle patch, Host entry, Client entry, stable Loader row, `desktop.main` slot contribution, and reversible resource effects. PASS. Host and Client share the Canvas distribution package and are not children of the Desktop plugin.
 - Agents disposable / room persistent: PTY sessions die with tiles. PASS for
   lifecycle, TRANSITIONAL for architecture: the hardcoded agent command list is
-  transport R&D, not the canonical room/provider scene. ACR-2 must replace
+  transport R&D, not the canonical room/provider scene. ACRYL-2 must replace
   agent tabs with the `acrAgentControl` service/provider seam.
 - Compose DSH, do not fork: conversation slot reused; no new agent loop. PASS.
 - Durable canonical state: deferred (in-memory snapshot). Documented in research. Acceptable for P1 walking skeleton.
@@ -43,7 +43,7 @@ Post-design: same gates. No unjustified kernel path.
 
 Cordis audit note (2026-08-24): Canvas Host/Client lifecycle is aligned. Do not
 extend `CANVAS_PTY_COMMAND_IDS` into relay, handoff, resume, or orchestration.
-Those consumers must inject `acrAgentControl` after ACR-2 defines it.
+Those consumers must inject `acrAgentControl` after ACRYL-2 defines it.
 
 ## Project Structure
 

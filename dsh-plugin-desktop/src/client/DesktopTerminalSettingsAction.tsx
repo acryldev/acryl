@@ -1,4 +1,4 @@
-/** Settings-header action for opening the launcher-owned DSH Terminal. */
+/** Settings-header action for opening the launcher-owned ACRYL Terminal. */
 
 import { useState } from 'react'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
@@ -15,7 +15,7 @@ export type DesktopTerminalSettingsActionProps =
   & PropsLocale<'desktop.settings'>
   & InjectFace<DesktopTerminalSettingsActionInjected>
 
-/** Open DSH Terminal without exposing launcher details to the renderer. */
+/** Open ACRYL Terminal without exposing launcher details to the renderer. */
 export function DesktopTerminalSettingsAction({ api, t }: DesktopTerminalSettingsActionProps) {
   const [opening, setOpening] = useState(false)
   const [failed, setFailed] = useState(false)

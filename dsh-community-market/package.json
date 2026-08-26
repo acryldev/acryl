@@ -2,7 +2,7 @@
   "name": "dsh-community-market",
   "version": "0.1.0-dev.0",
   "private": true,
-  "description": "Community plugin discovery and managed package operations for DeepSeek Harness Desktop",
+  "description": "Community plugin discovery and managed package operations for ACRYL",
   "license": "MIT",
   "publishConfig": {
     "access": "public",
@@ -10,12 +10,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anywhere-labs/deepseek-harness-desktop.git",
+    "url": "git+https://github.com/acryldev/acryl.git",
     "directory": "dsh-community-market"
   },
-  "homepage": "https://github.com/anywhere-labs/deepseek-harness-desktop/tree/master/dsh-community-market#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/dsh-community-market#readme",
   "bugs": {
-    "url": "https://github.com/anywhere-labs/deepseek-harness-desktop/issues"
+    "url": "https://github.com/acryldev/acryl/issues"
   },
   "type": "module",
   "main": "lib/index.js",

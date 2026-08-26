@@ -7,7 +7,7 @@
   },
   "include": ["scripts/**/*.ts", "src/*.ts", "tests/**/*.ts", "tests/**/*.tsx"],
   "exclude": [
-    "tests/client-acr-brand.spec.ts",
+    "tests/client-acryl-brand.spec.ts",
     "tests/client-boot-health.spec.ts",
     "tests/client-desktop-settings.spec.ts",
     "tests/client-environment.spec.ts",

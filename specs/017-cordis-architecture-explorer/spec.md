@@ -2,7 +2,7 @@
 
 ## Objective
 
-Make ACR's Cordis 4.0 architecture directly visible to users and demonstrate that product components are live plugins whose Fibers, dependencies, services, and effects can be inspected and safely controlled.
+Make ACRYL's Cordis 4.0 architecture directly visible to users and demonstrate that product components are live plugins whose Fibers, dependencies, services, and effects can be inspected and safely controlled.
 
 ## Source of truth
 

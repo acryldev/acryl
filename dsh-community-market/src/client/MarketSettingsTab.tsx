@@ -54,14 +54,14 @@ type MarketItem = CatalogSnapshot['items'][number]
 export type MarketView = 'discover' | 'installable' | 'installed' | 'sources'
 const INSTALLABLE_PAGE_SIZE = 50
 const INSTALL_REQUIREMENTS_DOCS = {
-  en: 'https://github.com/anywhere-labs/deepseek-harness-desktop/blob/master/dsh-community-market/docs/install-and-uninstall.md',
-  zh: 'https://github.com/anywhere-labs/deepseek-harness-desktop/blob/master/dsh-community-market/docs/install-and-uninstall.zh.md',
+  en: 'https://github.com/acryldev/acryl/blob/main/dsh-community-market/docs/install-and-uninstall.md',
+  zh: 'https://github.com/acryldev/acryl/blob/main/dsh-community-market/docs/install-and-uninstall.zh.md',
 } as const
 const CATALOG_ADAPTER_GUIDE_DOCS = {
-  en: 'https://github.com/anywhere-labs/deepseek-harness-desktop/blob/master/dsh-community-market/docs/catalog-adapter-guide.md',
-  zh: 'https://github.com/anywhere-labs/deepseek-harness-desktop/blob/master/dsh-community-market/docs/catalog-adapter-guide.zh.md',
+  en: 'https://github.com/acryldev/acryl/blob/main/dsh-community-market/docs/catalog-adapter-guide.md',
+  zh: 'https://github.com/acryldev/acryl/blob/main/dsh-community-market/docs/catalog-adapter-guide.zh.md',
 } as const
-const DSH_DESKTOP_ISSUES_URL = 'https://github.com/anywhere-labs/deepseek-harness-desktop/issues'
+const DSH_DESKTOP_ISSUES_URL = 'https://github.com/acryldev/acryl/issues'
 
 function installRequirementsUrl(locale: string): string {
   return locale.toLowerCase().startsWith('zh') ? INSTALL_REQUIREMENTS_DOCS.zh : INSTALL_REQUIREMENTS_DOCS.en

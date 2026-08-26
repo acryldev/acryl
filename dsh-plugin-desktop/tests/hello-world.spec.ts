@@ -2,7 +2,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it, vi } from 'vitest'
 import { apply, name } from '../src/hello-world.ts'
 
-describe('ACR Hello World Host plugin', () => {
+describe('ACRYL Hello World Host plugin', () => {
   it('loads through the ordinary Cordis apply contract', () => {
     const info = vi.fn()
     const ctx = {
@@ -11,8 +11,8 @@ describe('ACR Hello World Host plugin', () => {
 
     apply(ctx)
 
-    expect(name).toBe('acr-hello-world')
+    expect(name).toBe('acryl-hello-world')
     expect(info).toHaveBeenCalledOnce()
-    expect(info).toHaveBeenCalledWith('[acr/hello-world] plugin loaded through Cordis')
+    expect(info).toHaveBeenCalledWith('[acryl/hello-world] plugin loaded through Cordis')
   })
 })

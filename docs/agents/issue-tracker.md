@@ -1,10 +1,10 @@
 # Issue tracker: specs/ (local Spec Kit + Wayfinder)
 
 Issues, specs (PRDs), and Wayfinder maps for this repo live as markdown under
-`specs/`. GitHub remote is `AgentContextRelay/acr`; GitHub Issues are an
+`specs/`. GitHub remote is `acryldev/acryl`; GitHub Issues are an
 optional promotion surface, not the default store.
 
-This is intentional: ACR is built by many coding agents, some without `gh`
+This is intentional: ACRYL is built by many coding agents, some without `gh`
 auth, and the user asked for a `specs/` tree as the feature-block store.
 
 ## Conventions

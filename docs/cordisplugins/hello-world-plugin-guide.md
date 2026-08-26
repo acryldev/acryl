@@ -1,7 +1,7 @@
 # Hello World: a Cordis plugin for this DSH Desktop repository
 
 > **Status:** R&D learning fixture and coding-agent onboarding material. This
-> is not an ACR product feature or milestone.
+> is not an ACRYL product feature or milestone.
 
 This guide is the smallest practical path from one JavaScript module to a
 profile-installed DSH plugin. It targets the versions pinned by this checkout:
@@ -50,14 +50,14 @@ creates a TypeScript source module and a separate overlay file:
 # scratch-plugin/cordis.yml
 - insert:
     - id: hello-world
-      name: '/absolute/path/to/acr/scratch-plugin/src/my-plugin.ts'
+      name: '/absolute/path/to/acryl/scratch-plugin/src/my-plugin.ts'
 ```
 
 From the pinned `deepseek-harness/` source workspace, the tutorial launches the
 Web profile with:
 
 ```sh
-corepack pnpm dsh web --patch /absolute/path/to/acr/scratch-plugin/cordis.yml
+corepack pnpm dsh web --patch /absolute/path/to/acryl/scratch-plugin/cordis.yml
 ```
 
 This is an ephemeral development overlay. It does not create a package, does
@@ -196,7 +196,7 @@ it does not replace a focused test for the behavior of your own plugin. See the
 [fixture](../../dsh-plugin-desktop/tests/fixtures/desktop-host-services-smoke-plugin/index.js)
 and [smoke runner](../../dsh-plugin-desktop/scripts/verify-profile-boot.mjs).
 
-## Path 3: ACR Desktop's built-in registration
+## Path 3: ACRYL Desktop's built-in registration
 
 This repository's Desktop shell is not discovered through a special Electron
 plugin registry. It is registered through normal DSH package and Cordis
@@ -237,7 +237,7 @@ using standard DSH contracts in both modes. The repository
 [Desktop architecture](../architecture.md) and
 [package architecture](../../dsh-plugin-desktop/README.md) own this boundary.
 
-### Compatibility requirements for a future ACR rename
+### Compatibility requirements for a future ACRYL rename
 
 A future product/package rename should treat the DSH composition format as a
 compatibility contract, not as branding to rewrite freely. Retain:
@@ -254,10 +254,10 @@ compatibility contract, not as branding to rewrite freely. Retain:
 - compatibility exports for the public `profile-service` and `pnpm` contract
   paths while third-party consumers migrate.
 
-In other words, ACR may rename the application and its package, but an existing
+In other words, ACRYL may rename the application and its package, but an existing
 profile must still resolve its recorded bundle identities and every exported
 specifier referenced by the effective patch—or be migrated explicitly before
-boot. Do not invent an ACR-only plugin manifest. The pinned
+boot. Do not invent an ACRYL-only plugin manifest. The pinned
 [profile implementation](../../deepseek-harness/packages/boot/app-boot/src/profile.ts),
 [plugin command](../../deepseek-harness/apps/cli/src/plugin.ts), and
 [publishing tutorial](../../deepseek-harness/docs/user/develop/basic/publish.md)
@@ -305,7 +305,7 @@ export const name = 'hello-consumer'
 export const inject = ['greeter']
 
 export function apply(ctx) {
-  ctx.logger.info(ctx.greeter.greet('ACR'))
+  ctx.logger.info(ctx.greeter.greet('ACRYL'))
 }
 ```
 
@@ -364,7 +364,7 @@ export function apply(ctx: Context, config: Config): void {
     - id: hello-world
       name: dsh-hello-world
       config:
-        greeting: Hello from ACR!
+        greeting: Hello from ACRYL!
 ```
 
 Do not export a plain object under `Config`; Cordis expects a Standard

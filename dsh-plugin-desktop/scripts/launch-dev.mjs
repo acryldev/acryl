@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Launch the development build from a macOS bundle branded as ACR. */
+/** Launch the development build from a macOS bundle branded as ACRYL. */
 
 import { execFile, spawn } from 'node:child_process'
 import { mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises'
@@ -10,8 +10,8 @@ import { promisify } from 'node:util'
 
 const execFileAsync = promisify(execFile)
 const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)))
-const PRODUCT_NAME = 'ACR'
-const DEVELOPMENT_BUNDLE_ID = 'com.agentcontextrelay.acr.development'
+const PRODUCT_NAME = 'ACRYL'
+const DEVELOPMENT_BUNDLE_ID = 'dev.acryl.desktop.development'
 
 /** Replace one string value in an XML property list and fail if the key is absent. */
 export function setPlistString(source, key, value) {
@@ -35,10 +35,10 @@ export function electronAppPath(executable) {
   return appPath
 }
 
-/** Build a temporary ad-hoc-signed ACR.app around the development Electron runtime. */
+/** Build a temporary ad-hoc-signed ACRYL.app around the development Electron runtime. */
 export async function prepareDarwinDevelopmentBundle(electronExecutable) {
   const sourceApp = electronAppPath(electronExecutable)
-  const temporaryRoot = await mkdtemp(join(tmpdir(), 'acr-electron-dev-'))
+  const temporaryRoot = await mkdtemp(join(tmpdir(), 'acryl-electron-dev-'))
   const destinationApp = join(temporaryRoot, `${PRODUCT_NAME}.app`)
   try {
     try {

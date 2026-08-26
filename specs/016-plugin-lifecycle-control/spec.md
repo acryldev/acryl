@@ -1,13 +1,13 @@
 # Feature Specification: Plugin Lifecycle Control
 
 **Status:** In progress
-**Scope:** ACR Desktop plugin status, lifecycle actions, and reload shortcut
+**Scope:** ACRYL Desktop plugin status, lifecycle actions, and reload shortcut
 
 ## Objective
 
 Give users one Settings surface that distinguishes the Host and Client faces of every current Loader plugin and safely controls lifecycle-managed, user-mutable plugins.
 
-The first managed dual-face plugin is Development Canvas. The interface and policy must support additional ACR and profile-installed plugins without moving lifecycle logic into those plugins.
+The first managed dual-face plugin is Development Canvas. The interface and policy must support additional ACRYL and profile-installed plugins without moving lifecycle logic into those plugins.
 
 ## User requirements
 
@@ -24,7 +24,7 @@ The first managed dual-face plugin is Development Canvas. The interface and poli
 6. Enable persists the change, mounts and awaits the Host Fiber, and reloads the renderer so the Client package enters the new boot graph.
 7. Reload restarts the Host Fiber with current configuration and reloads the renderer for a fresh Client Fiber.
 8. The Canvas fallback conversation becomes visible after Canvas is disabled and Canvas returns after it is enabled.
-9. `/reload` is a human command, not model input. With no argument it reloads all mutable ACR plugin entries. With one Loader entry id it reloads that mutable entry.
+9. `/reload` is a human command, not model input. With no argument it reloads all mutable ACRYL plugin entries. With one Loader entry id it reloads that mutable entry.
 10. Failed operations remain visible and actionable. They must not silently leave persistence and runtime state divergent.
 
 ## Safety constraints

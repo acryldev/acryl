@@ -8,7 +8,7 @@
     - id: desktop-terminal
       name: dsh-plugin-desktop/terminal
       disabled: !!js process.platform === 'linux'
-    # Minimal ACR capability proof. This Host row is deliberately independent
+    # Minimal ACRYL capability proof. This Host row is deliberately independent
     # of compatibility/advanced presentation mode.
     - id: desktop-hello-world
       name: dsh-plugin-desktop/hello-world

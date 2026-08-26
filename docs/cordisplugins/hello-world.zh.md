@@ -2,7 +2,7 @@
 
 这是面向 **当前 Desktop 仓库** 的学习指南，不是上游教程的复述。读完后你应能写出一个会挂载、会 `inject`、会注册可逆 effect、卸载时不留残渣的插件。
 
-在写 Development Canvas 或任何 ACR 插件之前先读本文。
+在写 Development Canvas 或任何 ACRYL 插件之前先读本文。
 
 ## 不变的规则
 

@@ -18,8 +18,8 @@ test('rewrites one existing property-list string without changing neighboring ke
     '<string>Electron</string>',
   ].join('\n')
 
-  const rewritten = setPlistString(source, 'CFBundleDisplayName', 'ACR')
-  assert.match(rewritten, /<key>CFBundleDisplayName<\/key>\n<string>ACR<\/string>/u)
+  const rewritten = setPlistString(source, 'CFBundleDisplayName', 'ACRYL')
+  assert.match(rewritten, /<key>CFBundleDisplayName<\/key>\n<string>ACRYL<\/string>/u)
   assert.match(rewritten, /<key>CFBundleName<\/key>\n<string>Electron<\/string>/u)
-  assert.throws(() => setPlistString(source, 'MissingKey', 'ACR'), /no MissingKey string/u)
+  assert.throws(() => setPlistString(source, 'MissingKey', 'ACRYL'), /no MissingKey string/u)
 })

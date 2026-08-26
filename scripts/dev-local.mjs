@@ -7,11 +7,11 @@ import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-export const ACR_DSH_HOME_DIR_NAME = '.dsh-acr'
-export const ACR_USER_DATA_PRODUCT_NAME = 'DSH Desktop ACR'
+export const ACRYL_DSH_HOME_DIR_NAME = '.dsh-acryl'
+export const ACRYL_USER_DATA_PRODUCT_NAME = 'ACRYL Development'
 
 /**
- * Resolve isolated persistence roots for a local ACR/Desktop launch.
+ * Resolve isolated persistence roots for a local ACRYL/Desktop launch.
  * @param platform - process.platform
  * @param homeDirectory - os.homedir()
  * @param environment - process.env
@@ -21,29 +21,29 @@ export function resolveLocalDesktopRoots(
   homeDirectory = homedir(),
   environment = process.env,
 ) {
-  const dshHome = join(homeDirectory, ACR_DSH_HOME_DIR_NAME)
+  const dshHome = join(homeDirectory, ACRYL_DSH_HOME_DIR_NAME)
   if (platform === 'win32') {
     const appData = environment.APPDATA
     if (typeof appData !== 'string' || appData.length === 0) {
       throw new Error('APPDATA is unavailable; cannot isolate Desktop user data')
     }
-    return { dshHome, userData: join(appData, ACR_USER_DATA_PRODUCT_NAME) }
+    return { dshHome, userData: join(appData, ACRYL_USER_DATA_PRODUCT_NAME) }
   }
   if (platform === 'darwin') {
     return {
       dshHome,
-      userData: join(homeDirectory, 'Library', 'Application Support', ACR_USER_DATA_PRODUCT_NAME),
+      userData: join(homeDirectory, 'Library', 'Application Support', ACRYL_USER_DATA_PRODUCT_NAME),
     }
   }
   const config = environment.XDG_CONFIG_HOME
   const configHome = typeof config === 'string' && config.length > 0
     ? config
     : join(homeDirectory, '.config')
-  return { dshHome, userData: join(configHome, ACR_USER_DATA_PRODUCT_NAME) }
+  return { dshHome, userData: join(configHome, ACRYL_USER_DATA_PRODUCT_NAME) }
 }
 
 /**
- * Isolated ACR homes start in advanced mode so Development Canvas is visible.
+ * Isolated ACRYL homes start in advanced mode so Development Canvas is visible.
  * @param dshHome - resolved DSH_HOME for this launch
  */
 export function ensureLocalAdvancedMode(dshHome) {
@@ -94,7 +94,7 @@ export async function runDevLocal(argv = process.argv.slice(2), environment = pr
   process.stdout.write(`dev:local DSH_HOME=${roots.dshHome}\n`)
   process.stdout.write(`dev:local userData=${roots.userData}\n`)
   process.stdout.write(`dev:local desktop mode=${mode}\n`)
-  process.stdout.write('dev:local quit the installed DSH Desktop app if it is still running\n')
+  process.stdout.write('dev:local quit the installed ACRYL app if it is still running\n')
   const env = {
     ...environment,
     DSH_HOME: roots.dshHome,

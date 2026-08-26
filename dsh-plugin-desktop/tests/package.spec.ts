@@ -576,8 +576,8 @@ describe('published package surface', () => {
 
   it('fixes the installed application identity', () => {
     expect(manifest.version).toBe(workspaceManifest.version)
-    expect(manifest.build?.productName).toBe('ACR')
-    expect(manifest.build?.appId).toBe('ai.deepseek.dsh.desktop')
+    expect(manifest.build?.productName).toBe('ACRYL')
+    expect(manifest.build?.appId).toBe('dev.acryl.desktop')
     expect(manifest.build?.asarUnpack).toEqual([
       'package.json',
       'cordis.patch.yml',
@@ -612,7 +612,7 @@ describe('published package surface', () => {
       target: 'nsis',
       arch: ['x64'],
     }])
-    expect(manifest.build?.win?.artifactName).toBe('DSH-Desktop-${version}-${arch}-Portable.${ext}')
+    expect(manifest.build?.win?.artifactName).toBe('ACRYL-${version}-${arch}-Portable.${ext}')
     expect(manifest.build?.nsis).toEqual({
       license: 'THIRD_PARTY_NOTICES.md',
       oneClick: false,
@@ -622,9 +622,9 @@ describe('published package surface', () => {
       createDesktopShortcut: true,
       createStartMenuShortcut: true,
       differentialPackage: false,
-      shortcutName: 'ACR',
+      shortcutName: 'ACRYL',
       useZip: false,
-      artifactName: 'DSH-Desktop-${version}-${arch}-Setup.${ext}',
+      artifactName: 'ACRYL-${version}-${arch}-Setup.${ext}',
     })
     expect(manifest.build?.linux?.icon).toBe('build/app-icon.png')
   })
@@ -632,6 +632,7 @@ describe('published package surface', () => {
   it('separates unsigned smoke packaging from the signed macOS release', () => {
     const packageDir = readFileSync(new URL('scripts/package-dir.mjs', packageRoot), 'utf8')
 
+    expect(manifest.scripts?.build).toContain('node scripts/generate-acryl-brand.mjs')
     expect(manifest.scripts?.build).toContain('node scripts/generate-mac-app-icon.mjs')
     expect(manifest.scripts?.['build:canvas']).toBe('yarn workspace dsh-plugin-development-canvas build')
     expect(manifest.scripts?.dev)
@@ -735,11 +736,11 @@ describe('published package surface', () => {
     expect(ciWorkflow).toContain('Documentation-only change; product build and tests are not required.')
   })
 
-  it('keeps one fixed brand-blue tray source for generated native assets', () => {
-    const source = readFileSync(new URL('build/tray-icon.svg', packageRoot), 'utf8')
-
-    expect(source.match(/#4D6BFE/gu)).toHaveLength(1)
-    expect(source).not.toMatch(/<style\b|prefers-color-scheme/iu)
+  it('keeps the supplied ACRYL theme logos and generated native tray assets', () => {
+    const workspaceBlack = readFileSync(new URL('acryl-logo.png', workspaceRoot))
+    const workspaceWhite = readFileSync(new URL('acryl-logo-white.png', workspaceRoot))
+    expect(readFileSync(new URL('build/acryl-logo.png', packageRoot))).toEqual(workspaceBlack)
+    expect(readFileSync(new URL('build/acryl-logo-white.png', packageRoot))).toEqual(workspaceWhite)
     for (const filename of [
       'tray-iconTemplate.png',
       'tray-iconTemplate@2x.png',
@@ -752,12 +753,12 @@ describe('published package surface', () => {
     }
   })
 
-  it('keeps the fixed ACR application icon', () => {
+  it('keeps the fixed ACRYL application icon', () => {
     const digest = createHash('sha256')
       .update(readFileSync(new URL('build/app-icon.png', packageRoot)))
       .digest('hex')
 
-    expect(digest).toBe('3880ffd489a43d71a2aa7e8efe30488056c91d740f0a22e565e51ef21736665e')
+    expect(digest).toBe('eadf27f60deca0c8a8d49ebb65a4d8ed860ffc0d5ca7df23008946045b8d2fda')
   })
 
   it('generates a centered macOS icon with at least a 100-pixel visual inset', async () => {

@@ -19,7 +19,7 @@
 **Alternatives considered**: Always call `openTerminal()` (native window, not a tile); child-process pipes (not a real TTY); reuse `ctx.terminals` immediately (its current ownership is DSH-Agent scoped rather than a user Canvas tab).
 
 **Cordis follow-up**: The generic Terminal tab may keep this transport. The
-hardcoded coding-agent commands are transitional and move to ACR-2's
+hardcoded coding-agent commands are transitional and move to ACRYL-2's
 `acrAgentControl` service/provider seam. That seam should adapt
 `ctx.terminals`, `ctx.subagents`, and sandbox/process capabilities where their
 contracts fit; raw terminal output must not become canonical room history.
@@ -38,6 +38,6 @@ contracts fit; raw terminal output must not become canonical room history.
 
 ## Decision: Spec Kit milestone 015, Wayfinder destination redraw
 
-**Rationale**: The user named Development Canvas as the first feature to build, overriding the earlier "plan until ACR-1" note. The walking-skeleton map remains for room/relay work; this milestone is the ADE surface.
+**Rationale**: The user named Development Canvas as the first feature to build, overriding the earlier "plan until ACRYL-1" note. The walking-skeleton map remains for room/relay work; this milestone is the ADE surface.
 
-**Alternatives considered**: Fold canvas into stub `007-acr-6-minimal-ade-ui` (wrong number and still a stub).
+**Alternatives considered**: Fold canvas into stub `007-acryl-6-minimal-ade-ui` (wrong number and still a stub).

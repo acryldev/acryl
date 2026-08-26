@@ -10,12 +10,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anywhere-labs/deepseek-harness-desktop.git",
+    "url": "git+https://github.com/acryldev/acryl.git",
     "directory": "dsh-community-fabric"
   },
-  "homepage": "https://github.com/anywhere-labs/deepseek-harness-desktop/tree/master/dsh-community-fabric#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/dsh-community-fabric#readme",
   "bugs": {
-    "url": "https://github.com/anywhere-labs/deepseek-harness-desktop/issues"
+    "url": "https://github.com/acryldev/acryl/issues"
   },
   "type": "module",
   "files": [

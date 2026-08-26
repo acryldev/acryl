@@ -4,7 +4,7 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 // Type-only service and SlotMap convergence for the Desktop settings section.
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
-import { applyAcrBrand } from './acr-brand.tsx'
+import { applyAcrylBrand } from './acryl-brand.tsx'
 import { applyAdvancedShell } from './advanced-shell.ts'
 import { startRendererBootReporter } from './boot-health.ts'
 import { applyDesktopSettings } from './desktop-settings.ts'
@@ -13,8 +13,8 @@ import { parseDesktopClientEnvironment } from './environment.ts'
 import { applyPluginLifecycleSettings } from './plugin-lifecycle-settings.ts'
 import { installWorkspaceFolderDrop } from './workspace-folder-drop.ts'
 
-export { AcrBrandMark, AcrBrandName, applyAcrBrand } from './acr-brand.tsx'
-export type { AcrBrandMarkProps, AcrBrandNameProps } from './acr-brand.tsx'
+export { AcrylBrandMark, AcrylBrandName, applyAcrylBrand } from './acryl-brand.tsx'
+export type { AcrylBrandMarkProps, AcrylBrandNameProps } from './acryl-brand.tsx'
 export { applyAdvancedShell } from './advanced-shell.ts'
 export { applyDesktopSettings } from './desktop-settings.ts'
 export { PluginArchitectureSettingsTab } from './PluginArchitectureSettingsTab.tsx'
@@ -95,7 +95,7 @@ export const inject = [
 export function apply(ctx: ClientContext): void {
   const environment = parseDesktopClientEnvironment(window.location.search)
   if (!environment) return
-  applyAcrBrand(ctx)
+  applyAcrylBrand(ctx)
   applyDesktopSettings(ctx, environment)
   applyPluginLifecycleSettings(ctx)
   ctx.effect(

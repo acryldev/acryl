@@ -1,24 +1,24 @@
-# CORDIS SPEC — ACR Runtime Foundation & Coding-Agent Onboarding
+# CORDIS SPEC — ACRYL Runtime Foundation & Coding-Agent Onboarding
 
 > **File purpose:** `cordis_spec.md`  
-> **Audience:** coding agents and engineers working on ACR / Relaygent  
+> **Audience:** coding agents and engineers working on ACRYL / Relaygent
 > **Status:** architecture/onboarding specification; use as a living document  
 > **Primary framework:** Cordis v4 / DeepSeek Harness Cordis fork  
-> **Goal:** understand enough Cordis to build ACR as an agent-agnostic, dynamically composable, self-adapting ADE rather than as a monolithic application.
+> **Goal:** understand enough Cordis to build ACRYL as an agent-agnostic, dynamically composable, self-adapting ADE rather than as a monolithic application.
 
 For implementation work, pair this architecture specification with the
 [Cordis System Guide for Coding Agents](cordis_system_guide_for_coding_agents.md)
-and the current [ACR Cordis alignment audit](acr_cordis_alignment_audit.md).
+and the current [ACRYL Cordis alignment audit](acryl_cordis_alignment_audit.md).
 The system guide owns operational Context/Fiber/service/injection/effect/event/
-Tool/Loader rules; this document owns the ACR architectural direction.
+Tool/Loader rules; this document owns the ACRYL architectural direction.
 
 ---
 
 ## 0. Read this first
 
-ACR is intended to become an **agent-agnostic Agentic Development Environment (ADE)** and multiplexer that can host, coordinate, relay context between, and extend itself around many existing coding agents and LLMs.
+ACRYL is intended to become an **agent-agnostic Agentic Development Environment (ADE)** and multiplexer that can host, coordinate, relay context between, and extend itself around many existing coding agents and LLMs.
 
-Examples of external agents/providers ACR should be able to host or adapt:
+Examples of external agents/providers ACRYL should be able to host or adapt:
 
 - Claude Code
 - OpenAI Codex CLI / Codex agents
@@ -28,14 +28,14 @@ Examples of external agents/providers ACR should be able to host or adapt:
 - Kilo
 - future unknown coding agents
 - remote/ACP-compatible agents
-- native ACR/DSH-style agents
+- native ACRYL/DSH-style agents
 
-ACR should **not** hardcode one agent loop, one LLM, one memory system, one graph system, one orchestration methodology, or one UI.
+ACRYL should **not** hardcode one agent loop, one LLM, one memory system, one graph system, one orchestration methodology, or one UI.
 
 The intended product model is:
 
 ```text
-                    ACR / Relaygent
+                    ACRYL / Relaygent
                           |
           +---------------+---------------+
           |               |               |
@@ -43,7 +43,7 @@ The intended product model is:
           |               |               |
           +---------------+---------------+
                           |
-                    ACR Runtime
+                    ACRYL Runtime
                           |
                      Cordis v4
                           |
@@ -127,15 +127,15 @@ As of this specification:
 - DeepSeek Harness vendors/publishes its own Cordis build under the `@deepseek-ai/*` namespace;
 - DSH should be treated as the most concrete production-oriented reference for Cordis v4 agent-runtime usage.
 
-**Do not scatter raw Cordis imports everywhere in ACR.**  
-Use an ACR-owned adapter/runtime boundary so Cordis can be upgraded, pinned, vendored, or replaced deliberately.
+**Do not scatter raw Cordis imports everywhere in ACRYL.**
+Use an ACRYL-owned adapter/runtime boundary so Cordis can be upgraded, pinned, vendored, or replaced deliberately.
 
 Recommended boundary:
 
 ```text
-ACR domain APIs
+ACRYL domain APIs
       |
-@acr/runtime-cordis
+@acryl/runtime-cordis
       |
 Cordis v4
 ```
@@ -216,7 +216,7 @@ embeddings  NO
 Later:
 
 ```text
-@acr/embeddings-local mounts
+@acryl/embeddings-local mounts
         |
         v
 embeddings becomes available
@@ -246,7 +246,7 @@ It is **reactive runtime composition**.
 
 # 3. Cordis in five ideas
 
-A coding agent should internalize these before changing ACR runtime architecture.
+A coding agent should internalize these before changing ACRYL runtime architecture.
 
 ## 3.1 Plugin
 
@@ -300,7 +300,7 @@ ctx.sessions
 ctx.agents
 ```
 
-For ACR we should move toward keys such as:
+For ACRYL we should move toward keys such as:
 
 ```ts
 ctx.acrAgentControl
@@ -399,7 +399,7 @@ A plugin declares hard service requirements using `inject`.
 export const inject = ['greeter']
 
 export function apply(ctx: Context) {
-  console.log(ctx.greeter.greet('ACR'))
+  console.log(ctx.greeter.greet('ACRYL'))
 }
 ```
 
@@ -442,7 +442,7 @@ replacement service appears
 consumer activates again
 ```
 
-This is one of the most important mechanisms for ACR.
+This is one of the most important mechanisms for ACRYL.
 
 It allows:
 
@@ -518,7 +518,7 @@ Typical effects include:
 - subprocess/process handles where practical;
 - any resource that should disappear with the plugin.
 
-A standing ACR rule should be:
+A standing ACRYL rule should be:
 
 > **No plugin-lifetime resource without a disposer.**
 
@@ -601,12 +601,12 @@ A child plugin mounted by a parent participates in lifecycle ownership.
 
 When the parent disappears, child plugins should disappear with it.
 
-This gives ACR a natural way to model nested runtime structures.
+This gives ACRYL a natural way to model nested runtime structures.
 
 Possible mapping:
 
 ```text
-ACR root
+ACRYL root
   |
   +-- workspace plugin
        |
@@ -638,7 +638,7 @@ Use an **event** when producers should not need to know all consumers or when be
 Example:
 
 ```ts
-ctx.emit('acr/agent-started', agent)
+ctx.emit('acryl/agent-started', agent)
 ```
 
 or an interception point:
@@ -665,7 +665,7 @@ Example:
 ```ts
 declare module '@deepseek-ai/cordis' {
   interface Events {
-    'acr/agent-started'(id: string): void
+    'acryl/agent-started'(id: string): void
   }
 }
 ```
@@ -673,7 +673,7 @@ declare module '@deepseek-ai/cordis' {
 Listener:
 
 ```ts
-ctx.on('acr/agent-started', (id) => {
+ctx.on('acryl/agent-started', (id) => {
   console.log(id)
 })
 ```
@@ -753,7 +753,7 @@ This is the most important interception mechanism.
 A waterfall listener receives a continuation:
 
 ```ts
-ctx.on('acr/request', async (request, next) => {
+ctx.on('acryl/request', async (request, next) => {
   // inspect / modify
   return next()
 })
@@ -762,7 +762,7 @@ ctx.on('acr/request', async (request, next) => {
 A listener may wrap downstream behavior:
 
 ```ts
-ctx.on('acr/request', async (request, next) => {
+ctx.on('acryl/request', async (request, next) => {
   const result = await next()
   return transform(result)
 })
@@ -771,7 +771,7 @@ ctx.on('acr/request', async (request, next) => {
 Or deliberately short-circuit:
 
 ```ts
-ctx.on('acr/request', async (request, next) => {
+ctx.on('acryl/request', async (request, next) => {
   if (shouldBlock(request)) {
     return blockedResult
   }
@@ -820,12 +820,12 @@ Important entry concepts include:
 
 ## Stable IDs
 
-Always prefer explicit stable IDs in ACR-owned composition.
+Always prefer explicit stable IDs in ACRYL-owned composition.
 
 Example:
 
 ```yaml
-- id: acr-agent-claude
+- id: acryl-agent-claude
   name: './plugins/agent-claude.ts'
 ```
 
@@ -877,7 +877,7 @@ export function apply(ctx: Context, config: Config) {
 
 Bad configuration should fail **before** the plugin runs half-configured.
 
-ACR rule:
+ACRYL rule:
 
 > Fail configuration loudly, early, and transactionally.
 
@@ -906,7 +906,7 @@ disabled: !!js process.platform !== 'darwin'
 
 Treat dynamic configuration as code.
 
-ACR-generated expressions must go through the same trust/permission review as generated plugins.
+ACRYL-generated expressions must go through the same trust/permission review as generated plugins.
 
 Avoid using arbitrary expressions when a typed config option can solve the same problem.
 
@@ -934,12 +934,12 @@ root
 
 Both may expose a service named `shell` but consumers inside each isolated realm receive the provider for that realm.
 
-This is highly relevant to ACR.
+This is highly relevant to ACRYL.
 
-Potential ACR scope model:
+Potential ACRYL scope model:
 
 ```text
-ACR root
+ACRYL root
   |
   +-- Workspace
        |
@@ -1019,7 +1019,7 @@ LOADING
 ACTIVE
 ```
 
-This is the inner mechanism ACR should build on for **HOT self-adaptation**.
+This is the inner mechanism ACRYL should build on for **HOT self-adaptation**.
 
 Do not confuse HMR with full binary/core updating.  
 See the HOT/WARM/COLD model later in this document.
@@ -1055,7 +1055,7 @@ During development, DSH's tutorial runs TypeScript directly via Node + `tsx`:
 node --import tsx ../../vendor/cordis/bin.js
 ```
 
-For truly runtime-generated modules, ACR may support both:
+For truly runtime-generated modules, ACRYL may support both:
 
 ```text
 .ts   developer/generated typed plugin
@@ -1077,7 +1077,7 @@ A plugin is a plugin regardless of its source authoring language.
 
 # 15. Why Cordis is interesting for self-adapting software
 
-The desired ACR loop is:
+The desired ACRYL loop is:
 
 ```text
 observe
@@ -1133,12 +1133,12 @@ Example future user request:
 
 > Add support for FooCode, a coding agent released today.
 
-Desired ACR behavior:
+Desired ACRYL behavior:
 
 ```text
 1. research FooCode CLI/API
 2. infer adapter contract
-3. generate @acr/agent-foocode
+3. generate @acryl/agent-foocode
 4. test spawn/send/stream/interrupt/resume/stop
 5. stage plugin
 6. mount through Cordis
@@ -1148,7 +1148,7 @@ Desired ACR behavior:
 10. rollback plugin if necessary
 ```
 
-No ACR installer release should be required for an ordinary new agent adapter.
+No ACRYL installer release should be required for an ordinary new agent adapter.
 
 ---
 
@@ -1170,16 +1170,16 @@ DSH architecture treats major product parts as plugins, including:
 
 Its architecture states that there is no privileged product core that every extension must patch; extensions are mounted as neighboring plugins/capabilities.
 
-ACR should learn from this, but **must not become DSH-native-agent-centric**.
+ACRYL should learn from this, but **must not become DSH-native-agent-centric**.
 
-The fundamental inversion for ACR is:
+The fundamental inversion for ACRYL is:
 
 ```text
 DSH emphasis:
 model -> DSH agent loop -> tools
 
-ACR emphasis:
-                   ACR Room
+ACRYL emphasis:
+                   ACRYL Room
                       |
        +--------------+--------------+
        |              |              |
@@ -1190,7 +1190,7 @@ ACR emphasis:
                 relay/context
 ```
 
-The DSH-native loop should become one possible provider, not the definition of an ACR agent.
+The DSH-native loop should become one possible provider, not the definition of an ACRYL agent.
 
 ---
 
@@ -1213,7 +1213,7 @@ The architecture separates capability seams into:
 2. **Service Provider** — implementation.
 3. **Consumer** — code that uses the interface.
 
-This pattern should become foundational in ACR.
+This pattern should become foundational in ACRYL.
 
 Example:
 
@@ -1221,14 +1221,14 @@ Example:
 Agent Provider Seam
 
 Definition:
-@acr/contracts/agent-provider
+@acryl/contracts/agent-provider
 
 Providers:
-@acr/agent-claude-code
-@acr/agent-codex
-@acr/agent-pi
-@acr/agent-opencode
-@acr/agent-dsh-native
+@acryl/agent-claude-code
+@acryl/agent-codex
+@acryl/agent-pi
+@acryl/agent-opencode
+@acryl/agent-dsh-native
 
 Consumers:
 room runtime
@@ -1240,7 +1240,7 @@ commands
 
 ---
 
-# 18. ACR capability model
+# 18. ACRYL capability model
 
 The architecture target is:
 
@@ -1310,7 +1310,7 @@ future graph systems
 ```text
 ACP
 MCP
-ACR protocol
+ACRYL protocol
 JSON-RPC
 PTY bridge
 ```
@@ -1332,7 +1332,7 @@ No capability category above should imply one mandatory implementation.
 
 ---
 
-# 19. Proposed ACR runtime package boundary
+# 19. Proposed ACRYL runtime package boundary
 
 Do not import Cordis directly throughout the whole application.
 
@@ -1359,13 +1359,13 @@ Only `runtime-cordis` and deliberately Cordis-facing plugin packages should need
 Example:
 
 ```text
-@acr/contracts
+@acryl/contracts
         |
         v
-@acr/runtime
+@acryl/runtime
         |
         v
-@acr/runtime-cordis
+@acryl/runtime-cordis
         |
         v
 @deepseek-ai/cordis or upstream Cordis
@@ -1377,22 +1377,22 @@ Advantages:
 - make vendor pinning easier;
 - permit a future Cordis fork;
 - permit experiments with cordis-rs or another host;
-- keep ACR domain contracts stable.
+- keep ACRYL domain contracts stable.
 
 ---
 
 # 20. Fork vs dependency strategy
 
-Do **not** immediately hard-fork Cordis just because ACR depends on it.
+Do **not** immediately hard-fork Cordis just because ACRYL depends on it.
 
 Recommended progression:
 
 ## Phase A — dependency + adapter
 
 ```text
-ACR
+ACRYL
  |
- +-- @acr/runtime-cordis
+ +-- @acryl/runtime-cordis
           |
           +-- pinned Cordis version
 ```
@@ -1414,19 +1414,19 @@ Record:
 - exact upstream commit;
 - local patches;
 - synchronization process;
-- tests proving ACR assumptions.
+- tests proving ACRYL assumptions.
 
 ## Phase C — fork only with concrete reasons
 
-Fork only when ACR requires changes upstream cannot or should not absorb.
+Fork only when ACRYL requires changes upstream cannot or should not absorb.
 
 Never fork just to rename Cordis.
 
 ---
 
-# 21. Agent-agnostic ACR runtime
+# 21. Agent-agnostic ACRYL runtime
 
-ACR should separate:
+ACRYL should separate:
 
 ```text
 AgentProvider
@@ -1488,11 +1488,11 @@ The principle matters more than names:
 
 ---
 
-# 22. Context relay is an ACR domain concept, not a Cordis feature
+# 22. Context relay is an ACRYL domain concept, not a Cordis feature
 
 Cordis solves runtime composition.
 
-It does **not** automatically solve ACR's core product domain:
+It does **not** automatically solve ACRYL's core product domain:
 
 - persistent cross-agent room;
 - session capture;
@@ -1506,7 +1506,7 @@ It does **not** automatically solve ACR's core product domain:
 - transcript normalization;
 - trace capture.
 
-Implement these as ACR services/capabilities on top of Cordis.
+Implement these as ACRYL services/capabilities on top of Cordis.
 
 Example conceptual services:
 
@@ -1518,7 +1518,7 @@ ctx.traceStore
 ctx.sessionBridge
 ```
 
-Cordis is the kernel; ACR remains the product.
+Cordis is the kernel; ACRYL remains the product.
 
 ---
 
@@ -1528,7 +1528,7 @@ Borrow a strong idea from DSH:
 
 > durable facts should live in a replayable log; live coordination should use runtime events.
 
-Possible ACR split:
+Possible ACRYL split:
 
 ## Durable
 
@@ -1555,14 +1555,14 @@ generation/rolled-back
 Use Cordis events:
 
 ```text
-acr/agent/pre-spawn
-acr/agent/status
-acr/relay/before-handoff
-acr/relay/after-handoff
-acr/context/before-compact
-acr/plugin/candidate
-acr/plugin/health
-acr/generation/switching
+acryl/agent/pre-spawn
+acryl/agent/status
+acryl/relay/before-handoff
+acryl/relay/after-handoff
+acryl/context/before-compact
+acryl/plugin/candidate
+acryl/plugin/health
+acryl/generation/switching
 ```
 
 Do not use ephemeral events as the only record of facts that must survive restart.
@@ -1571,7 +1571,7 @@ Do not use ephemeral events as the only record of facts that must survive restar
 
 # 24. UI must be composable too
 
-If ACR wants generative/self-adapting UI, do not hardcode all features into React routes/components.
+If ACRYL wants generative/self-adapting UI, do not hardcode all features into React routes/components.
 
 Define UI contribution seams.
 
@@ -1632,7 +1632,7 @@ TUIContribution
 
 # 25. Self-adaptation levels: HOT / WARM / COLD
 
-ACR should classify every self-change.
+ACRYL should classify every self-change.
 
 ## HOT
 
@@ -1740,14 +1740,14 @@ Conceptual architecture:
 ```text
 OS
  |
- +-- ACR application
+ +-- ACRYL application
  |     |
  |     +-- Desktop shell
  |     +-- Node/Electron/Tauri
  |     +-- Cordis
  |     +-- plugins
  |
- +-- ACR Supervisor
+ +-- ACRYL Supervisor
        |
        +-- stage
        +-- verify
@@ -1780,7 +1780,7 @@ Use generations.
 Conceptually:
 
 ```text
-ACR/
+ACRYL/
   generations/
     141/
     142/
@@ -1933,7 +1933,7 @@ arbitrary shell
 update supervisor authority
 ```
 
-Cordis handles lifecycle/composition; **ACR must add a serious authorization model on top.**
+Cordis handles lifecycle/composition; **ACRYL must add a serious authorization model on top.**
 
 ---
 
@@ -1943,7 +1943,7 @@ Cordis does not require Electron or Tauri.
 
 Both can host a dynamic Node/Cordis runtime.
 
-## Electron advantage for ACR
+## Electron advantage for ACRYL
 
 Electron main-process code is JS/TS/Node.
 
@@ -1964,7 +1964,7 @@ Cordis-managed desktop runtime
        +-- updater UI
 ```
 
-A well-designed Electron ACR can keep most desktop behavior outside the tiny immutable bootstrap.
+A well-designed Electron ACRYL can keep most desktop behavior outside the tiny immutable bootstrap.
 
 This may be strategically valuable for **maximum malleability**.
 
@@ -1987,7 +1987,7 @@ With the COLD supervisor model this is still self-updatable, just not normally H
 
 Do not choose solely on "Electron is heavy" or "Tauri is cool."
 
-Evaluate against ACR's unusual primary requirement:
+Evaluate against ACRYL's unusual primary requirement:
 
 > **How much of the product can safely remain a replaceable runtime capability?**
 
@@ -2017,7 +2017,7 @@ Electron/Tauri native substrate
            |
     +------+------+------+
     |             |      |
- DSH/ACR       Desktop  3rd-party
+ DSH/ACRYL       Desktop  3rd-party
  services      services plugins
 ```
 
@@ -2082,7 +2082,7 @@ supervise runtime
 request rollback if runtime fails
 ```
 
-The less logic in the irreversible bootstrap, the deeper ACR can self-adapt.
+The less logic in the irreversible bootstrap, the deeper ACRYL can self-adapt.
 
 ---
 
@@ -2128,9 +2128,9 @@ Do not treat this interface as finalized.
 
 ---
 
-# 35. Cordis plugin authoring rules for ACR
+# 35. Cordis plugin authoring rules for ACRYL
 
-A coding agent creating an ACR plugin should follow these rules.
+A coding agent creating an ACRYL plugin should follow these rules.
 
 ## Rule 1 — define the capability contract first
 
@@ -2204,11 +2204,11 @@ If behavior depends on a service, declare it.
 
 ---
 
-# 36. ACR anti-patterns
+# 36. ACRYL anti-patterns
 
-## Anti-pattern: mandatory native ACR agent loop
+## Anti-pattern: mandatory native ACRYL agent loop
 
-ACR must remain able to host external agents.
+ACRYL must remain able to host external agents.
 
 A native DSH-like agent may exist, but as one provider.
 
@@ -2219,7 +2219,7 @@ A native DSH-like agent may exist, but as one provider.
 Avoid:
 
 ```text
-ctx.acr.doEverything()
+ctx.acryl.doEverything()
 ```
 
 Prefer focused seams.
@@ -2278,7 +2278,7 @@ Use/pin/adapter first.
 
 ---
 
-# 37. Suggested ACR plugin package anatomy
+# 37. Suggested ACRYL plugin package anatomy
 
 Example only:
 
@@ -2322,7 +2322,7 @@ Lifecycle tests matter as much as functional tests.
 
 ---
 
-# 38. First ACR Cordis experiment
+# 38. First ACRYL Cordis experiment
 
 Do not migrate the entire product immediately.
 
@@ -2330,7 +2330,7 @@ Build a small proof.
 
 ## Experiment objective
 
-Prove that Cordis can support a real ACR provider swap.
+Prove that Cordis can support a real ACRYL provider swap.
 
 ### Services
 
@@ -2623,7 +2623,7 @@ Executable/native substrate replacement.
 
 # 46. Questions a coding agent must answer before adding architecture
 
-Before implementing any significant ACR capability, answer:
+Before implementing any significant ACRYL capability, answer:
 
 ```text
 1. What is the stable capability contract?
@@ -2655,7 +2655,7 @@ If these questions are unanswered, the feature is not ready to become part of th
 The current preferred direction is:
 
 ```text
-                    ACR
+                    ACRYL
                      |
        +-------------+-------------+
        |             |             |
@@ -2663,13 +2663,13 @@ The current preferred direction is:
        |             |             |
        +-------------+-------------+
                      |
-                 ACR APIs
+                 ACRYL APIs
                      |
               Cordis Runtime
                      |
      +---------------+----------------+
      |               |                |
- ACR Domain      Providers        UI Contributions
+ ACRYL Domain      Providers        UI Contributions
      |               |                |
  rooms            agents            panels
  relay            models            commands
@@ -2689,7 +2689,7 @@ tiny Electron bootstrap
         |
 Cordis-managed desktop services
         |
-ACR runtime
+ACRYL runtime
 ```
 
 If Tauri is used:
@@ -2699,14 +2699,14 @@ Tauri/Rust stable native layer
         |
 Node/Cordis adaptive runtime
         |
-ACR plugins
+ACRYL plugins
 ```
 
 Do not finalize Electron vs Tauri before running the self-adaptation experiments.
 
 ---
 
-# 48. Long-term ACR vision
+# 48. Long-term ACRYL vision
 
 The long-term target is not merely an extensible IDE.
 
@@ -2730,7 +2730,7 @@ declarative composition
 HMR
 ```
 
-ACR adds the missing product/system layers:
+ACRYL adds the missing product/system layers:
 
 ```text
 agent-agnostic multiplexer
@@ -2758,7 +2758,7 @@ supervised rollback/update
 
 # 49. Non-goal: rewriting everything immediately
 
-Do not use this document as justification to rebuild every current ACR experiment at once.
+Do not use this document as justification to rebuild every current ACRYL experiment at once.
 
 First prove:
 
@@ -2779,10 +2779,10 @@ A small, correct compositional kernel is more valuable than a large theoretical 
 
 # 50. Final directive to the coding agent
 
-When implementing ACR on Cordis:
+When implementing ACRYL on Cordis:
 
 1. **Treat Cordis as a runtime kernel, not the product.**
-2. **Keep ACR domain contracts above Cordis.**
+2. **Keep ACRYL domain contracts above Cordis.**
 3. **Make external coding agents first-class providers.**
 4. **Use services for capabilities and events for observation/interception.**
 5. **Declare hard dependencies with `inject`; never depend on startup order.**
@@ -2794,15 +2794,15 @@ When implementing ACR on Cordis:
 11. **Classify mutations as HOT, WARM, or COLD.**
 12. **Use Cordis generations for runtime changes and an external supervisor for binary/core changes.**
 13. **Do not let self-adaptation become uncontrolled in-place source mutation.**
-14. **Pin Cordis behind `@acr/runtime-cordis`; vendor/fork only when evidence justifies it.**
-15. **Use DeepSeek Harness as the Cordis-v4 agent-runtime reference implementation, but invert its product assumptions so ACR remains agent-agnostic.**
+14. **Pin Cordis behind `@acryl/runtime-cordis`; vendor/fork only when evidence justifies it.**
+15. **Use DeepSeek Harness as the Cordis-v4 agent-runtime reference implementation, but invert its product assumptions so ACRYL remains agent-agnostic.**
 
 The desired property is:
 
 ```text
-ACR Core is stable enough to trust.
-ACR capabilities are dynamic enough to grow.
-ACR generations are safe enough to replace themselves.
+ACRYL Core is stable enough to trust.
+ACRYL capabilities are dynamic enough to grow.
+ACRYL generations are safe enough to replace themselves.
 ```
 
 That is the architecture to build toward.
@@ -2903,6 +2903,6 @@ dispose old plugin effects + mount new implementation
 ISOLATION
 different provider instances in different scopes
 
-ACR USE
+ACRYL USE
 capabilities/providers + runtime self-adaptation
 ```

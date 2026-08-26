@@ -10,7 +10,7 @@ This repository owns the desktop product around an unmodified DeepSeek Harness c
 
 ## Build, run, and verify
 
-- Start the isolated local Desktop (own `~/.dsh-acr` home, advanced mode, Development Canvas) with `corepack yarn dev` or `corepack yarn local`.
+- Start the isolated local Desktop (own `~/.dsh-acryl` home, advanced mode, Development Canvas) with `corepack yarn dev` or `corepack yarn local`.
 - Use `corepack yarn dev:shared` only when you intentionally want the installed app's `~/.dsh` home.
 - Fast headless loop: `corepack yarn typecheck`, `corepack yarn test`, or both via `corepack yarn verify`.
 - Typecheck, test, then isolated GUI: `corepack yarn lifecycle`.
@@ -87,15 +87,15 @@ Default Matt Pocock roles: `needs-triage`, `needs-info`, `ready-for-agent`, `rea
 
 ### Domain docs
 
-Single-context. Constitution, orientation, Cordis spec, and `docs/acr/` are required reading; `CONTEXT.md` / ADRs are created lazily. See `docs/agents/domain.md`.
+Single-context. Constitution, orientation, Cordis spec, and `docs/acryl/` are required reading; `CONTEXT.md` / ADRs are created lazily. See `docs/agents/domain.md`.
 
-Agent-runtime, Development Canvas, context-relay, and third-party adapter work must follow [`docs/acr/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md`](docs/acr/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md) and [the current alignment audit](docs/cordis/acr_cordis_alignment_audit.md). Build on Cordis services, injection, effects, events, Fibers, Loader composition, and existing DSH capability seams; do not introduce a parallel lifecycle, dependency-injection, event, tool, or provider framework.
+Agent-runtime, Development Canvas, context-relay, and third-party adapter work must follow [`docs/acryl/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md`](docs/acryl/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md) and [the current alignment audit](docs/cordis/acryl_cordis_alignment_audit.md). Build on Cordis services, injection, effects, events, Fibers, Loader composition, and existing DSH capability seams; do not introduce a parallel lifecycle, dependency-injection, event, tool, or provider framework.
 
 
 <claude-mem-context>
 # Memory Context
 
-# [acr] recent context, 2026-08-24 7:08pm GMT+2
+# [acryl] recent context, 2026-08-24 7:08pm GMT+2
 
 No previous sessions found.
 </claude-mem-context>

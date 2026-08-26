@@ -22,8 +22,8 @@
 | --- | --- |
 | [插件生态倡议书](plugin-ecosystem.md) | 开放、可组合、可持续的插件生态愿景与三条原则 |
 | [插件开发](plugin-development.md) | 普通 DSH 插件、Desktop 服务、兼容模式和生命周期 |
-| [面向 coding agent 的 Cordis 系统指南](cordis/cordis_system_guide_for_coding_agents.md) | Context、Fiber、Service、`inject`、effect、event、Tool、Loader、HMR、测试与 ACR 设计规则 |
-| [ACR Cordis 对齐审计](cordis/acr_cordis_alignment_audit.md) | 在 room 与 agent-provider 实现前，哪些部分已对齐、仍属过渡或被 gate 阻塞 |
+| [面向 coding agent 的 Cordis 系统指南](cordis/cordis_system_guide_for_coding_agents.md) | Context、Fiber、Service、`inject`、effect、event、Tool、Loader、HMR、测试与 ACRYL 设计规则 |
+| [ACRYL Cordis 对齐审计](cordis/acryl_cordis_alignment_audit.md) | 在 room 与 agent-provider 实现前，哪些部分已对齐、仍属过渡或被 gate 阻塞 |
 | [Cordis Hello World](cordisplugins/hello-world-plugin-guide.md) | 本仓库的 R&D fixture 与三种 plugin 注册路径 |
 | [Community Fabric Draft](../dsh-community-fabric/README.zh.md) | 从 Manifest/Capability 基础，到 Runtime/Presentation、service composition 和溯源诊断的社区互操作提案 |
 | [Fabric 社区意见处置记录](../dsh-community-fabric/docs/research/community-issue-23-review.zh.md) | Issue #23 中哪些建议已采纳、拆成独立 RFC、延期或不进入可移植核心 |

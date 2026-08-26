@@ -2,7 +2,7 @@
 
 This is a learning guide for **this repository**, not a copy of the upstream tutorial. After you finish it you should be able to write a plugin that mounts, injects a service, registers a reversible effect, and disappears cleanly.
 
-Read this before you write Development Canvas or any other ACR plugin.
+Read this before you write Development Canvas or any other ACRYL plugin.
 
 ## The rule that never changes
 
@@ -256,11 +256,11 @@ export function apply(ctx: ClientContext) {
 
 That is the same mechanism Development Canvas uses, except Canvas occupies the center surface in advanced mode instead of a tiny overlay.
 
-## How to run this Desktop / ACR checkout (the GUI)
+## How to run this Desktop / ACRYL checkout (the GUI)
 
 Hello World above is a tiny Host plugin. Development Canvas lives in **advanced** Desktop. That is a different command.
 
-1. **Quit the installed DSH Desktop app first.** Tray **Quit**, not only close the window. This checkout uses the same Electron app id (`DSH Desktop`). A second launch is swallowed by the single-instance lock and just focuses the already-running app.
+1. **Quit the installed ACRYL app first.** Tray **Quit**, not only close the window. This checkout uses the same Electron app id (`DSH Desktop`). A second launch is swallowed by the single-instance lock and just focuses the already-running app.
 
 2. From the repository root:
 
@@ -270,7 +270,7 @@ corepack yarn install --immutable
 corepack yarn local
 ```
 
-`yarn local` (alias `yarn dev:local`) builds, then starts Electron against `~/.dsh-acr` and a separate Electron user-data folder so it does not share settings with the installed DSH Desktop app. First build can take a while.
+`yarn local` (alias `yarn dev:local`) builds, then starts Electron against `~/.dsh-acryl` and a separate Electron user-data folder so it does not share settings with the installed ACRYL app. First build can take a while.
 
 Daily loop without launching the window:
 
@@ -303,14 +303,14 @@ By default **both** the `dshdesktop.cn` app and `yarn dev` use:
 
 They are two binaries of the same product name. They **will** share and overwrite that state unless you separate the Harness home.
 
-Safer ACR / canvas development:
+Safer ACRYL / canvas development:
 
 ```sh
 # quit Applications/DSH Desktop.app first
 corepack yarn local
 ```
 
-That uses `~/.dsh-acr` as Harness home and `~/Library/Application Support/DSH Desktop ACR` as Electron user data. The DMG app keeps `~/.dsh` and `~/Library/Application Support/DSH Desktop`. Still quit the store app before launching this checkout: two Electron processes with the same binary name can fight over the tray even when data dirs differ.
+That uses `~/.dsh-acryl` as Harness home and `~/Library/Application Support/ACRYL Development` as Electron user data. The DMG app keeps `~/.dsh` and `~/Library/Application Support/ACRYL`. Still quit the store app before launching this checkout: two Electron processes with the same binary name can fight over the tray even when data dirs differ.
 
 Do **not** install experimental plugins into the `desktop` profile while both apps share `~/.dsh`: the next launch of the store app will load that same profile.
 

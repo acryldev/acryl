@@ -2,7 +2,7 @@
 
 Type: grilling
 Status: open
-Blocked by: [Lock the ACR walking-skeleton destination](01-lock-destination.md)
+Blocked by: [Lock the ACRYL walking-skeleton destination](01-lock-destination.md)
 
 ## Question
 
@@ -11,7 +11,7 @@ what is the smallest slice we should specify next?
 
 Proposed default:
 
-1. ACR Cordis plugin + room identity + durable room events
+1. ACRYL Cordis plugin + room identity + durable room events
 2. Launch one DSH-native actor and one external PTY actor as room peers
 3. Structured handoff artifact between them
 

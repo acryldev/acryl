@@ -12,7 +12,7 @@
 
 ---
 
-**Path convention:** Unless an ACR/root path is written explicitly, paths such
+**Path convention:** Unless an ACRYL/root path is written explicitly, paths such
 as `docs/...`, `packages/...`, and `vendor/...` in this guide are relative to
 the pinned `deepseek-harness/` submodule.
 
@@ -526,7 +526,7 @@ upstream commit: 56b3d4f725681cf4556c1a8695a709cc3b6eed74
 
 The rescoped package published by this pinned Harness checkout is currently
 `@deepseek-ai/cordis` `4.0.1`. The upstream snapshot version documents source
-provenance; the rescoped package version is the dependency/runtime version ACR
+provenance; the rescoped package version is the dependency/runtime version ACRYL
 must satisfy.
 
 Harness also carries local changes, including lifecycle hardening, lazy config resolution, and transactional Loader/Include reconciliation.
@@ -4187,7 +4187,7 @@ A coding agent should be able to answer every section before merging a new core 
 
 ---
 
-# Part XXIV — Applying the model to an ACR-style agent platform
+# Part XXIV — Applying the model to an ACRYL-style agent platform
 
 ## 136. Recommended Cordis decomposition
 
@@ -4196,7 +4196,7 @@ For an agent-agnostic runtime, treat major swappable systems as capability seams
 Example conceptual tree:
 
 ```text
-ACR / agent runtime
+ACRYL / agent runtime
 ├── session store service
 ├── agent adapter registry
 │   ├── Codex provider
