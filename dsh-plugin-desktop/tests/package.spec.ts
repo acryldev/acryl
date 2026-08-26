@@ -66,6 +66,10 @@ const workspaceManifest = JSON.parse(readFileSync(new URL('package.json', worksp
   scripts?: Record<string, unknown>
 }
 const ciWorkflow = readFileSync(new URL('.github/workflows/ci.yml', workspaceRoot), 'utf8')
+const releaseCandidateWorkflow = readFileSync(
+  new URL('.github/workflows/release-candidate.yml', workspaceRoot),
+  'utf8',
+)
 
 describe('published package surface', () => {
   it('runs Canvas, Desktop, and Community Market typechecks from the root command', () => {
@@ -689,51 +693,31 @@ describe('published package surface', () => {
     expect(manifest.devDependencies?.['@electron/asar']).toBe('3.4.1')
   })
 
-  it('runs platform package gates before reusing native packaging outputs', () => {
-    const windowsJob = ciWorkflow.slice(
-      ciWorkflow.indexOf('  desktop-windows:'),
-      ciWorkflow.indexOf('  desktop-macos:'),
-    )
-    const macosJob = ciWorkflow.slice(
-      ciWorkflow.indexOf('  desktop-macos:'),
-      ciWorkflow.indexOf('  upstream-command-windows:'),
-    )
-
-    expect(windowsJob).not.toContain('- run: yarn check')
-    expect(windowsJob).toContain('- run: yarn workspace dsh-plugin-desktop check:win-package')
-    expect(windowsJob).toContain('run: yarn workspace dsh-plugin-desktop dist:win')
-    expect(windowsJob).toContain('run: yarn workspace dsh-plugin-desktop dist:win-portable')
-    expect(windowsJob).toContain('DSH_PACKAGE_CHECK_ALREADY_RAN: \'1\'')
-    expect(macosJob).not.toContain('- run: yarn check')
-    expect(macosJob).toContain('- run: yarn workspace dsh-plugin-desktop check:mac-package')
-    expect(macosJob).toContain('run: yarn workspace dsh-plugin-desktop dist:mac-smoke')
-    expect(macosJob).toContain('DSH_PACKAGE_CHECK_ALREADY_RAN: \'1\'')
-    expect(macosJob).not.toContain('- run: yarn dist:mac-smoke')
+  it('keeps platform packaging behind tag or manual release-candidate runs', () => {
+    expect(ciWorkflow).not.toContain('windows-latest')
+    expect(ciWorkflow).not.toContain('macos-latest')
+    expect(releaseCandidateWorkflow).toContain("tags: ['v*']")
+    expect(releaseCandidateWorkflow).toContain('workflow_dispatch:')
+    expect(releaseCandidateWorkflow).toContain('runs-on: windows-latest')
+    expect(releaseCandidateWorkflow).toContain('corepack yarn workspace dsh-plugin-desktop check:win-package')
+    expect(releaseCandidateWorkflow).toContain('corepack yarn workspace dsh-plugin-desktop dist:win')
+    expect(releaseCandidateWorkflow).toContain('corepack yarn workspace dsh-plugin-desktop dist:win-portable')
+    expect(releaseCandidateWorkflow).toContain('runs-on: macos-latest')
+    expect(releaseCandidateWorkflow).toContain('corepack yarn workspace dsh-plugin-desktop check:mac-package')
+    expect(releaseCandidateWorkflow).toContain('corepack yarn workspace dsh-plugin-desktop dist:mac-smoke')
+    expect(releaseCandidateWorkflow.match(/DSH_PACKAGE_CHECK_ALREADY_RAN: '1'/gu)).toHaveLength(3)
   })
 
-  it('skips product packaging only for documentation-only changes', () => {
-    const classifier = fileURLToPath(new URL('../../scripts/classify-ci-changes.mjs', import.meta.url))
-    const classify = (paths: string[]): string => execFileSync(
-      process.execPath,
-      [classifier],
-      { input: Buffer.from(`${paths.join('\0')}\0`), encoding: 'utf8' },
-    ).trim()
-
-    expect(classify([
-      'docs/architecture.md',
-      '.agents/notes/implemented/architecture/decision.md',
-      '.agents/notes/implemented/architecture/decision.i18n.yaml',
-      'dsh-community-market/docs/schema.json',
-      '.github/ISSUE_TEMPLATE/feature_request.yml',
-    ])).toBe('false')
-    expect(classify(['README.md', 'dsh-plugin-desktop/src/index.ts'])).toBe('true')
-    expect(classify(['.github/workflows/ci.yml'])).toBe('true')
-    expect(classify(['THIRD_PARTY_NOTICES.md'])).toBe('true')
-    expect(classify([])).toBe('true')
-
-    expect(ciWorkflow).toContain('product="$(git diff --name-only -z')
-    expect(ciWorkflow).toContain("if: needs.changes.outputs.product == 'true'")
-    expect(ciWorkflow).toContain('Documentation-only change; product build and tests are not required.')
+  it('runs one fast, conventional CI gate on main and pull requests', () => {
+    expect(ciWorkflow).toContain('branches: [main]')
+    expect(ciWorkflow).toContain('pull_request:')
+    expect(ciWorkflow).toContain('push:')
+    expect(ciWorkflow).toContain('runs-on: ubuntu-latest')
+    expect(ciWorkflow).toContain('corepack yarn install --immutable')
+    expect(ciWorkflow).toContain('corepack yarn check:layout')
+    expect(ciWorkflow).toContain('corepack yarn typecheck')
+    expect(ciWorkflow).toContain('corepack yarn test')
+    expect(ciWorkflow).toContain('corepack yarn build')
   })
 
   it('keeps the supplied ACRYL theme logos and generated native tray assets', () => {

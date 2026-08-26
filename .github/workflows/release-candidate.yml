@@ -1,0 +1,123 @@
+name: Release Candidate
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-candidate-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DSH_TELEMETRY_DISABLED: '1'
+
+jobs:
+  windows:
+    name: Windows artifacts
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Resolve Yarn cache folder
+        id: yarn-cache
+        shell: bash
+        run: echo "dir=$(corepack yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Yarn cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache.outputs.dir }}
+          key: yarn-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('yarn.lock', '.yarnrc.yml') }}
+          restore-keys: |
+            yarn-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Install dependencies
+        run: corepack yarn install --immutable
+
+      - name: Verify Windows packaging
+        run: corepack yarn workspace dsh-plugin-desktop check:win-package
+
+      - name: Build installer
+        env:
+          DSH_PACKAGE_CHECK_ALREADY_RAN: '1'
+        run: corepack yarn workspace dsh-plugin-desktop dist:win
+
+      - name: Build portable archive
+        env:
+          DSH_PACKAGE_CHECK_ALREADY_RAN: '1'
+        run: corepack yarn workspace dsh-plugin-desktop dist:win-portable
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: acryl-windows-${{ github.ref_name }}
+          path: |
+            dsh-plugin-desktop/dist/*.exe
+            dsh-plugin-desktop/dist/*.zip
+            dsh-plugin-desktop/dist/*.yml
+            dsh-plugin-desktop/dist/*.blockmap
+          if-no-files-found: error
+          retention-days: 7
+
+  macos:
+    name: macOS smoke artifact
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Resolve Yarn cache folder
+        id: yarn-cache
+        run: echo "dir=$(corepack yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Yarn cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache.outputs.dir }}
+          key: yarn-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('yarn.lock', '.yarnrc.yml') }}
+          restore-keys: |
+            yarn-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Install dependencies
+        run: corepack yarn install --immutable
+
+      - name: Verify macOS packaging
+        run: corepack yarn workspace dsh-plugin-desktop check:mac-package
+
+      - name: Build unsigned smoke artifact
+        env:
+          DSH_PACKAGE_CHECK_ALREADY_RAN: '1'
+        run: corepack yarn workspace dsh-plugin-desktop dist:mac-smoke
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: acryl-macos-${{ github.ref_name }}
+          path: dsh-plugin-desktop/dist/*.dmg
+          if-no-files-found: error
+          retention-days: 7
