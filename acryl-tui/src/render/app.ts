@@ -17,6 +17,8 @@ export interface CreateAcrylRendererOptions {
   readonly generationId: string
   readonly model?: string
   readonly health?: TuiHostHealth
+  /** Optional body owned by the active terminal screen. */
+  readonly body?: string
 }
 
 export interface AcrylRenderer {
@@ -43,7 +45,8 @@ export async function createAcrylRenderer(
         model: options.model ?? 'unavailable',
         health: options.health ?? 'healthy',
       }),
-    ].join('\n'),
+      options.body ?? '',
+    ].filter(line => line !== '').join('\n'),
   }))
   let destroyed = false
   return {
