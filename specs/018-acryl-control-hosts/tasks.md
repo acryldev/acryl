@@ -31,8 +31,8 @@
 - [x] T012 Implement `acrRuntimeArchitecture` provider in `acryl-control/src/architecture/projection.ts` and `provider.ts` to pass T011
 - [x] T013 Write failing lifecycle test in `acryl-control/tests/lifecycle.spec.ts`: enable/disable/reload receipt, protected-row rejection, settlement and rollback
 - [x] T014 Implement `acrPluginLifecycle` provider in `acryl-control/src/lifecycle/controller.ts` and `provider.ts` (Loader/Fiber authority, no stale reference across await) to pass T013
-- [ ] T015 Write failing agent-control test in `acryl-control/tests/agent-control.spec.ts`: capability rejection, identity separation, cancellation, structured result
-- [ ] T016 Implement `acrAgentControl` definition in `acryl-control/src/agent/agent-control.ts` with dsh-native, codex, claude, and acp providers in `acryl-control/src/agent/providers/`
+- [x] T015 Write failing agent-control test in `acryl-control/tests/agent-control.spec.ts`: capability rejection, identity separation, cancellation, structured result
+- [x] T016 Implement `acrAgentControl` definition in `acryl-control/src/agent/agent-control.ts` with dsh-native, codex, claude, and acp providers in `acryl-control/src/agent/providers/`
 - [ ] T017 Write failing leak test in `acryl-control/tests/leak.spec.ts`: 20 mount/unmount cycles return listeners, timers, sockets, processes, and registrations to baseline
 - [ ] T018 Implement `acrControlProtocol` provider in `acryl-control/src/index.ts` (local endpoint, generation negotiation, capability set) with owned effect and connection disposal
 
