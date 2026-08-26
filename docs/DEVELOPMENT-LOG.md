@@ -26,6 +26,47 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - ACRYL control-plane foundation services completed
+
+**Commit:** [`f3e4567efeb9a4e230eae431e1e8f1a3ccf7772b`](https://github.com/acryldev/acryl/commit/f3e4567efeb9a4e230eae431e1e8f1a3ccf7772b)
+
+The `acryl-control` workspace now provides the full host-neutral control plane
+that the terminal, GUI, and Web peer hosts will consume. Each service is a
+replaceable Cordis capability with its own contract, provider, and
+lifecycle-owned resources, verified through failing-then-passing tests and
+20-cycle leak checks.
+
+Delivered in this slice (oldest to newest):
+
+- control contracts (`cace1a2`): generation-scoped `ControlEndpoint`,
+  `ControlCapability`, canonical JSON envelope with runtime validation, and
+  typed `ownership`/`operations` records.
+- runtime architecture projection (`d61a3ce`): a bounded
+  `RuntimeArchitectureSnapshot` that reads native Cordis Fiber/service/effect
+  state directly - no parallel registry - with Fiber, service, effect-depth,
+  and label limits.
+- plugin lifecycle control (`26e3727`): a host-neutral controller over
+  `ctx.loader` with an injectable mutation policy and persistence adapter;
+  enable/disable/reload receipts, protected-row rejection, settlement, and
+  persistence rollback on failure.
+- agent control service (`97d0e72`): a provider-neutral `acrAgentControl`
+  definition with capability rejection, identity separation (worker/runtime/
+  provider-session), cancellation, structured results, and truthful
+  dsh-native/codex/claude/acp capability profiles whose transports are the
+  Phase 8 vendor seam.
+- local control protocol endpoint (`f3e4567`): a Unix-socket/loopback-HTTP
+  endpoint created inside one effect, with generation negotiation, capability
+  negotiation, bounded bodies, and connection/server disposal.
+
+Primary implementation and verification:
+
+- `acryl-control/src/{contracts,ownership,architecture,lifecycle,agent,protocol}/`
+- `acryl-control/tests/*.spec.ts` (34 tests)
+- `corepack yarn workspace acryl-control check`
+- `corepack yarn check:layout`
+
+---
+
 ## 2026-08-26 - Canonical `acryl` command workspace established
 
 **Commit:** [`e12a4172ff21a36be94a29bc53b2016ba8c3f636`](https://github.com/acryldev/acryl/commit/e12a4172ff21a36be94a29bc53b2016ba8c3f636)
