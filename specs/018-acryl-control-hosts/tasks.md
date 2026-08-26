@@ -27,8 +27,8 @@
 - [x] T008 Write failing ownership test in `acryl-control/tests/ownership.spec.ts`: exclusive acquire, attach, release, and 100-way race yielding exactly one owner
 - [x] T009 Implement `acrProfileOwnership` provider in `acryl-control/src/ownership/lease-store.ts` and `lease-provider.ts` (platform-exclusive lock, recovery, release) to pass T008
 - [x] T010 Implement stale/suspect recovery in `acryl-control/src/ownership/lease-store.ts` with verification before removal
-- [ ] T011 Write failing architecture test in `acryl-control/tests/architecture.spec.ts`: bounded `RuntimeArchitectureSnapshot` projects native Fiber/service/effect state without a parallel registry
-- [ ] T012 Implement `acrRuntimeArchitecture` provider in `acryl-control/src/architecture/projection.ts` and `provider.ts` to pass T011
+- [x] T011 Write failing architecture test in `acryl-control/tests/architecture.spec.ts`: bounded `RuntimeArchitectureSnapshot` projects native Fiber/service/effect state without a parallel registry
+- [x] T012 Implement `acrRuntimeArchitecture` provider in `acryl-control/src/architecture/projection.ts` and `provider.ts` to pass T011
 - [ ] T013 Write failing lifecycle test in `acryl-control/tests/lifecycle.spec.ts`: enable/disable/reload receipt, protected-row rejection, settlement and rollback
 - [ ] T014 Implement `acrPluginLifecycle` provider in `acryl-control/src/lifecycle/controller.ts` and `provider.ts` (Loader/Fiber authority, no stale reference across await) to pass T013
 - [ ] T015 Write failing agent-control test in `acryl-control/tests/agent-control.spec.ts`: capability rejection, identity separation, cancellation, structured result

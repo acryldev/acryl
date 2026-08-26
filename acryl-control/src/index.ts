@@ -1,3 +1,5 @@
+export * from './architecture/projection.ts'
+export * from './architecture/provider.ts'
 export * from './contracts/control-protocol.ts'
 export * from './contracts/operations.ts'
 export * from './contracts/ownership.ts'
