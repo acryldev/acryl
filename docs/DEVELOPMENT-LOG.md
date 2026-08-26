@@ -26,6 +26,35 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - Lean CI and release-candidate automation established
+
+**Commit:** [`2b8636be77d0cbf649b6100adb6c3549e64881a8`](https://github.com/acryldev/acryl/commit/2b8636be77d0cbf649b6100adb6c3549e64881a8)
+
+GitHub Actions now runs one fast Ubuntu verification job for pushes and pull
+requests targeting `main`. It installs the immutable Yarn workspace, validates
+repository layout and documentation invariants, typechecks, runs the complete
+unit suite, and builds all shipped workspaces. Concurrency cancellation keeps
+superseded branch runs from wasting time.
+
+Expensive native packaging no longer runs on every product change. A separate
+Release Candidate workflow runs only for `v*` tags or explicit manual dispatch,
+verifies native packaging, and retains Windows installer/portable and unsigned
+macOS smoke artifacts for seven days. It intentionally does not publish a
+GitHub Release or require signing credentials during rapid development.
+
+Primary implementation and verification:
+
+- `.github/workflows/ci.yml`
+- `.github/workflows/release-candidate.yml`
+- `dsh-plugin-desktop/tests/package.spec.ts`
+- `go run github.com/rhysd/actionlint/cmd/actionlint@latest .github/workflows/*.yml`
+- `corepack yarn check:layout`
+- `corepack yarn typecheck`
+- `corepack yarn test`
+- `corepack yarn build`
+
+---
+
 ## 2026-08-26 - Product identity migrated from ACR to ACRYL
 
 **Commit:** [`c8082fb2284b9f66aa86820b6f644948f3247676`](https://github.com/acryldev/acryl/commit/c8082fb2284b9f66aa86820b6f644948f3247676)
