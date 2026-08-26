@@ -1,0 +1,39 @@
+{
+  "name": "acryl-tui",
+  "version": "0.1.0-dev.0",
+  "private": true,
+  "description": "Canonical ACRYL command and OpenTUI host",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "acryl": "./lib/bin.js"
+  },
+  "main": "lib/bin.js",
+  "types": "lib/types/bin.d.ts",
+  "files": [
+    "lib/**",
+    "README.md"
+  ],
+  "engines": {
+    "bun": ">=1.3.0",
+    "node": ">=26.4.0"
+  },
+  "scripts": {
+    "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "test": "vitest run",
+    "check": "yarn run build && yarn run typecheck && yarn run test",
+    "prepack": "yarn run check"
+  },
+  "dependencies": {
+    "@opentui/core": "0.5.8",
+    "acryl-control": "0.1.0-dev.0",
+    "web-tree-sitter": "0.25.10"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3",
+    "vitest": "4.1.8"
+  }
+}

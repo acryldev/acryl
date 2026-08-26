@@ -13,8 +13,8 @@
 **Purpose**: workspace scaffolding.
 
 - [x] T001 Create `acryl-control/` workspace: `package.json`, `tsconfig.json`, `cordis.patch.yml`, and a public `src/index.ts` Host entry
-- [ ] T002 [P] Create `acryl-tui/` workspace: `package.json` (Bun 1.3+ / Node 26.4+ runtime, `@opentui/core` dependency), `tsconfig.json`
-- [ ] T003 [P] Wire root `package.json` scripts for `acryl-control` and `acryl-tui` build, typecheck, and test so `corepack yarn check` includes both
+- [x] T002 [P] Create `acryl-tui/` workspace: `package.json` (Bun 1.3+ / Node 26.4+ runtime, `@opentui/core` dependency), `tsconfig.json`
+- [x] T003 [P] Wire root `package.json` scripts for `acryl-control` and `acryl-tui` build, typecheck, and test so `corepack yarn check` includes both
 
 ## Phase 2: Foundational (control-plane service definitions and providers)
 
@@ -44,7 +44,7 @@
 
 **Independent Test**: run `acryl --profile desktop`, submit a task, inspect trajectory/tools, exit, restart, resume.
 
-- [ ] T019 [US1] Write failing CLI grammar test in `acryl-tui/tests/grammar.spec.ts`: `acryl`, `acryl tui`, `--profile`, `--json`
+- [x] T019 [US1] Write failing CLI grammar test in `acryl-tui/tests/grammar.spec.ts`: `acryl`, `acryl tui`, `--profile`, `--json`
 - [ ] T020 [US1] Implement `acryl-tui/src/cli/grammar.ts` and `src/bin.ts` argv parsing to pass T019
 - [ ] T021 [US1] Implement direct-mode boot in `acryl-tui/src/host/direct.ts`: acquire lease, boot ACRYL composition, expose services
 - [ ] T022 [US1] Write failing contributions test in `acryl-tui/tests/contributions.spec.ts`: screen/command/keybinding/status registration and removal on Fiber unload

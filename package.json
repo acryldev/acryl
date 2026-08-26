@@ -12,6 +12,7 @@
     "dsh-plugin-desktop",
     "dsh-plugin-development-canvas",
     "acryl-control",
+    "acryl-tui",
     "dsh-community-fabric",
     "dsh-community-market"
   ],
@@ -62,9 +63,9 @@
     }
   },
   "scripts": {
-    "build": "yarn workspace acryl-control build && yarn workspace dsh-community-market build && yarn workspace dsh-plugin-development-canvas build && yarn workspace dsh-plugin-desktop build",
-    "typecheck": "yarn workspace acryl-control typecheck && yarn workspace dsh-plugin-development-canvas typecheck && yarn workspace dsh-plugin-desktop typecheck && yarn workspace dsh-community-market typecheck",
-    "test": "yarn workspace acryl-control test && yarn workspace dsh-plugin-development-canvas test && yarn workspace dsh-plugin-desktop test && yarn workspace dsh-community-market test",
+    "build": "yarn workspace acryl-control build && yarn workspace acryl-tui build && yarn workspace dsh-community-market build && yarn workspace dsh-plugin-development-canvas build && yarn workspace dsh-plugin-desktop build",
+    "typecheck": "yarn workspace acryl-control typecheck && yarn workspace acryl-tui typecheck && yarn workspace dsh-plugin-development-canvas typecheck && yarn workspace dsh-plugin-desktop typecheck && yarn workspace dsh-community-market typecheck",
+    "test": "yarn workspace acryl-control test && yarn workspace acryl-tui test && yarn workspace dsh-plugin-development-canvas test && yarn workspace dsh-plugin-desktop test && yarn workspace dsh-community-market test",
     "verify": "yarn typecheck && yarn test && node --test scripts/dev-local.test.mjs",
     "dev:local": "node scripts/dev-local.mjs",
     "start:local": "node scripts/dev-local.mjs --skip-build",
@@ -75,7 +76,7 @@
     "test:architecture-gates": "node --test scripts/market-dependency-direction.test.mjs",
     "check:architecture": "yarn test:architecture-gates && node scripts/verify-market-dependency-direction.mjs",
     "check:layout": "yarn check:bilingual-docs && yarn check:architecture && node scripts/verify-layout.mjs",
-    "check": "yarn check:layout && yarn workspace acryl-control check && yarn workspace dsh-community-fabric check && yarn workspace dsh-community-market check && yarn workspace dsh-plugin-development-canvas check && yarn workspace dsh-plugin-desktop check",
+    "check": "yarn check:layout && yarn workspace acryl-control check && yarn workspace acryl-tui check && yarn workspace dsh-community-fabric check && yarn workspace dsh-community-market check && yarn workspace dsh-plugin-development-canvas check && yarn workspace dsh-plugin-desktop check",
     "dev": "node scripts/dev-local.mjs",
     "dev:shared": "yarn workspace dsh-community-market build && yarn workspace dsh-plugin-desktop dev",
     "start": "yarn workspace dsh-plugin-desktop start",

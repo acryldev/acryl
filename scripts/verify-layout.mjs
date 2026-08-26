@@ -16,6 +16,7 @@ const upstream = readJson('upstream.json')
 const plugin = readJson('dsh-plugin-desktop/package.json')
 const canvas = readJson('dsh-plugin-development-canvas/package.json')
 const control = readJson('acryl-control/package.json')
+const tui = readJson('acryl-tui/package.json')
 const fabric = readJson('dsh-community-fabric/package.json')
 const market = readJson('dsh-community-market/package.json')
 const upstreamPackage = readJson('deepseek-harness/package.json')
@@ -27,15 +28,17 @@ if (JSON.stringify(workspace.workspaces) !== JSON.stringify([
   'dsh-plugin-desktop',
   'dsh-plugin-development-canvas',
   'acryl-control',
+  'acryl-tui',
   'dsh-community-fabric',
   'dsh-community-market',
 ])) {
-  fail('the root Yarn workspace must contain the desktop, development-canvas, ACRYL control, community-fabric, and community-market packages')
+  fail('the root Yarn workspace must contain the desktop, development-canvas, ACRYL control, ACRYL TUI, community-fabric, and community-market packages')
 }
 for (const [name, manifest] of [
   ['dsh-plugin-desktop', plugin],
   ['dsh-plugin-development-canvas', canvas],
   ['acryl-control', control],
+  ['acryl-tui', tui],
   ['dsh-community-fabric', fabric],
   ['dsh-community-market', market],
 ]) {
@@ -43,6 +46,7 @@ for (const [name, manifest] of [
 }
 if (canvas.name !== 'dsh-plugin-development-canvas') fail('the Canvas workspace must own dsh-plugin-development-canvas')
 if (control.name !== 'acryl-control') fail('the control workspace must own acryl-control')
+if (tui.name !== 'acryl-tui') fail('the TUI workspace must own acryl-tui')
 if (fabric.name !== 'dsh-community-fabric') fail('the Fabric workspace must own dsh-community-fabric')
 if (market.name !== 'dsh-community-market') fail('the market workspace must own dsh-community-market')
 const claudePath = resolve(root, 'CLAUDE.md')
@@ -64,6 +68,8 @@ for (const legacyFile of [
   'dsh-plugin-development-canvas/pnpm-workspace.yaml',
   'acryl-control/pnpm-lock.yaml',
   'acryl-control/pnpm-workspace.yaml',
+  'acryl-tui/pnpm-lock.yaml',
+  'acryl-tui/pnpm-workspace.yaml',
   'dsh-community-fabric/pnpm-lock.yaml',
   'dsh-community-fabric/pnpm-workspace.yaml',
   'dsh-community-market/pnpm-lock.yaml',
@@ -86,6 +92,7 @@ for (const [owner, manifest] of [
   ['desktop', plugin],
   ['canvas', canvas],
   ['control', control],
+  ['tui', tui],
   ['fabric', fabric],
   ['market', market],
 ]) {
