@@ -12,7 +12,7 @@
 
 **Purpose**: workspace scaffolding.
 
-- [ ] T001 Create `acryl-control/` workspace: `package.json`, `tsconfig.json`, `cordis.patch.yml`, and a public `src/index.ts` Host entry
+- [x] T001 Create `acryl-control/` workspace: `package.json`, `tsconfig.json`, `cordis.patch.yml`, and a public `src/index.ts` Host entry
 - [ ] T002 [P] Create `acryl-tui/` workspace: `package.json` (Bun 1.3+ / Node 26.4+ runtime, `@opentui/core` dependency), `tsconfig.json`
 - [ ] T003 [P] Wire root `package.json` scripts for `acryl-control` and `acryl-tui` build, typecheck, and test so `corepack yarn check` includes both
 
@@ -24,9 +24,9 @@
 - [ ] T005 [P] Define ownership types in `acryl-control/src/contracts/ownership.ts`: `HostKind`, `HostInstance`, `ProfileOwnershipLease`, states, and invariants
 - [ ] T006 [P] Define operation types in `acryl-control/src/contracts/operations.ts`: `ControlOperation`, receipt, `restartClass`, and exit classes
 - [ ] T007 [P] Declare typed ACRYL events in `acryl-control/src/events.ts` (`acryl/host-status`, `acryl/ownership-changed`, `acryl/operation-settled`, `acryl/agent-runtime-status`)
-- [ ] T008 Write failing ownership test in `acryl-control/tests/ownership.spec.ts`: exclusive acquire, attach, release, and 100-way race yielding exactly one owner
+- [x] T008 Write failing ownership test in `acryl-control/tests/ownership.spec.ts`: exclusive acquire, attach, release, and 100-way race yielding exactly one owner
 - [ ] T009 Implement `acrProfileOwnership` provider in `acryl-control/src/ownership/lease-store.ts` and `lease-provider.ts` (platform-exclusive lock, heartbeat, release) to pass T008
-- [ ] T010 Implement stale/suspect recovery in `acryl-control/src/ownership/recovery.ts` with verification before removal
+- [x] T010 Implement stale/suspect recovery in `acryl-control/src/ownership/lease-store.ts` with verification before removal
 - [ ] T011 Write failing architecture test in `acryl-control/tests/architecture.spec.ts`: bounded `RuntimeArchitectureSnapshot` projects native Fiber/service/effect state without a parallel registry
 - [ ] T012 Implement `acrRuntimeArchitecture` provider in `acryl-control/src/architecture/projection.ts` and `provider.ts` to pass T011
 - [ ] T013 Write failing lifecycle test in `acryl-control/tests/lifecycle.spec.ts`: enable/disable/reload receipt, protected-row rejection, settlement and rollback

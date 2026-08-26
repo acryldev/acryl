@@ -56,7 +56,14 @@ export interface ProfileLeaseStoreOptions {
   readonly stateDirectory: string
   readonly now?: () => Date
   readonly createNonce?: () => string
+  readonly isProcessAlive?: (pid: number) => boolean | Promise<boolean>
+  readonly isEndpointReachable?: (endpoint: ControlEndpoint) => Promise<boolean>
 }
+
+export type StaleLeaseRecovery =
+  | { readonly kind: 'unowned' }
+  | { readonly kind: 'active'; readonly lease: ProfileOwnershipLease }
+  | { readonly kind: 'recovered'; readonly lease: ProfileOwnershipLease }
 
 function leaseDirectoryName(profileKey: string): string {
   return `${createHash('sha256').update(profileKey).digest('hex')}.lease`
@@ -131,11 +138,23 @@ export class ProfileLeaseStore {
   readonly #stateDirectory: string
   readonly #now: () => Date
   readonly #createNonce: () => string
+  readonly #isProcessAlive: (pid: number) => boolean | Promise<boolean>
+  readonly #isEndpointReachable: (endpoint: ControlEndpoint) => Promise<boolean>
 
   constructor(options: ProfileLeaseStoreOptions) {
     this.#stateDirectory = options.stateDirectory
     this.#now = options.now ?? (() => new Date())
     this.#createNonce = options.createNonce ?? randomUUID
+    this.#isProcessAlive = options.isProcessAlive ?? ((pid) => {
+      try {
+        process.kill(pid, 0)
+        return true
+      } catch (cause) {
+        if (cause instanceof Error && 'code' in cause && cause.code === 'ESRCH') return false
+        return true
+      }
+    })
+    this.#isEndpointReachable = options.isEndpointReachable ?? (async () => true)
   }
 
   async acquire(request: ProfileLeaseRequest): Promise<ProfileLeaseAcquisition> {
@@ -176,6 +195,36 @@ export class ProfileLeaseStore {
       if (active.profileKey !== request.profileKey) throw new Error('profile lease key does not match')
       return { kind: 'attached', lease: active }
     }
+  }
+
+  async recoverStale(profileKey: string): Promise<StaleLeaseRecovery> {
+    const directory = join(this.#stateDirectory, leaseDirectoryName(profileKey))
+    let lease: ProfileOwnershipLease
+    try {
+      lease = parseLease(await readFile(join(directory, 'lease.json'), 'utf8'))
+    } catch (cause) {
+      if (cause instanceof Error && 'code' in cause && cause.code === 'ENOENT') {
+        return { kind: 'unowned' }
+      }
+      throw cause
+    }
+    const [processAlive, endpointReachable] = await Promise.all([
+      this.#isProcessAlive(lease.pid),
+      this.#isEndpointReachable(lease.endpoint),
+    ])
+    if (processAlive || endpointReachable) return { kind: 'active', lease }
+
+    const current = parseLease(await readFile(join(directory, 'lease.json'), 'utf8'))
+    if (
+      current.ownerHostId !== lease.ownerHostId
+      || current.generationId !== lease.generationId
+      || current.nonce !== lease.nonce
+    ) {
+      return { kind: 'active', lease: current }
+    }
+    await unlink(join(directory, 'lease.json'))
+    await rmdir(directory)
+    return { kind: 'recovered', lease }
   }
 
   async release(lease: ProfileOwnershipLease): Promise<void> {

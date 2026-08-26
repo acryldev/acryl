@@ -75,4 +75,43 @@ describe('ProfileLeaseStore', () => {
     const replacement = await store.acquire(request(2))
     expect(replacement.kind).toBe('owned')
   })
+
+  it('recovers a lease only after both process and endpoint are gone', async () => {
+    const stateDirectory = await temporaryDirectory()
+    const ownerStore = new ProfileLeaseStore({ stateDirectory })
+    const owner = await ownerStore.acquire(request(1))
+    expect(owner.kind).toBe('owned')
+    if (owner.kind !== 'owned') throw new Error('expected owner')
+
+    const processAlive = new ProfileLeaseStore({
+      stateDirectory,
+      isProcessAlive: () => true,
+      isEndpointReachable: async () => false,
+    })
+    await expect(processAlive.recoverStale('desktop')).resolves.toEqual({
+      kind: 'active',
+      lease: owner.lease,
+    })
+
+    const endpointAlive = new ProfileLeaseStore({
+      stateDirectory,
+      isProcessAlive: () => false,
+      isEndpointReachable: async () => true,
+    })
+    await expect(endpointAlive.recoverStale('desktop')).resolves.toEqual({
+      kind: 'active',
+      lease: owner.lease,
+    })
+
+    const stale = new ProfileLeaseStore({
+      stateDirectory,
+      isProcessAlive: () => false,
+      isEndpointReachable: async () => false,
+    })
+    await expect(stale.recoverStale('desktop')).resolves.toEqual({
+      kind: 'recovered',
+      lease: owner.lease,
+    })
+    await expect(stale.acquire(request(2))).resolves.toMatchObject({ kind: 'owned' })
+  })
 })
