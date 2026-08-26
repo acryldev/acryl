@@ -6940,6 +6940,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "acryl-tui@workspace:acryl-tui"
   dependencies:
+    "@deepseek-ai/cordis": "npm:4.0.1"
     "@opentui/core": "npm:0.5.8"
     "@types/node": "npm:^22.20.0"
     acryl-control: "npm:0.1.0-dev.0"
@@ -6947,6 +6948,8 @@ __metadata:
     typescript: "npm:6.0.3"
     vitest: "npm:4.1.8"
     web-tree-sitter: "npm:0.25.10"
+  peerDependencies:
+    "@deepseek-ai/cordis": 4.0.1
   bin:
     acryl: ./lib/bin.js
   languageName: unknown

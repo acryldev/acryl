@@ -8,8 +8,15 @@
   "bin": {
     "acryl": "./lib/bin.js"
   },
-  "main": "lib/bin.js",
-  "types": "lib/types/bin.d.ts",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "lib/**",
     "README.md"
@@ -25,12 +32,16 @@
     "check": "yarn run build && yarn run typecheck && yarn run test",
     "prepack": "yarn run check"
   },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.1"
+  },
   "dependencies": {
     "@opentui/core": "0.5.8",
     "acryl-control": "0.1.0-dev.0",
     "web-tree-sitter": "0.25.10"
   },
   "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.1",
     "@types/node": "^22.20.0",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",

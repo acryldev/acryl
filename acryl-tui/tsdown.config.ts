@@ -1,15 +1,27 @@
 import { defineConfig } from 'tsdown'
 
-export default defineConfig({
-  name: 'acryl-tui',
-  entry: { bin: 'src/bin.ts' },
+const shared = {
   outDir: 'lib',
-  format: 'esm',
-  platform: 'node',
+  format: 'esm' as const,
+  platform: 'node' as const,
   target: 'es2024',
   fixedExtension: false,
   dts: false,
-  clean: true,
   sourcemap: true,
-  banner: '#!/usr/bin/env bun',
-})
+}
+
+export default defineConfig([
+  {
+    ...shared,
+    name: 'acryl-tui/bin',
+    entry: { bin: 'src/bin.ts' },
+    clean: true,
+    banner: '#!/usr/bin/env bun',
+  },
+  {
+    ...shared,
+    name: 'acryl-tui',
+    entry: { index: 'src/index.ts' },
+    clean: false,
+  },
+])
