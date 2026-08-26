@@ -46,7 +46,7 @@
 
 - [x] T019 [US1] Write failing CLI grammar test in `acryl-tui/tests/grammar.spec.ts`: `acryl`, `acryl tui`, `--profile`, `--json`
 - [x] T020 [US1] Implement `acryl-tui/src/cli/grammar.ts` and `src/bin.ts` argv parsing to pass T019
-- [ ] T021 [US1] Implement direct-mode boot in `acryl-tui/src/host/direct.ts`: acquire lease, boot ACRYL composition, expose services
+- [x] T021 [US1] Implement direct-mode boot in `acryl-tui/src/host/direct.ts`: acquire lease, boot ACRYL composition, expose services
 - [x] T022 [US1] Write failing contributions test in `acryl-tui/tests/contributions.spec.ts`: screen/command/keybinding/status registration and removal on Fiber unload
 - [x] T023 [US1] Implement `TuiContribution` registry in `acryl-tui/src/render/contributions.ts` to pass T022
 - [x] T024 [US1] Implement OpenTUI renderer lifecycle in `acryl-tui/src/render/app.ts` (createCliRenderer, root renderable, resize/input/alternate-screen, disposal)
