@@ -1,2 +1,6 @@
+export * from './contracts/control-protocol.ts'
+export * from './contracts/operations.ts'
+export * from './contracts/ownership.ts'
+export * from './events.ts'
 export * from './ownership/lease-store.ts'
 export * from './ownership/lease-provider.ts'

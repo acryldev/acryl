@@ -2,11 +2,11 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import {
-  ProfileLeaseStore,
-  type HostInstance,
-  type ProfileLeaseRequest,
-} from '../src/ownership/lease-store.ts'
+import type {
+  HostInstance,
+  ProfileLeaseRequest,
+} from '../src/contracts/ownership.ts'
+import { ProfileLeaseStore } from '../src/ownership/lease-store.ts'
 
 const temporaryDirectories: string[] = []
 

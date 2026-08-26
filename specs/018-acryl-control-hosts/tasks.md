@@ -20,10 +20,10 @@
 
 **Purpose**: host-neutral ACRYL control services consumed by all host surfaces. Blocks every user story.
 
-- [ ] T004 Define control protocol types in `acryl-control/src/contracts/control-protocol.ts`: generation-scoped `ControlEndpoint`, `ControlCapability`, and canonical JSON envelope
-- [ ] T005 [P] Define ownership types in `acryl-control/src/contracts/ownership.ts`: `HostKind`, `HostInstance`, `ProfileOwnershipLease`, states, and invariants
-- [ ] T006 [P] Define operation types in `acryl-control/src/contracts/operations.ts`: `ControlOperation`, receipt, `restartClass`, and exit classes
-- [ ] T007 [P] Declare typed ACRYL events in `acryl-control/src/events.ts` (`acryl/host-status`, `acryl/ownership-changed`, `acryl/operation-settled`, `acryl/agent-runtime-status`)
+- [x] T004 Define control protocol types in `acryl-control/src/contracts/control-protocol.ts`: generation-scoped `ControlEndpoint`, `ControlCapability`, and canonical JSON envelope
+- [x] T005 [P] Define ownership types in `acryl-control/src/contracts/ownership.ts`: `HostKind`, `HostInstance`, `ProfileOwnershipLease`, states, and invariants
+- [x] T006 [P] Define operation types in `acryl-control/src/contracts/operations.ts`: `ControlOperation`, receipt, `restartClass`, and exit classes
+- [x] T007 [P] Declare typed ACRYL events in `acryl-control/src/events.ts` (`acryl/host-status`, `acryl/ownership-changed`, `acryl/operation-settled`, `acryl/agent-runtime-status`)
 - [x] T008 Write failing ownership test in `acryl-control/tests/ownership.spec.ts`: exclusive acquire, attach, release, and 100-way race yielding exactly one owner
 - [x] T009 Implement `acrProfileOwnership` provider in `acryl-control/src/ownership/lease-store.ts` and `lease-provider.ts` (platform-exclusive lock, recovery, release) to pass T008
 - [x] T010 Implement stale/suspect recovery in `acryl-control/src/ownership/lease-store.ts` with verification before removal

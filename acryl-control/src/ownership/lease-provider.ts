@@ -1,10 +1,12 @@
 import { type Context, Service } from '@deepseek-ai/cordis'
+import type {
+  ProfileLeaseAcquisition,
+  ProfileLeaseRequest,
+  StaleLeaseRecovery,
+} from '../contracts/ownership.ts'
 import {
   ProfileLeaseStore,
-  type ProfileLeaseAcquisition,
-  type ProfileLeaseRequest,
   type ProfileLeaseStoreOptions,
-  type StaleLeaseRecovery,
 } from './lease-store.ts'
 
 export interface AcrProfileOwnership {
