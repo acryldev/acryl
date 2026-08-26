@@ -6927,6 +6927,7 @@ __metadata:
   resolution: "acryl-control@workspace:acryl-control"
   dependencies:
     "@deepseek-ai/cordis": "npm:4.0.1"
+    "@deepseek-ai/cordis-plugin-loader": "npm:1.0.2"
     "@types/node": "npm:^22.20.0"
     tsdown: "npm:0.22.2"
     typescript: "npm:6.0.3"
