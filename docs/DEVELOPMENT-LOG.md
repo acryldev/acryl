@@ -26,6 +26,24 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - ACRYL terminal composer is interactive
+
+**Commit:** [`29a2882d01f4724649ef604a0c4dcbb88c561d64`](https://github.com/acryldev/acryl/commit/29a2882d01f4724649ef604a0c4dcbb88c561d64)
+
+The initial direct TUI was static because it mounted only a `TextRenderable`.
+It now mounts and focuses OpenTUI's `InputRenderable`, so typing and a visible
+cursor work immediately. Input's actual submission seam is its `enter` event,
+not the inherited textarea `onSubmit` option. Until durable Harness sessions
+are composed, Enter empties the composer and states that the message was not
+sent instead of fabricating agent activity.
+
+Verification covers typing and Enter submission with the OpenTUI test renderer:
+
+- `acryl-tui/tests-bun/renderer.test.ts`
+- `corepack yarn workspace acryl-tui check`
+
+---
+
 ## 2026-08-26 - ACRYL direct TUI CLI is executable
 
 **Commit:** [`4b373693a76190837a43d4bfd609fd74ff2f2470`](https://github.com/acryldev/acryl/commit/4b373693a76190837a43d4bfd609fd74ff2f2470)
