@@ -1,4 +1,5 @@
 import {
+  InputRenderable,
   TextRenderable,
   createCliRenderer,
   type CliRenderer,
@@ -34,20 +35,28 @@ export async function createAcrylRenderer(
     clearOnShutdown: true,
     screenMode: 'alternate-screen',
   })
-  renderer.root.add(new TextRenderable(renderer, {
-    content: [
-      'ACRYL',
-      formatStatusRegion({
-        mode: options.mode,
-        ownerKind: options.ownerKind,
-        profile: options.profile,
-        generationId: options.generationId,
-        model: options.model ?? 'unavailable',
-        health: options.health ?? 'healthy',
-      }),
-      options.body ?? '',
-    ].filter(line => line !== '').join('\n'),
-  }))
+  const header = [
+    'ACRYL',
+    formatStatusRegion({
+      mode: options.mode,
+      ownerKind: options.ownerKind,
+      profile: options.profile,
+      generationId: options.generationId,
+      model: options.model ?? 'unavailable',
+      health: options.health ?? 'healthy',
+    }),
+    options.body ?? '',
+  ].filter(line => line !== '').join('\n')
+  const status = new TextRenderable(renderer, { content: header })
+  const composer = new InputRenderable(renderer, { placeholder: 'Message ACRYL' })
+  composer.on('enter', () => {
+    if (composer.value.trim() === '') return
+    status.content = `${header}\n\nMessage not sent: Harness session runtime is not connected.`
+    composer.value = ''
+  })
+  renderer.root.add(status)
+  renderer.root.add(composer)
+  composer.focus()
   let destroyed = false
   return {
     renderer,
