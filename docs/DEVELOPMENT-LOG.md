@@ -26,6 +26,33 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - ACRYL profile-ownership foundation added
+
+**Commit:** [`0b70845da4ed4ae721b2d23c20e25485fdc62eb5`](https://github.com/acryldev/acryl/commit/0b70845da4ed4ae721b2d23c20e25485fdc62eb5)
+
+The first implementation slice of the standalone-agent milestone adds the
+host-neutral `acryl-control` workspace and an atomic profile lease store. One
+terminal, GUI, or Web generation can acquire a profile; simultaneous contenders
+observe the complete winning lease and become attach candidates instead of
+starting competing writable runtimes. Release validates the owner generation
+and unpredictable nonce before withdrawing the lease.
+
+The lock is published by atomically renaming a fully written private candidate
+directory, so readers never observe a half-written record. Profile names are
+hashed for state-directory isolation, records and directories use private file
+modes, and the package remains on the existing DSH Node runtime line. A
+100-contender race test proves exactly one winner, and focused build,
+typecheck, test, and repository layout gates pass.
+
+Primary implementation and verification:
+
+- `acryl-control/src/ownership/lease-store.ts`
+- `acryl-control/tests/ownership.spec.ts`
+- `corepack yarn workspace acryl-control check`
+- `corepack yarn check:layout`
+
+---
+
 ## 2026-08-26 - Standalone ACRYL agent and peer-host architecture approved
 
 **Commit:** [`8f9908786f1cd20c2b8df72b3c40e9fa97c14af4`](https://github.com/acryldev/acryl/commit/8f9908786f1cd20c2b8df72b3c40e9fa97c14af4)
