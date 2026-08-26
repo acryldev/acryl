@@ -1,4 +1,4 @@
-# ACR Development Log
+# ACRYL Development Log
 
 This human-readable log records important project evolution. It explains what
 changed, why it matters, where the implementation lives, and which Git commit
@@ -23,6 +23,35 @@ Recommended workflow:
 2. Commit that change on `main`.
 3. Add its canonical commit hash and explanation here.
 4. Commit the log update as a separate documentation checkpoint.
+
+---
+
+## 2026-08-26 - Product identity migrated from ACR to ACRYL
+
+**Commit:** [`c8082fb2284b9f66aa86820b6f644948f3247676`](https://github.com/acryldev/acryl/commit/c8082fb2284b9f66aa86820b6f644948f3247676)
+
+The independent product is now consistently named **ACRYL** across application
+chrome, native menus, recovery surfaces, settings, terminal guidance, update
+artifacts, package metadata, repository documentation, and specifications. The
+application identity is `dev.acryl.desktop`, development state is isolated under
+`.dsh-acryl` and `ACRYL Development`, and release artifact names use ACRYL.
+Technical `@deepseek-ai/*`, DSH protocol, and pinned upstream identities remain
+unchanged where they are dependency contracts rather than product branding.
+
+The supplied transparent black and white ACRYL marks now drive light/dark
+sidebar branding. Deterministic generation produces the application, macOS, and
+tray assets from those sources, with integrity and packaging assertions in the
+Desktop test suite. Repository paths and internal ACRYL-owned examples were
+renamed alongside their references.
+
+Primary implementation and verification:
+
+- `acryl-logo.png`, `acryl-logo-white.png`
+- `dsh-plugin-desktop/scripts/generate-acryl-brand.mjs`
+- `dsh-plugin-desktop/src/client/acryl-brand.tsx`
+- `dsh-plugin-desktop/tests/client-acryl-brand.spec.ts`
+- `dsh-plugin-desktop/tests/package.spec.ts`
+- `corepack yarn check`
 
 ---
 
@@ -71,7 +100,7 @@ Development Canvas is the first mutable entry and exposes Enable, Disable, and
 Reload. Internal, nested, generated, and control-plane rows remain visible but
 protected until they have stable persistence identities and verified recovery
 paths. The Desktop Host also registers `/reload [loader-entry-id]`; without an
-argument it reloads every mounted managed ACR plugin and requests an orderly
+argument it reloads every mounted managed ACRYL plugin and requests an orderly
 Desktop restart.
 
 Primary implementation and verification:
@@ -163,16 +192,16 @@ Providers. Canvas and orchestration are Consumers and must not import concrete
 providers. Composition uses stable Loader rows and service dependencies rather
 than YAML order.
 
-The contract also separates Canvas tab, ACR worker, runtime, PTY, and opaque
+The contract also separates Canvas tab, ACRYL worker, runtime, PTY, and opaque
 provider-session identities; requires truthful capability negotiation; keeps
 raw terminal text out of semantic conversation history; and compiles handoffs
-from canonical ACR room state. All process, connection, route, listener, timer,
+from canonical ACRYL room state. All process, connection, route, listener, timer,
 and adapter resources must be owned by Cordis effects and reach quiescence on
 fiber disposal or replacement.
 
 Primary design:
 
-- `docs/acr/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md`
+- `docs/acryl/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md`
 - `AGENTS.md`
 
 ## 2026-08-14 - Development Canvas becomes an independent Cordis capability
@@ -247,18 +276,18 @@ embedding cannot render there.
 
 ---
 
-## 2026-08-13 - DeepSeek Harness and Cordis adopted as the ACR substrate
+## 2026-08-13 - DeepSeek Harness and Cordis adopted as the ACRYL substrate
 
 **Commit:** [`9a3ce7eb0793ffad8755db76071d6e4a291fe742`](https://github.com/AgentContextRelay/acr/commit/9a3ce7eb0793ffad8755db76071d6e4a291fe742)
 
-ACR adopted an unmodified, pinned DeepSeek Harness checkout as its runtime
+ACRYL adopted an unmodified, pinned DeepSeek Harness checkout as its runtime
 substrate and chose Cordis as the composition and lifecycle kernel. The outer
 repository became an isolated Yarn workspace containing the Desktop package,
 community interoperability work, community market work, specifications, and
 agent workflows. The upstream `deepseek-harness/` checkout remains a read-only
 Git submodule with its own pnpm workspace.
 
-The architectural direction established here is that ACR owns persistent
+The architectural direction established here is that ACRYL owns persistent
 project continuity while agent sessions are replaceable workers. Capabilities
 should be expressed as independently composable plugins and providers with
 explicit dependencies and reversible effects.
@@ -280,16 +309,16 @@ Primary locations:
 The project evaluated Cordis spatiotemporal composability and DeepSeek Harness
 as foundations for an agent-agnostic Agentic Development Environment. The work
 captured the lifecycle model, service injection, reversible effects, event
-composition, capability replacement, and the boundary between persistent ACR
+composition, capability replacement, and the boundary between persistent ACRYL
 state and disposable coding-agent sessions.
 
-This research produced the initial ACR orientation, Cordis specification,
-architecture study, composability-paper notes, and ACR versus DSH gap analysis.
+This research produced the initial ACRYL orientation, Cordis specification,
+architecture study, composability-paper notes, and ACRYL versus DSH gap analysis.
 It established the evidence used by the later substrate-adoption decision.
 
 Primary locations:
 
-- `docs/onboarding/orientation_spec_acr.md`
+- `docs/onboarding/orientation_spec_acryl.md`
 - `docs/cordis/cordis_spec.md`
 - `docs/cordis/`
-- `docs/acr/ACR_DSH_GAP_ANALYSIS.md`
+- `docs/acryl/ACRYL_DSH_GAP_ANALYSIS.md`
