@@ -26,6 +26,26 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - Durable ACRYL agent-workspace screen added
+
+**Commit:** [`fb6a74232089ce8c22b0f501620f366904362f06`](https://github.com/acryldev/acryl/commit/fb6a74232089ce8c22b0f501620f366904362f06)
+
+The terminal workspace now has a real screen projection for the canonical
+agent-session experience: durable session selection with new/resume controls,
+composer state, transcript blocks, tool-call cards, approval prompts, and job
+cards. The screen accepts only a read-only durable projection boundary and
+explicitly excludes raw PTY bytes and scrollback. Harness wiring is deferred to
+the later agent-integration task, where `ctx.sessions` and trajectory services
+become the source for this projection rather than a second in-memory history.
+
+Primary implementation and verification:
+
+- `acryl-tui/src/render/screens/agent-workspace.ts`
+- `acryl-tui/tests/agent-workspace.spec.ts`
+- `corepack yarn workspace acryl-tui check`
+
+---
+
 ## 2026-08-26 - ACRYL TUI status region added
 
 **Commit:** [`0d967f8910cb4741c2e12a8c8b1f3e731a2fc671`](https://github.com/acryldev/acryl/commit/0d967f8910cb4741c2e12a8c8b1f3e731a2fc671)
