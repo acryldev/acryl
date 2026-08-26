@@ -26,6 +26,32 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - Direct ACRYL control-host boot established
+
+**Commit:** [`e878d065795a147bef11a9a388435e82f3b6623d`](https://github.com/acryldev/acryl/commit/e878d065795a147bef11a9a388435e82f3b6623d)
+
+The terminal host now has a direct-mode composition boundary in
+`acryl-tui/src/host/direct.ts`. It creates a single Cordis context, acquires
+an exclusive profile lease before starting a writable runtime, and fails closed
+with `DirectHostAlreadyOwnedError` when another host owns that profile. The
+composition exposes profile ownership, native runtime architecture inspection,
+agent control, and a generation-scoped local control endpoint. Disposal runs
+in reverse activation order, closing the endpoint and releasing the lease.
+
+`acryl-control` now re-exports the shared Cordis runtime types used by this
+consumer composition. This prevents the workspace-local Yarn dependency copies
+from splitting the TypeScript Cordis identities of the host context and the
+control-service classes.
+
+Primary implementation and verification:
+
+- `acryl-tui/src/host/direct.ts`
+- `acryl-tui/tests/direct.spec.ts`
+- `corepack yarn workspace acryl-control check`
+- `corepack yarn workspace acryl-tui check`
+
+---
+
 ## 2026-08-26 - ACRYL control-plane foundation services completed
 
 **Commit:** [`f3e4567efeb9a4e230eae431e1e8f1a3ccf7772b`](https://github.com/acryldev/acryl/commit/f3e4567efeb9a4e230eae431e1e8f1a3ccf7772b)
