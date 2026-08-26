@@ -189,6 +189,27 @@ Optional (`ctx.get()`):
 
 For each service: real Loader/export activation, not hand-built plugin objects; PENDING with missing provider; provider appears and disappears; replacement with no stale references; disposal with no leaked timers, sockets, listeners, processes, or registrations; repeated mount/unmount cycles equal baseline. Control protocol tests cover origin/auth rejection, malformed/oversized bodies, unknown capabilities, and generation mismatch. Agent adapters test capability rejection, cancellation, identity separation, and structured-result acceptance. TUI tests cover contribution registration/removal, renderer lifecycle, and deterministic command output.
 
+### 7. Direct Harness session bridge
+
+`acryl` prepares a normal DSH profile whose default bundle is
+`@deepseek-ai/dsh-base`, then boots its Loader tree in the same Cordis root
+that owns the ACRYL lease and control services. The profile's `cordis.yml` is
+the standard empty patch root: bundle and user patches remain the configuration
+source of truth. ACRYL must not create a second root Context or duplicate the
+session log.
+
+A DSH-native ACRYL provider owns every `AgentHandle` it creates or resumes
+through `ctx.agents`. It maps the shared agent/session id to the ACRYL worker
+binding, submits identified user messages through the agent inbox, and derives
+TUI transcript, tool, approval, and job cards from the durable session stream
+and native services. It does not infer semantic history from terminal bytes.
+Its single owning effect disposes active handles in order, allowing the agent
+loop to flush final session events before live registry removal.
+
+The TUI composer dispatches only to this provider. When no model route is
+configured by the selected DSH profile, it displays the reported runtime error
+and preserves the durable session history rather than fabricating a reply.
+
 ## Delivery sequence
 
 1. `acryl-control` service definitions and profile ownership lease (direct mode identity).
