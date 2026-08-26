@@ -26,6 +26,28 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - ACRYL direct TUI CLI is executable
+
+**Commit:** [`4b373693a76190837a43d4bfd609fd74ff2f2470`](https://github.com/acryldev/acryl/commit/4b373693a76190837a43d4bfd609fd74ff2f2470)
+
+`acryl-tui/lib/bin.js` is now a real Bun executable rather than an inert
+module export. `acryl` and `acryl tui` acquire the direct profile lease, start
+the direct control host, open OpenTUI, and release the host when the renderer
+closes. `acryl --json` is a short-lived scriptable ownership/status probe. The
+current interactive surface explicitly reports that the Harness session runtime
+is not yet connected, rather than fabricating a session or replaying terminal
+scrollback.
+
+Primary implementation and verification:
+
+- `acryl-tui/src/bin.ts`
+- `acryl-tui/src/cli/run.ts`
+- `acryl-tui/tests/cli-run.spec.ts`
+- `corepack yarn workspace acryl-tui check`
+- `./acryl-tui/lib/bin.js --json`
+
+---
+
 ## 2026-08-26 - Durable ACRYL agent-workspace screen added
 
 **Commit:** [`fb6a74232089ce8c22b0f501620f366904362f06`](https://github.com/acryldev/acryl/commit/fb6a74232089ce8c22b0f501620f366904362f06)
