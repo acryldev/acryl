@@ -25,7 +25,7 @@
 - [ ] T006 [P] Define operation types in `acryl-control/src/contracts/operations.ts`: `ControlOperation`, receipt, `restartClass`, and exit classes
 - [ ] T007 [P] Declare typed ACRYL events in `acryl-control/src/events.ts` (`acryl/host-status`, `acryl/ownership-changed`, `acryl/operation-settled`, `acryl/agent-runtime-status`)
 - [x] T008 Write failing ownership test in `acryl-control/tests/ownership.spec.ts`: exclusive acquire, attach, release, and 100-way race yielding exactly one owner
-- [ ] T009 Implement `acrProfileOwnership` provider in `acryl-control/src/ownership/lease-store.ts` and `lease-provider.ts` (platform-exclusive lock, heartbeat, release) to pass T008
+- [x] T009 Implement `acrProfileOwnership` provider in `acryl-control/src/ownership/lease-store.ts` and `lease-provider.ts` (platform-exclusive lock, recovery, release) to pass T008
 - [x] T010 Implement stale/suspect recovery in `acryl-control/src/ownership/lease-store.ts` with verification before removal
 - [ ] T011 Write failing architecture test in `acryl-control/tests/architecture.spec.ts`: bounded `RuntimeArchitectureSnapshot` projects native Fiber/service/effect state without a parallel registry
 - [ ] T012 Implement `acrRuntimeArchitecture` provider in `acryl-control/src/architecture/projection.ts` and `provider.ts` to pass T011
