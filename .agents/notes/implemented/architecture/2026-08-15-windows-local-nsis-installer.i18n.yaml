@@ -1,0 +1,4 @@
+# Bilingual-pair consistency record: the git blob hash of each side as of the last
+# confirmed-consistent state. Both languages carry equal authority.
+2026-08-15-windows-local-nsis-installer.md: e5f9f6a38225dff26445998765928765ab615c82
+2026-08-15-windows-local-nsis-installer.zh.md: c01ae7015f7df3c7189e75bc62115ca975d5785c

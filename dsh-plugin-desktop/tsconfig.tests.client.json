@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.client.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "emitDeclarationOnly": false
+  },
+  "include": [
+    "src/client/**/*.ts",
+    "src/client/**/*.tsx",
+    "tests/client-acr-brand.spec.ts",
+    "tests/client-boot-health.spec.ts",
+    "tests/client-directory-picker.spec.ts",
+    "tests/client-desktop-settings.spec.ts",
+    "tests/client-environment.spec.ts",
+    "tests/client-plugin-architecture-api.spec.ts",
+    "tests/client-plugin-lifecycle-api.spec.ts",
+    "tests/client-workspace-folder-drop.spec.ts",
+    "tests/theme-presenter.spec.ts"
+  ]
+}

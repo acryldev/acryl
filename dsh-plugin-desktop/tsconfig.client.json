@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/client/**/*.ts",
+    "src/client/**/*.tsx",
+    "src/canvas-pty-contract.ts",
+    "src/plugin-architecture-contract.ts",
+    "src/plugin-architecture-inspector.ts",
+    "src/plugin-lifecycle-contract.ts"
+  ]
+}

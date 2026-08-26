@@ -1,0 +1,36 @@
+diff --git a/out/codeSign/macCodeSign.js b/out/codeSign/macCodeSign.js
+index 3bde9755d703a70fc3a45c048c249559fef78d82..9db6a66ee59dbe28a167683b791d835766f279dd 100644
+--- a/out/codeSign/macCodeSign.js
++++ b/out/codeSign/macCodeSign.js
+@@ -155,16 +155,16 @@ async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink, cscI
+     if (cscIKeyPassword != null) {
+         cscPasswords.push(cscIKeyPassword);
+     }
+-    return await importCerts(keychainFile, certPaths, cscPasswords);
++    return await importCerts(keychainFile, certPaths, cscPasswords, keychainPassword);
+ }
+-async function importCerts(keychainFile, paths, keyPasswords) {
++async function importCerts(keychainFile, paths, keyPasswords, keychainPassword) {
+     var _a;
+     for (let i = 0; i < paths.length; i++) {
+         const password = (_a = keyPasswords[i]) !== null && _a !== void 0 ? _a : "";
+         await (0, builder_util_1.exec)("/usr/bin/security", ["import", paths[i], "-k", keychainFile, "-T", "/usr/bin/codesign", "-T", "/usr/bin/productbuild", "-P", password]);
+         // https://stackoverflow.com/questions/39868578/security-codesign-in-sierra-keychain-ignores-access-control-settings-and-ui-p
+         // https://github.com/electron-userland/electron-packager/issues/701#issuecomment-322315996
+-        await (0, builder_util_1.exec)("/usr/bin/security", ["set-key-partition-list", "-S", "apple-tool:,apple:", "-s", "-k", password, keychainFile]);
++        await (0, builder_util_1.exec)("/usr/bin/security", ["set-key-partition-list", "-S", "apple-tool:,apple:", "-s", "-k", keychainPassword, keychainFile]);
+     }
+     return {
+         keychainFile,
+diff --git a/templates/nsis/installer.nsi b/templates/nsis/installer.nsi
+index 2f5d5cf1240c5219217498f1f1a0530deab435a6..821e1d1c9b97dce3fd8e847132508384968072a0 100644
+--- a/templates/nsis/installer.nsi
++++ b/templates/nsis/installer.nsi
+@@ -28,0 +29 @@
++ManifestLongPathAware true
+diff --git a/templates/nsis/portable.nsi b/templates/nsis/portable.nsi
+index 8d2992afbe79af270a0d08c38203166d3afc03f1..bd8dc7fd2bc01a4ec9ade821bbd5d7bd37265caf 100644
+--- a/templates/nsis/portable.nsi
++++ b/templates/nsis/portable.nsi
+@@ -8,0 +9 @@
++ManifestLongPathAware true
