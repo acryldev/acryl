@@ -28,7 +28,9 @@
   "scripts": {
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
-    "test": "vitest run",
+    "test:node": "vitest run",
+    "test:tui": "bun test tests-bun",
+    "test": "yarn run test:node && yarn run test:tui",
     "check": "yarn run build && yarn run typecheck && yarn run test",
     "prepack": "yarn run check"
   },

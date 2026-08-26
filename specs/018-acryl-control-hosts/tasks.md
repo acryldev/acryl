@@ -49,7 +49,7 @@
 - [ ] T021 [US1] Implement direct-mode boot in `acryl-tui/src/host/direct.ts`: acquire lease, boot ACRYL composition, expose services
 - [x] T022 [US1] Write failing contributions test in `acryl-tui/tests/contributions.spec.ts`: screen/command/keybinding/status registration and removal on Fiber unload
 - [x] T023 [US1] Implement `TuiContribution` registry in `acryl-tui/src/render/contributions.ts` to pass T022
-- [ ] T024 [US1] Implement OpenTUI renderer lifecycle in `acryl-tui/src/render/app.ts` (createCliRenderer, root renderable, resize/input/alternate-screen, disposal)
+- [x] T024 [US1] Implement OpenTUI renderer lifecycle in `acryl-tui/src/render/app.ts` (createCliRenderer, root renderable, resize/input/alternate-screen, disposal)
 - [ ] T025 [US1] Implement agent workspace screens in `acryl-tui/src/render/screens/` (session list, resume/new, composer, transcript, tool cards, approvals, jobs)
 - [ ] T026 [US1] Implement status region in `acryl-tui/src/render/status.ts` (mode, owner kind, profile, generation, model, health)
 - [ ] T027 [US1] Write smoke test in `acryl-tui/tests/smoke.spec.ts` asserting direct-mode boot and session resume over durable `ctx.sessions`
