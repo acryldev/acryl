@@ -58,6 +58,24 @@ The community market is useful only after there are real capability packages to
 discover and distribute. Freeze further marketplace expansion until the core
 runtime, relay, provider, and capability-package milestones create that demand.
 
+## Planning ledger
+
+`docs/ACRYL-ROADMAP.md` is the global navigator: it records the intended
+product direction, the active milestone sequence, and explicit architectural
+invariants. It is not the task tracker.
+
+`specs/<MILESTONE-ID>-<feature>/` is the central delivery ledger. Each folder
+is one bounded block of work within a milestone and contains the feature
+specification, research, implementation plan, dependency-ordered `tasks.md`,
+acceptance criteria, and implementation evidence as appropriate. Tasks are
+checked off only after their focused test/smoke loop and commit complete.
+
+A feature folder may be exploratory, superseded, or discovered to deviate from
+the roadmap. That is valid: mark it invalidated with the reason and successor
+when known, then archive or remove it deliberately rather than letting it
+silently direct future work. The roadmap changes only when the product
+navigation itself changes.
+
 ## Milestones
 
 ### M0 - Lock the runtime boundary and migration rules
