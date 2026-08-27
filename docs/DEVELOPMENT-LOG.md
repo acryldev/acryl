@@ -26,6 +26,19 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - ACRYL CLI launches with Cordis HMR support
+
+Commit: `a1281f2f6d29daa35abdde079b883018a04638f8`
+
+The Node `acryl` entrypoint now re-executes itself with
+`--expose-internals` before it boots an HMR-enabled Cordis profile. The launch
+contract is covered by a pure invocation test, and an isolated real CLI JSON
+smoke successfully acquired and released a runtime profile.
+
+Primary sources: `acryl-tui/src/bin.ts` and
+`acryl-tui/src/cli/node-launcher.ts`. Verification: 20 TUI tests, typecheck,
+build, and isolated CLI smoke.
+
 ## 2026-08-26 - ACRYL terminal renderer now uses React Ink
 
 Commit: `2ff2cb96c47f33966edb606167308b7607f8866e`
