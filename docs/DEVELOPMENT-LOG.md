@@ -26,6 +26,18 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - React Ink terminal foundation
+
+Commit: `1f6ed2f081f1b4065eca008d2bfe16623a2bfb1a`
+
+`acryl-tui` now has a minimal, tested React Ink terminal component that projects
+profile, ownership mode, and runtime state. This starts the staged replacement
+of OpenTUI/Bun with Node-compatible Ink without changing the GUI or Web
+surfaces.
+
+Primary source: `acryl-tui/src/render/ink-app.tsx`. Verification: the Ink
+component test and TypeScript check.
+
 ## 2026-08-26 - Harness HMR is preserved by profile composition
 
 Commit: `ffc597cd86a1e37f86a6d41099da69581b673434`
