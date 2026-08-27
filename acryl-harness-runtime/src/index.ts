@@ -5,6 +5,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import {
   DEFAULT_PROFILE_BUNDLES,
   boot,
+  composeEntries,
   healProfilesModuleFallback,
   initProfile,
   loadProfile,
@@ -40,10 +41,13 @@ export async function bootAcrylHarnessProfile(
   const patches = structuredClone([
     ...profile.layers.flatMap(layer => layer.patches),
     ...profile.patches,
-    // This headless host is not launched with Node's --expose-internals.
-    // HMR is development-only and would otherwise make normal CLI boot fail.
-    { id: 'hmr', disabled: true },
   ])
+  const hmr = composeEntries([patches]).find(entry => entry.id === 'hmr')
+  if (hmr?.disabled !== true && !process.execArgv.includes('--expose-internals')) {
+    throw new Error(
+      'ACRYL profile enables Cordis HMR and must be launched with Node --expose-internals',
+    )
+  }
   const ctx = await boot('acryl', rootConfig, patches, options.prepare)
   let disposed = false
   return Object.freeze({
