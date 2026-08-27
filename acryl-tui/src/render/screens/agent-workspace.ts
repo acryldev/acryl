@@ -1,7 +1,5 @@
 /** Read-only terminal projection of durable agent-session records. */
 
-import { TextRenderable, type CliRenderer } from '@opentui/core'
-
 export type AgentSessionStatus = 'idle' | 'running' | 'waiting' | 'stopped' | 'failed'
 export type AgentTranscriptAuthor = 'user' | 'assistant' | 'system'
 export type AgentToolStatus = 'running' | 'succeeded' | 'failed' | 'cancelled'
@@ -124,7 +122,7 @@ function lines<T>(title: string, items: readonly T[], render: (item: T) => strin
   return [title, ...(items.length === 0 ? ['(none)'] : items.map(render))]
 }
 
-/** Format the complete screen for a TextRenderable without treating text as state. */
+/** Format the complete screen without treating rendered text as state. */
 export function formatAgentWorkspaceScreen(screen: AgentWorkspaceScreen): string {
   return [
     ...lines('Sessions', screen.sessions, session => `${session.id === screen.selectedSessionId ? '* ' : '  '}${session.title} [${session.status}]`),
@@ -136,12 +134,4 @@ export function formatAgentWorkspaceScreen(screen: AgentWorkspaceScreen): string
     'Composer',
     `${screen.composer.enabled ? '' : '[disabled] '}${screen.composer.placeholder}`,
   ].join('\n')
-}
-
-/** Create the screen renderable from a validated durable projection. */
-export function createAgentWorkspaceScreen(
-  renderer: CliRenderer,
-  source: DurableAgentWorkspaceSource,
-): TextRenderable {
-  return new TextRenderable(renderer, { content: formatAgentWorkspaceScreen(projectAgentWorkspace(source)) })
 }

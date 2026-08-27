@@ -16,7 +16,7 @@ export default defineConfig([
     name: 'acryl-tui/bin',
     entry: { bin: 'src/bin.ts' },
     clean: true,
-    banner: '#!/usr/bin/env bun',
+    banner: '#!/usr/bin/env node',
   },
   {
     ...shared,

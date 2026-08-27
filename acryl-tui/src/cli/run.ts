@@ -2,7 +2,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { type ControlEndpoint } from 'acryl-control'
 import { startDirectHost } from '../host/direct.ts'
-import { createAcrylRenderer } from '../render/app.ts'
+import { createAcrylRenderer } from '../render/app.tsx'
 import { parseAcrylArgs } from './grammar.ts'
 
 interface RunningDirectHost {
@@ -31,7 +31,7 @@ export interface AcrylCliDependencies {
     readonly model: string
     readonly health: 'degraded'
     readonly body: string
-  }) => Promise<RunningRenderer>
+  }) => RunningRenderer | Promise<RunningRenderer>
   readonly waitForRendererDestroy: (renderer: unknown) => Promise<void>
   readonly write: (line: string) => void
 }
@@ -41,11 +41,15 @@ function defaultStateDirectory(): string {
 }
 
 function waitForRendererDestroy(renderer: unknown): Promise<void> {
-  if (typeof renderer !== 'object' || renderer === null || !('once' in renderer)) {
-    throw new Error('ACRYL renderer does not expose a destruction lifecycle')
+  if (typeof renderer === 'object' && renderer !== null && 'waitUntilExit' in renderer) {
+    const ink = renderer as { waitUntilExit(): Promise<void> }
+    return ink.waitUntilExit()
   }
-  const events = renderer as { once(event: 'destroy', listener: () => void): unknown }
-  return new Promise(resolve => { events.once('destroy', resolve) })
+  if (typeof renderer === 'object' && renderer !== null && 'once' in renderer) {
+    const events = renderer as { once(event: 'destroy', listener: () => void): unknown }
+    return new Promise(resolve => { events.once('destroy', resolve) })
+  }
+  throw new Error('ACRYL renderer does not expose a destruction lifecycle')
 }
 
 const defaults: AcrylCliDependencies = {
