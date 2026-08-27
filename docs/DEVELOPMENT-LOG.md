@@ -26,6 +26,19 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - Harness HMR is preserved by profile composition
+
+Commit: `ffc597cd86a1e37f86a6d41099da69581b673434`
+
+`acryl-harness-runtime` no longer overrides the Cordis HMR Loader row. An
+HMR-enabled profile now fails early with an actionable requirement to launch
+Node using `--expose-internals`; a profile that explicitly disables HMR still
+boots normally. The isolated smoke confirms that an exposed Node owner mounts
+HMR alongside durable sessions and agents.
+
+Primary source: `acryl-harness-runtime/src/index.ts`. Verification: the runtime
+workspace test suite and an isolated `node --expose-internals` profile boot.
+
 ## 2026-08-26 - Direct TUI hosts boot through the pinned Harness profile
 
 Commit: `41af5c897cf835d53cbee79d126c932adbe5570b`
