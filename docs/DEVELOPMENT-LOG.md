@@ -26,6 +26,18 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - ACRYL terminal renderer now uses React Ink
+
+Commit: `2ff2cb96c47f33966edb606167308b7607f8866e`
+
+The terminal renderer no longer depends on OpenTUI or Bun. `acryl-tui` now
+mounts and disposes a React Ink renderer under Node, while its durable agent
+workspace remains a renderer-neutral projection. The obsolete Bun/OpenTUI test
+path was removed.
+
+Primary source: `acryl-tui/src/render/app.tsx`. Verification: 18 Vitest tests,
+TypeScript typecheck, and package build.
+
 ## 2026-08-26 - React Ink terminal foundation
 
 Commit: `1f6ed2f081f1b4065eca008d2bfe16623a2bfb1a`
