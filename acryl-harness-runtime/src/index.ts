@@ -1,3 +1,9 @@
+export type {
+  DurableSessionMessage,
+  DurableSessionMessagePort,
+  DurableSessionMessageReceipt,
+} from './durable-message.ts'
+
 import { writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
