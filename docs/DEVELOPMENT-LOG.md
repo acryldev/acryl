@@ -26,6 +26,17 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - Ink terminal projects live Harness readiness
+
+Commit: `02b2687157e8d029ba71c6e5930cf50435eb5ca6`
+
+A direct host now reports whether both native Harness session and agent services
+are present. The CLI passes that fact to React Ink, replacing the previous
+hard-coded unavailable state with a real runtime-readiness projection.
+
+Primary sources: `acryl-tui/src/host/direct.ts` and
+`acryl-tui/src/cli/run.ts`. Verification: 20 TUI tests, typecheck, and build.
+
 ## 2026-08-26 - ACRYL CLI launches with Cordis HMR support
 
 Commit: `a1281f2f6d29daa35abdde079b883018a04638f8`
