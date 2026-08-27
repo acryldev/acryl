@@ -26,6 +26,18 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - Ink terminal composer has an interactive state loop
+
+Commit: `53c518126fadf89875ac22272de2923c24ed3d0f`
+
+The Ink terminal now accepts typed text, supports deletion, and records an
+explicit dispatch-pending message when Enter is pressed. This is intentionally
+local presentation state only; the following slice replaces the pending marker
+with a durable Harness session dispatch.
+
+Primary source: `acryl-tui/src/render/ink-app.tsx`. Verification: 21 TUI tests,
+typecheck, and build.
+
 ## 2026-08-26 - Ink terminal projects live Harness readiness
 
 Commit: `02b2687157e8d029ba71c6e5930cf50435eb5ca6`
