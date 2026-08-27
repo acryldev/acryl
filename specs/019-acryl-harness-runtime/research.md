@@ -1,49 +1,89 @@
 # Research: ACRYL Shared Harness Runtime
 
-## Status
+## Decision 1: Use one repository-owned wrapper around the pinned profile boot
 
-Research complete for specification. The implementation plan must resolve the
-remaining runtime-package dependency inventory before code is written.
+**Decision:** `acryl-harness-runtime` owns profile preparation and calls the
+pinned `@deepseek-ai/dsh-app-boot` boot seam once per owning generation.
 
-## Finding 1 - `@deepseek-ai/dsh-base` is a profile layer, not a self-contained dependency
+**Verified facts:**
 
-The direct-host experiment prepared a standard empty profile root and applied
-`@deepseek-ai/dsh-base`. Harness correctly attempted to load its agent, session,
-persistence, tool, approval, and job rows. It failed before activation because
-`acryl-tui` did not own the full module closure that those rows import.
+- `deepseek-harness/apps/cli/src/profile-boot.ts` heals the profile module
+  fallback, loads profile and user patch layers, rewrites the empty Loader root,
+  and boots one composed Cordis tree.
+- The existing runtime package already verifies that a booted profile exposes
+  `sessions` and `agents` in one root.
+- The existing TUI direct host already passes a `prepare` hook into that root.
 
-This is not a Loader ordering bug. The profile tree is correct, while the
-presentation package's runtime closure is incomplete.
+**Rationale:** This preserves the upstream configuration model and lets host
+services resolve against the same Cordis root as Harness capabilities.
 
-## Finding 2 - The upstream CLI provides the correct profile preparation pattern
+**Alternatives considered:** Copy profile boot fragments into Terminal and
+Desktop, rejected because composition, patches, and dependency closure drift.
 
-`deepseek-harness/apps/cli/src/profile-boot.ts` prepares a profile by:
+## Decision 2: Preserve user configuration; rewrite only generated root anchor
 
-1. healing the installation-owned module fallback;
-2. loading profile bundles and user patch layers;
-3. rewriting the empty `cordis.yml` root used only as the Loader anchor; and
-4. booting the composed patch stack through `@deepseek-ai/dsh-app-boot`.
+**Decision:** Treat the empty profile `cordis.yml` as generated Loader anchor.
+Preserve profile patches, home patches, and normal Harness settings files.
 
-ACRYL must reuse this pattern through an owned boundary, not copy fragments
-into each presentation host.
+**Rationale:** The upstream root rewrite prevents Loader write-back from baking
+composed rows into a later boot. User-controlled patches remain above profile
+bundle layers.
 
-## Finding 3 - Host and Harness must share one Cordis root
+## Decision 3: Attach through local capability authentication and OS protection
 
-`@deepseek-ai/dsh-app-boot.boot()` accepts a `prepare` hook after Loader setup
-and before profile entries mount. That is the correct location for the ACRYL
-profile lease and host-neutral control services. A separate `Context` would
-split service resolution and lifecycle ownership, violating the constitution.
+**Decision:** A healthy compatible profile owner publishes a local endpoint and
+an owner-generation-scoped random capability token. Unix endpoint permissions
+and Windows named-pipe ACL support are required in addition to the token.
 
-## Finding 4 - Native session and agent contracts already exist
+**Rationale:** Local same-user filesystem access is the baseline trust boundary;
+a capability token prevents accidental or unrelated endpoint access and detects
+stale ownership generations. The token is not a provider credential.
 
-The pinned `@deepseek-ai/dsh-session` service owns append-only session logs and
-persistence integration. `@deepseek-ai/dsh-agent` exposes `ctx.agents.create()`
-and `ctx.agents.resume()` with an ordered `AgentHandle` disposal contract. The
-native ACRYL agent bridge must be a consumer/provider adapter over these
-services, not a second session store.
+**Alternatives considered:** trust any local socket client, rejected because
+path reachability is not sufficient authorization; remote HTTP, rejected as out
+of scope and unnecessarily expands the threat model.
 
-## Deferred decision
+## Decision 4: Provider authentication stays provider-managed
 
-The precise runtime dependency inventory needs a bounded closure audit. The
-shared workspace must declare what the selected profile can load, rather than
-relying on a sibling package's `node_modules` tree.
+**Decision:** ACRYL observes authentication availability and reports
+re-authentication guidance. Harness profiles and provider CLIs own OAuth/API
+key authentication.
+
+**Rationale:** ACRYL must support Claude Code, Codex, OpenCode, Pi, and native
+DSH capabilities without extracting, duplicating, or storing their secrets.
+
+## Decision 5: Serial active-control lease, not concurrent writes
+
+**Decision:** Multiple authenticated surfaces may observe the live runtime, but
+one explicit active-control lease may submit agent actions. It automatically
+releases on disconnect, process death, or control-channel expiry.
+
+**Rationale:** This makes durable action ordering explicit and prevents stale
+surfaces from silently retaining control.
+
+## Decision 6: Use native Harness durable sessions and agents
+
+**Decision:** The native bridge creates and resumes only Harness sessions and
+uses Harness agent handles. It does not persist terminal scrollback.
+
+**Verified facts:**
+
+- The pinned session suite creates live sessions through `ctx.sessions.create()`
+  and persistence integration owns durable session state.
+- The pinned Harness test fixtures create agent handles through
+  `ctx.agents.create()`.
+- Existing `acryl-control` exposes a provider-neutral agent-control service;
+  the DSH-native provider is the appropriate consumer/provider adapter.
+
+**Rationale:** This respects the constitution's durable canonical state and
+avoids a parallel ACRYL history store.
+
+## Dependency Closure Decision
+
+**Decision:** Keep the selected pinned profile closure declared by
+`acryl-harness-runtime`, then reduce its manifest only after a deterministic
+profile-load audit proves packages are not required. Do not rely on
+`acryl-tui/node_modules` or Desktop's dependency tree.
+
+**Rationale:** The initial direct-host failure was a missing runtime closure,
+not Loader ordering. A local package must own the profile it declares.
