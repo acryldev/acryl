@@ -12,4 +12,18 @@ describe('AcrylInkApp', () => {
     expect(app.lastFrame()).toContain('Profile: acryl-dev')
     expect(app.lastFrame()).toContain('Runtime: ready (owner)')
   })
+
+  it('accepts text and records a local dispatch-pending message on Enter', async () => {
+    const app = render(
+      <AcrylInkApp profile="acryl-dev" ownerMode="owner" runtimeState="ready" />,
+    )
+
+    app.stdin.write('Hello ACRYL')
+    await new Promise(resolve => setImmediate(resolve))
+    expect(app.lastFrame()).toContain('Message: Hello ACRYL')
+
+    app.stdin.write('\r')
+    await new Promise(resolve => setImmediate(resolve))
+    expect(app.lastFrame()).toContain('Dispatch pending: Hello ACRYL')
+  })
 })
