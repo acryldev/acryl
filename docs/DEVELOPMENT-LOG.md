@@ -26,6 +26,22 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - Direct TUI hosts boot through the pinned Harness profile
+
+Commit: `41af5c897cf835d53cbee79d126c932adbe5570b`
+
+`acryl-harness-runtime` now owns normal profile initialization and boot, while
+`acryl-tui` installs its ownership, architecture, agent, and control services
+into that single returned Cordis root. The runtime explicitly disables the
+base development HMR row because regular Node CLI launches do not expose
+Cordis internals. This makes profile boot work without `--expose-internals`
+and ensures the real durable `sessions` and `agents` services are present.
+
+Primary sources: `acryl-harness-runtime/src/index.ts` and
+`acryl-tui/src/host/direct.ts`. Verified by each workspace's `check` command
+and an isolated normal-Node profile boot smoke. Closure research is recorded
+in `specs/019-acryl-harness-runtime/issues/01-audit-profile-runtime-closure.md`.
+
 ## 2026-08-26 - ACRYL terminal composer is interactive
 
 **Commit:** [`29a2882d01f4724649ef604a0c4dcbb88c561d64`](https://github.com/acryldev/acryl/commit/29a2882d01f4724649ef604a0c4dcbb88c561d64)
