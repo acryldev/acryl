@@ -26,6 +26,20 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - Durable Harness message dispatch has an explicit boundary
+
+Commit: `25a6228cfc5107366d32b90269650ed1ff043a11`
+
+`acryl-harness-runtime` now exports the typed durable-session message port and
+receipt contract. React Ink can receive this port and submit identified
+composer text through it, without creating an agent or persisting alternate
+history in the presentation layer. A runtime implementation of the port is the
+next slice.
+
+Primary sources: `acryl-harness-runtime/src/durable-message.ts` and
+`acryl-tui/src/render/ink-app.tsx`. Verification: runtime and TUI workspace
+checks, including 22 TUI tests.
+
 ## 2026-08-26 - Ink terminal composer has an interactive state loop
 
 Commit: `53c518126fadf89875ac22272de2923c24ed3d0f`
