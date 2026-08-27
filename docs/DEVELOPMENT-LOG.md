@@ -26,6 +26,19 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - Shared runtime control and authentication model clarified
+
+Commit: `9c0c36bbcd2cffa2fd44d4d586107f38a2aad85c`
+
+The ACRYL shared Harness runtime specification now requires compatible surfaces
+to attach to one healthy profile owner rather than start competing writable
+runtimes. Attachment uses an owner-issued local capability credential and
+operating-system local endpoint permissions. Provider authentication remains
+owned by provider-managed Harness profiles or CLIs, with no ACRYL secret
+extraction or storage. Concurrent surfaces observe live state, while one
+explicit active-control lease serializes agent actions and is automatically
+released on disconnect, process death, or channel expiry.
+
 ## 2026-08-26 - Reusable agent engineering methodology established
 
 Commit: `8d08cf7057c500cd562e2784d04280dafed72cb2`
