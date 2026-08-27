@@ -2,12 +2,22 @@
 
 **Feature Directory**: `specs/019-acryl-harness-runtime`  
 **Created**: 2026-08-26  
-**Status**: Draft  
+**Status**: Ready for planning
 **Input**: Make the standalone `acryl` terminal host use the pinned DeepSeek Harness agent and durable-session runtime without depending on the Electron Desktop package or duplicating Harness state.
 
 ## Objective
 
 Give every ACRYL presentation host one reliable way to start the same configured Harness profile. A terminal user must be able to open a real durable agent workspace, while Desktop and future Web hosts can reuse the same runtime boundary without owning separate copies of profile boot logic or plugin dependencies.
+
+## Clarifications
+
+### Session 2026-08-26
+
+- Q: What happens when a healthy compatible owner already owns the requested profile? → A: The requesting surface attaches to that owner.
+- Q: How does a standalone terminal choose its durable session at startup? → A: It always creates a new durable session.
+- Q: How is local attachment authorized, and how does ACRYL handle agent-provider authentication? → A: Attachment requires an owner-issued local capability credential plus operating-system local endpoint permissions. Agent-provider authentication remains provider-managed profile or CLI authentication; ACRYL exposes status and re-authentication guidance but neither stores nor extracts provider secrets.
+- Q: How do multiple authenticated attached surfaces submit agent actions? → A: Only the surface holding an explicit active-control lease can submit actions. Other attached surfaces receive live read-only projections until they acquire the lease.
+- Q: What happens to an active-control lease when its surface becomes unavailable? → A: The runtime automatically releases it on disconnect, process death, or authenticated control-channel expiry. Another attached surface must explicitly acquire it; control is never silently transferred.
 
 ## User Scenarios & Testing
 
@@ -24,6 +34,8 @@ As an ACRYL user, I can run `acryl` and enter a workspace backed by a real Harne
 1. **Given** an absent ACRYL profile, **When** a user starts the terminal host, **Then** the system initializes a usable profile without overwriting user configuration.
 2. **Given** a configured ACRYL profile, **When** the terminal host starts, **Then** the host and Harness runtime share one lifecycle root and expose durable session and agent capabilities.
 3. **Given** profile startup fails, **When** initialization stops, **Then** no partial profile owner or live runtime remains.
+4. **Given** a healthy compatible owner already owns the requested profile, **When** another ACRYL surface starts for it, **Then** it attaches rather than creating a second writable runtime.
+5. **Given** no compatible owner owns the profile, **When** a user starts the standalone terminal, **Then** it creates a new durable session rather than automatically resuming an earlier session.
 
 ---
 
@@ -47,6 +59,10 @@ As an ACRYL operator, I can use terminal and Desktop presentation without either
 - A second host attempts to acquire an already owned profile.
 - A model route is absent or invalid after the runtime starts.
 - Profile activation fails after ownership has been acquired.
+- A process reaches the local control endpoint without a valid current owner capability credential.
+- A provider authentication session is absent, expired, or revoked.
+- An attached surface attempts to submit an agent action without the active-control lease.
+- The active-control surface disconnects, dies, or its authenticated control channel expires.
 
 ## Requirements
 
@@ -60,6 +76,12 @@ As an ACRYL operator, I can use terminal and Desktop presentation without either
 - **FR-006**: A startup failure MUST dispose every partially created runtime contribution and release profile ownership.
 - **FR-007**: The runtime package MUST own the complete compatible dependency closure required by its declared profile composition.
 - **FR-008**: The follow-on native agent bridge MUST create, resume, and project only durable Harness sessions; it MUST NOT use terminal scrollback as agent history.
+- **FR-009**: When a healthy compatible owner already owns the requested profile, a requesting surface MUST attach to it and MUST NOT create a second writable runtime.
+- **FR-010**: When the standalone terminal becomes the profile owner, it MUST create a new durable session rather than automatically resuming an earlier session.
+- **FR-011**: A surface attaching to an existing owner MUST authenticate with a current owner-issued local capability credential and an operating-system-permitted local control endpoint; the credential MUST be rotated when ownership generation changes and MUST NOT be logged.
+- **FR-012**: Agent-provider authentication MUST remain provider-managed profile or CLI authentication. ACRYL MAY expose authentication status and re-authentication guidance but MUST NOT store, extract, or expose provider secrets.
+- **FR-013**: The runtime MUST grant at most one explicit active-control lease at a time. Only that surface may submit agent actions; other authenticated attached surfaces MUST receive live read-only projections until they acquire the lease.
+- **FR-014**: The runtime MUST automatically release the active-control lease when its surface disconnects, its process dies, or its authenticated control channel expires. It MUST NOT silently transfer control; another authenticated attached surface must explicitly acquire the lease.
 
 ### Key Entities
 
