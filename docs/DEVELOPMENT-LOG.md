@@ -26,6 +26,16 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - Shared Harness runtime design completed
+
+Commit: `522c964853d74ed0fb1425e30b248f8c1a121530`
+
+The 019 Spec Kit design now defines a host-neutral runtime as the sole owner of
+pinned Harness profile boot, durable sessions, native agents, local attachment,
+and ordered shutdown. It records the profile-generation, attachment, and
+active-control lease model, a local control contract, dependency-closure
+strategy, and headless walking-skeleton acceptance procedure.
+
 ## 2026-08-26 - Shared runtime control and authentication model clarified
 
 Commit: `9c0c36bbcd2cffa2fd44d4d586107f38a2aad85c`
