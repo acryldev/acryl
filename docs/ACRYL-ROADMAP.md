@@ -19,7 +19,7 @@ Electron process state, are the authoritative account of agent work.
                                   |
             acryl-control: lease, protocol, inspection, lifecycle
                     /                 |                  \
-          acryl-tui (React Ink)   acryl-gui (Electron)   acryl-web
+          acryl-tui (pi-tui)      acryl-gui (Electron)   acryl-web
 ```
 
 ## Architectural assessment and constraints
@@ -48,11 +48,14 @@ transport contracts, not process spawners. Actual agent process, protocol, or
 Harness-handle ownership belongs to the runtime owner, so attached surfaces
 cannot create competing agents or roots.
 
-`acryl-tui` is the terminal presentation. OpenTUI/Bun is being replaced by
-React Ink on Node. Ink gives the terminal surface React components, Yoga/Flexbox
-layout, deterministic component testing, and a supported Node 22+ runtime that
-can coexist with the Cordis owner process. Ink components project durable
-runtime/control state; they do not become a second source of truth.
+`acryl-tui` is the terminal presentation. It adopts the working pi-tui-based
+`dsh-pi-tui` implementation on Node, replacing the earlier OpenTUI/Bun and
+React Ink direction. Its renderer projects typed control/runtime snapshots and
+durable Harness records. It must not own a Cordis root, directly become the
+profile runtime, or become a second source of truth. The integration extracts
+surface-neutral agent, session, tool, approval, and lifecycle operations behind
+`acryl-control`, allowing the same agent to be operated from pi-tui, Electron,
+and Web.
 
 The community market is useful only after there are real capability packages to
 discover and distribute. Freeze further marketplace expansion until the core
@@ -102,20 +105,23 @@ that satisfies its acceptance criteria.
 surface; HMR is available to a development owner without globally changing
 profile composition.
 
-### M1 - Move the terminal to React Ink
+### M1 - Adopt pi-tui as the terminal surface
 
-- Replace `@opentui/core`, Bun-only scripts, and `tests-bun/` with React 19,
-  Ink 7, and Node run-once tests.
+- Replace `@opentui/core`, Bun-only scripts, `tests-bun/`, and the superseded
+  React Ink direction with the working Node-based `dsh-pi-tui` implementation.
 - Retain the existing CLI grammar, JSON output conventions, direct/attach/
   recovery concepts, and renderer lifecycle guarantees.
-- Build an Ink app shell with profile/owner/health status, durable-session
-  transcript projection, composer, structured tool/approval/job cards, and
-  controlled unmount behavior.
+- Refactor pi-tui's direct DSH bindings into an `acryl-tui` client of
+  `acryl-control`: profile/owner/health status, durable-session transcript,
+  composer, structured tool/approval/job cards, and controlled unmount are
+  all projections or commands over the shared runtime.
 - Keep renderer state ephemeral and derive it from typed control/runtime
-  snapshots and durable Harness records.
+  snapshots and durable Harness records. Do not permit the terminal surface to
+  create a second writable Cordis root.
 
-**Exit criterion:** `acryl` runs on supported Node, has no Bun dependency, and
-can render and test its terminal UI without creating a duplicate Harness root.
+**Exit criterion:** `acryl-tui` runs on supported Node with pi-tui, can render
+and test without Bun or React Ink, and starts or attaches to exactly one
+Harness runtime for its profile.
 
 ### M2 - Complete the single-owner runtime and attach protocol
 
