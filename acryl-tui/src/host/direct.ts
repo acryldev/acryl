@@ -23,6 +23,7 @@ export interface StartDirectHostOptions {
 
 export interface DirectHost {
   readonly ctx: Context
+  readonly runtimeState: 'ready' | 'unavailable'
   readonly profile: string
   readonly generationId: string
   readonly endpoint: ControlEndpoint
@@ -149,9 +150,13 @@ export async function startDirectHost(options: StartDirectHostOptions): Promise<
   assertControlContext(runtime.ctx)
   const ctx = runtime.ctx
 
+  const runtimeState = ctx.get('sessions') !== undefined && ctx.get('agents') !== undefined
+    ? 'ready'
+    : 'unavailable'
   let disposed = false
   return Object.freeze({
     ctx,
+    runtimeState,
     profile,
     generationId,
     endpoint,

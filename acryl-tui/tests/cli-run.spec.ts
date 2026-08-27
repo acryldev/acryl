@@ -14,6 +14,7 @@ function dependencies(overrides: Partial<AcrylCliDependencies> = {}): AcrylCliDe
     startDirectHost: async options => {
       events.push(`host:${options.profile}`)
       return {
+        runtimeState: 'ready',
         profile: options.profile,
         generationId: 'generation-1',
         endpoint: { kind: 'unix', address: '/tmp/acryl-test/acryl.sock', protocolVersion: 1 },

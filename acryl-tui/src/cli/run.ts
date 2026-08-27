@@ -6,6 +6,7 @@ import { createAcrylRenderer } from '../render/app.tsx'
 import { parseAcrylArgs } from './grammar.ts'
 
 interface RunningDirectHost {
+  readonly runtimeState: 'ready' | 'unavailable'
   readonly profile: string
   readonly generationId: string
   readonly endpoint: ControlEndpoint
@@ -29,7 +30,7 @@ export interface AcrylCliDependencies {
     readonly profile: string
     readonly generationId: string
     readonly model: string
-    readonly health: 'degraded'
+    readonly health: 'healthy' | 'degraded'
     readonly body: string
   }) => RunningRenderer | Promise<RunningRenderer>
   readonly waitForRendererDestroy: (renderer: unknown) => Promise<void>
@@ -100,8 +101,10 @@ export async function runAcryl(
       profile: host.profile,
       generationId: host.generationId,
       model: 'unavailable',
-      health: 'degraded',
-      body: 'Harness session runtime not connected.\nUse --json to verify direct-host ownership.',
+      health: host.runtimeState === 'ready' ? 'healthy' : 'degraded',
+      body: host.runtimeState === 'ready'
+        ? 'Harness session and agent runtime are ready.'
+        : 'Harness session runtime is unavailable.\nUse --json to verify direct-host ownership.',
     })
     try {
       await dependencies.waitForRendererDestroy(renderer.renderer)

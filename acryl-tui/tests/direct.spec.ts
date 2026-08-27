@@ -45,6 +45,7 @@ describe('startDirectHost', () => {
 
     expect(host.profile).toBe('desktop')
     expect(host.generationId).toBe('generation-1')
+    expect(host.runtimeState).toBe('ready')
     expect(host.ctx.acrProfileOwnership.current.kind).toBe('owned')
     expect(host.ctx.acrRuntimeArchitecture.snapshot('host').plane).toBe('host')
     expect(await host.ctx.acrAgentControl.snapshot()).toEqual([])
