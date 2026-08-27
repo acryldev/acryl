@@ -26,6 +26,17 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - First human-testable ACRYL vertical slice approved
+
+Commit: `befa8cdfda3a51e8d0a0f9220d77bb1651591ea3`
+
+The next work is constrained to one complete standalone feature: an
+already-authenticated native Harness profile accepts an ACRYL terminal prompt,
+returns a real provider response, and retains the exchange as durable Harness
+session state. Provider switching, third-party agent adapters, multi-surface
+attachment, and Desktop work are explicitly deferred until this human-testable
+slice is finished.
+
 ## 2026-08-26 - Shared Harness runtime delivery ledger generated
 
 Commit: `786a13ed1baf47c9863fa8eebb637217b0176050`
