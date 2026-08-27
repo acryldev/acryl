@@ -26,6 +26,19 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - Reusable agent engineering methodology established
+
+Commit: `8d08cf7057c500cd562e2784d04280dafed72cb2`
+
+A standalone methodology now records the repository-independent workflow for
+GitHub Spec Kit, spec-driven tasks, Superpowers TDD/debugging/verification,
+Cordis-style ownership, Ponytail minimalism, vertical slices, focused commits,
+and durable evidence. It defines the roadmap and specification ledger as the
+project's durable navigation and delivery records.
+
+Primary document:
+`docs/workmethodology/acryl-agent-co-developed-hybrid-engineering-methodology-github-spec-kit-matt-pocock-spec-driven-delivery-superpowers-tdd-debug-verification-cordis-lifecycle-architecture-ponytail-minimalism-vertical-slice-roadmap-ledger-execution.md`.
+
 ## 2026-08-26 - Durable Harness message dispatch has an explicit boundary
 
 Commit: `25a6228cfc5107366d32b90269650ed1ff043a11`
