@@ -76,6 +76,13 @@ when known, then archive or remove it deliberately rather than letting it
 silently direct future work. The roadmap changes only when the product
 navigation itself changes.
 
+The ledger follows GitHub Spec Kit. Use `specify` only to create a new bounded
+feature folder; for an existing active folder use the sequence
+`clarify -> plan -> tasks -> analyze -> implement -> converge`. The Spec Kit
+artifacts remain the authoritative task and acceptance record, while Ponytail
+(full) constrains each implementation task to the smallest root-cause change
+that satisfies its acceptance criteria.
+
 ## Milestones
 
 ### M0 - Lock the runtime boundary and migration rules
