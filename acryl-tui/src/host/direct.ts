@@ -2,6 +2,7 @@
 
 import { createHash, randomUUID } from 'node:crypto'
 import { join } from 'node:path'
+import { bootAcrylHarnessProfile } from 'acryl-harness-runtime'
 import {
   ACRYL_CONTROL_PROTOCOL_VERSION,
   Context,
@@ -32,6 +33,18 @@ export class DirectHostAlreadyOwnedError extends Error {
   constructor(readonly profile: string, readonly endpoint: ControlEndpoint) {
     super(`ACRYL profile ${profile} is already owned at ${endpoint.address}.`)
     this.name = 'DirectHostAlreadyOwnedError'
+  }
+}
+
+function assertControlContext(value: unknown): asserts value is Context {
+  if (
+    value === null
+    || typeof value !== 'object'
+    || !('plugin' in value)
+    || typeof value.plugin !== 'function'
+    || !('fiber' in value)
+  ) {
+    throw new Error('ACRYL Harness boot did not return a usable Cordis root')
   }
 }
 
@@ -69,68 +82,72 @@ export async function startDirectHost(options: StartDirectHostOptions): Promise<
   const generationId = options.generationId ?? randomUUID()
   const hostId = options.hostId ?? randomUUID()
   const endpoint = options.endpoint ?? defaultEndpoint(profile, generationId, options.stateDirectory)
-  const ctx = new Context()
-  const fibers: Array<{ dispose(): Promise<void> }> = []
-
+  let runtime: Awaited<ReturnType<typeof bootAcrylHarnessProfile>>
   try {
-    const ownership = ctx.plugin(AcrProfileOwnershipService, {
-      stateDirectory: options.stateDirectory,
-      request: {
-        profileKey: profile,
-        host: {
-          hostId,
-          kind: 'tui',
-          generationId,
-          pid: process.pid,
-          startedAt: new Date().toISOString(),
-          protocolVersion: ACRYL_CONTROL_PROTOCOL_VERSION,
-          status: 'ready',
-        },
-        endpoint,
-      },
-    })
-    fibers.push(ownership)
-    await ownership
-    const acquisition = ctx.acrProfileOwnership.current
-    if (acquisition.kind === 'attached') {
-      throw new DirectHostAlreadyOwnedError(profile, acquisition.lease.endpoint)
-    }
-
-    const architecture = ctx.plugin(AcrRuntimeArchitectureService)
-    fibers.push(architecture)
-    await architecture
-
-    const agentControl = ctx.plugin(AcrAgentControlService)
-    fibers.push(agentControl)
-    await agentControl
-
-    const protocol = ctx.plugin(AcrControlProtocolService, {
-      endpoint,
-      generationId,
-      capabilities: ['host.status', 'architecture.inspect'],
-      handle: async (operation, payload) => {
-        switch (operation) {
-          case 'host.status':
-            return {
-              profile,
+    runtime = await bootAcrylHarnessProfile({
+      profile,
+      prepare: async ctx => {
+        assertControlContext(ctx)
+        const ownership = ctx.plugin(AcrProfileOwnershipService, {
+          stateDirectory: options.stateDirectory,
+          request: {
+            profileKey: profile,
+            host: {
+              hostId,
+              kind: 'tui',
               generationId,
-              endpoint,
-              owner: ctx.acrProfileOwnership.current,
-              capabilities: ctx.acrControlProtocol.capabilities,
-            }
-          case 'architecture.inspect':
-            return ctx.acrRuntimeArchitecture.snapshot('host')
-          default:
-            throw new Error(`unsupported direct-host operation ${operation}: ${String(payload)}`)
+              pid: process.pid,
+              startedAt: new Date().toISOString(),
+              protocolVersion: ACRYL_CONTROL_PROTOCOL_VERSION,
+              status: 'ready',
+            },
+            endpoint,
+          },
+        })
+        await ownership
+        const acquisition = ctx.acrProfileOwnership.current
+        if (acquisition.kind === 'attached') {
+          throw new DirectHostAlreadyOwnedError(profile, acquisition.lease.endpoint)
         }
+
+        const architecture = ctx.plugin(AcrRuntimeArchitectureService)
+        await architecture
+
+        const agentControl = ctx.plugin(AcrAgentControlService)
+        await agentControl
+
+        const protocol = ctx.plugin(AcrControlProtocolService, {
+          endpoint,
+          generationId,
+          capabilities: ['host.status', 'architecture.inspect'],
+          handle: async (operation, payload) => {
+            switch (operation) {
+              case 'host.status':
+                return {
+                  profile,
+                  generationId,
+                  endpoint,
+                  owner: ctx.acrProfileOwnership.current,
+                  capabilities: ctx.acrControlProtocol.capabilities,
+                }
+              case 'architecture.inspect':
+                return ctx.acrRuntimeArchitecture.snapshot('host')
+              default:
+                throw new Error(`unsupported direct-host operation ${operation}: ${String(payload)}`)
+            }
+          },
+        })
+        await protocol
       },
     })
-    fibers.push(protocol)
-    await protocol
   } catch (cause) {
-    await Promise.allSettled(fibers.reverse().map(fiber => fiber.dispose()))
+    if (cause instanceof Error && cause.cause instanceof DirectHostAlreadyOwnedError) {
+      throw cause.cause
+    }
     throw cause
   }
+  assertControlContext(runtime.ctx)
+  const ctx = runtime.ctx
 
   let disposed = false
   return Object.freeze({
@@ -141,7 +158,7 @@ export async function startDirectHost(options: StartDirectHostOptions): Promise<
     async dispose() {
       if (disposed) return
       disposed = true
-      await Promise.all(fibers.reverse().map(fiber => fiber.dispose()))
+      await runtime.dispose()
     },
   })
 }

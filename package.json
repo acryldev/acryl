@@ -12,6 +12,7 @@
     "dsh-plugin-desktop",
     "dsh-plugin-development-canvas",
     "acryl-control",
+    "acryl-harness-runtime",
     "acryl-tui",
     "dsh-community-fabric",
     "dsh-community-market"

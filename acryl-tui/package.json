@@ -57,6 +57,7 @@
     "@deepseek-ai/dsh-typert-protocol": "0.1.1-rc.2",
     "@opentui/core": "0.5.8",
     "acryl-control": "0.1.0-dev.0",
+    "acryl-harness-runtime": "workspace:*",
     "web-tree-sitter": "0.25.10"
   },
   "devDependencies": {
