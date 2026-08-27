@@ -26,6 +26,15 @@ Recommended workflow:
 
 ---
 
+## 2026-08-26 - Shared Harness runtime delivery ledger generated
+
+Commit: `786a13ed1baf47c9863fa8eebb637217b0176050`
+
+The 019 ledger now has 21 dependency-ordered, acceptance-driven tasks. The
+first MVP slice is a Terminal-only one-root runtime that creates a fresh
+durable Harness session without Electron. Multi-surface authenticated attach
+and exclusive active control follow as a separate verified increment.
+
 ## 2026-08-26 - Shared Harness runtime design completed
 
 Commit: `522c964853d74ed0fb1425e30b248f8c1a121530`
