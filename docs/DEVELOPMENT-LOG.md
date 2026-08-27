@@ -26,6 +26,19 @@ Recommended workflow:
 
 ---
 
+## 2026-08-27 - pi-tui selected as the ACRYL terminal surface
+
+Commit: `ff9d4f1352538676ff969bf5451979a9fcf3d329`
+
+ACRYL replaces the earlier React Ink direction with the working Node-based
+`dsh-pi-tui` implementation. The terminal renderer remains a peer surface: it
+projects durable Harness records and sends commands through `acryl-control`.
+It must start or attach to the one profile runtime rather than create a second
+Cordis root. This keeps the same agent controllable from pi-tui, Electron, and
+Web.
+
+Primary document: `docs/ACRYL-ROADMAP.md`.
+
 ## 2026-08-26 - First human-testable ACRYL vertical slice approved
 
 Commit: `befa8cdfda3a51e8d0a0f9220d77bb1651591ea3`
