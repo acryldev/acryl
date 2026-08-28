@@ -1,6 +1,6 @@
 import { createConnection } from 'node:net'
 import type { ControlEndpoint } from '../contracts/control-protocol.ts'
-import type { AcrylSessionAttachment, AcrylSessionClient } from '../contracts/session.ts'
+import type { AcrylSessionClient } from '../contracts/session.ts'
 import { createAcrylSessionClient, type AcrylSessionTransport } from './client.ts'
 
 function request(endpoint: ControlEndpoint, generationId: string, operation: string, payload: unknown): Promise<unknown> {
@@ -34,27 +34,61 @@ function request(endpoint: ControlEndpoint, generationId: string, operation: str
 export function createAcrylEndpointSessionClient(
   endpoint: ControlEndpoint,
   generationId: string,
-  attachment: AcrylSessionAttachment,
+  token: string,
 ): AcrylSessionClient {
   const transport: AcrylSessionTransport = {
     request: (operation, payload) => request(endpoint, generationId, operation, {
-      attachment,
+      token,
       ...(payload as Record<string, unknown>),
     }),
-    async subscribe(operation, payload, listener) {
+    async subscribe(operation, payload, listener, onError) {
       let disposed = false
-      const poll = async (): Promise<void> => {
-        if (disposed) return
+      let failed = false
+      let timer: ReturnType<typeof setInterval> | undefined
+      let resolveError!: (error: Error) => void
+      const whenError = new Promise<Error>((resolve) => { resolveError = resolve })
+      const stop = (error: Error): void => {
+        if (disposed || failed) return
+        failed = true
+        if (timer !== undefined) clearInterval(timer)
+        resolveError(error)
         try {
-          listener(await request(endpoint, generationId, operation === 'session.subscribe' ? 'session.snapshot' : operation, {
-            attachment,
+          onError?.(error)
+        } catch {
+          // Error observers cannot disrupt terminal subscription cleanup.
+        }
+      }
+      const poll = async (): Promise<void> => {
+        if (disposed || failed) return
+        try {
+          const value = await request(endpoint, generationId, operation === 'session.subscribe' ? 'session.snapshot' : operation, {
+            token,
             ...(payload as Record<string, unknown>),
-          }))
-        } catch {}
+          })
+          if (!disposed && !failed) {
+            try {
+              listener(value)
+            } catch {
+              // Presentation listeners cannot break transport polling.
+            }
+          }
+        } catch (cause) {
+          stop(cause instanceof Error ? cause : new Error(String(cause)))
+        }
       }
       await poll()
-      const timer = setInterval(() => { void poll() }, 25)
-      return { async dispose() { disposed = true; clearInterval(timer) } }
+      if (failed) {
+        throw await whenError
+      }
+      timer = setInterval(() => { void poll() }, 25)
+      return Object.freeze({
+        whenError: () => whenError,
+        async dispose() {
+          if (disposed) return
+          disposed = true
+          if (timer !== undefined) clearInterval(timer)
+        },
+      })
     },
   }
   return createAcrylSessionClient(transport)

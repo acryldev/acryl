@@ -25,6 +25,7 @@ export interface AcrylSessionBridge {
   subscribe(
     sessionId: string,
     listener: (snapshot: AcrylSessionSnapshot) => void,
+    onError?: (error: Error) => void,
   ): Promise<AcrylSessionSubscription>
   submitPrompt(input: { readonly sessionId: string; readonly text: string }): Promise<void>
   cancel(sessionId: string): Promise<void>
@@ -153,14 +154,20 @@ export function createAcrylSessionBridge(
     async subscribe(
       sessionId: string,
       listener: (snapshot: AcrylSessionSnapshot) => void,
+      _onError?: (error: Error) => void,
     ): Promise<AcrylSessionSubscription> {
       agentFor(sessionId)
       const listeners = subscribers.get(sessionId) ?? new Set()
       subscribers.set(sessionId, listeners)
       listeners.add(listener)
-      listener(await snapshot(sessionId))
+      try {
+        listener(await snapshot(sessionId))
+      } catch {
+        // Presentation listeners cannot disrupt durable session delivery.
+      }
       let active = true
       return Object.freeze({
+        whenError(): Promise<Error> { return new Promise<Error>(() => {}) },
         async dispose(): Promise<void> {
           if (!active) return
           active = false
@@ -172,11 +179,18 @@ export function createAcrylSessionBridge(
     async submitPrompt(input: { readonly sessionId: string; readonly text: string }): Promise<void> {
       const agent = agentFor(input.sessionId)
       if (input.text.trim() === '') throw new Error('ACRYL prompt must not be empty')
+      const accepted = new Promise<void>((resolve) => {
+        const off = ctx.on('session/event', (session, event) => {
+          if (session !== agent.session || event.type !== 'user/message') return
+          off()
+          resolve()
+        })
+      })
       agent.followup(createUserMessage({
         content: [{ type: 'text', text: input.text }],
         source: { kind: 'user' },
       }))
-      await agent.whenIdle()
+      await accepted
     },
     async cancel(sessionId: string): Promise<void> {
       agentFor(sessionId).cancel({ kind: 'user' })

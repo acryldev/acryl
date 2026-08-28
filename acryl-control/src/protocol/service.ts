@@ -104,8 +104,8 @@ export class AcrControlProtocolService extends Service implements AcrControlProt
     this.handle = bootstrap.handle
     this.maxBodyBytes = bootstrap.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES
 
-    ctx.effect(() => {
-      this.server = this.startServer()
+    ctx.effect(async () => {
+      this.server = await this.startServer()
       return async () => {
         await this.closeServer()
       }
@@ -148,11 +148,28 @@ export class AcrControlProtocolService extends Service implements AcrControlProt
     }
   }
 
-  private startServer(): NetServer | HttpServer {
+  private async startServer(): Promise<NetServer | HttpServer> {
     return this.endpoint.kind === 'loopback-http' ? this.startHttpServer() : this.startSocketServer()
   }
 
-  private startSocketServer(): NetServer {
+  private async listen<T extends NetServer | HttpServer>(server: T): Promise<T> {
+    await new Promise<void>((resolve, reject) => {
+      const fail = (error: Error): void => {
+        server.off('listening', ready)
+        reject(error)
+      }
+      const ready = (): void => {
+        server.off('error', fail)
+        resolve()
+      }
+      server.once('error', fail)
+      server.once('listening', ready)
+      server.listen(this.endpoint.address)
+    })
+    return server
+  }
+
+  private async startSocketServer(): Promise<NetServer> {
     const server = createNetServer((socket) => {
       this.sockets.add(socket)
       socket.on('close', () => this.sockets.delete(socket))
@@ -173,12 +190,11 @@ export class AcrControlProtocolService extends Service implements AcrControlProt
         })
       })
     })
-    server.listen(this.endpoint.address)
-    return server
+    return this.listen(server)
   }
 
-  private startHttpServer(): HttpServer {
-    return createHttpServer((req, res) => {
+  private async startHttpServer(): Promise<HttpServer> {
+    const server = createHttpServer((req, res) => {
       const chunks: Buffer[] = []
       let size = 0
       req.on('data', (chunk: Buffer) => {
@@ -201,7 +217,8 @@ export class AcrControlProtocolService extends Service implements AcrControlProt
           res.end(outcome.body)
         })
       })
-    }).listen(this.endpoint.address)
+    })
+    return this.listen(server)
   }
 
   private async closeServer(): Promise<void> {

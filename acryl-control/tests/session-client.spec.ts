@@ -30,7 +30,7 @@ function transport(overrides: Partial<AcrylSessionTransport> = {}): AcrylSession
         transcript: [],
         tools: [],
       })
-      return { dispose: async () => undefined }
+      return { whenError: () => new Promise<Error>(() => {}), dispose: async () => undefined }
     },
     ...overrides,
   }

@@ -30,7 +30,7 @@
   "scripts": {
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
-    "test": "vitest run",
+    "test": "pnpm --filter acryl-harness-runtime run build && vitest run",
     "check": "pnpm run build && pnpm run typecheck && pnpm run test",
     "prepack": "pnpm run check"
   },

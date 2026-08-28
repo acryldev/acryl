@@ -17,14 +17,15 @@ interface OwnedRuntime {
   readonly profile: string
   readonly generationId: string
   readonly endpoint: AcrylSessionControlEndpoint
+  readonly ownerToken: string
   sessionId: string
   disposed: boolean
   closing: Promise<void> | undefined
 }
 const owners = new Map<string, Promise<OwnedRuntime>>()
 function requireProfile(profile: string): string { if (profile.trim() === '') throw new Error('ACRYL profile must not be empty'); return profile }
-function clientFor(endpoint: AcrylSessionControlEndpoint, generationId: string, attachment: AcrylSessionAttachment): AcrylSessionClient {
-  return createAcrylEndpointSessionClient(endpoint.endpoint, generationId, attachment)
+function clientFor(endpoint: AcrylSessionControlEndpoint, generationId: string, token: string): AcrylSessionClient {
+  return createAcrylEndpointSessionClient(endpoint.endpoint, generationId, token)
 }
 async function startOwner(options: AcrylOwnerOrAttachOptions, profile: string): Promise<OwnedRuntime> {
   const runtime = await bootAcrylHarnessProfile({ profile })
@@ -36,7 +37,17 @@ async function startOwner(options: AcrylOwnerOrAttachOptions, profile: string): 
       address: join('/tmp', `acryl-${createHash('sha256').update(`${profile}:${generationId}`).digest('hex').slice(0, 24)}.sock`),
       generationId,
     })
-    return { runtime, bridge, profile, generationId, endpoint, sessionId, disposed: false, closing: undefined }
+    return {
+      runtime,
+      bridge,
+      profile,
+      generationId,
+      endpoint,
+      ownerToken: endpoint.issueToken('owner'),
+      sessionId,
+      disposed: false,
+      closing: undefined,
+    }
   } catch (error: unknown) { await bridge.dispose(); await runtime.dispose(); throw error }
 }
 async function disposeOwner(owner: OwnedRuntime): Promise<void> {
@@ -57,5 +68,11 @@ export async function openAcrylSessionOwnerOrAttach(options: AcrylOwnerOrAttachO
   const owner = await ownerPromise
   if (owner.disposed) { await owner.closing; return openAcrylSessionOwnerOrAttach(options) }
   if (attachment === 'attached' && options.resumeSessionId !== undefined && options.resumeSessionId !== owner.sessionId) throw new Error('ACRYL attached clients cannot select another session')
-  return Object.freeze({ attachment, sessionId: owner.sessionId, client: clientFor(owner.endpoint, owner.generationId, attachment), async dispose() { if (attachment === 'owner') await disposeOwner(owner) } })
+  const token = attachment === 'owner' ? owner.ownerToken : owner.endpoint.issueToken('attached')
+  return Object.freeze({
+    attachment,
+    sessionId: owner.sessionId,
+    client: clientFor(owner.endpoint, owner.generationId, token),
+    async dispose() { if (attachment === 'owner') await disposeOwner(owner) },
+  })
 }

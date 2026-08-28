@@ -11,6 +11,7 @@ export interface AcrylSessionTransport {
     operation: string,
     payload: unknown,
     listener: (value: unknown) => void,
+    onError?: (error: Error) => void,
   ): Promise<AcrylSessionSubscription>
 }
 
@@ -35,15 +36,20 @@ export function createAcrylSessionClient(transport: AcrylSessionTransport): Acry
     async subscribe(
       value: string,
       listener: (snapshot: AcrylSessionSnapshot) => void,
+      onError?: (error: Error) => void,
     ): Promise<AcrylSessionSubscription> {
       const selectedSessionId = sessionId(value)
       return transport.subscribe('session.subscribe', { sessionId: selectedSessionId }, (snapshot) => {
-        const parsed = parseAcrylSessionSnapshot(snapshot)
-        if (parsed.sessionId !== selectedSessionId) {
-          throw new Error('ACRYL subscription returned a different session')
+        try {
+          const parsed = parseAcrylSessionSnapshot(snapshot)
+          if (parsed.sessionId !== selectedSessionId) {
+            throw new Error('ACRYL subscription returned a different session')
+          }
+          listener(parsed)
+        } catch {
+          // Presentation listeners cannot break a live transport subscription.
         }
-        listener(parsed)
-      })
+      }, onError)
     },
     async submitPrompt(input: {
       readonly sessionId: string

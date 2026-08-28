@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto'
 import type { Context } from '@deepseek-ai/cordis'
 import {
   ACRYL_CONTROL_PROTOCOL_VERSION,
@@ -13,6 +14,8 @@ export interface AcrylSessionControlEndpointOptions {
 
 export interface AcrylSessionControlEndpoint {
   readonly endpoint: ControlEndpoint
+  /** Issue a non-durable local credential for this live endpoint only. */
+  issueToken(attachment: 'owner' | 'attached'): string
   dispose(): Promise<void>
 }
 
@@ -26,9 +29,9 @@ function string(value: unknown, label: string): string {
   return value
 }
 
-function attachment(value: unknown): 'owner' | 'attached' {
-  if (value === 'owner' || value === 'attached') return value
-  throw new Error('invalid ACRYL session attachment')
+function token(value: unknown): string {
+  if (typeof value !== 'string' || value.length !== 64) throw new Error('invalid ACRYL session credential')
+  return value
 }
 
 /** Mount the DSH-owning session adapter behind the transport-neutral control endpoint. */
@@ -42,6 +45,12 @@ export async function mountAcrylSessionControlEndpoint(
     address: options.address,
     protocolVersion: ACRYL_CONTROL_PROTOCOL_VERSION,
   }
+  const tokenAuthorities = new Map<string, 'owner' | 'attached'>()
+  const issueToken = (mode: 'owner' | 'attached'): string => {
+    const credential = randomBytes(32).toString('hex')
+    tokenAuthorities.set(credential, mode)
+    return credential
+  }
   const fiber = ctx.plugin(AcrControlProtocolService, {
     endpoint,
     generationId: options.generationId,
@@ -49,7 +58,8 @@ export async function mountAcrylSessionControlEndpoint(
     async handle(operation: string, payload: unknown): Promise<unknown> {
       const input = record(payload)
       const sessionId = string(input.sessionId, 'session id')
-      const mode = attachment(input.attachment)
+      const mode = tokenAuthorities.get(token(input.token))
+      if (mode === undefined) throw new Error('invalid ACRYL session credential')
       switch (operation) {
         case 'session.snapshot': return Object.freeze({ ...(await bridge.snapshot(sessionId)), attachment: mode })
         case 'session.prompt.submit':
@@ -65,5 +75,12 @@ export async function mountAcrylSessionControlEndpoint(
     },
   })
   await fiber
-  return Object.freeze({ endpoint, async dispose(): Promise<void> { await fiber.dispose() } })
+  return Object.freeze({
+    endpoint,
+    issueToken,
+    async dispose(): Promise<void> {
+      tokenAuthorities.clear()
+      await fiber.dispose()
+    },
+  })
 }

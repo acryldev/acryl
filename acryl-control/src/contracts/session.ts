@@ -27,6 +27,8 @@ export interface AcrylSessionSnapshot {
 
 export interface AcrylSessionSubscription {
   dispose(): Promise<void>
+  /** Resolves with the terminal endpoint-subscription failure, if one occurs. */
+  whenError(): Promise<Error>
 }
 
 export interface AcrylSessionClient {
@@ -34,6 +36,7 @@ export interface AcrylSessionClient {
   subscribe(
     sessionId: string,
     listener: (snapshot: AcrylSessionSnapshot) => void,
+    onError?: (error: Error) => void,
   ): Promise<AcrylSessionSubscription>
   submitPrompt(input: {
     readonly sessionId: string

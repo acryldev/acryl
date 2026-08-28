@@ -96,7 +96,10 @@ describe('createAcrylSessionBridge', () => {
       expect(updates.at(-1)).toEqual(['Observed prompt'])
 
       await subscription.dispose()
-      await bridge.submitPrompt({ sessionId, text: 'Unobserved prompt' })
+      const session = runtime.ctx.agents.get(SessionId(sessionId))?.session
+      if (session === undefined) throw new Error('test agent was not registered')
+      session.append('todo/write', { todos: [] })
+      await new Promise(resolve => setTimeout(resolve, 0))
       expect(updates.at(-1)).toEqual(['Observed prompt'])
     } finally {
       await bridge.dispose()
