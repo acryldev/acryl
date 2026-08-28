@@ -56,7 +56,7 @@ describe('runAcryl', () => {
 
     expect(deps.events).toEqual([
       'host:work',
-      'write:{"mode":"direct","profile":"work","generationId":"generation-1","endpoint":{"kind":"unix","address":"/tmp/acryl-test/acryl.sock","protocolVersion":1}}',
+      'write:{"mode":"direct","profile":"work","generationId":"generation-1"}',
       'host:dispose',
     ])
   })

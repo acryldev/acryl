@@ -1,6 +1,5 @@
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { type ControlEndpoint } from 'acryl-control'
 import { startDirectHost } from '../host/direct.ts'
 import { createAcrylRenderer } from '../render/app.tsx'
 import { parseAcrylArgs } from './grammar.ts'
@@ -9,7 +8,6 @@ interface RunningDirectHost {
   readonly runtimeState: 'ready' | 'unavailable'
   readonly profile: string
   readonly generationId: string
-  readonly endpoint: ControlEndpoint
   dispose(): Promise<void>
 }
 
@@ -66,7 +64,6 @@ function statusLine(host: RunningDirectHost): string {
     mode: 'direct',
     profile: host.profile,
     generationId: host.generationId,
-    endpoint: host.endpoint,
   })
 }
 
