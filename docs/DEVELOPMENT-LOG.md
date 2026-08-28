@@ -26,6 +26,14 @@ Recommended workflow:
 
 ---
 
+## 2026-08-28 - Native sessions exposed through the local control endpoint
+
+Commit: `9a42d1da810db7c43dd907c1b3c7e3960adf0bc1`
+
+The owner runtime now mounts its native durable session bridge behind the existing local control protocol. Endpoint clients exchange only session DTOs: snapshots, subscription polling, prompt commands, and cancellation. Fresh connections replay durable session state, attached clients remain read-only, and owner shutdown disposes the endpoint before native bridge and Harness root resources.
+
+Primary sources: `acryl-harness-runtime/src/session-control-endpoint.ts`, `acryl-harness-runtime/src/owner-or-attach.ts`, and `acryl-control/src/protocol/endpoint-client.ts`. Verification: `acryl-control/tests/session-control.integration.spec.ts`, `corepack pnpm --filter acryl-control run check`, and `corepack pnpm --filter acryl-harness-runtime run check`.
+
 ## 2026-08-28 - Native session bridge and ownership hardening
 
 Commit: `adff40026abd6c773cba63e315f5e31412e8f39b`
