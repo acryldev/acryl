@@ -28,8 +28,8 @@
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
     "test": "vitest run",
-    "check": "yarn run build && yarn run typecheck && yarn run test",
-    "prepack": "yarn run check"
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test",
+    "prepack": "pnpm run check"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "4.0.1"
@@ -52,7 +52,7 @@
     "@deepseek-ai/dsh-system-prompt": "0.1.1-rc.2",
     "@deepseek-ai/dsh-timeout": "0.1.1-rc.2",
     "@deepseek-ai/dsh-typert-protocol": "0.1.1-rc.2",
-    "acryl-control": "0.1.0-dev.0",
+    "acryl-control": "workspace:*",
     "acryl-harness-runtime": "workspace:*",
     "ink": "^7.1.1",
     "react": "^19.2.4",

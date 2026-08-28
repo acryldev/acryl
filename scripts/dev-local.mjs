@@ -67,13 +67,13 @@ export function ensureLocalAdvancedMode(dshHome) {
   return 'appended'
 }
 
-function yarnCommand() {
-  return process.platform === 'win32' ? 'yarn.cmd' : 'yarn'
+function corepackCommand() {
+  return process.platform === 'win32' ? 'corepack.cmd' : 'corepack'
 }
 
-function runYarn(args, env) {
+function runPnpm(args, env) {
   return new Promise((resolveExit, reject) => {
-    const child = spawn(yarnCommand(), args, {
+    const child = spawn(corepackCommand(), ['pnpm', ...args], {
       stdio: 'inherit',
       env,
       cwd: resolve(fileURLToPath(new URL('..', import.meta.url))),
@@ -101,11 +101,11 @@ export async function runDevLocal(argv = process.argv.slice(2), environment = pr
     DSH_DESKTOP_USER_DATA: roots.userData,
   }
   if (!skipBuild) {
-    const marketCode = await runYarn(['workspace', 'dsh-community-market', 'build'], env)
+    const marketCode = await runPnpm(['--filter', 'dsh-community-market', 'run', 'build'], env)
     if (marketCode !== 0) return marketCode
-    return runYarn(['workspace', 'dsh-plugin-desktop', 'dev'], env)
+    return runPnpm(['--filter', 'dsh-plugin-desktop', 'run', 'dev'], env)
   }
-  return runYarn(['workspace', 'dsh-plugin-desktop', 'start'], env)
+  return runPnpm(['--filter', 'dsh-plugin-desktop', 'run', 'start'], env)
 }
 
 const invoked = process.argv[1] === undefined ? undefined : resolve(process.argv[1])

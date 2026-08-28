@@ -296,8 +296,8 @@ The repository includes a two-file profile-local fixture at [`tests/fixtures/des
 The complete Profile Loader smoke copies that package into a temporary profile's `node_modules`, loads it as a normal bare-package Loader entry, and fails unless the probe reports the active profile and both package-manager methods. Run it with:
 
 ```sh
-yarn workspace dsh-plugin-desktop build
-yarn workspace dsh-plugin-desktop verify:profile
+pnpm --filter dsh-plugin-desktop run build
+pnpm --filter dsh-plugin-desktop run verify:profile
 ```
 
 This fixture is under `tests/`, is absent from the npm `files` list and Electron build files, and never enters a production archive.

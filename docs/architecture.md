@@ -28,7 +28,7 @@ flowchart LR
 
 这是固定版本、只读的上游源码子模块，也是独立的 pnpm workspace。它是架构
 参考与验证来源，但 Desktop 不会把整个子模块目录当成一个巨大 plugin 加载。
-发布应用使用外层 Yarn workspace 固定的 `@deepseek-ai/dsh-*` 与 Cordis
+发布应用使用外层 PNPM workspace 固定的 `@deepseek-ai/dsh-*` 与 Cordis
 发布包。默认 Desktop profile 只有两个直接 bundle：
 `@deepseek-ai/dsh-base` 与 `@deepseek-ai/dsh-web-app`；它们的 patch 会展开
 为上游 Host、Client、agent、session、tool、storage、sandbox 与 Web rows。
@@ -183,7 +183,7 @@ Launcher 私有的 `desktopRuntime`、`desktopPnpmBootstrap`、Electron executab
 - [Plugin 与 registry 可视化](visuals/acryl-plugin-registry.html)
 - [Desktop service contract](../dsh-plugin-desktop/docs/plugin-services.md)
 - [Package README](../dsh-plugin-desktop/README.md)
-- [Pinned upstream and isolated Yarn workspace](../.agents/notes/implemented/process/2026-08-15-pinned-upstream-and-isolated-yarn-workspace.md)
+- [Pinned upstream and isolated PNPM workspace](../.agents/notes/implemented/process/2026-08-15-pinned-upstream-and-isolated-yarn-workspace.md)
 - [Profile and pnpm services decision](../.agents/notes/implemented/architecture/2026-08-15-desktop-profile-and-pnpm-services.md)
 - [Advanced shell decision](../.agents/notes/implemented/architecture/2026-08-15-desktop-advanced-shell.md)
 - [Native shell generation and platform adapters](../.agents/notes/implemented/architecture/2026-08-19-native-shell-generation-and-platform-adapters.md)

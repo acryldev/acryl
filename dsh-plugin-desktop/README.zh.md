@@ -77,11 +77,11 @@ desktop sidebar surface 会把上游 sidebar-fill token 局部设为透明，因
 
 ## 开发
 
-该包由仓库根目录的 Yarn workspace 管理。相邻的 `deepseek-harness/` checkout 仍是独立的上游 pnpm 项目，不属于 Yarn workspace。请从仓库根目录安装并验证 DSH Desktop：
+该包由仓库根目录的 PNPM workspace 管理。相邻的 `deepseek-harness/` checkout 仍是独立的上游 pnpm 项目，不属于 PNPM workspace。请从仓库根目录安装并验证 DSH Desktop：
 
 ```sh
-yarn install
-yarn check
+corepack pnpm install --frozen-lockfile
+corepack pnpm check
 ```
 
 该检查会验证生产依赖图中的每个必需第一方 peer 都由 desktop deploy root 声明。Headless Loader smoke 会激活 launcher 拥有的 desktop row 与 profile 本地第三方 row，然后启动已发布 Web profile 并检查其 loopback 根页面与 client manifest。单元和类型测试覆盖两种 profile 组合、重启栅栏、client environment 校验、desktop layout 状态与各平台原生窗口选项。
@@ -183,10 +183,10 @@ DSH Desktop 将 UTF-8 日志写入 Electron 用户数据目录：Windows 位于 
 ```bash
 source ~/.nvm/nvm.sh
 git submodule update --init --recursive
-corepack yarn install --immutable
-corepack yarn workspace dsh-plugin-desktop typecheck
-corepack yarn workspace dsh-plugin-desktop test
-corepack yarn build
+corepack pnpm install --frozen-lockfile
+corepack pnpm --filter dsh-plugin-desktop run typecheck
+corepack pnpm --filter dsh-plugin-desktop run test
+corepack pnpm build
 ```
 
 从 `/mnt/<drive>` 运行命令是有效的，但会比放在 WSL 原生 ext4 文件系统中的 checkout 更慢。WSL 不能替代真实 Linux 桌面会话来验证托盘、窗口管理器、`.desktop` 集成或安装后 smoke test。
@@ -197,8 +197,8 @@ corepack yarn build
 
 ```powershell
 git submodule update --init --recursive
-corepack.cmd yarn install --immutable
-corepack.cmd yarn dist:win
+corepack.cmd pnpm install --frozen-lockfile
+corepack.cmd pnpm dist:win
 ```
 
 该流程不要求 Python 或 Visual Studio C++ Build Tools。Windows 命令会直接使用 `node-pty` 内置的 x64 Node-API 二进制，而不会让 Electron Builder 从源码重新编译；如果安装包 staging tree 缺少这些二进制，packaged-runtime gate 会直接拒绝产物。
@@ -212,7 +212,7 @@ corepack.cmd yarn dist:win
 在原生 Windows x64 电脑上执行 `yarn dist:win-portable`，生成未签名的单文件绿色版：
 
 ```powershell
-corepack.cmd yarn dist:win-portable
+corepack.cmd pnpm dist:win-portable
 ```
 
 产物为 `dsh-plugin-desktop\\dist\\ACRYL-2.0.1-x64-Portable.zip`。用户解压到任意可写目录后运行其中的 `DSH Desktop.exe`，不需要安装器、管理员权限、开始菜单注册或卸载步骤。它仍会把 profile、日志和缓存写入 Windows 默认用户数据目录，因此这是便携分发方式，不是把数据完全封装在 exe 旁边的自包含沙箱。绿色 ZIP 不会交给 NSIS 自动更新流程，新版本需要手动替换并重新解压。本地构建没有签名，Windows 可能显示 Unknown publisher 或 SmartScreen 警告；签名后的绿色版仍属于正式发布 gate。

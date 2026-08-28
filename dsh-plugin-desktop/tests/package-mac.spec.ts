@@ -56,7 +56,7 @@ describe('macOS DMG smoke packaging', () => {
     expect(calls).toHaveLength(3)
     expect(calls[0]).toEqual({
       command: 'corepack',
-      args: ['yarn', 'workspace', 'dsh-plugin-desktop', 'check:mac-package'],
+      args: ['pnpm', '--filter', 'dsh-plugin-desktop', 'run', 'check:mac-package'],
       cwd: '/repo',
       env: { PATH: '/usr/bin:/bin', SAFE_VALUE: 'kept' },
     })

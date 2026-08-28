@@ -61,15 +61,15 @@ describe('macOS release command boundary', () => {
     expect(identityEnvironments).toEqual([{ PATH: '/usr/bin', SAFE_BUILD_VALUE: 'kept' }])
     expect(calls).toHaveLength(3)
     expect(calls[0]).toEqual({
-      command: 'yarn',
-      args: ['run', 'check'],
+      command: 'corepack',
+      args: ['pnpm', 'run', 'check'],
       cwd: resolve('/repo/dsh-plugin-desktop', '..'),
       env: { PATH: '/usr/bin', SAFE_BUILD_VALUE: 'kept' },
     })
     expect(calls[1]).toEqual({
-      command: 'yarn',
+      command: 'corepack',
       args: [
-        'exec', 'electron-builder', '--mac', 'dmg', '--universal',
+        'pnpm', 'exec', 'electron-builder', '--mac', 'dmg', '--universal',
         '--config.forceCodeSigning=true', '--config.mac.notarize=true',
         '--config.npmRebuild=false',
         '--config.directories.output=/repo/dsh-plugin-desktop/dist/mac-release',
@@ -155,7 +155,7 @@ describe('macOS release command boundary', () => {
 
     expect(() => releaseMac(options)).toThrow('headless check failed')
     expect(calls).toHaveLength(1)
-    expect(calls[0]?.args).toEqual(['run', 'check'])
+    expect(calls[0]?.args).toEqual(['pnpm', 'run', 'check'])
     expect(calls[0]?.cwd).toBe(resolve('/repo/dsh-plugin-desktop', '..'))
     expect(resetOutput).not.toHaveBeenCalled()
   })

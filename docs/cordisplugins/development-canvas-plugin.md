@@ -6,7 +6,7 @@ logic inside the Electron bootstrap.
 
 ## Package and composition
 
-Canvas owns the independent `dsh-plugin-development-canvas` Yarn workspace and
+Canvas owns the independent `dsh-plugin-development-canvas` PNPM workspace and
 package. Its bundle patch contributes one stable Loader row:
 
 ```yaml
@@ -93,7 +93,7 @@ The standalone package tests cover:
 Run:
 
 ```sh
-corepack yarn workspace dsh-plugin-development-canvas check
-corepack yarn workspace dsh-plugin-desktop verify:loader
-corepack yarn workspace dsh-plugin-desktop verify:profile
+corepack pnpm --filter dsh-plugin-development-canvas run check
+corepack pnpm --filter dsh-plugin-desktop run verify:loader
+corepack pnpm --filter dsh-plugin-desktop run verify:profile
 ```

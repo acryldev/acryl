@@ -2,7 +2,7 @@
 
 **Feature Directory**: `specs/020-pnpm-outer-workspace-migration`
 **Created**: 2026-08-27
-**Status**: Ready for planning
+**Status**: In verification
 **Input**: Replace the outer ACRYL Yarn workspace with PNPM before the pi-tui integration, while preserving the pinned DeepSeek Harness submodule as an independent upstream PNPM workspace.
 
 ## Objective
@@ -62,7 +62,7 @@ As an ACRYL user, I receive the same Electron application artifacts after the pa
 - **FR-003**: The migration MUST remove root Yarn lock, configuration, and command references after their PNPM replacements are verified.
 - **FR-004**: Every currently committed root dependency patch MUST remain explicit, reproducible, and covered by the same focused verification after translation.
 - **FR-005**: Native dependency build permission and supported architecture policy MUST be explicit and reproducible under PNPM.
-- **FR-006**: The root workspace MUST use PNPM's isolated dependency layout unless Electron packaging evidence proves a documented compatibility exception is required.
+- **FR-006**: The root workspace MUST use PNPM's isolated dependency layout unless Electron packaging evidence proves a documented compatibility exception is required. The current exception is the root hoisted linker: existing published DSH Web packages expose React 18 type references while `acryl-tui` owns React 19 types.
 - **FR-007**: Root scripts and documentation MUST use `corepack pnpm`; upstream scripts MUST enter the submodule and invoke its own pinned PNPM release.
 - **FR-008**: The migration MUST NOT modify `deepseek-harness/` or its Git submodule pointer.
 - **FR-009**: The pi-tui integration MUST begin only after this migration's focused checks, Electron build, and manual GUI smoke test have passed.

@@ -62,14 +62,14 @@
     "node": "^22.19.0 || >=24.0.0"
   },
   "scripts": {
-    "build": "node scripts/clean.mjs && yarn run generate:types && tsdown && tsc -p tsconfig.json && tsc -p tsconfig.client.json --emitDeclarationOnly",
+    "build": "node scripts/clean.mjs && pnpm run generate:types && tsdown && tsc -p tsconfig.json && tsc -p tsconfig.client.json --emitDeclarationOnly",
     "generate:types": "node scripts/generate-contract-types.mjs",
     "typecheck": "node scripts/generate-contract-types.mjs --check && tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
     "test": "vitest run",
     "verify:contracts": "node scripts/generate-contract-types.mjs --check",
     "verify:loader": "node scripts/verify-client-loader.mjs",
-    "check": "node scripts/verify-docs.mjs && yarn run build && node scripts/verify-package-exports.mjs && yarn run verify:loader && yarn run typecheck && yarn run test",
-    "prepack": "yarn run check"
+    "check": "node scripts/verify-docs.mjs && pnpm run build && node scripts/verify-package-exports.mjs && pnpm run verify:loader && pnpm run typecheck && pnpm run test",
+    "prepack": "pnpm run check"
   },
   "dependencies": {
     "ajv": "^8.20.0",

@@ -27,22 +27,22 @@ DSH 的核心是插件。如果你写插件，请先阅读：
 
 ```sh
 git submodule update --init --recursive
-corepack yarn install --immutable
-corepack yarn check   # 完整 headless gate：构建、类型检查、测试与冒烟
-corepack yarn dev     # 有图形环境时启动应用
+corepack pnpm install --frozen-lockfile
+corepack pnpm run check   # 完整 headless gate：构建、类型检查、测试与冒烟
+corepack pnpm run dev     # 有图形环境时启动应用
 ```
 
 ### 仓库边界（开始前务必了解）
 
 - `deepseek-harness/` 是固定版本的上游子模块，**桌面开发不修改其中的任何文件**；上游内容更新走独立的 pin 提交。
-- 桌面代码位于 `dsh-plugin-desktop/`；`dsh-community-fabric/` 保存社区标准 Draft，`dsh-community-market/` 保存市场壳设计。两个社区 package 当前都只有文档、尚不可加载，三个自有 package 共用外层 Yarn workspace。
+- 桌面代码位于 `dsh-plugin-desktop/`；`dsh-community-fabric/` 保存社区标准 Draft，`dsh-community-market/` 保存市场壳设计。两个社区 package 当前都只有文档、尚不可加载，三个自有 package 共用外层 PNPM workspace。
 - 构建、类型检查、单元测试和冒烟检查必须保持 headless-safe。
 
 ### 提交与 PR
 
 - 提交信息使用 conventional commits 风格（例如 `fix(desktop): ...`、`docs: ...`）。
-- 提交前运行 `yarn check` 并保证全绿。
-- 变更生产依赖后，运行 `yarn workspace dsh-plugin-desktop verify:notices` 刷新第三方许可清单，并提交更新后的 `dsh-plugin-desktop/THIRD_PARTY_NOTICES.md`。
+- 提交前运行 `corepack pnpm run check` 并保证全绿。
+- 变更生产依赖后，运行 `corepack pnpm --filter dsh-plugin-desktop run verify:notices` 刷新第三方许可清单，并提交更新后的 `dsh-plugin-desktop/THIRD_PARTY_NOTICES.md`。
 - 文档改动请中英同步，并更新 `README.i18n.yaml` 的双语 hash 记录。
 - PR 描述说明改动内容、动机和验证方式；CI 通过后再合并。
 

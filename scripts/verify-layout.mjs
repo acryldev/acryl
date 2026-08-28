@@ -12,6 +12,8 @@ const run = (command, args, cwd = root) => execFileSync(command, args, {
 const fail = message => { throw new Error(`verify-layout: ${message}`) }
 
 const workspace = readJson('package.json')
+const pnpmWorkspace = readFileSync(resolve(root, 'pnpm-workspace.yaml'), 'utf8')
+const npmrc = readFileSync(resolve(root, '.npmrc'), 'utf8')
 const upstream = readJson('upstream.json')
 const plugin = readJson('dsh-plugin-desktop/package.json')
 const canvas = readJson('dsh-plugin-development-canvas/package.json')
@@ -21,28 +23,83 @@ const fabric = readJson('dsh-community-fabric/package.json')
 const market = readJson('dsh-community-market/package.json')
 const upstreamPackage = readJson('deepseek-harness/package.json')
 
-if (workspace.packageManager !== 'yarn@4.18.0') {
-  fail('the product workspace must pin yarn@4.18.0')
+if (workspace.packageManager !== 'pnpm@11.7.0') {
+  fail('the product workspace must pin pnpm@11.7.0')
 }
-if (JSON.stringify(workspace.workspaces) !== JSON.stringify([
-  'dsh-plugin-desktop',
-  'dsh-plugin-development-canvas',
-  'acryl-control',
-  'acryl-tui',
-  'dsh-community-fabric',
-  'dsh-community-market',
-])) {
-  fail('the root Yarn workspace must contain the desktop, development-canvas, ACRYL control, ACRYL TUI, community-fabric, and community-market packages')
+if (workspace.workspaces !== undefined) fail('workspace membership belongs only in pnpm-workspace.yaml')
+if (!npmrc.includes('node-linker=hoisted\n')) fail('the product workspace must use the documented PNPM hoisted linker exception')
+if (!npmrc.includes('ReactNode types across the existing published DSH client packages.')) {
+  fail('the PNPM hoisted linker exception must record the DSH React peer-graph evidence')
+}
+if (pnpmWorkspace !== `packages:
+  - acryl-control
+  - acryl-harness-runtime
+  - acryl-tui
+  - dsh-plugin-desktop
+  - dsh-plugin-development-canvas
+  - dsh-community-fabric
+  - dsh-community-market
+  - '!deepseek-harness/**'
+
+allowBuilds:
+  '@deepseek-ai/dsh-subprocess-local': true
+  '@google/genai': false
+  electron: true
+  electron-winstaller: false
+  esbuild: true
+  koffi: true
+  node-pty: true
+  protobufjs: false
+
+overrides:
+  koffi: 3.1.5
+
+# Published DSH client packages declare React types in generated public APIs but
+# omit the type package from their manifests. Their web surface is React 18;
+# acryl-tui separately owns Ink's React 19 types.
+packageExtensions:
+  '@deepseek-ai/dsh-client-ui-primitives@0.1.1-rc.2':
+    dependencies:
+      '@types/react': 18.3.31
+  '@deepseek-ai/dsh-client-ui-slots@0.1.1-rc.2':
+    dependencies:
+      '@types/react': 18.3.31
+  'lucide-react@1.34.0':
+    dependencies:
+      '@types/react': 18.3.31
+
+patchedDependencies:
+  '@deepseek-ai/dsh-app-boot@0.1.1-rc.2': patches/dsh-app-boot@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-client-ui-directory-picker-browse@0.1.1-rc.2': patches/dsh-client-ui-directory-picker-browse@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-client-ui-settings-models@0.1.1-rc.2': patches/dsh-client-ui-settings-models@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-client-ui-trajectory@0.1.1-rc.2': patches/dsh-client-ui-trajectory@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-client-ui-workspace@0.1.1-rc.2': patches/dsh-client-ui-workspace@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-llm-deepseek@0.1.1-rc.2': patches/dsh-llm-deepseek@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-sandbox-windows-acl@0.1.1-rc.2': patches/dsh-sandbox-windows-acl@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-web-app@0.1.1-rc.2': patches/dsh-web-app@0.1.1-rc.2.patch
+  app-builder-lib@26.15.7: patches/app-builder-lib@26.15.7.patch
+  dshmarket@1.17.1: patches/dshmarket@1.17.1.patch
+
+supportedArchitectures:
+  os:
+    - current
+  cpu:
+    - current
+    - x64
+    - arm64
+`) {
+  fail('pnpm-workspace.yaml must define the owned workspace, patch, native-build, and universal macOS policies')
 }
 for (const [name, manifest] of [
   ['dsh-plugin-desktop', plugin],
   ['dsh-plugin-development-canvas', canvas],
   ['acryl-control', control],
+  ['acryl-harness-runtime', readJson('acryl-harness-runtime/package.json')],
   ['acryl-tui', tui],
   ['dsh-community-fabric', fabric],
   ['dsh-community-market', market],
 ]) {
-  if (manifest.packageManager !== undefined) fail(`${name} must inherit the root Yarn release`)
+  if (manifest.packageManager !== undefined) fail(`${name} must inherit the root PNPM release`)
 }
 if (canvas.name !== 'dsh-plugin-development-canvas') fail('the Canvas workspace must own dsh-plugin-development-canvas')
 if (control.name !== 'acryl-control') fail('the control workspace must own acryl-control')
@@ -59,23 +116,26 @@ const claudeTarget = claudeStat.isSymbolicLink()
 if (claudeTarget !== 'AGENTS.md') {
   fail('CLAUDE.md must link to the outer repository AGENTS.md')
 }
-for (const legacyFile of [
-  'pnpm-lock.yaml',
-  'pnpm-workspace.yaml',
-  'dsh-plugin-desktop/pnpm-lock.yaml',
-  'dsh-plugin-desktop/pnpm-workspace.yaml',
-  'dsh-plugin-development-canvas/pnpm-lock.yaml',
-  'dsh-plugin-development-canvas/pnpm-workspace.yaml',
-  'acryl-control/pnpm-lock.yaml',
-  'acryl-control/pnpm-workspace.yaml',
-  'acryl-tui/pnpm-lock.yaml',
-  'acryl-tui/pnpm-workspace.yaml',
-  'dsh-community-fabric/pnpm-lock.yaml',
-  'dsh-community-fabric/pnpm-workspace.yaml',
-  'dsh-community-market/pnpm-lock.yaml',
-  'dsh-community-market/pnpm-workspace.yaml',
+for (const obsoleteFile of [
+  'yarn.lock',
+  '.yarnrc.yml',
+  '.yarn',
+  'dsh-plugin-desktop/yarn.lock',
+  'dsh-plugin-desktop/.yarnrc.yml',
+  'dsh-plugin-development-canvas/yarn.lock',
+  'dsh-plugin-development-canvas/.yarnrc.yml',
+  'acryl-control/yarn.lock',
+  'acryl-control/.yarnrc.yml',
+  'acryl-harness-runtime/yarn.lock',
+  'acryl-harness-runtime/.yarnrc.yml',
+  'acryl-tui/yarn.lock',
+  'acryl-tui/.yarnrc.yml',
+  'dsh-community-fabric/yarn.lock',
+  'dsh-community-fabric/.yarnrc.yml',
+  'dsh-community-market/yarn.lock',
+  'dsh-community-market/.yarnrc.yml',
 ]) {
-  if (existsSync(resolve(root, legacyFile))) fail(`${legacyFile} must not exist`)
+  if (existsSync(resolve(root, obsoleteFile))) fail(`${obsoleteFile} must not exist`)
 }
 if (run('git', ['config', '-f', '.gitmodules', '--get', 'submodule.deepseek-harness.path']) !== 'deepseek-harness') {
   fail('the upstream submodule path must be deepseek-harness')
@@ -99,8 +159,9 @@ for (const [owner, manifest] of [
   for (const field of ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies', 'resolutions']) {
     for (const [name, range] of Object.entries(manifest[field] ?? {})) {
       if (typeof range !== 'string') continue
-      if (/^(?:workspace|portal|link):/u.test(range)
-        || (range.startsWith('file:') && range.includes('deepseek-harness'))) {
+      if ((name === '@deepseek-ai/dsh' || name.startsWith('@deepseek-ai/dsh-'))
+        && (/^(?:workspace|portal|link):/u.test(range)
+          || (range.startsWith('file:') && range.includes('deepseek-harness')))) {
         fail(`${owner} ${field}.${name} bypasses the published DSH package boundary`)
       }
     }
@@ -130,4 +191,4 @@ for (const name of Object.keys(plugin.dependencies).filter(name => name === '@de
   }
 }
 
-process.stdout.write(`verify-layout: Yarn workspace and upstream ${upstream.commit.slice(0, 10)} are consistent\n`)
+process.stdout.write(`verify-layout: PNPM workspace and upstream ${upstream.commit.slice(0, 10)} are consistent\n`)

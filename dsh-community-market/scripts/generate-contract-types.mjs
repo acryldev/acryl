@@ -33,7 +33,7 @@ for (const [schemaName, typeName] of targets) {
 
   if (checkOnly) {
     if (!existsSync(outputPath) || readFileSync(outputPath, 'utf8') !== generated) {
-      throw new Error(`${schemaName} generated types are stale; run yarn generate:types`)
+      throw new Error(`${schemaName} generated types are stale; run pnpm generate:types`)
     }
     continue
   }

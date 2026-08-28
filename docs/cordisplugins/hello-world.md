@@ -266,8 +266,8 @@ Hello World above is a tiny Host plugin. Development Canvas lives in **advanced*
 
 ```sh
 corepack enable
-corepack yarn install --immutable
-corepack yarn local
+corepack pnpm install --frozen-lockfile
+corepack pnpm local
 ```
 
 `yarn local` (alias `yarn dev:local`) builds, then starts Electron against `~/.dsh-acryl` and a separate Electron user-data folder so it does not share settings with the installed ACRYL app. First build can take a while.
@@ -275,10 +275,10 @@ corepack yarn local
 Daily loop without launching the window:
 
 ```sh
-corepack yarn typecheck
-corepack yarn test
-corepack yarn verify          # typecheck + test
-corepack yarn lifecycle       # verify, then isolated GUI
+corepack pnpm typecheck
+corepack pnpm test
+corepack pnpm verify          # typecheck + test
+corepack pnpm lifecycle       # verify, then isolated GUI
 ```
 
 3. In the window, open **Settings** (or the tray) and switch to **advanced** mode. That restarts the app. Compatibility mode is the upstream Chat UI and does **not** show the canvas.
@@ -288,8 +288,8 @@ corepack yarn lifecycle       # verify, then isolated GUI
 Headless checks (no window):
 
 ```sh
-corepack yarn workspace dsh-plugin-desktop test tests/development-canvas-state.spec.ts tests/canvas-pty.spec.ts
-corepack yarn workspace dsh-plugin-desktop typecheck
+corepack pnpm --filter dsh-plugin-desktop run test tests/development-canvas-state.spec.ts tests/canvas-pty.spec.ts
+corepack pnpm --filter dsh-plugin-desktop run typecheck
 ```
 
 ### Isolate this checkout from the installed DMG app
@@ -307,7 +307,7 @@ Safer ACRYL / canvas development:
 
 ```sh
 # quit Applications/DSH Desktop.app first
-corepack yarn local
+corepack pnpm local
 ```
 
 That uses `~/.dsh-acryl` as Harness home and `~/Library/Application Support/ACRYL Development` as Electron user data. The DMG app keeps `~/.dsh` and `~/Library/Application Support/ACRYL`. Still quit the store app before launching this checkout: two Electron processes with the same binary name can fight over the tray even when data dirs differ.

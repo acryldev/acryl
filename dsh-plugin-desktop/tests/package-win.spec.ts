@@ -52,7 +52,7 @@ describe('Windows x64 installer packaging', () => {
         '/d',
         '/s',
         '/c',
-        'corepack yarn workspace dsh-plugin-desktop check:win-package',
+        'corepack pnpm --filter dsh-plugin-desktop run check:win-package',
       ],
       cwd: 'C:\\repo',
       env: { PATH: 'C:\\Windows\\System32', SAFE_VALUE: 'kept' },

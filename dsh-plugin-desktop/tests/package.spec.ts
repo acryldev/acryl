@@ -12,7 +12,7 @@ import {
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { fileURLToPath, pathToFileURL } from 'node:url'
+import { pathToFileURL } from 'node:url'
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
 
@@ -61,9 +61,14 @@ const manifest = JSON.parse(readFileSync(new URL('package.json', packageRoot), '
   peerDependencies?: Record<string, unknown>
 }
 const workspaceManifest = JSON.parse(readFileSync(new URL('package.json', workspaceRoot), 'utf8')) as {
+  packageManager?: unknown
   version?: unknown
-  resolutions?: Record<string, unknown>
   scripts?: Record<string, unknown>
+}
+const pnpmWorkspace = readFileSync(new URL('pnpm-workspace.yaml', workspaceRoot), 'utf8')
+
+function expectPatchedDependency(name: string, path: string): void {
+  expect(pnpmWorkspace).toContain(`  '${name}': ${path.slice(2)}`)
 }
 const ciWorkflow = readFileSync(new URL('.github/workflows/ci.yml', workspaceRoot), 'utf8')
 const releaseCandidateWorkflow = readFileSync(
@@ -72,14 +77,14 @@ const releaseCandidateWorkflow = readFileSync(
 )
 
 describe('published package surface', () => {
-  it('runs Canvas, Desktop, and Community Market typechecks from the root command', () => {
+  it('runs owned-workspace typechecks and tests through PNPM filters', () => {
+    expect(workspaceManifest.packageManager).toBe('pnpm@11.7.0')
     expect(workspaceManifest.scripts?.typecheck)
-      .toBe('yarn workspace dsh-plugin-development-canvas typecheck && yarn workspace dsh-plugin-desktop typecheck && yarn workspace dsh-community-market typecheck')
-  })
-
-  it('runs Canvas, Desktop, and Community Market tests from the root command', () => {
+      .toBe('pnpm --filter acryl-control run typecheck && pnpm --filter acryl-tui run typecheck && pnpm --filter dsh-plugin-development-canvas run typecheck && pnpm --filter dsh-plugin-desktop run typecheck && pnpm --filter dsh-community-market run typecheck')
     expect(workspaceManifest.scripts?.test)
-      .toBe('yarn workspace dsh-plugin-development-canvas test && yarn workspace dsh-plugin-desktop test && yarn workspace dsh-community-market test')
+      .toBe('pnpm --filter acryl-control run test && pnpm --filter acryl-tui run test && pnpm --filter dsh-plugin-development-canvas run test && pnpm --filter dsh-plugin-desktop run test && pnpm --filter dsh-community-market run test')
+    expect(pnpmWorkspace).toContain("  - '!deepseek-harness/**'")
+    expect(pnpmWorkspace).toContain('node-pty: true')
   })
 
   it('registers both npm launcher names', () => {
@@ -179,8 +184,8 @@ describe('published package surface', () => {
 
   it('pins standalone Canvas and both selectable Market providers in the published runtime', () => {
     expect(manifest.dependencies).toMatchObject({
-      'dsh-community-market': '0.1.0-dev.0',
-      'dsh-plugin-development-canvas': '0.1.0-dev.0',
+      'dsh-community-market': 'workspace:*',
+      'dsh-plugin-development-canvas': 'workspace:*',
       dshmarket: '1.17.1',
     })
     expect(manifest.optionalDependencies ?? {}).not.toHaveProperty('dshmarket')
@@ -188,10 +193,7 @@ describe('published package surface', () => {
 
   it('patches app boot to accept an empty patch layer', () => {
     const patchPath = './patches/dsh-app-boot@0.1.1-rc.2.patch'
-    expect(workspaceManifest.resolutions).toMatchObject({
-      '@deepseek-ai/dsh-app-boot@npm:0.1.1-rc.2': expect.stringContaining(patchPath),
-      '@deepseek-ai/dsh-app-boot@npm:^0.1.1-rc.2': expect.stringContaining(patchPath),
-    })
+    expectPatchedDependency('@deepseek-ai/dsh-app-boot@0.1.1-rc.2', patchPath)
     const marker = 'if (parsed === void 0 || parsed === null) return [];'
     const patch = readFileSync(new URL(patchPath, workspaceRoot), 'utf8')
     const installedBoot = readFileSync(new URL(
@@ -204,10 +206,7 @@ describe('published package surface', () => {
 
   it('patches the browse panel with the Windows native-picker icon bridge', () => {
     const patchPath = './patches/dsh-client-ui-directory-picker-browse@0.1.1-rc.2.patch'
-    expect(workspaceManifest.resolutions).toMatchObject({
-      '@deepseek-ai/dsh-client-ui-directory-picker-browse@npm:0.1.1-rc.2': expect.stringContaining(patchPath),
-      '@deepseek-ai/dsh-client-ui-directory-picker-browse@npm:^0.1.1-rc.2': expect.stringContaining(patchPath),
-    })
+    expectPatchedDependency('@deepseek-ai/dsh-client-ui-directory-picker-browse@0.1.1-rc.2', patchPath)
     const patch = readFileSync(new URL(patchPath, workspaceRoot), 'utf8')
     const installedClient = readFileSync(new URL(
       'node_modules/@deepseek-ai/dsh-client-ui-directory-picker-browse/lib/client.js',
@@ -231,10 +230,7 @@ describe('published package surface', () => {
 
   it('marks the upstream Workspace browser as the desktop folder-drop target', () => {
     const patchPath = './patches/dsh-client-ui-workspace@0.1.1-rc.2.patch'
-    expect(workspaceManifest.resolutions).toMatchObject({
-      '@deepseek-ai/dsh-client-ui-workspace@npm:0.1.1-rc.2': expect.stringContaining(patchPath),
-      '@deepseek-ai/dsh-client-ui-workspace@npm:^0.1.1-rc.2': expect.stringContaining(patchPath),
-    })
+    expectPatchedDependency('@deepseek-ai/dsh-client-ui-workspace@0.1.1-rc.2', patchPath)
     const patch = readFileSync(new URL(patchPath, workspaceRoot), 'utf8')
     const installedClient = readFileSync(new URL(
       'node_modules/@deepseek-ai/dsh-client-ui-workspace/lib/client.js',
@@ -246,10 +242,7 @@ describe('published package surface', () => {
 
   it('keeps API selection available after overriding a provider base URL', () => {
     const patchPath = './patches/dsh-client-ui-settings-models@0.1.1-rc.2.patch'
-    expect(workspaceManifest.resolutions).toMatchObject({
-      '@deepseek-ai/dsh-client-ui-settings-models@npm:0.1.1-rc.2': expect.stringContaining(patchPath),
-      '@deepseek-ai/dsh-client-ui-settings-models@npm:^0.1.1-rc.2': expect.stringContaining(patchPath),
-    })
+    expectPatchedDependency('@deepseek-ai/dsh-client-ui-settings-models@0.1.1-rc.2', patchPath)
     const patch = readFileSync(new URL(patchPath, workspaceRoot), 'utf8')
     const installedClient = readFileSync(new URL(
       'node_modules/@deepseek-ai/dsh-client-ui-settings-models/lib/client.js',
@@ -267,10 +260,7 @@ describe('published package surface', () => {
 
   it('localizes Trajectory toolbar labels in Simplified Chinese', () => {
     const patchPath = './patches/dsh-client-ui-trajectory@0.1.1-rc.2.patch'
-    expect(workspaceManifest.resolutions).toMatchObject({
-      '@deepseek-ai/dsh-client-ui-trajectory@npm:0.1.1-rc.2': expect.stringContaining(patchPath),
-      '@deepseek-ai/dsh-client-ui-trajectory@npm:^0.1.1-rc.2': expect.stringContaining(patchPath),
-    })
+    expectPatchedDependency('@deepseek-ai/dsh-client-ui-trajectory@0.1.1-rc.2', patchPath)
     const patch = readFileSync(new URL(patchPath, workspaceRoot), 'utf8')
     const installedClient = readFileSync(new URL(
       'node_modules/@deepseek-ai/dsh-client-ui-trajectory/lib/client.js',
@@ -297,10 +287,7 @@ describe('published package surface', () => {
 
   it('keeps Desktop boot from opening an external browser and uses Electron Node mode for explicit helpers', () => {
     const patchPath = './patches/dsh-web-app@0.1.1-rc.2.patch'
-    expect(workspaceManifest.resolutions).toMatchObject({
-      '@deepseek-ai/dsh-web-app@npm:0.1.1-rc.2': expect.stringContaining(patchPath),
-      '@deepseek-ai/dsh-web-app@npm:^0.1.1-rc.2': expect.stringContaining(patchPath),
-    })
+    expectPatchedDependency('@deepseek-ai/dsh-web-app@0.1.1-rc.2', patchPath)
     const patch = readFileSync(new URL(patchPath, workspaceRoot), 'utf8')
     const installedWebApp = readFileSync(new URL(
       'node_modules/@deepseek-ai/dsh-web-app/lib/index.js',
@@ -638,43 +625,43 @@ describe('published package surface', () => {
 
     expect(manifest.scripts?.build).toContain('node scripts/generate-acryl-brand.mjs')
     expect(manifest.scripts?.build).toContain('node scripts/generate-mac-app-icon.mjs')
-    expect(manifest.scripts?.['build:canvas']).toBe('yarn workspace dsh-plugin-development-canvas build')
+    expect(manifest.scripts?.['build:canvas']).toBe('pnpm --filter dsh-plugin-development-canvas run build')
     expect(manifest.scripts?.dev)
-      .toBe('yarn run build:canvas && yarn run build && yarn run verify:loader && node scripts/launch-dev.mjs')
-    expect(manifest.scripts?.check).toContain('yarn run build:canvas')
+      .toBe('pnpm run build:canvas && pnpm run build && pnpm run verify:loader && node scripts/launch-dev.mjs')
+    expect(manifest.scripts?.check).toContain('pnpm run build:canvas')
     expect(manifest.scripts?.['package:dir'])
-      .toBe('yarn run build:canvas && yarn run build && node scripts/package-dir.mjs')
+      .toBe('pnpm run build:canvas && pnpm run build && node scripts/package-dir.mjs')
     expect(packageDir).toContain("CSC_IDENTITY_AUTO_DISCOVERY: 'false'")
     expect(manifest.scripts?.['dist:mac']).toBe('node scripts/release-mac.ts')
     expect(manifest.scripts?.['dist:mac-smoke']).toBe('node scripts/package-mac.ts')
     expect(manifest.scripts?.['dist:win']).toBe('node scripts/package-win.ts')
     expect(manifest.scripts?.['dist:win-portable']).toBe('node scripts/package-win-portable.ts')
-    expect(manifest.scripts?.['check:win-package']).toContain('yarn workspace dsh-community-market build')
-    expect(manifest.scripts?.['check:win-package']).toContain('yarn run build')
-    expect(manifest.scripts?.['check:win-package']).toContain('yarn run typecheck')
+    expect(manifest.scripts?.['check:win-package']).toContain('pnpm --filter dsh-community-market run build')
+    expect(manifest.scripts?.['check:win-package']).toContain('pnpm run build')
+    expect(manifest.scripts?.['check:win-package']).toContain('pnpm run typecheck')
     expect(manifest.scripts?.['check:win-package']).toContain('tests/package-win.spec.ts')
     expect(manifest.scripts?.['check:win-package']).toContain('tests/verify-win-portable.spec.ts')
     expect(manifest.scripts?.['check:win-package']).toContain('tests/update-checker.spec.ts')
     expect(manifest.scripts?.['check:win-package']).toContain('tests/update-download.spec.ts')
     expect(manifest.scripts?.['check:win-package']).toContain('tests/windows-volume-diagnostics.spec.ts')
-    expect(manifest.scripts?.['check:win-package']).toContain('yarn run verify:closure')
-    expect(manifest.scripts?.['check:mac-package']).toContain('yarn workspace dsh-community-market build')
-    expect(manifest.scripts?.['check:mac-package']).toContain('yarn run build')
-    expect(manifest.scripts?.['check:mac-package']).toContain('yarn run typecheck')
+    expect(manifest.scripts?.['check:win-package']).toContain('pnpm run verify:closure')
+    expect(manifest.scripts?.['check:mac-package']).toContain('pnpm --filter dsh-community-market run build')
+    expect(manifest.scripts?.['check:mac-package']).toContain('pnpm run build')
+    expect(manifest.scripts?.['check:mac-package']).toContain('pnpm run typecheck')
     expect(manifest.scripts?.['check:mac-package']).toContain('tests/package-mac.spec.ts')
     expect(manifest.scripts?.['check:mac-package']).toContain('tests/verify-mac-smoke.spec.ts')
     expect(manifest.scripts?.['check:mac-package']).toContain('tests/mac-universal.spec.ts')
-    expect(manifest.scripts?.['check:mac-package']).toContain('yarn run verify:closure')
+    expect(manifest.scripts?.['check:mac-package']).toContain('pnpm run verify:closure')
     expect(manifest.scripts?.['verify:cli']).toBe('node scripts/verify-cli-runtime.mjs')
-    expect(manifest.scripts?.check).toContain('yarn run verify:cli')
+    expect(manifest.scripts?.check).toContain('pnpm run verify:cli')
     expect(workspaceManifest.scripts?.['dist:mac'])
-      .toBe('yarn workspace dsh-community-market build && yarn workspace dsh-plugin-desktop dist:mac')
+      .toBe('pnpm --filter dsh-community-market run build && pnpm --filter dsh-plugin-desktop run dist:mac')
     expect(workspaceManifest.scripts?.['dist:mac-smoke'])
-      .toBe('yarn workspace dsh-community-market build && yarn workspace dsh-plugin-desktop dist:mac-smoke')
+      .toBe('pnpm --filter dsh-community-market run build && pnpm --filter dsh-plugin-desktop run dist:mac-smoke')
     expect(workspaceManifest.scripts?.['dist:win'])
-      .toBe('yarn workspace dsh-community-market build && yarn workspace dsh-plugin-desktop dist:win')
+      .toBe('pnpm --filter dsh-community-market run build && pnpm --filter dsh-plugin-desktop run dist:win')
     expect(workspaceManifest.scripts?.['dist:win-portable'])
-      .toBe('yarn workspace dsh-community-market build && yarn workspace dsh-plugin-desktop dist:win-portable')
+      .toBe('pnpm --filter dsh-community-market run build && pnpm --filter dsh-plugin-desktop run dist:win-portable')
     expect(manifest.build?.afterPack).toBe('./scripts/verify-packaged-runtime.ts')
     expect(manifest.build?.mac).toEqual(expect.objectContaining({
       extendInfo: {
@@ -699,12 +686,12 @@ describe('published package surface', () => {
     expect(releaseCandidateWorkflow).toContain("tags: ['v*']")
     expect(releaseCandidateWorkflow).toContain('workflow_dispatch:')
     expect(releaseCandidateWorkflow).toContain('runs-on: windows-latest')
-    expect(releaseCandidateWorkflow).toContain('corepack yarn workspace dsh-plugin-desktop check:win-package')
-    expect(releaseCandidateWorkflow).toContain('corepack yarn workspace dsh-plugin-desktop dist:win')
-    expect(releaseCandidateWorkflow).toContain('corepack yarn workspace dsh-plugin-desktop dist:win-portable')
+    expect(releaseCandidateWorkflow).toContain('corepack pnpm --filter dsh-plugin-desktop run check:win-package')
+    expect(releaseCandidateWorkflow).toContain('corepack pnpm --filter dsh-plugin-desktop run dist:win')
+    expect(releaseCandidateWorkflow).toContain('corepack pnpm --filter dsh-plugin-desktop run dist:win-portable')
     expect(releaseCandidateWorkflow).toContain('runs-on: macos-latest')
-    expect(releaseCandidateWorkflow).toContain('corepack yarn workspace dsh-plugin-desktop check:mac-package')
-    expect(releaseCandidateWorkflow).toContain('corepack yarn workspace dsh-plugin-desktop dist:mac-smoke')
+    expect(releaseCandidateWorkflow).toContain('corepack pnpm --filter dsh-plugin-desktop run check:mac-package')
+    expect(releaseCandidateWorkflow).toContain('corepack pnpm --filter dsh-plugin-desktop run dist:mac-smoke')
     expect(releaseCandidateWorkflow.match(/DSH_PACKAGE_CHECK_ALREADY_RAN: '1'/gu)).toHaveLength(3)
   })
 
@@ -713,11 +700,11 @@ describe('published package surface', () => {
     expect(ciWorkflow).toContain('pull_request:')
     expect(ciWorkflow).toContain('push:')
     expect(ciWorkflow).toContain('runs-on: ubuntu-latest')
-    expect(ciWorkflow).toContain('corepack yarn install --immutable')
-    expect(ciWorkflow).toContain('corepack yarn check:layout')
-    expect(ciWorkflow).toContain('corepack yarn typecheck')
-    expect(ciWorkflow).toContain('corepack yarn test')
-    expect(ciWorkflow).toContain('corepack yarn build')
+    expect(ciWorkflow).toContain('corepack pnpm install --frozen-lockfile')
+    expect(ciWorkflow).toContain('corepack pnpm run check:layout')
+    expect(ciWorkflow).toContain('corepack pnpm run typecheck')
+    expect(ciWorkflow).toContain('corepack pnpm run test')
+    expect(ciWorkflow).toContain('corepack pnpm run build')
   })
 
   it('keeps the supplied ACRYL theme logos and generated native tray assets', () => {
@@ -783,21 +770,18 @@ describe('published package surface', () => {
   })
 
   it('packages the native-compiled Koffi Windows runtime', () => {
-    const lockfile = readFileSync(new URL('yarn.lock', workspaceRoot), 'utf8')
+    const lockfile = readFileSync(new URL('pnpm-lock.yaml', workspaceRoot), 'utf8')
 
     expect(manifest.dependencies?.koffi).toBe('3.1.5')
-    expect(workspaceManifest.resolutions).toMatchObject({
-      'koffi@npm:^3.1.0': '3.1.5',
-    })
-    expect(lockfile).toContain('"koffi@npm:3.1.5":')
-    expect(lockfile).toContain('@koromix/koffi-win32-x64@npm:3.1.5')
-    expect(lockfile).not.toContain('"koffi@npm:3.1.4":')
-    expect(lockfile).not.toContain('@koromix/koffi-win32-x64@npm:3.1.4')
+    expect(pnpmWorkspace).toContain('  koffi: 3.1.5')
+    expect(lockfile).toContain('koffi@3.1.5:')
+    expect(lockfile).toContain('@koromix/koffi-win32-x64@3.1.5')
+    expect(lockfile).not.toContain('koffi@3.1.4:')
+    expect(lockfile).not.toContain('@koromix/koffi-win32-x64@3.1.4')
   })
 
   it('resolves electron-builder through the pinned app-builder-lib keychain patch', () => {
-    const patchResolution = 'patch:app-builder-lib@npm%3A26.15.7#./patches/app-builder-lib@26.15.7.patch'
-    const lockfile = readFileSync(new URL('yarn.lock', workspaceRoot), 'utf8')
+    const lockfile = readFileSync(new URL('pnpm-lock.yaml', workspaceRoot), 'utf8')
     const patch = readFileSync(new URL('patches/app-builder-lib@26.15.7.patch', workspaceRoot), 'utf8')
     const workspaceRequire = createRequire(new URL('package.json', packageRoot))
     const electronBuilderManifest = workspaceRequire.resolve('electron-builder/package.json')
@@ -807,11 +791,9 @@ describe('published package surface', () => {
     const installedNsisInstaller = readFileSync(join(dirname(appBuilderManifest), 'templates/nsis/installer.nsi'), 'utf8')
     const installedNsisPortable = readFileSync(join(dirname(appBuilderManifest), 'templates/nsis/portable.nsi'), 'utf8')
 
-    expect(workspaceManifest.resolutions).toMatchObject({
-      'app-builder-lib@npm:26.15.7': patchResolution,
-    })
+    expect(pnpmWorkspace).toContain('  app-builder-lib@26.15.7: patches/app-builder-lib@26.15.7.patch')
     expect(manifest.devDependencies?.['electron-builder']).toBe('26.15.7')
-    expect(lockfile).toContain('app-builder-lib@patch:app-builder-lib@npm%3A26.15.7#./patches/app-builder-lib@26.15.7.patch')
+    expect(lockfile).toContain('app-builder-lib@26.15.7(patch_hash=')
     expect(patch).toContain('importCerts(keychainFile, certPaths, cscPasswords, keychainPassword)')
     expect(patch).toContain('"-k", keychainPassword, keychainFile')
     expect(patch).toContain('ManifestLongPathAware true')
@@ -823,8 +805,8 @@ describe('published package surface', () => {
   })
 
   it('starts restricted Windows shells with a hidden console show state', () => {
-    const patchResolution = 'patch:@deepseek-ai/dsh-sandbox-windows-acl@npm%3A0.1.1-rc.2#./patches/dsh-sandbox-windows-acl@0.1.1-rc.2.patch'
-    const lockfile = readFileSync(new URL('yarn.lock', workspaceRoot), 'utf8')
+    const patchPath = './patches/dsh-sandbox-windows-acl@0.1.1-rc.2.patch'
+    const lockfile = readFileSync(new URL('pnpm-lock.yaml', workspaceRoot), 'utf8')
     const patch = readFileSync(new URL('patches/dsh-sandbox-windows-acl@0.1.1-rc.2.patch', workspaceRoot), 'utf8')
     const workspaceRequire = createRequire(new URL('package.json', packageRoot))
     const sandboxManifest = workspaceRequire.resolve('@deepseek-ai/dsh-sandbox-windows-acl/package.json')
@@ -833,13 +815,10 @@ describe('published package surface', () => {
     const sandboxLib = join(dirname(sandboxManifest), 'lib')
     const runtimeChunks = readdirSync(sandboxLib).filter(name => /^types-.*\.js$/u.test(name))
 
-    expect(workspaceManifest.resolutions).toMatchObject({
-      '@deepseek-ai/dsh-sandbox-windows-acl@npm:0.1.1-rc.2': patchResolution,
-      '@deepseek-ai/dsh-sandbox-windows-acl@npm:^0.1.1-rc.2': patchResolution,
-    })
+    expectPatchedDependency('@deepseek-ai/dsh-sandbox-windows-acl@0.1.1-rc.2', patchPath)
     expect(sandboxLocalRequire.resolve('@deepseek-ai/dsh-sandbox-windows-acl/package.json'))
       .toBe(sandboxManifest)
-    expect(lockfile).toContain('@deepseek-ai/dsh-sandbox-windows-acl@patch:@deepseek-ai/dsh-sandbox-windows-acl@npm%3A0.1.1-rc.2#./patches/dsh-sandbox-windows-acl@0.1.1-rc.2.patch')
+    expect(lockfile).toContain('@deepseek-ai/dsh-sandbox-windows-acl@0.1.1-rc.2(patch_hash=')
     expect(patch.match(/^\+\s*dwFlags: 257,\r?$/gmu)).toHaveLength(2)
     expect(patch.match(/^\+\s*wShowWindow: 0,\r?$/gmu)).toHaveLength(2)
     expect(runtimeChunks).toHaveLength(1)

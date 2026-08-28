@@ -295,8 +295,8 @@ Type-only import 会从 JavaScript 中消除。跨环境 package 可以把 `dsh-
 完整 Profile Loader smoke 会把该 package 复制到临时 profile 的 `node_modules`，以普通 bare-package Loader entry 加载，并在 probe 没有返回激活 profile 或两个 package-manager 方法时失败。运行命令：
 
 ```sh
-yarn workspace dsh-plugin-desktop build
-yarn workspace dsh-plugin-desktop verify:profile
+pnpm --filter dsh-plugin-desktop run build
+pnpm --filter dsh-plugin-desktop run verify:profile
 ```
 
 该 fixture 位于 `tests/`，不在 npm `files` 列表或 Electron build files 中，因此不会进入生产 archive。

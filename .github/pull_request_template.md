@@ -29,10 +29,10 @@
 
 <!-- List commands actually run and any manual checks. Do not claim unrun checks passed. / 列出实际运行过的命令和人工验证。不要声称未运行的检查已经通过。 -->
 
-- [ ] `corepack yarn check:layout`
-- [ ] `corepack yarn typecheck`
-- [ ] `corepack yarn test`
-- [ ] `corepack yarn check`
+- [ ] `corepack pnpm run check:layout`
+- [ ] `corepack pnpm run typecheck`
+- [ ] `corepack pnpm run test`
+- [ ] `corepack pnpm run check`
 - [ ] Platform package smoke / 平台打包或启动冒烟
 - [ ] Manual test / 人工测试
 

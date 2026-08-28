@@ -27,22 +27,22 @@ Plugins that follow the manifesto coexist better with other plugins and will be 
 
 ```sh
 git submodule update --init --recursive
-corepack yarn install --immutable
-corepack yarn check   # full headless gate: build, typecheck, tests, and smokes
-corepack yarn dev     # launch the application when a graphical session is available
+corepack pnpm install --frozen-lockfile
+corepack pnpm run check   # full headless gate: build, typecheck, tests, and smokes
+corepack pnpm run dev     # launch the application when a graphical session is available
 ```
 
 ### Repository boundaries (please read before starting)
 
 - `deepseek-harness/` is the pinned upstream submodule. **Desktop development never edits files inside it**; upstream updates land through separate pin commits.
-- Desktop code lives in `dsh-plugin-desktop/`; `dsh-community-fabric/` owns the community-standard Draft and `dsh-community-market/` owns the market-shell design. Both community packages are currently documentation-only and not loadable; all three owned packages share the outer Yarn workspace.
+- Desktop code lives in `dsh-plugin-desktop/`; `dsh-community-fabric/` owns the community-standard Draft and `dsh-community-market/` owns the market-shell design. Both community packages are currently documentation-only and not loadable; all three owned packages share the outer PNPM workspace.
 - Builds, typechecks, unit tests, and smoke checks must stay headless-safe.
 
 ### Commits and pull requests
 
 - Use conventional commit messages (for example `fix(desktop): ...`, `docs: ...`).
-- Run `yarn check` and keep it green before committing.
-- After changing production dependencies, run `yarn workspace dsh-plugin-desktop verify:notices` to refresh the third-party notices and commit the updated `dsh-plugin-desktop/THIRD_PARTY_NOTICES.md`.
+- Run `corepack pnpm run check` and keep it green before committing.
+- After changing production dependencies, run `corepack pnpm --filter dsh-plugin-desktop run verify:notices` to refresh the third-party notices and commit the updated `dsh-plugin-desktop/THIRD_PARTY_NOTICES.md`.
 - Documentation changes should stay bilingual and update the `README.i18n.yaml` hash record.
 - Describe the change, its motivation, and how it was verified in the PR; merge after CI passes.
 

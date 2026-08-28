@@ -4,26 +4,26 @@ This repository owns the desktop product around an unmodified DeepSeek Harness c
 
 ## Prerequisites and setup
 
-- Use Node.js `^22.19.0` or `>=24.0.0` and the root Yarn `4.18.0` release through Corepack.
+- Use Node.js `^22.19.0` or `>=24.0.0` and the root PNPM `11.7.0` release through Corepack.
 - Initialize the pinned upstream checkout with `git submodule update --init --recursive`.
-- Install root dependencies with `corepack yarn install --immutable`.
+- Install root dependencies with `corepack pnpm install --frozen-lockfile`.
 
 ## Build, run, and verify
 
-- Start the isolated local Desktop (own `~/.dsh-acryl` home, advanced mode, Development Canvas) with `corepack yarn dev` or `corepack yarn local`.
-- Use `corepack yarn dev:shared` only when you intentionally want the installed app's `~/.dsh` home.
-- Fast headless loop: `corepack yarn typecheck`, `corepack yarn test`, or both via `corepack yarn verify`.
-- Typecheck, test, then isolated GUI: `corepack yarn lifecycle`.
-- Build the desktop package with `corepack yarn build`.
-- Run the complete headless gate with `corepack yarn check`.
-- Run upstream operations through the root scripts, such as `corepack yarn upstream:build`.
+- Start the isolated local Desktop (own `~/.dsh-acryl` home, advanced mode, Development Canvas) with `corepack pnpm run dev` or `corepack pnpm run local`.
+- Use `corepack pnpm run dev:shared` only when you intentionally want the installed app's `~/.dsh` home.
+- Fast headless loop: `corepack pnpm run typecheck`, `corepack pnpm run test`, or both via `corepack pnpm run verify`.
+- Typecheck, test, then isolated GUI: `corepack pnpm run lifecycle`.
+- Build the desktop package with `corepack pnpm run build`.
+- Run the complete headless gate with `corepack pnpm run check`.
+- Run upstream operations through the root scripts, such as `corepack pnpm run upstream:build`.
 
 - `deepseek-harness/` is a pinned upstream Git submodule. Never edit files inside it from a desktop feature branch.
 - `dsh-plugin-desktop/` owns the Cordis Host and Client faces, Electron bootstrap, packaging, and release tests.
 - `dsh-community-fabric/` owns the community interoperability RFC. Until schemas and a reviewed reference adapter exist, it remains a private documentation scaffold and must not declare loadable DSH or package entry points.
 - `dsh-community-market/` is an implemented private Host/Client package. It is an optional Desktop Market provider, disabled by default, and must continue to use ordinary DSH/Cordis, profile, and Desktop service contracts rather than a parallel plugin runtime.
-- The outer repository and all owned packages use the root Yarn release with `nodeLinker: node-modules`.
-- The upstream submodule keeps its own pnpm workspace. Run upstream commands through the root `upstream:*` scripts, whose Yarn portable-shell commands enter the submodule before invoking Corepack.
+- The outer repository and all owned packages use the root PNPM release with `node-linker=isolated`.
+- The upstream submodule keeps its own PNPM workspace. Run upstream commands through the root `upstream:*` scripts, which enter the submodule before invoking its pinned Corepack release.
 - Compatibility mode must run the upstream default client without overrides. Advanced presentation belongs to desktop-owned client plugins and may replace documented slots or services through profile composition.
 - Keep graphical application launch explicit. Builds, typechecks, unit tests, and Loader smokes must remain headless-safe.
 - During the current small-team rapid-development phase, work directly on `main` unless the user explicitly requests a branch or pull request. Do not create routine PRs.

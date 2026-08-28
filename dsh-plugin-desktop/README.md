@@ -77,11 +77,11 @@ On macOS the advanced window uses a transparent hidden-inset title bar, position
 
 ## Development
 
-This package is managed by the Yarn workspace at the repository root. The sibling `deepseek-harness/` checkout remains an independent upstream pnpm project and is not part of the Yarn workspace. Install and verify DSH Desktop from the repository root:
+This package is managed by the PNPM workspace at the repository root. The sibling `deepseek-harness/` checkout remains an independent upstream pnpm project and is not part of the PNPM workspace. Install and verify DSH Desktop from the repository root:
 
 ```sh
-yarn install
-yarn check
+corepack pnpm install --frozen-lockfile
+corepack pnpm check
 ```
 
 The check verifies that every required first-party peer in the production graph is declared by the desktop deploy root. Headless Loader smokes activate the launcher-owned desktop row and a profile-local third-party row, then boot the published Web profile and inspect its loopback root and client manifest. Unit and type tests cover both profile compositions, restart fencing, client environment validation, desktop layout state, and platform-native window options.
@@ -183,10 +183,10 @@ WSL2 is suitable for Linux headless build, typecheck, and unit-test coverage fro
 ```bash
 source ~/.nvm/nvm.sh
 git submodule update --init --recursive
-corepack yarn install --immutable
-corepack yarn workspace dsh-plugin-desktop typecheck
-corepack yarn workspace dsh-plugin-desktop test
-corepack yarn build
+corepack pnpm install --frozen-lockfile
+corepack pnpm --filter dsh-plugin-desktop run typecheck
+corepack pnpm --filter dsh-plugin-desktop run test
+corepack pnpm build
 ```
 
 Commands run from `/mnt/<drive>` are valid but slower than a checkout stored on WSL's native ext4 filesystem. WSL does not replace a real Linux desktop session for tray, window-manager, `.desktop` integration, or installed-package smoke tests.
@@ -197,8 +197,8 @@ Use a native Windows x64 machine with Git and x64 Node `22.23.2` (the same relea
 
 ```powershell
 git submodule update --init --recursive
-corepack.cmd yarn install --immutable
-corepack.cmd yarn dist:win
+corepack.cmd pnpm install --frozen-lockfile
+corepack.cmd pnpm dist:win
 ```
 
 Python and Visual Studio C++ Build Tools are not required. The Windows command uses `node-pty`'s bundled x64 Node-API binaries instead of asking Electron Builder to rebuild them from source, and the packaged-runtime gate rejects an installer staging tree that omits those binaries.
@@ -212,7 +212,7 @@ This local command deliberately strips Windows certificate variables and sets `s
 Use `yarn dist:win-portable` on a native Windows x64 machine to create an unsigned portable ZIP:
 
 ```powershell
-corepack.cmd yarn dist:win-portable
+corepack.cmd pnpm dist:win-portable
 ```
 
 The output is `dsh-plugin-desktop\\dist\\ACRYL-2.0.1-x64-Portable.zip`. Extract it to any writable directory and launch `DSH Desktop.exe` without an installer, administrator access, Start Menu registration, or uninstall step. The application still keeps its profiles, logs, and caches in the normal Windows user-data directory, so this is portable distribution rather than a self-contained data sandbox. Portable archives are not handed to the NSIS updater and must be replaced manually when a new version is released. Local builds are unsigned and may trigger an Unknown publisher or SmartScreen warning; signed portable artifacts remain a release gate.

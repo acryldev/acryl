@@ -137,16 +137,16 @@ The outer repository is a Yarn 4 workspace; the pinned
 root, prepare the supported toolchains and build Desktop with the root scripts:
 
 ```sh
-corepack yarn install --immutable
-corepack yarn upstream:install
-corepack yarn upstream:build
-corepack yarn build
+corepack pnpm install --frozen-lockfile
+corepack pnpm upstream:install
+corepack pnpm upstream:build
+corepack pnpm build
 ```
 
 Start the graphical application only when you intend to open it:
 
 ```sh
-corepack yarn dev
+corepack pnpm dev
 ```
 
 In DSH Desktop, choose **Open DSH Terminal**. That terminal supplies the pinned
@@ -177,7 +177,7 @@ dsh plugin --profile desktop remove dsh-hello-world
 
 The product command deliberately forwards package work to pnpm in the selected
 profile and reconciles `dsh.profile.bundles`; do not replace it with `pnpm add`
-in the outer Yarn workspace. Relative `file:`/`link:` paths are anchored to the
+in the outer PNPM workspace. Relative `file:`/`link:` paths are anchored to the
 directory in which `dsh plugin` was invoked. The implementation is documented
 in the pinned [CLI reference](../../deepseek-harness/apps/cli/reference/README.md)
 and [plugin command source](../../deepseek-harness/apps/cli/src/plugin.ts).
@@ -187,8 +187,8 @@ Loader smoke (it uses a real profile-local third-party package fixture and does
 not open Electron):
 
 ```sh
-corepack yarn workspace dsh-plugin-desktop build
-corepack yarn workspace dsh-plugin-desktop verify:profile
+corepack pnpm --filter dsh-plugin-desktop run build
+corepack pnpm --filter dsh-plugin-desktop run verify:profile
 ```
 
 That smoke validates the current Desktop composition and public Host services;
@@ -402,7 +402,7 @@ First run `dsh --dump-config` for the active profile.
 
 - No bundle layer: verify `package.json` contains a valid `dsh.bundle.patch`,
   the patch is shipped, and the package appears in the profile's
-  `dsh.profile.bundles`. Install through `dsh plugin`, not raw root Yarn/pnpm.
+  `dsh.profile.bundles`. Install through `dsh plugin`, not raw root PNPM.
 - Layer exists but row is absent: check the YAML patch shape and row `id`.
 - Row exists but module is unresolved: check the exact package/path spelling
   and package exports. A resolution error can occur before a console logger is

@@ -165,38 +165,38 @@ assets/                 ACRYL brand assets
 
 ```sh
 git submodule update --init --recursive
-corepack yarn install --immutable
-corepack yarn dev
+corepack pnpm install --frozen-lockfile
+corepack pnpm dev
 ```
 
 ### Development scripts
 
-Run root package scripts through `corepack yarn <script>`. Corepack selects the
-repository-pinned Yarn 4 release; do not use `npm run` or install dependencies
+Run root package scripts through `corepack pnpm <script>`. Corepack selects the
+repository-pinned PNPM 11.7.0 release; do not use `npm run` or install dependencies
 with npm in this workspace.
 
 #### Daily development session
 
-- `corepack yarn dev` — recommended local development entry point. It builds
+- `corepack pnpm dev` — recommended local development entry point. It builds
   `dsh-community-market`, builds and starts `dsh-plugin-desktop`, and launches
   with isolated ACRYL state: `DSH_HOME=~/.dsh-acryl` plus a separate Electron
   `userData` directory. This keeps development profiles and settings away from
   the installed ACRYL application and seeds advanced mode so Development
   Canvas is visible.
-- `corepack yarn dev:local` — explicit spelling of `dev`; use it in notes or
+- `corepack pnpm dev:local` — explicit spelling of `dev`; use it in notes or
   automation when the isolated-local behavior should be obvious.
-- `corepack yarn local` — short alias for the same isolated build-and-launch
+- `corepack pnpm local` — short alias for the same isolated build-and-launch
   workflow.
-- `corepack yarn start:local` — starts the isolated local application with
+- `corepack pnpm start:local` — starts the isolated local application with
   `--skip-build`. Use it only when the market and Desktop artifacts are already
   current; it is faster but can otherwise launch stale output.
-- `corepack yarn lifecycle` — runs the focused development verification suite
+- `corepack pnpm lifecycle` — runs the focused development verification suite
   and launches the isolated application only after it passes. Use this for a
   verify-then-exercise session.
-- `corepack yarn dev:shared` — builds the market and runs the Desktop package's
+- `corepack pnpm dev:shared` — builds the market and runs the Desktop package's
   ordinary development command without the isolated ACRYL home/user-data wrapper.
   Use it only when intentionally exercising the normal shared profile state.
-- `corepack yarn start` — starts the already-built Desktop package without
+- `corepack pnpm start` — starts the already-built Desktop package without
   rebuilding it and without the local isolation wrapper.
 
 Quit an installed DSH Desktop instance before starting a local graphical
@@ -205,26 +205,26 @@ compete for process or desktop resources.
 
 #### Build and focused verification
 
-- `corepack yarn build` — builds the community market first, then the Desktop
+- `corepack pnpm build` — builds the community market first, then the Desktop
   package that consumes it. Use it to refresh runnable/packageable artifacts.
-- `corepack yarn typecheck` — runs TypeScript checks for Desktop and the
+- `corepack pnpm typecheck` — runs TypeScript checks for Desktop and the
   community market without emitting build output.
-- `corepack yarn test` — runs the Desktop and community-market unit test suites.
-- `corepack yarn verify` — runs `typecheck`, `test`, and the tests for the
+- `corepack pnpm test` — runs the Desktop and community-market unit test suites.
+- `corepack pnpm verify` — runs `typecheck`, `test`, and the tests for the
   isolated local launcher. This is the focused gate for an ordinary development
   session; it is intentionally smaller than the complete repository check.
-- `corepack yarn test:bilingual-docs` — unit-tests the bilingual-document hash
+- `corepack pnpm test:bilingual-docs` — unit-tests the bilingual-document hash
   and record validator itself.
-- `corepack yarn check:bilingual-docs` — tests that validator and then checks
+- `corepack pnpm check:bilingual-docs` — tests that validator and then checks
   every tracked bilingual pair against its recorded Git blob hashes.
-- `corepack yarn test:architecture-gates` — unit-tests the market dependency
+- `corepack pnpm test:architecture-gates` — unit-tests the market dependency
   direction rules used by the architecture gate.
-- `corepack yarn check:architecture` — runs the architecture-gate tests and
+- `corepack pnpm check:architecture` — runs the architecture-gate tests and
   verifies the current package dependency direction.
-- `corepack yarn check:layout` — combines bilingual-document and architecture
+- `corepack pnpm check:layout` — combines bilingual-document and architecture
   checks with repository-layout verification, including the pinned workspace and
   upstream boundaries.
-- `corepack yarn check` — runs the complete headless repository gate:
+- `corepack pnpm check` — runs the complete headless repository gate:
   `check:layout`, the Fabric checks, the Market checks, and the full Desktop
   package check. Use this before handing off or submitting changes.
 
@@ -233,30 +233,30 @@ compete for process or desktop resources.
 These commands build the community market first so Desktop packaging consumes
 current artifacts:
 
-- `corepack yarn package:dir` — creates an unpacked application directory for
+- `corepack pnpm package:dir` — creates an unpacked application directory for
   inspecting packaged contents without producing a platform installer.
-- `corepack yarn dist:mac` — builds the macOS distribution artifacts.
-- `corepack yarn dist:mac-smoke` — creates the macOS smoke-test package used to
+- `corepack pnpm dist:mac` — builds the macOS distribution artifacts.
+- `corepack pnpm dist:mac-smoke` — creates the macOS smoke-test package used to
   validate the local release path.
-- `corepack yarn dist:win` — builds the Windows installer distribution.
-- `corepack yarn dist:win-portable` — builds the portable Windows distribution.
+- `corepack pnpm dist:win` — builds the Windows installer distribution.
+- `corepack pnpm dist:win-portable` — builds the portable Windows distribution.
 
 #### Pinned DeepSeek Harness workspace
 
 The `deepseek-harness/` submodule is an independent pnpm workspace. Root wrapper
 scripts enter it before invoking its pinned pnpm release:
 
-- `corepack yarn upstream:update` — fetches the remote default branch, verifies
+- `corepack pnpm upstream:update` — fetches the remote default branch, verifies
   it is a fast-forward from the current clean pin, moves the Harness checkout
   to that exact commit, initializes nested submodules, and synchronizes
   `upstream.json`. It refuses to overwrite local Harness or pin-metadata
   changes. Review the result, then stage `deepseek-harness` and `upstream.json`
   together in a dedicated pin-update commit.
-- `corepack yarn upstream:version` — prints the pnpm version selected inside the
+- `corepack pnpm upstream:version` — prints the pnpm version selected inside the
   upstream checkout; use it to verify the package-manager boundary.
-- `corepack yarn upstream:install` — installs upstream dependencies from its
-  frozen lockfile without converting or modifying the workspace for Yarn.
-- `corepack yarn upstream:build` — runs the upstream Harness build through pnpm.
+- `corepack pnpm upstream:install` — installs upstream dependencies from its
+  frozen lockfile without converting or modifying the upstream workspace.
+- `corepack pnpm upstream:build` — runs the upstream Harness build through pnpm.
 
 These wrappers do not authorize edits inside the pinned submodule. Update its
 pin separately from ACRYL/Desktop behavior changes.
@@ -264,10 +264,10 @@ pin separately from ACRYL/Desktop behavior changes.
 ### Verify the repository
 
 ```sh
-corepack yarn check
+corepack pnpm check
 ```
 
-The outer ACRYL workspace uses Yarn. The pinned `deepseek-harness/` submodule remains an independent upstream pnpm workspace and must not be edited from an ACRYL feature branch.
+The outer ACRYL workspace uses PNPM. The pinned `deepseek-harness/` submodule remains an independent upstream pnpm workspace and must not be edited from an ACRYL feature branch.
 
 ## Project links
 

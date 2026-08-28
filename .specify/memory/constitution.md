@@ -61,9 +61,10 @@ policy/human approves. Self-extension and self-evolution are different systems.
 
 ## Desktop / repository constraints
 
-- Outer workspace is Yarn 4 (`nodeLinker: node-modules`). Upstream stays pnpm.
-- Use `corepack yarn` for owned packages. Never `npm install` / `yarn` without
-  Corepack.
+- Outer workspace is PNPM 11.7.0 (`node-linker=isolated`). Upstream remains an
+  independent PNPM workspace.
+- Use `corepack pnpm` for owned packages. Never `npm install` or an unpinned
+  package-manager command.
 - `dsh-plugin-desktop/` owns Electron Host/Client faces. Public desktop
   services are `desktopProfiles` and `desktopPnpm` only.
 - Compatibility mode must keep the upstream default client. Advanced

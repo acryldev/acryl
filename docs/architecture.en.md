@@ -30,7 +30,7 @@ This is the pinned, read-only upstream source submodule and an independent pnpm
 workspace. It is the architectural reference and verification source, but the
 Desktop does not load the submodule directory as one giant plugin. The shipped
 application consumes the published `@deepseek-ai/dsh-*` and Cordis packages
-pinned in the outer Yarn workspace. The default Desktop profile names
+pinned in the outer PNPM workspace. The default Desktop profile names
 `@deepseek-ai/dsh-base` and `@deepseek-ai/dsh-web-app` as its two direct
 bundles; their patches expand into the upstream Host, Client, agent, session,
 tool, storage, sandbox, and Web rows.
@@ -587,7 +587,7 @@ The outer workspace uses Yarn. The pinned `deepseek-harness/` submodule keeps it
 - [Visual plugin and registry map](visuals/acryl-plugin-registry.html)
 - [Desktop service contract](../dsh-plugin-desktop/docs/plugin-services.md)
 - [Package README](../dsh-plugin-desktop/README.md)
-- [Pinned upstream and isolated Yarn workspace](../.agents/notes/implemented/process/2026-08-15-pinned-upstream-and-isolated-yarn-workspace.md)
+- [Pinned upstream and isolated PNPM workspace](../.agents/notes/implemented/process/2026-08-15-pinned-upstream-and-isolated-yarn-workspace.md)
 - [Profile and pnpm services decision](../.agents/notes/implemented/architecture/2026-08-15-desktop-profile-and-pnpm-services.md)
 - [Advanced shell decision](../.agents/notes/implemented/architecture/2026-08-15-desktop-advanced-shell.md)
 - [Native shell generation and platform adapters](../.agents/notes/implemented/architecture/2026-08-19-native-shell-generation-and-platform-adapters.md)

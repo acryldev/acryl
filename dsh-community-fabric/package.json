@@ -30,7 +30,7 @@
   },
   "scripts": {
     "check": "node scripts/verify-docs.mjs",
-    "prepack": "yarn run check"
+    "prepack": "pnpm run check"
   },
   "keywords": [
     "deepseek",

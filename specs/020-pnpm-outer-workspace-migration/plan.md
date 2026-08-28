@@ -29,7 +29,7 @@
 - Modify: `scripts/verify-layout.mjs`
 - Test: `scripts/verify-layout.test.mjs` or the existing layout test entry point
 
-**Produces:** Root PNPM 11.7.0 metadata with the seven owned workspaces, explicit exclusion of `deepseek-harness/`, isolated linker policy, supported macOS CPU architectures, package override, patch registry, and native build permissions.
+**Produces:** Root PNPM 11.7.0 metadata with the seven owned workspaces, explicit exclusion of `deepseek-harness/`, a documented hoisted-linker exception for the existing React 18/React 19 DSH Electron peer graph, supported macOS CPU architectures, package override, patch registry, and native build permissions.
 
 - [ ] Write a failing layout test for PNPM root metadata and an unchanged upstream package-manager boundary.
 - [ ] Create the PNPM workspace configuration and translate the root package-manager field, resolutions, native build metadata, and workspace scripts.

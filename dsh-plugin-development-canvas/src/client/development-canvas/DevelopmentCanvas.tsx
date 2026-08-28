@@ -33,7 +33,7 @@ export function DevelopmentCanvas({ renderConversation, ptyApi, useSessions }: D
   const subscribe = useCallback((listener: () => void) => canvas.subscribe(listener), [canvas])
   const snapshot = useSyncExternalStore(subscribe, () => canvas.getSnapshot())
   const sessions = useSessions(state => state)
-  const previousCurrent = useRef(sessions.current)
+  const previousCurrent = useRef<string | undefined>(sessions.current)
   const menuRef = useRef<HTMLDivElement>(null)
   const active = snapshot.tiles.find(tile => tile.id === snapshot.activeId)
 

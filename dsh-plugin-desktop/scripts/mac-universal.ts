@@ -80,8 +80,8 @@ export interface MacUniversalPreparationOptions {
 
 /**
  * Validate both CPU runtime trees and restore node-pty helper execute bits.
- * Yarn intentionally disables lifecycle scripts, so the package step owns this
- * deterministic permission repair for both architectures.
+ * The package step owns this deterministic permission repair for both
+ * architectures after native dependencies install.
  * @param options - Desktop root and injectable filesystem operations.
  */
 export function prepareMacUniversalRuntime(
