@@ -26,6 +26,16 @@ Recommended workflow:
 
 ---
 
+## 2026-08-28 - Outer ACRYL workspace migrated to PNPM
+
+Commit: `26aa4f872132757e2f890de34fe26e5b8a64f73b`
+
+The ACRYL-owned workspace now uses Corepack PNPM 11.7.0 with a committed lockfile, translated dependency patches, explicit native-build permissions, and macOS architecture policy. The pinned `deepseek-harness/` submodule remains a separate, read-only PNPM workspace at `b150a551b8`; it is not included in the outer dependency graph.
+
+The migration passed frozen installation, layout and architecture gates, typecheck, 1,144 tests, production build, and packaged macOS arm64 Electron smoke. Manual testing confirmed Electron chat, model responses, the advanced embedded renderer, and Development Canvas lifecycle controls. The bare embedded server URL is not a standalone Web surface and is deferred to the planned owner-or-attach `acryl-web` runtime.
+
+Primary sources: `pnpm-workspace.yaml`, `.npmrc`, and `specs/020-pnpm-outer-workspace-migration/`. Verification: `specs/020-pnpm-outer-workspace-migration/evidence/verification.md`.
+
 ## 2026-08-27 - pi-tui selected as the ACRYL terminal surface
 
 Commit: `ff9d4f1352538676ff969bf5451979a9fcf3d329`
