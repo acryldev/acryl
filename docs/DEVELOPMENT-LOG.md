@@ -26,6 +26,14 @@ Recommended workflow:
 
 ---
 
+## 2026-08-28 - Native session bridge and ownership hardening
+
+Commit: `adff40026abd6c773cba63e315f5e31412e8f39b`
+
+The native session bridge now proves durable transcript replay across a real resume, projects durable assistant and tool facts, forwards an active-turn cancellation, and releases subscriptions deterministically. Profile ownership is reserved before boot, remains reserved through ordered shutdown, carries a unique generation ID, and gives attached clients read-only session access. The bridge refuses a second active native session rather than leaking an additional agent handle.
+
+Primary sources: `acryl-harness-runtime/src/session-bridge.ts` and `acryl-harness-runtime/src/owner-or-attach.ts`. Verification: `acryl-harness-runtime/tests/session-bridge.spec.ts`, `acryl-harness-runtime/tests/owner-or-attach.spec.ts`, and `corepack pnpm --filter acryl-harness-runtime run check`.
+
 ## 2026-08-28 - Single-root session owner-or-attach established
 
 Commit: `218f28f615662fdd98b924c7182ec586ec96016b`
