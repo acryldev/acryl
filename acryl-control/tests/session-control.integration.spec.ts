@@ -2,12 +2,16 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createConnection } from 'node:net'
+import type { Context } from '@deepseek-ai/cordis'
+import type {} from '@deepseek-ai/dsh-agent'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_PROFILE_BUNDLES, initProfile, resolveProfileDir } from '@deepseek-ai/dsh-app-boot'
+import { createAssistantMessage } from '@deepseek-ai/dsh-llm'
+import { SessionId } from '@deepseek-ai/dsh-session'
 const runtimeModule = 'acryl-harness-runtime'
 
 interface HarnessRuntimeModule {
-  bootAcrylHarnessProfile: (options: { profile: string }) => Promise<{ ctx: unknown; dispose(): Promise<void> }>
+  bootAcrylHarnessProfile: (options: { profile: string }) => Promise<{ ctx: Context; dispose(): Promise<void> }>
   createAcrylSessionBridge: (ctx: never, options: {
     profile: string
     generationId: string
@@ -100,6 +104,83 @@ describe('native session control endpoint', () => {
         sessionId: owned.sessionId,
         transcript: [{ author: 'user', text: 'Persist over endpoint' }],
       })
+    } finally {
+      await owned.endpoint.dispose()
+      await owned.bridge.dispose()
+      await owned.runtime.dispose()
+    }
+  })
+
+  it('replays a fresh durable assistant response through a new endpoint client', async () => {
+    const owned = await boot()
+    try {
+      const session = owned.runtime.ctx.agents.get(SessionId(owned.sessionId))?.session
+      if (session === undefined) throw new Error('test agent was not registered')
+      session.append('assistant/message', {
+        turn: 1,
+        step: 1,
+        message: createAssistantMessage({
+          content: [{ type: 'text', text: 'Fresh durable response' }],
+          source: { provider: 'test', model: 'test' },
+        }),
+      }, { surfaceOp: 'append' })
+
+      const reconnected = createAcrylEndpointSessionClient(owned.endpoint.endpoint, 'generation-test', owned.ownerToken)
+      await expect(reconnected.snapshot(owned.sessionId)).resolves.toMatchObject({
+        transcript: [{ author: 'assistant', text: 'Fresh durable response' }],
+      })
+    } finally {
+      await owned.endpoint.dispose()
+      await owned.bridge.dispose()
+      await owned.runtime.dispose()
+    }
+  })
+
+  it('cancels an endpoint-submitted turn with the native aborted reason', async () => {
+    const owned = await boot()
+    try {
+      const client = createAcrylEndpointSessionClient(owned.endpoint.endpoint, 'generation-test', owned.ownerToken)
+      const abortedTurn = new Promise<void>((resolve) => {
+        const stop = owned.runtime.ctx.on('session/event', (session, event) => {
+          if (session.id !== owned.sessionId) return
+          if (event.type === 'user/message') void client.cancel({ sessionId: owned.sessionId })
+          if (event.type === 'turn/end' && event.data.reason.kind === 'aborted') {
+            stop()
+            resolve()
+          }
+        })
+      })
+
+      await client.submitPrompt({ sessionId: owned.sessionId, text: 'Abort over endpoint', clientCommandId: 'abort' })
+      await abortedTurn
+    } finally {
+      await owned.endpoint.dispose()
+      await owned.bridge.dispose()
+      await owned.runtime.dispose()
+    }
+  })
+
+  it('does not invoke a disposed endpoint subscription for a later durable event', async () => {
+    const owned = await boot()
+    try {
+      const client = createAcrylEndpointSessionClient(owned.endpoint.endpoint, 'generation-test', owned.ownerToken)
+      const onSnapshot = vi.fn()
+      const subscription = await client.subscribe(owned.sessionId, onSnapshot)
+      await subscription.dispose()
+      const callsBeforeEvent = onSnapshot.mock.calls.length
+      const session = owned.runtime.ctx.agents.get(SessionId(owned.sessionId))?.session
+      if (session === undefined) throw new Error('test agent was not registered')
+      session.append('assistant/message', {
+        turn: 1,
+        step: 1,
+        message: createAssistantMessage({
+          content: [{ type: 'text', text: 'Late durable response' }],
+          source: { provider: 'test', model: 'test' },
+        }),
+      }, { surfaceOp: 'append' })
+
+      await new Promise(resolve => setTimeout(resolve, 60))
+      expect(onSnapshot).toHaveBeenCalledTimes(callsBeforeEvent)
     } finally {
       await owned.endpoint.dispose()
       await owned.bridge.dispose()

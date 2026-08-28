@@ -3,12 +3,27 @@ import type { ControlEndpoint } from '../contracts/control-protocol.ts'
 import type { AcrylSessionClient } from '../contracts/session.ts'
 import { createAcrylSessionClient, type AcrylSessionTransport } from './client.ts'
 
+export const ENDPOINT_REQUEST_TIMEOUT_MS = 5_000
+const POLLING_INTERVAL_MS = 25
+
 function request(endpoint: ControlEndpoint, generationId: string, operation: string, payload: unknown): Promise<unknown> {
   if (endpoint.kind !== 'unix') return Promise.reject(new Error('ACRYL session endpoint kind is not supported'))
   return new Promise((resolve, reject) => {
     const socket = createConnection(endpoint.address)
     let buffer = ''
-    socket.once('error', reject)
+    let settled = false
+    const settle = (complete: () => void): void => {
+      if (settled) return
+      settled = true
+      socket.destroy()
+      complete()
+    }
+    socket.setTimeout(ENDPOINT_REQUEST_TIMEOUT_MS)
+    socket.once('error', (error) => settle(() => reject(error)))
+    socket.once('timeout', () => settle(() => reject(new Error('ACRYL endpoint request timed out'))))
+    socket.once('close', () => {
+      settle(() => reject(new Error('ACRYL endpoint closed before responding')))
+    })
     socket.on('connect', () => {
       socket.write(`${JSON.stringify({ generationId, operation, payload })}\n`)
     })
@@ -16,15 +31,14 @@ function request(endpoint: ControlEndpoint, generationId: string, operation: str
       buffer += chunk.toString('utf8')
       const newline = buffer.indexOf('\n')
       if (newline < 0) return
-      socket.destroy()
       try {
         const envelope: unknown = JSON.parse(buffer.slice(0, newline))
         if (typeof envelope !== 'object' || envelope === null || !('ok' in envelope)) throw new Error('invalid ACRYL endpoint response')
         const record = envelope as { ok: boolean; result?: unknown; error?: { message?: unknown } }
         if (!record.ok) throw new Error(typeof record.error?.message === 'string' ? record.error.message : 'ACRYL endpoint request failed')
-        resolve(record.result)
+        settle(() => resolve(record.result))
       } catch (error: unknown) {
-        reject(error)
+        settle(() => reject(error))
       }
     })
   })
@@ -44,13 +58,13 @@ export function createAcrylEndpointSessionClient(
     async subscribe(operation, payload, listener, onError) {
       let disposed = false
       let failed = false
-      let timer: ReturnType<typeof setInterval> | undefined
+      let timer: ReturnType<typeof setTimeout> | undefined
       let resolveError!: (error: Error) => void
       const whenError = new Promise<Error>((resolve) => { resolveError = resolve })
       const stop = (error: Error): void => {
         if (disposed || failed) return
         failed = true
-        if (timer !== undefined) clearInterval(timer)
+        if (timer !== undefined) clearTimeout(timer)
         resolveError(error)
         try {
           onError?.(error)
@@ -74,19 +88,20 @@ export function createAcrylEndpointSessionClient(
           }
         } catch (cause) {
           stop(cause instanceof Error ? cause : new Error(String(cause)))
+        } finally {
+          if (!disposed && !failed) timer = setTimeout(() => { void poll() }, POLLING_INTERVAL_MS)
         }
       }
       await poll()
       if (failed) {
         throw await whenError
       }
-      timer = setInterval(() => { void poll() }, 25)
       return Object.freeze({
         whenError: () => whenError,
         async dispose() {
           if (disposed) return
           disposed = true
-          if (timer !== undefined) clearInterval(timer)
+          if (timer !== undefined) clearTimeout(timer)
         },
       })
     },
