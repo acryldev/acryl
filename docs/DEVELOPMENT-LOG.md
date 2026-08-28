@@ -34,6 +34,15 @@ ACRYL now implements coding-agent behavior once in its DeepSeek Harness/Cordis r
 
 Primary record: `docs/ACRYL-RUNTIME-SURFACE-CONTRACT.md`. This decision supersedes the cross-process ownership sections of Spec 019.
 
+## 2026-08-28 - P001 ownership experiment deliberately removed
+
+Commit: `3285a7f182f1b8780f22c7947067d01844bda79f`
+Reverted commit: `99af4c14871caa3e7fca1bddf4e3638c5953f7d8`
+
+Under the one-runtime/many-surfaces decision, each launched surface now starts its ordinary local Harness/Cordis runtime. Durable DSH sessions, rather than control records, leases, sockets, or owner discovery, provide continuity across later launches. The direct TUI bootstrap ignores stale `.acryl/control` experiment state.
+
+Primary sources: `acryl-tui/src/host/direct.ts` and `acryl-tui/tests/direct.spec.ts`. Verification: control, runtime, and TUI package checks.
+
 ## 2026-08-28 - Profile ownership and active-control protections added
 
 Commit: `99af4c14871caa3e7fca1bddf4e3638c5953f7d8`
