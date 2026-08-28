@@ -93,18 +93,19 @@ that satisfies its acceptance criteria.
 
 - Declare `dsh-plugin-desktop` legacy presentation scaffolding to be drained,
   not the default home for new cross-surface capability work.
-- Keep the three package roles strict: engine in `acryl-harness-runtime`,
-  host-neutral control in `acryl-control`, and presentation in surface packages.
+- Keep the three package roles strict: runtime in `acryl-harness-runtime`,
+  typed semantic API in `acryl-control`, and presentation in surface packages.
+- Implement agent/session/tool/plugin behavior once in the runtime. TUI,
+  Electron, and Web call the same capability contracts through direct, IPC, or
+  HTTP/WebSocket adapters as documented in
+  [`ACRYL-RUNTIME-SURFACE-CONTRACT.md`](ACRYL-RUNTIME-SURFACE-CONTRACT.md).
 - Preserve upstream Harness unchanged and compose ACRYL only through
   repository-owned packages, profile patches, and launchers.
-- Define a development launcher that starts the Node owner with
-  `--expose-internals`; define production HMR policy through profiles.
-- Audit every direct-root creation path and eliminate any path that can create a
-  second writable root for an owned profile.
+- Do not add a detached control daemon, cross-process owner protocol, or
+  active-controller lease without a demonstrated live multi-surface use case.
 
-**Exit criterion:** one written and tested ownership model governs every
-surface; HMR is available to a development owner without globally changing
-profile composition.
+**Exit criterion:** every new coding-agent feature is implemented once in the
+runtime and can be driven by each surface without copied agent logic.
 
 ### M1 - Adopt pi-tui as the terminal surface
 
@@ -120,29 +121,28 @@ profile composition.
 - Keep a provenance record with the upstream URL, commit, license notice,
   component inventory, and every local divergence. Do not add a submodule or
   ship the upstream bundle unchanged.
-- Refactor the upstream bundle's direct DSH/Cordis bindings into an
-  `acryl-tui` client of `acryl-control`. ACRYL owns the root, active-control
-  lease, sessions, and lifecycle; the TUI owns only terminal rendering and
-  ephemeral local interaction state.
+- Adapt the upstream bundle's terminal code to the runtime's direct typed API.
+  It may start a normal local DSH/Cordis runtime for its launch; it must not
+  duplicate agent logic or durable state.
 - Use the pinned normal `@earendil-works/pi-tui` 0.84.2 dependency. Do not
   copy the Pi monorepo or retain React Ink alongside it.
 
 **Exit criterion:** `acryl-tui` provides the pinned baseline's terminal
-experience through ACRYL control projections, without Bun, React Ink, a second
-Cordis root, or a terminal-owned durable state.
+experience without Bun or React Ink, and its durable sessions can be resumed
+from another ACRYL surface.
 
-### M2 - Complete the single-owner runtime and attach protocol
+### M2 - Normalize the shared runtime capability API
 
-- Make owner startup transactional: acquire lease, compose the profile, mount
-  control services, expose an authenticated endpoint, and release everything
-  on any failure.
-- Make attachment generation-scoped and capability-negotiated, with explicit
-  stale-owner recovery and no implicit takeover.
-- Test ownership races, owner disposal, endpoint loss, process restart,
-  repeated mount/unmount, and HMR/reload leak behavior.
+- Define typed runtime capabilities and durable events once, then expose them
+  through a direct TUI adapter, the existing Electron IPC/API seam, and the
+  existing Web HTTP/WebSocket seam.
+- Keep transport implementation thin. Reuse DeepSeek Harness API/transport
+  abstractions instead of creating a competing ACRYL RPC stack.
+- Test that a capability added to the runtime is callable from each applicable
+  surface without copied agent/session/plugin behavior.
 
-**Exit criterion:** exactly one writable owner wins every supported ownership
-race; all other surfaces attach or fail safely.
+**Exit criterion:** TUI, Electron, and Web drive the same runtime semantics
+while retaining renderer-specific presentation code.
 
 ### M3 - Drain reusable profile and runtime management from Electron
 

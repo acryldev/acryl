@@ -2,8 +2,15 @@
 
 **Feature Directory**: `specs/019-acryl-harness-runtime`  
 **Created**: 2026-08-26  
-**Status**: Ready for planning
+**Status**: Re-scoped - see `docs/ACRYL-RUNTIME-SURFACE-CONTRACT.md`
 **Input**: Make the standalone `acryl` terminal host use the pinned DeepSeek Harness agent and durable-session runtime without depending on the Electron Desktop package or duplicating Harness state.
+
+> **Architecture correction (2026-08-28):** The cross-process owner attachment,
+> capability-credential, and active-control-lease requirements in this older
+> specification are superseded. ACRYL now implements coding-agent behavior once
+> in the shared runtime and uses direct, Electron IPC, or Web HTTP/WebSocket
+> surface adapters. Cross-process attachment is deferred until a real live
+> multi-surface user story requires it.
 
 ## Objective
 
