@@ -42,11 +42,12 @@ HMR is disabled. No shared runtime package may disable HMR unconditionally.
 
 `acryl-control` is the control plane linked by every surface. It owns the
 single-writer lease, authenticated attach protocol, architecture projection,
-lifecycle operations, and provider-neutral agent-control contracts. Its current
-Codex, Claude, ACP, and DSH-native provider modules are descriptors and
-transport contracts, not process spawners. Actual agent process, protocol, or
-Harness-handle ownership belongs to the runtime owner, so attached surfaces
-cannot create competing agents or roots.
+lifecycle operations, and provider-neutral agent-control contracts. One active
+CLI, GUI, or Web controller may delegate scoped work to generic terminal or ACP
+coding agents. Those workers use durable project artifacts and capability commands;
+they do not receive a Cordis context, root credential, or authority to create a
+competing runtime. Actual agent process, protocol, or Harness-handle ownership
+belongs to the runtime owner.
 
 `acryl-tui` is the terminal presentation. It adopts the working pi-tui-based
 `dsh-pi-tui` implementation on Node, replacing the earlier OpenTUI/Bun and
@@ -178,34 +179,45 @@ profile identity, session meaning, plugin state, or agent continuity.
 - Expose authoritative Loader, Fiber, service, dependency, effect, health,
   profile, agent, and job inspection through all surfaces.
 - Support permitted install, update, remove, enable, disable, mount, unmount,
-  and reload operations only through policy, settlement, verification, health,
-  rollback, and HOT/WARM/COLD restart classification.
+  and reload operations only through global permission policy, settlement,
+  verification, health, rollback, and HOT/WARM/COLD restart classification.
+- Checkpoint every plugin mutation; automatically quarantine an unhealthy
+  candidate and restore the last healthy composition.
 - Maintain a narrow recovery interface when optional presentation plugins fail.
 
 **Exit criterion:** operators can safely diagnose and repair an ACRYL profile
 without manual file edits or Electron-only tooling.
 
-### M7 - Build continuity, relay, and persistent collaboration
+### M7 - Build continuity, relay, and delegated coding work
 
 - Add project rooms, context relay, structured handoffs, shared decisions,
-  durable task artifacts, and agent status as portable project state.
-- Compile bounded role/task context packets from durable records rather than
-  dumping transcript history into every agent.
-- Support agent replacement, rate-limit recovery, review, and worktree-based
-  delegation without losing the canonical project context.
+  durable task artifacts, agent status, and plugin proposals as portable
+  `.acryl/` project state.
+- Normalize generic terminal and ACP coding agents into durable delegated jobs.
+  Offline source/build/test work may continue after controller loss; runtime
+  mutation, integration testing, and approval-gated publication wait for the
+  active controller.
+- Support agent replacement, rate-limit recovery, review, and optional
+  worktree-based delegation without losing canonical project context.
 
 **Exit criterion:** an agent, runtime, or surface can be replaced without losing
 project continuity or relying on hidden private conversation state.
 
-### M8 - Revisit capability distribution and platform packaging
+### M8 - Build the ACRYL Registry and Blend catalog
 
-- Resume community market work only when real capability packages create a
-  demonstrated need for discovery, catalog, install, and federation features.
-- Continue native packaging, signing, updater, Windows policy, and macOS
-  distribution work at the level justified by active releases.
+- Provide an ACRYL-owned Registry for ACRYL packages while keeping official and
+  community DSH stores as separate connectable catalogs with explicit adapters.
+- Distribute signed editable-source and sealed-artifact packages with provenance,
+  compatibility, permissions, and lifecycle-adapter identity.
+- Introduce ACRYL Blends: versioned, declarative application compositions that
+  create isolated projects or generate explicit conflict-resolution plans for
+  existing projects. Blends may request, but never loosen, global policy.
+- Defer remote registry hosting, commercial transactions, licensing backend,
+  seller portal, and SaaS `webblends` deployment until local workflows are
+  proven.
 
-**Exit criterion:** marketplace and platform complexity follow demonstrated
-product demand rather than preceding the core runtime and collaboration model.
+**Exit criterion:** users can safely create, apply, recover, and extend an ACRYL
+Blend without confusing ACRYL-native packages with external DSH packages.
 
 ## Non-negotiable invariants
 
