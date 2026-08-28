@@ -3,7 +3,10 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { DEFAULT_PROFILE_BUNDLES, initProfile, resolveProfileDir } from '@deepseek-ai/dsh-app-boot'
-import { startDirectHost } from '../src/host/direct.ts'
+import {
+  DirectHostAlreadyOwnedError,
+  startDirectHost,
+} from '../src/host/direct.ts'
 
 const temporaryDirectories: string[] = []
 const initialDshHome = process.env.DSH_HOME
@@ -40,7 +43,6 @@ describe('startDirectHost', () => {
       generationId: 'generation-1',
     })
 
-    if (host.ctx === undefined) throw new Error('expected an owner host')
     expect(host.profile).toBe('desktop')
     expect(host.generationId).toBe('generation-1')
     expect(host.runtimeState).toBe('ready')
@@ -58,7 +60,7 @@ describe('startDirectHost', () => {
     await host.dispose()
   })
 
-  it('attaches without booting a competing root when another live owner holds the profile', async () => {
+  it('fails closed when another live owner holds the profile', async () => {
     const stateDirectory = await temporaryDirectory()
     process.env.DSH_HOME = await temporaryDirectory()
     await configureProductionProfileForTest()
@@ -69,17 +71,13 @@ describe('startDirectHost', () => {
       generationId: 'generation-owner',
     })
 
-    const attached = await startDirectHost({
+    await expect(startDirectHost({
       profile: 'desktop',
       stateDirectory,
       hostId: 'contender',
       generationId: 'generation-contender',
-    })
+    })).rejects.toBeInstanceOf(DirectHostAlreadyOwnedError)
 
-    expect(attached.attachment).toBe('attached')
-    expect(attached.ctx).toBeUndefined()
-    expect(attached.generationId).toBe('generation-owner')
-    await attached.dispose()
     await owner.dispose()
   })
 
@@ -101,7 +99,6 @@ describe('startDirectHost', () => {
       hostId: 'host-2',
       generationId: 'generation-2',
     })
-    if (second.ctx === undefined) throw new Error('expected a replacement owner host')
     expect(second.ctx.acrProfileOwnership.current.kind).toBe('owned')
     await second.dispose()
   })

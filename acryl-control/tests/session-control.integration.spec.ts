@@ -21,7 +21,6 @@ interface HarnessRuntimeModule {
   mountAcrylSessionControlEndpoint: (ctx: never, bridge: never, options: {
     address: string
     generationId: string
-    activeControlExpiresAfterMs?: number
   }) => Promise<{
     endpoint: import('../src/contracts/control-protocol.ts').ControlEndpoint
     issueToken(attachment: 'owner' | 'attached'): string
@@ -263,28 +262,6 @@ describe('native session control endpoint', () => {
       const client = createAcrylEndpointSessionClient(owned.endpoint.endpoint, 'generation-test', owned.ownerToken)
       await owned.endpoint.dispose()
       await expect(client.subscribe(owned.sessionId, () => undefined)).rejects.toThrow()
-    } finally {
-      await owned.bridge.dispose()
-      await owned.runtime.dispose()
-    }
-  })
-
-  it('denies prompt and cancel after the server-held active-control lease expires', async () => {
-    const owned = await boot()
-    try {
-      const expiring = await harnessRuntime()
-      await owned.endpoint.dispose()
-      const endpoint = await expiring.mountAcrylSessionControlEndpoint(owned.runtime.ctx as never, owned.bridge as never, {
-        address: join(process.env.DSH_HOME!, 'expire.sock'),
-        generationId: 'generation-test',
-        activeControlExpiresAfterMs: 1,
-      })
-      const client = createAcrylEndpointSessionClient(endpoint.endpoint, 'generation-test', endpoint.issueToken('owner'))
-      await new Promise(resolve => setTimeout(resolve, 5))
-      await expect(client.submitPrompt({ sessionId: owned.sessionId, text: 'expired', clientCommandId: 'expired' }))
-        .rejects.toThrow(/expired|authenticate/i)
-      await expect(client.cancel({ sessionId: owned.sessionId })).rejects.toThrow(/expired|authenticate/i)
-      await endpoint.dispose()
     } finally {
       await owned.bridge.dispose()
       await owned.runtime.dispose()
