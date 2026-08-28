@@ -109,20 +109,27 @@ profile composition.
 ### M1 - Adopt pi-tui as the terminal surface
 
 - Replace `@opentui/core`, Bun-only scripts, `tests-bun/`, and the superseded
-  React Ink direction with the working Node-based `dsh-pi-tui` implementation.
-- Retain the existing CLI grammar, JSON output conventions, direct/attach/
-  recovery concepts, and renderer lifecycle guarantees.
-- Refactor pi-tui's direct DSH bindings into an `acryl-tui` client of
-  `acryl-control`: profile/owner/health status, durable-session transcript,
-  composer, structured tool/approval/job cards, and controlled unmount are
-  all projections or commands over the shared runtime.
-- Keep renderer state ephemeral and derive it from typed control/runtime
-  snapshots and durable Harness records. Do not permit the terminal surface to
-  create a second writable Cordis root.
+  React Ink direction with the full terminal feature set in the pinned MIT
+  upstream baseline [`tomowang/dsh-tui`](https://github.com/tomowang/dsh-tui)
+  commit `f7663341f604c3ad96e9b2b838a7ca2de8e84fd1`
+  (`@tomowang/dsh-tui` 0.7.0, pi-tui 0.84.2).
+- Treat that exact snapshot as the complete behavior and component reference:
+  durable replay/resume, streaming, trajectory, tools, context, plugin
+  inspection, approvals, questions, model and preset controls, plan and goal
+  modes, compaction, terminal input, and status/statistics projections.
+- Keep a provenance record with the upstream URL, commit, license notice,
+  component inventory, and every local divergence. Do not add a submodule or
+  ship the upstream bundle unchanged.
+- Refactor the upstream bundle's direct DSH/Cordis bindings into an
+  `acryl-tui` client of `acryl-control`. ACRYL owns the root, active-control
+  lease, sessions, and lifecycle; the TUI owns only terminal rendering and
+  ephemeral local interaction state.
+- Use the pinned normal `@earendil-works/pi-tui` 0.84.2 dependency. Do not
+  copy the Pi monorepo or retain React Ink alongside it.
 
-**Exit criterion:** `acryl-tui` runs on supported Node with pi-tui, can render
-and test without Bun or React Ink, and starts or attaches to exactly one
-Harness runtime for its profile.
+**Exit criterion:** `acryl-tui` provides the pinned baseline's terminal
+experience through ACRYL control projections, without Bun, React Ink, a second
+Cordis root, or a terminal-owned durable state.
 
 ### M2 - Complete the single-owner runtime and attach protocol
 
