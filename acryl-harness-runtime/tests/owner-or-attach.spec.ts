@@ -39,6 +39,35 @@ describe('openAcrylSessionOwnerOrAttach', () => {
     await owner.dispose()
   })
 
+  it('reserves a single owner when requests start concurrently', async () => {
+    await prepareProfile('acryl-test')
+    const [first, second] = await Promise.all([
+      openAcrylSessionOwnerOrAttach({ profile: 'acryl-test', cwd: process.cwd() }),
+      openAcrylSessionOwnerOrAttach({ profile: 'acryl-test', cwd: process.cwd() }),
+    ])
+
+    expect([first.attachment, second.attachment].sort()).toEqual(['attached', 'owner'])
+    expect(first.sessionId).toBe(second.sessionId)
+
+    await first.dispose()
+    await second.dispose()
+  })
+
+  it('does not let an attached client mutate the owner session', async () => {
+    await prepareProfile('acryl-test')
+    const owner = await openAcrylSessionOwnerOrAttach({ profile: 'acryl-test', cwd: process.cwd() })
+    const attached = await openAcrylSessionOwnerOrAttach({ profile: 'acryl-test', cwd: process.cwd() })
+
+    await expect(attached.client.submitPrompt({
+      sessionId: attached.sessionId,
+      text: 'must not dispatch',
+      clientCommandId: 'attached-command',
+    })).rejects.toThrow('read-only')
+    await expect(attached.client.cancel({ sessionId: attached.sessionId })).rejects.toThrow('read-only')
+
+    await owner.dispose()
+  })
+
   it('rolls a failed owner startup back so the next request can own the profile', async () => {
     await prepareProfile('acryl-test')
 

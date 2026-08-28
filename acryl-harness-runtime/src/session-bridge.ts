@@ -14,6 +14,7 @@ import type {
 
 export interface AcrylSessionBridgeOptions {
   readonly profile: string
+  readonly generationId: string
   readonly attachment: AcrylSessionAttachment
   readonly cwd: string
 }
@@ -112,7 +113,7 @@ export function createAcrylSessionBridge(
     const agent = agentFor(sessionId)
     return Object.freeze({
       profile: options.profile,
-      generationId: 'runtime-local',
+      generationId: options.generationId,
       attachment: options.attachment,
       sessionId: agent.id,
       agentStatus: status(agent),
@@ -131,6 +132,7 @@ export function createAcrylSessionBridge(
   return Object.freeze({
     async open(resumeSessionId?: string): Promise<string> {
       if (disposed) throw new Error('ACRYL session bridge is disposed')
+      if (handles.size !== 0) throw new Error('ACRYL session bridge already has an active session')
       const defaultModel = ctx.get('agentDefaultModel')
       if (defaultModel === undefined) throw new Error('ACRYL profile has no default agent model')
       const selection = defaultModel.currentSelection()
@@ -175,7 +177,7 @@ export function createAcrylSessionBridge(
         source: { kind: 'user' },
       }))
       await agent.whenIdle()
-    }, 
+    },
     async cancel(sessionId: string): Promise<void> {
       agentFor(sessionId).cancel({ kind: 'user' })
     },
