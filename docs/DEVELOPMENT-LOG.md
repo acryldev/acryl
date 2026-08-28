@@ -26,6 +26,14 @@ Recommended workflow:
 
 ---
 
+## 2026-08-28 - One runtime, many surface adapters selected
+
+Commit: `1549539f1c2d78e498fd42567c4f5d840ff9130a`
+
+ACRYL now implements coding-agent behavior once in its DeepSeek Harness/Cordis runtime. TUI, Electron, and Web invoke the same typed capabilities through direct, existing IPC/API, and existing HTTP/WebSocket adapters. Durable DSH sessions provide continuity across launches. A detached control daemon and cross-process attachment protocol are deferred until a real simultaneous-live-surface requirement exists.
+
+Primary record: `docs/ACRYL-RUNTIME-SURFACE-CONTRACT.md`. This decision supersedes the cross-process ownership sections of Spec 019.
+
 ## 2026-08-28 - Profile ownership and active-control protections added
 
 Commit: `99af4c14871caa3e7fca1bddf4e3638c5953f7d8`
