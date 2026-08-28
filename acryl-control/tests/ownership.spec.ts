@@ -76,7 +76,29 @@ describe('ProfileLeaseStore', () => {
     expect(replacement.kind).toBe('owned')
   })
 
-  it('recovers a lease only after both process and endpoint are gone', async () => {
+  it('does not recover a recently heartbeated lease when its process and endpoint are temporarily unavailable', async () => {
+    const stateDirectory = await temporaryDirectory()
+    const owner = await new ProfileLeaseStore({
+      stateDirectory,
+      now: () => new Date('2026-08-26T00:00:00.000Z'),
+    }).acquire(request(1))
+    if (owner.kind !== 'owned') throw new Error('expected owner')
+
+    const recovery = new ProfileLeaseStore({
+      stateDirectory,
+      now: () => new Date('2026-08-26T00:00:01.000Z'),
+      staleAfterMs: 5_000,
+      isProcessAlive: () => false,
+      isEndpointReachable: async () => false,
+    })
+
+    await expect(recovery.recoverStale('desktop')).resolves.toEqual({
+      kind: 'active',
+      lease: owner.lease,
+    })
+  })
+
+  it('recovers a lease only after its heartbeat expires and both process and endpoint are gone', async () => {
     const stateDirectory = await temporaryDirectory()
     const ownerStore = new ProfileLeaseStore({ stateDirectory })
     const owner = await ownerStore.acquire(request(1))
@@ -105,6 +127,7 @@ describe('ProfileLeaseStore', () => {
 
     const stale = new ProfileLeaseStore({
       stateDirectory,
+      now: () => new Date('2099-01-01T00:00:00.000Z'),
       isProcessAlive: () => false,
       isEndpointReachable: async () => false,
     })

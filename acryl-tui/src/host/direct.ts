@@ -10,6 +10,7 @@ import {
   AcrControlProtocolService,
   AcrProfileOwnershipService,
   AcrRuntimeArchitectureService,
+  ProfileLeaseStore,
   type ControlEndpoint,
 } from 'acryl-control'
 
@@ -22,7 +23,8 @@ export interface StartDirectHostOptions {
 }
 
 export interface DirectHost {
-  readonly ctx: Context
+  readonly ctx?: Context
+  readonly attachment: 'owner' | 'attached'
   readonly runtimeState: 'ready' | 'unavailable'
   readonly profile: string
   readonly generationId: string
@@ -83,7 +85,33 @@ export async function startDirectHost(options: StartDirectHostOptions): Promise<
   const generationId = options.generationId ?? randomUUID()
   const hostId = options.hostId ?? randomUUID()
   const endpoint = options.endpoint ?? defaultEndpoint(profile, generationId, options.stateDirectory)
+  const leaseStore = new ProfileLeaseStore({ stateDirectory: options.stateDirectory })
+  const request = {
+    profileKey: profile,
+    host: {
+      hostId,
+      kind: 'tui' as const,
+      generationId,
+      pid: process.pid,
+      startedAt: new Date().toISOString(),
+      protocolVersion: ACRYL_CONTROL_PROTOCOL_VERSION,
+      status: 'ready' as const,
+    },
+    endpoint,
+  }
+  const reservation = await leaseStore.acquire(request)
+  if (reservation.kind === 'attached') {
+    return Object.freeze({
+      attachment: 'attached' as const,
+      runtimeState: 'unavailable' as const,
+      profile,
+      generationId: reservation.lease.generationId,
+      endpoint: reservation.lease.endpoint,
+      async dispose(): Promise<void> {},
+    })
+  }
   let runtime: Awaited<ReturnType<typeof bootAcrylHarnessProfile>>
+  let reservationTransferred = false
   try {
     runtime = await bootAcrylHarnessProfile({
       profile,
@@ -91,19 +119,8 @@ export async function startDirectHost(options: StartDirectHostOptions): Promise<
         assertControlContext(ctx)
         const ownership = ctx.plugin(AcrProfileOwnershipService, {
           stateDirectory: options.stateDirectory,
-          request: {
-            profileKey: profile,
-            host: {
-              hostId,
-              kind: 'tui',
-              generationId,
-              pid: process.pid,
-              startedAt: new Date().toISOString(),
-              protocolVersion: ACRYL_CONTROL_PROTOCOL_VERSION,
-              status: 'ready',
-            },
-            endpoint,
-          },
+          request,
+          ownedLease: reservation.lease,
         })
         await ownership
         const acquisition = ctx.acrProfileOwnership.current
@@ -141,7 +158,11 @@ export async function startDirectHost(options: StartDirectHostOptions): Promise<
         await protocol
       },
     })
+    reservationTransferred = true
   } catch (cause) {
+    if (!reservationTransferred) {
+      await leaseStore.release(reservation.lease).catch(() => undefined)
+    }
     if (cause instanceof Error && cause.cause instanceof DirectHostAlreadyOwnedError) {
       throw cause.cause
     }
@@ -156,6 +177,7 @@ export async function startDirectHost(options: StartDirectHostOptions): Promise<
   let disposed = false
   return Object.freeze({
     ctx,
+    attachment: 'owner',
     runtimeState,
     profile,
     generationId,

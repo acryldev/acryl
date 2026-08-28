@@ -22,6 +22,8 @@ export interface ProfileLeaseStoreOptions {
   readonly createNonce?: () => string
   readonly isProcessAlive?: (pid: number) => boolean | Promise<boolean>
   readonly isEndpointReachable?: (endpoint: ControlEndpoint) => Promise<boolean>
+  /** A lease cannot be recovered while its owner has heartbeated within this interval. */
+  readonly staleAfterMs?: number
 }
 
 function leaseDirectoryName(profileKey: string): string {
@@ -99,6 +101,7 @@ export class ProfileLeaseStore {
   readonly #createNonce: () => string
   readonly #isProcessAlive: (pid: number) => boolean | Promise<boolean>
   readonly #isEndpointReachable: (endpoint: ControlEndpoint) => Promise<boolean>
+  readonly #staleAfterMs: number
 
   constructor(options: ProfileLeaseStoreOptions) {
     this.#stateDirectory = options.stateDirectory
@@ -114,6 +117,10 @@ export class ProfileLeaseStore {
       }
     })
     this.#isEndpointReachable = options.isEndpointReachable ?? (async () => true)
+    this.#staleAfterMs = options.staleAfterMs ?? 15_000
+    if (!Number.isFinite(this.#staleAfterMs) || this.#staleAfterMs <= 0) {
+      throw new Error('profile lease stale interval must be positive')
+    }
   }
 
   async acquire(request: ProfileLeaseRequest): Promise<ProfileLeaseAcquisition> {
@@ -171,7 +178,10 @@ export class ProfileLeaseStore {
       this.#isProcessAlive(lease.pid),
       this.#isEndpointReachable(lease.endpoint),
     ])
-    if (processAlive || endpointReachable) return { kind: 'active', lease }
+    const heartbeatAt = Date.parse(lease.heartbeatAt)
+    if (!Number.isFinite(heartbeatAt)) throw new Error('invalid profile lease heartbeat')
+    const heartbeatCurrent = this.#now().getTime() - heartbeatAt < this.#staleAfterMs
+    if (processAlive || endpointReachable || heartbeatCurrent) return { kind: 'active', lease }
 
     const current = parseLease(await readFile(join(directory, 'lease.json'), 'utf8'))
     if (
@@ -184,6 +194,32 @@ export class ProfileLeaseStore {
     await unlink(join(directory, 'lease.json'))
     await rmdir(directory)
     return { kind: 'recovered', lease }
+  }
+
+  async heartbeat(lease: ProfileOwnershipLease): Promise<ProfileOwnershipLease> {
+    const directory = join(this.#stateDirectory, leaseDirectoryName(lease.profileKey))
+    const active = parseLease(await readFile(join(directory, 'lease.json'), 'utf8'))
+    if (
+      active.ownerHostId !== lease.ownerHostId
+      || active.generationId !== lease.generationId
+      || active.nonce !== lease.nonce
+    ) {
+      throw new Error('lease ownership does not match')
+    }
+    const renewed = Object.freeze({ ...active, heartbeatAt: this.#now().toISOString() })
+    const temporary = join(directory, `.lease.${active.nonce}.${this.#createNonce()}.tmp`)
+    await writeFile(temporary, `${JSON.stringify(renewed)}\n`, {
+      encoding: 'utf8',
+      flag: 'wx',
+      mode: 0o600,
+    })
+    try {
+      await rename(temporary, join(directory, 'lease.json'))
+    } catch (cause) {
+      await unlink(temporary).catch(() => undefined)
+      throw cause
+    }
+    return renewed
   }
 
   async release(lease: ProfileOwnershipLease): Promise<void> {
