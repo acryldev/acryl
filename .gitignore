@@ -2,6 +2,7 @@
 node_modules/
 *.tsbuildinfo
 .build/
+.pi/
 
 dsh-plugin-desktop/dist/
 dsh-plugin-desktop/lib/
