@@ -26,6 +26,14 @@ Recommended workflow:
 
 ---
 
+## 2026-08-28 - Session endpoint polling lifecycle completed
+
+Commit: `00b77eaf09adfd05b994a34555bda6124ad34815`
+
+The temporary local endpoint subscription transport now performs one snapshot request at a time, schedules a later poll only after that request settles, and stops cleanly after disposal or a terminal endpoint error. Socket close, error, and request timeout now settle every client request. Integration coverage proves endpoint cancellation reaches a native aborted turn, fresh clients replay durable assistant messages, and disposed subscriptions do not receive later session events.
+
+Primary sources: `acryl-control/src/protocol/endpoint-client.ts`, `acryl-control/tests/endpoint-client.spec.ts`, and `acryl-control/tests/session-control.integration.spec.ts`. Verification: `corepack pnpm --filter acryl-control run check` (51 tests) and `corepack pnpm --filter acryl-harness-runtime run check` (13 tests).
+
 ## 2026-08-28 - Local session endpoint capability and readiness correction
 
 Commit: `0cb802aa978bc8fe8c6acf826837ee189d5758d4`
