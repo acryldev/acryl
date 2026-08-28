@@ -508,6 +508,9 @@ importers:
       '@deepseek-ai/schemastery':
         specifier: ^3.18.1
         version: 3.18.1
+      acryl-control:
+        specifier: workspace:*
+        version: link:../acryl-control
       adm-zip:
         specifier: ^0.6.0
         version: 0.6.0

@@ -3,6 +3,11 @@ export type {
   DurableSessionMessagePort,
   DurableSessionMessageReceipt,
 } from './durable-message.ts'
+export {
+  createAcrylSessionBridge,
+  type AcrylSessionBridge,
+  type AcrylSessionBridgeOptions,
+} from './session-bridge.ts'
 
 import { writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
