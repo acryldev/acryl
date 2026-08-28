@@ -17,7 +17,7 @@ after its focused test, commit, and evidence are complete.
 
 ## Phase 1: Contract and runtime foundation
 
-- [ ] T001 Add validated `AcrylSessionSnapshot`, transcript/tool projections,
+- [x] T001 Add validated `AcrylSessionSnapshot`, transcript/tool projections,
   and four-command `AcrylSessionClient` types in
   `acryl-control/src/contracts/session.ts`; test invalid external payloads in
   `acryl-control/tests/session-contract.spec.ts`.
