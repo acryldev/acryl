@@ -26,6 +26,14 @@ Recommended workflow:
 
 ---
 
+## 2026-08-28 - Single-root session owner-or-attach established
+
+Commit: `218f28f615662fdd98b924c7182ec586ec96016b`
+
+The runtime now has one owner-or-attach entry point for a profile. The first caller boots the native Harness root and selects a durable session; subsequent in-process callers receive an attached, projection-only client for that same root and session. Failed startup disposes the attempted bridge and root before later ownership can proceed. The remote control-endpoint path remains the next task.
+
+Primary sources: `acryl-harness-runtime/src/owner-or-attach.ts` and `acryl-harness-runtime/tests/owner-or-attach.spec.ts`. Verification: `corepack pnpm --filter acryl-harness-runtime run check`.
+
 ## 2026-08-28 - Native durable Harness session bridge added
 
 Commit: `35a166708bd69266377b84f1c2c15a8e4ab910fc`
