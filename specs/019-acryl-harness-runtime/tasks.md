@@ -25,12 +25,12 @@ after its focused test, commit, and evidence are complete.
   cancel operations in `acryl-control/src/protocol/client.ts`; RED-GREEN test
   request/response parsing and subscription disposal in
   `acryl-control/tests/session-client.spec.ts`.
-- [ ] T003 Add a runtime-owned native DSH session bridge in
+- [x] T003 Add a runtime-owned native DSH session bridge in
   `acryl-harness-runtime/src/session-bridge.ts` that creates or resumes one
   durable session, projects durable transcript/basic tool state, sends prompts
   through the native agent, and cancels its active turn; test it against the
   pinned profile in `acryl-harness-runtime/tests/session-bridge.spec.ts`.
-- [ ] T004 Extend `acryl-harness-runtime/src/index.ts` with the only
+- [x] T004 Extend `acryl-harness-runtime/src/index.ts` with the only
   owner-or-attach entry point, returning a selected session identity and an
   `AcrylSessionClient`; prove startup rollback, owner reuse, and no second root
   in `acryl-harness-runtime/tests/owner-or-attach.spec.ts`.

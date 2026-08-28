@@ -8,6 +8,11 @@ export {
   type AcrylSessionBridge,
   type AcrylSessionBridgeOptions,
 } from './session-bridge.ts'
+export {
+  openAcrylSessionOwnerOrAttach,
+  type AcrylOwnerOrAttachOptions,
+  type AcrylOwnerOrAttachResult,
+} from './owner-or-attach.ts'
 
 import { writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'

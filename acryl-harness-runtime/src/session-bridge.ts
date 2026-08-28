@@ -7,6 +7,7 @@ import type {} from '@deepseek-ai/dsh-session-persistence'
 import type {
   AcrylSessionAttachment,
   AcrylSessionSnapshot,
+  AcrylSessionSubscription,
   AcrylToolProjection,
   AcrylTranscriptItem,
 } from 'acryl-control'
@@ -20,6 +21,10 @@ export interface AcrylSessionBridgeOptions {
 export interface AcrylSessionBridge {
   open(resumeSessionId?: string): Promise<string>
   snapshot(sessionId: string): Promise<AcrylSessionSnapshot>
+  subscribe(
+    sessionId: string,
+    listener: (snapshot: AcrylSessionSnapshot) => void,
+  ): Promise<AcrylSessionSubscription>
   submitPrompt(input: { readonly sessionId: string; readonly text: string }): Promise<void>
   cancel(sessionId: string): Promise<void>
   dispose(): Promise<void>
@@ -83,7 +88,38 @@ export function createAcrylSessionBridge(
   options: AcrylSessionBridgeOptions,
 ): AcrylSessionBridge {
   const handles = new Map<string, AgentHandle>()
+  const subscribers = new Map<string, Set<(snapshot: AcrylSessionSnapshot) => void>>()
   let disposed = false
+
+  const notify = (sessionId: string): void => {
+    const listeners = subscribers.get(sessionId)
+    if (listeners === undefined) return
+    void snapshot(sessionId).then((next) => {
+      for (const listener of listeners) {
+        try {
+          listener(next)
+        } catch {
+          // A presentation listener cannot disrupt durable session delivery.
+        }
+      }
+    })
+  }
+  const offSessionEvent = ctx.on('session/event', (session) => {
+    if (handles.has(session.id)) notify(session.id)
+  })
+
+  const snapshot = async (sessionId: string): Promise<AcrylSessionSnapshot> => {
+    const agent = agentFor(sessionId)
+    return Object.freeze({
+      profile: options.profile,
+      generationId: 'runtime-local',
+      attachment: options.attachment,
+      sessionId: agent.id,
+      agentStatus: status(agent),
+      transcript: transcript(agent.session.events),
+      tools: tools(agent.session.events),
+    })
+  }
 
   const agentFor = (sessionId: string): Agent => {
     if (disposed) throw new Error('ACRYL session bridge is disposed')
@@ -111,16 +147,24 @@ export function createAcrylSessionBridge(
       handles.set(handle.agent.id, handle)
       return handle.agent.id
     },
-    async snapshot(sessionId: string): Promise<AcrylSessionSnapshot> {
-      const agent = agentFor(sessionId)
+    snapshot,
+    async subscribe(
+      sessionId: string,
+      listener: (snapshot: AcrylSessionSnapshot) => void,
+    ): Promise<AcrylSessionSubscription> {
+      agentFor(sessionId)
+      const listeners = subscribers.get(sessionId) ?? new Set()
+      subscribers.set(sessionId, listeners)
+      listeners.add(listener)
+      listener(await snapshot(sessionId))
+      let active = true
       return Object.freeze({
-        profile: options.profile,
-        generationId: 'runtime-local',
-        attachment: options.attachment,
-        sessionId: agent.id,
-        agentStatus: status(agent),
-        transcript: transcript(agent.session.events),
-        tools: tools(agent.session.events),
+        async dispose(): Promise<void> {
+          if (!active) return
+          active = false
+          listeners.delete(listener)
+          if (listeners.size === 0) subscribers.delete(sessionId)
+        },
       })
     },
     async submitPrompt(input: { readonly sessionId: string; readonly text: string }): Promise<void> {
@@ -138,6 +182,8 @@ export function createAcrylSessionBridge(
     async dispose(): Promise<void> {
       if (disposed) return
       disposed = true
+      offSessionEvent()
+      subscribers.clear()
       await Promise.all([...handles.values()].map(handle => handle.dispose()))
       handles.clear()
     },
