@@ -1,206 +1,235 @@
-# Implementation Plan: ACRYL Shared Harness Runtime
+# Implementation Plan: ACRYL pi-tui Durable Session Vertical Slice
 
-**Branch**: `019-acryl-harness-runtime` | **Date**: 2026-08-26 | **Spec**: [spec.md](spec.md)
+**Branch**: `main` | **Date**: 2026-08-28 | **Spec**: [spec.md](spec.md)
 
 ## Summary
 
-Make `acryl-harness-runtime` the sole host-neutral owner of a pinned DeepSeek
-Harness profile's preparation, boot, durable session bridge, and ordered
-shutdown. Terminal, Desktop, and later Web surfaces acquire one profile owner
-or attach to it through a local authenticated control protocol. Provider
-credentials remain owned by Harness profiles and provider CLIs, never ACRYL.
+Deliver one human-testable terminal feature:
 
-The implementation delivers the smallest walking skeleton first: a normal
-pinned profile that starts in one Cordis root and creates a durable session.
-It then adds the owner/attach control boundary, one active-control lease, and a
-native DSH agent adapter. Existing `acryl-tui` direct boot and `acryl-control`
-services are integration points, not alternative runtime owners.
+```text
+acryl tui [--profile <name>] [--resume <session-id>]
+```
+
+The command requests an owner-or-attach connection for one named ACRYL profile.
+`acryl-harness-runtime` owns the only writable pinned DeepSeek Harness/Cordis
+root when ownership is available. Otherwise the terminal attaches through
+`acryl-control`. The Node pi-tui renderer receives typed session snapshots and
+submits typed commands through an `AcrylSessionClient`; it never receives a
+Cordis `Context`, native DSH session service, agent handle, or ownership lease.
+
+A user can send a prompt, see durable transcript and basic status/tool
+projections, exit without losing the session, and resume that exact session.
+This is the complete first vertical slice. GUI, standalone Web, provider
+selection, approval dialogs, session browsing, and advanced tool-card controls
+remain out of scope.
 
 ## Technical Context
 
 **Language/Version**: TypeScript 6.0.3, Node.js `^22.19.0 || >=24.0.0`
 
-**Primary Dependencies**: Yarn 4.18.0 workspaces; Cordis 4.0.1; pinned
-`@deepseek-ai/dsh-*` 0.1.1-rc.2 packages; Vitest 4.1.8
+**Package manager**: Corepack PNPM 11.7.0. The outer workspace is PNPM with
+`deepseek-harness/` explicitly excluded. The pinned submodule remains its own
+unchanged PNPM workspace.
 
-**Storage**: Existing Harness profile configuration and durable session
-persistence. ACRYL control metadata is local, per-profile, and user-private.
-No new ACRYL session store.
+**Primary dependencies**: Cordis 4.0.1, pinned `@deepseek-ai/dsh-*`
+0.1.1-rc.2, Vitest 4.1.8, and exact normal
+`@earendil-works/pi-tui@0.80.7` dependency ownership in `acryl-tui`.
 
-**Testing**: `corepack yarn workspace acryl-harness-runtime test`; `corepack
-yarn workspace acryl-control test`; `corepack yarn workspace acryl-tui test`;
-workspace typechecks and headless loader smoke tests.
+**Storage**: Existing DSH profile configuration and durable sessions. ACRYL
+adds no alternate transcript or session store.
 
-**Target Platform**: Local macOS, Linux, and Windows terminal/Desktop hosts.
-Unix domain sockets are used on Unix; Windows named pipes use a platform ACL
-adapter before they are considered equivalent.
+**Testing**: `corepack pnpm --filter <workspace> run test`, followed by
+workspace `typecheck`, `build`, and `check` commands. Tests are run once only.
 
-**Project Type**: Node.js workspace packages and terminal host, with Electron
-as a separate presentation host.
+**Target Platform**: Local Node terminal on macOS, Linux, and Windows. The
+existing local control endpoint is the only attachment transport. The Electron
+port 43120 renderer is not a standalone Web surface and is not touched here.
 
-**Performance Goals**: A local boot reaches a live agent/session root in one
-command. Ten sequential boot/dispose cycles leave no owner, listener, socket,
-or process from a prior generation.
+## Scope and non-goals
 
-**Constraints**:
+### In scope
 
-- Do not modify `deepseek-harness/`.
-- One profile has at most one writable runtime owner and one active-control
-  lease.
-- Provider secrets are never read, stored, transmitted, or logged by ACRYL.
-- The control token is random, owner-generation-scoped, user-private, rotated
-  on owner generation change, and never logged.
-- All resources are acquired in lifecycle-owned Cordis effects and fully
-  disposed.
-- Existing user profile patches/settings survive preparation.
+- Replace the superseded React Ink renderer direction in `acryl-tui` with a
+  Node pi-tui presentation.
+- Add a minimal control projection and command contract: snapshot, subscribe,
+  submit prompt, cancel.
+- Have the runtime implement that contract over native durable Harness sessions
+  and the native Harness agent.
+- Let `acryl tui` request owner-or-attach and render the selected session.
+- Render text transcript, agent status, and compact structured tool status
+  projections from the typed snapshot.
+- Print a resumable session ID on terminal exit and accept `--resume`.
 
-**Scale/Scope**: One local user may attach Terminal and Desktop to one named
-profile. Remote networking, cross-user collaboration, provider login flows,
-and migration of the complete Desktop presentation are outside this feature.
+### Out of scope
 
-## Constitution Check
+- GUI implementation or independent Web attachment.
+- Model selection, provider switching, credentials, approval/question dialogs,
+  slash-command catalog, session browser, token accounting, compaction UI, and
+  expandable tool-detail cards.
+- Codex, Claude, ACP, OpenCode, Gemini, Pi, and local adapters.
+- A second runtime, terminal-scrollback persistence, or a global/external DSH
+  installation flow.
 
-| Gate | Result | Evidence |
-|---|---|---|
-| Capability is a Cordis plugin/service, not a privileged kernel path | Pass | Runtime services use Cordis `Service`, `inject`, and `ctx.effect()` ownership. |
-| Pinned Harness is composed, not forked | Pass | Reuses `dsh-app-boot` profile composition and native `sessions`/`agents` services. |
-| Durable facts are not terminal-derived | Pass | Session identity, events, and history remain Harness durable-session facts. |
-| Services have stable contracts and explicit cleanup | Pass | Contract defines runtime, attachment, and lease state; boot root owns disposal. |
-| New complexity is justified | Pass | The local control boundary is necessary to prevent two writable owners and to support presentation-independent attachment. |
+## Provenance and dependency policy
 
-**Post-design check**: Pass. The design creates no parallel session store,
-provider auth store, dependency-injection system, or event system.
+`/Users/musichen/_projects/p11_acr_agentcontextrelay/dsh-pi-tui` is a read-only
+working reference, not a runtime dependency or shipped installation. Record
+its URL, reviewed commit, MIT license, and adapted component list in one small
+`docs/acryl/dsh-pi-tui-provenance.md` note. Do not add a `vendor/` tree,
+submodule, or Pi monorepo copy.
 
-## Cordis Mini-Design
+`@earendil-works/pi-tui@0.80.7` is owned as an exact normal dependency of
+`acryl-tui` through the root PNPM lockfile. Do not patch or bundle it by
+default. A future defect may justify a root PNPM patched dependency only with a
+separate decision, test, and provenance update.
+
+## Minimal control contract
+
+`acryl-control` owns public types and the local client. The runtime owns the
+server-side implementation. The renderer consumes only this interface:
+
+```ts
+interface AcrylSessionClient {
+  snapshot(sessionId: string): Promise<AcrylSessionSnapshot>
+  subscribe(
+    sessionId: string,
+    listener: (snapshot: AcrylSessionSnapshot) => void,
+  ): Promise<{ dispose(): Promise<void> }>
+  submitPrompt(input: {
+    sessionId: string
+    text: string
+    clientCommandId: string
+  }): Promise<void>
+  cancel(input: { sessionId: string }): Promise<void>
+}
+
+interface AcrylSessionSnapshot {
+  profile: string
+  generationId: string
+  attachment: 'owner' | 'attached'
+  sessionId: string
+  agentStatus: 'idle' | 'running' | 'waiting' | 'failed'
+  transcript: readonly AcrylTranscriptItem[]
+  tools: readonly AcrylToolProjection[]
+}
+```
+
+`AcrylTranscriptItem` contains only stable durable message identity, author,
+and renderable content blocks. `AcrylToolProjection` contains a call identity,
+name, and compact lifecycle status. The protocol transports snapshots and
+commands, never DSH objects, callbacks, credentials, or raw terminal bytes.
+
+## Direct DSH binding replacement
+
+The reference TUI reads `ctx.agents`, `ctx.sessions`, `ctx.commands`,
+`ctx.tools`, and DSH session events directly. In ACRYL:
+
+| Reference behavior | First-slice ACRYL boundary |
+|---|---|
+| session event replay | `AcrylSessionClient.snapshot()` and `subscribe()` |
+| prompt command execution | `submitPrompt()` |
+| turn cancellation | `cancel()` |
+| agent running state | `snapshot.agentStatus` |
+| tool call/result display | `snapshot.tools` |
+| profile/session startup and resume | launcher request to runtime, then an `AcrylSessionClient` |
+
+The first port copies only renderer logic necessary to display transcript,
+composer, status, and compact tool state. It does not port reference Cordis
+plugins, startup parsing, direct agent/session access, model selector,
+questions, or resume process replacement.
+
+## Cordis mini-design
 
 ### Capability and plugin boundary
 
-`acryl-harness-runtime` owns one started Harness profile generation. It is the
-only package allowed to call profile preparation and `boot()` for an ACRYL
-profile. It provides a stable host-neutral runtime handle. `acryl-control`
-owns generic ownership and protocol mechanics. Presentation packages consume
-those contracts and never boot a second root.
+`acryl-harness-runtime` is the only owner of profile preparation, DSH root
+boot, native session/agent handles, durable event projection, and shutdown.
+`acryl-control` owns the transport-neutral contracts, local endpoint, and
+client. `acryl-tui` owns only pi-tui process-terminal and renderer lifecycle.
 
 ### Provides and consumes
 
-The runtime provides:
-
-- `AcrylHarnessRuntimeHandle`: profile, generation, root `Context`, session
-  creation/projection, durable native-agent bridge, and idempotent disposal.
-- `AcrylRuntimeAttachment`: authenticated read projection plus an explicit
-  lease-acquisition operation.
-- `AcrylActiveControlLease`: exclusive authority to submit agent actions.
-
-It consumes the pinned Harness `sessions`, session-persistence integration,
-`agents`, and profile composition through the root context. The native agent
-adapter injects `sessions` and `agents`; it is PENDING or fails loudly if the
-profile lacks either required capability.
+The runtime provides the minimal session projection/command implementation and
+mounts it into the existing `acryl-control` protocol. It consumes native
+Harness `sessions`, `agents`, and their durable event services through the one
+root. The TUI consumes `AcrylSessionClient` only.
 
 ### Effects and disposal
 
-The owner lifecycle is:
-
-```text
-prepare profile -> acquire owner generation -> write token metadata (0600)
--> boot one Harness root -> install runtime services -> publish endpoint
--> accept authenticated attachments
-
-close listener -> revoke active lease -> close attachments -> dispose Cordis
-root -> remove token/endpoint metadata -> release profile owner
-```
-
-Startup failure reverses every completed acquisition in reverse order. A
-surface disconnect, dead process observation, or authenticated channel expiry
-releases only its active-control lease. It never silently transfers that lease.
+The runtime effect owns native agent handles, subscription registration, and
+endpoint publication; shutdown disposes subscriptions and agent handles before
+the root, then removes endpoint and lease metadata. A TUI process disposing
+its renderer only closes its client subscription. If it was the owner, its
+launcher then asks the runtime to perform the ordered owner shutdown. An
+attached TUI cannot dispose the root.
 
 ### Configuration and composition
 
-The runtime preserves a profile's user patch and settings layers. It rewrites
-only the generated empty `cordis.yml` Loader anchor, using the upstream
-`profile-boot.ts` pattern. Stable Loader row IDs and the pinned profile bundle
-composition remain authoritative. The HMR requirement is honored: runtime
-startup either receives a valid HMR configuration or fails with the explicit
-existing launch requirement, never suppresses it implicitly.
+Profile composition continues to use the pinned Harness profile and user patch
+layers. No TUI Loader row or TUI configuration is added. The current HMR launch
+rule remains unchanged. Runtime routes and session identity are selected by the
+existing profile configuration, not a TUI setting.
 
 ### Events and durability
 
-Control connection status and lease transitions are runtime observations.
-Harness session events and agent history are durable facts. Every agent action
-is tied to a named Harness session before model invocation. Read projections
-are derived from durable session state; terminal output is not replay history.
+Native DSH durable session events are the transcript and tool-projection
+source. The runtime emits a monotonically ordered control snapshot when the
+projection changes. The subscription notification is ephemeral; a reconnect
+rebuilds from durable records. Prompt commands are explicitly accepted by the
+runtime before agent work begins.
 
 ### Verification
 
-Tests cover fresh boot, preserved user patches, dependency closure, startup
-rollback, attach authentication, capability-token rotation, single active
-lease, disconnect expiry, repeated start/dispose, a new durable session on
-owner terminal boot, native create/resume behavior, and no leaked listeners or
-owners.
+Tests prove native prompt dispatch becomes durable transcript state, snapshot
+replay matches that state, cancellation reaches the native handle, owner and
+attached clients use the same client contract, and renderer disposal leaves no
+terminal listener. A local human smoke proves prompt, response, exit, and
+resume through `acryl tui`.
 
-## Project Structure
-
-### Documentation
+## Owner-or-attach flow
 
 ```text
-specs/019-acryl-harness-runtime/
-├── spec.md
-├── research.md
-├── plan.md
-├── data-model.md
-├── contracts/local-control.md
-├── quickstart.md
-└── tasks.md
+acryl tui --profile P [--resume S]
+  -> acryl-tui asks acryl-harness-runtime for P owner-or-attach
+  -> runtime/control acquire or observe P lease
+  -> owner: boot one root, mount control server, choose new or resumed S
+  -> attached: authenticate to current control endpoint and choose S
+  -> both paths return AcrylSessionClient + selected session identity
+  -> pi-tui renders snapshots and sends only typed commands
 ```
 
-### Source Code
+TUI does not decide lease ownership, boot a root, or access DSH services. A
+future GUI or Web client uses this same `AcrylSessionClient` contract and the
+same `profile`, `generationId`, and `sessionId`; this slice proves that with one
+generic second-client contract test, not GUI/Web implementations.
 
-```text
-acryl-harness-runtime/
-├── src/
-│   ├── index.ts                 # public runtime boundary
-│   ├── profile.ts               # upstream-compatible profile preparation
-│   ├── runtime-service.ts       # one-root owner lifecycle
-│   ├── attachment.ts            # authenticated attachment and lease projection
-│   ├── native-agent.ts          # durable DSH sessions/agents adapter
-│   └── durable-message.ts       # durable message contract
-└── tests/
-    ├── profile.spec.ts
-    ├── runtime-service.spec.ts
-    ├── attachment.spec.ts
-    └── native-agent.spec.ts
+## Delivery tasks
 
-acryl-control/
-├── src/ownership/               # existing profile owner records
-├── src/protocol/                # hardened local protocol service/client
-└── tests/
+1. Add the small `acryl-control` session contract and local client validation.
+2. Implement the runtime-owned native DSH session projection, prompt dispatch,
+   cancellation, owner-or-attach result, and ordered cleanup.
+3. Add exact pi-tui dependency ownership and the provenance note.
+4. Replace the Ink mount with a minimal pi-tui transcript/composer renderer
+   using only `AcrylSessionClient`.
+5. Extend CLI grammar with `--resume`, request owner-or-attach, and print the
+   resumable session identity at controlled exit.
+6. Run focused tests and one human local smoke. Stop here.
 
-acryl-tui/
-├── src/host/direct.ts           # owner-or-attach entry point
-├── src/cli/run.ts               # real session-backed terminal flow
-└── tests/
+## Human acceptance
+
+With an already-authenticated ACRYL Harness profile:
+
+```bash
+corepack pnpm --filter acryl-tui run build
+node acryl-tui/lib/bin.js tui --profile <profile>
 ```
 
-**Structure Decision**: Extend the existing `acryl-harness-runtime`,
-`acryl-control`, and `acryl-tui` packages. Do not create an Electron dependency
-in the terminal host or a second runtime package for Desktop.
+Type a prompt. Observe a native provider response, agent status, and any
+compact tool projection. Exit, copy the printed session ID, then run:
 
-## Delivery Sequence
+```bash
+node acryl-tui/lib/bin.js tui --profile <profile> --resume <session-id>
+```
 
-1. Establish profile preparation and dependency-closure tests in the runtime
-   package.
-2. Replace the current direct-only host boot with the runtime-owned one-root
-   handle and prove new durable session creation.
-3. Harden `acryl-control` with a local authenticated protocol handshake,
-   generation token rotation, and lease protocol.
-4. Add owner-or-attach behavior to TUI, retaining a read-only attached surface
-   until it explicitly acquires the active-control lease.
-5. Add the native DSH adapter over `ctx.sessions` and `ctx.agents`; prove no
-   terminal-history persistence path exists.
-6. Run ten-cycle lifecycle evidence and all package gates.
-
-## Complexity Tracking
-
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|---|---|---|
-| Local control protocol | Presentation hosts must attach to one durable writable runtime without sharing a process | A shared in-memory singleton cannot work across Terminal and Desktop processes |
-| Active-control lease | Durable agent actions need deterministic single-surface submission | Concurrent uncoordinated writes would make session ordering and ownership ambiguous |
+The earlier transcript must render and the next prompt must continue the same
+durable session.

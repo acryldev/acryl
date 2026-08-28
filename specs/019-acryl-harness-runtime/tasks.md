@@ -1,76 +1,91 @@
-# Tasks: ACRYL Shared Harness Runtime
+# Tasks: ACRYL pi-tui Durable Session Vertical Slice
 
 **Input**: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md),
-[data-model.md](data-model.md), [local control contract](contracts/local-control.md)
+[data-model.md](data-model.md), and [local control contract](contracts/local-control.md).
+
+## Single vertical-slice rule
+
+Do not start GUI, Web, provider selection, approval dialogs, session browsing,
+or another agent adapter. Every task below serves one human flow:
+
+```text
+acryl tui -> prompt -> durable native response -> exit -> --resume -> continue
+```
+
+Every behavior task follows RED-GREEN-REFACTOR. A checkbox is checked only
+after its focused test, commit, and evidence are complete.
+
+## Phase 1: Contract and runtime foundation
+
+- [ ] T001 Add validated `AcrylSessionSnapshot`, transcript/tool projections,
+  and four-command `AcrylSessionClient` types in
+  `acryl-control/src/contracts/session.ts`; test invalid external payloads in
+  `acryl-control/tests/session-contract.spec.ts`.
+- [ ] T002 Add the local protocol client for snapshot, subscribe, prompt, and
+  cancel operations in `acryl-control/src/protocol/client.ts`; RED-GREEN test
+  request/response parsing and subscription disposal in
+  `acryl-control/tests/session-client.spec.ts`.
+- [ ] T003 Add a runtime-owned native DSH session bridge in
+  `acryl-harness-runtime/src/session-bridge.ts` that creates or resumes one
+  durable session, projects durable transcript/basic tool state, sends prompts
+  through the native agent, and cancels its active turn; test it against the
+  pinned profile in `acryl-harness-runtime/tests/session-bridge.spec.ts`.
+- [ ] T004 Extend `acryl-harness-runtime/src/index.ts` with the only
+  owner-or-attach entry point, returning a selected session identity and an
+  `AcrylSessionClient`; prove startup rollback, owner reuse, and no second root
+  in `acryl-harness-runtime/tests/owner-or-attach.spec.ts`.
+- [ ] T005 Mount the session bridge behind the existing control endpoint in
+  `acryl-control/src/protocol/service.ts` and runtime owner composition; test
+  prompt persistence, response replay, cancellation, and endpoint cleanup in
+  `acryl-control/tests/session-control.integration.spec.ts`.
+
+## Phase 2: pi-tui presentation
+
+- [ ] T006 Add exact `@earendil-works/pi-tui@0.80.7` runtime dependency and
+  necessary reference-renderer dependencies to `acryl-tui/package.json`; add
+  `docs/acryl/dsh-pi-tui-provenance.md` without a vendor directory or package
+  patch.
+- [ ] T007 Replace the superseded Ink mount with a minimal pi-tui
+  transcript/composer/status renderer in `acryl-tui/src/pi-surface/`; it must
+  consume only `AcrylSessionClient` snapshots and submit/cancel commands.
+  Add renderer tests with a fake client in `acryl-tui/tests/pi-surface.spec.ts`.
+- [ ] T008 Replace `acryl-tui/src/host/direct.ts` with a thin
+  owner-or-attach request to `acryl-harness-runtime`; assert that TUI code has
+  no direct Cordis, DSH session, or DSH agent access in
+  `acryl-tui/tests/host-boundary.spec.ts`.
+- [ ] T009 Add `--resume <session-id>` to `acryl-tui/src/cli/grammar.ts` and
+  connect `acryl-tui/src/cli/run.ts` to the pi-tui renderer; on controlled exit
+  print the selected session ID and preserve durable state. Test fresh and
+  resumed invocation in `acryl-tui/tests/cli-run.spec.ts`.
+
+## Phase 3: End-to-end proof and stop point
+
+- [ ] T010 Add one generic second-client contract test in
+  `acryl-control/tests/session-client.spec.ts` proving a non-TUI client can
+  consume the same profile/generation/session snapshot without direct DSH
+  access.
+- [ ] T011 Run and record focused PNPM checks in
+  `specs/019-acryl-harness-runtime/evidence/first-pi-tui-vertical.md`:
+  `corepack pnpm --filter acryl-control run check`,
+  `corepack pnpm --filter acryl-harness-runtime run check`, and
+  `corepack pnpm --filter acryl-tui run check`.
+- [ ] T012 Run the local launcher smoke in
+  `specs/019-acryl-harness-runtime/evidence/first-pi-tui-vertical.md`: owner
+  starts, prompt persists, response renders, process exits, and `--resume`
+  replays and continues the same session. Record the manual user observation.
 
 ## Dependencies
 
 ```text
-Setup -> Foundation -> US1 (standalone durable workspace) -> US2 (attachable shared runtime) -> Polish
+T001 -> T002 -> T003 -> T004 -> T005 -> T006 -> T007 -> T008 -> T009 -> T010 -> T011 -> T012
 ```
 
-US2 depends on US1 because only a correctly owned one-root runtime can publish
-an attachment endpoint. All tasks require RED-GREEN-REFACTOR evidence.
+T006 may begin after T001, but the renderer must not be merged or tested as a
+feature before its real control-client path exists.
 
-## Phase 1: Setup
+## Definition of done
 
-- [ ] T001 Verify and document the selected pinned profile dependency closure in `acryl-harness-runtime/package.json` and `acryl-harness-runtime/tests/profile.spec.ts`.
-- [ ] T002 [P] Add contract fixtures for valid, stale-generation, and invalid-token attachment handshakes in `acryl-control/tests/control-protocol.spec.ts`.
-
-## Phase 2: Foundational lifecycle boundary
-
-- [ ] T003 Add upstream-compatible profile preparation that preserves user layers and rewrites only the generated Loader anchor in `acryl-harness-runtime/src/profile.ts`.
-- [ ] T004 Add the one-root runtime handle with startup rollback and idempotent ordered disposal in `acryl-harness-runtime/src/runtime-service.ts`.
-- [ ] T005 Add lifecycle tests for profile preservation, failed boot rollback, and ten sequential clean boot/dispose cycles in `acryl-harness-runtime/tests/runtime-service.spec.ts`.
-
-## Phase 3: User Story 1 - Start a standalone durable agent workspace (P1)
-
-**Goal**: `acryl` owns one normal pinned Harness profile and creates a new durable
-session without Electron.
-
-**Independent test**: isolated terminal startup exposes live `sessions` and
-`agents`, creates a fresh durable session, then disposes without leaving owner
-state or a listener.
-
-- [ ] T006 [US1] Add durable-session creation and projection over `ctx.sessions` in `acryl-harness-runtime/src/durable-session.ts`.
-- [ ] T007 [US1] Add a native DSH agent adapter over `ctx.sessions` and `ctx.agents` in `acryl-harness-runtime/src/native-agent.ts`.
-- [ ] T008 [US1] Extend the public runtime handle and exports in `acryl-harness-runtime/src/index.ts` so a host can create a new durable session and dispose one root.
-- [ ] T009 [US1] Replace direct TUI boot with the runtime-owned handle and create one new durable session for an owner terminal in `acryl-tui/src/host/direct.ts`.
-- [ ] T010 [US1] Render the real durable session state rather than a placeholder-ready message in `acryl-tui/src/cli/run.ts` and `acryl-tui/src/render/app.tsx`.
-- [ ] T011 [US1] Add RED-GREEN integration coverage for owner terminal boot, fresh durable session creation, native agent creation, and disposal in `acryl-tui/tests/direct.spec.ts` and `acryl-harness-runtime/tests/native-agent.spec.ts`.
-
-## Phase 4: User Story 2 - Reuse one runtime across presentation hosts (P2)
-
-**Goal**: a compatible terminal, Desktop, or future Web surface attaches to one
-profile owner, observes live state, and obtains explicit exclusive control.
-
-**Independent test**: a second authenticated surface attaches to the owner,
-reads runtime state, cannot mutate before acquiring the lease, and loses its
-lease on disconnect without transfer.
-
-- [ ] T012 [US2] Add generation-scoped token creation, user-private metadata, rotation, and cleanup to `acryl-control/src/ownership/lease-store.ts`.
-- [ ] T013 [US2] Harden local endpoint setup and handshake validation for protocol version, generation, OS-local transport, and capability token in `acryl-control/src/protocol/service.ts`.
-- [ ] T014 [US2] Add attachment registry, read projection, active-control lease acquisition/release, and expiry cleanup in `acryl-harness-runtime/src/attachment.ts`.
-- [ ] T015 [US2] Expose authenticated `runtime.inspect`, `runtime.subscribe`, `lease.acquire`, `lease.release`, and gated agent operations in `acryl-tui/src/host/direct.ts`.
-- [ ] T016 [US2] Change TUI startup to attach to an existing healthy compatible owner rather than fail with `DirectHostAlreadyOwnedError` in `acryl-tui/src/cli/run.ts` and `acryl-tui/src/host/direct.ts`.
-- [ ] T017 [US2] Add tests for invalid token/generation rejection, read-only attachment, one active lease, disconnect release, no silent transfer, and owner disposal cleanup in `acryl-control/tests/control-protocol.spec.ts` and `acryl-harness-runtime/tests/attachment.spec.ts`.
-
-## Phase 5: Polish and cross-cutting verification
-
-- [ ] T018 Add non-secret provider-authentication status and re-authentication guidance projection without provider credential access in `acryl-harness-runtime/src/native-agent.ts` and `acryl-harness-runtime/tests/native-agent.spec.ts`.
-- [ ] T019 Update `specs/019-acryl-harness-runtime/quickstart.md` with actual commands and acceptance evidence generated by the implementation.
-- [ ] T020 Run and record `corepack yarn workspace acryl-harness-runtime check`, `corepack yarn workspace acryl-control check`, `corepack yarn workspace acryl-tui check`, and `corepack yarn check` in `specs/019-acryl-harness-runtime/evidence/verification.md`.
-- [ ] T021 Run Spec Kit converge and resolve every remaining ledger task or explicitly record an invalidation in `specs/019-acryl-harness-runtime/tasks.md`.
-
-## Parallel opportunities
-
-- T001 and T002 can proceed in parallel.
-- After T004, T006 and T012 can proceed in parallel in separate packages.
-- T017 contract tests can be written in parallel with T014 after their contract
-  fixture names are agreed.
-
-## MVP
-
-Complete T001 through T011 first. That delivers a Terminal-only, one-root,
-new-durable-session walking skeleton with no Electron dependency. T012 through
-T017 add safe multi-surface attachment.
+The vertical slice is done only when the human acceptance command in `plan.md`
+works with an already-authenticated profile. Do not continue to GUI, Web,
+advanced tool UI, provider choice, or attachment enhancements until the human
+has tested this flow.
