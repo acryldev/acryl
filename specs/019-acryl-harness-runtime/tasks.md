@@ -21,7 +21,7 @@ after its focused test, commit, and evidence are complete.
   and four-command `AcrylSessionClient` types in
   `acryl-control/src/contracts/session.ts`; test invalid external payloads in
   `acryl-control/tests/session-contract.spec.ts`.
-- [ ] T002 Add the local protocol client for snapshot, subscribe, prompt, and
+- [x] T002 Add the local protocol client for snapshot, subscribe, prompt, and
   cancel operations in `acryl-control/src/protocol/client.ts`; RED-GREEN test
   request/response parsing and subscription disposal in
   `acryl-control/tests/session-client.spec.ts`.
