@@ -22,9 +22,9 @@ afterEach(async () => {
 })
 
 describe('startDirectHost', () => {
-  it('starts a normal local runtime without consulting stale control state', async () => {
+  it('starts a normal local runtime', async () => {
     await setup()
-    const host = await startDirectHost({ profile: 'desktop', stateDirectory: '/stale/.acryl/control' })
+    const host = await startDirectHost({ profile: 'desktop' })
     expect(host.runtimeState).toBe('ready')
     expect(host.ctx.get('sessions')).toBeDefined()
     expect(host.ctx.get('agents')).toBeDefined()

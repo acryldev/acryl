@@ -1,5 +1,3 @@
-import { homedir } from 'node:os'
-import { join } from 'node:path'
 import { startDirectHost } from '../host/direct.ts'
 import { createAcrylRenderer } from '../render/app.tsx'
 import { parseAcrylArgs } from './grammar.ts'
@@ -17,10 +15,8 @@ interface RunningRenderer {
 }
 
 export interface AcrylCliDependencies {
-  readonly stateDirectory: string
   readonly startDirectHost: (options: {
     readonly profile: string
-    readonly stateDirectory: string
   }) => Promise<RunningDirectHost>
   readonly createRenderer: (options: {
     readonly mode: 'direct'
@@ -33,10 +29,6 @@ export interface AcrylCliDependencies {
   }) => RunningRenderer | Promise<RunningRenderer>
   readonly waitForRendererDestroy: (renderer: unknown) => Promise<void>
   readonly write: (line: string) => void
-}
-
-function defaultStateDirectory(): string {
-  return join(homedir(), '.acryl', 'control')
 }
 
 function waitForRendererDestroy(renderer: unknown): Promise<void> {
@@ -52,7 +44,6 @@ function waitForRendererDestroy(renderer: unknown): Promise<void> {
 }
 
 const defaults: AcrylCliDependencies = {
-  stateDirectory: defaultStateDirectory(),
   startDirectHost,
   createRenderer: createAcrylRenderer,
   waitForRendererDestroy,
@@ -84,7 +75,6 @@ export async function runAcryl(
 
   const host = await dependencies.startDirectHost({
     profile: invocation.profile ?? 'acryl',
-    stateDirectory: dependencies.stateDirectory,
   })
   try {
     if (invocation.json) {

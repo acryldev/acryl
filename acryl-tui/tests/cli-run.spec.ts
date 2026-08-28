@@ -10,7 +10,6 @@ function dependencies(overrides: Partial<AcrylCliDependencies> = {}): AcrylCliDe
   const events: string[] = []
   return {
     events,
-    stateDirectory: '/tmp/acryl-test',
     startDirectHost: async options => {
       events.push(`host:${options.profile}`)
       return {

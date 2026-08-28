@@ -6,8 +6,6 @@ import type { Context } from '@deepseek-ai/cordis'
 
 export interface StartDirectHostOptions {
   readonly profile: string
-  /** Retained for CLI compatibility. Local launch does not create control state. */
-  readonly stateDirectory: string
   readonly generationId?: string
 }
 
