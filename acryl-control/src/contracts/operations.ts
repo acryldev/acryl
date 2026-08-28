@@ -1,3 +1,7 @@
+/** Presentation labels retained without a control transport. */
+export type HostKind = 'tui' | 'gui' | 'web'
+export type ControlCapability = string
+
 export type RestartClass = 'HOT' | 'WARM' | 'COLD'
 
 export type ControlOperationState =
