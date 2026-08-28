@@ -26,6 +26,14 @@ Recommended workflow:
 
 ---
 
+## 2026-08-28 - Native durable Harness session bridge added
+
+Commit: `35a166708bd69266377b84f1c2c15a8e4ab910fc`
+
+`acryl-harness-runtime` now owns a small bridge that creates or resumes one pinned-Harness agent/session, derives its initial transcript and compact tool state from durable session events, and routes submitted prompts and cancellation to that native agent. It adds no alternate transcript store or presentation-layer access to Cordis or DSH objects.
+
+Primary sources: `acryl-harness-runtime/src/session-bridge.ts` and `acryl-harness-runtime/src/index.ts`. Verification: `acryl-harness-runtime/tests/session-bridge.spec.ts`, `corepack pnpm --filter acryl-harness-runtime run typecheck`, and focused runtime tests.
+
 ## 2026-08-28 - Outer ACRYL workspace migrated to PNPM
 
 Commit: `26aa4f872132757e2f890de34fe26e5b8a64f73b`
