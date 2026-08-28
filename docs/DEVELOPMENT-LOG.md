@@ -34,6 +34,14 @@ ACRYL now implements coding-agent behavior once in its DeepSeek Harness/Cordis r
 
 Primary record: `docs/ACRYL-RUNTIME-SURFACE-CONTRACT.md`. This decision supersedes the cross-process ownership sections of Spec 019.
 
+## 2026-08-28 - Unused ownership and endpoint modules removed
+
+Commit: `89a2de16848bc5ffe79f0901356385e410f27c9e`
+
+The remaining speculative ownership, lease, local endpoint, attachment, and polling modules and their tests were deleted. The runtime retains its native durable-session bridge and normal profile boot path; control keeps only surface-neutral contracts still used today.
+
+Verification: control (22 tests), runtime (9 tests), and TUI (20 tests) package checks.
+
 ## 2026-08-28 - P001 ownership experiment deliberately removed
 
 Commit: `3285a7f182f1b8780f22c7947067d01844bda79f`
