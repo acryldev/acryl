@@ -26,6 +26,14 @@ Recommended workflow:
 
 ---
 
+## 2026-08-28 - Local session endpoint capability and readiness correction
+
+Commit: `0cb802aa978bc8fe8c6acf826837ee189d5758d4`
+
+The local session endpoint now authorizes requests with endpoint-scoped random capabilities held only by the live runtime, rather than trusting caller-selected attachment mode. It waits for Unix socket readiness, reports bounded polling failures through `onError` and `whenError()`, and accepts prompts once their durable user event is committed without treating the model turn as complete. The control package test command now builds the runtime artifact first, making this artifact-plane integration test reproducible.
+
+Primary sources: `acryl-harness-runtime/src/session-control-endpoint.ts`, `acryl-control/src/protocol/endpoint-client.ts`, and `acryl-control/tests/session-control.integration.spec.ts`. Verification: both package checks.
+
 ## 2026-08-28 - Native sessions exposed through the local control endpoint
 
 Commit: `9a42d1da810db7c43dd907c1b3c7e3960adf0bc1`
