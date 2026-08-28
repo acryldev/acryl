@@ -26,6 +26,14 @@ Recommended workflow:
 
 ---
 
+## 2026-08-28 - Profile ownership and active-control protections added
+
+Commit: `99af4c14871caa3e7fca1bddf4e3638c5953f7d8`
+
+P001 adds guarded profile-lease recovery and an explicit server-side active-control authority, then routes session mutation through that authority. The legacy TUI host no longer owns direct Harness boot. This remains a local-process baseline; cross-process discovery and attachment orchestration require further independent review.
+
+Primary sources: `acryl-control/src/ownership/active-control.ts`, `acryl-control/src/ownership/lease-store.ts`, `acryl-harness-runtime/src/session-control-endpoint.ts`, and `acryl-tui/src/host/direct.ts`. Verification: package checks and ownership/control tests.
+
 ## 2026-08-28 - Full pi-tui terminal baseline selected
 
 Commit: `00b2da5f2bf519f0eca154b77fb5e6f4704df51d`
