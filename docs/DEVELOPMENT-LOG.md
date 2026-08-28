@@ -26,6 +26,14 @@ Recommended workflow:
 
 ---
 
+## 2026-08-28 - Full pi-tui terminal baseline selected
+
+Commit: `00b2da5f2bf519f0eca154b77fb5e6f4704df51d`
+
+ACRYL now adopts the MIT-licensed `tomowang/dsh-tui` upstream snapshot `f7663341f604c3ad96e9b2b838a7ca2de8e84fd1` as its complete terminal behavior reference. Its pi-tui component and feature inventory replaces the earlier minimal `dsh-pi-tui` direction. ACRYL will preserve this terminal experience through `acryl-control` projections rather than shipping the upstream direct-Cordis bundle, so every surface continues to share one runtime and durable session authority.
+
+Primary record: `docs/ACRYL-ROADMAP.md`. The upstream snapshot is `@tomowang/dsh-tui` 0.7.0 using pi-tui 0.84.2. No source integration has started.
+
 ## 2026-08-28 - Session endpoint polling lifecycle completed
 
 Commit: `00b77eaf09adfd05b994a34555bda6124ad34815`
