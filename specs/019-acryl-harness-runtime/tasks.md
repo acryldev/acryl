@@ -34,7 +34,7 @@ after its focused test, commit, and evidence are complete.
   owner-or-attach entry point, returning a selected session identity and an
   `AcrylSessionClient`; prove startup rollback, owner reuse, and no second root
   in `acryl-harness-runtime/tests/owner-or-attach.spec.ts`.
-- [ ] T005 Mount the session bridge behind the existing control endpoint in
+- [x] T005 Mount the session bridge behind the existing control endpoint in
   `acryl-control/src/protocol/service.ts` and runtime owner composition; test
   prompt persistence, response replay, cancellation, and endpoint cleanup in
   `acryl-control/tests/session-control.integration.spec.ts`.

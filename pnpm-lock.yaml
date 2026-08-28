@@ -37,9 +37,15 @@ importers:
       '@deepseek-ai/cordis-plugin-loader':
         specifier: 1.0.2
         version: 1.0.2(@deepseek-ai/cordis@4.0.1)(node-addon-require-builtin@0.1.5)
+      '@deepseek-ai/dsh-app-boot':
+        specifier: 0.1.1-rc.2
+        version: 0.1.1-rc.2(patch_hash=a9b63b10edc9d310bfbfe17807bf6188b83dea71cb6c80fde393ab96b2880add)(d7ed335ddbfb7670edc51bd2c8928580)
       '@types/node':
         specifier: ^22.20.0
         version: 22.20.1
+      acryl-harness-runtime:
+        specifier: workspace:*
+        version: link:../acryl-harness-runtime
       tsdown:
         specifier: 0.22.2
         version: 0.22.2(typescript@6.0.3)

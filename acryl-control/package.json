@@ -40,7 +40,9 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.1",
     "@deepseek-ai/cordis-plugin-loader": "1.0.2",
+    "@deepseek-ai/dsh-app-boot": "0.1.1-rc.2",
     "@types/node": "^22.20.0",
+    "acryl-harness-runtime": "workspace:*",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
     "vitest": "4.1.8"

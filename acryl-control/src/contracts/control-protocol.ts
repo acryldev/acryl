@@ -17,6 +17,9 @@ export type ControlCapability =
   | 'agent.control'
   | 'approval.respond'
   | 'host.restart'
+  | 'session.snapshot'
+  | 'session.prompt.submit'
+  | 'session.cancel'
 
 export interface ControlSuccessEnvelope<T = unknown> {
   readonly schemaVersion: typeof ACRYL_CONTROL_PROTOCOL_VERSION
