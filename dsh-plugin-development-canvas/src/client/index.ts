@@ -20,21 +20,31 @@ export const inject = ['slots']
 
 /** Contribute Canvas only while the Desktop main slot declaration is live. */
 export function apply(ctx: ClientContext): void {
-  ctx.slots.inject('desktop.main', () => {
-    const ptyClient = new CanvasPtyClient(createCanvasPtyApi())
-    const removeStyles = installCanvasStyles()
-    const removeSlot = ctx.slots.register({
-      name: 'desktop.main',
-      priority: 0,
-      inject: () => ({ ptyApi: ptyClient }),
-    }, DevelopmentCanvas)
+  // `desktop.main` is declared only by the desktop's advanced shell. In
+  // compatibility mode the slot is undeclared, so the inject would throw and
+  // fail the whole client plugin tree ('Failed to load plugins'). Skip it
+  // instead (the Canvas is an advanced-mode feature), and rethrow anything
+  // that is not the undeclared-slot guard.
+  try {
+    ctx.slots.inject('desktop.main', () => {
+      const ptyClient = new CanvasPtyClient(createCanvasPtyApi())
+      const removeStyles = installCanvasStyles()
+      const removeSlot = ctx.slots.register({
+        name: 'desktop.main',
+        priority: 0,
+        inject: () => ({ ptyApi: ptyClient }),
+      }, DevelopmentCanvas)
 
-    return async () => {
-      removeSlot()
-      removeStyles()
-      await ptyClient.dispose()
-    }
-  })
+      return async () => {
+        removeSlot()
+        removeStyles()
+        await ptyClient.dispose()
+      }
+    })
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('is not declared')) return
+    throw error
+  }
 }
 
 export { DevelopmentCanvas } from './development-canvas/DevelopmentCanvas.tsx'
