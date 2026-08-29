@@ -1,3 +1,18 @@
+## 2026-08-29 - acryl-tui: all three surfaces launch/serve; gui launch verified
+
+Follow-up on the web host. `pnpm acryl-gui` = `pnpm --filter dsh-plugin-desktop run start`
+(runs `dsh-plugin-desktop/lib/bin.js`, an Electron launcher). A guarded launch
+stayed alive past 12s with no crash, and the process was then killed cleanly —
+so the desktop surface launches. Confirming it boots the ACRYL runtime (vs a
+pristine DSH profile) and shows ACRYL branding requires a display + the user's
+eyes; it is not verifiable headlessly.
+
+**Status.** All three entrypoints now run: `pnpm acryl` (terminal),
+`pnpm acryl-web` (serves the DSH SPA on 127.0.0.1:3080, HTTP 200),
+`pnpm acryl-gui` (launches Electron). All slash commands work; the YLY sprite
+aspect distortion is fixed. Remaining polish: web-client + gui DeepSeek/ACRYL
+branding (separate client-side tasks), and a visual confirmation of the animation.
+
 ## 2026-08-29 - acryl-tui: ACRYL web host wired (pnpm acryl-web)
 
 - `49e7dae` (full `49e7dae24fd8754fb424ab46c3ad78c46be3cd22`) — `pnpm acryl-web` no longer exits with a not-implemented error. The
