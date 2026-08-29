@@ -43,6 +43,34 @@ the YLY sprite aspect distortion is fixed. Remaining work is branding parity
 (web-client DeepSeek logo, gui ACRYL runtime confirmation) and a visual
 confirmation of the animation — both need the user's eyes.
 
+## 2026-08-29 - development-canvas rendering + default advanced shell (v0.1.4 -> v0.1.6)
+
+The user's dsh-plugin-development-canvas (self-extensibility test: a topbar of
+PTY terminals) was not rendering, and the renderer showed 'Failed to load plugins'.
+
+Root cause: dsh-plugin-development-canvas registers the desktop.main slot, which
+is declared ONLY by the desktop's advanced shell. The desktop booted in
+compatibility mode, so: (1) the slots runtime threw 'slot desktop.main is not
+declared' inside the canvas apply, failing the whole client plugin tree
+('Failed to load plugins'), and (2) desktop.main was undeclared so the canvas
+could never render.
+
+Fixes:
+- v0.1.4: gate the canvas apply (catch the slots 'is not declared' guard, skip;
+  rethrow real errors), so compatibility mode no longer crashes the tree.
+- v0.1.4/v0.1.5/v0.1.6: the renderer mode is fed from persisted settings
+  (dsh-desktop.mode), which defaulted to compatibility, not the cordis patch or
+  Config default. Default both the plugin Config and the DesktopSettingsSchema
+  mode to advanced, so a fresh install (no persisted mode) boots the advanced
+  shell where desktop.main is declared and the dev-canvas renders. A user who
+  saved compatibility (or whose app-data is stale from v0.1.0-0.1.5) must switch
+  shell mode to Advanced in Settings, or clear ~/Library/Application Support/ACRYL.
+
+Note: v0.1.0 / v0.1.1 did not start (missing natives). v0.1.2 starts but had the
+sidebar brand conflict. v0.1.3 fixed the brand. v0.1.4+ fixed the dev-canvas
+crash. **v0.1.6 defaults to advanced mode and is the working release to test the
+dev-canvas** (switch to Advanced in Settings if it shows compatibility).
+
 ## 2026-08-29 - Desktop app release fixes (v0.1.0 -> v0.1.3): native modules + brand shadow
 
 The first DMG the user installed (v0.1.0) did not start: the Cordis plugin tree
