@@ -1,89 +1,61 @@
-# Research: ACRYL Shared Harness Runtime
+# Research: ACRYL pi-tui Durable Session Surface
 
-## Decision 1: Use one repository-owned wrapper around the pinned profile boot
+## Runtime decision
 
-**Decision:** `acryl-harness-runtime` owns profile preparation and calls the
-pinned `@deepseek-ai/dsh-app-boot` boot seam once per owning generation.
+`acryl-harness-runtime` owns normal pinned DeepSeek Harness profile boot and exposes the resulting root to the direct TUI host. Durable DSH sessions and agent handles remain the canonical conversation state. The TUI must not duplicate them.
 
-**Verified facts:**
+## Superseded design
 
-- `deepseek-harness/apps/cli/src/profile-boot.ts` heals the profile module
-  fallback, loads profile and user patch layers, rewrites the empty Loader root,
-  and boots one composed Cordis tree.
-- The existing runtime package already verifies that a booted profile exposes
-  `sessions` and `agents` in one root.
-- The existing TUI direct host already passes a `prepare` hook into that root.
+The former owner-or-attach endpoint, capability credential, and active-control lease design is superseded by `docs/ACRYL-RUNTIME-SURFACE-CONTRACT.md` and has been removed from the implementation. A launched surface starts its own normal local runtime. No socket, listener, endpoint, lease, heartbeat, attachment, polling, or recovery design is part of this feature.
 
-**Rationale:** This preserves the upstream configuration model and lets host
-services resolve against the same Cordis root as Harness capabilities.
+## Tomo reference baseline
 
-**Alternatives considered:** Copy profile boot fragments into Terminal and
-Desktop, rejected because composition, patches, and dependency closure drift.
+The concrete behavioral reference is `tomowang/dsh-tui` commit `f7663341f604c3ad96e9b2b838a7ca2de8e84fd1`, package `@tomowang/dsh-tui` 0.7.0, MIT, built on `@earendil-works/pi-tui` 0.84.2. This feature ports only compatible terminal-presentation modules. It replaces Tomo's direct DSH/Cordis bootstrap and session access with `startDirectHost()` and `createAcrylSessionBridge()`.
 
-## Decision 2: Preserve user configuration; rewrite only generated root anchor
+## C1 mapping record
 
-**Decision:** Treat the empty profile `cordis.yml` as generated Loader anchor.
-Preserve profile patches, home patches, and normal Harness settings files.
+C1 has run Tomo successfully in this workspace and is the authority for concrete Tomo-to-ACRYL API and lifecycle mapping. Add the verified module mapping and any pi-tui/DSH lifecycle corrections here before T005 begins. Do not alter the renderer in parallel with C1.
 
-**Rationale:** The upstream root rewrite prevents Loader write-back from baking
-composed rows into a later boot. User-controlled patches remain above profile
-bundle layers.
+## Decision 7 (2026-08-29, C1): adopt tomowang/dsh-tui via a direct runtime adapter
 
-## Decision 3: Attach through local capability authentication and OS protection
+**Decision:** Port the concrete terminal implementation of `tomowang/dsh-tui` at
+`f7663341f604c3ad96e9b2b838a7ca2de8e84fd1` (`@tomowang/dsh-tui` 0.7.0, MIT,
+pi-tui 0.84.2) into `acryl-tui` over `startDirectHost()` +
+`createAcrylSessionBridge()`. Do not re-author a smaller TUI.
 
-**Decision:** A healthy compatible profile owner publishes a local endpoint and
-an owner-generation-scoped random capability token. Unix endpoint permissions
-and Windows named-pipe ACL support are required in addition to the token.
+**Verified facts (inspection, 2026-08-29):**
 
-**Rationale:** Local same-user filesystem access is the baseline trust boundary;
-a capability token prevents accidental or unrelated endpoint access and detects
-stale ownership generations. The token is not a provider credential.
+- ACRYL pins `@deepseek-ai/dsh-*` at `0.1.1-rc.2`; Tomo's peer range is
+  `^0.1.1-rc.2`. Same API surface; tomowang 0.7.0 already boots against ACRYL's
+  rc.2 package set (verified by running the launcher from ACRYL's installed
+  `@deepseek-ai/dsh@0.1.1-rc.2`).
+- rc.2 `AgentStatus = 'idle' | 'running'`; the bridge's `waiting | failed` are
+  derived surface states, not rc.2 values.
+- rc.2 `agents.create/resume` accept `{ sessionId, meta, agentOptions, setup }` —
+  `setup` runs `installModelSelection(agentCtx, ref)` + `presets.mount(...)`.
+  The current bridge does not pass `setup` (Tomo does).
+- rc.2 session service exposes `sessions.flush(session): Promise<boolean>` (the
+  `session/flush` durability checkpoint). Tomo flushes before exit; the bridge
+  currently does not.
+- Tomo's `subscribeEvents` counterpart is `ctx.on('session/event')` writing into
+  `TuiStore.appendEvent` (seq-dedupe replay boundary) with `BlockAssembler`
+  folding `assistant/chunk` deltas. The durable log entries are the presentation
+  source; streaming is fold-of-deltas, not a separate transport.
+- `acryl-control`'s `AcrylSessionClient` (protocol/client.ts) is now orphaned —
+  no surface imports it. It is kept, not deleted, this milestone.
+- `specs/019` T001–T003 artifacts exist; T004/T005 artifacts were removed by
+  commits `3285a7f`, `89a2de1`, `0f6ce15`, `515c0c3`.
 
-**Alternatives considered:** trust any local socket client, rejected because
-path reachability is not sufficient authorization; remote HTTP, rejected as out
-of scope and unnecessarily expands the threat model.
+**Assumptions (to verify at T011):**
 
-## Decision 4: Provider authentication stays provider-managed
-
-**Decision:** ACRYL observes authentication availability and reports
-re-authentication guidance. Harness profiles and provider CLIs own OAuth/API
-key authentication.
-
-**Rationale:** ACRYL must support Claude Code, Codex, OpenCode, Pi, and native
-DSH capabilities without extracting, duplicating, or storing their secrets.
-
-## Decision 5: Serial active-control lease, not concurrent writes
-
-**Decision:** Multiple authenticated surfaces may observe the live runtime, but
-one explicit active-control lease may submit agent actions. It automatically
-releases on disconnect, process death, or control-channel expiry.
-
-**Rationale:** This makes durable action ordering explicit and prevents stale
-surfaces from silently retaining control.
-
-## Decision 6: Use native Harness durable sessions and agents
-
-**Decision:** The native bridge creates and resumes only Harness sessions and
-uses Harness agent handles. It does not persist terminal scrollback.
-
-**Verified facts:**
-
-- The pinned session suite creates live sessions through `ctx.sessions.create()`
-  and persistence integration owns durable session state.
-- The pinned Harness test fixtures create agent handles through
-  `ctx.agents.create()`.
-- Existing `acryl-control` exposes a provider-neutral agent-control service;
-  the DSH-native provider is the appropriate consumer/provider adapter.
-
-**Rationale:** This respects the constitution's durable canonical state and
-avoids a parallel ACRYL history store.
-
-## Dependency Closure Decision
-
-**Decision:** Keep the selected pinned profile closure declared by
-`acryl-harness-runtime`, then reduce its manifest only after a deterministic
-profile-load audit proves packages are not required. Do not rely on
-`acryl-tui/node_modules` or Desktop's dependency tree.
-
-**Rationale:** The initial direct-host failure was a missing runtime closure,
-not Loader ordering. A local package must own the profile it declares.
+- A direct in-process adapter may pass rc.2 `SessionEvent` records through the
+  bridge without a protocol layer (M2 may re-introduce transports).
+- The runtime profile composition rows (persona, agent-presets `standard`,
+  session-stats, `hmr` off) are sufficient for the slice's toolset; the `cordis`
+  preset's `tool-cordis` needs `dsh-cordis-host-runner` (verified presence in
+  ACRYL's rc.2 package set) — deferred with approvals.
+- `acryl tui` will run against the default `DSH_HOME` (`~/.dsh`) unless the
+  caller sets it; `dev:local` sets `~/.dsh-acryl`. Session continuity holds
+  within one home; cross-home continuity is out of scope.
+- Tomo's `@earendil-works/pi-tui@0.84.2` types compile under ACRYL TS 6.0.3
+  (Tomo uses TS 5.9). Expect minor type-fit fixes only.

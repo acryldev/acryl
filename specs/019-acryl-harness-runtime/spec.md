@@ -1,114 +1,49 @@
-# Feature Specification: ACRYL Shared Harness Runtime
+# Feature Specification: ACRYL pi-tui Durable Session Surface
 
-**Feature Directory**: `specs/019-acryl-harness-runtime`  
-**Created**: 2026-08-26  
-**Status**: Re-scoped - see `docs/ACRYL-RUNTIME-SURFACE-CONTRACT.md`
-**Input**: Make the standalone `acryl` terminal host use the pinned DeepSeek Harness agent and durable-session runtime without depending on the Electron Desktop package or duplicating Harness state.
-
-> **Architecture correction (2026-08-28):** The cross-process owner attachment,
-> capability-credential, and active-control-lease requirements in this older
-> specification are superseded. ACRYL now implements coding-agent behavior once
-> in the shared runtime and uses direct, Electron IPC, or Web HTTP/WebSocket
-> surface adapters. Cross-process attachment is deferred until a real live
-> multi-surface user story requires it.
+**Feature Directory**: `specs/019-acryl-harness-runtime`
+**Status**: Active - re-scoped 2026-08-28
+**Authority**: `docs/ACRYL-RUNTIME-SURFACE-CONTRACT.md`
 
 ## Objective
 
-Give every ACRYL presentation host one reliable way to start the same configured Harness profile. A terminal user must be able to open a real durable agent workspace, while Desktop and future Web hosts can reuse the same runtime boundary without owning separate copies of profile boot logic or plugin dependencies.
+Deliver the first usable ACRYL terminal surface. `acryl tui --profile acryl` starts one normal local DeepSeek Harness and Cordis profile, opens or explicitly resumes one native durable session, and provides a full-screen pi-tui interface for prompts, streamed transcript/tool projection, cancellation, and clean exit.
 
-## Clarifications
+The runtime owns coding-agent behavior and durability. The TUI is a direct TypeScript presentation adapter only.
 
-### Session 2026-08-26
+## User Stories
 
-- Q: What happens when a healthy compatible owner already owns the requested profile? → A: The requesting surface attaches to that owner.
-- Q: How does a standalone terminal choose its durable session at startup? → A: It always creates a new durable session.
-- Q: How is local attachment authorized, and how does ACRYL handle agent-provider authentication? → A: Attachment requires an owner-issued local capability credential plus operating-system local endpoint permissions. Agent-provider authentication remains provider-managed profile or CLI authentication; ACRYL exposes status and re-authentication guidance but neither stores nor extracts provider secrets.
-- Q: How do multiple authenticated attached surfaces submit agent actions? → A: Only the surface holding an explicit active-control lease can submit actions. Other attached surfaces receive live read-only projections until they acquire the lease.
-- Q: What happens to an active-control lease when its surface becomes unavailable? → A: The runtime automatically releases it on disconnect, process death, or authenticated control-channel expiry. Another attached surface must explicitly acquire it; control is never silently transferred.
+### US1 - Use a live durable coding session (P1)
 
-## User Scenarios & Testing
+As a terminal user, I can start `acryl tui --profile acryl`, submit a prompt, see the running/idle state plus streamed transcript and tool activity, cancel a running turn with `Ctrl+C`, and exit without losing the durable DSH session.
 
-### User Story 1 - Start a standalone durable agent workspace (Priority: P1)
+**Independent acceptance**: an authenticated profile accepts a prompt and shows native DSH response events in a full-screen pi-tui, then restores the terminal and disposes its local runtime when exited.
 
-As an ACRYL user, I can run `acryl` and enter a workspace backed by a real Harness profile, rather than a static terminal placeholder.
+### US2 - Resume a durable session (P2)
 
-**Why this priority**: A standalone ACRYL host has no product value if it cannot access the canonical agent and session runtime.
+As a terminal user, I can provide an explicit session ID through `--resume <session-id>` and see its durable history before continuing the same native DSH session.
 
-**Independent Test**: Boot an isolated ACRYL profile, verify that its live runtime exposes agent and session capabilities, then shut it down cleanly.
+**Independent acceptance**: a session created in US1 is resumed in a later `acryl tui --resume` invocation and its preceding messages render before a new prompt is submitted.
 
-**Acceptance Scenarios**:
+## Functional Requirements
 
-1. **Given** an absent ACRYL profile, **When** a user starts the terminal host, **Then** the system initializes a usable profile without overwriting user configuration.
-2. **Given** a configured ACRYL profile, **When** the terminal host starts, **Then** the host and Harness runtime share one lifecycle root and expose durable session and agent capabilities.
-3. **Given** profile startup fails, **When** initialization stops, **Then** no partial profile owner or live runtime remains.
-4. **Given** a healthy compatible owner already owns the requested profile, **When** another ACRYL surface starts for it, **Then** it attaches rather than creating a second writable runtime.
-5. **Given** no compatible owner owns the profile, **When** a user starts the standalone terminal, **Then** it creates a new durable session rather than automatically resuming an earlier session.
+- **FR-001**: `acryl tui --profile <profile>` MUST use `startDirectHost()` to boot one normal local Harness/Cordis root.
+- **FR-002**: The interactive renderer MUST be `@earendil-works/pi-tui` exactly `0.84.2`, with a full-screen alternate terminal screen.
+- **FR-003**: The terminal controller MUST create or resume a native durable DSH session exclusively through the existing ACRYL session bridge.
+- **FR-004**: The UI MUST render transcript messages, running/idle state, active and completed tool calls, bridge errors, and a documented cancellation binding.
+- **FR-005**: Prompt submission and cancellation MUST invoke the native bridge, not a terminal-owned agent/session loop.
+- **FR-006**: Renderer shutdown MUST restore the terminal and dispose the subscription, session bridge, and direct runtime in order.
+- **FR-007**: `--json` MUST remain a headless direct-host readiness probe and MUST not mount pi-tui or a session bridge.
+- **FR-008**: `--resume <session-id>` MUST validate a non-empty session ID and call the bridge resume path.
+- **FR-009**: Stale `.acryl/control` artifacts MUST not affect direct launch.
+- **FR-010**: The port MUST adapt concrete compatible Tomo modules, not vendor the repository or reuse Tomo's direct runtime bootstrap.
 
----
+## Non-goals
 
-### User Story 2 - Reuse one runtime across presentation hosts (Priority: P2)
-
-As an ACRYL operator, I can use terminal and Desktop presentation without either host depending on the other for Harness startup.
-
-**Why this priority**: Presentation must not determine agent-runtime ownership or create an Electron dependency for the terminal product.
-
-**Independent Test**: A host-specific adapter can invoke the shared runtime boundary and receive the same profile identity and lifecycle contract.
-
-**Acceptance Scenarios**:
-
-1. **Given** terminal and Desktop hosts, **When** each initializes the same named profile in its permitted ownership mode, **Then** both use the shared profile-runtime contract.
-2. **Given** a host is disposed, **When** its shared runtime is released, **Then** the runtime performs one ordered shutdown without host-specific orphaned resources.
-
-## Edge Cases
-
-- A profile already has a user patch or settings file.
-- A required Harness package cannot be resolved from the runtime closure.
-- A second host attempts to acquire an already owned profile.
-- A model route is absent or invalid after the runtime starts.
-- Profile activation fails after ownership has been acquired.
-- A process reaches the local control endpoint without a valid current owner capability credential.
-- A provider authentication session is absent, expired, or revoked.
-- An attached surface attempts to submit an agent action without the active-control lease.
-- The active-control surface disconnects, dies, or its authenticated control channel expires.
-
-## Requirements
-
-### Functional Requirements
-
-- **FR-001**: The system MUST provide one host-neutral boundary to initialize and dispose an ACRYL Harness profile.
-- **FR-002**: The shared runtime MUST use the pinned Harness profile composition and must not modify the upstream submodule.
-- **FR-003**: The shared runtime MUST expose its live root context to the owning host so host control services and Harness capabilities share one lifecycle.
-- **FR-004**: The shared runtime MUST preserve a profile's user-managed configuration while preparing its generated root configuration.
-- **FR-005**: The terminal host MUST use the shared runtime rather than depending on `dsh-plugin-desktop` for Harness boot.
-- **FR-006**: A startup failure MUST dispose every partially created runtime contribution and release profile ownership.
-- **FR-007**: The runtime package MUST own the complete compatible dependency closure required by its declared profile composition.
-- **FR-008**: The follow-on native agent bridge MUST create, resume, and project only durable Harness sessions; it MUST NOT use terminal scrollback as agent history.
-- **FR-009**: When a healthy compatible owner already owns the requested profile, a requesting surface MUST attach to it and MUST NOT create a second writable runtime.
-- **FR-010**: When the standalone terminal becomes the profile owner, it MUST create a new durable session rather than automatically resuming an earlier session.
-- **FR-011**: A surface attaching to an existing owner MUST authenticate with a current owner-issued local capability credential and an operating-system-permitted local control endpoint; the credential MUST be rotated when ownership generation changes and MUST NOT be logged.
-- **FR-012**: Agent-provider authentication MUST remain provider-managed profile or CLI authentication. ACRYL MAY expose authentication status and re-authentication guidance but MUST NOT store, extract, or expose provider secrets.
-- **FR-013**: The runtime MUST grant at most one explicit active-control lease at a time. Only that surface may submit agent actions; other authenticated attached surfaces MUST receive live read-only projections until they acquire the lease.
-- **FR-014**: The runtime MUST automatically release the active-control lease when its surface disconnects, its process dies, or its authenticated control channel expires. It MUST NOT silently transfer control; another authenticated attached surface must explicitly acquire the lease.
-
-### Key Entities
-
-- **ACRYL Harness Runtime**: The host-neutral owner of profile preparation and the live Harness root lifecycle.
-- **ACRYL Profile**: A named, user-configurable Harness composition with durable settings and session storage.
-- **Host Prepare Hook**: The controlled pre-profile activation hook where an owning host contributes its lease and control services to the shared root.
-- **Native Agent Bridge**: The later adapter that maps ACRYL worker commands to live Harness agents and durable sessions.
+No daemon, listener, socket, lease, ownership protocol, heartbeat, endpoint polling, attachment/recovery path, RLM, routing, Fleet, marketplace, GUI/Web parity, session picker, approval/question UI, model/preset controls, plans, goals, context controls, shell mode, or plugin presentation.
 
 ## Success Criteria
 
-### Measurable Outcomes
-
-- **SC-001**: A fresh isolated profile reaches a ready agent/session runtime in one command without manual package repair.
-- **SC-002**: Repeating startup and shutdown ten times leaves no active profile owner, listener, or runtime process from prior runs.
-- **SC-003**: A terminal user reaches an interactive, durable-agent-backed workspace without launching Electron.
-- **SC-004**: Terminal and Desktop runtime boot behavior is explained by one shared contract rather than divergent host implementations.
-
-## Assumptions
-
-- The pinned Harness revision remains the authoritative source of profile and session behavior.
-- User model credentials and route selection remain normal Harness profile configuration.
-- The shared runtime is a repository-owned workspace, not a modification to the upstream Harness checkout.
-- GUI and Web presentation migration is outside this milestone except for consuming the shared boot contract.
+- **SC-001**: Full-screen `acryl tui` renders native durable session state and accepts a prompt.
+- **SC-002**: Focused automated tests prove prompt dispatch, stream/tool projection, cancel dispatch, renderer/runtime cleanup, and ignored stale control artifacts.
+- **SC-003**: All required package tests and TUI typecheck pass.
+- **SC-004**: A provenance note records Tomo commit `f7663341f604c3ad96e9b2b838a7ca2de8e84fd1`, MIT license, pi-tui 0.84.2, adapted behavior, and deferred parity.
