@@ -53,7 +53,7 @@ import { createTranscriptLine, DynamicText, padTranscriptText } from './text.js'
 import { CustomEditor } from './CustomEditor.js'
 import { Spinner } from './Spinner.js'
 import { YlyPet } from '../yly/yly-pet.js'
-import type { YlyMode } from '../yly/yly-programs.js'
+import type { YlyState as YlyMode } from '../yly/yly-programs.js'
 import type { TuiActions } from './actions.js'
 import type { TuiState, TuiStore } from './store.js'
 import { theme, fg } from './theme.js'
@@ -318,7 +318,7 @@ class TuiApp implements TuiHandle {
     })
     const header = new HStack(
       [
-        { component: this.pet, basis: 30, shrink: 0, visible: viewport => viewport.width >= 65 },
+        { component: this.pet, basis: 30, shrink: 0 },
         { component: headerInfo, basis: 'auto', grow: 1 },
       ],
       { gap: 1, align: 'start' },
@@ -354,12 +354,12 @@ class TuiApp implements TuiHandle {
     })
   }
 
-  /** Drive the YLY pet's mode from the live agent state (idle/thinking/tool/streaming). */
+  /** Drive the YLY pet's mode from the live agent state (idle/thinking/tool/typing). */
   private updatePetMode(state: TuiState): void {
     let mode: YlyMode = 'idle'
     if (state.status === 'running') {
       if (state.pendingToolCalls.length > 0) mode = 'tool'
-      else if (state.streaming !== undefined && (state.streaming.text !== '' || state.streaming.reasoningText !== '')) mode = 'streaming'
+      else if (state.streaming !== undefined && (state.streaming.text !== '' || state.streaming.reasoningText !== '')) mode = 'typing'
       else mode = 'thinking'
     }
     this.pet.setMode(mode)

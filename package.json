@@ -34,7 +34,9 @@
     "upstream:update": "node scripts/update-upstream.mjs",
     "upstream:version": "cd deepseek-harness && corepack pnpm --version",
     "upstream:install": "cd deepseek-harness && corepack pnpm install --frozen-lockfile",
-    "upstream:build": "cd deepseek-harness && corepack pnpm run build"
+    "upstream:build": "cd deepseek-harness && corepack pnpm run build",
+    "tui": "node acryl-tui/lib/bin.js tui",
+    "tui:resume": "node acryl-tui/lib/bin.js tui --resume"
   },
   "devDependencies": {
     "@types/react": "18.3.31"

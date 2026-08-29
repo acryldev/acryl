@@ -1,46 +1,49 @@
-// Compile the YLY animation sprite board (PNG contact sheet) into ANSI
-// half-block terminal frames at build time. No image decoder ships at runtime:
-// the generated file is arrays of ANSI strings, rendered by the pi-tui pet.
+// Compile the ACRYL YLY sprite sheet (13-cell horizontal strip, 96x84 cells)
+// into ANSI half-block terminal frames at build time. No image decoder ships at
+// runtime: the generated file is arrays of ANSI strings rendered by the pi-tui
+// pet, matching the react mockup's `ylyFrames.ts` (CELL_W=96, CELL_H=84, 13 cells).
 //
-// Usage: node scripts/compile-yly-sprites.mjs [board] [out]
-//   board  (default) acryl-graphics-animations-tui-effects-ui/yly_animation_sprite_board.png.png
-//   out    (default) src/yly/yly-frames.generated.ts
+// Usage: node scripts/compile-yly-sprites.mjs [sheet] [out]
+//   sheet (default) acryl-tui/assets/yly_sheet.png
+//   out   (default) acryl-tui/src/yly/yly-frames.generated.ts
 import sharp from 'sharp'
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const scriptDir = dirname(fileURLToPath(import.meta.url)) // acryl-tui/scripts
-const packageRoot = dirname(scriptDir) // acryl-tui
-const repoRoot = dirname(packageRoot) // acryl
-const devRoot = dirname(repoRoot) // acryldev (repo + graphics are siblings)
-const SOURCE = process.argv[2] ?? resolve(devRoot, 'acryl-graphics-animations-tui-effects-ui/yly_animation_sprite_board.png.png')
+const packageRoot = dirname(dirname(fileURLToPath(import.meta.url))) // acryl-tui
+const SOURCE = process.argv[2] ?? resolve(packageRoot, 'assets/yly_sheet.png')
 const OUTPUT = process.argv[3] ?? resolve(packageRoot, 'src/yly/yly-frames.generated.ts')
 
-// Grid on the sheet: 4 columns x 3 rows of square cells (board 1448x1086 -> 362px cells).
-const COLS = 4
-const ROWS = 3
-const TERMINAL_COLS = 24
-const TERMINAL_ROWS = 9 // each terminal row = 2 raster rows via ▀/▄
-const RASTER_W = TERMINAL_COLS
-const RASTER_H = TERMINAL_ROWS * 2
-const KEY_OUT_BLACK = true // treat pure-black as transparent (board may lack alpha)
+// The sheet is a single horizontal strip of 13 cells, 96x84 each.
+const CELL_W = 96
+const CELL_H = 84
+const FRAME_COUNT = 13
+
+// Terminal size presets (col x row) matching the mockup's responsive sizes.
+const SIZES = {
+  small: { cols: 7, rows: 5 },
+  medium: { cols: 10, rows: 6 },
+  large: { cols: 13, rows: 7 },
+}
+
+const KEY_OUT_BLACK = false // the distilled sheet uses real alpha; do not key out dark pixels
+const RESET = '\x1b[0m'
 
 function transparent(p) {
-  if (p.a < 32) return true
-  if (KEY_OUT_BLACK && p.r < 8 && p.g < 8 && p.b < 8) return true
-  return false
+  return p.a < 32
 }
 const fg = p => `\x1b[38;2;${p.r};${p.g};${p.b}m`
 const bg = p => `\x1b[48;2;${p.r};${p.g};${p.b}m`
-const RESET = '\x1b[0m'
 
-// Resize one cell to raster size, then encode each raster row-pair as a
-// terminal line (top px -> fg, bottom px -> bg, with ▀/▄ for half-block).
-async function encodeCell(img, cellX, cellY, cellW, cellH) {
+// Crop one cell, resize to a (cols x rows) terminal viewport where each
+// terminal row is TWO raster rows via half-block ▀ (top px -> fg, bottom px -> bg).
+async function encodeCell(cellIndex, cols, rows) {
+  const rasterW = cols
+  const rasterH = rows * 2
   const { data, info } = await sharp(SOURCE)
-    .extract({ left: cellX, top: cellY, width: cellW, height: cellH })
-    .resize(RASTER_W, RASTER_H, { fit: 'fill' })
+    .extract({ left: cellIndex * CELL_W, top: 0, width: CELL_W, height: CELL_H })
+    .resize(rasterW, rasterH, { fit: 'fill' })
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true })
@@ -60,9 +63,8 @@ async function encodeCell(img, cellX, cellY, cellW, cellH) {
       if (tE && bE) line += ' '
       else if (tE) line += `${fg(bottom)}▄${RESET}`
       else if (bE) line += `${fg(top)}▀${RESET}`
-      else line += top.r === bottom.r && top.g === bottom.g && top.b === bottom.b
-        ? `${fg(top)}▀${RESET}`
-        : `${fg(top)}${bg(bottom)}▀${RESET}`
+      else if (top.r === bottom.r && top.g === bottom.g && top.b === bottom.b) line += `${fg(top)}▀${RESET}`
+      else line += `${fg(top)}${bg(bottom)}▀${RESET}`
     }
     lines.push(line)
   }
@@ -70,24 +72,30 @@ async function encodeCell(img, cellX, cellY, cellW, cellH) {
 }
 
 async function main() {
-  const meta = await sharp(SOURCE).metadata()
-  const cellW = Math.floor(meta.width / COLS)
-  const cellH = Math.floor(meta.height / ROWS)
-  const frames = []
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
-      const lines = await encodeCell(SOURCE, col * cellW, row * cellH, cellW, cellH)
-      frames.push(lines)
-    }
+  // Compile each size preset once at high resolution; the pet picks the preset
+  // by terminal width. We emit a single canonical set (large) plus the other two
+  // presets so narrow terminals get a smaller, still-crisp mascot.
+  const frames = {}
+  for (const [name, size] of Object.entries(SIZES)) {
+    frames[name] = []
+    for (let i = 0; i < FRAME_COUNT; i++) frames[name].push(await encodeCell(i, size.cols, size.rows))
   }
   mkdirSync(dirname(OUTPUT), { recursive: true })
-  const body = frames.map((lines, i) =>
-    `  // frame ${i}\n  [\n${lines.map(l => `    ${JSON.stringify(l)},`).join('\n')}\n  ],`,
-  ).join('\n')
-  writeFileSync(OUTPUT, `/* eslint-disable */\n// Generated by scripts/compile-yly-sprites.mjs from the YLY sprite board.\n// Each frame is a list of ANSI half-block terminal lines; no runtime image decoder.\nexport const YLY_FRAMES: readonly (readonly string[])[] = [\n${body}\n]\n`)
-  // ASCII preview of the first frame (transparent -> space) so a human can confirm the grid.
-  const ascii = frames[0].map(line => line.replace(/\x1b\[[0-9;]*m/g, '').replace(/▀/g, '█').replace(/▄/g, '█')).join('\n')
-  console.log(`Wrote ${frames.length} frames -> ${OUTPUT}\n--- frame 0 preview ---\n${ascii}`)
+  const serialize = obj => JSON.stringify(obj, null, 2)
+    // strip nulls / collapse formatting kept readable
+  const out = `/* eslint-disable */
+// GENERATED by scripts/compile-yly-sprites.mjs from assets/yly_sheet.png.
+// 13 frames x {small,medium,large} ANSI half-block preset. No runtime image decoder.
+export const YLY_CELL_W = ${CELL_W}
+export const YLY_CELL_H = ${CELL_H}
+export const YLY_FRAME_COUNT = ${FRAME_COUNT}
+export const YLY_SIZES = ${serialize(SIZES)} as const
+export const YLY_FRAMES: Record<'small'|'medium'|'large', readonly (readonly string[])[]> = ${serialize(frames)}
+`
+  writeFileSync(OUTPUT, out)
+  // ASCII preview of the large idle (frame 0) so the crop can be eyeballed.
+  const strip = s => s.replace(/\x1b\[[0-9;]*m/g, '').replace(/[▀▄]/g, '█')
+  console.log(`Wrote ${FRAME_COUNT} frames x 3 presets -> ${OUTPUT}\n--- large frame 0 ---\n${frames.large[0].map(strip).join('\n')}`)
 }
 
 main().catch(err => { console.error(err); process.exit(1) })
