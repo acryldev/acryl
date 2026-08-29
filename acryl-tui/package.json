@@ -2,7 +2,7 @@
   "name": "acryl-tui",
   "version": "0.1.0-dev.0",
   "private": true,
-  "description": "Canonical ACRYL command and React Ink host",
+  "description": "Canonical ACRYL pi-tui coding-agent terminal client",
   "license": "MIT",
   "type": "module",
   "bin": {
