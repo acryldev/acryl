@@ -24,3 +24,29 @@ Node 26.7.0. Fix = run packaging under Node 24.x (version manager or CI node
 - R006 extend release-candidate.yml to mac+linux (Windows present); only once a
   mac build is confirmed under Node 24.x and CI reliability is verified.
 - R007 per-target evidence + ledger completion.
+
+## R002 build attempt outcome (Node 24.19.0, completed run)
+The mac universal package builds far enough to produce
+`dist/mac-smoke/mac-universal/ACRYL.app`, but the `verify-packaged-runtime.ts`
+afterPack check FAILS: the packaged `app.asar.unpacked` is missing required
+native physical entries for BOTH darwin arches:
+node_modules/@img/sharp-darwin-{arm64,x64}/…sharp-….node,
+@img/sharp-libvips-darwin-{arm64,x64}/…libvips-cpp….dylib,
+@koromix/koffi-darwin-{arm64,x64}/…koffi.node,
+@vscode/ripgrep-darwin-{arm64,x64}/bin/rg,
+node-addon-require-builtin-darwin-{arm64,x64}/prebuilt/…napi-v9.node.
+
+Root cause direction (not assumed, next step): the universal packaging needs the
+cross-arch native prebuilds staged into the runtime; the current dependency
+install on this arm64 host does not provide the x64 (and possibly the arm64)
+prebuilt physical files the verifier requires. Resolving requires either
+installing/staging the cross-arch prebuilds (a packaging/tooling change) or
+running the native prep on a CI macOS runner with both arch files available —
+this is a supported-target CI concern, not a one-line fix.
+
+## Blocked conclusion
+The unsigned mac (and by extension the matrix) alpha artifact is not buildable
+in this environment without (a) Node 24.x (available via nvm, works past the
+version gate) AND (b) the missing native prebuilds staged for universal arch.
+This is the exact Electron/toolchain blocker to relay; the supported-target path
+is CI (macOS + node 24) with the native prebuilds present.
