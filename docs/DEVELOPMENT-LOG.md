@@ -1,3 +1,24 @@
+## 2026-08-29 - acryl-tui: ACRYL web host wired (pnpm acryl-web)
+
+- `49e7dae` (full `49e7dae24fd8754fb424ab46c3ad78c46be3cd22`) — `pnpm acryl-web` no longer exits with a not-implemented error. The
+  DSH web surface is the `web` profile (`dsh-base` + `dsh-web-app`), whose
+  packages and built SPA dist are already installed in the ACRYL workspace.
+  `bootAcrylWebProfile()` composes the standard `web` profile as one normal ACRYL
+  runtime (ACRYL_RUNTIME_ROWS not re-inserted — the web bundle already supplies
+  `system-prompt`, and duplicating it breaks the loader); `provideCmdline()` seeds
+  the `web-startup` provider (defaults 127.0.0.1:3080); host/port are read back
+  into a canonical url. `runAcryl` dispatches `web` to `serveWeb` (boot, print
+  `ACRYL web: <url>`, serve until SIGINT/SIGTERM, dispose). `web --json` is a
+  headless readiness probe. Verified: `node bin.js web` serves HTTP 200 on
+  http://127.0.0.1:3080 with the SPA boot HTML; runtime 11 + acryl-tui 252 tests,
+  typecheck, build green.
+
+**Remaining.** `pnpm acryl gui` (Electron) is the one surface still not wired;
+need the desktop plugin to launch the same ACRYL runtime (not verifiable
+headlessly). The web client still shows DeepSeek brand (`dsh-client-ui-brand`);
+ACRYL web branding is a separate client-side task. The terminal surface is
+complete.
+
 ## 2026-08-29 - acryl-tui: fix YLY sprite aspect distortion (root cause of 'simplified' look)
 
 - `9a85967` (full `9a85967d4ef3f3ac22d203c9ac079458a27302b0`) — the frame compiler resized each 96x84 sheet cell to the preset
