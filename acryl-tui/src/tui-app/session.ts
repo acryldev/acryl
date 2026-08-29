@@ -18,6 +18,7 @@ import { mountTui, type TuiHandle } from '../tui/TuiApp.js'
 import type { TuiActions } from '../tui/actions.js'
 import type { PluginRow } from '../tui/plugins/types.js'
 import type { ProviderRow, StoredProviderProfile } from '../tui/modelProfile/types.js'
+import type { AgentPresetRow } from '../tui/agentPresets/types.js'
 import { loadFileIndex } from '../tui/fileIndex.js'
 import { stripSessionIdPrefix } from '../sessionId.js'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
@@ -68,7 +69,10 @@ function pluginRows(ctx: Context): PluginRow[] | undefined {
 }
 
 function sessionBlank(session: Session): boolean {
-  return session.events.length === 0
+  // A session is blank until the first turn actually starts; injected context
+  // (AGENTS.md, skill catalog, cron notices) is not a turn. Mirrors Tomo's/harness
+  // semantics so `/presets` can offer a preset switch on a not-yet-started session.
+  return !session.events.some(event => event.type === 'turn/start')
 }
 
 /** Read a nested value out of an untyped resolved/raw settings section. */
@@ -86,6 +90,14 @@ function deriveApiKeyRef(route: string): string {
   const upper = route.toUpperCase().replace(/[^A-Z0-9]+/g, '_')
   const identifier = /^[A-Z_]/.test(upper) ? upper : `P_${upper}`
   return `${identifier}_API_KEY`
+}
+
+/** English display names for the shipped preset ids (the metadata is authored in Chinese, and there is no server-side locale resolution). */
+const PRESET_LABELS: Record<string, string> = {
+  standard: 'Standard mode',
+  code: 'Code mode',
+  minimal: 'Minimal mode',
+  cordis: 'Creator mode',
 }
 
 const HELP_TEXT = [
@@ -176,6 +188,32 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
       })
     }
     store.updateModelProfile({ providers: rows, busy: false, error: undefined, selected: 0 })
+  }
+
+  // Fetch the deployment's agent-preset roster and refresh the open `/presets`
+  // overlay's row list. The service is optional, same pattern as the other
+  // model/profile actions: absent degrades to the overlay's empty message.
+  async function loadAgentPresets(): Promise<void> {
+    const presetsSvc: any = host.ctx.get('agentPresets')
+    if (presetsSvc === undefined) {
+      // Service is not composed in this profile: settle the spinner to the neutral
+      // empty message instead of leaving `/presets` on a perpetual 'Loading...'.
+      store.updateAgentPresets({ rows: [], busy: false, error: undefined })
+      return
+    }
+    try {
+      const list = await presetsSvc.list()
+      const rows: AgentPresetRow[] = list.map((preset: any) => ({
+        id: preset.id,
+        label: PRESET_LABELS[preset.id as string] ?? preset.name ?? preset.id,
+        description: preset.description,
+        trust: preset.trust,
+        broken: preset.broken,
+      }))
+      store.updateAgentPresets({ rows, busy: false, error: undefined })
+    } catch (error) {
+      store.updateAgentPresets({ busy: false, error: error instanceof Error ? error.message : String(error) })
+    }
   }
 
   const actions: TuiActions = {
@@ -273,6 +311,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     },
     openAgentPresets() {
       store.openAgentPresets({ current: undefined, blank: session === undefined ? true : sessionBlank(session) })
+      void loadAgentPresets()
     },
     closeModelProfile() { store.closeOverlay() },
     backToProviderList() { store.updateModelProfile({ view: 'list' }) },
