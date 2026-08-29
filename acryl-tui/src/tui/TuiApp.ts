@@ -318,7 +318,7 @@ class TuiApp implements TuiHandle {
     })
     const header = new HStack(
       [
-        { component: this.pet, basis: 30, shrink: 0 },
+        { component: this.pet, basis: 34, shrink: 0 },
         { component: headerInfo, basis: 'auto', grow: 1 },
       ],
       { gap: 1, align: 'start' },

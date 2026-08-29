@@ -116,12 +116,12 @@ export const YLY_CLIPS: Record<YlyState, YlyClip> = {
 
 /** Terminal size presets (cols x rows) mirroring the mockup's responsive sizes. */
 export const YLY_SIZE_PRESETS = {
-  small: { cols: 10, rows: 6 },
-  medium: { cols: 14, rows: 8 },
-  large: { cols: 20, rows: 11 },
+  small: { cols: 16, rows: 9 },
+  medium: { cols: 22, rows: 12 },
+  large: { cols: 30, rows: 16 },
 } as const
 
 export type YlySize = keyof typeof YLY_SIZE_PRESETS
 
 /** Pet is hidden below this terminal width; content always wins. */
-export const MIN_WIDTH = 76
+export const MIN_WIDTH = 92

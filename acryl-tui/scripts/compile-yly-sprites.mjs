@@ -21,10 +21,13 @@ const CELL_H = 84
 const FRAME_COUNT = 13
 
 // Terminal size presets (col x row) matching the mockup's responsive sizes.
+// Raised from the original (10x6 / 14x8 / 20x11) so the pet renders at a
+// higher pixel density (each row is 2 raster pixels via half-block), matching
+// the mockup's higher-resolution character.
 const SIZES = {
-  small: { cols: 10, rows: 6 },
-  medium: { cols: 14, rows: 8 },
-  large: { cols: 20, rows: 11 },
+  small: { cols: 16, rows: 9 },
+  medium: { cols: 22, rows: 12 },
+  large: { cols: 30, rows: 16 },
 }
 
 const KEY_OUT_BLACK = false // the distilled sheet uses real alpha; do not key out dark pixels
