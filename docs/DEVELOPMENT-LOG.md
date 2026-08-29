@@ -1,3 +1,11 @@
+## 2026-08-29 - README distinguishes Desktop GUI, Terminal CLI, and local Web
+
+Commit: `fe7192c6b90972fd284d85f4424610b6756f17c8`
+
+The release-facing README now explicitly separates three ACRYL surfaces: Desktop GUI installers, the npm-installed terminal CLI, and the opt-in local browser surface (`acryl web`). It states that the Desktop app carries its own runtime but neither adds a global CLI executable nor leaves a server running. The current links are synchronized to v0.1.4. The release README syncer now preserves this Install heading on all future tag releases.
+
+Verification: `corepack pnpm check:bilingual-docs` and `git diff --check` passed.
+
 ## 2026-08-29 - Release workflow synchronizes README installer links
 
 Commit: `967f33a5b30d38126e6bc3035463344e2242d755`
