@@ -36,7 +36,11 @@
     "upstream:install": "cd deepseek-harness && corepack pnpm install --frozen-lockfile",
     "upstream:build": "cd deepseek-harness && corepack pnpm run build",
     "tui": "node acryl-tui/lib/bin.js tui",
-    "tui:resume": "node acryl-tui/lib/bin.js tui --resume"
+    "tui:resume": "node acryl-tui/lib/bin.js tui --resume",
+    "acryl": "node acryl-tui/lib/bin.js tui",
+    "acryl:resume": "node acryl-tui/lib/bin.js tui --resume",
+    "acryl-gui": "pnpm --filter dsh-plugin-desktop run start",
+    "acryl-web": "node acryl-tui/lib/bin.js web"
   },
   "devDependencies": {
     "@types/react": "18.3.31"

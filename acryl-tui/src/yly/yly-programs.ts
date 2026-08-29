@@ -116,9 +116,9 @@ export const YLY_CLIPS: Record<YlyState, YlyClip> = {
 
 /** Terminal size presets (cols x rows) mirroring the mockup's responsive sizes. */
 export const YLY_SIZE_PRESETS = {
-  small: { cols: 7, rows: 5 },
-  medium: { cols: 10, rows: 6 },
-  large: { cols: 13, rows: 7 },
+  small: { cols: 10, rows: 6 },
+  medium: { cols: 14, rows: 8 },
+  large: { cols: 20, rows: 11 },
 } as const
 
 export type YlySize = keyof typeof YLY_SIZE_PRESETS

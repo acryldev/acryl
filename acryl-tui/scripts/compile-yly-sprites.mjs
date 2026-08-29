@@ -22,9 +22,9 @@ const FRAME_COUNT = 13
 
 // Terminal size presets (col x row) matching the mockup's responsive sizes.
 const SIZES = {
-  small: { cols: 7, rows: 5 },
-  medium: { cols: 10, rows: 6 },
-  large: { cols: 13, rows: 7 },
+  small: { cols: 10, rows: 6 },
+  medium: { cols: 14, rows: 8 },
+  large: { cols: 20, rows: 11 },
 }
 
 const KEY_OUT_BLACK = false // the distilled sheet uses real alpha; do not key out dark pixels
