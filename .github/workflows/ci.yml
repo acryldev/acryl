@@ -57,6 +57,14 @@ jobs:
       - name: Validate repository layout
         run: corepack pnpm run check:layout
 
+      # The workspace packages export their types from a built lib/. On a fresh
+      # checkout those are absent, so consumers (acryl-tui -> acetyl-harness-
+      # runtime -> acryl-control) cannot typecheck until the providers are built.
+      - name: Build workspace type providers
+        run: |
+          corepack pnpm --filter acryl-control run build
+          corepack pnpm --filter acryl-harness-runtime run build
+
       - name: Typecheck
         run: corepack pnpm run typecheck
 
