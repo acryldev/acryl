@@ -28,6 +28,7 @@
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
     "test": "vitest run",
+    "tui": "node lib/bin.js tui",
     "check": "pnpm run build && pnpm run typecheck && pnpm run test",
     "prepack": "pnpm run check"
   },
