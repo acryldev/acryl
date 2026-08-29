@@ -1,3 +1,11 @@
+## 2026-08-29 - Release workflow synchronizes README installer links
+
+Commit: `967f33a5b30d38126e6bc3035463344e2242d755`
+
+Tag releases now run `scripts/sync-release-readme.mjs <tag>` before publication. The script updates the root English and Chinese README release label and every platform-specific artifact URL, recomputes bilingual README blob hashes, and the workflow commits the synchronized documentation to `main`. A future tagged release cannot leave README downloads pointing at an earlier version.
+
+Verification: exercised the script against `v0.1.1`, verified all five renamed artifact links, restored the current `v0.1.0` README without a diff, then ran `corepack pnpm check:bilingual-docs` and `git diff --check`.
+
 ## 2026-08-29 - v0.1.0 download links and Context7 indexing configuration
 
 Commit: `b99daf1f3260f3a64fb00b20c7ad7b92e45013ab`
