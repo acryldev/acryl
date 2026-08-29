@@ -1,3 +1,24 @@
+## 2026-08-29 - acryl-harness-runtime: compose agent-presets + session-stats (fixes /presets)
+
+- `7321c1d` — the ACRYL_RUNTIME_ROWS added `agent-presets` and `session-stats` as
+  plain id-targeted rows, but dsh-base mounts plugins through a `cordis:include`
+  tree: a plain row only overrides an EXISTING entry, it does not create one. The
+  two rows silently never composed, so `/presets` fell back to 'No agent presets
+  configured' because the service was absent. Insert them instead. Also point the
+  agent-presets roster at the DSH submodule's shipped presets dir (the published
+  npm bundle does not carry the presets), so `/presets` lists the real set
+  (standard / ptc / minimal / cordis); the `~/.agent-presets` user root stays
+  mounted. Verified in a PTY: `/presets` now shows Standard/PTC/Minimal/Creator
+  rows; runtime still boots with agents + settings. runtime 11 + acryl-tui 252
+  tests, typecheck, build green.
+
+**Status.** The last verifiable functional gap is closed. All three entrypoints
+run (`pnpm acryl`, `pnpm acryl-web` on 127.0.0.1:3080, `pnpm acryl-gui` launches),
+all slash commands render their real surface (including `/presets` roster), and
+the YLY sprite aspect distortion is fixed. Remaining work is branding parity
+(web-client DeepSeek logo, gui ACRYL runtime confirmation) and a visual
+confirmation of the animation — both need the user's eyes.
+
 ## 2026-08-29 - acryl-tui: all three surfaces launch/serve; gui launch verified
 
 Follow-up on the web host. `pnpm acryl-gui` = `pnpm --filter dsh-plugin-desktop run start`
