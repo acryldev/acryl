@@ -26,6 +26,8 @@ export interface AcrylSessionEventSubscription {
 export interface AcrylSessionBridge {
   open(resumeSessionId?: string): Promise<string>
   snapshot(sessionId: string): Promise<AcrylSessionSnapshot>
+  /** The full durable event log for one session — the surface's replay/seed source. */
+  events(sessionId: string): readonly SessionEvent[]
   subscribe(
     sessionId: string,
     listener: (snapshot: AcrylSessionSnapshot) => void,
@@ -171,6 +173,9 @@ export function createAcrylSessionBridge(
       return handle.agent.id
     },
     snapshot,
+    events(sessionId: string): readonly SessionEvent[] {
+      return agentFor(sessionId).session.events
+    },
     async subscribe(
       sessionId: string,
       listener: (snapshot: AcrylSessionSnapshot) => void,

@@ -215,6 +215,27 @@ describe('createAcrylSessionBridge', () => {
     }
   })
 
+  it('exposes the full durable event log for store seeding and replay', async () => {
+    const runtime = await bootRuntime('acryl-test')
+    const bridge = createAcrylSessionBridge(runtime.ctx, {
+      profile: 'acryl-test',
+      generationId: 'generation-test',
+      attachment: 'owner',
+      cwd: process.cwd(),
+    })
+    try {
+      const sessionId = await bridge.open()
+      await bridge.submitPrompt({ sessionId, text: 'seed me' })
+
+      const events = bridge.events(sessionId)
+      expect(events.some(event => event.type === 'user/message')).toBe(true)
+      expect(events).toEqual(runtime.ctx.agents.get(SessionId(sessionId))?.session.events)
+    } finally {
+      await bridge.dispose()
+      await runtime.dispose()
+    }
+  })
+
   it('does not accumulate native agents for repeated opens', async () => {
     const runtime = await bootRuntime('acryl-test')
     const bridge = createAcrylSessionBridge(runtime.ctx, {

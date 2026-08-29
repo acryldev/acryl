@@ -4,6 +4,7 @@ export interface AcrylInvocation {
   readonly command: AcrylHostCommand
   readonly json: boolean
   readonly profile?: string
+  readonly resumeSessionId?: string
 }
 
 const HOST_COMMANDS = new Set<AcrylHostCommand>(['tui', 'gui', 'web'])
@@ -17,6 +18,7 @@ function hostCommand(value: string): AcrylHostCommand | undefined {
 export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
   let command: AcrylHostCommand | undefined
   let profile: string | undefined
+  let resumeSessionId: string | undefined
   let json = false
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]
@@ -28,6 +30,16 @@ export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
         throw new Error('--profile requires a value')
       }
       profile = value
+      index += 1
+      continue
+    }
+    if (argument === '--resume') {
+      if (resumeSessionId !== undefined) throw new Error('--resume may be provided only once')
+      const value = args[index + 1]
+      if (value === undefined || value.startsWith('--') || value.trim() === '') {
+        throw new Error('--resume requires a session id')
+      }
+      resumeSessionId = value
       index += 1
       continue
     }
@@ -46,7 +58,13 @@ export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
     throw new Error(`unexpected argument for ${command}: ${argument}`)
   }
   const resolvedCommand = command ?? 'tui'
-  return profile === undefined
-    ? { command: resolvedCommand, json }
-    : { command: resolvedCommand, json, profile }
+  if (profile === undefined && resumeSessionId === undefined) {
+    return { command: resolvedCommand, json }
+  }
+  return {
+    command: resolvedCommand,
+    json,
+    ...(profile === undefined ? {} : { profile }),
+    ...(resumeSessionId === undefined ? {} : { resumeSessionId }),
+  }
 }

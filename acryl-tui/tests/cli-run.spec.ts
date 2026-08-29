@@ -1,8 +1,22 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import {
   runAcryl,
   type AcrylCliDependencies,
 } from '../src/cli/run.ts'
+
+function setTty(ttys: readonly boolean[]): void {
+  const [stdin, stdout] = ttys
+  Object.defineProperty(process.stdin, 'isTTY', { value: stdin, configurable: true })
+  Object.defineProperty(process.stdout, 'isTTY', { value: stdout, configurable: true })
+}
+
+const originalTty = Object.getOwnPropertyDescriptor(process.stdin, 'isTTY')
+afterEach(() => {
+  if (originalTty !== undefined) {
+    Object.defineProperty(process.stdin, 'isTTY', originalTty)
+    Object.defineProperty(process.stdout, 'isTTY', originalTty)
+  }
+})
 
 function dependencies(overrides: Partial<AcrylCliDependencies> = {}): AcrylCliDependencies & {
   readonly events: string[]
@@ -16,39 +30,39 @@ function dependencies(overrides: Partial<AcrylCliDependencies> = {}): AcrylCliDe
         runtimeState: 'ready',
         profile: options.profile,
         generationId: 'generation-1',
-        endpoint: { kind: 'unix', address: '/tmp/acryl-test/acryl.sock', protocolVersion: 1 },
         dispose: async () => { events.push('host:dispose') },
       }
     },
-    createRenderer: async options => {
-      events.push(`renderer:${options.profile}`)
-      return {
-        renderer: {},
-        destroy: () => { events.push('renderer:destroy') },
-      }
+    runTui: async options => {
+      events.push(`tui:${options.profile}${options.resumeSessionId === undefined ? '' : `:${options.resumeSessionId}`}`)
+      return { resumeHint: 'resume-1' }
     },
-    waitForRendererDestroy: async () => { events.push('renderer:wait') },
+    exit: code => { events.push(`exit:${code}`) },
     write: line => { events.push(`write:${line}`) },
     ...overrides,
   }
 }
 
 describe('runAcryl', () => {
-  it('boots a direct TUI host and disposes it after the renderer closes', async () => {
+  it('mounts the pi-tui session over the runtime bridge and prints a resume hint', async () => {
+    setTty([true, true])
     const deps = dependencies()
 
-    await runAcryl([], deps)
+    await runAcryl(['tui'], deps)
 
-    expect(deps.events).toEqual([
-      'host:acryl',
-      'renderer:acryl',
-      'renderer:wait',
-      'renderer:destroy',
-      'host:dispose',
-    ])
+    expect(deps.events).toEqual(['tui:acryl', 'write:resume with: acryl tui --resume resume-1'])
   })
 
-  it('prints a structured direct-host status for --json without opening a renderer', async () => {
+  it('passes --resume through to the pi-tui session', async () => {
+    setTty([true, true])
+    const deps = dependencies()
+
+    await runAcryl(['tui', '--resume', 'abc-123'], deps)
+
+    expect(deps.events).toEqual(['tui:acryl:abc-123', 'write:resume with: acryl tui --resume resume-1'])
+  })
+
+  it('writes a structured direct-host status for --json without mounting the TUI', async () => {
     const deps = dependencies()
 
     await runAcryl(['tui', '--profile', 'work', '--json'], deps)
@@ -60,12 +74,15 @@ describe('runAcryl', () => {
     ])
   })
 
-  it('cleans up the host when renderer startup fails', async () => {
-    const deps = dependencies({
-      createRenderer: async () => { throw new Error('terminal unavailable') },
-    })
+  it('fails loud on a non-TTY stream instead of mounting the TUI', async () => {
+    setTty([false, false])
+    const deps = dependencies()
 
-    await expect(runAcryl([], deps)).rejects.toThrow('terminal unavailable')
-    expect(deps.events).toEqual(['host:acryl', 'host:dispose'])
+    await runAcryl(['tui'], deps)
+
+    expect(deps.events).toEqual([
+      'write:acryl-tui: stdin and stdout must both be TTYs; use `acryl tui --json` for a headless probe',
+      'exit:1',
+    ])
   })
 })
