@@ -1,3 +1,11 @@
+## 2026-08-29 - v0.1.0 download links and Context7 indexing configuration
+
+Commit: `b99daf1f3260f3a64fb00b20c7ad7b92e45013ab`
+
+Published platform-specific v0.1.0 links for macOS Apple Silicon and Intel, Windows x64, and Debian Linux x64 and arm64 in the root documentation and GitHub Release notes. The published `acryldev@0.1.0` npm terminal package is now linked as `npm install -g acryldev`. Added the user-supplied `context7.json` public indexing configuration. The standalone `acryl.dev` deployment source is not present in this repository, so it was not modified.
+
+Verification: GitHub release body was read back after mutation; `corepack pnpm check:bilingual-docs` passed.
+
 ## 2026-08-29 - acryl-harness-runtime: compose agent-presets + session-stats (fixes /presets)
 
 - `7321c1d` — the ACRYL_RUNTIME_ROWS added `agent-presets` and `session-stats` as
