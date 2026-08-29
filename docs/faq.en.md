@@ -2,7 +2,7 @@
 
 [中文](faq.md)
 
-This page answers common questions about installation, supported platforms, the bundled runtime, and plugins in the current stable release. The [latest GitHub Release](https://github.com/anywhere-labs/deepseek-harness-desktop/releases/latest) and [user guide](user-guide.en.md) define the shipped product scope.
+This page answers common questions about installation, supported platforms, the bundled runtime, and plugins in the current stable release. The [ACRYL v0.1.0 release](https://github.com/acryldev/acryl/releases/tag/v0.1.0) and [user guide](user-guide.en.md) define the shipped product scope.
 
 ## What is DSH Desktop?
 
@@ -14,7 +14,7 @@ No. DSH Desktop is an independent, community-maintained open-source project. It 
 
 ## Which operating systems are supported?
 
-Current release installers support Windows x64 and universal macOS (Intel and Apple Silicon). There is currently no Linux installer. Cross-platform compatibility code in the source tree does not imply that an installer has been released for that platform.
+ACRYL v0.1.0 ships macOS Apple Silicon and Intel DMGs, a Windows x64 installer, and Debian packages for Linux x64 and arm64. Download all installers from the [release page](https://github.com/acryldev/acryl/releases/tag/v0.1.0).
 
 ## Do I need to install Node.js, pnpm, or DSH?
 
@@ -46,4 +46,4 @@ Packaged applications check for stable releases in the background but never inst
 
 ## Where can I download the app or report a problem?
 
-Download from the [project download page](https://www.dshdesktop.cn/) or the [latest GitHub Release](https://github.com/anywhere-labs/deepseek-harness-desktop/releases/latest). Check the [troubleshooting section](user-guide.en.md#troubleshooting) first. If the problem remains, open a [GitHub Issue](https://github.com/anywhere-labs/deepseek-harness-desktop/issues/new/choose) with the operating system, app version, reproduction steps, and error details.
+Download from the [ACRYL v0.1.0 release](https://github.com/acryldev/acryl/releases/tag/v0.1.0), or install the terminal package with [`npm install -g acryldev`](https://www.npmjs.com/package/acryldev). Check the [troubleshooting section](user-guide.en.md#troubleshooting) first. If the problem remains, open a [GitHub Issue](https://github.com/acryldev/acryl/issues/new/choose) with the operating system, app version, reproduction steps, and error details.

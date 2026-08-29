@@ -13,6 +13,7 @@
   <a href="https://github.com/acryldev/acryl">⭐ Support ACRYL</a> ·
   <a href="https://acryl.dev/">Website</a> ·
   <a href="https://acryl.dev/docs">Documentation</a> ·
+  <a href="https://github.com/acryldev/acryl/releases/tag/v0.1.0">Download v0.1.0</a> ·
   <a href="https://discord.gg/cY9KXMex69">Discord</a> ·
   <a href="https://github.com/acryldev/acryl">GitHub</a>
 </p>
@@ -26,6 +27,18 @@
 
 > [!IMPORTANT]
 > ACRYL is in active early development. Interfaces, workflows, and packaging may change while the first public foundation is established.
+
+## Download ACRYL v0.1.0
+
+| Platform | Download |
+| --- | --- |
+| macOS - Apple Silicon | [DMG](https://github.com/acryldev/acryl/releases/download/v0.1.0/ACRYL-0.1.0-arm64.dmg) |
+| macOS - Intel | [DMG](https://github.com/acryldev/acryl/releases/download/v0.1.0/ACRYL-0.1.0.dmg) |
+| Windows - x64 | [Installer](https://github.com/acryldev/acryl/releases/download/v0.1.0/ACRYL-0.1.0-x64-Setup.exe) |
+| Linux - x64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.1.0/dsh-plugin-desktop_0.1.0_amd64.deb) |
+| Linux - arm64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.1.0/dsh-plugin-desktop_0.1.0_arm64.deb) |
+
+Terminal package: [`npm install -g acryldev`](https://www.npmjs.com/package/acryldev).
 
 ## What is ACRYL?
 
