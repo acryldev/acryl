@@ -1,0 +1,139 @@
+name: Release
+
+# Builds unsigned ACRYL desktop artifacts for the 5 targeted platforms and, on a
+# `v*` tag, publishes them as a GitHub Release. Each platform builds per-arch so
+# a runner only needs the native prebuilds for its own architecture (the
+# universal-mac cross-arch prebuild staging is a separate, documented blocker).
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write   # to create the release on a tag
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DSH_TELEMETRY_DISABLED: '1'
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macos-arm64
+            os: macos-latest        # Apple Silicon
+            arch: arm64
+            target: mac
+            mode: dmg
+            artifact: '*.dmg'
+          - name: macos-x64
+            os: macos-13            # Intel
+            arch: x64
+            target: mac
+            mode: dmg
+            artifact: '*.dmg'
+          - name: linux-arm64
+            os: ubuntu-24.04-arm
+            arch: arm64
+            target: linux
+            mode: deb
+            artifact: '*.deb'
+          - name: linux-x64
+            os: ubuntu-latest
+            arch: x64
+            target: linux
+            mode: deb
+            artifact: '*.deb'
+          - name: windows-x64
+            os: windows-latest
+            arch: x64
+            target: win
+            mode: nsis
+            artifact: '*.exe'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Resolve PNPM store directory
+        id: pnpm-store
+        shell: bash
+        run: echo "dir=$(corepack pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore PNPM store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.dir }}
+          key: pnpm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml', '.npmrc') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Install dependencies
+        run: corepack pnpm install --frozen-lockfile
+
+      # Build the desktop app (canvas + main + native-UI renderer) before
+      # electron-builder packages it.
+      - name: Build desktop app
+        run: |
+          corepack pnpm --filter dsh-plugin-development-canvas run build
+          corepack pnpm --filter dsh-plugin-desktop run build
+
+      - name: Package ${{ matrix.name }}
+        shell: bash
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          set -euo pipefail
+          cd dsh-plugin-desktop
+          node node_modules/electron-builder/cli.js \
+            --${{ matrix.target }} ${{ matrix.mode }} \
+            --${{ matrix.arch }} \
+            --publish never \
+            --config.mac.notarize=false \
+            --config.npmRebuild=false \
+            --config.directories.output=dist/${{ matrix.name }}
+
+      - name: Upload ${{ matrix.name }} artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: acryl-${{ matrix.name }}-${{ github.ref_name }}
+          path: dsh-plugin-desktop/dist/${{ matrix.name }}/${{ matrix.artifact }}
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish GitHub release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ACRYL ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
+          files: artifacts/**/*
