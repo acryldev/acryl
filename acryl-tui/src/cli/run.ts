@@ -1,5 +1,6 @@
 import { startDirectHost } from '../host/direct.ts'
 import { runAcrylTui } from '../tui-app/session.ts'
+import { ACRYL_VERSION } from '../version.ts'
 import { parseAcrylArgs } from './grammar.ts'
 
 interface RunningDirectHost {
@@ -44,6 +45,11 @@ export async function runAcryl(
   const invocation = parseAcrylArgs(args)
   if (invocation.command !== 'tui') {
     throw new Error(`ACRYL ${invocation.command} host is not implemented; use "acryl tui"`)
+  }
+
+  if (invocation.version) {
+    dependencies.write(ACRYL_VERSION)
+    return
   }
 
   if (invocation.json) {

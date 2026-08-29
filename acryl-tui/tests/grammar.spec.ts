@@ -6,22 +6,25 @@ describe('parseAcrylArgs', () => {
     expect(parseAcrylArgs([])).toEqual({
       command: 'tui',
       json: false,
+      version: false,
     })
     expect(parseAcrylArgs(['--profile', 'desktop'])).toEqual({
       command: 'tui',
       json: false,
+      version: false,
       profile: 'desktop',
     })
   })
 
   it('parses peer host commands without aliases', () => {
-    expect(parseAcrylArgs(['tui'])).toEqual({ command: 'tui', json: false })
+    expect(parseAcrylArgs(['tui'])).toEqual({ command: 'tui', json: false, version: false })
     expect(parseAcrylArgs(['gui', '--profile', 'work'])).toEqual({
       command: 'gui',
       json: false,
+      version: false,
       profile: 'work',
     })
-    expect(parseAcrylArgs(['web'])).toEqual({ command: 'web', json: false })
+    expect(parseAcrylArgs(['web'])).toEqual({ command: 'web', json: false, version: false })
   })
 
   it('rejects missing values, duplicates, and unknown arguments', () => {
