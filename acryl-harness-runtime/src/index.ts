@@ -11,7 +11,9 @@ export {
 
 import { writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
+import { existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
@@ -28,6 +30,20 @@ import {
 const require = createRequire(import.meta.url)
 const dshInstallAnchor = require.resolve('@deepseek-ai/dsh/package.json')
 const profileRoot = '[]\n'
+
+// The ACRYL repo root (this package sits at `<repo>/acryl-harness-runtime`). The
+// shipped agent presets live in the pinned DSH submodule rather than the
+// published npm bundle, so point the roster at that source dir.
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
+const shippedPresetsDir = join(repoRoot, 'deepseek-harness', 'packages', 'preset', 'agent-presets', 'presets')
+const agentPresetConfig: Record<string, unknown> = {
+  default: 'standard',
+  roots: existsSync(shippedPresetsDir)
+    ? [{ path: shippedPresetsDir, trust: 'system' }]
+    : [],
+  includeShippedRoot: false,
+  includeUserRoot: true,
+}
 
 /*
  * Rows the ACRYL runtime composes on top of a base profile. dsh-base alone
@@ -46,13 +62,15 @@ const ACRYL_RUNTIME_ROWS: readonly PatchOptions[] = [
     },
   },
   {
-    id: 'agent-presets',
-    name: '@deepseek-ai/dsh-agent-presets',
-    config: { default: 'standard' },
-  },
-  {
-    id: 'session-stats',
-    name: '@deepseek-ai/dsh-session-stats',
+    // `system-prompt` is already in dsh-base's include tree, so a plain id-targeted
+    // row overrides its config. `agent-presets` and `session-stats` are NOT in the
+    // base include set, so they must be `insert`ed — a plain row only overrides an
+    // existing entry, it does not create one (that is why they silently never
+    // composed before).
+    insert: [
+      { id: 'agent-presets', name: '@deepseek-ai/dsh-agent-presets', config: agentPresetConfig },
+      { id: 'session-stats', name: '@deepseek-ai/dsh-session-stats' },
+    ],
   },
 ]
 
