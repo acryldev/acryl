@@ -1,9 +1,18 @@
-import { describe, expect, it, vi } from 'vitest'
+import { chmodSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   CanvasPtyRegistry,
   type CanvasPtyProcess,
   planCanvasPtyCommand,
+  resolveCanvasPtyCommand,
 } from '../src/canvas-pty.ts'
+
+const tempDirs: string[] = []
+afterEach(() => {
+  for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true })
+})
 
 function fakePty(): {
   readonly process: CanvasPtyProcess
@@ -112,5 +121,29 @@ describe('CanvasPtyRegistry', () => {
     const registry = new CanvasPtyRegistry({ spawn })
     expect(() => registry.start('rm')).toThrow('unknown canvas PTY command')
     expect(spawn).not.toHaveBeenCalled()
+  })
+
+  it('resolves bare agent commands to the absolute executable in PATH', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'canvas-pty-'))
+    tempDirs.push(dir)
+    const claudePath = join(dir, 'claude')
+    writeFileSync(claudePath, '#!/bin/sh\necho claude\n')
+    chmodSync(claudePath, 0o755)
+
+    // An absolute or slash-qualified command passes through untouched.
+    expect(resolveCanvasPtyCommand('/bin/zsh', [], 'darwin')).toBe('/bin/zsh')
+    // A bare command not present in the given dirs resolves to nothing.
+    expect(resolveCanvasPtyCommand('claude', ['/nonexistent'], 'darwin')).toBeUndefined()
+    // A bare command found as an executable resolves to its absolute path.
+    expect(resolveCanvasPtyCommand('claude', [dir], 'darwin')).toBe(claudePath)
+
+    const spawn = vi.fn(() => fakePty().process)
+    const registry = new CanvasPtyRegistry({
+      env: { ...process.env, SHELL: '/bin/sh', PATH: dir },
+      platform: 'darwin',
+      spawn,
+    })
+    registry.start('claude')
+    expect(spawn).toHaveBeenCalledWith(claudePath, [], expect.objectContaining({ cwd: expect.any(String) }))
   })
 })

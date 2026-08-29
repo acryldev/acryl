@@ -1,6 +1,10 @@
 /** Host-owned Development Canvas PTY sessions. UI observes; this module owns lifetime. */
 
+import { execFileSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
+import { statSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { isAbsolute, join } from 'node:path'
 import { spawn as spawnPty } from 'node-pty'
 import type { CanvasPtyCommandId, CanvasPtyStatus, CanvasPtyView } from './canvas-pty-contract.ts'
 import { isCanvasPtyCommandId } from './canvas-pty-contract.ts'
@@ -9,6 +13,79 @@ const MAX_OUTPUT_CHARS = 64 * 1024
 const KILL_GRACE_MS = 1_000
 const DEFAULT_COLS = 120
 const DEFAULT_ROWS = 40
+
+/**
+ * A Finder-launched macOS app gets a minimal PATH (`/usr/bin:/bin:…`), so a
+ * bare agent name such as `claude` fails to spawn even when it is installed.
+ * Resolve bare commands to an absolute executable by merging `env.PATH` with
+ * the user's login-shell PATH (cached per registry).
+ */
+export function canvasPtySpawnDirs(env: NodeJS.ProcessEnv, platform: NodeJS.Platform): string[] {
+  const dirs: string[] = []
+  const add = (raw: string | undefined): void => {
+    if (raw === undefined) return
+    for (const dir of raw.split(platform === 'win32' ? ';' : ':')) {
+      if (dir.length > 0 && !dirs.includes(dir)) dirs.push(dir)
+    }
+  }
+  add(env.PATH)
+  const shell = env.SHELL ?? (platform === 'win32' ? env.ComSpec ?? 'cmd.exe' : '/bin/sh')
+  const probes = platform === 'win32'
+    ? [['/d', '/s', '/c', 'echo %PATH%']]
+    : [['-lic', 'echo $PATH'], ['-lc', 'echo $PATH']]
+  for (const args of probes) {
+    try {
+      const out = execFileSync(shell, args, {
+        encoding: 'utf8',
+        env,
+        timeout: 3_000,
+        stdio: ['ignore', 'pipe', 'ignore'],
+      })
+      add(out.trimEnd())
+      if (dirs.length > 0) break
+    } catch {
+      // Log-in shell not available; keep the env PATH we already have.
+    }
+  }
+  return dirs
+}
+
+/**
+ * Return an absolute executable path for `command`, or `undefined` when none of
+ * `dirs` contains an executable `command`. Absolute/relative paths pass through.
+ */
+export function resolveCanvasPtyCommand(
+  command: string,
+  dirs: readonly string[],
+  platform: NodeJS.Platform,
+): string | undefined {
+  if (isAbsolute(command) || command.includes('/') || command.includes('\\')) return command
+  const names = platform === 'win32'
+    ? [command, `${command}.exe`, `${command}.cmd`, `${command}.bat`]
+    : [command]
+  for (const dir of dirs) {
+    for (const name of names) {
+      try {
+        const candidate = join(dir, name)
+        const stat = statSync(candidate)
+        if (stat.isFile() && (platform === 'win32' || (stat.mode & 0o111) !== 0)) return candidate
+      } catch {
+        // Not present here; keep searching.
+      }
+    }
+  }
+  return undefined
+}
+
+/** The spawn cwd: process.cwd() when it exists, else the user's home directory. */
+function defaultSpawnCwd(): string {
+  try {
+    if (statSync(process.cwd()).isDirectory()) return process.cwd()
+  } catch {
+    // Fall through to the home directory.
+  }
+  return homedir()
+}
 
 export interface CanvasPtyProcess {
   onData(listener: (data: string) => void): { dispose(): void }
@@ -88,13 +165,15 @@ export class CanvasPtyRegistry {
   private readonly cwd: string
   private readonly platform: NodeJS.Platform
   private readonly createId: () => string
+  private readonly spawnDirs: string[]
 
   constructor(options: CanvasPtyRegistryOptions = {}) {
     this.spawnImpl = options.spawn ?? defaultSpawn
     this.env = options.env ?? process.env
-    this.cwd = options.cwd ?? process.cwd()
+    this.cwd = options.cwd ?? defaultSpawnCwd()
     this.platform = options.platform ?? process.platform
     this.createId = options.createId ?? (() => `pty_${randomUUID()}`)
+    this.spawnDirs = canvasPtySpawnDirs(this.env, this.platform)
   }
 
   /**
@@ -109,7 +188,11 @@ export class CanvasPtyRegistry {
     const id = this.createId()
     let process: CanvasPtyProcess
     try {
-      process = this.spawnImpl(plan.command, plan.args, {
+      const resolved = resolveCanvasPtyCommand(plan.command, this.spawnDirs, this.platform)
+      if (resolved === undefined && !plan.command.includes('/') && !plan.command.includes('\\')) {
+        throw new Error(`canvas PTY command not found in PATH: ${plan.command}`)
+      }
+      process = this.spawnImpl(resolved ?? plan.command, plan.args, {
         cwd: this.cwd,
         env: { ...this.env, TERM: this.env.TERM ?? 'xterm-256color' },
         name: 'xterm-256color',

@@ -20,6 +20,7 @@ patchedDependencies:
   '@deepseek-ai/dsh-web-app@0.1.1-rc.2': 6d5ce320123ccdf0bf7c458fbc218417b1e800435d6930cf46d0ca2f57549a2d
   app-builder-lib@26.15.7: 33e50ac9ace3ca3a0a86f35d4b20b1c9c638a01cda6258e10d74e10d3d351dab
   dshmarket@1.17.1: 1d6cc820c58c4c1894955e3eb30a5dc00b4c74b07210b43bedd3e17f8ad15a2b
+  node-pty@1.2.0-beta.15: 76ba48ec629e2a6ebc193ec734b522f890287419a74efee65d80ee1652de1e0d
 
 importers:
 
@@ -668,7 +669,7 @@ importers:
         version: 22.20.1
       node-pty:
         specifier: 1.2.0-beta.15
-        version: 1.2.0-beta.15
+        version: 1.2.0-beta.15(patch_hash=76ba48ec629e2a6ebc193ec734b522f890287419a74efee65d80ee1652de1e0d)
       sharp:
         specifier: 0.35.3
         version: 0.35.3(@types/node@22.20.1)
@@ -1374,7 +1375,7 @@ importers:
         version: 5.5.0
       node-pty:
         specifier: 1.2.0-beta.15
-        version: 1.2.0-beta.15
+        version: 1.2.0-beta.15(patch_hash=76ba48ec629e2a6ebc193ec734b522f890287419a74efee65d80ee1652de1e0d)
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.1
@@ -11195,7 +11196,7 @@ snapshots:
       '@deepseek-ai/dsh-subprocess': 0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1))
       '@deepseek-ai/dsh-timeout': 0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1))
       koffi: 3.1.5
-      node-pty: 1.2.0-beta.15
+      node-pty: 1.2.0-beta.15(patch_hash=76ba48ec629e2a6ebc193ec734b522f890287419a74efee65d80ee1652de1e0d)
 
   '@deepseek-ai/dsh-subprocess@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1))':
     dependencies:
@@ -15433,7 +15434,7 @@ snapshots:
 
   node-int64@0.4.0: {}
 
-  node-pty@1.2.0-beta.15:
+  node-pty@1.2.0-beta.15(patch_hash=76ba48ec629e2a6ebc193ec734b522f890287419a74efee65d80ee1652de1e0d):
     dependencies:
       node-addon-api: 7.1.1
 
