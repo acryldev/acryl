@@ -21,12 +21,12 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
           submodules: recursive
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
 
@@ -39,7 +39,7 @@ jobs:
         run: echo "dir=$(corepack pnpm store path)" >> "$GITHUB_OUTPUT"
 
       - name: Restore PNPM store
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-store.outputs.dir }}
           key: pnpm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml', '.npmrc') }}
@@ -63,7 +63,7 @@ jobs:
         run: corepack pnpm --filter dsh-plugin-desktop run dist:win-portable
 
       - name: Upload Windows artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: acryl-windows-${{ github.ref_name }}
           path: |
@@ -79,12 +79,12 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
           submodules: recursive
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
 
@@ -96,7 +96,7 @@ jobs:
         run: echo "dir=$(corepack pnpm store path)" >> "$GITHUB_OUTPUT"
 
       - name: Restore PNPM store
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-store.outputs.dir }}
           key: pnpm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml', '.npmrc') }}
@@ -115,7 +115,7 @@ jobs:
         run: corepack pnpm --filter dsh-plugin-desktop run dist:mac-smoke
 
       - name: Upload macOS artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: acryl-macos-${{ github.ref_name }}
           path: dsh-plugin-desktop/dist/*.dmg
