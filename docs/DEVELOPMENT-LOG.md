@@ -1,3 +1,27 @@
+## 2026-08-29 - acryl-tui: /model wired to the real provider directory; web/gui gap recorded
+
+Follow-up on the slash-command parity checkpoint above.
+
+- `3ac70ab` (full `3ac70ab13cbe4a89238110b88e55743dbfe5112c`) — `/model` re-join of `ctx.llm`'s provider
+  directory with `ctx.settings.describe({redactSecrets:true})` (persisted
+  overrides) and `ctx.credentials.describe()` (API-key presence), folded into
+  `ProviderRow` entries and pushed into the store. The overlay previously
+  opened but stayed on `Loading...`. Local `getAtPath`/`deriveApiKeyRef` helpers
+  ported; no new dependency. PTY proof: `/model` now renders the full provider
+  list (deepseek, openai, google, ...) marked live/configured and `[no api key]`.
+- `8c52e02` (full `8c52e02334ca332943a0373e0bd967941512cc3b`) — `pnpm acryl-web` / `pnpm acryl gui` now fail with a clear,
+  surface-specific message (web vs desktop Electron) pointing at the working
+  `pnpm acryl` terminal surface, instead of a generic `use "acryl tui"` throw.
+
+**Known gap / next work.** `acryl web` and `acryl gui` hosts are NOT wired into
+this build. The web surface needs the ACRYL runtime to compose the DSH web
+rows (serve the frontend on 127.0.0.1) rather than delegating to the pristine
+`dsh --profile web`; the gui surface needs the Electron desktop plugin to
+launch the same ACRYL runtime. Neither is a small change, and both are recorded
+here so the next session picks them up deliberately. The terminal surface is
+functionally complete: `pnpm acryl` boots, YLY pet animates, and every slash
+command works.
+
 ## 2026-08-29 - acryl-tui: /clear session reset, auto-build launcher, slash-command parity
 
 Follow-up on the M1 terminal surface and the YLY/branding work. The interactive
