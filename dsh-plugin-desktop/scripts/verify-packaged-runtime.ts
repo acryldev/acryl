@@ -1,6 +1,6 @@
 /** Fail-loud verification of the runtime entries sealed into Electron's app.asar. */
 
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { isAbsolute, join, relative, sep } from 'node:path'
@@ -25,10 +25,6 @@ export interface PackagedRuntimeContext {
     readonly appInfo: {
       readonly productFilename: string
     }
-    /** The application source dir (what electron-builder packs). */
-    readonly appDir?: string
-    /** The project directory containing package.json. */
-    readonly projectDir?: string
   }
 }
 
@@ -360,46 +356,6 @@ export function verifyUnpackedPackageResolution(
 }
 
 /**
- * Stage optional per-platform native modules (koffi, sharp, ripgrep, and
- * node-addon-require-builtin) into the packaged app's unpacked tree.
- *
- * These are optionalDependencies of their base packages, so pnpm only links
- * them as siblings in the package store and electron-builder's dependency
- * collector does not copy them into the app bundle — the packaged app then
- * fails at runtime with 'Cannot find the native Koffi module'. The dev
- * node_modules carries the matching platform/arch packages, so copy them (and
- * resolve symlinks) so the runtime's own require resolution finds them.
- */
-export function stageOptionalNativeModules(context: PackagedRuntimeContext): void {
-  const unpackedRoot = resolvePackagedUnpackedRoot(context)
-  // electron-builder transpiles the afterPack hook, so import.meta.url points at
-  // a temp build, not the repo. The hook runs in the same process that launched
-  // electron-builder (cwd = the desktop package dir), so derive the staging
-  // node_modules from cwd, falling back to the packager's project/app dir.
-  const desktopRoot = process.cwd()
-  const stagingRoot = join(desktopRoot, 'node_modules')
-  if (!existsSync(stagingRoot)) {
-    throw new Error(`dsh-plugin-desktop: cannot find staging node_modules at ${stagingRoot}`)
-  }
-  const scopes = ['@koromix', '@img', '@vscode']
-  for (const scope of scopes) {
-    const scopeSource = join(stagingRoot, scope)
-    if (!existsSync(scopeSource)) continue
-    for (const pkg of readdirSync(scopeSource)) {
-      const from = join(scopeSource, pkg)
-      const to = join(unpackedRoot, 'node_modules', scope, pkg)
-      if (!existsSync(to)) cpSync(from, to, { recursive: true, dereference: true })
-    }
-  }
-  for (const entry of readdirSync(stagingRoot)) {
-    if (!entry.startsWith('node-addon-require-builtin-')) continue
-    const from = join(stagingRoot, entry)
-    const to = join(unpackedRoot, 'node_modules', entry)
-    if (!existsSync(to)) cpSync(from, to, { recursive: true, dereference: true })
-  }
-}
-
-/**
  * Verify Electron Builder's completed application before signing begins.
  * @param context - Electron Builder's afterPack context.
  * @param list - ASAR listing implementation.
@@ -417,7 +373,7 @@ export function verifyPackagedRuntime(
   const unpackedRoot = resolvePackagedUnpackedRoot(context)
   const requiredPhysicalEntries = context.electronPlatformName === 'win32'
     ? [...REQUIRED_UNPACKED_RUNTIME_ENTRIES, ...REQUIRED_WINDOWS_X64_NODE_PTY_ENTRIES]
-    : context.electronPlatformName === 'darwin'
+    : context.electronPlatformName === 'darwin' && context.arch === 4
       ? [...REQUIRED_UNPACKED_RUNTIME_ENTRIES, ...REQUIRED_MACOS_UNIVERSAL_ENTRIES]
       : REQUIRED_UNPACKED_RUNTIME_ENTRIES
   const missing = requiredPhysicalEntries.filter(entry => !exists(join(unpackedRoot, entry)))
@@ -449,7 +405,6 @@ export async function afterPack(
   verify: typeof verifyPackagedRuntime = verifyPackagedRuntime,
   smoke: PackagedDiagnosticWorkerSmoke = smokePackagedDiagnosticWorker,
 ): Promise<void> {
-  stageOptionalNativeModules(context)
   verify(context)
   await smoke(resolvePackagedUnpackedRoot(context))
 }
