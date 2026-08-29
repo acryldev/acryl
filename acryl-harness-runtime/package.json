@@ -1,6 +1,6 @@
 {
   "name": "acryl-harness-runtime",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "private": true,
   "type": "module",
   "main": "lib/index.mjs",
