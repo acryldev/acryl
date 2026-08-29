@@ -1,3 +1,38 @@
+## 2026-08-29 - M1 pi-tui terminal surface: runtime seam and Tomo port foundation
+
+The M1 terminal milestone moved from the re-scoped runtime contract into code.
+The ACRYL runtime now has a durable-session event seam and a coding-agent
+profile composition, and `acryl-tui` carries Tomo's real presentation and
+editor/input code rather than a re-authored renderer.
+
+- `33439ec` (full `33439ec88c3e4c1f575b9e4d905bb2f01a2b3242`) — session bridge:
+  `AcrylSessionBridge.subscribeEvents` streams incremental durable `SessionEvent`
+  records (the streaming seam the terminal needs), and `dispose()` waits idle and
+  `sessions.flush`es before releasing native handles so durable resume survives
+  a clean exit. RED test first.
+- `67bbaca` (full `67bbaca72db3af50d32238eec0f6358affcd3866`) — `bootAcrylHarnessProfile` composes the
+  coding-agent rows dsh-base does not mount (`system-prompt` persona,
+  `agent-presets` default `standard`, `session-stats`) as runtime-owned rows.
+- `0b0cba5` (full `0b0cba5b5ccc5e78c0d127ab7d051005afde6e6b`) — ported Tomo presentation core into `acryl-tui`
+  verbatim (`store.ts`, `render.ts`, `markdown.ts`, `sessionId.ts`,
+  `tui/{theme,piTheme,text,liveText,Spinner,bannerText,statsFormat}` and the
+  overlay type modules) with their vitest suites, renamed to the repo `.spec`
+  convention, plus exact `@earendil-works/pi-tui@0.84.2` and `diff` deps.
+  Type accommoda tions: `noUncheckedIndexedAccess`/`exactOptionalPropertyTypes`
+  relaxed to Tomo's baseline in `acryl-tui`; compaction `SessionEvent`
+  augmentation imported.
+- `ecefaf4` (full `ecefaf4bcc5267ca42cf16e70f7ef2886642313a`) — ported Tomo input/editor chain
+  (`CustomEditor`, `promptAutocomplete`, `commands`, `fileMention`, `fileIndex`,
+  `miniTextField`, `actions`) + command/file-mention tests.
+
+Source/verification: `specs/019-acryl-harness-runtime/` (re-scoped),
+`acryl-harness-runtime/src/session-bridge.ts`, `acryl-harness-runtime/src/index.ts`,
+`acryl-tui/src/{render,markdown,sessionId}.ts`, `acryl-tui/src/tui/*`, and their
+tests. Upstream provenance: `docs/acryl/tomowang-dsh-tui-provenance.md`.
+
+Next parity gap (not yet wired): TuiApp application shell + overlays, the ACRYL
+host adapter over the bridge, Ink removal, and the TTY smoke — then approvals,
+questions, overlays, model/preset controls, prompt history.
 # ACRYL Development Log
 
 This human-readable log records important project evolution. It explains what
