@@ -5,8 +5,10 @@
 - 支持 ACRYL：[在 GitHub 上点 Star ⭐](https://github.com/acryldev/acryl)
 - 官网：[agentcontextrelay.com](https://acryl.dev/)
 - 文档：[agentcontextrelay.com/docs](https://acryl.dev/docs)
-- 下载：[ACRYL v0.1.0 GitHub Release](https://github.com/acryldev/acryl/releases/tag/v0.1.0)（[macOS Apple Silicon](https://github.com/acryldev/acryl/releases/download/v0.1.0/ACRYL-0.1.0-arm64.dmg)、[macOS Intel](https://github.com/acryldev/acryl/releases/download/v0.1.0/ACRYL-0.1.0.dmg)、[Windows x64](https://github.com/acryldev/acryl/releases/download/v0.1.0/ACRYL-0.1.0-x64-Setup.exe)、[Linux x64 DEB](https://github.com/acryldev/acryl/releases/download/v0.1.0/dsh-plugin-desktop_0.1.0_amd64.deb)、[Linux arm64 DEB](https://github.com/acryldev/acryl/releases/download/v0.1.0/dsh-plugin-desktop_0.1.0_arm64.deb)）
-- npm 终端包：[acryldev](https://www.npmjs.com/package/acryldev)，安装命令：`npm install -g acryldev`
+- 桌面 GUI 下载：[ACRYL v0.1.4 GitHub Release](https://github.com/acryldev/acryl/releases/tag/v0.1.4)（[macOS Apple Silicon](https://github.com/acryldev/acryl/releases/download/v0.1.4/ACRYL-0.1.4-arm64.dmg)、[macOS Intel](https://github.com/acryldev/acryl/releases/download/v0.1.4/ACRYL-0.1.4.dmg)、[Windows x64](https://github.com/acryldev/acryl/releases/download/v0.1.4/ACRYL-0.1.4-x64-Setup.exe)、[Linux x64 DEB](https://github.com/acryldev/acryl/releases/download/v0.1.4/dsh-plugin-desktop_0.1.4_amd64.deb)、[Linux arm64 DEB](https://github.com/acryldev/acryl/releases/download/v0.1.4/dsh-plugin-desktop_0.1.4_arm64.deb)）。桌面应用自带所需运行时，但不会把 `acryl` 安装到 shell PATH，也不会在退出后持续运行 Web 服务。
+- npm 终端 CLI：[acryldev](https://www.npmjs.com/package/acryldev)，安装并启动 TUI：`npm install -g acryldev`，然后运行 `acryl`。
+- 本地 Web 界面：运行 `acryl web`。它启动本地服务并打印 URL，直到命令停止为止，不是托管的云服务。
+- `acryl gui` 预留给未来从 CLI 跳转到桌面应用的功能；目前请直接启动已安装的桌面应用。
 - Discord：[加入 ACRYL 社区](https://discord.gg/cY9KXMex69)
 - Cordis：[github.com/cordiverse/cordis](https://github.com/cordiverse/cordis)
 

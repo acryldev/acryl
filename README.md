@@ -13,7 +13,7 @@
   <a href="https://github.com/acryldev/acryl">⭐ Support ACRYL</a> ·
   <a href="https://acryl.dev/">Website</a> ·
   <a href="https://acryl.dev/docs">Documentation</a> ·
-  <a href="https://github.com/acryldev/acryl/releases/tag/v0.1.0">Download v0.1.0</a> ·
+  <a href="https://github.com/acryldev/acryl/releases/tag/v0.1.4">Download v0.1.4</a> ·
   <a href="https://discord.gg/cY9KXMex69">Discord</a> ·
   <a href="https://github.com/acryldev/acryl">GitHub</a>
 </p>
@@ -28,17 +28,45 @@
 > [!IMPORTANT]
 > ACRYL is in active early development. Interfaces, workflows, and packaging may change while the first public foundation is established.
 
-## Download ACRYL v0.1.0
+## Install ACRYL v0.1.4
 
-| Platform | Download |
+ACRYL has three surfaces that share the same project model, but they are deliberately separate installs. Installing one does not silently install or start the others.
+
+### Desktop GUI
+
+The GitHub Release assets below install the **ACRYL Desktop GUI**. The app carries the runtime it needs, but it does **not** add the `acryl` command to your shell PATH or leave a web server running after the app exits.
+
+| Platform | Desktop download |
 | --- | --- |
-| macOS - Apple Silicon | [DMG](https://github.com/acryldev/acryl/releases/download/v0.1.0/ACRYL-0.1.0-arm64.dmg) |
-| macOS - Intel | [DMG](https://github.com/acryldev/acryl/releases/download/v0.1.0/ACRYL-0.1.0.dmg) |
-| Windows - x64 | [Installer](https://github.com/acryldev/acryl/releases/download/v0.1.0/ACRYL-0.1.0-x64-Setup.exe) |
-| Linux - x64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.1.0/dsh-plugin-desktop_0.1.0_amd64.deb) |
-| Linux - arm64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.1.0/dsh-plugin-desktop_0.1.0_arm64.deb) |
+| macOS - Apple Silicon | [DMG](https://github.com/acryldev/acryl/releases/download/v0.1.4/ACRYL-0.1.4-arm64.dmg) |
+| macOS - Intel | [DMG](https://github.com/acryldev/acryl/releases/download/v0.1.4/ACRYL-0.1.4.dmg) |
+| Windows - x64 | [Installer](https://github.com/acryldev/acryl/releases/download/v0.1.4/ACRYL-0.1.4-x64-Setup.exe) |
+| Linux - x64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.1.4/dsh-plugin-desktop_0.1.4_amd64.deb) |
+| Linux - arm64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.1.4/dsh-plugin-desktop_0.1.4_arm64.deb) |
 
-Terminal package: [`npm install -g acryldev`](https://www.npmjs.com/package/acryldev).
+### Terminal CLI
+
+Install the terminal interface explicitly:
+
+```bash
+npm install -g acryldev
+acryl
+```
+
+The `acryl` command starts the TUI. It is separate from the Desktop app so terminal users do not need Electron, and desktop users do not receive an unexpected global executable.
+
+### Local Web surface
+
+Start the browser surface explicitly when you want it:
+
+```bash
+acryl web
+```
+
+This starts a local ACRYL web runtime, prints its local URL, and serves until you stop the command. It is not a hosted ACRYL cloud service and it does not run in the background by default.
+
+> [!NOTE]
+> `acryl gui` is reserved for a future CLI-to-Desktop handoff. For now, launch the installed Desktop app directly.
 
 ## What is ACRYL?
 

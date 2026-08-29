@@ -30,7 +30,7 @@ export async function syncReleaseReadme(root, tag) {
     const path = resolve(root, relativePath)
     let text = await readFile(path, 'utf8')
     text = replaceRequired(text, /Download v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?/, `Download ${tag}`, relativePath)
-    text = replaceRequired(text, /## Download ACRYL v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?/, `## Download ACRYL ${tag}`, relativePath)
+    text = replaceRequired(text, /## (?:Download|Install) ACRYL v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?/, `## Install ACRYL ${tag}`, relativePath)
     text = text.replaceAll(/https:\/\/github\.com\/acryldev\/acryl\/releases\/tag\/v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?/g, `${repository}/releases/tag/${tag}`)
     text = text.replaceAll(/https:\/\/github\.com\/acryldev\/acryl\/releases\/download\/v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?/g, assetBase)
     text = text.replaceAll(/ACRYL-\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?-arm64\.dmg/g, `ACRYL-${version}-arm64.dmg`)
