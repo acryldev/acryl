@@ -669,6 +669,9 @@ importers:
       node-pty:
         specifier: 1.2.0-beta.15
         version: 1.2.0-beta.15
+      sharp:
+        specifier: 0.35.3
+        version: 0.35.3(@types/node@22.20.1)
       tsdown:
         specifier: 0.22.2
         version: 0.22.2(typescript@6.0.3)

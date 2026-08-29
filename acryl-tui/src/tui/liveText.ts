@@ -91,8 +91,8 @@ const PERMISSION_COLORS: Record<string, string> = {
  */
 export function buildUpdateHintText(currentVersion: string, latestVersion: string | undefined): string {
   if (latestVersion === undefined) return ''
-  return warning(`⬆ dsh-tui update available: v${currentVersion} → v${latestVersion}`) +
-    dim(' (run `dsh plugin --profile tui add @tomowang/dsh-tui` to upgrade)')
+  return warning(`⬆ ACRYL update available: v${currentVersion} → v${latestVersion}`) +
+    dim(' (run `pnpm add -g @acryl/cli` to upgrade)')
 }
 
 export function buildPermissionText(permission: PermissionState | undefined): string {
@@ -141,7 +141,7 @@ const GOAL_OBJECTIVE_LIMIT = 80
  * displayed verbatim by the terminal chrome, not interpreted as SGR.
  */
 export function buildTerminalTitle(title: string | null | undefined): string {
-  return title === null || title === undefined ? 'dsh-tui' : `${title} — dsh-tui`
+  return title === null || title === undefined ? 'ACRYL' : `${title} — ACRYL`
 }
 
 export function buildGoalBarText(goal: GoalProjection | null | undefined): string {

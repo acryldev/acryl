@@ -60,12 +60,12 @@ describe('buildGoalBarText', () => {
 
 describe('buildTerminalTitle', () => {
   it('falls back to the bare product name while loading or without the session-title service composed', () => {
-    expect(buildTerminalTitle(undefined)).toBe('dsh-tui')
-    expect(buildTerminalTitle(null)).toBe('dsh-tui')
+    expect(buildTerminalTitle(undefined)).toBe('ACRYL')
+    expect(buildTerminalTitle(null)).toBe('ACRYL')
   })
 
   it('suffixes the accepted session title with the product name', () => {
-    expect(buildTerminalTitle('Read-only agent preset creation')).toBe('Read-only agent preset creation — dsh-tui')
+    expect(buildTerminalTitle('Read-only agent preset creation')).toBe('Read-only agent preset creation — ACRYL')
   })
 })
 
@@ -78,6 +78,6 @@ describe('buildUpdateHintText', () => {
     const text = buildUpdateHintText('0.6.0', '0.7.0')
     expect(text).toContain('0.6.0')
     expect(text).toContain('0.7.0')
-    expect(text).toContain('dsh plugin --profile tui add @tomowang/dsh-tui')
+    expect(text).toContain('pnpm add -g @acryl/cli')
   })
 })

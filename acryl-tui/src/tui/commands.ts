@@ -24,8 +24,8 @@ export const SLASH_COMMANDS: readonly SlashCommand[] = [
   { command: '/plan', description: 'Enter plan mode, optionally with a message; /plan off to leave' },
   { command: '/compact', description: 'Summarize and compact session history' },
   { command: '/clear', description: 'Clear the screen and start a new session' },
-  { command: '/exit', description: 'Exit dsh-tui' },
-  { command: '/quit', description: 'Exit dsh-tui' },
+  { command: '/exit', description: 'Exit ACRYL' },
+  { command: '/quit', description: 'Exit ACRYL' },
 ]
 
 /** Widest command text, so the dropdown can pad every row's description to the same column. */

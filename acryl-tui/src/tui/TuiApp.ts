@@ -36,6 +36,7 @@ import {
   Container,
   ScrollView,
   VStack,
+  HStack,
   KeybindingsManager,
   TUI_KEYBINDINGS,
   setKeybindings,
@@ -46,12 +47,13 @@ import {
 } from '@earendil-works/pi-tui'
 import type { RenderOptions } from '../render.js'
 import { formatEvent, formatPendingToolCalls, formatShellRun, formatShellRunLive, formatStreamingText } from '../render.js'
-import { buildBannerText } from './bannerText.js'
 import { buildContextLine, buildStatsLine } from './statsFormat.js'
 import { buildGoalBarText, buildPermissionText, buildQueuedText, buildStatusBarText, buildTerminalTitle, buildUpdateHintText } from './liveText.js'
 import { createTranscriptLine, DynamicText, padTranscriptText } from './text.js'
 import { CustomEditor } from './CustomEditor.js'
 import { Spinner } from './Spinner.js'
+import { YlyPet } from '../yly/yly-pet.js'
+import type { YlyMode } from '../yly/yly-programs.js'
 import type { TuiActions } from './actions.js'
 import type { TuiState, TuiStore } from './store.js'
 import { theme, fg } from './theme.js'
@@ -217,6 +219,7 @@ class TuiApp implements TuiHandle {
   private readonly documentContainer = new Container()
   private readonly editor: CustomEditor
   private readonly spinner: Spinner
+  private readonly pet: YlyPet
   private appendedEventsCount = 0
   private appendedShellCount = 0
   private currentOverlayKind: TuiState['overlay']['kind'] = 'none'
@@ -232,10 +235,8 @@ class TuiApp implements TuiHandle {
     const terminal = new ProcessTerminal()
     this.tui = new TuiAltScreen(terminal, true, undefined, { mouse: true })
     this.spinner = new Spinner(this.tui)
+    this.pet = new YlyPet(this.tui)
 
-    this.documentContainer.addChild(
-      new DynamicText(width => buildBannerText({ version: options.version, provider: options.provider, model: options.model, cwd: options.cwd }, width)),
-    )
     const transcriptScrollView = new ScrollView(this.documentContainer, { follow: 'end', primary: true, overscroll: 'chain' })
 
     this.editor = new CustomEditor(this.tui, actions, {
@@ -308,8 +309,24 @@ class TuiApp implements TuiHandle {
       ],
       { gap: 0 },
     )
+    // Fixed ACRYL header: the YLY pet (top-left, animated) beside the brand
+    // name + session info. Unlike the old whale banner this does not scroll
+    // with the transcript — the pet stays put while the conversation scrolls.
+    const headerInfo = new DynamicText(() => {
+      const { provider, model, cwd } = options
+      return [fg(theme.primary)('ACRYL'), '', `${provider}/${model}`, cwd].join('\n')
+    })
+    const header = new HStack(
+      [
+        { component: this.pet, basis: 30, shrink: 0, visible: viewport => viewport.width >= 65 },
+        { component: headerInfo, basis: 'auto', grow: 1 },
+      ],
+      { gap: 1, align: 'start' },
+    )
+
     const layoutRoot = new VStack(
       [
+        { component: header, basis: 'auto', shrink: 0 },
         { component: transcriptScrollView, basis: 0, grow: 1, minSize: 1 },
         { component: dock, basis: 'auto', shrink: 1, minSize: 1 },
       ],
@@ -320,11 +337,13 @@ class TuiApp implements TuiHandle {
 
     this.appendNewTranscriptItems(store.getSnapshot())
     this.updateTerminalTitle(store.getSnapshot().title)
+    this.updatePetMode(store.getSnapshot())
     store.subscribe(() => {
       const state = store.getSnapshot()
       this.appendNewTranscriptItems(state)
       this.updateOverlay(state.overlay)
       this.updateTerminalTitle(state.title)
+      this.updatePetMode(state)
       const running = state.status === 'running'
       if (running !== this.wasRunning) {
         this.wasRunning = running
@@ -333,6 +352,17 @@ class TuiApp implements TuiHandle {
       }
       this.tui.requestRender()
     })
+  }
+
+  /** Drive the YLY pet's mode from the live agent state (idle/thinking/tool/streaming). */
+  private updatePetMode(state: TuiState): void {
+    let mode: YlyMode = 'idle'
+    if (state.status === 'running') {
+      if (state.pendingToolCalls.length > 0) mode = 'tool'
+      else if (state.streaming !== undefined && (state.streaming.text !== '' || state.streaming.reasoningText !== '')) mode = 'streaming'
+      else mode = 'thinking'
+    }
+    this.pet.setMode(mode)
   }
 
   /** Push the terminal window/tab title (OSC 0) when the session's title projection changes; a no-op once already reflecting the current value. */
@@ -345,6 +375,7 @@ class TuiApp implements TuiHandle {
 
   start(): void {
     activeTui = this.tui
+    this.pet.start()
     this.tui.start()
   }
 
@@ -419,7 +450,7 @@ class TuiApp implements TuiHandle {
       // uses; Ghostty/Kitty/iTerm2 forward it straight to the OS
       // notification center, and a terminal without OSC 9 support just
       // ignores the unrecognized sequence (no fallback needed).
-      const message = overlay.kind === 'approval' ? 'dsh-tui is waiting for your approval' : 'dsh-tui is waiting for your answer'
+      const message = overlay.kind === 'approval' ? 'ACRYL is waiting for your approval' : 'ACRYL is waiting for your answer'
       this.tui.terminal.write(`\x1b]9;${message}\x07`)
     }
     if (previousKind === 'approval') this.approvalSlot.set(undefined)
@@ -442,6 +473,7 @@ class TuiApp implements TuiHandle {
     if (this.stopped) return
     this.stopped = true
     this.spinner.stop()
+    this.pet.stop()
     this.tui.stop(options)
     if (activeTui === this.tui) activeTui = undefined
   }

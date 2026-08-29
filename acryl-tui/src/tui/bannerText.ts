@@ -61,7 +61,7 @@ function buildLeftColumn(): string[] {
 
 function buildRightColumn(content: BannerContent, width: number): string[] {
   return [
-    bold(primary('DeepSeek Harness')),
+    bold(primary('ACRYL')),
     '',
     dim(`${content.provider}/${content.model}`),
     dim(truncate(content.cwd, width)),
@@ -76,7 +76,7 @@ function buildRightColumn(content: BannerContent, width: number): string[] {
 export function buildBannerText(content: BannerContent, columns: number): string {
   const total = clamp(columns, MIN_WIDTH, MAX_WIDTH)
   const inner = total - 2
-  const top = topBorder(`dsh-tui v${content.version}`, total)
+  const top = topBorder(`ACRYL v${content.version}`, total)
   const bottom = `╰${'─'.repeat(inner)}╯`
 
   const rightWidth = inner - LEFT_WIDTH - 1
