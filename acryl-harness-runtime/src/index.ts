@@ -13,6 +13,7 @@ import { writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
+import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import {
   DEFAULT_PROFILE_BUNDLES,
   boot,
@@ -26,6 +27,33 @@ import {
 const require = createRequire(import.meta.url)
 const dshInstallAnchor = require.resolve('@deepseek-ai/dsh/package.json')
 const profileRoot = '[]\n'
+
+/*
+ * Rows the ACRYL runtime composes on top of a base profile. dsh-base alone
+ * mounts no persona, no agent-preset service, and no session-stat projection;
+ * these are what let a surface open a real coding agent. `hmr` is deliberately
+ * NOT forced here: the boot guard below must keep rejecting an HMR-enabled
+ * profile in a non-exposed process, and each surface decides its own HMR policy.
+ * Values are defaults a surface or user patch layer may override.
+ */
+const ACRYL_RUNTIME_ROWS: readonly PatchOptions[] = [
+  {
+    id: 'system-prompt',
+    name: '@deepseek-ai/dsh-system-prompt',
+    config: {
+      persona: 'You are a coding agent powered by the {{model}} model. Your working directory is {{cwd}}.',
+    },
+  },
+  {
+    id: 'agent-presets',
+    name: '@deepseek-ai/dsh-agent-presets',
+    config: { default: 'standard' },
+  },
+  {
+    id: 'session-stats',
+    name: '@deepseek-ai/dsh-session-stats',
+  },
+]
 
 export interface BootAcrylHarnessProfileOptions {
   readonly profile: string
@@ -51,6 +79,7 @@ export async function bootAcrylHarnessProfile(
   writeFileSync(rootConfig, profileRoot)
   const patches = structuredClone([
     ...profile.layers.flatMap(layer => layer.patches),
+    ...ACRYL_RUNTIME_ROWS,
     ...profile.patches,
   ])
   const hmr = composeEntries([patches]).find(entry => entry.id === 'hmr')
