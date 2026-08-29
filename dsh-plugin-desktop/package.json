@@ -370,11 +370,13 @@
       "target": [
         "dir"
       ],
-      "icon": "build/app-icon.png"
+      "icon": "build/app-icon.png",
+      "maintainer": "ACRYL <dev@acryl.dev>"
     }
   },
   "homepage": "https://github.com/acryldev/acryl/tree/main/dsh-plugin-desktop#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
-  }
+  },
+  "author": "ACRYL <dev@acryl.dev>"
 }

@@ -35,7 +35,7 @@ jobs:
             mode: dmg
             artifact: '*.dmg'
           - name: macos-x64
-            os: macos-13            # Intel
+            os: macos-14            # Intel (x64); macos-13 Intel was deprecation-queued
             arch: x64
             target: mac
             mode: dmg
@@ -59,6 +59,12 @@ jobs:
             mode: nsis
             artifact: '*.exe'
     steps:
+      # Windows git rejects the repo's very long docs/workmethodology filename
+      # unless core.longpaths is enabled; set it globally before the checkout.
+      - name: Enable Git longpaths
+        shell: bash
+        run: git config --global core.longpaths true
+
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
