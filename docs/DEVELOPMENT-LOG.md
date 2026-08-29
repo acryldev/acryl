@@ -1,3 +1,37 @@
+## 2026-08-29 - acryl-tui: /clear session reset, auto-build launcher, slash-command parity
+
+Follow-up on the M1 terminal surface and the YLY/branding work. The interactive
+host adapter is now a live session loop instead of a single-shot mount, and the
+root `pnpm acryl` / `pnpm tui` commands build-first so a stale checkout still
+starts.
+
+- `a4fac87` (full `a4fac8779e5459b1c43d8aff09a895325027f2d9`) — `/clear` session reset. The host
+  adapter is refactored around `attachSession` (one bridge + store + actions +
+  `TuiHandle` per session) and `runAcrylTui` now listens on each session's
+  `exitPromise`: `'exit'` restores the terminal and returns the resume hint,
+  `'clear'` disposes the current session with `preserveScreen=true` and
+  re-attaches a fresh native durable DSH session on the same runtime. Durable
+  history stays on disk. PTY proof: session A -> `clearing...` -> fresh session B
+  -> exit 0 with a resume hint. Typecheck + 251 acryl-tui tests green.
+- `e165c99` (full `e165c99ebfa336dff6d5bd952bfdef7a8c57fd17`) — `pnpm acryl` / `pnpm tui` auto-build.
+  Root scripts now route through `scripts/tui-run.mjs`, which rebuilds acryl-tui
+  when `lib/bin.js` is missing or older than the newest source file, then execs
+  the real CLI. Verified `pnpm acryl --version` / `pnpm tui --version` print
+  `0.1.0-dev.0`; a warm launch skips the rebuild.
+
+Slash-command parity was verified end-to-end under a real pseudo-terminal
+(one command per fresh session, exact overlay title / notice string):
+`/help` (available-commands list), `/model` (Model providers overlay),
+`/trajectory` (Trajectory ledger overlay), `/tools` (Tool Cards overlay),
+`/context` (Context usage overlay), `/plugins` (Plugins (79) — 0 active tree),
+`/presets` (Agent presets overlay), `/goal` (No goal is currently set...),
+`/plan` (Plan mode on...), `/compact` (no compactable history yet),
+`/clear` (clearing... + fresh session), `/exit`/`/quit` (exit 0).
+
+Source/verification: `acryl-tui/src/tui-app/session.ts`,
+`acryl-tui/src/cli/{run,grammar}.ts`, `scripts/tui-run.mjs`, `package.json`;
+`pnpm --filter acryl-tui run check` (typecheck + 251 tests + build) green.
+
 ## 2026-08-29 - M1 pi-tui terminal surface: runtime seam and Tomo port foundation
 
 The M1 terminal milestone moved from the re-scoped runtime contract into code.
