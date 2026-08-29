@@ -373,9 +373,10 @@ export function verifyUnpackedPackageResolution(
 export function stageOptionalNativeModules(context: PackagedRuntimeContext): void {
   const unpackedRoot = resolvePackagedUnpackedRoot(context)
   // electron-builder transpiles the afterPack hook, so import.meta.url points at
-  // a temp build, not the repo. Derive the desktop root from the packager's
-  // project/app dir instead.
-  const desktopRoot = context.packager.projectDir ?? context.packager.appDir ?? ''
+  // a temp build, not the repo. The hook runs in the same process that launched
+  // electron-builder (cwd = the desktop package dir), so derive the staging
+  // node_modules from cwd, falling back to the packager's project/app dir.
+  const desktopRoot = process.cwd()
   const stagingRoot = join(desktopRoot, 'node_modules')
   if (!existsSync(stagingRoot)) {
     throw new Error(`dsh-plugin-desktop: cannot find staging node_modules at ${stagingRoot}`)
