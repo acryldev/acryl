@@ -17,6 +17,7 @@ import { TuiStore } from '../tui/store.js'
 import { mountTui, type TuiHandle } from '../tui/TuiApp.js'
 import type { TuiActions } from '../tui/actions.js'
 import type { PluginRow } from '../tui/plugins/types.js'
+import type { ProviderRow, StoredProviderProfile } from '../tui/modelProfile/types.js'
 import { loadFileIndex } from '../tui/fileIndex.js'
 import { stripSessionIdPrefix } from '../sessionId.js'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
@@ -70,6 +71,23 @@ function sessionBlank(session: Session): boolean {
   return session.events.length === 0
 }
 
+/** Read a nested value out of an untyped resolved/raw settings section. */
+function getAtPath(value: unknown, path: readonly string[]): unknown {
+  let current = value
+  for (const key of path) {
+    if (current === null || typeof current !== 'object') return undefined
+    current = (current as Record<string, unknown>)[key]
+  }
+  return current
+}
+
+/** Derive a POSIX-identifier credential ref from a provider route, e.g. `my-proxy` -> `MY_PROXY_API_KEY`. */
+function deriveApiKeyRef(route: string): string {
+  const upper = route.toUpperCase().replace(/[^A-Z0-9]+/g, '_')
+  const identifier = /^[A-Z_]/.test(upper) ? upper : `P_${upper}`
+  return `${identifier}_API_KEY`
+}
+
 const HELP_TEXT = [
   'available commands:',
   '  /help        show this help',
@@ -117,6 +135,48 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
   const agent = host.ctx.agents?.get?.(SessionId(id))
   const session = agent?.session
   const history: string[] = []
+
+  // Re-join `ctx.llm`'s provider directory with `ctx.settings`/`ctx.credentials`
+  // and refresh the open `/model` overlay's list. The three services are
+  // optional and re-checked at point of use (the same pattern the other
+  // model-profile actions use), so a profile that does not mount them degrades
+  // to an error notice instead of refusing to start.
+  async function loadProviders(): Promise<void> {
+    const settingsSvc: any = host.ctx.get('settings')
+    const credentialsSvc: any = host.ctx.get('credentials')
+    const llmSvc: any = host.ctx.get('llm')
+    if (settingsSvc === undefined || credentialsSvc === undefined || llmSvc === undefined) {
+      store.updateModelProfile({ providers: [], busy: false, error: 'Model provider settings are not available in this profile.' })
+      return
+    }
+    const configurable = llmSvc.listConfigurableProviders()
+    const live = new Set((llmSvc.listProviders() as Array<{ id: string }>).map((provider: { id: string }) => provider.id))
+    const descriptors = settingsSvc.describe({ redactSecrets: true }) as Array<{ ns: string; value: unknown; user?: unknown; revision?: number }>
+    const byNs = new Map<string, (typeof descriptors)[number]>(descriptors.map(descriptor => [descriptor.ns, descriptor]))
+    const rows: ProviderRow[] = []
+    for (const entry of configurable) {
+      const descriptor = byNs.get(entry.settingsNs)
+      const value = (descriptor === undefined ? undefined : getAtPath(descriptor.value, entry.settingsPath)) as StoredProviderProfile | undefined
+      const userValue = descriptor === undefined ? undefined : getAtPath(descriptor.user, entry.settingsPath)
+      const apiKeyRef = value?.apiKeyEnv ?? deriveApiKeyRef(entry.provider)
+      const info = await credentialsSvc.describe(apiKeyRef)
+      rows.push({
+        route: entry.provider,
+        displayName: value?.displayName ?? entry.displayName,
+        settingsNs: entry.settingsNs,
+        settingsPath: entry.settingsPath,
+        configured: userValue !== undefined,
+        live: live.has(entry.provider),
+        api: value?.api,
+        baseURL: value?.baseURL,
+        apiKeyRef,
+        apiKeyConfigured: info.configured,
+        models: value?.models ?? [],
+        revision: descriptor?.revision,
+      })
+    }
+    store.updateModelProfile({ providers: rows, busy: false, error: undefined, selected: 0 })
+  }
 
   const actions: TuiActions = {
     send(text) {
@@ -202,7 +262,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
       if (store.getSnapshot().fileIndex.candidates !== undefined) return
       void loadFileIndex(process.cwd()).then(candidates => store.setFileIndex(candidates))
     },
-    openModelProfile() { store.openModelProfile() },
+    openModelProfile() { store.openModelProfile(); void loadProviders() },
     openTrajectory() { store.openTrajectory() },
     openToolCards() { store.openToolCards() },
     openContext() { store.openContext() },
