@@ -27,6 +27,42 @@ the YLY sprite aspect distortion is fixed. Remaining work is branding parity
 (web-client DeepSeek logo, gui ACRYL runtime confirmation) and a visual
 confirmation of the animation — both need the user's eyes.
 
+## 2026-08-29 - Desktop app release fixes (v0.1.0 -> v0.1.3): native modules + brand shadow
+
+The first DMG the user installed (v0.1.0) did not start: the Cordis plugin tree
+failed to apply because the bundled koffi/subprocess/sandbox natives were
+missing ('Cannot find the native Koffi module; did you bundle it correctly?').
+
+Root cause (verified from the packaged asar): electron-builder's dependency
+collector does not copy pnpm-optional native subpackages (@koromix, @img/sharp,
+@vscode/ripgrep, node-addon-require-builtin) — they are optionalDependencies of
+base packages and only linked as pnpm siblings, so they never reach
+app.asar(.unpacked). dev works; packaged does not.
+
+Fixes shipped across v0.1.1/v0.1.2/v0.1.3:
+- After an afterPack-staging experiment (rejected: the desktop node_modules on CI
+  does not carry the pnpm siblings), the natives are now declared as regular
+  dependencies of dsh-plugin-desktop. They declare os/cpu, so pnpm installs only
+  the matching per-platform/arch package per runner and electron-builder's
+  dependency collector copies them into app.asar(.unpacked). Verified: v0.1.2's
+  packaged app has koffi/sharp/ripgrep in app.asar.unpacked and the plugin tree
+  applies.
+- release.yml: pin pnpm via pnpm/action-setup (newer setup-node v5 runners no
+  longer resolve corepack pnpm reliably), enable core.longpaths for Windows (the
+  repo's long docs filename), and use macos-14 for the Intel runner (macos-13 was
+  deprecation-queued).
+- v0.1.3: the ACRYL sidebar brand shadowed the DeepSeek brand at the same
+  priority, so the renderer logged 'single slot sidebar.brand.mark already has a
+  registration at priority 0'. Register both brand slots at a negative priority
+  (lowest renders).
+
+Verified from the fresh v0.1.3 arm64 DMG: the app launches, the plugin tree
+applies (natives present), the process stays alive, and no sidebar-brand-slot
+conflict is logged. Local DMG at `release-artifacts/ACRYL-0.1.3-arm64.dmg`.
+
+Note: v0.1.0 / v0.1.1 artifacts do not start (missing natives). v0.1.2 starts
+but has the sidebar brand conflict. **v0.1.3 is the working release.**
+
 ## 2026-08-29 - ACRYL v0.1.0 first GitHub release shipped
 
 First release cut and published (user-requested). The release ledger
