@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-desktop",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "ACRYL desktop: a local-first agent workspace composed with Cordis plugins",
   "license": "MIT",
   "publishConfig": {

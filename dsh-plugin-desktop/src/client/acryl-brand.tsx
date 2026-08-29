@@ -53,10 +53,15 @@ export function AcrylBrandName() {
 
 /** Replace the upstream sidebar brand through its public contribution slots. */
 export function applyAcrylBrand(ctx: ClientContext): void {
+  // Register at a negative priority so the ACRYL brand shadows the upstream
+  // DeepSeek brand (sidecar also contributes sidebar.brand.mark at priority 0);
+  // 'lowest renders' per the slot contract.
   ctx.slots.inject('sidebar.brand.mark', () => ctx.slots.register({
     name: 'sidebar.brand.mark',
+    priority: -1000,
   }, AcrylBrandMark))
   ctx.slots.inject('sidebar.brand.name', () => ctx.slots.register({
     name: 'sidebar.brand.name',
+    priority: -1000,
   }, AcrylBrandName))
 }
