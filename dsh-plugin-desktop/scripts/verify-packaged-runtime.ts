@@ -3,8 +3,7 @@
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { isAbsolute, join, relative, sep } from 'node:path'
 import { Worker } from 'node:worker_threads'
 import { listPackage } from '@electron/asar'
 import AdmZip from 'adm-zip'
@@ -26,6 +25,10 @@ export interface PackagedRuntimeContext {
     readonly appInfo: {
       readonly productFilename: string
     }
+    /** The application source dir (what electron-builder packs). */
+    readonly appDir?: string
+    /** The project directory containing package.json. */
+    readonly projectDir?: string
   }
 }
 
@@ -369,8 +372,14 @@ export function verifyUnpackedPackageResolution(
  */
 export function stageOptionalNativeModules(context: PackagedRuntimeContext): void {
   const unpackedRoot = resolvePackagedUnpackedRoot(context)
-  const desktopRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  // electron-builder transpiles the afterPack hook, so import.meta.url points at
+  // a temp build, not the repo. Derive the desktop root from the packager's
+  // project/app dir instead.
+  const desktopRoot = context.packager.projectDir ?? context.packager.appDir ?? ''
   const stagingRoot = join(desktopRoot, 'node_modules')
+  if (!existsSync(stagingRoot)) {
+    throw new Error(`dsh-plugin-desktop: cannot find staging node_modules at ${stagingRoot}`)
+  }
   const scopes = ['@koromix', '@img', '@vscode']
   for (const scope of scopes) {
     const scopeSource = join(stagingRoot, scope)
