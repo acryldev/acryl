@@ -195,12 +195,16 @@ export function apply(ctx: Context, config: Config): void {
       `dsh-plugin-desktop: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`,
     )
   }
-  const restartAfterPluginLifecycleMutation = (): void => {
-    setImmediate(() => {
-      void runtime.requestRestart().catch(cause => {
-        reportHostError('restart after plugin lifecycle change', cause)
-      })
-    })
+  // Enabling/disabling/reloading a managed plugin hot-reloads its Host fiber in
+  // place (the Loader entry / fiber restart in PluginLifecycleController), and the
+  // renderer re-composes its own client boot graph via the renderer reload the
+  // lifecycle API already requests (reloadPage -> location.reload()). A full
+  // Desktop generation restart is NOT required here and would relaunch the whole
+  // app, so this callback deliberately performs no restart — the client owns the
+  // reload for the surface change, the Host owns the hot plugin swap.
+  const afterPluginLifecycleMutation = (): void => {
+    // Deliberate no-op: the Host fiber was already hot-reloaded and the client
+    // reloads itself through the lifecycle receipt's rendererReloadRequired.
   }
   const pluginLifecycleBootstrap = ctx.get('desktopPluginLifecycleBootstrap')
   if (pluginLifecycleBootstrap === undefined) {
@@ -238,7 +242,7 @@ export function apply(ctx: Context, config: Config): void {
           rendererOrigin,
           pluginLifecycle,
           reportHostError,
-          restartAfterPluginLifecycleMutation,
+          afterPluginLifecycleMutation,
         ),
       }),
       `dsh-plugin-desktop: private plugin lifecycle route ${path}`,
