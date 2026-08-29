@@ -85,4 +85,12 @@ describe('runAcryl', () => {
       'exit:1',
     ])
   })
+
+  it('reports a clear, actionable message for the not-yet-wired gui/web hosts', async () => {
+    setTty([true, true])
+    const deps = dependencies()
+
+    await expect(runAcryl(['web'], deps)).rejects.toThrow(/web surface is not wired into this build yet/)
+    await expect(runAcryl(['gui'], deps)).rejects.toThrow(/desktop \(Electron\) surface is not wired into this build yet/)
+  })
 })

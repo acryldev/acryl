@@ -44,7 +44,11 @@ export async function runAcryl(
   const dependencies = { ...defaults, ...supplied }
   const invocation = parseAcrylArgs(args)
   if (invocation.command !== 'tui') {
-    throw new Error(`ACRYL ${invocation.command} host is not implemented; use "acryl tui"`)
+    const command = invocation.command
+    const surface = command === 'web' ? 'web' : 'desktop (Electron)'
+    throw new Error(
+      `ACRYL ${command} host is not implemented; the ${surface} surface is not wired into this build yet. Use \`pnpm acryl\` for the terminal surface.`,
+    )
   }
 
   if (invocation.version) {
