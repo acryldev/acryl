@@ -36,28 +36,63 @@ function transparent(p) {
 const fg = p => `\x1b[38;2;${p.r};${p.g};${p.b}m`
 const bg = p => `\x1b[48;2;${p.r};${p.g};${p.b}m`
 
-// Crop one cell, resize to a (cols x rows) terminal viewport where each
-// terminal row is TWO raster rows via half-block ▀ (top px -> fg, bottom px -> bg).
+// Crop one cell, find the pet's opaque bounding box (the sheet cells carry a
+// transparent border), then fit just that region into a (cols x rows) terminal
+// viewport where each terminal row is TWO raster rows via half-block ▀ (top px
+// -> fg, bottom px -> bg). `contain` (not `fill`) preserves the pet's native
+// aspect ratio (~82x71 -> ~1.15): `fill` stretched the whole 96x84 cell
+// non-uniformly into the preset grid (large 20x11 -> aspect 0.91), which is
+// what made the mascot look distorted/simplified. The bbox is letterboxed and
+// centred so all frames keep their height and the pet never jitters.
 async function encodeCell(cellIndex, cols, rows) {
   const rasterW = cols
   const rasterH = rows * 2
+  // Pass 1: raw cell buffer to find the opaque bbox (sharp's `.trim()` resets
+  // geometry when chained after `.extract()`, so we scan alpha ourselves).
   const { data, info } = await sharp(SOURCE)
     .extract({ left: cellIndex * CELL_W, top: 0, width: CELL_W, height: CELL_H })
-    .resize(rasterW, rasterH, { fit: 'fill' })
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true })
   const { width, height } = info
+  let minX = width
+  let minY = height
+  let maxX = -1
+  let maxY = -1
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      if (data[(y * width + x) * 4 + 3] > 32) {
+        if (x < minX) minX = x
+        if (x > maxX) maxX = x
+        if (y < minY) minY = y
+        if (y > maxY) maxY = y
+      }
+    }
+  }
+  if (maxX < minX || maxY < minY) {
+    return Array.from({ length: rows }, () => ' '.repeat(cols))
+  }
+  const bboxW = maxX - minX + 1
+  const bboxH = maxY - minY + 1
+  // Pass 2: fit just the opaque bbox into the grid, preserving aspect.
+  const cell = await sharp(SOURCE)
+    .extract({ left: cellIndex * CELL_W + minX, top: minY, width: bboxW, height: bboxH })
+    .resize(rasterW, rasterH, { fit: 'contain', position: 'centre', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
+  const { data: cellData, info: cellInfo } = cell
+  const { width: cellW, height: cellH } = cellInfo
   const pixel = (x, y) => {
-    const i = (y * width + x) * 4
-    return { r: data[i], g: data[i + 1], b: data[i + 2], a: data[i + 3] }
+    const i = (y * cellW + x) * 4
+    return { r: cellData[i], g: cellData[i + 1], b: cellData[i + 2], a: cellData[i + 3] }
   }
   const lines = []
-  for (let y = 0; y < height; y += 2) {
+  for (let y = 0; y < cellH; y += 2) {
     let line = ''
-    for (let x = 0; x < width; x++) {
+    for (let x = 0; x < cellW; x += 1) {
       const top = pixel(x, y)
-      const bottom = y + 1 < height ? pixel(x, y + 1) : { r: 0, g: 0, b: 0, a: 0 }
+      const bottom = y + 1 < cellH ? pixel(x, y + 1) : { r: 0, g: 0, b: 0, a: 0 }
       const tE = transparent(top)
       const bE = transparent(bottom)
       if (tE && bE) line += ' '
