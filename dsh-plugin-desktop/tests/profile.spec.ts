@@ -186,7 +186,7 @@ describe('desktop profile composition', {
     expect(() => ensureDesktopProfile(home)).toThrow('dsh.profile.bundles must be an array')
   })
 
-  it('assembles the Host shell without replacing the upstream client shell', () => {
+  it('assembles the advanced Host shell and keeps required client capabilities', () => {
     const home = temporaryHome()
     const prepared = prepareDesktopProfile(undefined, home, 'darwin')
     const patches = prepared.patches as Array<Record<string, unknown>>
@@ -196,7 +196,7 @@ describe('desktop profile composition', {
     })
     expect(inserted).toContainEqual(expect.objectContaining({
       name: DESKTOP_PACKAGE_NAME,
-      config: { mode: 'compatibility' },
+      config: { mode: 'advanced' },
     }))
     expect(patches).toContainEqual(expect.objectContaining({
       id: 'webserver',
@@ -215,11 +215,14 @@ describe('desktop profile composition', {
     expect(readFileSync(prepared.rootConfig, 'utf8')).toBe('[]\n')
     expect(prepared.homeDir).toBe(home)
     expect(fileURLToPath(prepared.bareModuleBaseUrl)).toBe(join(prepared.profile.dir, 'package.json'))
-    expect(prepared.mode).toBe('compatibility')
+    expect(prepared.mode).toBe('advanced')
 
     const rows = composeEntries([prepared.patches])
+    expect(rows.find(row => row.id === 'ui-layout')).toEqual(expect.objectContaining({
+      name: '@deepseek-ai/dsh-client-ui-layout',
+      disabled: true,
+    }))
     for (const [id, name] of [
-      ['ui-layout', '@deepseek-ai/dsh-client-ui-layout'],
       ['ui-sidebar', '@deepseek-ai/dsh-client-ui-sidebar'],
       ['ui-conversation', '@deepseek-ai/dsh-client-ui-conversation'],
     ] as const) {
@@ -483,7 +486,7 @@ describe('desktop profile composition', {
     }])).toThrow('must insert exactly the canonical dsh-market row')
   })
 
-  it('boots a selected Web profile without overriding its compatibility UI rows', () => {
+  it('boots a selected Web profile without overriding its UI rows', () => {
     const home = temporaryHome()
     const webDir = join(home, 'profiles', 'web')
     const bundles = PROFILE_TEMPLATES.web
@@ -513,7 +516,7 @@ describe('desktop profile composition', {
     })
     expect(rows.find(row => row.id === 'desktop-shell')).toEqual(expect.objectContaining({
       name: 'dsh-plugin-desktop',
-      config: expect.objectContaining({ mode: 'compatibility' }),
+      config: expect.objectContaining({ mode: 'advanced' }),
     }))
   })
 
@@ -550,7 +553,7 @@ describe('desktop profile composition', {
     expect(rows.find(row => row.id === 'ui-conversation')?.disabled).toBe(false)
   })
 
-  it('reads JSON settings and defaults an absent desktop namespace to compatibility', () => {
+  it('reads JSON settings and defaults an absent desktop namespace to advanced', () => {
     const home = temporaryHome()
     const path = join(home, 'desktop-settings.json')
     writeFileSync(path, JSON.stringify({ 'dsh-desktop': { mode: 'advanced' } }))
@@ -564,7 +567,7 @@ describe('desktop profile composition', {
       mode: 'advanced',
       port: 43_120,
     })
-    expect(desktopShellModeFromSettings({ unrelated: { enabled: true } })).toBe('compatibility')
+    expect(desktopShellModeFromSettings({ unrelated: { enabled: true } })).toBe('advanced')
   })
 
   it('rejects invalid settings roots, sections, modes, and YAML', () => {

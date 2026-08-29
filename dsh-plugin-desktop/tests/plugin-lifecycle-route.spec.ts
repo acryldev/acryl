@@ -120,6 +120,23 @@ describe('plugin lifecycle private routes', () => {
     expect(control.reload).toHaveBeenNthCalledWith(2, 'include:desktop-development-canvas')
   })
 
+  it.each([
+    ['enable', handlePluginLifecycleEnableRequest, { entryId: 'include:desktop-development-canvas' }],
+    ['disable', handlePluginLifecycleDisableRequest, { entryId: 'include:desktop-development-canvas' }],
+    ['reload', handlePluginLifecycleReloadRequest, { entryId: 'include:desktop-development-canvas' }],
+  ] as const)('responds before requesting a Desktop generation restart after %s', async (_name, handler, body) => {
+    const control = controller()
+    const res = response()
+    const requestRestart = vi.fn(() => {
+      expect(res.end).toHaveBeenCalledOnce()
+    })
+
+    await handler(request('POST', body), res, ORIGIN, control, () => {}, requestRestart)
+
+    expect(res.statusCode).toBe(200)
+    expect(requestRestart).toHaveBeenCalledOnce()
+  })
+
   it('rejects malformed, foreign, and unsupported requests before dispatch', async () => {
     const control = controller()
     const malformed = response()
@@ -148,8 +165,10 @@ describe('plugin lifecycle private routes', () => {
       'private failure at /Users/example/secret',
     ))
     const res = response()
-    await handlePluginLifecycleReloadRequest(request('POST', {}), res, ORIGIN, control)
+    const requestRestart = vi.fn()
+    await handlePluginLifecycleReloadRequest(request('POST', {}), res, ORIGIN, control, () => {}, requestRestart)
     expect(res.statusCode).toBe(409)
+    expect(requestRestart).not.toHaveBeenCalled()
     expect(JSON.parse(res.body)).toEqual({ error: 'The selected plugin is protected.' })
     expect(res.body).not.toContain('/Users/example')
   })

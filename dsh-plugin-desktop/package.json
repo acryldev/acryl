@@ -277,7 +277,9 @@
     "@vscode/ripgrep-linux-x64": "1.18.0",
     "@vscode/ripgrep-win32-x64": "1.18.0",
     "node-addon-require-builtin-darwin-arm64": "0.1.5",
-    "node-addon-require-builtin-darwin-x64": "0.1.5"
+    "node-addon-require-builtin-darwin-x64": "0.1.5",
+    "@deepseek-ai/dsh-client-ui-settings-models": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-trajectory": "0.1.1-rc.2"
   },
   "peerDependencies": {
     "electron": "43.4.0"

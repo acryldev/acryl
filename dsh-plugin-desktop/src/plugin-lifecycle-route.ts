@@ -37,6 +37,8 @@ export interface PluginLifecycleRouteController {
   reload(entryId?: string): Promise<PluginLifecycleReceipt>
 }
 
+export type PluginLifecycleRouteSuccess = () => void
+
 function parseEntryRequest(value: unknown): PluginLifecycleEntryRequest | undefined {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return undefined
   const record = value as Record<string, unknown>
@@ -60,6 +62,7 @@ export async function handlePluginLifecycleSnapshotRequest(
   expectedOrigin: string,
   controller: PluginLifecycleRouteController,
   reportError: (operation: string, cause: unknown) => void = () => {},
+  _afterSuccess: PluginLifecycleRouteSuccess = () => {},
 ): Promise<void> {
   if (req.method !== 'GET') {
     return finishJson(res, 405, error('method not allowed'), 'GET')
@@ -82,6 +85,7 @@ async function entryAction(
   controller: PluginLifecycleRouteController,
   action: 'enable' | 'disable',
   reportError: (operation: string, cause: unknown) => void,
+  afterSuccess: PluginLifecycleRouteSuccess,
 ): Promise<void> {
   if (req.method !== 'POST') {
     return finishJson(res, 405, error('method not allowed'), 'POST')
@@ -95,16 +99,16 @@ async function entryAction(
   if (request === undefined) {
     return finishJson(res, 400, error(`invalid plugin ${action} request`))
   }
+  let receipt: PluginLifecycleReceipt
   try {
-    finishJson(
-      res,
-      200,
-      await controller.setEnabled(request.entryId, action === 'enable'),
-    )
+    receipt = await controller.setEnabled(request.entryId, action === 'enable')
   } catch (cause) {
     reportError(`${action} plugin`, cause)
     finishJson(res, 409, error(publicLifecycleError(cause)))
+    return
   }
+  finishJson(res, 200, receipt)
+  afterSuccess()
 }
 
 export function handlePluginLifecycleEnableRequest(
@@ -113,8 +117,9 @@ export function handlePluginLifecycleEnableRequest(
   expectedOrigin: string,
   controller: PluginLifecycleRouteController,
   reportError: (operation: string, cause: unknown) => void = () => {},
+  afterSuccess: PluginLifecycleRouteSuccess = () => {},
 ): Promise<void> {
-  return entryAction(req, res, expectedOrigin, controller, 'enable', reportError)
+  return entryAction(req, res, expectedOrigin, controller, 'enable', reportError, afterSuccess)
 }
 
 export function handlePluginLifecycleDisableRequest(
@@ -123,8 +128,9 @@ export function handlePluginLifecycleDisableRequest(
   expectedOrigin: string,
   controller: PluginLifecycleRouteController,
   reportError: (operation: string, cause: unknown) => void = () => {},
+  afterSuccess: PluginLifecycleRouteSuccess = () => {},
 ): Promise<void> {
-  return entryAction(req, res, expectedOrigin, controller, 'disable', reportError)
+  return entryAction(req, res, expectedOrigin, controller, 'disable', reportError, afterSuccess)
 }
 
 /** Reload one managed entry or every mounted managed entry. */
@@ -134,6 +140,7 @@ export async function handlePluginLifecycleReloadRequest(
   expectedOrigin: string,
   controller: PluginLifecycleRouteController,
   reportError: (operation: string, cause: unknown) => void = () => {},
+  afterSuccess: PluginLifecycleRouteSuccess = () => {},
 ): Promise<void> {
   if (req.method !== 'POST') {
     return finishJson(res, 405, error('method not allowed'), 'POST')
@@ -147,10 +154,14 @@ export async function handlePluginLifecycleReloadRequest(
   if (request === undefined) {
     return finishJson(res, 400, error('invalid plugin reload request'))
   }
+  let receipt: PluginLifecycleReceipt
   try {
-    finishJson(res, 200, await controller.reload(request?.entryId))
+    receipt = await controller.reload(request?.entryId)
   } catch (cause) {
     reportError('reload plugin', cause)
     finishJson(res, 409, error(publicLifecycleError(cause)))
+    return
   }
+  finishJson(res, 200, receipt)
+  afterSuccess()
 }

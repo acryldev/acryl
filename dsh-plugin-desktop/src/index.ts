@@ -195,6 +195,13 @@ export function apply(ctx: Context, config: Config): void {
       `dsh-plugin-desktop: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`,
     )
   }
+  const restartAfterPluginLifecycleMutation = (): void => {
+    setImmediate(() => {
+      void runtime.requestRestart().catch(cause => {
+        reportHostError('restart after plugin lifecycle change', cause)
+      })
+    })
+  }
   const pluginLifecycleBootstrap = ctx.get('desktopPluginLifecycleBootstrap')
   if (pluginLifecycleBootstrap === undefined) {
     throw new Error('dsh-plugin-desktop: launcher did not provide plugin lifecycle persistence')
@@ -231,6 +238,7 @@ export function apply(ctx: Context, config: Config): void {
           rendererOrigin,
           pluginLifecycle,
           reportHostError,
+          restartAfterPluginLifecycleMutation,
         ),
       }),
       `dsh-plugin-desktop: private plugin lifecycle route ${path}`,

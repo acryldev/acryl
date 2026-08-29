@@ -45,6 +45,15 @@ Cordis audit note (2026-08-24): Canvas Host/Client lifecycle is aligned. Do not
 extend `CANVAS_PTY_COMMAND_IDS` into relay, handoff, resume, or orchestration.
 Those consumers must inject `acrAgentControl` after ACRYL-2 defines it.
 
+## Cordis mini-design: lifecycle setting restart repair (2026-08-29)
+
+1. **Capability and plugin boundary** - `dsh-plugin-development-canvas` remains one independently enabled Host/Client package. Desktop lifecycle settings own only the control transaction and generation restart needed to rebuild the Client boot graph.
+2. **Provides and consumes** - Canvas continues to provide Host PTY routes and a `desktop.main` Client occupant. Desktop consumes Loader, Client-module graph, Web server, and `desktopRuntime`; no new service or provider seam is introduced.
+3. **Effects and disposal** - Loader enable, disable, and reload settle first. After the successful HTTP response is ended, Desktop schedules its existing generation restart. The existing generation disposer remains the sole owner of BrowserWindow, Host routes, Client fibers, PTYs, and cancellation.
+4. **Configuration and composition** - the stable `desktop-development-canvas` Loader row and persisted lifecycle override remain unchanged. Restart recomposes them through the normal profile path, so the enabled package is included in the new Client boot graph.
+5. **Events and durability** - no new Cordis event or durable record. The existing atomic lifecycle state remains canonical; the HTTP receipt is an acknowledgement, not project history.
+6. **Verification** - route tests must prove successful enable, disable, and reload respond before requesting restart, rejected operations never restart, and the current Loader lifecycle tests continue to prove mount, disposal, persistence, and reactivation.
+
 ## Project Structure
 
 ### Documentation (this feature)

@@ -33,8 +33,8 @@ describe('ACRYL branding', () => {
       'sidebar.brand.name',
     ])
     expect(registeredOptions).toEqual([
-      { name: 'sidebar.brand.mark' },
-      { name: 'sidebar.brand.name' },
+      { name: 'sidebar.brand.mark', priority: -1000 },
+      { name: 'sidebar.brand.name', priority: -1000 },
     ])
   })
 })
