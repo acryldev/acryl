@@ -1,3 +1,13 @@
+## 2026-08-29 - Development Canvas lifecycle restart and advanced clean-install default
+
+Commit: `be52e32`
+
+The Canvas could report Enabled and reload its Host Fiber without appearing because browser plugin membership is fixed in the Client boot graph for one Desktop generation. Lifecycle enable, disable, and reload routes now finish their successful response and schedule the existing Desktop generation restart, which recomposes the Host and Client graphs from the persisted lifecycle state. Failed operations do not restart. The launcher startup fallback also now matches the Desktop and schema defaults: a settings document without an explicit mode starts in `advanced`, while an explicitly persisted `compatibility` choice remains supported.
+
+Verification: the regression tests first failed because no restart was requested and because absent settings still resolved to `compatibility`; after the fix, 27 profile tests, 20 focused lifecycle tests, the complete Desktop suite (795 passed, 4 skipped), Desktop typecheck, and the native Apple Silicon electron-builder path passed. A mounted `ACRYL-0.1.7-arm64.dmg` was verified to contain an arm64 executable and the packaged Development Canvas Client.
+
+Local unsigned Apple Silicon packaging uses the same per-architecture path as release CI: build Community Market, Canvas, and Desktop; invoke electron-builder with `--mac dmg --arm64`, disabled identity discovery and notarization; then copy the DMG to the gitignored `release-artifacts/` directory. `pnpm dist:mac` remains the signed/notarized production path and intentionally requires a Developer ID Application certificate plus notarization credentials.
+
 ## 2026-08-29 - README distinguishes Desktop GUI, Terminal CLI, and local Web
 
 Commit: `fe7192c6b90972fd284d85f4424610b6756f17c8`
