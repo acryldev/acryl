@@ -1,3 +1,5 @@
+> **SUPERSEDED 2026-08-29.** This plan was transferred into the active Spec Kit ledger `specs/019-acryl-harness-runtime/` (see its `plan.md` revision and `tasks.md`). The repository does not maintain a parallel planning system; keep changes in the ledger.
+
 # ACRYL pi-tui Terminal Surface Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

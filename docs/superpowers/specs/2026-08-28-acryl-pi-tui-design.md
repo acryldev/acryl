@@ -1,3 +1,5 @@
+> **SUPERSEDED 2026-08-29.** This plan was transferred into the active Spec Kit ledger `specs/019-acryl-harness-runtime/` (see its `plan.md` revision and `tasks.md`). The repository does not maintain a parallel planning system; keep changes in the ledger.
+
 # ACRYL pi-tui terminal surface design
 
 ## Goal
