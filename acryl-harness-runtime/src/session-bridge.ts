@@ -19,6 +19,10 @@ export interface AcrylSessionBridgeOptions {
   readonly cwd: string
 }
 
+export interface AcrylSessionEventSubscription {
+  dispose(): Promise<void>
+}
+
 export interface AcrylSessionBridge {
   open(resumeSessionId?: string): Promise<string>
   snapshot(sessionId: string): Promise<AcrylSessionSnapshot>
@@ -27,6 +31,11 @@ export interface AcrylSessionBridge {
     listener: (snapshot: AcrylSessionSnapshot) => void,
     onError?: (error: Error) => void,
   ): Promise<AcrylSessionSubscription>
+  /** Live durable-log events for one active session (streaming presentation seam). */
+  subscribeEvents(
+    sessionId: string,
+    listener: (event: SessionEvent) => void,
+  ): Promise<AcrylSessionEventSubscription>
   submitPrompt(input: { readonly sessionId: string; readonly text: string }): Promise<void>
   cancel(sessionId: string): Promise<void>
   dispose(): Promise<void>
@@ -91,6 +100,7 @@ export function createAcrylSessionBridge(
 ): AcrylSessionBridge {
   const handles = new Map<string, AgentHandle>()
   const subscribers = new Map<string, Set<(snapshot: AcrylSessionSnapshot) => void>>()
+  const eventListeners = new Map<string, Set<(event: SessionEvent) => void>>()
   let disposed = false
 
   const notify = (sessionId: string): void => {
@@ -106,8 +116,18 @@ export function createAcrylSessionBridge(
       }
     })
   }
-  const offSessionEvent = ctx.on('session/event', (session) => {
-    if (handles.has(session.id)) notify(session.id)
+  const offSessionEvent = ctx.on('session/event', (session, event) => {
+    if (!handles.has(session.id)) return
+    notify(session.id)
+    const listeners = eventListeners.get(session.id)
+    if (listeners === undefined) return
+    for (const listener of listeners) {
+      try {
+        listener(event)
+      } catch {
+        // A presentation listener cannot disrupt durable session delivery.
+      }
+    }
   })
 
   const snapshot = async (sessionId: string): Promise<AcrylSessionSnapshot> => {
@@ -176,6 +196,24 @@ export function createAcrylSessionBridge(
         },
       })
     },
+    async subscribeEvents(
+      sessionId: string,
+      listener: (event: SessionEvent) => void,
+    ): Promise<AcrylSessionEventSubscription> {
+      agentFor(sessionId)
+      const listeners = eventListeners.get(sessionId) ?? new Set()
+      eventListeners.set(sessionId, listeners)
+      listeners.add(listener)
+      let active = true
+      return Object.freeze({
+        async dispose(): Promise<void> {
+          if (!active) return
+          active = false
+          listeners.delete(listener)
+          if (listeners.size === 0) eventListeners.delete(sessionId)
+        },
+      })
+    },
     async submitPrompt(input: { readonly sessionId: string; readonly text: string }): Promise<void> {
       const agent = agentFor(input.sessionId)
       if (input.text.trim() === '') throw new Error('ACRYL prompt must not be empty')
@@ -200,8 +238,26 @@ export function createAcrylSessionBridge(
       disposed = true
       offSessionEvent()
       subscribers.clear()
-      await Promise.all([...handles.values()].map(handle => handle.dispose()))
+      eventListeners.clear()
+      // Durable continuity: idle the turn, checkpoint the session log, then
+      // release the native handle. Mirror of Tomo's shutdown sequence, owned
+      // here so every surface gets the same durability guarantee.
+      const activeHandles = [...handles.values()]
       handles.clear()
+      const sessions = ctx.get('sessions')
+      for (const handle of activeHandles) {
+        try {
+          await handle.agent.whenIdle()
+        } catch {
+          // A disposing agent has no obligation to be idle; proceed to release.
+        }
+        try {
+          await sessions?.flush(handle.agent.session)
+        } catch {
+          // Flush is best-effort on dispose; persistence already ran per event.
+        }
+      }
+      await Promise.all(activeHandles.map(handle => handle.dispose()))
     },
   })
 }

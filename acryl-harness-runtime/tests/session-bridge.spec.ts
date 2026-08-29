@@ -183,6 +183,38 @@ describe('createAcrylSessionBridge', () => {
     }
   })
 
+  it('streams incremental durable events to an event subscription', async () => {
+    const runtime = await bootRuntime('acryl-test')
+    const bridge = createAcrylSessionBridge(runtime.ctx, {
+      profile: 'acryl-test',
+      generationId: 'generation-test',
+      attachment: 'owner',
+      cwd: process.cwd(),
+    })
+    try {
+      const sessionId = await bridge.open()
+      const seen: string[] = []
+      const subscription = await bridge.subscribeEvents(sessionId, event => {
+        seen.push(event.type)
+      })
+
+      const session = runtime.ctx.agents.get(SessionId(sessionId))?.session
+      if (session === undefined) throw new Error('test agent was not registered')
+      session.append('assistant/chunk', { turn: 1, step: 1, chunk: { type: 'text', text: 'hello' } })
+      await new Promise(resolve => setTimeout(resolve, 0))
+
+      expect(seen).toContain('assistant/chunk')
+
+      await subscription.dispose()
+      session.append('tool/call', { turn: 1, step: 1, callId: 'call-1', name: 'inspect', arguments: '{}' })
+      await new Promise(resolve => setTimeout(resolve, 0))
+      expect(seen).not.toContain('tool/call')
+    } finally {
+      await bridge.dispose()
+      await runtime.dispose()
+    }
+  })
+
   it('does not accumulate native agents for repeated opens', async () => {
     const runtime = await bootRuntime('acryl-test')
     const bridge = createAcrylSessionBridge(runtime.ctx, {
