@@ -1,9 +1,10 @@
 /** Fail-loud verification of the runtime entries sealed into Electron's app.asar. */
 
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
-import { isAbsolute, join, relative, sep } from 'node:path'
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import { listPackage } from '@electron/asar'
 import AdmZip from 'adm-zip'
@@ -356,6 +357,39 @@ export function verifyUnpackedPackageResolution(
 }
 
 /**
+ * Stage optional per-platform native modules (koffi, sharp, ripgrep, and
+ * node-addon-require-builtin) into the packaged app's unpacked tree.
+ *
+ * These are optionalDependencies of their base packages, so pnpm only links
+ * them as siblings in the package store and electron-builder's dependency
+ * collector does not copy them into the app bundle — the packaged app then
+ * fails at runtime with 'Cannot find the native Koffi module'. The dev
+ * node_modules carries the matching platform/arch packages, so copy them (and
+ * resolve symlinks) so the runtime's own require resolution finds them.
+ */
+export function stageOptionalNativeModules(context: PackagedRuntimeContext): void {
+  const unpackedRoot = resolvePackagedUnpackedRoot(context)
+  const desktopRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const stagingRoot = join(desktopRoot, 'node_modules')
+  const scopes = ['@koromix', '@img', '@vscode']
+  for (const scope of scopes) {
+    const scopeSource = join(stagingRoot, scope)
+    if (!existsSync(scopeSource)) continue
+    for (const pkg of readdirSync(scopeSource)) {
+      const from = join(scopeSource, pkg)
+      const to = join(unpackedRoot, 'node_modules', scope, pkg)
+      if (!existsSync(to)) cpSync(from, to, { recursive: true, dereference: true })
+    }
+  }
+  for (const entry of readdirSync(stagingRoot)) {
+    if (!entry.startsWith('node-addon-require-builtin-')) continue
+    const from = join(stagingRoot, entry)
+    const to = join(unpackedRoot, 'node_modules', entry)
+    if (!existsSync(to)) cpSync(from, to, { recursive: true, dereference: true })
+  }
+}
+
+/**
  * Verify Electron Builder's completed application before signing begins.
  * @param context - Electron Builder's afterPack context.
  * @param list - ASAR listing implementation.
@@ -373,7 +407,7 @@ export function verifyPackagedRuntime(
   const unpackedRoot = resolvePackagedUnpackedRoot(context)
   const requiredPhysicalEntries = context.electronPlatformName === 'win32'
     ? [...REQUIRED_UNPACKED_RUNTIME_ENTRIES, ...REQUIRED_WINDOWS_X64_NODE_PTY_ENTRIES]
-    : context.electronPlatformName === 'darwin' && context.arch === 4
+    : context.electronPlatformName === 'darwin'
       ? [...REQUIRED_UNPACKED_RUNTIME_ENTRIES, ...REQUIRED_MACOS_UNIVERSAL_ENTRIES]
       : REQUIRED_UNPACKED_RUNTIME_ENTRIES
   const missing = requiredPhysicalEntries.filter(entry => !exists(join(unpackedRoot, entry)))
@@ -405,6 +439,7 @@ export async function afterPack(
   verify: typeof verifyPackagedRuntime = verifyPackagedRuntime,
   smoke: PackagedDiagnosticWorkerSmoke = smokePackagedDiagnosticWorker,
 ): Promise<void> {
+  stageOptionalNativeModules(context)
   verify(context)
   await smoke(resolvePackagedUnpackedRoot(context))
 }

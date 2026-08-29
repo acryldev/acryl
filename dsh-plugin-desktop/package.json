@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-desktop",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "ACRYL desktop: a local-first agent workspace composed with Cordis plugins",
   "license": "MIT",
   "publishConfig": {
@@ -317,11 +317,6 @@
       "cordis.patch.yml",
       "lib/**",
       "package.json",
-      "node_modules/@koromix/**",
-      "node_modules/@img/**",
-      "node_modules/@vscode/**",
-      "node_modules/node-addon-require-builtin-darwin-arm64/**",
-      "node_modules/node-addon-require-builtin-darwin-x64/**",
       "!node_modules/node-pty/build/**"
     ],
     "mac": {
