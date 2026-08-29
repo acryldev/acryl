@@ -22,6 +22,9 @@ import type { TuiActions } from '../tui/actions.js'
 import type { PluginRow } from '../tui/plugins/types.js'
 import { loadFileIndex } from '../tui/fileIndex.js'
 import { stripSessionIdPrefix } from '../sessionId.js'
+import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import { ManualCompactionError } from '@deepseek-ai/dsh-compaction'
+import { GoalError } from '@deepseek-ai/dsh-goal'
 import { SessionId, type Session } from '@deepseek-ai/dsh-session'
 
 const TUI_VERSION = '0.1.0-dev.0'
@@ -149,13 +152,69 @@ export async function runAcrylTui(options: RunAcrylTuiOptions): Promise<AcrylTui
         store.setNotice('permission cycling is not composed in this profile yet')
       },
       compact() {
-        store.setNotice('compaction is not composed in this profile yet')
+        const compaction = host.ctx.get('compaction')
+        if (compaction === undefined || agent === undefined) return store.setNotice('compaction is not available in this profile')
+        store.setNotice('compacting…')
+        void compaction.compactNow(agent, new AbortController().signal)
+          .then(result => store.setNotice(result === null ? 'no compactable history yet' : undefined))
+          .catch((error: unknown) => {
+            const message = error instanceof ManualCompactionError ? error.code : error instanceof Error ? error.message : String(error)
+            store.setNotice(`compaction failed: ${message}`)
+          })
       },
-      plan() {
-        store.setNotice('plan mode is not composed in this profile yet')
+      plan(rawInput) {
+        const planMode = host.ctx.get('planMode')
+        if (planMode === undefined || agent === undefined) return store.setNotice('plan mode is not available in this profile')
+        const message = rawInput.trim()
+        if (message === 'off') {
+          planMode.set(agent, false)
+          store.setNotice('Plan mode off.')
+          return
+        }
+        const outcome = planMode.set(agent, true)
+        if (message !== '') {
+          agent.steer(createUserMessage({ content: [{ type: 'text', text: message }], source: { kind: 'user' } }))
+        }
+        store.setNotice(outcome === 'committed' ? 'Plan mode on. Use /plan off to leave.' : 'Entering plan mode (applies from the next step). Use /plan off to leave.')
       },
-      goal() {
-        store.setNotice('goal mode is not composed in this profile yet')
+      goal(command) {
+        const goals = host.ctx.get('goals')
+        if (goals === undefined || agent === undefined) return store.setNotice('goal mode is not available in this profile')
+        try {
+          const current = goals.get(agent)
+          switch (command.kind) {
+            case 'show':
+              store.setNotice(current === undefined ? 'No goal is currently set. Use /goal <objective> to set one.' : `Goal: ${current.objective}`)
+              return
+            case 'invalid-edit':
+              store.setNotice('Goal editing requires a replacement objective.')
+              return
+            case 'create':
+              store.setNotice(`Goal created: ${goals.create(agent, { objective: command.objective }).objective}`)
+              return
+            case 'edit':
+              if (current === undefined) return store.setNotice('No goal to edit.')
+              store.setNotice(`Goal updated: ${goals.edit(agent, { id: current.id, revision: current.revision }, { objective: command.objective }).objective}`)
+              return
+            case 'pause':
+              if (current === undefined) return store.setNotice('No goal to pause.')
+              goals.pause(agent, { id: current.id, revision: current.revision })
+              store.setNotice('Goal paused.')
+              return
+            case 'resume':
+              if (current === undefined) return store.setNotice('No goal to resume.')
+              goals.resume(agent, { id: current.id, revision: current.revision })
+              store.setNotice('Goal resumed.')
+              return
+            case 'clear':
+              if (current === undefined) return store.setNotice('No goal to clear.')
+              goals.clear(agent, { id: current.id, revision: current.revision })
+              store.setNotice('Goal cleared.')
+              return
+          }
+        } catch (error) {
+          store.setNotice(error instanceof GoalError ? 'The goal command is not valid for the current state. Run /goal to view available commands.' : `goal command failed: ${error instanceof Error ? error.message : String(error)}`)
+        }
       },
       runShell() {
         store.setNotice('shell mode is not composed in this profile yet')
