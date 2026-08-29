@@ -88,3 +88,33 @@ Approvals/questions (in-terminal answerers), overlays (`/model`, `/presets`,
 mode, prompt-history persistence, session picker, and tool-card service lookup
 (`getTool`) are wired as inert stubs in the host adapter — to be enabled per
 capability in later increments.
+
+## Update 2026-08-29 (C1) — pi-tui loop proven under a PTY; Ink removed
+
+**T013 evidence (real-TTY-equivalent):** `acryl-tui/scripts/tui-pty-smoke.mjs`
+drives the built `acryl tui` under a node-pty pseudo-terminal. Result
+(`MARKERS {"banner":true,"status":true,"prompt":true,"exited":true}`, exit 0):
+
+- banner `dsh-tui v0.1.0-dev.0` + DeepSeek Harness + model + cwd
+- native durable session `acryl-session-…`; status bar `idle → ⠋ running` with
+  live spinner frames
+- prompt `inspect the repository` submitted and echoed (`you › …`)
+- context rows from the runtime composition (`agent-instructions`,
+  `@deepseek-ai/dsh-system-prompt`, `skill-catalog`)
+- a runtime error surfaced in the transcript:
+  `✖ MISSING_CREDENTIAL: llm-deepseek: no API key for provider route
+  "deepseek-official"` — proves the shell surfaces runtime errors
+- clean `exitCode 0` (Ctrl+C cancel then idle exit)
+
+Full terminal capture: `evidence/tui-pty-smoke.output.txt`.
+
+**T012 done:** React Ink removed (renderer source `render/{app,ink-app,status,
+contributions,agent-workspace}`, Ink-only specs, `ink`/`react`/`@types/react`/
+`ink-testing-library`/`web-tree-sitter` deps, `jsx` setting). `acryl-tui` tests
+248/248, typecheck + build clean. The terminal surface is now pi-tui only.
+
+**Remaining:** real *credentialed* stream needs `DEEPSEEK_API_KEY` in the home
+(the smoke's isolated home has none, so the LLM path surfaces the expected
+missing-credential error). `--resume` is covered by the bridge resume test; a
+PTY `--resume` smoke is the next TTY check. Release readiness (secondary) is
+still deferred until the primary is accepted.

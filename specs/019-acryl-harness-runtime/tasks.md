@@ -66,12 +66,12 @@ its focused test, commit, and evidence are complete.
   store from `agent.session.events`, follow `subscribeEvents`, TuiActions over
   bridge, shutdown = cancel→whenIdle→flush→unmount) and wire it into
   `acryl-tui/src/cli/run.ts` (TTY guard, exit path). Keep `--json` headless probe.
-- [ ] T012 Delete the Ink surface after T011 is functional:
+- [x] T012 Delete the Ink surface after T011 is functional:
   `acryl-tui/src/render/{app,ink-app,contributions,status}.tsx/ts`,
   `screens/agent-workspace.ts` + Ink-only specs (`ink-app`, `renderer`,
   `agent-workspace`, `contributions`, `status`), rewrite `cli-run.spec.ts` for the
   new lifecycle. No parallel renderer beyond the migration step.
-- [ ] T013 End-to-end proof with recorded evidence in
+- [x] T013 End-to-end proof with recorded evidence in
   `specs/019-acryl-harness-runtime/evidence/first-pi-tui-vertical.md`:
   `acryl tui` → create → prompt → streamed text + tool state → cancel → exit →
   `--resume <id>` replays and continues. Record manual observation in a real TTY.
