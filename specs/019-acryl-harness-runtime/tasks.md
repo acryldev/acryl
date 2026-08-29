@@ -78,7 +78,7 @@ its focused test, commit, and evidence are complete.
 
 ## Phase 3: Stop point and next parity gap
 
-- [ ] T014 Record the handoff: changed Tomo source modules, adaptation, commands,
+- [x] T014 Record the handoff: changed Tomo source modules, adaptation, commands,
   user-visible behavior, and the next parity gap (approvals/questions, overlays,
   prompt history, session picker, model/preset controls) in
   `specs/019-acryl-harness-runtime/research.md` (Parity ledger section).
