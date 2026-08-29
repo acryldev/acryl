@@ -38,27 +38,27 @@ its focused test, commit, and evidence are complete.
 
 ## Phase 2: pi-tui presentation (tomowang port)
 
-- [ ] T006 Add exact `@earendil-works/pi-tui@0.84.2` plus `diff` to
+- [x] T006 Add exact `@earendil-works/pi-tui@0.84.2` plus `diff` to
   `acryl-tui/package.json`; remove `ink`, `react`, `@types/react`,
   `ink-testing-library` only as sources stop referencing them. Add
   `docs/acryl/tomowang-dsh-tui-provenance.md` (URL, commit, license, component
   inventory). No vendor tree, no submodule, no package patch.
-- [ ] T007 Extend `acryl-harness-runtime/src/session-bridge.ts` with an
+- [x] T007 Extend `acryl-harness-runtime/src/session-bridge.ts` with an
   incremental durable-event seam: `subscribeEvents(sessionId, listener)` emitting
   typed `SessionEvent` records; `dispose()` waits idle and `sessions.flush()`s
   before disposing handles. RED test in `session-bridge.spec.ts` first. This is
   the gap that makes streamed output surfaceable.
-- [ ] T008 Add the ACRYL runtime profile rows into `bootAcrylHarnessProfile`
+- [x] T008 Add the ACRYL runtime profile rows into `bootAcrylHarnessProfile`
   composition: `system-prompt` persona, `agent-presets` (default `standard`),
   `session-stats`, `hmr` disabled. Without these the host mounts a bare agent with
   no toolset/persona. Test profile boot exposes the rows (Loader activation check)
   in `acryl-harness-runtime/tests/profile.spec.ts`.
-- [ ] T009 Port Tomo presentation core into `acryl-tui`:
+- [x] T009 Port Tomo presentation core into `acryl-tui`:
   `src/tui/store.ts`, `src/render.ts`, `src/markdown.ts`,
   `src/sessionId.ts`, `src/tui/{theme,piTheme,text,liveText,Spinner,bannerText,
   statsFormat}.ts` with their vitest suites (store/render/markdown/liveText/
   statsFormat). Copy, do not re-author.
-- [ ] T010 Port the editor chain: `src/tui/{CustomEditor,promptAutocomplete,
+- [x] T010 Port the editor chain: `src/tui/{CustomEditor,promptAutocomplete,
   commands,fileMention,fileIndex,miniTextField}.ts` with commands/fileMention
   suites. Pure pi-tui + file-index; no runtime deps.
 - [ ] T011 Port `src/tui/TuiApp.ts` + `src/tui/actions.ts`; add the ACRYL host
