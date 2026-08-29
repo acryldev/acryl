@@ -262,6 +262,7 @@
   },
   "devDependencies": {
     "@base-ui/react": "^1.7.0",
+    "@deepseek-ai/dsh-llm-deepseek": "0.1.1-rc.2",
     "@electron/asar": "3.4.1",
     "@fontsource-variable/inter": "^5.3.0",
     "@tailwindcss/vite": "^4",

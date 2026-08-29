@@ -1213,6 +1213,9 @@ importers:
         specifier: ^2.9.0
         version: 2.9.0
     devDependencies:
+      '@deepseek-ai/dsh-llm-deepseek':
+        specifier: 0.1.1-rc.2
+        version: 0.1.1-rc.2(patch_hash=24082a6f625434e0e26e87215b97a239499f1e002be31224a5c8aebf892f4351)(a4f32a8d2888fcc753211ed9471efdc6)
       '@base-ui/react':
         specifier: ^1.7.0
         version: 1.7.0(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
