@@ -19,6 +19,37 @@ the YLY sprite aspect distortion is fixed. Remaining work is branding parity
 (web-client DeepSeek logo, gui ACRYL runtime confirmation) and a visual
 confirmation of the animation — both need the user's eyes.
 
+## 2026-08-29 - ACRYL v0.1.0 first GitHub release shipped
+
+First release cut and published (user-requested). The release ledger
+`specs/022-acryl-v0.1.0-alpha.1/` was the readiness input; the user asked for a
+published first-minor release plus a 5-platform CI and a local macOS DMG.
+
+- Version bumped to `0.1.0` across the ACRYL-owned packages (root, acryl-control,
+  acryl-harness-runtime, acryl-tui, dsh-plugin-desktop). The prior `2.0.2`/
+  `0.1.0-dev.0` were dev placeholders.
+- `.github/workflows/release.yml` added: a 5-target matrix (macos arm64 + x64
+  dmg, linux deb arm64 + x64, windows x64 nsis) that builds per-arch and, on a
+  `v*` tag, publishes a GitHub Release (`permissions: contents: write`,
+  softprops/action-gh-release).
+- Fixed the first-run failures: (a) linux `.deb` needed an `author`/`build.linux`
+  maintainer, (b) Windows checkout failed on the very long
+  `docs/workmethodology/...md` filename — enabled `core.longpaths`, (c) macos-x64
+  `macos-13` Intel runner never provisioned (deprecation-queued) — moved to
+  `macos-14`. Also fixed the pre-existing red `ci.yml`: `acryl-tui` typechecks
+  against `acryl-harness-runtime`, whose types are generated into `lib/`, so the
+  workspace type-providers (acryl-control -> acryl-harness-runtime) must be
+  built before the typecheck step.
+- Published `v0.1.0` on GitHub with all five artifacts:
+  `ACRYL-0.1.0-arm64.dmg`, `ACRYL-0.1.0.dmg` (x64), `dsh-plugin-desktop_0.1.0_arm64.deb`,
+  `dsh-plugin-desktop_0.1.0_amd64.deb`, `ACRYL-0.1.0-x64-Setup.exe`.
+- The local macOS DMG build was BLOCKED on this host: `electron-builder` hung at
+  the electron download/extract step and its universal build needs cross-arch
+  native prebuilds that a single-arch host does not stage (the documented
+  blocker). The DMG was built on the GitHub macOS ARM64 runner instead and
+  downloaded locally (`release-artifacts/ACRYL-0.1.0-arm64.dmg`, validated via
+  `hdiutil verify`) for the user to test on Apple Silicon.
+
 ## 2026-08-29 - acryl-tui: all three surfaces launch/serve; gui launch verified
 
 Follow-up on the web host. `pnpm acryl-gui` = `pnpm --filter dsh-plugin-desktop run start`
