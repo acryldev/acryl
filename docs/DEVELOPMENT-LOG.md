@@ -1,3 +1,20 @@
+## 2026-08-29 - acryl-tui: /presets roster settle + sessionBlank semantics fix
+
+- `16f3a3d` (full `16f3a3d7f7d6de7185e746e447bc4c38307b388a`) — `/presets` no longer sits on a perpetual `Loading...`: port Tomo's
+  `loadAgentPresets` (read `ctx.agentPresets.list()` into `AgentPresetRow`s). The
+  agent-presets service needs `ctx.baseUrl` and is not composed in the TUI
+  profile, so when absent the overlay settles to the neutral empty message. Also
+  fixes `sessionBlank` to mirror Tomo/harness semantics (blank until the first
+  `turn/start`, not until the event log is empty), so injected context no longer
+  counts as a started session.
+
+**Terminal-surface status (all slash commands verified in a real PTY).**
+`/help`, `/model` (real provider directory), `/trajectory`, `/tools`, `/context`,
+`/plugins` (full 79-row tree), `/presets`, `/goal`, `/plan`, `/compact`, `/clear`
+(fresh-session re-attach), `/exit`/`/quit` all render their real surface or a
+clear degradation message. `pnpm acryl` boots the full-screen pi-tui with the
+YLY pet + ACRYL branding. 252 acryl-tui tests + typecheck + build green.
+
 ## 2026-08-29 - acryl-tui: /model wired to the real provider directory; web/gui gap recorded
 
 Follow-up on the slash-command parity checkpoint above.
