@@ -61,7 +61,7 @@ its focused test, commit, and evidence are complete.
 - [x] T010 Port the editor chain: `src/tui/{CustomEditor,promptAutocomplete,
   commands,fileMention,fileIndex,miniTextField}.ts` with commands/fileMention
   suites. Pure pi-tui + file-index; no runtime deps.
-- [ ] T011 Port `src/tui/TuiApp.ts` + `src/tui/actions.ts`; add the ACRYL host
+- [x] T011 Port `src/tui/TuiApp.ts` + `src/tui/actions.ts`; add the ACRYL host
   adapter (new `acryl-tui/src/tui-app/session.ts`: attach/resolve bridge, seed
   store from `agent.session.events`, follow `subscribeEvents`, TuiActions over
   bridge, shutdown = cancel→whenIdle→flush→unmount) and wire it into
