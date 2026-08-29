@@ -1,3 +1,20 @@
+## 2026-08-29 - acryl-tui: fix YLY sprite aspect distortion (root cause of 'simplified' look)
+
+- `9a85967` (full `9a85967d4ef3f3ac22d203c9ac079458a27302b0`) — the frame compiler resized each 96x84 sheet cell to the preset
+  grid with `fit:'fill'`, stretching the cell non-uniformly (large 20x11 ->
+  aspect 0.91 vs the pet's ~1.15). That non-uniform stretch is what made the
+  mascot look distorted/simplified at low resolution. Now scan alpha for the
+  pet's opaque bbox (sharp's `.trim()` resets geometry when chained after
+  `.extract()`, so scan manually) and resize just the bbox into the grid with
+  `fit:'contain'`, preserving the native aspect and keeping every frame the
+  same height. All 13 frames x 3 presets still render at the preset row count;
+  252 tests + typecheck + build green.
+
+**Remaining.** `acryl web` host (needs the SPA frontend built plus
+`@deepseek-ai/dsh-web-app`/`dsh-host-frontend-static` installed and the web
+rows composed into the ACRYL runtime — a deliberate large task) and `acryl gui`
+(Electron). The terminal surface itself is functionally complete.
+
 ## 2026-08-29 - acryl-tui: /presets roster settle + sessionBlank semantics fix
 
 - `16f3a3d` (full `16f3a3d7f7d6de7185e746e447bc4c38307b388a`) — `/presets` no longer sits on a perpetual `Loading...`: port Tomo's
