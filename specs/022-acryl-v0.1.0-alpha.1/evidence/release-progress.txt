@@ -1,0 +1,26 @@
+# Acryl v0.1.0-alpha.1 release readiness — progress + blockers (2026-08-29, C1)
+
+## Done
+- R001 research facts recorded (research.md).
+- R005 headless-safe smoke checks: `acryl --version` -> `0.1.0-dev.0`;
+  `acryl tui --json` -> `{"mode":"direct","profile":"acryl","generationId":"…"}`.
+  Both pass headless (`node scripts/release-smoke.mjs` -> SMOKE PASS).
+
+## R002 exact blocker (verified by running it)
+`corepack pnpm --filter dsh-plugin-desktop run dist:mac-smoke` fails immediately:
+
+    macOS DMG smoke requires Node 22.19+ or Node 24.x with bundled Corepack;
+    received 26.7.0
+
+So the mac unsigned artifact build is blocked by the Node major: the desktop
+packaging prerelease gate only accepts Node 22.19+ or 24.x, but this host runs
+Node 26.7.0. Fix = run packaging under Node 24.x (version manager or CI node
+`24`), not by editing the gate.
+
+## Remaining after the blocker
+- R003 Windows artifact: needs Windows/CI (release-candidate.yml already builds
+  Windows; not local-buildable on macOS).
+- R004 Linux electron-builder target (deb/AppImage, ARM64+x64) not yet added.
+- R006 extend release-candidate.yml to mac+linux (Windows present); only once a
+  mac build is confirmed under Node 24.x and CI reliability is verified.
+- R007 per-target evidence + ledger completion.

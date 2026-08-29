@@ -23,7 +23,7 @@ checked only after its focused command, commit, and evidence are complete.
 - [ ] R004 Add the `linux` electron-builder target (deb/AppImage) for ARM64 + x64
   to `dsh-plugin-desktop/package.json` `build.linux`; build locally per arch and
   record in `evidence/`.
-- [ ] R005 Add executable smoke checks: `acryl --version`,
+- [x] R005 Add executable smoke checks: `acryl --version`,
   `acryl tui --json`, web startup/health (DSH web over an ACRYL profile), and
   desktop startup where headless-safe. Wire them as a local verify script.
 - [ ] R006 Extend `.github/workflows/release-candidate.yml` to build mac + linux
