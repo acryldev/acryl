@@ -121,7 +121,7 @@ export interface Config {
 
 /** Validated native window configuration. */
 export const Config: z<Config> = z.object({
-  mode: z.union(['compatibility', 'advanced'] as const).default('compatibility'),
+  mode: z.union(['compatibility', 'advanced'] as const).default('advanced'),
   port: z.number().step(1).min(0).max(65_535).default(DESKTOP_DEFAULT_WEB_PORT),
   width: z.number().step(1).min(800).default(1280),
   height: z.number().step(1).min(600).default(840),
