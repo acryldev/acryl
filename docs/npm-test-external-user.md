@@ -40,3 +40,22 @@ To publish `acryl@0.1.10` I need a **fresh npm access token** for one of the pac
 ## Next action
 
 Provide a valid npm token (or run `npm login`), then I will: build `acryl-tui` → run `verify-npm-entrypoint.mjs` → `npm publish` as 0.1.10 → re-test `npm i -g acryl` as external user to confirm `--version` prints 0.1.10.
+
+---
+
+## Status update (supersedes the "BROKEN" conclusion above)
+
+Published and re-tested on macOS 2026-08-30. The fix shipped as `0.1.10` → `0.1.12`
+(`npm dist-tags.latest = 0.1.12`), and `acryl --version` now prints the package
+version. **However**, an external-user simulation of the *full* boot found the
+package still did not run `tui`/`web` — the Cordis plugin tree failed to apply
+the `cordis:include` loader entries because the published dependency map omitted
+the DSH profile-bundle plugin packages (`@deepseek-ai/cordis-plugin-timer`,
+`-hmr`, `@deepseek-ai/dsh-typert-loader`) and the `@koromix/koffi-*` natives.
+
+That gap is addressed in commit `3d12e82` (see
+`docs/DEVELOPMENT-LOG.md` → "external npm CLI: full-boot verified and
+closure-completeness gated"): the publish script now derives the dependency map
+from the real production closure and gates on loader-entry completeness. The
+`--version`-only check in this file was insufficient — the definitive check is a
+full `npm i -g` + `acryl tui --json` boot.

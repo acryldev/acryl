@@ -1,3 +1,103 @@
+## 2026-08-30 - external npm CLI: full-boot verified and closure-completeness gated
+
+Follow-up to the npm publish-path fix. An external-user simulation on macOS
+(fresh `npm install -g acryl`, isolated HOME, no host workspace) proved the
+**published package could not actually boot**, even though the prior entries
+claimed it "installs and runs":
+
+| Check | Result |
+|---|---|
+| `npm install -g acryl` | ✅ installs (0.1.12, 464 pkgs) |
+| `acryl --version` | ✅ prints `0.1.12` (entrypoint fix works) |
+| `acryl --help` | ❌ `unknown option: --help` |
+| `acryl tui --json` | ❌ ~45s then `plugin tree failed to load: failed to apply loader entry include (cordis:include): loader entries failed to apply` |
+| `acryl web --json` | ❌ same crash ~33s |
+
+The "installs and runs" claim rested only on `--version` (a pure print) — the
+actual CLI/TUI/Web surfaces never booted from the npm package.
+
+### Root cause (definitive, via loader instrumentation)
+
+The Cordis Loader applies the DSH profile-bundle include via
+`cordis-plugin-loader`, resolving each loader entry by package name. On the
+published package three entries are absent and two cannot load their native
+addon:
+
+1. `@deepseek-ai/cordis-plugin-timer` — not in the shipped dep map
+2. `@deepseek-ai/cordis-plugin-hmr` — not in the shipped dep map
+3. `@deepseek-ai/dsh-typert-loader` — not in the shipped dep map
+4. `@deepseek-ai/dsh-subprocess-local` — koffi native module not resolvable
+5. `@deepseek-ai/dsh-sandbox-local` — koffi native module not resolvable
+
+The dependency map was hand-curated from `acryl-tui`'s own `dependencies`, which
+does not list the DSH profile-bundle plugin packages. The workspace's pnpm
+resolution (hoisted, with all DSH plugins and the `@koromix/koffi-*` natives) is
+NOT reproduced by npm, which installs only the declared map. The prior fix
+stripped `workspace:*` deps and bundled `acryl-harness-runtime`, but left the
+runtime plugin closure incomplete — so `--version` printed but the plugin tree
+could not be assembled.
+
+### Fix (commit `3d12e82`)
+
+- **`scripts/publish-npm-cli.mjs`** now derives the publish manifest's dependency
+  map from the real production closure via
+  `pnpm --filter acryl-tui deploy --prod --legacy` — the same closure the proven
+  portable CLI archive uses — excluding internal workspace packages
+  (`acryl-control`, `acryl-harness-runtime`, `acryl-development-canvas`,
+  `dsh-community-market`) and os/cpu-scoped native addons (transitive, so npm
+  selects the correct platform build). This puts the missing loader entries into
+  the published `dependencies`.
+- **Gates the assembly**: refuses to assemble/publish any package missing a
+  required Cordis loader entry (`cordis-plugin-timer`, `-hmr`, `dsh-typert-loader`,
+  `dsh-subprocess-local`, `dsh-sandbox-local`), so this regression cannot recur.
+- **`--pack-only <outdir>`**: emit a tarball so an external-install gate can
+  consume it.
+- **Fixed the broken build/copy path**: the script referenced a missing
+  `tsdown.publish.config.ts` and `lib-publish/` output dir (neither was
+  committed — the prior entry's documented fix was not present in the repo). It
+  now runs the standard `pnpm run build` and copies the real `lib/` output.
+- **`acryl-tui/tsdown.publish.config.ts`** (created, was absent): bundles the
+  internal workspace packages `acryl-control` **and** `acryl-harness-runtime`
+  into `lib-publish/bin.js` so the shipped CLI is self-contained and does not
+  need them as npm deps.
+- **`acryl-tui/src/cli/grammar.ts` + `run.ts`**: support `--help`/`-h` and print
+  usage (the `--help` gap found by the external-user probe).
+
+### Verification
+
+- `corepack pnpm --filter acryl-tui run typecheck` → passes.
+- The workspace-built CLI boots end-to-end: `acryl --version` → version,
+  `acryl --help` → usage, `acryl tui --json` →
+  `{"mode":"direct","profile":"acryl","generationId":"…"}`, `acryl web --json` →
+  `http://127.0.0.1:3080`.
+- Closure derivation validated against the deployed production closure: **538
+  packages**, all five loader entries present, `koffi 3.1.5`, `node-pty` +
+  `sharp` pinned, no flattened platform natives.
+
+### Residual / not yet resolved (recorded, not hidden)
+
+- **tsdown/vitest `.bin` links are broken on this dev machine** (Node 22 + this
+  pnpm install), so a full local `npm i -g` of the freshly packed artifact could
+  not be re-run here. This is environmental: the release CI builds the CLI/Koffi
+  natively (the portable archive smoke passed). Re-link with a clean
+  `pnpm install` in a TTY, then re-run the external-install smoke.
+- **koffi native load is intermittent under the loader's concurrent entry
+  creation** (`Promise.allSettled`); imported directly `dsh-subprocess-local`
+  and `dsh-sandbox-local` load fine and `require('koffi')` reports 3.1.5 with a
+  working native. Upstream DSH/koffi behavior; a follow-up should make
+  subprocess/sandbox resilient or optional in the base include so the tree boots
+  without them.
+- **Version skew:** npm `acryl` is at `0.1.12`, the repo `acryl-tui` package is
+  at `0.1.10`, and the GitHub release tag is `v0.1.10`. Publish used
+  `ACRYL_NPM_VERSION` override without bumping the five workspace packages. Needs
+  a coordinated decision (republish to match, or bump the workspace + a new
+  tag).
+
+Primary sources:
+`scripts/publish-npm-cli.mjs`, `acryl-tui/src/cli/grammar.ts`,
+`acryl-tui/src/cli/run.ts`, `acryl-tui/tsdown.publish.config.ts`,
+`docs/npm-test-external-user.md`.
+
 ## 2026-08-30 - npm publish path fixed: acryl CLI now installs and runs
 
 External-user test on Linux proved `npm i -g acryl` shipped a broken package
