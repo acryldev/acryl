@@ -1,3 +1,52 @@
+## 2026-08-30 - npm 0.1.13 publish blocked: token-permission root cause verified
+
+Follow-up to the v0.1.13 release. The GitHub Release and all 10 binaries are
+live (run `33322431850`, 11/12 jobs green), but the `npm-publish` job failed,
+leaving npm `acryl` at 0.1.12. This entry records the verified diagnosis; the
+fix is a human-approved token rotation (see Blocker).
+
+### Verified state
+
+- `gh run view 33322431850` → 11 jobs success (build matrix x5, cli matrix x5,
+  `Publish GitHub release`); only `Publish to npm` failed.
+- `npm view acryl version` → `0.1.12` (0.1.13 not published); `maintainers` =
+  `musichen`, `webboxescom`, `acryldev`.
+- Job log (exact): `npm error 404 Not Found - PUT https://registry.npmjs.org/acryl`
+  → "could not be found or you do not have permission to access it."
+- `scripts/publish-npm-cli.mjs` assembled the package correctly (0.1.13, 54
+  files, 464 KB) and failed only at the actual `npm publish`. Auth plumbing and
+  closure derivation are sound; this is a token-permission failure, not a
+  script or build defect.
+
+### Token probe (correction to the prior handoff)
+
+Probed both local tokens with `npm whoami` / `npm token list` /
+`npm access list packages` (token values never echoed):
+
+- `~/.npmrc` (`npm_…7eVf`) → **401** on `whoami` — dead/stale, does not
+  authenticate. The prior handoff said it "authenticates"; it does not.
+- `~/.secure-storage/npm/npm.json` → `npm_webboxes` (`npm_9LMU…rSyH`) →
+  `whoami` = `webboxescom` (authenticates), but `npm access list packages` →
+  **403** and the publish → **404**. It is scope-limited without write access to
+  `acryl`, even though `webboxescom` is a listed maintainer.
+
+### Root cause
+
+`NPM_TOKEN` (GitHub secret, last set 2026-08-30 19:19:22Z, immediately before
+the failed run) holds a scope-limited token. The token that published 0.1.12
+earlier the same day (13:26Z) was rotated out and not replaced with one
+carrying write access to `acryl`.
+
+### Blocker (human approval gate)
+
+npm auth is a documented human-controlled release boundary
+(`docs/npm-test-external-user.md`). A fresh token with read+write publish
+access to `acryl` is required from any maintainer (`musichen` / `webboxescom` /
+`acryldev`). Options: a granular token scoped read+write on `acryl` (npm web),
+`npm token create` (classic full-access), or the exact token that published
+0.1.12. Then `gh secret set NPM_TOKEN`, `gh run rerun 33322431850 --failed`,
+`npm view acryl version` → `0.1.13`.
+
 ## 2026-08-30 - version reconciled to 0.1.12; release auto-syncs npm and the GitHub release
 
 Follow-up version-reconciliation pass. The prior npm publish used the
