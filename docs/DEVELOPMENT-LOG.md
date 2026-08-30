@@ -50,9 +50,10 @@ darwin-arm64: archive extracted to an empty temp dir, `acryl --version` -> 0.1.9
 and `acryl tui --json` boot the harness runtime with PATH=/usr/bin:/bin (no host
 Node/npm/pnpm), SHA-256 generated and verified
 (`39697c8240f05865f0a2d78d1bf9e189501f0fdd09250ebf6aa09004eca364c8`).
-release.yml gains a cli matrix job (darwin-arm64/x64, linux-arm64/x64) that
-builds, smoke-tests without host runtime, then uploads; checksums.txt is
-generated at publish time.
+release.yml gains a cli matrix job (darwin-arm64/x64, linux-arm64/x64,
+windows-x64 via a .cmd launcher) that builds, smoke-tests without host runtime,
+then uploads; checksums.txt covers both tar.gz and zip and is generated at
+publish time.
 
 Verification: `corepack pnpm run verify` green (typecheck + all tests +
 dev-local), full build green, bilingual docs + verify-layout green except the

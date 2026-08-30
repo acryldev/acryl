@@ -92,14 +92,13 @@ async function main() {
   if (windows) run('tar', ['-a', '-c', '-f', archivePath, '-C', staging, `acryl-cli-${target}`])
   else run('tar', ['-czf', archivePath, '-C', staging, `acryl-cli-${target}`])
   const checksumPath = join(outDir, 'checksums.txt')
-  const line = `${sha256File(archivePath)}  ${archiveName}\n`
-  if (!existsSync(checksumPath)) writeFileSync(checksumPath, line)
-  else {
-    const rest = readFileSync(checksumPath, 'utf8').split('\n').filter((l) => !l.includes(archiveName)).join('\n')
-    writeFileSync(checksumPath, `${rest}${rest ? '\n' : ''}${line}`)
-  }
+  const line = `${sha256File(archivePath)}  ${archiveName}`
+  const existing = existsSync(checksumPath)
+    ? readFileSync(checksumPath, 'utf8').split('\n').map((l) => l.trimEnd()).filter((l) => l.length > 0 && !l.includes(archiveName))
+    : []
+  writeFileSync(checksumPath, [...existing, line].join('\n') + '\n')
   console.log(`built ${archivePath}`)
-  console.log(`checksum: ${line.trim()}`)
+  console.log(`checksum: ${line}`)
 
   // `pnpm deploy --prod` marks the workspace modules state as production-only
   // (node_modules/.modules.yaml included.devDependencies=false), which prunes
