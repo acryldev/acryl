@@ -49,7 +49,7 @@ The GitHub Release assets below install the **ACRYL Desktop GUI**. The app carri
 Install the terminal interface explicitly:
 
 ```bash
-npm install -g acryldev
+npm install -g acryl
 acryl
 ```
 
