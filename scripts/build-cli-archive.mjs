@@ -6,18 +6,18 @@
  * Usage:
  *   node scripts/build-cli-archive.mjs <target> [node-version] [out-dir]
  *
- * Targets: darwin-arm64, darwin-x64, linux-arm64, linux-x64 (windows-x64 added
- * once the .cmd launcher path is smoke-tested on a Windows runner).
- *
- * Emits: <out>/acryl-cli-<target>.tar.gz and appends its SHA-256 to
- * <out>/checksums.txt.
+ * Targets: darwin-arm64, darwin-x64, linux-arm64, linux-x64, windows-x64.
+ *   unix targets   -> acryl-cli-<target>.tar.gz with a sh launcher
+ *   windows-x64    -> acryl-cli-windows-x64.zip with a .cmd launcher
+ * Appends each SHA-256 to <out>/checksums.txt.
  *
  * Proven slice: darwin-arm64 (2026-08-30) — built, extracted to an empty temp
  * dir, `acryl --version` and `acryl tui --json` ran with PATH=/usr/bin:/bin,
- * SHA-256 generated and verified.
+ * SHA-256 generated and verified. The windows-x64 branch is structured for the
+ * Windows runner; the unix targets are exercised by the release cli matrix.
  */
 import { execFileSync } from 'node:child_process'
-import { chmodSync, copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
@@ -26,7 +26,6 @@ import { fileURLToPath } from 'node:url'
 
 const require = createRequire(import.meta.url)
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const launcher = join(root, 'scripts', 'acryl-cli-launcher.sh')
 const version = JSON.parse(readFileSync(join(root, 'acryl-tui', 'package.json'), 'utf8')).version
 
 const TARGETS = {
@@ -34,6 +33,7 @@ const TARGETS = {
   'darwin-x64': { nodePlatform: 'darwin', nodeArch: 'x64' },
   'linux-arm64': { nodePlatform: 'linux', nodeArch: 'arm64' },
   'linux-x64': { nodePlatform: 'linux', nodeArch: 'x64' },
+  'windows-x64': { nodePlatform: 'win', nodeArch: 'x64', windows: true },
 }
 
 function run(cmd, args, opts = {}) {
@@ -52,8 +52,12 @@ async function main() {
   if (!spec) {
     throw new Error(`unsupported CLI target ${target}; supported: ${Object.keys(TARGETS).join(', ')}`)
   }
+  const windows = spec.windows === true
   const nodeDist = `node-v${nodeVersion}-${spec.nodePlatform}-${spec.nodeArch}`
-  const archiveName = `acryl-cli-${target}.tar.gz`
+  const nodeExt = windows ? 'zip' : 'tar.gz'
+  const archiveName = `acryl-cli-${target}.${windows ? 'zip' : 'tar.gz'}`
+  const launcherName = windows ? 'acryl.cmd' : 'acryl'
+  const launcher = join(root, 'scripts', windows ? 'acryl-cli-launcher.cmd' : 'acryl-cli-launcher.sh')
   const staging = join(tmpdir(), `acryl-cli-${target}`)
   const archiveDir = join(staging, `acryl-cli-${target}`)
 
@@ -66,22 +70,27 @@ async function main() {
   mkdirSync(join(archiveDir, 'bin'), { recursive: true })
 
   // 2. Pinned Node runtime for this target.
-  const nodeArchive = join(tmpdir(), `${nodeDist}.tar.gz`)
-  run('curl', ['-fsSL', '-o', nodeArchive, `https://nodejs.org/dist/v${nodeVersion}/${nodeDist}.tar.gz`])
+  const nodeArchive = join(tmpdir(), `${nodeDist}.${nodeExt}`)
+  run('curl', ['-fsSL', '-o', nodeArchive, `https://nodejs.org/dist/v${nodeVersion}/${nodeDist}.${nodeExt}`])
   const nodeExtract = join(staging, 'node-dist')
   mkdirSync(nodeExtract, { recursive: true })
-  run('tar', ['-xzf', nodeArchive, '-C', nodeExtract])
-  copyFileSync(join(nodeExtract, nodeDist, 'bin', 'node'), join(archiveDir, 'bin', 'node'))
-  chmodSync(join(archiveDir, 'bin', 'node'), 0o755)
+  run('tar', ['-xf', nodeArchive, '-C', nodeExtract])
+  const nodeBinaryName = windows ? 'node.exe' : 'node'
+  const nodeBinarySource = windows
+    ? join(nodeExtract, nodeDist, 'node.exe')
+    : join(nodeExtract, nodeDist, 'bin', 'node')
+  copyFileSync(nodeBinarySource, join(archiveDir, 'bin', nodeBinaryName))
+  chmodSync(join(archiveDir, 'bin', nodeBinaryName), 0o755)
 
   // 3. Launcher: bundled node --expose-internals (Cordis HMR boot guard).
-  copyFileSync(launcher, join(archiveDir, 'bin', 'acryl'))
-  chmodSync(join(archiveDir, 'bin', 'acryl'), 0o755)
+  copyFileSync(launcher, join(archiveDir, 'bin', launcherName))
+  if (!windows) chmodSync(join(archiveDir, 'bin', launcherName), 0o755)
 
   // 4. Archive + checksum.
   mkdirSync(outDir, { recursive: true })
   const archivePath = join(outDir, archiveName)
-  run('tar', ['-czf', archivePath, '-C', staging, `acryl-cli-${target}`])
+  if (windows) run('tar', ['-a', '-c', '-f', archivePath, '-C', staging, `acryl-cli-${target}`])
+  else run('tar', ['-czf', archivePath, '-C', staging, `acryl-cli-${target}`])
   const checksumPath = join(outDir, 'checksums.txt')
   const line = `${sha256File(archivePath)}  ${archiveName}\n`
   if (!existsSync(checksumPath)) writeFileSync(checksumPath, line)

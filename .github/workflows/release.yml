@@ -152,12 +152,24 @@ jobs:
         include:
           - target: darwin-arm64
             os: macos-latest
+            ext: tar.gz
+            cli: acryl
           - target: darwin-x64
             os: macos-14
+            ext: tar.gz
+            cli: acryl
           - target: linux-arm64
             os: ubuntu-24.04-arm
+            ext: tar.gz
+            cli: acryl
           - target: linux-x64
             os: ubuntu-latest
+            ext: tar.gz
+            cli: acryl
+          - target: windows-x64
+            os: windows-latest
+            ext: zip
+            cli: acryl.cmd
     steps:
       - uses: actions/checkout@v5
         with:
@@ -190,20 +202,27 @@ jobs:
         run: node scripts/build-cli-archive.mjs ${{ matrix.target }} 24.19.0 release-artifacts
 
       - name: Smoke test CLI archive without host runtime
+        shell: bash
         run: |
           set -euo pipefail
           rm -rf /tmp/acryl-cli-smoke && mkdir -p /tmp/acryl-cli-smoke
-          tar -xzf release-artifacts/acryl-cli-${{ matrix.target }}.tar.gz -C /tmp/acryl-cli-smoke
-          env PATH=/usr/bin:/bin /tmp/acryl-cli-smoke/acryl-cli-${{ matrix.target }}/bin/acryl --version
-          env PATH=/usr/bin:/bin /tmp/acryl-cli-smoke/acryl-cli-${{ matrix.target }}/bin/acryl tui --json
-          HASH=$(node -e "const c=require('crypto');const f=require('fs');console.log(c.createHash('sha256').update(f.readFileSync('release-artifacts/acryl-cli-${{ matrix.target }}.tar.gz')).digest('hex'))")
+          tar -xf release-artifacts/acryl-cli-${{ matrix.target }}.${{ matrix.ext }} -C /tmp/acryl-cli-smoke
+          CLI="/tmp/acryl-cli-smoke/acryl-cli-${{ matrix.target }}/bin/${{ matrix.cli }}"
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            "$CLI" --version
+            (cd /tmp/acryl-cli-smoke && "$CLI" tui --json)
+          else
+            env PATH=/usr/bin:/bin "$CLI" --version
+            (cd /tmp/acryl-cli-smoke && env PATH=/usr/bin:/bin "$CLI" tui --json)
+          fi
+          HASH=$(node -e "const c=require('crypto');const f=require('fs');console.log(c.createHash('sha256').update(f.readFileSync('release-artifacts/acryl-cli-${{ matrix.target }}.${{ matrix.ext }}')).digest('hex'))")
           grep -q "$HASH" release-artifacts/checksums.txt
 
       - name: Upload CLI archive
         uses: actions/upload-artifact@v7
         with:
           name: acryl-cli-${{ matrix.target }}-${{ github.ref_name }}
-          path: release-artifacts/acryl-cli-${{ matrix.target }}.tar.gz
+          path: release-artifacts/acryl-cli-${{ matrix.target }}.${{ matrix.ext }}
           if-no-files-found: error
           retention-days: 14
 
@@ -240,7 +259,7 @@ jobs:
       - name: Generate checksums for CLI archives
         run: |
           cd artifacts
-          find . -type f -name 'acryl-cli-*.tar.gz' -exec shasum -a 256 {} + > checksums.txt
+          find . -type f \( -name 'acryl-cli-*.tar.gz' -o -name 'acryl-cli-*.zip' \) -exec shasum -a 256 {} + > checksums.txt
           cat checksums.txt
 
       - name: Create GitHub release
