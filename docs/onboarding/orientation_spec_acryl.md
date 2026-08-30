@@ -1,1424 +1,425 @@
-# MISSION: BOOTSTRAP ACRYL ON TOP OF DEEPSEEK HARNESS + CORDIS
-
-You are running inside the DeepSeek Harness repository.
-
-Your task is not to merely add a feature to DeepSeek Harness.
-
-Your task is to begin designing and implementing a new project/concept:
-
-    ACRYL — Agent Context Relay
-
-ACRYL should be an Agentic Development Environment (ADE) and persistent
-agent operating environment built ON TOP OF DeepSeek Harness and Cordis.
-
-The long-term vision is:
-
-    One persistent development environment.
-    One persistent project context.
-    Any coding agent.
-    Agents may come and go.
-    The work continues.
-
-Examples of coding agents ACRYL should eventually be able to run or connect:
-
-    DeepSeek Harness native agents
-    OpenCode
-    Claude Code
-    Codex
-    Pi
-    Kimi CLI
-    Gemini CLI
-    Goose
-    Crush
-    Aider
-    arbitrary future CLI / ACP / API agents
-
-ACRYL MUST NOT become tightly coupled to any one coding agent.
-
-DeepSeek Harness + Cordis should provide the stable runtime substrate.
-
-ACRYL should provide:
-
-    continuity
-    relay
-    orchestration
-    external-agent execution
-    context persistence
-    handoff
-    multi-agent rooms
-    generated capabilities
-    generated functional UI
-    self-extension
-    eventually evidence-driven self-evolution
-
-
-============================================================
-0. FIRST PRINCIPLE
-============================================================
-
-Do NOT start by rewriting DeepSeek Harness.
-
-Do NOT start by creating a giant new application.
-
-Do NOT fork or replace the existing DSH architecture unless absolutely
-necessary.
-
-First understand the architecture that already exists.
-
-DeepSeek Harness already provides important primitives:
-
-    Cordis plugin composition
-    Context / Services
-    Fibers
-    Effects
-    lifecycle/disposal
-    events
-    waterfall events
-    configuration
-    profiles
-    bundles
-    patches
-    sessions
-    agents
-    agent loop
-    tools
-    LLM adapters
-    filesystem
-    shell
-    subprocess
-    PTY
-    jobs
-    sandbox
-    permissions
-    persistence
-    skills
-    subagents
-    agent teams
-    web UI
-    telemetry
-    credentials
-
-Use these.
-
-The architectural question is:
-
-    "What is the smallest set of NEW ACRYL capabilities that turns
-     DSH into the foundation of an agent-agnostic ADE?"
-
-Prefer composition over modification.
-
-
-============================================================
-1. CORE ACRYL PHILOSOPHY
-============================================================
-
-The fundamental ACRYL principle is:
-
-    AGENT SESSIONS ARE DISPOSABLE.
-    PROJECT CONTEXT IS PERSISTENT.
-
-The user should be able to work like this:
-
-    Claude works on task
-        ↓
-    Claude stops / reaches limit / user changes preference
-        ↓
-    ACRYL preserves the scene
-        ↓
-    Codex continues
-        ↓
-    DeepSeek reviews
-        ↓
-    OpenCode implements another part
-        ↓
-    Pi builds a custom capability
-        ↓
-    work continues
-
-The project does NOT belong to Claude, Codex, OpenCode, Pi or DeepSeek.
-
-The project belongs to ACRYL.
-
-Agents are actors entering and leaving a persistent scene.
-
-Conceptually:
-
-    SAME PLAY
-    SAME SCENE
-    DIFFERENT ACTORS
-
-
-============================================================
-2. DSH SHOULD REMAIN THE RUNTIME SUBSTRATE
-============================================================
-
-Do not duplicate capabilities already correctly implemented by DSH.
-
-Think approximately:
-
-                    ACRYL ADE
-                       │
-        ┌──────────────┴──────────────┐
-        │                             │
-   ACRYL Product Layer             ACRYL UI Layer
-        │                             │
-        └──────────────┬──────────────┘
-                       │
-                 ACRYL Plugins
-                       │
-              DeepSeek Harness
-                       │
-                    Cordis
-
-
-Cordis should remain responsible for runtime composition/lifecycle.
-
-DSH should remain responsible for generic agent-runtime capabilities.
-
-ACRYL should initially be implemented as plugins/services/capabilities
-using documented DSH/Cordis extension seams wherever possible.
-
-
-============================================================
-3. DEFINE ACRYL AS CORDIS CAPABILITIES
-============================================================
-
-Investigate how these should be expressed idiomatically as Cordis services.
-
-Candidate capability seams:
-
-    ctx.acryl
-    ctx.relay
-    ctx.agentProviders
-    ctx.context
-    ctx.handoffs
-    ctx.identity
-    ctx.checkpoints
-    ctx.artifacts
-    ctx.capabilities
-    ctx.ui
-    ctx.workspace
-    ctx.tasks
-
-Do NOT blindly implement all of these.
-
-First determine which existing DSH services already cover them.
-
-For each proposed ACRYL capability classify it:
-
-    EXISTING DSH CAPABILITY
-    EXTEND EXISTING CAPABILITY
-    NEW ACRYL CAPABILITY
-    NOT NEEDED
-
-Avoid duplicate abstractions.
-
-
-============================================================
-4. CANONICAL ACRYL EVENT MODEL
-============================================================
-
-DSH already uses durable session events.
-
-Preserve that philosophy.
-
-Adopt this law:
-
-    MODEL-VISIBLE MEANS LOGGED.
-    AGENT-VISIBLE MEANS RELAYABLE.
-
-The canonical state of an ACRYL project should NOT be a model's chat history.
-
-It should be reconstructable from durable events + artifacts.
-
-Think:
-
-    ACRYL Event Stream
-          │
-          ├── DSH agent projection
-          ├── Claude projection
-          ├── Codex projection
-          ├── OpenCode projection
-          ├── Pi projection
-          ├── UI projection
-          ├── memory projection
-          └── analytics / trace projection
-
-Different agents may require different context formats.
-
-Therefore:
-
-    canonical event representation
-        !=
-    model prompt representation
-
-Do not create one mega-format for everything.
-
-Use projections.
-
-
-============================================================
-5. AGENT PROVIDERS / ADAPTERS
-============================================================
-
-ACRYL must eventually support arbitrary coding agents.
-
-Do not encode this as giant conditionals:
-
-    if claude...
-    if codex...
-    if opencode...
-
-Create a narrow provider/capability contract.
-
-Investigate at least three execution classes:
-
-    A. DSH-native agent
-    B. ACP-connected agent
-    C. PTY/CLI agent
-
-Potential later classes:
-
-    API agent
-    MCP-connected agent
-    remote agent
-    container agent
-
-A provider should expose capabilities, not pretend every agent is identical.
-
-For example an adapter may declare:
-
-    execution
-    streaming
-    resume
-    session import/export
-    structured tool events
-    context injection
-    ACP
-    PTY
-    permissions
-    checkpoints
-    model selection
-
-Capability detection is preferable to agent-name branching.
-
-
-============================================================
-6. NATIVE PTY IS IMPORTANT
-============================================================
-
-ACRYL is an ADE.
-
-A critical feature is the ability to run real coding agents exactly as
-developers already use them.
-
-Therefore inspect and reuse DSH:
-
-    PTY
-    subprocess
-    shell
-    job management
-    filesystem
-    sandbox
-
-The goal should eventually allow:
-
-    ACRYL
-      ├── native DSH agent
-      ├── opencode
-      ├── claude
-      ├── codex
-      ├── pi
-      └── arbitrary CLI
-
-inside one persistent project environment.
-
-Do not require every external agent to be rewritten as a DSH agent.
-
-
-============================================================
-7. RELAY / HANDOFF
-============================================================
-
-This is one of ACRYL's defining capabilities.
-
-An agent should be able to leave the project and another should continue.
-
-A handoff should NOT merely be:
-
-    summarize conversation
-
-It should eventually be a structured artifact containing useful state such as:
-
-    objective
-    current task
-    decisions
-    completed work
-    unresolved problems
-    changed files
-    relevant artifacts
-    important tool results
-    constraints
-    tests/status
-    recommended next actions
-    provenance
-
-Design the architecture so handoff representations can evolve.
-
-Do not over-specify the final schema in the first implementation.
-
-
-============================================================
-8. SESSION FORKING / BRANCHING
-============================================================
-
-Investigate DSH session fork semantics carefully.
-
-ACRYL should eventually support:
-
-                         scene
-                           │
-             ┌─────────────┼─────────────┐
-             │             │             │
-          Claude         Codex       DeepSeek
-             │             │             │
-             └────── compare / merge ────┘
-
-This becomes the basis for:
-
-    alternative implementations
-    parallel research
-    review
-    debate
-    Consilium
-    multi-agent work
-
-Reuse DSH lineage/fork primitives where possible.
-
-
-============================================================
-9. MULTI-AGENT ROOM
-============================================================
-
-Investigate DSH experimental Agent Teams before implementing a competing
-orchestration system.
-
-ACRYL eventually wants a persistent room where heterogeneous agents can be
-participants.
-
-Potential concepts:
-
-    agent identity
-    roster
-    task board
-    mailbox
-    shared artifacts
-    messages
-    mentions
-    assignments
-    status
-    handoffs
-
-But first determine what DSH Agent Teams already provides.
-
-Extend rather than duplicate.
-
-
-============================================================
-10. CONTINUOUS MODE
-============================================================
-
-Long term, ACRYL should allow work to continue even when one actor stops.
-
-Example:
-
-    task exists
-       ↓
-    Agent A works
-       ↓
-    Agent A finishes / fails / hits limit
-       ↓
-    ACRYL evaluates remaining task state
-       ↓
-    Agent B can continue
-       ↓
-    verifier/reviewer checks
-       ↓
-    task continues
-
-Do NOT implement uncontrolled autonomous loops now.
-
-Design the primitives required for this later:
-
-    durable tasks
-    agent lifecycle
-    handoff
-    checkpoints
-    resumability
-    permissions
-    budgets
-    failure state
-
-
-============================================================
-11. ACRYL MUST BE SELF-EXTENSIBLE
-============================================================
-
-This is a defining property.
-
-The application should not require its developers to anticipate every
-workflow.
-
-A user should eventually be able to say:
-
-    "Build me a Kanban board for these agents."
-
-or:
-
-    "Whenever a frontend task completes, launch the app, capture screenshots,
-     compare them to the previous version and give me an approval panel."
-
-or:
-
-    "Create a dependency graph viewer for this project."
-
-ACRYL should be capable of creating a NEW VERSIONED CAPABILITY PACKAGE.
-
-Conceptually:
-
-    user need
-       ↓
-    capability builder
-       ↓
-    generate extension
-       ↓
-    validate
-       ↓
-    test
-       ↓
-    sandbox
-       ↓
-    permission review
-       ↓
-    install
-       ↓
-    Cordis/DSH hot activation
-       ↓
-    capability appears
-
-NO rebuild of the complete ADE should be required.
-
-NO restart should be required where Cordis lifecycle/HMR allows safe reload.
-
-
-============================================================
-12. IMPORTANT: SELF-EXTENSION != CORE SELF-MODIFICATION
-============================================================
-
-Do NOT interpret "self-updating" as:
-
-    agent edits random DSH source
-        ↓
-    rebuild
-        ↓
-    hope application still works
-
-The stable kernel should be intentionally boring.
-
-Generated functionality should normally live outside the kernel.
-
-Prefer something like:
-
-    acryl/
-      capabilities/
-        kanban/
-        visual-qa/
-        graph-viewer/
-        custom-workflow/
-
-Each capability should eventually be versionable and reproducible.
-
-If the current extension contract cannot express a requested capability,
-the agent may create:
-
-    CORE EXTENSION PROPOSAL
-
-explaining:
-
-    missing seam
-    why it is needed
-    smallest proposed API
-    compatibility impact
-    tests
-
-But do NOT silently mutate fundamental DSH/Cordis semantics.
-
-
-============================================================
-13. SELF-SURGEON / CAPABILITY BUILDER
-============================================================
-
-Create the architectural concept of a built-in role:
-
-    @self-surgeon
-
-or internally:
-
-    acryl-capability-builder
-
-Its job is to understand:
-
-    Cordis plugin API
-    DSH capability seams
-    ACRYL capability API
-    event model
-    permission model
-    UI schema
-    package format
-    test harness
-    currently installed capabilities
-
-It should be able to answer:
-
-    "Can the current system already do this?"
-
-If yes:
-    compose existing capabilities.
-
-If no:
-    determine whether a new extension can implement it.
-
-Only if impossible:
-    propose a new kernel seam.
-
-The Capability Builder itself should eventually be an evolvable capability,
-not permanently hard-coded intelligence.
-
-
-============================================================
-14. FUNCTIONAL GENERATIVE UI
-============================================================
-
-"Generative UI" must NOT mean decorative AI-generated React.
-
-The generated UI must be connected to real functionality.
-
-A generated capability may contain:
-
-    manifest
-    logic
-    commands/actions
-    state schema
-    event handlers
-    UI description
-    permissions
-    tests
-
-For example:
-
-    kanban/
-      manifest
-      task state
-      move-task action
-      event subscriptions
-      kanban UI
-      permissions
-      tests
-
-The UI is simply a projection/control surface for a real capability.
-
-
-============================================================
-15. UI ARCHITECTURE
-============================================================
-
-Prefer two UI extension classes.
-
-NORMAL / SAFE PATH:
-
-    declarative UI schema
-          ↓
-    trusted ACRYL component registry
-          ↓
-    host renderer
-
-Possible inspiration:
-
-    A2UI
-    OpenUI
-    Flutter GenUI
-
-Do not adopt any of these blindly.
-First determine whether DSH's existing Web Client / conversation-node
-architecture already provides an appropriate primitive.
-
-ADVANCED / POWER PATH:
-
-    sandboxed custom UI module
-          ↓
-    strict ACRYL bridge
-          ↓
-    explicit permissions
-
-Do NOT allow generated code unrestricted access to the browser/Electron/Node
-host.
-
-
-============================================================
-16. CAPABILITY SECURITY
-============================================================
-
-Generated executable functionality must not automatically receive full
-machine authority.
-
-Design toward capability-based permissions such as:
-
-    project.read
-    project.write(patterns)
-
-    process.exec(commands)
-
-    network.allow(hosts)
-
-    git.read
-    git.write
-    git.commit
-
-    agents.dispatch
-
-    artifacts.read
-    artifacts.write
-
-    ui.register
-
-    secrets.read(named-secret)
-
-Reuse DSH permission/sandbox mechanisms whenever possible.
-
-Avoid creating a second security model if DSH already provides the necessary
-primitive.
-
-
-============================================================
-17. CONFIGURATION THROUGH DSH PROFILES / BUNDLES
-============================================================
-
-Explore using DSH composition for ACRYL distributions.
-
-Possible future bundles:
-
-    acryl-base
-    acryl-ade
-    acryl-coding
-    acryl-multi-agent
-    acryl-relay
-    acryl-ui
-    acryl-memory
-    acryl-graph
-    acryl-evolution
-
-A profile might compose:
-
-    dsh-base
-    + acryl-base
-    + acryl-ade
-    + selected agent providers
-    + selected memory provider
-    + selected graph provider
-
-This is important:
-
-ACRYL should offer tools at the user's disposal without forcing one provider.
-
-Examples:
-
-    memory:
-        OpenViking
-        Hindsight
-        Mem0
-        future systems
-
-    code graph:
-        OmniGraph
-        lat.md
-        Graphify
-        future systems
-
-    coding agent:
-        DSH
-        OpenCode
-        Claude
-        Codex
-        Pi
-        future agents
-
-Composition is a product feature.
-
-
-============================================================
-18. CHECKPOINTS
-============================================================
-
-Eventually an ACRYL checkpoint should be richer than chat history.
-
-Think:
-
-    session event boundary
-    +
-    workspace state
-    +
-    active task state
-    +
-    artifacts
-    +
-    runtime capability composition
-    +
-    provider/session references
-
-Possible actions:
-
-    rewind
-    branch
-    compare
-    resume
-    relay
-
-Do not build the entire checkpoint system immediately.
-
-Determine which primitives DSH already exposes.
-
-
-============================================================
-19. CONTEXT ENGINE
-============================================================
-
-Never assume every agent should receive the complete canonical event log.
-
-Architecture:
-
-    canonical ACRYL events
-          ↓
-    context selector
-          ↓
-    compaction
-          ↓
-    provider-specific projection
-          ↓
-    target agent
-
-This should eventually allow:
-
-    stable-prefix optimization
-    token budgeting
-    context compaction
-    memory retrieval
-    code graph retrieval
-    task-specific context
-    agent-specific formatting
-
-The context engine should be replaceable/composable.
-
-
-============================================================
-20. PREFIX CACHE STABILITY
-============================================================
-
-For providers supporting prompt/prefix caching, preserve stable prefixes
-where practical.
-
-Think:
-
-    STABLE:
-        core instructions
-        project identity
-        tool schemas
-        durable project rules
-
-    MUTABLE:
-        latest task
-        recent events
-        retrieved context
-        tool results
-
-Do not optimize prematurely, but avoid architectural decisions that make
-cache-stable projections impossible.
-
-
-============================================================
-21. SELF-EXTENSION AND SELF-EVOLUTION ARE DIFFERENT
-============================================================
-
-Keep these concepts separate.
-
-A. GENERATIVE SELF-EXTENSION
-
-Immediate:
-
-    "I need capability X"
-           ↓
-    capability builder
-           ↓
-    create package
-           ↓
-    test
-           ↓
-    approve
-           ↓
-    hot install
-
-B. SELF-EVOLUTION
-
-Evidence-driven:
-
-    existing capability
-           ↓
-    real usage traces
-           ↓
-    failures / feedback / outcomes
-           ↓
-    optimization
-           ↓
-    candidate vNext
-           ↓
-    regression gates
-           ↓
-    approval
-           ↓
-    upgrade
-
-Do not require GEPA for ordinary capability creation.
-
-
-============================================================
-22. FUTURE EVOLUTION LAB — DSPy + GEPA
-============================================================
-
-Do NOT implement this deeply in the first bootstrap unless it falls out
-naturally.
-
-But design the event/trace system so we can later build:
-
-    ACRYL Evolution Lab
-        DSPy
-        +
-        GEPA
-
-It could optimize:
-
-    capability-builder instructions
-    extension prompts
-    tool descriptions
-    context selection
-    handoff instructions
-    routing policies
-    agent-role prompts
-    UI-generation instructions
-    workflows
-
-Potentially code later, but code evolution requires much stronger gates.
-
-Important architecture rule:
-
-    evolution proposes candidates
-    tests/evals determine viability
-    humans/policy determine adoption
-
-The optimizer must not be the authority that declares itself improved.
-
-
-============================================================
-23. TRACES ARE A PRODUCT ASSET
-============================================================
-
-Design observability carefully.
-
-ACRYL should eventually be able to normalize:
-
-    prompts
-    messages
-    agent transitions
-    tool calls
-    tool results
-    files changed
-    tests
-    approvals
-    failures
-    handoffs
-    outcomes
-    extension usage
-
-into useful traces.
-
-These traces support:
-
-    debugging
-    replay
-    context reconstruction
-    evaluation
-    GEPA/DSPy evolution
-    benchmarking
-    future training datasets
-
-But preserve provenance and privacy boundaries.
-
-
-============================================================
-24. ARCHITECTURE AS CODE
-============================================================
-
-Follow DSH's own engineering philosophy.
-
-Do not let architecture documentation become hand-maintained fiction.
-
-Where practical, generate or verify catalogs such as:
-
-    ACRYL_CAPABILITIES.md
-    ACRYL_EVENTS.md
-    ACRYL_AGENT_PROVIDERS.md
-    ACRYL_EXTENSION_POINTS.md
-    ACRYL_PERMISSION_CATALOG.md
-    ACRYL_MODULE_GRAPH.md
-    ACRYL_PLUGIN_CATALOG.md
-
-Prefer source-derived architecture documentation and CI verification.
-
-
-============================================================
-25. PRODUCT EXPERIENCE
-============================================================
-
-ACRYL is an ADE, not merely a framework.
-
-Eventually the user should experience:
-
-    Projects
-      ↓
-    persistent workspace / room
-      ↓
-    agents
-      ↓
-    tasks
-      ↓
-    terminal / editor / diff / artifacts
-      ↓
-    generated tools/views as needed
-
-The interface should stay calm and minimal.
-
-Do not begin by building a giant IDE.
-
-A minimal ADE surface is enough:
-
-    project/workspace
-    conversation
-    agent selector
-    PTY
-    task state
-    artifacts
-    extension/capability surface
-
-More UI should increasingly be supplied through capabilities.
-
-
-============================================================
-26. FIRST BOOTSTRAP EXPERIMENT
-============================================================
-
-We are not asking you to implement the final ACRYL.
-
-We are asking you to prove that DSH + Cordis can become ACRYL.
-
-The first milestone should demonstrate FOUR things:
-
-1. ACRYL exists as a clean plugin/bundle/profile layer on DSH.
-
-2. A persistent ACRYL project/room can launch at least:
-       - one DSH-native agent
-       - one external PTY or ACP coding agent
-
-3. A minimal durable ACRYL event/handoff representation allows work/state
-   to survive switching between those actors.
-
-4. ACRYL can create/install/hot-activate ONE tiny generated capability
-   without modifying/rebuilding the DSH core.
-
-The fourth proof is crucial.
-
-Choose something small.
-
-For example:
-
-    generated task board
-    generated notes panel
-    generated session inspector
-    generated agent-status view
-
-It must include some FUNCTIONAL behavior, not merely static UI.
-
-
-============================================================
-27. YOUR FIRST ACTION: STUDY BEFORE CODING
-============================================================
-
-Before modifying code:
-
-Read carefully:
-
-    docs/architecture.md
-    docs/development.md
-    Cordis primer
-    Cordis tutorial
-    DSH configuration docs
-
-Then inspect source for:
-
-    sessions
-    session fork
-    agent teams
-    subagents
-    PTY
-    shell
-    subprocess
-    permissions
-    sandbox
-    persistence
-    Web Client
-    conversation nodes
-    plugin loading
-    HMR
-    profiles
-    bundles
-    patches
-
-Also inspect relevant:
-
-    .agents/notes/implemented/architecture/
-    .agents/notes/implemented/process/
-
-These notes are especially important.
-
-We want to understand WHY DSH architecture exists before adding ACRYL.
-
-
-============================================================
-28. PRODUCE AN ARCHITECTURAL GAP ANALYSIS
-============================================================
-
-Create:
-
-    docs/acryl/ACRYL_DSH_GAP_ANALYSIS.md
-
-For every desired ACRYL primitive document:
-
-    requirement
-    existing DSH primitive
-    relevant Cordis primitive
-    reusable as-is?
-    extension required?
-    missing seam?
-    proposed minimal implementation
-    risk
-
-Include at least:
-
-    project/room
-    canonical events
-    agent provider
-    PTY agent
-    ACP agent
-    handoff
-    context projection
-    checkpoint
-    multi-agent team
-    tasks
-    artifacts
-    extension package
-    dynamic UI
-    permissions
-    hot activation
-
-
-============================================================
-29. CREATE THE CONCEPT SPEC
-============================================================
-
-Then create:
-
-    docs/acryl/ACRYL_CONCEPT.md
-
-It should describe:
-
-    vision
-    non-goals
-    architecture
-    DSH/Cordis relationship
-    event model
-    provider model
-    extension model
-    UI model
-    security
-    project lifecycle
-    relay/handoff
-    multi-agent roadmap
-    self-extension
-    self-evolution
-    open questions
-
-
-============================================================
-30. CREATE A CONCRETE ROADMAP
-============================================================
-
-Create:
-
-    docs/acryl/ACRYL_ROADMAP.md
-
-Suggested progression:
-
-    ACRYL-0
-    Architecture/gap analysis
-
-    ACRYL-1
-    ACRYL Cordis plugin + project identity + durable state
-
-    ACRYL-2
-    external PTY agent provider
-
-    ACRYL-3
-    relay/handoff between DSH-native + external agent
-
-    ACRYL-4
-    capability package format + loader
-
-    ACRYL-5
-    first self-generated functional capability + hot activation
-
-    ACRYL-6
-    minimal ADE UI
-
-    ACRYL-7
-    ACP provider
-
-    ACRYL-8
-    multi-agent room / DSH Agent Teams integration
-
-    ACRYL-9
-    context engine / memory / graph seams
-
-    ACRYL-10
-    checkpoints / branch / compare / Consilium
-
-    ACRYL-11
-    Continuous Mode
-
-    ACRYL-12
-    trace/evaluation infrastructure
-
-    ACRYL-13
-    DSPy/GEPA Evolution Lab
-
-You may revise this ordering if source analysis shows a better dependency
-structure.
-
-Explain every revision.
-
-
-============================================================
-31. THEN IMPLEMENT ONLY THE FIRST VERTICAL SLICE
-============================================================
-
-After the architecture documents exist, implement the smallest useful
-vertical slice.
-
-Do NOT disappear into months of framework design.
-
-Prefer a walking skeleton.
-
-Target:
-
-    start DSH with ACRYL profile
-         ↓
-    create/open ACRYL project
-         ↓
-    durable ACRYL project identity exists
-         ↓
-    DSH native actor can participate
-         ↓
-    external PTY actor can be launched
-         ↓
-    events are captured
-         ↓
-    actor can be switched
-         ↓
-    minimal handoff is generated/read
-         ↓
-    project remains the same
-
-If feasible within the same iteration, add the smallest dynamic capability
-proof.
-
-Otherwise document it as the immediate next milestone.
-
-
-============================================================
-32. TEST THE THESIS, NOT JUST THE CODE
-============================================================
-
-At the end, answer these questions explicitly:
-
-    Q1.
-    Can ACRYL live mostly OUTSIDE the DSH core?
-
-    Q2.
-    Are Cordis services/plugins powerful enough for the ACRYL capability model?
-
-    Q3.
-    Can external coding agents be represented cleanly without pretending
-    they are DSH-native agents?
-
-    Q4.
-    Can DSH session/event primitives serve as the canonical foundation
-    for cross-agent continuity?
-
-    Q5.
-    Can a capability be installed/activated dynamically without rebuilding
-    the whole application?
-
-    Q6.
-    Can generated functional UI be added without injecting arbitrary code
-    into the trusted host?
-
-    Q7.
-    What is genuinely missing from DSH/Cordis?
-
-    Q8.
-    What is the SMALLEST upstream/core seam we would need to add?
-
-These answers matter more than feature count.
-
-
-============================================================
-33. ARCHITECTURAL LAWS
-============================================================
-
-Unless source evidence demonstrates they are wrong, preserve these laws:
-
-LAW 1
-    ACRYL owns continuity.
-    Agents perform work.
-
-LAW 2
-    Canonical state is durable and agent-independent.
-
-LAW 3
-    Agent-specific context is a projection.
-
-LAW 4
-    Prefer Cordis composition over DSH core modification.
-
-LAW 5
-    Generated capabilities live outside the stable kernel.
-
-LAW 6
-    Generated executable code receives explicit capabilities/permissions.
-
-LAW 7
-    Generated UI normally uses trusted declarative components.
-
-LAW 8
-    Everything generated is versioned and reproducible.
-
-LAW 9
-    Self-extension and self-evolution are separate systems.
-
-LAW 10
-    Evolution proposes; evaluation gates; policy/human approves.
-
-LAW 11
-    Never create an agent-name switch statement where a capability seam
-    would work.
-
-LAW 12
-    Do not rebuild functionality DSH already provides.
-
-LAW 13
-    If the extension contract is insufficient, propose the smallest new seam.
-
-LAW 14
-    Keep the kernel intentionally boring.
-
-LAW 15
-    ACRYL must remain capable of running coding agents that do not know ACRYL
-    exists.
-
-
-============================================================
-34. WORK AUTONOMOUSLY, BUT LEAVE AN AUDIT TRAIL
-============================================================
-
-You are allowed to inspect, create files, implement plugins, run tests,
-refactor experimental ACRYL code, and use DSH's own facilities.
-
-Maintain:
-
-    docs/acryl/ACRYL_DECISIONS.md
-
-Record important architectural decisions as:
-
-    context
-    alternatives
-    decision
-    evidence
-    consequences
-
-Do not silently make foundational decisions.
-
-
-============================================================
-35. BEGIN
-============================================================
-
-Start now.
-
-Phase 1:
-    understand DSH + Cordis architecture.
-
-Phase 2:
-    write the gap analysis.
-
-Phase 3:
-    define ACRYL concept and roadmap.
-
-Phase 4:
-    identify the smallest vertical slice.
-
-Phase 5:
-    implement it.
-
-Phase 6:
-    run tests and demonstrate it.
-
-Do not optimize for the amount of code written.
-
-Optimize for proving this thesis:
-
-    DeepSeek Harness + Cordis can become the stable substrate for a
-    self-extensible, agent-agnostic Agentic Development Environment
-    where project context persists independently of whichever coding
-    agent is currently doing the work.
-
-And the eventual experience should feel almost paradoxical:
-
-    ACRYL starts small.
-
-    The user works.
-
-    The system discovers missing capabilities.
-
-    Coding agents build those capabilities as extensions.
-
-    Cordis activates them.
-
-    The ADE grows around the user's actual workflow.
-
-    Yet the kernel remains small, understandable and stable.
+# ACRYL Orientation for Coding Agents
+
+**Project:** ACRYL - Agent Context Relay Yielding Lifecycles
+
+**Repository:** <https://github.com/acryldev/acryl>
+
+**Website:** <https://acryl.dev>
+
+**Status snapshot:** 2026-08-30, public foundation v0.1.9
+
+This is the entry point for a coding agent joining ACRYL. It explains the
+product thesis, the runtime model, what exists today, what remains planned, and
+how to make changes without creating a second architecture beside Cordis.
+
+This file is an orientation, not a complete API reference. Follow its links to
+the owning specifications and source before implementation.
+
+## 1. Mission
+
+ACRYL is a local-first, agent-agnostic Agentic Development Environment and
+continuity layer for software work.
+
+```text
+One persistent development environment.
+One persistent project context.
+Any coding agent.
+Agents may come and go.
+The work continues.
+```
+
+The project does not belong to Claude Code, Codex, OpenCode, Pi, Gemini CLI,
+DeepSeek, or any other agent. ACRYL owns the persistent project, room, context,
+tasks, artifacts, identities, and handoffs. Agent sessions are replaceable
+workers entering and leaving the same development scene.
+
+```text
+Same project
+Same context
+Same work
+Different agents
+```
+
+ACRYL must remain capable of operating agents that do not know ACRYL exists.
+Native Harness agents, ACP agents, structured protocol adapters, and ordinary
+PTY/CLI tools are all valid execution classes. Provider capabilities, not agent
+names, determine what ACRYL may safely do with each runtime.
+
+## 2. Source-of-truth hierarchy
+
+When documents disagree, use this order:
+
+1. [`AGENTS.md`](../../AGENTS.md) for repository operating rules.
+2. [The ACRYL constitution](../../.specify/memory/constitution.md) for product
+   and architecture law.
+3. The active feature's `spec.md`, `plan.md`, `tasks.md`, contracts, and evidence
+   under [`specs/`](../../specs/).
+4. [The Cordis system guide](../cordis/cordis_system_guide_for_coding_agents.md)
+   and the pinned `deepseek-harness/` documentation and package source for
+   runtime behavior.
+5. [The agent control-surface constraints](../acryl/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md)
+   and [current alignment audit](../cordis/acryl_cordis_alignment_audit.md) for
+   ACRYL-specific Cordis decisions.
+6. Owning package types, source, Loader composition, and tests.
+7. This orientation and the root README as maps of the current product.
+
+The pinned local Harness revision is authoritative over generic Cordis examples
+or newer public Harness documentation. Chat history is not architecture.
+Record durable decisions in the repository.
+
+## 3. The runtime model
+
+ACRYL continues key architecture from DeepSeek Harness while remaining an
+independent product:
+
+```text
+ACRYL product surfaces
+        |
+        +-- Desktop
+        +-- TUI / CLI
+        +-- explicit local Web surface
+        |
+ACRYL-owned capabilities and compositions
+        |
+DeepSeek Harness capability substrate
+        |
+Cordis lifecycle and composition runtime
+        |
+Node.js / Electron / operating system
+```
+
+The architectural rule is composition over duplication:
+
+- Cordis owns plugin lifecycle, services, injection, effects, events, Fibers,
+  scopes, configuration, Loader reconciliation, and HMR.
+- Harness provides reusable agent-runtime semantics such as sessions, agents,
+  tools, LLMs, prompts, subprocesses, PTYs, filesystems, sandboxing, approvals,
+  jobs, and Web composition.
+- ACRYL provides the product identity and the missing continuity, control,
+  context-relay, workspace, and multi-surface capabilities.
+- Electron is a host adapter and presentation boundary, not a second plugin
+  runtime.
+
+`deepseek-harness/` is a pinned, read-only upstream submodule. Reuse it through
+published capability seams and explicit patches. Update its pin deliberately;
+do not edit its source from an ACRYL feature branch.
+
+## 4. Cordis laws for every implementation
+
+The product is a plugin tree. Every practical capability must fit that model.
+
+1. **Plugin equals lifecycle unit.** Use a plugin when behavior needs independent
+   activation, configuration, replacement, or cleanup.
+2. **Context equals scoped capability environment.** Resolve capabilities from
+   `ctx`, not hidden globals.
+3. **`inject` equals live dependency contract.** Required consumers enter
+   `PENDING` when a provider is absent and reactivate when the provider returns
+   or changes.
+4. **Registration equals ownership.** Cordis-managed registrations belong to
+   their Fiber. Acquire raw timers, watchers, sockets, PTYs, subprocesses,
+   routes, and subscriptions inside one owning `ctx.effect()` and return full,
+   idempotent cleanup.
+5. **Services are for direct operations.** Events are for open observation or
+   deliberate interception. A waterfall observer calls `next()` unless it is
+   intentionally vetoing or replacing downstream behavior.
+6. **Loader configuration is desired composition.** Use stable row IDs,
+   validated runtime config, and explicit scopes. YAML order is not dependency
+   order.
+7. **Provider replacement is normal.** Consumers depend on stable interfaces,
+   never concrete providers. Do not retain provider references beyond an
+   activation episode.
+8. **Durable facts are not live events.** Model-visible or replay-critical facts
+   belong in durable session or ACRYL room state. Live Cordis events coordinate
+   the current process.
+9. **A Tool is a consumer.** A model-facing Tool injects `tools`, registers via
+   `defineTool(...)`, returns canonical typed values separately from rendering,
+   honors cancellation, traverses policy, and disappears on unload.
+10. **Cordis isolation is not an OS sandbox.** Security authority comes from
+    explicit permission, process, filesystem, sandbox, and host boundaries.
+
+Current Fiber states are `PENDING`, `LOADING`, `ACTIVE`, `FAILED`, `UNLOADING`,
+and `DISPOSED`. Missing dependencies are a valid `PENDING` state, not a startup
+race to hide with sleeps or retries.
+
+## 5. Canonical state and context relay
+
+ACRYL follows these laws:
+
+```text
+MODEL-VISIBLE MEANS LOGGED.
+AGENT-VISIBLE MEANS RELAYABLE.
+```
+
+The canonical project state is not any vendor's native chat. It must be
+reconstructable from durable events and artifacts. Agent prompts and histories
+are projections from that state.
+
+```text
+canonical room/session events + tasks + decisions + artifacts + workspace state
+                                  |
+                         context compiler
+                                  |
+                 provider-specific, budgeted packet
+                                  |
+                     target agent or runtime
+```
+
+A PTY transcript is useful evidence, but raw terminal output is not canonical
+semantic history. Sending bytes to a PTY proves delivery only. It does not prove
+that the target understood, accepted, or persisted the context.
+
+Keep identities separate:
+
+- presentation identity, such as a Canvas tab;
+- canonical ACRYL worker identity;
+- one live runtime/process identity;
+- provider-scoped session reference;
+- transport-private PTY handle.
+
+A provider session reference may support resume. It never becomes the owner of
+room history or task state.
+
+## 6. What exists now
+
+ACRYL is in active early development, but it is no longer only a bootstrap
+proposal.
+
+### 6.1 Public product surfaces
+
+- **Desktop:** `acryl-desktop` owns the Electron bootstrap, Cordis Host and
+  Client faces, native adapters, profile management, packaging, and Desktop UI.
+- **Terminal:** `acryl-tui` owns the canonical `acryl` command and terminal
+  experience.
+- **Local Web:** `acryl web` starts an explicit local Web runtime. It is not a
+  hosted cloud service and does not run implicitly.
+- **npm:** `npm install -g acryl` is the canonical CLI installation path. The
+  public package is `acryl`; internal workspace package names are implementation
+  details.
+- **Release:** v0.1.9 is the current public release snapshot. Desktop and CLI
+  distribution are separate so installing one does not silently install or
+  start another surface.
+
+### 6.2 Cordis-owned application composition
+
+- `acryl-control` provides host-neutral ACRYL control-plane capabilities.
+- `acryl-harness-runtime` integrates ACRYL behavior with Harness capability
+  seams while remaining outside the pinned upstream checkout.
+- `acryl-desktop` composes Host and Client behavior through Cordis rather than
+  a parallel Electron plugin system.
+- `acryl-development-canvas` is a standalone Host/Client plugin contributing
+  the Development Canvas through a stable Loader row and owned lifecycle.
+- `dsh-community-market` is an optional private Host/Client Market provider,
+  disabled by default and composed through normal Cordis, profile, and Desktop
+  service contracts.
+- `dsh-community-fabric` remains a private interoperability RFC scaffold. It is
+  not a loadable runtime or a second plugin framework.
+
+### 6.3 Development Canvas and terminals
+
+The Development Canvas is the emerging primary workspace surface. It currently
+supports real terminal-backed work and is designed to host agent sessions,
+files/editors, browser views, and future capability-provided tools.
+
+Its PTY lifecycle, Host routes, Client slot contribution, terminal handles, and
+cleanup are Cordis-owned and tested. The current brand-oriented agent command
+catalog remains transitional. Do not promote Canvas command names or PTY IDs
+into the canonical provider, identity, relay, or resume model.
+
+### 6.4 Lifecycle control and reload
+
+ACRYL has progressed from restart-oriented experiments to in-place plugin
+lifecycle control. Plugin changes should reconcile through the owning Cordis
+Fiber and Loader generation where the capability permits HOT replacement.
+Binary, native ABI, signing, preload, or Electron-host changes may still require
+WARM generation restart or COLD application replacement.
+
+Classify mutations explicitly:
+
+- **HOT:** plugin remount or provider replacement in the live process;
+- **WARM:** controlled Host/Web generation restart;
+- **COLD:** executable, native module, entitlement, installer, or host swap.
+
+### 6.5 Distribution foundation
+
+The repository has an npm CLI, Desktop installers, portable CLI archive work,
+checksum generation, and a release matrix designed to verify targets before
+publication. The current release-foundation status and remaining authoritative
+matrix work are tracked in [`docs/RELEASE-FOUNDATION-HANDOFF.md`](../RELEASE-FOUNDATION-HANDOFF.md).
+Do not describe a target as proven merely because configuration for it exists.
+
+## 7. What is still being built
+
+Do not confuse architecture direction with shipped functionality.
+
+The durable cross-agent room, canonical ACRYL event stream, complete handoff
+workflow, provider-neutral `acrAgentControl` seam, ACP provider, multi-agent
+room, context engine, checkpoints, Continuous Mode, generated capability
+pipeline, and evidence-driven evolution remain staged work across
+[`specs/`](../../specs/).
+
+In particular:
+
+- Development Canvas is a working terminal/UI foundation, not yet the complete
+  agent-agnostic control surface.
+- PTY is the universal low-fidelity fallback, not proof of structured messages,
+  tool events, acknowledgement, or resume.
+- The planned room must resolve ownership between Harness durable sessions and
+  any ACRYL-owned room projection before implementation.
+- ACRYL should reuse Harness sessions, subagents, Agent Teams, terminals,
+  subprocesses, sandbox, approvals, and dynamic composition wherever their
+  contracts fit.
+- Generated executable capabilities require versioning, provenance,
+  least-privilege permissions, tests, approval, and rollback. Decorative
+  generated UI alone is not a capability.
+- Self-extension and self-evolution are separate. Evolution proposes candidates;
+  tests and evaluations gate them; policy or a human approves adoption.
+
+The roadmap stubs are destinations, not authorization to implement every layer
+at once. Work only on the active vertical slice.
+
+## 8. Repository map
+
+```text
+acryl-control/              Host-neutral control-plane capabilities
+acryl-harness-runtime/      ACRYL integration with Harness runtime seams
+acryl-tui/                  Canonical terminal client and `acryl` command
+acryl-desktop/              Electron, Host/Client composition, native UI, release
+acryl-development-canvas/   Composable workspace and PTY surface
+dsh-community-market/       Optional private Market provider
+dsh-community-fabric/       Interoperability RFC scaffold only
+deepseek-harness/           Pinned read-only upstream submodule
+docs/acryl/                 ACRYL architecture constraints and analysis
+docs/cordis/                Operational Cordis guidance and audits
+specs/                      Feature truth: specification, plan, tasks, evidence
+.agents/notes/              Implemented architecture and process records
+```
+
+The outer repository is a PNPM 11.7.0 workspace. Use `corepack pnpm` for owned
+packages. The pinned Harness submodule remains its own independent upstream
+workspace and is entered only through the root `upstream:*` wrappers.
+
+## 9. Required onboarding sequence
+
+Before changing code:
+
+1. Read [`AGENTS.md`](../../AGENTS.md) and the
+   [constitution](../../.specify/memory/constitution.md).
+2. Read this orientation and the root [`README.md`](../../README.md).
+3. Read the active feature's complete `spec.md`, `plan.md`, `tasks.md`,
+   contracts, research, and evidence.
+4. For any plugin, service, provider, Tool, route, event, Client contribution,
+   or Loader change, read the complete
+   [Cordis system guide](../cordis/cordis_system_guide_for_coding_agents.md).
+5. Inspect the owning pinned Harness subsystem documentation, package types,
+   source, and tests. Reuse before inventing.
+6. For agent-runtime, Canvas, context-relay, or third-party adapter work, read
+   [the control-surface design](../acryl/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md)
+   and [alignment audit](../cordis/acryl_cordis_alignment_audit.md).
+7. Inspect current git status and recent commits. Preserve concurrent work and
+   never edit the pinned submodule from a product feature.
+8. Write the six-part Cordis mini-design in the active plan before
+   implementation:
+   - capability and plugin boundary;
+   - provides and consumes;
+   - effects and disposal;
+   - configuration and composition;
+   - events and durability;
+   - verification under PENDING, replacement, reload, and disposal.
+9. Implement the smallest end-to-end vertical slice and keep each package
+   boundary aligned with its owning capability.
+10. Verify the real Loader composition and lifecycle, not only isolated helper
+    functions.
+
+## 10. Verification standard
+
+Use run-once checks. Inspect scripts before invoking them.
+
+For an ordinary root change, the available progression is:
+
+```sh
+corepack pnpm typecheck
+corepack pnpm test
+corepack pnpm verify
+corepack pnpm check
+```
+
+Use the narrowest relevant checks during development and the complete applicable
+gate before handoff. Packaging, release, and platform work must also run their
+own package-specific verification.
+
+For a Cordis capability, completion requires evidence for:
+
+- real Loader activation;
+- valid `PENDING` behavior when a required service is absent;
+- reactivation when that service appears;
+- provider replacement without stale references;
+- full disposal and quiescence of owned resources;
+- repeated mount/reload without duplicate registrations or leaks;
+- cancellation of in-flight work;
+- durable handling of replay-critical facts;
+- honest degradation when a transport has lower fidelity.
+
+Passing a startup test is not sufficient.
+
+## 11. Development and release boundaries
+
+- Use `corepack pnpm`, not npm, to install or run the repository workspace.
+  `npm install -g acryl` is for consumers of the published CLI.
+- Keep build, typecheck, test, and Loader smoke paths headless-safe. Launch the
+  graphical app only through explicit development or lifecycle commands.
+- The isolated Desktop development entrypoint is `corepack pnpm dev` or
+  `corepack pnpm dev:local`; it uses `~/.dsh-acryl` and separate Electron user
+  data.
+- Commit coherent implementation checkpoints promptly. A release behavior
+  commit and its `docs/DEVELOPMENT-LOG.md` record are separate checkpoints.
+- Keep submodule pin updates separate from ACRYL behavior changes.
+- Treat signing, notarization, credentials, and npm browser authentication as
+  explicit human-controlled release boundaries.
+- Publish only verified artifacts. Configuration or an uploaded file is not
+  evidence that an install works.
+
+## 12. Architectural laws
+
+Preserve these unless source evidence and an explicit decision amend them:
+
+1. ACRYL owns continuity. Agents perform work.
+2. Agent sessions are disposable. Project and room context are persistent.
+3. Canonical state is durable and agent-independent.
+4. Agent-specific context is a projection.
+5. Prefer Cordis composition over Harness core modification.
+6. Reuse Harness capabilities before creating ACRYL twins.
+7. Generated capabilities live outside the stable kernel.
+8. Generated executable code receives explicit, least-privilege authority.
+9. Generated UI controls real capabilities through trusted host seams.
+10. Everything generated is versioned, reproducible, testable, and auditable.
+11. Self-extension and self-evolution remain separate systems.
+12. Evolution proposes; evaluation gates; policy or a human approves.
+13. Capability truth replaces agent-name branching.
+14. If an extension contract is insufficient, propose the smallest new seam.
+15. Keep the kernel intentionally boring.
+16. Preserve the ability to run agents that do not know ACRYL exists.
+
+## 13. How to leave the project better
+
+A completed coding-agent contribution should leave:
+
+- source and tests in the owning package;
+- lifecycle and replacement evidence;
+- updated active spec artifacts when scope or contracts changed;
+- an explicit decision record for foundational choices;
+- an accurate development-log entry tied to the implementation commit;
+- no hidden architecture in private chat;
+- no stale resources, duplicate registrations, or accidental edits to
+  concurrent work.
+
+Optimize for proving the product thesis, not for maximizing code volume:
+
+```text
+ACRYL starts small.
+The user works.
+Missing capabilities become explicit.
+Agents build versioned capabilities through stable seams.
+Cordis activates and can withdraw them.
+The environment grows around real workflows.
+The kernel remains small, understandable, and stable.
+```
