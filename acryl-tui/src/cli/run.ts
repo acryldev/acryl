@@ -66,6 +66,30 @@ export async function runAcryl(
   const dependencies = { ...defaults, ...supplied }
   const invocation = parseAcrylArgs(args)
 
+  if (invocation.help) {
+    dependencies.write(
+      [
+        'ACRYL - Agent Context Relay Yielding Lifecycles',
+        '',
+        `Usage: acryl [command] [options]`,
+        '',
+        'Commands:',
+        '  tui    Run the terminal client (default)',
+        '  web    Serve the local ACRYL web runtime',
+        '  gui    [reserved] launch the Desktop surface (not wired in this build)',
+        '',
+        'Options:',
+        '  -h, --help          Show this help',
+        '  -v, --version       Print the ACRYL version',
+        '  --json              Emit machine-readable output',
+        '  --profile <name>    Use a named ACRYL profile',
+        '  --resume <id>       Resume a session',
+        '',
+      ].join('\n'),
+    )
+    return
+  }
+
   if (invocation.version) {
     dependencies.write(ACRYL_VERSION)
     return

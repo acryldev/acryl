@@ -4,6 +4,7 @@ export interface AcrylInvocation {
   readonly command: AcrylHostCommand
   readonly json: boolean
   readonly version: boolean
+  readonly help: boolean
   readonly profile?: string
   readonly resumeSessionId?: string
 }
@@ -22,12 +23,18 @@ export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
   let resumeSessionId: string | undefined
   let json = false
   let version = false
+  let help = false
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]
     if (argument === undefined) continue
     if (argument === '--version' || argument === '-v') {
       if (version) throw new Error('--version may be provided only once')
       version = true
+      continue
+    }
+    if (argument === '--help' || argument === '-h') {
+      if (help) throw new Error('--help may be provided only once')
+      help = true
       continue
     }
     if (argument === '--profile') {
@@ -65,13 +72,14 @@ export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
     throw new Error(`unexpected argument for ${command}: ${argument}`)
   }
   const resolvedCommand = command ?? 'tui'
-  if (!version && profile === undefined && resumeSessionId === undefined) {
-    return { command: resolvedCommand, json, version }
+  if (!version && !help && profile === undefined && resumeSessionId === undefined) {
+    return { command: resolvedCommand, json, version, help }
   }
   return {
     command: resolvedCommand,
     json,
     version,
+    help,
     ...(profile === undefined ? {} : { profile }),
     ...(resumeSessionId === undefined ? {} : { resumeSessionId }),
   }

@@ -12,9 +12,21 @@
  * Auth: the caller must supply `NPM_TOKEN` (or `NODE_AUTH_TOKEN`), which is
  * wired into npm's registry auth via a private userconfig. Pass `--dry-run` to
  * validate assembly without publishing.
+ *
+ * Dependency closure: the published package MUST carry the full production
+ * runtime closure that the Cordis Loader resolves at boot. The DSH profile
+ * bundle (dsh-base / dsh) declares plugin packages such as
+ * `@deepseek-ai/cordis-plugin-timer`, `-hmr`, `@deepseek-ai/dsh-typert-loader`,
+ * `dsh-subprocess-local`, and `dsh-sandbox-local`. `acryl-tui/package.json`
+ * does not list these directly, and npm does not reproduce the workspace's
+ * pnpm resolution, so a package built only from `acryl-tui`'s dependency list
+ * silently omits them — an external `npm install -g acryl` then fails to apply
+ * the loader entry include. We therefore derive the publish manifest's
+ * dependency map from the actual deployed production closure (the same closure
+ * the proven portable CLI archive uses) instead of the hand-curated subset.
  */
 import { execFileSync } from 'node:child_process'
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -24,37 +36,128 @@ const tuiDir = join(root, 'acryl-tui')
 const srcPkg = JSON.parse(readFileSync(join(tuiDir, 'package.json'), 'utf8'))
 const version = process.env.ACRYL_NPM_VERSION ?? srcPkg.version
 const dryRun = process.argv.includes('--dry-run')
+const packOnly = process.argv.includes('--pack-only')
 const staging = mkdtempSync(join(tmpdir(), 'acryl-npm-'))
+
+/** Workspace-internal packages that are bundled into lib/bin.js and never published. */
+const INTERNAL_WORKSPACE_PACKAGES = new Set([
+  'acryl-control',
+  'acryl-harness-runtime',
+  'acryl-development-canvas',
+  'dsh-community-market',
+  'dsh-community-fabric',
+])
+
+/** True when a package.json is a platform-specific native addon (os/cpu-scoped).
+ *  These are pulled transitively by their parent (e.g. @koromix/koffi-*, @img/sharp-*),
+ *  so npm selects the right one per platform; they must NOT be flattened into the
+ *  top-level dependency map (a foreign os/cpu entry would fail an npm install). */
+function isPlatformNative(manifest) {
+  return Boolean(manifest?.os) || Boolean(manifest?.cpu)
+}
+
+/** Walk a node_modules tree and collect every package name -> version.
+ *  Handles both the top-level (hoisted/legacy) layout and pnpm's `.pnpm` store. */
+function collectManifests(nodeModules) {
+  const found = []
+  // Helper: given a dir that contains packages (a node_modules folder), read
+  // each package (plain, or @scope/name) and record its manifest path.
+  const scanDir = (dir) => {
+    let entries = []
+    try { entries = readdirSync(dir) } catch { return }
+    for (const entry of entries) {
+      if (entry.startsWith('.')) continue
+      const full = join(dir, entry)
+      if (entry.startsWith('@')) {
+        for (const sub of readdirSafe(full)) {
+          const pj = join(full, sub, 'package.json')
+          if (existsSync(pj)) found.push([`${entry}/${sub}`, pj])
+        }
+      } else if (existsSync(join(full, 'package.json'))) {
+        found.push([entry, join(full, 'package.json')])
+      }
+    }
+  }
+  scanDir(nodeModules)
+  // pnpm virtual store: node_modules/.pnpm/<name@version>/node_modules/<name>
+  const pnpmStore = join(nodeModules, '.pnpm')
+  if (existsSync(pnpmStore)) {
+    for (const entry of readdirSafe(pnpmStore)) {
+      if (entry.startsWith('.')) continue
+      const inner = join(pnpmStore, entry, 'node_modules')
+      if (existsSync(inner)) scanDir(inner)
+    }
+  }
+  return found
+}
+
+function readdirSafe(dir) {
+  try { return readdirSync(dir) } catch { return [] }
+}
+
+/** Derive the complete production dependency map from the deployed closure. */
+function deriveProductionClosure(deployDir) {
+  const nodeModules = join(deployDir, 'node_modules')
+  const deps = {}
+  for (const [name, pj] of collectManifests(nodeModules)) {
+    if (INTERNAL_WORKSPACE_PACKAGES.has(name)) continue
+    let manifest
+    try { manifest = JSON.parse(readFileSync(pj, 'utf8')) } catch { continue }
+    if (!manifest.version) continue
+    if (isPlatformNative(manifest)) continue        // transitive-per-platform
+    deps[name] = manifest.version
+  }
+  // The Loader must be able to resolve the core Cordis runtime as a peer.
+  if (!deps['@deepseek-ai/cordis']) {
+    deps['@deepseek-ai/cordis'] = srcPkg.devDependencies?.['@deepseek-ai/cordis'] ?? '4.0.1'
+  }
+  return deps
+}
 
 try {
   // 0. Build so the published `lib/bin.js` contains the corrected symlink-aware
-  //    entrypoint (the regression that shipped in npm `acryl@0.1.8`).
-  execFileSync('corepack', ['pnpm', '--filter', 'acryl-tui', 'exec', 'tsdown', '--config', 'tsdown.publish.config.ts'], {
+  //    entrypoint (the regression that shipped in npm `acryl@0.1.8`), and so the
+  //    internal workspace packages (acryl-control / acryl-harness-runtime) are
+  //    inlined rather than needed at runtime.
+  execFileSync('corepack', ['pnpm', '--filter', 'acryl-tui', 'run', 'build'], {
     stdio: 'inherit',
+    env: { ...process.env, CI: 'true' },
+  })
+
+  // 0b. Materialize the real production closure (same source as the portable
+  //     archive) so the published dependency map is complete and npm-accurate.
+  const deployDir = join(staging, 'deploy')
+  mkdirSync(deployDir, { recursive: true })
+  execFileSync('corepack', ['pnpm', '--filter', 'acryl-tui', 'deploy', deployDir, '--prod', '--legacy'], {
+    stdio: 'ignore',
     env: { ...process.env, CI: 'true' },
   })
 
   // 1. Assemble the publishable `acryl` package from the built acryl-tui.
   const dir = join(staging, 'pkg')
   mkdirSync(dir, { recursive: true })
-  cpSync(join(tuiDir, 'lib-publish'), join(dir, 'lib'), { recursive: true })
+  cpSync(join(tuiDir, 'lib'), join(dir, 'lib'), { recursive: true })
   if (existsSync(join(tuiDir, 'README.md'))) {
     cpSync(join(tuiDir, 'README.md'), join(dir, 'README.md'))
   }
 
-  // The runtime needs core @deepseek-ai/cordis (a peer of the dsh packages). It
-  // is a devDependency of acryl-tui, so the published manifest must declare it
-  // as a prod dependency rather than relying on npm's auto-install-peers.
-  const dependencies = { ...(srcPkg.dependencies ?? {}) }
-  // Strip internal pnpm workspace:* deps (acryl-control, acryl-harness-runtime).
-  // These are bundled into lib/bin.js by tsdown and are NOT published to npm, so
-  // a `workspace:*` protocol in the published manifest breaks external installs
-  // (npm cannot resolve it in the public registry).
-  for (const k of Object.keys(dependencies)) {
-    if (dependencies[k] === 'workspace:*') delete dependencies[k]
-  }
-  if (!dependencies['@deepseek-ai/cordis']) {
-    dependencies['@deepseek-ai/cordis'] = srcPkg.devDependencies?.['@deepseek-ai/cordis'] ?? '4.0.1'
+  const dependencies = deriveProductionClosure(deployDir)
+
+  // Gate: the Cordis Loader resolves these entries by package name at boot. If
+  // any is absent from the published dependency map, an external
+  // `npm install -g acryl` fails to apply the loader entry include (the exact
+  // bug this fixes). Refuse to assemble/publish a package with an incomplete
+  // runtime closure.
+  const REQUIRED_LOADER_ENTRIES = [
+    '@deepseek-ai/cordis-plugin-timer',
+    '@deepseek-ai/cordis-plugin-hmr',
+    '@deepseek-ai/dsh-typert-loader',
+    '@deepseek-ai/dsh-subprocess-local',
+    '@deepseek-ai/dsh-sandbox-local',
+  ]
+  const missing = REQUIRED_LOADER_ENTRIES.filter((k) => !dependencies[k])
+  if (missing.length) {
+    throw new Error(`publish-npm-cli: incomplete runtime closure; missing loader entries: ${missing.join(', ')}`)
   }
 
   const publishPkg = {
@@ -77,7 +180,21 @@ try {
   if (dryRun) {
     console.log(`dry-run: would publish ${publishPkg.name}@${publishPkg.version} (tag=${tag})`)
     console.log(`  bin=${JSON.stringify(publishPkg.bin)} deps=${Object.keys(dependencies).length}`)
+    console.log(`  has timer/hmr/typert/subprocess/sandbox loader entries: ${
+      ['@deepseek-ai/cordis-plugin-timer', '@deepseek-ai/cordis-plugin-hmr', '@deepseek-ai/dsh-typert-loader', '@deepseek-ai/dsh-subprocess-local', '@deepseek-ai/dsh-sandbox-local']
+        .map((k) => `${k}=${Boolean(dependencies[k])}`).join(', ')}`)
     execFileSync('npm', ['pack', dir, '--dry-run'], { cwd: dir, stdio: 'inherit' })
+  } else if (packOnly) {
+    // Assemble + pack a tarball so an external-install gate can consume it.
+    // Usage: publish-npm-cli.mjs --pack-only <outdir>
+    const outDir = resolve(process.argv[process.argv.indexOf('--pack-only') + 1] ?? '.')
+    mkdirSync(outDir, { recursive: true })
+    execFileSync('npm', ['pack', dir, '--silent'], { cwd: dir, stdio: 'inherit' })
+    const tgz = `${publishPkg.name}-${publishPkg.version}.tgz`
+    const outPath = join(outDir, tgz)
+    if (existsSync(outPath)) rmSync(outPath, { force: true })
+    cpSync(join(dir, tgz), outPath)
+    console.log(outPath)
   } else {
     const token = process.env.NPM_TOKEN ?? process.env.NODE_AUTH_TOKEN
     if (!token) throw new Error('npm publish requires NPM_TOKEN or NODE_AUTH_TOKEN')
