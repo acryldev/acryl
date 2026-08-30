@@ -207,6 +207,12 @@ jobs:
           corepack pnpm --filter acryl-harness-runtime run build
           corepack pnpm --filter acryl-tui run build
 
+      - name: Verify CLI product
+        run: |
+          corepack pnpm --filter acryl-tui run typecheck
+          corepack pnpm --filter acryl-tui run test
+          node --test scripts/cli-archive-platform.test.mjs
+
       - name: Build portable CLI archive
         run: node scripts/build-cli-archive.mjs ${{ matrix.target }} 24.19.0 release-artifacts
 
