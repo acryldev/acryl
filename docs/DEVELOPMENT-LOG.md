@@ -1,3 +1,20 @@
+## 2026-08-30 - Windows CLI archive spawn fix
+
+Implementation: `5d268c7f0dbbae33c4b262f0e85ce343104d7f6d`.
+
+The first non-publishing authoritative release run exposed a Windows-only CLI
+archive failure: Node's `execFileSync('corepack', ...)` cannot resolve the
+Windows command shim. The archive builder now selects `corepack.cmd` on Windows
+and `corepack` elsewhere. A focused platform helper test covers both paths.
+
+The CLI matrix also now runs TUI typechecking, tests, and the helper test before
+creating an archive. Local darwin-arm64 proof was repeated: the extracted
+archive's bundled launcher returned `0.1.9`, booted `acryl tui --json` with
+`PATH=/usr/bin:/bin`, and passed `shasum -a 256 -c checksums.txt`.
+
+A new non-publishing matrix dispatch is required after this commit. No tag or
+GitHub Release was created by the failed run.
+
 ## 2026-08-30 - Release-gate repair: one authoritative per-architecture workflow
 
 Implementation: `9c442facf129d4440e74d9f01611378f3c3576ec`.

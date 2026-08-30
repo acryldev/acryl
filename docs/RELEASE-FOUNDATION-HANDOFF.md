@@ -1,9 +1,10 @@
 # ACRYL distribution foundation — release handoff
 
 Status: **the legacy Release Candidate workflow and Windows long-path blocker
-were removed.** Portable darwin-arm64 CLI archive is proven without host Node.
-A non-publishing run of the authoritative per-architecture release matrix is
-still required before the next tag.
+were removed.** The first authoritative non-publishing matrix run exposed a
+Windows CLI archive spawn defect, fixed in `5d268c7`. Portable darwin-arm64 CLI
+archive is proven without host Node. A new non-publishing matrix run is required
+before the next tag.
 
 ## Remaining verification
 
@@ -20,9 +21,10 @@ still required before the next tag.
      `check:layout` + typecheck + test **before** electron-builder packages/upload.
    - `cli` matrix (darwin-arm64/x64, linux-arm64/x64, windows-x64) smoke-tests the
      extracted archive (bundled `acryl --version`, `acryl tui --json`, no host
-     Node) **before** upload.
-   - `release` job `needs: [build, cli]`; any failed matrix job prevents artifact
-     upload and release creation. Every desktop matrix job now also runs
+     Node) **before** upload. The Windows archive builder uses `corepack.cmd`;
+     each CLI job also runs the TUI typecheck/tests and platform-helper test.
+   - `release` job `needs: [build, cli]`; any failed matrix job prevents GitHub
+     Release creation. Every desktop matrix job now also runs
      `corepack pnpm --filter acryl-desktop run verify:closure`.
 2. **Fresh gates pass** — `corepack pnpm run verify` green locally. CI-side readiness
    confirmed: committed `upstream.json` (`b150a551…`) == committed submodule pointer
@@ -72,6 +74,9 @@ Homebrew, Scoop, Chocolatey, Pacman/AUR, mise, Nix.
 `9c442facf129d4440e74d9f01611378f3c3576ec` removes the obsolete Release
 Candidate workflow, makes the release-workflow assertion match its matrix, and
 renames the Windows-incompatible methodology path.
+
+`5d268c7f0dbbae33c4b262f0e85ce343104d7f6d` fixes Windows Corepack spawning
+for portable CLI archives and gates each CLI archive with TUI verification.
 
 `933ee2e` rename → `5558721` CLI version/entrypoint fixes → `16ba098` CLI archive
 build + matrix → `d196df0` installer seam → `5a509a6` verify-before-upload →
