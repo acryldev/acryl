@@ -72,8 +72,8 @@ function expectPatchedDependency(name: string, path: string): void {
   expect(pnpmWorkspace).toContain(`  '${name}': ${path.slice(2)}`)
 }
 const ciWorkflow = readFileSync(new URL('.github/workflows/ci.yml', workspaceRoot), 'utf8')
-const releaseCandidateWorkflow = readFileSync(
-  new URL('.github/workflows/release-candidate.yml', workspaceRoot),
+const releaseWorkflow = readFileSync(
+  new URL('.github/workflows/release.yml', workspaceRoot),
   'utf8',
 )
 
@@ -683,19 +683,37 @@ describe('published package surface', () => {
     expect(manifest.devDependencies?.['@electron/asar']).toBe('3.4.1')
   })
 
-  it('keeps platform packaging behind tag or manual release-candidate runs', () => {
+  it('keeps platform packaging behind tag or manual release runs', () => {
     expect(ciWorkflow).not.toContain('windows-latest')
     expect(ciWorkflow).not.toContain('macos-latest')
-    expect(releaseCandidateWorkflow).toContain("tags: ['v*']")
-    expect(releaseCandidateWorkflow).toContain('workflow_dispatch:')
-    expect(releaseCandidateWorkflow).toContain('runs-on: windows-latest')
-    expect(releaseCandidateWorkflow).toContain('corepack pnpm --filter acryl-desktop run check:win-package')
-    expect(releaseCandidateWorkflow).toContain('corepack pnpm --filter acryl-desktop run dist:win')
-    expect(releaseCandidateWorkflow).toContain('corepack pnpm --filter acryl-desktop run dist:win-portable')
-    expect(releaseCandidateWorkflow).toContain('runs-on: macos-latest')
-    expect(releaseCandidateWorkflow).toContain('corepack pnpm --filter acryl-desktop run check:mac-package')
-    expect(releaseCandidateWorkflow).toContain('corepack pnpm --filter acryl-desktop run dist:mac-smoke')
-    expect(releaseCandidateWorkflow.match(/DSH_PACKAGE_CHECK_ALREADY_RAN: '1'/gu)).toHaveLength(3)
+    expect(releaseWorkflow).toContain("tags: ['v*']")
+    expect(releaseWorkflow).toContain('workflow_dispatch:')
+
+    // Five per-architecture desktop matrix jobs (not one universal build).
+    expect(releaseWorkflow).toContain('os: macos-latest')
+    expect(releaseWorkflow).toContain('os: macos-14')
+    expect(releaseWorkflow).toContain('os: windows-latest')
+    expect(releaseWorkflow).toContain('os: ubuntu-24.04-arm')
+
+    // Every desktop matrix job verifies the same gates CI requires before
+    // packaging, and never rebuilds native modules from source in the archive.
+    expect(releaseWorkflow).toContain('corepack pnpm run check:layout')
+    expect(releaseWorkflow).toContain('corepack pnpm run typecheck')
+    expect(releaseWorkflow).toContain('corepack pnpm run test')
+    expect(releaseWorkflow).toContain('corepack pnpm --filter acryl-desktop run verify:closure')
+    expect(releaseWorkflow).toContain('--config.npmRebuild=false')
+
+    // Five portable CLI archive targets and a publish job gated on both matrices.
+    for (const target of [
+      'darwin-arm64',
+      'darwin-x64',
+      'linux-arm64',
+      'linux-x64',
+      'windows-x64',
+    ]) {
+      expect(releaseWorkflow).toContain(`target: ${target}`)
+    }
+    expect(releaseWorkflow).toContain('needs: [build, cli]')
   })
 
   it('runs one fast, conventional CI gate on main and pull requests', () => {

@@ -61,6 +61,8 @@ jobs:
     steps:
       # Windows git rejects the repo's very long docs/workmethodology filename
       # unless core.longpaths is enabled; set it globally before the checkout.
+      # NOTE: this does not reliably prevent the failure on GitHub-hosted
+      # runners; renaming the overlong file is the durable fix (see ledger).
       - name: Enable Git longpaths
         shell: bash
         run: git config --global core.longpaths true
@@ -109,13 +111,14 @@ jobs:
 
       # Same gates CI requires: a release matrix job must not package/upload
       # anything the repository checks would reject.
-      - name: Verify release gates (layout, typecheck, test)
+      - name: Verify release gates (layout, typecheck, test, closure)
         run: |
           corepack pnpm run check:layout
           corepack pnpm --filter acryl-control run build
           corepack pnpm --filter acryl-harness-runtime run build
           corepack pnpm run typecheck
           corepack pnpm run test
+          corepack pnpm --filter acryl-desktop run verify:closure
 
       - name: Package ${{ matrix.name }}
         shell: bash
@@ -171,6 +174,12 @@ jobs:
             ext: zip
             cli: acryl.cmd
     steps:
+      # Windows git rejects the repo's very long docs/workmethodology filename
+      # unless core.longpaths is enabled before the checkout.
+      - name: Enable Git longpaths
+        shell: bash
+        run: git config --global core.longpaths true
+
       - uses: actions/checkout@v5
         with:
           submodules: recursive
@@ -257,9 +266,16 @@ jobs:
           path: artifacts
 
       - name: Generate checksums for CLI archives
+        shell: bash
         run: |
           cd artifacts
-          find . -type f \( -name 'acryl-cli-*.tar.gz' -o -name 'acryl-cli-*.zip' \) -exec shasum -a 256 {} + > checksums.txt
+          # Match build-cli-archive.mjs's `<sha256>  <basename>` format so the
+          # installer's `awk '$2 == archive'` lookup and the per-archive
+          # checksums agree; shasum's `path` field is normalized to the basename.
+          find . -type f \( -name 'acryl-cli-*.tar.gz' -o -name 'acryl-cli-*.zip' \) \
+            -exec shasum -a 256 {} + \
+            | awk '{ hash=$1; name=$2; sub(/.*\//, "", name); print hash "  " name }' \
+            | sort > checksums.txt
           cat checksums.txt
 
       - name: Create GitHub release
