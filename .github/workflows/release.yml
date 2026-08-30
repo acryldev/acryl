@@ -212,6 +212,7 @@ jobs:
           corepack pnpm --filter acryl-tui run typecheck
           corepack pnpm --filter acryl-tui run test
           node --test scripts/cli-archive-platform.test.mjs
+          node scripts/verify-npm-entrypoint.mjs
 
       - name: Build portable CLI archive
         run: node scripts/build-cli-archive.mjs ${{ matrix.target }} 24.19.0 release-artifacts
