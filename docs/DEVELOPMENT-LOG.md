@@ -1,3 +1,25 @@
+## 2026-08-30 - npm publish path fixed: acryl CLI now installs and runs
+
+External-user test on Linux proved `npm i -g acryl` shipped a broken package
+(0.1.8 / 0.1.10 / 0.1.11). Three root causes fixed in `scripts/publish-npm-cli.mjs`:
+
+1. **workspace:* deps leaked into the published manifest.** `acryl-tui` declares
+   `acryl-control` and `acryl-harness-runtime` as `workspace:*` (internal pnpm).
+   npm cannot resolve `workspace:*` from the public registry, so install failed.
+   The publish script now strips any dep whose value is `workspace:*`.
+2. **The bin path was invalid.** npm auto-removed `bin[acryl]` during publish,
+   leaving no executable. Now emitted as `./lib/bin.js`.
+3. **The runtime bundle did not inline the workspace package.** The default
+   `tsdown.config.ts` leaves `import "acryl-harness-runtime"` external, so the
+   published CLI crashed with ERR_MODULE_NOT_FOUND. The publish now builds with
+   `tsdown.publish.config.ts` (which sets `noExternal: ['acryl-harness-runtime']`)
+   and copies `lib-publish/` so the bundle is self-contained.
+
+Also added an `ACRYL_NPM_VERSION` override. Verified: `acryl@0.1.12` (tag latest)
+installs via `npm i -g acryl` and `acryl --version` prints `0.1.12`. 0.1.10 and
+0.1.11 are unpublishable-again under npm's 72h version guard, so the working fix
+shipped as 0.1.12.
+
 ## 2026-08-30 - v0.1.10 shipped as an OpenCode-style combined release
 
 The non-publishing matrix and then the tag-gated release both ran fully green
