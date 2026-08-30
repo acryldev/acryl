@@ -23,7 +23,7 @@ import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { corepackCommand } from './cli-archive-platform.mjs'
+import { corepackCommand, corepackSpawnOptions } from './cli-archive-platform.mjs'
 
 const require = createRequire(import.meta.url)
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -66,6 +66,7 @@ async function main() {
 
   // 1. Production dependency closure (isolated, hoisted) for the CLI.
   run(corepackCommand(process.platform), ['pnpm', '--filter', 'acryl-tui', 'deploy', archiveDir, '--prod', '--legacy'], {
+    ...corepackSpawnOptions(process.platform),
     env: { ...process.env, CI: 'true' },
   })
   mkdirSync(join(archiveDir, 'bin'), { recursive: true })
@@ -105,7 +106,10 @@ async function main() {
   // (node_modules/.modules.yaml included.devDependencies=false), which prunes
   // devDependencies on the next install. Restore the full dev graph so a local
   // run leaves the workspace healthy; CI runners are isolated and unaffected.
-  run(corepackCommand(process.platform), ['pnpm', 'install'], { env: { ...process.env, CI: 'true' } })
+  run(corepackCommand(process.platform), ['pnpm', 'install'], {
+    ...corepackSpawnOptions(process.platform),
+    env: { ...process.env, CI: 'true' },
+  })
 }
 
 main().catch((cause) => {
