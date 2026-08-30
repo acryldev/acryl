@@ -374,27 +374,3 @@ jobs:
           draft: false
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
           files: artifacts/**/*
-
-      - uses: actions/setup-node@v5
-        if: ${{ secrets.NPM_TOKEN != '' }}
-        with:
-          node-version: 24
-          package-manager-cache: false
-
-      - name: Enable Corepack (for npm publish)
-        if: ${{ secrets.NPM_TOKEN != '' }}
-        run: corepack enable
-
-      - name: Install workspace dependencies (for npm publish)
-        if: ${{ secrets.NPM_TOKEN != '' }}
-        run: corepack pnpm install --frozen-lockfile
-
-      - name: Publish CLI to npm
-        if: ${{ secrets.NPM_TOKEN != '' }}
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: node scripts/publish-npm-cli.mjs
-
-      - name: No npm publish credentials
-        if: ${{ secrets.NPM_TOKEN == '' }}
-        run: echo "::warning::NPM_TOKEN secret not configured; npm 'acryl' was not published"
