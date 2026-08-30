@@ -24,14 +24,14 @@ Upstream condensed reference: [Cordis primer](https://deepseek-harness.github.io
 
 ```text
 Yarn 4 workspace (this repo)
-  dsh-plugin-desktop     Host + Client faces, Electron, packaging
+  acryl-desktop     Host + Client faces, Electron, packaging
   dsh-community-fabric   docs scaffold
   dsh-community-market   docs/runtime scaffold
   deepseek-harness/      pinned upstream (pnpm, read-only)
 
 A running Desktop generation
   Loader reads profile bundles + patches
-  dsh-plugin-desktop/cordis.patch.yml inserts desktop-* rows
+  acryl-desktop/cordis.patch.yml inserts desktop-* rows
   Host Cordis tree starts in Electron main
   loopback HTTP/WebSocket carries the Web Client
   packages with dsh.client are scanned into window.__DSH_BOOT__
@@ -118,12 +118,12 @@ Waterfall listeners that only observe **must** call `next()`. Forgetting it swal
 
 ## How a plugin is composed here
 
-Desktop's Host composition is `dsh-plugin-desktop/cordis.patch.yml`:
+Desktop's Host composition is `acryl-desktop/cordis.patch.yml`:
 
 ```yaml
 - insert:
     - id: desktop-shell
-      name: dsh-plugin-desktop
+      name: acryl-desktop
       config:
         mode: compatibility
 ```
@@ -228,7 +228,7 @@ DSH_HOME=/tmp/dsh-hello-home corepack pnpm dsh web --patch /tmp/dsh-hello-plugin
 
 Watch the terminal for the load line. Open the printed `http://127.0.0.1:...` URL if you also want the Web UI. Ctrl-C unloads the process.
 
-In Desktop, the same idea is a **profile** patch or `dsh plugin add`, not a hand-edit of `dsh-plugin-desktop/cordis.patch.yml`.
+In Desktop, the same idea is a **profile** patch or `dsh plugin add`, not a hand-edit of `acryl-desktop/cordis.patch.yml`.
 
 ## Walkthrough: Client Hello World on a slot
 
@@ -288,8 +288,8 @@ corepack pnpm lifecycle       # verify, then isolated GUI
 Headless checks (no window):
 
 ```sh
-corepack pnpm --filter dsh-plugin-desktop run test tests/development-canvas-state.spec.ts tests/canvas-pty.spec.ts
-corepack pnpm --filter dsh-plugin-desktop run typecheck
+corepack pnpm --filter acryl-desktop run test tests/development-canvas-state.spec.ts tests/canvas-pty.spec.ts
+corepack pnpm --filter acryl-desktop run typecheck
 ```
 
 ### Isolate this checkout from the installed DMG app
@@ -344,7 +344,7 @@ Headless tests in this repo use Vitest. Graphical `yarn dev` is explicit and is 
 Related:
 
 - Constitution: `.specify/memory/constitution.md`
-- Desktop plugin services: `dsh-plugin-desktop/docs/plugin-services.md`
+- Desktop plugin services: `acryl-desktop/docs/plugin-services.md`
 - Desktop plugin development (product APIs): `docs/plugin-development.en.md`
 - Upstream first plugin: `deepseek-harness/docs/user/develop/basic/index.md`
 - Upstream Cordis tutorial: `deepseek-harness/docs/cordis-tutorial/index.md`

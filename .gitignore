@@ -4,7 +4,7 @@ node_modules/
 .build/
 .pi/
 
-dsh-plugin-desktop/dist/
-dsh-plugin-desktop/lib/
+acryl-desktop/dist/
+acryl-desktop/lib/
 dsh-community-market/lib/
 release-artifacts/

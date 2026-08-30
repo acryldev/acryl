@@ -6,7 +6,7 @@
 This guide is the smallest practical path from one JavaScript module to a
 profile-installed DSH plugin. It targets the versions pinned by this checkout:
 DSH Desktop `2.0.2` and `@deepseek-ai/cordis` `4.0.1` (see the
-[Desktop package manifest](../../dsh-plugin-desktop/package.json)). The pinned
+[Desktop package manifest](../../acryl-desktop/package.json)). The pinned
 DeepSeek Harness source is the authority when an ecosystem tutorial disagrees
 with this guide.
 
@@ -187,14 +187,14 @@ Loader smoke (it uses a real profile-local third-party package fixture and does
 not open Electron):
 
 ```sh
-corepack pnpm --filter dsh-plugin-desktop run build
-corepack pnpm --filter dsh-plugin-desktop run verify:profile
+corepack pnpm --filter acryl-desktop run build
+corepack pnpm --filter acryl-desktop run verify:profile
 ```
 
 That smoke validates the current Desktop composition and public Host services;
 it does not replace a focused test for the behavior of your own plugin. See the
-[fixture](../../dsh-plugin-desktop/tests/fixtures/desktop-host-services-smoke-plugin/index.js)
-and [smoke runner](../../dsh-plugin-desktop/scripts/verify-profile-boot.mjs).
+[fixture](../../acryl-desktop/tests/fixtures/desktop-host-services-smoke-plugin/index.js)
+and [smoke runner](../../acryl-desktop/scripts/verify-profile-boot.mjs).
 
 ## Path 3: ACRYL Desktop's built-in registration
 
@@ -202,28 +202,28 @@ This repository's Desktop shell is not discovered through a special Electron
 plugin registry. It is registered through normal DSH package and Cordis
 surfaces:
 
-1. The package export `dsh-plugin-desktop` maps to `lib/index.js`, whose source
-   is [src/index.ts](../../dsh-plugin-desktop/src/index.ts) and exports the Host
+1. The package export `acryl-desktop` maps to `lib/index.js`, whose source
+   is [src/index.ts](../../acryl-desktop/src/index.ts) and exports the Host
    plugin's `name`, `inject`, schema, and `apply(ctx, config)`.
 2. The package manifest declares
    `"dsh": { "bundle": { "patch": "./cordis.patch.yml" } }` and ships the
-   patch; see [package.json](../../dsh-plugin-desktop/package.json).
-3. [cordis.patch.yml](../../dsh-plugin-desktop/cordis.patch.yml) inserts the
-   `desktop-shell` row with `name: dsh-plugin-desktop`, plus the Desktop-owned
+   patch; see [package.json](../../acryl-desktop/package.json).
+3. [cordis.patch.yml](../../acryl-desktop/cordis.patch.yml) inserts the
+   `desktop-shell` row with `name: acryl-desktop`, plus the Desktop-owned
    Hello World, terminal, development-canvas, diagnostics, notification, pnpm,
    profile, and update rows through exported package subpaths. The learning
    proof is implemented by
-   [src/hello-world.ts](../../dsh-plugin-desktop/src/hello-world.ts), exported
-   as `dsh-plugin-desktop/hello-world`, and registered under the stable
+   [src/hello-world.ts](../../acryl-desktop/src/hello-world.ts), exported
+   as `acryl-desktop/hello-world`, and registered under the stable
    `desktop-hello-world` row.
 4. During profile preparation, the launcher reads that patch and inserts it
    immediately after `@deepseek-ai/dsh-web-app`; it does not persist the
    Desktop package into the selected profile's bundle list. See the exact
-   composition in [profile.ts](../../dsh-plugin-desktop/src/profile.ts).
+   composition in [profile.ts](../../acryl-desktop/src/profile.ts).
 
 The Host row is part of both compatibility and advanced generations. The
 package also declares an ordinary Web Client face exported at `./client`.
-Its [Client entry](../../dsh-plugin-desktop/src/client/index.ts) registers the
+Its [Client entry](../../acryl-desktop/src/client/index.ts) registers the
 shared Desktop contributions in both modes and mounts the Desktop-owned layout
 and root presentation only when `environment.mode === 'advanced'`. Thus mode
 changes presentation composition, not the Cordis plugin contract.
@@ -235,7 +235,7 @@ plugin declares `apply`, config, `inject`, services, effects, package exports,
 or Loader rows. Third-party Host plugins and Web Client modules therefore keep
 using standard DSH contracts in both modes. The repository
 [Desktop architecture](../architecture.md) and
-[package architecture](../../dsh-plugin-desktop/README.md) own this boundary.
+[package architecture](../../acryl-desktop/README.md) own this boundary.
 
 ### Compatibility requirements for a future ACRYL rename
 
@@ -392,7 +392,7 @@ value rather than deep-merging it, so an override must restate every config key
 that row still needs. In this Desktop, the launcher prepares the chosen Web
 profile, keeps third-party bundle order, inserts the Desktop layer into the
 generation, and boots from an empty include root; the exact implementation is
-in [profile.ts](../../dsh-plugin-desktop/src/profile.ts).
+in [profile.ts](../../acryl-desktop/src/profile.ts).
 
 ## Failure diagnostics
 
@@ -447,14 +447,14 @@ or subprocess handle across a generation restart.
 ### It works in Desktop but not ordinary DSH—or the reverse
 
 The only supported third-party Desktop Host services are `desktopProfiles` and
-`desktopPnpm`, exported by `dsh-plugin-desktop/profile-service` and
-`dsh-plugin-desktop/pnpm`. A Desktop-only plugin may hard-inject them. A plugin
+`desktopPnpm`, exported by `acryl-desktop/profile-service` and
+`acryl-desktop/pnpm`. A Desktop-only plugin may hard-inject them. A plugin
 that must also run under ordinary DSH should detect `desktopProfiles` with
 `ctx.get(...)` and mount its Desktop adapter inside a nested
 `ctx.inject(['desktopPnpm'], ...)`, while retaining an ordinary DSH fallback.
 Do not infer the Desktop profile from argv, settings, a URL, or `$DSH_HOME`.
 The exact supported boundary and teardown semantics are in the
-[Desktop plugin-service contract](../../dsh-plugin-desktop/docs/plugin-services.md)
+[Desktop plugin-service contract](../../acryl-desktop/docs/plugin-services.md)
 and the repository's [plugin-development note](../plugin-development.md).
 
 ## Current contracts versus proposals
@@ -508,7 +508,7 @@ source.
 - [Pinned services tutorial](../../deepseek-harness/docs/cordis-tutorial/03-services.md)
 - [Pinned Loader implementation notes](../../deepseek-harness/vendor/loader/README.md)
 - [Repository Cordis architecture specification](../cordis/cordis_spec.md)
-- [Desktop public plugin services](../../dsh-plugin-desktop/docs/plugin-services.md)
+- [Desktop public plugin services](../../acryl-desktop/docs/plugin-services.md)
 
 Repository discovery for this guide used direct source reads because the
 codebase knowledge graph was unavailable. No file under the pinned

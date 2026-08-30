@@ -24,14 +24,14 @@ Cordis 是组合内核：
 
 ```text
 Yarn 4 workspace（本仓库）
-  dsh-plugin-desktop     Host + Client、Electron、打包
+  acryl-desktop     Host + Client、Electron、打包
   dsh-community-fabric   文档脚手架
   dsh-community-market   文档/运行时脚手架
   deepseek-harness/      固定上游（pnpm，只读）
 
 一次 Desktop generation
   Loader 读取 profile bundles + patches
-  dsh-plugin-desktop/cordis.patch.yml 插入 desktop-* 行
+  acryl-desktop/cordis.patch.yml 插入 desktop-* 行
   Host Cordis 树在 Electron main 启动
   loopback HTTP/WebSocket 承载 Web Client
   声明了 dsh.client 的包进入 window.__DSH_BOOT__
@@ -102,7 +102,7 @@ if (profiles === undefined) {
 
 ## 本仓库如何组合插件
 
-Desktop Host 组合在 `dsh-plugin-desktop/cordis.patch.yml`。
+Desktop Host 组合在 `acryl-desktop/cordis.patch.yml`。
 
 要点：
 
@@ -117,7 +117,7 @@ Client 包还要声明 `dsh.client` 和 `exports["./client"]`。Host 扫描后�
 
 这是学习 overlay，不是产品包。路径必须是绝对路径。补丁不会改变 Loader 解析模块的 profile 目录。
 
-在 Desktop 里，同样的想法是 profile 补丁或通过 `desktopPnpm` / `dsh plugin` 安装的 bundle 中的新 insert 行。不要为一次性实验手改 `dsh-plugin-desktop/cordis.patch.yml`，那是 Desktop 产品组合。
+在 Desktop 里，同样的想法是 profile 补丁或通过 `desktopPnpm` / `dsh plugin` 安装的 bundle 中的新 insert 行。不要为一次性实验手改 `acryl-desktop/cordis.patch.yml`，那是 Desktop 产品组合。
 
 ## 演练：Client Hello World 挂到 slot
 

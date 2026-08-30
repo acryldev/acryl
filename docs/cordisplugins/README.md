@@ -13,7 +13,7 @@ This folder is the local authoring guide for plugins on the current DSH Desktop
 3. [Hello World (short)](./hello-world.md) — condensed companion.
 4. [Constitution](../../.specify/memory/constitution.md) — ACRYL laws that every
    later plugin must obey.
-5. [Desktop plugin services](../../dsh-plugin-desktop/docs/plugin-services.md)
+5. [Desktop plugin services](../../acryl-desktop/docs/plugin-services.md)
    — the only public Desktop Host seams (`desktopProfiles`, `desktopPnpm`).
 
 ## Principle
@@ -24,7 +24,7 @@ system. If a resource is created for the plugin's lifetime, register its
 disposer.
 
 The first serious product plugin after Hello World is Development Canvas.
-The standalone `dsh-plugin-development-canvas` package owns both Host and Client
+The standalone `acryl-development-canvas` package owns both Host and Client
 faces. Its Client contributes through Desktop's `desktop.main` slot. Disabling
 the row restores the default conversation and reverses every Canvas route,
 PTY, style, and slot contribution. Spec: `specs/015-development-canvas/`.

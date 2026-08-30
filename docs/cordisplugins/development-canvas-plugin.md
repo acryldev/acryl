@@ -6,12 +6,12 @@ logic inside the Electron bootstrap.
 
 ## Package and composition
 
-Canvas owns the independent `dsh-plugin-development-canvas` PNPM workspace and
+Canvas owns the independent `acryl-development-canvas` PNPM workspace and
 package. Its bundle patch contributes one stable Loader row:
 
 ```yaml
 - id: desktop-development-canvas
-  name: dsh-plugin-development-canvas
+  name: acryl-development-canvas
 ```
 
 The package root is the Host plugin. The package also declares `dsh.client` and
@@ -28,7 +28,7 @@ package:
 
 ## Host Fiber
 
-`dsh-plugin-development-canvas/src/index.ts` hard-injects `webServer`. One
+`acryl-development-canvas/src/index.ts` hard-injects `webServer`. One
 `ctx.effect()` owns the private PTY registry and all same-origin routes.
 
 Activation is transactional. If any route registration fails, every earlier
@@ -93,7 +93,7 @@ The standalone package tests cover:
 Run:
 
 ```sh
-corepack pnpm --filter dsh-plugin-development-canvas run check
-corepack pnpm --filter dsh-plugin-desktop run verify:loader
-corepack pnpm --filter dsh-plugin-desktop run verify:profile
+corepack pnpm --filter acryl-development-canvas run check
+corepack pnpm --filter acryl-desktop run verify:loader
+corepack pnpm --filter acryl-desktop run verify:profile
 ```

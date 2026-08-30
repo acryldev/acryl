@@ -15,8 +15,8 @@ const workspace = readJson('package.json')
 const pnpmWorkspace = readFileSync(resolve(root, 'pnpm-workspace.yaml'), 'utf8')
 const npmrc = readFileSync(resolve(root, '.npmrc'), 'utf8')
 const upstream = readJson('upstream.json')
-const plugin = readJson('dsh-plugin-desktop/package.json')
-const canvas = readJson('dsh-plugin-development-canvas/package.json')
+const plugin = readJson('acryl-desktop/package.json')
+const canvas = readJson('acryl-development-canvas/package.json')
 const control = readJson('acryl-control/package.json')
 const tui = readJson('acryl-tui/package.json')
 const fabric = readJson('dsh-community-fabric/package.json')
@@ -35,8 +35,8 @@ if (pnpmWorkspace !== `packages:
   - acryl-control
   - acryl-harness-runtime
   - acryl-tui
-  - dsh-plugin-desktop
-  - dsh-plugin-development-canvas
+  - acryl-desktop
+  - acryl-development-canvas
   - dsh-community-fabric
   - dsh-community-market
   - '!deepseek-harness/**'
@@ -79,6 +79,7 @@ patchedDependencies:
   '@deepseek-ai/dsh-web-app@0.1.1-rc.2': patches/dsh-web-app@0.1.1-rc.2.patch
   app-builder-lib@26.15.7: patches/app-builder-lib@26.15.7.patch
   dshmarket@1.17.1: patches/dshmarket@1.17.1.patch
+  node-pty@1.2.0-beta.15: patches/node-pty@1.2.0-beta.15.patch
 
 supportedArchitectures:
   os:
@@ -91,8 +92,8 @@ supportedArchitectures:
   fail('pnpm-workspace.yaml must define the owned workspace, patch, native-build, and universal macOS policies')
 }
 for (const [name, manifest] of [
-  ['dsh-plugin-desktop', plugin],
-  ['dsh-plugin-development-canvas', canvas],
+  ['acryl-desktop', plugin],
+  ['acryl-development-canvas', canvas],
   ['acryl-control', control],
   ['acryl-harness-runtime', readJson('acryl-harness-runtime/package.json')],
   ['acryl-tui', tui],
@@ -101,7 +102,7 @@ for (const [name, manifest] of [
 ]) {
   if (manifest.packageManager !== undefined) fail(`${name} must inherit the root PNPM release`)
 }
-if (canvas.name !== 'dsh-plugin-development-canvas') fail('the Canvas workspace must own dsh-plugin-development-canvas')
+if (canvas.name !== 'acryl-development-canvas') fail('the Canvas workspace must own acryl-development-canvas')
 if (control.name !== 'acryl-control') fail('the control workspace must own acryl-control')
 if (tui.name !== 'acryl-tui') fail('the TUI workspace must own acryl-tui')
 if (fabric.name !== 'dsh-community-fabric') fail('the Fabric workspace must own dsh-community-fabric')
@@ -120,10 +121,10 @@ for (const obsoleteFile of [
   'yarn.lock',
   '.yarnrc.yml',
   '.yarn',
-  'dsh-plugin-desktop/yarn.lock',
-  'dsh-plugin-desktop/.yarnrc.yml',
-  'dsh-plugin-development-canvas/yarn.lock',
-  'dsh-plugin-development-canvas/.yarnrc.yml',
+  'acryl-desktop/yarn.lock',
+  'acryl-desktop/.yarnrc.yml',
+  'acryl-development-canvas/yarn.lock',
+  'acryl-development-canvas/.yarnrc.yml',
   'acryl-control/yarn.lock',
   'acryl-control/.yarnrc.yml',
   'acryl-harness-runtime/yarn.lock',

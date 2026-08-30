@@ -173,7 +173,7 @@
     "acryl-control": "workspace:*",
     "adm-zip": "^0.6.0",
     "dsh-community-market": "workspace:*",
-    "dsh-plugin-development-canvas": "workspace:*",
+    "acryl-development-canvas": "workspace:*",
     "dshmarket": "1.17.1",
     "koffi": "3.1.5",
     "node-addon-require-builtin": "^0.1.4",

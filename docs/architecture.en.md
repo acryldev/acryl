@@ -35,12 +35,12 @@ pinned in the outer PNPM workspace. The default Desktop profile names
 bundles; their patches expand into the upstream Host, Client, agent, session,
 tool, storage, sandbox, and Web rows.
 
-### `dsh-plugin-desktop/`
+### `acryl-desktop/`
 
 This is the executable Desktop product package. It provides:
 
-- a Host plugin at `dsh-plugin-desktop`;
-- a Web Client face at `dsh-plugin-desktop/client`;
+- a Host plugin at `acryl-desktop`;
+- a Web Client face at `acryl-desktop/client`;
 - public Desktop service contracts at `profile-service` and `pnpm`;
 - Desktop-owned Host subpath plugins; and
 - the Electron bootstrap, native adapters, packaging, recovery, and release
@@ -52,16 +52,16 @@ generation, rather than adding Desktop to the user's profile bundle list.
 
 The clean Desktop composition currently contributes these ten Loader rows:
 
-- `desktop-shell` → `dsh-plugin-desktop`
-- `desktop-terminal` → `dsh-plugin-desktop/terminal`
-- `desktop-hello-world` → `dsh-plugin-desktop/hello-world` (R&D fixture)
-- `desktop-development-canvas` → `dsh-plugin-development-canvas`
-- `desktop-diagnostics` → `dsh-plugin-desktop/diagnostics`
-- `desktop-notifications` → `dsh-plugin-desktop/notifications`
-- `desktop-pnpm` → `dsh-plugin-desktop/pnpm`
-- `desktop-profiles` → `dsh-plugin-desktop/profiles`
-- `desktop-updates` → `dsh-plugin-desktop/updates`
-- `desktop-webserver` → `dsh-plugin-desktop/webserver` (profile-generated)
+- `desktop-shell` → `acryl-desktop`
+- `desktop-terminal` → `acryl-desktop/terminal`
+- `desktop-hello-world` → `acryl-desktop/hello-world` (R&D fixture)
+- `desktop-development-canvas` → `acryl-development-canvas`
+- `desktop-diagnostics` → `acryl-desktop/diagnostics`
+- `desktop-notifications` → `acryl-desktop/notifications`
+- `desktop-pnpm` → `acryl-desktop/pnpm`
+- `desktop-profiles` → `acryl-desktop/profiles`
+- `desktop-updates` → `acryl-desktop/updates`
+- `desktop-webserver` → `acryl-desktop/webserver` (profile-generated)
 
 Launcher-owned services do not all appear as Loader rows. The launcher provides
 `desktopRuntime` and `desktopPnpmBootstrap` directly, and mounts
@@ -69,7 +69,7 @@ Launcher-owned services do not all appear as Loader rows. The launcher provides
 alongside the Loader tree. These are still Cordis lifecycle-managed services,
 but they have a different provenance from declarative Loader entries.
 
-### `dsh-plugin-development-canvas/`
+### `acryl-development-canvas/`
 
 Development Canvas is a standalone Host/Client Cordis package. Its own bundle
 patch inserts `desktop-development-canvas`; its Host Fiber owns PTY routes and
@@ -398,16 +398,16 @@ phase - whether that exact package specifier also appears in the Client graph.
 - `include:agent-presets:workflow-worker-thread` -> `@deepseek-ai/dsh-workflow-worker-thread` - enabled - `active` - Client graph: no
 - `include:agent-presets:tool-workflow` -> `@deepseek-ai/dsh-tool-workflow` - enabled - `active` - Client graph: no
 - `include:agent-presets:tool-ralph` -> `@deepseek-ai/dsh-tool-ralph` - enabled - `active` - Client graph: no
-- `include:desktop-shell` -> `dsh-plugin-desktop` - enabled - `active` - Client graph: yes
-- `include:desktop-terminal` -> `dsh-plugin-desktop/terminal` - enabled - `active` - Client graph: no
-- `include:desktop-hello-world` -> `dsh-plugin-desktop/hello-world` - enabled - `active` - Client graph: no
-- `include:desktop-diagnostics` -> `dsh-plugin-desktop/diagnostics` - enabled - `active` - Client graph: no
-- `include:desktop-notifications` -> `dsh-plugin-desktop/notifications` - enabled - `active` - Client graph: no
-- `include:desktop-pnpm` -> `dsh-plugin-desktop/pnpm` - enabled - `active` - Client graph: no
-- `include:desktop-profiles` -> `dsh-plugin-desktop/profiles` - enabled - `active` - Client graph: no
-- `include:desktop-updates` -> `dsh-plugin-desktop/updates` - enabled - `active` - Client graph: no
-- `include:desktop-development-canvas` -> `dsh-plugin-development-canvas` - enabled - `active` - Client graph: yes
-- `include:desktop-webserver` -> `dsh-plugin-desktop/webserver` - enabled - `active` - Client graph: no
+- `include:desktop-shell` -> `acryl-desktop` - enabled - `active` - Client graph: yes
+- `include:desktop-terminal` -> `acryl-desktop/terminal` - enabled - `active` - Client graph: no
+- `include:desktop-hello-world` -> `acryl-desktop/hello-world` - enabled - `active` - Client graph: no
+- `include:desktop-diagnostics` -> `acryl-desktop/diagnostics` - enabled - `active` - Client graph: no
+- `include:desktop-notifications` -> `acryl-desktop/notifications` - enabled - `active` - Client graph: no
+- `include:desktop-pnpm` -> `acryl-desktop/pnpm` - enabled - `active` - Client graph: no
+- `include:desktop-profiles` -> `acryl-desktop/profiles` - enabled - `active` - Client graph: no
+- `include:desktop-updates` -> `acryl-desktop/updates` - enabled - `active` - Client graph: no
+- `include:desktop-development-canvas` -> `acryl-development-canvas` - enabled - `active` - Client graph: yes
+- `include:desktop-webserver` -> `acryl-desktop/webserver` - enabled - `active` - Client graph: no
 - `92aa6ef5` -> `@deepseek-ai/dsh-host-directory-picker-native` - enabled - `active` - Client graph: no
 - `cabb18d8` -> `@deepseek-ai/dsh-client-ui-directory-picker-native` - enabled - `active` - Client graph: yes
 
@@ -465,8 +465,8 @@ first boot tier; it does not change Cordis dependency or lifecycle semantics.
 - `@deepseek-ai/dsh-client-ui-plan` - root Fiber: `active` - immediate: no
 - `@deepseek-ai/dsh-client-ui-user-questions` - root Fiber: `active` - immediate: no
 - `@deepseek-ai/dsh-client-ui-trajectory` - root Fiber: `active` - immediate: no
-- `dsh-plugin-desktop` - root Fiber: `active` - immediate: no
-- `dsh-plugin-development-canvas` - root Fiber: `active` - immediate: no
+- `acryl-desktop` - root Fiber: `active` - immediate: no
+- `acryl-development-canvas` - root Fiber: `active` - immediate: no
 - `@deepseek-ai/dsh-client-ui-directory-picker-native` - root Fiber: `active` - immediate: no
 
 
@@ -574,19 +574,19 @@ The profile name and absolute directory come from `desktopProfiles.current`; the
 
 `desktopPnpm.run()` runs bundled pnpm directly. `runPlugin()` uses packaged DSH CLI semantics so profile initialization, relative sources, and bundle reconciliation remain authoritative. Both operations belong to the current generation and use the subprocess service for complete process-tree ownership.
 
-The launcher-private `desktopRuntime`, `desktopPnpmBootstrap`, Electron executable, Node helpers, and ABI environment are not third-party APIs. The supported public contracts are only `dsh-plugin-desktop/profile-service` and `dsh-plugin-desktop/pnpm`.
+The launcher-private `desktopRuntime`, `desktopPnpmBootstrap`, Electron executable, Node helpers, and ABI environment are not third-party APIs. The supported public contracts are only `acryl-desktop/profile-service` and `acryl-desktop/pnpm`.
 
 ## Packaging and runtime closure
 
 Release artifacts use Electron Builder and `app.asar`, while dependencies that must be physical (for example pnpm, node-pty, and Windows ACL/native files) live under `app.asar.unpacked`. The packaged-runtime gate checks both archive entries and physical runtime entries; profile fallback links must not target virtual ASAR paths that Node cannot resolve.
 
-The outer workspace uses Yarn. The pinned `deepseek-harness/` submodule keeps its own pnpm workspace. Desktop source, tests, packaging, and release scripts belong to `dsh-plugin-desktop/`; the upstream submodule is not edited from Desktop branches.
+The outer workspace uses Yarn. The pinned `deepseek-harness/` submodule keeps its own pnpm workspace. Desktop source, tests, packaging, and release scripts belong to `acryl-desktop/`; the upstream submodule is not edited from Desktop branches.
 
 ## Maintainer reading
 
 - [Visual plugin and registry map](visuals/acryl-plugin-registry.html)
-- [Desktop service contract](../dsh-plugin-desktop/docs/plugin-services.md)
-- [Package README](../dsh-plugin-desktop/README.md)
+- [Desktop service contract](../acryl-desktop/docs/plugin-services.md)
+- [Package README](../acryl-desktop/README.md)
 - [Pinned upstream and isolated PNPM workspace](../.agents/notes/implemented/process/2026-08-15-pinned-upstream-and-isolated-yarn-workspace.md)
 - [Profile and pnpm services decision](../.agents/notes/implemented/architecture/2026-08-15-desktop-profile-and-pnpm-services.md)
 - [Advanced shell decision](../.agents/notes/implemented/architecture/2026-08-15-desktop-advanced-shell.md)

@@ -51,27 +51,27 @@ jobs:
         run: corepack pnpm install --frozen-lockfile
 
       - name: Verify Windows packaging
-        run: corepack pnpm --filter dsh-plugin-desktop run check:win-package
+        run: corepack pnpm --filter acryl-desktop run check:win-package
 
       - name: Build installer
         env:
           DSH_PACKAGE_CHECK_ALREADY_RAN: '1'
-        run: corepack pnpm --filter dsh-plugin-desktop run dist:win
+        run: corepack pnpm --filter acryl-desktop run dist:win
 
       - name: Build portable archive
         env:
           DSH_PACKAGE_CHECK_ALREADY_RAN: '1'
-        run: corepack pnpm --filter dsh-plugin-desktop run dist:win-portable
+        run: corepack pnpm --filter acryl-desktop run dist:win-portable
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v7
         with:
           name: acryl-windows-${{ github.ref_name }}
           path: |
-            dsh-plugin-desktop/dist/*.exe
-            dsh-plugin-desktop/dist/*.zip
-            dsh-plugin-desktop/dist/*.yml
-            dsh-plugin-desktop/dist/*.blockmap
+            acryl-desktop/dist/*.exe
+            acryl-desktop/dist/*.zip
+            acryl-desktop/dist/*.yml
+            acryl-desktop/dist/*.blockmap
           if-no-files-found: error
           retention-days: 7
 
@@ -109,17 +109,17 @@ jobs:
         run: corepack pnpm install --frozen-lockfile
 
       - name: Verify macOS packaging
-        run: corepack pnpm --filter dsh-plugin-desktop run check:mac-package
+        run: corepack pnpm --filter acryl-desktop run check:mac-package
 
       - name: Build unsigned smoke artifact
         env:
           DSH_PACKAGE_CHECK_ALREADY_RAN: '1'
-        run: corepack pnpm --filter dsh-plugin-desktop run dist:mac-smoke
+        run: corepack pnpm --filter acryl-desktop run dist:mac-smoke
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v7
         with:
           name: acryl-macos-${{ github.ref_name }}
-          path: dsh-plugin-desktop/dist/*.dmg
+          path: acryl-desktop/dist/*.dmg
           if-no-files-found: error
           retention-days: 7

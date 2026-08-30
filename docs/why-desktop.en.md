@@ -45,5 +45,5 @@ The current Desktop product provides:
 ## Who should read this
 
 - Users who want to install and use Harness: start with the [user guide](user-guide.en.md).
-- Users installing or building DSH plugins: read [plugin development](plugin-development.en.md), then the [Desktop service contract](../dsh-plugin-desktop/docs/plugin-services.md).
-- Maintainers working on startup, profiles, or packaging: read the [architecture](architecture.en.md) and the package [README](../dsh-plugin-desktop/README.md).
+- Users installing or building DSH plugins: read [plugin development](plugin-development.en.md), then the [Desktop service contract](../acryl-desktop/docs/plugin-services.md).
+- Maintainers working on startup, profiles, or packaging: read the [architecture](architecture.en.md) and the package [README](../acryl-desktop/README.md).

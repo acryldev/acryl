@@ -25,11 +25,11 @@ Electron process state, are the authoritative account of agent work.
 ## Architectural assessment and constraints
 
 The current repository is in a staged migration from an Electron-heavy fork,
-not yet in the target architecture. `dsh-plugin-desktop` contains most product
+not yet in the target architecture. `acryl-desktop` contains most product
 implementation, while `acryl-control`, `acryl-harness-runtime`, and
 `acryl-tui` are newer, much smaller packages. The migration direction must be
 explicit: logic that is reusable across presentation surfaces moves out of
-`dsh-plugin-desktop`, while that package shrinks toward Electron-only concerns
+`acryl-desktop`, while that package shrinks toward Electron-only concerns
 (window chrome, tray, native menu, packaging, updater, and OS integration).
 
 `acryl-harness-runtime` is the engine boundary. It starts and disposes the
@@ -91,7 +91,7 @@ that satisfies its acceptance criteria.
 
 ### M0 - Lock the runtime boundary and migration rules
 
-- Declare `dsh-plugin-desktop` legacy presentation scaffolding to be drained,
+- Declare `acryl-desktop` legacy presentation scaffolding to be drained,
   not the default home for new cross-surface capability work.
 - Keep the three package roles strict: runtime in `acryl-harness-runtime`,
   typed semantic API in `acryl-control`, and presentation in surface packages.
@@ -147,7 +147,7 @@ while retaining renderer-specific presentation code.
 ### M3 - Drain reusable profile and runtime management from Electron
 
 - Extract profile materialization, profile state, checkpoint/recovery,
-  lifecycle control, and architecture inspection from `dsh-plugin-desktop`
+  lifecycle control, and architecture inspection from `acryl-desktop`
   behind `acryl-harness-runtime` and `acryl-control` contracts.
 - Keep Electron-specific UI routes as clients of the extracted services until
   they can be simplified or removed.

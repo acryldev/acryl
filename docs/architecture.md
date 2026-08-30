@@ -33,12 +33,12 @@ flowchart LR
 `@deepseek-ai/dsh-base` 与 `@deepseek-ai/dsh-web-app`；它们的 patch 会展开
 为上游 Host、Client、agent、session、tool、storage、sandbox 与 Web rows。
 
-### `dsh-plugin-desktop/`
+### `acryl-desktop/`
 
 这是可执行的 Desktop 产品包，提供：
 
-- `dsh-plugin-desktop` Host plugin；
-- `dsh-plugin-desktop/client` Web Client face；
+- `acryl-desktop` Host plugin；
+- `acryl-desktop/client` Web Client face；
 - `profile-service` 与 `pnpm` 两个公开 Desktop service contract；
 - Desktop 自有 Host subpath plugins；
 - Electron bootstrap、native adapter、打包、恢复与发布验证。
@@ -49,23 +49,23 @@ launcher 都会把这层 patch 插在上游 Web bundle 之后，而不是把 Des
 
 干净 Desktop composition 当前贡献以下十个 Loader rows：
 
-- `desktop-shell` → `dsh-plugin-desktop`
-- `desktop-terminal` → `dsh-plugin-desktop/terminal`
-- `desktop-hello-world` → `dsh-plugin-desktop/hello-world`（R&D fixture）
-- `desktop-development-canvas` → `dsh-plugin-development-canvas`
-- `desktop-diagnostics` → `dsh-plugin-desktop/diagnostics`
-- `desktop-notifications` → `dsh-plugin-desktop/notifications`
-- `desktop-pnpm` → `dsh-plugin-desktop/pnpm`
-- `desktop-profiles` → `dsh-plugin-desktop/profiles`
-- `desktop-updates` → `dsh-plugin-desktop/updates`
-- `desktop-webserver` → `dsh-plugin-desktop/webserver`（由 profile 生成）
+- `desktop-shell` → `acryl-desktop`
+- `desktop-terminal` → `acryl-desktop/terminal`
+- `desktop-hello-world` → `acryl-desktop/hello-world`（R&D fixture）
+- `desktop-development-canvas` → `acryl-development-canvas`
+- `desktop-diagnostics` → `acryl-desktop/diagnostics`
+- `desktop-notifications` → `acryl-desktop/notifications`
+- `desktop-pnpm` → `acryl-desktop/pnpm`
+- `desktop-profiles` → `acryl-desktop/profiles`
+- `desktop-updates` → `acryl-desktop/updates`
+- `desktop-webserver` → `acryl-desktop/webserver`（由 profile 生成）
 
 Launcher 自有 service 不一定显示为 Loader row。Launcher 会直接提供
 `desktopRuntime` 与 `desktopPnpmBootstrap`，并通过 `ctx.plugin(...)` 挂载
 `desktopActions` 和 `desktopProfiles`。它们仍是由 Cordis 管理生命周期的
 service，但来源不同于声明式 Loader entry。
 
-### `dsh-plugin-development-canvas/`
+### `acryl-development-canvas/`
 
 Development Canvas 是独立的 Host/Client Cordis package。它自己的 bundle
 patch 插入 `desktop-development-canvas`；Host Fiber 拥有 PTY routes 与
@@ -170,19 +170,19 @@ profile 的名字和绝对目录由 `desktopProfiles.current` 提供，不能从
 
 `desktopPnpm.run()` 直接跑内置 pnpm；`runPlugin()` 通过打包的 DSH CLI 维持 profile 初始化、相对 source 和 bundle reconcile。两者都属于当前 generation，并由 subprocess service 管理完整进程树。
 
-Launcher 私有的 `desktopRuntime`、`desktopPnpmBootstrap`、Electron executable、Node helper 和 ABI 环境不是第三方 API。公开 contract 只有 `dsh-plugin-desktop/profile-service` 与 `dsh-plugin-desktop/pnpm`。
+Launcher 私有的 `desktopRuntime`、`desktopPnpmBootstrap`、Electron executable、Node helper 和 ABI 环境不是第三方 API。公开 contract 只有 `acryl-desktop/profile-service` 与 `acryl-desktop/pnpm`。
 
 ## 打包与运行时闭包
 
 发布包使用 Electron Builder 和 `app.asar`，但需要物理 unpack 的依赖（例如 pnpm、node-pty、Windows ACL/native 文件）会放在 `app.asar.unpacked`。Packaged runtime gate 会检查 ASAR 入口和物理运行时入口，profile fallback 不能把符号链接指向无法被 Node 解析的虚拟 ASAR 路径。
 
-根 workspace 使用 Yarn；固定的 `deepseek-harness/` 子模块保持上游自己的 pnpm workspace。桌面代码、测试、打包配置和发布脚本属于 `dsh-plugin-desktop/`，不修改上游子模块。
+根 workspace 使用 Yarn；固定的 `deepseek-harness/` 子模块保持上游自己的 pnpm workspace。桌面代码、测试、打包配置和发布脚本属于 `acryl-desktop/`，不修改上游子模块。
 
 ## 维护者深入阅读
 
 - [Plugin 与 registry 可视化](visuals/acryl-plugin-registry.html)
-- [Desktop service contract](../dsh-plugin-desktop/docs/plugin-services.md)
-- [Package README](../dsh-plugin-desktop/README.md)
+- [Desktop service contract](../acryl-desktop/docs/plugin-services.md)
+- [Package README](../acryl-desktop/README.md)
 - [Pinned upstream and isolated PNPM workspace](../.agents/notes/implemented/process/2026-08-15-pinned-upstream-and-isolated-yarn-workspace.md)
 - [Profile and pnpm services decision](../.agents/notes/implemented/architecture/2026-08-15-desktop-profile-and-pnpm-services.md)
 - [Advanced shell decision](../.agents/notes/implemented/architecture/2026-08-15-desktop-advanced-shell.md)

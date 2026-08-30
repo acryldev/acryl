@@ -52,7 +52,7 @@ The spec says the first milestone must prove four things. Re-scored against sour
 
 | Proof | Verdict | Evidence |
 | --- | --- | --- |
-| **1. ACRYL exists as clean plugin/bundle/profile layer on DSH** | **Already easy** | Bundles/profiles/patches are the composition model (`cordis.patch.yml`, `dsh.bundle`, `dsh.profile`). `dsh-plugin-desktop` is itself a profile/composition owner. ACRYL is another bundle. |
+| **1. ACRYL exists as clean plugin/bundle/profile layer on DSH** | **Already easy** | Bundles/profiles/patches are the composition model (`cordis.patch.yml`, `dsh.bundle`, `dsh.profile`). `acryl-desktop` is itself a profile/composition owner. ACRYL is another bundle. |
 | **2. Persistent project/room launches 1 DSH-native + 1 external PTY/ACP agent** | **Mostly exists** | DSH-native: `ctx.agents`/`ctx.agentLoop`. External: `ctx.subagents` with claude/codex/acp providers. The missing piece is a *room* that holds both as peers, not an external child under a DSH parent. |
 | **3. Minimal durable event/handoff lets work survive actor switch** | **Partial** | Durable events: `ctx.sessions`. Fork/lineage: `ctx.sessions.fork`. But handoff is *not* a structured artifact — it's session fork / resume / mailbox. ACRYL's handoff schema is the gap. |
 | **4. Create/install/hot-activate ONE generated capability without core rebuild** | **Already exists** | `ctx.dynamicCordisRunner.define()/run()` + Cordis HMR + `cordis/dynamic-package` event. `dsh-tool-cordis` is the model-facing consumer. ACRYL would mostly *reuse* this, adding provenance/permissions. |

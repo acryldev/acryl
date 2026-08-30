@@ -18,7 +18,7 @@ Create `acryl-harness-runtime/`, a non-presentation workspace that owns:
 - composition of bundle patches and profile patches in their documented order;
 - `bootAcrylHarnessProfile()` as the only host-facing boot API.
 
-`acryl-tui` and `dsh-plugin-desktop` consume this workspace. They do not import
+`acryl-tui` and `acryl-desktop` consume this workspace. They do not import
 one another and do not independently recreate profile boot logic.
 
 ## Public boundary

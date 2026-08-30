@@ -32,7 +32,7 @@ Single-context repo:
 ├── docs/cordis/
 ├── docs/onboarding/
 ├── specs/                     ← Spec Kit + Wayfinder
-└── dsh-plugin-desktop/
+└── acryl-desktop/
 ```
 
 ## Use the glossary's vocabulary

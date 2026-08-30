@@ -32,8 +32,8 @@ Ordinary users can start with the [user guide](user-guide.en.md) and never need 
 | [Community Market](../dsh-community-market/README.md) | Implemented optional Market provider, catalog sources, managed package operations, and safety boundary |
 | [Market catalog provider contract](../dsh-community-market/docs/catalog-provider-contract.md) | Schemas, query parameters, multi-source behavior, and adapter rules for the implementation team |
 | [Architecture](architecture.en.md) | Electron, Host, loopback Web, profiles, and packaging |
-| [Desktop service reference](../dsh-plugin-desktop/docs/plugin-services.md) | Stable `desktopProfiles` and `desktopPnpm` contracts with TypeScript examples |
-| [Package reference](../dsh-plugin-desktop/README.md) | Detailed build, runtime, release, and limitation notes |
+| [Desktop service reference](../acryl-desktop/docs/plugin-services.md) | Stable `desktopProfiles` and `desktopPnpm` contracts with TypeScript examples |
+| [Package reference](../acryl-desktop/README.md) | Detailed build, runtime, release, and limitation notes |
 
 ## How the README files are organized
 
@@ -43,7 +43,7 @@ The outer repository uses English as its default product language:
 - [`README.en.md`](../README.en.md): the English compatibility path with the same content.
 - [`README.zh.md`](../README.zh.md): a concise Chinese entry directing readers to the canonical README and current community links.
 
-`README.i18n.yaml` records the synchronized blob hashes for the two English entry files; it is not a user guide. `dsh-plugin-desktop/README.md` and `dsh-plugin-desktop/README.zh.md` ship with the npm package and are the more technical package reference. `dsh-plugin-desktop/docs/` contains stable API contracts rather than marketing copy. `.agents/notes/implemented/` contains dated maintainer decision records and does not replace user documentation.
+`README.i18n.yaml` records the synchronized blob hashes for the two English entry files; it is not a user guide. `acryl-desktop/README.md` and `acryl-desktop/README.zh.md` ship with the npm package and are the more technical package reference. `acryl-desktop/docs/` contains stable API contracts rather than marketing copy. `.agents/notes/implemented/` contains dated maintainer decision records and does not replace user documentation.
 
 `deepseek-harness/` is the pinned upstream submodule. Its README and `docs/` belong to the upstream project, not to the Desktop product, and are excluded from the outer documentation inventory.
 

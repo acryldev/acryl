@@ -13,7 +13,7 @@ Desktop adds two public Host services:
 
 These services live in the Host Cordis generation in Electron's main process. The renderer cannot read them directly; a plugin with browser UI should continue to use ordinary DSH Web routes, RPC, client metadata, services, and slots.
 
-The complete types, lifecycle, and failure semantics are in [`dsh-plugin-desktop/docs/plugin-services.md`](../dsh-plugin-desktop/docs/plugin-services.md). This page focuses on selection and the minimum safe patterns.
+The complete types, lifecycle, and failure semantics are in [`acryl-desktop/docs/plugin-services.md`](../acryl-desktop/docs/plugin-services.md). This page focuses on selection and the minimum safe patterns.
 
 ## Desktop-only plugins
 
@@ -22,8 +22,8 @@ If a plugin only makes sense in Desktop, declare the services as required inject
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
 import { randomUUID } from 'node:crypto'
-import type {} from 'dsh-plugin-desktop/profile-service'
-import type { DesktopPnpmHandle } from 'dsh-plugin-desktop/pnpm'
+import type {} from 'acryl-desktop/profile-service'
+import type { DesktopPnpmHandle } from 'acryl-desktop/pnpm'
 
 export const name = 'example-desktop-plugin'
 export const inject = ['desktopProfiles', 'desktopPnpm']
@@ -123,7 +123,7 @@ At minimum, a plugin should cover:
 - Cancellation, non-zero exit, spawn failure, and generation teardown for package operations.
 - Restarting after a plugin change and seeing the bundle in the next Loader composition.
 
-Read the [architecture](architecture.en.md) next, then use the package-level [service contract](../dsh-plugin-desktop/docs/plugin-services.md) as the API reference.
+Read the [architecture](architecture.en.md) next, then use the package-level [service contract](../acryl-desktop/docs/plugin-services.md) as the API reference.
 
 ## Ecosystem vision: keep the plugin ecosystem composable
 

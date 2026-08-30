@@ -104,8 +104,8 @@ jobs:
       # electron-builder packages it.
       - name: Build desktop app
         run: |
-          corepack pnpm --filter dsh-plugin-development-canvas run build
-          corepack pnpm --filter dsh-plugin-desktop run build
+          corepack pnpm --filter acryl-development-canvas run build
+          corepack pnpm --filter acryl-desktop run build
 
       - name: Package ${{ matrix.name }}
         shell: bash
@@ -113,7 +113,7 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: |
           set -euo pipefail
-          cd dsh-plugin-desktop
+          cd acryl-desktop
           node node_modules/electron-builder/cli.js \
             --${{ matrix.target }} ${{ matrix.mode }} \
             --${{ matrix.arch }} \
@@ -126,7 +126,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: acryl-${{ matrix.name }}-${{ github.ref_name }}
-          path: dsh-plugin-desktop/dist/${{ matrix.name }}/${{ matrix.artifact }}
+          path: |
+            acryl-desktop/dist/${{ matrix.name }}/${{ matrix.artifact }}
+            acryl-desktop/dist/${{ matrix.name }}/*.blockmap
           if-no-files-found: error
           retention-days: 14
 

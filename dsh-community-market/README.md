@@ -58,7 +58,7 @@ These checks establish package identity and a narrow compatibility boundary; the
 - [Catalog provider contract](docs/catalog-provider-contract.md): source manifests, query parameters, wire and normalized JSON, selected-source behavior, and the implementation handoff.
 - [Catalog adapter guide](docs/catalog-adapter-guide.md): the direct standard-source path, the reviewed adapter path for an existing API, and a mapping template.
 - [Security](SECURITY.md): trust model, reporting, and non-negotiable installation rules.
-- [Desktop plugin services](../dsh-plugin-desktop/docs/plugin-services.md): the `desktopProfiles` and `desktopPnpm` contracts used by Market package operations.
+- [Desktop plugin services](../acryl-desktop/docs/plugin-services.md): the `desktopProfiles` and `desktopPnpm` contracts used by Market package operations.
 - [DSH plugin development](../docs/plugin-development.en.md): the shared plugin model used by ordinary DSH and Desktop.
 
 ## Delivery plan

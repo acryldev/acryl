@@ -45,5 +45,5 @@ DSH Desktop 的目标不是重新实现 Harness，而是把同一个运行时放
 ## 适合谁
 
 - 只想安装后直接使用 Harness 的用户：从[用户指南](user-guide.md)开始。
-- 想安装或开发 DSH 插件的用户：先读[插件开发](plugin-development.md)，再看 [Desktop service contract](../dsh-plugin-desktop/docs/plugin-services.md)。
-- 想理解启动、profile 和打包边界的维护者：阅读[架构说明](architecture.md)和包级 [README](../dsh-plugin-desktop/README.md)。
+- 想安装或开发 DSH 插件的用户：先读[插件开发](plugin-development.md)，再看 [Desktop service contract](../acryl-desktop/docs/plugin-services.md)。
+- 想理解启动、profile 和打包边界的维护者：阅读[架构说明](architecture.md)和包级 [README](../acryl-desktop/README.md)。

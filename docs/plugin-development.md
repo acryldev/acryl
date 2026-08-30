@@ -13,7 +13,7 @@ Desktop 另外提供两个公开的 Host service：
 
 它们属于 Electron main 进程中的 Host Cordis generation。Renderer 不能直接读取它们；有浏览器界面的插件仍应使用普通 DSH Web routes、RPC、client metadata、service 和 slot。
 
-完整类型、生命周期和失败语义见 [`dsh-plugin-desktop/docs/plugin-services.md`](../dsh-plugin-desktop/docs/plugin-services.md)。下面只给出选择方式和最小原则。
+完整类型、生命周期和失败语义见 [`acryl-desktop/docs/plugin-services.md`](../acryl-desktop/docs/plugin-services.md)。下面只给出选择方式和最小原则。
 
 ## Desktop 专用插件
 
@@ -22,8 +22,8 @@ Desktop 另外提供两个公开的 Host service：
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
 import { randomUUID } from 'node:crypto'
-import type {} from 'dsh-plugin-desktop/profile-service'
-import type { DesktopPnpmHandle } from 'dsh-plugin-desktop/pnpm'
+import type {} from 'acryl-desktop/profile-service'
+import type { DesktopPnpmHandle } from 'acryl-desktop/pnpm'
 
 export const name = 'example-desktop-plugin'
 export const inject = ['desktopProfiles', 'desktopPnpm']
@@ -123,7 +123,7 @@ desktopPnpm.runPlugin(['install', '--no-frozen-lockfile'], invokingDir, signal)
 - package operation 的取消、非零退出、spawn failure 和 generation teardown。
 - 插件变更后重新启动，bundle 能进入下一次 Loader 组合。
 
-开发者可以先阅读 [架构说明](architecture.md)，再使用包级 [service contract](../dsh-plugin-desktop/docs/plugin-services.md)。
+开发者可以先阅读 [架构说明](architecture.md)，再使用包级 [service contract](../acryl-desktop/docs/plugin-services.md)。
 
 ## 生态愿景：保持插件生态可组合
 

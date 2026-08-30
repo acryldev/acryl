@@ -114,7 +114,7 @@ Market 界面包含四个视图：
 
 Preview 会针对这一个 package 完整检查 npm registry、规范仓库、deprecated 状态、lifecycle script、runtime、integrity、tarball、DSH bundle 和当前 profile，并用一次性不透明 preview 绑定已验证事实。用户确认后、真正修改前，执行阶段会立即重新获取或检查可变的 registry、候选和 profile 证据；候选、当前 profile、tarball、integrity 或 bundle 路径发生变化时会拒绝执行。受管操作中，renderer 只提交不透明身份，绝不会提交 package-manager spec 或命令。
 
-在 Desktop 中，Market Host 使用 `dsh-plugin-desktop` 已提供的公开服务：
+在 Desktop 中，Market Host 使用 `acryl-desktop` 已提供的公开服务：
 
 1. 从 `desktopProfiles.current` 读取当前身份。
 2. 调用 Desktop 的可恢复安装能力，使用固定构造的 `add --save-exact` 参数、官方 npm registry、明确的绝对 profile 目录和 `AbortSignal`。Child 启动前只为 `package.json`、`pnpm-lock.yaml` 和 `pnpm-workspace.yaml` 创建快照；操作报告完成前会封存成功结果或已识别的部分结果。

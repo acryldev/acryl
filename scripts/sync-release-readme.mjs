@@ -33,11 +33,13 @@ export async function syncReleaseReadme(root, tag) {
     text = replaceRequired(text, /## (?:Download|Install) ACRYL v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?/, `## Install ACRYL ${tag}`, relativePath)
     text = text.replaceAll(/https:\/\/github\.com\/acryldev\/acryl\/releases\/tag\/v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?/g, `${repository}/releases/tag/${tag}`)
     text = text.replaceAll(/https:\/\/github\.com\/acryldev\/acryl\/releases\/download\/v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?/g, assetBase)
-    text = text.replaceAll(/ACRYL-\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?-arm64\.dmg/g, `ACRYL-${version}-arm64.dmg`)
-    text = text.replaceAll(/ACRYL-\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?-x64-Setup\.exe/g, `ACRYL-${version}-x64-Setup.exe`)
-    text = text.replaceAll(/ACRYL-\d+\.\d+\.\d+(?:-(?!arm64\.dmg)[0-9A-Za-z.]+)?\.dmg/g, `ACRYL-${version}.dmg`)
-    text = text.replaceAll(/dsh-plugin-desktop_\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?_amd64\.deb/g, `dsh-plugin-desktop_${version}_amd64.deb`)
-    text = text.replaceAll(/dsh-plugin-desktop_\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?_arm64\.deb/g, `dsh-plugin-desktop_${version}_arm64.deb`)
+    // Desktop assets are version-less (OpenCode-style). Migrate any legacy
+    // versioned names still present, then leave the constant names untouched.
+    text = text.replaceAll(/ACRYL-\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?-arm64\.dmg/g, 'acryl-desktop-mac-arm64.dmg')
+    text = text.replaceAll(/ACRYL-\d+\.\d+\.\d+(?:-(?!arm64\.dmg)[0-9A-Za-z.]+)?\.dmg/g, 'acryl-desktop-mac-x64.dmg')
+    text = text.replaceAll(/ACRYL-\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?-x64-Setup\.exe/g, 'acryl-desktop-win-x64.exe')
+    text = text.replaceAll(/acryl-desktop_\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?_amd64\.deb/g, 'acryl-desktop-linux-x64.deb')
+    text = text.replaceAll(/acryl-desktop_\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?_arm64\.deb/g, 'acryl-desktop-linux-arm64.deb')
     await writeFile(path, text)
   }
 
@@ -46,11 +48,11 @@ export async function syncReleaseReadme(root, tag) {
   zh = replaceRequired(zh, /ACRYL v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)? GitHub Release/, `ACRYL ${tag} GitHub Release`, 'README.zh.md')
   zh = zh.replaceAll(/https:\/\/github\.com\/acryldev\/acryl\/releases\/tag\/v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?/g, `${repository}/releases/tag/${tag}`)
   zh = zh.replaceAll(/https:\/\/github\.com\/acryldev\/acryl\/releases\/download\/v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?/g, assetBase)
-  zh = zh.replaceAll(/ACRYL-\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?-arm64\.dmg/g, `ACRYL-${version}-arm64.dmg`)
-  zh = zh.replaceAll(/ACRYL-\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?-x64-Setup\.exe/g, `ACRYL-${version}-x64-Setup.exe`)
-  zh = zh.replaceAll(/ACRYL-\d+\.\d+\.\d+(?:-(?!arm64\.dmg)[0-9A-Za-z.]+)?\.dmg/g, `ACRYL-${version}.dmg`)
-  zh = zh.replaceAll(/dsh-plugin-desktop_\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?_amd64\.deb/g, `dsh-plugin-desktop_${version}_amd64.deb`)
-  zh = zh.replaceAll(/dsh-plugin-desktop_\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?_arm64\.deb/g, `dsh-plugin-desktop_${version}_arm64.deb`)
+  zh = zh.replaceAll(/ACRYL-\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?-arm64\.dmg/g, 'acryl-desktop-mac-arm64.dmg')
+  zh = zh.replaceAll(/ACRYL-\d+\.\d+\.\d+(?:-(?!arm64\.dmg)[0-9A-Za-z.]+)?\.dmg/g, 'acryl-desktop-mac-x64.dmg')
+  zh = zh.replaceAll(/ACRYL-\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?-x64-Setup\.exe/g, 'acryl-desktop-win-x64.exe')
+  zh = zh.replaceAll(/acryl-desktop_\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?_amd64\.deb/g, 'acryl-desktop-linux-x64.deb')
+  zh = zh.replaceAll(/acryl-desktop_\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?_arm64\.deb/g, 'acryl-desktop-linux-arm64.deb')
   await writeFile(zhPath, zh)
 
   const readmeHash = gitBlobHash('README.md', root)

@@ -55,7 +55,7 @@ const rawCatalog = {
     revision: 'sha256:fixture',
   },
   packages: [{
-    id: 'anywhere-labs/deepseek-harness-desktop/dsh-plugin-desktop',
+    id: 'anywhere-labs/deepseek-harness-desktop/acryl-desktop',
     name: 'deepseek-harness-desktop',
     owner: 'anywhere-labs',
     url: 'https://github.com/anywhere-labs/deepseek-harness-desktop',
@@ -176,7 +176,7 @@ describe('1024Store adapter', () => {
       summary: 'Desktop shell',
       repository: {
         url: 'https://github.com/anywhere-labs/deepseek-harness-desktop',
-        subdirectory: 'dsh-plugin-desktop',
+        subdirectory: 'acryl-desktop',
       },
       media: { icon: { assetRef: publisherAssetRef, role: 'publisher-avatar', alt: 'anywhere-labs' } },
       provenance: { sourceRecordId: source().sourceRecordId },

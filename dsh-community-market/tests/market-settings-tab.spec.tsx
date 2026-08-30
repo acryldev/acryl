@@ -976,7 +976,7 @@ describe('MarketSettingsTab', () => {
           bundleId: externalBundleId,
           packageName: 'dsh-plugin-disabled-external',
         },
-        { kind: 'immutable', status: 'active', action: 'none', packageName: 'dsh-plugin-desktop' },
+        { kind: 'immutable', status: 'active', action: 'none', packageName: 'acryl-desktop' },
       ],
     })
     render(<MarketSettingsTab {...props} />)
@@ -992,7 +992,7 @@ describe('MarketSettingsTab', () => {
     expect(screen.getByText(en.immutablePlugin)).toBeTruthy()
     expect(screen.queryByRole('button', { name: `${en.disable}: ${disabledReceipt.displayName}` })).toBeNull()
     expect(screen.queryByRole('button', { name: `${en.enable}: ${activeReceipt.displayName}` })).toBeNull()
-    expect(screen.queryByRole('button', { name: `${en.enable}: dsh-plugin-desktop` })).toBeNull()
+    expect(screen.queryByRole('button', { name: `${en.enable}: acryl-desktop` })).toBeNull()
   })
 
   it('keeps a managed receipt while locally transitioning its exact bundle between active and disabled', async () => {

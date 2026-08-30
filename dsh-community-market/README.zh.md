@@ -58,7 +58,7 @@ dshfind 可以提供包含精确稳定版本和 `repository_backlink` 证据、�
 - [目录提供方合同](docs/catalog-provider-contract.zh.md)：来源 manifest、查询参数、wire/标准化 JSON、单一已选来源行为和实现交接要求。
 - [目录适配器指南](docs/catalog-adapter-guide.zh.md)：标准来源直接接入、已有 API 的受审 adapter 接入路径和映射模板。
 - [安全说明](SECURITY.zh.md)：信任模型、漏洞反馈和不可妥协的安装规则。
-- [Desktop 插件服务](../dsh-plugin-desktop/docs/plugin-services.zh.md)：Market package 操作正在使用的 `desktopProfiles` 与 `desktopPnpm` 合同。
+- [Desktop 插件服务](../acryl-desktop/docs/plugin-services.zh.md)：Market package 操作正在使用的 `desktopProfiles` 与 `desktopPnpm` 合同。
 - [DSH 插件开发](../docs/plugin-development.md)：普通 DSH 与 Desktop 共用的插件模型。
 
 ## 交付计划

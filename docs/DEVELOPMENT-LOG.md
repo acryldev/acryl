@@ -55,10 +55,10 @@ confirmation of the animation — both need the user's eyes.
 
 ## 2026-08-29 - development-canvas rendering + default advanced shell (v0.1.4 -> v0.1.6)
 
-The user's dsh-plugin-development-canvas (self-extensibility test: a topbar of
+The user's acryl-development-canvas (self-extensibility test: a topbar of
 PTY terminals) was not rendering, and the renderer showed 'Failed to load plugins'.
 
-Root cause: dsh-plugin-development-canvas registers the desktop.main slot, which
+Root cause: acryl-development-canvas registers the desktop.main slot, which
 is declared ONLY by the desktop's advanced shell. The desktop booted in
 compatibility mode, so: (1) the slots runtime threw 'slot desktop.main is not
 declared' inside the canvas apply, failing the whole client plugin tree
@@ -96,7 +96,7 @@ app.asar(.unpacked). dev works; packaged does not.
 Fixes shipped across v0.1.1/v0.1.2/v0.1.3:
 - After an afterPack-staging experiment (rejected: the desktop node_modules on CI
   does not carry the pnpm siblings), the natives are now declared as regular
-  dependencies of dsh-plugin-desktop. They declare os/cpu, so pnpm installs only
+  dependencies of acryl-desktop. They declare os/cpu, so pnpm installs only
   the matching per-platform/arch package per runner and electron-builder's
   dependency collector copies them into app.asar(.unpacked). Verified: v0.1.2's
   packaged app has koffi/sharp/ripgrep in app.asar.unpacked and the plugin tree
@@ -124,7 +124,7 @@ First release cut and published (user-requested). The release ledger
 published first-minor release plus a 5-platform CI and a local macOS DMG.
 
 - Version bumped to `0.1.0` across the ACRYL-owned packages (root, acryl-control,
-  acryl-harness-runtime, acryl-tui, dsh-plugin-desktop). The prior `2.0.2`/
+  acryl-harness-runtime, acryl-tui, acryl-desktop). The prior `2.0.2`/
   `0.1.0-dev.0` were dev placeholders.
 - `.github/workflows/release.yml` added: a 5-target matrix (macos arm64 + x64
   dmg, linux deb arm64 + x64, windows x64 nsis) that builds per-arch and, on a
@@ -139,8 +139,8 @@ published first-minor release plus a 5-platform CI and a local macOS DMG.
   workspace type-providers (acryl-control -> acryl-harness-runtime) must be
   built before the typecheck step.
 - Published `v0.1.0` on GitHub with all five artifacts:
-  `ACRYL-0.1.0-arm64.dmg`, `ACRYL-0.1.0.dmg` (x64), `dsh-plugin-desktop_0.1.0_arm64.deb`,
-  `dsh-plugin-desktop_0.1.0_amd64.deb`, `ACRYL-0.1.0-x64-Setup.exe`.
+  `ACRYL-0.1.0-arm64.dmg`, `ACRYL-0.1.0.dmg` (x64), `acryl-desktop_0.1.0_arm64.deb`,
+  `acryl-desktop_0.1.0_amd64.deb`, `ACRYL-0.1.0-x64-Setup.exe`.
 - The local macOS DMG build was BLOCKED on this host: `electron-builder` hung at
   the electron download/extract step and its universal build needs cross-arch
   native prebuilds that a single-arch host does not stage (the documented
@@ -150,8 +150,8 @@ published first-minor release plus a 5-platform CI and a local macOS DMG.
 
 ## 2026-08-29 - acryl-tui: all three surfaces launch/serve; gui launch verified
 
-Follow-up on the web host. `pnpm acryl-gui` = `pnpm --filter dsh-plugin-desktop run start`
-(runs `dsh-plugin-desktop/lib/bin.js`, an Electron launcher). A guarded launch
+Follow-up on the web host. `pnpm acryl-gui` = `pnpm --filter acryl-desktop run start`
+(runs `acryl-desktop/lib/bin.js`, an Electron launcher). A guarded launch
 stayed alive past 12s with no crash, and the process was then killed cleanly —
 so the desktop surface launches. Confirming it boots the ACRYL runtime (vs a
 pristine DSH profile) and shows ACRYL branding requires a display + the user's
@@ -859,7 +859,7 @@ Primary implementation and verification:
 
 - `.github/workflows/ci.yml`
 - `.github/workflows/release-candidate.yml`
-- `dsh-plugin-desktop/tests/package.spec.ts`
+- `acryl-desktop/tests/package.spec.ts`
 - `go run github.com/rhysd/actionlint/cmd/actionlint@latest .github/workflows/*.yml`
 - `corepack yarn check:layout`
 - `corepack yarn typecheck`
@@ -889,10 +889,10 @@ renamed alongside their references.
 Primary implementation and verification:
 
 - `acryl-logo.png`, `acryl-logo-white.png`
-- `dsh-plugin-desktop/scripts/generate-acryl-brand.mjs`
-- `dsh-plugin-desktop/src/client/acryl-brand.tsx`
-- `dsh-plugin-desktop/tests/client-acryl-brand.spec.ts`
-- `dsh-plugin-desktop/tests/package.spec.ts`
+- `acryl-desktop/scripts/generate-acryl-brand.mjs`
+- `acryl-desktop/src/client/acryl-brand.tsx`
+- `acryl-desktop/tests/client-acryl-brand.spec.ts`
+- `acryl-desktop/tests/package.spec.ts`
 - `corepack yarn check`
 
 ---
@@ -915,8 +915,8 @@ plugin configuration, callbacks, private failures, and paths never cross the
 boundary. Lifecycle mutation remains Loader-oriented and protected, with
 Development Canvas as the first reviewed mutable dual-face plugin.
 
-Primary implementation: `dsh-plugin-desktop/src/plugin-architecture-*` and
-`dsh-plugin-desktop/src/client/PluginArchitectureSettingsTab.tsx`. Specification:
+Primary implementation: `acryl-desktop/src/plugin-architecture-*` and
+`acryl-desktop/src/client/PluginArchitectureSettingsTab.tsx`. Specification:
 `specs/017-cordis-architecture-explorer/`. Verification passed through the full
 `corepack yarn check` gate, including 796 Desktop tests, 274 Market tests, 18
 Canvas tests, build, typecheck, Loader/profile boot, runtime closure, bilingual
@@ -947,9 +947,9 @@ Desktop restart.
 
 Primary implementation and verification:
 
-- `dsh-plugin-desktop/src/plugin-lifecycle-{state,controller,route,contract}.ts`
-- `dsh-plugin-desktop/src/client/plugin-lifecycle-*`
-- `dsh-plugin-desktop/src/client/PluginLifecycleSettingsTab.tsx`
+- `acryl-desktop/src/plugin-lifecycle-{state,controller,route,contract}.ts`
+- `acryl-desktop/src/client/plugin-lifecycle-*`
+- `acryl-desktop/src/client/PluginLifecycleSettingsTab.tsx`
 - `specs/016-plugin-lifecycle-control/`
 - `docs/architecture.en.md`
 - focused persistence, profile, Host lifecycle, route-security, and Client
@@ -977,7 +977,7 @@ module-global state, or dependency on Desktop implementation.
 
 The initial standalone Canvas extraction left `yarn dev` building Desktop but
 not Canvas. A clean launch therefore reached the Cordis Loader without
-`dsh-plugin-development-canvas/lib/index.js` and Electron aborted before the
+`acryl-development-canvas/lib/index.js` and Electron aborted before the
 window became usable.
 
 Desktop development, direct checks, and directory packaging now build Canvas
@@ -994,8 +994,8 @@ successfully kept Electron alive without a Loader or module-resolution error.
 **Commit:** [`2e5b4d1009f0c1c64dd0a2f1f6d470ed0b55b573`](https://github.com/AgentContextRelay/acr/commit/2e5b4d1009f0c1c64dd0a2f1f6d470ed0b55b573)
 
 Development Canvas no longer lives as a Host subpath and Client child inside
-`dsh-plugin-desktop`. It now owns the independent
-`dsh-plugin-development-canvas` workspace, package, bundle patch, Host entry,
+`acryl-desktop`. It now owns the independent
+`acryl-development-canvas` workspace, package, bundle patch, Host entry,
 Client entry, native PTY dependency, styles, and tests.
 
 Desktop exposes one small `desktop.main` slot and contributes the upstream
@@ -1012,9 +1012,9 @@ that settle during disposal.
 
 Primary implementation and verification:
 
-- `dsh-plugin-development-canvas/`
-- `dsh-plugin-desktop/src/client/contracts.ts`
-- `dsh-plugin-desktop/src/client/advanced-shell.ts`
+- `acryl-development-canvas/`
+- `acryl-desktop/src/client/contracts.ts`
+- `acryl-desktop/src/client/advanced-shell.ts`
 - `specs/015-development-canvas/cordis-plugin-extraction.md`
 - `docs/cordisplugins/development-canvas-plugin.md`
 
@@ -1073,17 +1073,17 @@ Desktop plugin at runtime. The composition is flat:
 
 ```yaml
 - id: desktop-shell
-  name: dsh-plugin-desktop
+  name: acryl-desktop
 
 - id: desktop-development-canvas
-  name: dsh-plugin-desktop/development-canvas
+  name: acryl-desktop/development-canvas
 ```
 
 These rows create independent sibling fibers. Removing or disabling the Canvas
 row removes its Host routes, terminates its PTYs, removes its Client presence,
 and restores the ordinary advanced conversation surface.
 
-The source is colocated in the `dsh-plugin-desktop` package because it consumes
+The source is colocated in the `acryl-desktop` package because it consumes
 desktop-owned Host and Client capabilities. The package therefore contains
 multiple independently loadable Cordis entry points. This is not a runtime
 "plugin inside a plugin" relationship.
@@ -1095,13 +1095,13 @@ mechanism is distinct from the flat composition used by Development Canvas.
 
 ### Primary implementation
 
-- Host plugin: `dsh-plugin-desktop/src/development-canvas.ts`
-- Client plugin: `dsh-plugin-desktop/src/client/development-canvas/plugin.ts`
-- Canvas UI: `dsh-plugin-desktop/src/client/development-canvas/DevelopmentCanvas.tsx`
-- Canvas state: `dsh-plugin-desktop/src/client/development-canvas/state.ts`
-- PTY provider: `dsh-plugin-desktop/src/canvas-pty.ts`
-- PTY routes: `dsh-plugin-desktop/src/canvas-pty-route.ts`
-- Composition: `dsh-plugin-desktop/cordis.patch.yml`
+- Host plugin: `acryl-desktop/src/development-canvas.ts`
+- Client plugin: `acryl-desktop/src/client/development-canvas/plugin.ts`
+- Canvas UI: `acryl-desktop/src/client/development-canvas/DevelopmentCanvas.tsx`
+- Canvas state: `acryl-desktop/src/client/development-canvas/state.ts`
+- PTY provider: `acryl-desktop/src/canvas-pty.ts`
+- PTY routes: `acryl-desktop/src/canvas-pty-route.ts`
+- Composition: `acryl-desktop/cordis.patch.yml`
 - Feature specification: `specs/015-development-canvas/`
 - Plugin documentation: `docs/cordisplugins/development-canvas-plugin.md`
 
@@ -1136,11 +1136,11 @@ explicit dependencies and reversible effects.
 
 Primary locations:
 
-- Desktop product: `dsh-plugin-desktop/`
+- Desktop product: `acryl-desktop/`
 - Pinned upstream: `deepseek-harness/`
 - Capability specifications: `specs/`
 - Architecture and onboarding: `docs/`
-- Runtime composition: `dsh-plugin-desktop/cordis.patch.yml`
+- Runtime composition: `acryl-desktop/cordis.patch.yml`
 
 ---
 

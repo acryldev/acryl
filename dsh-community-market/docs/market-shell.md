@@ -114,7 +114,7 @@ Catalog `install` fields, documentation snippets, provider commands, and arbitra
 
 Preview performs the full npm registry, canonical-repository, deprecation, lifecycle-script, runtime, integrity, tarball, DSH bundle, and active-profile checks for that one package. The resulting one-shot opaque preview binds the verified facts. Immediately before the confirmed mutation, execution re-fetches or rechecks mutable registry, candidate, and profile evidence and refuses the operation if the candidate, active profile, tarball, integrity, or bundle path changed. For managed operations the renderer submits only opaque identities, never a package-manager spec or command.
 
-On Desktop, the Market Host uses the public services already owned by `dsh-plugin-desktop`:
+On Desktop, the Market Host uses the public services already owned by `acryl-desktop`:
 
 1. Read the active identity from `desktopProfiles.current`.
 2. Invoke the recoverable Desktop install capability with fixed `add --save-exact` arguments, the official npm registry, an explicit absolute profile directory, and an `AbortSignal`. Before the child starts, it snapshots only `package.json`, `pnpm-lock.yaml`, and `pnpm-workspace.yaml`; the operation seals its successful or recognized partial result before reporting completion.

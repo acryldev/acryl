@@ -626,7 +626,7 @@ describe('market install service', () => {
       runner(profileDir, calls, { exitCode: 1, signal: null }),
       { verify: vi.fn(async () => verification) },
     )
-    for (const reservedPackage of ['dsh-plugin-desktop', 'dsh-community-market']) {
+    for (const reservedPackage of ['acryl-desktop', 'dsh-community-market']) {
       service.observeCatalog(snapshot({
         name: reservedPackage,
         package: { registry: 'npm', name: reservedPackage },

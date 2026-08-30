@@ -103,9 +103,9 @@ export async function runDevLocal(argv = process.argv.slice(2), environment = pr
   if (!skipBuild) {
     const marketCode = await runPnpm(['--filter', 'dsh-community-market', 'run', 'build'], env)
     if (marketCode !== 0) return marketCode
-    return runPnpm(['--filter', 'dsh-plugin-desktop', 'run', 'dev'], env)
+    return runPnpm(['--filter', 'acryl-desktop', 'run', 'dev'], env)
   }
-  return runPnpm(['--filter', 'dsh-plugin-desktop', 'run', 'start'], env)
+  return runPnpm(['--filter', 'acryl-desktop', 'run', 'start'], env)
 }
 
 const invoked = process.argv[1] === undefined ? undefined : resolve(process.argv[1])

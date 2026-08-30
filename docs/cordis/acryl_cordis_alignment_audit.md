@@ -11,7 +11,7 @@ source.
 This audit covers the loadable repository-owned Cordis surfaces and the next
 planned ACRYL seams:
 
-- `dsh-plugin-desktop` Host and Client entries;
+- `acryl-desktop` Host and Client entries;
 - Development Canvas Host/Client lifecycle and PTY prototype;
 - Community Market Host/Client lifecycle;
 - Hello World R&D fixture;
@@ -44,7 +44,7 @@ DSH-reuse decisions are complete.
 
 Evidence:
 
-- `dsh-plugin-desktop/cordis.patch.yml` uses stable Loader ids.
+- `acryl-desktop/cordis.patch.yml` uses stable Loader ids.
 - Host plugins declare hard dependencies with `inject`.
 - Client contributions use child plugins, slots, and `ctx.effect()`.
 - Launcher-provided services are mounted into the Host root and are disposed
@@ -70,7 +70,7 @@ in a remote catalog.
 
 ### Aligned R&D: Hello World
 
-`dsh-plugin-desktop/hello-world` is a minimal function plugin with one stable
+`acryl-desktop/hello-world` is a minimal function plugin with one stable
 Loader row. It acquires no resources and therefore needs no custom disposer. It
 proves package export and Loader activation only; it is not a product
 capability or model-facing Tool.
@@ -80,7 +80,7 @@ capability or model-facing Tool.
 What is correct:
 
 - Host and Client faces live in the standalone
-  `dsh-plugin-development-canvas` package and derive from one Loader row.
+  `acryl-development-canvas` package and derive from one Loader row.
 - The Host injects `webServer` rather than assuming startup order.
 - `CanvasPtyRegistry` is created inside one `ctx.effect()`.
 - Partial route activation rolls back synchronously; normal disposal removes
@@ -201,10 +201,10 @@ unregistration on disposal.
 - `docs/cordis/cordis_system_guide_for_coding_agents.md`
 - `deepseek-harness/docs/cordis-tutorial/`
 - `docs/acryl/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md`
-- `dsh-plugin-desktop/cordis.patch.yml`
-- `dsh-plugin-development-canvas/src/index.ts`
-- `dsh-plugin-development-canvas/src/canvas-pty.ts`
-- `dsh-plugin-development-canvas/src/client/`
+- `acryl-desktop/cordis.patch.yml`
+- `acryl-development-canvas/src/index.ts`
+- `acryl-development-canvas/src/canvas-pty.ts`
+- `acryl-development-canvas/src/client/`
 - `dsh-community-market/src/index.ts`
 - `dsh-community-market/src/client/index.ts`
 - `specs/002-acryl-1-plugin-identity/`

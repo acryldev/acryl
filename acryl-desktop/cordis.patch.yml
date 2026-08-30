@@ -1,0 +1,32 @@
+# Desktop Host operations compose around the existing Web bundle. Compatibility
+# mode keeps upstream ownership of the browser carrier and rendered UI.
+- insert:
+    - id: desktop-shell
+      name: acryl-desktop
+      config:
+        mode: advanced
+    - id: desktop-terminal
+      name: acryl-desktop/terminal
+      disabled: !!js process.platform === 'linux'
+    # Minimal ACRYL capability proof. This Host row is deliberately independent
+    # of compatibility/advanced presentation mode.
+    - id: desktop-hello-world
+      name: acryl-desktop/hello-world
+    - id: desktop-diagnostics
+      name: acryl-desktop/diagnostics
+    - id: desktop-notifications
+      name: acryl-desktop/notifications
+    - id: desktop-pnpm
+      name: acryl-desktop/pnpm
+    - id: desktop-profiles
+      name: acryl-desktop/profiles
+    - id: desktop-updates
+      name: acryl-desktop/updates
+
+# A desktop launch has no terminal operator waiting for the Web readiness line.
+- id: web-runtime
+  config:
+    openBrowser: false
+    printUrl: false
+    surfaceContext: true
+    trustedHosts: []

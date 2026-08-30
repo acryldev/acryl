@@ -4,18 +4,18 @@ import { verifyMarketDependencyDirection } from './market-dependency-direction.m
 
 test('allows product-name data in Market source', () => {
   assert.deepEqual(verifyMarketDependencyDirection([
-    ['dsh-community-market/src/install.ts', "const blocked = new Set(['dsh-plugin-desktop'])\n"],
+    ['dsh-community-market/src/install.ts', "const blocked = new Set(['acryl-desktop'])\n"],
   ]), { fileCount: 1 })
 })
 
 test('rejects Market imports of Desktop implementation', () => {
   assert.throws(() => verifyMarketDependencyDirection([
-    ['dsh-community-market/src/index.ts', "import type { DesktopRuntime } from 'dsh-plugin-desktop/runtime'\n"],
+    ['dsh-community-market/src/index.ts', "import type { DesktopRuntime } from 'acryl-desktop/runtime'\n"],
   ]), /must not import Desktop implementation/u)
   assert.throws(() => verifyMarketDependencyDirection([
-    ['dsh-community-market/src/index.ts', "const desktop = await import('dsh-plugin-desktop')\n"],
+    ['dsh-community-market/src/index.ts', "const desktop = await import('acryl-desktop')\n"],
   ]), /must not import Desktop implementation/u)
   assert.throws(() => verifyMarketDependencyDirection([
-    ['dsh-community-market/src/index.ts', "export { runtime } from '../../dsh-plugin-desktop/src/runtime.js'\n"],
+    ['dsh-community-market/src/index.ts', "export { runtime } from '../../acryl-desktop/src/runtime.js'\n"],
   ]), /must not import Desktop implementation/u)
 })
