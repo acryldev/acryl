@@ -1,7 +1,35 @@
-## 2026-08-30 - Windows CLI archive spawn fix
+## 2026-08-30 - Release matrix repair: Zip-safe CLI archives, npm entrypoint verify, web from CLI
 
-Implementations: `5d268c7f0dbbae33c4b262f0e85ce343104d7f6d`,
-`02d3ff2`.
+Three fixes landed to make the non-publishing CLI/desktop matrix green and the
+split credible, plus fresh evidence.
+
+1. **Windows CLI smoke extracted a Zip with GNU tar.** The cli job runs under Git
+   Bash, where `tar` is GNU tar and cannot read a Zip, so `cli-windows-x64`'s
+   smoke step failed instantly at extraction — the only red job in the run. It
+   now extracts the Zip with `unzip` (falling back to PowerShell
+   `Expand-Archive`) and invokes the `.cmd` launcher through `cmd.exe` with a
+   `cygpath -w` Windows path.
+2. **The real Windows bug: pnpm's `.pnpm` symlinked layout does not survive Zip.**
+   After fixing extraction the runtime still failed with `ERR_MODULE_NOT_FOUND`
+   for `@deepseek-ai/cordis` — pnpm `deploy --legacy` writes an isolated
+   `.pnpm` tree of relative symlinks that tar.gz preserves but Zip/Windows
+   extractors do not. `scripts/flatten-node-modules.mjs` now hoists every store
+   package to the top level, drops `.pnpm`, and removes all symlinks, so the
+   archive is a flat, extractor-agnostic node_modules. Verified: darwin-arm64
+   rebuilt, extracted, `acryl --version` -> 0.1.9 and `acryl tui --json` boots
+   with PATH stripped and zero symlinks. This is a product-correctness fix (real
+   Windows users extracting the zip) not just a CI fix.
+3. **npm entrypoint regression guard.** `scripts/verify-npm-entrypoint.mjs`
+   reproduces npm's global-bin symlink, then asserts `acryl --version` prints
+   the package version and `acryl tui --json` boots. The published
+   `acryl@0.1.8` shipped the pre-canonicalization entrypoint and `--version`
+   exited 0 silently; the source fix now runs in every CLI matrix job.
+
+Additional evidence: `acryl web --json` from the extracted darwin archive prints
+`http://127.0.0.1:3080`; npm-symlink `acryl --version` -> 0.1.9; acryl-tui
+255/255 tests pass. The authoritative non-publishing matrix runs are
+`33309174496`, `33309895558`, `33310901665`; all desktop jobs and the four unix
+CLI jobs are green, `cli-windows-x64` is the one under repair.
 
 The first non-publishing authoritative release run exposed a Windows-only CLI
 archive failure: Node's `execFileSync('corepack', ...)` cannot resolve the
