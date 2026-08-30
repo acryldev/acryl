@@ -34,7 +34,18 @@ import { fileURLToPath } from 'node:url'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const tuiDir = join(root, 'acryl-tui')
 const srcPkg = JSON.parse(readFileSync(join(tuiDir, 'package.json'), 'utf8'))
-const version = process.env.ACRYL_NPM_VERSION ?? srcPkg.version
+const srcPkgVersion = srcPkg.version
+const version = process.env.ACRYL_NPM_VERSION ?? srcPkgVersion
+// Single source of truth: the npm version must always equal the workspace
+// package version (which the release workflow guarantees equals the release
+// tag). An override that diverges was the cause of the 0.1.10 (workspace) vs
+// 0.1.12 (npm) drift, so refuse to publish a divergent version.
+if (version !== srcPkgVersion) {
+  throw new Error(
+    `publish-npm-cli: ACRYL_NPM_VERSION override (${version}) differs from the workspace package version (${srcPkgVersion}); ` +
+    `the npm version must always match the workspace/release version`,
+  )
+}
 const dryRun = process.argv.includes('--dry-run')
 const packOnly = process.argv.includes('--pack-only')
 const staging = mkdtempSync(join(tmpdir(), 'acryl-npm-'))
