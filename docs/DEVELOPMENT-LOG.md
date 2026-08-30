@@ -1,3 +1,41 @@
+## 2026-08-30 - version reconciled to 0.1.12; release auto-syncs npm and the GitHub release
+
+Follow-up version-reconciliation pass. The prior npm publish used the
+`ACRYL_NPM_VERSION` override to ship `0.1.12`, while the workspace packages and
+the GitHub release tag stayed at `0.1.10` — a silent drift between the release
+and the npm package.
+
+### Change
+
+- **Bump:** the five core workspace packages (`package.json`,
+  `acryl-control`, `acryl-desktop`, `acryl-harness-runtime`, `acryl-tui`) now
+  all read `0.1.12`, matching the published npm package. (`b06bca5`)
+- **CI auto-sync (`f3103a4`):** `.github/workflows/release.yml` gains an
+  `npm-publish` job (runs on `v*` tags, `needs: [cli]`) that builds the CLI and
+  runs `scripts/publish-npm-cli.mjs` with `NPM_TOKEN`. Both the `npm-publish`
+  job and the `release` job now verify that `GITHUB_REF_NAME` (the tag,
+  without the leading `v`) equals the `acryl-tui` package version, and **fail
+  loudly** on any mismatch. So the GitHub Release, the workspace package
+  version, and the npm package version can never diverge again — the tag is the
+  single source of truth, and the workspace must (and is checked to) match it
+  before either a Release or an npm publish is created.
+- **Publish guard (`f3103a4`):** `publish-npm-cli.mjs` now refuses to publish a
+  version that differs from the workspace package version. An
+  `ACRYL_NPM_VERSION` override that diverges throws instead of silently shipping
+  a drifted package — closing the exact mechanism that caused the 0.1.10↔0.1.12
+  drift.
+
+### Resulting invariant
+
+```text
+git tag v<X>  ⇔  all five workspace package.json = <X>  ⇔  npm acryl = <X>
+```
+
+A tag cannot produce a GitHub Release or an npm publish at any other version.
+
+Primary sources: `.github/workflows/release.yml`, `scripts/publish-npm-cli.mjs`,
+the five workspace `package.json`.
+
 ## 2026-08-30 - external npm CLI: full-boot verified and closure-completeness gated
 
 Follow-up to the npm publish-path fix. An external-user simulation on macOS

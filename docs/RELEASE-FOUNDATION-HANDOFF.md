@@ -40,18 +40,31 @@ non-publishing matrix run is required before the next tag.
 5. **Ledger** — `docs/DEVELOPMENT-LOG.md` updated through the deferred-channels record.
 6. **Commits / results / targets / blockers / next task** — see below.
 
-## Release procedure for v0.1.10 (user-authorized)
+## Release procedure (version-synced; npm auto-published)
+
+The release tag is the **single source of truth** for the version. The workflow
+now enforces that the tag, the five workspace package versions, and the npm
+package all match — a mismatch fails the release.
 
 ```sh
-# 1. Bump the five package versions 0.1.9 -> 0.1.10:
-#    package.json, acryl-desktop, acryl-development-canvas, acryl-tui,
-#    acryl-harness-runtime, acryl-control
-# 2. Commit "release: ... (bump to v0.1.10)", push main.
-# 3. Tag v0.1.10, push tag -> Release workflow runs build + cli + release.
-# 4. Watch: every matrix job must verify green; any failure stops the release.
+# 1. Bump the five core package versions <old> -> <new> (they must all be equal):
+#    package.json, acryl-tui, acryl-harness-runtime, acryl-control, acryl-desktop
+# 2. Commit "release: bump workspace packages to v<new>", push main.
+# 3. Tag v<new>, push tag -> Release workflow runs build + cli + npm-publish + release.
+# 4. Watch: every matrix job must verify green; any failure stops the release,
+#    and the version-sync guards fail the job if tag != workspace package version.
 # 5. Confirm assets: acryl-desktop-* (DMG/EXE/DEB + blockmaps),
-#    acryl-cli-* (5 targets), checksums.txt, README download links synced.
+#    acryl-cli-* (5 targets), checksums.txt, README download links synced,
+#    AND that `npm view acryl version` == v<new> (the npm-publish job publishes it).
 ```
+
+Prerequisite for the npm auto-publish: a valid `NPM_TOKEN` stored as a GitHub
+Actions secret on the repository. Without it the `npm-publish` job fails; the
+GitHub Release itself is unaffected.
+
+The old `ACRYL_NPM_VERSION` publish override is gone — the npm version must
+always equal the workspace package version, and the workflow verifies the tag
+matches that too.
 
 ## Supported targets
 
