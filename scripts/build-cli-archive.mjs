@@ -24,6 +24,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { corepackCommand, corepackSpawnOptions } from './cli-archive-platform.mjs'
+import { flattenNodeModules } from './flatten-node-modules.mjs'
 
 const require = createRequire(import.meta.url)
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -87,6 +88,13 @@ async function main() {
   // 3. Launcher: bundled node --expose-internals (Cordis HMR boot guard).
   copyFileSync(launcher, join(archiveDir, 'bin', launcherName))
   if (!windows) chmodSync(join(archiveDir, 'bin', launcherName), 0o755)
+
+  // 3b. Flatten the pnpm isolated (.pnpm symlinked) node_modules to a hoisted,
+  // symlink-free layout. ZIP archives and Windows extractors do not preserve
+  // pnpm's relative symlinks, so an unflattened archive fails to resolve bare
+  // specifiers (e.g. `@deepseek-ai/cordis`) after extraction. Tar.gz preserves
+  // symlinks but a symlink-free tree works on every extractor and platform.
+  flattenNodeModules(archiveDir)
 
   // 4. Archive + checksum.
   mkdirSync(outDir, { recursive: true })
