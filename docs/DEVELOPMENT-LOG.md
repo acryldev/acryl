@@ -1,3 +1,39 @@
+## 2026-08-30 - dsh-plugin** renamed to acryl-*; portable CLI archive proven
+
+Commits: `933ee2e`, `5558721`, `16ba098`
+
+The two desktop/development packages are renamed so no confusing dsh-plugin
+names remain in live code, config, or docs: `dsh-plugin-desktop` ->
+`acryl-desktop` and `dsh-plugin-development-canvas` -> `acryl-development-canvas`
+(directories, package.json name/bin/exports, pnpm workspace membership +
+regenerated lockfile, Cordis patch rows, release workflows, root scripts,
+source/tests self-references, READMEs/CONTRIBUTING/AGENTS, i18n hash records).
+Desktop release assets are now version-less OpenCode-style names
+(`acryl-desktop-mac-arm64.dmg`, `acryl-desktop-win-x64.exe`, ...) with dmg/exe
+blockmaps, so one GitHub Release can list CLI and desktop binaries together.
+
+The CLI reported a hardcoded stale `0.1.0-dev.0`; `ACRYL_VERSION` now derives
+from package.json. `isEntrypoint()` compared a non-canonicalized argv path
+against `import.meta.url`, so a script reached through a symlink (/tmp ->
+/private/tmp, or any extracted portable archive) silently never ran; both sides
+are now realpath()'d.
+
+Priority 2 vertical slice: `scripts/build-cli-archive.mjs` assembles one portable
+CLI archive (pinned Node v24.19.0 + built acryl-tui + production dependency
+closure + launcher running bundled node --expose-internals). Proven on
+darwin-arm64: archive extracted to an empty temp dir, `acryl --version` -> 0.1.9
+and `acryl tui --json` boot the harness runtime with PATH=/usr/bin:/bin (no host
+Node/npm/pnpm), SHA-256 generated and verified
+(`39697c8240f05865f0a2d78d1bf9e189501f0fdd09250ebf6aa09004eca364c8`).
+release.yml gains a cli matrix job (darwin-arm64/x64, linux-arm64/x64) that
+builds, smoke-tests without host runtime, then uploads; checksums.txt is
+generated at publish time.
+
+Verification: `corepack pnpm run verify` green (typecheck + all tests +
+dev-local), full build green, bilingual docs + verify-layout green except the
+pre-existing dirty deepseek-harness submodule (untouched per repo policy). The
+built darwin-arm64 archive was smoke tested end-to-end after extraction.
+
 ## 2026-08-29 - Development Canvas lifecycle restart and advanced clean-install default
 
 Commit: `be52e32`
