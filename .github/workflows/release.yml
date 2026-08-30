@@ -132,9 +132,74 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  cli:
+    name: cli-${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: darwin-arm64
+            os: macos-latest
+          - target: darwin-x64
+            os: macos-14
+          - target: linux-arm64
+            os: ubuntu-24.04-arm
+          - target: linux-x64
+            os: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install pinned PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+          run_install: false
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Build CLI and runtime
+        run: |
+          corepack pnpm --filter acryl-control run build
+          corepack pnpm --filter acryl-harness-runtime run build
+          corepack pnpm --filter acryl-tui run build
+
+      - name: Build portable CLI archive
+        run: node scripts/build-cli-archive.mjs ${{ matrix.target }} 24.19.0 release-artifacts
+
+      - name: Smoke test CLI archive without host runtime
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/acryl-cli-smoke && mkdir -p /tmp/acryl-cli-smoke
+          tar -xzf release-artifacts/acryl-cli-${{ matrix.target }}.tar.gz -C /tmp/acryl-cli-smoke
+          env PATH=/usr/bin:/bin /tmp/acryl-cli-smoke/acryl-cli-${{ matrix.target }}/bin/acryl --version
+          env PATH=/usr/bin:/bin /tmp/acryl-cli-smoke/acryl-cli-${{ matrix.target }}/bin/acryl tui --json
+          HASH=$(node -e "const c=require('crypto');const f=require('fs');console.log(c.createHash('sha256').update(f.readFileSync('release-artifacts/acryl-cli-${{ matrix.target }}.tar.gz')).digest('hex'))")
+          grep -q "$HASH" release-artifacts/checksums.txt
+
+      - name: Upload CLI archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: acryl-cli-${{ matrix.target }}-${{ github.ref_name }}
+          path: release-artifacts/acryl-cli-${{ matrix.target }}.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+
   release:
     name: Publish GitHub release
-    needs: build
+    needs: [build, cli]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
@@ -161,6 +226,12 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           path: artifacts
+
+      - name: Generate checksums for CLI archives
+        run: |
+          cd artifacts
+          find . -type f -name 'acryl-cli-*.tar.gz' -exec shasum -a 256 {} + > checksums.txt
+          cat checksums.txt
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
