@@ -1,3 +1,15 @@
+## 2026-08-30 - ACRYL distribution foundation: deferred distribution channels
+
+Explicitly deferred (recorded per the OpenCode-style foundation goal, not built):
+AppImage, RPM, auto-update manifests (latest*.yml), code signing/notarization
+for the CLI, Homebrew, Scoop, Chocolatey, Pacman/AUR, mise, and Nix packaging.
+The desktop stays on DMG/EXE/DEB (macOS ARM64 + Intel, Windows x64, Linux
+x64/arm64 DEB); the CLI stays on npm (`npm install -g acryl`, canonical),
+portable archives (`acryl-cli-<os>-<arch>`, 5 targets) + checksums, and the
+`acryl.dev/install` seam. `acryl-cli-windows-x64.zip` assembly is structured and
+verified locally; its first live run happens on a windows-latest runner during
+the next tagged release.
+
 ## 2026-08-30 - CLI installer seam (Priority 3)
 
 Commit: `installer-seam`
