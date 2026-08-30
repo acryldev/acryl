@@ -1,3 +1,28 @@
+## 2026-08-30 - CLI installer seam (Priority 3)
+
+Commit: `installer-seam`
+
+`scripts/acryl-cli-install.sh` is the tested implementation seam for
+`curl -fsSL https://acryl.dev/install | bash` (hosted externally at acryl.dev;
+not advertised until hosting + release archives + checksums are live). It
+selects a versioned OS/arch archive (darwin/linux x arm64/x64; latest resolved
+via the GitHub API or pinned via ACRYL_VERSION), downloads
+`acryl-cli-<os>-<arch>.tar.gz`, verifies the SHA-256 against the release
+`checksums.txt`, extracts to a user-owned directory (default `~/.acryl/bin`),
+never uses sudo, never installs the GUI and never starts Web, and reports
+PATH/unsupported-platform issues clearly.
+
+`scripts/acryl-cli-launcher.sh` now resolves its own symlink chain (POSIX
+readlink loop) so a user-dir symlink to the launcher still finds the bundled
+node/lib — the first installer test failed exactly because the archive carried
+the pre-hardening launcher; rebuilding the archive fixed it.
+
+Verification (2026-08-30, darwin-arm64): served the built archive + checksums
+from a local HTTP mirror; the installer downloaded, verified, extracted,
+symlinked, and the installed `acryl --version` -> 0.1.9 and `acryl tui --json`
+booted with PATH=/usr/bin:/bin. A tampered checksums.txt was refused with
+`SHA-256 mismatch ... refusing to install` (exit 1).
+
 ## 2026-08-30 - dsh-plugin** renamed to acryl-*; portable CLI archive proven
 
 Commits: `933ee2e`, `5558721`, `16ba098`
