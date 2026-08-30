@@ -221,11 +221,25 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf /tmp/acryl-cli-smoke && mkdir -p /tmp/acryl-cli-smoke
-          tar -xf release-artifacts/acryl-cli-${{ matrix.target }}.${{ matrix.ext }} -C /tmp/acryl-cli-smoke
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            # Git Bash's tar is GNU tar and cannot read a Zip; prefer unzip,
+            # falling back to PowerShell's Expand-Archive (always present).
+            if command -v unzip >/dev/null 2>&1; then
+              unzip -q release-artifacts/acryl-cli-windows-x64.zip -d /tmp/acryl-cli-smoke
+            else
+              ZIP_WIN="$(cygpath -w "$PWD/release-artifacts/acryl-cli-windows-x64.zip")"
+              OUT_WIN="$(cygpath -w /tmp/acryl-cli-smoke)"
+              powershell -NoProfile -Command "Expand-Archive -LiteralPath '$ZIP_WIN' -DestinationPath '$OUT_WIN' -Force"
+            fi
+          else
+            tar -xf release-artifacts/acryl-cli-${{ matrix.target }}.${{ matrix.ext }} -C /tmp/acryl-cli-smoke
+          fi
           CLI="/tmp/acryl-cli-smoke/acryl-cli-${{ matrix.target }}/bin/${{ matrix.cli }}"
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            "$CLI" --version
-            (cd /tmp/acryl-cli-smoke && "$CLI" tui --json)
+            # Git Bash runs .cmd through cmd.exe; pass the Windows path form.
+            CLI_WIN="$(cygpath -w "$CLI")"
+            cmd //c "$CLI_WIN" --version
+            (cd /tmp/acryl-cli-smoke && cmd //c "$CLI_WIN" tui --json)
           else
             env PATH=/usr/bin:/bin "$CLI" --version
             (cd /tmp/acryl-cli-smoke && env PATH=/usr/bin:/bin "$CLI" tui --json)
