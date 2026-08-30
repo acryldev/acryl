@@ -1,4 +1,48 @@
-## 2026-08-30 - ACRYL distribution foundation: deferred distribution channels
+## 2026-08-30 - Release-gate repair: one authoritative per-architecture workflow
+
+Implementation: `9c442facf129d4440e74d9f01611378f3c3576ec`.
+
+Fresh verification (offline, this pass) plus exact root causes for the two
+Release Candidate failures.
+
+Portable CLI archive re-proven (darwin-arm64): `release-artifacts/acryl-cli-
+darwin-arm64.tar.gz` extracts to an empty temp dir, the bundled launcher runs
+`acryl --version` -> `0.1.9` and `acryl tui --json` -> `{"mode":"direct",...}`
+with `PATH=/usr/bin:/bin` and an isolated HOME (no host Node/npm/pnpm); the
+bundled `bin/node` is a Mach-O arm64 executable. SHA-256 `93a43a10…` matches
+`checksums.txt`. NPM CLI is a Node script, not a binary: workspace `acryl-tui`
+bin `acryl -> lib/bin.js`, `engines.node >= 22` (published `acryl` needs host
+Node >= 22).
+
+Root cause 1 (Windows long-path): the former methodology filename was 232
+characters, producing a 253-character relative path that exceeds Windows
+MAX_PATH on `D:\a\acryl\acryl\…` checkout. It is renamed to
+`docs/workmethodology/acryl-hybrid-engineering-methodology.md`; `core.longpaths`
+remains only a compatibility mitigation.
+
+Root cause 2 (macOS node-pty): the legacy `release-candidate.yml` macOS job runs
+`dist:mac-smoke` -> `scripts/package-mac.ts` -> `prepareInstalledMacUniversalRuntime`,
+which requires BOTH `node-pty/prebuilds/darwin-arm64` and `darwin-x64` in one
+universal build — incompatible with per-arch packaging. `release.yml` already
+packages per-arch; `release-candidate.yml` is now redundant with it.
+
+Implemented:
+- `.github/workflows/release.yml`: every desktop matrix job runs
+  `corepack pnpm --filter acryl-desktop run verify:closure`; its release
+  `checksums.txt` normalizes paths to basenames, matching the archive builder
+  and installer lookup.
+- `acryl-desktop/tests/package.spec.ts`: the packaging gate asserts the five
+  per-architecture desktop jobs, five CLI targets, verify-before-package gates,
+  and `needs: [build, cli]`.
+- The overlong methodology file was renamed and the obsolete
+  `release-candidate.yml` universal-mac workflow was deleted. `release.yml` is
+  the only tag-triggered release path.
+
+Remaining verification:
+1. Run an isolated `npm install -g acryl@<version>` smoke with registry access.
+2. Run the authoritative release matrix via `workflow_dispatch` before another
+   tag, then record every desktop and CLI target result.
+
 
 Explicitly deferred (recorded per the OpenCode-style foundation goal, not built):
 AppImage, RPM, auto-update manifests (latest*.yml), code signing/notarization
@@ -579,7 +623,7 @@ and durable evidence. It defines the roadmap and specification ledger as the
 project's durable navigation and delivery records.
 
 Primary document:
-`docs/workmethodology/acryl-agent-co-developed-hybrid-engineering-methodology-github-spec-kit-matt-pocock-spec-driven-delivery-superpowers-tdd-debug-verification-cordis-lifecycle-architecture-ponytail-minimalism-vertical-slice-roadmap-ledger-execution.md`.
+`docs/workmethodology/acryl-hybrid-engineering-methodology.md`.
 
 ## 2026-08-26 - Durable Harness message dispatch has an explicit boundary
 

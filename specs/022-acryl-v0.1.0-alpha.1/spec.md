@@ -1,9 +1,11 @@
 # Feature Specification: ACRYL v0.1.0-alpha.1 release readiness
 
 **Feature Directory**: `specs/022-acryl-v0.1.0-alpha.1`
-**Created**: 2026-08-29 (C1). **Status**: in progress.
-**Input**: `docs/ACRYL-ROADMAP.md` M1 secondary delivery; the primary pi-tui
-terminal surface is delivered and PTY-evidenced.
+**Created**: 2026-08-29 (C1). **Status**: superseded 2026-08-30.
+**Successor**: [`docs/RELEASE-FOUNDATION-HANDOFF.md`](../../docs/RELEASE-FOUNDATION-HANDOFF.md).
+
+This alpha-only plan was superseded after ACRYL adopted the five-target Desktop
+and portable CLI release foundation. It remains as historical evidence only.
 
 ## Objective
 

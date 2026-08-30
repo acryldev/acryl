@@ -1,7 +1,17 @@
 # ACRYL distribution foundation — release handoff
 
-Status: **all foundation deliverables complete and verified on `main` (`e92b9b3`).**
-The only remaining action is the user-authorized **v0.1.10** publication.
+Status: **the legacy Release Candidate workflow and Windows long-path blocker
+were removed.** Portable darwin-arm64 CLI archive is proven without host Node.
+A non-publishing run of the authoritative per-architecture release matrix is
+still required before the next tag.
+
+## Remaining verification
+
+1. **NPM clean-install verification** — run an isolated `npm install -g acryl`
+   smoke against the published package.
+2. **Authoritative release matrix** — run `.github/workflows/release.yml` through
+   `workflow_dispatch` and require every desktop and CLI target to pass before
+   creating another tag.
 
 ## Verified deliverables (goal's completion list)
 
@@ -12,8 +22,8 @@ The only remaining action is the user-authorized **v0.1.10** publication.
      extracted archive (bundled `acryl --version`, `acryl tui --json`, no host
      Node) **before** upload.
    - `release` job `needs: [build, cli]`; any failed matrix job prevents artifact
-     upload and release creation. `release-candidate.yml` additionally gates
-     `check:win-package` / `check:mac-package` before building.
+     upload and release creation. Every desktop matrix job now also runs
+     `corepack pnpm --filter acryl-desktop run verify:closure`.
 2. **Fresh gates pass** — `corepack pnpm run verify` green locally. CI-side readiness
    confirmed: committed `upstream.json` (`b150a551…`) == committed submodule pointer
    (`b150a551…`), so `check:layout` passes on a clean checkout; `pnpm install
@@ -59,11 +69,17 @@ Homebrew, Scoop, Chocolatey, Pacman/AUR, mise, Nix.
 
 ## Commits (goal work, all on `main`)
 
+`9c442facf129d4440e74d9f01611378f3c3576ec` removes the obsolete Release
+Candidate workflow, makes the release-workflow assertion match its matrix, and
+renames the Windows-incompatible methodology path.
+
 `933ee2e` rename → `5558721` CLI version/entrypoint fixes → `16ba098` CLI archive
 build + matrix → `d196df0` installer seam → `5a509a6` verify-before-upload →
 `30b2c15` README canonical npm → `f6c3f20` windows CLI target → `feb2e4f` checksums
 format → `e92b9b3` deferred channels.
 
-## Next task (user action)
+## Next task
 
-Authorize the v0.1.10 release. Everything up to the publish is done and verified.
+Run the authoritative release workflow through `workflow_dispatch`, inspect all
+five desktop and five CLI jobs, then address any target-specific failure before
+authorizing a new tag.
