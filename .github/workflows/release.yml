@@ -107,6 +107,16 @@ jobs:
           corepack pnpm --filter acryl-development-canvas run build
           corepack pnpm --filter acryl-desktop run build
 
+      # Same gates CI requires: a release matrix job must not package/upload
+      # anything the repository checks would reject.
+      - name: Verify release gates (layout, typecheck, test)
+        run: |
+          corepack pnpm run check:layout
+          corepack pnpm --filter acryl-control run build
+          corepack pnpm --filter acryl-harness-runtime run build
+          corepack pnpm run typecheck
+          corepack pnpm run test
+
       - name: Package ${{ matrix.name }}
         shell: bash
         env:
