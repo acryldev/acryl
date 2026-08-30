@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url'
+import { realpathSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { relaunchWithExposedInternals } from './cli/node-launcher.ts'
 import { runAcryl } from './cli/run.ts'
@@ -10,7 +11,15 @@ export type { AcrylCliDependencies } from './cli/run.ts'
 
 function isEntrypoint(): boolean {
   const entrypoint = process.argv[1]
-  return entrypoint !== undefined && resolve(entrypoint) === fileURLToPath(import.meta.url)
+  if (entrypoint === undefined) return false
+  // Compare canonical paths: Node resolves import.meta.url to the real path, so
+  // a script reached through a symlink (e.g. /tmp -> /private/tmp, or a portable
+  // archive extracted anywhere) must be canonicalized before comparison.
+  try {
+    return realpathSync(entrypoint) === realpathSync(fileURLToPath(import.meta.url))
+  } catch {
+    return resolve(entrypoint) === fileURLToPath(import.meta.url)
+  }
 }
 
 if (isEntrypoint()) {

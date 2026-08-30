@@ -25,8 +25,9 @@ import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { ManualCompactionError } from '@deepseek-ai/dsh-compaction'
 import { GoalError } from '@deepseek-ai/dsh-goal'
 import { SessionId, type Session } from '@deepseek-ai/dsh-session'
+import { ACRYL_VERSION } from '../version.ts'
 
-const TUI_VERSION = '0.1.0-dev.0'
+const TUI_VERSION = ACRYL_VERSION
 const PROMPT_HISTORY_LIMIT = 200
 
 export interface RunAcrylTuiOptions {
