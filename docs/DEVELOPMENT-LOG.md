@@ -1,4 +1,29 @@
-## 2026-08-30 - Release matrix repair: Zip-safe CLI archives, npm entrypoint verify, web from CLI
+## 2026-08-30 - v0.1.10 shipped as an OpenCode-style combined release
+
+The non-publishing matrix and then the tag-gated release both ran fully green
+(5 desktop + 5 CLI jobs), and **v0.1.10 is published** at
+https://github.com/acryldev/acryl/releases/tag/v0.1.10 with both asset families
+in one release (the OpenCode distribution model):
+
+- CLI portable archives (5): `acryl-cli-darwin-arm64/x64.tar.gz`,
+  `acryl-cli-linux-arm64/x64.tar.gz`, `acryl-cli-windows-x64.zip`.
+- Desktop installers (5 + blockmaps): `acryl-desktop-mac-arm64/x64.dmg`,
+  `acryl-desktop-win-x64.exe`, `acryl-desktop-linux-amd64/arm64.deb`.
+- `checksums.txt` (SHA-256 for every CLI archive, basename format).
+
+Release run: `33311328070` (all 10 jobs success; `Publish GitHub release`
+success). Non-publishing validation: `33310901665` (green). Shipped-artifact
+verification: downloaded `acryl-cli-darwin-arm64.tar.gz` from the release,
+SHA-256 matched (`75cc0ec8…`), extracted, `acryl --version` -> 0.1.10 and
+`acryl tui --json` boots with PATH=/usr/bin:/bin and an isolated HOME, zero
+symlinks in node_modules (Zip-safe flatten). npm `acryl` is still at 0.1.8
+(the pre-entrypoint-fix build); publishing 0.1.10 to npm is a separate,
+credential-gated step (no npm auth in this environment).
+
+Remaining/next: publish `acryl@0.1.10` to npm (does the fixed entrypoint via
+`acryl-tui` under the `acryl` name); add the cross-surface capability
+integration test (one shared ACRYL runtime capability surfaced through CLI,
+Desktop, and Web adapters).
 
 Three fixes landed to make the non-publishing CLI/desktop matrix green and the
 split credible, plus fresh evidence.
