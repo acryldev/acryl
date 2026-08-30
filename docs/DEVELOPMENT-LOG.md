@@ -1,3 +1,51 @@
+## 2026-08-30 - npm 0.1.13 published, but external-user boot is BROKEN (new pipeline bug)
+
+The `NPM_TOKEN` secret was rotated by the human (GitHub web), and the
+`npm-publish` job now succeeds: `npm view acryl version` → `0.1.13`,
+`dist-tags.latest` → `0.1.13`. The version invariant is closed. **However**, an
+isolated external-user smoke test (`npm i -g acryl` into a fresh prefix) found
+the published CLI crashes at startup — the same "published but broken" class
+this project has hit repeatedly (0.1.8 / 0.1.10 / 0.1.12).
+
+### Verified failure (fresh prefix, no host workspace)
+
+```text
+$ acryl --version
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'acryl-harness-runtime'
+  imported from .../lib/node_modules/acryl/lib/bin.js
+```
+
+The published `lib/bin.js` still carries a bare
+`import { bootAcrylHarnessProfile, ... } from "acryl-harness-runtime"`, but
+`acryl-harness-runtime` is absent from the published dependency map (it is a
+`workspace:*` dep of `acryl-tui`, excluded from npm by design).
+
+### Root cause (definitive)
+
+A dedicated publish build already exists and documents this exact failure:
+`acryl-tui/tsdown.publish.config.ts` bundles the internal workspace packages
+via `noExternal: ['acryl-control', 'acryl-harness-runtime']` and emits to
+`lib-publish/`. Its header states the default `tsdown.config.ts` "leaves
+node_modules dependencies external ... an external `npm install -g acryl`
+cannot resolve `acryl-harness-runtime`, so the CLI fails at startup with
+ERR_MODULE_NOT_FOUND."
+
+But `scripts/publish-npm-cli.mjs` step 0 runs
+`pnpm --filter acryl-tui run build` (the DEFAULT config → `lib/`) and step 1
+copies `lib/` into the publish package. It never invokes
+`tsdown.publish.config.ts` and never reads `lib-publish/`. So the publish
+config fix was authored but never wired into the release path.
+
+### Recommended fix
+
+1. Wire `publish-npm-cli.mjs` to build with `tsdown.publish.config.ts`
+   (e.g. `pnpm --filter acryl-tui exec tsdown -c tsdown.publish.config.ts`)
+   and copy `lib-publish/` instead of `lib/`.
+2. Bump workspace packages to `0.1.14` (0.1.13 is already published and cannot
+   be overwritten), tag `v0.1.14`, re-release.
+3. Re-run the isolated external-user smoke (`--version` and `tui --json` boot)
+   before declaring the release complete.
+
 ## 2026-08-30 - npm 0.1.13 publish blocked: token-permission root cause verified
 
 Follow-up to the v0.1.13 release. The GitHub Release and all 10 binaries are
