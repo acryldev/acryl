@@ -1,11 +1,14 @@
 ## 2026-08-30 - Windows CLI archive spawn fix
 
-Implementation: `5d268c7f0dbbae33c4b262f0e85ce343104d7f6d`.
+Implementations: `5d268c7f0dbbae33c4b262f0e85ce343104d7f6d`,
+`02d3ff2`.
 
 The first non-publishing authoritative release run exposed a Windows-only CLI
 archive failure: Node's `execFileSync('corepack', ...)` cannot resolve the
-Windows command shim. The archive builder now selects `corepack.cmd` on Windows
-and `corepack` elsewhere. A focused platform helper test covers both paths.
+Windows command shim. The first repair selected `corepack.cmd`, but the next
+matrix run showed that Windows also requires `shell: true` to spawn a `.cmd`
+file. The builder now applies both rules. A focused platform helper test covers
+both paths.
 
 The CLI matrix also now runs TUI typechecking, tests, and the helper test before
 creating an archive. Local darwin-arm64 proof was repeated: the extracted

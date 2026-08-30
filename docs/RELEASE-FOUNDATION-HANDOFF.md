@@ -2,9 +2,9 @@
 
 Status: **the legacy Release Candidate workflow and Windows long-path blocker
 were removed.** The first authoritative non-publishing matrix run exposed a
-Windows CLI archive spawn defect, fixed in `5d268c7`. Portable darwin-arm64 CLI
-archive is proven without host Node. A new non-publishing matrix run is required
-before the next tag.
+Windows CLI archive spawn defect, fixed in `5d268c7` and `02d3ff2`.
+Portable darwin-arm64 CLI archive is proven without host Node. A new
+non-publishing matrix run is required before the next tag.
 
 ## Remaining verification
 
@@ -75,8 +75,9 @@ Homebrew, Scoop, Chocolatey, Pacman/AUR, mise, Nix.
 Candidate workflow, makes the release-workflow assertion match its matrix, and
 renames the Windows-incompatible methodology path.
 
-`5d268c7f0dbbae33c4b262f0e85ce343104d7f6d` fixes Windows Corepack spawning
-for portable CLI archives and gates each CLI archive with TUI verification.
+`5d268c7f0dbbae33c4b262f0e85ce343104d7f6d` selects the Windows Corepack shim
+and gates each CLI archive with TUI verification. `02d3ff2` supplies the required
+Windows shell spawn option for that `.cmd` shim.
 
 `933ee2e` rename → `5558721` CLI version/entrypoint fixes → `16ba098` CLI archive
 build + matrix → `d196df0` installer seam → `5a509a6` verify-before-upload →
