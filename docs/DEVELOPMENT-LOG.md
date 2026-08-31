@@ -1,3 +1,9 @@
+## 2026-08-31 - clean npm install evidence harness
+
+Commit: `a171777`
+
+Added the release measurement foundation for the real global npm product. The harness installs an already-packed candidate into a fresh temporary prefix, npm cache, and HOME; discovers the installed global root through isolated `npm root --global`; measures regular-file bytes and files; runs the installed `acryl --version` and `acryl tui --json`; and counts realpath-deduplicated package roots under `acryl/node_modules` while ignoring `.bin` and `.pnpm`. A fixture proves symlink aliases cannot inflate the canonical package metric. The fresh published v0.1.17 baseline is 557 canonical packages, 244,467,079 regular-file bytes, 32,260 files, and a 24.124-second isolated global install on Darwin ARM64 with Node 24.19.0/npm 11.17.0.
+
 ## 2026-08-31 - Desktop target-native payload pruning
 
 Commits: `ac413a5`, `5e061be`
