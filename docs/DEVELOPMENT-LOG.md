@@ -1,3 +1,34 @@
+## 2026-08-31 - removed dead `dshmarket` dependency (root cause of ERESOLVE warning)
+
+The `npm i -g acryl` ERESOLVE warning traced to `dshmarket@1.17.1` (upstream
+DeepSeek Harness visual plugin market). Investigation showed it is a **dead
+dependency**:
+
+- Declared as a direct dep of `acryl-harness-runtime` and `acryl-desktop`
+  (added speculatively in `41af5c8`'s "declare all ~200 DSH packages"
+  approach), but never mounted by any profile — `DEFAULT_PROFILE_BUNDLES`
+  is `['@deepseek-ai/dsh-base']` (+ `dsh-web-app` for the web profile).
+- Never referenced by any owned source, preset, or include tree.
+- Superseded by the ACRYL-owned `dsh-community-market` ("Community plugin
+  discovery and managed package operations"), which does not depend on it.
+
+Its narrow peer range (`@deepseek-ai/dsh-settings@^0.1.0-rc.7`) conflicted
+with the shipped `0.1.1-rc.2`, causing the warning.
+
+### Change (`c5fdd2f`)
+
+- Removed `dshmarket@1.17.1` from `acryl-harness-runtime` + `acryl-desktop`
+  `dependencies`.
+- Removed `dshmarket@1.17.1` from `patchedDependencies` (`pnpm-workspace.yaml`).
+- Deleted `patches/dshmarket@1.17.1.patch`.
+
+### Verification
+
+- `pnpm why dshmarket` → empty; `grep -c dshmarket pnpm-lock.yaml` → 0.
+- `acryl-harness-runtime` tests: 11/11 pass (host profile boots).
+- `acryl-tui` tests: 255/255 pass.
+- `acryl web --json` → exit 0, `http://127.0.0.1:3080` (web profile boots).
+
 ## 2026-08-31 - npm 0.1.14 published: self-contained CLI, full boot verified
 
 Resolution of the 0.1.13 broken-boot defect. The publish script now builds the
