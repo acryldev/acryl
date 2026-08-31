@@ -59,4 +59,19 @@ describe('ACRYL_CODING_CAPABILITIES', () => {
     const second = createAcrylCodingCapabilityPatches(new Set(['tui']))
     expect(second[0]?.id).toBe('system-prompt')
   })
+
+  it('returns only the missing authorization integration for web and desktop composition', () => {
+    const web = createAcrylCodingCapabilityPatches(new Set(['web']))
+    const desktop = createAcrylCodingCapabilityPatches(new Set(['desktop']))
+    const insertedRows = web.flatMap(patch => ('insert' in patch && patch.insert) ? patch.insert : [])
+
+    expect(web.map(patch => ('id' in patch ? patch.id : undefined)).filter(Boolean)).toEqual([])
+    expect(insertedRows).toEqual([
+      expect.objectContaining({ id: 'authorization', name: '@deepseek-ai/dsh-authorization' }),
+    ])
+    expect(insertedRows.map(row => row.id)).not.toContain('agent-presets')
+    expect(insertedRows.map(row => row.id)).not.toContain('session-stats')
+    expect(JSON.stringify(web)).not.toContain('system-prompt')
+    expect(desktop).toEqual(web)
+  })
 })

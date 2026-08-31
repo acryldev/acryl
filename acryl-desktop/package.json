@@ -117,9 +117,12 @@
     }
   },
   "scripts": {
+    "prebuild": "pnpm --filter acryl-harness-runtime run build",
     "build": "node scripts/generate-acryl-brand.mjs && node scripts/generate-mac-app-icon.mjs && node scripts/generate-tray-icons.mjs && node scripts/clean.mjs && tsdown && vite build --config vite.native-ui.config.ts && tsc -p tsconfig.json --emitDeclarationOnly && tsc -p tsconfig.client.json --emitDeclarationOnly",
     "build:canvas": "pnpm --filter acryl-development-canvas run build",
+    "pretypecheck": "pnpm run prebuild",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.native-ui.json --noEmit && tsc -p tsconfig.tests.json --noEmit && tsc -p tsconfig.tests.client.json --noEmit",
+    "pretest": "pnpm run prebuild",
     "test": "vitest run && node --test scripts/launch-dev.spec.mjs",
     "verify:closure": "node --test scripts/runtime-closure.spec.mjs && node scripts/verify-runtime-closure.mjs",
     "verify:cli": "node scripts/verify-cli-runtime.mjs",
@@ -279,7 +282,8 @@
     "node-addon-require-builtin-darwin-arm64": "0.1.5",
     "node-addon-require-builtin-darwin-x64": "0.1.5",
     "@deepseek-ai/dsh-client-ui-settings-models": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-trajectory": "0.1.1-rc.2"
+    "@deepseek-ai/dsh-client-ui-trajectory": "0.1.1-rc.2",
+    "acryl-harness-runtime": "workspace:*"
   },
   "peerDependencies": {
     "electron": "43.4.0"

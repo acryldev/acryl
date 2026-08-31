@@ -275,6 +275,35 @@ describe('desktop profile composition', {
     }))
   })
 
+  it('adds the shared authorization row before replacing the Desktop webserver', () => {
+    const home = temporaryHome()
+    const prepared = prepareDesktopProfile(undefined, home, 'darwin')
+    const rows = composeEntries([prepared.patches])
+    const isEntryLike = (value: unknown): value is { id: string; name: string } =>
+      typeof value === 'object' && value !== null
+      && typeof (value as { id?: unknown }).id === 'string'
+      && typeof (value as { name?: unknown }).name === 'string'
+    const findPatchIndex = (patches: readonly { insert?: unknown }[], id: string, name: string) =>
+      patches.findIndex((patch) =>
+        Array.isArray(patch.insert)
+        && patch.insert.some(row => isEntryLike(row) && row.id === id && row.name === name))
+    const authorizationPatchIndex = findPatchIndex(
+      prepared.patches, 'authorization', '@deepseek-ai/dsh-authorization')
+    const desktopWebserverPatchIndex = findPatchIndex(
+      prepared.patches, 'desktop-webserver', 'acryl-desktop/webserver')
+
+    expect(authorizationPatchIndex).toBeGreaterThanOrEqual(0)
+    expect(desktopWebserverPatchIndex).toBeGreaterThan(authorizationPatchIndex)
+    expect(rows.find(row => row.id === 'authorization')).toEqual({
+      id: 'authorization',
+      name: '@deepseek-ai/dsh-authorization',
+    })
+    expect(rows.find(row => row.id === 'desktop-webserver')).toEqual(expect.objectContaining({
+      name: 'acryl-desktop/webserver',
+      config: { host: '127.0.0.1', port: 43_120 },
+    }))
+  })
+
   it('keeps both Market providers absent until the user explicitly enables one', () => {
     const home = temporaryHome()
     const prepared = prepareDesktopProfile(undefined, home, 'darwin')

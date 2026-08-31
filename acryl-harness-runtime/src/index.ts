@@ -100,9 +100,9 @@ export interface AcrylWebRuntime {
 /**
  * Boot the DSH browser surface (the `web` profile: `dsh-base` + `dsh-web-app`)
  * as one normal ACRYL runtime, so `pnpm acryl-web` serves the same DSH
- * HTTP/WebSocket seam the web surface always uses. The web profile already
- * composes the persona/agent rows ACRYL's terminal surface adds, so no shared
- * coding-capability patches are re-inserted here (that would duplicate `system-prompt`).
+ * HTTP/WebSocket seam the web surface always uses. The shipped Web profile
+ * already owns its system prompt, agent-preset roster, and session stats, so
+ * the shared factory contributes only the missing authorization seam here.
  */
 export async function bootAcrylWebProfile(
   options: BootAcrylWebProfileOptions = {},
@@ -114,7 +114,11 @@ export async function bootAcrylWebProfile(
   const profile = loadProfile('web', profileName, dshInstallAnchor)
   const rootConfig = join(profile.dir, 'cordis.yml')
   writeFileSync(rootConfig, profileRoot)
-  const patches = structuredClone([...profile.layers.flatMap(layer => layer.patches), ...profile.patches])
+  const patches = structuredClone([
+    ...profile.layers.flatMap(layer => layer.patches),
+    ...createAcrylCodingCapabilityPatches(new Set(['web'])),
+    ...profile.patches,
+  ])
   const cmdlineArgs = options.cmdlineArgs ?? []
   const ctx = await boot('web', rootConfig, patches, hostCtx => {
     provideCmdline(hostCtx, { args: [...cmdlineArgs], exit: code => { process.exitCode = code } })

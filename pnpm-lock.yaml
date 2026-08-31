@@ -456,6 +456,9 @@ importers:
       acryl-development-canvas:
         specifier: workspace:*
         version: link:../acryl-development-canvas
+      acryl-harness-runtime:
+        specifier: workspace:*
+        version: link:../acryl-harness-runtime
       adm-zip:
         specifier: ^0.6.0
         version: 0.6.0

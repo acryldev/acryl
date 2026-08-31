@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { DEFAULT_PROFILE_BUNDLES, initProfile, resolveProfileDir } from '@deepseek-ai/dsh-app-boot'
-import { bootAcrylHarnessProfile } from '../src/index.ts'
+import { bootAcrylHarnessProfile, bootAcrylWebProfile } from '../src/index.ts'
 
 const temporaryHomes: string[] = []
 const initialDshHome = process.env.DSH_HOME
@@ -45,6 +45,19 @@ describe('bootAcrylHarnessProfile', () => {
     // typert registries are mounted (the web/base composition does), so it is
     // asserted via the session bridge behaviour rather than `ctx.get`.
     expect(runtime.ctx.get('sessionProjections')).toBeDefined()
+    await runtime.dispose()
+  })
+})
+
+describe('bootAcrylWebProfile', () => {
+  it('boots the pinned web profile with shared authorization available', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-web-home-'))
+    temporaryHomes.push(home)
+    process.env.DSH_HOME = home
+
+    const runtime = await bootAcrylWebProfile({ cmdlineArgs: ['--no-open', '--port', '0'] })
+
+    expect(runtime.ctx.get('authorization')).toBeDefined()
     await runtime.dispose()
   })
 })

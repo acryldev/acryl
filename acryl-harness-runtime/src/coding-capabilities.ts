@@ -68,6 +68,18 @@ const authorizationCapabilityPatches = [
   },
 ] as const satisfies readonly PatchOptions[]
 
+const NON_TUI_SHARED_ROW_IDS: ReadonlySet<string> = new Set(['authorization'])
+
+function selectNonTuiCapabilityPatches(
+  patches: readonly PatchOptions[],
+): readonly PatchOptions[] {
+  return patches.flatMap((patch) => {
+    if (!('insert' in patch) || !Array.isArray(patch.insert)) return []
+    const insert = patch.insert.filter(row => NON_TUI_SHARED_ROW_IDS.has(row.id))
+    return insert.length === 0 ? [] : [{ insert }]
+  })
+}
+
 export const ACRYL_CODING_CAPABILITIES = [
   {
     id: 'authorization',
@@ -82,9 +94,12 @@ export const ACRYL_CODING_CAPABILITIES = [
 export function createAcrylCodingCapabilityPatches(
   surfaces: ReadonlySet<AcrylSurface>,
 ): readonly PatchOptions[] {
+  const includeSharedCodingRows = surfaces.has('tui')
   return structuredClone(
     ACRYL_CODING_CAPABILITIES
       .filter(capability => capability.surfaces.some(surface => surfaces.has(surface)))
-      .flatMap(capability => capability.loaderPatches),
+      .flatMap(capability => includeSharedCodingRows
+        ? capability.loaderPatches
+        : selectNonTuiCapabilityPatches(capability.loaderPatches)),
   )
 }

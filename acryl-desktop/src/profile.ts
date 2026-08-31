@@ -21,6 +21,7 @@ import {
   type ProfileManifest,
 } from '@deepseek-ai/dsh-app-boot'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
+import { createAcrylCodingCapabilityPatches } from 'acryl-harness-runtime'
 import FileSettingsProvider, {
   resolveSpec as resolveSettingsFileSpec,
   type Config as SettingsFileConfig,
@@ -623,6 +624,8 @@ export function prepareDesktopProfile(
   const desktopPatches = loadOverlayPatches(BIN_NAME, DESKTOP_PATCH_PATH)
   const canvasPatches = loadOverlayPatches(BIN_NAME, CANVAS_PATCH_PATH)
   const bundlePatches: PatchOptions[] = []
+  const desktopOverlayPatches: PatchOptions[] = []
+  const sharedDesktopPatches = createAcrylCodingCapabilityPatches(new Set(['desktop']))
   let dshMarketPatches: PatchOptions[] | undefined
   let desktopLayerInserted = false
   const providerAwareDisabledBundles = new Set(disabledBundles)
@@ -636,7 +639,7 @@ export function prepareDesktopProfile(
     }
     bundlePatches.push(...layer.patches)
     if (layer.packageName !== '@deepseek-ai/dsh-web-app') continue
-    bundlePatches.push(...desktopPatches, ...canvasPatches)
+    desktopOverlayPatches.push(...desktopPatches, ...canvasPatches)
     desktopLayerInserted = true
   }
   if (!desktopLayerInserted) {
@@ -690,6 +693,8 @@ export function prepareDesktopProfile(
   }
   const patches: PatchOptions[] = [
     ...filteredBundles.patches,
+    ...sharedDesktopPatches,
+    ...desktopOverlayPatches,
     ...providerPatches,
     ...filteredProfile.patches,
     ...filteredHome.patches,
