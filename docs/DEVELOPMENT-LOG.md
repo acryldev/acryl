@@ -1,3 +1,9 @@
+## 2026-08-31 - Desktop target-native payload pruning
+
+Commits: `ac413a5`, `5e061be`
+
+Electron Builder's `afterPack` hook now removes target-qualified native paths for another operating system or CPU before the existing runtime verifier and signing stages. Thin macOS/Linux/Windows builds retain only their target; universal macOS retains both Darwin CPU trees while removing Linux and Windows trees. Focused Desktop and shared-pruner tests cover target selection, universal behavior, and unsupported Electron Builder target combinations; Desktop typecheck passes.
+
 ## 2026-08-31 - Desktop-owned release map exclusion
 
 Commit: `2806c26`
