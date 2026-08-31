@@ -1,3 +1,9 @@
+## 2026-08-31 - version-independent npm closure verification
+
+Commit: `c6e76db`
+
+Made the focused packed-CLI closure test discover the produced tarball rather than assuming version `0.1.17`, so the same release guard survives every package bump. The test passes against the current shared TUI and Web-host closure.
+
 ## 2026-08-31 - reproducible shared CLI closure verification
 
 Commit: `c3f0aff`
