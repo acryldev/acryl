@@ -1,7 +1,8 @@
 /**
  * System-clipboard read, used for right-click paste. Node has no built-in
- * clipboard API, so this shells out to the platform's clipboard tool — the
- * same `execFile` pattern `oauth/flow.ts` already uses for `open`/`xdg-open`.
+ * clipboard API, so this shells out to the platform's clipboard tool via
+ * `execFile` (the same `node:child_process` approach used elsewhere for
+ * platform launchers like `open`/`xdg-open`).
  * @module @tomowang/dsh-tui/tui/clipboard
  */
 

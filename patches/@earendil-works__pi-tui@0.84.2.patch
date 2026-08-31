@@ -1,0 +1,26 @@
+diff --git a/dist/tui-alt-screen.d.ts b/dist/tui-alt-screen.d.ts
+index 848119411c1ff2885b8d1efe97f2f297bd4cd470..f24d8a5c2290b6f5e99e22d8501bd9eeace8267f 100644
+--- a/dist/tui-alt-screen.d.ts
++++ b/dist/tui-alt-screen.d.ts
+@@ -11,7 +11,7 @@ export interface TuiAltScreenOptions {
+     searchCurrentMatchStyle?: (text: string) => string;
+     /** Open an OSC 8 hyperlink activated with a primary-button click. */
+     openUrl?: (url: string) => void;
+-    /** Handle an unmodified secondary-button press for clipboard paste. Currently enabled on Windows only. */
++    /** Handle an unmodified secondary-button press for clipboard paste. */
+     onRightClickPaste?: () => void;
+     /**
+      * Copy selected text to the system clipboard. Return `true` on success; the caller flashes
+diff --git a/dist/tui-alt-screen.js b/dist/tui-alt-screen.js
+index 4edcf845ba7866782a8ec7219508a2dce0073a91..2da48c0b54a6a33c9a00ee699358552a814e3246 100644
+--- a/dist/tui-alt-screen.js
++++ b/dist/tui-alt-screen.js
+@@ -558,7 +558,7 @@ export class TuiAltScreen extends TuiBase {
+         };
+     }
+     handleRightClickPaste(event) {
+-        if (!this.onRightClickPaste || process.platform !== "win32" || event.release || event.button !== 2) {
++        if (!this.onRightClickPaste || event.release || event.button !== 2) {
+             return false;
+         }
+         try {

@@ -77,6 +77,7 @@ patchedDependencies:
   '@deepseek-ai/dsh-llm-deepseek@0.1.1-rc.2': patches/dsh-llm-deepseek@0.1.1-rc.2.patch
   '@deepseek-ai/dsh-sandbox-windows-acl@0.1.1-rc.2': patches/dsh-sandbox-windows-acl@0.1.1-rc.2.patch
   '@deepseek-ai/dsh-web-app@0.1.1-rc.2': patches/dsh-web-app@0.1.1-rc.2.patch
+  '@earendil-works/pi-tui@0.84.2': patches/@earendil-works__pi-tui@0.84.2.patch
   app-builder-lib@26.15.7: patches/app-builder-lib@26.15.7.patch
   dshmarket@1.17.1: patches/dshmarket@1.17.1.patch
   node-pty@1.2.0-beta.15: patches/node-pty@1.2.0-beta.15.patch
