@@ -19,6 +19,7 @@ function stubActions(): TuiActions {
     openModelProfile: vi.fn(),
     login: vi.fn(),
     logout: vi.fn(),
+    loginWithOAuth: vi.fn(),
     closeModelProfile: vi.fn(),
     backToProviderList: vi.fn(),
     selectProvider: vi.fn(),

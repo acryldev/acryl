@@ -21,6 +21,8 @@ import type { ProviderDraft, ProviderRow, StoredProviderProfile } from '../tui/m
 import type { AgentPresetRow } from '../tui/agentPresets/types.js'
 import { loadFileIndex } from '../tui/fileIndex.js'
 import { logoutNoneMessage, logoutSuccessMessage } from '../tui/auth-guidance.js'
+import { oauthProviderFor } from '../tui/oauth/metadata.js'
+import { runOAuthLogin, revokeOAuthGrant, readOAuthGrant } from '../tui/oauth/flow.js'
 import { stripSessionIdPrefix } from '../sessionId.js'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { ManualCompactionError } from '@deepseek-ai/dsh-compaction'
@@ -181,6 +183,8 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
       const userValue = descriptor === undefined ? undefined : getAtPath(descriptor.user, entry.settingsPath)
       const apiKeyRef = value?.apiKeyEnv ?? deriveApiKeyRef(entry.provider)
       const info = await credentialsSvc.describe(apiKeyRef)
+      const oauth = oauthProviderFor(entry.provider)
+      const grant = oauth === undefined ? undefined : await readOAuthGrant(oauth, credentialsSvc)
       rows.push({
         route: entry.provider,
         displayName: value?.displayName ?? entry.displayName,
@@ -192,6 +196,8 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
         baseURL: value?.baseURL,
         apiKeyRef,
         apiKeyConfigured: info.configured,
+        oauth,
+        grantConfigured: grant !== undefined,
         models: value?.models ?? [],
         revision: descriptor?.revision,
       })
@@ -311,6 +317,28 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     },
     openModelProfile() { store.openModelProfile(); void loadProviders() },
     login() { store.openModelProfile(); void loadProviders() },
+    loginWithOAuth(route) {
+      void (async () => {
+        const credentialsSvc: any = host.ctx.get('credentials')
+        if (credentialsSvc === undefined) {
+          store.setNotice('Credentials are not available in this profile.')
+          return
+        }
+        const meta = oauthProviderFor(route)
+        if (meta === undefined) {
+          store.setNotice('OAuth is not available for this provider.')
+          return
+        }
+        store.setNotice(`Opening ${meta.route} OAuth login…`)
+        const result = await runOAuthLogin(meta, credentialsSvc)
+        if (result.ok) {
+          store.setNotice(`OAuth login complete for ${meta.route}.`)
+          void loadProviders()
+        } else {
+          store.setNotice(`OAuth login failed: ${result.error}`)
+        }
+      })()
+    },
     logout() {
       void (async () => {
         const credentialsSvc: any = host.ctx.get('credentials')
@@ -328,6 +356,8 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
           return
         }
         try {
+          const oauth = oauthProviderFor(row.route)
+          if (oauth !== undefined) await revokeOAuthGrant(oauth, credentialsSvc)
           await credentialsSvc.unset(row.apiKeyRef)
           store.setNotice(logoutSuccessMessage(row.displayName))
           void loadProviders()

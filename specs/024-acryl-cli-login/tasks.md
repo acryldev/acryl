@@ -22,15 +22,16 @@
 
 ## Stage 2 — OAuth login (after Stage 1 is published)
 
-- [ ] L009 Define provider OAuth metadata shape (authorize/token endpoints,
-  client id/secret source) and a provider list.
-- [ ] L010 Loopback redirect listener for the authorization-code callback.
-- [ ] L011 Grant storage + refresh + revocation via `ctx.credentials`
-  (`GrantRecord`).
-- [ ] L012 Extend `LoginOverlay` with an OAuth vs API-key selector (Pi
-  `oauth-selector` shape).
-- [ ] L013 OAuth integration test with a stub provider (fake authorize/token);
-  focused commit + log checkpoint.
+- [x] L009 Define provider OAuth metadata shape (authorize/token endpoints,
+  client id/secret source) and a provider list (`oauth/metadata.ts`).
+- [x] L010 Loopback redirect listener for the authorization-code callback
+  (`oauth/flow.ts` `runOAuthLogin`, `127.0.0.1:0`).
+- [x] L011 Grant storage + refresh + revocation via `ctx.credentials`
+  (`GrantRecord`) (`readOAuthGrant`/`refreshOAuthGrant`/`revokeOAuthGrant`).
+- [x] L012 Extend the `/model` overlay with an OAuth-vs-API-key selector
+  (`o` key, `[oauth]`/`[oauth ✓]` row status).
+- [x] L013 OAuth integration test with a stub provider (fake authorize/token);
+  `tests/tui/oauth/flow.spec.ts`.
 
 ## Definition of done
 

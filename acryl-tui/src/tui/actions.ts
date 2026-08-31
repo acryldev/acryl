@@ -41,8 +41,10 @@ export interface TuiActions {
   openModelProfile(): void
   /** Configure provider authentication: open the provider list (the auth surface). */
   login(): void
-  /** Remove provider authentication for the active provider (clears its stored API key). */
+  /** Remove provider authentication for the active provider (clears its stored API key and OAuth grant). */
   logout(): void
+  /** Run the browser OAuth flow for an OAuth-capable provider and store its grant. */
+  loginWithOAuth(route: string): void
   /** Close the `/model` overlay, discarding any in-progress edit. */
   closeModelProfile(): void
   /** Return from the add/edit form to the provider list without saving. */

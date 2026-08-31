@@ -6,6 +6,8 @@
  * @module @tomowang/dsh-tui/tui/modelProfile/types
  */
 
+import type { OAuthProviderMetadata } from '../oauth/metadata.js'
+
 /** One model entry within a provider's catalog. */
 export interface ModelEntry {
   readonly id: string
@@ -45,6 +47,10 @@ export interface ProviderRow {
   readonly baseURL: string | undefined
   readonly apiKeyRef: string
   readonly apiKeyConfigured: boolean
+  /** OAuth metadata when this route is OAuth-capable. */
+  readonly oauth: OAuthProviderMetadata | undefined
+  /** Whether an OAuth grant is currently stored for this route. */
+  readonly grantConfigured: boolean
   readonly models: readonly ModelEntry[]
   /** Settings revision this row was read at; replayed as `expectedRevision` on write. */
   readonly revision: number | undefined
