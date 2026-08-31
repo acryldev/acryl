@@ -1,3 +1,9 @@
+## 2026-08-31 - base npm CLI no longer boots Web
+
+Commit: `e2768b2`
+
+Removed the `web` command from base ACRYL CLI grammar, help, dispatch, dependencies, and tests. `acryl web` now fails as an unknown command rather than importing or starting a Web runtime. The unused Web profile boot export and its command-line dependency were removed from `acryl-harness-runtime`; the separately distributed Desktop product is unaffected. Focused CLI tests and TUI/runtime TypeScript checks pass.
+
 ## 2026-08-31 - npm CLI scope correction
 
 Commit: `daaaad0`
