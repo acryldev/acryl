@@ -1,3 +1,9 @@
+## 2026-08-31 - Desktop-owned release map exclusion
+
+Commit: `2806c26`
+
+Electron Builder now excludes ACRYL Desktop's own `lib/**/*.map` files from packaged applications while preserving maps in local development output. The package contract test fails if the exclusion is removed. Dependency-map pruning and package-specific runtime allowlists remain separate work because broad dependency deletion is unsafe until the artifact manifest has an explicit allowlist.
+
 ## 2026-08-31 - Desktop Electron locale pruning
 
 Commit: `8d2e470`
