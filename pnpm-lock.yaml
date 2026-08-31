@@ -1081,9 +1081,6 @@ importers:
       dsh-community-market:
         specifier: workspace:*
         version: link:../dsh-community-market
-      dshmarket:
-        specifier: 1.17.1
-        version: 1.17.1(patch_hash=1d6cc820c58c4c1894955e3eb30a5dc00b4c74b07210b43bedd3e17f8ad15a2b)(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-settings@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-brand@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)))(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1))(@deepseek-ai/schemastery@3.18.1))
       koffi:
         specifier: 3.1.5
         version: 3.1.5
