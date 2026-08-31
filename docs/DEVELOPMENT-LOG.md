@@ -1,3 +1,12 @@
+## 2026-08-31 - release 0.1.17 (authorization rewire + interactive prompt)
+
+Bumped the workspace 0.1.16 → 0.1.17 and cut the release, keeping npm and
+GitHub in lockstep (the standing invariant: tag ⇔ 5 packages ⇔ npm ⇔ GitHub
+release). All 10 build jobs (5 CLI + 5 desktop) succeeded; `acryl` published to
+npm at 0.1.17 and the `v0.1.17` GitHub release created with 14 assets. Ships
+`/login` on `ctx.authorization` plus the interactive prompt
+(manual-code/secret/select).
+
 ## 2026-08-31 - TUI paste fixed: bracketed paste in form fields + right-click paste
 
 Two paste paths were broken in the terminal client.
