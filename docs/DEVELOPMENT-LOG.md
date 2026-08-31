@@ -1,3 +1,9 @@
+## 2026-08-31 - target-specific CLI native payload pruning
+
+Commit: `a56b498`
+
+Portable CLI assembly now flattens its production closure and removes native paths that are qualified for another operating-system/CPU target. The pruner preserves generic JavaScript plus the selected target's `node-pty`, ripgrep, Sharp/libvips, Koffi, and other prebuild paths. Focused tests cover retained target files and foreign OS/architecture rejection. On a fresh Darwin ARM64 deployed closure, the pre-archive pruning removed 136,468 KiB of foreign native payload (450,728 KiB → 314,260 KiB). Archive smoke and payload manifests remain the next gate before release publication.
+
 ## 2026-08-31 - runtime distribution milestone safety gate
 
 Commit: `0999312`
