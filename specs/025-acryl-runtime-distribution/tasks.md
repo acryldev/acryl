@@ -6,7 +6,7 @@
 
 - [x] T001 Record the v0.1.17 npm baseline in `evidence/npm-install-baseline-v0.1.17.md`: platform, Node/npm versions, fresh-prefix/fresh-cache command, direct dependencies, canonical installed package count, files, installed bytes, tarball bytes, elapsed wall time, and installed-binary checks.
 - [x] T002 Add `scripts/measure-npm-install.mjs` and tests. It installs a packed tarball into a newly created prefix/cache/HOME, discovers the installed root through isolated `npm root --global`, collects metrics, and runs the installed `acryl --version` and `acryl tui --json`.
-- [ ] T003 Add an npm evidence assertion with explicit package-count, installed-byte, and wall-time budgets against the v0.1.17 baseline.
+- [x] T003 Add an npm evidence assertion with explicit package-count, installed-byte, and wall-time budgets against the v0.1.17 baseline.
 - [x] T004 Add artifact-manifest tests and `scripts/inspect-artifact.mjs` for required paths, forbidden paths, foreign native payload, and byte budgets.
 - [ ] T005 Implement archive extraction verification and run it in release CI before upload.
 - [ ] T006 Replace the source-symlink `scripts/verify-npm-entrypoint.mjs` gate with the candidate-tarball clean-install gate. Keep it separate from portable archive acceptance.
