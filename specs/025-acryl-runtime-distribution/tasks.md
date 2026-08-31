@@ -22,8 +22,8 @@
 
 - [x] T008 [P] [US1] Add failing platform-native selection tests in `scripts/prune-target-native.test.mjs` for target-qualified native package and prebuild paths.
 - [x] T009 [US1] Implement target-aware optional native dependency pruning in `scripts/build-cli-archive.mjs` without removing target `node-pty`, ripgrep, Sharp/libvips, Koffi, or required loader files.
-- [ ] T010 [P] [US1] Add failing release-file pruning tests in `scripts/prune-release-payload.test.mjs` covering maps, declarations, tests, docs, license retention, and runtime allowlisted assets.
-- [ ] T011 [US1] Implement manifest-driven CLI release pruning in `scripts/prune-release-payload.mjs` and invoke it after dependency layout materialization.
+- [x] T010 [P] [US1] Add failing release-file pruning tests in `scripts/prune-release-payload.test.mjs` for source maps and retained runtime/license assets; declarations, tests, and docs remain gated by a later explicit allowlist.
+- [x] T011 [US1] Implement CLI source-map pruning in `scripts/prune-release-payload.mjs` and invoke it after dependency layout materialization.
 - [ ] T012 [US1] Remove the CLI publication library export only if `import 'acryl'` has no supported consumer; otherwise document and retain the API in `acryl-tui/package.json` and `acryl-tui/README.md`.
 - [ ] T013 [US1] Update `scripts/build-cli-archive.mjs`, `.github/workflows/release.yml`, and `scripts/verify-npm-entrypoint.mjs` so archives and npm publication use explicit release manifests rather than an unchecked maximal closure.
 - [ ] T014 [US1] Run all target-native/payload tests, build one local archive, run no-host-Node smoke, compare its measured size to baseline, and commit the CLI reduction checkpoint.

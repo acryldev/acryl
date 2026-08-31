@@ -26,6 +26,7 @@ import { fileURLToPath } from 'node:url'
 import { corepackCommand, corepackSpawnOptions } from './cli-archive-platform.mjs'
 import { flattenNodeModules } from './flatten-node-modules.mjs'
 import { pruneTargetNative } from './prune-target-native.mjs'
+import { pruneReleasePayload } from './prune-release-payload.mjs'
 
 const require = createRequire(import.meta.url)
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -97,6 +98,7 @@ async function main() {
   // symlinks but a symlink-free tree works on every extractor and platform.
   flattenNodeModules(archiveDir)
   pruneTargetNative(archiveDir, spec.nodePlatform === 'win' ? 'win32' : spec.nodePlatform, spec.nodeArch)
+  pruneReleasePayload(archiveDir)
 
   // 4. Archive + checksum.
   mkdirSync(outDir, { recursive: true })
