@@ -1,3 +1,9 @@
+## 2026-08-31 - reproducible shared CLI closure verification
+
+Commit: `c3f0aff`
+
+Added a focused publish-closure test that packs the npm CLI and verifies the manifest retains the shared Web bundle while excluding Canvas, Market, and PNPM roots. The product contract now accurately states that Desktop shares the upstream Web profile bundle but replaces the ordinary Web server Loader row with `acryl-desktop/webserver`; it does not reuse the CLI host implementation verbatim. Committed smoke evidence records the exact clean-install commands, 23-package candidate manifest, and successful `--version`, TUI JSON, and Web JSON output. The compatible `cordis-plugin-group@1.0.1` is now explicitly selected, eliminating the peer warnings observed on the first candidate install.
+
 ## 2026-08-31 - minimal shared TUI and Web npm closure
 
 Commit: `75b1dea`
