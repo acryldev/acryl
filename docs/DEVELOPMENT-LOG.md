@@ -1,3 +1,9 @@
+## 2026-08-31 - shared coding capability composition implementation plan
+
+Commit: `8b6a955`
+
+Added the implementation plan for authorization parity across TUI, Web, and Desktop. It sequences shared Loader-patch extraction, Desktop/Web composition, a secret-free authorization Host/Client adapter, three-surface parity gates, and release-relevant verification without embedding the TUI in Electron or introducing a generic capability runtime.
+
 ## 2026-08-31 - shared coding capability composition design
 
 Commit: `ad6a510`
