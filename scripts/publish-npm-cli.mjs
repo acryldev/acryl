@@ -129,6 +129,7 @@ function availableProductionDependencies(deployDir) {
 // specs/025-acryl-runtime-distribution/evidence/tui-web-closure-audit.md.
 const SHARED_CLI_PACKAGES = [
   '@deepseek-ai/cordis',
+  '@deepseek-ai/cordis-plugin-group',
   '@deepseek-ai/cordis-plugin-hmr',
   '@deepseek-ai/cordis-plugin-include',
   '@deepseek-ai/cordis-plugin-loader',

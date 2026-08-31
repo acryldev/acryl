@@ -12,7 +12,7 @@ acryl
 acryl web
 ```
 
-The base CLI contains the terminal TUI and existing shared local Web host, plus only runtime dependencies actually used by either. `acryl-desktop` remains a separately distributed Electron/Desktop shell that reuses that shared Web host and owns Desktop-only features.
+The base CLI contains the terminal TUI and existing shared local Web host, plus only runtime dependencies actually used by either. `acryl-desktop` remains a separately distributed Electron/Desktop shell. It uses the same upstream Web profile bundle but deliberately replaces the ordinary webserver Loader row with its Desktop-owned `acryl-desktop/webserver` customization; it does not reuse the CLI host implementation verbatim.
 
 ## Acceptance
 
