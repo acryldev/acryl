@@ -17,6 +17,8 @@ function stubActions(): TuiActions {
     runShell: vi.fn(),
     ensureFileIndex: vi.fn(),
     openModelProfile: vi.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
     closeModelProfile: vi.fn(),
     backToProviderList: vi.fn(),
     selectProvider: vi.fn(),
@@ -180,6 +182,20 @@ describe('runSlashCommand', () => {
     const actions = stubActions()
     runSlashCommand('/model', actions)
     expect(actions.openModelProfile).toHaveBeenCalledTimes(1)
+    expect(totalCalls(actions)).toBe(1)
+  })
+
+  it('dispatches /login to login', () => {
+    const actions = stubActions()
+    runSlashCommand('/login', actions)
+    expect(actions.login).toHaveBeenCalledTimes(1)
+    expect(totalCalls(actions)).toBe(1)
+  })
+
+  it('dispatches /logout to logout', () => {
+    const actions = stubActions()
+    runSlashCommand('/logout', actions)
+    expect(actions.logout).toHaveBeenCalledTimes(1)
     expect(totalCalls(actions)).toBe(1)
   })
 

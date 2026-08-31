@@ -25,9 +25,15 @@ Facts the plan depends on, recorded as they are confirmed.
 Credentials are addressed by env-var *references*; the provider-managed store
 (e.g. `credentials-local`) layers env/file/project-env/user-env.
 
-- **Open question (L001)**: the exact `modifyRecord` signature and whether the CLI
-  can write through it for the active provider route, or must write the
-  provider-managed store directly.
+- **Confirmed (L001)**: `CredentialProvider` has a clean two-space API. API keys
+  are stored by env-var *reference* via `set(ref, value)` / `unset(ref)`;
+  OAuth grants use the *record* space (`modifyRecord`/`readRecord`/`deleteRecord`
+  under a `<scope>/<id>` key). Settings persist via `settings.update(ns, patch,
+  expectedRevision)` / `replace`.
+- **Confirmed**: the `/model` overlay's `saveProvider`/`deleteProvider`/
+  `editProvider` actions were empty stubs in `session.ts` — the overlay rendered
+  but never persisted. Stage 1 wired them to `credentials.set/unset` +
+  `settings.update`.
 
 ## Current ACRYL auth surface
 

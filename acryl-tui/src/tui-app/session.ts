@@ -17,9 +17,10 @@ import { TuiStore } from '../tui/store.js'
 import { mountTui, type TuiHandle } from '../tui/TuiApp.js'
 import type { TuiActions } from '../tui/actions.js'
 import type { PluginRow } from '../tui/plugins/types.js'
-import type { ProviderRow, StoredProviderProfile } from '../tui/modelProfile/types.js'
+import type { ProviderDraft, ProviderRow, StoredProviderProfile } from '../tui/modelProfile/types.js'
 import type { AgentPresetRow } from '../tui/agentPresets/types.js'
 import { loadFileIndex } from '../tui/fileIndex.js'
+import { logoutNoneMessage, logoutSuccessMessage } from '../tui/auth-guidance.js'
 import { stripSessionIdPrefix } from '../sessionId.js'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { ManualCompactionError } from '@deepseek-ai/dsh-compaction'
@@ -91,6 +92,13 @@ function deriveApiKeyRef(route: string): string {
   const upper = route.toUpperCase().replace(/[^A-Z0-9]+/g, '_')
   const identifier = /^[A-Z_]/.test(upper) ? upper : `P_${upper}`
   return `${identifier}_API_KEY`
+}
+
+/** Nest a provider settings section at its path, e.g. `['providers','deepseek']` -> `{ providers: { deepseek: section } }`. */
+function nestAtPath(path: readonly string[], section: Record<string, unknown>): Record<string, unknown> {
+  let patch: Record<string, unknown> = section
+  for (let index = path.length - 1; index >= 0; index--) patch = { [path[index]]: patch }
+  return patch
 }
 
 /** English display names for the shipped preset ids (the metadata is authored in Chinese, and there is no server-side locale resolution). */
@@ -302,6 +310,32 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
       void loadFileIndex(process.cwd()).then(candidates => store.setFileIndex(candidates))
     },
     openModelProfile() { store.openModelProfile(); void loadProviders() },
+    login() { store.openModelProfile(); void loadProviders() },
+    logout() {
+      void (async () => {
+        const credentialsSvc: any = host.ctx.get('credentials')
+        if (credentialsSvc === undefined) {
+          store.setNotice('Credentials are not available in this profile.')
+          return
+        }
+        const selection = host.ctx.get('agentDefaultModel')?.currentSelection?.() as { provider?: string } | undefined
+        const overlay = store.getSnapshot().overlay
+        const rows = overlay.kind === 'modelProfile' ? overlay.modelProfile.providers : undefined
+        const row = rows?.find(entry => entry.route === selection?.provider)
+          ?? (rows !== undefined && rows.length === 1 ? rows[0] : undefined)
+        if (row === undefined) {
+          store.setNotice(logoutNoneMessage())
+          return
+        }
+        try {
+          await credentialsSvc.unset(row.apiKeyRef)
+          store.setNotice(logoutSuccessMessage(row.displayName))
+          void loadProviders()
+        } catch (error) {
+          store.setNotice(`logout failed: ${error instanceof Error ? error.message : String(error)}`)
+        }
+      })()
+    },
     openTrajectory() { store.openTrajectory() },
     openToolCards() { store.openToolCards() },
     openContext() { store.openContext() },
@@ -318,9 +352,72 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     backToProviderList() { store.updateModelProfile({ view: 'list' }) },
     selectProvider(index) { store.updateModelProfile({ selected: index }) },
     createProvider() { store.updateModelProfile({ view: 'form', draft: undefined }) },
-    editProvider() {},
-    saveProvider() {},
-    deleteProvider() {},
+    editProvider(route) {
+      const overlay = store.getSnapshot().overlay
+      if (overlay.kind !== 'modelProfile') return
+      const row = overlay.modelProfile.providers?.find(entry => entry.route === route)
+      if (row === undefined) return
+      const draft: ProviderDraft = {
+        route: row.route,
+        isNew: false,
+        settingsNs: row.settingsNs,
+        settingsPath: row.settingsPath,
+        displayName: row.displayName,
+        api: row.api ?? '',
+        baseURL: row.baseURL ?? '',
+        apiKeyRef: row.apiKeyRef,
+        apiKeyConfigured: row.apiKeyConfigured,
+        apiKeyDraft: '',
+        models: row.models,
+        revision: row.revision,
+      }
+      store.updateModelProfile({ view: 'form', draft, formKey: overlay.modelProfile.formKey + 1 })
+    },
+    saveProvider(draft) {
+      void (async () => {
+        const settingsSvc: any = host.ctx.get('settings')
+        const credentialsSvc: any = host.ctx.get('credentials')
+        if (settingsSvc === undefined || credentialsSvc === undefined) {
+          store.setNotice('Provider settings are not available in this profile.')
+          return
+        }
+        try {
+          const key = draft.apiKeyDraft.trim()
+          if (key !== '') await credentialsSvc.set(draft.apiKeyRef, key)
+          const section: StoredProviderProfile = {
+            displayName: draft.displayName,
+            api: draft.api,
+            baseURL: draft.baseURL,
+            apiKeyEnv: draft.apiKeyRef,
+            models: draft.models,
+          }
+          await settingsSvc.update(draft.settingsNs, nestAtPath(draft.settingsPath, section as unknown as Record<string, unknown>), draft.revision)
+          store.setNotice(`Saved ${draft.displayName || draft.route}.`)
+          store.updateModelProfile({ view: 'list' })
+          void loadProviders()
+        } catch (error) {
+          store.setNotice(`save failed: ${error instanceof Error ? error.message : String(error)}`)
+        }
+      })()
+    },
+    deleteProvider(row) {
+      void (async () => {
+        const settingsSvc: any = host.ctx.get('settings')
+        const credentialsSvc: any = host.ctx.get('credentials')
+        if (settingsSvc === undefined || credentialsSvc === undefined) {
+          store.setNotice('Provider settings are not available in this profile.')
+          return
+        }
+        try {
+          await credentialsSvc.unset(row.apiKeyRef)
+          await settingsSvc.update(row.settingsNs, nestAtPath(row.settingsPath, {}), row.revision)
+          store.setNotice(`Removed ${row.displayName}.`)
+          void loadProviders()
+        } catch (error) {
+          store.setNotice(`delete failed: ${error instanceof Error ? error.message : String(error)}`)
+        }
+      })()
+    },
     discoverModelsForDraft() {},
     setActiveModel() {},
     closeTrajectory() { store.closeOverlay() },

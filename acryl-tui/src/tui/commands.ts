@@ -14,6 +14,8 @@ export interface SlashCommand {
 
 export const SLASH_COMMANDS: readonly SlashCommand[] = [
   { command: '/help', description: 'Show help and available commands' },
+  { command: '/login', description: 'Configure provider authentication (API key)' },
+  { command: '/logout', description: 'Remove provider authentication' },
   { command: '/model', description: 'Manage LLM provider profiles' },
   { command: '/trajectory', description: 'Browse the turn/step event ledger' },
   { command: '/tools', description: 'Browse and expand tool cards' },
@@ -107,6 +109,12 @@ export function runSlashCommand(command: string, actions: TuiActions): void {
       return
     case '/model':
       actions.openModelProfile()
+      return
+    case '/login':
+      actions.login()
+      return
+    case '/logout':
+      actions.logout()
       return
     case '/trajectory':
       actions.openTrajectory()
