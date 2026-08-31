@@ -1,3 +1,29 @@
+## 2026-08-31 - OAuth login (Stage 2): PKCE + loopback + grant persistence
+
+`specs/024-acryl-cli-login` Stage 2. Adds the generic OAuth2
+authorization-code flow riding the credentials record seam. No new Cordis
+plugin: the grant storage is the existing `ctx.credentials` capability
+(`GrantRecord` via `modifyRecord`/`readRecord`/`deleteRecord`), and the browser
+dance is TUI-surface logic. The `/model` provider list marks OAuth-capable
+providers (`[oauth]`/`[oauth ✓]`); pressing `o` runs the flow, and `/logout`
+revokes the grant.
+
+### Key finding
+
+`credentials-local` already implements the record half of the seam
+(`readRecord`/`modifyRecord`/`deleteRecord`), so OAuth grants need no new
+service — only the flow. `modifyRecord` is a serialized read-modify-write, which
+makes refresh-token rotation safe across processes.
+
+### Change (`aa44f23`)
+
+- `oauth/metadata.ts`: `OAuthProviderMetadata`, `grantKey`, provider table.
+- `oauth/flow.ts`: PKCE (S256), one-shot `127.0.0.1:0` loopback listener,
+  code + refresh exchange, read/refresh/revoke over `ctx.credentials`.
+- `modelProfile`: `o` keybinding + row status; `session`: `loginWithOAuth`,
+  `logout` revokes grants, `loadProviders` reads grant status.
+- `tests/tui/oauth/flow.spec.ts`: stub-provider integration test (L013).
+
 ## 2026-08-31 - dshmarket: scoped to desktop only (CLI drops it, warning gone)
 
 The `npm i -g acryl` ERESOLVE warning came from `dshmarket@1.17.1` leaking
