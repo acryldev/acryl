@@ -1,3 +1,9 @@
+## 2026-08-31 - npm distribution budget gate
+
+Commit: `4bb0773`
+
+Added executable terminal-package budgets against the reproducible v0.1.17 clean-install baseline: candidates must reduce both canonical realpath-deduplicated installed package count and regular-file bytes by 20%, while install wall time may rise by no more than 10%. Tests prove compliant evidence is accepted and all over-budget dimensions are reported together. CI wiring remains the next P1 item; no terminal closure or publish-manifest change has started.
+
 ## 2026-08-31 - clean npm install evidence harness
 
 Commit: `a171777`
