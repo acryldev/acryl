@@ -1,4 +1,4 @@
-export type AcrylHostCommand = 'tui' | 'gui' | 'web'
+export type AcrylHostCommand = 'tui' | 'gui'
 
 export interface AcrylInvocation {
   readonly command: AcrylHostCommand
@@ -9,7 +9,7 @@ export interface AcrylInvocation {
   readonly resumeSessionId?: string
 }
 
-const HOST_COMMANDS = new Set<AcrylHostCommand>(['tui', 'gui', 'web'])
+const HOST_COMMANDS = new Set<AcrylHostCommand>(['tui', 'gui'])
 
 function hostCommand(value: string): AcrylHostCommand | undefined {
   return HOST_COMMANDS.has(value as AcrylHostCommand)

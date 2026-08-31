@@ -1,6 +1,5 @@
 import { startDirectHost } from '../host/direct.ts'
 import { runAcrylTui } from '../tui-app/session.ts'
-import { bootAcrylWebProfile } from 'acryl-harness-runtime'
 import { ACRYL_VERSION } from '../version.ts'
 import { parseAcrylArgs } from './grammar.ts'
 
@@ -11,37 +10,16 @@ interface RunningDirectHost {
   dispose(): Promise<void>
 }
 
-export interface AcrylWebResult {
-  readonly url: string
-}
-
 export interface AcrylCliDependencies {
   readonly startDirectHost: (options: { profile: string }) => Promise<RunningDirectHost>
   readonly runTui: (options: { profile: string; resumeSessionId?: string }) => Promise<{ resumeHint: string }>
-  readonly runWeb: (options: { profile: string }) => Promise<AcrylWebResult>
   readonly exit: (code: number) => void
   readonly write: (line: string) => void
-}
-
-/** Boot the DSH browser surface as one ACRYL runtime, print its URL, and serve until a termination signal. */
-async function serveWeb(): Promise<AcrylWebResult> {
-  const runtime = await bootAcrylWebProfile({ cmdlineArgs: [] })
-  const stopped = new Promise<void>(resolve => {
-    const onSignal = () => resolve()
-    process.once('SIGINT', onSignal)
-    process.once('SIGTERM', onSignal)
-  })
-  const url = runtime.url
-  process.stdout.write(`ACRYL web: ${url}\n`)
-  await stopped
-  await runtime.dispose()
-  return { url }
 }
 
 const defaults: AcrylCliDependencies = {
   startDirectHost,
   runTui: runAcrylTui,
-  runWeb: serveWeb,
   exit: code => { process.exitCode = code },
   write: line => { process.stdout.write(`${line}\n`) },
 }
@@ -75,7 +53,6 @@ export async function runAcryl(
         '',
         'Commands:',
         '  tui    Run the terminal client (default)',
-        '  web    Serve the local ACRYL web runtime',
         '  gui    [reserved] launch the Desktop surface (not wired in this build)',
         '',
         'Options:',
@@ -99,22 +76,6 @@ export async function runAcryl(
     throw new Error(
       'ACRYL gui host is not implemented; the desktop (Electron) surface is not wired into this build yet. Use `pnpm acryl` for the terminal surface.',
     )
-  }
-
-  if (invocation.command === 'web') {
-    if (invocation.json) {
-      // Headless readiness probe: boot the web runtime, print its URL, dispose.
-      const host = await bootAcrylWebProfile({ cmdlineArgs: [] })
-      try {
-        dependencies.write(host.url)
-      } finally {
-        await host.dispose()
-      }
-      return
-    }
-    const result = await dependencies.runWeb({ profile: invocation.profile ?? 'web' })
-    dependencies.write(`serving at ${result.url}`)
-    return
   }
 
   if (invocation.json) {

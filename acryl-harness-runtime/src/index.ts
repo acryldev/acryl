@@ -16,7 +16,6 @@ import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
-import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import {
   DEFAULT_PROFILE_BUNDLES,
   boot,
@@ -115,61 +114,6 @@ export async function bootAcrylHarnessProfile(
   let disposed = false
   return Object.freeze({
     ctx,
-    profileDirectory: profile.dir,
-    async dispose() {
-      if (disposed) return
-      disposed = true
-      await ctx.fiber.dispose()
-    },
-  })
-}
-
-export interface BootAcrylWebProfileOptions {
-  /** Inner arguments handed to the web-startup provider (e.g. `['--port', '4000']`). Defaults to no flags. */
-  readonly cmdlineArgs?: readonly string[]
-  /** Host setup run after Loader installation and before any config-tree entry mounts. */
-  readonly prepare?: (ctx: Context) => Promise<void> | void
-}
-
-export interface AcrylWebRuntime {
-  readonly ctx: Context
-  /** The canonical bind URL, e.g. `http://127.0.0.1:3080`. */
-  readonly url: string
-  readonly profileDirectory: string
-  dispose(): Promise<void>
-}
-
-/**
- * Boot the DSH browser surface (the `web` profile: `dsh-base` + `dsh-web-app`)
- * as one normal ACRYL runtime, so `pnpm acryl-web` serves the same DSH
- * HTTP/WebSocket seam the web surface always uses. The web profile already
- * composes the persona/agent rows ACRYL's terminal surface adds, so no
- * ACRYL_RUNTIME_ROWS are re-inserted (that would duplicate `system-prompt`).
- */
-export async function bootAcrylWebProfile(
-  options: BootAcrylWebProfileOptions = {},
-): Promise<AcrylWebRuntime> {
-  const profileName = 'web'
-  const profileDirectory = resolveProfileDir(profileName)
-  initProfile(profileDirectory, DEFAULT_PROFILE_BUNDLES)
-  healProfilesModuleFallback(dshInstallAnchor)
-  const profile = loadProfile('web', profileName, dshInstallAnchor)
-  const rootConfig = join(profile.dir, 'cordis.yml')
-  writeFileSync(rootConfig, profileRoot)
-  const patches = structuredClone([...profile.layers.flatMap(layer => layer.patches), ...profile.patches])
-  const cmdlineArgs = options.cmdlineArgs ?? []
-  const ctx = await boot('web', rootConfig, patches, hostCtx => {
-    provideCmdline(hostCtx, { args: [...cmdlineArgs], exit: code => { process.exitCode = code } })
-    return options.prepare?.(hostCtx)
-  })
-  const startup = ctx.get('webStartup') as { host?: string; port?: number } | undefined
-  const host = startup?.host ?? '127.0.0.1'
-  const port = startup?.port ?? 3080
-  const url = `http://${host}:${port}`
-  let disposed = false
-  return Object.freeze({
-    ctx,
-    url,
     profileDirectory: profile.dir,
     async dispose() {
       if (disposed) return
