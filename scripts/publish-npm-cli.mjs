@@ -106,8 +106,8 @@ function readdirSafe(dir) {
   try { return readdirSync(dir) } catch { return [] }
 }
 
-/** Derive the complete production dependency map from the deployed closure. */
-function deriveProductionClosure(deployDir) {
+/** Read versions from the deployed tree without copying its maximal dependency map. */
+function availableProductionDependencies(deployDir) {
   const nodeModules = join(deployDir, 'node_modules')
   const deps = {}
   for (const [name, pj] of collectManifests(nodeModules)) {
@@ -123,6 +123,39 @@ function deriveProductionClosure(deployDir) {
     deps['@deepseek-ai/cordis'] = srcPkg.devDependencies?.['@deepseek-ai/cordis'] ?? '4.0.1'
   }
   return deps
+}
+
+// Static publish-bundle imports plus the dynamic TUI/Web Loader rows audited in
+// specs/025-acryl-runtime-distribution/evidence/tui-web-closure-audit.md.
+const SHARED_CLI_PACKAGES = [
+  '@deepseek-ai/cordis',
+  '@deepseek-ai/cordis-plugin-hmr',
+  '@deepseek-ai/cordis-plugin-include',
+  '@deepseek-ai/cordis-plugin-loader',
+  '@deepseek-ai/cordis-plugin-timer',
+  '@deepseek-ai/dsh-agent-presets',
+  '@deepseek-ai/dsh-app-boot',
+  '@deepseek-ai/dsh-authorization',
+  '@deepseek-ai/dsh-base',
+  '@deepseek-ai/dsh',
+  '@deepseek-ai/dsh-compaction',
+  '@deepseek-ai/dsh-goal',
+  '@deepseek-ai/dsh-llm',
+  '@deepseek-ai/dsh-sandbox-local',
+  '@deepseek-ai/dsh-session',
+  '@deepseek-ai/dsh-session-stats',
+  '@deepseek-ai/dsh-subprocess-local',
+  '@deepseek-ai/dsh-system-prompt',
+  '@deepseek-ai/dsh-typert-loader',
+  '@deepseek-ai/dsh-web-app',
+  '@earendil-works/pi-tui',
+  'diff',
+]
+
+function selectSharedCliDependencies(available) {
+  const missing = SHARED_CLI_PACKAGES.filter(name => available[name] === undefined)
+  if (missing.length > 0) throw new Error(`publish-npm-cli: audited package missing from deployed closure: ${missing.join(', ')}`)
+  return Object.fromEntries(SHARED_CLI_PACKAGES.map(name => [name, available[name]]))
 }
 
 try {
@@ -154,7 +187,7 @@ try {
     cpSync(join(tuiDir, 'README.md'), join(dir, 'README.md'))
   }
 
-  const dependencies = deriveProductionClosure(deployDir)
+  const dependencies = selectSharedCliDependencies(availableProductionDependencies(deployDir))
 
   // Gate: the Cordis Loader resolves these entries by package name at boot. If
   // any is absent from the published dependency map, an external
