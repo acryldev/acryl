@@ -2,12 +2,12 @@
 
 The governing scope is [`spec.md`](./spec.md). Complete these tasks and stop.
 
-- [ ] T001 Audit `acryl-tui/src/cli/run.ts`, the authorization-enabled TUI profile, and Loader imports. Record the minimal terminal package closure.
-- [ ] T002 Add a failing CLI regression test proving base `acryl` has no `web` dispatch and no static Web boot import.
-- [ ] T003 Remove `acryl web` from base CLI dispatch and split/remove its Web-only entrypoint from the base npm package.
-- [ ] T004 Change `scripts/publish-npm-cli.mjs` only after T001-T003 identify the exact terminal closure. Do not flatten every deployed production manifest.
-- [ ] T005 Run existing TUI tests, pack the exact candidate, install it globally into one clean temporary prefix, and prove installed `acryl --version` plus `acryl tui --json`.
+- [x] T001 Audit direct TUI host imports plus `bootAcrylHarnessProfile` and `bootAcrylWebProfile` Loader/profile rows. Record the shared CLI closure and excluded package rationale in `evidence/tui-web-closure-audit.md`.
+- [x] T002 Restore and preserve base `acryl web` grammar, dispatch, shared boot export, and runtime path.
+- [ ] T003 Add a minimal closure test asserting the audited manifest retains TUI/Web requirements and excludes Electron/Desktop-native code, Canvas, Market, PNPM/package-management, and audit-proven-unused DSH packages.
+- [ ] T004 Replace only `scripts/publish-npm-cli.mjs` maximal dependency flattening with the proven shared TUI + Web closure.
+- [ ] T005 Run existing TUI/Web tests; pack the exact candidate; one clean global install must pass installed `acryl --version`, `acryl tui --json`, and `acryl web --json`.
 
 ## Deliberately deferred
 
-Desktop work, package/size/time budgets, generic measurement tooling, CI evidence machinery, server/attach/remote runtime, capability metadata, and plugin installer UX are out of scope.
+New Web servers, server/attach/remote runtime, daemon redesign, capability metadata, plugin installer UX, package metrics/budgets, installer abstractions, CI expansion, and Desktop/archive optimization are out of scope.

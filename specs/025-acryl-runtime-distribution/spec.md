@@ -4,21 +4,23 @@
 
 ## Scope
 
-Make the published `acryl` npm CLI terminal-only.
+Make published `acryl` a focused, self-contained coding-agent product:
 
-1. Remove `acryl web` from base CLI dispatch and remove its static Web import.
-2. Audit the actual authorization-enabled TUI boot/profile imports.
-3. Publish a manifest containing only packages that TUI boot and runtime use.
-4. Pack that candidate, install it globally into a clean temporary prefix, and prove `acryl tui --json` works.
-5. Stop.
+```sh
+npm i -g acryl
+acryl
+acryl web
+```
+
+The base CLI contains the terminal TUI and existing shared local Web host, plus only runtime dependencies actually used by either. `acryl-desktop` remains a separately distributed Electron/Desktop shell that reuses that shared Web host and owns Desktop-only features.
 
 ## Acceptance
 
-- The base CLI has no `acryl web` command or static Web boot import.
-- The published `acryl` manifest contains only the audited TUI closure.
-- A clean global installation of the packed candidate runs `acryl --version` and `acryl tui --json` without workspace symlinks or an installed global fallback.
-- The existing authorization-enabled terminal behavior remains covered by current TUI tests.
+- `acryl web` remains a supported base CLI command and uses the existing shared `bootAcrylWebProfile` implementation.
+- The published npm manifest contains only dependencies proven by a TUI plus Web-host import/profile audit.
+- Electron/Desktop-native code, Development Canvas, Market, PNPM/package-management, and unused DSH providers/tools/client bundles are excluded unless the audit proves one is required by TUI or Web host.
+- One clean installation of the exact packed candidate runs `acryl --version`, `acryl tui --json`, and `acryl web --json` without workspace symlinks or a global fallback.
 
 ## Out of Scope
 
-Desktop distribution and optimization, package counts/size/install-time budgets, generic measurement frameworks, cross-platform installer abstractions, release CI expansion, server/attach/remote runtime, capability metadata, and plugin installer UX are deliberately deferred.
+New Web servers, server/attach/remote runtime work, daemon redesign, capability metadata, plugin installer UX, package metrics/budgets, cross-platform installer abstractions, release CI expansion, and Desktop/archive optimization are deliberately deferred.

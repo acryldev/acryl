@@ -2,10 +2,10 @@
 
 The governing scope is [`spec.md`](./spec.md).
 
-1. Read `acryl-tui/src/cli/run.ts`, the TUI profile, and Loader rows to identify the packages TUI boot actually requires.
-2. Write a regression test that fails while base CLI dispatches `web` or statically imports Web boot.
-3. Remove base Web dispatch/import and update the TUI package/publish assembly so it declares only the audited terminal closure.
-4. Run existing TUI authorization and command tests.
-5. Pack the exact candidate package, run one clean `npm i -g <tarball>` into a temporary prefix, then run the installed `acryl --version` and `acryl tui --json`.
+1. Audit `acryl-tui` direct-host imports, `bootAcrylHarnessProfile`, `bootAcrylWebProfile`, and the profiles/Loader rows they compose. Record the packages genuinely required by either TUI or the existing shared Web host.
+2. Keep `acryl web` grammar, dispatch, and `bootAcrylWebProfile` unchanged. Do not create another server.
+3. Replace only `publish-npm-cli.mjs` maximal deployed-manifest flattening with the audited shared closure. Do not remove a package until the import/profile audit proves it unused.
+4. Pack the exact candidate, install it once into a clean temporary global prefix, then run installed `acryl --version`, `acryl tui --json`, and `acryl web --json`.
+5. Stop.
 
-Desktop packaging, archive optimization, budgets, generic evidence tooling, CI changes, and runtime architecture are deliberately deferred.
+Desktop-native functionality, Development Canvas, Market, PNPM/package-management, unused DSH bundles, runtime architecture, budgets, CI expansion, and installer abstractions remain outside this cleanup unless the import/profile audit proves a shared CLI requirement.
