@@ -359,6 +359,10 @@
         ]
       },
       "hardenedRuntime": true,
+      "electronLanguages": [
+        "en",
+        "zh_CN"
+      ],
       "icon": "build/app-icon-mac.png",
       "mergeASARs": false,
       "notarize": true,

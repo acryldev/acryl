@@ -673,6 +673,7 @@ describe('published package surface', () => {
         CFBundleLocalizations: ['en', 'zh_CN'],
       },
       hardenedRuntime: true,
+      electronLanguages: ['en', 'zh_CN'],
       mergeASARs: false,
       notarize: true,
       signIgnore: ['\\.(?:pak|dat|wasm)$'],
