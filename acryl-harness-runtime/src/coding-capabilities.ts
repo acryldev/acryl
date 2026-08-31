@@ -1,0 +1,84 @@
+import { existsSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
+
+export type AcrylSurface = 'tui' | 'web' | 'desktop'
+
+export interface AcrylCodingCapability {
+  readonly id: 'authorization'
+  readonly surfaces: readonly AcrylSurface[]
+  readonly loaderPatches: readonly PatchOptions[]
+}
+
+// The ACRYL repo root (this package sits at `<repo>/acryl-harness-runtime`). The
+// shipped agent presets live in the pinned DSH submodule rather than the
+// published npm bundle, so point the roster at that source dir.
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
+const shippedPresetsDir = join(
+  repoRoot,
+  'deepseek-harness',
+  'packages',
+  'preset',
+  'agent-presets',
+  'presets',
+)
+const agentPresetConfig: Record<string, unknown> = {
+  default: 'standard',
+  roots: existsSync(shippedPresetsDir)
+    ? [{ path: shippedPresetsDir, trust: 'system' }]
+    : [],
+  includeShippedRoot: false,
+  includeUserRoot: true,
+}
+
+/*
+ * Rows the ACRYL runtime composes on top of a base profile. dsh-base alone
+ * mounts no persona, no agent-preset service, and no session-stat projection;
+ * these are what let a surface open a real coding agent. `hmr` is deliberately
+ * NOT forced here: the boot guard below must keep rejecting an HMR-enabled
+ * profile in a non-exposed process, and each surface decides its own HMR policy.
+ * Values are defaults a surface or user patch layer may override.
+ */
+const authorizationCapabilityPatches = [
+  {
+    id: 'system-prompt',
+    name: '@deepseek-ai/dsh-system-prompt',
+    config: {
+      persona: 'You are a coding agent powered by the {{model}} model. Your working directory is {{cwd}}.',
+    },
+  },
+  {
+    // `system-prompt` is already in dsh-base's include tree, so a plain id-targeted
+    // row overrides its config. `agent-presets` and `session-stats` are NOT in the
+    // base include set, so they must be `insert`ed - a plain row only overrides an
+    // existing entry, it does not create one (that is why they silently never
+    // composed before).
+    insert: [
+      { id: 'agent-presets', name: '@deepseek-ai/dsh-agent-presets', config: agentPresetConfig },
+      { id: 'session-stats', name: '@deepseek-ai/dsh-session-stats' },
+      // The authorization seam that `dsh-llm-pi-ai` registers its OAuth
+      // sign-in flows into; without it the pi-ai adapter stays PENDING and
+      // `/login` has no providers to offer.
+      { id: 'authorization', name: '@deepseek-ai/dsh-authorization' },
+    ],
+  },
+] as const satisfies readonly PatchOptions[]
+
+export const ACRYL_CODING_CAPABILITIES = [
+  {
+    id: 'authorization',
+    surfaces: ['tui', 'web', 'desktop'],
+    loaderPatches: authorizationCapabilityPatches,
+  },
+] as const satisfies readonly AcrylCodingCapability[]
+
+export function createAcrylCodingCapabilityPatches(
+  surfaces: ReadonlySet<AcrylSurface>,
+): readonly PatchOptions[] {
+  return structuredClone(
+    ACRYL_CODING_CAPABILITIES
+      .filter(capability => capability.surfaces.some(surface => surfaces.has(surface)))
+      .flatMap(capability => capability.loaderPatches),
+  )
+}

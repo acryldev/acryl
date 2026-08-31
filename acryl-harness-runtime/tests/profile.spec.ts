@@ -39,10 +39,11 @@ describe('bootAcrylHarnessProfile', () => {
 
     expect(runtime.ctx.get('sessions')).toBeDefined()
     expect(runtime.ctx.get('agents')).toBeDefined()
-    // The runtime composes the coding-agent rows on a base profile. `agentPresets`
-    // is a Typert remote service that stays PENDING until the typert registries
-    // are mounted (the web/base composition does), so it is asserted via the
-    // session bridge behaviour rather than `ctx.get`.
+    expect(runtime.ctx.get('authorization')).toBeDefined()
+    // The runtime composes the shared coding-capability rows on a base profile.
+    // `agentPresets` is a Typert remote service that stays PENDING until the
+    // typert registries are mounted (the web/base composition does), so it is
+    // asserted via the session bridge behaviour rather than `ctx.get`.
     expect(runtime.ctx.get('sessionProjections')).toBeDefined()
     await runtime.dispose()
   })
