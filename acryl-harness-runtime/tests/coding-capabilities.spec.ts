@@ -5,19 +5,33 @@ import {
 } from '../src/coding-capabilities.ts'
 
 describe('ACRYL_CODING_CAPABILITIES', () => {
-  it('declares authorization for every applicable surface', () => {
+  it('declares authorization as applicable to every product surface before each root mounts it', () => {
     expect(ACRYL_CODING_CAPABILITIES).toContainEqual(expect.objectContaining({
       id: 'authorization',
       surfaces: ['tui', 'web', 'desktop'],
     }))
   })
 
-  it('returns fresh shared coding patches without desktop rows', () => {
+  it('returns fresh shared tui coding patches without implying web or desktop roots already mounted them', () => {
     const first = createAcrylCodingCapabilityPatches(new Set(['tui']))
 
+    const insertedIds = first.flatMap(patch => ('insert' in patch && patch.insert)
+      ? patch.insert.map(row => row.id)
+      : [])
+
+    expect(first.map(patch => ('id' in patch ? patch.id : undefined)).filter(Boolean)).toEqual([
+      'system-prompt',
+    ])
+    expect(insertedIds).toEqual([
+      'agent-presets',
+      'session-stats',
+      'authorization',
+    ])
     expect(first).toEqual(expect.arrayContaining([
       expect.objectContaining({ id: 'system-prompt' }),
       expect.objectContaining({ insert: expect.arrayContaining([
+        expect.objectContaining({ id: 'agent-presets', name: '@deepseek-ai/dsh-agent-presets' }),
+        expect.objectContaining({ id: 'session-stats', name: '@deepseek-ai/dsh-session-stats' }),
         expect.objectContaining({ id: 'authorization', name: '@deepseek-ai/dsh-authorization' }),
       ]) }),
     ]))

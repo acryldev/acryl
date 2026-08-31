@@ -7,6 +7,9 @@ export type AcrylSurface = 'tui' | 'web' | 'desktop'
 
 export interface AcrylCodingCapability {
   readonly id: 'authorization'
+  // Product surfaces this capability applies to. This is a declaration of
+  // intended applicability, not proof every root already mounts it. Task 2 adds
+  // the Web/Desktop composition sites.
   readonly surfaces: readonly AcrylSurface[]
   readonly loaderPatches: readonly PatchOptions[]
 }
@@ -68,6 +71,9 @@ const authorizationCapabilityPatches = [
 export const ACRYL_CODING_CAPABILITIES = [
   {
     id: 'authorization',
+    // Declared product applicability. Individual roots still opt into these
+    // shared patches by calling `createAcrylCodingCapabilityPatches()` with the
+    // surfaces they mount today.
     surfaces: ['tui', 'web', 'desktop'],
     loaderPatches: authorizationCapabilityPatches,
   },
