@@ -12,6 +12,17 @@
 
 import { Key, matchesKey } from '@earendil-works/pi-tui'
 
+const BRACKETED_PASTE_START = '\x1b[200~'
+const BRACKETED_PASTE_END = '\x1b[201~'
+
+/** Extract the content of one bracketed-paste sequence, or `undefined` if `data` is not one. */
+function extractBracketedPaste(data: string): string | undefined {
+  if (!data.startsWith(BRACKETED_PASTE_START)) return undefined
+  const end = data.indexOf(BRACKETED_PASTE_END)
+  if (end === -1) return undefined
+  return data.slice(BRACKETED_PASTE_START.length, end)
+}
+
 export interface MiniTextFieldState {
   readonly value: string
   readonly cursor: number
@@ -34,6 +45,17 @@ export function miniTextFieldInput(state: MiniTextFieldState, data: string): Min
   if (matchesKey(data, Key.delete)) {
     if (state.cursor >= state.value.length) return state
     return { value: state.value.slice(0, state.cursor) + state.value.slice(state.cursor + 1), cursor: state.cursor }
+  }
+  // Bracketed paste (terminal Cmd+V / paste): pi-tui's `Editor` buffers the
+  // \x1b[200~ ... \x1b[201~ wrapper itself, but this single-line field has no
+  // such buffering. Without this branch the paste is silently dropped — its
+  // leading ESC fails the printable check below. Unwrap and insert atomically.
+  const paste = extractBracketedPaste(data)
+  if (paste !== undefined) {
+    // Single-line field: collapse line breaks so a multi-line paste stays on one line.
+    const text = paste.replace(/[\r\n]+/g, '')
+    if (text.length === 0) return state
+    return { value: state.value.slice(0, state.cursor) + text + state.value.slice(state.cursor), cursor: state.cursor + text.length }
   }
   if (data.length > 0 && !data.startsWith('\x1b') && data !== '\r' && data !== '\n' && data !== '\t') {
     return { value: state.value.slice(0, state.cursor) + data + state.value.slice(state.cursor), cursor: state.cursor + data.length }

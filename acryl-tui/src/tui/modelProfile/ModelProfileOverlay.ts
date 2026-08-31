@@ -110,14 +110,12 @@ export class ModelProfileOverlay implements Component {
       const marker = row.configured ? '● ' : '○ '
       const active = row.live ? ' (active)' : ''
       const noKey = row.apiKeyConfigured ? '' : ' [no api key]'
-      const oauthStatus = row.oauth === undefined ? '' : (row.grantConfigured ? ' [oauth ✓]' : ' [oauth]')
       const confirm = this.confirmDelete === index ? ' — press d again to delete' : ''
-      const text = `${index === selected ? '› ' : '  '}${marker}${row.displayName}${active}${noKey}${oauthStatus}${confirm}`
+      const text = `${index === selected ? '› ' : '  '}${marker}${row.displayName}${active}${noKey}${confirm}`
       lines.push(index === selected ? invert(text) : text)
     })
     if (providers?.length === 0) lines.push(muted('No providers configured yet — press a to add one.'))
-    const hasOauth = providers?.some(row => row.oauth !== undefined) ?? false
-    lines.push(muted(`↑↓ select · enter edit · a add · d delete · s set active model${hasOauth ? ' · o login with oauth' : ''} · esc close`))
+    lines.push(muted('↑↓ select · enter edit · a add · d delete · s set active model · esc close'))
     return lines
   }
 
@@ -153,11 +151,6 @@ export class ModelProfileOverlay implements Component {
       const row = providers[selected]
       const model = row.models[0]
       if (model !== undefined) this.actions.setActiveModel(row.route, model.id)
-      return
-    }
-    if (data === 'o') {
-      const row = providers[selected]
-      if (row.oauth !== undefined) this.actions.loginWithOAuth(row.route)
       return
     }
     if (data === 'd') {

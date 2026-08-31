@@ -52,6 +52,7 @@ import { buildGoalBarText, buildPermissionText, buildQueuedText, buildStatusBarT
 import { createTranscriptLine, DynamicText, padTranscriptText } from './text.js'
 import { CustomEditor } from './CustomEditor.js'
 import { Spinner } from './Spinner.js'
+import { readClipboard } from './clipboard.js'
 import { YlyPet } from '../yly/yly-pet.js'
 import type { YlyState as YlyMode } from '../yly/yly-programs.js'
 import type { TuiActions } from './actions.js'
@@ -233,7 +234,19 @@ class TuiApp implements TuiHandle {
   constructor(private readonly options: MountOptions) {
     const { store, actions } = options
     const terminal = new ProcessTerminal()
-    this.tui = new TuiAltScreen(terminal, true, undefined, { mouse: true })
+    this.tui = new TuiAltScreen(terminal, true, undefined, {
+      mouse: true,
+      // Secondary-click paste: pi-tui only wires this on Windows, so ACRYL
+      // patches that gate open and reads the clipboard here (see
+      // `patches/@earendil-works__pi-tui@0.84.2.patch`). Injecting as a
+      // bracketed-paste sequence routes it through the same path as Cmd+V, so
+      // both the Editor and every miniTextField field handle it identically.
+      onRightClickPaste: () => {
+        void readClipboard()
+          .then(text => this.tui.getFocusedComponent()?.handleInput?.(`\x1b[200~${text}\x1b[201~`))
+          .catch(() => {})
+      },
+    })
     this.spinner = new Spinner(this.tui)
     this.pet = new YlyPet(this.tui)
 
