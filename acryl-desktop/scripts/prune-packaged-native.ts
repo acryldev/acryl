@@ -16,6 +16,22 @@ function targetOf(path: string): { readonly platform: NativePlatform; readonly a
   return { platform: match[1] as NativePlatform, arch: match[2] as Exclude<NativeArch, 'universal'> }
 }
 
+/**
+ * True when a packed entry path carries a native target other than the package
+ * target. This is the single source of truth shared by the payload pruner and
+ * the packaged-runtime verifier, so pruning and verification agree on which
+ * target-foreign native payloads are intentionally absent from app.asar.unpacked.
+ */
+export function nativePathIsForeign(
+  path: string,
+  platform: NativePlatform,
+  arch: NativeArch,
+): boolean {
+  const target = targetOf(path)
+  if (target === undefined) return false
+  return target.platform !== platform || (arch !== 'universal' && target.arch !== arch)
+}
+
 function walk(directory: string): readonly string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
     const path = join(directory, entry.name)

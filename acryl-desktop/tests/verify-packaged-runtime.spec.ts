@@ -188,6 +188,27 @@ describe('packaged desktop runtime verification', () => {
     )).toThrow(`missing ASAR-declared physical entries: ${missing}`)
   })
 
+  it('does not reject target-foreign native payload the pruner deliberately removed', () => {
+    const unpackedRoot = join('/build', 'resources', 'app.asar.unpacked')
+    // win32-x64 and darwin-x64 payloads are foreign to a darwin arm64 thin build.
+    const entries = new Set([
+      'lib/main.js',
+      'node_modules/@org/plugin/dist.js',
+      'node_modules/@img/sharp-win32-x64/index.cjs',
+      'node_modules/@img/sharp-darwin-x64/index.cjs',
+    ])
+
+    expect(() => verifyUnpackedArchiveMirror(
+      entries,
+      unpackedRoot,
+      filename => filename === join(unpackedRoot, 'lib/main.js')
+        || filename === join(unpackedRoot, 'node_modules/@org/plugin/dist.js')
+        || filename === join(unpackedRoot, 'node_modules/@img/sharp-darwin-arm64/index.cjs'),
+      'darwin',
+      'arm64',
+    )).not.toThrow()
+  })
+
   it('rejects a host-architecture node-pty build from a universal app', () => {
     const runtimeContext = context('/build', 'darwin', 4)
     const unpackedRoot = resolvePackagedUnpackedRoot(runtimeContext)

@@ -7,7 +7,12 @@ import { isAbsolute, join, relative, sep } from 'node:path'
 import { Worker } from 'node:worker_threads'
 import { listPackage } from '@electron/asar'
 import AdmZip from 'adm-zip'
-import { prunePackagedNative } from './prune-packaged-native.ts'
+import {
+  nativePathIsForeign,
+  prunePackagedNative,
+  type NativeArch,
+  type NativePlatform,
+} from './prune-packaged-native.ts'
 import {
   FORBIDDEN_MACOS_UNIVERSAL_ENTRIES,
   MACOS_UNIVERSAL_NATIVE_ENTRIES,
@@ -311,9 +316,17 @@ export function verifyUnpackedArchiveMirror(
   archiveEntries: ReadonlySet<string>,
   unpackedRoot: string,
   exists: FileProbe = existsSync,
+  targetPlatform?: NativePlatform,
+  targetArch?: NativeArch,
 ): void {
   const missing = [...archiveEntries]
     .filter(entry => entry.length > 0 && !exists(join(unpackedRoot, entry)))
+    // Target-foreign native payloads are deliberately pruned from the unpacked
+    // tree, so their absence is expected — not a collector regression. Skip them.
+    .filter(entry =>
+      targetPlatform === undefined
+      || targetArch === undefined
+      || !nativePathIsForeign(entry, targetPlatform, targetArch))
   if (missing.length > 0) {
     throw new Error(
       `acryl-desktop: unpacked runtime at ${unpackedRoot} is missing ASAR-declared physical entries: ${missing.join(', ')}`,
@@ -356,6 +369,14 @@ export function verifyUnpackedPackageResolution(
   }
 }
 
+/** Map an Electron Builder architecture enum to the pruner's NativeArch. */
+function archToNativeArch(arch: number | undefined): NativeArch | undefined {
+  if (arch === 4) return 'universal'
+  if (arch === 3) return 'arm64'
+  if (arch === 1) return 'x64'
+  return undefined
+}
+
 /**
  * Verify Electron Builder's completed application before signing begins.
  * @param context - Electron Builder's afterPack context.
@@ -392,7 +413,13 @@ export function verifyPackagedRuntime(
       )
     }
   }
-  verifyUnpackedArchiveMirror(archiveEntries, unpackedRoot, exists)
+  verifyUnpackedArchiveMirror(
+    archiveEntries,
+    unpackedRoot,
+    exists,
+    context.electronPlatformName as NativePlatform,
+    archToNativeArch(context.arch),
+  )
   verifyUnpackedPackageResolution(unpackedRoot, resolvePackage)
 }
 
