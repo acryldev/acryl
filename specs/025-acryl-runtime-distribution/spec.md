@@ -1,132 +1,76 @@
-# Feature Specification: ACRYL Runtime and Distribution Milestone
+# Feature Specification: ACRYL Terminal Runtime Distribution
 
 **Feature Branch**: `025-acryl-runtime-distribution`
-
 **Created**: 2026-08-31
+**Status**: Re-scoped after distribution review
 
-**Status**: Approved milestone
+**Input**: Make the actual `npm install -g acryl` product terminal-first and measurably lean. Archive and Desktop reductions remain valuable, but do not count as an npm-install win. Web, Market, Development Canvas, shared remote-runtime, and attach-server work are explicitly out of scope until a real user need and a separate spec justify them.
 
-**Input**: Reduce accidental release payload, make the shared ACRYL runtime boundary real across terminal, Web, and Desktop surfaces, prepare safe plugin distribution, and introduce an attachable local runtime only after the new boundaries are proven.
-
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing
 
 ### User Story 1 - Install a lean terminal agent (Priority: P1)
 
-As a terminal-first user, I can install or extract a target-specific ACRYL CLI that starts the normal durable coding-agent session without downloading or carrying browser UI, Marketplace installation machinery, foreign-platform native binaries, release source maps, or development-only files.
+As a terminal-first user, I can install `acryl` globally and start the normal durable TUI session without downloading browser UI, Marketplace/package-manager, Development Canvas, or Desktop-only runtime packages.
 
-**Why this priority**: Every user receives the CLI payload. It is the immediate size, startup, updater, and attack-surface improvement while retaining the current product behavior.
-
-**Independent Test**: Build each available local target archive, inspect its payload, and run `acryl --version` and `acryl tui --json` with no host Node runtime.
+**Independent Test**: From an empty temporary prefix and cache-safe temporary directory, pack the candidate, run `npm install -g <tarball>`, then run the installed `acryl --version` and `acryl tui --json`. Record direct dependency count, complete installed package count, files, bytes, and wall time against the same v0.1.17 baseline method.
 
 **Acceptance Scenarios**:
 
-1. **Given** a terminal-only archive for one operating-system/CPU target, **When** a user extracts it with no host Node installation, **Then** its launcher starts the terminal readiness probe and contains no foreign operating-system/CPU native packages.
-2. **Given** a production CLI archive, **When** its contents are inspected, **Then** it contains no production source maps, test fixtures, declarations, or publication-only library entry that are not needed at runtime.
-3. **Given** the existing authorization-enabled terminal profile, **When** a user starts the terminal surface, **Then** its durable-session, login, tool, and cancellation behavior remains available.
+1. Given a clean machine prefix, when a candidate tarball is globally installed, then the installed binary successfully runs `acryl --version` and `acryl tui --json` without symlinking source files.
+2. Given the candidate package manifest, when its production closure is inspected, then it excludes Web/client UI, Marketplace/package-management, Development Canvas, and Desktop-only packages from the base `acryl` dependency closure.
+3. Given the existing authorization-enabled terminal profile, when a user starts the terminal surface, then durable-session, login, tool, cancellation, and resume behavior remains available.
+4. Given a terminal archive for one operating-system/CPU target, when extracted with no host Node installation, then its launcher passes readiness and contains no foreign native payload.
 
----
+### User Story 2 - Publish only a proven terminal closure (Priority: P2)
 
-### User Story 2 - Add only the surface and capabilities I use (Priority: P2)
+As a release maintainer, I can publish `acryl` only after its packed tarball has passed clean-install evidence and package-manifest closure checks.
 
-As an ACRYL user, I can use the terminal, Web, Desktop, Marketplace, and Development Canvas without unrelated surfaces being mandatory dependencies of the terminal agent.
-
-**Why this priority**: A plugin-native product needs intentional capability boundaries. The base coding agent must remain small while optional features remain installable, composable, and compatible.
-
-**Independent Test**: Install the terminal product without optional Web or plugin-management bundles, boot a durable session, then install/enable each optional bundle and verify its own surface without changing terminal behavior.
+**Independent Test**: Release CI packs the same candidate that would be published, globally installs that tarball into a clean prefix, executes the installed binary checks, emits the measurement record, and rejects budget regressions.
 
 **Acceptance Scenarios**:
 
-1. **Given** a terminal-only installation, **When** the user starts `acryl tui`, **Then** it does not require Web UI, Marketplace package management, or Desktop-only extensions.
-2. **Given** a user requests the Web surface, **When** its optional feature is present, **Then** it serves the same durable ACRYL runtime semantics as the terminal surface.
-3. **Given** a user enables package installation, **When** the plugin-management capability is present, **Then** it alone owns package-manager execution, lockfile mutation, health checking, rollback, and cleanup.
-4. **Given** a capability is absent, **When** a surface requests it, **Then** ACRYL gives an actionable install/enable response and never silently substitutes unrelated behavior.
-
----
-
-### User Story 3 - Receive identical agent behavior through every surface (Priority: P3)
-
-As a user moving between terminal, browser, and Desktop, I get the same session, plugin, profile, and lifecycle semantics without the surfaces maintaining competing agent runtimes or copied boot logic.
-
-**Why this priority**: Shared behavior makes multi-surface ACRYL maintainable and is necessary before an external plugin ecosystem can depend on stable contracts.
-
-**Independent Test**: Exercise the same fixture session and plugin/profile operation through the direct terminal adapter and the Web/Desktop transport, and assert equivalent durable results and cleanup.
-
-**Acceptance Scenarios**:
-
-1. **Given** a configured profile, **When** terminal, Web, or Desktop starts it, **Then** one shared host-composition contract applies common profile validation, patch ordering, boot, and disposal behavior.
-2. **Given** a durable session, **When** it is opened through direct and remote surface transports, **Then** transcript, tool activity, prompt submission, cancellation, and failure semantics are equivalent.
-3. **Given** a Desktop startup recovery condition, **When** the shared runtime composition is used, **Then** Desktop-specific recovery, native windows, diagnostics, and package operations remain owned by Desktop rather than the common runtime.
-
----
-
-### User Story 4 - Keep work running while changing surfaces (Priority: P4)
-
-As an advanced user, I can explicitly start one local ACRYL runtime and attach a terminal, browser, or Desktop surface to it without losing durable work when a client exits.
-
-**Why this priority**: Persistent local runtime ownership enables future multi-surface and long-running work, but only after the core and transport contracts are stable.
-
-**Independent Test**: Start a local runtime, attach a terminal client, begin a fixture operation, detach the client, attach another supported surface, and verify the operation/session remains available and orderly shutdown cleans all resources.
-
-**Acceptance Scenarios**:
-
-1. **Given** no running local runtime, **When** a user explicitly starts one, **Then** ACRYL reports an authenticated loopback endpoint and its owner process.
-2. **Given** a compatible running local runtime, **When** a supported client attaches, **Then** the client uses its documented API/event transport instead of creating a competing root.
-3. **Given** an incompatible runtime version, **When** a client tries to attach, **Then** it fails clearly and does not mutate or terminate the running process.
-4. **Given** all clients disconnect, **When** the user has not requested persistence, **Then** the runtime follows its documented shutdown policy and disposes every owned resource.
+1. Given a release candidate, when CI prepares npm publication, then it tests the packed tarball rather than a local symlink or workspace entrypoint.
+2. Given a candidate's package manifest, when package count or bytes increase beyond budget, then publication fails with the compared baseline and actual measurements.
+3. Given a package needed by the terminal Loader profile, when the manifest is reduced, then clean installed boot proves no `MODULE_NOT_FOUND` is introduced.
 
 ### Edge Cases
 
+- Payload pruning must retain license notices, runtime-loaded assets, target-native modules, and all files required for Node resolution.
 - A package archive built on one platform must not contain another platform's native executable or dynamic library.
-- Payload pruning must retain license notices, runtime-loaded assets, target-native modules, and all files required for Node module resolution.
-- A missing optional feature must not make `acryl tui --json` fail or cause a partial runtime boot.
-- Profile configuration can enable or disable a capability while a process is active; Cordis lifecycle ownership must unload its routes, registrations, processes, and subscriptions before reactivation.
-- Desktop may require a Web host internally, but that does not make Web dependencies mandatory for the standalone terminal distribution.
-- Attach protocol failure, stale endpoint records, duplicate starts, and client exit must not corrupt durable sessions or leave orphaned processes.
+- The production test must use an isolated temporary prefix and not inherit a globally installed `acryl`, workspace symlink, or reusable npm cache.
+- No optional install/enable/plugin-manager UX is introduced by this milestone. Richer surfaces remain Desktop-owned opt-in behavior, not base CLI features.
 
-## Requirements *(mandatory)*
+## Requirements
 
-### Functional Requirements
+- **FR-001**: Base `acryl` MUST be terminal-first and MUST NOT declare or transitively require Web/client UI, Marketplace/package-manager, Development Canvas, or Desktop-only packages.
+- **FR-002**: The terminal Loader declarations and profile composition MUST be reduced by manifest-level package ownership so that the published npm dependency map contains only the verified terminal closure. Merely changing dependency-map generation is insufficient.
+- **FR-003**: Release CI MUST pack the candidate package, install that tarball globally into an empty temporary prefix, and execute the installed `acryl --version` and `acryl tui --json` checks before npm publication.
+- **FR-004**: The clean-install evidence MUST record direct dependency count, complete installed package count, file count, installed bytes, tarball bytes, and installation wall time using the same method for baseline and candidate.
+- **FR-005**: The candidate MUST meet explicit reduction budgets against the recorded v0.1.17 baseline while preserving authorization-enabled TUI, durable session, tool, cancellation, and resume acceptance coverage.
+- **FR-006**: Target-specific terminal archives MUST reject foreign operating-system/CPU native payloads and exclude release source maps/development-only files unless a documented runtime requirement justifies them.
+- **FR-007**: Desktop artifacts MUST include only supported application localizations and target-required native payloads while retaining Desktop runtime behavior.
+- **FR-008**: Public/shared contracts introduced by this milestone MUST NOT expose a raw Cordis `Context` root.
+- **FR-009**: RuntimeCapability metadata for permissions, provenance, and client contributions is out of scope. No speculative capability schema is introduced.
 
-- **FR-001**: ACRYL MUST define one core runtime contract for durable sessions, agent behavior, tools, profile composition, plugin lifecycle, and domain events.
-- **FR-002**: Terminal, Web, and Desktop surfaces MUST invoke the core runtime contract rather than independently implementing agent loops, session mutation semantics, or common profile boot logic.
-- **FR-003**: The terminal distribution MUST contain only terminal-required runtime capabilities and target-required native dependencies.
-- **FR-004**: Web hosting/client capability, Marketplace/package-management capability, Development Canvas capability, and Desktop-native capability MUST be independently composable and absent from the terminal distribution unless explicitly requested.
-- **FR-005**: Package-manager execution, dependency installation, lockfile mutation, package health validation, recovery, and rollback MUST have one owning plugin-management capability.
-- **FR-006**: Release artifacts MUST reject foreign operating-system/CPU native payloads and must exclude release source maps and development-only files unless a documented runtime requirement justifies them.
-- **FR-007**: Desktop release artifacts MUST include only supported application localizations and target-required native payloads, while retaining all Desktop runtime behavior.
-- **FR-008**: ACRYL MUST retain the v0.1.17 authorization-enabled TUI, durable session, tool, cancellation, and resume behavior throughout each phase.
-- **FR-009**: Shared host composition MUST provide a stable surface-neutral boot/dispose interface, while Desktop retains ownership of Electron lifecycle, recovery, diagnostics, native dialogs, updater, and platform package-manager adapters.
-- **FR-010**: Direct in-process and remote surface transports MUST implement one documented session/client capability contract without exposing raw Cordis roots to external clients.
-- **FR-011**: Dynamic capability packages MUST declare their compatibility, requested permissions, host/client contributions, provenance, and lifecycle owner before activation.
-- **FR-012**: ACRYL MUST support an explicit local runtime server only after phases 1 through 3 pass their compatibility and lifecycle gates.
-- **FR-013**: The local runtime server MUST use loopback-only authenticated transport, version compatibility checks, ordered shutdown, and durable-session preservation.
-- **FR-014**: New dependencies and packaging rules MUST be owned by explicit profile/capability packages rather than inferred from a maximal deployed workspace closure.
-- **FR-015**: Every phase MUST add automated payload, boot, lifecycle, and regression verification before removing the preceding implementation path.
+## Key Entities
 
-### Key Entities
+- **NPM Install Evidence**: A reproducible clean-install measurement containing candidate tarball identity, direct and complete package counts, files, bytes, wall time, installed-binary checks, and baseline comparison.
+- **Terminal Closure**: The explicit package-manifest and Loader/profile dependency set required for the authorization-enabled durable TUI, and nothing else.
+- **Artifact Manifest**: The inspected target-specific release payload inventory, including platform, architecture, permitted native files, excluded classes, byte budget, and verification result.
 
-- **Runtime Capability**: A versioned, independently composable ACRYL behavior with declared dependencies, permissions, lifecycle owner, and optional surface contributions.
-- **Surface Adapter**: A terminal, Web, or Desktop presentation/transport that invokes runtime capabilities without owning duplicated domain semantics.
-- **Runtime Composition**: The ordered profile and capability selection used to create one Cordis root for a requested surface.
-- **Artifact Manifest**: The inspected release payload inventory, including platform, architecture, permitted native files, excluded classes, byte budget, and verification result.
-- **Runtime Endpoint**: An authenticated loopback address plus version and owner metadata used by an explicitly attachable local runtime.
+## Success Criteria
 
-## Success Criteria *(mandatory)*
+- **SC-001**: The real clean global install of the candidate package passes `acryl --version` and `acryl tui --json` with no workspace symlinks or global fallback.
+- **SC-002**: Candidate npm evidence shows a reduction of at least 20% in installed bytes and complete installed package count from the recorded v0.1.17 baseline, with no increase in clean-install wall time beyond 10%.
+- **SC-003**: The published package's direct dependency count is derived from the explicit terminal closure and is lower than the v0.1.17 536-direct-dependency baseline.
+- **SC-004**: Every target-specific terminal archive passes readiness and contains zero foreign-platform native package directories.
+- **SC-005**: Desktop target artifacts remove foreign native payloads, owned release maps, and unsupported language resources.
 
-### Measurable Outcomes
+## Deferred Follow-up Specifications
 
-- **SC-001**: Every target-specific terminal archive passes its no-host-runtime readiness probe and contains zero foreign-platform native package directories.
-- **SC-002**: The terminal artifact's installed runtime payload is reduced by at least 20% from the v0.1.17 measured baseline without losing terminal session, login, tool, cancellation, or resume acceptance coverage.
-- **SC-003**: The Desktop ARM64 release payload removes all foreign platform-native payloads, release source maps, and unsupported language resources, with a measured compressed artifact reduction of at least 20% from the recorded baseline when comparable inputs are used.
-- **SC-004**: Terminal-only installation starts a durable coding session without Web, Marketplace, or Desktop-only capability packages present.
-- **SC-005**: Equivalent fixture session operations through direct and remote transports produce the same durable event sequence and terminal outcome.
-- **SC-006**: An explicitly started local runtime survives one supported client detach/reattach cycle and shuts down with no leaked owned process, socket, route, subscription, or temporary endpoint record.
+The following are deliberately excluded and require a separate evidence-backed product spec before implementation:
 
-## Assumptions
-
-- The five current release targets remain macOS ARM64, macOS x64, Linux ARM64, Linux x64, and Windows x64.
-- Desktop continues to use Electron; its Chromium framework cost is not an artifact-pruning target.
-- DeepSeek Harness remains pinned and unmodified; ACRYL composes its documented Cordis and DSH seams.
-- The current direct TUI launch remains supported until the optional local runtime server is delivered and demonstrated compatible.
-- The initial ACRYL registry is curated metadata, not a claim of universal review, sandboxing, or automatic trusted publication.
-- The milestone may add tasks as evidence uncovers required migration work, but no phase may bypass its documented verification gate.
+- Optional Web, Marketplace/package-manager, and Development Canvas distribution/activation.
+- A cross-surface shared runtime facade or remote transport API.
+- `acryl serve`, loopback endpoints, attach/detach clients, and persistent runtime ownership.
+- External capability distribution metadata, permissions, provenance, or client-contribution schemas.

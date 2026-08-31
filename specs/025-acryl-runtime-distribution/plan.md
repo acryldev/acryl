@@ -1,154 +1,83 @@
-# ACRYL Runtime and Distribution Milestone Implementation Plan
+# ACRYL Terminal Runtime Distribution Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use `subagent-driven-development` (recommended) or `executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
-**Goal:** Deliver a lean target-specific ACRYL distribution, independently composable optional capabilities, one host-composition contract for TUI/Web/Desktop, and an additive attachable local runtime.
-
-**Architecture:** Preserve the existing direct TUI and Desktop behavior while extracting smaller, explicit runtime capability boundaries. First prove release payload rules, then split dependency ownership, then make shared composition and session contracts real, and only then introduce a loopback local runtime. Every phase is backward-compatible until its replacement passes lifecycle, regression, and artifact checks.
-
-**Tech Stack:** Node.js 24, TypeScript 6, PNPM 11.7, tsdown, Vitest, DeepSeek Harness, Cordis, Electron Builder, target-specific Node archives.
+**Goal:** Make the real `npm install -g acryl` product terminal-first, measurably lean, and release-gated through a clean install of the packed candidate. Archive and Desktop payload pruning are separate acceptance paths and do not substitute for npm-install evidence.
 
 **Spec:** `specs/025-acryl-runtime-distribution/spec.md`
 
-## Global Constraints
+## Scope and non-goals
 
-- Keep the five release targets: darwin arm64/x64, linux arm64/x64, win32 x64.
-- Use `corepack pnpm` only. Do not modify `deepseek-harness/`.
-- Keep v0.1.17 TUI authorization, durable session, tool, cancellation, and resume behavior green.
-- Do not remove an active boot or packaging path before its replacement has a passing payload and runtime test.
-- Every external resource belongs to a Cordis lifecycle owner and is fully disposed.
-- Do not add a detached local server until phases 1 through 3 have passed their documented gates.
-- Keep every coherent change in a focused commit and add its canonical hash to `docs/DEVELOPMENT-LOG.md` in a subsequent documentation checkpoint.
+This plan contains only terminal npm distribution, target archive verification, and Desktop payload hygiene.
 
----
+It does not create a generic capability schema, plugin installer/enable UX, Web/Market/Canvas distribution mechanism, shared runtime facade, public Cordis contract, loopback server, `acryl serve`, or `acryl attach`. Those need separate specs with demonstrated user value.
 
-## Technical Context
+## Baseline and canonical measurement
 
-**Language/Version**: TypeScript 6 on Node 24.
+The v0.1.17 baseline is measured from the published tarball on the release host using a newly created temporary directory for each run. Tarball acquisition (`npm pack` or download) is preparation, uses a separate temporary pack cache, and is explicitly outside timed installation measurement. The measured command is:
 
-**Primary Dependencies**: DeepSeek Harness/Cordis, pi-tui, Electron, Electron Builder, PNPM package APIs.
-
-**Storage**: Existing DSH profile/session persistence; local endpoint record only in phase 4.
-
-**Testing**: Vitest, Node test runner packaging scripts, target artifact smoke tests, fresh package installation checks.
-
-**Target Platform**: macOS ARM64/x64, Linux ARM64/x64, Windows x64.
-
-**Project Type**: Node CLI, local Web host, Electron desktop application, Cordis plugin system.
-
-**Performance Goals**: Reduce comparable terminal and Desktop artifact bytes by at least 20%; preserve current readiness probes.
-
-**Constraints**: No host Node for portable CLI. Loopback-only server. No raw Cordis context across a remote boundary. Existing pinned Harness behavior remains authoritative.
-
-**Scale/Scope**: One long-lived four-phase milestone. Phase 4 is gated by phase 1-3 evidence.
-
-## Constitution Check
-
-| Principle | Plan response |
-|---|---|
-| Everything is a plugin | Optional Web, package manager, Market, Canvas, and agent-control behavior become declared capabilities, not kernel switches. |
-| Agents are disposable | Durable session records remain runtime-owned and transports project them. |
-| Compose DSH, do not fork | New work uses documented DSH/Cordis profile, API, Loader, session, and lifecycle seams only. |
-| Canonical state is durable | Runtime endpoint records are transport metadata, not a replacement session/event store. |
-| Generated capabilities outside kernel | Plugin manifests and policy stay capability-owned and versioned. |
-
-**Gate result**: Pass. The milestone extracts existing behavior behind smaller capability boundaries rather than adding a second plugin framework.
-
-## Project Structure
-
-```text
-specs/025-acryl-runtime-distribution/
-├── spec.md
-├── plan.md
-├── research.md
-├── data-model.md
-├── contracts/
-│   ├── artifact-manifest.md
-│   └── runtime-composition.md
-├── quickstart.md
-├── tasks.md
-└── checklists/requirements.md
-
-acryl-harness-runtime/
-├── src/
-│   ├── index.ts                 # compatibility exports during migration
-│   ├── composition.ts           # shared boot/dispose contract
-│   ├── capabilities/            # explicit capability composition
-│   └── session-bridge.ts        # direct session-client transport
-└── tests/
-
-acryl-tui/
-├── src/cli/                     # command/feature dispatch
-├── src/host/                    # direct runtime transport only
-├── src/tui-app/                 # pi-tui presentation
-└── tests/
-
-acryl-desktop/
-├── src/main.ts                  # Electron-native startup and recovery
-├── src/profile.ts               # Desktop profile adapter
-├── scripts/                     # package/verification scripts
-└── tests/
-
-scripts/
-├── build-cli-archive.mjs
-├── inspect-artifact.mjs
-└── verify-cli-archive-payload.mjs
+```sh
+env -i PATH="$PATH" HOME="$work/home" \
+  npm_config_prefix="$work/prefix" npm_config_cache="$work/install-cache" \
+  npm install --global --ignore-scripts --no-audit --no-fund "$candidate_tarball"
 ```
 
-**Structure Decision**: Keep existing packages and introduce deep modules within them first. New workspace packages are created only when an optional capability must be independently installed and published.
+Using the same isolated environment, the collector discovers the cross-platform global module root with `npm root --global --prefix "$work/prefix"`, resolves `acryl` below that result, and never assumes a platform-specific prefix layout. The canonical transitive-package metric is the number of distinct package roots reachable under the resolved installed `acryl/node_modules` tree. The collector walks directories deterministically, ignores `.bin` and pnpm metadata, canonicalizes each package root with `realpath`, and deduplicates real paths before counting. It therefore cannot be inflated by symlink aliases or duplicate traversal paths. Manifest count, `npm ls` output, file count, tarball bytes, and install time are informational except where a stated budget applies.
 
-## Phase 0 - Baseline and safeguards
+Baseline evidence records platform, Node/npm version, exact command, temporary-prefix/cache policy, direct dependency count, canonical transitive package count, installed files/bytes, tarball bytes, wall time, and installed-binary results. Candidate measurement uses exactly the same procedure.
 
-1. Capture current v0.1.17 archive/Desktop payload inventories as committed feature evidence, clearly labelling stale historical artifacts versus freshly built baselines.
-2. Add a reusable artifact inspector with typed manifest input and unit tests.
-3. Add no-regression tests for `acryl --version`, `acryl tui --json`, authorization-enabled TUI command wiring, and existing Desktop closure verification.
+## Architecture
 
-**Exit gate**: Baseline measurements and exact forbidden/required payload rules are executable tests.
+1. **Measurement first.** `scripts/measure-npm-install.mjs` packs or accepts one candidate tarball, installs it into a fresh prefix/cache/HOME with isolated PATH, measures the installed package tree, and runs the installed binary. Its JSON output is both test fixture and release evidence.
+2. **Manifest-level terminal split.** Identify the authorization-enabled TUI Loader rows and imports required at boot. Create distinct TUI-core and Web manifests/entrypoints. Base `acryl` declares only TUI-core packages. Removing a static Web import alone is insufficient: both the package manifest and installed tree must reject the excluded package IDs.
+3. **Prove then publish.** Only after the split passes a clean tarball install may `publish-npm-cli.mjs` replace maximal deployed-manifest flattening with the explicit terminal closure. The clean installed `tui --json` smoke proves Loader/package declarations remain complete.
+4. **Separate payload checks.** Native/map pruning and Desktop locale pruning continue behind artifact manifest checks. They do not change npm package-count acceptance.
 
-## Phase 1 - Target-specific payload reduction
+## Exact base-closure exclusions
 
-1. Teach CLI archive construction to select only the target's optional native packages.
-2. Prune only manifest-approved release artifacts: maps, declarations, tests, docs, source, and duplicate CLI library output when not required.
-3. Add post-prune module-resolution and no-host-Node archive smoke tests.
-4. Configure Desktop packaging for supported Electron languages, target-native dependencies, and a narrower unpack allowlist.
-5. Add Desktop packaged-payload verification and fresh size comparison evidence.
+The base `acryl` package manifest and its installed `acryl/node_modules` tree must exclude these package-ID families:
 
-**Exit gate**: Every target build rejects foreign native files; local target smoke passes; comparable artifact size targets are met without behavior regression.
+- `@deepseek-ai/dsh-web`, `@deepseek-ai/dsh-web-*`, and `@deepseek-ai/dsh-client-*`
+- `dsh-community-market`
+- `acryl-development-canvas`
+- `pnpm`
+- `@deepseek-ai/dsh-host-webserver`, `@deepseek-ai/dsh-host-apiproxy`, and `@deepseek-ai/dsh-host-frontend-static`
 
-## Phase 2 - Capability-owned dependency closure
+The closure test must validate both manifest dependency keys and installed package root IDs. Any package that becomes necessary for terminal behavior must be explicitly justified in terminal-closure evidence before the exclusion list changes.
 
-1. Model capability metadata and core/surface composition selection in `acryl-harness-runtime`.
-2. Move Web-only boot/loading dependencies behind a Web capability entry point.
-3. Move PNPM/market installation ownership behind a plugin-management capability, retaining Desktop behavior through its adapter.
-4. Move Canvas and Market composition out of the core terminal profile.
-5. Update CLI command dispatch so unavailable optional features produce explicit guidance.
-6. Publish/archive from explicit profile-owned closures rather than a flattened maximal workspace graph.
+## Implementation phases
 
-**Exit gate**: A terminal-only install runs its full session/auth flow with no Web, Market, Canvas, or PNPM closure; each optional feature activates through declared dependencies and disposes cleanly.
+### Phase 1 - Evidence and guards
 
-## Phase 3 - Shared composition and session client façade
+- Record the v0.1.17 published-tarball baseline.
+- Implement and test deterministic clean-install measurement, including realpath de-duplication.
+- Add comparison budgets and candidate-tarball acceptance.
+- Replace local-source/symlink entrypoint verification with the clean-install test.
 
-1. Extract `bootAcrylRuntime()` from the direct TUI path with compatibility wrappers.
-2. Move Desktop's common profile boot/patched composition into the shared module while retaining Desktop recovery and Electron adapters externally.
-3. Define the surface-neutral session client contract and adapt the direct bridge.
-4. Adapt the DSH API/Web transport to the same contract, then move surface-visible profile/plugin operations behind Cordis services.
-5. Remove duplicate common boot code only after direct, Web, and Desktop parity tests pass.
+**Exit gate:** a generated JSON record proves the actual globally installed candidate invokes `--version` and `tui --json` in isolation.
 
-**Exit gate**: Equivalent fixture operations yield equal durable results through direct and remote transports; Desktop recovery remains intact; no surface receives raw root context remotely.
+### Phase 2 - TUI manifest closure
 
-## Phase 4 - Explicit local runtime and attachment
+- Map existing TUI Loader rows and imports to terminal ownership.
+- Split TUI-core and Web manifests/entrypoints and remove/defer base `acryl web` dispatch.
+- Assert excluded package IDs are absent from both the base manifest and clean installed tree.
+- Update publishing only after the clean candidate validates no missing terminal Loader module.
 
-1. Define loopback endpoint metadata, version negotiation, secret storage boundary, and server lifecycle as Cordis capabilities.
-2. Add `acryl serve`, `acryl attach`, and Web attachment behavior without changing current direct launch defaults.
-3. Teach Desktop to start/attach through the same contract only after Desktop lifecycle and recovery tests pass.
-4. Add detach, stale-record, version-mismatch, simultaneous-client, graceful-stop, and leak tests.
+**Exit gate:** base npm tarball is materially smaller and lower-count than v0.1.17 while existing authorization-enabled terminal behavior remains green.
 
-**Exit gate**: A user can explicitly run one runtime, detach and attach supported surfaces, preserve durable work, and shut down with no owned-resource leaks.
+### Phase 3 - Artifact and release enforcement
 
-## Complexity Tracking
+- Retain target-native/map pruning and Desktop locale/payload checks.
+- Run the candidate tarball measurement in release CI immediately before npm publish with `npm_config_prefix`, `npm_config_cache`, isolated HOME/PATH, and a fresh temporary work directory.
+- Upload the emitted measurement JSON as a workflow artifact and fail budget regressions.
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|---|---|---|
-| Four sequential phases | Distribution, capability boundaries, host composition, and attachment must be independently reversible | A big-bang rewrite would combine payload, lifecycle, packaging, and transport regressions without an isolatable rollback point |
-| Optional runtime capabilities | Required to keep terminal core lean while preserving Desktop/Market features | One maximal dependency graph makes every optional subsystem mandatory |
-| Local server capability | Required only for explicit simultaneous/long-running surface use | A permanent daemon or distributed control system is not needed for the current direct-launch product |
+**Exit gate:** the same tarball CI would publish has clean-install evidence plus archive and Desktop evidence.
+
+## Verification
+
+- Focused Node/Vitest tests for measurement, symlink de-duplication, closure exclusions, and artifact verifiers.
+- Existing authorization and TUI command regressions, including `--version` and `tui --json`.
+- Clean candidate-tarball global install with isolated `HOME`, `PATH`, prefix, and npm cache.
+- Archive no-host-Node smoke and Desktop package tests remain independent checks.
+
+## Change discipline
+
+Keep focused implementation commits. After each implementation commit, add its canonical hash and evidence to `docs/DEVELOPMENT-LOG.md` in a separate documentation commit. Do not modify `deepseek-harness/`.
