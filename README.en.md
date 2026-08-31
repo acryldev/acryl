@@ -13,7 +13,7 @@
   <a href="https://github.com/acryldev/acryl">⭐ Support ACRYL</a> ·
   <a href="https://acryl.dev/">Website</a> ·
   <a href="https://acryl.dev/docs">Documentation</a> ·
-  <a href="https://github.com/acryldev/acryl/releases/tag/v0.1.15">Download v0.1.15</a> ·
+  <a href="https://github.com/acryldev/acryl/releases/tag/v0.1.16">Download v0.1.16</a> ·
   <a href="https://discord.gg/cY9KXMex69">Discord</a> ·
   <a href="https://github.com/acryldev/acryl">GitHub</a>
 </p>
@@ -28,7 +28,7 @@
 > [!IMPORTANT]
 > ACRYL is in active early development. Interfaces, workflows, and packaging may change while the first public foundation is established.
 
-## Install ACRYL v0.1.15
+## Install ACRYL v0.1.16
 
 ACRYL has three surfaces that share the same project model, but they are deliberately separate installs. Installing one does not silently install or start the others.
 
@@ -38,11 +38,11 @@ The GitHub Release assets below install the **ACRYL Desktop GUI**. The app carri
 
 | Platform | Desktop download |
 | --- | --- |
-| macOS - Apple Silicon | [DMG](https://github.com/acryldev/acryl/releases/download/v0.1.15/acryl-desktop-mac-arm64.dmg) |
-| macOS - Intel | [DMG](https://github.com/acryldev/acryl/releases/download/v0.1.15/acryl-desktop-mac-x64.dmg) |
-| Windows - x64 | [Installer](https://github.com/acryldev/acryl/releases/download/v0.1.15/acryl-desktop-win-x64.exe) |
-| Linux - x64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.1.15/dsh-plugin-desktop_0.1.9_amd64.deb) |
-| Linux - arm64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.1.15/dsh-plugin-desktop_0.1.9_arm64.deb) |
+| macOS - Apple Silicon | [DMG](https://github.com/acryldev/acryl/releases/download/v0.1.16/acryl-desktop-mac-arm64.dmg) |
+| macOS - Intel | [DMG](https://github.com/acryldev/acryl/releases/download/v0.1.16/acryl-desktop-mac-x64.dmg) |
+| Windows - x64 | [Installer](https://github.com/acryldev/acryl/releases/download/v0.1.16/acryl-desktop-win-x64.exe) |
+| Linux - x64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.1.16/dsh-plugin-desktop_0.1.9_amd64.deb) |
+| Linux - arm64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.1.16/dsh-plugin-desktop_0.1.9_arm64.deb) |
 
 ### Terminal CLI
 
