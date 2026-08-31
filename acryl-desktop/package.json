@@ -117,7 +117,7 @@
     }
   },
   "scripts": {
-    "prebuild": "pnpm --filter acryl-harness-runtime run build",
+    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-harness-runtime run build",
     "build": "node scripts/generate-acryl-brand.mjs && node scripts/generate-mac-app-icon.mjs && node scripts/generate-tray-icons.mjs && node scripts/clean.mjs && tsdown && vite build --config vite.native-ui.config.ts && tsc -p tsconfig.json --emitDeclarationOnly && tsc -p tsconfig.client.json --emitDeclarationOnly",
     "build:canvas": "pnpm --filter acryl-development-canvas run build",
     "pretypecheck": "pnpm run prebuild",
