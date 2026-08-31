@@ -4,8 +4,8 @@
 
 ## Phase 1 - Baseline and release evidence
 
-- [ ] T001 Record the v0.1.17 npm baseline in `evidence/npm-install-baseline-v0.1.17.md`: platform, Node/npm versions, fresh-prefix/fresh-cache command, direct dependencies, complete installed package count, files, installed bytes, tarball bytes, and elapsed wall time.
-- [ ] T002 Add `scripts/measure-npm-install.mjs` and tests. It must pack/install a tarball into a newly created prefix and cache, collect the same metrics, and run only the installed `acryl --version` and `acryl tui --json`.
+- [x] T001 Record the v0.1.17 npm baseline in `evidence/npm-install-baseline-v0.1.17.md`: platform, Node/npm versions, fresh-prefix/fresh-cache command, direct dependencies, canonical installed package count, files, installed bytes, tarball bytes, elapsed wall time, and installed-binary checks.
+- [x] T002 Add `scripts/measure-npm-install.mjs` and tests. It installs a packed tarball into a newly created prefix/cache/HOME, discovers the installed root through isolated `npm root --global`, collects metrics, and runs the installed `acryl --version` and `acryl tui --json`.
 - [ ] T003 Add an npm evidence assertion with explicit package-count, installed-byte, and wall-time budgets against the v0.1.17 baseline.
 - [x] T004 Add artifact-manifest tests and `scripts/inspect-artifact.mjs` for required paths, forbidden paths, foreign native payload, and byte budgets.
 - [ ] T005 Implement archive extraction verification and run it in release CI before upload.
