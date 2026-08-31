@@ -1,3 +1,9 @@
+## 2026-08-31 - CLI release source-map removal
+
+Commit: `7a99b84`
+
+Portable CLI archive assembly now removes `.map` files after the production dependency graph is materialized and target-native pruning has completed. The release pruner is intentionally narrow: runtime JavaScript, assets, and license files remain untouched. Focused tests prove map removal and required-file retention. Declarations, tests, docs, and source pruning remain explicitly deferred until an allowlist can prove that dynamic module resolution and required notices are retained.
+
 ## 2026-08-31 - target-specific CLI native payload pruning
 
 Commit: `a56b498`
