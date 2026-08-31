@@ -40,6 +40,7 @@
     "acryl": "node scripts/tui-run.mjs",
     "acryl:resume": "node scripts/tui-run.mjs --resume",
     "acryl-gui": "pnpm --filter acryl-desktop run start",
+    "acryl-desktop": "pnpm --filter acryl-desktop run start",
     "acryl-web": "node acryl-tui/lib/bin.js web"
   },
   "devDependencies": {
