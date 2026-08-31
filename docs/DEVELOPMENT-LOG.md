@@ -1,3 +1,9 @@
+## 2026-08-31 - runtime distribution milestone safety gate
+
+Commit: `0999312`
+
+Created the first executable guard for the approved runtime/distribution milestone. `scripts/inspect-artifact.mjs` validates a release artifact inventory against explicit required paths, forbidden release files, target-native allowlists, and byte budgets. Its Node tests prove it rejects missing runtime files, source maps/test paths, foreign native binaries, and budget overflow. This is intentionally a safety foundation only: no package payload has been pruned yet, so it cannot regress the v0.1.17 authorization-enabled TUI or Desktop release behavior.
+
 ## 2026-08-31 - release 0.1.17 (authorization rewire + interactive prompt)
 
 Bumped the workspace 0.1.16 → 0.1.17 and cut the release, keeping npm and
