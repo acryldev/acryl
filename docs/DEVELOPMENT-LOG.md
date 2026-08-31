@@ -1,3 +1,31 @@
+## 2026-08-31 - TUI paste fixed: bracketed paste in form fields + right-click paste
+
+Two paste paths were broken in the terminal client.
+
+1. **Bracketed paste (Cmd+V) into single-line form fields** (API key, base
+   URL, model id, `/trajectory` filter, question answer). The terminal wraps
+   pastes in `\x1b[200~ ... \x1b[201~`, but `miniTextFieldInput` only handled
+   raw printable keys — its leading `ESC` failed the printable check, so the
+   paste was silently dropped. It now unwraps bracketed paste and inserts it
+   atomically (collapsing line breaks for the single-line field).
+
+2. **Right-click / middle-click paste.** `pi-tui` enables mouse reporting (the
+   TUI owns scroll/selection), which turns a secondary click into an SGR mouse
+   event instead of a native paste — and its `onRightClickPaste` hook was gated
+   behind `process.platform === 'win32'`. A `pnpm` patch removes that gate, and
+   `TuiApp` wires `onRightClickPaste` to read the system clipboard
+   (`pbpaste`/`xclip`/`Get-Clipboard`) and inject it as a bracketed-paste
+   sequence, so it routes through the same path as Cmd+V.
+
+### Change (`71482d4`)
+
+- `miniTextField.ts`: unwrap and insert bracketed paste.
+- `clipboard.ts` (new): cross-platform system-clipboard read.
+- `TuiApp.ts`: `onRightClickPaste` wiring.
+- `patches/@earendil-works__pi-tui@0.84.2.patch`: remove the win32 gate.
+- `pnpm-workspace.yaml` / `verify-layout.mjs` / lockfile: record the patch.
+- `tests/tui/miniTextField.spec.ts`: bracketed-paste unit tests.
+
 ## 2026-08-31 - OAuth login (Stage 2): PKCE + loopback + grant persistence
 
 `specs/024-acryl-cli-login` Stage 2. Adds the generic OAuth2
