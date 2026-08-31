@@ -1,3 +1,9 @@
+## 2026-08-31 - release 0.1.18 prepared
+
+Commit: `c3b1192`
+
+Bumped the root, TUI, Harness runtime, Control, and Desktop workspace packages together from `0.1.17` to `0.1.18`. The synchronized version is ready for the required non-publishing Release matrix; a `v0.1.18` tag must not be created until that matrix completes successfully.
+
 ## 2026-08-31 - version-independent npm closure verification
 
 Commit: `c6e76db`
