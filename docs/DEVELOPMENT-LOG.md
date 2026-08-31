@@ -1,3 +1,9 @@
+## 2026-08-31 - npm CLI scope correction
+
+Commit: `daaaad0`
+
+The runtime/distribution milestone was reduced to one concrete user outcome: a lean terminal-only npm CLI. The exploratory package-count, byte, time-budget, and generic measurement framework commits are intentionally removed from the active product surface. The remaining work is a TUI profile/import audit, removal of base `acryl web`, an explicit minimal publish manifest, and one clean packed-tarball global-install smoke. Desktop optimization, CI expansion, runtime/server architecture, capability metadata, and installer UX are deferred.
+
 ## 2026-08-31 - npm distribution budget gate
 
 Commit: `4bb0773`
