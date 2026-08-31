@@ -1,3 +1,33 @@
+## 2026-08-31 - npm 0.1.14 published: self-contained CLI, full boot verified
+
+Resolution of the 0.1.13 broken-boot defect. The publish script now builds the
+self-contained bundle and the release is green end to end.
+
+### Change
+
+- **`scripts/publish-npm-cli.mjs`** (`dc447f7`): build with
+  `tsdown -c tsdown.publish.config.ts` (emits bundled `lib-publish/`) and copy
+  `lib-publish/` instead of `lib/`. The publish config's `noExternal` inlines
+  `acryl-control` / `acryl-harness-runtime`, so the shipped `bin.js` is
+  self-contained and no longer carries bare workspace imports.
+- **Bump** (`7b29179`): five workspace packages `0.1.13` → `0.1.14` (0.1.13 is
+  already published and cannot be overwritten).
+- Tag `v0.1.14` → release run `33347151982` all green (build x5, cli x5,
+  `Publish to npm`, `Publish GitHub release`).
+
+### Verification (external-user, fresh prefix, no host workspace)
+
+| Check | Result |
+|---|---|
+| `npm view acryl version` | `0.1.14` (`dist-tags.latest` = `0.1.14`) |
+| `npm i -g acryl` (isolated) | ✅ installs |
+| `acryl --version` | ✅ `0.1.14` (was ERR_MODULE_NOT_FOUND on 0.1.13) |
+| `acryl --help` | ✅ prints usage |
+| `acryl tui --json` | ✅ exit 0 → `{"mode":"direct","profile":"acryl","generationId":"…"}` |
+
+The published npm CLI now boots end to end; the entrypoint and the plugin tree
+both work from a clean `npm install -g acryl`.
+
 ## 2026-08-30 - npm 0.1.13 published, but external-user boot is BROKEN (new pipeline bug)
 
 The `NPM_TOKEN` secret was rotated by the human (GitHub web), and the
