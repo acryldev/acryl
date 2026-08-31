@@ -1,3 +1,30 @@
+## 2026-08-31 - dshmarket: scoped to desktop only (CLI drops it, warning gone)
+
+The `npm i -g acryl` ERESOLVE warning came from `dshmarket@1.17.1` leaking
+into the CLI's publish closure via `acryl-harness-runtime`. An initial fix
+(`c5fdd2f`) over-removed it from both `acryl-harness-runtime` AND
+`acryl-desktop`, which red-shifted the v0.1.15 release: `verify-layout.mjs`
+(its hardcoded `pnpm-workspace.yaml` snapshot) and the `dshmarket-compat` /
+`package` / `profile` desktop tests all failed, because `dshmarket` is a
+first-class desktop concept (`desktop-market.ts`, `profile.ts`, `pnpm.ts`
+use the patched `runExternalMarketPluginInstall`).
+
+### Key finding
+
+`dshmarket` is NOT dead. It is the desktop's market package identity, and the
+`patches/dshmarket@1.17.1.patch` adds the `runExternalMarketPluginInstall`
+boundary used by `acryl-desktop/src/pnpm.ts`. It belongs in `acryl-desktop`
+only, never in `acryl-harness-runtime` (the CLI's dependency path).
+
+### Change
+
+- `7b536e8` / `06a6075`: revert the over-broad removal + snapshot sync.
+- `d5d3634`: scope `dshmarket` to `acryl-desktop` only. Result: CLI publish
+  manifest drops `dshmarket` (536 deps, `dshmarket in deps: false`), desktop
+  keeps it via its own direct dep (795 tests green). Release v0.1.15 rebuilt
+  green: 5 CLI archives + 5 desktop installers + checksums published to the
+  GitHub release.
+
 ## 2026-08-31 - /login + /logout provider auth (Stage 1: API key)
 
 `specs/024-acryl-cli-login` (two-stage plan; OAuth is Stage 2). Stage 1 adds
