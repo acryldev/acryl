@@ -26,6 +26,26 @@ Two paste paths were broken in the terminal client.
 - `pnpm-workspace.yaml` / `verify-layout.mjs` / lockfile: record the patch.
 - `tests/tui/miniTextField.spec.ts`: bracketed-paste unit tests.
 
+## 2026-08-31 - interactive authorization prompt (manual-code/secret/select)
+
+Completes the `/login` flow's prompt handling so a running authorization can
+collect real input instead of settling on the browser callback. The
+`interaction.prompt()` now renders inline in the `LoginOverlay`: `select` shows
+a cursor list, `text`/`secret` a masked single-line field (reusing the shared
+`miniTextField` primitive, same as `QuestionOverlay`). Enter submits through a
+new `answerAuthorizationPrompt` action that resolves the pending promise; the
+flow's own signal still withdraws the prompt when the browser loopback wins the
+race.
+
+### Change (`6781b14`)
+
+- `login/types.ts`: `LoginPromptState` (`text`/`secret`/`select`) + `prompt` on
+  the overlay state.
+- `LoginOverlay.ts`: `renderPrompt` + `handlePromptInput` (miniTextField for
+  text, `•` mask for secret).
+- `session.ts`: `pendingPromptResolve` closure + `answerAuthorizationPrompt`.
+- `store.ts`: `openLogin` initializes `prompt: undefined`.
+
 ## 2026-08-31 - /login rewire: ctx.authorization seam (real pi-ai OAuth)
 
 `/login` now renders the sign-in flows `dsh-llm-pi-ai` registers through the
