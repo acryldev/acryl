@@ -20,8 +20,8 @@
 
 **Independent Test**: Build a target archive, verify its manifest, execute `--version` and `tui --json` with `PATH=/usr/bin:/bin`, and confirm the authorization/session test suite remains green.
 
-- [ ] T008 [P] [US1] Add failing platform-native selection tests in `scripts/build-cli-archive.test.mjs` for darwin-arm64, darwin-x64, linux-arm64, linux-x64, and win32-x64.
-- [ ] T009 [US1] Implement target-aware optional native dependency pruning in `scripts/build-cli-archive.mjs` without removing target `node-pty`, ripgrep, Sharp/libvips, Koffi, or required loader files.
+- [x] T008 [P] [US1] Add failing platform-native selection tests in `scripts/prune-target-native.test.mjs` for target-qualified native package and prebuild paths.
+- [x] T009 [US1] Implement target-aware optional native dependency pruning in `scripts/build-cli-archive.mjs` without removing target `node-pty`, ripgrep, Sharp/libvips, Koffi, or required loader files.
 - [ ] T010 [P] [US1] Add failing release-file pruning tests in `scripts/prune-release-payload.test.mjs` covering maps, declarations, tests, docs, license retention, and runtime allowlisted assets.
 - [ ] T011 [US1] Implement manifest-driven CLI release pruning in `scripts/prune-release-payload.mjs` and invoke it after dependency layout materialization.
 - [ ] T012 [US1] Remove the CLI publication library export only if `import 'acryl'` has no supported consumer; otherwise document and retain the API in `acryl-tui/package.json` and `acryl-tui/README.md`.

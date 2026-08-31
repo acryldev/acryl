@@ -25,6 +25,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { corepackCommand, corepackSpawnOptions } from './cli-archive-platform.mjs'
 import { flattenNodeModules } from './flatten-node-modules.mjs'
+import { pruneTargetNative } from './prune-target-native.mjs'
 
 const require = createRequire(import.meta.url)
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -95,6 +96,7 @@ async function main() {
   // specifiers (e.g. `@deepseek-ai/cordis`) after extraction. Tar.gz preserves
   // symlinks but a symlink-free tree works on every extractor and platform.
   flattenNodeModules(archiveDir)
+  pruneTargetNative(archiveDir, spec.nodePlatform === 'win' ? 'win32' : spec.nodePlatform, spec.nodeArch)
 
   // 4. Archive + checksum.
   mkdirSync(outDir, { recursive: true })
