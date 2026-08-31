@@ -15,8 +15,8 @@
   and `ctx.settings`.
 - [ ] L006 Wire auth guidance into session start (helper exists; boot-time
   "no key → run /login" notice is a follow-up).
-- [ ] L007 PTY smoke evidence: `/login` stores a key and `/logout` clears it
-  (unit + boot smoke pass; interactive PTY smoke is a follow-up).
+- [x] L007 PTY smoke evidence: `/login` opens the provider list with per-row
+  auth status (`login-pty-smoke.mjs` → `evidence/login-pty-smoke.output.txt`).
 - [ ] L008 Focused commit + `DEVELOPMENT-LOG.md` checkpoint; bump + tag + release
   when green (publish stage).
 
