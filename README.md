@@ -53,6 +53,19 @@ npm install -g acryl
 acryl
 ```
 
+> [!NOTE]
+> npm 11+ prints advisory `install-scripts` warnings on this install, listing ACRYL's native dependencies (`node-pty`, `koffi`, and others). These are npm's new security notices, not ACRYL errors; the packages still install and run. To install without the warnings, allow the scripts explicitly:
+>
+> ```bash
+> npm install -g acryl --allow-scripts=@deepseek-ai/dsh-subprocess-local,@google/genai,koffi,node-pty,protobufjs
+> ```
+
+Prefer a standalone binary with no Node.js or npm? Use the installer script (installs to `~/.acryl/bin`):
+
+```bash
+curl -fsSL https://acryl.dev/install | bash
+```
+
 The `acryl` command starts the TUI. It is separate from the Desktop app so terminal users do not need Electron, and desktop users do not receive an unexpected global executable.
 
 ### Local Web surface
