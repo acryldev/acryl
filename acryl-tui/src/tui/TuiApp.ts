@@ -59,6 +59,7 @@ import type { TuiActions } from './actions.js'
 import type { TuiState, TuiStore } from './store.js'
 import { theme, fg } from './theme.js'
 import { ModelProfileOverlay } from './modelProfile/ModelProfileOverlay.js'
+import { LoginOverlay } from './login/LoginOverlay.js'
 import { TrajectoryOverlay } from './trajectory/TrajectoryOverlay.js'
 import { ToolCardsOverlay } from './toolCards/ToolCardsOverlay.js'
 import { ContextOverlay } from './context/ContextOverlay.js'
@@ -435,6 +436,8 @@ class TuiApp implements TuiHandle {
         return undefined
       case 'modelProfile':
         return new ModelProfileOverlay(store, actions)
+      case 'login':
+        return new LoginOverlay(store, actions)
       case 'trajectory':
         return new TrajectoryOverlay(this.tui, store, actions, getTool)
       case 'toolCards':

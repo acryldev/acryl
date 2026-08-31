@@ -15,6 +15,7 @@ import type { SessionEvent, UserMessage } from '@deepseek-ai/dsh-session'
 import type { SessionStatsProjection } from '@deepseek-ai/dsh-session-stats'
 import type { ContextBreakdownProjection, ContextPressureProjection, TokenUsageProjection } from '@deepseek-ai/dsh-token-meter'
 import type { DiscoveredModel, ProviderDraft, ProviderRow } from './modelProfile/types.js'
+import type { LoginOverlayState } from './login/types.js'
 import type { PluginRow } from './plugins/types.js'
 import type { AgentPresetRow } from './agentPresets/types.js'
 import type { ApprovalPromptState, QuestionPromptState } from './interaction/types.js'
@@ -59,6 +60,7 @@ export interface AgentPresetsOverlayState {
 export type Overlay =
   | { readonly kind: 'none' }
   | { readonly kind: 'modelProfile'; readonly modelProfile: ModelProfileOverlayState }
+  | { readonly kind: 'login'; readonly login: LoginOverlayState }
   | { readonly kind: 'trajectory' }
   | { readonly kind: 'toolCards' }
   | { readonly kind: 'context' }
@@ -370,6 +372,24 @@ export class TuiStore {
           error: undefined,
         },
       },
+    })
+  }
+
+  /** Open the `/login` sign-in overlay to a fresh, loading flow list. */
+  openLogin(): void {
+    this.set({
+      overlay: {
+        kind: 'login',
+        login: { flows: undefined, selected: 0, signingIn: undefined, busy: true, error: undefined },
+      },
+    })
+  }
+
+  /** Patch the open `/login` overlay's sub-state; a no-op once it's closed. */
+  updateLogin(patch: Partial<LoginOverlayState>): void {
+    if (this.state.overlay.kind !== 'login') return
+    this.set({
+      overlay: { kind: 'login', login: { ...this.state.overlay.login, ...patch } },
     })
   }
 

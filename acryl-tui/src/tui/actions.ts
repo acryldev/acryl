@@ -39,10 +39,16 @@ export interface TuiActions {
 
   /** Open the `/model` provider-profile overlay and start loading providers. */
   openModelProfile(): void
-  /** Configure provider authentication: open the provider list (the auth surface). */
+  /** Configure provider authentication: open the `/login` sign-in overlay. */
   login(): void
   /** Remove provider authentication for the active provider (clears its stored API key). */
   logout(): void
+  /** Close the `/login` overlay. */
+  closeLogin(): void
+  /** Move the `/login` overlay's selection cursor. */
+  selectLoginFlow(index: number): void
+  /** Run the authorization flow for the selected provider (pi-ai OAuth). */
+  beginAuthorization(key: string): void
   /** Close the `/model` overlay, discarding any in-progress edit. */
   closeModelProfile(): void
   /** Return from the add/edit form to the provider list without saving. */

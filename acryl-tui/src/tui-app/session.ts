@@ -10,6 +10,7 @@
  */
 
 import { randomUUID } from 'node:crypto'
+import { execFile } from 'node:child_process'
 import type { Context } from '@deepseek-ai/cordis'
 import { createAcrylSessionBridge, type AcrylSessionBridge } from 'acryl-harness-runtime'
 import { startDirectHost, type DirectHost } from '../host/direct.js'
@@ -21,8 +22,6 @@ import type { ProviderDraft, ProviderRow, StoredProviderProfile } from '../tui/m
 import type { AgentPresetRow } from '../tui/agentPresets/types.js'
 import { loadFileIndex } from '../tui/fileIndex.js'
 import { logoutNoneMessage, logoutSuccessMessage } from '../tui/auth-guidance.js'
-import { oauthProviderFor } from '../tui/oauth/metadata.js'
-import { runOAuthLogin, revokeOAuthGrant, readOAuthGrant } from '../tui/oauth/flow.js'
 import { stripSessionIdPrefix } from '../sessionId.js'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { ManualCompactionError } from '@deepseek-ai/dsh-compaction'
@@ -94,6 +93,15 @@ function deriveApiKeyRef(route: string): string {
   const upper = route.toUpperCase().replace(/[^A-Z0-9]+/g, '_')
   const identifier = /^[A-Z_]/.test(upper) ? upper : `P_${upper}`
   return `${identifier}_API_KEY`
+}
+
+/** Open a URL in the platform's default browser (fire-and-forget). */
+function openBrowser(url: string): Promise<void> {
+  const platform = process.platform
+  const command: [string, string[]] = platform === 'darwin' ? ['open', [url]]
+    : platform === 'win32' ? ['cmd', ['/c', 'start', '', url]]
+    : ['xdg-open', [url]]
+  return new Promise(resolve => { execFile(command[0], command[1], () => resolve()) })
 }
 
 /** Nest a provider settings section at its path, e.g. `['providers','deepseek']` -> `{ providers: { deepseek: section } }`. */
@@ -183,8 +191,6 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
       const userValue = descriptor === undefined ? undefined : getAtPath(descriptor.user, entry.settingsPath)
       const apiKeyRef = value?.apiKeyEnv ?? deriveApiKeyRef(entry.provider)
       const info = await credentialsSvc.describe(apiKeyRef)
-      const oauth = oauthProviderFor(entry.provider)
-      const grant = oauth === undefined ? undefined : await readOAuthGrant(oauth, credentialsSvc)
       rows.push({
         route: entry.provider,
         displayName: value?.displayName ?? entry.displayName,
@@ -196,13 +202,27 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
         baseURL: value?.baseURL,
         apiKeyRef,
         apiKeyConfigured: info.configured,
-        oauth,
-        grantConfigured: grant !== undefined,
         models: value?.models ?? [],
         revision: descriptor?.revision,
       })
     }
     store.updateModelProfile({ providers: rows, busy: false, error: undefined, selected: 0 })
+  }
+
+  // Fetch the registered authorization flows (providers that ship a login via
+  // dsh-llm-pi-ai) and refresh the open `/login` overlay's list.
+  async function loadAuthorizationFlows(): Promise<void> {
+    const authSvc: any = host.ctx.get('authorization')
+    if (authSvc === undefined) {
+      store.updateLogin({ flows: [], busy: false, error: 'Sign-in is not available in this profile.' })
+      return
+    }
+    try {
+      const list = authSvc.list() as Array<{ key: string; label: string; methods: Array<{ id: string; label: string }>; inFlight: boolean }>
+      store.updateLogin({ flows: list, busy: false, error: undefined })
+    } catch (error) {
+      store.updateLogin({ busy: false, error: error instanceof Error ? error.message : String(error) })
+    }
   }
 
   // Fetch the deployment's agent-preset roster and refresh the open `/presets`
@@ -316,26 +336,53 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
       void loadFileIndex(process.cwd()).then(candidates => store.setFileIndex(candidates))
     },
     openModelProfile() { store.openModelProfile(); void loadProviders() },
-    login() { store.openModelProfile(); void loadProviders() },
-    loginWithOAuth(route) {
+    login() { store.openLogin(); void loadAuthorizationFlows() },
+    closeLogin() { store.closeOverlay() },
+    selectLoginFlow(index) { store.updateLogin({ selected: index }) },
+    beginAuthorization(key) {
       void (async () => {
-        const credentialsSvc: any = host.ctx.get('credentials')
-        if (credentialsSvc === undefined) {
-          store.setNotice('Credentials are not available in this profile.')
+        const authSvc: any = host.ctx.get('authorization')
+        if (authSvc === undefined) {
+          store.setNotice('Sign-in is not available in this profile.')
           return
         }
-        const meta = oauthProviderFor(route)
-        if (meta === undefined) {
-          store.setNotice('OAuth is not available for this provider.')
-          return
+        const overlay = store.getSnapshot().overlay
+        const flow = overlay.kind === 'login' ? overlay.login.flows?.find(entry => entry.key === key) : undefined
+        if (flow === undefined) return
+        store.updateLogin({ signingIn: key })
+        const interaction = {
+          notify(notice: { message: string; url?: string; code?: string }) {
+            if (notice.url !== undefined) void openBrowser(notice.url)
+            const parts = [notice.message]
+            if (notice.url !== undefined) parts.push(notice.url)
+            if (notice.code !== undefined) parts.push(`Code: ${notice.code}`)
+            store.setNotice(parts.join('\n'))
+          },
+          async prompt(prompt: { kind: string; message: string; options?: readonly { id: string; label: string }[]; signal?: AbortSignal }) {
+            if (prompt.kind === 'select' && prompt.options !== undefined && prompt.options.length > 0) {
+              return prompt.options[0]!.id
+            }
+            store.setNotice(prompt.message)
+            // The browser loopback callback resolves the flow; this fallback
+            // prompt settles (empty) when the flow's own signal withdraws it.
+            return await new Promise<string>(resolve => {
+              if (prompt.signal?.aborted) { resolve(''); return }
+              prompt.signal?.addEventListener('abort', () => resolve(''), { once: true })
+            })
+          },
         }
-        store.setNotice(`Opening ${meta.route} OAuth login…`)
-        const result = await runOAuthLogin(meta, credentialsSvc)
-        if (result.ok) {
-          store.setNotice(`OAuth login complete for ${meta.route}.`)
-          void loadProviders()
-        } else {
-          store.setNotice(`OAuth login failed: ${result.error}`)
+        try {
+          const outcome = await authSvc.begin({ key, interaction })
+          if (outcome.status === 'authorized') {
+            store.setNotice(`Signed in to ${flow.label}.`)
+            void loadAuthorizationFlows()
+          } else {
+            store.setNotice('Sign-in cancelled.')
+          }
+        } catch (error) {
+          store.setNotice(`Sign-in failed: ${error instanceof Error ? error.message : String(error)}`)
+        } finally {
+          store.updateLogin({ signingIn: undefined })
         }
       })()
     },
@@ -356,8 +403,6 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
           return
         }
         try {
-          const oauth = oauthProviderFor(row.route)
-          if (oauth !== undefined) await revokeOAuthGrant(oauth, credentialsSvc)
           await credentialsSvc.unset(row.apiKeyRef)
           store.setNotice(logoutSuccessMessage(row.displayName))
           void loadProviders()

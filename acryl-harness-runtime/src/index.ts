@@ -70,6 +70,10 @@ const ACRYL_RUNTIME_ROWS: readonly PatchOptions[] = [
     insert: [
       { id: 'agent-presets', name: '@deepseek-ai/dsh-agent-presets', config: agentPresetConfig },
       { id: 'session-stats', name: '@deepseek-ai/dsh-session-stats' },
+      // The authorization seam that `dsh-llm-pi-ai` registers its OAuth
+      // sign-in flows into; without it the pi-ai adapter stays PENDING and
+      // `/login` has no providers to offer.
+      { id: 'authorization', name: '@deepseek-ai/dsh-authorization' },
     ],
   },
 ]

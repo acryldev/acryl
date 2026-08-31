@@ -42,10 +42,10 @@ proc.onExit(({ exitCode }) => {
   const cleaned = out.replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, '').replace(/\r/g, '\n')
   const markers = {
     banner: /acryl/i.test(cleaned),
-    // The `/login` overlay's list header, or its degraded empty-state notice.
-    overlay: /Model providers|provider settings are not available|Loading/i.test(cleaned),
-    // The provider list paints with per-row auth status ("[no api key]").
-    providerList: /Model providers/.test(cleaned),
+    // The `/login` sign-in overlay's header, or its degraded empty-state notice.
+    overlay: /Sign in|not available in this profile|Loading/i.test(cleaned),
+    // The registered sign-in flows (pi-ai providers).
+    providerList: /Anthropic|OpenAI|Codex|Copilot/i.test(cleaned),
     exited: exitCode === 0,
   }
   const evidenceDir = join(repoRoot, 'specs/024-acryl-cli-login/evidence')
