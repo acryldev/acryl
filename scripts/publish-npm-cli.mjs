@@ -176,7 +176,7 @@ try {
   const publishPkg = {
     name: 'acryl',
     version,
-    description: 'ACRYL local-first coding-agent workspace CLI',
+    description: 'A persistent, agent-agnostic coding environment. Keep your context, change your agent.',
     license: srcPkg.license ?? 'MIT',
     type: srcPkg.type,
     main: srcPkg.main,
@@ -185,7 +185,7 @@ try {
     files: ['lib/**', 'README.md'],
     dependencies,
     engines: srcPkg.engines,
-    keywords: ['acryl', 'coding-agent', 'terminal', 'cli', 'agentic'],
+    keywords: ['ai', 'coding-agent', 'agent', 'agentic-development', 'cli', 'tui', 'developer-tools', 'context', 'agent-context', 'multi-agent', 'cordis', 'deepseek-harness'],
   }
   writeFileSync(join(dir, 'package.json'), JSON.stringify(publishPkg, null, 2) + '\n')
 
