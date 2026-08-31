@@ -17,6 +17,12 @@ test('removes wrong architecture from the selected platform', () => {
   assert.equal(shouldRemoveNativePath('node_modules/@earendil-works/pi-tui/native/darwin/prebuilds/darwin-x64/darwin-modifiers.node', 'darwin', 'arm64'), true)
 })
 
+test('keeps both macOS architectures for a universal artifact while removing other platforms', () => {
+  assert.equal(shouldRemoveNativePath('node_modules/@vscode/ripgrep-darwin-arm64/bin/rg', 'darwin', 'universal'), false)
+  assert.equal(shouldRemoveNativePath('node_modules/@vscode/ripgrep-darwin-x64/bin/rg', 'darwin', 'universal'), false)
+  assert.equal(shouldRemoveNativePath('node_modules/@vscode/ripgrep-linux-x64/bin/rg', 'darwin', 'universal'), true)
+})
+
 test('does not classify ordinary JavaScript paths as native target payload', () => {
   assert.equal(shouldRemoveNativePath('node_modules/@deepseek-ai/dsh/lib/index.js', 'darwin', 'arm64'), false)
   assert.equal(shouldRemoveNativePath('node_modules/node-pty/lib/unixTerminal.js', 'darwin', 'arm64'), false)

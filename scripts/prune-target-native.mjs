@@ -2,7 +2,7 @@ import { readdirSync, rmSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
 
 const TARGETS = new Set(['darwin', 'linux', 'win32'])
-const ARCHES = new Set(['arm64', 'x64'])
+const ARCHES = new Set(['arm64', 'x64', 'universal'])
 
 function normalizedSegments(path) {
   return path.replaceAll(sep, '/').split('/').filter(Boolean)
@@ -16,13 +16,13 @@ function targetFromSegment(segment) {
 
 /** Return whether a known native package/prebuild path belongs to another target. */
 export function shouldRemoveNativePath(path, platform, arch) {
-  if (!TARGETS.has(platform) || !ARCHES.has(arch)) {
+  if (!TARGETS.has(platform) || !ARCHES.has(arch) || (arch === 'universal' && platform !== 'darwin')) {
     throw new Error(`unsupported native target ${platform}-${arch}`)
   }
   const segments = normalizedSegments(path)
   for (const segment of segments) {
     const target = targetFromSegment(segment)
-    if (target !== undefined) return target.platform !== platform || target.arch !== arch
+    if (target !== undefined) return target.platform !== platform || (arch !== 'universal' && target.arch !== arch)
   }
   return false
 }
