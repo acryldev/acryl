@@ -34,8 +34,8 @@
 
 **Independent Test**: Package a comparable local Desktop target, mount/inspect it, pass native/path manifests and current Desktop closure tests.
 
-- [ ] T015 [P] [US1] Add failing package verification cases in `acryl-desktop/tests/verify-packaged-runtime.spec.ts` for foreign native payloads, forbidden maps, and unsupported Electron locales.
-- [ ] T016 [US1] Add target-specific native package staging/pruning in `acryl-desktop/scripts/` and connect it to each Electron Builder target.
+- [x] T015 [P] [US1] Add failing package-native target tests in `acryl-desktop/tests/prune-packaged-native.spec.ts` for thin ARM64/x64, universal macOS, and unsupported target combinations.
+- [x] T016 [US1] Add target-specific native pruning in `acryl-desktop/scripts/prune-packaged-native.ts` and invoke it from Electron Builder `afterPack` before runtime verification.
 - [ ] T017 [US1] Narrow `acryl-desktop/package.json` `asarUnpack` and Desktop package `files` rules using a runtime allowlist, retaining module-resolution, native executable, and license requirements.
 - [ ] T018 [US1] Configure release-only source-map exclusion and supported `electronLanguages` in `acryl-desktop/package.json`; preserve development maps and supported English/Chinese UI behavior.
 - [ ] T019 [US1] Run `corepack pnpm --filter acryl-desktop run check:mac-package`, build a comparable local DMG, verify it, record size evidence, and commit the Desktop reduction checkpoint.

@@ -7,6 +7,7 @@ import { isAbsolute, join, relative, sep } from 'node:path'
 import { Worker } from 'node:worker_threads'
 import { listPackage } from '@electron/asar'
 import AdmZip from 'adm-zip'
+import { prunePackagedNative } from './prune-packaged-native.ts'
 import {
   FORBIDDEN_MACOS_UNIVERSAL_ENTRIES,
   MACOS_UNIVERSAL_NATIVE_ENTRIES,
@@ -404,9 +405,14 @@ export async function afterPack(
   context: PackagedRuntimeContext,
   verify: typeof verifyPackagedRuntime = verifyPackagedRuntime,
   smoke: PackagedDiagnosticWorkerSmoke = smokePackagedDiagnosticWorker,
+  prune: typeof prunePackagedNative = prunePackagedNative,
 ): Promise<void> {
+  const unpackedRoot = resolvePackagedUnpackedRoot(context)
+  // Unit tests supply a synthetic package path; a real Electron Builder hook
+  // always has the unpacked tree at this point, before signing starts.
+  if (existsSync(unpackedRoot)) prune(unpackedRoot, context.electronPlatformName, context.arch)
   verify(context)
-  await smoke(resolvePackagedUnpackedRoot(context))
+  await smoke(unpackedRoot)
 }
 
 export default afterPack
