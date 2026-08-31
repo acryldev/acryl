@@ -380,7 +380,7 @@ export class TuiStore {
     this.set({
       overlay: {
         kind: 'login',
-        login: { flows: undefined, selected: 0, signingIn: undefined, busy: true, error: undefined },
+        login: { flows: undefined, selected: 0, signingIn: undefined, prompt: undefined, busy: true, error: undefined },
       },
     })
   }

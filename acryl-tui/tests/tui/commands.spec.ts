@@ -22,6 +22,7 @@ function stubActions(): TuiActions {
     closeLogin: vi.fn(),
     selectLoginFlow: vi.fn(),
     beginAuthorization: vi.fn(),
+    answerAuthorizationPrompt: vi.fn(),
     closeModelProfile: vi.fn(),
     backToProviderList: vi.fn(),
     selectProvider: vi.fn(),

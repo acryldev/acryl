@@ -49,6 +49,8 @@ export interface TuiActions {
   selectLoginFlow(index: number): void
   /** Run the authorization flow for the selected provider (pi-ai OAuth). */
   beginAuthorization(key: string): void
+  /** Answer the in-flight authorization prompt (typed text/secret, or a chosen option id). */
+  answerAuthorizationPrompt(value: string): void
   /** Close the `/model` overlay, discarding any in-progress edit. */
   closeModelProfile(): void
   /** Return from the add/edit form to the provider list without saving. */

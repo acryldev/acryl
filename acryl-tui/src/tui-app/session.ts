@@ -251,6 +251,10 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     }
   }
 
+  // Resolves the single in-flight authorization prompt, if any. Set by the
+  // flow's `prompt()` interaction and settled by `answerAuthorizationPrompt`.
+  let pendingPromptResolve: ((value: string) => void) | undefined
+
   const actions: TuiActions = {
     send(text) {
       store.setNotice(undefined)
@@ -358,16 +362,19 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
             if (notice.code !== undefined) parts.push(`Code: ${notice.code}`)
             store.setNotice(parts.join('\n'))
           },
-          async prompt(prompt: { kind: string; message: string; options?: readonly { id: string; label: string }[]; signal?: AbortSignal }) {
-            if (prompt.kind === 'select' && prompt.options !== undefined && prompt.options.length > 0) {
-              return prompt.options[0]!.id
-            }
-            store.setNotice(prompt.message)
-            // The browser loopback callback resolves the flow; this fallback
-            // prompt settles (empty) when the flow's own signal withdraws it.
-            return await new Promise<string>(resolve => {
-              if (prompt.signal?.aborted) { resolve(''); return }
-              prompt.signal?.addEventListener('abort', () => resolve(''), { once: true })
+          async prompt(prompt: { kind: 'text' | 'secret' | 'select'; message: string; options?: readonly { id: string; label: string; description?: string }[]; placeholder?: string; signal?: AbortSignal }) {
+            return await new Promise<string>((resolve, reject) => {
+              if (prompt.signal?.aborted) { reject(new Error('authorization prompt withdrawn')); return }
+              pendingPromptResolve = resolve
+              const state = prompt.kind === 'select'
+                ? { kind: 'select' as const, message: prompt.message, options: (prompt.options ?? []).map(option => ({ id: option.id, label: option.label, description: option.description })) }
+                : { kind: prompt.kind, message: prompt.message, placeholder: prompt.placeholder }
+              store.updateLogin({ prompt: state })
+              prompt.signal?.addEventListener('abort', () => {
+                if (pendingPromptResolve === resolve) pendingPromptResolve = undefined
+                store.updateLogin({ prompt: undefined })
+                reject(new Error('authorization prompt withdrawn'))
+              }, { once: true })
             })
           },
         }
@@ -385,6 +392,12 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
           store.updateLogin({ signingIn: undefined })
         }
       })()
+    },
+    answerAuthorizationPrompt(value) {
+      const resolve = pendingPromptResolve
+      pendingPromptResolve = undefined
+      store.updateLogin({ prompt: undefined })
+      if (resolve !== undefined) resolve(value)
     },
     logout() {
       void (async () => {
