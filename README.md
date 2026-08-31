@@ -46,24 +46,23 @@ The GitHub Release assets below install the **ACRYL Desktop GUI**. The app carri
 
 ### Terminal CLI
 
-Install the terminal interface explicitly:
-
-```bash
-npm install -g acryl
-acryl
-```
-
-> [!NOTE]
-> npm 11+ prints advisory `install-scripts` warnings on this install, listing ACRYL's native dependencies (`node-pty`, `koffi`, and others). These are npm's new security notices, not ACRYL errors; the packages still install and run. To install without the warnings, allow the scripts explicitly:
->
-> ```bash
-> npm install -g acryl --allow-scripts=@deepseek-ai/dsh-subprocess-local,@google/genai,koffi,node-pty,protobufjs
-> ```
-
-Prefer a standalone binary with no Node.js or npm? Use the installer script (installs to `~/.acryl/bin`):
+The recommended install is the standalone installer: no Node.js or npm required, no install warnings, and it adds `acryl` to your shell PATH automatically.
 
 ```bash
 curl -fsSL https://acryl.dev/install | bash
+```
+
+This installs the prebuilt `acryl` binary to `~/.acryl/bin`, adds it to your PATH, and verifies the download against the release checksum. Open a new terminal (or run `source ~/.zshrc` / `source ~/.bashrc`) and start it:
+
+```bash
+acryl
+```
+
+Prefer npm? It works, but npm 11+ prints advisory `install-scripts` warnings for ACRYL's native dependencies (`node-pty`, `koffi`, and others). These are npm security notices, not ACRYL errors; the packages still install and run. To install without the warnings:
+
+```bash
+npm install -g acryl --allow-scripts=@deepseek-ai/dsh-subprocess-local,@google/genai,koffi,node-pty,protobufjs
+acryl
 ```
 
 The `acryl` command starts the TUI. It is separate from the Desktop app so terminal users do not need Electron, and desktop users do not receive an unexpected global executable.
