@@ -126,11 +126,13 @@ function deriveProductionClosure(deployDir) {
 }
 
 try {
-  // 0. Build so the published `lib/bin.js` contains the corrected symlink-aware
-  //    entrypoint (the regression that shipped in npm `acryl@0.1.8`), and so the
-  //    internal workspace packages (acryl-control / acryl-harness-runtime) are
-  //    inlined rather than needed at runtime.
-  execFileSync('corepack', ['pnpm', '--filter', 'acryl-tui', 'run', 'build'], {
+  // 0. Build the publish bundle with the dedicated publish config
+  //    (tsdown.publish.config.ts), which BUNDLES the internal workspace
+  //    packages (acryl-control / acryl-harness-runtime) into a self-contained
+  //    lib-publish/bin.js. The default `build` leaves those external, so an
+  //    external `npm install -g acryl` cannot resolve them at startup
+  //    (ERR_MODULE_NOT_FOUND).
+  execFileSync('corepack', ['pnpm', '--filter', 'acryl-tui', 'exec', 'tsdown', '-c', 'tsdown.publish.config.ts'], {
     stdio: 'inherit',
     env: { ...process.env, CI: 'true' },
   })
@@ -147,7 +149,7 @@ try {
   // 1. Assemble the publishable `acryl` package from the built acryl-tui.
   const dir = join(staging, 'pkg')
   mkdirSync(dir, { recursive: true })
-  cpSync(join(tuiDir, 'lib'), join(dir, 'lib'), { recursive: true })
+  cpSync(join(tuiDir, 'lib-publish'), join(dir, 'lib'), { recursive: true })
   if (existsSync(join(tuiDir, 'README.md'))) {
     cpSync(join(tuiDir, 'README.md'), join(dir, 'README.md'))
   }
