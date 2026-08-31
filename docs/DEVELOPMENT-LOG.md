@@ -1,3 +1,9 @@
+## 2026-08-31 - shared Web host restored to base npm CLI
+
+Commit: `61f1e70`
+
+Restored the existing shared Web host as the required `acryl web` command. This reverses the preceding terminal-only product interpretation: the base npm CLI is now the focused TUI plus shared Web-host product, while Electron/Desktop remains its separate shell. The existing grammar, dispatch, shared `bootAcrylWebProfile` export, and runtime path are restored unchanged. Focused CLI tests and TUI/runtime TypeScript checks pass.
+
 ## 2026-08-31 - base npm CLI no longer boots Web
 
 Commit: `e2768b2`
