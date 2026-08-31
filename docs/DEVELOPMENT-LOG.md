@@ -26,6 +26,39 @@ Two paste paths were broken in the terminal client.
 - `pnpm-workspace.yaml` / `verify-layout.mjs` / lockfile: record the patch.
 - `tests/tui/miniTextField.spec.ts`: bracketed-paste unit tests.
 
+## 2026-08-31 - /login rewire: ctx.authorization seam (real pi-ai OAuth)
+
+`/login` now renders the sign-in flows `dsh-llm-pi-ai` registers through the
+`ctx.authorization` seam, instead of a hand-rolled loopback+PKCE flow. Selecting
+a provider runs pi-ai's own OAuth strategies (Anthropic, OpenAI Codex, GitHub
+Copilot, xAI, OpenRouter, Kimi) and persists the grant under
+`llm-pi-ai/<providerId>`.
+
+### Key finding
+
+`dsh-llm-pi-ai` (the pi-ai-backed multi-provider adapter) already implements
+the full OAuth path: it registers one authorization flow per catalog provider
+that ships a login, runs pi-ai's strategies via `models.login()`, and persists
+grants through its credential store under `llm-pi-ai/<providerId>`. The only
+missing piece was composing `dsh-authorization` in the profile, so
+`llm-pi-ai`'s `ctx.inject(['authorization'])` resolves and its flows register.
+
+### Change (`a3c5585`)
+
+- `harness-runtime`: insert `@deepseek-ai/dsh-authorization` into the profile.
+- `login/types.ts` + `LoginOverlay`: sign-in flow list + `enter` to begin.
+- `store`: `login` overlay kind + `openLogin`/`updateLogin`.
+- `session`: `loadAuthorizationFlows` + `beginAuthorization` with a
+  notify/prompt interaction (notify opens the browser; prompt settles on the
+  flow's own signal).
+
+## 2026-08-31 - reconcile 0.1.16 (npm had run ahead of GitHub)
+
+The 0.1.16 manual publish bumped only the root + `acryl-tui` (the other three
+workspace packages stayed at 0.1.15) and never tagged, so npm sat ahead of the
+GitHub release. Completed the bump across all five packages and tagged
+`v0.1.16`, which rebuilt the GitHub release with matching binaries.
+
 ## 2026-08-31 - OAuth login (Stage 2): PKCE + loopback + grant persistence
 
 `specs/024-acryl-cli-login` Stage 2. Adds the generic OAuth2
