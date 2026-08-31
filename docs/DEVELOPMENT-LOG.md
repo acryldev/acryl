@@ -1,3 +1,29 @@
+## 2026-08-31 - /login + /logout provider auth (Stage 1: API key)
+
+`specs/024-acryl-cli-login` (two-stage plan; OAuth is Stage 2). Stage 1 adds
+`/login` + `/logout` slash commands and wires the model-profile persistence,
+which was previously stubbed.
+
+### Key finding
+
+`/model`'s `saveProvider`/`deleteProvider`/`editProvider` actions were empty
+stubs in `session.ts` — the overlay rendered but never persisted. The write
+path is the DSH `CredentialProvider` (`set`/`unset` for API-key env refs;
+`modifyRecord`/`deleteRecord` for OAuth grants) plus `settings.update`.
+
+### Change (`c972eb3`)
+
+- `commands.ts`: `/login` + `/logout` in `SLASH_COMMANDS` + dispatch.
+- `actions.ts`: `login()` + `logout()` on `TuiActions`.
+- `auth-guidance.ts` (new): guidance strings, modeled on Pi.
+- `session.ts`: implement `editProvider`/`saveProvider`/`deleteProvider`
+  (`credentials.set/unset` + `settings.update`) and `login()`/`logout()`.
+- Reuse `ModelProfileOverlay` as the auth surface (no separate `LoginOverlay`).
+
+### Verification
+
+257 tests + typecheck + build green; `acryl tui --json` boot smoke passes.
+
 ## 2026-08-31 - removed dead `dshmarket` dependency (root cause of ERESOLVE warning)
 
 The `npm i -g acryl` ERESOLVE warning traced to `dshmarket@1.17.1` (upstream
