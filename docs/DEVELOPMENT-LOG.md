@@ -1,3 +1,9 @@
+## 2026-08-31 - minimal shared TUI and Web npm closure
+
+Commit: `75b1dea`
+
+The npm publish assembler no longer copies every package from the deployed workspace closure. It now selects the audited shared TUI plus existing Web-host package list: publish-bundle external imports, the dynamic base/Web profile bundles, ACRYL terminal rows, and required Loader plugins. A clean packed-tarball global install exposed and added the one profile-resolution anchor (`@deepseek-ai/dsh`). The installed candidate passed `acryl --version`, `acryl tui --json`, and `acryl web --json`. No new Web server, runtime daemon, capability framework, or Desktop packaging work was introduced.
+
 ## 2026-08-31 - shared Web host restored to base npm CLI
 
 Commit: `61f1e70`
