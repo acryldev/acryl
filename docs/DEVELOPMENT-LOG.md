@@ -1,3 +1,9 @@
+## 2026-08-31 - Desktop Electron locale pruning
+
+Commit: `8d2e470`
+
+Desktop release configuration now asks Electron Builder to ship only the English and Simplified Chinese locale resources declared by the application. The package contract test was written first and failed until `electronLanguages` was set. This removes unused Chromium locale payload without changing ACRYL's supported application localizations.
+
 ## 2026-08-31 - CLI release source-map removal
 
 Commit: `7a99b84`
