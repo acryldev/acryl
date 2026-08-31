@@ -2,6 +2,20 @@
 
 **Feature Directory**: `specs/024-acryl-cli-login`
 
+## Design decision: core-but-capability-shaped
+
+`/login` + `/logout` are **core** — the essence of a coding agent — so they must
+NOT be an optional/toggleable plugin that a profile can disable. But they must
+still follow "everything is a plugin" as closely as technically possible.
+
+Resolution: the auth *logic* lives entirely in the existing DSH
+`ctx.credentials` capability (the `dsh-credentials` + `dsh-credentials-local`
+plugins, composed in the base profile), and the TUI `/login`/`/logout` commands
+are only a client surface that consumes that capability. No new auth system, no
+hardcoded secret storage. Stage 2's OAuth extends the same capability via its
+`GrantRecord` space (`modifyRecord`/`readRecord`/`deleteRecord`), rather than
+introducing a parallel OAuth service.
+
 ## Architecture summary
 
 ACRYL's TUI already boots the DeepSeek Harness in a pi-tui terminal and exposes a
