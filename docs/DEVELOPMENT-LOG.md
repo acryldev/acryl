@@ -1,3 +1,9 @@
+## 2026-08-31 - shared coding capability composition design
+
+Commit: `ad6a510`
+
+Defined the product rule that all applicable user-facing coding capabilities are composed once and exposed through TUI, Web, and Desktop adapters. The design makes `acryl-harness-runtime` the narrow shared Loader-patch boundary, preserves Desktop's owned Web server and native concerns, and starts the migration with authorization parity rather than a generic capability framework.
+
 ## 2026-08-31 - release 0.1.18 prepared
 
 Commit: `c3b1192`
