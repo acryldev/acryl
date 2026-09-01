@@ -11,6 +11,7 @@
     "runtime.js",
     "release-contract.js",
     "web-runtime.js",
+    "desktop-runtime.js",
     "package.json"
   ],
   "scripts": {

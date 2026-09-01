@@ -51,7 +51,7 @@ test('clean local tarball global install launches the prepared target TUI withou
     cpSync(new URL('../acryl-npm-launcher', import.meta.url), selector, { recursive: true })
     writeFileSync(join(selector, 'package.json'), JSON.stringify({
       name: 'acryl', version, type: 'module', bin: { acryl: './bin.js' },
-      files: ['bin.js', 'runtime.js', 'release-contract.js', 'web-runtime.js'], optionalDependencies: { [packageName]: version },
+      files: ['bin.js', 'runtime.js', 'release-contract.js', 'web-runtime.js', 'desktop-runtime.js'], optionalDependencies: { [packageName]: version },
     }))
     const selectorTarball = pack(selector)
 

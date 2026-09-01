@@ -30,7 +30,7 @@ function targetManifest(target) {
 function selectorManifest() {
   return {
     name: 'acryl', version, private: false, type: 'module', bin: { acryl: './bin.js' },
-    files: ['bin.js', 'runtime.js', 'release-contract.js', 'web-runtime.js'],
+    files: ['bin.js', 'runtime.js', 'release-contract.js', 'web-runtime.js', 'desktop-runtime.js'],
     optionalDependencies: Object.fromEntries(Object.keys(CLI_TARGETS).map(target => [targetPackageName(target), version])),
     engines: { node: '>=22.19.0 || >=24.0.0' },
     description: 'ACRYL CLI target-runtime selector', license: 'MIT',
@@ -74,7 +74,7 @@ try {
   if (!printManifests) {
     const selector = join(staging, 'acryl')
     mkdirSync(selector, { recursive: true })
-    for (const file of ['bin.js', 'runtime.js', 'release-contract.js', 'web-runtime.js']) {
+    for (const file of ['bin.js', 'runtime.js', 'release-contract.js', 'web-runtime.js', 'desktop-runtime.js']) {
       if (existsSync(join(selectorSource, file))) cpSync(join(selectorSource, file), join(selector, file))
     }
     writeFileSync(join(selector, 'package.json'), `${JSON.stringify(selectorManifest(), null, 2)}\n`)

@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path'
 import { createInterface } from 'node:readline/promises'
 import { stdin, stderr } from 'node:process'
 import { runtimeLauncher, targetFor } from './runtime.js'
+import { acquireDesktopInstaller } from './desktop-runtime.js'
 import { acquireWebRuntime, fetchReleaseManifest, hasVerifiedWebRuntime, manifestUrl, managedWebRoot, selectWebArtifact } from './web-runtime.js'
 
 const require = createRequire(import.meta.url)
@@ -26,6 +27,24 @@ async function confirmDownload() {
   try {
     return (await prompt.question('ACRYL Web will download a verified matching runtime. Continue? [y/N] ')).trim().toLowerCase() === 'y'
   } finally { prompt.close() }
+}
+
+function openInstaller(path) {
+  const opener = process.platform === 'darwin' ? ['open', [path]]
+    : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', path]]
+    : ['xdg-open', [path]]
+  const child = spawn(...opener, { stdio: 'ignore' })
+  child.once('error', () => {})
+}
+
+async function runDesktop(desktopArgs) {
+  const noOpen = desktopArgs.includes('--no-open')
+  const result = await acquireDesktopInstaller({
+    version: selectorVersion,
+    ...(noOpen ? {} : { open: openInstaller }),
+  })
+  console.log(`ACRYL desktop installer ${result.version}: ${result.path}`)
+  if (noOpen) console.log('use --no-open to download without launching')
 }
 
 async function runWeb(webArgs) {
@@ -51,6 +70,11 @@ async function runWeb(webArgs) {
 
 if (args[0] === 'web') {
   runWeb(args.slice(1)).catch(cause => {
+    console.error(`acryl: ${cause instanceof Error ? cause.message : String(cause)}`)
+    process.exitCode = 1
+  })
+} else if (args[0] === 'desktop') {
+  runDesktop(args.slice(1)).catch(cause => {
     console.error(`acryl: ${cause instanceof Error ? cause.message : String(cause)}`)
     process.exitCode = 1
   })
