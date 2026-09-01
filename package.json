@@ -1,6 +1,6 @@
 {
   "name": "acryl",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "private": true,
   "description": "ACRYL local-first plugin-native agent workspace",
   "license": "MIT",
