@@ -66,23 +66,26 @@ plus an isolated `corepack pnpm run dev` smoke.
 
 ## Stage decomposition
 
-### Stage A — remove genuinely unused/dead parallel framework (P0, verified safe)
+### Stage A — correct the duplication framing (verified; no trivial dead-code removals)
 
-Confident, high-value removals confirmed by per-file consumer analysis. Each is one focused
-commit. NOTE: `desktop-terminal.ts` and `acryl-desktop/webserver` were re-classified as
-load-bearing / deliberate design and are NOT in this stage (they were split out).
+Per-file verification (including `tests/` and `cordis.patch.yml`) disproved the original
+"delete the duplication" stage. Every originally-flagged item was re-checked:
 
-- A1: Remove `acryl-control/src/architecture/projection.ts` + `provider.ts` and their two barrel
-  exports in `src/index.ts` (lines 9-10). `projectRuntimeArchitecture` has no consumer.
-- A2: Remove `acryl-desktop/src/hello-world.ts` and its `"./hello-world"` export in
-  `acryl-desktop/package.json` (lines 50-52). Dead scaffold.
-- A3: Remove `acryl-control/src/agent/agent-control.ts` + `agent/providers/*` and the
-  `export * from './agent/agent-control.ts'` line in `src/index.ts` (line 2). Self-contained;
-  providers are `transport-unavailable` stubs; no surface consumer. Update/remove the
-  agent-control specs in `acryl-control/tests`.
-- A4: Audit (do NOT remove) the live `FIBER_PHASE` in `acryl-control/src/lifecycle/controller.ts`;
-  ensure the lifecycle controller uses `ctx.loader` (`@deepseek-ai/cordis-plugin-loader`)
-  and not private Cordis state.
+- **`hello-world.ts` — KEEP.** It is a Loader-registered, tested Cordis plugin proof
+  (`cordis.patch.yml:13-14`, `tests/hello-world.spec.ts`), i.e. the canonical example of the
+  behavior ACRYL wants. Not a scaffold.
+- **`architecture/projection.ts` + `provider.ts` — review-gated refactor** (tested in
+  `tests/architecture.spec.ts`; reaches Cordis internals). Replace with
+  `dsh-host-plugin-inventory`, keep the test's contracts.
+- **`agent/agent-control.ts` + `providers/*` — review-gated refactor** (tested in
+  `tests/agent-control.spec.ts`; parallel to `dsh-subagent`). Re-base onto `ctx.subagents`.
+- **`desktop-terminal.ts` — KEEP** (load-bearing OS integration).
+- **`acryl-desktop/webserver` — KEEP** (deliberate documented design).
+- **`session-bridge.ts` — KEEP** (tested TUI session backbone); refactor to
+  `dsh-session-projection` only as its own ledger block.
+
+Net effect: there is no safe "delete the parallel framework" commit; the duplication is
+architectural in tested code. The concrete, safe, high-value work is the Tool gate.
 
 ### Stage B — re-base the control plane (P1)
 
