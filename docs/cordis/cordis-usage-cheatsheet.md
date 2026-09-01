@@ -136,6 +136,26 @@ export function apply(ctx, config) {
 }
 ```
 
+## 6b. Where plugins run — the three ACRYL surface kinds
+
+Don't conflate "surface" with "thin consumer." ACRYL has three UI surfaces with different
+relationships to the runtime:
+
+- **TUI (`acryl-tui`)** — an **in-process** pi-tui agent surface, adapted from
+  `tomowang/dsh-tui` (`@tomowang/dsh-tui` 0.7.0 @ `f7663341`, `@earendil-works/pi-tui`
+  0.84.2). It boots the runtime directly (`startDirectHost()` + `createAcrylSessionBridge()`)
+  and reads/writes `ctx` in-process — it is a rich agent UI, **not** an RPC client. It has
+  GUI-feature-parity overlays (`/model /presets /trajectory /tools /context /plugins /goal
+  /plan /compact` + approvals). DSH's `apps/cli` is only the `dsh` **launcher** and is **not**
+  the model for this.
+- **Web (`acryl-web`)** — the browser renderer is a **separate client Cordis app** consuming
+  host services over typed RPC (typert) + `dsh-client-connection`; the Node host boots the
+  runtime in-process.
+- **Desktop (`acryl-desktop`)** — Electron main boots the runtime; the renderer is the same
+  client shell over `file://` + IPC (not HTTP). It should NOT re-roll its own renderer.
+
+See `docs/acryl/tomowang-dsh-tui-provenance.md` and the roadmap's M1 for the TUI origin.
+
 ## 7. Reference pointers
 
 - Long handbook: `docs/cordis/cordis_system_guide_for_coding_agents.md`

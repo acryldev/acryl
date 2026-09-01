@@ -17,11 +17,21 @@
 Across all five codebases, five ideas recur and are load-bearing. If ACRYL adopts only
 these, it fixes the biggest problems already identified in the ACRYL critique.
 
-1. **One agent runtime, many surfaces; surfaces are thin consumers, never state owners.**
-   pi.dev proves the loop is a transport-neutral event stream and the TUI is just one
-   consumer. CodeWhale enforces "exactly one turn loop" with a single runtime behind
-   protocol. DSH puts the agent loop behind a stable `Agent` interface. **ACRYL's
-   `acryl-desktop` must stop owning agent state.**
+1. **One agent runtime, many surfaces; UI surfaces must not own agent state.** pi.dev proves
+   the loop is a transport-neutral event stream; CodeWhale enforces "exactly one turn loop"
+   behind protocol; DSH puts the loop behind a stable `Agent` interface. **ACRYL's
+   `acryl-desktop` must stop owning agent state.** Caveat — "thin consumer" is exact for the
+   **web/desktop renderers** (RPC clients of the host), but NOT for the ACRYL **TUI**, which is
+   an in-process pi-tui agent surface (see note below).
+
+   *ACRYL surface kinds:* DSH's `apps/cli` is only the `dsh` launcher (841 lines: bin/args/
+   profile-boot/plugin/dump-config/shutdown — no TUI; DSH's GUI is the web surface). ACRYL's
+   CLI is a **distinct, full-featured pi-tui TUI coding agent** adapted from `tomowang/dsh-tui`
+   (`@tomowang/dsh-tui` 0.7.0 @ `f7663341`, `@earendil-works/pi-tui` 0.84.2), driving the
+   runtime **in-process** via `startDirectHost()` + `createAcrylSessionBridge()` (not RPC), with
+   GUI-feature-parity overlays (`/model /presets /trajectory /tools /context /plugins /goal
+   /plan /compact` + approvals). See `docs/acryl/tomowang-dsh-tui-provenance.md` and the
+   `acryl-tui/` package. DSH `apps/cli` is therefore **not** the model for ACRYL's CLI.
 
 2. **Capability = interface + provider + consumer, composed by configuration, never a
    parallel framework.** DSH calls this the *capability seam*. If ACRYL names a new
