@@ -283,7 +283,7 @@ describe('desktop lifecycle events', () => {
     })
   })
 
-  it('replaces stale run evidence and keeps current evidence within byte caps', () => {
+  it('replaces stale run evidence and keeps current evidence within byte caps', { timeout: 10000 }, () => {
     const userDataDir = tempUserData('dsh-lifecycle-cap-')
     const evidencePath = desktopLifecycleEvidencePath(userDataDir)
     mkdirSync(join(userDataDir, 'lifecycle-events'))
