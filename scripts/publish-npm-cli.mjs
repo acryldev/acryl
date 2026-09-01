@@ -148,7 +148,6 @@ const SHARED_CLI_PACKAGES = [
   '@deepseek-ai/dsh-subprocess-local',
   '@deepseek-ai/dsh-system-prompt',
   '@deepseek-ai/dsh-typert-loader',
-  '@deepseek-ai/dsh-web-app',
   '@earendil-works/pi-tui',
   'diff',
 ]

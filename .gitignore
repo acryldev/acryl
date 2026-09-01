@@ -7,4 +7,5 @@ node_modules/
 acryl-desktop/dist/
 acryl-desktop/lib/
 dsh-community-market/lib/
+acryl-web/lib/
 release-artifacts/
