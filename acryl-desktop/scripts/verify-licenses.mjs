@@ -11,7 +11,7 @@
  */
 
 import { createRequire } from 'node:module'
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -43,6 +43,7 @@ const ALLOWED_LICENSES = new Set([
 const NOTICE_LICENSES = new Set([
   'LGPL-3.0-or-later',
   'Apache-2.0 AND LGPL-3.0-or-later',
+  'Apache-2.0 AND LGPL-3.0-or-later AND MIT',
 ])
 
 /**
@@ -54,7 +55,10 @@ function resolvePackageManifest(name, fromManifestPath) {
   const segments = name.split('/')
   const folder = name.startsWith('@') ? segments.slice(0, 2).join('/') : segments[0]
   const entry = name.startsWith('@') ? segments.slice(2).join('/') : segments.slice(1).join('/')
-  let dir = dirname(fromManifestPath)
+  // PNPM's isolated linker exposes workspace dependencies through symlinks.
+  // Walk from the real virtual-store package path so that a package's own
+  // dependency links are visible instead of incorrectly requiring hoisting.
+  let dir = dirname(realpathSync(fromManifestPath))
   for (;;) {
     const candidate = join(dir, 'node_modules', folder, entry, 'package.json')
     if (existsSync(candidate)) return candidate

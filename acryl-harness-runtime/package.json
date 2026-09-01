@@ -2,6 +2,7 @@
   "name": "acryl-harness-runtime",
   "version": "0.1.19",
   "private": false,
+  "license": "MIT",
   "type": "module",
   "main": "lib/index.mjs",
   "types": "lib/types/index.d.ts",

@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from 'node:fs'
@@ -841,8 +842,8 @@ describe('published package surface', () => {
     const runtimeChunks = readdirSync(sandboxLib).filter(name => /^types-.*\.js$/u.test(name))
 
     expectPatchedDependency('@deepseek-ai/dsh-sandbox-windows-acl@0.1.1-rc.2', patchPath)
-    expect(sandboxLocalRequire.resolve('@deepseek-ai/dsh-sandbox-windows-acl/package.json'))
-      .toBe(sandboxManifest)
+    expect(realpathSync(sandboxLocalRequire.resolve('@deepseek-ai/dsh-sandbox-windows-acl/package.json')))
+      .toBe(realpathSync(sandboxManifest))
     expect(lockfile).toContain('@deepseek-ai/dsh-sandbox-windows-acl@0.1.1-rc.2(patch_hash=')
     expect(patch.match(/^\+\s*dwFlags: 257,\r?$/gmu)).toHaveLength(2)
     expect(patch.match(/^\+\s*wShowWindow: 0,\r?$/gmu)).toHaveLength(2)

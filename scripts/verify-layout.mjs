@@ -28,11 +28,13 @@ if (workspace.packageManager !== 'pnpm@11.7.0') {
   fail('the product workspace must pin pnpm@11.7.0')
 }
 if (workspace.workspaces !== undefined) fail('workspace membership belongs only in pnpm-workspace.yaml')
-if (!npmrc.includes('node-linker=hoisted\n')) fail('the product workspace must use the documented PNPM hoisted linker exception')
-if (!npmrc.includes('ReactNode types across the existing published DSH client packages.')) {
-  fail('the PNPM hoisted linker exception must record the DSH React peer-graph evidence')
+if (!npmrc.includes('node-linker=isolated\n')) fail('the product workspace must use the documented PNPM isolated linker')
+if (!npmrc.includes('TUI owns its independent React 19 graph.')) {
+  fail('the PNPM linker policy must record the separate React peer graphs')
 }
-if (pnpmWorkspace !== `packages:
+if (pnpmWorkspace !== `nodeLinker: isolated
+
+packages:
   - acryl-control
   - acryl-harness-runtime
   - acryl-npm-launcher

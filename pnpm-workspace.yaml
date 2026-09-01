@@ -1,3 +1,5 @@
+nodeLinker: isolated
+
 packages:
   - acryl-control
   - acryl-harness-runtime
