@@ -1,9 +1,19 @@
 {
   "name": "acryl",
-  "version": "0.1.19",
+  "version": "0.1.20",
   "private": true,
   "type": "module",
-  "bin": { "acryl": "./bin.js" },
-  "files": ["bin.js", "runtime.js", "release-contract.js", "web-runtime.js", "package.json"],
-  "scripts": { "test": "node --test tests/*.test.mjs" }
+  "bin": {
+    "acryl": "./bin.js"
+  },
+  "files": [
+    "bin.js",
+    "runtime.js",
+    "release-contract.js",
+    "web-runtime.js",
+    "package.json"
+  ],
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  }
 }
