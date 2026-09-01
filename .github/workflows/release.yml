@@ -258,7 +258,7 @@ jobs:
 
   npm-publish:
     name: Publish to npm
-    needs: [cli]
+    needs: [build, cli]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
