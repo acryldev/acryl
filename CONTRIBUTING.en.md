@@ -26,7 +26,7 @@ Plugins that follow the manifesto coexist better with other plugins and will be 
 ### Development environment
 
 ```sh
-git submodule update --init --recursive
+corepack pnpm run upstream:sync
 corepack pnpm install --frozen-lockfile
 corepack pnpm run check   # full headless gate: build, typecheck, tests, and smokes
 corepack pnpm run dev     # launch the application when a graphical session is available

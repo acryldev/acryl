@@ -217,7 +217,7 @@ assets/                 ACRYL brand assets
 ### Start ACRYL
 
 ```sh
-git submodule update --init --recursive
+corepack pnpm run upstream:sync
 corepack pnpm install --frozen-lockfile
 corepack pnpm dev
 ```
@@ -299,6 +299,8 @@ current artifacts:
 The `deepseek-harness/` submodule is an independent pnpm workspace. Root wrapper
 scripts enter it before invoking its pinned pnpm release:
 
+- `corepack pnpm run upstream:sync` — runs `git submodule update --init --recursive`
+  to populate a missing checkout or sync to the current pin without moving it.
 - `corepack pnpm upstream:update` — fetches the remote default branch, verifies
   it is a fast-forward from the current clean pin, moves the Harness checkout
   to that exact commit, initializes nested submodules, and synchronizes

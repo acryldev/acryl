@@ -5,7 +5,7 @@ This repository owns the desktop product around an unmodified DeepSeek Harness c
 ## Prerequisites and setup
 
 - Use Node.js `^22.19.0` or `>=24.0.0` and the root PNPM `11.7.0` release through Corepack.
-- Initialize the pinned upstream checkout with `git submodule update --init --recursive`.
+- Initialize the pinned upstream checkout with `corepack pnpm run upstream:sync`.
 - Install root dependencies with `corepack pnpm install --frozen-lockfile`.
 
 ## Build, run, and verify
