@@ -1,6 +1,5 @@
 import { startDirectHost } from '../host/direct.ts'
 import { runAcrylTui } from '../tui-app/session.ts'
-import { bootAcrylWebProfile } from 'acryl-harness-runtime'
 import { ACRYL_VERSION } from '../version.ts'
 import { parseAcrylArgs } from './grammar.ts'
 
@@ -11,37 +10,33 @@ interface RunningDirectHost {
   dispose(): Promise<void>
 }
 
-export interface AcrylWebResult {
-  readonly url: string
-}
-
 export interface AcrylCliDependencies {
   readonly startDirectHost: (options: { profile: string }) => Promise<RunningDirectHost>
   readonly runTui: (options: { profile: string; resumeSessionId?: string }) => Promise<{ resumeHint: string }>
-  readonly runWeb: (options: { profile: string }) => Promise<AcrylWebResult>
   readonly exit: (code: number) => void
   readonly write: (line: string) => void
 }
 
-/** Boot the DSH browser surface as one ACRYL runtime, print its URL, and serve until a termination signal. */
-async function serveWeb(): Promise<AcrylWebResult> {
-  const runtime = await bootAcrylWebProfile({ cmdlineArgs: [] })
-  const stopped = new Promise<void>(resolve => {
-    const onSignal = () => resolve()
-    process.once('SIGINT', onSignal)
-    process.once('SIGTERM', onSignal)
-  })
-  const url = runtime.url
-  process.stdout.write(`ACRYL web: ${url}\n`)
-  await stopped
-  await runtime.dispose()
-  return { url }
+/**
+ * The `acryl` CLI is the terminal surface only. The browser (`acryl web`) and
+ * Electron (`acryl gui`) surfaces are separate distributions and are NOT wired
+ * into this package, so the CLI stays lightweight and does not pull the
+ * `dsh-web-app` / host / client bundle into its publish closure.
+ */
+function surfaceError(command: 'web' | 'gui'): Error {
+  if (command === 'web') {
+    return new Error(
+      '`acryl web` is served by the separate `acryl-web` distribution. Install it separately; the `acryl` CLI is the terminal (TUI) surface only.',
+    )
+  }
+  return new Error(
+    '`acryl gui` (Electron Desktop) is a separate distribution and is not wired into the `acryl` CLI package. Use the desktop installer.',
+  )
 }
 
 const defaults: AcrylCliDependencies = {
   startDirectHost,
   runTui: runAcrylTui,
-  runWeb: serveWeb,
   exit: code => { process.exitCode = code },
   write: line => { process.stdout.write(`${line}\n`) },
 }
@@ -55,8 +50,8 @@ function statusLine(host: RunningDirectHost): string {
 }
 
 /**
- * Run the direct ACRYL terminal host. `--json` is a short-lived, scriptable
- * headless readiness probe; interactive mode mounts the pi-tui session via the
+ * Run the ACRYL terminal host. `--json` is a short-lived, scriptable
+ * readiness probe; interactive mode mounts the pi-tui session via the
  * runtime bridge until a normal exit, then prints a resumable session id.
  */
 export async function runAcryl(
@@ -75,8 +70,6 @@ export async function runAcryl(
         '',
         'Commands:',
         '  tui    Run the terminal client (default)',
-        '  web    Serve the local ACRYL web runtime',
-        '  gui    [reserved] launch the Desktop surface (not wired in this build)',
         '',
         'Options:',
         '  -h, --help          Show this help',
@@ -84,6 +77,9 @@ export async function runAcryl(
         '  --json              Emit machine-readable output',
         '  --profile <name>    Use a named ACRYL profile',
         '  --resume <id>       Resume a session',
+        '',
+        'The browser (`acryl web`) and Electron (`acryl gui`) surfaces are ',
+        'separate distributions. Install them individually.',
         '',
       ].join('\n'),
     )
@@ -95,27 +91,8 @@ export async function runAcryl(
     return
   }
 
-  if (invocation.command === 'gui') {
-    throw new Error(
-      'ACRYL gui host is not implemented; the desktop (Electron) surface is not wired into this build yet. Use `pnpm acryl` for the terminal surface.',
-    )
-  }
-
-  if (invocation.command === 'web') {
-    if (invocation.json) {
-      // Headless readiness probe: boot the web runtime, print its URL, dispose.
-      const host = await bootAcrylWebProfile({ cmdlineArgs: [] })
-      try {
-        dependencies.write(host.url)
-      } finally {
-        await host.dispose()
-      }
-      return
-    }
-    const result = await dependencies.runWeb({ profile: invocation.profile ?? 'web' })
-    dependencies.write(`serving at ${result.url}`)
-    return
-  }
+  if (invocation.command === 'web') throw surfaceError('web')
+  if (invocation.command === 'gui') throw surfaceError('gui')
 
   if (invocation.json) {
     const host = await dependencies.startDirectHost({ profile: invocation.profile ?? 'acryl' })

@@ -2,6 +2,7 @@ packages:
   - acryl-control
   - acryl-harness-runtime
   - acryl-tui
+  - acryl-web
   - acryl-desktop
   - acryl-development-canvas
   - dsh-community-fabric

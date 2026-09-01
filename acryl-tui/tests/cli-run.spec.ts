@@ -37,10 +37,6 @@ function dependencies(overrides: Partial<AcrylCliDependencies> = {}): AcrylCliDe
       events.push(`tui:${options.profile}${options.resumeSessionId === undefined ? '' : `:${options.resumeSessionId}`}`)
       return { resumeHint: 'resume-1' }
     },
-    runWeb: async options => {
-      events.push(`web:${options.profile}`)
-      return { url: 'http://127.0.0.1:3080' }
-    },
     exit: code => { events.push(`exit:${code}`) },
     write: line => { events.push(`write:${line}`) },
     ...overrides,
@@ -90,13 +86,11 @@ describe('runAcryl', () => {
     ])
   })
 
-  it('dispatches web to the web host and gui to a clear not-implemented error', async () => {
+  it('rejects web and gui with a clear surface-separation error (TUI-only CLI)', async () => {
     setTty([true, true])
     const deps = dependencies()
 
-    await runAcryl(['web'], deps)
-    expect(deps.events).toEqual(['web:web', 'write:serving at http://127.0.0.1:3080'])
-
-    await expect(runAcryl(['gui'], deps)).rejects.toThrow(/desktop \(Electron\) surface is not wired into this build yet/)
+    await expect(runAcryl(['web'], deps)).rejects.toThrow(/acryl-web/i)
+    await expect(runAcryl(['gui'], deps)).rejects.toThrow(/separate distribution|Electron/i)
   })
 })
