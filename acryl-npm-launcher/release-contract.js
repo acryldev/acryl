@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync, statSync } from 'node:fs'
+import { join, relative } from 'node:path'
 
 export const RECEIPT_SCHEMA_VERSION = 1
 
@@ -26,6 +27,22 @@ export function sha256(value) {
   return createHash('sha256').update(value).digest('hex')
 }
 
+/** Hash a prepared runtime tree in a stable, receipt-excluding form. */
+export function payloadSha256(directory) {
+  const entries = []
+  const visit = current => {
+    for (const entry of readdirSync(current)) {
+      const absolute = join(current, entry)
+      const path = relative(directory, absolute).replaceAll('\\\\', '/')
+      if (path === 'receipt.json') continue
+      if (statSync(absolute).isDirectory()) visit(absolute)
+      else entries.push(`${path}\u0000${sha256(readFileSync(absolute))}`)
+    }
+  }
+  visit(directory)
+  return sha256(entries.sort().join('\n'))
+}
+
 export function receiptFor({ surface = 'cli', target, version, payloadSha256 }) {
   if (!CLI_TARGETS[target]) throw new Error(`unknown ACRYL target: ${target}`)
   if (!/^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$/.test(version)) throw new Error(`invalid release version: ${version}`)
@@ -40,6 +57,12 @@ export function validateReceipt(receipt, { surface = 'cli', target, version, pac
     if (expected !== undefined && receipt[key] !== expected) throw new Error(`runtime receipt ${key} mismatch: expected ${expected}, found ${String(receipt[key])}`)
   }
   if (!/^[a-f0-9]{64}$/u.test(receipt.payloadSha256)) throw new Error('runtime receipt has invalid payloadSha256')
+  return receipt
+}
+
+export function validatePayloadReceipt(receipt, directory) {
+  const actual = payloadSha256(directory)
+  if (receipt.payloadSha256 !== actual) throw new Error(`runtime receipt payload hash mismatch: expected ${receipt.payloadSha256}, found ${actual}`)
   return receipt
 }
 

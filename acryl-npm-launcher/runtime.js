@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import { readFileSync } from 'node:fs'
-import { targetForNode, targetPackageName, validateReceipt } from './release-contract.js'
+import { targetForNode, targetPackageName, validatePayloadReceipt, validateReceipt } from './release-contract.js'
 
 export const targetFor = targetForNode
 export { targetPackageName }
@@ -27,7 +27,10 @@ export function runtimeLauncher({ require = createRequire(import.meta.url), plat
   try { receipt = JSON.parse(readFileSync(join(root, 'runtime', 'receipt.json'), 'utf8')) } catch {
     throw new Error(`ACRYL CLI runtime ${packageName} has no valid receipt. Reinstall with: npm install -g acryl --include=optional`)
   }
-  try { validateReceipt(receipt, { target, version: selectorVersion, packageName }) } catch (cause) {
+  try {
+    validateReceipt(receipt, { target, version: selectorVersion, packageName })
+    validatePayloadReceipt(receipt, join(root, 'runtime'))
+  } catch (cause) {
     throw new Error(`ACRYL CLI runtime ${packageName} receipt validation failed: ${cause.message}. Reinstall with: npm install -g acryl --include=optional`)
   }
   return join(root, 'runtime', 'bin', platform === 'win32' ? 'acryl.cmd' : 'acryl')

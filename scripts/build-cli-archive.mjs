@@ -17,7 +17,7 @@
  * Windows runner; the unix targets are exercised by the release cli matrix.
  */
 import { execFileSync } from 'node:child_process'
-import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
@@ -27,7 +27,7 @@ import { corepackCommand, corepackSpawnOptions } from './cli-archive-platform.mj
 import { flattenNodeModules } from './flatten-node-modules.mjs'
 import { pruneTargetNative } from './prune-target-native.mjs'
 import { pruneReleasePayload } from './prune-release-payload.mjs'
-import { receiptFor, sha256 } from './release-contract.mjs'
+import { payloadSha256, receiptFor } from './release-contract.mjs'
 
 const require = createRequire(import.meta.url)
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -47,21 +47,6 @@ function run(cmd, args, opts = {}) {
 
 function sha256File(path) {
   return createHash('sha256').update(readFileSync(path)).digest('hex')
-}
-
-function payloadSha256(directory) {
-  const entries = []
-  const visit = current => {
-    for (const entry of readdirSync(current)) {
-      const absolute = join(current, entry)
-      const relative = absolute.slice(directory.length + 1).replaceAll('\\\\', '/')
-      if (relative === 'receipt.json') continue
-      if (statSync(absolute).isDirectory()) visit(absolute)
-      else entries.push(`${relative}\u0000${sha256(readFileSync(absolute))}`)
-    }
-  }
-  visit(directory)
-  return sha256(entries.sort().join('\n'))
 }
 
 async function main() {
