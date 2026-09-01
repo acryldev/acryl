@@ -27,7 +27,8 @@ checkpoint. `US#` = success criteria / functional req refs from `spec.md`.
     `dsh-host-plugin-inventory` (or the documented Loader/reflect API).
 
 - [ ] **T003 [FR-005] Collapse to one web server** — remove `acryl-desktop/src/webserver.ts`
-      duplicate host or make it consume the `acryl web` host.
+      duplicate host or make it consume the `acryl web` host, AND drop the `"./webserver"`
+      export key in `acryl-desktop/package.json` (verified present at line 34).
   - Why: two independent web-server implementations (`acryl-tui` host on 127.0.0.1:3080 and the
     desktop variant) are documented as not reusing each other.
   - Depends on: none.
