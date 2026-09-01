@@ -41,7 +41,9 @@
     "acryl:resume": "node scripts/tui-run.mjs --resume",
     "acryl-gui": "pnpm --filter acryl-desktop run start",
     "acryl-desktop": "pnpm --filter acryl-desktop run start",
-    "acryl-web": "node acryl-tui/lib/bin.js web"
+    "acryl-web": "node scripts/web-run.mjs",
+    "web": "node scripts/web-run.mjs",
+    "gui": "node scripts/dev-local.mjs"
   },
   "devDependencies": {
     "@types/react": "18.3.31"
