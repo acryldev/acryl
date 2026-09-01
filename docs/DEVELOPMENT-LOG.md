@@ -1,3 +1,13 @@
+## 2026-09-01 - run the CLI on the host's Node
+
+Commit: `15f28ef`
+
+The CLI archive no longer bundles a Node runtime; it runs on the host's Node
+(>=22.19.0) via a thin launcher. This halves the package (80MB -> 40MB archive,
+~350MB -> ~219MB clean install) and clears the release clean-install size gate,
+making `npm i -g acryl` fast. The release CLI smoke now uses the runner's Node
+instead of a bundled runtime.
+
 ## 2026-09-01 - allow node-pty Windows ConPTY binaries in Web archives
 
 Commit: `d56351d`
