@@ -1,3 +1,23 @@
+## 2026-09-01 - prepare v0.1.20 coordinated target distributions
+
+Commit: `1623d2bed5c4077546c64ed21d8acc0ab75a9459`
+
+Synchronized the public selector, TUI, Web, Desktop, control, and shared runtime
+at version 0.1.20. This is the first release candidate for the selector-only
+`acryl` npm package, target-specific prepared CLI runtimes, lazy verified Web
+runtime acquisition, and complete multi-surface release manifest gates.
+
+## 2026-09-01 - reconcile PNPM license verification with isolated linking
+
+Commit: `790dc6326c3b2552520a6b6c6bd34c7adc47068a`
+
+Made PNPM 11 isolated linking explicit and taught the Desktop license verifier
+to traverse dependency manifests from their canonical virtual-store paths.
+This removed 183 false missing-manifest reports without forcing a hoisted graph
+that duplicates React types. Added missing MIT metadata, canonicalized the
+patched-runtime assertion, regenerated third-party notices, and verified 558
+installed production packages with redistribution-safe licenses.
+
 ## 2026-09-01 - validate prepared CLI runtime payload receipts
 
 Commit: `951ea26faa304ca981d84103f6164f95ba59bd26`
