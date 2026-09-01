@@ -1,6 +1,7 @@
 packages:
   - acryl-control
   - acryl-harness-runtime
+  - acryl-npm-launcher
   - acryl-tui
   - acryl-web
   - acryl-desktop

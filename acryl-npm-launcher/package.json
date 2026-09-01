@@ -1,0 +1,9 @@
+{
+  "name": "acryl-npm-launcher",
+  "version": "0.1.19",
+  "private": true,
+  "type": "module",
+  "bin": { "acryl": "./bin.js" },
+  "files": ["bin.js", "runtime.js", "package.json"],
+  "scripts": { "test": "node --test tests/*.test.mjs" }
+}
