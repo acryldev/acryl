@@ -35,6 +35,10 @@ export function payloadSha256(directory) {
       const absolute = join(current, entry)
       const path = relative(directory, absolute).replaceAll('\\\\', '/')
       if (path === 'receipt.json') continue
+      // npm strips .npmignore/.gitignore/.npmrc when packing a vendored
+      // node_modules, so exclude them from the payload hash or the installed
+      // runtime would fail receipt validation.
+      if (/\/(?:\.npmignore|\.gitignore|\.npmrc)$/u.test(path)) continue
       if (statSync(absolute).isDirectory()) visit(absolute)
       else entries.push(`${path}\u0000${sha256(readFileSync(absolute))}`)
     }
