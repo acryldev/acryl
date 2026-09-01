@@ -101,6 +101,12 @@ Commit: `c6e76db`
 
 Made the focused packed-CLI closure test discover the produced tarball rather than assuming version `0.1.17`, so the same release guard survives every package bump. The test passes against the current shared TUI and Web-host closure.
 
+## 2026-09-01 - Desktop Web profile dependency closure restored
+
+Commit: `709728d`
+
+Fixed Recovery startup for the Desktop `web` profile. Its Loader dynamically mounts every dependency declared by the pinned `@deepseek-ai/dsh-web-app` bundle, but the Desktop package resolver deliberately only exposes direct `acryl-desktop` dependencies or profile-local packages. The package had omitted 30 Web bundle dependencies, so production-style resolution failed despite root-workspace hoisting masking the issue. `acryl-desktop` now declares the exact pinned bundle dependency set and a regression test compares the two manifests. The full `build:canvas -> build -> verify:loader` preflight passes.
+
 ## 2026-09-01 - Desktop Web-profile loader regression coverage
 
 Commit: `b4a8d55`
