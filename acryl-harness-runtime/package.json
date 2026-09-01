@@ -1,7 +1,7 @@
 {
   "name": "acryl-harness-runtime",
   "version": "0.1.18",
-  "private": true,
+  "private": false,
   "type": "module",
   "main": "lib/index.mjs",
   "types": "lib/types/index.d.ts",
@@ -15,7 +15,8 @@
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "check": "pnpm run build && pnpm run typecheck && pnpm run test"
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test",
+    "prepublishOnly": "pnpm run check"
   },
   "dependencies": {
     "@deepseek-ai/cordis-plugin-group": "1.0.1",
@@ -172,8 +173,6 @@
     "@deepseek-ai/schemastery": "^3.18.1",
     "acryl-control": "workspace:*",
     "adm-zip": "^0.6.0",
-    "dsh-community-market": "workspace:*",
-    "acryl-development-canvas": "workspace:*",
     "koffi": "3.1.5",
     "node-addon-require-builtin": "^0.1.4",
     "pnpm": "11.7.0",
@@ -191,5 +190,8 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "4.0.1"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
