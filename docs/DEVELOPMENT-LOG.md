@@ -1,3 +1,14 @@
+## 2026-09-01 - make Web target archives portable
+
+Commit: `4a2b5ccdcea807a59200f882ed8106bf42e0a519`
+
+Corrected the first target-Web CI attempt: release pruning now removes vendored
+dependency test fixtures as well as source maps, native pruning recognizes
+`node-pty`'s Windows ConPTY payload naming, target validation accepts native
+files directly beneath a qualified path, Windows fetches the correct Node ZIP,
+and Windows npm smoke uses command shims. A local darwin-arm64 Web archive now
+builds and passes receipt/payload inspection.
+
 ## 2026-09-01 - build standalone Web package before coordinated publication
 
 Commit: `11633261c1d4f911533c21eca0640fc05a5dc406`
