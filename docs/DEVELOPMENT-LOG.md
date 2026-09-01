@@ -1,3 +1,18 @@
+## 2026-09-01 - source-validated Cordis usage cheatsheet
+
+Commit: `18a1000`
+
+Added `docs/cordis/cordis-usage-cheatsheet.md`, a condensed operational reference that
+validates `docs/cordis/` + `docs/cordisplugins/` against the vendored
+`@deepseek-ai/cordis` 4.0.1 source. Covers the Cordis kernel (Context / Services+inject /
+Events / Fiber / Effects / Loader), the plugin contract (`name` / `inject` / `Config` /
+`apply` + bundle→profile→patch chain), the AGENTS.md Harness Tool rule
+(`ctx.tools.register(defineTool(...))`), and seven doc-vs-source corrections that matter for
+implementation (sync StandardSchema `Config`; `timer`/`hmr`/`loader` are not core; `root` is
+experimental; `parallel` mislabels its dispatch mode; `FiberState` enum order; real API docs at
+docs/cordis-api/*; fork version 4.0.1). Produced via a three-scout fleet study plus direct
+source validation.
+
 ## 2026-09-01 - land the first real ACRYL model-facing Tool (T008 gate)
 
 Commit: `9c5f489`
