@@ -813,6 +813,83 @@ nix run .#acryl-desktop -- --help
 nix run .#acryl-desktop -- --version
 ```
 
+## 2026-08-31 - Devin ACP transport for acryl-control
+
+**Commit:** [`8ee8d8ed7ca841cf28a7a49c6ae44a9d7277d906`](https://github.com/levonk/acryl/commit/8ee8d8ed7ca841cf28a7a49c6ae44a9d7277d906)
+
+Wired `devin acp` (JSON-RPC over stdio, Agent Client Protocol v1) as the first
+concrete `AgentTransport` behind the existing `acpProvider` in `acryl-control`.
+This fills the Phase-8 transport seam declared at
+`runtime/acryl-control/src/agent/agent-control.ts:77-80` that previously threw
+`transport-unavailable` for all providers. ACRYL Desktop users can now drive
+their Devin subscription from the Development Canvas using their existing
+`devin auth login` credentials or `WINDSURF_API_KEY`.
+
+### What was added
+
+- `runtime/acryl-control/src/agent/transports/acp-json-rpc.ts` — reusable JSON-RPC 2.0
+  client over child process stdio with request/response correlation,
+  notification dispatch, inbound request handling, and disposal
+- `runtime/acryl-control/src/agent/transports/devin-acp-config.ts` — config type,
+  binary resolution via `which devin` fallback, env building with
+  `WINDSURF_API_KEY` passthrough
+- `runtime/acryl-control/src/agent/transports/devin-acp.ts` — transport factory
+  implementing `AgentTransport.execute` with ACP v1 method mapping:
+  `start` → `initialize` + `session/new`, `send` → `session/prompt`,
+  `cancel` → `session/cancel`, `stop` → SIGTERM → SIGKILL after 2s,
+  `resume` → `session/load` (if supported) or `session/new`
+- `runtime/acryl-control/tests/acp-json-rpc.spec.ts` — 8 unit tests for the JSON-RPC
+  client (call, notify, notification dispatch, concurrent correlation, error
+  rejection, dispose, process exit, malformed input)
+- `runtime/acryl-control/tests/devin-acp-transport.spec.ts` — 8 lifecycle tests with
+  a stub ACP server (start handshake, prompt round-trip, cancel, stop kills
+  process, dispose kills all processes, reactivation spawns new PID, error
+  cases)
+- `runtime/acryl-control/tests/stub-acp-server.mjs` — stub ACP v1 server for tests
+- `apps/acryl-desktop/src/desktop-settings-contract.ts` — `DevinAcpSettings` type
+  (enabled, binaryPath, authMode, model, permissionMode) as a type-only
+  addition; UI wiring is a follow-up
+
+### Key design decisions
+
+- **Transport, not provider**: The `acpProvider` and `'acp'` provider kind
+  already existed. The implementation fills the `AgentTransport` seam rather
+  than creating a new provider framework or provider kind.
+- **ACP v1 protocol**: Implements the Agent Client Protocol v1 flow
+  (initialize → session/new → session/prompt with session/update
+  notifications → session/cancel). Validated against the ACP spec at
+  agentclientprotocol.com.
+- **Lifecycle ownership**: The subprocess, stdio streams, and JSON-RPC
+  correlation map are owned by the transport's closure-scoped state. The
+  `dispose()` method kills all spawned processes (SIGTERM → SIGKILL after 2s),
+  drains stdio, and clears the map. No orphan processes remain after
+  disposal.
+- **Auth modes**: Supports `devin-auth` (default, uses stored credentials
+  from `devin auth login`), `windsurf-key` (passes `WINDSURF_API_KEY` env),
+  and `interactive` (throws with a clear message — follow-up for UI-driven
+  ACP `authenticate` flow).
+- **No new framework**: Uses Cordis services, injection, effects, and Loader
+  composition only. No parallel lifecycle, DI, event, or provider framework.
+  No `deepseek-harness/` edits.
+
+### Verification
+
+- `pnpm run typecheck` passes across all 5 packages
+- `pnpm run build` passes
+- All 38 `acryl-control` tests pass (8 new JSON-RPC + 8 new transport + 22
+  existing)
+- 6 pre-existing `acryl-desktop` test failures confirmed unrelated by
+  running on the base commit
+
+Primary locations:
+
+- Devin ACP transport: `runtime/acryl-control/src/agent/transports/devin-acp.ts`
+- JSON-RPC client: `runtime/acryl-control/src/agent/transports/acp-json-rpc.ts`
+- Transport config: `runtime/acryl-control/src/agent/transports/devin-acp-config.ts`
+- Settings type: `apps/acryl-desktop/src/desktop-settings-contract.ts`
+- PRD and tasks: `internal-docs/feature/todo/devin-acp-integration/`
+>>>>>>> 0890fb0 (docs: log Devin ACP transport implementation in DEVELOPMENT-LOG.md)
+
 ---
 
 ## 2026-08-31 - Nix flake support for acryl-tui
