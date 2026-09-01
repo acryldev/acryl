@@ -1,3 +1,12 @@
+## 2026-09-01 - build standalone Web package before coordinated publication
+
+Commit: `11633261c1d4f911533c21eca0640fc05a5dc406`
+
+Made the npm publication job install the pinned workspace and rebuild, typecheck,
+and test `acryl-web` before publishing it. Target CLI packages still publish
+before the selector, while the standalone Web package can no longer be assembled
+from a clean checkout that lacks its generated `lib/` runtime files.
+
 ## 2026-09-01 - prepare v0.1.20 coordinated target distributions
 
 Commit: `1623d2bed5c4077546c64ed21d8acc0ab75a9459`
