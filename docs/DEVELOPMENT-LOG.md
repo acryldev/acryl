@@ -1,3 +1,15 @@
+## 2026-09-01 - allow node-pty Windows ConPTY binaries in Web archives
+
+Commit: `d56351d`
+
+A first `v0.1.21` release run passed every surface except `web-windows-x64`:
+the artifact verifier rejected `node-pty`'s embedded Windows ConPTY runtime
+(`build/Release/conpty/*.exe`/`*.dll` and `third_party/conpty/*/win10-x64/*`)
+as foreign native payload. The native allowlist now also accepts those
+`node-pty` Windows binaries and the `win10-<arch>` vendor naming, extracted into
+the testable `webNativeAllowlist`, with a regression test proving the opposite
+architecture's vendored ConPTY is still rejected.
+
 ## 2026-09-01 - make Web target archives portable
 
 Commit: `4a2b5ccdcea807a59200f882ed8106bf42e0a519`
