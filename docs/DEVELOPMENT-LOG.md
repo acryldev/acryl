@@ -1,3 +1,17 @@
+## 2026-09-01 - verified on-demand Web runtime distribution
+
+Commit: `f1406d6a2e4e300723336edf0adeca3268359469`
+
+Added per-target portable Web archive construction with target-aware receipts,
+checksums, release-payload pruning, and Desktop exclusion inspection. The npm
+selector now implements `acryl web`: it validates the installed matching CLI
+runtime, reads the exact-version release manifest, confirms a required download
+(or accepts `--yes`), verifies the artifact checksum, extracts into a managed
+version/target cache atomically, and reuses only a verified ready runtime.
+Failures retain the existing TUI and any prior verified cache; the cache stores
+only the runtime and integrity receipt, never session, credential, or context
+state.
+
 ## 2026-09-01 - target-specific npm CLI runtime distribution
 
 Commit: `dc5e978fa384efe52e8b669a8b6a91a1fad86c0d`
@@ -9,6 +23,18 @@ package carries the prepared native TUI runtime, target receipt, and OS/CPU
 constraints. The selector validates installed package metadata and receipts
 before launching, with reinstall guidance for unsupported, missing, or mismatched
 runtimes. Artifact inspection now validates receipt metadata.
+
+## 2026-09-01 - gate complete multi-surface releases with a verifiable manifest
+
+Commit: `50a798659b9f307ee3c2d80bd338a8f62c8e5113`
+
+Added `scripts/release-manifest.mjs` and a complete release workflow gate. Every
+CLI and Web target plus all five Desktop installer targets now emits a receipt
+with release version, capability baseline, location, and SHA-256 integrity. The
+manifest gate verifies exact coverage, uniqueness, receipt/version/baseline and
+checksum agreement, artifact presence, and CLI clean-install size/time budgets
+before npm publication or GitHub-release promotion. Immutable
+`acryl-cli-{target}` packages publish before the `acryl` selector.
 
 ## 2026-09-01 - separate the web surface from the lightweight CLI
 
