@@ -48,10 +48,12 @@ one runtime. A future capability is added by defining a Cordis seam, not by patc
   is a DELIBERATE design (Desktop replaces the CLI webserver Loader row with it, documented
   in `docs/DEVELOPMENT-LOG.md`, consumed by `profile.ts`); it is not duplication to remove.
   Instead, keep exactly one webserver per surface and do not add a third.
-- FR-005a: No ACRYL-owned package may expose a barrel export that is consumed nowhere OR that
-  re-implements a DSH/Cordis facility. Verified targets: `architecture/projection.ts`+
-  `provider.ts` (unused, reaches Cordis internals), `agent/agent-control.ts`+`providers/*`
-  (self-contained, stub providers, no surface consumer), and the `hello-world.ts` scaffold.
+- FR-005a: No ACRYL-owned package may re-implement a DSH/Cordis facility *without a deliberate
+  decision and a tested consumer*, and no barrel export may be exposed with no consumer. Per-file
+  verification (including `tests/` and `cordis.patch.yml`) found the previously-flagged
+  `architecture/projection.ts`, `agent/agent-control.ts`, and `hello-world.ts` are each TESTED
+  (and hello-world is a Loader-REGISTERED plugin proof). Treat their removal as a deliberate,
+  review-gated refactor, not a dead-code cleanup.
 - FR-006: ACRYL must ship **exactly one** real model-facing Tool as a genuine Cordis plugin
   (the Tool gate), satisfying: `inject: ['tools']`; registers via `ctx.tools.register`;
   canonical typed output split into `output.schema`/`output.render`; honours `exec.signal`;
