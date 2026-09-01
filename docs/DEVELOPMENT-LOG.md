@@ -101,6 +101,16 @@ Commit: `c6e76db`
 
 Made the focused packed-CLI closure test discover the produced tarball rather than assuming version `0.1.17`, so the same release guard survives every package bump. The test passes against the current shared TUI and Web-host closure.
 
+## 2026-09-01 - v0.1.19 separate Web distribution
+
+Commit: `ae47b14`
+
+Released `acryl-web` as a public npm distribution for the local browser surface, distinct from the lightweight terminal CLI and Desktop installers. The package bundles ACRYL-owned runtime code, declares the pinned DSH Web runtime, and ships the `acryl-web` command. Its release gate packs the package, installs it into an empty temporary project with pnpm, boots `acryl-web --json`, and verifies the local readiness URL. Tagged releases now verify the version across the root, CLI, Web, Desktop, Control, and Harness Runtime packages, publish `acryl-web` and `acryl` to npm, then publish Desktop and CLI artifacts through the GitHub Release.
+
+Commit: `ed9c80d`
+
+Updated the workspace and package-script release contracts so the public Web surface is included in repository validation.
+
 ## 2026-09-01 - Desktop Web profile dependency closure restored
 
 Commit: `709728d`
