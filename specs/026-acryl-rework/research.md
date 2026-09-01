@@ -35,13 +35,19 @@ and today they are being re-implemented in parallel.
     `execute` (stubs).
   - `acryl-control/src/architecture/projection.ts` reaches into Cordis internals
     (`ctx.root.reflect.store`, `ctx.root.registry.values()`, `fiber.getEffects()`,
-    `fiber.inject`, `fiber.store`) and hand-codes `FIBER_PHASE` 0–5 (duplicates the Cordis
-    `Fiber.State` enum). Native alternative: `dsh-host-plugin-inventory`.
-  - `acryl-desktop/src/desktop-terminal.ts` is a custom `child_process` launcher duplicating
-    `dsh-terminal`/`node-pty`; `acryl-desktop/src/terminal.ts` (DSH-native tray terminal
-    plugin) already exists in the same package.
-  - `acryl-desktop/src/webserver.ts` re-implements the web host vs `acryl web`
-    (`acryl-tui`), documented as not reusing it.
+    `fiber.inject`, `fiber.store`) and hand-codes `FIBER_PHASE` 0–5. **CORRECTION:**
+    `projectRuntimeArchitecture()` is consumed nowhere (`grep` across all ACRYL src → zero
+    callers besides its own barrel export); it is unused/exports-only, so it is safe to remove.
+    Native alternative: `dsh-host-plugin-inventory`.
+  - ~~`acryl-desktop/src/desktop-terminal.ts` is a custom launcher duplicating `dsh-terminal`~~
+    **CORRECTION (verified):** `desktop-terminal.ts` is a LOAD-BEARING Electron/OS-integration
+    concern (tray-native macOS/Windows terminal launch), consumed by `electron-runtime.ts`,
+    `index.ts` route (line 290), and `desktop-settings-controller.ts`. It is NOT a duplicate of
+    `dsh-terminal` — do NOT remove it.
+  - ~~`acryl-desktop/src/webserver.ts` re-implements the web host~~ **CORRECTION (verified):**
+    `acryl-desktop/webserver` is a DELIBERATE, DOCUMENTED design (Desktop replaces the CLI
+    webserver Loader row with it; `docs/DEVELOPMENT-LOG.md`; `profile.ts` lines 80-81,
+    767-825). Do NOT remove it.
   - `acryl-desktop/src/hello-world.ts` dead R&D scaffold is still exported via `./hello-world`.
 - **Cross-package duplication (same concept in ≥2 packages)**: session/transcript projection
   is implemented in `acryl-harness-runtime/session-bridge.ts`, `acryl-tui/src/tui/store.ts`,

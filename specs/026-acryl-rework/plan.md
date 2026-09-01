@@ -66,23 +66,23 @@ plus an isolated `corepack pnpm run dev` smoke.
 
 ## Stage decomposition
 
-### Stage A — delete the parallel framework (P0)
+### Stage A — remove genuinely unused/dead parallel framework (P0, verified safe)
 
-Confident, high-value removals. Each is one focused commit.
+Confident, high-value removals confirmed by per-file consumer analysis. Each is one focused
+commit. NOTE: `desktop-terminal.ts` and `acryl-desktop/webserver` were re-classified as
+load-bearing / deliberate design and are NOT in this stage (they were split out).
 
-- A1: Delete `acryl-desktop/src/desktop-terminal.ts`; route terminal through `dsh-terminal`
-  (reuse the existing `terminal.ts` DSH-native plugin). Remove its `./desktop-terminal`
-  export.
-- A2: Delete `acryl-control/src/architecture/projection.ts` (+ `provider.ts`) and
-  `acryl-desktop/src/plugin-architecture-inspector.ts`; consume `dsh-host-plugin-inventory`.
-  Remove the `FIBER_PHASE` 0–5 enum and any `ctx.root.reflect.store` / `fiber.getEffects()`
-  access.
-- A3: Delete `acryl-desktop/src/webserver.ts` duplicate host; reuse `acryl web` (or make the
-  desktop consume the same host).
-- A4: Remove `acryl-desktop` `./hello-world` export and the `hello-world.ts` scaffold.
-- A5: Remove the second/third hand-rolled session projection (`tui/store.ts` projection and
-  `session-bridge.ts`) and re-point `acryl-control` + `acryl-tui` at
-  `dsh-session-projection`.
+- A1: Remove `acryl-control/src/architecture/projection.ts` + `provider.ts` and their two barrel
+  exports in `src/index.ts` (lines 9-10). `projectRuntimeArchitecture` has no consumer.
+- A2: Remove `acryl-desktop/src/hello-world.ts` and its `"./hello-world"` export in
+  `acryl-desktop/package.json` (lines 50-52). Dead scaffold.
+- A3: Remove `acryl-control/src/agent/agent-control.ts` + `agent/providers/*` and the
+  `export * from './agent/agent-control.ts'` line in `src/index.ts` (line 2). Self-contained;
+  providers are `transport-unavailable` stubs; no surface consumer. Update/remove the
+  agent-control specs in `acryl-control/tests`.
+- A4: Audit (do NOT remove) the live `FIBER_PHASE` in `acryl-control/src/lifecycle/controller.ts`;
+  ensure the lifecycle controller uses `ctx.loader` (`@deepseek-ai/cordis-plugin-loader`)
+  and not private Cordis state.
 
 ### Stage B — re-base the control plane (P1)
 

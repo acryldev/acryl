@@ -38,10 +38,20 @@ one runtime. A future capability is added by defining a Cordis seam, not by patc
   (or the documented Loader/reflect API) and must not reach into private Cordis fields
   (`ctx.root.reflect.store`, `ctx.root.registry.values()`, `fiber.getEffects()`,
   `fiber.inject`, `fiber.store`). The hand-coded `FIBER_PHASE` 0–5 table must be removed.
-- FR-004: The desktop terminal launcher (`acryl-desktop/src/desktop-terminal.ts`) must be
-  removed in favor of the `@deepseek-ai/dsh-terminal` seam (`dsh-subprocess`/`node-pty`).
-- FR-005: Only one web-server implementation remains. `acryl-desktop` must reuse the
-  `acryl web` host or delete its own `DesktopWebServer` variant.
+- FR-004: ACRYL must not maintain TWO terminal-launch mechanisms for the SAME role. The
+  in-app DSH terminal plugin (`terminal.ts`) is the canonical in-app surface; the
+  `desktop-terminal.ts` OS-integration launcher (tray-native macOS/Windows terminal) is a
+  deliberate Electron/OS concern and is NOT a duplicate — it must stay, but must not be
+  duplicated by a second in-app path. Verifed: `desktop-terminal.ts` is consumed by
+  `electron-runtime.ts`, `index.ts` route, and `desktop-settings-controller.ts`.
+- FR-005: No duplicate webserver implementation may be introduced. `acryl-desktop/webserver`
+  is a DELIBERATE design (Desktop replaces the CLI webserver Loader row with it, documented
+  in `docs/DEVELOPMENT-LOG.md`, consumed by `profile.ts`); it is not duplication to remove.
+  Instead, keep exactly one webserver per surface and do not add a third.
+- FR-005a: No ACRYL-owned package may expose a barrel export that is consumed nowhere OR that
+  re-implements a DSH/Cordis facility. Verified targets: `architecture/projection.ts`+
+  `provider.ts` (unused, reaches Cordis internals), `agent/agent-control.ts`+`providers/*`
+  (self-contained, stub providers, no surface consumer), and the `hello-world.ts` scaffold.
 - FR-006: ACRYL must ship **exactly one** real model-facing Tool as a genuine Cordis plugin
   (the Tool gate), satisfying: `inject: ['tools']`; registers via `ctx.tools.register`;
   canonical typed output split into `output.schema`/`output.render`; honours `exec.signal`;
