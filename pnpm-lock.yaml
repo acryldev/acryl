@@ -1076,15 +1076,9 @@ importers:
       acryl-control:
         specifier: workspace:*
         version: link:../acryl-control
-      acryl-development-canvas:
-        specifier: workspace:*
-        version: link:../acryl-development-canvas
       adm-zip:
         specifier: ^0.6.0
         version: 0.6.0
-      dsh-community-market:
-        specifier: workspace:*
-        version: link:../dsh-community-market
       koffi:
         specifier: 3.1.5
         version: 3.1.5

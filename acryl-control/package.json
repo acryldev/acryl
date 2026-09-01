@@ -1,7 +1,7 @@
 {
   "name": "acryl-control",
   "version": "0.1.18",
-  "private": true,
+  "private": false,
   "description": "Host-neutral Cordis control plane for ACRYL",
   "license": "MIT",
   "type": "module",
@@ -32,7 +32,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
     "test": "pnpm --filter acryl-harness-runtime run build && vitest run",
     "check": "pnpm run build && pnpm run typecheck && pnpm run test",
-    "prepack": "pnpm run check"
+    "prepack": "pnpm run check",
+    "prepublishOnly": "pnpm run check"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "4.0.1"
@@ -49,5 +50,8 @@
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
     "vitest": "4.1.8"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
