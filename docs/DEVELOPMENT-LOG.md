@@ -1,3 +1,13 @@
+## 2026-09-01 - validate prepared CLI runtime payload receipts
+
+Commit: `951ea26faa304ca981d84103f6164f95ba59bd26`
+
+Hardened the target npm runtime receipt boundary: the selector now recomputes
+and validates the stable receipt-excluding SHA-256 for the installed prepared
+runtime before delegating to its native TUI launcher. Archive assembly and
+selector validation share one canonical hashing implementation, with regression
+coverage for a payload altered after receipt issuance.
+
 ## 2026-09-01 - verified on-demand Web runtime distribution
 
 Commit: `f1406d6a2e4e300723336edf0adeca3268359469`
