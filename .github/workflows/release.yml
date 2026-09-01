@@ -283,27 +283,38 @@ jobs:
       - name: Install dependencies
         run: corepack pnpm install --frozen-lockfile
 
-      - name: Build CLI and runtime
+      - name: Build npm surfaces and runtime
         run: |
           corepack pnpm --filter acryl-control run build
           corepack pnpm --filter acryl-harness-runtime run build
           corepack pnpm --filter acryl-tui run build
+          corepack pnpm --filter acryl-web run build
+          corepack pnpm --filter acryl-web run typecheck
+          corepack pnpm --filter acryl-web run test
+          corepack pnpm --filter acryl-web run verify:npm
 
-      # Single source of truth for the version is the workspace package. Every
-      # tag MUST match it, and npm is always published at that version, so the
-      # GitHub Release, the workspace, and the npm package can never drift.
-      - name: Verify release/npm version synchronization
+      # Every public surface shares the release tag version. This prevents a
+      # Desktop installer, the terminal CLI, and the standalone Web server from
+      # drifting into incompatible releases.
+      - name: Verify release/package version synchronization
         env:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          VERSION="$(node -e "console.log(require('./acryl-tui/package.json').version)")"
           TAG_VERSION="${RELEASE_TAG#v}"
-          if [ "$TAG_VERSION" != "$VERSION" ]; then
-            echo "::error::version drift: release tag v${TAG_VERSION} != acryl-tui package ${VERSION}"
-            exit 1
-          fi
-          echo "versions synchronized (release = acryl-tui = npm): ${VERSION}"
+          for PACKAGE in package.json acryl-control/package.json acryl-harness-runtime/package.json acryl-tui/package.json acryl-web/package.json acryl-desktop/package.json; do
+            VERSION="$(node -e "console.log(require('./$PACKAGE').version)")"
+            if [ "$TAG_VERSION" != "$VERSION" ]; then
+              echo "::error::version drift: release tag v${TAG_VERSION} != $PACKAGE version ${VERSION}"
+              exit 1
+            fi
+          done
+          echo "versions synchronized (release, CLI, Web, and Desktop): ${TAG_VERSION}"
+
+      - name: Publish acryl-web to npm
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: node scripts/publish-npm-web.mjs
 
       - name: Publish acryl CLI to npm
         env:
@@ -322,18 +333,20 @@ jobs:
         with:
           ref: main
 
-      - name: Verify release/workspace version synchronization
+      - name: Verify release/package version synchronization
         env:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          VERSION="$(node -e "console.log(require('./acryl-tui/package.json').version)")"
           TAG_VERSION="${RELEASE_TAG#v}"
-          if [ "$TAG_VERSION" != "$VERSION" ]; then
-            echo "::error::version drift: release tag v${TAG_VERSION} != acryl-tui package ${VERSION}"
-            exit 1
-          fi
-          echo "versions synchronized (release = acryl-tui): ${VERSION}"
+          for PACKAGE in package.json acryl-control/package.json acryl-harness-runtime/package.json acryl-tui/package.json acryl-web/package.json acryl-desktop/package.json; do
+            VERSION="$(node -e "console.log(require('./$PACKAGE').version)")"
+            if [ "$TAG_VERSION" != "$VERSION" ]; then
+              echo "::error::version drift: release tag v${TAG_VERSION} != $PACKAGE version ${VERSION}"
+              exit 1
+            fi
+          done
+          echo "versions synchronized (release, CLI, Web, and Desktop): ${TAG_VERSION}"
 
       - name: Synchronize README downloads with release tag
         run: node scripts/sync-release-readme.mjs "${{ github.ref_name }}"
