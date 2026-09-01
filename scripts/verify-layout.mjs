@@ -35,6 +35,7 @@ if (!npmrc.includes('ReactNode types across the existing published DSH client pa
 if (pnpmWorkspace !== `packages:
   - acryl-control
   - acryl-harness-runtime
+  - acryl-npm-launcher
   - acryl-tui
   - acryl-web
   - acryl-desktop
@@ -99,6 +100,7 @@ for (const [name, manifest] of [
   ['acryl-development-canvas', canvas],
   ['acryl-control', control],
   ['acryl-harness-runtime', readJson('acryl-harness-runtime/package.json')],
+  ['acryl-npm-launcher', readJson('acryl-npm-launcher/package.json')],
   ['acryl-tui', tui],
   ['acryl-web', web],
   ['dsh-community-fabric', fabric],
@@ -108,6 +110,7 @@ for (const [name, manifest] of [
 }
 if (canvas.name !== 'acryl-development-canvas') fail('the Canvas workspace must own acryl-development-canvas')
 if (control.name !== 'acryl-control') fail('the control workspace must own acryl-control')
+if (readJson('acryl-npm-launcher/package.json').name !== 'acryl') fail('the npm selector workspace must own the public acryl selector package')
 if (tui.name !== 'acryl-tui') fail('the TUI workspace must own acryl-tui')
 if (web.name !== 'acryl-web') fail('the Web workspace must own acryl-web')
 if (fabric.name !== 'dsh-community-fabric') fail('the Fabric workspace must own dsh-community-fabric')
