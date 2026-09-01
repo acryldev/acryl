@@ -1,3 +1,18 @@
+## 2026-09-01 - correct the TUI surface vs DSH launcher distinction
+
+Commit: `1428d40`
+
+Per-file verification corrected the surface model. DSH `apps/cli` is only the `dsh` launcher
+(841 lines: bin/args/profile-boot/plugin/dump-config/shutdown; no TUI; DSH's GUI is the web
+surface). ACRYL's CLI is a distinct, full-featured pi-tui TUI coding agent adapted from
+`tomowang/dsh-tui` (`@tomowang/dsh-tui` 0.7.0 @ `f7663341`, `@earendil-works/pi-tui` 0.84.2),
+driving the runtime in-process via `startDirectHost()` + `createAcrylSessionBridge()` (not RPC).
+Updates: the provenance doc's feature overlays (`/model /presets /trajectory /tools /context
+/plugins /goal /plan /compact` + approvals) are verified present, no longer deferred; the ideas
+register notes "thin consumer" is exact for web/desktop RPC renderers but not the in-process
+TUI; the Cordis cheatsheet adds a three-surface-kinds section. DSH `apps/cli` is explicitly NOT
+the model for ACRYL's CLI.
+
 ## 2026-09-01 - source-validated Cordis usage cheatsheet
 
 Commit: `18a1000`
