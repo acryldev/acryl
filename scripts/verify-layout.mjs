@@ -19,6 +19,7 @@ const plugin = readJson('acryl-desktop/package.json')
 const canvas = readJson('acryl-development-canvas/package.json')
 const control = readJson('acryl-control/package.json')
 const tui = readJson('acryl-tui/package.json')
+const web = readJson('acryl-web/package.json')
 const fabric = readJson('dsh-community-fabric/package.json')
 const market = readJson('dsh-community-market/package.json')
 const upstreamPackage = readJson('deepseek-harness/package.json')
@@ -35,6 +36,7 @@ if (pnpmWorkspace !== `packages:
   - acryl-control
   - acryl-harness-runtime
   - acryl-tui
+  - acryl-web
   - acryl-desktop
   - acryl-development-canvas
   - dsh-community-fabric
@@ -98,6 +100,7 @@ for (const [name, manifest] of [
   ['acryl-control', control],
   ['acryl-harness-runtime', readJson('acryl-harness-runtime/package.json')],
   ['acryl-tui', tui],
+  ['acryl-web', web],
   ['dsh-community-fabric', fabric],
   ['dsh-community-market', market],
 ]) {
@@ -106,6 +109,7 @@ for (const [name, manifest] of [
 if (canvas.name !== 'acryl-development-canvas') fail('the Canvas workspace must own acryl-development-canvas')
 if (control.name !== 'acryl-control') fail('the control workspace must own acryl-control')
 if (tui.name !== 'acryl-tui') fail('the TUI workspace must own acryl-tui')
+if (web.name !== 'acryl-web') fail('the Web workspace must own acryl-web')
 if (fabric.name !== 'dsh-community-fabric') fail('the Fabric workspace must own dsh-community-fabric')
 if (market.name !== 'dsh-community-market') fail('the market workspace must own dsh-community-market')
 const claudePath = resolve(root, 'CLAUDE.md')
