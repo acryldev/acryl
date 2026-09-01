@@ -214,6 +214,58 @@ the plugin path with one real model-facing Tool as the hard gate. Follow-on diff
 (authorization pipeline, room identity, relay/handoff, capability package, agent-agnostic
 canvas) are intentionally recorded as subsequent ledgers.
 
+## 2026-08-31 - Nix flake support for acryl-tui
+
+**Commit:** [`d6d2e464db46fbe61c36e84136880d8c55ac5a0d`](https://github.com/levonk/acryl/commit/d6d2e464db46fbe61c36e84136880d8c55ac5a0d)
+
+Added Nix flake support targeting the `acryl-tui` terminal client. The flake
+builds the TUI and its workspace dependencies (`acryl-control`,
+`acryl-harness-runtime`) using nixpkgs' modern PNPM hooks, producing a
+runnable `acryl` binary.
+
+### What was added
+
+- `flake.nix` — Nix flake with `packages.${system}.acryl` (default) and
+  `devShells.${system}.default`
+- `flake.lock` — Locked inputs (nixpkgs-unstable, nixpkgs-26.05-darwin,
+  nix-systems/default)
+- `devbox.json` — Reproducible development environment
+- `.github/workflows/nix.yml` — CI for all 4 supported systems
+- `.gitignore` — `/result` and `/result-*` entries
+
+### Key design decisions
+
+- **TUI target, not Electron:** The flake builds `acryl-tui` (the terminal
+  client) as the default package. Packaging the Electron desktop app via Nix
+  is a separate, harder problem deferred to future work.
+
+- **Intel macOS support:** nixpkgs-unstable (26.11) dropped `x86_64-darwin`.
+  The flake pins `nixpkgs-26.05-darwin` for Intel macOS and uses unstable for
+  all other systems.
+
+- **Modern PNPM API:** Uses `fetchPnpmDeps` with `fetcherVersion = 4`,
+  `pnpmConfigHook`, and `pnpm_11` (not the deprecated `pnpm.fetchDeps`).
+
+- **Hoisted node-linker:** Forces `nodeLinker: hoisted` in
+  `pnpm-workspace.yaml` during the build (pnpm 11 moved this setting from
+  `.npmrc`). This flattens `node_modules/` so the install phase can copy it
+  without resolving pnpm's `.pnpm/` virtual store symlinks.
+
+- **Selective build:** Builds only `acryl-control -> acryl-harness-runtime ->
+  acryl-tui` instead of the full workspace (which includes Electron).
+
+- **Performance:** `dontStrip` and `dontFixup` skip Nix's strip and fixup
+  phases, which are extremely slow on thousands of JS files in node_modules.
+
+### Usage
+
+```sh
+nix build .#acryl
+nix run .#acryl -- --help
+nix run .#acryl -- --version
+```
+
+---
 ## 2026-08-31 - shared coding capability composition implementation plan
 
 Commit: `8b6a955`
