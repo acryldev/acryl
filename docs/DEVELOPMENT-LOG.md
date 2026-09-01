@@ -22,6 +22,15 @@ Failures retain the existing TUI and any prior verified cache; the cache stores
 only the runtime and integrity receipt, never session, credential, or context
 state.
 
+## 2026-09-01 - resolve managed Web artifact locations
+
+Commit: `4f4646c8550b218894a2d66759f5db8e726b0ccb`
+
+Made managed Web acquisition resolve a relative artifact location against the
+versioned release-manifest URL before downloading. This keeps the release
+manifest portable while retaining exact artifact/receipt location matching and
+checksum validation.
+
 ## 2026-09-01 - target-specific npm CLI runtime distribution
 
 Commit: `dc5e978fa384efe52e8b669a8b6a91a1fad86c0d`
