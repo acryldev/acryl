@@ -111,6 +111,10 @@ Commit: `ed9c80d`
 
 Updated the workspace and package-script release contracts so the public Web surface is included in repository validation.
 
+Commit: `fbea6f5`
+
+Made npm publication wait for both the Desktop and CLI artifact matrices, so a failed Desktop build cannot leave a separately published Web or CLI package without its matching release.
+
 ## 2026-09-01 - Desktop Web profile dependency closure restored
 
 Commit: `709728d`
