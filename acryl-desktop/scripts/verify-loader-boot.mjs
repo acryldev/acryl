@@ -13,6 +13,7 @@ import {
 import { installDesktopPnpmRuntime } from '../lib/desktop-runtime-environment.js'
 import { installProfilePackageResolver } from '../lib/module-resolution.js'
 import { prepareDesktopProfile } from '../lib/profile.js'
+import { createDesktopWebProfile } from '../lib/profile-manager.js'
 
 const BIN_NAME = 'acryl-desktop-loader-smoke'
 const THIRD_PARTY_NAME = 'dsh-desktop-loader-smoke-plugin'
@@ -50,7 +51,8 @@ try {
     stateDir: join(home, 'runtime-commands'),
     environment: process.env,
   })
-  const prepared = prepareDesktopProfile(undefined, home)
+  createDesktopWebProfile(home, 'web')
+  const prepared = prepareDesktopProfile(undefined, home, process.platform, 'web')
   const thirdPartyLink = join(prepared.profile.dir, 'node_modules', THIRD_PARTY_NAME)
   const thirdPartyDir = join(home, 'linked-plugins', THIRD_PARTY_NAME)
   const thirdPartyDependencyDir = join(home, 'profiles', 'node_modules', THIRD_PARTY_DEPENDENCY_NAME)
