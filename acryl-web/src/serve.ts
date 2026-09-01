@@ -34,7 +34,9 @@ export async function serveWeb(
   })
   const url = runtime.url
   if (options.waitForSignal === false) {
-    // Headless readiness probe: report the URL and hand ownership back.
+    // Headless readiness probe: boot, report the URL, then dispose the runtime
+    // so the HTTP server does not keep the process alive.
+    await runtime.dispose()
     return { url }
   }
   const stopped = new Promise<void>(resolve => {
