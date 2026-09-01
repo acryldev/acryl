@@ -31,6 +31,7 @@ import {
 } from '@deepseek-ai/dsh-app-boot'
 
 import { createAcrylCodingCapabilityPatches } from './coding-capabilities.ts'
+import { installAcrylWorkspaceStatusTool } from './plugin-acryl-workspace-status.ts'
 
 const require = createRequire(import.meta.url)
 const dshInstallAnchor = require.resolve('@deepseek-ai/dsh/package.json')
@@ -70,6 +71,7 @@ export async function bootAcrylHarnessProfile(
     )
   }
   const ctx = await boot('acryl', rootConfig, patches, options.prepare)
+  if ((ctx as { tools?: unknown }).tools) installAcrylWorkspaceStatusTool(ctx)
   let disposed = false
   return Object.freeze({
     ctx,
@@ -124,6 +126,7 @@ export async function bootAcrylWebProfile(
     provideCmdline(hostCtx, { args: [...cmdlineArgs], exit: code => { process.exitCode = code } })
     return options.prepare?.(hostCtx)
   })
+  if ((ctx as { tools?: unknown }).tools) installAcrylWorkspaceStatusTool(ctx)
   const startup = ctx.get('webStartup') as { host?: string; port?: number } | undefined
   const host = startup?.host ?? '127.0.0.1'
   const port = startup?.port ?? 3080
