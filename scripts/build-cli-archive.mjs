@@ -108,6 +108,12 @@ async function main() {
   // specifiers (e.g. `@deepseek-ai/cordis`) after extraction. Tar.gz preserves
   // symlinks but a symlink-free tree works on every extractor and platform.
   flattenNodeModules(archiveDir)
+  // For darwin targets, explicitly remove arm64 prebuilds if we're building x64
+  // (GitHub's macos-14 runner is Apple Silicon, so pnpm installs arm64 prebuilds).
+  if (spec.nodePlatform === 'darwin' && spec.nodeArch === 'x64') {
+    const armPrebuilds = walk(archiveDir).filter(path => path.includes('darwin-arm64') || path.includes('prebuilds/arm64'))
+    for (const path of armPrebuilds) rmSync(path, { recursive: true, force: true })
+  }
   pruneTargetNative(archiveDir, spec.nodePlatform === 'win' ? 'win32' : spec.nodePlatform, spec.nodeArch)
   pruneReleasePayload(archiveDir)
   verifyCliRuntimeClosure(archiveDir, target, spec)
