@@ -705,7 +705,8 @@ describe('published package surface', () => {
     expect(releaseWorkflow).toContain('corepack pnpm --filter acryl-desktop run verify:closure')
     expect(releaseWorkflow).toContain('--config.npmRebuild=false')
 
-    // Five portable CLI archive targets and a publish job gated on both matrices.
+    // Every supported target appears in the CLI and Web matrices, and promotion
+    // remains gated on the complete release manifest plus npm publication.
     for (const target of [
       'darwin-arm64',
       'darwin-x64',
@@ -715,7 +716,8 @@ describe('published package surface', () => {
     ]) {
       expect(releaseWorkflow).toContain(`target: ${target}`)
     }
-    expect(releaseWorkflow).toContain('needs: [build, cli]')
+    expect(releaseWorkflow).toContain('needs: [desktop, cli, web]')
+    expect(releaseWorkflow).toContain('needs: [manifest, npm-publish]')
   })
 
   it('runs one fast, conventional CI gate on main and pull requests', () => {
