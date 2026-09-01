@@ -1,3 +1,18 @@
+## 2026-09-01 - separate the web surface from the lightweight CLI
+
+Commit: `42fe0bf`
+
+Split the web server out of the terminal CLI so `acryl` is lightweight and ships only
+`acryl-harness-runtime` (not the browser client). `acryl-tui/src/cli/run.ts` is now TUI-only
+(removed the static `bootAcrylWebProfile` import + `serveWeb`; `acryl web`/`acryl gui` throw a
+clear surface-separation error pointing to the separate distributions).
+`scripts/publish-npm-cli.mjs` dropped `@deepseek-ai/dsh-web-app` from the `SHARED_CLI_PACKAGES`
+closure, so the npm `acryl` package no longer pulls the web host/client/api bundle (the >200MB
+source). Added a new `acryl-web` workspace package as the 3rd-surface browser distribution: it
+boots `bootAcrylWebProfile` and serves, bundles `acryl-harness-runtime` + `acryl-control`
+(self-contained bin), and declares the audited web closure (22 `dsh-*` deps incl `dsh-web-app`).
+Root typecheck + all 262 `acryl-tui` tests pass.
+
 ## 2026-09-01 - correct the TUI surface vs DSH launcher distinction
 
 Commit: `1428d40`
