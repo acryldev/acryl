@@ -47,5 +47,11 @@ jobs:
       - name: Build acryl TUI
         run: nix build .#acryl --system ${{ matrix.system }}
 
-      - name: Test --help
+      - name: Build acryl-desktop
+        run: nix build .#acryl-desktop --system ${{ matrix.system }}
+
+      - name: Test TUI --help
         run: nix run .#acryl -- --help
+
+      - name: Test desktop --help
+        run: nix run .#acryl-desktop -- --help
