@@ -73,8 +73,12 @@ function expectPatchedDependency(name: string, path: string): void {
   expect(pnpmWorkspace).toContain(`  '${name}': ${path.slice(2)}`)
 }
 const ciWorkflow = readFileSync(new URL('.github/workflows/ci.yml', workspaceRoot), 'utf8')
-const releaseWorkflow = readFileSync(
-  new URL('.github/workflows/release.yml', workspaceRoot),
+const releaseCliWorkflow = readFileSync(
+  new URL('.github/workflows/release-cli.yml', workspaceRoot),
+  'utf8',
+)
+const releaseDesktopWorkflow = readFileSync(
+  new URL('.github/workflows/release-desktop.yml', workspaceRoot),
   'utf8',
 )
 
@@ -689,22 +693,23 @@ describe('published package surface', () => {
   it('keeps platform packaging behind tag or manual release runs', () => {
     expect(ciWorkflow).not.toContain('windows-latest')
     expect(ciWorkflow).not.toContain('macos-latest')
-    expect(releaseWorkflow).toContain("tags: ['v*']")
-    expect(releaseWorkflow).toContain('workflow_dispatch:')
+    expect(releaseCliWorkflow).toContain("tags: ['v*']")
+    expect(releaseDesktopWorkflow).toContain("tags: ['desktop-v*']")
+    expect(releaseDesktopWorkflow).toContain('workflow_dispatch:')
 
     // Five per-architecture desktop matrix jobs (not one universal build).
-    expect(releaseWorkflow).toContain('os: macos-latest')
-    expect(releaseWorkflow).toContain('os: macos-14')
-    expect(releaseWorkflow).toContain('os: windows-latest')
-    expect(releaseWorkflow).toContain('os: ubuntu-24.04-arm')
+    expect(releaseDesktopWorkflow).toContain('os: macos-latest')
+    expect(releaseDesktopWorkflow).toContain('os: macos-14')
+    expect(releaseDesktopWorkflow).toContain('os: windows-latest')
+    expect(releaseDesktopWorkflow).toContain('os: ubuntu-24.04-arm')
 
     // Every desktop matrix job verifies the same gates CI requires before
     // packaging, and never rebuilds native modules from source in the archive.
-    expect(releaseWorkflow).toContain('corepack pnpm run check:layout')
-    expect(releaseWorkflow).toContain('corepack pnpm run typecheck')
-    expect(releaseWorkflow).toContain('corepack pnpm run test')
-    expect(releaseWorkflow).toContain('corepack pnpm --filter acryl-desktop run verify:closure')
-    expect(releaseWorkflow).toContain('--config.npmRebuild=false')
+    expect(releaseDesktopWorkflow).toContain('corepack pnpm run check:layout')
+    expect(releaseDesktopWorkflow).toContain('corepack pnpm run typecheck')
+    expect(releaseDesktopWorkflow).toContain('corepack pnpm run test')
+    expect(releaseDesktopWorkflow).toContain('corepack pnpm --filter acryl-desktop run verify:closure')
+    expect(releaseDesktopWorkflow).toContain('--config.npmRebuild=false')
 
     // Every supported target appears in the CLI and Web matrices, and promotion
     // remains gated on the complete release manifest plus npm publication.
@@ -715,10 +720,10 @@ describe('published package surface', () => {
       'linux-x64',
       'windows-x64',
     ]) {
-      expect(releaseWorkflow).toContain(`target: ${target}`)
+      expect(releaseCliWorkflow).toContain(`target: ${target}`)
     }
-    expect(releaseWorkflow).toContain('needs: [desktop, cli, web]')
-    expect(releaseWorkflow).toContain('needs: [manifest, npm-publish]')
+    expect(releaseCliWorkflow).toContain('needs: [cli, web]')
+    expect(releaseCliWorkflow).toContain('needs: [manifest, npm-publish]')
   })
 
   it('runs one fast, conventional CI gate on main and pull requests', () => {
