@@ -34,14 +34,22 @@ if (isEntrypoint()) {
     if (relaunched) return
     await runAcryl(process.argv.slice(2))
   })().catch((cause: unknown) => {
-    if (cause instanceof AggregateError) {
-      for (const error of cause.errors) {
-        if (error instanceof Error) process.stderr.write(`acryl: ${error.stack ?? error.message}\n`)
-        else process.stderr.write(`acryl: ${String(error)}\n`)
+    // Walk the cause chain: the loader wraps the AggregateError one level down,
+    // so surface each plugin's original failure rather than the opaque wrapper.
+    let current: unknown = cause
+    const seen = new Set<unknown>()
+    let aggregatePrinted = false
+    while (current instanceof Error && !seen.has(current)) {
+      seen.add(current)
+      if (current instanceof AggregateError) {
+        for (const error of current.errors) {
+          process.stderr.write(`acryl: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`)
+        }
+        aggregatePrinted = true
       }
-    } else {
-      process.stderr.write(`acryl: ${cause instanceof Error ? cause.message : String(cause)}\n`)
+      current = current.cause
     }
+    if (!aggregatePrinted) process.stderr.write(`acryl: ${cause instanceof Error ? cause.message : String(cause)}\n`)
     process.exitCode = 1
   })
 }
