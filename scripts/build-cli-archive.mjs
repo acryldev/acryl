@@ -90,9 +90,11 @@ async function main() {
   rmSync(staging, { recursive: true, force: true })
 
   // 1. Production dependency closure (isolated, hoisted) for the CLI.
+  // Override platform/arch env vars to ensure correct prebuilds are fetched for the target.
+  const platformEnv = spec.nodePlatform === 'win' ? 'win32' : spec.nodePlatform
   run(corepackCommand(process.platform), ['pnpm', '--filter', 'acryl-tui', 'deploy', archiveDir, '--prod', '--legacy'], {
     ...corepackSpawnOptions(process.platform),
-    env: { ...process.env, CI: 'true' },
+    env: { ...process.env, CI: 'true', npm_config_platform: platformEnv, npm_config_arch: spec.nodeArch },
   })
   mkdirSync(join(archiveDir, 'bin'), { recursive: true })
 
