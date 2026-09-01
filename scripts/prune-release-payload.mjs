@@ -4,6 +4,7 @@ import { join, relative, sep } from 'node:path'
 /** Source maps are release-debug artifacts, not runtime dependencies. */
 export function shouldPruneReleasePath(path) {
   return path.endsWith('.map')
+    || (path.startsWith('node_modules/') && /\/(?:test|tests)\//u.test(path))
 }
 
 function walk(directory) {

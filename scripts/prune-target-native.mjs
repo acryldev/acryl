@@ -9,9 +9,9 @@ function normalizedSegments(path) {
 }
 
 function targetFromSegment(segment) {
-  const match = /(?:^|[^a-z0-9])(darwin|linux|win32)-(arm64|x64)(?:$|[^a-z0-9])/u.exec(segment)
+  const match = /(?:^|[^a-z0-9])(darwin|linux|win32|win10)-(arm64|x64)(?:$|[^a-z0-9])/u.exec(segment)
   if (match === null) return undefined
-  return { platform: match[1], arch: match[2] }
+  return { platform: match[1] === 'win10' ? 'win32' : match[1], arch: match[2] }
 }
 
 /** Return whether a known native package/prebuild path belongs to another target. */

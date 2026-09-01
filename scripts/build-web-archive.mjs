@@ -11,7 +11,7 @@ import { flattenNodeModules } from './flatten-node-modules.mjs'
 import { verifyArtifactManifest, inspectDirectory } from './inspect-artifact.mjs'
 import { pruneReleasePayload } from './prune-release-payload.mjs'
 import { pruneTargetNative } from './prune-target-native.mjs'
-import { artifactReceipt, webTarget } from './web-archive-contract.mjs'
+import { artifactReceipt, nodeDistribution, webTarget } from './web-archive-contract.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const version = JSON.parse(readFileSync(join(root, 'acryl-web', 'package.json'), 'utf8')).version
@@ -33,7 +33,7 @@ async function main() {
   const spec = webTarget(target)
   const staging = join(tmpdir(), `acryl-web-${target}`)
   const archiveDir = join(staging, `acryl-web-${target}`)
-  const nodeDist = `node-v${nodeVersion}-${spec.nodePlatform}-${spec.nodeArch}`
+  const nodeDist = nodeDistribution(target, nodeVersion)
   const archiveName = `acryl-web-${target}.tar.gz`
   rmSync(staging, { recursive: true, force: true })
   try {
@@ -41,10 +41,10 @@ async function main() {
       ...corepackSpawnOptions(process.platform), env: { ...process.env, CI: 'true' },
     })
     mkdirSync(join(archiveDir, 'runtime', 'bin'), { recursive: true })
-    const nodeArchive = join(tmpdir(), `${nodeDist}.tar.gz`)
-    run('curl', ['-fsSL', '-o', nodeArchive, `https://nodejs.org/dist/v${nodeVersion}/${nodeDist}.tar.gz`])
-    run('tar', ['-xzf', nodeArchive, '-C', staging])
-    copyFileSync(join(staging, nodeDist, spec.windows ? 'node.exe' : 'bin/node'), join(archiveDir, 'runtime', 'bin', spec.windows ? 'node.exe' : 'node'))
+    const nodeArchive = join(tmpdir(), `${nodeDist.basename}.${nodeDist.extension}`)
+    run('curl', ['-fsSL', '-o', nodeArchive, `https://nodejs.org/dist/v${nodeVersion}/${nodeDist.basename}.${nodeDist.extension}`])
+    run('tar', ['-xf', nodeArchive, '-C', staging])
+    copyFileSync(join(staging, nodeDist.basename, spec.windows ? 'node.exe' : 'bin/node'), join(archiveDir, 'runtime', 'bin', spec.windows ? 'node.exe' : 'node'))
     const launcher = join(archiveDir, 'runtime', 'bin', spec.windows ? 'acryl-web.cmd' : 'acryl-web')
     writeFileSync(launcher, spec.windows
       ? '@echo off\r\n"%~dp0node.exe" "%~dp0..\\..\\lib\\bin.js" %*\r\n'
@@ -58,7 +58,12 @@ async function main() {
       product: 'web', platform: spec.windows ? 'win32' : spec.nodePlatform, arch: spec.nodeArch,
       requiredPaths: [`runtime/bin/${spec.windows ? 'acryl-web.cmd' : 'acryl-web'}`, `runtime/bin/${spec.windows ? 'node.exe' : 'node'}`, 'lib/bin.js'], 
       forbiddenPathPatterns: ['**/acryl-desktop/**', '**/electron/**', '**/*.map', '**/tests/**'],
-      allowedNativePackagePatterns: [`node_modules/**/prebuilds/${spec.windows ? 'win32' : spec.nodePlatform}-${spec.nodeArch}/**`], maximumBytes: 1_000_000_000,
+      allowedNativePackagePatterns: [
+        `node_modules/**/*${spec.windows ? 'win32' : spec.nodePlatform}-${spec.nodeArch}*`,
+        `node_modules/**/*${spec.windows ? 'win32' : spec.nodePlatform}-${spec.nodeArch}*/**`,
+        ...(spec.windows ? ['runtime/bin/node.exe'] : []),
+      ],
+      maximumBytes: 1_000_000_000,
     }, inspectDirectory(archiveDir, directoryEntries))
     mkdirSync(outDir, { recursive: true })
     const archive = join(outDir, archiveName)
@@ -66,7 +71,7 @@ async function main() {
     const receipt = artifactReceipt({ version, target, archive: `${releaseBaseUrl}/${archiveName}`, sha256: sha256(archive) })
     writeFileSync(join(outDir, `${archiveName}.receipt.json`), `${JSON.stringify(receipt, null, 2)}\n`)
     const checksums = join(outDir, 'checksums.txt')
-    const line = `${receipt.sha256}  ${archiveName}`
+    const line = `${receipt.integrity.value}  ${archiveName}`
     const old = existsSync(checksums) ? readFileSync(checksums, 'utf8').split('\n').filter(value => value && !value.endsWith(`  ${archiveName}`)) : []
     writeFileSync(checksums, [...old, line].join('\n') + '\n')
     console.log(`built ${archive}\nreceipt: ${join(outDir, `${archiveName}.receipt.json`)}\nchecksum: ${line}`)

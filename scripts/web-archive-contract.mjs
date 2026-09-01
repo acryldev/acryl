@@ -8,6 +8,14 @@ const TARGETS = {
   'windows-x64': { nodePlatform: 'win', nodeArch: 'x64', windows: true },
 }
 
+export function nodeDistribution(target, version) {
+  const spec = webTarget(target)
+  return {
+    basename: `node-v${version}-${spec.nodePlatform}-${spec.nodeArch}`,
+    extension: spec.windows ? 'zip' : 'tar.gz',
+  }
+}
+
 export function webTarget(target) {
   const result = TARGETS[target]
   if (result === undefined) throw new Error(`unsupported Web target ${target}; supported: ${Object.keys(TARGETS).join(', ')}`)
