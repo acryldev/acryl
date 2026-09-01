@@ -42,6 +42,33 @@ function run(cmd, args, opts = {}) {
   return execFileSync(cmd, args, { stdio: 'inherit', ...opts })
 }
 
+const REQUIRED_LOADER_ENTRIES = [
+  '@deepseek-ai/cordis-plugin-timer',
+  '@deepseek-ai/cordis-plugin-hmr',
+  '@deepseek-ai/dsh-typert-loader',
+  '@deepseek-ai/dsh-subprocess-local',
+  '@deepseek-ai/dsh-sandbox-local',
+]
+
+function walk(directory) {
+  return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+    const path = join(directory, entry.name)
+    return entry.isDirectory() ? walk(path) : [path]
+  })
+}
+
+function koffiPlatform(platform) { return platform === 'win' ? 'win32' : platform }
+
+/** Fail fast (with a precise message) if the CLI runtime closure is incomplete. */
+function verifyCliRuntimeClosure(archiveDir, target, spec) {
+  const missing = REQUIRED_LOADER_ENTRIES.filter(entry => !existsSync(join(archiveDir, 'node_modules', entry)))
+  if (missing.length > 0) throw new Error(`CLI runtime closure missing required loader entries: ${missing.join(', ')}`)
+  const koffiPackage = `@koromix/koffi-${koffiPlatform(spec.nodePlatform)}-${spec.nodeArch}`
+  const nativeRoot = join(archiveDir, 'node_modules', koffiPackage)
+  const hasNative = existsSync(nativeRoot) && walk(nativeRoot).some(path => path.endsWith('koffi.node'))
+  if (!hasNative) throw new Error(`CLI runtime closure missing the ${koffiPackage} native binary`)
+}
+
 function sha256File(path) {
   return createHash('sha256').update(readFileSync(path)).digest('hex')
 }
@@ -81,6 +108,7 @@ async function main() {
   flattenNodeModules(archiveDir)
   pruneTargetNative(archiveDir, spec.nodePlatform === 'win' ? 'win32' : spec.nodePlatform, spec.nodeArch)
   pruneReleasePayload(archiveDir)
+  verifyCliRuntimeClosure(archiveDir, target, spec)
 
   // A receipt binds this prepared, target-specific payload to one release.
   // It intentionally hashes the runtime tree excluding the receipt itself.
