@@ -10,17 +10,28 @@ be lightweight: it ships only `acryl-harness-runtime` and the TUI closure, not
 the browser client. The web server (`dsh-base` + `dsh-web-app` → host + client)
 lives here instead.
 
-## Usage
+## Install and use
+
+`acryl-web` is published as a public npm package. It starts a local server on
+`127.0.0.1`; it is not a hosted ACRYL service and does not send your project to
+an ACRYL cloud.
 
 ```sh
-# Build
+pnpm add --global acryl-web
+acryl-web
+```
+
+Open the printed local URL in a browser. For automation or a readiness probe:
+
+```sh
+acryl-web --json
+```
+
+For repository development:
+
+```sh
 pnpm --filter acryl-web run build
-
-# Serve the local web runtime (boots the 'web' profile via the shared runtime)
-node lib/bin.js
-
-# Headless readiness probe (boot, print URL, dispose)
-node lib/bin.js --json
+node acryl-web/lib/bin.js
 ```
 
 `acryl-web` bundles `acryl-control` + `acryl-harness-runtime` into

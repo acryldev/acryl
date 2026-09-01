@@ -1,6 +1,6 @@
 {
   "name": "acryl",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "private": true,
   "description": "ACRYL local-first plugin-native agent workspace",
   "license": "MIT",
@@ -9,9 +9,9 @@
     "node": "^22.19.0 || >=24.0.0"
   },
   "scripts": {
-    "build": "pnpm --filter acryl-control run build && pnpm --filter acryl-tui run build && pnpm --filter dsh-community-market run build && pnpm --filter acryl-development-canvas run build && pnpm --filter acryl-desktop run build",
-    "typecheck": "pnpm --filter acryl-control run typecheck && pnpm --filter acryl-tui run typecheck && pnpm --filter acryl-development-canvas run typecheck && pnpm --filter acryl-desktop run typecheck && pnpm --filter dsh-community-market run typecheck",
-    "test": "pnpm --filter acryl-control run test && pnpm --filter acryl-tui run test && pnpm --filter acryl-development-canvas run test && pnpm --filter acryl-desktop run test && pnpm --filter dsh-community-market run test",
+    "build": "pnpm --filter acryl-control run build && pnpm --filter acryl-tui run build && pnpm --filter acryl-web run build && pnpm --filter dsh-community-market run build && pnpm --filter acryl-development-canvas run build && pnpm --filter acryl-desktop run build",
+    "typecheck": "pnpm --filter acryl-control run typecheck && pnpm --filter acryl-tui run typecheck && pnpm --filter acryl-web run typecheck && pnpm --filter acryl-development-canvas run typecheck && pnpm --filter acryl-desktop run typecheck && pnpm --filter dsh-community-market run typecheck",
+    "test": "pnpm --filter acryl-control run test && pnpm --filter acryl-tui run test && pnpm --filter acryl-web run test && pnpm --filter acryl-development-canvas run test && pnpm --filter acryl-desktop run test && pnpm --filter dsh-community-market run test",
     "verify": "pnpm run typecheck && pnpm run test && node --test scripts/dev-local.test.mjs",
     "dev:local": "node scripts/dev-local.mjs",
     "start:local": "node scripts/dev-local.mjs --skip-build",
@@ -22,7 +22,7 @@
     "test:architecture-gates": "node --test scripts/market-dependency-direction.test.mjs",
     "check:architecture": "pnpm run test:architecture-gates && node scripts/verify-market-dependency-direction.mjs",
     "check:layout": "pnpm run check:bilingual-docs && pnpm run check:architecture && node scripts/verify-layout.mjs",
-    "check": "pnpm run check:layout && pnpm --filter acryl-control run check && pnpm --filter acryl-tui run check && pnpm --filter dsh-community-fabric run check && pnpm --filter dsh-community-market run check && pnpm --filter acryl-development-canvas run check && pnpm --filter acryl-desktop run check",
+    "check": "pnpm run check:layout && pnpm --filter acryl-control run check && pnpm --filter acryl-tui run check && pnpm --filter acryl-web run check && pnpm --filter dsh-community-fabric run check && pnpm --filter dsh-community-market run check && pnpm --filter acryl-development-canvas run check && pnpm --filter acryl-desktop run check",
     "dev": "node scripts/dev-local.mjs",
     "dev:shared": "pnpm --filter dsh-community-market run build && pnpm --filter acryl-desktop run dev",
     "start": "pnpm --filter acryl-desktop run start",
