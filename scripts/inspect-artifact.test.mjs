@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { verifyArtifactManifest } from './inspect-artifact.mjs'
+import { receiptFor } from './release-contract.mjs'
 
 const baseManifest = {
   product: 'cli',
@@ -22,6 +23,15 @@ test('accepts a complete target-specific artifact', () => {
     ],
     bytes: 100,
   }))
+})
+
+test('rejects an absent or mismatched versioned artifact receipt', () => {
+  const manifest = { ...baseManifest, receipt: { target: 'darwin-arm64', version: '0.1.19' } }
+  assert.throws(() => verifyArtifactManifest(manifest, { paths: baseManifest.requiredPaths, bytes: 1 }), /missing its receipt/)
+  assert.throws(() => verifyArtifactManifest(manifest, {
+    paths: baseManifest.requiredPaths, bytes: 1,
+    receipt: receiptFor({ target: 'darwin-arm64', version: '0.1.18', payloadSha256: 'a'.repeat(64) }),
+  }), /version mismatch/)
 })
 
 test('reports every missing required path', () => {

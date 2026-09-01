@@ -1,5 +1,6 @@
 import { readdirSync, statSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
+import { validateReceipt } from './release-contract.mjs'
 
 /** Convert a portable artifact path pattern to a RegExp without adding a glob dependency. */
 function patternRegExp(pattern) {
@@ -21,6 +22,10 @@ function matches(path, patterns) {
  * cannot quietly acquire another platform's executable payload.
  */
 export function verifyArtifactManifest(manifest, inventory) {
+  if (manifest.receipt) {
+    if (!inventory.receipt) throw new Error(`artifact ${manifest.product}/${manifest.platform}-${manifest.arch} is missing its receipt`)
+    validateReceipt(inventory.receipt, manifest.receipt)
+  }
   const paths = [...new Set(inventory.paths)].sort()
   const present = new Set(paths)
   const missing = manifest.requiredPaths.filter(path => !present.has(path))
