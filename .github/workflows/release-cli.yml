@@ -29,7 +29,7 @@ jobs:
       matrix:
         include:
           - { target: darwin-arm64, os: macos-latest, ext: tar.gz, cli: acryl }
-          - { target: darwin-x64, os: macos-14, ext: tar.gz, cli: acryl }
+          - { target: darwin-x64, os: macos-13, ext: tar.gz, cli: acryl }
           - { target: linux-arm64, os: ubuntu-24.04-arm, ext: tar.gz, cli: acryl }
           - { target: linux-x64, os: ubuntu-latest, ext: tar.gz, cli: acryl }
           - { target: windows-x64, os: windows-latest, ext: zip, cli: acryl.cmd }
@@ -95,7 +95,7 @@ jobs:
       matrix:
         include:
           - { target: darwin-arm64, os: macos-latest, ext: tar.gz }
-          - { target: darwin-x64, os: macos-14, ext: tar.gz }
+          - { target: darwin-x64, os: macos-13, ext: tar.gz }
           - { target: linux-arm64, os: ubuntu-24.04-arm, ext: tar.gz }
           - { target: linux-x64, os: ubuntu-latest, ext: tar.gz }
           - { target: windows-x64, os: windows-latest, ext: tar.gz }
