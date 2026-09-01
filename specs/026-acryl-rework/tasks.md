@@ -76,13 +76,19 @@ executed as routine cleanups.
       `transport-unavailable` (stubs). Re-base onto `ctx.subagents`, port the tests.
   - Gate: requires review of the `acryl-control` public API and the 5 control-plane tests.
 
-- [ ] **T002 [FUTURE] Replace the architecture inspector with `dsh-host-plugin-inventory`** —
-      `acryl-control/src/architecture/projection.ts` + `provider.ts` +
-      `tests/architecture.spec.ts`. It reaches into Cordis internals
-      (`ctx.root.reflect.store`, `fiber.getEffects()`) and hand-codes a `FIBER_PHASE` table.
-      Replace with `dsh-host-plugin-inventory` (or the documented Loader/reflect API), keeping
-      the test's contracts.
-  - Gate: confirm `dsh-host-plugin-inventory` exports what the inspector surfaces.
+- [ ] **T002 [FUTURE] Make the architecture inspector stop reaching into private Cordis fields**
+      — `acryl-control/src/architecture/projection.ts` + `provider.ts` +
+      `tests/architecture.spec.ts`. **Corrected scope (verified):** do NOT replace with
+      `dsh-host-plugin-inventory` — it is too narrow (only Loader entryId/moduleName/enabled/
+      fiberPhase; no services/effects/dependencies/uid/parentUid/plane projection). The ACRYL
+      inspector is a distinct, richer, JSON-safe, live `RuntimeArchitectureSnapshot` across
+      host/client/tui planes — not a duplicate. The real improvement is a robust-API refactor:
+      read the Cordis Loader/reflect API instead of private fields (`ctx.root.reflect.store`,
+      `ctx.root.registry.values()`, `fiber.getEffects()`, `fiber.inject`), keeping the
+      `architecture.spec.ts` contracts intact.
+  - Gate: verify there is a documented Cordis API that yields the same deep projection before
+    removing any private-field access; otherwise the internals access is a maintenance risk to
+    note, not a removal.
 
 - [ ] **T005 [FUTURE] Refactor `session-bridge.ts` to consume `dsh-session-projection`** — a
       load-bearing, tested module; this is risk-bearing and should be its own ledger block, not
