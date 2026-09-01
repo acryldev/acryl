@@ -101,6 +101,12 @@ Commit: `c6e76db`
 
 Made the focused packed-CLI closure test discover the produced tarball rather than assuming version `0.1.17`, so the same release guard survives every package bump. The test passes against the current shared TUI and Web-host closure.
 
+## 2026-09-01 - Desktop Web-profile loader regression coverage
+
+Commit: `b4a8d55`
+
+The Desktop Loader smoke now creates and boots the shipped `web` profile rather than only the default Desktop profile. This covers the exact runtime surface that previously reached Recovery with aggregate Loader errors. The current rebuilt Web-profile smoke passes; diagnostics from the failed local run identified missing Web UI package resolution in an incomplete earlier local dependency state. No Loader composition or dependency workaround was added.
+
 ## 2026-08-31 - reproducible shared CLI closure verification
 
 Commit: `c3f0aff`
