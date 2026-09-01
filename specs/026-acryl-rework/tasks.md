@@ -1,103 +1,119 @@
 # Tasks: ACRYL Rebase onto Native DSH/Cordis Seams
 
+> **Correction (2026-09-01):** per-file verification before execution showed several
+> earlier tasks over-reached. Tasks were re-scoped against actual consumers. Only tasks
+> marked **[verified safe]** remove code that is genuinely dead/unused. Tasks marked
+> **[load-bearing]** are NOT safe deletions and were split out so they are not executed as
+> removals. Evidence for each is inline.
+
 Dependency-ordered. Work on `main` in focused commits; update `docs/DEVELOPMENT-LOG.md` per
 checkpoint. `US#` = success criteria / functional req refs from `spec.md`.
 
-- [ ] **T001 [FR-004] Remove the custom desktop terminal launcher** in
-      `acryl-desktop/src/desktop-terminal.ts`.
-  - Why: `dsh-terminal` is the native seam; `desktop-terminal.ts` is a parallel `child_process`
-    launcher duplicating it (already coexists with the DSH-native `terminal.ts`).
+---
+
+## Verified-safe removals (barely-used or dead code)
+
+- [ ] **T002 [FR-003] Remove the unused architecture inspector** — delete
+      `acryl-control/src/architecture/projection.ts` and `architecture/provider.ts`, and drop
+      the two `export * from './architecture/...'` lines in `acryl-control/src/index.ts`
+      (lines 9-10).
+  - Why (verified): `projectRuntimeArchitecture()` is barrel-exported but **consumed nowhere**
+    in `acryl-control/src`, `acryl-tui/src`, `acryl-desktop/src`, or
+    `acryl-harness-runtime/src`. It reaches into Cordis internals
+    (`ctx.root.reflect.store`, `ctx.root.registry.values()`, `fiber.getEffects()`) and
+    hand-codes a `FIBER_PHASE` 0–5 table duplicating the Cordis `Fiber.State` enum.
+  - Scope guard: the TUI has its **own, separate** `plugins/PluginsOverlay.ts` inspector —
+    do NOT touch it. The live `FIBER_PHASE` in `acryl-control/src/lifecycle/controller.ts`
+    is a **different** table used by the live lifecycle controller (see T007); do not remove it
+    here.
   - Depends on: none.
-  - RED/GREEN proof: `corepack pnpm run typecheck` (after removing the export, the consumer that
-    referenced `./desktop-terminal` breaks → fix by wiring through `ctx.terminals`/`dsh-terminal`).
-  - Acceptance: no reference to `desktop-terminal.ts` remains; terminal start runs through the
-    DSH terminal seam; `verify` passes.
+  - RED/GREEN proof: `grep -rn "projectRuntimeArchitecture" acryl-*` → nothing after removal;
+    `grep -rn "ctx.root.reflect.store\|fiber.getEffects" acryl-control` → nothing.
+  - Acceptance: `corepack pnpm run typecheck` + `verify` pass.
 
-- [ ] **T002 [FR-003] Re-base the architecture inspector on `dsh-host-plugin-inventory`** —
-      delete `acryl-control/src/architecture/projection.ts` (+ `provider.ts`) and
-      `acryl-desktop/src/plugin-architecture-inspector.ts`; remove the `FIBER_PHASE` enum and all
-      `ctx.root.reflect.store` / `ctx.root.registry.values()` / `fiber.getEffects()` /
-      `fiber.inject` / `fiber.store` access.
-  - Why: the inspector duplicates `dsh-host-plugin-inventory` and depends on private Cordis
-    fields (fragile), and hand-codes the `Fiber.State` enum.
+- [ ] **T004 [FR-006-adj] Remove the dead `hello-world` scaffold** — delete
+      `acryl-desktop/src/hello-world.ts` and drop the `"./hello-world"` export entry in
+      `acryl-desktop/package.json` (lines 50-52).
+  - Why (verified): `hello-world.ts` has **no** consumer in `acryl-desktop/src`; it is only
+    referenced by its own `package.json` export. Dead R&D scaffold.
   - Depends on: none.
-  - RED/GREEN proof: `grep -rn "ctx.root.reflect.store\|fiber.getEffects\|FIBER_PHASE" acryl-control acryl-desktop`
-    returns nothing after the change.
-  - Acceptance: `typecheck` + `verify` pass; inventory of plugins/services/effects comes from
-    `dsh-host-plugin-inventory` (or the documented Loader/reflect API).
+  - RED/GREEN proof: `grep -rn "hello-world" acryl-desktop/package.json` → nothing.
+  - Acceptance: export map no longer exposes `./hello-world`.
 
-- [ ] **T003 [FR-005] Collapse to one web server** — remove `acryl-desktop/src/webserver.ts`
-      duplicate host or make it consume the `acryl web` host, AND drop the `"./webserver"`
-      export key in `acryl-desktop/package.json` (verified present at line 34).
-  - Why: two independent web-server implementations (`acryl-tui` host on 127.0.0.1:3080 and the
-    desktop variant) are documented as not reusing each other.
-  - Depends on: none.
-  - RED/GREEN proof: `grep -rn "DesktopWebServer\|class WebServer" acryl-desktop/src` returns
-    nothing after the change.
-  - Acceptance: desktop and CLI serve via one host; `verify` passes.
+- [ ] **T006 [FR-002] Remove the unused custom agent-control framework** — delete
+      `acryl-control/src/agent/agent-control.ts` + `agent/providers/*`, drop the
+      `export * from './agent/agent-control.ts'` line in `acryl-control/src/index.ts` (line 2),
+      and remove/replace the `agent-control` specs in `acryl-control/tests`.
+  - Why (verified): `AcrAgentControlService` is consumed **only within `acryl-control` itself**
+    (its own `providers/*` register into it). No TUI/desktop/runtime consumes it externally;
+    the providers (`dsh-native`/`acp`/`claude`/`codex`) are stubs that throw
+    `transport-unavailable`. It is a parallel framework to `dsh-agent`/`dsh-agent-loop`/
+    `dsh-subagent`/`dsh-tools` with no surface consumer.
+  - Depends on: none (it is self-contained).
+  - RED/GREEN proof: `grep -rn "AcrAgentControlService\|ctx.acrAgentControl" acryl-tui acryl-desktop acryl-harness-runtime` → nothing.
+  - Acceptance: `corepack pnpm run typecheck` + `test` pass (update/remove the agent-control
+    tests that referenced the deleted service).
 
-- [ ] **T004 [FR-006-adj] Remove the dead `hello-world` scaffold** — drop the `./hello-world`
-      export in `acryl-desktop/package.json` and delete `acryl-desktop/src/hello-world.ts`.
-  - Why: dead R&D scaffold shipped in a released package export map.
-  - Depends on: none.
-  - RED/GREEN proof: `grep -rn "hello-world" acryl-desktop/package.json` returns nothing.
-  - Acceptance: package export map no longer exposes `./hello-world`.
-
-- [ ] **T005 [FR-001] Re-point session/transcript/tool projection to `dsh-session-projection`**
-      — replace the hand-rolled `transcript()`/`tools()` projections in
-      `acryl-harness-runtime/src/session-bridge.ts` and the projection store in
-      `acryl-tui/src/tui/store.ts`; `acryl-control` consumes the projection types from the DSH
-      package.
-  - Why: the session log is the canonical source; projections must derive from it
-    (`SessionProjectionRegistry`, `stateOf()`/`snapshot()`), not be rebuilt in 3 places.
-  - Depends on: none.
-  - RED/GREEN proof: a session replay test asserts UI/tool projection matches
-    `dsh-session-projection` output for the same events.
-  - Acceptance: single projection source; `typecheck` + `verify` pass; no second session store.
-
-- [ ] **T006 [FR-002] Re-base agent control on `ctx.subagents`/`ctx.agents`** — replace
-      `acryl-control/src/agent/agent-control.ts` + `agent/providers/*` with thin adapters; delete
-      the custom provider registry, capability vocabulary, and `owner.effect` ownership
-      re-implementation. Keep the idiomatic `acryl/*` Cordis events.
-  - Why: `dsh-agent`/`dsh-agent-loop`/`dsh-subagent`/`dsh-tools` are native; `ctx.subagents`
-    already ships claude-code/codex/acp/dsh-sdk backends. The custom registry is a parallel
-    framework (and its providers are stubs throwing `transport-unavailable`).
-  - Depends on: T005 (control plane should project the same session).
-  - RED/GREEN proof: `dsh-native`/`acp`/`claude`/`codex` provider modules no longer exist in
-    `acryl-control`; agent attach/dispatch goes through `ctx.subagents`.
-  - Acceptance: `typecheck` + `verify` pass; no `AcrAgentControlService` provider map remains.
-
-- [ ] **T007 [FR-002] Reduce the lifecycle controller to a thin `ctx.loader` wrapper** — drop
-      the re-mapped `FIBER_PHASE` table in `acryl-control/src/lifecycle/controller.ts`.
-  - Why: `@deepseek-ai/cordis-plugin-loader` already exposes enable/disable/reload and the
-    `Fiber.State` enum; the hand-rolled phase table duplicates it.
-  - Depends on: T002 (removes the sibling internals dependency).
-  - RED/GREEN proof: `grep -rn "FIBER_PHASE" acryl-control` returns nothing.
+- [ ] **T007-scoped [FR-002] Audit the FIBER_PHASE duplication only** — do NOT remove the live
+      `FIBER_PHASE` in `acryl-control/src/lifecycle/controller.ts`; instead confirm the
+      lifecycle controller consumes `ctx.loader` (`@deepseek-ai/cordis-plugin-loader`)
+      rather than private Cordis state.
+  - Why (verified): the `lifecycle/controller.ts` `FIBER_PHASE` is used by a **live** controller
+    (unlike the dead `architecture/projection.ts` copy). The earlier "remove it" task was an
+    over-reach.
+  - Depends on: T002 (so only the dead copy is gone).
+  - RED/GREEN proof: `grep -rn "fiber.getEffects\|ctx.root.registry.values\|fiber.inject" acryl-control/src/lifecycle` → nothing.
   - Acceptance: enable/disable/reload still works through `ctx.loader`; `verify` passes.
 
+---
+
+## Split-out — NOT safe deletions (load-bearing product code)
+
+These were originally in the plan as removals but are load-bearing or deliberate design; they
+must be treated as refactors evaluated separately, never as deletions.
+
+- **T001 (split) — `desktop-terminal.ts`.** Load-bearing: imported by
+  `acryl-desktop/src/electron-runtime.ts`, wired as a route in `src/index.ts` (line 290),
+  used by `src/desktop-settings-controller.ts`, and platform-specific (macOS/Windows native
+  terminal launch from the tray). It is Electron/OS integration, not a duplicate of
+  `dsh-terminal` (the `terminal.ts` `'desktop-terminal'` DSH plugin is a different, in-app
+  surface). **Do not delete.** If anything, only the *overlapping* mechanism should be
+  reviewed, not this file.
+
+- **T003 (split) — `acryl-desktop/webserver`.** Deliberate, documented design
+  (`docs/DEVELOPMENT-LOG.md`: Desktop shares the upstream Web profile bundle but **replaces**
+  the ordinary Web-server Loader row with `acryl-desktop/webserver`; `profile.ts` lines
+  80-81, 767-825 consume it). **Do not delete.**
+
+- **T005 (split) — `session-bridge.ts`.** Load-bearing and tested
+  (`tests/session-bridge.spec.ts`); the TUI builds its session on `createAcrylSessionBridge`
+  (`acryl-tui/src/tui-app/session.ts:150`). It does hand-roll `transcript()`/`tools()`
+  projections, so **re-pointing it to `@deepseek-ai/dsh-session-projection`** is a legitimate
+  refactor, but it is a risk-bearing change, not a removal. Re-scope as its own
+  `specs/<NNN>-session-projection-refactor` if pursued.
+
+---
+
+## New capability (unchanged from plan)
+
 - [ ] **T008 [FR-006] Implement ONE real model-facing Tool as a Cordis plugin** —
-      `inject: ['tools']`; `ctx.tools.register(defineTool(...))`; canonical typed output split into
-      `output.schema`/`output.render`; honour `exec.signal`; traverse the tool policy/event
-      pipeline; dispose on Fiber/provider unload. Choose a genuinely useful first tool (e.g. a
-      repo/context status tool) so it is a real consumer, not a demo.
-  - Why: this is the hard gate that forces the seams to be real and proves the plugin
-    philosophy end-to-end before more abstraction is added.
-  - Depends on: T006.
+      `inject: ['tools']`; `ctx.tools.register(defineTool(...))`; canonical typed output split
+      into `output.schema`/`output.render`; honour `exec.signal`; traverse the tool
+      policy/event pipeline; dispose on Fiber/provider unload.
+  - Depends on: none (independent of the removals).
   - RED/GREEN proof: a test calls the tool through `ctx.tools` (not a bypass) and observes a
-    typed `tool/call`/`tool/result` pair in the event log; an `exec.signal` aborts cleanly.
-  - Acceptance: `typecheck` + `test` pass; tool appears as a typed call in the session log.
+    typed `tool/call`/`tool/result` pair in the session log; `exec.signal` aborts cleanly.
+  - Acceptance: `typecheck` + `test` pass; tool appears as a typed call in the event log.
 
 - [ ] **T009 [FR-006] Add Loader activation + disposal + reload test** — mount the Tool, reload
-      the profile/Fiber, and assert no duplicate registration and full effect release.
-  - Why: provider change must unload/reactivate consumers without stale refs or orphaned
-    resources (PENDING/LOADING/ACTIVE/FAILED/UNLOADING/DISPOSED).
+      the profile/Fiber, assert no duplicate registration and full effect release.
   - Depends on: T008.
-  - RED/GREEN proof: a Loader smoke test asserts exactly one registration after reload and a
-    clean disposer run (leak check).
-  - Acceptance: `corepack pnpm run test` passes the activation/disposal/reload case.
+  - RED/GREEN proof: Loader smoke test asserts exactly one registration after reload and a
+    clean disposer run.
+  - Acceptance: `corepack pnpm run test` passes.
 
 ## Suggested first commit
 
-T001 + T002 together as "remove parallel framework in control plane + desktop" (they are the
-highest-confidence, low-risk removals and materially shrink the surface). Then verify
-(`typecheck` + `test`), commit, and log in `docs/DEVELOPMENT-LOG.md`.
+T002 + T004 + T006 together (all verified safe, no external consumers, no load-bearing
+dependencies) as "remove unused/dead parallel-framework exports in control + desktop". Then
+verify (`typecheck` + `test`), commit, and log in `docs/DEVELOPMENT-LOG.md`.
