@@ -123,7 +123,9 @@ try {
     BIN_NAME,
     prepared.rootConfig,
     [{ insert: [
-      { id: 'desktop-shell', name: 'acryl-desktop' },
+      // The smoke asserts a fixed shell mode + renderer URL, so pin the row
+      // config explicitly: the plugin's Config defaults to 'advanced'.
+      { id: 'desktop-shell', name: 'acryl-desktop', config: { mode: 'compatibility' } },
       { id: 'community-market', name: 'dsh-community-market' },
       { id: 'third-party-smoke', name: THIRD_PARTY_NAME },
     ] }],
