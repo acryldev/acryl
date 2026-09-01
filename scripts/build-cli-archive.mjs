@@ -1,20 +1,17 @@
 #!/usr/bin/env node
 /**
- * Build one portable ACRYL CLI archive: a pinned Node runtime + the built CLI +
- * its production dependency closure, with no host Node/npm/pnpm requirement.
+ * Build one portable ACRYL CLI archive: the built CLI + its production
+ * dependency closure. The CLI runs on the host's Node (>=22.19.0), so the
+ * archive carries no bundled Node runtime and stays small for a fast
+ * `npm i -g acryl`.
  *
  * Usage:
- *   node scripts/build-cli-archive.mjs <target> [node-version] [out-dir]
+ *   node scripts/build-cli-archive.mjs <target> [out-dir]
  *
  * Targets: darwin-arm64, darwin-x64, linux-arm64, linux-x64, windows-x64.
  *   unix targets   -> acryl-cli-<target>.tar.gz with a sh launcher
  *   windows-x64    -> acryl-cli-windows-x64.zip with a .cmd launcher
  * Appends each SHA-256 to <out>/checksums.txt.
- *
- * Proven slice: darwin-arm64 (2026-08-30) — built, extracted to an empty temp
- * dir, `acryl --version` and `acryl tui --json` ran with PATH=/usr/bin:/bin,
- * SHA-256 generated and verified. The windows-x64 branch is structured for the
- * Windows runner; the unix targets are exercised by the release cli matrix.
  */
 import { execFileSync } from 'node:child_process'
 import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -51,15 +48,12 @@ function sha256File(path) {
 
 async function main() {
   const target = process.argv[2]
-  const nodeVersion = process.argv[3] ?? '24.19.0'
-  const outDir = resolve(process.argv[4] ?? join(root, 'release-artifacts'))
+  const outDir = resolve(process.argv[3] ?? join(root, 'release-artifacts'))
   const spec = TARGETS[target]
   if (!spec) {
     throw new Error(`unsupported CLI target ${target}; supported: ${Object.keys(TARGETS).join(', ')}`)
   }
   const windows = spec.windows === true
-  const nodeDist = `node-v${nodeVersion}-${spec.nodePlatform}-${spec.nodeArch}`
-  const nodeExt = windows ? 'zip' : 'tar.gz'
   const archiveName = `acryl-cli-${target}.${windows ? 'zip' : 'tar.gz'}`
   const launcherName = windows ? 'acryl.cmd' : 'acryl'
   const launcher = join(root, 'scripts', windows ? 'acryl-cli-launcher.cmd' : 'acryl-cli-launcher.sh')
@@ -75,24 +69,11 @@ async function main() {
   })
   mkdirSync(join(archiveDir, 'bin'), { recursive: true })
 
-  // 2. Pinned Node runtime for this target.
-  const nodeArchive = join(tmpdir(), `${nodeDist}.${nodeExt}`)
-  run('curl', ['-fsSL', '-o', nodeArchive, `https://nodejs.org/dist/v${nodeVersion}/${nodeDist}.${nodeExt}`])
-  const nodeExtract = join(staging, 'node-dist')
-  mkdirSync(nodeExtract, { recursive: true })
-  run('tar', ['-xf', nodeArchive, '-C', nodeExtract])
-  const nodeBinaryName = windows ? 'node.exe' : 'node'
-  const nodeBinarySource = windows
-    ? join(nodeExtract, nodeDist, 'node.exe')
-    : join(nodeExtract, nodeDist, 'bin', 'node')
-  copyFileSync(nodeBinarySource, join(archiveDir, 'bin', nodeBinaryName))
-  chmodSync(join(archiveDir, 'bin', nodeBinaryName), 0o755)
-
-  // 3. Launcher: bundled node --expose-internals (Cordis HMR boot guard).
+  // 2. Launcher: resolves host Node --expose-internals (Cordis HMR boot guard).
   copyFileSync(launcher, join(archiveDir, 'bin', launcherName))
   if (!windows) chmodSync(join(archiveDir, 'bin', launcherName), 0o755)
 
-  // 3b. Flatten the pnpm isolated (.pnpm symlinked) node_modules to a hoisted,
+  // 3. Flatten the pnpm isolated (.pnpm symlinked) node_modules to a hoisted,
   // symlink-free layout. ZIP archives and Windows extractors do not preserve
   // pnpm's relative symlinks, so an unflattened archive fails to resolve bare
   // specifiers (e.g. `@deepseek-ai/cordis`) after extraction. Tar.gz preserves

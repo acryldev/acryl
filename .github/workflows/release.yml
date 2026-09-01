@@ -111,7 +111,7 @@ jobs:
           corepack pnpm --filter acryl-tui run test
           node --test scripts/cli-archive-platform.test.mjs scripts/inspect-artifact.test.mjs
           node scripts/verify-npm-entrypoint.mjs
-      - run: node scripts/build-cli-archive.mjs ${{ matrix.target }} 24.19.0 release-artifacts
+      - run: node scripts/build-cli-archive.mjs ${{ matrix.target }} release-artifacts
       - name: Clean-runtime smoke and release receipt
         shell: bash
         env:
@@ -129,8 +129,9 @@ jobs:
           else
             tar -xf "$ARCHIVE" -C /tmp/acryl-cli-smoke
             CLI="/tmp/acryl-cli-smoke/acryl-cli-${{ matrix.target }}/bin/${{ matrix.cli }}"
-            env PATH=/usr/bin:/bin "$CLI" --version
-            (cd /tmp/acryl-cli-smoke && env PATH=/usr/bin:/bin "$CLI" tui --json)
+            node --version
+            "$CLI" --version
+            (cd /tmp/acryl-cli-smoke && "$CLI" tui --json)
           fi
           END_MS="$(node -p 'Date.now()')"
           BYTES="$(( $(du -sk /tmp/acryl-cli-smoke | awk '{print $1}') * 1024 ))"
