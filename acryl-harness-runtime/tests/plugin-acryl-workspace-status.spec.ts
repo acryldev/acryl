@@ -44,6 +44,13 @@ describe('acryl_workspace_status tool (the ACRYL Cordis Tool gate)', () => {
     expect((blocks[0] as { text: string }).text).toContain('ACRYL workspace context')
   }, 60_000)
 
+  it('disposes cleanly with the owning runtime (no leak on dispose)', async () => {
+    const runtime = await bootRuntime('acryl-tool-gate')
+    expect(runtime.ctx.tools.get(TOOL_NAME)).toBeDefined()
+    // Disposing the runtime disposes the Fiber that owns the tool registration.
+    await expect(runtime.dispose()).resolves.toBeUndefined()
+  }, 60_000)
+
   it('is a proper Cordis plugin entry (name/inject/apply)', async () => {
     const mod = await import('../src/plugin-acryl-workspace-status.ts')
     expect(mod.name).toBe('acryl-workspace-status')
