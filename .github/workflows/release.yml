@@ -237,6 +237,17 @@ jobs:
         with: { submodules: recursive }
       - uses: actions/setup-node@v5
         with: { node-version: 24, package-manager-cache: false }
+      - uses: pnpm/action-setup@v4
+        with: { version: 11.7.0, run_install: false }
+      - run: corepack enable
+      - run: corepack pnpm install --frozen-lockfile
+      - name: Build standalone Web npm package
+        run: |
+          corepack pnpm --filter acryl-control run build
+          corepack pnpm --filter acryl-harness-runtime run build
+          corepack pnpm --filter acryl-web run build
+          corepack pnpm --filter acryl-web run typecheck
+          corepack pnpm --filter acryl-web run test
       - uses: actions/download-artifact@v7
         with: { path: artifacts }
       - name: Assemble immutable target packages
