@@ -1,3 +1,22 @@
+## 2026-09-01 - register coding-agent ideas and ACRYL rebase plan
+
+Commit: `f328459`
+
+Registered the verified best-idea extraction across the coding-agent codebases (pi.dev,
+CodeWhale, OpenClaude, DeepSeek Harness) and the Cordis reference metaframework in
+`docs/acryl/IDEAS-TO-TAKE-FOR-ACRYL.md`, treating each pre-existing analysis doc as a
+hypothesis and verifying it against source (corrections recorded: OpenClaude guardrails are
+not removed and its `sessionTranscript` is a stub; pi.dev is directionally accurate;
+CodeWhale adds a monotonic fail-closed authorization pipeline and a KV-cache pinned-prefix
+discipline as load-bearing ideas). Laid out a new Spec Kit ledger `specs/026-acryl-rework/`
+(spec.md / research.md / plan.md / tasks.md) that plans removing the parallel-framework debt
+in ACRYL-owned packages (hand-rolled session projection, custom agent/provider registry,
+Cordis-internals architecture inspector, duplicate desktop terminal and web server) by
+re-basing the control plane onto the native `@deepseek-ai/dsh-*` / Cordis seams, and proves
+the plugin path with one real model-facing Tool as the hard gate. Follow-on differentiators
+(authorization pipeline, room identity, relay/handoff, capability package, agent-agnostic
+canvas) are intentionally recorded as subsequent ledgers.
+
 ## 2026-08-31 - shared coding capability composition implementation plan
 
 Commit: `8b6a955`
