@@ -69,12 +69,18 @@ These are real architectural consolidations, but each touches a **tested** facil
 consumer, so they need explicit review/approval before implementation. They should not be
 executed as routine cleanups.
 
-- [ ] **T006 [FUTURE] Replace the custom agent-control framework with a `ctx.subagents`
-      adapter** — `acryl-control/src/agent/agent-control.ts` + `agent/providers/*` +
-      `tests/agent-control.spec.ts`. The service is tested but is a parallel framework to
-      `dsh-agent`/`dsh-agent-loop`/`dsh-subagent`/`dsh-tools`; its providers throw
-      `transport-unavailable` (stubs). Re-base onto `ctx.subagents`, port the tests.
-  - Gate: requires review of the `acryl-control` public API and the 5 control-plane tests.
+- [ ] **T006 [FUTURE] Implement the agent-provider transports (Phase 8), keep the control plane**
+      — `acryl-control/src/agent/agent-control.ts` + `agent/providers/*` +
+      `tests/agent-control.spec.ts`. **Corrected scope (verified):** do NOT replace
+      `AcrAgentControlService` with `ctx.subagents` — different responsibility. The service is the
+      provider-neutral **control plane** (registerProvider/attach/dispatch/snapshot, worker↔provider
+      binding, capability gating, identity model), while `ctx.subagents` is a **delegation backend
+      registry** (for an agent delegating to another agent as a tool). The real gap is that the
+      providers (`dsh-native`/`acp`/`claude`/`codex`) are stubs throwing `transport-unavailable`.
+      Implement the transport seam, and where a provider overlaps a native backend (claude-code,
+      codex, acp) route it through `ctx.subagents`/vendor SDK rather than re-implementing.
+  - Gate: control-plane tests must stay green; provider transports need a runtime capability + a
+    typed receipt.
 
 - [ ] **T002 [FUTURE] Make the architecture inspector stop reaching into private Cordis fields**
       — `acryl-control/src/architecture/projection.ts` + `provider.ts` +
