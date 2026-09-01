@@ -11,7 +11,7 @@ import { flattenNodeModules } from './flatten-node-modules.mjs'
 import { verifyArtifactManifest, inspectDirectory } from './inspect-artifact.mjs'
 import { pruneReleasePayload } from './prune-release-payload.mjs'
 import { pruneTargetNative } from './prune-target-native.mjs'
-import { artifactReceipt, nodeDistribution, webTarget } from './web-archive-contract.mjs'
+import { artifactReceipt, nodeDistribution, webNativeAllowlist, webTarget } from './web-archive-contract.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const version = JSON.parse(readFileSync(join(root, 'acryl-web', 'package.json'), 'utf8')).version
@@ -58,11 +58,7 @@ async function main() {
       product: 'web', platform: spec.windows ? 'win32' : spec.nodePlatform, arch: spec.nodeArch,
       requiredPaths: [`runtime/bin/${spec.windows ? 'acryl-web.cmd' : 'acryl-web'}`, `runtime/bin/${spec.windows ? 'node.exe' : 'node'}`, 'lib/bin.js'], 
       forbiddenPathPatterns: ['**/acryl-desktop/**', '**/electron/**', '**/*.map', '**/tests/**'],
-      allowedNativePackagePatterns: [
-        `node_modules/**/*${spec.windows ? 'win32' : spec.nodePlatform}-${spec.nodeArch}*`,
-        `node_modules/**/*${spec.windows ? 'win32' : spec.nodePlatform}-${spec.nodeArch}*/**`,
-        ...(spec.windows ? ['runtime/bin/node.exe'] : []),
-      ],
+      allowedNativePackagePatterns: webNativeAllowlist(spec),
       maximumBytes: 1_000_000_000,
     }, inspectDirectory(archiveDir, directoryEntries))
     mkdirSync(outDir, { recursive: true })

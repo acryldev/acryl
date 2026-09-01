@@ -22,6 +22,28 @@ export function webTarget(target) {
   return result
 }
 
+/** Native binaries a Web target archive may legitimately embed in node_modules. */
+export function webNativeAllowlist(spec) {
+  const platform = spec.windows ? 'win32' : spec.nodePlatform
+  const arch = spec.nodeArch
+  const patterns = [
+    `node_modules/**/*${platform}-${arch}*`,
+    `node_modules/**/*${platform}-${arch}*/**`,
+  ]
+  if (spec.windows) {
+    // node-pty nests its Windows ConPTY runtime under build/Release and a
+    // win10-<arch> vendor tree; these are the target's own native binaries.
+    patterns.push(
+      `node_modules/*node-pty*/build/Release/conpty/**`,
+      `node_modules/**/*node-pty*/build/Release/conpty/**`,
+      `node_modules/**/*win10-${arch}*`,
+      `node_modules/**/*win10-${arch}*/**`,
+      `runtime/bin/node.exe`,
+    )
+  }
+  return patterns
+}
+
 /** Create a Web receipt with the shared release schema and integrity form. */
 export function artifactReceipt({ version, target, archive, sha256 }) {
   return {
