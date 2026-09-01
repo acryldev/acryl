@@ -37,10 +37,12 @@ These were originally in the plan as removals. Verified truth: keep them.
 
 ## Concretely worth doing now (the real, safe work)
 
-> **Status: T008 is DONE.** Implemented + verified in commit `9c5f489`. The tool
-> `acryl_workspace_status` auto-mounts on the booted `ctx.tools` seam, executes, and renders
-> canonical typed output; all 17 `acryl-harness-runtime` tests pass, typecheck + build clean.
-> T009 (dedicated reload/duplicate-registration test) remains open.
+> **Status: T008 + T009 are DONE.** Implemented + verified in commits `9c5f489` (tool) and
+> `ec5ae4d` (disposal test). The tool `acryl_workspace_status` auto-mounts on the booted
+> `ctx.tools` seam, executes, renders canonical typed output, and disposes cleanly with its
+> owning Fiber; all 18 `acryl-harness-runtime` tests pass, typecheck + build clean. The only
+> outstanding part of T009 is an explicit Fiber-reload / no-duplicate-registration case (the
+> runtime `dispose()` path is covered).
 
 - [x] **T008 [FR-006] Implement ONE real model-facing Tool as a Cordis plugin** —
       `acryl_workspace_status` in `acryl-harness-runtime/src/plugin-acryl-workspace-status.ts`;
