@@ -34,8 +34,14 @@ if (isEntrypoint()) {
     if (relaunched) return
     await runAcryl(process.argv.slice(2))
   })().catch((cause: unknown) => {
-    const message = cause instanceof Error ? cause.message : String(cause)
-    process.stderr.write(`acryl: ${message}\n`)
+    if (cause instanceof AggregateError) {
+      for (const error of cause.errors) {
+        if (error instanceof Error) process.stderr.write(`acryl: ${error.stack ?? error.message}\n`)
+        else process.stderr.write(`acryl: ${String(error)}\n`)
+      }
+    } else {
+      process.stderr.write(`acryl: ${cause instanceof Error ? cause.message : String(cause)}\n`)
+    }
     process.exitCode = 1
   })
 }
