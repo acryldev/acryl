@@ -40,6 +40,7 @@ test('rejects malformed and mismatched release manifests precisely', () => {
   assert.throws(() => selectWebArtifact({ ...manifest, version: '9.9.9' }, { version, target }), /version 9\.9\.9 does not match installed CLI version/)
   assert.throws(() => selectWebArtifact({ schemaVersion: 1, version, artifacts: [] }, { version, target }), /does not contain a Web artifact/)
   assert.throws(() => selectWebArtifact({ ...manifest, artifacts: [{ ...artifact, target: 'linux-x64' }] }, { version, target }), /does not contain a Web artifact/)
+  assert.equal(selectWebArtifact({ ...manifest, artifactBaseUrl: 'https://example.test/releases/v0.1.19/release-manifest.json', artifacts: [{ ...artifact, location: 'acryl-web-darwin-arm64.tar.gz', receipt: { ...artifact.receipt, location: 'acryl-web-darwin-arm64.tar.gz' } }] }, { version, target }).url, 'https://example.test/releases/v0.1.19/acryl-web-darwin-arm64.tar.gz')
 })
 
 test('rejects a checksum failure without writing a managed runtime', async () => {

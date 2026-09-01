@@ -41,7 +41,9 @@ export function selectWebArtifact(manifest, { version, target }) {
     && artifact.surface === 'web' && artifact.target === target)
   if (matches.length !== 1) fail(`release manifest does not contain a Web artifact for version ${version} target ${target}`)
   const artifact = matches[0]
-  if (typeof artifact.location !== 'string' || !/^https:/.test(artifact.location)
+  let url
+  try { url = new URL(artifact.location, manifest.artifactBaseUrl).toString() } catch { fail(`Web artifact for version ${version} target ${target} has an invalid location`) }
+  if (typeof artifact.location !== 'string'
     || artifact.integrity?.algorithm !== 'sha256' || typeof artifact.integrity.value !== 'string' || !/^[a-f0-9]{64}$/u.test(artifact.integrity.value)
     || artifact.receipt?.schemaVersion !== 1 || artifact.receipt.surface !== 'web' || artifact.receipt.target !== target
     || artifact.receipt.version !== version || artifact.receipt.location !== artifact.location
@@ -49,7 +51,7 @@ export function selectWebArtifact(manifest, { version, target }) {
     || artifact.receipt.capabilityBaseline !== manifest.capabilityBaseline) {
     fail(`Web artifact for version ${version} target ${target} is malformed`)
   }
-  return { ...artifact, url: artifact.location, sha256: artifact.integrity.value }
+  return { ...artifact, url, sha256: artifact.integrity.value }
 }
 
 function receiptPath(root) { return join(root, RECEIPT_NAME) }
@@ -124,5 +126,8 @@ export async function acquireWebRuntime({
 export async function fetchReleaseManifest(url = manifestUrl('unknown')) {
   const response = await fetch(url, { redirect: 'error' })
   if (!response.ok) fail(`release manifest lookup failed: ${response.status} ${response.statusText}`)
-  try { return await response.json() } catch { fail('release manifest is malformed') }
+  try {
+    const manifest = await response.json()
+    return { ...manifest, artifactBaseUrl: url }
+  } catch { fail('release manifest is malformed') }
 }
