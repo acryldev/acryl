@@ -1,3 +1,15 @@
+## 2026-09-01 - target-specific npm CLI runtime distribution
+
+Commit: `dc5e978fa384efe52e8b669a8b6a91a1fad86c0d`
+
+Defined a versioned CLI target and receipt contract for the five supported npm
+OS/CPU targets. The public `acryl` package is now assembled as a selector-only
+package with exact optional target dependencies. Each `acryl-cli-<target>`
+package carries the prepared native TUI runtime, target receipt, and OS/CPU
+constraints. The selector validates installed package metadata and receipts
+before launching, with reinstall guidance for unsupported, missing, or mismatched
+runtimes. Artifact inspection now validates receipt metadata.
+
 ## 2026-09-01 - separate the web surface from the lightweight CLI
 
 Commit: `42fe0bf`
