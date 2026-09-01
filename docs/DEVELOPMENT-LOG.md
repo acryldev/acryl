@@ -213,6 +213,40 @@ re-basing the control plane onto the native `@deepseek-ai/dsh-*` / Cordis seams,
 the plugin path with one real model-facing Tool as the hard gate. Follow-on differentiators
 (authorization pipeline, room identity, relay/handoff, capability package, agent-agnostic
 canvas) are intentionally recorded as subsequent ledgers.
+## 2026-08-31 - Nix flake: add acryl-desktop (Electron) output
+
+**Commit:** [`397f91034cb6a6444c6dccf6f33d06e8b10bf43b`](https://github.com/levonk/acryl/commit/397f91034cb6a6444c6dccf6f33d06e8b10bf43b)
+
+Extended the Nix flake to also build the Electron desktop app as
+`packages.${system}.acryl-desktop`, alongside the existing TUI output.
+
+### Approach
+
+- Uses nixpkgs `electron` (43.1.0) as the runtime instead of the npm
+  `electron` package (which downloads a platform binary via postinstall,
+  blocked by `--ignore-scripts` in the Nix sandbox)
+- Creates a CJS shim at `node_modules/electron/index.js` that exports the
+  nixpkgs electron path, replacing the real npm package. The desktop
+  launcher (`bin.ts`) does `import('electron')` to get the binary path,
+  then spawns it with `main.js` — the shim makes this work without the
+  npm electron binary
+- Skips the `generate-*` build scripts (they use `sharp` for image
+  processing) since `build/` assets are already tracked in git
+- Builds the full dependency chain: `acryl-control ->
+  acryl-harness-runtime -> dsh-community-market ->
+  acryl-development-canvas -> acryl-desktop`
+- Refactors shared derivation attrs into `commonDerivationAttrs` to
+  avoid duplication between TUI and desktop derivations
+
+### Usage
+
+```sh
+nix build .#acryl-desktop
+nix run .#acryl-desktop -- --help
+nix run .#acryl-desktop -- --version
+```
+
+---
 
 ## 2026-08-31 - Nix flake support for acryl-tui
 
