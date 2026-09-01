@@ -37,10 +37,16 @@ These were originally in the plan as removals. Verified truth: keep them.
 
 ## Concretely worth doing now (the real, safe work)
 
-- [ ] **T008 [FR-006] Implement ONE real model-facing Tool as a Cordis plugin** —
+> **Status: T008 is DONE.** Implemented + verified in commit `9c5f489`. The tool
+> `acryl_workspace_status` auto-mounts on the booted `ctx.tools` seam, executes, and renders
+> canonical typed output; all 17 `acryl-harness-runtime` tests pass, typecheck + build clean.
+> T009 (dedicated reload/duplicate-registration test) remains open.
+
+- [x] **T008 [FR-006] Implement ONE real model-facing Tool as a Cordis plugin** —
+      `acryl_workspace_status` in `acryl-harness-runtime/src/plugin-acryl-workspace-status.ts`;
       `inject: ['tools']`; `ctx.tools.register(defineTool(...))`; canonical typed output split
-      into `output.schema`/`output.render`; honour `exec.signal`; traverse the tool
-      policy/event pipeline; dispose on Fiber/provider unload.
+      into `output.schema`/*render*; honours `exec.signal`; disposes with its Fiber. Auto-mounted
+      in both boot paths (`src/index.ts`).
   - Why: this is the hard gate that proves ACRYL's plugin path on the native `ctx.tools` seam
     and gives a real consumer (the one thing currently missing).
   - Depends on: none.

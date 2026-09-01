@@ -1,3 +1,18 @@
+## 2026-09-01 - land the first real ACRYL model-facing Tool (T008 gate)
+
+Commit: `9c5f489`
+
+Implemented `acryl_workspace_status` as a genuine Cordis plugin in
+`acryl-harness-runtime/src/plugin-acryl-workspace-status.ts`: it injects `ctx.tools`, registers
+via `ctx.tools.register(defineTool(...))`, declares a canonical typed `output.schema` plus a
+separate `render()` for model-facing text, honours `exec.signal`, and disposes with its owning
+Fiber. It is auto-mounted on both the TUI and web boot paths (guarded on `ctx.tools` presence),
+so it is present in every real ACRYL profile. Adds a spec that boots the profile, asserts
+auto-mount on the native `ctx.tools` seam, executes, and renders canonical typed output, plus a
+plugin-entry (`name`/`inject`/`apply`) assertion. All 17 `acryl-harness-runtime` tests pass;
+typecheck and build are clean. This closes the ACRYL hard gate (one real model-facing Tool as a
+Cordis plugin) identified by the alignment audit.
+
 ## 2026-09-01 - register coding-agent ideas and ACRYL rebase plan
 
 Commit: `f328459`
