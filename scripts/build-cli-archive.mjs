@@ -110,12 +110,20 @@ async function main() {
   flattenNodeModules(archiveDir)
   // Rebuild native modules for the target platform. GitHub runners may use
   // a different arch than the build target (e.g., macos-14 is arm64 but
-  // darwin-x64 target needs x64 binaries). Rebuild recompiles native modules.
+  // darwin-x64 target needs x64 binaries). Rebuild recompiles native modules
+  // with explicit cross-compilation flags for the target architecture.
   if (target === 'darwin-x64' || target === 'darwin-arm64') {
     console.log(`Rebuilding native modules for ${target}...`)
+    const rebuildEnv = {
+      ...process.env,
+      CI: 'true',
+      npm_config_platform: spec.nodePlatform === 'win' ? 'win32' : spec.nodePlatform,
+      npm_config_arch: spec.nodeArch,
+    }
     run(corepackCommand(process.platform), ['pnpm', 'rebuild', '--prefix', archiveDir], {
       ...corepackSpawnOptions(process.platform),
       cwd: archiveDir,
+      env: rebuildEnv,
     })
   }
   pruneTargetNative(archiveDir, spec.nodePlatform === 'win' ? 'win32' : spec.nodePlatform, spec.nodeArch)

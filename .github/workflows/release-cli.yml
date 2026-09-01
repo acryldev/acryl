@@ -29,6 +29,7 @@ jobs:
       matrix:
         include:
           - { target: darwin-arm64, os: macos-latest, ext: tar.gz, cli: acryl }
+          - { target: darwin-x64, os: macos-latest, ext: tar.gz, cli: acryl }
           - { target: linux-arm64, os: ubuntu-24.04-arm, ext: tar.gz, cli: acryl }
           - { target: linux-x64, os: ubuntu-latest, ext: tar.gz, cli: acryl }
           - { target: windows-x64, os: windows-latest, ext: zip, cli: acryl.cmd }
@@ -94,6 +95,7 @@ jobs:
       matrix:
         include:
           - { target: darwin-arm64, os: macos-latest, ext: tar.gz }
+          - { target: darwin-x64, os: macos-latest, ext: tar.gz }
           - { target: linux-arm64, os: ubuntu-24.04-arm, ext: tar.gz }
           - { target: linux-x64, os: ubuntu-latest, ext: tar.gz }
           - { target: windows-x64, os: windows-latest, ext: tar.gz }
@@ -159,7 +161,7 @@ jobs:
           set -euo pipefail
           node scripts/release-manifest.mjs verify-versions "${RELEASE_TAG#v}" package.json acryl-control/package.json acryl-harness-runtime/package.json acryl-tui/package.json acryl-web/package.json acryl-desktop/package.json acryl-npm-launcher/package.json
           mapfile -t RECEIPTS < <(find artifacts -name release-receipt.json -type f | sort)
-          test "${#RECEIPTS[@]}" -eq 8
+          test "${#RECEIPTS[@]}" -eq 10
           node scripts/release-manifest.mjs generate "${RELEASE_TAG#v}" "$ACRYL_CAPABILITY_BASELINE" artifacts/acryl-release-manifest.json "${RECEIPTS[@]}"
           node scripts/release-manifest.mjs validate artifacts/acryl-release-manifest.json
       - uses: actions/upload-artifact@v7
