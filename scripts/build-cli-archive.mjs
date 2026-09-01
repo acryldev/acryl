@@ -110,10 +110,10 @@ async function main() {
   flattenNodeModules(archiveDir)
   // Rebuild native modules for the target platform. GitHub runners may use
   // a different arch than the build target (e.g., macos-14 is arm64 but
-  // darwin-x64 target needs x64 binaries). Rebuild forces recompilation.
+  // darwin-x64 target needs x64 binaries). Rebuild recompiles native modules.
   if (target === 'darwin-x64' || target === 'darwin-arm64') {
     console.log(`Rebuilding native modules for ${target}...`)
-    run(corepackCommand(process.platform), ['pnpm', 'rebuild', '--prefix', archiveDir, '--force'], {
+    run(corepackCommand(process.platform), ['pnpm', 'rebuild', '--prefix', archiveDir], {
       ...corepackSpawnOptions(process.platform),
       cwd: archiveDir,
     })
