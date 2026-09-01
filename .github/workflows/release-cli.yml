@@ -1,5 +1,8 @@
-name: Release
+name: Release CLI
 
+# Fast path: the minimal host-Node CLI + the on-demand Web runtime. This is the
+# always-green release that makes `npm i -g acryl` quick. Desktop is released
+# separately via release-desktop.yml so a CLI change never rebuilds Electron.
 on:
   push:
     tags: ['v*']
@@ -9,7 +12,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-cli-${{ github.ref }}
   cancel-in-progress: false
 
 env:
@@ -17,66 +20,6 @@ env:
   ACRYL_CAPABILITY_BASELINE: acryl-capability-baseline-v1
 
 jobs:
-  desktop:
-    name: desktop-${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 75
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { name: macos-arm64, os: macos-latest, arch: arm64, target: mac, mode: dmg, artifact: '*.dmg' }
-          - { name: macos-x64, os: macos-14, arch: x64, target: mac, mode: dmg, artifact: '*.dmg' }
-          - { name: linux-arm64, os: ubuntu-24.04-arm, arch: arm64, target: linux, mode: deb, artifact: '*.deb' }
-          - { name: linux-x64, os: ubuntu-latest, arch: x64, target: linux, mode: deb, artifact: '*.deb' }
-          - { name: windows-x64, os: windows-latest, arch: x64, target: win, mode: nsis, artifact: '*.exe' }
-    steps:
-      - name: Enable Git longpaths
-        shell: bash
-        run: git config --global core.longpaths true
-      - uses: actions/checkout@v5
-        with: { persist-credentials: false, submodules: recursive }
-      - uses: actions/setup-node@v5
-        with: { node-version: 24, package-manager-cache: false }
-      - uses: pnpm/action-setup@v4
-        with: { version: 11.7.0, run_install: false }
-      - run: corepack enable
-      - run: corepack pnpm install --frozen-lockfile
-      - name: Build and verify desktop surface
-        run: |
-          corepack pnpm --filter acryl-development-canvas run build
-          corepack pnpm --filter acryl-desktop run build
-          corepack pnpm run check:layout
-          corepack pnpm run typecheck
-          corepack pnpm run test
-          corepack pnpm --filter acryl-desktop run verify:closure
-      - name: Package ${{ matrix.name }}
-        shell: bash
-        env: { CSC_IDENTITY_AUTO_DISCOVERY: 'false' }
-        run: |
-          set -euo pipefail
-          cd acryl-desktop
-          node node_modules/electron-builder/cli.js --${{ matrix.target }} ${{ matrix.mode }} --${{ matrix.arch }} --publish never --config.mac.notarize=false --config.npmRebuild=false --config.directories.output=dist/${{ matrix.name }}
-      - name: Create Desktop release receipt
-        shell: bash
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          VERSION="${RELEASE_TAG#v}"
-          ARTIFACT="$(find acryl-desktop/dist/${{ matrix.name }} -type f -name '${{ matrix.artifact }}' | head -n 1)"
-          test -n "$ARTIFACT"
-          node scripts/release-manifest.mjs receipt desktop '${{ matrix.name }}' "$VERSION" "$(basename "$ARTIFACT")" "$ARTIFACT" "acryl-desktop/dist/${{ matrix.name }}/release-receipt.json"
-      - uses: actions/upload-artifact@v7
-        with:
-          name: acryl-desktop-${{ matrix.name }}-${{ github.ref_name }}
-          path: |
-            acryl-desktop/dist/${{ matrix.name }}/${{ matrix.artifact }}
-            acryl-desktop/dist/${{ matrix.name }}/*.blockmap
-            acryl-desktop/dist/${{ matrix.name }}/release-receipt.json
-          if-no-files-found: error
-          retention-days: 14
-
   cli:
     name: cli-${{ matrix.target }}
     runs-on: ${{ matrix.os }}
@@ -202,8 +145,8 @@ jobs:
           retention-days: 14
 
   manifest:
-    name: verify complete multi-surface release
-    needs: [desktop, cli, web]
+    name: verify complete cli+web release
+    needs: [cli, web]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -218,7 +161,7 @@ jobs:
           set -euo pipefail
           node scripts/release-manifest.mjs verify-versions "${RELEASE_TAG#v}" package.json acryl-control/package.json acryl-harness-runtime/package.json acryl-tui/package.json acryl-web/package.json acryl-desktop/package.json acryl-npm-launcher/package.json
           mapfile -t RECEIPTS < <(find artifacts -name release-receipt.json -type f | sort)
-          test "${#RECEIPTS[@]}" -eq 15
+          test "${#RECEIPTS[@]}" -eq 10
           node scripts/release-manifest.mjs generate "${RELEASE_TAG#v}" "$ACRYL_CAPABILITY_BASELINE" artifacts/acryl-release-manifest.json "${RECEIPTS[@]}"
           node scripts/release-manifest.mjs validate artifacts/acryl-release-manifest.json
       - uses: actions/upload-artifact@v7
