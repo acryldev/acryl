@@ -1,6 +1,6 @@
 {
   "name": "acryl-tui",
-  "version": "0.1.26",
+  "version": "0.1.27",
   "private": true,
   "description": "Canonical ACRYL pi-tui coding-agent terminal client",
   "license": "MIT",
