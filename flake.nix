@@ -54,6 +54,28 @@
             # Exclude Nix build outputs
             !pkgs'.lib.hasPrefix "/result" rel
           );
+
+      # Prebuilt CLI release tarballs (v0.1.19). Each tarball bundles its
+      # own Node runtime and native addons (node-pty, koffi, sharp).
+      releaseVersion = "0.1.19";
+      prebuiltAssets = {
+        "x86_64-linux" = {
+          url = "https://github.com/acryldev/acryl/releases/download/v${releaseVersion}/acryl-cli-linux-x64.tar.gz";
+          hash = "sha256-cTlDn36FUJ69bLLKSqfXYBCcU2AMVL0GuTJ+y32833s=";
+        };
+        "aarch64-linux" = {
+          url = "https://github.com/acryldev/acryl/releases/download/v${releaseVersion}/acryl-cli-linux-arm64.tar.gz";
+          hash = "sha256-/XNe8kTxF5/AgV1xeHg7kKeT9humvoH0MKcp81+/uLE=";
+        };
+        "x86_64-darwin" = {
+          url = "https://github.com/acryldev/acryl/releases/download/v${releaseVersion}/acryl-cli-darwin-x64.tar.gz";
+          hash = "sha256-8pvnuU0Z5+GOGAHKS+k6ucApZEBq55cnP0XK9H0t/hQ=";
+        };
+        "aarch64-darwin" = {
+          url = "https://github.com/acryldev/acryl/releases/download/v${releaseVersion}/acryl-cli-darwin-arm64.tar.gz";
+          hash = "sha256-8W0Df1ZyLSEr+aYDmxGIWqEv43mZwRIJYgoDyWlfTqA=";
+        };
+      };
     in
     {
       packages = forAllSystems ({ pkgs, system }:
@@ -131,6 +153,48 @@
         in
         {
           default = self.packages.${system}.acryl;
+
+          # Prebuilt CLI tarball — bundles its own Node runtime and native
+          # addons (node-pty, koffi, sharp). Fast path for users who want
+          # the exact release binary without a from-source build.
+          prebuilt = pkgs.stdenv.mkDerivation {
+            pname = "acryl-prebuilt";
+            inherit (commonDerivationAttrs) version;
+
+            src = pkgs.fetchurl {
+              url = prebuiltAssets.${system}.url;
+              hash = prebuiltAssets.${system}.hash;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = pkgs.lib.optionals pkgs.stdenv.isLinux [ pkgs.autoPatchelfHook ];
+            buildInputs = pkgs.lib.optionals pkgs.stdenv.isLinux [ pkgs.stdenv.cc.cc.lib ];
+
+            dontConfigure = true;
+            dontBuild = true;
+
+            installPhase = ''
+              runHook preInstall
+              mkdir -p $out
+              cp -r acryl-cli-*/bin $out/bin
+              cp -r acryl-cli-*/lib $out/lib
+              cp -r acryl-cli-*/node_modules $out/node_modules
+              cp acryl-cli-*/package.json $out/
+              chmod +x $out/bin/acryl
+              runHook postInstall
+            '';
+
+            meta = with pkgs.lib; {
+              description = "ACRYL TUI (prebuilt release binary)";
+              homepage = "https://github.com/acryldev/acryl";
+              downloadPage = "https://github.com/acryldev/acryl/releases";
+              license = licenses.mit;
+              mainProgram = "acryl";
+              platforms = builtins.attrNames prebuiltAssets;
+              sourceProvenance = [ sourceTypes.binaryNativeCode ];
+            };
+          };
 
           acryl = pkgs.stdenv.mkDerivation (finalAttrs: {
             pname = "acryl";

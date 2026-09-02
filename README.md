@@ -88,7 +88,7 @@ nix run github:acryldev/acryl/v0.1.19
 nix develop github:acryldev/acryl
 ```
 
-The flake exposes `packages.<system>.acryl` (TUI), `packages.<system>.acryl-desktop`, and `devShells.<system>.default`.
+The flake exposes `packages.<system>.acryl` (TUI, from source, also `#default`), `packages.<system>.prebuilt` (prebuilt release binary with bundled Node runtime), `packages.<system>.acryl-desktop`, and `devShells.<system>.default`.
 
 ### Devbox
 
