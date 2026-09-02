@@ -1,3 +1,16 @@
+## 2026-09-02 - add #prebuilt output for prebuilt CLI release tarballs
+
+Commit: `b90ced5cefce1cc439092158a7a0291b5b324165`
+
+Added `packages.<system>.prebuilt` to the Nix flake — fetches the prebuilt
+CLI tarball from GitHub releases (v0.1.19) with per-platform SRI hashes.
+Each tarball bundles its own Node runtime and native addons (node-pty,
+koffi, sharp), so the prebuilt path needs no from-source build. Uses
+`autoPatchelfHook` on Linux for glibc linking. The default output remains
+`#acryl` (from-source build), following Nix convention; `#prebuilt` is an
+optional fast path. CI now builds and tests `#prebuilt` on all 4 platforms.
+READMEs updated to document the `#prebuilt` output.
+
 ## 2026-09-02 - align nixify artifacts with nixify skill rules
 
 Commits: `85374a5f3bbfe05e20d61d8af57996defd2dfb8f`,
