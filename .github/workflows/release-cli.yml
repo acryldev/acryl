@@ -233,4 +233,16 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: ACRYL ${{ github.ref_name }}
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
-          files: artifacts/**/*
+          # Every per-target artifact directory carries its own loose
+          # release-receipt.json and checksums.txt with the SAME filename
+          # (8 targets = 8 identically-named files each), which collide as
+          # GitHub release assets and make softprops/action-gh-release
+          # churn through racy delete-then-reupload retries. The uniquely
+          # named archives and the single aggregated
+          # acryl-release-manifest.json (which already carries every
+          # target's checksum and receipt) are what the release actually
+          # needs; the colliding per-target sidecars are excluded.
+          files: |
+            artifacts/**/*
+            !artifacts/**/release-receipt.json
+            !artifacts/**/checksums.txt
