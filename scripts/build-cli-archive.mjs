@@ -108,13 +108,14 @@ async function main() {
   // specifiers (e.g. `@deepseek-ai/cordis`) after extraction. Tar.gz preserves
   // symlinks but a symlink-free tree works on every extractor and platform.
   flattenNodeModules(archiveDir)
-  // Remove host-arch native prebuilds before rebuild so cross-compilation happens.
-  // For example: on arm64 runner building darwin-x64, remove arm64 prebuilds first.
+  // Force recompilation for cross-arch targets by removing ALL native prebuilds.
+  // pnpm rebuild will recompile with target-arch environment variables.
   const hostArch = process.arch === 'arm64' ? 'arm64' : 'x64'
   const targetArch = spec.nodeArch === 'arm64' ? 'arm64' : 'x64'
   if (spec.nodePlatform === 'darwin' && hostArch !== targetArch) {
-    console.log(`Removing ${hostArch} prebuilds before cross-compiling for ${targetArch}...`)
-    pruneTargetNative(archiveDir, spec.nodePlatform === 'win' ? 'win32' : spec.nodePlatform, targetArch)
+    console.log(`Removing all prebuilds before cross-compiling darwin-${hostArch} → darwin-${targetArch}...`)
+    run('find', [archiveDir, '-type', 'f', '-name', '*.node', '-delete'])
+    run('find', [archiveDir, '-type', 'd', '-name', 'prebuilds', '-delete'])
   }
   // Rebuild native modules for the target platform. GitHub runners may use
   // a different arch than the build target (e.g., macos-latest is arm64 but
