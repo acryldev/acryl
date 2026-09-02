@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { chmodSync, cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { payloadSha256, receiptFor, targetForNode, targetPackageName } from '../acryl-npm-launcher/release-contract.js'
+import { CLI_TARGETS, payloadSha256, receiptFor, targetForNode, targetPackageName } from '../acryl-npm-launcher/release-contract.js'
 
 function pack(directory) {
   return join(directory, execFileSync('npm', ['pack', '--silent'], { cwd: directory, encoding: 'utf8' }).trim())
@@ -61,5 +61,42 @@ test('clean local tarball global install launches the prepared target TUI withou
     assert.deepEqual(JSON.parse(execFileSync(executable, ['tui', '--json'], { encoding: 'utf8' })), { mode: 'tui' })
   } finally {
     rmSync(directory, { recursive: true, force: true })
+  }
+})
+
+test('packs every CLI_TARGETS archive, including the windows-x64 .zip', () => {
+  // windows-x64 ships as .zip while every other target ships .tar.gz. This
+  // reproduces the real prepared-artifact layout build-cli-archive.mjs
+  // produces, so extractRuntime's archive-format branch is exercised for
+  // real: a GNU tar cannot extract a .zip and must fall back to unzip.
+  const artifactDir = mkdtempSync(join(tmpdir(), 'acryl-npm-artifacts-'))
+  const outDir = mkdtempSync(join(tmpdir(), 'acryl-npm-out-'))
+  const version = JSON.parse(readFileSync(new URL('../acryl-npm-launcher/package.json', import.meta.url), 'utf8')).version
+  try {
+    for (const target of Object.keys(CLI_TARGETS)) {
+      const windows = target === 'windows-x64'
+      const staging = mkdtempSync(join(tmpdir(), `acryl-npm-stage-${target}-`))
+      const runtimeDir = join(staging, `acryl-cli-${target}`)
+      mkdirSync(join(runtimeDir, 'bin'), { recursive: true })
+      const launcher = join(runtimeDir, 'bin', windows ? 'acryl.cmd' : 'acryl')
+      writeFileSync(launcher, windows ? '@echo off\r\n' : '#!/bin/sh\necho acryl\n')
+      if (!windows) chmodSync(launcher, 0o755)
+      writeFileSync(join(runtimeDir, 'receipt.json'), JSON.stringify(receiptFor({ target, version, payloadSha256: payloadSha256(runtimeDir) })))
+      const archive = join(artifactDir, `acryl-cli-${target}.${windows ? 'zip' : 'tar.gz'}`)
+      if (windows) execFileSync('zip', ['-qr', archive, `acryl-cli-${target}`], { cwd: staging })
+      else execFileSync('tar', ['-czf', archive, '-C', staging, `acryl-cli-${target}`])
+    }
+    execFileSync(process.execPath, ['scripts/publish-npm-cli.mjs', '--pack-only', outDir], {
+      env: { ...process.env, ACRYL_CLI_ARTIFACT_DIR: artifactDir },
+      stdio: 'inherit',
+    })
+    const produced = readdirSync(outDir).sort()
+    assert.deepEqual(produced, [
+      `acryl-${version}.tgz`,
+      ...Object.keys(CLI_TARGETS).map(target => `acryl-cli-${target}-${version}.tgz`).sort(),
+    ].sort())
+  } finally {
+    rmSync(artifactDir, { recursive: true, force: true })
+    rmSync(outDir, { recursive: true, force: true })
   }
 })
