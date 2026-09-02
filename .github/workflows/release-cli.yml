@@ -202,8 +202,14 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           set -euo pipefail
-          for PACKAGE in npm-packages/acryl-cli-*.tgz; do npm publish "$PACKAGE" --access public; done
-          npm publish "$(find npm-packages -maxdepth 1 -name 'acryl-*.tgz' ! -name 'acryl-cli-*.tgz')" --access public
+          # npm's package-arg parser only recognizes a bare relative path
+          # (no ./ prefix) as a filesystem reference if it has zero slashes;
+          # "npm-packages/foo.tgz" instead matches its GitHub-shorthand
+          # pattern (owner/repo) and npm tries an SSH git fetch instead of
+          # publishing the local tarball. The leading ./ forces file
+          # resolution.
+          for PACKAGE in ./npm-packages/acryl-cli-*.tgz; do npm publish "$PACKAGE" --access public; done
+          npm publish "./$(find npm-packages -maxdepth 1 -name 'acryl-*.tgz' ! -name 'acryl-cli-*.tgz')" --access public
       - name: Publish standalone Web package
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
