@@ -1,3 +1,32 @@
+## 2026-09-02 - Devin subagent via ACP for TUI
+
+Commit: `256e287`
+
+The acryl TUI can now delegate to Devin as an out-of-process ACP subagent. A new
+`devin` agent preset extends the standard coding agent with a `subagent_devin`
+tool. When the model calls `subagent_devin`, the `dsh-subagent-acp` provider
+spawns `devin acp` as a subprocess and drives it over JSON-RPC stdio, returning
+the child's output as the tool result.
+
+The `devin` preset is an acryl-owned composition that mirrors the shipped
+`standard` preset and adds one `tool-subagent-devin` row configured with
+`provider: 'devin', backgroundMode: 'one-shot', maxDepth: 'provider-managed'`.
+The matching `subagent-acp` host plugin is inserted via the `devin-subagent`
+coding capability, which applies only to the TUI surface. The agent-presets
+roster now scans both the DSH shipped presets root and the acryl-owned
+`acryl-harness-runtime/presets/` root, so the `devin` preset appears alongside
+`standard`, `cordis`, and `ptc` in the preset selector.
+
+`permission: 'reject'` declines every `session/request_permission` prompt from
+the child — the TUI has no interactivity channel into the child's ACP session.
+Set `permission: 'allow'` in a user patch layer to auto-approve.
+
+Primary implementation:
+
+- Devin preset: `acryl-harness-runtime/presets/devin/agent.cordis.yml`
+- Subagent provider: `acryl-harness-runtime/src/coding-capabilities.ts` (`devin-subagent` capability)
+- Dependencies: `@deepseek-ai/dsh-subagent-acp`, `@deepseek-ai/dsh-tool-subagent`
+
 ## 2026-09-02 - acryl ACP server for Devin Desktop integration
 
 Commit: `3132bc1`
