@@ -174,8 +174,15 @@
 
             sourceRoot = ".";
 
+            # The prebuilt tarball bundles both glibc-linked and musl-linked
+            # native addons (koffi ships musl_x64/koffi.node alongside
+            # linux_x64/koffi.node). autoPatchelf needs both glibc and musl
+            # available to satisfy all shared library dependencies.
             nativeBuildInputs = pkgs.lib.optionals pkgs.stdenv.isLinux [ pkgs.autoPatchelfHook ];
-            buildInputs = pkgs.lib.optionals pkgs.stdenv.isLinux [ pkgs.stdenv.cc.cc.lib ];
+            buildInputs = pkgs.lib.optionals pkgs.stdenv.isLinux [
+              pkgs.stdenv.cc.cc.lib
+              pkgs.musl
+            ];
 
             dontConfigure = true;
             dontBuild = true;
