@@ -1,6 +1,8 @@
 ## 2026-09-02 - align nixify artifacts with nixify skill rules
 
-Commit: `85374a5f3bbfe05e20d61d8af57996defd2dfb8f`
+Commits: `85374a5f3bbfe05e20d61d8af57996defd2dfb8f`,
+`a2fd96b` (devbox x86_64-darwin first attempt),
+`b79e414` (devbox x86_64-darwin per-package scoping)
 
 Audited the `feature/nix-flake-support` branch against the nixify skill's
 Definition of Done and fixed nine findings. SHA-pinned all GitHub Actions
@@ -11,15 +13,21 @@ prevent PR-controlled code from reaching `GITHUB_TOKEN`/OIDC. Added path
 filtering so Nix CI only fires when `flake.nix`, `flake.lock`, `**/*.nix`,
 `pnpm-lock.yaml`, or `package.json` change. Added `nix run .#default --
 --help` test. Added `act` to `devbox.json` for local CI validation.
-Removed the invalid `nixpkgs.commit` field from `devbox.json` (devbox 0.18
-ignores it; was set to a channel name, not a 40-char hash). Added
-`.devbox/` to `.gitignore`. Added Nix (Flake) and Devbox install sections
-to `README.md`, `README.en.md`, and `README.zh.md`; updated the
+Added `.devbox/` to `.gitignore`. Added Nix (Flake) and Devbox install
+sections to `README.md`, `README.en.md`, and `README.zh.md`; updated the
 bilingual-docs hash record in `README.i18n.yaml`.
 
-`devbox.lock` cannot be generated on x86_64-darwin because devbox 0.18
-hardcodes a nixpkgs commit that dropped x86_64-darwin support; it must be
-generated on aarch64-darwin or Linux.
+The `devbox.lock` blocker was resolved with per-package platform scoping:
+clean package names (`nodejs_22`, `pnpm_11`, `esbuild`, `act`) for normal
+platforms (Linux, aarch64-darwin), and flake URL references to
+nixpkgs-26.05-darwin only for x86_64-darwin. The `nixpkgs.commit` field
+is set to the 26.05-darwin pin for the shell infrastructure (`mkShell`).
+On normal platforms, packages resolve from nixpkgs-unstable via devbox's
+index — unchanged from before. On x86_64-darwin, the flake URL references
+bypass devbox 0.18's hardcoded nixpkgs 26.11 (which dropped x86_64-darwin)
+and pull from 26.05-darwin instead. `devbox.lock` is committed with both
+resolution paths; Linux/aarch64-darwin entries will be populated when a
+user on that platform runs `devbox install`.
 
 ## 2026-09-02 - align exact PNPM pins to the 11.8.0 root release
 
