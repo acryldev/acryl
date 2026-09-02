@@ -1,0 +1,3 @@
+name: Devin (ACP)
+description: Standard coding agent with a Devin subagent available via ACP.
+order: 10

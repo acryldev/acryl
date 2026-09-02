@@ -136,6 +136,7 @@
     "@deepseek-ai/dsh-storage": "0.1.1-rc.2",
     "@deepseek-ai/dsh-storage-domain": "0.1.1-rc.2",
     "@deepseek-ai/dsh-subagent": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-subagent-acp": "0.1.1-rc.2",
     "@deepseek-ai/dsh-subagent-fork-in-process": "0.1.1-rc.2",
     "@deepseek-ai/dsh-subagent-in-process-driver": "0.1.1-rc.2",
     "@deepseek-ai/dsh-subagent-spawn-in-process": "0.1.1-rc.2",

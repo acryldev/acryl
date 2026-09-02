@@ -8,7 +8,7 @@ describe('ACRYL_CODING_CAPABILITIES', () => {
   it('declares authorization as applicable to every product surface before each root mounts it', () => {
     expect(ACRYL_CODING_CAPABILITIES).toContainEqual(expect.objectContaining({
       id: 'authorization',
-      surfaces: ['tui', 'web', 'desktop'],
+      surfaces: ['tui', 'web', 'desktop', 'acp'],
     }))
   })
 
@@ -34,6 +34,7 @@ describe('ACRYL_CODING_CAPABILITIES', () => {
       'agent-presets',
       'session-stats',
       'authorization',
+      'subagent-acp-devin',
     ])
     expect(agentPresets).toEqual(expect.objectContaining({
       id: 'agent-presets',

@@ -6,7 +6,7 @@ import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 export type AcrylSurface = 'tui' | 'web' | 'desktop' | 'acp'
 
 export interface AcrylCodingCapability {
-  readonly id: 'authorization'
+  readonly id: 'authorization' | 'devin-subagent'
   // Product surfaces this capability applies to. This is a declaration of
   // intended applicability, not proof every root already mounts it. Task 2 adds
   // the Web/Desktop composition sites.
@@ -18,6 +18,8 @@ export interface AcrylCodingCapability {
 // shipped agent presets live in the pinned DSH submodule rather than the
 // published npm bundle, so point the roster at that source dir.
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
+// This package's own root (src/ → package root, or lib/ → package root).
+const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const shippedPresetsDir = join(
   repoRoot,
   'deepseek-harness',
@@ -26,11 +28,14 @@ const shippedPresetsDir = join(
   'agent-presets',
   'presets',
 )
+// acryl-owned presets shipped alongside this package.
+const acrylPresetsDir = join(packageRoot, 'presets')
 const agentPresetConfig: Record<string, unknown> = {
   default: 'standard',
-  roots: existsSync(shippedPresetsDir)
-    ? [{ path: shippedPresetsDir, trust: 'system' }]
-    : [],
+  roots: [
+    ...(existsSync(shippedPresetsDir) ? [{ path: shippedPresetsDir, trust: 'system' as const }] : []),
+    ...(existsSync(acrylPresetsDir) ? [{ path: acrylPresetsDir, trust: 'system' as const }] : []),
+  ],
   includeShippedRoot: false,
   includeUserRoot: true,
 }
@@ -68,6 +73,34 @@ const authorizationCapabilityPatches = [
   },
 ] as const satisfies readonly PatchOptions[]
 
+/*
+ * The Devin subagent capability: registers the `devin` provider on
+ * `ctx.subagents` via `dsh-subagent-acp`, which spawns `devin acp` as a
+ * subprocess and drives it over JSON-RPC stdio. The matching `tool-subagent-devin`
+ * row lives in the `devin` agent preset under `presets/devin/`.
+ *
+ * `permission: 'reject'` declines every `session/request_permission` prompt
+ * from the child — the TUI has no interactivity channel into the child's ACP
+ * session. Set `permission: 'allow'` in a user patch layer to auto-approve.
+ */
+const devinSubagentPatches = [
+  {
+    insert: [
+      {
+        id: 'subagent-acp-devin',
+        name: '@deepseek-ai/dsh-subagent-acp',
+        config: {
+          providerName: 'devin',
+          command: 'devin',
+          args: ['acp'],
+          permission: 'reject',
+          env: {},
+        },
+      },
+    ],
+  },
+] as const satisfies readonly PatchOptions[]
+
 const NON_TUI_SHARED_ROW_IDS: ReadonlySet<string> = new Set(['authorization'])
 
 function selectNonTuiCapabilityPatches(
@@ -88,6 +121,11 @@ export const ACRYL_CODING_CAPABILITIES = [
     // surfaces they mount today.
     surfaces: ['tui', 'web', 'desktop', 'acp'],
     loaderPatches: authorizationCapabilityPatches,
+  },
+  {
+    id: 'devin-subagent',
+    surfaces: ['tui'],
+    loaderPatches: devinSubagentPatches,
   },
 ] as const satisfies readonly AcrylCodingCapability[]
 
