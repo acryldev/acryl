@@ -180,7 +180,7 @@
 
             meta = with pkgs.lib; {
               description = "ACRYL local-first plugin-native agent workspace (TUI)";
-              homepage = "https://github.com/levonk/acryl";
+              homepage = "https://github.com/acryldev/acryl";
               license = licenses.mit;
               mainProgram = "acryl";
               platforms = platforms.unix;
@@ -264,7 +264,7 @@
 
             meta = with pkgs.lib; {
               description = "ACRYL local-first plugin-native agent workspace (Desktop)";
-              homepage = "https://github.com/levonk/acryl";
+              homepage = "https://github.com/acryldev/acryl";
               license = licenses.mit;
               mainProgram = "acryl-desktop";
               platforms = platforms.unix;
