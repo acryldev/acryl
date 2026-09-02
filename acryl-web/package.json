@@ -1,6 +1,6 @@
 {
   "name": "acryl-web",
-  "version": "0.1.28",
+  "version": "0.1.29",
   "type": "module",
   "description": "ACRYL browser surface: boots the shared runtime web profile and serves the local web client.",
   "bin": {
