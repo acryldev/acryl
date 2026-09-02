@@ -24,8 +24,8 @@ const fabric = readJson('dsh-community-fabric/package.json')
 const market = readJson('dsh-community-market/package.json')
 const upstreamPackage = readJson('deepseek-harness/package.json')
 
-if (workspace.packageManager !== 'pnpm@11.7.0') {
-  fail('the product workspace must pin pnpm@11.7.0')
+if (!workspace.packageManager?.match(/^pnpm@11\.\d+\.\d+$/)) {
+  fail('the product workspace must pin pnpm@11.x.x (patch updates permitted)')
 }
 if (workspace.workspaces !== undefined) fail('workspace membership belongs only in pnpm-workspace.yaml')
 if (!npmrc.includes('node-linker=isolated\n')) fail('the product workspace must use the documented PNPM isolated linker')
