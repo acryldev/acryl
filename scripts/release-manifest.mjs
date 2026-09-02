@@ -133,9 +133,16 @@ export function validateReleaseManifest(manifest, { requireComplete = true, budg
   }
 
   if (requireComplete) {
-    const missing = Object.entries(SURFACE_TARGETS).flatMap(([surface, targets]) => targets
-      .filter(target => !seen.has(`${surface}/${target}`))
-      .map(target => `${surface}/${target}`))
+    // Completeness is scoped to the surfaces this manifest actually carries.
+    // release-cli.yml (cli+web) and release-desktop.yml (desktop) promote
+    // independent manifests, so a cli+web manifest must not be required to
+    // also carry every desktop target, and vice versa.
+    const presentSurfaces = new Set([...seen].map(key => key.split('/')[0]))
+    const missing = Object.entries(SURFACE_TARGETS)
+      .filter(([surface]) => presentSurfaces.has(surface))
+      .flatMap(([surface, targets]) => targets
+        .filter(target => !seen.has(`${surface}/${target}`))
+        .map(target => `${surface}/${target}`))
     if (missing.length > 0) throw new Error(`release manifest is missing required artifacts: ${missing.join(', ')}`)
   }
   return manifest

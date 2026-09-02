@@ -37,7 +37,7 @@ test('rejects missing and mismatched target runtime receipts with recovery guida
     writeFileSync(join(directory, 'package.json'), JSON.stringify({ name: 'acryl-cli-linux-x64', version }))
     const require = { resolve: () => join(directory, 'package.json') }
     assert.throws(() => runtimeLauncher({ require, platform: 'linux', arch: 'x64', version }), /no valid receipt.*include=optional/)
-    writeFileSync(join(directory, 'runtime', 'receipt.json'), JSON.stringify(receiptFor({ target: 'darwin-x64', version, payloadSha256: 'a'.repeat(64) })))
+    writeFileSync(join(directory, 'runtime', 'receipt.json'), JSON.stringify(receiptFor({ target: 'darwin-arm64', version, payloadSha256: 'a'.repeat(64) })))
     assert.throws(() => runtimeLauncher({ require, platform: 'linux', arch: 'x64', version }), /receipt validation failed.*target mismatch/)
   } finally { rmSync(directory, { recursive: true, force: true }) }
 })

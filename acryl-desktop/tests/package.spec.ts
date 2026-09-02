@@ -713,9 +713,10 @@ describe('published package surface', () => {
 
     // Every supported target appears in the CLI and Web matrices, and promotion
     // remains gated on the complete release manifest plus npm publication.
+    // darwin-x64 is intentionally excluded: see CLI_TARGETS in
+    // acryl-npm-launcher/release-contract.js.
     for (const target of [
       'darwin-arm64',
-      'darwin-x64',
       'linux-arm64',
       'linux-x64',
       'windows-x64',

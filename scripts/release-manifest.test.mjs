@@ -53,6 +53,20 @@ test('rejects a missing required surface target', () => {
   assert.throws(() => validateReleaseManifest(manifest), /missing required artifacts: web\/linux-x64/)
 })
 
+test('accepts a cli+web-only manifest without desktop targets', () => {
+  // release-cli.yml and release-desktop.yml promote independent manifests;
+  // a cli+web manifest must not be required to also carry desktop targets.
+  const manifest = createReleaseManifest({
+    version,
+    capabilityBaseline: CAPABILITY_BASELINE,
+    receipts: [
+      ...Object.keys(CLI_TARGETS).map(target => receipt('cli', target)),
+      ...Object.keys(CLI_TARGETS).map(target => receipt('web', target)),
+    ],
+  })
+  assert.doesNotThrow(() => validateReleaseManifest(manifest))
+})
+
 test('rejects duplicate surface target entries', () => {
   const manifest = completeManifest()
   manifest.artifacts.push(manifest.artifacts[0])

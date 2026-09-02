@@ -4,9 +4,13 @@ import { join, relative } from 'node:path'
 
 export const RECEIPT_SCHEMA_VERSION = 1
 
+// darwin-x64 is intentionally absent: GitHub's macos-14 runners are arm64 and
+// cannot cross-compile sharp/koffi's native binaries for x64, so the CLI is
+// not published for that target. Intel Mac users build it themselves via
+// scripts/build-darwin-x64-from-source.sh and run the archive directly,
+// outside the npm-published selector/runtime resolution below.
 export const CLI_TARGETS = Object.freeze({
   'darwin-arm64': { platform: 'darwin', arch: 'arm64', npmOs: 'darwin', npmCpu: 'arm64' },
-  'darwin-x64': { platform: 'darwin', arch: 'x64', npmOs: 'darwin', npmCpu: 'x64' },
   'linux-arm64': { platform: 'linux', arch: 'arm64', npmOs: 'linux', npmCpu: 'arm64' },
   'linux-x64': { platform: 'linux', arch: 'x64', npmOs: 'linux', npmCpu: 'x64' },
   'windows-x64': { platform: 'win32', arch: 'x64', npmOs: 'win32', npmCpu: 'x64' },

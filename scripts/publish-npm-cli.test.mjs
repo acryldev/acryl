@@ -15,7 +15,7 @@ test('assembles a selector-only manifest with exact optional target dependencies
   const { selector, targets } = JSON.parse(output)
   assert.deepEqual(Object.keys(selector.dependencies ?? {}), [])
   assert.deepEqual(Object.keys(selector.optionalDependencies).sort(), [
-    'acryl-cli-darwin-arm64', 'acryl-cli-darwin-x64', 'acryl-cli-linux-arm64', 'acryl-cli-linux-x64', 'acryl-cli-windows-x64',
+    'acryl-cli-darwin-arm64', 'acryl-cli-linux-arm64', 'acryl-cli-linux-x64', 'acryl-cli-windows-x64',
   ])
   for (const [target, manifest] of Object.entries(targets)) {
     assert.equal(manifest.name, `acryl-cli-${target}`)
