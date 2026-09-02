@@ -42,7 +42,7 @@ jobs:
       - uses: actions/setup-node@v5
         with: { node-version: 24, package-manager-cache: false }
       - uses: pnpm/action-setup@v4
-        with: { version: 11.7.0, run_install: false }
+        with: { version: 11.8.0, run_install: false }
       - run: corepack enable
       - run: corepack pnpm install --frozen-lockfile
       - name: Build and verify CLI surface
@@ -108,7 +108,7 @@ jobs:
       - uses: actions/setup-node@v5
         with: { node-version: 24, package-manager-cache: false }
       - uses: pnpm/action-setup@v4
-        with: { version: 11.7.0, run_install: false }
+        with: { version: 11.8.0, run_install: false }
       - run: corepack enable
       - run: corepack pnpm install --frozen-lockfile
       - name: Build and verify Web surface
@@ -182,7 +182,7 @@ jobs:
       - uses: actions/setup-node@v5
         with: { node-version: 24, package-manager-cache: false }
       - uses: pnpm/action-setup@v4
-        with: { version: 11.7.0, run_install: false }
+        with: { version: 11.8.0, run_install: false }
       - run: corepack enable
       - run: corepack pnpm install --frozen-lockfile
       - name: Build standalone Web npm package

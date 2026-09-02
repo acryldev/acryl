@@ -294,7 +294,7 @@ specs/                      Feature truth: specification, plan, tasks, evidence
 .agents/notes/              Implemented architecture and process records
 ```
 
-The outer repository is a PNPM 11.7.0 workspace. Use `corepack pnpm` for owned
+The outer repository is a PNPM 11.8.0 workspace. Use `corepack pnpm` for owned
 packages. The pinned Harness submodule remains its own independent upstream
 workspace and is entered only through the root `upstream:*` wrappers.
 

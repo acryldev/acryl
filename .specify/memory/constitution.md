@@ -61,7 +61,7 @@ policy/human approves. Self-extension and self-evolution are different systems.
 
 ## Desktop / repository constraints
 
-- Outer workspace is PNPM 11.7.0 (`node-linker=isolated`). Upstream remains an
+- Outer workspace is PNPM 11.8.0 (`node-linker=isolated`). Upstream remains an
   independent PNPM workspace.
 - Use `corepack pnpm` for owned packages. Never `npm install` or an unpinned
   package-manager command.

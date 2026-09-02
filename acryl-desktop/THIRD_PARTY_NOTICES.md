@@ -312,9 +312,9 @@ the package names, versions, and licenses for transparency.
 | @xterm/addon-fit | 0.10.0 | MIT |
 | @xterm/xterm | 5.5.0 | MIT |
 | accepts | 2.0.0 | MIT |
-| acryl-control | 0.1.19 | MIT |
+| acryl-control | 0.1.26 | MIT |
 | acryl-development-canvas | 0.1.0-dev.0 | MIT |
-| acryl-harness-runtime | 0.1.19 | MIT |
+| acryl-harness-runtime | 0.1.26 | MIT |
 | adm-zip | 0.6.0 | MIT |
 | agent-base | 7.1.4 | MIT |
 | ajv | 8.20.0 | MIT |
@@ -496,7 +496,7 @@ the package names, versions, and licenses for transparency.
 | picocolors | 1.1.1 | ISC |
 | picomatch | 4.0.7 | MIT |
 | pkce-challenge | 5.0.1 | MIT |
-| pnpm | 11.7.0 | MIT |
+| pnpm | 11.8.0 | MIT |
 | powershell-utils | 0.2.0 | MIT |
 | property-information | 7.2.0 | MIT |
 | protobufjs | 7.6.5 | BSD-3-Clause |

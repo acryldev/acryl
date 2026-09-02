@@ -84,7 +84,7 @@ const releaseDesktopWorkflow = readFileSync(
 
 describe('published package surface', () => {
   it('runs owned-workspace typechecks and tests through PNPM filters', () => {
-    expect(workspaceManifest.packageManager).toBe('pnpm@11.7.0')
+    expect(workspaceManifest.packageManager).toBe('pnpm@11.8.0')
     expect(workspaceManifest.scripts?.typecheck)
       .toBe('pnpm --filter acryl-control run typecheck && pnpm --filter acryl-tui run typecheck && pnpm --filter acryl-web run typecheck && pnpm --filter acryl-development-canvas run typecheck && pnpm --filter acryl-desktop run typecheck && pnpm --filter dsh-community-market run typecheck')
     expect(workspaceManifest.scripts?.test)
@@ -797,7 +797,7 @@ describe('published package surface', () => {
     expect(manifest.dependencies).not.toHaveProperty('electron')
     expect(manifest.peerDependencies?.electron).toBe('43.4.0')
     expect(manifest.devDependencies?.electron).toBe('43.4.0')
-    expect(manifest.dependencies?.pnpm).toBe('11.7.0')
+    expect(manifest.dependencies?.pnpm).toBe('11.8.0')
   })
 
   it('packages the native-compiled Koffi Windows runtime', () => {
