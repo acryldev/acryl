@@ -115,9 +115,15 @@
             # Force hoisted node-linker so all dependencies are flattened
             # into a single node_modules/ directory (like npm's layout).
             # In pnpm 11, this setting moved from .npmrc to pnpm-workspace.yaml
-            # as "nodeLinker". The project's .npmrc still has the old key.
+            # as "nodeLinker". The project's pnpm-workspace.yaml has
+            # nodeLinker: isolated (symlink-based .pnpm/ virtual store) which
+            # doesn't survive the Nix store copy — symlinks break. Replace it
+            # with hoisted so all packages are real directories.
             preConfigure = ''
-              if ! grep -q "nodeLinker" pnpm-workspace.yaml; then
+              if grep -q "nodeLinker" pnpm-workspace.yaml; then
+                sed -i.bak 's/nodeLinker:.*/nodeLinker: hoisted/' pnpm-workspace.yaml
+                rm -f pnpm-workspace.yaml.bak
+              else
                 sed -i.bak '1i nodeLinker: hoisted' pnpm-workspace.yaml
                 rm -f pnpm-workspace.yaml.bak
               fi
