@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 
-export type AcrylSurface = 'tui' | 'web' | 'desktop'
+export type AcrylSurface = 'tui' | 'web' | 'desktop' | 'acp'
 
 export interface AcrylCodingCapability {
   readonly id: 'authorization'
@@ -86,7 +86,7 @@ export const ACRYL_CODING_CAPABILITIES = [
     // Declared product applicability. Individual roots still opt into these
     // shared patches by calling `createAcrylCodingCapabilityPatches()` with the
     // surfaces they mount today.
-    surfaces: ['tui', 'web', 'desktop'],
+    surfaces: ['tui', 'web', 'desktop', 'acp'],
     loaderPatches: authorizationCapabilityPatches,
   },
 ] as const satisfies readonly AcrylCodingCapability[]
@@ -94,7 +94,7 @@ export const ACRYL_CODING_CAPABILITIES = [
 export function createAcrylCodingCapabilityPatches(
   surfaces: ReadonlySet<AcrylSurface>,
 ): readonly PatchOptions[] {
-  const includeSharedCodingRows = surfaces.has('tui')
+  const includeSharedCodingRows = surfaces.has('tui') || surfaces.has('acp')
   return structuredClone(
     ACRYL_CODING_CAPABILITIES
       .filter(capability => capability.surfaces.some(surface => surfaces.has(surface)))
