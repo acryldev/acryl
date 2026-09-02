@@ -1,3 +1,21 @@
+## 2026-09-02 - align exact PNPM pins to the 11.8.0 root release
+
+Commit: `ea62ec13ced9268c2c9afc70b26dd12432469ef5`
+
+The root `packageManager` was bumped to `pnpm@11.8.0` (dfaece1) but
+`acryl-desktop` and `acryl-harness-runtime` kept an exact-pinned `pnpm: 11.7.0`
+dependency and the release workflows pinned `pnpm/action-setup` at 11.7.0. The
+typecheck job failed because lifecycle scripts inside those packages resolve
+bare `pnpm` from `node_modules/.bin` (11.7.0), and that binary's version guard
+rejects the root `packageManager` (11.8.0). Aligned the dependency pins, the
+action-setup versions, and the package-surface test assertions; regenerated the
+lockfile and third-party notices under 11.8.0 (the lockfile carries 11.8.0 peer
+resolution IDs and the notices also refresh `acryl-control`/
+`acryl-harness-runtime` to 0.1.26); updated the documented root PNPM release in
+AGENTS.md, README*.md, the constitution, and the orientation spec. Verified with
+a frozen-lockfile install and the root typecheck/test gate (806 passed, 0 failed,
+plus 274 passed in dsh-community-market).
+
 ## 2026-09-01 - run the CLI on the host's Node
 
 Commit: `15f28ef`
