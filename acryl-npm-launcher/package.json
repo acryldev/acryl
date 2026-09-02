@@ -12,7 +12,8 @@
     "release-contract.js",
     "web-runtime.js",
     "desktop-runtime.js",
-    "package.json"
+    "package.json",
+    "README.md"
   ],
   "scripts": {
     "test": "node --test tests/*.test.mjs"

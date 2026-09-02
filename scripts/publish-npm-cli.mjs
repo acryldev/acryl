@@ -30,10 +30,12 @@ function targetManifest(target) {
 function selectorManifest() {
   return {
     name: 'acryl', version, private: false, type: 'module', bin: { acryl: './bin.js' },
-    files: ['bin.js', 'runtime.js', 'release-contract.js', 'web-runtime.js', 'desktop-runtime.js'],
+    files: ['bin.js', 'runtime.js', 'release-contract.js', 'web-runtime.js', 'desktop-runtime.js', 'README.md'],
     optionalDependencies: Object.fromEntries(Object.keys(CLI_TARGETS).map(target => [targetPackageName(target), version])),
     engines: { node: '>=22.19.0 || >=24.0.0' },
-    description: 'ACRYL CLI target-runtime selector', license: 'MIT',
+    description: 'A persistent, agent-agnostic coding environment. Keep your context, change your agent.',
+    keywords: ['ai', 'coding-agent', 'agent', 'agentic-development', 'cli', 'tui', 'developer-tools', 'context', 'agent-context', 'multi-agent', 'cordis', 'deepseek-harness'],
+    homepage: 'https://acryl.dev', repository: 'github:acryldev/acryl', license: 'MIT',
   }
 }
 
@@ -77,7 +79,7 @@ try {
   if (!printManifests) {
     const selector = join(staging, 'acryl')
     mkdirSync(selector, { recursive: true })
-    for (const file of ['bin.js', 'runtime.js', 'release-contract.js', 'web-runtime.js', 'desktop-runtime.js']) {
+    for (const file of ['bin.js', 'runtime.js', 'release-contract.js', 'web-runtime.js', 'desktop-runtime.js', 'README.md']) {
       if (existsSync(join(selectorSource, file))) cpSync(join(selectorSource, file), join(selector, file))
     }
     writeFileSync(join(selector, 'package.json'), `${JSON.stringify(selectorManifest(), null, 2)}\n`)
