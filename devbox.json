@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/main/plugins/schemas/devbox.json",
+  "packages": {
+    "nodejs_22": "latest",
+    "pnpm_11": "latest",
+    "esbuild": "latest"
+  },
+  "shell": {
+    "init_hook": [
+      "[ -d deepseek-harness/.git ] || git submodule update --init --recursive",
+      "corepack enable pnpm",
+      "corepack pnpm install --frozen-lockfile"
+    ],
+    "scripts": {
+      "sync-submodule": "corepack pnpm run upstream:sync"
+    }
+  },
+  "nixpkgs": {
+    "commit": "nixpkgs-unstable"
+  }
+}

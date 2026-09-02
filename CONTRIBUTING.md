@@ -26,7 +26,7 @@ DSH 的核心是插件。如果你写插件，请先阅读：
 ### 开发环境
 
 ```sh
-git submodule update --init --recursive
+corepack pnpm run upstream:sync
 corepack pnpm install --frozen-lockfile
 corepack pnpm run check   # 完整 headless gate：构建、类型检查、测试与冒烟
 corepack pnpm run dev     # 有图形环境时启动应用

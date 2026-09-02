@@ -31,6 +31,7 @@
     "dist:mac-smoke": "pnpm --filter dsh-community-market run build && pnpm --filter acryl-desktop run dist:mac-smoke",
     "dist:win": "pnpm --filter dsh-community-market run build && pnpm --filter acryl-desktop run dist:win",
     "dist:win-portable": "pnpm --filter dsh-community-market run build && pnpm --filter acryl-desktop run dist:win-portable",
+    "upstream:sync": "git submodule update --init --recursive",
     "upstream:update": "node scripts/update-upstream.mjs",
     "upstream:version": "cd deepseek-harness && corepack pnpm --version",
     "upstream:install": "cd deepseek-harness && corepack pnpm install --frozen-lockfile",
