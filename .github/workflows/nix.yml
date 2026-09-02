@@ -3,8 +3,24 @@ name: Nix
 on:
   pull_request:
     branches: [main]
+    paths:
+      - flake.nix
+      - flake.lock
+      - "**/*.nix"
+      - .github/workflows/nix.yml
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - package.json
   push:
     branches: [main]
+    paths:
+      - flake.nix
+      - flake.lock
+      - "**/*.nix"
+      - .github/workflows/nix.yml
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - package.json
   workflow_dispatch:
 
 permissions:
@@ -33,13 +49,13 @@ jobs:
             runner: macos-13
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           submodules: recursive
 
-      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
 
-      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@908b263ff629f4cc17666315b7fd3ec127c6244d # v14
 
       - name: Check flake
         run: nix flake check --no-build
@@ -50,8 +66,14 @@ jobs:
       - name: Build acryl-desktop
         run: nix build .#acryl-desktop --system ${{ matrix.system }}
 
+      - name: Test default --help
+        if: github.event_name != 'pull_request'
+        run: nix run .#default -- --help
+
       - name: Test TUI --help
+        if: github.event_name != 'pull_request'
         run: nix run .#acryl -- --help
 
       - name: Test desktop --help
+        if: github.event_name != 'pull_request'
         run: nix run .#acryl-desktop -- --help
