@@ -1,3 +1,32 @@
+## 2026-09-02 - acryl ACP server for Devin Desktop integration
+
+Commit: `3132bc1`
+
+acryl can now run as an ACP (Agent Client Protocol) agent inside Devin Desktop's
+Agent Command Center. The `acryl acp` subcommand boots DSH's ACP profile
+(`dsh-base` + `dsh-acp`) with acryl coding capabilities (authorization,
+agent-presets, session-stats, system-prompt) layered on top, serving JSON-RPC
+over stdio that Devin Desktop launches as a subprocess.
+
+The upstream `dsh-acp-app` bundle (which provides the ACP startup latch) is not
+published at the `0.1.1-rc.2` version line acryl pins, so an acryl-owned startup
+plugin replaces it: it publishes the `acpAppStartup` service the `dsh-acp` bridge
+waits for and binds stdin EOF to a clean shutdown. The module fallback anchor
+uses `acryl-harness-runtime`'s own package (not `@deepseek-ai/dsh`) so
+`@deepseek-ai/dsh-acp` — a direct dependency of `acryl-harness-runtime`, not of
+the `dsh` meta-package at `0.1.1-rc.2` — enters the profile's `node_modules`.
+
+Devin Desktop users register acryl via `~/.windsurf/acp/registry.json` with
+`cmd: "acryl", args: ["acp"]`, then enable it in Devin User Settings → Agents.
+Full instructions are in `docs/acryl/ACP_REGISTRY.md`.
+
+Primary implementation:
+
+- ACP boot: `acryl-harness-runtime/src/acp-boot.ts`
+- Coding surface: `acryl-harness-runtime/src/coding-capabilities.ts` (added 'acp' surface)
+- CLI subcommand: `acryl-tui/src/cli/grammar.ts`, `acryl-tui/src/cli/run.ts`
+- Registry docs: `docs/acryl/ACP_REGISTRY.md`
+
 ## 2026-09-02 - align exact PNPM pins to the 11.8.0 root release
 
 Commit: `ea62ec13ced9268c2c9afc70b26dd12432469ef5`
