@@ -3,9 +3,14 @@ node_modules/
 *.tsbuildinfo
 .build/
 .pi/
+.codewhale
+.openclaude
+
+docs/codebase/
 
 acryl-desktop/dist/
 acryl-desktop/lib/
 dsh-community-market/lib/
 acryl-web/lib/
 release-artifacts/
+
