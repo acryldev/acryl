@@ -73,19 +73,19 @@ The project provides a Nix flake that builds the TUI and Desktop from source. Ni
 
 ```bash
 # Run the TUI (default output)
-nix run github:levonk/acryl
+nix run github:acryldev/acryl
 
 # Run the Desktop GUI
-nix run github:levonk/acryl#acryl-desktop
+nix run github:acryldev/acryl#acryl-desktop
 
 # Install to your Nix profile
-nix profile install github:levonk/acryl
+nix profile install github:acryldev/acryl
 
 # Specific release (the flake builds from source at every git tag)
-nix run github:levonk/acryl/v0.1.19
+nix run github:acryldev/acryl/v0.1.19
 
 # Enter a development shell
-nix develop github:levonk/acryl
+nix develop github:acryldev/acryl
 ```
 
 The flake exposes `packages.<system>.acryl` (TUI), `packages.<system>.acryl-desktop`, and `devShells.<system>.default`.
