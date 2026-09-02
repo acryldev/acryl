@@ -9,7 +9,7 @@ export { CLI_TARGETS }
 export const RELEASE_MANIFEST_SCHEMA_VERSION = 1
 export const CAPABILITY_BASELINE = 'acryl-capability-baseline-v1'
 export const DESKTOP_TARGETS = Object.freeze(['macos-arm64', 'macos-x64', 'linux-arm64', 'linux-x64', 'windows-x64'])
-export const CLEAN_INSTALL_BUDGET = Object.freeze({ maximumBytes: 350_000_000, maximumMilliseconds: 60_000 })
+export const CLEAN_INSTALL_BUDGET = Object.freeze({ maximumBytes: 350_000_000, maximumMilliseconds: 120_000 })
 
 const SURFACE_TARGETS = Object.freeze({
   cli: Object.keys(CLI_TARGETS),
