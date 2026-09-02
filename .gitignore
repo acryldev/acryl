@@ -14,3 +14,9 @@ dsh-community-market/lib/
 acryl-web/lib/
 release-artifacts/
 
+# Nix build outputs
+/result
+/result-*
+
+# Devbox generated artifacts (machine-local paths and scripts)
+.devbox/

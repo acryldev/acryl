@@ -3,7 +3,8 @@
   "packages": {
     "nodejs_22": "latest",
     "pnpm_11": "latest",
-    "esbuild": "latest"
+    "esbuild": "latest",
+    "act": "latest"
   },
   "shell": {
     "init_hook": [
@@ -14,8 +15,5 @@
     "scripts": {
       "sync-submodule": "corepack pnpm run upstream:sync"
     }
-  },
-  "nixpkgs": {
-    "commit": "nixpkgs-unstable"
   }
 }
