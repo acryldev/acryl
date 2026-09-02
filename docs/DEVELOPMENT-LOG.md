@@ -246,7 +246,7 @@ the plugin path with one real model-facing Tool as the hard gate. Follow-on diff
 canvas) are intentionally recorded as subsequent ledgers.
 ## 2026-08-31 - Nix flake: add acryl-desktop (Electron) output
 
-**Commit:** [`397f91034cb6a6444c6dccf6f33d06e8b10bf43b`](https://github.com/levonk/acryl/commit/397f91034cb6a6444c6dccf6f33d06e8b10bf43b)
+**Commit:** [`397f91034cb6a6444c6dccf6f33d06e8b10bf43b`](https://github.com/acryldev/acryl/commit/397f91034cb6a6444c6dccf6f33d06e8b10bf43b)
 
 Extended the Nix flake to also build the Electron desktop app as
 `packages.${system}.acryl-desktop`, alongside the existing TUI output.
@@ -281,7 +281,7 @@ nix run .#acryl-desktop -- --version
 
 ## 2026-08-31 - Nix flake support for acryl-tui
 
-**Commit:** [`d6d2e464db46fbe61c36e84136880d8c55ac5a0d`](https://github.com/levonk/acryl/commit/d6d2e464db46fbe61c36e84136880d8c55ac5a0d)
+**Commit:** [`d6d2e464db46fbe61c36e84136880d8c55ac5a0d`](https://github.com/acryldev/acryl/commit/d6d2e464db46fbe61c36e84136880d8c55ac5a0d)
 
 Added Nix flake support targeting the `acryl-tui` terminal client. The flake
 builds the TUI and its workspace dependencies (`acryl-control`,
