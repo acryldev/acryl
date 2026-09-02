@@ -1,10 +1,10 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/main/plugins/schemas/devbox.json",
   "packages": {
-    "nodejs_22": "latest",
-    "pnpm_11": "latest",
-    "esbuild": "latest",
-    "act": "latest"
+    "github:nixos/nixpkgs/f6107e546a5012172d93e79f1f7950da02ad798f#nodejs_22": "",
+    "github:nixos/nixpkgs/f6107e546a5012172d93e79f1f7950da02ad798f#pnpm_11": "",
+    "github:nixos/nixpkgs/f6107e546a5012172d93e79f1f7950da02ad798f#esbuild": "",
+    "github:nixos/nixpkgs/f6107e546a5012172d93e79f1f7950da02ad798f#act": ""
   },
   "shell": {
     "init_hook": [
@@ -15,5 +15,8 @@
     "scripts": {
       "sync-submodule": "corepack pnpm run upstream:sync"
     }
+  },
+  "nixpkgs": {
+    "commit": "f6107e546a5012172d93e79f1f7950da02ad798f"
   }
 }
