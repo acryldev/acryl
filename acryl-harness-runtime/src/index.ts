@@ -14,6 +14,11 @@ export {
   type AcrylSessionBridge,
   type AcrylSessionBridgeOptions,
 } from './session-bridge.ts'
+export type {
+  BootAcrylAcpProfileOptions,
+  AcrylAcpRuntime,
+} from './acp-boot.ts'
+export { bootAcrylAcpProfile } from './acp-boot.ts'
 
 import { writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'

@@ -2,6 +2,7 @@ import { startDirectHost } from '../host/direct.ts'
 import { runAcrylTui } from '../tui-app/session.ts'
 import { ACRYL_VERSION } from '../version.ts'
 import { parseAcrylArgs } from './grammar.ts'
+import { bootAcrylAcpProfile } from 'acryl-harness-runtime'
 
 interface RunningDirectHost {
   readonly runtimeState: 'ready' | 'unavailable'
@@ -70,6 +71,7 @@ export async function runAcryl(
         '',
         'Commands:',
         '  tui    Run the terminal client (default)',
+        '  acp    Serve as an ACP agent over JSON-RPC stdio',
         '',
         'Options:',
         '  -h, --help          Show this help',
@@ -93,6 +95,16 @@ export async function runAcryl(
 
   if (invocation.command === 'web') throw surfaceError('web')
   if (invocation.command === 'gui') throw surfaceError('gui')
+
+  if (invocation.command === 'acp') {
+    const runtime = await bootAcrylAcpProfile()
+    const shutdown = async (): Promise<void> => {
+      await runtime.dispose()
+    }
+    process.on('SIGTERM', () => { void shutdown().then(() => process.exit(0)) })
+    process.on('SIGINT', () => { void shutdown().then(() => process.exit(130)) })
+    return
+  }
 
   if (invocation.json) {
     const host = await dependencies.startDirectHost({ profile: invocation.profile ?? 'acryl' })

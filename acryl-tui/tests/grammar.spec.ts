@@ -28,6 +28,7 @@ describe('parseAcrylArgs', () => {
       profile: 'work',
     })
     expect(parseAcrylArgs(['web'])).toEqual({ command: 'web', json: false, version: false, help: false })
+    expect(parseAcrylArgs(['acp'])).toEqual({ command: 'acp', json: false, version: false, help: false })
   })
 
   it('rejects missing values, duplicates, and unknown arguments', () => {
