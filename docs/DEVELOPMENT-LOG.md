@@ -1,3 +1,26 @@
+## 2026-09-02 - align nixify artifacts with nixify skill rules
+
+Commit: `85374a5f3bbfe05e20d61d8af57996defd2dfb8f`
+
+Audited the `feature/nix-flake-support` branch against the nixify skill's
+Definition of Done and fixed nine findings. SHA-pinned all GitHub Actions
+in `nix.yml` to 40-char commit SHAs (checkout@v5, nix-installer-action@v22,
+magic-nix-cache-action@v14) instead of mutable `@v4`/`@main` refs. Added
+`if: github.event_name != 'pull_request'` guards on `nix run` steps to
+prevent PR-controlled code from reaching `GITHUB_TOKEN`/OIDC. Added path
+filtering so Nix CI only fires when `flake.nix`, `flake.lock`, `**/*.nix`,
+`pnpm-lock.yaml`, or `package.json` change. Added `nix run .#default --
+--help` test. Added `act` to `devbox.json` for local CI validation.
+Removed the invalid `nixpkgs.commit` field from `devbox.json` (devbox 0.18
+ignores it; was set to a channel name, not a 40-char hash). Added
+`.devbox/` to `.gitignore`. Added Nix (Flake) and Devbox install sections
+to `README.md`, `README.en.md`, and `README.zh.md`; updated the
+bilingual-docs hash record in `README.i18n.yaml`.
+
+`devbox.lock` cannot be generated on x86_64-darwin because devbox 0.18
+hardcodes a nixpkgs commit that dropped x86_64-darwin support; it must be
+generated on aarch64-darwin or Linux.
+
 ## 2026-09-02 - align exact PNPM pins to the 11.8.0 root release
 
 Commit: `ea62ec13ced9268c2c9afc70b26dd12432469ef5`
