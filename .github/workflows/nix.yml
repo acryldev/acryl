@@ -66,6 +66,9 @@ jobs:
       - name: Build acryl-desktop
         run: nix build .#acryl-desktop --system ${{ matrix.system }}
 
+      - name: Build prebuilt
+        run: nix build .#prebuilt --system ${{ matrix.system }}
+
       - name: Test default --help
         if: github.event_name != 'pull_request'
         run: nix run .#default -- --help
@@ -73,6 +76,10 @@ jobs:
       - name: Test TUI --help
         if: github.event_name != 'pull_request'
         run: nix run .#acryl -- --help
+
+      - name: Test prebuilt --help
+        if: github.event_name != 'pull_request'
+        run: nix run .#prebuilt -- --help
 
       - name: Test desktop --help
         if: github.event_name != 'pull_request'
