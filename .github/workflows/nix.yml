@@ -1,0 +1,95 @@
+name: Nix
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - flake.nix
+      - flake.lock
+      - "**/*.nix"
+      - .github/workflows/nix.yml
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - package.json
+  push:
+    branches: [main]
+    paths:
+      - flake.nix
+      - flake.lock
+      - "**/*.nix"
+      - .github/workflows/nix.yml
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - package.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nix-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build (${{ matrix.system }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - system: x86_64-linux
+            runner: ubuntu-latest
+          - system: aarch64-linux
+            runner: ubuntu-24.04-arm
+          - system: aarch64-darwin
+            runner: macos-14
+          # x86_64-darwin uses nixpkgs-26.05-darwin legacy pin
+          - system: x86_64-darwin
+            runner: macos-13
+
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          submodules: recursive
+
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+
+      # magic-nix-cache is Linux-only: the v14 static binary on arm64-darwin
+      # fails with `dyld: Symbol not found: __ZNSt13exception_ptr...` because
+      # it was built against a newer libc++ than the macos-14 runner ships.
+      # See DeterminateSystems/nix-installer#1684 and llvm/llvm-project#86077.
+      # Darwin builds work without the cache, just slower.
+      - uses: DeterminateSystems/magic-nix-cache-action@908b263ff629f4cc17666315b7fd3ec127c6244d # v14
+        if: runner.os == 'Linux'
+        with:
+          use-flakehub: false
+
+      - name: Check flake
+        run: nix flake check --no-build
+
+      - name: Build acryl TUI
+        run: nix build .#acryl --system ${{ matrix.system }}
+
+      - name: Build acryl-desktop
+        run: nix build .#acryl-desktop --system ${{ matrix.system }}
+
+      - name: Build prebuilt
+        run: nix build .#prebuilt --system ${{ matrix.system }}
+
+      - name: Test default --help
+        if: github.event_name != 'pull_request'
+        run: nix run .#default -- --help
+
+      - name: Test TUI --help
+        if: github.event_name != 'pull_request'
+        run: nix run .#acryl -- --help
+
+      - name: Test prebuilt --help
+        if: github.event_name != 'pull_request'
+        run: nix run .#prebuilt -- --help
+
+      - name: Test desktop --help
+        if: github.event_name != 'pull_request'
+        run: nix run .#acryl-desktop -- --help

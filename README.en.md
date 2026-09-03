@@ -67,6 +67,44 @@ acryl
 
 The `acryl` command starts the TUI. It is separate from the Desktop app so terminal users do not need Electron, and desktop users do not receive an unexpected global executable.
 
+### Nix (Flake)
+
+The project provides a Nix flake that builds the TUI and Desktop from source. Nix with flakes enabled is required.
+
+```bash
+# Run the TUI (default output)
+nix run github:acryldev/acryl
+
+# Run the Desktop GUI
+nix run github:acryldev/acryl#acryl-desktop
+
+# Install to your Nix profile
+nix profile install github:acryldev/acryl
+
+# Specific release (the flake builds from source at every git tag)
+nix run github:acryldev/acryl/v0.1.19
+
+# Enter a development shell
+nix develop github:acryldev/acryl
+```
+
+The flake exposes `packages.<system>.acryl` (TUI, from source, also `#default`), `packages.<system>.prebuilt` (prebuilt release binary with bundled Node runtime), `packages.<system>.acryl-desktop`, and `devShells.<system>.default`.
+
+### Devbox
+
+For a reproducible development environment without managing Nix tooling manually, use [Devbox](https://www.jetify.com/devbox):
+
+```bash
+# Install Devbox (if not already installed)
+curl -fsSL https://get.jetify.dev/devbox | bash
+
+# Enter the development environment
+devbox shell
+
+# Build the project
+corepack pnpm build
+```
+
 ### Local Web surface
 
 Start the browser surface explicitly when you want it:
