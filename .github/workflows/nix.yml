@@ -56,7 +56,13 @@ jobs:
 
       - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
 
+      # magic-nix-cache is Linux-only: the v14 static binary on arm64-darwin
+      # fails with `dyld: Symbol not found: __ZNSt13exception_ptr...` because
+      # it was built against a newer libc++ than the macos-14 runner ships.
+      # See DeterminateSystems/nix-installer#1684 and llvm/llvm-project#86077.
+      # Darwin builds work without the cache, just slower.
       - uses: DeterminateSystems/magic-nix-cache-action@908b263ff629f4cc17666315b7fd3ec127c6244d # v14
+        if: runner.os == 'Linux'
         with:
           use-flakehub: false
 
