@@ -1,3 +1,39 @@
+## 2026-09-07 - mental model: factory / car / driver
+
+Commit: `b4fb36aeb91665d96e9b96c5e22c43c095e269e1`
+
+Added `docs/acryl/MENTAL-MODEL-factory-car-driver.md`, a canonical non-normative
+framing for the engine-swap work. The factory (ACRYL) never changes and owns
+continuity - room, context relay, task artifacts, worker identity, the canonical
+durable session record, the capability-package format. The car (the harness
+engine / `AcrylEngine`) is what M9 makes swappable (`dsh` <-> `pi`). The car's
+subsystems (steering, dashboard, tools, memory) are Cordis plugins, swappable
+independently by Loader row. The driver / brain is the LLM model, a separate
+per-turn concern - "engine swap" never means the model. Records the DSH/Cordis
+(modular) and pi.dev (minimal efficient core) philosophies, the caveat that the
+car runs on rails *inside* the factory for its whole life (continuity is
+retained by the building, not handed between cars), and the terminology clash
+with the source diagram's "model" label. Linked from
+`docs/onboarding/orientation_spec_acryl.md` §3 and `docs/ACRYL-ROADMAP.md` M9.
+
+## 2026-09-07 - analyze + wayfinder follow-ups for the engine swap
+
+Commits: `cac8f33` (028 `/speckit-analyze` fixes), `620a19c` + `80c3f25`
+(`specs/000-wayfinding/issues/06-zero-harness-driver.md`).
+
+Ran `/speckit-analyze` on `specs/028-harness-engine-swap`: 0 critical, 0 high;
+applied 8 doc-consistency fixes (resolver name, `ctx.runtime.engine` shape, pi
+pin now cites `research-pi-spike.md`, Cordis Law 7 row, `engine-collision`
+assertion, an automated room/artifact-invariance task T028b, `AcrylEngineName`
+package-ownership resolved before coding). Added Wayfinder ticket 06: the
+Zero-Harness composable driver as a post-M9 candidate (a minimal engine that
+composes pi-ai + Cordis + DSH prompt discipline and provisions task-scoped
+Cordis tool-plugins in a freeze-then-run phase), with 6 open questions. The
+same ticket records the settled decision to consume `pi` as pinned npm packages
+(`optionalDependencies`, exact `0.85.x`), not a git submodule: updates happen
+only on deliberate ACRYL-dev sync either way, but npm means adopting a published
+release with a changelog rather than a raw, often mid-refactor commit range.
+
 ## 2026-09-07 - specify M9 hybrid DSH + Pi engine follow-on
 
 Commit: `e6cad5254ab89a3dc1254ec4e83bb4e4c44a566f`
