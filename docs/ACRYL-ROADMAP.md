@@ -234,6 +234,11 @@ Blend without confusing ACRYL-native packages with external DSH packages.
 
 ### M9 - Interchangeable harness engine (DSH and pi)
 
+Mental model: the factory (ACRYL) never changes; the car (the harness engine)
+is what this milestone makes swappable; the driver (the LLM model) is a
+separate, per-turn concern. See
+[the factory / car / driver mental model](acryl/MENTAL-MODEL-factory-car-driver.md).
+
 - Make the agent **engine** - the owner of the agent loop, durable sessions,
   tools, models, and approvals - a replaceable provider behind
   `acryl-harness-runtime`, not a hard-wired DeepSeek Harness `startDirectHost()`

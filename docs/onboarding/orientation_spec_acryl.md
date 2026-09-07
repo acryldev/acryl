@@ -69,6 +69,10 @@ Record durable decisions in the repository.
 
 ## 3. The runtime model
 
+For the one-picture version - the factory (ACRYL, never swapped), the car (the
+harness engine, swappable per M9), the driver (the LLM model) - see
+[the factory / car / driver mental model](../acryl/MENTAL-MODEL-factory-car-driver.md).
+
 ACRYL continues key architecture from DeepSeek Harness while remaining an
 independent product:
 
