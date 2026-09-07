@@ -226,6 +226,38 @@ project continuity or relying on hidden private conversation state.
 **Exit criterion:** users can safely create, apply, recover, and extend an ACRYL
 Blend without confusing ACRYL-native packages with external DSH packages.
 
+### M9 - Interchangeable harness engine (DSH and pi)
+
+- Make the agent **engine** - the owner of the agent loop, durable sessions,
+  tools, models, and approvals - a replaceable provider behind
+  `acryl-harness-runtime`, not a hard-wired DeepSeek Harness `startDirectHost()`
+  call. DSH-in-CLI-mode is the first engine; `pi` (`pi.dev` / prime-agent) is
+  the second; a declared DSH+pi composition is a later candidate.
+- Surfaces (`acryl-tui`, Electron, Web) talk only to the engine-neutral
+  `acryl-control` capability API. No surface imports a DSH-only or pi-only
+  bootstrap. This milestone depends on M2 normalizing that API.
+- Keep the ACRYL room, context relay, task artifacts, decisions, and canonical
+  worker identity constant across an engine swap. Engine-native session stores
+  are projections into ACRYL durable state, never a competing source of truth.
+- Preserve one writable runtime owner per profile and one Cordis lifecycle
+  system. A single active engine owns the Cordis root for its episode; the combo
+  engine, if built, must declare one owner and an ordered disposal chain.
+- Select the engine per launch and/or per profile with a stable Loader row.
+  Classify a mid-project engine change as HOT, WARM, or COLD explicitly.
+- Each engine adapter carries explicit capability, cancellation, disposal,
+  authentication, HMR, sandbox, approval, and fidelity contracts. Honest
+  documented degradation is allowed where an engine cannot match a contract.
+
+**Depends on:** M2 (normalized shared runtime capability API).
+
+**Unlocked by:** Wayfinder ticket *Lock the interchangeable harness-engine
+destination (DSH <-> pi)* in `specs/000-wayfinding/issues/`.
+
+**Exit criterion:** `acryl tui --engine pi` runs a prompt end-to-end through the
+pi engine, and the ACRYL room/task state produced by a prior DSH session is
+still visible and continuable, with no duplicate runtime owner and full
+disposal on exit.
+
 ## Non-negotiable invariants
 
 - One writable runtime owner per profile.

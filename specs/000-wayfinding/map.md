@@ -23,6 +23,16 @@ on the later ACRYL-1+ specs; it is no longer the first build.
 - [ACRYL ↔ DeepSeek Harness Gap Analysis](../../docs/acryl/ACRYL_DSH_GAP_ANALYSIS.md) — prior research (not a closed Wayfinder ticket): DSH already has sessions, subagent providers, agent teams, PTY, and `dynamicCordisRunner`. Real gaps are room identity, structured relay, capability package format, and the agent-agnostic inversion.
 - [First feature is Development Canvas](../../specs/015-development-canvas/spec.md) — user override: Orca-inspired canvas with + for Terminal / File / Browser is the first serious plugin surface; Hello World is the teaching guide in `docs/cordisplugins/`.
 
+## Open decisions
+
+- [Lock the interchangeable harness-engine destination (DSH <-> pi)](issues/04-lock-harness-engine-swap.md)
+  — grilling ticket for the new roadmap milestone **M9 - Interchangeable
+  harness engine**. The engine (agent loop / sessions / tools / approvals owner)
+  becomes a replaceable provider behind `acryl-harness-runtime`; DSH-in-CLI-mode
+  is engine #1, pi is engine #2, DSH+pi combo is a later candidate. Depends on
+  M2. Unfilled `specs/028-acryl-harness-engine-swap/` is NOT created until this
+  ticket resolves.
+
 ## Not yet specified
 
 - Exact `ctx.acrRoom` / `ctx.acrRelay` / `ctx.acrAgentControl` service shapes (wait for destination lock + first-slice grill).
