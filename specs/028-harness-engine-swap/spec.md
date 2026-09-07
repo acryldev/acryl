@@ -61,7 +61,7 @@ that only one runtime owner existed for the session.
 1. **Given** an authenticated profile and a stable `--engine pi` Loader row,
    **When** the user runs `acryl tui --engine pi` and submits a prompt,
    **Then** the surface renders pi-engine transcript and tool events and shows
-   `ctx.runtime` resolved to `pi`.
+   `ctx.runtime.engine` resolved to `pi`.
 2. **Given** the same profile has prior DSH-engine room and task artifacts,
    **When** the pi-engine session is open,
    **Then** those artifacts are visible and unchanged in the surface.
@@ -120,7 +120,7 @@ is the highest-risk slice (disposal ordering, PENDING correctness, no duplicate
 registration). It is valuable only after US1 and US2 are solid.
 
 **Independent Test**: Start a profile on `dsh`, run a turn, change the row to
-`pi`, run `/reload`, confirm the surface now shows `ctx.runtime` = `pi`, confirm
+`pi`, run `/reload`, confirm the surface now shows `ctx.runtime.engine` = `pi`, confirm
 the previous engine's resources are all disposed (no leak, no duplicate
 registration) via a Loader/activation test, and confirm room/task/session
 continuity across the swap.
@@ -129,7 +129,7 @@ continuity across the swap.
 
 1. **Given** a running `dsh`-engine profile, **When** the operator sets the row
    to `pi` and runs `/reload`, **Then** the runtime disposes the `dsh` engine in
-   order, activates the `pi` engine, and the surface shows `ctx.runtime` = `pi`.
+   order, activates the `pi` engine, and the surface shows `ctx.runtime.engine` = `pi`.
 2. **Given** an in-flight turn at `/reload` time, **When** the swap begins,
    **Then** the turn is cancelled cleanly before the old engine is disposed.
 3. **Given** a consumer that injects the engine capability, **When** the engine
@@ -168,8 +168,9 @@ continuity across the swap.
 ### Functional Requirements
 
 - **FR-001**: The system MUST expose the agent engine as a single named,
-  replaceable capability resolved from context (`ctx.runtime`), with the value
-  identifying the active engine (`dsh` or `pi`).
+  replaceable capability resolved from context. A one-field marker service is
+  registered at the engine root so any plugin reads the active engine as
+  `ctx.runtime.engine` (`dsh` or `pi`) without importing an adapter.
 - **FR-002**: `acryl-harness-runtime` MUST define one engine-neutral contract
   (start, durable-session access, prompt submission, cancellation, streamed
   transcript/tool projection, ordered disposal) that both a DSH adapter and a pi

@@ -21,7 +21,7 @@ by either phase; a DSH-authored durable session is resumable under pi.
 
 **Language/Version**: TypeScript, Node `^22.19.0` or `>=24.0.0`, ESM. PNPM `11.8.0` via Corepack, `node-linker=isolated`.
 
-**Primary Dependencies**: `@deepseek-ai/cordis` 4.0.1 (vendored), `@deepseek-ai/dsh-*` (pinned submodule, unmodified), `@deepseek-ai/dsh-app-boot`, `@earendil-works/pi-tui` 0.84.2 (rendering). Phase B adds pinned `pi` engine packages (`ai`/`agent`) - exact pin is `NEEDS PIN` (research.md open items).
+**Primary Dependencies**: `@deepseek-ai/cordis` 4.0.1 (vendored), `@deepseek-ai/dsh-*` (pinned submodule, unmodified), `@deepseek-ai/dsh-app-boot`, `@earendil-works/pi-tui` 0.84.2 (rendering). Phase B adds pinned `pi` engine packages - `@earendil-works/pi-coding-agent` + `@earendil-works/pi-agent-core` + `@earendil-works/pi-ai` (the SDK `createAgentSessionRuntime` path), exact `0.85.x`, MIT, as `optionalDependencies` - per [research-pi-spike.md](./research-pi-spike.md) §1/§4.
 
 **Storage**: ACRYL-owned canonical session record via `DurableSessionMessage` port (`acryl-harness-runtime`). Engine-native session stores are projection sources only. Profile/Loader config on disk (`cordis.yml` / patches). No new store.
 
@@ -54,6 +54,7 @@ by either phase; a DSH-authored durable session is resumable under pi.
 | Cordis Law 4 (services vs events; waterfall `next()`) | PASS | Engine ops are service calls; an `engine.swap` observation event is `emit` (sync, no veto). No waterfall interception introduced. |
 | Cordis Law 5 (deliberate scope) | PASS | Engine adapter scope = root (it *is* the runtime for the episode). `ctx.runtime` resolves at root. |
 | Cordis Law 6 (stable ids, typed config, fail loud) | PASS | Row id `acryl-engine`; config `{ engine: 'dsh'|'pi' }` as sync StandardSchema; unknown engine throws before `boot()` (FR-005). |
+| Cordis Law 7 (generated plugins testable/least-privilege/rollbackable) | N/A | No generated capability here (see Principle V row). HOT-swap rollback is HMR transactional apply, not a generated-plugin concern. |
 | Cordis Law 8 (never assume load order) | PASS | Consumers PENDING until `AcrylEngine` present; swap reactivation keyed on service availability, not row order. |
 | Desktop constraints (PNPM, headless-safe, HMR) | PASS | Corepack PNPM only; all gates headless; HMR rule preserved from `bootAcrylHarnessProfile`. |
 | One writable runtime owner per profile | PASS | FR-009; single `acryl-engine` row with an enum makes "two engines at once" unrepresentable. |
@@ -88,7 +89,7 @@ Justified in research.md Decision 1 - the alternative (block M9 on the full
 **Provides**
 
 - `AcrylEngine` interface + `registerAcrylEngineAdapter(owner, adapter)` +
-  `resolveAcrylEngine(name)` registry (`acryl-harness-runtime`).
+  `resolveAcrylEngineAdapter(name)` registry (`acryl-harness-runtime`).
 - `ctx.runtime: AcrylRuntimeMarker` service (`{ engine: 'dsh' | 'pi' }`).
 - Engine-neutral session client (promote/confirm `AcrylSessionClient` from
   `acryl-control/contracts/session.ts` as the surface-facing path).
@@ -187,6 +188,7 @@ Per `docs/onboarding/orientation_spec_acryl.md` §10 the Cordis completion bar:
 specs/028-harness-engine-swap/
 ├── plan.md              # this file
 ├── research.md          # M2 assessment + pi/Chord/selection/resume decisions
+├── research-pi-spike.md # pi package layout, entry-point map, pin, Chord audit
 ├── data-model.md        # engine entities + acryl-engine row schema
 ├── quickstart.md        # runnable validation scenarios
 ├── contracts/
@@ -245,13 +247,15 @@ implementation before a factory).
 | Phase | Delivers | User story | Gate |
 | --- | --- | --- | --- |
 | **A - engine seam + `dsh` adapter + TUI re-point (M2-slice-α)** | `AcrylEngine` interface, registry, `dsh` adapter (behavior-preserving), `ctx.runtime`, TUI consumes the seam and the engine-neutral session client; direct `acryl-harness-runtime` bootstrap imports removed from the surface | foundational (enables US1-US3) | SC-004 regression: default `dsh` path unchanged; existing TUI + canvas tests green; new registry/adapter Loader tests |
-| **B1 - `pi` adapter** | research spike (`NEEDS PIN`, entry-point map, Chord-shim surface); `adapter-pi.ts` boots pi in its own root; projects into the canonical record; meets HMR/sandbox/approval contracts | US1 | SC-001, SC-002, SC-003, SC-008; cross-resume SC-006 |
+| **B1 - `pi` adapter** | research spike closed in [research-pi-spike.md](./research-pi-spike.md) (pin `0.85.x`, entry-point map, Chord audit); `adapter-pi.ts` boots pi in its own root; projects into the canonical record; meets HMR/sandbox/approval contracts | US1 | SC-001, SC-002, SC-003, SC-008; cross-resume SC-006 |
 | **B2 - selection** | `acryl-engine` Loader row + schema; `--engine` launch override; unknown-name loud failure | US2 | SC-005; row + override tests |
 | **B3 - HOT-swap** | `/reload` engine swap; ordered disposal; PENDING → reactivation; in-flight cancellation; transactional rollback | US3 | SC-007; leak / repeated-swap tests |
 
 Each phase is a focused-commit checkpoint with a `docs/DEVELOPMENT-LOG.md`
-entry. Phase B1 does not start until its research spike closes the research.md
-open items.
+entry. The Phase B1 research spike is closed (`research-pi-spike.md`); the two
+remaining B1 design items (pi credential path vs `024-acryl-cli-login`; pi
+approval bridge to `ctx.approval`) are tasks T018/T019 and must land before the
+`pi` adapter implementation task.
 
 ## Complexity Tracking
 
