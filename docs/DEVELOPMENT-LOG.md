@@ -1,3 +1,24 @@
+## 2026-09-07 - roadmap M9: interchangeable harness engine (DSH and pi)
+
+Commit: `4a703fe`
+
+Added a new roadmap milestone. Until now ACRYL has one hard-wired engine:
+DeepSeek Harness run in CLI mode, composed in-process as the single Cordis root
+by `acryl-harness-runtime` via `startDirectHost()` (pi-tui is only a rendering
+library, not the engine). M9 makes the engine - the owner of the agent loop,
+durable sessions, tools, models, and approvals - a replaceable provider behind
+`acryl-harness-runtime`. DSH-in-CLI-mode is engine #1; `pi` (`pi.dev` /
+prime-agent) is engine #2; a declared DSH+pi composition is a later candidate.
+Surfaces call only the engine-neutral `acryl-control` API, so M9 depends on M2.
+The ACRYL room, context relay, task artifacts, and worker identity stay constant
+across an engine swap; engine-native session stores become projections into
+ACRYL durable state.
+
+This is a decision-pending milestone: the grilling ticket *Lock the
+interchangeable harness-engine destination (DSH <-> pi)*
+(`specs/000-wayfinding/issues/04-lock-harness-engine-swap.md`) must resolve
+before `specs/028-acryl-harness-engine-swap/` is created with `/speckit-specify`.
+
 ## 2026-09-02 - align exact PNPM pins to the 11.8.0 root release
 
 Commit: `ea62ec13ced9268c2c9afc70b26dd12432469ef5`
