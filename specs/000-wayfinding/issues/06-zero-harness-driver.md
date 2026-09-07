@@ -18,6 +18,20 @@ Edit / Bash), it starts with **one tool: READ**. The agent reads the current
 codebase and the task, then **assembles - or authors - the tools it needs** for
 that task, registering them as it goes.
 
+## Prior art
+
+- **DSH ships a "Minimal" runtime mode** - persistent bash + string-replace
+  only (one of DSH's four modes: Standard / PTC-Code / Minimal / Creator; DSH
+  ran its own benchmarks in Minimal mode). Per DataCamp's *DeepSeek Harness vs
+  Claude Code* review. This is a DSH-flavored proto-form of the idea: a
+  deliberately stripped toolbelt. The Zero-Harness driver is "Minimal mode taken
+  further" - start from READ, provision the rest as task-scoped Cordis
+  tool-plugins - and made **engine-neutral** rather than a DSH mode. Evidence the
+  direction is real, not that the specific "only READ" framing is right (see the
+  grill below).
+- pi's tree-shakeable `./providers/*` and thin transport-neutral primitives are
+  the other half of the "minimal efficient core" the driver would compose.
+
 ## Why this is ACRYL-native (not crazy)
 
 - It is the most on-brand of the three engines: Cordis composition, "everything

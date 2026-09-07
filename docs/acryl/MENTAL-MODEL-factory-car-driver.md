@@ -86,3 +86,47 @@ Tier 3  Car (harness engine)     HOT / WARM / COLD    M9 - dsh <-> pi <-> (combo
 Future Tier 3 cars: the DSH+pi combo engine (ticket 04 follow-on) and the
 Zero-Harness composable driver (ticket 06). Both are post-M9; both are still
 just cars driving inside the same factory.
+
+## External positioning: DSH gave the direction; ACRYL builds the product
+
+DataCamp's *DeepSeek Harness vs Claude Code*
+(<https://www.datacamp.com/blog/deepseek-harness-vs-claude-code>, developer
+preview review) describes DSH as *"not a finished product"* but *"a configurable
+infrastructure platform"* where the agent loop *"can be replaced through
+`cordis.patch.yml`"* and *"the runtime itself is the project"*. It lists the
+friction: hand-authored config, manual credentials / model IDs / endpoint rules,
+*"updates may break existing setups"*, single-surface CLI, a broken Windows
+sandbox, steeper onboarding.
+
+That review is the case for ACRYL. DSH demonstrated the direction - loop as a
+plugin, model-agnostic, append-only event-stream sessions, replaceable
+sandboxes. ACRYL turns the direction into something a person starts and uses:
+choose an engine, run on a real project, across CLI / GUI / Web, with the room
+and continuity constant.
+
+| Layer | Owner | Swap unit | Review's framing |
+| --- | --- | --- | --- |
+| Fixed loop, one model | Claude Code | nothing (skills/hooks wrap a constant) | *"packages its built-in loop"* |
+| Loop as a plugin, many models | **DSH** | the loop, via `cordis.patch.yml` | *"the loop itself can be replaced"* |
+| Harness as a plugin, many harnesses | **ACRYL** (M9) | the whole engine (`dsh` <-> `pi` <-> ...), via a Loader row + `/reload` | not in the review - the gap ACRYL fills |
+| Continuity above all harnesses | **ACRYL factory** | never swapped | - |
+
+The review's line *"Harness can host Claude, but Claude Code cannot host
+DeepSeek"* is the asymmetry ACRYL generalizes: **ACRYL can host any harness; no
+harness hosts ACRYL.**
+
+Two findings from the review that shape M9:
+
+- The hands-on test produced **byte-identical patches**; the 55s vs 125s gap was
+  **approval friction + a broken sandbox**, not loop or model quality. Engines
+  are more interchangeable than they look. The engine adapter's real job is the
+  fidelity contract - approvals, sandbox, HMR (028 FR-012 / SC-008) - and ACRYL
+  owning the approval / sandbox UX so every car rides smoothly.
+- DSH ships a **"Minimal" runtime mode** (persistent bash + string-replace
+  only). It is a proto-form of the Zero-Harness driver (ticket 06).
+
+**Calibration:** "start ACRYL, choose engine, go" is the destination, not the
+current state. Absorbing the config complexity the review describes is M2 + M3 +
+`specs/024-acryl-cli-login` + the 028 engine adapters. M9 wires only `acryl-tui`;
+Electron and Web adopt the engine-neutral path in later slices. State the
+external claim to match the built state, per the constitution.
