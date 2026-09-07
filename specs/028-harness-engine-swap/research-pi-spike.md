@@ -104,6 +104,24 @@ Both are lint-enforceable (a forbidden-import rule in `acryl-harness-runtime`).
 replicated-state / delta model is interesting for the future ACRYL room), never
 a loaded runtime.
 
+### Strategic note: Chord and Cordis are converging
+
+Chord is under active development (commits within days of 2026-09-07) and is
+pi.dev's take on the same composability model Cordis implements - plugins that
+declare provides/requires, activate providers before consumers, dispose in
+reverse dependency order, stable service facades across provider replacement.
+The vocabularies map almost one-to-one (Chord *facet* ~ Cordis *plugin/fiber*,
+Chord *service token* ~ Cordis *service key*, Chord *replicated state* ~ a
+future ACRYL room projection).
+
+This does **not** change the M9 decision (one Cordis lifecycle system; consume
+pi's `Agent`/SDK, not its composition runtime). But it is worth a Wayfinder
+ticket **after M9 ships**: if Chord stabilizes, an ACRYL engine could in
+principle host pi's chord facets *under* a Cordis-owned boundary, or the two
+runtimes could share a service-token bridge. Recorded as a future decision, not
+M9 scope. Flag: `specs/000-wayfinding` candidate "Cordis <-> Chord
+interop".
+
 ## 4. Version pin
 
 - Pin `@earendil-works/pi-coding-agent`, `@earendil-works/pi-agent-core`,
