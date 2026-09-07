@@ -140,10 +140,14 @@ Decision from `specs/028-harness-engine-swap/research-pi-spike.md` (§1, §4):
 
 Submodule rejected because:
 
-- pi is pre-1.0, lockstep-versioned, shipping fast, and *actively rewriting its
-  own composition layer* (`@earendil-works/chord`). A live submodule lands every
-  such change unreviewed; a pinned npm range absorbs pi's innovations
-  **deliberately, per release, after a changelog read**.
+- Updates must only happen when ACRYL developers **deliberately sync** the pi
+  upstream - never a live feed. Both a pinned npm range and a pinned submodule
+  satisfy that (a submodule only moves on an explicit `git submodule update` +
+  commit). The difference is *what you review at sync time*: with npm you adopt
+  a **published release with a changelog**; with a submodule you adopt a **raw
+  commit range**, and pi is pre-1.0, lockstep-versioned, shipping fast, and
+  *actively rewriting its own composition layer* (`@earendil-works/chord`), so
+  that range is often mid-refactor.
 - The DSH-submodule precedent does not transfer: DSH is a *stable harness you
   compose against*; pi is not stable yet. Same mechanism, opposite risk.
 - A submodule vendors pi's whole monorepo + its own pnpm workspace + Chord + the
