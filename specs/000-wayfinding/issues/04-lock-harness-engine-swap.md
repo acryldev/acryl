@@ -1,8 +1,38 @@
 # Lock the interchangeable harness-engine destination (DSH <-> pi)
 
 Type: grilling
-Status: open
+Status: resolved 2026-09-07
 Unlocks: M9 - Interchangeable harness engine; `specs/028-acryl-harness-engine-swap/`
+
+## Resolution (user, 2026-09-07)
+
+1. **pi as engine**: upstream `pi` / prime-agent consumed as a **library,
+   composed in-process**, with its **own Cordis root**. Exposed as
+   `ctx.runtime` valued `'dsh'` or `'pi'`.
+2. **Boundary**: `acryl-harness-runtime` becomes an interface with a DSH adapter
+   and a pi adapter. **Hard-depends on M2.** Note: pi.dev ships an unfinished
+   composition runtime of their own, `@earendil-works/chord`
+   (github.com/earendil-works/pi/tree/main/packages/chord) - conceptually
+   parallel to Cordis (plugins/facets/services/replicated-state/delta/remote
+   boundaries, Go-like context). ACRYL keeps **one Cordis lifecycle system**;
+   Chord is a source to mine / a compatibility reference, not a second runtime
+   to adopt. The pi engine adapter maps pi's loop onto Cordis seams.
+3. **Durable session across a swap**: a DSH-created session **can be resumed
+   under pi**. Users try different engines against the same session. Canonical
+   record stays ACRYL-owned; engine-native stores project into it.
+4. **DSH+pi combo**: **follow-on** after single-engine swap works. Out of scope
+   for the first ledger.
+5. **Selection**: `--engine pi` bound to a **Loader row**. Mid-project change is
+   **HOT** - `/reload` makes it immediately effective.
+6. **First slice**: `acryl tui --engine pi` runs a prompt end-to-end through pi
+   while prior DSH room state stays visible. Confirmed walking skeleton.
+7. **HMR / sandbox / approvals**: the pi engine **must match** the Cordis
+   contracts (no degradation shortcut).
+
+Next: read the Cordis system guide, write the six-part mini-design into
+`specs/028-acryl-harness-engine-swap/plan.md` + `research.md`, then
+`/speckit-specify`.
+
 
 ## Context
 

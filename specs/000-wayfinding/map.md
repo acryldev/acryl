@@ -23,15 +23,18 @@ on the later ACRYL-1+ specs; it is no longer the first build.
 - [ACRYL ↔ DeepSeek Harness Gap Analysis](../../docs/acryl/ACRYL_DSH_GAP_ANALYSIS.md) — prior research (not a closed Wayfinder ticket): DSH already has sessions, subagent providers, agent teams, PTY, and `dynamicCordisRunner`. Real gaps are room identity, structured relay, capability package format, and the agent-agnostic inversion.
 - [First feature is Development Canvas](../../specs/015-development-canvas/spec.md) — user override: Orca-inspired canvas with + for Terminal / File / Browser is the first serious plugin surface; Hello World is the teaching guide in `docs/cordisplugins/`.
 
-## Open decisions
+## Decisions so far (continued)
 
-- [Lock the interchangeable harness-engine destination (DSH <-> pi)](issues/04-lock-harness-engine-swap.md)
-  — grilling ticket for the new roadmap milestone **M9 - Interchangeable
-  harness engine**. The engine (agent loop / sessions / tools / approvals owner)
-  becomes a replaceable provider behind `acryl-harness-runtime`; DSH-in-CLI-mode
-  is engine #1, pi is engine #2, DSH+pi combo is a later candidate. Depends on
-  M2. Unfilled `specs/028-acryl-harness-engine-swap/` is NOT created until this
-  ticket resolves.
+- [Interchangeable harness engine (DSH <-> pi)](issues/04-lock-harness-engine-swap.md)
+  — RESOLVED 2026-09-07. Roadmap milestone **M9**. pi/prime-agent consumed as a
+  library, in-process, with its own Cordis root; `ctx.runtime` = `'dsh'` | `'pi'`.
+  `acryl-harness-runtime` becomes a DSH-adapter / pi-adapter interface, hard-depends
+  on M2. DSH sessions resumable under pi (canonical record stays ACRYL-owned).
+  `--engine pi` via a Loader row, HOT-swappable with `/reload`. DSH+pi combo is a
+  follow-on. pi engine must match Cordis HMR/sandbox/approval contracts. pi.dev's
+  own unfinished runtime `@earendil-works/chord` is a reference to mine, not a
+  second lifecycle system to adopt. Next: `specs/028-acryl-harness-engine-swap/`
+  via `/speckit-specify`.
 
 ## Not yet specified
 
