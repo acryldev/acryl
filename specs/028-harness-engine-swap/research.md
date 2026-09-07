@@ -276,11 +276,17 @@ the transcript projection, not dropped silently (FR-007).
 
 ## Open items carried to tasks
 
-| Item | Phase | Blocker for |
+The `pi` research spike is done - see [research-pi-spike.md](./research-pi-spike.md)
+(pi `v0.85.1`, MIT; build on the `@earendil-works/pi-coding-agent` SDK +
+`pi-agent-core` + `pi-ai`; **no Chord shims needed** on the SDK path, enforce
+two forbidden-import rules).
+
+| Item | Phase | Status |
 | --- | --- | --- |
-| `NEEDS PIN`: exact `pi` commit/version + entry-point map (loop, session, tools, streaming) | B research spike | Phase B `/speckit-tasks` |
-| Chord-shim surface area (which pi paths need Cordis-backed shims) | B research spike | Phase B design |
-| Is `DurableSessionMessage` free of DSH-only fields? | A | Cross-engine resume |
-| pi bundle-size impact on the `acryl` CLI publish closure | B | `025` size gate |
-| pi auth profile shape vs `024-acryl-cli-login` seam | B | pi engine activation |
-| Roadmap footnote: M9 Phase A carries M2-slice-α | A (docs) | roadmap accuracy |
+| `NEEDS PIN` + pi entry-point map | B spike | **Closed** (spike §2, §4) |
+| Chord-shim surface area | B spike | **Closed** - none needed (spike §3) |
+| Is `DurableSessionMessage` free of DSH-only fields? | A | Open (Phase A task) |
+| pi bundle-size measurement → optional-dep vs `acryl-engine-pi` package | B1 | Open (measurement task; strategy chosen, spike §5) |
+| pi `pi-ai` credential store vs `024-acryl-cli-login` seam | B1 | Open (design task) |
+| pi `ToolCallEvent` interception → Cordis `ctx.approval` bridge | B1 | Open (design task) |
+| Roadmap footnote: M9 Phase A carries M2-slice-α | A (docs) | **Done** (`c44b334`) |
