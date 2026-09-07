@@ -1,6 +1,6 @@
 ## 2026-09-07 - specify M9 hybrid DSH + Pi engine follow-on
 
-Commit: `e6cad5225f7a0d51274ce614196d4401858f4380`
+Commit: `e6cad5254ab89a3dc1254ec4e83bb4e4c44a566f`
 
 Added `specs/029-acryl-hybrid-engine/` as the separately scoped follow-on to
 the DSH/Pi engine-swap ledger. It defines a real hybrid engine—not two
