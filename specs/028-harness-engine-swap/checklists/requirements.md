@@ -36,7 +36,10 @@
   product's own domain vocabulary from the roadmap, constitution, and runtime
   contract, not incidental implementation choices, so they are retained
   deliberately.
-- Hard dependency on M2 is recorded in FR-003 and Assumptions; `/speckit-plan`
-  must confirm the M2 contract exists or mark this ledger blocked.
-- The six-part Cordis mini-design (per `AGENTS.md` / constitution) is owed in
-  `plan.md` / `research.md` before `/speckit-tasks`.
+- Hard dependency on M2: assessed in `research.md` Decision 1. M2 is partial
+  (contract shapes exist; the TUI is still engine-coupled). Resolved by
+  delivering a minimal M2 seam ("M2-slice-alpha") as M9 Phase A. Not blocked.
+- The six-part Cordis mini-design is delivered in `plan.md` (post-`/speckit-plan`).
+- Design artifacts complete: `research.md`, `plan.md`, `data-model.md`,
+  `contracts/engine-runtime.md`, `quickstart.md`. Ready for `/speckit-tasks`
+  (Phase A + B2 + B3); Phase B1 gated on the `research.md` pi research spike.

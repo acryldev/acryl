@@ -144,6 +144,12 @@ from another ACRYL surface.
 **Exit criterion:** TUI, Electron, and Web drive the same runtime semantics
 while retaining renderer-specific presentation code.
 
+> Note: M9 (`specs/028-harness-engine-swap`) carries a minimal slice of this
+> milestone ("M2-slice-alpha": an engine-neutral runtime seam in
+> `acryl-harness-runtime` + the TUI re-pointed off the direct DSH bootstrap),
+> scoped to what the engine swap needs. See `specs/028-harness-engine-swap/research.md`
+> Decision 1.
+
 ### M3 - Drain reusable profile and runtime management from Electron
 
 - Extract profile materialization, profile state, checkpoint/recovery,
