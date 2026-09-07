@@ -1,3 +1,19 @@
+## 2026-09-07 - specify M9 hybrid DSH + Pi engine follow-on
+
+Commit: `e6cad5225f7a0d51274ce614196d4401858f4380`
+
+Added `specs/029-acryl-hybrid-engine/` as the separately scoped follow-on to
+the DSH/Pi engine-swap ledger. It defines a real hybrid engine—not two
+independent agent sessions—with one canonical ACRYL session, turn, cancellation,
+and durable-record owner. The first composition has a declared, finite
+capability matrix: DSH contributes established trajectory, goal, plan, approval,
+and governed-tool behavior while Pi contributes its agent-loop behavior. Every
+advertised capability has exactly one owner and durable DSH/Pi/hybrid
+provenance. The ledger prohibits a second lifecycle authority, competing
+durable writers, automatic arbitrary feature mixing, and unverified fallback.
+Implementation remains dependent on `specs/028-harness-engine-swap/` providing
+the engine-neutral single-engine contract.
+
 ## 2026-09-07 - roadmap M9: interchangeable harness engine (DSH and pi)
 
 Commit: `4a703fe`
