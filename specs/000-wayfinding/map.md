@@ -43,6 +43,12 @@ on the later ACRYL-1+ specs; it is no longer the first build.
 - Capability package manifest / permission / provenance schema.
 - Declarative UI registry vs DSH conversation nodes.
 - ACRYL-6 and later ADE/UI/evolution work.
+- [A third engine: the Zero-Harness composable driver](issues/06-zero-harness-driver.md)
+  — candidate, not yet grilled. A minimal task-adaptive engine that composes
+  pi-ai + Cordis + DSH prompt discipline and provisions task-scoped tool-plugins
+  in a freeze-then-run phase. Post-M9, depends on the `AcrylEngine` seam and the
+  M5/M6 capability-package format. Same ticket records the settled decision to
+  consume pi as pinned npm packages, not a git submodule.
 
 ## Out of scope
 
