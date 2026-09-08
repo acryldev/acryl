@@ -47,6 +47,7 @@ import {
 } from '@earendil-works/pi-tui'
 import type { RenderOptions } from '../render.js'
 import { formatEvent, formatPendingToolCalls, formatShellRun, formatShellRunLive, formatStreamingText } from '../render.js'
+import { ACRYL_MARK_ROWS } from './acrylMark.js'
 import { buildContextLine, buildStatsLine } from './statsFormat.js'
 import { buildGoalBarText, buildPermissionText, buildQueuedText, buildStatusBarText, buildTerminalTitle, buildUpdateHintText } from './liveText.js'
 import { createTranscriptLine, DynamicText, padTranscriptText } from './text.js'
@@ -288,8 +289,8 @@ class TuiApp implements TuiHandle {
       const state = store.getSnapshot()
       return buildStatusBarText({
         sessionId: options.sessionId,
-        provider: options.provider,
-        model: options.model,
+        provider: state.activeModel?.provider ?? options.provider,
+        model: state.activeModel?.model ?? options.model,
         status: state.status,
         queuedCount: state.queued.length,
         presetLabel: state.preset?.current,
@@ -323,12 +324,14 @@ class TuiApp implements TuiHandle {
       ],
       { gap: 0 },
     )
-    // Fixed ACRYL header: the YLY pet (top-left, animated) beside the brand
-    // name + session info. Unlike the old whale banner this does not scroll
-    // with the transcript — the pet stays put while the conversation scrolls.
+    // Fixed ACRYL header: the YLY pet (top-left, animated) beside the block
+    // ACRYL mark + session info. Unlike the old whale banner this does not
+    // scroll with the transcript — the pet stays put while the conversation
+    // scrolls.
     const headerInfo = new DynamicText(() => {
       const { provider, model, cwd } = options
-      return [fg(theme.primary)('ACRYL'), '', `${provider}/${model}`, cwd].join('\n')
+      const mark = ACRYL_MARK_ROWS.map(row => fg(theme.primary)(row)).join('\n')
+      return [mark, '', `${provider}/${model}`, cwd].join('\n')
     })
     const header = new HStack(
       [
@@ -435,9 +438,9 @@ class TuiApp implements TuiHandle {
       case 'none':
         return undefined
       case 'modelProfile':
-        return new ModelProfileOverlay(store, actions)
+        return new ModelProfileOverlay(this.tui, store, actions)
       case 'login':
-        return new LoginOverlay(store, actions)
+        return new LoginOverlay(this.tui, store, actions)
       case 'trajectory':
         return new TrajectoryOverlay(this.tui, store, actions, getTool)
       case 'toolCards':
