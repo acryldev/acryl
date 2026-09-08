@@ -8,6 +8,13 @@
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
   },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.8.0",
+      "onFail": "warn"
+    }
+  },
   "scripts": {
     "build": "pnpm --filter acryl-control run build && pnpm --filter acryl-cli run build && pnpm --filter acryl-web run build && pnpm --filter dsh-community-market run build && pnpm --filter acryl-development-canvas run build && pnpm --filter acryl-desktop run build",
     "typecheck": "pnpm --filter acryl-control run typecheck && pnpm --filter acryl-cli run typecheck && pnpm --filter acryl-web run typecheck && pnpm --filter acryl-development-canvas run typecheck && pnpm --filter acryl-desktop run typecheck && pnpm --filter dsh-community-market run typecheck",
