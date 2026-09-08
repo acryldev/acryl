@@ -1,3 +1,11 @@
+## 2026-09-08 - Public README names the three actual ACRYL surfaces
+
+Commit: `cd39729b1da9d58d89312e34ddbcf1f3442f1141`
+
+Corrected the public surface diagram and installation language in `README.md`:
+ACRYL has a Desktop GUI, one CLI terminal surface, and a local Web surface.
+The TUI is the CLI's renderer, not an independent fourth product surface.
+
 ## 2026-09-08 - AGENTS.md: clean-architecture / DDD discipline rules
 
 Commit: `f250b6a`
