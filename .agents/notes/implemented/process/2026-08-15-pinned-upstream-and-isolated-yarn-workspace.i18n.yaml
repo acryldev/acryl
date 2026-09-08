@@ -1,5 +1,5 @@
 # Bilingual-pair consistency record: the git blob hash of each side as of the last
 # confirmed-consistent state. Both languages carry equal authority. Update both files
 # and re-record their hashes with git hash-object after editing either side.
-2026-08-15-pinned-upstream-and-isolated-yarn-workspace.md: 13a361681a7ab7b1a5e9b57d8840129db53648ff
-2026-08-15-pinned-upstream-and-isolated-yarn-workspace.zh.md: bdb581d62fb2ad7d668a0b4bb40a20c280955c40
+2026-08-15-pinned-upstream-and-isolated-yarn-workspace.md: 4db39c4083a8a804c824e79c90fbe7a6958a58b4
+2026-08-15-pinned-upstream-and-isolated-yarn-workspace.zh.md: 0c1475103130455ae18a6f186c2aeff506199a03
