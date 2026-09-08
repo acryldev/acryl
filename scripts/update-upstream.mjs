@@ -69,14 +69,33 @@ function updateMetadata(commit) {
   const upstreamPackage = JSON.parse(
     readFileSync(resolve(upstreamDir, 'package.json'), 'utf8'),
   )
+  // Keep runtimePackageVersion aligned with sourceVersion at every sync
+  // (specs/001-acryl-refactor-improvements-and-tech-debt, R13b): a source
+  // that runs ahead of the published npm family the surfaces actually
+  // depend on means the shipped agent-presets (read from the submodule)
+  // can silently drift from the runtime code consuming them. This only
+  // updates the recorded target; it does NOT bump every dsh-* dependency
+  // across every package.json to match -- do that as its own reviewed,
+  // build-verified step once the new family version is actually published
+  // to npm, not automatically here.
   const next = {
     ...metadata,
     commit,
     sourceVersion: upstreamPackage.version,
+    runtimePackageVersion: upstreamPackage.version,
   }
   const serialized = JSON.stringify(next, null, 2) + '\n'
   if (serialized !== readFileSync(metadataPath, 'utf8')) {
     writeFileSync(metadataPath, serialized, 'utf8')
+  }
+  if (next.runtimePackageVersion !== metadata.runtimePackageVersion) {
+    process.stdout.write(
+      'runtimePackageVersion recorded as ' + next.runtimePackageVersion
+      + ' (was ' + metadata.runtimePackageVersion + '). This does NOT update '
+      + 'the dsh-* dependency pins in every package.json -- bump those '
+      + 'deliberately, once that version is published to npm, verified, and '
+      + 'build-tested, before relying on check:layout\'s family gate again.\n',
+    )
   }
 }
 
