@@ -1,7 +1,8 @@
 // `pnpm web` / `pnpm acryl-web` launcher for the ACRYL browser surface.
 //
-// Like `tui-run.mjs`, this rebuilds `acryl-web` if its compiled entry is
-// missing or stale (newer source under `acryl-web/src`), then execs the web
+// The web surface owns its launcher (the terminal surface owns
+// `acryl-cli/bin/dev-run.mjs`). It rebuilds `acryl-web` if its compiled entry
+// is missing or stale (newer source under `acryl-web/src`), then execs the web
 // bin with the user's remaining arguments. The web surface is a SEPARATE
 // distribution from the terminal CLI (`acryl-cli`).
 import { spawnSync } from 'node:child_process'
@@ -10,8 +11,8 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const root = resolve(here, '..')
-const packageRoot = resolve(root, 'acryl-web')
+const packageRoot = resolve(here, '..')
+const root = resolve(packageRoot, '..')
 const bin = resolve(packageRoot, 'lib/bin.js')
 const src = resolve(packageRoot, 'src')
 

@@ -44,8 +44,9 @@
     "tui:fresh": "node scripts/rebuild-tui-clean.mjs && node acryl-cli/bin/dev-run.mjs",
     "acryl-gui": "pnpm --filter acryl-desktop run start",
     "acryl-desktop": "pnpm --filter acryl-desktop run start",
-    "acryl-web": "node scripts/web-run.mjs",
-    "web": "node scripts/web-run.mjs",
+    "acryl-web": "node acryl-web/bin/dev-run.mjs",
+    "web": "node acryl-web/bin/dev-run.mjs",
+    "debt:check": "node specs/001-acryl-refactor-improvements-and-tech-debt/proof/architecture-guardrails.mjs",
     "gui": "node scripts/dev-local.mjs"
   },
   "devDependencies": {
