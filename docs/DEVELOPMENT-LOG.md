@@ -1,3 +1,86 @@
+## 2026-09-08 - ACRYL owns its own home; /model and /login gain real edit/auth flows; v0.1.32 released
+
+Commits: `6c5e700`, `7fcd219`, `fa9f973`, `0205a3d`, `84a9606`, `8a25457`,
+`008921d`, `4460e15`, `c9a898a`, `d4368c8`, `8b0c902`, `d4c4f23`, `76dbe41`,
+`466371c`, `95f1ab4`, `2f4d379`, `eb98cb0`, `c0f80da` (tag `v0.1.32`).
+
+**Home separation.** Every ACRYL surface (CLI/TUI, web, desktop) previously
+defaulted to plain `~/.dsh` — the same home a stock DSH Desktop install
+(dshdesktop.com) uses, so the two products silently shared credentials,
+settings, and sessions on one machine. Added `resolveAcrylDshHome()`
+(`acryl-harness-runtime/src/acryl-home.ts`), defaulting to `~/.acryl/.dsh`
+instead (`~/.acryl/.pi` reserved for a future pi.dev engine; an explicit
+`$DSH_HOME` still wins). The isolated local-dev launcher moved to its own
+sibling root, `~/.acryl-dev/.dsh`, so an isolated dev run can never collide
+with a real install's home either.
+
+**A real, reproducible infinite-loop bug.** The `-oauth` display-name suffix
+added for OAuth-signed-in routes was not actually idempotent:
+`loadAuthorizationFlows`'s retroactive-repair pass set `repaired = true` on
+every completed call regardless of whether anything was written, then
+unconditionally called `refreshCredentialState()` → `loadAuthorizationFlows()`
+→ the same repair pass, forever. Every iteration reset `/model`'s list
+selection to 0 and re-suffixed an already-suffixed name; three provider
+display names grew to 400–560KB each of repeated `-oauth-oauth-oauth…`
+before the loop was caught, corrupting `~/.dsh/settings.yaml` to 1.5MB —
+and, because ACRYL and the stock DeepSeek Desktop app were still sharing
+that file at the time, corrupting the stock app's own settings too. Fixed by
+making `ensureProviderActivated` return whether it actually wrote (not mere
+completion), so the repair loop terminates once every provider is caught up;
+both files were repaired directly. A related, separately-diagnosed bug fed a
+plain API key into an OAuth-only request path (`apiKeyEnv` always wins over
+OAuth by design, and a stray leftover `apiKeyEnv` sat alongside two OAuth
+grants) — root-caused via a live diagnostic patch on the vendored
+`@earendil-works/pi-ai` package after an earlier attempt silently failed
+(`require()` inside an ES module).
+
+**`/model` and `/login` UX.** Bare-letter shortcuts (`a`/`d`/`m`/`s`) on the
+provider list replaced with Ctrl-combos (`ctrl+n`/`ctrl+x`/`ctrl+e`/`ctrl+a`;
+never `ctrl+m`, byte-identical to Enter in virtually every terminal). Fuzzy
+search added to the providers list (previously arrow-key-only, unlike the
+model picker). An already-configured provider now gets the same full edit
+form as a new one — display name, base URL, protocol, and models are all
+editable, not just the API key — with the API-key field hidden entirely for
+an OAuth route rather than exposing the stray-`apiKeyEnv` footgun again.
+Masked fields (both `/login`'s secret prompt and `/model`'s key field) now
+reveal the first/last few characters instead of fully hiding the value, so a
+field with something typed isn't indistinguishable from an empty one.
+Selecting an already-configured provider in `/login` (Enter or `ctrl+e`) now
+opens that edit form directly instead of a blind re-authentication screen.
+`/logout` no longer silently guesses a provider from `/model`'s possibly-empty
+overlay cache and deletes its credential with no confirmation — it opens the
+provider list instead. `cancel()`'s failure path no longer swallows errors
+silently.
+
+**Branding.** The header's plain `'ACRYL'` text and the OAuth success/error
+page's pi.dev logo (vendored inside `@earendil-works/pi-ai`, patched via
+`pnpm patch` — the same mechanism already used for `pi-tui` in this
+workspace) both now render the real pixelized ACRYL wordmark
+(`assets/pixelized/`), via the SVG's own rect grid rendered natively as
+half-block characters in the TUI and as an SVG in the web page — one shared
+source of truth for the mark's shape, not two independent recreations.
+
+**Build/dev tooling.** Every build now stamps its own commit + time
+(`acryl-tui/scripts/generate-build-info.mjs`, wired as `prebuild`/
+`pretypecheck`) into the TUI header — this session lost real time to stale
+terminal tabs (including a week-old zombie `acryl` global-install process
+still actively corrupting `~/.dsh` live) being tested against instead of a
+freshly relaunched one, with no way to tell from a screenshot alone.
+`pnpm run tui:rebuild` (`scripts/rebuild-tui-clean.mjs`) forces a clean
+`acryl-tui` rebuild; `pnpm run tui:fresh` chains that into an immediate
+launch. Also added `installSessionLogExporter` (a Cordis `ctx.logger`
+exporter writing JSONL to `$DSH_HOME/logs/`) for CLI/TUI and web, and
+restored `AcrylSessionBridge.selectModel` (dropped in an earlier revert),
+which is what makes `/model`'s "set active model" actually change an
+already-running session rather than only future ones.
+
+Primary locations:
+
+- `acryl-harness-runtime/src/acryl-home.ts`, `src/session-log-exporter.ts`
+- `acryl-tui/src/tui-app/session.ts`, `src/tui/modelProfile/ModelProfileOverlay.ts`, `src/tui/login/LoginOverlay.ts`, `src/tui/miniTextField.ts`, `src/tui/acrylMark.ts`, `src/tui/TuiApp.ts`
+- `acryl-tui/scripts/generate-build-info.mjs`, `scripts/rebuild-tui-clean.mjs`
+- `patches/@earendil-works__pi-ai@0.82.1.patch`
+
 ## 2026-09-07 - mental model: factory / car / driver
 
 Commit: `b4fb36aeb91665d96e9b96c5e22c43c095e269e1`
