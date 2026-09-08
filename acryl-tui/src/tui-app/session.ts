@@ -18,7 +18,7 @@ import { TuiStore } from '../tui/store.js'
 import { mountTui, type TuiHandle } from '../tui/TuiApp.js'
 import type { TuiActions } from '../tui/actions.js'
 import type { PluginRow } from '../tui/plugins/types.js'
-import type { ProviderDraft, ProviderRow, StoredProviderProfile } from '../tui/modelProfile/types.js'
+import { deriveApiKeyRef, maskKeyPreview, type ProviderDraft, type ProviderRow, type StoredProviderProfile } from '../tui/modelProfile/types.js'
 import type { AgentPresetRow } from '../tui/agentPresets/types.js'
 import { loadFileIndex } from '../tui/fileIndex.js'
 import { logoutNoneMessage, logoutSuccessMessage } from '../tui/auth-guidance.js'
@@ -88,11 +88,32 @@ function getAtPath(value: unknown, path: readonly string[]): unknown {
   return current
 }
 
-/** Derive a POSIX-identifier credential ref from a provider route, e.g. `my-proxy` -> `MY_PROXY_API_KEY`. */
-function deriveApiKeyRef(route: string): string {
-  const upper = route.toUpperCase().replace(/[^A-Z0-9]+/g, '_')
-  const identifier = /^[A-Z_]/.test(upper) ? upper : `P_${upper}`
-  return `${identifier}_API_KEY`
+/**
+ * `dsh-llm-pi-ai`'s own credential record scope (`credentialKey('llm-pi-ai', providerId)`,
+ * i.e. `"llm-pi-ai/<providerId>"`). A `/login` sign-in (OAuth or API key) writes here through
+ * pi-ai's own `CredentialStore`, entirely separate from the `apiKeyEnv` reference a manually
+ * configured provider's settings profile points at — so a provider's "has credentials" status
+ * has to check both places, and this is the address for the first.
+ */
+function piAiRecordKey(providerId: string): string {
+  return `llm-pi-ai/${providerId}`
+}
+
+/**
+ * Wait out `ctx.settings`' asynchronous watcher queue after a write.
+ *
+ * `settingsSvc.update()`'s returned promise resolves once the write commits
+ * to the settings document — but `dsh-llm-pi-ai`'s own reactive watcher (the
+ * thing that actually rebuilds its live `Models` registry and re-registers
+ * routes with `ctx.llm`) runs on a *separate* promise chained off that
+ * commit, not before it settles. A caller that reads `ctx.llm.listModels()`
+ * or `listProviders()` immediately after `update()` resolves races that
+ * watcher and sees the pre-write state. `setImmediate` runs after the
+ * Node microtask queue drains, which is exactly where that chained watcher
+ * promise settles, so awaiting one flush is enough to see the write reflected.
+ */
+function flushSettingsWatchers(): Promise<void> {
+  return new Promise<void>(resolve => { setImmediate(resolve) })
 }
 
 /** Open a URL in the platform's default browser (fire-and-forget). */
@@ -172,14 +193,16 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
   // optional and re-checked at point of use (the same pattern the other
   // model-profile actions use), so a profile that does not mount them degrades
   // to an error notice instead of refusing to start.
-  async function loadProviders(): Promise<void> {
+  // Pulled out of `loadProviders()` so `/logout` (which must work whether or
+  // not `/model` happens to be the open overlay — `store.updateModelProfile`
+  // is a no-op while it isn't) can compute the same row list independently,
+  // instead of reading `/model`'s possibly-empty cached overlay state and
+  // reporting "no active providers" even when providers plainly exist.
+  async function computeProviderRows(): Promise<ProviderRow[] | undefined> {
     const settingsSvc: any = host.ctx.get('settings')
     const credentialsSvc: any = host.ctx.get('credentials')
     const llmSvc: any = host.ctx.get('llm')
-    if (settingsSvc === undefined || credentialsSvc === undefined || llmSvc === undefined) {
-      store.updateModelProfile({ providers: [], busy: false, error: 'Model provider settings are not available in this profile.' })
-      return
-    }
+    if (settingsSvc === undefined || credentialsSvc === undefined || llmSvc === undefined) return undefined
     const configurable = llmSvc.listConfigurableProviders()
     const live = new Set((llmSvc.listProviders() as Array<{ id: string }>).map((provider: { id: string }) => provider.id))
     const descriptors = settingsSvc.describe({ redactSecrets: true }) as Array<{ ns: string; value: unknown; user?: unknown; revision?: number }>
@@ -191,38 +214,226 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
       const userValue = descriptor === undefined ? undefined : getAtPath(descriptor.user, entry.settingsPath)
       const apiKeyRef = value?.apiKeyEnv ?? deriveApiKeyRef(entry.provider)
       const info = await credentialsSvc.describe(apiKeyRef)
+      // A `/login` sign-in never sets `apiKeyEnv` — it writes pi-ai's own login
+      // record instead — so `info.configured` alone would still read "no key"
+      // for a provider the user just successfully signed into via OAuth or a
+      // catalog API key. Check that record too before reporting "not configured".
+      const loginRecord = await credentialsSvc.readRecord?.(piAiRecordKey(entry.provider))
+      // A `/login` record's `kind` names the actual method used ('grant' is an
+      // OAuth token, 'api-key' is a catalog-flow-typed key); the ref-based path
+      // (`apiKeyEnv`) only ever comes from typing a key into `/model` directly,
+      // so it's unambiguously 'api-key' too. A row can only be one or the
+      // other in practice — `/login` and `/model` write to different storage,
+      // and a provider signed in through one is not simultaneously the other.
+      const authMethod: 'oauth' | 'api-key' | undefined = loginRecord !== undefined
+        ? (loginRecord.kind === 'grant' ? 'oauth' : 'api-key')
+        : info.configured ? 'api-key' : undefined
+      const isLive = live.has(entry.provider)
+      // `value?.models` only reflects a settings-document override; omitting it
+      // (the normal case — nobody names an explicit model list unless
+      // customizing) means "use the installed catalog's own models", which
+      // only a live registration can actually answer. Falling back to the
+      // settings value alone left every un-customized route — the common case
+      // for every OAuth/catalog sign-in — showing zero models in `/model`,
+      // even though the route worked fine for real requests.
+      const models = isLive
+        ? await llmSvc.listModels(entry.provider).catch(() => value?.models ?? [])
+        : value?.models ?? []
       rows.push({
         route: entry.provider,
         displayName: value?.displayName ?? entry.displayName,
         settingsNs: entry.settingsNs,
         settingsPath: entry.settingsPath,
         configured: userValue !== undefined,
-        live: live.has(entry.provider),
+        live: isLive,
         api: value?.api,
         baseURL: value?.baseURL,
         apiKeyRef,
-        apiKeyConfigured: info.configured,
-        models: value?.models ?? [],
+        apiKeyConfigured: info.configured || loginRecord !== undefined,
+        authMethod,
+        models,
         revision: descriptor?.revision,
       })
     }
+    return rows
+  }
+
+  async function loadProviders(): Promise<void> {
+    const rows = await computeProviderRows()
+    if (rows === undefined) {
+      store.updateModelProfile({ providers: [], busy: false, error: 'Model provider settings are not available in this profile.' })
+      return
+    }
     store.updateModelProfile({ providers: rows, busy: false, error: undefined, selected: 0 })
+  }
+
+  // A `/login` sign-in only ever writes a credential (the OAuth grant or typed
+  // API key) — it never touches `ctx.settings`. `dsh-llm-pi-ai` only registers
+  // a route as live once its settings section names it (even with an empty
+  // profile, which just means "use the installed catalog's own defaults"), so
+  // without this a successful sign-in leaves the provider credentialed but
+  // still absent from `ctx.llm`'s live directory and unusable from `/model`.
+  // Writes only when the route has no settings profile yet, so it never clobbers
+  // one the user already configured (custom baseURL, model overrides, etc.).
+  // Returns whether this call actually wrote a settings change — the
+  // retroactive-repair loop in `loadAuthorizationFlows` uses that (not mere
+  // completion) to decide whether it's worth refreshing state, so an
+  // already-caught-up flow doesn't retrigger `refreshCredentialState` ->
+  // `loadAuthorizationFlows` -> this same repair pass forever (that loop is
+  // exactly what corrupted every OAuth display name into a multi-hundred-KB
+  // string of repeated "-oauth" suffixes and reset `/model`'s list selection
+  // to 0 on every iteration).
+  async function ensureProviderActivated(providerId: string, method: string | undefined): Promise<boolean> {
+    const settingsSvc: any = host.ctx.get('settings')
+    const llmSvc: any = host.ctx.get('llm')
+    if (settingsSvc === undefined || llmSvc === undefined) return false
+    const entry = (llmSvc.listConfigurableProviders() as Array<{ provider: string; displayName: string; settingsNs: string; settingsPath: readonly string[] }>)
+      .find(candidate => candidate.provider === providerId)
+    if (entry === undefined) return false
+    const descriptors = settingsSvc.describe({ redactSecrets: true }) as Array<{ ns: string; user?: unknown; revision?: number }>
+    const descriptor = descriptors.find(candidate => candidate.ns === entry.settingsNs)
+    const existing = descriptor === undefined ? undefined : getAtPath(descriptor.user, entry.settingsPath) as { displayName?: string } | undefined
+    // OAuth-signed-in routes get a permanent, stored `-oauth` name suffix (not
+    // just a rendered tag) so a route the user later adds as a *second*,
+    // API-key-authenticated custom route under the same catalog name — the
+    // dual-credential workaround discussed for this same provider — is
+    // unambiguously distinct everywhere a name is shown, not just wherever
+    // the auth-method badge happens to render. Runs on every successful
+    // OAuth sign-in, not only the first, so a route that already has a
+    // profile (signed in earlier, before this suffix existed) gets it
+    // retroactively too, without touching anything else already configured
+    // there — the merge-only `update()` leaves every other field as is.
+    //
+    // `entry.displayName` reflects whatever is *currently* configured, not a
+    // stable catalog base — `listConfigurableProviders()` merges in the
+    // settings-stored name once one exists. Stripping any existing `-oauth`
+    // run before re-appending is what makes this idempotent: without it,
+    // the retroactive-repair pass in `loadAuthorizationFlows` (which calls
+    // this for every already-oauth-configured route on every app launch)
+    // re-suffixes an already-suffixed name every single time it runs.
+    const baseName = entry.displayName.replace(/(?:-oauth)+$/, '')
+    const oauthName = `${baseName}-oauth`
+    if (existing !== undefined) {
+      if (method === 'oauth' && existing.displayName !== oauthName) {
+        await settingsSvc.update(entry.settingsNs, nestAtPath(entry.settingsPath, { displayName: oauthName }), descriptor?.revision)
+        await flushSettingsWatchers()
+        return true
+      }
+      return false
+    }
+    const section = method === 'oauth' ? { displayName: oauthName } : {}
+    await settingsSvc.update(entry.settingsNs, nestAtPath(entry.settingsPath, section), descriptor?.revision)
+    await flushSettingsWatchers()
+    return true
   }
 
   // Fetch the registered authorization flows (providers that ship a login via
   // dsh-llm-pi-ai) and refresh the open `/login` overlay's list.
   async function loadAuthorizationFlows(): Promise<void> {
     const authSvc: any = host.ctx.get('authorization')
+    const credentialsSvc: any = host.ctx.get('credentials')
     if (authSvc === undefined) {
       store.updateLogin({ flows: [], busy: false, error: 'Sign-in is not available in this profile.' })
       return
     }
     try {
-      const list = authSvc.list() as Array<{ key: string; label: string; methods: Array<{ id: string; label: string }>; inFlight: boolean }>
+      const entries = authSvc.list() as Array<{ key: string; label: string; methods: Array<{ id: string; label: string }>; inFlight: boolean }>
+      // A flow's `key` IS its stored credential's record key, so this is a
+      // direct presence check — the durable "signed in and ready to use"
+      // signal a transient `setNotice` can't provide once the overlay moves on.
+      const list = await Promise.all(entries.map(async entry => {
+        const record = credentialsSvc === undefined ? undefined : await credentialsSvc.readRecord?.(entry.key)
+        return {
+          ...entry,
+          configured: record !== undefined,
+          authMethod: record === undefined ? undefined : (record.kind === 'grant' ? 'oauth' as const : 'api-key' as const),
+        }
+      }))
       store.updateLogin({ flows: list, busy: false, error: undefined })
+      // Retroactive repair for routes signed in via OAuth before the
+      // `-oauth` display-name suffix existed: `ensureProviderActivated` is
+      // idempotent (it only writes when the stored name doesn't already
+      // carry the suffix), so replaying it here on every already-configured
+      // OAuth flow costs nothing once it's caught up.
+      const toRepair = list.filter(flow => flow.configured && flow.authMethod === 'oauth' && flow.key.startsWith('llm-pi-ai/'))
+      if (toRepair.length > 0) {
+        void (async () => {
+          let repaired = false
+          for (const flow of toRepair) {
+            try {
+              // Sequential, not `Promise.all`: `ensureProviderActivated` reads
+              // the namespace's revision, then writes expecting that exact
+              // revision back — running several concurrently against the
+              // *same* namespace means every write after the first reads a
+              // now-stale revision and throws SettingsConflictError. Running
+              // them one at a time means each one sees the revision the
+              // previous write actually landed at.
+              if (await ensureProviderActivated(flow.key.slice('llm-pi-ai/'.length), 'oauth')) repaired = true
+            } catch {
+              // Best-effort background repair — a conflict or transient
+              // failure here must not surface as an unhandled rejection (it
+              // previously crashed the whole process) or block the others;
+              // the repair simply retries next time `/login` opens.
+            }
+          }
+          if (repaired) refreshCredentialState()
+        })()
+      }
     } catch (error) {
       store.updateLogin({ busy: false, error: error instanceof Error ? error.message : String(error) })
     }
+  }
+
+  // `/login` and `/model` each hold their own independently-fetched read of
+  // the same underlying credential/settings state, and neither overlay
+  // invalidates the other's cache when it changes something — only the one
+  // that's actually open right now gets refreshed by its own action. A key
+  // saved, cleared, or signed into through one surface then reads stale
+  // ("still shows signed in", "shows configured but the edit screen is
+  // empty") the next time the *other* surface is opened, until that surface
+  // happens to refetch on its own. Refreshing both together after any action
+  // that can change either's picture closes that gap regardless of which
+  // overlay initiated the change; each update is a no-op while its overlay
+  // isn't the one currently open.
+  function refreshCredentialState(): void {
+    void loadProviders()
+    void loadAuthorizationFlows()
+  }
+
+  /** Open `/model`'s blank custom-provider draft — assumes `/model` is (or is about to become) the open overlay. Shared by `createProvider` (already there) and `addCustomProvider` (getting there first). */
+  function openCustomProviderDraft(): void {
+    const llmSvc: any = host.ctx.get('llm')
+    // Every `dsh-llm-pi-ai` route — catalog or custom — lives at the same
+    // settings namespace (`directoryEntries()` stamps every entry with the
+    // plugin's own `NS`), so any already-configurable entry's `settingsNs`
+    // is the right one for a brand-new route too; there is always at least
+    // one (the installed catalog is never empty). `settingsPath` is
+    // recomputed from the typed route at save time in `buildDraft()`, since
+    // the route itself does not exist yet here.
+    const settingsNs: string | undefined = llmSvc?.listConfigurableProviders?.()[0]?.settingsNs
+    if (settingsNs === undefined) {
+      store.setNotice('Adding a custom provider is not available in this profile.')
+      return
+    }
+    const draft: ProviderDraft = {
+      route: '',
+      isNew: true,
+      settingsNs,
+      settingsPath: [],
+      displayName: '',
+      api: '',
+      baseURL: '',
+      apiKeyRef: '',
+      apiKeyConfigured: false,
+      authMethod: undefined,
+      apiKeyDraft: '',
+      apiKeyPreview: undefined,
+      models: [],
+      revision: undefined,
+    }
+    const overlay = store.getSnapshot().overlay
+    const formKey = overlay.kind === 'modelProfile' ? overlay.modelProfile.formKey + 1 : 1
+    store.updateModelProfile({ view: 'form', draft, formKey })
   }
 
   // Fetch the deployment's agent-preset roster and refresh the open `/presets`
@@ -263,7 +474,9 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
       })
     },
     cancel() {
-      void bridge.cancel(id).catch(() => {})
+      void bridge.cancel(id).catch(error => {
+        store.setNotice(`Could not cancel: ${error instanceof Error ? error.message : String(error)}`)
+      })
     },
     shutdown() { signal('exit') },
     help() { store.setNotice(HELP_TEXT) },
@@ -342,8 +555,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     openModelProfile() { store.openModelProfile(); void loadProviders() },
     login() { store.openLogin(); void loadAuthorizationFlows() },
     closeLogin() { store.closeOverlay() },
-    selectLoginFlow(index) { store.updateLogin({ selected: index }) },
-    beginAuthorization(key) {
+    beginAuthorization(key, method) {
       void (async () => {
         const authSvc: any = host.ctx.get('authorization')
         if (authSvc === undefined) {
@@ -379,15 +591,16 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
           },
         }
         try {
-          const outcome = await authSvc.begin({ key, interaction })
+          const outcome = await authSvc.begin({ key, method, interaction })
           if (outcome.status === 'authorized') {
-            store.setNotice(`Signed in to ${flow.label}.`)
-            void loadAuthorizationFlows()
+            store.setNotice(`Signed in to ${flow.label} — credentials saved, ready to use from /model.`)
+            if (key.startsWith('llm-pi-ai/')) await ensureProviderActivated(key.slice('llm-pi-ai/'.length), method)
+            refreshCredentialState()
           } else {
-            store.setNotice('Sign-in cancelled.')
+            store.updateLogin({ error: 'Sign-in cancelled.' })
           }
         } catch (error) {
-          store.setNotice(`Sign-in failed: ${error instanceof Error ? error.message : String(error)}`)
+          store.updateLogin({ error: `Sign-in failed: ${error instanceof Error ? error.message : String(error)}` })
         } finally {
           store.updateLogin({ signingIn: undefined })
         }
@@ -408,7 +621,8 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
         }
         const selection = host.ctx.get('agentDefaultModel')?.currentSelection?.() as { provider?: string } | undefined
         const overlay = store.getSnapshot().overlay
-        const rows = overlay.kind === 'modelProfile' ? overlay.modelProfile.providers : undefined
+        const cached = overlay.kind === 'modelProfile' ? overlay.modelProfile.providers : undefined
+        const rows = cached ?? await computeProviderRows()
         const row = rows?.find(entry => entry.route === selection?.provider)
           ?? (rows !== undefined && rows.length === 1 ? rows[0] : undefined)
         if (row === undefined) {
@@ -418,7 +632,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
         try {
           await credentialsSvc.unset(row.apiKeyRef)
           store.setNotice(logoutSuccessMessage(row.displayName))
-          void loadProviders()
+          refreshCredentialState()
         } catch (error) {
           store.setNotice(`logout failed: ${error instanceof Error ? error.message : String(error)}`)
         }
@@ -437,9 +651,25 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
       void loadAgentPresets()
     },
     closeModelProfile() { store.closeOverlay() },
-    backToProviderList() { store.updateModelProfile({ view: 'list' }) },
+    backToProviderList() {
+      store.updateModelProfile({ view: 'list' })
+      // The provider list was fetched once, whenever `/model` first opened;
+      // it never self-refreshes while an edit screen is showing. Without this,
+      // stepping back after confirming "(already set)" on the edit screen —
+      // itself reflecting a credential that landed after that first fetch —
+      // still shows the stale pre-fetch state (no ✓, "[no api key]").
+      refreshCredentialState()
+    },
     selectProvider(index) { store.updateModelProfile({ selected: index }) },
-    createProvider() { store.updateModelProfile({ view: 'form', draft: undefined }) },
+    createProvider() { openCustomProviderDraft() },
+    addCustomProvider() {
+      // `store.updateModelProfile()` is a no-op unless `/model` is already the
+      // open overlay — this is the one path that isn't already there (`/login`
+      // has no custom-provider path of its own), so switch first.
+      store.openModelProfile()
+      void loadProviders()
+      openCustomProviderDraft()
+    },
     editProvider(route) {
       const overlay = store.getSnapshot().overlay
       if (overlay.kind !== 'modelProfile') return
@@ -455,11 +685,32 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
         baseURL: row.baseURL ?? '',
         apiKeyRef: row.apiKeyRef,
         apiKeyConfigured: row.apiKeyConfigured,
+        authMethod: row.authMethod,
         apiKeyDraft: '',
+        apiKeyPreview: undefined,
         models: row.models,
         revision: row.revision,
       }
-      store.updateModelProfile({ view: 'form', draft, formKey: overlay.modelProfile.formKey + 1 })
+      const formKey = overlay.modelProfile.formKey + 1
+      store.updateModelProfile({ view: 'form', draft, formKey })
+      // Never pre-fill the editable draft field with the real secret — only
+      // fetch it to render a short, non-reversible first/last-chars preview
+      // (masked via maskKeyPreview) so the field doesn't look empty when a
+      // key genuinely is set. OAuth-authenticated routes have no separate
+      // api-key ref to resolve here; the "signed in via OAuth" hint already
+      // covers that case.
+      if (row.authMethod === 'api-key') {
+        void (async () => {
+          const credentialsSvc: any = host.ctx.get('credentials')
+          const resolved = await credentialsSvc?.resolve?.(row.apiKeyRef).catch(() => undefined)
+          if (resolved?.value === undefined) return
+          const current = store.getSnapshot().overlay
+          if (current.kind !== 'modelProfile' || current.modelProfile.formKey !== formKey) return
+          const currentDraft = current.modelProfile.draft
+          if (currentDraft === undefined) return
+          store.updateModelProfile({ draft: { ...currentDraft, apiKeyPreview: maskKeyPreview(resolved.value) } })
+        })()
+      }
     },
     saveProvider(draft) {
       void (async () => {
@@ -469,20 +720,34 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
           store.setNotice('Provider settings are not available in this profile.')
           return
         }
+        if (draft.isNew && draft.route.trim() === '') {
+          store.updateModelProfile({ error: 'Provider ID is required.' })
+          return
+        }
         try {
           const key = draft.apiKeyDraft.trim()
           if (key !== '') await credentialsSvc.set(draft.apiKeyRef, key)
+          // An empty string/array here means "the user never touched this
+          // field" for a catalog route (every field on `ProviderDraft` is a
+          // plain string, so there is no `undefined` to distinguish "unset"
+          // from "explicitly blanked"). Per `PiAiProviderProfile`'s own
+          // contract, omitting a field defers to the installed catalog's
+          // default — writing it as `''`/`[]` instead is an explicit override
+          // to "no protocol"/"no endpoint"/"no models", which fails
+          // `assertServiceable` and refuses the whole write (or, for `models`,
+          // would silently zero out every model on an otherwise-working route).
           const section: StoredProviderProfile = {
-            displayName: draft.displayName,
-            api: draft.api,
-            baseURL: draft.baseURL,
+            ...draft.displayName.trim() === '' ? {} : { displayName: draft.displayName },
+            ...draft.api.trim() === '' ? {} : { api: draft.api },
+            ...draft.baseURL.trim() === '' ? {} : { baseURL: draft.baseURL },
             apiKeyEnv: draft.apiKeyRef,
-            models: draft.models,
+            ...draft.models.length === 0 ? {} : { models: draft.models },
           }
           await settingsSvc.update(draft.settingsNs, nestAtPath(draft.settingsPath, section as unknown as Record<string, unknown>), draft.revision)
-          store.setNotice(`Saved ${draft.displayName || draft.route}.`)
+          await flushSettingsWatchers()
+          store.setNotice(`Saved ${draft.displayName || draft.route} — credentials stored, ready to use from /model.`)
           store.updateModelProfile({ view: 'list' })
-          void loadProviders()
+          refreshCredentialState()
         } catch (error) {
           store.setNotice(`save failed: ${error instanceof Error ? error.message : String(error)}`)
         }
@@ -499,15 +764,86 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
         try {
           await credentialsSvc.unset(row.apiKeyRef)
           await settingsSvc.update(row.settingsNs, nestAtPath(row.settingsPath, {}), row.revision)
+          await flushSettingsWatchers()
           store.setNotice(`Removed ${row.displayName}.`)
-          void loadProviders()
+          refreshCredentialState()
         } catch (error) {
           store.setNotice(`delete failed: ${error instanceof Error ? error.message : String(error)}`)
         }
       })()
     },
-    discoverModelsForDraft() {},
-    setActiveModel() {},
+    clearApiKey(draft) {
+      void (async () => {
+        const credentialsSvc: any = host.ctx.get('credentials')
+        if (credentialsSvc === undefined) {
+          store.setNotice('Credentials are not available in this profile.')
+          return
+        }
+        try {
+          // A provider's credential can live in either of two independent
+          // stores (see `piAiRecordKey`'s doc comment) depending on whether it
+          // was set here or via `/login` — clear whichever is actually there.
+          await credentialsSvc.unset(draft.apiKeyRef)
+          await credentialsSvc.deleteRecord?.(piAiRecordKey(draft.route))
+          store.setNotice(`Removed the API key for ${draft.displayName || draft.route}.`)
+          store.updateModelProfile({ view: 'list' })
+          refreshCredentialState()
+        } catch (error) {
+          store.setNotice(`Could not remove the key: ${error instanceof Error ? error.message : String(error)}`)
+        }
+      })()
+    },
+    discoverModelsForDraft(draft) {
+      void (async () => {
+        const llmSvc: any = host.ctx.get('llm')
+        if (llmSvc === undefined) {
+          store.setNotice('Model discovery is not available in this profile.')
+          return
+        }
+        store.updateModelProfile({ busy: true })
+        try {
+          // A route the installed catalog ships (e.g. `zai`) answers from that
+          // catalog with no network call — see `dsh-llm-pi-ai`'s discovery
+          // module — so this surfaces new catalog entries a package update
+          // adds, but not a model the provider added to its own API before the
+          // installed catalog caught up (e.g. a newly released model tier).
+          // For those, use "m" on an existing provider to type the id directly.
+          const request: Record<string, unknown> = {}
+          if (!draft.isNew) request.provider = draft.route
+          if (draft.baseURL.trim() !== '') request.baseURL = draft.baseURL.trim()
+          if (draft.api.trim() !== '') request.api = draft.api.trim()
+          if (draft.apiKeyDraft.trim() !== '') request.apiKey = draft.apiKeyDraft.trim()
+          const discovered = await llmSvc.discoverModels(draft.settingsNs, request)
+          store.updateModelProfile({ busy: false, discovered })
+        } catch (error) {
+          store.updateModelProfile({ busy: false, discovered: [] })
+          store.setNotice(`Model discovery failed: ${error instanceof Error ? error.message : String(error)}`)
+        }
+      })()
+    },
+    setActiveModel(provider, model) {
+      void (async () => {
+        try {
+          // Switches the running session immediately (`agentOptions.provider`/
+          // `model` are a one-time construction input to `ctx.agents.create`,
+          // not a live setting — this is the only thing that actually changes
+          // what an already-open session sends its next request to).
+          await bridge.selectModel({ sessionId: id, provider, model })
+          store.setActiveModel({ provider, model })
+          // Also persist as the default so a *future* session starts here too;
+          // best-effort — the live switch above already succeeded either way.
+          try {
+            await host.ctx.get('agentDefaultModel')?.saveSelection({ provider, model })
+          } catch {
+            // Non-fatal: the current session's model already changed.
+          }
+          store.setNotice(`Active model set to ${model} (${provider}).`)
+          void loadProviders()
+        } catch (error) {
+          store.setNotice(`Could not set active model: ${error instanceof Error ? error.message : String(error)}`)
+        }
+      })()
+    },
     closeTrajectory() { store.closeOverlay() },
     closeToolCards() { store.closeOverlay() },
     closeContext() { store.closeOverlay() },
