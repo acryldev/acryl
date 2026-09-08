@@ -83,7 +83,7 @@ async function main() {
   const windows = spec.windows === true
   const archiveName = `acryl-cli-${target}.${windows ? 'zip' : 'tar.gz'}`
   const launcherName = windows ? 'acryl.cmd' : 'acryl'
-  const launcher = join(root, 'scripts', windows ? 'acryl-cli-launcher.cmd' : 'acryl-cli-launcher.sh')
+  const launcher = join(root, 'acryl-tui', 'scripts', windows ? 'acryl-cli-launcher.cmd' : 'acryl-cli-launcher.sh')
   const staging = join(tmpdir(), `acryl-cli-${target}`)
   const archiveDir = join(staging, `acryl-cli-${target}`)
 
@@ -120,8 +120,13 @@ async function main() {
   // Rebuild native modules for the target platform. GitHub runners may use
   // a different arch than the build target (e.g., macos-latest is arm64 but
   // darwin-x64 target needs x64 binaries). Rebuild recompiles native modules
-  // with explicit cross-compilation flags for the target architecture.
-  if (target === 'darwin-x64' || target === 'darwin-arm64') {
+  // with explicit cross-compilation flags for the target architecture. Same
+  // condition as the prebuild-deletion step above -- a native-arch build
+  // (host === target, e.g. darwin-arm64 on an arm64 runner) already has
+  // correct prebuilds from the initial `pnpm install` and doesn't need this;
+  // running it anyway hits ERR_PNPM_NO_LOCKFILE, since the flattened archive
+  // dir (`flattenNodeModules` above) never carries pnpm-lock.yaml with it.
+  if (spec.nodePlatform === 'darwin' && hostArch !== targetArch) {
     console.log(`Rebuilding native modules for ${target}...`)
     const rebuildEnv = {
       ...process.env,
