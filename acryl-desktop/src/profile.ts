@@ -8,6 +8,7 @@ import { evaluate, isJsExpr, type EntryOptions } from '@deepseek-ai/cordis-plugi
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import {
   composeEntries,
+  DEFAULT_PROFILE_PATCH_RELOAD,
   healProfilesModuleFallback,
   initProfile,
   loadOptionalPatches,
@@ -186,11 +187,11 @@ export function readDesktopShellMode(config: SettingsFileConfig): DesktopShellMo
 
 /** Resolve the public Web template once and reject an incompatible DSH release. */
 function requiredWebBundles(): string[] {
-  const bundles = PROFILE_TEMPLATES.web
-  if (bundles === undefined) {
+  const template = PROFILE_TEMPLATES.web
+  if (template === undefined) {
     throw new Error(`${BIN_NAME}: installed dsh-app-boot has no web profile template`)
   }
-  return [...bundles]
+  return [...template.bundles]
 }
 
 /** Prepared profile inputs consumed by app-boot. */
@@ -309,9 +310,13 @@ function loadRecoveryFilteredProfile(
     if (template === undefined) {
       throw new Error(`${BIN_NAME}: profile ${JSON.stringify(profileName)} does not exist`)
     }
-    initProfile(profileDir, template)
+    initProfile(profileDir, template.bundles, template.patchReload)
   }
   const manifest = readProfileManifest(BIN_NAME, profileDir)
+  // Mirror dsh-app-boot's own `loadProfile`: an absent manifest value defaults
+  // to live reload, matching the shipped template's own launcher behavior.
+  const patchReload = (manifest.dsh?.profile as { patchReload?: unknown } | undefined)?.patchReload
+    === 'startup' ? 'startup' : DEFAULT_PROFILE_PATCH_RELOAD
   const rawBundles = (manifest.dsh?.profile as { bundles?: unknown } | undefined)?.bundles
   if (rawBundles !== undefined
     && (!Array.isArray(rawBundles) || rawBundles.some(value => typeof value !== 'string'))) {
@@ -371,6 +376,7 @@ function loadRecoveryFilteredProfile(
       layers,
       patchPath,
       patches: existsSync(patchPath) ? loadOverlayPatches(BIN_NAME, patchPath) : [],
+      patchReload,
     },
     ...(dshMarketFailure === undefined ? {} : { dshMarketFailure }),
   }
@@ -591,7 +597,12 @@ export function prepareDesktopProfile(
   const profileDir = profileName === DESKTOP_PROFILE_NAME
     ? ensureDesktopProfile(home)
     : resolveProfileDir(profileName, home)
-  healProfilesModuleFallback(INSTALL_ANCHOR, home)
+  // Best-effort background repair of the profile's module-fallback symlink
+  // farm; `prepareDesktopProfile` itself stays synchronous and must not wait
+  // on or fail from this. Swallow so a torn-down or unwritable profiles
+  // directory surfaces as a silent no-op heal rather than an unhandled
+  // rejection outliving this call.
+  void healProfilesModuleFallback({ installAnchor: INSTALL_ANCHOR, home }).catch(() => {})
   // `plugin-management` is the community market's user-facing scope. Startup
   // recovery has its own state file so switching to another provider cannot
   // reapply a stale community-market disable, while a recovery disable always

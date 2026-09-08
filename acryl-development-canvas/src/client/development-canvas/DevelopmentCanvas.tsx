@@ -3,6 +3,12 @@
 import { FitAddon } from '@xterm/addon-fit'
 import { Terminal as XtermTerminal } from '@xterm/xterm'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+// `GlobalStandardProps.useSessions` (destructured below) is merged in by
+// `dsh-client-ui-session`'s ambient `declare module` augmentation. Importing
+// a real type from it (rather than an empty `import type {}`, which some
+// compilations drop entirely) reliably pulls that augmentation into this
+// program even though nothing here holds a value of it.
+import type { UseSessions as _UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import type { CanvasPtyCommandId } from '../../canvas-pty-contract.ts'
 import {

@@ -1,4 +1,11 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
+// `ctx.slots`'s `Context` augmentation now lives in `dsh-client-ui-renderer`
+// (split out of `dsh-client-ui-slots`'s pure core in the v0.1.5-alpha.1
+// "extract Store and renderer Slot infrastructure" refactor). Importing a
+// real type from it (rather than an empty `import type {}`, which some
+// compilations drop entirely) reliably pulls its ambient `declare module`
+// augmentation into this program even though nothing here holds a value of it.
+import type { UiRendererService as _UiRendererService } from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type { ReactNode } from 'react'
 import { DevelopmentCanvas } from './development-canvas/DevelopmentCanvas.tsx'
 import { createCanvasPtyApi } from './development-canvas/pty-api.ts'

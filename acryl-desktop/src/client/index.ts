@@ -1,9 +1,21 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/cordis-plugin-loader'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 // Type-only service and SlotMap convergence for the Desktop settings section.
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
+// Type-only: `ctx.slots`'s `Context` augmentation (split out of
+// `dsh-client-ui-slots`'s pure core into `dsh-client-ui-renderer` in the
+// v0.1.5-alpha.1 "extract Store and renderer Slot infrastructure" refactor)
+// and `GlobalStandardProps.useSessions`/`ctx.uiWorkspace`, respectively.
+// `ui-sidebar`/`ui-conversation` are pulled in too: `ui-workspace`'s own
+// `.d.ts` references their `'sidebar.workspaces'`/`'conversation.hero.workspace'`
+// SlotMap keys, which only exist in the program once those declarations merge in.
+import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
+import type {} from '@deepseek-ai/dsh-client-ui-session/client'
+import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
+import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import { applyAcrylBrand } from './acryl-brand.tsx'
 import { applyAdvancedShell } from './advanced-shell.ts'
 import { startRendererBootReporter } from './boot-health.ts'
@@ -89,6 +101,7 @@ export const inject = [
   'sessions',
   'theme',
   'workspaces',
+  'uiWorkspace',
 ]
 
 /** Register desktop-owned client surfaces for the current BrowserWindow mode. @param ctx - browser Cordis context. */
@@ -105,7 +118,7 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(
     () => installWorkspaceFolderDrop({
       create: input => ctx.workspaces.create(input),
-      startSession: workspaceId => { ctx.workspaces.startSession(workspaceId) },
+      startSession: workspaceId => { ctx.uiWorkspace.startSession(workspaceId) },
       ...(environment.platform === 'win32'
         ? { validateDirectory: (path: string) => requestDesktopDirectoryValidation(path) }
         : {}),

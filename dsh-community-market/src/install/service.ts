@@ -25,7 +25,7 @@ const MAX_CANDIDATES = 10_000
 const MAX_RECEIPTS = 512
 const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall', 'prepare'] as const
 const BLOCKED_PRODUCT_PACKAGES = new Set(['acryl-desktop', 'dsh-community-market'])
-const DSH_RUNTIME_VERSION = '0.1.1-rc.2'
+const DSH_RUNTIME_VERSION = '0.1.5-alpha.1'
 const CORDIS_RUNTIME_VERSION = '4.0.1'
 const NODE_RUNTIME_VERSION = '24.18.1'
 

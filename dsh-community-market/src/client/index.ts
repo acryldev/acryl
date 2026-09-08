@@ -1,8 +1,20 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
+// Type-only: `ctx.slots`'s `Context` augmentation was split out of
+// `dsh-client-ui-slots`'s pure core into `dsh-client-ui-renderer` in the
+// v0.1.5-alpha.1 "extract Store and renderer Slot infrastructure" refactor.
+// `ui-session`/`ui-workspace` merge `GlobalStandardProps.useSessions`/
+// `useWorkspaces`, which `MarketLauncherProps` (a `sidebar.footer.action`
+// slot) inherits through the standard global seat. `ui-conversation` is
+// pulled in too: `ui-workspace`'s own `.d.ts` references its
+// `'conversation.hero.workspace'` SlotMap key.
+import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
+import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
+import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import type { MarketLocaleKey } from './locales.js'
 import { MarketLauncher } from './MarketLauncher.js'
 import { MarketOverlay } from './MarketOverlay.js'

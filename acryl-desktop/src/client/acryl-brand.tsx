@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import {
   ACRYL_LOGO_BLACK_DATA_URL,
   ACRYL_LOGO_WHITE_DATA_URL,

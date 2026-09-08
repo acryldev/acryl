@@ -7,6 +7,7 @@ import type {} from '@deepseek-ai/dsh-cmdline'
 import type {} from '@deepseek-ai/cordis-plugin-loader'
 import type {} from '@deepseek-ai/dsh-commands'
 import {
+  LOCALE_IDS,
   LOCALE_SETTINGS_NAMESPACE,
   type LocaleSettings,
 } from '@deepseek-ai/dsh-client-locale'
@@ -15,7 +16,6 @@ import {
   THEME_SETTINGS_NAMESPACE,
   type ThemeSettings,
 } from '@deepseek-ai/dsh-client-ui-theme'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
 import {
   handleRendererBootRequest,
   RENDERER_BOOT_REPORT_PATH,
@@ -69,8 +69,19 @@ import {
 } from './plugin-lifecycle-route.ts'
 import type {} from './plugin-lifecycle-state.ts'
 import { desktopBootRecoveryInjections } from './desktop-boot-recovery.ts'
-import type { DesktopShellMode } from './runtime.ts'
+import type { DesktopLocale, DesktopShellMode } from './runtime.ts'
 import type {} from './runtime.ts'
+
+/**
+ * Narrow `dsh-client-locale`'s open, plugin-extensible `LocaleId` down to the
+ * fixed set the native shell chrome (window title, tray, menu) actually ships
+ * strings for. A language-pack-only preference falls back to the platform
+ * default rather than mislabeling the native chrome in a locale it has no
+ * strings for.
+ */
+function toDesktopLocale(preference: string | undefined): DesktopLocale | undefined {
+  return LOCALE_IDS.includes(preference as (typeof LOCALE_IDS)[number]) ? (preference as DesktopLocale) : undefined
+}
 import { DESKTOP_DEFAULT_WEB_PORT } from './desktop-port.ts'
 
 /** Stable Cordis plugin name. */
@@ -80,11 +91,14 @@ export const name = 'desktop-shell'
 /** Services required by the desktop shell; `desktopRuntime` is probed, not required. */
 export const inject = ['webServer', 'webRuntime', 'appExit', 'settings', 'loader']
 
+// `SettingsNamespace` is a compile-time-validated string literal type, not a
+// branded runtime value — `ctx.settings.register`/`.get`/etc. accept these
+// literals directly (see `@deepseek-ai/dsh-settings`'s `SettingsNamespaceInput`).
 /** Standard settings namespace shared by tray and configuration surfaces. */
-export const DESKTOP_SETTINGS_NAMESPACE = settingsNamespace('dsh-desktop')
+export const DESKTOP_SETTINGS_NAMESPACE = 'dsh-desktop'
 
-const UI_THEME_SETTINGS_NAMESPACE = settingsNamespace(THEME_SETTINGS_NAMESPACE)
-const UI_LOCALE_SETTINGS_NAMESPACE = settingsNamespace(LOCALE_SETTINGS_NAMESPACE)
+const UI_THEME_SETTINGS_NAMESPACE = THEME_SETTINGS_NAMESPACE
+const UI_LOCALE_SETTINGS_NAMESPACE = LOCALE_SETTINGS_NAMESPACE
 
 /** Desktop settings presented by the standard settings service. */
 export interface DesktopSettings {
@@ -383,7 +397,7 @@ export function apply(ctx: Context, config: Config): void {
   }
   ctx.on('settings/updated', (namespace, next) => {
     if (namespace !== UI_LOCALE_SETTINGS_NAMESPACE) return
-    runtime.setLocalePreference((next as LocaleSettings).preference)
+    runtime.setLocalePreference(toDesktopLocale((next as LocaleSettings).preference))
   })
   ctx.effect(
     () => runtime.schedule({
@@ -394,7 +408,7 @@ export function apply(ctx: Context, config: Config): void {
       iconPath,
       trayIcons,
       readLocalePreference: () => {
-        return (ctx.settings.get(UI_LOCALE_SETTINGS_NAMESPACE) as LocaleSettings | undefined)?.preference
+        return toDesktopLocale((ctx.settings.get(UI_LOCALE_SETTINGS_NAMESPACE) as LocaleSettings | undefined)?.preference)
       },
       readThemeSource: () => {
         const theme = ctx.settings.get(UI_THEME_SETTINGS_NAMESPACE) as ThemeSettings | undefined

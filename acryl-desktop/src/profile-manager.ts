@@ -167,15 +167,15 @@ function existingProfile(name: string, home: string): DesktopProfileSummary {
 
 /** Describe one profile that upstream app-boot will lazily initialize. */
 function virtualProfile(name: typeof DEFAULT_PROFILE_NAME | typeof WEB_PROFILE_NAME, home: string): DesktopProfileSummary {
-  const bundles = PROFILE_TEMPLATES.web
-  if (bundles === undefined) {
+  const template = PROFILE_TEMPLATES.web
+  if (template === undefined) {
     throw new Error(`${BIN_NAME}: installed dsh-app-boot has no web profile template`)
   }
   return {
     name,
     dir: resolveProfileDir(name, home),
     exists: false,
-    bundles: [...bundles],
+    bundles: [...template.bundles],
     webCapable: true,
   }
 }
@@ -205,7 +205,7 @@ export function createDesktopWebProfile(home: string, name: string): DesktopProf
 
   const staging = join(profilesDir, `.${basename(target)}.creating-${process.pid}-${randomUUID()}`)
   try {
-    initProfile(staging, [...template])
+    initProfile(staging, [...template.bundles], template.patchReload)
     const manifest = readProfileManifest(BIN_NAME, staging)
     writeProfileManifest(staging, { ...manifest, name: `dsh-profile-${name}` })
     // The target is checked again immediately before publication. `renameSync`
