@@ -1,1 +1,3 @@
 lib/
+# Regenerated on every build (commit hash + timestamp) -- see scripts/generate-build-info.mjs
+src/buildInfo.generated.ts

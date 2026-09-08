@@ -25,7 +25,9 @@
     "node": ">=22"
   },
   "scripts": {
+    "prebuild": "node scripts/generate-build-info.mjs",
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
+    "pretypecheck": "node scripts/generate-build-info.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
     "test": "vitest run",
     "tui": "node lib/bin.js tui",

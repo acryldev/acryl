@@ -48,6 +48,7 @@ import {
 import type { RenderOptions } from '../render.js'
 import { formatEvent, formatPendingToolCalls, formatShellRun, formatShellRunLive, formatStreamingText } from '../render.js'
 import { ACRYL_MARK_ROWS } from './acrylMark.js'
+import { BUILD_COMMIT, BUILD_TIME } from '../buildInfo.generated.js'
 import { buildContextLine, buildStatsLine } from './statsFormat.js'
 import { buildGoalBarText, buildPermissionText, buildQueuedText, buildStatusBarText, buildTerminalTitle, buildUpdateHintText } from './liveText.js'
 import { createTranscriptLine, DynamicText, padTranscriptText } from './text.js'
@@ -336,12 +337,17 @@ class TuiApp implements TuiHandle {
       ],
       { gap: 1, align: 'start' },
     )
-    // Session info (provider/model, cwd) is its own full-width row below the
-    // pet+mark row, left-aligned to column 0 — not indented to sit beside the
-    // pet the way it read as part of the same right-hand column before.
+    // Session info (provider/model, cwd, build) is its own full-width row
+    // below the pet+mark row, left-aligned to column 0 — not indented to sit
+    // beside the pet the way it read as part of the same right-hand column
+    // before. The build line exists because a running process never picks up
+    // a later fix without a full relaunch, and there was previously no way to
+    // tell from the screen alone whether a given session predated one — this
+    // makes that answerable from a screenshot instead of a `ps`/`git log` dig.
+    const buildStamp = `build ${BUILD_COMMIT ?? '(no git)'} · ${new Date(BUILD_TIME).toLocaleTimeString()}`
     const sessionInfo = new DynamicText(() => {
       const { provider, model, cwd } = options
-      return [`${provider}/${model}`, cwd].join('\n')
+      return [`${provider}/${model}`, cwd, fg(theme.muted)(buildStamp)].join('\n')
     })
 
     const layoutRoot = new VStack(
