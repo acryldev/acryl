@@ -1,8 +1,8 @@
 diff --git a/lib/client.js b/lib/client.js
-index fff5f43..b10f8d7 100644
+index a87322abe9bd8a4efaa05ad2c846f6c95ee57d50..a342781dec056ecfcd3c5b378b330f203ffe360a 100644
 --- a/lib/client.js
 +++ b/lib/client.js
-@@ -1529,6 +1529,8 @@ window.__ModuleLoader__.load({
+@@ -1572,6 +1572,8 @@ window.__ModuleLoader__.load({
  			*/
  			const curatedFields = (family) => {
  				const ownsIdentity = family === "pi-ai" && props.declared === true;
@@ -11,7 +11,7 @@ index fff5f43..b10f8d7 100644
  				const customModels = schema.getPath(draft, ["models"]);
  				const modelsOverridden = schema.hasPath(draft, ["models"]);
  				const models = modelDrafts(modelsOverridden ? customModels : inheritedModels());
-@@ -1617,7 +1619,7 @@ window.__ModuleLoader__.load({
+@@ -1660,7 +1662,7 @@ window.__ModuleLoader__.load({
  									}
  								})]
  							}),
