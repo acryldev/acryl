@@ -1,3 +1,49 @@
+## 2026-09-08 - acryl-tui renamed to acryl-cli; 001 tech-debt ledger opened, Phase 0 closed
+
+Commits: `42c4177`, `79fc28c`, `8d73826`, `7c460f8`, `f03586c`, `f03b28a`,
+`7926b4d`, `1818f50`, `cd2f269`, `3758809`.
+
+**Surface rename.** `acryl-tui` renamed to `acryl-cli` across the folder,
+package name, `pnpm-workspace.yaml`, CI workflows, release/build scripts,
+the user-facing CLI string + its test, and current docs/specs (`docs/DEVELOPMENT-LOG.md`
+and `docs/handoff/*.md` deliberately left as historical record). A pending,
+previously-uncommitted scripts reorg (CLI-owned scripts/launchers/tests moved
+into `acryl-tui/` proper) was landed first so the rename started from a clean
+tree. Verified end to end: workspace typecheck/test across all packages,
+`verify-layout.mjs`, and a real `darwin-arm64` CLI archive built and
+smoke-tested (`--version`, `tui --json`, the TTY-guard message).
+
+**001 technical-debt ledger opened.** `specs/001-acryl-refactor-improvements-and-tech-debt/`
+is now the standing, cyclic home for ACRYL refactoring/tech-debt/stability
+work (spec, plan, research R1-R14, tasks T001-T024, and
+`proof/architecture-guardrails.mjs` — 10 static guardrails G1-G10, one per
+major architecture finding). Phase 0 (hygiene, T001-T008) closed:
+- Workspace install reconciled so the headless gate passes without `CI=true`.
+- `acryl-cli/tests/tui/login-preview.spec.ts` committed (was untracked).
+- `deepseek-harness` submodule pointer reconciled: gitlink, `upstream.json`,
+  and the checkout now all agree at `b4c7f9a2c5` (a local fork fix moving
+  `dsh-attachment`/`dsh-invariants` to dependencies) — pinned there per
+  explicit direction rather than rolling back to the older recorded commit.
+  Also fixed a truncation-length bug in the G10 guardrail's own SHA
+  comparison (fixed 7-char slice vs `git rev-parse --short`'s variable
+  length) that made it possible to FAIL even when the three values agreed.
+- `verify-layout.mjs`'s `runtimePackageVersion` family check extended from
+  `acryl-desktop`-only to every manifest declaring `dsh-*` deps; the shipped
+  agent-presets submodule read made loud (fails instead of silently
+  shrinking `/presets` when the source directory is missing).
+- `scripts/web-run.mjs` moved to `acryl-web/bin/dev-run.mjs` for launcher
+  symmetry with `acryl-cli/bin/dev-run.mjs`.
+- `specs/024-acryl-cli-login` reconciled with the shipped two-step `/login`
+  design (auth-type chooser + fuzzy-searchable provider list), superseding
+  the stale single-list description without erasing the original tasks.
+- A stale bilingual-doc hash record (`.agents/notes/.../2026-08-15-*.i18n.yaml`)
+  refreshed after the rename touched both language sides identically.
+
+`corepack pnpm run check` and `check:layout` both pass plainly (no
+`CI=true`). The guardrail script now reports 8/10 RED — every remaining
+failure is a Track B (Phase 1-3) architecture-move item, not a hygiene gap.
+Track B (the credential/authorization boundary move) is next.
+
 ## 2026-09-08 - ACRYL owns its own home; /model and /login gain real edit/auth flows; v0.1.32 released
 
 Commits: `6c5e700`, `7fcd219`, `fa9f973`, `0205a3d`, `84a9606`, `8a25457`,

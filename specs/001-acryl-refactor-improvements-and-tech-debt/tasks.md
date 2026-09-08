@@ -16,49 +16,49 @@
 
 **Purpose:** the workspace and gate must be trustworthy before logic moves.
 
-- [ ] T001 Run a workspace install so the plain headless gate works without `CI=true`.
+- [x] T001 Run a workspace install so the plain headless gate works without `CI=true`.
   - Why: `corepack pnpm --filter acryl-cli run typecheck` currently exits 1 at a pnpm deps-status pre-check (`pnpm install --production`); it only passes with `CI=true` (R11).
   - Depends on: none.
   - RED/GREEN proof: `corepack pnpm --filter acryl-cli run typecheck` (no `CI=true`) → RED now (exit 1) → GREEN after install (exit 0).
   - Acceptance test: `corepack pnpm run verify` → `Acceptance/README.md` T001. Green when the plain (no `CI=true`) gate passes.
 
-- [ ] T002 [P] Commit the uncommitted test with the behavior it covers.
+- [x] T002 [P] Commit the uncommitted test with the behavior it covers.
   - Why: `acryl-cli/tests/tui/login-preview.spec.ts` is untracked (never committed) (R12).
   - Depends on: none.
   - RED/GREEN proof: `git status --short acryl-cli/tests/tui/login-preview.spec.ts` → shows `??` (RED) → then tracked (GREEN).
   - Acceptance test: `corepack pnpm --filter acryl-cli run test` → `Acceptance/README.md` T002. Green when the test is tracked and passes.
 
-- [ ] T003 Reconcile the DeepSeek Harness submodule pointer so `gitlink == upstream.json == checkout`.
+- [x] T003 Reconcile the DeepSeek Harness submodule pointer so `gitlink == upstream.json == checkout`.
   - Why: `git submodule status` shows `+b4c7f9a…` differing from the recorded gitlink (`cd5ef81`) and `upstream.json.commit` (`c389f96`) (R13a).
   - Depends on: none.
   - RED/GREEN proof: `node specs/001-.../proof/architecture-guardrails.mjs` → G10 FAIL (RED) → G10 PASS (GREEN).
   - Acceptance test: guardrail `G10` + `corepack pnpm run check:layout` → `Acceptance/README.md` T003. Green when `G10 PASS` and layout gate passes.
 
-- [ ] T004 [P] Extend the `runtimePackageVersion` family check to every manifest declaring `dsh-*` deps.
+- [x] T004 [P] Extend the `runtimePackageVersion` family check to every manifest declaring `dsh-*` deps.
   - Why: the family check covers only `acryl-desktop` today; `acryl-cli`/`acryl-web`/`acryl-harness-runtime` are convention-only (R14a).
   - Depends on: none. Touches `scripts/verify-layout.mjs`.
   - RED/GREEN proof: `corepack pnpm run check:layout` passes; a deliberately off-family `acryl-cli` `dsh-*` pin fails the gate.
   - Acceptance test: `corepack pnpm run check:layout` → `Acceptance/README.md` T004. Green when every manifest `dsh-*` dep is gate-enforced.
 
-- [ ] T005 [P] Make the shipped-presets submodule read a loud, gate-checked dependency.
+- [x] T005 [P] Make the shipped-presets submodule read a loud, gate-checked dependency.
   - Why: `deepseek-harness/packages/preset/agent-presets/presets` is a soft `existsSync` read; a missing submodule silently shrinks `/presets` (R14b).
   - Depends on: none. Touches `scripts/verify-layout.mjs` + CI config.
   - RED/GREEN proof: `corepack pnpm run check:layout` passes with the submodule initialized; surfaces a loud warning/failure when the preset dir is absent.
   - Acceptance test: `corepack pnpm run check:layout` → `Acceptance/README.md` T005. Green when a missing preset source cannot silently degrade `/presets`.
 
-- [ ] T006 [P] Move `scripts/web-run.mjs` → `acryl-web/bin/dev-run.mjs` for launcher symmetry.
+- [x] T006 [P] Move `scripts/web-run.mjs` → `acryl-web/bin/dev-run.mjs` for launcher symmetry.
   - Why: each surface owns its launcher (the TUI moved to `acryl-cli/bin/dev-run.mjs`) (R14c).
   - Depends on: none. Touches `acryl-web/` + root `package.json`.
   - RED/GREEN proof: `corepack pnpm run web` boots through the new launcher; `acryl-web` typecheck/build pass.
   - Acceptance test: `corepack pnpm --filter acryl-web run build` + `corepack pnpm run web` → `Acceptance/README.md` T006. Green when web boots via `acryl-web/bin/dev-run.mjs`.
 
-- [ ] T007 Reconcile the `specs/024-acryl-cli-login` ledger with the shipped two-step design.
+- [x] T007 Reconcile the `specs/024-acryl-cli-login` ledger with the shipped two-step design.
   - Why: the spec still describes the single-list `/login [provider]` model; the shipped product is a two-step auth-type chooser + fuzzy search + `ctrl+p` custom-provider jump (R10).
   - Depends on: none. Touches `specs/024-acryl-cli-login/{spec,plan,tasks}.md`.
   - RED/GREEN proof: `node specs/001-.../proof/architecture-guardrails.mjs` → G9 FAIL (RED) → G9 PASS (GREEN).
   - Acceptance test: guardrail `G9` → `Acceptance/README.md` T007. Green when `G9 PASS`.
 
-- [ ] T008 Close Phase 0: run the full gate, update this ledger's checklists, add a dev-log checkpoint.
+- [x] T008 Close Phase 0: run the full gate, update this ledger's checklists, add a dev-log checkpoint.
   - Why: confirms the workspace is trustworthy before Track B.
   - Depends on: T001–T007.
   - RED/GREEN proof: `corepack pnpm run check` and `corepack pnpm run check:layout` pass; guardrail script shows only Track B items RED.
