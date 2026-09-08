@@ -266,6 +266,52 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     store.updateModelProfile({ providers: rows, busy: false, error: undefined, selected: 0 })
   }
 
+  // Shared by `editProvider` (called from /model's own provider list, which
+  // already has `overlay.modelProfile.providers` loaded) and `openProviderEditor`
+  // (called from /login, which has to open /model and load that list first) --
+  // one path into the edit form (masked key preview, Models editor) regardless
+  // of which overlay the user started from.
+  function openEditFormForRow(row: ProviderRow): void {
+    const overlay = store.getSnapshot().overlay
+    if (overlay.kind !== 'modelProfile') return
+    const draft: ProviderDraft = {
+      route: row.route,
+      isNew: false,
+      settingsNs: row.settingsNs,
+      settingsPath: row.settingsPath,
+      displayName: row.displayName,
+      api: row.api ?? '',
+      baseURL: row.baseURL ?? '',
+      apiKeyRef: row.apiKeyRef,
+      apiKeyConfigured: row.apiKeyConfigured,
+      authMethod: row.authMethod,
+      apiKeyDraft: '',
+      apiKeyPreview: undefined,
+      models: row.models,
+      revision: row.revision,
+    }
+    const formKey = overlay.modelProfile.formKey + 1
+    store.updateModelProfile({ view: 'form', draft, formKey })
+    // Never pre-fill the editable draft field with the real secret — only
+    // fetch it to render a short, non-reversible first/last-chars preview
+    // (masked via maskKeyPreview) so the field doesn't look empty when a
+    // key genuinely is set. OAuth-authenticated routes have no separate
+    // api-key ref to resolve here; the "signed in via OAuth" hint already
+    // covers that case.
+    if (row.authMethod === 'api-key') {
+      void (async () => {
+        const credentialsSvc: any = host.ctx.get('credentials')
+        const resolved = await credentialsSvc?.resolve?.(row.apiKeyRef).catch(() => undefined)
+        if (resolved?.value === undefined) return
+        const current = store.getSnapshot().overlay
+        if (current.kind !== 'modelProfile' || current.modelProfile.formKey !== formKey) return
+        const currentDraft = current.modelProfile.draft
+        if (currentDraft === undefined) return
+        store.updateModelProfile({ draft: { ...currentDraft, apiKeyPreview: maskKeyPreview(resolved.value) } })
+      })()
+    }
+  }
+
   // A `/login` sign-in only ever writes a credential (the OAuth grant or typed
   // API key) — it never touches `ctx.settings`. `dsh-llm-pi-ai` only registers
   // a route as live once its settings section names it (even with an empty
@@ -661,42 +707,24 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
       if (overlay.kind !== 'modelProfile') return
       const row = overlay.modelProfile.providers?.find(entry => entry.route === route)
       if (row === undefined) return
-      const draft: ProviderDraft = {
-        route: row.route,
-        isNew: false,
-        settingsNs: row.settingsNs,
-        settingsPath: row.settingsPath,
-        displayName: row.displayName,
-        api: row.api ?? '',
-        baseURL: row.baseURL ?? '',
-        apiKeyRef: row.apiKeyRef,
-        apiKeyConfigured: row.apiKeyConfigured,
-        authMethod: row.authMethod,
-        apiKeyDraft: '',
-        apiKeyPreview: undefined,
-        models: row.models,
-        revision: row.revision,
-      }
-      const formKey = overlay.modelProfile.formKey + 1
-      store.updateModelProfile({ view: 'form', draft, formKey })
-      // Never pre-fill the editable draft field with the real secret — only
-      // fetch it to render a short, non-reversible first/last-chars preview
-      // (masked via maskKeyPreview) so the field doesn't look empty when a
-      // key genuinely is set. OAuth-authenticated routes have no separate
-      // api-key ref to resolve here; the "signed in via OAuth" hint already
-      // covers that case.
-      if (row.authMethod === 'api-key') {
-        void (async () => {
-          const credentialsSvc: any = host.ctx.get('credentials')
-          const resolved = await credentialsSvc?.resolve?.(row.apiKeyRef).catch(() => undefined)
-          if (resolved?.value === undefined) return
-          const current = store.getSnapshot().overlay
-          if (current.kind !== 'modelProfile' || current.modelProfile.formKey !== formKey) return
-          const currentDraft = current.modelProfile.draft
-          if (currentDraft === undefined) return
-          store.updateModelProfile({ draft: { ...currentDraft, apiKeyPreview: maskKeyPreview(resolved.value) } })
-        })()
-      }
+      openEditFormForRow(row)
+    },
+    // Entry point from /login: choosing an already-configured provider there
+    // used to just re-run sign-in, with no way to see its masked key or manage
+    // its models without separately learning /model's own navigation. Opens
+    // /model and jumps straight to that provider's edit form instead.
+    openProviderEditor(route) {
+      void (async () => {
+        store.openModelProfile()
+        const rows = await computeProviderRows()
+        store.updateModelProfile({ providers: rows ?? [], busy: false, error: rows === undefined ? 'Model provider settings are not available in this profile.' : undefined, selected: 0 })
+        const row = rows?.find(entry => entry.route === route)
+        if (row === undefined) {
+          store.setNotice(`Provider "${route}" not found.`)
+          return
+        }
+        openEditFormForRow(row)
+      })()
     },
     saveProvider(draft) {
       void (async () => {

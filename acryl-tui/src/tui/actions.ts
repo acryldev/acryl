@@ -45,10 +45,8 @@ export interface TuiActions {
   logout(): void
   /** Close the `/login` overlay. */
   closeLogin(): void
-  /** Move the `/login` overlay's selection cursor. */
-  selectLoginFlow(index: number): void
-  /** Run the authorization flow for the selected provider (pi-ai OAuth). */
-  beginAuthorization(key: string): void
+  /** Run the authorization flow for the selected provider (pi-ai OAuth). `method` defaults to the flow's first (its preferred) method when omitted. */
+  beginAuthorization(key: string, method?: string): void
   /** Answer the in-flight authorization prompt (typed text/secret, or a chosen option id). */
   answerAuthorizationPrompt(value: string): void
   /** Close the `/model` overlay, discarding any in-progress edit. */
@@ -59,12 +57,18 @@ export interface TuiActions {
   selectProvider(index: number): void
   /** Open a blank draft for a new custom provider. */
   createProvider(): void
+  /** Switch to `/model`'s custom-provider form directly, from wherever the caller is (e.g. `/login`'s provider list, which offers no custom-provider path of its own). */
+  addCustomProvider(): void
   /** Open an existing provider's stored profile for editing. */
   editProvider(route: string): void
+  /** Open `/model` and jump straight to editing this provider — the entry point `/login`'s provider list uses for an already-configured route, since it offers no edit/models path of its own. */
+  openProviderEditor(route: string): void
   /** Persist a draft via `ctx.settings`/`ctx.credentials`, then reload the list. */
   saveProvider(draft: ProviderDraft): void
   /** Remove a provider's settings section and credential. */
   deleteProvider(row: ProviderRow): void
+  /** Remove only a draft's stored credential (both the `apiKeyEnv` reference and any `/login` record), keeping its settings profile (baseURL/api/models) intact. */
+  clearApiKey(draft: ProviderDraft): void
   /** Probe a draft's endpoint via `ctx.llm.discoverModels`. */
   discoverModelsForDraft(draft: ProviderDraft): void
   /** Save `{provider, model}` as the Agent's default model selection. */
