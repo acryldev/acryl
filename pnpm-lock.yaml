@@ -18,6 +18,7 @@ patchedDependencies:
   '@deepseek-ai/dsh-llm-deepseek@0.1.1-rc.2': 24082a6f625434e0e26e87215b97a239499f1e002be31224a5c8aebf892f4351
   '@deepseek-ai/dsh-sandbox-windows-acl@0.1.1-rc.2': 297a2bcef0f65035a21c61ce39a0249fdd930f749f1eea258ba81d70477e9fb6
   '@deepseek-ai/dsh-web-app@0.1.1-rc.2': 6d5ce320123ccdf0bf7c458fbc218417b1e800435d6930cf46d0ca2f57549a2d
+  '@earendil-works/pi-ai@0.82.1': ef7e0dd0e86a1b21c8e64ec36c432a2a1512afb9819470c32a4cd19c322bdffe
   '@earendil-works/pi-tui@0.84.2': 5dc0250a1f7f94a22edffa555f19c38ab55dd19672e6d7031592e52d82cf7be5
   app-builder-lib@26.15.7: 33e50ac9ace3ca3a0a86f35d4b20b1c9c638a01cda6258e10d74e10d3d351dab
   dshmarket@1.17.1: 1d6cc820c58c4c1894955e3eb30a5dc00b4c74b07210b43bedd3e17f8ad15a2b
@@ -10672,7 +10673,7 @@ snapshots:
       '@deepseek-ai/dsh-settings': 0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-brand@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)))(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1))(@deepseek-ai/schemastery@3.18.1)
       '@deepseek-ai/dsh-timeout': 0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1))
       '@deepseek-ai/schemastery': 3.18.1
-      '@earendil-works/pi-ai': 0.82.1(@modelcontextprotocol/sdk@1.30.0(zod@4.4.3))(ws@8.21.3)(zod@4.4.3)
+      '@earendil-works/pi-ai': 0.82.1(patch_hash=ef7e0dd0e86a1b21c8e64ec36c432a2a1512afb9819470c32a4cd19c322bdffe)(@modelcontextprotocol/sdk@1.30.0(zod@4.4.3))(ws@8.21.3)(zod@4.4.3)
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
       - bufferutil
@@ -10693,7 +10694,7 @@ snapshots:
       '@deepseek-ai/dsh-settings': 0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-brand@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)))(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1))(@deepseek-ai/schemastery@3.18.1)
       '@deepseek-ai/dsh-timeout': 0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1))
       '@deepseek-ai/schemastery': 3.18.1
-      '@earendil-works/pi-ai': 0.82.1(@modelcontextprotocol/sdk@1.30.0(zod@4.4.3))(ws@8.21.3)(zod@4.4.3)
+      '@earendil-works/pi-ai': 0.82.1(patch_hash=ef7e0dd0e86a1b21c8e64ec36c432a2a1512afb9819470c32a4cd19c322bdffe)(@modelcontextprotocol/sdk@1.30.0(zod@4.4.3))(ws@8.21.3)(zod@4.4.3)
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
       - bufferutil
@@ -12441,7 +12442,7 @@ snapshots:
 
   '@dotenvx/primitives@0.8.0': {}
 
-  '@earendil-works/pi-ai@0.82.1(@modelcontextprotocol/sdk@1.30.0(zod@4.4.3))(ws@8.21.3)(zod@4.4.3)':
+  '@earendil-works/pi-ai@0.82.1(patch_hash=ef7e0dd0e86a1b21c8e64ec36c432a2a1512afb9819470c32a4cd19c322bdffe)(@modelcontextprotocol/sdk@1.30.0(zod@4.4.3))(ws@8.21.3)(zod@4.4.3)':
     dependencies:
       '@anthropic-ai/sdk': 0.91.1(zod@4.4.3)
       '@aws-sdk/client-bedrock-runtime': 3.1048.0
