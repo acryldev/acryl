@@ -17,7 +17,7 @@ import { Key, matchesKey, fuzzyFilter } from '@earendil-works/pi-tui'
 import type { TuiActions } from '../actions.js'
 import type { ModelProfileOverlayState, TuiStore } from '../store.js'
 import { emptyMiniTextField, miniTextFieldInput, renderMiniTextField, type MiniTextFieldState } from '../miniTextField.js'
-import { deriveApiKeyRef, type ModelEntry, type ProviderDraft } from './types.js'
+import { deriveApiKeyRef, type ModelEntry, type ProviderDraft, type ProviderRow } from './types.js'
 import { theme, fg } from '../theme.js'
 
 const bold = (s: string): string => `\x1b[1m${s}\x1b[0m`
@@ -52,7 +52,12 @@ export class ModelProfileOverlay implements Component {
   private modelSearch: MiniTextFieldState = emptyMiniTextField()
   private modelPickerCursor = 0
 
-  // --- provider list: selection lives in the store; only the delete-confirm arm is local ---
+  // --- provider list: fuzzy-searchable the same way the model picker is,
+  // selection and search both local (mirrors modelSearch/modelPickerCursor
+  // above) rather than the store's `selected`, which only ever indexed the
+  // unfiltered list. ---
+  private providerSearch: MiniTextFieldState = emptyMiniTextField()
+  private providerCursor = 0
   private confirmDelete: number | undefined
   // Set by the list's `m` shortcut (edit models directly, skipping the API-key
   // screen) right before `editProvider` swaps in a fresh `formKey`; consumed
@@ -251,81 +256,92 @@ export class ModelProfileOverlay implements Component {
     }
   }
 
+  private filteredProviders(mp: ModelProfileOverlayState): readonly ProviderRow[] {
+    const providers = mp.providers ?? []
+    const query = this.providerSearch.value.trim()
+    return query === '' ? providers : fuzzyFilter([...providers], query, row => `${row.displayName} ${row.route}`)
+  }
+
   private renderList(mp: ModelProfileOverlayState): string[] {
-    const { providers, selected, busy, error } = mp
+    const { providers, busy, error } = mp
     const lines: string[] = [bold(secondary('Model providers'))]
     lines.push(...this.noticeLines())
     if (error !== undefined) lines.push(errorColor(error))
+    lines.push(`> ${renderMiniTextField(this.providerSearch, true)}`)
     if (busy && providers === undefined) lines.push(muted('Loading…'))
+    const filtered = this.filteredProviders(mp)
     const chrome = lines.length + 2 // lines pushed so far, plus this list's own final hint line and the "N/total" indicator
     const maxVisible = this.listWindow(chrome)
-    const { start, end } = this.visibleRange(providers?.length ?? 0, selected, maxVisible)
-    providers?.slice(start, end).forEach((row, offset) => {
+    const { start, end } = this.visibleRange(filtered.length, this.providerCursor, maxVisible)
+    filtered.slice(start, end).forEach((row, offset) => {
       const index = start + offset
       const marker = row.configured ? '● ' : '○ '
       const active = row.live ? ' (active)' : ''
       const noKey = row.apiKeyConfigured
         ? ` [${row.authMethod === 'oauth' ? 'oauth' : 'api key'}]`
         : ' [no api key]'
-      const confirm = this.confirmDelete === index ? ' — press d again to delete' : ''
-      const text = `${index === selected ? '› ' : '  '}${marker}${row.displayName}${active}${noKey}${confirm}`
-      lines.push(index === selected ? invert(text) : text)
+      const confirm = this.confirmDelete === index ? ' — press ctrl+x again to delete' : ''
+      const text = `${index === this.providerCursor ? '› ' : '  '}${marker}${row.displayName}${active}${noKey}${confirm}`
+      lines.push(index === this.providerCursor ? invert(text) : text)
     })
-    if ((providers?.length ?? 0) > maxVisible) lines.push(muted(`(${selected + 1}/${providers?.length ?? 0})`))
-    if (providers?.length === 0) lines.push(muted('No providers configured yet — press a to add one.'))
-    lines.push(muted('↑↓ select · enter edit · ctrl+n add · ctrl+x delete · ctrl+e edit models · ctrl+a set active model · esc back'))
+    if (filtered.length > maxVisible) lines.push(muted(`(${this.providerCursor + 1}/${filtered.length})`))
+    if (providers?.length === 0) lines.push(muted('No providers configured yet — ctrl+n to add one.'))
+    else if (filtered.length === 0) lines.push(muted('No matching providers.'))
+    lines.push(muted('type to search · ↑↓ select · enter edit · ctrl+n add · ctrl+x delete · ctrl+e edit models · ctrl+a set active model · esc back'))
     return lines
   }
 
   private handleListInput(data: string, mp: ModelProfileOverlayState): void {
-    const { providers, selected } = mp
     if (matchesKey(data, Key.escape)) {
       this.mode = 'picker'
-      return
-    }
-    if (providers === undefined || providers.length === 0) {
-      if (matchesKey(data, Key.ctrl('n'))) this.actions.createProvider()
-      return
-    }
-    if (matchesKey(data, Key.up)) {
-      this.confirmDelete = undefined
-      this.actions.selectProvider(Math.max(0, selected - 1))
-      return
-    }
-    if (matchesKey(data, Key.down)) {
-      this.confirmDelete = undefined
-      this.actions.selectProvider(Math.min(providers.length - 1, selected + 1))
-      return
-    }
-    if (matchesKey(data, Key.enter)) {
-      this.actions.editProvider(providers[selected].route)
       return
     }
     if (matchesKey(data, Key.ctrl('n'))) {
       this.actions.createProvider()
       return
     }
+    const filtered = this.filteredProviders(mp)
+    if (filtered.length === 0) return
+    if (matchesKey(data, Key.up)) {
+      this.confirmDelete = undefined
+      this.providerCursor = Math.max(0, this.providerCursor - 1)
+      return
+    }
+    if (matchesKey(data, Key.down)) {
+      this.confirmDelete = undefined
+      this.providerCursor = Math.min(filtered.length - 1, this.providerCursor + 1)
+      return
+    }
+    if (matchesKey(data, Key.enter)) {
+      this.actions.editProvider(filtered[this.providerCursor]!.route)
+      return
+    }
     if (matchesKey(data, Key.ctrl('e'))) {
       this.pendingShowModels = true
-      this.actions.editProvider(providers[selected].route)
+      this.actions.editProvider(filtered[this.providerCursor]!.route)
       return
     }
     if (matchesKey(data, Key.ctrl('a'))) {
-      const row = providers[selected]
+      const row = filtered[this.providerCursor]!
       const model = row.models[0]
       if (model !== undefined) this.actions.setActiveModel(row.route, model.id)
       return
     }
     if (matchesKey(data, Key.ctrl('x'))) {
-      if (this.confirmDelete === selected) {
+      if (this.confirmDelete === this.providerCursor) {
         this.confirmDelete = undefined
-        this.actions.deleteProvider(providers[selected])
+        this.actions.deleteProvider(filtered[this.providerCursor]!)
       } else {
-        this.confirmDelete = selected
+        this.confirmDelete = this.providerCursor
       }
       return
     }
     this.confirmDelete = undefined
+    const next = miniTextFieldInput(this.providerSearch, data)
+    if (next !== undefined) {
+      this.providerSearch = next
+      this.providerCursor = 0
+    }
   }
 
   /**
@@ -352,9 +368,9 @@ export class ModelProfileOverlay implements Component {
       lines.push(muted(`(${via} — leave blank to keep it)`))
     }
     lines.push(renderMiniTextField(this.apiKeyDraft, true, '*'))
-    lines.push(muted(`Models (${this.models.length}) — esc back, m from the provider list to edit`))
+    lines.push(muted(`Models (${this.models.length}) — ctrl+e edit here`))
     const removeHint = draft.apiKeyConfigured ? ' · ctrl+d remove key' : ''
-    lines.push(muted(`${mp.busy ? 'Saving…' : '(escape to cancel, enter to submit)'}${removeHint}`))
+    lines.push(muted(`esc back${removeHint} · ${mp.busy ? 'Saving…' : 'enter to submit'}`))
     return lines
   }
 
@@ -368,6 +384,12 @@ export class ModelProfileOverlay implements Component {
     }
     if (matchesKey(data, Key.ctrl('d')) && draft.apiKeyConfigured) {
       this.actions.clearApiKey(draft)
+      return
+    }
+    // Edit this exact provider's models right from this screen — no reason to
+    // back out to the provider list and re-select it just to reach the editor.
+    if (matchesKey(data, Key.ctrl('e'))) {
+      this.showModels = true
       return
     }
     if (matchesKey(data, Key.enter)) {

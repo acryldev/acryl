@@ -24,7 +24,6 @@ function stubActions(): TuiActions {
     answerAuthorizationPrompt: vi.fn(),
     closeModelProfile: vi.fn(),
     backToProviderList: vi.fn(),
-    selectProvider: vi.fn(),
     createProvider: vi.fn(),
     addCustomProvider: vi.fn(),
     editProvider: vi.fn(),

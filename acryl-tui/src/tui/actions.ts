@@ -53,8 +53,6 @@ export interface TuiActions {
   closeModelProfile(): void
   /** Return from the add/edit form to the provider list without saving. */
   backToProviderList(): void
-  /** Move the provider list's selection cursor. */
-  selectProvider(index: number): void
   /** Open a blank draft for a new custom provider. */
   createProvider(): void
   /** Switch to `/model`'s custom-provider form directly, from wherever the caller is (e.g. `/login`'s provider list, which offers no custom-provider path of its own). */

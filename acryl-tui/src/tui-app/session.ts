@@ -603,6 +603,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     beginAuthorization(key, method) {
       void (async () => {
         const authSvc: any = host.ctx.get('authorization')
+        const credentialsSvc: any = host.ctx.get('credentials')
         if (authSvc === undefined) {
           store.setNotice('Sign-in is not available in this profile.')
           return
@@ -610,6 +611,16 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
         const overlay = store.getSnapshot().overlay
         const flow = overlay.kind === 'login' ? overlay.login.flows?.find(entry => entry.key === key) : undefined
         if (flow === undefined) return
+        const selectedMethod = method ?? flow.methods[0]?.id
+        // The authorization flow deliberately asks for a replacement key in an
+        // empty secret field. Preserve that behavior, but carry a masked hint
+        // into the prompt so an already-configured route does not look empty.
+        const existingRecord = selectedMethod === 'api-key'
+          ? await credentialsSvc?.readRecord?.(flow.key)
+          : undefined
+        const storedApiKeyPreview = typeof existingRecord?.key === 'string'
+          ? maskKeyPreview(existingRecord.key)
+          : undefined
         store.updateLogin({ signingIn: key })
         const interaction = {
           notify(notice: { message: string; url?: string; code?: string }) {
@@ -625,7 +636,9 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
               pendingPromptResolve = resolve
               const state = prompt.kind === 'select'
                 ? { kind: 'select' as const, message: prompt.message, options: (prompt.options ?? []).map(option => ({ id: option.id, label: option.label, description: option.description })) }
-                : { kind: prompt.kind, message: prompt.message, placeholder: prompt.placeholder }
+                : prompt.kind === 'secret'
+                  ? { kind: 'secret' as const, message: prompt.message, placeholder: prompt.placeholder, storedApiKeyPreview }
+                  : { kind: 'text' as const, message: prompt.message, placeholder: prompt.placeholder }
               store.updateLogin({ prompt: state })
               prompt.signal?.addEventListener('abort', () => {
                 if (pendingPromptResolve === resolve) pendingPromptResolve = undefined
@@ -692,7 +705,6 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
       // still shows the stale pre-fetch state (no ✓, "[no api key]").
       refreshCredentialState()
     },
-    selectProvider(index) { store.updateModelProfile({ selected: index }) },
     createProvider() { openCustomProviderDraft() },
     addCustomProvider() {
       // `store.updateModelProfile()` is a no-op unless `/model` is already the
