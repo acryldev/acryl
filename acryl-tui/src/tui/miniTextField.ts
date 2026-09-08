@@ -63,9 +63,23 @@ export function miniTextFieldInput(state: MiniTextFieldState, data: string): Min
   return undefined
 }
 
+/**
+ * Mask a value for display while typing, revealing the first/last couple of
+ * characters instead of hiding it entirely — a fully-masked live field looks
+ * indistinguishable from an empty one, giving no confirmation that anything
+ * was actually typed. Length-preserving (unlike a static preview's `sk-p…9sZ4`
+ * ellipsis form) so cursor-position math against the masked string stays
+ * correct: every hidden character becomes exactly one `mask` character.
+ */
+function partiallyMask(value: string, mask: string): string {
+  if (value.length <= 2) return mask.repeat(value.length)
+  if (value.length <= 10) return `${value[0]}${mask.repeat(value.length - 2)}${value.at(-1)}`
+  return `${value.slice(0, 4)}${mask.repeat(value.length - 8)}${value.slice(-4)}`
+}
+
 /** Render the field's text, optionally with an inverse-video cursor block at the cursor position. */
 export function renderMiniTextField(state: MiniTextFieldState, cursorVisible: boolean, mask?: string): string {
-  const display = mask === undefined ? state.value : mask.repeat(state.value.length)
+  const display = mask === undefined ? state.value : partiallyMask(state.value, mask)
   if (!cursorVisible) return display
   const before = display.slice(0, state.cursor)
   const at = display[state.cursor] ?? ' '
