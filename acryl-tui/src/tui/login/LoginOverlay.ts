@@ -30,6 +30,11 @@ const errorColor = fg(theme.error)
 const successColor = fg(theme.success)
 const invert = (s: string): string => `\x1b[7m${s}\x1b[0m`
 
+/** A non-secret reminder that replacing an API-key prompt will overwrite an existing stored key. */
+export function formatStoredApiKeyHint(preview: string | undefined): string | undefined {
+  return preview === undefined ? undefined : `Stored key: ${preview}`
+}
+
 type AuthType = 'oauth' | 'api-key'
 
 const AUTH_TYPES: readonly AuthType[] = ['oauth', 'api-key']
@@ -165,6 +170,8 @@ export class LoginOverlay implements Component {
       const mask = prompt.kind === 'secret' ? '•' : undefined
       const placeholder = prompt.placeholder ?? (prompt.kind === 'secret' ? 'API key' : 'code')
       const field = this.promptField.value === '' ? `(${placeholder})` : renderMiniTextField(this.promptField, true, mask)
+      const storedKeyHint = prompt.kind === 'secret' ? formatStoredApiKeyHint(prompt.storedApiKeyPreview) : undefined
+      if (storedKeyHint !== undefined) lines.push(muted(storedKeyHint))
       lines.push(`> ${field}`)
       lines.push(muted('escape/ctrl+c to cancel, enter to submit'))
     }

@@ -20,6 +20,10 @@ export interface AuthorizationFlowRow {
   readonly methods: readonly AuthorizationMethodRow[]
   /** Whether an attempt is already running for this key. */
   readonly inFlight: boolean
+  /** Whether a credential is already stored for this flow's key — signed in and ready to use. */
+  readonly configured: boolean
+  /** How the stored credential was obtained, or `undefined` when `configured` is false. */
+  readonly authMethod: 'oauth' | 'api-key' | undefined
 }
 
 /** One choice offered by a `select` authorization prompt. */
@@ -32,14 +36,13 @@ export interface LoginPromptOption {
 /** A question the running flow needs answered before it can continue. */
 export type LoginPromptState =
   | { readonly kind: 'text'; readonly message: string; readonly placeholder?: string }
-  | { readonly kind: 'secret'; readonly message: string; readonly placeholder?: string }
+  | { readonly kind: 'secret'; readonly message: string; readonly placeholder?: string; readonly storedApiKeyPreview?: string }
   | { readonly kind: 'select'; readonly message: string; readonly options: readonly LoginPromptOption[] }
 
 /** Overlay-owned state for the `/login` sign-in screen. */
 export interface LoginOverlayState {
   /** Joined flow list; `undefined` until the first load settles. */
   readonly flows: readonly AuthorizationFlowRow[] | undefined
-  readonly selected: number
   /** The flow being signed into right now (spinner), or undefined. */
   readonly signingIn: string | undefined
   /** The prompt the running flow is waiting on, or undefined outside a flow. */

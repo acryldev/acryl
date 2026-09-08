@@ -157,6 +157,8 @@ export interface TuiState {
   readonly stats: StatsSnapshot
   /** Current agent preset, or `undefined` when `ctx.agentPresets` isn't composed in this profile. */
   readonly preset: PresetState | undefined
+  /** Live override of the session's active provider/model set via `/model`; `undefined` until the first switch, so the status bar falls back to the mount-time default. */
+  readonly activeModel: { readonly provider: string; readonly model: string } | undefined
   /** The in-flight step's accumulated text, or `undefined` when nothing is currently streaming. */
   readonly streaming: StreamingState | undefined
   /** Tool calls sent but not yet resolved by a `tool/result`, in call order. */
@@ -229,6 +231,7 @@ export class TuiStore {
       title: undefined,
       stats: EMPTY_STATS,
       preset: undefined,
+      activeModel: undefined,
       streaming: undefined,
       pendingToolCalls: this.pendingToolCallsSnapshot(),
       shellRun: undefined,
@@ -331,6 +334,11 @@ export class TuiStore {
     this.set({ preset })
   }
 
+  /** Record a live `/model` switch so the status bar reflects it immediately. */
+  setActiveModel(activeModel: { provider: string; model: string }): void {
+    this.set({ activeModel })
+  }
+
   private shellRunSeq = 0
 
   /** Begin one local shell-escape run; its output accumulates via `appendShellOutput` until `finishShellRun` settles it into the transcript. */
@@ -380,7 +388,7 @@ export class TuiStore {
     this.set({
       overlay: {
         kind: 'login',
-        login: { flows: undefined, selected: 0, signingIn: undefined, prompt: undefined, busy: true, error: undefined },
+        login: { flows: undefined, signingIn: undefined, prompt: undefined, busy: true, error: undefined },
       },
     })
   }
