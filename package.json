@@ -22,7 +22,7 @@
     "test:architecture-gates": "node --test scripts/market-dependency-direction.test.mjs",
     "check:architecture": "pnpm run test:architecture-gates && node scripts/verify-market-dependency-direction.mjs",
     "check:layout": "pnpm run check:bilingual-docs && pnpm run check:architecture && node scripts/verify-layout.mjs",
-    "check": "pnpm run check:layout && pnpm --filter acryl-control run check && pnpm --filter acryl-cli run check && pnpm --filter acryl-web run check && pnpm --filter dsh-community-fabric run check && pnpm --filter dsh-community-market run check && pnpm --filter acryl-development-canvas run check && pnpm --filter acryl-desktop run check",
+    "check": "pnpm run check:layout && pnpm run debt:check && pnpm --filter acryl-control run check && pnpm --filter acryl-cli run check && pnpm --filter acryl-web run check && pnpm --filter dsh-community-fabric run check && pnpm --filter dsh-community-market run check && pnpm --filter acryl-development-canvas run check && pnpm --filter acryl-desktop run check",
     "dev": "node scripts/dev-local.mjs",
     "dev:shared": "pnpm --filter dsh-community-market run build && pnpm --filter acryl-desktop run dev",
     "start": "pnpm --filter acryl-desktop run start",

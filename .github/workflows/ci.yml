@@ -60,6 +60,9 @@ jobs:
       - name: Validate repository layout
         run: corepack pnpm run check:layout
 
+      - name: Check technical-debt architecture guardrails
+        run: corepack pnpm run debt:check
+
       # The workspace packages export their types from a built lib/. On a fresh
       # checkout those are absent, so consumers (acryl-cli -> acryl-harness-
       # runtime -> acryl-control) cannot typecheck until the providers are built.
