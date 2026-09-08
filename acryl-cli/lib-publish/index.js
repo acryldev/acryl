@@ -1,75 +1,148 @@
-#!/usr/bin/env node
 import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
-import { existsSync, realpathSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
-import { execFile, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { appendFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { installModelSelection } from "@deepseek-ai/dsh-agent";
 import { BlockAssembler, createUserMessage } from "@deepseek-ai/dsh-llm";
 import { SessionId } from "@deepseek-ai/dsh-session";
+import { resolveDshHome } from "@deepseek-ai/dsh-home-paths";
+import { homedir } from "node:os";
 import { DEFAULT_PROFILE_BUNDLES, boot, composeEntries, healProfilesModuleFallback, initProfile, loadProfile, resolveProfileDir } from "@deepseek-ai/dsh-app-boot";
+import { defineTool } from "@deepseek-ai/dsh-tools";
+import { execFile, spawn } from "node:child_process";
 import { diffLines } from "diff";
-import { Container, Editor, HStack, Key, KeybindingsManager, ProcessTerminal, ScrollView, TUI_KEYBINDINGS, Text, TuiAltScreen, VStack, matchesKey, setKeybindings, visibleWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
+import { Container, Editor, HStack, Key, KeybindingsManager, ProcessTerminal, ScrollView, TUI_KEYBINDINGS, Text, TuiAltScreen, VStack, fuzzyFilter, matchesKey, setKeybindings, visibleWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
 import { readdir } from "node:fs/promises";
 import { ManualCompactionError } from "@deepseek-ai/dsh-compaction";
 import { GoalError } from "@deepseek-ai/dsh-goal";
-//#region src/cli/node-launcher.ts
-/** Return the child Node invocation required to expose Cordis HMR internals. */
-function exposedInternalsInvocation(input) {
-	if (input.execArgv.includes("--expose-internals")) return void 0;
-	return [
-		"--expose-internals",
-		...input.execArgv,
-		input.script,
-		...input.args
-	];
+//#region src/cli/grammar.ts
+const HOST_COMMANDS = /* @__PURE__ */ new Set([
+	"tui",
+	"gui",
+	"web"
+]);
+function hostCommand(value) {
+	return HOST_COMMANDS.has(value) ? value : void 0;
 }
-/** Re-execute this CLI under Node with the Cordis HMR prerequisite enabled. */
-async function relaunchWithExposedInternals(input) {
-	const invocation = exposedInternalsInvocation(input);
-	if (invocation === void 0) return false;
-	const exitCode = await new Promise((resolve, reject) => {
-		const child = spawn(process.execPath, invocation, { stdio: "inherit" });
-		child.once("error", reject);
-		child.once("exit", (code) => resolve(code ?? 1));
-	});
-	process.exitCode = exitCode;
-	return true;
-}
-//#endregion
-//#region ../node_modules/.pnpm/@deepseek-ai+dsh-cmdline@0.1.1-rc.2_@deepseek-ai+cordis-plugin-loader@1.0.2_@deepseek-a_1bc57e8c58566d7b9c3fbf261d0f481e/node_modules/@deepseek-ai/dsh-cmdline/lib/index.js
-/**
-* @deepseek-ai/dsh-cmdline — the command line a dsh launcher hands to the app
-* it boots.
-*
-* The launcher parses only its own flags (`--profile`, `--patch`, the config
-* dumps) and hands everything after them to the tree verbatim through the
-* {@link CmdlineArgs} service, so an app owns its flag family, its `--help`
-* text, and its parse errors instead of the launcher knowing them.
-*
-* Any app plugin can inject `cmdlineArgs` and call {@link parseCmdline}. A
-* provider may publish the parsed values as its own service from its program's
-* commander action, and ordinary rows
-* can inject that service and read it from lazily resolved config —
-* `port: !!js ctx.webStartup.port ?? 3080` — so a flag beats the value written
-* beside it. No row has launcher-level command-line status.
-* @module @deepseek-ai/dsh-cmdline
-*/
-/**
-* Provide the command line and the exit request on a host context before any
-* tree entry mounts. Both are launcher facts, not config: an embedding host
-* with no command line provides an empty argument list.
-* @param ctx - the host context the tree will mount under.
-* @param host - the invocation's arguments and its exit request.
-*/
-function provideCmdline(ctx, host) {
-	const snapshot = Object.freeze([...host.args]);
-	ctx.provide("cmdlineArgs", { get: () => snapshot });
-	ctx.provide("appExit", host.exit);
+function parseAcrylArgs(args) {
+	let command;
+	let profile;
+	let resumeSessionId;
+	let json = false;
+	let version = false;
+	let help = false;
+	for (let index = 0; index < args.length; index += 1) {
+		const argument = args[index];
+		if (argument === void 0) continue;
+		if (argument === "--version" || argument === "-v") {
+			if (version) throw new Error("--version may be provided only once");
+			version = true;
+			continue;
+		}
+		if (argument === "--help" || argument === "-h") {
+			if (help) throw new Error("--help may be provided only once");
+			help = true;
+			continue;
+		}
+		if (argument === "--profile") {
+			if (profile !== void 0) throw new Error("--profile may be provided only once");
+			const value = args[index + 1];
+			if (value === void 0 || value.startsWith("--") || value.trim() === "") throw new Error("--profile requires a value");
+			profile = value;
+			index += 1;
+			continue;
+		}
+		if (argument === "--resume") {
+			if (resumeSessionId !== void 0) throw new Error("--resume may be provided only once");
+			const value = args[index + 1];
+			if (value === void 0 || value.startsWith("--") || value.trim() === "") throw new Error("--resume requires a session id");
+			resumeSessionId = value;
+			index += 1;
+			continue;
+		}
+		if (argument === "--json") {
+			if (json) throw new Error("--json may be provided only once");
+			json = true;
+			continue;
+		}
+		if (argument.startsWith("-")) throw new Error(`unknown option: ${argument}`);
+		const parsed = hostCommand(argument);
+		if (command === void 0) {
+			if (parsed === void 0) throw new Error(`unknown command: ${argument}`);
+			command = parsed;
+			continue;
+		}
+		throw new Error(`unexpected argument for ${command}: ${argument}`);
+	}
+	const resolvedCommand = command ?? "tui";
+	if (!version && !help && profile === void 0 && resumeSessionId === void 0) return {
+		command: resolvedCommand,
+		json,
+		version,
+		help
+	};
+	return {
+		command: resolvedCommand,
+		json,
+		version,
+		help,
+		...profile === void 0 ? {} : { profile },
+		...resumeSessionId === void 0 ? {} : { resumeSessionId }
+	};
 }
 process.stdout, process.stderr;
 //#endregion
 //#region ../acryl-harness-runtime/lib/index.mjs
+const shippedPresetsDir = join(resolve(dirname(fileURLToPath(import.meta.url)), "../.."), "deepseek-harness", "packages", "preset", "agent-presets", "presets");
+const authorizationCapabilityPatches = [{
+	id: "system-prompt",
+	name: "@deepseek-ai/dsh-system-prompt",
+	config: { persona: "You are a coding agent powered by the {{model}} model. Your working directory is {{cwd}}." }
+}, { insert: [
+	{
+		id: "agent-presets",
+		name: "@deepseek-ai/dsh-agent-presets",
+		config: {
+			default: "standard",
+			roots: existsSync(shippedPresetsDir) ? [{
+				path: shippedPresetsDir,
+				trust: "system"
+			}] : [],
+			includeShippedRoot: false,
+			includeUserRoot: true
+		}
+	},
+	{
+		id: "session-stats",
+		name: "@deepseek-ai/dsh-session-stats"
+	},
+	{
+		id: "authorization",
+		name: "@deepseek-ai/dsh-authorization"
+	}
+] }];
+const NON_TUI_SHARED_ROW_IDS = /* @__PURE__ */ new Set(["authorization"]);
+function selectNonTuiCapabilityPatches(patches) {
+	return patches.flatMap((patch) => {
+		if (!("insert" in patch) || !Array.isArray(patch.insert)) return [];
+		const insert = patch.insert.filter((row) => NON_TUI_SHARED_ROW_IDS.has(row.id));
+		return insert.length === 0 ? [] : [{ insert }];
+	});
+}
+const ACRYL_CODING_CAPABILITIES = [{
+	id: "authorization",
+	surfaces: [
+		"tui",
+		"web",
+		"desktop"
+	],
+	loaderPatches: authorizationCapabilityPatches
+}];
+function createAcrylCodingCapabilityPatches(surfaces) {
+	const includeSharedCodingRows = surfaces.has("tui");
+	return structuredClone(ACRYL_CODING_CAPABILITIES.filter((capability) => capability.surfaces.some((surface) => surfaces.has(surface))).flatMap((capability) => includeSharedCodingRows ? capability.loaderPatches : selectNonTuiCapabilityPatches(capability.loaderPatches)));
+}
 function contentText(content) {
 	return content.filter((block) => {
 		return block.type === "text" && typeof block.text === "string";
@@ -125,6 +198,8 @@ function status(agent) {
 */
 function createAcrylSessionBridge(ctx, options) {
 	const handles = /* @__PURE__ */ new Map();
+	const modelSelections = /* @__PURE__ */ new Map();
+	const modelSelectionDisposers = /* @__PURE__ */ new Map();
 	const subscribers = /* @__PURE__ */ new Map();
 	const eventListeners = /* @__PURE__ */ new Map();
 	let disposed = false;
@@ -186,6 +261,12 @@ function createAcrylSessionBridge(ctx, options) {
 				}
 			});
 			handles.set(handle.agent.id, handle);
+			const ref = {
+				current: void 0,
+				assembled: void 0
+			};
+			modelSelectionDisposers.set(handle.agent.id, installModelSelection(handle.agent.ctx, ref));
+			modelSelections.set(handle.agent.id, ref);
 			return handle.agent.id;
 		},
 		snapshot,
@@ -245,6 +326,15 @@ function createAcrylSessionBridge(ctx, options) {
 			}));
 			await accepted;
 		},
+		async selectModel(input) {
+			agentFor(input.sessionId);
+			const ref = modelSelections.get(input.sessionId);
+			if (ref === void 0) throw new Error(`ACRYL session ${input.sessionId} has no installed model selection`);
+			ref.current = {
+				provider: input.provider,
+				model: input.model
+			};
+		},
 		async cancel(sessionId) {
 			agentFor(sessionId).cancel({ kind: "user" });
 		},
@@ -254,6 +344,9 @@ function createAcrylSessionBridge(ctx, options) {
 			offSessionEvent();
 			subscribers.clear();
 			eventListeners.clear();
+			for (const dispose of modelSelectionDisposers.values()) dispose();
+			modelSelectionDisposers.clear();
+			modelSelections.clear();
 			const activeHandles = [...handles.values()];
 			handles.clear();
 			const sessions = ctx.get("sessions");
@@ -269,39 +362,171 @@ function createAcrylSessionBridge(ctx, options) {
 		}
 	});
 }
+/**
+* A durable, cross-surface debug log for ACRYL sessions.
+*
+* Cordis's own `ctx.logger` already carries every structured log record any
+* plugin emits, but nothing in this stack persisted it anywhere — a failure
+* like a vendored provider's OAuth error only ever reached the terminal
+* transcript, gone the moment the pane scrolled or the process exited. This
+* registers one JSONL file exporter on `ctx.logger` per surface (CLI/TUI,
+* web, and — once wired there too — the desktop GUI), so `error`/`warn`
+* records (and everything, when `ACRYL_LOG_LEVEL=debug`) survive the session
+* and can be read back after the fact instead of re-derived from a
+* screenshot.
+*
+* @module acryl-harness-runtime/session-log-exporter
+*/
+const LOGGER_LEVEL_WARN = 2;
+const LOGGER_LEVEL_DEBUG = 3;
+/**
+* Register the file exporter for this process's lifetime. `ctx.logger.exporter()`
+* already ties its own disposal to the fiber that registers it (see
+* `LoggerService.exporter` in `@deepseek-ai/cordis`), so this needs no extra
+* `ctx.effect()` wrapper of its own.
+* @param ctx - the plugin context whose `ctx.logger` gains the exporter.
+* @param options - which surface/home this log file belongs to.
+*/
+function installSessionLogExporter(ctx, options) {
+	const logDir = join(resolveDshHome(options.dshHome), "logs");
+	try {
+		mkdirSync(logDir, {
+			recursive: true,
+			mode: 448
+		});
+	} catch {
+		return;
+	}
+	const day = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+	const logFile = join(logDir, `acryl-${options.surface}-${day}.jsonl`);
+	const threshold = process.env.ACRYL_LOG_LEVEL === "debug" ? LOGGER_LEVEL_DEBUG : LOGGER_LEVEL_WARN;
+	ctx.logger.exporter({ export(message) {
+		if (message.level > threshold) return;
+		try {
+			appendFileSync(logFile, `${JSON.stringify({
+				ts: new Date(message.ts).toISOString(),
+				type: message.type,
+				name: message.name,
+				args: message.args.map((arg) => arg instanceof Error ? {
+					message: arg.message,
+					stack: arg.stack,
+					name: arg.name
+				} : arg)
+			})}\n`, { mode: 384 });
+		} catch {}
+	} });
+}
+/**
+* ACRYL's own data root, nested one level above the DSH engine home it
+* composes.
+*
+* The stock DSH Desktop app (from dshdesktop.com) uses plain `~/.dsh`, and so
+* did every ACRYL surface until now — sharing that root made the two
+* genuinely different products silently share credentials/settings/sessions,
+* which is both confusing and useless for comparing ACRYL against a stock
+* DSH Desktop install side by side. ACRYL now owns `~/.acryl` and nests each
+* engine's artifacts under it by engine name:
+*
+* ```txt
+* ~/.acryl/            ACRYL's own root — everything not engine-specific
+* ~/.acryl/.dsh/        the DSH engine home (what DSH_HOME resolves to)
+* ~/.acryl/.pi/         reserved for a future pi.dev engine
+* ```
+*
+* `$DSH_HOME`, if a caller has already set it explicitly, still wins — this
+* only changes the *default* the harness's own `resolveDshHome()` falls
+* back to when nothing overrides it.
+*
+* @module acryl-harness-runtime/acryl-home
+*/
+/** ACRYL's own root directory name under the OS home. */
+const ACRYL_HOME_DIR_NAME = ".acryl";
+/** The DSH engine's directory name, nested under ACRYL's root. */
+const ACRYL_DSH_ENGINE_DIR_NAME = ".dsh";
+/** ACRYL's own root — `~/.acryl` unless `$ACRYL_HOME` overrides it. */
+function resolveAcrylHome(env = process.env) {
+	const overridden = env.ACRYL_HOME?.trim();
+	return overridden && overridden !== "" ? overridden : join(homedir(), ACRYL_HOME_DIR_NAME);
+}
+/**
+* The DSH engine home ACRYL boots against: `$DSH_HOME` if a caller already
+* set it (highest precedence, same as `resolveDshHome()` itself), otherwise
+* `<acrylHome>/.dsh` instead of the harness's own bare `~/.dsh` default.
+*/
+function resolveAcrylDshHome(env = process.env) {
+	const overridden = env.DSH_HOME?.trim();
+	if (overridden && overridden !== "") return resolveDshHome(void 0, env);
+	return resolveDshHome(join(resolveAcrylHome(env), ACRYL_DSH_ENGINE_DIR_NAME), env);
+}
+/** Canonical tool name exposed to the model. */
+const TOOL_NAME = "acryl_workspace_status";
+/** Read the ACRYL workspace/profile context the agent is running under. */
+function readWorkspaceContext() {
+	return {
+		cwd: process.cwd(),
+		dshHome: process.env.DSH_HOME ?? "",
+		profile: process.env.ACRYL_PROFILE ?? "",
+		surface: process.env.ACRYL_SURFACE ?? ""
+	};
+}
+/** Render one line of the model-facing text from the canonical context value. */
+function fmt(label, value, prefix) {
+	return `${prefix} ${label}: ${value}`;
+}
+/** Register the `acryl_workspace_status` tool on `ctx.tools`. Returns a disposer. */
+function installAcrylWorkspaceStatusTool(ctx) {
+	const tool = defineTool({
+		name: TOOL_NAME,
+		description: "Report the ACRYL workspace context the agent is operating in: current working directory, DSH home, active ACRYL profile, and presentation surface. Use it to confirm which project/profile a session is bound to before acting.",
+		parameters: {},
+		output: {
+			schema: {
+				type: "object",
+				additionalProperties: false,
+				properties: {
+					cwd: {
+						type: "string",
+						required: true
+					},
+					dshHome: {
+						type: "string",
+						required: true
+					},
+					profile: {
+						type: "string",
+						required: true
+					},
+					surface: {
+						type: "string",
+						required: true
+					}
+				}
+			},
+			render(_args, value) {
+				const v = value;
+				return [{
+					type: "text",
+					text: ["ACRYL workspace context:", ...[
+						fmt("cwd", v.cwd, "-"),
+						fmt("dshHome", v.dshHome || "<unset>", "-"),
+						fmt("profile", v.profile || "<default>", "-"),
+						fmt("surface", v.surface || "<tui>", "-")
+					]].join("\n")
+				}];
+			}
+		},
+		async execute(_args, _exec) {
+			return readWorkspaceContext();
+		}
+	});
+	return ctx.tools.register(tool);
+}
 const dshInstallAnchor = createRequire(import.meta.url).resolve("@deepseek-ai/dsh/package.json");
 const profileRoot = "[]\n";
-const shippedPresetsDir = join(resolve(dirname(fileURLToPath(import.meta.url)), "../.."), "deepseek-harness", "packages", "preset", "agent-presets", "presets");
-const ACRYL_RUNTIME_ROWS = [{
-	id: "system-prompt",
-	name: "@deepseek-ai/dsh-system-prompt",
-	config: { persona: "You are a coding agent powered by the {{model}} model. Your working directory is {{cwd}}." }
-}, { insert: [
-	{
-		id: "agent-presets",
-		name: "@deepseek-ai/dsh-agent-presets",
-		config: {
-			default: "standard",
-			roots: existsSync(shippedPresetsDir) ? [{
-				path: shippedPresetsDir,
-				trust: "system"
-			}] : [],
-			includeShippedRoot: false,
-			includeUserRoot: true
-		}
-	},
-	{
-		id: "session-stats",
-		name: "@deepseek-ai/dsh-session-stats"
-	},
-	{
-		id: "authorization",
-		name: "@deepseek-ai/dsh-authorization"
-	}
-] }];
 /** Boot one normal pinned-Harness ACRYL profile in a single Cordis root. */
 async function bootAcrylHarnessProfile(options) {
 	if (options.profile.trim() === "") throw new Error("ACRYL Harness profile must not be empty");
+	process.env.DSH_HOME = resolveAcrylDshHome();
 	initProfile(resolveProfileDir(options.profile), DEFAULT_PROFILE_BUNDLES);
 	healProfilesModuleFallback(dshInstallAnchor);
 	const profile = loadProfile("acryl", options.profile, dshInstallAnchor);
@@ -309,53 +534,16 @@ async function bootAcrylHarnessProfile(options) {
 	writeFileSync(rootConfig, profileRoot);
 	const patches = structuredClone([
 		...profile.layers.flatMap((layer) => layer.patches),
-		...ACRYL_RUNTIME_ROWS,
+		...createAcrylCodingCapabilityPatches(/* @__PURE__ */ new Set(["tui"])),
 		...profile.patches
 	]);
 	if (composeEntries([patches]).find((entry) => entry.id === "hmr")?.disabled !== true && !process.execArgv.includes("--expose-internals")) throw new Error("ACRYL profile enables Cordis HMR and must be launched with Node --expose-internals");
 	const ctx = await boot("acryl", rootConfig, patches, options.prepare);
+	if (ctx.tools) installAcrylWorkspaceStatusTool(ctx);
+	installSessionLogExporter(ctx, { surface: "tui" });
 	let disposed = false;
 	return Object.freeze({
 		ctx,
-		profileDirectory: profile.dir,
-		async dispose() {
-			if (disposed) return;
-			disposed = true;
-			await ctx.fiber.dispose();
-		}
-	});
-}
-/**
-* Boot the DSH browser surface (the `web` profile: `dsh-base` + `dsh-web-app`)
-* as one normal ACRYL runtime, so `pnpm acryl-web` serves the same DSH
-* HTTP/WebSocket seam the web surface always uses. The web profile already
-* composes the persona/agent rows ACRYL's terminal surface adds, so no
-* ACRYL_RUNTIME_ROWS are re-inserted (that would duplicate `system-prompt`).
-*/
-async function bootAcrylWebProfile(options = {}) {
-	const profileName = "web";
-	initProfile(resolveProfileDir(profileName), DEFAULT_PROFILE_BUNDLES);
-	healProfilesModuleFallback(dshInstallAnchor);
-	const profile = loadProfile("web", profileName, dshInstallAnchor);
-	const rootConfig = join(profile.dir, "cordis.yml");
-	writeFileSync(rootConfig, profileRoot);
-	const patches = structuredClone([...profile.layers.flatMap((layer) => layer.patches), ...profile.patches]);
-	const cmdlineArgs = options.cmdlineArgs ?? [];
-	const ctx = await boot("web", rootConfig, patches, (hostCtx) => {
-		provideCmdline(hostCtx, {
-			args: [...cmdlineArgs],
-			exit: (code) => {
-				process.exitCode = code;
-			}
-		});
-		return options.prepare?.(hostCtx);
-	});
-	const startup = ctx.get("webStartup");
-	const url = `http://${startup?.host ?? "127.0.0.1"}:${startup?.port ?? 3080}`;
-	let disposed = false;
-	return Object.freeze({
-		ctx,
-		url,
 		profileDirectory: profile.dir,
 		async dispose() {
 			if (disposed) return;
@@ -1078,6 +1266,7 @@ var TuiStore = class {
 			title: void 0,
 			stats: EMPTY_STATS,
 			preset: void 0,
+			activeModel: void 0,
 			streaming: void 0,
 			pendingToolCalls: this.pendingToolCallsSnapshot(),
 			shellRun: void 0,
@@ -1188,6 +1377,10 @@ var TuiStore = class {
 	setPreset(preset) {
 		this.set({ preset });
 	}
+	/** Record a live `/model` switch so the status bar reflects it immediately. */
+	setActiveModel(activeModel) {
+		this.set({ activeModel });
+	}
 	shellRunSeq = 0;
 	/** Begin one local shell-escape run; its output accumulates via `appendShellOutput` until `finishShellRun` settles it into the transcript. */
 	startShellRun(command) {
@@ -1244,7 +1437,6 @@ var TuiStore = class {
 			kind: "login",
 			login: {
 				flows: void 0,
-				selected: 0,
 				signingIn: void 0,
 				prompt: void 0,
 				busy: true,
@@ -1367,6 +1559,36 @@ var TuiStore = class {
 		for (const listener of this.listeners) listener();
 	}
 };
+//#endregion
+//#region src/tui/acrylMark.ts
+/**
+* The compact ACRYL wordmark shown in the fixed header, next to the pet.
+*
+* This is the real pixelized brand wordmark (`assets/pixelized/`), rendered
+* natively as half-block characters (each terminal row packs 2 pixel rows
+* via \u2580/\u2584/\u2588) instead of downsampled or replaced with a different mark \u2014 54
+* columns wide at the artwork's own resolution, not simplified. Generated
+* from the SVG's rect grid and verified by printing it before wiring into
+* the header \u2014 same proven-before-embedding convention as
+* `yly/compile-sprites.mjs`.
+* @module @tomowave/dsh-tui/tui/acrylMark
+*/
+/** The plain (uncolored) rows of the ACRYL mark \u2014 11 lines, 54 columns. */
+const ACRYL_MARK_ROWS = [
+	"                    ▄▀▀▀▀▀▀▀▀                         ",
+	"                  ▄▀   ▄▄▄▄▄▄▄▄▄                      ",
+	"      ▄▄         ▄             ▀▄                     ",
+	"    ▄█▀█▄      ▄▀         ▄▄▄▄▄█                      ",
+	"  ▄█▀    ▀█▀▀▀▀█▄          ▀▄                ▄▀       ",
+	" █▀       ▀▄    ▀█          ▀▄▄            ▄█         ",
+	"▀▀          ▀    ▀█▄           ▄         ▄██▄▄▄▄▄▄▄▄▄▄",
+	"                   ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▄   ▄▀▀             ",
+	"                                  ▀▄▄▄▀               ",
+	"                                    █                 ",
+	"                                    ▀                 "
+];
+/** ISO timestamp this build was produced at. */
+const BUILD_TIME = "2026-09-08T15:54:40.872Z";
 //#endregion
 //#region src/tui/statsFormat.ts
 /**
@@ -1521,7 +1743,7 @@ function stripSessionIdPrefix(id) {
 //#region src/tui/liveText.ts
 const dim = fg(theme.muted);
 const accent = fg(theme.accent);
-const warning$1 = fg(theme.warning);
+const warning$2 = fg(theme.warning);
 function buildStatusBarText(params) {
 	const { sessionId, provider, model, status, queuedCount, presetLabel, eventCount, spinnerChar } = params;
 	const queuedSuffix = queuedCount > 0 ? ` · ${queuedCount} queued` : "";
@@ -1564,7 +1786,7 @@ const PERMISSION_COLORS = {
 */
 function buildUpdateHintText(currentVersion, latestVersion) {
 	if (latestVersion === void 0) return "";
-	return warning$1(`⬆ ACRYL update available: v${currentVersion} → v${latestVersion}`) + dim(" (run `pnpm add -g @acryl/cli` to upgrade)");
+	return warning$2(`⬆ ACRYL update available: v${currentVersion} → v${latestVersion}`) + dim(" (run `pnpm add -g @acryl/cli` to upgrade)");
 }
 function buildPermissionText(permission) {
 	if (permission === void 0) return "";
@@ -3184,27 +3406,92 @@ function miniTextFieldInput(state, data) {
 		cursor: state.cursor + data.length
 	};
 }
+/**
+* Mask a value for display while typing, revealing the first/last couple of
+* characters instead of hiding it entirely — a fully-masked live field looks
+* indistinguishable from an empty one, giving no confirmation that anything
+* was actually typed. Length-preserving (unlike a static preview's `sk-p…9sZ4`
+* ellipsis form) so cursor-position math against the masked string stays
+* correct: every hidden character becomes exactly one `mask` character.
+*/
+function partiallyMask(value, mask) {
+	if (value.length <= 2) return mask.repeat(value.length);
+	if (value.length <= 10) return `${value[0]}${mask.repeat(value.length - 2)}${value.at(-1)}`;
+	return `${value.slice(0, 4)}${mask.repeat(value.length - 8)}${value.slice(-4)}`;
+}
 /** Render the field's text, optionally with an inverse-video cursor block at the cursor position. */
 function renderMiniTextField(state, cursorVisible, mask) {
-	const display = mask === void 0 ? state.value : mask.repeat(state.value.length);
+	const display = mask === void 0 ? state.value : partiallyMask(state.value, mask);
 	if (!cursorVisible) return display;
 	return `${display.slice(0, state.cursor)}\x1b[7m${display[state.cursor] ?? " "}\x1b[0m${display.slice(state.cursor + 1)}`;
+}
+//#endregion
+//#region src/tui/modelProfile/types.ts
+/**
+* Data shapes for the `/model` provider-profile overlay: the read model that
+* joins `ctx.llm`'s provider directory with `ctx.settings`' stored sections,
+* the raw shape stored at each provider's settings path, and the mutable
+* draft one add/edit form works with before a save round-trips it back.
+* @module @tomowang/dsh-tui/tui/modelProfile/types
+*/
+/**
+* The `apiKeyEnv` reference a provider route falls back to when its settings
+* profile names none, e.g. `my-proxy` -> `MY_PROXY_API_KEY`. Shared between
+* the overlay (recomputing it for a just-typed custom route before save) and
+* the host wiring (deriving it for every already-configured row), so the
+* naming rule lives in exactly one place.
+*/
+function deriveApiKeyRef(route) {
+	const upper = route.toUpperCase().replace(/[^A-Z0-9]+/g, "_");
+	return `${/^[A-Z_]/.test(upper) ? upper : `P_${upper}`}_API_KEY`;
+}
+/**
+* A short, identifying (never full) preview of a stored secret — first 4 and
+* last 4 characters, so the API-key field isn't blank-looking when a key is
+* already set and the user can tell *which* key it is without ever seeing
+* enough of it to be usable on its own. Short values (<= 10 chars, where that
+* split would show most of the string anyway) mask everything but the first
+* and last single character instead.
+*/
+function maskKeyPreview(value) {
+	if (value.length <= 10) return value.length <= 2 ? "*".repeat(value.length) : `${value[0]}${"*".repeat(value.length - 2)}${value.at(-1)}`;
+	return `${value.slice(0, 4)}…${value.slice(-4)}`;
 }
 //#endregion
 //#region src/tui/modelProfile/ModelProfileOverlay.ts
 const bold$9 = (s) => `\x1b[1m${s}\x1b[0m`;
 const secondary$9 = fg(theme.secondary);
 const muted$10 = fg(theme.muted);
+const warning$1 = fg(theme.warning);
 const errorColor$5 = fg(theme.error);
 const invert$5 = (s) => `\x1b[7m${s}\x1b[0m`;
+/**
+* The only wire protocols `dsh-llm-pi-ai` can speak (`supportedProtocols()`),
+* matching the DSH Desktop GUI's "Custom provider" dialog's own dropdown
+* exactly. Free-text protocol entry let a typo reach `assertServiceable` as a
+* runtime save failure instead of being impossible to enter in the first
+* place, so this is a cycling choice, never a typed field.
+*/
+const PROTOCOLS = [
+	"openai-completions",
+	"openai-responses",
+	"anthropic-messages"
+];
 var ModelProfileOverlay = class {
+	tui;
 	store;
 	actions;
+	mode = "picker";
+	modelSearch = emptyMiniTextField();
+	modelPickerCursor = 0;
+	providerSearch = emptyMiniTextField();
+	providerCursor = 0;
 	confirmDelete;
+	pendingShowModels = false;
 	formKeySeen = -1;
 	route = emptyMiniTextField();
 	displayName = emptyMiniTextField();
-	api = emptyMiniTextField();
+	api = PROTOCOLS[0];
 	baseURL = emptyMiniTextField();
 	apiKeyDraft = emptyMiniTextField();
 	models = [];
@@ -3212,25 +3499,58 @@ var ModelProfileOverlay = class {
 	focused = 0;
 	modelDraftId = emptyMiniTextField();
 	modelSelected = 0;
-	modelInputFocused = false;
-	constructor(store, actions) {
+	constructor(tui, store, actions) {
+		this.tui = tui;
 		this.store = store;
 		this.actions = actions;
 	}
 	invalidate() {}
+	/**
+	* Rows available for a scrollable list body: terminal height minus the
+	* lines every such screen spends on chrome (header/hint/notice/search —
+	* `chrome` lines, caller-counted since it varies by screen). Long catalogs
+	* (~35 providers, matching that many models) previously rendered every row
+	* unconditionally, pushing the key-legend hint line — the only place a
+	* shortcut is documented — past the bottom of the terminal, invisible
+	* without scrolling back. Every list-shaped view here windows around the
+	* current selection instead, so the hint line is always the last line
+	* printed and always fits on screen.
+	*/
+	listWindow(chrome) {
+		return Math.max(3, this.tui.terminal.rows - chrome);
+	}
+	/** The `[start, end)` slice of `count` items to show so `selected` stays visible within `maxVisible` rows, biased to keep it centered. */
+	visibleRange(count, selected, maxVisible) {
+		if (count <= maxVisible) return {
+			start: 0,
+			end: count
+		};
+		const start = Math.max(0, Math.min(selected - Math.floor(maxVisible / 2), count - maxVisible));
+		return {
+			start,
+			end: start + maxVisible
+		};
+	}
+	/**
+	* The global one-line notice (`store.setNotice`), rendered inline here.
+	* `/model` runs as a full-screen overlay that paints over the whole
+	* terminal, so the notice dock underneath — where "Saved X."/"Active model
+	* set to X." otherwise lands — is invisible for as long as this overlay
+	* stays open (e.g. right after `saveProvider` returns to the list view
+	* without closing the overlay). Surfacing it here is what makes a save
+	* actually visible as "done" instead of the screen looking unchanged.
+	*/
+	noticeLines() {
+		const notice = this.store.getSnapshot().notice;
+		return notice === void 0 ? [] : [muted$10(notice)];
+	}
 	textFields(draft) {
-		return draft.isNew ? [
+		const base = draft.isNew ? [
 			"route",
 			"displayName",
-			"api",
-			"baseURL",
-			"apiKey"
-		] : [
-			"displayName",
-			"api",
-			"baseURL",
-			"apiKey"
-		];
+			"baseURL"
+		] : ["displayName", "baseURL"];
+		return draft.authMethod === "oauth" ? base : [...base, "apiKey"];
 	}
 	/** Reinitialize form-local state from the store's draft when `formKey` changes — the equivalent of the old `key={formKey}` remount. */
 	syncFormState(mp) {
@@ -3240,24 +3560,29 @@ var ModelProfileOverlay = class {
 			this.formKeySeen = mp.formKey;
 			this.route = emptyMiniTextField(draft.route);
 			this.displayName = emptyMiniTextField(draft.displayName);
-			this.api = emptyMiniTextField(draft.api);
+			this.api = PROTOCOLS.includes(draft.api) ? draft.api : PROTOCOLS[0];
 			this.baseURL = emptyMiniTextField(draft.baseURL);
 			this.apiKeyDraft = emptyMiniTextField("");
 			this.models = [...draft.models];
-			this.showModels = false;
+			this.showModels = this.pendingShowModels;
+			this.pendingShowModels = false;
 			this.focused = 0;
 			this.modelDraftId = emptyMiniTextField();
 			this.modelSelected = 0;
-			this.modelInputFocused = false;
 		}
 		return draft;
 	}
 	buildDraft(draft) {
+		const route = draft.isNew ? this.route.value.trim() : draft.route;
 		return {
 			...draft,
-			route: draft.isNew ? this.route.value.trim() : draft.route,
+			route,
+			...draft.isNew ? {
+				settingsPath: ["providers", route],
+				apiKeyRef: deriveApiKeyRef(route)
+			} : {},
 			displayName: this.displayName.value,
-			api: this.api.value,
+			api: this.api,
 			baseURL: this.baseURL.value,
 			apiKeyDraft: this.apiKeyDraft.value,
 			models: this.models
@@ -3268,109 +3593,221 @@ var ModelProfileOverlay = class {
 		if (overlay.kind !== "modelProfile") return [];
 		const mp = overlay.modelProfile;
 		const draft = this.syncFormState(mp);
-		if (draft !== void 0) return this.showModels ? this.renderModelListEditor(mp) : this.renderForm(draft, mp);
-		return this.renderList(mp);
+		if (draft !== void 0) {
+			if (this.showModels) return this.renderModelListEditor(mp);
+			return this.renderForm(draft, mp);
+		}
+		return this.mode === "picker" ? this.renderModelPicker(mp) : this.renderList(mp);
 	}
-	renderList(mp) {
-		const { providers, selected, busy, error } = mp;
-		const lines = [bold$9(secondary$9("Model providers"))];
-		if (error !== void 0) lines.push(errorColor$5(error));
-		if (busy && providers === void 0) lines.push(muted$10("Loading…"));
-		providers?.forEach((row, index) => {
-			const marker = row.configured ? "● " : "○ ";
-			const active = row.live ? " (active)" : "";
-			const noKey = row.apiKeyConfigured ? "" : " [no api key]";
-			const confirm = this.confirmDelete === index ? " — press d again to delete" : "";
-			const text = `${index === selected ? "› " : "  "}${marker}${row.displayName}${active}${noKey}${confirm}`;
-			lines.push(index === selected ? invert$5(text) : text);
+	pickerItems(mp) {
+		const items = [];
+		for (const row of mp.providers ?? []) {
+			if (!row.live) continue;
+			for (const model of row.models) items.push({
+				route: row.route,
+				id: model.id,
+				authMethod: row.authMethod
+			});
+		}
+		return items;
+	}
+	filteredPickerItems(mp) {
+		const items = this.pickerItems(mp);
+		const query = this.modelSearch.value.trim();
+		return query === "" ? items : fuzzyFilter([...items], query, (item) => `${item.id} ${item.route}`);
+	}
+	/**
+	* pi.dev's `/model` picker (see Image #45): a flat, fuzzy-searchable list of
+	* every model on a live (actually usable) route, not a per-provider drill-down.
+	* Provider add/edit/delete moves to a secondary `p` mode instead of being the
+	* default, since picking a model to make active is the far more common action.
+	*/
+	renderModelPicker(mp) {
+		const lines = [warning$1("Only showing models from configured providers. Use /login to add providers.")];
+		lines.push(...this.noticeLines());
+		if (mp.error !== void 0) lines.push(errorColor$5(mp.error));
+		lines.push(`> ${renderMiniTextField(this.modelSearch, true)}`);
+		if (mp.busy && mp.providers === void 0) lines.push(muted$10("Loading…"));
+		const all = this.pickerItems(mp);
+		const filtered = this.filteredPickerItems(mp);
+		const chrome = lines.length + 2;
+		const maxVisible = this.listWindow(chrome);
+		const { start, end } = this.visibleRange(filtered.length, this.modelPickerCursor, maxVisible);
+		filtered.slice(start, end).forEach((item, offset) => {
+			const isSelected = start + offset === this.modelPickerCursor;
+			const via = item.authMethod === "oauth" ? " oauth" : item.authMethod === "api-key" ? " api" : "";
+			const text = `${isSelected ? "→ " : "  "}${item.id} [${item.route}${via}]`;
+			lines.push(isSelected ? invert$5(text) : text);
 		});
-		if (providers?.length === 0) lines.push(muted$10("No providers configured yet — press a to add one."));
-		lines.push(muted$10("↑↓ select · enter edit · a add · d delete · s set active model · esc close"));
+		if (filtered.length > maxVisible) lines.push(muted$10(`(${this.modelPickerCursor + 1}/${filtered.length})`));
+		if (all.length === 0 && mp.providers !== void 0) lines.push(muted$10("No models available yet — use /login to sign in to a provider."));
+		else if (filtered.length === 0) lines.push(muted$10("No matching models."));
+		lines.push(muted$10("type to search · ↑↓ select · enter set active · ctrl+p manage providers (add/remove models) · esc close"));
 		return lines;
 	}
-	handleListInput(data, mp) {
-		const { providers, selected } = mp;
+	handleModelPickerInput(data, mp) {
 		if (matchesKey(data, Key.escape)) {
 			this.actions.closeModelProfile();
 			return;
 		}
-		if (providers === void 0 || providers.length === 0) {
-			if (data === "a") this.actions.createProvider();
+		if (matchesKey(data, Key.ctrl("p"))) {
+			this.mode = "providers";
 			return;
 		}
+		const filtered = this.filteredPickerItems(mp);
+		if (matchesKey(data, Key.up)) {
+			this.modelPickerCursor = Math.max(0, this.modelPickerCursor - 1);
+			return;
+		}
+		if (matchesKey(data, Key.down)) {
+			this.modelPickerCursor = Math.min(Math.max(0, filtered.length - 1), this.modelPickerCursor + 1);
+			return;
+		}
+		if (matchesKey(data, Key.enter)) {
+			const item = filtered[this.modelPickerCursor];
+			if (item !== void 0) {
+				this.actions.setActiveModel(item.route, item.id);
+				this.actions.closeModelProfile();
+			}
+			return;
+		}
+		const next = miniTextFieldInput(this.modelSearch, data);
+		if (next !== void 0) {
+			this.modelSearch = next;
+			this.modelPickerCursor = 0;
+		}
+	}
+	filteredProviders(mp) {
+		const providers = mp.providers ?? [];
+		const query = this.providerSearch.value.trim();
+		return query === "" ? providers : fuzzyFilter([...providers], query, (row) => `${row.displayName} ${row.route}`);
+	}
+	renderList(mp) {
+		const { providers, busy, error } = mp;
+		const lines = [bold$9(secondary$9("Model providers"))];
+		lines.push(...this.noticeLines());
+		if (error !== void 0) lines.push(errorColor$5(error));
+		lines.push(`> ${renderMiniTextField(this.providerSearch, true)}`);
+		if (busy && providers === void 0) lines.push(muted$10("Loading…"));
+		const filtered = this.filteredProviders(mp);
+		const chrome = lines.length + 2;
+		const maxVisible = this.listWindow(chrome);
+		const { start, end } = this.visibleRange(filtered.length, this.providerCursor, maxVisible);
+		filtered.slice(start, end).forEach((row, offset) => {
+			const index = start + offset;
+			const marker = row.configured ? "● " : "○ ";
+			const active = row.live ? " (active)" : "";
+			const noKey = row.apiKeyConfigured ? ` [${row.authMethod === "oauth" ? "oauth" : "api key"}]` : " [no api key]";
+			const confirm = this.confirmDelete === index ? " — press ctrl+x again to delete" : "";
+			const text = `${index === this.providerCursor ? "› " : "  "}${marker}${row.displayName}${active}${noKey}${confirm}`;
+			lines.push(index === this.providerCursor ? invert$5(text) : text);
+		});
+		if (filtered.length > maxVisible) lines.push(muted$10(`(${this.providerCursor + 1}/${filtered.length})`));
+		if (providers?.length === 0) lines.push(muted$10("No providers configured yet — ctrl+n to add one."));
+		else if (filtered.length === 0) lines.push(muted$10("No matching providers."));
+		lines.push(muted$10("type to search · ↑↓ select · enter edit · ctrl+n add · ctrl+x delete · ctrl+e edit models · ctrl+a set active model · esc back"));
+		return lines;
+	}
+	handleListInput(data, mp) {
+		if (matchesKey(data, Key.escape)) {
+			this.mode = "picker";
+			return;
+		}
+		if (matchesKey(data, Key.ctrl("n"))) {
+			this.actions.createProvider();
+			return;
+		}
+		const filtered = this.filteredProviders(mp);
+		if (filtered.length === 0) return;
 		if (matchesKey(data, Key.up)) {
 			this.confirmDelete = void 0;
-			this.actions.selectProvider(Math.max(0, selected - 1));
+			this.providerCursor = Math.max(0, this.providerCursor - 1);
 			return;
 		}
 		if (matchesKey(data, Key.down)) {
 			this.confirmDelete = void 0;
-			this.actions.selectProvider(Math.min(providers.length - 1, selected + 1));
+			this.providerCursor = Math.min(filtered.length - 1, this.providerCursor + 1);
 			return;
 		}
 		if (matchesKey(data, Key.enter)) {
-			this.actions.editProvider(providers[selected].route);
+			this.actions.editProvider(filtered[this.providerCursor].route);
 			return;
 		}
-		if (data === "a") {
-			this.actions.createProvider();
+		if (matchesKey(data, Key.ctrl("e"))) {
+			this.pendingShowModels = true;
+			this.actions.editProvider(filtered[this.providerCursor].route);
 			return;
 		}
-		if (data === "s") {
-			const row = providers[selected];
+		if (matchesKey(data, Key.ctrl("a"))) {
+			const row = filtered[this.providerCursor];
 			const model = row.models[0];
 			if (model !== void 0) this.actions.setActiveModel(row.route, model.id);
 			return;
 		}
-		if (data === "d") {
-			if (this.confirmDelete === selected) {
+		if (matchesKey(data, Key.ctrl("x"))) {
+			if (this.confirmDelete === this.providerCursor) {
 				this.confirmDelete = void 0;
-				this.actions.deleteProvider(providers[selected]);
-			} else this.confirmDelete = selected;
+				this.actions.deleteProvider(filtered[this.providerCursor]);
+			} else this.confirmDelete = this.providerCursor;
 			return;
 		}
 		this.confirmDelete = void 0;
+		const next = miniTextFieldInput(this.providerSearch, data);
+		if (next !== void 0) {
+			this.providerSearch = next;
+			this.providerCursor = 0;
+		}
 	}
 	renderForm(draft, mp) {
 		const textFields = this.textFields(draft);
-		const modelsRow = textFields.length;
-		const saveRow = textFields.length + 1;
+		const protocolRow = textFields.length;
+		const modelsRow = protocolRow + 1;
+		const saveRow = protocolRow + 2;
 		const fieldState = {
 			route: this.route,
 			displayName: this.displayName,
-			api: this.api,
 			baseURL: this.baseURL,
 			apiKey: this.apiKeyDraft
 		};
 		const labels = {
-			route: "Route",
-			displayName: "Name",
-			api: "Protocol",
+			route: "Provider ID",
+			displayName: "Display name",
 			baseURL: "Base URL",
-			apiKey: draft.apiKeyConfigured ? "API key (set — leave blank to keep)" : "API key"
+			apiKey: draft.apiKeyConfigured ? `API key (set${draft.apiKeyPreview === void 0 ? "" : `: ${draft.apiKeyPreview}`} — leave blank to keep)` : "API key"
 		};
-		const lines = [bold$9(secondary$9(draft.isNew ? "Add provider" : `Edit ${draft.displayName || draft.route}`))];
+		const lines = [bold$9(secondary$9(draft.isNew ? "Custom provider" : `Edit ${draft.displayName || draft.route}`))];
+		lines.push(...this.noticeLines());
 		if (mp.error !== void 0) lines.push(errorColor$5(mp.error));
+		if (draft.authMethod === "oauth") lines.push(muted$10("(signed in via OAuth — no separate API key for this route)"));
 		textFields.forEach((field, index) => {
 			const isFocused = this.focused === index;
 			const mask = field === "apiKey" ? "*" : void 0;
 			const prefix = `${isFocused ? "› " : "  "}${labels[field]}: `;
 			lines.push(`${prefix}${renderMiniTextField(fieldState[field], isFocused, mask)}`);
 		});
+		const protocolFocused = this.focused === protocolRow;
+		const protocolText = `${protocolFocused ? "› " : "  "}API protocol: ‹ ${this.api} ›`;
+		lines.push(protocolFocused ? invert$5(protocolText) : protocolText);
 		const modelsText = `${this.focused === modelsRow ? "› " : "  "}Models (${this.models.length}) — enter to edit`;
 		lines.push(this.focused === modelsRow ? invert$5(modelsText) : modelsText);
-		const saveText = `${this.focused === saveRow ? "› " : "  "}${mp.busy ? "Saving…" : "Save"}`;
+		const saveText = `${this.focused === saveRow ? "› " : "  "}${mp.busy ? "Saving…" : draft.isNew ? "Create provider" : "Save changes"}`;
 		lines.push(this.focused === saveRow ? invert$5(saveText) : saveText);
-		lines.push(muted$10("tab/shift+tab move · enter confirm field / activate row · esc cancel"));
+		const removeHint = draft.apiKeyConfigured ? " · ctrl+d sign out (remove key/OAuth grant)" : "";
+		lines.push(muted$10(`tab/shift+tab move · ←→ cycle protocol · enter confirm/activate · esc cancel${removeHint}`));
 		return lines;
 	}
 	handleFormInput(data, draft) {
 		const textFields = this.textFields(draft);
-		const modelsRow = textFields.length;
-		const saveRow = textFields.length + 1;
-		const rowCount = textFields.length + 2;
+		const protocolRow = textFields.length;
+		const modelsRow = protocolRow + 1;
+		const saveRow = protocolRow + 2;
+		const rowCount = protocolRow + 3;
 		if (matchesKey(data, Key.escape)) {
 			this.actions.backToProviderList();
+			return;
+		}
+		if (matchesKey(data, Key.ctrl("d")) && draft.apiKeyConfigured) {
+			this.actions.clearApiKey(draft);
 			return;
 		}
 		if (matchesKey(data, "shift+tab")) {
@@ -3381,6 +3818,12 @@ var ModelProfileOverlay = class {
 			this.focused = (this.focused + 1) % rowCount;
 			return;
 		}
+		if (this.focused === protocolRow && (matchesKey(data, Key.left) || matchesKey(data, Key.right))) {
+			const direction = matchesKey(data, Key.left) ? -1 : 1;
+			const currentIndex = PROTOCOLS.indexOf(this.api);
+			this.api = PROTOCOLS[(currentIndex + direction + PROTOCOLS.length) % PROTOCOLS.length];
+			return;
+		}
 		if (matchesKey(data, Key.enter) && this.focused === modelsRow) {
 			this.showModels = true;
 			return;
@@ -3389,7 +3832,7 @@ var ModelProfileOverlay = class {
 			this.actions.saveProvider(this.buildDraft(draft));
 			return;
 		}
-		if (matchesKey(data, Key.enter) && this.focused < textFields.length) {
+		if (matchesKey(data, Key.enter) && this.focused <= protocolRow) {
 			this.focused = (this.focused + 1) % rowCount;
 			return;
 		}
@@ -3398,34 +3841,43 @@ var ModelProfileOverlay = class {
 			const next = miniTextFieldInput({
 				route: this.route,
 				displayName: this.displayName,
-				api: this.api,
 				baseURL: this.baseURL,
 				apiKey: this.apiKeyDraft
 			}[field], data);
 			if (next === void 0) return;
 			if (field === "route") this.route = next;
 			else if (field === "displayName") this.displayName = next;
-			else if (field === "api") this.api = next;
 			else if (field === "baseURL") this.baseURL = next;
 			else this.apiKeyDraft = next;
 		}
 	}
+	/**
+	* No Tab-toggled focus, on purpose: a hidden "which of two things am I
+	* typing into right now" mode with no visible indicator (the earlier
+	* design) is exactly the kind of invisible-state bug already fixed
+	* elsewhere in this file. Instead the "Add id" field is *always* live —
+	* every printable key, paste, and left/right/backspace/delete/home/end
+	* goes there, full stop, since ↑/↓ are the only keys `miniTextFieldInput`
+	* never claims. That leaves ↑/↓ free to always drive the list selection
+	* (for removal) at the same time, with no mode switch and no key that can
+	* ever mean two different things depending on invisible state.
+	*/
 	renderModelListEditor(mp) {
 		const lines = [bold$9(secondary$9("Models"))];
 		this.models.forEach((model, index) => {
-			const isSelected = !this.modelInputFocused && index === this.modelSelected;
+			const isSelected = index === this.modelSelected;
 			const text = `${isSelected ? "› " : "  "}${model.id}${model.name === void 0 ? "" : ` — ${model.name}`}`;
 			lines.push(isSelected ? invert$5(text) : text);
 		});
 		if (this.models.length === 0) lines.push(muted$10("No models yet."));
-		lines.push(`${this.modelInputFocused ? "› " : "  "}Add id: ${renderMiniTextField(this.modelDraftId, this.modelInputFocused)}`);
+		lines.push(`Add id: ${renderMiniTextField(this.modelDraftId, true)}`);
 		if (mp.busy) lines.push(muted$10("Discovering…"));
 		if (mp.discovered !== void 0) if (mp.discovered.length === 0) lines.push(muted$10("No models discovered."));
 		else {
-			lines.push(muted$10("Discovered — tab to the id field and type one to adopt it:"));
+			lines.push(muted$10("Discovered — type one into \"Add id\" above to adopt it:"));
 			for (const model of mp.discovered) lines.push(muted$10(`  ${model.id}${model.name === void 0 ? "" : ` — ${model.name}`}`));
 		}
-		lines.push(muted$10("tab toggle list/input · ↑↓ select · x remove · g discover · esc back"));
+		lines.push(muted$10("type + enter add · ↑↓ select · ctrl+x remove · ctrl+g discover · ctrl+s save · esc back (without saving)"));
 		return lines;
 	}
 	addModel(id) {
@@ -3441,36 +3893,34 @@ var ModelProfileOverlay = class {
 			this.showModels = false;
 			return;
 		}
-		if (matchesKey(data, Key.tab)) {
-			this.modelInputFocused = !this.modelInputFocused;
+		if (matchesKey(data, Key.ctrl("s"))) {
+			this.actions.saveProvider(this.buildDraft(draft));
 			return;
 		}
-		if (this.modelInputFocused) {
-			if (matchesKey(data, Key.enter)) {
-				this.addModel(this.modelDraftId.value);
-				return;
-			}
-			const next = miniTextFieldInput(this.modelDraftId, data);
-			if (next !== void 0) this.modelDraftId = next;
-			return;
-		}
-		if (data === "g") {
+		if (matchesKey(data, Key.ctrl("g"))) {
 			this.actions.discoverModelsForDraft(this.buildDraft(draft));
 			return;
 		}
-		if (this.models.length === 0) return;
+		if (matchesKey(data, Key.ctrl("x"))) {
+			if (this.models.length === 0) return;
+			this.models = this.models.filter((_, index) => index !== this.modelSelected);
+			this.modelSelected = Math.max(0, Math.min(this.modelSelected, this.models.length - 1));
+			return;
+		}
 		if (matchesKey(data, Key.up)) {
-			this.modelSelected = Math.max(0, this.modelSelected - 1);
+			if (this.models.length > 0) this.modelSelected = Math.max(0, this.modelSelected - 1);
 			return;
 		}
 		if (matchesKey(data, Key.down)) {
-			this.modelSelected = Math.min(this.models.length - 1, this.modelSelected + 1);
+			if (this.models.length > 0) this.modelSelected = Math.min(this.models.length - 1, this.modelSelected + 1);
 			return;
 		}
-		if (data === "x") {
-			this.models = this.models.filter((_, index) => index !== this.modelSelected);
-			this.modelSelected = Math.max(0, Math.min(this.modelSelected, this.models.length - 1));
+		if (matchesKey(data, Key.enter)) {
+			this.addModel(this.modelDraftId.value);
+			return;
 		}
+		const next = miniTextFieldInput(this.modelDraftId, data);
+		if (next !== void 0) this.modelDraftId = next;
 	}
 	handleInput(data) {
 		const overlay = this.store.getSnapshot().overlay;
@@ -3482,7 +3932,8 @@ var ModelProfileOverlay = class {
 			else this.handleFormInput(data, draft);
 			return;
 		}
-		this.handleListInput(data, mp);
+		if (this.mode === "picker") this.handleModelPickerInput(data, mp);
+		else this.handleListInput(data, mp);
 	}
 };
 //#endregion
@@ -3491,33 +3942,121 @@ const bold$8 = (s) => `\x1b[1m${s}\x1b[0m`;
 const secondary$8 = fg(theme.secondary);
 const muted$9 = fg(theme.muted);
 const errorColor$4 = fg(theme.error);
+const successColor = fg(theme.success);
 const invert$4 = (s) => `\x1b[7m${s}\x1b[0m`;
+/** A non-secret reminder that replacing an API-key prompt will overwrite an existing stored key. */
+function formatStoredApiKeyHint(preview) {
+	return preview === void 0 ? void 0 : `Stored key: ${preview}`;
+}
+const AUTH_TYPES = ["oauth", "api-key"];
+const AUTH_TYPE_LABELS = {
+	oauth: "Sign in with an account",
+	"api-key": "Sign in with an API key"
+};
 var LoginOverlay = class {
+	tui;
 	store;
 	actions;
+	step = "authType";
+	authType;
+	authTypeCursor = 0;
+	chooserSkipped = false;
+	autoSkipChecked = false;
+	listCursor = 0;
+	searchQuery = emptyMiniTextField();
 	promptField = emptyMiniTextField();
 	promptCursor = 0;
-	constructor(store, actions) {
+	constructor(tui, store, actions) {
+		this.tui = tui;
 		this.store = store;
 		this.actions = actions;
 	}
 	invalidate() {}
-	renderList(login) {
-		const lines = [bold$8(secondary$8("Sign in"))];
+	/** See `ModelProfileOverlay.listWindow` — same overflow bug, same fix: a long provider list (~35 catalog entries) must never push the key-legend hint line past the bottom of the terminal. */
+	listWindow(chrome) {
+		return Math.max(3, this.tui.terminal.rows - chrome);
+	}
+	/** The `[start, end)` slice of `count` items to show so `selected` stays visible within `maxVisible` rows, biased to keep it centered. */
+	visibleRange(count, selected, maxVisible) {
+		if (count <= maxVisible) return {
+			start: 0,
+			end: count
+		};
+		const start = Math.max(0, Math.min(selected - Math.floor(maxVisible / 2), count - maxVisible));
+		return {
+			start,
+			end: start + maxVisible
+		};
+	}
+	/**
+	* The global one-line notice (`store.setNotice`), rendered inline here.
+	* `/login` runs as a full-screen overlay that paints over the whole
+	* terminal, so the notice dock underneath — where sign-in progress,
+	* success ("Signed in to X."), and failure text otherwise land — is
+	* completely hidden for as long as this overlay stays open. Surfacing it
+	* here is what makes an OAuth callback's result actually visible instead
+	* of the screen appearing to do nothing once the browser redirects back.
+	*/
+	noticeLines() {
+		const notice = this.store.getSnapshot().notice;
+		return notice === void 0 ? [] : [muted$9(notice)];
+	}
+	/** Partition the loaded flows by method type, once, the first time they arrive; auto-advances past the chooser if only one type is on offer. */
+	maybeAutoSkipChooser(login) {
+		if (this.autoSkipChecked || login.flows === void 0) return;
+		this.autoSkipChecked = true;
+		const hasOAuth = login.flows.some((flow) => flow.methods.some((method) => method.id === "oauth"));
+		if (hasOAuth === login.flows.some((flow) => flow.methods.some((method) => method.id === "api-key"))) return;
+		this.authType = hasOAuth ? "oauth" : "api-key";
+		this.step = "list";
+		this.chooserSkipped = true;
+	}
+	filteredFlows(login) {
+		const all = login.flows ?? [];
+		const byType = this.authType === void 0 ? all : all.filter((flow) => flow.methods.some((method) => method.id === this.authType));
+		const query = this.searchQuery.value.trim();
+		return query === "" ? byType : fuzzyFilter([...byType], query, (flow) => flow.label);
+	}
+	renderAuthTypeChooser(login) {
+		const lines = [bold$8(secondary$8("Select authentication method"))];
+		lines.push(...this.noticeLines());
 		if (login.error !== void 0) lines.push(errorColor$4(login.error));
 		if (login.busy && login.flows === void 0) lines.push(muted$9("Loading…"));
-		login.flows?.forEach((flow, index) => {
-			const marker = flow.inFlight ? "· " : "○ ";
-			const signingIn = login.signingIn === flow.key ? " — signing in…" : "";
-			const text = `${index === login.selected ? "› " : "  "}${marker}${flow.label}${signingIn}`;
-			lines.push(index === login.selected ? invert$4(text) : text);
+		AUTH_TYPES.forEach((type, index) => {
+			const text = `${index === this.authTypeCursor ? "› " : "  "}${AUTH_TYPE_LABELS[type]}`;
+			lines.push(index === this.authTypeCursor ? invert$4(text) : text);
 		});
-		if (login.flows?.length === 0) lines.push(muted$9("No sign-in providers are available in this profile."));
-		lines.push(muted$9("↑↓ select · enter sign in · esc close"));
+		lines.push(muted$9("↑↓ select · enter continue · esc close"));
+		return lines;
+	}
+	renderProviderList(login) {
+		const lines = [bold$8(secondary$8("Select provider to configure:"))];
+		lines.push(...this.noticeLines());
+		if (login.error !== void 0) lines.push(errorColor$4(login.error));
+		lines.push(`> ${renderMiniTextField(this.searchQuery, true)}`);
+		if (login.busy && login.flows === void 0) lines.push(muted$9("Loading…"));
+		const flows = this.filteredFlows(login);
+		const chrome = lines.length + 2;
+		const maxVisible = this.listWindow(chrome);
+		const { start, end } = this.visibleRange(flows.length, this.listCursor, maxVisible);
+		flows.slice(start, end).forEach((flow, offset) => {
+			const index = start + offset;
+			const marker = flow.inFlight ? "· " : flow.configured ? "✓ " : "○ ";
+			const signingIn = login.signingIn === flow.key ? " — signing in…" : "";
+			const via = flow.authMethod === "oauth" ? " [oauth]" : flow.authMethod === "api-key" ? " [api]" : "";
+			const readyNote = login.signingIn !== flow.key && flow.configured ? ` — ready to use${via}` : "";
+			const text = `${index === this.listCursor ? "› " : "  "}${marker}${flow.label}${signingIn}${readyNote}`;
+			lines.push(index === this.listCursor ? invert$4(text) : flow.configured ? successColor(text) : text);
+		});
+		if (flows.length > maxVisible) lines.push(muted$9(`(${this.listCursor + 1}/${flows.length})`));
+		if (login.flows !== void 0 && flows.length === 0) lines.push(muted$9("No matching providers."));
+		const back = this.chooserSkipped ? "esc close" : "esc back";
+		lines.push(muted$9(`type to search · ↑↓ select · enter sign in (or edit key/models if already configured) · ctrl+p add custom provider · ${back}`));
 		return lines;
 	}
 	renderPrompt(prompt) {
 		const lines = [bold$8(secondary$8("Sign in"))];
+		lines.push(...this.noticeLines());
 		lines.push(prompt.message);
 		if (prompt.kind === "select") {
 			prompt.options.forEach((option, index) => {
@@ -3530,26 +4069,34 @@ var LoginOverlay = class {
 			const mask = prompt.kind === "secret" ? "•" : void 0;
 			const placeholder = prompt.placeholder ?? (prompt.kind === "secret" ? "API key" : "code");
 			const field = this.promptField.value === "" ? `(${placeholder})` : renderMiniTextField(this.promptField, true, mask);
+			const storedKeyHint = prompt.kind === "secret" ? formatStoredApiKeyHint(prompt.storedApiKeyPreview) : void 0;
+			if (storedKeyHint !== void 0) lines.push(muted$9(storedKeyHint));
 			lines.push(`> ${field}`);
-			lines.push(muted$9("type + enter submit · esc cancel"));
+			lines.push(muted$9("escape/ctrl+c to cancel, enter to submit"));
 		}
 		return lines;
 	}
 	render(_width) {
 		const overlay = this.store.getSnapshot().overlay;
 		if (overlay.kind !== "login") return [];
-		const { prompt } = overlay.login;
-		return prompt === void 0 ? this.renderList(overlay.login) : this.renderPrompt(prompt);
+		const { login } = overlay;
+		if (login.prompt !== void 0) return this.renderPrompt(login.prompt);
+		this.maybeAutoSkipChooser(login);
+		return this.step === "authType" ? this.renderAuthTypeChooser(login) : this.renderProviderList(login);
 	}
 	handleInput(data) {
 		const overlay = this.store.getSnapshot().overlay;
 		if (overlay.kind !== "login") return;
-		const { prompt } = overlay.login;
-		if (prompt !== void 0) this.handlePromptInput(data, prompt);
-		else this.handleListInput(data, overlay.login);
+		const { login } = overlay;
+		if (login.prompt !== void 0) {
+			this.handlePromptInput(data, login.prompt);
+			return;
+		}
+		if (this.step === "authType") this.handleAuthTypeChooserInput(data);
+		else this.handleProviderListInput(data, login);
 	}
 	handlePromptInput(data, prompt) {
-		if (matchesKey(data, Key.escape)) {
+		if (matchesKey(data, Key.escape) || matchesKey(data, Key.ctrl("c"))) {
 			this.actions.answerAuthorizationPrompt("");
 			return;
 		}
@@ -3572,22 +4119,65 @@ var LoginOverlay = class {
 		const next = miniTextFieldInput(this.promptField, data);
 		if (next !== void 0) this.promptField = next;
 	}
-	handleListInput(data, login) {
+	handleAuthTypeChooserInput(data) {
 		if (matchesKey(data, Key.escape)) {
 			this.actions.closeLogin();
 			return;
 		}
-		const flows = login.flows;
-		if (flows === void 0 || flows.length === 0) return;
 		if (matchesKey(data, Key.up)) {
-			this.actions.selectLoginFlow(Math.max(0, login.selected - 1));
+			this.authTypeCursor = Math.max(0, this.authTypeCursor - 1);
 			return;
 		}
 		if (matchesKey(data, Key.down)) {
-			this.actions.selectLoginFlow(Math.min(flows.length - 1, login.selected + 1));
+			this.authTypeCursor = Math.min(AUTH_TYPES.length - 1, this.authTypeCursor + 1);
 			return;
 		}
-		if (matchesKey(data, Key.enter)) this.actions.beginAuthorization(flows[login.selected].key);
+		if (matchesKey(data, Key.enter)) {
+			this.authType = AUTH_TYPES[this.authTypeCursor];
+			this.step = "list";
+			this.listCursor = 0;
+			this.searchQuery = emptyMiniTextField();
+		}
+	}
+	handleProviderListInput(data, login) {
+		if (matchesKey(data, Key.escape)) {
+			if (this.chooserSkipped) this.actions.closeLogin();
+			else {
+				this.step = "authType";
+				this.searchQuery = emptyMiniTextField();
+			}
+			return;
+		}
+		if (matchesKey(data, Key.ctrl("p"))) {
+			this.actions.addCustomProvider();
+			return;
+		}
+		const flows = this.filteredFlows(login);
+		if (matchesKey(data, Key.up)) {
+			this.listCursor = Math.max(0, this.listCursor - 1);
+			return;
+		}
+		if (matchesKey(data, Key.down)) {
+			this.listCursor = Math.min(Math.max(0, flows.length - 1), this.listCursor + 1);
+			return;
+		}
+		if (matchesKey(data, Key.ctrl("e"))) {
+			const flow = flows[this.listCursor];
+			if (flow !== void 0 && flow.configured && flow.key.startsWith("llm-pi-ai/")) this.actions.openProviderEditor(flow.key.slice(10));
+			return;
+		}
+		if (matchesKey(data, Key.enter)) {
+			const flow = flows[this.listCursor];
+			if (flow === void 0) return;
+			if (flow.configured && flow.key.startsWith("llm-pi-ai/")) this.actions.openProviderEditor(flow.key.slice(10));
+			else this.actions.beginAuthorization(flow.key, this.authType);
+			return;
+		}
+		const next = miniTextFieldInput(this.searchQuery, data);
+		if (next !== void 0) {
+			this.searchQuery = next;
+			this.listCursor = 0;
+		}
 	}
 };
 //#endregion
@@ -4872,8 +5462,8 @@ var TuiApp = class {
 			const state = store.getSnapshot();
 			return buildStatusBarText({
 				sessionId: options.sessionId,
-				provider: options.provider,
-				model: options.model,
+				provider: state.activeModel?.provider ?? options.provider,
+				model: state.activeModel?.model ?? options.model,
 				status: state.status,
 				queuedCount: state.queued.length,
 				presetLabel: state.preset?.current,
@@ -4901,29 +5491,36 @@ var TuiApp = class {
 			updateHintText,
 			statsLineText
 		], { gap: 0 });
-		const headerInfo = new DynamicText(() => {
+		const headerMark = new DynamicText(() => ACRYL_MARK_ROWS.map((row) => fg(theme.primary)(row)).join("\n"));
+		const header = new HStack([{
+			component: this.pet,
+			basis: 34,
+			shrink: 0
+		}, {
+			component: headerMark,
+			basis: "auto",
+			grow: 1
+		}], {
+			gap: 1,
+			align: "start"
+		});
+		const buildStamp = `build 42c4177 · ${(/* @__PURE__ */ new Date(BUILD_TIME)).toLocaleTimeString()}`;
+		const sessionInfo = new DynamicText(() => {
 			const { provider, model, cwd } = options;
 			return [
-				fg(theme.primary)("ACRYL"),
-				"",
 				`${provider}/${model}`,
-				cwd
+				cwd,
+				fg(theme.muted)(buildStamp)
 			].join("\n");
 		});
 		const layoutRoot = new VStack([
 			{
-				component: new HStack([{
-					component: this.pet,
-					basis: 34,
-					shrink: 0
-				}, {
-					component: headerInfo,
-					basis: "auto",
-					grow: 1
-				}], {
-					gap: 1,
-					align: "start"
-				}),
+				component: header,
+				basis: "auto",
+				shrink: 0
+			},
+			{
+				component: sessionInfo,
 				basis: "auto",
 				shrink: 0
 			},
@@ -5022,8 +5619,8 @@ var TuiApp = class {
 		const { store, actions, getTool, getToolCall } = this.options;
 		switch (overlay.kind) {
 			case "none": return;
-			case "modelProfile": return new ModelProfileOverlay(store, actions);
-			case "login": return new LoginOverlay(store, actions);
+			case "modelProfile": return new ModelProfileOverlay(this.tui, store, actions);
+			case "login": return new LoginOverlay(this.tui, store, actions);
 			case "trajectory": return new TrajectoryOverlay(this.tui, store, actions, getTool);
 			case "toolCards": return new ToolCardsOverlay(this.tui, store, actions, getTool, getToolCall);
 			case "context": return new ContextOverlay(store, actions);
@@ -5147,16 +5744,6 @@ async function walkDirectory(cwd) {
 	return results;
 }
 //#endregion
-//#region src/tui/auth-guidance.ts
-function logoutSuccessMessage(provider) {
-	return `Removed stored authentication for ${provider.trim() === "" ? "provider" : provider}.`;
-}
-function logoutNoneMessage() {
-	return "No active provider is selected; nothing to log out.";
-}
-/** Canonical ACRYL version string used by the CLI and the release smoke checks. */
-const ACRYL_VERSION = createRequire(import.meta.url)("../package.json").version;
-//#endregion
 //#region src/tui-app/session.ts
 /**
 * ACRYL terminal host adapter: brings up one normal local runtime, opens or
@@ -5168,7 +5755,7 @@ const ACRYL_VERSION = createRequire(import.meta.url)("../package.json").version;
 * TUI shows the same capabilities the web surface does. `/clear` flushes the
 * current session and re-attaches a fresh one (durable history stays on disk).
 */
-const TUI_VERSION = ACRYL_VERSION;
+const TUI_VERSION = createRequire(import.meta.url)("../package.json").version;
 const PROMPT_HISTORY_LIMIT = 200;
 function failUnknown(status) {
 	return status === "running" ? "running" : "idle";
@@ -5209,10 +5796,33 @@ function getAtPath(value, path) {
 	}
 	return current;
 }
-/** Derive a POSIX-identifier credential ref from a provider route, e.g. `my-proxy` -> `MY_PROXY_API_KEY`. */
-function deriveApiKeyRef(route) {
-	const upper = route.toUpperCase().replace(/[^A-Z0-9]+/g, "_");
-	return `${/^[A-Z_]/.test(upper) ? upper : `P_${upper}`}_API_KEY`;
+/**
+* `dsh-llm-pi-ai`'s own credential record scope (`credentialKey('llm-pi-ai', providerId)`,
+* i.e. `"llm-pi-ai/<providerId>"`). A `/login` sign-in (OAuth or API key) writes here through
+* pi-ai's own `CredentialStore`, entirely separate from the `apiKeyEnv` reference a manually
+* configured provider's settings profile points at — so a provider's "has credentials" status
+* has to check both places, and this is the address for the first.
+*/
+function piAiRecordKey(providerId) {
+	return `llm-pi-ai/${providerId}`;
+}
+/**
+* Wait out `ctx.settings`' asynchronous watcher queue after a write.
+*
+* `settingsSvc.update()`'s returned promise resolves once the write commits
+* to the settings document — but `dsh-llm-pi-ai`'s own reactive watcher (the
+* thing that actually rebuilds its live `Models` registry and re-registers
+* routes with `ctx.llm`) runs on a *separate* promise chained off that
+* commit, not before it settles. A caller that reads `ctx.llm.listModels()`
+* or `listProviders()` immediately after `update()` resolves races that
+* watcher and sees the pre-write state. `setImmediate` runs after the
+* Node microtask queue drains, which is exactly where that chained watcher
+* promise settles, so awaiting one flush is enough to see the write reflected.
+*/
+function flushSettingsWatchers() {
+	return new Promise((resolve) => {
+		setImmediate(resolve);
+	});
 }
 /** Open a URL in the platform's default browser (fire-and-forget). */
 function openBrowser(url) {
@@ -5277,18 +5887,11 @@ async function attachSession(host, resumeId) {
 	const agent = host.ctx.agents?.get?.(SessionId(id));
 	const session = agent?.session;
 	const history = [];
-	async function loadProviders() {
+	async function computeProviderRows() {
 		const settingsSvc = host.ctx.get("settings");
 		const credentialsSvc = host.ctx.get("credentials");
 		const llmSvc = host.ctx.get("llm");
-		if (settingsSvc === void 0 || credentialsSvc === void 0 || llmSvc === void 0) {
-			store.updateModelProfile({
-				providers: [],
-				busy: false,
-				error: "Model provider settings are not available in this profile."
-			});
-			return;
-		}
+		if (settingsSvc === void 0 || credentialsSvc === void 0 || llmSvc === void 0) return void 0;
 		const configurable = llmSvc.listConfigurableProviders();
 		const live = new Set(llmSvc.listProviders().map((provider) => provider.id));
 		const descriptors = settingsSvc.describe({ redactSecrets: true });
@@ -5300,20 +5903,37 @@ async function attachSession(host, resumeId) {
 			const userValue = descriptor === void 0 ? void 0 : getAtPath(descriptor.user, entry.settingsPath);
 			const apiKeyRef = value?.apiKeyEnv ?? deriveApiKeyRef(entry.provider);
 			const info = await credentialsSvc.describe(apiKeyRef);
+			const loginRecord = await credentialsSvc.readRecord?.(piAiRecordKey(entry.provider));
+			const authMethod = loginRecord !== void 0 ? loginRecord.kind === "grant" ? "oauth" : "api-key" : info.configured ? "api-key" : void 0;
+			const isLive = live.has(entry.provider);
+			const models = isLive ? await llmSvc.listModels(entry.provider).catch(() => value?.models ?? []) : value?.models ?? [];
 			rows.push({
 				route: entry.provider,
 				displayName: value?.displayName ?? entry.displayName,
 				settingsNs: entry.settingsNs,
 				settingsPath: entry.settingsPath,
 				configured: userValue !== void 0,
-				live: live.has(entry.provider),
+				live: isLive,
 				api: value?.api,
 				baseURL: value?.baseURL,
 				apiKeyRef,
-				apiKeyConfigured: info.configured,
-				models: value?.models ?? [],
+				apiKeyConfigured: info.configured || loginRecord !== void 0,
+				authMethod,
+				models,
 				revision: descriptor?.revision
 			});
+		}
+		return rows;
+	}
+	async function loadProviders() {
+		const rows = await computeProviderRows();
+		if (rows === void 0) {
+			store.updateModelProfile({
+				providers: [],
+				busy: false,
+				error: "Model provider settings are not available in this profile."
+			});
+			return;
 		}
 		store.updateModelProfile({
 			providers: rows,
@@ -5322,8 +5942,69 @@ async function attachSession(host, resumeId) {
 			selected: 0
 		});
 	}
+	function openEditFormForRow(row) {
+		const overlay = store.getSnapshot().overlay;
+		if (overlay.kind !== "modelProfile") return;
+		const draft = {
+			route: row.route,
+			isNew: false,
+			settingsNs: row.settingsNs,
+			settingsPath: row.settingsPath,
+			displayName: row.displayName,
+			api: row.api ?? "",
+			baseURL: row.baseURL ?? "",
+			apiKeyRef: row.apiKeyRef,
+			apiKeyConfigured: row.apiKeyConfigured,
+			authMethod: row.authMethod,
+			apiKeyDraft: "",
+			apiKeyPreview: void 0,
+			models: row.models,
+			revision: row.revision
+		};
+		const formKey = overlay.modelProfile.formKey + 1;
+		store.updateModelProfile({
+			view: "form",
+			draft,
+			formKey
+		});
+		if (row.authMethod === "api-key") (async () => {
+			const resolved = await host.ctx.get("credentials")?.resolve?.(row.apiKeyRef).catch(() => void 0);
+			if (resolved?.value === void 0) return;
+			const current = store.getSnapshot().overlay;
+			if (current.kind !== "modelProfile" || current.modelProfile.formKey !== formKey) return;
+			const currentDraft = current.modelProfile.draft;
+			if (currentDraft === void 0) return;
+			store.updateModelProfile({ draft: {
+				...currentDraft,
+				apiKeyPreview: maskKeyPreview(resolved.value)
+			} });
+		})();
+	}
+	async function ensureProviderActivated(providerId, method) {
+		const settingsSvc = host.ctx.get("settings");
+		const llmSvc = host.ctx.get("llm");
+		if (settingsSvc === void 0 || llmSvc === void 0) return false;
+		const entry = llmSvc.listConfigurableProviders().find((candidate) => candidate.provider === providerId);
+		if (entry === void 0) return false;
+		const descriptor = settingsSvc.describe({ redactSecrets: true }).find((candidate) => candidate.ns === entry.settingsNs);
+		const existing = descriptor === void 0 ? void 0 : getAtPath(descriptor.user, entry.settingsPath);
+		const oauthName = `${entry.displayName.replace(/(?:-oauth)+$/, "")}-oauth`;
+		if (existing !== void 0) {
+			if (method === "oauth" && existing.displayName !== oauthName) {
+				await settingsSvc.update(entry.settingsNs, nestAtPath(entry.settingsPath, { displayName: oauthName }), descriptor?.revision);
+				await flushSettingsWatchers();
+				return true;
+			}
+			return false;
+		}
+		const section = method === "oauth" ? { displayName: oauthName } : {};
+		await settingsSvc.update(entry.settingsNs, nestAtPath(entry.settingsPath, section), descriptor?.revision);
+		await flushSettingsWatchers();
+		return true;
+	}
 	async function loadAuthorizationFlows() {
 		const authSvc = host.ctx.get("authorization");
+		const credentialsSvc = host.ctx.get("credentials");
 		if (authSvc === void 0) {
 			store.updateLogin({
 				flows: [],
@@ -5333,18 +6014,69 @@ async function attachSession(host, resumeId) {
 			return;
 		}
 		try {
-			const list = authSvc.list();
+			const entries = authSvc.list();
+			const list = await Promise.all(entries.map(async (entry) => {
+				const record = credentialsSvc === void 0 ? void 0 : await credentialsSvc.readRecord?.(entry.key);
+				return {
+					...entry,
+					configured: record !== void 0,
+					authMethod: record === void 0 ? void 0 : record.kind === "grant" ? "oauth" : "api-key"
+				};
+			}));
 			store.updateLogin({
 				flows: list,
 				busy: false,
 				error: void 0
 			});
+			const toRepair = list.filter((flow) => flow.configured && flow.authMethod === "oauth" && flow.key.startsWith("llm-pi-ai/"));
+			if (toRepair.length > 0) (async () => {
+				let repaired = false;
+				for (const flow of toRepair) try {
+					if (await ensureProviderActivated(flow.key.slice(10), "oauth")) repaired = true;
+				} catch {}
+				if (repaired) refreshCredentialState();
+			})();
 		} catch (error) {
 			store.updateLogin({
 				busy: false,
 				error: error instanceof Error ? error.message : String(error)
 			});
 		}
+	}
+	function refreshCredentialState() {
+		loadProviders();
+		loadAuthorizationFlows();
+	}
+	/** Open `/model`'s blank custom-provider draft — assumes `/model` is (or is about to become) the open overlay. Shared by `createProvider` (already there) and `addCustomProvider` (getting there first). */
+	function openCustomProviderDraft() {
+		const settingsNs = host.ctx.get("llm")?.listConfigurableProviders?.()[0]?.settingsNs;
+		if (settingsNs === void 0) {
+			store.setNotice("Adding a custom provider is not available in this profile.");
+			return;
+		}
+		const draft = {
+			route: "",
+			isNew: true,
+			settingsNs,
+			settingsPath: [],
+			displayName: "",
+			api: "",
+			baseURL: "",
+			apiKeyRef: "",
+			apiKeyConfigured: false,
+			authMethod: void 0,
+			apiKeyDraft: "",
+			apiKeyPreview: void 0,
+			models: [],
+			revision: void 0
+		};
+		const overlay = store.getSnapshot().overlay;
+		const formKey = overlay.kind === "modelProfile" ? overlay.modelProfile.formKey + 1 : 1;
+		store.updateModelProfile({
+			view: "form",
+			draft,
+			formKey
+		});
 	}
 	async function loadAgentPresets() {
 		const presetsSvc = host.ctx.get("agentPresets");
@@ -5388,7 +6120,9 @@ async function attachSession(host, resumeId) {
 			});
 		},
 		cancel() {
-			bridge.cancel(id).catch(() => {});
+			bridge.cancel(id).catch((error) => {
+				store.setNotice(`Could not cancel: ${error instanceof Error ? error.message : String(error)}`);
+			});
 		},
 		shutdown() {
 			signal("exit");
@@ -5501,12 +6235,10 @@ async function attachSession(host, resumeId) {
 		closeLogin() {
 			store.closeOverlay();
 		},
-		selectLoginFlow(index) {
-			store.updateLogin({ selected: index });
-		},
-		beginAuthorization(key) {
+		beginAuthorization(key, method) {
 			(async () => {
 				const authSvc = host.ctx.get("authorization");
+				const credentialsSvc = host.ctx.get("credentials");
 				if (authSvc === void 0) {
 					store.setNotice("Sign-in is not available in this profile.");
 					return;
@@ -5514,6 +6246,8 @@ async function attachSession(host, resumeId) {
 				const overlay = store.getSnapshot().overlay;
 				const flow = overlay.kind === "login" ? overlay.login.flows?.find((entry) => entry.key === key) : void 0;
 				if (flow === void 0) return;
+				const existingRecord = (method ?? flow.methods[0]?.id) === "api-key" ? await credentialsSvc?.readRecord?.(flow.key) : void 0;
+				const storedApiKeyPreview = typeof existingRecord?.key === "string" ? maskKeyPreview(existingRecord.key) : void 0;
 				store.updateLogin({ signingIn: key });
 				const interaction = {
 					notify(notice) {
@@ -5538,8 +6272,13 @@ async function attachSession(host, resumeId) {
 									label: option.label,
 									description: option.description
 								}))
+							} : prompt.kind === "secret" ? {
+								kind: "secret",
+								message: prompt.message,
+								placeholder: prompt.placeholder,
+								storedApiKeyPreview
 							} : {
-								kind: prompt.kind,
+								kind: "text",
 								message: prompt.message,
 								placeholder: prompt.placeholder
 							};
@@ -5555,13 +6294,15 @@ async function attachSession(host, resumeId) {
 				try {
 					if ((await authSvc.begin({
 						key,
+						method,
 						interaction
 					})).status === "authorized") {
-						store.setNotice(`Signed in to ${flow.label}.`);
-						loadAuthorizationFlows();
-					} else store.setNotice("Sign-in cancelled.");
+						store.setNotice(`Signed in to ${flow.label} — credentials saved, ready to use from /model.`);
+						if (key.startsWith("llm-pi-ai/")) await ensureProviderActivated(key.slice(10), method);
+						refreshCredentialState();
+					} else store.updateLogin({ error: "Sign-in cancelled." });
 				} catch (error) {
-					store.setNotice(`Sign-in failed: ${error instanceof Error ? error.message : String(error)}`);
+					store.updateLogin({ error: `Sign-in failed: ${error instanceof Error ? error.message : String(error)}` });
 				} finally {
 					store.updateLogin({ signingIn: void 0 });
 				}
@@ -5574,28 +6315,9 @@ async function attachSession(host, resumeId) {
 			if (resolve !== void 0) resolve(value);
 		},
 		logout() {
-			(async () => {
-				const credentialsSvc = host.ctx.get("credentials");
-				if (credentialsSvc === void 0) {
-					store.setNotice("Credentials are not available in this profile.");
-					return;
-				}
-				const selection = host.ctx.get("agentDefaultModel")?.currentSelection?.();
-				const overlay = store.getSnapshot().overlay;
-				const rows = overlay.kind === "modelProfile" ? overlay.modelProfile.providers : void 0;
-				const row = rows?.find((entry) => entry.route === selection?.provider) ?? (rows !== void 0 && rows.length === 1 ? rows[0] : void 0);
-				if (row === void 0) {
-					store.setNotice(logoutNoneMessage());
-					return;
-				}
-				try {
-					await credentialsSvc.unset(row.apiKeyRef);
-					store.setNotice(logoutSuccessMessage(row.displayName));
-					loadProviders();
-				} catch (error) {
-					store.setNotice(`logout failed: ${error instanceof Error ? error.message : String(error)}`);
-				}
-			})();
+			store.openModelProfile();
+			store.setNotice("Select a provider, then Ctrl+D to sign out.");
+			loadProviders();
 		},
 		openTrajectory() {
 			store.openTrajectory();
@@ -5623,40 +6345,40 @@ async function attachSession(host, resumeId) {
 		},
 		backToProviderList() {
 			store.updateModelProfile({ view: "list" });
-		},
-		selectProvider(index) {
-			store.updateModelProfile({ selected: index });
+			refreshCredentialState();
 		},
 		createProvider() {
-			store.updateModelProfile({
-				view: "form",
-				draft: void 0
-			});
+			openCustomProviderDraft();
+		},
+		addCustomProvider() {
+			store.openModelProfile();
+			loadProviders();
+			openCustomProviderDraft();
 		},
 		editProvider(route) {
 			const overlay = store.getSnapshot().overlay;
 			if (overlay.kind !== "modelProfile") return;
 			const row = overlay.modelProfile.providers?.find((entry) => entry.route === route);
 			if (row === void 0) return;
-			const draft = {
-				route: row.route,
-				isNew: false,
-				settingsNs: row.settingsNs,
-				settingsPath: row.settingsPath,
-				displayName: row.displayName,
-				api: row.api ?? "",
-				baseURL: row.baseURL ?? "",
-				apiKeyRef: row.apiKeyRef,
-				apiKeyConfigured: row.apiKeyConfigured,
-				apiKeyDraft: "",
-				models: row.models,
-				revision: row.revision
-			};
-			store.updateModelProfile({
-				view: "form",
-				draft,
-				formKey: overlay.modelProfile.formKey + 1
-			});
+			openEditFormForRow(row);
+		},
+		openProviderEditor(route) {
+			(async () => {
+				store.openModelProfile();
+				const rows = await computeProviderRows();
+				store.updateModelProfile({
+					providers: rows ?? [],
+					busy: false,
+					error: rows === void 0 ? "Model provider settings are not available in this profile." : void 0,
+					selected: 0
+				});
+				const row = rows?.find((entry) => entry.route === route);
+				if (row === void 0) {
+					store.setNotice(`Provider "${route}" not found.`);
+					return;
+				}
+				openEditFormForRow(row);
+			})();
 		},
 		saveProvider(draft) {
 			(async () => {
@@ -5666,20 +6388,25 @@ async function attachSession(host, resumeId) {
 					store.setNotice("Provider settings are not available in this profile.");
 					return;
 				}
+				if (draft.isNew && draft.route.trim() === "") {
+					store.updateModelProfile({ error: "Provider ID is required." });
+					return;
+				}
 				try {
 					const key = draft.apiKeyDraft.trim();
 					if (key !== "") await credentialsSvc.set(draft.apiKeyRef, key);
 					const section = {
-						displayName: draft.displayName,
-						api: draft.api,
-						baseURL: draft.baseURL,
+						...draft.displayName.trim() === "" ? {} : { displayName: draft.displayName },
+						...draft.api.trim() === "" ? {} : { api: draft.api },
+						...draft.baseURL.trim() === "" ? {} : { baseURL: draft.baseURL },
 						apiKeyEnv: draft.apiKeyRef,
-						models: draft.models
+						...draft.models.length === 0 ? {} : { models: draft.models }
 					};
 					await settingsSvc.update(draft.settingsNs, nestAtPath(draft.settingsPath, section), draft.revision);
-					store.setNotice(`Saved ${draft.displayName || draft.route}.`);
+					await flushSettingsWatchers();
+					store.setNotice(`Saved ${draft.displayName || draft.route} — credentials stored, ready to use from /model.`);
 					store.updateModelProfile({ view: "list" });
-					loadProviders();
+					refreshCredentialState();
 				} catch (error) {
 					store.setNotice(`save failed: ${error instanceof Error ? error.message : String(error)}`);
 				}
@@ -5696,15 +6423,85 @@ async function attachSession(host, resumeId) {
 				try {
 					await credentialsSvc.unset(row.apiKeyRef);
 					await settingsSvc.update(row.settingsNs, nestAtPath(row.settingsPath, {}), row.revision);
+					await flushSettingsWatchers();
 					store.setNotice(`Removed ${row.displayName}.`);
-					loadProviders();
+					refreshCredentialState();
 				} catch (error) {
 					store.setNotice(`delete failed: ${error instanceof Error ? error.message : String(error)}`);
 				}
 			})();
 		},
-		discoverModelsForDraft() {},
-		setActiveModel() {},
+		clearApiKey(draft) {
+			(async () => {
+				const credentialsSvc = host.ctx.get("credentials");
+				if (credentialsSvc === void 0) {
+					store.setNotice("Credentials are not available in this profile.");
+					return;
+				}
+				try {
+					await credentialsSvc.unset(draft.apiKeyRef);
+					await credentialsSvc.deleteRecord?.(piAiRecordKey(draft.route));
+					store.setNotice(`Removed the API key for ${draft.displayName || draft.route}.`);
+					store.updateModelProfile({ view: "list" });
+					refreshCredentialState();
+				} catch (error) {
+					store.setNotice(`Could not remove the key: ${error instanceof Error ? error.message : String(error)}`);
+				}
+			})();
+		},
+		discoverModelsForDraft(draft) {
+			(async () => {
+				const llmSvc = host.ctx.get("llm");
+				if (llmSvc === void 0) {
+					store.setNotice("Model discovery is not available in this profile.");
+					return;
+				}
+				store.updateModelProfile({ busy: true });
+				try {
+					const request = {};
+					if (!draft.isNew) request.provider = draft.route;
+					if (draft.baseURL.trim() !== "") request.baseURL = draft.baseURL.trim();
+					if (draft.api.trim() !== "") request.api = draft.api.trim();
+					if (draft.apiKeyDraft.trim() !== "") request.apiKey = draft.apiKeyDraft.trim();
+					const discovered = await llmSvc.discoverModels(draft.settingsNs, request);
+					store.updateModelProfile({
+						busy: false,
+						discovered
+					});
+				} catch (error) {
+					store.updateModelProfile({
+						busy: false,
+						discovered: []
+					});
+					store.setNotice(`Model discovery failed: ${error instanceof Error ? error.message : String(error)}`);
+				}
+			})();
+		},
+		setActiveModel(provider, model) {
+			(async () => {
+				try {
+					await bridge.selectModel({
+						sessionId: id,
+						provider,
+						model
+					});
+					store.setActiveModel({
+						provider,
+						model
+					});
+					try {
+						await host.ctx.get("agentDefaultModel")?.saveSelection({
+							provider,
+							model
+						});
+					} catch {}
+					store.setNotice(`Active model set to ${model} (${provider}).`);
+					loadProviders();
+				} catch (error) {
+					store.setNotice(`Could not set active model: ${error instanceof Error ? error.message : String(error)}`);
+				}
+			})();
+		},
 		closeTrajectory() {
 			store.closeOverlay();
 		},
@@ -5787,212 +6584,6 @@ async function runAcrylTui(options) {
 	}
 }
 //#endregion
-//#region src/cli/grammar.ts
-const HOST_COMMANDS = /* @__PURE__ */ new Set([
-	"tui",
-	"gui",
-	"web"
-]);
-function hostCommand(value) {
-	return HOST_COMMANDS.has(value) ? value : void 0;
-}
-function parseAcrylArgs(args) {
-	let command;
-	let profile;
-	let resumeSessionId;
-	let json = false;
-	let version = false;
-	let help = false;
-	for (let index = 0; index < args.length; index += 1) {
-		const argument = args[index];
-		if (argument === void 0) continue;
-		if (argument === "--version" || argument === "-v") {
-			if (version) throw new Error("--version may be provided only once");
-			version = true;
-			continue;
-		}
-		if (argument === "--help" || argument === "-h") {
-			if (help) throw new Error("--help may be provided only once");
-			help = true;
-			continue;
-		}
-		if (argument === "--profile") {
-			if (profile !== void 0) throw new Error("--profile may be provided only once");
-			const value = args[index + 1];
-			if (value === void 0 || value.startsWith("--") || value.trim() === "") throw new Error("--profile requires a value");
-			profile = value;
-			index += 1;
-			continue;
-		}
-		if (argument === "--resume") {
-			if (resumeSessionId !== void 0) throw new Error("--resume may be provided only once");
-			const value = args[index + 1];
-			if (value === void 0 || value.startsWith("--") || value.trim() === "") throw new Error("--resume requires a session id");
-			resumeSessionId = value;
-			index += 1;
-			continue;
-		}
-		if (argument === "--json") {
-			if (json) throw new Error("--json may be provided only once");
-			json = true;
-			continue;
-		}
-		if (argument.startsWith("-")) throw new Error(`unknown option: ${argument}`);
-		const parsed = hostCommand(argument);
-		if (command === void 0) {
-			if (parsed === void 0) throw new Error(`unknown command: ${argument}`);
-			command = parsed;
-			continue;
-		}
-		throw new Error(`unexpected argument for ${command}: ${argument}`);
-	}
-	const resolvedCommand = command ?? "tui";
-	if (!version && !help && profile === void 0 && resumeSessionId === void 0) return {
-		command: resolvedCommand,
-		json,
-		version,
-		help
-	};
-	return {
-		command: resolvedCommand,
-		json,
-		version,
-		help,
-		...profile === void 0 ? {} : { profile },
-		...resumeSessionId === void 0 ? {} : { resumeSessionId }
-	};
-}
-//#endregion
-//#region src/cli/run.ts
-/** Boot the DSH browser surface as one ACRYL runtime, print its URL, and serve until a termination signal. */
-async function serveWeb() {
-	const runtime = await bootAcrylWebProfile({ cmdlineArgs: [] });
-	const stopped = new Promise((resolve) => {
-		const onSignal = () => resolve();
-		process.once("SIGINT", onSignal);
-		process.once("SIGTERM", onSignal);
-	});
-	const url = runtime.url;
-	process.stdout.write(`ACRYL web: ${url}\n`);
-	await stopped;
-	await runtime.dispose();
-	return { url };
-}
-const defaults = {
-	startDirectHost,
-	runTui: runAcrylTui,
-	runWeb: serveWeb,
-	exit: (code) => {
-		process.exitCode = code;
-	},
-	write: (line) => {
-		process.stdout.write(`${line}\n`);
-	}
-};
-function statusLine(host) {
-	return JSON.stringify({
-		mode: "direct",
-		profile: host.profile,
-		generationId: host.generationId
-	});
-}
-/**
-* Run the direct ACRYL terminal host. `--json` is a short-lived, scriptable
-* headless readiness probe; interactive mode mounts the pi-tui session via the
-* runtime bridge until a normal exit, then prints a resumable session id.
-*/
-async function runAcryl(args, supplied = {}) {
-	const dependencies = {
-		...defaults,
-		...supplied
-	};
-	const invocation = parseAcrylArgs(args);
-	if (invocation.help) {
-		dependencies.write([
-			"ACRYL - Agent Context Relay Yielding Lifecycles",
-			"",
-			`Usage: acryl [command] [options]`,
-			"",
-			"Commands:",
-			"  tui    Run the terminal client (default)",
-			"  web    Serve the local ACRYL web runtime",
-			"  gui    [reserved] launch the Desktop surface (not wired in this build)",
-			"",
-			"Options:",
-			"  -h, --help          Show this help",
-			"  -v, --version       Print the ACRYL version",
-			"  --json              Emit machine-readable output",
-			"  --profile <name>    Use a named ACRYL profile",
-			"  --resume <id>       Resume a session",
-			""
-		].join("\n"));
-		return;
-	}
-	if (invocation.version) {
-		dependencies.write(ACRYL_VERSION);
-		return;
-	}
-	if (invocation.command === "gui") throw new Error("ACRYL gui host is not implemented; the desktop (Electron) surface is not wired into this build yet. Use `pnpm acryl` for the terminal surface.");
-	if (invocation.command === "web") {
-		if (invocation.json) {
-			const host = await bootAcrylWebProfile({ cmdlineArgs: [] });
-			try {
-				dependencies.write(host.url);
-			} finally {
-				await host.dispose();
-			}
-			return;
-		}
-		const result = await dependencies.runWeb({ profile: invocation.profile ?? "web" });
-		dependencies.write(`serving at ${result.url}`);
-		return;
-	}
-	if (invocation.json) {
-		const host = await dependencies.startDirectHost({ profile: invocation.profile ?? "acryl" });
-		try {
-			dependencies.write(statusLine(host));
-		} finally {
-			await host.dispose();
-		}
-		return;
-	}
-	if (!process.stdin.isTTY || !process.stdout.isTTY) {
-		dependencies.write("acryl-tui: stdin and stdout must both be TTYs; use `acryl tui --json` for a headless probe");
-		dependencies.exit(1);
-		return;
-	}
-	const result = await dependencies.runTui({
-		profile: invocation.profile ?? "acryl",
-		resumeSessionId: invocation.resumeSessionId
-	});
-	dependencies.write(`resume with: acryl tui --resume ${result.resumeHint}`);
-}
-//#endregion
-//#region src/bin.ts
-function isEntrypoint() {
-	const entrypoint = process.argv[1];
-	if (entrypoint === void 0) return false;
-	try {
-		return realpathSync(entrypoint) === realpathSync(fileURLToPath(import.meta.url));
-	} catch {
-		return resolve(entrypoint) === fileURLToPath(import.meta.url);
-	}
-}
-if (isEntrypoint()) (async () => {
-	const script = process.argv[1];
-	if (script === void 0) throw new Error("ACRYL Node entrypoint is unavailable");
-	if (await relaunchWithExposedInternals({
-		execArgv: process.execArgv,
-		script,
-		args: process.argv.slice(2)
-	})) return;
-	await runAcryl(process.argv.slice(2));
-})().catch((cause) => {
-	const message = cause instanceof Error ? cause.message : String(cause);
-	process.stderr.write(`acryl: ${message}\n`);
-	process.exitCode = 1;
-});
-//#endregion
-export { parseAcrylArgs, runAcryl };
+export { parseAcrylArgs, runAcrylTui, startDirectHost };
 
-//# sourceMappingURL=bin.js.map
+//# sourceMappingURL=index.js.map

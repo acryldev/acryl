@@ -3,7 +3,7 @@
  * `ylyAnimations.ts` (frame indices + per-step ms + loop/next + bob). A pi-tui
  * terminal renders these frame-for-frame. Frame names follow `ylyFrames.ts`
  * (sheet cell indices 0..12).
- * @module acryl-tui/yly/yly-programs
+ * @module acryl-cli/yly/yly-programs
  */
 
 export type YlyState = 'idle' | 'thinking' | 'walking' | 'tool' | 'typing' | 'success' | 'error' | 'sleeping'

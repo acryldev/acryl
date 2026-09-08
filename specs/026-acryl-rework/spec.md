@@ -2,7 +2,7 @@
 
 ## Objective
 
-`acryl-control`, `acryl-harness-runtime`, `acryl-tui`, and `acryl-desktop` currently
+`acryl-control`, `acryl-harness-runtime`, `acryl-cli`, and `acryl-desktop` currently
 re-implement framework capabilities that DeepSeek Harness (DSH) and Cordis already ship
 (verified against `@deepseek-ai/dsh-*` packages). This feature removes the parallel
 framework and re-bases the ACRYL control plane and runtime onto native seams, then proves

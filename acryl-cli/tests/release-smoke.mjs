@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
 
-const packageRoot = fileURLToPath(new URL('..', import.meta.url)) // acryl-tui/
+const packageRoot = fileURLToPath(new URL('..', import.meta.url)) // acryl-cli/
 const bin = join(packageRoot, 'lib/bin.js')
 const smokeHome = mkdtempSync(join(tmpdir(), 'acryl-release-smoke-'))
 

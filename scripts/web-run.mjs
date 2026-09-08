@@ -3,7 +3,7 @@
 // Like `tui-run.mjs`, this rebuilds `acryl-web` if its compiled entry is
 // missing or stale (newer source under `acryl-web/src`), then execs the web
 // bin with the user's remaining arguments. The web surface is a SEPARATE
-// distribution from the terminal CLI (`acryl-tui`).
+// distribution from the terminal CLI (`acryl-cli`).
 import { spawnSync } from 'node:child_process'
 import { existsSync, readdirSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'

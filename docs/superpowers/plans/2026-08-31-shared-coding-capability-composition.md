@@ -35,14 +35,14 @@
 | `acryl-harness-runtime/tests/coding-capabilities.spec.ts` | Exact shared-patch and capability-declaration tests. |
 | `acryl-harness-runtime/tests/authorization-host.spec.ts` | Real Host plugin activation, provider loss/recovery, cancellation, logout, and no-secret projection tests. |
 | `acryl-harness-runtime/tests/authorization-client.spec.tsx` | Client settings registration, interaction rendering state, and disposal tests. |
-| `acryl-tui/src/tui-app/session.ts` | Keep the existing TUI adapter against the same authorization behavior; replace `any` surface calls with the shared contract types where possible. |
-| `acryl-tui/tests/tui/commands.spec.ts` and new focused session test | Preserve `/login` and `/logout` behavior against the shared composition. |
+| `acryl-cli/src/tui-app/session.ts` | Keep the existing TUI adapter against the same authorization behavior; replace `any` surface calls with the shared contract types where possible. |
+| `acryl-cli/tests/tui/commands.spec.ts` and new focused session test | Preserve `/login` and `/logout` behavior against the shared composition. |
 | `acryl-desktop/package.json` | Add the explicit workspace dependency on `acryl-harness-runtime` so packaged Desktop resolves the shared Loader plugins. |
 | `acryl-desktop/src/profile.ts` | Apply the shared coding patches before Desktop overlays and preserve `desktop-webserver` substitution. |
 | `acryl-desktop/src/client/index.ts` | Compose the shared authorization client plugin in the Desktop Client root. |
 | `acryl-desktop/tests/profile.spec.ts` | Prove Desktop uses shared authorization rows and preserves its Web server ownership. |
 | `acryl-desktop/tests/client-authorization.spec.tsx` | Prove Desktop exposes the shared authorization settings adapter and removes it on unload. |
-| `acryl-tui/src/cli/run.ts` and `acryl-harness-runtime/tests/profile.spec.ts` | Prove `acryl web` composes the shared authorization Host/Client path. |
+| `acryl-cli/src/cli/run.ts` and `acryl-harness-runtime/tests/profile.spec.ts` | Prove `acryl web` composes the shared authorization Host/Client path. |
 | `docs/superpowers/specs/2026-08-31-shared-coding-capability-composition-design.md` | Update only if implementation discovers a material constraint that changes the approved design. |
 | `docs/DEVELOPMENT-LOG.md` | Record each coherent implementation checkpoint after its implementation commit. |
 
@@ -213,7 +213,7 @@ Expected: FAIL because Desktop and Web do not yet consume the shared factory.
 
 Add `"acryl-harness-runtime": "workspace:*"` to Desktop dependencies. In `prepareDesktopProfile()`, append the shared Desktop patches after the upstream bundle patches and before `desktopPatches`, Canvas patches, provider patches, and the Desktop webserver replacement. In `bootAcrylWebProfile()`, append the Web patches after the Web bundle layers and before user profile patches.
 
-Do not import `acryl-tui`, do not alter `DESKTOP_WEB_SERVER_PACKAGE`, and do not move any Desktop-only row into `acryl-harness-runtime`.
+Do not import `acryl-cli`, do not alter `DESKTOP_WEB_SERVER_PACKAGE`, and do not move any Desktop-only row into `acryl-harness-runtime`.
 
 - [ ] **Step 4: Update the lockfile and run composition tests**
 
@@ -338,9 +338,9 @@ git commit -m "feat: add shared authorization surface adapter"
 - Modify: `acryl-harness-runtime/src/index.ts`
 - Modify: `acryl-desktop/src/client/index.ts`
 - Create: `acryl-desktop/tests/client-authorization.spec.tsx`
-- Modify: `acryl-tui/src/tui-app/session.ts`
-- Modify: `acryl-tui/tests/tui/commands.spec.ts`
-- Create: `acryl-tui/tests/tui/authorization-parity.spec.ts`
+- Modify: `acryl-cli/src/tui-app/session.ts`
+- Modify: `acryl-cli/tests/tui/commands.spec.ts`
+- Create: `acryl-cli/tests/tui/authorization-parity.spec.ts`
 - Create: `acryl-harness-runtime/tests/capability-parity.spec.ts`
 
 **Consumes:** Shared Host/Client plugin exports from Task 3 and the existing TUI login overlay/actions.
@@ -353,7 +353,7 @@ git commit -m "feat: add shared authorization surface adapter"
 it('has a verified adapter test for every authorization surface', () => {
   expect(authorizationCapability.surfaces).toEqual(['tui', 'web', 'desktop'])
   expect(authorizationCapability.adapters).toEqual({
-    tui: 'acryl-tui/tests/tui/authorization-parity.spec.ts',
+    tui: 'acryl-cli/tests/tui/authorization-parity.spec.ts',
     web: 'acryl-harness-runtime/tests/authorization-client.spec.tsx',
     desktop: 'acryl-desktop/tests/client-authorization.spec.tsx',
   })
@@ -376,7 +376,7 @@ Run:
 ```bash
 corepack pnpm --filter acryl-harness-runtime exec vitest run tests/capability-parity.spec.ts
 corepack pnpm --filter acryl-desktop exec vitest run tests/client-authorization.spec.tsx
-corepack pnpm --filter acryl-tui exec vitest run tests/tui/authorization-parity.spec.ts
+corepack pnpm --filter acryl-cli exec vitest run tests/tui/authorization-parity.spec.ts
 ```
 
 Expected: FAIL because the declarations lack adapter proof and Desktop does not mount the Client plugin.
@@ -385,7 +385,7 @@ Expected: FAIL because the declarations lack adapter proof and Desktop does not 
 
 Add the authorization Host and Client Loader entries to the `authorization` declaration, only for `web` and `desktop` where the browser remote exists. In `acryl-desktop/src/client/index.ts`, use the same Client plugin function rather than copying its slot registrations or React component. Ensure its hard client dependencies are added to Desktop `inject` only when they are truly required.
 
-Keep `acryl-tui/src/tui-app/session.ts` as the terminal adapter. Replace its `any` authorization/credential casts with the contract types introduced in Task 3 where those types match. Do not route TUI interaction through a browser remote.
+Keep `acryl-cli/src/tui-app/session.ts` as the terminal adapter. Replace its `any` authorization/credential casts with the contract types introduced in Task 3 where those types match. Do not route TUI interaction through a browser remote.
 
 - [ ] **Step 4: Run surface parity and typechecks**
 
@@ -394,10 +394,10 @@ Run:
 ```bash
 corepack pnpm --filter acryl-harness-runtime exec vitest run tests/capability-parity.spec.ts tests/authorization-host.spec.ts tests/authorization-client.spec.tsx
 corepack pnpm --filter acryl-desktop exec vitest run tests/profile.spec.ts tests/client-authorization.spec.tsx
-corepack pnpm --filter acryl-tui exec vitest run tests/tui/commands.spec.ts tests/tui/authorization-parity.spec.ts
+corepack pnpm --filter acryl-cli exec vitest run tests/tui/commands.spec.ts tests/tui/authorization-parity.spec.ts
 corepack pnpm --filter acryl-harness-runtime typecheck
 corepack pnpm --filter acryl-desktop typecheck
-corepack pnpm --filter acryl-tui typecheck
+corepack pnpm --filter acryl-cli typecheck
 ```
 
 Expected: PASS. The tests prove one shared behavior, three adapters, no secret projection, and retained Desktop Web server ownership.
@@ -405,7 +405,7 @@ Expected: PASS. The tests prove one shared behavior, three adapters, no secret p
 - [ ] **Step 5: Commit the surface parity integration**
 
 ```bash
-git add acryl-harness-runtime/src/coding-capabilities.ts acryl-harness-runtime/src/index.ts acryl-harness-runtime/tests/capability-parity.spec.ts acryl-desktop/src/client/index.ts acryl-desktop/tests/client-authorization.spec.tsx acryl-tui/src/tui-app/session.ts acryl-tui/tests/tui/commands.spec.ts acryl-tui/tests/tui/authorization-parity.spec.ts
+git add acryl-harness-runtime/src/coding-capabilities.ts acryl-harness-runtime/src/index.ts acryl-harness-runtime/tests/capability-parity.spec.ts acryl-desktop/src/client/index.ts acryl-desktop/tests/client-authorization.spec.tsx acryl-cli/src/tui-app/session.ts acryl-cli/tests/tui/commands.spec.ts acryl-cli/tests/tui/authorization-parity.spec.ts
 git commit -m "feat: expose shared authorization across acryl surfaces"
 ```
 
@@ -434,7 +434,7 @@ Run:
 
 ```bash
 node --test scripts/publish-npm-cli.test.mjs
-corepack pnpm --filter acryl-tui exec vitest run
+corepack pnpm --filter acryl-cli exec vitest run
 corepack pnpm --filter acryl-harness-runtime run check
 corepack pnpm --filter acryl-desktop run check
 ```

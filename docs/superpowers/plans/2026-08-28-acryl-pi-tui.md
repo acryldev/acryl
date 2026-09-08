@@ -28,8 +28,8 @@
 **Files:**
 - Modify: `acryl-harness-runtime/src/session-bridge.ts`
 - Modify: `acryl-harness-runtime/tests/session-bridge.spec.ts`
-- Create: `acryl-tui/src/tui/store.ts`
-- Create: `acryl-tui/tests/tui-store.spec.ts`
+- Create: `acryl-cli/src/tui/store.ts`
+- Create: `acryl-cli/tests/tui-store.spec.ts`
 
 **Interfaces:**
 - Consumes: `AcrylSessionBridge.open`, `snapshot`, `subscribe`, `submitPrompt`, `cancel`, and `dispose`.
@@ -48,7 +48,7 @@ expect(store.snapshot().tools[0]?.status).toBe('running')
 
 - [ ] **Step 2: Run the focused tests to confirm the projection seam is incomplete**
 
-Run: `corepack pnpm --filter acryl-harness-runtime test -- session-bridge` and `corepack pnpm --filter acryl-tui test -- tui-store`
+Run: `corepack pnpm --filter acryl-harness-runtime test -- session-bridge` and `corepack pnpm --filter acryl-cli test -- tui-store`
 Expected: failure because the store/controller exports do not yet exist or do not project bridge updates.
 
 - [ ] **Step 3: Implement the immutable store and bridge error propagation**
@@ -66,31 +66,31 @@ Subscribe the controller to `bridge.subscribe`, copy snapshots into this present
 
 - [ ] **Step 4: Run focused tests**
 
-Run: `corepack pnpm --filter acryl-harness-runtime test -- session-bridge` and `corepack pnpm --filter acryl-tui test -- tui-store`
+Run: `corepack pnpm --filter acryl-harness-runtime test -- session-bridge` and `corepack pnpm --filter acryl-cli test -- tui-store`
 Expected: PASS.
 
 - [ ] **Step 5: Commit the projection seam**
 
 ```bash
-git add acryl-harness-runtime/src/session-bridge.ts acryl-harness-runtime/tests/session-bridge.spec.ts acryl-tui/src/tui/store.ts acryl-tui/tests/tui-store.spec.ts
+git add acryl-harness-runtime/src/session-bridge.ts acryl-harness-runtime/tests/session-bridge.spec.ts acryl-cli/src/tui/store.ts acryl-cli/tests/tui-store.spec.ts
 git commit -m "feat: project durable sessions into tui state"
 ```
 
 ### Task 2: Port the focused Tomo pi-tui application shell
 
 **Files:**
-- Modify: `acryl-tui/package.json`
+- Modify: `acryl-cli/package.json`
 - Modify: root lockfile
-- Create: `acryl-tui/src/tui/TuiApp.ts`
-- Create: `acryl-tui/src/tui/CustomEditor.ts`
-- Create: `acryl-tui/src/tui/text.ts`
-- Create: `acryl-tui/src/tui/theme.ts`
-- Create: `acryl-tui/tests/tui-app.spec.ts`
-- Delete: `acryl-tui/src/render/app.tsx`
-- Delete: `acryl-tui/src/render/ink-app.tsx`
-- Delete: `acryl-tui/src/render/contributions.ts`
-- Delete: `acryl-tui/src/render/status.ts`
-- Delete: Ink-only tests under `acryl-tui/tests/`
+- Create: `acryl-cli/src/tui/TuiApp.ts`
+- Create: `acryl-cli/src/tui/CustomEditor.ts`
+- Create: `acryl-cli/src/tui/text.ts`
+- Create: `acryl-cli/src/tui/theme.ts`
+- Create: `acryl-cli/tests/tui-app.spec.ts`
+- Delete: `acryl-cli/src/render/app.tsx`
+- Delete: `acryl-cli/src/render/ink-app.tsx`
+- Delete: `acryl-cli/src/render/contributions.ts`
+- Delete: `acryl-cli/src/render/status.ts`
+- Delete: Ink-only tests under `acryl-cli/tests/`
 
 **Interfaces:**
 - Consumes: `AcrylTuiStore` and actions `{ submit(text): Promise<void>; cancel(): Promise<void>; exit(): void }`.
@@ -98,7 +98,7 @@ git commit -m "feat: project durable sessions into tui state"
 
 - [ ] **Step 1: Add pi-tui and remove Ink dependencies**
 
-Use `corepack pnpm add --filter acryl-tui @earendil-works/pi-tui@0.84.2` and `corepack pnpm remove --filter acryl-tui ink react`; remove `ink-testing-library`, React type dependencies, and stale build configuration only when no source references remain.
+Use `corepack pnpm add --filter acryl-cli @earendil-works/pi-tui@0.84.2` and `corepack pnpm remove --filter acryl-cli ink react`; remove `ink-testing-library`, React type dependencies, and stale build configuration only when no source references remain.
 
 - [ ] **Step 2: Port the compatible concrete Tomo components**
 
@@ -118,26 +118,26 @@ Assert transcript/tool/status/error rows render from the store and that `dispose
 
 - [ ] **Step 4: Run TUI package tests and typecheck**
 
-Run: `corepack pnpm --filter acryl-tui test` and `corepack pnpm --filter acryl-tui typecheck`
+Run: `corepack pnpm --filter acryl-cli test` and `corepack pnpm --filter acryl-cli typecheck`
 Expected: PASS with no Ink/React imports or dependencies.
 
 - [ ] **Step 5: Commit the renderer port**
 
 ```bash
-git add acryl-tui/package.json pnpm-lock.yaml acryl-tui/src acryl-tui/tests
+git add acryl-cli/package.json pnpm-lock.yaml acryl-cli/src acryl-cli/tests
 git commit -m "feat: port tomo pi tui shell"
 ```
 
 ### Task 3: Wire CLI, session lifecycle, and cleanup
 
 **Files:**
-- Modify: `acryl-tui/src/cli/grammar.ts`
-- Modify: `acryl-tui/src/cli/run.ts`
-- Modify: `acryl-tui/src/host/direct.ts`
-- Modify: `acryl-tui/src/index.ts`
-- Modify: `acryl-tui/tests/cli-run.spec.ts`
-- Modify: `acryl-tui/tests/direct.spec.ts`
-- Create: `acryl-tui/tests/tui-controller.spec.ts`
+- Modify: `acryl-cli/src/cli/grammar.ts`
+- Modify: `acryl-cli/src/cli/run.ts`
+- Modify: `acryl-cli/src/host/direct.ts`
+- Modify: `acryl-cli/src/index.ts`
+- Modify: `acryl-cli/tests/cli-run.spec.ts`
+- Modify: `acryl-cli/tests/direct.spec.ts`
+- Create: `acryl-cli/tests/tui-controller.spec.ts`
 
 **Interfaces:**
 - Consumes: `startDirectHost`, `createAcrylSessionBridge`, `mountAcrylTui`.
@@ -166,13 +166,13 @@ After direct host boot, construct one native session bridge using the root conte
 
 - [ ] **Step 4: Run focused and package tests**
 
-Run: `corepack pnpm --filter acryl-tui test` and `corepack pnpm --filter acryl-tui typecheck`
+Run: `corepack pnpm --filter acryl-cli test` and `corepack pnpm --filter acryl-cli typecheck`
 Expected: PASS.
 
 - [ ] **Step 5: Commit CLI lifecycle wiring**
 
 ```bash
-git add acryl-tui/src acryl-tui/tests
+git add acryl-cli/src acryl-cli/tests
 git commit -m "feat: run durable sessions in acryl tui"
 ```
 
@@ -191,8 +191,8 @@ Record the Tomo repository, exact `f7663341f604c3ad96e9b2b838a7ca2de8e84fd1` com
 ```bash
 corepack pnpm --filter acryl-control test
 corepack pnpm --filter acryl-harness-runtime test
-corepack pnpm --filter acryl-tui test
-corepack pnpm --filter acryl-tui typecheck
+corepack pnpm --filter acryl-cli test
+corepack pnpm --filter acryl-cli typecheck
 git diff --check
 ```
 

@@ -50,7 +50,7 @@ and today they are being re-implemented in parallel.
     767-825). Do NOT remove it.
   - `acryl-desktop/src/hello-world.ts` dead R&D scaffold is still exported via `./hello-world`.
 - **Cross-package duplication (same concept in ≥2 packages)**: session/transcript projection
-  is implemented in `acryl-harness-runtime/session-bridge.ts`, `acryl-tui/src/tui/store.ts`,
+  is implemented in `acryl-harness-runtime/session-bridge.ts`, `acryl-cli/src/tui/store.ts`,
   and declared in `acryl-control` (3×). PTY/terminal is implemented twice inside
   `acryl-desktop`. Architecture/effect inspector appears 3× (`acryl-control/src/architecture/*`,
   `acryl-desktop/src/plugin-architecture-inspector.ts`, TUI `plugins/PluginsOverlay.ts`).

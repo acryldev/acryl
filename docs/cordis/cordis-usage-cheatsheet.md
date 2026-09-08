@@ -141,7 +141,7 @@ export function apply(ctx, config) {
 Don't conflate "surface" with "thin consumer." ACRYL has three UI surfaces with different
 relationships to the runtime:
 
-- **TUI (`acryl-tui`)** — an **in-process** pi-tui agent surface, adapted from
+- **TUI (`acryl-cli`)** — an **in-process** pi-tui agent surface, adapted from
   `tomowang/dsh-tui` (`@tomowang/dsh-tui` 0.7.0 @ `f7663341`, `@earendil-works/pi-tui`
   0.84.2). It boots the runtime directly (`startDirectHost()` + `createAcrylSessionBridge()`)
   and reads/writes `ctx` in-process — it is a rich agent UI, **not** an RPC client. It has

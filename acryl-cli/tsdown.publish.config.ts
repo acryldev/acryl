@@ -32,14 +32,14 @@ const shared = {
 export default defineConfig([
   {
     ...shared,
-    name: 'acryl-tui/bin',
+    name: 'acryl-cli/bin',
     entry: { bin: 'src/bin.ts' },
     clean: true,
     banner: '#!/usr/bin/env node',
   },
   {
     ...shared,
-    name: 'acryl-tui',
+    name: 'acryl-cli',
     entry: { index: 'src/index.ts' },
     clean: false,
   },

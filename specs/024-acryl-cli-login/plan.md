@@ -19,7 +19,7 @@ introducing a parallel OAuth service.
 ## Architecture summary
 
 ACRYL's TUI already boots the DeepSeek Harness in a pi-tui terminal and exposes a
-data-driven slash-command surface (`acryl-tui/src/tui/commands.ts`) dispatched to
+data-driven slash-command surface (`acryl-cli/src/tui/commands.ts`) dispatched to
 `TuiActions`. The `/model` command already opens a `ModelProfileOverlay` that edits
 provider route/API/baseURL/API-key, and the DSH `ctx.credentials` service
 (`CredentialProvider`) is the single source of truth for secrets.
@@ -58,11 +58,11 @@ framework).
 
 ## Key files
 
-- `acryl-tui/src/tui/commands.ts` — slash command table + dispatch.
-- `acryl-tui/src/tui/actions.ts` — `TuiActions` interface.
-- `acryl-tui/src/tui-app/` — overlay components (`ModelProfileOverlay` sibling).
-- `acryl-tui/src/tui/auth-guidance.ts` (new) — guidance strings.
-- `acryl-tui/src/tui/LoginOverlay.tsx` (new) — login UI.
+- `acryl-cli/src/tui/commands.ts` — slash command table + dispatch.
+- `acryl-cli/src/tui/actions.ts` — `TuiActions` interface.
+- `acryl-cli/src/tui-app/` — overlay components (`ModelProfileOverlay` sibling).
+- `acryl-cli/src/tui/auth-guidance.ts` (new) — guidance strings.
+- `acryl-cli/src/tui/LoginOverlay.tsx` (new) — login UI.
 - `deepseek-harness/packages/credentials/credentials/src/index.ts` — `CredentialProvider`
   (read-only upstream; interface only).
 

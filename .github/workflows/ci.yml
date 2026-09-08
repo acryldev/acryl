@@ -61,7 +61,7 @@ jobs:
         run: corepack pnpm run check:layout
 
       # The workspace packages export their types from a built lib/. On a fresh
-      # checkout those are absent, so consumers (acryl-tui -> acetyl-harness-
+      # checkout those are absent, so consumers (acryl-cli -> acryl-harness-
       # runtime -> acryl-control) cannot typecheck until the providers are built.
       - name: Build workspace type providers
         run: |

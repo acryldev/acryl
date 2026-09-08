@@ -19,7 +19,7 @@ const plugin = readJson('acryl-desktop/package.json')
 const canvas = readJson('acryl-development-canvas/package.json')
 const control = readJson('acryl-control/package.json')
 const harness = readJson('acryl-harness-runtime/package.json')
-const tui = readJson('acryl-tui/package.json')
+const cli = readJson('acryl-cli/package.json')
 const web = readJson('acryl-web/package.json')
 const fabric = readJson('dsh-community-fabric/package.json')
 const market = readJson('dsh-community-market/package.json')
@@ -39,7 +39,7 @@ packages:
   - acryl-control
   - acryl-harness-runtime
   - acryl-npm-launcher
-  - acryl-tui
+  - acryl-cli
   - acryl-web
   - acryl-desktop
   - acryl-development-canvas
@@ -62,7 +62,7 @@ overrides:
 
 # Published DSH client packages declare React types in generated public APIs but
 # omit the type package from their manifests. Their web surface is React 18;
-# acryl-tui separately owns Ink's React 19 types.
+# acryl-cli separately owns Ink's React 19 types.
 packageExtensions:
   '@deepseek-ai/dsh-client-ui-primitives@0.1.1-rc.2':
     dependencies:
@@ -105,7 +105,7 @@ for (const [name, manifest] of [
   ['acryl-control', control],
   ['acryl-harness-runtime', harness],
   ['acryl-npm-launcher', readJson('acryl-npm-launcher/package.json')],
-  ['acryl-tui', tui],
+  ['acryl-cli', cli],
   ['acryl-web', web],
   ['dsh-community-fabric', fabric],
   ['dsh-community-market', market],
@@ -115,7 +115,7 @@ for (const [name, manifest] of [
 if (canvas.name !== 'acryl-development-canvas') fail('the Canvas workspace must own acryl-development-canvas')
 if (control.name !== 'acryl-control') fail('the control workspace must own acryl-control')
 if (readJson('acryl-npm-launcher/package.json').name !== 'acryl') fail('the npm selector workspace must own the public acryl selector package')
-if (tui.name !== 'acryl-tui') fail('the TUI workspace must own acryl-tui')
+if (cli.name !== 'acryl-cli') fail('the CLI workspace must own acryl-cli')
 if (web.name !== 'acryl-web') fail('the Web workspace must own acryl-web')
 if (fabric.name !== 'dsh-community-fabric') fail('the Fabric workspace must own dsh-community-fabric')
 if (market.name !== 'dsh-community-market') fail('the market workspace must own dsh-community-market')
@@ -141,8 +141,8 @@ for (const obsoleteFile of [
   'acryl-control/.yarnrc.yml',
   'acryl-harness-runtime/yarn.lock',
   'acryl-harness-runtime/.yarnrc.yml',
-  'acryl-tui/yarn.lock',
-  'acryl-tui/.yarnrc.yml',
+  'acryl-cli/yarn.lock',
+  'acryl-cli/.yarnrc.yml',
   'dsh-community-fabric/yarn.lock',
   'dsh-community-fabric/.yarnrc.yml',
   'dsh-community-market/yarn.lock',
@@ -166,7 +166,7 @@ for (const [owner, manifest] of [
   ['canvas', canvas],
   ['control', control],
   ['harness-runtime', harness],
-  ['tui', tui],
+  ['cli', cli],
   ['web', web],
   ['fabric', fabric],
   ['market', market],

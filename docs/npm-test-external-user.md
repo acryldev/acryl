@@ -35,11 +35,11 @@ The repo has **no automated npm publish workflow** (npm auth is a documented hum
 - wbx24 — no npm auth
 - m1max — unreachable
 
-To publish `acryl@0.1.10` I need a **fresh npm access token** for one of the package maintainers (musichen / webboxescom / acryldev). Publish path: build `acryl-tui`, then publish it as the `acryl` npm name.
+To publish `acryl@0.1.10` I need a **fresh npm access token** for one of the package maintainers (musichen / webboxescom / acryldev). Publish path: build `acryl-cli`, then publish it as the `acryl` npm name.
 
 ## Next action
 
-Provide a valid npm token (or run `npm login`), then I will: build `acryl-tui` → run `verify-npm-entrypoint.mjs` → `npm publish` as 0.1.10 → re-test `npm i -g acryl` as external user to confirm `--version` prints 0.1.10.
+Provide a valid npm token (or run `npm login`), then I will: build `acryl-cli` → run `verify-npm-entrypoint.mjs` → `npm publish` as 0.1.10 → re-test `npm i -g acryl` as external user to confirm `--version` prints 0.1.10.
 
 ---
 

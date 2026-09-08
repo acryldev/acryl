@@ -4,14 +4,14 @@
 // pet, matching the react mockup's `ylyFrames.ts` (CELL_W=96, CELL_H=84, 13 cells).
 //
 // Usage: node src/yly/compile-sprites.mjs [sheet] [out]
-//   sheet (default) acryl-tui/assets/yly_sheet.png
-//   out   (default) acryl-tui/src/yly/yly-frames.generated.ts
+//   sheet (default) acryl-cli/assets/yly_sheet.png
+//   out   (default) acryl-cli/src/yly/yly-frames.generated.ts
 import sharp from 'sharp'
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const packageRoot = dirname(dirname(dirname(fileURLToPath(import.meta.url)))) // acryl-tui
+const packageRoot = dirname(dirname(dirname(fileURLToPath(import.meta.url)))) // acryl-cli
 const SOURCE = process.argv[2] ?? resolve(packageRoot, 'assets/yly_sheet.png')
 const OUTPUT = process.argv[3] ?? resolve(packageRoot, 'src/yly/yly-frames.generated.ts')
 

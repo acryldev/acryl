@@ -31,8 +31,8 @@ or packaging.
 
 `/login` and `/logout` demonstrate the gap:
 
-- `acryl-tui/src/tui/commands.ts` recognizes the slash commands.
-- `acryl-tui/src/tui-app/session.ts` provides the login overlay and invokes the
+- `acryl-cli/src/tui/commands.ts` recognizes the slash commands.
+- `acryl-cli/src/tui-app/session.ts` provides the login overlay and invokes the
   Harness `authorization` service.
 - `acryl-harness-runtime` inserts the `authorization` Loader row only through
   `bootAcrylHarnessProfile()`.
@@ -107,7 +107,7 @@ state.
    Shared coding composition must not overwrite that row.
 3. Desktop-native Loader rows remain in `acryl-desktop/cordis.patch.yml` and
    must never enter the shared capability layer.
-4. CLI-only terminal presentation remains in `acryl-tui`; Desktop-only UI
+4. CLI-only terminal presentation remains in `acryl-cli`; Desktop-only UI
    remains in Desktop client code; neither layer owns domain behavior.
 5. Web and Desktop may use the upstream `dsh-web-app` bundle, but an upstream
    bundle alone does not prove ACRYL capability parity.

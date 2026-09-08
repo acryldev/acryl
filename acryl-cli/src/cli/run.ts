@@ -105,7 +105,7 @@ export async function runAcryl(
   }
 
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    dependencies.write('acryl-tui: stdin and stdout must both be TTYs; use `acryl tui --json` for a headless probe')
+    dependencies.write('acryl-cli: stdin and stdout must both be TTYs; use `acryl tui --json` for a headless probe')
     dependencies.exit(1)
     return
   }

@@ -20,7 +20,7 @@ add a `docs/DEVELOPMENT-LOG.md` checkpoint in a separate docs commit.
 ## Path conventions
 
 Multi-package workspace. Primary packages: `acryl-harness-runtime/`,
-`acryl-control/`, `acryl-tui/`. No new package (see plan.md Structure Decision;
+`acryl-control/`, `acryl-cli/`. No new package (see plan.md Structure Decision;
 the `pi` optional-dep / `acryl-engine-pi` split is decided in T030).
 
 ---
@@ -60,12 +60,12 @@ behavior change: default `dsh` path stays identical (SC-004).
 - [ ] T011 Wire the `dsh` adapter into `bootAcrylHarnessProfile` / a new `acryl-harness-runtime/src/engine/index.ts` export surface, and export the engine seam from `acryl-harness-runtime/src/index.ts`. Proof: `corepack pnpm run typecheck`.
 - [ ] T012 Write `acryl-harness-runtime/tests/engine-dsh-adapter.spec.ts`: real Loader activation of the `dsh` adapter; `ctx.runtime.engine === 'dsh'`; a prompt round-trips through `handle.sessions`; a second `adapter.start()` while one handle is live throws `AcrylEngineError('engine-collision')` (guarantee G4 / FR-009); `handle.dispose()` releases every owned resource with no leak / no duplicate registration; repeated start/dispose is clean. RED first. Proof: `corepack pnpm --filter acryl-harness-runtime test`.
 
-### Re-point `acryl-tui` off the direct bootstrap
+### Re-point `acryl-cli` off the direct bootstrap
 
-- [ ] T013 [US-none] Rewrite `acryl-tui/src/host/direct.ts` to resolve the engine by name via `resolveAcrylEngineAdapter` + `adapter.start({ profile })` and return the `AcrylEngineHandle`; drop the direct `bootAcrylHarnessProfile` import and the `ctx.get('sessions')`/`ctx.get('agents')` probe (use `handle.readiness`). Proof: T016 + grep.
-- [ ] T014 Update `acryl-tui/src/cli/run.ts`: `AcrylCliDependencies.startDirectHost` becomes engine-resolving; default engine `'dsh'`; help text unchanged this phase. Proof: `corepack pnpm --filter acryl-tui test`.
-- [ ] T015 Update `acryl-tui/src/tui-app/session.ts` to consume `handle.sessions` (`AcrylSessionClient`) instead of importing `createAcrylSessionBridge` directly. Proof: grep clean + `corepack pnpm --filter acryl-tui test`.
-- [ ] T016 Update/extend `acryl-tui/tests/` so the existing TUI session/host tests pass against the seam; add an assertion that `acryl-tui/src/**` no longer imports `bootAcrylHarnessProfile`, `createAcrylSessionBridge`, or `startDirectHost` internals (guarantee G6). Proof: `corepack pnpm --filter acryl-tui test`.
+- [ ] T013 [US-none] Rewrite `acryl-cli/src/host/direct.ts` to resolve the engine by name via `resolveAcrylEngineAdapter` + `adapter.start({ profile })` and return the `AcrylEngineHandle`; drop the direct `bootAcrylHarnessProfile` import and the `ctx.get('sessions')`/`ctx.get('agents')` probe (use `handle.readiness`). Proof: T016 + grep.
+- [ ] T014 Update `acryl-cli/src/cli/run.ts`: `AcrylCliDependencies.startDirectHost` becomes engine-resolving; default engine `'dsh'`; help text unchanged this phase. Proof: `corepack pnpm --filter acryl-cli test`.
+- [ ] T015 Update `acryl-cli/src/tui-app/session.ts` to consume `handle.sessions` (`AcrylSessionClient`) instead of importing `createAcrylSessionBridge` directly. Proof: grep clean + `corepack pnpm --filter acryl-cli test`.
+- [ ] T016 Update/extend `acryl-cli/tests/` so the existing TUI session/host tests pass against the seam; add an assertion that `acryl-cli/src/**` no longer imports `bootAcrylHarnessProfile`, `createAcrylSessionBridge`, or `startDirectHost` internals (guarantee G6). Proof: `corepack pnpm --filter acryl-cli test`.
 
 ### Phase 2 checkpoint
 
@@ -106,7 +106,7 @@ scenarios (SC-001, SC-002, SC-003, SC-006, SC-008).
 
 ### US1 wiring + measurement
 
-- [ ] T029 [US1] Add a temporary `--engine <name>` pass-through in `acryl-tui/src/cli/run.ts` + `host/direct.ts` (full grammar lands in US2) so US1 can be exercised: `acryl tui --engine pi`. Proof: manual quickstart B1 scenario.
+- [ ] T029 [US1] Add a temporary `--engine <name>` pass-through in `acryl-cli/src/cli/run.ts` + `host/direct.ts` (full grammar lands in US2) so US1 can be exercised: `acryl tui --engine pi`. Proof: manual quickstart B1 scenario.
 - [ ] T030 [US1] Measure the `acryl` CLI publish-closure size with pi as an optionalDependency vs. extracted into a separate `acryl-engine-pi` package; decide and record in `research-pi-spike.md` §5; if a separate package is needed, create it and move `adapter-pi.ts` into it. Proof: size numbers vs `specs/025` limits recorded.
 - [ ] T031 [US1] Run `corepack pnpm run verify` + `corepack pnpm run check`; run quickstart B1 + cross-resume scenarios manually against a real authed profile (SC-001, SC-002, SC-003). Commit US1; add `docs/DEVELOPMENT-LOG.md` checkpoint (separate commit).
 
@@ -123,10 +123,10 @@ loud pre-boot failure on unknown name.
 
 - [ ] T032 [US2] Add the `acryl-engine` Loader row plugin: `acryl-harness-runtime/src/engine/plugin-acryl-engine.ts` with stable name `'acryl-engine'`, sync StandardSchema config `{ engine: enum('dsh','pi') = 'dsh' }` (cheatsheet §4.1), which mounts `resolveAcrylEngineAdapter(config.engine)`. Proof: T035.
 - [ ] T033 [US2] Compose the `acryl-engine` row into the profile patch set in `bootAcrylHarnessProfile` (default `dsh`, so absent config reproduces today). Proof: `corepack pnpm --filter acryl-harness-runtime test`.
-- [ ] T034 [US2] Implement the `--engine <name>` launch override: parse it in `acryl-tui/src/cli/grammar.ts`; in `bootAcrylHarnessProfile` patch the composed `acryl-engine` entry's `engine` value **before `boot()`** for this launch only (no row-file rewrite, FR-004); unknown name throws `AcrylEngineError('unknown-engine')` -> `AcrylExitClass = 'usage'` before any runtime boot (FR-005). Proof: T035, T036.
+- [ ] T034 [US2] Implement the `--engine <name>` launch override: parse it in `acryl-cli/src/cli/grammar.ts`; in `bootAcrylHarnessProfile` patch the composed `acryl-engine` entry's `engine` value **before `boot()`** for this launch only (no row-file rewrite, FR-004); unknown name throws `AcrylEngineError('unknown-engine')` -> `AcrylExitClass = 'usage'` before any runtime boot (FR-005). Proof: T035, T036.
 - [ ] T035 [US2] Write `acryl-harness-runtime/tests/engine-select.spec.ts`: no config -> `dsh`; row `pi` -> `pi`; `--engine dsh` over row `pi` -> `dsh` and row file unchanged; `--engine bogus` -> throws before boot with a message naming the invalid value + valid engines. RED first. Proof: `corepack pnpm --filter acryl-harness-runtime test`.
-- [ ] T036 [US2] Write `acryl-tui/tests/engine-cli.spec.ts`: `parseAcrylArgs` handles `--engine`; the CLI exits `usage` on an unknown engine without booting. Proof: `corepack pnpm --filter acryl-tui test`.
-- [ ] T037 [US2] Update `acryl-tui` help text in `cli/run.ts` for `--engine <name>`. Proof: snapshot/`--help` output.
+- [ ] T036 [US2] Write `acryl-cli/tests/engine-cli.spec.ts`: `parseAcrylArgs` handles `--engine`; the CLI exits `usage` on an unknown engine without booting. Proof: `corepack pnpm --filter acryl-cli test`.
+- [ ] T037 [US2] Update `acryl-cli` help text in `cli/run.ts` for `--engine <name>`. Proof: snapshot/`--help` output.
 - [ ] T038 [US2] `corepack pnpm run verify` + `check`; quickstart B2 manual run. Commit US2 + `docs/DEVELOPMENT-LOG.md` checkpoint.
 
 **Checkpoint**: engine selectable by row + flag; invalid input fails loud and early.

@@ -39,7 +39,7 @@ its focused test, commit, and evidence are complete.
 ## Phase 2: pi-tui presentation (tomowang port)
 
 - [x] T006 Add exact `@earendil-works/pi-tui@0.84.2` plus `diff` to
-  `acryl-tui/package.json`; remove `ink`, `react`, `@types/react`,
+  `acryl-cli/package.json`; remove `ink`, `react`, `@types/react`,
   `ink-testing-library` only as sources stop referencing them. Add
   `docs/acryl/tomowang-dsh-tui-provenance.md` (URL, commit, license, component
   inventory). No vendor tree, no submodule, no package patch.
@@ -53,7 +53,7 @@ its focused test, commit, and evidence are complete.
   `session-stats`, `hmr` disabled. Without these the host mounts a bare agent with
   no toolset/persona. Test profile boot exposes the rows (Loader activation check)
   in `acryl-harness-runtime/tests/profile.spec.ts`.
-- [x] T009 Port Tomo presentation core into `acryl-tui`:
+- [x] T009 Port Tomo presentation core into `acryl-cli`:
   `src/tui/store.ts`, `src/render.ts`, `src/markdown.ts`,
   `src/sessionId.ts`, `src/tui/{theme,piTheme,text,liveText,Spinner,bannerText,
   statsFormat}.ts` with their vitest suites (store/render/markdown/liveText/
@@ -62,12 +62,12 @@ its focused test, commit, and evidence are complete.
   commands,fileMention,fileIndex,miniTextField}.ts` with commands/fileMention
   suites. Pure pi-tui + file-index; no runtime deps.
 - [x] T011 Port `src/tui/TuiApp.ts` + `src/tui/actions.ts`; add the ACRYL host
-  adapter (new `acryl-tui/src/tui-app/session.ts`: attach/resolve bridge, seed
+  adapter (new `acryl-cli/src/tui-app/session.ts`: attach/resolve bridge, seed
   store from `agent.session.events`, follow `subscribeEvents`, TuiActions over
   bridge, shutdown = cancel→whenIdle→flush→unmount) and wire it into
-  `acryl-tui/src/cli/run.ts` (TTY guard, exit path). Keep `--json` headless probe.
+  `acryl-cli/src/cli/run.ts` (TTY guard, exit path). Keep `--json` headless probe.
 - [x] T012 Delete the Ink surface after T011 is functional:
-  `acryl-tui/src/render/{app,ink-app,contributions,status}.tsx/ts`,
+  `acryl-cli/src/render/{app,ink-app,contributions,status}.tsx/ts`,
   `screens/agent-workspace.ts` + Ink-only specs (`ink-app`, `renderer`,
   `agent-workspace`, `contributions`, `status`), rewrite `cli-run.spec.ts` for the
   new lifecycle. No parallel renderer beyond the migration step.

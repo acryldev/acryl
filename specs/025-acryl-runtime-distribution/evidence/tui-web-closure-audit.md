@@ -2,7 +2,7 @@
 
 ## Entry paths
 
-- `acryl` / `acryl tui` runs `acryl-tui/src/host/direct.ts` -> `bootAcrylHarnessProfile()`.
+- `acryl` / `acryl tui` runs `acryl-cli/src/host/direct.ts` -> `bootAcrylHarnessProfile()`.
 - `acryl web` runs `serveWeb()` -> `bootAcrylWebProfile()`.
 - The npm publish build bundles internal `acryl-control`, `acryl-harness-runtime`, and Cordis code into `lib-publish/bin.js`.
 

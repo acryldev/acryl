@@ -175,7 +175,7 @@ continuity across the swap.
   (start, durable-session access, prompt submission, cancellation, streamed
   transcript/tool projection, ordered disposal) that both a DSH adapter and a pi
   adapter implement. No surface may call an engine-specific bootstrap directly.
-- **FR-003**: All surfaces (`acryl-tui` first) MUST drive the engine only
+- **FR-003**: All surfaces (`acryl-cli` first) MUST drive the engine only
   through the engine-neutral `acryl-control` capability API. This feature
   depends on M2 normalizing that API and MUST NOT proceed to implementation
   before the M2 contract exists.
@@ -281,5 +281,5 @@ continuity across the swap.
   `docs/DEVELOPMENT-LOG.md` checkpoint after each implementation commit.
 - The DSH+pi combo engine, model routing between engines, and remote/detached
   engine hosting are explicitly out of scope for this ledger (follow-on work).
-- `acryl-tui` is the only surface wired in this ledger; Electron and Web adopt
+- `acryl-cli` is the only surface wired in this ledger; Electron and Web adopt
   the engine-neutral path in later slices.

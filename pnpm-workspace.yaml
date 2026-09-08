@@ -4,7 +4,7 @@ packages:
   - acryl-control
   - acryl-harness-runtime
   - acryl-npm-launcher
-  - acryl-tui
+  - acryl-cli
   - acryl-web
   - acryl-desktop
   - acryl-development-canvas
@@ -27,7 +27,7 @@ overrides:
 
 # Published DSH client packages declare React types in generated public APIs but
 # omit the type package from their manifests. Their web surface is React 18;
-# acryl-tui separately owns Ink's React 19 types.
+# acryl-cli separately owns Ink's React 19 types.
 packageExtensions:
   '@deepseek-ai/dsh-client-ui-primitives@0.1.1-rc.2':
     dependencies:

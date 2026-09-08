@@ -13,8 +13,8 @@
 **Purpose**: workspace scaffolding.
 
 - [x] T001 Create `acryl-control/` workspace: `package.json`, `tsconfig.json`, `cordis.patch.yml`, and a public `src/index.ts` Host entry
-- [x] T002 [P] Create `acryl-tui/` workspace: `package.json` (Bun 1.3+ / Node 26.4+ runtime, `@opentui/core` dependency), `tsconfig.json`
-- [x] T003 [P] Wire root `package.json` scripts for `acryl-control` and `acryl-tui` build, typecheck, and test so `corepack yarn check` includes both
+- [x] T002 [P] Create `acryl-cli/` workspace: `package.json` (Bun 1.3+ / Node 26.4+ runtime, `@opentui/core` dependency), `tsconfig.json`
+- [x] T003 [P] Wire root `package.json` scripts for `acryl-control` and `acryl-cli` build, typecheck, and test so `corepack yarn check` includes both
 
 ## Phase 2: Foundational (control-plane service definitions and providers)
 
@@ -44,15 +44,15 @@
 
 **Independent Test**: run `acryl --profile desktop`, submit a task, inspect trajectory/tools, exit, restart, resume.
 
-- [x] T019 [US1] Write failing CLI grammar test in `acryl-tui/tests/grammar.spec.ts`: `acryl`, `acryl tui`, `--profile`, `--json`
-- [x] T020 [US1] Implement `acryl-tui/src/cli/grammar.ts` and `src/bin.ts` argv parsing to pass T019
-- [x] T021 [US1] Implement direct-mode boot in `acryl-tui/src/host/direct.ts`: acquire lease, boot ACRYL composition, expose services
-- [x] T022 [US1] Write failing contributions test in `acryl-tui/tests/contributions.spec.ts`: screen/command/keybinding/status registration and removal on Fiber unload
-- [x] T023 [US1] Implement `TuiContribution` registry in `acryl-tui/src/render/contributions.ts` to pass T022
-- [x] T024 [US1] Implement OpenTUI renderer lifecycle in `acryl-tui/src/render/app.ts` (createCliRenderer, root renderable, resize/input/alternate-screen, disposal)
-- [x] T025 [US1] Implement agent workspace screens in `acryl-tui/src/render/screens/` (session list, resume/new, composer, transcript, tool cards, approvals, jobs)
-- [x] T026 [US1] Implement status region in `acryl-tui/src/render/status.ts` (mode, owner kind, profile, generation, model, health)
-- [ ] T027 [US1] Write smoke test in `acryl-tui/tests/smoke.spec.ts` asserting direct-mode boot and session resume over durable `ctx.sessions`
+- [x] T019 [US1] Write failing CLI grammar test in `acryl-cli/tests/grammar.spec.ts`: `acryl`, `acryl tui`, `--profile`, `--json`
+- [x] T020 [US1] Implement `acryl-cli/src/cli/grammar.ts` and `src/bin.ts` argv parsing to pass T019
+- [x] T021 [US1] Implement direct-mode boot in `acryl-cli/src/host/direct.ts`: acquire lease, boot ACRYL composition, expose services
+- [x] T022 [US1] Write failing contributions test in `acryl-cli/tests/contributions.spec.ts`: screen/command/keybinding/status registration and removal on Fiber unload
+- [x] T023 [US1] Implement `TuiContribution` registry in `acryl-cli/src/render/contributions.ts` to pass T022
+- [x] T024 [US1] Implement OpenTUI renderer lifecycle in `acryl-cli/src/render/app.ts` (createCliRenderer, root renderable, resize/input/alternate-screen, disposal)
+- [x] T025 [US1] Implement agent workspace screens in `acryl-cli/src/render/screens/` (session list, resume/new, composer, transcript, tool cards, approvals, jobs)
+- [x] T026 [US1] Implement status region in `acryl-cli/src/render/status.ts` (mode, owner kind, profile, generation, model, health)
+- [ ] T027 [US1] Write smoke test in `acryl-cli/tests/smoke.spec.ts` asserting direct-mode boot and session resume over durable `ctx.sessions`
 
 **Checkpoint**: US1 independently usable as the standalone agent.
 
@@ -62,10 +62,10 @@
 
 **Independent Test**: start GUI/Web, run `acryl`, confirm attached mode and no second owner.
 
-- [ ] T028 [US3] Write failing attach test in `acryl-tui/tests/attach.spec.ts`: discovery, auth, generation mismatch rejection, owner loss
-- [ ] T029 [US3] Implement transports in `acryl-tui/src/bridge/transport/` (socket, unix, named pipe, loopback HTTP)
-- [ ] T030 [US3] Implement `acryl-tui/src/bridge/control-client.ts` and `src/host/attach.ts` to pass T028
-- [ ] T031 [US3] Implement recovery mode in `acryl-tui/src/host/recovery.ts` (narrow diagnostic/repair commands, no competing owner)
+- [ ] T028 [US3] Write failing attach test in `acryl-cli/tests/attach.spec.ts`: discovery, auth, generation mismatch rejection, owner loss
+- [ ] T029 [US3] Implement transports in `acryl-cli/src/bridge/transport/` (socket, unix, named pipe, loopback HTTP)
+- [ ] T030 [US3] Implement `acryl-cli/src/bridge/control-client.ts` and `src/host/attach.ts` to pass T028
+- [ ] T031 [US3] Implement recovery mode in `acryl-cli/src/host/recovery.ts` (narrow diagnostic/repair commands, no competing owner)
 - [ ] T032 [US3] Wire ownership discovery into the GUI/Web control plane via `acrControlProtocol` so attach targets are advertised
 
 **Checkpoint**: US3 independently testable; single-writer invariant holds across hosts.
@@ -74,7 +74,7 @@
 
 **Goal**: terminal, Electron, and Web are peer compositions; convenience launchers delegate.
 
-- [ ] T033 [US2] Implement `acryl gui` and `acryl web` subcommands in `acryl-tui/src/cli/grammar.ts` and `src/bin.ts`
+- [ ] T033 [US2] Implement `acryl gui` and `acryl web` subcommands in `acryl-cli/src/cli/grammar.ts` and `src/bin.ts`
 - [ ] T034 [US2] Add `acryl-gui` and `acryl-web` convenience executables delegating to the canonical commands
 - [ ] T035 [US2] Add TUI-scoped presentation plugin rows to `acryl-control/cordis.patch.yml` so disabling the terminal plugin removes normal contributions but preserves recovery
 - [ ] T036 [US2] Write peer-host test asserting host-specific contributions appear only on their host while domain state remains consistent
@@ -85,9 +85,9 @@
 
 **Goal**: full architecture and lifecycle control from the terminal surface.
 
-- [ ] T037 [US4] Implement architecture screen in `acryl-tui/src/render/screens/` projecting `acrRuntimeArchitecture` (Fibers, services, effects, phases, protection)
-- [ ] T038 [US4] Implement lifecycle screen in `acryl-tui/src/render/screens/` consuming `acrPluginLifecycle` (enable, disable, mount, unmount, reload)
-- [ ] T039 [US4] Implement profile inspection screen in `acryl-tui/src/render/screens/`
+- [ ] T037 [US4] Implement architecture screen in `acryl-cli/src/render/screens/` projecting `acrRuntimeArchitecture` (Fibers, services, effects, phases, protection)
+- [ ] T038 [US4] Implement lifecycle screen in `acryl-cli/src/render/screens/` consuming `acrPluginLifecycle` (enable, disable, mount, unmount, reload)
+- [ ] T039 [US4] Implement profile inspection screen in `acryl-cli/src/render/screens/`
 - [ ] T040 [US4] Write screen test asserting protected rows reject mutation and admitted rows settle with receipts
 
 **Checkpoint**: US4 independently testable; no manual profile-file editing needed.
@@ -97,7 +97,7 @@
 **Goal**: Market and package operations with preview, approval, restart class, and rollback.
 
 - [ ] T041 [US5] Implement preview/execute control in `acryl-control` over existing Market install/remove services with candidate digest verification
-- [ ] T042 [US5] Implement install/update/remove screens in `acryl-tui/src/render/screens/` with preview and approval flow
+- [ ] T042 [US5] Implement install/update/remove screens in `acryl-cli/src/render/screens/` with preview and approval flow
 - [ ] T043 [US5] Implement candidate promotion (`PluginCandidate` states, HOT/WARM/COLD, health, rollback) in `acryl-control/src/`
 - [ ] T044 [US5] Write promotion test asserting failed activation leaves the previous valid composition or an explicit recoverable state
 
@@ -110,7 +110,7 @@
 - [ ] T045 [US6] Wire built-in Harness agent into the TUI via `ctx.agents`/`ctx.agentLoop` with durable session projection
 - [ ] T046 [US6] Compose existing Codex and Claude providers and expose delegation in the agent workspace
 - [ ] T047 [US6] Add Gemini, OpenCode, and local runtime providers at the same seam with truthful capability declarations
-- [ ] T048 [US6] Implement agent catalog and handoff controls in `acryl-tui/src/render/screens/`
+- [ ] T048 [US6] Implement agent catalog and handoff controls in `acryl-cli/src/render/screens/`
 - [ ] T049 [US6] Write provider test covering capability rejection, cancellation, disposal, and structured-result acceptance
 
 **Checkpoint**: US6 independently testable.
@@ -119,8 +119,8 @@
 
 **Goal**: deterministic script commands with protocol-pure stdout and stable exit codes.
 
-- [ ] T050 [US7] Implement canonical JSON envelope and exit classes in `acryl-tui/src/cli/output.ts`
-- [ ] T051 [US7] Implement non-interactive commands in `acryl-tui/src/cli/noninteractive.ts` (profile/plugin/architecture/agent query paths)
+- [ ] T050 [US7] Implement canonical JSON envelope and exit classes in `acryl-cli/src/cli/output.ts`
+- [ ] T051 [US7] Implement non-interactive commands in `acryl-cli/src/cli/noninteractive.ts` (profile/plugin/architecture/agent query paths)
 - [ ] T052 [US7] Write output-contract test asserting stdout purity, stderr diagnostics, and documented exit codes
 
 **Checkpoint**: US7 independently testable.

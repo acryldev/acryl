@@ -4,7 +4,7 @@
 **Date**: 2026-09-07
 **Inputs**: `spec.md`, resolved Wayfinder ticket 04, `docs/ACRYL-ROADMAP.md` (M2/M9),
 `docs/cordis/cordis-usage-cheatsheet.md`, source of `acryl-harness-runtime`,
-`acryl-control`, `acryl-tui`.
+`acryl-control`, `acryl-cli`.
 
 ---
 
@@ -25,10 +25,10 @@ Inspected 2026-09-07 against working tree at `main` (commit `93c1be3`).
   `AcrylSessionClient` (`snapshot` / `subscribe` / `submitPrompt` / `cancel`)
   and `AcrylSessionSnapshot` with a boundary validator
   (`parseAcrylSessionSnapshot`). This is transport-neutral and the right shape
-  for M2. **But** the TUI does not consume it: `acryl-tui/src/cli/run.ts`
+  for M2. **But** the TUI does not consume it: `acryl-cli/src/cli/run.ts`
   imports `startDirectHost` from `../host/direct.ts`, which imports
   `bootAcrylHarnessProfile` from `acryl-harness-runtime` directly, and
-  `acryl-tui/src/tui-app/session.ts` builds on `createAcrylSessionBridge`
+  `acryl-cli/src/tui-app/session.ts` builds on `createAcrylSessionBridge`
   (also `acryl-harness-runtime`). The surface is coupled to the engine
   bootstrap, which FR-002/FR-003 forbid.
 - **A provider-neutral *agent-control service* exists (M4 seam, partial).**
@@ -46,7 +46,7 @@ Inspected 2026-09-07 against working tree at `main` (commit `93c1be3`).
   `AcrylEngine` type, and no `ctx.runtime` concept anywhere in the tree
   (grep: 0 hits for `ctx.runtime`, `AcrylEngine`, `engine adapter`).
 - **`startDirectHost` probes DSH service keys directly.**
-  `acryl-tui/src/host/direct.ts` sets `runtimeState` from
+  `acryl-cli/src/host/direct.ts` sets `runtimeState` from
   `ctx.get('sessions') !== undefined && ctx.get('agents') !== undefined` -
   DSH-specific keys, not an engine-neutral readiness contract.
 - **The M2-adjacent rework ledger (`specs/026-acryl-rework`) is largely open.**
@@ -76,7 +76,7 @@ The minimal unblocking M2 work (call it **M2-slice-α**) is:
    `AcrylEngineAdapter` registration, and an engine registry keyed by name.
 2. Provide the `dsh` adapter as a thin wrapper over the existing
    `bootAcrylHarnessProfile` + `createAcrylSessionBridge` (behavior-preserving).
-3. Re-point `acryl-tui` (`cli/run.ts`, `host/direct.ts`, `tui-app/session.ts`)
+3. Re-point `acryl-cli` (`cli/run.ts`, `host/direct.ts`, `tui-app/session.ts`)
    to resolve the engine by name through the seam and consume the
    engine-neutral session client, deleting the direct `acryl-harness-runtime`
    bootstrap imports from the surface.

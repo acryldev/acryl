@@ -41,6 +41,6 @@ for packaging; packaging must not fork runtime behavior.
 
 ## Dependencies
 
-- `acryl-tui` (shipped, primary flow proven).
+- `acryl-cli` (shipped, primary flow proven).
 - `dsh-plugin-desktop` (Electron packaging, electron-builder).
 - Existing `.github/workflows/{ci,release-candidate}.yml`.

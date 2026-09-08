@@ -107,7 +107,7 @@ test('rejects CLI clean-install size and time budget regressions', () => {
 })
 
 test('rejects package version drift before release assembly', () => {
-  assert.doesNotThrow(() => verifyPackageVersions(version, { 'acryl-tui/package.json': { version } }))
+  assert.doesNotThrow(() => verifyPackageVersions(version, { 'acryl-cli/package.json': { version } }))
   assert.throws(() => verifyPackageVersions(version, { 'acryl-web/package.json': { version: '9.9.9' } }), /version drift: release 0\.1\.19 != acryl-web\/package\.json 9\.9\.9/)
 })
 

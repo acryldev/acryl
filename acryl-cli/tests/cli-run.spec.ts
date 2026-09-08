@@ -81,7 +81,7 @@ describe('runAcryl', () => {
     await runAcryl(['tui'], deps)
 
     expect(deps.events).toEqual([
-      'write:acryl-tui: stdin and stdout must both be TTYs; use `acryl tui --json` for a headless probe',
+      'write:acryl-cli: stdin and stdout must both be TTYs; use `acryl tui --json` for a headless probe',
       'exit:1',
     ])
   })

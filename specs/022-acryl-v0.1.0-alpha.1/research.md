@@ -32,7 +32,7 @@ produced and smoke-checkable.
   artifact job yet.
 - **Web entrypoint:** DSH serves the web surface via `dsh --profile web`
   (boots `@deepseek-ai/dsh-web-app`). ACRYL's `acryl web` command is declared in
-  `acryl-tui/src/cli/grammar.ts` but `runAcryl` currently throws for non-`tui`;
+  `acryl-cli/src/cli/grammar.ts` but `runAcryl` currently throws for non-`tui`;
   so web/gui entrypoints are not yet wired into the `acryl` CLI. (They remain
   reachable via the DSH launcher against an ACRYL profile.)
 - **GUI entrypoint:** Electron via `dsh-plugin-desktop/lib/main.js` (the

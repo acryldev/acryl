@@ -19,10 +19,10 @@ acryl tui -> native durable DSH session -> prompt -> streamed output/tool state
 
 **Runtime ownership.** `acryl-harness-runtime` owns profile boot
 (`bootAcrylHarnessProfile`), agent/session handles, durable-log projection, and
-shutdown. `acryl-control` owns the typed semantic contracts. `acryl-tui` owns only
+shutdown. `acryl-control` owns the typed semantic contracts. `acryl-cli` owns only
 terminal presentation lifecycle.
 
-**Bootstrap.** `acryl-tui/src/host/direct.ts` `startDirectHost()` is the sole
+**Bootstrap.** `acryl-cli/src/host/direct.ts` `startDirectHost()` is the sole
 bootstrap: one root via `bootAcrylHarnessProfile({ profile })`. No daemon, no
 sockets, no ownership/attachment, no leases.
 
@@ -52,7 +52,7 @@ agent-presets default `standard`, session-stats, `hmr` disabled) — they are ru
 capability, not surface code.
 
 **Dependencies.** `@earendil-works/pi-tui` exactly `0.84.2` (normal dependency of
-`acryl-tui`, never vendored/patchable by default) and `diff`. `ink`, `react`,
+`acryl-cli`, never vendored/patchable by default) and `diff`. `ink`, `react`,
 `@types/react`, `ink-testing-library` are removed once the pi-tui surface is
 functional.
 
@@ -76,8 +76,8 @@ after implementation commits.
 ## Acceptance (final proof)
 
 `corepack pnpm --filter acryl-harness-runtime run check`,
-`corepack pnpm --filter acryl-tui run check`, then in a real TTY:
-`corepack pnpm --filter acryl-tui exec acryl tui` — create session, submit a
+`corepack pnpm --filter acryl-cli run check`, then in a real TTY:
+`corepack pnpm --filter acryl-cli exec acryl tui` — create session, submit a
 prompt, watch streamed text plus a live tool spinner, Ctrl+C cancels, exit prints
 a resumable session id; `acryl tui --resume <id>` replays and continues the same
 durable session.

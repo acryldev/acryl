@@ -15,7 +15,7 @@ decoder; no new animation library. Brand ACRYL, not DeepSeek.
 - Sprite board `yly_animation_sprite_board.png.png` = 1448x1086 RGBA; cropping as
   a 4(col) x 3(row) grid of 362px cells yields 12 coherent character frames
   (compile script ascii preview confirms a head/face shape with ears/eyes).
-- `sharp` is available in `acryl-tui/node_modules` (build-time only; the npm
+- `sharp` is available in `acryl-cli/node_modules` (build-time only; the npm
   `@img/sharp-*` prebuilds are the runtime-native set the desktop packaging pulls).
 - Current branding to replace: `logoArt.generated.ts` (DeepSeek whale
   `LOGO_HALF_BLOCK`), `bannerText.ts` ("DeepSeek Harness", "dsh-tui v…"),

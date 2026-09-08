@@ -7,7 +7,7 @@
 - **T001–T005** — contract + runtime foundation (prior work; owner-or-attach
   tasks superseded and removed).
 - **T006** — exact `@earendil-works/pi-tui@0.84.2` + `diff` + only-imported dsh
-  type deps in `acryl-tui`; provenance `docs/acryl/tomowang-dsh-tui-provenance.md`.
+  type deps in `acryl-cli`; provenance `docs/acryl/tomowang-dsh-tui-provenance.md`.
   Ink/React deps still present (removal is the gated T012).
 - **T007** — `AcrylSessionBridge.subscribeEvents` (incremental durable event
   seam) + `events(sessionId)` (full durable-log accessor) + idle/flush on dispose.
@@ -20,7 +20,7 @@
 - **T010** — Tomo input/editor chain ported (`CustomEditor`, `promptAutocomplete`,
   `commands`, `fileMention`, `fileIndex`, `miniTextField`, `actions`) + suites.
 - **T011** — `TuiApp` + overlay components ported; ACRYL host adapter
-  `acryl-tui/src/tui-app/session.ts` (bridge→store→actions→mount/dispose); CLI
+  `acryl-cli/src/tui-app/session.ts` (bridge→store→actions→mount/dispose); CLI
   wiring (`cli/run.ts` uses the host adapter, `--json` stays a probe, `--resume`
   added); TTY guard.
 
@@ -29,8 +29,8 @@
 ```
 33439ec feat: stream durable session events and flush bridge dispose   (T007)
 67bbaca feat: compose coding-agent rows into the acryl runtime profile (T008)
-0b0cba5 feat: port tomowang presentation core into acryl-tui           (T006+T009)
-ecefaf4 feat: port tomowang input/editor chain into acryl-tui         (T010)
+0b0cba5 feat: port tomowang presentation core into acryl-cli           (T006+T009)
+ecefaf4 feat: port tomowang input/editor chain into acryl-cli         (T010)
 7f4a697 feat: wire pi-tui shell over the runtime bridge (T011)
 0d8c451 docs: mark m1 ledger tasks T006-T010 complete
 5f913be docs: record M1 pi-tui runtime seam and Tomo port checkpoint
@@ -43,9 +43,9 @@ ecefaf4 feat: port tomowang input/editor chain into acryl-tui         (T010)
 - `corepack pnpm --filter acryl-harness-runtime test` → 11/11
 - `corepack pnpm --filter acryl-harness-runtime typecheck` → pass
 - `corepack pnpm --filter acryl-harness-runtime build` → pass
-- `corepack pnpm --filter acryl-tui test` → 259/259 (190 ported Tomo tests)
-- `corepack pnpm --filter acryl-tui typecheck` → pass
-- `corepack pnpm --filter acryl-tui build` → pass
+- `corepack pnpm --filter acryl-cli test` → 259/259 (190 ported Tomo tests)
+- `corepack pnpm --filter acryl-cli typecheck` → pass
+- `corepack pnpm --filter acryl-cli build` → pass
 
 ## Proven behavior (code + tests)
 
@@ -72,10 +72,10 @@ Run in a real terminal:
 ```sh
 cd <acryl>
 corepack pnpm --filter acryl-harness-runtime run build
-corepack pnpm --filter acryl-tui run build
-corepack pnpm --filter acryl-tui exec acryl tui
+corepack pnpm --filter acryl-cli run build
+corepack pnpm --filter acryl-cli exec acryl tui
 # then: type a prompt, watch stream, Ctrl+C, exit, and
-corepack pnpm --filter acryl-tui exec acryl tui --resume <session-id>
+corepack pnpm --filter acryl-cli exec acryl tui --resume <session-id>
 ```
 
 If that flow works, then remove Ink (T012), record evidence (T013), and proceed
@@ -91,7 +91,7 @@ capability in later increments.
 
 ## Update 2026-08-29 (C1) — pi-tui loop proven under a PTY; Ink removed
 
-**T013 evidence (real-TTY-equivalent):** `acryl-tui/scripts/tui-pty-smoke.mjs`
+**T013 evidence (real-TTY-equivalent):** `acryl-cli/scripts/tui-pty-smoke.mjs`
 drives the built `acryl tui` under a node-pty pseudo-terminal. Result
 (`MARKERS {"banner":true,"status":true,"prompt":true,"exited":true}`, exit 0):
 
@@ -110,7 +110,7 @@ Full terminal capture: `evidence/tui-pty-smoke.output.txt`.
 
 **T012 done:** React Ink removed (renderer source `render/{app,ink-app,status,
 contributions,agent-workspace}`, Ink-only specs, `ink`/`react`/`@types/react`/
-`ink-testing-library`/`web-tree-sitter` deps, `jsx` setting). `acryl-tui` tests
+`ink-testing-library`/`web-tree-sitter` deps, `jsx` setting). `acryl-cli` tests
 248/248, typecheck + build clean. The terminal surface is now pi-tui only.
 
 **Remaining:** real *credentialed* stream needs `DEEPSEEK_API_KEY` in the home

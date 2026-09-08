@@ -1,10 +1,10 @@
 // `pnpm acryl` / `pnpm tui` launcher.
 //
 // Starts the ACRYL pi-tui terminal surface. The compiled entry lives at
-// `acryl-tui/lib/bin.js`; a fresh checkout or a source edit leaves it either
+// `acryl-cli/lib/bin.js`; a fresh checkout or a source edit leaves it either
 // missing or stale, so this launcher rebuilds it first and then execs the real
 // CLI with the user's remaining arguments. A stale rebuild is mtime-based: if
-// the newest source file under `acryl-tui/src` is newer than `lib/bin.js`, we
+// the newest source file under `acryl-cli/src` is newer than `lib/bin.js`, we
 // rebuild. This keeps `pnpm acryl` forgiving in a dev loop without forcing a
 // full build on every launch.
 import { spawnSync } from 'node:child_process'
@@ -40,13 +40,13 @@ function isStale() {
 }
 
 if (isStale()) {
-  process.stderr.write('Building acryl-tui (lib is missing or stale)…\n')
-  const build = spawnSync('corepack', ['pnpm', '--filter', 'acryl-tui', 'run', 'build'], {
+  process.stderr.write('Building acryl-cli (lib is missing or stale)…\n')
+  const build = spawnSync('corepack', ['pnpm', '--filter', 'acryl-cli', 'run', 'build'], {
     cwd: root,
     stdio: 'inherit',
   })
   if (build.status !== 0) {
-    process.stderr.write('acryl: build failed; run `corepack pnpm --filter acryl-tui run build` for details\n')
+    process.stderr.write('acryl: build failed; run `corepack pnpm --filter acryl-cli run build` for details\n')
     process.exit(build.status ?? 1)
   }
 }

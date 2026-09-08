@@ -4,12 +4,12 @@
 - **Commit**: `f7663341f604c3ad96e9b2b838a7ca2de8e84fd1`
 - **Package**: `@tomowang/dsh-tui` 0.7.0, MIT
 - **Terminal library**: `@earendil-works/pi-tui` exactly 0.84.2 (normal dependency
-  of `acryl-tui`; never vendored, copied, or patched by default)
+  of `acryl-cli`; never vendored, copied, or patched by default)
 - **Usage**: M1 terminal surface. ACRYL adapts the upstream terminal presentation
   to the shared runtime semantics; the upstream direct-Cordis bundle is NOT
   shipped unchanged and no submodule is added.
 
-## Retained component inventory (ported into `acryl-tui`)
+## Retained component inventory (ported into `acryl-cli`)
 
 Presentation core (copied verbatim, import-path adaptations only):
 
@@ -40,7 +40,7 @@ when overlays are ported).
 ## Feature overlays — NOW ported (was deferred)
 
 The GUI-parity feature overlays originally listed as deferrals are now live in
-`acryl-tui/src/tui/{context,agentPresets,plugins,modelProfile,trajectory,toolCards,interaction,login}`
+`acryl-cli/src/tui/{context,agentPresets,plugins,modelProfile,trajectory,toolCards,interaction,login}`
 and registered as slash-commands in `src/tui/commands.ts`: `/help /login /logout /model
 /trajectory /tools /context /plugins /presets /goal /plan /compact /clear /exit /quit`.
 The `TuiApp` routes each via `tui.showOverlay(...)` keyed off
@@ -55,7 +55,7 @@ inspection, context usage, goal/plan/compact, approvals/questions).
   in-terminal approval/question answerers. Replaced by `startDirectHost()` +
   `createAcrylSessionBridge()` + the ACRYL host adapter.
 - `src/startup.ts` + `cordis.patch.yml` — bundle startup/CLI flags and the
-  bundle composition patch. Replaced by `acryl-tui`'s CLI grammar and
+  bundle composition patch. Replaced by `acryl-cli`'s CLI grammar and
   runtime-owned profile composition.
 - `src/updateCheck.ts` — npm registry update hint (deferred).
 
@@ -66,6 +66,6 @@ inspection, context usage, goal/plan/compact, approvals/questions).
 | Bootstrap | Cordis bundle plugin | `startDirectHost()` sole local bootstrap |
 | Session access | `ctx.agents.create/resume` + `ctx.on('session/event')` | `AcrylSessionBridge` (+ incremental event seam) |
 | Composition rows | bundle `cordis.patch.yml` | runtime-owned profile rows |
-| CLI flags | `dsh-cmdline` + launcher | `acryl-tui/src/cli/grammar.ts` |
+| CLI flags | `dsh-cmdline` + launcher | `acryl-cli/src/cli/grammar.ts` |
 
 *Last updated: 2026-09-01 (overlays verified present; see "Feature overlays"). Update this note with every local divergence.*

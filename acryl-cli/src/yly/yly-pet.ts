@@ -10,7 +10,7 @@
  * no movement) and random-length *active* bursts (the mode's clip plays). A
  * mode change (`setMode`) wakes it into an active burst so an agent turn still
  * reads as activity, and the status bar carries the live state meanwhile.
- * @module acryl-tui/yly/yly-pet
+ * @module acryl-cli/yly/yly-pet
  */
 
 import type { Component, TUI } from '@earendil-works/pi-tui'

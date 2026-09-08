@@ -20,7 +20,7 @@ C1 has run Tomo successfully in this workspace and is the authority for concrete
 
 **Decision:** Port the concrete terminal implementation of `tomowang/dsh-tui` at
 `f7663341f604c3ad96e9b2b838a7ca2de8e84fd1` (`@tomowang/dsh-tui` 0.7.0, MIT,
-pi-tui 0.84.2) into `acryl-tui` over `startDirectHost()` +
+pi-tui 0.84.2) into `acryl-cli` over `startDirectHost()` +
 `createAcrylSessionBridge()`. Do not re-author a smaller TUI.
 
 **Verified facts (inspection, 2026-08-29):**

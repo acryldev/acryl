@@ -1,7 +1,7 @@
 # Tasks: ACRYL YLY pet + branding
 
 - [x] B001 Compile the YLY sprite board into `src/yly/yly-frames.generated.ts`
-  (ANSI half-block frames) via `acryl-tui/scripts/compile-yly-sprites.mjs` (sharp).
+  (ANSI half-block frames) via `acryl-cli/scripts/compile-yly-sprites.mjs` (sharp).
 - [x] B002 Add `src/yly/yly-programs.ts` (mode->frames+interval) and
   `src/yly/yly-pet.ts` (`YlyPet` Component) with `tests/yly/yly-pet.spec.ts`.
 - [x] B003 Integrate `YlyPet` into `TuiApp` as a fixed header (pet + ACRYL

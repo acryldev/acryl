@@ -127,6 +127,6 @@ Two findings from the review that shape M9:
 
 **Calibration:** "start ACRYL, choose engine, go" is the destination, not the
 current state. Absorbing the config complexity the review describes is M2 + M3 +
-`specs/024-acryl-cli-login` + the 028 engine adapters. M9 wires only `acryl-tui`;
+`specs/024-acryl-cli-login` + the 028 engine adapters. M9 wires only `acryl-cli`;
 Electron and Web adopt the engine-neutral path in later slices. State the
 external claim to match the built state, per the constitution.

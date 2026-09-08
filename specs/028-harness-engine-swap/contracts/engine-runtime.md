@@ -1,7 +1,7 @@
 # Contract: `AcrylEngine` engine-neutral runtime seam
 
 **Owner**: `acryl-harness-runtime/src/engine/`
-**Consumers**: `acryl-tui` (Phase A), later `acryl-desktop` / `acryl-web`
+**Consumers**: `acryl-cli` (Phase A), later `acryl-desktop` / `acryl-web`
 **Status**: proposed (Phase A)
 
 This is a design contract, not final code. Names may adjust in implementation;

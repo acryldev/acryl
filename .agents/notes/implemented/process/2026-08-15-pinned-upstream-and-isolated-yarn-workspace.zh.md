@@ -14,7 +14,7 @@ DSH Desktop 需要保留可供审查的 DeepSeek Harness 官方精确源码，�
 
 外层 README 文件和资源由产品仓库拥有，并保留 `anywhere-labs/deepseek-harness-desktop` 已有的 DSH Desktop 落地页；这些内容不从官方源码子模块派生。Desktop package 的初始化与发行文档属于 [`dsh-plugin-desktop/README.md`](../../../../dsh-plugin-desktop/README.md)；规划中的社区互操作 contract 属于 [`dsh-community-fabric/README.zh.md`](../../../../dsh-community-fabric/README.zh.md)；规划中的社区市场产品与信任边界属于 [`dsh-community-market/README.zh.md`](../../../../dsh-community-market/README.zh.md)。
 
-外层仓库是 PNPM 11.7.0 工作区。自有 workspace 成员是 [`acryl-control`](../../../../acryl-control/)、[`acryl-harness-runtime`](../../../../acryl-harness-runtime/)、[`acryl-tui`](../../../../acryl-tui/)、[`dsh-plugin-desktop`](../../../../dsh-plugin-desktop/)、[`dsh-plugin-development-canvas`](../../../../dsh-plugin-development-canvas/)、[`dsh-community-fabric`](../../../../dsh-community-fabric/) 和 [`dsh-community-market`](../../../../dsh-community-market/)。Fabric 从私有文档初始化工程开始：在社区 Draft 拥有经过评审的 contract 与一致性证据前，不提供 runtime 入口、SDK、正式 schema 或 DSH bundle。Market 同样从私有文档初始化工程开始：在市场壳具备实现和 Loader 证据前，不提供运行入口或 DSH bundle。上游 checkout 按照自己的[包管理器决策](../../../../deepseek-harness/.agents/notes/implemented/process/2026-06-16-pnpm-over-yarn.zh.md)保持为独立的 PNPM 工作区。根目录的 `upstream:*` 脚本通过 Corepack 进入子模块，并调用上游固定的 PNPM 版本。
+外层仓库是 PNPM 11.7.0 工作区。自有 workspace 成员是 [`acryl-control`](../../../../acryl-control/)、[`acryl-harness-runtime`](../../../../acryl-harness-runtime/)、[`acryl-cli`](../../../../acryl-cli/)、[`dsh-plugin-desktop`](../../../../dsh-plugin-desktop/)、[`dsh-plugin-development-canvas`](../../../../dsh-plugin-development-canvas/)、[`dsh-community-fabric`](../../../../dsh-community-fabric/) 和 [`dsh-community-market`](../../../../dsh-community-market/)。Fabric 从私有文档初始化工程开始：在社区 Draft 拥有经过评审的 contract 与一致性证据前，不提供 runtime 入口、SDK、正式 schema 或 DSH bundle。Market 同样从私有文档初始化工程开始：在市场壳具备实现和 Loader 证据前，不提供运行入口或 DSH bundle。上游 checkout 按照自己的[包管理器决策](../../../../deepseek-harness/.agents/notes/implemented/process/2026-06-16-pnpm-over-yarn.zh.md)保持为独立的 PNPM 工作区。根目录的 `upstream:*` 脚本通过 Corepack 进入子模块，并调用上游固定的 PNPM 版本。
 
 普通桌面构建从 npm registry 解析已发布的 DSH 包，不从子模块链接源码。`upstream.json` 分别记录源码版本和运行时包 family。固定的 GitHub 公开源码和桌面运行时现在都使用已发布的 `0.1.0-rc.8` family；当 npm artifact 没有发布对应源码提交时，仓库不会虚构两者的对应关系。
 
@@ -40,4 +40,4 @@ DSH Desktop 需要保留可供审查的 DeepSeek Harness 官方精确源码，�
 
 桌面改动有三个边界明确的自有 package tree，官方 checkout 可以与其远端提交直接比较。外层落地页展示 DSH Desktop，Desktop README 负责应用初始化与发行说明，Fabric README 负责规划中的社区 contract 边界，Market README 负责规划中的市场边界。产品安装与检查可由外层 PNPM lockfile 复现，上游验证则继续使用自己的 PNPM lockfile。
 
-克隆时必须初始化子模块，贡献者也需要维护两个有意隔离的 PNPM 依赖图。外层工作区使用已记录的 hoisted linker，因为已发布 DSH Web 包公开 React 18 类型，而 `acryl-tui` 使用 React 19 类型。GitHub 公开修订与 npm 发布 family 可能不对应，因此源码 pin 更新和运行时 family 更新需要分别提供验证证据。
+克隆时必须初始化子模块，贡献者也需要维护两个有意隔离的 PNPM 依赖图。外层工作区使用已记录的 hoisted linker，因为已发布 DSH Web 包公开 React 18 类型，而 `acryl-cli` 使用 React 19 类型。GitHub 公开修订与 npm 发布 family 可能不对应，因此源码 pin 更新和运行时 family 更新需要分别提供验证证据。

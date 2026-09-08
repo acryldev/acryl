@@ -3,7 +3,7 @@
  * Publish the standalone local Web surface to npm.
  *
  * `acryl-web` is a regular public package, unlike `acryl`, whose publish
- * artifact is assembled from the private workspace package `acryl-tui`.
+ * artifact is assembled from the private workspace package `acryl-cli`.
  * This wrapper supplies npm auth through a temporary user config so no token
  * is written to the repository or a developer's global npm configuration.
  */

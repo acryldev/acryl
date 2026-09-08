@@ -115,7 +115,7 @@ substrate they must ride on.
 
 ## Risks
 
-- Removing `session-bridge.ts` changes how `acryl-tui` renders; must be validated against
+- Removing `session-bridge.ts` changes how `acryl-cli` renders; must be validated against
   `dsh-session-projection` output shape before cutting over.
 - The architecture inspector removal may leave a gap if ACRYL needs a stable inventory API —
   confirm `dsh-host-plugin-inventory` exports what the inspector surfaced; if not, use the

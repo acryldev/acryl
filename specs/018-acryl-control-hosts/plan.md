@@ -84,7 +84,7 @@ acryl-control/
 │   ├── agent-control.spec.ts
 │   └── leak.spec.ts
 
-acryl-tui/
+acryl-cli/
 ├── package.json                 # Bun 1.3+ / Node 26.4+ runtime; depends on @opentui/core
 ├── tsconfig.json
 ├── src/
@@ -114,7 +114,7 @@ acryl-tui/
 │   └── smoke.spec.ts
 ```
 
-**Structure Decision**: follow the existing flat workspace convention (`dsh-plugin-*` at root). `acryl-control/` is the host-neutral control plane consumed both in-process and over the protocol; `acryl-tui/` is the terminal presentation host. Desktop and Market continue to own their Electron/browser faces and are refactored stage-by-stage toward `acryl-control`.
+**Structure Decision**: follow the existing flat workspace convention (`dsh-plugin-*` at root). `acryl-control/` is the host-neutral control plane consumed both in-process and over the protocol; `acryl-cli/` is the terminal presentation host. Desktop and Market continue to own their Electron/browser faces and are refactored stage-by-stage toward `acryl-control`.
 
 ## Six-part Cordis mini-design
 
@@ -215,7 +215,7 @@ and preserves the durable session history rather than fabricating a reply.
 1. `acryl-control` service definitions and profile ownership lease (direct mode identity).
 2. Architecture and lifecycle control services, extracted from Desktop controllers behind host-neutral interfaces.
 3. Control protocol and attach mode with generation negotiation.
-4. `acryl-tui` OpenTUI host with direct/attach/recovery modes and canonical CLI grammar.
+4. `acryl-cli` OpenTUI host with direct/attach/recovery modes and canonical CLI grammar.
 5. Agent orchestration surface reusing `ctx.agents`/`ctx.subagents` and adding provider adapters.
 6. Installation/Market control and candidate promotion with HOT/WARM/COLD classification.
 7. Cross-platform packaging, `acryl-gui`/`acryl-web` convenience launchers, and full verification.

@@ -29,7 +29,7 @@ corepack pnpm acryl tui --profile acryl        # default: dsh engine
 Expected:
 
 - Prompt / stream / cancel / exit behave exactly as before (SC-004).
-- `acryl-tui/src/cli/run.ts`, `host/direct.ts`, `tui-app/session.ts` no longer
+- `acryl-cli/src/cli/run.ts`, `host/direct.ts`, `tui-app/session.ts` no longer
   import `bootAcrylHarnessProfile` / `startDirectHost` / `createAcrylSessionBridge`
   (grep clean) - they resolve the engine by name and use `handle.sessions` (G6).
 - `ctx.runtime.engine === 'dsh'` (assert in an activation test).

@@ -192,7 +192,7 @@ proposal.
 
 - **Desktop:** `acryl-desktop` owns the Electron bootstrap, Cordis Host and
   Client faces, native adapters, profile management, packaging, and Desktop UI.
-- **Terminal:** `acryl-tui` owns the canonical `acryl` command and terminal
+- **Terminal:** `acryl-cli` owns the canonical `acryl` command and terminal
   experience.
 - **Local Web:** `acryl web` starts an explicit local Web runtime. It is not a
   hosted cloud service and does not run implicitly.
@@ -286,7 +286,7 @@ at once. Work only on the active vertical slice.
 ```text
 acryl-control/              Host-neutral control-plane capabilities
 acryl-harness-runtime/      ACRYL integration with Harness runtime seams
-acryl-tui/                  Canonical terminal client and `acryl` command
+acryl-cli/                  Canonical terminal client and `acryl` command
 acryl-desktop/              Electron, Host/Client composition, native UI, release
 acryl-development-canvas/   Composable workspace and PTY surface
 dsh-community-market/       Optional private Market provider

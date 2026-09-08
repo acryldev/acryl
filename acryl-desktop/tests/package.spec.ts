@@ -86,9 +86,9 @@ describe('published package surface', () => {
   it('runs owned-workspace typechecks and tests through PNPM filters', () => {
     expect(workspaceManifest.packageManager).toBe('pnpm@11.8.0')
     expect(workspaceManifest.scripts?.typecheck)
-      .toBe('pnpm --filter acryl-control run typecheck && pnpm --filter acryl-tui run typecheck && pnpm --filter acryl-web run typecheck && pnpm --filter acryl-development-canvas run typecheck && pnpm --filter acryl-desktop run typecheck && pnpm --filter dsh-community-market run typecheck')
+      .toBe('pnpm --filter acryl-control run typecheck && pnpm --filter acryl-cli run typecheck && pnpm --filter acryl-web run typecheck && pnpm --filter acryl-development-canvas run typecheck && pnpm --filter acryl-desktop run typecheck && pnpm --filter dsh-community-market run typecheck')
     expect(workspaceManifest.scripts?.test)
-      .toBe('pnpm --filter acryl-control run test && pnpm --filter acryl-tui run test && pnpm --filter acryl-web run test && pnpm --filter acryl-development-canvas run test && pnpm --filter acryl-desktop run test && pnpm --filter dsh-community-market run test')
+      .toBe('pnpm --filter acryl-control run test && pnpm --filter acryl-cli run test && pnpm --filter acryl-web run test && pnpm --filter acryl-development-canvas run test && pnpm --filter acryl-desktop run test && pnpm --filter dsh-community-market run test')
     expect(pnpmWorkspace).toContain("  - '!deepseek-harness/**'")
     expect(pnpmWorkspace).toContain('node-pty: true')
   })

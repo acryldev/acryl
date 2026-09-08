@@ -9,7 +9,7 @@ The existing three package roles remain strict:
 ```text
 acryl-harness-runtime: one runtime root, native handles, plugin settlement, health, rollback
 acryl-control: leases, capability authorization, endpoint protocol, durable operation records
-acryl-tui / acryl-gui / acryl-web: peer presentation surfaces and controllers
+acryl-cli / acryl-gui / acryl-web: peer presentation surfaces and controllers
 ```
 
 New responsibilities are implemented as replaceable Cordis capabilities, not a parallel plugin or agent framework:

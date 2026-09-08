@@ -9,7 +9,7 @@
 Make the agent **engine** a named, replaceable capability. Introduce one
 engine-neutral seam in `acryl-harness-runtime` (`AcrylEngine` interface +
 adapter registry + `ctx.runtime` marker), wrap today's DSH bootstrap as the
-`dsh` adapter with zero behavior change, and re-point `acryl-tui` to resolve the
+`dsh` adapter with zero behavior change, and re-point `acryl-cli` to resolve the
 engine by name through that seam (**Phase A**). Then add the `pi` adapter -
 upstream pi/prime-agent run in its own Cordis root, projected into the
 ACRYL-owned canonical session record - plus a validated `acryl-engine` Loader
@@ -25,17 +25,17 @@ by either phase; a DSH-authored durable session is resumable under pi.
 
 **Storage**: ACRYL-owned canonical session record via `DurableSessionMessage` port (`acryl-harness-runtime`). Engine-native session stores are projection sources only. Profile/Loader config on disk (`cordis.yml` / patches). No new store.
 
-**Testing**: `corepack pnpm run typecheck`, `corepack pnpm run test` (per-package vitest `run`), `corepack pnpm run verify`, full gate `corepack pnpm run check`. Loader-activation / disposal tests in `acryl-harness-runtime/tests/` and `acryl-tui/tests/`. Headless-safe.
+**Testing**: `corepack pnpm run typecheck`, `corepack pnpm run test` (per-package vitest `run`), `corepack pnpm run verify`, full gate `corepack pnpm run check`. Loader-activation / disposal tests in `acryl-harness-runtime/tests/` and `acryl-cli/tests/`. Headless-safe.
 
 **Target Platform**: local developer machine (macOS / Linux / Windows), terminal surface first.
 
-**Project Type**: multi-package workspace; this feature touches `acryl-harness-runtime` (seam + adapters), `acryl-control` (engine-select/-swap operation + `ctx.runtime` typing), `acryl-tui` (consume seam). Electron/Web unchanged this ledger.
+**Project Type**: multi-package workspace; this feature touches `acryl-harness-runtime` (seam + adapters), `acryl-control` (engine-select/-swap operation + `ctx.runtime` typing), `acryl-cli` (consume seam). Electron/Web unchanged this ledger.
 
 **Performance Goals**: engine boot within the current `bootAcrylHarnessProfile` envelope for `dsh` (no regression); HOT-swap completes without a process restart.
 
 **Constraints**: one writable runtime owner per profile; one Cordis lifecycle system (no Chord); `deepseek-harness/` and `pi` consumed unmodified; HMR retained (`--expose-internals` when composed profile enables it); every resource effect-owned with an ordered disposer; default `dsh` path byte-for-byte unchanged (SC-004).
 
-**Scale/Scope**: 2 engines (`dsh`, `pi`); 1 surface wired (`acryl-tui`); combo engine and Electron/Web out of scope.
+**Scale/Scope**: 2 engines (`dsh`, `pi`); 1 surface wired (`acryl-cli`); combo engine and Electron/Web out of scope.
 
 ## Constitution Check
 
@@ -225,7 +225,7 @@ acryl-control/
 └── tests/
     └── engine-operation.spec.ts       [NEW, Phase B]
 
-acryl-tui/
+acryl-cli/
 ├── src/
 │   ├── cli/grammar.ts         # parse --engine <name>                          [MODIFY, Phase B]
 │   ├── cli/run.ts             # resolve engine by name via seam                [MODIFY, Phase A]
@@ -237,7 +237,7 @@ acryl-tui/
 
 **Structure Decision**: no new package. The seam lives in
 `acryl-harness-runtime` (the engine boundary per the roadmap), the operation
-typing in `acryl-control`, consumption in `acryl-tui`. Adapters are sub-modules
+typing in `acryl-control`, consumption in `acryl-cli`. Adapters are sub-modules
 of `acryl-harness-runtime/src/engine/`, not separate packages, until a second
 surface or an external engine author needs them extracted (Ponytail: one
 implementation before a factory).

@@ -31,7 +31,7 @@ These were originally in the plan as removals. Verified truth: keep them.
   `profile.ts` lines 80-81, 767-825 replace the CLI webserver row with it).
 - **`acryl-harness-runtime/src/session-bridge.ts` — KEEP, refactor only if pursued.** Tested
   (`tests/session-bridge.spec.ts`) and the TUI session backbone
-  (`acryl-tui/src/tui-app/session.ts:150` builds on `createAcrylSessionBridge`). It does
+  (`acryl-cli/src/tui-app/session.ts:150` builds on `createAcrylSessionBridge`). It does
   hand-roll `transcript()`/`tools()` projections, so re-pointing to
   `@deepseek-ai/dsh-session-projection` is a legitimate future refactor, not a removal.
 

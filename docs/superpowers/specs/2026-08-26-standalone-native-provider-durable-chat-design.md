@@ -53,9 +53,9 @@ Use the existing seam rather than inventing a new protocol:
    normal provider/model route.
 3. The port derives submitted and assistant response projections from the
    durable Harness session. It returns a typed result or a non-secret error.
-4. `acryl-tui/src/host/direct.ts` receives the session identity and port from
+4. `acryl-cli/src/host/direct.ts` receives the session identity and port from
    the runtime handle.
-5. `acryl-tui/src/render/app.tsx` forwards both values into `AcrylInkApp`.
+5. `acryl-cli/src/render/app.tsx` forwards both values into `AcrylInkApp`.
 6. `AcrylInkApp` renders the current durable transcript and failure state. It
    does not own session persistence, agent lifecycle, or credentials.
 
@@ -72,11 +72,11 @@ acryl-harness-runtime/src/native-agent.ts        # runtime-owned native message 
 acryl-harness-runtime/src/index.ts               # create session and expose the handle
 acryl-harness-runtime/tests/native-agent.spec.ts # real Harness-facing RED/GREEN tests
 
-acryl-tui/src/host/direct.ts                      # obtain selected session and port
-acryl-tui/src/render/app.tsx                      # forward them to Ink
-acryl-tui/src/render/ink-app.tsx                  # render durable transcript/results
-acryl-tui/tests/ink-app.spec.tsx                  # human-visible projection behavior
-acryl-tui/tests/direct.spec.ts                    # owner-host durable session integration
+acryl-cli/src/host/direct.ts                      # obtain selected session and port
+acryl-cli/src/render/app.tsx                      # forward them to Ink
+acryl-cli/src/render/ink-app.tsx                  # render durable transcript/results
+acryl-cli/tests/ink-app.spec.tsx                  # human-visible projection behavior
+acryl-cli/tests/direct.spec.ts                    # owner-host durable session integration
 ```
 
 No new package, provider abstraction, storage format, setting, or dependency is

@@ -48,7 +48,7 @@ package all match — a mismatch fails the release.
 
 ```sh
 # 1. Bump the five core package versions <old> -> <new> (they must all be equal):
-#    package.json, acryl-tui, acryl-harness-runtime, acryl-control, acryl-desktop
+#    package.json, acryl-cli, acryl-harness-runtime, acryl-control, acryl-desktop
 # 2. Commit "release: bump workspace packages to v<new>", push main.
 # 3. Tag v<new>, push tag -> Release workflow runs build + cli + npm-publish + release.
 # 4. Watch: every matrix job must verify green; any failure stops the release,

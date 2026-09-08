@@ -31,7 +31,7 @@ these, it fixes the biggest problems already identified in the ACRYL critique.
    runtime **in-process** via `startDirectHost()` + `createAcrylSessionBridge()` (not RPC), with
    GUI-feature-parity overlays (`/model /presets /trajectory /tools /context /plugins /goal
    /plan /compact` + approvals). See `docs/acryl/tomowang-dsh-tui-provenance.md` and the
-   `acryl-tui/` package. DSH `apps/cli` is therefore **not** the model for ACRYL's CLI.
+   `acryl-cli/` package. DSH `apps/cli` is therefore **not** the model for ACRYL's CLI.
 
 2. **Capability = interface + provider + consumer, composed by configuration, never a
    parallel framework.** DSH calls this the *capability seam*. If ACRYL names a new

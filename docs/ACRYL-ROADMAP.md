@@ -19,7 +19,7 @@ Electron process state, are the authoritative account of agent work.
                                   |
             acryl-control: lease, protocol, inspection, lifecycle
                     /                 |                  \
-          acryl-tui (pi-tui)      acryl-gui (Electron)   acryl-web
+          acryl-cli (pi-tui)      acryl-gui (Electron)   acryl-web
 ```
 
 ## Architectural assessment and constraints
@@ -27,7 +27,7 @@ Electron process state, are the authoritative account of agent work.
 The current repository is in a staged migration from an Electron-heavy fork,
 not yet in the target architecture. `acryl-desktop` contains most product
 implementation, while `acryl-control`, `acryl-harness-runtime`, and
-`acryl-tui` are newer, much smaller packages. The migration direction must be
+`acryl-cli` are newer, much smaller packages. The migration direction must be
 explicit: logic that is reusable across presentation surfaces moves out of
 `acryl-desktop`, while that package shrinks toward Electron-only concerns
 (window chrome, tray, native menu, packaging, updater, and OS integration).
@@ -49,7 +49,7 @@ they do not receive a Cordis context, root credential, or authority to create a
 competing runtime. Actual agent process, protocol, or Harness-handle ownership
 belongs to the runtime owner.
 
-`acryl-tui` is the terminal presentation. It adopts the working pi-tui-based
+`acryl-cli` is the terminal presentation. It adopts the working pi-tui-based
 `dsh-pi-tui` implementation on Node, replacing the earlier OpenTUI/Bun and
 React Ink direction. Its renderer projects typed control/runtime snapshots and
 durable Harness records. It must not own a Cordis root, directly become the
@@ -127,7 +127,7 @@ runtime and can be driven by each surface without copied agent logic.
 - Use the pinned normal `@earendil-works/pi-tui` 0.84.2 dependency. Do not
   copy the Pi monorepo or retain React Ink alongside it.
 
-**Exit criterion:** `acryl-tui` provides the pinned baseline's terminal
+**Exit criterion:** `acryl-cli` provides the pinned baseline's terminal
 experience without Bun or React Ink, and its durable sessions can be resumed
 from another ACRYL surface.
 
@@ -244,7 +244,7 @@ separate, per-turn concern. See
   `acryl-harness-runtime`, not a hard-wired DeepSeek Harness `startDirectHost()`
   call. DSH-in-CLI-mode is the first engine; `pi` (`pi.dev` / prime-agent) is
   the second; a declared DSH+pi composition is a later candidate.
-- Surfaces (`acryl-tui`, Electron, Web) talk only to the engine-neutral
+- Surfaces (`acryl-cli`, Electron, Web) talk only to the engine-neutral
   `acryl-control` capability API. No surface imports a DSH-only or pi-only
   bootstrap. This milestone depends on M2 normalizing that API.
 - Keep the ACRYL room, context relay, task artifacts, decisions, and canonical
