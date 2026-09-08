@@ -200,10 +200,32 @@ if (run('git', ['remote', 'get-url', 'origin'], upstreamDir) !== upstream.reposi
 if (upstreamPackage.version !== upstream.sourceVersion) {
   fail('deepseek-harness package version differs from upstream.json')
 }
-for (const name of Object.keys(plugin.dependencies).filter(name => name === '@deepseek-ai/dsh' || name.startsWith('@deepseek-ai/dsh-'))) {
-  if (plugin.dependencies[name] !== upstream.runtimePackageVersion) {
-    fail(`${name} must use the recorded DSH runtime package family`)
+for (const [owner, manifest] of [
+  ['desktop', plugin],
+  ['harness-runtime', harness],
+  ['cli', cli],
+  ['web', web],
+  ['control', control],
+  ['canvas', canvas],
+  ['market', market],
+]) {
+  for (const field of ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies', 'resolutions']) {
+    for (const [name, range] of Object.entries(manifest[field] ?? {})) {
+      if (typeof range !== 'string') continue
+      if ((name === '@deepseek-ai/dsh' || name.startsWith('@deepseek-ai/dsh-'))
+        && range !== upstream.runtimePackageVersion) {
+        fail(`${owner} ${field}.${name} must use the recorded DSH runtime package family (${upstream.runtimePackageVersion})`)
+      }
+    }
   }
+}
+
+// The shipped agent presets are the one runtime read of the submodule. Make the
+// soft `existsSync` dependency loud: a missing source silently shrinks `/presets`,
+// so fail here when the submodule is initialized but the directory is gone.
+const presetsDir = resolve(upstreamDir, 'packages', 'preset', 'agent-presets', 'presets')
+if (!existsSync(presetsDir)) {
+  fail(`the shipped agent-presets source is missing: ${presetsDir}`)
 }
 
 process.stdout.write(`verify-layout: PNPM workspace and upstream ${upstream.commit.slice(0, 10)} are consistent\n`)
