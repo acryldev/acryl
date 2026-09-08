@@ -1,3 +1,23 @@
+## 2026-09-08 - AGENTS.md: clean-architecture / DDD discipline rules
+
+Commit: `f250b6a`
+
+Added a `## Architecture and clean-code discipline (engineering books)` section
+to `AGENTS.md` (mirrored by `CLAUDE.md` via symlink), encoding the
+ACRYL-specific interpretation of Clean Architecture (Robert C. Martin) and
+Implementing DDD (Vaughn Vernon) — the same references the repo's own
+`AGENTS.md` precedence rules point to, and the discipline the
+`specs/001-acryl-refactor-improvements-and-tech-debt` ledger's guardrails
+enforce. It covers (a) boundaries — surfaces never own domain/credential/auth
+logic, typed services only (no `any`), no state encoded into user-visible
+names, one projection per state; (b) models/language — small immutable value
+objects, one exported type per concept, one term one meaning; (c) functions
+and state — pure `render()`, discriminated-union view state, no generic
+`utils/` dumping grounds, depend inward; (d) checkpoints/honesty — green
+reversible commits, keep the spec ledger current. Precedence is explicit: the
+constitution, Cordis guide, and ACRYL control-surface design win; this section
+is coding-style and boundary discipline, not a second architecture.
+
 ## 2026-09-08 - 001 tech-debt ledger: Phases 1-5 closed, all 10 architecture guardrails green
 
 Commits: `401eb7a`, `10ba1b6`, `c1d0a09`, `8ba5ac4`, `ee90704`, `6ae507e`,
