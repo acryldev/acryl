@@ -1,3 +1,54 @@
+## 2026-09-09 - DSH bumped to v0.1.5-alpha.1
+
+Commits: `712b957181ce2e371fffdf35c465ee027c8b6d54`,
+`9d182f503cb3a96a8187efb4206a5dd37261a31d`,
+`a36d49ab83f305a68fe9ca521c5a8ecea4cb2253`,
+`8d6e8bc7ea1590cff68b82f9b80431240b0f59b8`,
+`779c91b37a8af89532adadd357cd899f078c160d`
+
+Bumped the pinned `deepseek-harness` submodule and every
+`@deepseek-ai/dsh-*`/`cordis-plugin-*` dependency from `0.1.1-rc.2` to
+`0.1.5-alpha.1` (upstream commit `5dda764ed3aa172535a7967b06ff95d9cbfe536a`,
+430 commits of pre-stable-API upstream work), regenerated all 6 patches this
+repo carries, and worked through every resulting compile/test break across
+`acryl-cli`, `acryl-harness-runtime`, `acryl-desktop`, `acryl-development-canvas`,
+and `dsh-community-market`. All ten `debt:check` architecture guardrails,
+the full workspace typecheck, and the full test suite are green.
+
+The single largest behavioral change: session format v2 no longer persists a
+per-token `assistant/chunk` event in the durable log — live in-progress typing
+now arrives via the process-local, non-durable `agent/assistant-stream` Cordis
+event instead, with the durable settlement carrying the same stream (embedded
+`AssistantStreamRecord[]`) only once an attempt commits. `acryl-harness-runtime`
+gained `AcrylSessionBridge.subscribeAssistantStream`; `acryl-cli`'s `TuiStore`
+gained `appendAssistantStreamFrame`, keyed by `attemptId` so a stale frame
+from a superseded attempt cannot corrupt the current one.
+
+Also migrated three packages off the removed `dsh-client-runtime` (split into
+`Context` from `@deepseek-ai/cordis`, `dsh-api-workspace-controller/client`,
+`dsh-client-ui-settings/client`, and the new `dsh-client-store`); re-ported
+the hand-patched native directory-picker feature onto the new minified
+`dsh-client-ui-directory-picker-browse` bundle (`ctx.workspaces.*` renamed to
+`ctx.uiWorkspace.*`); retargeted the Windows restricted-shell
+console-visibility patch from `dsh-sandbox-windows-acl` onto the new
+`dsh-win32-process` package that now owns that spawn code; and dropped the
+`dsh-client-ui-trajectory` localization patch as obsolete (upstream now ships
+its own Simplified Chinese toolbar labels).
+
+Follow-up for the user: manually click through the Desktop settings' native
+directory-picker dialog to visually confirm the re-ported patch still works —
+a minified UI patch could not be visually tested in this environment.
+
+Primary locations:
+
+- Submodule pin: `deepseek-harness/`, `upstream.json`
+- Patches: `patches/`, `pnpm-workspace.yaml`
+- Live-typing migration: `acryl-harness-runtime/src/session-bridge.ts`,
+  `acryl-cli/src/tui/store.ts`
+- `dsh-client-runtime` migration: `acryl-desktop/src/client/`,
+  `acryl-development-canvas/src/client/`, `dsh-community-market/src/client/`
+- Layout gate: `scripts/verify-layout.mjs`
+
 ## 2026-09-08 - Public README names the three actual ACRYL surfaces
 
 Commit: `cd39729b1da9d58d89312e34ddbcf1f3442f1141`
