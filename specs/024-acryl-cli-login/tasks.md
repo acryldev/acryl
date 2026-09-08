@@ -9,10 +9,14 @@
 - [x] L003 Add `login()` and `logout()` to the `TuiActions` interface and wire
   them in the session/actions layer.
 - [x] L004 Add `auth-guidance.ts` (guidance strings, modeled on Pi).
-- [x] L005 Reuse `ModelProfileOverlay` as the auth surface (no separate
+- [x] L005 ~~Reuse `ModelProfileOverlay` as the auth surface (no separate
   `LoginOverlay` needed for the API-key stage); implement the previously-stubbed
   `editProvider`/`saveProvider`/`deleteProvider` to persist via `ctx.credentials`
-  and `ctx.settings`.
+  and `ctx.settings`.~~ **Superseded:** the shipped `/login` is a dedicated
+  two-step overlay (see `spec.md` design evolution), not a `ModelProfileOverlay`
+  reuse. `editProvider`/`saveProvider`/`deleteProvider` still exist under `/model`.
+  The auth-method selector moved from `/model` (`o` key) into the `/login` step
+  one chooser. Tracked under `specs/001-acryl-refactor-improvements-and-tech-debt`.
 - [ ] L006 Wire auth guidance into session start (helper exists; boot-time
   "no key → run /login" notice is a follow-up).
 - [x] L007 PTY smoke evidence: `/login` opens the provider list with per-row
@@ -28,8 +32,11 @@
   (`oauth/flow.ts` `runOAuthLogin`, `127.0.0.1:0`).
 - [x] L011 Grant storage + refresh + revocation via `ctx.credentials`
   (`GrantRecord`) (`readOAuthGrant`/`refreshOAuthGrant`/`revokeOAuthGrant`).
-- [x] L012 Extend the `/model` overlay with an OAuth-vs-API-key selector
-  (`o` key, `[oauth]`/`[oauth ✓]` row status).
+- [x] L012 ~~Extend the `/model` overlay with an OAuth-vs-API-key selector
+  (`o` key, `[oauth]`/`[oauth ✓]` row status).~~ **Superseded:** the auth-method
+  selector is now the `/login` step-one chooser (account vs API key), and the
+  provider status badges (`[oauth]`/`[api]`) live in the `/login` provider list
+  and `/model` profile rows. See `spec.md` design evolution.
 - [x] L013 OAuth integration test with a stub provider (fake authorize/token);
   `tests/tui/oauth/flow.spec.ts`.
 
