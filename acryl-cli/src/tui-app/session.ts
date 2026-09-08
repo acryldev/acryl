@@ -17,8 +17,11 @@ import {
   computeCredentialProjection,
   AuthorizationService,
   type AuthorizationInteraction,
+  type AuthorizationPort,
+  type CredentialProjectionLlmPort,
   type CredentialProjectionRow,
   type CredentialProjectionServices,
+  type CredentialProjectionSettingsPort,
   type RouteActivationPort,
 } from 'acryl-control'
 import { startDirectHost, type DirectHost } from '../host/direct.js'
@@ -38,6 +41,36 @@ import { ACRYL_VERSION } from '../version.ts'
 
 /** The credential-record scope `dsh-llm-pi-ai` writes a `/login` sign-in under (`credentialKey('llm-pi-ai', providerId)`). */
 const LOGIN_RECORD_SCOPE = 'llm-pi-ai'
+
+// Typed `host.ctx.get(...)` ports for the raw DSH runtime services this host
+// adapter reads/writes directly (finding R9: no untyped service handles).
+// `acryl-control`'s narrower credential/authorization ports cover the shared
+// read side; these extend them with the write/discovery methods only the
+// host adapter itself needs.
+type SettingsServicePort = CredentialProjectionSettingsPort & {
+  update(ns: string, patch: Record<string, unknown>, expectedRevision?: number): Promise<unknown>
+}
+interface CredentialRecordLike {
+  readonly kind: string
+  readonly key?: string
+}
+interface CredentialsServicePort {
+  describe(ref: string): Promise<{ readonly configured: boolean }>
+  readRecord?(key: string): Promise<CredentialRecordLike | undefined>
+  set(ref: string, value: string): Promise<void>
+  unset(ref: string): Promise<void>
+  deleteRecord?(key: string): Promise<void>
+  resolve?(ref: string): Promise<{ readonly value?: string } | undefined>
+}
+type LlmServicePort = CredentialProjectionLlmPort & {
+  discoverModels(ns: string, request: Record<string, unknown>): Promise<readonly { readonly id: string; readonly name?: string; readonly contextWindow?: number; readonly maxTokens?: number }[]>
+}
+type AuthorizationListPort = AuthorizationPort & {
+  list(): readonly { readonly key: string; readonly label: string; readonly methods: readonly { readonly id: string; readonly label: string }[]; readonly inFlight: boolean }[]
+}
+interface AgentPresetsServicePort {
+  list(): Promise<readonly { readonly id: string; readonly name?: string; readonly description?: string; readonly trust: 'system' | 'user'; readonly broken: string | undefined }[]>
+}
 
 const TUI_VERSION = ACRYL_VERSION
 const PROMPT_HISTORY_LIMIT = 200
@@ -214,9 +247,9 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
   // cached overlay state and reporting "no active providers" even when
   // providers plainly exist.
   function credentialProjectionServices(): CredentialProjectionServices | undefined {
-    const settingsSvc: any = host.ctx.get('settings')
-    const credentialsSvc: any = host.ctx.get('credentials')
-    const llmSvc: any = host.ctx.get('llm')
+    const settingsSvc = host.ctx.get('settings') as SettingsServicePort | undefined
+    const credentialsSvc = host.ctx.get('credentials') as CredentialsServicePort | undefined
+    const llmSvc = host.ctx.get('llm') as LlmServicePort | undefined
     if (settingsSvc === undefined || credentialsSvc === undefined || llmSvc === undefined) return undefined
     return { settings: settingsSvc, credentials: credentialsSvc, llm: llmSvc }
   }
@@ -290,7 +323,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     // covers that case.
     if (row.authMethod === 'api-key') {
       void (async () => {
-        const credentialsSvc: any = host.ctx.get('credentials')
+        const credentialsSvc = host.ctx.get('credentials') as CredentialsServicePort | undefined
         const resolved = await credentialsSvc?.resolve?.(row.apiKeyRef).catch(() => undefined)
         if (resolved?.value === undefined) return
         const current = store.getSnapshot().overlay
@@ -315,13 +348,12 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
   // is rendered as a badge from the projection instead (specs/001-…, R2).
   const routeActivationPort: RouteActivationPort = {
     async ensureRouteActivated(providerId) {
-      const settingsSvc: any = host.ctx.get('settings')
-      const llmSvc: any = host.ctx.get('llm')
+      const settingsSvc = host.ctx.get('settings') as SettingsServicePort | undefined
+      const llmSvc = host.ctx.get('llm') as LlmServicePort | undefined
       if (settingsSvc === undefined || llmSvc === undefined) return
-      const entry = (llmSvc.listConfigurableProviders() as Array<{ provider: string; settingsNs: string; settingsPath: readonly string[] }>)
-        .find(candidate => candidate.provider === providerId)
+      const entry = llmSvc.listConfigurableProviders().find(candidate => candidate.provider === providerId)
       if (entry === undefined) return
-      const descriptors = settingsSvc.describe({ redactSecrets: true }) as Array<{ ns: string; user?: unknown; revision?: number }>
+      const descriptors = settingsSvc.describe({ redactSecrets: true })
       const descriptor = descriptors.find(candidate => candidate.ns === entry.settingsNs)
       const existing = descriptor === undefined ? undefined : getAtPath(descriptor.user, entry.settingsPath)
       if (existing !== undefined) return
@@ -336,13 +368,13 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
   // read — one source of truth, specs/001-…, R3/R4), and refresh the open
   // `/login` overlay's list.
   async function loadLoginFlows(): Promise<void> {
-    const authSvc: any = host.ctx.get('authorization')
+    const authSvc = host.ctx.get('authorization') as AuthorizationListPort | undefined
     if (authSvc === undefined) {
       store.updateLogin({ flows: [], busy: false, error: 'Sign-in is not available in this profile.' })
       return
     }
     try {
-      const entries = authSvc.list() as Array<{ key: string; label: string; methods: Array<{ id: string; label: string }>; inFlight: boolean }>
+      const entries = authSvc.list()
       const rows = await credentialRows()
       const byKey = new Map((rows ?? []).map(row => [loginRecordKey(row.route), row] as const))
       const list = entries.map(entry => {
@@ -375,7 +407,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
 
   /** Open `/model`'s blank custom-provider draft — assumes `/model` is (or is about to become) the open overlay. Shared by `createProvider` (already there) and `addCustomProvider` (getting there first). */
   function openCustomProviderDraft(): void {
-    const llmSvc: any = host.ctx.get('llm')
+    const llmSvc = host.ctx.get('llm') as LlmServicePort | undefined
     // Every `dsh-llm-pi-ai` route — catalog or custom — lives at the same
     // settings namespace (`directoryEntries()` stamps every entry with the
     // plugin's own `NS`), so any already-configurable entry's `settingsNs`
@@ -413,7 +445,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
   // overlay's row list. The service is optional, same pattern as the other
   // model/profile actions: absent degrades to the overlay's empty message.
   async function loadAgentPresets(): Promise<void> {
-    const presetsSvc: any = host.ctx.get('agentPresets')
+    const presetsSvc = host.ctx.get('agentPresets') as AgentPresetsServicePort | undefined
     if (presetsSvc === undefined) {
       // Service is not composed in this profile: settle the spinner to the neutral
       // empty message instead of leaving `/presets` on a perpetual 'Loading...'.
@@ -422,7 +454,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     }
     try {
       const list = await presetsSvc.list()
-      const rows: AgentPresetRow[] = list.map((preset: any) => ({
+      const rows: AgentPresetRow[] = list.map(preset => ({
         id: preset.id,
         label: PRESET_LABELS[preset.id as string] ?? preset.name ?? preset.id,
         description: preset.description,
@@ -530,8 +562,8 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     closeLogin() { store.closeOverlay() },
     beginAuthorization(key, method) {
       void (async () => {
-        const authSvc: any = host.ctx.get('authorization')
-        const credentialsSvc: any = host.ctx.get('credentials')
+        const authSvc = host.ctx.get('authorization') as AuthorizationListPort | undefined
+        const credentialsSvc = host.ctx.get('credentials') as CredentialsServicePort | undefined
         if (authSvc === undefined) {
           store.setNotice('Sign-in is not available in this profile.')
           return
@@ -672,8 +704,8 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     },
     saveProvider(draft) {
       void (async () => {
-        const settingsSvc: any = host.ctx.get('settings')
-        const credentialsSvc: any = host.ctx.get('credentials')
+        const settingsSvc = host.ctx.get('settings') as SettingsServicePort | undefined
+        const credentialsSvc = host.ctx.get('credentials') as CredentialsServicePort | undefined
         if (settingsSvc === undefined || credentialsSvc === undefined) {
           store.setNotice('Provider settings are not available in this profile.')
           return
@@ -713,8 +745,8 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     },
     deleteProvider(row) {
       void (async () => {
-        const settingsSvc: any = host.ctx.get('settings')
-        const credentialsSvc: any = host.ctx.get('credentials')
+        const settingsSvc = host.ctx.get('settings') as SettingsServicePort | undefined
+        const credentialsSvc = host.ctx.get('credentials') as CredentialsServicePort | undefined
         if (settingsSvc === undefined || credentialsSvc === undefined) {
           store.setNotice('Provider settings are not available in this profile.')
           return
@@ -732,7 +764,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     },
     clearApiKey(draft) {
       void (async () => {
-        const credentialsSvc: any = host.ctx.get('credentials')
+        const credentialsSvc = host.ctx.get('credentials') as CredentialsServicePort | undefined
         if (credentialsSvc === undefined) {
           store.setNotice('Credentials are not available in this profile.')
           return
@@ -753,7 +785,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     },
     discoverModelsForDraft(draft) {
       void (async () => {
-        const llmSvc: any = host.ctx.get('llm')
+        const llmSvc = host.ctx.get('llm') as LlmServicePort | undefined
         if (llmSvc === undefined) {
           store.setNotice('Model discovery is not available in this profile.')
           return
