@@ -52,7 +52,7 @@ jobs:
           corepack pnpm --filter acryl-tui run typecheck
           corepack pnpm --filter acryl-tui run test
           node --test scripts/cli-archive-platform.test.mjs scripts/inspect-artifact.test.mjs
-          node scripts/verify-npm-entrypoint.mjs
+          node acryl-tui/scripts/verify-npm-entrypoint.mjs
       - run: node scripts/build-cli-archive.mjs ${{ matrix.target }} release-artifacts
       - name: Clean-runtime smoke and release receipt
         shell: bash

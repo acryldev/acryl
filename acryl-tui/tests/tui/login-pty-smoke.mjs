@@ -4,7 +4,7 @@
 // notice when the settings/credentials/llm services are absent).
 //
 // Usage (after `corepack pnpm --filter acryl-tui run build`):
-//   corepack pnpm --filter acryl-tui exec node scripts/login-pty-smoke.mjs
+//   corepack pnpm --filter acryl-tui exec node tests/tui/login-pty-smoke.mjs
 import { mkdtempSync, mkdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -14,8 +14,8 @@ import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
 const pty = require('node-pty')
 
-const packageRoot = fileURLToPath(new URL('..', import.meta.url)) // acryl-tui/
-const repoRoot = fileURLToPath(new URL('../..', import.meta.url)) // acryl/
+const packageRoot = fileURLToPath(new URL('../..', import.meta.url)) // acryl-tui/
+const repoRoot = fileURLToPath(new URL('../../..', import.meta.url)) // acryl/
 const bin = join(packageRoot, 'lib/bin.js')
 const home = mkdtempSync(join(tmpdir(), 'acryl-login-smoke-'))
 

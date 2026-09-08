@@ -83,7 +83,7 @@ async function main() {
   const windows = spec.windows === true
   const archiveName = `acryl-cli-${target}.${windows ? 'zip' : 'tar.gz'}`
   const launcherName = windows ? 'acryl.cmd' : 'acryl'
-  const launcher = join(root, 'scripts', windows ? 'acryl-cli-launcher.cmd' : 'acryl-cli-launcher.sh')
+  const launcher = join(root, 'acryl-tui', 'scripts', windows ? 'acryl-cli-launcher.cmd' : 'acryl-cli-launcher.sh')
   const staging = join(tmpdir(), `acryl-cli-${target}`)
   const archiveDir = join(staging, `acryl-cli-${target}`)
 

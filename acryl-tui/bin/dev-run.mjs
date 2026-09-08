@@ -13,8 +13,8 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const root = resolve(here, '..')
-const packageRoot = resolve(root, 'acryl-tui')
+const packageRoot = resolve(here, '..')
+const root = resolve(packageRoot, '..')
 const bin = resolve(packageRoot, 'lib/bin.js')
 const src = resolve(packageRoot, 'src')
 

@@ -5,7 +5,7 @@
 // errors surfaced -> clean exit code 0.
 //
 // Usage (after `corepack pnpm --filter acryl-tui run build`):
-//   corepack pnpm --filter acryl-tui exec node scripts/tui-pty-smoke.mjs
+//   corepack pnpm --filter acryl-tui exec node tests/tui/pty-smoke.mjs
 // Optional: set DSH_HOME to a real home with a DEEPSEEK_API_KEY to see an actual
 // streamed assistant response instead of the MISSING_CREDENTIAL surface error.
 import { mkdtempSync, rmSync } from 'node:fs'
@@ -17,8 +17,8 @@ import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
 const pty = require('node-pty')
 
-const packageRoot = fileURLToPath(new URL('..', import.meta.url)) // acryl-tui/
-const repoRoot = fileURLToPath(new URL('../..', import.meta.url)) // acryl/
+const packageRoot = fileURLToPath(new URL('../..', import.meta.url)) // acryl-tui/
+const repoRoot = fileURLToPath(new URL('../../..', import.meta.url)) // acryl/
 const bin = join(packageRoot, 'lib/bin.js')
 const home = mkdtempSync(join(tmpdir(), 'acryl-tui-smoke-'))
 

@@ -9,8 +9,8 @@
  * through the symlink, and asserts `--version` prints the package version and
  * `tui --json` boots the runtime.
  *
- * Usage: node scripts/verify-npm-entrypoint.mjs   (after `pnpm --filter
- * acryl-tui run build`)
+ * Usage: node acryl-tui/scripts/verify-npm-entrypoint.mjs   (after `pnpm
+ * --filter acryl-tui run build`)
  */
 import { spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from 'node:fs'
@@ -18,9 +18,9 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const binJs = join(root, 'acryl-tui', 'lib', 'bin.js')
-const manifestPath = join(root, 'acryl-tui', 'package.json')
+const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const binJs = join(packageRoot, 'lib', 'bin.js')
+const manifestPath = join(packageRoot, 'package.json')
 const version = JSON.parse(readFileSync(manifestPath, 'utf8')).version
 
 if (!existsSync(binJs)) {

@@ -1,6 +1,6 @@
 // Headless-safe release smoke checks for the ACRYL CLI/TUI entrypoint (R005).
 // These run without a real TTY and must pass for any candidate artifact.
-//   node scripts/release-smoke.mjs
+//   node tests/release-smoke.mjs
 // Checks:
 //   - `acryl --version` -> the canonical version string
 //   - `acryl tui --json` -> a structured direct-host status line (probe)
