@@ -1,9 +1,11 @@
 import type { Context } from '@deepseek-ai/cordis'
-import { installModelSelection, type Agent, type AgentHandle, type ModelSelectionRef } from '@deepseek-ai/dsh-agent'
+import { installModelSelection, type Agent, type AgentHandle, type AssistantStreamFrame, type ModelSelectionRef } from '@deepseek-ai/dsh-agent'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { SessionId, type SessionEvent } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-agent-default-model'
 import type {} from '@deepseek-ai/dsh-session-persistence'
+
+export type { AssistantStreamFrame }
 import type {
   AcrylSessionAttachment,
   AcrylSessionSnapshot,
@@ -37,6 +39,19 @@ export interface AcrylSessionBridge {
   subscribeEvents(
     sessionId: string,
     listener: (event: SessionEvent) => void,
+  ): Promise<AcrylSessionEventSubscription>
+  /**
+   * Process-local live assistant-stream frames (start/chunk/end) for one
+   * active session. Session format v2 no longer persists per-token
+   * `assistant/chunk` events in the durable log — `agent/assistant-stream`
+   * is the intentionally process-local replacement for in-progress-typing
+   * presentation; the durable `assistant/message`/`assistant/attempt`
+   * settlement (delivered via `subscribeEvents`) carries the same stream
+   * for replay once the attempt settles.
+   */
+  subscribeAssistantStream(
+    sessionId: string,
+    listener: (frame: AssistantStreamFrame) => void,
   ): Promise<AcrylSessionEventSubscription>
   submitPrompt(input: { readonly sessionId: string; readonly text: string }): Promise<void>
   /**
@@ -114,6 +129,7 @@ export function createAcrylSessionBridge(
   const modelSelectionDisposers = new Map<string, () => void>()
   const subscribers = new Map<string, Set<(snapshot: AcrylSessionSnapshot) => void>>()
   const eventListeners = new Map<string, Set<(event: SessionEvent) => void>>()
+  const assistantStreamListeners = new Map<string, Set<(frame: AssistantStreamFrame) => void>>()
   let disposed = false
 
   const notify = (sessionId: string): void => {
@@ -142,6 +158,23 @@ export function createAcrylSessionBridge(
       }
     }
   })
+  // `agent/assistant-stream` is process-local and dispatched per-agent by
+  // `@deepseek-ai/dsh-scope`; `{ global: true }` receives every agent's
+  // frames and this bridge filters to the sessions it owns, matching the
+  // pattern `dsh-api-session-controller`'s own history/follow code uses for
+  // the same event.
+  const offAssistantStream = ctx.on('agent/assistant-stream', ({ agent, frame }) => {
+    if (!handles.has(agent.session.id)) return
+    const listeners = assistantStreamListeners.get(agent.session.id)
+    if (listeners === undefined) return
+    for (const listener of listeners) {
+      try {
+        listener(frame)
+      } catch {
+        // A presentation listener cannot disrupt durable session delivery.
+      }
+    }
+  }, { global: true })
 
   const snapshot = async (sessionId: string): Promise<AcrylSessionSnapshot> => {
     const agent = agentFor(sessionId)
@@ -151,8 +184,8 @@ export function createAcrylSessionBridge(
       attachment: options.attachment,
       sessionId: agent.id,
       agentStatus: status(agent),
-      transcript: transcript(agent.session.events),
-      tools: tools(agent.session.events),
+      transcript: transcript(agent.session.snapshotEvents()),
+      tools: tools(agent.session.snapshotEvents()),
     })
   }
 
@@ -188,7 +221,7 @@ export function createAcrylSessionBridge(
     },
     snapshot,
     events(sessionId: string): readonly SessionEvent[] {
-      return agentFor(sessionId).session.events
+      return agentFor(sessionId).session.snapshotEvents()
     },
     async subscribe(
       sessionId: string,
@@ -233,6 +266,24 @@ export function createAcrylSessionBridge(
         },
       })
     },
+    async subscribeAssistantStream(
+      sessionId: string,
+      listener: (frame: AssistantStreamFrame) => void,
+    ): Promise<AcrylSessionEventSubscription> {
+      agentFor(sessionId)
+      const listeners = assistantStreamListeners.get(sessionId) ?? new Set()
+      assistantStreamListeners.set(sessionId, listeners)
+      listeners.add(listener)
+      let active = true
+      return Object.freeze({
+        async dispose(): Promise<void> {
+          if (!active) return
+          active = false
+          listeners.delete(listener)
+          if (listeners.size === 0) assistantStreamListeners.delete(sessionId)
+        },
+      })
+    },
     async submitPrompt(input: { readonly sessionId: string; readonly text: string }): Promise<void> {
       const agent = agentFor(input.sessionId)
       if (input.text.trim() === '') throw new Error('ACRYL prompt must not be empty')
@@ -262,8 +313,10 @@ export function createAcrylSessionBridge(
       if (disposed) return
       disposed = true
       offSessionEvent()
+      offAssistantStream()
       subscribers.clear()
       eventListeners.clear()
+      assistantStreamListeners.clear()
       for (const dispose of modelSelectionDisposers.values()) dispose()
       modelSelectionDisposers.clear()
       modelSelections.clear()

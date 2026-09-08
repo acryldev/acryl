@@ -8,7 +8,7 @@
 
 import type { Component, TUI } from '@earendil-works/pi-tui'
 import { Key, matchesKey } from '@earendil-works/pi-tui'
-import type { CallId } from '@deepseek-ai/dsh-llm'
+import type { ToolCallId } from '@deepseek-ai/dsh-llm/brand'
 import type { SessionEvent } from '@deepseek-ai/dsh-session'
 import { formatToolCardDetail, formatToolCardSummary, type RenderOptions } from '../../render.js'
 import type { TuiActions } from '../actions.js'
@@ -76,7 +76,7 @@ export class ToolCardsOverlay implements Component {
   /** Pairs `tool/call`/`tool/result` events by `callId`, in call order; an orphaned result (no call in the log) gets its own trailing row. */
   private cards(): ToolCardRow[] {
     const rows: ToolCardRow[] = []
-    const indexByCallId = new Map<CallId, number>()
+    const indexByCallId = new Map<ToolCallId, number>()
     for (const event of this.store.getSnapshot().events) {
       if (event.type === 'tool/call') {
         indexByCallId.set(event.data.callId, rows.length)

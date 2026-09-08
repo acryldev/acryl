@@ -118,7 +118,7 @@ function sessionBlank(session: Session): boolean {
   // A session is blank until the first turn actually starts; injected context
   // (AGENTS.md, skill catalog, cron notices) is not a turn. Mirrors Tomo's/harness
   // semantics so `/presets` can offer a preset switch on a not-yet-started session.
-  return !session.events.some(event => event.type === 'turn/start')
+  return !session.snapshotEvents().some(event => event.type === 'turn/start')
 }
 
 /** Read a nested value out of an untyped resolved/raw settings section. */
@@ -229,6 +229,11 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     store.appendEvent(event)
     void bridge.snapshot(id).then(next => storeSetStatus(store, next))
   })
+  // Process-local live-typing presentation, separate from the durable event
+  // log above (see acryl-harness-runtime's `subscribeAssistantStream` doc
+  // comment): folds `agent/assistant-stream` frames into `store.streaming`
+  // without ever appending a `SessionEvent`.
+  void bridge.subscribeAssistantStream(id, frame => store.appendAssistantStreamFrame(frame))
   const agent = host.ctx.agents?.get?.(SessionId(id))
   const session = agent?.session
   const history: string[] = []

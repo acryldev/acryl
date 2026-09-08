@@ -7,10 +7,11 @@
  * @module @tomowang/dsh-tui/tui/store
  */
 
-import type { AgentStatus } from '@deepseek-ai/dsh-agent'
+import type { AgentStatus, AssistantStreamFrame } from '@deepseek-ai/dsh-agent'
 import type { GoalProjection } from '@deepseek-ai/dsh-goal'
 import { BlockAssembler } from '@deepseek-ai/dsh-llm'
-import type { CallId, StreamChunk } from '@deepseek-ai/dsh-llm'
+import type { StreamChunk } from '@deepseek-ai/dsh-llm'
+import type { LlmAttemptId, ToolCallId } from '@deepseek-ai/dsh-llm/brand'
 import type { SessionEvent, UserMessage } from '@deepseek-ai/dsh-session'
 import type { SessionStatsProjection } from '@deepseek-ai/dsh-session-stats'
 import type { ContextBreakdownProjection, ContextPressureProjection, TokenUsageProjection } from '@deepseek-ai/dsh-token-meter'
@@ -111,7 +112,7 @@ export interface StreamingState {
 
 /** One tool call sent but with no `tool/result` yet, for the live region's spinner row; collapses into the transcript's one-line summary once its result lands. */
 export interface PendingToolCall {
-  readonly callId: CallId
+  readonly callId: ToolCallId
   readonly name: string
   readonly arguments: string
 }
@@ -190,18 +191,24 @@ export class TuiStore {
   private state: TuiState
   private readonly listeners = new Set<Listener>()
   private lastSeq: number
-  // Not part of TuiState: mid-stream assembly state for the in-flight step,
-  // rebuilt fresh whenever a chunk's `{turn, step}` doesn't match the last one.
+  // Not part of TuiState: mid-stream assembly state for the in-flight
+  // attempt, rebuilt fresh on every `agent/assistant-stream` 'start' frame.
+  // Session format v2 no longer persists per-token `assistant/chunk` events
+  // in the durable log (see acryl-harness-runtime's `subscribeAssistantStream`
+  // doc) — live typing now comes from this process-local frame stream instead
+  // of `appendEvent`; keyed by `attemptId` (not just `{turn, step}`) so a
+  // stale chunk/end from a superseded attempt at the same turn/step is
+  // ignored rather than corrupting the current one.
   private streamingAssembler: BlockAssembler | undefined
-  private streamingKey: { turn: number; step: number } | undefined
+  private streamingKey: { attemptId: LlmAttemptId; turn: number; step: number } | undefined
   // Not part of TuiState either: a `tool/result` event carries no name/arguments
   // of its own (only `message.source.callId`), so a later `presentResult` needs
   // this O(1) lookup back to its `tool/call` rather than an O(n) history scan.
-  private readonly toolCalls = new Map<CallId, { name: string; arguments: string }>()
+  private readonly toolCalls = new Map<ToolCallId, { name: string; arguments: string }>()
   // Backing map for `pendingToolCalls`: insertion-ordered so its `.values()`
   // snapshot lists calls in the order they were sent, same as `toolCalls`
   // above but pruned as each call's result lands.
-  private readonly pendingToolCallsMap = new Map<CallId, { name: string; arguments: string }>()
+  private readonly pendingToolCallsMap = new Map<ToolCallId, { name: string; arguments: string }>()
 
   constructor(initial: { events: readonly SessionEvent[] }) {
     const lastSeq = initial.events.at(-1)?.seq ?? 0
@@ -216,11 +223,7 @@ export class TuiStore {
       }
     }
     this.state = {
-      // `assistant/chunk` rows from a prior session are never folded into
-      // `streaming` (see appendEvent/foldChunk) — dropping them here too
-      // keeps a resumed session's <Static> transcript free of dead entries
-      // that would only ever render as null.
-      events: initial.events.filter(event => event.type !== 'assistant/chunk'),
+      events: initial.events,
       replayThrough: lastSeq,
       status: 'idle',
       queued: [],
@@ -244,7 +247,7 @@ export class TuiStore {
   getSnapshot = (): TuiState => this.state
 
   /** The `tool/call` a later `tool/result` correlates with, by `callId`; `undefined` when its call was never seen (e.g. log truncation). */
-  getToolCall = (callId: CallId): { name: string; arguments: string } | undefined => this.toolCalls.get(callId)
+  getToolCall = (callId: ToolCallId): { name: string; arguments: string } | undefined => this.toolCalls.get(callId)
 
   subscribe = (listener: Listener): (() => void) => {
     this.listeners.add(listener)
@@ -267,11 +270,7 @@ export class TuiStore {
       this.set({ events: [...this.state.events, event], pendingToolCalls: this.pendingToolCallsSnapshot() })
       return
     }
-    if (event.type === 'assistant/chunk') {
-      this.foldChunk(event.data)
-      return
-    }
-    if (event.type === 'assistant/message') {
+    if (event.type === 'assistant/message' || event.type === 'assistant/attempt') {
       this.streamingAssembler = undefined
       this.streamingKey = undefined
       this.set({ events: [...this.state.events, event], streaming: undefined })
@@ -280,18 +279,42 @@ export class TuiStore {
     this.set({ events: [...this.state.events, event] })
   }
 
+  /**
+   * Fold one process-local `agent/assistant-stream` frame into the in-flight
+   * attempt's live text. Not a `SessionEvent` — this is the presentation-only
+   * seam `appendEvent` no longer covers (see `streamingKey`'s doc comment).
+   */
+  appendAssistantStreamFrame(frame: AssistantStreamFrame): void {
+    if (frame.type === 'start') {
+      this.streamingAssembler = new BlockAssembler()
+      this.streamingKey = { attemptId: frame.attemptId, turn: frame.turn, step: frame.step }
+      return
+    }
+    if (frame.attemptId !== this.streamingKey?.attemptId) return // stale frame from a superseded attempt
+    if (frame.type === 'chunk') {
+      this.foldChunk(frame.chunk)
+      return
+    }
+    // 'end': the loop appends the durable assistant/message|assistant/attempt
+    // settlement before a *committed* end frame, so appendEvent's handler
+    // above already cleared streaming for that case — this only matters for
+    // an *abandoned* end (turn cancelled/interrupted with no settlement at
+    // all), where this frame is the sole signal to stop showing stale text.
+    this.streamingAssembler = undefined
+    this.streamingKey = undefined
+    this.set({ streaming: undefined })
+  }
+
   /** Snapshot `pendingToolCallsMap` into `TuiState`'s array shape, in call order. */
   private pendingToolCallsSnapshot(): PendingToolCall[] {
     return [...this.pendingToolCallsMap.entries()].map(([callId, call]) => ({ callId, ...call }))
   }
 
   /** Fold one raw stream chunk into the in-flight step's live text, keyed by `{turn, step}`. */
-  private foldChunk(data: { turn: number; step: number; chunk: StreamChunk }): void {
-    const { turn, step, chunk } = data
-    if (this.streamingKey?.turn !== turn || this.streamingKey?.step !== step) {
-      this.streamingAssembler = new BlockAssembler()
-      this.streamingKey = { turn, step }
-    }
+  private foldChunk(chunk: StreamChunk): void {
+    // Guaranteed set: appendAssistantStreamFrame only reaches here for a
+    // 'chunk' frame whose attemptId already matched a prior 'start'.
+    const { turn, step } = this.streamingKey!
     this.streamingAssembler!.push(chunk)
     const blocks = this.streamingAssembler!.blocks()
     const text = textOf(blocks)
