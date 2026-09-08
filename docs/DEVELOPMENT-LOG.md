@@ -1,3 +1,73 @@
+## 2026-09-08 - 001 tech-debt ledger: Phases 1-5 closed, all 10 architecture guardrails green
+
+Commits: `401eb7a`, `10ba1b6`, `c1d0a09`, `8ba5ac4`, `ee90704`, `6ae507e`,
+`a7a7f57`, `6acd9c7`.
+
+Closes the credential/authorization boundary move that Phase 0 (previous
+entry) staged for: `acryl-cli/src/tui-app/session.ts` no longer owns
+authorization/credential domain logic.
+
+**Phase 1 — the boundary move.** New `acryl-control` seam:
+`credential/{types,projection}.ts` exports one `AuthMethod` and
+`computeCredentialProjection()` — the single join of `ctx.llm` +
+`ctx.settings` + `ctx.credentials` that `/login` and `/model` both now
+read, replacing session.ts's independent `computeProviderRows`/
+`loadAuthorizationFlows` duplicates (finding R1/R3). `authorization/service.ts`
+exports `AuthorizationService.begin()`: forwards to the underlying
+authorization port, activates the route on success via an injected
+`RouteActivationPort`, and notifies a `credential.changed` listener instead
+of the surface re-running both loaders (R4). Critically, the `-oauth`
+display-name suffix and the retroactive repair loop it needed — the exact
+mechanism that corrupted three provider names into 400-560KB strings,
+per the Phase-0-adjacent incident already logged — are **deleted, not
+moved**: route activation now only ensures a settings profile exists so the
+route registers live; `authMethod` renders as data (a `[oauth]`/`[api]`
+badge), never encoded into the visible name (R2). 9 new unit tests in
+`acryl-control/tests/`.
+
+**Phase 2 — type the domain concepts.** The 4 duplicated
+`'oauth' | 'api-key'` literal unions (`login/types.ts`,
+`modelProfile/types.ts` x2, `LoginOverlay.ts`'s private `AuthType`) and the
+bare `method?: string` at `actions.ts`'s `beginAuthorization` seam are gone,
+replaced by `acryl-control`'s exported `AuthMethod` (R5). All 19 `: any`
+service handles in `session.ts` replaced by typed local ports
+(`SettingsServicePort`/`CredentialsServicePort`/`LlmServicePort`/
+`AuthorizationListPort`/`AgentPresetsServicePort`, extending
+`acryl-control`'s narrower credential/authorization ports where they
+overlap) (R9).
+
+**Phase 3 — UI/state hygiene.** New `acryl-cli/src/tui/listWindow.ts`
+extracts the `listWindow`/`visibleRange` algorithm duplicated verbatim in
+`LoginOverlay.ts` and `ModelProfileOverlay.ts` into one tested helper (R7).
+`LoginOverlay`'s 6-field loose cluster (`step`/`authType`/`authTypeCursor`/
+`chooserSkipped`/`autoSkipChecked`/`listCursor`/`searchQuery`) is now one
+discriminated-union `view: LoginViewState`
+(`{kind:'authType',cursor}|{kind:'list',authType,chooserSkipped,cursor,
+searchQuery}`) (R8); `render()` is pure — the auto-skip decision
+(`autoSkipAuthType`/`effectiveView`) is a fresh computation every call, no
+longer a mutation inside `render()`, which also fixes a real staleness bug
+(a refreshed flow set couldn't previously re-trigger the skip once
+`autoSkipChecked` latched) (R6). Verified with an interactive node-pty
+smoke test driving the actual chooser -> list -> back navigation, not just
+a typecheck.
+
+**Phase 4 (optional).** `scripts/update-upstream.mjs` now records
+`runtimePackageVersion` alongside `sourceVersion` at every sync, so future
+upstream syncs stop the two drifting; today's pre-existing divergence
+(`sourceVersion` 0.1.3-alpha.2 vs `runtimePackageVersion` 0.1.1-rc.2) is
+deliberately left unforced — reconciling it means bumping ~100 `dsh-*`
+dependency ranges to an unpublished npm family, its own reviewed step.
+`T022` (draining `acryl-desktop`'s own harness composition into
+`acryl-harness-runtime`) stays PENDING, blocked on the M3 ledger.
+
+**Phase 5 — proof & close.** `debt:check` (the guardrail script) wired
+into `.github/workflows/ci.yml` and local `pnpm run check`, so a future
+regression on any closed finding fails the gate. All 10 guardrails
+(G1-G10) report PASS; `corepack pnpm run check` passes plainly end to end.
+The ledger stays **Active** — it is a standing, cyclic home for ACRYL debt,
+not a one-shot feature; this batch is closed, `tasks.md` reflects it, and
+T022 is already queued as the next item once its dependency lands.
+
 ## 2026-09-08 - acryl-tui renamed to acryl-cli; 001 tech-debt ledger opened, Phase 0 closed
 
 Commits: `42c4177`, `79fc28c`, `8d73826`, `7c460f8`, `f03586c`, `f03b28a`,

@@ -76,43 +76,43 @@
 - `credential-projection.spec.ts` (T009/T010/T012)
 - `authorization-service.spec.ts` (T011)
 
-- [ ] T009 [P] Define `AuthMethod` (`'oauth' | 'api-key'`) and the typed `CredentialProjection` read-model type in `acryl-control`.
+- [x] T009 [P] Define `AuthMethod` (`'oauth' | 'api-key'`) and the typed `CredentialProjection` read-model type in `acryl-control`.
   - Why: the concept is duplicated 4× and the seam uses `string` (R5); the projection needs a shared shape (R3).
   - Depends on: none. Touches `acryl-control/src/contracts/session.ts` (or a new `credentials.ts`).
   - RED/GREEN proof: `corepack pnpm --filter acryl-control run typecheck` passes.
   - Acceptance test: `corepack pnpm --filter acryl-control run test -- credential-projection` → `Acceptance/README.md` T009. Green when `AuthMethod` is exported and `CredentialProjection` has one field set (`hasCredential`, `hasSettingsProfile`, `isLive`, `authMethod`).
 
-- [ ] T010 Implement the `CredentialProjection` service (read-model) in `acryl-control`.
+- [x] T010 Implement the `CredentialProjection` service (read-model) in `acryl-control`.
   - Why: `/login` and `/model` each re-join `ctx.llm` + `ctx.settings` + `ctx.credentials` independently today (R1/R3).
   - Depends on: T009.
   - RED/GREEN proof: `corepack pnpm --filter acryl-control run test -- credential-projection` (stub llm/settings/credentials; assert the joined row).
   - Acceptance test: `corepack pnpm --filter acryl-control run test -- credential-projection` → `Acceptance/README.md` T010. Green when the projection returns the joined row with `authMethod`/`isLive` and `configured` appears once per row.
 
-- [ ] T011 Implement `AuthorizationService.begin()` in `acryl-control`.
+- [x] T011 Implement `AuthorizationService.begin()` in `acryl-control`.
   - Why: the surface currently runs the whole interaction and persists display names (R1/R2).
   - Depends on: T009.
   - RED/GREEN proof: `corepack pnpm --filter acryl-control run test -- authorization-service` (stub `authorization`; assert forwards + event).
   - Acceptance test: `corepack pnpm --filter acryl-control run test -- authorization-service` → `Acceptance/README.md` T011. Green when `begin` forwards `{key, method, interaction}` and emits `credential.changed`.
 
-- [ ] T012 Emit and subscribe to `credential.changed` instead of `refreshCredentialState()`.
+- [x] T012 Emit and subscribe to `credential.changed` instead of `refreshCredentialState()`.
   - Why: the shotgun re-fetch of both overlays (R4).
   - Depends on: T010/T011.
   - RED/GREEN proof: guardrail `G8` green; add a test that a `credential.changed` event invalidates only the affected consumer.
   - Acceptance test: guardrail `G8` + `corepack pnpm --filter acryl-control run test -- credential-projection` → `Acceptance/README.md` T012. Green when `G8 PASS` and no dual reload loop.
 
-- [ ] T013 Migrate `/login` and `/model` read paths to consume `CredentialProjection` (delete the surface's own join logic).
+- [x] T013 Migrate `/login` and `/model` read paths to consume `CredentialProjection` (delete the surface's own join logic).
   - Why: remove `computeProviderRows`/`loadAuthorizationFlows` duplicate joins from `session.ts` (R1).
   - Depends on: T010.
   - RED/GREEN proof: `corepack pnpm --filter acryl-cli run typecheck` + guardrail `G1` (FAIL while `session.ts` defines the functions → PASS after removal).
   - Acceptance test: guardrail `G1` + `corepack pnpm --filter acryl-cli run typecheck` → `Acceptance/README.md` T013. Green when `G1 PASS` (session.ts no longer defines the joins).
 
-- [ ] T014 Route `beginAuthorization` through `AuthorizationService`; delete the `-oauth` display-name rewrite and the retroactive repair loop; render `authMethod` as a badge.
+- [x] T014 Route `beginAuthorization` through `AuthorizationService`; delete the `-oauth` display-name rewrite and the retroactive repair loop; render `authMethod` as a badge.
   - Why: the suffix encodes internal state into the visible name and drives a repair loop (R2).
   - Depends on: T011.
   - RED/GREEN proof: guardrail `G2` FAIL (7 `-oauth`) → PASS (0); `corepack pnpm --filter acryl-cli run typecheck` green.
   - Acceptance test: guardrail `G2` + `corepack pnpm --filter acryl-cli run test` → `Acceptance/README.md` T014. Green when `G2 PASS` (0 `-oauth`) and `authMethod` renders as a badge.
 
-- [ ] T015 Remove the surface's duplicated `ensureProviderActivated` copy once the service owns activation.
+- [x] T015 Remove the surface's duplicated `ensureProviderActivated` copy once the service owns activation.
   - Why: it is a second implementation of provider activation in the surface (R1).
   - Depends on: T014.
   - RED/GREEN proof: guardrail `G1` stays GREEN; `corepack pnpm --filter acryl-cli run test` green.
@@ -124,13 +124,13 @@
 
 ## Phase 2 — Type the domain concepts (R5/R9)
 
-- [ ] T016 [P] Use the exported `AuthMethod` at the action seam and delete the local `AuthType` + duplicated unions.
+- [x] T016 [P] Use the exported `AuthMethod` at the action seam and delete the local `AuthType` + duplicated unions.
   - Why: 4 `'oauth' | 'api-key'` declarations + `method?: string` (R5).
   - Depends on: T009.
   - RED/GREEN proof: guardrail `G4` FAIL → PASS (`authMethod` declarations ≤ 1, seam typed).
   - Acceptance test: guardrail `G4` + `corepack pnpm --filter acryl-cli run typecheck` → `Acceptance/README.md` T016. Green when `G4 PASS` and `beginAuthorization(key, method: AuthMethod)`.
 
-- [ ] T017 [P] Remove `: any` on every runtime service handle in `acryl-cli/src`; use typed `ctx.get(...)` or a typed port.
+- [x] T017 [P] Remove `: any` on every runtime service handle in `acryl-cli/src`; use typed `ctx.get(...)` or a typed port.
   - Why: 19 `: any` defeat the typed contract (R9).
   - Depends on: Phase 1.
   - RED/GREEN proof: `corepack pnpm --filter acryl-cli run typecheck` green + `grep -c ': any' acryl-cli/src/tui-app/session.ts` → 19 (RED) → 0 (GREEN).
@@ -142,19 +142,19 @@
 
 ## Phase 3 — UI/state hygiene (R6/R7/R8)
 
-- [ ] T018 Make `render()` pure: compute the step/auto-skip decision during the data transition, not inside `render`.
+- [x] T018 Make `render()` pure: compute the step/auto-skip decision during the data transition, not inside `render`.
   - Why: `render()` mutates component state; the `autoSkipChecked` latch prevents re-evaluation (R6).
   - Depends on: Phase 1.
   - RED/GREEN proof: guardrail `G6` FAIL → PASS; `corepack pnpm --filter acryl-cli run test` green.
   - Acceptance test: guardrail `G6` + `corepack pnpm --filter acryl-cli run test` → `Acceptance/README.md` T018. Green when `G6 PASS` (render is pure).
 
-- [ ] T019 Extract `listWindow`/`visibleRange` into one narrow, owned helper used by both overlays.
+- [x] T019 Extract `listWindow`/`visibleRange` into one narrow, owned helper used by both overlays.
   - Why: duplicated container-slicing algorithm (R7).
   - Depends on: none (parallel with T018).
   - RED/GREEN proof: guardrail `G5` FAIL (2+2 defs) → PASS (≤1 each).
   - Acceptance test: guardrail `G5` + `corepack pnpm --filter acryl-cli run typecheck` → `Acceptance/README.md` T019. Green when `G5 PASS` (one definition of each).
 
-- [ ] T020 Refactor `LoginOverlay` view state into a discriminated union (`{kind:'authType'} | {kind:'list'} | {kind:'prompt'}`).
+- [x] T020 Refactor `LoginOverlay` view state into a discriminated union (`{kind:'authType'} | {kind:'list'} | {kind:'prompt'}`).
   - Why: the 9-field loose cluster can drift inconsistent (R8).
   - Depends on: T018.
   - RED/GREEN proof: guardrail `G7` FAIL → PASS; overlay tests green.
@@ -166,7 +166,7 @@
 
 ## Phase 4 — Cross-surface / optional maintenance
 
-- [ ] T021 [P] Align `runtimePackageVersion === sourceVersion` at each `upstream:update`.
+- [x] T021 [P] Align `runtimePackageVersion === sourceVersion` at each `upstream:update`.
   - Why: presets read from a newer source than the runtime consumes (R13b). Optional consistency upgrade.
   - Depends on: T003/T004.
   - RED/GREEN proof: `corepack pnpm run check:layout` passes; `upstream.json` versions equal.
@@ -182,13 +182,13 @@
 
 ## Phase 5 — Proof & ledger close
 
-- [ ] T023 Wire the guardrail script into the test gate so the architectural move can't regress.
+- [x] T023 Wire the guardrail script into the test gate so the architectural move can't regress.
   - Why: proofs must be durable, not one-off (Laws: mechanism carries the guarantee).
   - Depends on: Phase 1–3 green.
   - RED/GREEN proof: add `node .../proof/architecture-guardrails.mjs` to `scripts/`/CI; guardrails stay GREEN on every run.
   - Acceptance test: guardrail script wired to CI → `Acceptance/README.md` T023. Green when guardrails run green on every CI run.
 
-- [ ] T024 Close the ledger: run all guardrails to green, record evidence, mark tasks done, add the dev-log checkpoint.
+- [x] T024 Close the ledger: run all guardrails to green, record evidence, mark tasks done, add the dev-log checkpoint.
   - Why: the ledger is the source of truth and must not appear active when closed.
   - Depends on: all.
   - RED/GREEN proof: guardrail script exits 0; `corepack pnpm run check` green; `git status` clean for the moved code.
