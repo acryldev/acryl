@@ -33,7 +33,11 @@ if (!npmrc.includes('node-linker=isolated\n')) fail('the product workspace must 
 if (!npmrc.includes('TUI owns its independent React 19 graph.')) {
   fail('the PNPM linker policy must record the separate React peer graphs')
 }
-if (pnpmWorkspace !== `nodeLinker: isolated
+// Checked as a prefix, not full-file equality: pnpm appends its own
+// auto-managed `minimumReleaseAgeExclude:` list (every currently-resolved
+// package, regenerated on install) after this point, which is pnpm's
+// responsibility to keep correct, not a hand-authored policy this gate owns.
+const OWNED_WORKSPACE_POLICY = `nodeLinker: isolated
 
 packages:
   - acryl-control
@@ -64,10 +68,10 @@ overrides:
 # omit the type package from their manifests. Their web surface is React 18;
 # acryl-cli separately owns Ink's React 19 types.
 packageExtensions:
-  '@deepseek-ai/dsh-client-ui-primitives@0.1.1-rc.2':
+  '@deepseek-ai/dsh-client-ui-primitives@${upstream.runtimePackageVersion}':
     dependencies:
       '@types/react': 18.3.31
-  '@deepseek-ai/dsh-client-ui-slots@0.1.1-rc.2':
+  '@deepseek-ai/dsh-client-ui-slots@${upstream.runtimePackageVersion}':
     dependencies:
       '@types/react': 18.3.31
   'lucide-react@1.34.0':
@@ -75,20 +79,11 @@ packageExtensions:
       '@types/react': 18.3.31
 
 patchedDependencies:
-  '@deepseek-ai/dsh-app-boot@0.1.1-rc.2': patches/dsh-app-boot@0.1.1-rc.2.patch
-  '@deepseek-ai/dsh-client-ui-directory-picker-browse@0.1.1-rc.2': patches/dsh-client-ui-directory-picker-browse@0.1.1-rc.2.patch
-  '@deepseek-ai/dsh-client-ui-settings-models@0.1.1-rc.2': patches/dsh-client-ui-settings-models@0.1.1-rc.2.patch
-  '@deepseek-ai/dsh-client-ui-trajectory@0.1.1-rc.2': patches/dsh-client-ui-trajectory@0.1.1-rc.2.patch
-  '@deepseek-ai/dsh-client-ui-workspace@0.1.1-rc.2': patches/dsh-client-ui-workspace@0.1.1-rc.2.patch
-  '@deepseek-ai/dsh-llm-deepseek@0.1.1-rc.2': patches/dsh-llm-deepseek@0.1.1-rc.2.patch
-  '@deepseek-ai/dsh-sandbox-windows-acl@0.1.1-rc.2': patches/dsh-sandbox-windows-acl@0.1.1-rc.2.patch
-  '@deepseek-ai/dsh-web-app@0.1.1-rc.2': patches/dsh-web-app@0.1.1-rc.2.patch
-  '@earendil-works/pi-ai@0.82.1': patches/@earendil-works__pi-ai@0.82.1.patch
-  '@earendil-works/pi-tui@0.84.2': patches/@earendil-works__pi-tui@0.84.2.patch
-  app-builder-lib@26.15.7: patches/app-builder-lib@26.15.7.patch
-  dshmarket@1.17.1: patches/dshmarket@1.17.1.patch
-  node-pty@1.2.0-beta.15: patches/node-pty@1.2.0-beta.15.patch
-
+`
+if (!pnpmWorkspace.startsWith(OWNED_WORKSPACE_POLICY)) {
+  fail('pnpm-workspace.yaml must define the owned workspace, patch, and native-build policies')
+}
+if (!pnpmWorkspace.includes(`
 supportedArchitectures:
   os:
     - current
@@ -96,8 +91,8 @@ supportedArchitectures:
     - current
     - x64
     - arm64
-`) {
-  fail('pnpm-workspace.yaml must define the owned workspace, patch, native-build, and universal macOS policies')
+`)) {
+  fail('pnpm-workspace.yaml must define the universal macOS/native-build policy')
 }
 for (const [name, manifest] of [
   ['acryl-desktop', plugin],
