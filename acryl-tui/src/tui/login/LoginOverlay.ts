@@ -146,7 +146,7 @@ export class LoginOverlay implements Component {
     if (flows.length > maxVisible) lines.push(muted(`(${this.listCursor + 1}/${flows.length})`))
     if (login.flows !== undefined && flows.length === 0) lines.push(muted('No matching providers.'))
     const back = this.chooserSkipped ? 'esc close' : 'esc back'
-    lines.push(muted(`type to search · ↑↓ select · enter sign in · ctrl+e edit key/models (if configured) · ctrl+p add custom provider · ${back}`))
+    lines.push(muted(`type to search · ↑↓ select · enter sign in (or edit key/models if already configured) · ctrl+p add custom provider · ${back}`))
     return lines
   }
 
@@ -258,7 +258,17 @@ export class LoginOverlay implements Component {
     }
     if (matchesKey(data, Key.enter)) {
       const flow = flows[this.listCursor]
-      if (flow !== undefined) this.actions.beginAuthorization(flow.key, this.authType)
+      if (flow === undefined) return
+      // A configured route has nothing left to "sign in" to — re-running
+      // authorization blindly (no indication anything was already there) is
+      // almost never what selecting it means. Show what's actually stored
+      // instead, the same screen ctrl+e opens; only an unconfigured route
+      // still starts a fresh sign-in.
+      if (flow.configured && flow.key.startsWith('llm-pi-ai/')) {
+        this.actions.openProviderEditor(flow.key.slice('llm-pi-ai/'.length))
+      } else {
+        this.actions.beginAuthorization(flow.key, this.authType)
+      }
       return
     }
     const next = miniTextFieldInput(this.searchQuery, data)
