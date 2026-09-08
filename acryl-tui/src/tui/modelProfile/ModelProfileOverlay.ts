@@ -217,7 +217,7 @@ export class ModelProfileOverlay implements Component {
     if (filtered.length > maxVisible) lines.push(muted(`(${this.modelPickerCursor + 1}/${filtered.length})`))
     if (all.length === 0 && mp.providers !== undefined) lines.push(muted('No models available yet — use /login to sign in to a provider.'))
     else if (filtered.length === 0) lines.push(muted('No matching models.'))
-    lines.push(muted('type to search · ↑↓ select · enter set active · ctrl+p manage providers · esc close'))
+    lines.push(muted('type to search · ↑↓ select · enter set active · ctrl+p manage providers (add/remove models) · esc close'))
     return lines
   }
 
@@ -273,7 +273,7 @@ export class ModelProfileOverlay implements Component {
     })
     if ((providers?.length ?? 0) > maxVisible) lines.push(muted(`(${selected + 1}/${providers?.length ?? 0})`))
     if (providers?.length === 0) lines.push(muted('No providers configured yet — press a to add one.'))
-    lines.push(muted('↑↓ select · enter edit · a add · d delete · m edit models · s set active model · esc back'))
+    lines.push(muted('↑↓ select · enter edit · ctrl+n add · ctrl+x delete · ctrl+e edit models · ctrl+a set active model · esc back'))
     return lines
   }
 
@@ -284,7 +284,7 @@ export class ModelProfileOverlay implements Component {
       return
     }
     if (providers === undefined || providers.length === 0) {
-      if (data === 'a') this.actions.createProvider()
+      if (matchesKey(data, Key.ctrl('n'))) this.actions.createProvider()
       return
     }
     if (matchesKey(data, Key.up)) {
@@ -301,22 +301,22 @@ export class ModelProfileOverlay implements Component {
       this.actions.editProvider(providers[selected].route)
       return
     }
-    if (data === 'a') {
+    if (matchesKey(data, Key.ctrl('n'))) {
       this.actions.createProvider()
       return
     }
-    if (data === 'm') {
+    if (matchesKey(data, Key.ctrl('e'))) {
       this.pendingShowModels = true
       this.actions.editProvider(providers[selected].route)
       return
     }
-    if (data === 's') {
+    if (matchesKey(data, Key.ctrl('a'))) {
       const row = providers[selected]
       const model = row.models[0]
       if (model !== undefined) this.actions.setActiveModel(row.route, model.id)
       return
     }
-    if (data === 'd') {
+    if (matchesKey(data, Key.ctrl('x'))) {
       if (this.confirmDelete === selected) {
         this.confirmDelete = undefined
         this.actions.deleteProvider(providers[selected])
