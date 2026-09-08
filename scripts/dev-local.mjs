@@ -7,7 +7,13 @@ import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-export const ACRYL_DSH_HOME_DIR_NAME = '.dsh-acryl'
+// Deliberately its own root, sibling to (not nested inside) ACRYL's normal
+// `~/.acryl` — an isolated dev run must never collide with the home a real
+// packaged ACRYL install uses (`resolveAcrylDshHome()`'s `~/.acryl/.dsh`
+// default, see acryl-harness-runtime/src/acryl-home.ts), or with a stock DSH
+// Desktop install (dshdesktop.com), which uses plain `~/.dsh`.
+export const ACRYL_DEV_HOME_DIR_NAME = '.acryl-dev'
+export const ACRYL_DSH_ENGINE_DIR_NAME = '.dsh'
 export const ACRYL_USER_DATA_PRODUCT_NAME = 'ACRYL Development'
 
 /**
@@ -21,7 +27,7 @@ export function resolveLocalDesktopRoots(
   homeDirectory = homedir(),
   environment = process.env,
 ) {
-  const dshHome = join(homeDirectory, ACRYL_DSH_HOME_DIR_NAME)
+  const dshHome = join(homeDirectory, ACRYL_DEV_HOME_DIR_NAME, ACRYL_DSH_ENGINE_DIR_NAME)
   if (platform === 'win32') {
     const appData = environment.APPDATA
     if (typeof appData !== 'string' || appData.length === 0) {

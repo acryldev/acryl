@@ -14,8 +14,8 @@ import {
   type FailLoudProcess,
 } from '@deepseek-ai/dsh-app-boot'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
-import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 import { DSH_LAUNCH_ENVIRONMENT_KEY } from '@deepseek-ai/dsh-launch-environment'
+import { resolveAcrylDshHome } from 'acryl-harness-runtime'
 import {
   installDesktopDshRuntime,
   installDesktopPnpmRuntime,
@@ -442,7 +442,12 @@ async function start(): Promise<void> {
       platform: process.platform,
     })
     for (const [name, value] of Object.entries(shellEnvironmentResolution.updates)) process.env[name] = value
-    const homeDir = resolveDshHome()
+    // ACRYL's own root nests each engine's data under it (`~/.acryl/.dsh` for
+    // the DSH engine) so it never silently shares state with a stock DSH
+    // Desktop install (dshdesktop.com), which uses plain `~/.dsh` — an
+    // explicit $DSH_HOME still wins, same precedence as resolveDshHome() itself.
+    process.env.DSH_HOME = resolveAcrylDshHome()
+    const homeDir = process.env.DSH_HOME
     const windowsVolumeConcerns = diagnoseWindowsVolumes(process.platform, [
       { label: 'application install', path: process.execPath },
       { label: 'desktop user data', path: app.getPath('userData') },

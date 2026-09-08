@@ -18,6 +18,12 @@ export {
   installSessionLogExporter,
   type InstallSessionLogExporterOptions,
 } from './session-log-exporter.ts'
+export {
+  ACRYL_DSH_ENGINE_DIR_NAME,
+  ACRYL_HOME_DIR_NAME,
+  resolveAcrylDshHome,
+  resolveAcrylHome,
+} from './acryl-home.ts'
 
 import { writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -34,6 +40,7 @@ import {
   resolveProfileDir,
 } from '@deepseek-ai/dsh-app-boot'
 
+import { resolveAcrylDshHome } from './acryl-home.ts'
 import { createAcrylCodingCapabilityPatches } from './coding-capabilities.ts'
 import { installAcrylWorkspaceStatusTool } from './plugin-acryl-workspace-status.ts'
 import { installSessionLogExporter } from './session-log-exporter.ts'
@@ -58,6 +65,7 @@ export async function bootAcrylHarnessProfile(
   options: BootAcrylHarnessProfileOptions,
 ): Promise<AcrylHarnessRuntime> {
   if (options.profile.trim() === '') throw new Error('ACRYL Harness profile must not be empty')
+  process.env.DSH_HOME = resolveAcrylDshHome()
   const profileDirectory = resolveProfileDir(options.profile)
   initProfile(profileDirectory, DEFAULT_PROFILE_BUNDLES)
   healProfilesModuleFallback(dshInstallAnchor)
@@ -116,6 +124,7 @@ export async function bootAcrylWebProfile(
   options: BootAcrylWebProfileOptions = {},
 ): Promise<AcrylWebRuntime> {
   const profileName = 'web'
+  process.env.DSH_HOME = resolveAcrylDshHome()
   const profileDirectory = resolveProfileDir(profileName)
   initProfile(profileDirectory, DEFAULT_PROFILE_BUNDLES)
   healProfilesModuleFallback(dshInstallAnchor)
