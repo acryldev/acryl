@@ -1,5 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
-import type { Agent, AgentHandle } from '@deepseek-ai/dsh-agent'
+import { installModelSelection, type Agent, type AgentHandle, type ModelSelectionRef } from '@deepseek-ai/dsh-agent'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { SessionId, type SessionEvent } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-agent-default-model'
@@ -39,6 +39,15 @@ export interface AcrylSessionBridge {
     listener: (event: SessionEvent) => void,
   ): Promise<AcrylSessionEventSubscription>
   submitPrompt(input: { readonly sessionId: string; readonly text: string }): Promise<void>
+  /**
+   * Switch an already-open session's live model. `agentOptions.provider`/`model`
+   * are a one-time construction input to `ctx.agents.create` — not a live
+   * setting — so this is the only thing that changes what a running session
+   * sends its next request to (`ModelSelectionRef` installed on the agent's
+   * own scoped context via `installModelSelection`, per-step prompt assembly
+   * reads it fresh).
+   */
+  selectModel(input: { readonly sessionId: string; readonly provider: string; readonly model: string }): Promise<void>
   cancel(sessionId: string): Promise<void>
   dispose(): Promise<void>
 }
@@ -101,6 +110,8 @@ export function createAcrylSessionBridge(
   options: AcrylSessionBridgeOptions,
 ): AcrylSessionBridge {
   const handles = new Map<string, AgentHandle>()
+  const modelSelections = new Map<string, ModelSelectionRef>()
+  const modelSelectionDisposers = new Map<string, () => void>()
   const subscribers = new Map<string, Set<(snapshot: AcrylSessionSnapshot) => void>>()
   const eventListeners = new Map<string, Set<(event: SessionEvent) => void>>()
   let disposed = false
@@ -170,6 +181,9 @@ export function createAcrylSessionBridge(
             agentOptions: { provider: selection.provider, model: selection.model },
           })
       handles.set(handle.agent.id, handle)
+      const ref: ModelSelectionRef = { current: undefined, assembled: undefined }
+      modelSelectionDisposers.set(handle.agent.id, installModelSelection(handle.agent.ctx, ref))
+      modelSelections.set(handle.agent.id, ref)
       return handle.agent.id
     },
     snapshot,
@@ -235,6 +249,12 @@ export function createAcrylSessionBridge(
       }))
       await accepted
     },
+    async selectModel(input: { readonly sessionId: string; readonly provider: string; readonly model: string }): Promise<void> {
+      agentFor(input.sessionId)
+      const ref = modelSelections.get(input.sessionId)
+      if (ref === undefined) throw new Error(`ACRYL session ${input.sessionId} has no installed model selection`)
+      ref.current = { provider: input.provider, model: input.model }
+    },
     async cancel(sessionId: string): Promise<void> {
       agentFor(sessionId).cancel({ kind: 'user' })
     },
@@ -244,6 +264,9 @@ export function createAcrylSessionBridge(
       offSessionEvent()
       subscribers.clear()
       eventListeners.clear()
+      for (const dispose of modelSelectionDisposers.values()) dispose()
+      modelSelectionDisposers.clear()
+      modelSelections.clear()
       // Durable continuity: idle the turn, checkpoint the session log, then
       // release the native handle. Mirror of Tomo's shutdown sequence, owned
       // here so every surface gets the same durability guarantee.
