@@ -328,22 +328,26 @@ class TuiApp implements TuiHandle {
     // ACRYL mark + session info. Unlike the old whale banner this does not
     // scroll with the transcript — the pet stays put while the conversation
     // scrolls.
-    const headerInfo = new DynamicText(() => {
-      const { provider, model, cwd } = options
-      const mark = ACRYL_MARK_ROWS.map(row => fg(theme.primary)(row)).join('\n')
-      return [mark, '', `${provider}/${model}`, cwd].join('\n')
-    })
+    const headerMark = new DynamicText(() => ACRYL_MARK_ROWS.map(row => fg(theme.primary)(row)).join('\n'))
     const header = new HStack(
       [
         { component: this.pet, basis: 34, shrink: 0 },
-        { component: headerInfo, basis: 'auto', grow: 1 },
+        { component: headerMark, basis: 'auto', grow: 1 },
       ],
       { gap: 1, align: 'start' },
     )
+    // Session info (provider/model, cwd) is its own full-width row below the
+    // pet+mark row, left-aligned to column 0 — not indented to sit beside the
+    // pet the way it read as part of the same right-hand column before.
+    const sessionInfo = new DynamicText(() => {
+      const { provider, model, cwd } = options
+      return [`${provider}/${model}`, cwd].join('\n')
+    })
 
     const layoutRoot = new VStack(
       [
         { component: header, basis: 'auto', shrink: 0 },
+        { component: sessionInfo, basis: 'auto', shrink: 0 },
         { component: transcriptScrollView, basis: 0, grow: 1, minSize: 1 },
         { component: dock, basis: 'auto', shrink: 1, minSize: 1 },
       ],

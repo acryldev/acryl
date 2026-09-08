@@ -13,12 +13,3 @@ export function noApiKeyMessage(provider: string): string {
   const display = provider.trim() === '' ? 'the selected provider' : provider
   return `No API key configured for ${display}. Run /login to add one.`
 }
-
-export function logoutSuccessMessage(provider: string): string {
-  const display = provider.trim() === '' ? 'provider' : provider
-  return `Removed stored authentication for ${display}.`
-}
-
-export function logoutNoneMessage(): string {
-  return 'No active provider is selected; nothing to log out.'
-}

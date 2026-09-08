@@ -21,7 +21,6 @@ import type { PluginRow } from '../tui/plugins/types.js'
 import { deriveApiKeyRef, maskKeyPreview, type ProviderDraft, type ProviderRow, type StoredProviderProfile } from '../tui/modelProfile/types.js'
 import type { AgentPresetRow } from '../tui/agentPresets/types.js'
 import { loadFileIndex } from '../tui/fileIndex.js'
-import { logoutNoneMessage, logoutSuccessMessage } from '../tui/auth-guidance.js'
 import { stripSessionIdPrefix } from '../sessionId.js'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { ManualCompactionError } from '@deepseek-ai/dsh-compaction'
@@ -612,31 +611,18 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
       store.updateLogin({ prompt: undefined })
       if (resolve !== undefined) resolve(value)
     },
+    // `/logout` used to silently guess a single provider (the current default
+    // model's, or the only configured one) and delete its credential with no
+    // list, no confirmation — and for an OAuth route it only ever unset the
+    // unused apiKeyEnv ref, never the actual login record, so it didn't even
+    // fully sign the route out. Open `/model`'s provider list instead: it
+    // already shows every route with its auth method, and Ctrl+D on a
+    // selected row (`clearApiKey`) correctly clears both the api-key ref and
+    // any OAuth grant.
     logout() {
-      void (async () => {
-        const credentialsSvc: any = host.ctx.get('credentials')
-        if (credentialsSvc === undefined) {
-          store.setNotice('Credentials are not available in this profile.')
-          return
-        }
-        const selection = host.ctx.get('agentDefaultModel')?.currentSelection?.() as { provider?: string } | undefined
-        const overlay = store.getSnapshot().overlay
-        const cached = overlay.kind === 'modelProfile' ? overlay.modelProfile.providers : undefined
-        const rows = cached ?? await computeProviderRows()
-        const row = rows?.find(entry => entry.route === selection?.provider)
-          ?? (rows !== undefined && rows.length === 1 ? rows[0] : undefined)
-        if (row === undefined) {
-          store.setNotice(logoutNoneMessage())
-          return
-        }
-        try {
-          await credentialsSvc.unset(row.apiKeyRef)
-          store.setNotice(logoutSuccessMessage(row.displayName))
-          refreshCredentialState()
-        } catch (error) {
-          store.setNotice(`logout failed: ${error instanceof Error ? error.message : String(error)}`)
-        }
-      })()
+      store.openModelProfile()
+      store.setNotice('Select a provider, then Ctrl+D to sign out.')
+      void loadProviders()
     },
     openTrajectory() { store.openTrajectory() },
     openToolCards() { store.openToolCards() },
