@@ -18,6 +18,19 @@ reversible commits, keep the spec ledger current. Precedence is explicit: the
 constitution, Cordis guide, and ACRYL control-surface design win; this section
 is coding-style and boundary discipline, not a second architecture.
 
+## 2026-09-08 - pnpm devEngines declaration makes the version contract explicit
+
+Commit: `65938ce`
+
+Declared the pinned `pnpm@11.8.0` in `package.json` `devEngines.packageManager`
+with `onFail: warn`. The root scripts call bare `pnpm`, so when the active
+pnpm on `PATH` differs from the pinned (e.g. a global install shadowing
+corepack), pnpm's version guard hard-failed with a cryptic corepack message
+and blocked the whole headless gate. Declaring `devEngines.packageManager`
+makes the contract explicit and downgrades the guard to a `[WARN]`, so
+`corepack pnpm run check` proceeds and still surfaces a mismatch. Verified:
+`corepack pnpm run typecheck` now exits 0 instead of dying at the guard.
+
 ## 2026-09-08 - 001 tech-debt ledger: Phases 1-5 closed, all 10 architecture guardrails green
 
 Commits: `401eb7a`, `10ba1b6`, `c1d0a09`, `8ba5ac4`, `ee90704`, `6ae507e`,
