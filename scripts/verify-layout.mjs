@@ -18,6 +18,7 @@ const upstream = readJson('upstream.json')
 const plugin = readJson('acryl-desktop/package.json')
 const canvas = readJson('acryl-development-canvas/package.json')
 const control = readJson('acryl-control/package.json')
+const harness = readJson('acryl-harness-runtime/package.json')
 const tui = readJson('acryl-tui/package.json')
 const web = readJson('acryl-web/package.json')
 const fabric = readJson('dsh-community-fabric/package.json')
@@ -102,7 +103,7 @@ for (const [name, manifest] of [
   ['acryl-desktop', plugin],
   ['acryl-development-canvas', canvas],
   ['acryl-control', control],
-  ['acryl-harness-runtime', readJson('acryl-harness-runtime/package.json')],
+  ['acryl-harness-runtime', harness],
   ['acryl-npm-launcher', readJson('acryl-npm-launcher/package.json')],
   ['acryl-tui', tui],
   ['acryl-web', web],
@@ -164,7 +165,9 @@ for (const [owner, manifest] of [
   ['desktop', plugin],
   ['canvas', canvas],
   ['control', control],
+  ['harness-runtime', harness],
   ['tui', tui],
+  ['web', web],
   ['fabric', fabric],
   ['market', market],
 ]) {
