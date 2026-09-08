@@ -21,6 +21,7 @@ import type { AuthMethod } from 'acryl-control'
 import type { TuiActions } from '../actions.js'
 import type { TuiStore } from '../store.js'
 import { emptyMiniTextField, miniTextFieldInput, renderMiniTextField, type MiniTextFieldState } from '../miniTextField.js'
+import { listWindow, visibleRange } from '../listWindow.js'
 import type { AuthorizationFlowRow, LoginOverlayState, LoginPromptState } from './types.js'
 import { theme, fg } from '../theme.js'
 
@@ -42,20 +43,29 @@ const AUTH_TYPE_LABELS: Record<AuthMethod, string> = {
   'api-key': 'Sign in with an API key',
 }
 
-export class LoginOverlay implements Component {
-  // Step-one (auth-type chooser) local state.
-  private step: 'authType' | 'list' = 'authType'
-  private authType: AuthMethod | undefined
-  private authTypeCursor = 0
-  // Whether step one was skipped because the loaded flows only offered one
-  // method type — determines whether Escape from the list goes back to the
-  // chooser or closes the overlay outright.
-  private chooserSkipped = false
-  private autoSkipChecked = false
+/**
+ * The overlay's own step state, as a discriminated union rather than a loose
+ * field cluster (specs/001-acryl-refactor-improvements-and-tech-debt, R8):
+ * each variant carries exactly the fields that step owns, so they can never
+ * drift inconsistent (e.g. `chooserSkipped` true while still on the chooser).
+ * `chooserSkipped` lives inside the `list` variant because it only has
+ * meaning once step two is reached — it decides what Escape does from there.
+ */
+type LoginViewState =
+  | { readonly kind: 'authType'; readonly cursor: number }
+  | {
+      readonly kind: 'list'
+      readonly authType: AuthMethod | undefined
+      readonly chooserSkipped: boolean
+      readonly cursor: number
+      readonly searchQuery: MiniTextFieldState
+    }
 
-  // Step-two (fuzzy provider list) local state.
-  private listCursor = 0
-  private searchQuery: MiniTextFieldState = emptyMiniTextField()
+export class LoginOverlay implements Component {
+  // The one step-machine field this overlay owns; every render/handleInput
+  // call reads it through `effectiveView` (a pure computation — never
+  // mutated inside `render()`, only ever reassigned from `handleInput`).
+  private view: LoginViewState = { kind: 'authType', cursor: 0 }
 
   // Prompt-mode local state: the single-line field for text/secret prompts and
   // the cursor for select prompts. Reinitialized when a fresh prompt arrives.
@@ -69,18 +79,6 @@ export class LoginOverlay implements Component {
   ) {}
 
   invalidate(): void {}
-
-  /** See `ModelProfileOverlay.listWindow` — same overflow bug, same fix: a long provider list (~35 catalog entries) must never push the key-legend hint line past the bottom of the terminal. */
-  private listWindow(chrome: number): number {
-    return Math.max(3, this.tui.terminal.rows - chrome)
-  }
-
-  /** The `[start, end)` slice of `count` items to show so `selected` stays visible within `maxVisible` rows, biased to keep it centered. */
-  private visibleRange(count: number, selected: number, maxVisible: number): { start: number; end: number } {
-    if (count <= maxVisible) return { start: 0, end: count }
-    const start = Math.max(0, Math.min(selected - Math.floor(maxVisible / 2), count - maxVisible))
-    return { start, end: start + maxVisible }
-  }
 
   /**
    * The global one-line notice (`store.setNotice`), rendered inline here.
@@ -96,60 +94,79 @@ export class LoginOverlay implements Component {
     return notice === undefined ? [] : [muted(notice)]
   }
 
-  /** Partition the loaded flows by method type, once, the first time they arrive; auto-advances past the chooser if only one type is on offer. */
-  private maybeAutoSkipChooser(login: LoginOverlayState): void {
-    if (this.autoSkipChecked || login.flows === undefined) return
-    this.autoSkipChecked = true
+  /**
+   * Pure: given the loaded flows, which single method (if any) they all
+   * share — the chooser has nothing to offer when only one method type is
+   * registered at all. Recomputed fresh every call (no cached/latched
+   * result), so a later-refreshed flow set is always re-evaluated instead of
+   * replaying a stale decision (specs/001-…, R6).
+   */
+  private autoSkipAuthType(login: LoginOverlayState): AuthMethod | undefined {
+    if (login.flows === undefined) return undefined
     const hasOAuth = login.flows.some(flow => flow.methods.some(method => method.id === 'oauth'))
     const hasApiKey = login.flows.some(flow => flow.methods.some(method => method.id === 'api-key'))
-    if (hasOAuth === hasApiKey) return // both or neither present: let the user choose
-    this.authType = hasOAuth ? 'oauth' : 'api-key'
-    this.step = 'list'
-    this.chooserSkipped = true
+    return hasOAuth === hasApiKey ? undefined : (hasOAuth ? 'oauth' : 'api-key') // both or neither present: let the user choose
   }
 
-  private filteredFlows(login: LoginOverlayState): readonly AuthorizationFlowRow[] {
+  /**
+   * Pure: the view to actually render/operate against. `this.view` stays the
+   * untouched `authType` default until the user explicitly chooses (Enter on
+   * the chooser) — until then, this derives the auto-skipped `list` view on
+   * every call instead of mutating `this.view` from inside `render()`. The
+   * first `handleInput` mutation against a derived (not-yet-explicit) `list`
+   * view reassigns `this.view` directly (see `handleProviderListInput`), so
+   * cursor/search state persists across renders once the user interacts.
+   */
+  private effectiveView(login: LoginOverlayState): LoginViewState {
+    if (this.view.kind === 'authType') {
+      const auto = this.autoSkipAuthType(login)
+      if (auto !== undefined) return { kind: 'list', authType: auto, chooserSkipped: true, cursor: 0, searchQuery: emptyMiniTextField() }
+    }
+    return this.view
+  }
+
+  private filteredFlows(login: LoginOverlayState, view: Extract<LoginViewState, { kind: 'list' }>): readonly AuthorizationFlowRow[] {
     const all = login.flows ?? []
-    const byType = this.authType === undefined ? all : all.filter(flow => flow.methods.some(method => method.id === this.authType))
-    const query = this.searchQuery.value.trim()
+    const byType = view.authType === undefined ? all : all.filter(flow => flow.methods.some(method => method.id === view.authType))
+    const query = view.searchQuery.value.trim()
     return query === '' ? byType : fuzzyFilter([...byType], query, flow => flow.label)
   }
 
-  private renderAuthTypeChooser(login: LoginOverlayState): string[] {
+  private renderAuthTypeChooser(login: LoginOverlayState, view: Extract<LoginViewState, { kind: 'authType' }>): string[] {
     const lines: string[] = [bold(secondary('Select authentication method'))]
     lines.push(...this.noticeLines())
     if (login.error !== undefined) lines.push(errorColor(login.error))
     if (login.busy && login.flows === undefined) lines.push(muted('Loading…'))
     AUTH_TYPES.forEach((type, index) => {
-      const text = `${index === this.authTypeCursor ? '› ' : '  '}${AUTH_TYPE_LABELS[type]}`
-      lines.push(index === this.authTypeCursor ? invert(text) : text)
+      const text = `${index === view.cursor ? '› ' : '  '}${AUTH_TYPE_LABELS[type]}`
+      lines.push(index === view.cursor ? invert(text) : text)
     })
     lines.push(muted('↑↓ select · enter continue · esc close'))
     return lines
   }
 
-  private renderProviderList(login: LoginOverlayState): string[] {
+  private renderProviderList(login: LoginOverlayState, view: Extract<LoginViewState, { kind: 'list' }>): string[] {
     const lines: string[] = [bold(secondary('Select provider to configure:'))]
     lines.push(...this.noticeLines())
     if (login.error !== undefined) lines.push(errorColor(login.error))
-    lines.push(`> ${renderMiniTextField(this.searchQuery, true)}`)
+    lines.push(`> ${renderMiniTextField(view.searchQuery, true)}`)
     if (login.busy && login.flows === undefined) lines.push(muted('Loading…'))
-    const flows = this.filteredFlows(login)
+    const flows = this.filteredFlows(login, view)
     const chrome = lines.length + 2 // lines pushed so far, plus this list's own final hint line and the "N/total" indicator
-    const maxVisible = this.listWindow(chrome)
-    const { start, end } = this.visibleRange(flows.length, this.listCursor, maxVisible)
+    const maxVisible = listWindow(this.tui.terminal.rows, chrome)
+    const { start, end } = visibleRange(flows.length, view.cursor, maxVisible)
     flows.slice(start, end).forEach((flow, offset) => {
       const index = start + offset
       const marker = flow.inFlight ? '· ' : flow.configured ? '✓ ' : '○ '
       const signingIn = login.signingIn === flow.key ? ' — signing in…' : ''
       const via = flow.authMethod === 'oauth' ? ' [oauth]' : flow.authMethod === 'api-key' ? ' [api]' : ''
       const readyNote = login.signingIn !== flow.key && flow.configured ? ` — ready to use${via}` : ''
-      const text = `${index === this.listCursor ? '› ' : '  '}${marker}${flow.label}${signingIn}${readyNote}`
-      lines.push(index === this.listCursor ? invert(text) : flow.configured ? successColor(text) : text)
+      const text = `${index === view.cursor ? '› ' : '  '}${marker}${flow.label}${signingIn}${readyNote}`
+      lines.push(index === view.cursor ? invert(text) : flow.configured ? successColor(text) : text)
     })
-    if (flows.length > maxVisible) lines.push(muted(`(${this.listCursor + 1}/${flows.length})`))
+    if (flows.length > maxVisible) lines.push(muted(`(${view.cursor + 1}/${flows.length})`))
     if (login.flows !== undefined && flows.length === 0) lines.push(muted('No matching providers.'))
-    const back = this.chooserSkipped ? 'esc close' : 'esc back'
+    const back = view.chooserSkipped ? 'esc close' : 'esc back'
     lines.push(muted(`type to search · ↑↓ select · enter sign in (or edit key/models if already configured) · ctrl+p add custom provider · ${back}`))
     return lines
   }
@@ -182,8 +199,8 @@ export class LoginOverlay implements Component {
     if (overlay.kind !== 'login') return []
     const { login } = overlay
     if (login.prompt !== undefined) return this.renderPrompt(login.prompt)
-    this.maybeAutoSkipChooser(login)
-    return this.step === 'authType' ? this.renderAuthTypeChooser(login) : this.renderProviderList(login)
+    const view = this.effectiveView(login)
+    return view.kind === 'authType' ? this.renderAuthTypeChooser(login, view) : this.renderProviderList(login, view)
   }
 
   handleInput(data: string): void {
@@ -194,8 +211,9 @@ export class LoginOverlay implements Component {
       this.handlePromptInput(data, login.prompt)
       return
     }
-    if (this.step === 'authType') this.handleAuthTypeChooserInput(data)
-    else this.handleProviderListInput(data, login)
+    const view = this.effectiveView(login)
+    if (view.kind === 'authType') this.handleAuthTypeChooserInput(data, view)
+    else this.handleProviderListInput(data, login, view)
   }
 
   private handlePromptInput(data: string, prompt: LoginPromptState): void {
@@ -214,28 +232,24 @@ export class LoginOverlay implements Component {
     if (next !== undefined) this.promptField = next
   }
 
-  private handleAuthTypeChooserInput(data: string): void {
+  private handleAuthTypeChooserInput(data: string, view: Extract<LoginViewState, { kind: 'authType' }>): void {
     if (matchesKey(data, Key.escape)) {
       this.actions.closeLogin()
       return
     }
-    if (matchesKey(data, Key.up)) { this.authTypeCursor = Math.max(0, this.authTypeCursor - 1); return }
-    if (matchesKey(data, Key.down)) { this.authTypeCursor = Math.min(AUTH_TYPES.length - 1, this.authTypeCursor + 1); return }
+    if (matchesKey(data, Key.up)) { this.view = { kind: 'authType', cursor: Math.max(0, view.cursor - 1) }; return }
+    if (matchesKey(data, Key.down)) { this.view = { kind: 'authType', cursor: Math.min(AUTH_TYPES.length - 1, view.cursor + 1) }; return }
     if (matchesKey(data, Key.enter)) {
-      this.authType = AUTH_TYPES[this.authTypeCursor]
-      this.step = 'list'
-      this.listCursor = 0
-      this.searchQuery = emptyMiniTextField()
+      this.view = { kind: 'list', authType: AUTH_TYPES[view.cursor], chooserSkipped: false, cursor: 0, searchQuery: emptyMiniTextField() }
     }
   }
 
-  private handleProviderListInput(data: string, login: LoginOverlayState): void {
+  private handleProviderListInput(data: string, login: LoginOverlayState, view: Extract<LoginViewState, { kind: 'list' }>): void {
     if (matchesKey(data, Key.escape)) {
-      if (this.chooserSkipped) {
+      if (view.chooserSkipped) {
         this.actions.closeLogin()
       } else {
-        this.step = 'authType'
-        this.searchQuery = emptyMiniTextField()
+        this.view = { kind: 'authType', cursor: 0 }
       }
       return
     }
@@ -248,22 +262,22 @@ export class LoginOverlay implements Component {
       this.actions.addCustomProvider()
       return
     }
-    const flows = this.filteredFlows(login)
-    if (matchesKey(data, Key.up)) { this.listCursor = Math.max(0, this.listCursor - 1); return }
-    if (matchesKey(data, Key.down)) { this.listCursor = Math.min(Math.max(0, flows.length - 1), this.listCursor + 1); return }
+    const flows = this.filteredFlows(login, view)
+    if (matchesKey(data, Key.up)) { this.view = { ...view, cursor: Math.max(0, view.cursor - 1) }; return }
+    if (matchesKey(data, Key.down)) { this.view = { ...view, cursor: Math.min(Math.max(0, flows.length - 1), view.cursor + 1) }; return }
     // An already-configured provider's key/models live in /model, not here —
     // this jumps straight to that provider's edit form (masked key preview,
     // Models editor) instead of making the user separately learn /model's own
     // navigation to reach the exact route they just selected here.
     if (matchesKey(data, Key.ctrl('e'))) {
-      const flow = flows[this.listCursor]
+      const flow = flows[view.cursor]
       if (flow !== undefined && flow.configured && flow.key.startsWith('llm-pi-ai/')) {
         this.actions.openProviderEditor(flow.key.slice('llm-pi-ai/'.length))
       }
       return
     }
     if (matchesKey(data, Key.enter)) {
-      const flow = flows[this.listCursor]
+      const flow = flows[view.cursor]
       if (flow === undefined) return
       // A configured route has nothing left to "sign in" to — re-running
       // authorization blindly (no indication anything was already there) is
@@ -273,14 +287,13 @@ export class LoginOverlay implements Component {
       if (flow.configured && flow.key.startsWith('llm-pi-ai/')) {
         this.actions.openProviderEditor(flow.key.slice('llm-pi-ai/'.length))
       } else {
-        this.actions.beginAuthorization(flow.key, this.authType)
+        this.actions.beginAuthorization(flow.key, view.authType)
       }
       return
     }
-    const next = miniTextFieldInput(this.searchQuery, data)
+    const next = miniTextFieldInput(view.searchQuery, data)
     if (next !== undefined) {
-      this.searchQuery = next
-      this.listCursor = 0
+      this.view = { ...view, searchQuery: next, cursor: 0 }
     }
   }
 }

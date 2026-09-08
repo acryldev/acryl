@@ -14,9 +14,11 @@
 
 import type { Component, TUI } from '@earendil-works/pi-tui'
 import { Key, matchesKey, fuzzyFilter } from '@earendil-works/pi-tui'
+import type { AuthMethod } from 'acryl-control'
 import type { TuiActions } from '../actions.js'
 import type { ModelProfileOverlayState, TuiStore } from '../store.js'
 import { emptyMiniTextField, miniTextFieldInput, renderMiniTextField, type MiniTextFieldState } from '../miniTextField.js'
+import { listWindow, visibleRange } from '../listWindow.js'
 import { deriveApiKeyRef, type ModelEntry, type ProviderDraft, type ProviderRow } from './types.js'
 import { theme, fg } from '../theme.js'
 
@@ -42,7 +44,7 @@ const PROTOCOLS = ['openai-completions', 'openai-responses', 'anthropic-messages
 interface ModelPickerItem {
   readonly route: string
   readonly id: string
-  readonly authMethod: 'oauth' | 'api-key' | undefined
+  readonly authMethod: AuthMethod | undefined
 }
 
 export class ModelProfileOverlay implements Component {
@@ -87,28 +89,6 @@ export class ModelProfileOverlay implements Component {
   ) {}
 
   invalidate(): void {}
-
-  /**
-   * Rows available for a scrollable list body: terminal height minus the
-   * lines every such screen spends on chrome (header/hint/notice/search —
-   * `chrome` lines, caller-counted since it varies by screen). Long catalogs
-   * (~35 providers, matching that many models) previously rendered every row
-   * unconditionally, pushing the key-legend hint line — the only place a
-   * shortcut is documented — past the bottom of the terminal, invisible
-   * without scrolling back. Every list-shaped view here windows around the
-   * current selection instead, so the hint line is always the last line
-   * printed and always fits on screen.
-   */
-  private listWindow(chrome: number): number {
-    return Math.max(3, this.tui.terminal.rows - chrome)
-  }
-
-  /** The `[start, end)` slice of `count` items to show so `selected` stays visible within `maxVisible` rows, biased to keep it centered. */
-  private visibleRange(count: number, selected: number, maxVisible: number): { start: number; end: number } {
-    if (count <= maxVisible) return { start: 0, end: count }
-    const start = Math.max(0, Math.min(selected - Math.floor(maxVisible / 2), count - maxVisible))
-    return { start, end: start + maxVisible }
-  }
 
   /**
    * The global one-line notice (`store.setNotice`), rendered inline here.
@@ -216,8 +196,8 @@ export class ModelProfileOverlay implements Component {
     const all = this.pickerItems(mp)
     const filtered = this.filteredPickerItems(mp)
     const chrome = lines.length + 2 // lines pushed so far, plus this list's own final hint line and the "N/total" indicator
-    const maxVisible = this.listWindow(chrome)
-    const { start, end } = this.visibleRange(filtered.length, this.modelPickerCursor, maxVisible)
+    const maxVisible = listWindow(this.tui.terminal.rows, chrome)
+    const { start, end } = visibleRange(filtered.length, this.modelPickerCursor, maxVisible)
     filtered.slice(start, end).forEach((item, offset) => {
       const index = start + offset
       const isSelected = index === this.modelPickerCursor
@@ -277,8 +257,8 @@ export class ModelProfileOverlay implements Component {
     if (busy && providers === undefined) lines.push(muted('Loading…'))
     const filtered = this.filteredProviders(mp)
     const chrome = lines.length + 2 // lines pushed so far, plus this list's own final hint line and the "N/total" indicator
-    const maxVisible = this.listWindow(chrome)
-    const { start, end } = this.visibleRange(filtered.length, this.providerCursor, maxVisible)
+    const maxVisible = listWindow(this.tui.terminal.rows, chrome)
+    const { start, end } = visibleRange(filtered.length, this.providerCursor, maxVisible)
     filtered.slice(start, end).forEach((row, offset) => {
       const index = start + offset
       const marker = row.configured ? '● ' : '○ '
