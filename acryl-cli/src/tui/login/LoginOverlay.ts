@@ -17,6 +17,7 @@
 
 import type { Component, TUI } from '@earendil-works/pi-tui'
 import { Key, matchesKey, fuzzyFilter } from '@earendil-works/pi-tui'
+import type { AuthMethod } from 'acryl-control'
 import type { TuiActions } from '../actions.js'
 import type { TuiStore } from '../store.js'
 import { emptyMiniTextField, miniTextFieldInput, renderMiniTextField, type MiniTextFieldState } from '../miniTextField.js'
@@ -35,10 +36,8 @@ export function formatStoredApiKeyHint(preview: string | undefined): string | un
   return preview === undefined ? undefined : `Stored key: ${preview}`
 }
 
-type AuthType = 'oauth' | 'api-key'
-
-const AUTH_TYPES: readonly AuthType[] = ['oauth', 'api-key']
-const AUTH_TYPE_LABELS: Record<AuthType, string> = {
+const AUTH_TYPES: readonly AuthMethod[] = ['oauth', 'api-key']
+const AUTH_TYPE_LABELS: Record<AuthMethod, string> = {
   oauth: 'Sign in with an account',
   'api-key': 'Sign in with an API key',
 }
@@ -46,7 +45,7 @@ const AUTH_TYPE_LABELS: Record<AuthType, string> = {
 export class LoginOverlay implements Component {
   // Step-one (auth-type chooser) local state.
   private step: 'authType' | 'list' = 'authType'
-  private authType: AuthType | undefined
+  private authType: AuthMethod | undefined
   private authTypeCursor = 0
   // Whether step one was skipped because the loaded flows only offered one
   // method type — determines whether Escape from the list goes back to the

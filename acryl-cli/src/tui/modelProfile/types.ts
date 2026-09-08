@@ -5,6 +5,7 @@
  * draft one add/edit form works with before a save round-trips it back.
  * @module @tomowang/dsh-tui/tui/modelProfile/types
  */
+import type { AuthMethod } from 'acryl-control'
 
 /**
  * The `apiKeyEnv` reference a provider route falls back to when its settings
@@ -74,7 +75,7 @@ export interface ProviderRow {
   readonly apiKeyRef: string
   readonly apiKeyConfigured: boolean
   /** How the credential behind `apiKeyConfigured` was obtained, or `undefined` when none is configured. */
-  readonly authMethod: 'oauth' | 'api-key' | undefined
+  readonly authMethod: AuthMethod | undefined
   readonly models: readonly ModelEntry[]
   /** Settings revision this row was read at; replayed as `expectedRevision` on write. */
   readonly revision: number | undefined
@@ -92,7 +93,7 @@ export interface ProviderDraft {
   readonly apiKeyRef: string
   readonly apiKeyConfigured: boolean
   /** How the credential behind `apiKeyConfigured` was obtained, or `undefined` when none is configured. */
-  readonly authMethod: 'oauth' | 'api-key' | undefined
+  readonly authMethod: AuthMethod | undefined
   /** Local-only plaintext key entered in this session; empty means "keep current". */
   readonly apiKeyDraft: string
   /** First/last few characters of the currently-stored key (e.g. `sk-p…9sZ4`), so the field isn't blank-looking when one is already set; `undefined` when none is configured. */

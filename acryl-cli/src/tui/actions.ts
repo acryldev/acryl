@@ -7,6 +7,7 @@
  * @module @tomowang/dsh-tui/tui/actions
  */
 
+import type { AuthMethod } from 'acryl-control'
 import type { GoalCommand } from './commands.js'
 import type { ProviderDraft, ProviderRow } from './modelProfile/types.js'
 import type { QuestionAnswer } from './interaction/types.js'
@@ -46,7 +47,7 @@ export interface TuiActions {
   /** Close the `/login` overlay. */
   closeLogin(): void
   /** Run the authorization flow for the selected provider (pi-ai OAuth). `method` defaults to the flow's first (its preferred) method when omitted. */
-  beginAuthorization(key: string, method?: string): void
+  beginAuthorization(key: string, method?: AuthMethod): void
   /** Answer the in-flight authorization prompt (typed text/secret, or a chosen option id). */
   answerAuthorizationPrompt(value: string): void
   /** Close the `/model` overlay, discarding any in-progress edit. */

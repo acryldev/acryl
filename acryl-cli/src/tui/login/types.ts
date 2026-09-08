@@ -3,6 +3,7 @@
  * `ctx.authorization`'s registered flows with the surface that renders them.
  * @module @tomowang/dsh-tui/tui/login/types
  */
+import type { AuthMethod } from 'acryl-control'
 
 /** One method a flow offers (e.g. `oauth`, `api-key`). */
 export interface AuthorizationMethodRow {
@@ -23,7 +24,7 @@ export interface AuthorizationFlowRow {
   /** Whether a credential is already stored for this flow's key — signed in and ready to use. */
   readonly configured: boolean
   /** How the stored credential was obtained, or `undefined` when `configured` is false. */
-  readonly authMethod: 'oauth' | 'api-key' | undefined
+  readonly authMethod: AuthMethod | undefined
 }
 
 /** One choice offered by a `select` authorization prompt. */
