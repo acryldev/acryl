@@ -125,7 +125,13 @@ export class ModelProfileOverlay implements Component {
   }
 
   private textFields(draft: ProviderDraft): TextField[] {
-    return draft.isNew ? ['route', 'displayName', 'baseURL', 'apiKey'] : ['displayName', 'baseURL', 'apiKey']
+    const base: TextField[] = draft.isNew ? ['route', 'displayName', 'baseURL'] : ['displayName', 'baseURL']
+    // An OAuth-authenticated route has no separate apiKeyEnv in play — showing
+    // this field and letting a save write one is exactly the stray-override
+    // footgun already root-caused once this session: apiKeyEnv always wins
+    // over OAuth, so a value typed here (even accidentally) would silently
+    // break every future request on this route the same way it did before.
+    return draft.authMethod === 'oauth' ? base : [...base, 'apiKey']
   }
 
   /** Reinitialize form-local state from the store's draft when `formKey` changes — the equivalent of the old `key={formKey}` remount. */
@@ -175,7 +181,7 @@ export class ModelProfileOverlay implements Component {
     const draft = this.syncFormState(mp)
     if (draft !== undefined) {
       if (this.showModels) return this.renderModelListEditor(mp)
-      return draft.isNew ? this.renderForm(draft, mp) : this.renderApiKeyPrompt(draft, mp)
+      return this.renderForm(draft, mp)
     }
     return this.mode === 'picker' ? this.renderModelPicker(mp) : this.renderList(mp)
   }
@@ -344,62 +350,6 @@ export class ModelProfileOverlay implements Component {
     }
   }
 
-  /**
-   * pi.dev-style masked secret entry (see `LoginOverlay.renderPrompt`'s
-   * `secret` kind, the proven reference for this shape) — the only screen
-   * shown when editing a provider that's already known to the catalog.
-   * Route/protocol/base URL/models come from the catalog or a prior save;
-   * the one thing worth re-entering here is the key itself, paste-and-go.
-   * The old Tab-navigated Name/Protocol/Base URL/Models/Save form is kept
-   * only for genuinely new/custom providers via `renderForm`, since those
-   * fields have no catalog default to fall back on.
-   */
-  private renderApiKeyPrompt(draft: ProviderDraft, mp: ModelProfileOverlayState): string[] {
-    const name = draft.displayName || draft.route
-    const lines: string[] = [bold(secondary(`Login to ${name}`)), `Enter ${name} API key`]
-    lines.push(...this.noticeLines())
-    if (mp.error !== undefined) lines.push(errorColor(mp.error))
-    if (draft.apiKeyConfigured) {
-      const via = draft.authMethod === 'oauth'
-        ? 'signed in via OAuth'
-        : draft.authMethod === 'api-key'
-          ? draft.apiKeyPreview === undefined ? 'signed in via API key' : `signed in via API key ${draft.apiKeyPreview}`
-          : 'already set'
-      lines.push(muted(`(${via} — leave blank to keep it)`))
-    }
-    lines.push(renderMiniTextField(this.apiKeyDraft, true, '*'))
-    lines.push(muted(`Models (${this.models.length}) — ctrl+e edit here`))
-    const removeHint = draft.apiKeyConfigured ? ' · ctrl+d remove key' : ''
-    lines.push(muted(`esc back${removeHint} · ${mp.busy ? 'Saving…' : 'enter to submit'}`))
-    return lines
-  }
-
-  private handleApiKeyPromptInput(data: string, draft: ProviderDraft): void {
-    // No plain-letter shortcuts here — every letter is a valid API key
-    // character, so this field's only reserved keys are modifier combos,
-    // escape, and enter.
-    if (matchesKey(data, Key.escape)) {
-      this.actions.backToProviderList()
-      return
-    }
-    if (matchesKey(data, Key.ctrl('d')) && draft.apiKeyConfigured) {
-      this.actions.clearApiKey(draft)
-      return
-    }
-    // Edit this exact provider's models right from this screen — no reason to
-    // back out to the provider list and re-select it just to reach the editor.
-    if (matchesKey(data, Key.ctrl('e'))) {
-      this.showModels = true
-      return
-    }
-    if (matchesKey(data, Key.enter)) {
-      this.actions.saveProvider(this.buildDraft(draft))
-      return
-    }
-    const next = miniTextFieldInput(this.apiKeyDraft, data)
-    if (next !== undefined) this.apiKeyDraft = next
-  }
-
   private renderForm(draft: ProviderDraft, mp: ModelProfileOverlayState): string[] {
     const textFields = this.textFields(draft)
     const protocolRow = textFields.length
@@ -411,14 +361,19 @@ export class ModelProfileOverlay implements Component {
       baseURL: this.baseURL,
       apiKey: this.apiKeyDraft,
     }
+    const apiKeyLabel = draft.apiKeyConfigured
+      ? `API key (set${draft.apiKeyPreview === undefined ? '' : `: ${draft.apiKeyPreview}`} — leave blank to keep)`
+      : 'API key'
     const labels: Record<TextField, string> = {
       route: 'Provider ID',
       displayName: 'Display name',
       baseURL: 'Base URL',
-      apiKey: draft.apiKeyConfigured ? 'API key (set — leave blank to keep)' : 'API key',
+      apiKey: apiKeyLabel,
     }
     const lines: string[] = [bold(secondary(draft.isNew ? 'Custom provider' : `Edit ${draft.displayName || draft.route}`))]
+    lines.push(...this.noticeLines())
     if (mp.error !== undefined) lines.push(errorColor(mp.error))
+    if (draft.authMethod === 'oauth') lines.push(muted('(signed in via OAuth — no separate API key for this route)'))
     textFields.forEach((field, index) => {
       const isFocused = this.focused === index
       const mask = field === 'apiKey' ? '*' : undefined
@@ -430,9 +385,10 @@ export class ModelProfileOverlay implements Component {
     lines.push(protocolFocused ? invert(protocolText) : protocolText)
     const modelsText = `${this.focused === modelsRow ? '› ' : '  '}Models (${this.models.length}) — enter to edit`
     lines.push(this.focused === modelsRow ? invert(modelsText) : modelsText)
-    const saveText = `${this.focused === saveRow ? '› ' : '  '}${mp.busy ? 'Saving…' : 'Create provider'}`
+    const saveText = `${this.focused === saveRow ? '› ' : '  '}${mp.busy ? 'Saving…' : draft.isNew ? 'Create provider' : 'Save changes'}`
     lines.push(this.focused === saveRow ? invert(saveText) : saveText)
-    lines.push(muted('tab/shift+tab move · ←→ cycle protocol · enter confirm/activate · esc cancel'))
+    const removeHint = draft.apiKeyConfigured ? ' · ctrl+d sign out (remove key/OAuth grant)' : ''
+    lines.push(muted(`tab/shift+tab move · ←→ cycle protocol · enter confirm/activate · esc cancel${removeHint}`))
     return lines
   }
 
@@ -444,6 +400,10 @@ export class ModelProfileOverlay implements Component {
     const rowCount = protocolRow + 3
     if (matchesKey(data, Key.escape)) {
       this.actions.backToProviderList()
+      return
+    }
+    if (matchesKey(data, Key.ctrl('d')) && draft.apiKeyConfigured) {
+      this.actions.clearApiKey(draft)
       return
     }
     if (matchesKey(data, 'shift+tab')) {
@@ -582,8 +542,7 @@ export class ModelProfileOverlay implements Component {
     const draft = this.syncFormState(mp)
     if (draft !== undefined) {
       if (this.showModels) this.handleModelListEditorInput(data, draft)
-      else if (draft.isNew) this.handleFormInput(data, draft)
-      else this.handleApiKeyPromptInput(data, draft)
+      else this.handleFormInput(data, draft)
       return
     }
     if (this.mode === 'picker') this.handleModelPickerInput(data, mp)
