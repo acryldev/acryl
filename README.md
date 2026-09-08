@@ -30,7 +30,7 @@
 
 ## Install ACRYL v0.1.19
 
-ACRYL has three surfaces that share the same project model, but they are deliberately separate installs. Installing one does not silently install or start the others.
+ACRYL has three product surfaces that share the same project model: the CLI, local Web, and Desktop GUI. They are deliberately separate installs, so installing one does not silently install or start the others. The TUI is the CLI's terminal renderer, not a fourth surface.
 
 ### Desktop GUI
 
@@ -44,7 +44,7 @@ The GitHub Release assets below install the **ACRYL Desktop GUI**. The app carri
 | Linux - x64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.1.19/dsh-plugin-desktop_0.1.9_amd64.deb) |
 | Linux - arm64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.1.19/dsh-plugin-desktop_0.1.9_arm64.deb) |
 
-### Terminal CLI
+### CLI terminal
 
 The recommended install is the standalone installer: no Node.js or npm required, no install warnings, and it adds `acryl` to your shell PATH automatically.
 
@@ -65,7 +65,7 @@ npm install -g acryl --allow-scripts=@deepseek-ai/dsh-subprocess-local,@google/g
 acryl
 ```
 
-The `acryl` command starts the TUI. It is separate from the Desktop app so terminal users do not need Electron, and desktop users do not receive an unexpected global executable.
+The `acryl` command starts ACRYL's terminal UI. It is separate from the Desktop app so terminal users do not need Electron, and desktop users do not receive an unexpected global executable.
 
 ### Local Web surface
 
@@ -138,7 +138,7 @@ This lets ACRYL treat agents, models, memory systems, code graphs, tools, workfl
                         |
           +-------------+-------------+
           |             |             |
-       Desktop         TUI           CLI
+       Desktop      CLI terminal    Local Web
           |             |             |
           +-------------+-------------+
                         |
