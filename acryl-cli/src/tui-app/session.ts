@@ -13,6 +13,14 @@ import { randomUUID } from 'node:crypto'
 import { execFile } from 'node:child_process'
 import type { Context } from '@deepseek-ai/cordis'
 import { createAcrylSessionBridge, type AcrylSessionBridge } from 'acryl-harness-runtime'
+import {
+  computeCredentialProjection,
+  AuthorizationService,
+  type AuthorizationInteraction,
+  type CredentialProjectionRow,
+  type CredentialProjectionServices,
+  type RouteActivationPort,
+} from 'acryl-control'
 import { startDirectHost, type DirectHost } from '../host/direct.js'
 import { TuiStore } from '../tui/store.js'
 import { mountTui, type TuiHandle } from '../tui/TuiApp.js'
@@ -27,6 +35,9 @@ import { ManualCompactionError } from '@deepseek-ai/dsh-compaction'
 import { GoalError } from '@deepseek-ai/dsh-goal'
 import { SessionId, type Session } from '@deepseek-ai/dsh-session'
 import { ACRYL_VERSION } from '../version.ts'
+
+/** The credential-record scope `dsh-llm-pi-ai` writes a `/login` sign-in under (`credentialKey('llm-pi-ai', providerId)`). */
+const LOGIN_RECORD_SCOPE = 'llm-pi-ai'
 
 const TUI_VERSION = ACRYL_VERSION
 const PROMPT_HISTORY_LIMIT = 200
@@ -88,14 +99,16 @@ function getAtPath(value: unknown, path: readonly string[]): unknown {
 }
 
 /**
- * `dsh-llm-pi-ai`'s own credential record scope (`credentialKey('llm-pi-ai', providerId)`,
- * i.e. `"llm-pi-ai/<providerId>"`). A `/login` sign-in (OAuth or API key) writes here through
- * pi-ai's own `CredentialStore`, entirely separate from the `apiKeyEnv` reference a manually
- * configured provider's settings profile points at — so a provider's "has credentials" status
- * has to check both places, and this is the address for the first.
+ * `dsh-llm-pi-ai`'s own credential record key under `LOGIN_RECORD_SCOPE`
+ * (`credentialKey('llm-pi-ai', providerId)`, i.e. `"llm-pi-ai/<providerId>"`).
+ * A `/login` sign-in (OAuth or API key) writes here through pi-ai's own
+ * `CredentialStore`, entirely separate from the `apiKeyEnv` reference a
+ * manually configured provider's settings profile points at.
+ * `acryl-control`'s `CredentialProjection` computes this internally for the
+ * read side; only `clearApiKey`'s explicit delete still needs it directly.
  */
-function piAiRecordKey(providerId: string): string {
-  return `llm-pi-ai/${providerId}`
+function loginRecordKey(providerId: string): string {
+  return `${LOGIN_RECORD_SCOPE}/${providerId}`
 }
 
 /**
@@ -187,83 +200,60 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
   const session = agent?.session
   const history: string[] = []
 
-  // Re-join `ctx.llm`'s provider directory with `ctx.settings`/`ctx.credentials`
-  // and refresh the open `/model` overlay's list. The three services are
-  // optional and re-checked at point of use (the same pattern the other
-  // model-profile actions use), so a profile that does not mount them degrades
-  // to an error notice instead of refusing to start.
-  // Pulled out of `loadProviders()` so `/logout` (which must work whether or
-  // not `/model` happens to be the open overlay — `store.updateModelProfile`
-  // is a no-op while it isn't) can compute the same row list independently,
-  // instead of reading `/model`'s possibly-empty cached overlay state and
-  // reporting "no active providers" even when providers plainly exist.
-  async function computeProviderRows(): Promise<ProviderRow[] | undefined> {
+  // Read `credentialProjectionServices()`'s three optional services and join
+  // them through `acryl-control`'s `CredentialProjection` — the one shared
+  // read-model `/login` and `/model` both consume, so `hasSettingsProfile`/
+  // `hasCredential`/`isLive`/`authMethod` mean the same thing everywhere
+  // (specs/001-acryl-refactor-improvements-and-tech-debt, findings R1/R3).
+  // Re-checked at point of use (the same pattern the other model-profile
+  // actions use), so a profile that does not mount them degrades to an error
+  // notice instead of refusing to start.
+  // Called independently by `/logout` too (which must work whether or not
+  // `/model` happens to be the open overlay — `store.updateModelProfile` is a
+  // no-op while it isn't), instead of reading `/model`'s possibly-empty
+  // cached overlay state and reporting "no active providers" even when
+  // providers plainly exist.
+  function credentialProjectionServices(): CredentialProjectionServices | undefined {
     const settingsSvc: any = host.ctx.get('settings')
     const credentialsSvc: any = host.ctx.get('credentials')
     const llmSvc: any = host.ctx.get('llm')
     if (settingsSvc === undefined || credentialsSvc === undefined || llmSvc === undefined) return undefined
-    const configurable = llmSvc.listConfigurableProviders()
-    const live = new Set((llmSvc.listProviders() as Array<{ id: string }>).map((provider: { id: string }) => provider.id))
-    const descriptors = settingsSvc.describe({ redactSecrets: true }) as Array<{ ns: string; value: unknown; user?: unknown; revision?: number }>
-    const byNs = new Map<string, (typeof descriptors)[number]>(descriptors.map(descriptor => [descriptor.ns, descriptor]))
-    const rows: ProviderRow[] = []
-    for (const entry of configurable) {
-      const descriptor = byNs.get(entry.settingsNs)
-      const value = (descriptor === undefined ? undefined : getAtPath(descriptor.value, entry.settingsPath)) as StoredProviderProfile | undefined
-      const userValue = descriptor === undefined ? undefined : getAtPath(descriptor.user, entry.settingsPath)
-      const apiKeyRef = value?.apiKeyEnv ?? deriveApiKeyRef(entry.provider)
-      const info = await credentialsSvc.describe(apiKeyRef)
-      // A `/login` sign-in never sets `apiKeyEnv` — it writes pi-ai's own login
-      // record instead — so `info.configured` alone would still read "no key"
-      // for a provider the user just successfully signed into via OAuth or a
-      // catalog API key. Check that record too before reporting "not configured".
-      const loginRecord = await credentialsSvc.readRecord?.(piAiRecordKey(entry.provider))
-      // A `/login` record's `kind` names the actual method used ('grant' is an
-      // OAuth token, 'api-key' is a catalog-flow-typed key); the ref-based path
-      // (`apiKeyEnv`) only ever comes from typing a key into `/model` directly,
-      // so it's unambiguously 'api-key' too. A row can only be one or the
-      // other in practice — `/login` and `/model` write to different storage,
-      // and a provider signed in through one is not simultaneously the other.
-      const authMethod: 'oauth' | 'api-key' | undefined = loginRecord !== undefined
-        ? (loginRecord.kind === 'grant' ? 'oauth' : 'api-key')
-        : info.configured ? 'api-key' : undefined
-      const isLive = live.has(entry.provider)
-      // `value?.models` only reflects a settings-document override; omitting it
-      // (the normal case — nobody names an explicit model list unless
-      // customizing) means "use the installed catalog's own models", which
-      // only a live registration can actually answer. Falling back to the
-      // settings value alone left every un-customized route — the common case
-      // for every OAuth/catalog sign-in — showing zero models in `/model`,
-      // even though the route worked fine for real requests.
-      const models = isLive
-        ? await llmSvc.listModels(entry.provider).catch(() => value?.models ?? [])
-        : value?.models ?? []
-      rows.push({
-        route: entry.provider,
-        displayName: value?.displayName ?? entry.displayName,
-        settingsNs: entry.settingsNs,
-        settingsPath: entry.settingsPath,
-        configured: userValue !== undefined,
-        live: isLive,
-        api: value?.api,
-        baseURL: value?.baseURL,
-        apiKeyRef,
-        apiKeyConfigured: info.configured || loginRecord !== undefined,
-        authMethod,
-        models,
-        revision: descriptor?.revision,
-      })
+    return { settings: settingsSvc, credentials: credentialsSvc, llm: llmSvc }
+  }
+
+  async function credentialRows(): Promise<readonly CredentialProjectionRow[] | undefined> {
+    const services = credentialProjectionServices()
+    if (services === undefined) return undefined
+    return computeCredentialProjection(services, { deriveApiKeyRef, loginRecordScope: LOGIN_RECORD_SCOPE })
+  }
+
+  /** Map the shared `CredentialProjectionRow` onto `/model`'s own `ProviderRow` presentation shape. */
+  function toProviderRow(row: CredentialProjectionRow): ProviderRow {
+    return {
+      route: row.route,
+      displayName: row.displayName,
+      settingsNs: row.settingsNs,
+      settingsPath: row.settingsPath,
+      configured: row.hasSettingsProfile,
+      live: row.isLive,
+      api: row.api,
+      baseURL: row.baseURL,
+      apiKeyRef: row.apiKeyRef,
+      apiKeyConfigured: row.hasCredential,
+      authMethod: row.authMethod,
+      models: row.models,
+      revision: row.revision,
     }
-    return rows
   }
 
   async function loadProviders(): Promise<void> {
-    const rows = await computeProviderRows()
+    const rows = await credentialRows()
     if (rows === undefined) {
       store.updateModelProfile({ providers: [], busy: false, error: 'Model provider settings are not available in this profile.' })
       return
     }
-    store.updateModelProfile({ providers: rows, busy: false, error: undefined, selected: 0 })
+    const providers: ProviderRow[] = rows.map(toProviderRow)
+    store.updateModelProfile({ providers, busy: false, error: undefined, selected: 0 })
   }
 
   // Shared by `editProvider` (called from /model's own provider list, which
@@ -312,118 +302,54 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     }
   }
 
-  // A `/login` sign-in only ever writes a credential (the OAuth grant or typed
-  // API key) — it never touches `ctx.settings`. `dsh-llm-pi-ai` only registers
-  // a route as live once its settings section names it (even with an empty
-  // profile, which just means "use the installed catalog's own defaults"), so
-  // without this a successful sign-in leaves the provider credentialed but
-  // still absent from `ctx.llm`'s live directory and unusable from `/model`.
-  // Writes only when the route has no settings profile yet, so it never clobbers
-  // one the user already configured (custom baseURL, model overrides, etc.).
-  // Returns whether this call actually wrote a settings change — the
-  // retroactive-repair loop in `loadAuthorizationFlows` uses that (not mere
-  // completion) to decide whether it's worth refreshing state, so an
-  // already-caught-up flow doesn't retrigger `refreshCredentialState` ->
-  // `loadAuthorizationFlows` -> this same repair pass forever (that loop is
-  // exactly what corrupted every OAuth display name into a multi-hundred-KB
-  // string of repeated "-oauth" suffixes and reset `/model`'s list selection
-  // to 0 on every iteration).
-  async function ensureProviderActivated(providerId: string, method: string | undefined): Promise<boolean> {
-    const settingsSvc: any = host.ctx.get('settings')
-    const llmSvc: any = host.ctx.get('llm')
-    if (settingsSvc === undefined || llmSvc === undefined) return false
-    const entry = (llmSvc.listConfigurableProviders() as Array<{ provider: string; displayName: string; settingsNs: string; settingsPath: readonly string[] }>)
-      .find(candidate => candidate.provider === providerId)
-    if (entry === undefined) return false
-    const descriptors = settingsSvc.describe({ redactSecrets: true }) as Array<{ ns: string; user?: unknown; revision?: number }>
-    const descriptor = descriptors.find(candidate => candidate.ns === entry.settingsNs)
-    const existing = descriptor === undefined ? undefined : getAtPath(descriptor.user, entry.settingsPath) as { displayName?: string } | undefined
-    // OAuth-signed-in routes get a permanent, stored `-oauth` name suffix (not
-    // just a rendered tag) so a route the user later adds as a *second*,
-    // API-key-authenticated custom route under the same catalog name — the
-    // dual-credential workaround discussed for this same provider — is
-    // unambiguously distinct everywhere a name is shown, not just wherever
-    // the auth-method badge happens to render. Runs on every successful
-    // OAuth sign-in, not only the first, so a route that already has a
-    // profile (signed in earlier, before this suffix existed) gets it
-    // retroactively too, without touching anything else already configured
-    // there — the merge-only `update()` leaves every other field as is.
-    //
-    // `entry.displayName` reflects whatever is *currently* configured, not a
-    // stable catalog base — `listConfigurableProviders()` merges in the
-    // settings-stored name once one exists. Stripping any existing `-oauth`
-    // run before re-appending is what makes this idempotent: without it,
-    // the retroactive-repair pass in `loadAuthorizationFlows` (which calls
-    // this for every already-oauth-configured route on every app launch)
-    // re-suffixes an already-suffixed name every single time it runs.
-    const baseName = entry.displayName.replace(/(?:-oauth)+$/, '')
-    const oauthName = `${baseName}-oauth`
-    if (existing !== undefined) {
-      if (method === 'oauth' && existing.displayName !== oauthName) {
-        await settingsSvc.update(entry.settingsNs, nestAtPath(entry.settingsPath, { displayName: oauthName }), descriptor?.revision)
-        await flushSettingsWatchers()
-        return true
-      }
-      return false
-    }
-    const section = method === 'oauth' ? { displayName: oauthName } : {}
-    await settingsSvc.update(entry.settingsNs, nestAtPath(entry.settingsPath, section), descriptor?.revision)
-    await flushSettingsWatchers()
-    return true
+  // `AuthorizationService`'s `RouteActivationPort`: a `/login` sign-in only
+  // ever writes a credential (the OAuth grant or typed API key) — it never
+  // touches `ctx.settings`. `dsh-llm-pi-ai` only registers a route as live
+  // once its settings section names it (even with an empty profile, which
+  // just means "use the installed catalog's own defaults"), so without this
+  // a successful sign-in leaves the provider credentialed but still absent
+  // from `ctx.llm`'s live directory and unusable from `/model`. Writes only
+  // when the route has no settings profile yet, so it never clobbers one the
+  // user already configured (custom baseURL, model overrides, etc.), and
+  // never touches `displayName` — no auth-method name suffix; `authMethod`
+  // is rendered as a badge from the projection instead (specs/001-…, R2).
+  const routeActivationPort: RouteActivationPort = {
+    async ensureRouteActivated(providerId) {
+      const settingsSvc: any = host.ctx.get('settings')
+      const llmSvc: any = host.ctx.get('llm')
+      if (settingsSvc === undefined || llmSvc === undefined) return
+      const entry = (llmSvc.listConfigurableProviders() as Array<{ provider: string; settingsNs: string; settingsPath: readonly string[] }>)
+        .find(candidate => candidate.provider === providerId)
+      if (entry === undefined) return
+      const descriptors = settingsSvc.describe({ redactSecrets: true }) as Array<{ ns: string; user?: unknown; revision?: number }>
+      const descriptor = descriptors.find(candidate => candidate.ns === entry.settingsNs)
+      const existing = descriptor === undefined ? undefined : getAtPath(descriptor.user, entry.settingsPath)
+      if (existing !== undefined) return
+      await settingsSvc.update(entry.settingsNs, nestAtPath(entry.settingsPath, {}), descriptor?.revision)
+      await flushSettingsWatchers()
+    },
   }
 
   // Fetch the registered authorization flows (providers that ship a login via
-  // dsh-llm-pi-ai) and refresh the open `/login` overlay's list.
-  async function loadAuthorizationFlows(): Promise<void> {
+  // dsh-llm-pi-ai), derive each one's configured/authMethod from the same
+  // shared `CredentialProjection` `/model` reads (not an independent record
+  // read — one source of truth, specs/001-…, R3/R4), and refresh the open
+  // `/login` overlay's list.
+  async function loadLoginFlows(): Promise<void> {
     const authSvc: any = host.ctx.get('authorization')
-    const credentialsSvc: any = host.ctx.get('credentials')
     if (authSvc === undefined) {
       store.updateLogin({ flows: [], busy: false, error: 'Sign-in is not available in this profile.' })
       return
     }
     try {
       const entries = authSvc.list() as Array<{ key: string; label: string; methods: Array<{ id: string; label: string }>; inFlight: boolean }>
-      // A flow's `key` IS its stored credential's record key, so this is a
-      // direct presence check — the durable "signed in and ready to use"
-      // signal a transient `setNotice` can't provide once the overlay moves on.
-      const list = await Promise.all(entries.map(async entry => {
-        const record = credentialsSvc === undefined ? undefined : await credentialsSvc.readRecord?.(entry.key)
-        return {
-          ...entry,
-          configured: record !== undefined,
-          authMethod: record === undefined ? undefined : (record.kind === 'grant' ? 'oauth' as const : 'api-key' as const),
-        }
-      }))
+      const rows = await credentialRows()
+      const byKey = new Map((rows ?? []).map(row => [loginRecordKey(row.route), row] as const))
+      const list = entries.map(entry => {
+        const row = byKey.get(entry.key)
+        return { ...entry, configured: row?.hasCredential ?? false, authMethod: row?.authMethod }
+      })
       store.updateLogin({ flows: list, busy: false, error: undefined })
-      // Retroactive repair for routes signed in via OAuth before the
-      // `-oauth` display-name suffix existed: `ensureProviderActivated` is
-      // idempotent (it only writes when the stored name doesn't already
-      // carry the suffix), so replaying it here on every already-configured
-      // OAuth flow costs nothing once it's caught up.
-      const toRepair = list.filter(flow => flow.configured && flow.authMethod === 'oauth' && flow.key.startsWith('llm-pi-ai/'))
-      if (toRepair.length > 0) {
-        void (async () => {
-          let repaired = false
-          for (const flow of toRepair) {
-            try {
-              // Sequential, not `Promise.all`: `ensureProviderActivated` reads
-              // the namespace's revision, then writes expecting that exact
-              // revision back — running several concurrently against the
-              // *same* namespace means every write after the first reads a
-              // now-stale revision and throws SettingsConflictError. Running
-              // them one at a time means each one sees the revision the
-              // previous write actually landed at.
-              if (await ensureProviderActivated(flow.key.slice('llm-pi-ai/'.length), 'oauth')) repaired = true
-            } catch {
-              // Best-effort background repair — a conflict or transient
-              // failure here must not surface as an unhandled rejection (it
-              // previously crashed the whole process) or block the others;
-              // the repair simply retries next time `/login` opens.
-            }
-          }
-          if (repaired) refreshCredentialState()
-        })()
-      }
     } catch (error) {
       store.updateLogin({ busy: false, error: error instanceof Error ? error.message : String(error) })
     }
@@ -436,13 +362,15 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
   // saved, cleared, or signed into through one surface then reads stale
   // ("still shows signed in", "shows configured but the edit screen is
   // empty") the next time the *other* surface is opened, until that surface
-  // happens to refetch on its own. Refreshing both together after any action
+  // happens to refetch on its own. Syncing both together after any action
   // that can change either's picture closes that gap regardless of which
   // overlay initiated the change; each update is a no-op while its overlay
-  // isn't the one currently open.
-  function refreshCredentialState(): void {
+  // isn't the one currently open. Also the `AuthorizationService`
+  // `credential.changed` listener (targeted at the signed-in key today; both
+  // overlays currently re-fetch their whole list either way).
+  function syncCredentialViews(): void {
     void loadProviders()
-    void loadAuthorizationFlows()
+    void loadLoginFlows()
   }
 
   /** Open `/model`'s blank custom-provider draft — assumes `/model` is (or is about to become) the open overlay. Shared by `createProvider` (already there) and `addCustomProvider` (getting there first). */
@@ -598,7 +526,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
       void loadFileIndex(process.cwd()).then(candidates => store.setFileIndex(candidates))
     },
     openModelProfile() { store.openModelProfile(); void loadProviders() },
-    login() { store.openLogin(); void loadAuthorizationFlows() },
+    login() { store.openLogin(); void loadLoginFlows() },
     closeLogin() { store.closeOverlay() },
     beginAuthorization(key, method) {
       void (async () => {
@@ -648,12 +576,15 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
             })
           },
         }
+        const authorizationService = new AuthorizationService({
+          authorization: authSvc,
+          routeActivation: routeActivationPort,
+          onCredentialChanged: () => syncCredentialViews(),
+        })
         try {
-          const outcome = await authSvc.begin({ key, method, interaction })
+          const outcome = await authorizationService.begin({ key, method, interaction: interaction as AuthorizationInteraction })
           if (outcome.status === 'authorized') {
             store.setNotice(`Signed in to ${flow.label} — credentials saved, ready to use from /model.`)
-            if (key.startsWith('llm-pi-ai/')) await ensureProviderActivated(key.slice('llm-pi-ai/'.length), method)
-            refreshCredentialState()
           } else {
             store.updateLogin({ error: 'Sign-in cancelled.' })
           }
@@ -703,7 +634,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
       // stepping back after confirming "(already set)" on the edit screen —
       // itself reflecting a credential that landed after that first fetch —
       // still shows the stale pre-fetch state (no ✓, "[no api key]").
-      refreshCredentialState()
+      syncCredentialViews()
     },
     createProvider() { openCustomProviderDraft() },
     addCustomProvider() {
@@ -728,9 +659,10 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     openProviderEditor(route) {
       void (async () => {
         store.openModelProfile()
-        const rows = await computeProviderRows()
-        store.updateModelProfile({ providers: rows ?? [], busy: false, error: rows === undefined ? 'Model provider settings are not available in this profile.' : undefined, selected: 0 })
-        const row = rows?.find(entry => entry.route === route)
+        const rows = await credentialRows()
+        const providers = rows?.map(toProviderRow)
+        store.updateModelProfile({ providers: providers ?? [], busy: false, error: rows === undefined ? 'Model provider settings are not available in this profile.' : undefined, selected: 0 })
+        const row = providers?.find(entry => entry.route === route)
         if (row === undefined) {
           store.setNotice(`Provider "${route}" not found.`)
           return
@@ -773,7 +705,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
           await flushSettingsWatchers()
           store.setNotice(`Saved ${draft.displayName || draft.route} — credentials stored, ready to use from /model.`)
           store.updateModelProfile({ view: 'list' })
-          refreshCredentialState()
+          syncCredentialViews()
         } catch (error) {
           store.setNotice(`save failed: ${error instanceof Error ? error.message : String(error)}`)
         }
@@ -792,7 +724,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
           await settingsSvc.update(row.settingsNs, nestAtPath(row.settingsPath, {}), row.revision)
           await flushSettingsWatchers()
           store.setNotice(`Removed ${row.displayName}.`)
-          refreshCredentialState()
+          syncCredentialViews()
         } catch (error) {
           store.setNotice(`delete failed: ${error instanceof Error ? error.message : String(error)}`)
         }
@@ -807,13 +739,13 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
         }
         try {
           // A provider's credential can live in either of two independent
-          // stores (see `piAiRecordKey`'s doc comment) depending on whether it
+          // stores (see `loginRecordKey`'s doc comment) depending on whether it
           // was set here or via `/login` — clear whichever is actually there.
           await credentialsSvc.unset(draft.apiKeyRef)
-          await credentialsSvc.deleteRecord?.(piAiRecordKey(draft.route))
+          await credentialsSvc.deleteRecord?.(loginRecordKey(draft.route))
           store.setNotice(`Removed the API key for ${draft.displayName || draft.route}.`)
           store.updateModelProfile({ view: 'list' })
-          refreshCredentialState()
+          syncCredentialViews()
         } catch (error) {
           store.setNotice(`Could not remove the key: ${error instanceof Error ? error.message : String(error)}`)
         }

@@ -55,7 +55,12 @@ const CLOSES = {
 
 // --- G1 (R1): the auth/credential domain logic is NOT in the surface ---
 const session = read('acryl-cli/src/tui-app/session.ts') ?? ''
-const surfaceOwnsAuth = ['loadAuthorizationFlows', 'computeProviderRows', 'ensureProviderActivated', 'refreshCredentialState', 'beginAuthorization']
+// `beginAuthorization` deliberately excluded: it is the permanent public
+// `TuiActions` entry-point name (see acryl-cli/src/tui/actions.ts) — its mere
+// presence is not evidence of misplaced domain logic once it is a thin
+// forwarder to `AuthorizationService.begin()`. The other four names were the
+// actual duplicated join/activation/refresh function *definitions*.
+const surfaceOwnsAuth = ['loadAuthorizationFlows', 'computeProviderRows', 'ensureProviderActivated', 'refreshCredentialState']
   .filter(name => has(session, name))
 const controlHasAuthProjection = ['acryl-control/src/credential/', 'acryl-control/src/authorization/'].some(d => existsSync(join(repo, d)))
 check('G1', 'auth/credential domain logic not in the surface',
