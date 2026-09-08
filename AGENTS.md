@@ -75,6 +75,73 @@ must unload and reactivate consumers without stale references or duplicate
 registrations. Cordis service isolation scopes resolution; it is not an OS
 sandbox.
 
+## Architecture and clean-code discipline (engineering books)
+
+Engineering reference (authoritative for clean-architecture and DDD judgement;
+this section is the ACRYL-specific interpretation):
+
+- `~/.agents/rules/agent-rules-books/clean-architecture/clean-architecture.md`
+- `~/.agents/rules/agent-rules-books/implementing-domain-driven-design/implementing-domain-driven-design.md`
+
+Precedence: the constitution, the Cordis coding-agent guide, and the ACRYL
+control-surface design win over this section; this section never overrides a
+documented seam or an owning-package contract. These are coding-style and
+boundary-discipline rules, not a second architecture.
+
+### Boundaries
+
+- Surfaces (`acryl-tui`, Electron, Web) render and drive runtime semantics; they
+  do not own domain or business logic. ACRYL-owned capability logic belongs
+  behind `acryl-control` / `acryl-harness-runtime` contracts. Never implement a
+  provider/credential/authorization state machine, a durable-state write, or a
+  business invariant inside an overlay or surface file.
+- Depend on typed service interfaces (`inject` keys and typed `ctx.get(...)`),
+  never on `any`, bare framework handles, concrete providers, or YAML row order.
+  A `const svc: any = ctx.get('x')` in production code is a review failure
+  (break the pattern with an explicit decision, or fix it; do not extend it).
+- Do not mutate durable/system state from a presentation surface, and do not
+  encode internal state bits into user-visible names or fields (no `-oauth`
+  display-name suffixing). A presentation field is not a domain store.
+- Cross-boundary data flows through one typed projection/service, not through
+  ad-hoc re-fetch plus `refreshCredentialState()`-style shotgun loops. One
+  source of truth per state; targeted invalidation or subscription, not
+  "refresh everything".
+
+### Models and language
+
+- Model real domain concepts with small, immutable, explicit types (value
+  objects / discriminated unions), not bare `string` / `'a' | 'b'` unions
+  smeared inline. One exported type per concept;
+  do not re-declare it in three files.
+- One term, one meaning (ubiquitous language). Do not overload a single field
+  (e.g. `configured`) to mean different things in different overlays. Rename
+  when understanding improves; keep tests, events, commands, and services
+  speaking the same language.
+- Prefer identity (IDs) over object references across aggregate/context
+  boundaries; keep aggregates small and centered on immediate invariants.
+  Protect the core domain from generic abstractions and vendor terms.
+
+### Functions and state
+
+- `render()` / UI projection functions are pure — no state mutation during
+  render. View state is a small discriminated-union state machine, not a loose
+  field cluster that can drift inconsistent.
+- Extract genuinely shared logic once (e.g. list-window slicing) into a narrow,
+  owned helper; do not build generic `utils/`, `shared/`, or `core/` dumping
+  grounds.
+- Depend inward: framework/infrastructure details at the edge, business rules
+  in the application/domain layer.
+
+### Checkpoints and honesty
+
+- Land coherent, buildable commits. A `HEAD` that cannot typecheck (a feature
+  split so its container is committed but its surface is not) is a review
+  failure — restore a green, reversible checkpoint.
+- Keep the spec ledger honest: when a delivered interaction diverges from
+  `spec.md` / `plan.md` / `tasks.md`, update the ledger (or open a decision
+  ticket) before marking the slice done. Never leave a stale spec apparently
+  active.
+
 ## Agent skills
 
 ### Issue tracker
@@ -95,7 +162,7 @@ Agent-runtime, Development Canvas, context-relay, and third-party adapter work m
 <claude-mem-context>
 # Memory Context
 
-# [acryl] recent context, 2026-08-24 7:08pm GMT+2
+# [acryl] recent context, 2026-09-08 4:33pm GMT+2
 
 No previous sessions found.
 </claude-mem-context>
