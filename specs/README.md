@@ -27,7 +27,7 @@ specs/
   000-wayfinding/          Wayfinder map + decision tickets
     map.md
     issues/NN-slug.md
-  001-acryl-0-gap-analysis/
+  001-acryl-refactor-improvements-and-tech-debt/   standing tech-debt + refactoring ledger
   002-acryl-1-plugin-identity/
   ...
   014-acryl-13-evolution-lab/
