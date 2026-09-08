@@ -41,6 +41,7 @@
     "acryl": "node acryl-tui/bin/dev-run.mjs",
     "acryl:resume": "node acryl-tui/bin/dev-run.mjs --resume",
     "tui:rebuild": "node scripts/rebuild-tui-clean.mjs",
+    "tui:fresh": "node scripts/rebuild-tui-clean.mjs && node acryl-tui/bin/dev-run.mjs",
     "acryl-gui": "pnpm --filter acryl-desktop run start",
     "acryl-desktop": "pnpm --filter acryl-desktop run start",
     "acryl-web": "node scripts/web-run.mjs",
