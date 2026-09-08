@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { AcrylBrandMark, AcrylBrandName, applyAcrylBrand } from '../src/client/acryl-brand.tsx'
 
 describe('ACRYL branding', () => {

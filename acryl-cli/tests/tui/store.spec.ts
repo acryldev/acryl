@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { CallId } from '@deepseek-ai/dsh-llm'
+import type { AssistantStreamFrame } from '@deepseek-ai/dsh-agent'
+import { LlmAttemptId, ToolCallId } from '@deepseek-ai/dsh-llm/brand'
 import type { GoalProjection } from '@deepseek-ai/dsh-goal'
 import type { SessionEvent } from '@deepseek-ai/dsh-session'
 import { TuiStore } from '../../src/tui/store.js'
@@ -8,8 +9,21 @@ function event(seq: number): SessionEvent {
   return { type: 'user/message', seq, time: 0, data: { source: { kind: 'user' }, content: [] } } as unknown as SessionEvent
 }
 
-function chunkEvent(seq: number, turn: number, step: number, chunk: unknown): SessionEvent {
-  return { type: 'assistant/chunk', seq, time: 0, data: { turn, step, chunk } } as unknown as SessionEvent
+/** A `'start'` frame opening a fresh live-streaming attempt. */
+function startFrame(attemptId: string, turn: number, step: number): AssistantStreamFrame {
+  return { type: 'start', attemptId: LlmAttemptId(attemptId), revision: 1, turn, step }
+}
+
+/** A `'chunk'` frame folding one `StreamChunk` into the named attempt's live text. */
+function chunkFrame(attemptId: string, index: number, chunk: unknown): AssistantStreamFrame {
+  return { type: 'chunk', attemptId: LlmAttemptId(attemptId), revision: 1, index, time: 0, chunk } as AssistantStreamFrame
+}
+
+type AssistantStreamEndFrame = Extract<AssistantStreamFrame, { type: 'end' }>
+
+/** An `'end'` frame settling (or abandoning) the named attempt. */
+function endFrame(attemptId: string, index: number, outcome: AssistantStreamEndFrame['outcome']): AssistantStreamFrame {
+  return { type: 'end', attemptId: LlmAttemptId(attemptId), revision: 1, index, outcome }
 }
 
 function assistantMessageEvent(seq: number, turn: number, step: number): SessionEvent {
@@ -76,22 +90,25 @@ describe('TuiStore streaming', () => {
   it('folds text-delta chunks into streaming.text without adding to events', () => {
     const store = new TuiStore({ events: [] })
 
-    store.appendEvent(chunkEvent(1, 1, 1, { type: 'block-start', index: 0, blockType: 'text' }))
-    store.appendEvent(chunkEvent(2, 1, 1, { type: 'text-delta', index: 0, text: 'Hel' }))
-    store.appendEvent(chunkEvent(3, 1, 1, { type: 'text-delta', index: 0, text: 'lo' }))
+    store.appendAssistantStreamFrame(startFrame('attempt-1', 1, 1))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-1', 0, { type: 'block-start', index: 0, blockType: 'text' }))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-1', 1, { type: 'text-delta', index: 0, text: 'Hel' }))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-1', 2, { type: 'text-delta', index: 0, text: 'lo' }))
 
     const snapshot = store.getSnapshot()
     expect(snapshot.streaming).toEqual({ turn: 1, step: 1, text: 'Hello', reasoningText: '' })
     expect(snapshot.events).toEqual([])
   })
 
-  it('resets the accumulator when turn/step changes', () => {
+  it('resets the accumulator on a fresh start frame for a new turn/step', () => {
     const store = new TuiStore({ events: [] })
 
-    store.appendEvent(chunkEvent(1, 1, 1, { type: 'block-start', index: 0, blockType: 'text' }))
-    store.appendEvent(chunkEvent(2, 1, 1, { type: 'text-delta', index: 0, text: 'first step' }))
-    store.appendEvent(chunkEvent(3, 1, 2, { type: 'block-start', index: 0, blockType: 'text' }))
-    store.appendEvent(chunkEvent(4, 1, 2, { type: 'text-delta', index: 0, text: 'second step' }))
+    store.appendAssistantStreamFrame(startFrame('attempt-1', 1, 1))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-1', 0, { type: 'block-start', index: 0, blockType: 'text' }))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-1', 1, { type: 'text-delta', index: 0, text: 'first step' }))
+    store.appendAssistantStreamFrame(startFrame('attempt-2', 1, 2))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-2', 0, { type: 'block-start', index: 0, blockType: 'text' }))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-2', 1, { type: 'text-delta', index: 0, text: 'second step' }))
 
     expect(store.getSnapshot().streaming).toEqual({ turn: 1, step: 2, text: 'second step', reasoningText: '' })
   })
@@ -99,11 +116,12 @@ describe('TuiStore streaming', () => {
   it('folds reasoning-delta chunks into streaming.reasoningText alongside text', () => {
     const store = new TuiStore({ events: [] })
 
-    store.appendEvent(chunkEvent(1, 1, 1, { type: 'block-start', index: 0, blockType: 'reasoning' }))
-    store.appendEvent(chunkEvent(2, 1, 1, { type: 'reasoning-delta', index: 0, text: 'weighing op' }))
-    store.appendEvent(chunkEvent(3, 1, 1, { type: 'reasoning-delta', index: 0, text: 'tions' }))
-    store.appendEvent(chunkEvent(4, 1, 1, { type: 'block-start', index: 1, blockType: 'text' }))
-    store.appendEvent(chunkEvent(5, 1, 1, { type: 'text-delta', index: 1, text: 'answer' }))
+    store.appendAssistantStreamFrame(startFrame('attempt-1', 1, 1))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-1', 0, { type: 'block-start', index: 0, blockType: 'reasoning' }))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-1', 1, { type: 'reasoning-delta', index: 0, text: 'weighing op' }))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-1', 2, { type: 'reasoning-delta', index: 0, text: 'tions' }))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-1', 3, { type: 'block-start', index: 1, blockType: 'text' }))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-1', 4, { type: 'text-delta', index: 1, text: 'answer' }))
 
     expect(store.getSnapshot().streaming).toEqual({ turn: 1, step: 1, text: 'answer', reasoningText: 'weighing options' })
   })
@@ -111,8 +129,9 @@ describe('TuiStore streaming', () => {
   it('assistant/message clears streaming and appends the settled event', () => {
     const store = new TuiStore({ events: [] })
 
-    store.appendEvent(chunkEvent(1, 1, 1, { type: 'block-start', index: 0, blockType: 'text' }))
-    store.appendEvent(chunkEvent(2, 1, 1, { type: 'text-delta', index: 0, text: 'partial' }))
+    store.appendAssistantStreamFrame(startFrame('attempt-1', 1, 1))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-1', 0, { type: 'block-start', index: 0, blockType: 'text' }))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-1', 1, { type: 'text-delta', index: 0, text: 'partial' }))
     store.appendEvent(assistantMessageEvent(3, 1, 1))
 
     const snapshot = store.getSnapshot()
@@ -120,33 +139,48 @@ describe('TuiStore streaming', () => {
     expect(snapshot.events.map(e => e.seq)).toEqual([3])
   })
 
-  it('drops persisted assistant/chunk rows from the seeded events without seeding streaming', () => {
-    const store = new TuiStore({
-      events: [event(1), chunkEvent(2, 1, 1, { type: 'text-delta', index: 0, text: 'stale' }), assistantMessageEvent(3, 1, 1)],
-    })
+  it('ignores a chunk/end frame whose attemptId does not match the current start', () => {
+    const store = new TuiStore({ events: [] })
+
+    store.appendAssistantStreamFrame(startFrame('attempt-1', 1, 1))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-1', 0, { type: 'block-start', index: 0, blockType: 'text' }))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-1', 1, { type: 'text-delta', index: 0, text: 'live' }))
+    // A stale frame from a superseded attempt must not corrupt the current one.
+    store.appendAssistantStreamFrame(chunkFrame('attempt-0', 9, { type: 'text-delta', index: 0, text: 'stale' }))
+    store.appendAssistantStreamFrame(endFrame('attempt-0', 9, { kind: 'abandoned' }))
+
+    expect(store.getSnapshot().streaming).toEqual({ turn: 1, step: 1, text: 'live', reasoningText: '' })
+  })
+
+  it('an abandoned end frame with no durable settlement clears streaming on its own', () => {
+    const store = new TuiStore({ events: [] })
+
+    store.appendAssistantStreamFrame(startFrame('attempt-1', 1, 1))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-1', 0, { type: 'block-start', index: 0, blockType: 'text' }))
+    store.appendAssistantStreamFrame(chunkFrame('attempt-1', 1, { type: 'text-delta', index: 0, text: 'partial' }))
+    store.appendAssistantStreamFrame(endFrame('attempt-1', 2, { kind: 'abandoned' }))
 
     const snapshot = store.getSnapshot()
-    expect(snapshot.events.map(e => e.seq)).toEqual([1, 3])
     expect(snapshot.streaming).toBeUndefined()
-    expect(snapshot.replayThrough).toBe(3)
+    expect(snapshot.events).toEqual([])
   })
 })
 
 describe('TuiStore.getToolCall', () => {
   it('resolves a call seeded from replay', () => {
     const store = new TuiStore({ events: [toolCallEvent(1, 'call-1', 'read_file', '{"path":"/tmp/foo.txt"}')] })
-    expect(store.getToolCall(CallId('call-1'))).toEqual({ name: 'read_file', arguments: '{"path":"/tmp/foo.txt"}' })
+    expect(store.getToolCall(ToolCallId('call-1'))).toEqual({ name: 'read_file', arguments: '{"path":"/tmp/foo.txt"}' })
   })
 
   it('resolves a call appended live', () => {
     const store = new TuiStore({ events: [] })
     store.appendEvent(toolCallEvent(1, 'call-1', 'bash', '{"command":"ls"}'))
-    expect(store.getToolCall(CallId('call-1'))).toEqual({ name: 'bash', arguments: '{"command":"ls"}' })
+    expect(store.getToolCall(ToolCallId('call-1'))).toEqual({ name: 'bash', arguments: '{"command":"ls"}' })
   })
 
   it('returns undefined for an unknown callId', () => {
     const store = new TuiStore({ events: [] })
-    expect(store.getToolCall(CallId('missing'))).toBeUndefined()
+    expect(store.getToolCall(ToolCallId('missing'))).toBeUndefined()
   })
 })
 

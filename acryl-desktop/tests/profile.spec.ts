@@ -31,9 +31,9 @@ function installWebClient(
   manifest: Record<string, unknown> = {},
 ): string {
   const webDir = join(home, 'profiles', 'web')
-  const bundles = PROFILE_TEMPLATES.web
-  if (bundles === undefined) throw new Error('test requires the shipped Web template')
-  initProfile(webDir, bundles)
+  const template = PROFILE_TEMPLATES.web
+  if (template === undefined) throw new Error('test requires the shipped Web template')
+  initProfile(webDir, template.bundles, template.patchReload)
   const packageDir = join(webDir, 'node_modules', ...packageName.split('/'))
   mkdirSync(packageDir, { recursive: true })
   writeFileSync(join(packageDir, 'package.json'), JSON.stringify({
@@ -518,9 +518,9 @@ describe('desktop profile composition', {
   it('boots a selected Web profile without overriding its UI rows', () => {
     const home = temporaryHome()
     const webDir = join(home, 'profiles', 'web')
-    const bundles = PROFILE_TEMPLATES.web
-    if (bundles === undefined) throw new Error('test requires the shipped Web template')
-    initProfile(webDir, bundles)
+    const template = PROFILE_TEMPLATES.web
+    if (template === undefined) throw new Error('test requires the shipped Web template')
+    initProfile(webDir, template.bundles, template.patchReload)
     writeFileSync(join(webDir, 'cordis.patch.yml'), [
       '- id: ui-layout',
       "  name: '@deepseek-ai/dsh-client-ui-layout'",

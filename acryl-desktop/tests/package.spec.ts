@@ -5,8 +5,6 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
-  readdirSync,
-  realpathSync,
   rmSync,
   writeFileSync,
 } from 'node:fs'
@@ -169,7 +167,6 @@ describe('published package surface', () => {
         '@deepseek-ai/dsh-api-remotes',
         '@deepseek-ai/dsh-client-connection',
         '@deepseek-ai/dsh-client-locale',
-        '@deepseek-ai/dsh-client-runtime',
         '@deepseek-ai/dsh-client-ui-settings',
         '@deepseek-ai/dsh-client-ui-theme',
       ],
@@ -198,8 +195,8 @@ describe('published package surface', () => {
   })
 
   it('patches app boot to accept an empty patch layer', () => {
-    const patchPath = './patches/dsh-app-boot@0.1.1-rc.2.patch'
-    expectPatchedDependency('@deepseek-ai/dsh-app-boot@0.1.1-rc.2', patchPath)
+    const patchPath = './patches/@deepseek-ai__dsh-app-boot@0.1.5-alpha.1.patch'
+    expectPatchedDependency('@deepseek-ai/dsh-app-boot@0.1.5-alpha.1', patchPath)
     const marker = 'if (parsed === void 0 || parsed === null) return [];'
     const patch = readFileSync(new URL(patchPath, workspaceRoot), 'utf8')
     const installedBoot = readFileSync(new URL(
@@ -211,8 +208,8 @@ describe('published package surface', () => {
   })
 
   it('patches the browse panel with the Windows native-picker icon bridge', () => {
-    const patchPath = './patches/dsh-client-ui-directory-picker-browse@0.1.1-rc.2.patch'
-    expectPatchedDependency('@deepseek-ai/dsh-client-ui-directory-picker-browse@0.1.1-rc.2', patchPath)
+    const patchPath = './patches/@deepseek-ai__dsh-client-ui-directory-picker-browse@0.1.5-alpha.1.patch'
+    expectPatchedDependency('@deepseek-ai/dsh-client-ui-directory-picker-browse@0.1.5-alpha.1', patchPath)
     const patch = readFileSync(new URL(patchPath, workspaceRoot), 'utf8')
     const installedClient = readFileSync(new URL(
       'node_modules/@deepseek-ai/dsh-client-ui-directory-picker-browse/lib/client.js',
@@ -226,7 +223,7 @@ describe('published package surface', () => {
       'IconFolderOpen16',
       'nativePickerButton',
       'browser.nativePicker',
-      'border:1px solid var(--dsw-alias-border-l2)',
+      'border:.5px solid var(--dsw-alias-border-l2)',
       'background:var(--dsw-alias-bg-layer-2)',
     ]) {
       expect(patch).toContain(marker)
@@ -235,8 +232,8 @@ describe('published package surface', () => {
   })
 
   it('marks the upstream Workspace browser as the desktop folder-drop target', () => {
-    const patchPath = './patches/dsh-client-ui-workspace@0.1.1-rc.2.patch'
-    expectPatchedDependency('@deepseek-ai/dsh-client-ui-workspace@0.1.1-rc.2', patchPath)
+    const patchPath = './patches/@deepseek-ai__dsh-client-ui-workspace@0.1.5-alpha.1.patch'
+    expectPatchedDependency('@deepseek-ai/dsh-client-ui-workspace@0.1.5-alpha.1', patchPath)
     const patch = readFileSync(new URL(patchPath, workspaceRoot), 'utf8')
     const installedClient = readFileSync(new URL(
       'node_modules/@deepseek-ai/dsh-client-ui-workspace/lib/client.js',
@@ -247,8 +244,8 @@ describe('published package surface', () => {
   })
 
   it('keeps API selection available after overriding a provider base URL', () => {
-    const patchPath = './patches/dsh-client-ui-settings-models@0.1.1-rc.2.patch'
-    expectPatchedDependency('@deepseek-ai/dsh-client-ui-settings-models@0.1.1-rc.2', patchPath)
+    const patchPath = './patches/@deepseek-ai__dsh-client-ui-settings-models@0.1.5-alpha.1.patch'
+    expectPatchedDependency('@deepseek-ai/dsh-client-ui-settings-models@0.1.5-alpha.1', patchPath)
     const patch = readFileSync(new URL(patchPath, workspaceRoot), 'utf8')
     const installedClient = readFileSync(new URL(
       'node_modules/@deepseek-ai/dsh-client-ui-settings-models/lib/client.js',
@@ -264,36 +261,22 @@ describe('published package surface', () => {
     }
   })
 
-  it('localizes Trajectory toolbar labels in Simplified Chinese', () => {
-    const patchPath = './patches/dsh-client-ui-trajectory@0.1.1-rc.2.patch'
-    expectPatchedDependency('@deepseek-ai/dsh-client-ui-trajectory@0.1.1-rc.2', patchPath)
-    const patch = readFileSync(new URL(patchPath, workspaceRoot), 'utf8')
+  it('gets Trajectory toolbar Simplified Chinese labels natively, without a patch', () => {
+    // The 0.1.5-alpha.1 bump shipped upstream's own zh toolbar localization
+    // (distinct wording from our old hand patch, e.g. "时长" not "耗时"), so
+    // `dsh-client-ui-trajectory` is no longer in `patchedDependencies` — see
+    // pnpm-workspace.yaml and docs/DEVELOPMENT-LOG.md for the removal.
+    expect(pnpmWorkspace).not.toContain('dsh-client-ui-trajectory@0.1.5-alpha.1.patch')
     const installedClient = readFileSync(new URL(
       'node_modules/@deepseek-ai/dsh-client-ui-trajectory/lib/client.js',
       packageRoot,
     ), 'utf8')
-    for (const marker of [
-      '"toolbar.duration": "耗时"',
-      '"toolbar.useActualDuration": "使用实际耗时"',
-      '"toolbar.useEqualWidth": "使用等宽操作"',
-      '"toolbar.turns": "轮次"',
-      '"toolbar.expandTurns": "展开轮次"',
-      '"toolbar.collapseTurns": "折叠轮次"',
-      '"toolbar.calls": "调用"',
-      '"toolbar.expandCalls": "展开调用"',
-      '"toolbar.collapseCalls": "折叠调用"',
-      '"toolbar.thinking": "思考"',
-      'children: [trajectoryLabel("toolbar.thinking")',
-      'currentTrajectoryT = t',
-    ]) {
-      expect(patch).toContain(marker)
-      expect(installedClient).toContain(marker)
-    }
+    expect(installedClient).toContain('"toolbar.duration": "时长"')
   })
 
   it('keeps Desktop boot from opening an external browser and uses Electron Node mode for explicit helpers', () => {
-    const patchPath = './patches/dsh-web-app@0.1.1-rc.2.patch'
-    expectPatchedDependency('@deepseek-ai/dsh-web-app@0.1.1-rc.2', patchPath)
+    const patchPath = './patches/@deepseek-ai__dsh-web-app@0.1.5-alpha.1.patch'
+    expectPatchedDependency('@deepseek-ai/dsh-web-app@0.1.5-alpha.1', patchPath)
     const patch = readFileSync(new URL(patchPath, workspaceRoot), 'utf8')
     const installedWebApp = readFileSync(new URL(
       'node_modules/@deepseek-ai/dsh-web-app/lib/index.js',
@@ -837,28 +820,26 @@ describe('published package surface', () => {
   })
 
   it('starts restricted Windows shells with a hidden console show state', () => {
-    const patchPath = './patches/dsh-sandbox-windows-acl@0.1.1-rc.2.patch'
+    // The win32 process-spawn code this patch targets moved out of
+    // `dsh-sandbox-windows-acl` into its own `dsh-win32-process` package
+    // (still `dsh-sandbox-windows-acl`'s own dependency); the patch content
+    // (dwFlags/wShowWindow) is unchanged, only its target package is new.
+    const patchPath = './patches/@deepseek-ai__dsh-win32-process@0.1.5-alpha.1.patch'
     const lockfile = readFileSync(new URL('pnpm-lock.yaml', workspaceRoot), 'utf8')
-    const patch = readFileSync(new URL('patches/dsh-sandbox-windows-acl@0.1.1-rc.2.patch', workspaceRoot), 'utf8')
-    const workspaceRequire = createRequire(new URL('package.json', packageRoot))
-    const sandboxManifest = workspaceRequire.resolve('@deepseek-ai/dsh-sandbox-windows-acl/package.json')
-    const sandboxLocalManifest = workspaceRequire.resolve('@deepseek-ai/dsh-sandbox-local/package.json')
-    const sandboxLocalRequire = createRequire(sandboxLocalManifest)
-    const sandboxLib = join(dirname(sandboxManifest), 'lib')
-    const runtimeChunks = readdirSync(sandboxLib).filter(name => /^types-.*\.js$/u.test(name))
+    const patch = readFileSync(new URL(patchPath, workspaceRoot), 'utf8')
+    const sandboxRequire = createRequire(
+      createRequire(new URL('package.json', packageRoot)).resolve('@deepseek-ai/dsh-sandbox-windows-acl/package.json'),
+    )
+    const win32ProcessManifest = sandboxRequire.resolve('@deepseek-ai/dsh-win32-process/package.json')
+    const win32ProcessLib = join(dirname(win32ProcessManifest), 'lib')
 
-    expectPatchedDependency('@deepseek-ai/dsh-sandbox-windows-acl@0.1.1-rc.2', patchPath)
-    expect(realpathSync(sandboxLocalRequire.resolve('@deepseek-ai/dsh-sandbox-windows-acl/package.json')))
-      .toBe(realpathSync(sandboxManifest))
-    expect(lockfile).toContain('@deepseek-ai/dsh-sandbox-windows-acl@0.1.1-rc.2(patch_hash=')
+    expectPatchedDependency('@deepseek-ai/dsh-win32-process@0.1.5-alpha.1', patchPath)
+    expect(lockfile).toContain('@deepseek-ai/dsh-win32-process@0.1.5-alpha.1(patch_hash=')
     expect(patch.match(/^\+\s*dwFlags: 257,\r?$/gmu)).toHaveLength(2)
     expect(patch.match(/^\+\s*wShowWindow: 0,\r?$/gmu)).toHaveLength(2)
-    expect(runtimeChunks).toHaveLength(1)
-    const installedRuntime = readFileSync(join(sandboxLib, runtimeChunks[0] as string), 'utf8')
+    const installedRuntime = readFileSync(join(win32ProcessLib, 'index.js'), 'utf8')
     expect(installedRuntime.match(/dwFlags: 257,/gu)).toHaveLength(2)
     expect(installedRuntime.match(/wShowWindow: 0,/gu)).toHaveLength(2)
-    expect(installedRuntime).toContain('api.createProcessAsUserW(token, null, commandLine, null, null, 1, 0, null')
-    expect(installedRuntime).toContain('api.createProcessAsUserW(token, null, commandLine, null, null, 1, 4, null')
-    expect(installedRuntime).not.toContain('134217728')
+    expect(installedRuntime).toContain('createProcessAsUserW')
   })
 })

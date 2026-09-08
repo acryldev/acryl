@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
+import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
 import { FileSettingsProvider } from '@deepseek-ai/dsh-settings-file'
 import z from '@deepseek-ai/schemastery'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -62,7 +62,7 @@ const receipt: MarketInstallReceipt = {
 }
 
 const SiblingSchema = z.object({ label: z.string().default('default') })
-const SIBLING_NAMESPACE = settingsNamespace('market-persistence-fixture')
+const SIBLING_NAMESPACE = 'market-persistence-fixture' as SettingsNamespace
 
 describe('community market file-backed settings', () => {
   it('restores sources and install receipts in a new Host context', async () => {

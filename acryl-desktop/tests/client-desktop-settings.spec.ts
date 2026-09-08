@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { ClientContext, SettingsScope } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import type { SettingsScope } from '@deepseek-ai/dsh-client-ui-settings/client'
 import { DesktopSettingsSection } from '../src/client/DesktopSettingsSection.tsx'
 import { DesktopTerminalSettingsAction } from '../src/client/DesktopTerminalSettingsAction.tsx'
 import {
@@ -116,6 +117,7 @@ describe('Desktop settings Slot registration', () => {
       subscribe: () => () => {},
       set: vi.fn(async () => {}),
       unset: vi.fn(async () => {}),
+      mutate: vi.fn(async () => {}),
     } satisfies SettingsScope<unknown>
     const bind = vi.fn(() => scope)
     const register = vi.fn(() => () => {})

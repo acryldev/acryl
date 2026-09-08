@@ -3,8 +3,13 @@ import { MessageId, type StreamChunk } from '@deepseek-ai/dsh-llm'
 import {
   DeepSeekAdapter,
   resolveAdapterOptions,
+  type DeepSeekAdapterOptions,
 } from '@deepseek-ai/dsh-llm-deepseek'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+
+/** No plugin-contributed wire fields; matches the fixture's `DeepSeekAdapter` construction elsewhere in dsh-llm-deepseek's own tests. */
+const noExtensions: DeepSeekAdapterOptions['prepareExtensions'] = () =>
+  Promise.resolve({ fields: {}, accept: () => Promise.resolve() })
 
 function sseResponse(payloads: readonly unknown[]): Response {
   const body = payloads
@@ -61,6 +66,7 @@ describe('DeepSeek streaming tool calls', () => {
       options: () => connection,
       resolveApiKey: async () => 'test-key',
       resolveUserId: () => 'test-user' as AnonymousUserId,
+      prepareExtensions: noExtensions,
     })
     const chunks: StreamChunk[] = []
 

@@ -4,7 +4,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { LocaleId } from '@deepseek-ai/dsh-client-locale'
 import type { WebRoute } from '@deepseek-ai/dsh-host-webserver'
 import type { ThemePreference } from '@deepseek-ai/dsh-client-ui-theme'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
+import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   apply,
@@ -149,11 +149,11 @@ function createHarness(platform: DesktopRuntime['platform'] = 'darwin'): PluginH
     notify: async (next, prev) => { await watcher?.(next, prev) },
     notifyLocale: (preference) => {
       localePreference = preference
-      for (const listener of settingsUpdated) listener(settingsNamespace('locale'), { preference })
+      for (const listener of settingsUpdated) listener('locale' as SettingsNamespace, { preference })
     },
     notifyTheme: (preference) => {
       themePreference = preference
-      for (const listener of settingsUpdated) listener(settingsNamespace('ui-theme'), { preference })
+      for (const listener of settingsUpdated) listener('ui-theme' as SettingsNamespace, { preference })
     },
   }
 }
