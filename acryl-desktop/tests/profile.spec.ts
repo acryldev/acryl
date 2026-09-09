@@ -231,6 +231,19 @@ describe('desktop profile composition', {
       expect(matching[0]).toEqual(expect.objectContaining({ name }))
       expect(matching[0]?.disabled).toBeFalsy()
     }
+    // Brand swap: `dsh-client-ui-brand-acryl` and the base bundle's
+    // `@deepseek-ai/dsh-client-ui-brand-official` occupy the identical slot
+    // set; exactly one is enabled per `DESKTOP_BRAND`, proving the two
+    // packages are a real swappable Cordis composition rather than one
+    // patching the other.
+    expect(rows.find(row => row.id === 'ui-brand-official')).toEqual(expect.objectContaining({
+      name: '@deepseek-ai/dsh-client-ui-brand-official',
+      disabled: true,
+    }))
+    const acrylBrandRows = rows.filter(row => row.id === 'ui-brand-acryl')
+    expect(acrylBrandRows).toHaveLength(1)
+    expect(acrylBrandRows[0]).toEqual(expect.objectContaining({ name: 'dsh-client-ui-brand-acryl' }))
+    expect(acrylBrandRows[0]?.disabled).toBeFalsy()
     expect(rows.find(row => row.id === 'directory-picker')).toEqual(expect.objectContaining({
       name: '@deepseek-ai/dsh-host-directory-picker-auto',
     }))

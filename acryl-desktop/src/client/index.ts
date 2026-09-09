@@ -16,7 +16,6 @@ import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
-import { applyAcrylBrand } from './acryl-brand.tsx'
 import { applyAdvancedShell } from './advanced-shell.ts'
 import { startRendererBootReporter } from './boot-health.ts'
 import { applyDesktopSettings } from './desktop-settings.ts'
@@ -25,8 +24,6 @@ import { parseDesktopClientEnvironment } from './environment.ts'
 import { applyPluginLifecycleSettings } from './plugin-lifecycle-settings.ts'
 import { installWorkspaceFolderDrop } from './workspace-folder-drop.ts'
 
-export { AcrylBrandMark, AcrylBrandName, AcrylHeroBrandMark, applyAcrylBrand } from './acryl-brand.tsx'
-export type { AcrylBrandMarkProps, AcrylBrandNameProps, AcrylHeroBrandMarkProps } from './acryl-brand.tsx'
 export { applyAdvancedShell } from './advanced-shell.ts'
 export { applyDesktopSettings } from './desktop-settings.ts'
 export { PluginArchitectureSettingsTab } from './PluginArchitectureSettingsTab.tsx'
@@ -108,7 +105,9 @@ export const inject = [
 export function apply(ctx: ClientContext): void {
   const environment = parseDesktopClientEnvironment(window.location.hash)
   if (!environment) return
-  applyAcrylBrand(ctx)
+  // ACRYL identity is composed at the Loader level (`dsh-client-ui-brand-acryl`,
+  // a standalone swappable counterpart to `@deepseek-ai/dsh-client-ui-brand-official`
+  // - see profile.ts), not applied inline from this plugin.
   applyDesktopSettings(ctx, environment)
   applyPluginLifecycleSettings(ctx)
   ctx.effect(

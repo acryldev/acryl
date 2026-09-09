@@ -85,6 +85,21 @@ const DESKTOP_SETTINGS_NAMESPACE = 'dsh-desktop'
 const UI_LAYOUT_PACKAGE = '@deepseek-ai/dsh-client-ui-layout'
 const UI_SIDEBAR_PACKAGE = '@deepseek-ai/dsh-client-ui-sidebar'
 const UI_CONVERSATION_PACKAGE = '@deepseek-ai/dsh-client-ui-conversation'
+const UI_BRAND_OFFICIAL_ROW_ID = 'ui-brand-official'
+const UI_BRAND_ACRYL_ROW_ID = 'ui-brand-acryl'
+const UI_BRAND_ACRYL_PACKAGE = 'dsh-client-ui-brand-acryl'
+/**
+ * Selects which browser-brand package occupies the sidebar and
+ * conversation-hero brand slots (`sidebar.brand.mark`/`.name`,
+ * `conversation.hero.brand.mark`) - exactly one of two standalone,
+ * independently swappable Cordis Client plugins carrying the same slot
+ * contract: `@deepseek-ai/dsh-client-ui-brand-official` (stock DeepSeek
+ * Harness identity, already composed by the base `dsh-web-app` bundle) or
+ * `dsh-client-ui-brand-acryl` (ACRYL identity). Flipping this constant and
+ * rebuilding proves the swap; a Settings-driven runtime toggle is a
+ * follow-up once this composition-level swap is validated.
+ */
+const DESKTOP_BRAND: 'official' | 'acryl' = 'acryl'
 const DEFAULT_DESKTOP_MARKET_SNAPSHOT: DesktopMarketSnapshot = Object.freeze({
   requested: 'disabled',
   effective: 'disabled',
@@ -732,6 +747,21 @@ export function prepareDesktopProfile(
     id: 'settings',
     config: settingsConfig,
   })
+  // Brand swap: exactly one of the two same-slot-contract brand packages is
+  // enabled, regardless of desktop mode (mirrors the compatibility-vs-advanced
+  // toggle below, but this axis is brand identity, not shell composition).
+  const officialBrandRow = rows.get(UI_BRAND_OFFICIAL_ROW_ID)
+  if (officialBrandRow?.name !== '@deepseek-ai/dsh-client-ui-brand-official') {
+    throw new Error(`${BIN_NAME}: desktop profile must use @deepseek-ai/dsh-client-ui-brand-official in the ${UI_BRAND_OFFICIAL_ROW_ID} row`)
+  }
+  patches.push(
+    { id: UI_BRAND_OFFICIAL_ROW_ID, disabled: DESKTOP_BRAND !== 'official' },
+    { insert: [{
+      id: UI_BRAND_ACRYL_ROW_ID,
+      name: UI_BRAND_ACRYL_PACKAGE,
+      disabled: DESKTOP_BRAND !== 'acryl',
+    }] },
+  )
   if (mode === 'advanced') {
     for (const [id, packageName] of [
       ['ui-layout', UI_LAYOUT_PACKAGE],

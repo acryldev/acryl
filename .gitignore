@@ -7,10 +7,13 @@ node_modules/
 .openclaude
 
 docs/codebase/
+graphify-out/
 
 acryl-desktop/dist/
 acryl-desktop/lib/
 dsh-community-market/lib/
+dsh-client-ui-brand-acryl/lib/
 acryl-web/lib/
 release-artifacts/
 
+.cgr-hash-cache.json

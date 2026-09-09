@@ -1,0 +1,80 @@
+{
+  "name": "dsh-client-ui-brand-acryl",
+  "version": "0.1.0-dev.0",
+  "private": true,
+  "description": "ACRYL brand occupants for the DSH Web client's sidebar and conversation-hero slots - the swappable counterpart to @deepseek-ai/dsh-client-ui-brand-official",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "dsh-client-ui-brand-acryl"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/dsh-client-ui-brand-acryl#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-sidebar",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ],
+      "platform": "web"
+    }
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "generate:logo": "node scripts/generate-acryl-brand-data.mjs",
+    "build": "node scripts/clean.mjs && pnpm run generate:logo && tsdown && tsc -p tsconfig.json && tsc -p tsconfig.client.json --emitDeclarationOnly",
+    "typecheck": "pnpm run generate:logo && tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "test": "vitest run",
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.1"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/dsh-client-ui-conversation": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-client-ui-renderer": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-client-ui-sidebar": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-client-ui-slots": "0.1.5-alpha.1",
+    "@types/node": "^22.20.0",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "sharp": "0.35.3",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3",
+    "vitest": "4.1.8"
+  }
+}

@@ -1,29 +1,32 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import { AcrylBrandMark, AcrylBrandName, AcrylHeroBrandMark, applyAcrylBrand } from '../src/client/acryl-brand.tsx'
+import { AcrylBrandMark, AcrylBrandName, AcrylHeroBrandMark } from '../src/client/Brand.tsx'
+import { apply, inject } from '../src/client/index.ts'
 
-describe('ACRYL branding', () => {
-  it('renders both supplied theme marks and the ACRYL product name', () => {
+describe('ACRYL brand plugin', () => {
+  it('renders the sidebar mark/name and hero mark with the ACRYL identity', () => {
     const mark = renderToStaticMarkup(AcrylBrandMark({ size: 24 }))
     expect(mark).toContain('width:24px')
     expect(mark).toContain('acrylBrandMarkLight')
     expect(mark).toContain('acrylBrandMarkDark')
     expect(mark.match(/data:image\/png;base64,/gu)).toHaveLength(2)
     expect(renderToStaticMarkup(AcrylBrandName())).toBe('<span>ACRYL</span>')
+
+    const hero = renderToStaticMarkup(AcrylHeroBrandMark({ size: 34, className: 'fish' }))
+    expect(hero).toContain('width:34px')
+    expect(hero).toContain('class="acrylBrandMark fish"')
+    expect(hero.match(/data:image\/png;base64,/gu)).toHaveLength(2)
   })
 
-  it('renders the hero mark at the requested size under the host class', () => {
-    const mark = renderToStaticMarkup(AcrylHeroBrandMark({ size: 34, className: 'fish' }))
-    expect(mark).toContain('width:34px')
-    expect(mark).toContain('class="acrylBrandMark fish"')
-    expect(mark.match(/data:image\/png;base64,/gu)).toHaveLength(2)
+  it('declares the slots service dependency', () => {
+    expect(inject).toEqual(['slots'])
   })
 
-  it('contributes the sidebar and hero brand slots', () => {
+  it('contributes the sidebar and hero brand slots as one declaration-aware set', () => {
     const injectedNames: string[] = []
     const registeredOptions: unknown[] = []
-    const inject = vi.fn((name: string, register: () => unknown) => {
+    const slotsInject = vi.fn((name: string, register: () => unknown) => {
       injectedNames.push(name)
       return register()
     })
@@ -31,9 +34,9 @@ describe('ACRYL branding', () => {
       registeredOptions.push(options)
       return () => {}
     })
-    const ctx = { slots: { inject, register } } as unknown as ClientContext
+    const ctx = { slots: { inject: slotsInject, register } } as unknown as ClientContext
 
-    applyAcrylBrand(ctx)
+    apply(ctx)
 
     expect(injectedNames).toEqual([
       'sidebar.brand.mark',
@@ -41,9 +44,9 @@ describe('ACRYL branding', () => {
       'conversation.hero.brand.mark',
     ])
     expect(registeredOptions).toEqual([
-      { name: 'sidebar.brand.mark', priority: -1000 },
-      { name: 'sidebar.brand.name', priority: -1000 },
-      { name: 'conversation.hero.brand.mark', priority: -1000 },
+      { name: 'sidebar.brand.mark' },
+      { name: 'sidebar.brand.name' },
+      { name: 'conversation.hero.brand.mark' },
     ])
   })
 })
