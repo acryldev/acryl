@@ -21,7 +21,7 @@ export type AdvancedFrameProps = PropsRuntime<'root'>
   & AdvancedFrameInjected
 
 /** Desktop-owned transparent frame around the unchanged product surfaces. */
-export function AdvancedFrame({ layout, platform, renderSlot, useSessions }: AdvancedFrameProps) {
+export function AdvancedFrame({ layout, platform, renderSlot, useSessions, SessionProvider }: AdvancedFrameProps) {
   const subscribeLayout = useCallback((listener: () => void) => layout.subscribe(listener), [layout])
   const readLayout = useCallback(() => layout.getSnapshot(), [layout])
   const panels = useSyncExternalStore(subscribeLayout, readLayout)
@@ -117,7 +117,14 @@ export function AdvancedFrame({ layout, platform, renderSlot, useSessions }: Adv
           renderConversation: () => renderSlot('conversation', {}),
         })}
       </main>
-      <aside className="dshDesktopDetailsSurface">{renderSlot('details', {})}</aside>
+      <aside className="dshDesktopDetailsSurface">
+        {/* Strict session entry: with no session there is no surface, and the
+            column is an empty zero-width track (matches ui-layout's
+            AppFrame/rightbar - SessionProvider withholds the strict entry
+            while no session is current instead of rendering it into a
+            scope with no binding, which throws SlotAssemblyError). */}
+        <SessionProvider>{renderSlot('details', {})}</SessionProvider>
+      </aside>
       <div className="dshDesktopOverlay" data-shell-overlay>
         {renderSlot('shell.overlay', {})}
       </div>
