@@ -2550,3 +2550,17 @@ Primary locations:
 - `docs/cordis/cordis_spec.md`
 - `docs/cordis/`
 - `docs/acryl/ACRYL_DSH_GAP_ANALYSIS.md`
+## 2026-09-09 - establish the Loader-managed engine host
+
+Commit: `af47a4b5224bfef95fb840f347e1f7370a2f3988`
+
+Added `createAcrylEngineHost` to `acryl-harness-runtime`. It owns one Cordis
+root and a stable `acryl-engine` Loader entry, registers engine packages as
+Loader builtins, and replaces the active provider through the Loader's
+transactional module replacement path. Tests prove initial provider activation,
+dependent-consumer teardown and reactivation during a DSH-to-Pi-style swap, and
+rejection of an unknown engine without disturbing the active provider.
+
+M9's plan and task ledger now state the same architecture: `dsh-cordis` and
+the future `pi-cordis` are provider entries beneath the persistent ACRYL host;
+they do not each create a separate Cordis root.
