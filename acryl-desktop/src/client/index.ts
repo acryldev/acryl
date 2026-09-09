@@ -106,7 +106,7 @@ export const inject = [
 
 /** Register desktop-owned client surfaces for the current BrowserWindow mode. @param ctx - browser Cordis context. */
 export function apply(ctx: ClientContext): void {
-  const environment = parseDesktopClientEnvironment(window.location.search)
+  const environment = parseDesktopClientEnvironment(window.location.hash)
   if (!environment) return
   applyAcrylBrand(ctx)
   applyDesktopSettings(ctx, environment)

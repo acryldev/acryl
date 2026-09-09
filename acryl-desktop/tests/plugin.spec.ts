@@ -206,17 +206,19 @@ describe('desktop Host plugin', () => {
     const url = new URL(desktopRendererUrl(43120, 'advanced', 'darwin'))
     expect(url.origin).toBe('http://127.0.0.1:43120')
     expect(url.pathname).toBe('/')
-    expect(Object.fromEntries(url.searchParams)).toEqual({
+    expect(Object.fromEntries(new URLSearchParams(url.hash.slice(1)))).toEqual({
       'dsh-desktop-mode': 'advanced',
       'dsh-desktop-platform': 'darwin',
     })
   })
 
   it('keeps the desktop markers when Connection rebuilds the URL around its launch token', () => {
-    // Connection's own `authenticatedUrl` clears the query before adding its
-    // token, so the markers must survive it: without them the renderer's
-    // desktop client plugin no-ops and never provides the `layout` service
-    // every sidebar row injects.
+    // Connection's `authorizeIndex` always 303s a token-carrying GET / to the
+    // bare origin, discarding the query - so the markers travel in the
+    // fragment, which the Fetch redirect algorithm copies onto a `Location`
+    // that carries none of its own. Without them the renderer's desktop
+    // client plugin no-ops and never provides the `layout` service every
+    // sidebar row injects.
     const authenticate = (baseUrl: string): string => {
       const rebuilt = new URL(baseUrl)
       rebuilt.search = ''
@@ -226,8 +228,8 @@ describe('desktop Host plugin', () => {
 
     const url = new URL(desktopRendererUrl(43120, 'advanced', 'darwin', authenticate))
 
-    expect(Object.fromEntries(url.searchParams)).toEqual({
-      token: 'launch-token',
+    expect(Object.fromEntries(url.searchParams)).toEqual({ token: 'launch-token' })
+    expect(Object.fromEntries(new URLSearchParams(url.hash.slice(1)))).toEqual({
       'dsh-desktop-mode': 'advanced',
       'dsh-desktop-platform': 'darwin',
     })
@@ -256,7 +258,7 @@ describe('desktop Host plugin', () => {
     )
     expect(harness.shell()).toEqual(expect.objectContaining({
       mode: 'compatibility',
-      url: 'http://127.0.0.1:43120/?dsh-desktop-mode=compatibility&dsh-desktop-platform=darwin',
+      url: 'http://127.0.0.1:43120/#dsh-desktop-mode=compatibility&dsh-desktop-platform=darwin',
       productName: 'ACRYL',
       windowTitle: 'ACRYL',
       readThemeSource: expect.any(Function),

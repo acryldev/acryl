@@ -159,16 +159,22 @@ export function desktopRendererUrl(
   platform: Context['desktopRuntime']['platform'],
   authenticate: (baseUrl: string) => string = baseUrl => baseUrl,
 ): string {
-  // Connection's `authenticatedUrl` rebuilds the URL from the origin and
-  // clears the query (`url.search = ''`) before adding its launch token, so
-  // the desktop markers have to be applied to its result. Passing an
-  // already-marked URL through it silently drops them, which leaves the
-  // renderer without `dsh-desktop-mode`; the desktop client plugin then
-  // no-ops on `parseDesktopClientEnvironment`, never runs the advanced shell,
-  // and never provides the `layout` service every sidebar row injects.
+  // Connection's browser-auth always answers a token-carrying GET / with a
+  // 303 to the bare origin (`authorizeIndex` in dsh-client-connection), so
+  // any desktop marker on the query string is discarded by that redirect
+  // before the renderer ever loads - the desktop client plugin then no-ops
+  // on `parseDesktopClientEnvironment`, never runs the advanced shell, and
+  // never provides the `layout` service every sidebar row injects. Encode
+  // the markers as a URL fragment instead: the Fetch redirect algorithm
+  // copies the pre-redirect fragment onto the target whenever `Location`
+  // does not carry its own, so the fragment survives where the query does
+  // not. `authenticatedUrl` only touches origin/search/query, so applying
+  // the fragment before or after it is equivalent; done after for clarity.
   const url = new URL(authenticate(`http://127.0.0.1:${String(port)}/`))
-  url.searchParams.set('dsh-desktop-mode', mode)
-  url.searchParams.set('dsh-desktop-platform', platform)
+  const markers = new URLSearchParams()
+  markers.set('dsh-desktop-mode', mode)
+  markers.set('dsh-desktop-platform', platform)
+  url.hash = markers.toString()
   return url.href
 }
 
