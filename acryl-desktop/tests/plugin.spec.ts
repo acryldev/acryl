@@ -212,6 +212,27 @@ describe('desktop Host plugin', () => {
     })
   })
 
+  it('keeps the desktop markers when Connection rebuilds the URL around its launch token', () => {
+    // Connection's own `authenticatedUrl` clears the query before adding its
+    // token, so the markers must survive it: without them the renderer's
+    // desktop client plugin no-ops and never provides the `layout` service
+    // every sidebar row injects.
+    const authenticate = (baseUrl: string): string => {
+      const rebuilt = new URL(baseUrl)
+      rebuilt.search = ''
+      rebuilt.searchParams.set('token', 'launch-token')
+      return rebuilt.href
+    }
+
+    const url = new URL(desktopRendererUrl(43120, 'advanced', 'darwin', authenticate))
+
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      token: 'launch-token',
+      'dsh-desktop-mode': 'advanced',
+      'dsh-desktop-platform': 'darwin',
+    })
+  })
+
   it('registers settings and the active Web port without re-entering Loader settlement', async () => {
     const harness = createHarness()
     const loaderAwait = vi.fn(() => new Promise<void>(() => {}))
@@ -227,9 +248,11 @@ describe('desktop Host plugin', () => {
     expect(loaderAwait).not.toHaveBeenCalled()
     // The renderer's first navigation must carry the Connection launch
     // token, or dsh-client-connection's browser-auth 401s it and the
-    // renderer never reports boot health.
+    // renderer never reports boot health. The bare origin is what gets
+    // authenticated: `authenticatedUrl` clears the query, so the desktop
+    // markers are applied to its result rather than passed through it.
     expect(vi.mocked(harness.ctx.connection.authenticatedUrl)).toHaveBeenCalledWith(
-      'http://127.0.0.1:43120/?dsh-desktop-mode=compatibility&dsh-desktop-platform=darwin',
+      'http://127.0.0.1:43120/',
     )
     expect(harness.shell()).toEqual(expect.objectContaining({
       mode: 'compatibility',

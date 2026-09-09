@@ -157,8 +157,16 @@ export function desktopRendererUrl(
   port: number,
   mode: DesktopShellMode,
   platform: Context['desktopRuntime']['platform'],
+  authenticate: (baseUrl: string) => string = baseUrl => baseUrl,
 ): string {
-  const url = new URL(`http://127.0.0.1:${String(port)}/`)
+  // Connection's `authenticatedUrl` rebuilds the URL from the origin and
+  // clears the query (`url.search = ''`) before adding its launch token, so
+  // the desktop markers have to be applied to its result. Passing an
+  // already-marked URL through it silently drops them, which leaves the
+  // renderer without `dsh-desktop-mode`; the desktop client plugin then
+  // no-ops on `parseDesktopClientEnvironment`, never runs the advanced shell,
+  // and never provides the `layout` service every sidebar row injects.
+  const url = new URL(authenticate(`http://127.0.0.1:${String(port)}/`))
   url.searchParams.set('dsh-desktop-mode', mode)
   url.searchParams.set('dsh-desktop-platform', platform)
   return url.href
@@ -416,7 +424,12 @@ export function apply(ctx: Context, config: Config): void {
     connectionCtx.effect(
       () => runtime.schedule({
         ...config,
-        url: connectionCtx.connection.authenticatedUrl(desktopRendererUrl(ctx.webServer.port, config.mode, runtime.platform)),
+        url: desktopRendererUrl(
+          ctx.webServer.port,
+          config.mode,
+          runtime.platform,
+          baseUrl => connectionCtx.connection.authenticatedUrl(baseUrl),
+        ),
         productName: 'ACRYL',
         windowTitle: 'ACRYL',
         iconPath,
