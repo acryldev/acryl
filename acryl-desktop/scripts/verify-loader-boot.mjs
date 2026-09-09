@@ -145,7 +145,12 @@ try {
         port: 43120,
         register() { return () => {} },
       })
-      host.provide('webRuntime', {})
+      // `dsh-client-connection`'s own cordis.patch.yml config row spreads
+      // `ctx.webRuntime.trustedHosts` (`['app.internal', ...trustedHosts]`);
+      // an empty stub previously went unexercised because nothing in this
+      // smoke asked for `ctx.connection` — asking now (see
+      // `acryl-desktop/src/index.ts`'s authenticatedUrl call) surfaces it.
+      host.provide('webRuntime', { trustedHosts: [] })
       host.provide('appExit', () => {})
       host.provide('settings', {
         register() {
@@ -160,6 +165,12 @@ try {
     },
     prepared.bareModuleBaseUrl,
   )
+  if (process.env.DEBUG_VERIFY_LOADER_BOOT !== undefined) {
+    console.error('connection service present:', ctx.get('connection') !== undefined)
+    for (const entry of ctx.loader.entries()) {
+      console.error(entry.options.name, entry.fiber?.state)
+    }
+  }
   await runtime.mountScheduled()
 
   const desktopEntry = ctx.loader.resolve('include:desktop-shell')
@@ -177,7 +188,17 @@ try {
   if (mountedSpec?.mode !== 'compatibility') {
     throw new Error(`desktop plugin produced an unexpected shell mode: ${String(mountedSpec?.mode)}`)
   }
-  if (mountedSpec?.url !== 'http://127.0.0.1:43120/?dsh-desktop-mode=compatibility&dsh-desktop-platform=darwin') {
+  // The Connection launch token is a fresh signed value per activation, so
+  // this checks the stable parts and that a token is actually present —
+  // its absence is exactly the bug that left the renderer 401'd and
+  // boot-health timing out (see acryl-desktop/src/index.ts's
+  // `ctx.connection.authenticatedUrl` call).
+  const mountedUrl = mountedSpec?.url === undefined ? undefined : new URL(mountedSpec.url)
+  if (mountedUrl?.origin !== 'http://127.0.0.1:43120'
+    || mountedUrl.pathname !== '/'
+    || mountedUrl.searchParams.get('dsh-desktop-mode') !== 'compatibility'
+    || mountedUrl.searchParams.get('dsh-desktop-platform') !== 'darwin'
+    || mountedUrl.searchParams.get('token') === null) {
     throw new Error(`desktop plugin produced an unexpected renderer URL: ${String(mountedSpec?.url)}`)
   }
 } finally {

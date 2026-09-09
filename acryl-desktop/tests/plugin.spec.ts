@@ -124,11 +124,18 @@ function createHarness(platform: DesktopRuntime['platform'] = 'darwin'): PluginH
         return () => { if (routes.get(route.path) === route) routes.delete(route.path) }
       }),
     },
+    connection: { authenticatedUrl: vi.fn((url: string) => url) },
     settings,
     logger: { warn: vi.fn(), error: vi.fn() },
     get: vi.fn((key: unknown) => String(key) === 'desktopRuntime' ? runtime : () => {}),
     effect: vi.fn((register: () => unknown) => register()),
-    inject: vi.fn(),
+    // Runs the callback only when every requested service is present on
+    // this fixture (immediately, unlike the real deferred Cordis inject) —
+    // otherwise stays a no-op, matching prior behavior for services this
+    // fixture never provides (e.g. 'commands').
+    inject: vi.fn((names: string[], callback: (scoped: Context) => void) => {
+      if (names.every(name => (ctx as unknown as Record<string, unknown>)[name] !== undefined)) callback(ctx)
+    }),
     on: vi.fn((event: string, listener: (namespace: unknown, next: unknown) => void) => {
       if (event === 'settings/updated') settingsUpdated.add(listener)
       return () => { settingsUpdated.delete(listener) }
@@ -218,6 +225,12 @@ describe('desktop Host plugin', () => {
     expect(register.mock.calls[0]?.[2]).toEqual(expect.objectContaining({ applies: 'restart' }))
     expect(register.mock.calls[0]?.[2]).not.toHaveProperty('base')
     expect(loaderAwait).not.toHaveBeenCalled()
+    // The renderer's first navigation must carry the Connection launch
+    // token, or dsh-client-connection's browser-auth 401s it and the
+    // renderer never reports boot health.
+    expect(vi.mocked(harness.ctx.connection.authenticatedUrl)).toHaveBeenCalledWith(
+      'http://127.0.0.1:43120/?dsh-desktop-mode=compatibility&dsh-desktop-platform=darwin',
+    )
     expect(harness.shell()).toEqual(expect.objectContaining({
       mode: 'compatibility',
       url: 'http://127.0.0.1:43120/?dsh-desktop-mode=compatibility&dsh-desktop-platform=darwin',

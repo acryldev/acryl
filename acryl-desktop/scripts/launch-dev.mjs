@@ -12,6 +12,7 @@ const execFileAsync = promisify(execFile)
 const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)))
 const PRODUCT_NAME = 'ACRYL'
 const DEVELOPMENT_BUNDLE_ID = 'dev.acryl.desktop.development'
+const DEV_ENTITLEMENTS_PATH = join(packageRoot, 'build', 'entitlements.dev.plist')
 
 /** Replace one string value in an XML property list and fail if the key is absent. */
 export function setPlistString(source, key, value) {
@@ -58,7 +59,24 @@ export async function prepareDarwinDevelopmentBundle(electronExecutable) {
     const sourceExecutable = join(destinationApp, 'Contents', 'MacOS', basename(electronExecutable))
     const brandedExecutable = join(destinationApp, 'Contents', 'MacOS', PRODUCT_NAME)
     await rename(sourceExecutable, brandedExecutable)
-    await execFileAsync('/usr/bin/codesign', ['--force', '--deep', '--sign', '-', destinationApp])
+    // `--deep` alone (no entitlements, no hardened runtime) leaves every
+    // nested Electron Helper.app ad-hoc-signed but WITHOUT
+    // `com.apple.security.inherit` — after the outer app is renamed/
+    // re-identified, each Helper then computes a mismatched Mach service
+    // name for the renderer/GPU Mach-port rendezvous handshake and exits
+    // immediately ("Unknown service name" / "No rendezvous client,
+    // terminating process"), which surfaces as a silent renderer-boot-health
+    // timeout. Signing with the same entitlements (and hardened runtime)
+    // app-builder-lib's own packaged `dist:mac` build already signs
+    // successfully with fixes the rendezvous for this ad-hoc dev rebrand too.
+    await execFileAsync('/usr/bin/codesign', [
+      '--force',
+      '--deep',
+      '--options', 'runtime',
+      '--entitlements', DEV_ENTITLEMENTS_PATH,
+      '--sign', '-',
+      destinationApp,
+    ])
 
     return {
       executable: brandedExecutable,

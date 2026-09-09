@@ -6,6 +6,9 @@ import z from '@deepseek-ai/schemastery'
 import type {} from '@deepseek-ai/dsh-cmdline'
 import type {} from '@deepseek-ai/cordis-plugin-loader'
 import type {} from '@deepseek-ai/dsh-commands'
+// `ctx.connection`'s Context augmentation; see the authenticatedUrl() call
+// building the renderer URL below.
+import type {} from '@deepseek-ai/dsh-client-connection'
 import {
   LOCALE_IDS,
   LOCALE_SETTINGS_NAMESPACE,
@@ -399,27 +402,39 @@ export function apply(ctx: Context, config: Config): void {
     if (namespace !== UI_LOCALE_SETTINGS_NAMESPACE) return
     runtime.setLocalePreference(toDesktopLocale((next as LocaleSettings).preference))
   })
-  ctx.effect(
-    () => runtime.schedule({
-      ...config,
-      url: desktopRendererUrl(ctx.webServer.port, config.mode, runtime.platform),
-      productName: 'ACRYL',
-      windowTitle: 'ACRYL',
-      iconPath,
-      trayIcons,
-      readLocalePreference: () => {
-        return toDesktopLocale((ctx.settings.get(UI_LOCALE_SETTINGS_NAMESPACE) as LocaleSettings | undefined)?.preference)
-      },
-      readThemeSource: () => {
-        const theme = ctx.settings.get(UI_THEME_SETTINGS_NAMESPACE) as ThemeSettings | undefined
-        if (theme === undefined) {
-          throw new Error('acryl-desktop: advanced shell requires the ui-theme settings namespace')
-        }
-        return theme.preference
-      },
-      requestQuit: appExit,
-      requestModeChange: async mode => settings.update({ mode }),
-    }),
-    'acryl-desktop: native shell generation',
-  )
+  // `desktopRendererUrl` alone is unauthenticated: the shared Connection
+  // cookie gate (dsh-client-connection's browser-auth) 401s any request
+  // that skips the launch-token exchange — the same "authenticatedUrl" step
+  // `dsh web` runs before printing/opening its own URL — so the
+  // BrowserWindow's very first navigation must carry the token too, or its
+  // renderer never gets past the 401 page and boot health times out.
+  // `connection` is injected scoped here (not in this plugin's own static
+  // `inject` array) so a deployment that never mounts dsh-client-connection
+  // degrades to the unauthenticated URL instead of leaving this whole
+  // plugin permanently pending.
+  ctx.inject(['connection'], connectionCtx => {
+    connectionCtx.effect(
+      () => runtime.schedule({
+        ...config,
+        url: connectionCtx.connection.authenticatedUrl(desktopRendererUrl(ctx.webServer.port, config.mode, runtime.platform)),
+        productName: 'ACRYL',
+        windowTitle: 'ACRYL',
+        iconPath,
+        trayIcons,
+        readLocalePreference: () => {
+          return toDesktopLocale((ctx.settings.get(UI_LOCALE_SETTINGS_NAMESPACE) as LocaleSettings | undefined)?.preference)
+        },
+        readThemeSource: () => {
+          const theme = ctx.settings.get(UI_THEME_SETTINGS_NAMESPACE) as ThemeSettings | undefined
+          if (theme === undefined) {
+            throw new Error('acryl-desktop: advanced shell requires the ui-theme settings namespace')
+          }
+          return theme.preference
+        },
+        requestQuit: appExit,
+        requestModeChange: async mode => settings.update({ mode }),
+      }),
+      'acryl-desktop: native shell generation',
+    )
+  })
 }
