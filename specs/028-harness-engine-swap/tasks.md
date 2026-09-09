@@ -1,5 +1,11 @@
 # Tasks: Interchangeable Harness Engine (DSH and pi)
 
+> **Architecture correction, 2026-09-09:** T004 onward must use the persistent
+> `acryl-harness-runtime` engine host and its stable `acryl-engine` Loader row.
+> `dsh-cordis` and the later `pi-cordis` are provider entries beneath it. Do
+> not add a Cordis root per provider. The initial host lifecycle proof is
+> `acryl-harness-runtime/src/engine-host.ts` and its Loader/provider-swap test.
+
 **Feature**: `specs/028-harness-engine-swap` | **Milestone**: M9
 **Input**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md),
 [research-pi-spike.md](./research-pi-spike.md), [data-model.md](./data-model.md),

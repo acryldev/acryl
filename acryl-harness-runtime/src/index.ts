@@ -24,6 +24,11 @@ export {
   resolveAcrylDshHome,
   resolveAcrylHome,
 } from './acryl-home.ts'
+export {
+  createAcrylEngineHost,
+  type AcrylEngineDefinition,
+  type AcrylEngineHost,
+} from './engine-host.ts'
 
 import { writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'

@@ -1,5 +1,20 @@
 # Implementation Plan: Interchangeable Harness Engine (DSH and pi)
 
+## Architecture correction — 2026-09-09
+
+The prior wording that each engine adapter "boots in its own Cordis root" is
+superseded. `acryl-harness-runtime` owns one persistent Cordis host and Loader.
+Each engine is a Loader-managed provider entry beneath that host: the default
+DSH provider is `dsh-cordis`; the future Pi provider is `pi-cordis`. A provider
+swap changes the one stable `acryl-engine` Loader entry, which disposes the old
+engine Fiber and lets consumers reactivate against the next provider. The host
+root, its Loader, and engine-neutral consumers survive the replacement.
+
+`dsh-cordis` is independently publishable and carries the DSH base composition
+and agent presets. It creates no root Context and instead injects the host's
+`loader`. `pi-cordis` must follow the same shape. Engine packages own the live
+capabilities they contribute; the host owns engine selection and replacement.
+
 **Branch**: `028-harness-engine-swap` | **Date**: 2026-09-07 | **Spec**: [spec.md](./spec.md)
 
 **Milestone**: M9 | **Depends on**: M2 (delivered here as Phase A / "M2-slice-α", see [research.md](./research.md) Decision 1)
