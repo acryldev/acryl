@@ -45,9 +45,9 @@ export const MANAGED_PLUGIN_LIFECYCLE_ENTRIES = Object.freeze({
     moduleName: '@deepseek-ai/dsh-client-ui-brand-official',
     clientPackage: '@deepseek-ai/dsh-client-ui-brand-official',
   }),
-  'include:ui-brand-acryl': Object.freeze({
-    entryId: 'include:ui-brand-acryl',
-    patchId: 'ui-brand-acryl',
+  'include:ui-acryl': Object.freeze({
+    entryId: 'include:ui-acryl',
+    patchId: 'ui-acryl',
     moduleName: 'dsh-client-ui-brand-acryl',
     clientPackage: 'dsh-client-ui-brand-acryl',
   }),

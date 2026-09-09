@@ -240,7 +240,7 @@ describe('desktop profile composition', {
       name: '@deepseek-ai/dsh-client-ui-brand-official',
       disabled: true,
     }))
-    const acrylBrandRows = rows.filter(row => row.id === 'ui-brand-acryl')
+    const acrylBrandRows = rows.filter(row => row.id === 'ui-acryl')
     expect(acrylBrandRows).toHaveLength(1)
     expect(acrylBrandRows[0]).toEqual(expect.objectContaining({ name: 'dsh-client-ui-brand-acryl' }))
     expect(acrylBrandRows[0]?.disabled).toBeFalsy()

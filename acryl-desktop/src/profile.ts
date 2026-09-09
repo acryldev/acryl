@@ -86,7 +86,7 @@ const UI_LAYOUT_PACKAGE = '@deepseek-ai/dsh-client-ui-layout'
 const UI_SIDEBAR_PACKAGE = '@deepseek-ai/dsh-client-ui-sidebar'
 const UI_CONVERSATION_PACKAGE = '@deepseek-ai/dsh-client-ui-conversation'
 const UI_BRAND_OFFICIAL_ROW_ID = 'ui-brand-official'
-const UI_BRAND_ACRYL_ROW_ID = 'ui-brand-acryl'
+const UI_BRAND_ACRYL_ROW_ID = 'ui-acryl'
 const UI_BRAND_ACRYL_PACKAGE = 'dsh-client-ui-brand-acryl'
 /**
  * Selects which browser-brand package occupies the sidebar and
