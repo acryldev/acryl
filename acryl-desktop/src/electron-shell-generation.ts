@@ -139,6 +139,17 @@ export class ElectronShellGeneration {
         )
       }
     }
+    // The renderer's own console (uncaught React errors, thrown exceptions
+    // outside the Loader's own try/catch, CSP/asset failures) is otherwise
+    // invisible outside DevTools. Mirror warnings and errors to the same
+    // stderr/log sink as every other desktop diagnostic so `pnpm run dev`
+    // surfaces them without a manual DevTools open.
+    const rendererConsoleMessage = (event: Electron.Event<Electron.WebContentsConsoleMessageEventParams>): void => {
+      if (event.level !== 'warning' && event.level !== 'error') return
+      this.options.logError(
+        `acryl-desktop: renderer console.${event.level} (${event.sourceId}:${String(event.lineNumber)}): ${event.message}`,
+      )
+    }
 
     app.on('activate', activate)
     if (platform.platform === 'darwin') app.on('did-become-active', activate)
@@ -150,6 +161,7 @@ export class ElectronShellGeneration {
     window.webContents.on('will-redirect', redirect)
     window.webContents.on('render-process-gone', rendererGone)
     window.webContents.on('did-fail-load', loadFailed)
+    window.webContents.on('console-message', rendererConsoleMessage)
     window.webContents.setWindowOpenHandler(({ url }) => {
       try {
         const target = new URL(url)
@@ -177,6 +189,7 @@ export class ElectronShellGeneration {
       window.webContents.off('will-redirect', redirect)
       window.webContents.off('render-process-gone', rendererGone)
       window.webContents.off('did-fail-load', loadFailed)
+      window.webContents.off('console-message', rendererConsoleMessage)
       tray?.off('click', show)
     }
 
