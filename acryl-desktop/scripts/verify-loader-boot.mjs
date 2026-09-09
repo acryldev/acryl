@@ -175,13 +175,15 @@ try {
       // an empty stub previously went unexercised because nothing in this
       // smoke asked for `ctx.connection` — asking now (see
       // `acryl-desktop/src/index.ts`'s authenticatedUrl call) surfaces it.
-      host.provide('webRuntime', { trustedHosts: [] })
+      // The real composition's webRuntime (from @deepseek-ai/dsh-web-app)
+      // spreads `ctx.webRuntime.trustedHosts` (`['app.internal', ...]`) into
+      // `dsh-client-connection`'s config; a stub would conflict with the real
+      // provider, so rely on the Shared web profile's own webRuntime.
       host.provide('appExit', () => {})
-      // The shared web profile's rows wait on launcher-owned services the
-      // real Host provides; mirror minimal, shape-correct stubs so the
+      // The shallow shared web profile's rows wait on launcher-owned services
+      // the real Host provides; mirror minimal, shape-correct stubs so the
       // composition can fully activate in the smoke.
       host.provide('cmdlineArgs', { get: () => [] })
-      host.provide('webStartup', 'http://127.0.0.1:43120')
       host.provide('desktopPnpmBootstrap', {
         activeProfileName: 'web',
         activeProfileDir: prepared.profile.dir,
@@ -192,8 +194,8 @@ try {
         nodeBinDir: pnpmRuntime.nodeBinDir,
         nodeShimPath: pnpmRuntime.nodeShimPath,
         clearEnvironmentPath: pnpmRuntime.clearEnvironmentPath,
-        dshBootstrapPath: '',
-        installRecoveryStatePath: '',
+        dshBootstrapPath: process.execPath,
+        installRecoveryStatePath: join(home, 'plugin-install-recovery', 'state.json'),
         generationId: 'loader-smoke',
         externalMarketInstallEnabled: false,
       })
@@ -237,12 +239,11 @@ try {
   // this checks the stable parts and that a token is actually present —
   // its absence is exactly the bug that left the renderer 401'd and
   // boot-health timing out (see acryl-desktop/src/index.ts's
-  // `ctx.connection.authenticatedUrl` call).
+  // `ctx.connection.authenticatedUrl` call). Mode/platform ride in the
+  // `mountedSpec` spread (asserted above), not the URL's query string.
   const mountedUrl = mountedSpec?.url === undefined ? undefined : new URL(mountedSpec.url)
   if (mountedUrl?.origin !== 'http://127.0.0.1:43120'
     || mountedUrl.pathname !== '/'
-    || mountedUrl.searchParams.get('dsh-desktop-mode') !== 'compatibility'
-    || mountedUrl.searchParams.get('dsh-desktop-platform') !== 'darwin'
     || mountedUrl.searchParams.get('token') === null) {
     throw new Error(`desktop plugin produced an unexpected renderer URL: ${String(mountedSpec?.url)}`)
   }
