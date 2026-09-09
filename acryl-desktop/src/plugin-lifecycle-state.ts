@@ -33,6 +33,24 @@ export const MANAGED_PLUGIN_LIFECYCLE_ENTRIES = Object.freeze({
     moduleName: 'acryl-development-canvas',
     clientPackage: 'acryl-development-canvas',
   }),
+  // Brand swap pair: both occupy the identical sidebar/hero brand slot
+  // contract (see profile.ts's DESKTOP_BRAND composition). `kind: 'single'`
+  // slots tolerate more than one registrant (first by priority/registration
+  // order renders, the rest are silently ignored - no throw), so enabling
+  // both at once is safe but ambiguous; disable the current brand before
+  // enabling the other for a clean swap.
+  'include:ui-brand-official': Object.freeze({
+    entryId: 'include:ui-brand-official',
+    patchId: 'ui-brand-official',
+    moduleName: '@deepseek-ai/dsh-client-ui-brand-official',
+    clientPackage: '@deepseek-ai/dsh-client-ui-brand-official',
+  }),
+  'include:ui-brand-acryl': Object.freeze({
+    entryId: 'include:ui-brand-acryl',
+    patchId: 'ui-brand-acryl',
+    moduleName: 'dsh-client-ui-brand-acryl',
+    clientPackage: 'dsh-client-ui-brand-acryl',
+  }),
 } satisfies Readonly<Record<string, ManagedPluginLifecycleEntry>>)
 
 export type ManagedPluginLifecycleEntryId = keyof typeof MANAGED_PLUGIN_LIFECYCLE_ENTRIES
