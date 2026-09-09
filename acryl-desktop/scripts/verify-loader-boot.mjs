@@ -120,17 +120,42 @@ try {
     show() {},
     async requestRestart() {},
     prepareToQuit() {},
+    // Desktop sub-plugins (terminal, diagnostics, profiles, update-lifecycle)
+    // contribute tray items through the runtime; the real Electron adapter
+    // joins them into one menu. A no-op registration keeps the smoke's full
+    // composition active without a native tray.
+    registerTrayItem: () => ({ refresh: () => {}, dispose: () => {} }),
+    // update-lifecycle reads the update adapter's packaged flag at activation;
+    // a non-packaged build keeps the policy disabled (no network calls).
+    updates: { isPackaged: false },
+  }
+  if (process.env.DEBUG_ROOT_CONFIG !== undefined) {
+    console.error('rootConfig content:', readFileSync(prepared.rootConfig, 'utf8'))
+    console.error('patches count:', prepared.patches.length, JSON.stringify(prepared.patches).slice(0, 3000))
   }
   ctx = await boot(
     BIN_NAME,
     prepared.rootConfig,
-    [{ insert: [
+    [
+      // The launcher composes the profile's bundle layers (dsh-web-app's
+      // include tree, desktop/canvas overlays, home patches) via
+      // `prepared.patches` (main.ts does the same); the smoke must too, or
+      // the boot has no services (`connection` absent -> the shell's
+      // `inject(['connection'])` never fires and it never schedules).
+      ...prepared.patches,
+      // The smoke's `webServer` stub pins the renderer URL assertions below;
+      // disable the profile's own desktop-webserver row, or its real
+      // `webServer` provision conflicts with the stub at <root>.
+      { id: 'desktop-webserver', disabled: true },
       // The smoke asserts a fixed shell mode + renderer URL, so pin the row
-      // config explicitly: the plugin's Config defaults to 'advanced'.
-      { id: 'desktop-shell', name: 'acryl-desktop', config: { mode: 'compatibility' } },
-      { id: 'community-market', name: 'dsh-community-market' },
-      { id: 'third-party-smoke', name: THIRD_PARTY_NAME },
-    ] }],
+      // config explicitly: the profile's own row leaves the plugin default
+      // ('advanced'); an id-targeted row replaces only its config.
+      { id: 'desktop-shell', config: { mode: 'compatibility' } },
+      { insert: [
+        { id: 'community-market', name: 'dsh-community-market' },
+        { id: 'third-party-smoke', name: THIRD_PARTY_NAME },
+      ] },
+    ],
     (host) => {
       // Packaged Electron does not expose Node's internal ESM loader.
       host.loader.internal = undefined
@@ -152,15 +177,31 @@ try {
       // `acryl-desktop/src/index.ts`'s authenticatedUrl call) surfaces it.
       host.provide('webRuntime', { trustedHosts: [] })
       host.provide('appExit', () => {})
-      host.provide('settings', {
-        register() {
-          return {
-            get: () => ({ mode: 'compatibility' }),
-            watch: () => () => {},
-            update: async () => {},
-            replace: async () => {},
-          }
-        },
+      // The shared web profile's rows wait on launcher-owned services the
+      // real Host provides; mirror minimal, shape-correct stubs so the
+      // composition can fully activate in the smoke.
+      host.provide('cmdlineArgs', { get: () => [] })
+      host.provide('webStartup', 'http://127.0.0.1:43120')
+      host.provide('desktopPnpmBootstrap', {
+        activeProfileName: 'web',
+        activeProfileDir: prepared.profile.dir,
+        homeDir: home,
+        appExecutable: process.execPath,
+        pnpmBinPath,
+        electronVersion,
+        nodeBinDir: pnpmRuntime.nodeBinDir,
+        nodeShimPath: pnpmRuntime.nodeShimPath,
+        clearEnvironmentPath: pnpmRuntime.clearEnvironmentPath,
+        dshBootstrapPath: '',
+        installRecoveryStatePath: '',
+        generationId: 'loader-smoke',
+        externalMarketInstallEnabled: false,
+      })
+      host.provide('desktopProfiles', {
+        list: async () => [],
+        data: () => ({ id: 'web', name: 'web' }),
+        create: async () => {},
+        select: async () => {},
       })
     },
     prepared.bareModuleBaseUrl,
@@ -170,6 +211,10 @@ try {
     for (const entry of ctx.loader.entries()) {
       console.error(entry.options.name, entry.fiber?.state)
     }
+  }
+  if (process.env.DEBUG_ROOT_CONFIG !== undefined) {
+    console.error('rootConfig content:', readFileSync(prepared.rootConfig, 'utf8'))
+    console.error('patches count:', prepared.patches.length, JSON.stringify(prepared.patches).slice(0, 2000))
   }
   await runtime.mountScheduled()
 

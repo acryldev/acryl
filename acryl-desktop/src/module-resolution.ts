@@ -45,14 +45,20 @@ function isBareSpecifier(specifier: string): boolean {
  */
 export function installProfilePackageResolver(profileBaseUrl: string): () => void {
   const profileManifestPath = fileURLToPath(profileBaseUrl)
+  // Directory-derived `createRequire` bases (e.g. `new URL('.', profileBaseUrl)`)
+  // yield a synthetic `noop.js` module as the require parent; the manifest
+  // anchor yields the manifest path itself. Both live inside the profile
+  // directory, so treat any parent anchored there as profile-owned.
+  const profileDirPath = fileURLToPath(new URL('.', profileBaseUrl))
 
   // ClientModuleRegistry intentionally uses createRequire(ctx.baseUrl) to
   // resolve each browser bundle from the config tree. Node's ESM resolve hook
   // does not observe that CommonJS manifest lookup, so without this narrow
   // bridge the Loader can activate the Desktop copy while the browser receives
-  // an older Profile copy of the same package. Intercept only exact package
-  // manifests requested from this Profile anchor; every other CJS resolution
-  // remains untouched.
+  // an older Profile copy of the same package. Intercept only package
+  // manifests requested from a parent anchored in this Profile (the manifest
+  // itself or a synthetic module under the profile directory); every other
+  // CJS resolution remains untouched.
   const commonJsModule = Module as unknown as CommonJsModuleResolver
   const previousResolveFilename = commonJsModule._resolveFilename
   const overlayResolveFilename: CommonJsModuleResolver['_resolveFilename'] = function (
@@ -62,7 +68,9 @@ export function installProfilePackageResolver(profileBaseUrl: string): () => voi
     isMain,
     options,
   ) {
-    const packageName = parent?.filename === profileManifestPath
+    const profileAnchored = parent?.filename !== undefined
+      && (parent.filename === profileManifestPath || parent.filename.startsWith(profileDirPath))
+    const packageName = profileAnchored
       ? packageNameFromManifestSpecifier(request)
       : undefined
     if (packageName !== undefined) {
