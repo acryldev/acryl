@@ -2736,3 +2736,33 @@ entry appeared only on the next launch.
 Result: install `cordis-plugin-graph` -> click Reload -> its Settings tab
 appears, no app relaunch. Uninstall is the reverse. T3 (no renderer reload at
 all), T4 (dependency cascade), T5 (dev file-watch), T6 (docs) still pending.
+
+## 2026-09-10 - Universal plugin hot-reload T3-T6
+
+Commits: `663fc25` (T3 soft reconcile + T4 cascade), `c717495` (T5 dev watch)
+
+- **T3 - soft client reconcile.** After a lifecycle mutation the client API
+  (`acryl-desktop/src/client/plugin-lifecycle-api.ts`) reconciles its own
+  Loader tree to the Host receipt - `entry.update({disabled})` for
+  enable/disable, `fiber.restart()` for reload - instead of
+  `globalThis.location.reload()`. Renderer-local state (an open editor file,
+  scroll) survives a toggle. Falls back to a full reload when a fresh
+  enable/install's browser bundle is not yet in the boot graph, or the Loader
+  mutation cannot be driven.
+- **T4 - dependency cascade.** `snapshot()` reports `dependents` per entry -
+  mutable mounted entries that hard-`inject` a service the entry provides,
+  transitive, from `ctx.root.reflect.store` + `fiber.inject` + `fiber.store`.
+  `setEnabled(disable)` disables them in the same transaction (dependents
+  first), the receipt lists every changed id, and a mid-cascade failure rolls
+  the whole set back. The confirm dialog shows the list.
+- **T5 - local dev auto-reload.** `ACRYL_PLUGIN_WATCH=<pkg>=<abs dir>[,...]`
+  (`acryl-desktop/src/desktop-plugin-watch.ts`) watches a checkout and
+  `PluginLifecycleController.reloadByPackage`s it on a debounced file event.
+  Off by default.
+- **T6 - docs.** `docs/acryl/plugin-hot-reload.md`.
+
+Spec 032 T1-T6 are all landed. The one remaining limit is that a fresh
+install / enable of a plugin whose browser bundle was not in the page-load
+boot graph still triggers one renderer reload - the client module loader has
+the `invalidate` / `arrive` primitives but the Host-served boot graph does not
+yet stream additions. Noted in the doc.
