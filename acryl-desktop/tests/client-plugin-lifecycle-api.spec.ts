@@ -14,6 +14,7 @@ const ENTRY = {
   clientInBootGraph: true,
   mutable: true,
   protectedReason: null,
+  dependents: [],
 } as const
 
 function loader(state = 2): PluginLifecycleClientLoader {
@@ -93,6 +94,38 @@ describe('plugin lifecycle client API', () => {
     expect(fetcher).toHaveBeenCalledWith('/api/desktop/plugins/lifecycle/reload', expect.objectContaining({
       body: '{}',
     }))
+  })
+
+  it('reconciles the client Loader in place instead of reloading the page', async () => {
+    const update = vi.fn(async () => {})
+    const restart = vi.fn(async () => {})
+    const softLoader: PluginLifecycleClientLoader = {
+      * entries() {
+        yield {
+          options: { name: 'acryl-development-canvas' },
+          fiber: { state: 2, restart },
+          disabled: false,
+          update,
+        }
+      },
+    }
+    for (const action of ['enable', 'disable', 'reload'] as const) {
+      update.mockClear(); restart.mockClear()
+      const reloadPage = vi.fn()
+      const api = createPluginLifecycleApi(softLoader, vi.fn(async () => response(receipt(action))), reloadPage)
+      await api[action]('include:desktop-development-canvas')
+      expect(reloadPage).not.toHaveBeenCalled()
+      if (action === 'reload') expect(restart).toHaveBeenCalledOnce()
+      else expect(update).toHaveBeenCalledWith({ disabled: action === 'disable' })
+    }
+  })
+
+  it('falls back to a page reload when the browser bundle is not yet in the graph', async () => {
+    const reloadPage = vi.fn()
+    const emptyLoader: PluginLifecycleClientLoader = { * entries() {} }
+    const api = createPluginLifecycleApi(emptyLoader, vi.fn(async () => response(receipt('enable'))), reloadPage)
+    await api.enable('include:desktop-development-canvas')
+    expect(reloadPage).toHaveBeenCalledOnce()
   })
 
   it('does not reload after a rejected or malformed response', async () => {

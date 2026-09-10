@@ -105,6 +105,7 @@ describe('PluginLifecycleController', () => {
         clientInBootGraph: false,
         mutable: true,
         protectedReason: null,
+        dependents: [],
       }))
       expect(protectedEntry).toEqual(expect.objectContaining({
         mutable: false,

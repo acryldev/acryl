@@ -20,7 +20,9 @@ const ACTIVE_FIBER_STATE = 2 as FiberState.ACTIVE
 
 export interface PluginLifecycleClientLoaderEntry {
   readonly options: { readonly name: string }
-  readonly fiber?: { readonly state: FiberState }
+  readonly fiber?: { readonly state: FiberState, restart?: () => Promise<void> }
+  readonly disabled?: boolean
+  update?: (options: { readonly disabled: boolean }) => Promise<void>
 }
 
 export interface PluginLifecycleClientLoader {
@@ -76,7 +78,7 @@ function parseEntry(value: unknown): PluginLifecycleEntryView {
   if (!isRecord(value)
     || !hasExactKeys(value, [
       'entryId', 'moduleName', 'enabled', 'hostPhase', 'clientPackage',
-      'clientInBootGraph', 'mutable', 'protectedReason',
+      'clientInBootGraph', 'mutable', 'protectedReason', 'dependents',
     ])) {
     throw new Error('acryl-desktop: invalid plugin lifecycle entry')
   }
@@ -93,6 +95,11 @@ function parseEntry(value: unknown): PluginLifecycleEntryView {
   if (value.mutable === (value.protectedReason !== null)) {
     throw new Error('acryl-desktop: inconsistent plugin lifecycle mutation policy')
   }
+  if (!Array.isArray(value.dependents)
+    || value.dependents.length > MAX_ENTRIES
+    || value.dependents.some(id => typeof id !== 'string' || id.length > MAX_STRING)) {
+    throw new Error('acryl-desktop: invalid plugin lifecycle dependents')
+  }
   return Object.freeze({
     entryId: parseString(value.entryId, 'entry id'),
     moduleName: parseString(value.moduleName, 'module name'),
@@ -102,6 +109,7 @@ function parseEntry(value: unknown): PluginLifecycleEntryView {
     clientInBootGraph: value.clientInBootGraph,
     mutable: value.mutable,
     protectedReason: value.protectedReason,
+    dependents: Object.freeze([...value.dependents as string[]]),
   })
 }
 
@@ -211,12 +219,53 @@ export function createPluginLifecycleApi(
   fetcher: FetchLike = globalThis.fetch.bind(globalThis),
   reloadPage: () => void = () => { globalThis.location.reload() },
 ): PluginLifecycleApi {
+  /** Client Loader entry that owns the browser half of one snapshot row. */
+  const clientEntryFor = (moduleName: string): PluginLifecycleClientLoaderEntry | undefined => {
+    for (const entry of loader.entries()) if (entry.options.name === moduleName) return entry
+    return undefined
+  }
+
+  /**
+   * Bring the client Loader tree in line with the Host receipt without a full
+   * page reload. Returns `true` on success; `false` asks the caller to fall
+   * back to `reloadPage()` - a fresh enable/install whose browser bundle is
+   * not in the boot graph, or a Loader mutation this build cannot drive.
+   */
+  const reconcileClient = async (receipt: PluginLifecycleReceipt): Promise<boolean> => {
+    const rowByEntryId = new Map(receipt.snapshot.entries.map(row => [row.entryId, row]))
+    for (const entryId of receipt.entryIds) {
+      const row = rowByEntryId.get(entryId)
+      if (row === undefined) return false
+      const moduleName = row.clientPackage ?? row.moduleName
+      const clientEntry = clientEntryFor(moduleName)
+      if (row.clientPackage === null) continue // host-only plugin: nothing on this plane
+      if (clientEntry === undefined) {
+        // No browser fiber yet. A disable has nothing to do; anything else
+        // needs the bundle graph the Host only re-serves on a reload.
+        if (receipt.action === 'disable') continue
+        return false
+      }
+      try {
+        if (receipt.action === 'reload') {
+          if (typeof clientEntry.fiber?.restart !== 'function') return false
+          await clientEntry.fiber.restart()
+        } else {
+          if (typeof clientEntry.update !== 'function') return false
+          await clientEntry.update({ disabled: receipt.action === 'disable' })
+        }
+      } catch {
+        return false
+      }
+    }
+    return true
+  }
+
   const mutate = async (path: string, entryId?: string): Promise<void> => {
     const receipt = parseReceipt(await readResponse(await post(fetcher, path, entryId)))
     if (!receipt.rendererReloadRequired) {
       throw new Error('acryl-desktop: lifecycle receipt omitted the required renderer reload')
     }
-    reloadPage()
+    if (!await reconcileClient(receipt)) reloadPage()
   }
   return Object.freeze({
     async read() {

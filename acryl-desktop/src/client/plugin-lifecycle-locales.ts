@@ -44,6 +44,7 @@ export type PluginLifecycleLocaleKey =
   | 'missing'
   | 'resolvedBy'
   | 'none'
+  | 'alsoDisables'
 
 export const en: Record<PluginLifecycleLocaleKey, string> = {
   tab: 'Lifecycle',
@@ -72,6 +73,7 @@ export const en: Record<PluginLifecycleLocaleKey, string> = {
   reload: 'Reload',
   reloadAll: 'Reload managed plugins',
   confirmDisable: 'Confirm disable',
+  alsoDisables: 'Disabling this also disables',
   cancel: 'Cancel',
   shortcut: 'Session shortcut: /reload [loader-entry-id]',
   architectureTab: 'Architecture',
@@ -118,6 +120,7 @@ export const zh: Record<PluginLifecycleLocaleKey, string> = {
   reload: '重新加载',
   reloadAll: '重新加载受管插件',
   confirmDisable: '确认禁用',
+  alsoDisables: '禁用此项也会禁用',
   cancel: '取消',
   shortcut: '会话快捷命令：/reload [loader-entry-id]',
   architectureTab: '架构',

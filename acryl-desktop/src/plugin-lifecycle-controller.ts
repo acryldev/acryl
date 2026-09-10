@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
-import { type Context, type FiberState, Service } from '@deepseek-ai/cordis'
+import { type Context, type Fiber, type FiberState, Service } from '@deepseek-ai/cordis'
 import type { Entry, EntryOptions } from '@deepseek-ai/cordis-plugin-loader'
 import { loadOverlayPatches } from '@deepseek-ai/dsh-app-boot'
 import type {} from '@deepseek-ai/dsh-client-modules'
@@ -137,6 +137,48 @@ export class PluginLifecycleController {
     return typeof entry.options.name === 'string' && this.userBundleNames.has(entry.options.name)
   }
 
+  /** Service names whose live provider is `fiber`. */
+  private servicesProvidedBy(fiber: Fiber): ReadonlySet<string> {
+    const store = (this.ctx.root as { reflect?: { store?: Record<symbol, { name: string; fiber: Fiber } | undefined> } })
+      .reflect?.store
+    const names = new Set<string>()
+    if (store === undefined) return names
+    for (const key of Object.getOwnPropertySymbols(store)) {
+      const impl = store[key]
+      if (impl !== undefined && impl.fiber === fiber) names.add(impl.name)
+    }
+    return names
+  }
+
+  /**
+   * Mutable, currently-mounted entries that hard-`inject` a service `entry`
+   * provides and resolve it to `entry`'s fiber - transitively.
+   */
+  private mutableDependents(entry: Entry): Entry[] {
+    const byId = new Map([...this.ctx.loader.entries()].map(candidate => [candidate.id, candidate]))
+    const found = new Map<string, Entry>()
+    const queue: Entry[] = [entry]
+    while (queue.length > 0) {
+      const current = queue.shift()!
+      if (current.fiber === undefined) continue
+      const provided = this.servicesProvidedBy(current.fiber)
+      if (provided.size === 0) continue
+      for (const other of byId.values()) {
+        if (other === entry || found.has(other.id) || other.options.group) continue
+        if (other.fiber === undefined || !this.isMutable(other)) continue
+        const inject = (other.fiber as { inject?: Record<string, unknown> }).inject ?? {}
+        const store = (other.fiber as { store?: Record<string, { fiber?: Fiber } | undefined> }).store ?? {}
+        const dependsOnCurrent = Object.keys(inject)
+          .some(name => provided.has(name) && store[name]?.fiber === current.fiber)
+        if (dependsOnCurrent) {
+          found.set(other.id, other)
+          queue.push(other)
+        }
+      }
+    }
+    return [...found.values()]
+  }
+
   /** Read every non-group Host entry and current Client graph membership. */
   snapshot(): PluginLifecycleSnapshot {
     const graph = this.ctx.get('clientModules')?.graph()
@@ -155,48 +197,61 @@ export class PluginLifecycleController {
         clientInBootGraph: clientPackage !== null && clientGraph.has(clientPackage),
         mutable,
         protectedReason: mutable ? null : PROTECTED_REASON,
+        dependents: mutable && !entry.disabled
+          ? Object.freeze(this.mutableDependents(entry).map(dependent => dependent.id))
+          : Object.freeze([]),
       }))
     }
     return Object.freeze({ entries: Object.freeze(entries) })
   }
 
-  /** Persist and apply one managed entry enablement transactionally. */
+  /**
+   * Persist and apply one managed entry enablement transactionally. Disabling
+   * an entry that mutable plugins depend on disables those dependents in the
+   * same transaction (dependents first, so a consumer unmounts before its
+   * provider); the receipt lists every id changed.
+   */
   setEnabled(entryId: string, enabled: boolean): Promise<PluginLifecycleReceipt> {
     return this.exclusive(async () => {
       const { entry } = this.resolveMutable(entryId)
-      const wasEnabled = !entry.disabled
-      if (wasEnabled === enabled) {
+      if ((!entry.disabled) === enabled) {
         throw new PluginLifecycleError(
           enabled ? 'already-enabled' : 'already-disabled',
           `Plugin ${entryId} is already ${enabled ? 'enabled' : 'disabled'}.`,
         )
       }
+      // Disable: [dependents (transitive), then the target]. Enable: just the target.
+      const targets = enabled
+        ? [entry]
+        : [...this.mutableDependents(entry).filter(dependent => !dependent.disabled), entry]
+
+      const applied: Entry[] = []
       try {
-        await setPluginLifecycleEntryEnabled(this.bootstrap, entry.id, enabled)
-      } catch (cause) {
-        throw new PluginLifecycleError(
-          'persistence-failed',
-          `Unable to persist plugin lifecycle change: ${cause instanceof Error ? cause.message : String(cause)}`,
-        )
-      }
-      try {
-        await entry.update({ disabled: !enabled })
+        for (const target of targets) {
+          await setPluginLifecycleEntryEnabled(this.bootstrap, target.id, enabled)
+          await target.update({ disabled: !enabled })
+          applied.push(target)
+        }
         await Promise.resolve()
       } catch (cause) {
-        try {
-          await setPluginLifecycleEntryEnabled(this.bootstrap, entry.id, wasEnabled)
-        } catch (rollbackCause) {
-          throw new PluginLifecycleError(
-            'persistence-failed',
-            `Plugin lifecycle failed and persistence rollback also failed: ${cause instanceof Error ? cause.message : String(cause)}; ${rollbackCause instanceof Error ? rollbackCause.message : String(rollbackCause)}`,
-          )
+        const rollbackErrors: string[] = []
+        for (const target of applied.reverse()) {
+          try {
+            await setPluginLifecycleEntryEnabled(this.bootstrap, target.id, !enabled)
+            await target.update({ disabled: enabled })
+          } catch (rollbackCause) {
+            rollbackErrors.push(rollbackCause instanceof Error ? rollbackCause.message : String(rollbackCause))
+          }
         }
+        const detail = cause instanceof Error ? cause.message : String(cause)
         throw new PluginLifecycleError(
-          'lifecycle-failed',
-          `Plugin lifecycle change failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+          rollbackErrors.length > 0 ? 'persistence-failed' : 'lifecycle-failed',
+          rollbackErrors.length > 0
+            ? `Plugin lifecycle change failed and rollback also failed: ${detail}; ${rollbackErrors.join('; ')}`
+            : `Plugin lifecycle change failed: ${detail}`,
         )
       }
-      return this.receipt(enabled ? 'enable' : 'disable', [entryId], true)
+      return this.receipt(enabled ? 'enable' : 'disable', applied.map(target => target.id), true)
     })
   }
 
@@ -290,6 +345,30 @@ export class PluginLifecycleController {
       }
       this.refreshUserBundles()
       return this.receipt('disable', [entry.id], true)
+    })
+  }
+
+  /**
+   * Restart the fiber of a mounted plugin identified by package name. Used by
+   * the local-development file watcher. No-op when the package is not mounted.
+   */
+  reloadByPackage(packageName: string): Promise<PluginLifecycleReceipt> {
+    return this.exclusive(async () => {
+      const entry = [...this.ctx.loader.entries()]
+        .find(candidate => !candidate.options.group && candidate.options.name === packageName)
+      if (entry === undefined || entry.disabled || entry.fiber === undefined) {
+        return this.receipt('reload', [], true)
+      }
+      try {
+        await entry.fiber.restart()
+      } catch (cause) {
+        throw new PluginLifecycleError(
+          'lifecycle-failed',
+          `Plugin ${packageName} failed to reload: ${cause instanceof Error ? cause.message : String(cause)}`,
+        )
+      }
+      await Promise.resolve()
+      return this.receipt('reload', [entry.id], true)
     })
   }
 

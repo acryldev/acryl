@@ -184,6 +184,11 @@ export function PluginLifecycleSettingsTab({ api, t }: PluginLifecycleSettingsTa
                             <>
                               {confirmingDisable ? (
                                 <>
+                                  {entry.dependents.length > 0 && (
+                                    <p className={css.protected}>
+                                      {t('alsoDisables')}: {entry.dependents.join(', ')}
+                                    </p>
+                                  )}
                                   <button type="button" className={css.danger} disabled={busy} onClick={() => { void execute('disable', entry.entryId) }}>
                                     {t('confirmDisable')}
                                   </button>

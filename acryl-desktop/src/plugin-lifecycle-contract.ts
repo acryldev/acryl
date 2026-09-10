@@ -24,6 +24,11 @@ export interface PluginLifecycleEntryView {
   readonly clientInBootGraph: boolean
   readonly mutable: boolean
   readonly protectedReason: string | null
+  /**
+   * Mutable entries that hard-`inject` a service this entry provides. Disabling
+   * this entry disables them in the same transaction.
+   */
+  readonly dependents: readonly string[]
 }
 
 /** Point-in-time Host lifecycle projection. */
