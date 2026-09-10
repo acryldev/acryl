@@ -129,12 +129,16 @@ function parseState(value: unknown): PluginLifecycleStateV1 {
     names.add(profile.profileName)
     if (!Array.isArray(profile.disabledEntries)
       || profile.disabledEntries.length > MAX_OVERRIDES
-      || profile.disabledEntries.some(entryId => !isManagedEntryId(entryId))) {
+      || profile.disabledEntries.some(entryId => typeof entryId !== 'string')) {
       throw new Error(`disabledEntries for profile ${JSON.stringify(profile.profileName)} is invalid`)
     }
+    // An id that no longer appears in MANAGED_PLUGIN_LIFECYCLE_ENTRIES (a
+    // managed plugin was renamed or removed between versions) is dropped, not
+    // treated as corruption - a stale persisted override must never brick the
+    // profile at composition time.
     profiles.push({
       profileName: profile.profileName,
-      disabledEntries: [...new Set(profile.disabledEntries as ManagedPluginLifecycleEntryId[])]
+      disabledEntries: [...new Set((profile.disabledEntries as unknown[]).filter(isManagedEntryId))]
         .sort(stableCompare),
     })
   }

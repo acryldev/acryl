@@ -74,14 +74,28 @@ describe('plugin lifecycle state', () => {
     expect(pluginLifecyclePatches({ profileName: 'work', statePath: path })).toHaveLength(1)
   })
 
-  it('fails closed on unknown entries and malformed state', async () => {
+  it('drops stale managed-entry ids and fails closed on malformed state', async () => {
     const path = statePath()
     mkdirSync(join(path, '..'), { recursive: true })
+
+    // A managed plugin renamed or removed between versions leaves a stale id
+    // in disabledEntries. It must be dropped, not throw - a stale persisted
+    // override cannot be allowed to brick profile composition.
     writeFileSync(path, JSON.stringify({
       version: 1,
-      profiles: [{ profileName: 'desktop', disabledEntries: ['include:unknown'] }],
+      profiles: [{
+        profileName: 'desktop',
+        disabledEntries: ['include:ui-brand-acryl', 'include:desktop-development-canvas'],
+      }],
     }))
+    expect([...readDisabledPluginLifecycleEntries({ profileName: 'desktop', statePath: path })])
+      .toEqual(['include:desktop-development-canvas'])
 
+    // A non-string element is genuine corruption and still throws.
+    writeFileSync(path, JSON.stringify({
+      version: 1,
+      profiles: [{ profileName: 'desktop', disabledEntries: [42] }],
+    }))
     expect(() => readDisabledPluginLifecycleEntries({ profileName: 'desktop', statePath: path }))
       .toThrow('disabledEntries')
 
