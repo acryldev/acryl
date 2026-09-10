@@ -234,7 +234,13 @@ async function fetchJson(
   if (status < 200 || status >= 300) throw new CatalogNetworkError('http')
   const contentType = response.headers['content-type'] ?? ''
   const encoding = response.headers['content-encoding']
-  if (!/^(?:application\/json|application\/[^;]+\+json)(?:;|$)/iu.test(contentType)
+  // Accept the JSON media types plus the labels static hosts commonly apply to
+  // an extension-less catalog file (GitHub Pages serves `/v1/plugins` as
+  // `application/octet-stream`; some serve `text/plain`). The body is still
+  // JSON-parsed here and schema-validated by the caller, and the transport is
+  // already DNS-pinned with the response origin locked, so a lax content-type
+  // label cannot smuggle a different resource in.
+  if (!/^(?:application\/json|application\/[^;]+\+json|application\/octet-stream|text\/json|text\/plain)(?:;|$)/iu.test(contentType)
     || encoding !== undefined && encoding !== 'identity') {
     throw new CatalogNetworkError('response')
   }

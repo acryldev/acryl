@@ -1621,6 +1621,39 @@ describe('restricted HTTP boundary', () => {
     )).rejects.toMatchObject({ code: 'blocked-address' })
   })
 
+  it('accepts an extension-less catalog served as application/octet-stream', async () => {
+    const request = vi.fn(async () => ({
+      body: Buffer.from('{"schemaVersion":"1.0.0","items":[],"page":{"total":0}}'),
+      headers: { 'content-type': 'application/octet-stream' },
+      statusCode: 200,
+    }))
+    const client = createRestrictedHttpClient({
+      resolveAddress: async () => ({ address: '185.199.108.153', family: 4 as const }),
+      request,
+    })
+    await expect(client.getJson(
+      'https://acryl.dev/v1/plugins',
+      new AbortController().signal,
+      { allowedOrigin: 'https://acryl.dev' },
+    )).resolves.toMatchObject({ value: { schemaVersion: '1.0.0' } })
+  })
+
+  it('rejects a non-JSON media type such as text/html', async () => {
+    const request = vi.fn(async () => ({
+      body: Buffer.from('<!doctype html><title>nope</title>'),
+      headers: { 'content-type': 'text/html; charset=utf-8' },
+      statusCode: 200,
+    }))
+    const client = createRestrictedHttpClient({
+      resolveAddress: async () => ({ address: '185.199.108.153', family: 4 as const }),
+      request,
+    })
+    await expect(client.getJson(
+      'https://acryl.dev/v1/plugins',
+      new AbortController().signal,
+    )).rejects.toMatchObject({ code: 'response' })
+  })
+
   it('caches a completed fixed-catalog response and collapses concurrent reads', async () => {
     let now = 1_000
     let release: ((value: { value: object; finalUrl: string }) => void) | undefined
