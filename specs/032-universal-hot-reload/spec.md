@@ -2,6 +2,20 @@
 
 Status: needs-triage
 
+## Status: T1-T6 landed
+
+- T1 `4270f25` - graph-derived mutability; any profile-bundle / market plugin toggles.
+- T2 `d74b505` + `bd5adcb` - live install via `ctx.livePluginActivation`, renderer reload only.
+- T3 `663fc25` - soft client-Loader reconcile in place of `location.reload()` for toggles.
+- T4 `663fc25` - dependency-aware disable cascade.
+- T5 `c717495` - `ACRYL_PLUGIN_WATCH` local dev auto-reload.
+- T6 `e9d6093` - `docs/acryl/plugin-hot-reload.md`.
+
+Remaining limit: a fresh install/enable whose browser bundle was not in the
+page-load boot graph still triggers one renderer reload (the Host boot-graph
+does not yet stream additions to the client module loader). Everything else is
+hot.
+
 ## Objective
 
 Any plugin - a market-installed one, a profile bundle, a locally linked
