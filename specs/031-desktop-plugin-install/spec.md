@@ -1,6 +1,29 @@
 # Desktop plugin install: own pnpm + bundle reconciliation
 
-Status: ready-for-agent
+Status: ready-for-human
+
+## Progress
+
+Both layers landed:
+
+- Layer 1 - `4b7bb3a`. `enterPackagedDshCli` calls the exported `runCli`.
+- Layer 2 - `410473a`. `acryl-desktop/src/desktop-plugin-reconcile.ts` +
+  `pnpm.ts` run direct pnpm in the active profile and reconcile
+  `dsh.profile.bundles` themselves; a reconcile failure demotes the exit code
+  so the WAL rolls back.
+
+Verified end to end against the real desktop profile: `pnpm add --save-exact
+acryl-dsh-editor-plugin@0.2.3` + `reconcileProfileBundles` yields
+`dependencies: {"acryl-dsh-editor-plugin": "0.2.3"}` and the
+`dsh.profile.bundles` entry - both conditions `assertInstalledBundle` checks.
+812 desktop tests + 278 market tests + `verify:loader` green.
+
+Not blocking, pre-existing from the DSH bump (own tickets): `verify:closure`
+(~15 transitive first-party peers undeclared) and `verify:profile` (the
+renderer-URL check does not expect the fragment-based desktop markers).
+
+Remaining: GUI confirmation of the full Market install -> restart -> plugin
+tab flow (the reason this is `ready-for-human`).
 
 ## Problem
 

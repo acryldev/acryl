@@ -2599,3 +2599,38 @@ footgun remains a separate open ticket.
 
 Remaining on 030: publish the client to npm for non-ACRYL DSH Desktop (C),
 docs (D), and endpoint query support (deferred).
+
+## 2026-09-10 - Desktop plugin install: own pnpm + bundle reconciliation
+
+Commits: `4b7bb3a`, `410473a` (+ spec `7efa434`)
+
+The `dsh plugin add` silent no-op - and the Market "plugin bundle was invalid,
+rolled back" - had two stacked causes, both from the DSH
+`0.1.1-rc.2` -> `0.1.5-alpha.1` bump:
+
+1. `acryl-desktop/src/desktop-cli.ts` loaded `@deepseek-ai/dsh/lib/bin.js` with
+   a bare `import()` and relied on the CLI running as an import side effect.
+   `dsh@0.1.5` guards its dispatch with `if (import.meta.main)` and exports
+   `runCli`, so every packaged `dsh` command from the desktop became a silent
+   success no-op. `4b7bb3a` adds `enterPackagedDshCli`, which calls the export.
+
+2. With the CLI actually running, `dsh@0.1.5`'s `plugin` command hard-rejects
+   `--profile desktop` ("managed exclusively by the Electron application").
+   `410473a` stops forwarding to `dsh plugin`: `acryl-desktop/src/pnpm.ts` now
+   runs packaged pnpm directly in the active profile
+   (`installPlugin` / `runPlugin` non-add / `runExternalMarketPluginInstall`),
+   and `acryl-desktop/src/desktop-plugin-reconcile.ts` reproduces the upstream
+   `reconcilePlugins` rule on `@deepseek-ai/dsh-app-boot` primitives - a
+   profile dependency whose package declares `dsh.bundle.patch` joins
+   `dsh.profile.bundles`; a former dependency that no longer does is dropped;
+   in-box template bundles are untouched. `start`/`settle` run the reconcile
+   after a zero-exit pnpm and demote the exit code on failure so the install
+   recovery WAL rolls back rather than seals.
+
+This restores the `dsh-community-market` `assertInstalledBundle` contract
+(exact dependency version + `dsh.profile.bundles` membership + lockfile
+integrity), which had been rolling every Market install back.
+
+Pre-existing and untouched: `verify:closure` (undeclared transitive
+first-party peers) and `verify:profile` (renderer-URL check vs fragment
+markers) both fail from the earlier DSH bump and need their own checkpoints.
