@@ -2634,3 +2634,44 @@ integrity), which had been rolling every Market install back.
 Pre-existing and untouched: `verify:closure` (undeclared transitive
 first-party peers) and `verify:profile` (renderer-URL check vs fragment
 markers) both fail from the earlier DSH bump and need their own checkpoints.
+
+## 2026-09-10 - Out-of-tree plugin load: connection row must declare webServer
+
+Commits: `68c81d9`
+
+Installing ACRYL Code Editor (`acryl-dsh-editor-plugin`) stopped the whole
+Desktop profile: `plugin tree failed to load: failed to apply loader entry
+dsh-editor (acryl-dsh-editor-plugin): cannot get property "webServer" without
+inject`, thrown from the plugin's `apply`.
+
+The plugin was not the cause, and neither was its version. `HostConnectionService`
+mounts each per-caller RPC channel through the Context its own Loader row was
+constructed with, and resolves `webServer` while registering the route. Cordis
+resolves an undeclared name only along the provider's fiber chain, and every
+insert-only bundle composition appends rows as root-level siblings - so the
+Desktop's `desktop-webserver` row was never on that chain and
+`connection.rpc.handle(channel, handler)`, the documented entry point for
+third-party plugins, could not work at all. Upstream never trips over it because
+in-tree code registers routes through `ctx.webServer.register(...)` or
+`connection.fetch.register`, never through the resolving `get rpc()`.
+
+`prepareDesktopProfile` now emits one further patch declaring `webServer` on the
+`connection` row, guarded by the upstream row id and package name and preserving
+the row's own `webRuntime` declaration. A declared dependency resolves by
+isolate key globally, so the name is found at the first walk step. Verified
+headlessly against the unmodified published package: the profile boots, the
+`/editor` channel answers the connection fence (401), and an unregistered path
+never reaches it (405).
+
+`verify:profile` is green again: its renderer-URL assertion was rewritten for
+the token-in-query plus markers-in-fragment contract, and the boot smoke now
+replays Connection's launch-token exchange (303 plus session cookie, then the
+index) instead of a single fetch that could only ever observe 401.
+
+Second, independent defect found on the way - the plugin's browser bundle
+registered itself as `dsh-editor` while the client module loader keys rows by
+package name, so the renderer failed with `loaded without registering
+"acryl-dsh-editor-plugin"`. Fixed in the plugin repository
+(`acryl-dsh-editor-plugin@0.2.6`); the Host half is byte-identical between
+0.2.5 and 0.2.6, so this checkpoint is what makes the plugin load on any
+published version.
