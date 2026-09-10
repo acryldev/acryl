@@ -1,6 +1,25 @@
 # ACRYL Marketplace
 
-Status: needs-triage
+Status: ready-for-agent
+
+## Progress
+
+- **A (catalog service)** - DONE (earlier session). `acryl.dev` serves
+  `CatalogProviderPage` at `/v1/plugins` (with `page` object) and a
+  `CatalogSourceManifest` at `/.well-known/acryl-catalog-source.json`,
+  regenerated every 15 min by `scripts/build-market-catalog.mjs` from npm
+  `acryl-package` keyword discovery.
+- **B (default source registration)** - DONE (`06a2185`). "ACRYL Package
+  Catalog" is a one-click built-in source in `dsh-community-market`, resolving
+  through `market.standard-http-v1` against the acryl.dev manifest. Appears in
+  the Sources tab with an Add button; no URL typing.
+- **C (npm distribution)** - not started. `dsh-community-market` is still
+  `private: true`.
+- **D (docs)** - not started.
+- Query support on the static endpoint - deferred (`query.supported: []`,
+  client filters locally).
+- Import-guard + pre-restart-confirm for the `dsh-market` footgun - separate
+  ticket, not started.
 
 ## Objective
 

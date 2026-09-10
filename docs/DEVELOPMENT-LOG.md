@@ -2564,3 +2564,38 @@ rejection of an unknown engine without disturbing the active provider.
 M9's plan and task ledger now state the same architecture: `dsh-cordis` and
 the future `pi-cordis` are provider entries beneath the persistent ACRYL host;
 they do not each create a separate Cordis root.
+
+## 2026-09-10 - ACRYL Marketplace: catalog source + built-in registration
+
+Commits: `59f40ab` (spec), `06a2185` (built-in source)
+
+Filed `specs/030-acryl-marketplace`: a first-party plugin marketplace any DSH
+Desktop user can connect to, not only ACRYL Desktop. Two halves - a
+provider-neutral catalog service at `acryl.dev` conforming to the
+`dsh-community-market` `catalog-source` contract, and npm distribution of the
+ACRYL market client for stock DSH Desktop.
+
+Deliverable A was already live from earlier catalog work: `acryl.dev` serves a
+`CatalogProviderPage` at `/v1/plugins` and a `CatalogSourceManifest` at
+`/.well-known/acryl-catalog-source.json`, regenerated every 15 minutes by
+`scripts/build-market-catalog.mjs` from npm `acryl-package` keyword discovery.
+
+Deliverable B: "ACRYL Package Catalog" is now a one-click built-in source in
+`dsh-community-market`, next to DSH 1024Store and dshfind. Unlike the
+custom-adapter built-ins it resolves through the generic
+`market.standard-http-v1` adapter, so `BuiltInProviderDefinition` gained an
+optional `manifestUrl` and `add-builtin` validates a standard-http built-in
+exactly like a user-added standard source (fetch manifest, assert trust root,
+confirm `providerId`). The `LocalSourceRecord` contract was relaxed so a
+built-in may carry `builtInProviderKey` together with `manifestUrl` + `manifest`;
+user-added records still may not carry `builtInProviderKey`.
+
+Motivation: the `dsh-market` provider (third-party `dshmarket@1.17.1`) bricks
+the plugin host on DSH `0.1.5-alpha.1` because it hard-imports
+`installSettingsSection`/`settingsNamespace`, both removed from
+`@deepseek-ai/dsh-settings`. `dsh-community-market` is clean, so it is the home
+for the ACRYL catalog. Import-guard + pre-restart-confirm for the `dsh-market`
+footgun remains a separate open ticket.
+
+Remaining on 030: publish the client to npm for non-ACRYL DSH Desktop (C),
+docs (D), and endpoint query support (deferred).
