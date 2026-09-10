@@ -317,6 +317,21 @@ describe('desktop profile composition', {
     }))
   })
 
+  it('declares the connection row dependency on webServer for plugin RPC channels', () => {
+    const home = temporaryHome()
+    const prepared = prepareDesktopProfile(undefined, home, 'darwin')
+    const rows = composeEntries([prepared.patches])
+    const connection = rows.find(row => row.id === 'connection')
+
+    // HostConnectionService resolves `webServer` from the Context its own Loader
+    // row was constructed with, and Cordis only walks the provider's fiber chain
+    // for names the row did not declare. The Desktop webserver is a root-level
+    // sibling, so an undeclared `webServer` throws for every `rpc.handle` caller.
+    expect(connection?.name).toBe('@deepseek-ai/dsh-client-connection')
+    expect(connection?.inject).toContain('webServer')
+    expect(connection?.inject).toContain('webRuntime')
+  })
+
   it('keeps both Market providers absent until the user explicitly enables one', () => {
     const home = temporaryHome()
     const prepared = prepareDesktopProfile(undefined, home, 'darwin')

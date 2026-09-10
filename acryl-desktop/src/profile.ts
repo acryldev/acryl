@@ -80,6 +80,8 @@ const DEFAULT_DESKTOP_SHELL_MODE: DesktopShellMode = 'advanced'
 const DEFAULT_DESKTOP_PORT = DESKTOP_DEFAULT_WEB_PORT
 const DESKTOP_WEB_SERVER_ROW_ID = 'desktop-webserver'
 const DESKTOP_WEB_SERVER_PACKAGE = 'acryl-desktop/webserver'
+const CONNECTION_ROW_ID = 'connection'
+const UPSTREAM_CONNECTION_PACKAGE = '@deepseek-ai/dsh-client-connection'
 const SETTINGS_FILE_PACKAGE = '@deepseek-ai/dsh-settings-file'
 const DESKTOP_SETTINGS_NAMESPACE = 'dsh-desktop'
 const UI_LAYOUT_PACKAGE = '@deepseek-ai/dsh-client-ui-layout'
@@ -411,6 +413,21 @@ function rowConfig(row: EntryOptions | undefined): Record<string, unknown> {
   return config !== null && typeof config === 'object' && !Array.isArray(config)
     ? config as Record<string, unknown>
     : {}
+}
+
+/**
+ * Add one declared dependency to a Loader row's `inject` metadata.
+ *
+ * A patch replaces the whole value, so the row's own declaration is preserved
+ * in either the list or the map form Cordis accepts.
+ */
+function withDeclaredDependency(inject: unknown, name: string): string[] | Record<string, unknown> {
+  if (Array.isArray(inject)) return inject.includes(name) ? [...inject] : [...inject, name]
+  if (inject !== null && typeof inject === 'object') {
+    const declared = inject as Record<string, unknown>
+    return name in declared ? { ...declared } : { ...declared, [name]: null }
+  }
+  return [name]
 }
 
 /** Resolve a Loader row's platform gate without mutating the host process. */
@@ -894,6 +911,25 @@ export function prepareDesktopProfile(
         config: webserverConfig,
       })
     }
+  }
+  // `@deepseek-ai/dsh-client-connection` mounts every per-caller RPC channel
+  // through the Context it was constructed with and resolves `webServer` while
+  // registering each route (`HostConnectionService.register`). Cordis resolves
+  // an undeclared name only along the provider's fiber chain, so a caller's
+  // `connection.rpc.handle(channel, handler)` throws `cannot get property
+  // "webServer" without inject` whenever the webServer row is a sibling of the
+  // connection row - which every bundle composition is, because an insert
+  // without a target appends siblings. Declaring the dependency on the row
+  // itself makes the service resolvable from that Context, which restores the
+  // documented channel API for third-party plugins instead of forcing them onto
+  // private registration entry points.
+  const connection = rows.get(CONNECTION_ROW_ID)
+  if (connection !== undefined && connection.name === UPSTREAM_CONNECTION_PACKAGE) {
+    patches.push({
+      id: CONNECTION_ROW_ID,
+      name: UPSTREAM_CONNECTION_PACKAGE,
+      inject: withDeclaredDependency(connection.inject, 'webServer'),
+    })
   }
   if ((telemetryDisabled ?? '') !== '' && rows.has('session-telemetry-otel')) {
     patches.push({ id: 'session-telemetry-otel', disabled: true })

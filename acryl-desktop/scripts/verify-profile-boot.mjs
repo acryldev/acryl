@@ -209,8 +209,17 @@ try {
     throw new Error(`assembled Windows browse picker listed ${listing.path} instead of ${home}`)
   }
 
-  const expectedUrl = `http://127.0.0.1:${String(ctx.webServer.port)}/?dsh-desktop-mode=advanced&dsh-desktop-platform=win32`
-  if (mountedSpec?.url !== expectedUrl) {
+  // Connection's browser-auth owns the launch-token exchange, so the renderer
+  // URL carries an opaque token and keeps the desktop markers in the fragment
+  // (the authenticated 303 to the bare origin would discard a query string, and
+  // the Fetch redirect algorithm copies a fragment Location does not replace).
+  const rendererUrl = new URL(String(mountedSpec?.url))
+  const markers = new URLSearchParams(rendererUrl.hash.replace(/^#/u, ''))
+  if (rendererUrl.origin !== `http://127.0.0.1:${String(ctx.webServer.port)}`
+    || rendererUrl.pathname !== '/'
+    || (rendererUrl.searchParams.get('token') ?? '') === ''
+    || markers.get('dsh-desktop-mode') !== 'advanced'
+    || markers.get('dsh-desktop-platform') !== 'win32') {
     throw new Error(`desktop plugin produced an unexpected renderer URL: ${String(mountedSpec?.url)}`)
   }
   if (mountedSpec?.mode !== 'advanced') {
@@ -234,7 +243,19 @@ try {
   if (profileMenu?.submenu?.()[0]?.label() !== 'desktop') {
     throw new Error('assembled desktop profile is missing the active profile tray submenu')
   }
-  const response = await fetch(expectedUrl)
+  // Connection's browser-auth mints the session cookie from the launch token
+  // and redirects to the clean origin; only that cookie serves the index. Fetch
+  // has no cookie jar, so the exchange has to be replayed explicitly here.
+  const launch = await fetch(rendererUrl, { redirect: 'manual' })
+  const setCookie = launch.headers.getSetCookie?.()[0] ?? launch.headers.get('set-cookie')
+  if (launch.status !== 303 || launch.headers.get('location') !== '/' || setCookie === undefined) {
+    throw new Error(
+      `assembled Web root did not exchange the launch token: HTTP ${String(launch.status)}`,
+    )
+  }
+  const response = await fetch(new URL('/', rendererUrl), {
+    headers: { cookie: setCookie.split(';')[0] ?? '' },
+  })
   const html = await response.text()
   if (response.status !== 200) {
     throw new Error(`assembled Web root returned HTTP ${String(response.status)}`)
