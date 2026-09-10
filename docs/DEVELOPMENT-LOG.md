@@ -2709,3 +2709,30 @@ its Files tab in the conversation view.
 Remaining on 032: T2 (live install with no restart prompt), T3 (soft renderer
 reconcile in place of `location.reload()`), T4 (dependency-aware cascade), T5
 (local dev file-watch auto-reload), T6 (docs).
+
+## 2026-09-10 - Live plugin install, no restart (spec 032 T2)
+
+Commits: `d74b505` (desktop), `bd5adcb` (market)
+
+Installing a plugin from the market still needed a restart: profile ->
+loader-entry composition only runs at boot, so a fresh `dsh.profile.bundles`
+entry appeared only on the next launch.
+
+- `acryl-desktop`: `PluginLifecycleController.activate(packageName)` /
+  `deactivate(packageName)` read the just-installed bundle's own
+  `cordis.patch.yml` insert row and mount / unmount it in the running Loader
+  tree through the include group - the same live-mutation path `setEnabled`
+  uses. The entry keeps the bundle's real row id, so the reboot patch (by id)
+  and the Lifecycle toggle target the same entry. `LivePluginActivationService`
+  publishes this as `ctx.livePluginActivation` for the market plugin to call.
+- `dsh-community-market`: after a verified install / uninstall,
+  `MarketInstallService` calls the optional `liveActivate` / `liveDeactivate`
+  callbacks (wired to `ctx.livePluginActivation`). The operation result carries
+  `restartRequired: false` when the live mount succeeds; the success modal then
+  offers "Reload" (renderer reload, app stays open) instead of "Restart now",
+  and falls back to the restart prompt where the capability is absent or the
+  mount throws.
+
+Result: install `cordis-plugin-graph` -> click Reload -> its Settings tab
+appears, no app relaunch. Uninstall is the reverse. T3 (no renderer reload at
+all), T4 (dependency cascade), T5 (dev file-watch), T6 (docs) still pending.
