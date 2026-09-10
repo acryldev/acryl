@@ -18,6 +18,21 @@ const DSH_ENTRY_URL = pathToFileURL(
   packagedDependencyPath(import.meta.url, '@deepseek-ai/dsh/lib/bin.js'),
 ).href
 
+/**
+ * Enter the packaged `dsh` CLI entry module.
+ *
+ * `@deepseek-ai/dsh` >= 0.1.5 guards its dispatch with `if (import.meta.main)`
+ * and exports `runCli`, so importing `bin.js` no longer runs the command - the
+ * bootstrap has to call the export. Older builds ran the dispatch as an import
+ * side effect and expose no `runCli`; there the import above already did the
+ * work and this call is a no-op.
+ */
+async function enterPackagedDshCli(load: (url: string) => Promise<unknown>): Promise<void> {
+  const entry = await load(DSH_ENTRY_URL) as { readonly runCli?: unknown } | undefined
+  const runCli = entry?.runCli
+  if (typeof runCli === 'function') await runCli()
+}
+
 /** Remove Electron Node mode before the DSH CLI creates any child process. */
 export function clearElectronRunAsNode(environment: NodeJS.ProcessEnv): void {
   for (const key of Object.keys(environment)) {
@@ -136,7 +151,7 @@ async function loadWithInstallRecovery(
     )
   }) as typeof process.exit
   try {
-    await load(DSH_ENTRY_URL)
+    await enterPackagedDshCli(load)
   } catch (cause) {
     if (cause instanceof CapturedDesktopCliExit) capturedExitCode = cause.code
     else failure = cause
@@ -201,7 +216,7 @@ export async function runDesktopDshCli(
     await loadWithInstallRecovery(load, store)
     return
   }
-  await load(DSH_ENTRY_URL)
+  await enterPackagedDshCli(load)
 }
 
 function isDirectExecution(): boolean {

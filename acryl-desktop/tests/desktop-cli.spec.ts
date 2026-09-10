@@ -34,6 +34,7 @@ describe('packaged dsh bootstrap', () => {
       KEEP: 'value',
     }
     const argv = ['/Applications/ACRYL', '/app.asar/lib/desktop-cli.js', '--dump-config']
+    const runCli = vi.fn(async () => {})
     const load = vi.fn(async (url: string) => {
       expect(environment).toEqual({ KEEP: 'value' })
       expect(argv).toEqual([
@@ -44,10 +45,23 @@ describe('packaged dsh bootstrap', () => {
         '--dump-config',
       ])
       expect(url).toMatch(/\/node_modules\/@deepseek-ai\/dsh\/lib\/bin\.js$/u)
+      return { runCli }
     })
 
     await runDesktopDshCli(environment, load, argv)
 
+    expect(load).toHaveBeenCalledOnce()
+    // dsh >= 0.1.5 guards its dispatch with `import.meta.main`; the bootstrap
+    // must call the exported entry rather than rely on an import side effect.
+    expect(runCli).toHaveBeenCalledOnce()
+  })
+
+  it('tolerates an older packaged CLI that dispatches on import and exports nothing', async () => {
+    const environment = { KEEP: 'value' }
+    const argv = ['/x', '/app.asar/lib/desktop-cli.js', '--dump-config']
+    const load = vi.fn(async () => undefined)
+
+    await expect(runDesktopDshCli(environment, load, argv)).resolves.toBeUndefined()
     expect(load).toHaveBeenCalledOnce()
   })
 
