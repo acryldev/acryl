@@ -80,6 +80,8 @@ interface VisibleItem {
 interface CompletedOperation {
   readonly preview: MarketOperationPreviewResponse
   readonly restartToken: string
+  /** `false` when the Host mounted the plugin live - a page reload is enough. */
+  readonly restartRequired: boolean
 }
 
 type ManualInstallHint = MarketCatalogResponse['manualInstall'][number]
@@ -887,7 +889,11 @@ export function MarketSurface({ initialView = 'installable', readLocale, t, show
       setOperationPreview(undefined)
       selectedKeyRef.current = undefined
       setSelected(undefined)
-      setOperationSuccess({ preview, restartToken: result.restartToken })
+      setOperationSuccess({
+        preview,
+        restartToken: result.restartToken,
+        restartRequired: 'restartRequired' in result ? result.restartRequired : true,
+      })
       if (result.action === 'install' && viewRef.current === 'installable') void loadInstallable()
       if ((result.action === 'uninstall' || result.action === 'disable' || result.action === 'enable')
         && viewRef.current === 'installed') {
@@ -1125,7 +1131,13 @@ export function MarketSurface({ initialView = 'installable', readLocale, t, show
           pending={desktopActionPending}
           error={desktopActionError}
           onClose={() => setOperationSuccess(undefined)}
-          onRestart={() => { void runDesktopAction('request-restart', operationSuccess.restartToken) }}
+          onRestart={() => {
+            if (operationSuccess.restartRequired) {
+              void runDesktopAction('request-restart', operationSuccess.restartToken)
+            } else {
+              window.location.reload()
+            }
+          }}
           t={t}
         />
       )}
@@ -1951,11 +1963,14 @@ function OperationSuccessModal({ operation, canRestart, pending, error, onClose,
   onRestart: () => void
   t: MarketSettingsTabProps['t']
 }) {
-  const title = operation.preview.action === 'install'
-    ? t('installComplete')
-    : operation.preview.action === 'uninstall'
-      ? t('uninstallComplete')
-      : operation.preview.action === 'disable' ? t('disableComplete') : t('enableComplete')
+  const live = !operation.restartRequired
+  const title = live
+    ? t('liveAppliedTitle')
+    : operation.preview.action === 'install'
+      ? t('installComplete')
+      : operation.preview.action === 'uninstall'
+        ? t('uninstallComplete')
+        : operation.preview.action === 'disable' ? t('disableComplete') : t('enableComplete')
   return (
     <Modal
       open
@@ -1964,22 +1979,22 @@ function OperationSuccessModal({ operation, canRestart, pending, error, onClose,
       onClose={() => { if (!pending) onClose() }}
       closeLabel={t('close')}
       title={title}
-      description={t('restartRequiredTitle')}
+      description={live ? t('liveAppliedBody') : t('restartRequiredTitle')}
       footer={<div className="dshMarketModalActions">
         <Button variant="ghost" disabled={pending} onClick={onClose}>{t('restartLater')}</Button>
         <Button
           variant="primary"
-          disabled={!canRestart || pending}
+          disabled={(!live && !canRestart) || pending}
           icon={<IconRefreshOutline16 />}
           onClick={onRestart}
-        >{pending ? t('restarting') : t('restartNow')}</Button>
+        >{pending ? t('restarting') : live ? t('reloadNow') : t('restartNow')}</Button>
       </div>}
     >
       <div className="dshMarketOperationReview">
         <OperationFacts operation={operation.preview} showExpiry={false} t={t} />
         <div className="dshMarketOperationSuccess" role="status">
           <StateDot state="done" size={12} />
-          <span>{t('restartRequiredBody')}</span>
+          <span>{live ? t('liveAppliedBody') : t('restartRequiredBody')}</span>
         </div>
         {error !== undefined && <div className="dshMarketError" role="alert">{error}</div>}
       </div>

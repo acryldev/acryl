@@ -99,8 +99,8 @@ export interface MarketUninstallResult {
 }
 
 export type MarketOperationResult =
-  | ({ readonly action: 'install'; readonly restartToken: string } & MarketInstallResult)
-  | ({ readonly action: 'uninstall'; readonly restartToken: string } & MarketUninstallResult)
+  | ({ readonly action: 'install'; readonly restartToken: string; readonly restartRequired: boolean } & MarketInstallResult)
+  | ({ readonly action: 'uninstall'; readonly restartToken: string; readonly restartRequired: boolean } & MarketUninstallResult)
 
 export type MarketInstallErrorCode =
   | 'invalid-request'
@@ -174,6 +174,15 @@ export interface MarketInstallServiceOptions {
   readonly maxCandidates?: number
   /** Host-owned policy state; Renderer values must never reach this callback. */
   readonly disabledPackageNames?: () => readonly string[]
+  /**
+   * Mount a just-installed package into the running Loader tree. Returns `true`
+   * when the deployment activated it live (no restart needed), `false` when it
+   * is unavailable. A throw is treated as "not activated". Package name is
+   * Host-derived from the verified receipt, never a Renderer value.
+   */
+  readonly liveActivate?: (packageName: string) => Promise<boolean>
+  /** The uninstall counterpart of {@link liveActivate}. */
+  readonly liveDeactivate?: (packageName: string) => Promise<boolean>
 }
 
 function stableExactVersion(value: unknown): value is string {
@@ -597,6 +606,8 @@ export class MarketInstallService {
   private readonly maxIntents: number
   private readonly maxCandidates: number
   private readonly disabledPackageNames: () => readonly string[]
+  private readonly liveActivate: ((packageName: string) => Promise<boolean>) | undefined
+  private readonly liveDeactivate: ((packageName: string) => Promise<boolean>) | undefined
   private readonly generation = new AbortController()
   private recoveryReconciliation: Promise<void> | undefined
   private operationActive = false
@@ -615,6 +626,8 @@ export class MarketInstallService {
     this.maxIntents = options.maxIntents ?? MAX_INTENTS
     this.maxCandidates = options.maxCandidates ?? MAX_CANDIDATES
     this.disabledPackageNames = options.disabledPackageNames ?? (() => [])
+    this.liveActivate = options.liveActivate
+    this.liveDeactivate = options.liveDeactivate
     for (const [label, value] of [
       ['intent TTL', this.intentTtlMs],
       ['candidate TTL', this.candidateTtlMs],
@@ -901,10 +914,37 @@ export class MarketInstallService {
     if (intent === undefined) {
       throw new MarketInstallError('intent-expired', 'The confirmation expired or was already used. Preview the operation again.')
     }
-    const result: MarketOperationResult = intent.kind === 'install'
-      ? { action: 'install', ...await this.executeInstall(token, signal), restartToken: this.issueRestartToken() }
-      : { action: 'uninstall', ...await this.executeUninstall(token, signal), restartToken: this.issueRestartToken() }
-    return result
+    if (intent.kind === 'install') {
+      const installed = await this.executeInstall(token, signal)
+      const live = await this.tryLive(this.liveActivate, installed.receipt.packageName)
+      return {
+        action: 'install',
+        ...installed,
+        restartToken: this.issueRestartToken(),
+        restartRequired: !live,
+      }
+    }
+    const removed = await this.executeUninstall(token, signal)
+    const live = await this.tryLive(this.liveDeactivate, removed.packageName)
+    return {
+      action: 'uninstall',
+      ...removed,
+      restartToken: this.issueRestartToken(),
+      restartRequired: !live,
+    }
+  }
+
+  /** Run one live activation callback; any failure counts as "not activated". */
+  private async tryLive(
+    callback: ((packageName: string) => Promise<boolean>) | undefined,
+    packageName: string,
+  ): Promise<boolean> {
+    if (callback === undefined) return false
+    try {
+      return await callback(packageName)
+    } catch {
+      return false
+    }
   }
 
   /** Consume one short-lived restart grant issued only after a completed mutation. */

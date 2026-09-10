@@ -194,12 +194,15 @@ export type MarketOperationExecuteResponse =
       readonly action: 'install'
       readonly receipt: MarketInstallReceipt
       readonly restartToken: string
+      /** `false` when the Host mounted the plugin live; the Renderer reloads instead of prompting a restart. */
+      readonly restartRequired: boolean
     }
   | {
       readonly action: 'uninstall'
       readonly receiptId: string
       readonly packageName: string
       readonly restartToken: string
+      readonly restartRequired: boolean
     }
   | {
       readonly action: 'disable'

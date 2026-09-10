@@ -526,6 +526,7 @@ describe('MarketSettingsTab', () => {
       action: 'install',
       receipt,
       restartToken: 'opaque-install-restart',
+      restartRequired: true,
     })
     vi.mocked(requestMarketRestart).mockResolvedValue({ ok: true })
     render(<MarketSettingsTab {...props} />)
@@ -617,6 +618,7 @@ describe('MarketSettingsTab', () => {
         action: 'install',
         receipt,
         restartToken: 'opaque-retry-install-restart',
+      restartRequired: true,
       })
     render(<MarketSettingsTab {...props} />)
 
@@ -828,6 +830,7 @@ describe('MarketSettingsTab', () => {
       receiptId: receipt.receiptId,
       packageName: receipt.packageName,
       restartToken: 'opaque-uninstall-restart',
+      restartRequired: true,
     })
     render(<MarketSettingsTab {...props} />)
 

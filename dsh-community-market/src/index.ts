@@ -67,6 +67,9 @@ export function apply(ctx: Context): void {
     const profiles = desktopCtx.get('desktopProfiles') as DesktopProfilesCapability
     const pnpm = desktopCtx.get('desktopPnpm') as MarketDesktopPnpm
     desktopCtx.effect(() => {
+      const liveActivation = desktopCtx.get('livePluginActivation') as
+        | { activate(name: string): Promise<void>; deactivate(name: string): Promise<void> }
+        | undefined
       const service = new MarketInstallService(
         scope,
         () => profiles.current,
@@ -80,6 +83,10 @@ export function apply(ctx: Context): void {
             }
             return plugins.disabledPackageNames()
           },
+          ...(liveActivation === undefined ? {} : {
+            liveActivate: async name => { await liveActivation.activate(name); return true },
+            liveDeactivate: async name => { await liveActivation.deactivate(name); return true },
+          }),
         },
       )
       installService = service

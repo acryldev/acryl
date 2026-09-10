@@ -417,6 +417,7 @@ describe('market install service', () => {
     const installedResult = await service.executePreview(preview.intent, new AbortController().signal)
     if (installedResult.action !== 'install') throw new Error('expected install result')
     const installed = installedResult
+    expect(installed.restartRequired).toBe(true)
     expect(calls[0]).toMatchObject({
       args: ['add', '--save-exact', '--registry=https://registry.npmjs.org/', `${packageName}@${version}`],
       dir: profileDir,
@@ -439,6 +440,52 @@ describe('market install service', () => {
     profileName = 'other'
     expect(() => service.consumeRestartToken(removed.restartToken)).toThrow(/active desktop profile changed/u)
     expect(settings.receipts()).toEqual([])
+  })
+
+  it('reports restartRequired:false when the Host activates the plugin live', async () => {
+    const profileDir = await createProfile()
+    const settings = memoryScope()
+    const activated: string[] = []
+    const deactivated: string[] = []
+    const service = new MarketInstallService(
+      settings.scope,
+      () => ({ name: 'web', dir: profileDir }),
+      runner(profileDir, []),
+      { verify: vi.fn(async () => verification) },
+      {
+        liveActivate: async (name: string) => { activated.push(name); return true },
+        liveDeactivate: async (name: string) => { deactivated.push(name); return true },
+      },
+    )
+    service.observeCatalog(snapshot())
+
+    const preview = await service.previewInstall('source-1', 'example/dsh-plugin-safe', new AbortController().signal)
+    const installed = await service.executePreview(preview.intent, new AbortController().signal)
+    if (installed.action !== 'install') throw new Error('expected install result')
+    expect(installed.restartRequired).toBe(false)
+    expect(activated).toEqual([packageName])
+
+    const uninstall = await service.previewUninstall(installed.receipt.receiptId, new AbortController().signal)
+    const removed = await service.executePreview(uninstall.intent, new AbortController().signal)
+    expect(removed.restartRequired).toBe(false)
+    expect(deactivated).toEqual([packageName])
+  })
+
+  it('falls back to restartRequired:true when live activation throws', async () => {
+    const profileDir = await createProfile()
+    const settings = memoryScope()
+    const service = new MarketInstallService(
+      settings.scope,
+      () => ({ name: 'web', dir: profileDir }),
+      runner(profileDir, []),
+      { verify: vi.fn(async () => verification) },
+      { liveActivate: async () => { throw new Error('loader mount failed') } },
+    )
+    service.observeCatalog(snapshot())
+    const preview = await service.previewInstall('source-1', 'example/dsh-plugin-safe', new AbortController().signal)
+    const installed = await service.executePreview(preview.intent, new AbortController().signal)
+    if (installed.action !== 'install') throw new Error('expected install result')
+    expect(installed.restartRequired).toBe(true)
   })
 
   it('restores an installed receipt through a new service and file-backed settings context', async () => {
