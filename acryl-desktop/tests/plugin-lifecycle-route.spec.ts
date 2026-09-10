@@ -169,7 +169,7 @@ describe('plugin lifecycle private routes', () => {
     await handlePluginLifecycleReloadRequest(request('POST', {}), res, ORIGIN, control, () => {}, requestRestart)
     expect(res.statusCode).toBe(409)
     expect(requestRestart).not.toHaveBeenCalled()
-    expect(JSON.parse(res.body)).toEqual({ error: 'The selected plugin is protected.' })
+    expect(JSON.parse(res.body)).toEqual({ error: 'The selected plugin is a core capability and cannot be toggled.' })
     expect(res.body).not.toContain('/Users/example')
   })
 })

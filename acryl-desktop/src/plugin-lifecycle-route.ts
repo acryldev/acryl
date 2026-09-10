@@ -21,8 +21,7 @@ function publicLifecycleError(cause: unknown): string {
   if (!(cause instanceof PluginLifecycleError)) return 'Plugin lifecycle operation failed.'
   switch (cause.code) {
     case 'unknown-entry': return 'The selected plugin no longer exists.'
-    case 'protected-entry': return 'The selected plugin is protected.'
-    case 'entry-changed': return 'The selected plugin identity changed. Refresh and try again.'
+    case 'protected-entry': return 'The selected plugin is a core capability and cannot be toggled.'
     case 'already-enabled': return 'The selected plugin is already enabled.'
     case 'already-disabled': return 'The selected plugin is already disabled.'
     case 'not-mounted': return 'The selected plugin is not mounted.'

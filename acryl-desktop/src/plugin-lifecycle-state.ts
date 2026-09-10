@@ -2,7 +2,7 @@
 
 import { readFileSync } from 'node:fs'
 import { chmod, lstat, mkdir } from 'node:fs/promises'
-import { dirname } from 'node:path'
+import { dirname, join } from 'node:path'
 import { withFileLock, writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
 import { assertDesktopProfileName } from './profile-manager.ts'
 
@@ -13,7 +13,26 @@ const MAX_STATE_BYTES = 64 * 1024
 const MAX_PROFILES = 64
 const MAX_OVERRIDES = 256
 
-/** Stable Loader entry currently admitted to lifecycle mutation. */
+/** A well-formed runtime Loader entry id (`include:<row>` or a bare row id). */
+const ENTRY_ID_PATTERN = /^(?:include:)?[a-z0-9](?:[a-z0-9._:@/-]{0,190}[a-z0-9])?$/iu
+
+/** Runtime entry id -> the patch-local row id it disables during composition. */
+export function entryPatchId(entryId: string): string {
+  return entryId.startsWith('include:') ? entryId.slice('include:'.length) : entryId
+}
+
+/** Whether a persisted disabled-entry id is structurally a Loader entry id. */
+export function isPluginLifecycleEntryId(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && value.length <= 200 && ENTRY_ID_PATTERN.test(value)
+}
+
+/** Base-template bundles: never user-mutable. Every other profile bundle is. */
+export const BASE_TEMPLATE_BUNDLE_NAMES: ReadonlySet<string> = new Set([
+  '@deepseek-ai/dsh-base',
+  '@deepseek-ai/dsh-web-app',
+])
+
+/** Legacy seed of always-mutable entries that are not user-added profile bundles. */
 export interface ManagedPluginLifecycleEntry {
   /** Runtime Loader identity, including its owning Include path. */
   readonly entryId: string
@@ -25,7 +44,11 @@ export interface ManagedPluginLifecycleEntry {
   readonly clientPackage: string | null
 }
 
-/** Explicit mutation policy. Visibility does not imply mutability. */
+/**
+ * Entries that are user-mutable regardless of the profile bundle list: the
+ * Development Canvas and the two brand-slot packages. Every other mutable
+ * entry is derived at runtime from `dsh.profile.bundles` (see the controller).
+ */
 export const MANAGED_PLUGIN_LIFECYCLE_ENTRIES = Object.freeze({
   'include:desktop-development-canvas': Object.freeze({
     entryId: 'include:desktop-development-canvas',
@@ -57,7 +80,7 @@ export type ManagedPluginLifecycleEntryId = keyof typeof MANAGED_PLUGIN_LIFECYCL
 
 interface ProfileState {
   readonly profileName: string
-  readonly disabledEntries: readonly ManagedPluginLifecycleEntryId[]
+  readonly disabledEntries: readonly string[]
 }
 
 interface PluginLifecycleStateV1 {
@@ -65,10 +88,16 @@ interface PluginLifecycleStateV1 {
   readonly profiles: readonly ProfileState[]
 }
 
-/** Inputs needed by startup composition and the live Host controller. */
-export interface PluginLifecycleStateBootstrap {
+/** Persistence inputs: enough to read and write the override file. */
+export interface PluginLifecycleStatePersistence {
   readonly profileName: string
   readonly statePath: string
+}
+
+/** Inputs needed by the live Host controller: persistence plus the profile dir. */
+export interface PluginLifecycleStateBootstrap extends PluginLifecycleStatePersistence {
+  /** Active profile directory - source of the user-mutable bundle list. */
+  readonly profileDir: string
 }
 
 declare module '@deepseek-ai/cordis' {
@@ -93,10 +122,6 @@ function hasExactKeys(record: Record<string, unknown>, keys: readonly string[]):
     && actual.every((key, index) => key === expected[index])
 }
 
-function isManagedEntryId(value: unknown): value is ManagedPluginLifecycleEntryId {
-  return typeof value === 'string'
-    && Object.prototype.hasOwnProperty.call(MANAGED_PLUGIN_LIFECYCLE_ENTRIES, value)
-}
 
 function parseState(value: unknown): PluginLifecycleStateV1 {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
@@ -132,13 +157,14 @@ function parseState(value: unknown): PluginLifecycleStateV1 {
       || profile.disabledEntries.some(entryId => typeof entryId !== 'string')) {
       throw new Error(`disabledEntries for profile ${JSON.stringify(profile.profileName)} is invalid`)
     }
-    // An id that no longer appears in MANAGED_PLUGIN_LIFECYCLE_ENTRIES (a
-    // managed plugin was renamed or removed between versions) is dropped, not
-    // treated as corruption - a stale persisted override must never brick the
-    // profile at composition time.
+    // Any structurally valid Loader entry id is kept - the mutable set is now
+    // derived at runtime from the profile bundle list, not this file. A
+    // malformed string, or one for an entry that no longer exists, is dropped
+    // rather than treated as corruption: composition emits a disable patch by
+    // id, and the Loader treats an unknown-id patch as a warning, not a fault.
     profiles.push({
       profileName: profile.profileName,
-      disabledEntries: [...new Set((profile.disabledEntries as unknown[]).filter(isManagedEntryId))]
+      disabledEntries: [...new Set((profile.disabledEntries as unknown[]).filter(isPluginLifecycleEntryId))]
         .sort(stableCompare),
     })
   }
@@ -164,14 +190,34 @@ function renderState(state: PluginLifecycleStateV1): string {
   return `${JSON.stringify(state, null, 2)}\n`
 }
 
-/** Read disabled managed entry ids for one profile. */
+/** Read disabled Loader entry ids for one profile. */
 export function readDisabledPluginLifecycleEntries(
-  bootstrap: PluginLifecycleStateBootstrap,
-): ReadonlySet<ManagedPluginLifecycleEntryId> {
+  bootstrap: PluginLifecycleStatePersistence,
+): ReadonlySet<string> {
   assertDesktopProfileName(bootstrap.profileName)
   const profile = readState(bootstrap.statePath).profiles
     .find(candidate => candidate.profileName === bootstrap.profileName)
   return new Set(profile?.disabledEntries ?? [])
+}
+
+/**
+ * User-added profile bundles from `dsh.profile.bundles`, minus the base
+ * template. Each such package's inserted Loader row is user-mutable. A missing
+ * or malformed manifest yields an empty set (nothing user-mutable by bundle).
+ */
+export function readUserMutableBundleNames(profileDir: string): ReadonlySet<string> {
+  let manifest: unknown
+  try {
+    manifest = JSON.parse(readFileSync(join(profileDir, 'package.json'), 'utf8'))
+  } catch {
+    return new Set()
+  }
+  const bundles = (manifest as { dsh?: { profile?: { bundles?: unknown } } })?.dsh?.profile?.bundles
+  if (!Array.isArray(bundles)) return new Set()
+  return new Set(
+    bundles.filter((name): name is string =>
+      typeof name === 'string' && !BASE_TEMPLATE_BUNDLE_NAMES.has(name)),
+  )
 }
 
 async function ensurePrivateStateDirectory(statePath: string): Promise<void> {
@@ -184,14 +230,14 @@ async function ensurePrivateStateDirectory(statePath: string): Promise<void> {
   await chmod(directory, STATE_DIRECTORY_MODE)
 }
 
-/** Persist one desired managed-entry enablement with locking and atomic replace. */
+/** Persist one desired entry enablement with locking and atomic replace. */
 export async function setPluginLifecycleEntryEnabled(
-  bootstrap: PluginLifecycleStateBootstrap,
-  entryId: ManagedPluginLifecycleEntryId,
+  bootstrap: PluginLifecycleStatePersistence,
+  entryId: string,
   enabled: boolean,
 ): Promise<void> {
   assertDesktopProfileName(bootstrap.profileName)
-  if (!isManagedEntryId(entryId)) throw new Error('plugin lifecycle entry is not managed')
+  if (!isPluginLifecycleEntryId(entryId)) throw new Error('plugin lifecycle entry id is malformed')
   await ensurePrivateStateDirectory(bootstrap.statePath)
   await withFileLock(bootstrap.statePath, async () => {
     const state = readState(bootstrap.statePath)
@@ -219,12 +265,15 @@ export async function setPluginLifecycleEntryEnabled(
   })
 }
 
-/** Convert persisted policy into final profile overlay rows. */
+/**
+ * Convert persisted overrides into profile overlay rows. A disable patch
+ * matches its target by id only - no `name`, so a row whose id and package
+ * name differ (e.g. `dsh-editor` / `acryl-dsh-editor-plugin`) still disables,
+ * and a stale id is a Loader warning rather than a skipped patch.
+ */
 export function pluginLifecyclePatches(
-  bootstrap: PluginLifecycleStateBootstrap,
-): readonly { readonly id: string; readonly name: string; readonly disabled: true }[] {
-  return [...readDisabledPluginLifecycleEntries(bootstrap)].map((entryId) => {
-    const policy = MANAGED_PLUGIN_LIFECYCLE_ENTRIES[entryId]
-    return { id: policy.patchId, name: policy.moduleName, disabled: true }
-  })
+  bootstrap: PluginLifecycleStatePersistence,
+): readonly { readonly id: string; readonly disabled: true }[] {
+  return [...readDisabledPluginLifecycleEntries(bootstrap)]
+    .map(entryId => ({ id: entryPatchId(entryId), disabled: true as const }))
 }

@@ -42,7 +42,6 @@ describe('plugin lifecycle state', () => {
     ])
     expect(pluginLifecyclePatches(bootstrap)).toEqual([{
       id: 'desktop-development-canvas',
-      name: 'acryl-development-canvas',
       disabled: true,
     }])
     expect(JSON.parse(readFileSync(path, 'utf8'))).toEqual({
@@ -74,22 +73,28 @@ describe('plugin lifecycle state', () => {
     expect(pluginLifecyclePatches({ profileName: 'work', statePath: path })).toHaveLength(1)
   })
 
-  it('drops stale managed-entry ids and fails closed on malformed state', async () => {
+  it('keeps any well-formed entry id, drops malformed ones, fails closed on corruption', async () => {
     const path = statePath()
     mkdirSync(join(path, '..'), { recursive: true })
 
-    // A managed plugin renamed or removed between versions leaves a stale id
-    // in disabledEntries. It must be dropped, not throw - a stale persisted
-    // override cannot be allowed to brick profile composition.
+    // The mutable set is derived at runtime from the profile bundle list, not
+    // from this file, so a disabled id for any plugin the user added is kept -
+    // it is not restricted to a hard-coded allowlist. A structurally invalid
+    // string (bad charset, over length) is dropped so it cannot reach the
+    // Loader as a patch id.
     writeFileSync(path, JSON.stringify({
       version: 1,
       profiles: [{
         profileName: 'desktop',
-        disabledEntries: ['include:ui-brand-acryl', 'include:desktop-development-canvas'],
+        disabledEntries: [
+          'include:cordis-plugin-graph',
+          'include:desktop-development-canvas',
+          'include:has spaces',
+        ],
       }],
     }))
-    expect([...readDisabledPluginLifecycleEntries({ profileName: 'desktop', statePath: path })])
-      .toEqual(['include:desktop-development-canvas'])
+    expect([...readDisabledPluginLifecycleEntries({ profileName: 'desktop', statePath: path })].sort())
+      .toEqual(['include:cordis-plugin-graph', 'include:desktop-development-canvas'])
 
     // A non-string element is genuine corruption and still throws.
     writeFileSync(path, JSON.stringify({
@@ -112,8 +117,8 @@ describe('plugin lifecycle state', () => {
 
     await expect(setPluginLifecycleEntryEnabled(
       { profileName: 'desktop', statePath: path },
-      'include:unknown' as 'include:desktop-development-canvas',
+      'has spaces and slashes//',
       false,
-    )).rejects.toThrow('not managed')
+    )).rejects.toThrow('malformed')
   })
 })

@@ -13,8 +13,8 @@ import type {
 } from './plugin-lifecycle-contract.ts'
 import {
   MANAGED_PLUGIN_LIFECYCLE_ENTRIES,
+  readUserMutableBundleNames,
   setPluginLifecycleEntryEnabled,
-  type ManagedPluginLifecycleEntryId,
   type PluginLifecycleStateBootstrap,
 } from './plugin-lifecycle-state.ts'
 
@@ -36,13 +36,14 @@ const FIBER_PHASE = {
   [FIBER_STATE.UNLOADING]: 'unloading',
 } as const satisfies Record<FiberState, PluginLifecycleFiberPhase>
 
-const PROTECTED_REASON = 'This internal or dependency-managed Loader entry is not admitted to safe user lifecycle control.'
+const PROTECTED_REASON = 'This core capability is part of the Desktop runtime and is not user-toggleable. Plugins you add through a profile bundle or the plugin market can be enabled, disabled, and reloaded here.'
+
+const LEGACY_MUTABLE_ENTRY_IDS: ReadonlySet<string> = new Set(Object.keys(MANAGED_PLUGIN_LIFECYCLE_ENTRIES))
 
 /** Stable failures that private routes and human commands may present. */
 export type PluginLifecycleErrorCode =
   | 'unknown-entry'
   | 'protected-entry'
-  | 'entry-changed'
   | 'already-enabled'
   | 'already-disabled'
   | 'not-mounted'
@@ -83,6 +84,8 @@ export class PluginLifecycleController {
   private operation = Promise.resolve()
   private readonly clientFaces = new Map<string, boolean>()
   private readonly resolvePackageJson: ((specifier: string) => string) | undefined
+  /** Package names from `dsh.profile.bundles` (minus the base template). */
+  private readonly userBundleNames: ReadonlySet<string>
 
   constructor(
     private readonly ctx: Context,
@@ -92,6 +95,19 @@ export class PluginLifecycleController {
       const require = createRequire(ctx.baseUrl)
       this.resolvePackageJson = specifier => require.resolve(`${specifier}/package.json`)
     }
+    this.userBundleNames = readUserMutableBundleNames(bootstrap.profileDir)
+  }
+
+  /**
+   * A Loader entry is user-mutable when it is the Development Canvas or a
+   * brand-slot package (the legacy seed), or when its package was added to the
+   * active profile's `dsh.profile.bundles` (a profile bundle or a market
+   * install). Core runtime capabilities and the base-template includes are not.
+   */
+  private isMutable(entry: Entry): boolean {
+    if (entry.options.group) return false
+    if (LEGACY_MUTABLE_ENTRY_IDS.has(entry.id)) return true
+    return typeof entry.options.name === 'string' && this.userBundleNames.has(entry.options.name)
   }
 
   /** Read every non-group Host entry and current Client graph membership. */
@@ -101,9 +117,8 @@ export class PluginLifecycleController {
     const entries: PluginLifecycleEntryView[] = []
     for (const entry of this.ctx.loader.entries()) {
       if (entry.options.group) continue
-      const policy = MANAGED_PLUGIN_LIFECYCLE_ENTRIES[entry.id as ManagedPluginLifecycleEntryId]
       const clientPackage = this.clientPackage(entry.options.name, clientGraph)
-      const mutable = policy !== undefined && policy.moduleName === entry.options.name
+      const mutable = this.isMutable(entry)
       entries.push(Object.freeze({
         entryId: entry.id,
         moduleName: entry.options.name,
@@ -121,7 +136,7 @@ export class PluginLifecycleController {
   /** Persist and apply one managed entry enablement transactionally. */
   setEnabled(entryId: string, enabled: boolean): Promise<PluginLifecycleReceipt> {
     return this.exclusive(async () => {
-      const { entry, managedId } = this.resolveManaged(entryId)
+      const { entry } = this.resolveMutable(entryId)
       const wasEnabled = !entry.disabled
       if (wasEnabled === enabled) {
         throw new PluginLifecycleError(
@@ -130,7 +145,7 @@ export class PluginLifecycleController {
         )
       }
       try {
-        await setPluginLifecycleEntryEnabled(this.bootstrap, managedId, enabled)
+        await setPluginLifecycleEntryEnabled(this.bootstrap, entry.id, enabled)
       } catch (cause) {
         throw new PluginLifecycleError(
           'persistence-failed',
@@ -142,7 +157,7 @@ export class PluginLifecycleController {
         await Promise.resolve()
       } catch (cause) {
         try {
-          await setPluginLifecycleEntryEnabled(this.bootstrap, managedId, wasEnabled)
+          await setPluginLifecycleEntryEnabled(this.bootstrap, entry.id, wasEnabled)
         } catch (rollbackCause) {
           throw new PluginLifecycleError(
             'persistence-failed',
@@ -162,10 +177,8 @@ export class PluginLifecycleController {
   reload(entryId?: string): Promise<PluginLifecycleReceipt> {
     return this.exclusive(async () => {
       const entries = entryId === undefined
-        ? Object.keys(MANAGED_PLUGIN_LIFECYCLE_ENTRIES)
-          .map(id => this.resolveManaged(id).entry)
-          .filter(entry => !entry.disabled)
-        : [this.resolveManaged(entryId).entry]
+        ? [...this.ctx.loader.entries()].filter(entry => this.isMutable(entry) && !entry.disabled)
+        : [this.resolveMutable(entryId).entry]
       if (entries.length === 0) {
         throw new PluginLifecycleError('not-mounted', 'No managed plugin is currently mounted.')
       }
@@ -204,26 +217,15 @@ export class PluginLifecycleController {
     return declared ? moduleName : null
   }
 
-  private resolveManaged(entryId: string): {
-    readonly entry: Entry
-    readonly managedId: ManagedPluginLifecycleEntryId
-  } {
-    const policy = MANAGED_PLUGIN_LIFECYCLE_ENTRIES[entryId as ManagedPluginLifecycleEntryId]
-    if (policy === undefined) {
-      const exists = [...this.ctx.loader.entries()].some(entry => entry.id === entryId)
-      throw new PluginLifecycleError(
-        exists ? 'protected-entry' : 'unknown-entry',
-        exists ? `Plugin ${entryId} is protected.` : `Unknown plugin ${entryId}.`,
-      )
-    }
+  private resolveMutable(entryId: string): { readonly entry: Entry } {
     const entry = [...this.ctx.loader.entries()].find(candidate => candidate.id === entryId)
     if (entry === undefined) {
       throw new PluginLifecycleError('unknown-entry', `Unknown plugin ${entryId}.`)
     }
-    if (entry.options.name !== policy.moduleName) {
-      throw new PluginLifecycleError('entry-changed', `Plugin ${entryId} no longer has its managed package identity.`)
+    if (!this.isMutable(entry)) {
+      throw new PluginLifecycleError('protected-entry', `Plugin ${entryId} is a core capability and cannot be toggled.`)
     }
-    return { entry, managedId: policy.entryId }
+    return { entry }
   }
 
   private receipt(

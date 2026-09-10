@@ -8,6 +8,7 @@ import { pluginLifecyclePatches } from '../src/plugin-lifecycle-state.ts'
 
 const roots: string[] = []
 const PACKAGE = 'acryl-development-canvas'
+const MARKET_PACKAGE = 'cordis-plugin-graph'
 
 afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
@@ -42,11 +43,25 @@ async function harness() {
     `  name: ${PACKAGE}`,
     '- id: protected-test',
     `  name: ${PACKAGE}`,
+    '- id: market-plugin',
+    `  name: ${MARKET_PACKAGE}`,
     '',
   ].join('\n'))
+  // A profile manifest whose bundle list contains a user-added package makes
+  // that package's inserted row user-mutable, without any allowlist edit.
+  writeFileSync(join(root, 'package.json'), JSON.stringify({
+    name: 'dsh-profile-desktop',
+    private: true,
+    dependencies: { [MARKET_PACKAGE]: '1.0.0' },
+    dsh: { profile: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', MARKET_PACKAGE] } },
+  }))
+  const marketDir = join(root, 'node_modules', MARKET_PACKAGE)
+  mkdirSync(marketDir, { recursive: true })
+  writeFileSync(join(marketDir, 'package.json'), JSON.stringify({ name: MARKET_PACKAGE, version: '1.0.0', type: 'module', exports: { '.': './index.mjs' } }))
+  writeFileSync(join(marketDir, 'index.mjs'), 'export const name = "market-plugin"\nexport function apply() {}\n')
   const ctx = await boot('plugin-lifecycle-controller-test', join(root, 'cordis.yml'))
   const statePath = join(root, 'state', 'lifecycle.json')
-  const controller = new PluginLifecycleController(ctx, { profileName: 'desktop', statePath })
+  const controller = new PluginLifecycleController(ctx, { profileName: 'desktop', statePath, profileDir: root })
   return { ctx, controller, logPath, statePath }
 }
 
@@ -75,6 +90,31 @@ describe('PluginLifecycleController', () => {
         mutable: false,
         protectedReason: expect.any(String),
       }))
+
+      const marketEntry = snapshot.entries.find(entry => entry.entryId === 'include:market-plugin')
+      expect(marketEntry).toEqual(expect.objectContaining({
+        moduleName: MARKET_PACKAGE,
+        mutable: true,
+        protectedReason: null,
+      }))
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
+  it('toggles a profile-bundle plugin that is not on any allowlist', async () => {
+    const { ctx, controller, statePath } = await harness()
+    try {
+      const disabled = await controller.setEnabled('include:market-plugin', false)
+      expect(disabled.action).toBe('disable')
+      expect(disabled.snapshot.entries.find(entry => entry.entryId === 'include:market-plugin'))
+        .toEqual(expect.objectContaining({ enabled: false, hostPhase: null }))
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([
+        { id: 'market-plugin', disabled: true },
+      ])
+
+      await controller.setEnabled('include:market-plugin', true)
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([])
     } finally {
       await ctx.fiber.dispose()
     }
@@ -91,7 +131,6 @@ describe('PluginLifecycleController', () => {
       expect(lines(logPath)).toEqual(['mount', 'mount', 'unmount'])
       expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([{
         id: 'desktop-development-canvas',
-        name: PACKAGE,
         disabled: true,
       }])
 

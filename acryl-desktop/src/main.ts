@@ -817,6 +817,7 @@ async function start(): Promise<void> {
         hostCtx.provide('desktopPluginLifecycleBootstrap', {
           profileName: activeProfileName,
           statePath: pluginLifecycleStatePath,
+          profileDir: activeProfileDir,
         })
         await hostCtx.plugin(DesktopActionsService, {
           openTerminal: () => { runtime.openTerminal() },
