@@ -3,6 +3,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
+import { pathToFileURL } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
 import { FileSettingsProvider } from '@deepseek-ai/dsh-settings-file'
 import type { SubprocessHandle, SubprocessRuntime, SubprocessSpawnSpec } from '@deepseek-ai/dsh-subprocess'
@@ -218,11 +219,9 @@ describe('desktop pnpm and community market integration', () => {
       expect(spawn.mock.calls[0]?.[0]).toMatchObject({
         argv: [
           selectedBootstrap.appExecutable,
-          '--expose-internals',
-          selectedBootstrap.dshBootstrapPath,
-          'plugin',
-          '--profile',
-          'web',
+          '--import',
+          pathToFileURL(selectedBootstrap.clearEnvironmentPath).href,
+          selectedBootstrap.pnpmBinPath,
           'remove',
           PACKAGE_NAME,
         ],

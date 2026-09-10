@@ -109,6 +109,26 @@ async function createHarness(
   }
 }
 
+/** Expected argv for a direct packaged-pnpm run in the active profile. */
+function directPnpmArgv(b: DesktopPnpmBootstrap, pnpmArgs: readonly string[]): string[] {
+  return [
+    b.appExecutable,
+    '--import',
+    pathToFileURL(b.clearEnvironmentPath).href,
+    b.pnpmBinPath,
+    ...pnpmArgs,
+  ]
+}
+
+/** A minimal real profile directory so bundle reconciliation can read a manifest. */
+function seedProfile(b: DesktopPnpmBootstrap, dependencies: Record<string, string> = {}): void {
+  mkdirSync(b.activeProfileDir, { recursive: true })
+  writeFileSync(
+    join(b.activeProfileDir, 'package.json'),
+    `${JSON.stringify({ name: 'dsh-profile-test', private: true, dependencies, dsh: { profile: { bundles: [] } } }, undefined, 2)}\n`,
+  )
+}
+
 function finish(child: ControlledSubprocess, outcome: SubprocessOutcome = {
   exitCode: 0,
   signal: null,
@@ -164,31 +184,28 @@ describe('desktop pnpm Host service', () => {
     expect(harness.ctx.get('desktopPnpm')).toBeUndefined()
   })
 
-  it('runs the packaged DSH plugin command from the caller directory', async () => {
+  it('runs a non-add plugin operation as direct pnpm in the active profile', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'dsh-desktop-pnpm-remove-'))
+    const selectedBootstrap = bootstrap(root)
+    seedProfile(selectedBootstrap, { dshmarket: '1.17.1' })
     const child = controlledSubprocess()
-    const harness = await createHarness([child])
-    const invokingDir = '/workspace/third-party-plugin'
+    try {
+      const harness = await createHarness([child], selectedBootstrap)
 
-    const operation = harness.service.runPlugin(['remove', 'dshmarket'], invokingDir)
+      const operation = harness.service.runPlugin(['remove', 'dshmarket'], '/workspace/third-party-plugin')
 
-    const spec = harness.spawn.mock.calls[0]?.[0]
-    expect(spec?.argv).toEqual([
-      bootstrap().appExecutable,
-      '--expose-internals',
-      bootstrap().dshBootstrapPath,
-      'plugin',
-      '--profile',
-      '工作 profile',
-      'remove',
-      'dshmarket',
-    ])
-    expect(spec?.cwd).toBe(invokingDir)
-    expect(spec).not.toHaveProperty('signal')
-    expect(spec).not.toHaveProperty('shell')
+      const spec = harness.spawn.mock.calls[0]?.[0]
+      expect(spec?.argv).toEqual(directPnpmArgv(selectedBootstrap, ['remove', 'dshmarket']))
+      expect(spec?.cwd).toBe(selectedBootstrap.activeProfileDir)
+      expect(spec).not.toHaveProperty('signal')
+      expect(spec).not.toHaveProperty('shell')
 
-    finish(child, { exitCode: 7, signal: null })
-    await expect(operation.done).resolves.toEqual({ exitCode: 7, signal: null })
-    await harness.dispose()
+      finish(child, { exitCode: 7, signal: null })
+      await expect(operation.done).resolves.toEqual({ exitCode: 7, signal: null })
+      await harness.dispose()
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
   })
 
   it('allows an unpatched dsh-market runtime to add through the external boundary', async () => {
@@ -206,31 +223,29 @@ describe('desktop pnpm Host service', () => {
   })
 
   it('runs the selected dsh-market install without creating a per-install WAL', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'dsh-desktop-pnpm-dshmarket-'))
+    const selectedBootstrap = { ...bootstrap(root), externalMarketInstallEnabled: true }
+    seedProfile(selectedBootstrap)
     const child = controlledSubprocess()
-    const selectedBootstrap = { ...bootstrap(), externalMarketInstallEnabled: true }
-    const harness = await createHarness([child], selectedBootstrap)
-    const operation = harness.service.runExternalMarketPluginInstall(
-      ['add', '--reporter=ndjson', '@scope/example-plugin@1.2.3'],
-      '/workspace/dsh-market',
-    )
+    try {
+      const harness = await createHarness([child], selectedBootstrap)
+      const operation = harness.service.runExternalMarketPluginInstall(
+        ['add', '--reporter=ndjson', '@scope/example-plugin@1.2.3'],
+        '/workspace/dsh-market',
+      )
 
-    expect(harness.spawn.mock.calls[0]?.[0].argv).toEqual([
-      selectedBootstrap.appExecutable,
-      '--expose-internals',
-      selectedBootstrap.dshBootstrapPath,
-      'plugin',
-      '--profile',
-      selectedBootstrap.activeProfileName,
-      'add',
-      '--reporter=ndjson',
-      '@scope/example-plugin@1.2.3',
-    ])
-    expect(harness.spawn.mock.calls[0]?.[0].cwd).toBe('/workspace/dsh-market')
-    expect(existsSync(selectedBootstrap.installRecoveryStatePath)).toBe(false)
+      expect(harness.spawn.mock.calls[0]?.[0].argv).toEqual(
+        directPnpmArgv(selectedBootstrap, ['add', '--reporter=ndjson', '@scope/example-plugin@1.2.3']),
+      )
+      expect(harness.spawn.mock.calls[0]?.[0].cwd).toBe(selectedBootstrap.activeProfileDir)
+      expect(existsSync(selectedBootstrap.installRecoveryStatePath)).toBe(false)
 
-    finish(child)
-    await operation.done
-    await harness.dispose()
+      finish(child)
+      await operation.done
+      await harness.dispose()
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
   })
 
   it('rejects the external Market boundary unless dsh-market is selected', async () => {
@@ -283,17 +298,10 @@ describe('desktop pnpm Host service', () => {
       finish(child)
       await expect(operation.done).resolves.toEqual({ exitCode: 0, signal: null })
 
-      expect(harness.spawn.mock.calls[0]?.[0].argv).toEqual([
-        selectedBootstrap.appExecutable,
-        '--expose-internals',
-        selectedBootstrap.dshBootstrapPath,
-        'plugin',
-        '--profile',
-        selectedBootstrap.activeProfileName,
-        'add',
-        '--save-exact',
-        'example-plugin@1.0.0',
-      ])
+      expect(harness.spawn.mock.calls[0]?.[0].argv).toEqual(
+        directPnpmArgv(selectedBootstrap, ['add', '--save-exact', 'example-plugin@1.0.0']),
+      )
+      expect(harness.spawn.mock.calls[0]?.[0].cwd).toBe(selectedBootstrap.activeProfileDir)
       expect(JSON.parse(readFileSync(selectedBootstrap.installRecoveryStatePath, 'utf8'))).toMatchObject({
         packageName: 'example-plugin',
         packageVersion: '1.0.0',
@@ -355,17 +363,9 @@ describe('desktop pnpm Host service', () => {
         },
       )
 
-      expect(harness.spawn.mock.calls[0]?.[0].argv).toEqual([
-        selectedBootstrap.appExecutable,
-        '--expose-internals',
-        selectedBootstrap.dshBootstrapPath,
-        'plugin',
-        '--profile',
-        selectedBootstrap.activeProfileName,
-        'add',
-        '--save-exact',
-        'legacy-plugin@1.2.3',
-      ])
+      expect(harness.spawn.mock.calls[0]?.[0].argv).toEqual(
+        directPnpmArgv(selectedBootstrap, ['add', '--save-exact', 'legacy-plugin@1.2.3']),
+      )
       finish(child)
       await operation.done
       await harness.dispose()

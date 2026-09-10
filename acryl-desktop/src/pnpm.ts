@@ -1,6 +1,6 @@
 /** Desktop-owned package-manager capability for the active DSH profile. */
 
-import { delimiter, isAbsolute } from 'node:path'
+import { delimiter, isAbsolute, resolve as resolvePath } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import type { Readable } from 'node:stream'
 import { Context, Service } from '@deepseek-ai/cordis'
@@ -12,6 +12,7 @@ import type {
 import {
   DesktopInstallRecoveryStore,
 } from './install-recovery.ts'
+import { profileDependencyNames, reconcileProfileBundles } from './desktop-plugin-reconcile.ts'
 import { assertDesktopProfileName } from './profile-manager.ts'
 
 const BIN_NAME = 'acryl-desktop'
@@ -127,6 +128,13 @@ interface ActiveOperation {
   child: SubprocessHandle
   done: Promise<DesktopPnpmOutcome>
   recoveryTransactionId?: string
+  /**
+   * Post-exit reconciliation run only after a zero-exit pnpm operation, before
+   * the recovery WAL is sealed. A throw here fails the operation (WAL rolls
+   * back, reported exit code becomes non-zero) so a broken `dsh.profile.bundles`
+   * never survives as a "successful" install.
+   */
+  onSuccess?: () => void | Promise<void>
 }
 
 /** Read PATH with Windows-compatible environment-name matching. */
@@ -142,6 +150,18 @@ function assertAbsolutePath(label: string, value: string): void {
   if (value.length === 0 || value.includes('\0') || !isAbsolute(value)) {
     throw new Error(`${BIN_NAME}: desktop pnpm ${label} must be an absolute path without NUL`)
   }
+}
+
+/**
+ * Anchor a relative filesystem spec against the caller's directory. pnpm runs
+ * with cwd = the profile directory, so a bare `./plugin` (or its `file:` /
+ * `link:` form) would otherwise resolve inside the profile. Registry names and
+ * every other argument pass through untouched. Mirrors `dsh`'s `anchorPathSpec`.
+ */
+function anchorRelativeSpec(argument: string, callerDir: string): string {
+  const match = /^(?<prefix>(?:file|link):)?(?<path>\.{1,2}(?:[/\\].*)?)$/u.exec(argument)
+  if (match?.groups?.path === undefined) return argument
+  return `${match.groups.prefix ?? ''}${resolvePath(callerDir, match.groups.path)}`
 }
 
 /** Validate one argv list before it crosses the process boundary. */
@@ -258,9 +278,13 @@ class DesktopPnpmService extends Service implements DesktopPnpm {
   }
 
   /**
-   * Run the packaged `dsh plugin` command so upstream profile reconciliation remains authoritative.
-   * @param args - pnpm arguments forwarded by `dsh plugin`.
-   * @param invokingDir - absolute caller directory used to anchor relative package specifications.
+   * Run a non-`add` profile plugin operation (`remove`, `update`, `why`, ...).
+   *
+   * `dsh@0.1.5`'s `plugin` command hard-rejects `--profile desktop`, so this
+   * runs packaged pnpm directly in the active profile and then reconciles
+   * `dsh.profile.bundles` itself (a no-op write when nothing changed).
+   * @param args - pnpm arguments (`add` is routed to the recoverable boundary).
+   * @param invokingDir - absolute caller directory used to anchor relative specs.
    * @param signal - optional cancellation for this operation.
    * @returns live output streams, completion, and cancellation.
    */
@@ -277,17 +301,11 @@ class DesktopPnpmService extends Service implements DesktopPnpm {
       throw new Error(`${BIN_NAME}: plugin add must use the recoverable install boundary`)
     }
     assertAbsolutePath('plugin invoking directory', invokingDir)
+    const anchoredArgs = resolvedArgs.map(argument => anchorRelativeSpec(argument, invokingDir))
     return this.start({
-      argv: [
-        this.bootstrap.appExecutable,
-        '--expose-internals',
-        this.bootstrap.dshBootstrapPath,
-        'plugin',
-        '--profile',
-        this.bootstrap.activeProfileName,
-        ...resolvedArgs,
-      ],
-      cwd: invokingDir,
+      argv: this.directPnpmArgv(anchoredArgs),
+      cwd: this.bootstrap.activeProfileDir,
+      onSuccess: this.reconcileClosure(),
       ...(signal === undefined ? {} : { signal }),
     })
   }
@@ -304,16 +322,9 @@ class DesktopPnpmService extends Service implements DesktopPnpm {
     const resolvedArgs = validateExternalMarketInstallArgs(args)
     assertAbsolutePath('plugin invoking directory', invokingDir)
     return this.start({
-      argv: [
-        this.bootstrap.appExecutable,
-        '--expose-internals',
-        this.bootstrap.dshBootstrapPath,
-        'plugin',
-        '--profile',
-        this.bootstrap.activeProfileName,
-        ...resolvedArgs,
-      ],
-      cwd: invokingDir,
+      argv: this.directPnpmArgv(resolvedArgs.map(argument => anchorRelativeSpec(argument, invokingDir))),
+      cwd: this.bootstrap.activeProfileDir,
+      onSuccess: this.reconcileClosure(),
       ...(signal === undefined ? {} : { signal }),
     })
   }
@@ -361,21 +372,18 @@ class DesktopPnpmService extends Service implements DesktopPnpm {
     let transaction: Awaited<ReturnType<DesktopInstallRecoveryStore['begin']>> | undefined
     try {
       transaction = await this.installRecovery.begin(request.recovery)
+      const target = `${request.recovery.packageName}@${request.recovery.packageVersion}`
       const handle = this.start({
-        argv: [
-          this.bootstrap.appExecutable,
-          '--expose-internals',
-          this.bootstrap.dshBootstrapPath,
-          'plugin',
-          '--profile',
-          this.bootstrap.activeProfileName,
+        argv: this.directPnpmArgv([
           'add',
           ...resolvedOptions,
-          `${request.recovery.packageName}@${request.recovery.packageVersion}`,
-        ],
-        cwd: request.invokingDir,
+          ...(resolvedOptions.includes('--save-exact') ? [] : ['--save-exact']),
+          target,
+        ]),
+        cwd: this.bootstrap.activeProfileDir,
         recoveryTransactionId: transaction.transactionId,
         allowInstallPreparation: true,
+        onSuccess: this.reconcileClosure(),
         ...(request.signal === undefined ? {} : { signal: request.signal }),
       })
       this.installPreparationActive = false
@@ -425,6 +433,33 @@ class DesktopPnpmService extends Service implements DesktopPnpm {
     return true
   }
 
+  /** argv for a direct packaged-pnpm run (RunAsNode, cleared environment). */
+  private directPnpmArgv(pnpmArgs: readonly string[]): string[] {
+    return [
+      this.bootstrap.appExecutable,
+      '--import',
+      pathToFileURL(this.bootstrap.clearEnvironmentPath).href,
+      this.bootstrap.pnpmBinPath,
+      ...pnpmArgs,
+    ]
+  }
+
+  /**
+   * Snapshot the profile's current dependency names and return a post-exit
+   * closure that reconciles `dsh.profile.bundles` against the installed state.
+   * Called before the pnpm child runs so the "before" set is accurate.
+   */
+  private reconcileClosure(): () => void {
+    const profileDir = this.bootstrap.activeProfileDir
+    let before: readonly string[] = []
+    try {
+      before = profileDependencyNames(profileDir)
+    } catch {
+      before = []
+    }
+    return () => { reconcileProfileBundles(profileDir, before) }
+  }
+
   /** Start one managed child after applying the generation-wide gate. */
   private start(command: {
     argv: readonly string[]
@@ -432,6 +467,7 @@ class DesktopPnpmService extends Service implements DesktopPnpm {
     signal?: AbortSignal
     recoveryTransactionId?: string
     allowInstallPreparation?: boolean
+    onSuccess?: () => void | Promise<void>
   }): DesktopPnpmHandle {
     if (this.closed) {
       throw new Error(`${BIN_NAME}: desktop pnpm generation is closed`)
@@ -475,6 +511,7 @@ class DesktopPnpmService extends Service implements DesktopPnpm {
       ...(command.recoveryTransactionId === undefined
         ? {}
         : { recoveryTransactionId: command.recoveryTransactionId }),
+      ...(command.onSuccess === undefined ? {} : { onSuccess: command.onSuccess }),
     }
     active.done = this.settle(active)
     this.active = active
@@ -489,14 +526,28 @@ class DesktopPnpmService extends Service implements DesktopPnpm {
   /** Keep the operation gate held until the complete process tree is gone. */
   private async settle(active: ActiveOperation): Promise<DesktopPnpmOutcome> {
     let outcome: SubprocessOutcome | undefined
+    let reconcileFailed = false
     try {
       outcome = await active.child.done
-      return { exitCode: outcome.exitCode, signal: outcome.signal }
+      // A zero-exit pnpm run still has to reconcile `dsh.profile.bundles`
+      // before the install counts as successful; a failure here demotes the
+      // operation so the WAL rolls back rather than seals.
+      if (active.onSuccess !== undefined && outcome.exitCode === 0 && outcome.signal === null) {
+        try {
+          await active.onSuccess()
+        } catch (cause) {
+          reconcileFailed = true
+          this.ctx.logger?.error?.(cause)
+        }
+      }
+      return reconcileFailed
+        ? { exitCode: outcome.exitCode === 0 ? 1 : outcome.exitCode, signal: outcome.signal }
+        : { exitCode: outcome.exitCode, signal: outcome.signal }
     } finally {
       try {
         await active.child.waitForExit()
         if (active.recoveryTransactionId !== undefined) {
-          if (outcome?.exitCode === 0 && outcome.signal === null) {
+          if (outcome?.exitCode === 0 && outcome.signal === null && !reconcileFailed) {
             await this.installRecovery.seal(active.recoveryTransactionId)
           } else {
             await this.rollbackUnstartedInstall(active.recoveryTransactionId)
