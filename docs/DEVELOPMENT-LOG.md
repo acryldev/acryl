@@ -2675,3 +2675,37 @@ package name, so the renderer failed with `loaded without registering
 (`acryl-dsh-editor-plugin@0.2.6`); the Host half is byte-identical between
 0.2.5 and 0.2.6, so this checkpoint is what makes the plugin load on any
 published version.
+
+## 2026-09-10 - Universal plugin hot-reload, slice 1 (spec 032 T1)
+
+Commit: `4270f25` (+ spec/plan `f48a7ab`)
+
+The Settings -> Plugins -> Lifecycle tab could enable/disable/reload only three
+hard-coded entries (`MANAGED_PLUGIN_LIFECYCLE_ENTRIES`: Development Canvas and
+the two brand-slot packages). Every market-installed plugin showed a dead
+toggle behind "not admitted to safe user lifecycle control", even though the
+underlying machinery - `entry.update({disabled})` for the Host Fiber,
+`fiber.restart()` for reload, no process restart - was already generic.
+
+- `plugin-lifecycle-state.ts`: `disabledEntries` now accepts any structurally
+  valid Loader entry id. `pluginLifecyclePatches` emits `{id, disabled:true}`
+  with no `name`, so a disable matches its row by id alone (a row whose id and
+  package differ - `dsh-editor` / `acryl-dsh-editor-plugin` - still disables)
+  and a stale id is a Loader warning, not a skipped patch.
+  `readUserMutableBundleNames(profileDir)` reads `dsh.profile.bundles` minus
+  the base template (`dsh-base`, `dsh-web-app`).
+- `plugin-lifecycle-controller.ts`: `isMutable(entry)` is the legacy seed
+  (Canvas + brands) OR "the entry's package is in the profile's user bundle
+  list". Because spec 031's install writes the package into
+  `dsh.profile.bundles`, every market install is lifecycle-managed
+  automatically - no per-plugin allowlist edit. `reload()` with no argument now
+  restarts every mutable enabled entry.
+- The controller bootstrap carries `profileDir`; `main.ts` provides it.
+
+Verified end to end: `acryl-dsh-editor-plugin` installed from the ACRYL Package
+Catalog appears in the Lifecycle tab with a working Disable/Reload and renders
+its Files tab in the conversation view.
+
+Remaining on 032: T2 (live install with no restart prompt), T3 (soft renderer
+reconcile in place of `location.reload()`), T4 (dependency-aware cascade), T5
+(local dev file-watch auto-reload), T6 (docs).
