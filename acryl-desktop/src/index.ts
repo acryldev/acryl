@@ -64,6 +64,7 @@ import {
   PLUGIN_LIFECYCLE_RELOAD_PATH,
 } from './plugin-lifecycle-contract.ts'
 import { LivePluginActivationService, PluginLifecycleController } from './plugin-lifecycle-controller.ts'
+import { installPluginWatchers, parsePluginWatchSpec } from './desktop-plugin-watch.ts'
 import {
   handlePluginLifecycleDisableRequest,
   handlePluginLifecycleEnableRequest,
@@ -249,6 +250,20 @@ export function apply(ctx: Context, config: Config): void {
   // stub with no Cordis service registry.
   if (typeof (ctx as { reflect?: unknown }).reflect === 'object') {
     new LivePluginActivationService(ctx, pluginLifecycle)
+  }
+  // Local-development auto-reload: ACRYL_PLUGIN_WATCH=<pkg>=<abs dir>[,...]
+  const watchTargets = parsePluginWatchSpec(process.env.ACRYL_PLUGIN_WATCH)
+  if (watchTargets.length > 0) {
+    ctx.effect(
+      () => installPluginWatchers(
+        watchTargets,
+        packageName => pluginLifecycle.reloadByPackage(packageName),
+        (packageName, cause) => {
+          ctx.logger.error(`acryl-desktop: watched plugin ${packageName} failed to reload: ${cause instanceof Error ? cause.message : String(cause)}`)
+        },
+      ),
+      'acryl-desktop: local plugin development watchers',
+    )
   }
   ctx.effect(
     () => ctx.webServer.register({
