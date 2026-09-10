@@ -818,6 +818,7 @@ async function start(): Promise<void> {
           profileName: activeProfileName,
           statePath: pluginLifecycleStatePath,
           profileDir: activeProfileDir,
+          ...(prepared.blend === undefined ? {} : { blend: prepared.blend }),
         })
         await hostCtx.plugin(DesktopActionsService, {
           openTerminal: () => { runtime.openTerminal() },

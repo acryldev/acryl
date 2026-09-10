@@ -619,10 +619,12 @@ describe('desktop profile composition', {
     expect(desktopStartupSettingsFromSettings({ 'dsh-desktop': { mode: 'advanced', port: 43_189 } })).toEqual({
       mode: 'advanced',
       port: 43_189,
+      blend: null,
     })
     expect(desktopStartupSettingsFromSettings({ 'dsh-desktop': { mode: 'advanced' } })).toEqual({
       mode: 'advanced',
       port: 43_120,
+      blend: null,
     })
     expect(desktopShellModeFromSettings({ unrelated: { enabled: true } })).toBe('advanced')
   })

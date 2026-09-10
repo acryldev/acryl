@@ -102,6 +102,8 @@ function phaseOf(entry: Entry): PluginLifecycleFiberPhase {
 export class PluginLifecycleController {
   private operation = Promise.resolve()
   private readonly clientFaces = new Map<string, boolean>()
+  /** Row ids from the selected BLEND's lock, in both runtime id spellings. */
+  private readonly blendRowIds: ReadonlySet<string>
   private readonly resolvePackageJson: ((specifier: string) => string) | undefined
   /**
    * Package names from `dsh.profile.bundles` (minus the base template).
@@ -119,6 +121,14 @@ export class PluginLifecycleController {
       this.resolvePackageJson = specifier => require.resolve(`${specifier}/package.json`)
     }
     this.userBundleNames = readUserMutableBundleNames(bootstrap.profileDir)
+    const blendRowIds = new Set<string>()
+    if (bootstrap.blend !== undefined) {
+      for (const row of bootstrap.blend.rows) {
+        blendRowIds.add(row.id)
+        blendRowIds.add(`include:${row.id}`)
+      }
+    }
+    this.blendRowIds = blendRowIds
   }
 
   private refreshUserBundles(): void {
@@ -127,13 +137,15 @@ export class PluginLifecycleController {
 
   /**
    * A Loader entry is user-mutable when it is the Development Canvas or a
-   * brand-slot package (the legacy seed), or when its package was added to the
+   * brand-slot package (the legacy seed), when its package was added to the
    * active profile's `dsh.profile.bundles` (a profile bundle or a market
-   * install). Core runtime capabilities and the base-template includes are not.
+   * install), or when its row id comes from the selected BLEND's lock (D25).
+   * Core runtime capabilities and the base-template includes are not.
    */
   private isMutable(entry: Entry): boolean {
     if (entry.options.group) return false
     if (LEGACY_MUTABLE_ENTRY_IDS.has(entry.id)) return true
+    if (this.blendRowIds.has(entry.id) || this.blendRowIds.has(`include:${entry.id}`)) return true
     return typeof entry.options.name === 'string' && this.userBundleNames.has(entry.options.name)
   }
 
@@ -202,7 +214,18 @@ export class PluginLifecycleController {
           : Object.freeze([]),
       }))
     }
-    return Object.freeze({ entries: Object.freeze(entries) })
+    const blend = this.bootstrap.blend
+    return Object.freeze({
+      entries: Object.freeze(entries),
+      blend: blend === undefined ? null : Object.freeze({
+        id: blend.origin.id,
+        kind: blend.origin.kind,
+        version: blend.origin.version,
+        digest: blend.origin.digest,
+        lockPath: blend.lockPath,
+        rows: blend.rows.length,
+      }),
+    })
   }
 
   /**

@@ -44,6 +44,12 @@ import {
   type DesktopMarketSnapshot,
 } from './desktop-market.ts'
 import { pluginLifecyclePatches } from './plugin-lifecycle-state.ts'
+import {
+  assertNoBlendRowCollisions,
+  blendInsertPatch,
+  readDesktopBlend,
+  type DesktopBlendProjection,
+} from './desktop-blend.ts'
 
 /** Persistent profile managed by the desktop launcher and the ordinary dsh plugin command. */
 export const DESKTOP_PROFILE_NAME = 'desktop'
@@ -138,12 +144,21 @@ export function parseDesktopPort(value: unknown): number {
 export interface DesktopStartupSettings {
   mode: DesktopShellMode
   port: number
+  /** BLEND selection: path to an owned Blend directory or lock file, or null. */
+  blend: string | null
+}
+
+/** Parse the requested BLEND selection and reject malformed values. */
+export function parseDesktopBlend(value: unknown): string | null {
+  if (value === undefined || value === null) return null
+  if (typeof value === 'string' && value.length > 0 && value.length <= 4096) return value
+  throw new Error(`${BIN_NAME}: ${DESKTOP_SETTINGS_NAMESPACE}.blend must be a non-empty path of at most 4096 characters`)
 }
 
 /**
  * Read Desktop startup settings from one parsed settings document.
  * @param document - untrusted settings document root.
- * @returns validated mode and port defaults for the next generation.
+ * @returns validated mode, port, and BLEND selection for the next generation.
  */
 export function desktopStartupSettingsFromSettings(document: unknown): DesktopStartupSettings {
   if (typeof document !== 'object' || document === null || Array.isArray(document)) {
@@ -151,7 +166,7 @@ export function desktopStartupSettingsFromSettings(document: unknown): DesktopSt
   }
   const section = (document as Record<string, unknown>)[DESKTOP_SETTINGS_NAMESPACE]
   if (section === undefined) {
-    return { mode: DEFAULT_DESKTOP_SHELL_MODE, port: DEFAULT_DESKTOP_PORT }
+    return { mode: DEFAULT_DESKTOP_SHELL_MODE, port: DEFAULT_DESKTOP_PORT, blend: null }
   }
   if (typeof section !== 'object' || section === null || Array.isArray(section)) {
     throw new Error(`${BIN_NAME}: ${DESKTOP_SETTINGS_NAMESPACE} settings must be a map`)
@@ -160,6 +175,7 @@ export function desktopStartupSettingsFromSettings(document: unknown): DesktopSt
   return {
     mode: parseDesktopShellMode(values.mode),
     port: parseDesktopPort(values.port),
+    blend: parseDesktopBlend(values.blend),
   }
 }
 
@@ -180,7 +196,7 @@ export function readDesktopStartupSettings(config: SettingsFileConfig): DesktopS
     text = readFileSync(spec.filename, 'utf8')
   } catch (cause) {
     if ((cause as NodeJS.ErrnoException).code === 'ENOENT') {
-      return { mode: DEFAULT_DESKTOP_SHELL_MODE, port: DEFAULT_DESKTOP_PORT }
+      return { mode: DEFAULT_DESKTOP_SHELL_MODE, port: DEFAULT_DESKTOP_PORT, blend: null }
     }
     throw cause
   }
@@ -235,6 +251,8 @@ export interface PreparedDesktopProfile {
   market: DesktopMarketSnapshot
   /** Internal boot diagnostic when the requested provider was disabled. */
   marketFailure?: string
+  /** Trusted lock projection for the configured BLEND, when one is selected. */
+  blend?: DesktopBlendProjection
 }
 
 /** Optional observations emitted before profile preparation can fail. */
@@ -759,11 +777,23 @@ export function prepareDesktopProfile(
   } as SettingsFileConfig)
   const settingsDocument = resolveSettingsFileSpec(settingsConfig).filename
   hooks.onSettingsDocumentResolved?.(settingsDocument)
-  const { mode, port } = readDesktopStartupSettings(settingsConfig)
+  const { mode, port, blend: blendPath } = readDesktopStartupSettings(settingsConfig)
   patches.push({
     id: 'settings',
     config: settingsConfig,
   })
+  // BLEND composition (D24): the selected owned Blend's lock becomes one
+  // insert patch, pushed after the settings row and before the desktop
+  // invariant pushes. Precedence: base composition < BLEND rows < desktop
+  // invariants. Collisions against already-composed rows fail with a
+  // blend-attributed error instead of the generic unique-id throw; a missing
+  // or malformed lock fails the generation loudly (D23).
+  let blend: DesktopBlendProjection | undefined
+  if (blendPath !== null) {
+    blend = readDesktopBlend(blendPath)
+    assertNoBlendRowCollisions(blend, composedRows)
+    patches.push(blendInsertPatch(blend))
+  }
   // Brand swap: exactly one of the two same-slot-contract brand packages is
   // enabled, regardless of desktop mode (mirrors the compatibility-vs-advanced
   // toggle below, but this axis is brand identity, not shell composition).
@@ -965,6 +995,7 @@ export function prepareDesktopProfile(
     settingsDocument,
     market: desktopMarketSnapshotWithEffective(marketSelection, effectiveMarket),
     ...(marketFailure === undefined ? {} : { marketFailure }),
+    ...(blend === undefined ? {} : { blend }),
   }
 }
 

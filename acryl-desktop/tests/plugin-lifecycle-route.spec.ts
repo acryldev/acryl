@@ -12,7 +12,7 @@ import {
 } from '../src/plugin-lifecycle-route.ts'
 
 const ORIGIN = 'http://127.0.0.1:43120'
-const SNAPSHOT: PluginLifecycleSnapshot = { entries: [] }
+const SNAPSHOT: PluginLifecycleSnapshot = { entries: [], blend: null }
 const RECEIPT: PluginLifecycleReceipt = {
   accepted: true,
   action: 'reload',

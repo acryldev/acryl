@@ -133,6 +133,12 @@ export function PluginLifecycleSettingsTab({ api, t }: PluginLifecycleSettingsTa
       ) : null}
       {state.status === 'ready' ? (
         <div className={css.catalog}>
+          {state.snapshot.blend !== null ? (
+            <p className={css.status} data-desktop-blend={state.snapshot.blend.id}>
+              {t('blend')}: <strong>{state.snapshot.blend.id}</strong> {state.snapshot.blend.version}
+              {' - '}{state.snapshot.blend.rows} {t('blendRows')} <code>{state.snapshot.blend.lockPath}</code>
+            </p>
+          ) : null}
           <label className={css.search}>
             <span aria-hidden="true">⌕</span>
             <input

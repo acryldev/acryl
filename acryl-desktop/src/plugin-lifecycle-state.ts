@@ -5,6 +5,7 @@ import { chmod, lstat, mkdir } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { withFileLock, writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
 import { assertDesktopProfileName } from './profile-manager.ts'
+import type { DesktopBlendProjection } from './desktop-blend.ts'
 
 const STATE_VERSION = 1
 const STATE_FILE_MODE = 0o600
@@ -98,6 +99,8 @@ export interface PluginLifecycleStatePersistence {
 export interface PluginLifecycleStateBootstrap extends PluginLifecycleStatePersistence {
   /** Active profile directory - source of the user-mutable bundle list. */
   readonly profileDir: string
+  /** BLEND projection for the selected Blend; its rows are user-mutable entries. */
+  readonly blend?: DesktopBlendProjection
 }
 
 declare module '@deepseek-ai/cordis' {

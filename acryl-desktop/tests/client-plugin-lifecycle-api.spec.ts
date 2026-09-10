@@ -38,29 +38,39 @@ function receipt(action: 'enable' | 'disable' | 'reload') {
     action,
     entryIds: [ENTRY.entryId],
     rendererReloadRequired: true,
-    snapshot: { entries: [ENTRY] },
+    snapshot: { entries: [ENTRY], blend: null },
   }
 }
 
 describe('plugin lifecycle client API', () => {
   it('strictly parses snapshots and rejects inconsistent policy', () => {
-    expect(parsePluginLifecycleSnapshot({ entries: [ENTRY] })).toEqual({ entries: [ENTRY] })
+    const blend = { id: 'acryl.crm', kind: 'Blueprint', version: '0.1.0', digest: 'sha256:' + 'a'.repeat(64), lockPath: '/d/.acryl/blend.lock.json', rows: 4 }
+    expect(parsePluginLifecycleSnapshot({ entries: [ENTRY], blend })).toEqual({ entries: [ENTRY], blend })
+    expect(parsePluginLifecycleSnapshot({ entries: [ENTRY], blend: null })).toEqual({ entries: [ENTRY], blend: null })
+    expect(() => parsePluginLifecycleSnapshot({ entries: [ENTRY] }))
+      .toThrow('invalid plugin lifecycle snapshot')
+    expect(() => parsePluginLifecycleSnapshot({ entries: [ENTRY], blend: { ...blend, kind: 'Struct' } }))
+      .toThrow('invalid plugin lifecycle blend view')
+    expect(() => parsePluginLifecycleSnapshot({ entries: [ENTRY], blend: { ...blend, rows: 1.5 } }))
+      .toThrow('invalid plugin lifecycle blend view')
     expect(() => parsePluginLifecycleSnapshot({
       entries: [{ ...ENTRY, mutable: true, protectedReason: 'protected' }],
+      blend: null,
     })).toThrow('inconsistent')
-    expect(() => parsePluginLifecycleSnapshot({ entries: [{ ...ENTRY, extra: true }] }))
+    expect(() => parsePluginLifecycleSnapshot({ entries: [{ ...ENTRY, extra: true }], blend: null }))
       .toThrow('invalid plugin lifecycle entry')
-    expect(() => parsePluginLifecycleSnapshot({ entries: [ENTRY], extra: true }))
+    expect(() => parsePluginLifecycleSnapshot({ entries: [ENTRY], extra: true, blend: null }))
       .toThrow('invalid plugin lifecycle snapshot')
-    expect(() => parsePluginLifecycleSnapshot({ entries: [ENTRY, ENTRY] })).toThrow('duplicate')
+    expect(() => parsePluginLifecycleSnapshot({ entries: [ENTRY, ENTRY], blend: null })).toThrow('duplicate')
   })
 
   it('merges the current Client Loader phase into the Host snapshot', async () => {
-    const fetcher = vi.fn(async () => response({ entries: [ENTRY] }))
+    const fetcher = vi.fn(async () => response({ entries: [ENTRY], blend: null }))
     const api = createPluginLifecycleApi(loader(), fetcher)
 
     await expect(api.read()).resolves.toEqual({
       entries: [{ ...ENTRY, clientPhase: 'active', clientMounted: true }],
+      blend: null,
     })
     expect(fetcher).toHaveBeenCalledWith('/api/desktop/plugins/lifecycle', expect.objectContaining({
       method: 'GET',

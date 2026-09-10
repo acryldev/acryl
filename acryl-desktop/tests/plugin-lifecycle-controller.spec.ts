@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { boot } from '@deepseek-ai/dsh-app-boot'
 import { PluginLifecycleController } from '../src/plugin-lifecycle-controller.ts'
+import type { DesktopBlendProjection } from '../src/desktop-blend.ts'
 import { pluginLifecyclePatches } from '../src/plugin-lifecycle-state.ts'
 
 const roots: string[] = []
@@ -19,7 +20,7 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
 })
 
-async function harness() {
+async function harness(blend?: DesktopBlendProjection) {
   const root = mkdtempSync(join(tmpdir(), 'dsh-plugin-lifecycle-controller-'))
   roots.push(root)
   const packageDir = join(root, 'node_modules', PACKAGE)
@@ -79,10 +80,33 @@ async function harness() {
   }))
   writeFileSync(join(installedDir, 'index.mjs'), 'export const name = "dsh-editor"\nexport function apply() {}\n')
   writeFileSync(join(installedDir, 'cordis.patch.yml'), `- insert:\n    - id: ${INSTALLED_ROW_ID}\n      name: '${INSTALLED_PACKAGE}'\n`)
+  // A package named by a BLEND lock row, composed into this generation like
+  // the desktop launcher would with the `dsh-desktop.blend` insert patch.
+  const blendDir = join(root, 'node_modules', BLEND_PACKAGE)
+  mkdirSync(blendDir, { recursive: true })
+  writeFileSync(join(blendDir, 'package.json'), JSON.stringify({ name: BLEND_PACKAGE, version: '0.1.0', type: 'module', exports: { '.': './index.mjs' } }))
+  writeFileSync(join(blendDir, 'index.mjs'), 'export const name = "blend-row"\nexport function apply() {}\n')
+  writeFileSync(join(root, 'cordis.yml'), `- id: blend-row\n  name: ${BLEND_PACKAGE}\n`, { flag: 'a' })
   const ctx = await boot('plugin-lifecycle-controller-test', join(root, 'cordis.yml'))
   const statePath = join(root, 'state', 'lifecycle.json')
-  const controller = new PluginLifecycleController(ctx, { profileName: 'desktop', statePath, profileDir: root })
+  const controller = new PluginLifecycleController(ctx, {
+    profileName: 'desktop',
+    statePath,
+    profileDir: root,
+    ...(blend === undefined ? {} : { blend }),
+  })
   return { ctx, controller, logPath, statePath }
+}
+
+const BLEND_PACKAGE = 'acryl-blend-row-package'
+
+function blendProjection(): DesktopBlendProjection {
+  return {
+    lockPath: join('/tmp', 'acryl-crm', '.acryl', 'blend.lock.json'),
+    generator: { name: '@acryl/blends-core', version: '0.1.0' },
+    origin: { id: 'acryl.crm', kind: 'Blueprint', version: '0.1.0', digest: `sha256:${'a'.repeat(64)}` },
+    rows: [{ id: 'blend-row', name: BLEND_PACKAGE }],
+  }
 }
 
 function lines(path: string): string[] {
@@ -118,6 +142,40 @@ describe('PluginLifecycleController', () => {
         mutable: true,
         protectedReason: null,
       }))
+      expect(snapshot.blend).toBeNull()
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
+  it('treats BLEND lock rows as user-mutable and projects the blend identity', async () => {
+    const { ctx, controller, statePath } = await harness(blendProjection())
+    try {
+      const snapshot = controller.snapshot()
+      expect(snapshot.blend).toEqual({
+        id: 'acryl.crm',
+        kind: 'Blueprint',
+        version: '0.1.0',
+        digest: `sha256:${'a'.repeat(64)}`,
+        lockPath: join('/tmp', 'acryl-crm', '.acryl', 'blend.lock.json'),
+        rows: 1,
+      })
+      // Rows composed through an Include file carry the include: prefix; the
+      // controller must recognize both spellings of a BLEND row id (D25).
+      expect(snapshot.entries.find(entry => entry.entryId === 'include:blend-row'))
+        .toEqual(expect.objectContaining({ mutable: true, protectedReason: null }))
+
+      // A persisted disable becomes the composition patch `{ id: row,
+      // disabled: true }`, which wins over the BLEND insert on the next
+      // generation (PENDING/reactivation semantics stay the Loader's own).
+      const disabled = await controller.setEnabled('include:blend-row', false)
+      expect(disabled.snapshot.entries.find(entry => entry.entryId === 'include:blend-row'))
+        .toEqual(expect.objectContaining({ enabled: false, hostPhase: null }))
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([
+        { id: 'blend-row', disabled: true },
+      ])
+      await controller.setEnabled('include:blend-row', true)
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([])
     } finally {
       await ctx.fiber.dispose()
     }

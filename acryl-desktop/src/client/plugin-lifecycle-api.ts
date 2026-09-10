@@ -2,6 +2,7 @@
 
 import type { FiberState } from '@deepseek-ai/cordis'
 import type {
+  PluginLifecycleBlendView,
   PluginLifecycleEntryView,
   PluginLifecycleFiberPhase,
   PluginLifecycleReceipt,
@@ -36,6 +37,7 @@ export interface PluginLifecycleClientEntryView extends PluginLifecycleEntryView
 
 export interface PluginLifecycleClientSnapshot {
   readonly entries: readonly PluginLifecycleClientEntryView[]
+  readonly blend: PluginLifecycleBlendView | null
 }
 
 export interface PluginLifecycleApi {
@@ -115,7 +117,7 @@ function parseEntry(value: unknown): PluginLifecycleEntryView {
 
 export function parsePluginLifecycleSnapshot(value: unknown): PluginLifecycleSnapshot {
   if (!isRecord(value)
-    || !hasExactKeys(value, ['entries'])
+    || !hasExactKeys(value, ['entries', 'blend'])
     || !Array.isArray(value.entries)
     || value.entries.length > MAX_ENTRIES) {
     throw new Error('acryl-desktop: invalid plugin lifecycle snapshot')
@@ -124,7 +126,30 @@ export function parsePluginLifecycleSnapshot(value: unknown): PluginLifecycleSna
   if (new Set(entries.map(entry => entry.entryId)).size !== entries.length) {
     throw new Error('acryl-desktop: duplicate plugin lifecycle entry')
   }
-  return Object.freeze({ entries: Object.freeze(entries) })
+  return Object.freeze({
+    entries: Object.freeze(entries),
+    blend: value.blend === null ? null : parseBlendView(value.blend),
+  })
+}
+
+function parseBlendView(value: unknown): PluginLifecycleBlendView {
+  if (!isRecord(value)
+    || !hasExactKeys(value, ['id', 'kind', 'version', 'digest', 'lockPath', 'rows'])
+    || (value.kind !== 'Blueprint' && value.kind !== 'Blend')
+    || typeof value.rows !== 'number'
+    || !Number.isInteger(value.rows)
+    || value.rows < 0
+    || value.rows > MAX_ENTRIES) {
+    throw new Error('acryl-desktop: invalid plugin lifecycle blend view')
+  }
+  return Object.freeze({
+    id: parseString(value.id, 'blend id'),
+    kind: value.kind,
+    version: parseString(value.version, 'blend version'),
+    digest: parseString(value.digest, 'blend digest'),
+    lockPath: parseString(value.lockPath, 'blend lock path'),
+    rows: value.rows,
+  })
 }
 
 function parseReceipt(value: unknown): PluginLifecycleReceipt {
@@ -210,6 +235,7 @@ function mergeClientSnapshot(
         clientMounted: phase !== null,
       })
     })),
+    blend: snapshot.blend,
   })
 }
 

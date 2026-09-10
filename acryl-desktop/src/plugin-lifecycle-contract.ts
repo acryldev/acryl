@@ -31,9 +31,23 @@ export interface PluginLifecycleEntryView {
   readonly dependents: readonly string[]
 }
 
+/** Identity of the Blend whose rows are composed into this generation. */
+export interface PluginLifecycleBlendView {
+  readonly id: string
+  readonly kind: 'Blueprint' | 'Blend'
+  readonly version: string
+  /** sha256:<hex> over the origin definition bytes, as recorded in the lock. */
+  readonly digest: string
+  /** Exact lock file path the launcher projected this generation from. */
+  readonly lockPath: string
+  readonly rows: number
+}
+
 /** Point-in-time Host lifecycle projection. */
 export interface PluginLifecycleSnapshot {
   readonly entries: readonly PluginLifecycleEntryView[]
+  /** The selected Blend, or null when no `dsh-desktop.blend` is configured. */
+  readonly blend: PluginLifecycleBlendView | null
 }
 
 /** Exact entry-targeted mutation request. */
