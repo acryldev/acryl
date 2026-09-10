@@ -2,8 +2,10 @@
 
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import type { Context, FiberState } from '@deepseek-ai/cordis'
-import type { Entry } from '@deepseek-ai/cordis-plugin-loader'
+import { dirname, join } from 'node:path'
+import { type Context, type FiberState, Service } from '@deepseek-ai/cordis'
+import type { Entry, EntryOptions } from '@deepseek-ai/cordis-plugin-loader'
+import { loadOverlayPatches } from '@deepseek-ai/dsh-app-boot'
 import type {} from '@deepseek-ai/dsh-client-modules'
 import type {
   PluginLifecycleEntryView,
@@ -37,6 +39,23 @@ const FIBER_PHASE = {
 } as const satisfies Record<FiberState, PluginLifecycleFiberPhase>
 
 const PROTECTED_REASON = 'This core capability is part of the Desktop runtime and is not user-toggleable. Plugins you add through a profile bundle or the plugin market can be enabled, disabled, and reloaded here.'
+
+/**
+ * Host-internal capability the plugin market calls after it writes
+ * `dsh.profile.bundles`, so an install/uninstall takes effect without a
+ * process restart. Optional: the market degrades to a restart prompt when the
+ * running deployment does not provide it.
+ */
+export interface LivePluginActivation {
+  activate(packageName: string): Promise<void>
+  deactivate(packageName: string): Promise<void>
+}
+
+declare module '@deepseek-ai/cordis' {
+  interface Context {
+    livePluginActivation: LivePluginActivation
+  }
+}
 
 const LEGACY_MUTABLE_ENTRY_IDS: ReadonlySet<string> = new Set(Object.keys(MANAGED_PLUGIN_LIFECYCLE_ENTRIES))
 
@@ -84,8 +103,12 @@ export class PluginLifecycleController {
   private operation = Promise.resolve()
   private readonly clientFaces = new Map<string, boolean>()
   private readonly resolvePackageJson: ((specifier: string) => string) | undefined
-  /** Package names from `dsh.profile.bundles` (minus the base template). */
-  private readonly userBundleNames: ReadonlySet<string>
+  /**
+   * Package names from `dsh.profile.bundles` (minus the base template).
+   * Re-read on `activate`/`deactivate` because the Market install writes the
+   * bundle list milliseconds before it asks for a live mount.
+   */
+  private userBundleNames: ReadonlySet<string>
 
   constructor(
     private readonly ctx: Context,
@@ -96,6 +119,10 @@ export class PluginLifecycleController {
       this.resolvePackageJson = specifier => require.resolve(`${specifier}/package.json`)
     }
     this.userBundleNames = readUserMutableBundleNames(bootstrap.profileDir)
+  }
+
+  private refreshUserBundles(): void {
+    this.userBundleNames = readUserMutableBundleNames(this.bootstrap.profileDir)
   }
 
   /**
@@ -200,6 +227,105 @@ export class PluginLifecycleController {
     })
   }
 
+  /**
+   * Mount a just-installed profile-bundle package into the running Loader tree,
+   * so a Market install takes effect without a restart. The bundle's row comes
+   * from its own `cordis.patch.yml` `insert` (id and package name may differ).
+   * Idempotent: a package already mounted returns its current snapshot.
+   */
+  activate(packageName: string): Promise<PluginLifecycleReceipt> {
+    return this.exclusive(async () => {
+      this.refreshUserBundles()
+      if (!this.userBundleNames.has(packageName)) {
+        throw new PluginLifecycleError(
+          'protected-entry',
+          `Package ${packageName} is not a profile bundle in the active profile.`,
+        )
+      }
+      const already = [...this.ctx.loader.entries()]
+        .find(entry => !entry.options.group && entry.options.name === packageName)
+      if (already !== undefined) return this.receipt('enable', [already.id], true)
+
+      const group = this.includeGroup()
+      const row = this.bundleInsertRow(packageName)
+      // The Loader's create() keeps a provided id (ensureId only generates one
+      // when absent); its type omits `id` to steer callers toward generated
+      // ids, but a bundle row's id must stay stable so the reboot patch (by id)
+      // and the Lifecycle toggle target the same entry.
+      const rowOptions: EntryOptions = { id: row.id, name: row.name }
+      try {
+        await group.create(rowOptions)
+        group.data.push(rowOptions)
+        await this.ctx.loader.await?.()
+      } catch (cause) {
+        try { await group.remove(row.id) } catch { /* best effort */ }
+        throw new PluginLifecycleError(
+          'lifecycle-failed',
+          `Plugin ${packageName} failed to activate: ${cause instanceof Error ? cause.message : String(cause)}`,
+        )
+      }
+      const entry = [...this.ctx.loader.entries()].find(candidate => candidate.options.id === row.id)
+      return this.receipt('enable', [entry?.id ?? `include:${row.id}`], true)
+    })
+  }
+
+  /**
+   * Unmount a Market-uninstalled package from the running Loader tree. No-op
+   * when it is already gone.
+   */
+  deactivate(packageName: string): Promise<PluginLifecycleReceipt> {
+    return this.exclusive(async () => {
+      const entry = [...this.ctx.loader.entries()]
+        .find(candidate => !candidate.options.group && candidate.options.name === packageName)
+      if (entry === undefined) return this.receipt('disable', [], true)
+      const rowId = entry.options.id
+      try {
+        await entry.parent.remove(rowId)
+        await this.ctx.loader.await?.()
+      } catch (cause) {
+        throw new PluginLifecycleError(
+          'lifecycle-failed',
+          `Plugin ${packageName} failed to deactivate: ${cause instanceof Error ? cause.message : String(cause)}`,
+        )
+      }
+      this.refreshUserBundles()
+      return this.receipt('disable', [entry.id], true)
+    })
+  }
+
+  /** The Loader group that owns profile-bundle rows (`include:<id>`). */
+  private includeGroup(): Entry['parent'] {
+    const sibling = [...this.ctx.loader.entries()]
+      .find(entry => !entry.options.group && entry.id.startsWith('include:'))
+    if (sibling === undefined) {
+      throw new PluginLifecycleError('lifecycle-failed', 'The profile include group is not available.')
+    }
+    return sibling.parent
+  }
+
+  /** Read `{ id, name }` from a profile bundle's own `cordis.patch.yml` insert. */
+  private bundleInsertRow(packageName: string): { readonly id: string; readonly name: string } {
+    if (this.resolvePackageJson === undefined) {
+      throw new PluginLifecycleError('lifecycle-failed', 'Package resolution is unavailable in this context.')
+    }
+    const packageDir = dirname(this.resolvePackageJson(packageName))
+    const manifest = JSON.parse(readFileSync(join(packageDir, 'package.json'), 'utf8')) as {
+      readonly dsh?: { readonly bundle?: { readonly patch?: unknown } }
+    }
+    const patchRel = manifest.dsh?.bundle?.patch
+    if (typeof patchRel !== 'string') {
+      throw new PluginLifecycleError('lifecycle-failed', `Package ${packageName} declares no dsh.bundle.patch.`)
+    }
+    const patches = loadOverlayPatches('acryl-desktop', join(packageDir, patchRel)) as ReadonlyArray<{
+      readonly insert?: ReadonlyArray<{ readonly id?: unknown; readonly name?: unknown }>
+    }>
+    const row = patches.find(patch => Array.isArray(patch.insert))?.insert?.[0]
+    if (typeof row?.id !== 'string' || typeof row.name !== 'string') {
+      throw new PluginLifecycleError('lifecycle-failed', `Package ${packageName} bundle patch has no insert row.`)
+    }
+    return { id: row.id, name: row.name }
+  }
+
   private clientPackage(moduleName: string, graph: ReadonlySet<string>): string | null {
     if (graph.has(moduleName)) return moduleName
     const cached = this.clientFaces.get(moduleName)
@@ -246,5 +372,24 @@ export class PluginLifecycleController {
     const next = this.operation.then(operation, operation)
     this.operation = next.then(() => undefined, () => undefined)
     return next
+  }
+}
+
+/**
+ * Publishes {@link LivePluginActivation} on the Host context for the plugin
+ * market to call after it writes `dsh.profile.bundles`. Thin wrapper over the
+ * controller so the capability's lifetime is the desktop Host plugin's.
+ */
+export class LivePluginActivationService extends Service implements LivePluginActivation {
+  constructor(ctx: Context, private readonly controller: PluginLifecycleController) {
+    super(ctx, 'livePluginActivation')
+  }
+
+  async activate(packageName: string): Promise<void> {
+    await this.controller.activate(packageName)
+  }
+
+  async deactivate(packageName: string): Promise<void> {
+    await this.controller.deactivate(packageName)
   }
 }

@@ -9,6 +9,11 @@ import { pluginLifecyclePatches } from '../src/plugin-lifecycle-state.ts'
 const roots: string[] = []
 const PACKAGE = 'acryl-development-canvas'
 const MARKET_PACKAGE = 'cordis-plugin-graph'
+// In the bundle list + node_modules but NOT in cordis.yml - the shape of a
+// just-installed market plugin before a restart. Its patch row id differs from
+// the package name, like the real acryl-dsh-editor-plugin.
+const INSTALLED_PACKAGE = 'acryl-dsh-editor-plugin'
+const INSTALLED_ROW_ID = 'dsh-editor'
 
 afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
@@ -52,13 +57,28 @@ async function harness() {
   writeFileSync(join(root, 'package.json'), JSON.stringify({
     name: 'dsh-profile-desktop',
     private: true,
-    dependencies: { [MARKET_PACKAGE]: '1.0.0' },
-    dsh: { profile: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', MARKET_PACKAGE] } },
+    dependencies: { [MARKET_PACKAGE]: '1.0.0', [INSTALLED_PACKAGE]: '0.2.6' },
+    dsh: {
+      profile: {
+        bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', MARKET_PACKAGE, INSTALLED_PACKAGE],
+      },
+    },
   }))
   const marketDir = join(root, 'node_modules', MARKET_PACKAGE)
   mkdirSync(marketDir, { recursive: true })
   writeFileSync(join(marketDir, 'package.json'), JSON.stringify({ name: MARKET_PACKAGE, version: '1.0.0', type: 'module', exports: { '.': './index.mjs' } }))
   writeFileSync(join(marketDir, 'index.mjs'), 'export const name = "market-plugin"\nexport function apply() {}\n')
+  const installedDir = join(root, 'node_modules', INSTALLED_PACKAGE)
+  mkdirSync(installedDir, { recursive: true })
+  writeFileSync(join(installedDir, 'package.json'), JSON.stringify({
+    name: INSTALLED_PACKAGE,
+    version: '0.2.6',
+    type: 'module',
+    exports: { '.': './index.mjs', './package.json': './package.json' },
+    dsh: { bundle: { patch: './cordis.patch.yml' } },
+  }))
+  writeFileSync(join(installedDir, 'index.mjs'), 'export const name = "dsh-editor"\nexport function apply() {}\n')
+  writeFileSync(join(installedDir, 'cordis.patch.yml'), `- insert:\n    - id: ${INSTALLED_ROW_ID}\n      name: '${INSTALLED_PACKAGE}'\n`)
   const ctx = await boot('plugin-lifecycle-controller-test', join(root, 'cordis.yml'))
   const statePath = join(root, 'state', 'lifecycle.json')
   const controller = new PluginLifecycleController(ctx, { profileName: 'desktop', statePath, profileDir: root })
@@ -156,6 +176,47 @@ describe('PluginLifecycleController', () => {
       }))
       expect(lines(logPath)).toEqual(['mount', 'mount', 'unmount', 'mount'])
       expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([])
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
+  it('activates a just-installed bundle into the running tree, then deactivates it', async () => {
+    const { ctx, controller } = await harness()
+    try {
+      expect(controller.snapshot().entries.some(e => e.entryId === 'include:dsh-editor')).toBe(false)
+
+      const activated = await controller.activate(INSTALLED_PACKAGE)
+      expect(activated.action).toBe('enable')
+      const mounted = controller.snapshot().entries.find(e => e.entryId === 'include:dsh-editor')
+      expect(mounted).toEqual(expect.objectContaining({
+        moduleName: INSTALLED_PACKAGE,
+        enabled: true,
+        hostPhase: 'active',
+        mutable: true,
+      }))
+
+      // Idempotent.
+      await expect(controller.activate(INSTALLED_PACKAGE)).resolves.toEqual(
+        expect.objectContaining({ action: 'enable' }),
+      )
+
+      await controller.deactivate(INSTALLED_PACKAGE)
+      expect(controller.snapshot().entries.some(e => e.entryId === 'include:dsh-editor')).toBe(false)
+      // Deactivate is a no-op when already gone.
+      await expect(controller.deactivate(INSTALLED_PACKAGE)).resolves.toEqual(
+        expect.objectContaining({ action: 'disable', entryIds: [] }),
+      )
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
+  it('refuses to activate a package that is not a profile bundle', async () => {
+    const { ctx, controller } = await harness()
+    try {
+      await expect(controller.activate('some-unrelated-package'))
+        .rejects.toMatchObject({ code: 'protected-entry' })
     } finally {
       await ctx.fiber.dispose()
     }

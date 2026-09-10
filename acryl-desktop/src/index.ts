@@ -63,7 +63,7 @@ import {
   PLUGIN_LIFECYCLE_PATH,
   PLUGIN_LIFECYCLE_RELOAD_PATH,
 } from './plugin-lifecycle-contract.ts'
-import { PluginLifecycleController } from './plugin-lifecycle-controller.ts'
+import { LivePluginActivationService, PluginLifecycleController } from './plugin-lifecycle-controller.ts'
 import {
   handlePluginLifecycleDisableRequest,
   handlePluginLifecycleEnableRequest,
@@ -242,6 +242,14 @@ export function apply(ctx: Context, config: Config): void {
     throw new Error('acryl-desktop: launcher did not provide plugin lifecycle persistence')
   }
   const pluginLifecycle = new PluginLifecycleController(ctx, pluginLifecycleBootstrap)
+  // The plugin market calls `ctx.livePluginActivation` after it writes
+  // `dsh.profile.bundles` so an install/uninstall mounts into the running
+  // Loader tree without a restart. Scoped to this desktop Host plugin's fiber.
+  // Guarded because focused route tests mount `apply` against a minimal ctx
+  // stub with no Cordis service registry.
+  if (typeof (ctx as { reflect?: unknown }).reflect === 'object') {
+    new LivePluginActivationService(ctx, pluginLifecycle)
+  }
   ctx.effect(
     () => ctx.webServer.register({
       kind: 'exact',
