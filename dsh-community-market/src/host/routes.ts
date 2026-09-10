@@ -636,15 +636,38 @@ async function mutateSources(
     const provider = BUILT_IN_PROVIDERS.find(candidate => candidate.key === mutation.key)
     if (provider === undefined) throw new Error('built-in source unavailable')
     if (records.some(record => record.builtInProviderKey === mutation.key)) throw new Error('source already added')
-    records.push({
-      sourceRecordId: randomUUID(),
-      registrationKind: 'built-in',
-      adapterId: provider.adapterId,
-      providerId: provider.providerId,
-      builtInProviderKey: provider.key,
-      enabled: false,
-      order: nextOrder,
-    })
+    // A standard-http built-in (a first-party or partner catalog that publishes
+    // a catalog-source manifest) is validated at registration exactly like a
+    // user-added standard source: fetch the manifest, assert the trust root,
+    // and confirm the manifest claims the provider id the built-in promises.
+    if (provider.manifestUrl !== undefined) {
+      const manifest = await readManifest(provider.manifestUrl, signal)
+      signal.throwIfAborted()
+      if (manifest.providerId !== provider.providerId) {
+        throw new Error('built-in manifest provider id does not match the built-in definition')
+      }
+      records.push({
+        sourceRecordId: randomUUID(),
+        registrationKind: 'built-in',
+        adapterId: provider.adapterId,
+        providerId: provider.providerId,
+        builtInProviderKey: provider.key,
+        manifestUrl: provider.manifestUrl,
+        manifest,
+        enabled: false,
+        order: nextOrder,
+      })
+    } else {
+      records.push({
+        sourceRecordId: randomUUID(),
+        registrationKind: 'built-in',
+        adapterId: provider.adapterId,
+        providerId: provider.providerId,
+        builtInProviderKey: provider.key,
+        enabled: false,
+        order: nextOrder,
+      })
+    }
   } else if (mutation.action === 'add-standard') {
     const manifest = await readManifest(mutation.manifestUrl, signal)
     signal.throwIfAborted()

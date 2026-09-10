@@ -9,6 +9,7 @@ export interface MarketBuiltInProvider {
   readonly providerId: string
   readonly adapterId: string
   readonly endpoint: string
+  readonly manifestUrl?: string
   readonly attribution: {
     readonly name: string
     readonly url: string

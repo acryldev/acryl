@@ -15,6 +15,13 @@ export interface BuiltInProviderDefinition {
   readonly providerId: string
   readonly adapterId: string
   readonly endpoint: string
+  /**
+   * Manifest URL for a built-in that resolves through the generic
+   * `market.standard-http-v1` adapter (a first-party or partner catalog that
+   * publishes a standard `catalog-source` manifest). Custom-adapter built-ins
+   * (`dsh-1024store`, `dshfind`) leave this unset and hard-code their transport.
+   */
+  readonly manifestUrl?: string
   readonly attribution: {
     readonly name: string
     readonly url: string
@@ -23,7 +30,26 @@ export interface BuiltInProviderDefinition {
   readonly partnership: boolean
 }
 
+export const ACRYL_CATALOG_KEY = 'acryl-catalog'
+export const ACRYL_CATALOG_PROVIDER_ID = 'dev.acryl.catalog'
+export const ACRYL_CATALOG_ENDPOINT = 'https://acryl.dev/v1/plugins'
+export const ACRYL_CATALOG_MANIFEST_URL = 'https://acryl.dev/.well-known/acryl-catalog-source.json'
+
 export const BUILT_IN_PROVIDERS: readonly BuiltInProviderDefinition[] = [
+  {
+    key: ACRYL_CATALOG_KEY,
+    name: 'ACRYL Package Catalog',
+    description: 'First-party ACRYL catalog. Packages auto-discovered on npm via the acryl-package keyword; refreshed every 15 minutes. Listing does not imply review or endorsement.',
+    providerId: ACRYL_CATALOG_PROVIDER_ID,
+    adapterId: standardHttpAdapter.adapterId,
+    endpoint: ACRYL_CATALOG_ENDPOINT,
+    manifestUrl: ACRYL_CATALOG_MANIFEST_URL,
+    attribution: {
+      name: 'acryl.dev',
+      url: 'https://acryl.dev/packages',
+    },
+    partnership: false,
+  },
   {
     key: DSH_1024STORE_KEY,
     name: 'DSH 1024Store',

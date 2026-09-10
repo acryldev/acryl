@@ -16,6 +16,12 @@ import {
   DSHFIND_KEY,
   DSHFIND_PROVIDER_ID,
 } from '../src/adapters/dshfind.js'
+import {
+  ACRYL_CATALOG_ENDPOINT,
+  ACRYL_CATALOG_KEY,
+  ACRYL_CATALOG_MANIFEST_URL,
+  ACRYL_CATALOG_PROVIDER_ID,
+} from '../src/catalog/service.js'
 import type { MarketSettingsDocument } from '../src/catalog/source-store.js'
 import type { CatalogSourceManifest, LocalSourceRecord } from '../src/contracts/index.js'
 import { marketRoutes, registerMarketRoutes } from '../src/host/routes.js'
@@ -173,6 +179,14 @@ describe('community market Host routes', () => {
           enabled: false,
         }],
         builtIns: [
+          {
+            key: ACRYL_CATALOG_KEY,
+            providerId: ACRYL_CATALOG_PROVIDER_ID,
+            adapterId: 'market.standard-http-v1',
+            endpoint: ACRYL_CATALOG_ENDPOINT,
+            manifestUrl: ACRYL_CATALOG_MANIFEST_URL,
+            partnership: false,
+          },
           {
             key: DSH_1024STORE_KEY,
             providerId: DSH_1024STORE_PROVIDER_ID,
@@ -344,6 +358,70 @@ describe('community market Host routes', () => {
           name,
         }],
       })
+    } finally {
+      await server.close()
+    }
+  })
+
+  it('adds the ACRYL built-in by validating its published catalog-source manifest', async () => {
+    const acrylManifest = {
+      manifestVersion: '1.0.0',
+      providerId: ACRYL_CATALOG_PROVIDER_ID,
+      name: 'ACRYL Package Catalog',
+      attribution: { name: 'acryl.dev', url: 'https://acryl.dev/packages' },
+      transport: { kind: 'https-json', endpoint: ACRYL_CATALOG_ENDPOINT, method: 'GET' },
+      query: { supported: [], defaultLimit: 50, maxLimit: 50, sorts: [] },
+    }
+    const getJson = vi.spyOn(restrictedHttpClient, 'getJson').mockResolvedValue({
+      value: acrylManifest,
+      finalUrl: ACRYL_CATALOG_MANIFEST_URL,
+    })
+    const server = await startMarketServer([])
+    try {
+      const response = await mutateSource(server, { action: 'add-builtin', key: ACRYL_CATALOG_KEY })
+
+      expect(response.status).toBe(200)
+      await expect(response.json()).resolves.toMatchObject({
+        sources: [{
+          registrationKind: 'built-in',
+          adapterId: 'market.standard-http-v1',
+          providerId: ACRYL_CATALOG_PROVIDER_ID,
+          builtInProviderKey: ACRYL_CATALOG_KEY,
+          manifestUrl: ACRYL_CATALOG_MANIFEST_URL,
+          enabled: false,
+          order: 0,
+          name: 'ACRYL Package Catalog',
+          endpoint: ACRYL_CATALOG_ENDPOINT,
+        }],
+      })
+      expect(getJson).toHaveBeenCalledWith(
+        ACRYL_CATALOG_MANIFEST_URL,
+        expect.any(AbortSignal),
+        { allowedOrigin: 'https://acryl.dev' },
+      )
+    } finally {
+      await server.close()
+    }
+  })
+
+  it('rejects the ACRYL built-in when the manifest claims a different provider id', async () => {
+    vi.spyOn(restrictedHttpClient, 'getJson').mockResolvedValue({
+      value: {
+        manifestVersion: '1.0.0',
+        providerId: 'dev.attacker.catalog',
+        name: 'Not ACRYL',
+        attribution: { name: 'x', url: 'https://acryl.dev/packages' },
+        transport: { kind: 'https-json', endpoint: ACRYL_CATALOG_ENDPOINT, method: 'GET' },
+        query: { supported: [], defaultLimit: 50, maxLimit: 50, sorts: [] },
+      },
+      finalUrl: ACRYL_CATALOG_MANIFEST_URL,
+    })
+    const server = await startMarketServer([])
+    try {
+      const response = await mutateSource(server, { action: 'add-builtin', key: ACRYL_CATALOG_KEY })
+      expect(response.status).toBe(400)
+      const state = await readRoute(server, marketRoutes.state)
+      await expect(state.json()).resolves.toMatchObject({ sources: [] })
     } finally {
       await server.close()
     }

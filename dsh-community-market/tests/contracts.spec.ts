@@ -235,10 +235,18 @@ describe('catalog identity and local source records', () => {
     expect(() => validateLocalSourceRecords([{
       ...record,
       builtInProviderKey: 'example',
-    }])).toThrow(/exactly one/u)
+    }])).toThrow(/builtInProviderKey is reserved for built-in sources/u)
     expect(() => validateLocalSourceRecords([{
       ...record,
       manifestUrl: 'http://127.0.0.1/catalog-source.json',
     }])).toThrow(/credential-free HTTPS/u)
+
+    // A standard-http built-in (a first-party catalog such as ACRYL) carries
+    // builtInProviderKey together with manifestUrl + manifest.
+    expect(() => validateLocalSourceRecords([{
+      ...record,
+      registrationKind: 'built-in',
+      builtInProviderKey: 'acryl-catalog',
+    }])).not.toThrow()
   })
 })

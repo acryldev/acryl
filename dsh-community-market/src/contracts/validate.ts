@@ -119,9 +119,18 @@ export function validateLocalSourceRecords(records: readonly LocalSourceRecord[]
   for (const [index, record] of records.entries()) {
     const hasManifest = record.manifestUrl !== undefined
     const hasBuiltIn = record.builtInProviderKey !== undefined
-    if (hasManifest === hasBuiltIn) {
+    // A source resolves either through a custom-adapter built-in
+    // (`builtInProviderKey`, no manifest) or through the generic standard-http
+    // adapter (`manifestUrl` + cached `manifest`). A standard-http *built-in*
+    // (a first-party catalog such as ACRYL) legitimately carries both.
+    if (!hasManifest && !hasBuiltIn) {
       throw new CatalogContractError('local-source', [
-        semanticIssue(`/${index}`, 'must contain exactly one of manifestUrl or builtInProviderKey'),
+        semanticIssue(`/${index}`, 'must contain manifestUrl or builtInProviderKey'),
+      ])
+    }
+    if (record.registrationKind === 'user-added' && hasBuiltIn) {
+      throw new CatalogContractError('local-source', [
+        semanticIssue(`/${index}/builtInProviderKey`, 'is reserved for built-in sources'),
       ])
     }
     if (record.registrationKind === 'user-added' && !hasManifest) {
@@ -139,9 +148,9 @@ export function validateLocalSourceRecords(records: readonly LocalSourceRecord[]
         semanticIssue(`/${index}/builtInProviderKey`, 'is required for a built-in source'),
       ])
     }
-    if (record.registrationKind === 'built-in' && record.manifest !== undefined) {
+    if (record.manifest !== undefined && !hasManifest) {
       throw new CatalogContractError('local-source', [
-        semanticIssue(`/${index}/manifest`, 'is reserved for user-added standard sources'),
+        semanticIssue(`/${index}/manifest`, 'requires a manifestUrl'),
       ])
     }
     if (!uuidPattern.test(record.sourceRecordId)) {
