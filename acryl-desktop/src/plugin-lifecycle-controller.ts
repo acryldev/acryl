@@ -255,11 +255,18 @@ export class PluginLifecycleController {
     })
   }
 
-  /** Restart one managed entry, or every currently enabled managed entry. */
+  /**
+   * Restart one entry, or - with no argument - every currently enabled entry
+   * in the legacy seed (Development Canvas + the active brand). Reload-all
+   * deliberately does NOT sweep market plugins: churning many unrelated client
+   * fibers at once destabilises the renderer. Reload a market plugin from its
+   * own card (`reload(entryId)`).
+   */
   reload(entryId?: string): Promise<PluginLifecycleReceipt> {
     return this.exclusive(async () => {
       const entries = entryId === undefined
-        ? [...this.ctx.loader.entries()].filter(entry => this.isMutable(entry) && !entry.disabled)
+        ? [...this.ctx.loader.entries()].filter(entry =>
+            LEGACY_MUTABLE_ENTRY_IDS.has(entry.id) && !entry.options.group && !entry.disabled)
         : [this.resolveMutable(entryId).entry]
       if (entries.length === 0) {
         throw new PluginLifecycleError('not-mounted', 'No managed plugin is currently mounted.')

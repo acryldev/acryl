@@ -232,6 +232,10 @@ export function createPluginLifecycleApi(
    * not in the boot graph, or a Loader mutation this build cannot drive.
    */
   const reconcileClient = async (receipt: PluginLifecycleReceipt): Promise<boolean> => {
+    // Only reconcile a single targeted entry in place. Reload-all and a
+    // disable cascade touch several unrelated client fibers; sweeping them all
+    // at once destabilises the renderer, so those take the full page reload.
+    if (receipt.entryIds.length !== 1) return false
     const rowByEntryId = new Map(receipt.snapshot.entries.map(row => [row.entryId, row]))
     for (const entryId of receipt.entryIds) {
       const row = rowByEntryId.get(entryId)
