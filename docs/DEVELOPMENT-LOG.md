@@ -3543,3 +3543,80 @@ consumes session events rather than `dsh-agent-loop`. Engine 3
 - `timeout(1)` is unavailable on this macOS box, and the failed verify run was
   piped through `tail`, which hides all progress until exit and made a hang
   indistinguishable from slow work. Gate runs should stream instead.
+
+## 2026-09-11 - fix: ACRYL_HOME is now a real isolation switch
+
+Commit: `24c1532`
+
+Corrects and supersedes the `env -u DSH_HOME` workaround recorded in the
+previous entry. That entry treated a real layering bug as a usage note; the
+right fix was to make the variable mean what it says.
+
+`resolveAcrylDshHome` let an ambient `DSH_HOME` outrank an explicitly set
+`ACRYL_HOME`. That inverts the layering: ACRYL owns `~/.acryl` and nests each
+engine beneath it, so `DSH_HOME` is an engine-level detail *inside* ACRYL's
+product root. Because `DSH_HOME` is commonly exported in a developer shell (and
+is set by the DSH Desktop app - it is set in this very environment), the
+consequence was not merely a confusing test: `ACRYL_HOME=/tmp/clean acryl ...`
+silently read and wrote the operator's real `~/.dsh`, credentials and sessions
+included, while appearing to be isolated.
+
+Reproduced before fixing, both cheaply and end to end:
+`resolveAcrylDshHome({ACRYL_HOME:'/tmp/root', DSH_HOME:'/tmp/ambient'})`
+returned `/tmp/ambient`, and a real `createAcrylEngineHost` boot with both set
+created its profile under the ambient home rather than the ACRYL root. A
+cold-start test written that way **passes without ever being isolated**, which
+is worse than a test that fails - and it is exactly how the previous session's
+cold-start run appeared to succeed.
+
+Precedence is now, highest first: `ACRYL_HOME` (giving `<root>/.dsh`), then
+`DSH_HOME` when `ACRYL_HOME` is unset, then the default `~/.acryl/.dsh`. Pinning
+`ACRYL_HOME` is therefore a complete clean-room switch with no companion flag.
+
+`tests/acryl-home.spec.ts` (new, 8 cases) covers the precedence rules and, as
+the decisive one, boots the real `dsh` engine with `ACRYL_HOME` plus a decoy
+`DSH_HOME` and asserts the profile landed under `ACRYL_HOME` while the ambient
+home's `profiles/` was never created. RED first (2 failed / 6 passed, with the
+profile written to the wrong root), then GREEN (8/8). The boot-level test is
+what makes this regression-proof: a unit assertion on the precedence function
+alone would not have caught the built-lib trap below.
+
+Verified live afterwards with the ambient `DSH_HOME=/Users/musichen/.dsh` still
+exported: `ACRYL_HOME=$PWD/.acryl-home-test` alone produced
+`.acryl-home-test/.dsh/profiles/{acryl,node_modules}` and left
+`~/.dsh/profiles`' mtime untouched.
+
+### Two traps that hid this, both now documented
+
+1. **A change to `acryl-harness-runtime` does not reach `acryl-cli` without a
+   rebuild.** The CLI bundles the runtime's built `lib/`, and
+   `acryl-cli/bin/dev-run.mjs` only checks *`acryl-cli`'s* `src/` for staleness.
+   The first post-fix run therefore executed the previous build and appeared to
+   show the fix not working - a correct source change made to look like a bug.
+   `corepack pnpm --filter acryl-harness-runtime run build` is required first.
+2. **`node_modules/.pnpm` shows history, not current state.** 278
+   `@deepseek-ai/dsh-*@0.1.1-rc.2` directories survive from before the
+   `0.1.5-alpha.1` migration even though `pnpm-lock.yaml` contains zero
+   references to that version and every workspace package resolves
+   `dsh-home-paths` to `0.1.5-alpha.1`. Reading the old version's source while
+   diagnosing this was a self-inflicted detour. The legacy declarations that do
+   remain on disk are inside the gitignored 1.8 GB `acryl-desktop/dist/`
+   packaged builds, not in the live graph.
+
+Both are recorded in `docs/acryl/environment-and-isolation.md`, which also
+carries the precedence rules, the one-line clean-room recipe, and the two
+checks that prove isolation rather than assuming it (the isolated root
+populated, and the real home's mtime unmoved). `AGENTS.md` links it and no
+longer names the removed `~/.dsh-acryl` dev home (`scripts/dev-local.mjs` uses
+`~/.acryl-dev`).
+
+### Residual
+
+- The `acryl-desktop` suite still has not been run to completion in this
+  session; the earlier attempt hung against a live Electron dev app. The
+  `acryl-harness-runtime` suite is 32 passed / 4 failed, and those 4 are the
+  documented pre-existing failures (the HMR-guard assertion plus three
+  `DEEPSEEK_API_KEY`-dependent `session-bridge.spec.ts` cases) - confirmed
+  identical by running those two files without the new spec.
+- The 1.8 GB `acryl-desktop/dist/` tree and the stale virtual-store entries are
+  deletable disk hygiene, deliberately not removed here.
