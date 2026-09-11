@@ -31,6 +31,8 @@ export {
 } from './engine-host.ts'
 export {
   createDshEngineDefinition,
+  createDshEngineDefinitionFromComposition,
+  type DshEngineComposition,
 } from './engine-dsh.ts'
 
 import { writeFileSync } from 'node:fs'
