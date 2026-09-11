@@ -80,6 +80,34 @@
 >   against `createAcrylEngineHost`'s actual return shape (`ctx`,
 >   `currentEngine()`, `select()`, `dispose()`), not the `AcrylEngineAdapter`/
 >   `AcrylEngineHandle` shape T004/T010 describe.
+> - **T010 done, 2026-09-11** (`acryl-harness-runtime/src/engine-dsh.ts`,
+>   `createDshEngineDefinition(profileName)`; tests: `tests/engine-dsh.spec.ts`,
+>   4/4 through real Loader activation with the real pinned `acryl` profile,
+>   not a synthetic fixture). Replicates `bootAcrylHarnessProfile` exactly
+>   (profile/patch resolution, the HMR guard, workspace-status/session-log-
+>   exporter wiring) minus the second Cordis root, using the spike-verified
+>   `mountRootInclude` pattern above. Two more real bugs found and fixed
+>   while verifying, both the same class as the spike's: (1) `boot()`'s
+>   `ctx.provide('dshHomePath', dshHomePath)` must land on `ctx.root`, not
+>   this plugin's own forked `ctx` - the profile's Include tree is a sibling,
+>   not a descendant, so `dshHomePath` is otherwise invisible to it
+>   (`ReferenceError: dshHomePath is not defined` inside the composed
+>   patches); guarded with a presence check since it is a static,
+>   engine-agnostic value meant to survive engine swaps, unlike the DSH
+>   profile tree itself. (2) `installAcrylWorkspaceStatusTool`'s
+>   `ctx.tools.register()` disposer is never wrapped by any of its three
+>   callers (harmless for the other two, which own a whole process-lifetime
+>   root) - this plugin must capture and own it via `ctx.effect()`, or
+>   swapping away from and back to `dsh` throws a duplicate-registration
+>   error (caught by a dedicated swap-safety test, not assumed). Also
+>   confirmed: `installSessionLogExporter` needed no such fix -
+>   `ctx.logger` is an ambient Cordis primitive, not a topology-sensitive
+>   injected service, so this plugin's own `ctx` (not `ctx.root`) is
+>   correct for it. Bonus fix discovered in the same investigation:
+>   `bootAcrylHarnessProfile`/`bootAcrylWebProfile` themselves had a real,
+>   if narrow, production bug - `healProfilesModuleFallback` was called
+>   without `await`, racing a fresh `DSH_HOME`'s package-fallback links (see
+>   `docs/DEVELOPMENT-LOG.md`, commit `aebaac2`).
 
 **Feature**: `specs/028-harness-engine-swap` | **Milestone**: M9
 **Input**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md),

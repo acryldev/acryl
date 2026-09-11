@@ -29,6 +29,9 @@ export {
   type AcrylEngineDefinition,
   type AcrylEngineHost,
 } from './engine-host.ts'
+export {
+  createDshEngineDefinition,
+} from './engine-dsh.ts'
 
 import { writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
