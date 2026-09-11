@@ -16,6 +16,56 @@
 > unrenumbered pending a decision on the adoption mechanism (git submodule,
 > published npm dependency, or pnpm workspace path).
 
+> **Reconciliation, 2026-09-11: T004-T012 below are stale, superseded by the
+> 2026-09-09 correction above and by code that already exists.** Verified
+> directly, not assumed:
+> - `acryl-harness-runtime/src/engine-host.ts` (`createAcrylEngineHost`,
+>   commit `af47a4b`) already implements the corrected design: one Cordis
+>   root, a stable `acryl-engine` Loader row, engines registered as
+>   `ctx.loader.builtins['acryl-engine-<id>']`, `select(id)` swapping via
+>   `entry.update()`. `acryl-harness-runtime/tests/engine-host.spec.ts`
+>   already proves mount, swap, dependent-consumer reactivation
+>   (`activations`/`disposals` counted), and unknown-engine rejection through
+>   real Loader activation - using `'dsh'`/`'pi'` as its own fixture ids. T004
+>   (`AcrylEngineAdapter`/registry types), T005 (`registerAcrylEngineAdapter`/
+>   `resolveAcrylEngineAdapter`), and T006 (their test) describe a plain
+>   TypeScript adapter-registry pattern this already-built code does not use -
+>   do not implement them as written.
+> - The extraction primitive for the `dsh` engine plugin (T010's actual
+>   remaining job) is `mountRootInclude(ctx, absoluteConfigPath, patches,
+>   bareModuleBaseUrl)`, exported from `@deepseek-ai/dsh-app-boot`
+>   (`packages/boot/app-boot/src/index.ts:516`), not `bootAcrylHarnessProfile`
+>   as T010 assumed. `bootAcrylHarnessProfile` calls `boot()`
+>   (`packages/boot/app-boot/src/index.ts:787`), which unconditionally does
+>   `const ctx = new Context()` - exactly the "Cordis root per provider" the
+>   correction forbids. `mountRootInclude`'s own JSDoc: "`ctx` - context
+>   carrying an initialized Loader service" - it composes onto an
+>   **already-existing** Loader, which is exactly what `createAcrylEngineHost`
+>   already provides to each engine plugin. This is the same `Include`/
+>   `cordis:include` mechanism `acryl-desktop`'s own profile composition
+>   already relies on in production (spec 032's whole hot-reload surface
+>   sits on it), so the nesting/disposal pattern is proven elsewhere in this
+>   monorepo, not novel.
+> - The `dsh` engine plugin is therefore everything `bootAcrylHarnessProfile`
+>   does **except** `new Context()` and `ctx.plugin(Loader)` (the host already
+>   provides both): `ctx.baseUrl = ...`, `ctx.provide('dshHomePath', ...)`,
+>   the profile/patch resolution (`resolveAcrylDshHome`, `initProfile`,
+>   `healProfilesModuleFallback`, `loadProfile`, `createAcrylCodingCapabilityPatches`),
+>   `mountRootInclude(ctx, rootConfig, patches, bareModuleBaseUrl)`,
+>   `ctx.get('loader')?.await()`, `assertEntriesActivated` (also exported),
+>   then `installAcrylWorkspaceStatusTool`/`installSessionLogExporter`.
+> - Open risk carried to implementation, not yet resolved: `mountRootInclude`
+>   sets `ctx.loader.builtins.include` on the ctx it is given every call. On
+>   the shared engine-host `ctx`, calling it more than once (e.g. re-selecting
+>   `dsh` after swapping away and back) must be proven not to collide with
+>   a concurrent or prior registration - verify with a real Loader-activation
+>   test before trusting it, per this repo's own Cordis verification bar.
+> - T013-T017 (re-pointing `acryl-cli` off the direct bootstrap onto
+>   `AcrylEngineHandle`) remain conceptually valid but must be re-authored
+>   against `createAcrylEngineHost`'s actual return shape (`ctx`,
+>   `currentEngine()`, `select()`, `dispose()`), not the `AcrylEngineAdapter`/
+>   `AcrylEngineHandle` shape T004/T010 describe.
+
 **Feature**: `specs/028-harness-engine-swap` | **Milestone**: M9
 **Input**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md),
 [research-pi-spike.md](./research-pi-spike.md), [data-model.md](./data-model.md),
