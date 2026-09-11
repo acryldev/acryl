@@ -92,4 +92,48 @@ describe('createAcrylEngineHost', () => {
     expect(host.ctx.testEngine.id).toBe('dsh')
     expect(events).toEqual(['start:dsh'])
   })
+
+  it('runs prepare on the bare root before any engine mounts, so its registrations are visible to the mounted engine', async () => {
+    const events: string[] = []
+    const host = await createAcrylEngineHost({
+      engines: [engine('dsh', events)],
+      initialEngine: 'dsh',
+      prepare(ctx) {
+        events.push('prepare')
+        ctx.provide('testSurfaceService', 'surface-value')
+      },
+    })
+    hosts.push(host)
+
+    expect(events).toEqual(['prepare', 'start:dsh'])
+    expect(host.ctx.get('testSurfaceService')).toBe('surface-value')
+  })
+
+  it('surfaces a synchronous prepare failure as host preparation, before any engine mounts', async () => {
+    const events: string[] = []
+    await expect(createAcrylEngineHost({
+      engines: [engine('dsh', events)],
+      initialEngine: 'dsh',
+      prepare() { throw new Error('surface setup failed') },
+    })).rejects.toThrow('surface setup failed')
+
+    expect(events).toEqual([])
+  })
+
+  it('behaves exactly as before when prepare is omitted', async () => {
+    const events: string[] = []
+    const host = await createAcrylEngineHost({
+      engines: [engine('dsh', events)],
+      initialEngine: 'dsh',
+    })
+    hosts.push(host)
+
+    expect(events).toEqual(['start:dsh'])
+  })
 })
+
+declare module '@deepseek-ai/cordis' {
+  interface Context {
+    testSurfaceService: string
+  }
+}

@@ -26,6 +26,15 @@ export interface AcrylEngineHost {
 export async function createAcrylEngineHost(input: {
   readonly engines: readonly AcrylEngineDefinition[]
   readonly initialEngine: string
+  /**
+   * Register surface-owned services on the bare root before any engine
+   * mounts - mirrors `boot()`'s own `prepare` timing exactly (Loader is
+   * plugged, no config-tree entry has mounted yet), so a surface with its
+   * own non-engine capabilities (e.g. Desktop's profile/market/plugin-
+   * lifecycle services) can provide them ahead of an engine's Loader entries
+   * that `ctx.inject`/`ctx.get` them.
+   */
+  readonly prepare?: (ctx: Context) => Promise<void> | void
 }): Promise<AcrylEngineHost> {
   const engines = new Map<string, AcrylEngineDefinition>()
   for (const engine of input.engines) {
@@ -38,23 +47,24 @@ export async function createAcrylEngineHost(input: {
 
   const ctx = new Context()
   await ctx.plugin(Loader)
-  ctx.loader.builtins.group = Group
-  for (const engine of engines.values()) ctx.loader.builtins[`acryl-engine-${engine.id}`] = engine.plugin
-
-  let active = initial.id
-  let disposed = false
   const entryFor = (engine: AcrylEngineDefinition) => ({
     id: ENGINE_ENTRY_ID,
     name: `cordis:acryl-engine-${engine.id}`,
     ...(engine.config === undefined ? {} : { config: engine.config }),
   })
   try {
+    await input.prepare?.(ctx)
+    ctx.loader.builtins.group = Group
+    for (const engine of engines.values()) ctx.loader.builtins[`acryl-engine-${engine.id}`] = engine.plugin
     await ctx.loader.create(entryFor(initial))
     await ctx.loader.await()
   } catch (error) {
     await ctx.fiber.dispose()
     throw error
   }
+
+  let active = initial.id
+  let disposed = false
 
   return Object.freeze({
     ctx,
