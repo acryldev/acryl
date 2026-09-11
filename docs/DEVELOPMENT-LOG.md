@@ -3459,3 +3459,87 @@ not just within one script evaluation - plus a case for an unrelated
 error being ignored and one for the `unhandledrejection` path.
 `acryl-desktop` typecheck clean across all five tsconfig faces; full
 suite 849/853 (4 pre-existing skips, no regressions).
+
+## 2026-09-11 - feat: acryl-cli boots through the engine host (spec 028 T013-T017, M2-slice-alpha)
+
+Commit: `9cb4f5c`
+
+The extraction built in T010 (`engine-dsh.ts`, commit `39088ed`) had no
+consumer. `acryl-cli/src/host/direct.ts` still called
+`bootAcrylHarnessProfile`, whose `boot()` unconditionally does `new Context()`
+- the second Cordis root the 2026-09-09 architecture correction forbids. This
+lands the consumer, so the CLI's selected engine is now one Loader row
+(`acryl-engine`) beneath `createAcrylEngineHost`'s single root and a later
+`select()` can swap it in place.
+
+`DirectHost` gains `engine` (the mounted row), exposed as an additive `engine`
+field in `--json` so the selection is observable from the scriptable readiness
+probe: `{"mode":"direct","profile":"acryl","engine":"dsh","generationId":...}`.
+Behavior is otherwise unchanged (SC-004): the `dsh` engine composes the
+identical pinned profile, so `runtimeState`, `sessions` and `agents` are what
+they always were, and `--engine` selection plus help-text changes stay in
+Phase 4 (US2).
+
+The task text for T013-T017 was stale (it described an
+`AcrylEngineAdapter`/`AcrylEngineHandle` registry the built host does not have).
+It was re-authored and the reconciliation is recorded in `tasks.md`; T015 in
+particular reduces to "call site unchanged", because the session bridge is
+correctly built from the host's shared `ctx` and a single-consumer
+`AcrylSessionClient` wrapper would be speculative indirection.
+
+Evidence: RED first against the old `direct.ts` (2 failed / 3 passed), then
+green - `acryl-cli` 292/292 tests, `acryl-cli` typecheck clean, root
+`check:layout` clean (workspace + upstream `5dda764` consistent), and a real
+cold start on a fresh isolated `ACRYL_HOME` boots the pinned profile, creates
+its fallback links, and reports `engine` `"dsh"` with exit 0.
+
+### Two findings worth keeping
+
+**1. `ACRYL_HOME` alone does not isolate a cold start - `DSH_HOME` wins.**
+The documented procedure from the previous session
+(`ACRYL_HOME=.acryl-home-test corepack pnpm run tui`) silently does **not**
+isolate when `DSH_HOME` is exported in the shell, which it is in this
+environment (`DSH_HOME=~/.dsh`): `resolveAcrylDshHome()` gives an already-set
+`DSH_HOME` deliberate highest precedence, so the run reused the real
+`~/.dsh/profiles/acryl` and would have "passed" as a cold start without ever
+being cold. Caught by checking the filesystem for the isolated tree instead of
+trusting the green exit code. The working form removes the inherited override:
+
+```sh
+env -u DSH_HOME ACRYL_HOME="$PWD/.acryl-home-test" \
+  node acryl-cli/bin/dev-run.mjs tui --json
+```
+
+This is not an ACRYL defect - the precedence is documented in
+`acryl-harness-runtime/src/acryl-home.ts` - but the cold-start recipe written
+into the docs and notes needs updating, or it is a test that cannot fail.
+
+**2. The surfaces x engines matrix did not exist.** The ledger scoped this
+feature to `acryl-cli` and deferred Electron/Web "to later slices" without
+analysing whether they can run another engine at all. `research.md` Decision 7
+now records it. The core finding: a surface can run an engine only if it has a
+projection from that engine's native session model to what the surface renders,
+and ACRYL's only projection (`AcrylSessionBridge` + `TuiStore`) is DSH-shaped
+while Web and Desktop own none - they render DSH's own pinned client packages.
+So the parallel `pi` engine (`ctx.piEngine` only: no `ctx.sessions`, no
+`ctx.agents`, no `SessionEventMap`, no `ctx.tools`) can reach the CLI only, and
+only after new projection work; Web and Desktop cannot reach it at all. The
+route that does reach all three surfaces is Pi supplying a DSH `AgentFactory`
+(Decision 5's priced work), because the whole UI/Web/Desktop surrounding
+consumes session events rather than `dsh-agent-loop`. Engine 3
+(`acryl-cordis`) is that route generalized.
+
+### Residual risk / not covered
+
+- Web and Desktop still boot their own DSH profile directly and were **not**
+  changed. Copying the CLI change into them would not help before the
+  projection question is answered (Decision 7).
+- The full cross-package `corepack pnpm run verify` was not completed in this
+  session: the `acryl-desktop` suite hung while a live Electron dev app was
+  running against the same user-data/ports. The verification above is
+  `acryl-cli` plus the root layout gate plus the real cold start. A clean
+  `run verify` with no dev app running is still owed before this is called
+  fully gated.
+- `timeout(1)` is unavailable on this macOS box, and the failed verify run was
+  piped through `tail`, which hides all progress until exit and made a hang
+  indistinguishable from slow work. Gate runs should stream instead.
