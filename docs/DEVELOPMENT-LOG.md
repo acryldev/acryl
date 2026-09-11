@@ -374,7 +374,7 @@ interchangeable harness-engine destination (DSH <-> pi)*
 before `specs/028-acryl-harness-engine-swap/` is created with `/speckit-specify`.
 ## 2026-09-02 - add #prebuilt output for prebuilt CLI release tarballs
 
-Commit: `b90ced5cefce1cc439092158a7a0291b5b324165`
+Commit: `c01bbfc73bfc8c1ca7edfd5ec4a76aee6c7d6a51`
 
 Added `packages.<system>.prebuilt` to the Nix flake — fetches the prebuilt
 CLI tarball from GitHub releases (v0.1.19) with per-platform SRI hashes.
@@ -387,9 +387,9 @@ READMEs updated to document the `#prebuilt` output.
 
 ## 2026-09-02 - align nixify artifacts with nixify skill rules
 
-Commits: `85374a5f3bbfe05e20d61d8af57996defd2dfb8f`,
-`a2fd96b` (devbox x86_64-darwin first attempt),
-`b79e414` (devbox x86_64-darwin per-package scoping)
+Commits: `a3ebe71686e01efa923f8b0df44068527752e401`,
+`122f207` (devbox x86_64-darwin first attempt),
+`2d895f6` (devbox x86_64-darwin per-package scoping)
 
 Audited the `feature/nix-flake-support` branch against the nixify skill's
 Definition of Done and fixed nine findings. SHA-pinned all GitHub Actions
@@ -633,7 +633,7 @@ the plugin path with one real model-facing Tool as the hard gate. Follow-on diff
 canvas) are intentionally recorded as subsequent ledgers.
 ## 2026-08-31 - Nix flake: add acryl-desktop (Electron) output
 
-**Commit:** [`397f91034cb6a6444c6dccf6f33d06e8b10bf43b`](https://github.com/acryldev/acryl/commit/397f91034cb6a6444c6dccf6f33d06e8b10bf43b)
+**Commit:** [`47840639adafd11c4531f096bec5fba44ce49c99`](https://github.com/acryldev/acryl/commit/47840639adafd11c4531f096bec5fba44ce49c99)
 
 Extended the Nix flake to also build the Electron desktop app as
 `packages.${system}.acryl-desktop`, alongside the existing TUI output.
@@ -668,7 +668,7 @@ nix run .#acryl-desktop -- --version
 
 ## 2026-08-31 - Nix flake support for acryl-tui
 
-**Commit:** [`d6d2e464db46fbe61c36e84136880d8c55ac5a0d`](https://github.com/acryldev/acryl/commit/d6d2e464db46fbe61c36e84136880d8c55ac5a0d)
+**Commit:** [`f8f7efcd8a56f0942fee49a36ebacec493655210`](https://github.com/acryldev/acryl/commit/f8f7efcd8a56f0942fee49a36ebacec493655210)
 
 Added Nix flake support targeting the `acryl-tui` terminal client. The flake
 builds the TUI and its workspace dependencies (`acryl-control`,
