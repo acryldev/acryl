@@ -6,6 +6,16 @@
 > not add a Cordis root per provider. The initial host lifecycle proof is
 > `acryl-harness-runtime/src/engine-host.ts` and its Loader/provider-swap test.
 
+> **Finding, 2026-09-11 (not yet reflected in the task numbering below):** a
+> working, tested `pi-cordis` provider already exists in the sibling
+> `acryldev/pi-cordis` repo, built the exact shape this correction describes
+> (one Cordis tree, `ctx.piEngine`, no root per provider, no Chord). See
+> `research.md` Decision 2's amendment for the full FR-by-FR gap assessment
+> and what it does/doesn't cover. The T030+ "pi provider" tasks likely become
+> "adopt `pi-cordis`" rather than "author a pi provider from scratch" - left
+> unrenumbered pending a decision on the adoption mechanism (git submodule,
+> published npm dependency, or pnpm workspace path).
+
 **Feature**: `specs/028-harness-engine-swap` | **Milestone**: M9
 **Input**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md),
 [research-pi-spike.md](./research-pi-spike.md), [data-model.md](./data-model.md),

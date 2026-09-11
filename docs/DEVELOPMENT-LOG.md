@@ -3115,3 +3115,45 @@ the user's immediate next focus is the swappable-runtime problem
 `specs/029-acryl-hybrid-engine/`) - directly the same multi-engine question
 spec 033's triage flagged as needing tracking before its own tool-facade
 work can lock its registration shape.
+
+## 2026-09-11 - docs: spec 028 assessment - pi-cordis already exists
+
+No code, no push yet (research finding, staged for the next commit).
+`specs/028-harness-engine-swap/` is fully speced (walking-skeleton user
+stories, resolved research decisions, 50 tasks) but 0/50 tasks are done.
+
+Read the sibling `acryldev/pi-cordis` repo in full at the user's request
+(assess-before-implementing). Finding: it already implements almost exactly
+what `tasks.md`'s own "Architecture correction, 2026-09-09" banner
+describes as the target shape for a provider under the future persistent
+engine host - `ctx.piEngine`, one Cordis tree, `inject: ['loader']`, no
+second root, no Chord (confirmed by reading `src/index.mjs`: only
+`@deepseek-ai/cordis` + the published `@earendil-works/pi-coding-agent`
+SDK + `zod`). Its own test suite proves the Cordis-level half of
+FR-010/FR-011 for real - mount/remove through a genuine
+`ctx.loader.create()`, a dependent consumer starting/stopping exactly once
+per cycle, `ctx.get('piEngine')` correctly `undefined` while absent.
+
+Also found a real, independent inconsistency in the existing ledger: Decision
+2 in `research.md` (written 2026-09-07) still says the pi engine "runs
+inside its own Cordis root" - text the 2026-09-09 tasks.md correction already
+reversed but never got back-ported into Decision 2 itself. `pi-cordis`,
+built the same day as that correction, is the working proof of the
+*corrected* architecture, not the original Decision 2 text.
+
+What `pi-cordis` explicitly does not cover (verified by reading `docs/
+PLAN.md` and the source, not assumed): the FR-002 engine-neutral contract
+(exposes Pi's own shape, not yet adapted), FR-006/FR-007 cross-engine
+durable-record projection (its own docs say so: "does not claim
+cross-engine resume yet"), FR-012 sandbox/approval parity with DSH, and
+FR-015's documented capability/fidelity contract.
+
+Amended `research.md` Decision 2 with the full finding and added a pointer
+banner at the top of `tasks.md`. Did not renumber or rewrite the 50-task
+list - the adoption mechanism (git submodule matching `deepseek-harness/`'s
+convention, a published npm dependency, or a pnpm workspace path) is an
+open decision for the next session, not resolved here. Also noted: an
+equivalent extracted `dsh-cordis` provider does not yet exist on the DSH
+side (DSH is still directly wired via `startDirectHost()`), so the plan's
+stated "dsh-cordis first, then pi-cordis" provider order may need to invert
+for the Cordis-mounting half of the work specifically.

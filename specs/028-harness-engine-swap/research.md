@@ -115,6 +115,55 @@ exactly what US1 needs, not the full `026` rework.
 
 ## Decision 2: How `pi` is consumed as an in-process engine
 
+> **Amendment, 2026-09-11.** This decision's "own Cordis root" text below is
+> **superseded** by `tasks.md`'s "Architecture correction, 2026-09-09" banner
+> (T004 onward uses the persistent `acryl-harness-runtime` engine host;
+> `dsh-cordis` and `pi-cordis` are provider entries beneath it - no Cordis
+> root per provider). That banner was never back-ported into this decision's
+> own text until now. A working, tested proof of the corrected architecture
+> already exists: the sibling `acryldev/pi-cordis` repo (git@github.com:
+> acryldev/pi-cordis.git, commit `fbe2596`, dated 2026-09-09 - same day as
+> the correction), reviewed 2026-09-11. It wraps `@earendil-works/pi-coding-
+> agent@0.85.1`'s published SDK as `PiCordisEngine extends Service`,
+> `name: 'pi-cordis'`, `inject: ['loader']`, exposing `ctx.piEngine` -
+> **one Cordis tree, no second root, no Chord** (confirmed by reading
+> `src/index.mjs`: only `@deepseek-ai/cordis` + the Pi SDK + `zod` are
+> imported). Its own test suite already proves the Cordis-level half of
+> FR-010/FR-011 for real: `test/engine.test.mjs` mounts/removes a real
+> `ctx.loader.create({ id: 'pi-engine', name: '...' })` entry twice in a loop
+> and asserts a dependent consumer (`inject: ['piEngine']`) starts exactly
+> once per mount, stops exactly once per removal, and sees `ctx.get
+> ('piEngine') === undefined` while absent - `PENDING`-equivalent behavior
+> with no duplicate registration, via a real Loader activation, not a mock.
+>
+> **What it does NOT cover** (verified by reading `src/index.mjs` and
+> `docs/PLAN.md` in full, not assumed): the FR-002 engine-neutral contract
+> itself (`ctx.piEngine` exposes Pi's own `open`/`prompt`/`abort`/
+> `subscribe` shape, not yet mapped onto whatever `acryl-harness-runtime`'s
+> engine-neutral seam turns out to be per Decision 1); FR-006/FR-007
+> cross-engine durable-record projection (`docs/PLAN.md` says so explicitly:
+> "This package does not claim cross-engine resume yet" - Pi session files
+> stay Pi-native evidence only); FR-012 sandbox/approval parity with DSH (no
+> policy/permission pipeline in the package at all); FR-015's documented
+> capability/fidelity contract (only an informal PLAN.md, not the ledger's
+> per-adapter contract doc). `ctx.runtime.engine`/FR-001 and the persistent
+> engine host itself are explicitly out of this package's scope by design -
+> "A future ACRYL engine adapter consumes the engine-neutral contract rather
+> than this concrete service" (`docs/PLAN.md`).
+>
+> **Consequence for sequencing**: the plan's stated order (extract a
+> `dsh-cordis` provider first under the new engine host, land `pi-cordis`
+> second) can likely invert for the *Cordis-mounting* half of the work,
+> since a tested pi provider already exists and an equivalent extracted
+> `dsh-cordis` provider does not (DSH is still directly wired via
+> `startDirectHost()` per Decision 1's verified facts). The FR-002 adapter
+> layer, FR-006/007 durable-record projection, and FR-012 sandbox/approval
+> work remain required regardless of which provider mounts first. Formal
+> adoption mechanism (git submodule matching `deepseek-harness/`'s
+> convention, vs. consuming `pi-cordis` as a published npm dependency once
+> it ships one, vs. a pnpm workspace path) is an open decision, not
+> resolved by this amendment.
+
 ### Verified facts
 
 - Ticket 04 answer 1: upstream `pi` / prime-agent, consumed as a **library**,
