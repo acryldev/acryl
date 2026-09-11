@@ -705,3 +705,30 @@ Is Engine 2's product goal (a) Pi's ecosystem available in ACRYL's terminal
 surface, or (b) any engine drivable from every surface? The answer decides
 whether Engine 2 is a bounded CLI feature or the start of the `AgentFactory`
 program - and it decides whether Engine 3 is the main line or an experiment.
+
+### Decision (user, 2026-09-11)
+
+**(b): any engine, any surface.** Route 2/3 is the target - Pi becomes a
+driver behind DSH's real `AgentFactory` seam (Decision 5), not a parallel
+world reachable only from the CLI. `acryl-cordis` (Engine 3) is Route 2
+generalized and is the main line, not an experiment.
+
+Consequences for sequencing, unchanged from the recommendation above and now
+committed to:
+
+1. Engine 1 (`dsh`) everywhere first. Desktop adopting `acryl-harness-runtime`'s
+   shared factory (today it calls DSH's raw `boot()` directly in
+   `acryl-desktop/src/main.ts`, the only `boot()` call site in that package) is
+   the real, unstarted prerequisite - not a "later slice." Web already goes
+   through the shared factory (`bootAcrylWebProfile`) but not yet through
+   `createAcrylEngineHost` specifically; both close the same gap CLI (T013-T017)
+   already closed.
+2. Do not build a Pi-shaped projection for any surface yet - Route 2 makes
+   that unnecessary by design (DSH keeps `ctx.sessions`/`ctx.tools`/UI; only the
+   loop swaps), so a projection would be throwaway work for the wrong route.
+3. The `AgentFactory` program (Decision 5's real cost - re-emitting Pi activity
+   as `SessionEventMap`, routing Pi tool calls through `ctx.tools`, matching
+   `ctx.systemPrompt`/approval/sandbox, tracking a pre-stable upstream contract)
+   is now in scope, not a deferred option. It needs its own ledger once Engine 1
+   everywhere is done; this ledger stays scoped to Engine 1 + the engine-host
+   mechanism until then.
