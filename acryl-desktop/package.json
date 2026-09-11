@@ -1,6 +1,6 @@
 {
   "name": "acryl-desktop",
-  "version": "0.1.36",
+  "version": "0.1.37",
   "description": "ACRYL desktop: a local-first agent workspace composed with Cordis plugins",
   "license": "MIT",
   "publishConfig": {
