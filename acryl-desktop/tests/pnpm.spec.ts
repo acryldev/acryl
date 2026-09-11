@@ -314,6 +314,51 @@ describe('desktop pnpm Host service', () => {
     }
   })
 
+  it('clears the awaiting-restart WAL once live activation confirms no restart is needed', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'dsh-desktop-pnpm-live-ack-'))
+    const selectedBootstrap = bootstrap(root)
+    const manifestPath = join(selectedBootstrap.activeProfileDir, 'package.json')
+    const child = controlledSubprocess()
+    const nextChild = controlledSubprocess()
+    try {
+      mkdirSync(selectedBootstrap.activeProfileDir, { recursive: true })
+      writeFileSync(manifestPath, JSON.stringify({ dependencies: {} }))
+      const harness = await createHarness([child, nextChild], selectedBootstrap)
+
+      const pending = harness.service.installPlugin({
+        invokingDir: '/workspace',
+        recovery: {
+          packageName: 'example-plugin',
+          packageVersion: '1.0.0',
+          receiptId: 'receipt:test-live-ack-0001',
+        },
+      })
+      const operation = await pending
+      writeFileSync(manifestPath, JSON.stringify({ dependencies: { 'example-plugin': '1.0.0' } }))
+      finish(child)
+      await expect(operation.done).resolves.toEqual({ exitCode: 0, signal: null })
+      expect(JSON.parse(readFileSync(selectedBootstrap.installRecoveryStatePath, 'utf8'))).toMatchObject({
+        phase: 'awaiting-restart',
+      })
+
+      // No-op for a different package - must never clear another install's WAL.
+      await harness.service.acknowledgeLiveInstall('unrelated-plugin')
+      expect(existsSync(selectedBootstrap.installRecoveryStatePath)).toBe(true)
+
+      await harness.service.acknowledgeLiveInstall('example-plugin')
+      expect(existsSync(selectedBootstrap.installRecoveryStatePath)).toBe(false)
+
+      // A later install (of any package) is no longer blocked behind the
+      // now-cleared transaction - this is the actual bug this fix closes.
+      const nextOperation = harness.service.runPlugin(['remove', 'unrelated-plugin'], '/workspace')
+      finish(nextChild)
+      await expect(nextOperation.done).resolves.toEqual({ exitCode: 0, signal: null })
+      await harness.dispose()
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
   it('restores partial profile writes when a recoverable plugin install exits nonzero', async () => {
     const root = mkdtempSync(join(tmpdir(), 'dsh-desktop-pnpm-recovery-failure-'))
     const selectedBootstrap = bootstrap(root)

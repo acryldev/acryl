@@ -67,6 +67,13 @@ export interface MarketDesktopPnpm {
   recoveredInstallReceiptIds(): Promise<readonly string[]>
   acknowledgeRecoveredInstall(receiptId: string): Promise<void>
   rollbackPluginInstall(receiptId: string): Promise<boolean>
+  /**
+   * Clear the install's restart-recovery WAL entry once live activation
+   * confirms no restart is needed - otherwise it blocks every later install
+   * (of any package) forever, since nothing else ever visits an
+   * `awaiting-restart` transaction outside an actual restart.
+   */
+  acknowledgeLiveInstall(packageName: string): Promise<void>
 }
 
 export interface MarketInstallPreview {

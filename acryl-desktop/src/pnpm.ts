@@ -113,6 +113,16 @@ export interface DesktopPnpm {
   recoveredInstallReceiptIds(): Promise<readonly string[]>
   acknowledgeRecoveredInstall(receiptId: string): Promise<void>
   rollbackPluginInstall(receiptId: string): Promise<boolean>
+  /**
+   * Clear a sealed `awaiting-restart` transaction once live activation
+   * confirms the promised restart will never come. Without this, a
+   * live-successful install leaves its recovery WAL pending forever - the
+   * WAL was designed around every install eventually restarting, which a
+   * live-activated one by definition does not - blocking every later
+   * install (of any package) behind the one stale file. No-op when the
+   * current transaction does not belong to this exact package.
+   */
+  acknowledgeLiveInstall(packageName: string): Promise<void>
 }
 
 declare module '@deepseek-ai/cordis' {
@@ -408,6 +418,13 @@ class DesktopPnpmService extends Service implements DesktopPnpm {
   async acknowledgeRecoveredInstall(receiptId: string): Promise<void> {
     const state = await this.installRecovery.read()
     if (state?.phase !== 'rolled-back' || state.receiptId !== receiptId) return
+    await this.installRecovery.clear(state.transactionId)
+  }
+
+  async acknowledgeLiveInstall(packageName: string): Promise<void> {
+    const state = await this.installRecovery.read()
+    if (state?.phase !== 'awaiting-restart' || state.packageName !== packageName) return
+    await this.installRecovery.acknowledgeLiveSuccess(state.transactionId)
     await this.installRecovery.clear(state.transactionId)
   }
 

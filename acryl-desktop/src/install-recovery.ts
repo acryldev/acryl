@@ -597,6 +597,36 @@ export class DesktopInstallRecoveryStore {
     return await this.withMutationLock(async () => await this.markHealthyLocked(transactionId))
   }
 
+  /**
+   * Seal a transaction as verified directly from `awaiting-restart`, without
+   * the restart-based `verifying` cycle, when live activation already proved
+   * this exact generation's install succeeded (spec 032's `livePluginActivation`
+   * path). Restart-based verification exists to prove durability *across* a
+   * new generation; a live-activated install already has stronger real-time
+   * evidence *within* the generation that created it, so re-deriving that
+   * proof from a future restart would be redundant, not more correct. Scoped
+   * to `createdByGeneration === this.generationId` for exactly that reason -
+   * this must never acknowledge a transaction on behalf of a different
+   * generation, which is what the restart-based path exists to verify.
+   */
+  async acknowledgeLiveSuccess(transactionId: string): Promise<DesktopInstallRecoveryTransaction> {
+    return await this.withMutationLock(async () => {
+      const state = await this.requireTransaction(transactionId)
+      this.assertBound(state)
+      if (state.phase === 'verified') return state
+      if (state.phase !== 'awaiting-restart' || state.createdByGeneration !== this.generationId) {
+        throw new Error(`${BIN_NAME}: plugin install recovery transaction is not this generation's awaiting-restart install`)
+      }
+      const next: DesktopInstallRecoveryTransaction = {
+        ...state,
+        phase: 'verified',
+        verifiedAt: timestamp(this.now),
+      }
+      await this.writeState(next)
+      return next
+    })
+  }
+
   /** Persist that the healthy Desktop generation explained a completed rollback to the user. */
   async markRollbackNotified(transactionId: string): Promise<DesktopInstallRecoveryTransaction> {
     return await this.withMutationLock(async () => {

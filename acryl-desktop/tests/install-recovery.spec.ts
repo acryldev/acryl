@@ -188,6 +188,34 @@ describe('Desktop plugin install recovery WAL', () => {
     expect(existsSync(join(dirname(target.statePath), 'backups', prepared.transactionId))).toBe(false)
   })
 
+  it('acknowledges a live-successful install from awaiting-restart directly, same generation only', async () => {
+    const target = fixture()
+    const origin = store(target)
+    const prepared = await origin.begin({
+      packageName: 'plugin-a',
+      packageVersion: '1.0.0',
+      receiptId: 'receipt-0001',
+    })
+    writePostinstall(target)
+    const sealed = await origin.seal(prepared.transactionId)
+    expect(sealed.phase).toBe('awaiting-restart')
+
+    // A different generation must never acknowledge on another generation's
+    // behalf - that is exactly the restart-based check this path exists to
+    // skip only for the generation that produced the live evidence itself.
+    const other = store(target, 'generation-0002')
+    await expect(other.acknowledgeLiveSuccess(prepared.transactionId))
+      .rejects.toThrow("not this generation's awaiting-restart install")
+
+    const verified = await origin.acknowledgeLiveSuccess(prepared.transactionId)
+    expect(verified.phase).toBe('verified')
+    // Idempotent: acknowledging an already-verified transaction again is a no-op, not an error.
+    await expect(origin.acknowledgeLiveSuccess(prepared.transactionId)).resolves.toMatchObject({ phase: 'verified' })
+
+    await origin.clear(prepared.transactionId)
+    expect(existsSync(target.statePath)).toBe(false)
+  })
+
   it('restores a mix of admitted pre- and postimages without overwriting unrelated paths', async () => {
     const target = fixture()
     const origin = store(target)

@@ -252,6 +252,7 @@ function recoverableRunner(
     },
     async recoveredInstallReceiptIds() { return [] },
     async acknowledgeRecoveredInstall() {},
+    async acknowledgeLiveInstall() {},
     async rollbackPluginInstall() {
       if (pendingPackageName === undefined) return false
       const handle = implementation.runPlugin(['remove', pendingPackageName], profileDir)

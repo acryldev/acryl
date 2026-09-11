@@ -84,7 +84,17 @@ export function apply(ctx: Context): void {
             return plugins.disabledPackageNames()
           },
           ...(liveActivation === undefined ? {} : {
-            liveActivate: async name => { await liveActivation.activate(name); return true },
+            liveActivate: async name => {
+              await liveActivation.activate(name)
+              // A live-successful install will never get the restart its
+              // recovery WAL entry is waiting for - acknowledge it now, or
+              // that one stale awaiting-restart transaction blocks every
+              // later install (of any package) until an unrelated restart
+              // happens to clear it. Best-effort: a failure here must not
+              // turn a successful live install into a reported failure.
+              try { await pnpm.acknowledgeLiveInstall(name) } catch { /* best-effort, see above */ }
+              return true
+            },
             liveDeactivate: async name => { await liveActivation.deactivate(name); return true },
           }),
         },
