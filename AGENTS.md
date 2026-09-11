@@ -10,8 +10,9 @@ This repository owns the desktop product around an unmodified DeepSeek Harness c
 
 ## Build, run, and verify
 
-- Start the isolated local Desktop (own `~/.dsh-acryl` home, advanced mode, Development Canvas) with `corepack pnpm run dev` or `corepack pnpm run local`.
+- Start the isolated local Desktop (own `~/.acryl-dev` home, advanced mode, Development Canvas) with `corepack pnpm run dev` or `corepack pnpm run local`.
 - Use `corepack pnpm run dev:shared` only when you intentionally want the installed app's `~/.dsh` home.
+- ACRYL's real root is `~/.acryl`, with each engine nested under it (`~/.acryl/.dsh` today). `ACRYL_HOME` outranks an ambient `DSH_HOME`, so `ACRYL_HOME=/tmp/clean corepack pnpm run acryl ...` is a complete clean-room switch and is the correct way to reproduce first-run behavior. Verify the isolated root actually populated and the real home's mtime did not move; see [`docs/acryl/environment-and-isolation.md`](docs/acryl/environment-and-isolation.md).
 - Fast headless loop: `corepack pnpm run typecheck`, `corepack pnpm run test`, or both via `corepack pnpm run verify`.
 - Typecheck, test, then isolated GUI: `corepack pnpm run lifecycle`.
 - Build the desktop package with `corepack pnpm run build`.
@@ -162,7 +163,7 @@ Agent-runtime, Development Canvas, context-relay, and third-party adapter work m
 <claude-mem-context>
 # Memory Context
 
-# [acryl] recent context, 2026-09-08 4:33pm GMT+2
+# [acryl] recent context, 2026-09-09 6:32am GMT+2
 
 No previous sessions found.
 </claude-mem-context>
