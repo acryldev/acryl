@@ -3673,3 +3673,54 @@ session's `acryl-cli` cold-start verification.
 
 Web (`acryl-web`, still calling `bootAcrylWebProfile` directly) remains
 the one surface not yet re-pointed.
+
+## 2026-09-12 - fix: engine host's own Loader entries had no resolution base URL
+
+Commit: `397537b`
+
+Live-reported on the user's first real Desktop GUI launch after the
+engine-host re-point (`e2fae09`): `failed to apply loader entry
+acryl-engine (cordis:acryl-engine-dsh) ... client-modules: loader entry
+cordis:acryl-engine-dsh has no resolution base URL` (and the same for
+`cordis:include`) - a hard boot failure, confirming the exact gap
+flagged as "not independently verified" in the prior checkpoint.
+
+Root cause, found by reading `cordis-plugin-loader`'s compiled source
+directly rather than guessing: `EntryTree`'s constructor snapshots
+`ctx.baseUrl` once, as an own property, at the exact moment a tree is
+constructed - not a live read. The host's own top-level tree is
+constructed the instant `createAcrylEngineHost` calls `ctx.plugin(Loader)`.
+Every entry created directly on that root (the "acryl-engine-<id>" row,
+and `mountRootInclude`'s sibling "cordis:include" row) permanently
+inherits whatever `ctx.baseUrl` was at that one line - setting it later,
+from anywhere, cannot reach the already-taken snapshot. Verified
+empirically with two failed attempts before finding this (`ctx.root.baseUrl
+= ...` from inside the engine's own plugin, and setting it inside `prepare`)
+- both left the two entries' resolved baseUrl at `undefined`, proving
+the timing requirement precisely rather than by inference.
+
+`dsh-client-modules` (Desktop's and Web's client-bundle composer, absent
+from the CLI/TUI profile) reads exactly this property for every Loader
+entry and throws unconditionally if it is undefined - which is exactly
+why this gap survived every automated test and the CLI's own real
+cold-start throughout this session's engine-host work: nothing in the
+CLI/TUI composition ever exercises this code path.
+
+Fix: `createAcrylEngineHost` sets `ctx.baseUrl` to its own package
+directory before `ctx.plugin(Loader)` - never read for a real client
+bundle (client-modules finds nothing there and skips, same as any other
+non-client entry), so it needs no per-engine knowledge and engines can
+still vary independently. Removed the first (ineffective) fix attempt's
+dead `ctx.root.baseUrl` line from `engine-dsh.ts`.
+
+Tests: RED confirmed first (stashed the fix, reproduced the exact
+`undefined` baseUrl on the host-owned engine row), then GREEN across
+`engine-host.spec.ts`/`engine-dsh.spec.ts`/`engine-host-mount-root-
+include.spec.ts` (16/16). Full `acryl-harness-runtime` suite: same 4
+pre-existing unrelated failures, unchanged. Full `acryl-cli` suite
+292/292 and a real cold-start unaffected. Full `acryl-desktop` suite
+850/854 (4 pre-existing skips, no regressions); typecheck clean across
+all five tsconfig faces.
+
+Not verified here: an actual Electron GUI launch - the user's own
+re-test of the exact failure they reported.
