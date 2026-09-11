@@ -45,9 +45,11 @@ jobs:
             runner: ubuntu-24.04-arm
           - system: aarch64-darwin
             runner: macos-14
-          # x86_64-darwin uses nixpkgs-26.05-darwin legacy pin
-          - system: x86_64-darwin
-            runner: macos-13
+          # x86_64-darwin (nixpkgs-26.05-darwin legacy pin) has no CI job:
+          # the Determinate Nix installer no longer supports Intel macOS on
+          # GitHub-hosted runners (DeterminateSystems/nix-src#224). The
+          # derivation stays in flake.nix for local Intel builders; restore
+          # the job via a Rosetta cross-build from macos-14 when feasible.
 
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
