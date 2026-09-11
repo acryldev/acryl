@@ -323,6 +323,139 @@ the transcript projection, not dropped silently (FR-007).
 
 ---
 
+## Decision 5: DSH's real agent-loop extension seam, and the true cost of deep Pi integration
+
+### Question
+
+The user asked, precisely: which parts of `deepseek-harness` actually make it
+"the coding agent engine," and can pi be swapped in without losing what DSH
+already gives ACRYL - not as an external, parallel engine (this ledger's
+current design, `research-pi-spike.md`'s `AcrylEngineAdapter('pi')`), but as
+a driver that behaves like DSH's own inside the *same* Cordis tree: writing
+Cordis plugins, hot-reloading them, and using DSH's existing tool/capability
+ecosystem (fs, shell, lsp, skill, subagent, workflow, mcp, ...) instead of a
+separate one. How expensive is that, concretely?
+
+### Verified facts
+
+Read `docs/architecture.md`, `docs/capability-seams.md` (the generated
+service graph), `packages/core/agent-loop/README.md`, and
+`packages/core/agent/src/index.ts` directly - not summarized secondhand.
+
+- **`ctx.agentLoop` is a `bundle`-role service with zero listed alternative
+  implementations** (`capability-seams.md` row: `| ctx.agentLoop | bundle |
+  agent-loop | - | base, sdk-minimal | - |`). Unlike `ctx.llm` (a real
+  `seam` with three interchangeable providers - `llm-deepseek`,
+  `llm-pi-ai`, `llm-replay`), there is no config-level "swap the loop
+  provider" story at that key.
+- **The real seam is one level up, on `ctx.agents`.** `packages/core/agent/
+  src/index.ts:171-203` exports `AgentFactory` (`createAgent(ownerCtx,
+  options)`, `resume(ownerCtx, options)`), registered via
+  `AgentRegistry.setFactory()` (`:355`). The class doc (`:233-237`) says it
+  plainly: "Agent *creation* is provided by whichever plugin implements the
+  `AgentFactory` (`@deepseek-ai/dsh-agent-loop`), registered via
+  `setFactory`." `dsh-agent-loop`'s own README (top paragraph) confirms the
+  same from the other side: "Choose a custom `Agent` implementation only
+  when the standard 'call model, run tools, repeat' lifecycle is
+  insufficient" - and its "Understand the implementation" section: "The
+  package is **the one concrete implementation** of the public `Agent`
+  contract. It registers itself as the `AgentFactory` on `ctx.agents`... 
+  **Every observable effect happens through session events and the
+  `agent/*` taxonomy** - package internals are never part of the public
+  surface." This is a deliberately designed, documented, exported
+  extension point - not something ACRYL would be working against the
+  grain of DSH's architecture to use. `private factory: FactorySlot |
+  undefined` confirms exactly one factory at a time, matching this
+  ledger's own FR-009 (one runtime owner per episode).
+- **Everything downstream of the loop depends on the session-event
+  contract, not on `dsh-agent-loop` itself** - `docs/architecture.md`'s
+  own "Core packages" table footnote-equivalent line: "extension packages
+  depend on dsh-agent events and services, not on this package [agent-
+  loop]." Concretely, per `capability-seams.md`: `compaction`,
+  `session-query`, `session-projection`, `session-title`,
+  `session-telemetry`, the Web/Desktop UI, `subagent`, `workflow`, and
+  every tool all consume `ctx.sessions`/`ctx.agents`/session events -
+  **none of them import `dsh-agent-loop` directly.** If a replacement
+  `AgentFactory` emits the same `SessionEventMap` vocabulary (`turn/*`,
+  `step/*`, `system/message`, `user/message`, `assistant/message`,
+  `assistant/attempt`, `tool/*` - the exact turn-flow pseudocode in
+  `docs/architecture.md`'s "Turn flow" section) and drives tool calls
+  through the existing `ctx.tools` registry rather than a private one,
+  every one of those consumers keeps working unmodified, with no edit to
+  the pinned `deepseek-harness/` checkout.
+- **`pi-cordis` (reviewed under spec 033's earlier tracking, see the
+  amendment above) does not do this today.** It wraps Pi's own
+  `AgentSession`/event model (`open`/`prompt`/`abort`/`subscribe`) as
+  `ctx.piEngine` - a self-contained capability alongside DSH's tree, not
+  an `AgentFactory` registered on DSH's own `ctx.agents`. This is
+  consistent with `research-pi-spike.md`'s `AcrylEngineAdapter('pi')`
+  design (a parallel engine, reconciled into ACRYL's canonical record
+  after the fact), not the deep-integration path this decision assesses.
+
+### The real cost of deep integration (an `AgentFactory` driven by Pi)
+
+Building a Pi-backed `AgentFactory` is real, sanctioned engineering, not a
+hack - but it is **substantial**, not thin-adapter-sized:
+
+1. Implement `createAgent`/`resume` satisfying `AgentHandle` semantics
+   (rollback-covered creation, paired disposal notifications, session
+   persistence integration - `AgentFactory`'s own JSDoc states these
+   invariants precisely; they are not optional).
+2. Re-emit Pi's own agent-loop activity (its model calls, its tool
+   decisions, its streaming) as DSH's `SessionEventMap` - i.e.
+   reimplementing the *turn/step/request/assistant-stream/tool* event
+   contract `docs/architecture.md`'s "Turn flow" section specifies in
+   detail, driven by Pi's reasoning instead of `dsh-agent-loop`'s. This is
+   DSH's most carefully specified subsystem; nothing about it is stable
+   API today (`deepseek-harness/CLAUDE.md`: "Public APIs are pre-stable;
+   update every consumer") - upstream evolves this contract regularly, and
+   ACRYL would have to track it indefinitely with no upstream help, since
+   the pinned checkout cannot be edited to ease the mapping.
+3. Route Pi's tool-calling through DSH's `ctx.tools` registry (so DSH's
+   fs/shell/lsp/skill/subagent/workflow ecosystem is usable from a
+   Pi-driven turn) instead of, or in addition to, Pi's own bundled tools -
+   a real translation layer between Pi's tool-invocation shape and DSH's
+   guarded execution pipeline (pre-policy, monotonic guards, post-policy,
+   per `ctx.tools`'s capability-seams.md row).
+4. Match `ctx.systemPrompt` assembly, `ctx.approval`, and
+   `ctx.sandboxPolicy` semantics so a Pi-driven turn is honest about what
+   it is doing under DSH's own governance model - matching this ledger's
+   own FR-012 (HMR/sandbox/approval parity), which already assumed this
+   cost without naming its shape.
+
+**What this buys, in exchange:** Pi becomes hot-reloadable the same way
+`dsh-agent-loop` already is (a Cordis plugin, `/reload` swaps it), gains
+DSH's entire existing tool/capability ecosystem for free (no separate
+"Pi's own tools" world to maintain in ACRYL), and a Pi-driven turn is
+genuinely indistinguishable from a DSH-driven one to every downstream
+consumer (UI, compaction, session query, subagents) - the user's stated
+goal ("pi.dev ENGINE to also function similarly to current DSH-cordis
+ENGINE"), achieved exactly, not approximately.
+
+**What the cheaper, already-speced path (this ledger + `research-pi-
+spike.md`, `pi-cordis` as it stands) buys instead:** ships sooner, has no
+ongoing DSH-internal-API tracking burden, and still gets a real, live,
+hot-swappable, session-continuity-preserving Pi engine - but Pi's own
+"maturing ecosystem of skills and extensions" (the user's other stated
+goal) runs on Pi's own terms inside its own session, not through DSH's
+tool registry, and a Pi turn stays visibly a *different kind of thing*
+from a DSH turn to the rest of ACRYL rather than a peer.
+
+### Recommendation (not yet decided - carried to the user)
+
+Do not choose between these unilaterally in this ledger. Stage them:
+ship the already-speced parallel-engine path first (it is the walking
+skeleton US1 already commits to, and it is the cheaper, lower-risk proof
+that engine-swapping and session continuity work at all). Treat the
+`AgentFactory` deep-integration path as an explicit, separately-specced
+follow-on ("pi as a native DSH agent-loop driver") once the parallel path
+is live and the team has real field experience with how much Pi's and
+DSH's ecosystems actually need to interoperate - the same staged-commitment
+discipline `ACRYL_BLENDS_SPEC.md` §35 uses (prove the cheap vertical slice
+before the expensive one).
+
+---
+
 ## Open items carried to tasks
 
 The `pi` research spike is done - see [research-pi-spike.md](./research-pi-spike.md)

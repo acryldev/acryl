@@ -3157,3 +3157,48 @@ equivalent extracted `dsh-cordis` provider does not yet exist on the DSH
 side (DSH is still directly wired via `startDirectHost()`), so the plan's
 stated "dsh-cordis first, then pi-cordis" provider order may need to invert
 for the Cordis-mounting half of the work specifically.
+
+## 2026-09-11 - docs: spec 028 Decision 5 - the real DSH extension seam, and two engine-swap architectures
+
+At the user's direction, went deeper than "is pi-cordis usable" into "which
+parts of deepseek-harness actually make it the coding-agent engine, and can
+one be swapped without losing what DSH already gives ACRYL." Read
+`deepseek-harness/docs/architecture.md`, `docs/capability-seams.md` (the
+generated service graph), `packages/core/agent-loop/README.md`, and
+`packages/core/agent/src/index.ts` directly.
+
+Finding: `ctx.agentLoop` itself has no alternative-provider seam (`bundle`
+role, one concrete implementation, unlike `ctx.llm`'s three interchangeable
+providers). But one level up, `ctx.agents` does - `AgentFactory`
+(`packages/core/agent/src/index.ts:171-203`, registered via
+`AgentRegistry.setFactory()` at `:355`) is a real, exported, documented
+extension point. `dsh-agent-loop`'s own README says so directly: "Choose a
+custom `Agent` implementation only when the standard lifecycle is
+insufficient... every observable effect happens through session events and
+the `agent/*` taxonomy." Everything downstream (compaction, session-query,
+session-projection, telemetry, subagents, workflow, every tool, the UI)
+depends on that session-event contract, not on `dsh-agent-loop` the package -
+confirmed via `capability-seams.md`'s consumer edges and architecture.md's
+own line: "extension packages depend on dsh-agent events and services, not
+on this package."
+
+This means a genuinely DSH-native "Pi engine" - one that writes/hot-reloads
+Cordis plugins the way DSH does today, and uses DSH's existing
+fs/shell/lsp/skill/subagent/workflow tool ecosystem instead of a separate
+one - is architecturally sanctioned, not a hack. It is also **substantial**
+work, not a thin adapter: it means reimplementing DSH's turn/step/
+assistant-stream/tool session-event contract driven by Pi's own reasoning
+instead of `dsh-agent-loop`'s, against APIs DSH's own CLAUDE.md calls
+"pre-stable" - meaning ACRYL would carry an ongoing tracking burden with no
+upstream help, since the pinned checkout stays unmodified.
+
+Wrote this up as Decision 5 in `specs/028-harness-engine-swap/research.md`,
+contrasting it plainly against the already-speced, cheaper path (`pi-cordis`
++ `research-pi-spike.md`'s `AcrylEngineAdapter('pi')` - a parallel engine,
+session continuity reconciled after the fact, Pi's own skills ecosystem
+runs on Pi's own terms). Recommendation carried to the user, not decided
+unilaterally: stage them - ship the parallel-engine walking skeleton first
+(cheaper, already speced, proves engine-swap + continuity work at all),
+treat the `AgentFactory` deep-integration path as an explicit follow-on
+ledger once there is real field experience with how much the two ecosystems
+actually need to interoperate.
