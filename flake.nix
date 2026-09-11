@@ -220,10 +220,10 @@
               # Build the TUI dependency chain.
               # acryl-harness-runtime imports types from acryl-control, so
               # acryl-control must be built first. Then acryl-harness-runtime,
-              # then acryl-tui (which depends on both).
+              # then acryl-cli (which depends on both; renamed from acryl-tui upstream).
               pnpm --filter acryl-control run build
               pnpm --filter acryl-harness-runtime run build
-              pnpm --filter acryl-tui run build
+              pnpm --filter acryl-cli run build
 
               runHook postBuild
             '';
@@ -234,8 +234,8 @@
               mkdir -p $out/lib/acryl $out/bin
 
               # Copy the built TUI
-              cp -r acryl-tui/lib $out/lib/acryl/lib
-              cp acryl-tui/package.json $out/lib/acryl/
+              cp -r acryl-cli/lib $out/lib/acryl/lib
+              cp acryl-cli/package.json $out/lib/acryl/
 
               # With node-linker=hoisted, node_modules/ is a flat directory
               # (like npm's layout) with no .pnpm/ virtual store symlinks.
