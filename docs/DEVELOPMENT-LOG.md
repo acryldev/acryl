@@ -3361,3 +3361,55 @@ reconciliation banner. Remaining for the "Engine 1 and 2" goal: adopt
 `pi-cordis` (already exists, Decision 2's amendment), and re-point
 `acryl-cli`'s direct bootstrap onto `createAcrylEngineHost` (T013-T017,
 still conceptually valid but need re-authoring against its actual shape).
+
+## 2026-09-11 - fix: live-successful install no longer blocks every later install
+
+Commit: `0be5988`
+
+Found live, mid-session, while the user tested Desktop under a real
+debugger (`--remote-debugging-port`) after the earlier `renderSlot('root')`
+white-screen did not reproduce: uninstalling then reinstalling
+`cordis-plugin-graph` failed with "The desktop package manager could not
+start." on the first attempt and "The confirmation expired or was already
+used" on the retry - a console trace showed the pattern repeating (502 then
+410, twice).
+
+Root cause: `DesktopInstallRecoveryStore.begin()` refuses to start any new
+install transaction whenever a recovery WAL state file exists at all,
+regardless of which package or phase it names. A live-successful install
+(spec 032's T2 - no restart needed) reaches `awaiting-restart` and stays
+there forever, because that phase's only clearing path is the
+startup-recovery-controller's post-restart verify cycle, which a live
+install by definition never triggers. Confirmed directly: found the actual
+stuck `state.json` on disk (`~/Library/Application Support/ACRYL/
+plugin-install-recovery/state.json`), phase `awaiting-restart`, for the
+**editor plugin** - a completely different package, installed earlier in
+the same session and never restarted since (because it worked live) -
+silently blocking the graph plugin's reinstall.
+
+Fix: `DesktopInstallRecoveryStore` gains `acknowledgeLiveSuccess()`, a new
+transition straight from `awaiting-restart` to `verified` - not a shortcut
+around the existing restart-based `verifying` cycle (which exists to prove
+durability *across* a new generation) but a distinct, narrower path scoped
+to `createdByGeneration === this.generationId`: a live-activated install
+already has stronger same-generation evidence (the plugin genuinely
+mounted and is running) that re-deriving proof from a future restart would
+be redundant to require, not more correct. `DesktopPnpmService` gains
+`acknowledgeLiveInstall(packageName)`, calling this then `clear()`. Wired
+into `dsh-community-market`'s `liveActivate` callback (best-effort - a
+failure here must never turn a successful live install into a reported
+failure) right after live activation succeeds.
+
+Tests: `install-recovery.spec.ts` covers the new transition directly,
+including that a different generation is correctly rejected (the exact
+invariant this path must not weaken); `pnpm.spec.ts` covers the full
+service-level integration end to end - install, seal, acknowledge, and a
+subsequent install of an unrelated package no longer blocked (proving the
+actual reported bug is fixed, not just the state transition in isolation).
+Full `acryl-desktop` suite 843/847 (4 pre-existing skips, no regressions);
+`dsh-community-market` 280/280.
+
+Immediate unblock given to the user before this fix landed: restart ACRYL
+Desktop once - `startup-recovery-controller.ts`'s normal boot-time
+verification clears a genuinely-succeeded pending transaction the same way
+it always has, no code change needed for that path.
