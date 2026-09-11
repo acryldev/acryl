@@ -669,10 +669,19 @@ export class DesktopPluginsService extends Service implements DesktopPlugins {
 
   list(): readonly DesktopPluginBundle[] {
     this.assertActive()
-    return readDesktopProfileBundleInventory(this.bootstrap, this.bootstrap.recoveryStatePath).map(item => ({
-      ...item,
-      bundleId: this.bundleId(item.packageName),
-    }))
+    // spec 032 issue-01: when a package has a live Loader entry, its actual
+    // enabled/disabled state is ground truth over this file-based inventory
+    // - the Lifecycle tab toggles that entry live without necessarily going
+    // through this same persistence path, so the file alone can be stale.
+    const live = this.ctx.get('livePluginActivation')
+    return readDesktopProfileBundleInventory(this.bootstrap, this.bootstrap.recoveryStatePath).map(item => {
+      const liveStatus = item.mutable ? live?.statusOf(item.packageName) : undefined
+      return {
+        ...item,
+        ...(liveStatus === undefined ? {} : { status: liveStatus }),
+        bundleId: this.bundleId(item.packageName),
+      }
+    })
   }
 
   isDisabled(packageName: string): boolean {
@@ -828,6 +837,16 @@ export class DesktopPluginsService extends Service implements DesktopPlugins {
       if (current.status === 'disabled') {
         throw new DesktopPluginsError('already-disabled', 'This Desktop bundle is already disabled.')
       }
+      // spec 032 issue-01: prefer a live Fiber unmount over the bundle-layer
+      // disable file when one is mounted - no restart needed, and it keeps
+      // this tab and the Lifecycle tab agreeing on the same live truth.
+      // `setEnabled` resolves false (not throws) when nothing is mounted for
+      // this package, so bundle-layer persistence remains the fallback for
+      // exactly the case it uniquely serves: a bundle whose module cannot
+      // even be imported.
+      if (await this.ctx.get('livePluginActivation')?.setEnabled(preview.packageName, false) === true) {
+        return { packageName: preview.packageName }
+      }
       return await disableDesktopProfileBundle(
         this.bootstrap,
         preview.packageName,
@@ -851,6 +870,13 @@ export class DesktopPluginsService extends Service implements DesktopPlugins {
       }
       if (current.status === 'active') {
         throw new DesktopPluginsError('already-active', 'This Desktop bundle is already active.')
+      }
+      // spec 032 issue-01: see the matching comment in persistDisable. A
+      // package already mounted (disabled in place, not removed) re-enables
+      // live; only a package with no live entry needs the persisted
+      // bundle-layer re-enable below.
+      if (await this.ctx.get('livePluginActivation')?.setEnabled(preview.packageName, true) === true) {
+        return { packageName: preview.packageName }
       }
       return await enableDesktopProfileBundle(
         { ...this.bootstrap, ...(preview.statePath === undefined ? {} : { statePath: preview.statePath }) },

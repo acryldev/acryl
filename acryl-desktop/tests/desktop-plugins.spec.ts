@@ -116,6 +116,34 @@ async function createHarness(options: DesktopPluginsBootstrap): Promise<Harness>
   return { ctx, service, dispose: fiber.dispose }
 }
 
+/** A fake `livePluginActivation` (spec 032 issue-01) for one package name. */
+function fakeLiveActivation(packageName: string, initialStatus: 'active' | 'disabled') {
+  let status = initialStatus
+  return {
+    setEnabled: async (name: string, enabled: boolean) => {
+      if (name !== packageName) return false
+      status = enabled ? 'active' : 'disabled'
+      return true
+    },
+    statusOf: (name: string) => (name === packageName ? status : undefined),
+    activate: async () => {},
+    deactivate: async () => {},
+  }
+}
+
+async function createHarnessWithLiveActivation(
+  options: DesktopPluginsBootstrap,
+  live: ReturnType<typeof fakeLiveActivation>,
+): Promise<Harness> {
+  const ctx = new Context()
+  ctx.provide('livePluginActivation', live)
+  const fiber = ctx.plugin(DesktopPluginsService, options)
+  await fiber
+  const service = ctx.get('desktopPlugins')
+  if (service === undefined) throw new Error('desktopPlugins did not mount')
+  return { ctx, service, dispose: fiber.dispose }
+}
+
 function errorCode(cause: unknown): string | undefined {
   return cause instanceof DesktopPluginsError ? cause.code : undefined
 }
@@ -148,6 +176,69 @@ describe('desktop direct bundle management', () => {
     expect(desktopPluginBundleMutable('dsh-community-market')).toBe(false)
     expect(desktopPluginBundleMutable('../third-party-plugin')).toBe(false)
     expect(desktopPluginBundleMutable('Third-Party-Plugin')).toBe(false)
+    await harness.dispose()
+  })
+
+  it('prefers a live entry status over the persisted file when one is mounted (issue-01)', async () => {
+    const root = temporaryRoot()
+    const options = bootstrap(root)
+    installBundle(options.homeDir, 'third-party-plugin')
+    addBundle(options.homeDir, 'third-party-plugin')
+    // The persisted file says active; the live Loader entry (as the
+    // Lifecycle tab would leave it) says disabled - live wins.
+    const live = fakeLiveActivation('third-party-plugin', 'disabled')
+    const harness = await createHarnessWithLiveActivation(options, live)
+
+    expect(harness.service.list().find(item => item.packageName === 'third-party-plugin')?.status)
+      .toBe('disabled')
+    await harness.dispose()
+  })
+
+  it('disables and re-enables through a live entry without touching the bundle-layer state file (issue-01)', async () => {
+    const root = temporaryRoot()
+    const options = bootstrap(root)
+    installBundle(options.homeDir, 'third-party-plugin')
+    addBundle(options.homeDir, 'third-party-plugin')
+    const live = fakeLiveActivation('third-party-plugin', 'active')
+    const harness = await createHarnessWithLiveActivation(options, live)
+    const target = harness.service.list().find(item => item.packageName === 'third-party-plugin')
+    if (target === undefined) throw new Error('missing target')
+
+    await expect(harness.service.executeDisable(harness.service.previewDisable(target.bundleId).previewId))
+      .resolves.toEqual({ packageName: 'third-party-plugin' })
+    expect(harness.service.list().find(item => item.packageName === 'third-party-plugin')?.status)
+      .toBe('disabled')
+    // The bundle-layer file is untouched - the live path handled it entirely.
+    expect(existsSync(options.statePath)).toBe(false)
+
+    const disabled = harness.service.list().find(item => item.packageName === 'third-party-plugin')
+    if (disabled === undefined) throw new Error('missing target')
+    await expect(harness.service.executeEnable(harness.service.previewEnable(disabled.bundleId).previewId))
+      .resolves.toEqual({ packageName: 'third-party-plugin' })
+    expect(harness.service.list().find(item => item.packageName === 'third-party-plugin')?.status)
+      .toBe('active')
+    expect(existsSync(options.statePath)).toBe(false)
+    await harness.dispose()
+  })
+
+  it('falls back to the bundle-layer disable file when no live entry exists for the package (issue-01)', async () => {
+    const root = temporaryRoot()
+    const options = bootstrap(root)
+    installBundle(options.homeDir, 'third-party-plugin')
+    addBundle(options.homeDir, 'third-party-plugin')
+    // Live activation is present (some other package is mounted through it)
+    // but resolves false for this package - e.g. its module failed to import.
+    const live = fakeLiveActivation('unrelated-package', 'active')
+    const harness = await createHarnessWithLiveActivation(options, live)
+    const target = harness.service.list().find(item => item.packageName === 'third-party-plugin')
+    if (target === undefined) throw new Error('missing target')
+
+    await expect(harness.service.executeDisable(harness.service.previewDisable(target.bundleId).previewId))
+      .resolves.toEqual({ packageName: 'third-party-plugin' })
+    expect(JSON.parse(readFileSync(options.statePath, 'utf8'))).toEqual({
+      version: 1,
+      profiles: [{ profileName: 'desktop', disabledBundles: ['third-party-plugin'] }],
+    })
     await harness.dispose()
   })
 

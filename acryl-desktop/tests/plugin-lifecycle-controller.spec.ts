@@ -200,6 +200,34 @@ describe('PluginLifecycleController', () => {
     }
   })
 
+  it('toggles a mounted plugin by package name for a caller outside the Lifecycle tab (issue-01)', async () => {
+    const { ctx, controller, statePath } = await harness()
+    try {
+      expect(controller.statusOfPackage(MARKET_PACKAGE)).toBe('active')
+      expect(controller.statusOfPackage('not-a-mounted-package')).toBeUndefined()
+
+      await expect(controller.setEnabledByPackageName(MARKET_PACKAGE, false)).resolves.toBe(true)
+      expect(controller.statusOfPackage(MARKET_PACKAGE)).toBe('disabled')
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([
+        { id: 'market-plugin', disabled: true },
+      ])
+
+      // Idempotent against a state that already matches - the whole point of
+      // this bridge is that the caller's own "current status" may be stale.
+      await expect(controller.setEnabledByPackageName(MARKET_PACKAGE, false)).resolves.toBe(true)
+
+      await expect(controller.setEnabledByPackageName(MARKET_PACKAGE, true)).resolves.toBe(true)
+      expect(controller.statusOfPackage(MARKET_PACKAGE)).toBe('active')
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([])
+
+      // No live entry for this package - the caller must fall back to its
+      // own persisted bundle-layer state.
+      await expect(controller.setEnabledByPackageName('not-a-mounted-package', false)).resolves.toBe(false)
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
   it('disables and enables Canvas with persistence and settled Fiber cleanup', async () => {
     const { ctx, controller, logPath, statePath } = await harness()
     try {

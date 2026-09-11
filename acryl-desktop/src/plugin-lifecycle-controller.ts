@@ -50,6 +50,15 @@ const PROTECTED_REASON = 'This core capability is part of the Desktop runtime an
 export interface LivePluginActivation {
   activate(packageName: string): Promise<void>
   deactivate(packageName: string): Promise<void>
+  /**
+   * Toggle a mounted entry by package name (spec 032 issue-01: the market's
+   * Installed tab, which only knows package names, not Loader entry ids).
+   * Resolves `false` when the package has no live entry, so the caller falls
+   * back to its own persisted state.
+   */
+  setEnabled(packageName: string, enabled: boolean): Promise<boolean>
+  /** Live enabled/disabled state for a mounted entry, or `undefined` when not mounted. */
+  statusOf(packageName: string): 'active' | 'disabled' | undefined
 }
 
 declare module '@deepseek-ai/cordis' {
@@ -365,8 +374,7 @@ export class PluginLifecycleController {
    */
   deactivate(packageName: string): Promise<PluginLifecycleReceipt> {
     return this.exclusive(async () => {
-      const entry = [...this.ctx.loader.entries()]
-        .find(candidate => !candidate.options.group && candidate.options.name === packageName)
+      const entry = this.findLiveEntry(packageName)
       if (entry === undefined) {
         await this.pruneStaleDisable(packageName)
         return this.receipt('disable', [], true)
@@ -409,8 +417,7 @@ export class PluginLifecycleController {
    */
   reloadByPackage(packageName: string): Promise<PluginLifecycleReceipt> {
     return this.exclusive(async () => {
-      const entry = [...this.ctx.loader.entries()]
-        .find(candidate => !candidate.options.group && candidate.options.name === packageName)
+      const entry = this.findLiveEntry(packageName)
       if (entry === undefined || entry.disabled || entry.fiber === undefined) {
         return this.receipt('reload', [], true)
       }
@@ -425,6 +432,45 @@ export class PluginLifecycleController {
       await Promise.resolve()
       return this.receipt('reload', [entry.id], true)
     })
+  }
+
+  /**
+   * Toggle a live entry by package name for a caller outside the Lifecycle
+   * tab (the market's Installed tab - spec 032 issue-01). Returns `false`
+   * when no live entry exists (an import failure, or not yet mounted), so
+   * the caller falls back to its own persisted bundle-layer state; that
+   * fallback is the only mechanism that still works when a bundle's module
+   * cannot even be imported. Idempotent against a state that already
+   * matches, since the caller's own view of "current status" may be the
+   * exact stale read this method exists to correct.
+   */
+  async setEnabledByPackageName(packageName: string, enabled: boolean): Promise<boolean> {
+    const entry = this.findLiveEntry(packageName)
+    if (entry === undefined) return false
+    try {
+      await this.setEnabled(entry.id, enabled)
+    } catch (cause) {
+      if (cause instanceof PluginLifecycleError
+        && (cause.code === 'already-enabled' || cause.code === 'already-disabled')) return true
+      throw cause
+    }
+    return true
+  }
+
+  /**
+   * Read a live entry's current enabled/disabled state by package name, or
+   * `undefined` when it is not mounted (the caller's own persisted status is
+   * authoritative in that case).
+   */
+  statusOfPackage(packageName: string): 'active' | 'disabled' | undefined {
+    const entry = this.findLiveEntry(packageName)
+    if (entry === undefined) return undefined
+    return entry.disabled ? 'disabled' : 'active'
+  }
+
+  private findLiveEntry(packageName: string): Entry | undefined {
+    return [...this.ctx.loader.entries()]
+      .find(candidate => !candidate.options.group && candidate.options.name === packageName)
   }
 
   /** The Loader group that owns profile-bundle rows (`include:<id>`). */
@@ -525,5 +571,13 @@ export class LivePluginActivationService extends Service implements LivePluginAc
 
   async deactivate(packageName: string): Promise<void> {
     await this.controller.deactivate(packageName)
+  }
+
+  setEnabled(packageName: string, enabled: boolean): Promise<boolean> {
+    return this.controller.setEnabledByPackageName(packageName, enabled)
+  }
+
+  statusOf(packageName: string): 'active' | 'disabled' | undefined {
+    return this.controller.statusOfPackage(packageName)
   }
 }
