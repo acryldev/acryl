@@ -380,7 +380,7 @@ describe('published package surface', () => {
     const installDsh = main.indexOf('const dshRuntime = process.platform === \'win32\'')
     const ownPnpm = main.indexOf('const releasePnpmRuntime = generation.own(')
     const ownDsh = main.indexOf('const releaseDshRuntime = generation.own(')
-    const boot = main.indexOf('const ctx = await boot')
+    const boot = main.indexOf('const engineHost = await createAcrylEngineHost')
 
     expect(recover).toBeGreaterThanOrEqual(0)
     expect(applyRecovered).toBeGreaterThan(recover)

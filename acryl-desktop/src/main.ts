@@ -6,7 +6,6 @@ import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
-  boot,
   installFailLoud,
   loadLayeredEnv,
   PROFILE_PATCH_FILENAME,
@@ -15,7 +14,11 @@ import {
 } from '@deepseek-ai/dsh-app-boot'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { DSH_LAUNCH_ENVIRONMENT_KEY } from '@deepseek-ai/dsh-launch-environment'
-import { resolveAcrylDshHome } from 'acryl-harness-runtime'
+import {
+  createAcrylEngineHost,
+  createDshEngineDefinitionFromComposition,
+  resolveAcrylDshHome,
+} from 'acryl-harness-runtime'
 import {
   installDesktopDshRuntime,
   installDesktopPnpmRuntime,
@@ -812,11 +815,15 @@ async function start(): Promise<void> {
       homeDir: prepared.homeDir,
     })
     recoveryTerminalAvailable = true
-    const ctx = await boot(
-      BIN_NAME,
-      prepared.rootConfig,
-      prepared.patches,
-      async (hostCtx) => {
+    const engineHost = await createAcrylEngineHost({
+      engines: [createDshEngineDefinitionFromComposition({
+        rootConfig: prepared.rootConfig,
+        patches: prepared.patches,
+        bareModuleBaseUrl: prepared.bareModuleBaseUrl,
+        surface: 'desktop',
+      })],
+      initialEngine: 'dsh',
+      prepare: async (hostCtx) => {
         generation.bindHost(hostCtx)
         hostCtx.effect(
           () => releasePnpmRuntime,
@@ -1001,11 +1008,11 @@ async function start(): Promise<void> {
           exit: requestQuit,
         })
       },
-      prepared.bareModuleBaseUrl,
-    ).catch((cause: unknown) => {
+    }).catch((cause: unknown) => {
       releasePackageResolver()
       throw cause
     })
+    const ctx = engineHost.ctx
     generation.bindHost(ctx)
     fileExporter?.setThreshold((ctx.settings.get(DESKTOP_SETTINGS_NAMESPACE) as DesktopSettings | undefined)?.logLevel ?? 'info')
     ctx.on('settings/updated', (namespace, next) => {
