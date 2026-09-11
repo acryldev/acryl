@@ -73,6 +73,7 @@ import {
 } from './plugin-lifecycle-route.ts'
 import type {} from './plugin-lifecycle-state.ts'
 import { desktopBootRecoveryInjections } from './desktop-boot-recovery.ts'
+import { desktopRootSlotRecoveryInjections } from './desktop-root-slot-recovery.ts'
 import type { DesktopLocale, DesktopShellMode } from './runtime.ts'
 import type {} from './runtime.ts'
 
@@ -330,6 +331,7 @@ export function apply(ctx: Context, config: Config): void {
   })
   ctx.on('webserver/index-inject', table => {
     table.push(...desktopBootRecoveryInjections())
+    table.push(...desktopRootSlotRecoveryInjections())
   })
   const desktopSettings = ctx.get('desktopSettingsController')
   if (desktopSettings !== undefined) {
