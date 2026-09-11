@@ -2845,3 +2845,34 @@ boot until the link is refreshed.
 Verification: full `corepack pnpm run check` green (exit 0; closure 244
 nodes, CLI, loader boot, profile boot smokes, licenses); `check:layout`
 green; blend spec suites 13/13.
+
+## 2026-09-11 - fix: uninstall no longer leaves a stale plugin-management disable
+
+Commit: `354eb9a` (updates specs/032-universal-hot-reload/issues/01)
+
+Reproduced live: uninstalling `cordis-plugin-graph` through the market left it
+in `plugin-management/state.json`'s `disabledBundles` (a separate store from
+the Lifecycle tab's `plugin-lifecycle/state.json`, both described in the spec
+032 T1-T6 checkpoint). The stale entry made the market treat the package as
+"installed but disabled" and hid the managed Install button.
+
+`desktop-plugins.ts` gains `removeDesktopDisabledBundle` - a narrow single-
+package cleanup that, unlike `enableDesktopProfileBundle`, does not require
+the package to still be a current profile bundle. `PluginLifecycleController
+.deactivate` calls it best-effort through a new optional
+`pluginManagementStatePath` on the lifecycle bootstrap (wired from `main.ts`
+alongside the existing plugin-management state path).
+
+Reassessed the "unify the two disable stores" framing from the earlier
+follow-up ticket: they are not simply duplicative. `plugin-management`'s
+bundle-layer disable is the only mechanism that works when a bundle's module
+cannot even be imported (boot recovery's "skip a mutable plugin bundle");
+`plugin-lifecycle`'s entry-level disable needs a working Fiber. Collapsing
+them into one store would lose the recovery path. Updated
+`specs/032-universal-hot-reload/issues/01-unify-disable-state.md` accordingly
+- remaining work is routing the market Installed tab's enable/disable through
+the same `PluginLifecycleController` path the Lifecycle tab uses, not a data
+model merge.
+
+`pnpm --filter acryl-desktop run check` green (839 tests, closure/layout/
+loader/profile-boot/licenses all pass).
