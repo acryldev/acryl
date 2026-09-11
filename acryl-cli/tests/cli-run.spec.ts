@@ -29,6 +29,7 @@ function dependencies(overrides: Partial<AcrylCliDependencies> = {}): AcrylCliDe
       return {
         runtimeState: 'ready',
         profile: options.profile,
+        engine: 'dsh',
         generationId: 'generation-1',
         dispose: async () => { events.push('host:dispose') },
       }
@@ -69,7 +70,7 @@ describe('runAcryl', () => {
 
     expect(deps.events).toEqual([
       'host:work',
-      'write:{"mode":"direct","profile":"work","generationId":"generation-1"}',
+      'write:{"mode":"direct","profile":"work","engine":"dsh","generationId":"generation-1"}',
       'host:dispose',
     ])
   })

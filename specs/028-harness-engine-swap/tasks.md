@@ -109,6 +109,35 @@
 >   without `await`, racing a fresh `DSH_HOME`'s package-fallback links (see
 >   `docs/DEVELOPMENT-LOG.md`, commit `aebaac2`).
 
+> **T013-T017 re-authored and done, 2026-09-11** (see `research.md` Decision 6
+> for the six-part Cordis mini-design). The task text below still describes the
+> superseded `AcrylEngineAdapter`/`AcrylEngineHandle` shape; the delivered slice
+> is:
+> - **T013** - `acryl-cli/src/host/direct.ts` now boots through
+>   `createAcrylEngineHost` + `createDshEngineDefinition(profile)` and exposes
+>   `engine` (the mounted `acryl-engine` row). The `bootAcrylHarnessProfile`
+>   import is gone, so the CLI no longer creates a second Cordis root.
+> - **T014** - `DirectHost.engine` surfaced in `--json` as an additive field
+>   (`{"mode":"direct","profile":…,"engine":"dsh","generationId":…}`).
+>   `--engine` selection and help-text changes remain Phase 4 (US2).
+> - **T015** - call site unchanged by design: `createAcrylSessionBridge` is
+>   built from the host's shared `ctx`, which is the root the `dsh` engine's
+>   profile tree now lives in. The `AcrylSessionClient` wrapper T015 assumed
+>   does not exist in the built host and would be single-consumer indirection
+>   (see Decision 6's scope note).
+> - **T016** - `acryl-cli/tests/direct.spec.ts` extended: engine-row assertion,
+>   idempotent-dispose + teardown, empty-profile rejection, and a source-level
+>   guarantee that no `acryl-cli/src/**` file *imports* the direct bootstrap.
+>   RED verified first against the old `direct.ts` (2 failed / 3 passed), then
+>   GREEN (292/292 `acryl-cli`, typecheck clean).
+> - **T017** - `corepack pnpm run verify` / `check` gate and the manual TUI run
+>   are recorded in the `docs/DEVELOPMENT-LOG.md` checkpoint for this commit.
+>
+> **Not covered by this slice (deliberately):** Web and Desktop still boot
+> their own DSH profile directly. Whether/how they adopt the engine host is the
+> surfaces x engines question in `research.md` Decision 7 - a design gap, not
+> an oversight to fix by copying the CLI change.
+
 **Feature**: `specs/028-harness-engine-swap` | **Milestone**: M9
 **Input**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md),
 [research-pi-spike.md](./research-pi-spike.md), [data-model.md](./data-model.md),

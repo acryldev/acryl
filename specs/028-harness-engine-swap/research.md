@@ -523,3 +523,185 @@ two forbidden-import rules).
 | pi `pi-ai` credential store vs `024-acryl-cli-login` seam | B1 | Open (design task) |
 | pi `ToolCallEvent` interception → Cordis `ctx.approval` bridge | B1 | Open (design task) |
 | Roadmap footnote: M9 Phase A carries M2-slice-α | A (docs) | **Done** (`c44b334`) |
+
+## Decision 6: `acryl-cli` re-point onto `createAcrylEngineHost` (six-part Cordis mini-design)
+
+**Context.** T013-T017 as originally written assumed an `AcrylEngineAdapter` /
+`AcrylEngineHandle` registry (`engine/engine.ts`,
+`registerAcrylEngineAdapter`). That design is stale. `engine-host.ts` already
+implements the corrected architecture (one Cordis root, one stable
+`acryl-engine` Loader row, `select(id)` via `entry.update()`), and
+`engine-dsh.ts` already mounts the pinned profile as a Loader row beneath it.
+The missing piece is the **consumer**: `acryl-cli/src/host/direct.ts` still
+calls `bootAcrylHarnessProfile`, whose `boot()` creates a *second* Cordis root -
+exactly what the 2026-09-09 architecture correction forbids. This is the
+"M2-slice-alpha" that M9 depends on.
+
+1. **Capability and plugin boundary.** The engine is a replaceable provider of
+   "the agent runtime" - a capability ACRYL must be able to swap without
+   restarting the surface (M9's whole point). `createAcrylEngineHost` owns the
+   one root and the `acryl-engine` row; `createDshEngineDefinition(profile)`
+   owns DSH profile composition. `acryl-cli/src/host/direct.ts` is a surface
+   adapter: it must know *which engine is selected*, never *how DSH boots*.
+
+2. **Provides and consumes.** Provides: no service (this is a composition root,
+   not a Cordis consumer). Consumes: `createAcrylEngineHost` and
+   `createDshEngineDefinition` from the workspace package
+   `acryl-harness-runtime`. The existing optional `ctx.get('sessions')` /
+   `ctx.get('agents')` readiness probe is retained verbatim (SC-004). No new
+   `inject` requirement is introduced.
+
+3. **Effects and disposal.** `createAcrylEngineHost` owns the root Fiber.
+   `direct.ts` must call `host.dispose()` exactly once and stay idempotent
+   (existing `disposed` flag retained). The nested DSH Include tree is disposed
+   by `engine-dsh.ts`'s explicit `ctx.effect()` removal (the
+   sibling-not-descendant fix from T010). `direct.ts` acquires no new resource,
+   so it owns no new disposer.
+
+4. **Configuration and composition.** Stable Loader row id `acryl-engine`
+   (already fixed in `engine-host.ts`). Engine name `'dsh'` is the default and
+   the only definition registered this phase; `--engine` selection is Phase 4
+   (US2) and deliberately out of scope here. The profile name (`--profile`) is
+   bound at host-creation time, matching `createDshEngineDefinition`'s
+   one-profile-per-definition shape.
+
+5. **Events and durability.** No new event. Durable state does not move: the
+   `dsh` engine mounts the identical profile, so `DSH_HOME` (and therefore
+   sessions, persistence, settings, credentials) stay exactly where they were.
+   `--json` gains an **additive** `engine` field so the extraction is
+   observable from the scriptable readiness probe; no durable format changes.
+
+6. **Verification.** Real Loader activation through `startDirectHost` (the
+   existing `tests/direct.spec.ts` pattern: real profile, HMR disabled, real
+   `DSH_HOME`): `runtimeState`/`sessions`/`agents` unchanged, `engine === 'dsh'`,
+   dispose idempotent, plus a source-level guarantee that `acryl-cli/src/**` no
+   longer imports `bootAcrylHarnessProfile` (guarantee G6). Gate:
+   `corepack pnpm run verify`, then `corepack pnpm run check`.
+
+**Scope note (Ponytail).** T015 as written ("consume `handle.sessions` instead
+of importing `createAcrylSessionBridge`") described an `AcrylEngineHandle`
+abstraction that the built host does not have. `createAcrylEngineHost` returns
+`ctx`; the session bridge is correctly built from that shared `ctx`, which is
+the root the `dsh` engine's profile tree now lives in. Introducing a new
+`AcrylSessionClient` wrapper for a single consumer would be speculative
+indirection, so T015 reduces to "unchanged call site, now pointed at the host
+root" and is verified by the T016 import guarantee instead.
+
+## Decision 7: the surfaces x engines matrix (what a swap actually means per surface)
+
+**Raised by the user**, 2026-09-11: the ledger scoped this feature to
+`acryl-cli` ("Electron and Web adopt the engine-neutral path in later slices")
+but never analysed *how the three surfaces behave across the three engines*.
+This decision closes that gap. It is analysis plus a recommendation; it does
+not change the implemented slice.
+
+### Verified facts: what each surface actually requires
+
+- **CLI (`acryl-cli`)** - one in-process Cordis root, profile `acryl`
+  (`dsh-base`). Readiness is `ctx.get('sessions')` + `ctx.get('agents')`. All
+  session I/O goes through `createAcrylSessionBridge(ctx)`
+  (`open`/`snapshot`/`subscribeEvents`/`subscribeAssistantStream`), and
+  `TuiStore` folds DSH's durable `SessionEventMap` (`turn/*`, `step/*`,
+  `assistant/message`, `tool/*`) plus the process-local
+  `agent/assistant-stream` frames. Its panels additionally read `ctx.llm`
+  (`/model`), `ctx.credentials`/`ctx.authorization` (`/login`), `ctx.tools`,
+  the Cordis Loader (`/plugins`, `/reload`), the pinned submodule's agent
+  presets, and compaction/stats services.
+- **Web (`acryl-web`)** - `bootAcrylWebProfile` boots profile `web`
+  (`dsh-base` + `dsh-web-app`) and serves the **DSH browser client**:
+  `dsh-client-modules` bundles (`window.__ModuleLoader__`), the
+  `dsh-client-ui-*` slot tree, and RPC channels, behind
+  `dsh-client-connection`'s browser auth. Every client panel consumes DSH
+  sessions/agents over that RPC.
+- **Desktop (`acryl-desktop`)** - Electron, profile `desktop`, advanced vs
+  compatibility mode; Host + Client Cordis faces plus `ctx.connection`,
+  `ctx.webServer`, `ctx.desktopRuntime`, and ACRYL-owned services
+  (`desktopProfiles`, `desktopPnpm`, plugin lifecycle, install-recovery WAL,
+  live activation, `dsh-community-market`, BLEND lock layer). It calls the
+  Harness `boot()` itself (`acryl-desktop/src/main.ts:815`) with its own
+  profile/composition machinery - verified: this is the **only** `boot()` call
+  site in `acryl-desktop/src` - and it does **not** go through
+  `acryl-harness-runtime`'s shared factory (`bootAcrylHarnessProfile` /
+  `bootAcrylWebProfile`). (An earlier note in this session claimed five call
+  sites; that conflated `dsh-app-boot` *imports* across
+  `main.ts`/`desktop-cli.ts`/`profile.ts`/`profile-manager.ts`/
+  `desktop-plugins.ts` with actual `boot()` invocations. Corrected here.)
+- **Engine `dsh`** provides all of the above; it *is* the substrate.
+- **Engine `pi` (`pi-cordis`, as built)** provides exactly one service:
+  `ctx.piEngine` with `open()`/`prompt()`/`abort()`/`subscribe(event)` and
+  `inject: ['loader']`. It provides no `ctx.sessions`, no `ctx.agents`, no
+  `SessionEventMap`, no `ctx.tools`, no `ctx.llm`/credentials/authorization, no
+  Cordis rows for the Pi world, and no HMR of Pi internals. Its event stream is
+  Pi's own shape, unrelated to DSH's durable records.
+- **Engine `acryl` (`acryl-cordis`)** exists as a repo with the DSH basis only;
+  the Pi half is unstarted.
+
+### The structural finding
+
+A surface can run an engine only if it has a **projection** from that engine's
+native session/transcript model to what the surface renders. Today ACRYL owns
+exactly one such projection - `AcrylSessionBridge` + `TuiStore` - and it is
+**DSH-shaped**. Web and Desktop own **no ACRYL projection at all**: they render
+DSH's own pinned client packages, which speak DSH sessions/agents/slots over
+DSH's own transport. ACRYL cannot re-point those at Pi without replacing them.
+
+| Surface | `dsh` | `pi` (parallel, as built) | `acryl` (future) |
+| --- | --- | --- | --- |
+| **CLI** | Full - today's behavior | **Partial, and only after new work.** Prompt/stream/abort need a Pi-shaped projection; trajectory, tool cards, context, approvals, `/model`, `/login`, `/plugins`, presets, compaction and stats have **no data source** (`ctx.sessions`/`ctx.tools`/`ctx.llm` are absent) | Full in principle - same DSH surrounding, different loop |
+| **Web** | Full - today's behavior | **Unavailable.** `dsh-web-app` + the `dsh-client-ui-*` family are DSH-shaped; `pi-cordis` ships no web client and no HTTP/WS session API | Works if it stays DSH-session-shaped (the pinned client is untouched) |
+| **Desktop** | Full - today's behavior | **Unavailable.** Host/Client faces, plugin lifecycle, hot-reload, market, BLEND, connection and profiles are all DSH+Cordis; Pi offers no Cordis rows to hot-reload | Works if it stays DSH-session-shaped |
+
+### Why this matters: "the pi engine" means two different things
+
+The decisive insight is that two incompatible meanings of "Pi engine" have
+opposite surface reach.
+
+**Route 1 - Pi as a parallel engine (what `pi-cordis` is today).** Pi owns its
+loop, session store, model runtime and extension ecosystem; ACRYL keeps its own
+canonical record and reconciles after the fact.
+- Reach: **CLI only**, and only after ACRYL writes a Pi-shaped projection.
+- Buys exactly what the user described for Engine 2: a parallel world with Pi's
+  own extensions, no DSH-internal-API tracking.
+- Cannot reach Web/Desktop without ACRYL rebuilding both clients.
+
+**Route 2 - Pi as a DSH `AgentFactory` (a driver inside DSH).** Pi supplies only
+the loop; DSH keeps `ctx.sessions`, `ctx.tools`, `ctx.systemPrompt`, approvals
+and - critically - the whole UI/Web/Desktop surrounding, which per
+`capability-seams.md` consumes session events rather than `dsh-agent-loop`.
+- Reach: **all three surfaces, unchanged.** Nothing in Web or Desktop needs to
+  know which loop ran.
+- Cost is the one already priced in Decision 5: re-emit Pi activity as
+  `SessionEventMap`, route Pi tool calls through `ctx.tools`, match
+  `ctx.systemPrompt`/approval/sandbox, and track a pre-stable upstream contract
+  that cannot be edited.
+
+**Engine 3 (`acryl-cordis`) is Route 2 generalized.** ACRYL's own
+`AgentFactory`-shaped driver mounting DSH's individual capability packages
+unmodified, free to source tools/skills from both ecosystems. It inherits Route
+2's reach (all surfaces) precisely because the DSH surrounding stays in place.
+
+### Recommendation
+
+1. **Do not copy the CLI re-point into Web or Desktop.** It is not "the same
+   change, later": they render DSH's own pinned clients, and an engine seam
+   beneath them buys nothing until the projection question is answered.
+2. **Declare per-surface engine support explicitly** instead of implying every
+   surface supports every engine. Engine selection should be offered only where
+   a surface declares support, and selecting an unrenderable engine should fail
+   loud (FR-005's spirit) rather than boot into an empty shell.
+3. **Sequence:**
+   - Now: Engine 1 everywhere - which makes Desktop adopting the shared factory
+     at all a real prerequisite (it currently boots through its own private
+     `boot()` call rather than `acryl-harness-runtime`).
+   - Next: settle what Engine 2 must be. If the goal is "Pi's ecosystem in
+     ACRYL's terminal", Route 1 plus a Pi projection is the honest bounded
+     deliverable. If the goal is "any engine, any surface", Route 2/3 is the
+     only route and belongs in its own ledger.
+   - Do not promise Web/Desktop engine swapping before Route 2/3 is chosen.
+
+### Open question for the user
+
+Is Engine 2's product goal (a) Pi's ecosystem available in ACRYL's terminal
+surface, or (b) any engine drivable from every surface? The answer decides
+whether Engine 2 is a bounded CLI feature or the start of the `AgentFactory`
+program - and it decides whether Engine 3 is the main line or an experiment.

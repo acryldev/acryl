@@ -6,6 +6,7 @@ import { parseAcrylArgs } from './grammar.ts'
 interface RunningDirectHost {
   readonly runtimeState: 'ready' | 'unavailable'
   readonly profile: string
+  readonly engine: string
   readonly generationId: string
   dispose(): Promise<void>
 }
@@ -45,6 +46,7 @@ function statusLine(host: RunningDirectHost): string {
   return JSON.stringify({
     mode: 'direct',
     profile: host.profile,
+    engine: host.engine,
     generationId: host.generationId,
   })
 }
