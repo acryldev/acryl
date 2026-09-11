@@ -3306,3 +3306,58 @@ with the remaining 3 (`session-bridge.spec.ts`) needing a real
 self-skip guard DSH's own e2e tests use - flagged, not fixed, separate
 concern from this bug. `acryl-cli`/`acryl-web` typecheck clean against the
 fix (both consume these functions).
+
+## 2026-09-11 - feat: dsh engine extracted as a full Cordis swappable plugin (spec 028 T010)
+
+Commit: `39088ed`
+
+The real deliverable of "concentrate on Engine 1 and 2" -
+`acryl-harness-runtime/src/engine-dsh.ts`, `createDshEngineDefinition
+(profileName)`. Mounts the pinned Harness `acryl` profile under
+`createAcrylEngineHost`'s persistent root using the `mountRootInclude`
+pattern the previous spike verified, instead of the second Cordis root
+`bootAcrylHarnessProfile`'s `boot()` creates - `dsh` is now genuinely the
+same kind of hot-swappable Loader row `pi-cordis` already proved itself to
+be, not a special case.
+
+Verifying against the real pinned profile (not a synthetic noop fixture,
+matching `tests/profile.spec.ts`'s own working pattern) surfaced two more
+real bugs beyond the spike's disposal-scoping one - both caught by tests
+that failed first, not assumed correct:
+
+- `boot()`'s `ctx.provide('dshHomePath', dshHomePath)` had to move to
+  `ctx.root` - the profile's Include tree is a sibling of this plugin's own
+  entry in the shared Loader, not a descendant, so a provide on this
+  plugin's own forked `ctx` was invisible to it
+  (`ReferenceError: dshHomePath is not defined` deep inside the composed
+  session-persistence/storage patches). Guarded with a presence check
+  since it is a static, engine-agnostic value meant to outlive any one
+  engine's mount, unlike the profile tree itself.
+- `installAcrylWorkspaceStatusTool`'s `ctx.tools.register()` disposer is
+  never wrapped in `ctx.effect()` by any of its three callers - harmless
+  for the other two (`bootAcrylHarnessProfile`, `bootAcrylWebProfile`),
+  which each own a whole process-lifetime root and never unmount
+  independently. This plugin captures and owns that disposer explicitly;
+  without it, a dedicated swap-safety test (swap away from `dsh`, swap
+  back) failed with a duplicate-registration error on the second mount.
+
+Confirmed `installSessionLogExporter` needed no equivalent fix -
+`ctx.logger` is an ambient Cordis primitive, not a topology-sensitive
+injected service like `ctx.tools`, so this plugin's own `ctx` was already
+correct for it.
+
+`tests/engine-dsh.spec.ts`: 4/4 through real Loader activation - real
+profile boot with real `sessions`/`agents`/`authorization` services
+present in the shared host tree (not a second root), full teardown on host
+disposal, empty-profile-name rejection before any activation, and the
+swap-safety test. Full `acryl-harness-runtime` suite: 24/28 (same 4
+pre-existing, unrelated failures as before this work - the confirmed-
+unrelated HMR-guard assertion and three `DEEPSEEK_API_KEY`-dependent
+`session-bridge.spec.ts` tests). typecheck clean across
+`acryl-harness-runtime`, `acryl-cli`, `acryl-control`.
+
+Recorded as T010 done in `specs/028-harness-engine-swap/tasks.md`'s
+reconciliation banner. Remaining for the "Engine 1 and 2" goal: adopt
+`pi-cordis` (already exists, Decision 2's amendment), and re-point
+`acryl-cli`'s direct bootstrap onto `createAcrylEngineHost` (T013-T017,
+still conceptually valid but need re-authoring against its actual shape).
