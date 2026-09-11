@@ -3274,3 +3274,35 @@ it is not a stale-install artifact). Root cause is in `initProfile`/
 `healProfilesModuleFallback`'s package-linking behavior for a fresh
 temp-dir profile, a different subsystem from the engine-extraction work -
 flagged, not fixed, to avoid scope creep into an unrelated investigation.
+
+## 2026-09-11 - fix: bootAcrylHarnessProfile/bootAcrylWebProfile raced the module-fallback link setup
+
+Commit: `aebaac2`
+
+Discovered while trying to verify the real dsh-cordis engine extraction
+(spec 028): `acryl-harness-runtime/tests/profile.spec.ts` - the dedicated
+test for `bootAcrylHarnessProfile` - failed on every real-profile-boot path,
+every DSH bundle package unresolvable ("Cannot find package
+'@deepseek-ai/dsh-agent-loop'" and dozens more). Root cause:
+`healProfilesModuleFallback` is genuinely async (real symlink/proxy work
+under a cross-process file lock) but both `bootAcrylHarnessProfile` and
+`bootAcrylWebProfile` called it without `await`, racing `loadProfile()`/
+`boot()` ahead of the fallback links actually existing.
+
+Masked in normal desktop use because a long-lived `~/.dsh-acryl` home
+already has the fallback established from a prior run - the race window is
+empty once `moduleFallbackCurrent()` is already true. Not masked on a
+genuinely fresh home: a real first-time user's very first launch would hit
+this exact race, not just tests using a throwaway temp `DSH_HOME`. This is
+a real, if narrow, production bug, not only a test-infrastructure gap.
+
+Fixed by adding the missing `await` at both call sites. Verified: 2 of
+`profile.spec.ts`'s 3 tests now pass with real DSH packages resolving (the
+remaining failure is a pre-existing HMR-guard assertion, confirmed
+unrelated - reverting this fix reproduces it identically); the broader
+suite went from effectively every real-boot test failing to 20/24 passing,
+with the remaining 3 (`session-bridge.spec.ts`) needing a real
+`DEEPSEEK_API_KEY` this environment doesn't have and lacking the
+self-skip guard DSH's own e2e tests use - flagged, not fixed, separate
+concern from this bug. `acryl-cli`/`acryl-web` typecheck clean against the
+fix (both consume these functions).
