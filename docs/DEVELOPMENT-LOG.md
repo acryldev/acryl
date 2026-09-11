@@ -3600,3 +3600,76 @@ resolution against every name every shipped preset references, so a future
 instead of only surfacing as a session-create crash in the running app.
 Full `acryl-desktop` suite 850/854 (4 pre-existing skips, no regressions);
 typecheck clean across all five tsconfig faces.
+
+## 2026-09-12 - feat: Desktop and the engine-host prepare hook (spec 028)
+
+Commits: `10d8c5b`, `2af6a4c`, `e2fae09`
+
+User confirmed spec 028 Decision 7's open question (any engine, any
+surface - Route 2/3, not CLI-only), which commits to "Engine 1 everywhere"
+as the real prerequisite: Desktop, the only surface still calling DSH's
+raw `boot()` directly (its own second Cordis root, no engine-host row),
+needed to close the same gap `acryl-cli`'s existing re-point already
+closed.
+
+Two shared-infra gaps found and closed before Desktop's own re-point
+could land:
+
+1. `createAcrylEngineHost` had no hook for a surface's own pre-engine
+   setup. Desktop's `boot()` `prepare` callback registers its own services
+   (`DesktopActionsService`, `DesktopProfileService`, `DesktopPluginsService`,
+   `desktopRuntime`/`desktopPnpmBootstrap` provides) *before* any DSH
+   profile plugin mounts - load-bearing, since `dsh-community-market`'s own
+   plugin does `ctx.inject(['desktopProfiles', 'desktopPnpm'])` against
+   exactly those services. Added an optional `prepare(ctx)` parameter,
+   invoked right after `ctx.plugin(Loader)` and before any engine mounts -
+   mirrors `boot()`'s own timing exactly. Purely additive; `acryl-cli`'s
+   existing usage (never passes it) verified unaffected (292/292).
+
+2. `createDshEngineDefinition(profileName)` resolves its own profile
+   internally (the CLI/TUI flavor: `acryl-harness-runtime`'s own
+   `loadProfile`/`resolveProfileDir`). Desktop has its own separate
+   pipeline (`prepareDesktopProfile()`) that already produces its own
+   `rootConfig`/patches (market/editor/BLEND layering)/`bareModuleBaseUrl` -
+   handing that to the existing function would have silently discarded it
+   and resolved a different profile. Split `engine-dsh.ts`: the mounting
+   logic (`mountDshEngine`) now takes an already-resolved
+   `DshEngineComposition`; `createDshEngineDefinition` resolves a profile
+   by name then calls it (unchanged behavior, same tests passing);
+   `createDshEngineDefinitionFromComposition` is the new Desktop-facing
+   entry point taking an externally-resolved composition directly.
+
+Desktop's own re-point (`main.ts`) is a 25-line mechanical transplant -
+the ~190-line `prepare` callback body moves verbatim into the new hook;
+`prepared.rootConfig`/`patches`/`bareModuleBaseUrl` pass straight into
+`createDshEngineDefinitionFromComposition`. Verified before landing that
+`ctx.baseUrl` is never read directly in `main.ts` (only Cordis's own
+Loader/Include internals consume it, already set correctly inside
+`mountDshEngine`), that `lifecycleStartupFailureReason` never string-
+matches `boot()`'s specific error format, and that no direct
+`ctx.fiber.dispose()` call exists to route through `engineHost.dispose()`
+instead.
+
+Tests: RED confirmed first for both shared-infra changes (real failing
+cases against the unfixed functions), then GREEN. `package.spec.ts`'s
+source-ordering assertion updated to the new call-site literal (same
+ordering invariant). Full `acryl-desktop` suite 850/854 (4 pre-existing
+skips, no regressions); typecheck clean across all five tsconfig faces;
+full `acryl-cli` suite 292/292 and a real cold-start (`--json`, throwaway
+`ACRYL_HOME`) both unaffected.
+
+Pre-existing, found and left unfixed (confirmed unrelated by stashing
+each change out and reproducing identically): `acryl-harness-runtime`'s
+`profile.spec.ts` has a stale HMR-guard test premise (fresh profiles now
+ship `hmr.disabled: true` by default); 3 failures in `session-bridge.spec.ts`
+look like `dsh-llm`/`dsh-token-meter` shape drift at the pinned
+`0.1.5-alpha.1`. Neither touched - separate root causes, no overlap with
+the engine-host mechanism.
+
+Not verified: an actual Electron GUI launch of Desktop. Builds/typechecks/
+tests stay headless-safe per this repo's own rule; a real `pnpm run dev`
+boot is the user's own hands-on check next, same pattern as this
+session's `acryl-cli` cold-start verification.
+
+Web (`acryl-web`, still calling `bootAcrylWebProfile` directly) remains
+the one surface not yet re-pointed.
