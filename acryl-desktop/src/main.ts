@@ -93,6 +93,7 @@ import type {} from './plugin-lifecycle-state.ts'
 import {
   createDesktopExitCoordinator,
   createDesktopShutdown,
+  DESKTOP_DEV_RESTART_EXIT_CODE,
   installShutdownRequests,
   type DesktopShutdown,
 } from './shutdown.ts'
@@ -107,6 +108,15 @@ import { resolveDesktopUserDataOverride } from './desktop-user-data.ts'
 
 const BIN_NAME = 'acryl-desktop'
 const PRODUCT_NAME = 'ACRYL'
+
+/**
+ * True when this process is the ephemeral dev-mode bundle `launch-dev.mjs`
+ * stages into a per-run temp directory (see `DESKTOP_DEV_RESTART_EXIT_CODE`
+ * in `shutdown.ts`). A packaged install's execPath never matches this.
+ */
+function isEphemeralDevBundle(): boolean {
+  return process.execPath.includes('acryl-electron-dev-')
+}
 
 class RendererStartupFailure extends Error {
   constructor(
@@ -341,10 +351,21 @@ async function start(): Promise<void> {
     electronLogger.error(`${BIN_NAME}: active run tracking unavailable: ${cause instanceof Error ? cause.message : String(cause)}`)
   }
   removeChildProcessLogging = installDesktopChildProcessLogging(app, electronLogger)
+  // `launch-dev.mjs` stages the Electron runtime into a per-run temp
+  // directory and deletes it as soon as this process exits. app.relaunch()
+  // would spawn a new process pointed at that same doomed executable path
+  // ("Library not loaded: Electron Framework" - a dyld crash, not a JS
+  // error). Detect that ephemeral staging path and exit with a dedicated
+  // code instead, so launch-dev.mjs can stage a fresh bundle and relaunch
+  // itself; a packaged install's execPath never matches this and keeps
+  // using the normal OS relaunch.
   const nativeExit = createDesktopExitCoordinator(
     {
       prepareToQuit: () => { runtime.prepareToQuit() },
-      relaunch: () => { app.relaunch() },
+      relaunch: () => {
+        if (isEphemeralDevBundle()) app.exit(DESKTOP_DEV_RESTART_EXIT_CODE)
+        else app.relaunch()
+      },
       exit: code => { app.exit(code) },
     },
     () => {
@@ -1189,8 +1210,11 @@ async function handleFatalLauncherFailure(cause: unknown): Promise<void> {
     })
     const result = await recoveryWindow.run()
     if (result === 'restart') {
-      app.relaunch()
-      app.exit(0)
+      if (isEphemeralDevBundle()) app.exit(DESKTOP_DEV_RESTART_EXIT_CODE)
+      else {
+        app.relaunch()
+        app.exit(0)
+      }
     } else {
       app.exit(1)
     }

@@ -3,6 +3,21 @@
 /** Maximum grace allowed for the Cordis tree to dispose before native exit. */
 export const DESKTOP_SHUTDOWN_TIMEOUT_MS = 5_000
 
+/**
+ * Exit code a dev-mode relaunch uses instead of `app.relaunch()`.
+ *
+ * `acryl-desktop/scripts/launch-dev.mjs` stages the Electron runtime into a
+ * fresh, per-run temp directory and deletes it as soon as this process
+ * exits. `app.relaunch()` would spawn a new process pointed at that same
+ * (about to be deleted) executable path, which crashes at dyld load time
+ * ("Library not loaded: Electron Framework") instead of restarting the app.
+ * `main.ts` exits with this code under the dev launcher instead of calling
+ * `app.relaunch()`; `launch-dev.mjs` recognizes it and stages a fresh bundle
+ * before spawning again. The literal `43` is mirrored in `launch-dev.mjs` -
+ * that plain script cannot import this compiled module.
+ */
+export const DESKTOP_DEV_RESTART_EXIT_CODE = 43
+
 /** Bounded, escalating shutdown controller for the Electron application. */
 export interface DesktopShutdown {
   /** Start graceful disposal, or force exit when a shutdown already owns it. */

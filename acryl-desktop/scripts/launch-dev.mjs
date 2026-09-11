@@ -13,6 +13,10 @@ const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)))
 const PRODUCT_NAME = 'ACRYL'
 const DEVELOPMENT_BUNDLE_ID = 'dev.acryl.desktop.development'
 const DEV_ENTITLEMENTS_PATH = join(packageRoot, 'build', 'entitlements.dev.plist')
+// Must match `DESKTOP_DEV_RESTART_EXIT_CODE` in `../src/shutdown.ts`. That
+// module is compiled TypeScript and this is a standalone script run directly
+// by Node, so the two sides mirror the literal rather than sharing an import.
+export const DEV_RESTART_EXIT_CODE = 43
 
 /** Replace one string value in an XML property list and fail if the key is absent. */
 export function setPlistString(source, key, value) {
@@ -89,44 +93,72 @@ export async function prepareDarwinDevelopmentBundle(electronExecutable) {
   }
 }
 
-/** Spawn Electron, forward termination requests, and return its process status. */
-export async function launchDevelopmentElectron(argv = []) {
-  const imported = await import('electron')
+/** Spawn one Electron process and resolve with its exit code, forwarding SIGINT/SIGTERM to it. */
+function spawnAndWait(executable, argv) {
+  return new Promise((resolveExit, reject) => {
+    const child = spawn(executable, argv, {
+      stdio: 'inherit',
+      env: process.env,
+    })
+    const forwardSignal = signal => { child.kill(signal) }
+    const onInterrupt = () => { forwardSignal('SIGINT') }
+    const onTerminate = () => { forwardSignal('SIGTERM') }
+    process.once('SIGINT', onInterrupt)
+    process.once('SIGTERM', onTerminate)
+    const release = () => {
+      process.off('SIGINT', onInterrupt)
+      process.off('SIGTERM', onTerminate)
+    }
+    child.once('error', cause => {
+      release()
+      reject(cause)
+    })
+    child.once('exit', (code, signal) => {
+      release()
+      resolveExit(code ?? (signal === null ? 1 : 128))
+    })
+  })
+}
+
+/**
+ * Spawn Electron, forward termination requests, and return its process status.
+ *
+ * A restart requested from inside the app (spec 032 live-install restart, or
+ * the manual "Restart ACRYL" control) exits with `DEV_RESTART_EXIT_CODE`
+ * instead of calling `app.relaunch()`: this function's own per-run temp
+ * bundle is deleted as soon as the child exits (see `prepareDarwinDevelopmentBundle`),
+ * so `app.relaunch()`'s own OS-level respawn would point at an
+ * executable path we are about to delete out from under it - a dyld crash
+ * ("Library not loaded: Electron Framework"), not a graceful restart. On
+ * that exit code, stage a fresh bundle and spawn again instead of returning.
+ *
+ * `prepareBundle` and `spawnChild` default to the real darwin-bundling and
+ * process-spawning implementations; tests inject fakes for the restart loop
+ * without touching Electron, cp, or codesign.
+ */
+export async function launchDevelopmentElectron(argv = [], {
+  importElectron = () => import('electron'),
+  prepareBundle = prepareDarwinDevelopmentBundle,
+  spawnChild = spawnAndWait,
+} = {}) {
+  const imported = await importElectron()
   if (typeof imported.default !== 'string') {
     throw new Error('launch-dev: electron package did not provide its executable path')
   }
-  const prepared = process.platform === 'darwin'
-    ? await prepareDarwinDevelopmentBundle(imported.default)
-    : { executable: imported.default, cleanup: async () => {} }
   const mainPath = join(packageRoot, 'lib', 'main.js')
 
-  try {
-    return await new Promise((resolveExit, reject) => {
-      const child = spawn(prepared.executable, [mainPath, ...argv], {
-        stdio: 'inherit',
-        env: process.env,
-      })
-      const forwardSignal = signal => { child.kill(signal) }
-      const onInterrupt = () => { forwardSignal('SIGINT') }
-      const onTerminate = () => { forwardSignal('SIGTERM') }
-      process.once('SIGINT', onInterrupt)
-      process.once('SIGTERM', onTerminate)
-      const release = () => {
-        process.off('SIGINT', onInterrupt)
-        process.off('SIGTERM', onTerminate)
-      }
-      child.once('error', cause => {
-        release()
-        reject(cause)
-      })
-      child.once('exit', (code, signal) => {
-        release()
-        resolveExit(code ?? (signal === null ? 1 : 128))
-      })
-    })
-  }
-  finally {
-    await prepared.cleanup()
+  for (;;) {
+    const prepared = process.platform === 'darwin'
+      ? await prepareBundle(imported.default)
+      : { executable: imported.default, cleanup: async () => {} }
+    let code
+    try {
+      code = await spawnChild(prepared.executable, [mainPath, ...argv])
+    }
+    finally {
+      await prepared.cleanup()
+    }
+    if (code !== DEV_RESTART_EXIT_CODE) return code
   }
 }
 
