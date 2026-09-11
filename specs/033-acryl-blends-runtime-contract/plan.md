@@ -39,6 +39,18 @@ citations, not general claims:
    with, and which Harness `subagents` capability (if any) a candidate-
    worktree evolution run should reuse per that doc's "Relationship to
    existing Harness capabilities" section.
+6. **Multi-engine coordination** (triaged: coordinate now, not deferred).
+   Re-read `specs/028-harness-engine-swap/` and `specs/029-acryl-hybrid-
+   engine/` at whatever state they have reached by B0's start (both were
+   drafts with no committed TypeScript interface as of this ticket's
+   filing). Confirm the finding already recorded in `spec.md`'s gap table
+   still holds: `BlendRuntimeAdapter` sits on a different axis than their
+   "Engine adapter" (Cordis composition vs. which agent loop drives a
+   session) and does not block on them, but Blends' §10 tool facade
+   (`BlendAgentTools`) does - it must register through whatever uniform
+   cross-engine tool-exposure mechanism 028/029 end up defining. If 028/029
+   have since committed a concrete interface, cite it here by file/line
+   before B1 locks the tool-facade registration shape.
 
 Complete when: every gap row in `spec.md`'s table has a cited answer, not a
 guess. Invalid/needs re-scoping if B0 finds the hot-reload boundary is
@@ -73,32 +85,38 @@ before every method has a real implementation.
 
 ## B2 - Live module resolution for a not-yet-published row
 
-The one concrete, scoped extension of spec 032's live-mount machinery this
-ticket actually needs for Blends' own Phase 4 vertical slice ("Zero ->
-Contacts", `ACRYL_BLENDS_SPEC.md` §29): `PluginLifecycleController.activate`
-today requires the package to already resolve via `dsh.profile.bundles` +
-`node_modules` (real npm package on disk). A freshly agent-generated
-private Cordis module has neither yet. Design (informed by B0 ADR-001)
-either:
+**Triaged and scoped down from the original draft** (verified against
+`plugin-lifecycle-controller.ts` and `desktop-plugin-reconcile.ts` directly,
+not assumed): `PluginLifecycleController.activate` requires the package to
+already resolve via `dsh.profile.bundles` + `node_modules`, but
+`desktop-plugin-reconcile.ts`'s existing `pnpm add file:<dir>` + reconcile
+path (spec 031, already used by the market) already produces exactly that -
+a local directory with a `package.json` and `cordis.patch.yml` becomes a
+real resolvable package - and `activate()` already mounts it live
+afterward, no restart. So B2 is **not** a new Loader mechanism. It is:
 
-- a "local file module" activation path parallel to the existing
-  `file:`-install mechanism `desktop-plugin-reconcile.ts` already uses for
-  the market (spec 031) - reuse that pnpm+reconcile machinery rather than
-  inventing a second local-install path, or
-- a narrower "register this in-memory/on-disk-but-unpublished row" Loader
-  insert, if B0 shows the existing `include:` group insert path
-  (`includeGroup()` / `bundleInsertRow()` in
-  `plugin-lifecycle-controller.ts`) already supports a row that has no
-  `dsh.profile.bundles` entry.
+1. A thin helper that, given a generated module's source (from wherever
+   Blends' differentiation step writes it - a candidate worktree, per B3),
+   materializes it as a local npm-shaped package directory (`package.json`
+   with `dsh.bundle.patch`, the module source, `cordis.patch.yml`) in the
+   shape `reconcileProfileBundles` already expects.
+2. Calling the existing `pnpm add file:<dir>` + `reconcileProfileBundles` +
+   `PluginLifecycleController.activate(packageName)` sequence, exactly as
+   the market install path already does end to end.
+3. The equivalent teardown sequence (`deactivate` + `pnpm remove` +
+   reconcile) for a rejected/rolled-back candidate.
 
-Do not build a generic "any file path becomes a live plugin" surface wider
-than what one generated-module scenario needs - match spec 032's own
-discipline (T1-T6 each a narrow, provable slice).
+This means every "generated Cordis module" a Blend produces is, by
+construction, a real local npm package the instant it is tried live - the
+same shape a market plugin has, not a special ephemeral case. Keep it that
+way; do not special-case in-memory modules unless a real scenario proves
+this materialization step is a measured bottleneck.
 
-Complete when: a hand-written Cordis module living outside
-`dsh.profile.bundles`/`node_modules` can be mounted live through this path
-and torn down again, proven by a real Loader-activation test (not a mock),
-matching the verification bar in `AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md`.
+Complete when: a hand-written module directory (not published anywhere)
+goes from "just files on disk" to "live, mounted Cordis row" and back
+through this exact reconcile+activate/deactivate sequence, proven by a real
+Loader-activation test (not a mock), matching the verification bar in
+`AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md`.
 
 ## B3 - Candidate workspace + checkpoint primitives (design only this ticket)
 

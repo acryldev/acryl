@@ -1,6 +1,28 @@
 # ACRYL-side runtime contract for BLENDS
 
-Status: needs-triage
+Status: ready-for-agent
+
+## Triage (2026-09-11)
+
+Three open questions were resolved before this moved off `needs-triage`
+(see the gap table and `plan.md` for the full reasoning each decision
+produced):
+
+1. **B2 scope** - confirmed smaller than the original draft: reuse the
+   existing `desktop-plugin-reconcile.ts` (`pnpm add file:` + reconcile) +
+   `PluginLifecycleController.activate` sequence for a generated module,
+   not a new Loader mechanism. A generated module is always a real local
+   npm package by construction.
+2. **"Checkpoint" naming** - collides in name only with the still-unspecified
+   `specs/011-acryl-10-checkpoints` (session/conversation branching). Kept
+   as two separate concepts; flagged in the gap table so nobody conflates
+   them later.
+3. **Multi-engine coordination** - track `specs/028-harness-engine-swap/`
+   and `specs/029-acryl-hybrid-engine/` now, not later. Finding so far:
+   `BlendRuntimeAdapter` (Cordis composition) is a different axis from their
+   "Engine adapter" (agent-loop selection) and is not blocked by them; the
+   Blends §10 tool facade is the actual intersection point and must re-check
+   028/029's state before B1 locks its registration shape (plan.md B0 item 6).
 
 ## Summary
 
@@ -68,12 +90,13 @@ facade), §26 (service contracts) against this repo's actual surfaces:
 
 | Blends needs | Closest existing ACRYL surface | Gap |
 | --- | --- | --- |
-| Mount/unmount a row live, by package name, without a restart | `PluginLifecycleController.setEnabledByPackageName` / `activate` / `deactivate` (`acryl-desktop/src/plugin-lifecycle-controller.ts`, spec 032) | None for a *known* row. No "insert a brand-new generated row I haven't published anywhere" path - `activate()` requires the package to already resolve via `dsh.profile.bundles` + `node_modules`. |
+| Mount/unmount a row live, by package name, without a restart | `PluginLifecycleController.setEnabledByPackageName` / `activate` / `deactivate` (`acryl-desktop/src/plugin-lifecycle-controller.ts`, spec 032) | None for a *known* row. `activate()` requires the package to already resolve via `dsh.profile.bundles` + `node_modules` (it `require.resolve`s the package's own `cordis.patch.yml`). **Verified and triaged smaller than first stated:** `desktop-plugin-reconcile.ts`'s existing `pnpm add file:<dir>` + reconcile path (spec 031) already stages exactly that - a local directory becomes a real resolvable package - and `activate()` already mounts it live afterward with no restart. B2 is therefore "wire reconcile + activate together for an agent-generated module," not a new Loader mechanism; see `plan.md` B2. |
 | Snapshot/restore state across a candidate swap | Cordis's own Fiber dispose/re-`apply` (`entry.fiber.restart()`, spec 032 T4/T5) gives disposal ordering, not a state *snapshot*. No `RuntimeStateSnapshot` concept exists. | Real gap - needs design, not just wiring. |
 | Isolated candidate workspace per evolution (git worktree/branch) | None in `acryl-desktop`. ALLAGENT (the parent project) has a worktree convention (`.worktrees/TASK-<id>-<agent>`, `git worktree` helpers) but that is a *different, unrelated* product/repo - do not import its code, only note the prior art exists. | Real gap. |
 | Health check + atomic activate/abort of a candidate | `PluginLifecycleController.setEnabled`'s rollback-on-failure (spec 032, disable-cascade rollback) is the closest proof this pattern already works for *enable/disable*; there is no equivalent for "mount a never-before-seen module, verify, then commit or discard." | Real gap, but a proven pattern to extend rather than invent from zero. |
-| Checkpoint + rollback of the whole Blend generation | Git (source/config) exists as infrastructure but nothing in this repo currently checkpoints a *desktop profile generation* as a restorable unit. `startup-recovery-controller.ts` restores a known-good profile after a *boot* failure, which is adjacent but not the same operation (it is host-boot recovery, not user-directed rollback of an accepted change). | Real gap; `startup-recovery-controller.ts` is the nearest prior art to study, not reuse as-is. |
+| Checkpoint + rollback of the whole Blend generation | Git (source/config) exists as infrastructure but nothing in this repo currently checkpoints a *desktop profile generation* as a restorable unit. `startup-recovery-controller.ts` restores a known-good profile after a *boot* failure, which is adjacent but not the same operation (it is host-boot recovery, not user-directed rollback of an accepted change). | Real gap; `startup-recovery-controller.ts` is the nearest prior art to study, not reuse as-is. **Naming note (triaged):** `specs/011-acryl-10-checkpoints` reserves "checkpoint" for a different, still-unspecified concept (session/conversation branch-compare, per its "Richer than chat history. Reuse session fork" note) - the two are unrelated in scope and stay separate; this ticket just flags the word collision so nobody conflates them. |
 | One neutral tool facade registered into every agent runtime (Pi, DSH) | `docs/acryl/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md` already states the exact same requirement for ACRYL's own agent-control-surface work ("reuse the existing Harness `subagents` capability... do not fork or edit the pinned upstream checkout... add an ACRYL-owned adjacent capability"). | Not a gap in principle - a BLEND tool facade must follow that same document, not invent parallel tool-registration machinery. This is the highest-risk place for scope duplication if BLENDS and ACRYL agent-control-surface work happen on separate tracks without talking to each other. |
+| `BlendRuntimeAdapter` being engine-agnostic (DSH first, pi/pi-cordis later - Blends' own "Agent Runtime Adapter != Blend Runtime" rule) | `specs/028-harness-engine-swap/` (drafted, "Engine adapter": the ACRYL-owned mapping between one concrete engine and an engine-neutral runtime contract) and `specs/029-acryl-hybrid-engine/` (drafted). **Checked, triaged "coordinate now":** neither has a committed TypeScript interface yet - both are still requirement-level specs, nothing to literally import. But the finding that matters: 028/029's "Engine adapter" answers *which agent loop drives a session* (DSH vs pi vs hybrid); `BlendRuntimeAdapter` answers *how a Blend's Cordis rows mount/snapshot/checkpoint*, and Cordis is the substrate regardless of which engine is driving the loop at any moment - so `BlendRuntimeAdapter` itself is **not** on the same axis and does not need to wait for 028/029. The real intersection is narrower: Blends' §10 tool facade (`blend_inspect`, `blend_plan_create`, ...) must register through whatever uniform tool-exposure mechanism 028/029's hybrid engine work establishes for making tools available across DSH/pi - not invent a second one. | Track 028/029; re-check before B1 locks `BlendAgentTools`' registration shape, not before `BlendRuntimeAdapter`'s. |
 | Evolution Ledger (who/what/why changed, append-only) | `.allagent/room/main.jsonl`-style event sourcing is an ALLAGENT (parent project) concept, not something this repo has. This repo does have `docs/DEVELOPMENT-LOG.md` (human-authored, not machine-queryable) and the plugin-lifecycle receipt/snapshot machinery (spec 032), which is the closest *typed, machine-readable* record of "what changed" that exists today. | Real gap for a durable, queryable ledger; the plugin-lifecycle receipt shape (`PluginLifecycleReceipt`) is a reasonable starting shape to extend rather than a new format from scratch. |
 | UI contribution slots (Tier A/B/C from the Blends spec §14) | The renderer already has a named-slot contribution system (`renderSlot('root')` and friends - see the boot-order crash investigated in spec 032's dev-log entries for how central this already is). | Needs an inventory (what slots exist today, are they stable/public enough for a third-party-ish contributor like a Blend module), not a new mechanism. |
 | Data adapter / schema migrations | Not investigated in this pass. `@deepseek-ai/dsh-app-boot` and the Harness session/storage stack likely already have *some* persistence primitive; unknown whether it fits "per-Blend SQLite domain data with migrations." | Unknown - flagged as a Phase 0 research item, not assumed either way. |

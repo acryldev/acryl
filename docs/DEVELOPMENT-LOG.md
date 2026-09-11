@@ -3030,3 +3030,36 @@ CLI, UI) in this repo - this repo owns primitives, Blends owns the product.
 
 `Status: needs-triage` - this is a proposal for review, not yet scoped into
 an active implementation milestone.
+
+## 2026-09-11 - docs: spec 033 triage - three questions resolved, ready-for-agent
+
+Went back into the code rather than ask a generic status question, per the
+user's direction ("ask me specifying implementation questions on what
+already contradicts to Acryl current implementation"):
+
+- **B2 was overstated.** Verified directly: `PluginLifecycleController
+  .activate()` (`plugin-lifecycle-controller.ts:331`) does require the
+  package in `dsh.profile.bundles` + `node_modules`, but
+  `desktop-plugin-reconcile.ts`'s existing `pnpm add file:` + reconcile
+  path (spec 031) already produces exactly that shape, and `activate()`
+  already mounts it live afterward - no restart. Triaged: reuse
+  reconcile+activate for a generated module rather than build new Loader
+  mechanism; a generated module becomes a real local npm package the
+  moment it is tried live, by construction.
+- **"Checkpoint" naming collision** with the still-unspecified
+  `specs/011-acryl-10-checkpoints` (session/conversation branching, not
+  plugin composition) - triaged as two separate concepts that happen to
+  share a word; flagged in the doc, not unified.
+- **Multi-engine coordination** with `specs/028-harness-engine-swap/` and
+  `specs/029-acryl-hybrid-engine/` (both drafted, no committed TS interface
+  yet as of this check) - triaged "coordinate now." Finding:
+  `BlendRuntimeAdapter` (Cordis row composition) and 028/029's "Engine
+  adapter" (which agent loop drives a session) are different axes;
+  `BlendRuntimeAdapter` is not blocked on them. The real intersection is
+  Blends' §10 tool facade, which must register through whatever uniform
+  cross-engine tool-exposure mechanism 028/029 settle on - added as a B0
+  research item (item 6) to re-check before B1 locks that shape.
+
+`specs/033-acryl-blends-runtime-contract/spec.md` and `plan.md` updated in
+place with these findings and a `## Triage` section. Status moved to
+`ready-for-agent`.
