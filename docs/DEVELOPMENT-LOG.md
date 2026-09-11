@@ -3231,3 +3231,46 @@ into its own dedicated spec ledger once there is real field signal - the
 user's own framing already names it as a potential "new chapter," possibly
 a coding-agent engine other projects consume, which is the right scale for
 its own ledger rather than a subtask here.
+
+## 2026-09-11 - spike: verified mountRootInclude nesting inside the engine host
+
+`acryl-harness-runtime/tests/engine-host-mount-root-include.spec.ts` (3/3
+passing, real Loader activation) - proved the primitive the `dsh` engine
+plugin extraction (spec 028 Phase 2) depends on, before trusting it in the
+real extraction.
+
+Found and fixed a real bug the spike itself surfaced: `mountRootInclude`
+creates its Include row at the Loader's own top level (no `parent`
+parameter) - it is not automatically scoped to the calling plugin's own
+fiber the way `ctx.effect()` resources are. Without an explicit fix,
+swapping the `acryl-engine` row away would leave the entire nested DSH
+Include tree mounted forever - a real resource leak on every engine swap,
+not a hypothetical one; the first version of the spike demonstrated it
+directly (`lines(dir)` staying `['mount']` after a swap that should have
+unmounted it). Fix, now proven: capture `mountRootInclude`'s returned
+`Entry` and explicitly own its removal via `ctx.effect(() => () => {
+ctx.loader.remove(entry.options.id) })`. Also found and worked around: an
+inner `ctx.get('loader')?.await()` call from inside the engine plugin's own
+`apply()` deadlocks against `createAcrylEngineHost`'s own outer await on
+the same loader - removed it; the host's own settle is sufficient.
+
+Also confirmed the earlier "does re-selecting collide on
+`ctx.loader.builtins.include`" risk from the previous reconciliation entry
+is not real - the spike's third test (swap away, swap back) passes cleanly;
+that registration is just harmlessly overwritten each call.
+
+Both findings recorded in `specs/028-harness-engine-swap/tasks.md`'s
+reconciliation banner.
+
+Separately, incidentally discovered a pre-existing, unrelated test failure
+while running the full `acryl-harness-runtime` suite:
+`tests/session-bridge.spec.ts` fails end to end - `bootAcrylHarnessProfile`
+cannot resolve DSH bundle packages (`@deepseek-ai/dsh-agent-loop`,
+`dsh-fs-sandbox`, `dsh-llm-deepseek`, and others) from its fresh temp
+`DSH_HOME` test fixture. Confirmed not caused by anything this session
+touched (git history on that file predates this session; a clean
+`corepack pnpm install --frozen-lockfile` reports already up to date, so
+it is not a stale-install artifact). Root cause is in `initProfile`/
+`healProfilesModuleFallback`'s package-linking behavior for a fresh
+temp-dir profile, a different subsystem from the engine-extraction work -
+flagged, not fixed, to avoid scope creep into an unrelated investigation.

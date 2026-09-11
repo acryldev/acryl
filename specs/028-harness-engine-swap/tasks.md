@@ -54,12 +54,27 @@
 >   `mountRootInclude(ctx, rootConfig, patches, bareModuleBaseUrl)`,
 >   `ctx.get('loader')?.await()`, `assertEntriesActivated` (also exported),
 >   then `installAcrylWorkspaceStatusTool`/`installSessionLogExporter`.
-> - Open risk carried to implementation, not yet resolved: `mountRootInclude`
->   sets `ctx.loader.builtins.include` on the ctx it is given every call. On
->   the shared engine-host `ctx`, calling it more than once (e.g. re-selecting
->   `dsh` after swapping away and back) must be proven not to collide with
->   a concurrent or prior registration - verify with a real Loader-activation
->   test before trusting it, per this repo's own Cordis verification bar.
+> - **Verified with a real spike, 2026-09-11** (`acryl-harness-runtime/tests/
+>   engine-host-mount-root-include.spec.ts`, 3/3 passing through real Loader
+>   activation): `mountRootInclude` composes cleanly onto
+>   `createAcrylEngineHost`'s shared `ctx`, and re-selecting `dsh` after
+>   swapping away and back does **not** collide on `ctx.loader.builtins.include`
+>   (it is simply overwritten harmlessly on each call). **But the spike found
+>   a real, different bug first:** `mountRootInclude` creates its Include row
+>   at the Loader's own top level (no `parent` parameter) - it is **not**
+>   automatically scoped to the calling plugin's own fiber the way
+>   `ctx.effect()` resources are. Without an explicit fix, swapping the
+>   `acryl-engine` row away leaves the entire nested DSH Include tree mounted
+>   forever (a real resource leak on every engine swap). Fix, proven in the
+>   spike: capture `mountRootInclude`'s returned `Entry` and explicitly own
+>   its removal: `const entry = await mountRootInclude(ctx, ...); if (entry)
+>   ctx.effect(() => () => { void ctx.loader.remove(entry.options.id) })`.
+>   The real `dsh` engine plugin (T010) must use this exact pattern. Also
+>   found and worked around: calling `ctx.get('loader')?.await()` from
+>   *inside* the engine plugin's own `apply()` deadlocks (`createAcrylEngineHost`
+>   already awaits the same loader outside) - do not add that call; the
+>   outer `ctx.loader.await()` `createAcrylEngineHost` already performs after
+>   `ctx.loader.create()` settles the nested tree too.
 > - T013-T017 (re-pointing `acryl-cli` off the direct bootstrap onto
 >   `AcrylEngineHandle`) remain conceptually valid but must be re-authored
 >   against `createAcrylEngineHost`'s actual return shape (`ctx`,
