@@ -6,7 +6,7 @@ Status: needs-triage
 
 - T1 `4270f25` - graph-derived mutability; any profile-bundle / market plugin toggles.
 - T2 `d74b505` + `bd5adcb` - live install via `ctx.livePluginActivation`, renderer reload only.
-- T3 `663fc25` then reverted (`<revert commit>`, 2026-09-11) - a soft
+- T3 `663fc25` then reverted (`dbd6e54`, 2026-09-11) - a soft
   client-Loader reconcile in place of `location.reload()` for a single
   targeted toggle. Two independent live tests crashed the whole app on
   disable (`Error: renderSlot('root') before any 'root' registration

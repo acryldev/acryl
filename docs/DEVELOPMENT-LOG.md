@@ -2876,3 +2876,42 @@ model merge.
 
 `pnpm --filter acryl-desktop run check` green (839 tests, closure/layout/
 loader/profile-boot/licenses all pass).
+
+## 2026-09-11 - revert: spec 032 T3 soft client-Loader reconcile (live crash)
+
+Commit: `dbd6e54` (also fixes the spec.md status table's revert-commit
+placeholder in this checkpoint)
+
+Live testing surfaced two independent crash reports on the same code path:
+disabling `cordis-plugin-graph`, then separately disabling the editor plugin,
+each closed the whole app on the "Reload"/disable action. Both traced in the
+renderer console (`~/Library/Application Support/ACRYL/logs/dsh-2026-09-1{0,1}.log`)
+to the same signature immediately before the process died:
+
+```
+Error: renderSlot('root') before any 'root' registration (boot order)
+```
+
+That signature recurred across many log timestamps, including some that may
+predate the T3 reconcile code, so the interaction with the renderer's own
+slot-registration lifecycle was not understood well enough to patch blind
+without a live devtools session on the renderer at the moment of the crash.
+Per the standing rule to reproduce before fixing, and given a second crash
+through the same subsystem, reverted T3 rather than attempting a further
+speculative fix: `client/plugin-lifecycle-api.ts`'s `mutate()` goes back to an
+unconditional `globalThis.location.reload()` for every enable/disable/reload,
+removing the in-place `clientEntryFor()`/`reconcileClient()` path entirely.
+
+T1 (graph-derived mutability), T2 (live install), T4 (dependency cascade), and
+T5 (`ACRYL_PLUGIN_WATCH` local dev auto-reload) are host-side and unaffected -
+every mutation still hot-mounts/unmounts on the Host without a process
+restart; only the renderer's post-mutation step is back to a full page
+reload, which is the known-safe, field-tested behavior. `docs/acryl/plugin-hot-reload.md`'s
+Limits section and `specs/032-universal-hot-reload/spec.md`'s status table
+were updated to match.
+
+Verified: `corepack pnpm run typecheck` clean; `client-plugin-lifecycle-api`
+suite 7/7; full acryl-desktop suite 837 passed | 4 skipped; `pnpm run build`
+succeeds; `pnpm run check` green (verify-runtime-closure 244 nodes,
+verify-cli-runtime, verify-loader-boot, verify-profile-boot, verify-licenses
+all pass).
