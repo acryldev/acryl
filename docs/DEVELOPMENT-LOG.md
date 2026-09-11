@@ -3063,3 +3063,55 @@ already contradicts to Acryl current implementation"):
 `specs/033-acryl-blends-runtime-contract/spec.md` and `plan.md` updated in
 place with these findings and a `## Triage` section. Status moved to
 `ready-for-agent`.
+
+## 2026-09-11 - session evolution: hot-reload crash chain, root cause, live-confirmed
+
+Pushed to `origin/main` as `ab7b76c` (12 commits: `354eb9a` through
+`ab7b76c`). Chronology of how this session's hot-reload work actually
+unfolded, since the sequence of diagnoses matters more than any single
+commit:
+
+1. Live testing surfaced "the app closed" on plugin disable (twice, two
+   different plugins). Grepped the renderer logs and found a recurring
+   `Error: renderSlot('root') before any 'root' registration (boot order)`
+   right before each crash - pointed at spec 032 T3 (the soft client-Loader
+   reconcile that replaced `location.reload()`). Reverted T3 (`dbd6e54`)
+   rather than patch blind, since I could not reproduce with real devtools.
+2. A **fourth** crash report ("enable also closes the app," *after* T3 was
+   already reverted) proved that diagnosis wrong: a plain
+   `location.reload()` cannot restart the whole Electron process. Went to
+   the actual macOS crash reporter
+   (`~/Library/Logs/DiagnosticReports/ACRYL-*.ips`) instead of the app's
+   own logs, and found the real cause: `app.relaunch()` racing
+   `launch-dev.mjs`'s per-run temp Electron bundle cleanup - a dyld
+   "Library not loaded" abort at process launch, unrelated to the renderer
+   entirely. Fixed in `95236ff` (dev-mode restart now stages a fresh bundle
+   instead of trusting the OS to respawn a path already deleted).
+3. Went back and corrected the record rather than leave the wrong T3
+   narrative standing (`60f9ddc`): the `renderSlot('root')` errors were
+   most likely leftover log-tail noise from a prior crashed run, not the
+   proximate cause. T3 stays reverted (still unverified, not proven unsafe)
+   pending real devtools access.
+4. Closed spec 032's one remaining open item (`f7704b6`): the market
+   Installed tab and the Lifecycle tab wrote to two different disable
+   stores and could disagree; unified them through the existing
+   `ctx.livePluginActivation` bridge.
+5. Reviewed the sibling `acryldev/blends` project in depth at the user's
+   request and wrote `specs/033-acryl-blends-runtime-contract/` (`c990d3a`),
+   then triaged it against actual code rather than leaving it as narrative
+   claims (`ab7b76c`) - see the two entries directly above.
+6. **User-confirmed live**: enable, disable, reload, install, and uninstall
+   all work correctly with no crash, through both the Lifecycle tab and the
+   market's Installed tab. Spec 032 is functionally closed and field-proven,
+   not just test-suite-green.
+
+Also cleaned up session-crash-loop fallout from step 1-2's live testing:
+killed an orphaned `acryl-web` dev process tree holding port 3080, removed
+920 stale `dsh-spill-*` temp directories.
+
+Next: `specs/033-acryl-blends-runtime-contract/` is `ready-for-agent`, but
+the user's immediate next focus is the swappable-runtime problem
+(`dsh-cordis` <-> `pi-cordis`, i.e. `specs/028-harness-engine-swap/` and
+`specs/029-acryl-hybrid-engine/`) - directly the same multi-engine question
+spec 033's triage flagged as needing tracking before its own tool-facade
+work can lock its registration shape.
