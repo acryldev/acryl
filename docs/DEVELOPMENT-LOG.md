@@ -1,3 +1,14 @@
+## 2026-09-11 - Release v0.1.37 prepared for all ACRYL surfaces
+
+Commit: `55c80d810884ab4249d61a5866aaed7abf70acea`
+
+Synchronized the root, control plane, Harness runtime, CLI, Web, Desktop, and
+npm launcher package versions to `0.1.37`. This release contains the DSH
+`0.1.5-alpha.1` upgrade, the first swappable DSH engine extraction, the ACRYL
+Package Catalog and managed Desktop installation path, universal profile-bundle
+hot reload, and the Desktop root-slot boot-order recovery fix. The release tags
+`v0.1.37` and `desktop-v0.1.37` promote the CLI/Web/npm and Desktop matrices.
+
 ## 2026-09-09 - DSH bumped to v0.1.5-alpha.1
 
 Commits: `712b957181ce2e371fffdf35c465ee027c8b6d54`,
