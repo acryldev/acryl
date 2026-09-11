@@ -2,19 +2,26 @@
 
 Status: needs-triage
 
-## Status: T1-T6 landed
+## Status: T1, T2, T4, T5, T6 landed; T3 attempted and reverted
 
 - T1 `4270f25` - graph-derived mutability; any profile-bundle / market plugin toggles.
 - T2 `d74b505` + `bd5adcb` - live install via `ctx.livePluginActivation`, renderer reload only.
-- T3 `663fc25` - soft client-Loader reconcile in place of `location.reload()` for toggles.
-- T4 `663fc25` - dependency-aware disable cascade.
+- T3 `663fc25` then reverted (`<revert commit>`, 2026-09-11) - a soft
+  client-Loader reconcile in place of `location.reload()` for a single
+  targeted toggle. Two independent live tests crashed the whole app on
+  disable (`Error: renderSlot('root') before any 'root' registration
+  (boot order)` in the renderer console right before the process died). See
+  `docs/acryl/plugin-hot-reload.md#limits` before re-attempting - needs live
+  devtools on the renderer, not static analysis.
+- T4 `663fc25` - dependency-aware disable cascade (host-side only; unaffected
+  by the T3 revert).
 - T5 `c717495` - `ACRYL_PLUGIN_WATCH` local dev auto-reload.
 - T6 `e9d6093` - `docs/acryl/plugin-hot-reload.md`.
 
-Remaining limit: a fresh install/enable whose browser bundle was not in the
-page-load boot graph still triggers one renderer reload (the Host boot-graph
-does not yet stream additions to the client module loader). Everything else is
-hot.
+Remaining: every mutation reloads the renderer (a full web-content reload
+inside the same window, not an app restart) - this is the safe, field-tested
+behavior, not a bug. Host-side hot mounting/unmounting (T1, T2, T4, T5) is
+unaffected by the T3 revert.
 
 ## Objective
 

@@ -88,13 +88,23 @@ without it (or a live mount that throws) falls back to the restart prompt. See
 
 ## Limits
 
-- The **renderer** still does a full web reload after a lifecycle change
+- The **renderer** always does a full web reload after a lifecycle change
   (`globalThis.location.reload()` in
-  `acryl-desktop/src/client/plugin-lifecycle-api.ts`). A soft client-context
-  reconcile that keeps renderer-local UI state (an open editor file, scroll
-  position) is future work - the client module loader
-  (`@deepseek-ai/dsh-client-modules`) has the `invalidate` / `arrive`
-  primitives, but the host-served boot-graph does not yet stream additions.
+  `acryl-desktop/src/client/plugin-lifecycle-api.ts`), even for a single
+  targeted enable/disable/reload. **A soft in-place client-Loader reconcile
+  was attempted and reverted**: it called `entry.update({disabled})` /
+  `fiber.restart()` directly on the client Loader entry to skip the reload and
+  keep renderer-local UI state. Two independent live tests crashed the whole
+  app on disable, both showing
+  `Error: renderSlot('root') before any 'root' registration (boot order)` in
+  the renderer console right before the process died - a boot-order
+  interaction with the renderer's own slot-registration lifecycle that was
+  not understood well enough to fix blind. Re-attempting this needs live
+  devtools on the renderer at the moment of the crash, not static analysis.
+  The client module loader (`@deepseek-ai/dsh-client-modules`) does have the
+  `invalidate` / `arrive` primitives a safer version would need; the
+  host-served boot-graph also does not yet stream additions, so a fresh
+  enable/install would still need a reload regardless.
 - The base-template bundles stay restart-only.
 - Engine / runtime-provider swapping is a different mechanism (specs 028/029).
 
