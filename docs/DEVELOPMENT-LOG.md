@@ -3413,3 +3413,38 @@ Immediate unblock given to the user before this fix landed: restart ACRYL
 Desktop once - `startup-recovery-controller.ts`'s normal boot-time
 verification clears a genuinely-succeeded pending transaction the same way
 it always has, no code change needed for that path.
+
+## 2026-09-11 - fix: auto-retry the renderSlot('root') boot-order race once
+
+Commit: `70719f8`
+
+Follow-up on the live-reported `SlotAssemblyError` white-screen crash
+(`renderSlot('root') before any 'root' registration (boot order)`),
+thrown by `RootOutlet` in the pinned `deepseek-harness` `ui-renderer`
+package when React renders the shell before any plugin has registered the
+'root' slot. The assertion is deliberate pinned upstream behavior and is
+not touched; the user's own extended debugger-attached testing session
+did not reproduce the crash, supporting the working hypothesis (logged
+correlation with `desktop-web-server` ECONNRESET) that the race is
+transient, not a systemic boot-order bug.
+
+Mitigation lives entirely in ACRYL-owned code: a new
+`desktopRootSlotRecoveryInjections()` row, wired through the existing
+`webserver/index-inject` table (`desktop-boot-recovery.ts`'s sibling used
+for the static "Failed to load plugins" recovery panel). Renders as a
+`head`-placed classic `<script>` - ahead of every deferred module script,
+so the listener is armed before the module graph that can throw this
+error even starts evaluating. The script listens for the exact error
+message on both `window.error` (the synchronous throw during the initial
+render) and `unhandledrejection` (defensive, in case a future renderer
+version defers it), and reloads the page exactly once per tab session via
+a `sessionStorage` guard - a persistent, non-transient recurrence still
+surfaces normally on the retried load instead of looping reloads.
+
+Verified with a real `vm`-sandboxed evaluation of the injected script
+text across two simulated page loads sharing one `sessionStorage`
+instance, proving the single-retry bound holds across an actual reload,
+not just within one script evaluation - plus a case for an unrelated
+error being ignored and one for the `unhandledrejection` path.
+`acryl-desktop` typecheck clean across all five tsconfig faces; full
+suite 849/853 (4 pre-existing skips, no regressions).
