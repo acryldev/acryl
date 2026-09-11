@@ -2992,3 +2992,41 @@ Verified: `pnpm --filter acryl-desktop run check` green (841 passed | 4
 skipped, closure/cli/loader/profile/licenses all pass). Spec 032 is now
 fully closed: T1/T2/T4/T5/T6 landed, T3 reverted with an accurate record,
 issue-01 done.
+
+## 2026-09-11 - docs: spec 033 - ACRYL-side runtime contract for BLENDS
+
+New ticket, no code: `specs/033-acryl-blends-runtime-contract/{spec.md,
+plan.md}`.
+
+Reviewed the sibling `acryldev/blends` project
+(`acryl_blends_project/blends`) in detail - M1 (BLEND format + `blends-core`),
+M2 (local hub + CLI), and M3 (this repo's static, boot-time composition of a
+compiled BLEND lock, `acryl-desktop/src/desktop-blend.ts`, spec 003 there)
+are all done. What is not built anywhere yet is Blends' own "Differentiation
+Engine" - an agent adding a capability to a running Blend live, captured as
+versioned state with checkpoint/rollback. That is Blends product logic, but
+every primitive it needs (live mount of a not-yet-published module, state
+snapshot/restore, candidate workspace, checkpoint, a neutral agent tool
+facade) is an ACRYL runtime capability, per Blends' own architecture
+("Agent Runtime Adapter != Blend Runtime").
+
+Mapped each capability Blends' spec (`ACRYL_BLENDS_SPEC.md` §4/§10/§26)
+assumes against what this repo actually has today: spec 032's
+`PluginLifecycleController` covers live mount/unmount/cascade/rollback for
+already-resolvable packages; nothing exists yet for a freshly generated,
+not-yet-published module, a state snapshot, a candidate git worktree, a
+user-directed profile-generation checkpoint, or a durable evolution ledger.
+Anchored the framing in the existing
+`docs/acryl/MENTAL-MODEL-factory-car-driver.md` tiering (a BLEND is Tier-2
+car-subsystem state, never a new tier) and flagged
+`docs/acryl/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md` as the document any
+Blend agent-tool-facade work must compose with, not fork.
+
+`plan.md` phases the work B0 (repo-mapping ADR, no code) through B3
+(candidate-workspace/checkpoint design, deliberately not committed to an
+implementation milestone yet - flagged as the highest-risk, least-proven
+area). Explicit non-goal: no Blends product logic (catalog, Evolution Plan,
+CLI, UI) in this repo - this repo owns primitives, Blends owns the product.
+
+`Status: needs-triage` - this is a proposal for review, not yet scoped into
+an active implementation milestone.
