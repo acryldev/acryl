@@ -20,7 +20,7 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
 })
 
-async function harness(blend?: DesktopBlendProjection) {
+async function harness(blend?: DesktopBlendProjection, pluginManagementStatePath?: string) {
   const root = mkdtempSync(join(tmpdir(), 'dsh-plugin-lifecycle-controller-'))
   roots.push(root)
   const packageDir = join(root, 'node_modules', PACKAGE)
@@ -94,8 +94,9 @@ async function harness(blend?: DesktopBlendProjection) {
     statePath,
     profileDir: root,
     ...(blend === undefined ? {} : { blend }),
+    ...(pluginManagementStatePath === undefined ? {} : { pluginManagementStatePath }),
   })
-  return { ctx, controller, logPath, statePath }
+  return { ctx, controller, logPath, statePath, root }
 }
 
 const BLEND_PACKAGE = 'acryl-blend-row-package'
@@ -266,6 +267,27 @@ describe('PluginLifecycleController', () => {
       await expect(controller.deactivate(INSTALLED_PACKAGE)).resolves.toEqual(
         expect.objectContaining({ action: 'disable', entryIds: [] }),
       )
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
+  it('deactivate prunes the stale plugin-management disable record for an uninstalled package (spec 032 issue 01)', async () => {
+    const pmRoot = mkdtempSync(join(tmpdir(), 'dsh-plugin-management-'))
+    roots.push(pmRoot)
+    const pluginManagementStatePath = join(pmRoot, 'plugin-management', 'state.json')
+    mkdirSync(join(pmRoot, 'plugin-management'), { recursive: true })
+    writeFileSync(pluginManagementStatePath, JSON.stringify({
+      version: 1,
+      profiles: [{ profileName: 'desktop', disabledBundles: [INSTALLED_PACKAGE, MARKET_PACKAGE] }],
+    }))
+    const { ctx, controller } = await harness(undefined, pluginManagementStatePath)
+    try {
+      await controller.deactivate(MARKET_PACKAGE)
+      const state = JSON.parse(readFileSync(pluginManagementStatePath, 'utf8')) as {
+        profiles: readonly { profileName: string, disabledBundles: readonly string[] }[]
+      }
+      expect(state.profiles.find(p => p.profileName === 'desktop')?.disabledBundles).toEqual([INSTALLED_PACKAGE])
     } finally {
       await ctx.fiber.dispose()
     }

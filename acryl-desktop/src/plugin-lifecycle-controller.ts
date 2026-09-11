@@ -7,6 +7,7 @@ import { type Context, type Fiber, type FiberState, Service } from '@deepseek-ai
 import type { Entry, EntryOptions } from '@deepseek-ai/cordis-plugin-loader'
 import { loadOverlayPatches } from '@deepseek-ai/dsh-app-boot'
 import type {} from '@deepseek-ai/dsh-client-modules'
+import { removeDesktopDisabledBundle } from './desktop-plugins.ts'
 import type {
   PluginLifecycleEntryView,
   PluginLifecycleFiberPhase,
@@ -356,13 +357,20 @@ export class PluginLifecycleController {
 
   /**
    * Unmount a Market-uninstalled package from the running Loader tree. No-op
-   * when it is already gone.
+   * when it is already gone. Always prunes any stale `plugin-management`
+   * disable record for the package (spec 032 issue 01): a package that has
+   * left `dsh.profile.bundles` has nothing left to be disabled, and a leftover
+   * record there makes the market treat it as "installed but disabled" and
+   * hide the managed install path on reinstall.
    */
   deactivate(packageName: string): Promise<PluginLifecycleReceipt> {
     return this.exclusive(async () => {
       const entry = [...this.ctx.loader.entries()]
         .find(candidate => !candidate.options.group && candidate.options.name === packageName)
-      if (entry === undefined) return this.receipt('disable', [], true)
+      if (entry === undefined) {
+        await this.pruneStaleDisable(packageName)
+        return this.receipt('disable', [], true)
+      }
       const rowId = entry.options.id
       try {
         await entry.parent.remove(rowId)
@@ -374,8 +382,25 @@ export class PluginLifecycleController {
         )
       }
       this.refreshUserBundles()
+      await this.pruneStaleDisable(packageName)
       return this.receipt('disable', [entry.id], true)
     })
+  }
+
+  /** Best-effort: never let a plugin-management cleanup failure fail the uninstall itself. */
+  private async pruneStaleDisable(packageName: string): Promise<void> {
+    if (this.bootstrap.pluginManagementStatePath === undefined) return
+    try {
+      await removeDesktopDisabledBundle(
+        this.bootstrap.pluginManagementStatePath,
+        this.bootstrap.profileName,
+        packageName,
+      )
+    } catch (cause) {
+      this.ctx.logger?.warn?.(
+        `acryl-desktop: could not clear the stale plugin-management disable record for ${packageName}: ${cause instanceof Error ? cause.message : String(cause)}`,
+      )
+    }
   }
 
   /**

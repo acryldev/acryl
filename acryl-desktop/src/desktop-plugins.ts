@@ -385,6 +385,42 @@ export async function clearDesktopProfilePluginState(
 }
 
 /**
+ * Remove one package from `disabledBundles`, leaving every other disable
+ * untouched. For the case `enableDesktopProfileBundle` deliberately refuses:
+ * a package that has left `dsh.profile.bundles` entirely (uninstalled), where
+ * a stale disable record would otherwise make the market treat it as
+ * "installed but disabled" and hide the managed install path. Silently a
+ * no-op when the package was never disabled or the state file is absent.
+ */
+export async function removeDesktopDisabledBundle(
+  statePath: string,
+  profileName: string,
+  packageName: string,
+): Promise<void> {
+  assertDesktopProfileName(profileName)
+  if (!isAbsolute(statePath) || statePath.includes('\0') || !safePackageName(packageName)) {
+    throw new Error(`${BIN_NAME}: plugin-management cleanup arguments are invalid`)
+  }
+  await ensurePrivateStateDirectory(statePath)
+  await withFileLock(statePath, async () => {
+    const state = readState(statePath)
+    const existingProfile = state.profiles.find(profile => profile.profileName === profileName)
+    const disabled = new Set(existingProfile?.disabledBundles ?? [])
+    if (!disabled.delete(packageName)) return
+    const profiles = state.profiles.filter(profile => profile.profileName !== profileName)
+    if (disabled.size > 0) {
+      profiles.push({ profileName, disabledBundles: [...disabled].sort(stableCompare) })
+    }
+    profiles.sort((left, right) => stableCompare(left.profileName, right.profileName))
+    const next = parseState({ version: STATE_VERSION, profiles })
+    await writeFileAtomic(statePath, renderState(next), {
+      mode: STATE_FILE_MODE,
+      dirMode: STATE_DIRECTORY_MODE,
+    })
+  })
+}
+
+/**
  * Read the active profile's direct bundle declarations without resolving or
  * parsing any bundle patch. This remains available when a bundle itself is
  * what prevents the normal profile loader from starting.

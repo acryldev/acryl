@@ -18,6 +18,7 @@ import {
   DesktopPluginsService,
   desktopPluginBundleMutable,
   readDesktopDisabledBundles,
+  removeDesktopDisabledBundle,
   type DesktopPlugins,
   type DesktopPluginsBootstrap,
 } from '../src/desktop-plugins.ts'
@@ -548,5 +549,64 @@ describe('desktop direct bundle management', () => {
       options.statePath,
     )).not.toThrow()
     await harness.dispose()
+  })
+})
+
+describe('removeDesktopDisabledBundle', () => {
+  const roots: string[] = []
+  afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }) })
+
+  function root(): string {
+    const dir = mkdtempSync(join(tmpdir(), 'dsh-plugin-management-cleanup-'))
+    roots.push(dir)
+    return dir
+  }
+
+  it('removes one stale disable record and leaves the rest of the profile untouched', async () => {
+    const statePath = join(root(), 'plugin-management', 'state.json')
+    mkdirSync(dirname(statePath), { recursive: true, mode: 0o700 })
+    writeFileSync(statePath, JSON.stringify({
+      version: 1,
+      profiles: [
+        { profileName: 'desktop', disabledBundles: ['acryl-dsh-editor-plugin', 'cordis-plugin-graph'] },
+        { profileName: 'work', disabledBundles: ['other-plugin'] },
+      ],
+    }))
+
+    await removeDesktopDisabledBundle(statePath, 'desktop', 'cordis-plugin-graph')
+
+    expect([...readDesktopDisabledBundles(statePath, 'desktop')]).toEqual(['acryl-dsh-editor-plugin'])
+    expect([...readDesktopDisabledBundles(statePath, 'work')]).toEqual(['other-plugin'])
+  })
+
+  it('drops the profile entry entirely once its last disable is removed', async () => {
+    const statePath = join(root(), 'plugin-management', 'state.json')
+    mkdirSync(dirname(statePath), { recursive: true, mode: 0o700 })
+    writeFileSync(statePath, JSON.stringify({
+      version: 1,
+      profiles: [{ profileName: 'desktop', disabledBundles: ['cordis-plugin-graph'] }],
+    }))
+
+    await removeDesktopDisabledBundle(statePath, 'desktop', 'cordis-plugin-graph')
+
+    expect(JSON.parse(readFileSync(statePath, 'utf8'))).toEqual({ version: 1, profiles: [] })
+  })
+
+  it('is a no-op when the package was never disabled, the profile is unknown, or the file is missing', async () => {
+    const statePath = join(root(), 'plugin-management', 'state.json')
+    mkdirSync(dirname(statePath), { recursive: true, mode: 0o700 })
+    writeFileSync(statePath, JSON.stringify({
+      version: 1,
+      profiles: [{ profileName: 'desktop', disabledBundles: ['acryl-dsh-editor-plugin'] }],
+    }))
+
+    await removeDesktopDisabledBundle(statePath, 'desktop', 'cordis-plugin-graph')
+    expect([...readDesktopDisabledBundles(statePath, 'desktop')]).toEqual(['acryl-dsh-editor-plugin'])
+
+    await removeDesktopDisabledBundle(statePath, 'other-profile', 'acryl-dsh-editor-plugin')
+    expect([...readDesktopDisabledBundles(statePath, 'desktop')]).toEqual(['acryl-dsh-editor-plugin'])
+
+    const missing = join(root(), 'never-written', 'state.json')
+    await expect(removeDesktopDisabledBundle(missing, 'desktop', 'cordis-plugin-graph')).resolves.toBeUndefined()
   })
 })

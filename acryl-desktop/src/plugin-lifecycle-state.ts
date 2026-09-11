@@ -101,6 +101,13 @@ export interface PluginLifecycleStateBootstrap extends PluginLifecycleStatePersi
   readonly profileDir: string
   /** BLEND projection for the selected Blend; its rows are user-mutable entries. */
   readonly blend?: DesktopBlendProjection
+  /**
+   * Path to the plugin-management state file (`disabledBundles`, a separate
+   * store owned by `desktop-plugins.ts`). Optional; when present, a live
+   * uninstall prunes the package's stale disable record there so it does not
+   * block a later reinstall through the market.
+   */
+  readonly pluginManagementStatePath?: string
 }
 
 declare module '@deepseek-ai/cordis' {
