@@ -1,7 +1,19 @@
+import { dirname } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
 import { Group, Loader } from '@deepseek-ai/cordis-plugin-loader'
 
 const ENGINE_ENTRY_ID = 'acryl-engine'
+
+/**
+ * Fallback resolution base for the host root's own Loader entries (the
+ * "acryl-engine-<id>" row and mountRootInclude's sibling "cordis:include"
+ * row - see the `ctx.baseUrl` assignment below for why). Never read for a
+ * real client bundle - `dsh-client-modules` finds no client export at this
+ * location and skips, exactly as it does for any other non-client entry -
+ * so its value need not track a specific engine's own profile location.
+ */
+const HOST_ROOT_BASE_URL = pathToFileURL(dirname(fileURLToPath(import.meta.url))).href + '/'
 
 type CordisPlugin = Parameters<Context['plugin']>[0]
 
@@ -46,6 +58,24 @@ export async function createAcrylEngineHost(input: {
   if (initial === undefined) throw new Error(`unknown ACRYL engine: ${input.initialEngine}`)
 
   const ctx = new Context()
+  // `EntryTree`'s constructor snapshots `ctx.baseUrl` once, as an own
+  // property (`ctx.extend({ baseUrl: ctx.baseUrl })`) - not a live read - at
+  // the moment the Loader plugin constructs its root tree, i.e. exactly this
+  // `ctx.plugin(Loader)` call below. Every entry created directly on this
+  // root (the "acryl-engine-<id>" row this function creates, and
+  // mountRootInclude's sibling "cordis:include" row - see engine-dsh.ts)
+  // permanently inherits whatever `ctx.baseUrl` was at this line; setting it
+  // later (inside an engine's own plugin, or even inside `prepare` below,
+  // which also runs after this line) cannot reach that already-taken
+  // snapshot. Reproduced directly: Desktop's real composition failed with
+  // "loader entry cordis:acryl-engine-dsh has no resolution base URL" from
+  // `dsh-client-modules` (Desktop composes client bundles; CLI/TUI does not,
+  // which is why no automated test caught this) before this assignment
+  // existed - confirmed via `entry.parent.tree.ctx.baseUrl` reading
+  // `undefined` for exactly these two entries, and every entry nested one
+  // level deeper (inside the profile's own composed tree, constructed later
+  // from a ctx that does have baseUrl set) reading correctly.
+  ctx.baseUrl = HOST_ROOT_BASE_URL
   await ctx.plugin(Loader)
   const entryFor = (engine: AcrylEngineDefinition) => ({
     id: ENGINE_ENTRY_ID,

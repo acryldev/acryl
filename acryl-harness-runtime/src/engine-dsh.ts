@@ -73,6 +73,15 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
       'ACRYL profile enables Cordis HMR and must be launched with Node --expose-internals',
     )
   }
+  // This assignment feeds mountRootInclude's own nested composition tree
+  // (constructed below, from this ctx) - not the host root's own top-level
+  // tree, whose baseUrl is a one-time snapshot taken when `createAcrylEngineHost`
+  // calls `ctx.plugin(Loader)`, long before this plugin function ever runs
+  // (see engine-host.ts's `HOST_ROOT_BASE_URL`). Setting `ctx.baseUrl` here
+  // reaches only entries nested inside mountRootInclude's own subtree (the
+  // real DSH profile plugins) - the "acryl-engine-<id>" and sibling
+  // "cordis:include" rows at the host's own top level are unaffected by
+  // anything this function does.
   ctx.baseUrl = pathToFileURL(dirname(composition.rootConfig)).href + '/'
   // mountRootInclude's Include entry lands as a sibling of this plugin's own
   // entry in the shared host Loader tree, not a descendant of it (the same

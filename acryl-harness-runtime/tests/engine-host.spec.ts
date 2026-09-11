@@ -130,6 +130,26 @@ describe('createAcrylEngineHost', () => {
 
     expect(events).toEqual(['start:dsh'])
   })
+
+  it('gives the host-owned engine row a resolution base URL, the same property dsh-client-modules reads for every Loader entry', async () => {
+    // dsh-client-modules (Desktop/Web's client-bundle composer, absent from
+    // the CLI/TUI profile - which is why no other test in this file caught
+    // this) reads `entry.parent.tree.ctx.baseUrl` for every Loader entry and
+    // throws if it is undefined. That property is a one-time snapshot
+    // EntryTree's constructor takes of `ctx.baseUrl` when the Loader plugin
+    // activates - reproduced directly (RED) as `undefined` for the
+    // host-owned "acryl-engine-<id>" row before HOST_ROOT_BASE_URL existed.
+    const events: string[] = []
+    const host = await createAcrylEngineHost({
+      engines: [engine('dsh', events)],
+      initialEngine: 'dsh',
+    })
+    hosts.push(host)
+
+    const entry = [...host.ctx.loader.entries()].find(candidate => candidate.options.name === 'cordis:acryl-engine-dsh')
+    expect(entry).toBeDefined()
+    expect((entry as { parent: { tree: { ctx: { baseUrl?: string } } } }).parent.tree.ctx.baseUrl).toBeDefined()
+  })
 })
 
 declare module '@deepseek-ai/cordis' {
