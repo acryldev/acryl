@@ -60,7 +60,15 @@ function installBundle(home: string, packageName: string, patch: string, version
 }
 
 afterEach(() => {
-  for (const home of homes.splice(0)) rmSync(home, { recursive: true, force: true })
+  // maxRetries/retryDelay: rmSync races an ENOTEMPTY/EBUSY when something
+  // else (an indexer, a lingering fs watcher from the code under test) still
+  // holds a handle in this temp home for a moment after the test returns -
+  // observed under a full parallel `pnpm run check` run, not in isolation.
+  // Node retries only these specific transient error codes, so a real bug
+  // leaving files behind still fails loudly.
+  for (const home of homes.splice(0)) {
+    rmSync(home, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 })
+  }
 })
 
 describe('desktop profile composition', {
