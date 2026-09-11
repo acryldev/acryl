@@ -40,6 +40,7 @@ if (!npmrc.includes('TUI owns its independent React 19 graph.')) {
 const OWNED_WORKSPACE_POLICY = `nodeLinker: isolated
 
 packages:
+  - acryl-blend-demo
   - acryl-control
   - acryl-harness-runtime
   - acryl-npm-launcher

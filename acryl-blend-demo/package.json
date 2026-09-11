@@ -1,0 +1,14 @@
+{
+  "name": "acryl-blend-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Inert function plugin named by BLEND lock rows to demo desktop consumption (spec 003).",
+  "type": "module",
+  "exports": {
+    ".": "./index.mjs",
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -5,15 +5,15 @@
     "version": "0.1.0"
   },
   "origin": {
-    "id": "acryl.crm",
+    "id": "acryl.demo",
     "kind": "Blueprint",
     "version": "0.1.0",
-    "digest": "sha256:f70e1a2b4b8e8b3b7d53200eb51bf9c794584344ba46234eb960639ffb163864"
+    "digest": "sha256:b149de115c2f37a4be70e5ceda7ba8e79374c70a5d7f611273c9c006a47a6beb"
   },
   "rows": [
     {
       "id": "contacts",
-      "name": "@acryl/contacts",
+      "name": "acryl-blend-demo",
       "config": {
         "title": "Contacts",
         "org": "My Organization",
@@ -22,11 +22,11 @@
     },
     {
       "id": "tasks",
-      "name": "@acryl/tasks"
+      "name": "acryl-blend-demo"
     },
     {
       "id": "pipeline",
-      "name": "@acryl/pipeline",
+      "name": "acryl-blend-demo",
       "config": {
         "enabled": true,
         "maxDealValue": 1000000
@@ -34,7 +34,7 @@
     },
     {
       "id": "invoicing",
-      "name": "@acryl/invoicing",
+      "name": "acryl-blend-demo",
       "disabled": true
     }
   ]

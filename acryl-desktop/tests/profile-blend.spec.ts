@@ -15,7 +15,7 @@ import {
 } from '../src/profile.ts'
 
 const homes: string[] = []
-const BLEND_FIXTURE_DIR = fileURLToPath(new URL('./fixtures/blend/acryl-crm', import.meta.url))
+const BLEND_FIXTURE_DIR = fileURLToPath(new URL('./fixtures/blend/acryl-demo', import.meta.url))
 
 function temporaryHome(): string {
   const home = mkdtempSync(join(tmpdir(), 'dsh-desktop-profile-blend-'))
@@ -54,7 +54,7 @@ describe('desktop startup settings: dsh-desktop.blend (D23)', () => {
 })
 
 describe('desktop profile BLEND composition (D24)', () => {
-  it('composes the acryl.crm lock rows into the generation and projects the blend', () => {
+  it('composes the acryl.demo lock rows into the generation and projects the blend', () => {
     const home = temporaryHome()
     const prepared = prepareDesktopProfile(undefined, home, 'darwin')
     expect(prepared.blend).toBeUndefined()
@@ -63,7 +63,7 @@ describe('desktop profile BLEND composition (D24)', () => {
     const blended = prepareDesktopProfile(undefined, home, 'darwin')
     expect(blended.blend).toBeDefined()
     expect(blended.blend?.origin).toEqual(expect.objectContaining({
-      id: 'acryl.crm',
+      id: 'acryl.demo',
       kind: 'Blueprint',
     }))
     expect(blended.blend?.rows.map(row => row.id)).toEqual(['contacts', 'tasks', 'pipeline', 'invoicing'])
@@ -74,10 +74,10 @@ describe('desktop profile BLEND composition (D24)', () => {
       expect(ids).toContain(id)
     }
     // The locked config travels with the row, and the locked disabled state
-    // survives composition (invoicing is locked disabled by acryl.crm's
+    // survives composition (invoicing is locked disabled by acryl.demo's
     // default parameters).
     expect(composed.find(row => row.id === 'contacts')).toEqual(expect.objectContaining({
-      name: '@acryl/contacts',
+      name: 'acryl-blend-demo',
       config: {
         title: 'Contacts',
         org: 'My Organization',

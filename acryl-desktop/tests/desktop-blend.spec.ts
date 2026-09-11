@@ -15,7 +15,7 @@ import {
   resolveBlendLockPath,
 } from '../src/desktop-blend.ts'
 
-const FIXTURE_LOCK_DIR = fileURLToPath(new URL('./fixtures/blend/acryl-crm', import.meta.url))
+const FIXTURE_LOCK_DIR = fileURLToPath(new URL('./fixtures/blend/acryl-demo', import.meta.url))
 
 function validLock(): Record<string, unknown> {
   return {
@@ -83,9 +83,9 @@ describe('parseBlendLock', () => {
 })
 
 describe('readDesktopBlend', () => {
-  it('reads the committed acryl.crm fixture lock through its Blend directory', () => {
+  it('reads the committed acryl.demo fixture lock through its Blend directory', () => {
     const projection = readDesktopBlend(FIXTURE_LOCK_DIR)
-    expect(projection.origin.id).toBe('acryl.crm')
+    expect(projection.origin.id).toBe('acryl.demo')
     expect(projection.origin.kind).toBe('Blueprint')
     expect(projection.rows.map(row => row.id)).toEqual(['contacts', 'tasks', 'pipeline', 'invoicing'])
     expect(projection.rows.find(row => row.id === 'invoicing')?.disabled).toBe(true)
@@ -103,7 +103,7 @@ describe('readDesktopBlend', () => {
     expect(readDesktopBlend(lockPath).origin.id).toBe('acryl.crm')
 
     expect(() => readDesktopBlend(join(dir, 'missing'))).toThrow('BLEND path')
-    expect(() => readDesktopBlend(FIXTURE_LOCK_DIR.replace('acryl-crm', 'no-such-dir')))
+    expect(() => readDesktopBlend(FIXTURE_LOCK_DIR.replace('acryl-demo', 'no-such-dir')))
       .toThrow('does not exist')
 
     // A directory without its .acryl lock names the resolved lock file.

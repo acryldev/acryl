@@ -229,6 +229,8 @@ importers:
         specifier: 18.3.31
         version: 18.3.31
 
+  acryl-blend-demo: {}
+
   acryl-cli:
     dependencies:
       '@deepseek-ai/cordis-plugin-group':

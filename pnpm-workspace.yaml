@@ -1,6 +1,7 @@
 nodeLinker: isolated
 
 packages:
+  - acryl-blend-demo
   - acryl-control
   - acryl-harness-runtime
   - acryl-npm-launcher

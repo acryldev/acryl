@@ -1,13 +1,13 @@
 apiVersion: blends.acryl.dev/v1alpha1
 kind: Blend
 metadata:
-  id: acryl.crm.acryl-crm
-  name: acryl-crm
+  id: acryl.demo.acryl-demo-init
+  name: acryl-demo-init
   version: 0.1.0
-  description: Instantiated from acryl.crm@0.1.0
+  description: Instantiated from acryl.demo@0.1.0
 spec:
   runtime: cordis
   lineage:
-    blueprint: acryl.crm
+    blueprint: acryl.demo
     blueprintVersion: 0.1.0
 
