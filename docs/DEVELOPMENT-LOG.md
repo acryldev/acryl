@@ -2915,3 +2915,46 @@ suite 7/7; full acryl-desktop suite 837 passed | 4 skipped; `pnpm run build`
 succeeds; `pnpm run check` green (verify-runtime-closure 244 nodes,
 verify-cli-runtime, verify-loader-boot, verify-profile-boot, verify-licenses
 all pass).
+
+## 2026-09-11 - fix: app.relaunch() crashed the dev build, not hot-reload
+
+Commit: `95236ff` (test flake fix in the same session: `2100200`)
+
+The T3 revert above turned out to fix the wrong subsystem. The user reported
+the crash again immediately after that revert - now on **enable**, not just
+disable - which is impossible for a renderer-only `location.reload()` to
+cause. Root-caused via the real macOS crash reporter
+(`~/Library/Logs/DiagnosticReports/ACRYL-*.ips`, not just the app's own
+logs): every crash was a `DYLD` `Library not loaded: Electron Framework`
+"terminated at launch" abort, three of them lining up exactly with three
+full main-process restarts visible in the same-day log file.
+
+`acryl-desktop/scripts/launch-dev.mjs` stages Electron into a fresh
+`mkdtemp('acryl-electron-dev-...')` per `pnpm run dev` run and deletes it in
+a `finally` block the instant the child process exits. `app.relaunch()`
+(used by the plugin market's "Restart ACRYL" after an install/enable/disable
+that still needs one - spec 032 issue-01's open item - and by the
+startup-recovery window's restart button) asks the OS to spawn a new process
+at that same `execPath`. In dev mode that path is already deleted by the
+time the new process's dyld tries to load Electron Framework from it, so it
+aborts before any JS ever runs - explaining why it looked identical
+regardless of which lifecycle action asked for the restart, and why my T3
+diagnosis was wrong: the crash was never in the renderer at all.
+
+Fix: `shutdown.ts` gained `DESKTOP_DEV_RESTART_EXIT_CODE`; `main.ts` detects
+the ephemeral dev bundle via `execPath` at both `app.relaunch()` call sites
+and exits with that code instead (a packaged install is unaffected);
+`launch-dev.mjs`'s `launchDevelopmentElectron` loops on that code, tearing
+down the bundle it just used and staging a fresh one before spawning again.
+Gained `importElectron`/`prepareBundle`/`spawnChild` injection seams so the
+restart loop itself has real test coverage, not just the pure helpers.
+
+Also fixed in the same pass (test flakiness hit while verifying this):
+`tests/profile.spec.ts`'s `afterEach` `rmSync` of its temp home raced
+`ENOTEMPTY` under a full parallel `pnpm run check`, though it passed every
+time in isolation - added `maxRetries`/`retryDelay`, which only retries that
+specific transient error class.
+
+Verified: typecheck clean; `node --test scripts/launch-dev.spec.mjs` (3/3);
+`pnpm --filter acryl-desktop run check` green (837 passed | 4 skipped,
+closure/cli/loader/profile/licenses all pass).
