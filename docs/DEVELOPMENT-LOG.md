@@ -2958,3 +2958,37 @@ specific transient error class.
 Verified: typecheck clean; `node --test scripts/launch-dev.spec.mjs` (3/3);
 `pnpm --filter acryl-desktop run check` green (837 passed | 4 skipped,
 closure/cli/loader/profile/licenses all pass).
+
+## 2026-09-11 - feat: unify Installed-tab and Lifecycle-tab plugin disable
+
+Commits: `f7704b6` (code), `60f9ddc` (docs)
+
+Closed spec 032 issue-01's remaining item. The market's Installed tab
+enable/disable always wrote `plugin-management/state.json` directly and
+always required a restart, independent of the Lifecycle tab's live
+`entry.update()` path against `plugin-lifecycle/state.json` - the two
+surfaces could disagree on a plugin's enabled state, and the Installed tab
+needed a restart even for a healthy, already-mounted plugin.
+
+`LivePluginActivation` (the existing bridge the market already used for
+live install/uninstall) gained `setEnabled(packageName, enabled)` and
+`statusOf(packageName)`, backed by new
+`PluginLifecycleController.setEnabledByPackageName`/`statusOfPackage`.
+`DesktopPluginsService.list()` now overrides its file-based status with the
+live entry's actual state when one exists; `persistDisable`/`persistEnable`
+try the live path first and only fall back to the bundle-layer file for the
+one case it uniquely serves: a package whose module cannot even be
+imported.
+
+Also reassessed the T3 revert's causal claim from the previous entry above:
+a fourth crash report ("enable also closes the app," after T3 was already
+reverted) proved the crashes were never a renderer bug - see the
+`app.relaunch()` entry above. The `renderSlot('root')` errors T3's revert
+cited were most likely leftover log-tail noise from a prior crashed run.
+T3 stays reverted pending live-devtools verification, but `spec.md` no
+longer overstates the case against it.
+
+Verified: `pnpm --filter acryl-desktop run check` green (841 passed | 4
+skipped, closure/cli/loader/profile/licenses all pass). Spec 032 is now
+fully closed: T1/T2/T4/T5/T6 landed, T3 reverted with an accurate record,
+issue-01 done.
