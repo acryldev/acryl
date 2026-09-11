@@ -23,6 +23,21 @@ inside the same window, not an app restart) - this is the safe, field-tested
 behavior, not a bug. Host-side hot mounting/unmounting (T1, T2, T4, T5) is
 unaffected by the T3 revert.
 
+**Reassessment (2026-09-11):** a fourth crash report ("enable also closes the
+app", after T3 was already reverted) proved the app-closing crashes were
+never a renderer-reload bug at all - a plain `location.reload()` cannot
+restart the whole Electron process. The real cause, root-caused via the
+macOS crash reporter, was `app.relaunch()` racing `launch-dev.mjs`'s
+per-run temp bundle cleanup (fixed separately, see
+`docs/DEVELOPMENT-LOG.md`'s "app.relaunch() crashed the dev build" entry).
+The two `renderSlot('root')` errors T3's revert cited were most likely
+leftover buffered output from a prior crashed run's log tail, not the
+proximate cause. T3 stays reverted - a few seconds slower per toggle is a
+minor cost and I have not re-verified it is actually safe - but the case for
+it having been unsafe is now much weaker than the original revert claimed.
+Re-attempting T3 is still gated on live devtools verification, not a reason
+to distrust the reconcile approach itself.
+
 ## Objective
 
 Any plugin - a market-installed one, a profile bundle, a locally linked

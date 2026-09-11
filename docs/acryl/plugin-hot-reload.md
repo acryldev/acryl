@@ -8,7 +8,7 @@ the running application - no process restart. This is the equivalent of Pi's
 
 | Action | Host (Node process) | Renderer (web UI) |
 | --- | --- | --- |
-| Toggle a loaded plugin (Lifecycle tab) | `entry.update({ disabled })` unmounts / remounts the fiber | reload |
+| Toggle a loaded plugin (Lifecycle tab, or market Installed tab when mounted) | `entry.update({ disabled })` unmounts / remounts the fiber | reload |
 | Reload a loaded plugin (Lifecycle tab) | `entry.fiber.restart()` - dispose effects, re-run `apply` | reload |
 | Install from the plugin market | `ctx.livePluginActivation.activate(pkg)` mounts the new row | reload |
 | Uninstall from the plugin market | `ctx.livePluginActivation.deactivate(pkg)` unmounts the fiber | reload |
@@ -55,6 +55,13 @@ first place, so this never reaches the user.
   `<userData>/plugin-lifecycle/state.json` as a list of disabled Loader entry
   ids, applied at the next boot as `{ id, disabled: true }` overlay patches
   (matched by id, so a row whose id and package name differ still disables).
+  The plugin market's own Installed tab (Settings -> Plugins -> Installed)
+  writes to this same live path (via `ctx.livePluginActivation.setEnabled`)
+  whenever the package has a live Loader entry, so toggling a plugin from
+  either tab is immediately visible in both, live, with no restart. Only a
+  package whose module cannot even be imported falls back to
+  `<userData>/plugin-management/state.json`'s bundle-layer disable, which
+  needs a restart to take effect (spec 032 issue-01).
 - Install / uninstall is persisted in `dsh.profile.bundles` by the market's
   `pnpm add` / `pnpm remove` + reconciliation
   (`acryl-desktop/src/desktop-plugin-reconcile.ts`). The live mount uses the

@@ -1,5 +1,9 @@
 # Plan: universal plugin hot-reload
 
+T1, T2, T4, T5, T6 below landed as written; T3 landed then was reverted
+after live crash reports. See `spec.md`'s status table and
+`issues/01-unify-disable-state.md` (done) for the current state.
+
 ## Task order (each a green, committable slice)
 
 ### T1 - graph-independent mutability from the profile bundle list  ← core

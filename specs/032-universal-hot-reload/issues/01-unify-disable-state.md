@@ -1,6 +1,21 @@
-Status: ready-for-agent
+Status: done
 
 ## Progress
+
+- **Done.** The market's Installed tab enable/disable now routes through
+  `PluginLifecycleController` (via the existing `ctx.livePluginActivation`
+  bridge, extended with `setEnabled(packageName, enabled)` and
+  `statusOf(packageName)`) whenever the package has a live Loader entry -
+  live, no restart, and the Lifecycle tab and Installed tab agree on the same
+  truth. `DesktopPluginsService.list()` also now overrides its file-based
+  status with the live entry's actual state when one exists, so a
+  Lifecycle-tab toggle is immediately visible in the Installed tab too.
+  `disableDesktopProfileBundle`/`enableDesktopProfileBundle` (the
+  bundle-layer file) remain the fallback for exactly the case they uniquely
+  serve: a package with no live entry (import failure, or not yet mounted).
+  Tested: `tests/plugin-lifecycle-controller.spec.ts` ("toggles a mounted
+  plugin by package name..."), `tests/desktop-plugins.spec.ts` (live-status
+  override, live disable/enable round-trip, fallback when no live entry).
 
 - **Done (`354eb9a`).** `PluginLifecycleController.deactivate` now prunes the
   stale `disabledBundles` entry via the new
@@ -44,27 +59,10 @@ Consequences observed:
 - ~~A market uninstall ... does not remove the package from `disabledBundles`~~
   **Fixed in `354eb9a`.**
 
-## Wanted (remaining)
-
-- The market's own **Installed tab** enable/disable still writes
-  `plugin-management/state.json` directly (`disableDesktopProfileBundle` /
-  `enableDesktopProfileBundle`), while the **Lifecycle tab** writes
-  `plugin-lifecycle/state.json`. A plugin can therefore show enabled in one
-  tab and disabled in the other. Route the Installed tab's enable/disable
-  through `PluginLifecycleController.setEnabled` when the package resolves to
-  a live entry (the common case for a healthy plugin), and keep
-  `disableDesktopProfileBundle`/bundle-layer removal only for the case it
-  uniquely serves: a bundle whose module cannot even be imported (boot
-  recovery's "skip a mutable plugin bundle").
-- Consider a read-side merge instead of touching both write paths: the market
-  Installed tab's "is this disabled" check could consult
-  `plugin-lifecycle/state.json` too, so a Lifecycle-tab disable is at least
-  visible there even before the write paths converge.
-
 ## Acceptance
 
 - Uninstall then reinstall through the market UI works with no hand-editing -
   **done**.
 - Disabling a healthy, mounted plugin in either surface shows disabled in
-  both - open.
+  both - **done**.
 - `verify:loader` + `pnpm --filter acryl-desktop run check` green.
