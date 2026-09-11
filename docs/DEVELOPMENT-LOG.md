@@ -3558,3 +3558,45 @@ Recorded only because the same trap bit this session: `acryl-cli` bundles
 `acryl-cli/src` for staleness, so a runtime change is invisible to the CLI
 until `corepack pnpm --filter acryl-harness-runtime run build`. That made a
 correct fix look broken for one run.
+
+## 2026-09-11 - fix: Minimal/PTC/Creator mode session creation restored
+
+Commit: `871675f`
+
+Live-reported while re-testing after the earlier fixes: creating a new
+session failed outright (`agent-preset/invalid: preset "minimal" failed to
+mount ... cannot resolve package "@deepseek-ai/dsh-terminal-bash"`), and
+Settings > Agent presets showed PTC mode and Creator mode both
+"Failed to load" - only Standard mode (and Minimal mode's own listing,
+misleadingly, since its badge check does not exercise deep tool
+resolution) looked fine.
+
+Root cause: `@deepseek-ai/dsh-agent-presets` composes its built-in presets
+by naming plugin packages as bare specifiers in `agent.cordis.yml`, on the
+assumption that the consuming app declares them as its own dependencies -
+it does not depend on them itself. Under the isolated pnpm node-linker this
+repo uses, a package the consumer never declared is not resolvable from the
+consumer's own install anchor, which is exactly the check
+`package-overlay.ts` performs for every real Desktop session.
+
+Reproduced directly (not assumed): scanned every `@deepseek-ai/...` name
+referenced across all four shipped presets (`standard`, `minimal`, `ptc`,
+`cordis`) and ran the identical `findPackageJSON(name, installAnchor)`
+`package-overlay.ts` uses, from `acryl-desktop`'s own package.json. 6 of 31
+names failed - `dsh-terminal-bash`, `dsh-tool-bash-persistent`,
+`dsh-tool-pwsh-persistent`, `dsh-tool-str-replace-editor` (all four used by
+`minimal`), `dsh-tool-cordis` (the Creator-mode preset's own id), and
+`dsh-agent-tool-presentation` (PTC) - an exact match for every symptom
+observed, including why Standard mode alone was unaffected (it needs none
+of the six).
+
+Fix: declared all six as `acryl-desktop` dependencies pinned to the same
+`0.1.5-alpha.1` already used throughout, then `pnpm install`. Re-running
+the identical scan against all 31 names now finds zero missing.
+
+Tests: new `preset-package-resolution.spec.ts` drives this exact
+resolution against every name every shipped preset references, so a future
+`dsh-agent-presets` bump that adds a required package fails this test
+instead of only surfacing as a session-create crash in the running app.
+Full `acryl-desktop` suite 850/854 (4 pre-existing skips, no regressions);
+typecheck clean across all five tsconfig faces.
