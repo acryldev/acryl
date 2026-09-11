@@ -18,8 +18,5 @@ release-artifacts/
 
 .cgr-hash-cache.json
 
-# Throwaway ACRYL_HOME for reproducing fresh-install/cold-start behavior
-# (never-used package-fallback links, first profile creation, etc.) without
-# touching a real ~/.acryl or Desktop's own persistent ~/.acryl-dev, both of
-# which mask that class of bug once their fallback links are established.
-.acryl-home-test/
+# session context extractor  https://github.com/handyutils/sctxx/ coding agent Session Context Extractor. standalone, agent-agnostic CLI. produces a compact, verified, provenance-linked handoff artifact that any other coding agent can load to continue the work. LLM-anchored fold.
+.sctxx
