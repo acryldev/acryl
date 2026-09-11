@@ -454,6 +454,57 @@ DSH's ecosystems actually need to interoperate - the same staged-commitment
 discipline `ACRYL_BLENDS_SPEC.md` §35 uses (prove the cheap vertical slice
 before the expensive one).
 
+### Addendum, 2026-09-11: reframed as three engines, not "DSH modified"
+
+The user's own reframing corrects a flaw in the "deep integration" framing
+above: it read as patching `dsh-agent-loop` itself, which really would be
+an unsyncable fork. That is not required. The capability-seams graph shows
+`ctx.tools`, `ctx.fs`, `ctx.shell`, `ctx.lsp`, `ctx.skill`, `ctx.subagent`,
+`ctx.workflow`, `ctx.session`, `ctx.systemPrompt` etc. do **not** depend on
+`dsh-agent-loop` - it is the other way around (`agent-loop` consumes them).
+They are already independently mountable, published, upstream-syncable
+`@deepseek-ai/dsh-*` packages, composable beside any driver, exactly like
+`dsh-base` mounts them today.
+
+So the real shape is **three separate engines**, each independently
+upstream-syncable where it has an upstream:
+
+1. **`dsh` (as-is)** - `startDirectHost()` extracted into a `dsh-cordis`
+   provider (Decision 2's amendment already flags this doesn't exist yet
+   either). Zero modification; syncs from the pinned `deepseek-harness/`
+   submodule exactly as today.
+2. **`pi` (scenario A above)** - `pi-cordis` as it already stands. Zero
+   modification; syncs from upstream `pi`.
+3. **`acryl` (a new, ACRYL-owned engine)** - mounts DSH's individual
+   capability packages as ordinary Cordis rows (free, unmodified,
+   independently upstream-syncable per package - the normal Cordis
+   consumption pattern, the same one `dsh-agent-loop` itself uses for
+   `ctx.tools`/`ctx.systemPrompt`), and supplies its **own** loop/driver on
+   top, free to pull tool/skill definitions from both `dsh`'s tool seams
+   and `pi`'s extension ecosystem. This is not "DSH plus Pi merged" as a
+   single act - it is a new `AgentFactory`-shaped driver ACRYL authors and
+   owns outright.
+
+This removes the "fork `deepseek-harness/` forever" risk the original
+framing above implied. It does **not** remove the two costs that were
+always going to be real regardless of framing: (a) the loop itself -
+`dsh-agent-loop`'s prefix/KV-cache request-construction discipline (frozen
+system-prompt-as-surface-node, message-freeze provenance reuse) is where
+DSH's efficiency actually lives, not in the seams around it; an `acryl`
+loop that wants that property has to earn it fresh, by study or by adapting
+Pi's own `pi-coding-agent` loop; (b) a real translation layer between Pi's
+tool/skill definitions and `ctx.tools`'s registration shape (or a new,
+third seam both convert into) - bounded, scoped work, but not zero.
+
+**Recommendation, restated**: sequence 1 and 2 first (both cheap, both
+already mostly speced/prototyped, both prove the swap mechanism and session
+continuity end to end). Spin `acryl` into its own dedicated spec ledger once
+1 and 2 are live and there is real field signal on what actually needs to
+carry over from each side - not a task folded into this one. The user's own
+framing: this could become "a new chapter" - potentially a coding-agent
+engine other projects consume, not only ACRYL's internal choice - which is
+exactly the scale that warrants its own ledger rather than a subtask here.
+
 ---
 
 ## Open items carried to tasks

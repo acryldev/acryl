@@ -3202,3 +3202,32 @@ unilaterally: stage them - ship the parallel-engine walking skeleton first
 treat the `AgentFactory` deep-integration path as an explicit follow-on
 ledger once there is real field experience with how much the two ecosystems
 actually need to interoperate.
+
+## 2026-09-11 - docs: spec 028 Decision 5 addendum - three engines, not a DSH fork
+
+The user corrected a flaw in Decision 5's framing: "deep integration" read
+as patching `dsh-agent-loop` itself, which really would be an unsyncable
+fork. It isn't required - the capability-seams graph shows `ctx.tools`,
+`ctx.fs`, `ctx.shell`, `ctx.lsp`, `ctx.skill`, `ctx.subagent`,
+`ctx.workflow`, `ctx.session`, `ctx.systemPrompt` do not depend on
+`dsh-agent-loop`; it is the other way around. They are already independently
+mountable, published, upstream-syncable packages.
+
+Reframed as three genuinely separate engines: `dsh` (as-is, extracted as a
+provider, zero modification), `pi` (scenario A, `pi-cordis` as it stands,
+zero modification), and a new, ACRYL-owned `acryl` engine that mounts DSH's
+capability packages unmodified and supplies its own loop/driver on top,
+free to pull tool/skill definitions from both ecosystems. This removes the
+"fork deepseek-harness forever" risk. It does not remove the two costs that
+were always real: DSH's prefix/KV-cache discipline lives in the loop itself,
+not the seams around it, so an `acryl` loop has to earn that property fresh;
+and a real translation layer is still needed between Pi's tool/skill shape
+and `ctx.tools`'s.
+
+Recorded as an addendum to Decision 5 in research.md. Recommendation
+unchanged in substance, restated: sequence engines 1 and 2 first (cheap,
+mostly speced/prototyped already, prove the swap mechanism), spin `acryl`
+into its own dedicated spec ledger once there is real field signal - the
+user's own framing already names it as a potential "new chapter," possibly
+a coding-agent engine other projects consume, which is the right scale for
+its own ledger rather than a subtask here.
