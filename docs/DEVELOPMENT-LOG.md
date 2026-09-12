@@ -3789,3 +3789,46 @@ Still open, separate from this fix: whether the Market card's
 disable/enable should try the live path first (matching the Installed
 tab) instead of always requiring a restart - a product decision, not
 addressed here.
+
+## 2026-09-12 - feat: Web re-pointed onto the engine host - Engine 1 everywhere complete
+
+Commit: `fd01485`
+
+Closes the "Engine 1 everywhere" sequencing from spec 028 Decision 7:
+Web was the last surface still calling `bootAcrylWebProfile` directly
+(its own second Cordis root). Now boots through `createAcrylEngineHost`
++ a new `createWebEngineDefinition()`, the same treatment `acryl-cli`
+and `acryl-desktop` already got this session.
+
+Web's own re-point was simpler than Desktop's - no `prepareDesktopProfile()`-
+style external pipeline to reconcile, just `provideCmdline`'s wiring
+moving from `boot()`'s own `prepare` callback into `createAcrylEngineHost`'s
+equivalent hook, at the identical point in the sequence.
+`createWebEngineDefinition()` resolves the pinned `web` profile
+(`dsh-base` + `dsh-web-app`) through this package's own profile system,
+mirroring `createDshEngineDefinition`'s CLI/TUI flavor with a different
+profile/capability-set/surface, reusing the identical shared
+`mountDshEngine` primitive. `bootAcrylWebProfile` itself is untouched
+and still exported.
+
+`AcrylWebResult` gains an `engine` field, surfaced in `--json` output -
+an observable proof this is really going through the engine host, not
+silently falling back, matching `acryl-cli`'s own `DirectHost.engine`.
+Declared `@deepseek-ai/dsh-cmdline` as an explicit `acryl-web`
+dependency (it's now imported directly, not received transitively) -
+the exact class of gap fixed earlier today in Desktop's preset
+packages, caught proactively this time rather than live-reported.
+
+Tests: RED confirmed first, then GREEN - a real Loader activation of
+the web profile with shared authorization available. Full
+`acryl-harness-runtime` suite: same 4 pre-existing unrelated failures,
+unchanged. Real cold-start verified twice:
+`{"url":"http://127.0.0.1:3080","engine":"dsh"}`. Full `acryl-cli`
+(292/292) and `acryl-desktop` (851/855, 4 pre-existing skips) suites
+both confirmed unaffected by the shared `pnpm-lock.yaml` churn.
+
+All three surfaces (CLI, Desktop, Web) now mount `dsh` as one swappable
+Loader row under a shared engine host. What remains open for spec 028:
+adopting `pi-cordis` into this repo (mechanism still undecided) and the
+`AgentFactory`-driven Pi-as-a-DSH-loop-driver program (Decision 5/the
+user's "any engine, any surface" decision) - neither started.
