@@ -468,7 +468,7 @@ class TuiApp implements TuiHandle {
         // only place the actual UI-building logic lives (spec 034 T009).
         const registration = this.options.getDynamicCommand?.(overlay.command)
         if (registration === undefined) return undefined
-        return registration.open({ tui: this.tui })
+        return registration.open({ tui: this.tui, close: () => this.options.actions.closeDynamic() })
       }
       case 'agentPresets':
         return new AgentPresetsOverlay(store, actions)

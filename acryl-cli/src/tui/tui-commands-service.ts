@@ -33,6 +33,8 @@ import type { Component, TUI } from '@earendil-works/pi-tui'
  */
 export interface TuiCommandOpenContext {
   readonly tui: TUI
+  /** Close this overlay - the registration's own Component calls this from its `handleInput`, matching every built-in overlay's own `actions.closeX()` convention (bare Escape at the top level would be wrong for a plugin with its own nested modes to Escape out of first). */
+  close(): void
 }
 
 /** One plugin-contributed slash command. */
