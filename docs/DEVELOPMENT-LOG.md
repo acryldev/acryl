@@ -4266,3 +4266,47 @@ profiles in the operator's real home). It is pre-existing - the `agent-presets`
 insert in `coding-capabilities.ts` is committed behavior and untouched by this
 commit - and it is the cross-surface half of FR-008, so it belongs with T008
 rather than as a side effect of T003. Recorded in `tasks.md`.
+
+## 2026-09-12 - feat: dsh-community-market wired into Web (browsing only)
+
+Commits: `2ec919c`, `6745ec4`, `5db9879`, `fa70e7e` (this entry covers `fa70e7e`;
+the first three are the ACRYL web-branding work checkpointed earlier today)
+
+Materialized `dsh-community-market` into the web profile's own `node_modules`
+(the same `materializeProfilePackage` technique the ACRYL brand swap already
+uses - another ACRYL-owned workspace package outside `@deepseek-ai/dsh`'s own
+dependency closure) and inserted it as a Loader row under the same id/name
+`acryl-desktop`'s own `DESKTOP_MARKET_IDENTITIES.community` uses. Unlike
+Desktop, the row is unconditionally present rather than a user-toggleable
+setting - Web has no settings surface for that yet.
+
+`dsh-community-market`'s own top-level `inject` is only `['webServer',
+'settings']` - both already present on Web - so the row activates cleanly.
+Real install/uninstall lives behind a second, nested
+`ctx.inject(['desktopProfiles', 'desktopPnpm'], ...)` inside its own `apply()`,
+which its own source comments as deliberate ("Browsing remains portable"):
+that inner block simply never activates on Web today - no crash, no error, it
+stays PENDING. Confirmed directly with a real boot: the served page's boot
+manifest lists `dsh-community-market`'s client bundle, and a real HTTP request
+to its own `/api/community-market/state` route returns 200 with the built-in
+catalog sources (including the ACRYL Package Catalog, which auto-discovers
+npm packages carrying the `acryl-package` keyword) and `desktopActions`
+correctly reporting `false` rather than throwing.
+
+Also published `acryl-dsh-editor-plugin-web@0.1.0` to npm today as the first
+real third-party-style plugin exercised end-to-end on Web - its own
+`peerDependencies` used prerelease-anchored caret ranges that could never
+resolve the pinned `0.1.5-alpha.1` release, and its host half's use of
+`@deepseek-ai/dsh-client-connection`'s `rpc.handle` hit a genuine upstream bug
+(the connection service's own internal ctx is never itself injected with
+`webServer`, so any consumer's `rpc.handle()` throws regardless of what the
+calling plugin declares) - worked around by calling the same service's public
+`register()` method directly with a correctly-injected ctx. Full detail and
+the disproved "duplicate Cordis instance" theory live in that plugin's own
+repo history (`acryldev/acryl-dsh-editor-plugin-web`).
+
+Full monorepo typecheck and test suite green except the same 4 pre-existing
+`acryl-harness-runtime` failures recorded above, unchanged by this work.
+Web-side `desktopProfiles`/`desktopPnpm` equivalents (Market install/uninstall
+parity with Desktop) and a CLI-native plugin browser remain separate,
+unstarted work.
