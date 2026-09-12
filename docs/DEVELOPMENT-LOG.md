@@ -3832,3 +3832,55 @@ Loader row under a shared engine host. What remains open for spec 028:
 adopting `pi-cordis` into this repo (mechanism still undecided) and the
 `AgentFactory`-driven Pi-as-a-DSH-loop-driver program (Decision 5/the
 user's "any engine, any surface" decision) - neither started.
+
+## 2026-09-12 - fix: the DSH agent-preset payload never reached a packaged build
+
+Commit: `23cab0cac77be1c83ce9a3cc0a47d31ed87ccf01`
+
+First Linux packaging run on this repo (Ubuntu x64, `electron-builder
+--linux deb --x64`) failed in `afterPack` on
+`verify-packaged-runtime.ts`'s own `REQUIRED_UNPACKED_RUNTIME_ENTRIES`:
+the three `@deepseek-ai/dsh/config/agent-presets/cordis/*` entries
+(`agent.cordis.yml` plus both `SKILL.md` files) were absent from
+`app.asar.unpacked`. The whole `config/` tree of the `dsh` package was
+missing - all 4 presets (`cordis`, `minimal`, `ptc`, `standard`), not
+just the 3 asserted files.
+
+Root cause is a non-obvious electron-builder contract:
+`computeNodeModuleFileSets` reuses `build.files` for every dependency via
+`new FileMatcher(source, destination, macroExpander,
+mainMatcher.patterns)`, so those patterns are re-rooted at each module's
+own directory. Top-level dependency *files* survive regardless (which is
+why `package.json`, `LICENSE`, and the READMEs were present and the
+breakage looked selective), but a top-level dependency *directory* that
+matches no pattern is pruned. `build.files` listed `lib/**`,
+`package.json`, `cordis.patch.yml`, and `build/*` - nothing that could
+match `config/`.
+
+The fix is a one-line module-relative include, `config/agent-presets/**`.
+An absolute-looking `node_modules/@deepseek-ai/dsh/config/**` does *not*
+work - tried first, it resolves against the module directory too and
+matches nothing. `acryl-desktop` owns no `config/` directory, so the
+app-root side of the shared matcher is unchanged; `dsh` is the only
+dependency carrying `config/agent-presets`.
+
+This filter is platform-neutral, so the gap blocked *every* packaging
+target since the verifier requirement landed in `933ee2e` (2026-08-30) -
+`check:mac-package` and `check:win-package` were failing the same way on
+their own hosts. The pre-existing `dist/linux-x64/linux-unpacked` tree in
+this workspace shows the same missing `config/`.
+
+Verification: `tests/package.spec.ts` pins `build.files` exactly, so its
+expectation moved with the manifest and now documents the module-relative
+semantics inline; packaging specs 42/43 green (1 pre-existing skip),
+`verify:closure` green (244 first-party nodes). Then a real end-to-end
+deb: `dist/acryl-desktop-linux-amd64.deb`, 122 MB, `Package:
+acryl-desktop`, `Version: 0.1.37`, `Architecture: amd64`, 60
+`agent-presets` entries packed, `afterPack` verifier passing, plus
+`/usr/share/applications/acryl-desktop.desktop` and hicolor icons.
+
+Still open, deliberately out of scope here: Linux has no owned packaging
+path. `build.linux.target` is `["dir"]` and there is no `dist:linux`
+script or `verify-linux-*` gate, so the `deb` target exists only as a CLI
+override (`--linux deb --x64`) with no host gate and no installed-artifact
+verification - unlike `dist:win`/`dist:mac`.
