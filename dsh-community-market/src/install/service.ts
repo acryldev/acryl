@@ -26,7 +26,16 @@ const MAX_RECEIPTS = 512
 const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall', 'prepare'] as const
 const BLOCKED_PRODUCT_PACKAGES = new Set(['acryl-desktop', 'dsh-community-market'])
 const DSH_RUNTIME_VERSION = '0.1.5-alpha.1'
-const CORDIS_RUNTIME_VERSION = '4.0.1'
+// @deepseek-ai/dsh@0.1.5-alpha.1 itself declares "@deepseek-ai/cordis": "^4.0.2" -
+// this constant fell behind that when the whole repo's own package.json pins
+// were bumped to 4.0.2 (a stale 4.0.1 pin was found and fixed everywhere else
+// today), because this one lives as a source constant here, not a
+// package.json field a repo-wide version sweep would touch. Confirmed by
+// reproducing directly: a real plugin correctly pinning
+// "@deepseek-ai/cordis": "^4.0.2" (the actually-correct, current requirement)
+// got rejected here as "not compatible with this ACRYL runtime" - the
+// opposite of the truth.
+const CORDIS_RUNTIME_VERSION = '4.0.2'
 const NODE_RUNTIME_VERSION = '24.18.1'
 
 export type { MarketInstallReceipt } from '../api-types.js'
