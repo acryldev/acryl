@@ -90,9 +90,9 @@ describe('catalog schemas and semantics', () => {
     }, 1)).toThrow(/effective query limit/u)
   })
 
-  it('rejects provider and normalized pages above the 100-item safety cap', () => {
+  it('rejects provider and normalized pages above the 200-item safety cap', () => {
     const provider = providerFixture() as CatalogProviderPage
-    const providerItems = Array.from({ length: 101 }, (_, index) => ({
+    const providerItems = Array.from({ length: 201 }, (_, index) => ({
       ...provider.items[0]!,
       id: `provider-plugin-${index}`,
     }))
@@ -100,7 +100,7 @@ describe('catalog schemas and semantics', () => {
       .toThrow(CatalogContractError)
 
     const snapshot = snapshotFixture() as ReturnType<typeof parseCatalogSnapshot>
-    const snapshotItems = Array.from({ length: 101 }, (_, index) => ({
+    const snapshotItems = Array.from({ length: 201 }, (_, index) => ({
       ...snapshot.items[0]!,
       id: `snapshot-plugin-${index}`,
       provenance: {
