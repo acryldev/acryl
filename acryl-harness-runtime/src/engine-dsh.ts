@@ -30,6 +30,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import {
   DEFAULT_PROFILE_BUNDLES,
+  PROFILE_TEMPLATES,
   composeEntries,
   healProfilesModuleFallback,
   initProfile,
@@ -170,7 +171,23 @@ async function resolveWebEngineComposition(): Promise<DshEngineComposition> {
   const profileName = 'web'
   process.env.DSH_HOME = resolveAcrylDshHome()
   const profileDirectory = resolveProfileDir(profileName)
-  initProfile(profileDirectory, DEFAULT_PROFILE_BUNDLES)
+  // The shipped `web` template (PROFILE_TEMPLATES.web) bundles dsh-web-app
+  // (dsh-client-connection, webStartup, the auth-gated index) on top of
+  // dsh-base - DEFAULT_PROFILE_BUNDLES is only ['@deepseek-ai/dsh-base'], the
+  // generic fallback loadProfile() uses for a *custom-named* profile with no
+  // shipped template (the CLI/TUI flavor's own 'acryl'/'--profile' names).
+  // initProfile() only writes package.json when one doesn't exist yet, so
+  // calling it here with the wrong (too-minimal) bundle list on a profile
+  // loadProfile() would otherwise auto-initialize correctly *pre-empts* that
+  // correct initialization - a fresh 'web' profile then permanently has no
+  // dsh-web-app bundle, so ctx.get('connection')/ctx.get('webStartup') never
+  // exist and the served index falls back to its own "authentication
+  // required" client-side message rather than ever serving the app.
+  // Reproduced directly: a fresh profile's Loader entries contained no
+  // "connection" or "web-startup" row at all (not pending, not failed -
+  // absent) before this fix.
+  const webTemplate = PROFILE_TEMPLATES.web
+  initProfile(profileDirectory, webTemplate?.bundles ?? DEFAULT_PROFILE_BUNDLES, webTemplate?.patchReload)
   await healProfilesModuleFallback({ installAnchor: dshInstallAnchor })
   const profile = loadProfile('web', profileName, dshInstallAnchor)
   const rootConfig = join(profile.dir, 'cordis.yml')

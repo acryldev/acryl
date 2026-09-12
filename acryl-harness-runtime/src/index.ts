@@ -43,6 +43,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import {
   DEFAULT_PROFILE_BUNDLES,
+  PROFILE_TEMPLATES,
   boot,
   composeEntries,
   healProfilesModuleFallback,
@@ -137,7 +138,14 @@ export async function bootAcrylWebProfile(
   const profileName = 'web'
   process.env.DSH_HOME = resolveAcrylDshHome()
   const profileDirectory = resolveProfileDir(profileName)
-  initProfile(profileDirectory, DEFAULT_PROFILE_BUNDLES)
+  // See engine-dsh.ts's resolveWebEngineComposition for the full rationale:
+  // DEFAULT_PROFILE_BUNDLES (dsh-base only) pre-empts loadProfile()'s own
+  // correct PROFILE_TEMPLATES.web-based auto-init (dsh-base + dsh-web-app),
+  // leaving a fresh 'web' profile with no dsh-client-connection/webStartup -
+  // ctx.get('connection') and ctx.get('webStartup') are never defined, and
+  // the served index falls back to its own "authentication required" message.
+  const webTemplate = PROFILE_TEMPLATES.web
+  initProfile(profileDirectory, webTemplate?.bundles ?? DEFAULT_PROFILE_BUNDLES, webTemplate?.patchReload)
   await healProfilesModuleFallback({ installAnchor: dshInstallAnchor })
   const profile = loadProfile('web', profileName, dshInstallAnchor)
   const rootConfig = join(profile.dir, 'cordis.yml')

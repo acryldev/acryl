@@ -17,6 +17,7 @@
  * for any other consumer; this file just no longer calls it.
  */
 
+import type {} from '@deepseek-ai/dsh-client-connection'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { createAcrylEngineHost, createWebEngineDefinition } from 'acryl-harness-runtime'
 
@@ -51,7 +52,15 @@ export async function serveWeb(
   const startup = ctx.get('webStartup') as { host?: string; port?: number } | undefined
   const startupHost = startup?.host ?? '127.0.0.1'
   const port = startup?.port ?? 3080
-  const url = `http://${startupHost}:${port}`
+  const baseUrl = `http://${startupHost}:${port}`
+  // The served index requires this process's launch token as its sole
+  // authentication input (dsh-client-connection's authorizeIndex) - a bare
+  // origin without it renders "authentication required; reopen the URL
+  // printed by dsh web" instead of the app. connection is present whenever
+  // the web profile mounts dsh-client-connection (always, for the shipped
+  // `web` profile); optional here only because nothing in this package's
+  // own type graph can assert that composition-time fact.
+  const url = ctx.get('connection')?.authenticatedUrl(baseUrl) ?? baseUrl
   const engine = host.currentEngine()
   if (options.waitForSignal === false) {
     // Headless readiness probe: boot, report the URL, then dispose the runtime
