@@ -22,8 +22,8 @@
  * file trusted the pattern.
  */
 
-import { writeFileSync } from 'node:fs'
-import { createRequire } from 'node:module'
+import { existsSync, mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { createRequire, findPackageJSON } from 'node:module'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
@@ -39,6 +39,7 @@ import {
   resolveProfileDir,
 } from '@deepseek-ai/dsh-app-boot'
 import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
+import type {} from '@deepseek-ai/dsh-host-webserver'
 
 import { resolveAcrylDshHome } from './acryl-home.ts'
 import { createAcrylCodingCapabilityPatches } from './coding-capabilities.ts'
@@ -134,6 +135,33 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   // installSessionLogExporter's own doc comment) - this plugin's own ctx is
   // correct here, unlike the two cases above.
   installSessionLogExporter(ctx, { surface: composition.surface })
+  // Web only: the shell HTML dsh-web-app serves is a pinned
+  // @deepseek-ai/dsh-web-frontend build artifact with a hardcoded
+  // "DeepSeek Harness" <title> - not part of the pluggable Cordis Client
+  // slot system the brand-swap patch (resolveWebEngineComposition) actually
+  // covers, so swapping ui-brand-official for ui-acryl alone leaves the
+  // visible browser-tab title wrong. Reproduced directly: a real served
+  // index still read "<title>DeepSeek Harness</title>" after the brand-swap
+  // patch landed. Desktop does not have this gap - electron-shell-
+  // generation.ts already suppresses page-title-updated and keeps its
+  // native window title fixed at the OS level, so this vendored HTML's
+  // <title> never reaches anything the user sees there; Web has no native
+  // window, so this served HTML's own <title> IS the visible artifact.
+  // dsh-host-webserver's WebServer service exposes tapIndex(transform) as
+  // its own designed escape hatch for exactly this class of rewrite ("no
+  // IndexInjection row exists for this", per its own doc comment) -
+  // registering a tap here, rather than editing the vendored
+  // dsh-web-frontend package, which the project's own repo rules forbid.
+  // Only the title is fixed here; a matching ACRYL favicon needs a real
+  // static asset plus a route to serve it, tracked separately.
+  if (composition.surface === 'web') {
+    ctx.inject(['webServer'], webServerCtx => {
+      const disposeTap = webServerCtx.webServer.tapIndex(
+        html => html.replace(/<title>[^<]*<\/title>/i, '<title>ACRYL</title>'),
+      )
+      ctx.effect(() => disposeTap)
+    })
+  }
 }
 
 /** Resolve the pinned Harness `acryl` profile by name into a mountable composition (the CLI/TUI flavor). */
@@ -166,8 +194,35 @@ export function createDshEngineDefinition(profileName: string): AcrylEngineDefin
   }
 }
 
+/**
+ * Symlink one ACRYL-owned package into a profile's own `node_modules`, so
+ * Node's ordinary bare-specifier resolution - the only mechanism
+ * `HostResolvedRootInclude`'s composed rows use, verified directly by
+ * logging every `resolve()` call: `context.parentURL` is always the
+ * profile's own `package.json`, never `@deepseek-ai/cordis-plugin-loader`'s
+ * own entry - can find it. A resolution-hook overlay (matching
+ * `acryl-desktop`'s `installProfilePackageResolver`) cannot help here: it
+ * only intercepts imports whose parent is the Loader's own entry module,
+ * which this composition style never uses. Idempotent: replaces a stale
+ * symlink pointing elsewhere, leaves an already-correct one untouched.
+ */
+function materializeProfilePackage(profileDir: string, packageName: string, installPackageUrl: string): void {
+  const manifestPath = findPackageJSON(packageName, installPackageUrl)
+  if (manifestPath === undefined) {
+    throw new Error(`ACRYL web profile: cannot resolve package ${JSON.stringify(packageName)} from the acryl-web installation`)
+  }
+  const sourceDir = dirname(manifestPath)
+  const linkPath = join(profileDir, 'node_modules', packageName)
+  mkdirSync(dirname(linkPath), { recursive: true })
+  if (existsSync(linkPath)) {
+    if (realpathSync.native(linkPath) === realpathSync.native(sourceDir)) return
+    rmSync(linkPath, { force: true, recursive: true })
+  }
+  symlinkSync(sourceDir, linkPath, 'dir')
+}
+
 /** Resolve the pinned Harness `web` profile into a mountable composition (the Web flavor). */
-async function resolveWebEngineComposition(): Promise<DshEngineComposition> {
+async function resolveWebEngineComposition(installPackageUrl: string): Promise<DshEngineComposition> {
   const profileName = 'web'
   process.env.DSH_HOME = resolveAcrylDshHome()
   const profileDirectory = resolveProfileDir(profileName)
@@ -197,6 +252,38 @@ async function resolveWebEngineComposition(): Promise<DshEngineComposition> {
     ...createAcrylCodingCapabilityPatches(new Set(['web'])),
     ...profile.patches,
   ])
+  // Brand swap: same technique and same row id as acryl-desktop's own
+  // (independent) brand swap in profile.ts - the stock DeepSeek Harness
+  // identity (`@deepseek-ai/dsh-client-ui-brand-official`, already composed
+  // by the base dsh-web-app bundle at row id `ui-brand-official`) and
+  // `dsh-client-ui-brand-acryl` are standalone, independently swappable
+  // Cordis Client plugins carrying the same slot contract
+  // (`sidebar.brand.mark`/`.name`, `conversation.hero.brand.mark`) - exactly
+  // one is ever enabled. Validated against the real composed row (not
+  // assumed) so a future dsh-web-app bundle change that renames or removes
+  // this row fails loud here instead of silently keeping the DeepSeek brand.
+  const officialBrandRow = composeEntries([patches]).find(entry => entry.id === 'ui-brand-official')
+  if (officialBrandRow?.name !== '@deepseek-ai/dsh-client-ui-brand-official') {
+    throw new Error('ACRYL web profile must use @deepseek-ai/dsh-client-ui-brand-official in the ui-brand-official row')
+  }
+  // dsh-client-ui-brand-acryl is an ACRYL-owned workspace package, not a
+  // dependency of @deepseek-ai/dsh itself, so healProfilesModuleFallback's
+  // installAnchor-rooted closure (above) can never resolve it - reproduced
+  // directly: a real Loader activation failed with "Cannot find package
+  // 'dsh-client-ui-brand-acryl'" even after declaring it everywhere, because
+  // that fallback mechanism is fundamentally rooted at @deepseek-ai/dsh's own
+  // dependency tree, never the calling surface's own. Materializing it
+  // directly into this profile's own node_modules (matching this profile
+  // directory's own resolution base, verified by logging every resolve()
+  // call HostResolvedRootInclude's composed rows make) is what actually
+  // makes it resolvable - a resolution-hook overlay (acryl-desktop's
+  // installProfilePackageResolver) does not apply to this composition style
+  // at all, confirmed the same way.
+  materializeProfilePackage(profile.dir, 'dsh-client-ui-brand-acryl', installPackageUrl)
+  patches.push(
+    { id: 'ui-brand-official', disabled: true },
+    { insert: [{ id: 'ui-acryl', name: 'dsh-client-ui-brand-acryl', disabled: false }] },
+  )
   return { rootConfig, patches, surface: 'web' }
 }
 
@@ -206,11 +293,14 @@ async function resolveWebEngineComposition(): Promise<DshEngineComposition> {
  * as {@link createDshEngineDefinition}, resolved through this package's own
  * profile system like the CLI flavor (Web has no external profile pipeline
  * of its own, unlike Desktop's `prepareDesktopProfile()`).
+ * @param installPackageUrl - file URL of `acryl-web`'s own `package.json`,
+ * used to materialize `dsh-client-ui-brand-acryl` into the profile (see
+ * {@link resolveWebEngineComposition}'s own comment for why that is needed).
  */
-export function createWebEngineDefinition(): AcrylEngineDefinition {
+export function createWebEngineDefinition(installPackageUrl: string): AcrylEngineDefinition {
   return {
     id: 'dsh',
-    plugin: async (ctx: Context) => mountDshEngine(ctx, await resolveWebEngineComposition()),
+    plugin: async (ctx: Context) => mountDshEngine(ctx, await resolveWebEngineComposition(installPackageUrl)),
   }
 }
 

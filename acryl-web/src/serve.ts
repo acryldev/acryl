@@ -42,7 +42,7 @@ export async function serveWeb(
 ): Promise<AcrylWebResult> {
   const cmdlineArgs = options.cmdlineArgs ? [...options.cmdlineArgs] : []
   const host = await createAcrylEngineHost({
-    engines: [createWebEngineDefinition()],
+    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
     initialEngine: 'dsh',
     prepare: hostCtx => {
       provideCmdline(hostCtx, { args: cmdlineArgs, exit: code => { process.exitCode = code } })

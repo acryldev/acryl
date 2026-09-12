@@ -6,11 +6,11 @@
  * real-profile-boot path) rather than a synthetic noop plugin, so this
  * proves the real extraction, not just the mounting primitive.
  */
-import { writeFileSync } from 'node:fs'
+import { existsSync, realpathSync, writeFileSync } from 'node:fs'
 import { mkdtemp, rm } from 'node:fs/promises'
-import { createRequire } from 'node:module'
+import { createRequire, findPackageJSON } from 'node:module'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import {
   DEFAULT_PROFILE_BUNDLES,
   healProfilesModuleFallback,
@@ -18,6 +18,7 @@ import {
   loadProfile,
   resolveProfileDir,
 } from '@deepseek-ai/dsh-app-boot'
+import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   createDshEngineDefinition,
@@ -106,19 +107,67 @@ describe('the extracted dsh engine, mounted under createAcrylEngineHost', () => 
 })
 
 describe('the web engine entry point, mounted under createAcrylEngineHost', () => {
-  it('boots the pinned web profile in the host tree, with shared authorization available', async () => {
+  it('boots the pinned web profile in the host tree, with shared authorization and a token-authenticated connection', async () => {
     await freshDshHome()
+    // web-startup's own plugin (@deepseek-ai/dsh-web-app) throws on activation
+    // without ctx.cmdlineArgs/ctx.appExit - provideCmdline is not optional
+    // plumbing for a real boot, matching how acryl-web/src/serve.ts always
+    // supplies it via createAcrylEngineHost's prepare hook.
+    const installPackageUrl = new URL('../package.json', import.meta.url).href
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition()],
+      engines: [createWebEngineDefinition(installPackageUrl)],
       initialEngine: 'dsh',
+      prepare: hostCtx => {
+        provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} })
+      },
     })
     try {
       expect(host.currentEngine()).toBe('dsh')
       expect(host.ctx.get('authorization')).toBeDefined()
+      // Proves the brand swap and the profile-template fix together: a
+      // fresh profile now actually mounts dsh-client-connection, and its
+      // authenticatedUrl carries a real token.
+      const url = host.ctx.get('connection')?.authenticatedUrl('http://127.0.0.1:3080')
+      expect(new URL(url ?? '').searchParams.get('token')).toBeTruthy()
+
+      // materializeProfilePackage's actual effect: a real symlink from the
+      // fresh profile's own node_modules to the acryl-web installation's
+      // resolved copy of dsh-client-ui-brand-acryl - not just "no error was
+      // thrown while resolving it".
+      const profile = loadProfile('web', 'web', dshInstallAnchor)
+      const linkPath = join(profile.dir, 'node_modules', 'dsh-client-ui-brand-acryl')
+      expect(existsSync(linkPath)).toBe(true)
+      const installManifest = findPackageJSON('dsh-client-ui-brand-acryl', installPackageUrl)
+      expect(installManifest).toBeDefined()
+      expect(realpathSync.native(linkPath)).toBe(realpathSync.native(dirname(installManifest as string)))
+
+      // The composed Loader tree actually carries the swap, not just a
+      // resolvable package sitting unused on disk: the stock DeepSeek row is
+      // disabled and the ACRYL row is enabled.
+      const entries = [...host.ctx.loader.entries()]
+      const officialBrand = entries.find(candidate => candidate.options.id === 'ui-brand-official')
+      const acrylBrand = entries.find(candidate => candidate.options.id === 'ui-acryl')
+      expect(officialBrand?.options.disabled).toBe(true)
+      expect(acrylBrand?.options.name).toBe('dsh-client-ui-brand-acryl')
+      expect(acrylBrand?.options.disabled).toBeFalsy()
+
+      // The served shell HTML's <title> is a pinned dsh-web-frontend build
+      // artifact, outside the Cordis Client slot system the brand-swap patch
+      // above covers - reproduced directly: a real served index still read
+      // "DeepSeek Harness" after that patch landed. mountDshEngine registers
+      // a webServer.tapIndex() rewrite for the web surface specifically;
+      // exercise the real service's real renderIndex(), not a mocked string
+      // replace, so a future WebServer change that renames/removes tapIndex
+      // fails loud here.
+      const rendered = host.ctx.get('webServer')?.renderIndex(
+        '<!doctype html><html><head><title>DeepSeek Harness</title></head><body></body></html>',
+      )
+      expect(rendered).toContain('<title>ACRYL</title>')
+      expect(rendered).not.toContain('DeepSeek Harness')
     } finally {
       await host.dispose()
     }
-  })
+  }, 30000)
 })
 
 describe('the composition-based dsh engine entry point (for a surface with its own profile pipeline)', () => {

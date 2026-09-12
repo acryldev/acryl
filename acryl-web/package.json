@@ -188,7 +188,8 @@
     "@deepseek-ai/dsh-web-search-deepseek": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-workflow-worker-thread": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-workspace": "0.1.5-alpha.1",
-    "diff": "^8.0.4"
+    "diff": "^8.0.4",
+    "dsh-client-ui-brand-acryl": "workspace:*"
   },
   "scripts": {
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
