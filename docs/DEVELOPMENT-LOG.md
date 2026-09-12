@@ -701,7 +701,7 @@ the plugin path with one real model-facing Tool as the hard gate. Follow-on diff
 canvas) are intentionally recorded as subsequent ledgers.
 ## 2026-08-31 - Nix flake: add acryl-desktop (Electron) output
 
-**Commit:** [`47840639adafd11c4531f096bec5fba44ce49c99`](https://github.com/acryldev/acryl/commit/47840639adafd11c4531f096bec5fba44ce49c99)
+**Commit:** [`7383dd9d9e6b619fcec51c5f7567d6b1488d02b6`](https://github.com/acryldev/acryl/commit/7383dd9d9e6b619fcec51c5f7567d6b1488d02b6)
 
 Extended the Nix flake to also build the Electron desktop app as
 `packages.${system}.acryl-desktop`, alongside the existing TUI output.
@@ -736,7 +736,7 @@ nix run .#acryl-desktop -- --version
 
 ## 2026-08-31 - Nix flake support for acryl-tui
 
-**Commit:** [`f8f7efcd8a56f0942fee49a36ebacec493655210`](https://github.com/acryldev/acryl/commit/f8f7efcd8a56f0942fee49a36ebacec493655210)
+**Commit:** [`4f15a00d778c8b01af8f536b78e04fbf3372f8ee`](https://github.com/acryldev/acryl/commit/4f15a00d778c8b01af8f536b78e04fbf3372f8ee)
 
 Added Nix flake support targeting the `acryl-tui` terminal client. The flake
 builds the TUI and its workspace dependencies (`acryl-control`,
@@ -4657,7 +4657,51 @@ CLI's own install verb (spec 034 T006's original "at least one non-Electron
 surface" wording covers either) remains open - Web was the one driven to
 completion because it was the one under active user testing.
 
-## 2026-09-13 - fix: Desktop's Market install was blocked by pnpm-workspace.yaml, not just a missing flag (spec 034 T006)
+---
+
+## 2026-09-11 - Nix flake: bump prebuilt to v0.1.36, add hash automation, newest runner
+
+**Commits:** [`cfa0c03a55adb34e3db4251cdd35ef50073d78a3`](https://github.com/acryldev/acryl/commit/cfa0c03a55adb34e3db4251cdd35ef50073d78a3) (implementation), [`d2e7ef2d0f6b6f8246be48a621bb59407bc31ddd`](https://github.com/acryldev/acryl/commit/d2e7ef2d0f6b6f8246be48a621bb59407bc31ddd) (docs)
+
+Rebased `feature/nix-flake-support` onto the latest `upstream/main`
+(`0822873`) and applied the remaining nixify skill compliance fixes.
+
+### Changes
+
+- Bumped the prebuilt CLI version from v0.1.19 to v0.1.36 (latest
+  release). Refreshed all three per-platform SRI hashes by prefetching
+  the new release assets.
+- Removed `x86_64-darwin` from `prebuiltAssets` because v0.1.36 does not
+  ship a darwin-x64 CLI tarball. Made `#prebuilt` conditional via
+  `optionalAttrs` so it is only exposed on platforms with a release
+  asset (`x86_64-linux`, `aarch64-linux`, `aarch64-darwin`). On
+  `x86_64-darwin`, `nix run .#prebuilt` correctly errors "package not
+  available" instead of failing with a missing attribute error.
+- Added `.github/workflows/nix-release.yml` — daily hash automation
+  workflow (scheduled lag-check template, required by nixify Step 16
+  for prebuilt tarball flakes). Detects when `flake.nix` lags behind
+  the latest GitHub release, prefetches new SRI hashes, and opens a
+  PR. Uses `GITHUB_TOKEN` (releases are created with `GITHUB_TOKEN`
+  via `softprops/action-gh-release`, so `release: published` would
+  never fire).
+- Updated the `aarch64-darwin` CI runner from `macos-14` to `macos-26`
+  (nixify Step 16: always use the newest runner).
+- Updated all three READMEs to reference v0.1.36 in the Nix tag-pinning
+  example and noted the `#prebuilt` platform scope. Re-recorded the
+  bilingual-docs blob hashes in `README.i18n.yaml`.
+- Re-pointed the two earlier Nix development-log entries at their
+  rebased commit hashes.
+
+### Validation
+
+- `nix flake check --no-build` passes on `x86_64-darwin`.
+- `nix build .#default` succeeds (from-source TUI build).
+- `nix run .#default -- --help` shows the correct help output.
+- `nix build .#prebuilt` correctly errors on `x86_64-darwin` (no
+  prebuilt asset for this platform).
+- `validate-action-pins.sh` — all actions pinned to commit SHAs.
+- `validate-pre-push.sh` — magic-nix-cache guard, timeout, runner
+  labels, action pins, and branch-not-stale checks all pass.## 2026-09-13 - fix: Desktop's Market install was blocked by pnpm-workspace.yaml, not just a missing flag (spec 034 T006)
 
 Commits: `71c7df7`, `e321be1`
 
@@ -4726,6 +4770,50 @@ and live-activate a Market plugin without a process restart. What remains for
 spec 034 to close: T007 (retire `acryl-desktop`'s now-dead private
 plugin-lifecycle duplication), T008 (the cross-surface duplicate-loader-entry
 parity gap), and the real end-to-end GUI retest on Desktop.
+
+## 2026-09-11 - Nix flake: bump prebuilt to v0.1.36, add hash automation, newest runner
+
+**Commits:** [`cfa0c03a55adb34e3db4251cdd35ef50073d78a3`](https://github.com/acryldev/acryl/commit/cfa0c03a55adb34e3db4251cdd35ef50073d78a3) (implementation), [`d2e7ef2d0f6b6f8246be48a621bb59407bc31ddd`](https://github.com/acryldev/acryl/commit/d2e7ef2d0f6b6f8246be48a621bb59407bc31ddd) (docs)
+
+Rebased `feature/nix-flake-support` onto the latest `upstream/main`
+(`0822873`) and applied the remaining nixify skill compliance fixes.
+
+### Changes
+
+- Bumped the prebuilt CLI version from v0.1.19 to v0.1.36 (latest
+  release). Refreshed all three per-platform SRI hashes by prefetching
+  the new release assets.
+- Removed `x86_64-darwin` from `prebuiltAssets` because v0.1.36 does not
+  ship a darwin-x64 CLI tarball. Made `#prebuilt` conditional via
+  `optionalAttrs` so it is only exposed on platforms with a release
+  asset (`x86_64-linux`, `aarch64-linux`, `aarch64-darwin`). On
+  `x86_64-darwin`, `nix run .#prebuilt` correctly errors "package not
+  available" instead of failing with a missing attribute error.
+- Added `.github/workflows/nix-release.yml` — daily hash automation
+  workflow (scheduled lag-check template, required by nixify Step 16
+  for prebuilt tarball flakes). Detects when `flake.nix` lags behind
+  the latest GitHub release, prefetches new SRI hashes, and opens a
+  PR. Uses `GITHUB_TOKEN` (releases are created with `GITHUB_TOKEN`
+  via `softprops/action-gh-release`, so `release: published` would
+  never fire).
+- Updated the `aarch64-darwin` CI runner from `macos-14` to `macos-26`
+  (nixify Step 16: always use the newest runner).
+- Updated all three READMEs to reference v0.1.36 in the Nix tag-pinning
+  example and noted the `#prebuilt` platform scope. Re-recorded the
+  bilingual-docs blob hashes in `README.i18n.yaml`.
+- Re-pointed the two earlier Nix development-log entries at their
+  rebased commit hashes.
+
+### Validation
+
+- `nix flake check --no-build` passes on `x86_64-darwin`.
+- `nix build .#default` succeeds (from-source TUI build).
+- `nix run .#default -- --help` shows the correct help output.
+- `nix build .#prebuilt` correctly errors on `x86_64-darwin` (no
+  prebuilt asset for this platform).
+- `validate-action-pins.sh` — all actions pinned to commit SHAs.
+- `validate-pre-push.sh` — magic-nix-cache guard, timeout, runner
+  labels, action pins, and branch-not-stale checks all pass.
 
 ## 2026-09-14 - fix(desktop): report restartRequired for a live plugin disable/enable
 
@@ -4917,6 +5005,7 @@ into the temp profile rather than symlinking them, making them resolvable in
 the isolated context. Verified: `corepack pnpm --filter acryl-desktop run check`
 now passes end to end with exit code 0.
 
+<<<<<<< HEAD
 ## 2026-09-15/16 - feat(cli): /plugins fuzzy search + navigation-while-filtering fix
 
 Commits: `82d316c`, `2785545`
@@ -5263,3 +5352,5 @@ binary directly rather than through whatever bare `pnpm` resolves to on
 - Not done, on purpose or by decision: steps 9-11 of T045's own checklist - push the registry, resync both sites (acryldev.github.io/ui and acrylblends.github.io/ui) and push the commits - were reserved for the operator at review time, so everything above is
   committed locally and unPushed. `questionnaire` and `message-scroller` stay blocked rather than ported narrower. Nothing else in T045 is open: the 26 ports are in the manifest, contracted, categorised (both sites render a component only inside a category, so an
   uncategorised port is invisible - a bug class that shipped twice before the ingest gate checked it), tested and browser-verified.
+=======
+>>>>>>> 9a172dc (docs(dev-log): record v0.1.36 bump, hash automation, and rebase)
