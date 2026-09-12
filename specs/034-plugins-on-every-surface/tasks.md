@@ -83,6 +83,25 @@ reports `dsh`.
 **Done when**: the panel no longer reports `0 plugins` for a profile whose
 CLI reports plugins.
 
+**Partially landed 2026-09-12, commit `fa70e7e` (market provider half only).**
+Q3's own measurement already showed `@deepseek-ai/dsh-host-plugin-inventory`
+(`pluginInventory`) composed on web today - the plugin-inventory-rows half of
+this task was already done before this spec existed. What was actually
+missing was the market provider row, resolved by Q1 above and landed the same
+way `acryl-desktop`'s own `DESKTOP_MARKET_IDENTITIES.community` row works:
+`materializeProfilePackage` + a Loader insert in `resolveWebEngineComposition`,
+unconditional rather than a user-toggleable setting (Web has no settings
+surface for that yet, unlike Desktop's `desktop-market.ts`). Verified with a
+real boot and a real HTTP request to `/api/community-market/state` (200, real
+catalog sources, `desktopActions` correctly reporting absent) - not yet
+verified against a rendered Settings > Plugins > Market tab in an actual
+browser (no browser tooling available in that session). Full monorepo
+typecheck and test suite green except the four pre-existing
+`acryl-harness-runtime` failures this spec's earlier entries already record.
+This was done independently of this spec's own numbering (a different session
+without visibility into `specs/034` yet) - recorded here now so T004 reflects
+its real state before anyone else picks it up.
+
 ## T005 - Shared plugin lifecycle capability
 
 **Files**: `acryl-control/src/plugin/**`, `acryl-harness-runtime/src/**`,

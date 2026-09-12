@@ -5,7 +5,7 @@ task it gates starts.
 
 ## Q1 - Can `dsh-community-market` mount under the Web host?
 
-**Status**: open
+**Status**: resolved (2026-09-12) - T004 (browsing half) unblocked
 **Gates**: T004
 
 Known: `dsh-community-market` is an implemented private Host/Client package
@@ -18,7 +18,38 @@ injection) and whether it assumes an Electron main process.
 Measured: the package composes as one row (`dsh-community-market`) in the real
 Desktop Loader tree - it is a plain Cordis Host row, not an Electron main-process
 object, so the question is which of its injected services exist off-Electron,
-not whether the row itself can mount. Not attempted yet under the Web host.
+not whether the row itself can mount.
+
+**Answer, with evidence:** yes, cleanly, for browsing. `dsh-community-market`'s
+own top-level `inject` is `['webServer', 'settings']` only - both already
+present on Web. Its `apply()` reads (`src/index.ts:33-63`): `registerMarketRoutes`
+and the route registration `ctx.effect` run unconditionally at that top level;
+`desktopActions`/`desktopPlugins`/`desktopProfiles`+`desktopPnpm` are each a
+separate, nested `ctx.inject([...], ...)` the module's own comment documents as
+deliberate degradation ("Browsing remains portable. Desktop-only package
+operations appear whenever the narrow profile and package-manager capabilities
+are live."). Wired into `acryl-web` via `materializeProfilePackage` (same
+technique the ACRYL brand swap already uses - `dsh-community-market` is an
+ACRYL-owned workspace package outside `@deepseek-ai/dsh`'s own dependency
+closure) plus a `{ insert: [{ id: 'community-market', name: 'dsh-community-market' }] }`
+patch in `resolveWebEngineComposition`, same row id/name
+`acryl-desktop`'s own `DESKTOP_MARKET_IDENTITIES.community` uses
+(`acryl-harness-runtime/src/engine-dsh.ts`, commit `fa70e7e`).
+
+Verified with a real boot (throwaway `ACRYL_HOME`, no manual profile edits):
+the served page's boot manifest lists `dsh-community-market`'s client bundle,
+and a real `curl` to its own host route
+(`GET /api/community-market/state`) returns `200` with the built-in catalog
+sources (`acryl-catalog`, `dsh-1024store`, `dshfind`) and
+`"desktopActions":{"openTerminal":false,"requestRestart":false}` - the
+Desktop-only capabilities correctly report absent rather than throwing or
+leaving the row PENDING forever. Not yet verified in a real browser (no
+browser tooling available in that session) - only the host route and the
+boot manifest, not a rendered Settings > Plugins > Market tab screenshot.
+
+Unresolved by this: install/uninstall itself (the nested
+`desktopProfiles`/`desktopPnpm` inject) never activates on Web today - that
+remains Q2/T006's job, not this one's.
 
 ## Q2 - Does the install/reconcile path work without Electron?
 
