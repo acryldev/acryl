@@ -574,11 +574,15 @@ describe('published package surface', () => {
       'build/tray-icon*.png',
       'docs/**',
     ]))
+    // electron-builder reuses `build.files` as the per-dependency matcher rooted
+    // at each module directory, so the DSH agent-preset payload needs a
+    // module-relative include to survive packaging.
     expect(manifest.build?.files).toEqual([
       'build/app-icon.png',
       'build/app-icon-mac.png',
       'build/tray-icon.svg',
       'build/tray-icon*.png',
+      'config/agent-presets/**',
       'cordis.patch.yml',
       'lib/**',
       'package.json',

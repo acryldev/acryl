@@ -456,6 +456,7 @@
       "build/app-icon-mac.png",
       "build/tray-icon.svg",
       "build/tray-icon*.png",
+      "config/agent-presets/**",
       "cordis.patch.yml",
       "lib/**",
       "package.json",
