@@ -3884,3 +3884,78 @@ path. `build.linux.target` is `["dir"]` and there is no `dist:linux`
 script or `verify-linux-*` gate, so the `deb` target exists only as a CLI
 override (`--linux deb --x64`) with no host gate and no installed-artifact
 verification - unlike `dist:win`/`dist:mac`.
+
+## 2026-09-12 - fix: the packaged-runtime gate now derives the closure it verifies
+
+Commit: `2e0128a16c485a2df1d75177a0e2186e5671871d`
+
+A `deb` built from source on the Ubuntu z370n box started its helper
+processes and then died before any window appeared:
+
+```
+Uncaught Exception: Error [ERR_MODULE_NOT_FOUND]: Cannot find package
+'@deepseek-ai/dsh-home-paths' imported from .../dsh-app-boot/lib/index.js
+```
+
+`@deepseek-ai/dsh-home-paths` was absent from that build's `app.asar`
+entirely, and `verify-packaged-runtime.ts` had nothing to say about it,
+because its `REQUIRED_PACKAGED_RUNTIME_ENTRIES` /
+`REQUIRED_UNPACKED_RUNTIME_ENTRIES` lists are curated names.
+
+What this checkout shows: `acryl-desktop/package.json` does declare
+`@deepseek-ai/dsh-home-paths` (`0.1.5-alpha.1`, line 245 at `desktop-v0.1.36`
+too), and a Linux x64 `--dir` package built here at HEAD *does* contain it
+(7 ASAR entries, `node_modules/@deepseek-ai/dsh-home-paths/lib/index.js`
+present in `app.asar.unpacked`, `afterPack` passing). So the collector is
+not dropping the package from a correct tree; the blind spot is that a tree
+which loses it ships silently.
+
+The mechanism is a peer-only edge. `@deepseek-ai/dsh-app-boot` imports
+`@deepseek-ai/dsh-home-paths` from `lib/index.js:12` but declares it only
+under `peerDependencies`, and electron-builder collects the root manifest's
+declared production closure, never peers. The package reaches an app only
+because the application manifest declares it as well: a stale or partial
+install, a tree without that declaration, or any collector regression
+produces an app that looks complete and crashes on first launch.
+
+`verify-packaged-runtime.ts` therefore stops relying on the curated list for
+this question and derives the requirement from the artifact:
+`verifyPackagedDependencyClosure` walks every package root physically present
+in `app.asar.unpacked` plus the application manifest itself, and requires
+each declared `dependencies` entry and each non-optional `peerDependencies`
+entry to resolve exactly as Node would (scoped directories, nested
+`node_modules` overrides, walk-up to the packaged root). Two classes stay
+exempt on purpose: target-foreign native payload, through the same
+`nativePathIsForeign` predicate the payload pruner uses, and the `electron`
+peer, which is the application binary rather than a packaged module. A
+missing declared peer is fatal when the application manifest ships that
+package, since that is the closure the packager collects; a required peer the
+root never declares cannot be collected at all, so it is reported as
+`unshipablePeerEdges` in the packager log instead of failing an otherwise
+consistent tree.
+
+Cost is one directory walk and one manifest read per package: 628 packages
+and 2818 declared edges in 60 ms on the HEAD Linux x64 package, with 48
+legitimately absent optional entries. Deleting `@deepseek-ai/dsh-home-paths`
+from that same tree fails the gate and names all twelve owners, including
+`@deepseek-ai/dsh-app-boot` and `acryl-desktop` - the exact failure mode the
+deb reported. Six new specs pin the behaviour (peer-only drop, complete
+closure, reported-vs-fatal classification, optional absences, nested
+override, foreign native payload, and the end-to-end gate through
+`verifyPackagedRuntime`); the desktop suite is 42/42 in
+`tests/verify-packaged-runtime.spec.ts`, 853 passed / 4 pre-existing skips
+overall, `tsc` clean.
+
+Still open, reported by the new check on the current tree and deliberately
+not fixed here: `dsh-community-market -> @deepseek-ai/dsh-client-store`.
+It is the only one of that package's 35 `@deepseek-ai/*` peers the desktop
+root does not declare, so the packaged app cannot satisfy it even though dev
+workspaces resolve it through pnpm's peer link. The remedy is one
+declaration line in `acryl-desktop/package.json` plus the matching
+`pnpm-lock.yaml` entry, which is held back because the lockfile currently
+carries unrelated in-flight workspace edits (`dsh-client-ui-brand-acryl`,
+`@types/semver`) that are not ready to commit - and pnpm rejects extra
+lockfile entries against a manifest without them. The same gap applies to
+`scripts/runtime-closure.mjs`: it only walks `@deepseek-ai/*` direct
+dependencies, so a workspace package such as `dsh-community-market` is never
+visited and its first-party peers are never required at the root.
