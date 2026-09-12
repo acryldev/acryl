@@ -1,6 +1,13 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { TuiActions } from '../../src/tui/actions.js'
-import { matchSlashCommands, parseGoalCommand, parsePlanCommand, runSlashCommand } from '../../src/tui/commands.js'
+import {
+  commandQuery,
+  matchSlashCommands,
+  parseGoalCommand,
+  parsePlanCommand,
+  runSlashCommand,
+  setDynamicSlashCommands,
+} from '../../src/tui/commands.js'
 
 function stubActions(): TuiActions {
   return {
@@ -47,6 +54,7 @@ function stubActions(): TuiActions {
     applyAgentPreset: vi.fn(),
     answerApproval: vi.fn(),
     answerQuestion: vi.fn(),
+    closeDynamic: vi.fn(),
   }
 }
 
@@ -255,5 +263,48 @@ describe('runSlashCommand', () => {
     const actions = stubActions()
     runSlashCommand('/goal', actions)
     expect(totalCalls(actions)).toBe(0)
+  })
+})
+
+describe('plugin-registered commands (spec 034 T009)', () => {
+  afterEach(() => {
+    // setDynamicSlashCommands mutates module-level state - every test must
+    // leave it exactly as it found it (empty), or later tests (including
+    // ones in the describe block above, which assume no dynamic commands
+    // exist) become order-dependent.
+    setDynamicSlashCommands([])
+  })
+
+  it('does not appear in matchSlashCommands before registration, and disappears again after clearing', () => {
+    expect(matchSlashCommands('/files')).toEqual([])
+    setDynamicSlashCommands([{ command: '/files', description: 'Browse files' }])
+    expect(matchSlashCommands('/files')).toEqual([{ command: '/files', description: 'Browse files' }])
+    setDynamicSlashCommands([])
+    expect(matchSlashCommands('/files')).toEqual([])
+  })
+
+  it('is included alongside built-ins in commandQuery, and dispatches through runDynamicCommand', () => {
+    setDynamicSlashCommands([{ command: '/files', description: 'Browse files' }])
+    const { isCommandMode, matches } = commandQuery('/fil')
+    expect(isCommandMode).toBe(true)
+    expect(matches.map(m => m.command)).toEqual(['/files'])
+
+    const actions = stubActions()
+    const runDynamicCommand = vi.fn()
+    runSlashCommand('/files', { ...actions, runDynamicCommand })
+    expect(totalCalls(actions)).toBe(0)
+    expect(runDynamicCommand).toHaveBeenCalledExactlyOnceWith('/files')
+  })
+
+  it('a genuinely unknown command still calls nothing, even with runDynamicCommand present', () => {
+    const actions = stubActions()
+    const runDynamicCommand = vi.fn()
+    runSlashCommand('/nope', { ...actions, runDynamicCommand })
+    expect(totalCalls(actions)).toBe(0)
+    // Unlike a real registered command, runSlashCommand has no way to tell
+    // "unknown" from "dynamic" on its own - matchSlashCommands is what keeps
+    // an unregistered command from ever reaching here in the real prompt
+    // flow (CustomEditor only calls runSlashCommand with matches[0]).
+    expect(runDynamicCommand).toHaveBeenCalledExactlyOnceWith('/nope')
   })
 })

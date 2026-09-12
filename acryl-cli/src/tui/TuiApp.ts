@@ -59,6 +59,7 @@ import { YlyPet } from '../yly/yly-pet.js'
 import type { YlyState as YlyMode } from '../yly/yly-programs.js'
 import type { TuiActions } from './actions.js'
 import type { TuiState, TuiStore } from './store.js'
+import type { TuiCommandRegistration } from './tui-commands-service.js'
 import { theme, fg } from './theme.js'
 import { ModelProfileOverlay } from './modelProfile/ModelProfileOverlay.js'
 import { LoginOverlay } from './login/LoginOverlay.js'
@@ -86,6 +87,8 @@ export interface MountOptions {
   readonly getTool: RenderOptions['getTool']
   /** Look up a `tool/call`'s name/arguments by `callId`, for a `tool/result` to present with. */
   readonly getToolCall: RenderOptions['getToolCall']
+  /** Resolve a plugin-registered command by exact name (spec 034 T009); `undefined` when none is registered under that name (e.g. it was disabled since the overlay opened). */
+  readonly getDynamicCommand?: (command: string) => TuiCommandRegistration | undefined
 }
 
 export interface TuiHandle {
@@ -459,6 +462,14 @@ class TuiApp implements TuiHandle {
         return new ContextOverlay(store, actions)
       case 'plugins':
         return new PluginsOverlay(this.tui, overlay.rows, actions)
+      case 'dynamic': {
+        // Resolved live rather than snapshotted at open time (unlike every
+        // other overlay's own state above) - the registration itself is the
+        // only place the actual UI-building logic lives (spec 034 T009).
+        const registration = this.options.getDynamicCommand?.(overlay.command)
+        if (registration === undefined) return undefined
+        return registration.open({ tui: this.tui })
+      }
       case 'agentPresets':
         return new AgentPresetsOverlay(store, actions)
       case 'approval':

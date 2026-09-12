@@ -7,6 +7,7 @@ import {
   type AcrylEngineHost,
 } from 'acryl-harness-runtime'
 import type { Context } from '@deepseek-ai/cordis'
+import { TuiCommandsService } from '../tui/tui-commands-service.ts'
 
 export interface StartDirectHostOptions {
   readonly profile: string
@@ -41,6 +42,14 @@ export async function startDirectHost(options: StartDirectHostOptions): Promise<
   const host: AcrylEngineHost = await createAcrylEngineHost({
     engines: [createDshEngineDefinition(options.profile)],
     initialEngine: DEFAULT_ENGINE,
+    // Provided on the bare root before any engine's Loader entries mount
+    // (see createAcrylEngineHost's own prepare-timing doc comment), so a
+    // plugin mounted as part of the initial dsh composition can register a
+    // TUI command during its own apply() without racing this service's
+    // construction (spec 034 T009).
+    prepare: async hostCtx => {
+      await hostCtx.plugin(TuiCommandsService)
+    },
   })
   const ctx = host.ctx
   let disposed = false

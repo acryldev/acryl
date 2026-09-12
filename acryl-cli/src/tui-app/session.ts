@@ -25,6 +25,7 @@ import {
   type RouteActivationPort,
 } from 'acryl-control'
 import { startDirectHost, type DirectHost } from '../host/direct.js'
+import { setDynamicSlashCommands } from '../tui/commands.js'
 import { TuiStore } from '../tui/store.js'
 import { mountTui, type TuiHandle } from '../tui/TuiApp.js'
 import type { TuiActions } from '../tui/actions.js'
@@ -844,6 +845,14 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     closeContext() { store.closeOverlay() },
     closePlugins() { store.closeOverlay() },
     closeAgentPresets() { store.closeOverlay() },
+    runDynamicCommand(command) {
+      if (host.ctx.get('tuiCommands')?.get(command) === undefined) {
+        store.setNotice(`Unknown command: ${command}`)
+        return
+      }
+      store.openDynamic(command)
+    },
+    closeDynamic() { store.closeOverlay() },
     selectAgentPresetRow() {},
     applyAgentPreset() {},
     answerApproval() {},
@@ -862,6 +871,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     promptHistory: history,
     getTool: toolPreview(host.ctx),
     getToolCall: store.getToolCall,
+    getDynamicCommand: command => host.ctx.get('tuiCommands')?.get(command),
   })
 
   return Object.freeze({
@@ -885,6 +895,12 @@ function storeSetStatus(store: TuiStore, snapshot: { agentStatus: string }): voi
 /** Mount one interactive pi-tui session over the bridge; loop over `/clear` re-attaches. */
 export async function runAcrylTui(options: RunAcrylTuiOptions): Promise<AcrylTuiResult> {
   const host: DirectHost = await startDirectHost({ profile: options.profile })
+  // Snapshotted once per process, not per attachSession() - registrations
+  // happen at Loader-composition/boot time (spec 034 T009), same convention
+  // as /plugins' own snapshot-at-open-time read of the tree.
+  setDynamicSlashCommands(
+    host.ctx.get('tuiCommands')?.list().map(r => ({ command: r.command, description: r.description })) ?? [],
+  )
   let current: TuiSession | undefined
   let settled = false
 

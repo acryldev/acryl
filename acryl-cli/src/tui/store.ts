@@ -66,6 +66,14 @@ export type Overlay =
   | { readonly kind: 'toolCards' }
   | { readonly kind: 'context' }
   | { readonly kind: 'plugins'; readonly rows: readonly PluginRow[] }
+  /**
+   * A plugin-registered command's overlay (spec 034 T009). Carries only the
+   * command name, not a built `Component` - `TuiApp`'s own
+   * `buildOverlayComponent` resolves the registration and calls its `open()`
+   * lazily, at render time, because only it has the live `tui` reference
+   * `open()` needs; `store`/`session.ts` never construct the Component.
+   */
+  | { readonly kind: 'dynamic'; readonly command: string }
   | { readonly kind: 'agentPresets'; readonly agentPresets: AgentPresetsOverlayState }
   | { readonly kind: 'approval'; readonly approval: ApprovalPromptState }
   | { readonly kind: 'userQuestion'; readonly userQuestion: QuestionPromptState }
@@ -442,6 +450,11 @@ export class TuiStore {
   /** Open the `/plugins` loaded-plugin-tree overlay with a snapshotted row list. */
   openPlugins(rows: readonly PluginRow[]): void {
     this.set({ overlay: { kind: 'plugins', rows } })
+  }
+
+  /** Open a plugin-registered command's overlay by name (spec 034 T009) - resolved and built lazily by `TuiApp`'s own render. */
+  openDynamic(command: string): void {
+    this.set({ overlay: { kind: 'dynamic', command } })
   }
 
   /** Open the `/presets` overlay to a fresh, loading roster. */

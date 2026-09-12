@@ -4310,3 +4310,47 @@ Full monorepo typecheck and test suite green except the same 4 pre-existing
 Web-side `desktopProfiles`/`desktopPnpm` equivalents (Market install/uninstall
 parity with Desktop) and a CLI-native plugin browser remain separate,
 unstarted work.
+
+## 2026-09-12 - feat: TUI presentation-slot extension point (spec 034 T009)
+
+Found while scoping a CLI-native editor plugin: DSH's plugin manifest system
+has `dsh.client` for Web (the slot registry brand/editor plugins already
+use), but nothing equivalent for the TUI - `acryl-cli`'s `SLASH_COMMANDS` and
+its dispatch `switch` are hardcoded in `commands.ts`, and `/plugins` is a
+read-only viewer, not a slot host. `docs/ACRYL-RUNTIME-SURFACE-CONTRACT.md`
+already promises plugins can contribute "declared TUI ... presentation
+slots" - this had never been built.
+
+Added `TuiCommandsService` (`acryl-cli/src/tui/tui-commands-service.ts`): a
+Cordis `Service` a plugin's own `apply(ctx)` calls
+`ctx.get('tuiCommands')?.register({command, description, open})` on. Provided
+once via `startDirectHost`'s own `prepare` hook - before any engine's Loader
+entries mount, so a plugin in the initial composition can register during its
+own activation. `open({tui})` is called lazily, at render time, by a new
+`'dynamic'` overlay kind in `TuiApp`'s own `buildOverlayComponent` - the
+overlay state carries only the command name, not a pre-built Component, since
+only `TuiApp` holds the live `tui` reference `open()` needs (every other
+overlay kind snapshots its own state instead; this one can't, and doesn't
+need to - the CLI and the Loader tree share one process, so there is no wire
+protocol to design the way Web's `/editor` RPC channel needed one).
+`commands.ts` gained a module-level `dynamicSlashCommands` list
+(`setDynamicSlashCommands`, populated once per process after boot) merged
+into `matchSlashCommands`, and `runSlashCommand`'s switch falls through to
+`actions.runDynamicCommand?.(command)` for anything not built-in.
+
+Verified with a real `startDirectHost` boot (not a mock): `tuiCommands` is
+provided, and a registration behaves exactly like a real profile plugin's own
+`apply(ctx)` call would, with a working disposer. Plus direct unit coverage
+of the service (register/list/get/duplicate-rejection/idempotent-disposal)
+and of `commands.ts`'s merge/dispatch (including that a genuinely unknown
+command still reaches nothing built-in - `matchSlashCommands` is what keeps
+it from ever reaching the dynamic fallthrough in the real prompt flow, since
+`CustomEditor` only ever calls `runSlashCommand` with `matches[0]`). `acryl-cli`
+18 files / 318 passed (up from 17/310), typecheck clean.
+
+This is the extension *mechanism* only - `acryl-dsh-editor-plugin-cli`, the
+actual TUI-native file browser that would use it, is separate, unstarted
+follow-up work. Recorded as spec 034 T009, not part of the original spec -
+added because it's the same "plugins contribute presentation slots" contract
+the rest of that spec is about, and to keep it visible to whoever else is
+working that spec rather than landing invisibly.

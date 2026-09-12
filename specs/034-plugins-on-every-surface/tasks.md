@@ -207,6 +207,35 @@ dispatch behavior for the built-in commands.
 editing `acryl-cli`'s own source - the TUI-side counterpart to `dsh.client`.
 Not blocking T005-T008; independent of the Web/Desktop parity chain.
 
+**Mechanism landed 2026-09-12.** `acryl-cli/src/tui/tui-commands-service.ts`:
+a `Service` (`ctx.get('tuiCommands')`) a plugin's own `apply(ctx)` calls
+`register({command, description, open})` on, returning a disposer;
+`open({tui})` is called lazily by `TuiApp`'s own `buildOverlayComponent` (a
+new `'dynamic'` overlay kind carrying only the command name, resolved and
+built at render time - not pre-built and stored, since only `TuiApp` holds
+the live `tui` reference `open()` needs). Provided once via
+`startDirectHost`'s own `prepare` hook, before any engine's Loader entries
+mount, so a plugin in the initial composition can register during its own
+`apply()`. `commands.ts` gained a module-level `dynamicSlashCommands` list
+(`setDynamicSlashCommands`, called once per process from `session.ts` after
+boot) merged into `matchSlashCommands`'s results, and `runSlashCommand`'s
+switch falls through to `actions.runDynamicCommand?.(command)` for anything
+not built-in - `matchSlashCommands` is what keeps a genuinely unknown command
+from ever reaching that fallthrough in the real prompt flow. Evidence: a real
+`startDirectHost` boot (`tests/direct.spec.ts`) provides `tuiCommands` and
+accepts/removes a registration exactly like a profile plugin's own
+`apply(ctx)` would; `tests/tui/tui-commands-service.spec.ts` covers
+register/list/get/duplicate-rejection/idempotent-disposal directly;
+`tests/tui/commands.spec.ts` covers the `matchSlashCommands`/
+`runSlashCommand` merge and dispatch, including that a genuinely unknown
+command still reaches nothing built-in. `acryl-cli` 18 files / 318 passed,
+typecheck clean.
+
+**Not yet done:** the actual `acryl-dsh-editor-plugin-cli` content (a real
+TUI-native file browser/editor Component) - this task built the extension
+seam, not an example plugin using it. That is separate follow-up work, not
+part of this task's own evidence bar.
+
 ## Ledger
 
 Each task appends its commit and human-readable explanation to

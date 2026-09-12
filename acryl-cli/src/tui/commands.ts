@@ -12,6 +12,22 @@ export interface SlashCommand {
   readonly description: string
 }
 
+/**
+ * Plugin-registered commands (spec 034 T009), snapshotted once at TUI startup
+ * from `TuiCommandsService` - matching `/plugins`' own snapshot-at-open-time
+ * convention. `setDynamicSlashCommands` is the only writer; `session.ts`
+ * calls it once after the engine host boots. A module-level list (rather than
+ * threading a parameter through `matchSlashCommands`/`commandQuery`) keeps
+ * every existing call site (`promptAutocomplete.ts`, `CustomEditor.ts`)
+ * unchanged - they already read through these two functions.
+ */
+let dynamicSlashCommands: readonly SlashCommand[] = []
+
+/** Replace the plugin-registered command list. See {@link dynamicSlashCommands}. */
+export function setDynamicSlashCommands(commands: readonly SlashCommand[]): void {
+  dynamicSlashCommands = commands
+}
+
 export const SLASH_COMMANDS: readonly SlashCommand[] = [
   { command: '/help', description: 'Show help and available commands' },
   { command: '/login', description: 'Configure provider authentication (API key)' },
@@ -30,11 +46,17 @@ export const SLASH_COMMANDS: readonly SlashCommand[] = [
   { command: '/quit', description: 'Exit ACRYL' },
 ]
 
-/** Widest command text, so the dropdown can pad every row's description to the same column. */
+/**
+ * Widest command text, so the dropdown can pad every row's description to the
+ * same column. A dynamic command longer than every built-in one narrows this
+ * column's alignment rather than widening it - `setDynamicSlashCommands` runs
+ * once at startup, after this constant is already computed. Acceptable for a
+ * first cut; revisit if a real plugin's command name makes it visible.
+ */
 export const SLASH_COMMAND_WIDTH = Math.max(...SLASH_COMMANDS.map(c => c.command.length))
 
 export function matchSlashCommands(query: string): readonly SlashCommand[] {
-  return SLASH_COMMANDS.filter(c => c.command.startsWith(query))
+  return [...SLASH_COMMANDS, ...dynamicSlashCommands].filter(c => c.command.startsWith(query))
 }
 
 export function commandQuery(value: string): { isCommandMode: boolean; matches: readonly SlashCommand[] } {
@@ -135,4 +157,10 @@ export function runSlashCommand(command: string, actions: TuiActions): void {
       actions.compact()
       return
   }
+  // Falls through here for any command not in the switch above - including
+  // a plugin-registered one from `dynamicSlashCommands`. `matchSlashCommands`
+  // already only ever surfaces a command that's either a built-in above or a
+  // real dynamic registration, so an unmatched command reaching here is
+  // always a plugin's.
+  actions.runDynamicCommand?.(command)
 }

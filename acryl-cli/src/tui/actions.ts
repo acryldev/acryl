@@ -93,6 +93,15 @@ export interface TuiActions {
   /** Close the `/plugins` overlay. */
   closePlugins(): void
 
+  /**
+   * Dispatch a plugin-registered command (spec 034 T009) - `runSlashCommand`
+   * calls this for any command not in its own built-in switch. Optional so a
+   * test double implementing `TuiActions` doesn't need a no-op for it.
+   */
+  runDynamicCommand?(command: string): void
+  /** Close a plugin-registered command's overlay - its own Component calls this on Escape, matching every other overlay's own close convention. */
+  closeDynamic(): void
+
   /** Open the `/presets` agent-preset overlay and start loading the roster. */
   openAgentPresets(): void
   /** Close the `/presets` overlay. */

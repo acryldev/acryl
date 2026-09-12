@@ -59,6 +59,30 @@ describe('startDirectHost', () => {
   it('rejects an empty profile before any Loader activation', async () => {
     await expect(startDirectHost({ profile: '  ' })).rejects.toThrow('profile must not be empty')
   })
+
+  it('provides tuiCommands before the dsh engine mounts, so a profile plugin can register during its own apply() (spec 034 T009)', async () => {
+    await setup()
+    const host = await startDirectHost({ profile: 'desktop' })
+    try {
+      // The service itself is always present, independent of any plugin.
+      expect(host.ctx.get('tuiCommands')).toBeDefined()
+
+      // A real registration behaves exactly like a profile plugin's own
+      // apply(ctx) calling ctx.get('tuiCommands')?.register(...) would -
+      // this is the same object a Loader row's plugin function would see.
+      const open = () => ({ render: () => ['hello from a plugin'], invalidate: () => {} })
+      const dispose = host.ctx.get('tuiCommands')?.register({
+        command: '/files',
+        description: 'Browse files',
+        open,
+      })
+      expect(host.ctx.get('tuiCommands')?.get('/files')?.open).toBe(open)
+      dispose?.()
+      expect(host.ctx.get('tuiCommands')?.get('/files')).toBeUndefined()
+    } finally {
+      await host.dispose()
+    }
+  })
 })
 
 /** Guarantee G6 (spec 028): the CLI surface must not reach for the direct bootstrap. */
