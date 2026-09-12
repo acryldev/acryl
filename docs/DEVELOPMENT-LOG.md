@@ -4053,3 +4053,64 @@ against a clean `main` checkout, unchanged by any of today's work),
 symlink, the composed row states, and `webServer.renderIndex()`'s actual
 output - all green. `acryl-web` (2/2) and `acryl-desktop` (853/857, 4
 pre-existing skips) both confirmed unaffected.
+
+## 2026-09-12 - refactor: coding capabilities declare their surfaces (spec 034)
+
+Commit: `3f7ceb2e37838194852a298a9158f614065252c8`
+
+`docs/ACRYL-RUNTIME-SURFACE-CONTRACT.md` says the runtime owns plugin
+lifecycle and the surfaces only render it. For plugins the implementation is
+the inverse: the whole plugin stack is `acryl-desktop`'s, and `acryl-cli` has
+no plugin surface at all. The composition seam that should carry the
+difference (`acryl-harness-runtime/src/coding-capabilities.ts`) held exactly
+one capability and decided the rest with a branch -
+`selectNonTuiCapabilityPatches` filtered non-TUI roots down to a hardcoded
+`NON_TUI_SHARED_ROW_IDS` set - so a row could only be added to one surface by
+editing filter logic.
+
+Before touching it, the actual per-surface compositions were measured by
+booting each real definition headlessly and dumping `ctx.loader.entries()`:
+tui 88 rows, web 157, desktop 168 (`DEBUG_VERIFY_LOADER_BOOT=1` on the repo's
+own desktop gate). That measurement corrected the report that started this
+work. Web is not missing the plugin machinery - it already composes
+`@deepseek-ai/dsh-host-plugin-inventory`, both settings plugin UIs and the
+brand swap. The `Global plugins 0 plugins` in the report is a
+post-search-filter count (`lib/client.js:245-262`) for the query `editor`, and
+the row the user was looking for lives in the shipped `minimal` agent preset,
+which is what the panel's own "1 more matches in other presets" line says. The
+genuine asymmetries are: ACRYL's plugin *management* (market install,
+enable/disable, architecture inspector) is Desktop-owned code, and
+`@deepseek-ai/dsh-tool-str-replace-editor` - declared by `acryl-harness-runtime`,
+not by `acryl-desktop` as the first draft of the spec claimed - is composed by
+no surface's global rows. Both are recorded in `research.md` and corrected in
+`spec.md`; the tasks were reordered so the shared lifecycle capability (T005)
+lands before the CLI surface that calls it (T003).
+
+This commit is the enabling move, with composition held identical: the table
+splits into `persona`, `agent-roster`, `session-stats` and `authorization`
+capabilities, each declaring its surfaces, and
+`createAcrylCodingCapabilityPatches` now composes by declaration alone. TUI
+keeps the persona/roster/session-stat rows dsh-base lacks; Web and Desktop
+keep the authorization insert and the rows their `dsh-web-app` bundle already
+composes.
+
+One silent defect fell out of reading the same file. The agent-roster root
+pointed at `deepseek-harness/packages/preset/agent-presets/presets`, a path
+that exists only in a full source checkout - the CLI archive builder never
+ships it. Since `scanRoot` treats ENOENT as an empty root, a packaged CLI
+composed `roots: []` with `includeShippedRoot: false`: an `agent-presets` row
+whose roster had no presets in it, failing nothing. It now resolves the
+`presets/` directory of the pinned `@deepseek-ai/dsh-agent-presets` package,
+which ships that directory in its own `files` list. Proven by booting the real
+tui composition and asserting the service reads four presets off it
+(`tests/engine-dsh.spec.ts`), not by asserting the row exists.
+
+Evidence: `acryl-harness-runtime` typecheck clean, 11 new per-surface
+assertions green, `engine-dsh.spec.ts` 7/7. The package's suite still reports
+the same 4 pre-existing failures (the fresh-profile HMR expectation in
+`tests/profile.spec.ts` and three synthetic-fixture tests in
+`tests/session-bridge.spec.ts` that use `session.events`, an accessor the
+0.1.5-alpha.1 pin replaced with `snapshotEvents()`; one of
+them now trips inside `@deepseek-ai/dsh-llm`'s own projection when a synthetic
+`assistant/chunk` is appended). Confirmed unchanged by this work: the same
+four fail with this commit's files stashed.
