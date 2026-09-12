@@ -249,6 +249,14 @@ const css = `
   overflow: hidden;
 }
 
+/* Which ACRYL surface (tui/web/desktop) a plugin declares itself for - given
+   the same accent treatment as dshMarketGlyph so it reads as a distinct
+   signal, not just another freeform category tag. */
+.dshMarketSurfaceBadge {
+  background: var(--dsw-alias-state-business-tertiary);
+  color: var(--dsw-alias-state-business-primary);
+}
+
 .dshMarketPagination {
   display: flex;
   flex-direction: column;

@@ -207,6 +207,32 @@ function categoriesFromItems(items: readonly MarketItem[]): readonly string[] {
   return [...categories].sort((left, right) => left.localeCompare(right, 'en', { sensitivity: 'base' }))
 }
 
+/**
+ * The ACRYL surfaces (tui/web/desktop) an item declares itself for, via its
+ * own `compatibility.hosts` - a wire field the catalog contract has always
+ * reserved, first populated by acryl.dev's own catalog build
+ * (`acryl.surfaces` in a package's package.json). An item with no
+ * `compatibility` at all is surface-agnostic (or simply never declared it),
+ * not "for no surface" - it must never be hidden by a surface filter.
+ */
+const KNOWN_SURFACES = ['tui', 'web', 'desktop'] as const
+type MarketSurface = (typeof KNOWN_SURFACES)[number]
+
+function surfacesOfItem(item: MarketItem): readonly MarketSurface[] {
+  return (item.compatibility?.hosts ?? []).filter((host): host is MarketSurface =>
+    (KNOWN_SURFACES as readonly string[]).includes(host))
+}
+
+function matchesSurfaceFilter(item: MarketItem, selected: readonly MarketSurface[]): boolean {
+  if (selected.length === 0) return true
+  const declared = surfacesOfItem(item)
+  // An item that never declared a surface stays visible under any filter -
+  // the filter narrows what's confidently relevant, it does not hide the
+  // unknown.
+  if (declared.length === 0) return true
+  return declared.some(surface => selected.includes(surface))
+}
+
 function matchesInstallableQuery(item: MarketItem, query: string): boolean {
   const needle = query.trim().toLocaleLowerCase()
   if (!needle) return true
@@ -272,6 +298,17 @@ export function MarketSurface({ initialView = 'installable', readLocale, t, show
   const [installableQuery, setInstallableQuery] = useState('')
   const [appliedInstallableQuery, setAppliedInstallableQuery] = useState('')
   const [installableCategories, setInstallableCategories] = useState<readonly string[]>([])
+  // One toggle set for both tabs: unlike categories (which are catalog-source
+  // specific, hence separate Discover/Installable state), "which surface am I
+  // browsing for" is the same question regardless of tab. Applied client-side
+  // only - `compatibility.hosts` is not part of the catalog query contract,
+  // so this narrows already-fetched items rather than round-tripping a query.
+  const [selectedSurfaces, setSelectedSurfaces] = useState<readonly MarketSurface[]>([])
+  const toggleSurface = (surface: MarketSurface) => {
+    setSelectedSurfaces(current => current.includes(surface)
+      ? current.filter(value => value !== surface)
+      : [...current, surface])
+  }
   const [installableLimit, setInstallableLimit] = useState(INSTALLABLE_PAGE_SIZE)
   const [installableLoaded, setInstallableLoaded] = useState(false)
   const [installableLoading, setInstallableLoading] = useState(false)
@@ -509,8 +546,9 @@ export function MarketSurface({ initialView = 'installable', readLocale, t, show
     }
   }, [loadInstallable, loadState])
 
-  const items = useMemo(() => catalog?.results.flatMap(result =>
-    (result.snapshot?.items ?? []).map(item => ({ item, source: result.source, stale: result.stale }))) ?? [], [catalog])
+  const items = useMemo(() => (catalog?.results.flatMap(result =>
+    (result.snapshot?.items ?? []).map(item => ({ item, source: result.source, stale: result.stale }))) ?? [])
+    .filter(entry => matchesSurfaceFilter(entry.item, selectedSurfaces)), [catalog, selectedSurfaces])
   const installableCategoryOptions = useMemo(
     () => categoriesFromItems(installableIndex?.items ?? []),
     [installableIndex],
@@ -519,10 +557,12 @@ export function MarketSurface({ initialView = 'installable', readLocale, t, show
     .filter(item => matchesInstallableQuery(item, appliedInstallableQuery))
     .filter(item => installableCategories.length === 0
       || item.categories?.some(category => installableCategories.includes(category)) === true)
+    .filter(item => matchesSurfaceFilter(item, selectedSurfaces))
     .map(item => ({ item, source: installableIndex!.source, stale: false })), [
     appliedInstallableQuery,
     installableCategories,
     installableIndex,
+    selectedSurfaces,
   ])
   const installableItems = useMemo(
     () => filteredInstallableItems.slice(0, installableLimit),
@@ -990,6 +1030,8 @@ export function MarketSurface({ initialView = 'installable', readLocale, t, show
             query={query}
             categoryOptions={categoryOptions}
             selectedCategories={selectedCategories}
+            selectedSurfaces={selectedSurfaces}
+            onToggleSurface={toggleSurface}
             loading={loading}
             loadingMore={loadingMore}
             mutationPending={mutationPending}
@@ -1014,6 +1056,8 @@ export function MarketSurface({ initialView = 'installable', readLocale, t, show
             query={installableQuery}
             categoryOptions={installableCategoryOptions}
             selectedCategories={installableCategories}
+            selectedSurfaces={selectedSurfaces}
+            onToggleSurface={toggleSurface}
             metadata={installableIndex?.metadata}
             loaded={installableLoaded}
             loading={installableLoading}
@@ -1196,6 +1240,7 @@ function DiscoverView(props: {
   query: string
   categoryOptions: readonly string[]
   selectedCategories: readonly string[]
+  selectedSurfaces: readonly MarketSurface[]
   loading: boolean
   loadingMore: boolean
   mutationPending: boolean
@@ -1207,6 +1252,7 @@ function DiscoverView(props: {
   onSearch: () => void
   onRefresh: () => void
   onToggleCategory: (category: string) => void
+  onToggleSurface: (surface: MarketSurface) => void
   onLoadMore: () => void
   onSources: () => void
   onSelect: (value: VisibleItem) => void
@@ -1270,6 +1316,18 @@ function DiscoverView(props: {
           ))}
         </div>
       )}
+      <div className="dshMarketCategories" role="group" aria-label={props.t('surfaces')}>
+        <span>{props.t('surfaces')}</span>
+        {KNOWN_SURFACES.map(surface => (
+          <Pill
+            key={surface}
+            active={props.selectedSurfaces.includes(surface)}
+            aria-pressed={props.selectedSurfaces.includes(surface)}
+            disabled={props.mutationPending}
+            onClick={() => props.onToggleSurface(surface)}
+          >{surfaceLabel(surface, props.t)}</Pill>
+        ))}
+      </div>
       {props.partialFailure && <div className="dshMarketBanner" role="status"><StateDot state="warning" />{props.t('partialFailure')}</div>}
       {props.error !== undefined && (
         <div className="dshMarketEmpty" role="alert">
@@ -1311,6 +1369,7 @@ function InstallableView(props: {
   query: string
   categoryOptions: readonly string[]
   selectedCategories: readonly string[]
+  selectedSurfaces: readonly MarketSurface[]
   metadata: MarketInstallableResponse['metadata'] | undefined
   loaded: boolean
   loading: boolean
@@ -1321,6 +1380,7 @@ function InstallableView(props: {
   onSearch: () => void
   onRefresh: () => void
   onToggleCategory: (category: string) => void
+  onToggleSurface: (surface: MarketSurface) => void
   onLoadMore: () => void
   onRetry: () => void
   onSources: () => void
@@ -1408,6 +1468,18 @@ function InstallableView(props: {
           ))}
         </div>
       )}
+      <div className="dshMarketCategories" role="group" aria-label={props.t('surfaces')}>
+        <span>{props.t('surfaces')}</span>
+        {KNOWN_SURFACES.map(surface => (
+          <Pill
+            key={surface}
+            active={props.selectedSurfaces.includes(surface)}
+            aria-pressed={props.selectedSurfaces.includes(surface)}
+            disabled={props.operationPending}
+            onClick={() => props.onToggleSurface(surface)}
+          >{surfaceLabel(surface, props.t)}</Pill>
+        ))}
+      </div>
       {props.error !== undefined && (
         <div className="dshMarketBanner" role="alert">
           <StateDot state="error" />
@@ -1592,6 +1664,14 @@ function InstallationCard(props: {
   )
 }
 
+function surfaceLabel(surface: MarketSurface, t: MarketSettingsTabProps['t']): string {
+  switch (surface) {
+    case 'tui': return t('surfaceTui')
+    case 'web': return t('surfaceWeb')
+    case 'desktop': return t('surfaceDesktop')
+  }
+}
+
 function sourceDisplayLabel(source: MarketSourceView): string {
   const attribution = source.attribution?.name
   return attribution === undefined || attribution === source.name
@@ -1636,6 +1716,9 @@ function PluginCard({ value, actionLabel, disabled = false, onClick, t }: {
       </div>
       <p className="dshMarketSummary">{value.item.summary}</p>
       <div className="dshMarketTags">
+        {surfacesOfItem(value.item).map(surface => (
+          <Pill key={surface} className="dshMarketSurfaceBadge">{surfaceLabel(surface, t)}</Pill>
+        ))}
         <Pill>{t('source')}: {sourceLabel}</Pill>
         {actionLabel !== undefined && <Pill>{actionLabel}</Pill>}
         {value.stale && <Pill>{t('stale')}</Pill>}
