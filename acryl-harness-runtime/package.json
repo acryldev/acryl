@@ -171,6 +171,7 @@
     "@deepseek-ai/schemastery": "^3.18.1",
     "acryl-control": "workspace:*",
     "adm-zip": "^0.6.0",
+    "dsh-client-ui-brand-acryl": "workspace:*",
     "koffi": "3.1.5",
     "node-addon-require-builtin": "^0.1.4",
     "pnpm": "11.8.0",
@@ -182,6 +183,7 @@
     "@deepseek-ai/cordis": "4.0.1",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.20.0",
+    "@types/semver": "^7.7.1",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
     "vitest": "4.1.8"

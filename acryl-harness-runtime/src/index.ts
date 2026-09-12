@@ -35,6 +35,20 @@ export {
   createWebEngineDefinition,
   type DshEngineComposition,
 } from './engine-dsh.ts'
+export {
+  PackageOverlayNotFoundError,
+  findOverlayPackage,
+  packageNameFromSpecifier,
+  resolveOverlayPackage,
+  type PackageOverlayCandidate,
+  type PackageOverlayOptions,
+  type PackageOverlaySelection,
+  type PackageOverlaySource,
+} from './package-overlay.ts'
+export {
+  installProfilePackageResolver,
+  type InstallProfilePackageResolverOptions,
+} from './module-resolution.ts'
 
 import { writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
