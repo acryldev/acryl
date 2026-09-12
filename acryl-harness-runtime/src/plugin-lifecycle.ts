@@ -57,14 +57,21 @@ export interface DshPluginLifecycleOptions {
   /** Narrower reload-all sweep, when restarting every mutable entry is too much. */
   readonly reloadAllEntryIds?: () => ReadonlySet<string>
   /**
-   * Resolves an installed package's manifest path from the profile's own
-   * module base (a profile's `node_modules`, where a user-installed bundle
-   * lives). Defaults to the context's base URL, which is the profile directory
-   * for a surface that boots the profile itself and is not for one whose root
-   * is elsewhere - the CLI composes the profile under its own engine host, so
-   * it passes the profile-resolving form explicitly.
+   * Resolves a bare module specifier from the profile's own module base (a
+   * profile's `node_modules`, where a user-installed bundle lives) - normally
+   * just `require.resolve`/`createRequire(...).resolve` bound to that base.
+   * Despite the parameter's own name, `createDshPluginLifecycleHost`'s
+   * internal caller always passes the full `"<packageName>/package.json"`
+   * specifier already, never the bare package name - do not re-append
+   * `/package.json` inside this callback (a real, reproduced bug: doing so
+   * throws `ERR_PACKAGE_PATH_NOT_EXPORTED` on a literal
+   * `package.json/package.json` subpath). Defaults to the context's base URL,
+   * which is the profile directory for a surface that boots the profile
+   * itself and is not for one whose root is elsewhere - the CLI composes the
+   * profile under its own engine host, so it passes the profile-resolving
+   * form explicitly.
    */
-  readonly resolvePackageJson?: (packageName: string) => string
+  readonly resolvePackageJson?: (specifier: string) => string
   /** Reports a best-effort failure that must not throw to its caller. */
   readonly warn?: (message: string) => void
   /** Profile-name rule, when this surface names profiles its own way. */

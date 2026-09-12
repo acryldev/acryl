@@ -100,7 +100,16 @@ export async function runPluginCommand(options: PluginCommandOptions): Promise<P
       profileDir,
       statePath,
       binName: 'acryl',
-      resolvePackageJson: packageName => profileRequire.resolve(`${packageName}/package.json`),
+      // createDshPluginLifecycleHost's own internal wrapper already appends
+      // "/package.json" before calling this callback - despite the option's
+      // own parameter being named `packageName`, what actually arrives here
+      // is the full "<packageName>/package.json" specifier already (unlike
+      // diagnosePluginLifecycle's own resolvePackageJson below, which does
+      // not pre-append and genuinely wants the bare name). Never exercised
+      // on the CLI until acryl-web's own live-activation path hit
+      // ERR_PACKAGE_PATH_NOT_EXPORTED on a literal "package.json/package.json"
+      // subpath and traced back to this identical bug (spec 034 T006).
+      resolvePackageJson: specifier => profileRequire.resolve(specifier),
     })
     const context: PluginCommandContext = {
       profile: options.profile,
