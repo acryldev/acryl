@@ -45,6 +45,7 @@ import { resolveAcrylDshHome } from './acryl-home.ts'
 import { createAcrylCodingCapabilityPatches } from './coding-capabilities.ts'
 import type { AcrylEngineDefinition } from './engine-host.ts'
 import { installAcrylWorkspaceStatusTool } from './plugin-acryl-workspace-status.ts'
+import { pluginLifecyclePatches, resolvePluginLifecycleStatePath } from './plugin-lifecycle-state.ts'
 import { installSessionLogExporter } from './session-log-exporter.ts'
 
 const require = createRequire(import.meta.url)
@@ -178,6 +179,14 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
     ...createAcrylCodingCapabilityPatches(new Set(['tui'])),
     ...profile.patches,
   ])
+  // The profile's own user overrides come from the shared store, not from this
+  // surface: `acryl plugin disable` on a TUI writes the same file the Desktop
+  // panel and the Web surface read, so the next boot of any of them composes
+  // the same plugin set.
+  patches.push(...pluginLifecyclePatches({
+    profileName,
+    statePath: resolvePluginLifecycleStatePath(),
+  }))
   return { rootConfig, patches, surface: 'tui' }
 }
 
@@ -284,6 +293,12 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
     { id: 'ui-brand-official', disabled: true },
     { insert: [{ id: 'ui-acryl', name: 'dsh-client-ui-brand-acryl', disabled: false }] },
   )
+  // Last, so a user override beats every composition decision above it - the
+  // same shared store the CLI and the Desktop panel write (spec 034).
+  patches.push(...pluginLifecyclePatches({
+    profileName,
+    statePath: resolvePluginLifecycleStatePath(),
+  }))
   return { rootConfig, patches, surface: 'web' }
 }
 

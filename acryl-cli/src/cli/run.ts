@@ -1,7 +1,13 @@
 import { startDirectHost } from '../host/direct.ts'
+import {
+  runPluginCommand,
+  type PluginCommandOptions,
+  type PluginCommandResult,
+} from '../host/plugin-command.ts'
 import { runAcrylTui } from '../tui-app/session.ts'
 import { ACRYL_VERSION } from '../version.ts'
-import { parseAcrylArgs } from './grammar.ts'
+import { parseAcrylArgs, type AcrylPluginInvocation } from './grammar.ts'
+import { renderPluginCommand } from './plugin-render.ts'
 
 interface RunningDirectHost {
   readonly runtimeState: 'ready' | 'unavailable'
@@ -14,6 +20,7 @@ interface RunningDirectHost {
 export interface AcrylCliDependencies {
   readonly startDirectHost: (options: { profile: string }) => Promise<RunningDirectHost>
   readonly runTui: (options: { profile: string; resumeSessionId?: string }) => Promise<{ resumeHint: string }>
+  readonly runPluginCommand: (options: PluginCommandOptions) => Promise<PluginCommandResult>
   readonly exit: (code: number) => void
   readonly write: (line: string) => void
 }
@@ -38,6 +45,7 @@ function surfaceError(command: 'web' | 'gui'): Error {
 const defaults: AcrylCliDependencies = {
   startDirectHost,
   runTui: runAcrylTui,
+  runPluginCommand,
   exit: code => { process.exitCode = code },
   write: line => { process.stdout.write(`${line}\n`) },
 }
@@ -49,6 +57,34 @@ function statusLine(host: RunningDirectHost): string {
     engine: host.engine,
     generationId: host.generationId,
   })
+}
+
+/**
+ * Drive the shared plugin lifecycle for this profile and print what happened.
+ *
+ * `add`/`remove` are the install/reconcile actions (spec 034, T006). They are
+ * recognized here so the command surface matches `plan.md`, and refused with a
+ * pointer to the surface that can serve them today, rather than as an unknown
+ * action a user would read as a typo.
+ */
+async function runPluginInvocation(
+  invocation: AcrylPluginInvocation,
+  dependencies: AcrylCliDependencies,
+): Promise<void> {
+  if (invocation.action === 'add' || invocation.action === 'remove') {
+    throw new Error(
+      `plugin ${invocation.action} lands with install/reconcile (spec 034, T006); `
+      + 'install through the Desktop market today, or this profile\'s own package manager',
+    )
+  }
+  const result = await dependencies.runPluginCommand({
+    profile: invocation.profile ?? 'acryl',
+    action: invocation.action,
+    ...(invocation.entryId === undefined ? {} : { entryId: invocation.entryId }),
+  })
+  const rendered = renderPluginCommand(result, invocation.json)
+  for (const line of rendered.lines) dependencies.write(line)
+  if (rendered.exitCode !== 0) dependencies.exit(rendered.exitCode)
 }
 
 /**
@@ -71,7 +107,12 @@ export async function runAcryl(
         `Usage: acryl [command] [options]`,
         '',
         'Commands:',
-        '  tui    Run the terminal client (default)',
+        '  tui                              Run the terminal client (default)',
+        '  plugin                           List this profile\'s plugins (default action)',
+        '  plugin list                      List plugins and their current state',
+        '  plugin enable <id>               Enable a plugin for this profile',
+        '  plugin disable <id>              Disable a plugin for this profile',
+        '  plugin doctor                    Check a profile\'s plugin layer',
         '',
         'Options:',
         '  -h, --help          Show this help',
@@ -90,6 +131,11 @@ export async function runAcryl(
 
   if (invocation.version) {
     dependencies.write(ACRYL_VERSION)
+    return
+  }
+
+  if (invocation.kind === 'plugin') {
+    await runPluginInvocation(invocation, dependencies)
     return
   }
 

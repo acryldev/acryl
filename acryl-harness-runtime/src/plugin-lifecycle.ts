@@ -56,6 +56,15 @@ export interface DshPluginLifecycleOptions {
   readonly afterDeactivate?: (packageName: string) => Promise<void>
   /** Narrower reload-all sweep, when restarting every mutable entry is too much. */
   readonly reloadAllEntryIds?: () => ReadonlySet<string>
+  /**
+   * Resolves an installed package's manifest path from the profile's own
+   * module base (a profile's `node_modules`, where a user-installed bundle
+   * lives). Defaults to the context's base URL, which is the profile directory
+   * for a surface that boots the profile itself and is not for one whose root
+   * is elsewhere - the CLI composes the profile under its own engine host, so
+   * it passes the profile-resolving form explicitly.
+   */
+  readonly resolvePackageJson?: (packageName: string) => string
   /** Reports a best-effort failure that must not throw to its caller. */
   readonly warn?: (message: string) => void
   /** Profile-name rule, when this surface names profiles its own way. */
@@ -80,9 +89,11 @@ export function createDshPluginLifecycleHost(
   options: DshPluginLifecycleOptions,
 ): PluginLifecycleHost {
   const binName = options.binName ?? 'acryl'
-  const resolvePackageJson = ctx.baseUrl === undefined
+  const resolveManifest = options.resolvePackageJson
+    ?? (ctx.baseUrl === undefined ? undefined : createRequire(ctx.baseUrl).resolve)
+  const resolvePackageJson = resolveManifest === undefined
     ? undefined
-    : createRequire(ctx.baseUrl)
+    : (packageName: string) => resolveManifest(`${packageName}/package.json`)
   const persistence: PluginLifecycleStatePersistence = {
     profileName: options.profileName,
     statePath: options.statePath,
@@ -107,7 +118,7 @@ export function createDshPluginLifecycleHost(
         'Package resolution is unavailable in this context.',
       )
     }
-    const packageDir = dirname(resolvePackageJson.resolve(`${packageName}/package.json`))
+    const packageDir = dirname(resolvePackageJson(packageName))
     const manifest = JSON.parse(
       readFileSync(join(packageDir, 'package.json'), 'utf8'),
     ) as BundleManifest

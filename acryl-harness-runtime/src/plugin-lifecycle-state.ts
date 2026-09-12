@@ -14,6 +14,7 @@ import { chmod, lstat, mkdir } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { resolveProfileDir } from '@deepseek-ai/dsh-app-boot'
 import { withFileLock, writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
+import { resolveAcrylDshHome } from './acryl-home.ts'
 
 const STATE_VERSION = 1
 const STATE_FILE_MODE = 0o600
@@ -55,6 +56,30 @@ export interface PluginLifecycleStatePersistence {
   readonly statePath: string
   /** Overrides {@link assertProfileName} when a surface names profiles its own way. */
   readonly validateProfileName?: ProfileNameValidator
+}
+
+/**
+ * The one override file every surface reads and writes, inside the engine home
+ * whose profiles these overrides describe.
+ *
+ * The overrides are a property of a profile, and the profiles themselves live
+ * under the engine home - so the store shares their root, their lifetime, and
+ * their isolation switch. It is deliberately not a surface's private data
+ * directory (the Electron userData path it used to be), because then
+ * `acryl plugin disable x` and the Desktop panel would give two different
+ * answers about one profile: the defect spec 034 exists to fix.
+ *
+ * The engine home, not a bare `~/.acryl`, is also what keeps an isolated run
+ * isolated: `resolveAcrylHome()` ignores `$DSH_HOME`, so a dev or throwaway
+ * `DSH_HOME=~/.acryl-dev/.dsh` would otherwise read and write overrides in the
+ * operator's real install. Every surface already agrees on this root - each one
+ * boots through `resolveAcrylDshHome()`.
+ *
+ * @param dshHome - the engine home this process booted; defaults to the one
+ * `$ACRYL_HOME` / `$DSH_HOME` resolve to.
+ */
+export function resolvePluginLifecycleStatePath(dshHome: string = resolveAcrylDshHome()): string {
+  return join(dshHome, 'plugin-lifecycle', 'state.json')
 }
 
 /** Runtime entry id -> the patch-local row id it disables during composition. */

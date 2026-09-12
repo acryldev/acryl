@@ -18,6 +18,7 @@ import {
   createAcrylEngineHost,
   createDshEngineDefinitionFromComposition,
   resolveAcrylDshHome,
+  resolvePluginLifecycleStatePath,
 } from 'acryl-harness-runtime'
 import {
   installDesktopDshRuntime,
@@ -514,7 +515,12 @@ async function start(): Promise<void> {
     const releasePnpmRuntime = generation.own(() => { pnpmRuntime.dispose() })
     const selectionStatePath = join(app.getPath('userData'), 'profile-selection', 'state.json')
     const pluginManagementStatePath = join(app.getPath('userData'), 'plugin-management', 'state.json')
-    const pluginLifecycleStatePath = join(app.getPath('userData'), 'plugin-lifecycle', 'state.json')
+    // Inside the engine home this launch booted, not Electron's userData: the
+    // overrides describe a profile, and the CLI and the Web surface resolve the
+    // same file for the same profile (spec 034). Electron's data directory is
+    // private to this surface, so an override written from
+    // `acryl plugin disable` would never reach the panel.
+    const pluginLifecycleStatePath = resolvePluginLifecycleStatePath(homeDir)
     const startupRecoveryStatePath = join(app.getPath('userData'), 'startup-recovery', 'state.json')
     startupStage = 'profile-selection'
     lifecycleRecorder.transitionStartupStage(startupStage)

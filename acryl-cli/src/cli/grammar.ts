@@ -1,15 +1,54 @@
 export type AcrylHostCommand = 'tui' | 'gui' | 'web'
 
-export interface AcrylInvocation {
-  readonly command: AcrylHostCommand
+/**
+ * What `acryl plugin` can do. `list`, `enable`, `disable`, and `doctor` are
+ * implemented here; `add` and `remove` are install/reconcile (spec 034, T006)
+ * and are recognized so the command surface matches `plan.md`, then refused
+ * with a pointer rather than reported as an unknown action.
+ */
+export type AcrylPluginAction = 'list' | 'enable' | 'disable' | 'doctor' | 'add' | 'remove'
+
+interface AcrylInvocationFlags {
   readonly json: boolean
   readonly version: boolean
   readonly help: boolean
+  /** Named ACRYL profile; absent means this surface's own default profile. */
   readonly profile?: string
+}
+
+export interface AcrylSurfaceInvocation extends AcrylInvocationFlags {
+  readonly kind: 'surface'
+  readonly command: AcrylHostCommand
   readonly resumeSessionId?: string
 }
 
+export interface AcrylPluginInvocation extends AcrylInvocationFlags {
+  readonly kind: 'plugin'
+  readonly action: AcrylPluginAction
+  /** Loader entry id, row id, or package name the action targets. */
+  readonly entryId?: string
+}
+
+export type AcrylInvocation = AcrylSurfaceInvocation | AcrylPluginInvocation
+
 const HOST_COMMANDS = new Set<AcrylHostCommand>(['tui', 'gui', 'web'])
+
+const PLUGIN_ACTIONS = new Set<AcrylPluginAction>([
+  'list',
+  'enable',
+  'disable',
+  'doctor',
+  'add',
+  'remove',
+])
+
+/** Actions that name exactly one plugin. */
+const PLUGIN_TARGET_ACTIONS = new Set<AcrylPluginAction>(['enable', 'disable', 'add', 'remove'])
+
+/** What a target action's argument is called, for error messages a user reads. */
+function targetNoun(action: AcrylPluginAction): string {
+  return action === 'add' || action === 'remove' ? 'package name' : 'plugin id'
+}
 
 function hostCommand(value: string): AcrylHostCommand | undefined {
   return HOST_COMMANDS.has(value as AcrylHostCommand)
@@ -17,13 +56,42 @@ function hostCommand(value: string): AcrylHostCommand | undefined {
     : undefined
 }
 
+function pluginAction(value: string): AcrylPluginAction | undefined {
+  return PLUGIN_ACTIONS.has(value as AcrylPluginAction)
+    ? value as AcrylPluginAction
+    : undefined
+}
+
+/** `acryl plugin …` behind `acryl tui`: the command word plus its own arguments. */
+function parsePluginInvocation(
+  rest: readonly string[],
+  flags: AcrylInvocationFlags & { readonly resumeSessionId?: string },
+): AcrylPluginInvocation {
+  const [rawAction, entryId, ...extra] = rest
+  if (flags.resumeSessionId !== undefined) {
+    throw new Error('--resume applies to the tui command, not to plugin commands')
+  }
+  // `acryl plugin` alone lists, the same way `git remote` does.
+  const action = rawAction === undefined ? 'list' : pluginAction(rawAction)
+  if (action === undefined) {
+    throw new Error(`unknown plugin action: ${rawAction}`)
+  }
+  if (extra.length > 0) throw new Error(`unexpected argument for plugin ${action}: ${extra[0]}`)
+  if (PLUGIN_TARGET_ACTIONS.has(action)) {
+    if (entryId === undefined) throw new Error(`plugin ${action} requires a ${targetNoun(action)}`)
+    return { ...flags, kind: 'plugin', action, entryId }
+  }
+  if (entryId !== undefined) throw new Error(`plugin ${action} takes no argument`)
+  return { ...flags, kind: 'plugin', action }
+}
+
 export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
-  let command: AcrylHostCommand | undefined
   let profile: string | undefined
   let resumeSessionId: string | undefined
   let json = false
   let version = false
   let help = false
+  const positional: string[] = []
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]
     if (argument === undefined) continue
@@ -63,24 +131,29 @@ export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
       continue
     }
     if (argument.startsWith('-')) throw new Error(`unknown option: ${argument}`)
-    const parsed = hostCommand(argument)
-    if (command === undefined) {
-      if (parsed === undefined) throw new Error(`unknown command: ${argument}`)
-      command = parsed
-      continue
-    }
-    throw new Error(`unexpected argument for ${command}: ${argument}`)
+    positional.push(argument)
   }
-  const resolvedCommand = command ?? 'tui'
-  if (!version && !help && profile === undefined && resumeSessionId === undefined) {
-    return { command: resolvedCommand, json, version, help }
-  }
-  return {
-    command: resolvedCommand,
+
+  const flags = {
     json,
     version,
     help,
     ...(profile === undefined ? {} : { profile }),
+  }
+  const [command, ...rest] = positional
+  if (command === 'plugin') {
+    return parsePluginInvocation(rest, {
+      ...flags,
+      ...(resumeSessionId === undefined ? {} : { resumeSessionId }),
+    })
+  }
+  const surface = command === undefined ? 'tui' : hostCommand(command)
+  if (surface === undefined) throw new Error(`unknown command: ${command}`)
+  if (rest.length > 0) throw new Error(`unexpected argument for ${surface}: ${rest[0]}`)
+  return {
+    ...flags,
+    kind: 'surface',
+    command: surface,
     ...(resumeSessionId === undefined ? {} : { resumeSessionId }),
   }
 }

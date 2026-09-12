@@ -63,10 +63,19 @@ export {
   pluginLifecyclePatches,
   readDisabledPluginLifecycleEntries,
   readUserMutableBundleNames,
+  resolvePluginLifecycleStatePath,
   setPluginLifecycleEntryEnabled,
   type PluginLifecycleStatePersistence,
   type ProfileNameValidator,
 } from './plugin-lifecycle-state.ts'
+export {
+  diagnosePluginLifecycle,
+  type PluginHealthCode,
+  type PluginHealthFinding,
+  type PluginHealthInput,
+  type PluginHealthReport,
+  type PluginHealthSeverity,
+} from './plugin-doctor.ts'
 // The lifecycle vocabulary itself belongs to `acryl-control`, the domain
 // package. Surfaces depend on this runtime, not on the domain package, so the
 // shared contract is re-exported here rather than duplicated per surface; one

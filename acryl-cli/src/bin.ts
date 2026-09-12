@@ -5,9 +5,21 @@ import { relaunchWithExposedInternals } from './cli/node-launcher.ts'
 import { runAcryl } from './cli/run.ts'
 
 export { parseAcrylArgs } from './cli/grammar.ts'
-export type { AcrylHostCommand, AcrylInvocation } from './cli/grammar.ts'
+export type {
+  AcrylHostCommand,
+  AcrylInvocation,
+  AcrylPluginAction,
+  AcrylPluginInvocation,
+  AcrylSurfaceInvocation,
+} from './cli/grammar.ts'
 export { runAcryl } from './cli/run.ts'
 export type { AcrylCliDependencies } from './cli/run.ts'
+export { runPluginCommand, resolvePluginEntryId } from './host/plugin-command.ts'
+export type {
+  AcrylPluginCommandAction,
+  PluginCommandOptions,
+  PluginCommandResult,
+} from './host/plugin-command.ts'
 
 function isEntrypoint(): boolean {
   const entrypoint = process.argv[1]
