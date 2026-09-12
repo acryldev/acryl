@@ -32,6 +32,7 @@ export {
 export {
   createDshEngineDefinition,
   createDshEngineDefinitionFromComposition,
+  createWebEngineDefinition,
   type DshEngineComposition,
 } from './engine-dsh.ts'
 

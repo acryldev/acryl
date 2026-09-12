@@ -165,6 +165,38 @@ export function createDshEngineDefinition(profileName: string): AcrylEngineDefin
   }
 }
 
+/** Resolve the pinned Harness `web` profile into a mountable composition (the Web flavor). */
+async function resolveWebEngineComposition(): Promise<DshEngineComposition> {
+  const profileName = 'web'
+  process.env.DSH_HOME = resolveAcrylDshHome()
+  const profileDirectory = resolveProfileDir(profileName)
+  initProfile(profileDirectory, DEFAULT_PROFILE_BUNDLES)
+  await healProfilesModuleFallback({ installAnchor: dshInstallAnchor })
+  const profile = loadProfile('web', profileName, dshInstallAnchor)
+  const rootConfig = join(profile.dir, 'cordis.yml')
+  writeFileSync(rootConfig, profileRoot)
+  const patches = structuredClone([
+    ...profile.layers.flatMap(layer => layer.patches),
+    ...createAcrylCodingCapabilityPatches(new Set(['web'])),
+    ...profile.patches,
+  ])
+  return { rootConfig, patches, surface: 'web' }
+}
+
+/**
+ * Build the `dsh` engine definition for the Web surface's `web` profile
+ * (`dsh-base` + `dsh-web-app`) - the same shared `mountDshEngine` primitive
+ * as {@link createDshEngineDefinition}, resolved through this package's own
+ * profile system like the CLI flavor (Web has no external profile pipeline
+ * of its own, unlike Desktop's `prepareDesktopProfile()`).
+ */
+export function createWebEngineDefinition(): AcrylEngineDefinition {
+  return {
+    id: 'dsh',
+    plugin: async (ctx: Context) => mountDshEngine(ctx, await resolveWebEngineComposition()),
+  }
+}
+
 /**
  * Build the `dsh` engine definition from a composition a surface already
  * resolved itself (Desktop's `prepareDesktopProfile()`: its own profile

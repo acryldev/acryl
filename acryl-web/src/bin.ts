@@ -30,7 +30,7 @@ async function main(argv: readonly string[]): Promise<void> {
   }
   const json = argv.includes('--json')
   const result = await serveWeb({ waitForSignal: !json })
-  if (json) process.stdout.write(`${JSON.stringify({ url: result.url })}\n`)
+  if (json) process.stdout.write(`${JSON.stringify({ url: result.url, engine: result.engine })}\n`)
 }
 
 main(process.argv.slice(2)).catch(cause => {

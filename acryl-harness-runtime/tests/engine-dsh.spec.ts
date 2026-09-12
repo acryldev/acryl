@@ -22,6 +22,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import {
   createDshEngineDefinition,
   createDshEngineDefinitionFromComposition,
+  createWebEngineDefinition,
 } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 
@@ -98,6 +99,22 @@ describe('the extracted dsh engine, mounted under createAcrylEngineHost', () => 
       // duplicate-registration error and this select() would reject.
       await expect(host.select('dsh')).resolves.toBeUndefined()
       expect(host.ctx.get('sessions')).toBeDefined()
+    } finally {
+      await host.dispose()
+    }
+  })
+})
+
+describe('the web engine entry point, mounted under createAcrylEngineHost', () => {
+  it('boots the pinned web profile in the host tree, with shared authorization available', async () => {
+    await freshDshHome()
+    const host = await createAcrylEngineHost({
+      engines: [createWebEngineDefinition()],
+      initialEngine: 'dsh',
+    })
+    try {
+      expect(host.currentEngine()).toBe('dsh')
+      expect(host.ctx.get('authorization')).toBeDefined()
     } finally {
       await host.dispose()
     }
