@@ -44,7 +44,7 @@ jobs:
           - system: aarch64-linux
             runner: ubuntu-24.04-arm
           - system: aarch64-darwin
-            runner: macos-14
+            runner: macos-26
           # x86_64-darwin (nixpkgs-26.05-darwin legacy pin) has no CI job:
           # the Determinate Nix installer no longer supports Intel macOS on
           # GitHub-hosted runners (DeterminateSystems/nix-src#224). The
