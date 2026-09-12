@@ -366,8 +366,15 @@ async function start(): Promise<void> {
     {
       prepareToQuit: () => { runtime.prepareToQuit() },
       relaunch: () => {
+        // Fully owns process termination (see DesktopNativeExit.relaunch's
+        // doc comment) - app.relaunch() alone does not end this process, so
+        // the packaged branch must also call app.exit() itself here, not
+        // rely on finish()'s own exit() call.
         if (isEphemeralDevBundle()) app.exit(DESKTOP_DEV_RESTART_EXIT_CODE)
-        else app.relaunch()
+        else {
+          app.relaunch()
+          app.exit(0)
+        }
       },
       exit: code => { app.exit(code) },
     },

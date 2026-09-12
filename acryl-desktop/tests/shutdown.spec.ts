@@ -11,7 +11,7 @@ import {
 afterEach(() => { vi.useRealTimers() })
 
 describe('application shutdown requests', () => {
-  it('relaunches only a successful exit after a mode change', () => {
+  it('relaunches only a successful exit after a mode change, and never also calls exit()', () => {
     const beforeExit = vi.fn()
     const native = {
       prepareToQuit: vi.fn(),
@@ -26,7 +26,32 @@ describe('application shutdown requests', () => {
     expect(beforeExit).toHaveBeenCalledOnce()
     expect(native.prepareToQuit).toHaveBeenCalledOnce()
     expect(native.relaunch).toHaveBeenCalledOnce()
-    expect(native.exit).toHaveBeenCalledWith(0)
+    // relaunch() fully owns process termination - a trailing exit() call
+    // would race whichever exit code relaunch()'s own implementation needs.
+    // Reproduced live: the dev-mode branch calls app.exit(43) internally,
+    // and this exact trailing call used to immediately follow with
+    // app.exit(0), silently replacing the dev-restart signal - the app
+    // closed with no automatic restart, every time (spec 028 follow-up).
+    expect(native.exit).not.toHaveBeenCalled()
+  })
+
+  it('does not race relaunch()\'s own exit code with a trailing exit() call', () => {
+    // Regression test for the exact bug found live: relaunch()'s dev-mode
+    // implementation calls app.exit() with its own code as part of actually
+    // performing the relaunch - not just "scheduling" one. A second,
+    // unconditional exit() call from finish() afterward would override it.
+    const exitCodesSeen: number[] = []
+    const native = {
+      prepareToQuit: vi.fn(),
+      relaunch: vi.fn(() => { exitCodesSeen.push(43) }),
+      exit: vi.fn((code: number) => { exitCodesSeen.push(code) }),
+    }
+    const coordinator = createDesktopExitCoordinator(native, () => {})
+
+    coordinator.requestRelaunch()
+    coordinator.finish(0)
+
+    expect(exitCodesSeen).toEqual([43])
   })
 
   it('does not relaunch a failed generation', () => {

@@ -28,7 +28,21 @@ export interface DesktopShutdown {
 export interface DesktopNativeExit {
   /** Mark the window close path as a final process exit. */
   prepareToQuit(): void
-  /** Schedule a fresh Electron process using the current command line. */
+  /**
+   * Schedule a fresh Electron process and terminate the current one - fully
+   * owns process exit; `finish()` never calls `exit()` afterward. A packaged
+   * install's implementation must call both `app.relaunch()` (schedule) and
+   * `app.exit()` (terminate this instance) itself - `app.relaunch()` alone
+   * does not end the current process. Calling `exit()` again afterward with
+   * a different code is not a graceful no-op: two `app.exit()` calls in
+   * quick succession race, and the second one's code wins - confirmed live
+   * (`app.exit(DESKTOP_DEV_RESTART_EXIT_CODE)` from the dev-mode branch,
+   * immediately followed by `finish()`'s own unconditional `app.exit(0)`,
+   * silently replaced the dev-restart signal with a plain exit, so
+   * `launch-dev.mjs`'s loop saw code 0, concluded "not a restart," and
+   * returned instead of staging a fresh bundle and respawning - the app
+   * closed with no automatic restart, every time).
+   */
   relaunch(): void
   /** End the current Electron process without another quit event. */
   exit(code: number): void
@@ -60,7 +74,13 @@ export function createDesktopExitCoordinator(
     finish(code) {
       beforeExit()
       native.prepareToQuit()
-      if (relaunchRequested && code === 0) native.relaunch()
+      // relaunch() fully owns process termination (see its doc comment) -
+      // calling exit() afterward would race it and can silently replace
+      // whichever exit code relaunch() actually needs with this one.
+      if (relaunchRequested && code === 0) {
+        native.relaunch()
+        return
+      }
       native.exit(code)
     },
   }
