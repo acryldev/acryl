@@ -231,10 +231,17 @@ register/list/get/duplicate-rejection/idempotent-disposal directly;
 command still reaches nothing built-in. `acryl-cli` 18 files / 318 passed,
 typecheck clean.
 
-**Not yet done:** the actual `acryl-dsh-editor-plugin-cli` content (a real
-TUI-native file browser/editor Component) - this task built the extension
-seam, not an example plugin using it. That is separate follow-up work, not
-part of this task's own evidence bar.
+**Example plugin landed 2026-09-12** (`github.com/acryldev/acryl-dsh-editor-plugin-cli`,
+commit `ccff778`): a real TUI-native `/files` command (browse from the home
+directory, view a file read-only) using the seam above - no Host/Client
+split, since the CLI and its Loader tree share one process; `apply(ctx)`
+both registers the command and reads files directly. Verified end-to-end
+with a real PTY session (`node-pty`, not a mock): a fresh throwaway
+`ACRYL_HOME`, `dsh plugin add` from the local checkout, a real `acryl tui`
+boot, `/files` opens showing real home-directory contents, Escape closes it,
+clean exit code 0. Also fixed a real gap the first consumer surfaced:
+`TuiCommandOpenContext` had no way for a plugin's own overlay to close
+itself (`close(): void` added, commit `dd6c503`).
 
 ## Ledger
 

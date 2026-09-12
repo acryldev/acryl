@@ -4354,3 +4354,33 @@ follow-up work. Recorded as spec 034 T009, not part of the original spec -
 added because it's the same "plugins contribute presentation slots" contract
 the rest of that spec is about, and to keep it visible to whoever else is
 working that spec rather than landing invisibly.
+
+## 2026-09-12 - feat: acryl-dsh-editor-plugin-cli, the first tuiCommands consumer
+
+`github.com/acryldev/acryl-dsh-editor-plugin-cli` was an unmodified import of
+`acryl-dsh-editor-plugin-web` (browser/React/Monaco) - none of that applies
+to a terminal with no browser. Rebuilt from scratch against `tuiCommands`
+(the extension point from the previous entry): a `/files` command that
+browses from the home directory and views a file read-only. Unlike the Web
+sibling, no Host/Client split - the CLI and its Loader tree share one
+process, so `apply(ctx)` both registers the command and reads files
+directly, no wire protocol.
+
+Building the first real consumer immediately found a real gap in the seam
+itself: `TuiCommandOpenContext` only carried `{tui}`, so a plugin's overlay
+had no way to tell the host TUI "close me" - fixed by adding `close(): void`,
+wired to `actions.closeDynamic()`, called from the plugin's own `handleInput`
+(not a blanket top-level Escape, which would be wrong for a plugin - this
+one included - with its own nested modes: the file viewer needs one Escape
+back to browsing, a second to close entirely).
+
+Verified end-to-end with a real PTY session (`node-pty`), not a mock: fresh
+throwaway `ACRYL_HOME`, `dsh plugin add` from the local checkout (correctly
+reconciled into `dsh.profile.bundles`), a real `acryl tui` boot, `/files`
+opened a genuine file browser showing real home-directory contents
+(`Files — /Users/musichen`, real folder names, working `↑↓`/Enter/Escape),
+clean exit code 0. `acryl-cli` 18 files / 318 passed, typecheck clean.
+
+Deliberately v1-scoped: browse + view only, no editing/search/git-diff/
+Markdown - real follow-up work once this seam has a second consumer to
+generalize from, not features to guess at up front.
