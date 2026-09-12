@@ -4170,3 +4170,99 @@ service other surfaces use and expects the Desktop snapshot and the persisted
 16/16 in `tests/plugin-lifecycle.spec.ts` against a real Loader, typecheck clean.
 `acryl-harness-runtime` typecheck clean; its suite still reports the same four
 pre-existing failures recorded in the entry above, unchanged by this work.
+
+## 2026-09-12 - feat: the CLI plugin surface, one store per engine home (spec 034, T003)
+
+Commit `82f05cd2a24e9c1bd6de7b7b731464eda810db2f`.
+
+T003 is the surface the user's report named directly: "we still don't have
+plugins in ... CLI". `acryl plugin list|enable|disable|doctor` (and `--json`)
+now exist. They own no lifecycle logic - each one boots the profile the way the
+TUI does, mounts the same `acrPluginLifecycle` capability the Desktop panel
+mounts, drives it, and disposes - so the CLI cannot describe a plugin state the
+Desktop would disagree with.
+
+**The store moved to the engine home.** T005 had left the override file under
+`resolveAcrylHome()`, i.e. `~/.acryl/plugin-lifecycle/state.json`. That is wrong
+for anything other than the default install, and the dev launcher is the case
+that proves it: `scripts/dev-local.mjs` sets only `DSH_HOME=~/.acryl-dev/.dsh`,
+and `resolveAcrylHome()` ignores `$DSH_HOME` - so an isolated or dev run would
+have read and written overrides in the operator's real ACRYL install. The store
+is now `<dshHome>/plugin-lifecycle/state.json`, resolved from the home the
+process actually booted, which is the one value every surface already agrees on
+(all three boot through `resolveAcrylDshHome()`). The Desktop passes its own
+`homeDir`, and moves off Electron's `userData`: that directory is private to the
+surface, so an override written by `acryl plugin disable` could never reach the
+panel. This is a deliberate relocation of Desktop plugin state, and it is the
+second time in this spec that a Desktop-private path had to become a shared one.
+
+**Composition.** Both `resolveDshEngineComposition` (tui) and
+`resolveWebEngineComposition` (web) now apply `pluginLifecyclePatches()` last, so
+a disable is a row-disabling Loader patch on the next boot of any surface rather
+than a surface-local view.
+
+**Doctor.** `diagnosePluginLifecycle` is read-only, surface-neutral health in the
+runtime: an unreadable override file, an override that outlived its row, an
+override on a row the user does not control, a bundle that is installed but
+composes nothing, and a bundle the profile lists that does not resolve. The CLI
+renders it and exits non-zero only on an `error`. Rendering is the surface's job;
+diagnosis is not.
+
+**Resolution is user-facing.** `plugin enable|disable` accepts the entry id a row
+shows (`include:ui-acryl`), the patch id the override file stores (`ui-acryl`),
+or the package name the market shows, and refuses an ambiguous argument instead
+of guessing. `add`/`remove` parse (so the surface matches `plan.md`) and are
+refused with a pointer to install/reconcile, T006.
+
+Evidence, cold `ACRYL_HOME=/tmp/acr-034-t003` with one local bundle installed to
+give the profile a user-mutable row:
+
+```txt
+$ acryl plugin list --profile acryl | grep -v "(core)"
+profile acryl (dsh) - 90 plugins
+on  include:acryl-evidence-plugin  acryl-evidence-plugin
+override file: /tmp/acr-034-t003/.dsh/plugin-lifecycle/state.json
+
+$ acryl plugin doctor --profile acryl
+profile acryl (dsh) - 90 plugins
+no problems found
+
+$ acryl plugin disable acryl-evidence-plugin
+disabled `include:acryl-evidence-plugin` in profile acryl
+off include:acryl-evidence-plugin  acryl-evidence-plugin
+
+$ acryl plugin list --profile acryl        # next boot of the same profile
+off include:acryl-evidence-plugin  acryl-evidence-plugin
+
+$ cat $ACRYL_HOME/.dsh/plugin-lifecycle/state.json
+{ "version": 1, "profiles": [ { "profileName": "acryl",
+  "disabledEntries": [ "include:acryl-evidence-plugin" ] } ] }
+
+$ acryl plugin enable acryl-evidence-plugin
+enabled `include:acryl-evidence-plugin` in profile acryl
+on  include:acryl-evidence-plugin  acryl-evidence-plugin
+
+$ acryl plugin disable include:tools       # core row
+acryl: Plugin include:tools is a core capability and cannot be toggled.   (exit 1)
+
+$ acryl plugin disable nope                # unknown row
+acryl: profile "acryl" has no plugin "nope"; run `acryl plugin list --profile acryl`  (exit 1)
+
+$ ls ~/.acryl/.dsh/plugin-lifecycle ~/.acryl/plugin-lifecycle   # nothing outside the throwaway home
+ls: No such file or directory (both)
+```
+
+Suites: `acryl-cli` 17 files / 310 passed, typecheck clean. `acryl-desktop` 95
+files / 850 passed / 4 skipped, typecheck clean across all five tsconfigs.
+`acryl-control` 41 passed. `acryl-harness-runtime` typecheck clean and its suite
+reports the same four pre-existing failures recorded two entries above,
+unchanged by this work.
+
+**Found while gathering evidence, not fixed here:** the CLI composes the `tui`
+surface, so booting a profile whose own bundles compose what that surface also
+inserts fails with `duplicate loader entry id: agent-presets`
+(`acryl plugin list --profile desktop`, and the same for the `tui` and `web`
+profiles in the operator's real home). It is pre-existing - the `agent-presets`
+insert in `coding-capabilities.ts` is committed behavior and untouched by this
+commit - and it is the cross-surface half of FR-008, so it belongs with T008
+rather than as a side effect of T003. Recorded in `tasks.md`.

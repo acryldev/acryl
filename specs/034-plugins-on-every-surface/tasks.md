@@ -51,6 +51,25 @@ boot; output pasted into the development log.
 **Done when**: the CLI can see and change the same plugin set the Desktop
 panel shows for the same profile.
 
+**Landed 2026-09-12, commit `82f05cd`.** `acryl plugin list|enable|disable|
+doctor` plus `--json` boots the profile the way the TUI does, mounts the shared
+capability from T005, drives it, and disposes. `acryl-cli/src/host/plugin-command.ts`
+owns the boot/drive/dispose and `cli/plugin-render.ts` only renders; the CLI holds
+no lifecycle logic. Evidence as specified: a cold throwaway `ACRYL_HOME` whose
+profile has one local bundle installed reports `on include:acryl-evidence-plugin`,
+`disable` writes the override, and the next boot reports the row `off`; the full
+transcript is in the development log, including the refusals (core row, unknown
+row, `add`) and a check that nothing was written outside the throwaway home.
+Suites: `acryl-cli` 17 files / 310 passed, `acryl-desktop` 95 files / 850 passed,
+`acryl-control` 41 passed, `acryl-harness-runtime` unchanged at its four known
+failures. Two decisions the task did not settle and this one did: the override
+store moves from `resolveAcrylHome()` to the engine home
+(`<dshHome>/plugin-lifecycle/state.json`), because `~/.acryl` ignores `$DSH_HOME`
+and a dev or throwaway `DSH_HOME` would otherwise read and write overrides in the
+operator's real install - the Desktop now passes its own `homeDir` and leaves
+Electron's `userData`; and `add`/`remove` parse but are refused with a pointer to
+T006 rather than surfacing as unknown actions.
+
 ## T004 - Web plugin panel parity
 
 **Files**: `acryl-harness-runtime/src/engine-dsh.ts`,
@@ -125,6 +144,16 @@ one profile and compares plugin row id sets; the desktop/web/cli gates.
 surface without declaring its surfaces.
 **Evidence**: the gate fails when a row is added to exactly one surface.
 **Done when**: CI/local gate enforces parity.
+
+**Known gap found while gathering T003's evidence (2026-09-12).** The CLI
+composes the `tui` surface, so booting a profile whose own bundles already
+compose what that surface also inserts fails at boot with
+`duplicate loader entry id: agent-presets` - reproduced with
+`acryl plugin list --profile desktop`, and with the `tui` and `web` profiles in
+the operator's real home. It is pre-existing (`ACRYL_CODING_CAPABILITIES`'
+`agent-presets` insert is committed behavior, untouched by T003) and it is the
+cross-surface half of FR-008: parity has to hold across compositions that are
+allowed to overlap, not only across surfaces that happen to boot today.
 
 ## Ledger
 
