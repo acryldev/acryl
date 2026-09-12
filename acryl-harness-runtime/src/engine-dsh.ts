@@ -293,6 +293,24 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
     { id: 'ui-brand-official', disabled: true },
     { insert: [{ id: 'ui-acryl', name: 'dsh-client-ui-brand-acryl', disabled: false }] },
   )
+  // Community Market: same row id/name acryl-desktop's own profile.ts uses
+  // (DESKTOP_MARKET_IDENTITIES.community), same materialization technique as
+  // the brand swap above - dsh-community-market is another ACRYL-owned
+  // workspace package outside @deepseek-ai/dsh's own dependency closure.
+  // Unlike Desktop, Web has no on/off provider switch (Desktop's Market is
+  // disabled by default and user-toggleable via desktop-market.ts) - Web has
+  // no such setting surface yet, so this row is simply always present.
+  // dsh-community-market's own top-level inject (['webServer', 'settings'])
+  // needs nothing Desktop-specific - its host code's own comment documents
+  // this deliberately ("Browsing remains portable"): Discover/Installable/
+  // Sources activate on any surface with webServer+settings, while real
+  // install/uninstall is a second, nested `ctx.inject(['desktopProfiles',
+  // 'desktopPnpm'], ...)` that simply stays PENDING (no error, no crash) on
+  // Web today. Web-side desktopProfiles/desktopPnpm equivalents - and so
+  // Market install/uninstall parity with Desktop - remain a separate,
+  // unstarted piece of work; this row only turns on browsing.
+  materializeProfilePackage(profile.dir, 'dsh-community-market', installPackageUrl)
+  patches.push({ insert: [{ id: 'community-market', name: 'dsh-community-market' }] })
   // Last, so a user override beats every composition decision above it - the
   // same shared store the CLI and the Desktop panel write (spec 034).
   patches.push(...pluginLifecyclePatches({
@@ -309,8 +327,9 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
  * profile system like the CLI flavor (Web has no external profile pipeline
  * of its own, unlike Desktop's `prepareDesktopProfile()`).
  * @param installPackageUrl - file URL of `acryl-web`'s own `package.json`,
- * used to materialize `dsh-client-ui-brand-acryl` into the profile (see
- * {@link resolveWebEngineComposition}'s own comment for why that is needed).
+ * used to materialize `dsh-client-ui-brand-acryl` and `dsh-community-market`
+ * into the profile (see {@link resolveWebEngineComposition}'s own comments
+ * for why that is needed).
  */
 export function createWebEngineDefinition(installPackageUrl: string): AcrylEngineDefinition {
   return {

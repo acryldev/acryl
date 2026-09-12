@@ -23,7 +23,7 @@
     "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/cordis": "4.0.2",
     "@deepseek-ai/cordis-plugin-group": "1.0.2",
     "@deepseek-ai/cordis-plugin-hmr": "1.0.17",
     "@deepseek-ai/cordis-plugin-include": "1.0.7",
@@ -189,7 +189,8 @@
     "@deepseek-ai/dsh-workflow-worker-thread": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-workspace": "0.1.5-alpha.1",
     "diff": "^8.0.4",
-    "dsh-client-ui-brand-acryl": "workspace:*"
+    "dsh-client-ui-brand-acryl": "workspace:*",
+    "dsh-community-market": "workspace:*"
   },
   "scripts": {
     "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-harness-runtime run build",
@@ -200,7 +201,7 @@
     "check": "pnpm run build && pnpm run typecheck && pnpm run test && pnpm run verify:npm"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/cordis": "4.0.2",
     "@types/node": "^22.20.0",
     "acryl-control": "workspace:*",
     "acryl-harness-runtime": "workspace:*",
