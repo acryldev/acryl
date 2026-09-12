@@ -192,6 +192,7 @@
     "dsh-client-ui-brand-acryl": "workspace:*"
   },
   "scripts": {
+    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-harness-runtime run build",
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",

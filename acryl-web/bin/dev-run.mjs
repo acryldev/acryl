@@ -2,9 +2,17 @@
 //
 // The web surface owns its launcher (the terminal surface owns
 // `acryl-cli/bin/dev-run.mjs`). It rebuilds `acryl-web` if its compiled entry
-// is missing or stale (newer source under `acryl-web/src`), then execs the web
-// bin with the user's remaining arguments. The web surface is a SEPARATE
-// distribution from the terminal CLI (`acryl-cli`).
+// is missing or stale - newer source under `acryl-web/src`, or under the
+// pre-built workspace dependencies it imports (`acryl-control`,
+// `acryl-harness-runtime` - `pnpm --filter acryl-web run build`'s own
+// `prebuild` script rebuilds both, but only once this launcher actually
+// decides to run that build). Without checking those dependencies too, an
+// edit to e.g. `acryl-harness-runtime/src/engine-dsh.ts` alone would leave
+// `isStale()` false (acryl-web's own src is untouched) and this launcher
+// would silently keep serving a stale build of that shared engine code - the
+// exact class of confusion hit live while building the ACRYL web brand swap.
+// The web surface is a SEPARATE distribution from the terminal CLI
+// (`acryl-cli`).
 import { spawnSync } from 'node:child_process'
 import { existsSync, readdirSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
@@ -14,7 +22,11 @@ const here = dirname(fileURLToPath(import.meta.url))
 const packageRoot = resolve(here, '..')
 const root = resolve(packageRoot, '..')
 const bin = resolve(packageRoot, 'lib/bin.js')
-const src = resolve(packageRoot, 'src')
+const watchedSourceDirs = [
+  resolve(packageRoot, 'src'),
+  resolve(root, 'acryl-control/src'),
+  resolve(root, 'acryl-harness-runtime/src'),
+]
 
 function newestSourceMtime(dir) {
   let newest = 0
@@ -34,7 +46,8 @@ function newestSourceMtime(dir) {
 
 function isStale() {
   if (!existsSync(bin)) return true
-  return newestSourceMtime(src) > statSync(bin).mtimeMs
+  const binMtime = statSync(bin).mtimeMs
+  return watchedSourceDirs.some(dir => newestSourceMtime(dir) > binMtime)
 }
 
 if (isStale()) {

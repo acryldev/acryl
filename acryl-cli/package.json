@@ -25,7 +25,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "prebuild": "node scripts/generate-build-info.mjs",
+    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-harness-runtime run build && node scripts/generate-build-info.mjs",
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "pretypecheck": "node scripts/generate-build-info.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
