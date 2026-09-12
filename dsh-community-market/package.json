@@ -78,7 +78,7 @@
     "yaml": "^2.9.0"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/cordis": "4.0.2",
     "@deepseek-ai/dsh-agent": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-agent-presets": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-api-gateway": "0.1.5-alpha.1",
@@ -174,7 +174,7 @@
     }
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/cordis": "4.0.2",
     "@deepseek-ai/dsh-agent": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-agent-presets": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-api-gateway": "0.1.5-alpha.1",

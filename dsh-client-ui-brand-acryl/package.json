@@ -59,10 +59,10 @@
     "check": "pnpm run build && pnpm run typecheck && pnpm run test"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "4.0.1"
+    "@deepseek-ai/cordis": "4.0.2"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/cordis": "4.0.2",
     "@deepseek-ai/dsh-client-ui-conversation": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-ui-renderer": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-ui-sidebar": "0.1.5-alpha.1",

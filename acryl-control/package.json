@@ -36,10 +36,10 @@
     "prepublishOnly": "pnpm run check"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "4.0.1"
+    "@deepseek-ai/cordis": "4.0.2"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/cordis": "4.0.2",
     "@deepseek-ai/cordis-plugin-loader": "1.0.3",
     "@deepseek-ai/dsh-agent": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-app-boot": "0.1.5-alpha.1",

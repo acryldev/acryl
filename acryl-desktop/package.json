@@ -142,7 +142,7 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/cordis": "4.0.2",
     "@deepseek-ai/cordis-plugin-group": "1.0.2",
     "@deepseek-ai/cordis-plugin-hmr": "1.0.17",
     "@deepseek-ai/cordis-plugin-include": "1.0.7",

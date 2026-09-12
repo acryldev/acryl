@@ -35,7 +35,7 @@
     "prepack": "pnpm run check"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "4.0.1"
+    "@deepseek-ai/cordis": "4.0.2"
   },
   "dependencies": {
     "@deepseek-ai/cordis-plugin-group": "1.0.2",
@@ -143,7 +143,7 @@
     "diff": "^9.0.0"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/cordis": "4.0.2",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.20.0",
     "node-pty": "1.2.0-beta.15",
