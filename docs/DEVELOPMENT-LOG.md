@@ -372,6 +372,49 @@ This is a decision-pending milestone: the grilling ticket *Lock the
 interchangeable harness-engine destination (DSH <-> pi)*
 (`specs/000-wayfinding/issues/04-lock-harness-engine-swap.md`) must resolve
 before `specs/028-acryl-harness-engine-swap/` is created with `/speckit-specify`.
+## 2026-09-02 - add #prebuilt output for prebuilt CLI release tarballs
+
+Commit: `c01bbfc73bfc8c1ca7edfd5ec4a76aee6c7d6a51`
+
+Added `packages.<system>.prebuilt` to the Nix flake — fetches the prebuilt
+CLI tarball from GitHub releases (v0.1.19) with per-platform SRI hashes.
+Each tarball bundles its own Node runtime and native addons (node-pty,
+koffi, sharp), so the prebuilt path needs no from-source build. Uses
+`autoPatchelfHook` on Linux for glibc linking. The default output remains
+`#acryl` (from-source build), following Nix convention; `#prebuilt` is an
+optional fast path. CI now builds and tests `#prebuilt` on all 4 platforms.
+READMEs updated to document the `#prebuilt` output.
+
+## 2026-09-02 - align nixify artifacts with nixify skill rules
+
+Commits: `a3ebe71686e01efa923f8b0df44068527752e401`,
+`122f207` (devbox x86_64-darwin first attempt),
+`2d895f6` (devbox x86_64-darwin per-package scoping)
+
+Audited the `feature/nix-flake-support` branch against the nixify skill's
+Definition of Done and fixed nine findings. SHA-pinned all GitHub Actions
+in `nix.yml` to 40-char commit SHAs (checkout@v5, nix-installer-action@v22,
+magic-nix-cache-action@v14) instead of mutable `@v4`/`@main` refs. Added
+`if: github.event_name != 'pull_request'` guards on `nix run` steps to
+prevent PR-controlled code from reaching `GITHUB_TOKEN`/OIDC. Added path
+filtering so Nix CI only fires when `flake.nix`, `flake.lock`, `**/*.nix`,
+`pnpm-lock.yaml`, or `package.json` change. Added `nix run .#default --
+--help` test. Added `act` to `devbox.json` for local CI validation.
+Added `.devbox/` to `.gitignore`. Added Nix (Flake) and Devbox install
+sections to `README.md`, `README.en.md`, and `README.zh.md`; updated the
+bilingual-docs hash record in `README.i18n.yaml`.
+
+The `devbox.lock` blocker was resolved with per-package platform scoping:
+clean package names (`nodejs_22`, `pnpm_11`, `esbuild`, `act`) for normal
+platforms (Linux, aarch64-darwin), and flake URL references to
+nixpkgs-26.05-darwin only for x86_64-darwin. The `nixpkgs.commit` field
+is set to the 26.05-darwin pin for the shell infrastructure (`mkShell`).
+On normal platforms, packages resolve from nixpkgs-unstable via devbox's
+index — unchanged from before. On x86_64-darwin, the flake URL references
+bypass devbox 0.18's hardcoded nixpkgs 26.11 (which dropped x86_64-darwin)
+and pull from 26.05-darwin instead. `devbox.lock` is committed with both
+resolution paths; Linux/aarch64-darwin entries will be populated when a
+user on that platform runs `devbox install`.
 
 ## 2026-09-02 - align exact PNPM pins to the 11.8.0 root release
 
@@ -588,7 +631,93 @@ re-basing the control plane onto the native `@deepseek-ai/dsh-*` / Cordis seams,
 the plugin path with one real model-facing Tool as the hard gate. Follow-on differentiators
 (authorization pipeline, room identity, relay/handoff, capability package, agent-agnostic
 canvas) are intentionally recorded as subsequent ledgers.
+## 2026-08-31 - Nix flake: add acryl-desktop (Electron) output
 
+**Commit:** [`7383dd9d9e6b619fcec51c5f7567d6b1488d02b6`](https://github.com/acryldev/acryl/commit/7383dd9d9e6b619fcec51c5f7567d6b1488d02b6)
+
+Extended the Nix flake to also build the Electron desktop app as
+`packages.${system}.acryl-desktop`, alongside the existing TUI output.
+
+### Approach
+
+- Uses nixpkgs `electron` (43.1.0) as the runtime instead of the npm
+  `electron` package (which downloads a platform binary via postinstall,
+  blocked by `--ignore-scripts` in the Nix sandbox)
+- Creates a CJS shim at `node_modules/electron/index.js` that exports the
+  nixpkgs electron path, replacing the real npm package. The desktop
+  launcher (`bin.ts`) does `import('electron')` to get the binary path,
+  then spawns it with `main.js` — the shim makes this work without the
+  npm electron binary
+- Skips the `generate-*` build scripts (they use `sharp` for image
+  processing) since `build/` assets are already tracked in git
+- Builds the full dependency chain: `acryl-control ->
+  acryl-harness-runtime -> dsh-community-market ->
+  acryl-development-canvas -> acryl-desktop`
+- Refactors shared derivation attrs into `commonDerivationAttrs` to
+  avoid duplication between TUI and desktop derivations
+
+### Usage
+
+```sh
+nix build .#acryl-desktop
+nix run .#acryl-desktop -- --help
+nix run .#acryl-desktop -- --version
+```
+
+---
+
+## 2026-08-31 - Nix flake support for acryl-tui
+
+**Commit:** [`4f15a00d778c8b01af8f536b78e04fbf3372f8ee`](https://github.com/acryldev/acryl/commit/4f15a00d778c8b01af8f536b78e04fbf3372f8ee)
+
+Added Nix flake support targeting the `acryl-tui` terminal client. The flake
+builds the TUI and its workspace dependencies (`acryl-control`,
+`acryl-harness-runtime`) using nixpkgs' modern PNPM hooks, producing a
+runnable `acryl` binary.
+
+### What was added
+
+- `flake.nix` — Nix flake with `packages.${system}.acryl` (default) and
+  `devShells.${system}.default`
+- `flake.lock` — Locked inputs (nixpkgs-unstable, nixpkgs-26.05-darwin,
+  nix-systems/default)
+- `devbox.json` — Reproducible development environment
+- `.github/workflows/nix.yml` — CI for all 4 supported systems
+- `.gitignore` — `/result` and `/result-*` entries
+
+### Key design decisions
+
+- **TUI target, not Electron:** The flake builds `acryl-tui` (the terminal
+  client) as the default package. Packaging the Electron desktop app via Nix
+  is a separate, harder problem deferred to future work.
+
+- **Intel macOS support:** nixpkgs-unstable (26.11) dropped `x86_64-darwin`.
+  The flake pins `nixpkgs-26.05-darwin` for Intel macOS and uses unstable for
+  all other systems.
+
+- **Modern PNPM API:** Uses `fetchPnpmDeps` with `fetcherVersion = 4`,
+  `pnpmConfigHook`, and `pnpm_11` (not the deprecated `pnpm.fetchDeps`).
+
+- **Hoisted node-linker:** Forces `nodeLinker: hoisted` in
+  `pnpm-workspace.yaml` during the build (pnpm 11 moved this setting from
+  `.npmrc`). This flattens `node_modules/` so the install phase can copy it
+  without resolving pnpm's `.pnpm/` virtual store symlinks.
+
+- **Selective build:** Builds only `acryl-control -> acryl-harness-runtime ->
+  acryl-tui` instead of the full workspace (which includes Electron).
+
+- **Performance:** `dontStrip` and `dontFixup` skip Nix's strip and fixup
+  phases, which are extremely slow on thousands of JS files in node_modules.
+
+### Usage
+
+```sh
+nix build .#acryl
+nix run .#acryl -- --help
+nix run .#acryl -- --version
+```
+
+---
 ## 2026-08-31 - shared coding capability composition implementation plan
 
 Commit: `8b6a955`
@@ -4384,3 +4513,49 @@ clean exit code 0. `acryl-cli` 18 files / 318 passed, typecheck clean.
 Deliberately v1-scoped: browse + view only, no editing/search/git-diff/
 Markdown - real follow-up work once this seam has a second consumer to
 generalize from, not features to guess at up front.
+
+---
+
+## 2026-09-11 - Nix flake: bump prebuilt to v0.1.36, add hash automation, newest runner
+
+**Commits:** [`cfa0c03a55adb34e3db4251cdd35ef50073d78a3`](https://github.com/acryldev/acryl/commit/cfa0c03a55adb34e3db4251cdd35ef50073d78a3) (implementation), [`d2e7ef2d0f6b6f8246be48a621bb59407bc31ddd`](https://github.com/acryldev/acryl/commit/d2e7ef2d0f6b6f8246be48a621bb59407bc31ddd) (docs)
+
+Rebased `feature/nix-flake-support` onto the latest `upstream/main`
+(`0822873`) and applied the remaining nixify skill compliance fixes.
+
+### Changes
+
+- Bumped the prebuilt CLI version from v0.1.19 to v0.1.36 (latest
+  release). Refreshed all three per-platform SRI hashes by prefetching
+  the new release assets.
+- Removed `x86_64-darwin` from `prebuiltAssets` because v0.1.36 does not
+  ship a darwin-x64 CLI tarball. Made `#prebuilt` conditional via
+  `optionalAttrs` so it is only exposed on platforms with a release
+  asset (`x86_64-linux`, `aarch64-linux`, `aarch64-darwin`). On
+  `x86_64-darwin`, `nix run .#prebuilt` correctly errors "package not
+  available" instead of failing with a missing attribute error.
+- Added `.github/workflows/nix-release.yml` — daily hash automation
+  workflow (scheduled lag-check template, required by nixify Step 16
+  for prebuilt tarball flakes). Detects when `flake.nix` lags behind
+  the latest GitHub release, prefetches new SRI hashes, and opens a
+  PR. Uses `GITHUB_TOKEN` (releases are created with `GITHUB_TOKEN`
+  via `softprops/action-gh-release`, so `release: published` would
+  never fire).
+- Updated the `aarch64-darwin` CI runner from `macos-14` to `macos-26`
+  (nixify Step 16: always use the newest runner).
+- Updated all three READMEs to reference v0.1.36 in the Nix tag-pinning
+  example and noted the `#prebuilt` platform scope. Re-recorded the
+  bilingual-docs blob hashes in `README.i18n.yaml`.
+- Re-pointed the two earlier Nix development-log entries at their
+  rebased commit hashes.
+
+### Validation
+
+- `nix flake check --no-build` passes on `x86_64-darwin`.
+- `nix build .#default` succeeds (from-source TUI build).
+- `nix run .#default -- --help` shows the correct help output.
+- `nix build .#prebuilt` correctly errors on `x86_64-darwin` (no
+  prebuilt asset for this platform).
+- `validate-action-pins.sh` — all actions pinned to commit SHAs.
+- `validate-pre-push.sh` — magic-nix-cache guard, timeout, runner
+  labels, action pins, and branch-not-stale checks all pass.
