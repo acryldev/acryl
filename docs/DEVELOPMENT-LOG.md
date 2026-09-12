@@ -4114,3 +4114,59 @@ the same 4 pre-existing failures (the fresh-profile HMR expectation in
 them now trips inside `@deepseek-ai/dsh-llm`'s own projection when a synthetic
 `assistant/chunk` is appended). Confirmed unchanged by this work: the same
 four fail with this commit's files stashed.
+
+## 2026-09-12 - refactor: one plugin lifecycle for every surface (spec 034, T005)
+
+Commit `46cd4796307a070b5b0bc7fa398869a0cb132325`.
+
+The user's report was "we still don't have plugins in WEB and in CLI", and the
+reason was structural, not cosmetic: enable/disable/reload/activate existed only
+as `acryl-desktop` code. `acryl-control` had a lifecycle *package* (`src/lifecycle/`)
+that the Desktop did not use for this, and the state store - the override list
+behind `plugin-lifecycle/state.json` - lived in the Desktop source too, so a
+second surface could only ever have re-implemented it.
+
+This is the enabling move for T003 (CLI) and T004 (Web panel). The split follows
+the repo's existing domain seam:
+
+- `acryl-control/src/plugin/**` (was `src/lifecycle/**`) owns the host-neutral
+  mechanics: entry resolution, dependent cascade, transaction ordering, rollback,
+  Fiber restart. What a surface may toggle is not a mechanic, so it is now an
+  explicit `PluginLifecycleHost` seam (`isMutable`, `protectedReason`, `bundleRow`,
+  `bundleGroup`, `setEnabled`, `reloadAllEntryIds`, `afterDeactivate`, `warn`)
+  rather than a Desktop-shaped service.
+- `acryl-harness-runtime` owns the part every ACRYL surface shares anyway: the DSH
+  profile's user-mutable bundle list, the `plugin-lifecycle/state.json` store, and
+  how a just-installed bundle inserts its row from its own `dsh.bundle.patch`.
+  `createAcrylPluginLifecycle(ctx, options)` builds that authority;
+  `mountAcrylPluginLifecycle(ctx, options)` publishes it as `ctx.acrPluginLifecycle`.
+- `acryl-desktop/src/plugin-lifecycle-controller.ts` is now a caller (583 to 250
+  lines). What stayed is only what a Desktop profile can answer: the always-mutable
+  row seed (Canvas and the two brand packages), BLEND lock rows, the cross-plane
+  Client projection the Lifecycle tab renders, and pruning the market's stale
+  disable record. It publishes the shared service inside the Host plugin's existing
+  `ctx.reflect` guard, next to `LivePluginActivationService`.
+
+Two deliberate choices worth recording. Building the authority and publishing it as
+a Cordis service are separate acts, because `Service`'s constructor registers with
+`ctx.reflect` immediately - a focused route test that mounts `apply` against a bare
+ctx stub has no registry, and the previous unconditional mount made 11 such tests
+throw. And `activate()` now asks the host for the bundle row *before* the
+already-mounted shortcut, so the host stays the single authority on what may be
+activated at all; previously a package that was already live could be "activated"
+even when no profile bundle declared it.
+
+The Desktop reaches `acryl-control` through `acryl-harness-runtime` re-exports
+rather than a new dependency, so no `package.json` or lockfile edit was needed -
+which also keeps this commit off the files a concurrent writer is holding.
+
+Evidence: `acryl-desktop` typecheck clean across all five tsconfigs, suite green at
+95 files / 850 passed / 4 skipped plus the 3 native launcher tests. The new
+assertion in `tests/plugin-lifecycle-controller.spec.ts` is the T005 evidence: it
+publishes the service, drives a disable through the Desktop facade and expects the
+shared controller to receive it, then drives a disable through the *registry-resolved*
+service other surfaces use and expects the Desktop snapshot and the persisted
+`state.json` overrides to show it - two surfaces, one lifecycle. `acryl-control`
+16/16 in `tests/plugin-lifecycle.spec.ts` against a real Loader, typecheck clean.
+`acryl-harness-runtime` typecheck clean; its suite still reports the same four
+pre-existing failures recorded in the entry above, unchanged by this work.

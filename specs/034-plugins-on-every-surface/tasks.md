@@ -77,6 +77,24 @@ stays a surface concern.
 lifecycle state still round-trips `plugin-lifecycle/state.json`.
 **Done when**: two surfaces exercise one lifecycle implementation.
 
+**Landed 2026-09-12, commit `46cd479`.** `acryl-control/src/plugin/**` (was
+`src/lifecycle/**`) holds the host-neutral mechanics behind an explicit
+`PluginLifecycleHost` seam; `acryl-harness-runtime` holds the DSH-profile policy,
+the shared `plugin-lifecycle/state.json` store, and
+`createAcrylPluginLifecycle`/`mountAcrylPluginLifecycle`; the Desktop controller
+is a caller (583 to 250 lines) that publishes `ctx.acrPluginLifecycle` inside its
+Host plugin's existing `ctx.reflect` guard. Evidence as specified: `acryl-desktop`
+95 files / 850 passed with the shared controller in the path, including the
+registry-resolved-service round trip in `tests/plugin-lifecycle-controller.spec.ts`;
+`acryl-control` 16/16 against a real Loader; desktop typecheck clean across all
+five tsconfigs. Two design points the spec did not settle and this task did:
+building the lifecycle authority and publishing it as a Cordis service are
+separate acts (`Service` registers with `ctx.reflect` at construction, which a
+bare route-test stub lacks), and `activate()` consults the host's bundle row
+before its already-mounted shortcut so the host stays the single authority on
+what may be activated. The Desktop reaches `acryl-control` through runtime
+re-exports, so no dependency or lockfile edit was needed.
+
 ## T006 - Install/reconcile with an injected anchor
 
 **Files**: `acryl-desktop/src/desktop-plugin-reconcile.ts` (or its moved
