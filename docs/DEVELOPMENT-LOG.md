@@ -4384,3 +4384,78 @@ clean exit code 0. `acryl-cli` 18 files / 318 passed, typecheck clean.
 Deliberately v1-scoped: browse + view only, no editing/search/git-diff/
 Markdown - real follow-up work once this seam has a second consumer to
 generalize from, not features to guess at up front.
+
+## 2026-09-12 - feat: real Market install/uninstall + live activation on Web (spec 034 T006)
+
+Web's Market tab could browse but showed "ACRYL is required" for Install/
+Uninstall. `dsh-community-market`'s install service needs `desktopProfiles`/
+`desktopPnpm` (real package-manager operations) and `desktopPlugins`
+(`disabledPackageNames()` is a hard requirement even for a plain install) -
+no surface but Desktop had ever provided them.
+
+Chose reuse over porting: Desktop's own install path is `pnpm.ts` +
+`install-recovery.ts`, 1,500+ lines together, almost entirely a crash-
+recovery write-ahead-log built around Electron's own generation-restart
+cycle. Web has no equivalent risk to protect against - a `dsh plugin add`
+child process either finishes within one request or it doesn't. So Web's
+own `desktopProfiles`/`desktopPnpm` (`acryl-harness-runtime/src/web-market-
+install.ts`) shell out to `dsh plugin --profile web add/remove` directly -
+the exact command a human operator already runs - rather than reimplementing
+pnpm invocation and `dsh.profile.bundles` reconciliation from scratch;
+Desktop needs that reimplementation only because its packaged CLI hard-
+rejects `--profile desktop` (confirmed directly that `--profile web` has no
+such restriction). `desktopPlugins` (`web-market-plugins.ts`) is a thin
+market-shaped (package-name + preview-token) view over the same shared
+`AcrPluginLifecycleController` (T005) the CLI and Desktop already drive -
+Web had no shared plugin-lifecycle mount at all before this.
+
+After the install itself worked, real user testing on a real running
+profile showed the freshly-installed plugin stayed inactive until a full
+server-process restart. Added `livePluginActivation`, reusing
+`AcrPluginLifecycleController.activate()`/`.deactivate()` - the same
+host-side hot-mount mechanism `specs/032-universal-hot-reload`'s still-
+shipped T1/T2/T4/T5 already use, not a new or risky mechanism. The market's
+own client finishes with a full page reload, the same safe mechanism
+Desktop's Client half already uses - not the riskier soft-reconcile that
+spec's own T3 attempted and reverted after real crashes.
+
+Two real bugs found and fixed only by driving the actual Market UI end to
+end against real environments, not by reasoning about the code:
+
+- `dsh-community-market`'s own `CORDIS_RUNTIME_VERSION` constant was stale
+  at `4.0.1` (the same repo-wide staleness fixed everywhere else earlier
+  today, but this one lives as a source constant, invisible to a
+  package.json version sweep) - it rejected a plugin correctly declaring
+  the actually-current `^4.0.2` as "not compatible," backwards from the
+  truth.
+- `resolvePackageJson`'s documented contract was backwards in both
+  `acryl-cli/src/host/plugin-command.ts` (a latent bug, never exercised
+  there - the CLI has no install/live-activation flow yet) and this
+  feature's own first draft: `createDshPluginLifecycleHost`'s internal
+  wrapper already appends `/package.json` before calling the callback, so
+  appending it again threw `ERR_PACKAGE_PATH_NOT_EXPORTED` on a literal
+  `package.json/package.json` subpath. Fixed both call sites and clarified
+  the interface's own doc comment.
+
+Also found and fixed a real cross-package TypeScript declaration-merging
+conflict: `acryl-desktop` already declares `desktopProfiles`/`desktopPnpm`/
+`desktopPlugins` on `Context` with its own (richer, Electron-specific)
+types; a second, differently-shaped `declare module` for the same names in
+the new Web file broke Desktop's own typecheck the moment it existed.
+`Service`'s own constructor takes a plain `name: string`, not `keyof
+Context`, so the fix was simply not declaring these three names at all in
+the new file - it only ever provides them, never reads them back.
+
+Verified end-to-end through the Market's own real HTTP routes (add source,
+select, browse the real live acryl.dev catalog - `acryl-dsh-editor-plugin-
+web` was already indexed there from today's earlier npm publish - preview,
+execute) against both a throwaway profile and, with the user's own explicit
+go-ahead, their real running `acryl-web` profile: real npm install, real
+`dsh.profile.bundles` reconciliation, real receipt, and - after the ordering
+and `resolvePackageJson` fixes - the plugin active in the running server's
+own served boot manifest with zero process restart. Full monorepo typecheck
+and test suite green, including `acryl-desktop`.
+
+CLI's own install verb (spec 034 T006's original "at least one non-Electron
+surface" wording covers either) remains open - Web was the one driven to
+completion because it was the one under active user testing.

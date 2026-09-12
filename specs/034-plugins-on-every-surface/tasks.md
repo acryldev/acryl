@@ -145,6 +145,44 @@ installation directory.
 `assertInstalledBundle` conditions), then a boot that loads the plugin.
 **Done when**: install works from at least one non-Electron surface.
 
+**Landed 2026-09-12, commits `05a2d06`, `652506a`, `8833eca`** (Web, not CLI -
+the CLI's own `acryl plugin` command still has no install verb). Chose reuse
+over the planned generalization: rather than moving Desktop's
+`desktop-plugin-reconcile.ts` (paired with 1,500+ lines of Electron-generation-
+restart-cycle crash recovery in `pnpm.ts`/`install-recovery.ts` that Web has no
+equivalent risk to protect against), Web's own `desktopProfiles`/`desktopPnpm`
+(`acryl-harness-runtime/src/web-market-install.ts`) shell out to
+`dsh plugin --profile web add/remove` directly - the exact command a human
+operator already runs, confirmed to have no `--profile web` restriction the
+way Desktop's packaged CLI blocks `--profile desktop`. `desktopPlugins`
+(`web-market-plugins.ts`) is a thin market-shaped view over the same shared
+`AcrPluginLifecycleController` (T005) the CLI and Desktop already drive - Web
+had no shared plugin-lifecycle mount at all before this commit series.
+
+Also added live activation (`livePluginActivation`), reusing
+`AcrPluginLifecycleController.activate()`/`.deactivate()` - the same proven
+host-side hot-mount mechanism `specs/032-universal-hot-reload`'s T1/T2/T4/T5
+already ship - after real user testing on a real running profile showed an
+install left the plugin inactive until a full server-process restart.
+Fixed two real bugs along the way, both found only by driving the actual
+Market UI end to end against real environments: `dsh-community-market`'s own
+`CORDIS_RUNTIME_VERSION` constant was stale at `4.0.1` (rejecting a plugin
+correctly pinning the actually-current `^4.0.2`), and
+`resolvePackageJson`'s documented contract was backwards in both
+`acryl-cli/src/host/plugin-command.ts` and this commit's own first draft -
+the callback receives the full `<packageName>/package.json` specifier
+already, not a bare package name to append it to.
+
+Full monorepo typecheck/test green, including a real cross-package
+TypeScript declaration-merging conflict with `acryl-desktop`'s own
+`desktopProfiles`/`desktopPnpm`/`desktopPlugins` types found and fixed (no
+`declare module` augmentation needed in the new file at all - `Service`'s
+constructor takes a plain `name: string`).
+
+CLI's own `dsh plugin add`-equivalent install verb (mentioned as "at least
+one non-Electron surface" above) remains open - Web was the one driven to
+completion because it was the one under active user testing.
+
 ## T007 - Retire the desktop-private duplication
 
 **Files**: `acryl-desktop/src/desktop-plugins.ts` and friends
