@@ -50,6 +50,21 @@ export {
   type InstallProfilePackageResolverOptions,
 } from './module-resolution.ts'
 export {
+  provideWebMarketInstall,
+  WebPnpmService,
+  WebProfilesService,
+  type WebMarketPnpm,
+  type WebMarketPnpmHandle,
+  type WebMarketPnpmOutcome,
+  type WebMarketProfile,
+} from './web-market-install.ts'
+export {
+  provideWebMarketPlugins,
+  WebLiveActivationService,
+  WebPluginsService,
+  type WebMarketPluginBundle,
+} from './web-market-plugins.ts'
+export {
   createAcrylPluginLifecycle,
   createDshPluginLifecycleHost,
   mountAcrylPluginLifecycle,

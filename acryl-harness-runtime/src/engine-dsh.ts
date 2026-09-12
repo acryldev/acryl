@@ -47,6 +47,8 @@ import type { AcrylEngineDefinition } from './engine-host.ts'
 import { installAcrylWorkspaceStatusTool } from './plugin-acryl-workspace-status.ts'
 import { pluginLifecyclePatches, resolvePluginLifecycleStatePath } from './plugin-lifecycle-state.ts'
 import { installSessionLogExporter } from './session-log-exporter.ts'
+import { provideWebMarketInstall } from './web-market-install.ts'
+import { provideWebMarketPlugins } from './web-market-plugins.ts'
 
 const require = createRequire(import.meta.url)
 const dshInstallAnchor = require.resolve('@deepseek-ai/dsh/package.json')
@@ -162,6 +164,48 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
       )
       ctx.effect(() => disposeTap)
     })
+    // Web's own desktopPlugins/livePluginActivation (spec 034 T006) - mounted
+    // BEFORE desktopProfiles/desktopPnpm below on purpose. dsh-community-
+    // market's own ctx.inject(['desktopProfiles', 'desktopPnpm'], ...) reads
+    // ctx.get('livePluginActivation') exactly once, opportunistically, the
+    // moment that inject's dependencies first resolve - not reactively, so a
+    // livePluginActivation provided AFTER that moment is captured as
+    // `undefined` for the fiber's whole life. Reproduced directly: with the
+    // reverse order, a real install through the Market succeeded but the
+    // installed plugin never became active without a full process restart -
+    // no error anywhere, just a silently-missed live-activation opportunity.
+    // Web has no shared plugin-lifecycle mount at all before this - CLI's and
+    // Desktop's own each mount it separately, so this is the first time Web
+    // gets one. Guarded like dshHomePath above: an engine swap away from and
+    // back to `dsh` must not re-provide an already-registered service.
+    if (ctx.root.get('desktopPlugins') === undefined) {
+      const profileDir = dirname(composition.rootConfig)
+      provideWebMarketPlugins(ctx.root, {
+        profileName: 'web',
+        profileDir,
+        statePath: resolvePluginLifecycleStatePath(),
+        binName: 'acryl-web',
+        // `createDshPluginLifecycleHost`'s own internal wrapper already
+        // appends "/package.json" before calling this callback - despite the
+        // option's own parameter being named `packageName`, what actually
+        // arrives here is the full "<packageName>/package.json" specifier
+        // already. Reproduced directly: a real live-activation attempt threw
+        // ERR_PACKAGE_PATH_NOT_EXPORTED on a literal "package.json/package.json"
+        // subpath before this fix - the same latent bug exists in acryl-cli's
+        // own plugin-command.ts, just never exercised there (the CLI has no
+        // install/live-activation path yet, spec 034 T006).
+        resolvePackageJson: specifier => createRequire(pathToFileURL(join(profileDir, 'package.json'))).resolve(specifier),
+      })
+    }
+    // Web's own desktopProfiles/desktopPnpm (spec 034 T006, scoped v1) - what
+    // dsh-community-market's install service needs for its Install/Uninstall
+    // buttons to do a real operation instead of showing "ACRYL is required".
+    // Both are stateless besides this one profile's own fixed name/directory,
+    // so - also like dshHomePath - never disposed; there is nothing to
+    // invalidate by leaving them registered for the process's whole life.
+    if (ctx.root.get('desktopProfiles') === undefined) {
+      provideWebMarketInstall(ctx.root, dirname(composition.rootConfig))
+    }
   }
 }
 
