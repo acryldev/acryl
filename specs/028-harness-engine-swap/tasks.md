@@ -133,10 +133,56 @@
 > - **T017** - `corepack pnpm run verify` / `check` gate and the manual TUI run
 >   are recorded in the `docs/DEVELOPMENT-LOG.md` checkpoint for this commit.
 >
-> **Not covered by this slice (deliberately):** Web and Desktop still boot
-> their own DSH profile directly. Whether/how they adopt the engine host is the
-> surfaces x engines question in `research.md` Decision 7 - a design gap, not
-> an oversight to fix by copying the CLI change.
+> **"Engine 1 everywhere" done, 2026-09-12** (per the user's Decision 7
+> follow-up, `research.md`'s Decision entry: "(b) any engine, any surface" -
+> not the bounded CLI-only reading, which made this a real prerequisite
+> rather than an optional later slice). Desktop and Web are no longer the
+> exception this note originally flagged:
+> - `createAcrylEngineHost` gained an optional `prepare(ctx)` hook (Loader
+>   plugged, no engine mounted yet - mirrors `boot()`'s own timing exactly),
+>   needed because Desktop's own service registrations
+>   (`DesktopActionsService`/`DesktopProfileService`/`DesktopPluginsService`,
+>   several `ctx.provide()` calls) must run before the `dsh` engine's own
+>   Loader entries mount - `dsh-community-market`'s plugin does
+>   `ctx.inject(['desktopProfiles', 'desktopPnpm'])` against exactly those.
+> - `engine-dsh.ts` split into resolution (`createDshEngineDefinition`,
+>   unchanged CLI/TUI behavior) and mounting (`mountDshEngine`, now taking an
+>   already-resolved `DshEngineComposition`): Desktop has its own separate
+>   profile pipeline (`prepareDesktopProfile()`, market/editor/BLEND-lock
+>   patch layering, a worker `bareModuleBaseUrl` the old function had no
+>   parameter for at all) that would have been silently discarded by the
+>   CLI-flavored resolver. `createDshEngineDefinitionFromComposition` is the
+>   new Desktop-facing entry point; `createWebEngineDefinition` is a third,
+>   Web-flavored resolver reusing the same shared mounting primitive.
+> - `acryl-desktop/src/main.ts`'s `boot()` call site (`createDesktopExitCoordinator`'s
+>   sibling, the only `boot()` call in that package) is now a 25-line
+>   mechanical transplant onto `createAcrylEngineHost` - the ~190-line
+>   `prepare` callback body moved verbatim.
+> - `acryl-web/src/serve.ts` re-pointed the same way, simpler (no external
+>   profile pipeline to reconcile - just `provideCmdline`'s wiring moving
+>   into the new `prepare` hook).
+> - One real, engine-host-specific bug found and fixed live during Desktop's
+>   first real GUI boot: `createAcrylEngineHost`'s own root Loader entries
+>   (the "acryl-engine-<id>" row and `mountRootInclude`'s sibling
+>   "cordis:include" row) had no resolution base URL -
+>   `dsh-client-modules` (Desktop/Web's client-bundle composer, absent from
+>   CLI/TUI, which is why no automated test caught it) throws unconditionally
+>   on any entry lacking one. Root cause: `EntryTree`'s constructor snapshots
+>   `ctx.baseUrl` once, at `ctx.plugin(Loader)` time - setting it later, from
+>   anywhere, cannot reach that snapshot. Fixed with a package-anchored
+>   default set before `ctx.plugin(Loader)` runs.
+> - A second, unrelated but also live-reported bug found in the same Desktop
+>   testing pass: `finish()` raced `relaunch()`'s own exit code with a
+>   trailing, unconditional `exit()` call, silently replacing a dev-mode
+>   restart signal with a plain exit - predates this session's engine-host
+>   work entirely, just never exercised by a restart from a fully active
+>   session before now. See `docs/DEVELOPMENT-LOG.md`'s 2026-09-12 entries
+>   for full root-cause detail on both.
+>
+> **Still not covered:** adopting `pi-cordis` (mechanism undecided) and the
+> `AgentFactory`-driven Pi-as-a-DSH-loop-driver program (Decision 5) - the
+> actual "any engine" half of "any engine, any surface." Engine 1 everywhere
+> was the committed prerequisite for that, not the goal itself.
 
 **Feature**: `specs/028-harness-engine-swap` | **Milestone**: M9
 **Input**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md),
