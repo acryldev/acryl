@@ -174,6 +174,39 @@ the operator's real home. It is pre-existing (`ACRYL_CODING_CAPABILITIES`'
 cross-surface half of FR-008: parity has to hold across compositions that are
 allowed to overlap, not only across surfaces that happen to boot today.
 
+## T009 - TUI presentation-slot extension point
+
+**Files**: `acryl-cli/src/tui/**`, `acryl-harness-runtime/src/**`
+**Do**: `docs/ACRYL-RUNTIME-SURFACE-CONTRACT.md:31` already says "Dynamic
+ACRYL plugins load into the runtime. They may contribute capabilities,
+commands, events, and declared TUI, Electron, or Web presentation slots" -
+today only Web has that seam (`dsh.client`, the Cordis Client slot registry
+Web's own brand/editor plugins already use). The TUI has none: `SLASH_COMMANDS`
+(`acryl-cli/src/tui/commands.ts`) and its dispatch `switch` are a hardcoded
+array and case list, not something an installed plugin can add a row to, and
+`/plugins` (`src/tui/plugins/PluginsOverlay.ts`) is a read-only viewer of the
+composed Loader tree, not a slot host. Design a real Cordis-service-based
+registration seam (a plugin's own `apply(ctx)` calls something like
+`ctx.get('tuiCommands')?.register({command, description, open})`, disposed via
+`ctx.effect()`) that `acryl-cli`'s TUI session (`src/tui-app/session.ts`,
+which already holds `host.ctx` - the same Cordis Context the engine host
+runs) reads to extend `SLASH_COMMANDS`/dispatch dynamically. Write the six-part
+Cordis mini-design (capability boundary, provides/consumes, effects/disposal,
+configuration/composition, events/durability, verification) before touching
+`session.ts`, per this repo's own Cordis development protocol - this is a new
+service and a new Loader-composition contract, not a wiring job like T003/T004.
+**Evidence**: a real installed test plugin (mirroring
+`acryl-dsh-editor-plugin-web`'s host/client split, but TUI-native - no
+`dsh-client-connection`/`webServer` at all, since the TUI and the Loader tree
+share one process) registers a command via the new service, a real TUI session
+boot shows it in `/help`'s command list and dispatches it to a real overlay,
+and removing/disabling the plugin makes the command disappear on the next
+boot with no crash. Full `acryl-cli` suite green, no change to `SLASH_COMMANDS`
+dispatch behavior for the built-in commands.
+**Done when**: an installed CLI plugin can add a real slash command without
+editing `acryl-cli`'s own source - the TUI-side counterpart to `dsh.client`.
+Not blocking T005-T008; independent of the Web/Desktop parity chain.
+
 ## Ledger
 
 Each task appends its commit and human-readable explanation to
