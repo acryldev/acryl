@@ -1,6 +1,7 @@
-import { existsSync, mkdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { describe, expect, it, vi } from 'vitest'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { dirname, join } from 'node:path'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import AdmZip from 'adm-zip'
 import {
   afterPack,
@@ -13,6 +14,7 @@ import {
   resolvePackagedUnpackedRoot,
   smokePackagedDiagnosticWorker,
   verifyUnpackedArchiveMirror,
+  verifyPackagedDependencyClosure,
   verifyPackagedRuntime,
   type ArchiveLister,
   type FileProbe,
@@ -41,6 +43,35 @@ function completeArchiveEntries(separator = '/'): string[] {
 
 function completePackageResolver(unpackedRoot: string): PackageResolver {
   return specifier => join(unpackedRoot, 'resolved', `${specifier.replaceAll('/', '-')}.js`)
+}
+
+const syntheticTrees: string[] = []
+
+afterEach(() => {
+  for (const root of syntheticTrees.splice(0)) rmSync(root, { recursive: true, force: true })
+})
+
+/** Write one packaged manifest at its physical location inside a synthetic tree. */
+function writePackageManifest(
+  unpackedRoot: string,
+  relativeDir: string,
+  manifest: Record<string, unknown>,
+): void {
+  const dir = join(unpackedRoot, relativeDir)
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(join(dir, 'package.json'), `${JSON.stringify({ version: '0.0.0-test', ...manifest })}\n`)
+}
+
+/** Build a synthetic app.asar.unpacked tree with an application manifest. */
+function syntheticUnpackedRoot(rootDependencies: readonly string[] = []): string {
+  const root = mkdtempSync(join(tmpdir(), 'dsh-packaged-closure-'))
+  syntheticTrees.push(root)
+  const unpackedRoot = join(root, 'resources', 'app.asar.unpacked')
+  writePackageManifest(unpackedRoot, '.', {
+    name: 'acryl-desktop',
+    dependencies: Object.fromEntries(rootDependencies.map(name => [name, '1.0.0'])),
+  })
+  return unpackedRoot
 }
 
 describe('packaged desktop runtime verification', () => {
@@ -321,6 +352,129 @@ describe('packaged desktop runtime verification', () => {
     )).toThrow(
       `packaged runtime at ${unpackedRoot} cannot resolve required package export ${specifier}`,
     )
+  })
+
+  it('fails loud when the packaged tree drops a peer-only package the app ships', () => {
+    // dsh-app-boot imports @deepseek-ai/dsh-home-paths under a peer edge only, so
+    // Electron Builder collects it solely because the application declares it.
+    const unpackedRoot = syntheticUnpackedRoot([
+      '@deepseek-ai/dsh-app-boot',
+      '@deepseek-ai/dsh-home-paths',
+    ])
+    writePackageManifest(unpackedRoot, 'node_modules/@deepseek-ai/dsh-app-boot', {
+      name: '@deepseek-ai/dsh-app-boot',
+      peerDependencies: { '@deepseek-ai/dsh-home-paths': '^0.1.5-alpha.1' },
+    })
+
+    expect(() => verifyPackagedDependencyClosure(unpackedRoot)).toThrow(
+      `packaged runtime at ${unpackedRoot} is missing declared dependencies: acryl-desktop -> @deepseek-ai/dsh-home-paths, @deepseek-ai/dsh-app-boot -> @deepseek-ai/dsh-home-paths`,
+    )
+  })
+
+  it('accepts a packaged tree whose declared dependencies and peers all resolve', () => {
+    const unpackedRoot = syntheticUnpackedRoot(['@deepseek-ai/dsh-app-boot', '@deepseek-ai/dsh-home-paths'])
+    writePackageManifest(unpackedRoot, 'node_modules/@deepseek-ai/dsh-app-boot', {
+      name: '@deepseek-ai/dsh-app-boot',
+      dependencies: { '@deepseek-ai/dsh-home-paths': '0.1.5-alpha.1' },
+    })
+    writePackageManifest(unpackedRoot, 'node_modules/@deepseek-ai/dsh-home-paths', {
+      name: '@deepseek-ai/dsh-home-paths',
+    })
+
+    expect(() => verifyPackagedDependencyClosure(unpackedRoot)).not.toThrow()
+  })
+
+  it('reports a required peer the application manifest never ships instead of failing the packager', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const unpackedRoot = syntheticUnpackedRoot(['dsh-community-market'])
+    writePackageManifest(unpackedRoot, 'node_modules/dsh-community-market', {
+      name: 'dsh-community-market',
+      peerDependencies: { '@deepseek-ai/dsh-client-store': '0.1.5-alpha.1' },
+    })
+
+    const report = verifyPackagedDependencyClosure(unpackedRoot)
+
+    expect(report.unshipablePeerEdges).toEqual([
+      'dsh-community-market -> @deepseek-ai/dsh-client-store',
+    ])
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining(
+      'dsh-community-market -> @deepseek-ai/dsh-client-store',
+    ))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('acryl-desktop/package.json'))
+    warn.mockRestore()
+  })
+
+  it('ignores optional dependencies and optional peers the packager omits', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const unpackedRoot = syntheticUnpackedRoot(['@deepseek-ai/dsh-tool-pwsh'])
+    writePackageManifest(unpackedRoot, 'node_modules/@deepseek-ai/dsh-tool-pwsh', {
+      name: '@deepseek-ai/dsh-tool-pwsh',
+      optionalDependencies: { '@deepseek-ai/dsh-pwsh-local': '0.1.5-alpha.1' },
+      peerDependencies: { typescript: '^6.0.0' },
+      peerDependenciesMeta: { typescript: { optional: true } },
+    })
+
+    const report = verifyPackagedDependencyClosure(unpackedRoot)
+
+    expect(report.optionalAbsences).toEqual([
+      '@deepseek-ai/dsh-tool-pwsh -> @deepseek-ai/dsh-pwsh-local',
+      '@deepseek-ai/dsh-tool-pwsh -> typescript',
+    ])
+    expect(report.unshipablePeerEdges).toEqual([])
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('skips target-foreign native payload the packager prunes', () => {
+    const unpackedRoot = syntheticUnpackedRoot(['@img/sharp-darwin-arm64', '@img/sharp-linux-x64'])
+    writePackageManifest(unpackedRoot, 'node_modules/@img/sharp-linux-x64', { name: '@img/sharp-linux-x64' })
+
+    expect(() => verifyPackagedDependencyClosure(unpackedRoot, undefined, 'linux', 'x64')).not.toThrow()
+    expect(() => verifyPackagedDependencyClosure(unpackedRoot, undefined, 'darwin', 'arm64'))
+      .toThrow('missing declared dependencies: acryl-desktop -> @img/sharp-darwin-arm64')
+  })
+
+  it('resolves a nested node_modules override before the shared root copy', () => {
+    const unpackedRoot = syntheticUnpackedRoot(['@scope/host'])
+    writePackageManifest(unpackedRoot, 'node_modules/@scope/host', {
+      name: '@scope/host',
+      dependencies: { '@scope/dep': '2.0.0' },
+    })
+    writePackageManifest(unpackedRoot, 'node_modules/@scope/host/node_modules/@scope/dep', {
+      name: '@scope/dep',
+    })
+
+    expect(() => verifyPackagedDependencyClosure(unpackedRoot)).not.toThrow()
+  })
+
+  it('gates the packaged closure before signing', () => {
+    const runtimeContext = context(mkdtempSync(join(tmpdir(), 'dsh-packaged-closure-gate-')), 'linux')
+    syntheticTrees.push(runtimeContext.appOutDir)
+    const unpackedRoot = resolvePackagedUnpackedRoot(runtimeContext)
+    const archiveEntries = completeArchiveEntries().map(entry => entry.replace(/^\/+/, ''))
+    for (const entry of new Set([...REQUIRED_UNPACKED_RUNTIME_ENTRIES, ...archiveEntries])) {
+      // Empty JSON keeps every packaged manifest readable for the closure pass.
+      const file = join(unpackedRoot, entry)
+      mkdirSync(dirname(file), { recursive: true })
+      writeFileSync(file, '{}\n')
+    }
+    writePackageManifest(unpackedRoot, '.', { name: 'acryl-desktop', dependencies: { '@scope/boot': '1.0.0' } })
+    writePackageManifest(unpackedRoot, 'node_modules/@scope/boot', { name: '@scope/boot' })
+
+    expect(() => verifyPackagedRuntime(
+      runtimeContext,
+      () => completeArchiveEntries(),
+      existsSync,
+      completePackageResolver(unpackedRoot),
+    )).not.toThrow()
+
+    rmSync(join(unpackedRoot, 'node_modules/@scope/boot'), { recursive: true, force: true })
+    expect(() => verifyPackagedRuntime(
+      runtimeContext,
+      () => completeArchiveEntries(),
+      existsSync,
+      completePackageResolver(unpackedRoot),
+    )).toThrow('missing declared dependencies: acryl-desktop -> @scope/boot')
   })
 
   it('fails loud when a required package export escapes app.asar.unpacked', () => {

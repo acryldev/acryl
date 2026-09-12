@@ -1,9 +1,9 @@
 /** Fail-loud verification of the runtime entries sealed into Electron's app.asar. */
 
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
-import { isAbsolute, join, relative, sep } from 'node:path'
+import { dirname, isAbsolute, join, relative, sep } from 'node:path'
 import { Worker } from 'node:worker_threads'
 import { listPackage } from '@electron/asar'
 import AdmZip from 'adm-zip'
@@ -369,6 +369,233 @@ export function verifyUnpackedPackageResolution(
   }
 }
 
+/** Injectable directory lister used by focused tests. */
+export type DirectoryLister = (path: string) => readonly string[]
+
+/** Injectable JSON manifest reader used by focused tests. */
+export type ManifestReader = (path: string) => unknown
+
+/** Derived packaged dependency closure of the physical application tree. */
+export interface PackagedClosureReport {
+  /** Number of package roots discovered inside app.asar.unpacked. */
+  readonly packageCount: number
+  /** Number of declared dependency edges considered. */
+  readonly edgeCount: number
+  /** Required peer edges whose target the application manifest never ships. */
+  readonly unshipablePeerEdges: readonly string[]
+  /** Declared optional edges the packager legitimately omitted. */
+  readonly optionalAbsences: readonly string[]
+}
+
+/** Declared dependency tables read from one packaged manifest. */
+interface DeclaredDependencyTables {
+  readonly name: string
+  readonly dependencies: readonly string[]
+  readonly requiredPeers: readonly string[]
+  readonly optionalEdges: readonly string[]
+}
+
+/** Read a directory listing, treating an absent or unreadable path as empty. */
+function listDirectoryNames(path: string): readonly string[] {
+  try {
+    return readdirSync(path)
+  } catch {
+    return []
+  }
+}
+
+/** Read one manifest as unknown JSON; packaged manifests are boundary data. */
+function readJsonManifest(path: string): unknown {
+  return JSON.parse(readFileSync(path, 'utf8'))
+}
+
+/** Collect the declared package names of one dependency table. */
+function declaredNames(table: unknown): readonly string[] {
+  if (typeof table !== 'object' || table === null) return []
+  return Object.keys(table)
+}
+
+/** Narrow one parsed manifest to its declared fields. */
+function readRecord(manifest: unknown): Record<string, unknown> {
+  return typeof manifest === 'object' && manifest !== null
+    ? manifest as Record<string, unknown>
+    : {}
+}
+
+/** Read the declared dependency tables of one manifest as boundary-validated data. */
+function readDeclaredTables(manifest: unknown, fallbackName: string): DeclaredDependencyTables {
+  const record = readRecord(manifest)
+  const peerMetaRecord = readRecord(record.peerDependenciesMeta)
+  const peers = declaredNames(record.peerDependencies)
+  const optionalPeers = peers.filter((peer) => {
+    const entry = peerMetaRecord[peer]
+    return typeof entry === 'object' && entry !== null
+      && (entry as Record<string, unknown>).optional === true
+  })
+  const requiredPeers = peers.filter(peer => !optionalPeers.includes(peer))
+  return {
+    name: typeof record.name === 'string' ? record.name : fallbackName,
+    dependencies: declaredNames(record.dependencies),
+    requiredPeers,
+    optionalEdges: [
+      ...declaredNames(record.optionalDependencies),
+      ...optionalPeers,
+    ],
+  }
+}
+
+/**
+ * Discover every package root physically present in the unpacked tree.
+ *
+ * pnpm's isolated linker is flattened by the packager, so the shipped tree is
+ * an ordinary nested node_modules layout: scoped directories, plus per-package
+ * overrides for version conflicts.
+ */
+function collectPackagedPackageDirs(
+  nodeModulesDir: string,
+  list: DirectoryLister,
+  exists: FileProbe,
+  found: Set<string>,
+): void {
+  for (const entry of list(nodeModulesDir)) {
+    if (entry === '.bin' || entry === '.pnpm') continue
+    const candidate = join(nodeModulesDir, entry)
+    if (entry.startsWith('@')) {
+      collectPackagedPackageDirs(candidate, list, exists, found)
+      continue
+    }
+    if (!exists(join(candidate, 'package.json'))) continue
+    found.add(candidate)
+    collectPackagedPackageDirs(join(candidate, 'node_modules'), list, exists, found)
+  }
+}
+
+/** Resolve one declared dependency the way Node resolves it from the owning package. */
+function packagedDependencyResolves(
+  fromDir: string,
+  specifier: string,
+  packages: ReadonlySet<string>,
+): boolean {
+  for (let dir = fromDir; ;) {
+    if (packages.has(join(dir, 'node_modules', specifier))) return true
+    const parent = dirname(dir)
+    if (parent === dir) return false
+    dir = parent
+  }
+}
+
+/**
+ * Derive the dependency closure of the sealed application from its own manifests.
+ *
+ * Curated entry lists only prove that named files survived packaging. This check
+ * derives the requirement from the artifact instead: every package the packager
+ * shipped must find each dependency it declares, including non-optional peers,
+ * which Electron Builder never collects on its own. A first-party package whose
+ * only consumer-side obligation is a peer edge (dsh-app-boot's peer on
+ * dsh-home-paths, for example) therefore fails the gate here instead of crashing
+ * the Electron main process on first launch.
+ *
+ * A declared peer is fatal only when the application manifest itself ships that
+ * package. Electron Builder collects the root manifest's declared production
+ * closure, so a package the root declares but the tree lacks is by definition a
+ * collector regression. A required peer the root never declares cannot be
+ * collected at all; that is a defect in the source tree's own closure, reported
+ * as `unshipablePeerEdges` for the packager log until the root declares it.
+ *
+ * Target-foreign native payloads are skipped for the same reason the payload
+ * pruner removes them: the desktop manifest declares every platform's prebuild
+ * package, and only the packaged target's copy is expected to survive.
+ *
+ * @param unpackedRoot - absolute path to app.asar.unpacked.
+ * @param exists - physical-file probe.
+ * @param targetPlatform - packaged Electron platform, when known.
+ * @param targetArch - packaged CPU target, when known.
+ * @param list - directory listing implementation.
+ * @param readManifest - manifest reader for packaged package.json files.
+ * @returns Counts of packages, edges, and the declared edges left unsatisfied.
+ */
+export function verifyPackagedDependencyClosure(
+  unpackedRoot: string,
+  exists: FileProbe = existsSync,
+  targetPlatform?: NativePlatform,
+  targetArch?: NativeArch,
+  list: DirectoryLister = listDirectoryNames,
+  readManifest: ManifestReader = readJsonManifest,
+): PackagedClosureReport {
+  const nodeModulesDir = join(unpackedRoot, 'node_modules')
+  const packageDirs = new Set<string>()
+  collectPackagedPackageDirs(nodeModulesDir, list, exists, packageDirs)
+  // The required physical entries above already prove the application manifest
+  // is present, so an unreadable one here means a synthetic tree under test.
+  let applicationManifest: Record<string, unknown> = {}
+  try {
+    applicationManifest = readRecord(readManifest(join(unpackedRoot, 'package.json')))
+  } catch {
+    applicationManifest = {}
+  }
+  const shipped = new Set([
+    ...declaredNames(applicationManifest.dependencies),
+    ...declaredNames(applicationManifest.optionalDependencies),
+  ])
+
+  const missing: string[] = []
+  const unshipablePeerEdges: string[] = []
+  const optionalAbsences: string[] = []
+  let edgeCount = 0
+  // The application manifest itself owns the production closure Electron Builder
+  // collects, so its own declared dependencies are verified alongside the rest.
+  const manifests: Array<{ readonly dir: string; readonly manifest: unknown }> = [
+    { dir: unpackedRoot, manifest: applicationManifest },
+    ...[...packageDirs].sort().map(packageDir => ({
+      dir: packageDir,
+      manifest: readManifest(join(packageDir, 'package.json')),
+    })),
+  ]
+  for (const { dir: packageDir, manifest } of manifests) {
+    let tables: DeclaredDependencyTables
+    try {
+      tables = readDeclaredTables(manifest, packageDir)
+    } catch (cause) {
+      throw new Error(
+        `acryl-desktop: packaged runtime at ${unpackedRoot} has an unreadable manifest at ${join(packageDir, 'package.json')}`,
+        { cause },
+      )
+    }
+    const edges = [
+      ...tables.dependencies.map(specifier => ({ specifier, kind: 'dependency' as const })),
+      ...tables.requiredPeers.map(specifier => ({ specifier, kind: 'peer' as const })),
+      ...tables.optionalEdges.map(specifier => ({ specifier, kind: 'optional' as const })),
+    ]
+    for (const edge of edges) {
+      // Electron itself is the application binary, never a packaged module.
+      if (edge.specifier === 'electron') continue
+      if (
+        targetPlatform !== undefined
+        && targetArch !== undefined
+        && nativePathIsForeign(edge.specifier, targetPlatform, targetArch)
+      ) continue
+      edgeCount += 1
+      if (packagedDependencyResolves(packageDir, edge.specifier, packageDirs)) continue
+      const description = `${tables.name} -> ${edge.specifier}`
+      if (edge.kind === 'optional') optionalAbsences.push(description)
+      else if (edge.kind === 'peer' && !shipped.has(edge.specifier)) unshipablePeerEdges.push(description)
+      else missing.push(description)
+    }
+  }
+
+  if (missing.length > 0) {
+    throw new Error(
+      `acryl-desktop: packaged runtime at ${unpackedRoot} is missing declared dependencies: ${missing.join(', ')}`,
+    )
+  }
+  if (unshipablePeerEdges.length > 0) {
+    console.warn(
+      `acryl-desktop: packaged runtime at ${unpackedRoot} cannot satisfy required peer edges the application manifest does not ship: ${unshipablePeerEdges.join(', ')}. Declare these packages in acryl-desktop/package.json so Electron Builder collects them.`,
+    )
+  }
+  return { packageCount: packageDirs.size, edgeCount, unshipablePeerEdges, optionalAbsences }
+}
+
 /** Map an Electron Builder architecture enum to the pruner's NativeArch. */
 function archToNativeArch(arch: number | undefined): NativeArch | undefined {
   if (arch === 4) return 'universal'
@@ -379,6 +606,13 @@ function archToNativeArch(arch: number | undefined): NativeArch | undefined {
 
 /**
  * Verify Electron Builder's completed application before signing begins.
+ *
+ * The archive, mirror, export, and derived closure checks each answer a
+ * different question, so all four run before signing: which sealed entries
+ * exist, whether the unpacked mirror matches, whether the launcher's own
+ * exports resolve, and whether the shipped packages can satisfy the
+ * dependencies they declare.
+ *
  * @param context - Electron Builder's afterPack context.
  * @param list - ASAR listing implementation.
  * @param exists - physical-file probe for the unpacked CLI dependency tree.
@@ -421,6 +655,12 @@ export function verifyPackagedRuntime(
     archToNativeArch(context.arch),
   )
   verifyUnpackedPackageResolution(unpackedRoot, resolvePackage)
+  verifyPackagedDependencyClosure(
+    unpackedRoot,
+    exists,
+    context.electronPlatformName as NativePlatform,
+    archToNativeArch(context.arch),
+  )
 }
 
 /**
