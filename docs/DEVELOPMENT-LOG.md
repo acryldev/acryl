@@ -3724,3 +3724,68 @@ all five tsconfig faces.
 
 Not verified here: an actual Electron GUI launch - the user's own
 re-test of the exact failure they reported.
+
+## 2026-09-12 - fix: Desktop restart never came back after a Market card toggle
+
+Commit: `06dfe76`
+
+Live-reported, 100% reproducible: disabling (or enabling, on a second
+report) a plugin from the Market's own card - which requires a restart,
+unlike Lifecycle's always-live toggle - closed ACRYL Desktop with no
+automatic restart, every single time.
+
+Investigated in stages, each ruling something concrete out before
+moving to the next real hypothesis (per house rule: reproduce like a
+real user, never fix blind):
+
+1. Confirmed via `docs/acryl/plugin-hot-reload.md` and `dsh-community-
+   market/src/host/routes.ts` that the Market card's own disable/enable
+   action is unconditionally restart-required by construction - it
+   never attempts `liveActivate`/`liveDeactivate` at all, unlike the
+   Market's own "Installed" tab (which does try the live path first per
+   the doc) or Lifecycle (always live). Not itself a bug, but a real,
+   worth-a-product-decision gap between the two market surfaces for the
+   same action.
+2. Ruled out the earlier `app.relaunch()`-under-ephemeral-dev-bundle
+   crash class by tracing the restart callback end-to-end through
+   source - it funnels through the one already-guarded `relaunch()`
+   implementation, no uncovered call site.
+3. Ruled out slow or failing disposal with a temporary timing
+   diagnostic around `generation.release()`: completed cleanly in
+   ~240ms, nowhere near the 5-second shutdown-coordinator timeout.
+4. Instrumented every step of the actual shutdown sequence
+   (`finish()`, `prepareToQuit()`, `relaunch()`, `exit()`) and got the
+   real answer directly from the live logs: `relaunch()` correctly read
+   `isEphemeralDevBundle=true` and called `app.exit(43)` - then
+   `finish()` *unconditionally* called `native.exit(0)` right after.
+   Electron's `app.exit()` is not a graceful no-op on a second call in
+   quick succession; the second call's code wins. The process actually
+   exited with code 0, so `launch-dev.mjs`'s loop
+   (`if (code !== DEV_RESTART_EXIT_CODE) return code`) saw 0, concluded
+   "not a restart," and returned instead of staging a fresh bundle and
+   respawning.
+
+This bug predates today's engine-host work entirely - `finish()`'s
+shape hasn't changed - it simply had never been exercised for a
+restart from a fully active session before now (every earlier
+restart-guard test was a fresh-boot-failure recovery flow).
+
+Fix: `relaunch()` now fully owns process termination in both branches
+- the packaged branch gains its own `app.exit(0)` call (Electron's
+`app.relaunch()` alone does not end the current process, so this was
+always latently needed), matching the dev-mode branch's own
+`app.exit(DESKTOP_DEV_RESTART_EXIT_CODE)`. `finish()` returns
+immediately after calling `relaunch()` instead of also calling `exit()`
+with a possibly-conflicting code.
+
+Tests: RED confirmed first (a regression test built around the exact
+`[43, 0]` sequence, reproduced by stashing the fix), then GREEN.
+`shutdown.spec.ts` 8/8. Full `acryl-desktop` suite 851/855 (4
+pre-existing skips, no regressions); typecheck clean across all five
+tsconfig faces. All temporary diagnostic logging added during the
+investigation was fully removed before this commit - none of it ships.
+
+Still open, separate from this fix: whether the Market card's
+disable/enable should try the live path first (matching the Installed
+tab) instead of always requiring a restart - a product decision, not
+addressed here.
