@@ -43,9 +43,23 @@ the composition:
 
 | Surface | plugin-relevant packages it declares |
 | --- | --- |
-| `acryl-desktop` | market (`dsh-community-market`, `dshmarket`), `@deepseek-ai/dsh-host-plugin-inventory`, both client settings plugin UIs, `@deepseek-ai/dsh-plugin-package-inventory-deepseek`, `@deepseek-ai/dsh-tool-str-replace-editor`, `acryl-development-canvas`, brand |
-| `acryl-web` | `@deepseek-ai/dsh-host-plugin-inventory`, both client settings plugin UIs, `@deepseek-ai/dsh-plugin-package-inventory-deepseek`, brand - no market, no editor, no canvas |
+| `acryl-desktop` | market (`dsh-community-market`, `dshmarket`), `@deepseek-ai/dsh-host-plugin-inventory`, both client settings plugin UIs, `@deepseek-ai/dsh-plugin-package-inventory-deepseek`, `acryl-development-canvas`, brand |
+| `acryl-web` | `@deepseek-ai/dsh-host-plugin-inventory`, both client settings plugin UIs, `@deepseek-ai/dsh-plugin-package-inventory-deepseek`, brand - no market, no canvas |
 | `acryl-cli` | `@deepseek-ai/dsh-plugin-package-inventory-deepseek` only |
+| `acryl-harness-runtime` | `@deepseek-ai/dsh-tool-str-replace-editor` (declared, composed by no surface's global rows - it exists only inside the shipped `minimal` agent preset) |
+
+Measured on 2026-09-12 (boot each real definition headlessly and dump
+`ctx.loader.entries()`; commands and full tables in `research.md`): tui 88 rows,
+web 157, desktop 168. The surfaces do not differ by "has plugins" - the client
+stack is correctly web+desktop only - but by **which** rows each declares. The
+one plugin-relevant row tui is missing that it could host is the Host
+inventory service itself (`@deepseek-ai/dsh-host-plugin-inventory`); ACRYL's
+plugin *management* is Desktop-only because it is implemented there
+(`desktop-plugins.ts`, `plugin-lifecycle-*`, `plugin-architecture-*`, the
+`PluginLifecycleSettingsTab` client tab), not because a declaration excludes it.
+The panel's `0 plugins` in the original report is a post-search-filter count for
+the query `editor`; the editor row lives in the `minimal` preset, which is what
+its "1 more matches in other presets" line says.
 
 The per-surface composition seam that should carry this already exists and is
 under-used: `acryl-harness-runtime/src/coding-capabilities.ts` declares

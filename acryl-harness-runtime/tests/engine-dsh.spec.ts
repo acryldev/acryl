@@ -58,6 +58,18 @@ describe('the extracted dsh engine, mounted under createAcrylEngineHost', () => 
       expect(host.ctx.get('sessions')).toBeDefined()
       expect(host.ctx.get('agents')).toBeDefined()
       expect(host.ctx.get('authorization')).toBeDefined()
+      // The roster is real, not just a composed row: the `agent-presets` root
+      // the capability declares resolves to the pinned package's own `presets/`
+      // directory and the service actually reads it. A root that does not exist
+      // scans as empty (`scanRoot` treats ENOENT as no presets), so asserting
+      // the row alone would pass on a roster with nothing in it.
+      const presets = await host.ctx.get('agentPresets')?.list()
+      expect(presets?.map(preset => preset.id).sort()).toEqual([
+        'cordis',
+        'minimal',
+        'ptc',
+        'standard',
+      ])
     } finally {
       await host.dispose()
     }

@@ -4,6 +4,13 @@ Ordered. Each task lands as its own commit with its evidence; a task that
 cannot show its evidence is not done. `T001` gates `T002`+ by answering the
 open research questions that change the design.
 
+Order amended 2026-09-12 after the composition measurement in `research.md`:
+`T005` runs before `T003`, because T003's commands invoke the shared lifecycle
+capability T005 creates - the reverse order would ship a CLI command over
+Desktop-private code and then rewrite it. `T002` is scoped to the measured
+diff: tui gains the Host inventory row (`pluginInventory`), desktop and web
+keep today's rows.
+
 ## T001 - Answer the composition and panel questions
 
 **Files**: `research.md`
