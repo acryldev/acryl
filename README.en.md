@@ -82,13 +82,13 @@ nix run github:acryldev/acryl#acryl-desktop
 nix profile install github:acryldev/acryl
 
 # Specific release (the flake builds from source at every git tag)
-nix run github:acryldev/acryl/v0.1.19
+nix run github:acryldev/acryl/v0.1.36
 
 # Enter a development shell
 nix develop github:acryldev/acryl
 ```
 
-The flake exposes `packages.<system>.acryl` (TUI, from source, also `#default`), `packages.<system>.prebuilt` (prebuilt release binary with bundled Node runtime), `packages.<system>.acryl-desktop`, and `devShells.<system>.default`.
+The flake exposes `packages.<system>.acryl` (TUI, from source, also `#default`), `packages.<system>.prebuilt` (prebuilt release binary with bundled Node runtime; available on `x86_64-linux`, `aarch64-linux`, and `aarch64-darwin`), `packages.<system>.acryl-desktop`, and `devShells.<system>.default`.
 
 ### Devbox
 
