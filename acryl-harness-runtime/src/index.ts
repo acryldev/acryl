@@ -49,6 +49,45 @@ export {
   installProfilePackageResolver,
   type InstallProfilePackageResolverOptions,
 } from './module-resolution.ts'
+export {
+  createAcrylPluginLifecycle,
+  createDshPluginLifecycleHost,
+  mountAcrylPluginLifecycle,
+  type DshPluginLifecycleOptions,
+} from './plugin-lifecycle.ts'
+export {
+  BASE_TEMPLATE_BUNDLE_NAMES,
+  assertProfileName,
+  entryPatchId,
+  isPluginLifecycleEntryId,
+  pluginLifecyclePatches,
+  readDisabledPluginLifecycleEntries,
+  readUserMutableBundleNames,
+  setPluginLifecycleEntryEnabled,
+  type PluginLifecycleStatePersistence,
+  type ProfileNameValidator,
+} from './plugin-lifecycle-state.ts'
+// The lifecycle vocabulary itself belongs to `acryl-control`, the domain
+// package. Surfaces depend on this runtime, not on the domain package, so the
+// shared contract is re-exported here rather than duplicated per surface; one
+// `PluginLifecycleError` class has to be the one every surface throws and
+// catches, or its `code` stops crossing a route boundary.
+export {
+  AcrPluginLifecycleService,
+  PROTECTED_PLUGIN_ENTRY_REASON,
+  PluginLifecycleError,
+  type AcrPluginLifecycle,
+  type AcrPluginLifecycleController,
+  type PluginLifecycleAction,
+  type PluginLifecycleEntryRef,
+  type PluginLifecycleEntryView,
+  type PluginLifecycleErrorCode,
+  type PluginLifecycleFiberPhase,
+  type PluginLifecycleHost,
+  type PluginLifecycleMountedStatus,
+  type PluginLifecycleReceipt,
+  type PluginLifecycleSnapshot,
+} from 'acryl-control'
 
 import { writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'

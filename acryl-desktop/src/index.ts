@@ -246,10 +246,12 @@ export function apply(ctx: Context, config: Config): void {
   const pluginLifecycle = new PluginLifecycleController(ctx, pluginLifecycleBootstrap)
   // The plugin market calls `ctx.livePluginActivation` after it writes
   // `dsh.profile.bundles` so an install/uninstall mounts into the running
-  // Loader tree without a restart. Scoped to this desktop Host plugin's fiber.
-  // Guarded because focused route tests mount `apply` against a minimal ctx
-  // stub with no Cordis service registry.
+  // Loader tree without a restart, and every other surface reaches the same
+  // lifecycle through `ctx.acrPluginLifecycle`. Scoped to this desktop Host
+  // plugin's fiber. Guarded because focused route tests mount `apply` against a
+  // minimal ctx stub with no Cordis service registry.
   if (typeof (ctx as { reflect?: unknown }).reflect === 'object') {
+    pluginLifecycle.publishLifecycleService()
     new LivePluginActivationService(ctx, pluginLifecycle)
   }
   // Local-development auto-reload: ACRYL_PLUGIN_WATCH=<pkg>=<abs dir>[,...]

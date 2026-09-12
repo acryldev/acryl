@@ -22,7 +22,7 @@ import {
   type ProfileManifest,
 } from '@deepseek-ai/dsh-app-boot'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
-import { createAcrylCodingCapabilityPatches } from 'acryl-harness-runtime'
+import { createAcrylCodingCapabilityPatches, pluginLifecyclePatches } from 'acryl-harness-runtime'
 import FileSettingsProvider, {
   resolveSpec as resolveSettingsFileSpec,
   type Config as SettingsFileConfig,
@@ -43,7 +43,6 @@ import {
   type DesktopMarketProvider,
   type DesktopMarketSnapshot,
 } from './desktop-market.ts'
-import { pluginLifecyclePatches } from './plugin-lifecycle-state.ts'
 import {
   assertNoBlendRowCollisions,
   blendInsertPatch,

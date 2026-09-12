@@ -1,11 +1,11 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { boot } from '@deepseek-ai/dsh-app-boot'
+import { AcrPluginLifecycleService, pluginLifecyclePatches } from 'acryl-harness-runtime'
 import { PluginLifecycleController } from '../src/plugin-lifecycle-controller.ts'
 import type { DesktopBlendProjection } from '../src/desktop-blend.ts'
-import { pluginLifecyclePatches } from '../src/plugin-lifecycle-state.ts'
 
 const roots: string[] = []
 const PACKAGE = 'acryl-development-canvas'
@@ -343,6 +343,46 @@ describe('PluginLifecycleController', () => {
       await controller.setEnabled('include:desktop-development-canvas', false)
       await expect(controller.reload('include:desktop-development-canvas'))
         .rejects.toMatchObject({ code: 'not-mounted' })
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
+  // Spec 034, T005: Desktop's controller is a caller of the one lifecycle
+  // service, not a second implementation of it.
+  it('drives the shared lifecycle service every surface mounts', async () => {
+    const { ctx, controller, statePath } = await harness()
+    try {
+      // What the desktop Host plugin registers for the other surfaces (a
+      // route, a market bridge, the CLI) to reach this same lifecycle.
+      const shared = controller.publishLifecycleService()
+      expect(shared).toBeInstanceOf(AcrPluginLifecycleService)
+      // Cordis hands a service back through its own registry object, so this is
+      // behavioural identity, not reference identity: whatever a route or the
+      // CLI resolves has to drive the one controller this surface renders.
+      const published = ctx.get('acrPluginLifecycle') as AcrPluginLifecycleService
+      expect(published).toBeInstanceOf(AcrPluginLifecycleService)
+      expect(published.controller).toBe(shared.controller)
+      const canvas = 'include:desktop-development-canvas'
+      const sharedSetEnabled = vi.spyOn(shared.controller, 'setEnabled')
+
+      // The Desktop route's own facade reaches the shared controller, which is
+      // where the persistence, cascade, and rollback happen.
+      const receipt = await controller.setEnabled(canvas, false)
+      expect(sharedSetEnabled).toHaveBeenCalledWith(canvas, false)
+      expect(receipt.snapshot.entries.find(entry => entry.entryId === canvas))
+        .toEqual(expect.objectContaining({ enabled: false, hostPhase: null }))
+
+      // And the reverse: a disable asked for through the published service -
+      // the entry point the Web surface and the CLI use - is the state the
+      // Desktop renders from and the state the next boot composes against.
+      await published.setEnabled('include:market-plugin', false)
+      expect(controller.snapshot().entries.find(entry => entry.entryId === 'include:market-plugin'))
+        .toEqual(expect.objectContaining({ enabled: false, hostPhase: null }))
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([
+        { id: 'desktop-development-canvas', disabled: true },
+        { id: 'market-plugin', disabled: true },
+      ])
     } finally {
       await ctx.fiber.dispose()
     }
