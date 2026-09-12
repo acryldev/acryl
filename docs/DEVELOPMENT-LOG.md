@@ -3959,3 +3959,31 @@ lockfile entries against a manifest without them. The same gap applies to
 `scripts/runtime-closure.mjs`: it only walks `@deepseek-ai/*` direct
 dependencies, so a workspace package such as `dsh-community-market` is never
 visited and its first-party peers are never required at the root.
+
+## 2026-09-12 - fix: the preset gate pointed at the pre-0.1.5 payload location
+
+Commit: `115068d98e23a04c3feb009528dcd2179b87d9c7`
+
+Validating the derived closure check against a real Linux x64 package built at
+`HEAD` exposed a second, older regression in the same gate: `afterPack`
+required `node_modules/@deepseek-ai/dsh/config/agent-presets/cordis/**`, a path
+that no longer exists in any install of the pinned DSH version. The pin move
+to `0.1.5-alpha.1` relocated the Cordis preset payload out of `dsh` and into
+`@deepseek-ai/dsh-agent-presets`, whose `presets/` directory carries the same
+`cordis/agent.cordis.yml` and the two bundled `SKILL.md` files. The published
+`@deepseek-ai/dsh@0.1.5-alpha.1` tarball is ten files and 49 kB - it cannot
+contain them - and every copy of that version in the local store lacks
+`config/`, while all five remaining `0.1.1-rc.2` copies still have it. The
+required-entry list was written before the pin moved and was never updated, so
+the gate could not pass on a correct artifact; the built tree already shipped
+the payload at the new location.
+
+The three entries and their mirrored expectations in
+`tests/verify-packaged-runtime.spec.ts` now name
+`@deepseek-ai/dsh-agent-presets/presets/cordis/**`. Verified on the same
+artifact: the gate failed on the old paths before the change and passes end to
+end after it - archive, physical entries, mirror, package exports, and the
+derived closure - with the single remaining `console.warn` naming
+`dsh-community-market -> @deepseek-ai/dsh-client-store`, which is already
+recorded as open above. Desktop typecheck is clean across all five tsconfigs
+and the suite is 853 passed / 4 skipped.
