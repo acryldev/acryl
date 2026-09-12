@@ -3987,3 +3987,69 @@ derived closure - with the single remaining `console.warn` naming
 `dsh-community-market -> @deepseek-ai/dsh-client-store`, which is already
 recorded as open above. Desktop typecheck is clean across all five tsconfigs
 and the suite is 853 passed / 4 skipped.
+
+## 2026-09-12 - feat: ACRYL branding for Web - brand-package materialization and page-title fix
+
+Commits: `2ec919c`, `6745ec4`
+
+Web still showed DeepSeek Harness branding after the "Engine 1 everywhere"
+re-point. The fix needed two layers, both found by direct instrumentation
+rather than assumed from how Desktop's own brand swap works.
+
+First: `acryl-desktop`'s `package-overlay.ts`/`module-resolution.ts`
+(`installProfilePackageResolver`, a resolution-hook overlay between an
+installation's own copy of a package and a profile's own copy) were
+extracted into `acryl-harness-runtime` as shared, parameterized
+infrastructure - Desktop's own two files became thin wrappers supplying its
+Electron-specific anchors, verified unchanged by its full existing test
+suite (the deep hook-logic tests moved to
+`acryl-harness-runtime/tests/module-resolution.spec.ts`, where the logic now
+lives). This looked like the mechanism Web's brand swap needed too, mirroring
+Desktop's own approach.
+
+It wasn't. Logging every `resolve()` call the composed Loader rows actually
+make proved `HostResolvedRootInclude`'s rows (the composition style Web's
+engine host uses) always resolve bare specifiers against the profile's own
+`package.json` as `parentURL`, never against the Loader's own entry module -
+the one condition `installProfilePackageResolver`'s hook checks for. Desktop's
+real brand swap does not actually depend on that hook at all; it works
+because Desktop's separate Market/plugin-lifecycle system does a real
+`pnpm add`-style install into each profile's own `node_modules`. The
+extraction itself was kept - it is genuinely useful, tested infrastructure
+for Desktop's continued use and any future overlay need - but it does not
+solve Web's problem.
+
+The actual fix: `materializeProfilePackage`, a direct symlink from the web
+profile's own `node_modules` to `dsh-client-ui-brand-acryl`'s resolved
+location in the `acryl-web` installation, called before the brand-swap patch
+(disable `ui-brand-official`, insert `ui-acryl`) is applied. The patch itself
+is validated against the real composed Loader row first, so a future
+`dsh-web-app` change that renames or removes that row fails loud instead of
+silently keeping the DeepSeek brand. `createWebEngineDefinition` now takes
+`acryl-web`'s own `package.json` URL directly (the anchors-object shape built
+for the abandoned resolver-hook approach is gone).
+
+A second gap surfaced only by fetching the served page directly: the `<title>`
+stayed "DeepSeek Harness" even with the brand plugin correctly swapped,
+because that string is baked into a pinned `@deepseek-ai/dsh-web-frontend`
+build artifact - outside the Cordis Client slot system the brand plugin
+covers. `dsh-host-webserver`'s `WebServer` service exposes `tapIndex()` as its
+own designed escape hatch for exactly this ("no `IndexInjection` row exists
+for this" markup rewrite); `mountDshEngine` now registers a title-rewriting
+tap for the web surface only. Desktop does not need this - it already
+suppresses `page-title-updated` on its own `BrowserWindow` and keeps a fixed
+native title, so the vendored HTML's `<title>` never reaches anything visible
+there. A matching ACRYL favicon needs a real static asset plus a route and is
+tracked separately, not bundled into this markup-rewrite fix.
+
+Verified end-to-end with a real profile boot (throwaway `ACRYL_HOME`) and a
+real HTTP fetch of the served index: the boot manifest lists
+`dsh-client-ui-brand-acryl` (not the official package) among its client
+entries, and the returned HTML's `<title>` reads `ACRYL` with no remaining
+"DeepSeek Harness" string anywhere in the page. `acryl-harness-runtime`'s
+suite: same 4 pre-existing unrelated failures (confirmed via `git stash`
+against a clean `main` checkout, unchanged by any of today's work),
+`engine-dsh.spec.ts`'s web-engine test extended with real assertions for the
+symlink, the composed row states, and `webServer.renderIndex()`'s actual
+output - all green. `acryl-web` (2/2) and `acryl-desktop` (853/857, 4
+pre-existing skips) both confirmed unaffected.
