@@ -1,6 +1,6 @@
 /** Headless artifact smoke for profile-local and launcher-owned Cordis plugins. */
 
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -96,11 +96,6 @@ try {
   if (profileRequire.resolve('acryl-desktop/package.json') !== desktopManifest) {
     throw new Error('desktop package manifest did not resolve from the installed launcher')
   }
-  const canvasManifest = fileURLToPath(new URL('../../acryl-development-canvas/package.json', import.meta.url))
-  if (realpathSync(profileRequire.resolve('acryl-development-canvas/package.json')) !== realpathSync(canvasManifest)) {
-    throw new Error('Canvas package manifest did not resolve from the installed launcher')
-  }
-  await import('acryl-development-canvas')
   const profileDirectoryRequire = createRequire(new URL('.', prepared.bareModuleBaseUrl))
   if (profileDirectoryRequire.resolve('acryl-desktop/package.json') !== desktopManifest) {
     throw new Error('desktop package manifest did not resolve from the profile directory')
@@ -138,7 +133,7 @@ try {
     prepared.rootConfig,
     [
       // The launcher composes the profile's bundle layers (dsh-web-app's
-      // include tree, desktop/canvas overlays, home patches) via
+      // include tree, desktop overlays, home patches) via
       // `prepared.patches` (main.ts does the same); the smoke must too, or
       // the boot has no services (`connection` absent -> the shell's
       // `inject(['connection'])` never fires and it never schedules).

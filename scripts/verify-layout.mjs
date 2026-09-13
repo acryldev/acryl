@@ -16,7 +16,6 @@ const pnpmWorkspace = readFileSync(resolve(root, 'pnpm-workspace.yaml'), 'utf8')
 const npmrc = readFileSync(resolve(root, '.npmrc'), 'utf8')
 const upstream = readJson('upstream.json')
 const plugin = readJson('acryl-desktop/package.json')
-const canvas = readJson('acryl-development-canvas/package.json')
 const control = readJson('acryl-control/package.json')
 const harness = readJson('acryl-harness-runtime/package.json')
 const cli = readJson('acryl-cli/package.json')
@@ -47,7 +46,6 @@ packages:
   - acryl-cli
   - acryl-web
   - acryl-desktop
-  - acryl-development-canvas
   - dsh-client-ui-brand-acryl
   - dsh-community-fabric
   - dsh-community-market
@@ -98,7 +96,6 @@ supportedArchitectures:
 }
 for (const [name, manifest] of [
   ['acryl-desktop', plugin],
-  ['acryl-development-canvas', canvas],
   ['acryl-control', control],
   ['acryl-harness-runtime', harness],
   ['acryl-npm-launcher', readJson('acryl-npm-launcher/package.json')],
@@ -109,7 +106,6 @@ for (const [name, manifest] of [
 ]) {
   if (manifest.packageManager !== undefined) fail(`${name} must inherit the root PNPM release`)
 }
-if (canvas.name !== 'acryl-development-canvas') fail('the Canvas workspace must own acryl-development-canvas')
 if (control.name !== 'acryl-control') fail('the control workspace must own acryl-control')
 if (readJson('acryl-npm-launcher/package.json').name !== 'acryl') fail('the npm selector workspace must own the public acryl selector package')
 if (cli.name !== 'acryl-cli') fail('the CLI workspace must own acryl-cli')
@@ -132,8 +128,6 @@ for (const obsoleteFile of [
   '.yarn',
   'acryl-desktop/yarn.lock',
   'acryl-desktop/.yarnrc.yml',
-  'acryl-development-canvas/yarn.lock',
-  'acryl-development-canvas/.yarnrc.yml',
   'acryl-control/yarn.lock',
   'acryl-control/.yarnrc.yml',
   'acryl-harness-runtime/yarn.lock',
@@ -160,7 +154,6 @@ if (typeof upstreamPackage.packageManager !== 'string' || !upstreamPackage.packa
 for (const [owner, manifest] of [
   ['root', workspace],
   ['desktop', plugin],
-  ['canvas', canvas],
   ['control', control],
   ['harness-runtime', harness],
   ['cli', cli],
@@ -203,7 +196,6 @@ for (const [owner, manifest] of [
   ['cli', cli],
   ['web', web],
   ['control', control],
-  ['canvas', canvas],
   ['market', market],
 ]) {
   for (const field of ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies', 'resolutions']) {

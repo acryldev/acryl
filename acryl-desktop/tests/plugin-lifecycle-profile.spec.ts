@@ -13,13 +13,13 @@ afterEach(() => {
 })
 
 describe('plugin lifecycle profile composition', () => {
-  it('applies a persisted Canvas disable as the final generation override', async () => {
+  it('applies a persisted brand-row disable as the final generation override', async () => {
     const home = mkdtempSync(join(tmpdir(), 'dsh-plugin-lifecycle-profile-'))
     homes.push(home)
     const statePath = join(home, 'desktop-user-data', 'plugin-lifecycle', 'state.json')
     await setPluginLifecycleEntryEnabled(
       { profileName: 'desktop', statePath },
-      'include:desktop-development-canvas',
+      'include:ui-brand-official',
       false,
     )
 
@@ -34,11 +34,11 @@ describe('plugin lifecycle profile composition', () => {
       { pluginLifecycleStatePath: statePath },
     )
     const row = composeEntries([prepared.patches])
-      .find(entry => entry.id === 'desktop-development-canvas')
+      .find(entry => entry.id === 'ui-brand-official')
 
     expect(row).toEqual(expect.objectContaining({
-      id: 'desktop-development-canvas',
-      name: 'acryl-development-canvas',
+      id: 'ui-brand-official',
+      name: '@deepseek-ai/dsh-client-ui-brand-official',
       disabled: true,
     }))
   })

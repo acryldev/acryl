@@ -65,10 +65,6 @@ const REQUIRED_BUNDLE_SET = new Set(REQUIRED_BUNDLES)
 const OBSOLETE_DESKTOP_BUNDLE_SET = new Set(['@deepseek-ai/dsh-desktop-app'])
 const INSTALL_ANCHOR = unpackedAsarPath(fileURLToPath(new URL('../package.json', import.meta.url)))
 const DESKTOP_PATCH_PATH = fileURLToPath(new URL('../cordis.patch.yml', import.meta.url))
-const CANVAS_PATCH_PATH = unpackedAsarPath(join(
-  dirname(createRequire(import.meta.url).resolve('acryl-development-canvas/package.json')),
-  'cordis.patch.yml',
-))
 const DIRECTORY_PICKER_ROW_ID = 'directory-picker'
 const AUTO_PICKER_PACKAGE = '@deepseek-ai/dsh-host-directory-picker-auto'
 const BROWSE_PICKER_BACKEND = '@deepseek-ai/dsh-host-directory-picker-browse'
@@ -682,7 +678,6 @@ export function prepareDesktopProfile(
   writeFileSync(rootConfig, '[]\n')
 
   const desktopPatches = loadOverlayPatches(BIN_NAME, DESKTOP_PATCH_PATH)
-  const canvasPatches = loadOverlayPatches(BIN_NAME, CANVAS_PATCH_PATH)
   const bundlePatches: PatchOptions[] = []
   const desktopOverlayPatches: PatchOptions[] = []
   const sharedDesktopPatches = createAcrylCodingCapabilityPatches(new Set(['desktop']))
@@ -699,7 +694,7 @@ export function prepareDesktopProfile(
     }
     bundlePatches.push(...layer.patches)
     if (layer.packageName !== '@deepseek-ai/dsh-web-app') continue
-    desktopOverlayPatches.push(...desktopPatches, ...canvasPatches)
+    desktopOverlayPatches.push(...desktopPatches)
     desktopLayerInserted = true
   }
   if (!desktopLayerInserted) {

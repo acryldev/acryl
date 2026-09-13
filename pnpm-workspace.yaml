@@ -8,7 +8,6 @@ packages:
   - acryl-cli
   - acryl-web
   - acryl-desktop
-  - acryl-development-canvas
   - dsh-client-ui-brand-acryl
   - dsh-community-fabric
   - dsh-community-market

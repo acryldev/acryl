@@ -17,12 +17,6 @@ import { describe, expect, it } from 'vitest'
 
 const packageRoot = new URL('../', import.meta.url)
 const workspaceRoot = new URL('../', packageRoot)
-const canvasRoot = new URL('acryl-development-canvas/', workspaceRoot)
-const canvasManifest = JSON.parse(readFileSync(new URL('package.json', canvasRoot), 'utf8')) as {
-  name?: unknown
-  exports?: Record<string, unknown>
-  dsh?: { bundle?: { patch?: unknown }; client?: unknown }
-}
 const manifest = JSON.parse(readFileSync(new URL('package.json', packageRoot), 'utf8')) as {
   name?: unknown
   version?: unknown
@@ -84,9 +78,9 @@ describe('published package surface', () => {
   it('runs owned-workspace typechecks and tests through PNPM filters', () => {
     expect(workspaceManifest.packageManager).toBe('pnpm@11.8.0')
     expect(workspaceManifest.scripts?.typecheck)
-      .toBe('pnpm --filter acryl-control run typecheck && pnpm --filter acryl-cli run typecheck && pnpm --filter acryl-web run typecheck && pnpm --filter acryl-development-canvas run typecheck && pnpm --filter dsh-client-ui-brand-acryl run typecheck && pnpm --filter acryl-desktop run typecheck && pnpm --filter dsh-community-market run typecheck')
+      .toBe('pnpm --filter acryl-control run typecheck && pnpm --filter acryl-cli run typecheck && pnpm --filter acryl-web run typecheck && pnpm --filter dsh-client-ui-brand-acryl run typecheck && pnpm --filter acryl-desktop run typecheck && pnpm --filter dsh-community-market run typecheck')
     expect(workspaceManifest.scripts?.test)
-      .toBe('pnpm --filter acryl-control run test && pnpm --filter acryl-cli run test && pnpm --filter acryl-web run test && pnpm --filter acryl-development-canvas run test && pnpm --filter dsh-client-ui-brand-acryl run test && pnpm --filter acryl-desktop run test && pnpm --filter dsh-community-market run test')
+      .toBe('pnpm --filter acryl-control run test && pnpm --filter acryl-cli run test && pnpm --filter acryl-web run test && pnpm --filter dsh-client-ui-brand-acryl run test && pnpm --filter acryl-desktop run test && pnpm --filter dsh-community-market run test')
     expect(pnpmWorkspace).toContain("  - '!deepseek-harness/**'")
     expect(pnpmWorkspace).toContain('node-pty: true')
   })
@@ -114,17 +108,6 @@ describe('published package surface', () => {
       default: './lib/terminal.js',
     })
     expect(manifest.exports).not.toHaveProperty('./development-canvas')
-    expect(canvasManifest).toMatchObject({
-      name: 'acryl-development-canvas',
-      exports: {
-        '.': { types: './lib/types/index.d.ts', default: './lib/index.js' },
-        './client': { types: './lib/types/client/index.d.ts', default: './lib/client.js' },
-      },
-      dsh: {
-        bundle: { patch: './cordis.patch.yml' },
-        client: { platform: 'web' },
-      },
-    })
     expect(manifest.exports).toHaveProperty('./hello-world', {
       types: './lib/types/hello-world.d.ts',
       default: './lib/hello-world.js',
@@ -175,8 +158,6 @@ describe('published package surface', () => {
     expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).not.toContain('name: dsh-community-market')
     expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).toContain('name: acryl-desktop/terminal')
     expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).not.toContain('development-canvas')
-    expect(readFileSync(new URL('cordis.patch.yml', canvasRoot), 'utf8'))
-      .toContain('name: acryl-development-canvas')
     expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).toContain('name: acryl-desktop/hello-world')
     expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).toContain('name: acryl-desktop/pnpm')
     expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).toContain('name: acryl-desktop/profiles')
@@ -185,12 +166,12 @@ describe('published package surface', () => {
     expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).toContain('name: acryl-desktop/updates')
   })
 
-  it('pins standalone Canvas and both selectable Market providers in the published runtime', () => {
+  it('pins both selectable Market providers in the published runtime', () => {
     expect(manifest.dependencies).toMatchObject({
       'dsh-community-market': 'workspace:*',
-      'acryl-development-canvas': 'workspace:*',
       dshmarket: '1.17.1',
     })
+    expect(manifest.dependencies).not.toHaveProperty('acryl-development-canvas')
     expect(manifest.optionalDependencies ?? {}).not.toHaveProperty('dshmarket')
   })
 
@@ -363,9 +344,6 @@ describe('published package surface', () => {
     expect(config).toContain("terminal: 'src/terminal.ts'")
     expect(config).toContain("'hello-world': 'src/hello-world.ts'")
     expect(config).not.toContain("'development-canvas': 'src/development-canvas.ts'")
-    const canvasConfig = readFileSync(new URL('tsdown.config.ts', canvasRoot), 'utf8')
-    expect(canvasConfig).toContain("entry: { index: 'src/index.ts' }")
-    expect(canvasConfig).toContain("entry: { client: 'src/client/index.ts' }")
     expect(config).toContain("'update-download': 'src/update-download.ts'")
     expect(config).toContain("updates: 'src/updates.ts'")
   })
@@ -621,12 +599,12 @@ describe('published package surface', () => {
 
     expect(manifest.scripts?.build).toContain('node scripts/generate-acryl-brand.mjs')
     expect(manifest.scripts?.build).toContain('node scripts/generate-mac-app-icon.mjs')
-    expect(manifest.scripts?.['build:canvas']).toBe('pnpm --filter acryl-development-canvas run build')
+    expect(manifest.scripts).not.toHaveProperty('build:canvas')
     expect(manifest.scripts?.dev)
-      .toBe('pnpm run build:canvas && pnpm run build && pnpm run verify:loader && node scripts/launch-dev.mjs')
-    expect(manifest.scripts?.check).toContain('pnpm run build:canvas')
+      .toBe('pnpm run build && pnpm run verify:loader && node scripts/launch-dev.mjs')
+    expect(manifest.scripts?.check).not.toContain('pnpm run build:canvas')
     expect(manifest.scripts?.['package:dir'])
-      .toBe('pnpm run build:canvas && pnpm run build && node scripts/package-dir.mjs')
+      .toBe('pnpm run build && node scripts/package-dir.mjs')
     expect(packageDir).toContain("CSC_IDENTITY_AUTO_DISCOVERY: 'false'")
     expect(manifest.scripts?.['dist:mac']).toBe('node scripts/release-mac.ts')
     expect(manifest.scripts?.['dist:mac-smoke']).toBe('node scripts/package-mac.ts')
