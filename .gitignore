@@ -9,11 +9,11 @@ node_modules/
 docs/codebase/
 graphify-out/
 
-acryl-desktop/dist/
-acryl-desktop/lib/
-dsh-community-market/lib/
-dsh-client-ui-brand-acryl/lib/
-acryl-web/lib/
+apps/acryl-desktop/dist/
+apps/acryl-desktop/lib/
+plugins/dsh-community-market/lib/
+plugins/dsh-client-ui-brand-acryl/lib/
+apps/acryl-web/lib/
 release-artifacts/
 
 .cgr-hash-cache.json

@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { CLI_TARGETS, targetPackageName } from './release-contract.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const selectorSource = join(root, 'acryl-npm-launcher')
+const selectorSource = join(root, 'distribution', 'acryl-npm-launcher')
 const version = JSON.parse(readFileSync(join(selectorSource, 'package.json'), 'utf8')).version
 const requestedVersion = process.env.ACRYL_NPM_VERSION ?? version
 if (requestedVersion !== version) throw new Error(`publish-npm-cli: ACRYL_NPM_VERSION (${requestedVersion}) must equal workspace version (${version})`)

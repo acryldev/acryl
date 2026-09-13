@@ -197,7 +197,7 @@
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "verify:npm": "node ../scripts/verify-npm-web-entrypoint.mjs",
+    "verify:npm": "node ../../scripts/verify-npm-web-entrypoint.mjs",
     "check": "pnpm run build && pnpm run typecheck && pnpm run test && pnpm run verify:npm"
   },
   "devDependencies": {

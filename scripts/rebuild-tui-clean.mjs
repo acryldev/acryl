@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = resolve(here, '..')
-const lib = join(root, 'acryl-cli', 'lib')
+const lib = join(root, 'apps', 'acryl-cli', 'lib')
 
 rmSync(lib, { recursive: true, force: true })
 process.stdout.write(`removed ${lib}\n`)

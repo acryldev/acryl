@@ -146,7 +146,7 @@ async function createWebServer() {
 
 describe('desktop pnpm and community market integration', () => {
   it('executes a market uninstall route through the managed desktop pnpm boundary', async () => {
-    const marketModuleUrl = new URL('../../dsh-community-market/src/index.js', import.meta.url).href
+    const marketModuleUrl = new URL('../../../plugins/dsh-community-market/src/index.js', import.meta.url).href
     const market = await import(marketModuleUrl) as CommunityMarketModule
     const root = await mkdtemp(join(tmpdir(), 'dsh-market-desktop-pnpm-'))
     const profileDir = join(root, 'profiles', 'web')

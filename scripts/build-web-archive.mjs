@@ -14,7 +14,7 @@ import { pruneTargetNative } from './prune-target-native.mjs'
 import { artifactReceipt, nodeDistribution, webNativeAllowlist, webTarget } from './web-archive-contract.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const version = JSON.parse(readFileSync(join(root, 'acryl-web', 'package.json'), 'utf8')).version
+const version = JSON.parse(readFileSync(join(root, 'apps', 'acryl-web', 'package.json'), 'utf8')).version
 const releaseBaseUrl = process.env.ACRYL_RELEASE_BASE_URL ?? `https://github.com/acryldev/acryl/releases/download/v${version}`
 const run = (command, args, options = {}) => execFileSync(command, args, { stdio: 'inherit', ...options })
 const sha256 = path => createHash('sha256').update(readFileSync(path)).digest('hex')

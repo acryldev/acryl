@@ -52,7 +52,7 @@ jobs:
           corepack pnpm --filter acryl-cli run typecheck
           corepack pnpm --filter acryl-cli run test
           node --test scripts/cli-archive-platform.test.mjs scripts/inspect-artifact.test.mjs
-          node acryl-cli/scripts/verify-npm-entrypoint.mjs
+          node apps/acryl-cli/scripts/verify-npm-entrypoint.mjs
       - run: node scripts/build-cli-archive.mjs ${{ matrix.target }} release-artifacts
       - name: Clean-runtime smoke and release receipt
         shell: bash
@@ -157,7 +157,7 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          node scripts/release-manifest.mjs verify-versions "${RELEASE_TAG#v}" package.json acryl-control/package.json acryl-harness-runtime/package.json acryl-cli/package.json acryl-web/package.json acryl-desktop/package.json acryl-npm-launcher/package.json
+          node scripts/release-manifest.mjs verify-versions "${RELEASE_TAG#v}" package.json runtime/acryl-control/package.json runtime/acryl-harness-runtime/package.json apps/acryl-cli/package.json apps/acryl-web/package.json apps/acryl-desktop/package.json distribution/acryl-npm-launcher/package.json
           mapfile -t RECEIPTS < <(find artifacts -name release-receipt.json -type f | sort)
           test "${#RECEIPTS[@]}" -eq 8
           node scripts/release-manifest.mjs generate "${RELEASE_TAG#v}" "$ACRYL_CAPABILITY_BASELINE" artifacts/acryl-release-manifest.json "${RECEIPTS[@]}"
