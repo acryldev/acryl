@@ -1,16 +1,16 @@
 nodeLinker: isolated
 
 packages:
-  - acryl-blend-demo
-  - acryl-control
-  - acryl-harness-runtime
-  - acryl-npm-launcher
-  - acryl-cli
-  - acryl-web
-  - acryl-desktop
-  - dsh-client-ui-brand-acryl
-  - dsh-community-fabric
-  - dsh-community-market
+  - examples/acryl-blend-demo
+  - runtime/acryl-control
+  - runtime/acryl-harness-runtime
+  - distribution/acryl-npm-launcher
+  - apps/acryl-cli
+  - apps/acryl-web
+  - apps/acryl-desktop
+  - plugins/dsh-client-ui-brand-acryl
+  - plugins/dsh-community-fabric
+  - plugins/dsh-community-market
   - '!deepseek-harness/**'
 
 allowBuilds:

@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
 
 const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)))
-const workspaceRoot = dirname(packageRoot)
+const workspaceRoot = dirname(dirname(packageRoot))
 const clientModule = join(packageRoot, 'src', 'client', 'acryl-logo-data.ts')
 const blackSource = join(workspaceRoot, 'acryl-logo.png')
 const whiteSource = join(workspaceRoot, 'acryl-logo-white.png')

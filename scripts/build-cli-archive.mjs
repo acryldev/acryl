@@ -28,7 +28,7 @@ import { payloadSha256, receiptFor } from './release-contract.mjs'
 
 const require = createRequire(import.meta.url)
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const version = JSON.parse(readFileSync(join(root, 'acryl-cli', 'package.json'), 'utf8')).version
+const version = JSON.parse(readFileSync(join(root, 'apps', 'acryl-cli', 'package.json'), 'utf8')).version
 
 const TARGETS = {
   'darwin-arm64': { nodePlatform: 'darwin', nodeArch: 'arm64' },
@@ -83,7 +83,7 @@ async function main() {
   const windows = spec.windows === true
   const archiveName = `acryl-cli-${target}.${windows ? 'zip' : 'tar.gz'}`
   const launcherName = windows ? 'acryl.cmd' : 'acryl'
-  const launcher = join(root, 'acryl-cli', 'scripts', windows ? 'acryl-cli-launcher.cmd' : 'acryl-cli-launcher.sh')
+  const launcher = join(root, 'apps', 'acryl-cli', 'scripts', windows ? 'acryl-cli-launcher.cmd' : 'acryl-cli-launcher.sh')
   const staging = join(tmpdir(), `acryl-cli-${target}`)
   const archiveDir = join(staging, `acryl-cli-${target}`)
 

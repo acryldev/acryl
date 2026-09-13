@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { corepackCommand, corepackSpawnOptions } from './cli-archive-platform.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const packageDir = join(root, 'acryl-web')
+const packageDir = join(root, 'apps', 'acryl-web')
 const staging = mkdtempSync(join(tmpdir(), 'acryl-web-npm-'))
 
 try {

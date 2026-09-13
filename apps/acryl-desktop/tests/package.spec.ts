@@ -16,7 +16,7 @@ import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
 
 const packageRoot = new URL('../', import.meta.url)
-const workspaceRoot = new URL('../', packageRoot)
+const workspaceRoot = new URL('../../', packageRoot)
 const manifest = JSON.parse(readFileSync(new URL('package.json', packageRoot), 'utf8')) as {
   name?: unknown
   version?: unknown

@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url'
 // Deliberately its own root, sibling to (not nested inside) ACRYL's normal
 // `~/.acryl` — an isolated dev run must never collide with the home a real
 // packaged ACRYL install uses (`resolveAcrylDshHome()`'s `~/.acryl/.dsh`
-// default, see acryl-harness-runtime/src/acryl-home.ts), or with a stock DSH
+// default, see runtime/acryl-harness-runtime/src/acryl-home.ts), or with a stock DSH
 // Desktop install (dshdesktop.com), which uses plain `~/.dsh`.
 export const ACRYL_DEV_HOME_DIR_NAME = '.acryl-dev'
 export const ACRYL_DSH_ENGINE_DIR_NAME = '.dsh'

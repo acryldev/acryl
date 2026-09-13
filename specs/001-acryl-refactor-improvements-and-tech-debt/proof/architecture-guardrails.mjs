@@ -54,7 +54,7 @@ const CLOSES = {
 }
 
 // --- G1 (R1): the auth/credential domain logic is NOT in the surface ---
-const session = read('acryl-cli/src/tui-app/session.ts') ?? ''
+const session = read('apps/acryl-cli/src/tui-app/session.ts') ?? ''
 // `beginAuthorization` deliberately excluded: it is the permanent public
 // `TuiActions` entry-point name (see acryl-cli/src/tui/actions.ts) — its mere
 // presence is not evidence of misplaced domain logic once it is a thin
@@ -62,7 +62,7 @@ const session = read('acryl-cli/src/tui-app/session.ts') ?? ''
 // actual duplicated join/activation/refresh function *definitions*.
 const surfaceOwnsAuth = ['loadAuthorizationFlows', 'computeProviderRows', 'ensureProviderActivated', 'refreshCredentialState']
   .filter(name => has(session, name))
-const controlHasAuthProjection = ['acryl-control/src/credential/', 'acryl-control/src/authorization/'].some(d => existsSync(join(repo, d)))
+const controlHasAuthProjection = ['runtime/acryl-control/src/credential/', 'runtime/acryl-control/src/authorization/'].some(d => existsSync(join(repo, d)))
 check('G1', 'auth/credential domain logic not in the surface',
   surfaceOwnsAuth.length === 0 && controlHasAuthProjection,
   `surface still defines: ${surfaceOwnsAuth.join(', ') || 'none'}; acryl-control projection present: ${controlHasAuthProjection}`)
@@ -80,9 +80,9 @@ check('G3', 'no `: any` service handles in surface source',
   `': any' occurrences in session.ts: ${anyHits}`)
 
 // --- G4 (R5): exactly one AuthMethod type, used at the seam ---
-const loginTypes = read('acryl-cli/src/tui/login/types.ts') ?? ''
-const mProfileTypes = read('acryl-cli/src/tui/modelProfile/types.ts') ?? ''
-const actionsT = read('acryl-cli/src/tui/actions.ts') ?? ''
+const loginTypes = read('apps/acryl-cli/src/tui/login/types.ts') ?? ''
+const mProfileTypes = read('apps/acryl-cli/src/tui/modelProfile/types.ts') ?? ''
+const actionsT = read('apps/acryl-cli/src/tui/actions.ts') ?? ''
 const authMethodDeclarations = [session, loginTypes, mProfileTypes].reduce((n, t) => n + count(t, "'oauth' | 'api-key'"), 0)
 const seamTyped = !/\bmethod\?: string\b/.test(actionsT)
 check('G4', 'one AuthMethod type used at the seam',
@@ -91,8 +91,8 @@ check('G4', 'one AuthMethod type used at the seam',
 
 // --- G5 (R7): listWindow/visibleRange defined once, not duplicated ---
 const countDef = (text, fn) => (text ?? '').split(`private ${fn}`).length - 1
-const loginOv = read('acryl-cli/src/tui/login/LoginOverlay.ts') ?? ''
-const modelOv = read('acryl-cli/src/tui/modelProfile/ModelProfileOverlay.ts') ?? ''
+const loginOv = read('apps/acryl-cli/src/tui/login/LoginOverlay.ts') ?? ''
+const modelOv = read('apps/acryl-cli/src/tui/modelProfile/ModelProfileOverlay.ts') ?? ''
 const listWindowDefs = countDef(loginOv, 'listWindow') + countDef(modelOv, 'listWindow')
 const visibleRangeDefs = countDef(loginOv, 'visibleRange') + countDef(modelOv, 'visibleRange')
 check('G5', 'listWindow/visibleRange defined once (not duplicated)',

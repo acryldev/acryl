@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
 
 const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)))
-const workspaceRoot = dirname(packageRoot)
+const workspaceRoot = dirname(dirname(packageRoot))
 const buildRoot = join(packageRoot, 'build')
 const blackSource = join(workspaceRoot, 'acryl-logo.png')
 const whiteSource = join(workspaceRoot, 'acryl-logo-white.png')

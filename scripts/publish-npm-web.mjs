@@ -14,7 +14,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const packageDir = join(root, 'acryl-web')
+const packageDir = join(root, 'apps', 'acryl-web')
 const manifest = JSON.parse(readFileSync(join(packageDir, 'package.json'), 'utf8'))
 const dryRun = process.argv.includes('--dry-run')
 const token = process.env.NPM_TOKEN ?? process.env.NODE_AUTH_TOKEN

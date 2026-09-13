@@ -15,13 +15,13 @@ const workspace = readJson('package.json')
 const pnpmWorkspace = readFileSync(resolve(root, 'pnpm-workspace.yaml'), 'utf8')
 const npmrc = readFileSync(resolve(root, '.npmrc'), 'utf8')
 const upstream = readJson('upstream.json')
-const plugin = readJson('acryl-desktop/package.json')
-const control = readJson('acryl-control/package.json')
-const harness = readJson('acryl-harness-runtime/package.json')
-const cli = readJson('acryl-cli/package.json')
-const web = readJson('acryl-web/package.json')
-const fabric = readJson('dsh-community-fabric/package.json')
-const market = readJson('dsh-community-market/package.json')
+const plugin = readJson('apps/acryl-desktop/package.json')
+const control = readJson('runtime/acryl-control/package.json')
+const harness = readJson('runtime/acryl-harness-runtime/package.json')
+const cli = readJson('apps/acryl-cli/package.json')
+const web = readJson('apps/acryl-web/package.json')
+const fabric = readJson('plugins/dsh-community-fabric/package.json')
+const market = readJson('plugins/dsh-community-market/package.json')
 const upstreamPackage = readJson('deepseek-harness/package.json')
 
 if (!workspace.packageManager?.match(/^pnpm@11\.\d+\.\d+$/)) {
@@ -39,16 +39,16 @@ if (!npmrc.includes('TUI owns its independent React 19 graph.')) {
 const OWNED_WORKSPACE_POLICY = `nodeLinker: isolated
 
 packages:
-  - acryl-blend-demo
-  - acryl-control
-  - acryl-harness-runtime
-  - acryl-npm-launcher
-  - acryl-cli
-  - acryl-web
-  - acryl-desktop
-  - dsh-client-ui-brand-acryl
-  - dsh-community-fabric
-  - dsh-community-market
+  - examples/acryl-blend-demo
+  - runtime/acryl-control
+  - runtime/acryl-harness-runtime
+  - distribution/acryl-npm-launcher
+  - apps/acryl-cli
+  - apps/acryl-web
+  - apps/acryl-desktop
+  - plugins/dsh-client-ui-brand-acryl
+  - plugins/dsh-community-fabric
+  - plugins/dsh-community-market
   - '!deepseek-harness/**'
 
 allowBuilds:
@@ -98,7 +98,7 @@ for (const [name, manifest] of [
   ['acryl-desktop', plugin],
   ['acryl-control', control],
   ['acryl-harness-runtime', harness],
-  ['acryl-npm-launcher', readJson('acryl-npm-launcher/package.json')],
+  ['acryl-npm-launcher', readJson('distribution/acryl-npm-launcher/package.json')],
   ['acryl-cli', cli],
   ['acryl-web', web],
   ['dsh-community-fabric', fabric],
@@ -107,7 +107,7 @@ for (const [name, manifest] of [
   if (manifest.packageManager !== undefined) fail(`${name} must inherit the root PNPM release`)
 }
 if (control.name !== 'acryl-control') fail('the control workspace must own acryl-control')
-if (readJson('acryl-npm-launcher/package.json').name !== 'acryl') fail('the npm selector workspace must own the public acryl selector package')
+if (readJson('distribution/acryl-npm-launcher/package.json').name !== 'acryl') fail('the npm selector workspace must own the public acryl selector package')
 if (cli.name !== 'acryl-cli') fail('the CLI workspace must own acryl-cli')
 if (web.name !== 'acryl-web') fail('the Web workspace must own acryl-web')
 if (fabric.name !== 'dsh-community-fabric') fail('the Fabric workspace must own dsh-community-fabric')
@@ -126,18 +126,18 @@ for (const obsoleteFile of [
   'yarn.lock',
   '.yarnrc.yml',
   '.yarn',
-  'acryl-desktop/yarn.lock',
-  'acryl-desktop/.yarnrc.yml',
-  'acryl-control/yarn.lock',
-  'acryl-control/.yarnrc.yml',
-  'acryl-harness-runtime/yarn.lock',
-  'acryl-harness-runtime/.yarnrc.yml',
-  'acryl-cli/yarn.lock',
-  'acryl-cli/.yarnrc.yml',
-  'dsh-community-fabric/yarn.lock',
-  'dsh-community-fabric/.yarnrc.yml',
-  'dsh-community-market/yarn.lock',
-  'dsh-community-market/.yarnrc.yml',
+  'apps/acryl-desktop/yarn.lock',
+  'apps/acryl-desktop/.yarnrc.yml',
+  'runtime/acryl-control/yarn.lock',
+  'runtime/acryl-control/.yarnrc.yml',
+  'runtime/acryl-harness-runtime/yarn.lock',
+  'runtime/acryl-harness-runtime/.yarnrc.yml',
+  'apps/acryl-cli/yarn.lock',
+  'apps/acryl-cli/.yarnrc.yml',
+  'plugins/dsh-community-fabric/yarn.lock',
+  'plugins/dsh-community-fabric/.yarnrc.yml',
+  'plugins/dsh-community-market/yarn.lock',
+  'plugins/dsh-community-market/.yarnrc.yml',
 ]) {
   if (existsSync(resolve(root, obsoleteFile))) fail(`${obsoleteFile} must not exist`)
 }

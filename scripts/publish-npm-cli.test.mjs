@@ -4,7 +4,7 @@ import { chmodSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, r
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { CLI_TARGETS, payloadSha256, receiptFor, targetForNode, targetPackageName } from '../acryl-npm-launcher/release-contract.js'
+import { CLI_TARGETS, payloadSha256, receiptFor, targetForNode, targetPackageName } from '../distribution/acryl-npm-launcher/release-contract.js'
 
 function pack(directory) {
   return join(directory, execFileSync('npm', ['pack', '--silent'], { cwd: directory, encoding: 'utf8' }).trim())
@@ -32,7 +32,7 @@ test('clean local tarball global install launches the prepared target TUI withou
   const prefix = join(directory, 'prefix')
   const target = targetForNode({ platform: process.platform, arch: process.arch })
   const packageName = targetPackageName(target)
-  const version = JSON.parse(readFileSync(new URL('../acryl-npm-launcher/package.json', import.meta.url), 'utf8')).version
+  const version = JSON.parse(readFileSync(new URL('../distribution/acryl-npm-launcher/package.json', import.meta.url), 'utf8')).version
   const runtime = join(directory, packageName, 'runtime')
   const launcher = join(runtime, 'bin', process.platform === 'win32' ? 'acryl.cmd' : 'acryl')
   try {
@@ -48,7 +48,7 @@ test('clean local tarball global install launches the prepared target TUI withou
     const targetTarball = pack(join(directory, packageName))
 
     const selector = join(directory, 'acryl')
-    cpSync(new URL('../acryl-npm-launcher', import.meta.url), selector, { recursive: true })
+    cpSync(new URL('../distribution/acryl-npm-launcher', import.meta.url), selector, { recursive: true })
     writeFileSync(join(selector, 'package.json'), JSON.stringify({
       name: 'acryl', version, type: 'module', bin: { acryl: './bin.js' },
       files: ['bin.js', 'runtime.js', 'release-contract.js', 'web-runtime.js', 'desktop-runtime.js'], optionalDependencies: { [packageName]: version },
@@ -71,7 +71,7 @@ test('packs every CLI_TARGETS archive, including the windows-x64 .zip', () => {
   // real: a GNU tar cannot extract a .zip and must fall back to unzip.
   const artifactDir = mkdtempSync(join(tmpdir(), 'acryl-npm-artifacts-'))
   const outDir = mkdtempSync(join(tmpdir(), 'acryl-npm-out-'))
-  const version = JSON.parse(readFileSync(new URL('../acryl-npm-launcher/package.json', import.meta.url), 'utf8')).version
+  const version = JSON.parse(readFileSync(new URL('../distribution/acryl-npm-launcher/package.json', import.meta.url), 'utf8')).version
   try {
     for (const target of Object.keys(CLI_TARGETS)) {
       const windows = target === 'windows-x64'

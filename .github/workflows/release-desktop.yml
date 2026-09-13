@@ -56,7 +56,7 @@ jobs:
         env: { CSC_IDENTITY_AUTO_DISCOVERY: 'false' }
         run: |
           set -euo pipefail
-          cd acryl-desktop
+          cd apps/acryl-desktop
           node node_modules/electron-builder/cli.js --${{ matrix.target }} ${{ matrix.mode }} --${{ matrix.arch }} --publish never --config.mac.notarize=false --config.npmRebuild=false --config.directories.output=dist/${{ matrix.name }}
       - name: Create Desktop release receipt
         shell: bash
@@ -65,16 +65,16 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${RELEASE_TAG#desktop-v}"
-          ARTIFACT="$(find acryl-desktop/dist/${{ matrix.name }} -type f -name '${{ matrix.artifact }}' | head -n 1)"
+          ARTIFACT="$(find apps/acryl-desktop/dist/${{ matrix.name }} -type f -name '${{ matrix.artifact }}' | head -n 1)"
           test -n "$ARTIFACT"
-          node scripts/release-manifest.mjs receipt desktop '${{ matrix.name }}' "$VERSION" "$(basename "$ARTIFACT")" "$ARTIFACT" "acryl-desktop/dist/${{ matrix.name }}/release-receipt.json"
+          node scripts/release-manifest.mjs receipt desktop '${{ matrix.name }}' "$VERSION" "$(basename "$ARTIFACT")" "$ARTIFACT" "apps/acryl-desktop/dist/${{ matrix.name }}/release-receipt.json"
       - uses: actions/upload-artifact@v7
         with:
           name: acryl-desktop-${{ matrix.name }}-${{ github.ref_name }}
           path: |
-            acryl-desktop/dist/${{ matrix.name }}/${{ matrix.artifact }}
-            acryl-desktop/dist/${{ matrix.name }}/*.blockmap
-            acryl-desktop/dist/${{ matrix.name }}/release-receipt.json
+            apps/acryl-desktop/dist/${{ matrix.name }}/${{ matrix.artifact }}
+            apps/acryl-desktop/dist/${{ matrix.name }}/*.blockmap
+            apps/acryl-desktop/dist/${{ matrix.name }}/release-receipt.json
           if-no-files-found: error
           retention-days: 14
 
