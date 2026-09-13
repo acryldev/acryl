@@ -26,6 +26,7 @@ import {
 } from 'acryl-control'
 import { startDirectHost, type DirectHost } from '../host/direct.js'
 import { setDynamicSlashCommands } from '../tui/commands.js'
+import { MarketOverlay } from '../tui/market/MarketOverlay.js'
 import { TuiStore } from '../tui/store.js'
 import { mountTui, type TuiHandle } from '../tui/TuiApp.js'
 import type { TuiActions } from '../tui/actions.js'
@@ -895,12 +896,26 @@ function storeSetStatus(store: TuiStore, snapshot: { agentStatus: string }): voi
 /** Mount one interactive pi-tui session over the bridge; loop over `/clear` re-attaches. */
 export async function runAcrylTui(options: RunAcrylTuiOptions): Promise<AcrylTuiResult> {
   const host: DirectHost = await startDirectHost({ profile: options.profile })
-  // Snapshotted once per process, not per attachSession() - registrations
-  // happen at Loader-composition/boot time (spec 034 T009), same convention
-  // as /plugins' own snapshot-at-open-time read of the tree.
-  setDynamicSlashCommands(
-    host.ctx.get('tuiCommands')?.list().map(r => ({ command: r.command, description: r.description })) ?? [],
-  )
+  // Re-read on demand (not just once at boot, unlike every other plugin-
+  // contributed command): a /market install mounts a new Loader row into
+  // this same live tree (spec 034 T006's shared live-activation path), and
+  // the newly-installed plugin's own dynamic command must become usable
+  // without restarting this process - that is the whole point of hot-reload
+  // reaching the TUI surface, not just the Host's Loader tree.
+  const refreshDynamicCommands = (): void => {
+    setDynamicSlashCommands(
+      host.ctx.get('tuiCommands')?.list().map(r => ({ command: r.command, description: r.description })) ?? [],
+    )
+  }
+  // /market is registered the same way a third-party plugin's own apply(ctx)
+  // would register a command - it is not a special case in TuiCommandsService,
+  // just this process's own first-party use of the identical mechanism.
+  host.ctx.get('tuiCommands')?.register({
+    command: '/market',
+    description: 'Browse and install ACRYL plugins',
+    open: ({ tui, close }) => new MarketOverlay(tui, host.ctx, close, refreshDynamicCommands),
+  })
+  refreshDynamicCommands()
   let current: TuiSession | undefined
   let settled = false
 

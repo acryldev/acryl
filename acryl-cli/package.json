@@ -140,7 +140,8 @@
     "@earendil-works/pi-tui": "0.84.2",
     "acryl-control": "workspace:*",
     "acryl-harness-runtime": "workspace:*",
-    "diff": "^9.0.0"
+    "diff": "^9.0.0",
+    "dsh-community-market": "workspace:*"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.2",

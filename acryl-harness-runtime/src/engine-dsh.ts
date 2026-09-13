@@ -24,7 +24,7 @@
 
 import { existsSync, mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { createRequire, findPackageJSON } from 'node:module'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
@@ -42,6 +42,8 @@ import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 
 import { resolveAcrylDshHome } from './acryl-home.ts'
+import { provideCliMarketInstall } from './cli-market-install.ts'
+import { provideCliMarketPlugins } from './cli-market-plugins.ts'
 import { createAcrylCodingCapabilityPatches } from './coding-capabilities.ts'
 import type { AcrylEngineDefinition } from './engine-host.ts'
 import { installAcrylWorkspaceStatusTool } from './plugin-acryl-workspace-status.ts'
@@ -205,6 +207,33 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
     // invalidate by leaving them registered for the process's whole life.
     if (ctx.root.get('desktopProfiles') === undefined) {
       provideWebMarketInstall(ctx.root, dirname(composition.rootConfig))
+    }
+  }
+  // CLI/TUI's own desktopPlugins/livePluginActivation + desktopProfiles/
+  // desktopPnpm (spec 034 T006, completing the third surface) - same
+  // ordering constraint as Web above (mount desktopPlugins first, since
+  // dsh-community-market's own ctx.inject(['desktopProfiles', 'desktopPnpm'])
+  // reads ctx.get('livePluginActivation') exactly once, opportunistically).
+  // Unlike Web, the CLI has more than one named profile, so the profile name
+  // comes from this composition's own directory rather than a literal - see
+  // dsh-app-boot's own `$DSH_HOME/profiles/<name>` layout contract.
+  if (composition.surface === 'tui') {
+    const profileDir = dirname(composition.rootConfig)
+    const profileName = basename(profileDir)
+    if (ctx.root.get('desktopPlugins') === undefined) {
+      provideCliMarketPlugins(ctx.root, {
+        profileName,
+        profileDir,
+        statePath: resolvePluginLifecycleStatePath(),
+        binName: 'acryl',
+        // Same double-append trap as web-market-plugins.ts's own resolvePackageJson
+        // and acryl-cli's own plugin-command.ts: createDshPluginLifecycleHost's
+        // internal wrapper already appends "/package.json" before calling this.
+        resolvePackageJson: specifier => createRequire(pathToFileURL(join(profileDir, 'package.json'))).resolve(specifier),
+      })
+    }
+    if (ctx.root.get('desktopProfiles') === undefined) {
+      provideCliMarketInstall(ctx.root, { name: profileName, dir: profileDir })
     }
   }
 }

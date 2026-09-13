@@ -65,6 +65,21 @@ export {
   type WebMarketPluginBundle,
 } from './web-market-plugins.ts'
 export {
+  provideCliMarketInstall,
+  CliPnpmService,
+  CliProfilesService,
+  type CliMarketPnpm,
+  type CliMarketPnpmHandle,
+  type CliMarketPnpmOutcome,
+  type CliMarketProfile,
+} from './cli-market-install.ts'
+export {
+  provideCliMarketPlugins,
+  CliLiveActivationService,
+  CliPluginsService,
+  type CliMarketPluginBundle,
+} from './cli-market-plugins.ts'
+export {
   createAcrylPluginLifecycle,
   createDshPluginLifecycleHost,
   mountAcrylPluginLifecycle,

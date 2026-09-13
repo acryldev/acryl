@@ -542,6 +542,9 @@ importers:
       diff:
         specifier: ^9.0.0
         version: 9.0.0
+      dsh-community-market:
+        specifier: workspace:*
+        version: link:../dsh-community-market
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.2
