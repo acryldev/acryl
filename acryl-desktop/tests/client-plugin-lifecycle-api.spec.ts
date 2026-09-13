@@ -6,7 +6,7 @@ import {
 } from '../src/client/plugin-lifecycle-api.ts'
 
 const ENTRY = {
-  entryId: 'include:desktop-development-canvas',
+  entryId: 'include:acryl-development-canvas',
   moduleName: 'acryl-development-canvas',
   enabled: true,
   hostPhase: 'active',
@@ -79,9 +79,9 @@ describe('plugin lifecycle client API', () => {
   })
 
   it.each([
-    ['enable', 'include:desktop-development-canvas', '/api/desktop/plugins/lifecycle/enable'],
-    ['disable', 'include:desktop-development-canvas', '/api/desktop/plugins/lifecycle/disable'],
-    ['reload', 'include:desktop-development-canvas', '/api/desktop/plugins/lifecycle/reload'],
+    ['enable', 'include:acryl-development-canvas', '/api/desktop/plugins/lifecycle/enable'],
+    ['disable', 'include:acryl-development-canvas', '/api/desktop/plugins/lifecycle/disable'],
+    ['reload', 'include:acryl-development-canvas', '/api/desktop/plugins/lifecycle/reload'],
   ] as const)('posts %s and reloads only after a valid receipt', async (action, entryId, path) => {
     const reloadPage = vi.fn()
     const fetcher = vi.fn(async () => response(receipt(action)))

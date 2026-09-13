@@ -52,7 +52,8 @@ launcher 都会把这层 patch 插在上游 Web bundle 之后，而不是把 Des
 - `desktop-shell` → `acryl-desktop`
 - `desktop-terminal` → `acryl-desktop/terminal`
 - `desktop-hello-world` → `acryl-desktop/hello-world`（R&D fixture）
-- `desktop-development-canvas` → `acryl-development-canvas`
+- `acryl-development-canvas`（独立 package，row id 与 package 名一致，
+  不遵循以上 `desktop-` 子导出惯例）
 - `desktop-diagnostics` → `acryl-desktop/diagnostics`
 - `desktop-notifications` → `acryl-desktop/notifications`
 - `desktop-pnpm` → `acryl-desktop/pnpm`
@@ -68,7 +69,7 @@ service，但来源不同于声明式 Loader entry。
 ### `acryl-development-canvas/`
 
 Development Canvas 是独立的 Host/Client Cordis package。它自己的 bundle
-patch 插入 `desktop-development-canvas`；Host Fiber 拥有 PTY routes 与
+patch 插入 `acryl-development-canvas`；Host Fiber 拥有 PTY routes 与
 processes，Client Fiber 通过 Desktop 声明的 `desktop.main` slot 提供界面。
 Desktop 只负责 advanced frame 与 conversation fallback。移除 Canvas row
 会直接恢复 fallback，不需要轮询，也不需要 Desktop import Canvas

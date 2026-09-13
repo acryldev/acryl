@@ -45,7 +45,7 @@ async function harness(blend?: DesktopBlendProjection, pluginManagementStatePath
   ].join('\n'))
   writeFileSync(join(packageDir, 'client.js'), 'window.__testCanvas = true\n')
   writeFileSync(join(root, 'cordis.yml'), [
-    '- id: desktop-development-canvas',
+    '- id: acryl-development-canvas',
     `  name: ${PACKAGE}`,
     '- id: protected-test',
     `  name: ${PACKAGE}`,
@@ -119,7 +119,7 @@ describe('PluginLifecycleController', () => {
     const { ctx, controller } = await harness()
     try {
       const snapshot = controller.snapshot()
-      const canvas = snapshot.entries.find(entry => entry.entryId === 'include:desktop-development-canvas')
+      const canvas = snapshot.entries.find(entry => entry.entryId === 'include:acryl-development-canvas')
       const protectedEntry = snapshot.entries.find(entry => entry.entryId === 'include:protected-test')
 
       expect(canvas).toEqual(expect.objectContaining({
@@ -231,20 +231,20 @@ describe('PluginLifecycleController', () => {
   it('disables and enables Canvas with persistence and settled Fiber cleanup', async () => {
     const { ctx, controller, logPath, statePath } = await harness()
     try {
-      const disabled = await controller.setEnabled('include:desktop-development-canvas', false)
+      const disabled = await controller.setEnabled('include:acryl-development-canvas', false)
       expect(disabled.action).toBe('disable')
       expect(disabled.rendererReloadRequired).toBe(true)
-      expect(disabled.snapshot.entries.find(entry => entry.entryId === 'include:desktop-development-canvas'))
+      expect(disabled.snapshot.entries.find(entry => entry.entryId === 'include:acryl-development-canvas'))
         .toEqual(expect.objectContaining({ enabled: false, hostPhase: null }))
       expect(lines(logPath)).toEqual(['mount', 'mount', 'unmount'])
       expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([{
-        id: 'desktop-development-canvas',
+        id: 'acryl-development-canvas',
         disabled: true,
       }])
 
-      const enabled = await controller.setEnabled('include:desktop-development-canvas', true)
+      const enabled = await controller.setEnabled('include:acryl-development-canvas', true)
       expect(enabled.action).toBe('enable')
-      expect(enabled.snapshot.entries.find(entry => entry.entryId === 'include:desktop-development-canvas'))
+      expect(enabled.snapshot.entries.find(entry => entry.entryId === 'include:acryl-development-canvas'))
         .toEqual(expect.objectContaining({ enabled: true, hostPhase: 'active' }))
       expect(lines(logPath)).toEqual(['mount', 'mount', 'unmount', 'mount'])
       expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([])
@@ -256,10 +256,10 @@ describe('PluginLifecycleController', () => {
   it('reloads through Fiber restart without changing persistence', async () => {
     const { ctx, controller, logPath, statePath } = await harness()
     try {
-      const receipt = await controller.reload('include:desktop-development-canvas')
+      const receipt = await controller.reload('include:acryl-development-canvas')
       expect(receipt).toEqual(expect.objectContaining({
         action: 'reload',
-        entryIds: ['include:desktop-development-canvas'],
+        entryIds: ['include:acryl-development-canvas'],
         rendererReloadRequired: true,
       }))
       expect(lines(logPath)).toEqual(['mount', 'mount', 'unmount', 'mount'])
@@ -338,10 +338,10 @@ describe('PluginLifecycleController', () => {
         .rejects.toMatchObject({ code: 'protected-entry' })
       await expect(controller.setEnabled('include:missing', false))
         .rejects.toMatchObject({ code: 'unknown-entry' })
-      await expect(controller.setEnabled('include:desktop-development-canvas', true))
+      await expect(controller.setEnabled('include:acryl-development-canvas', true))
         .rejects.toMatchObject({ code: 'already-enabled' })
-      await controller.setEnabled('include:desktop-development-canvas', false)
-      await expect(controller.reload('include:desktop-development-canvas'))
+      await controller.setEnabled('include:acryl-development-canvas', false)
+      await expect(controller.reload('include:acryl-development-canvas'))
         .rejects.toMatchObject({ code: 'not-mounted' })
     } finally {
       await ctx.fiber.dispose()
@@ -363,7 +363,7 @@ describe('PluginLifecycleController', () => {
       const published = ctx.get('acrPluginLifecycle') as AcrPluginLifecycleService
       expect(published).toBeInstanceOf(AcrPluginLifecycleService)
       expect(published.controller).toBe(shared.controller)
-      const canvas = 'include:desktop-development-canvas'
+      const canvas = 'include:acryl-development-canvas'
       const sharedSetEnabled = vi.spyOn(shared.controller, 'setEnabled')
 
       // The Desktop route's own facade reaches the shared controller, which is
@@ -380,7 +380,7 @@ describe('PluginLifecycleController', () => {
       expect(controller.snapshot().entries.find(entry => entry.entryId === 'include:market-plugin'))
         .toEqual(expect.objectContaining({ enabled: false, hostPhase: null }))
       expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([
-        { id: 'desktop-development-canvas', disabled: true },
+        { id: 'acryl-development-canvas', disabled: true },
         { id: 'market-plugin', disabled: true },
       ])
     } finally {

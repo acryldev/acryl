@@ -62,28 +62,28 @@ describe('plugin lifecycle state', () => {
 
     await setPluginLifecycleEntryEnabled(
       bootstrap,
-      'include:desktop-development-canvas',
+      'include:acryl-development-canvas',
       false,
     )
 
     expect([...readDisabledPluginLifecycleEntries(bootstrap)]).toEqual([
-      'include:desktop-development-canvas',
+      'include:acryl-development-canvas',
     ])
     expect(pluginLifecyclePatches(bootstrap)).toEqual([{
-      id: 'desktop-development-canvas',
+      id: 'acryl-development-canvas',
       disabled: true,
     }])
     expect(JSON.parse(readFileSync(path, 'utf8'))).toEqual({
       version: 1,
       profiles: [{
         profileName: 'desktop',
-        disabledEntries: ['include:desktop-development-canvas'],
+        disabledEntries: ['include:acryl-development-canvas'],
       }],
     })
 
     await setPluginLifecycleEntryEnabled(
       bootstrap,
-      'include:desktop-development-canvas',
+      'include:acryl-development-canvas',
       true,
     )
     expect([...readDisabledPluginLifecycleEntries(bootstrap)]).toEqual([])
@@ -94,7 +94,7 @@ describe('plugin lifecycle state', () => {
     const path = statePath()
     await setPluginLifecycleEntryEnabled(
       { profileName: 'work', statePath: path },
-      'include:desktop-development-canvas',
+      'include:acryl-development-canvas',
       false,
     )
 
@@ -117,13 +117,13 @@ describe('plugin lifecycle state', () => {
         profileName: 'desktop',
         disabledEntries: [
           'include:cordis-plugin-graph',
-          'include:desktop-development-canvas',
+          'include:acryl-development-canvas',
           'include:has spaces',
         ],
       }],
     }))
     expect([...readDisabledPluginLifecycleEntries({ profileName: 'desktop', statePath: path })].sort())
-      .toEqual(['include:cordis-plugin-graph', 'include:desktop-development-canvas'])
+      .toEqual(['include:acryl-development-canvas', 'include:cordis-plugin-graph'])
 
     // A non-string element is genuine corruption and still throws.
     writeFileSync(path, JSON.stringify({

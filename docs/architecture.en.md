@@ -55,7 +55,8 @@ The clean Desktop composition currently contributes these ten Loader rows:
 - `desktop-shell` → `acryl-desktop`
 - `desktop-terminal` → `acryl-desktop/terminal`
 - `desktop-hello-world` → `acryl-desktop/hello-world` (R&D fixture)
-- `desktop-development-canvas` → `acryl-development-canvas`
+- `acryl-development-canvas` (standalone package - row id matches the
+  package name, not the `desktop-` sub-export convention above)
 - `desktop-diagnostics` → `acryl-desktop/diagnostics`
 - `desktop-notifications` → `acryl-desktop/notifications`
 - `desktop-pnpm` → `acryl-desktop/pnpm`
@@ -72,7 +73,7 @@ but they have a different provenance from declarative Loader entries.
 ### `acryl-development-canvas/`
 
 Development Canvas is a standalone Host/Client Cordis package. Its own bundle
-patch inserts `desktop-development-canvas`; its Host Fiber owns PTY routes and
+patch inserts `acryl-development-canvas`; its Host Fiber owns PTY routes and
 processes, and its Client Fiber contributes through the Desktop-owned
 `desktop.main` slot. Desktop provides only the advanced frame and conversation
 fallback. Removing the Canvas row restores that fallback without polling or a
@@ -406,7 +407,7 @@ phase - whether that exact package specifier also appears in the Client graph.
 - `include:desktop-pnpm` -> `acryl-desktop/pnpm` - enabled - `active` - Client graph: no
 - `include:desktop-profiles` -> `acryl-desktop/profiles` - enabled - `active` - Client graph: no
 - `include:desktop-updates` -> `acryl-desktop/updates` - enabled - `active` - Client graph: no
-- `include:desktop-development-canvas` -> `acryl-development-canvas` - enabled - `active` - Client graph: yes
+- `include:acryl-development-canvas` -> `acryl-development-canvas` - enabled - `active` - Client graph: yes
 - `include:desktop-webserver` -> `acryl-desktop/webserver` - enabled - `active` - Client graph: no
 - `92aa6ef5` -> `@deepseek-ai/dsh-host-directory-picker-native` - enabled - `active` - Client graph: no
 - `cabb18d8` -> `@deepseek-ai/dsh-client-ui-directory-picker-native` - enabled - `active` - Client graph: yes

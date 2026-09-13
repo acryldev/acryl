@@ -4,13 +4,21 @@ Development Canvas follows the same law as the rest of ACRYL: **everything is a
 plugin**. It is not a Desktop subpath, a Desktop child plugin, or unconditional
 logic inside the Electron bootstrap.
 
+**Provenance note**: the package has since been extracted out of this
+workspace entirely (`acryldev/acryl-development-canvas` on GitHub, published
+to npm) and is no longer a pnpm workspace member here — Desktop no longer
+force-loads it by default. It is a Market-install-only plugin, same as any
+third-party bundle. The design and Fiber-ownership description below still
+holds; the `pnpm --filter acryl-development-canvas` commands referenced
+further down only work from a checkout of that separate repo.
+
 ## Package and composition
 
 Canvas owns the independent `acryl-development-canvas` PNPM workspace and
 package. Its bundle patch contributes one stable Loader row:
 
 ```yaml
-- id: desktop-development-canvas
+- id: acryl-development-canvas
   name: acryl-development-canvas
 ```
 
@@ -22,7 +30,7 @@ A profile patch can disable the whole capability without editing either
 package:
 
 ```yaml
-- id: desktop-development-canvas
+- id: acryl-development-canvas
   disabled: true
 ```
 

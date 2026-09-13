@@ -31,9 +31,9 @@ export interface ManagedPluginLifecycleEntry {
  * host in `acryl-harness-runtime`).
  */
 export const MANAGED_PLUGIN_LIFECYCLE_ENTRIES = Object.freeze({
-  'include:desktop-development-canvas': Object.freeze({
-    entryId: 'include:desktop-development-canvas',
-    patchId: 'desktop-development-canvas',
+  'include:acryl-development-canvas': Object.freeze({
+    entryId: 'include:acryl-development-canvas',
+    patchId: 'acryl-development-canvas',
     moduleName: 'acryl-development-canvas',
     clientPackage: 'acryl-development-canvas',
   }),

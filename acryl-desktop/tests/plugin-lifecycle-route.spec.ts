@@ -16,7 +16,7 @@ const SNAPSHOT: PluginLifecycleSnapshot = { entries: [], blend: null }
 const RECEIPT: PluginLifecycleReceipt = {
   accepted: true,
   action: 'reload',
-  entryIds: ['include:desktop-development-canvas'],
+  entryIds: ['include:acryl-development-canvas'],
   rendererReloadRequired: true,
   snapshot: SNAPSHOT,
 }
@@ -95,13 +95,13 @@ describe('plugin lifecycle private routes', () => {
     const control = controller()
     const res = response()
     await handler(
-      request('POST', { entryId: 'include:desktop-development-canvas' }),
+      request('POST', { entryId: 'include:acryl-development-canvas' }),
       res,
       ORIGIN,
       control,
     )
     expect(res.statusCode).toBe(200)
-    expect(control.setEnabled).toHaveBeenCalledWith('include:desktop-development-canvas', enabled)
+    expect(control.setEnabled).toHaveBeenCalledWith('include:acryl-development-canvas', enabled)
   })
 
   it('accepts reload-all and exact-entry reload requests', async () => {
@@ -112,18 +112,18 @@ describe('plugin lifecycle private routes', () => {
 
     const one = response()
     await handlePluginLifecycleReloadRequest(
-      request('POST', { entryId: 'include:desktop-development-canvas' }),
+      request('POST', { entryId: 'include:acryl-development-canvas' }),
       one,
       ORIGIN,
       control,
     )
-    expect(control.reload).toHaveBeenNthCalledWith(2, 'include:desktop-development-canvas')
+    expect(control.reload).toHaveBeenNthCalledWith(2, 'include:acryl-development-canvas')
   })
 
   it.each([
-    ['enable', handlePluginLifecycleEnableRequest, { entryId: 'include:desktop-development-canvas' }],
-    ['disable', handlePluginLifecycleDisableRequest, { entryId: 'include:desktop-development-canvas' }],
-    ['reload', handlePluginLifecycleReloadRequest, { entryId: 'include:desktop-development-canvas' }],
+    ['enable', handlePluginLifecycleEnableRequest, { entryId: 'include:acryl-development-canvas' }],
+    ['disable', handlePluginLifecycleDisableRequest, { entryId: 'include:acryl-development-canvas' }],
+    ['reload', handlePluginLifecycleReloadRequest, { entryId: 'include:acryl-development-canvas' }],
   ] as const)('responds before requesting a Desktop generation restart after %s', async (_name, handler, body) => {
     const control = controller()
     const res = response()

@@ -57,6 +57,22 @@ research note:
 6. **Verification** — real Loader activation plus PENDING/reactivation,
    provider replacement, disposal, repeated mount/reload, and leak checks.
 
+**Loader row id naming.** A Loader row's `id` (what `include:` prefixes)
+must equal its package name by default — `acryl-development-canvas` gets
+row id `acryl-development-canvas`, never an unrelated shorthand a reader
+has to look up in the package's own `cordis.patch.yml` to decode (fixed
+real instances of the anti-pattern: `acryl-development-canvas` itself
+shipped with row id `desktop-development-canvas` until this rule was
+written; `acryl-dsh-editor-plugin`'s row id is the still-unfixed, opaque
+`dsh-editor`, discovered only when it broke Desktop's boot — neither was
+a hypothetical). The one legitimate
+exception is a deliberately shared, multi-provider slot where the id names
+a *capability*, not a package, because more than one interchangeable
+package can fill it (e.g., the brand-slot pair, where `ui-brand-official`
+and `dsh-client-ui-brand-acryl` both occupy the same swap slot by design).
+That exception must be named as such in the mini-design (point 4 above) —
+it is never a default excuse for an unrelated or abbreviated id.
+
 Use function plugins by default and `Service` classes for direct named
 capabilities. Consumers depend on stable service interfaces through `inject`,
 not concrete providers or YAML row order. Cordis/Harness registrations are
