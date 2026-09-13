@@ -136,6 +136,37 @@ describe('createAcrylCodingCapabilityPatches', () => {
     expect(createAcrylCodingCapabilityPatches(new Set())).toEqual([])
   })
 
+  it('drops an insert whose id the profile already composes (spec 034 T008)', () => {
+    // A profile booted through the tui flavor is not necessarily tui-shaped:
+    // `--profile <name>` can point at one created with Desktop/Web's own
+    // richer bundle, which already carries agent-presets/session-stats
+    // natively. Composing the tui capabilities on top of that used to insert
+    // the same row id a second time and throw `duplicate loader entry id` at
+    // boot - the existingRowIds filter is what this test guards.
+    const withoutExisting = shapeOf(createAcrylCodingCapabilityPatches(new Set(['tui'])))
+    expect(withoutExisting.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization'])
+
+    const withExisting = shapeOf(
+      createAcrylCodingCapabilityPatches(new Set(['tui']), new Set(['agent-presets'])),
+    )
+    expect(withExisting.insertedIds).toEqual(['session-stats', 'authorization'])
+  })
+
+  it('drops every insert of a fully-provided capability, not just its first row', () => {
+    const allProvided = shapeOf(
+      createAcrylCodingCapabilityPatches(
+        new Set(['tui']),
+        new Set(['agent-presets', 'session-stats', 'authorization']),
+      ),
+    )
+    expect(allProvided).toEqual({ idRows: ['system-prompt'], insertedIds: [] })
+  })
+
+  it('still inserts a row existingRowIds does not name', () => {
+    const patches = shapeOf(createAcrylCodingCapabilityPatches(new Set(['tui']), new Set(['some-other-row'])))
+    expect(patches.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization'])
+  })
+
   it('returns fresh patches a caller may mutate without affecting the next surface', () => {
     const first = createAcrylCodingCapabilityPatches(new Set(['tui']))
     const [firstPatch] = first

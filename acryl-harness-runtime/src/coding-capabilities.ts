@@ -135,16 +135,33 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
 /**
  * The patches one root composes, for the surfaces that root serves.
  *
+ * `existingRowIds` names rows the target profile's own bundle already
+ * composes before these patches apply (e.g. a `desktop`/`web`-flavored
+ * profile booted through the CLI/TUI's own generic `--profile <name>` path,
+ * whose `dsh-web-app`-based bundle already carries `agent-presets` natively).
+ * An `insert` is a Loader row that must not already exist - unlike a plain
+ * `id`-targeted patch, which only overrides one - so an `insert` entry whose
+ * id is already present is dropped rather than composed a second time: the
+ * capability's actual intent ("this profile ends up with the row") is
+ * already satisfied by the bundle, and inserting again throws `duplicate
+ * loader entry id` at boot (spec 034 T008). This does not special-case any
+ * one row id; it holds for every declared capability.
+ *
  * Returns fresh objects on every call (`structuredClone`), because callers hand
  * the result to a Loader composition that mutates it, and a shared frozen
  * declaration would leak one surface's edits into the next root.
  */
 export function createAcrylCodingCapabilityPatches(
   surfaces: ReadonlySet<AcrylSurface>,
+  existingRowIds: ReadonlySet<string> = new Set(),
 ): readonly PatchOptions[] {
-  return structuredClone(
-    ACRYL_CODING_CAPABILITIES
-      .filter(capability => capability.surfaces.some(surface => surfaces.has(surface)))
-      .flatMap(capability => capability.loaderPatches),
-  )
+  const patches = ACRYL_CODING_CAPABILITIES
+    .filter(capability => capability.surfaces.some(surface => surfaces.has(surface)))
+    .flatMap(capability => capability.loaderPatches)
+    .flatMap((patch): readonly PatchOptions[] => {
+      if (patch.insert === undefined) return [patch]
+      const insert = patch.insert.filter(row => row.id === undefined || !existingRowIds.has(row.id))
+      return insert.length > 0 ? [{ ...patch, insert }] : []
+    })
+  return structuredClone(patches)
 }

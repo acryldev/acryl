@@ -118,6 +118,44 @@ describe('the extracted dsh engine, mounted under createAcrylEngineHost', () => 
   })
 })
 
+describe('CLI/TUI flavor booting a profile another surface already initialized (spec 034 T008)', () => {
+  it('does not throw duplicate loader entry id when --profile names an existing web-flavored profile', async () => {
+    await freshDshHome()
+    const installPackageUrl = new URL('../package.json', import.meta.url).href
+    // First, initialize the 'web' profile directory with its own richer
+    // template (dsh-web-app), which already composes agent-presets/persona/
+    // session-stats natively - exactly what a real Desktop/Web profile looks
+    // like on disk (`acryl plugin list --profile desktop`'s real-world
+    // reproduction, spec 034 tasks.md T008).
+    const webHost = await createAcrylEngineHost({
+      engines: [createWebEngineDefinition(installPackageUrl)],
+      initialEngine: 'dsh',
+      prepare: hostCtx => {
+        provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} })
+      },
+    })
+    await webHost.dispose()
+
+    // Now boot the SAME on-disk profile directory through the CLI/TUI's own
+    // generic --profile flavor. Before the fix, ACRYL's own tui-only
+    // agent-roster insert collided with the row the web bundle already
+    // composed, throwing `duplicate loader entry id: agent-presets` at boot.
+    const cliHost = await createAcrylEngineHost({
+      engines: [createDshEngineDefinition('web')],
+      initialEngine: 'dsh',
+    })
+    try {
+      expect(cliHost.currentEngine()).toBe('dsh')
+      expect(cliHost.ctx.get('sessions')).toBeDefined()
+      const entries = [...cliHost.ctx.loader.entries()]
+      const agentPresetsRows = entries.filter(candidate => candidate.options.id === 'agent-presets')
+      expect(agentPresetsRows).toHaveLength(1)
+    } finally {
+      await cliHost.dispose()
+    }
+  }, 30000)
+})
+
 describe('the web engine entry point, mounted under createAcrylEngineHost', () => {
   it('boots the pinned web profile in the host tree, with shared authorization and a token-authenticated connection', async () => {
     await freshDshHome()

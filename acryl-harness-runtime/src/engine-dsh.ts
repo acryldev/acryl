@@ -247,9 +247,16 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
   const profile = loadProfile('acryl', profileName, dshInstallAnchor)
   const rootConfig = join(profile.dir, 'cordis.yml')
   writeFileSync(rootConfig, profileRoot)
+  const profileLayerPatches = profile.layers.flatMap(layer => layer.patches)
+  // A profile directory booted through this CLI/TUI flavor is not necessarily
+  // tui-shaped: `--profile <name>` can point at one created by Desktop/Web's
+  // own richer template, whose bundle already composes agent-presets/persona/
+  // session-stats natively. Without this, ACRYL's own tui-only insert of the
+  // same row ids collides at boot (spec 034 T008).
+  const existingRowIds = new Set(composeEntries([profileLayerPatches]).map(entry => entry.id))
   const patches = structuredClone([
-    ...profile.layers.flatMap(layer => layer.patches),
-    ...createAcrylCodingCapabilityPatches(new Set(['tui'])),
+    ...profileLayerPatches,
+    ...createAcrylCodingCapabilityPatches(new Set(['tui']), existingRowIds),
     ...profile.patches,
   ])
   // The profile's own user overrides come from the shared store, not from this
@@ -329,9 +336,14 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   const profile = loadProfile('web', profileName, dshInstallAnchor)
   const rootConfig = join(profile.dir, 'cordis.yml')
   writeFileSync(rootConfig, profileRoot)
+  const profileLayerPatches = profile.layers.flatMap(layer => layer.patches)
+  // Same reasoning as the CLI/TUI flavor above: this profile's own bundle may
+  // already compose a row ACRYL's own capability table would otherwise insert
+  // a second time (spec 034 T008).
+  const existingRowIds = new Set(composeEntries([profileLayerPatches]).map(entry => entry.id))
   const patches = structuredClone([
-    ...profile.layers.flatMap(layer => layer.patches),
-    ...createAcrylCodingCapabilityPatches(new Set(['web'])),
+    ...profileLayerPatches,
+    ...createAcrylCodingCapabilityPatches(new Set(['web']), existingRowIds),
     ...profile.patches,
   ])
   // Brand swap: same technique and same row id as acryl-desktop's own
