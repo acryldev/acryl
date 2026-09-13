@@ -331,8 +331,13 @@ class DesktopPnpmService extends Service implements DesktopPnpm {
     }
     const resolvedArgs = validateExternalMarketInstallArgs(args)
     assertAbsolutePath('plugin invoking directory', invokingDir)
+    // Same profile-is-workspace-root fix as installPlugin below - see its
+    // comment for the reproduction.
+    const withWorkspaceRoot = resolvedArgs.includes('-w') || resolvedArgs.includes('--workspace-root')
+      ? resolvedArgs
+      : [...resolvedArgs, '-w']
     return this.start({
-      argv: this.directPnpmArgv(resolvedArgs.map(argument => anchorRelativeSpec(argument, invokingDir))),
+      argv: this.directPnpmArgv(withWorkspaceRoot.map(argument => anchorRelativeSpec(argument, invokingDir))),
       cwd: this.bootstrap.activeProfileDir,
       onSuccess: this.reconcileClosure(),
       ...(signal === undefined ? {} : { signal }),
@@ -388,6 +393,13 @@ class DesktopPnpmService extends Service implements DesktopPnpm {
           'add',
           ...resolvedOptions,
           ...(resolvedOptions.includes('--save-exact') ? [] : ['--save-exact']),
+          // Each profile is its own single-package pnpm workspace root, so a
+          // bare `pnpm add` trips pnpm's own workspace-root safety check
+          // (ERR_PNPM_ADDING_TO_ROOT) - reproduced directly against a real
+          // Market install ("The desktop package manager did not complete
+          // successfully", a 502 on operations/execute). Web's own
+          // installPlugin already always appends this for the same reason.
+          ...(resolvedOptions.includes('-w') || resolvedOptions.includes('--workspace-root') ? [] : ['-w']),
           target,
         ]),
         cwd: this.bootstrap.activeProfileDir,

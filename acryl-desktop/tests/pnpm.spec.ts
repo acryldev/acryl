@@ -235,7 +235,7 @@ describe('desktop pnpm Host service', () => {
       )
 
       expect(harness.spawn.mock.calls[0]?.[0].argv).toEqual(
-        directPnpmArgv(selectedBootstrap, ['add', '--reporter=ndjson', '@scope/example-plugin@1.2.3']),
+        directPnpmArgv(selectedBootstrap, ['add', '--reporter=ndjson', '@scope/example-plugin@1.2.3', '-w']),
       )
       expect(harness.spawn.mock.calls[0]?.[0].cwd).toBe(selectedBootstrap.activeProfileDir)
       expect(existsSync(selectedBootstrap.installRecoveryStatePath)).toBe(false)
@@ -299,7 +299,7 @@ describe('desktop pnpm Host service', () => {
       await expect(operation.done).resolves.toEqual({ exitCode: 0, signal: null })
 
       expect(harness.spawn.mock.calls[0]?.[0].argv).toEqual(
-        directPnpmArgv(selectedBootstrap, ['add', '--save-exact', 'example-plugin@1.0.0']),
+        directPnpmArgv(selectedBootstrap, ['add', '--save-exact', '-w', 'example-plugin@1.0.0']),
       )
       expect(harness.spawn.mock.calls[0]?.[0].cwd).toBe(selectedBootstrap.activeProfileDir)
       expect(JSON.parse(readFileSync(selectedBootstrap.installRecoveryStatePath, 'utf8'))).toMatchObject({
@@ -409,7 +409,7 @@ describe('desktop pnpm Host service', () => {
       )
 
       expect(harness.spawn.mock.calls[0]?.[0].argv).toEqual(
-        directPnpmArgv(selectedBootstrap, ['add', '--save-exact', 'legacy-plugin@1.2.3']),
+        directPnpmArgv(selectedBootstrap, ['add', '--save-exact', '-w', 'legacy-plugin@1.2.3']),
       )
       finish(child)
       await operation.done
