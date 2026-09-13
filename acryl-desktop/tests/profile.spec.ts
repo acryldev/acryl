@@ -157,6 +157,25 @@ describe('desktop profile composition', {
     expect(repaired.custom.preserved).toBe(true)
   })
 
+  it('allows node-pty native builds on a fresh profile and repairs one missing it', () => {
+    const home = temporaryHome()
+    const dir = ensureDesktopProfile(home)
+    const workspacePath = join(dir, 'pnpm-workspace.yaml')
+    // A fresh profile already has it - Development Canvas's real node-pty
+    // dependency must build without a second boot to repair anything.
+    expect(readFileSync(workspacePath, 'utf8')).toMatch(/allowBuilds:\s*\n\s*node-pty:\s*true/u)
+
+    // Simulate a profile from before this fix existed (or one where pnpm's
+    // own upstream template changed underneath it) - reproduced directly:
+    // without this, a real Market install of acryl-development-canvas rolls
+    // back with "The desktop package manager did not complete successfully"
+    // because pnpm silently skips node-pty's build (ERR_PNPM_IGNORED_BUILDS)
+    // and the post-install bundle-validity check then rejects it.
+    writeFileSync(workspacePath, 'packages:\n  - .\n')
+    ensureDesktopProfile(home)
+    expect(readFileSync(workspacePath, 'utf8')).toMatch(/allowBuilds:\s*\n\s*node-pty:\s*true/u)
+  })
+
   it('migrates the obsolete Desktop bundle before loading a historical profile', () => {
     const home = temporaryHome()
     const dir = ensureDesktopProfile(home)

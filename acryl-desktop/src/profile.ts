@@ -284,6 +284,31 @@ function sameList(left: readonly string[], right: readonly string[]): boolean {
 }
 
 /**
+ * A profile's own `pnpm-workspace.yaml` (from `initProfile`'s fixed upstream
+ * template) never allows any dependency's install/postinstall script to run -
+ * pnpm's own security default for a bare `add`. `acryl-development-canvas`
+ * needs `node-pty`'s real native build to do anything useful; without this,
+ * pnpm silently skips it (`ERR_PNPM_IGNORED_BUILDS`), and the Market's own
+ * post-install `assertInstalledBundle` check then rejects the bundle as
+ * invalid and rolls the whole install back - surfaced to the user as the
+ * generic "The desktop package manager did not complete successfully",
+ * reproduced directly against a real Market install. `initProfile` itself
+ * takes no template-override parameter (its signature is fixed upstream), so
+ * this repairs the file the same way `ensureDesktopProfile` already repairs
+ * `dsh.profile.bundles` below - idempotently, on every boot, not just at
+ * first creation, so an existing profile self-heals too.
+ * @param dir - the profile directory.
+ */
+function ensureProfileAllowsNativeBuilds(dir: string): void {
+  const path = join(dir, 'pnpm-workspace.yaml')
+  if (!existsSync(path)) return
+  const document = parseDocument(readFileSync(path, 'utf8'), { prettyErrors: true })
+  if (document.getIn(['allowBuilds', 'node-pty']) === true) return
+  document.setIn(['allowBuilds', 'node-pty'], true)
+  writeFileSync(path, document.toString())
+}
+
+/**
  * Initialize or repair the persistent desktop profile.
  * @param home - Harness home containing the profiles directory.
  * @returns the absolute profile directory.
@@ -291,6 +316,7 @@ function sameList(left: readonly string[], right: readonly string[]): boolean {
 export function ensureDesktopProfile(home: string = resolveDshHome()): string {
   const dir = resolveProfileDir(DESKTOP_PROFILE_NAME, home)
   if (!existsSync(join(dir, 'package.json'))) initProfile(dir, REQUIRED_BUNDLES)
+  ensureProfileAllowsNativeBuilds(dir)
   const manifest = readProfileManifest(BIN_NAME, dir)
   const rawBundles = (manifest.dsh?.profile as { bundles?: unknown } | undefined)?.bundles
   if (rawBundles !== undefined
@@ -342,6 +368,7 @@ function loadRecoveryFilteredProfile(
     }
     initProfile(profileDir, template.bundles, template.patchReload)
   }
+  ensureProfileAllowsNativeBuilds(profileDir)
   const manifest = readProfileManifest(BIN_NAME, profileDir)
   // Mirror dsh-app-boot's own `loadProfile`: an absent manifest value defaults
   // to live reload, matching the shipped template's own launcher behavior.
