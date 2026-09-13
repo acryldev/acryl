@@ -4459,3 +4459,73 @@ and test suite green, including `acryl-desktop`.
 CLI's own install verb (spec 034 T006's original "at least one non-Electron
 surface" wording covers either) remains open - Web was the one driven to
 completion because it was the one under active user testing.
+
+## 2026-09-13 - fix: Desktop's Market install was blocked by pnpm-workspace.yaml, not just a missing flag (spec 034 T006)
+
+Commits: `71c7df7`, `e321be1`
+
+Repeated real-world retests of Desktop's Market install kept failing ("The
+desktop package manager did not complete successfully", surfaced in the UI as
+a 502 from `/api/community-market/operations/execute`) even after `71c7df7`
+added `-w` to every Market `pnpm add` to match Web's own invocation. `e321be1`
+found the actual root cause: a profile's `pnpm-workspace.yaml` - written by
+`initProfile`'s fixed upstream template, which takes no override parameter -
+never allows any dependency's install/postinstall script to run at all.
+`node-pty` (a real dependency of at least one Market plugin) needs its real
+native build to be usable; pnpm silently skips it
+(`ERR_PNPM_IGNORED_BUILDS`), and the Market's own post-install
+`assertInstalledBundle` check then rejects the resulting bundle as invalid
+and rolls the whole install back. A prior fix session had patched one
+already-running profile's `pnpm-workspace.yaml` by hand and confirmed the
+install then succeeds end to end (package installed, `node-pty`'s real
+darwin-arm64 binary built, live-activated with `restartRequired: false`) -
+but that was a one-off patch, not a real fix: a fresh profile installing
+Canvas (or any native-dependency plugin) for the first time would hit the
+identical wall.
+
+`ensureProfileAllowsNativeBuilds()` repairs this the same way
+`ensureDesktopProfile()` already repairs `dsh.profile.bundles` -
+idempotently, on every boot, for both a brand-new profile and an existing one
+missing the setting. Wired into both real profile-loading paths
+(`ensureDesktopProfile` and `loadRecoveryFilteredProfile`). Verified with a
+real test: a fresh profile already has it with no second boot needed, and a
+profile stripped back to a bare `pnpm-workspace.yaml` (the "never had this
+fix" case) is repaired on the very next call.
+
+A real end-to-end GUI retest (install Development Canvas from the Market,
+confirm it activates with no restart) is still open - only the user can run
+that.
+
+## 2026-09-13 - feat(cli): /market command - browse, install, and hot-reload plugins (spec 034 T006)
+
+Commit: `0092490`
+
+Completes the third surface: CLI/TUI now has the same install + live-reload
+capability Web and Desktop already have, closing the gap that was blocking
+"all 3 surfaces can install a plugin and hot-reload it" as a real, tested bar
+rather than a claim.
+
+`cli-market-install.ts`/`cli-market-plugins.ts` (`acryl-harness-runtime`):
+CLI-flavored `desktopProfiles`/`desktopPnpm`/`desktopPlugins`/
+`livePluginActivation`, adapted directly from the proven Web versions.
+The one real difference: the CLI has more than one named profile (Web's is
+always `"web"`), so the profile name comes from the booted composition's own
+directory, not a literal. `engine-dsh.ts` mounts these for
+`composition.surface === 'tui'`, with the same ordering constraint as Web
+(`desktopPlugins` before `desktopProfiles`, since `dsh-community-market`'s own
+`ctx.inject` reads the former). `MarketOverlay.ts` gives the TUI a `/market`
+overlay/command.
+
+Verified end to end with a real PTY session (`market-pty-smoke.mjs`, not a
+mock): navigation selects `acryl-dsh-editor-plugin-cli` specifically, install
+succeeds, live-activation succeeds, and `/files` - the newly-installed
+plugin's own contributed command - opens and renders a real directory
+listing in the same running process, no restart. A first test run had a bug
+in its own item-selection timing (installed the wrong catalog entry) and was
+corrected before trusting the result.
+
+With this and the Desktop root-cause fix above, all three surfaces install
+and live-activate a Market plugin without a process restart. What remains for
+spec 034 to close: T007 (retire `acryl-desktop`'s now-dead private
+plugin-lifecycle duplication), T008 (the cross-surface duplicate-loader-entry
+parity gap), and the real end-to-end GUI retest on Desktop.

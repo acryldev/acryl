@@ -179,9 +179,41 @@ TypeScript declaration-merging conflict with `acryl-desktop`'s own
 `declare module` augmentation needed in the new file at all - `Service`'s
 constructor takes a plain `name: string`).
 
-CLI's own `dsh plugin add`-equivalent install verb (mentioned as "at least
-one non-Electron surface" above) remains open - Web was the one driven to
-completion because it was the one under active user testing.
+**CLI landed 2026-09-13, commit `0092490`.** `cli-market-install.ts`/
+`cli-market-plugins.ts` (`acryl-harness-runtime`) adapt Web's proven
+`desktopProfiles`/`desktopPnpm`/`desktopPlugins`/`livePluginActivation` for
+`composition.surface === 'tui'`, mounted in `engine-dsh.ts` with the same
+ordering constraint as Web (`desktopPlugins` before `desktopProfiles`, since
+`dsh-community-market`'s own `ctx.inject` reads the former). The one real
+difference from Web: the CLI has more than one named profile (Web's is always
+`'web'`), so the profile name comes from the booted composition's own
+directory, not a literal. `MarketOverlay.ts` gives the TUI a `/market` command;
+verified end to end with a real PTY session (`market-pty-smoke.mjs`):
+navigate, install a real catalog plugin, live-activate with no restart, then
+use the newly-installed plugin's own contributed command in the same running
+process. All three surfaces (Web `8833eca`, Desktop's pre-existing
+`desktop-plugin-reconcile.ts`, CLI `0092490`) now install and live-activate a
+Market plugin without a process restart - the spec's original per-surface
+install-verb gap is closed.
+
+**Desktop's install path had a deeper bug than the missing `-w` flag.**
+`71c7df7` (2026-09-13) added `-w` to every Market `pnpm add`, matching Web's
+invocation, but repeated real-world retests still failed ("The desktop
+package manager did not complete successfully"). `e321be1` (2026-09-13) found
+the actual root cause: a profile's `pnpm-workspace.yaml` (from `initProfile`'s
+fixed upstream template, which takes no override parameter) never allows any
+dependency's install/postinstall script to run at all - `node-pty` (a real
+dependency of at least one Market plugin) needs its native build to be usable,
+pnpm silently skips it (`ERR_PNPM_IGNORED_BUILDS`), and the Market's own
+post-install `assertInstalledBundle` check then rejects the bundle and rolls
+the whole install back. `ensureProfileAllowsNativeBuilds()` repairs this the
+same way `ensureDesktopProfile()` already repairs `dsh.profile.bundles` -
+idempotently, on every boot, wired into both real profile-loading paths
+(`ensureDesktopProfile` and `loadRecoveryFilteredProfile`). Verified with a
+real test: a fresh profile already has the setting with no second boot
+needed, and a profile stripped back to a bare `pnpm-workspace.yaml` is
+repaired on the very next call. A real end-to-end GUI retest by the user is
+still the open item (see Ledger).
 
 ## T007 - Retire the desktop-private duplication
 
