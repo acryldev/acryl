@@ -17,6 +17,11 @@ acryl-web/lib/
 release-artifacts/
 
 .cgr-hash-cache.json
+.cgr-dir-mtimes.json
+.cgr-exclusion-state.json
+.cgr-parser-fingerprint
+.qdrant_code_embeddings/
 
 # session context extractor  https://github.com/handyutils/sctxx/ coding agent Session Context Extractor. standalone, agent-agnostic CLI. produces a compact, verified, provenance-linked handoff artifact that any other coding agent can load to continue the work. LLM-anchored fold.
 .sctxx
+.ccompactor
