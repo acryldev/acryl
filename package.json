@@ -43,6 +43,7 @@
     "upstream:version": "cd deepseek-harness && corepack pnpm --version",
     "upstream:install": "cd deepseek-harness && corepack pnpm install --frozen-lockfile",
     "upstream:build": "cd deepseek-harness && corepack pnpm run build",
+    "graft:deepscan": "node scripts/graft-deepscan.mjs",
     "tui": "node apps/acryl-cli/bin/dev-run.mjs",
     "tui:resume": "node apps/acryl-cli/bin/dev-run.mjs --resume",
     "acryl": "node apps/acryl-cli/bin/dev-run.mjs",
