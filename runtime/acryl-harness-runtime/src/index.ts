@@ -19,8 +19,11 @@ export {
   type InstallSessionLogExporterOptions,
 } from './session-log-exporter.ts'
 export {
+  ACRYL_DEV_HOME_DIR_NAME,
   ACRYL_DSH_ENGINE_DIR_NAME,
   ACRYL_HOME_DIR_NAME,
+  applyIsolatedDevHomeDefault,
+  resolveAcrylDevDshHome,
   resolveAcrylDshHome,
   resolveAcrylHome,
 } from './acryl-home.ts'

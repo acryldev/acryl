@@ -10,7 +10,11 @@ import {
   createLaunchEnvironmentSnapshot,
   DSH_LAUNCH_ENVIRONMENT_KEY,
 } from '@deepseek-ai/dsh-launch-environment'
+import { applyIsolatedDevHomeDefault } from 'acryl-harness-runtime'
 import { DESKTOP_SETTINGS_NAMESPACE } from '../lib/index.js'
+
+// See the matching comment in verify-loader-boot.mjs.
+applyIsolatedDevHomeDefault()
 import { installDesktopPnpmRuntime } from '../lib/desktop-runtime-environment.js'
 import { installProfilePackageResolver } from '../lib/module-resolution.js'
 import { prepareDesktopProfile } from '../lib/profile.js'

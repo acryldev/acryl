@@ -7,6 +7,13 @@ import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
+import { applyIsolatedDevHomeDefault } from 'acryl-harness-runtime'
+
+// See the matching comment in verify-loader-boot.mjs. The Electron child
+// this script spawns inherits `process.env`, so setting the default here
+// (before the child's own env is assembled below) is what actually makes
+// the isolated home reach the booted app.
+applyIsolatedDevHomeDefault()
 
 const execFileAsync = promisify(execFile)
 const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)))
