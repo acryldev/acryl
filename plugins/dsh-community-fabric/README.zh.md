@@ -51,8 +51,8 @@ Capability 声明有助于兼容判断、用户确认和审计，但它**不会�
 - [调研：Koishi、Chrome 与 VS Code 的成熟模式](docs/research/mature-plugin-frameworks.zh.md)
 - [调研：VS Code 扩展模型及其对 RFC 的价值](docs/research/vscode-extension-model.zh.md)
 - [调研：真实 DSH 插件需要什么](docs/research/dsh-plugin-needs.zh.md)
-- [当前可用的 DSH 插件开发方式](../docs/plugin-development.md)
-- [DSH 插件生态倡议书](../docs/plugin-ecosystem.md)
+- [当前可用的 DSH 插件开发方式](../../docs/plugin-development.md)
+- [DSH 插件生态倡议书](../../docs/plugin-ecosystem.md)
 
 RFC 是社区讨论稿，不是 DeepSeek 或 DSH 官方标准。欢迎通过 issue、discussion 或 PR 提出修改；插件作者、GUI / Web UI / TUI 维护者、启动器与市场维护者、安全研究者和普通用户都可以参与。
 

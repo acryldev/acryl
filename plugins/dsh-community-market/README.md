@@ -2,7 +2,7 @@
 
 [中文说明](README.zh.md)
 
-DSH Community Market is the open plugin market built into [DSH Desktop](../README.en.md). It helps people discover community plugins and, on Desktop, install, manage, or remove npm packages that pass the Market Host's checks.
+DSH Community Market is the open plugin market built into [DSH Desktop](../../README.en.md). It helps people discover community plugins and, on Desktop, install, manage, or remove npm packages that pass the Market Host's checks.
 
 > **Current status: complete and built into DSH Desktop.** The package provides loadable Host and Client entries, persisted user-owned source records, a constrained HTTPS client, standard sources and reviewed cooperating-source adapters, an official **Plugin market** tab under **Settings > Plugins**, a sidebar launcher, Host-managed install and receipt-backed uninstall, plus fail-closed enable/disable controls for mutable direct bundles. This is not a claim that listed or installable plugin code is safe.
 
@@ -58,8 +58,8 @@ These checks establish package identity and a narrow compatibility boundary; the
 - [Catalog provider contract](docs/catalog-provider-contract.md): source manifests, query parameters, wire and normalized JSON, selected-source behavior, and the implementation handoff.
 - [Catalog adapter guide](docs/catalog-adapter-guide.md): the direct standard-source path, the reviewed adapter path for an existing API, and a mapping template.
 - [Security](SECURITY.md): trust model, reporting, and non-negotiable installation rules.
-- [Desktop plugin services](../acryl-desktop/docs/plugin-services.md): the `desktopProfiles` and `desktopPnpm` contracts used by Market package operations.
-- [DSH plugin development](../docs/plugin-development.en.md): the shared plugin model used by ordinary DSH and Desktop.
+- [Desktop plugin services](../../apps/acryl-desktop/docs/plugin-services.md): the `desktopProfiles` and `desktopPnpm` contracts used by Market package operations.
+- [DSH plugin development](../../docs/plugin-development.en.md): the shared plugin model used by ordinary DSH and Desktop.
 
 ## Delivery plan
 

@@ -51,8 +51,8 @@ Community review also exposed several important problems that should not be forc
 - [Research: lessons from Koishi, Chrome, and VS Code](docs/research/mature-plugin-frameworks.md)
 - [Research: the VS Code extension model and its RFC implications](docs/research/vscode-extension-model.md)
 - [Research: what real DSH plugins need](docs/research/dsh-plugin-needs.md)
-- [Existing DSH plugin development](../docs/plugin-development.en.md)
-- [Community plugin ecosystem manifesto](../docs/plugin-ecosystem.en.md)
+- [Existing DSH plugin development](../../docs/plugin-development.en.md)
+- [Community plugin ecosystem manifesto](../../docs/plugin-ecosystem.en.md)
 
 The RFC is a discussion draft, not an official DeepSeek or DSH standard. Open an issue, start a discussion, or propose edits by pull request. Plugin authors, GUI/Web UI/TUI maintainers, launcher maintainers, market maintainers, security reviewers, and ordinary users are all invited.
 

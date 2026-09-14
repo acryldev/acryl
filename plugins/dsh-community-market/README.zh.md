@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-DSH Community Market 是 [DSH Desktop](../README.md) 内置的开放插件市场，用于发现社区插件；在 Desktop 中，还可以安装、管理或移除通过 Market Host 检查的 npm package。
+DSH Community Market 是 [DSH Desktop](../../README.md) 内置的开放插件市场，用于发现社区插件；在 Desktop 中，还可以安装、管理或移除通过 Market Host 检查的 npm package。
 
 > **当前状态：已完成并内置于 DSH Desktop。** Package 提供可加载的 Host/Client 入口、用户拥有的来源持久化、受限 HTTPS client、标准来源与受审合作来源 adapter，并在**设置 > 插件**中提供官方的**插件市场**标签页和侧边栏入口；同时支持 Host 受管安装、基于 receipt 的卸载，以及对可变 direct bundle 的 fail-closed 启用/禁用。这不表示被收录或显示为可安装的插件代码是安全的。
 
@@ -58,8 +58,8 @@ dshfind 可以提供包含精确稳定版本和 `repository_backlink` 证据、�
 - [目录提供方合同](docs/catalog-provider-contract.zh.md)：来源 manifest、查询参数、wire/标准化 JSON、单一已选来源行为和实现交接要求。
 - [目录适配器指南](docs/catalog-adapter-guide.zh.md)：标准来源直接接入、已有 API 的受审 adapter 接入路径和映射模板。
 - [安全说明](SECURITY.zh.md)：信任模型、漏洞反馈和不可妥协的安装规则。
-- [Desktop 插件服务](../acryl-desktop/docs/plugin-services.zh.md)：Market package 操作正在使用的 `desktopProfiles` 与 `desktopPnpm` 合同。
-- [DSH 插件开发](../docs/plugin-development.md)：普通 DSH 与 Desktop 共用的插件模型。
+- [Desktop 插件服务](../../apps/acryl-desktop/docs/plugin-services.zh.md)：Market package 操作正在使用的 `desktopProfiles` 与 `desktopPnpm` 合同。
+- [DSH 插件开发](../../docs/plugin-development.md)：普通 DSH 与 Desktop 共用的插件模型。
 
 ## 交付计划
 
