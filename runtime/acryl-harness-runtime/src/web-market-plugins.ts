@@ -121,7 +121,14 @@ export class WebPluginsService extends Service {
     return this.mintPreview(bundleId, true)
   }
 
-  private async execute(previewId: string, targetEnabled: boolean): Promise<{ readonly packageName: string }> {
+  // `controller.setEnabled()` applies the change through Cordis' own reactive
+  // Loader (`entry.update({ disabled: ... })`, spec 032's hot-reload
+  // mechanism) before resolving - a resolved call has already taken effect
+  // live, so success here always means `live: true`. `MarketDesktopPlugins`
+  // (dsh-community-market/src/host/routes.ts) requires this field to decide
+  // `restartRequired`; omitting it left `restartRequired` permanently `true`
+  // for Web regardless of whether the toggle actually applied live.
+  private async execute(previewId: string, targetEnabled: boolean): Promise<{ readonly packageName: string; readonly live: boolean }> {
     const preview = this.previews.get(previewId)
     if (preview === undefined || preview.targetEnabled !== targetEnabled) {
       throw new Error('web plugins: preview not found or expired')
@@ -129,14 +136,14 @@ export class WebPluginsService extends Service {
     this.previews.delete(previewId)
     if (Date.now() > preview.expiresAt) throw new Error('web plugins: preview expired')
     await this.controller.setEnabled(preview.entryId, targetEnabled)
-    return { packageName: preview.packageName }
+    return { packageName: preview.packageName, live: true }
   }
 
-  executeDisable(previewId: string): Promise<{ readonly packageName: string }> {
+  executeDisable(previewId: string): Promise<{ readonly packageName: string; readonly live: boolean }> {
     return this.execute(previewId, false)
   }
 
-  executeEnable(previewId: string): Promise<{ readonly packageName: string }> {
+  executeEnable(previewId: string): Promise<{ readonly packageName: string; readonly live: boolean }> {
     return this.execute(previewId, true)
   }
 }

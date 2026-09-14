@@ -101,7 +101,13 @@ export class CliPluginsService extends Service {
     return this.mintPreview(bundleId, true)
   }
 
-  private async execute(previewId: string, targetEnabled: boolean): Promise<{ readonly packageName: string }> {
+  // Same reasoning as WebPluginsService.execute() (web-market-plugins.ts):
+  // `controller.setEnabled()` applies live via Cordis' reactive Loader before
+  // resolving, so a resolved call always means `live: true`. Omitting this
+  // field left `MarketDesktopPlugins.executeEnable/executeDisable`'s
+  // `restartRequired` computation (dsh-community-market/src/host/routes.ts)
+  // permanently `true` for CLI too - same copy-pasted gap as Web had.
+  private async execute(previewId: string, targetEnabled: boolean): Promise<{ readonly packageName: string; readonly live: boolean }> {
     const preview = this.previews.get(previewId)
     if (preview === undefined || preview.targetEnabled !== targetEnabled) {
       throw new Error('cli plugins: preview not found or expired')
@@ -109,14 +115,14 @@ export class CliPluginsService extends Service {
     this.previews.delete(previewId)
     if (Date.now() > preview.expiresAt) throw new Error('cli plugins: preview expired')
     await this.controller.setEnabled(preview.entryId, targetEnabled)
-    return { packageName: preview.packageName }
+    return { packageName: preview.packageName, live: true }
   }
 
-  executeDisable(previewId: string): Promise<{ readonly packageName: string }> {
+  executeDisable(previewId: string): Promise<{ readonly packageName: string; readonly live: boolean }> {
     return this.execute(previewId, false)
   }
 
-  executeEnable(previewId: string): Promise<{ readonly packageName: string }> {
+  executeEnable(previewId: string): Promise<{ readonly packageName: string; readonly live: boolean }> {
     return this.execute(previewId, true)
   }
 }
