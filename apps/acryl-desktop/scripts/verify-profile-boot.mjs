@@ -39,6 +39,12 @@ try {
     '  default: minimal',
     '',
   ].join('\n'))
+  // Ensure pnpm's package linking mode matches the root workspace config, so
+  // when initProfile installs required bundles into the temp home's profile,
+  // packages are deep-copied rather than symlinked. Symlinks in a temp
+  // directory would point to paths in the original DSH home that don't exist
+  // in this isolated context, and the Loader would fail to resolve them.
+  writeFileSync(join(home, '.npmrc'), 'node-linker=isolated\n')
   const prepared = prepareDesktopProfile('1', home, 'win32')
   const hostServicePluginDir = join(
     prepared.profile.dir,
