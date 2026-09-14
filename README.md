@@ -5,15 +5,15 @@
 <h1 align="center">ACRYL - Agent Context Relay Yielding Lifecycles</h1>
 
 <p align="center">
-  <strong>One persistent development environment. One persistent project context. Any coding agent.</strong><br>
-  Agents may come and go. The work continues.
+  <strong>One persistent development environment. Universal plugin hot-reload across three surfaces.</strong><br>
+  Build, run, and swap coding agents without restarting. Install and reload plugins live.
 </p>
 
 <p align="center">
   <a href="https://github.com/acryldev/acryl">⭐ Support ACRYL</a> ·
   <a href="https://acryl.dev/">Website</a> ·
   <a href="https://acryl.dev/docs">Documentation</a> ·
-  <a href="https://github.com/acryldev/acryl/releases/tag/v0.1.19">Download v0.1.19</a> ·
+  <a href="https://github.com/acryldev/acryl/releases/tag/v0.2.0">Download v0.2.0</a> ·
   <a href="https://discord.gg/cY9KXMex69">Discord</a> ·
   <a href="https://github.com/acryldev/acryl">GitHub</a>
 </p>
@@ -22,13 +22,21 @@
   <a href="https://github.com/acryldev/acryl"><img src="https://img.shields.io/github/stars/acryldev/acryl?style=social" alt="Star ACRYL on GitHub"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2EA44F?style=flat" alt="MIT License"></a>
   <a href="https://discord.gg/cY9KXMex69"><img src="https://img.shields.io/badge/Discord-5865F2?style=flat&amp;logo=discord&amp;logoColor=white" alt="Join Discord"></a>
-  <img src="https://img.shields.io/badge/status-early%20development-F59E0B?style=flat" alt="Early development">
+  <img src="https://img.shields.io/badge/version-0.2.0-28A745?style=flat" alt="Version 0.2.0">
 </p>
 
 > [!IMPORTANT]
 > ACRYL is in active early development. Interfaces, workflows, and packaging may change while the first public foundation is established.
 
-## Install ACRYL v0.1.19
+## What's in v0.2.0
+
+**Universal plugin hot-reload** — Install and reload plugins live across Desktop, Web, and CLI without restarting the app.
+
+**Plugin market** — Browse, install, and manage community plugins through a unified market interface.
+
+**Multi-surface parity** — All three surfaces (Desktop, Web, CLI/TUI) share the same hot-reload and market capabilities.
+
+## Install ACRYL v0.2.0
 
 ACRYL has three product surfaces that share the same project model: the CLI, local Web, and Desktop GUI. They are deliberately separate installs, so installing one does not silently install or start the others. The TUI is the CLI's terminal renderer, not a fourth surface.
 
@@ -38,11 +46,11 @@ The GitHub Release assets below install the **ACRYL Desktop GUI**. The app carri
 
 | Platform | Desktop download |
 | --- | --- |
-| macOS - Apple Silicon | [DMG](https://github.com/acryldev/acryl/releases/download/v0.1.19/acryl-desktop-mac-arm64.dmg) |
-| macOS - Intel | [DMG](https://github.com/acryldev/acryl/releases/download/v0.1.19/acryl-desktop-mac-x64.dmg) |
-| Windows - x64 | [Installer](https://github.com/acryldev/acryl/releases/download/v0.1.19/acryl-desktop-win-x64.exe) |
-| Linux - x64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.1.19/dsh-plugin-desktop_0.1.9_amd64.deb) |
-| Linux - arm64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.1.19/dsh-plugin-desktop_0.1.9_arm64.deb) |
+| macOS - Apple Silicon | [DMG](https://github.com/acryldev/acryl/releases/download/v0.2.0/acryl-desktop-mac-arm64.dmg) |
+| macOS - Intel | [DMG](https://github.com/acryldev/acryl/releases/download/v0.2.0/acryl-desktop-mac-x64.dmg) |
+| Windows - x64 | [Installer](https://github.com/acryldev/acryl/releases/download/v0.2.0/acryl-desktop-win-x64.exe) |
+| Linux - x64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.2.0/dsh-plugin-desktop_0.2.0_amd64.deb) |
+| Linux - arm64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.2.0/dsh-plugin-desktop_0.2.0_arm64.deb) |
 
 ### CLI terminal
 
