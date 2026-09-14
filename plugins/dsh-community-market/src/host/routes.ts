@@ -521,9 +521,9 @@ export interface MarketDesktopPluginEnablePreview {
 export interface MarketDesktopPlugins {
   list(): readonly MarketDesktopPluginBundle[]
   previewDisable(bundleId: string): MarketDesktopPluginDisablePreview
-  executeDisable(previewId: string): Promise<{ readonly packageName: string }>
+  executeDisable(previewId: string): Promise<{ readonly packageName: string; readonly live: boolean }>
   previewEnable(bundleId: string): MarketDesktopPluginEnablePreview
-  executeEnable(previewId: string): Promise<{ readonly packageName: string }>
+  executeEnable(previewId: string): Promise<{ readonly packageName: string; readonly live: boolean }>
   isDisabled(packageName: string): boolean
   disabledPackageNames(): readonly string[]
 }
@@ -1334,7 +1334,7 @@ export function registerMarketRoutes(
                 throw new MarketInstallError('conflict', 'The selected plugin ownership changed before it could be enabled.')
               }
             }
-            let changed: { readonly packageName: string }
+            let changed: { readonly packageName: string; readonly live: boolean }
             try {
               changed = action === 'disable'
                 ? await desktopPlugins.executeDisable(previewId)
@@ -1357,7 +1357,7 @@ export function registerMarketRoutes(
             }
             const restartToken = randomUUID()
             rememberDesktopToken(desktopPluginRestartTokens, restartToken, Date.now() + 5 * 60 * 1000)
-            result = { action, packageName: changed.packageName, restartToken }
+            result = { action, packageName: changed.packageName, restartToken, restartRequired: !changed.live }
           } else {
             const install = installProvider.get()
             if (install === undefined) {

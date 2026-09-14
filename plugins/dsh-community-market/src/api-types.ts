@@ -208,11 +208,15 @@ export type MarketOperationExecuteResponse =
       readonly action: 'disable'
       readonly packageName: string
       readonly restartToken: string
+      /** `false` when the Host unmounted the plugin live; the Renderer reloads instead of prompting a restart. */
+      readonly restartRequired: boolean
     }
   | {
       readonly action: 'enable'
       readonly packageName: string
       readonly restartToken: string
+      /** `false` when the Host mounted the plugin live; the Renderer reloads instead of prompting a restart. */
+      readonly restartRequired: boolean
     }
 
 export interface MarketDesktopActionResponse {

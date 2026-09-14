@@ -887,6 +887,10 @@ describe('MarketSettingsTab', () => {
       action: 'disable',
       packageName: external.packageName,
       restartToken: 'opaque-disable-restart',
+      // Explicit false-activation case: the Host could not unmount it live
+      // (this test's own name is "prompts for restart"), unlike the sibling
+      // "applies live, no restart" test below.
+      restartRequired: true,
     })
     render(<MarketSettingsTab {...props} />)
 
@@ -934,6 +938,9 @@ describe('MarketSettingsTab', () => {
       action: 'enable',
       packageName: external.packageName,
       restartToken: 'opaque-enable-restart',
+      // Explicit false-activation case; see the matching comment on the
+      // disable test above.
+      restartRequired: true,
     })
     render(<MarketSettingsTab {...props} />)
 
@@ -1029,11 +1036,13 @@ describe('MarketSettingsTab', () => {
         action: 'disable',
         packageName: receipt.packageName,
         restartToken: 'opaque-managed-disable-restart',
+        restartRequired: true,
       })
       .mockResolvedValueOnce({
         action: 'enable',
         packageName: receipt.packageName,
         restartToken: 'opaque-managed-enable-restart',
+        restartRequired: true,
       })
     render(<MarketSettingsTab {...props} />)
 

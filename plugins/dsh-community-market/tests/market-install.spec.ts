@@ -1123,7 +1123,7 @@ describe('market install Host routes', () => {
       })),
       executeDisable: vi.fn(async () => {
         bundleStatus = 'disabled'
-        return { packageName: bundle.packageName }
+        return { packageName: bundle.packageName, live: true }
       }),
       previewEnable: vi.fn(() => ({
         previewId: 'enable_opaque_preview',
@@ -1133,7 +1133,7 @@ describe('market install Host routes', () => {
       })),
       executeEnable: vi.fn(async () => {
         bundleStatus = 'active'
-        return { packageName: bundle.packageName }
+        return { packageName: bundle.packageName, live: true }
       }),
     }
     const dispose = registerMarketRoutes(
@@ -1262,7 +1262,11 @@ describe('market install Host routes', () => {
     const disabled = await request(marketRoutes.operationExecute, 'POST', { previewId: 'disable_opaque_preview' })
     expect(disabled).toMatchObject({
       status: 200,
-      body: { action: 'disable', packageName: bundle.packageName },
+      // A live disable must not ask the Renderer to prompt a restart - the
+      // real regression this locks in: the wire response used to omit
+      // restartRequired entirely, so the client defaulted to `true` and
+      // offered "Restart ACRYL" even after a successful live unmount.
+      body: { action: 'disable', packageName: bundle.packageName, restartRequired: false },
     })
     expect(desktopPlugins.executeDisable).toHaveBeenCalledWith('disable_opaque_preview')
 

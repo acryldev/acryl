@@ -205,7 +205,7 @@ describe('desktop direct bundle management', () => {
     if (target === undefined) throw new Error('missing target')
 
     await expect(harness.service.executeDisable(harness.service.previewDisable(target.bundleId).previewId))
-      .resolves.toEqual({ packageName: 'third-party-plugin' })
+      .resolves.toEqual({ packageName: 'third-party-plugin', live: true })
     expect(harness.service.list().find(item => item.packageName === 'third-party-plugin')?.status)
       .toBe('disabled')
     // The bundle-layer file is untouched - the live path handled it entirely.
@@ -214,7 +214,7 @@ describe('desktop direct bundle management', () => {
     const disabled = harness.service.list().find(item => item.packageName === 'third-party-plugin')
     if (disabled === undefined) throw new Error('missing target')
     await expect(harness.service.executeEnable(harness.service.previewEnable(disabled.bundleId).previewId))
-      .resolves.toEqual({ packageName: 'third-party-plugin' })
+      .resolves.toEqual({ packageName: 'third-party-plugin', live: true })
     expect(harness.service.list().find(item => item.packageName === 'third-party-plugin')?.status)
       .toBe('active')
     expect(existsSync(options.statePath)).toBe(false)
@@ -234,7 +234,7 @@ describe('desktop direct bundle management', () => {
     if (target === undefined) throw new Error('missing target')
 
     await expect(harness.service.executeDisable(harness.service.previewDisable(target.bundleId).previewId))
-      .resolves.toEqual({ packageName: 'third-party-plugin' })
+      .resolves.toEqual({ packageName: 'third-party-plugin', live: false })
     expect(JSON.parse(readFileSync(options.statePath, 'utf8'))).toEqual({
       version: 1,
       profiles: [{ profileName: 'desktop', disabledBundles: ['third-party-plugin'] }],
@@ -264,6 +264,7 @@ describe('desktop direct bundle management', () => {
     }))
     await expect(harness.service.executeDisable(preview.previewId)).resolves.toEqual({
       packageName: 'third-party-plugin',
+      live: false,
     })
     await expect(harness.service.executeDisable(preview.previewId)).rejects.toSatisfy(
       (cause: unknown) => errorCode(cause) === 'preview-expired',
@@ -313,6 +314,7 @@ describe('desktop direct bundle management', () => {
     }))
     await expect(harness.service.executeEnable(preview.previewId)).resolves.toEqual({
       packageName: 'third-party-plugin',
+      live: false,
     })
     await expect(harness.service.executeEnable(preview.previewId)).rejects.toSatisfy(
       (cause: unknown) => errorCode(cause) === 'preview-expired',

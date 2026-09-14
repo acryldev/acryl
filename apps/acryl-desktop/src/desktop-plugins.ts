@@ -66,10 +66,18 @@ export interface DesktopPluginDisablePreview {
   readonly expiresAt: string
 }
 
+/** Bundle-layer persistence result shared by the disable/enable standalone helpers - always the "not live" fallback path. */
+export interface DesktopPluginBundlePersistResult {
+  /** Informational package name whose bundle layer was mutated. */
+  readonly packageName: string
+}
+
 /** Result of persisting a disable for the next Desktop generation. */
 export interface DesktopPluginDisableResult {
   /** Informational package name whose bundle layer was disabled. */
   readonly packageName: string
+  /** Whether the change took effect live (no restart needed) or only in the persisted bundle layer (restart required). */
+  readonly live: boolean
 }
 
 /** Short-lived confirmation minted for one exact disabled direct bundle. */
@@ -88,6 +96,8 @@ export interface DesktopPluginEnablePreview {
 export interface DesktopPluginEnableResult {
   /** Informational package name whose direct bundle layer was re-enabled. */
   readonly packageName: string
+  /** Whether the change took effect live (no restart needed) or only in the persisted bundle layer (restart required). */
+  readonly live: boolean
 }
 
 /** Narrow profile-bundle capability available to trusted Host plugins. */
@@ -485,7 +495,7 @@ export async function disableDesktopProfileBundle(
   bootstrap: DesktopPluginStateBootstrap,
   packageName: string,
   authorize: () => void | Promise<void> = () => {},
-): Promise<DesktopPluginDisableResult> {
+): Promise<DesktopPluginBundlePersistResult> {
   let authorizationFailure: unknown
   try {
     assertStateBootstrap(bootstrap)
@@ -563,7 +573,7 @@ export async function enableDesktopProfileBundle(
   bootstrap: DesktopPluginStateBootstrap,
   packageName: string,
   authorize: () => void | Promise<void> = () => {},
-): Promise<DesktopPluginEnableResult> {
+): Promise<DesktopPluginBundlePersistResult> {
   let authorizationFailure: unknown
   try {
     assertStateBootstrap(bootstrap)
@@ -845,13 +855,16 @@ export class DesktopPluginsService extends Service implements DesktopPlugins {
       // exactly the case it uniquely serves: a bundle whose module cannot
       // even be imported.
       if (await this.ctx.get('livePluginActivation')?.setEnabled(preview.packageName, false) === true) {
-        return { packageName: preview.packageName }
+        return { packageName: preview.packageName, live: true }
       }
-      return await disableDesktopProfileBundle(
-        this.bootstrap,
-        preview.packageName,
-        () => { this.assertActive() },
-      )
+      return {
+        ...await disableDesktopProfileBundle(
+          this.bootstrap,
+          preview.packageName,
+          () => { this.assertActive() },
+        ),
+        live: false,
+      }
     } catch (cause) {
       if (cause instanceof DesktopPluginsError) throw cause
       throw new DesktopPluginsError(
@@ -876,13 +889,16 @@ export class DesktopPluginsService extends Service implements DesktopPlugins {
       // live; only a package with no live entry needs the persisted
       // bundle-layer re-enable below.
       if (await this.ctx.get('livePluginActivation')?.setEnabled(preview.packageName, true) === true) {
-        return { packageName: preview.packageName }
+        return { packageName: preview.packageName, live: true }
       }
-      return await enableDesktopProfileBundle(
-        { ...this.bootstrap, ...(preview.statePath === undefined ? {} : { statePath: preview.statePath }) },
-        preview.packageName,
-        () => { this.assertActive() },
-      )
+      return {
+        ...await enableDesktopProfileBundle(
+          { ...this.bootstrap, ...(preview.statePath === undefined ? {} : { statePath: preview.statePath }) },
+          preview.packageName,
+          () => { this.assertActive() },
+        ),
+        live: false,
+      }
     } catch (cause) {
       if (cause instanceof DesktopPluginsError) throw cause
       throw new DesktopPluginsError(
