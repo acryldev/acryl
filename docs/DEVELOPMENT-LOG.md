@@ -4698,3 +4698,24 @@ script after either.**
 - **A patch that can silently no-op is worse than no patch.** `applyPatch`
   fails loud as `drift` when an anchor disappears, because a silent no-op would
   quietly return the next scan to 80% coverage.
+
+## 2026-09-14 - fix(desktop): ensure temp profile home uses isolated package linking
+
+Commit: `42d0aaf`
+
+Real bug in the smoke test: `verify-profile-boot.mjs` creates an isolated temp
+DSH home with `mkdtempSync`, but when `initProfile` installed required bundles
+into that temp profile, pnpm was defaulting to hoisted linking and creating
+symlinks. Those symlinks pointed back to paths in the original DSH home that
+don't exist in the isolated temp environment — when the Loader tried to resolve
+them, it failed with "Cannot find package @deepseek-ai/dsh-storage-domain
+imported from /var/folders/.../dsh-desktop-profile-*/profiles/desktop/package.json".
+
+The root workspace uses `node-linker=isolated` (via .npmrc) to deep-copy packages;
+the temp home's pnpm ran without that setting, defaulting to hoisted symlinks.
+
+Fixed by writing a `.npmrc` to the temp home (before `prepareDesktopProfile`
+runs) that sets `node-linker=isolated`. This forces pnpm to deep-copy packages
+into the temp profile rather than symlinking them, making them resolvable in
+the isolated context. Verified: `corepack pnpm --filter acryl-desktop run check`
+now passes end to end with exit code 0.
