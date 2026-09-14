@@ -19,9 +19,9 @@ This repository owns the desktop product around an unmodified DeepSeek Harness c
 - Run upstream operations through the root scripts, such as `corepack pnpm run upstream:build`.
 
 - `deepseek-harness/` is a pinned upstream Git submodule. Never edit files inside it from a desktop feature branch.
-- `acryl-desktop/` owns the Cordis Host and Client faces, Electron bootstrap, packaging, and release tests.
-- `dsh-community-fabric/` owns the community interoperability RFC. Until schemas and a reviewed reference adapter exist, it remains a private documentation scaffold and must not declare loadable DSH or package entry points.
-- `dsh-community-market/` is an implemented private Host/Client package. It is an optional Desktop Market provider, disabled by default, and must continue to use ordinary DSH/Cordis, profile, and Desktop service contracts rather than a parallel plugin runtime.
+- `apps/acryl-desktop/` owns the Cordis Host and Client faces, Electron bootstrap, packaging, and release tests.
+- `plugins/dsh-community-fabric/` owns the community interoperability RFC. Until schemas and a reviewed reference adapter exist, it remains a private documentation scaffold and must not declare loadable DSH or package entry points.
+- `plugins/dsh-community-market/` is an implemented private Host/Client package. It is an optional Desktop Market provider, disabled by default, and must continue to use ordinary DSH/Cordis, profile, and Desktop service contracts rather than a parallel plugin runtime.
 - The outer repository and all owned packages use the root PNPM release with `node-linker=isolated`.
 - The upstream submodule keeps its own PNPM workspace. Run upstream commands through the root `upstream:*` scripts, which enter the submodule before invoking its pinned Corepack release.
 - Compatibility mode must run the upstream default client without overrides. Advanced presentation belongs to desktop-owned client plugins and may replace documented slots or services through profile composition.
@@ -93,11 +93,13 @@ sandbox.
 
 ## Architecture and clean-code discipline (engineering books)
 
-Engineering reference (authoritative for clean-architecture and DDD judgement;
-this section is the ACRYL-specific interpretation):
+Engineering reference (authoritative for clean-architecture, DDD, and
+day-to-day engineering-discipline judgement; this section is the
+ACRYL-specific interpretation):
 
 - `~/.agents/rules/agent-rules-books/clean-architecture/clean-architecture.md`
 - `~/.agents/rules/agent-rules-books/implementing-domain-driven-design/implementing-domain-driven-design.md`
+- `~/.agents/rules/agent-rules-books/the-pragmatic-programmer/the-pragmatic-programmer.md`
 
 Precedence: the constitution, the Cordis coding-agent guide, and the ACRYL
 control-surface design win over this section; this section never overrides a
@@ -122,6 +124,52 @@ boundary-discipline rules, not a second architecture.
   ad-hoc re-fetch plus `refreshCredentialState()`-style shotgun loops. One
   source of truth per state; targeted invalidation or subscription, not
   "refresh everything".
+
+### Repository layout (package placement discipline)
+
+Root packages are grouped by role, not left flat (fixed real instance:
+ten packages sat loose at repo root with no grouping signal for what
+depended on what — `acryl-npm-launcher`, a release shim, sat at the same
+level as `acryl-harness-runtime`, the core engine, and `dsh-community-market`,
+a Cordis plugin; regrouped 2026-09-14, `pnpm-workspace.yaml` and
+`scripts/verify-layout.mjs` are the enforced source of truth for the
+result). This is Clean Architecture ch.11 (dependency inversion — depend
+inward, never let the stable core depend on a replaceable surface) and
+ch.17 (plugin architecture — components a reader should recognize as
+swappable belong grouped, not scattered) applied to directory layout, not
+just import direction. It is also *Pragmatic Programmer*'s broken-windows
+discipline: one un-grouped, randomly-placed package normalizes the next
+one, and a repo that looks abandoned gets treated like one.
+
+Current groups and what belongs in each:
+
+- `apps/` — the swappable surfaces (`acryl-cli`, `acryl-web`, `acryl-desktop`).
+  A new terminal/web/desktop-shaped entry point goes here.
+- `runtime/` — the stable core every surface depends on
+  (`acryl-control`, `acryl-harness-runtime`). Nothing here may depend on
+  anything under `apps/`.
+- `plugins/` — independently replaceable Cordis/DSH plugins
+  (`dsh-client-ui-brand-acryl`, `dsh-community-fabric`, `dsh-community-market`).
+  A new installable capability package goes here, not next to `apps/` or
+  `runtime/`.
+- `examples/` — demo/reference packages (`acryl-blend-demo`) that ship
+  nothing production-facing.
+- `distribution/` — release/publish shims (`acryl-npm-launcher`), never
+  product logic.
+- `deepseek-harness/` (pinned submodule), `docs/`, `specs/`, `scripts/`,
+  `patches/`, `assets/` stay at root — they are not workspace packages.
+
+A new top-level package's home is decided by which of the five groups it
+plays the *role* of, not by where it's convenient to drop it "for now" —
+there is no scratch space at root. If a new package genuinely fits none
+of the five, that is a signal to design the grouping deliberately (raise
+it, don't invent a sixth ad hoc bucket) — the same discipline this
+section already asks for Loader row ids and service contracts. Whichever
+directory a package moves to or is added under, update it in the same
+commit as `pnpm-workspace.yaml`'s package list and
+`scripts/verify-layout.mjs`'s asserted layout — the CI gate
+(`corepack pnpm run check`) is the actual enforcement, this text is only
+the reasoning behind it.
 
 ### Models and language
 
@@ -173,12 +221,3 @@ Default Matt Pocock roles: `needs-triage`, `needs-info`, `ready-for-agent`, `rea
 Single-context. Constitution, orientation, Cordis spec, and `docs/acryl/` are required reading; `CONTEXT.md` / ADRs are created lazily. See `docs/agents/domain.md`.
 
 Agent-runtime, Development Canvas, context-relay, and third-party adapter work must follow [`docs/acryl/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md`](docs/acryl/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md) and [the current alignment audit](docs/cordis/acryl_cordis_alignment_audit.md). Build on Cordis services, injection, effects, events, Fibers, Loader composition, and existing DSH capability seams; do not introduce a parallel lifecycle, dependency-injection, event, tool, or provider framework.
-
-
-<claude-mem-context>
-# Memory Context
-
-# [acryl] recent context, 2026-09-09 6:32am GMT+2
-
-No previous sessions found.
-</claude-mem-context>
