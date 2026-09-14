@@ -4529,3 +4529,87 @@ and live-activate a Market plugin without a process restart. What remains for
 spec 034 to close: T007 (retire `acryl-desktop`'s now-dead private
 plugin-lifecycle duplication), T008 (the cross-surface duplicate-loader-entry
 parity gap), and the real end-to-end GUI retest on Desktop.
+
+## 2026-09-14 - fix(desktop): report restartRequired for a live plugin disable/enable
+
+Commit: `46ff326`
+
+Real bug, found live: disabling or re-enabling a Market plugin that
+succeeded via the genuine live Cordis Fiber swap still popped the "Restart
+ACRYL" prompt, and confirming it triggered an actual unnecessary
+`app.relaunch()` + `app.exit()`. Root-caused with temporary stack-trace
+instrumentation (added, then fully reverted) tracing the real call chain:
+`requestQuit` -> `finish(0)` -> `nativeExit.relaunch()` -> `app.exit(43)`,
+triggered by the Market's own `/api/community-market/desktop/request-restart`
+route, which the client only calls when `restartRequired` is truthy.
+
+The client (`MarketSettingsTab.tsx`) already defaulted `restartRequired` to
+`true` when the field was absent from the response - but the disable/enable
+route never sent the field at all (install/uninstall always did), so a fully
+successful live toggle still read as "needs restart".
+
+Fixed at the source: `desktop-plugins.ts`'s `persistDisable`/`persistEnable`
+now return a `live: boolean` alongside `packageName`;
+`dsh-community-market`'s `routes.ts` disable/enable handler threads that
+through as `restartRequired: !changed.live` on the response, matching
+install/uninstall's existing contract. Verified via updated tests across
+both packages (851 + 280 green) and the reverted debug instrumentation.
+
+## 2026-09-14 - fix(docs): repair relative links broken by the apps/runtime/plugins reorg
+
+Commit: `a879b8e`
+
+`dsh-community-fabric` and `dsh-community-market`'s own `verify-docs.mjs`
+gate - silently skipped by a plain `check` run - caught relative Markdown
+links left pointing at the pre-reorg flat paths (`../README.en.md`,
+`../acryl-desktop/docs/plugin-services.md`, etc.) after both packages moved
+under `plugins/`. Fixed the links in both packages' `README.md`/`README.zh.md`
+and regenerated their `README.i18n.yaml` bilingual-pair git-blob-hash records.
+
+## 2026-09-14 - docs(agents): codify the apps/runtime/plugins/examples/distribution grouping rule
+
+Commit: `af54fe0`
+
+Integrated the engineering-discipline references (Pragmatic Programmer
+alongside the existing Clean Architecture / DDD references) and added a new
+"Repository layout (package placement discipline)" section to `AGENTS.md`,
+grounding the `apps/`/`runtime/`/`plugins/`/`examples/`/`distribution/`
+package-placement convention explicitly in Clean Architecture's dependency
+inversion (ch. 11) and plugin architecture (ch. 17) chapters and the
+Pragmatic Programmer's broken-windows principle: a new top-level package's
+home is decided by its role, not convenience - there is no scratch space at
+the repo root. Also fixed three stale flat-path references left over from
+the earlier reorg (`acryl-desktop/`, `dsh-community-fabric/`,
+`dsh-community-market/` all needed their `apps/`/`plugins/` prefix) and
+removed a stray `<claude-mem-context>` memory-tool artifact that had been
+accidentally committed into the tracked file in an earlier session.
+
+## 2026-09-14 - fix(desktop): self-sufficient isolated dev DSH_HOME in every dev-mode script
+
+Commit: `13ab2fa`
+
+Real bug, found live: launching Desktop hit a startup crash - `BLEND path
+'.../acryl-desktop/tests/fixtures/blend/acryl-demo' does not exist` - a
+pre-reorg absolute path stale in `~/.acryl/.dsh`'s `settings.yaml`. Root
+cause was one level deeper than the stale path itself: `apps/acryl-desktop`'s
+own dev-mode scripts (`launch-dev.mjs`, `verify-loader-boot.mjs`,
+`verify-profile-boot.mjs`) never set `DSH_HOME` themselves - only the root
+`scripts/dev-local.mjs` orchestrator did. Running the desktop package's own
+dev script directly (`pnpm --filter acryl-desktop run dev`, bypassing the
+root `pnpm run dev`) silently fell back to the packaged-install default
+(`~/.acryl/.dsh`) instead of the intended isolated `~/.acryl-dev/.dsh` home,
+so the two homes drifted out of sync without any error until this exact
+kind of stale-config crash surfaced.
+
+Added `resolveAcrylDevDshHome()` and `applyIsolatedDevHomeDefault()` to
+`acryl-harness-runtime`'s `acryl-home.ts`, and call the latter at the very
+top of all three desktop dev-mode scripts (before anything else reads the
+environment, and in `launch-dev.mjs`, before the child Electron process's
+env is assembled). Each dev entry point is now self-sufficient regardless of
+invocation path. Verified: `env -u DSH_HOME -u ACRYL_HOME pnpm --filter
+acryl-desktop run dev` now boots against `~/.acryl-dev/.dsh` (confirmed via
+`ps` on the running Electron process), not the stale packaged-install
+default. Separately confirmed (via `git stash`) that `acryl-desktop`'s
+`verify:profile` smoke-test failure - a tmp-dir profile copy losing
+resolution of pnpm-symlinked `@deepseek-ai/dsh-*` packages - is a distinct,
+pre-existing bug unrelated to this fix, reproduced identically on baseline.
