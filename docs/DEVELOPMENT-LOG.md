@@ -4613,3 +4613,88 @@ default. Separately confirmed (via `git stash`) that `acryl-desktop`'s
 `verify:profile` smoke-test failure - a tmp-dir profile copy losing
 resolution of pnpm-symlinked `@deepseek-ai/dsh-*` packages - is a distinct,
 pre-existing bug unrelated to this fix, reproduced identically on baseline.
+
+## 2026-09-14 - feat(scripts): finish the graft deep scan on DeepSeek (graft:deepscan)
+
+Commit: `0b4b4b7`
+
+`graft build --deep` (spec 034's context graph) had been stuck at ~80% for
+several sessions across four different providers — DeepSeek-flash,
+DeepSeek-v4-flash, GPT-5.4/nano, Qwen3-coder-plus — always with the same
+signature: `model returned no usable symbol summaries [empty-parsed,
+finish_reason=null]`, concentrated in `runtime/acryl-control` and
+`runtime/acryl-harness-runtime`. The working theory was a graft-side payload
+limit on symbol-dense files. **That theory was wrong, and the data said so:**
+152 of the 175 failing files were under 200 lines, and a 69-line file failed
+while a 465-line file succeeded. Size was never the constraint.
+
+Three real defects in graft 0.18.0 (`@nanonets/graft`), each confirmed against
+the live API rather than inferred:
+
+1. **Forced `tool_choice` is rejected by every DeepSeek thinking-mode model.**
+   `HTTP 400`, body `{"choices":0,"error":{"message":"Thinking mode does not
+   support this tool_choice"}}`. Graft forces a tool for its JSON passes
+   (concept synthesis via `record_graph`, per-symbol crux via `record_symbols`)
+   but not for plain per-file summaries — which is exactly why 526/526
+   summaries succeeded while the deep passes failed. Graft already carries a
+   retry for this precise message (`openai.js`'s `isRejectedToolsWithReasoning`,
+   which sets `reasoning_effort: "none"`), but it is *reactive*, so it burns a
+   round-trip. Verified that `reasoning_effort: "none"` returns a valid tool
+   call (`200`, `finish_reason=tool_calls`).
+2. **The id echo — the actual cause of `empty-parsed`.** `classifyCruxMiss`
+   returns `empty-parsed` when entries came back but every `summary` was blank;
+   measurement showed the model returns the *target line's decoration folded
+   into the id* for a `file`-kind target: target `- id=<path> | file | L1-L70`
+   came back as id `"<path> | file | L1-L70"`. `enrich.js` matches results by
+   **exact id**, so `results.get(node.id)` missed, `applied` stayed 0, and the
+   file was reported as a total miss although its summaries were perfect.
+   Distinct exact-match rates on the same file: **0/1 for the file-kind target,
+   40/40 for function/method targets.** 171 of the 175 failures had exactly one
+   pending ref — the file node — so this single bug accounted for almost all of
+   them.
+3. **One response per file.** `describeFile` sends *every* target in a single
+   request capped at `maxTokens: 8192`. The two generated bundles
+   (`apps/acryl-cli/lib-publish/bin.js` 415 symbols, `index.js` 409) truncate
+   with `finish_reason=length` and the whole file is lost.
+
+Result on this repo: **175 files failing / 3927 of 4926 symbols (80%) → 0 files
+failing / 4926 of 4926 (100%)**, `graft build --deep` exit 0, and
+`graft check: OK — the graph is in sync with the code`. Final graph: 531 files,
+4926 nodes (2156 function, 1332 method, 584 interface, 526 file, 237 type,
+91 class), 11094 edges, 323 concept nodes.
+
+`scripts/graft-deepscan.mjs` makes this reproducible: it resolves the installed
+graft, re-applies the four patches, exports the provider settings from
+`~/.secure-storage/llmproviders/deepseek/deepseek.json`'s `graft` block, and
+runs `graft build . --deep`. `corepack pnpm run graft:deepscan -- --check`
+verifies the setup and writes nothing. Because the patches live in the globally
+installed package, **`graft upgrade` or a reinstall reverts them — re-run the
+script after either.**
+
+### Method notes worth reusing
+
+- **Where the previous analysis went wrong, and why.** It reasoned from
+  correlation ("these are the largest, most symbol-dense files") to cause
+  without measuring the distribution. One histogram of failing-file sizes
+  (`min=1, median=60, max=6738`, 152/175 under 200 lines) falsified it in a
+  single command. The two genuinely large files turned out to be a *separate*
+  third bug. Measure the population before naming a mechanism.
+- **Read the tool's own source, and its error labels.** `empty-parsed` is not
+  "the model returned nothing" — in `crux.js` it means "entries parsed but
+  every summary was blank", which pointed straight at id matching. Three
+  distinct miss labels (`empty-parsed`, `empty-toolCalls`, `truncated`) existed
+  and two were being treated as one.
+- **`empty-parsed` + `finish_reason=null` is a *silent* provider rejection, not
+  empty content.** The provider put the real reason in an `error` field on a
+  200/400 body. Always print the raw response body, not just the parsed result.
+- **Verify the fix against the live API in isolation before believing the
+  pipeline.** Replaying graft's exact request for one failing file by hand
+  (`0/1` vs `40/40` exact ids) located the bug, and re-running it after each
+  patch showed which defect each patch actually closed.
+- **Make idempotency marker-based, never text-comparison-based.** The first
+  version compared the replacement string and reported a false "drift" the
+  moment the installed file carried a hand-edited comment. Per-patch sentinels
+  fixed it, and the test that caught it is worth keeping.
+- **A patch that can silently no-op is worse than no patch.** `applyPatch`
+  fails loud as `drift` when an anchor disappears, because a silent no-op would
+  quietly return the next scan to 80% coverage.
