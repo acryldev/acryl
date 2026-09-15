@@ -11,6 +11,7 @@ import type { AuthMethod } from 'acryl-control'
 import type { GoalCommand } from './commands.js'
 import type { ProviderDraft, ProviderRow } from './modelProfile/types.js'
 import type { QuestionAnswer } from './interaction/types.js'
+import type { PluginRow } from './plugins/types.js'
 
 export interface TuiActions {
   /** Route free text to steering (running) or follow-up (idle). */
@@ -92,6 +93,13 @@ export interface TuiActions {
   openPlugins(): void
   /** Close the `/plugins` overlay. */
   closePlugins(): void
+  /**
+   * Enable or disable one mutable `/plugins` row (`PluginRow.mutable`) live,
+   * through the same `desktopPlugins` preview/execute contract the Market's
+   * own Installed tab drives. Resolves with a status message for the overlay
+   * to display and, on success, a fresh row snapshot reflecting the change.
+   */
+  togglePlugin(entryId: string, enable: boolean): Promise<{ readonly ok: boolean; readonly message: string; readonly rows?: readonly PluginRow[] }>
 
   /**
    * Dispatch a plugin-registered command (spec 034 T009) - `runSlashCommand`

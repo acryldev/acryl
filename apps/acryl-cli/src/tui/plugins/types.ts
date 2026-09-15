@@ -16,4 +16,11 @@ export interface PluginRow {
   readonly group: boolean
   /** Fiber lifecycle state, or `undefined` while the entry has no fiber (not yet started, or disabled). */
   readonly state: 'pending' | 'loading' | 'active' | 'failed' | 'disposed' | 'unloading' | undefined
+  /**
+   * True when this entry is a user-toggleable market/profile-bundle plugin
+   * (`AcrPluginLifecycleController.isMutable()` via the `desktopPlugins`
+   * service), as opposed to a core DSH capability. Only mutable rows accept
+   * the overlay's enable/disable action.
+   */
+  readonly mutable: boolean
 }

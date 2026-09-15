@@ -48,6 +48,7 @@ function stubActions(): TuiActions {
     closeContext: vi.fn(),
     openPlugins: vi.fn(),
     closePlugins: vi.fn(),
+    togglePlugin: vi.fn(),
     openAgentPresets: vi.fn(),
     closeAgentPresets: vi.fn(),
     selectAgentPresetRow: vi.fn(),

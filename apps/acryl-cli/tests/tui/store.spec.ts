@@ -435,7 +435,7 @@ describe('TuiStore overlay state machine', () => {
 
   it('openPlugins opens the plugins overlay with the given rows', () => {
     const store = new TuiStore({ events: [] })
-    const rows = [{ id: 'tui', name: '@tomowang/dsh-tui', disabled: false, group: false, state: 'active' as const }]
+    const rows = [{ id: 'tui', name: '@tomowang/dsh-tui', disabled: false, group: false, state: 'active' as const, mutable: false }]
 
     store.openPlugins(rows)
 

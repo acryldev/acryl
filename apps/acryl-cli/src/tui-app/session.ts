@@ -27,6 +27,7 @@ import {
 import { startDirectHost, type DirectHost } from '../host/direct.js'
 import { setDynamicSlashCommands } from '../tui/commands.js'
 import { MarketOverlay } from '../tui/market/MarketOverlay.js'
+import type { MarketDesktopPlugins } from 'dsh-community-market'
 import { TuiStore } from '../tui/store.js'
 import { mountTui, type TuiHandle } from '../tui/TuiApp.js'
 import type { TuiActions } from '../tui/actions.js'
@@ -107,12 +108,21 @@ function fiberStateLabel(state: unknown): PluginRow['state'] {
 function pluginRows(ctx: Context): PluginRow[] | undefined {
   const loader = ctx.get('loader')
   if (loader === undefined) return undefined
+  // `desktopPlugins.list()` is the same source `MarketOverlay`'s install flow
+  // and the market's own Installed tab already trust for which entries are
+  // user-toggleable market/profile-bundle plugins (CliPluginsService, backed
+  // by AcrPluginLifecycleController.isMutable()) - reusing it here means the
+  // `/plugins` overlay's toggle action targets exactly the same set, rather
+  // than re-deriving mutability with a second, possibly-diverging rule.
+  const desktopPlugins = ctx.get('desktopPlugins') as MarketDesktopPlugins | undefined
+  const mutableIds = new Set(desktopPlugins?.list().map(bundle => bundle.bundleId) ?? [])
   return [...loader.entries()].map(entry => ({
     id: entry.id,
     name: entry.options.name,
     disabled: entry.disabled,
     group: Boolean(entry.options.group),
     state: entry.fiber === undefined ? undefined : fiberStateLabel(entry.fiber.state),
+    mutable: mutableIds.has(entry.id),
   }))
 }
 
@@ -660,6 +670,25 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
       const rows = pluginRows(host.ctx)
       if (rows === undefined) store.setNotice('/plugins: loader tree is not composed in this profile')
       else store.openPlugins(rows)
+    },
+    async togglePlugin(entryId, enable) {
+      const desktopPlugins = host.ctx.get('desktopPlugins') as MarketDesktopPlugins | undefined
+      if (desktopPlugins === undefined) {
+        return { ok: false, message: 'This profile has no plugin toggle capability (desktopPlugins is unavailable).' }
+      }
+      try {
+        const preview = enable ? desktopPlugins.previewEnable(entryId) : desktopPlugins.previewDisable(entryId)
+        const outcome = enable
+          ? await desktopPlugins.executeEnable(preview.previewId)
+          : await desktopPlugins.executeDisable(preview.previewId)
+        const rows = pluginRows(host.ctx)
+        const verb = enable ? 'Enabled' : 'Disabled'
+        const liveNote = outcome.live ? '' : ' (restart to take effect)'
+        return { ok: true, message: `${verb} ${outcome.packageName}${liveNote}.`, rows }
+      } catch (cause) {
+        const detail = cause instanceof Error ? cause.message : String(cause)
+        return { ok: false, message: `${enable ? 'Enable' : 'Disable'} failed: ${detail}` }
+      }
     },
     openAgentPresets() {
       store.openAgentPresets({ current: undefined, blank: session === undefined ? true : sessionBlank(session) })
