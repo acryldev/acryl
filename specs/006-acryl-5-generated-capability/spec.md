@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL-5 — First self-generated functional capability + hot activation
 
+**Tracking:** https://github.com/acryldev/acryl/issues/23
+
 **Feature Branch**: `006-acryl-5-generated-capability`
 **Created**: 2026-08-23
 **Status**: Stub

@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL-4 — Capability package format + loader
 
+**Tracking:** https://github.com/acryldev/acryl/issues/22
+
 **Feature Branch**: `005-acryl-4-capability-package`
 **Created**: 2026-08-23
 **Status**: Stub

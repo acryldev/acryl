@@ -1,5 +1,7 @@
 # Feature Specification: Coordinated Multi-Surface Distribution
 
+**Tracking:** https://github.com/acryldev/acryl/issues/44
+
 **Feature Branch**: `027-multisurface-release-distribution`
 
 **Created**: 2026-09-01

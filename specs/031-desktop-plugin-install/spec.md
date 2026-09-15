@@ -1,5 +1,7 @@
 # Desktop plugin install: own pnpm + bundle reconciliation
 
+**Tracking:** https://github.com/acryldev/acryl/issues/48
+
 Status: ready-for-human
 
 ## Progress

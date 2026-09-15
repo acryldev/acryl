@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL pi-tui Durable Session Surface
 
+**Tracking:** https://github.com/acryldev/acryl/issues/36
+
 **Feature Directory**: `specs/019-acryl-harness-runtime`
 **Status**: Active - re-scoped 2026-08-28
 **Authority**: `docs/ACRYL-RUNTIME-SURFACE-CONTRACT.md`

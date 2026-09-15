@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL-7 — ACP provider
 
+**Tracking:** https://github.com/acryldev/acryl/issues/25
+
 **Feature Branch**: `008-acryl-7-acp-provider`
 **Created**: 2026-08-23
 **Status**: Stub

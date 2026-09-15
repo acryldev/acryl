@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL-13 — DSPy / GEPA Evolution Lab
 
+**Tracking:** https://github.com/acryldev/acryl/issues/31
+
 **Feature Branch**: `014-acryl-13-evolution-lab`
 **Created**: 2026-08-23
 **Status**: Stub

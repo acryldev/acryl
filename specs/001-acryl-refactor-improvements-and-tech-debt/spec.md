@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL Technical Debt, Refactoring & Stability
 
+**Tracking:** https://github.com/acryldev/acryl/issues/18
+
 **Feature Directory**: `specs/001-acryl-refactor-improvements-and-tech-debt/`
 **Status**: Active (standing ledger — ongoing, cyclic)
 **Consolidates**: the former `specs/001-acryl-0-gap-analysis/` stub (renamed).

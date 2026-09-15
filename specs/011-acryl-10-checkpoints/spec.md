@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL-10 — Checkpoints / branch / compare / Consilium
 
+**Tracking:** https://github.com/acryldev/acryl/issues/28
+
 **Feature Branch**: `011-acryl-10-checkpoints`
 **Created**: 2026-08-23
 **Status**: Stub

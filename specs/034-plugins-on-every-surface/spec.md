@@ -1,5 +1,7 @@
 # Plugins on every surface
 
+**Tracking:** https://github.com/acryldev/acryl/issues/51
+
 **Feature Directory**: `specs/034-plugins-on-every-surface`
 **Created**: 2026-09-12
 **Status**: ready-for-agent

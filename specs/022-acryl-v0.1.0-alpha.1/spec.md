@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL v0.1.0-alpha.1 release readiness
 
+**Tracking:** https://github.com/acryldev/acryl/issues/39
+
 **Feature Directory**: `specs/022-acryl-v0.1.0-alpha.1`
 **Created**: 2026-08-29 (C1). **Status**: superseded 2026-08-30.
 **Successor**: [`docs/RELEASE-FOUNDATION-HANDOFF.md`](../../docs/RELEASE-FOUNDATION-HANDOFF.md).

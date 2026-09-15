@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL-2 - External PTY agent provider as a room peer
 
+**Tracking:** https://github.com/acryldev/acryl/issues/20
+
 **Feature Branch**: `003-acryl-2-pty-provider`
 **Created**: 2026-08-23
 **Status**: Draft

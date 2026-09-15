@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL Agent, Plugin, Registry, and Blend Ecosystem
 
+**Tracking:** https://github.com/acryldev/acryl/issues/38
+
 **Feature Directory**: `specs/021-acryl-agent-plugin-ecosystem`
 **Created**: 2026-08-28
 **Status**: Approved architecture, not ready for implementation

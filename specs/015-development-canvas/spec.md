@@ -1,5 +1,7 @@
 # Feature Specification: Development Canvas
 
+**Tracking:** https://github.com/acryldev/acryl/issues/32
+
 **Feature Branch**: `015-development-canvas`
 **Created**: 2026-08-23
 **Status**: Draft

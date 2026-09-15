@@ -1,5 +1,7 @@
 # Feature Specification: Lean ACRYL npm CLI
 
+**Tracking:** https://github.com/acryldev/acryl/issues/42
+
 **Feature:** `025-acryl-runtime-distribution`
 
 ## Scope
