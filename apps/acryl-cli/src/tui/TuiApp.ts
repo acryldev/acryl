@@ -41,6 +41,7 @@ import {
   TUI_KEYBINDINGS,
   setKeybindings,
   visibleWidth,
+  matchesKey,
   type TUI,
   type Component,
   type OverlayHandle,
@@ -55,6 +56,7 @@ import { createTranscriptLine, DynamicText, padTranscriptText } from './text.js'
 import { CustomEditor } from './CustomEditor.js'
 import { Spinner } from './Spinner.js'
 import { readClipboard } from './clipboard.js'
+import { createCtrlCHandler, type CtrlCHandler } from './ctrl-c-handler.js'
 import { YlyPet } from '../yly/yly-pet.js'
 import type { YlyState as YlyMode } from '../yly/yly-programs.js'
 import type { TuiActions } from './actions.js'
@@ -236,6 +238,7 @@ class TuiApp implements TuiHandle {
   private stopped = false
   /** Last title string sent to the terminal, so an unrelated store change doesn't re-issue the same OSC 0 write every render. */
   private lastTerminalTitle: string | undefined
+  private readonly ctrlCHandler: CtrlCHandler
 
   constructor(private readonly options: MountOptions) {
     const { store, actions } = options
@@ -252,6 +255,22 @@ class TuiApp implements TuiHandle {
           .then(text => this.tui.getFocusedComponent()?.handleInput?.(`\x1b[200~${text}\x1b[201~`))
           .catch(() => {})
       },
+    })
+    // See ctrl-c-handler.ts for why this needs an addInputListener (pi-tui's
+    // own default ctrl+c keybinding is "copy selection", not interrupt/quit,
+    // and Ctrl+C never reaches the process as SIGINT in raw mode) and for the
+    // state machine itself, factored out there so it's unit-testable without
+    // a real ProcessTerminal.
+    this.ctrlCHandler = createCtrlCHandler({
+      isRunning: () => store.getSnapshot().status === 'running',
+      cancel: () => actions.cancel(),
+      quit: () => actions.shutdown(),
+      setNotice: notice => store.setNotice(notice),
+    })
+    this.tui.addInputListener(data => {
+      if (!matchesKey(data, 'ctrl+c')) return undefined
+      this.ctrlCHandler.press()
+      return { consume: true }
     })
     this.spinner = new Spinner(this.tui)
     this.pet = new YlyPet(this.tui)
@@ -512,6 +531,7 @@ class TuiApp implements TuiHandle {
   unmount(options?: { preserveScreen?: boolean }): void {
     if (this.stopped) return
     this.stopped = true
+    this.ctrlCHandler.disarm()
     this.spinner.stop()
     this.pet.stop()
     this.tui.stop(options)
