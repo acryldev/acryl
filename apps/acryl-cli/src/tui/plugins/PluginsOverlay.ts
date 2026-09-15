@@ -185,8 +185,34 @@ export class PluginsOverlay implements Component {
       lines.push(`${marker}${label}${id}${muted(` (${row.name})`)}${toggleHint}`)
     })
     if (this.status !== undefined) lines.push(this.busy ? muted(this.status) : success(this.status))
-    lines.push(muted(this.filtering ? 'type to filter · esc clear · enter toggle' : '↑↓ select · / filter · enter toggle · esc close'))
+    lines.push(muted(this.filtering ? '↑↓ select · type to filter · enter toggle · esc clear' : '↑↓ select · / filter · enter toggle · esc close'))
     return lines
+  }
+
+  /** Navigation shared by filtering and non-filtering mode — moving the cursor must work identically in both, or filtering silently strands you on whatever row was selected before you started typing. Returns whether `data` was a navigation key it handled. */
+  private handleNavigation(data: string): boolean {
+    const visibleCount = this.visibleRows().length
+    if (matchesKey(data, Key.up)) {
+      this.selected = Math.max(0, this.selected - 1)
+      this.followSelection(visibleCount)
+      return true
+    }
+    if (matchesKey(data, Key.down)) {
+      this.selected = Math.min(visibleCount - 1, this.selected + 1)
+      this.followSelection(visibleCount)
+      return true
+    }
+    if (matchesKey(data, Key.pageUp)) {
+      this.selected = Math.max(0, this.selected - this.listHeight())
+      this.followSelection(visibleCount)
+      return true
+    }
+    if (matchesKey(data, Key.pageDown)) {
+      this.selected = Math.min(visibleCount - 1, this.selected + this.listHeight())
+      this.followSelection(visibleCount)
+      return true
+    }
+    return false
   }
 
   handleInput(data: string): void {
@@ -206,9 +232,10 @@ export class PluginsOverlay implements Component {
         this.resyncSelection()
         return
       }
+      if (this.handleNavigation(data)) return
       // A bare printable character (no escape sequence, no control byte) extends the query.
-      // Anything else (arrow keys, function keys, ...) is a stray escape sequence to ignore
-      // rather than accidentally inject into the filter text.
+      // Anything else (function keys, unrecognized escape sequences, ...) is ignored rather
+      // than accidentally injected into the filter text.
       if (data.length === 1 && data >= ' ' && data !== '\x7f') {
         this.filterQuery += data
         this.resyncSelection()
@@ -224,27 +251,7 @@ export class PluginsOverlay implements Component {
       this.filtering = true
       return
     }
-    const visibleCount = this.visibleRows().length
-    if (matchesKey(data, Key.up)) {
-      this.selected = Math.max(0, this.selected - 1)
-      this.followSelection(visibleCount)
-      return
-    }
-    if (matchesKey(data, Key.down)) {
-      this.selected = Math.min(visibleCount - 1, this.selected + 1)
-      this.followSelection(visibleCount)
-      return
-    }
-    if (matchesKey(data, Key.pageUp)) {
-      this.selected = Math.max(0, this.selected - this.listHeight())
-      this.followSelection(visibleCount)
-      return
-    }
-    if (matchesKey(data, Key.pageDown)) {
-      this.selected = Math.min(visibleCount - 1, this.selected + this.listHeight())
-      this.followSelection(visibleCount)
-      return
-    }
+    if (this.handleNavigation(data)) return
     if (matchesKey(data, Key.enter)) {
       void this.toggle()
     }
