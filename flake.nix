@@ -147,12 +147,21 @@
 
           # Helper to install a built workspace package into a node_modules
           # directory, replacing any symlink/dir that the hoisted linker
-          # may have created.
-          installWorkspacePackage = pkgDir: destDir: ''
-            rm -rf ${destDir}/${pkgDir}
-            mkdir -p ${destDir}/${pkgDir}
-            cp -r ${pkgDir}/lib ${destDir}/${pkgDir}/lib
-            cp ${pkgDir}/package.json ${destDir}/${pkgDir}/
+          # may have created. srcDir is the workspace path (e.g.
+          # "runtime/acryl-control"), pkgName is the node_modules name
+          # (e.g. "acryl-control"). extraDirs is a list of additional
+          # subdirectories to copy (e.g. ["docs"] for packages that read
+          # non-compiled assets at runtime; pass [] when not needed).
+          installWorkspacePackage = srcDir: pkgName: destDir: extraDirs:
+            let copyExtra = pkgs.lib.concatMapStrings (d: ''
+              cp -r ${srcDir}/${d} ${destDir}/${pkgName}/${d}
+            '') extraDirs;
+            in ''
+            rm -rf ${destDir}/${pkgName}
+            mkdir -p ${destDir}/${pkgName}
+            cp -r ${srcDir}/lib ${destDir}/${pkgName}/lib
+            cp ${srcDir}/package.json ${destDir}/${pkgName}/
+            ${copyExtra}
           '';
         in
         {
@@ -169,9 +178,12 @@
               # Build the TUI dependency chain.
               # acryl-harness-runtime imports types from acryl-control, so
               # acryl-control must be built first. Then acryl-harness-runtime,
-              # then acryl-cli (which depends on both; renamed from acryl-tui upstream).
+              # then dsh-community-market (imported by acryl-cli's /market
+              # command), then acryl-cli (which depends on all three;
+              # renamed from acryl-tui upstream).
               pnpm --filter acryl-control run build
               pnpm --filter acryl-harness-runtime run build
+              pnpm --filter dsh-community-market run build
               pnpm --filter acryl-cli run build
 
               runHook postBuild
@@ -183,8 +195,8 @@
               mkdir -p $out/lib/acryl $out/bin
 
               # Copy the built TUI
-              cp -r acryl-cli/lib $out/lib/acryl/lib
-              cp acryl-cli/package.json $out/lib/acryl/
+              cp -r apps/acryl-cli/lib $out/lib/acryl/lib
+              cp apps/acryl-cli/package.json $out/lib/acryl/
 
               # With node-linker=hoisted, node_modules/ is a flat directory
               # (like npm's layout) with no .pnpm/ virtual store symlinks.
@@ -194,8 +206,9 @@
               # Replace workspace package symlinks/dirs with actual built
               # packages (the hoisted linker may have created symlinks for
               # workspace packages that point to source directories).
-              ${installWorkspacePackage "acryl-control" "$out/lib/acryl/node_modules"}
-              ${installWorkspacePackage "acryl-harness-runtime" "$out/lib/acryl/node_modules"}
+              ${installWorkspacePackage "runtime/acryl-control" "acryl-control" "$out/lib/acryl/node_modules" []}
+              ${installWorkspacePackage "runtime/acryl-harness-runtime" "acryl-harness-runtime" "$out/lib/acryl/node_modules" []}
+              ${installWorkspacePackage "plugins/dsh-community-market" "dsh-community-market" "$out/lib/acryl/node_modules" ["docs"]}
 
               # Wrap the TUI entry point
               makeWrapper ${pkgs.nodejs_22}/bin/node $out/bin/acryl \
@@ -230,7 +243,6 @@
               pnpm --filter acryl-control run build
               pnpm --filter acryl-harness-runtime run build
               pnpm --filter dsh-community-market run build
-              pnpm --filter acryl-development-canvas run build
 
               # Build the desktop package. Skip the generate-* scripts
               # (they use sharp for image processing) since the build/
@@ -250,20 +262,19 @@
               mkdir -p $out/lib/acryl-desktop $out/bin
 
               # Copy the built desktop package
-              cp -r acryl-desktop/lib $out/lib/acryl-desktop/lib
-              cp -r acryl-desktop/build $out/lib/acryl-desktop/build
-              cp acryl-desktop/package.json $out/lib/acryl-desktop/
-              cp acryl-desktop/cordis.patch.yml $out/lib/acryl-desktop/ 2>/dev/null || true
+              cp -r apps/acryl-desktop/lib $out/lib/acryl-desktop/lib
+              cp -r apps/acryl-desktop/build $out/lib/acryl-desktop/build
+              cp apps/acryl-desktop/package.json $out/lib/acryl-desktop/
+              cp apps/acryl-desktop/cordis.patch.yml $out/lib/acryl-desktop/ 2>/dev/null || true
 
               # Copy node_modules (hoisted, flat layout)
               cp -a node_modules $out/lib/acryl-desktop/node_modules
 
               # Replace workspace packages with built versions
-              ${installWorkspacePackage "acryl-control" "$out/lib/acryl-desktop/node_modules"}
-              ${installWorkspacePackage "acryl-harness-runtime" "$out/lib/acryl-desktop/node_modules"}
-              ${installWorkspacePackage "dsh-community-market" "$out/lib/acryl-desktop/node_modules"}
-              ${installWorkspacePackage "acryl-development-canvas" "$out/lib/acryl-desktop/node_modules"}
-              ${installWorkspacePackage "acryl-desktop" "$out/lib/acryl-desktop/node_modules"}
+              ${installWorkspacePackage "runtime/acryl-control" "acryl-control" "$out/lib/acryl-desktop/node_modules" []}
+              ${installWorkspacePackage "runtime/acryl-harness-runtime" "acryl-harness-runtime" "$out/lib/acryl-desktop/node_modules" []}
+              ${installWorkspacePackage "plugins/dsh-community-market" "dsh-community-market" "$out/lib/acryl-desktop/node_modules" ["docs"]}
+              ${installWorkspacePackage "apps/acryl-desktop" "acryl-desktop" "$out/lib/acryl-desktop/node_modules" []}
 
               # Create a shim for the 'electron' npm package that exports
               # the nixpkgs electron path. The desktop launcher does
