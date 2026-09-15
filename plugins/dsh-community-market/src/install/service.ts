@@ -127,6 +127,14 @@ export type MarketInstallErrorCode =
   | 'operation-failed'
   | 'persistence-failed'
 
+/** Append a bounded, single-line stderr snippet to a generic failure message, when there is one to show. */
+function appendDetail(message: string, stderrText: string): string {
+  const trimmed = stderrText.trim()
+  if (trimmed === '') return message
+  const oneLine = trimmed.replace(/\s+/gu, ' ').slice(0, 500)
+  return `${message} ${oneLine}`
+}
+
 /** Error whose message is safe to return through the loopback API. */
 export class MarketInstallError extends Error {
   constructor(readonly code: MarketInstallErrorCode, message: string) {
@@ -1226,20 +1234,35 @@ export class MarketInstallService {
           })
     }
     catch { throw new MarketInstallError('operation-failed', 'The desktop package manager could not start.') }
+    // Bounded capture instead of `.resume()`-and-discard: every failure below
+    // used to report only a fixed generic sentence with the real pnpm/dsh
+    // stderr thrown away, so a transient cause (a registry DNS blip, a stale
+    // lockfile, a real package-manager error) was indistinguishable from any
+    // other failure - reproduced directly running this exact command by hand,
+    // where the one time it failed was a `pnpm add` registry ENOTFOUND retry;
+    // the app's own generic message gave no way to tell that from a real bug.
+    const STDERR_CAP = 4096
+    let stderrText = ''
+    handle.stderr.on('data', (chunk: Buffer | string) => {
+      if (stderrText.length >= STDERR_CAP) return
+      stderrText += chunk.toString('utf8')
+    })
     handle.stdout.resume()
-    handle.stderr.resume()
     const cancel = () => handle.cancel()
     combinedSignal.addEventListener('abort', cancel, { once: true })
     let outcome: MarketDesktopPnpmOutcome
     try { outcome = await handle.done }
     catch {
       combinedSignal.throwIfAborted()
-      throw new MarketInstallError('operation-failed', 'The desktop package manager failed.')
+      throw new MarketInstallError('operation-failed', appendDetail('The desktop package manager failed.', stderrText))
     }
     finally { combinedSignal.removeEventListener('abort', cancel) }
     combinedSignal.throwIfAborted()
     if (outcome.exitCode !== 0 || outcome.signal !== null) {
-      throw new MarketInstallError('operation-failed', 'The desktop package manager did not complete successfully.')
+      throw new MarketInstallError(
+        'operation-failed',
+        appendDetail('The desktop package manager did not complete successfully.', stderrText),
+      )
     }
   }
 
