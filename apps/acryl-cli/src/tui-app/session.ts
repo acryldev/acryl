@@ -25,7 +25,7 @@ import {
   type RouteActivationPort,
 } from 'acryl-control'
 import { startDirectHost, type DirectHost } from '../host/direct.js'
-import { setDynamicSlashCommands } from '../tui/commands.js'
+import { expandDynamicCommands, setDynamicSlashCommands } from '../tui/commands.js'
 import { MarketOverlay } from '../tui/market/MarketOverlay.js'
 import type { MarketDesktopPlugins } from 'dsh-community-market'
 import { TuiStore } from '../tui/store.js'
@@ -876,7 +876,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     closePlugins() { store.closeOverlay() },
     closeAgentPresets() { store.closeOverlay() },
     runDynamicCommand(command) {
-      if (host.ctx.get('tuiCommands')?.get(command) === undefined) {
+      if (host.ctx.get('tuiCommands')?.resolve(command) === undefined) {
         store.setNotice(`Unknown command: ${command}`)
         return
       }
@@ -901,7 +901,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     promptHistory: history,
     getTool: toolPreview(host.ctx),
     getToolCall: store.getToolCall,
-    getDynamicCommand: command => host.ctx.get('tuiCommands')?.get(command),
+    getDynamicCommand: command => host.ctx.get('tuiCommands')?.resolve(command),
   })
 
   return Object.freeze({
@@ -932,9 +932,7 @@ export async function runAcrylTui(options: RunAcrylTuiOptions): Promise<AcrylTui
   // without restarting this process - that is the whole point of hot-reload
   // reaching the TUI surface, not just the Host's Loader tree.
   const refreshDynamicCommands = (): void => {
-    setDynamicSlashCommands(
-      host.ctx.get('tuiCommands')?.list().map(r => ({ command: r.command, description: r.description })) ?? [],
-    )
+    setDynamicSlashCommands(expandDynamicCommands(host.ctx.get('tuiCommands')?.list() ?? []))
   }
   // /market is registered the same way a third-party plugin's own apply(ctx)
   // would register a command - it is not a special case in TuiCommandsService,
