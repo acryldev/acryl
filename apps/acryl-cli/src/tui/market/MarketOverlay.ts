@@ -98,6 +98,13 @@ type MarketState =
 export class MarketOverlay implements Component {
   private state: MarketState = { phase: 'loading' }
   private selected = 0
+  // packageName -> real npm dist-tags.latest, filled in progressively after
+  // the catalog itself loads (see resolveDisplayedVersions). The browse list
+  // reads through this before falling back to the catalog's own possibly-
+  // stale latestVersion, so what's shown always matches what install()
+  // actually targets - a label that said one version while installing a
+  // different one is its own confusion independent of which one is "right".
+  private resolvedVersions = new Map<string, string>()
 
   constructor(
     private readonly tui: TUI,
@@ -115,11 +122,29 @@ export class MarketOverlay implements Component {
       const response = await fetch(CATALOG_URL)
       if (!response.ok) throw new Error(`catalog request failed: HTTP ${String(response.status)}`)
       const page = parseCatalogProviderPage(await response.json())
-      this.state = { phase: 'browse', items: page.items.filter(usableOnTui) }
+      const items = page.items.filter(usableOnTui)
+      this.state = { phase: 'browse', items }
+      void this.resolveDisplayedVersions(items)
     } catch (cause) {
       this.state = { phase: 'error', message: cause instanceof Error ? cause.message : String(cause) }
     }
     this.tui.requestRender()
+  }
+
+  /** Resolve every visible item's real npm version in the background so the list updates in place, without delaying the catalog's own initial render. */
+  private async resolveDisplayedVersions(items: readonly CatalogProviderPage['items'][number][]): Promise<void> {
+    await Promise.all(items.map(async item => {
+      const packageName = item.package?.name ?? item.name
+      if (item.latestVersion === undefined) return
+      const resolved = await resolveInstallVersion(packageName, item.latestVersion)
+      this.resolvedVersions.set(packageName, resolved)
+      this.tui.requestRender()
+    }))
+  }
+
+  private displayedVersion(item: CatalogProviderPage['items'][number]): string | undefined {
+    const packageName = item.package?.name ?? item.name
+    return this.resolvedVersions.get(packageName) ?? item.latestVersion
   }
 
   private async install(item: CatalogProviderPage['items'][number]): Promise<void> {
@@ -177,7 +202,7 @@ export class MarketOverlay implements Component {
         this.state.items.forEach((item, index) => {
           const surfaces = item.compatibility?.hosts?.join('/') ?? ''
           const marker = index === this.selected ? success('> ') : '  '
-          const label = `${item.displayName} ${muted(`(${item.latestVersion ?? '?'}${surfaces === '' ? '' : ` · ${surfaces}`})`)}`
+          const label = `${item.displayName} ${muted(`(${this.displayedVersion(item) ?? '?'}${surfaces === '' ? '' : ` · ${surfaces}`})`)}`
           lines.push(`${marker}${label}`)
         })
         return lines
