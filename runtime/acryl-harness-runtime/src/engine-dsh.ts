@@ -294,21 +294,34 @@ export function createDshEngineDefinition(profileName: string): AcrylEngineDefin
  * only intercepts imports whose parent is the Loader's own entry module,
  * which this composition style never uses. Idempotent: replaces a stale
  * symlink pointing elsewhere, leaves an already-correct one untouched.
- * Race-safe against a second concurrent call for the same package (real,
- * reproduced in CI on a genuinely fresh runner - the Loader's own
- * `Promise.allSettled` composition can reach this same plugin's `_init()`
- * more than once before either write is visible to the other's own
- * `existsSync` check): a plain check-then-create has a TOCTOU gap, so the
- * write itself is attempted first and only re-checked against a raced
- * winner on `EEXIST`, not skipped ahead of time.
+ *
+ * Genuinely raced in CI, reproduced directly with a fresh `$HOME` (this
+ * machine's own `~/.acryl/.dsh` already had a correct symlink from earlier
+ * testing, so its idempotent early-return always won and nothing ever
+ * raced - only a truly first-ever boot, which is what every CI runner is,
+ * exposes it): the Loader's own `Promise.allSettled` composition can reach
+ * this same plugin's `_init()` more than twice concurrently, so a single
+ * catch-EEXIST-and-retry still lost the race sometimes (a third caller's
+ * `rmSync` landing between a second caller's failed `symlinkSync` and its
+ * own recovery `realpathSync`, throwing ENOENT). Fixed at the root instead
+ * of trying to out-retry an N-way filesystem race: a synchronous
+ * (no `await` inside) per-process memo ensures the real filesystem
+ * mutation for one `linkPath` happens exactly once no matter how many
+ * overlapping async Fiber activations reach this function, since two
+ * synchronous callers can never interleave inside this check-and-mark
+ * block - only truly concurrent OS processes could, which nothing else in
+ * this boot path is.
  */
+const materializedProfileLinks = new Set<string>()
 function materializeProfilePackage(profileDir: string, packageName: string, installPackageUrl: string): void {
+  const linkPath = join(profileDir, 'node_modules', packageName)
+  if (materializedProfileLinks.has(linkPath)) return
+  materializedProfileLinks.add(linkPath)
   const manifestPath = findPackageJSON(packageName, installPackageUrl)
   if (manifestPath === undefined) {
     throw new Error(`ACRYL web profile: cannot resolve package ${JSON.stringify(packageName)} from the acryl-web installation`)
   }
   const sourceDir = dirname(manifestPath)
-  const linkPath = join(profileDir, 'node_modules', packageName)
   mkdirSync(dirname(linkPath), { recursive: true })
   try {
     symlinkSync(sourceDir, linkPath, 'dir')
