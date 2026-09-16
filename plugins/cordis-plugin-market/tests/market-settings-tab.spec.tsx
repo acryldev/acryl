@@ -704,7 +704,7 @@ describe('MarketSettingsTab', () => {
     expect(await screen.findByText('not a standard plugin')).toBeTruthy()
     const details = screen.getByRole('link', { name: en.verificationDetails }) as HTMLAnchorElement
     expect(details.href).toBe(
-      'https://github.com/acryldev/acryl/blob/main/dsh-community-market/docs/install-and-uninstall.md',
+      'https://github.com/acryldev/acryl/blob/main/plugins/cordis-plugin-market/docs/install-and-uninstall.md',
     )
     expect(details.target).toBe('_blank')
     expect(details.rel).toContain('noopener')
@@ -1159,7 +1159,7 @@ describe('MarketSettingsTab', () => {
     expect(contact.rel).toContain('noopener')
     const guide = screen.getByRole('link', { name: en.sourcePartnershipGuide }) as HTMLAnchorElement
     expect(guide.href).toBe(
-      'https://github.com/acryldev/acryl/blob/main/dsh-community-market/docs/catalog-adapter-guide.md',
+      'https://github.com/acryldev/acryl/blob/main/plugins/cordis-plugin-market/docs/catalog-adapter-guide.md',
     )
     expect(guide.target).toBe('_blank')
     expect(guide.rel).toContain('noopener')

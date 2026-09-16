@@ -107,7 +107,7 @@ export async function runDevLocal(argv = process.argv.slice(2), environment = pr
     DSH_DESKTOP_USER_DATA: roots.userData,
   }
   if (!skipBuild) {
-    const marketCode = await runPnpm(['--filter', 'dsh-community-market', 'run', 'build'], env)
+    const marketCode = await runPnpm(['--filter', 'cordis-plugin-market', 'run', 'build'], env)
     if (marketCode !== 0) return marketCode
     return runPnpm(['--filter', 'acryl-desktop', 'run', 'dev'], env)
   }
