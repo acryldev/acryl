@@ -116,7 +116,7 @@
     }
   },
   "scripts": {
-    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter dsh-client-ui-brand-acryl run build",
+    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter dsh-client-ui-brand-acryl run build && pnpm --filter dsh-community-market run build",
     "build": "node scripts/generate-acryl-brand.mjs && node scripts/generate-mac-app-icon.mjs && node scripts/generate-tray-icons.mjs && node scripts/clean.mjs && tsdown && vite build --config vite.native-ui.config.ts && tsc -p tsconfig.json --emitDeclarationOnly && tsc -p tsconfig.client.json --emitDeclarationOnly",
     "pretypecheck": "pnpm run prebuild",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.native-ui.json --noEmit && tsc -p tsconfig.tests.json --noEmit && tsc -p tsconfig.tests.client.json --noEmit",
