@@ -36,6 +36,34 @@ that renamed `dsh-community-market` to `cordis-plugin-market` tonight
 "Cordis plugin market" is the *accurate* name for what the package already
 does architecturally, independent of the collision.
 
+## Cordis the protocol vs. ACRYL Blends the framework
+
+These are two different things and the names should not blur together:
+
+- **Cordis** is the *formal meta-framework* — the protocol-level rules for
+  how a plugin declares itself, how the Loader composes rows, how Fibers
+  mount/unmount/reload, how services are provided and injected. It answers
+  "what is a valid way to compose plugins," in the abstract. It is not
+  ACRYL's own; it is the substrate DSH and ACRYL both build on.
+- **ACRYL Blends** is the *practical, opinionated framework built on top of
+  Cordis* — real libraries and real machinery (not just a specification)
+  that let a team actually scaffold, compose, and stably ship Cordis
+  plugins as the fundamental unit ("cells"/"atoms"/"bricks") of an
+  application, without everyone re-deriving Cordis's own formal rules from
+  first principles every time. Where Cordis says *how composition is
+  legal*, ACRYL Blends is the tooling that makes *doing it correctly, fast,
+  every time* the path of least resistance — starting with `blends-core`
+  (already landed) and extending through the still-missing "generate a
+  Cordis plugin from template" skill described below.
+
+`acrylblends` (lowercase, the GitHub org) names the *registry* specifically
+— the Docker-Hub-analog catalog of shareable Blend recipes. **ACRYL
+Blends** (the framework) is the larger thing that registry is one part of:
+the format, the composition machinery, the registry, and eventually the
+Differentiation Engine (spec 033) all together. Keep the two apart when
+writing about this — "ACRYL Blends" is not just another word for the
+registry.
+
 Given that, the ecosystem has three layers, each with a real-world registry
 analog:
 
@@ -43,7 +71,7 @@ analog:
 | --- | --- | --- | --- |
 | **Atom**: a Cordis plugin | One bounded capability — a tool, a UI slot occupant, a settings tab, a whole surface feature | **npm** itself, browsed through `cordis-plugin-market` | Any public npm package; `cordis-plugin-market`'s own catalog (`acryl.dev/v1/plugins` today, source-pluggable per its own "Sources" concept) |
 | **Blend**: a composed instance state | A YAML manifest naming which Cordis rows (plugins) are mounted, their config, and (once the Differentiation Engine in spec 033 exists) a ledger of what an agent added live | **A Docker image** — reproduces a whole running instance from a declarative recipe | `acryldev/blends` (sibling repo, M1–M3 already landed per spec 033's own summary — BLEND format, `blends-core`, local hub index/CLI, static boot-time composition into `acryl-desktop/src/desktop-blend.ts`) |
-| **Blend registry**: a catalog of shareable Blends | A place to publish/discover/pull whole pre-configured instance recipes across ~100 (eventually) categories of starter apps | **Docker Hub** | `github.com/acrylblends` (user-created 2026-09-16, not yet populated — this spec's own open item) |
+| **Blend registry**: a catalog of shareable Blends | A place to publish/discover/pull whole pre-configured instance recipes. The user's own stated target is ~100 categories of starter apps, described as work already done informally but "not yet formalized in a ticket" — that inventory's actual location is unverified, see open questions | **Docker Hub** | `github.com/acrylblends` (user-created 2026-09-16, not yet populated — this spec's own open item) |
 
 The **npm : Cordis-plugin-market :: Docker image registry : acrylblends**
 analogy is deliberate and should be kept exact when explaining this to
@@ -117,6 +145,18 @@ judgment each time and therefore inconsistent. This is the actual technical
 bridge between "everything is a plugin" as a philosophy and "an agent can
 build anything as a plugin" as a working feature.
 
+A second, related requirement: the agent operating inside a blank-canvas
+(or any) Blend needs to **know its own architecture** the way `pi.dev`'s
+own coding agent is documented to understand the runtime it operates
+in — not just be handed the scaffolding skill, but have ACRYL's own
+Tier 0–3 model, the Cordis composition rules, and the Blend/plugin
+relationship available to it as real, in-context knowledge, so it can
+reason about *when* growing the Blend with a new plugin is the right move
+versus reusing something that already exists. This is a documentation/
+context-design requirement as much as a tooling one, and is currently
+unspecified — no inventory of what an agent would need to know, or where
+that knowledge should live (a skill, a bundled doc, a tool), exists yet.
+
 ## Open, explicitly unresolved: nesting/grouping plugins
 
 The user raised, as a live, not-yet-decided idea: once a Blend has enough
@@ -164,6 +204,7 @@ design that hardcodes a single public source would need revisiting before
 | BLEND format, `blends-core`, local hub index/CLI, static boot-time composition | **Landed** (M1–M3) | `acryldev/blends` (sibling repo), `specs/033-acryl-blends-runtime-contract/` |
 | Live Differentiation Engine (agent adds a capability to a running Blend, checkpointed, rollback-able) | **Not built.** Real, scoped gap analysis already exists | `specs/033-acryl-blends-runtime-contract/` (gap table is the authoritative "what's missing" reference — do not duplicate it here) |
 | "Generate a Cordis plugin from template" agent skill, guaranteed-compatible scaffolding | **Not built. No spec yet.** | Needs its own follow-on spec once scoped — candidate `037` |
+| Agent self-knowledge of ACRYL's own architecture (pi.dev-style), so it can judge when to differentiate a Blend | **Not designed. No inventory of required knowledge exists.** | Needs its own follow-on spec once scoped |
 | `acrylblends` registry (Blend recipes, ~100 starter categories) | Org created 2026-09-16, not populated, no CLI/index built against it yet | Needs its own follow-on spec once scoped, coordinating with `acryldev/blends`'s own already-landed M2 local hub index (does `acrylblends` replace, front, or federate with that local index? — unanswered) |
 | Blank-canvas Blend as the literal framework floor | **Product framing stated here for the first time.** No blank-canvas Blend YAML exists yet to point at | Needs its own follow-on spec |
 | Nesting/grouping plugins above the single-plugin unit | **Explicitly open**, not designed | Deferred — see "Open" section above |
@@ -216,3 +257,9 @@ design that hardcodes a single public source would need revisiting before
 4. Nesting/grouping of plugins — genuinely open, see above.
 5. Does `@deepseek-ai/cordis-plugin-group` already provide (or nearly
    provide) whatever the nesting idea above is reaching for? Unchecked.
+6. Where does the "~100 categories of starter apps" inventory the user
+   referred to as already-done-informally actually live, if anywhere?
+   Needed before `acrylblends` can be seeded with real content.
+7. What, precisely, does an agent need to know about ACRYL's own
+   architecture to reason well about differentiating a Blend (pi.dev-style
+   self-knowledge)? No inventory exists yet.
