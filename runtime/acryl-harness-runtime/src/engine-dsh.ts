@@ -22,7 +22,7 @@
  * file trusted the pattern.
  */
 
-import { mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { lstatSync, mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { createRequire, findPackageJSON } from 'node:module'
 import { basename, dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -295,43 +295,58 @@ export function createDshEngineDefinition(profileName: string): AcrylEngineDefin
  * which this composition style never uses. Idempotent: replaces a stale
  * symlink pointing elsewhere, leaves an already-correct one untouched.
  *
- * Genuinely raced in CI, reproduced directly with a fresh `$HOME` (this
- * machine's own `~/.acryl/.dsh` already had a correct symlink from earlier
- * testing, so its idempotent early-return always won and nothing ever
- * raced - only a truly first-ever boot, which is what every CI runner is,
- * exposes it): the Loader's own `Promise.allSettled` composition can reach
- * this same plugin's `_init()` more than twice concurrently, so a single
- * catch-EEXIST-and-retry still lost the race sometimes (a third caller's
- * `rmSync` landing between a second caller's failed `symlinkSync` and its
- * own recovery `realpathSync`, throwing ENOENT). Fixed at the root instead
- * of trying to out-retry an N-way filesystem race: a synchronous
- * (no `await` inside) per-process memo ensures the real filesystem
- * mutation for one `linkPath` happens exactly once no matter how many
- * overlapping async Fiber activations reach this function, since two
- * synchronous callers can never interleave inside this check-and-mark
- * block - only truly concurrent OS processes could, which nothing else in
- * this boot path is.
+ * The "stale" case is not hypothetical - it is the actual CI failure mode.
+ * `release-cli.yml`'s `web` job runs the test suite and
+ * `verify-npm-web-entrypoint.mjs` *before* building and smoke-testing the
+ * release archive, in the same job, against the same shared
+ * `~/.acryl/.dsh` home. Both earlier steps materialize this exact symlink
+ * pointing at their own temporary staging directories, then delete those
+ * directories in their own cleanup - leaving a **dangling** symlink behind
+ * in the shared profile, not a missing one. The later archive-smoke step's
+ * own `materializeProfilePackage` call then hits `EEXIST` (something is
+ * there) and, before this fix, called `realpathSync.native` on it to
+ * decide whether to replace it - which throws `ENOENT` on a dangling
+ * symlink instead of returning a comparable path, crashing where the
+ * function should simply have replaced the stale link. (An earlier pass
+ * misdiagnosed this as an N-way in-process race and added a same-process
+ * memo guard; that guard was harmless but irrelevant - every reproduction
+ * that actually matched CI's real symptom involved *no* concurrency at
+ * all, just one process inheriting another, earlier process's leftover
+ * dangling link.)
  */
-const materializedProfileLinks = new Set<string>()
 function materializeProfilePackage(profileDir: string, packageName: string, installPackageUrl: string): void {
-  const linkPath = join(profileDir, 'node_modules', packageName)
-  if (materializedProfileLinks.has(linkPath)) return
-  materializedProfileLinks.add(linkPath)
   const manifestPath = findPackageJSON(packageName, installPackageUrl)
   if (manifestPath === undefined) {
     throw new Error(`ACRYL web profile: cannot resolve package ${JSON.stringify(packageName)} from the acryl-web installation`)
   }
   const sourceDir = dirname(manifestPath)
+  const linkPath = join(profileDir, 'node_modules', packageName)
   mkdirSync(dirname(linkPath), { recursive: true })
-  try {
-    symlinkSync(sourceDir, linkPath, 'dir')
-  } catch (cause) {
-    const isExist = cause instanceof Error && 'code' in cause && cause.code === 'EEXIST'
-    if (!isExist) throw cause
-    if (realpathSync.native(linkPath) === realpathSync.native(sourceDir)) return
+  // `lstatSync` (not `existsSync`/`realpathSync`, both of which follow the
+  // symlink and would throw or report "missing" for a dangling one) is the
+  // only one of the three that answers "is there a filesystem entry at
+  // this exact path at all" without caring whether it resolves.
+  const hasEntry = (() => {
+    try {
+      lstatSync(linkPath)
+      return true
+    } catch {
+      return false
+    }
+  })()
+  if (hasEntry) {
+    // realpathSync throws on a dangling symlink rather than returning a
+    // comparable path - that case means "stale", exactly like a mismatch.
+    let existingTarget: string | undefined
+    try {
+      existingTarget = realpathSync.native(linkPath)
+    } catch {
+      existingTarget = undefined
+    }
+    if (existingTarget === realpathSync.native(sourceDir)) return
     rmSync(linkPath, { force: true, recursive: true })
-    symlinkSync(sourceDir, linkPath, 'dir')
   }
+  symlinkSync(sourceDir, linkPath, 'dir')
 }
 
 /** Resolve the pinned Harness `web` profile into a mountable composition (the Web flavor). */
