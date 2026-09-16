@@ -22,11 +22,14 @@ section of its own.
 
 ## The core claim
 
-**A Cordis plugin is the atomic unit of everything ACRYL builds.** Not just
-"installable extras" — the file browser, the Market UI itself, the branding,
-a settings panel, a whole GUI surface: all of it is, or should be, a Cordis
-plugin. Cordis (the meta-framework both stock DeepSeek Harness and ACRYL are
-built on — `@deepseek-ai/cordis` and friends) is the one substrate the two
+**A Cordis plugin is the minimal unit, the building block, the brick, the
+"cell" — the smallest thing everything else in ACRYL is built out of.** Not
+just "installable extras": the file browser, the Market UI itself, the
+branding, a settings panel, a whole GUI surface, a tool, a whole product
+capability — all of it is, or should be, a Cordis plugin, and nothing in
+ACRYL should exist as a special, non-pluginized exception to that rule.
+Cordis (the meta-framework both stock DeepSeek Harness and ACRYL are built
+on — `@deepseek-ai/cordis` and friends) is the one substrate the two
 communities already share, so it is the correct name for anything meant to
 work across both, not "dsh" (implies DeepSeek-team ownership ACRYL does not
 have and should not claim) and not "acryl" (implies ACRYL-exclusivity for
@@ -63,6 +66,81 @@ the format, the composition machinery, the registry, and eventually the
 Differentiation Engine (spec 033) all together. Keep the two apart when
 writing about this — "ACRYL Blends" is not just another word for the
 registry.
+
+## What a Cordis plugin actually is (from the real tutorial)
+
+DeepSeek Harness's own Cordis tutorial
+(`deepseek-harness.github.io/deepseek-harness/en/develop/cordis-tutorial/`,
+seven chapters) is the canonical source for this — summarized here so it is
+not just a link, with real code quoted from it, not paraphrased:
+
+**A plugin is a function; the Loader mounts it.** The minimal plugin
+(chapter 1, "Your first plugin"):
+
+```typescript
+import type { Context } from '@deepseek-ai/cordis'
+
+export const name = 'hello'
+
+export function apply(ctx: Context) {
+  console.log('hello from my first plugin')
+}
+```
+
+mounted via a Loader composition entry:
+
+```yaml
+- name: './hello.ts'
+```
+
+**A plugin can provide a service** (chapter 3, "Services") by extending
+`Service`:
+
+```typescript
+export class GreeterService extends Service {
+  constructor(ctx: Context) {
+    super(ctx, 'greeter')
+  }
+  greet(who: string) {
+    return `Hello, ${who}!`
+  }
+}
+```
+
+**A plugin declares what it needs** via `inject` (hard dependency — Cordis
+holds the plugin PENDING until every listed service exists) or `ctx.get()`
+(optional):
+
+```typescript
+export const inject = ['greeter']
+export function apply(ctx: Context) {
+  console.log(ctx.greeter.greet('world'))
+}
+```
+
+**Plugins compose hierarchically and hot-reload** (chapter 6, "Composition
+and HMR") through Loader entries with stable `id`s, `disabled` toggles, and
+groups that load/unload as one unit:
+
+```yaml
+- id: logger
+  name: '@deepseek-ai/cordis-plugin-logger-console'
+- id: hmr
+  name: '@deepseek-ai/cordis-plugin-hmr'
+  config:
+    root: ['.']
+- id: hello
+  name: './hello.ts'
+```
+
+That is Cordis's own formal answer to "how do you build one." What ACRYL
+Blends adds on top, per the distinction above, is not a different way to
+write this code — it is the *machinery* that removes the manual work of
+getting `cordis.patch.yml`/Loader-row-id-equals-package-name/the
+six-part-mini-design discipline right by hand every time: the still-missing
+"generate a Cordis plugin from template" skill (below) is meant to produce
+exactly the shape this tutorial teaches, mechanically, not leave an agent to
+re-derive it from the tutorial each time.
 
 Given that, the ecosystem has three layers, each with a real-world registry
 analog:
@@ -260,6 +338,11 @@ design that hardcodes a single public source would need revisiting before
   the `cordis-plugin-market` rename and publish this spec's table cites.
 - `docs/acrylbelnds_100ctgs/acrylbelnds_100ctgs.md` — the real 100-category
   software taxonomy `acrylblends` is meant to organize around.
+- https://deepseek-harness.github.io/deepseek-harness/en/develop/cordis-tutorial/
+  — the canonical Cordis plugin tutorial (7 chapters); quoted from directly
+  above rather than only linked.
+- `specs/036-cordis-ecosystem-and-acryl-blends/design/` — the `acrylblends`
+  web portal's own content structure/sitemap (new, this same pass).
 
 ## Open questions (carried forward, not answered here)
 
