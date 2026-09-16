@@ -1,6 +1,6 @@
 {
   "name": "acryl-harness-runtime",
-  "version": "0.1.40",
+  "version": "0.1.41",
   "private": false,
   "license": "MIT",
   "type": "module",
