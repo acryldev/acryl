@@ -227,22 +227,26 @@ jobs:
         with: { path: artifacts }
       - name: Revalidate complete promotion gate
         run: node scripts/release-manifest.mjs validate "$(find artifacts -name acryl-release-manifest.json -type f -print -quit)"
+      - name: Drop per-target sidecar files that collide as release assets
+        # Every per-target artifact directory carries its own loose
+        # release-receipt.json and checksums.txt with the SAME filename
+        # (8 targets = 8 identically-named files each). The uniquely named
+        # archives and the single aggregated acryl-release-manifest.json
+        # (which already carries every target's checksum and receipt) are
+        # what the release actually needs. softprops/action-gh-release's
+        # own `!artifacts/**/...` exclusion globs proved unreliable here —
+        # v0.1.44 still attempted to upload the duplicates, hit racy
+        # "update asset metadata" 404s on the collisions, and aborted the
+        # whole step, leaving the release stuck as a draft even though the
+        # real assets had already landed. Deleting the colliding files
+        # before the action runs removes the race entirely.
+        run: |
+          find artifacts -name 'release-receipt.json' -delete
+          find artifacts -name 'checksums.txt' -delete
       - name: Create GitHub release only after every required surface succeeds
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
           name: ACRYL ${{ github.ref_name }}
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
-          # Every per-target artifact directory carries its own loose
-          # release-receipt.json and checksums.txt with the SAME filename
-          # (8 targets = 8 identically-named files each), which collide as
-          # GitHub release assets and make softprops/action-gh-release
-          # churn through racy delete-then-reupload retries. The uniquely
-          # named archives and the single aggregated
-          # acryl-release-manifest.json (which already carries every
-          # target's checksum and receipt) are what the release actually
-          # needs; the colliding per-target sidecars are excluded.
-          files: |
-            artifacts/**/*
-            !artifacts/**/release-receipt.json
-            !artifacts/**/checksums.txt
+          files: artifacts/**/*
