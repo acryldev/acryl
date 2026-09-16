@@ -10,7 +10,7 @@ This repository owns the desktop product around an unmodified DeepSeek Harness c
 
 ## Build, run, and verify
 
-- Start the isolated local Desktop (own `~/.acryl-dev` home, advanced mode, Development Canvas) with `corepack pnpm run dev` or `corepack pnpm run local`.
+- Start the isolated local Desktop (own `~/.acryl-dev` home, advanced mode, Development Canvas) with `corepack pnpm run dev` (alias: `corepack pnpm run desktop`) or `corepack pnpm run local`.
 - Use `corepack pnpm run dev:shared` only when you intentionally want the installed app's `~/.dsh` home.
 - Fast headless loop: `corepack pnpm run typecheck`, `corepack pnpm run test`, or both via `corepack pnpm run verify`.
 - Typecheck, test, then isolated GUI: `corepack pnpm run lifecycle`.

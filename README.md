@@ -240,12 +240,12 @@ with npm in this workspace.
 
 #### Daily development session
 
-- `corepack pnpm dev` — recommended local development entry point. It builds
-  `cordis-plugin-market`, builds and starts `acryl-desktop`, and launches
-  with isolated ACRYL state: `DSH_HOME=~/.dsh-acryl` plus a separate Electron
-  `userData` directory. This keeps development profiles and settings away from
-  the installed ACRYL application and seeds advanced mode so Development
-  Canvas is visible.
+- `corepack pnpm dev` (alias: `corepack pnpm desktop`) — recommended local
+  development entry point. It builds `cordis-plugin-market`, builds and starts
+  `acryl-desktop`, and launches with isolated ACRYL state:
+  `DSH_HOME=~/.dsh-acryl` plus a separate Electron `userData` directory. This
+  keeps development profiles and settings away from the installed ACRYL
+  application and seeds advanced mode so Development Canvas is visible.
 - `corepack pnpm dev:local` — explicit spelling of `dev`; use it in notes or
   automation when the isolated-local behavior should be obvious.
 - `corepack pnpm local` — short alias for the same isolated build-and-launch
