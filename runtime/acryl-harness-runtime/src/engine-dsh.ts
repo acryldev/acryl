@@ -22,7 +22,7 @@
  * file trusted the pattern.
  */
 
-import { existsSync, mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { createRequire, findPackageJSON } from 'node:module'
 import { basename, dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -294,6 +294,13 @@ export function createDshEngineDefinition(profileName: string): AcrylEngineDefin
  * only intercepts imports whose parent is the Loader's own entry module,
  * which this composition style never uses. Idempotent: replaces a stale
  * symlink pointing elsewhere, leaves an already-correct one untouched.
+ * Race-safe against a second concurrent call for the same package (real,
+ * reproduced in CI on a genuinely fresh runner - the Loader's own
+ * `Promise.allSettled` composition can reach this same plugin's `_init()`
+ * more than once before either write is visible to the other's own
+ * `existsSync` check): a plain check-then-create has a TOCTOU gap, so the
+ * write itself is attempted first and only re-checked against a raced
+ * winner on `EEXIST`, not skipped ahead of time.
  */
 function materializeProfilePackage(profileDir: string, packageName: string, installPackageUrl: string): void {
   const manifestPath = findPackageJSON(packageName, installPackageUrl)
@@ -303,11 +310,15 @@ function materializeProfilePackage(profileDir: string, packageName: string, inst
   const sourceDir = dirname(manifestPath)
   const linkPath = join(profileDir, 'node_modules', packageName)
   mkdirSync(dirname(linkPath), { recursive: true })
-  if (existsSync(linkPath)) {
+  try {
+    symlinkSync(sourceDir, linkPath, 'dir')
+  } catch (cause) {
+    const isExist = cause instanceof Error && 'code' in cause && cause.code === 'EEXIST'
+    if (!isExist) throw cause
     if (realpathSync.native(linkPath) === realpathSync.native(sourceDir)) return
     rmSync(linkPath, { force: true, recursive: true })
+    symlinkSync(sourceDir, linkPath, 'dir')
   }
-  symlinkSync(sourceDir, linkPath, 'dir')
 }
 
 /** Resolve the pinned Harness `web` profile into a mountable composition (the Web flavor). */
