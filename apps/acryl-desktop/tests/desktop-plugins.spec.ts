@@ -173,7 +173,7 @@ describe('desktop direct bundle management', () => {
       expect.objectContaining({ status: 'active', mutable: false }),
     )
     expect(desktopPluginBundleMutable('acryl-desktop')).toBe(false)
-    expect(desktopPluginBundleMutable('dsh-community-market')).toBe(false)
+    expect(desktopPluginBundleMutable('cordis-plugin-market')).toBe(false)
     expect(desktopPluginBundleMutable('../third-party-plugin')).toBe(false)
     expect(desktopPluginBundleMutable('Third-Party-Plugin')).toBe(false)
     await harness.dispose()

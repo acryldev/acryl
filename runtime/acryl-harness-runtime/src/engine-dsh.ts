@@ -200,7 +200,7 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
       })
     }
     // Web's own desktopProfiles/desktopPnpm (spec 034 T006, scoped v1) - what
-    // dsh-community-market's install service needs for its Install/Uninstall
+    // cordis-plugin-market's install service needs for its Install/Uninstall
     // buttons to do a real operation instead of showing "ACRYL is required".
     // Both are stateless besides this one profile's own fixed name/directory,
     // so - also like dshHomePath - never disposed; there is nothing to
@@ -212,7 +212,7 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   // CLI/TUI's own desktopPlugins/livePluginActivation + desktopProfiles/
   // desktopPnpm (spec 034 T006, completing the third surface) - same
   // ordering constraint as Web above (mount desktopPlugins first, since
-  // dsh-community-market's own ctx.inject(['desktopProfiles', 'desktopPnpm'])
+  // cordis-plugin-market's own ctx.inject(['desktopProfiles', 'desktopPnpm'])
   // reads ctx.get('livePluginActivation') exactly once, opportunistically).
   // Unlike Web, the CLI has more than one named profile, so the profile name
   // comes from this composition's own directory rather than a literal - see
@@ -380,12 +380,12 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   )
   // Community Market: same row id/name acryl-desktop's own profile.ts uses
   // (DESKTOP_MARKET_IDENTITIES.community), same materialization technique as
-  // the brand swap above - dsh-community-market is another ACRYL-owned
+  // the brand swap above - cordis-plugin-market is another ACRYL-owned
   // workspace package outside @deepseek-ai/dsh's own dependency closure.
   // Unlike Desktop, Web has no on/off provider switch (Desktop's Market is
   // disabled by default and user-toggleable via desktop-market.ts) - Web has
   // no such setting surface yet, so this row is simply always present.
-  // dsh-community-market's own top-level inject (['webServer', 'settings'])
+  // cordis-plugin-market's own top-level inject (['webServer', 'settings'])
   // needs nothing Desktop-specific - its host code's own comment documents
   // this deliberately ("Browsing remains portable"): Discover/Installable/
   // Sources activate on any surface with webServer+settings, while real
@@ -394,8 +394,8 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   // Web today. Web-side desktopProfiles/desktopPnpm equivalents - and so
   // Market install/uninstall parity with Desktop - remain a separate,
   // unstarted piece of work; this row only turns on browsing.
-  materializeProfilePackage(profile.dir, 'dsh-community-market', installPackageUrl)
-  patches.push({ insert: [{ id: 'community-market', name: 'dsh-community-market' }] })
+  materializeProfilePackage(profile.dir, 'cordis-plugin-market', installPackageUrl)
+  patches.push({ insert: [{ id: 'community-market', name: 'cordis-plugin-market' }] })
   // Last, so a user override beats every composition decision above it - the
   // same shared store the CLI and the Desktop panel write (spec 034).
   patches.push(...pluginLifecyclePatches({
@@ -412,7 +412,7 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
  * profile system like the CLI flavor (Web has no external profile pipeline
  * of its own, unlike Desktop's `prepareDesktopProfile()`).
  * @param installPackageUrl - file URL of `acryl-web`'s own `package.json`,
- * used to materialize `dsh-client-ui-brand-acryl` and `dsh-community-market`
+ * used to materialize `dsh-client-ui-brand-acryl` and `cordis-plugin-market`
  * into the profile (see {@link resolveWebEngineComposition}'s own comments
  * for why that is needed).
  */

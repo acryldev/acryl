@@ -104,6 +104,7 @@
     "@deepseek-ai/dsh-compaction-tool-result-pruner": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-cordis-client-runner": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-cordis-host-runner": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-credentials": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-credentials-local": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-deepseek-llm-api-extensions": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-file-reference-local": "0.1.5-alpha.1",
@@ -137,6 +138,7 @@
     "@deepseek-ai/dsh-session-log-deepseek": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-session-log-export": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-session-persistence-jsonl": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-session-persistence": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-session-projection": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-session-projection-cache": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-session-query-sqlite": "0.1.5-alpha.1",
@@ -146,6 +148,7 @@
     "@deepseek-ai/dsh-session-title": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-session-title-first-prompt-llm": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-session-turn-outline": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-settings": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-settings-file": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-shell-env": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-skill": "0.1.5-alpha.1",
@@ -190,10 +193,10 @@
     "@deepseek-ai/dsh-workspace": "0.1.5-alpha.1",
     "diff": "^8.0.4",
     "dsh-client-ui-brand-acryl": "workspace:*",
-    "dsh-community-market": "workspace:*"
+    "cordis-plugin-market": "workspace:*"
   },
   "scripts": {
-    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter dsh-client-ui-brand-acryl run build && pnpm --filter dsh-community-market run build",
+    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter dsh-client-ui-brand-acryl run build && pnpm --filter cordis-plugin-market run build",
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",

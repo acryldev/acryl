@@ -225,3 +225,37 @@ regression. Phase 2/3 (typing + UI hygiene) harden it; Phase 4/5 are optional /
 close-out. Each phase is its own checkpoint commit, and each commit keeps the
 headless gate green. The acceptance criterion for every task is the test it
 points to in [`acceptance/README.md`](./acceptance/README.md).
+
+---
+
+## Phase 6 — Upstream-latest migrations (DSH + pi-tui) [PENDING user decision]
+
+**Purpose:** advance ACRYL onto the latest published harness/TUI family. Both are
+feasible but **both break version-pinned local patches**, so each is a controlled
+migration, not a bump. **Blocked on the user's call**: patch strategy
+(upstream / keep-as-pnpm-patch / maintain-fork) and sequencing (now vs after M9).
+See `research.md` finding R15.
+
+- [ ] T025 [P] Resolve the patch strategy for the four failing DSH patches
+  (`dsh-llm-deepseek`, `dsh-client-ui-directory-picker-browse`,
+  `dsh-client-ui-trajectory`, `dsh-sandbox-windows-acl`) — upstream vs re-gen vs fork.
+  - Why: every future bump re-hits them (R15).
+  - Depends on: none (decision).
+  - RED/GREEN proof: patch-strategy recorded; the `patch --dry-run` probe per package.
+  - Acceptance: a recorded decision that makes future bumps deterministic.
+
+- [ ] T026 [P] Bump the runtime family `@deepseek-ai/dsh-*` → `0.1.5-alpha.1` and re-port
+  the failing patches; update `upstream.json.runtimePackageVersion` + manifests + lockfile.
+  - Why: make the surfaces run the latest harness (R15). Do NOT change the submodule pin alone.
+  - Depends on: T025 (patch strategy) + M9 sequencing decision.
+  - RED/GREEN proof: `corepack pnpm install` + `corepack pnpm run check` (full gate) + `pnpm run debt:check` stays green.
+  - Acceptance: every `dsh-*` dep == `0.1.5-alpha.1`, all patches apply, gate green.
+
+- [ ] T027 [P] Bump `@earendil-works/pi-tui` → `0.85.1` and re-port the `tui-alt-screen` patch;
+  keep it an npm dependency (add a read-only reference submodule only if visibility is wanted).
+  - Why: latest TUI renderer (R15). Do NOT wire submodule source into the build.
+  - Depends on: T025 (patch strategy).
+  - RED/GREEN proof: `corepack pnpm --filter acryl-cli run typecheck` + TUI PTY smoke.
+  - Acceptance: pi-tui == `0.85.1`, patch applies, TUI boots and passes PTY smoke.
+
+**Checkpoint (Phase 6):** DSH family and pi-tui both on latest, patches re-ported, gate green.

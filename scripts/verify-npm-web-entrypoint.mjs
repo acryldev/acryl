@@ -13,13 +13,22 @@ const staging = mkdtempSync(join(tmpdir(), 'acryl-web-npm-'))
 
 try {
   const windows = process.platform === 'win32'
-  execFileSync(windows ? 'npm.cmd' : 'npm', ['pack', packageDir, '--silent', '--ignore-scripts'], {
-    cwd: staging,
+  // `pnpm pack`, not `npm pack`: acryl-web depends on real workspace
+  // packages (`dsh-client-ui-brand-acryl`, `cordis-plugin-market`) via the
+  // `workspace:*` protocol - only pnpm's own pack/publish rewrites that to
+  // the dependency's real published version in the packed manifest. `npm
+  // pack` leaves the literal string `workspace:*` in the packed
+  // package.json, which a standalone install (this script's whole point)
+  // cannot resolve - reproduced directly: `pnpm add ./tgz` in a plain temp
+  // dir failed with "Cannot resolve package from workspace because
+  // workspace packages were not loaded into the resolver" until this fix.
+  execFileSync(corepackCommand(process.platform), ['pnpm', 'pack', '--pack-destination', staging], {
+    cwd: packageDir,
     stdio: 'inherit',
     ...corepackSpawnOptions(process.platform),
   })
   const archive = readdirSync(staging).find(name => name.endsWith('.tgz'))
-  if (!archive) throw new Error('verify-npm-web-entrypoint: npm pack produced no archive')
+  if (!archive) throw new Error('verify-npm-web-entrypoint: pnpm pack produced no archive')
 
   writeFileSync(join(staging, 'package.json'), '{"private":true}\n')
   execFileSync(corepackCommand(process.platform), ['pnpm', '--dir', staging, 'add', '--ignore-scripts', `./${archive}`], {

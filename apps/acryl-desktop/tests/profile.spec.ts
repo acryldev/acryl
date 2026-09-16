@@ -548,7 +548,7 @@ describe('desktop profile composition', {
 
   it('fails a conflicting provider identity closed without blocking the core profile', () => {
     const home = temporaryHome()
-    writeFileSync(join(home, 'cordis.patch.yml'), `- insert:\n    - id: community-market\n      name: dsh-community-market\n`)
+    writeFileSync(join(home, 'cordis.patch.yml'), `- insert:\n    - id: community-market\n      name: cordis-plugin-market\n`)
 
     const prepared = prepareDesktopProfile(undefined, home, 'darwin', 'desktop', undefined, {
       requested: 'community-market',

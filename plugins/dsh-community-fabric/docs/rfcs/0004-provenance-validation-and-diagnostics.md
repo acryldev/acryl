@@ -252,7 +252,7 @@ Tests must run headlessly. At least one real Adapter integration test should com
 - [RFC 0003](0003-service-providers-and-composition.md) owns service-provider conflict and replacement policy; this RFC records only the resulting runtime transitions as observed effects while decisions remain in the Composition Plan.
 - [RFC 0002](0002-runtime-presentation-invocation-transport.md) owns invocation and Runtime/Presentation identity; this RFC records opaque identities and redacted outcomes.
 - [DSH plugin-needs research](../research/dsh-plugin-needs.md) supplies real examples of private routes, UI registration, processes, package operations, and monkey patches that require ownership.
-- [DSH Community Market](../../../dsh-community-market/README.md) may display reports but cannot create or upgrade their trust class.
+- [Cordis Plugin Market](../../../cordis-plugin-market/README.md) may display reports but cannot create or upgrade their trust class.
 
 ## 15. Open questions
 

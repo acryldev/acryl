@@ -252,7 +252,7 @@ artifact → manifest → negotiation/grant → activation
 - [RFC 0003](0003-service-providers-and-composition.zh.md)管理 service-provider 冲突与替换策略；本 RFC 只把最终 runtime transition 记录为 observed effect，decision 仍留在 Composition Plan。
 - [RFC 0002](0002-runtime-presentation-invocation-transport.zh.md)管理 invocation 与 Runtime/Presentation identity；本 RFC 记录不透明 identity 和脱敏结果。
 - [DSH 插件需求调研](../research/dsh-plugin-needs.zh.md)包含 private route、UI 注册、process、package operation 和 monkey patch 等需要 ownership 的真实例子。
-- [DSH Community Market](../../../dsh-community-market/README.zh.md)可以展示报告，但不能自行创建或提升其 trust class。
+- [Cordis Plugin Market](../../../cordis-plugin-market/README.zh.md)可以展示报告，但不能自行创建或提升其 trust class。
 
 ## 15. 开放问题
 

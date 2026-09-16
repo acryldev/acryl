@@ -79,7 +79,7 @@ processes, and its Client Fiber contributes through the Desktop-owned
 fallback. Removing the Canvas row restores that fallback without polling or a
 Desktop import of Canvas implementation.
 
-### `dsh-community-market/`
+### `cordis-plugin-market/`
 
 Community Market is implemented, private, and built into this workspace. It has
 a Host entry, a Client entry, catalog contracts, persisted source selection,
@@ -90,7 +90,7 @@ It is an optional provider, not an always-active plugin. A fresh installation
 defaults Market selection to `disabled`. Selecting `community-market` for the
 next generation:
 
-1. inserts `community-market` → `dsh-community-market` into the Loader tree;
+1. inserts `community-market` → `cordis-plugin-market` into the Loader tree;
 2. mounts the launcher-owned `desktopPlugins` service for direct profile-bundle
    inventory and enable/disable operations; and
 3. activates the Market Client contributions for Settings, sidebar, and shell

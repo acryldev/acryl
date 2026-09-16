@@ -16,7 +16,7 @@ keep today's rows.
 **Files**: `research.md`
 **Do**: determine (a) what `@deepseek-ai/dsh-host-plugin-inventory` enumerates
 and whether a TUI can read it without a client UI, (b) which ACRYL plugin rows
-each surface can host today, (c) whether `dsh-community-market` runs under a
+each surface can host today, (c) whether `cordis-plugin-market` runs under a
 non-Electron host.
 **Evidence**: answers written into `research.md` with the console/activation
 proof for each, or an explicit "unknown, prototype needed" before T004/T006.
@@ -165,7 +165,7 @@ host-side hot-mount mechanism `specs/032-universal-hot-reload`'s T1/T2/T4/T5
 already ship - after real user testing on a real running profile showed an
 install left the plugin inactive until a full server-process restart.
 Fixed two real bugs along the way, both found only by driving the actual
-Market UI end to end against real environments: `dsh-community-market`'s own
+Market UI end to end against real environments: `cordis-plugin-market`'s own
 `CORDIS_RUNTIME_VERSION` constant was stale at `4.0.1` (rejecting a plugin
 correctly pinning the actually-current `^4.0.2`), and
 `resolvePackageJson`'s documented contract was backwards in both
@@ -184,7 +184,7 @@ constructor takes a plain `name: string`).
 `desktopProfiles`/`desktopPnpm`/`desktopPlugins`/`livePluginActivation` for
 `composition.surface === 'tui'`, mounted in `engine-dsh.ts` with the same
 ordering constraint as Web (`desktopPlugins` before `desktopProfiles`, since
-`dsh-community-market`'s own `ctx.inject` reads the former). The one real
+`cordis-plugin-market`'s own `ctx.inject` reads the former). The one real
 difference from Web: the CLI has more than one named profile (Web's is always
 `'web'`), so the profile name comes from the booted composition's own
 directory, not a literal. `MarketOverlay.ts` gives the TUI a `/market` command;

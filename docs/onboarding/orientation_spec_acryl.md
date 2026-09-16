@@ -212,7 +212,7 @@ proposal.
   a parallel Electron plugin system.
 - `acryl-development-canvas` is a standalone Host/Client plugin contributing
   the Development Canvas through a stable Loader row and owned lifecycle.
-- `dsh-community-market` is an optional private Host/Client Market provider,
+- `cordis-plugin-market` is an optional private Host/Client Market provider,
   disabled by default and composed through normal Cordis, profile, and Desktop
   service contracts.
 - `dsh-community-fabric` remains a private interoperability RFC scaffold. It is
@@ -289,7 +289,7 @@ acryl-harness-runtime/      ACRYL integration with Harness runtime seams
 acryl-cli/                  Canonical terminal client and `acryl` command
 acryl-desktop/              Electron, Host/Client composition, native UI, release
 acryl-development-canvas/   Composable workspace and PTY surface
-dsh-community-market/       Optional private Market provider
+cordis-plugin-market/       Optional private Market provider
 dsh-community-fabric/       Interoperability RFC scaffold only
 deepseek-harness/           Pinned read-only upstream submodule
 docs/acryl/                 ACRYL architecture constraints and analysis

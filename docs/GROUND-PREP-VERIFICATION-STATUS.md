@@ -23,7 +23,7 @@ All fixes verified via typecheck + full existing test suites (no regressions; th
 Ran each affected package's own full `check` gate (build + typecheck + test + verify scripts) directly, since the root `pnpm run check` aborts early on an unrelated pre-existing failure (see below):
 
 - `acryl-harness-runtime`: typecheck clean; 4 pre-existing test failures (documented, unrelated - `CHANGELOG-0.2.0.md`)
-- `dsh-community-market`: typecheck clean; **280/280 tests pass**
+- `cordis-plugin-market`: typecheck clean; **280/280 tests pass**
 - `acryl-cli`: full check clean (build + typecheck + **318/318 tests**)
 - `acryl-web`: build + typecheck + test all clean; `verify:npm` fails on an unrelated pre-existing workspace-resolution gap (`dsh-client-ui-brand-acryl@workspace:*` not found) - traced to the `804e5bf` repo-layout refactor (root packages regrouped into `apps/runtime/plugins/examples/distribution`), already committed before this session, not caused by tonight's fixes
 - `acryl-desktop`: **full check gate 100% green** - 851 tests passed, 4 skipped, all verify scripts (closure, cli-runtime, loader-boot, profile-boot, licenses) passed

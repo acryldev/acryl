@@ -27,7 +27,7 @@ import {
 import { startDirectHost, type DirectHost } from '../host/direct.js'
 import { expandDynamicCommands, setDynamicSlashCommands } from '../tui/commands.js'
 import { MarketOverlay } from '../tui/market/MarketOverlay.js'
-import type { MarketDesktopPlugins } from 'dsh-community-market'
+import type { MarketDesktopPlugins } from 'cordis-plugin-market'
 import { TuiStore } from '../tui/store.js'
 import { mountTui, type TuiHandle } from '../tui/TuiApp.js'
 import type { TuiActions } from '../tui/actions.js'

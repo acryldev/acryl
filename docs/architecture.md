@@ -75,7 +75,7 @@ Desktop 只负责 advanced frame 与 conversation fallback。移除 Canvas row
 会直接恢复 fallback，不需要轮询，也不需要 Desktop import Canvas
 implementation。
 
-### `dsh-community-market/`
+### `cordis-plugin-market/`
 
 Community Market 已实现，是当前 workspace 中的 private built-in package。
 它包含 Host entry、Client entry、catalog contract、持久化 source selection、
@@ -84,7 +84,7 @@ Community Market 已实现，是当前 workspace 中的 private built-in package
 它是可选 provider，不是始终激活的 plugin。新安装默认 Market selection 为
 `disabled`。为下一个 generation 选择 `community-market` 后：
 
-1. Loader tree 插入 `community-market` → `dsh-community-market`；
+1. Loader tree 插入 `community-market` → `cordis-plugin-market`；
 2. launcher 挂载 `desktopPlugins` service，用于直接 profile bundle inventory
    与 enable/disable 操作；
 3. Market Client 在 Settings、sidebar 与 shell overlay 注册贡献。

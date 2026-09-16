@@ -29,7 +29,7 @@ export const DESKTOP_MARKET_IDENTITIES = Object.freeze({
   community: Object.freeze({
     provider: 'community-market' as const,
     rowId: 'community-market',
-    packageName: 'dsh-community-market',
+    packageName: 'cordis-plugin-market',
   }),
   dshMarket: Object.freeze({
     provider: 'dsh-market' as const,

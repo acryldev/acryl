@@ -21,7 +21,7 @@ This repository owns the desktop product around an unmodified DeepSeek Harness c
 - `deepseek-harness/` is a pinned upstream Git submodule. Never edit files inside it from a desktop feature branch.
 - `apps/acryl-desktop/` owns the Cordis Host and Client faces, Electron bootstrap, packaging, and release tests.
 - `plugins/dsh-community-fabric/` owns the community interoperability RFC. Until schemas and a reviewed reference adapter exist, it remains a private documentation scaffold and must not declare loadable DSH or package entry points.
-- `plugins/dsh-community-market/` is an implemented private Host/Client package. It is an optional Desktop Market provider, disabled by default, and must continue to use ordinary DSH/Cordis, profile, and Desktop service contracts rather than a parallel plugin runtime.
+- `plugins/cordis-plugin-market/` is an implemented private Host/Client package. It is an optional Desktop Market provider, disabled by default, and must continue to use ordinary DSH/Cordis, profile, and Desktop service contracts rather than a parallel plugin runtime.
 - The outer repository and all owned packages use the root PNPM release with `node-linker=isolated`.
 - The upstream submodule keeps its own PNPM workspace. Run upstream commands through the root `upstream:*` scripts, which enter the submodule before invoking its pinned Corepack release.
 - Compatibility mode must run the upstream default client without overrides. Advanced presentation belongs to desktop-owned client plugins and may replace documented slots or services through profile composition.
@@ -130,7 +130,7 @@ boundary-discipline rules, not a second architecture.
 Root packages are grouped by role, not left flat (fixed real instance:
 ten packages sat loose at repo root with no grouping signal for what
 depended on what — `acryl-npm-launcher`, a release shim, sat at the same
-level as `acryl-harness-runtime`, the core engine, and `dsh-community-market`,
+level as `acryl-harness-runtime`, the core engine, and `cordis-plugin-market`,
 a Cordis plugin; regrouped 2026-09-14, `pnpm-workspace.yaml` and
 `scripts/verify-layout.mjs` are the enforced source of truth for the
 result). This is Clean Architecture ch.11 (dependency inversion — depend
@@ -149,7 +149,7 @@ Current groups and what belongs in each:
   (`acryl-control`, `acryl-harness-runtime`). Nothing here may depend on
   anything under `apps/`.
 - `plugins/` — independently replaceable Cordis/DSH plugins
-  (`dsh-client-ui-brand-acryl`, `dsh-community-fabric`, `dsh-community-market`).
+  (`dsh-client-ui-brand-acryl`, `dsh-community-fabric`, `cordis-plugin-market`).
   A new installable capability package goes here, not next to `apps/` or
   `runtime/`.
 - `examples/` — demo/reference packages (`acryl-blend-demo`) that ship

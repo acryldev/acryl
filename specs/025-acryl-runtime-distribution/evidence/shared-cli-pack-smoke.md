@@ -47,7 +47,7 @@ The packed `acryl@0.1.17` candidate declares 23 direct dependencies:
 diff
 ```
 
-It does not declare `acryl-development-canvas`, `dsh-community-market`, or `pnpm`.
+It does not declare `acryl-development-canvas`, `cordis-plugin-market`, or `pnpm`.
 
 ## Result
 

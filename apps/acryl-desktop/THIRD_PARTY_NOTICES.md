@@ -355,7 +355,7 @@ the package names, versions, and licenses for transparency.
 | detect-libc | 2.1.2 | Apache-2.0 |
 | devlop | 1.1.0 | MIT |
 | diff | 9.0.0 | BSD-3-Clause |
-| dsh-community-market | 0.1.0-dev.0 | MIT |
+| cordis-plugin-market | 0.1.0-dev.0 | MIT |
 | dshmarket | 1.17.1 | MIT |
 | dunder-proto | 1.0.1 | MIT |
 | ecdsa-sig-formatter | 1.0.11 | Apache-2.0 |

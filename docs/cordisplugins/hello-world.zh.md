@@ -26,7 +26,7 @@ Cordis 是组合内核：
 Yarn 4 workspace（本仓库）
   acryl-desktop     Host + Client、Electron、打包
   dsh-community-fabric   文档脚手架
-  dsh-community-market   文档/运行时脚手架
+  cordis-plugin-market   文档/运行时脚手架
   deepseek-harness/      固定上游（pnpm，只读）
 
 一次 Desktop generation

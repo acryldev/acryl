@@ -143,7 +143,7 @@
 >   needed because Desktop's own service registrations
 >   (`DesktopActionsService`/`DesktopProfileService`/`DesktopPluginsService`,
 >   several `ctx.provide()` calls) must run before the `dsh` engine's own
->   Loader entries mount - `dsh-community-market`'s plugin does
+>   Loader entries mount - `cordis-plugin-market`'s plugin does
 >   `ctx.inject(['desktopProfiles', 'desktopPnpm'])` against exactly those.
 > - `engine-dsh.ts` split into resolution (`createDshEngineDefinition`,
 >   unchanged CLI/TUI behavior) and mounting (`mountDshEngine`, now taking an

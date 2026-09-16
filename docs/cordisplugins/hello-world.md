@@ -26,7 +26,7 @@ Upstream condensed reference: [Cordis primer](https://deepseek-harness.github.io
 Yarn 4 workspace (this repo)
   acryl-desktop     Host + Client faces, Electron, packaging
   dsh-community-fabric   docs scaffold
-  dsh-community-market   docs/runtime scaffold
+  cordis-plugin-market   docs/runtime scaffold
   deepseek-harness/      pinned upstream (pnpm, read-only)
 
 A running Desktop generation

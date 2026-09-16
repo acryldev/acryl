@@ -52,7 +52,7 @@ bump:
    layer 1 fixed the install now fails loudly instead of silently. Upstream is
    explicitly telling the Electron app to manage this profile itself.
 
-`assertInstalledBundle` in `dsh-community-market` then correctly rolls the
+`assertInstalledBundle` in `cordis-plugin-market` then correctly rolls the
 install back because the profile manifest never gained the dependency or the
 `dsh.profile.bundles` entry.
 
@@ -120,7 +120,7 @@ CLI-internal:
 - `market-pnpm-integration.spec.ts` / `pnpm.spec.ts`: an install writes the
   exact-version dependency and the `dsh.profile.bundles` entry; a remove
   reverses both; a bundle-less dependency is added without a bundle entry.
-- `dsh-community-market` `assertInstalledBundle` passes against a profile
+- `cordis-plugin-market` `assertInstalledBundle` passes against a profile
   reconciled by the new helper (integration test with a real fixture package).
 - Recovery: a killed pnpm mid-install leaves no partial manifest; the WAL
   restores the pre-install snapshot.
@@ -147,7 +147,7 @@ CLI-internal:
 
 - `4b7bb3a` - layer 1 fix (packaged dsh CLI entry).
 - `specs/030-acryl-marketplace` - the marketplace this unblocks.
-- `dsh-community-market/src/install/service.ts` `assertInstalledBundle` - the
+- `cordis-plugin-market/src/install/service.ts` `assertInstalledBundle` - the
   contract this must satisfy.
 - `acryl-desktop/src/pnpm.ts`, `acryl-desktop/src/desktop-plugins.ts`,
   `acryl-desktop/src/desktop-terminal.ts`.

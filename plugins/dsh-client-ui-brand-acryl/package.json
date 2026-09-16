@@ -1,7 +1,6 @@
 {
   "name": "dsh-client-ui-brand-acryl",
-  "version": "0.1.0-dev.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "ACRYL brand occupants for the DSH Web client's sidebar and conversation-hero slots - the swappable counterpart to @deepseek-ai/dsh-client-ui-brand-official",
   "license": "MIT",
   "publishConfig": {

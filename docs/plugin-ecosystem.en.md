@@ -36,7 +36,7 @@ Once the plugin marketplace ships, plugins that follow this manifesto will be ea
 
 Fabric capabilities begin as compatibility, consent, and audit declarations. They do not present in-process JavaScript as a security sandbox. Only a Host with evidence of real isolation may claim technical permission enforcement.
 
-The market is still in its [product and safety design phase](../dsh-community-market/README.md), with no usable page or installer yet. Catalog inclusion means that a project matched catalog rules; it is not a security review or endorsement.
+The market is still in its [product and safety design phase](../cordis-plugin-market/README.md), with no usable page or installer yet. Catalog inclusion means that a project matched catalog rules; it is not a security review or endorsement.
 
 ## How to participate
 

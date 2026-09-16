@@ -227,3 +227,33 @@ CI=true corepack pnpm --filter acryl-cli run typecheck -> exit 0
 - One term one meaning; prefer IDs across boundaries; small aggregates.
 - `render()`/projection functions are pure; view state is a discriminated union.
 - Land coherent, buildable commits; keep the spec ledger honest.
+
+## Finding R15 — "update everything to latest" (DSH + pi-tui) — verified feasible, both patch-blocked
+
+**Question:** can we update the `deepseek-harness` submodule / npm family and make all
+surfaces depend on the latest upstream?
+
+**Verified facts (2026-09-08):**
+- **DSH:** submodule is **430 commits behind** `origin/master` (pin at `0.1.3-alpha.2`,
+  `b4c7f9a`; upstream tip `dsh-v0.1.5-alpha.1`). The runtime npm family everywhere is
+  `@deepseek-ai/dsh-*@0.1.1-rc.2` (gate-enforced). `0.1.5-alpha.1` **is published** on npm.
+- **pi-tui:** current pin `0.84.2`; latest is **`0.85.1`** (`@earendil-works/pi-tui`, public npm).
+- **Both bumps break version-pinned local patches** (probe: `patch --dry-run` against the new tarball):
+  - DSH: `dsh-llm-deepseek`, `dsh-client-ui-directory-picker-browse`, `dsh-client-ui-trajectory`
+    FAIL (and `dsh-sandbox-windows-acl` unconfirmed) — ~4 of 8 need re-porting; the other
+    four (`dsh-app-boot`, `dsh-web-app`, `dsh-client-ui-settings-models`, `dsh-client-ui-workspace`)
+    apply cleanly.
+  - pi-tui: the `@earendil-works__pi-tui@0.84.2.patch` (touches `dist/tui-alt-screen.js`, NOT
+    OAuth branding — that patch is `__pi-ai@0.82.1.patch`) FAILS at `0.85.1`.
+
+**Decision:** neither is a clean bump; each requires a **patch re-port + full gate**.
+Do them as separate, controlled migrations. The submodule is read-only reference + the npm
+family is what runs (existing architecture); for pi-tui, a read-only reference submodule is
+fine for sync/visibility but keep consuming the published package — importing submodule source
+into `acryl-cli`'s tsdown/build-cli-archive pipeline is a real release-surface cost.
+
+**Open decision (user):** patch strategy — (1) upstream ACRYL-specific patches, (2) keep as
+pnpm patches regenerated per bump, (3) maintain a fork; and sequencing — now vs after M9
+(engine swap) settles. Until chosen, execution is blocked.
+
+**Consequences for tasks:** T025–T027 record this; T022/M9 sequencing cannot overlap a bump.

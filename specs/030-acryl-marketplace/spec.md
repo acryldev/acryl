@@ -12,10 +12,10 @@ Status: ready-for-agent
   regenerated every 15 min by `scripts/build-market-catalog.mjs` from npm
   `acryl-package` keyword discovery.
 - **B (default source registration)** - DONE (`06a2185`). "ACRYL Package
-  Catalog" is a one-click built-in source in `dsh-community-market`, resolving
+  Catalog" is a one-click built-in source in `cordis-plugin-market`, resolving
   through `market.standard-http-v1` against the acryl.dev manifest. Appears in
   the Sources tab with an Add button; no URL typing.
-- **C (npm distribution)** - not started. `dsh-community-market` is still
+- **C (npm distribution)** - not started. `cordis-plugin-market` is still
   `private: true`.
 - **D (docs)** - not started.
 - Query support on the static endpoint - deferred (`query.supported: []`,
@@ -29,16 +29,16 @@ Stand up a first-party ACRYL plugin marketplace that any DSH Desktop user can
 connect to - not only ACRYL Desktop. It has two halves:
 
 1. **Catalog service** - a hosted, provider-neutral HTTPS JSON catalog at
-   `acryl.dev` that conforms to the `dsh-community-market` `catalog-source`
+   `acryl.dev` that conforms to the `cordis-plugin-market` `catalog-source`
    contract, so it is selectable from any market client that supports custom
    sources.
 2. **Market client distribution** - publish the ACRYL market client
-   (`dsh-community-market`, or a slimmed `acryl-market`) to npm so a plain DSH
+   (`cordis-plugin-market`, or a slimmed `acryl-market`) to npm so a plain DSH
    Desktop user can `dsh plugin add` it and get the ACRYL catalog
    pre-registered, with the same UI ACRYL Desktop ships built in.
 
 The marketplace must not introduce a parallel plugin runtime, install engine,
-or trust model. It reuses the existing `dsh-community-market` contracts,
+or trust model. It reuses the existing `cordis-plugin-market` contracts,
 adapters, and managed-install verification.
 
 ## Source of truth
@@ -47,12 +47,12 @@ The catalog contract is already defined and generated in-repo. The service
 must project exactly these shapes, no extensions:
 
 - `CatalogSourceManifest` v1.0.0
-  (`dsh-community-market/src/contracts/generated/catalog-source.ts`) -
+  (`cordis-plugin-market/src/contracts/generated/catalog-source.ts`) -
   the user-registered manifest URL.
 - `CatalogProviderPage` v1.0.0
   (`.../generated/catalog-provider-page.ts`) - the `/v1/plugins` response.
 - Identity normalization and managed-install verification in
-  `dsh-community-market/src/contracts/identity.ts` and
+  `cordis-plugin-market/src/contracts/identity.ts` and
   `.../install/service.ts` stay authoritative. The service publishes data;
   the client verifies npm identity, canonical repository, integrity, absence
   of lifecycle scripts, and DSH bundle evidence at install time.
@@ -62,7 +62,7 @@ stays on the device. The service is stateless catalog data only.
 
 ## Current state (see research.md)
 
-- `dsh-community-market` already implements the full client: source store,
+- `cordis-plugin-market` already implements the full client: source store,
   `standard-http` / `dsh-1024store` / `dshfind` adapters, Market UI, managed
   install, schemas. It is an optional Desktop Market provider, disabled by
   default, `private: true`.
@@ -111,8 +111,8 @@ stays on the device. The service is stateless catalog data only.
 
 ### C. Market client on npm (for non-ACRYL DSH Desktop)
 
-- Decide: publish `dsh-community-market` as-is (drop `private: true`) or cut a
-  slimmed `acryl-market` package. Recommendation: publish `dsh-community-market`
+- Decide: publish `cordis-plugin-market` as-is (drop `private: true`) or cut a
+  slimmed `acryl-market` package. Recommendation: publish `cordis-plugin-market`
   unscoped or as `@acryl/market`, since it already uses only stock DSH/Cordis,
   profile, and Desktop service contracts (repo rule in root `CLAUDE.md`).
 - The published client ships with the acryl.dev manifest pre-registered.
@@ -185,7 +185,7 @@ stays on the device. The service is stateless catalog data only.
 
 ## Related
 
-- `dsh-community-market` - the client (this repo).
+- `cordis-plugin-market` - the client (this repo).
 - Spec 021 (`acryl-agent-plugin-ecosystem`), Spec 017
   (`cordis-architecture-explorer`), Spec 016 (`plugin-lifecycle-control`).
 - Market-provider import-guard + pre-restart-confirm UX (to be filed as its

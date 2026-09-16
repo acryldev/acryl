@@ -26,6 +26,6 @@
 
 ## Exclusions to prove during clean install
 
-The shared CLI does not import Electron/Desktop shell code, `acryl-development-canvas`, `dsh-community-market`, or `pnpm`. They must not be added to the explicit publish manifest unless the final packed-install smoke identifies a transitive Loader requirement.
+The shared CLI does not import Electron/Desktop shell code, `acryl-development-canvas`, `cordis-plugin-market`, or `pnpm`. They must not be added to the explicit publish manifest unless the final packed-install smoke identifies a transitive Loader requirement.
 
 This audit is the input to the smallest possible replacement for maximal deployed-manifest flattening. The packed candidate smoke, not a static guess, is the final authority for dynamic Loader resolution.

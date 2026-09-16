@@ -1,6 +1,6 @@
 /**
  * CLI/TUI's own `desktopProfiles`/`desktopPnpm` capabilities (spec 034,
- * completing T006 for the third surface) - what `dsh-community-market`'s
+ * completing T006 for the third surface) - what `cordis-plugin-market`'s
  * install service needs for a CLI-driven Market install/uninstall to do a
  * real package operation, instead of the "ACRYL is required" gate it shows
  * without them.
@@ -24,19 +24,19 @@ import { dirname, join } from 'node:path'
 import { PassThrough, Readable } from 'node:stream'
 import { type Context, Service } from '@deepseek-ai/cordis'
 
-/** Matches `dsh-community-market`'s own `MarketDesktopProfile` shape. */
+/** Matches `cordis-plugin-market`'s own `MarketDesktopProfile` shape. */
 export interface CliMarketProfile {
   readonly name: string
   readonly dir: string
 }
 
-/** Matches `dsh-community-market`'s own `MarketDesktopPnpmOutcome` shape. */
+/** Matches `cordis-plugin-market`'s own `MarketDesktopPnpmOutcome` shape. */
 export interface CliMarketPnpmOutcome {
   readonly exitCode: number | null
   readonly signal: NodeJS.Signals | null
 }
 
-/** Matches `dsh-community-market`'s own `MarketDesktopPnpmHandle` shape. */
+/** Matches `cordis-plugin-market`'s own `MarketDesktopPnpmHandle` shape. */
 export interface CliMarketPnpmHandle {
   readonly stdout: Readable
   readonly stderr: Readable
@@ -50,7 +50,7 @@ export interface CliMarketPnpmHandle {
 // `Service`'s constructor takes a plain string name, not `keyof Context`, so
 // providing under these exact names needs no static declaration at all.
 
-/** Matches `dsh-community-market`'s own `MarketDesktopPnpm` shape exactly. */
+/** Matches `cordis-plugin-market`'s own `MarketDesktopPnpm` shape exactly. */
 export interface CliMarketPnpm {
   runPlugin(args: readonly string[], invokingDir: string, signal?: AbortSignal): CliMarketPnpmHandle
   installPlugin(request: {

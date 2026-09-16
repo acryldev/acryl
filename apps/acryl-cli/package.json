@@ -25,7 +25,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter dsh-community-market run build && node scripts/generate-build-info.mjs",
+    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter cordis-plugin-market run build && node scripts/generate-build-info.mjs",
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "pretypecheck": "node scripts/generate-build-info.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
@@ -141,7 +141,7 @@
     "acryl-control": "workspace:*",
     "acryl-harness-runtime": "workspace:*",
     "diff": "^9.0.0",
-    "dsh-community-market": "workspace:*"
+    "cordis-plugin-market": "workspace:*"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.2",
