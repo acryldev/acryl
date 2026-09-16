@@ -160,7 +160,12 @@ export class WebPnpmService extends Service implements WebMarketPnpm {
     // `installPlugin` (never trust `pnpmOptions` alone to carry the target).
     const target = `${request.recovery.packageName}@${request.recovery.packageVersion}`
     const options = request.pnpmOptions === undefined ? [] : [...request.pnpmOptions]
-    return this.runPlugin(['add', ...options, target], request.invokingDir, request.signal)
+    // See the identical override and its own doc comment in
+    // cli-market-install.ts's installPlugin: a Market install of a plugin
+    // published minutes earlier is the normal case here, not the untrusted-
+    // fresh-package scenario pnpm's `minimumReleaseAge` default guards
+    // against. Overridden only for this one `add` invocation.
+    return this.runPlugin(['add', '--config.minimum-release-age=0', ...options, target], request.invokingDir, request.signal)
   }
 
   // No WAL (see this module's own doc comment): nothing was ever recorded as

@@ -133,7 +133,16 @@ export class CliPnpmService extends Service implements CliMarketPnpm {
   }): Promise<CliMarketPnpmHandle> {
     const target = `${request.recovery.packageName}@${request.recovery.packageVersion}`
     const options = request.pnpmOptions === undefined ? [] : [...request.pnpmOptions]
-    return this.runPlugin(['add', ...options, target], request.invokingDir, request.signal)
+    // A version of ACRYL's own tooling published minutes before an install
+    // attempt is the normal case here (Market installs are how a person
+    // actually picks up a just-published plugin), not the untrusted-fresh-
+    // package scenario pnpm's own `minimumReleaseAge` supply-chain default
+    // guards against - reproduced directly: a real install of a package
+    // this session had itself published minutes earlier failed with
+    // `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` on a pnpm whose default
+    // enables the policy. Overridden only for this one `add` invocation,
+    // not the user's global pnpm config, which stays untouched.
+    return this.runPlugin(['add', '--config.minimum-release-age=0', ...options, target], request.invokingDir, request.signal)
   }
 
   // No crash-recovery WAL (see this module's own doc comment) - there is
