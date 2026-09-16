@@ -141,6 +141,8 @@ Cordis provides the runtime foundation for:
 
 This lets ACRYL treat agents, models, memory systems, code graphs, tools, workflows, terminals, and UI surfaces as composable capabilities rather than hardcoded subsystems.
 
+Every one of those capabilities is a Cordis plugin, browsable on the public registry at [cordisplugins.github.io](https://cordisplugins.github.io). Complete, pullable compositions of plugins — Blends — are browsable at [acrylblends.github.io](https://acrylblends.github.io); ACRYL itself is just one Blend, the maxed-out one.
+
 ```text
                        ACRYL
                         |
@@ -337,6 +339,8 @@ The outer ACRYL workspace uses PNPM. The pinned `deepseek-harness/` submodule re
 - Website: [agentcontextrelay.com](https://acryl.dev/)
 - Documentation: [agentcontextrelay.com/docs](https://acryl.dev/docs)
 - Source: [github.com/acryldev/acryl](https://github.com/acryldev/acryl)
+- ACRYL Blends (the Blend registry): [acrylblends.github.io](https://acrylblends.github.io)
+- Cordis Plugins (the plugin registry): [cordisplugins.github.io](https://cordisplugins.github.io)
 - Discord: [discord.gg/cY9KXMex69](https://discord.gg/cY9KXMex69)
 - Cordis: [github.com/cordiverse/cordis](https://github.com/cordiverse/cordis)
 - DeepSeek Harness: [github.com/deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)
