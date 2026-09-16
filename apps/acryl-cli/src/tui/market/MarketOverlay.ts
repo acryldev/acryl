@@ -168,9 +168,19 @@ export class MarketOverlay implements Component {
         invokingDir: profiles.current.dir,
         recovery: { packageName, packageVersion, receiptId: `receipt:${randomUUID()}` },
       })
+      // A bare "pnpm add exited with code 1" told a real user nothing
+      // actionable - the underlying pnpm stderr (an npm 404, a store
+      // mismatch, a network failure) is exactly what a person would need to
+      // fix or report the failure, and it was there on `handle.stderr` the
+      // whole time, just never read.
+      let stderrOutput = ''
+      handle.stderr.on('data', (chunk: Buffer) => { stderrOutput += chunk.toString('utf8') })
       const outcome = await handle.done
       if (outcome.exitCode !== 0) {
-        throw new Error(`pnpm add exited with code ${String(outcome.exitCode)}`)
+        // Strip ANSI (pnpm colors its own output) and cap length - this
+        // renders inside a fixed-width popup box, not a scrollable log.
+        const detail = stderrOutput.replaceAll(/\x1b\[[0-9;]*m/gu, '').replaceAll(/\s+/gu, ' ').trim().slice(-400)
+        throw new Error(`pnpm add exited with code ${String(outcome.exitCode)}${detail === '' ? '' : `: ${detail}`}`)
       }
       const live = this.ctx.get('livePluginActivation') as LivePluginActivation | undefined
       let message = `Installed ${packageName}@${packageVersion}. Restart to activate.`
