@@ -107,9 +107,15 @@ export class CliPnpmService extends Service implements CliMarketPnpm {
     const stderr = new PassThrough()
     child.stdout?.pipe(stdout)
     child.stderr?.pipe(stderr)
+    // 'close', not 'exit': 'exit' can fire before the piped stdout/stderr
+    // have finished draining into `stdout`/`stderr` above, which raced a
+    // real caller reading `stderr` after `done` resolved - a fast failure
+    // (this profile's dsh wrapper prints one line and exits immediately)
+    // showed a near-empty stderr capture because the pipe hadn't flushed
+    // yet. 'close' is Node's own guarantee that both streams have ended.
     const done = new Promise<CliMarketPnpmOutcome>((resolve, reject) => {
       child.once('error', reject)
-      child.once('exit', (exitCode, exitSignal) => resolve({ exitCode, signal: exitSignal }))
+      child.once('close', (exitCode, exitSignal) => resolve({ exitCode, signal: exitSignal }))
     })
     return {
       stdout,

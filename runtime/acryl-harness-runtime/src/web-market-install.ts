@@ -134,9 +134,12 @@ export class WebPnpmService extends Service implements WebMarketPnpm {
     const stderr = new PassThrough()
     child.stdout?.pipe(stdout)
     child.stderr?.pipe(stderr)
+    // 'close', not 'exit' - see the identical fix and its own doc comment
+    // in cli-market-install.ts's runPlugin: 'exit' can race ahead of the
+    // piped stdout/stderr actually draining into the streams above.
     const done = new Promise<WebMarketPnpmOutcome>((resolve, reject) => {
       child.once('error', reject)
-      child.once('exit', (exitCode, exitSignal) => resolve({ exitCode, signal: exitSignal }))
+      child.once('close', (exitCode, exitSignal) => resolve({ exitCode, signal: exitSignal }))
     })
     return {
       stdout,
