@@ -31,6 +31,21 @@ describe('TuiCommandsService (spec 034 T009)', () => {
     expect(service.list()).toHaveLength(2)
   })
 
+  it('defaults overlay to undefined - a registration that predates the field is unaffected', () => {
+    const service = new TuiCommandsService(new Context())
+    service.register({ command: '/plugins-like', description: 'wants full-screen', open })
+    expect(service.list()[0]?.overlay).toBeUndefined()
+  })
+
+  it('carries an overlay presentation hint through register/list/resolve unchanged', () => {
+    const service = new TuiCommandsService(new Context())
+    const overlay = { width: '60%' as const, anchor: 'center' as const, margin: { top: 2, bottom: 2 } }
+    service.register({ command: '/files', description: 'Browse files', packageName: 'acryl-dsh-editor-plugin-cli', overlay, open })
+
+    expect(service.list()[0]?.overlay).toEqual(overlay)
+    expect(service.resolve('/files')?.overlay).toEqual(overlay)
+  })
+
   it('returns a disposer that removes exactly its own registration, idempotently', () => {
     const service = new TuiCommandsService(new Context())
     const disposeFiles = service.register({ command: '/files', description: 'a', open })

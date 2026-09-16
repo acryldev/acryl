@@ -45,6 +45,7 @@ import {
   type TUI,
   type Component,
   type OverlayHandle,
+  type OverlayOptions,
 } from '@earendil-works/pi-tui'
 import type { RenderOptions } from '../render.js'
 import { formatEvent, formatPendingToolCalls, formatShellRun, formatShellRunLive, formatStreamingText } from '../render.js'
@@ -61,7 +62,7 @@ import { YlyPet } from '../yly/yly-pet.js'
 import type { YlyState as YlyMode } from '../yly/yly-programs.js'
 import type { TuiActions } from './actions.js'
 import type { TuiState, TuiStore } from './store.js'
-import type { TuiCommandRegistration } from './tui-commands-service.js'
+import type { TuiCommandOverlayHint, TuiCommandRegistration } from './tui-commands-service.js'
 import { theme, fg } from './theme.js'
 import { ModelProfileOverlay } from './modelProfile/ModelProfileOverlay.js'
 import { LoginOverlay } from './login/LoginOverlay.js'
@@ -98,8 +99,20 @@ export interface TuiHandle {
   waitUntilExit(): Promise<void>
 }
 
-/** Full-screen panel anchored at the top — every overlay's uniform placement. */
+/** Full-screen panel anchored at the top — every overlay's uniform placement, used whenever a dynamic command doesn't opt into `TuiCommandOverlayHint`. */
 const OVERLAY_OPTIONS = { anchor: 'top-left' as const, row: 0, col: 0, width: '100%' as const, maxHeight: '100%' as const }
+
+/**
+ * Translate a plugin's narrow `TuiCommandOverlayHint` into `pi-tui`'s own
+ * `showOverlay` options. A direct field-for-field pass-through today because
+ * the hint's shape was deliberately kept a subset of `OverlayOptions` (see
+ * that type's own doc comment) - this indirection exists so the hint type
+ * stays `acryl-cli`'s own stable contract even if `pi-tui`'s richer options
+ * surface grows fields plugin authors shouldn't be reaching for yet.
+ */
+function toShowOverlayOptions(hint: TuiCommandOverlayHint): OverlayOptions {
+  return { width: hint.width, anchor: hint.anchor, margin: hint.margin }
+}
 
 /**
  * Wraps an overlay `Component` so it always paints every cell of the
@@ -464,39 +477,46 @@ class TuiApp implements TuiHandle {
     })
   }
 
-  private buildOverlayComponent(overlay: TuiState['overlay']): Component | undefined {
+  /**
+   * Builds the overlay `Component` for the current overlay state, plus (only
+   * for `'dynamic'`) the registration's own presentation hint — the one case
+   * where a plugin, not this file, decides how its overlay should be shown.
+   * Every other overlay kind implicitly wants `undefined` (full-screen).
+   */
+  private buildOverlayComponent(overlay: TuiState['overlay']): { component: Component; overlayHint: TuiCommandOverlayHint | undefined } | undefined {
     const { store, actions, getTool, getToolCall } = this.options
     switch (overlay.kind) {
       case 'none':
         return undefined
       case 'modelProfile':
-        return new ModelProfileOverlay(this.tui, store, actions)
+        return { component: new ModelProfileOverlay(this.tui, store, actions), overlayHint: undefined }
       case 'login':
-        return new LoginOverlay(this.tui, store, actions)
+        return { component: new LoginOverlay(this.tui, store, actions), overlayHint: undefined }
       case 'trajectory':
-        return new TrajectoryOverlay(this.tui, store, actions, getTool)
+        return { component: new TrajectoryOverlay(this.tui, store, actions, getTool), overlayHint: undefined }
       case 'toolCards':
-        return new ToolCardsOverlay(this.tui, store, actions, getTool, getToolCall)
+        return { component: new ToolCardsOverlay(this.tui, store, actions, getTool, getToolCall), overlayHint: undefined }
       case 'context':
-        return new ContextOverlay(store, actions)
+        return { component: new ContextOverlay(store, actions), overlayHint: undefined }
       case 'plugins':
-        return new PluginsOverlay(this.tui, overlay.rows, actions)
+        return { component: new PluginsOverlay(this.tui, overlay.rows, actions), overlayHint: undefined }
       case 'dynamic': {
         // Resolved live rather than snapshotted at open time (unlike every
         // other overlay's own state above) - the registration itself is the
         // only place the actual UI-building logic lives (spec 034 T009).
         const registration = this.options.getDynamicCommand?.(overlay.command)
         if (registration === undefined) return undefined
-        return registration.open({ tui: this.tui, close: () => this.options.actions.closeDynamic() })
+        const component = registration.open({ tui: this.tui, close: () => this.options.actions.closeDynamic() })
+        return { component, overlayHint: registration.overlay }
       }
       case 'agentPresets':
-        return new AgentPresetsOverlay(store, actions)
+        return { component: new AgentPresetsOverlay(store, actions), overlayHint: undefined }
       case 'approval':
         // Rendered inline via `approvalSlot` in `updateOverlay` instead —
         // never reaches a full-screen `showOverlay` panel.
         return undefined
       case 'userQuestion':
-        return new QuestionOverlay(overlay.userQuestion, actions)
+        return { component: new QuestionOverlay(overlay.userQuestion, actions), overlayHint: undefined }
     }
   }
 
@@ -523,9 +543,11 @@ class TuiApp implements TuiHandle {
       return
     }
     this.tui.setFocus(this.editor)
-    const component = this.buildOverlayComponent(overlay)
-    if (component === undefined) return
-    this.overlayHandle = this.tui.showOverlay(new FullScreenOverlay(component, this.tui), OVERLAY_OPTIONS)
+    const built = this.buildOverlayComponent(overlay)
+    if (built === undefined) return
+    this.overlayHandle = built.overlayHint === undefined
+      ? this.tui.showOverlay(new FullScreenOverlay(built.component, this.tui), OVERLAY_OPTIONS)
+      : this.tui.showOverlay(built.component, toShowOverlayOptions(built.overlayHint))
   }
 
   unmount(options?: { preserveScreen?: boolean }): void {

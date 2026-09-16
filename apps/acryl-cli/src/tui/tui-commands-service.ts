@@ -60,6 +60,26 @@ export interface TuiCommandOpenContext {
   close(): void
 }
 
+/**
+ * Positioning hint for a registration's overlay, opting it out of the default
+ * full-screen presentation `TuiApp.ts` gives every dynamic command. Deliberately
+ * a narrow subset of `pi-tui`'s own `OverlayOptions` (width/anchor/margin) -
+ * the fields a compact popup actually needs, not the full options surface
+ * (`row`/`col`/`offsetX`/`offsetY`/`visible`/`nonCapturing` stay TuiApp-internal
+ * concerns until a real plugin needs them). Reference values match
+ * `almegal/pi-file-browser`'s own `ctx.ui.custom(builder, { overlay: true,
+ * overlayOptions: { width: '60%', anchor: 'center', margin: { top: 2, bottom: 2 } } })`
+ * call - the exact popup style a screenshot of that project showed running.
+ */
+export interface TuiCommandOverlayHint {
+  /** Columns, or a percentage of terminal width (e.g. `'60%'`). */
+  readonly width?: number | `${number}%`
+  /** Defaults to `'center'`, matching `pi-tui`'s own `OverlayOptions` default. */
+  readonly anchor?: 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top-center' | 'bottom-center' | 'left-center' | 'right-center'
+  /** Distance from terminal edges; a bare number applies to all sides. */
+  readonly margin?: number | { readonly top?: number; readonly bottom?: number; readonly left?: number; readonly right?: number }
+}
+
 /** One plugin-contributed slash command, as the plugin itself declares it. */
 export interface TuiCommandRegistration {
   /** Must start with `/`; the bare method name a plugin author picks (e.g. `/files`) - collisions with another plugin's own bare `command` are expected and fine, see module doc. */
@@ -68,12 +88,21 @@ export interface TuiCommandRegistration {
   readonly description: string
   /** The registering plugin's own package name (its `package.json` `name`), used to build `/plugin:<packageName>/<method>` and `/<method>:<packageName>` addressing - `undefined` for a first-party, unnamespaced command (e.g. this app's own built-in `/market`). */
   readonly packageName?: string
+  /**
+   * Opts this command's overlay out of `TuiApp.ts`'s default full-screen
+   * `FullScreenOverlay` treatment into a positioned popup instead. Absent
+   * (the default for every existing registration, including this app's own
+   * built-ins) means exactly today's behavior - a plugin that predates this
+   * field, or simply doesn't need compact presentation (e.g. a 90-row list
+   * like `/plugins` genuinely wants the vertical space), is unaffected.
+   */
+  readonly overlay?: TuiCommandOverlayHint
   /** Builds the overlay `Component` shown when the command runs. Called fresh each invocation - no state survives between opens unless the plugin's own closure keeps it. */
   open(context: TuiCommandOpenContext): Component
 }
 
-/** A registration as stored - `packageName` always present (possibly `undefined`), never optional-absent, so `list()`/`resolve()` consumers don't need the `in` check `TuiCommandRegistration`'s optional field would otherwise force on them. */
-export type ResolvedTuiCommand = Required<Pick<TuiCommandRegistration, 'command' | 'description' | 'open'>> & { readonly packageName: string | undefined }
+/** A registration as stored - `packageName` always present (possibly `undefined`), never optional-absent, so `list()`/`resolve()` consumers don't need the `in` check `TuiCommandRegistration`'s optional field would otherwise force on them. Same treatment for `overlay`. */
+export type ResolvedTuiCommand = Required<Pick<TuiCommandRegistration, 'command' | 'description' | 'open'>> & { readonly packageName: string | undefined; readonly overlay: TuiCommandOverlayHint | undefined }
 
 declare module '@deepseek-ai/cordis' {
   interface Context {
@@ -111,7 +140,7 @@ export class TuiCommandsService extends Service {
       throw new Error(`tuiCommands: command must start with "/" and name something, got ${JSON.stringify(registration.command)}`)
     }
     const id = Symbol(registration.command)
-    this.registrations.set(id, { command: registration.command, description: registration.description, open: registration.open, packageName: registration.packageName })
+    this.registrations.set(id, { command: registration.command, description: registration.description, open: registration.open, packageName: registration.packageName, overlay: registration.overlay })
     let active = true
     return () => {
       if (!active) return
