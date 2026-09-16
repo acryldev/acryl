@@ -71,11 +71,28 @@ analog:
 | --- | --- | --- | --- |
 | **Atom**: a Cordis plugin | One bounded capability — a tool, a UI slot occupant, a settings tab, a whole surface feature | **npm** itself, browsed through `cordis-plugin-market` | Any public npm package; `cordis-plugin-market`'s own catalog (`acryl.dev/v1/plugins` today, source-pluggable per its own "Sources" concept) |
 | **Blend**: a composed instance state | A YAML manifest naming which Cordis rows (plugins) are mounted, their config, and (once the Differentiation Engine in spec 033 exists) a ledger of what an agent added live | **A Docker image** — reproduces a whole running instance from a declarative recipe | `acryldev/blends` (sibling repo, M1–M3 already landed per spec 033's own summary — BLEND format, `blends-core`, local hub index/CLI, static boot-time composition into `acryl-desktop/src/desktop-blend.ts`) |
-| **Blend registry**: a catalog of shareable Blends | A place to publish/discover/pull whole pre-configured instance recipes. The user's own stated target is ~100 categories of starter apps, described as work already done informally but "not yet formalized in a ticket" — that inventory's actual location is unverified, see open questions | **Docker Hub** | `github.com/acrylblends` (user-created 2026-09-16, not yet populated — this spec's own open item) |
+| **Blend registry**: a catalog of shareable Blends | A place to publish/discover/pull whole pre-configured instance recipes, targeting the 100-category software taxonomy below | **Docker Hub** | `github.com/acrylblends` (user-created 2026-09-16, not yet populated — this spec's own open item) |
 
 The **npm : Cordis-plugin-market :: Docker image registry : acrylblends**
 analogy is deliberate and should be kept exact when explaining this to
 anyone new — it is the fastest way to make the three-layer shape click.
+
+### The 100-category taxonomy exists and is real
+
+`docs/acrylbelnds_100ctgs/acrylbelnds_100ctgs.md` (added 2026-09-16, note
+the directory's own typo in "acrylbelnds" — not renamed here since it is
+not this spec's call to make) is a genuine, complete taxonomy: 100 numbered
+top-level software categories (System, Application, Business, Developer,
+AI, Data, Analytics, Cloud, DevOps, Networking, Cybersecurity, ... through
+Autonomous and Meta-software), each broken into named subcategories with
+examples, plus eight cross-cutting classification dimensions (interaction
+model, execution environment, architecture, delivery model, licensing,
+user type, autonomy level, and a condensed 16+1-family top-level view).
+This is the real, already-done inventory `acrylblends` is meant to be
+organized against — it answers open question 6 from the first version of
+this spec directly. It is a *category taxonomy*, not yet a set of actual
+Blend recipes; turning categories into real, buildable starter Blends is
+still open work, not implied by the taxonomy's own existence.
 
 ## Why ACRYL itself is "just" one Blend
 
@@ -205,7 +222,7 @@ design that hardcodes a single public source would need revisiting before
 | Live Differentiation Engine (agent adds a capability to a running Blend, checkpointed, rollback-able) | **Not built.** Real, scoped gap analysis already exists | `specs/033-acryl-blends-runtime-contract/` (gap table is the authoritative "what's missing" reference — do not duplicate it here) |
 | "Generate a Cordis plugin from template" agent skill, guaranteed-compatible scaffolding | **Not built. No spec yet.** | Needs its own follow-on spec once scoped — candidate `037` |
 | Agent self-knowledge of ACRYL's own architecture (pi.dev-style), so it can judge when to differentiate a Blend | **Not designed. No inventory of required knowledge exists.** | Needs its own follow-on spec once scoped |
-| `acrylblends` registry (Blend recipes, ~100 starter categories) | Org created 2026-09-16, not populated, no CLI/index built against it yet | Needs its own follow-on spec once scoped, coordinating with `acryldev/blends`'s own already-landed M2 local hub index (does `acrylblends` replace, front, or federate with that local index? — unanswered) |
+| `acrylblends` registry (Blend recipes) | Org created 2026-09-16, not populated, no CLI/index built against it yet. Its target category taxonomy exists and is real (`docs/acrylbelnds_100ctgs/`) — actual Blend recipes per category do not yet exist | Needs its own follow-on spec once scoped, coordinating with `acryldev/blends`'s own already-landed M2 local hub index (does `acrylblends` replace, front, or federate with that local index? — unanswered) |
 | Blank-canvas Blend as the literal framework floor | **Product framing stated here for the first time.** No blank-canvas Blend YAML exists yet to point at | Needs its own follow-on spec |
 | Nesting/grouping plugins above the single-plugin unit | **Explicitly open**, not designed | Deferred — see "Open" section above |
 | Private/self-hosted registry variant (business model) | Context only, no design | Deferred until a public registry design exists to extend |
@@ -241,6 +258,8 @@ design that hardcodes a single public source would need revisiting before
   boundary).
 - `docs/DEVELOPMENT-LOG.md`, 2026-09-16 entries — the real commits behind
   the `cordis-plugin-market` rename and publish this spec's table cites.
+- `docs/acrylbelnds_100ctgs/acrylbelnds_100ctgs.md` — the real 100-category
+  software taxonomy `acrylblends` is meant to organize around.
 
 ## Open questions (carried forward, not answered here)
 
@@ -257,9 +276,10 @@ design that hardcodes a single public source would need revisiting before
 4. Nesting/grouping of plugins — genuinely open, see above.
 5. Does `@deepseek-ai/cordis-plugin-group` already provide (or nearly
    provide) whatever the nesting idea above is reaching for? Unchecked.
-6. Where does the "~100 categories of starter apps" inventory the user
-   referred to as already-done-informally actually live, if anywhere?
-   Needed before `acrylblends` can be seeded with real content.
+6. ~~Where does the "~100 categories of starter apps" inventory live?~~
+   **Resolved:** `docs/acrylbelnds_100ctgs/acrylbelnds_100ctgs.md`, added
+   2026-09-16. Open now: turning categories into actual, buildable starter
+   Blend recipes — the taxonomy alone is not that.
 7. What, precisely, does an agent need to know about ACRYL's own
    architecture to reason well about differentiating a Blend (pi.dev-style
    self-knowledge)? No inventory exists yet.
