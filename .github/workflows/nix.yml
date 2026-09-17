@@ -45,18 +45,33 @@ jobs:
             runner: ubuntu-24.04-arm
           - system: aarch64-darwin
             runner: macos-26
-          # x86_64-darwin (nixpkgs-26.05-darwin legacy pin) has no CI job:
-          # the Determinate Nix installer no longer supports Intel macOS on
-          # GitHub-hosted runners (DeterminateSystems/nix-src#224). The
-          # derivation stays in flake.nix for local Intel builders; restore
-          # the job via a Rosetta cross-build from macos-14 when feasible.
+          # x86_64-darwin uses the nixpkgs-26.05-darwin legacy pin.
+          # macos-26-intel is the current Intel macOS runner label (GA Feb
+          # 2026). Determinate dropped Intel *hosts* in Nov 2025
+          # (DeterminateSystems/nix-src#224), so this leg installs upstream
+          # Nix via cachix/install-nix-action instead of the Determinate
+          # installer below.
+          - system: x86_64-darwin
+            runner: macos-26-intel
 
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           submodules: recursive
 
+      # Determinate Nix installer — not usable on x86_64-darwin hosts since
+      # Nov 2025 (DeterminateSystems/nix-src#224).
       - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+        if: matrix.system != 'x86_64-darwin'
+
+      # Upstream Nix installer for the Intel macOS leg (Determinate no longer
+      # ships an x86_64-darwin host build). Vanilla Nix needs flakes enabled
+      # explicitly; the Determinate installer does it implicitly.
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+        if: matrix.system == 'x86_64-darwin'
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
 
       # magic-nix-cache is Linux-only: the v14 static binary on arm64-darwin
       # fails with `dyld: Symbol not found: __ZNSt13exception_ptr...` because
