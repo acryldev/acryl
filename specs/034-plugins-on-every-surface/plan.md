@@ -31,7 +31,7 @@ removes the duplication.
 | Plugin inventory | `@deepseek-ai/dsh-host-plugin-inventory` (service `pluginInventory`), composed only where a surface mounts it | composed on all three surfaces |
 | Plugin lifecycle (enable/disable) | `acryl-desktop/src/plugin-lifecycle-{contract,controller,state,route}.ts` | contract and controller in `acryl-control/src/plugin/`, Cordis service in the runtime package, route stays with the surface that serves HTTP |
 | Plugin install/reconcile | `acryl-desktop/src/desktop-plugin-reconcile.ts` + the profile's own pnpm (`specs/031`) | shared runtime module; surface supplies the install anchor |
-| Market provider | `dshmarket` (provider `dshmarket`) and `dsh-community-market` (provider `community-market`), selected by `acryl-desktop/src/desktop-market.ts` | provider selection becomes a runtime capability; the Electron-only parts stay in the surface |
+| Market provider | `dshmarket` (provider `dshmarket`) and `cordis-plugin-market` (provider `community-market`), selected by `acryl-desktop/src/desktop-market.ts` | provider selection becomes a runtime capability; the Electron-only parts stay in the surface |
 | Presentation | Electron/Web client plugins (`@deepseek-ai/dsh-client-ui-settings-plugins`, `...-plugin-inventory`), TUI has none | unchanged per surface; a plugin declares the slots it ships |
 
 `acryl-control` already follows the contract/provider/controller split for
@@ -92,7 +92,7 @@ Per surface, real evidence:
 
 ## Risks
 
-- **Market under a non-Electron host**: `dsh-community-market` may assume an
+- **Market under a non-Electron host**: `cordis-plugin-market` may assume an
   Electron main process. Resolve in `research.md` Q1 before committing Web to
   it; the fallback is that Web lists and enables plugins but installs through
   the CLI path.

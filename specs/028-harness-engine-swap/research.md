@@ -617,7 +617,7 @@ not change the implemented slice.
   compatibility mode; Host + Client Cordis faces plus `ctx.connection`,
   `ctx.webServer`, `ctx.desktopRuntime`, and ACRYL-owned services
   (`desktopProfiles`, `desktopPnpm`, plugin lifecycle, install-recovery WAL,
-  live activation, `dsh-community-market`, BLEND lock layer). It calls the
+  live activation, `cordis-plugin-market`, BLEND lock layer). It calls the
   Harness `boot()` itself (`acryl-desktop/src/main.ts:815`) with its own
   profile/composition machinery - verified: this is the **only** `boot()` call
   site in `acryl-desktop/src` - and it does **not** go through

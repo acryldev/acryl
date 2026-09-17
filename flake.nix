@@ -91,7 +91,7 @@
             pname = "acryl";
             inherit version src pnpm;
             fetcherVersion = 4;
-            hash = "sha256-gqs/PgXIBj8+YsH/z/qIPa68XVNO7hu4eDxvShYkyxI=";
+            hash = "sha256-2R0I7aABmehNQLo1RCG5oiLpTOcckZIRGv6ChyggNz8=";
           };
 
           # Shared flags for both TUI and desktop derivations.
@@ -178,12 +178,12 @@
               # Build the TUI dependency chain.
               # acryl-harness-runtime imports types from acryl-control, so
               # acryl-control must be built first. Then acryl-harness-runtime,
-              # then dsh-community-market (imported by acryl-cli's /market
+              # then cordis-plugin-market (imported by acryl-cli's /market
               # command), then acryl-cli (which depends on all three;
               # renamed from acryl-tui upstream).
               pnpm --filter acryl-control run build
               pnpm --filter acryl-harness-runtime run build
-              pnpm --filter dsh-community-market run build
+              pnpm --filter cordis-plugin-market run build
               pnpm --filter acryl-cli run build
 
               runHook postBuild
@@ -208,7 +208,7 @@
               # workspace packages that point to source directories).
               ${installWorkspacePackage "runtime/acryl-control" "acryl-control" "$out/lib/acryl/node_modules" []}
               ${installWorkspacePackage "runtime/acryl-harness-runtime" "acryl-harness-runtime" "$out/lib/acryl/node_modules" []}
-              ${installWorkspacePackage "plugins/dsh-community-market" "dsh-community-market" "$out/lib/acryl/node_modules" ["docs"]}
+              ${installWorkspacePackage "plugins/cordis-plugin-market" "cordis-plugin-market" "$out/lib/acryl/node_modules" ["docs"]}
 
               # Wrap the TUI entry point
               makeWrapper ${pkgs.nodejs_22}/bin/node $out/bin/acryl \
@@ -242,7 +242,7 @@
               # Order matters: each package imports types from its deps.
               pnpm --filter acryl-control run build
               pnpm --filter acryl-harness-runtime run build
-              pnpm --filter dsh-community-market run build
+              pnpm --filter cordis-plugin-market run build
 
               # Build the desktop package. Skip the generate-* scripts
               # (they use sharp for image processing) since the build/
@@ -273,7 +273,7 @@
               # Replace workspace packages with built versions
               ${installWorkspacePackage "runtime/acryl-control" "acryl-control" "$out/lib/acryl-desktop/node_modules" []}
               ${installWorkspacePackage "runtime/acryl-harness-runtime" "acryl-harness-runtime" "$out/lib/acryl-desktop/node_modules" []}
-              ${installWorkspacePackage "plugins/dsh-community-market" "dsh-community-market" "$out/lib/acryl-desktop/node_modules" ["docs"]}
+              ${installWorkspacePackage "plugins/cordis-plugin-market" "cordis-plugin-market" "$out/lib/acryl-desktop/node_modules" ["docs"]}
               ${installWorkspacePackage "apps/acryl-desktop" "acryl-desktop" "$out/lib/acryl-desktop/node_modules" []}
 
               # Create a shim for the 'electron' npm package that exports

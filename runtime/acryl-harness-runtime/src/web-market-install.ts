@@ -1,6 +1,6 @@
 /**
  * Web's own `desktopProfiles`/`desktopPnpm` capabilities (spec 034 T006,
- * scoped v1) - what `dsh-community-market`'s install service needs to make
+ * scoped v1) - what `cordis-plugin-market`'s install service needs to make
  * its Installed-tab Install/Uninstall buttons do a real package operation on
  * Web, instead of the "ACRYL is required" gate it shows without them.
  *
@@ -38,19 +38,19 @@ import { dirname, join } from 'node:path'
 import { PassThrough, Readable } from 'node:stream'
 import { type Context, Service } from '@deepseek-ai/cordis'
 
-/** Matches `dsh-community-market`'s own `MarketDesktopProfile` shape (`src/install/service.ts`). */
+/** Matches `cordis-plugin-market`'s own `MarketDesktopProfile` shape (`src/install/service.ts`). */
 export interface WebMarketProfile {
   readonly name: string
   readonly dir: string
 }
 
-/** Matches `dsh-community-market`'s own `MarketDesktopPnpmOutcome` shape. */
+/** Matches `cordis-plugin-market`'s own `MarketDesktopPnpmOutcome` shape. */
 export interface WebMarketPnpmOutcome {
   readonly exitCode: number | null
   readonly signal: NodeJS.Signals | null
 }
 
-/** Matches `dsh-community-market`'s own `MarketDesktopPnpmHandle` shape. */
+/** Matches `cordis-plugin-market`'s own `MarketDesktopPnpmHandle` shape. */
 export interface WebMarketPnpmHandle {
   readonly stdout: Readable
   readonly stderr: Readable
@@ -72,7 +72,7 @@ export interface WebMarketPnpmHandle {
 // these services; it never reads `ctx.get('desktopProfiles' | 'desktopPnpm')`
 // itself, so the missing consumer-side typing costs it nothing.
 
-/** Matches `dsh-community-market`'s own `MarketDesktopPnpm` shape exactly - the six methods it actually calls. */
+/** Matches `cordis-plugin-market`'s own `MarketDesktopPnpm` shape exactly - the six methods it actually calls. */
 export interface WebMarketPnpm {
   runPlugin(args: readonly string[], invokingDir: string, signal?: AbortSignal): WebMarketPnpmHandle
   installPlugin(request: {
@@ -134,9 +134,12 @@ export class WebPnpmService extends Service implements WebMarketPnpm {
     const stderr = new PassThrough()
     child.stdout?.pipe(stdout)
     child.stderr?.pipe(stderr)
+    // 'close', not 'exit' - see the identical fix and its own doc comment
+    // in cli-market-install.ts's runPlugin: 'exit' can race ahead of the
+    // piped stdout/stderr actually draining into the streams above.
     const done = new Promise<WebMarketPnpmOutcome>((resolve, reject) => {
       child.once('error', reject)
-      child.once('exit', (exitCode, exitSignal) => resolve({ exitCode, signal: exitSignal }))
+      child.once('close', (exitCode, exitSignal) => resolve({ exitCode, signal: exitSignal }))
     })
     return {
       stdout,
@@ -157,7 +160,12 @@ export class WebPnpmService extends Service implements WebMarketPnpm {
     // `installPlugin` (never trust `pnpmOptions` alone to carry the target).
     const target = `${request.recovery.packageName}@${request.recovery.packageVersion}`
     const options = request.pnpmOptions === undefined ? [] : [...request.pnpmOptions]
-    return this.runPlugin(['add', ...options, target], request.invokingDir, request.signal)
+    // See the identical override and its own doc comment in
+    // cli-market-install.ts's installPlugin: a Market install of a plugin
+    // published minutes earlier is the normal case here, not the untrusted-
+    // fresh-package scenario pnpm's `minimumReleaseAge` default guards
+    // against. Overridden only for this one `add` invocation.
+    return this.runPlugin(['add', '--config.minimum-release-age=0', ...options, target], request.invokingDir, request.signal)
   }
 
   // No WAL (see this module's own doc comment): nothing was ever recorded as
@@ -178,7 +186,7 @@ export class WebPnpmService extends Service implements WebMarketPnpm {
 
 /**
  * Provide `desktopProfiles`/`desktopPnpm` on the host root, before
- * `dsh-community-market`'s own row mounts - matching the same `prepare`-hook
+ * `cordis-plugin-market`'s own row mounts - matching the same `prepare`-hook
  * timing `createWebEngineDefinition`'s brand/market row materialization
  * already relies on.
  * @param profileDir - the web profile's own directory (`resolveWebEngineComposition`'s `profile.dir`).

@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL-1 - ACRYL Cordis plugin + project/room identity + durable state
 
+**Tracking:** https://github.com/acryldev/acryl/issues/19
+
 **Feature Branch**: `002-acryl-1-plugin-identity`
 **Created**: 2026-08-23
 **Status**: Draft

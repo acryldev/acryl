@@ -4893,3 +4893,110 @@ into the temp profile rather than symlinking them, making them resolvable in
 the isolated context. Verified: `corepack pnpm --filter acryl-desktop run check`
 now passes end to end with exit code 0.
 
+## 2026-09-15/16 - feat(cli): /plugins fuzzy search + navigation-while-filtering fix
+
+Commits: `82d316c`, `2785545`
+
+`/plugins`' read-only Loader-tree list (spec 034 T009) had no way to narrow a
+real populated profile's ~90 rows other than scrolling by hand - reported
+directly as unusable. Added subsequence fuzzy matching (`fuzzyScore`,
+`filterPluginRows` in `apps/acryl-cli/src/tui/plugins/PluginsOverlay.ts`).
+Found and fixed a real regression while building it: arrow-key input (a
+multi-byte escape sequence) was silently swallowed by the single-character
+printable-input branch whenever a filter was active, since it hit that
+branch before reaching navigation handling. Fixed by extracting a shared
+`handleNavigation()` called from both the filtering and non-filtering
+`handleInput` branches. Regression test added in
+`tests/tui/plugins-overlay.spec.ts`, including prefix-colliding ids
+(`include:dsh-editor` vs `include:dsh-editor-cli`) to prove the fix
+disambiguates correctly rather than matching the first prefix hit.
+
+## 2026-09-15/16 - fix(cli): /market install/display trusted a stale catalog version
+
+Commits: `1f7d888`, `c29c52f`
+
+`acryl.dev`'s own plugin catalog (`https://acryl.dev/v1/plugins`) is a
+separately re-indexed snapshot of npm, not a live pass-through - reproduced
+directly: a package this session published to npm was live within seconds,
+but the catalog still reported the prior version minutes later. `/market`'s
+`MarketOverlay` trusted the catalog's own `latestVersion` field for both the
+actual install target and the version shown in the browse list, so a user
+could install (or believe they'd installed) a stale version with no way to
+tell from the UI. `resolveInstallVersion()` now queries
+`registry.npmjs.org/<name>` directly for `dist-tags.latest`, falling back to
+the catalog version only on a request failure/throw/missing-field; both
+`install()` and the browse-list render read through it (`displayedVersion()`,
+resolved progressively in the background so the initial catalog render isn't
+delayed). Five tests added in `tests/tui/market-overlay.spec.ts` covering the
+preference and every fallback path.
+
+## 2026-09-16 - feat(cli): per-command overlay presentation for /files
+
+Commit: `318e53e`
+
+Spec 034 T009's own TUI presentation-slot registration seam
+(`tuiCommands.register()`) wrapped every dynamic command in one shared
+`FullScreenOverlay` + one fixed `OVERLAY_OPTIONS` (`TuiApp.ts`), regardless
+of what the command actually needed - correct for `/plugins`' long list,
+wrong for `/files`, whose own reference implementation
+(`github.com/almegal/pi-file-browser`) renders as a small, centered popup
+with the surrounding chat history still visible. The capability to do this
+was already present one layer down: `@earendil-works/pi-tui`'s own `TUI`
+exposes `showOverlay(component, options)` with real positioning options
+(`width`, `anchor`, `margin`, etc) - this was a wiring gap, not a missing
+library feature. `TuiCommandRegistration` gained an optional `overlay` hint
+(`TuiCommandOverlayHint`, a narrow pass-through subset of pi-tui's own
+`OverlayOptions`); `TuiApp.ts`'s `updateOverlay` calls `showOverlay()`
+directly when a registration carries the hint, and keeps today's exact
+`FullScreenOverlay` path, unchanged, when it doesn't - `/plugins` and
+`/market` are provably unaffected, since neither sets the field.
+`acryl-dsh-editor-plugin-cli` (separate repo, `0.4.0`) opted `/files` in
+with `{width: '60%', anchor: 'center', margin: {top: 2, bottom: 2}}`,
+matching the reference's own values. Verified against a real throwaway-
+profile boot (`tuiCommands.resolve('/files').overlay` returns the exact
+shape) and against the real rendered terminal UI. `acryl-cli` 353→354
+tests, typecheck clean.
+
+## 2026-09-16 - fix: /market install failures were undiagnosable, then genuinely broken by three stacked causes
+
+Commits: `1ff7917`, `1356228`, `5283ad4`
+
+A real `/market` install of `acryl-dsh-editor-plugin-cli` (this session's
+own freshly-published plugin) failed, and each layer of the failure had to
+be found by reproducing the real command by hand rather than reading code:
+
+1. **The error message was unhelpful by design.** `install()` only ever
+   showed `"pnpm add exited with code 1"` - a store mismatch, a 404, and a
+   network failure all produced the identical text. Fixed by reading
+   `handle.stderr` (ANSI-stripped, collapsed to one line, capped to 400
+   chars for the fixed-width popup) into the thrown error (`1ff7917`).
+2. **That capture then raced a real Node.js bug.** `CliPnpmService`/
+   `WebMarketPnpmService.runPlugin()` both resolved their `done` promise on
+   the spawned child's `'exit'` event. Node's own docs warn `'exit'` can
+   fire before piped stdout/stderr have finished draining into the
+   `PassThrough` streams the caller reads; `'close'` is the guarantee both
+   streams have fully ended. A fast-failing `dsh` invocation showed a
+   near-empty stderr capture as a direct result. Fixed by resolving on
+   `'close'` in both services (`1356228`).
+3. **With (1) and (2) fixed, the real underlying error was a legitimate
+   pnpm supply-chain policy**, not a bug: `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`
+   - a recent pnpm default that refuses to install any package published
+   within roughly the last 24 hours. Installing a version of ACRYL's own
+   tooling published minutes earlier through the Market is exactly the
+   normal case here, not the untrusted-fresh-package scenario the policy
+   exists to guard against, so both `installPlugin()` paths now pass
+   `--config.minimum-release-age=0` on the one `add` invocation only - the
+   operator's own global pnpm config is never touched (`5283ad4`).
+
+Also surfaced, machine-local and not a code change: this development
+machine had three separate `pnpm` binaries resolving inconsistently across
+shells (a corepack shim, a real `npm install -g pnpm` whose `bin/pnpm`
+symlink had been silently overwritten by that same shim, and a fully
+separate standalone install under a different global prefix) - the actual
+reason bugs (2) and (3) reproduced for a real interactive session while
+every manual repro of the identical command from a different shell kept
+succeeding cleanly. Consolidated to the one real npm-global install;
+confirmed `corepack pnpm --version` in this repo still resolves the pinned
+`11.8.0` correctly afterward, since it dispatches through the `corepack`
+binary directly rather than through whatever bare `pnpm` resolves to on
+`PATH`.

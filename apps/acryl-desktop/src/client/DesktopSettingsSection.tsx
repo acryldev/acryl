@@ -162,7 +162,7 @@ const MARKET_OPTIONS: readonly {
   { id: 'dsh-market', title: 'dshMarket', body: 'dshMarketBody' },
 ]
 
-const COMMUNITY_MARKET_URL = 'https://github.com/acryldev/acryl/tree/main/dsh-community-market'
+const COMMUNITY_MARKET_URL = 'https://github.com/acryldev/acryl/tree/main/plugins/cordis-plugin-market'
 const DSH_MARKET_URL = 'https://github.com/dsh-market/dsh-market'
 const AWESOME_DSH_PLUGIN_URL = 'https://github.com/awesome-dsh-plugin/awesome-dsh-plugin'
 

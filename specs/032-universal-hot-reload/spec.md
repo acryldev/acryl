@@ -1,5 +1,7 @@
 # Universal plugin hot-reload
 
+**Tracking:** https://github.com/acryldev/acryl/issues/49
+
 Status: needs-triage
 
 ## Status: T1, T2, T4, T5, T6 landed; T3 attempted and reverted
@@ -104,7 +106,7 @@ Everything a user added is mutable by construction; the core is never.
 
 ### 2. Market-installed plugins are managed automatically
 
-An install receipt (`dsh-community-market` `installReceipts`) for the active
+An install receipt (`cordis-plugin-market` `installReceipts`) for the active
 profile implies its Loader entry is lifecycle-managed. No allowlist edit per
 plugin. The managed set becomes: `{ derived-mutable entries } ∪ { entries
 with a market receipt }` minus the protected denylist.

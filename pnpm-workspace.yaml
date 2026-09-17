@@ -10,7 +10,7 @@ packages:
   - apps/acryl-desktop
   - plugins/dsh-client-ui-brand-acryl
   - plugins/dsh-community-fabric
-  - plugins/dsh-community-market
+  - plugins/cordis-plugin-market
   - '!deepseek-harness/**'
 
 allowBuilds:

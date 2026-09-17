@@ -16,7 +16,7 @@ keep today's rows.
 **Files**: `research.md`
 **Do**: determine (a) what `@deepseek-ai/dsh-host-plugin-inventory` enumerates
 and whether a TUI can read it without a client UI, (b) which ACRYL plugin rows
-each surface can host today, (c) whether `dsh-community-market` runs under a
+each surface can host today, (c) whether `cordis-plugin-market` runs under a
 non-Electron host.
 **Evidence**: answers written into `research.md` with the console/activation
 proof for each, or an explicit "unknown, prototype needed" before T004/T006.
@@ -165,7 +165,7 @@ host-side hot-mount mechanism `specs/032-universal-hot-reload`'s T1/T2/T4/T5
 already ship - after real user testing on a real running profile showed an
 install left the plugin inactive until a full server-process restart.
 Fixed two real bugs along the way, both found only by driving the actual
-Market UI end to end against real environments: `dsh-community-market`'s own
+Market UI end to end against real environments: `cordis-plugin-market`'s own
 `CORDIS_RUNTIME_VERSION` constant was stale at `4.0.1` (rejecting a plugin
 correctly pinning the actually-current `^4.0.2`), and
 `resolvePackageJson`'s documented contract was backwards in both
@@ -184,7 +184,7 @@ constructor takes a plain `name: string`).
 `desktopProfiles`/`desktopPnpm`/`desktopPlugins`/`livePluginActivation` for
 `composition.surface === 'tui'`, mounted in `engine-dsh.ts` with the same
 ordering constraint as Web (`desktopPlugins` before `desktopProfiles`, since
-`dsh-community-market`'s own `ctx.inject` reads the former). The one real
+`cordis-plugin-market`'s own `ctx.inject` reads the former). The one real
 difference from Web: the CLI has more than one named profile (Web's is always
 `'web'`), so the profile name comes from the booted composition's own
 directory, not a literal. `MarketOverlay.ts` gives the TUI a `/market` command;
@@ -214,6 +214,53 @@ real test: a fresh profile already has the setting with no second boot
 needed, and a profile stripped back to a bare `pnpm-workspace.yaml` is
 repaired on the very next call. A real end-to-end GUI retest by the user is
 still the open item (see Ledger).
+
+**CLI/Web install-path robustness fixes, 2026-09-16, commits `1f7d888`,
+`c29c52f`, `1ff7917`, `1356228`, `5283ad4`.** Four
+real bugs, each found by driving a real install end to end rather than
+assumed from reading the code:
+1. `MarketOverlay`'s browse list and its actual install target both trusted
+   `acryl.dev`'s own catalog `latestVersion` field, which is a separately
+   re-indexed snapshot of npm, not a live pass-through - reproduced directly
+   (a package published to npm within seconds still showed the prior version
+   in the catalog minutes later). `resolveInstallVersion()` now queries
+   `registry.npmjs.org` directly for `dist-tags.latest`, falling back to the
+   catalog version on any failure; both the install target and the displayed
+   label read through it (`c29c52f`, tests in `market-overlay.spec.ts`).
+2. A failed install surfaced only `"pnpm add exited with code 1"` - useless
+   for telling a store mismatch from a 404 from a network failure apart
+   without reproducing the underlying `dsh plugin add` command by hand.
+   `install()` now captures `handle.stderr` (ANSI-stripped, collapsed to one
+   line, capped to 400 chars for the fixed-width popup) into the thrown
+   error (`1ff7917`).
+3. That capture then raced a real bug in `CliPnpmService`/
+   `WebMarketPnpmService.runPlugin()`: both resolved `done` on the spawned
+   child's `'exit'` event, which Node's own docs warn can fire before piped
+   stdout/stderr have finished draining - a fast-failing `dsh` invocation
+   showed a near-empty stderr capture as a result. Both now resolve on
+   `'close'` instead (`1356228`).
+4. With (2) and (3) fixed, a real install of `acryl-dsh-editor-plugin-cli`
+   published minutes earlier by this same session failed with
+   `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` - a supply-chain default recent
+   pnpm versions ship enabling a ~24h minimum age before an install is
+   allowed. Installing a just-published version of ACRYL's own tooling
+   through the Market is the normal case here, not the untrusted-fresh-
+   package scenario the policy guards against, so both `installPlugin()`
+   paths now pass `--config.minimum-release-age=0` on the one `add`
+   invocation only - the operator's own global pnpm config is left
+   untouched (`5283ad4`).
+
+Also surfaced, machine-local rather than a code bug: this development
+machine had three separate `pnpm` installations (a corepack shim, a real
+`npm install -g pnpm` whose own `bin/pnpm` symlink had been silently
+overwritten by that shim, and a fully separate standalone install under a
+different global prefix) resolving inconsistently across shells/terminals -
+the proximate cause of bugs (3) and (4) actually reproducing for a real
+user while every one of this session's own manual repros of the identical
+command kept succeeding. Consolidated to the one real `npm`-global install;
+`corepack pnpm` (this repo's own pinned-version workflow) is unaffected,
+since it dispatches through the `corepack` binary directly rather than
+through whatever plain `pnpm` resolves to on `PATH`.
 
 ## T007 - Retire the desktop-private duplication
 
@@ -312,6 +359,42 @@ boot, `/files` opens showing real home-directory contents, Escape closes it,
 clean exit code 0. Also fixed a real gap the first consumer surfaced:
 `TuiCommandOpenContext` had no way for a plugin's own overlay to close
 itself (`close(): void` added, commit `dd6c503`).
+
+**Fuzzy filter added to `/plugins` 2026-09-15/16, commits `82d316c`, `2785545`.**
+The read-only Loader-tree viewer T009 itself names above got real subsequence
+fuzzy search (`fuzzyScore`/`filterPluginRows` in `PluginsOverlay.ts`) - a
+real list this size (~90 rows on a populated profile) was reported directly
+as unusable to scroll through by hand. Found and fixed a real regression
+while adding it: arrow-key navigation (multi-byte escape sequences) was
+silently swallowed by the single-character printable-input branch while a
+filter was active, fixed by extracting a shared `handleNavigation()` used by
+both the filtering and non-filtering `handleInput` branches. Regression test
+in `tests/tui/plugins-overlay.spec.ts` covers navigation-while-filtering
+directly, disambiguating prefix-colliding ids (`include:dsh-editor` vs
+`include:dsh-editor-cli`).
+
+**Per-command overlay presentation added 2026-09-16, commit `318e53e`.**
+Every dynamic command registered through this task's own `tuiCommands`
+service got identical full-screen presentation (`TuiApp.ts` unconditionally
+wrapped every one in `FullScreenOverlay` + one shared `OVERLAY_OPTIONS`) -
+fine for `/plugins`' own long list, wrong for a small file browser, and a
+real gap against the reference implementation
+(`github.com/almegal/pi-file-browser`) this task's own `/files` example
+plugin was built to match, which renders as a compact, anchored popup with
+chat history visible above it. `TuiCommandRegistration` gained an optional
+`overlay` hint (`TuiCommandOverlayHint`: `width`/`anchor`/`margin`, a narrow
+pass-through subset of `@earendil-works/pi-tui`'s own `OverlayOptions` -
+that capability was already present in the library ACRYL's CLI is built on,
+this was wiring, not a missing feature); `TuiApp.ts`'s `updateOverlay` calls
+`tui.showOverlay()` directly when a hint is present, and keeps today's exact
+`FullScreenOverlay` path, byte-for-byte, when absent - `/plugins` and
+`/market` are unaffected by construction (neither registration sets the
+field). `acryl-dsh-editor-plugin-cli` (separate repo) opted `/files` in with
+`{width: '60%', anchor: 'center', margin: {top: 2, bottom: 2}}`, matching
+the reference's own values, in its `0.4.0` release - verified live against a
+throwaway profile (`tuiCommands.resolve('/files').overlay` returns exactly
+that shape) and against the real terminal UI. `acryl-cli` 353→354 tests
+(2 new registration-hint regression tests), typecheck clean.
 
 ## Ledger
 

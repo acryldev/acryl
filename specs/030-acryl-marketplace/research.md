@@ -7,11 +7,11 @@ Facts established while diagnosing the `dsh-market` recovery-screen incident
 
 | Client | Package | Origin | Notes |
 | --- | --- | --- | --- |
-| Community market | `dsh-community-market` | this repo, `private: true` | Our provider. Optional, disabled by default. Enabled via Settings -> Desktop -> Plugin market -> `community-market`. |
+| Community market | `cordis-plugin-market` | this repo, `private: true` | Our provider. Optional, disabled by default. Enabled via Settings -> Desktop -> Plugin market -> `community-market`. |
 | DSH market | `dshmarket@1.17.1` | third-party, `zhu1090093659/dsh-web`, from deepseek1024.com | Bundled as an `acryl-desktop` dependency so the `dsh-market` provider option can resolve it. |
 
 `DESKTOP_MARKET_IDENTITIES` (`acryl-desktop/src/desktop-market.ts`):
-- community: provider `community-market`, rowId `community-market`, package `dsh-community-market`
+- community: provider `community-market`, rowId `community-market`, package `cordis-plugin-market`
 - dshMarket: provider `dsh-market`, rowId `dsh-market`, package `dshmarket`
 
 Selection persists to
@@ -41,7 +41,7 @@ only check package resolution and patch shape - never that the module graph
 actually imports. So an upstream API break passes the guard and detonates in
 the loader. Fix: ESM import-smoke the provider entry before committing it.
 
-`dsh-community-market` is clean on this axis - it imports `dsh-settings`
+`cordis-plugin-market` is clean on this axis - it imports `dsh-settings`
 type-only (`import type { SettingsScope }`), is pinned to `0.1.5-alpha.1`, and
 `verify-loader-boot.mjs` explicitly asserts `include:community-market`
 activates through its bare package name.
@@ -56,7 +56,7 @@ the plugins as "activated" even though the host failed.
 
 ## The catalog-source contract (already in-repo)
 
-`dsh-community-market/src/contracts/generated/`:
+`cordis-plugin-market/src/contracts/generated/`:
 
 - `catalog-source.ts` - `CatalogSourceManifest` v1.0.0:
   `manifestVersion, providerId, name, description?, homepage?,
@@ -102,7 +102,7 @@ github-topic, 1024store, awesome-dsh, composio sources.
 ## Open questions for plan.md
 
 1. Static vs edge function for `/v1/plugins` query support.
-2. Publish `dsh-community-market` as-is, or cut `acryl-market`? Package name
+2. Publish `cordis-plugin-market` as-is, or cut `acryl-market`? Package name
    (`@acryl/market` vs unscoped `acryl-market`).
 3. Where the built-in ACRYL source registration lives (profile compose vs
    client default config) so it is present for both ACRYL Desktop and the

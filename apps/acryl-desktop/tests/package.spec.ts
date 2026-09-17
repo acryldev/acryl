@@ -78,9 +78,9 @@ describe('published package surface', () => {
   it('runs owned-workspace typechecks and tests through PNPM filters', () => {
     expect(workspaceManifest.packageManager).toBe('pnpm@11.8.0')
     expect(workspaceManifest.scripts?.typecheck)
-      .toBe('pnpm --filter acryl-control run typecheck && pnpm --filter acryl-cli run typecheck && pnpm --filter acryl-web run typecheck && pnpm --filter dsh-client-ui-brand-acryl run typecheck && pnpm --filter acryl-desktop run typecheck && pnpm --filter dsh-community-market run typecheck')
+      .toBe('pnpm --filter acryl-control run typecheck && pnpm --filter acryl-cli run typecheck && pnpm --filter acryl-web run typecheck && pnpm --filter dsh-client-ui-brand-acryl run typecheck && pnpm --filter acryl-desktop run typecheck && pnpm --filter cordis-plugin-market run typecheck')
     expect(workspaceManifest.scripts?.test)
-      .toBe('pnpm --filter acryl-control run test && pnpm --filter acryl-cli run test && pnpm --filter acryl-web run test && pnpm --filter dsh-client-ui-brand-acryl run test && pnpm --filter acryl-desktop run test && pnpm --filter dsh-community-market run test')
+      .toBe('pnpm --filter acryl-control run test && pnpm --filter acryl-cli run test && pnpm --filter acryl-web run test && pnpm --filter dsh-client-ui-brand-acryl run test && pnpm --filter acryl-desktop run test && pnpm --filter cordis-plugin-market run test')
     expect(pnpmWorkspace).toContain("  - '!deepseek-harness/**'")
     expect(pnpmWorkspace).toContain('node-pty: true')
   })
@@ -155,7 +155,7 @@ describe('published package surface', () => {
       ],
     })
     expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).toContain('name: acryl-desktop')
-    expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).not.toContain('name: dsh-community-market')
+    expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).not.toContain('name: cordis-plugin-market')
     expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).toContain('name: acryl-desktop/terminal')
     expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).not.toContain('development-canvas')
     expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).toContain('name: acryl-desktop/hello-world')
@@ -168,7 +168,7 @@ describe('published package surface', () => {
 
   it('pins both selectable Market providers in the published runtime', () => {
     expect(manifest.dependencies).toMatchObject({
-      'dsh-community-market': 'workspace:*',
+      'cordis-plugin-market': 'workspace:*',
       dshmarket: '1.17.1',
     })
     expect(manifest.dependencies).not.toHaveProperty('acryl-development-canvas')
@@ -610,7 +610,7 @@ describe('published package surface', () => {
     expect(manifest.scripts?.['dist:mac-smoke']).toBe('node scripts/package-mac.ts')
     expect(manifest.scripts?.['dist:win']).toBe('node scripts/package-win.ts')
     expect(manifest.scripts?.['dist:win-portable']).toBe('node scripts/package-win-portable.ts')
-    expect(manifest.scripts?.['check:win-package']).toContain('pnpm --filter dsh-community-market run build')
+    expect(manifest.scripts?.['check:win-package']).toContain('pnpm --filter cordis-plugin-market run build')
     expect(manifest.scripts?.['check:win-package']).toContain('pnpm run build')
     expect(manifest.scripts?.['check:win-package']).toContain('pnpm run typecheck')
     expect(manifest.scripts?.['check:win-package']).toContain('tests/package-win.spec.ts')
@@ -619,7 +619,7 @@ describe('published package surface', () => {
     expect(manifest.scripts?.['check:win-package']).toContain('tests/update-download.spec.ts')
     expect(manifest.scripts?.['check:win-package']).toContain('tests/windows-volume-diagnostics.spec.ts')
     expect(manifest.scripts?.['check:win-package']).toContain('pnpm run verify:closure')
-    expect(manifest.scripts?.['check:mac-package']).toContain('pnpm --filter dsh-community-market run build')
+    expect(manifest.scripts?.['check:mac-package']).toContain('pnpm --filter cordis-plugin-market run build')
     expect(manifest.scripts?.['check:mac-package']).toContain('pnpm run build')
     expect(manifest.scripts?.['check:mac-package']).toContain('pnpm run typecheck')
     expect(manifest.scripts?.['check:mac-package']).toContain('tests/package-mac.spec.ts')
@@ -629,13 +629,13 @@ describe('published package surface', () => {
     expect(manifest.scripts?.['verify:cli']).toBe('node scripts/verify-cli-runtime.mjs')
     expect(manifest.scripts?.check).toContain('pnpm run verify:cli')
     expect(workspaceManifest.scripts?.['dist:mac'])
-      .toBe('pnpm --filter dsh-community-market run build && pnpm --filter acryl-desktop run dist:mac')
+      .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:mac')
     expect(workspaceManifest.scripts?.['dist:mac-smoke'])
-      .toBe('pnpm --filter dsh-community-market run build && pnpm --filter acryl-desktop run dist:mac-smoke')
+      .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:mac-smoke')
     expect(workspaceManifest.scripts?.['dist:win'])
-      .toBe('pnpm --filter dsh-community-market run build && pnpm --filter acryl-desktop run dist:win')
+      .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:win')
     expect(workspaceManifest.scripts?.['dist:win-portable'])
-      .toBe('pnpm --filter dsh-community-market run build && pnpm --filter acryl-desktop run dist:win-portable')
+      .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:win-portable')
     expect(manifest.build?.afterPack).toBe('./scripts/verify-packaged-runtime.ts')
     expect(manifest.build?.mac).toEqual(expect.objectContaining({
       extendInfo: {

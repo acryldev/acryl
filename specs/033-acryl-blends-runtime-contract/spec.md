@@ -1,5 +1,7 @@
 # ACRYL-side runtime contract for BLENDS
 
+**Tracking:** https://github.com/acryldev/acryl/issues/50
+
 Status: ready-for-agent
 
 ## Triage (2026-09-11)

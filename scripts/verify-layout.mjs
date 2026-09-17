@@ -21,7 +21,7 @@ const harness = readJson('runtime/acryl-harness-runtime/package.json')
 const cli = readJson('apps/acryl-cli/package.json')
 const web = readJson('apps/acryl-web/package.json')
 const fabric = readJson('plugins/dsh-community-fabric/package.json')
-const market = readJson('plugins/dsh-community-market/package.json')
+const market = readJson('plugins/cordis-plugin-market/package.json')
 const upstreamPackage = readJson('deepseek-harness/package.json')
 
 if (!workspace.packageManager?.match(/^pnpm@11\.\d+\.\d+$/)) {
@@ -48,7 +48,7 @@ packages:
   - apps/acryl-desktop
   - plugins/dsh-client-ui-brand-acryl
   - plugins/dsh-community-fabric
-  - plugins/dsh-community-market
+  - plugins/cordis-plugin-market
   - '!deepseek-harness/**'
 
 allowBuilds:
@@ -102,7 +102,7 @@ for (const [name, manifest] of [
   ['acryl-cli', cli],
   ['acryl-web', web],
   ['dsh-community-fabric', fabric],
-  ['dsh-community-market', market],
+  ['cordis-plugin-market', market],
 ]) {
   if (manifest.packageManager !== undefined) fail(`${name} must inherit the root PNPM release`)
 }
@@ -111,7 +111,7 @@ if (readJson('distribution/acryl-npm-launcher/package.json').name !== 'acryl') f
 if (cli.name !== 'acryl-cli') fail('the CLI workspace must own acryl-cli')
 if (web.name !== 'acryl-web') fail('the Web workspace must own acryl-web')
 if (fabric.name !== 'dsh-community-fabric') fail('the Fabric workspace must own dsh-community-fabric')
-if (market.name !== 'dsh-community-market') fail('the market workspace must own dsh-community-market')
+if (market.name !== 'cordis-plugin-market') fail('the market workspace must own cordis-plugin-market')
 const claudePath = resolve(root, 'CLAUDE.md')
 const claudeStat = lstatSync(claudePath)
 // Windows checkouts materialize the symlink as a regular file holding the
@@ -136,8 +136,8 @@ for (const obsoleteFile of [
   'apps/acryl-cli/.yarnrc.yml',
   'plugins/dsh-community-fabric/yarn.lock',
   'plugins/dsh-community-fabric/.yarnrc.yml',
-  'plugins/dsh-community-market/yarn.lock',
-  'plugins/dsh-community-market/.yarnrc.yml',
+  'plugins/cordis-plugin-market/yarn.lock',
+  'plugins/cordis-plugin-market/.yarnrc.yml',
 ]) {
   if (existsSync(resolve(root, obsoleteFile))) fail(`${obsoleteFile} must not exist`)
 }

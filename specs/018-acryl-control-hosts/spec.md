@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL Standalone Agent and Peer Hosts
 
+**Tracking:** https://github.com/acryldev/acryl/issues/35
+
 **Feature Directory**: `specs/018-acryl-control-hosts`
 
 **Created**: 2026-08-26

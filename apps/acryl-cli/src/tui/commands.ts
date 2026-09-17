@@ -6,6 +6,7 @@
  */
 
 import type { TuiActions } from './actions.js'
+import type { ResolvedTuiCommand } from './tui-commands-service.js'
 
 export interface SlashCommand {
   readonly command: string
@@ -26,6 +27,48 @@ let dynamicSlashCommands: readonly SlashCommand[] = []
 /** Replace the plugin-registered command list. See {@link dynamicSlashCommands}. */
 export function setDynamicSlashCommands(commands: readonly SlashCommand[]): void {
   dynamicSlashCommands = commands
+}
+
+/**
+ * Expand `TuiCommandsService.list()`'s raw registrations into the flat,
+ * directly-typeable/completable command strings the palette shows and
+ * `matchSlashCommands`/`runSlashCommand` dispatch by exact text. Three forms
+ * per registration with a `packageName`, one without:
+ *
+ * - `/<method>` - only when exactly one registrant owns that bare command
+ *   (an ambiguous bare form is never emitted; `TuiCommandsService.resolve()`
+ *   would return `undefined` for it anyway, so offering it would dead-end).
+ * - `/<method>:<packageName>` - always offered for every namespaced
+ *   registration, collision or not (a single unambiguous registrant still
+ *   gets both `/files` and `/files:acryl-dsh-editor-plugin-cli` - typing the
+ *   long form is never wrong, even when the short one already works).
+ * - `/plugin:<packageName>/<method>` - always offered for every namespaced
+ *   registration, the fully-qualified form.
+ *
+ * A registration with no `packageName` (first-party, or a plugin that
+ * hasn't been updated to supply one) only ever gets the bare form, and only
+ * when it doesn't collide with anything else sharing that command name.
+ */
+export function expandDynamicCommands(registrations: readonly ResolvedTuiCommand[]): SlashCommand[] {
+  const byCommand = new Map<string, ResolvedTuiCommand[]>()
+  for (const registration of registrations) {
+    const group = byCommand.get(registration.command)
+    if (group === undefined) byCommand.set(registration.command, [registration])
+    else group.push(registration)
+  }
+  const expanded: SlashCommand[] = []
+  for (const [command, group] of byCommand) {
+    if (group.length === 1) {
+      const [only] = group
+      if (only !== undefined) expanded.push({ command, description: only.description })
+    }
+    for (const registration of group) {
+      if (registration.packageName === undefined) continue
+      expanded.push({ command: `${command}:${registration.packageName}`, description: registration.description })
+      expanded.push({ command: `/plugin:${registration.packageName}${command}`, description: registration.description })
+    }
+  }
+  return expanded
 }
 
 export const SLASH_COMMANDS: readonly SlashCommand[] = [

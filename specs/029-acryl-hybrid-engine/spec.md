@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL Hybrid Engine
 
+**Tracking:** https://github.com/acryldev/acryl/issues/46
+
 **Feature Branch**: `029-acryl-hybrid-engine`
 **Created**: 2026-09-07
 **Status**: Draft

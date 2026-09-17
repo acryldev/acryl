@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL-11 — Continuous Mode
 
+**Tracking:** https://github.com/acryldev/acryl/issues/29
+
 **Feature Branch**: `012-acryl-11-continuous-mode`
 **Created**: 2026-08-23
 **Status**: Stub

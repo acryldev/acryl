@@ -1,5 +1,7 @@
 # Feature Specification: Interchangeable Harness Engine (DSH and pi)
 
+**Tracking:** https://github.com/acryldev/acryl/issues/45
+
 **Feature Branch**: `028-harness-engine-swap`
 
 **Created**: 2026-09-07

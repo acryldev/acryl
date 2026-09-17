@@ -1,5 +1,7 @@
 # Feature Specification: OAuth provider login on Desktop and Web
 
+**Tracking:** https://github.com/acryldev/acryl/issues/52
+
 **Feature Directory**: `specs/035-desktop-web-oauth-login`
 **Created**: 2026-09-14. **Status**: scoped, not started.
 **Input**: user direction — CLI's `/login` OAuth flow (spec 024) already works

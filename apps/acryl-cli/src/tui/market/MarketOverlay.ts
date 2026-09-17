@@ -20,7 +20,7 @@ import { randomUUID } from 'node:crypto'
 import type { Component, TUI } from '@earendil-works/pi-tui'
 import { Key, matchesKey } from '@earendil-works/pi-tui'
 import type { Context } from '@deepseek-ai/cordis'
-import { parseCatalogProviderPage, type CatalogProviderPage } from 'dsh-community-market'
+import { parseCatalogProviderPage, type CatalogProviderPage } from 'cordis-plugin-market'
 import type {
   CliMarketPnpm,
   CliMarketProfile,
@@ -34,6 +34,54 @@ const errorColor = fg(theme.error)
 const success = fg(theme.success)
 
 const CATALOG_URL = 'https://acryl.dev/v1/plugins'
+const NPM_REGISTRY_ORIGIN = 'https://registry.npmjs.org'
+
+/**
+ * Resolve the real npm `dist-tags.latest` directly from the registry, rather
+ * than trusting the catalog's own `latestVersion` field - acryl.dev's catalog
+ * is a separately re-indexed snapshot of npm, not a live pass-through, and
+ * can genuinely lag behind a real publish (reproduced directly: this session
+ * published a fix, npm had it within seconds, the catalog still reported the
+ * prior version minutes later). Falls back to the catalog's own version on
+ * any failure (offline, registry hiccup, unexpected shape) - staleness is a
+ * quieter failure mode than blocking every install because npm was briefly
+ * unreachable.
+ */
+export async function resolveInstallVersion(packageName: string, catalogVersion: string): Promise<string> {
+  try {
+    const response = await fetch(`${NPM_REGISTRY_ORIGIN}/${encodeURIComponent(packageName)}`)
+    if (!response.ok) return catalogVersion
+    const manifest: unknown = await response.json()
+    const distTags = manifest !== null && typeof manifest === 'object' && 'dist-tags' in manifest
+      ? (manifest as { 'dist-tags'?: unknown })['dist-tags']
+      : undefined
+    const latest = distTags !== null && typeof distTags === 'object' && 'latest' in distTags
+      ? (distTags as { latest?: unknown }).latest
+      : undefined
+    return typeof latest === 'string' && latest !== '' ? latest : catalogVersion
+  } catch {
+    return catalogVersion
+  }
+}
+
+/**
+ * Default the browse list to what's actually usable here: an item declaring
+ * `compatibility.hosts` (populated from the package's own `acryl.surfaces`
+ * field by acryl.dev's catalog build) must include `'tui'`, matching the
+ * exact rule Web/Desktop's own Market tab already applies in
+ * `cordis-plugin-market/src/client/MarketSettingsTab.tsx`'s
+ * `matchesSurfaceFilter` - an item with no `compatibility` at all is
+ * surface-agnostic (or simply never declared it), not "for no surface", so
+ * it stays visible rather than being hidden by this default. Without this,
+ * browsing here showed every package regardless of surface (Desktop-only
+ * canvas plugins mixed in with CLI-only ones), with only a small trailing
+ * label to tell them apart - reported directly as making it hard to find
+ * "our cli plugins" among items that don't even run on this surface.
+ */
+function usableOnTui(item: CatalogProviderPage['items'][number]): boolean {
+  const hosts = item.compatibility?.hosts
+  return hosts === undefined || hosts.length === 0 || hosts.includes('tui')
+}
 
 /** The narrow slice of `livePluginActivation` this overlay actually calls. */
 interface LivePluginActivation {
@@ -50,6 +98,13 @@ type MarketState =
 export class MarketOverlay implements Component {
   private state: MarketState = { phase: 'loading' }
   private selected = 0
+  // packageName -> real npm dist-tags.latest, filled in progressively after
+  // the catalog itself loads (see resolveDisplayedVersions). The browse list
+  // reads through this before falling back to the catalog's own possibly-
+  // stale latestVersion, so what's shown always matches what install()
+  // actually targets - a label that said one version while installing a
+  // different one is its own confusion independent of which one is "right".
+  private resolvedVersions = new Map<string, string>()
 
   constructor(
     private readonly tui: TUI,
@@ -67,17 +122,35 @@ export class MarketOverlay implements Component {
       const response = await fetch(CATALOG_URL)
       if (!response.ok) throw new Error(`catalog request failed: HTTP ${String(response.status)}`)
       const page = parseCatalogProviderPage(await response.json())
-      this.state = { phase: 'browse', items: page.items }
+      const items = page.items.filter(usableOnTui)
+      this.state = { phase: 'browse', items }
+      void this.resolveDisplayedVersions(items)
     } catch (cause) {
       this.state = { phase: 'error', message: cause instanceof Error ? cause.message : String(cause) }
     }
     this.tui.requestRender()
   }
 
+  /** Resolve every visible item's real npm version in the background so the list updates in place, without delaying the catalog's own initial render. */
+  private async resolveDisplayedVersions(items: readonly CatalogProviderPage['items'][number][]): Promise<void> {
+    await Promise.all(items.map(async item => {
+      const packageName = item.package?.name ?? item.name
+      if (item.latestVersion === undefined) return
+      const resolved = await resolveInstallVersion(packageName, item.latestVersion)
+      this.resolvedVersions.set(packageName, resolved)
+      this.tui.requestRender()
+    }))
+  }
+
+  private displayedVersion(item: CatalogProviderPage['items'][number]): string | undefined {
+    const packageName = item.package?.name ?? item.name
+    return this.resolvedVersions.get(packageName) ?? item.latestVersion
+  }
+
   private async install(item: CatalogProviderPage['items'][number]): Promise<void> {
     const packageName = item.package?.name ?? item.name
-    const packageVersion = item.latestVersion
-    if (packageVersion === undefined) {
+    const catalogVersion = item.latestVersion
+    if (catalogVersion === undefined) {
       this.state = { phase: 'error', message: `${packageName} has no installable version` }
       this.tui.requestRender()
       return
@@ -85,6 +158,7 @@ export class MarketOverlay implements Component {
     this.state = { phase: 'installing', item }
     this.tui.requestRender()
     try {
+      const packageVersion = await resolveInstallVersion(packageName, catalogVersion)
       const pnpm = this.ctx.get('desktopPnpm') as CliMarketPnpm | undefined
       const profiles = this.ctx.get('desktopProfiles') as { current: CliMarketProfile } | undefined
       if (pnpm === undefined || profiles === undefined) {
@@ -94,9 +168,19 @@ export class MarketOverlay implements Component {
         invokingDir: profiles.current.dir,
         recovery: { packageName, packageVersion, receiptId: `receipt:${randomUUID()}` },
       })
+      // A bare "pnpm add exited with code 1" told a real user nothing
+      // actionable - the underlying pnpm stderr (an npm 404, a store
+      // mismatch, a network failure) is exactly what a person would need to
+      // fix or report the failure, and it was there on `handle.stderr` the
+      // whole time, just never read.
+      let stderrOutput = ''
+      handle.stderr.on('data', (chunk: Buffer) => { stderrOutput += chunk.toString('utf8') })
       const outcome = await handle.done
       if (outcome.exitCode !== 0) {
-        throw new Error(`pnpm add exited with code ${String(outcome.exitCode)}`)
+        // Strip ANSI (pnpm colors its own output) and cap length - this
+        // renders inside a fixed-width popup box, not a scrollable log.
+        const detail = stderrOutput.replaceAll(/\x1b\[[0-9;]*m/gu, '').replaceAll(/\s+/gu, ' ').trim().slice(-400)
+        throw new Error(`pnpm add exited with code ${String(outcome.exitCode)}${detail === '' ? '' : `: ${detail}`}`)
       }
       const live = this.ctx.get('livePluginActivation') as LivePluginActivation | undefined
       let message = `Installed ${packageName}@${packageVersion}. Restart to activate.`
@@ -128,7 +212,7 @@ export class MarketOverlay implements Component {
         this.state.items.forEach((item, index) => {
           const surfaces = item.compatibility?.hosts?.join('/') ?? ''
           const marker = index === this.selected ? success('> ') : '  '
-          const label = `${item.displayName} ${muted(`(${item.latestVersion ?? '?'}${surfaces === '' ? '' : ` · ${surfaces}`})`)}`
+          const label = `${item.displayName} ${muted(`(${this.displayedVersion(item) ?? '?'}${surfaces === '' ? '' : ` · ${surfaces}`})`)}`
           lines.push(`${marker}${label}`)
         })
         return lines

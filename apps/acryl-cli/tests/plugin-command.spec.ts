@@ -24,7 +24,7 @@ const SNAPSHOT: PluginLifecycleSnapshot = {
   entries: [
     entry('include:ui-acryl', { moduleName: '@acryl/dsh-client-ui-brand-acryl' }),
     entry('include:ui-brand-official', { moduleName: '@deepseek-ai/dsh-client-ui-brand-official' }),
-    entry('include:market-plugin', { moduleName: 'dsh-community-market', enabled: false, hostPhase: null }),
+    entry('include:market-plugin', { moduleName: 'cordis-plugin-market', enabled: false, hostPhase: null }),
   ],
 }
 
@@ -38,14 +38,14 @@ describe('resolvePluginEntryId', () => {
   })
 
   it('accepts the package name the market shows', () => {
-    expect(resolvePluginEntryId('acryl', SNAPSHOT, 'dsh-community-market')).toBe('include:market-plugin')
+    expect(resolvePluginEntryId('acryl', SNAPSHOT, 'cordis-plugin-market')).toBe('include:market-plugin')
   })
 
   it('prefers an exact entry match over a package-name match', () => {
     const ambiguous: PluginLifecycleSnapshot = {
-      entries: [entry('dsh-community-market', { moduleName: 'x' }), entry('include:market-plugin', { moduleName: 'dsh-community-market' })],
+      entries: [entry('cordis-plugin-market', { moduleName: 'x' }), entry('include:market-plugin', { moduleName: 'cordis-plugin-market' })],
     }
-    expect(resolvePluginEntryId('acryl', ambiguous, 'dsh-community-market')).toBe('dsh-community-market')
+    expect(resolvePluginEntryId('acryl', ambiguous, 'cordis-plugin-market')).toBe('cordis-plugin-market')
   })
 
   it('names the profile and the list command when nothing matches', () => {

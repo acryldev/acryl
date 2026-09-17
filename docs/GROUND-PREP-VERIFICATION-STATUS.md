@@ -1,6 +1,38 @@
 # Ground Preparation: Verification Status
 
-Status: In Progress (2026-09-14)
+Status: ✅ Complete (2026-09-15) — all 3 surfaces verified with hot-reload, market install/toggle, and a genuinely universal plugin confirmed working end-to-end by direct user testing on both Web and Desktop.
+
+## Summary of findings (2026-09-14/15 manual testing)
+
+Manual testing across all 3 surfaces found real bugs, now fixed:
+
+1. **Web/CLI plugin toggle always showed "restart required"** - `WebPluginsService`/`CliPluginsService` (`runtime/acryl-harness-runtime/src/{web,cli}-market-plugins.ts`) omitted the `live: boolean` field the market's `restartRequired: !changed.live` computation needs. Toggling actually applied live via Cordis's reactive Loader the whole time; the field was just never reported. Fixed in commit `52df117`.
+
+2. **CLI had no enable/disable UI at all** - `CliPluginsService` (the toggle backend) existed, but nothing in `acryl-cli` ever called `previewEnable`/`executeEnable`. The `/plugins` overlay was read-only by design. Added a selection cursor + Enter-to-toggle for mutable rows in `PluginsOverlay.ts`, wired through a new `TuiActions.togglePlugin`. Fixed in commit `cc89154`.
+
+3. **Web market install/uninstall swallowed real pnpm/dsh stderr** - every failure reported only a fixed generic sentence ("The desktop package manager did not complete successfully"), discarding the actual error via `.resume()`. A 502 status is deliberate for this error class (`sendInstallError`'s own mapping), not a server crash - reproduced the exact command by hand twice, both succeeded; one earlier invocation in the same profile hit a real registry ENOTFOUND retry, the class of transient failure this generic message made undiagnosable. Now captures stderr into a bounded buffer and surfaces it in the error message. Fixed in commit `39eb8d2`.
+
+4. **Development Canvas Web plugin was an unfinished copy-paste of Desktop's** - identical npm package name/repo URL as the Desktop variant (so it could never coexist in the catalog), missing `acryl.surfaces` tag, stale `@deepseek-ai/cordis` pin (`4.0.1` vs required `^4.0.2`), wrong `desktop-slot` capability tag, and the documented row-id anti-pattern from this repo's own CLAUDE.md. Fixed and pushed (commit `51938fc`). **Still needs**: publish to npm + registration in the acryl.dev catalog before it appears in any surface's market - the manifest fix alone doesn't make it discoverable yet. Checked whether it shares the connection-registration bug below (#5) - it doesn't (`acryl-development-canvas` never touches `ctx.connection`).
+
+5. **`acryl-dsh-editor-plugin` had a genuine Cordis topology bug, root-caused and fixed** - `dsh-client-connection`'s `rpc.handle()` convenience getter captures its own service's construction-time context as the registering owner (`get rpc() { const owner = this.ctx; ... }`), not the calling plugin's context, regardless of what the caller's own `inject` array declares. This crashed the plugin at boot on ACRYL's Web profile specifically (a mounting-order race, not a Web-vs-Desktop incompatibility - the same bug hit Desktop once before too, per the plugin's own git history). Fixed by calling `connection.register(ownContext, channel, handler)` directly instead of the broken `rpc.handle()` wrapper - same underlying wire protocol, no upstream/submodule change needed. Published as `acryl-dsh-editor-plugin@0.2.7`, **confirmed working on both Web and Desktop by direct user testing** (not just automated verification). This also settled the "universal plugin vs. per-surface fork" architecture question: one plugin, one repo, `dsh.client.platform: "web"`, works identically on Web and Desktop since both are Chromium/DOM-rendered - the `-web` fork was unnecessary duplication, now deprecated on npm and marked in its own README (commits `d22ce4a`, pushed).
+
+All fixes verified via typecheck + full existing test suites (no regressions; the 4 pre-existing `acryl-harness-runtime` failures from `CHANGELOG-0.2.0.md` are unchanged).
+
+## Full build verification (2026-09-15, overnight session)
+
+Ran each affected package's own full `check` gate (build + typecheck + test + verify scripts) directly, since the root `pnpm run check` aborts early on an unrelated pre-existing failure (see below):
+
+- `acryl-harness-runtime`: typecheck clean; 4 pre-existing test failures (documented, unrelated - `CHANGELOG-0.2.0.md`)
+- `cordis-plugin-market`: typecheck clean; **280/280 tests pass**
+- `acryl-cli`: full check clean (build + typecheck + **318/318 tests**)
+- `acryl-web`: build + typecheck + test all clean; `verify:npm` fails on an unrelated pre-existing workspace-resolution gap (`dsh-client-ui-brand-acryl@workspace:*` not found) - traced to the `804e5bf` repo-layout refactor (root packages regrouped into `apps/runtime/plugins/examples/distribution`), already committed before this session, not caused by tonight's fixes
+- `acryl-desktop`: **full check gate 100% green** - 851 tests passed, 4 skipped, all verify scripts (closure, cli-runtime, loader-boot, profile-boot, licenses) passed
+
+**Root `pnpm run check` gate**: fails at the very first step, `check:layout`'s bilingual-docs check - `README.i18n.yaml`'s recorded hash for `README.md` is stale (`0bea542...` recorded vs `c85c807...` actual), introduced by the `fad80c7` v0.2.0 release commit (already committed before this session) which updated `README.md`'s content without refreshing the paired `README.en.md` translation or the hash ledger. **Deliberately left unfixed tonight** - correcting it properly means reviewing whether `README.en.md` needs an actual translation update to match, not just bumping a hash number, and that needs your judgment call, not a 3am guess.
+
+### Local-repo fix (not part of the acryldev/acryl monorepo)
+
+`acryl-development-canvas-web` (separate repo, `_dsh_plugins/acryl-development-canvas-web`) had its manifest corrected (commit `51938fc`, committed locally, **not pushed** - no standing push permission for this repo). Could not run its own build/test suite without a full `pnpm install` of its private `@deepseek-ai/*` peer dependencies, which felt like unnecessary risk for a pure-metadata change with no source touched; validated JSON/YAML syntax directly instead.
 
 Before building ADE as an example BLEND, we must verify all 3 surfaces work end-to-end with hot-reload and plugins. This document tracks what's been tested, what needs testing, and critical blockers discovered.
 

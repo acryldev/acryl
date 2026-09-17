@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL-3 — Relay / structured handoff between DSH-native and external actor
 
+**Tracking:** https://github.com/acryldev/acryl/issues/21
+
 **Feature Branch**: `004-acryl-3-relay-handoff`
 **Created**: 2026-08-23
 **Status**: Stub

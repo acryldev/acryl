@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL-8 — Multi-agent room / Agent Teams integration
 
+**Tracking:** https://github.com/acryldev/acryl/issues/26
+
 **Feature Branch**: `009-acryl-8-multi-agent-room`
 **Created**: 2026-08-23
 **Status**: Stub

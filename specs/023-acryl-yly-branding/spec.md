@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL YLY pet + branding
 
+**Tracking:** https://github.com/acryldev/acryl/issues/40
+
 **Feature Directory**: `specs/023-acryl-yly-branding`
 **Created**: 2026-08-29 (C1). **Status**: in progress.
 **Input**: user direction — replace the DeepSeek whale branding with the ACRYL

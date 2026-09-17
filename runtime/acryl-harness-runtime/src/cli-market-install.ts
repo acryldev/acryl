@@ -1,6 +1,6 @@
 /**
  * CLI/TUI's own `desktopProfiles`/`desktopPnpm` capabilities (spec 034,
- * completing T006 for the third surface) - what `dsh-community-market`'s
+ * completing T006 for the third surface) - what `cordis-plugin-market`'s
  * install service needs for a CLI-driven Market install/uninstall to do a
  * real package operation, instead of the "ACRYL is required" gate it shows
  * without them.
@@ -24,19 +24,19 @@ import { dirname, join } from 'node:path'
 import { PassThrough, Readable } from 'node:stream'
 import { type Context, Service } from '@deepseek-ai/cordis'
 
-/** Matches `dsh-community-market`'s own `MarketDesktopProfile` shape. */
+/** Matches `cordis-plugin-market`'s own `MarketDesktopProfile` shape. */
 export interface CliMarketProfile {
   readonly name: string
   readonly dir: string
 }
 
-/** Matches `dsh-community-market`'s own `MarketDesktopPnpmOutcome` shape. */
+/** Matches `cordis-plugin-market`'s own `MarketDesktopPnpmOutcome` shape. */
 export interface CliMarketPnpmOutcome {
   readonly exitCode: number | null
   readonly signal: NodeJS.Signals | null
 }
 
-/** Matches `dsh-community-market`'s own `MarketDesktopPnpmHandle` shape. */
+/** Matches `cordis-plugin-market`'s own `MarketDesktopPnpmHandle` shape. */
 export interface CliMarketPnpmHandle {
   readonly stdout: Readable
   readonly stderr: Readable
@@ -50,7 +50,7 @@ export interface CliMarketPnpmHandle {
 // `Service`'s constructor takes a plain string name, not `keyof Context`, so
 // providing under these exact names needs no static declaration at all.
 
-/** Matches `dsh-community-market`'s own `MarketDesktopPnpm` shape exactly. */
+/** Matches `cordis-plugin-market`'s own `MarketDesktopPnpm` shape exactly. */
 export interface CliMarketPnpm {
   runPlugin(args: readonly string[], invokingDir: string, signal?: AbortSignal): CliMarketPnpmHandle
   installPlugin(request: {
@@ -107,9 +107,15 @@ export class CliPnpmService extends Service implements CliMarketPnpm {
     const stderr = new PassThrough()
     child.stdout?.pipe(stdout)
     child.stderr?.pipe(stderr)
+    // 'close', not 'exit': 'exit' can fire before the piped stdout/stderr
+    // have finished draining into `stdout`/`stderr` above, which raced a
+    // real caller reading `stderr` after `done` resolved - a fast failure
+    // (this profile's dsh wrapper prints one line and exits immediately)
+    // showed a near-empty stderr capture because the pipe hadn't flushed
+    // yet. 'close' is Node's own guarantee that both streams have ended.
     const done = new Promise<CliMarketPnpmOutcome>((resolve, reject) => {
       child.once('error', reject)
-      child.once('exit', (exitCode, exitSignal) => resolve({ exitCode, signal: exitSignal }))
+      child.once('close', (exitCode, exitSignal) => resolve({ exitCode, signal: exitSignal }))
     })
     return {
       stdout,
@@ -127,7 +133,16 @@ export class CliPnpmService extends Service implements CliMarketPnpm {
   }): Promise<CliMarketPnpmHandle> {
     const target = `${request.recovery.packageName}@${request.recovery.packageVersion}`
     const options = request.pnpmOptions === undefined ? [] : [...request.pnpmOptions]
-    return this.runPlugin(['add', ...options, target], request.invokingDir, request.signal)
+    // A version of ACRYL's own tooling published minutes before an install
+    // attempt is the normal case here (Market installs are how a person
+    // actually picks up a just-published plugin), not the untrusted-fresh-
+    // package scenario pnpm's own `minimumReleaseAge` supply-chain default
+    // guards against - reproduced directly: a real install of a package
+    // this session had itself published minutes earlier failed with
+    // `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` on a pnpm whose default
+    // enables the policy. Overridden only for this one `add` invocation,
+    // not the user's global pnpm config, which stays untouched.
+    return this.runPlugin(['add', '--config.minimum-release-age=0', ...options, target], request.invokingDir, request.signal)
   }
 
   // No crash-recovery WAL (see this module's own doc comment) - there is

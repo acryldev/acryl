@@ -22,7 +22,7 @@
  * file trusted the pattern.
  */
 
-import { existsSync, mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { lstatSync, mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { createRequire, findPackageJSON } from 'node:module'
 import { basename, dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -200,7 +200,7 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
       })
     }
     // Web's own desktopProfiles/desktopPnpm (spec 034 T006, scoped v1) - what
-    // dsh-community-market's install service needs for its Install/Uninstall
+    // cordis-plugin-market's install service needs for its Install/Uninstall
     // buttons to do a real operation instead of showing "ACRYL is required".
     // Both are stateless besides this one profile's own fixed name/directory,
     // so - also like dshHomePath - never disposed; there is nothing to
@@ -212,7 +212,7 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   // CLI/TUI's own desktopPlugins/livePluginActivation + desktopProfiles/
   // desktopPnpm (spec 034 T006, completing the third surface) - same
   // ordering constraint as Web above (mount desktopPlugins first, since
-  // dsh-community-market's own ctx.inject(['desktopProfiles', 'desktopPnpm'])
+  // cordis-plugin-market's own ctx.inject(['desktopProfiles', 'desktopPnpm'])
   // reads ctx.get('livePluginActivation') exactly once, opportunistically).
   // Unlike Web, the CLI has more than one named profile, so the profile name
   // comes from this composition's own directory rather than a literal - see
@@ -294,6 +294,25 @@ export function createDshEngineDefinition(profileName: string): AcrylEngineDefin
  * only intercepts imports whose parent is the Loader's own entry module,
  * which this composition style never uses. Idempotent: replaces a stale
  * symlink pointing elsewhere, leaves an already-correct one untouched.
+ *
+ * The "stale" case is not hypothetical - it is the actual CI failure mode.
+ * `release-cli.yml`'s `web` job runs the test suite and
+ * `verify-npm-web-entrypoint.mjs` *before* building and smoke-testing the
+ * release archive, in the same job, against the same shared
+ * `~/.acryl/.dsh` home. Both earlier steps materialize this exact symlink
+ * pointing at their own temporary staging directories, then delete those
+ * directories in their own cleanup - leaving a **dangling** symlink behind
+ * in the shared profile, not a missing one. The later archive-smoke step's
+ * own `materializeProfilePackage` call then hits `EEXIST` (something is
+ * there) and, before this fix, called `realpathSync.native` on it to
+ * decide whether to replace it - which throws `ENOENT` on a dangling
+ * symlink instead of returning a comparable path, crashing where the
+ * function should simply have replaced the stale link. (An earlier pass
+ * misdiagnosed this as an N-way in-process race and added a same-process
+ * memo guard; that guard was harmless but irrelevant - every reproduction
+ * that actually matched CI's real symptom involved *no* concurrency at
+ * all, just one process inheriting another, earlier process's leftover
+ * dangling link.)
  */
 function materializeProfilePackage(profileDir: string, packageName: string, installPackageUrl: string): void {
   const manifestPath = findPackageJSON(packageName, installPackageUrl)
@@ -303,8 +322,28 @@ function materializeProfilePackage(profileDir: string, packageName: string, inst
   const sourceDir = dirname(manifestPath)
   const linkPath = join(profileDir, 'node_modules', packageName)
   mkdirSync(dirname(linkPath), { recursive: true })
-  if (existsSync(linkPath)) {
-    if (realpathSync.native(linkPath) === realpathSync.native(sourceDir)) return
+  // `lstatSync` (not `existsSync`/`realpathSync`, both of which follow the
+  // symlink and would throw or report "missing" for a dangling one) is the
+  // only one of the three that answers "is there a filesystem entry at
+  // this exact path at all" without caring whether it resolves.
+  const hasEntry = (() => {
+    try {
+      lstatSync(linkPath)
+      return true
+    } catch {
+      return false
+    }
+  })()
+  if (hasEntry) {
+    // realpathSync throws on a dangling symlink rather than returning a
+    // comparable path - that case means "stale", exactly like a mismatch.
+    let existingTarget: string | undefined
+    try {
+      existingTarget = realpathSync.native(linkPath)
+    } catch {
+      existingTarget = undefined
+    }
+    if (existingTarget === realpathSync.native(sourceDir)) return
     rmSync(linkPath, { force: true, recursive: true })
   }
   symlinkSync(sourceDir, linkPath, 'dir')
@@ -380,12 +419,12 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   )
   // Community Market: same row id/name acryl-desktop's own profile.ts uses
   // (DESKTOP_MARKET_IDENTITIES.community), same materialization technique as
-  // the brand swap above - dsh-community-market is another ACRYL-owned
+  // the brand swap above - cordis-plugin-market is another ACRYL-owned
   // workspace package outside @deepseek-ai/dsh's own dependency closure.
   // Unlike Desktop, Web has no on/off provider switch (Desktop's Market is
   // disabled by default and user-toggleable via desktop-market.ts) - Web has
   // no such setting surface yet, so this row is simply always present.
-  // dsh-community-market's own top-level inject (['webServer', 'settings'])
+  // cordis-plugin-market's own top-level inject (['webServer', 'settings'])
   // needs nothing Desktop-specific - its host code's own comment documents
   // this deliberately ("Browsing remains portable"): Discover/Installable/
   // Sources activate on any surface with webServer+settings, while real
@@ -394,8 +433,8 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   // Web today. Web-side desktopProfiles/desktopPnpm equivalents - and so
   // Market install/uninstall parity with Desktop - remain a separate,
   // unstarted piece of work; this row only turns on browsing.
-  materializeProfilePackage(profile.dir, 'dsh-community-market', installPackageUrl)
-  patches.push({ insert: [{ id: 'community-market', name: 'dsh-community-market' }] })
+  materializeProfilePackage(profile.dir, 'cordis-plugin-market', installPackageUrl)
+  patches.push({ insert: [{ id: 'community-market', name: 'cordis-plugin-market' }] })
   // Last, so a user override beats every composition decision above it - the
   // same shared store the CLI and the Desktop panel write (spec 034).
   patches.push(...pluginLifecyclePatches({
@@ -412,7 +451,7 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
  * profile system like the CLI flavor (Web has no external profile pipeline
  * of its own, unlike Desktop's `prepareDesktopProfile()`).
  * @param installPackageUrl - file URL of `acryl-web`'s own `package.json`,
- * used to materialize `dsh-client-ui-brand-acryl` and `dsh-community-market`
+ * used to materialize `dsh-client-ui-brand-acryl` and `cordis-plugin-market`
  * into the profile (see {@link resolveWebEngineComposition}'s own comments
  * for why that is needed).
  */

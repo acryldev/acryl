@@ -65,7 +65,7 @@ jobs:
 
       # The workspace packages export their types from a built lib/. On a fresh
       # checkout those are absent, so consumers (acryl-cli -> acryl-harness-
-      # runtime -> acryl-control, and acryl-cli -> dsh-community-market) cannot
+      # runtime -> acryl-control, and acryl-cli -> cordis-plugin-market) cannot
       # typecheck until the providers are built. The web serve test also
       # loads dsh-client-ui-brand-acryl as a profile plugin, so its lib/
       # must exist before the test step.
@@ -73,7 +73,7 @@ jobs:
         run: |
           corepack pnpm --filter acryl-control run build
           corepack pnpm --filter acryl-harness-runtime run build
-          corepack pnpm --filter dsh-community-market run build
+          corepack pnpm --filter cordis-plugin-market run build
           corepack pnpm --filter dsh-client-ui-brand-acryl run build
 
       - name: Typecheck

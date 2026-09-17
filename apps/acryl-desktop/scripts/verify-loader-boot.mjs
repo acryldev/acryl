@@ -155,7 +155,7 @@ try {
       // ('advanced'); an id-targeted row replaces only its config.
       { id: 'desktop-shell', config: { mode: 'compatibility' } },
       { insert: [
-        { id: 'community-market', name: 'dsh-community-market' },
+        { id: 'community-market', name: 'cordis-plugin-market' },
         { id: 'third-party-smoke', name: THIRD_PARTY_NAME },
       ] },
     ],
@@ -232,7 +232,7 @@ try {
   if (thirdPartyEntry?.options.name !== THIRD_PARTY_NAME) {
     throw new Error('profile-local third-party plugin did not activate')
   }
-  if (marketEntry?.options.name !== 'dsh-community-market') {
+  if (marketEntry?.options.name !== 'cordis-plugin-market') {
     throw new Error('community market Host plugin did not activate through its bare package name')
   }
   if (mountedSpec?.mode !== 'compatibility') {

@@ -28,13 +28,22 @@ try {
   if (token) {
     writeFileSync(join(configDir, '.npmrc'), `//registry.npmjs.org/:_authToken=${token}\n`)
   }
-  execFileSync('npm', [
+  // `pnpm publish`, not `npm publish`: acryl-web depends on real workspace
+  // packages (`dsh-client-ui-brand-acryl`, `cordis-plugin-market`) via the
+  // `workspace:*` protocol. Only pnpm's own publish rewrites that to the
+  // dependency's real published version in what actually gets uploaded -
+  // `npm publish` ships the literal string `workspace:*`, which is not a
+  // valid version range npm's own installer understands, breaking every
+  // real end-user install. `--no-git-checks` because this runs from CI
+  // against a specific already-tagged commit, not an interactive release.
+  execFileSync('pnpm', [
     'publish',
-    packageDir,
     '--access', 'public',
     '--tag', process.env.ACRYL_NPM_TAG ?? 'latest',
+    '--no-git-checks',
     ...(dryRun ? ['--dry-run'] : []),
   ], {
+    cwd: packageDir,
     stdio: 'inherit',
     env: { ...process.env, NPM_CONFIG_USERCONFIG: join(configDir, '.npmrc') },
   })

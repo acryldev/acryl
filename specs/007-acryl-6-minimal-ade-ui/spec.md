@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL-6 — Minimal ADE UI
 
+**Tracking:** https://github.com/acryldev/acryl/issues/24
+
 **Feature Branch**: `007-acryl-6-minimal-ade-ui`
 **Created**: 2026-08-23
 **Status**: Stub

@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL-12 — Trace / evaluation infrastructure
 
+**Tracking:** https://github.com/acryldev/acryl/issues/30
+
 **Feature Branch**: `013-acryl-12-trace-eval`
 **Created**: 2026-08-23
 **Status**: Stub

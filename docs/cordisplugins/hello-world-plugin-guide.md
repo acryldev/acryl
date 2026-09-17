@@ -480,7 +480,7 @@ still use existing DSH/Cordis APIs. See its explicit
 The Community Market is a real Desktop component, but catalog membership is
 discovery metadata—not proof of safety or compatibility. Its current boundary
 and the reviewed dshfind/1024Store adapters are documented in the
-[Market README](../../dsh-community-market/README.md). The public
+[Market README](../../cordis-plugin-market/README.md). The public
 [dshfind repository](https://github.com/hikariming/dshfind) describes a catalog
 generated from the `dsh-plugin` GitHub topic, while
 [DSH 1024Store](https://github.com/imsai-sh/awesome-deepseek-harness-plugins)

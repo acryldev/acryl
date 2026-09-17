@@ -27,7 +27,7 @@ export function verifyMarketDependencyDirection(files) {
 }
 
 export function verifyTrackedMarketDependencyDirection(root) {
-  const paths = execFileSync('git', ['ls-files', '-z', '--', 'plugins/dsh-community-market/src'], {
+  const paths = execFileSync('git', ['ls-files', '-z', '--', 'plugins/cordis-plugin-market/src'], {
     cwd: root,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],

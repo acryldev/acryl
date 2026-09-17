@@ -386,19 +386,19 @@ describe('packaged desktop runtime verification', () => {
 
   it('reports a required peer the application manifest never ships instead of failing the packager', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const unpackedRoot = syntheticUnpackedRoot(['dsh-community-market'])
-    writePackageManifest(unpackedRoot, 'node_modules/dsh-community-market', {
-      name: 'dsh-community-market',
+    const unpackedRoot = syntheticUnpackedRoot(['cordis-plugin-market'])
+    writePackageManifest(unpackedRoot, 'node_modules/cordis-plugin-market', {
+      name: 'cordis-plugin-market',
       peerDependencies: { '@deepseek-ai/dsh-client-store': '0.1.5-alpha.1' },
     })
 
     const report = verifyPackagedDependencyClosure(unpackedRoot)
 
     expect(report.unshipablePeerEdges).toEqual([
-      'dsh-community-market -> @deepseek-ai/dsh-client-store',
+      'cordis-plugin-market -> @deepseek-ai/dsh-client-store',
     ])
     expect(warn).toHaveBeenCalledWith(expect.stringContaining(
-      'dsh-community-market -> @deepseek-ai/dsh-client-store',
+      'cordis-plugin-market -> @deepseek-ai/dsh-client-store',
     ))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('acryl-desktop/package.json'))
     warn.mockRestore()

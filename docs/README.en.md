@@ -29,8 +29,8 @@ Ordinary users can start with the [user guide](user-guide.en.md) and never need 
 | [Fabric community-feedback disposition](../dsh-community-fabric/docs/research/community-issue-23-review.md) | Which Issue #23 proposals were adopted, split into focused RFCs, deferred, or kept out of portable core |
 | [Fabric framework and plugin-needs research](../dsh-community-fabric/docs/research/mature-plugin-frameworks.md) | Mature Koishi, Chrome, and VS Code patterns plus requirements observed in real DSH plugins |
 | [VS Code extension-model research](../dsh-community-fabric/docs/research/vscode-extension-model.md) | Implemented declaration, Provider, UI, placement, and lifecycle patterns, with concrete constraints for the Fabric RFC |
-| [Community Market](../dsh-community-market/README.md) | Implemented optional Market provider, catalog sources, managed package operations, and safety boundary |
-| [Market catalog provider contract](../dsh-community-market/docs/catalog-provider-contract.md) | Schemas, query parameters, multi-source behavior, and adapter rules for the implementation team |
+| [Community Market](../cordis-plugin-market/README.md) | Implemented optional Market provider, catalog sources, managed package operations, and safety boundary |
+| [Market catalog provider contract](../cordis-plugin-market/docs/catalog-provider-contract.md) | Schemas, query parameters, multi-source behavior, and adapter rules for the implementation team |
 | [Architecture](architecture.en.md) | Electron, Host, loopback Web, profiles, and packaging |
 | [Desktop service reference](../acryl-desktop/docs/plugin-services.md) | Stable `desktopProfiles` and `desktopPnpm` contracts with TypeScript examples |
 | [Package reference](../acryl-desktop/README.md) | Detailed build, runtime, release, and limitation notes |
@@ -49,4 +49,4 @@ The outer repository uses English as its default product language:
 
 ## Status convention
 
-These pages distinguish shipped behavior, platform limits, and roadmap items. Compatibility mode keeps the upstream default Web client; advanced mode installs the Desktop-owned layout and native materials. The plugin marketplace now has a documentation scaffold in [`dsh-community-market`](../dsh-community-market/README.md), but no usable page or installer; mobile remote control and Channels also remain separate roadmap items and are not implied to be part of the current installer.
+These pages distinguish shipped behavior, platform limits, and roadmap items. Compatibility mode keeps the upstream default Web client; advanced mode installs the Desktop-owned layout and native materials. The plugin marketplace now has a documentation scaffold in [`cordis-plugin-market`](../cordis-plugin-market/README.md), but no usable page or installer; mobile remote control and Channels also remain separate roadmap items and are not implied to be part of the current installer.

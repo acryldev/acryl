@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL Outer PNPM Workspace Migration
 
+**Tracking:** https://github.com/acryldev/acryl/issues/37
+
 **Feature Directory**: `specs/020-pnpm-outer-workspace-migration`
 **Created**: 2026-08-27
 **Status**: In verification

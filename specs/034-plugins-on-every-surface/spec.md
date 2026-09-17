@@ -1,5 +1,7 @@
 # Plugins on every surface
 
+**Tracking:** https://github.com/acryldev/acryl/issues/51
+
 **Feature Directory**: `specs/034-plugins-on-every-surface`
 **Created**: 2026-09-12
 **Status**: ready-for-agent
@@ -43,7 +45,7 @@ the composition:
 
 | Surface | plugin-relevant packages it declares |
 | --- | --- |
-| `acryl-desktop` | market (`dsh-community-market`, `dshmarket`), `@deepseek-ai/dsh-host-plugin-inventory`, both client settings plugin UIs, `@deepseek-ai/dsh-plugin-package-inventory-deepseek`, `acryl-development-canvas`, brand |
+| `acryl-desktop` | market (`cordis-plugin-market`, `dshmarket`), `@deepseek-ai/dsh-host-plugin-inventory`, both client settings plugin UIs, `@deepseek-ai/dsh-plugin-package-inventory-deepseek`, `acryl-development-canvas`, brand |
 | `acryl-web` | `@deepseek-ai/dsh-host-plugin-inventory`, both client settings plugin UIs, `@deepseek-ai/dsh-plugin-package-inventory-deepseek`, brand - no market, no canvas |
 | `acryl-cli` | `@deepseek-ai/dsh-plugin-package-inventory-deepseek` only |
 | `acryl-harness-runtime` | `@deepseek-ai/dsh-tool-str-replace-editor` (declared, composed by no surface's global rows - it exists only inside the shipped `minimal` agent preset) |
@@ -144,7 +146,7 @@ Per surface, with real evidence (not unit tests alone):
 
 Tracked in `research.md`; each one is a gate on a task in `tasks.md`:
 
-1. Can `dsh-community-market` (Host + Client faces) mount under the Web host
+1. Can `cordis-plugin-market` (Host + Client faces) mount under the Web host
    without Electron-only APIs?
 2. Does the install/reconcile path of `specs/031` (`desktop-plugin-reconcile.ts`
    plus the profile's own pnpm) work outside an Electron process, where there

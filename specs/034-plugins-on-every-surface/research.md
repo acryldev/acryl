@@ -3,24 +3,24 @@
 Facts the plan waits on. Each answered question becomes a note here before the
 task it gates starts.
 
-## Q1 - Can `dsh-community-market` mount under the Web host?
+## Q1 - Can `cordis-plugin-market` mount under the Web host?
 
 **Status**: resolved (2026-09-12) - T004 (browsing half) unblocked
 **Gates**: T004
 
-Known: `dsh-community-market` is an implemented private Host/Client package
+Known: `cordis-plugin-market` is an implemented private Host/Client package
 declared by `acryl-desktop` and enabled as an optional Desktop Market provider;
 `acryl-web` does not declare it. The market's Client face is an ordinary Cordis
 Client plugin and should render in the Web client like any other; the open part
 is the Host face (install, profile reconcile, `desktopProfiles`/`desktopPnpm`
 injection) and whether it assumes an Electron main process.
 
-Measured: the package composes as one row (`dsh-community-market`) in the real
+Measured: the package composes as one row (`cordis-plugin-market`) in the real
 Desktop Loader tree - it is a plain Cordis Host row, not an Electron main-process
 object, so the question is which of its injected services exist off-Electron,
 not whether the row itself can mount.
 
-**Answer, with evidence:** yes, cleanly, for browsing. `dsh-community-market`'s
+**Answer, with evidence:** yes, cleanly, for browsing. `cordis-plugin-market`'s
 own top-level `inject` is `['webServer', 'settings']` only - both already
 present on Web. Its `apply()` reads (`src/index.ts:33-63`): `registerMarketRoutes`
 and the route registration `ctx.effect` run unconditionally at that top level;
@@ -29,15 +29,15 @@ separate, nested `ctx.inject([...], ...)` the module's own comment documents as
 deliberate degradation ("Browsing remains portable. Desktop-only package
 operations appear whenever the narrow profile and package-manager capabilities
 are live."). Wired into `acryl-web` via `materializeProfilePackage` (same
-technique the ACRYL brand swap already uses - `dsh-community-market` is an
+technique the ACRYL brand swap already uses - `cordis-plugin-market` is an
 ACRYL-owned workspace package outside `@deepseek-ai/dsh`'s own dependency
-closure) plus a `{ insert: [{ id: 'community-market', name: 'dsh-community-market' }] }`
+closure) plus a `{ insert: [{ id: 'community-market', name: 'cordis-plugin-market' }] }`
 patch in `resolveWebEngineComposition`, same row id/name
 `acryl-desktop`'s own `DESKTOP_MARKET_IDENTITIES.community` uses
 (`acryl-harness-runtime/src/engine-dsh.ts`, commit `fa70e7e`).
 
 Verified with a real boot (throwaway `ACRYL_HOME`, no manual profile edits):
-the served page's boot manifest lists `dsh-community-market`'s client bundle,
+the served page's boot manifest lists `cordis-plugin-market`'s client bundle,
 and a real `curl` to its own host route
 (`GET /api/community-market/state`) returns `200` with the built-in catalog
 sources (`acryl-catalog`, `dsh-1024store`, `dshfind`) and
@@ -111,7 +111,7 @@ Differences by module name:
 
 | Set | Rows |
 | --- | --- |
-| desktop only | `acryl-desktop`, its `terminal`/`pnpm`/`profiles`/`updates`/`notifications`/`diagnostics`/`hello-world`/`webserver` rows, `acryl-development-canvas`, `dsh-community-market` |
+| desktop only | `acryl-desktop`, its `terminal`/`pnpm`/`profiles`/`updates`/`notifications`/`diagnostics`/`hello-world`/`webserver` rows, `acryl-development-canvas`, `cordis-plugin-market` |
 | web only (vs desktop) | none (the include row's id differs) |
 | web/tui share | every remaining row |
 | tui only | none |

@@ -1,5 +1,7 @@
 # Cordis Architecture Explorer
 
+**Tracking:** https://github.com/acryldev/acryl/issues/34
+
 ## Objective
 
 Make ACRYL's Cordis 4.0 architecture directly visible to users and demonstrate that product components are live plugins whose Fibers, dependencies, services, and effects can be inspected and safely controlled.

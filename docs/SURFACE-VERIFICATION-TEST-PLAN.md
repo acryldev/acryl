@@ -171,31 +171,32 @@ acryl
 ## Results Summary
 
 ### Desktop Results
-- [ ] Startup: PASS / FAIL / NOTES
-- [ ] Market: PASS / FAIL / NOTES
-- [ ] Install: PASS / FAIL / NOTES
-- [ ] Hot-reload: PASS / FAIL / NOTES
-- [ ] Interaction: PASS / FAIL / NOTES
-- [ ] Toggle: PASS / FAIL / NOTES
-- [ ] Uninstall: PASS / FAIL / NOTES
+- [x] Startup: PASS
+- [x] Market: PASS
+- [x] Install: PASS
+- [x] Hot-reload: PASS
+- [x] Interaction: PASS
+- [x] Toggle: PASS
+- [ ] Uninstall: not tested
 
 ### Web Results
-- [ ] Startup: PASS / FAIL / NOTES
-- [ ] Market: PASS / FAIL / NOTES
-- [ ] Install: PASS / FAIL / NOTES
-- [ ] Hot-reload: PASS / FAIL / NOTES
-- [ ] Interaction: PASS / FAIL / NOTES
-- [ ] Toggle: PASS / FAIL / NOTES
-- [ ] Uninstall: PASS / FAIL / NOTES
+- [x] Startup: PASS
+- [x] Market: PASS
+- [x] Install: PASS
+- [x] Hot-reload: PASS (after fix in commit 52df117 - was always showing restart-required due to a missing `live` field, not an actual hot-reload failure)
+- [x] Interaction: PASS
+- [x] Toggle: PASS (after the same fix)
+- [x] Uninstall: FAIL initially (502, generic "package manager did not complete successfully") - root-caused to swallowed pnpm/dsh stderr (fixed in 39eb8d2, now surfaces the real error); the specific failure itself could not be reproduced deterministically by hand (see docs/GROUND-PREP-VERIFICATION-STATUS.md for the full writeup) - most likely a transient npm registry blip, now diagnosable if it recurs
+- [ ] Development Canvas Web: NOT IN CATALOG - root-caused to a copy-paste manifest bug (identical name/repo as Desktop's canvas plugin, no `surfaces` tag, stale Cordis pin) - fixed locally in the separate acryl-development-canvas-web repo (commit 51938fc, not yet published/registered with acryl.dev's catalog)
 
 ### CLI Results
-- [ ] Startup: PASS / FAIL / NOTES
-- [ ] Market: PASS / FAIL / NOTES
-- [ ] Install: PASS / FAIL / NOTES
-- [ ] Hot-reload: PASS / FAIL / NOTES
-- [ ] Interaction: PASS / FAIL / NOTES
-- [ ] Toggle: PASS / FAIL / NOTES
-- [ ] Uninstall: PASS / FAIL / NOTES
+- [x] Startup: PASS
+- [x] Market: PASS (browse/install via `/market` overlay)
+- [x] Install: PASS (acryl-dsh-editor-plugin-cli installs and appears in `/plugins`)
+- [x] Hot-reload: PASS (after fix in commit 52df117)
+- [ ] Interaction: not verified (editor-cli plugin's own `/files` command not exercised after the toggle fix)
+- [x] Toggle: FAIL initially - no enable/disable UI existed in the CLI at all (`/plugins` was read-only by design; `CliPluginsService` backend existed but nothing called it) - built in commit cc89154 (selection cursor + Enter-to-toggle in PluginsOverlay)
+- [ ] Uninstall: not tested
 
 ---
 

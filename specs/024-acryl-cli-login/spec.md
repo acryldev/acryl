@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL CLI `/login` + `/logout` provider authentication
 
+**Tracking:** https://github.com/acryldev/acryl/issues/41
+
 **Feature Directory**: `specs/024-acryl-cli-login`
 **Created**: 2026-08-31. **Status**: in progress.
 **Input**: user direction — make ACRYL a standalone full-featured coding-agent CLI

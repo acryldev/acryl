@@ -1,6 +1,6 @@
 /**
  * Web's own `desktopPlugins` capability (spec 034 T006, scoped v1) - the
- * package-name/preview-token-shaped adapter `dsh-community-market`'s install
+ * package-name/preview-token-shaped adapter `cordis-plugin-market`'s install
  * service needs for `disabledPackageNames()` (a hard requirement even for a
  * plain install - `previewInstall` checks a target isn't already disabled),
  * plus real enable/disable for its Installed tab.
@@ -49,10 +49,10 @@ interface PreviewEntry {
 
 const PREVIEW_TTL_MS = 5 * 60 * 1000
 const MAX_PREVIEWS = 256
-/** Matches dsh-community-market's own PACKAGE_NAME_PATTERN - it rejects the whole list if even one entry isn't a real npm package name. */
+/** Matches cordis-plugin-market's own PACKAGE_NAME_PATTERN - it rejects the whole list if even one entry isn't a real npm package name. */
 const NPM_PACKAGE_NAME_PATTERN = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/u
 
-/** Matches `dsh-community-market`'s own `MarketDesktopPlugins` shape exactly - the six methods it actually calls. */
+/** Matches `cordis-plugin-market`'s own `MarketDesktopPlugins` shape exactly - the six methods it actually calls. */
 export class WebPluginsService extends Service {
   private readonly previews = new Map<string, PreviewEntry>()
 
@@ -70,7 +70,7 @@ export class WebPluginsService extends Service {
       // A Loader row's own `moduleName` is often not npm-package-shaped at
       // all (`cordis:group`, `cordis:include`, ...) - the market validates
       // every name it receives against exactly this npm-package pattern
-      // (`dsh-community-market`'s own PACKAGE_NAME_PATTERN) and hard-rejects
+      // (`cordis-plugin-market`'s own PACKAGE_NAME_PATTERN) and hard-rejects
       // the whole list if even one entry fails, so this filter isn't
       // optional cosmetics.
       .filter(entry => NPM_PACKAGE_NAME_PATTERN.test(entry.moduleName))
@@ -125,7 +125,7 @@ export class WebPluginsService extends Service {
   // Loader (`entry.update({ disabled: ... })`, spec 032's hot-reload
   // mechanism) before resolving - a resolved call has already taken effect
   // live, so success here always means `live: true`. `MarketDesktopPlugins`
-  // (dsh-community-market/src/host/routes.ts) requires this field to decide
+  // (cordis-plugin-market/src/host/routes.ts) requires this field to decide
   // `restartRequired`; omitting it left `restartRequired` permanently `true`
   // for Web regardless of whether the toggle actually applied live.
   private async execute(previewId: string, targetEnabled: boolean): Promise<{ readonly packageName: string; readonly live: boolean }> {
@@ -164,9 +164,9 @@ export class WebPluginsService extends Service {
  * mechanism `specs/032-universal-hot-reload`'s T1/T2/T4/T5 already landed and
  * use elsewhere. Nothing new or risky is built here; this is reuse.
  *
- * `dsh-community-market`'s own install service calls `activate()`
+ * `cordis-plugin-market`'s own install service calls `activate()`
  * automatically right after a successful install when this service is
- * present (`liveActivate` in `dsh-community-market/src/index.ts`), then
+ * present (`liveActivate` in `cordis-plugin-market/src/index.ts`), then
  * `acknowledgeLiveInstall()` (already implemented as a no-op above - no WAL
  * to acknowledge). The market's own client finishes with a full page
  * `location.reload()` - the same safe mechanism Desktop's Client half uses

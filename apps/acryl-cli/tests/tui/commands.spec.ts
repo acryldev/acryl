@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { TuiActions } from '../../src/tui/actions.js'
+import type { ResolvedTuiCommand } from '../../src/tui/tui-commands-service.js'
 import {
   commandQuery,
+  expandDynamicCommands,
   matchSlashCommands,
   parseGoalCommand,
   parsePlanCommand,
@@ -48,6 +50,7 @@ function stubActions(): TuiActions {
     closeContext: vi.fn(),
     openPlugins: vi.fn(),
     closePlugins: vi.fn(),
+    togglePlugin: vi.fn(),
     openAgentPresets: vi.fn(),
     closeAgentPresets: vi.fn(),
     selectAgentPresetRow: vi.fn(),
@@ -85,6 +88,43 @@ describe('matchSlashCommands', () => {
 
   it('matches /plan against its own full text', () => {
     expect(matchSlashCommands('/plan').map(c => c.command)).toEqual(['/plan'])
+  })
+})
+
+describe('expandDynamicCommands', () => {
+  const open = () => ({ render: () => [], invalidate: () => {} })
+
+  it('emits only the bare form for an unnamespaced registration', () => {
+    const registrations: readonly ResolvedTuiCommand[] = [
+      { command: '/market', description: 'Browse plugins', packageName: undefined, overlay: undefined, open },
+    ]
+    expect(expandDynamicCommands(registrations).map(c => c.command)).toEqual(['/market'])
+  })
+
+  it('emits bare, suffixed, and fully-qualified forms for one unambiguous namespaced registration', () => {
+    const registrations: readonly ResolvedTuiCommand[] = [
+      { command: '/files', description: 'Browse files', packageName: 'acryl-dsh-editor-plugin-cli', overlay: undefined, open },
+    ]
+    expect(expandDynamicCommands(registrations).map(c => c.command).sort()).toEqual([
+      '/files',
+      '/files:acryl-dsh-editor-plugin-cli',
+      '/plugin:acryl-dsh-editor-plugin-cli/files',
+    ])
+  })
+
+  it('drops the bare form and offers only disambiguated forms on collision', () => {
+    const registrations: readonly ResolvedTuiCommand[] = [
+      { command: '/files', description: 'Browse files (A)', packageName: 'acryl-dsh-editor-plugin-cli', overlay: undefined, open },
+      { command: '/files', description: 'Browse files (B)', packageName: 'quick-editor-plugin-cli', overlay: undefined, open },
+    ]
+    const commands = expandDynamicCommands(registrations).map(c => c.command).sort()
+    expect(commands).not.toContain('/files')
+    expect(commands).toEqual([
+      '/files:acryl-dsh-editor-plugin-cli',
+      '/files:quick-editor-plugin-cli',
+      '/plugin:acryl-dsh-editor-plugin-cli/files',
+      '/plugin:quick-editor-plugin-cli/files',
+    ])
   })
 })
 

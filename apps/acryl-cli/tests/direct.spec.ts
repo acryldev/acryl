@@ -76,9 +76,9 @@ describe('startDirectHost', () => {
         description: 'Browse files',
         open,
       })
-      expect(host.ctx.get('tuiCommands')?.get('/files')?.open).toBe(open)
+      expect(host.ctx.get('tuiCommands')?.resolve('/files')?.open).toBe(open)
       dispose?.()
-      expect(host.ctx.get('tuiCommands')?.get('/files')).toBeUndefined()
+      expect(host.ctx.get('tuiCommands')?.resolve('/files')).toBeUndefined()
     } finally {
       await host.dispose()
     }

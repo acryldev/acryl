@@ -1,5 +1,7 @@
 # Feature Specification: Plugin Lifecycle Control
 
+**Tracking:** https://github.com/acryldev/acryl/issues/33
+
 **Status:** In progress
 **Scope:** ACRYL Desktop plugin status, lifecycle actions, and reload shortcut
 

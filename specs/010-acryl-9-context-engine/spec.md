@@ -1,5 +1,7 @@
 # Feature Specification: ACRYL-9 — Context engine / memory / graph seams
 
+**Tracking:** https://github.com/acryldev/acryl/issues/27
+
 **Feature Branch**: `010-acryl-9-context-engine`
 **Created**: 2026-08-23
 **Status**: Stub
