@@ -91,7 +91,7 @@
             pname = "acryl";
             inherit version src pnpm;
             fetcherVersion = 4;
-            hash = "sha256-2R0I7aABmehNQLo1RCG5oiLpTOcckZIRGv6ChyggNz8=";
+            hash = "sha256-OGbbOnu44vOLGl1PEbghgYF6tBZXEQN8b9203LJFPK8=";
           };
 
           # Shared flags for both TUI and desktop derivations.
