@@ -92,8 +92,15 @@ jobs:
       - name: Build acryl-desktop
         run: nix build .#acryl-desktop --system ${{ matrix.system }}
 
+      # #prebuilt exists only on systems with a release asset — x86_64-darwin
+      # has no darwin-x64 tarball, so the attribute is absent there.
       - name: Build prebuilt
-        run: nix build .#prebuilt --system ${{ matrix.system }}
+        run: |
+          if nix flake show --json 2>/dev/null | jq -e '.packages["${{ matrix.system }}"].prebuilt' >/dev/null; then
+            nix build .#prebuilt --system ${{ matrix.system }}
+          else
+            echo "No #prebuilt output for ${{ matrix.system }} — skipping"
+          fi
 
       - name: Test default --help
         if: github.event_name != 'pull_request'
@@ -105,7 +112,12 @@ jobs:
 
       - name: Test prebuilt --help
         if: github.event_name != 'pull_request'
-        run: nix run .#prebuilt -- --help
+        run: |
+          if nix flake show --json 2>/dev/null | jq -e '.packages["${{ matrix.system }}"].prebuilt' >/dev/null; then
+            nix run .#prebuilt -- --help
+          else
+            echo "No #prebuilt output for ${{ matrix.system }} — skipping"
+          fi
 
       - name: Test desktop --help
         if: github.event_name != 'pull_request'
