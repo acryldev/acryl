@@ -39,6 +39,19 @@ release-artifacts/
 .sctxx
 .ccompactor
 
+# Throwaway ACRYL_HOME for reproducing fresh-install/cold-start behavior
+# (never-used package-fallback links, first profile creation, etc.) without
+# touching a real ~/.acryl or Desktop's own persistent ~/.acryl-dev, both of
+# which mask that class of bug once their fallback links are established.
+.acryl-home-test/
+
+# Nix build outputs
+/result
+/result-*
+
+# Devbox generated artifacts (machine-local paths and scripts)
+.devbox/
+
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 /graft/
 
