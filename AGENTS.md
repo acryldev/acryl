@@ -220,6 +220,10 @@ Default Matt Pocock roles: `needs-triage`, `needs-info`, `ready-for-agent`, `rea
 
 Single-context. Constitution, orientation, Cordis spec, and `docs/acryl/` are required reading; `CONTEXT.md` / ADRs are created lazily. See `docs/agents/domain.md`.
 
+### Local Cordis plugin quick-build
+
+Need a Cordis plugin for your own immediate use, not public distribution? Use the `cordis-plugin-quickstart` skill (`.claude/skills/cordis-plugin-quickstart/SKILL.md`) to scaffold, mount, and hot-iterate one locally instead of going through `cordis-plugin-market`'s npm-publish install path.
+
 Agent-runtime, Development Canvas, context-relay, and third-party adapter work must follow [`docs/acryl/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md`](docs/acryl/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md) and [the current alignment audit](docs/cordis/acryl_cordis_alignment_audit.md). Build on Cordis services, injection, effects, events, Fibers, Loader composition, and existing DSH capability seams; do not introduce a parallel lifecycle, dependency-injection, event, tool, or provider framework.
 
 ## Rebuilding the graft graph

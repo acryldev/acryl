@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACRYL CLI Surface — How It Works</title>
+<!--
+  Visual explainer: how the ACRYL terminal (CLI) surface works — launch chain,
+  package topology, runtime boot, service composition, session bridge data flow,
+  surface parity. Aesthetic: Blueprint (drafting paper, monospace annotations,
+  precise borders). Light/dark via prefers-color-scheme.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============ THEME (Blueprint) ============ */
+  :root {
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'Fira Code', 'SF Mono', Consolas, monospace;
+
+    /* drafting paper light */
+    --bg: #f2f6fa;
+    --surface: #fbfdff;
+    --surface2: #e9eff6;
+    --surface-elevated: #ffffff;
+    --border: rgba(19, 42, 62, 0.14);
+    --border-bright: rgba(19, 42, 62, 0.30);
+    --text: #132a3e;
+    --text-dim: #5a7288;
+    --ink: #1d6fb8;          /* drafting blue — primary accent */
+    --ink-dim: rgba(29, 111, 184, 0.09);
+    --measure: #b0731c;      /* amber measurement markings */
+    --measure-dim: rgba(176, 115, 28, 0.10);
+    --green: #1d7a4f;        /* runtime / durable */
+    --green-dim: rgba(29, 122, 79, 0.09);
+    --brick: #b3423a;        /* failure / rejection */
+    --brick-dim: rgba(179, 66, 58, 0.09);
+    --slate: #5a7288;
+    --slate-dim: rgba(90, 114, 136, 0.10);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0c1722;
+      --surface: #111f2e;
+      --surface2: #17293a;
+      --surface-elevated: #152839;
+      --border: rgba(214, 231, 245, 0.10);
+      --border-bright: rgba(214, 231, 245, 0.24);
+      --text: #dce8f2;
+      --text-dim: #8aa3b8;
+      --ink: #6db2e8;
+      --ink-dim: rgba(109, 178, 232, 0.12);
+      --measure: #e0a44a;
+      --measure-dim: rgba(224, 164, 74, 0.12);
+      --green: #5fcb94;
+      --green-dim: rgba(95, 203, 148, 0.12);
+      --brick: #e57a70;
+      --brick-dim: rgba(229, 122, 112, 0.12);
+      --slate: #8aa3b8;
+      --slate-dim: rgba(138, 163, 184, 0.12);
+    }
+  }
+
+  /* ============ RESET + BASE ============ */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    /* blueprint grid: fine 24px lines + stronger 120px lines */
+    background-image:
+      linear-gradient(var(--ink-dim) 1px, transparent 1px),
+      linear-gradient(90deg, var(--ink-dim) 1px, transparent 1px),
+      linear-gradient(rgba(19,42,62,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(19,42,62,0.035) 1px, transparent 1px);
+    background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+    color: var(--text);
+    font-family: var(--font-body);
+    padding: 40px;
+    min-height: 100vh;
+  }
+
+  /* ============ ANIMATION ============ */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .sec, .flow-note {
+    animation: fadeUp 0.4s ease-out both;
+    animation-delay: calc(var(--i, 0) * 0.05s);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-delay: 0ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* ============ TYPOGRAPHY ============ */
+  h1 {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+  }
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 8px;
+    font-family: var(--font-mono);
+  }
+  .lead {
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1.65;
+    margin-top: 16px;
+    max-width: 76ch;
+  }
+  .lead strong { color: var(--text); }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+    background: var(--ink-dim);
+    color: var(--ink);
+    padding: 1px 5px;
+    border-radius: 3px;
+    overflow-wrap: break-word;
+  }
+  a { color: var(--ink); }
+
+  /* ============ LAYOUT: TOC + MAIN ============ */
+  .wrap {
+    max-width: 1360px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 186px 1fr;
+    gap: 0 44px;
+  }
+  .main { min-width: 0; }
+
+  .toc {
+    position: sticky;
+    top: 24px;
+    align-self: start;
+    padding: 14px 0;
+    grid-row: 1 / -1;
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+  }
+  .toc::-webkit-scrollbar { width: 3px; }
+  .toc::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+  .toc-title {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    padding: 0 0 10px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .toc a {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    line-height: 1.4;
+    margin-bottom: 1px;
+  }
+  .toc a:hover { color: var(--text); background: var(--surface2); }
+  .toc a.active { color: var(--text); border-left-color: var(--ink); }
+
+  /* ============ SECTION HEAD (drawing-annotation style) ============ */
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 52px 0 6px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-bright);
+    scroll-margin-top: 24px;
+  }
+  .sec-head .fig {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--measure);
+    white-space: nowrap;
+  }
+  .sec-head h2 {
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .sec-intro {
+    color: var(--text-dim);
+    font-size: 13.5px;
+    line-height: 1.6;
+    margin-bottom: 18px;
+    max-width: 84ch;
+  }
+  .sec-intro code { font-size: 12px; }
+
+  /* ============ CARD ============ */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    min-width: 0;
+  }
+  .card--hero {
+    background: var(--surface-elevated);
+    border-color: color-mix(in srgb, var(--border) 40%, var(--ink) 60%);
+    box-shadow: 0 3px 18px rgba(19, 42, 62, 0.08);
+    padding: 24px 28px;
+  }
+  .card--recessed {
+    background: var(--surface2);
+    box-shadow: inset 0 1px 3px rgba(19, 42, 62, 0.05);
+  }
+  .card-label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-label .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+  .c-ink { color: var(--ink); }       .c-ink .dot { background: var(--ink); }       .c-ink.card, .card.c-ink { border-color: var(--ink-dim); }
+  .c-measure { color: var(--measure);} .c-measure .dot { background: var(--measure);} .card.c-measure { border-color: var(--measure-dim); }
+  .c-green { color: var(--green); }   .c-green .dot { background: var(--green); }   .card.c-green { border-color: var(--green-dim); }
+  .c-brick { color: var(--brick); }   .c-brick .dot { background: var(--brick); }   .card.c-brick { border-color: var(--brick-dim); }
+  .c-slate { color: var(--slate); }   .c-slate .dot { background: var(--slate); }   .card.c-slate { border-color: var(--slate-dim); }
+
+  /* ============ HERO FACT ROW ============ */
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 20px;
+  }
+  .fact {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    background: var(--surface);
+    min-width: 0;
+  }
+  .fact .k {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+  }
+  .fact .v {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    overflow-wrap: break-word;
+  }
+  .fact .v small { display: block; font-weight: 400; font-size: 10.5px; color: var(--text-dim); margin-top: 3px; }
+
+  /* ============ TABLES ============ */
+  .tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  thead th {
+    position: sticky; top: 0;
+    background: var(--surface2);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-dim);
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-bright);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.5;
+    overflow-wrap: break-word;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: color-mix(in srgb, var(--surface2) 45%, transparent); }
+  tbody tr:hover { background: var(--ink-dim); }
+  td code, th code { font-size: 11px; }
+  .dim { color: var(--text-dim); font-size: 11.5px; }
+
+  /* status pills */
+  .pill {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .pill--green { background: var(--green-dim); color: var(--green); border: 1px solid var(--green); }
+  .pill--brick { background: var(--brick-dim); color: var(--brick); border: 1px solid var(--brick); }
+  .pill--measure { background: var(--measure-dim); color: var(--measure); border: 1px solid var(--measure); }
+  .pill--ink { background: var(--ink-dim); color: var(--ink); border: 1px solid var(--ink); }
+
+  /* ============ BOOT STEPS (numbered vertical flow) ============ */
+  .steps { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: grid;
+    grid-template-columns: 44px 220px 1fr;
+    gap: 14px;
+    padding: 13px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    align-items: start;
+  }
+  .step + .step { margin-top: -1px; border-top-left-radius: 0; border-top-right-radius: 0; }
+  .step:first-child { border-radius: 6px 6px 0 0; }
+  .step:last-child { border-radius: 0 0 6px 6px; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; }
+  .step .num {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--measure);
+    border-right: 1px dashed var(--border-bright);
+    align-self: stretch;
+    padding: 2px 10px 0 0;
+  }
+  .step .what {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    overflow-wrap: break-word;
+  }
+  .step .what small { display: block; font-weight: 400; font-size: 10.5px; color: var(--text-dim); margin-top: 3px; }
+  .step .why { font-size: 12.5px; color: var(--text-dim); line-height: 1.55; min-width: 0; }
+  .step .why code { font-size: 11px; }
+
+  /* ============ SERVICE DOMAIN GRID ============ */
+  .dom-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .dom {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    min-width: 0;
+  }
+  .dom h3 {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .dom h3 .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .dom ul { list-style: none; font-size: 12px; line-height: 1.75; }
+  .dom li { padding-left: 13px; position: relative; overflow-wrap: break-word; }
+  .dom li::before { content: '›'; position: absolute; left: 0; color: var(--text-dim); font-weight: 600; }
+  .dom li code { font-size: 10.5px; }
+  .dom .note { font-size: 11px; color: var(--text-dim); margin-top: 8px; line-height: 1.5; border-top: 1px dashed var(--border); padding-top: 8px; }
+
+  /* ============ CALLOUT ============ */
+  .callout {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--measure);
+    border-radius: 0 6px 6px 0;
+    padding: 13px 17px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-dim);
+    margin-top: 16px;
+  }
+  .callout strong { color: var(--text); }
+  .callout code { font-size: 11px; }
+
+  /* ============ MERMAID SHELL (skill pattern) ============ */
+  .diagram-shell { position: relative; margin-top: 4px; }
+  .diagram-shell__hint {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    opacity: 0.75;
+  }
+  .mermaid-wrap {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 28px 20px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 420px;
+    cursor: grab;
+  }
+  .mermaid-wrap.is-panning { cursor: grabbing; user-select: none; }
+  .mermaid-viewport { position: relative; overflow: hidden; width: 100%; height: 100%; min-height: 300px; }
+  .mermaid-canvas { position: absolute; top: 0; left: 0; }
+  .zoom-controls {
+    position: absolute; top: 8px; right: 8px; display: flex; gap: 2px; z-index: 10;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 2px;
+  }
+  .zoom-controls button {
+    width: 28px; height: 28px; border: none; background: transparent; color: var(--text-dim);
+    font-family: var(--font-mono); font-size: 13px; cursor: pointer; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .zoom-controls button:hover { background: var(--surface2); color: var(--text); }
+  .zoom-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); padding: 0 6px; white-space: nowrap; }
+
+  /* ============ LEGEND ============ */
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10.5px; color: var(--text-dim); }
+  .legend-swatch { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 1000px) {
+    body { padding: 20px; }
+    .wrap { grid-template-columns: 1fr; }
+    .toc {
+      position: sticky; top: 0; z-index: 200; max-height: none;
+      display: flex; gap: 4px; align-items: center;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      background: var(--bg); border-bottom: 1px solid var(--border);
+      padding: 10px 0; margin: 0 -20px; padding-left: 20px; padding-right: 20px;
+      grid-row: auto;
+    }
+    .toc::-webkit-scrollbar { display: none; }
+    .toc-title { display: none; }
+    .toc a {
+      white-space: nowrap; flex-shrink: 0; border-left: none;
+      border-bottom: 2px solid transparent; border-radius: 4px 4px 0 0;
+      padding: 6px 10px; font-size: 10px;
+    }
+    .toc a.active { border-left: none; border-bottom-color: var(--ink); background: var(--surface); }
+    .main { padding-top: 20px; }
+    .sec-head { scroll-margin-top: 52px; }
+    .facts { grid-template-columns: repeat(2, 1fr); }
+    .dom-grid { grid-template-columns: 1fr; }
+    .step { grid-template-columns: 34px 1fr; }
+    .step .why { grid-column: 2; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <nav class="toc" id="toc">
+    <div class="toc-title">Contents</div>
+    <a href="#s1">1 · Overview</a>
+    <a href="#s2">2 · Launch chain</a>
+    <a href="#s3">3 · Package topology</a>
+    <a href="#s4">4 · Runtime boot</a>
+    <a href="#s5">5 · Service composition</a>
+    <a href="#s6">6 · Session bridge</a>
+    <a href="#s7">7 · Surface parity</a>
+    <a href="#s8">8 · Source map</a>
+  </nav>
+
+  <div class="main">
+
+    <h1 class="sec" style="--i:0">ACRYL CLI Surface — How It Works</h1>
+    <p class="subtitle sec" style="--i:1">pnpm acryl → one process · one cordis root · one durable log</p>
+    <p class="lead sec" style="--i:2">
+      Typing <code>pnpm acryl</code> starts <strong>one Node process that owns one local
+      Cordis runtime</strong>. The terminal is styled by <code>acryl-cli</code>; the runtime
+      itself is assembled and booted by <code>acryl-harness-runtime</code> — the only package
+      that knows how to compose the pinned DeepSeek Harness
+      (<code>@deepseek-ai/dsh-*</code>) into a live profile. The TUI is a
+      <strong>direct host</strong>: no server, no loopback — just a durable session log on
+      disk and a single in-process seam between surface and runtime.
+    </p>
+
+    <!-- ============ S1 OVERVIEW ============ -->
+    <div id="s1" class="sec-head sec" style="--i:3"><span class="fig">Fig. 1</span><h2>Overview</h2></div>
+
+    <div class="card card--hero sec" style="--i:4">
+      <div class="card-label c-ink"><span class="dot"></span> The whole system in one flow</div>
+      <div class="tbl-wrap" style="border:none;background:transparent">
+        <pre style="font-family:var(--font-mono);font-size:11.5px;line-height:1.65;color:var(--text);overflow-x:auto;margin:0">pnpm acryl
+ └─ acryl-cli/bin/dev-run.mjs ........ rebuild-if-stale launcher (owned by acryl-cli)
+     └─ acryl-cli/lib/bin.js ......... CLI entry (bin.ts)
+         └─ re-exec node --expose-internals     (Cordis HMR prerequisite)
+             └─ runAcryl() ......... cli/run.ts — args, TTY gate, probes
+                 └─ runAcrylTui() .. tui-app/session.ts — session driver
+                     ├─ startDirectHost() ──── host/direct.ts
+                     │    └─ <b>bootAcrylHarnessProfile()</b>  acryl-harness-runtime
+                     │         └─ Cordis root (dsh-base + ACRYL patches)
+                     └─ <b>createAcrylSessionBridge(ctx)</b>   acryl-harness-runtime
+                          └─ durable DSH session ⇄ TuiStore ⇄ pi-tui UI</pre>
+      </div>
+      <div class="facts">
+        <div class="fact"><div class="k">Entry</div><div class="v">pnpm acryl<small>acryl-cli/bin/dev-run.mjs → lib/bin.js</small></div></div>
+        <div class="fact"><div class="k">Runtime seam</div><div class="v">2 functions<small>bootAcrylHarnessProfile · createAcrylSessionBridge</small></div></div>
+        <div class="fact"><div class="k">Profile</div><div class="v">acryl<small>~/.dsh/profiles/acryl · bundle: dsh-base</small></div></div>
+        <div class="fact"><div class="k">Continuity</div><div class="v">acryl tui --resume &lt;id&gt;<small>~/.dsh/sessions JSONL — survives the process</small></div></div>
+      </div>
+    </div>
+
+    <div class="legend sec" style="--i:5">
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--ink)"></div> surface (acryl-cli)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--measure)"></div> assembly (acryl-harness-runtime)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--green)"></div> runtime / durable state</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--brick)"></div> guard / rejection</div>
+    </div>
+
+    <!-- ============ S2 LAUNCH CHAIN ============ -->
+    <div id="s2" class="sec-head sec"><span class="fig">Fig. 2</span><h2>Launch Chain</h2></div>
+    <p class="sec-intro">
+      Eight hops from the shell to a mounted terminal. <code>acryl-cli/bin/dev-run.mjs</code>
+      rebuilds <code>acryl-cli/lib</code> only when a source mtime is newer than the build
+      output. <code>bin.ts</code> re-execs Node with <code>--expose-internals</code> because
+      the profile mounts Cordis HMR. <code>runAcryl()</code> rejects <code>acryl web</code> /
+      <code>acryl gui</code> and non-TTY stdin/stdout; <code>--json</code> is a headless
+      boot-probe that prints status and disposes.
+    </p>
+
+    <section class="diagram-shell sec">
+      <p class="diagram-shell__hint">Ctrl/Cmd + wheel to zoom. Drag to pan. Double-click to fit. ⛶ opens full size.</p>
+      <div class="mermaid-wrap">
+        <div class="zoom-controls">
+          <button type="button" data-action="zoom-in" title="Zoom in">+</button>
+          <button type="button" data-action="zoom-out" title="Zoom out">&minus;</button>
+          <button type="button" data-action="zoom-fit" title="Smart fit">&#8634;</button>
+          <button type="button" data-action="zoom-one" title="1:1 zoom">1:1</button>
+          <button type="button" data-action="zoom-expand" title="Open full size">&#x26F6;</button>
+          <span class="zoom-label">Loading...</span>
+        </div>
+        <div class="mermaid-viewport">
+          <div class="mermaid mermaid-canvas"></div>
+        </div>
+      </div>
+      <script type="text/plain" class="diagram-source">
+      flowchart TD
+        A["pnpm acryl"] --> B["acryl-cli/bin/dev-run.mjs<br/>rebuild lib if stale"]
+        B --> C["acryl-cli/lib/bin.js<br/>bin.ts entrypoint"]
+        C --> D{"--expose-internals<br/>already set?"}
+        D -->|"no"| E["re-exec node<br/>--expose-internals"]
+        E --> C
+        D -->|"yes"| F["runAcryl args<br/>cli/run.ts"]
+        F --> P{"invocation?"}
+        P -->|"--json probe"| Q["boot host → print status JSON<br/>→ dispose · headless"]
+        P -->|"web / gui"| R["directed error:<br/>separate distribution"]
+        P -->|"tui · default"| G{"stdin + stdout<br/>both TTY?"}
+        G -->|"no"| H["exit 1<br/>hint: acryl tui --json"]
+        G -->|"yes"| I["runAcrylTui profile=acryl<br/>tui-app/session.ts"]
+        I --> J["startDirectHost<br/>host/direct.ts"]
+        J --> K["bootAcrylHarnessProfile<br/>acryl-harness-runtime"]
+        K --> L["Cordis root Context<br/>dsh-base + ACRYL patches"]
+        L --> M["createAcrylSessionBridge<br/>open or resume session"]
+        M --> N["TuiStore seed<br/>snapshot + subscribeEvents"]
+        N --> O["mountTui · pi-tui shell<br/>interactive until /exit"]
+        O --> Z["dispose fiber<br/>print: acryl tui --resume id"]
+
+        classDef surface fill:#dbe9f6,stroke:#1d6fb8,color:#132a3e
+        classDef assembly fill:#f6e8d2,stroke:#b0731c,color:#5c3d0e
+        classDef runtime fill:#d9ede2,stroke:#1d7a4f,color:#0f3d27
+        classDef guard fill:#f2dcd9,stroke:#b3423a,color:#571e19
+        classDef gate fill:#e9eff6,stroke:#5a7288,color:#132a3e
+
+        class A,C,F,I,O surface
+        class B,K,M assembly
+        class L,N,Z runtime
+        class R,H,Q guard
+        class D,G,P gate
+      </script>
+    </section>
+
+    <div class="callout sec">
+      <strong>Why a relaunch?</strong> The composed patches always contain the
+      <code>hmr</code> row (<code>@deepseek-ai/cordis-plugin-hmr</code>), and
+      <code>bootAcrylHarnessProfile()</code> hard-fails without
+      <code>--expose-internals</code>. <code>node-launcher.ts</code> re-spawns the same
+      script with that flag, forwards the exit code, and the child proceeds — so the
+      process you talk to is always the relaunched one.
+    </div>
+
+    <!-- ============ S3 PACKAGE TOPOLOGY ============ -->
+    <div id="s3" class="sec-head sec"><span class="fig">Fig. 3</span><h2>Package Topology</h2></div>
+    <p class="sec-intro">
+      The dependency rule: <strong>surfaces → harness-runtime → pinned harness</strong>,
+      with <code>acryl-control</code> supplying shared types. Nothing depends on a surface,
+      which is what makes the runtime swappable across terminal, web, and desktop.
+    </p>
+
+    <div class="card sec">
+      <div class="card-label c-measure"><span class="dot"></span> Who depends on whom</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Package</th><th>Role</th><th>Depends on</th><th>Key fact</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>acryl-cli</code></td>
+              <td>Terminal surface: CLI entry, pi-tui shell, overlays, stores. The <code>acryl</code> bin.</td>
+              <td><code>acryl-harness-runtime</code> · <code>acryl-control</code> · <code>@earendil-works/pi-tui</code> · ~24 dsh-* types/services</td>
+              <td><span class="pill pill--ink">slim by design</span> never imports the web-app bundle; <code>web</code>/<code>gui</code> are hard errors</td>
+            </tr>
+            <tr>
+              <td><code>acryl-harness-runtime</code></td>
+              <td>Runtime assembly: boot factory, session bridge, capability patches, workspace-status tool.</td>
+              <td><strong>160</strong> <code>@deepseek-ai/dsh-*</code> + cordis-plugin-* packages · <code>acryl-control</code></td>
+              <td><span class="pill pill--measure">the fat node</span> 5 source modules; composition needs packages resolvable by name</td>
+            </tr>
+            <tr>
+              <td><code>acryl-control</code></td>
+              <td>Presentation-neutral contracts: snapshot/attachment types, agent providers, protocol client, lifecycle.</td>
+              <td>— (types + provider factories)</td>
+              <td><span class="pill pill--green">shared language</span> TUI bridge and web protocol project identical shapes</td>
+            </tr>
+            <tr>
+              <td><code>acryl-web</code> / <code>acryl-desktop</code></td>
+              <td>Browser / Electron distributions.</td>
+              <td>harness-runtime or dsh-app-boot primitives directly</td>
+              <td><span class="pill pill--brick">separate installs</span> not wired into the CLI package</td>
+            </tr>
+            <tr>
+              <td><code>deepseek-harness/</code></td>
+              <td>Pinned upstream git submodule; source of truth for published <code>@deepseek-ai/*@0.1.1-rc.2</code>.</td>
+              <td>excluded from workspace (<code>!deepseek-harness/**</code>)</td>
+              <td><span class="pill pill--measure">read-only</span> agent-presets roster reads its presets dir at runtime</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="callout sec">
+      <strong>Why 160 deps in one package?</strong> Loader patch rows reference plugins by
+      npm name (<code>{ id: 'session', name: '@deepseek-ai/dsh-session' }</code>). For rows
+      to resolve, the packages must be resolvable from the booting package. Concentrating
+      the catalog in <code>acryl-harness-runtime</code> keeps every surface slim.
+    </div>
+
+    <div class="card sec">
+      <div class="card-label c-green"><span class="dot"></span> Harness inheritance — submodule vs published npm</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Surface</th><th>Own <code>dsh-*@0.1.1-rc.2</code> deps</th><th>Via harness-runtime</th><th>Reads the submodule?</th></tr></thead>
+          <tbody>
+            <tr><td><code>acryl-cli</code></td><td>19 + 4 cordis-*</td><td>yes (workspace)</td><td><span class="pill pill--measure">1 runtime read</span> shipped agent-presets dir (<code>existsSync</code>-guarded, <code>trust: 'system'</code>)</td></tr>
+            <tr><td><code>acryl-web</code></td><td>15 + 6 cordis-*</td><td>yes (workspace)</td><td><span class="pill pill--brick">no</span></td></tr>
+            <tr><td><code>acryl-desktop</code></td><td>131 + 5 cordis-* — declared directly, not inherited</td><td>no</td><td><span class="pill pill--brick">no</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="dim" style="margin-top:10px">
+        No surface imports <code>deepseek-harness/</code> as code — <code>scripts/verify-layout.mjs</code> fails any
+        <code>file:</code>/<code>link:</code>/<code>workspace:</code> dep into it ("bypasses the published DSH package boundary").
+        The runtime consumes <strong>published npm artifacts</strong> (8 of them locally patched); the submodule is pinned
+        reference source + preset assets, bound by the <code>upstream.json</code> contract
+        (<code>sourceVersion</code> 0.1.3-alpha.2 vs <code>runtimePackageVersion</code> 0.1.1-rc.2).
+        The npm store dedupes per dependency-graph hash — <code>dsh-base</code> has two variants (tui/desktop vs web's React graph);
+        <code>~/.dsh/profiles/node_modules</code> adds only symlinks. Full detail:
+        <code>docs/how-acryl-works/07-harness-inheritance.md</code>.
+      </div>
+    </div>
+
+    <!-- ============ S4 RUNTIME BOOT ============ -->
+    <div id="s4" class="sec-head sec"><span class="fig">Fig. 4</span><h2>Runtime Boot — bootAcrylHarnessProfile()</h2></div>
+    <p class="sec-intro">
+      <code>acryl-harness-runtime/src/index.ts</code> turns a profile name into a live
+      Cordis root <code>Context</code>. The Cordis root config itself is empty
+      (<code>[]</code>) — <strong>everything is ordered patch entries</strong> applied by the
+      Loader, activation being service-availability driven (row order carries no load
+      semantics; a later id-targeted row replaces a row's whole config, it never merges).
+    </p>
+
+    <div class="steps sec">
+      <div class="step">
+        <div class="num">01</div>
+        <div class="what">resolveProfileDir('acryl')<small>$DSH_HOME → ~/.dsh/profiles/acryl</small></div>
+        <div class="why">TUI uses the shared DSH home (<code>DSH_HOME</code> env can override; desktop uses its own <code>~/.dsh-acryl</code>). Names validated, no path tricks allowed.</div>
+      </div>
+      <div class="step">
+        <div class="num">02</div>
+        <div class="what">initProfile()<small>manifest + cordis.patch.yml + pnpm-workspace.yaml</small></div>
+        <div class="why">Idempotent seeding — never overwrites. Manifest declares <code>bundles: ["@deepseek-ai/dsh-base"]</code>; user patch layer starts as <code>[]</code>.</div>
+      </div>
+      <div class="step">
+        <div class="num">03</div>
+        <div class="what">healProfilesModuleFallback()<small>profiles/node_modules symlinks</small></div>
+        <div class="why">Ensures the installation fallback resolves bundle packages for the profile loader; repairs wrong links, throws on real directories.</div>
+      </div>
+      <div class="step">
+        <div class="num">04</div>
+        <div class="what">loadProfile('acryl', …)<small>bundles → layers → patches</small></div>
+        <div class="why">Loads dsh-base's include tree + its giant <code>insert</code> patch, plus the user's patch layer.</div>
+      </div>
+      <div class="step">
+        <div class="num">05</div>
+        <div class="what">compose patch pipeline<small>dsh-base layers → ACRYL capability rows → user layer</small></div>
+        <div class="why"><code>structuredClone</code>'d, ordered. ACRYL rows override <code>system-prompt</code> and insert <code>agent-presets</code>, <code>session-stats</code>, <code>authorization</code>. User layer wins last per row.</div>
+      </div>
+      <div class="step">
+        <div class="num">06</div>
+        <div class="what">HMR guard<small>requires --expose-internals</small></div>
+        <div class="why">Finds the <code>hmr</code> entry in the composed patches; throws before boot if the process wasn't relaunched exposed. The CLI's relaunch (Fig. 2) always satisfies it.</div>
+      </div>
+      <div class="step">
+        <div class="num">07</div>
+        <div class="what">await boot('acryl', …)<small>Loader install → patch apply → activation</small></div>
+        <div class="why">Activates every row when its dependencies exist; runs the optional <code>prepare</code> host hook (the web variant uses it to provide <code>cmdline</code>).</div>
+      </div>
+      <div class="step">
+        <div class="num">08</div>
+        <div class="what">installAcrylWorkspaceStatusTool(ctx)<small>ACRYL's model-facing tool</small></div>
+        <div class="why">Ordinary Cordis plugin: injects <code>tools</code>, registers <code>acryl_workspace_status</code> via <code>defineTool</code>, typed output schema + separate render, honors <code>exec.signal</code>, disposes with its Fiber.</div>
+      </div>
+      <div class="step">
+        <div class="num">09</div>
+        <div class="what">return frozen runtime handle<small>{ ctx, profileDirectory, dispose() }</small></div>
+        <div class="why"><code>startDirectHost</code> checks readiness (<code>ctx.get('sessions')</code> + <code>ctx.get('agents')</code>); dispose awaits <code>ctx.fiber.dispose()</code> — every plugin disposer, in dependency order.</div>
+      </div>
+    </div>
+
+    <!-- ============ S5 SERVICE COMPOSITION ============ -->
+    <div id="s5" class="sec-head sec"><span class="fig">Fig. 5</span><h2>Service Composition</h2></div>
+    <p class="sec-intro">
+      What ends up resolvable on <code>ctx</code>. Layer 1 is <code>dsh-base</code>'s one
+      giant <code>insert</code> (grouped below by domain); Layer 2 is ACRYL's capability
+      patch; Layer 3 is the user's <code>cordis.patch.yml</code> (empty here, wins last).
+    </p>
+
+    <div class="dom-grid sec">
+      <div class="dom c-ink">
+        <h3><span class="dot"></span> LLM plane</h3>
+        <ul>
+          <li><code>llm</code> registry · <code>llm-retry</code></li>
+          <li><code>llm-deepseek</code> native adapter — key resolves per request</li>
+          <li><code>llm-pi-ai</code> multi-provider twin, <b>mounted dormant</b> — zero routes until a <code>llm-pi-ai:</code> settings section names providers (what /login drives)</li>
+          <li><code>settings</code> ($DSH_HOME/settings.yaml, hot-reload) · <code>credentials</code> (env → .credentials.yaml → .env)</li>
+        </ul>
+      </div>
+      <div class="dom c-green">
+        <h3><span class="dot"></span> Session plane</h3>
+        <ul>
+          <li><code>session</code> durable event log</li>
+          <li><code>session-persistence-jsonl</code> → <code>~/.dsh/sessions</code> (what --resume reads)</li>
+          <li>titles (LLM), <code>user-questions</code>, <code>attachment-local</code> (content-addressed images)</li>
+          <li><code>session-query-sqlite</code> <b>openAt: never</b> — search off, exact reads fine</li>
+          <li>checkpoint policy · projection · telemetry-otel <b>DISABLED by default</b></li>
+        </ul>
+      </div>
+      <div class="dom c-ink">
+        <h3><span class="dot"></span> Agent plane</h3>
+        <ul>
+          <li><code>agent</code> service (<code>ctx.agents</code>)</li>
+          <li><code>agent-loop</code> with <b>no startup agents</b> — sessions created on demand</li>
+          <li><code>agent-default-model</code>: deepseek-official / deepseek-v4-flash</li>
+          <li><code>agent-instructions</code> (AGENTS.md, 64 KiB cap)</li>
+        </ul>
+      </div>
+      <div class="dom c-measure">
+        <h3><span class="dot"></span> Isolation &amp; approval</h3>
+        <ul>
+          <li><code>sandbox-local</code> + policy <code>workspace-write</code> (<code>DSH_PERMISSION_MODE</code>)</li>
+          <li><code>approval</code> = <code>ask</code> (never under danger-full-access)</li>
+          <li>permission presets: read-only · workspace-write · danger-full-access</li>
+          <li><code>fs-sandbox</code> cwd = process.cwd() · bash/pwsh sandbox per platform</li>
+        </ul>
+      </div>
+      <div class="dom c-measure">
+        <h3><span class="dot"></span> Tool registry</h3>
+        <ul>
+          <li><code>tools</code> registry + bash/pwsh, fs, fs-search, str-replace-editor (16k cap)</li>
+          <li>skill · todo · goal · web (<b>fetch: false</b>, search-only)</li>
+          <li>subagent (spawn, continuable) · subagent_fork (one-shot) · control · workflow · ralph</li>
+          <li>timeout policy · repeat-reminder (3/5/8) · spill 50k · tool-result-pruner</li>
+        </ul>
+      </div>
+      <div class="dom c-ink">
+        <h3><span class="dot"></span> Commands · goal · plan · context</h3>
+        <ul>
+          <li><code>commands</code> registry + feedback</li>
+          <li><code>goal</code> + round-driver + <code>/goal</code></li>
+          <li><code>plan-mode</code> section: explore first, no mutations, exit_plan_mode presents</li>
+          <li><code>token-meter</code> · <code>compaction-basic</code> · <code>/compact</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card c-measure sec" style="margin-top:14px">
+      <div class="card-label c-measure"><span class="dot"></span> Layer 2 — ACRYL capability patches (tui surface)</div>
+      <div class="tbl-wrap" style="border:none;background:transparent">
+        <table>
+          <thead><tr><th>Row</th><th>Kind</th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td><code>system-prompt</code></td><td><span class="pill pill--measure">override</span></td><td>persona → <em>"You are a coding agent powered by the {{model}} model. Your working directory is {{cwd}}."</em></td></tr>
+            <tr><td><code>agent-presets</code></td><td><span class="pill pill--ink">insert</span></td><td>default <code>standard</code>; roster from <code>deepseek-harness/…/presets/</code> (system trust) + user roots — powers <code>/presets</code></td></tr>
+            <tr><td><code>session-stats</code></td><td><span class="pill pill--ink">insert</span></td><td>session stat projection for status bar / overlays</td></tr>
+            <tr><td><code>authorization</code></td><td><span class="pill pill--ink">insert</span></td><td>the seam <code>dsh-llm-pi-ai</code> registers OAuth flows into — without it the pi-ai adapter stays PENDING and <code>/login</code> has no providers</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="dim" style="margin-top:10px">Non-TUI surfaces receive only the <code>authorization</code> insert — persona and presets/stats are TUI-applied today (<code>selectNonTuiCapabilityPatches</code>).</div>
+    </div>
+
+    <!-- ============ S6 SESSION BRIDGE ============ -->
+    <div id="s6" class="sec-head sec"><span class="fig">Fig. 6</span><h2>Session Bridge — Data Flow</h2></div>
+    <p class="sec-intro">
+      The TUI touches the runtime only through <code>createAcrylSessionBridge()</code>
+      (types from <code>acryl-control</code>). Two channels feed the UI: raw
+      <code>SessionEvent</code>s for the transcript, and periodic
+      <code>AcrylSessionSnapshot</code>s for status. Both fold from the durable log —
+      <strong>the log is the source of truth, the store is a cache</strong>.
+    </p>
+
+    <section class="diagram-shell sec">
+      <p class="diagram-shell__hint">Ctrl/Cmd + wheel to zoom. Drag to pan. Double-click to fit. ⛶ opens full size.</p>
+      <div class="mermaid-wrap">
+        <div class="zoom-controls">
+          <button type="button" data-action="zoom-in" title="Zoom in">+</button>
+          <button type="button" data-action="zoom-out" title="Zoom out">&minus;</button>
+          <button type="button" data-action="zoom-fit" title="Smart fit">&#8634;</button>
+          <button type="button" data-action="zoom-one" title="1:1 zoom">1:1</button>
+          <button type="button" data-action="zoom-expand" title="Open full size">&#x26F6;</button>
+          <span class="zoom-label">Loading...</span>
+        </div>
+        <div class="mermaid-viewport">
+          <div class="mermaid mermaid-canvas"></div>
+        </div>
+      </div>
+      <script type="text/plain" class="diagram-source">
+      sequenceDiagram
+        actor U as User · terminal
+        participant T as TUI · pi-tui shell
+        participant S as TuiStore
+        participant B as SessionBridge
+        participant C as Cordis ctx · agents/sessions
+        participant D as ~/.dsh/sessions · JSONL
+
+        T->>B: open(resumeId?)
+        B->>C: create or resume session
+        C->>D: durable appends
+        B-->>S: snapshot seed
+        T->>B: subscribeEvents(id)
+
+        loop one agent turn
+          U->>T: prompt text
+          T->>B: submitPrompt(sessionId, text)
+          B->>C: user message · turn starts
+          C->>D: turn/step/tool events appended
+          C-->>B: SessionEvent stream
+          B-->>S: appendEvent + snapshot refresh
+          S-->>T: re-render transcript + status
+        end
+
+        U->>T: Ctrl+C
+        T->>B: cancel(sessionId)
+        U->>T: /exit
+        T->>B: dispose
+        T-->>U: resume with: acryl tui --resume id
+      </script>
+    </section>
+
+    <div class="card sec">
+      <div class="card-label c-ink"><span class="dot"></span> What each slash command drives</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Command</th><th>Runtime service</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>/model</code></td><td><code>llm</code> × <code>settings</code> × <code>credentials</code></td><td>joins configurable providers with stored profiles; checks <b>two</b> credential addresses (apiKeyEnv + pi-ai login record); awaits a <code>setImmediate</code> flush after writes so llm-pi-ai's registry watcher settles first</td></tr>
+            <tr><td><code>/trajectory</code></td><td>durable turn/step ledger</td><td>browse the event ledger behind the transcript</td></tr>
+            <tr><td><code>/tools</code></td><td><code>tools</code> registry</td><td>browse/expand tool cards</td></tr>
+            <tr><td><code>/context</code></td><td><code>token-meter</code></td><td>context-window usage</td></tr>
+            <tr><td><code>/plugins</code></td><td><code>loader.entries()</code></td><td>plugin tree with Fiber states: active · pending · loading · failed · unloading · disposed</td></tr>
+            <tr><td><code>/presets</code></td><td><code>agent-presets</code></td><td>switch allowed while the session is "blank" (no <code>turn/start</code> yet — injected context is not a turn)</td></tr>
+            <tr><td><code>/goal</code> · <code>/plan</code> · <code>/compact</code></td><td><code>goal</code> · <code>plan-mode</code> · <code>command-compact</code></td><td>same services a web client would drive</td></tr>
+            <tr><td><code>/clear</code></td><td>session flush</td><td>re-attach a fresh session; durable history stays on disk</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="callout sec">
+      <strong>Blank-session rule.</strong> A session is blank until the first
+      <code>turn/start</code>. AGENTS.md injection, the skill catalog, and cron notices are
+      <em>not</em> turns — mirroring harness semantics so <code>/presets</code> can offer a
+      preset switch on a not-yet-started session.
+    </div>
+
+    <!-- ============ S7 SURFACE PARITY ============ -->
+    <div id="s7" class="sec-head sec"><span class="fig">Fig. 7</span><h2>Surface Parity</h2></div>
+    <p class="sec-intro">
+      Same runtime vocabulary, three presentations. The CLI is the only <strong>direct
+      host</strong>; web and desktop serve the same composition over loopback transports.
+    </p>
+
+    <div class="card sec">
+      <div class="card-label c-slate"><span class="dot"></span> TUI vs Web vs Desktop</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Aspect</th><th>TUI · pnpm acryl</th><th>Web · acryl-web</th><th>Desktop · acryl-desktop</th></tr></thead>
+          <tbody>
+            <tr><td>Process model</td><td><span class="pill pill--green">direct host</span> one process owns the Cordis root, no server</td><td>runtime serves HTTP/WS on loopback; sandboxed renderer, no Electron APIs</td><td>Electron main boots Host via Cordis; renderer served over loopback</td></tr>
+            <tr><td>Session access</td><td>in-process bridge, <code>attachment: 'owner'</code></td><td>protocol client over transport</td><td>Host/client faces</td></tr>
+            <tr><td>UI toolkit</td><td><code>@earendil-works/pi-tui</code></td><td><code>dsh-web-app</code> bundle</td><td>desktop shell + Development Canvas</td></tr>
+            <tr><td>Capability patches</td><td>persona + presets + stats + authorization</td><td>authorization only</td><td>desktop profile composes its own rows</td></tr>
+            <tr><td>DSH home</td><td><code>~/.dsh</code> (shared)</td><td><code>~/.dsh</code></td><td><code>~/.dsh-acryl</code> (isolated)</td></tr>
+            <tr><td>Continuity</td><td colspan="3"><code>acryl tui --resume &lt;id&gt;</code> · same <code>$DSH_HOME/sessions</code> JSONL · same snapshot types from <code>acryl-control</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="callout sec">
+      <strong>Direct-host trade-off.</strong> In-process hosting means no bootstrap race and
+      immediate cancellation/snapshots — but a direct host cannot share its live runtime
+      with a second surface. Attaching another viewer to a <em>running</em> session is the
+      web/desktop protocol layer's job, not the TUI's. Continuity is external either way:
+      the process is disposable, the durable log survives.
+    </div>
+
+    <!-- ============ S8 SOURCE MAP ============ -->
+    <div id="s8" class="sec-head sec"><span class="fig">Fig. 8</span><h2>Source Map</h2></div>
+    <p class="sec-intro">
+      Ground-truth files behind every claim on this page. Full written detail lives in
+      <code>docs/how-acryl-works/01…06 — *.md</code>.
+    </p>
+
+    <div class="card card--recessed sec">
+      <div class="card-label c-slate"><span class="dot"></span> Read these to verify or extend</div>
+      <div class="tbl-wrap" style="border:none;background:transparent">
+        <table>
+          <thead><tr><th>File</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td><code>acryl-cli/bin/dev-run.mjs</code></td><td>launcher; mtime-based stale rebuild — lives with its surface; root <code>scripts/</code> is infrastructure only</td></tr>
+            <tr><td><code>scripts/update-upstream.mjs</code></td><td>submodule updater; rewrites <code>upstream.json</code> (commit + source/runtime versions)</td></tr>
+            <tr><td><code>scripts/verify-layout.mjs</code></td><td>layout gate: domain-driven layout, npm/submodule boundary, version-family pins</td></tr>
+            <tr><td><code>acryl-cli/src/bin.ts</code> · <code>cli/node-launcher.ts</code></td><td>entrypoint; <code>--expose-internals</code> relaunch; error unwrapping</td></tr>
+            <tr><td><code>acryl-cli/src/cli/run.ts</code></td><td><code>runAcryl()</code> — commands, TTY gating, injectable dependencies</td></tr>
+            <tr><td><code>acryl-cli/src/host/direct.ts</code></td><td><code>startDirectHost()</code> — one local runtime, readiness check</td></tr>
+            <tr><td><code>acryl-cli/src/tui-app/session.ts</code></td><td><code>runAcrylTui()</code> — attach, overlays, slash commands</td></tr>
+            <tr><td><code>acryl-harness-runtime/src/index.ts</code></td><td><code>bootAcrylHarnessProfile()</code> / <code>bootAcrylWebProfile()</code></td></tr>
+            <tr><td><code>acryl-harness-runtime/src/coding-capabilities.ts</code></td><td>ACRYL capability patch set, surface scoping</td></tr>
+            <tr><td><code>acryl-harness-runtime/src/session-bridge.ts</code></td><td><code>createAcrylSessionBridge()</code></td></tr>
+            <tr><td><code>acryl-harness-runtime/src/plugin-acryl-workspace-status.ts</code></td><td><code>acryl_workspace_status</code> tool plugin</td></tr>
+            <tr><td><code>@deepseek-ai/dsh-base/cordis.patch.yml</code></td><td>the one giant insert — every core service row</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="dim sec" style="margin:36px 0 8px;font-family:var(--font-mono);font-size:10.5px">
+      acryl 0.1.31 · @deepseek-ai/* 0.1.1-rc.2 · verified against source · docs/how-acryl-works
+    </p>
+
+  </div><!-- /main -->
+</div><!-- /wrap -->
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  import elkLayouts from 'https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk/dist/mermaid-layout-elk.esm.min.mjs';
+
+  const config = {
+    fitPadding: 28,
+    minHeight: 360,
+    maxHeightPx: 920,
+    maxHeightVh: 0.84,
+    maxInitialZoom: 1.8,
+    minZoom: 0.08,
+    maxZoom: 6.5,
+    zoomStep: 0.14,
+    readabilityFloor: 0.58
+  };
+
+  const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+  let activeDrag = null;
+  addEventListener('mousemove', (e) => activeDrag?.onMove(e));
+  addEventListener('mouseup', () => { activeDrag?.onEnd(); activeDrag = null; });
+
+  const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+
+  mermaid.registerLayoutLoaders(elkLayouts);
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    look: 'classic',
+    layout: 'elk',
+    themeVariables: {
+      fontFamily: "'DM Sans', system-ui, sans-serif",
+      fontSize: '17px',
+      primaryColor: isDark ? '#173248' : '#dbe9f6',
+      primaryBorderColor: isDark ? '#6db2e8' : '#1d6fb8',
+      primaryTextColor: isDark ? '#dce8f2' : '#132a3e',
+      secondaryColor: isDark ? '#3a2c14' : '#f6e8d2',
+      secondaryBorderColor: isDark ? '#e0a44a' : '#b0731c',
+      secondaryTextColor: isDark ? '#dce8f2' : '#5c3d0e',
+      tertiaryColor: isDark ? '#12301f' : '#d9ede2',
+      tertiaryBorderColor: isDark ? '#5fcb94' : '#1d7a4f',
+      tertiaryTextColor: isDark ? '#dce8f2' : '#0f3d27',
+      lineColor: isDark ? '#8aa3b8' : '#5a7288',
+      noteBkgColor: isDark ? '#173248' : '#e9eff6',
+      noteTextColor: isDark ? '#dce8f2' : '#132a3e',
+      noteBorderColor: isDark ? '#6db2e8' : '#1d6fb8'
+    }
+  });
+
+  function initDiagram(shell) {
+    const wrap = shell.querySelector('.mermaid-wrap');
+    const viewport = shell.querySelector('.mermaid-viewport');
+    const canvas = shell.querySelector('.mermaid-canvas');
+    const source = shell.querySelector('.diagram-source');
+    const label = shell.querySelector('.zoom-label');
+    if (!wrap || !viewport || !canvas || !source || !label) {
+      console.error('initDiagram: missing required elements in', shell);
+      return;
+    }
+
+    let zoom = 1, fitMode = 'contain', panX = 0, panY = 0, svgW = 0, svgH = 0;
+    let sx = 0, sy = 0, spx = 0, spy = 0;
+    let touchDist = 0, touchCx = 0, touchCy = 0;
+
+    function constrainPan() {
+      const vpW = viewport.clientWidth, vpH = viewport.clientHeight;
+      const rW = svgW * zoom, rH = svgH * zoom, pad = config.fitPadding;
+      panX = (rW + pad * 2 <= vpW) ? (vpW - rW) / 2 : clamp(panX, vpW - rW - pad, pad);
+      panY = (rH + pad * 2 <= vpH) ? (vpH - rH) / 2 : clamp(panY, vpH - rH - pad, pad);
+    }
+
+    function applyTransform() {
+      const svg = canvas.querySelector('svg');
+      if (!svg || !svgW) return;
+      constrainPan();
+      svg.style.width = (svgW * zoom) + 'px';
+      svg.style.height = (svgH * zoom) + 'px';
+      canvas.style.transform = `translate(${panX}px, ${panY}px)`;
+      label.textContent = Math.round(zoom * 100) + '% — ' + fitMode;
+    }
+
+    function canPan() {
+      const rW = svgW * zoom, rH = svgH * zoom;
+      return rW + config.fitPadding * 2 > viewport.clientWidth
+          || rH + config.fitPadding * 2 > viewport.clientHeight;
+    }
+
+    function computeSmartFit() {
+      const vpW = viewport.clientWidth, vpH = viewport.clientHeight;
+      const aW = Math.max(80, vpW - config.fitPadding * 2);
+      const aH = Math.max(80, vpH - config.fitPadding * 2);
+      const contain = Math.min(aW / svgW, aH / svgH);
+      let z = contain, mode = 'contain';
+      if (contain < config.readabilityFloor) {
+        const chartR = svgH / svgW, vpR = vpH / Math.max(vpW, 1);
+        if (chartR >= vpR) { z = aW / svgW; mode = 'width-priority'; }
+        else { z = aH / svgH; mode = 'height-priority'; }
+      }
+      return { zoom: clamp(z, config.minZoom, config.maxInitialZoom), mode };
+    }
+
+    function fitDiagram() {
+      if (!svgW) return;
+      const fit = computeSmartFit();
+      zoom = fit.zoom; fitMode = fit.mode;
+      panX = (viewport.clientWidth - svgW * zoom) / 2;
+      panY = (viewport.clientHeight - svgH * zoom) / 2;
+      applyTransform();
+    }
+
+    function setOneToOne() {
+      zoom = clamp(1, config.minZoom, config.maxZoom); fitMode = '1:1';
+      panX = (viewport.clientWidth - svgW * zoom) / 2;
+      panY = (viewport.clientHeight - svgH * zoom) / 2;
+      applyTransform();
+    }
+
+    function zoomAround(factor, cx, cy) {
+      const next = clamp(zoom * factor, config.minZoom, config.maxZoom);
+      const ratio = next / zoom;
+      panX = cx - ratio * (cx - panX);
+      panY = cy - ratio * (cy - panY);
+      zoom = next; fitMode = 'custom';
+      applyTransform();
+    }
+
+    function readSvgNaturalSize(svg) {
+      let w = 0, h = 0;
+      if (svg.viewBox?.baseVal?.width > 0) { w = svg.viewBox.baseVal.width; h = svg.viewBox.baseVal.height; }
+      if (!w) { w = parseFloat(svg.getAttribute('width')) || 0; h = parseFloat(svg.getAttribute('height')) || 0; }
+      if (!w) { const b = svg.getBBox(); w = b.width; h = b.height; }
+      if (!w) { const r = svg.getBoundingClientRect(); w = r.width || 1000; h = r.height || 700; }
+      if (!svg.getAttribute('viewBox')) svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      return { w, h };
+    }
+
+    function setAdaptiveHeight() {
+      if (!svgW) return;
+      const usableW = Math.max(280, wrap.getBoundingClientRect().width - 2);
+      const idealH = (svgH / svgW) * usableW + config.fitPadding * 2;
+      const maxVp = Math.floor(innerHeight * config.maxHeightVh);
+      const hardMax = Math.min(config.maxHeightPx, Math.max(config.minHeight + 40, maxVp));
+      wrap.style.height = Math.round(clamp(idealH, config.minHeight, hardMax)) + 'px';
+    }
+
+    function openInNewTab() {
+      const svg = canvas.querySelector('svg');
+      if (!svg) return;
+      const clone = svg.cloneNode(true);
+      clone.style.width = ''; clone.style.height = '';
+      const bg = isDark ? '#0c1722' : '#f2f6fa';
+      const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Diagram</title><style>
+      body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+      background:${bg};padding:40px;box-sizing:border-box}
+      svg{max-width:100%;max-height:90vh;height:auto}
+      </style></head><body>${clone.outerHTML}</body></html>`;
+      open(URL.createObjectURL(new Blob([html], { type: 'text/html' })), '_blank');
+    }
+
+    async function render() {
+      try {
+        const code = source.textContent.trim();
+        if (!code) { label.textContent = 'Error: Empty source'; return; }
+        const id = 'diagram-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        const { svg } = await mermaid.render(id, code);
+        canvas.innerHTML = svg;
+        const svgNode = canvas.querySelector('svg');
+        if (!svgNode) { label.textContent = 'Error: No SVG'; return; }
+        const size = readSvgNaturalSize(svgNode);
+        svgW = size.w; svgH = size.h;
+        svgNode.removeAttribute('width');
+        svgNode.removeAttribute('height');
+        svgNode.style.maxWidth = 'none';
+        svgNode.style.display = 'block';
+        setAdaptiveHeight();
+        fitDiagram();
+      } catch (err) {
+        console.error('Mermaid render failed:', err);
+        label.textContent = 'Error: ' + (err.message || 'Render failed');
+      }
+    }
+
+    const actions = {
+      'zoom-in': () => zoomAround(1 + config.zoomStep, viewport.clientWidth / 2, viewport.clientHeight / 2),
+      'zoom-out': () => zoomAround(1 / (1 + config.zoomStep), viewport.clientWidth / 2, viewport.clientHeight / 2),
+      'zoom-fit': fitDiagram,
+      'zoom-one': setOneToOne,
+      'zoom-expand': openInNewTab
+    };
+    Object.entries(actions).forEach(([action, handler]) => {
+      wrap.querySelector(`[data-action="${action}"]`)?.addEventListener('click', handler);
+    });
+
+    viewport.addEventListener('dblclick', fitDiagram);
+    viewport.addEventListener('wheel', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const rect = viewport.getBoundingClientRect();
+        const factor = e.deltaY < 0 ? 1 + config.zoomStep : 1 / (1 + config.zoomStep);
+        zoomAround(factor, e.clientX - rect.left, e.clientY - rect.top);
+        return;
+      }
+      if (canPan()) {
+        e.preventDefault();
+        panX -= e.deltaX; panY -= e.deltaY;
+        applyTransform();
+      }
+    }, { passive: false });
+
+    viewport.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.zoom-controls') || !canPan()) return;
+      wrap.classList.add('is-panning');
+      sx = e.clientX; sy = e.clientY; spx = panX; spy = panY;
+      e.preventDefault();
+      activeDrag = {
+        onMove: (ev) => { panX = spx + (ev.clientX - sx); panY = spy + (ev.clientY - sy); applyTransform(); },
+        onEnd: () => { wrap.classList.remove('is-panning'); }
+      };
+    });
+
+    viewport.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        sx = e.touches[0].clientX; sy = e.touches[0].clientY; spx = panX; spy = panY;
+      } else if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        touchDist = Math.sqrt(dx * dx + dy * dy);
+        const r = viewport.getBoundingClientRect();
+        touchCx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left;
+        touchCy = (e.touches[0].clientY + e.touches[1].clientY) / 2 - r.top;
+      }
+    }, { passive: true });
+
+    viewport.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1 && canPan()) {
+        if (touchDist > 0) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; spx = panX; spy = panY; touchDist = 0; }
+        e.preventDefault();
+        panX = spx + (e.touches[0].clientX - sx);
+        panY = spy + (e.touches[0].clientY - sy);
+        applyTransform();
+      } else if (e.touches.length === 2 && touchDist > 0) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        zoomAround(d / touchDist, touchCx, touchCy);
+        touchDist = d;
+      }
+    }, { passive: false });
+
+    new ResizeObserver(() => { if (svgW) { setAdaptiveHeight(); fitDiagram(); } }).observe(wrap);
+
+    render();
+  }
+
+  document.querySelectorAll('.diagram-shell').forEach(initDiagram);
+</script>
+
+<script>
+(function() {
+  const toc = document.getElementById('toc');
+  const links = toc.querySelectorAll('a');
+  const sections = [];
+  links.forEach(link => {
+    const id = link.getAttribute('href').slice(1);
+    const el = document.getElementById(id);
+    if (el) sections.push({ id, el, link });
+  });
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const match = sections.find(s => s.el === entry.target);
+        if (match) {
+          match.link.classList.add('active');
+          if (window.innerWidth <= 1000) {
+            match.link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        }
+      }
+    });
+  }, { rootMargin: '-10% 0px -80% 0px' });
+  sections.forEach(s => observer.observe(s.el));
+  links.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const id = link.getAttribute('href').slice(1);
+      const el = document.getElementById(id);
+      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); history.replaceState(null, '', '#' + id); }
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

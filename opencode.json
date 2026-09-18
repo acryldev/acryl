@@ -1,0 +1,13 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "mcp": {
+    "graft": {
+      "type": "local",
+      "command": [
+        "graft",
+        "mcp"
+      ],
+      "enabled": true
+    }
+  }
+}

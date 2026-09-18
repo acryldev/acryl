@@ -1,10 +1,4 @@
-# Claude Code onboarding prompt — ACRYL
-
-Paste everything below into a fresh Claude Code session as your opening message.
-It is written to be self-contained, up to date, and pointed at the authoritative
-documents so a new agent reaches working context without guessing.
-
----
+# New Agent onboarding prompt — ACRYL
 
 You are onboarding onto **ACRYL**, a local-first, plugin-native, multi-surface
 agent workspace built on an unmodified DeepSeek Harness + Cordis runtime.
@@ -51,12 +45,12 @@ acryl-harness-runtime -> the engine: boots/disposes the one pinned Harness
                          profile + Cordis root. Owns durable state.
 acryl-control      -> control plane linked by every surface: lease, protocol,
                       inspection, lifecycle, provider-neutral agent control.
-acryl-tui          -> terminal surface (pi-tui). Never owns a Cordis root.
+acryl-cli          -> terminal surface (pi-tui). Never owns a Cordis root.
 acryl-web          -> standalone web surface (local HTTP/WebSocket server).
 acryl-desktop      -> Electron GUI + packaging; shrink toward Electron-only.
 acryl-development-canvas -> first ADE surface (Orca-inspired canvas).
 dsh-community-fabric     -> community interop RFC (doc scaffold, not loadable).
-dsh-community-market     -> optional Market provider (disabled by default).
+cordis-plugin-market     -> optional Market provider (disabled by default).
 deepseek-harness/        -> PINNED UPSTREAM SUBMODULE. Never edit from a feature.
 ```
 
@@ -155,7 +149,7 @@ the exit status, not just the last line.
 ## 7. Release distribution (context you may need)
 
 The repo ships a **coordinated multi-surface release**: the public `acryl`
-selector, the standalone `acryl-web` server, the `acryl-tui` CLI runtime, and
+selector, the standalone `acryl-web` server, the `acryl-cli` CLI runtime, and
 Desktop installers. See `specs/027-multisurface-release-distribution/` and
 `docs/RELEASE-FOUNDATION-HANDOFF.md` for the release matrix, version-sync
 guards, and npm publication. Release tags are the single source of truth for
