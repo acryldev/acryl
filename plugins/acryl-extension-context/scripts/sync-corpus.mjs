@@ -52,7 +52,8 @@ for (const group of groups) {
     const source = clean(readFileSync(join(group.base, rel), 'utf8'))
     const name = basename(rel)
     const outRel = `${group.out}/${name}`
-    const header = `<!-- Synced from ${group.repoName}:${rel} @ ${commits[group.repoName].slice(0, 10)}. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->\n\n`
+    const fileCommit = group.repoName === 'acryl' ? execFileSync('git', ['-C', repo, 'log', '-1', '--format=%H', '--', rel], { encoding: 'utf8' }).trim() : commits[group.repoName]
+    const header = `<!-- Synced from ${group.repoName}:${rel} @ ${fileCommit.slice(0, 10)}. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->\n\n`
     mkdirSync(dirname(join(pack, 'docs', outRel)), { recursive: true })
     writeFileSync(join(pack, 'docs', outRel), header + source)
     const title = firstHeading(source) ?? name.replace(/\.md$/u, '')
@@ -63,7 +64,7 @@ for (const group of groups) {
       when: firstSentence(source) ?? `Reference for ${title}.`,
       surfaces: ['tui', 'web', 'desktop'],
       applies: 'partial',
-      source: { sourceRepo: group.repoName, sourcePath: rel, sourceCommit: commits[group.repoName].slice(0, 10) },
+      source: { sourceRepo: group.repoName, sourcePath: rel, sourceCommit: fileCommit.slice(0, 10) },
     })
   }
 }

@@ -1,4 +1,4 @@
-<!-- Synced from acryl:docs/cordisplugins/development-canvas-plugin.md @ 10e94f45df. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
+<!-- Synced from acryl:docs/cordisplugins/development-canvas-plugin.md @ 7968b4ff5d. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
 
 # Development Canvas as a standalone Cordis plugin
 

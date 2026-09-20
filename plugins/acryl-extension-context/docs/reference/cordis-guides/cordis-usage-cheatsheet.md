@@ -1,4 +1,4 @@
-<!-- Synced from acryl:docs/cordis/cordis-usage-cheatsheet.md @ 10e94f45df. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
+<!-- Synced from acryl:docs/cordis/cordis-usage-cheatsheet.md @ 79fc28c108. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
 
 # Cordis usage cheatsheet (source-validated)
 

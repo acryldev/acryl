@@ -1710,7 +1710,7 @@
           "source": {
             "sourceRepo": "acryl",
             "sourcePath": "docs/cordis/cordis-usage-cheatsheet.md",
-            "sourceCommit": "10e94f45df"
+            "sourceCommit": "79fc28c108"
           }
         },
         {
@@ -1727,7 +1727,7 @@
           "source": {
             "sourceRepo": "acryl",
             "sourcePath": "docs/cordis/cordis_system_guide_for_coding_agents.md",
-            "sourceCommit": "10e94f45df"
+            "sourceCommit": "c8082fb228"
           }
         },
         {
@@ -1744,7 +1744,7 @@
           "source": {
             "sourceRepo": "acryl",
             "sourcePath": "docs/cordisplugins/hello-world-plugin-guide.md",
-            "sourceCommit": "10e94f45df"
+            "sourceCommit": "043fa47bf8"
           }
         },
         {
@@ -1761,7 +1761,7 @@
           "source": {
             "sourceRepo": "acryl",
             "sourcePath": "docs/cordisplugins/development-canvas-plugin.md",
-            "sourceCommit": "10e94f45df"
+            "sourceCommit": "7968b4ff5d"
           }
         }
       ]

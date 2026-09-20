@@ -1,4 +1,4 @@
-<!-- Synced from acryl:docs/cordisplugins/hello-world-plugin-guide.md @ 10e94f45df. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
+<!-- Synced from acryl:docs/cordisplugins/hello-world-plugin-guide.md @ 043fa47bf8. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
 
 # Hello World: a Cordis plugin for this DSH Desktop repository
 
