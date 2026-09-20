@@ -30,6 +30,9 @@ determine whether the real Loader accepts `export default` and what
 **Done when**: Q1 is resolved and the spec's coverage matrix is either confirmed
 or corrected with the measured differences.
 
+**Partial 2026-09-20**: tui (89 rows) and web (159 rows) measured and saved in
+`evidence/census-tui-web.json`; desktop and the type classification remain.
+
 ## T002 - Answer the prompt-section and skill-provider questions (Q2)
 
 **Files**: `research.md`
@@ -42,6 +45,11 @@ surface's engine and show the section present and its position relative to
 calls, the chosen `order` value and why.
 **Done when**: Q2 is resolved and the router is shown to be independent of
 `persona`.
+
+**Partial 2026-09-20**: `systemPrompt`, `skills` and `tools` resolve and the
+system-prompt, skill and agent-instructions rows are composed on tui and web with
+no `persona` dependency. Exact registration calls, `order` and the assembled-prompt
+capture remain.
 
 ## T003 - Fix the coverage matrix and the TUI seam (Q6)
 

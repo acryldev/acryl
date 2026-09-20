@@ -82,7 +82,8 @@ Verified by reading source and docs on 2026-09-20.
 
 ## Q1 - What are the real plugin types and per-surface seams?
 
-**Status**: open
+**Status**: partly resolved 2026-09-20 (tui and web measured; desktop and the
+type census still open)
 **Gates**: T003 (matrix), T011 onward (docs and examples)
 
 Known: `AcrylSurface` has three values; spec 034 says CLI/TUI has no client slot
@@ -91,7 +92,27 @@ e.g. `desktop.main`) and HTTP routes, Desktop adds `desktopProfiles` and
 `desktopPnpm` in the Electron main process. The starting matrix in `spec.md` is
 built from that and from the harness package map, not yet from a census.
 
-To do: census the real rows. For each of `tui`, `web`, `desktop` boot the real
+**Measured 2026-09-20** (`evidence/census-tui-web.json`, reproduce with
+`evidence/census.spec.ts.txt`; real `createDshEngineDefinition('acryl-test')` and
+`createWebEngineDefinition(...)` on a temp `DSH_HOME`, `ctx.loader.entries()`):
+
+| Surface | Rows | Notes |
+| --- | --- | --- |
+| tui | 89 | strict subset of web (no tui-only row) |
+| web | 159 | adds 70 rows: `webserver`, `client-modules` (`modules`), `web-runtime`, `web-startup`, `plugin-inventory`, `community-market`, `ui-*` client plugins (chat, settings, plugins, skill, tool, sidebar, ...), `session-controller`, `workspace`, `file-upload`, ... |
+| desktop | not measured | needs the Electron gate (`scripts/verify-loader-boot.mjs`); spec 034 measured 168 on 2026-09-12 |
+
+Spec 034 measured tui 88 and web 157 on 2026-09-12, so both drifted by +1 and +2
+since; the matrix must be regenerated from a fresh census, never copied.
+
+Host services present at boot: `systemPrompt`, `skills`, `tools`, `agentPresets`,
+`sessions`, `agents`, `llm`, `livePluginActivation` on **both** tui and web;
+`webServer`, `clientModules`, `pluginInventory` on web only. `slots` is absent on
+both hosts: client slots belong to the Client Cordis generation in the renderer,
+not the Host, so a client-slot example must be verified in a Client context
+(open: how, T025).
+
+Still to do: census the real rows. For each of `tui`, `web`, `desktop` boot the real
 engine definition headlessly and list `ctx.loader.entries()` (method already used
 in spec 034's research); map each row to a type; find the real TUI contribution
 mechanism (Q6); confirm whether the real Loader unwraps `export default` (the
@@ -100,7 +121,8 @@ exist.
 
 ## Q2 - How is a `PromptSection` and a `SkillProvider` registered, and at what order?
 
-**Status**: partly known - docs describe both, no ACRYL code uses either yet
+**Status**: partly resolved 2026-09-20 - the seams exist on tui and web; exact
+registration calls and `order` still to read
 **Gates**: T005, T006
 
 Known: `PromptSection` sorts by ascending `order` then name and may be static
@@ -109,6 +131,15 @@ text or resolved from `AssembleContext`; a duplicate name throws; exactly one
 `persona` is composed for `tui` only in `coding-capabilities.ts`. `dsh-skill-badge`
 registers one immutable `bundled` candidate at `BUNDLED_SKILL_RANK` and exposes
 its asset directory through `resourceBase`.
+
+**Measured 2026-09-20**: in the real tui and web boots the rows `system-prompt`
+(`@deepseek-ai/dsh-system-prompt`), `skill`, `skill-filesystem`, `skill-badge`,
+`tool-skill` and `agent-instructions` are all composed and `ctx.systemPrompt`,
+`ctx.skills` and `ctx.tools` resolve. `ctx.agentInstructions` does not resolve
+because that plugin exposes no ctx key (its README lists `-`); it works through
+the session. So the router `PromptSection` and a bundled `SkillProvider` have a
+seam on both measured surfaces with no dependence on the `persona` capability
+(tui-only in `coding-capabilities.ts`), which removes the main risk in this Q.
 
 To do: read `packages/core/system-prompt/src/index.ts` and
 `packages/skill/skill-badge/src` for the exact registration calls; decide the
@@ -183,8 +214,16 @@ and mark the matrix row `n/a` with the reason.
 
 ## Q7 - Local live path: where does the agent write a package and does live activation work on every surface?
 
-**Status**: open
+**Status**: partly resolved 2026-09-20 - `ctx.livePluginActivation` resolves on
+the real tui and web hosts; install path, workspace directory and rollback still
+open
 **Gates**: T012, T013
+
+**Measured 2026-09-20**: `ctx.livePluginActivation` is defined in the real tui and
+web boots (`evidence/census-tui-web.json`), not only Desktop. That makes a live
+local path plausible on all three surfaces; it does not yet show that install
+(`pnpm add file:` plus reconcile) works off Electron (spec 034 Q2/T006 owns that
+question for the market and is the dependency to check).
 
 Known: spec 031 verified `pnpm add --save-exact` plus reconcile against the
 Desktop profile; spec 032 T2 landed `ctx.livePluginActivation`, T5 landed

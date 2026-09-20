@@ -1,0 +1,45 @@
+// Reproduce: copy to runtime/acryl-harness-runtime/tests/zz-census.spec.ts (delete after),
+// then: CENSUS_OUT=<file>.json corepack pnpm exec vitest run tests/zz-census.spec.ts
+// Boots the REAL tui and web engine definitions on a temp DSH_HOME and dumps
+// ctx.loader.entries() plus which host services resolve. Result: census-tui-web.json (2026-09-20).
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
+import { describe, it } from 'vitest'
+import { createDshEngineDefinition, createWebEngineDefinition } from '../src/engine-dsh.ts'
+import { createAcrylEngineHost } from '../src/engine-host.ts'
+
+const OUT = process.env.CENSUS_OUT!
+const SERVICES = ['systemPrompt', 'skills', 'tools', 'agentInstructions', 'slots', 'webServer', 'clientModules', 'livePluginActivation', 'pluginInventory', 'agentPresets', 'sessions', 'agents', 'llm']
+
+async function census(label: string, make: () => Promise<Awaited<ReturnType<typeof createAcrylEngineHost>>>) {
+  const host = await make()
+  try {
+    const entries = [...host.ctx.loader.entries()].map(e => ({ id: e.options.id, name: e.options.name }))
+    const services = Object.fromEntries(SERVICES.map(s => [s, host.ctx.get(s as never) !== undefined]))
+    return { label, rowCount: entries.length, services, entries }
+  } finally {
+    await host.dispose()
+  }
+}
+
+describe('037 census', () => {
+  it('dumps rows and services per surface', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-037-census-'))
+    process.env.DSH_HOME = home
+    const results = []
+    try {
+      results.push(await census('tui', () => createAcrylEngineHost({ engines: [createDshEngineDefinition('acryl-test')], initialEngine: 'dsh' })))
+      const installPackageUrl = new URL('../package.json', import.meta.url).href
+      results.push(await census('web', () => createAcrylEngineHost({
+        engines: [createWebEngineDefinition(installPackageUrl)],
+        initialEngine: 'dsh',
+        prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+      })))
+    } finally {
+      await rm(home, { recursive: true, force: true })
+    }
+    await writeFile(OUT, JSON.stringify(results, null, 2))
+  }, 120_000)
+})
