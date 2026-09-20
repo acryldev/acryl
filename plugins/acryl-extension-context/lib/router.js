@@ -33,16 +33,18 @@ export function buildRouterText(root, manifest) {
     `- Read ${join(docs, 'start-here', 'this-runtime.md')} first.`,
     '- Before writing code: read the doc for your topic and the nearest example COMPLETELY, and follow their',
     '  cross-references. Never guess a plugin\'s shape from memory of a similar one.',
-    '- Topic -> doc:',
+    `- Topic -> doc (paths relative to ${docs}/):`,
+    '  - WHERE something mounts (CLI overlay, Web/Desktop slot, host service) and every plugin type: maps/mount-points.md, maps/taxonomy.md',
   ]
   for (const group of manifest.navigation) {
     for (const item of group.items) {
       if (item.applies === 'not-for-authors' || item.id?.startsWith('reference.')) continue
-      lines.push(`  - ${item.title}: ${join(docs, item.path)}`)
+      if (item.id?.startsWith('maps.')) continue
+      lines.push(`  - ${item.title.length > 64 ? `${item.title.slice(0, 61)}...` : item.title}: ${item.path}`)
     }
   }
   lines.push(
-    `  - Reference (the Cordis API, every harness subsystem such as tools, skills, slots, commands, settings, sidebar, subagents, and cookbooks): ${join(docs, 'reference')}, one file each, listed in the docs index. Read the subsystem doc before using a seam.`,
+    `  - Reference (the Cordis API, every harness subsystem such as tools, skills, slots, commands, settings, sidebar, subagents, and cookbooks): reference/ (one file each, listed in the docs index). Read the subsystem doc before using a seam.`,
     `- Write plugin sources in <workspace>/.acryl-extensions/<name>/. To make one live, call ${INSTALL_TOOL_NAME} with that ABSOLUTE path: it checks it, installs it,`,
     '  activates it live, and undoes the install if activation fails. Calling it again on a changed package UPDATES it.',
     `  To change, fix or improve a plugin first call ${LIST_TOOL_NAME} to find its directory, edit the files, then call`,

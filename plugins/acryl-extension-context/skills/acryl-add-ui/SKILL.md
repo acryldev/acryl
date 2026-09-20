@@ -4,7 +4,10 @@ description: Use when an ACRYL extension needs UI in the Web or Desktop app (a b
 ---
 # Add UI to ACRYL (web and desktop)
 
-Read {{pack}}/docs/extending/client-slot.md completely, then the example
+First read {{pack}}/docs/maps/mount-points.md to choose the mount point and check the surface: Web and Desktop use client
+slots (header actions, sidebar tab, settings, composer, tool and message renderers, and on Desktop the `desktop.main` frame); the
+CLI has only terminal overlays (`tuiCommands`, see {{pack}}/docs/extending/tui-command.md), so a UI request from a terminal user
+means an overlay, not a slot. Then read {{pack}}/docs/extending/client-slot.md completely, then the example
 {{pack}}/examples/packages/client-slot-header-action/ (index.js and client.js).
 
 Key facts: the package has a host half (empty apply) and a browser half client.js exported as "./client" with

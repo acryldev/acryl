@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "packVersion": "0.5.0",
+  "packVersion": "0.6.0",
   "navigation": [
     {
       "title": "Start here",
@@ -155,7 +155,8 @@
           ],
           "applies": "all",
           "examples": [
-            "config-schema.basic"
+            "config-schema.basic",
+            "settings-section.basic"
           ]
         },
         {
@@ -303,6 +304,24 @@
           "examples": [
             "agent-preset.reviewer"
           ]
+        },
+        {
+          "id": "extending.chat-command",
+          "title": "Chat slash commands",
+          "path": "extending/chat-command.md",
+          "when": "A /command the user types in the chat that runs on the host without the model (reload, export, toggle).",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "examples": [
+            "chat-command.basic"
+          ],
+          "seeAlso": [
+            "extending.tui-command"
+          ]
         }
       ]
     },
@@ -342,6 +361,42 @@
           "seeAlso": [
             "delivery.local-live",
             "extending.packaging"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Maps (generated)",
+      "items": [
+        {
+          "id": "maps.mount-points",
+          "title": "Mount points per surface: where UI and host extensions attach (CLI, Web, Desktop)",
+          "path": "maps/mount-points.md",
+          "when": "You must decide WHERE something mounts: which slot, terminal overlay, host service or Desktop frame, and which surface supports it.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "extending.client-slot",
+            "extending.tui-command"
+          ]
+        },
+        {
+          "id": "maps.taxonomy",
+          "title": "Plugin taxonomy: every plugin type and every shipped plugin, per surface",
+          "path": "maps/taxonomy.md",
+          "when": "You want the full list of plugin types, which surfaces have them, whether an agent can author one, and real shipped plugins to study.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "extending.cordis-core"
           ]
         }
       ]
@@ -1655,7 +1710,7 @@
           "source": {
             "sourceRepo": "acryl",
             "sourcePath": "docs/cordis/cordis-usage-cheatsheet.md",
-            "sourceCommit": "2f06c20261"
+            "sourceCommit": "10e94f45df"
           }
         },
         {
@@ -1672,7 +1727,7 @@
           "source": {
             "sourceRepo": "acryl",
             "sourcePath": "docs/cordis/cordis_system_guide_for_coding_agents.md",
-            "sourceCommit": "2f06c20261"
+            "sourceCommit": "10e94f45df"
           }
         },
         {
@@ -1689,7 +1744,7 @@
           "source": {
             "sourceRepo": "acryl",
             "sourcePath": "docs/cordisplugins/hello-world-plugin-guide.md",
-            "sourceCommit": "2f06c20261"
+            "sourceCommit": "10e94f45df"
           }
         },
         {
@@ -1706,7 +1761,7 @@
           "source": {
             "sourceRepo": "acryl",
             "sourcePath": "docs/cordisplugins/development-canvas-plugin.md",
-            "sourceCommit": "2f06c20261"
+            "sourceCommit": "10e94f45df"
           }
         }
       ]
@@ -1987,6 +2042,34 @@
       "teaches": "a right-sidebar tab in two stages (tab type, then body) with no build step.",
       "docs": [
         "extending.client-slot"
+      ]
+    },
+    {
+      "id": "chat-command.basic",
+      "type": "chat-command",
+      "path": "chat-command-basic",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "a /command handled on the host without the model, via ctx.commands.register.",
+      "docs": [
+        "extending.chat-command"
+      ]
+    },
+    {
+      "id": "settings-section.basic",
+      "type": "settings-section",
+      "path": "settings-section-basic",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "a validated settings section with installSection, setSource and onChange.",
+      "docs": [
+        "extending.config-schema"
       ]
     }
   ]

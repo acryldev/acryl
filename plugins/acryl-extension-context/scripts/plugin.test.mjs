@@ -298,3 +298,13 @@ test('every plugin type in the coverage matrix has a doc and an example, and eve
     assert.match(readFileSync(entry, 'utf8').slice(0, 400), /Example:/u, `${example.id}: missing Example header`)
   }
 })
+
+test('generated maps exist, name the slots the examples use, and cover every surface', () => {
+  const root = resolvePackRoot()
+  const mount = readFileSync(join(root, 'docs/maps/mount-points.md'), 'utf8')
+  for (const slot of ['conversation.session.header.actions', 'sidebar.right.pane.tab', 'desktop.main', 'settings.plugin.item']) assert.ok(mount.includes(`\`${slot}\``), `mount-points lists ${slot}`)
+  assert.match(mount, /tuiCommands/u)
+  const taxonomy = readFileSync(join(root, 'docs/maps/taxonomy.md'), 'utf8')
+  assert.match(taxonomy, /distinct plugin packages are composed across the three surfaces/u)
+  for (const type of ['client-slot', 'tool', 'llm-adapter', 'chat-command', 'desktop-main', 'core-infrastructure']) assert.ok(taxonomy.includes(`## ${type} (`), `taxonomy has ${type}`)
+})

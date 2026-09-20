@@ -6,8 +6,8 @@
  *   ACRYL_E2E_LOG=/tmp/e2e.jsonl ACRYL_E2E_KEY_FILE=~/.secure-storage/llmproviders/deepseek/deepseek.json \
  *   corepack pnpm exec vitest run tests/e2e-real-model.spec.ts
  *
- * Boots the real web engine in a throwaway DSH_HOME, opens one session on the `standard` preset (the
- * composition the Web UI gives a session), sends each prompt in turn and appends every session event to the
+ * Boots the real web engine (or the CLI/terminal engine with ACRYL_E2E_ENGINE=tui) in a throwaway DSH_HOME. On web it opens
+ * one session on the `standard` preset (the composition the Web UI gives a session), sends each prompt in turn and appends every session event to the
  * log file. The key is read from the file into the process environment and never logged.
  */
 import { existsSync, mkdtempSync, readFileSync, readdirSync, appendFileSync } from 'node:fs'
@@ -16,7 +16,7 @@ import { join } from 'node:path'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import { it } from 'vitest'
-import { createWebEngineDefinition } from '../src/engine-dsh.ts'
+import { createDshEngineDefinition, createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 import { createAcrylSessionBridge } from '../src/session-bridge.ts'
 
@@ -31,18 +31,23 @@ it.skipIf(prompts === undefined)('the agent builds, changes, extends and removes
   const log = (entry: unknown): void => appendFileSync(logFile, `${JSON.stringify(entry)}\n`)
   log({ workspace })
 
-  const host = await createAcrylEngineHost({
-    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
-    initialEngine: 'dsh',
-    prepare: ctx => { provideCmdline(ctx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
-  })
-  const bridge = createAcrylSessionBridge(host.ctx, { profile: 'web', generationId: 'e2e', attachment: 'owner', cwd: workspace })
+  const tui = process.env.ACRYL_E2E_ENGINE === 'tui'
+  const host = await createAcrylEngineHost(tui
+    ? { engines: [createDshEngineDefinition('acryl-e2e')], initialEngine: 'dsh' }
+    : {
+        engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+        initialEngine: 'dsh',
+        prepare: ctx => { provideCmdline(ctx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+      })
+  const bridge = createAcrylSessionBridge(host.ctx, { profile: tui ? 'acryl-e2e' : 'web', generationId: 'e2e', attachment: 'owner', cwd: workspace })
   try {
     const sessionId = await bridge.open()
     await bridge.selectModel({ sessionId, provider: 'deepseek-official', model: 'deepseek-v4-flash' })
-    const presets = host.ctx.get('agentPresets' as never) as { select(agent: unknown, id: string): Promise<string> }
-    const agent = (host.ctx as unknown as { agents: { get(id: unknown): unknown } }).agents.get(SessionId(sessionId))
-    await presets.select(agent, 'standard')
+    if (!tui) {
+      const presets = host.ctx.get('agentPresets' as never) as { select(agent: unknown, id: string): Promise<string> }
+      const agent = (host.ctx as unknown as { agents: { get(id: unknown): unknown } }).agents.get(SessionId(sessionId))
+      await presets.select(agent, 'standard')
+    }
 
     let turnEnded: (() => void) | undefined
     await bridge.subscribeEvents(sessionId, event => {

@@ -51,6 +51,7 @@ describe('extension pack examples on the real web engine', () => {
         ['host-route-basic', 'ACTIVE'],
         ['llm-adapter-echo', 'ACTIVE'],
         ['generated-capability-template', 'ACTIVE'],
+        ['chat-command-basic', 'ACTIVE'],
         ['tui-command-basic', 'ACTIVE'], // optional ctx.get('tuiCommands'): a no-op off the terminal
         ['desktop-main-profile-info', 'ACTIVE'],
       ]
@@ -104,6 +105,15 @@ describe('extension pack examples on the real web engine', () => {
       const bad = host.ctx.plugin(await load('config-schema-basic') as never, { intervalMs: 10 } as never) as { state: number }
       await settle()
       expect(stateOf(bad)).toBe('FAILED')
+    } finally { await host.dispose() }
+  }, 60_000)
+
+  it('settings-section: mounts with a config and registers its namespace when a settings service exists', async () => {
+    const host = await bootHost()
+    try {
+      const fiber = host.ctx.plugin(await load('settings-section-basic') as never, { greeting: 'Hi', loud: true } as never) as { state: number }
+      await settle()
+      expect(stateOf(fiber)).toBe('ACTIVE')
     } finally { await host.dispose() }
   }, 60_000)
 })

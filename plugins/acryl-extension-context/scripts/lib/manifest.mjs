@@ -15,6 +15,7 @@ export const PLUGIN_TYPES = [
   'llm-adapter', 'agent-preset', 'host-route',
   'client-slot', 'desktop-main', 'tui-contribution',
   'packaging', 'generated-capability', 'diagnostics',
+  'chat-command', 'settings-section',
 ]
 
 const ID = /^[a-z0-9]+(?:[.-][a-z0-9]+)*$/u

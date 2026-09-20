@@ -1,0 +1,25 @@
+{
+  "name": "acryl-example-chat-command",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Registers a /hello-example chat slash command (all surfaces)",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.2"
+  }
+}

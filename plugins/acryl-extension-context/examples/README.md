@@ -27,3 +27,5 @@ pack gate and its declared outcome observed. Find the closest, read it, then ada
 | [desktop-main.profile-info](packages/desktop-main-profile-info/) | desktop-main | reading desktopProfiles portably: current everywhere, list only on Desktop. | tui web desktop | extending.desktop-main |
 | [agent-preset.reviewer](packages/agent-preset-reviewer/) | agent-preset | an agent preset directory: agent.cordis.yml plus preset.yml, a persona-only reviewer. | tui web desktop | extending.agent-preset |
 | [client-slot.sidebar-tab](packages/client-slot-sidebar-tab/) | client-slot | a right-sidebar tab in two stages (tab type, then body) with no build step. | web desktop | extending.client-slot |
+| [chat-command.basic](packages/chat-command-basic/) | chat-command | a /command handled on the host without the model, via ctx.commands.register. | tui web desktop | extending.chat-command |
+| [settings-section.basic](packages/settings-section-basic/) | settings-section | a validated settings section with installSection, setSource and onChange. | tui web desktop | extending.config-schema |

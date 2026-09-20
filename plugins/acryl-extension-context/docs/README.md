@@ -33,6 +33,7 @@ plugin. Verified working examples: `../examples/README.md`.
 | [Three-role capability: definition, providers, consumers](extending/three-role-capability.md) | Several interchangeable implementations of one capability that consumers must not care about; swapping providers. | tui web desktop | all |
 | [Profile and install services (desktopProfiles, desktopPnpm, livePluginActivation)](extending/desktop-main.md) | A plugin needs the active profile, package operations or live activation of another plugin. | tui web desktop | all |
 | [Agent presets and personas](extending/agent-preset.md) | A different session composition (tools, prompt, skills) or identity, such as a reviewer or a minimal agent. | tui web desktop | all |
+| [Chat slash commands](extending/chat-command.md) | A /command the user types in the chat that runs on the host without the model (reload, export, toggle). | tui web desktop | all |
 
 ## Delivery
 
@@ -40,6 +41,13 @@ plugin. Verified working examples: `../examples/README.md`.
 | --- | --- | --- | --- |
 | [Deliver a plugin live: local install, no restart](delivery/local-live.md) | The plugin is written and must become live now; a plugin must be CHANGED, FIXED, IMPROVED or REMOVED; acryl_install_plugin returned an error; or the plugin is PENDING, FAILED or not visible. | tui web desktop | all |
 | [Delivering through the marketplace](delivery/marketplace.md) | The user wants to share or publish a plugin: readiness checks and the human publish step. | tui web desktop | all |
+
+## Maps (generated)
+
+| Doc | Read it when | Surfaces | Applies |
+| --- | --- | --- | --- |
+| [Mount points per surface: where UI and host extensions attach (CLI, Web, Desktop)](maps/mount-points.md) | You must decide WHERE something mounts: which slot, terminal overlay, host service or Desktop frame, and which surface supports it. | tui web desktop | all |
+| [Plugin taxonomy: every plugin type and every shipped plugin, per surface](maps/taxonomy.md) | You want the full list of plugin types, which surfaces have them, whether an agent can author one, and real shipped plugins to study. | tui web desktop | all |
 
 ## Reference (synced)
 

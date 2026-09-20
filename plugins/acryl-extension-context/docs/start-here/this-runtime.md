@@ -14,7 +14,8 @@ Read this first. It is the map; the other docs are the detail.
 
 A plugin you write is a Cordis plugin that the runtime loads the same way on every
 surface. Some plugin types exist only where a surface has the seam (a Web client
-slot, a Desktop-main service, a TUI command); each doc says which.
+slot, a Desktop-main service, a TUI command); each doc says which. The full map of where things mount on each surface is
+`../maps/mount-points.md`, and every plugin type with the shipped plugins of that type is `../maps/taxonomy.md`.
 
 ## The plugin file contract
 

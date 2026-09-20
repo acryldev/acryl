@@ -34,7 +34,10 @@ one. Paths below are relative to the docs folder (`docs/`); every one exists in 
 | Validated configuration | `extending/config-schema.md` | `reference/harness/config-catalog.md`, `reference/subsystems/settings.md` |
 | A system-prompt section | `extending/prompt-contribution.md` | `reference/subsystems/system-prompt.md` |
 | A skill or skill provider | `extending/skill-provider.md` | `reference/subsystems/skills.md` |
-| A slash command (chat) | `extending/tui-command.md` | `reference/subsystems/commands.md` |
+| A chat slash command (all surfaces) | `extending/chat-command.md` | `reference/subsystems/commands.md` |
+| A terminal overlay (CLI only) | `extending/tui-command.md` | `maps/mount-points.md` |
+| Where something can mount, per surface | `maps/mount-points.md` | `reference/subsystems/slots.md` |
+| The full list of plugin types and shipped plugins | `maps/taxonomy.md` | `reference/harness/architecture.md` |
 | A new model provider | `extending/llm-adapter.md` | `reference/cookbook/adding-an-llm-adapter.md`, `reference/subsystems/llm-streaming.md` |
 | An agent preset or persona | `extending/agent-preset.md` | `reference/subsystems/subagent.md`, `reference/subsystems/agent-team.md` |
 | A backend HTTP/RPC route | `extending/host-route.md` | `reference/cookbook/adding-a-remote-api.md`, `reference/subsystems/web-server.md` |

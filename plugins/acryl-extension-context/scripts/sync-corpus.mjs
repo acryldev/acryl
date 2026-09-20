@@ -9,6 +9,7 @@
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
+import { classifyRow, collectSlots, indexPackages, loadRows, renderMountPoints, renderTaxonomy } from './lib/maps.mjs'
 import { fileURLToPath } from 'node:url'
 
 const pack = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -67,9 +68,64 @@ for (const group of groups) {
   }
 }
 
+// ---- generated maps: mount points and taxonomy (from source and the composed rows)
+const HOST_SEAMS = [
+  { mount: 'Tools', call: "ctx.tools.register(defineTool({...}))", what: 'a model-callable tool', doc: 'extending/tool-plugin.md, example tool-basic' },
+  { mount: 'Chat slash commands', call: "ctx.commands.register({ name, description, handler })", what: 'a /command run on the host without the model', doc: 'extending/chat-command.md, example chat-command-basic' },
+  { mount: 'System prompt', call: "ctx.systemPrompt.section({ name, order, text })", what: 'a prompt section (static text, or per-turn via PromptContext)', doc: 'extending/prompt-contribution.md' },
+  { mount: 'Skills', call: "ctx.skills.registerProvider(() => provider)", what: 'on-demand skills (name and description in context, body on demand)', doc: 'extending/skill-provider.md' },
+  { mount: 'Model providers', call: "ctx.llm.registerAdapter(['route'], adapter)", what: 'a new LLM provider route', doc: 'extending/llm-adapter.md, example llm-adapter-echo' },
+  { mount: 'Events', call: "ctx.on(name, listener) / ctx.emit / waterfall", what: 'listen to or intercept harness events (tool policy, session events)', doc: 'extending/event-hook.md' },
+  { mount: 'Settings sections', call: "ctx.settings.installSection(ctx, NS, Config, config, opts)", what: 'validated user-editable settings', doc: 'extending/config-schema.md, example settings-section-basic' },
+  { mount: 'Agent presets and personas', call: 'a preset directory (agent.cordis.yml + preset.yml)', what: 'a different session composition or identity', doc: 'extending/agent-preset.md' },
+  { mount: 'Subagent providers', call: "ctx.subagents.register(...)", what: 'a new way to run a delegated agent', doc: 'reference/subsystems/subagent.md (no example)' },
+  { mount: 'Host routes (Web and Desktop)', call: "ctx.webServer route / typert @Remote", what: 'an HTTP or RPC endpoint for a browser half', doc: 'extending/host-route.md' },
+  { mount: 'Services', call: "class X extends Service { constructor(ctx) { super(ctx, 'name') } }", what: 'a named capability others inject', doc: 'extending/service.md, extending/three-role-capability.md' },
+  { mount: 'Terminal overlays (CLI only)', call: "ctx.get('tuiCommands')?.register({...})", what: 'a slash command that opens a pi-tui overlay', doc: 'extending/tui-command.md' },
+  { mount: 'Profile and install (all surfaces, fuller on Desktop)', call: "ctx.get('desktopProfiles' | 'desktopPnpm' | 'livePluginActivation')", what: 'profile identity, package operations, live activation', doc: 'extending/desktop-main.md' },
+]
+const TYPE_GUIDE = {
+  'client-slot': { can: 'yes (Web, Desktop)', doc: 'extending/client-slot.md', example: 'client-slot-header-action, client-slot-sidebar-tab', notes: '58 slots, see mount-points; slots with owner props need the declaring package doc' },
+  'tool': { can: 'yes', doc: 'extending/tool-plugin.md', example: 'tool-basic', notes: '' },
+  'chat-command': { can: 'yes', doc: 'extending/chat-command.md', example: 'chat-command-basic', notes: 'host command run without the model' },
+  'llm-adapter': { can: 'yes', doc: 'extending/llm-adapter.md', example: 'llm-adapter-echo', notes: 'real providers need a key: never in the package' },
+  'prompt-contribution': { can: 'yes', doc: 'extending/prompt-contribution.md', example: 'prompt-contribution-basic', notes: '' },
+  'skill-provider': { can: 'yes', doc: 'extending/skill-provider.md', example: 'skill-provider-basic', notes: '' },
+  'subagent-provider': { can: 'possible, advanced', doc: 'reference/subsystems/subagent.md', example: '(none)', notes: 'large contract (continuations, capabilities); ask the user first' },
+  'agent-preset': { can: 'yes (directory, not a package)', doc: 'extending/agent-preset.md', example: 'agent-preset-reviewer', notes: 'structural only, a preset grants its plugins capabilities' },
+  'settings-section': { can: 'yes', doc: 'extending/config-schema.md', example: 'settings-section-basic', notes: 'a browser card is optional (settings.plugin.item)' },
+  'host-route': { can: 'yes (Web, Desktop)', doc: 'extending/host-route.md', example: 'host-route-basic', notes: 'the CLI has no web server' },
+  'event-hook': { can: 'yes', doc: 'extending/event-hook.md', example: 'event-hook-basic', notes: 'a waterfall observer MUST call next()' },
+  'sandbox-or-terminal-backend': { can: 'not for an agent to author', doc: 'reference/subsystems/sandbox.md', example: '(none)', notes: 'a security boundary: only with explicit user direction and review' },
+  'storage-or-persistence': { can: 'not for an agent to author', doc: 'reference/subsystems/persistence.md', example: '(none)', notes: 'durable session format; a bug corrupts history' },
+  'schedule-job-workflow': { can: 'yes as a consumer', doc: 'reference/subsystems/schedule.md', example: '(none)', notes: 'see also jobs.md, workflow.md, webhook.md' },
+  'protocol-bridge': { can: 'possible, advanced', doc: 'reference/subsystems/extensions.md', example: '(none)', notes: 'MCP, ACP, LSP integrations are mostly configuration-driven' },
+  'service-provider': { can: 'yes', doc: 'extending/service.md', example: 'service-provider-greeter, capability-swap-*', notes: '' },
+  'client-service': { can: 'yes (browser half)', doc: 'extending/client-slot.md', example: '(client bundle can ctx.provide)', notes: 'not separately verified' },
+  'tui-command': { can: 'yes (CLI)', doc: 'extending/tui-command.md', example: 'tui-command-basic', notes: '' },
+  'desktop-main': { can: 'yes (Node in the Electron main process)', doc: 'extending/desktop-main.md', example: 'desktop-main-profile-info', notes: 'Electron APIs themselves are not verified for local plugins' },
+  'core-infrastructure': { can: 'no', doc: 'reference/cordis-api/', example: '(none)', notes: 'Loader, include, timer, HMR: never author' },
+  'other': { can: 'case by case', doc: 'extending/cordis-core.md', example: '(none)', notes: 'session projections and local attachment stores' },
+}
+const index = indexPackages(repo)
+const slots = collectSlots(repo, index)
+const surfacesByName = loadRows(join(pack, 'scripts/data'))
+const rows = [...surfacesByName].map(([name, set]) => classifyRow(name, index, set))
+mkdirSync(join(pack, 'docs/maps'), { recursive: true })
+writeFileSync(join(pack, 'docs/maps/mount-points.md'), renderMountPoints(slots, HOST_SEAMS))
+writeFileSync(join(pack, 'docs/maps/taxonomy.md'), renderTaxonomy(rows, TYPE_GUIDE))
+
 const manifestPath = join(pack, 'docs/docs.json')
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
 manifest.navigation = manifest.navigation.filter(g => g.title !== 'Reference (synced)')
+manifest.navigation = manifest.navigation.filter(g => g.title !== 'Maps (generated)')
+manifest.navigation.splice(manifest.navigation.findIndex(g => g.title === 'Delivery') + 1, 0, {
+  title: 'Maps (generated)',
+  items: [
+    { id: 'maps.mount-points', title: 'Mount points per surface: where UI and host extensions attach (CLI, Web, Desktop)', path: 'maps/mount-points.md', when: 'You must decide WHERE something mounts: which slot, terminal overlay, host service or Desktop frame, and which surface supports it.', surfaces: ['tui', 'web', 'desktop'], applies: 'all', seeAlso: ['extending.client-slot', 'extending.tui-command'] },
+    { id: 'maps.taxonomy', title: 'Plugin taxonomy: every plugin type and every shipped plugin, per surface', path: 'maps/taxonomy.md', when: 'You want the full list of plugin types, which surfaces have them, whether an agent can author one, and real shipped plugins to study.', surfaces: ['tui', 'web', 'desktop'], applies: 'all', seeAlso: ['extending.cordis-core'] },
+  ],
+})
 manifest.navigation.push({ title: 'Reference (synced)', items })
 writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
-console.log(`sync-corpus: ${items.length} reference docs`)
+console.log(`sync-corpus: ${items.length} reference docs, ${slots.length} slots, ${rows.length} plugin rows`)

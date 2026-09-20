@@ -1,0 +1,3 @@
+- insert:
+    - id: example-chat-command
+      name: acryl-example-chat-command
