@@ -4,6 +4,9 @@ Use this to add a button, a panel, a tab or a settings section to the app (a kan
 board, a notes panel, a dashboard). Works on **web** and **desktop**; the terminal UI
 has no client slots (see `tui-command.md`).
 
+BEFORE hand-styling anything read `ui-components.md`: the app's own themed Button, Modal, Input, Switch, Tag and more can be `require`d
+(verified in a browser), so the UI matches the app with no CSS.
+
 Working example, copy from it: `../examples/packages/client-slot-header-action/`
 (read `index.js` and `client.js` completely).
 

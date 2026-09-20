@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "packVersion": "0.7.0",
+  "packVersion": "0.8.0",
   "navigation": [
     {
       "title": "Start here",
@@ -76,6 +76,26 @@
           ]
         },
         {
+          "id": "extending.ui-components",
+          "title": "Ready-made UI components: build with the app's own library",
+          "path": "extending/ui-components.md",
+          "when": "Before building ANY UI: the themed component library you can require today (Button, Modal, Input, Switch, Tag, ...) and the terminal equivalents.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "extending.client-slot",
+            "extending.ui-theme",
+            "maps.ui-components"
+          ],
+          "examples": [
+            "ui-components.shared-primitives"
+          ]
+        },
+        {
           "id": "extending.cordis-core",
           "title": "Cordis building blocks and where each is documented",
           "path": "extending/cordis-core.md",
@@ -103,7 +123,8 @@
           "seeAlso": [
             "start.this-runtime",
             "delivery.local-live",
-            "extending.host-route"
+            "extending.host-route",
+            "extending.ui-components"
           ],
           "examples": [
             "client-slot.header-action",
@@ -482,6 +503,21 @@
           "applies": "all",
           "seeAlso": [
             "extending.ui-theme"
+          ]
+        },
+        {
+          "id": "maps.ui-components",
+          "title": "UI component libraries available today (web primitives, pi-tui) and the gap",
+          "path": "maps/ui-components.md",
+          "when": "You are about to build UI: which ready-made components exist on each surface so you do not hand-style.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "extending.ui-components"
           ]
         },
         {
@@ -2209,6 +2245,20 @@
       "teaches": "a themed pi-tui overlay: Container, Text, SelectList, a semantic palette, and width-safe rendering.",
       "docs": [
         "extending.tui-components"
+      ]
+    },
+    {
+      "id": "ui-components.shared-primitives",
+      "type": "ui-components",
+      "path": "client-ui-components",
+      "surfaces": [
+        "web",
+        "desktop"
+      ],
+      "teaches": "build UI from the shared primitives (Button, Modal, Input, Switch, Tag) via require, in the root-scoped sidebar.footer.action slot.",
+      "docs": [
+        "extending.ui-components",
+        "extending.client-slot"
       ]
     }
   ]
