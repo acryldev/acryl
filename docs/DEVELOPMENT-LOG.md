@@ -1,3 +1,18 @@
+## 2026-09-20 - 037 self-extension machinery: router, install tool, docs, examples, skills
+
+Commits: `9770c63571c3a3ebe8b543c537f6bcf8e23487b1`, `afe499bfdb86d285623488ac45715f768ca62634`
+
+Built the pi.dev-style self-extension mechanism for the production agent runtime. The
+`acryl-extension-context` plugin is composed on web and desktop: it puts a docs router in the
+system prompt (paths resolved at runtime from an indexed manifest, read-completely policy,
+about 990 tokens), registers bundled authoring skills, and registers the `acryl_install_plugin`
+tool, which checks a package, runs `dsh plugin add file:`, live-activates it, and removes it
+again if activation fails (CLI and Web have no install recovery log). The pack holds docs for
+each plugin type, a local live delivery guide, and source example packages for each type, including
+a web/desktop client-slot plugin written with no build step. Proven on the real web engine
+(vitest) and the Desktop headless loader gate; the end-to-end "ask the agent to build a feature and see
+it live" flow is a human test, not automated. Marketplace publishing stays a human-only action.
+
 ## 2026-09-20 - 037 Extension Context Pack: first package and manifest tooling
 
 Commit: `6f66220fa118b1862a0fe3b3947349ccf0aceb07`

@@ -7,6 +7,14 @@ coherent change promptly, and record each landed task in
 implementation commit. Never stage with `git add .` or `-A`; the working tree
 holds unrelated untracked files.
 
+## Status (2026-09-20)
+
+P0 machinery landed (`9770c63`, `afe499b`): T011 runtime plugin and router, T012/T013 composition on
+web and desktop with real-engine evidence, T018a install tool, T010 docs and examples for every plugin
+type, skills. T014 (a real agent building a feature live) is a **human test** by the owner on Web and
+Desktop, deliberately not automated. CLI composition, the full verifier, release-archive shipping (T029),
+marketplace publish and eval remain as listed below.
+
 ## Priority order (2026-09-20): self-extension working ASAP
 
 Direction from the owner: get the pi.dev-style self-extension loop working first,
