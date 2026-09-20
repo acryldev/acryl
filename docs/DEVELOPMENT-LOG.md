@@ -4937,3 +4937,8 @@ binary directly rather than through whatever bare `pnpm` resolves to on
   brand plugin now keeps the ACRYL name (in `31735dbfd516aa83a56de0ebb1c0c0079a53772a`).
 - New spec `specs/038-ui-component-library` (spec, research, plan, tasks, data-model): one component vocabulary, a token source, a terminal
   theme service and per-surface implementations for Web, Desktop and the CLI (`fd48e6a8381b182e85c663d67c96331108c2b86e`).
+
+## 2026-09-20 - docs: system-prompt folder (development aid)
+
+- `docs/system-prompt/`: README (how the prompt is assembled, links to every source, what to edit, tuning loop) and generated current copies for
+  Web/Desktop and CLI captured from the real engine by the opt-in `tests/dump-system-prompt.spec.ts` (`d6cfb28aba628a4e9393d0fff107dfea1a355672`).
