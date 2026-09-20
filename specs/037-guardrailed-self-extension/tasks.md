@@ -9,11 +9,18 @@ holds unrelated untracked files.
 
 ## Status (2026-09-20)
 
-P0 machinery landed (`9770c63`, `afe499b`): T011 runtime plugin and router, T012/T013 composition on
-web and desktop with real-engine evidence, T018a install tool, T010 docs and examples for every plugin
-type, skills. T014 (a real agent building a feature live) is a **human test** by the owner on Web and
-Desktop, deliberately not automated. CLI composition, the full verifier, release-archive shipping (T029),
-marketplace publish and eval remain as listed below.
+Landed: T005/T011/T012/T013 (runtime plugin, router, composition on web, desktop AND CLI, real-engine evidence),
+T010/T023-T027 in reduced form (docs for 11 extension topics, 13 verified examples, 4 skills, manifest tooling and
+tests), T018 local live install/update/remove (incl. Desktop fallback), T017 in reduced form (`acryl_verify_plugin`
+tool: lint plus import and shape check with doc ids; no CLI command, no mount-based scenario run), T019 as a
+dry-run tool (`acryl_prepare_publish`), T028 pointers, T029 (pack is a public dependency of acryl-cli, acryl-web,
+acryl-desktop and the runtime; `pnpm pack --dry-run` shows docs, examples and skills), T030 (enabled everywhere),
+plus `/reload`.
+Not landed, by recorded reason: T014 is the owner's human test, deliberately not automated; T015/T016 full verifier
+and gate (mount-based checks deferred; the manifest gate and the router budget test exist); T020/T021 publish and
+catalog visibility stay human; T022 corpus sync, T031-T034 eval and tuning are P2 and not needed for the loop;
+installed-build evidence for T029 needs a release build and is unverified. Follow-up: publish
+`acryl-extension-context` to npm once before the next acryl-web release.
 
 ## Priority order (2026-09-20): self-extension working ASAP
 

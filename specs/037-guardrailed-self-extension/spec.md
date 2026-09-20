@@ -4,7 +4,7 @@
 
 **Feature Directory**: `specs/037-guardrailed-self-extension`
 **Created**: 2026-09-20
-**Status**: research complete 2026-09-20 (all eight gates answered with evidence, see `research.md`); implementation starts at Slice 1
+**Status**: P0 and the CLI, `/reload`, verify, marketplace dry-run and shipping work are implemented (2026-09-20); waiting on the owner's real Web/Desktop test (T014). Deferred by priority, see `tasks.md` Status: full mount-based verifier, corpus sync, eval harness.
 **Authority**: `.specify/memory/constitution.md` (principles I, V; Cordis
 Authoring Laws), `docs/ACRYL-RUNTIME-SURFACE-CONTRACT.md`,
 `specs/033-acryl-blends-runtime-contract/spec.md`,
