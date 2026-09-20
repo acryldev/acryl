@@ -4942,3 +4942,11 @@ binary directly rather than through whatever bare `pnpm` resolves to on
 
 - `docs/system-prompt/`: README (how the prompt is assembled, links to every source, what to edit, tuning loop) and generated current copies for
   Web/Desktop and CLI captured from the real engine by the opt-in `tests/dump-system-prompt.spec.ts` (`d6cfb28aba628a4e9393d0fff107dfea1a355672`).
+
+## 2026-09-20 - fix: stable pnpm across surfaces; real-test fixes (spec 037)
+
+- A real Web test failed to install an extension: the profile's node_modules came from pnpm 9, `dsh plugin add` ran the machine's pnpm 12.4.2 from PATH,
+  and pnpm refused the modules directory (ERR_PNPM_PUBLIC_HOIST_PATTERN_DIFF). Root cause of the drift: only Desktop pinned pnpm (bundled 11.8.0);
+  Web and CLI used PATH. Web and CLI now put a shim for the runtime's own pnpm 11.8.0 first on PATH for the spawned `dsh plugin` (`9be9e78003ec9e3de9b303f72b4e8a00e94c9dfb`).
+- The install tool also self-heals legacy profiles by pinning the recorded publicHoistPattern once and retrying; `acryl_workspace_status` now reports the
+  real surface and profile (it always said <tui>); Desktop system-prompt copy added (`58f104192534a83f6faffa7353936c92047b651c`).
