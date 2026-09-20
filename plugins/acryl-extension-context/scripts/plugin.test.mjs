@@ -21,12 +21,14 @@ const manifest = {
 test('router names real paths, the policy, the install tool, and omits not-for-authors docs', () => {
   const text = buildRouterText('/pack', manifest)
   assert.match(text, /\/pack\/docs\/README\.md/)
-  assert.match(text, /\/pack\/docs\/docs\.json/)
   assert.match(text, /\/pack\/docs\/start-here\/this-runtime\.md/)
   assert.match(text, /\/pack\/examples\/README\.md/)
   assert.match(text, /acryl_install_plugin/)
-  assert.match(text, /COMPLETELY/)
-  assert.match(text, /cannot publish/)
+  assert.match(text, /completely/i)
+  assert.match(text, /publishing is the user's decision/)
+  assert.match(text, /^<acryl_extension_docs>/)
+  assert.match(text, /<\/acryl_extension_docs>$/)
+  assert.match(text, /this-runtime\.md \(|start-here\/this-runtime\.md/)
   assert.doesNotMatch(text, /Loader internals/)
 })
 

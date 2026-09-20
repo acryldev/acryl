@@ -3,6 +3,8 @@ import { join } from 'node:path'
 /** The router must stay small: it is in every prompt (spec 037 NFR-002). */
 export const ROUTER_TOKEN_BUDGET = 1500
 export const ROUTER_SECTION_NAME = 'acryl:extension-router'
+/** The XML-style tag wrapping the router text, in pi.dev's per-section tag style. */
+export const ROUTER_TAG = 'acryl_extension_docs'
 /** After the tool sections, before the local-path suffix (harness SECTION_ORDERS: 5000..10000). */
 export const ROUTER_SECTION_ORDER = 9500
 export const INSTALL_TOOL_NAME = 'acryl_install_plugin'
@@ -14,43 +16,36 @@ export const PUBLISH_TOOL_NAME = 'acryl_prepare_publish'
 export const estimateTokens = text => Math.ceil(text.length / 4)
 
 /**
- * The docs router for the system prompt, the same idea as pi.dev's `docs`
- * section: a small index of where the reference material lives, generated from
- * the manifest with paths resolved at runtime, plus the policy "read the doc and
- * the nearest example fully before implementing; verify; deliver".
+ * The docs router for the system prompt, built the way pi.dev builds its `docs` section (packages/coding-agent/src/core/system-prompt.ts):
+ * one tagged section that does not contain the architecture but routes the model to it. Paths are resolved at runtime from the installed
+ * package; the topic map is inline ("when asked about X (doc)"); the protocol is "read the docs and the nearest example, read .md files
+ * completely, follow cross-references before implementing". The topic map is generated from the manifest (`topic` labels), so it cannot
+ * drift from the docs. The tag lets the model tell this block from its neighbours, as pi's per-section tags do.
  * @param {string} root pack root on disk
- * @param {{ navigation: Array<{ items: Array<{ title: string, path: string, applies: string }> }> }} manifest
+ * @param {{ navigation: Array<{ items: Array<{ id?: string, topic?: string, title: string, path: string, applies: string }> }> }} manifest
  */
 export function buildRouterText(root, manifest) {
   const docs = join(root, 'docs')
   const examples = join(root, 'examples')
-  const lines = [
-    'ACRYL extension docs. Read them ONLY when the user asks you to build, change, fix, improve, extend or remove',
-    'something in ACRYL itself: an extension, feature, plugin, tool, panel, button, view, board, skill, prompt',
-    'contribution or LLM adapter. Otherwise ignore this section.',
-    `- Docs index: ${join(docs, 'README.md')}  (manifest: ${join(docs, 'docs.json')})`,
-    `- Examples (working, verified plugins): ${join(examples, 'README.md')}`,
-    `- Read ${join(docs, 'start-here', 'this-runtime.md')} first.`,
-    '- Before writing code: read the doc for your topic and the nearest example COMPLETELY, and follow their',
-    '  cross-references. Never guess a plugin\'s shape from memory of a similar one.',
-    `- Topic -> doc (paths relative to ${docs}/):`,
-    '  - WHERE something mounts (CLI overlay, Web/Desktop slot, host service) and every plugin type: maps/mount-points.md, maps/taxonomy.md',
-  ]
+  const topics = []
   for (const group of manifest.navigation) {
     for (const item of group.items) {
-      if (item.applies === 'not-for-authors' || item.id?.startsWith('reference.')) continue
-      if (item.id?.startsWith('maps.')) continue
-      lines.push(`  - ${item.title.length > 64 ? `${item.title.slice(0, 61)}...` : item.title}: ${item.path}`)
+      if (item.applies === 'not-for-authors' || item.id?.startsWith('reference.') || item.id?.startsWith('maps.')) continue
+      topics.push(`${item.topic ?? (item.title.length > 48 ? `${item.title.slice(0, 45)}...` : item.title)} (${item.path})`)
     }
   }
-  lines.push(
-    `  - Reference (the Cordis API, every harness subsystem such as tools, skills, slots, commands, settings, sidebar, subagents, and cookbooks): reference/ (one file each, listed in the docs index). Read the subsystem doc before using a seam.`,
-    `- Write plugin sources in <workspace>/.acryl-extensions/<name>/. To make one live, call ${INSTALL_TOOL_NAME} with that ABSOLUTE path: it checks it, installs it,`,
-    '  activates it live, and undoes the install if activation fails. Calling it again on a changed package UPDATES it.',
-    `  To change, fix or improve a plugin first call ${LIST_TOOL_NAME} to find its directory, edit the files, then call`,
-    `  ${INSTALL_TOOL_NAME} again. To delete one call ${REMOVE_TOOL_NAME}. Before installing, ${VERIFY_TOOL_NAME} checks a package and points at the docs to fix. Read every result; never claim a plugin works,`,
-    '  or state its state, without it. UI (browser) changes need a page reload: tell the user.',
-    `- Marketplace: call ${PUBLISH_TOOL_NAME} (a dry run); publishing itself is the user's decision, you cannot publish. The user can type /reload to re-install local plugins.`,
-  )
-  return lines.join('\n')
+  return [
+    `<${ROUTER_TAG}>`,
+    'ACRYL extension documentation (read only when the user asks to build, change, fix, improve, extend or remove something in ACRYL itself: an extension, plugin, tool, panel, button, view, theme, skill, command or LLM adapter):',
+    `- Docs index: ${join(docs, 'README.md')}`,
+    `- Examples: ${join(examples, 'README.md')} (working, verified plugins for every plugin type and surface)`,
+    `- When reading ACRYL docs, resolve the relative paths below under ${docs}/, not the current working directory`,
+    `- Start with ${join(docs, 'start-here', 'this-runtime.md')}. Where something mounts on the CLI, Web or Desktop, and every plugin type: maps/mount-points.md, maps/taxonomy.md`,
+    `- When asked about: ${topics.join(', ')}`,
+    '- Reference for the Cordis API and every harness subsystem: reference/ (one file each, listed in the docs index)',
+    '- When working on ACRYL extension topics, read the docs and the nearest example, and follow .md cross-references before implementing',
+    '- Always read ACRYL .md files completely and follow links to related docs',
+    `- Write extensions in <workspace>/.acryl-extensions/<name>/ and deliver with ${INSTALL_TOOL_NAME} (ABSOLUTE path; calling it again updates). Check first with ${VERIFY_TOOL_NAME}; also ${LIST_TOOL_NAME}, ${REMOVE_TOOL_NAME}, ${PUBLISH_TOOL_NAME} (a dry run: publishing is the user's decision). Never claim a plugin works without the tool result; UI needs a page reload (the user can type /reload)`,
+    `</${ROUTER_TAG}>`,
+  ].join('\n')
 }

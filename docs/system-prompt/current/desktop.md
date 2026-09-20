@@ -44,50 +44,18 @@ Use subagent_fork in the background by default. Start independent delegations to
 
 When you successfully create or modify files, mention the primary outputs in your final response. To make those and any other changed-file references clickable in Web, format them as Markdown inline code using the exact file-tool path, or a basename when unique among the files changed in that turn.
 
-ACRYL extension docs. Read them ONLY when the user asks you to build, change, fix, improve, extend or remove
-something in ACRYL itself: an extension, feature, plugin, tool, panel, button, view, board, skill, prompt
-contribution or LLM adapter. Otherwise ignore this section.
-- Docs index: <acryl-repo>/plugins/acryl-extension-context/docs/README.md  (manifest: <acryl-repo>/plugins/acryl-extension-context/docs/docs.json)
-- Examples (working, verified plugins): <acryl-repo>/plugins/acryl-extension-context/examples/README.md
-- Read <acryl-repo>/plugins/acryl-extension-context/docs/start-here/this-runtime.md first.
-- Before writing code: read the doc for your topic and the nearest example COMPLETELY, and follow their
-  cross-references. Never guess a plugin's shape from memory of a similar one.
-- Topic -> doc (paths relative to <acryl-repo>/plugins/acryl-extension-context/docs/):
-  - WHERE something mounts (CLI overlay, Web/Desktop slot, host service) and every plugin type: maps/mount-points.md, maps/taxonomy.md
-  - This runtime: how ACRYL plugins are built, loaded and delivered: start-here/this-runtime.md
-  - Verify before you say it works: start-here/verify-before-done.md
-  - Troubleshooting: start-here/troubleshooting.md
-  - Changing how ACRYL looks: what, where, how live (all surfaces): extending/ui-customization.md
-  - Ready-made UI components: build with the app's own library: extending/ui-components.md
-  - Cordis building blocks and where each is documented: extending/cordis-core.md
-  - Client slots: add UI to the Web and Desktop app (panel, butto...: extending/client-slot.md
-  - Tool plugins: give the agent a new capability: extending/tool-plugin.md
-  - Services: provide a capability, consume it, optional dependen...: extending/service.md
-  - Events: listen, emit, intercept (waterfall): extending/event-hook.md
-  - Plugin configuration (Schemastery): extending/config-schema.md
-  - Prompt contributions: add to the agent system prompt: extending/prompt-contribution.md
-  - Skills: on-demand instructions for the agent: extending/skill-provider.md
-  - Host routes: an HTTP API for a web or desktop plugin: extending/host-route.md
-  - Terminal commands: slash commands with an overlay: extending/tui-command.md
-  - LLM adapters: connect a new model provider: extending/llm-adapter.md
-  - Packaging a plugin, and generated capabilities: extending/packaging.md
-  - Three-role capability: definition, providers, consumers: extending/three-role-capability.md
-  - Profile and install services (desktopProfiles, desktopPnpm, l...: extending/desktop-main.md
-  - Agent presets and personas: extending/agent-preset.md
-  - Chat slash commands: extending/chat-command.md
-  - Theme, colors and fonts (Web and Desktop client theme service): extending/ui-theme.md
-  - Branding: logo, name, tab title, favicon, page shell: extending/ui-branding.md
-  - The Desktop (Electron) app: structure and what a plugin can o...: extending/desktop-app.md
-  - The terminal UI: pi-tui components, theming, branding: extending/tui-components.md
-  - Deliver a plugin live: local install, no restart: delivery/local-live.md
-  - Delivering through the marketplace: delivery/marketplace.md
-  - Reference (the Cordis API, every harness subsystem such as tools, skills, slots, commands, settings, sidebar, subagents, and cookbooks): reference/ (one file each, listed in the docs index). Read the subsystem doc before using a seam.
-- Write plugin sources in <workspace>/.acryl-extensions/<name>/. To make one live, call acryl_install_plugin with that ABSOLUTE path: it checks it, installs it,
-  activates it live, and undoes the install if activation fails. Calling it again on a changed package UPDATES it.
-  To change, fix or improve a plugin first call acryl_list_plugins to find its directory, edit the files, then call
-  acryl_install_plugin again. To delete one call acryl_remove_plugin. Before installing, acryl_verify_plugin checks a package and points at the docs to fix. Read every result; never claim a plugin works,
-  or state its state, without it. UI (browser) changes need a page reload: tell the user.
-- Marketplace: call acryl_prepare_publish (a dry run); publishing itself is the user's decision, you cannot publish. The user can type /reload to re-install local plugins.
+<acryl_extension_docs>
+ACRYL extension documentation (read only when the user asks to build, change, fix, improve, extend or remove something in ACRYL itself: an extension, plugin, tool, panel, button, view, theme, skill, command or LLM adapter):
+- Docs index: <acryl-repo>/plugins/acryl-extension-context/docs/README.md
+- Examples: <acryl-repo>/plugins/acryl-extension-context/examples/README.md (working, verified plugins for every plugin type and surface)
+- When reading ACRYL docs, resolve the relative paths below under <acryl-repo>/plugins/acryl-extension-context/docs/, not the current working directory
+- Start with <acryl-repo>/plugins/acryl-extension-context/docs/start-here/this-runtime.md. Where something mounts on the CLI, Web or Desktop, and every plugin type: maps/mount-points.md, maps/taxonomy.md
+- When asked about: how plugins are built and delivered (start-here/this-runtime.md), verifying before claiming done (start-here/verify-before-done.md), a plugin that is PENDING, FAILED, invisible or stale (start-here/troubleshooting.md), colors, fonts, branding, look and feel, any UI change (extending/ui-customization.md), building UI from the shared components (extending/ui-components.md), which Cordis mechanism to use (extending/cordis-core.md), a button, panel, tab or card (Web/Desktop) (extending/client-slot.md), a model-callable tool (extending/tool-plugin.md), services and dependencies (extending/service.md), events and interception (extending/event-hook.md), configuration and settings (extending/config-schema.md), system prompt sections (extending/prompt-contribution.md), skills (extending/skill-provider.md), an HTTP or RPC route (extending/host-route.md), terminal (CLI) overlays (extending/tui-command.md), a new model provider (extending/llm-adapter.md), package layout and publishing (extending/packaging.md), swappable providers of one capability (extending/three-role-capability.md), profile, pnpm and live activation services (extending/desktop-main.md), agent presets and personas (extending/agent-preset.md), a chat slash command (extending/chat-command.md), theme tokens and fonts (Web/Desktop) (extending/ui-theme.md), logo, name, tab title, favicon (extending/ui-branding.md), the Electron app and its native chrome (extending/desktop-app.md), pi-tui components and terminal theming (extending/tui-components.md), installing live, updating, removing (delivery/local-live.md), preparing to share on the marketplace (delivery/marketplace.md)
+- Reference for the Cordis API and every harness subsystem: reference/ (one file each, listed in the docs index)
+- When working on ACRYL extension topics, read the docs and the nearest example, and follow .md cross-references before implementing
+- Always read ACRYL .md files completely and follow links to related docs
+- Write extensions in <workspace>/.acryl-extensions/<name>/ and deliver with acryl_install_plugin (ABSOLUTE path; calling it again updates). Check first with acryl_verify_plugin; also acryl_list_plugins, acryl_remove_plugin, acryl_prepare_publish (a dry run: publishing is the user's decision). Never claim a plugin works without the tool result; UI needs a page reload (the user can type /reload)
+</acryl_extension_docs>
 
 The DeepSeek Harness implementation checkout is at <acryl-repo>/node_modules/.pnpm/@deepseek-ai+dsh-web-app@0.1.5-alpha.1_patch_hash=68a389c2a80ec059477dd6b3bdd43a971953d_dd6fecb854ee0c9ed55a527501ff76c9/. The checkout location and current working directory are separate values and may differ; never infer the working directory from this path. Use pwd to determine the current working directory. Use this checkout only to inspect or extend DSH itself.
 

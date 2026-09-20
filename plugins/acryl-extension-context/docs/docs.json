@@ -18,7 +18,8 @@
           "applies": "all",
           "examples": [
             "lifecycle-function.basic"
-          ]
+          ],
+          "topic": "how plugins are built and delivered"
         },
         {
           "id": "start.verify-before-done",
@@ -33,7 +34,8 @@
           "applies": "all",
           "seeAlso": [
             "start.this-runtime"
-          ]
+          ],
+          "topic": "verifying before claiming done"
         },
         {
           "id": "start.troubleshooting",
@@ -49,7 +51,8 @@
           "seeAlso": [
             "start.verify-before-done",
             "delivery.local-live"
-          ]
+          ],
+          "topic": "a plugin that is PENDING, FAILED, invisible or stale"
         }
       ]
     },
@@ -73,7 +76,8 @@
             "extending.desktop-app",
             "extending.tui-components",
             "maps.mount-points"
-          ]
+          ],
+          "topic": "colors, fonts, branding, look and feel, any UI change"
         },
         {
           "id": "extending.ui-components",
@@ -93,7 +97,8 @@
           ],
           "examples": [
             "ui-components.shared-primitives"
-          ]
+          ],
+          "topic": "building UI from the shared components"
         },
         {
           "id": "extending.cordis-core",
@@ -108,7 +113,8 @@
           "applies": "all",
           "seeAlso": [
             "start.this-runtime"
-          ]
+          ],
+          "topic": "which Cordis mechanism to use"
         },
         {
           "id": "extending.client-slot",
@@ -129,7 +135,8 @@
           "examples": [
             "client-slot.header-action",
             "client-slot.sidebar-tab"
-          ]
+          ],
+          "topic": "a button, panel, tab or card (Web/Desktop)"
         },
         {
           "id": "extending.tool",
@@ -147,7 +154,8 @@
           ],
           "examples": [
             "tool.basic"
-          ]
+          ],
+          "topic": "a model-callable tool"
         },
         {
           "id": "extending.service",
@@ -166,7 +174,8 @@
           "examples": [
             "service.provider",
             "service.consumer"
-          ]
+          ],
+          "topic": "services and dependencies"
         },
         {
           "id": "extending.event-hook",
@@ -181,7 +190,8 @@
           "applies": "all",
           "examples": [
             "event-hook.basic"
-          ]
+          ],
+          "topic": "events and interception"
         },
         {
           "id": "extending.config-schema",
@@ -197,7 +207,8 @@
           "examples": [
             "config-schema.basic",
             "settings-section.basic"
-          ]
+          ],
+          "topic": "configuration and settings"
         },
         {
           "id": "extending.prompt-contribution",
@@ -212,7 +223,8 @@
           "applies": "all",
           "examples": [
             "prompt-contribution.basic"
-          ]
+          ],
+          "topic": "system prompt sections"
         },
         {
           "id": "extending.skill-provider",
@@ -227,7 +239,8 @@
           "applies": "all",
           "examples": [
             "skill-provider.basic"
-          ]
+          ],
+          "topic": "skills"
         },
         {
           "id": "extending.host-route",
@@ -244,7 +257,8 @@
           ],
           "examples": [
             "host-route.basic"
-          ]
+          ],
+          "topic": "an HTTP or RPC route"
         },
         {
           "id": "extending.tui-command",
@@ -257,7 +271,8 @@
           "applies": "all",
           "examples": [
             "tui-command.basic"
-          ]
+          ],
+          "topic": "terminal (CLI) overlays"
         },
         {
           "id": "extending.llm-adapter",
@@ -272,7 +287,8 @@
           "applies": "all",
           "examples": [
             "llm-adapter.echo"
-          ]
+          ],
+          "topic": "a new model provider"
         },
         {
           "id": "extending.packaging",
@@ -290,7 +306,8 @@
           ],
           "examples": [
             "generated-capability.template"
-          ]
+          ],
+          "topic": "package layout and publishing"
         },
         {
           "id": "extending.three-role-capability",
@@ -310,7 +327,8 @@
             "capability.swap-provider-loud",
             "capability.swap-provider-quiet",
             "capability.swap-consumer"
-          ]
+          ],
+          "topic": "swappable providers of one capability"
         },
         {
           "id": "extending.desktop-main",
@@ -328,7 +346,8 @@
           ],
           "examples": [
             "desktop-main.profile-info"
-          ]
+          ],
+          "topic": "profile, pnpm and live activation services"
         },
         {
           "id": "extending.agent-preset",
@@ -343,7 +362,8 @@
           "applies": "all",
           "examples": [
             "agent-preset.reviewer"
-          ]
+          ],
+          "topic": "agent presets and personas"
         },
         {
           "id": "extending.chat-command",
@@ -361,7 +381,8 @@
           ],
           "seeAlso": [
             "extending.tui-command"
-          ]
+          ],
+          "topic": "a chat slash command"
         },
         {
           "id": "extending.ui-theme",
@@ -378,7 +399,8 @@
           ],
           "examples": [
             "ui-theme.override"
-          ]
+          ],
+          "topic": "theme tokens and fonts (Web/Desktop)"
         },
         {
           "id": "extending.ui-branding",
@@ -398,7 +420,8 @@
           "examples": [
             "web-page-branding.basic",
             "ui-theme.override"
-          ]
+          ],
+          "topic": "logo, name, tab title, favicon"
         },
         {
           "id": "extending.desktop-app",
@@ -412,7 +435,8 @@
           "seeAlso": [
             "extending.desktop-main",
             "extending.ui-customization"
-          ]
+          ],
+          "topic": "the Electron app and its native chrome"
         },
         {
           "id": "extending.tui-components",
@@ -428,7 +452,8 @@
           ],
           "examples": [
             "tui-overlay.themed"
-          ]
+          ],
+          "topic": "pi-tui components and terminal theming"
         }
       ]
     },
@@ -452,7 +477,8 @@
           ],
           "examples": [
             "lifecycle-function.hot-shim"
-          ]
+          ],
+          "topic": "installing live, updating, removing"
         },
         {
           "id": "delivery.marketplace",
@@ -468,7 +494,8 @@
           "seeAlso": [
             "delivery.local-live",
             "extending.packaging"
-          ]
+          ],
+          "topic": "preparing to share on the marketplace"
         }
       ]
     },
@@ -544,7 +571,7 @@
           "id": "reference.subsystems.readme",
           "title": "Harness subsystems: Subsystems",
           "path": "reference/subsystems/README.md",
-          "when": "English | [中文](README.zh.md)",
+          "when": "English | [\u4e2d\u6587](README.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -561,7 +588,7 @@
           "id": "reference.subsystems.agent-team",
           "title": "Harness subsystems: Agent Teams",
           "path": "reference/subsystems/agent-team.md",
-          "when": "English | [中文](agent-team.zh.md)",
+          "when": "English | [\u4e2d\u6587](agent-team.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -578,7 +605,7 @@
           "id": "reference.subsystems.approval",
           "title": "Harness subsystems: User Approval",
           "path": "reference/subsystems/approval.md",
-          "when": "English | [中文](approval.zh.md)",
+          "when": "English | [\u4e2d\u6587](approval.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -595,7 +622,7 @@
           "id": "reference.subsystems.attachment",
           "title": "Harness subsystems: Durable Attachments",
           "path": "reference/subsystems/attachment.md",
-          "when": "English | [中文](attachment.zh.md)",
+          "when": "English | [\u4e2d\u6587](attachment.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -612,7 +639,7 @@
           "id": "reference.subsystems.client-modules",
           "title": "Harness subsystems: Client Modules",
           "path": "reference/subsystems/client-modules.md",
-          "when": "English | [中文](client-modules.zh.md)",
+          "when": "English | [\u4e2d\u6587](client-modules.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -629,7 +656,7 @@
           "id": "reference.subsystems.client-resources",
           "title": "Harness subsystems: Client Resources",
           "path": "reference/subsystems/client-resources.md",
-          "when": "English | [中文](client-resources.zh.md)",
+          "when": "English | [\u4e2d\u6587](client-resources.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -646,7 +673,7 @@
           "id": "reference.subsystems.code-runtime",
           "title": "Harness subsystems: Code Runtime",
           "path": "reference/subsystems/code-runtime.md",
-          "when": "English | [中文](code-runtime.zh.md)",
+          "when": "English | [\u4e2d\u6587](code-runtime.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -663,7 +690,7 @@
           "id": "reference.subsystems.commands",
           "title": "Harness subsystems: Human Commands",
           "path": "reference/subsystems/commands.md",
-          "when": "English | [中文](commands.zh.md)",
+          "when": "English | [\u4e2d\u6587](commands.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -680,7 +707,7 @@
           "id": "reference.subsystems.compaction",
           "title": "Harness subsystems: Compaction",
           "path": "reference/subsystems/compaction.md",
-          "when": "English | [中文](compaction.zh.md)",
+          "when": "English | [\u4e2d\u6587](compaction.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -697,7 +724,7 @@
           "id": "reference.subsystems.conversation",
           "title": "Harness subsystems: Conversation assembly",
           "path": "reference/subsystems/conversation.md",
-          "when": "English | [中文](conversation.zh.md)",
+          "when": "English | [\u4e2d\u6587](conversation.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -714,7 +741,7 @@
           "id": "reference.subsystems.core",
           "title": "Harness subsystems: Core",
           "path": "reference/subsystems/core.md",
-          "when": "English | [中文](core.zh.md)",
+          "when": "English | [\u4e2d\u6587](core.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -731,7 +758,7 @@
           "id": "reference.subsystems.credentials",
           "title": "Harness subsystems: User Credentials",
           "path": "reference/subsystems/credentials.md",
-          "when": "English | [中文](credentials.zh.md)",
+          "when": "English | [\u4e2d\u6587](credentials.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -748,7 +775,7 @@
           "id": "reference.subsystems.extensions",
           "title": "Harness subsystems: Extensions",
           "path": "reference/subsystems/extensions.md",
-          "when": "English | [中文](extensions.zh.md)",
+          "when": "English | [\u4e2d\u6587](extensions.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -765,7 +792,7 @@
           "id": "reference.subsystems.feedback",
           "title": "Harness subsystems: Message Feedback",
           "path": "reference/subsystems/feedback.md",
-          "when": "English | [中文](feedback.zh.md)",
+          "when": "English | [\u4e2d\u6587](feedback.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -782,7 +809,7 @@
           "id": "reference.subsystems.filesystem",
           "title": "Harness subsystems: Filesystem",
           "path": "reference/subsystems/filesystem.md",
-          "when": "English | [中文](filesystem.zh.md)",
+          "when": "English | [\u4e2d\u6587](filesystem.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -799,7 +826,7 @@
           "id": "reference.subsystems.goal",
           "title": "Harness subsystems: Same-session goals",
           "path": "reference/subsystems/goal.md",
-          "when": "English | [中文](goal.zh.md)",
+          "when": "English | [\u4e2d\u6587](goal.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -816,7 +843,7 @@
           "id": "reference.subsystems.invariants",
           "title": "Harness subsystems: Runtime Invariants",
           "path": "reference/subsystems/invariants.md",
-          "when": "English | [中文](invariants.zh.md)",
+          "when": "English | [\u4e2d\u6587](invariants.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -833,7 +860,7 @@
           "id": "reference.subsystems.jobs",
           "title": "Harness subsystems: Background Task Runtime",
           "path": "reference/subsystems/jobs.md",
-          "when": "English | [中文](jobs.zh.md)",
+          "when": "English | [\u4e2d\u6587](jobs.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -850,7 +877,7 @@
           "id": "reference.subsystems.llm-streaming",
           "title": "Harness subsystems: LLM Streaming",
           "path": "reference/subsystems/llm-streaming.md",
-          "when": "English | [中文](llm-streaming.zh.md)",
+          "when": "English | [\u4e2d\u6587](llm-streaming.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -867,7 +894,7 @@
           "id": "reference.subsystems.lsp",
           "title": "Harness subsystems: LSP navigation",
           "path": "reference/subsystems/lsp.md",
-          "when": "English | [中文](lsp.zh.md)",
+          "when": "English | [\u4e2d\u6587](lsp.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -884,7 +911,7 @@
           "id": "reference.subsystems.permission-presets",
           "title": "Harness subsystems: Permission Presets",
           "path": "reference/subsystems/permission-presets.md",
-          "when": "English | [中文](permission-presets.zh.md)",
+          "when": "English | [\u4e2d\u6587](permission-presets.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -901,7 +928,7 @@
           "id": "reference.subsystems.persistence",
           "title": "Harness subsystems: Session Persistence",
           "path": "reference/subsystems/persistence.md",
-          "when": "English | [中文](persistence.zh.md)",
+          "when": "English | [\u4e2d\u6587](persistence.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -918,7 +945,7 @@
           "id": "reference.subsystems.plan",
           "title": "Harness subsystems: Plan Mode",
           "path": "reference/subsystems/plan.md",
-          "when": "English | [中文](plan.zh.md)",
+          "when": "English | [\u4e2d\u6587](plan.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -935,7 +962,7 @@
           "id": "reference.subsystems.sandbox",
           "title": "Harness subsystems: Process Sandbox",
           "path": "reference/subsystems/sandbox.md",
-          "when": "English | [中文](sandbox.zh.md)",
+          "when": "English | [\u4e2d\u6587](sandbox.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -952,7 +979,7 @@
           "id": "reference.subsystems.schedule",
           "title": "Harness subsystems: Session-local Schedule",
           "path": "reference/subsystems/schedule.md",
-          "when": "English | [中文](schedule.zh.md)",
+          "when": "English | [\u4e2d\u6587](schedule.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -969,7 +996,7 @@
           "id": "reference.subsystems.scope",
           "title": "Harness subsystems: Scoped Registration",
           "path": "reference/subsystems/scope.md",
-          "when": "English | [中文](scope.zh.md)",
+          "when": "English | [\u4e2d\u6587](scope.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -986,7 +1013,7 @@
           "id": "reference.subsystems.session-projection",
           "title": "Harness subsystems: Session Projections",
           "path": "reference/subsystems/session-projection.md",
-          "when": "English | [中文](session-projection.zh.md)",
+          "when": "English | [\u4e2d\u6587](session-projection.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1003,7 +1030,7 @@
           "id": "reference.subsystems.session-query",
           "title": "Harness subsystems: Session Query",
           "path": "reference/subsystems/session-query.md",
-          "when": "English | [中文](session-query.zh.md)",
+          "when": "English | [\u4e2d\u6587](session-query.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1020,7 +1047,7 @@
           "id": "reference.subsystems.session-reference",
           "title": "Harness subsystems: Session References",
           "path": "reference/subsystems/session-reference.md",
-          "when": "English | [中文](session-reference.zh.md)",
+          "when": "English | [\u4e2d\u6587](session-reference.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1037,7 +1064,7 @@
           "id": "reference.subsystems.session-telemetry",
           "title": "Harness subsystems: SessionTelemetryBackend",
           "path": "reference/subsystems/session-telemetry.md",
-          "when": "English | [中文](session-telemetry.zh.md)",
+          "when": "English | [\u4e2d\u6587](session-telemetry.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1054,7 +1081,7 @@
           "id": "reference.subsystems.session-title",
           "title": "Harness subsystems: Session Titles",
           "path": "reference/subsystems/session-title.md",
-          "when": "English | [中文](session-title.zh.md)",
+          "when": "English | [\u4e2d\u6587](session-title.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1071,7 +1098,7 @@
           "id": "reference.subsystems.session",
           "title": "Harness subsystems: Sessions",
           "path": "reference/subsystems/session.md",
-          "when": "English | [中文](session.zh.md)",
+          "when": "English | [\u4e2d\u6587](session.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1088,7 +1115,7 @@
           "id": "reference.subsystems.settings",
           "title": "Harness subsystems: User Settings",
           "path": "reference/subsystems/settings.md",
-          "when": "English | [中文](settings.zh.md)",
+          "when": "English | [\u4e2d\u6587](settings.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1105,7 +1132,7 @@
           "id": "reference.subsystems.shell",
           "title": "Harness subsystems: Bash Executor",
           "path": "reference/subsystems/shell.md",
-          "when": "English | [中文](shell.zh.md)",
+          "when": "English | [\u4e2d\u6587](shell.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1122,7 +1149,7 @@
           "id": "reference.subsystems.sidebar-right",
           "title": "Harness subsystems: Right Sidebar",
           "path": "reference/subsystems/sidebar-right.md",
-          "when": "English | [中文](sidebar-right.zh.md)",
+          "when": "English | [\u4e2d\u6587](sidebar-right.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1139,7 +1166,7 @@
           "id": "reference.subsystems.skills",
           "title": "Harness subsystems: Skills",
           "path": "reference/subsystems/skills.md",
-          "when": "English | [中文](skills.zh.md)",
+          "when": "English | [\u4e2d\u6587](skills.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1156,7 +1183,7 @@
           "id": "reference.subsystems.slots",
           "title": "Harness subsystems: Web Client Slots",
           "path": "reference/subsystems/slots.md",
-          "when": "English | [中文](slots.zh.md)",
+          "when": "English | [\u4e2d\u6587](slots.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1173,7 +1200,7 @@
           "id": "reference.subsystems.spill",
           "title": "Harness subsystems: Spill Storage",
           "path": "reference/subsystems/spill.md",
-          "when": "English | [中文](spill.zh.md)",
+          "when": "English | [\u4e2d\u6587](spill.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1190,7 +1217,7 @@
           "id": "reference.subsystems.storage",
           "title": "Harness subsystems: Storage",
           "path": "reference/subsystems/storage.md",
-          "when": "English | [中文](storage.zh.md)",
+          "when": "English | [\u4e2d\u6587](storage.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1207,7 +1234,7 @@
           "id": "reference.subsystems.subagent",
           "title": "Harness subsystems: Subagent",
           "path": "reference/subsystems/subagent.md",
-          "when": "English | [中文](subagent.zh.md)",
+          "when": "English | [\u4e2d\u6587](subagent.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1224,7 +1251,7 @@
           "id": "reference.subsystems.subprocess",
           "title": "Harness subsystems: Subprocess",
           "path": "reference/subsystems/subprocess.md",
-          "when": "English | [中文](subprocess.zh.md)",
+          "when": "English | [\u4e2d\u6587](subprocess.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1241,7 +1268,7 @@
           "id": "reference.subsystems.system-prompt",
           "title": "Harness subsystems: System Prompt Assembly",
           "path": "reference/subsystems/system-prompt.md",
-          "when": "English | [中文](system-prompt.zh.md)",
+          "when": "English | [\u4e2d\u6587](system-prompt.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1258,7 +1285,7 @@
           "id": "reference.subsystems.terminal",
           "title": "Harness subsystems: Persistent PTY Sessions",
           "path": "reference/subsystems/terminal.md",
-          "when": "English | [中文](terminal.zh.md)",
+          "when": "English | [\u4e2d\u6587](terminal.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1275,7 +1302,7 @@
           "id": "reference.subsystems.todo",
           "title": "Harness subsystems: Todo",
           "path": "reference/subsystems/todo.md",
-          "when": "English | [中文](todo.zh.md)",
+          "when": "English | [\u4e2d\u6587](todo.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1292,7 +1319,7 @@
           "id": "reference.subsystems.token-meter",
           "title": "Harness subsystems: Token Meter",
           "path": "reference/subsystems/token-meter.md",
-          "when": "English | [中文](token-meter.zh.md)",
+          "when": "English | [\u4e2d\u6587](token-meter.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1309,7 +1336,7 @@
           "id": "reference.subsystems.tools",
           "title": "Harness subsystems: Tools",
           "path": "reference/subsystems/tools.md",
-          "when": "English | [中文](tools.zh.md)",
+          "when": "English | [\u4e2d\u6587](tools.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1326,7 +1353,7 @@
           "id": "reference.subsystems.typert",
           "title": "Harness subsystems: Typert remote calls",
           "path": "reference/subsystems/typert.md",
-          "when": "English | [中文](typert.zh.md)",
+          "when": "English | [\u4e2d\u6587](typert.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1343,7 +1370,7 @@
           "id": "reference.subsystems.user-questions",
           "title": "Harness subsystems: User Interaction",
           "path": "reference/subsystems/user-questions.md",
-          "when": "English | [中文](user-questions.zh.md)",
+          "when": "English | [\u4e2d\u6587](user-questions.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1360,7 +1387,7 @@
           "id": "reference.subsystems.web-client",
           "title": "Harness subsystems: Web Client architecture",
           "path": "reference/subsystems/web-client.md",
-          "when": "English | [中文](web-client.zh.md)",
+          "when": "English | [\u4e2d\u6587](web-client.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1377,7 +1404,7 @@
           "id": "reference.subsystems.web-server",
           "title": "Harness subsystems: HTTP Server",
           "path": "reference/subsystems/web-server.md",
-          "when": "English | [中文](web-server.zh.md)",
+          "when": "English | [\u4e2d\u6587](web-server.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1394,7 +1421,7 @@
           "id": "reference.subsystems.web",
           "title": "Harness subsystems: Web Access",
           "path": "reference/subsystems/web.md",
-          "when": "English | [中文](web.zh.md)",
+          "when": "English | [\u4e2d\u6587](web.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1411,7 +1438,7 @@
           "id": "reference.subsystems.webhook",
           "title": "Harness subsystems: Webhook runtime",
           "path": "reference/subsystems/webhook.md",
-          "when": "English | [中文](webhook.zh.md)",
+          "when": "English | [\u4e2d\u6587](webhook.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1428,7 +1455,7 @@
           "id": "reference.subsystems.workflow",
           "title": "Harness subsystems: Workflow",
           "path": "reference/subsystems/workflow.md",
-          "when": "English | [中文](workflow.zh.md)",
+          "when": "English | [\u4e2d\u6587](workflow.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1445,7 +1472,7 @@
           "id": "reference.subsystems.workspace",
           "title": "Harness subsystems: Workspaces",
           "path": "reference/subsystems/workspace.md",
-          "when": "English | [中文](workspace.zh.md)",
+          "when": "English | [\u4e2d\u6587](workspace.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1564,7 +1591,7 @@
           "id": "reference.cookbook.adding-a-package",
           "title": "Harness cookbook: Cookbook: adding a workspace package",
           "path": "reference/cookbook/adding-a-package.md",
-          "when": "English | [中文](adding-a-package.zh.md)",
+          "when": "English | [\u4e2d\u6587](adding-a-package.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1581,7 +1608,7 @@
           "id": "reference.cookbook.adding-a-remote-api",
           "title": "Harness cookbook: Cookbook: adding a Remote API",
           "path": "reference/cookbook/adding-a-remote-api.md",
-          "when": "English | [中文](adding-a-remote-api.zh.md)",
+          "when": "English | [\u4e2d\u6587](adding-a-remote-api.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1598,7 +1625,7 @@
           "id": "reference.cookbook.adding-a-settings-card",
           "title": "Harness cookbook: Cookbook: adding a settings card",
           "path": "reference/cookbook/adding-a-settings-card.md",
-          "when": "English | [中文](adding-a-settings-card.zh.md)",
+          "when": "English | [\u4e2d\u6587](adding-a-settings-card.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1615,7 +1642,7 @@
           "id": "reference.cookbook.adding-a-tool",
           "title": "Harness cookbook: Tool authoring reference",
           "path": "reference/cookbook/adding-a-tool.md",
-          "when": "English | [中文](adding-a-tool.zh.md)",
+          "when": "English | [\u4e2d\u6587](adding-a-tool.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1632,7 +1659,7 @@
           "id": "reference.cookbook.adding-an-llm-adapter",
           "title": "Harness cookbook: Cookbook: adding an LLM adapter",
           "path": "reference/cookbook/adding-an-llm-adapter.md",
-          "when": "English | [中文](adding-an-llm-adapter.zh.md)",
+          "when": "English | [\u4e2d\u6587](adding-an-llm-adapter.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1649,7 +1676,7 @@
           "id": "reference.cookbook.extension-cookbook",
           "title": "Harness cookbook: Cookbook: extension plugin shapes",
           "path": "reference/cookbook/extension-cookbook.md",
-          "when": "English | [中文](extension-cookbook.zh.md)",
+          "when": "English | [\u4e2d\u6587](extension-cookbook.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1666,7 +1693,7 @@
           "id": "reference.harness.cordis-primer",
           "title": "Harness architecture: Cordis Primer",
           "path": "reference/harness/cordis-primer.md",
-          "when": "English | [中文](cordis-primer.zh.md)",
+          "when": "English | [\u4e2d\u6587](cordis-primer.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1700,7 +1727,7 @@
           "id": "reference.harness.glossary",
           "title": "Harness architecture: Glossary",
           "path": "reference/harness/glossary.md",
-          "when": "English | [中文](glossary.zh.md)",
+          "when": "English | [\u4e2d\u6587](glossary.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1717,7 +1744,7 @@
           "id": "reference.harness.defensive-patterns",
           "title": "Harness architecture: Defensive patterns",
           "path": "reference/harness/defensive-patterns.md",
-          "when": "English | [中文](defensive-patterns.zh.md)",
+          "when": "English | [\u4e2d\u6587](defensive-patterns.zh.md)",
           "surfaces": [
             "tui",
             "web",
@@ -1785,7 +1812,7 @@
           "id": "reference.harness.architecture",
           "title": "Harness architecture: DeepSeek Harness Architecture",
           "path": "reference/harness/architecture.md",
-          "when": "English | [中文](architecture.zh.md)",
+          "when": "English | [\u4e2d\u6587](architecture.zh.md)",
           "surfaces": [
             "tui",
             "web",
