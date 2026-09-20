@@ -23,6 +23,7 @@ import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import { PassThrough, Readable } from 'node:stream'
 import { type Context, Service } from '@deepseek-ai/cordis'
+import { pinnedPnpmEnv } from './pinned-pnpm.ts'
 
 /** Matches `cordis-plugin-market`'s own `MarketDesktopProfile` shape. */
 export interface CliMarketProfile {
@@ -100,7 +101,8 @@ export class CliPnpmService extends Service implements CliMarketPnpm {
 
   runPlugin(args: readonly string[], _invokingDir: string, signal?: AbortSignal): CliMarketPnpmHandle {
     const child = spawn(process.execPath, [this.dshBin, 'plugin', '--profile', this.profileName, ...args, '-w'], {
-      env: process.env,
+      // The pinned pnpm, not whatever the machine has on PATH (see pinned-pnpm.ts).
+      env: pinnedPnpmEnv(process.env),
       signal,
     })
     const stdout = new PassThrough()

@@ -37,6 +37,7 @@ import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import { PassThrough, Readable } from 'node:stream'
 import { type Context, Service } from '@deepseek-ai/cordis'
+import { pinnedPnpmEnv } from './pinned-pnpm.ts'
 
 /** Matches `cordis-plugin-market`'s own `MarketDesktopProfile` shape (`src/install/service.ts`). */
 export interface WebMarketProfile {
@@ -124,7 +125,8 @@ export class WebPnpmService extends Service implements WebMarketPnpm {
 
   runPlugin(args: readonly string[], _invokingDir: string, signal?: AbortSignal): WebMarketPnpmHandle {
     const child = spawn(process.execPath, [this.dshBin, 'plugin', '--profile', this.profileName, ...args, '-w'], {
-      env: process.env,
+      // The pinned pnpm, not whatever the machine has on PATH (see pinned-pnpm.ts).
+      env: pinnedPnpmEnv(process.env),
       signal,
     })
     // The market resumes/discards these itself (`handle.stdout.resume()`) -

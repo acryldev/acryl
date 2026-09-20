@@ -279,3 +279,4 @@ export {
   type CaptureSystemPromptOptions,
   type CapturedSystemPrompt,
 } from './system-prompt-capture.ts'
+export { pinnedPnpmEnv, resolvePinnedPnpm, type PinnedPnpm } from './pinned-pnpm.ts'
