@@ -31,8 +31,9 @@ determine whether the real Loader accepts `export default` and what
 **Done when**: Q1 is resolved and the spec's coverage matrix is either confirmed
 or corrected with the measured differences.
 
-**Partial 2026-09-20**: tui (89 rows) and web (159 rows) measured and saved in
-`evidence/census-tui-web.json`; desktop and the type classification remain.
+**Done 2026-09-20**: tui 89, web 159 and desktop 168 rows measured
+(`evidence/census-tui-web.json`, `evidence/census-desktop.json`); the Loader's default-export
+unwrapping and its metadata-drop hazard verified; matrix corrected in `spec.md`.
 
 ## T002 - Answer the prompt-section and skill-provider questions (Q2)
 
@@ -48,9 +49,9 @@ calls, the chosen `order` value and why.
 `persona`.
 
 **Partial 2026-09-20**: `systemPrompt`, `skills` and `tools` resolve and the
-system-prompt, skill and agent-instructions rows are composed on tui and web with
-no `persona` dependency. Exact registration calls, `order` and the assembled-prompt
-capture remain.
+system-prompt, skill and agent-instructions rows are composed on all three surfaces
+with no `persona` dependency. Exact registration calls, `order` and the
+assembled-prompt capture are read at T011.
 
 ## T003 - Fix the coverage matrix and the TUI seam (Q6)
 
@@ -63,6 +64,8 @@ references.
 **Done when**: the matrix has no open marks and `PluginTypeId` in
 `data-model.md` matches it exactly.
 
+**Done 2026-09-20** (matrix finalized; TUI seam is `tuiCommands`, see `research.md` Q6).
+
 ## T004 - Prototype the headless verifier composition (Q4)
 
 **Files**: `research.md`, `specs/037-guardrailed-self-extension/evidence/`
@@ -73,6 +76,8 @@ spec 033 B1 and B3 with a note in that spec.
 **Evidence**: a prototype run mounting the same fixture package on all three
 engine definitions, with fiber states.
 **Done when**: Q4 is resolved and the module home for the verifier is decided.
+
+**Done 2026-09-20** (tui and web prototype, desktop via the existing gate; `research.md` Q4).
 
 ## T005 - Establish the local live path per surface (Q7)
 
@@ -87,6 +92,8 @@ result, per surface.
 **Done when**: Q7 is resolved and the plan's local-delivery section states the
 real per-surface behavior.
 
+**Done 2026-09-20** on tui with measurements; web and desktop parity re-measured in T018 (`research.md` Q7).
+
 ## T006 - Design the safe publish step (Q8)
 
 **Files**: `research.md`
@@ -97,6 +104,8 @@ visibility is confirmed given the 15-minute refresh. No real publish.
 the approval flow sketched against `dsh-authorization`.
 **Done when**: Q8 is resolved with the negative lint cases listed.
 
+**Done 2026-09-20** (design and dry run proven, no publish; `research.md` Q8).
+
 ## T007 - Decide where eval lives (Q5)
 
 **Files**: `research.md`
@@ -104,6 +113,8 @@ the approval flow sketched against `dsh-authorization`.
 package here; record which tutorial harness parts are reused.
 **Evidence**: the decision and the reused components list.
 **Done when**: Q5 is resolved.
+
+**Done 2026-09-20** (spec 013 is a stub; eval lives here; `research.md` Q5).
 
 ## T008 - Packaging spike for installed builds (Q3)
 
@@ -116,6 +127,8 @@ Decide dependency versus materialization to `<ACRYL_HOME>/context/<version>/`.
 **Done when**: Q3 is resolved and the shipping mechanism for Slice 5 is chosen.
 
 ---
+
+**Done 2026-09-20** (asar, release archives and pruner measured; `research.md` Q3).
 
 ## Slice 1 - Route (walking skeleton, part 1)
 
@@ -132,6 +145,8 @@ the seed content.
 **Done when**: the package installs under the isolated PNPM workspace and the
 tooling passes and fails correctly.
 
+**Landed 2026-09-20, commit `6f66220fa118b1862a0fe3b3947349ccf0aceb07`.** Twelve `node:test` cases cover every invariant and the build and `--check` modes; layout, architecture and debt gates pass.
+
 ## T010 - Seed docs and two examples
 
 **Files**: `plugins/acryl-extension-context/docs/{start-here,extending}/**`,
@@ -142,6 +157,8 @@ tool plugin) each with header, scenario and tests. Contracts come from measured
 behavior (T001), not memory.
 **Evidence**: both scenarios pass on every surface they declare.
 **Done when**: manifest tooling passes and each doc names its example.
+
+**Landed 2026-09-20 (T009), commit `6f66220fa118b1862a0fe3b3947349ccf0aceb07`.** The package, manifest validator, index generator and 12 tests. The T010 seed (two start-here docs and the lifecycle-function example) landed with it so the package check is green on its own; the tool-plugin doc and example remain.
 
 ## T011 - Runtime plugin: service, router section, path resolution
 

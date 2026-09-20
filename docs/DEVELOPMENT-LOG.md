@@ -1,3 +1,40 @@
+## 2026-09-20 - 037 Extension Context Pack: first package and manifest tooling
+
+Commit: `6f66220fa118b1862a0fe3b3947349ccf0aceb07`
+
+Added `plugins/acryl-extension-context`, the shippable pack of routed docs,
+verified examples and (later) skills that lets the ACRYL agent write its own
+plugins (spec 037 T009, plus the T010 seed). The manifest (`docs/docs.json`) is
+the single index: every doc and example must be listed with its surfaces and a
+"read this when" line, ids must resolve, paths must exist, nothing may be
+unlisted, and example files may not live in `test`/`tests` directories because
+the release pruner deletes them. `docs/README.md` and `examples/README.md` are
+generated from it and `--check` fails when stale. The package is registered in
+the workspace, the layout gate's owned policy, the lockfile importer and the
+root `test`/`check` scripts. Layout, architecture and debt gates pass. The
+bilingual-docs gate fails on stale `README.md`, `README.en.md` and
+`dsh-community-fabric` RFC 0004 translation records that predate this change and
+were not touched.
+
+## 2026-09-20 - 037 guardrailed self-extension specified and researched
+
+Commits: `6b66a79d272e7bae3b61f91aac2b0c153e1e036c`, `f84b957ca488c836e91b1160b4e62034fccb8c80`, `e823566581c8b2bbc44d912b6661ae6e30ea2c65`
+
+Wrote `specs/037-guardrailed-self-extension` (spec, research, plan with the
+Cordis mini-design, data model, 35 ordered tasks): how the production ACRYL agent
+runtime writes its own working plugins and delivers them locally with live
+activation or via the marketplace, using the mechanism pi.dev uses (a docs router
+in the system prompt, an indexed manifest, working examples of every plugin type
+per surface, verification). Research gates Q1-Q8 were answered with measured
+evidence on the real engines and a packaged app. Findings that changed the design:
+the real Loader unwraps default exports but silently drops named metadata beside
+one; a package must export `./package.json` or live activation fails, which the
+`hello-world` guide's `exports` form does; CLI and Web have no install recovery
+log so the install command compensates with `dsh plugin remove`; the release
+pruner deletes `test`/`tests` under `node_modules`; the published CLI is a
+launcher over prepared runtime archives; the catalog's real listing rules define
+the publish lint; no agent-callable publish tool will exist.
+
 ## 2026-09-11 - Release v0.1.37 prepared for all ACRYL surfaces
 
 Commit: `55c80d810884ab4249d61a5866aaed7abf70acea`
