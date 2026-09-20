@@ -1,0 +1,96 @@
+[
+  {
+    "surface": "tui",
+    "results": [
+      {
+        "fixture": "good-named",
+        "state": "ACTIVE",
+        "error": "",
+        "timersStillLiveAfterDispose": 2
+      },
+      {
+        "fixture": "unmet-inject",
+        "state": "PENDING",
+        "error": "",
+        "timersStillLiveAfterDispose": 2
+      },
+      {
+        "fixture": "default-export-shape",
+        "state": "ACTIVE",
+        "error": "",
+        "timersStillLiveAfterDispose": 2
+      },
+      {
+        "fixture": "default-plus-named-metadata",
+        "state": "ACTIVE",
+        "error": "",
+        "timersStillLiveAfterDispose": 2
+      },
+      {
+        "fixture": "throws",
+        "state": "FAILED",
+        "error": "deliberate failure",
+        "timersStillLiveAfterDispose": 2
+      },
+      {
+        "fixture": "leaks-timer",
+        "state": "ACTIVE",
+        "error": "",
+        "timersStillLiveAfterDispose": 3
+      },
+      {
+        "fixture": "effect-owned-timer",
+        "state": "ACTIVE",
+        "error": "",
+        "timersStillLiveAfterDispose": 2
+      }
+    ]
+  },
+  {
+    "surface": "web",
+    "results": [
+      {
+        "fixture": "good-named",
+        "state": "ACTIVE",
+        "error": "",
+        "timersStillLiveAfterDispose": 5
+      },
+      {
+        "fixture": "unmet-inject",
+        "state": "PENDING",
+        "error": "",
+        "timersStillLiveAfterDispose": 2
+      },
+      {
+        "fixture": "default-export-shape",
+        "state": "ACTIVE",
+        "error": "",
+        "timersStillLiveAfterDispose": 2
+      },
+      {
+        "fixture": "default-plus-named-metadata",
+        "state": "ACTIVE",
+        "error": "",
+        "timersStillLiveAfterDispose": 2
+      },
+      {
+        "fixture": "throws",
+        "state": "FAILED",
+        "error": "deliberate failure",
+        "timersStillLiveAfterDispose": 2
+      },
+      {
+        "fixture": "leaks-timer",
+        "state": "ACTIVE",
+        "error": "",
+        "timersStillLiveAfterDispose": 3
+      },
+      {
+        "fixture": "effect-owned-timer",
+        "state": "ACTIVE",
+        "error": "",
+        "timersStillLiveAfterDispose": 2
+      }
+    ]
+  }
+]

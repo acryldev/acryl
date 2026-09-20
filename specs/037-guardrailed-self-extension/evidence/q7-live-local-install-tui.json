@@ -1,0 +1,21 @@
+{
+  "bootMs": 617,
+  "afterBoot": {
+    "fx1Row": true,
+    "fxLocalService": true,
+    "fx2Row": false
+  },
+  "services": {
+    "desktopPlugins": true,
+    "livePluginActivation": true,
+    "desktopPnpm": true
+  },
+  "externalAdd": {
+    "code": 0,
+    "ms": 450
+  },
+  "liveWithoutRestart": {
+    "serviceAppearedAfterMs": null,
+    "fx2Row": false
+  }
+}

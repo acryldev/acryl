@@ -7,8 +7,9 @@ coherent change promptly, and record each landed task in
 implementation commit. Never stage with `git add .` or `-A`; the working tree
 holds unrelated untracked files.
 
-Slice 0 (T001-T008) answers the open research questions and may change the
-design; Slices 1 and 2 are the walking skeleton. Every task keeps
+Slice 0 (T001-T008) is **complete as of 2026-09-20**: every gate was answered with
+measured evidence in `research.md` and folded into the spec, plan and data model.
+Slices 1 and 2 are the walking skeleton. Every task keeps
 `corepack pnpm run check` green.
 
 Paths: `runtime/acryl-harness-runtime`, `runtime/acryl-control`, `apps/acryl-cli`,

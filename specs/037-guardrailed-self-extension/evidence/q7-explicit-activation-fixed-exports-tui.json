@@ -1,0 +1,25 @@
+{
+  "bootHasFx1": true,
+  "goodPlugin": {
+    "addExit": 0,
+    "activateMs": 4,
+    "activateError": "",
+    "serviceLive": true,
+    "status": "active"
+  },
+  "brokenPlugin": {
+    "addExit": 0,
+    "activateMs": 6,
+    "activateError": "Plugin fx-broken-plugin failed to activate: failed to apply loader entry fx-broken-plugin (fx-broken-plugin): deliberate failure in apply",
+    "stillInProfileBundles": true
+  },
+  "hostStillHealthy": true,
+  "compensation": {
+    "removeExit": 0,
+    "bundlesAfter": [
+      "@deepseek-ai/dsh-base",
+      "fx-local-plugin",
+      "fx-local-plugin-2"
+    ]
+  }
+}

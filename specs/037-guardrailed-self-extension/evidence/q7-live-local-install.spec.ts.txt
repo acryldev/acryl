@@ -1,0 +1,37 @@
+import { execFile } from 'node:child_process'
+import { writeFile } from 'node:fs/promises'
+import { describe, it } from 'vitest'
+import { createDshEngineDefinition } from '../src/engine-dsh.ts'
+import { createAcrylEngineHost } from '../src/engine-host.ts'
+
+const HOME = process.env.DSH_HOME!
+const OUT = process.env.LIVE_OUT!
+const CLI = '/Users/musichen/_projects/p11_acr_agentcontextrelay/acryldev/acryl/apps/acryl-cli'
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+const run = (args: string[]) => new Promise<{ code: number | null; out: string }>(res => {
+  execFile('corepack', ['pnpm', 'exec', 'dsh', ...args], { cwd: CLI, env: { ...process.env, DSH_HOME: HOME } }, (e, so, se) => res({ code: e ? (e as any).code ?? 1 : 0, out: (so + se).slice(-300) }))
+})
+
+describe('037 Q7 live local install', () => {
+  it('installs a second plugin while the host runs', async () => {
+    const t0 = Date.now()
+    const host = await createAcrylEngineHost({ engines: [createDshEngineDefinition('t1')], initialEngine: 'dsh' })
+    const result: any = { bootMs: Date.now() - t0 }
+    try {
+      const ids = () => [...host.ctx.loader.entries()].map(e => e.options.id)
+      result.afterBoot = { fx1Row: ids().includes('fx-local-plugin'), fxLocalService: host.ctx.get('fxLocal' as never) !== undefined, fx2Row: ids().includes('fx-local-plugin-2') }
+      result.services = { desktopPlugins: host.ctx.get('desktopPlugins' as never) !== undefined, livePluginActivation: host.ctx.get('livePluginActivation' as never) !== undefined, desktopPnpm: host.ctx.get('desktopPnpm' as never) !== undefined }
+      const t1 = Date.now()
+      const add = await run(['plugin', '--profile', 't1', 'add', `file:${HOME}/_fixtures/fx-local-plugin-2`])
+      result.externalAdd = { code: add.code, ms: Date.now() - t1 }
+      // poll: does the running host pick it up with no restart and no explicit activation call?
+      let seenAt: number | null = null
+      for (let i = 0; i < 40 && seenAt === null; i++) {
+        await sleep(250)
+        if (host.ctx.get('fxLocal2' as never) !== undefined) seenAt = Date.now() - t1
+      }
+      result.liveWithoutRestart = { serviceAppearedAfterMs: seenAt, fx2Row: ids().includes('fx-local-plugin-2') }
+    } finally { await host.dispose() }
+    await writeFile(OUT, JSON.stringify(result, null, 2))
+  }, 120_000)
+})

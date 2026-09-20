@@ -1,0 +1,112 @@
+[
+  {
+    "surface": "tui",
+    "results": [
+      {
+        "fixture": "good-named",
+        "normalizedKeys": "name,inject,apply",
+        "state": "ACTIVE",
+        "unmet": [],
+        "error": "",
+        "leakedTimeoutsAfterDispose": 0
+      },
+      {
+        "fixture": "unmet-inject",
+        "normalizedKeys": "name,inject,apply",
+        "state": "PENDING",
+        "unmet": [
+          "nonexistent-service"
+        ],
+        "error": "",
+        "leakedTimeoutsAfterDispose": 0
+      },
+      {
+        "fixture": "default-export-shape",
+        "normalizedKeys": "name,apply",
+        "state": "ACTIVE",
+        "unmet": [],
+        "error": "",
+        "leakedTimeoutsAfterDispose": 0
+      },
+      {
+        "fixture": "default-plus-named-metadata",
+        "normalizedKeys": "apply",
+        "state": "ACTIVE",
+        "unmet": [],
+        "error": "",
+        "leakedTimeoutsAfterDispose": 0
+      },
+      {
+        "fixture": "throws",
+        "normalizedKeys": "name,apply",
+        "state": "FAILED",
+        "unmet": [],
+        "error": "deliberate failure",
+        "leakedTimeoutsAfterDispose": 0
+      },
+      {
+        "fixture": "leaks-timer",
+        "normalizedKeys": "name,apply",
+        "state": "ACTIVE",
+        "unmet": [],
+        "error": "",
+        "leakedTimeoutsAfterDispose": 0
+      }
+    ]
+  },
+  {
+    "surface": "web",
+    "results": [
+      {
+        "fixture": "good-named",
+        "normalizedKeys": "name,inject,apply",
+        "state": "ACTIVE",
+        "unmet": [],
+        "error": "",
+        "leakedTimeoutsAfterDispose": 1
+      },
+      {
+        "fixture": "unmet-inject",
+        "normalizedKeys": "name,inject,apply",
+        "state": "PENDING",
+        "unmet": [
+          "nonexistent-service"
+        ],
+        "error": "",
+        "leakedTimeoutsAfterDispose": 0
+      },
+      {
+        "fixture": "default-export-shape",
+        "normalizedKeys": "name,apply",
+        "state": "ACTIVE",
+        "unmet": [],
+        "error": "",
+        "leakedTimeoutsAfterDispose": 0
+      },
+      {
+        "fixture": "default-plus-named-metadata",
+        "normalizedKeys": "apply",
+        "state": "ACTIVE",
+        "unmet": [],
+        "error": "",
+        "leakedTimeoutsAfterDispose": 0
+      },
+      {
+        "fixture": "throws",
+        "normalizedKeys": "name,apply",
+        "state": "FAILED",
+        "unmet": [],
+        "error": "deliberate failure",
+        "leakedTimeoutsAfterDispose": 0
+      },
+      {
+        "fixture": "leaks-timer",
+        "normalizedKeys": "name,apply",
+        "state": "ACTIVE",
+        "unmet": [],
+        "error": "",
+        "leakedTimeoutsAfterDispose": 0
+      }
+    ]
+  }
+]

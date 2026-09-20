@@ -1,0 +1,40 @@
+import { execFile } from 'node:child_process'
+import { readFile, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { describe, it } from 'vitest'
+import { createDshEngineDefinition } from '../src/engine-dsh.ts'
+import { createAcrylEngineHost } from '../src/engine-host.ts'
+
+const HOME = process.env.DSH_HOME!
+const OUT = process.env.LIVE_OUT!
+const CLI = '/Users/musichen/_projects/p11_acr_agentcontextrelay/acryldev/acryl/apps/acryl-cli'
+const run = (args: string[]) => new Promise<{ code: number; ms: number }>(res => {
+  const t = Date.now(); execFile('corepack', ['pnpm', 'exec', 'dsh', ...args], { cwd: CLI, env: { ...process.env, DSH_HOME: HOME } }, e => res({ code: e ? ((e as any).code ?? 1) : 0, ms: Date.now() - t }))
+})
+const bundles = async () => JSON.parse(await readFile(join(HOME, 'profiles/t2/package.json'), 'utf8')).dsh.profile.bundles as string[]
+
+describe('037 Q7 explicit live activation and failure state', () => {
+  it('activate good, then a throwing plugin', async () => {
+    await run(['plugin', '--profile', 't2', 'add', `file:${HOME}/_fixtures/fx-local-plugin`]) // seeds profile t2 with fx1
+    const host = await createAcrylEngineHost({ engines: [createDshEngineDefinition('t2')], initialEngine: 'dsh' })
+    const r: any = { bootHasFx1: host.ctx.get('fxLocal' as never) !== undefined }
+    try {
+      const live: any = host.ctx.get('livePluginActivation' as never)
+      // good plugin, installed while running, then explicitly activated
+      const add2 = await run(['plugin', '--profile', 't2', 'add', `file:${HOME}/_fixtures/fx-local-plugin-2`])
+      let t = Date.now(); let err2 = ''
+      try { await live.activate('fx-local-plugin-2') } catch (e) { err2 = e instanceof Error ? e.message : String(e) }
+      r.goodPlugin = { addExit: add2.code, activateMs: Date.now() - t, activateError: err2, serviceLive: host.ctx.get('fxLocal2' as never) !== undefined, status: live.statusOf('fx-local-plugin-2') }
+      // throwing plugin
+      const add3 = await run(['plugin', '--profile', 't2', 'add', `file:${HOME}/_fixtures/fx-broken-plugin`])
+      let err3 = ''; t = Date.now()
+      try { await live.activate('fx-broken-plugin') } catch (e) { err3 = e instanceof Error ? e.message : String(e) }
+      r.brokenPlugin = { addExit: add3.code, activateMs: Date.now() - t, activateError: err3.slice(0, 200), status: live.statusOf('fx-broken-plugin'), stillInProfileBundles: (await bundles()).includes('fx-broken-plugin') }
+      r.hostStillHealthy = host.ctx.get('fxLocal2' as never) !== undefined && host.ctx.get('sessions' as never) !== undefined
+      // manual compensation
+      const rm = await run(['plugin', '--profile', 't2', 'remove', 'fx-broken-plugin'])
+      r.compensation = { removeExit: rm.code, bundlesAfter: await bundles() }
+    } finally { await host.dispose() }
+    await writeFile(OUT, JSON.stringify(r, null, 2))
+  }, 180_000)
+})

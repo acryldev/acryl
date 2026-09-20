@@ -4,7 +4,7 @@
 
 **Feature Directory**: `specs/037-guardrailed-self-extension`
 **Created**: 2026-09-20
-**Status**: draft - plan and tasks written; T001-T004 (research gates) open
+**Status**: research complete 2026-09-20 (all eight gates answered with evidence, see `research.md`); implementation starts at Slice 1
 **Authority**: `.specify/memory/constitution.md` (principles I, V; Cordis
 Authoring Laws), `docs/ACRYL-RUNTIME-SURFACE-CONTRACT.md`,
 `specs/033-acryl-blends-runtime-contract/spec.md`,
@@ -160,9 +160,11 @@ that is stated as a gap, not papered over.
   the manifest. A doc not in the manifest does not exist to the agent, and the
   gate fails on an unlisted file.
 - **FR-002 Shippable pack.** Docs, examples and skills live in one owned package
-  (`plugins/acryl-extension-context`, private) that is a dependency of every
-  surface and is present on disk in an installed CLI, an installed Web runtime
-  and a packaged Desktop app.
+  (`plugins/acryl-extension-context`, private) that is a `dependencies` entry of
+  every surface package and is present, as real files, in the prepared CLI and
+  Web release archives and in a packaged Desktop app (under `asarUnpack`ed
+  `node_modules`). It is never bundled as JS. Example packages avoid `test` and
+  `tests` directory names because the release pruner deletes them.
 - **FR-003 Runtime path resolution.** The runtime plugin resolves the pack root
   at runtime and exposes it as a service (`extensionContext`); no path is
   hard-coded in a prompt. The agent can read the resolved files with its normal
@@ -193,8 +195,13 @@ that is stated as a gap, not papered over.
   their fiber states, unmet `inject` by service name, services and events
   provided, leaked effects after dispose, behavior across repeated mount and
   reload, manifest and permission lint, and declared-versus-mounted surfaces.
-  It never mutates the user's profile. Exit status is non-zero on any error
-  finding.
+  It mounts the candidate into the real surface host (so `inject` resolves
+  against real services) after normalizing it through the host Loader's own
+  `unwrapExports`. Lint includes: `exports` must include `./package.json` (else
+  live activation fails), a default export mixed with named `name`/`inject`/`Config`
+  is an error (the named metadata is silently dropped), the exact `acryl-package`
+  keyword and a valid `acryl` manifest for publishable packages. It never mutates
+  the user's profile. Exit status is non-zero on any error finding.
 - **FR-009 Bundled skills.** A small set of authoring skills (workflow
   triggers, not duplicated reference) is registered through the existing skill
   provider seam at the bundled rank, so a project or user skill of the same name
@@ -238,21 +245,26 @@ path. Neither path introduces a second loader, install engine or trust model.
 | --- | --- | --- |
 | Author | agent writes a package in a local plugin workspace | same package |
 | Gate | `acryl plugin verify` green for the declared surfaces | same, plus publish lint |
-| Deliver | `acryl plugin install --local <dir>`: `pnpm add file:` in the profile's own pnpm, reconcile `dsh.profile.bundles`, activate through `ctx.livePluginActivation` (specs 031, 032, 033 B2) | `acryl plugin publish`: pack, lint (`acryl-package` keyword, manifest, license), then npm publish **only after explicit human approval**; catalog picks it up from npm (spec 030) |
+| Deliver | `acryl plugin install --local <dir>`: `dsh plugin add file:<dir>` (pnpm add plus bundle reconcile, about 0.45 s), then an explicit `livePluginActivation.activate(pkg)` (about 4 ms, no restart); compensating `dsh plugin remove` on failure (specs 031, 032, 033 B2; measured on tui) | `acryl plugin publish`: pack, lint (`acryl-package` keyword, manifest, license), then npm publish **only after explicit human approval**; catalog picks it up from npm (spec 030) |
 | Live effect | host-side rows mount and unmount live; a client-side change reloads the renderer (spec 032 limits) | after catalog refresh and Market install, same live activation as any market plugin |
 | Iterate | edit, re-verify, `ACRYL_PLUGIN_WATCH` or explicit re-install; old fiber disposed first | publish a new version |
-| Undo | disable or remove through the plugin lifecycle controller; profile state restored by the install WAL | unpublish is out of scope; local disable applies |
+| Undo | disable or remove through the plugin lifecycle controller; failed installs are compensated by removal (Desktop also has its recovery log) | unpublish is out of scope; local disable applies |
 | Authority | the user's existing approval and authorization policy for installing a plugin | publishing is public and irreversible: never automatic, always a human decision |
 
 - **FR-016 Local live delivery.** The agent can take a verified package from its
   local workspace to an active plugin in the running profile without a
   marketplace, without restarting the ACRYL runtime, on CLI, Web and Desktop.
-  Failure at any step leaves the profile as it was (the existing install
-  write-ahead-log rollback), and the agent receives the real error.
+  Failure at any step leaves the profile as it was and the agent receives the real
+  error. Desktop uses its existing install recovery log; CLI and Web have none, so
+  the install command compensates itself (`dsh plugin remove`) - measured in
+  `research.md` Q7, where a throwing plugin stayed in `dsh.profile.bundles` until
+  removed.
 - **FR-017 Marketplace delivery.** The same package can be prepared for and
   published to the marketplace. Preparation (pack, lint, dry run) is automatic
   and safe. The publish step requires explicit human approval each time, is never
   performed from a prompt alone, and never uses credentials the agent can read.
+  No agent-callable publish tool exists at all; the publish command runs only in an
+  interactive terminal with a typed confirmation of package name and version.
   After publication the agent can confirm catalog visibility and install from
   the market the same way a user does.
 - **FR-018 One package, both paths.** Nothing in a package depends on which path
@@ -263,7 +275,7 @@ path. Neither path introduces a second loader, install engine or trust model.
   examples (an install-and-activate scenario and a pack-and-lint scenario), and
   the router policy names both paths.
 
-## Plugin-type coverage matrix (to be finalized by T001)
+## Plugin-type coverage matrix (finalized 2026-09-20 from the census, `research.md` Q1 and Q6)
 
 Source-grounded starting list. `n/a` means the surface has no such seam and the
 doc says so. Rows marked (?) have an open question in `research.md`.
@@ -281,10 +293,10 @@ doc says so. Rows marked (?) have an open question in `research.md`.
 | 9 | Skill provider / bundled skill | yes | yes | yes | yes | yes |
 | 10 | LLM adapter | yes | yes | yes | yes | yes |
 | 11 | Agent preset / subagent | yes | yes | yes | yes | yes |
-| 12 | Host route / RPC | n/a (?) | yes | yes | yes | yes |
+| 12 | Host route / RPC | n/a | yes | yes | yes | yes |
 | 13 | Client slot plugin (`ctx.slots.inject`, settings card) | n/a | yes | yes | yes | yes |
 | 14 | Desktop-main plugin (`desktopProfiles`, `desktopPnpm`) | n/a | n/a | yes | yes | yes |
-| 15 | TUI presentation contribution | yes (?) | n/a | n/a | yes | yes |
+| 15 | TUI presentation contribution (`ctx.get('tuiCommands')?.register`) | yes | n/a | n/a | yes | yes |
 | 16 | Packaging: bundle, `cordis.patch.yml`, profile install | yes | yes | yes | yes | yes |
 | 17 | Generated capability package (Blend module) with permissions, tests, provenance | yes | yes | yes | yes | yes |
 | 18 | Failure and diagnosis (FAILED, PENDING, leak after reload) | yes | yes | yes | yes | yes |
@@ -361,20 +373,8 @@ Evidence, not unit tests alone:
 
 ## Open questions
 
-Tracked in `research.md`; each gates a task in `tasks.md`:
-
-1. Q1 - What are the real plugin types and per-surface seams (the matrix)?
-2. Q2 - How does a plugin register a `PromptSection` and a `SkillProvider`
-   today, and at what order values?
-3. Q3 - Can the pack be resolved and read from an installed CLI, an installed
-   Web runtime and a packaged Desktop app (asar)?
-4. Q4 - What does a Loader-based headless verifier need to boot per surface,
-   and how does it relate to `plugin-doctor` and `specs/033`'s adapter?
-5. Q5 - Where does eval live relative to `specs/013-acryl-12-trace-eval`?
-6. Q6 - What is the TUI extension seam, if any (matrix row 15)?
-7. Q7 - Where does the agent write a local package (which directory, how is it
-   watched) and does `ctx.livePluginActivation` work from CLI and Web, or only
-   Desktop (specs 031, 032, 033 B2)?
-8. Q8 - What does a safe publish step look like: which credential source, which
-   approval seam, what dry-run does npm provide, and how does the agent confirm
-   catalog visibility (spec 030 refreshes every 15 minutes)?
+All eight were answered on 2026-09-20 with measured evidence in `research.md`
+(Q1 census and export shapes, Q2 seams, Q3 packaging, Q4 verifier prototype, Q5 eval
+home, Q6 TUI seam, Q7 local live path, Q8 publish design). Decisions D1-D11 there
+are binding for the plan and tasks. Remaining unknowns are implementation details
+(exact registration calls at T011, web and desktop live-install parity at T018).

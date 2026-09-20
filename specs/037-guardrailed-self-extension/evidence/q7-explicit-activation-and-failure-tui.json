@@ -1,0 +1,24 @@
+{
+  "bootHasFx1": true,
+  "goodPlugin": {
+    "addExit": 0,
+    "activateMs": 1,
+    "activateError": "Package subpath './package.json' is not defined by \"exports\" in /tmp/acryl-037-q7-0689/profiles/t2/node_modules/fx-local-plugin-2/package.json",
+    "serviceLive": false
+  },
+  "brokenPlugin": {
+    "addExit": 0,
+    "activateMs": 1,
+    "activateError": "Package subpath './package.json' is not defined by \"exports\" in /tmp/acryl-037-q7-0689/profiles/t2/node_modules/fx-broken-plugin/package.json",
+    "stillInProfileBundles": true
+  },
+  "hostStillHealthy": false,
+  "compensation": {
+    "removeExit": 0,
+    "bundlesAfter": [
+      "@deepseek-ai/dsh-base",
+      "fx-local-plugin",
+      "fx-local-plugin-2"
+    ]
+  }
+}

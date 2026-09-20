@@ -25,7 +25,7 @@ docs/
 examples/
   README.md                  generated index of examples
   scenarios.json             expected outcomes, one entry per scenario
-  packages/<type>-<name>/    each example is a real package (package.json, index, tests)
+  packages/<type>-<name>/    each example is a real package (package.json, index, checks/); never name a dir test or tests (release pruner deletes it)
 skills/<name>/SKILL.md       bundled authoring skills
 evals/
   tasks/<id>.json            eval task definitions
@@ -187,6 +187,9 @@ type VerifyCode =
   | 'config-invalid' | 'leaked-effect' | 'remount-duplicates' | 'remount-failed'
   | 'surface-declared-not-mounted' | 'surface-mounted-not-declared'
   | 'manifest-missing' | 'permissions-undeclared' | 'tests-missing' | 'provenance-missing'
+  | 'package-json-not-exported'    // exports lacks "./package.json": installs but cannot go live (measured)
+  | 'default-with-named-metadata'  // named name/inject/Config dropped by Loader unwrapExports (measured)
+  | 'catalog-keyword-missing' | 'acryl-manifest-invalid' | 'bundle-patch-missing' | 'repository-not-github'
 ```
 
 `docs` on a finding is the routing feedback loop: a failed check points the agent

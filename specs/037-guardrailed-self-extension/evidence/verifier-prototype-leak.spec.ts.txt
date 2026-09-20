@@ -1,0 +1,80 @@
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
+import { describe, it } from 'vitest'
+import { createDshEngineDefinition, createWebEngineDefinition } from '../src/engine-dsh.ts'
+import { createAcrylEngineHost } from '../src/engine-host.ts'
+
+const OUT = process.env.PROTO_OUT!
+const STATE = ['PENDING', 'LOADING', 'ACTIVE', 'FAILED', 'DISPOSED', 'UNLOADING']
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+const live = new Set<unknown>()
+const real = { si: globalThis.setInterval, ci: globalThis.clearInterval, st: globalThis.setTimeout, ct: globalThis.clearTimeout }
+function installShim() {
+  ;(globalThis as any).setInterval = (...a: any[]) => { const h = (real.si as any)(...a); live.add(h); return h }
+  ;(globalThis as any).clearInterval = (h: any) => { live.delete(h); return real.ci(h) }
+  ;(globalThis as any).setTimeout = (...a: any[]) => { const h = (real.st as any)(...a); live.add(h); return h }
+  ;(globalThis as any).clearTimeout = (h: any) => { live.delete(h); return real.ct(h) }
+}
+function removeShim() { globalThis.setInterval = real.si; globalThis.clearInterval = real.ci; globalThis.setTimeout = real.st; globalThis.clearTimeout = real.ct }
+const timeouts = () => live.size
+
+// Fixture candidates (as module namespaces / default-export shapes).
+const fixtures: Record<string, () => unknown> = {
+  'good-named': () => ({ name: 'fx-good', inject: ['tools'], apply(ctx: any) { ctx.provide('fxGood', { ok: true }) } }),
+  'unmet-inject': () => ({ name: 'fx-unmet', inject: ['nonexistent-service'], apply() {} }),
+  'default-export-shape': () => ({ default: { name: 'fx-default', apply() {} } }),
+  'default-plus-named-metadata': () => ({ default: { apply() {} }, name: 'fx-lost-name', inject: ['nonexistent-service'] }),
+  'throws': () => ({ name: 'fx-throws', apply() { throw new Error('deliberate failure') } }),
+  'leaks-timer': () => ({ name: 'fx-leak', apply() { setInterval(() => {}, 60_000) } }),
+  'effect-owned-timer': () => ({ name: 'fx-effect', apply(ctx: any) { ctx.effect(() => { const t = setInterval(() => {}, 60_000); return () => clearInterval(t) }) } }),
+}
+
+async function run(label: string, make: () => Promise<Awaited<ReturnType<typeof createAcrylEngineHost>>>) {
+  const host = await make()
+  const results: any[] = []
+  try {
+    const loader: any = host.ctx.loader
+    for (const [id, build] of Object.entries(fixtures)) {
+      live.clear(); installShim()
+      let error = ''
+      let state = 'n/a'
+      let unmet: string[] = []
+      let normalizedKeys = ''
+      try {
+        const normalized = loader.unwrapExports(build() as any)
+        normalizedKeys = Object.keys(normalized ?? {}).join(',')
+        const fiber: any = host.ctx.plugin(normalized as any, {})
+        try { await fiber.await() } catch (e) { error = e instanceof Error ? e.message : String(e) }
+        await sleep(30)
+        state = STATE[fiber.state]
+        const inject = (normalized as any).inject
+        const names: string[] = Array.isArray(inject) ? inject : Object.keys(inject ?? {})
+        unmet = names.filter(n => host.ctx.get(n as never) === undefined)
+        await fiber.dispose()
+        await sleep(30)
+      } catch (e) { error = e instanceof Error ? e.message : String(e) }
+      const leaked = timeouts(); removeShim(); for (const h of live) real.ci(h as any); live.clear()
+      results.push({ fixture: id, state, error, timersStillLiveAfterDispose: leaked })
+    }
+  } finally { await host.dispose() }
+  return { surface: label, results }
+}
+
+describe('037 verifier prototype', () => {
+  it('mounts fixtures into real tui and web hosts', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-037-verify-'))
+    process.env.DSH_HOME = home
+    const out = []
+    try {
+      out.push(await run('tui', () => createAcrylEngineHost({ engines: [createDshEngineDefinition('acryl-test')], initialEngine: 'dsh' })))
+      const installPackageUrl = new URL('../package.json', import.meta.url).href
+      out.push(await run('web', () => createAcrylEngineHost({
+        engines: [createWebEngineDefinition(installPackageUrl)], initialEngine: 'dsh',
+        prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+      })))
+    } finally { await rm(home, { recursive: true, force: true }) }
+    await writeFile(OUT, JSON.stringify(out, null, 2))
+  }, 180_000)
+})

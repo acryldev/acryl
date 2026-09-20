@@ -2,7 +2,7 @@
 
 **Spec**: `specs/037-guardrailed-self-extension/spec.md`
 **Data model**: `data-model.md`
-**Status**: active (research gates open)
+**Status**: active (research gates closed 2026-09-20; Slice 1 next)
 **Created**: 2026-09-20
 
 ## Shape of the change
@@ -47,12 +47,12 @@ real size; measure (6) last because it needs everything, but its harness shape
 | System prompt content | `dsh-system-prompt` `PromptSection` / `PromptContext`; `persona` composed for `tui` only | one router `PromptSection`; must not depend on `persona` (Q2) |
 | Skills | `dsh-skill` registry, `SkillProvider`, bundled rank 600, `dsh-skill-badge` precedent | `acryl-extension-context` registers a bundled `SkillProvider` for `skills/` |
 | Project instructions | `dsh-agent-instructions` (default) | one pointer line in this repo's `AGENTS.md` only |
-| Docs on disk for installed users | none (`acryl-cli` ships `lib/**`) | pack as a dependency of each surface package; path resolved by the runtime plugin (Q3) |
+| Docs on disk for installed users | none: the published `acryl` package is a launcher plus per-platform prepared runtime archives (`publish-npm-cli.mjs`, `build-cli-archive.mjs`, `build-web-archive.mjs`); Desktop is asar with `node_modules/**` unpacked | pack as a `dependencies` entry so it is under `node_modules` in every archive and unpacked in Desktop; runtime resolves it and maps `app.asar` to `app.asar.unpacked`; release inspection fails if it is absent; not in `noExternal` (Q3) |
 | Examples | `examples/acryl-blend-demo` only | `plugins/acryl-extension-context/examples/packages/*`; the demo stays where it is and is cross-linked |
 | Candidate verification | `plugin-doctor.ts` (profile health) | `acryl-harness-runtime/src/plugin-verify.ts` beside it, per-candidate, per-surface (Q4) |
-| Local install and live activation | `desktop-plugin-reconcile.ts` (031), `ctx.livePluginActivation` (032), generated-module resolution (033 B2); CLI has `plugin list/enable/disable/doctor` (034 T003) | `acryl plugin install --local`, shared capability, no Desktop-private copy (Q7) |
+| Local install and live activation | `desktop-plugin-reconcile.ts` (031), `ctx.livePluginActivation` (032), generated-module resolution (033 B2); CLI has `plugin list/enable/disable/doctor` (034 T003) | `acryl plugin install --local`: verify, `dsh plugin add file:`, explicit `livePluginActivation.activate`, compensating `remove`; shared capability, no Desktop-private copy (Q7) |
 | Marketplace | `cordis-plugin-market`, catalog from npm `acryl-package` keyword (030) | `acryl plugin publish` prepare + human-approved publish; no catalog change (Q8) |
-| Eval | `specs/013-acryl-12-trace-eval` (state unread); tutorial harness in `_experiments` | eval package or tasks inside 013 (Q5) |
+| Eval | `specs/013-acryl-12-trace-eval` is an unfilled stub with a privacy note; tutorial harness in `_experiments` | `plugins/acryl-extension-context/evals/`; full trajectories local and gitignored, summaries committed (Q5, D11) |
 | Doc corpus | scattered, no manifest | synced, split, surface-tagged, provenance-stamped, manifest-indexed |
 
 ## Cordis mini-design (`AGENTS.md` requires this before implementation)
@@ -126,12 +126,17 @@ Derived from `surfaces` declarations, not a per-surface list.
 Reuses, does not reimplement:
 
 1. Agent writes the package under the profile's local plugin workspace
-   (`<ACRYL_HOME>/plugins-local/<name>/`, final location fixed by Q7).
+   (`<profile>/plugins-local/<name>/`, so a throwaway `DSH_HOME` isolates it).
 2. `acryl plugin verify` against the surfaces the package declares.
-3. `acryl plugin install --local <dir>`: the shared install capability runs the
-   profile's own pnpm with `file:`, reconciles `dsh.profile.bundles`, and
-   activates through `ctx.livePluginActivation` (spec 033 B2 sequence). The install
-   write-ahead log restores the profile if any step fails (spec 031 behavior).
+3. `acryl plugin install --local <dir>`: the shared install capability refuses on
+   verifier errors, runs `dsh plugin add file:<dir>` (pnpm add plus bundle
+   reconcile), reads `ctx.get('livePluginActivation')` **at call time** (the
+   documented ordering trap), and calls `activate(packageName)`. On any failure it
+   runs the compensating `dsh plugin remove`, because CLI and Web have no recovery
+   log (measured: a throwing plugin stayed in `dsh.profile.bundles`). Desktop keeps
+   its own recovery log behind the same result type. `file:` copies the package, so
+   editing requires re-adding; `link:` may enable the edit-and-see loop (T018 tests
+   it).
 4. The result is a `LocalInstallResult`. `activation: 'live'` on host-side
    rows; `'reload-required'` when a client bundle changed (spec 032 renderer
    reload); `'restart-required'` only if Q7 finds a surface that needs it, in
@@ -142,15 +147,19 @@ Reuses, does not reimplement:
 ## Marketplace delivery design
 
 1. Same verified package.
-2. `acryl plugin publish --prepare` (safe, automatic): `pnpm pack`, lint
-   (`acryl-package` keyword, manifest, license, `files` allowlist, no secrets,
-   declared surfaces equal verified surfaces), then install the produced tarball
-   into a throwaway profile and mount it, so the packed artifact is what is
-   proven. Returns `PublishPrepResult`.
-3. `acryl plugin publish` (human-approved every time): shows the tarball
-   contents, version and target registry, requires an explicit confirmation
-   through the existing approval seam, uses the user's own npm authentication
-   which the agent cannot read, and is never run by any automated gate.
+2. `acryl plugin publish --prepare` (safe, automatic): `npm pack`, lint against the
+   catalog's real listing rules (exact `acryl-package` keyword, valid `acryl`
+   manifest with existing artifact paths, `dsh.bundle.patch` in `files`, `exports`
+   includes `./package.json`, GitHub `repository`, `description`, `license`, version
+   not yet published, no secrets, declared surfaces equal verified surfaces), run
+   `npm publish --dry-run` (no credentials needed, cannot upload), then install the
+   produced tarball into a throwaway profile and mount it (proven headlessly), so
+   the packed artifact is what is verified. Returns `PublishPrepResult`.
+3. `acryl plugin publish` (human-only): shows the tarball contents, version and
+   registry, requires an interactive terminal and a typed confirmation of package
+   name and version, uses the user's own npm authentication, and is never run by any
+   automated gate. **No agent tool for publish is registered**, so misuse is
+   structurally impossible rather than policy-blocked.
 4. Visibility: the catalog refreshes about every 15 minutes (spec 030 A). The
    agent confirms with the catalog source's own read API through the market
    client, not by scraping npm, and reports "pending refresh" honestly.
@@ -217,9 +226,11 @@ GUI confirmation for Desktop and Web panels stays a separate human-attended task
 
 ## Risks
 
-- **Asar and packaging (Q3).** If the agent cannot read the pack in a packaged
-  Desktop app, the router points at nothing. Mitigation: decide and test before
-  claiming Desktop; fallback is materializing to `<ACRYL_HOME>/context/<version>/`.
+- **Packaging (Q3, measured).** Files inside `app.asar` are invisible to child-process
+  tools, and the release pruner deletes `test`/`tests` directories under
+  `node_modules`. Mitigation: dependency under `asarUnpack`ed `node_modules`, path
+  mapping, examples use `checks/`, release inspection asserts the pack is present;
+  fallback is materializing to `<ACRYL_HOME>/context/<version>/`.
 - **Router present but ignored.** The tutorial showed reads at first contact and
   none later. Mitigation: verifier findings carry doc ids so failure routes the
   agent back to the right doc; the eval measures reads and outcome; the policy

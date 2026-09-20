@@ -82,8 +82,7 @@ Verified by reading source and docs on 2026-09-20.
 
 ## Q1 - What are the real plugin types and per-surface seams?
 
-**Status**: partly resolved 2026-09-20 (tui and web measured; desktop and the
-type census still open)
+**Status**: resolved 2026-09-20 (three surfaces measured; matrix adjusted below)
 **Gates**: T003 (matrix), T011 onward (docs and examples)
 
 Known: `AcrylSurface` has three values; spec 034 says CLI/TUI has no client slot
@@ -100,7 +99,7 @@ built from that and from the harness package map, not yet from a census.
 | --- | --- | --- |
 | tui | 89 | strict subset of web (no tui-only row) |
 | web | 159 | adds 70 rows: `webserver`, `client-modules` (`modules`), `web-runtime`, `web-startup`, `plugin-inventory`, `community-market`, `ui-*` client plugins (chat, settings, plugins, skill, tool, sidebar, ...), `session-controller`, `workspace`, `file-upload`, ... |
-| desktop | not measured | needs the Electron gate (`scripts/verify-loader-boot.mjs`); spec 034 measured 168 on 2026-09-12 |
+| desktop | 168 | `apps/acryl-desktop/scripts/verify-loader-boot.mjs` with `DEBUG_VERIFY_LOADER_BOOT=1` (`evidence/census-desktop.json`); same count as spec 034; composes the same `system-prompt`, `skill`, `skill-filesystem`, `tool-skill`, `agent-instructions` rows as tui and web |
 
 Spec 034 measured tui 88 and web 157 on 2026-09-12, so both drifted by +1 and +2
 since; the matrix must be regenerated from a fresh census, never copied.
@@ -112,7 +111,35 @@ both hosts: client slots belong to the Client Cordis generation in the renderer,
 not the Host, so a client-slot example must be verified in a Client context
 (open: how, T025).
 
-Still to do: census the real rows. For each of `tui`, `web`, `desktop` boot the real
+**Export shapes (new, verified)**: the real Loader normalizes every module with
+`unwrapExports(exports)`: `exports.default ?? exports` (plus `__esModule`
+unwrapping) in `cordis-plugin-loader`. So `export default` **works** for
+Loader-composed packages (profile bundles, installed plugins) and is **rejected**
+by a bare `ctx.plugin(namespace)`. Measured hazard (`evidence/verifier-prototype-tui-web.json`):
+a module with a default export **and** named `name`/`inject` normalizes to only
+the default's own keys, so the named `inject: ['nonexistent-service']` was
+silently dropped and the plugin mounted **ACTIVE** instead of PENDING. Rule for
+the docs and the verifier: name-export form (`name`, `inject`, `Config`, `apply`)
+is the portable form; a default export must carry its metadata itself; mixing is
+an error finding (`default-with-named-metadata`).
+
+**TUI seam (Q6, resolved)**: see Q6; the matrix row 15 is `tui` only.
+
+**Client slots**: `slots` does not resolve on any Host (client slots belong to
+the renderer's Client generation), so row 13 examples are verified against a
+Client context, not the Host census. Matrix confirmed with these corrections:
+row 12 (Host route) is web and desktop only (`webServer` is web only in the
+census; desktop has `acryl-desktop/webserver`); rows 13-14 as specified; row 15
+is `tui` only.
+
+**Catalog artifact kinds (new)**: an ACRYL package's `acryl` manifest field
+(`schemaVersion: 1`, `artifacts`) recognizes `plugins`, `extensions`, `adapters`,
+`skills`, `workflows`, `blueprints`, `stemcells` (see Q8). The matrix types map:
+1-8, 11-15 to `plugins`; 9 to `skills`; 10 to `adapters`; 17 to
+`blueprints`/`stemcells` (exact mapping to confirm at T026).
+
+Still to do: none for Q1; the type-by-type classification of the 168 rows is
+deferred to when each doc is written. For each of `tui`, `web`, `desktop` boot the real
 engine definition headlessly and list `ctx.loader.entries()` (method already used
 in spec 034's research); map each row to a type; find the real TUI contribution
 mechanism (Q6); confirm whether the real Loader unwraps `export default` (the
@@ -121,8 +148,8 @@ exist.
 
 ## Q2 - How is a `PromptSection` and a `SkillProvider` registered, and at what order?
 
-**Status**: partly resolved 2026-09-20 - the seams exist on tui and web; exact
-registration calls and `order` still to read
+**Status**: seams resolved on all three surfaces 2026-09-20 (desktop rows
+confirmed in Q1); exact registration calls and `order` are read at T011
 **Gates**: T005, T006
 
 Known: `PromptSection` sorts by ascending `order` then name and may be static
@@ -149,14 +176,53 @@ is tui-only today and the router must not depend on it.
 
 ## Q3 - Can the pack be resolved and read from installed builds, including asar?
 
-**Status**: open, high risk
-**Gates**: T004, T017
+**Status**: resolved 2026-09-20 with three corrections to the plan
+**Gates**: T029 (shipping)
 
 Known: an installed CLI has only `lib/**` and `README.md`. Desktop is Electron;
 files inside an `asar` archive are not readable by ordinary child-process or
 external tools, and the agent's read tool is a filesystem read.
 
-To do: decide the packaging (pack as a dependency of each surface package, or
+**Measured 2026-09-20**:
+
+1. **Desktop, packaged app** (`apps/acryl-desktop/dist/mac-arm64/ACRYL.app`): `app.asar`
+   is a single 5.9 MB file. An external tool cannot read inside it (`cat
+   app.asar/package.json` -> "Not a directory"), so shell and ripgrep-style child
+   processes cannot see files that stay inside the archive. Electron's own Node
+   `fs` (run-as-node, how the packaged runtime executes) reads asar paths
+   transparently (`readFileSync`, `readdirSync` on `app.asar/lib` returned 77
+   entries). The builder config has `asar: true` and `asarUnpack: ["package.json",
+   "cordis.patch.yml", "build/**", "lib/**", "node_modules/**"]`; `Resources/app.asar.unpacked/node_modules`
+   holds 273 real package directories. **A pack shipped as a dependency lands under
+   `node_modules/**` and is therefore real files on disk.** `require.resolve` from
+   inside the app returns the virtual `.../app.asar/node_modules/...` path, so
+   the runtime plugin must map it to `.../app.asar.unpacked/...` before
+   handing it to the agent (whose tools include child-process based search).
+2. **The published CLI is a launcher, not `lib/**`**: `scripts/publish-npm-cli.mjs`
+   builds an `acryl` selector package (`bin.js`, `runtime.js`, ...) plus
+   per-platform `optionalDependencies` whose `files` are `runtime/**`, extracted
+   from prepared archives (`scripts/build-cli-archive.mjs`, receipt-checked). The
+   pack has to be inside those prepared runtime archives (CLI and Web,
+   `build-web-archive.mjs`), and `scripts/inspect-artifact.mjs` and the release
+   contract are the gates that will see it. The publish tsdown build
+   (`tsdown.publish.config.ts`) bundles `acryl-control` and `acryl-harness-runtime`
+   (`noExternal`); the pack must stay out of `noExternal` because docs and
+   examples are assets, not JS.
+3. **The release pruner deletes `test` and `tests` directories under
+   `node_modules`** (`scripts/prune-release-payload.mjs`: `*.map` and
+   `node_modules/**/(test|tests)/**`). Example packages must not keep files in
+   directories named `test` or `tests`, or a shipped pack silently loses them. The
+   data model uses `checks/` instead.
+
+Decision: ship the pack as a normal `dependencies` entry of each surface package
+(so it is under `node_modules` in every prepared archive and `asarUnpack`ed in
+Desktop), resolve it at runtime with `createRequire(...).resolve(
+'acryl-extension-context/package.json')`, map `app.asar` to `app.asar.unpacked`
+where present, and fail the release inspection if the pack is absent. No
+materialization to `<ACRYL_HOME>` is needed; it stays as the fallback only if T029
+finds a surface where the dependency is pruned.
+
+Original plan text: decide the packaging (pack as a dependency of each surface package, or
 publish separately), then test on a real installed CLI (`npm pack` of the CLI in
 a scratch directory), a built Web runtime and a packaged Desktop app whether the
 agent's read tool can open `docs.json`. If asar blocks it, the fallbacks are
@@ -166,8 +232,41 @@ version check). Decision recorded here with the evidence before T017.
 
 ## Q4 - What does a headless Loader verifier need, and how does it relate to `plugin-doctor` and spec 033?
 
-**Status**: open
-**Gates**: T007, T008
+**Status**: resolved 2026-09-20 (tui and web prototyped; desktop via the existing
+gate)
+**Gates**: T015
+
+**Measured 2026-09-20** (`evidence/verifier-prototype-tui-web.json`,
+`evidence/verifier-prototype-leak-tui-web.json`; reproduce from the `.spec.ts.txt`
+files): six fixtures mounted into the real tui and web hosts, normalized with the
+host Loader's own `unwrapExports`, mounted with `host.ctx.plugin(...)` and observed:
+
+| Fixture | tui | web | Observable |
+| --- | --- | --- | --- |
+| named export, `inject: ['tools']`, provides a service | ACTIVE | ACTIVE | state, service |
+| `inject: ['nonexistent-service']` | PENDING | PENDING | unmet inject by name: `ctx.get(name) === undefined` |
+| default-export namespace | ACTIVE | ACTIVE | normalized keys `name,apply` |
+| default + named metadata | ACTIVE | ACTIVE | normalized keys `apply` only: **metadata dropped** |
+| `apply()` throws | FAILED | FAILED | real error text `deliberate failure` |
+| bare `setInterval` in `apply()` | ACTIVE | ACTIVE | leak: 3 timers live after dispose vs baseline 2 |
+| timer inside `ctx.effect` | ACTIVE | ACTIVE | after dispose: back to baseline 2 |
+
+Design consequences: (1) mount into the **real surface host**, not a stub, so a
+candidate's `inject` resolves against real services; (2) always normalize through
+the host Loader so the verifier matches production; (3) leak detection needs a
+timer-tracking shim active only during the candidate's mount and dispose, with the
+baseline taken from a warm-up no-op mount, because the host itself holds 2 timers
+(5 during the first web mount) and `process.getActiveResourcesInfo()` diffs are
+too noisy (first attempt produced a false positive and a false negative); (4) a
+FAILED fixture still needs disposing; (5) for `tuiCommands` and other services the
+CLI host provides in `prepare` (Q6), the verifier supplies the same `prepare`.
+Desktop: `verify-loader-boot.mjs` already mounts a third-party package
+(`dsh-desktop-loader-smoke-plugin`) in the real Desktop Loader tree; the desktop
+verifier reuses `prepareDesktopProfile` plus `boot`, needs `--expose-internals`
+and the built `lib/`, and is therefore the slowest surface (tui/web verify in
+about 4 s on this machine). Module home: `runtime/acryl-harness-runtime/src/plugin-verify.ts`,
+beside and independent of `plugin-doctor.ts` (which reads a profile snapshot);
+a note for spec 033 B1/B3 is added when T015 lands.
 
 Known: spec 019 established Loader smokes as headless-safe; the engine
 definitions for each surface are `createDshEngineDefinition` (tui),
@@ -185,8 +284,8 @@ to B3 rather than a competing check.
 
 ## Q5 - Where does the eval harness live relative to spec 013 (trace-eval)?
 
-**Status**: open
-**Gates**: T023
+**Status**: resolved 2026-09-20
+**Gates**: T031
 
 Known: `specs/013-acryl-12-trace-eval` exists; its state was not read for this
 draft. The tutorial harness (`agent-trajectory-tests`) has: WS client, goals read
@@ -194,30 +293,52 @@ from real events and files, run folders `result-of-run-<DD-MM-YY-HH-MMAM>-<runId
 usage and cache metrics, docs and examples read counts, previous-run comparison,
 `--reset-workspace`.
 
-To do: read spec 013; if it covers the same ground, 037's eval becomes tasks and
+**Resolved**: `specs/013-acryl-12-trace-eval/spec.md` is an unfilled stub ("This
+file is a placeholder. Do not implement from it."), with one note: "Traces are a
+product asset with privacy boundaries." So the eval harness lives in 037
+(`plugins/acryl-extension-context/evals/`) and 013 stays untouched; 013 may later
+absorb it. The privacy note changes the tutorial's habit: full trajectories of real
+sessions contain user prompts and file contents, so eval run folders keep full
+trajectories in a gitignored local `results/` directory and only `summary.json`
+files are committed. Task inputs are synthetic.
+
+Original: read spec 013; if it covers the same ground, 037's eval becomes tasks and
 goals inside it; if not, port the harness as a package here with the run-folder
 convention. Either way the goals must come from the verifier, not from agent prose.
 
 ## Q6 - What is the TUI extension seam, if any?
 
-**Status**: open
-**Gates**: T003 (matrix row 15), the TUI example
+**Status**: resolved 2026-09-20
+**Gates**: the TUI doc and example (T025)
 
 Known: the surface contract says plugins may declare TUI presentation slots, and
 the first terminal surface adopts `tomowang/dsh-tui` 0.7.0 (pi-tui). No TUI
 plugin example exists in this repo. Pi's `examples/plugins/pi-example-plugin`
 builds separate Session-worker and TUI Chord facets, a possible model.
 
-To do: read the TUI adapter source, find what a plugin can contribute (commands,
+**Resolved (read `apps/acryl-cli/src/tui/tui-commands-service.ts`)**: there is a
+real seam, added by spec 034 T009. A plugin's Host `apply(ctx)` calls
+`ctx.get('tuiCommands')?.register({ command, description, packageName?, overlay?,
+open({ tui, close }) => Component })`, where `Component` is a `pi-tui` component
+pushed on the overlay stack; `register` returns a disposer to wrap in `ctx.effect`;
+a name collision never throws (disambiguated as `/cmd:<pkg>` and
+`/plugin:<pkg>/cmd`). `TuiCommandsService` is provided once in the CLI host's
+`prepare` hook (`host/direct.ts`), so it exists only on tui: it must be read with
+`ctx.get` (optional), never `inject`, and it is `undefined` on web and desktop.
+Documented trap: a `Service`'s `this.ctx` is its construction scope, not the
+caller's, so registration must not read `this.ctx.loader` or `this.ctx.fiber`.
+Web's counterpart is the `dsh.client` slot registry. The TUI is a `pi-tui`
+(`@earendil-works/pi-tui` 0.84.2) application. Matrix row 15 is `tui` only.
+
+Original: read the TUI adapter source, find what a plugin can contribute (commands,
 key chords, widgets), and either write the doc and example or record "no seam"
 and mark the matrix row `n/a` with the reason.
 
 ## Q7 - Local live path: where does the agent write a package and does live activation work on every surface?
 
-**Status**: partly resolved 2026-09-20 - `ctx.livePluginActivation` resolves on
-the real tui and web hosts; install path, workspace directory and rollback still
-open
-**Gates**: T012, T013
+**Status**: resolved 2026-09-20 on tui with real measurements; web shares the same
+implementation, desktop has its own recovery log (both re-measured in T018)
+**Gates**: T018
 
 **Measured 2026-09-20**: `ctx.livePluginActivation` is defined in the real tui and
 web boots (`evidence/census-tui-web.json`), not only Desktop. That makes a live
@@ -233,7 +354,55 @@ local npm package installed with `pnpm add file:`. The Desktop install code is i
 capability and gives the CLI `acryl plugin list|enable|disable|doctor`, not
 `install`.
 
-To do: confirm on each surface whether `ctx.livePluginActivation` exists and what
+**Measured 2026-09-20 (tui host, temp `DSH_HOME`, no network)**:
+`evidence/q7-live-local-install-tui.json`,
+`evidence/q7-explicit-activation-and-failure-tui.json` (first attempt, failed for a
+real reason), `evidence/q7-explicit-activation-fixed-exports-tui.json`:
+
+1. **Install**: `dsh plugin --profile <name> add file:<dir>` (a thin wrapper over
+   `pnpm add`) works offline in about 0.45 s, writes the dependency **and**
+   reconciles the package into `dsh.profile.bundles`. pnpm **copies** a `file:`
+   package into the profile (a snapshot): later edits to the source directory are
+   not reflected until it is added again. A `link:` specifier would track edits and
+   is the candidate for the edit-and-see loop (untested; decided at T018).
+2. **Next boot**: the installed plugin's row mounts ACTIVE and its service resolves
+   (boot 617 ms).
+3. **While running**: an install from outside is **not** picked up by the running
+   host on its own (10 s poll, no change) even though the profile has
+   `patchReload: "live"`. Live activation is an explicit call:
+   `ctx.get('livePluginActivation').activate(packageName)` (also `deactivate`,
+   `setEnabled`, `statusOf`), backed by the shared plugin lifecycle controller.
+   It took 4 ms and the service was live, status `active`, no restart.
+4. **Hard requirement found**: `activate` resolves `<package>/package.json`, so the
+   package's `exports` **must** include `"./package.json"`. With the form the
+   `hello-world` guide teaches (`"exports": "./index.js"`) activation failed with
+   `Package subpath './package.json' is not defined by "exports"` although the
+   package installed and would mount on the next boot. This is a documentation
+   defect to fix and a verifier lint (`package-json-not-exported`).
+5. **Failure is loud and non-corrupting for the host, but not rolled back**: a
+   plugin whose `apply()` throws makes `activate` reject with `Plugin <name> failed
+   to activate: failed to apply loader entry ... : deliberate failure in apply`;
+   the host stayed healthy (other services still resolve); but the package **stays
+   in `dsh.profile.bundles`**, so the next boot would mount it and fail again.
+   `dsh plugin --profile <name> remove <pkg>` (exit 0) removed it. CLI and Web
+   have **no crash-recovery log** (`cli-market-install.ts` and `web-market-install.ts`
+   say so explicitly; Desktop's `install-recovery.ts` is Electron-specific). So
+   `install --local` implements compensation itself: verify first (prevents most
+   failures), then add, then activate, and on any failure run `remove`.
+6. **Ordering trap** (documented in `engine-dsh.ts`): a consumer that reads
+   `ctx.get('livePluginActivation')` once at inject time captures `undefined` if the
+   service is provided later, and installs then succeed silently without going live.
+   `install --local` reads it at call time.
+7. **Local package directory**: nothing requires a fixed location because pnpm
+   copies from any path; the decision is a per-profile directory next to the
+   profile (`<profile>/plugins-local/<name>/`) so a throwaway `DSH_HOME` isolates
+   it and the source stays with the profile that owns it.
+
+Not measured here: web (same `provideWebMarketPlugins` controller, expected the
+same) and desktop (Electron, own recovery log). T018 records both before claiming
+parity, and the plan states the difference if there is one.
+
+Original to do: confirm on each surface whether `ctx.livePluginActivation` exists and what
 it reports; choose the local plugin workspace directory (profile-relative, so the
 throwaway `ACRYL_HOME` in tests isolates it); confirm what a client-side change
 costs (renderer reload per 032) and what a host-side change costs (none); confirm
@@ -243,14 +412,59 @@ documented reload) instead of pretending parity.
 
 ## Q8 - Marketplace path: what does a safe publish step look like?
 
-**Status**: open
-**Gates**: T014, T015
+**Status**: resolved 2026-09-20 (design and dry-run proven; no real publish)
+**Gates**: T019, T020, T021
 
 Known: catalog is built from npm `acryl-package` keyword discovery every 15
 minutes (spec 030 A); `cordis-plugin-market` is private; the default source is
 registered. Publishing to npm is public and effectively irreversible.
 
-To do: define (a) the pre-publish lint (`acryl-package` keyword, manifest,
+**Measured and read 2026-09-20**:
+
+1. **What the catalog lists** (`acryldev.github.io/scripts/lib/acryl-catalog.mjs`,
+   `sync-acryl-catalog.mjs`): npm search `keywords:acryl-package`; then the package's
+   `latest` manifest must be an object with string `name` and `version`, and
+   `keywords` must include the **exact** `acryl-package`. Optional `acryl` field is
+   inspected: `schemaVersion: 1`, `artifacts` keyed only by `plugins`, `extensions`,
+   `adapters`, `skills`, `workflows`, `blueprints`, `stemcells` (non-empty), each a
+   list of safe relative paths (no absolute, no `..`, no URL), optional `capabilities`
+   string array; result `valid`, `invalid` or `missing`. An install hint appears only
+   when `dsh.bundle` exists. `repository` is used only if it is a GitHub URL, else
+   the entry links to the npm page. Installs stay through npm; the catalog hosts no
+   tarballs (spec 030).
+2. **Pre-publish lint therefore is**: exact `acryl-package` keyword; `acryl` manifest
+   valid with `plugins`/`skills`/`adapters` paths that exist in `files`; `dsh.bundle.patch`
+   present and in `files`; `exports` includes `./package.json` (Q7); GitHub
+   `repository`; non-empty `description`; `license`; `version` not already published
+   (a publish would fail); no secrets or dotfiles in the tarball; declared surfaces
+   equal the verified surfaces; no `default` export mixed with named metadata (Q1).
+3. **Dry run, verified** (`evidence/q8-tarball-install-boot-tui.json`, fixture
+   `acryl-fx-publishable-037`): `npm pack --dry-run --json` (no network) lists the
+   exact files and size; `npm pack` produces the tarball; **`npm publish --dry-run`
+   needs no credentials, prints the full tarball details and "(dry-run)", and cannot
+   upload**; `dsh plugin --profile <p> add file:<tarball>` into a fresh profile then
+   boot gives row present, service live, status `active`. So "the packed artifact,
+   not the source directory, is what was proven" is achievable headlessly.
+4. **Existing convention**: `scripts/publish-npm-cli.mjs` opens with "Assemble npm
+   tarballs only. Publication remains an explicit release-CI action" and has a
+   `--pack-only` mode. `acryl plugin publish` follows it: prepare is automatic and
+   safe; publication is a separate explicit act.
+5. **Credential and approval design**: the publish command runs `npm publish` as the
+   user's own process with the user's own npm authentication; the agent never reads
+   `~/.npmrc` or a token. **No agent tool for publish is registered at all**: the
+   agent gets `acryl_verify_plugin` and a prepare-only tool, and the publish
+   command additionally refuses to run without an interactive TTY and a typed
+   confirmation that repeats the package name and version. This is a structural
+   guarantee (no tool to misuse) rather than a policy check. The harness approval
+   service (`ctx.approval`) is not needed for a human-only command and is noted as
+   an option if a future policy wants agent-initiated publish requests.
+6. **Visibility**: the catalog regenerates about every 15 minutes from npm search,
+   and npm's own search index lags a publish by a variable delay, so the agent cannot
+   promise immediate listing. Confirmation reads the catalog's own JSON
+   (`https://acryl.dev/v1/plugins`) for the package name and reports "not visible
+   yet, refresh pending" honestly. Not exercised here (no publish, no network).
+
+Original to do: define (a) the pre-publish lint (`acryl-package` keyword, manifest,
 license, no secrets, declared surfaces match verifier result, `files` allowlist),
 (b) the dry run (`npm pack --dry-run` and a local install of the produced
 tarball into a throwaway profile, which also proves the packaged artifact and not
@@ -275,3 +489,16 @@ automated gate.
 - **D5** Eval tasks must have headroom and must exclude their own solution
   examples; a result of "no measurable lift" is a valid recorded outcome.
 - **D6** Publishing is never part of an automated gate and never automatic.
+- **D7** Ship the pack as a `dependencies` entry of each surface package, resolved
+  at runtime, with `app.asar` mapped to `app.asar.unpacked`; example packages avoid
+  `test` and `tests` directory names (`checks/` instead) because the release pruner
+  deletes them.
+- **D8** No agent-callable publish tool exists. Prepare is automatic; publish is a
+  human-only, TTY-confirmed command.
+- **D9** `install --local` = verify, `dsh plugin add file:`, explicit
+  `livePluginActivation.activate`, and compensating `dsh plugin remove` on any
+  failure, because CLI and Web have no recovery log.
+- **D10** Named exports are the documented portable plugin form; a default export
+  is accepted by the real Loader but mixing it with named metadata is an error.
+- **D11** Eval full trajectories stay local and gitignored (privacy note in spec
+  013); only summaries are committed.
