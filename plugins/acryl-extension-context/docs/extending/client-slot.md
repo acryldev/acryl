@@ -78,6 +78,13 @@ an id, move a card by updating state and saving to `localStorage`, render column
 `React.createElement`. Keep it in one `client.js`. Choose the slot by what the user asked: a
 top-bar button and panel is the simplest; a right-sidebar tab is nicer but needs the extra props.
 
+## Debugging in the browser
+
+Put a `console.info('[<package>] ...')` at the top of `client.js` and in `apply`. Open the browser console
+(reload first): if the module line appears the bundle loaded and `require('react')` works; if the `apply` line
+appears the slot registration ran. Nothing logged means the bundle did not load (check the wrapper `id`, no
+JSX, no `import`, and that `package.json` has `dsh.client` and `exports["./client"]`). The example does this.
+
 ## Common mistakes
 
 - JSX or `import` in `client.js` (no compiler): the bundle fails to load. Use `createElement`

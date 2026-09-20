@@ -15,6 +15,7 @@ var module = { exports: {} }; var exports = module.exports;
 const React = require('react')
 const ReactDOM = require('react-dom')
 const h = React.createElement
+console.info('[acryl-example-client-notes] client module loaded (react ' + typeof React.createElement + ')')
 const KEY = 'acryl-example-client-notes'
 
 function load() {
@@ -46,6 +47,7 @@ function NotesAction() {
 exports.inject = ['slots']
 
 exports.apply = function apply(ctx) {
+  console.info('[acryl-example-client-notes] apply: registering header action')
   // slots.inject waits for the slot's own declaration, so this works whether this
   // package loads before or after the package that declares the slot.
   ctx.slots.inject('conversation.session.header.actions', () =>
