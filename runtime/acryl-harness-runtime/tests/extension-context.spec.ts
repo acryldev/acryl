@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { afterEach, describe, expect, it } from 'vitest'
-import { createWebEngineDefinition } from '../src/engine-dsh.ts'
+import { createDshEngineDefinition, createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 
 const temporaryHomes: string[] = []
@@ -51,6 +51,25 @@ describe('extension context on the web engine', () => {
 
       const toolNames = assembly.tools.map(tool => tool.name)
       expect(toolNames).toEqual(expect.arrayContaining(['acryl_install_plugin', 'acryl_list_plugins', 'acryl_remove_plugin']))
+    } finally {
+      await host.dispose()
+    }
+  }, 60_000)
+
+  it('mounts on the CLI (tui) engine too', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-extension-context-tui-'))
+    temporaryHomes.push(home)
+    process.env.DSH_HOME = home
+    const host = await createAcrylEngineHost({
+      engines: [createDshEngineDefinition('acryl-ext-test')],
+      initialEngine: 'dsh',
+    })
+    try {
+      const rows = [...host.ctx.loader.entries()]
+      expect(rows.some(entry => entry.options.id === 'extension-context')).toBe(true)
+      const assembly = await host.ctx.get('systemPrompt')!.assemble()
+      expect(assembly.sections.some(section => section.name === 'acryl:extension-router')).toBe(true)
+      expect(assembly.tools.map(tool => tool.name)).toEqual(expect.arrayContaining(['acryl_install_plugin']))
     } finally {
       await host.dispose()
     }

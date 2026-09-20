@@ -259,6 +259,13 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
     ...createAcrylCodingCapabilityPatches(new Set(['tui']), existingRowIds),
     ...profile.patches,
   ])
+  // Extension Context Pack (spec 037), CLI flavor: anchored on this runtime
+  // package, which depends on the pack. Skipped when the profile already
+  // composes the row (a Desktop/Web-shaped profile booted through the CLI).
+  if (!existingRowIds.has('extension-context')) {
+    materializeProfilePackage(profile.dir, 'acryl-extension-context', import.meta.url)
+    patches.push({ insert: [{ id: 'extension-context', name: 'acryl-extension-context' }] })
+  }
   // The profile's own user overrides come from the shared store, not from this
   // surface: `acryl plugin disable` on a TUI writes the same file the Desktop
   // panel and the Web surface read, so the next boot of any of them composes
