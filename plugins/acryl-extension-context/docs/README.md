@@ -18,6 +18,7 @@ plugin. Verified working examples: `../examples/README.md`.
 
 | Doc | Read it when | Surfaces | Applies |
 | --- | --- | --- | --- |
+| [Changing how ACRYL looks: what, where, how live (all surfaces)](extending/ui-customization.md) | ANY request about colors, fonts, branding, logo, layout, look and feel or restyling: what each surface allows and what needs a rebuild. | tui web desktop | all |
 | [Cordis building blocks and where each is documented](extending/cordis-core.md) | You are unsure which Cordis or harness mechanism to use: the model in ten lines and a table from what you are building to its doc and reference. | tui web desktop | all |
 | [Client slots: add UI to the Web and Desktop app (panel, button, tab, dashboard)](extending/client-slot.md) | The extension needs any UI in the app: a top-bar button, a panel, a sidebar tab, a board, a dashboard. | web desktop | all |
 | [Tool plugins: give the agent a new capability](extending/tool-plugin.md) | The feature is something the agent should be able to DO (call an API, read a source, run an action). | tui web desktop | all |
@@ -34,6 +35,10 @@ plugin. Verified working examples: `../examples/README.md`.
 | [Profile and install services (desktopProfiles, desktopPnpm, livePluginActivation)](extending/desktop-main.md) | A plugin needs the active profile, package operations or live activation of another plugin. | tui web desktop | all |
 | [Agent presets and personas](extending/agent-preset.md) | A different session composition (tools, prompt, skills) or identity, such as a reviewer or a minimal agent. | tui web desktop | all |
 | [Chat slash commands](extending/chat-command.md) | A /command the user types in the chat that runs on the host without the model (reload, export, toggle). | tui web desktop | all |
+| [Theme, colors and fonts (Web and Desktop client theme service)](extending/ui-theme.md) | Change colors, surfaces, accent, fonts or text size of the Web or Desktop app: overrideTokens, register, setFontSize. | web desktop | all |
+| [Branding: logo, name, tab title, favicon, page shell](extending/ui-branding.md) | Rebrand the app: brand slots, the tab or window title, favicon, page background, and what is native or compiled-in. | tui web desktop | all |
+| [The Desktop (Electron) app: structure and what a plugin can or cannot change](extending/desktop-app.md) | Any Desktop request: main process versus renderer, modes, files for window chrome, icon, menu, tray, and what needs a rebuild. | desktop | all |
+| [The terminal UI: pi-tui components, theming, branding](extending/tui-components.md) | Build or restyle terminal UI: the Component contract, built-in components, palette, width safety, and what is compiled into the CLI. | tui | all |
 
 ## Delivery
 
@@ -47,6 +52,7 @@ plugin. Verified working examples: `../examples/README.md`.
 | Doc | Read it when | Surfaces | Applies |
 | --- | --- | --- | --- |
 | [Mount points per surface: where UI and host extensions attach (CLI, Web, Desktop)](maps/mount-points.md) | You must decide WHERE something mounts: which slot, terminal overlay, host service or Desktop frame, and which surface supports it. | tui web desktop | all |
+| [Theme tokens: every design token you can override (Web and Desktop)](maps/theme-tokens.md) | You want to change colors, surfaces, borders, buttons or fonts of the Web or Desktop app: the exact token names with light and dark values. | web desktop | all |
 | [Plugin taxonomy: every plugin type and every shipped plugin, per surface](maps/taxonomy.md) | You want the full list of plugin types, which surfaces have them, whether an agent can author one, and real shipped plugins to study. | tui web desktop | all |
 
 ## Reference (synced)

@@ -16,6 +16,7 @@ export const PLUGIN_TYPES = [
   'client-slot', 'desktop-main', 'tui-contribution',
   'packaging', 'generated-capability', 'diagnostics',
   'chat-command', 'settings-section',
+  'ui-theme', 'ui-branding', 'tui-ui',
 ]
 
 const ID = /^[a-z0-9]+(?:[.-][a-z0-9]+)*$/u

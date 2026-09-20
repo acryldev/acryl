@@ -141,7 +141,7 @@ test('skills: frontmatter parses, and the real pack lists its skills with real d
   const root = resolvePackRoot()
   const provider = createSkillProvider(root)
   const list = await provider.list()
-  assert.deepEqual(list.map(c => c.name).sort(), ['acryl-add-provider-or-capability', 'acryl-add-ui', 'acryl-build-extension', 'acryl-change-plugin', 'acryl-diagnose-plugin', 'acryl-fix-plugin', 'acryl-improve-ui', 'acryl-remove-extension', 'acryl-share-extension'])
+  assert.deepEqual(list.map(c => c.name).sort(), ['acryl-add-provider-or-capability', 'acryl-add-ui', 'acryl-build-extension', 'acryl-change-plugin', 'acryl-desktop-shell', 'acryl-diagnose-plugin', 'acryl-fix-plugin', 'acryl-improve-ui', 'acryl-remove-extension', 'acryl-restyle-ui', 'acryl-share-extension', 'acryl-tui-ui'])
   assert.ok(list.every(c => c.rank === 600 && c.source === 'bundled'))
   const skill = await provider.get(list.find(c => c.name === 'acryl-build-extension'))
   assert.ok(skill.content.includes(join(root, 'docs/start-here/this-runtime.md')))

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "packVersion": "0.6.0",
+  "packVersion": "0.7.0",
   "navigation": [
     {
       "title": "Start here",
@@ -56,6 +56,25 @@
     {
       "title": "Extending ACRYL (by plugin type)",
       "items": [
+        {
+          "id": "extending.ui-customization",
+          "title": "Changing how ACRYL looks: what, where, how live (all surfaces)",
+          "path": "extending/ui-customization.md",
+          "when": "ANY request about colors, fonts, branding, logo, layout, look and feel or restyling: what each surface allows and what needs a rebuild.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "extending.ui-theme",
+            "extending.ui-branding",
+            "extending.desktop-app",
+            "extending.tui-components",
+            "maps.mount-points"
+          ]
+        },
         {
           "id": "extending.cordis-core",
           "title": "Cordis building blocks and where each is documented",
@@ -322,6 +341,73 @@
           "seeAlso": [
             "extending.tui-command"
           ]
+        },
+        {
+          "id": "extending.ui-theme",
+          "title": "Theme, colors and fonts (Web and Desktop client theme service)",
+          "path": "extending/ui-theme.md",
+          "when": "Change colors, surfaces, accent, fonts or text size of the Web or Desktop app: overrideTokens, register, setFontSize.",
+          "surfaces": [
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "maps.theme-tokens"
+          ],
+          "examples": [
+            "ui-theme.override"
+          ]
+        },
+        {
+          "id": "extending.ui-branding",
+          "title": "Branding: logo, name, tab title, favicon, page shell",
+          "path": "extending/ui-branding.md",
+          "when": "Rebrand the app: brand slots, the tab or window title, favicon, page background, and what is native or compiled-in.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "extending.ui-theme",
+            "extending.desktop-app"
+          ],
+          "examples": [
+            "web-page-branding.basic",
+            "ui-theme.override"
+          ]
+        },
+        {
+          "id": "extending.desktop-app",
+          "title": "The Desktop (Electron) app: structure and what a plugin can or cannot change",
+          "path": "extending/desktop-app.md",
+          "when": "Any Desktop request: main process versus renderer, modes, files for window chrome, icon, menu, tray, and what needs a rebuild.",
+          "surfaces": [
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "extending.desktop-main",
+            "extending.ui-customization"
+          ]
+        },
+        {
+          "id": "extending.tui-components",
+          "title": "The terminal UI: pi-tui components, theming, branding",
+          "path": "extending/tui-components.md",
+          "when": "Build or restyle terminal UI: the Component contract, built-in components, palette, width safety, and what is compiled into the CLI.",
+          "surfaces": [
+            "tui"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "extending.tui-command"
+          ],
+          "examples": [
+            "tui-overlay.themed"
+          ]
         }
       ]
     },
@@ -382,6 +468,20 @@
           "seeAlso": [
             "extending.client-slot",
             "extending.tui-command"
+          ]
+        },
+        {
+          "id": "maps.theme-tokens",
+          "title": "Theme tokens: every design token you can override (Web and Desktop)",
+          "path": "maps/theme-tokens.md",
+          "when": "You want to change colors, surfaces, borders, buttons or fonts of the Web or Desktop app: the exact token names with light and dark values.",
+          "surfaces": [
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "extending.ui-theme"
           ]
         },
         {
@@ -2070,6 +2170,45 @@
       "teaches": "a validated settings section with installSection, setSource and onChange.",
       "docs": [
         "extending.config-schema"
+      ]
+    },
+    {
+      "id": "ui-theme.override",
+      "type": "ui-theme",
+      "path": "client-theme-override",
+      "surfaces": [
+        "web",
+        "desktop"
+      ],
+      "teaches": "restyle colors and font with ctx.theme.overrideTokens (both modes) and keep a custom tab title with an observer.",
+      "docs": [
+        "extending.ui-theme",
+        "extending.ui-branding"
+      ]
+    },
+    {
+      "id": "web-page-branding.basic",
+      "type": "ui-branding",
+      "path": "web-page-branding",
+      "surfaces": [
+        "web",
+        "desktop"
+      ],
+      "teaches": "brand the served page from the host: favicon and CSS via webserver/index-inject rows, title via tapIndex (pre-boot only).",
+      "docs": [
+        "extending.ui-branding"
+      ]
+    },
+    {
+      "id": "tui-overlay.themed",
+      "type": "tui-ui",
+      "path": "tui-overlay-themed",
+      "surfaces": [
+        "tui"
+      ],
+      "teaches": "a themed pi-tui overlay: Container, Text, SelectList, a semantic palette, and width-safe rendering.",
+      "docs": [
+        "extending.tui-components"
       ]
     }
   ]

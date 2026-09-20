@@ -1973,6 +1973,9 @@ importers:
       '@deepseek-ai/schemastery':
         specifier: ^3.18.1
         version: 3.18.2
+      '@earendil-works/pi-tui':
+        specifier: 0.84.2
+        version: 0.84.2(patch_hash=5dc0250a1f7f94a22edffa555f19c38ab55dd19672e6d7031592e52d82cf7be5)
 
   plugins/cordis-plugin-market:
     dependencies:

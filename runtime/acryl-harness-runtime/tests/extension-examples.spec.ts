@@ -33,6 +33,8 @@ async function bootHost() {
 }
 
 const load = async (dir: string) => import(pathToFileURL(join(new URL(dir, examples).pathname, 'index.js')).href) as Promise<Record<string, unknown>>
+// ASCII-only fixtures: strip SGR colour codes and count characters.
+const visibleWidth = (line: string): number => line.replace(/\u001b\[[0-9;]*m/gu, '').length
 const STATES = ['PENDING', 'LOADING', 'ACTIVE', 'FAILED', 'UNLOADING', 'DISPOSED']
 const stateOf = (fiber: { state: number | string }): string => (typeof fiber.state === 'number' ? STATES[fiber.state] : fiber.state) ?? String(fiber.state)
 const settle = () => new Promise(resolve => setTimeout(resolve, 50))
@@ -114,6 +116,37 @@ describe('extension pack examples on the real web engine', () => {
       const fiber = host.ctx.plugin(await load('settings-section-basic') as never, { greeting: 'Hi', loud: true } as never) as { state: number }
       await settle()
       expect(stateOf(fiber)).toBe('ACTIVE')
+    } finally { await host.dispose() }
+  }, 60_000)
+
+  it('web-page-branding: the served index gets the title, favicon and style rows', async () => {
+    const host = await bootHost()
+    try {
+      const fiber = host.ctx.plugin(await load('web-page-branding') as never) as { state: number }
+      await settle()
+      expect(stateOf(fiber)).toBe('ACTIVE')
+      const server = host.ctx.get('webServer' as never) as { renderIndex(html: string): string }
+      const html = server.renderIndex('<!doctype html><html><head><title>DeepSeek Harness</title></head><body></body></html>')
+      expect(html).toContain('<title>My Studio</title>')
+      expect(html).toContain('rel="icon"')
+      expect(html).toContain('background:#1a1410')
+    } finally { await host.dispose() }
+  }, 60_000)
+
+  it('tui-overlay-themed: never renders a line wider than the terminal, and closes on escape', async () => {
+    const mod = await load('tui-overlay-themed') as { buildOverlay(close: () => void): { render(width: number): string[]; handleInput(data: string): void } }
+    let closed = 0
+    const overlay = mod.buildOverlay(() => { closed += 1 })
+    for (const width of [12, 24, 40, 80, 200]) {
+      for (const line of overlay.render(width)) expect(visibleWidth(line)).toBeLessThanOrEqual(width)
+    }
+    overlay.handleInput('\x1b')
+    expect(closed).toBe(1)
+    const host = await bootHost()
+    try {
+      const fiber = host.ctx.plugin(mod as never) as { state: number }
+      await settle()
+      expect(stateOf(fiber)).toBe('ACTIVE') // a no-op where there is no tuiCommands service
     } finally { await host.dispose() }
   }, 60_000)
 })

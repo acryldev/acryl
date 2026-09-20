@@ -33,6 +33,8 @@ Web and Desktop, an optional **browser** half (`client.js`, slots). Pick the mou
 | Subagent providers | ctx.subagents.register(...) | a new way to run a delegated agent | reference/subsystems/subagent.md (no example) |
 | Host routes (Web and Desktop) | ctx.webServer route / typert @Remote | an HTTP or RPC endpoint for a browser half | extending/host-route.md |
 | Services | class X extends Service { constructor(ctx) { super(ctx, 'name') } } | a named capability others inject | extending/service.md, extending/three-role-capability.md |
+| Page shell: title, favicon, CSS, scripts (Web, Desktop) | ctx.on('webserver/index-inject', table => table.push(row)); ctx.get('webServer')?.tapIndex(html => html) | structured head/body rows (style, html, script, global) and a raw index.html transform | extending/ui-branding.md, example web-page-branding |
+| Theme tokens and fonts (Web, Desktop client) | ctx.theme.overrideTokens(id, { '--token': { light, dark } }); ctx.theme.register({...}) | colors, surfaces, borders, font family, content font size | extending/ui-theme.md, maps/theme-tokens.md, example client-theme-override |
 | Terminal overlays (CLI only) | ctx.get('tuiCommands')?.register({...}) | a slash command that opens a pi-tui overlay | extending/tui-command.md |
 | Profile and install (all surfaces, fuller on Desktop) | ctx.get('desktopProfiles' \| 'desktopPnpm' \| 'livePluginActivation') | profile identity, package operations, live activation | extending/desktop-main.md |
 

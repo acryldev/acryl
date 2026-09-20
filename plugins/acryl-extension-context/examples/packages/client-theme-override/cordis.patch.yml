@@ -1,0 +1,3 @@
+- insert:
+    - id: example-theme-override
+      name: acryl-example-theme-override

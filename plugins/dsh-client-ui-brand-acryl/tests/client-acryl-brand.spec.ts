@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { AcrylBrandMark, AcrylBrandName, AcrylHeroBrandMark } from '../src/client/Brand.tsx'
 import { apply, inject } from '../src/client/index.ts'
+import { brandTitleText, installDocumentTitleBrand } from '../src/client/document-title.ts'
 
 describe('ACRYL brand plugin', () => {
   it('renders the sidebar mark/name and hero mark with the ACRYL identity', () => {
@@ -34,7 +35,7 @@ describe('ACRYL brand plugin', () => {
       registeredOptions.push(options)
       return () => {}
     })
-    const ctx = { slots: { inject: slotsInject, register } } as unknown as ClientContext
+    const ctx = { slots: { inject: slotsInject, register }, effect: (setup: () => unknown) => setup() } as unknown as ClientContext
 
     apply(ctx)
 
@@ -48,5 +49,29 @@ describe('ACRYL brand plugin', () => {
       { name: 'sidebar.brand.name' },
       { name: 'conversation.hero.brand.mark' },
     ])
+  })
+
+  it('keeps the ACRYL name in the document title the client rewrites', () => {
+    expect(brandTitleText('DeepSeek Harness')).toBe('ACRYL')
+    expect(brandTitleText('Fix the bug \u2014 DeepSeek Harness')).toBe('Fix the bug \u2014 ACRYL')
+    expect(brandTitleText('ACRYL')).toBe('ACRYL')
+
+    let notify: (() => void) | undefined
+    let disconnected = false
+    const doc = { title: 'DeepSeek Harness', head: {} }
+    class FakeObserver {
+      constructor(callback: () => void) { notify = callback }
+      observe(): void {}
+      disconnect(): void { disconnected = true }
+    }
+    const dispose = installDocumentTitleBrand(doc, FakeObserver)
+    expect(doc.title).toBe('ACRYL')
+    doc.title = 'Some session \u2014 DeepSeek Harness'
+    notify?.()
+    expect(doc.title).toBe('Some session \u2014 ACRYL')
+    dispose()
+    expect(disconnected).toBe(true)
+    // No DOM: a no-op, never a throw.
+    expect(() => installDocumentTitleBrand(undefined, undefined)()).not.toThrow()
   })
 })

@@ -29,3 +29,6 @@ pack gate and its declared outcome observed. Find the closest, read it, then ada
 | [client-slot.sidebar-tab](packages/client-slot-sidebar-tab/) | client-slot | a right-sidebar tab in two stages (tab type, then body) with no build step. | web desktop | extending.client-slot |
 | [chat-command.basic](packages/chat-command-basic/) | chat-command | a /command handled on the host without the model, via ctx.commands.register. | tui web desktop | extending.chat-command |
 | [settings-section.basic](packages/settings-section-basic/) | settings-section | a validated settings section with installSection, setSource and onChange. | tui web desktop | extending.config-schema |
+| [ui-theme.override](packages/client-theme-override/) | ui-theme | restyle colors and font with ctx.theme.overrideTokens (both modes) and keep a custom tab title with an observer. | web desktop | extending.ui-theme, extending.ui-branding |
+| [web-page-branding.basic](packages/web-page-branding/) | ui-branding | brand the served page from the host: favicon and CSS via webserver/index-inject rows, title via tapIndex (pre-boot only). | web desktop | extending.ui-branding |
+| [tui-overlay.themed](packages/tui-overlay-themed/) | tui-ui | a themed pi-tui overlay: Container, Text, SelectList, a semantic palette, and width-safe rendering. | tui | extending.tui-components |

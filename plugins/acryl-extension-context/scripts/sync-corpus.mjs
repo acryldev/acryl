@@ -9,7 +9,7 @@
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
-import { classifyRow, collectSlots, indexPackages, loadRows, renderMountPoints, renderTaxonomy } from './lib/maps.mjs'
+import { classifyRow, collectSlots, collectThemeTokens, indexPackages, loadRows, renderMountPoints, renderTaxonomy, renderThemeTokens } from './lib/maps.mjs'
 import { fileURLToPath } from 'node:url'
 
 const pack = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -82,6 +82,8 @@ const HOST_SEAMS = [
   { mount: 'Subagent providers', call: "ctx.subagents.register(...)", what: 'a new way to run a delegated agent', doc: 'reference/subsystems/subagent.md (no example)' },
   { mount: 'Host routes (Web and Desktop)', call: "ctx.webServer route / typert @Remote", what: 'an HTTP or RPC endpoint for a browser half', doc: 'extending/host-route.md' },
   { mount: 'Services', call: "class X extends Service { constructor(ctx) { super(ctx, 'name') } }", what: 'a named capability others inject', doc: 'extending/service.md, extending/three-role-capability.md' },
+  { mount: 'Page shell: title, favicon, CSS, scripts (Web, Desktop)', call: "ctx.on('webserver/index-inject', table => table.push(row)); ctx.get('webServer')?.tapIndex(html => html)", what: 'structured head/body rows (style, html, script, global) and a raw index.html transform', doc: 'extending/ui-branding.md, example web-page-branding' },
+  { mount: 'Theme tokens and fonts (Web, Desktop client)', call: "ctx.theme.overrideTokens(id, { '--token': { light, dark } }); ctx.theme.register({...})", what: 'colors, surfaces, borders, font family, content font size', doc: 'extending/ui-theme.md, maps/theme-tokens.md, example client-theme-override' },
   { mount: 'Terminal overlays (CLI only)', call: "ctx.get('tuiCommands')?.register({...})", what: 'a slash command that opens a pi-tui overlay', doc: 'extending/tui-command.md' },
   { mount: 'Profile and install (all surfaces, fuller on Desktop)', call: "ctx.get('desktopProfiles' | 'desktopPnpm' | 'livePluginActivation')", what: 'profile identity, package operations, live activation', doc: 'extending/desktop-main.md' },
 ]
@@ -115,6 +117,8 @@ const rows = [...surfacesByName].map(([name, set]) => classifyRow(name, index, s
 mkdirSync(join(pack, 'docs/maps'), { recursive: true })
 writeFileSync(join(pack, 'docs/maps/mount-points.md'), renderMountPoints(slots, HOST_SEAMS))
 writeFileSync(join(pack, 'docs/maps/taxonomy.md'), renderTaxonomy(rows, TYPE_GUIDE))
+const themeTokens = collectThemeTokens(repo)
+writeFileSync(join(pack, 'docs/maps/theme-tokens.md'), renderThemeTokens(themeTokens))
 
 const manifestPath = join(pack, 'docs/docs.json')
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
@@ -124,6 +128,7 @@ manifest.navigation.splice(manifest.navigation.findIndex(g => g.title === 'Deliv
   title: 'Maps (generated)',
   items: [
     { id: 'maps.mount-points', title: 'Mount points per surface: where UI and host extensions attach (CLI, Web, Desktop)', path: 'maps/mount-points.md', when: 'You must decide WHERE something mounts: which slot, terminal overlay, host service or Desktop frame, and which surface supports it.', surfaces: ['tui', 'web', 'desktop'], applies: 'all', seeAlso: ['extending.client-slot', 'extending.tui-command'] },
+    { id: 'maps.theme-tokens', title: 'Theme tokens: every design token you can override (Web and Desktop)', path: 'maps/theme-tokens.md', when: 'You want to change colors, surfaces, borders, buttons or fonts of the Web or Desktop app: the exact token names with light and dark values.', surfaces: ['web', 'desktop'], applies: 'all', seeAlso: ['extending.ui-theme'] },
     { id: 'maps.taxonomy', title: 'Plugin taxonomy: every plugin type and every shipped plugin, per surface', path: 'maps/taxonomy.md', when: 'You want the full list of plugin types, which surfaces have them, whether an agent can author one, and real shipped plugins to study.', surfaces: ['tui', 'web', 'desktop'], applies: 'all', seeAlso: ['extending.cordis-core'] },
   ],
 })

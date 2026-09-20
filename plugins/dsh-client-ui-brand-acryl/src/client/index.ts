@@ -12,6 +12,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import { AcrylBrandMark, AcrylBrandName, AcrylHeroBrandMark } from './Brand.tsx'
+import { installDocumentTitleBrand, type TitleDocument, type TitleObserverConstructor } from './document-title.ts'
 
 export { AcrylBrandMark, AcrylBrandName, AcrylHeroBrandMark } from './Brand.tsx'
 
@@ -26,6 +27,14 @@ export const inject = ['slots']
  * @param ctx - Client root context.
  */
 export function apply(ctx: ClientContext): void {
+  // The browser tab and desktop window title: the client rewrites it at runtime, so keep the ACRYL name on it.
+  ctx.effect(
+    () => installDocumentTitleBrand(
+      typeof document === 'undefined' ? undefined : document as unknown as TitleDocument,
+      typeof MutationObserver === 'undefined' ? undefined : MutationObserver as unknown as TitleObserverConstructor,
+    ),
+    'ui-brand-acryl: document title',
+  )
   ctx.slots.inject('sidebar.brand.mark', () =>
     ctx.slots.register({ name: 'sidebar.brand.mark' }, AcrylBrandMark))
   ctx.slots.inject('sidebar.brand.name', () =>
