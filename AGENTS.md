@@ -2,6 +2,8 @@
 
 This repository owns the desktop product around an unmodified DeepSeek Harness checkout.
 
+The agent's system prompt (where it comes from, how to change it, and a generated current copy per surface): `docs/system-prompt/README.md`.
+
 Building or changing an ACRYL plugin, tool, UI slot or skill: start at `plugins/acryl-extension-context/docs/README.md` (routed docs) and `plugins/acryl-extension-context/examples/README.md` (verified examples for every plugin type).
 
 ## Prerequisites and setup
