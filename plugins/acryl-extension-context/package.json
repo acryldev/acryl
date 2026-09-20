@@ -6,10 +6,13 @@
   "license": "MIT",
   "type": "module",
   "exports": {
+    ".": "./index.js",
     "./package.json": "./package.json",
     "./manifest": "./docs/docs.json"
   },
   "files": [
+    "index.js",
+    "lib/**",
     "docs/**",
     "examples/**",
     "skills/**",
@@ -18,10 +21,14 @@
   "scripts": {
     "build:manifest": "node scripts/build-manifest.mjs",
     "verify:manifest": "node scripts/build-manifest.mjs --check",
-    "test": "node --test scripts/manifest.test.mjs",
+    "test": "node --test scripts/manifest.test.mjs scripts/plugin.test.mjs",
     "check": "pnpm run test && pnpm run verify:manifest"
   },
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
+  },
+  "main": "./index.js",
+  "dependencies": {
+    "@deepseek-ai/dsh-tools": "0.1.5-alpha.1"
   }
 }

@@ -1288,6 +1288,9 @@ importers:
       '@vscode/ripgrep-win32-x64':
         specifier: 1.18.0
         version: 1.18.0
+      acryl-extension-context:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-extension-context
       acryl-harness-runtime:
         specifier: workspace:*
         version: link:../../runtime/acryl-harness-runtime
@@ -1916,6 +1919,9 @@ importers:
       '@deepseek-ai/dsh-workspace':
         specifier: 0.1.5-alpha.1
         version: 0.1.5-alpha.1(aa7bfec93e4c2aba81613045530ef037)
+      acryl-extension-context:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-extension-context
       cordis-plugin-market:
         specifier: workspace:*
         version: link:../../plugins/cordis-plugin-market
@@ -1949,7 +1955,11 @@ importers:
 
   examples/acryl-blend-demo: {}
 
-  plugins/acryl-extension-context: {}
+  plugins/acryl-extension-context:
+    dependencies:
+      '@deepseek-ai/dsh-tools':
+        specifier: 0.1.5-alpha.1
+        version: 0.1.5-alpha.1(239eb910b4462b7c15b6b44661457a15)
 
   plugins/cordis-plugin-market:
     dependencies:
@@ -2673,6 +2683,9 @@ importers:
       acryl-control:
         specifier: workspace:*
         version: link:../acryl-control
+      acryl-extension-context:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-extension-context
       adm-zip:
         specifier: ^0.6.0
         version: 0.6.0

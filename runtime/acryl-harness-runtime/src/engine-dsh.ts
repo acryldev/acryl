@@ -435,6 +435,13 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   // unstarted piece of work; this row only turns on browsing.
   materializeProfilePackage(profile.dir, 'cordis-plugin-market', installPackageUrl)
   patches.push({ insert: [{ id: 'community-market', name: 'cordis-plugin-market' }] })
+  // Extension Context Pack (spec 037): routes the agent to ACRYL's own extension
+  // docs and verified examples and gives it the install tool that makes a plugin
+  // it wrote live. Same materialization technique as the two owned packages
+  // above: it is an ACRYL-owned workspace package outside @deepseek-ai/dsh's own
+  // dependency closure.
+  materializeProfilePackage(profile.dir, 'acryl-extension-context', installPackageUrl)
+  patches.push({ insert: [{ id: 'extension-context', name: 'acryl-extension-context' }] })
   // Last, so a user override beats every composition decision above it - the
   // same shared store the CLI and the Desktop panel write (spec 034).
   patches.push(...pluginLifecyclePatches({
