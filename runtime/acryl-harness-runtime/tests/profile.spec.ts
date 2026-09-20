@@ -18,6 +18,11 @@ describe('bootAcrylHarnessProfile', () => {
     const home = await mkdtemp(join(tmpdir(), 'acryl-harness-home-'))
     temporaryHomes.push(home)
     process.env.DSH_HOME = home
+    // The pinned profile now ships HMR disabled, so this rejection only applies when a profile
+    // explicitly enables it.
+    const profileDirectory = resolveProfileDir('acryl-test')
+    initProfile(profileDirectory, DEFAULT_PROFILE_BUNDLES)
+    await writeFile(join(profileDirectory, 'cordis.patch.yml'), '- id: hmr\n  disabled: false\n')
 
     await bootAcrylHarnessProfile({ profile: 'acryl-test' }).then(
       () => { throw new Error('expected HMR-enabled profile boot to reject') },

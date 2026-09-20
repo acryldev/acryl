@@ -68,7 +68,7 @@ describe('createAcrylSessionBridge', () => {
       await bridge.submitPrompt({ sessionId, text: 'Cancel this turn' })
       stop()
 
-      expect(runtime.ctx.agents.get(SessionId(sessionId))?.session.events).toContainEqual(expect.objectContaining({
+      expect(runtime.ctx.agents.get(SessionId(sessionId))?.session.snapshotEvents()).toContainEqual(expect.objectContaining({
         type: 'turn/end',
         data: expect.objectContaining({ reason: expect.objectContaining({ kind: 'aborted' }) }),
       }))
@@ -155,11 +155,16 @@ describe('createAcrylSessionBridge', () => {
       session.append('assistant/message', {
         turn: 1,
         step: 1,
+        // Session format v2: a durable Assistant settlement carries its compact stream.
+        stream: [
+          { type: 'chunk', time: 1, chunk: { type: 'usage', usage: { inputTokens: 1, outputTokens: 1 } } },
+          { type: 'chunk', time: 2, chunk: { type: 'finish', reason: { kind: 'stop' } } },
+        ],
         message: createAssistantMessage({
           content: [{ type: 'text', text: 'Native response' }],
           source: { provider: 'test', model: 'test' },
         }),
-      }, { surfaceOp: 'append' })
+      } as never, { surfaceOp: 'append' })
       session.append('tool/call', { turn: 1, step: 1, callId: 'call-1', name: 'inspect', arguments: '{}' })
       session.append('tool/result', {
         turn: 1,
@@ -229,7 +234,7 @@ describe('createAcrylSessionBridge', () => {
 
       const events = bridge.events(sessionId)
       expect(events.some(event => event.type === 'user/message')).toBe(true)
-      expect(events).toEqual(runtime.ctx.agents.get(SessionId(sessionId))?.session.events)
+      expect(events).toEqual(runtime.ctx.agents.get(SessionId(sessionId))?.session.snapshotEvents())
     } finally {
       await bridge.dispose()
       await runtime.dispose()

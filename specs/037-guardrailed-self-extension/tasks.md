@@ -17,8 +17,8 @@ dry-run tool (`acryl_prepare_publish`), T028 pointers, T029 (pack is a public de
 acryl-desktop and the runtime; `pnpm pack --dry-run` shows docs, examples and skills), T030 (enabled everywhere),
 plus `/reload`.
 Not landed, by recorded reason: T014 is the owner's human test, deliberately not automated; T015/T016 full verifier
-and gate (mount-based checks deferred; the manifest gate and the router budget test exist); T020/T021 publish and
-catalog visibility stay human; T022 corpus sync, T031-T034 eval and tuning are P2 and not needed for the loop;
+and gate (mount-based checks deferred; the manifest gate, the router budget test, the coverage test and the real-engine example test exist); T020/T021 publish and
+catalog visibility stay human; T031-T034 eval and tuning are P2 (an opt-in real-model end-to-end run exists, see HUMAN-TEST.md, but no baselines or with/without-docs comparison); T022 corpus sync landed (80 reference docs, `scripts/sync-corpus.mjs`);
 installed-build evidence for T029 needs a release build and is unverified. Follow-up: publish
 `acryl-extension-context` to npm once before the next acryl-web release.
 

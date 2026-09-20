@@ -10,7 +10,9 @@ import { join } from 'node:path'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createDshEngineDefinition, createWebEngineDefinition } from '../src/engine-dsh.ts'
+import { SessionId } from '@deepseek-ai/dsh-session'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
+import { createAcrylSessionBridge } from '../src/session-bridge.ts'
 
 const temporaryHomes: string[] = []
 const initialDshHome = process.env.DSH_HOME
@@ -71,6 +73,34 @@ describe('extension context on the web engine', () => {
       expect(assembly.sections.some(section => section.name === 'acryl:extension-router')).toBe(true)
       expect(assembly.tools.map(tool => tool.name)).toEqual(expect.arrayContaining(['acryl_install_plugin']))
     } finally {
+      await host.dispose()
+    }
+  }, 60_000)
+})
+
+describe('/reload on the web engine', () => {
+  it('is registered for a session and re-installs no local plugins when there are none', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-extension-reload-'))
+    temporaryHomes.push(home)
+    process.env.DSH_HOME = home
+    const host = await createAcrylEngineHost({
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      initialEngine: 'dsh',
+      prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+    })
+    const bridge = createAcrylSessionBridge(host.ctx, { profile: 'web', generationId: 'reload', attachment: 'owner', cwd: home })
+    try {
+      const sessionId = await bridge.open()
+      const agent = (host.ctx as unknown as { agents: { get(id: unknown): unknown } }).agents.get(SessionId(sessionId))
+      const commands = host.ctx.get('commands' as never) as {
+        list(agent: unknown): Array<{ name: string }>
+        execute(agent: unknown, line: string, attachments: unknown[], signal: AbortSignal): Promise<{ result: { kind: string; text?: string } } | undefined>
+      }
+      expect(commands.list(agent).map(command => command.name)).toContain('reload')
+      const execution = await commands.execute(agent, '/reload', [], new AbortController().signal)
+      expect(execution?.result).toMatchObject({ kind: 'success', text: 'No local extensions installed.' })
+    } finally {
+      await bridge.dispose()
       await host.dispose()
     }
   }, 60_000)
