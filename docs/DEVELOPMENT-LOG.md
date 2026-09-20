@@ -4913,7 +4913,7 @@ binary directly rather than through whatever bare `pnpm` resolves to on
 
 - Coverage of all 18 plugin types with docs and examples (llm-adapter, three-role swap, desktop-main, agent preset,
   sidebar tab), 80 synced harness/Cordis reference docs, 5 more skills, a real-engine test mounting every host example
-  (`aead144744d70915dd2914a625b3f5fc691f0f46`, corpus and examples in `caf894b`).
+  (`caf894be7d1b3cd47f6431d8df6e4fd81b59e358`).
 - A real DeepSeek model ran build, update, add-tool-and-use and remove through the real web engine in 102 s; the run is kept
-  as an opt-in test (`aead144`).
+  as an opt-in test (`aead144744d70915dd2914a625b3f5fc691f0f46`).
 - Fixed four stale pre-existing runtime tests (HMR default, session format v2) and added the /reload real-engine test (`a2f611f55418ebc6eff9a5ccd373594115c4821f`).
