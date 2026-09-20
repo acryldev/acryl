@@ -4908,3 +4908,12 @@ binary directly rather than through whatever bare `pnpm` resolves to on
 - `acryl_verify_plugin` (lint + import/shape check, doc ids per finding; a declared-but-uninstalled dependency is
   a warning, not an error), AGENTS.md and human-doc pointers, spec 037 status and 030/033/034 cross-references (`8fa3aa6c54d037cb7a035e08a5649194695fdb72`).
 - Remaining 037 items and their reasons are listed in `specs/037-guardrailed-self-extension/tasks.md` Status.
+
+## 2026-09-20 - feat: full plugin-type coverage, reference corpus, real-model end-to-end (spec 037)
+
+- Coverage of all 18 plugin types with docs and examples (llm-adapter, three-role swap, desktop-main, agent preset,
+  sidebar tab), 80 synced harness/Cordis reference docs, 5 more skills, a real-engine test mounting every host example
+  (`aead144744d70915dd2914a625b3f5fc691f0f46`, corpus and examples in `caf894b`).
+- A real DeepSeek model ran build, update, add-tool-and-use and remove through the real web engine in 102 s; the run is kept
+  as an opt-in test (`aead144`).
+- Fixed four stale pre-existing runtime tests (HMR default, session format v2) and added the /reload real-engine test (`a2f611f55418ebc6eff9a5ccd373594115c4821f`).
