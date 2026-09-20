@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "packVersion": "0.2.0",
+  "packVersion": "0.3.0",
   "navigation": [
     {
       "title": "Start here",
@@ -225,7 +225,7 @@
           "id": "delivery.local-live",
           "title": "Deliver a plugin live: local install, no restart",
           "path": "delivery/local-live.md",
-          "when": "The plugin is written and must become live now, or acryl_install_plugin returned an error, or the plugin is PENDING, FAILED or not visible.",
+          "when": "The plugin is written and must become live now; a plugin must be CHANGED, FIXED, IMPROVED or REMOVED; acryl_install_plugin returned an error; or the plugin is PENDING, FAILED or not visible.",
           "surfaces": [
             "tui",
             "web",
@@ -235,6 +235,9 @@
           "seeAlso": [
             "start.verify-before-done",
             "extending.packaging"
+          ],
+          "examples": [
+            "lifecycle-function.hot-shim"
           ]
         }
       ]
@@ -404,6 +407,20 @@
       "teaches": "The shape of a publishable, reviewable generated capability.",
       "docs": [
         "extending.packaging"
+      ]
+    },
+    {
+      "id": "lifecycle-function.hot-shim",
+      "type": "lifecycle-function",
+      "path": "lifecycle-function-hot-shim",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "A host plugin whose code hot-updates: a never-changing shim re-imports impl.js with a cache-busting query.",
+      "docs": [
+        "delivery.local-live"
       ]
     }
   ]

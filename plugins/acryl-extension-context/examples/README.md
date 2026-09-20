@@ -19,3 +19,4 @@ pack gate and its declared outcome observed. Find the closest, read it, then ada
 | [client-slot.header-action](packages/client-slot-header-action/) | client-slot | A UI plugin with no build step: top-bar button and panel, hand-written client bundle. | web desktop | extending.client-slot |
 | [tui-command.basic](packages/tui-command-basic/) | tui-contribution | A slash command with an overlay in the terminal UI. | tui | extending.tui-command |
 | [generated-capability.template](packages/generated-capability-template/) | generated-capability | The shape of a publishable, reviewable generated capability. | tui web desktop | extending.packaging |
+| [lifecycle-function.hot-shim](packages/lifecycle-function-hot-shim/) | lifecycle-function | A host plugin whose code hot-updates: a never-changing shim re-imports impl.js with a cache-busting query. | tui web desktop | delivery.local-live |

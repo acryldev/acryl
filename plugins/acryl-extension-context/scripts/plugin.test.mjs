@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { test } from 'node:test'
-import { lintPackageDir, installLocalPlugin } from '../lib/install.js'
+import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin } from '../lib/install.js'
 import { resolvePackRoot } from '../lib/pack-root.js'
 import { createSkillProvider, parseSkill } from '../lib/skills.js'
 import { buildRouterText, estimateTokens, ROUTER_TOKEN_BUDGET } from '../lib/router.js'
@@ -60,7 +60,7 @@ function makePkg(over = {}, { patch = true } = {}) {
 
 test('lint accepts a correct package', () => {
   const dir = makePkg()
-  try { assert.deepEqual(lintPackageDir(dir), { name: 'my-plugin', hasClient: false, errors: [] }) } finally { rmSync(dir, { recursive: true, force: true }) }
+  try { assert.deepEqual(lintPackageDir(dir), { name: 'my-plugin', hasClient: false, hotShim: false, errors: [] }) } finally { rmSync(dir, { recursive: true, force: true }) }
 })
 
 test('lint catches the measured failures: missing bundle, missing patch file, exports without ./package.json', () => {
@@ -77,12 +77,17 @@ test('lint catches the measured failures: missing bundle, missing patch file, ex
 
 const handle = (exitCode, text = '') => ({ done: Promise.resolve({ exitCode, signal: null }), stdout: (async function* () { yield text })(), stderr: (async function* () {})() })
 
-function fakes({ addExit = 0, activateError = null, removeExit = 0 } = {}) {
+function fakes({ addExit = 0, activateError = null, removeExit = 0, preinstalled = false } = {}) {
   const calls = []
+  const mounted = new Set(preinstalled ? ['my-plugin'] : [])
   return {
     calls,
     pnpm: { runPlugin: (args) => { calls.push(['run', ...args]); return handle(args[0] === 'add' ? addExit : removeExit, args[0] === 'add' && addExit ? 'boom' : '') } },
-    live: { activate: async name => { calls.push(['activate', name]); if (activateError) throw new Error(activateError) }, statusOf: () => 'active' },
+    live: {
+      activate: async name => { calls.push(['activate', name]); if (activateError) throw new Error(activateError); mounted.add(name) },
+      deactivate: async name => { calls.push(['deactivate', name]); mounted.delete(name) },
+      statusOf: name => (mounted.has(name) ? 'active' : undefined),
+    },
   }
 }
 
@@ -98,7 +103,7 @@ test('install: success adds, activates and reports status', async () => {
   const dir = makePkg(); const s = fakes()
   try {
     const r = await installLocalPlugin({ path: dir }, s)
-    assert.deepEqual(r, { ok: true, package: 'my-plugin', status: 'active' })
+    assert.deepEqual(r, { ok: true, package: 'my-plugin', status: 'active', action: 'installed' })
     assert.deepEqual(s.calls, [['run', 'add', `file:${dir}`], ['activate', 'my-plugin']])
   } finally { rmSync(dir, { recursive: true, force: true }) }
 })
@@ -136,9 +141,43 @@ test('skills: frontmatter parses, and the real pack lists its skills with real d
   const root = resolvePackRoot()
   const provider = createSkillProvider(root)
   const list = await provider.list()
-  assert.deepEqual(list.map(c => c.name).sort(), ['acryl-add-ui', 'acryl-build-extension', 'acryl-fix-plugin'])
+  assert.deepEqual(list.map(c => c.name).sort(), ['acryl-add-ui', 'acryl-build-extension', 'acryl-change-plugin', 'acryl-fix-plugin'])
   assert.ok(list.every(c => c.rank === 600 && c.source === 'bundled'))
   const skill = await provider.get(list.find(c => c.name === 'acryl-build-extension'))
   assert.ok(skill.content.includes(join(root, 'docs/start-here/this-runtime.md')))
   assert.doesNotMatch(skill.content, /\{\{pack\}\}/)
+})
+
+test('update: an already-mounted plugin is deactivated first, re-added, and warned about host caching', async () => {
+  const dir = makePkg(); const s = fakes({ preinstalled: true })
+  try {
+    const r = await installLocalPlugin({ path: dir }, s)
+    assert.equal(r.ok, true); assert.equal(r.action, 'updated'); assert.match(r.warning, /hot shim/)
+    assert.deepEqual(s.calls.map(c => c[0]), ['deactivate', 'run', 'activate'])
+  } finally { rmSync(dir, { recursive: true, force: true }) }
+})
+
+test('update: a plugin using the hot shim gets no caching warning', async () => {
+  const dir = makePkg({ files: ['index.js', 'cordis.patch.yml'] })
+  writeFileSync(join(dir, 'index.js'), "export async function apply(ctx){ const m = await import(new URL('./impl.js', import.meta.url).href + '?t=' + Date.now()); return m.apply(ctx) }")
+  const s = fakes({ preinstalled: true })
+  try {
+    assert.equal(lintPackageDir(dir).hotShim, true)
+    const r = await installLocalPlugin({ path: dir }, s)
+    assert.equal(r.warning, undefined)
+  } finally { rmSync(dir, { recursive: true, force: true }) }
+})
+
+test('list reads file: dependencies of the profile; remove deactivates then removes', async () => {
+  const profile = mkdtempSync(join(tmpdir(), 'profile-'))
+  try {
+    writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: { a: 'file:/src/a', b: '^1.0.0' } }))
+    assert.deepEqual(listLocalPlugins(profile), [{ name: 'a', installedFrom: '/src/a' }])
+    assert.deepEqual(listLocalPlugins('/nonexistent-profile'), [])
+  } finally { rmSync(profile, { recursive: true, force: true }) }
+  const calls = []
+  const svc = { pnpm: { runPlugin: args => { calls.push(args.join(' ')); return handle(0) } }, live: { deactivate: async n => { calls.push(`deactivate ${n}`) } } }
+  const r = await removeLocalPlugin({ package: 'a' }, svc)
+  assert.equal(r.ok, true); assert.deepEqual(calls, ['deactivate a', 'remove a'])
+  assert.equal((await removeLocalPlugin({}, svc)).ok, false)
 })

@@ -13,10 +13,10 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { installLocalPlugin } from './lib/install.js'
+import { installLocalPlugin, listLocalPlugins, removeLocalPlugin } from './lib/install.js'
 import { resolvePackRoot } from './lib/pack-root.js'
 import { createSkillProvider } from './lib/skills.js'
-import { buildRouterText, INSTALL_TOOL_NAME, ROUTER_SECTION_NAME, ROUTER_SECTION_ORDER } from './lib/router.js'
+import { buildRouterText, INSTALL_TOOL_NAME, LIST_TOOL_NAME, REMOVE_TOOL_NAME, ROUTER_SECTION_NAME, ROUTER_SECTION_ORDER } from './lib/router.js'
 
 export const name = 'acryl-extension-context'
 export const inject = ['systemPrompt']
@@ -55,6 +55,32 @@ export function apply(ctx) {
       async execute(args) {
         const result = await installLocalPlugin({ path: args.path }, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation') })
         // A thrown error is reported to the model as a tool error with the full detail.
+        if (!result.ok) throw new Error(JSON.stringify(result, null, 2))
+        return JSON.stringify(result)
+      },
+    }))
+
+    scoped.tools.register(defineTool({
+      name: LIST_TOOL_NAME,
+      description: 'List the local plugins installed in the active ACRYL profile and the directory each was installed from, so you can find and edit them.',
+      parameters: {},
+      output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+      async execute() {
+        const profile = ctx.get('desktopProfiles')
+        if (!profile?.current?.dir) throw new Error('the active profile is not available in this runtime')
+        return JSON.stringify(listLocalPlugins(profile.current.dir))
+      },
+    }))
+
+    scoped.tools.register(defineTool({
+      name: REMOVE_TOOL_NAME,
+      description: 'Remove a local plugin from the active ACRYL profile and unmount it live. Pass the package name (see the list tool).',
+      parameters: {
+        package: { type: 'string', required: true, description: 'Package name of the plugin to remove.' },
+      },
+      output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+      async execute(args) {
+        const result = await removeLocalPlugin({ package: args.package }, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation') })
         if (!result.ok) throw new Error(JSON.stringify(result, null, 2))
         return JSON.stringify(result)
       },

@@ -4,7 +4,7 @@ Goal: the user asks for a feature, you write a plugin, it appears without a rest
 
 1. Write the package in a new directory (never inside the pack or the profile). Copy the closest
    example from `../examples/README.md` and change it.
-2. Call the **`acryl_install_plugin`** tool with the package directory. It checks the package
+2. Call the **`acryl_install_plugin`** tool with the package directory. Write host logic in a hot shim from the start if you may edit it later (below). It checks the package
    (bundle patch, `exports` including `./package.json`, a client bundle if `dsh.client` is set), runs
    `dsh plugin add file:<dir>`, live-activates it, and **removes it again if activation fails**.
 3. Read the result. `ok: true` with status `active` means the host part is live. If the result has a
@@ -12,8 +12,22 @@ Goal: the user asks for a feature, you write a plugin, it appears without a rest
 4. On an error the result names the stage (`check`, `install`, `activate`) and the real message. Fix that
    cause and call the tool again; the tool already undid a failed install.
 
-To change a plugin, edit the files and call the tool again (`file:` installs copy the package, so it must be
-re-added). To remove one: `dsh plugin --profile <name> remove <package>`.
+## Changing, fixing, improving or removing a plugin
+
+1. Call `acryl_list_plugins` to find the plugin and the directory it was installed from. Edit the files there.
+2. Call `acryl_install_plugin` with that directory again. It detects the existing plugin, takes it down, re-installs the
+   changed files and mounts a fresh instance ("action": "updated").
+3. **Browser code (`client.js`)**: the new file is served after a page reload. Tell the user to reload.
+4. **Host code (`index.js` and what it imports)**: Node caches module resolution, so a plain re-install keeps
+   running the OLD host code (measured). Make host code hot-updatable with the **hot shim**: keep `index.js` as the
+   tiny, never-changing shim from `../examples/packages/lifecycle-function-hot-shim/` and put all real logic in
+   `impl.js`; each mount re-imports `impl.js` with a cache-busting query. The tool warns you ("warning") when it
+   updated a plugin that does not use the shim; then the change needs an app restart. A plugin whose host half is
+   empty (a UI-only plugin) has nothing to reload.
+5. To delete a plugin call `acryl_remove_plugin` with its package name (UI plugins: tell the user to reload).
+
+To improve or change UI, edit `client.js` and update as above. Never edit files inside the profile's `node_modules`
+or the pack; always the source directory that `acryl_list_plugins` reports.
 
 ## Marketplace
 

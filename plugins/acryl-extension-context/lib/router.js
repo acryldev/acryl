@@ -6,6 +6,8 @@ export const ROUTER_SECTION_NAME = 'acryl:extension-router'
 /** After the tool sections, before the local-path suffix (harness SECTION_ORDERS: 5000..10000). */
 export const ROUTER_SECTION_ORDER = 9500
 export const INSTALL_TOOL_NAME = 'acryl_install_plugin'
+export const LIST_TOOL_NAME = 'acryl_list_plugins'
+export const REMOVE_TOOL_NAME = 'acryl_remove_plugin'
 
 export const estimateTokens = text => Math.ceil(text.length / 4)
 
@@ -37,9 +39,11 @@ export function buildRouterText(root, manifest) {
     }
   }
   lines.push(
-    `- To make a plugin live, call the ${INSTALL_TOOL_NAME} tool with the package directory. It checks the package,`,
-    '  installs it into the active profile and activates it live, and undoes the install if activation fails.',
-    '  Read its result; never claim a plugin works, or state its state, without it.',
+    `- To make a plugin live, call ${INSTALL_TOOL_NAME} with the package directory: it checks the package, installs it,`,
+    '  activates it live, and undoes the install if activation fails. Calling it again on a changed package UPDATES it.',
+    `  To change, fix or improve a plugin first call ${LIST_TOOL_NAME} to find its directory, edit the files, then call`,
+    `  ${INSTALL_TOOL_NAME} again. To delete one call ${REMOVE_TOOL_NAME}. Read every result; never claim a plugin works,`,
+    '  or state its state, without it. UI (browser) changes need a page reload: tell the user.',
     '- Publishing to the marketplace is a human decision: prepare the package and tell the user; you cannot publish.',
   )
   return lines.join('\n')
