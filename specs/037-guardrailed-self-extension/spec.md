@@ -387,3 +387,8 @@ All eight were answered on 2026-09-20 with measured evidence in `research.md`
 home, Q6 TUI seam, Q7 local live path, Q8 publish design). Decisions D1-D11 there
 are binding for the plan and tasks. Remaining unknowns are implementation details
 (exact registration calls at T011, web and desktop live-install parity at T018).
+
+## Follow-ups
+
+- `specs/038-ui-component-library`: a cross-surface UI/TUI component library and terminal theme service, so agent-authored UI matches the app
+  on Web, Desktop and the CLI. This spec's pack already teaches what exists today (`docs/extending/ui-*.md`, `docs/maps/ui-components.md`).
