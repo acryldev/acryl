@@ -1,3 +1,19 @@
+## 2026-09-20 - 037 self-extension: update, list, remove, Desktop path; ready for human test
+
+Commits: `6dd728c90a798d95f22e9aa8ddc90c3e010cc1a0`, `1aaeb877d0d700abf0600f0f5be94d2a1c453a71`, `501827f0add6498d8cdf8da7e5057fbe53d80486`
+
+The agent can now change, fix, improve and remove its own plugins, not only create them. New tools
+`acryl_list_plugins` and `acryl_remove_plugin`; `acryl_install_plugin` updates an already-mounted plugin.
+Measured on the real engine: re-installing changed HOST code keeps running the old code because Node caches
+module resolution, so plugins use a hot shim (a never-changing entry that re-imports `impl.js` with a
+cache-busting query on every mount); the tool warns when an update cannot pick up host code. Browser
+`client.js` is re-read on reload. Found and fixed a Desktop-only blocker: Desktop's `desktopPnpm.runPlugin`
+refuses `add`, so the tool falls back to `pnpm run` in the profile and registers the bundle itself (validated
+by emulating Desktop's boundary on a real engine). Verified in a real browser that a hand-written client
+bundle executes and registers. Absolute paths are required. A human test guide is at
+`specs/037-guardrailed-self-extension/HUMAN-TEST.md`. Four unrelated runtime tests (profile HMR flag,
+session-bridge) fail on this branch and were not touched.
+
 ## 2026-09-20 - 037 self-extension machinery: router, install tool, docs, examples, skills
 
 Commits: `9770c63571c3a3ebe8b543c537f6bcf8e23487b1`, `afe499bfdb86d285623488ac45715f768ca62634`

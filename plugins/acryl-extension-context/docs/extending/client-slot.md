@@ -60,6 +60,15 @@ Styling: inline `style` objects, or inject one `<style>` element in `apply` and 
 For a first version use the header action plus a floating panel opened by the button
 (the example): it needs no other props. Register with `{ name, id, order }`.
 
+## A sidebar-like or full-screen view
+
+The right-sidebar tab slot needs extra props (`key`, `store`, `inject`, `locale`) that are easy to get wrong
+without a compiler. The robust way to get a sidebar or a full view: keep the header-action button from the example
+and change the panel it opens. A docked side panel is `position: 'fixed', top: 0, right: 0, height: '100vh',
+width: 420, zIndex: 9999`; a full view is `inset: 0`. Give it a title bar with a close button. Use this unless the
+user specifically needs the native tab strip; if they do, read `ui-sidebar-files/src/client/index.ts` under
+`deepseek-harness/packages/client/` for the exact registration and copy it.
+
 ## Persisting state
 
 The example keeps state in `localStorage`. That survives reloads on one machine. For state
