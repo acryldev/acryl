@@ -4917,3 +4917,12 @@ binary directly rather than through whatever bare `pnpm` resolves to on
 - A real DeepSeek model ran build, update, add-tool-and-use and remove through the real web engine in 102 s; the run is kept
   as an opt-in test (`aead144744d70915dd2914a625b3f5fc691f0f46`).
 - Fixed four stale pre-existing runtime tests (HMR default, session format v2) and added the /reload real-engine test (`a2f611f55418ebc6eff9a5ccd373594115c4821f`).
+
+## 2026-09-20 - feat: mount-point map and plugin taxonomy across CLI, Web and Desktop (spec 037)
+
+- Generated `docs/maps/mount-points.md` (58 client slots read from `SlotMap` declarations, the CLI `tuiCommands` overlay seam,
+  13 host mount points, a which-surface-shows-what table) and `docs/maps/taxonomy.md` (169 composed plugin packages classified
+  into 20 types with authoring verdicts) from source and the composed loader rows; new chat-command and settings-section examples;
+  skills and router point the agent at the maps (`e5fe25819b46f34306dc656e7d08b7b64dc9412b`).
+- A real model on the CLI engine chose a terminal overlay for a "todo I can open from the terminal" request, built, verified,
+  installed and updated it. Synced-doc provenance made stable per file (`56fdd85376a88bca46fe1f0be979b726c3b1f167`).
