@@ -7,6 +7,34 @@ coherent change promptly, and record each landed task in
 implementation commit. Never stage with `git add .` or `-A`; the working tree
 holds unrelated untracked files.
 
+## Priority order (2026-09-20): self-extension working ASAP
+
+Direction from the owner: get the pi.dev-style self-extension loop working first,
+**Web and Desktop before CLI**, and do not spend effort on anything that is not on
+that path. Multi-language docs are out of scope: the pack is **English only**; other
+languages may be added later and nothing here should be shaped around them (the
+repo's bilingual-docs gate does not apply to the pack, which has no `*.i18n.yaml`).
+
+**P0 - the critical path (do these, in this order):**
+
+1. **T011** runtime plugin: `extensionContext` service and the router `PromptSection`.
+2. **T012 + T013** compose it on **web and desktop first**, with the assembled-prompt
+   evidence; CLI is enabled afterwards with the same data change.
+3. **T018a** an agent-callable **install tool** (`acryl_install_plugin`): mount-check,
+   `dsh plugin add file:`, explicit `livePluginActivation.activate`, compensating
+   `remove`. Without this the agent can write a plugin but cannot make it live
+   (activation is not reachable from a shell), so this is what makes the loop close.
+4. **T010** just enough docs and examples to author a working plugin: tool plugin,
+   client slot (web/desktop), and local live delivery.
+5. **T014** a real agent, on Web then Desktop, writes a plugin and it goes live.
+
+**P1 - after the loop works:** T015-T017 full verifier and CLI command, T029 shipping
+in release archives (needed before this reaches installed users), then CLI enablement.
+
+**P2 - only if needed later:** T019-T021 marketplace publish, T022-T028 full corpus,
+per-type coverage and skills, T031-T034 eval and tuning. Skipped for now; not required
+for self-extensibility.
+
 Slice 0 (T001-T008) is **complete as of 2026-09-20**: every gate was answered with
 measured evidence in `research.md` and folded into the spec, plan and data model.
 Slices 1 and 2 are the walking skeleton. Every task keeps

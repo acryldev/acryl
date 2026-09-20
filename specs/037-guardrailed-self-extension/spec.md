@@ -353,6 +353,16 @@ Evidence, not unit tests alone:
 - **Gate**: `corepack pnpm run check` fails when a doc is unlisted, an example
   has no scenario, a scenario fails, or the router exceeds budget.
 
+## Priority and language scope
+
+Priority is the shortest path to a working self-extension loop: **Web and Desktop
+first, then CLI**. The minimum is the router, enough docs and examples to author a
+plugin, and an agent-callable install tool that verifies, installs and live-activates.
+Everything else (full verifier, corpus sync, per-type coverage, skills, eval,
+marketplace publish) follows only if needed. The pack is **English only**; additional
+languages can be added later and are not a design constraint. See the priority order
+in `tasks.md`.
+
 ## Non-goals
 
 - Self-**evolution** (proposing changes to ACRYL itself, promotion policy);
@@ -368,8 +378,7 @@ Evidence, not unit tests alone:
 - Changing DeepSeek Harness, its prompt assembly, or the skill registry.
 - Engine #2 (pi) integration from `specs/028`; this spec assumes the `dsh`
   engine and stays engine-neutral where it can.
-- Translating the pack (the harness ships `.zh.md`; the pack is English until a
-  separate decision).
+- Translating the pack: English only for now; other languages may be added later.
 
 ## Open questions
 
