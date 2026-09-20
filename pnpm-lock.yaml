@@ -1949,6 +1949,8 @@ importers:
 
   examples/acryl-blend-demo: {}
 
+  plugins/acryl-extension-context: {}
+
   plugins/cordis-plugin-market:
     dependencies:
       ajv:

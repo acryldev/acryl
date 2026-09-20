@@ -49,6 +49,7 @@ packages:
   - plugins/dsh-client-ui-brand-acryl
   - plugins/dsh-community-fabric
   - plugins/cordis-plugin-market
+  - plugins/acryl-extension-context
   - '!deepseek-harness/**'
 
 allowBuilds:

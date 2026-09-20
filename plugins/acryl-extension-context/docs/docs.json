@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "packVersion": "0.1.0",
+  "navigation": [
+    {
+      "title": "Start here",
+      "items": [
+        {
+          "id": "start.this-runtime",
+          "title": "This runtime: how ACRYL plugins are built, loaded and delivered",
+          "path": "start-here/this-runtime.md",
+          "when": "Always first: the layers, the plugin and package contracts, and the two delivery paths.",
+          "surfaces": ["tui", "web", "desktop"],
+          "applies": "all",
+          "examples": ["lifecycle-function.basic"]
+        },
+        {
+          "id": "start.verify-before-done",
+          "title": "Verify before you say it works",
+          "path": "start-here/verify-before-done.md",
+          "when": "Before claiming a plugin works, stating a live fiber state, or delivering a package.",
+          "surfaces": ["tui", "web", "desktop"],
+          "applies": "all",
+          "seeAlso": ["start.this-runtime"]
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "id": "lifecycle-function.basic",
+      "type": "lifecycle-function",
+      "path": "lifecycle-function-basic",
+      "surfaces": ["tui", "web", "desktop"],
+      "teaches": "The smallest plugin: named exports name and apply, no dependencies.",
+      "docs": ["start.this-runtime"],
+      "scenario": "lifecycle-function-basic"
+    }
+  ]
+}

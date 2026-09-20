@@ -1,0 +1,11 @@
+[
+  {
+    "id": "lifecycle-function-basic",
+    "surfaces": ["tui", "web", "desktop"],
+    "steps": [
+      { "mount": "packages/lifecycle-function-basic", "expect": "ACTIVE" },
+      { "remount": "packages/lifecycle-function-basic", "expect": "ACTIVE" },
+      { "expectNoLeak": true }
+    ]
+  }
+]
