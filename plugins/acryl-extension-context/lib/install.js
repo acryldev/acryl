@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { isAbsolute, join, resolve } from 'node:path'
 
 /**
@@ -65,6 +65,45 @@ export function listLocalPlugins(profileDir, fs = { existsSync, readFileSync }) 
 }
 
 /**
+ * Add `name` to `dsh.profile.bundles` in the profile's package.json when it is missing. This is what
+ * `dsh plugin add` (CLI/Web) does after pnpm; Desktop's generic `run` does not, so we do it here.
+ */
+export function ensureProfileBundle(profileDir, name, fs = { existsSync, readFileSync, writeFileSync, renameSync }) {
+  const path = join(profileDir, 'package.json')
+  if (!fs.existsSync(path)) throw new Error(`the active profile has no package.json at ${path}`)
+  const pkg = JSON.parse(fs.readFileSync(path, 'utf8'))
+  const bundles = pkg.dsh?.profile?.bundles
+  if (!Array.isArray(bundles)) throw new Error('the active profile package.json has no dsh.profile.bundles list')
+  if (bundles.includes(name)) return false
+  pkg.dsh.profile.bundles = [...bundles, name]
+  const tmp = `${path}.acryl-tmp`
+  fs.writeFileSync(tmp, `${JSON.stringify(pkg, null, 2)}\n`)
+  fs.renameSync(tmp, path)
+  return true
+}
+
+/**
+ * Add a local package to the active profile. CLI and Web: `dsh plugin add file:<dir>` through runPlugin.
+ * Desktop refuses `add` through runPlugin (it must use its recoverable registry-install boundary, which
+ * cannot take a local path), so there we run pnpm directly with `run` and register the bundle ourselves.
+ */
+export async function addLocalPackage(services, dir, name, profileDir, fs) {
+  try {
+    return await runPlugin(services.pnpm, ['add', `file:${dir}`], dir)
+  } catch (cause) {
+    const message = cause instanceof Error ? cause.message : String(cause)
+    if (!/recoverable install boundary/u.test(message) || typeof services.pnpm.run !== 'function') throw cause
+  }
+  const handle = services.pnpm.run(['add', '-w', `file:${dir}`])
+  const [outcome, stdout, stderr] = await Promise.all([handle.done, drain(handle.stdout), drain(handle.stderr)])
+  const result = { ok: outcome.exitCode === 0, exitCode: outcome.exitCode, output: `${stdout}${stderr}`.trim().slice(-600) }
+  if (!result.ok) return result
+  if (!profileDir) return { ok: false, exitCode: null, output: 'the active profile directory is not available to register the bundle' }
+  try { ensureProfileBundle(profileDir, name, fs) } catch (cause) { return { ok: false, exitCode: null, output: cause instanceof Error ? cause.message : String(cause) } }
+  return result
+}
+
+/**
  * Local, in-place delivery (spec 037 FR-016): lint, `dsh plugin add file:<dir>`, an
  * EXPLICIT live activation, and a compensating `remove` on any failure, because CLI
  * and Web have no install recovery log (measured: a plugin whose apply() threw stayed
@@ -73,7 +112,12 @@ export function listLocalPlugins(profileDir, fs = { existsSync, readFileSync }) 
  * @param {{ pnpm: any, live: any, cwd?: string }} services
  */
 export async function installLocalPlugin(input, services, fs) {
-  const dir = isAbsolute(input.path) ? input.path : resolve(services.cwd ?? process.cwd(), input.path)
+  if (typeof input.path !== 'string' || input.path === '') return { ok: false, stage: 'check', errors: ['path is required'] }
+  // The runtime's working directory is not the user's workspace, so a relative path would silently point somewhere else.
+  if (!isAbsolute(input.path) && services.cwd === undefined) {
+    return { ok: false, stage: 'check', errors: [`path must be ABSOLUTE (got "${input.path}"); use the workspace directory you are working in`] }
+  }
+  const dir = isAbsolute(input.path) ? input.path : resolve(services.cwd, input.path)
   const lint = lintPackageDir(dir, fs)
   if (lint.errors.length > 0 || lint.name === undefined) {
     return { ok: false, stage: 'check', errors: lint.errors, next: 'Fix these in the package and call the tool again. See docs/start-here/this-runtime.md (package contract).' }
@@ -91,7 +135,7 @@ export async function installLocalPlugin(input, services, fs) {
       return { ok: false, stage: 'update', errors: [`could not deactivate the running version: ${cause instanceof Error ? cause.message : cause}`] }
     }
   }
-  const added = await runPlugin(services.pnpm, ['add', `file:${dir}`], dir)
+  const added = await addLocalPackage(services, dir, lint.name, services.profileDir, fs)
   if (!added.ok) return { ok: false, stage: 'install', errors: [`dsh plugin add failed (exit ${added.exitCode})`], detail: added.output }
 
   try {

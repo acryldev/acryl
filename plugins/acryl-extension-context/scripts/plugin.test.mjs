@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { test } from 'node:test'
-import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin } from '../lib/install.js'
+import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, ensureProfileBundle } from '../lib/install.js'
 import { resolvePackRoot } from '../lib/pack-root.js'
 import { createSkillProvider, parseSkill } from '../lib/skills.js'
 import { buildRouterText, estimateTokens, ROUTER_TOKEN_BUDGET } from '../lib/router.js'
@@ -180,4 +180,36 @@ test('list reads file: dependencies of the profile; remove deactivates then remo
   const r = await removeLocalPlugin({ package: 'a' }, svc)
   assert.equal(r.ok, true); assert.deepEqual(calls, ['deactivate a', 'remove a'])
   assert.equal((await removeLocalPlugin({}, svc)).ok, false)
+})
+
+test('install: a relative path is refused (the runtime cwd is not the workspace) unless a cwd is supplied', async () => {
+  const s = fakes()
+  const r = await installLocalPlugin({ path: 'my-plugin' }, s)
+  assert.equal(r.ok, false); assert.match(r.errors[0], /ABSOLUTE/); assert.deepEqual(s.calls, [])
+  assert.equal((await installLocalPlugin({}, s)).ok, false)
+})
+
+test('desktop path: runPlugin add is refused, so pnpm run is used and the bundle is registered', async () => {
+  const dir = makePkg(); const profile = mkdtempSync(join(tmpdir(), 'profile-'))
+  writeFileSync(join(profile, 'package.json'), JSON.stringify({ dsh: { profile: { bundles: ['@deepseek-ai/dsh-base'] } } }))
+  const calls = []
+  const s = fakes()
+  s.pnpm = {
+    runPlugin: () => { throw new Error('acryl-desktop: plugin add must use the recoverable install boundary') },
+    run: args => { calls.push(args.join(' ')); return handle(0) },
+  }
+  s.profileDir = profile
+  try {
+    const r = await installLocalPlugin({ path: dir }, s)
+    assert.equal(r.ok, true); assert.deepEqual(calls, [`add -w file:${dir}`])
+    const bundles = JSON.parse(readFileSync(join(profile, 'package.json'), 'utf8')).dsh.profile.bundles
+    assert.deepEqual(bundles, ['@deepseek-ai/dsh-base', 'my-plugin'])
+    assert.equal(ensureProfileBundle(profile, 'my-plugin'), false)   // idempotent
+  } finally { rmSync(dir, { recursive: true, force: true }); rmSync(profile, { recursive: true, force: true }) }
+})
+
+test('desktop path: an unrelated runPlugin error is not swallowed', async () => {
+  const dir = makePkg(); const s = fakes()
+  s.pnpm = { runPlugin: () => { throw new Error('something else') }, run: () => handle(0) }
+  try { await assert.rejects(installLocalPlugin({ path: dir }, s), /something else/) } finally { rmSync(dir, { recursive: true, force: true }) }
 })

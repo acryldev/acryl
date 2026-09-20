@@ -47,13 +47,13 @@ export function apply(ctx) {
   ctx.inject(['tools'], scoped => {
     scoped.tools.register(defineTool({
       name: INSTALL_TOOL_NAME,
-      description: 'Install a plugin package you wrote into the active ACRYL profile and activate it live (no restart). Checks the package first and undoes the install if activation fails. Pass the package directory. Returns the plugin status or the exact error to fix.',
+      description: 'Install a plugin package you wrote into the active ACRYL profile and activate it live (no restart), or UPDATE it if it is already installed. Checks the package first and undoes the install if activation fails. Pass the ABSOLUTE path of the package directory. Returns the plugin status or the exact error to fix.',
       parameters: {
-        path: { type: 'string', required: true, description: 'Directory of the plugin package (the folder containing package.json).' },
+        path: { type: 'string', required: true, description: 'ABSOLUTE path of the plugin package directory (the folder containing package.json).' },
       },
       output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
       async execute(args) {
-        const result = await installLocalPlugin({ path: args.path }, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation') })
+        const result = await installLocalPlugin({ path: args.path }, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir: ctx.get('desktopProfiles')?.current?.dir })
         // A thrown error is reported to the model as a tool error with the full detail.
         if (!result.ok) throw new Error(JSON.stringify(result, null, 2))
         return JSON.stringify(result)

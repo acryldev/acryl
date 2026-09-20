@@ -39,7 +39,7 @@ export function buildRouterText(root, manifest) {
     }
   }
   lines.push(
-    `- To make a plugin live, call ${INSTALL_TOOL_NAME} with the package directory: it checks the package, installs it,`,
+    `- Write plugin sources in <workspace>/.acryl-extensions/<name>/. To make one live, call ${INSTALL_TOOL_NAME} with that ABSOLUTE path: it checks it, installs it,`,
     '  activates it live, and undoes the install if activation fails. Calling it again on a changed package UPDATES it.',
     `  To change, fix or improve a plugin first call ${LIST_TOOL_NAME} to find its directory, edit the files, then call`,
     `  ${INSTALL_TOOL_NAME} again. To delete one call ${REMOVE_TOOL_NAME}. Read every result; never claim a plugin works,`,

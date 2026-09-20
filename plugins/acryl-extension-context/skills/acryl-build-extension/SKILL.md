@@ -9,9 +9,9 @@ description: Use when the user asks you to add a feature, tool, panel, command o
    (tool, service, event hook, config, prompt, client UI, host route, tui command). Read it completely and
    follow its cross-references.
 3. Open the closest working example in {{pack}}/examples/README.md and read every file of it. Copy it into a
-   NEW directory outside the pack and change it. Never guess a plugin's shape from memory.
+   NEW directory <workspace>/.acryl-extensions/<plugin-name>/ (outside the pack) and change it. Never guess a plugin's shape from memory.
 4. Write the package (package.json, cordis.patch.yml, index.js, and client.js for UI).
-5. Call the acryl_install_plugin tool with that directory. Read its result. Fix the named cause and call it
+5. Call the acryl_install_plugin tool with the ABSOLUTE path of that directory. Read its result. Fix the named cause and call it
    again if it fails; it undoes failed installs.
 6. Tell the user what you built, whether it is live, and (for UI) that they should reload the page or window.
    Do not claim it works before the tool result says so. You cannot publish to the marketplace; say what
