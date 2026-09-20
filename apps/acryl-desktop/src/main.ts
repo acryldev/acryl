@@ -645,6 +645,9 @@ async function start(): Promise<void> {
     lifecycleRecorder.transitionStartupStage(startupStage)
     const marketUserDataDir = app.getPath('userData')
     const marketSelection = readDesktopMarketStateForUserData(marketUserDataDir)
+    // Read by `acryl_workspace_status`: the agent must learn the real surface and profile.
+    process.env.ACRYL_SURFACE = 'desktop'
+    process.env.ACRYL_PROFILE = activeProfileName
     const prepared = prepareDesktopProfile(
       process.env.DSH_TELEMETRY_DISABLED,
       homeDir,

@@ -104,4 +104,19 @@ describe('/reload on the web engine', () => {
       await host.dispose()
     }
   }, 60_000)
+
+  it('reports the real surface and profile to the workspace-status tool', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-extension-surface-'))
+    temporaryHomes.push(home)
+    process.env.DSH_HOME = home
+    const host = await createAcrylEngineHost({
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      initialEngine: 'dsh',
+      prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+    })
+    try {
+      expect(process.env.ACRYL_SURFACE).toBe('web')
+      expect(process.env.ACRYL_PROFILE).toBe('web')
+    } finally { await host.dispose() }
+  }, 60_000)
 })

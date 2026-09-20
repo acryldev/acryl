@@ -65,6 +65,23 @@ export function listLocalPlugins(profileDir, fs = { existsSync, readFileSync }) 
 }
 
 /**
+ * Write the profile's recorded `publicHoistPattern` into its `pnpm-workspace.yaml`, so a newer pnpm accepts the existing
+ * modules directory instead of demanding a full reinstall. Returns true when the file changed.
+ */
+export function pinPublicHoistPattern(profileDir, fs = { existsSync, readFileSync, writeFileSync }) {
+  const modulesFile = join(profileDir, 'node_modules', '.modules.yaml')
+  const workspaceFile = join(profileDir, 'pnpm-workspace.yaml')
+  if (!fs.existsSync(modulesFile) || !fs.existsSync(workspaceFile)) return false
+  const workspace = fs.readFileSync(workspaceFile, 'utf8')
+  if (/^publicHoistPattern:/mu.test(workspace)) return false
+  const recorded = /^publicHoistPattern:\n((?:[ \t]+- .*\n?)+)/mu.exec(fs.readFileSync(modulesFile, 'utf8'))
+  const items = recorded ? recorded[1].split('\n').map(line => line.trim()).filter(line => line.startsWith('- ')) : []
+  const block = items.length > 0 ? `publicHoistPattern:\n${items.map(item => `  ${item}`).join('\n')}\n` : 'publicHoistPattern: []\n'
+  fs.writeFileSync(workspaceFile, `${workspace.replace(/\n*$/u, '\n')}# Pinned by ACRYL: this node_modules was created by an older pnpm whose default public hoist pattern differs from the pnpm on PATH.\n${block}`)
+  return true
+}
+
+/**
  * Add `name` to `dsh.profile.bundles` in the profile's package.json when it is missing. This is what
  * `dsh plugin add` (CLI/Web) does after pnpm; Desktop's generic `run` does not, so we do it here.
  */
@@ -89,7 +106,13 @@ export function ensureProfileBundle(profileDir, name, fs = { existsSync, readFil
  */
 export async function addLocalPackage(services, dir, name, profileDir, fs) {
   try {
-    return await runPlugin(services.pnpm, ['add', `file:${dir}`], dir)
+    let first = await runPlugin(services.pnpm, ['add', `file:${dir}`], dir)
+    // Measured on a real profile: node_modules created by an older pnpm records a public-hoist-pattern that the pnpm on PATH
+    // (a newer major) computes differently and refuses (ERR_PNPM_PUBLIC_HOIST_PATTERN_DIFF). Pin the recorded value once and retry.
+    if (!first.ok && profileDir && /public[-_ ]?hoist[-_ ]?pattern/iu.test(first.output) && pinPublicHoistPattern(profileDir, fs)) {
+      first = await runPlugin(services.pnpm, ['add', `file:${dir}`], dir)
+    }
+    return first
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : String(cause)
     if (!/recoverable install boundary/u.test(message) || typeof services.pnpm.run !== 'function') throw cause

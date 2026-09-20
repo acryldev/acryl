@@ -273,3 +273,9 @@ export async function bootAcrylWebProfile(
     },
   })
 }
+export {
+  captureSystemPrompt,
+  renderSystemPromptDoc,
+  type CaptureSystemPromptOptions,
+  type CapturedSystemPrompt,
+} from './system-prompt-capture.ts'

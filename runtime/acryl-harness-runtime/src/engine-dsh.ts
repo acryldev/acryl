@@ -241,6 +241,9 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
 /** Resolve the pinned Harness `acryl` profile by name into a mountable composition (the CLI/TUI flavor). */
 async function resolveDshEngineComposition(profileName: string): Promise<DshEngineComposition> {
   process.env.DSH_HOME = resolveAcrylDshHome()
+  // Read by `acryl_workspace_status`: the agent must learn the real surface and profile, not a fallback label.
+  process.env.ACRYL_SURFACE = 'tui'
+  process.env.ACRYL_PROFILE = profileName
   const profileDirectory = resolveProfileDir(profileName)
   initProfile(profileDirectory, DEFAULT_PROFILE_BUNDLES)
   await healProfilesModuleFallback({ installAnchor: dshInstallAnchor })
@@ -360,6 +363,8 @@ function materializeProfilePackage(profileDir: string, packageName: string, inst
 async function resolveWebEngineComposition(installPackageUrl: string): Promise<DshEngineComposition> {
   const profileName = 'web'
   process.env.DSH_HOME = resolveAcrylDshHome()
+  process.env.ACRYL_SURFACE = 'web'
+  process.env.ACRYL_PROFILE = profileName
   const profileDirectory = resolveProfileDir(profileName)
   // The shipped `web` template (PROFILE_TEMPLATES.web) bundles dsh-web-app
   // (dsh-client-connection, webStartup, the auth-gated index) on top of

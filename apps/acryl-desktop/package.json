@@ -125,6 +125,7 @@
     "verify:closure": "node --test scripts/runtime-closure.spec.mjs && node scripts/verify-runtime-closure.mjs",
     "verify:cli": "node scripts/verify-cli-runtime.mjs",
     "verify:loader": "node scripts/verify-loader-boot.mjs",
+    "dump:system-prompt": "node scripts/verify-loader-boot.mjs --dump-system-prompt ../../docs/system-prompt/current",
     "verify:profile": "node scripts/verify-profile-boot.mjs",
     "verify:licenses": "node scripts/verify-licenses.mjs",
     "verify:notices": "node scripts/verify-licenses.mjs --notices THIRD_PARTY_NOTICES.md",

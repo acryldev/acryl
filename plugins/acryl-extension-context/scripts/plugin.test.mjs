@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { test } from 'node:test'
-import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, ensureProfileBundle } from '../lib/install.js'
+import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, ensureProfileBundle, pinPublicHoistPattern } from '../lib/install.js'
 import { resolvePackRoot } from '../lib/pack-root.js'
 import { createSkillProvider, parseSkill } from '../lib/skills.js'
 import { buildRouterText, estimateTokens, ROUTER_TOKEN_BUDGET } from '../lib/router.js'
@@ -307,4 +307,22 @@ test('generated maps exist, name the slots the examples use, and cover every sur
   const taxonomy = readFileSync(join(root, 'docs/maps/taxonomy.md'), 'utf8')
   assert.match(taxonomy, /distinct plugin packages are composed across the three surfaces/u)
   for (const type of ['client-slot', 'tool', 'llm-adapter', 'chat-command', 'desktop-main', 'core-infrastructure']) assert.ok(taxonomy.includes(`## ${type} (`), `taxonomy has ${type}`)
+})
+
+test('hoist pattern drift: the recorded pattern is pinned once and the add is retried', async () => {
+  const profile = mkdtempSync(join(tmpdir(), 'profile-')); const dir = makePkg()
+  try {
+    mkdirSync(join(profile, 'node_modules'), { recursive: true })
+    writeFileSync(join(profile, 'node_modules', '.modules.yaml'), "layoutVersion: 5\npublicHoistPattern:\n  - '*eslint*'\n  - '*prettier*'\nregistries: {}\n")
+    writeFileSync(join(profile, 'pnpm-workspace.yaml'), 'packages:\n  - .\n')
+    let adds = 0
+    const s = fakes()
+    s.pnpm = { runPlugin: (args) => { s.calls.push(['run', ...args]); adds += 1; return adds === 1 ? handle(1, 'ERR_PNPM_PUBLIC_HOIST_PATTERN_DIFF: This modules directory was created using a different public-hoist-pattern value') : handle(0) } }
+    const r = await installLocalPlugin({ path: dir }, { ...s, profileDir: profile })
+    assert.equal(r.ok, true); assert.equal(adds, 2)
+    const workspace = readFileSync(join(profile, 'pnpm-workspace.yaml'), 'utf8')
+    assert.match(workspace, /publicHoistPattern:\n {2}- '\*eslint\*'\n {2}- '\*prettier\*'/)
+    assert.equal(pinPublicHoistPattern(profile), false, 'already pinned: no second write')
+    assert.equal(pinPublicHoistPattern(join(profile, 'missing')), false)
+  } finally { rmSync(dir, { recursive: true, force: true }); rmSync(profile, { recursive: true, force: true }) }
 })

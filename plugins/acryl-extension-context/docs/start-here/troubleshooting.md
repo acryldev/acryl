@@ -15,6 +15,7 @@ Read this when a plugin you installed does not behave. Diagnose from evidence, n
 | Named exports (`name`, `inject`, `Config`) ignored | the entry also has a default export: the loader keeps only the default | export named only |
 | Second provider rejected | one provider per service name | swap, do not stack (`docs/extending/three-role-capability.md`) |
 | Behavior doubles after reload | a leaked effect: something acquired outside `ctx.effect` | move every listener, timer and registration into an effect with a disposer |
+| Install fails with `ERR_PNPM_PUBLIC_HOIST_PATTERN_DIFF` (different public-hoist-pattern) | the profile's `node_modules` was made by an older pnpm than the one on PATH | the install tool now pins the recorded pattern in the profile's `pnpm-workspace.yaml` and retries once. If it still fails, report the exact error to the user; do NOT run `pnpm install` in the live profile (it re-resolves the running app's dependencies) and do not edit profile config by hand without telling them |
 | Verify says `dependency-not-installed-yet` | a declared dependency resolves only after install | install, then read the status |
 
 ## Where to look

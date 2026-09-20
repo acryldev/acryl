@@ -12,6 +12,9 @@ Read this first. It is the map; the other docs are the detail.
   surfaces that render it: `tui` (the `acryl` CLI), `web` and `desktop`. A feature
   is implemented once as a runtime capability; a surface only renders or drives it.
 
+**Which surface am I on?** `acryl_workspace_status` reports `surface` (`web`, `desktop` or `tui`) and the active `profile`; the runtime context
+message also says how you are talking to the user (for example "Web GUI"). Trust these over guesses from processes or environment variables.
+
 A plugin you write is a Cordis plugin that the runtime loads the same way on every
 surface. Some plugin types exist only where a surface has the seam (a Web client
 slot, a Desktop-main service, a TUI command); each doc says which. The full map of where things mount on each surface is

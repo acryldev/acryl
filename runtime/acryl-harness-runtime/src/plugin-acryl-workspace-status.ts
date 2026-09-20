@@ -78,7 +78,7 @@ export function installAcrylWorkspaceStatusTool(ctx: Context): () => void {
           fmt('cwd', v.cwd, '-'),
           fmt('dshHome', v.dshHome || '<unset>', '-'),
           fmt('profile', v.profile || '<default>', '-'),
-          fmt('surface', v.surface || '<tui>', '-'),
+          fmt('surface', v.surface || '<unknown>', '-'),
         ]
         return [{ type: 'text', text: [head, ...lines].join('\n') }]
       },

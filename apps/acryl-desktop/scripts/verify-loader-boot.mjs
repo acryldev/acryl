@@ -3,7 +3,7 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { boot } from '@deepseek-ai/dsh-app-boot'
 import {
@@ -249,6 +249,22 @@ try {
     || mountedUrl.pathname !== '/'
     || mountedUrl.searchParams.get('token') === null) {
     throw new Error(`desktop plugin produced an unexpected renderer URL: ${String(mountedSpec?.url)}`)
+  }
+  // Development aid: `--dump-system-prompt <dir>` also captures the system prompt and tool list this composed Desktop runtime sends to the
+  // model (docs/system-prompt/current/desktop.md). A dummy key is used; no model is called successfully.
+  const dumpFlag = process.argv.indexOf('--dump-system-prompt')
+  if (dumpFlag !== -1) {
+    const outDir = resolve(process.argv[dumpFlag + 1] ?? '')
+    process.env.DEEPSEEK_API_KEY = 'dummy-key-for-prompt-capture'
+    const { captureSystemPrompt, renderSystemPromptDoc } = await import('acryl-harness-runtime')
+    const captured = await captureSystemPrompt(ctx, {
+      profile: 'web',
+      selectStandardPreset: true,
+      scrub: [[home, '<dsh-home>'], [resolve(fileURLToPath(new URL('../../../', import.meta.url))), '<acryl-repo>']],
+    })
+    mkdirSync(outDir, { recursive: true })
+    writeFileSync(join(outDir, 'desktop.md'), renderSystemPromptDoc('desktop', 'headless Desktop composition, standard preset', captured))
+    console.log(`wrote ${join(outDir, 'desktop.md')}`)
   }
 } finally {
   try {
