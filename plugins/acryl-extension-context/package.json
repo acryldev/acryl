@@ -31,6 +31,7 @@
     "scripts/lib/**"
   ],
   "scripts": {
+    "sync:corpus": "node scripts/sync-corpus.mjs",
     "build:manifest": "node scripts/build-manifest.mjs",
     "verify:manifest": "node scripts/build-manifest.mjs --check",
     "test": "node --test scripts/manifest.test.mjs scripts/plugin.test.mjs",
@@ -42,5 +43,10 @@
   "main": "./index.js",
   "dependencies": {
     "@deepseek-ai/dsh-tools": "0.1.5-alpha.1"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.2",
+    "@deepseek-ai/dsh-llm": "0.1.5-alpha.1",
+    "@deepseek-ai/schemastery": "^3.18.1"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "packVersion": "0.4.0",
+  "packVersion": "0.5.0",
   "navigation": [
     {
       "title": "Start here",
@@ -34,12 +34,43 @@
           "seeAlso": [
             "start.this-runtime"
           ]
+        },
+        {
+          "id": "start.troubleshooting",
+          "title": "Troubleshooting",
+          "path": "start-here/troubleshooting.md",
+          "when": "A plugin is PENDING, FAILED, invisible or running stale code: symptom table and where to look.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "start.verify-before-done",
+            "delivery.local-live"
+          ]
         }
       ]
     },
     {
       "title": "Extending ACRYL (by plugin type)",
       "items": [
+        {
+          "id": "extending.cordis-core",
+          "title": "Cordis building blocks and where each is documented",
+          "path": "extending/cordis-core.md",
+          "when": "You are unsure which Cordis or harness mechanism to use: the model in ten lines and a table from what you are building to its doc and reference.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "start.this-runtime"
+          ]
+        },
         {
           "id": "extending.client-slot",
           "title": "Client slots: add UI to the Web and Desktop app (panel, button, tab, dashboard)",
@@ -56,7 +87,8 @@
             "extending.host-route"
           ],
           "examples": [
-            "client-slot.header-action"
+            "client-slot.header-action",
+            "client-slot.sidebar-tab"
           ]
         },
         {
@@ -190,13 +222,16 @@
           "id": "extending.llm-adapter",
           "title": "LLM adapters: connect a new model provider",
           "path": "extending/llm-adapter.md",
-          "when": "The feature connects a new model provider.",
+          "when": "Connect a new model provider route: the stream protocol and a working network-free adapter.",
           "surfaces": [
             "tui",
             "web",
             "desktop"
           ],
-          "applies": "all"
+          "applies": "all",
+          "examples": [
+            "llm-adapter.echo"
+          ]
         },
         {
           "id": "extending.packaging",
@@ -214,6 +249,59 @@
           ],
           "examples": [
             "generated-capability.template"
+          ]
+        },
+        {
+          "id": "extending.three-role-capability",
+          "title": "Three-role capability: definition, providers, consumers",
+          "path": "extending/three-role-capability.md",
+          "when": "Several interchangeable implementations of one capability that consumers must not care about; swapping providers.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "extending.service"
+          ],
+          "examples": [
+            "capability.swap-provider-loud",
+            "capability.swap-provider-quiet",
+            "capability.swap-consumer"
+          ]
+        },
+        {
+          "id": "extending.desktop-main",
+          "title": "Profile and install services (desktopProfiles, desktopPnpm, livePluginActivation)",
+          "path": "extending/desktop-main.md",
+          "when": "A plugin needs the active profile, package operations or live activation of another plugin.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "delivery.local-live"
+          ],
+          "examples": [
+            "desktop-main.profile-info"
+          ]
+        },
+        {
+          "id": "extending.agent-preset",
+          "title": "Agent presets and personas",
+          "path": "extending/agent-preset.md",
+          "when": "A different session composition (tools, prompt, skills) or identity, such as a reviewer or a minimal agent.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "examples": [
+            "agent-preset.reviewer"
           ]
         }
       ]
@@ -255,6 +343,1371 @@
             "delivery.local-live",
             "extending.packaging"
           ]
+        }
+      ]
+    },
+    {
+      "title": "Reference (synced)",
+      "items": [
+        {
+          "id": "reference.subsystems.readme",
+          "title": "Harness subsystems: Subsystems",
+          "path": "reference/subsystems/README.md",
+          "when": "English | [中文](README.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/README.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.agent-team",
+          "title": "Harness subsystems: Agent Teams",
+          "path": "reference/subsystems/agent-team.md",
+          "when": "English | [中文](agent-team.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/agent-team.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.approval",
+          "title": "Harness subsystems: User Approval",
+          "path": "reference/subsystems/approval.md",
+          "when": "English | [中文](approval.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/approval.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.attachment",
+          "title": "Harness subsystems: Durable Attachments",
+          "path": "reference/subsystems/attachment.md",
+          "when": "English | [中文](attachment.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/attachment.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.client-modules",
+          "title": "Harness subsystems: Client Modules",
+          "path": "reference/subsystems/client-modules.md",
+          "when": "English | [中文](client-modules.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/client-modules.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.client-resources",
+          "title": "Harness subsystems: Client Resources",
+          "path": "reference/subsystems/client-resources.md",
+          "when": "English | [中文](client-resources.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/client-resources.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.code-runtime",
+          "title": "Harness subsystems: Code Runtime",
+          "path": "reference/subsystems/code-runtime.md",
+          "when": "English | [中文](code-runtime.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/code-runtime.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.commands",
+          "title": "Harness subsystems: Human Commands",
+          "path": "reference/subsystems/commands.md",
+          "when": "English | [中文](commands.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/commands.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.compaction",
+          "title": "Harness subsystems: Compaction",
+          "path": "reference/subsystems/compaction.md",
+          "when": "English | [中文](compaction.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/compaction.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.conversation",
+          "title": "Harness subsystems: Conversation assembly",
+          "path": "reference/subsystems/conversation.md",
+          "when": "English | [中文](conversation.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/conversation.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.core",
+          "title": "Harness subsystems: Core",
+          "path": "reference/subsystems/core.md",
+          "when": "English | [中文](core.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/core.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.credentials",
+          "title": "Harness subsystems: User Credentials",
+          "path": "reference/subsystems/credentials.md",
+          "when": "English | [中文](credentials.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/credentials.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.extensions",
+          "title": "Harness subsystems: Extensions",
+          "path": "reference/subsystems/extensions.md",
+          "when": "English | [中文](extensions.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/extensions.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.feedback",
+          "title": "Harness subsystems: Message Feedback",
+          "path": "reference/subsystems/feedback.md",
+          "when": "English | [中文](feedback.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/feedback.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.filesystem",
+          "title": "Harness subsystems: Filesystem",
+          "path": "reference/subsystems/filesystem.md",
+          "when": "English | [中文](filesystem.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/filesystem.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.goal",
+          "title": "Harness subsystems: Same-session goals",
+          "path": "reference/subsystems/goal.md",
+          "when": "English | [中文](goal.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/goal.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.invariants",
+          "title": "Harness subsystems: Runtime Invariants",
+          "path": "reference/subsystems/invariants.md",
+          "when": "English | [中文](invariants.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/invariants.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.jobs",
+          "title": "Harness subsystems: Background Task Runtime",
+          "path": "reference/subsystems/jobs.md",
+          "when": "English | [中文](jobs.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/jobs.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.llm-streaming",
+          "title": "Harness subsystems: LLM Streaming",
+          "path": "reference/subsystems/llm-streaming.md",
+          "when": "English | [中文](llm-streaming.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/llm-streaming.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.lsp",
+          "title": "Harness subsystems: LSP navigation",
+          "path": "reference/subsystems/lsp.md",
+          "when": "English | [中文](lsp.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/lsp.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.permission-presets",
+          "title": "Harness subsystems: Permission Presets",
+          "path": "reference/subsystems/permission-presets.md",
+          "when": "English | [中文](permission-presets.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/permission-presets.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.persistence",
+          "title": "Harness subsystems: Session Persistence",
+          "path": "reference/subsystems/persistence.md",
+          "when": "English | [中文](persistence.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/persistence.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.plan",
+          "title": "Harness subsystems: Plan Mode",
+          "path": "reference/subsystems/plan.md",
+          "when": "English | [中文](plan.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/plan.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.sandbox",
+          "title": "Harness subsystems: Process Sandbox",
+          "path": "reference/subsystems/sandbox.md",
+          "when": "English | [中文](sandbox.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/sandbox.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.schedule",
+          "title": "Harness subsystems: Session-local Schedule",
+          "path": "reference/subsystems/schedule.md",
+          "when": "English | [中文](schedule.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/schedule.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.scope",
+          "title": "Harness subsystems: Scoped Registration",
+          "path": "reference/subsystems/scope.md",
+          "when": "English | [中文](scope.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/scope.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.session-projection",
+          "title": "Harness subsystems: Session Projections",
+          "path": "reference/subsystems/session-projection.md",
+          "when": "English | [中文](session-projection.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/session-projection.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.session-query",
+          "title": "Harness subsystems: Session Query",
+          "path": "reference/subsystems/session-query.md",
+          "when": "English | [中文](session-query.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/session-query.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.session-reference",
+          "title": "Harness subsystems: Session References",
+          "path": "reference/subsystems/session-reference.md",
+          "when": "English | [中文](session-reference.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/session-reference.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.session-telemetry",
+          "title": "Harness subsystems: SessionTelemetryBackend",
+          "path": "reference/subsystems/session-telemetry.md",
+          "when": "English | [中文](session-telemetry.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/session-telemetry.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.session-title",
+          "title": "Harness subsystems: Session Titles",
+          "path": "reference/subsystems/session-title.md",
+          "when": "English | [中文](session-title.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/session-title.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.session",
+          "title": "Harness subsystems: Sessions",
+          "path": "reference/subsystems/session.md",
+          "when": "English | [中文](session.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/session.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.settings",
+          "title": "Harness subsystems: User Settings",
+          "path": "reference/subsystems/settings.md",
+          "when": "English | [中文](settings.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/settings.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.shell",
+          "title": "Harness subsystems: Bash Executor",
+          "path": "reference/subsystems/shell.md",
+          "when": "English | [中文](shell.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/shell.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.sidebar-right",
+          "title": "Harness subsystems: Right Sidebar",
+          "path": "reference/subsystems/sidebar-right.md",
+          "when": "English | [中文](sidebar-right.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/sidebar-right.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.skills",
+          "title": "Harness subsystems: Skills",
+          "path": "reference/subsystems/skills.md",
+          "when": "English | [中文](skills.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/skills.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.slots",
+          "title": "Harness subsystems: Web Client Slots",
+          "path": "reference/subsystems/slots.md",
+          "when": "English | [中文](slots.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/slots.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.spill",
+          "title": "Harness subsystems: Spill Storage",
+          "path": "reference/subsystems/spill.md",
+          "when": "English | [中文](spill.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/spill.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.storage",
+          "title": "Harness subsystems: Storage",
+          "path": "reference/subsystems/storage.md",
+          "when": "English | [中文](storage.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/storage.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.subagent",
+          "title": "Harness subsystems: Subagent",
+          "path": "reference/subsystems/subagent.md",
+          "when": "English | [中文](subagent.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/subagent.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.subprocess",
+          "title": "Harness subsystems: Subprocess",
+          "path": "reference/subsystems/subprocess.md",
+          "when": "English | [中文](subprocess.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/subprocess.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.system-prompt",
+          "title": "Harness subsystems: System Prompt Assembly",
+          "path": "reference/subsystems/system-prompt.md",
+          "when": "English | [中文](system-prompt.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/system-prompt.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.terminal",
+          "title": "Harness subsystems: Persistent PTY Sessions",
+          "path": "reference/subsystems/terminal.md",
+          "when": "English | [中文](terminal.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/terminal.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.todo",
+          "title": "Harness subsystems: Todo",
+          "path": "reference/subsystems/todo.md",
+          "when": "English | [中文](todo.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/todo.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.token-meter",
+          "title": "Harness subsystems: Token Meter",
+          "path": "reference/subsystems/token-meter.md",
+          "when": "English | [中文](token-meter.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/token-meter.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.tools",
+          "title": "Harness subsystems: Tools",
+          "path": "reference/subsystems/tools.md",
+          "when": "English | [中文](tools.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/tools.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.typert",
+          "title": "Harness subsystems: Typert remote calls",
+          "path": "reference/subsystems/typert.md",
+          "when": "English | [中文](typert.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/typert.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.user-questions",
+          "title": "Harness subsystems: User Interaction",
+          "path": "reference/subsystems/user-questions.md",
+          "when": "English | [中文](user-questions.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/user-questions.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.web-client",
+          "title": "Harness subsystems: Web Client architecture",
+          "path": "reference/subsystems/web-client.md",
+          "when": "English | [中文](web-client.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/web-client.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.web-server",
+          "title": "Harness subsystems: HTTP Server",
+          "path": "reference/subsystems/web-server.md",
+          "when": "English | [中文](web-server.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/web-server.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.web",
+          "title": "Harness subsystems: Web Access",
+          "path": "reference/subsystems/web.md",
+          "when": "English | [中文](web.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/web.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.webhook",
+          "title": "Harness subsystems: Webhook runtime",
+          "path": "reference/subsystems/webhook.md",
+          "when": "English | [中文](webhook.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/webhook.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.workflow",
+          "title": "Harness subsystems: Workflow",
+          "path": "reference/subsystems/workflow.md",
+          "when": "English | [中文](workflow.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/workflow.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.subsystems.workspace",
+          "title": "Harness subsystems: Workspaces",
+          "path": "reference/subsystems/workspace.md",
+          "when": "English | [中文](workspace.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/workspace.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.cordis-api.context",
+          "title": "Cordis API: Context",
+          "path": "reference/cordis-api/context.md",
+          "when": "Run `pnpm run gen-cordis-catalog` to regenerate. -->",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/cordis-api/context.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.cordis-api.events",
+          "title": "Cordis API: Events",
+          "path": "reference/cordis-api/events.md",
+          "when": "Run `pnpm run gen-cordis-catalog` to regenerate. -->",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/cordis-api/events.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.cordis-api.fiber",
+          "title": "Cordis API: Fiber",
+          "path": "reference/cordis-api/fiber.md",
+          "when": "Run `pnpm run gen-cordis-catalog` to regenerate. -->",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/cordis-api/fiber.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.cordis-api.inherited",
+          "title": "Cordis API: Inherited Cordis API",
+          "path": "reference/cordis-api/inherited.md",
+          "when": "Run `pnpm run gen-cordis-catalog` to regenerate. -->",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/cordis-api/inherited.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.cordis-api.registry",
+          "title": "Cordis API: Registry",
+          "path": "reference/cordis-api/registry.md",
+          "when": "Run `pnpm run gen-cordis-catalog` to regenerate. -->",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/cordis-api/registry.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.cordis-api.service",
+          "title": "Cordis API: Service",
+          "path": "reference/cordis-api/service.md",
+          "when": "Run `pnpm run gen-cordis-catalog` to regenerate. -->",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/cordis-api/service.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.cookbook.adding-a-package",
+          "title": "Harness cookbook: Cookbook: adding a workspace package",
+          "path": "reference/cookbook/adding-a-package.md",
+          "when": "English | [中文](adding-a-package.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/cookbook/adding-a-package.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.cookbook.adding-a-remote-api",
+          "title": "Harness cookbook: Cookbook: adding a Remote API",
+          "path": "reference/cookbook/adding-a-remote-api.md",
+          "when": "English | [中文](adding-a-remote-api.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/cookbook/adding-a-remote-api.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.cookbook.adding-a-settings-card",
+          "title": "Harness cookbook: Cookbook: adding a settings card",
+          "path": "reference/cookbook/adding-a-settings-card.md",
+          "when": "English | [中文](adding-a-settings-card.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/cookbook/adding-a-settings-card.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.cookbook.adding-a-tool",
+          "title": "Harness cookbook: Tool authoring reference",
+          "path": "reference/cookbook/adding-a-tool.md",
+          "when": "English | [中文](adding-a-tool.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/cookbook/adding-a-tool.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.cookbook.adding-an-llm-adapter",
+          "title": "Harness cookbook: Cookbook: adding an LLM adapter",
+          "path": "reference/cookbook/adding-an-llm-adapter.md",
+          "when": "English | [中文](adding-an-llm-adapter.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/cookbook/adding-an-llm-adapter.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.cookbook.extension-cookbook",
+          "title": "Harness cookbook: Cookbook: extension plugin shapes",
+          "path": "reference/cookbook/extension-cookbook.md",
+          "when": "English | [中文](extension-cookbook.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/cookbook/extension-cookbook.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.harness.cordis-primer",
+          "title": "Harness architecture: Cordis Primer",
+          "path": "reference/harness/cordis-primer.md",
+          "when": "English | [中文](cordis-primer.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/cordis-primer.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.harness.capability-seams",
+          "title": "Harness architecture: Capability Seams And Core Services",
+          "path": "reference/harness/capability-seams.md",
+          "when": "Run `pnpm run gen-doc-graphs` to regenerate. -->",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/capability-seams.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.harness.glossary",
+          "title": "Harness architecture: Glossary",
+          "path": "reference/harness/glossary.md",
+          "when": "English | [中文](glossary.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/glossary.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.harness.defensive-patterns",
+          "title": "Harness architecture: Defensive patterns",
+          "path": "reference/harness/defensive-patterns.md",
+          "when": "English | [中文](defensive-patterns.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/defensive-patterns.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.harness.event-producer-consumer",
+          "title": "Harness architecture: Event Producer And Consumer Matrix",
+          "path": "reference/harness/event-producer-consumer.md",
+          "when": "Run `pnpm run gen-doc-graphs` to regenerate. -->",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/event-producer-consumer.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.harness.tool-execution-pipeline",
+          "title": "Harness architecture: Tool Execution Pipeline",
+          "path": "reference/harness/tool-execution-pipeline.md",
+          "when": "Run `pnpm run gen-doc-graphs` to regenerate. -->",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/tool-execution-pipeline.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.harness.agent-lifecycle",
+          "title": "Harness architecture: Agent Turn And Step Lifecycle",
+          "path": "reference/harness/agent-lifecycle.md",
+          "when": "Run `pnpm run gen-doc-graphs` to regenerate. -->",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/agent-lifecycle.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.harness.architecture",
+          "title": "Harness architecture: DeepSeek Harness Architecture",
+          "path": "reference/harness/architecture.md",
+          "when": "English | [中文](architecture.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/architecture.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.harness.config-catalog",
+          "title": "Harness architecture: Plugin Config Catalog",
+          "path": "reference/harness/config-catalog.md",
+          "when": "Run `pnpm run gen-config-catalog` to regenerate. -->",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/config-catalog.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.harness.tool-catalog",
+          "title": "Harness architecture: Tool Schema Catalog",
+          "path": "reference/harness/tool-catalog.md",
+          "when": "Run `pnpm run gen-tool-catalog` to regenerate. -->",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/tool-catalog.md",
+            "sourceCommit": "5dda764ed3"
+          }
+        },
+        {
+          "id": "reference.cordis-guides.cordis-usage-cheatsheet",
+          "title": "Cordis guides: Cordis usage cheatsheet (source-validated)",
+          "path": "reference/cordis-guides/cordis-usage-cheatsheet.md",
+          "when": "Cordis is a **meta-framework**: it knows nothing about LLMs, agents, tools, sessions, or shell.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "acryl",
+            "sourcePath": "docs/cordis/cordis-usage-cheatsheet.md",
+            "sourceCommit": "2f06c20261"
+          }
+        },
+        {
+          "id": "reference.cordis-guides.cordis-system-guide-for-coding-agents",
+          "title": "Cordis guides: Cordis System Guide for Coding Agents",
+          "path": "reference/cordis-guides/cordis_system_guide_for_coding_agents.md",
+          "when": "**Path convention:** Unless an ACRYL/root path is written explicitly, paths such",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "acryl",
+            "sourcePath": "docs/cordis/cordis_system_guide_for_coding_agents.md",
+            "sourceCommit": "2f06c20261"
+          }
+        },
+        {
+          "id": "reference.cordis-guides.hello-world-plugin-guide",
+          "title": "Cordis guides: Hello World: a Cordis plugin for this DSH Desktop repository",
+          "path": "reference/cordis-guides/hello-world-plugin-guide.md",
+          "when": "This guide is the smallest practical path from one JavaScript module to a",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "acryl",
+            "sourcePath": "docs/cordisplugins/hello-world-plugin-guide.md",
+            "sourceCommit": "2f06c20261"
+          }
+        },
+        {
+          "id": "reference.cordis-guides.development-canvas-plugin",
+          "title": "Cordis guides: Development Canvas as a standalone Cordis plugin",
+          "path": "reference/cordis-guides/development-canvas-plugin.md",
+          "when": "Development Canvas follows the same law as the rest of ACRYL: **everything is a",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "acryl",
+            "sourcePath": "docs/cordisplugins/development-canvas-plugin.md",
+            "sourceCommit": "2f06c20261"
+          }
         }
       ]
     }
@@ -437,6 +1890,103 @@
       "teaches": "A host plugin whose code hot-updates: a never-changing shim re-imports impl.js with a cache-busting query.",
       "docs": [
         "delivery.local-live"
+      ]
+    },
+    {
+      "id": "llm-adapter.echo",
+      "type": "llm-adapter",
+      "path": "llm-adapter-echo",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "the LlmAdapter stream protocol and registerAdapter, with no network.",
+      "docs": [
+        "extending.llm-adapter"
+      ]
+    },
+    {
+      "id": "capability.swap-provider-loud",
+      "type": "three-role-capability",
+      "path": "capability-swap-provider-loud",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "provider A of a named capability (Service subclass); definition is the name plus method shape.",
+      "docs": [
+        "extending.three-role-capability"
+      ]
+    },
+    {
+      "id": "capability.swap-provider-quiet",
+      "type": "three-role-capability",
+      "path": "capability-swap-provider-quiet",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "provider B: swap it for A and the consumer keeps working.",
+      "docs": [
+        "extending.three-role-capability"
+      ]
+    },
+    {
+      "id": "capability.swap-consumer",
+      "type": "three-role-capability",
+      "path": "capability-swap-consumer",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "a consumer that depends on the service name only; PENDING until a provider exists, remounts on swap.",
+      "docs": [
+        "extending.three-role-capability"
+      ]
+    },
+    {
+      "id": "desktop-main.profile-info",
+      "type": "desktop-main",
+      "path": "desktop-main-profile-info",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "reading desktopProfiles portably: current everywhere, list only on Desktop.",
+      "docs": [
+        "extending.desktop-main"
+      ]
+    },
+    {
+      "id": "agent-preset.reviewer",
+      "type": "agent-preset",
+      "path": "agent-preset-reviewer",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "an agent preset directory: agent.cordis.yml plus preset.yml, a persona-only reviewer.",
+      "docs": [
+        "extending.agent-preset"
+      ]
+    },
+    {
+      "id": "client-slot.sidebar-tab",
+      "type": "client-slot",
+      "path": "client-slot-sidebar-tab",
+      "surfaces": [
+        "web",
+        "desktop"
+      ],
+      "teaches": "a right-sidebar tab in two stages (tab type, then body) with no build step.",
+      "docs": [
+        "extending.client-slot"
       ]
     }
   ]

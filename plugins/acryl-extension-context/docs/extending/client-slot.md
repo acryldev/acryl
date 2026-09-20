@@ -54,20 +54,29 @@ Styling: inline `style` objects, or inject one `<style>` element in `apply` and 
 | --- | --- | --- |
 | `conversation.session.header.actions` | top bar of a conversation, next to the title | list (use `order`) |
 | `conversation.session.header.utilities` | top bar, right-aligned utilities | list |
-| `sidebar.right.pane.tab` | a tab in the right sidebar pane (needs `key`, and more props; see `deepseek-harness/packages/client/ui-sidebar-files/src/client/index.ts`) | list |
-| `settings.section` | a section in Settings | list |
+| `sidebar.right.pane.tab` | a tab in the right sidebar (two stages: register the tab TYPE in `ctx.sidebarRightTabs`, then the BODY in this keyed slot; see `client-slot-sidebar-tab`) | keyed (`key` = the type id) |
+| `settings.plugin.item` | a card on the Settings > Plugin configuration page, paired with a Host settings namespace (see `reference/cookbook/adding-a-settings-card.md`; no verified example) | keyed (`key` = the namespace) |
 
 For a first version use the header action plus a floating panel opened by the button
 (the example): it needs no other props. Register with `{ name, id, order }`.
 
-## A sidebar-like or full-screen view
+## A sidebar tab, or a docked or full-screen view
 
-The right-sidebar tab slot needs extra props (`key`, `store`, `inject`, `locale`) that are easy to get wrong
-without a compiler. The robust way to get a sidebar or a full view: keep the header-action button from the example
-and change the panel it opens. A docked side panel is `position: 'fixed', top: 0, right: 0, height: '100vh',
-width: 420, zIndex: 9999`; a full view is `inset: 0`. Give it a title bar with a close button. Use this unless the
-user specifically needs the native tab strip; if they do, read `ui-sidebar-files/src/client/index.ts` under
-`deepseek-harness/packages/client/` for the exact registration and copy it.
+**Native sidebar tab (verified example)**: `../examples/packages/client-slot-sidebar-tab/`. Copy its `client.js`.
+Two stages, both inside `ctx.effect(...)`: (1) `ctx.sidebarRightTabs.register({ id, kind, title: () => 'Todo',
+guide: [{ order, title, description }] })` declares the tab type and puts an entry on the sidebar's "new tab" page;
+(2) `ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({ name: 'sidebar.right.pane.tab', key: id },
+Body))` registers the body. `inject` is `['slots', 'sidebarRightTabs']` and the package needs `dsh.client.inject`
+to include `@deepseek-ai/dsh-client-ui-sidebar-right`. After install and a page reload the user opens the sidebar's
+new-tab page and picks the entry. This example is loaded and applied in a real browser without errors; its body
+rendering inside an open session is the part to confirm with the user, so say so.
+
+**Docked or full view (most robust)**: keep the header-action button from `client-slot-header-action` and change
+the panel it opens. A docked side panel is `position: 'fixed', top: 0, right: 0, height: '100vh', width: 420,
+zIndex: 9999`; a full view is `inset: 0`. Give it a title bar with a close button. Use this when the native tab
+strip is not required, or as the fallback if the sidebar tab does not show.
+
+Exact registration reference: `reference/subsystems/sidebar-right.md` and `reference/subsystems/slots.md`.
 
 ## Persisting state
 
@@ -85,7 +94,7 @@ tool result tells you so. Say that to the user.
 Copy the example and change the component: columns as arrays in state, cards as objects with
 an id, move a card by updating state and saving to `localStorage`, render columns with
 `React.createElement`. Keep it in one `client.js`. Choose the slot by what the user asked: a
-top-bar button and panel is the simplest; a right-sidebar tab is nicer but needs the extra props.
+top-bar button and panel is the simplest; a right-sidebar tab uses the `client-slot-sidebar-tab` pattern.
 
 ## Debugging in the browser
 

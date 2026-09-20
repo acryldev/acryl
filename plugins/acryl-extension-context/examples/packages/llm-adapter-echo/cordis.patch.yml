@@ -1,0 +1,3 @@
+- insert:
+    - id: example-llm-echo
+      name: acryl-example-llm-echo

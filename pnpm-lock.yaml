@@ -1963,6 +1963,16 @@ importers:
       '@deepseek-ai/dsh-tools':
         specifier: 0.1.5-alpha.1
         version: 0.1.5-alpha.1(239eb910b4462b7c15b6b44661457a15)
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.2
+        version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
+      '@deepseek-ai/dsh-llm':
+        specifier: 0.1.5-alpha.1
+        version: 0.1.5-alpha.1(@deepseek-ai/cordis@4.0.2)
+      '@deepseek-ai/schemastery':
+        specifier: ^3.18.1
+        version: 3.18.2
 
   plugins/cordis-plugin-market:
     dependencies:

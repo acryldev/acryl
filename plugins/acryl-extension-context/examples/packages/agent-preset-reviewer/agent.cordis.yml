@@ -1,0 +1,18 @@
+# Example: agent-preset.reviewer
+# Type:     agent-preset
+# Surfaces: tui web desktop (wherever `dsh-agent-presets` is composed)
+# Teaches:  an agent PRESET is not a plugin package: it is a directory with `agent.cordis.yml` (the plugins this
+#           preset's sessions run: tools, prompt sections, skills) and `preset.yml` (display name, description,
+#           order). Put it at `<dshHome>/.agent-presets/<id>/`, where <id> matches [a-z0-9][a-z0-9-]*. The persona
+#           row below replaces the whole system prompt. A preset grants the capabilities of the plugins it lists,
+#           so treat it as trusted configuration. A running session keeps its preset; only an empty session can
+#           switch. The simplest safe way to start is to COPY a shipped preset and edit the copy.
+# Expect:   the preset appears in the preset picker; a new session on it runs a read-only reviewer persona.
+# Docs:     extending.agent-preset
+# Status:   structure copied from the shipped `minimal` preset; not booted headlessly by the pack tests.
+- id: persona
+  name: '@deepseek-ai/dsh-persona'
+  config:
+    prefix: You are a careful code reviewer. Read the code, report concrete problems with file and line, and never edit files.
+    complete: true
+    includeRuntimeContext: false

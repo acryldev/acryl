@@ -37,11 +37,12 @@ export function buildRouterText(root, manifest) {
   ]
   for (const group of manifest.navigation) {
     for (const item of group.items) {
-      if (item.applies === 'not-for-authors') continue
+      if (item.applies === 'not-for-authors' || item.id?.startsWith('reference.')) continue
       lines.push(`  - ${item.title}: ${join(docs, item.path)}`)
     }
   }
   lines.push(
+    `  - Reference (the Cordis API, every harness subsystem such as tools, skills, slots, commands, settings, sidebar, subagents, and cookbooks): ${join(docs, 'reference')}, one file each, listed in the docs index. Read the subsystem doc before using a seam.`,
     `- Write plugin sources in <workspace>/.acryl-extensions/<name>/. To make one live, call ${INSTALL_TOOL_NAME} with that ABSOLUTE path: it checks it, installs it,`,
     '  activates it live, and undoes the install if activation fails. Calling it again on a changed package UPDATES it.',
     `  To change, fix or improve a plugin first call ${LIST_TOOL_NAME} to find its directory, edit the files, then call`,

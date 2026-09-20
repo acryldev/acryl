@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -141,7 +141,7 @@ test('skills: frontmatter parses, and the real pack lists its skills with real d
   const root = resolvePackRoot()
   const provider = createSkillProvider(root)
   const list = await provider.list()
-  assert.deepEqual(list.map(c => c.name).sort(), ['acryl-add-ui', 'acryl-build-extension', 'acryl-change-plugin', 'acryl-fix-plugin'])
+  assert.deepEqual(list.map(c => c.name).sort(), ['acryl-add-provider-or-capability', 'acryl-add-ui', 'acryl-build-extension', 'acryl-change-plugin', 'acryl-diagnose-plugin', 'acryl-fix-plugin', 'acryl-improve-ui', 'acryl-remove-extension', 'acryl-share-extension'])
   assert.ok(list.every(c => c.rank === 600 && c.source === 'bundled'))
   const skill = await provider.get(list.find(c => c.name === 'acryl-build-extension'))
   assert.ok(skill.content.includes(join(root, 'docs/start-here/this-runtime.md')))
@@ -269,4 +269,32 @@ test('verify: reports the real import error, the default+named trap, and passes 
     writeFileSync(join(dir, 'index.js'), 'export const name = "p"')
     assert.equal((await verifyPackage({ path: dir })).findings[0].code, 'invalid-plugin-shape')
   } finally { rmSync(dir, { recursive: true, force: true }) }
+})
+
+test('every pack path a skill or the docs README-referenced text names exists on disk', async () => {
+  const { readdirSync, existsSync } = await import('node:fs')
+  const root = resolvePackRoot()
+  const missing = []
+  for (const dir of readdirSync(join(root, 'skills'))) {
+    const text = readFileSync(join(root, 'skills', dir, 'SKILL.md'), 'utf8')
+    for (const [, rel] of text.matchAll(/\{\{pack\}\}\/([\w./-]+\.md)/gu)) if (!existsSync(join(root, rel))) missing.push(`${dir}: ${rel}`)
+  }
+  assert.deepEqual(missing, [])
+})
+
+test('every plugin type in the coverage matrix has a doc and an example, and every example has a header', async () => {
+  const { PLUGIN_TYPES } = await import('./lib/manifest.mjs')
+  const root = resolvePackRoot()
+  const manifest = JSON.parse(readFileSync(join(root, 'docs/docs.json'), 'utf8'))
+  const covered = new Set(manifest.examples.map(e => e.type))
+  // Types with no package example, each with a doc that states why: diagnostics is a doc, packaging is a template.
+  const docOnly = new Set(['diagnostics', 'packaging'])
+  const missing = PLUGIN_TYPES.filter(type => !covered.has(type) && !docOnly.has(type))
+  assert.deepEqual(missing, [])
+  for (const example of manifest.examples) {
+    const dir = join(root, 'examples/packages', example.path)
+    const entry = ['index.js', 'client.js', 'agent.cordis.yml'].map(f => join(dir, f)).find(f => existsSync(f))
+    assert.ok(entry, `${example.id}: no entry file`)
+    assert.match(readFileSync(entry, 'utf8').slice(0, 400), /Example:/u, `${example.id}: missing Example header`)
+  }
 })

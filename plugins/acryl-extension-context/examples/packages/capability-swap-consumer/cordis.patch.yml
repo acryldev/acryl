@@ -1,0 +1,3 @@
+- insert:
+    - id: example-speller-consumer
+      name: acryl-example-speller-consumer

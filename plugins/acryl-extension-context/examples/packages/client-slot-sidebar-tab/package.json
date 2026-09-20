@@ -1,0 +1,32 @@
+{
+  "name": "acryl-example-client-sidebar-tab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Adds a tab to the right sidebar (web client plugin, no build step)",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json",
+    "./client": "./client.js"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "client.js"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-sidebar-right"
+      ],
+      "platform": "web"
+    }
+  }
+}

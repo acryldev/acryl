@@ -1,0 +1,3 @@
+name: Reviewer
+description: A read-only code reviewer persona.
+order: 50

@@ -6,4 +6,4 @@ the agent's context, with the full body loaded only when needed. Register a prov
 `list()` returns candidates (`name` kebab-case, `description`, `invocation`, `provider`, `source`,
 `rank`); `get()` returns the definition with `content`. Simplest for a project: put
 `<name>/SKILL.md` under `.dsh/skills` or `.agents/skills`; a plugin provider is for shipping skills
-with a package. Reference: `deepseek-harness/docs/subsystems/skills.md`.
+with a package. Reference: `reference/subsystems/skills.md`.

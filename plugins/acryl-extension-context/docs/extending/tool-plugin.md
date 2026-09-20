@@ -20,5 +20,5 @@ export function apply(ctx) {
 Rules: arguments are validated for you; `execute` returns one JSON-serializable value matching
 `output.schema`; a throw becomes a tool error; cancel work when `exec.signal` aborts; keep
 `presentCall`/`presentResult` (UI cards) pure. Registration is an effect: disposing the plugin
-unregisters the tool. Full contract: `deepseek-harness/docs/cookbook/adding-a-tool.md`.
+unregisters the tool. Full contract: `reference/cookbook/adding-a-tool.md`.
 The package needs `@deepseek-ai/dsh-tools` as a dependency.
