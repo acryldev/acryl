@@ -4926,3 +4926,14 @@ binary directly rather than through whatever bare `pnpm` resolves to on
   skills and router point the agent at the maps (`e5fe25819b46f34306dc656e7d08b7b64dc9412b`).
 - A real model on the CLI engine chose a terminal overlay for a "todo I can open from the terminal" request, built, verified,
   installed and updated it. Synced-doc provenance made stable per file (`56fdd85376a88bca46fe1f0be979b726c3b1f167`).
+
+## 2026-09-20 - feat: UI customization pack for all surfaces, tab-title fix, spec 038 (spec 037, new spec 038)
+
+- Extension pack: docs `ui-customization`, `ui-theme`, `ui-branding`, `ui-components`, `desktop-app`, `tui-components`; generated
+  `maps/theme-tokens.md` and `maps/ui-components.md`; skills `acryl-restyle-ui`, `acryl-tui-ui`, `acryl-desktop-shell`; examples
+  `client-theme-override`, `web-page-branding`, `tui-overlay-themed` (`31735dbfd516aa83a56de0ebb1c0c0079a53772a`), `client-ui-components` (`cc848e837b574feacd657e0cf966ebcabc651558`). Verified in a real browser
+  (token override, favicon, page style, custom title, shared-primitive modal) and with a real-model restyle run.
+- Fixed: ACRYL's browser tab and window title reverted to "DeepSeek Harness" because the client rewrites `document.title` at runtime; the
+  brand plugin now keeps the ACRYL name (in `31735dbfd516aa83a56de0ebb1c0c0079a53772a`).
+- New spec `specs/038-ui-component-library` (spec, research, plan, tasks, data-model): one component vocabulary, a token source, a terminal
+  theme service and per-surface implementations for Web, Desktop and the CLI (`fd48e6a8381b182e85c663d67c96331108c2b86e`).
