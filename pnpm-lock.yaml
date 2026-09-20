@@ -534,6 +534,9 @@ importers:
       acryl-control:
         specifier: workspace:*
         version: link:../../runtime/acryl-control
+      acryl-extension-context:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-extension-context
       acryl-harness-runtime:
         specifier: workspace:*
         version: link:../../runtime/acryl-harness-runtime

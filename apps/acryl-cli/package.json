@@ -139,6 +139,7 @@
     "@deepseek-ai/dsh-workflow-worker-thread": "0.1.5-alpha.1",
     "@earendil-works/pi-tui": "0.84.2",
     "acryl-control": "workspace:*",
+    "acryl-extension-context": "workspace:*",
     "acryl-harness-runtime": "workspace:*",
     "diff": "^9.0.0",
     "cordis-plugin-market": "workspace:*"

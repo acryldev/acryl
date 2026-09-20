@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "packVersion": "0.3.0",
+  "packVersion": "0.4.0",
   "navigation": [
     {
       "title": "Start here",
@@ -238,6 +238,22 @@
           ],
           "examples": [
             "lifecycle-function.hot-shim"
+          ]
+        },
+        {
+          "id": "delivery.marketplace",
+          "title": "Delivering through the marketplace",
+          "path": "delivery/marketplace.md",
+          "when": "The user wants to share or publish a plugin: readiness checks and the human publish step.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "delivery.local-live",
+            "extending.packaging"
           ]
         }
       ]

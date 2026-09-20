@@ -1,6 +1,10 @@
 # Human test: ACRYL builds its own extensions live
 
-Status 2026-09-20: machinery ready for Web and Desktop. CLI is not composed yet.
+Status 2026-09-20: machinery ready for Web, Desktop and CLI (`corepack pnpm run tui`, same profile flow).
+
+Extras: type `/reload` in the chat to re-install every local extension from its source folder (checked, rolled back on
+failure; reload the page/window afterwards for UI changes). Ask the agent to "prepare this for the marketplace": it
+runs `acryl_prepare_publish` (a dry run) and hands you the `npm publish` step, which only you run.
 
 ## Run it
 
@@ -35,7 +39,8 @@ sources under `<workspace>/.acryl-extensions/<name>/`).
 ## Known limits (not bugs)
 
 - UI plugins need a page/window reload after install or update; host code updates need the hot shim or a restart.
-- The agent cannot publish to the marketplace; that is a human action.
+- The agent cannot publish to the marketplace; that is a human action. Before the next acryl-web npm release,
+  `acryl-extension-context` must be published to npm once (it is now public like the market and brand packages).
 - Verified headlessly and in a real browser: the engine composition, router in the prompt, the three tools, install /
   update / remove, the Desktop install fallback (emulated), and that a hand-written client bundle executes and
   registers. NOT verified: the button rendering inside a live session header, Desktop launched for real, and how well

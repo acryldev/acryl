@@ -164,3 +164,20 @@ export async function removeLocalPlugin(input, services) {
   if (!removed.ok) return { ok: false, stage: 'remove', errors: [`dsh plugin remove failed (exit ${removed.exitCode})`], detail: removed.output }
   return { ok: true, package: name, removed: true, next: 'If the plugin had a browser (client) part, ask the user to reload the page or window.' }
 }
+
+/**
+ * `/reload`: re-install every local plugin from its source directory, so edits made by hand
+ * (or by another tool) go live without asking the agent. Each plugin goes through the same
+ * checked install path, so a broken edit is reported and rolled back, never half-applied.
+ */
+export async function reloadLocalPlugins(services, fs) {
+  const plugins = listLocalPlugins(services.profileDir, fs)
+  const results = []
+  for (const plugin of plugins) {
+    const dir = plugin.installedFrom
+    if (!dir || !isAbsolute(dir)) { results.push({ name: plugin.name, ok: false, errors: [`source directory "${dir}" is not absolute, skipped`] }); continue }
+    const result = await installLocalPlugin({ path: dir }, services, fs)
+    results.push({ name: plugin.name, ...result })
+  }
+  return results
+}

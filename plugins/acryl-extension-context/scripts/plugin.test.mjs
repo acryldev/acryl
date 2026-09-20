@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { test } from 'node:test'
-import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, ensureProfileBundle } from '../lib/install.js'
+import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, ensureProfileBundle } from '../lib/install.js'
 import { resolvePackRoot } from '../lib/pack-root.js'
 import { createSkillProvider, parseSkill } from '../lib/skills.js'
 import { buildRouterText, estimateTokens, ROUTER_TOKEN_BUDGET } from '../lib/router.js'
@@ -212,4 +212,45 @@ test('desktop path: an unrelated runPlugin error is not swallowed', async () => 
   const dir = makePkg(); const s = fakes()
   s.pnpm = { runPlugin: () => { throw new Error('something else') }, run: () => handle(0) }
   try { await assert.rejects(installLocalPlugin({ path: dir }, s), /something else/) } finally { rmSync(dir, { recursive: true, force: true }) }
+})
+
+test('reload: re-installs each local plugin from its source folder and reports per plugin', async () => {
+  const dir = makePkg(); const profile = mkdtempSync(join(tmpdir(), 'profile-')); const s = { ...fakes({ preinstalled: true }), profileDir: profile }
+  try {
+    writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: { 'my-plugin': `file:${dir}`, other: '^1.0.0' } }))
+    const r = await reloadLocalPlugins(s)
+    assert.equal(r.length, 1); assert.equal(r[0].name, 'my-plugin'); assert.equal(r[0].ok, true); assert.equal(r[0].action, 'updated')
+    assert.deepEqual(await reloadLocalPlugins({ ...s, profileDir: mkdtempSync(join(tmpdir(), 'empty-')) }), [])
+  } finally { rmSync(dir, { recursive: true, force: true }); rmSync(profile, { recursive: true, force: true }) }
+})
+
+test('plugin registers /reload when a commands service exists and reports an unavailable profile', async () => {
+  const { apply } = await import('../index.js')
+  const registered = []
+  const ctx = {
+    effect: fn => { const it = fn(); if (it && typeof it.next === 'function') for (let r = it.next(); !r.done; r = it.next()) { /* effect yields disposers */ } },
+    provide() {}, get: () => undefined, root: {},
+    inject: (names, fn) => { if (names.includes('commands')) fn({ commands: { register: def => { registered.push(def); return () => {} } } }) },
+    systemPrompt: { section: () => () => {} },
+  }
+  try { apply(ctx) } catch { /* other seams are not under test */ }
+  const reload = registered.find(d => d.name === 'reload')
+  assert.ok(reload, '/reload is registered')
+  assert.equal((await reload.handler()).kind, 'error')
+})
+
+test('publish prep: catalog metadata is enforced, the dry run runs, nothing is published', async () => {
+  const { preparePublish } = await import('../lib/publish.js')
+  const dir = makePkg()
+  try {
+    const bad = await preparePublish({ path: dir }, { pack: async () => ({ ok: true, files: 3 }) })
+    assert.equal(bad.ok, false); assert.match(bad.errors.join('\n'), /acryl-package/); assert.match(bad.errors.join('\n'), /GitHub/)
+    const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
+    writeFileSync(join(dir, 'package.json'), JSON.stringify({ ...pkg, version: '1.0.0', license: 'MIT', keywords: ['acryl-package'], repository: { type: 'git', url: 'git+https://github.com/x/y.git' } }))
+    const ok = await preparePublish({ path: dir }, { pack: async () => ({ ok: true, files: 3 }) })
+    assert.equal(ok.ok, true); assert.equal(ok.readyForHumanPublish, true); assert.match(ok.next, /cannot and must not publish|must not publish/)
+    const failed = await preparePublish({ path: dir }, { pack: async () => ({ ok: false, output: 'boom' }) })
+    assert.match(failed.errors[0], /boom/)
+    assert.equal((await preparePublish({ path: 'rel/dir' })).ok, false)
+  } finally { rmSync(dir, { recursive: true, force: true }) }
 })

@@ -34,3 +34,4 @@ plugin. Verified working examples: `../examples/README.md`.
 | Doc | Read it when | Surfaces | Applies |
 | --- | --- | --- | --- |
 | [Deliver a plugin live: local install, no restart](delivery/local-live.md) | The plugin is written and must become live now; a plugin must be CHANGED, FIXED, IMPROVED or REMOVED; acryl_install_plugin returned an error; or the plugin is PENDING, FAILED or not visible. | tui web desktop | all |
+| [Delivering through the marketplace](delivery/marketplace.md) | The user wants to share or publish a plugin: readiness checks and the human publish step. | tui web desktop | all |

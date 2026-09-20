@@ -13,10 +13,11 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { installLocalPlugin, listLocalPlugins, removeLocalPlugin } from './lib/install.js'
+import { installLocalPlugin, listLocalPlugins, reloadLocalPlugins, removeLocalPlugin } from './lib/install.js'
+import { preparePublish } from './lib/publish.js'
 import { resolvePackRoot } from './lib/pack-root.js'
 import { createSkillProvider } from './lib/skills.js'
-import { buildRouterText, INSTALL_TOOL_NAME, LIST_TOOL_NAME, REMOVE_TOOL_NAME, ROUTER_SECTION_NAME, ROUTER_SECTION_ORDER } from './lib/router.js'
+import { buildRouterText, INSTALL_TOOL_NAME, LIST_TOOL_NAME, REMOVE_TOOL_NAME, PUBLISH_TOOL_NAME, ROUTER_SECTION_NAME, ROUTER_SECTION_ORDER } from './lib/router.js'
 
 export const name = 'acryl-extension-context'
 export const inject = ['systemPrompt']
@@ -44,6 +45,26 @@ export function apply(ctx) {
     scoped.skills.registerProvider(() => createSkillProvider(root))
   })
 
+  // `/reload`: re-install every local plugin from its source directory (human command).
+  ctx.inject(['commands'], scoped => {
+    ctx.effect(function* () {
+      yield scoped.commands.register({
+        name: 'reload',
+        description: 'Reload local extensions from their source folders',
+        async handler() {
+          const profileDir = ctx.get('desktopProfiles')?.current?.dir
+          if (!profileDir) return { kind: 'error', text: 'The active profile is not available in this runtime.' }
+          const results = await reloadLocalPlugins({ pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir })
+          if (results.length === 0) return { kind: 'success', text: 'No local extensions installed.' }
+          const lines = results.map(r => r.ok ? `${r.name}: ${r.action}` : `${r.name}: FAILED - ${(r.errors ?? []).join('; ')}`)
+          const failed = results.some(r => !r.ok)
+          const text = `${lines.join('\n')}\nReload the page (Web) or window (Desktop, Cmd/Ctrl+R) to pick up UI changes.`
+          return failed ? { kind: 'error', text } : { kind: 'success', text }
+        },
+      })
+    }, 'extension-context reload command')
+  })
+
   ctx.inject(['tools'], scoped => {
     scoped.tools.register(defineTool({
       name: INSTALL_TOOL_NAME,
@@ -69,6 +90,20 @@ export function apply(ctx) {
         const profile = ctx.get('desktopProfiles')
         if (!profile?.current?.dir) throw new Error('the active profile is not available in this runtime')
         return JSON.stringify(listLocalPlugins(profile.current.dir))
+      },
+    }))
+
+    scoped.tools.register(defineTool({
+      name: PUBLISH_TOOL_NAME,
+      description: 'Check that a local plugin package is ready for the marketplace (install checks, catalog metadata, npm pack dry run). It NEVER publishes: publishing is done by the user. Pass the ABSOLUTE package directory.',
+      parameters: {
+        path: { type: 'string', required: true, description: 'ABSOLUTE path of the plugin package directory.' },
+      },
+      output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+      async execute(args) {
+        const result = await preparePublish({ path: args.path })
+        if (!result.ok) throw new Error(JSON.stringify(result, null, 2))
+        return JSON.stringify(result)
       },
     }))
 

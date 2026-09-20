@@ -43,3 +43,7 @@ package for it (`extending/packaging.md`: `acryl-package` keyword, `acryl` manif
 - Installed but not live: `exports` lacks `./package.json` (the tool checks this).
 - UI not visible: the page has not been reloaded, or `client.js` failed to load (check the browser console
   for the wrapper `id` and any `import`/JSX in the file).
+
+## /reload
+
+The human can type `/reload` in the chat. It re-installs every local plugin from its source folder (same checks and rollback as `acryl_install_plugin`) and prints one line per plugin. Suggest it after the user edits a plugin by hand. UI changes still need a page (Web) or window (Desktop) reload.

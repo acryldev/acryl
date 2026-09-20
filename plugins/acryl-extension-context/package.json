@@ -1,9 +1,21 @@
 {
   "name": "acryl-extension-context",
   "version": "0.1.0",
-  "private": true,
   "description": "Extension Context Pack: routed docs, verified examples and authoring skills that let the ACRYL agent write its own plugins (spec 037)",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/acryl-extension-context"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-extension-context#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
   "type": "module",
   "exports": {
     ".": "./index.js",
