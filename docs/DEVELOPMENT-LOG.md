@@ -4950,3 +4950,10 @@ binary directly rather than through whatever bare `pnpm` resolves to on
   Web and CLI used PATH. Web and CLI now put a shim for the runtime's own pnpm 11.8.0 first on PATH for the spawned `dsh plugin` (`9be9e78003ec9e3de9b303f72b4e8a00e94c9dfb`).
 - The install tool also self-heals legacy profiles by pinning the recorded publicHoistPattern once and retrying; `acryl_workspace_status` now reports the
   real surface and profile (it always said <tui>); Desktop system-prompt copy added (`58f104192534a83f6faffa7353936c92047b651c`).
+
+## 2026-09-21 - feat: extension router in pi.dev's prompt shape (spec 037)
+
+- Checked against pi's real `packages/coding-agent/src/core/system-prompt.ts`: same routing mechanism (runtime-resolved docs paths, conditional wording, topic map,
+  read-completely protocol). Router now uses a tagged section and an inline topic map generated from manifest `topic` labels, 768 tokens (`7f1ce800f3f06e3a273e4ee8b635f4008efdd224`).
+  A real-model run of build, update, add-tool-and-use and remove passes on the new text. Difference kept and documented in `docs/system-prompt/README.md`:
+  ACRYL composes the prompt from harness sections (pinned upstream) rather than one owned builder.
