@@ -4895,3 +4895,10 @@ confirmed `corepack pnpm --version` in this repo still resolves the pinned
 `11.8.0` correctly afterward, since it dispatches through the `corepack`
 binary directly rather than through whatever bare `pnpm` resolves to on
 `PATH`.
+
+## 2026-09-20 - feat: extension pack on the CLI, /reload, marketplace dry run, pack shipped (spec 037)
+
+- CLI (tui) engine composes the pack (`a7a85598154f19ff424dc5cc7122211f8adf6ed0`), covered by a real-engine test.
+- `/reload` chat command, `acryl_prepare_publish` dry-run tool (never publishes), pack made a public
+  package and a dependency of acryl-cli so release archives and asar include it (`fe9f093ddbec49277ea91045926fd4289a17e3f9`).
+- One human step remains before the next acryl-web npm release: publish `acryl-extension-context` to npm once.
