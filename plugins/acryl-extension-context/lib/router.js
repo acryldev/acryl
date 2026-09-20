@@ -23,8 +23,9 @@ export function buildRouterText(root, manifest) {
   const docs = join(root, 'docs')
   const examples = join(root, 'examples')
   const lines = [
-    'ACRYL extension docs. Read them ONLY when the user asks you to build, change or extend ACRYL itself:',
-    'a plugin, tool, UI slot, skill, prompt contribution or LLM adapter. Otherwise ignore this section.',
+    'ACRYL extension docs. Read them ONLY when the user asks you to build, change, fix, improve, extend or remove',
+    'something in ACRYL itself: an extension, feature, plugin, tool, panel, button, view, board, skill, prompt',
+    'contribution or LLM adapter. Otherwise ignore this section.',
     `- Docs index: ${join(docs, 'README.md')}  (manifest: ${join(docs, 'docs.json')})`,
     `- Examples (working, verified plugins): ${join(examples, 'README.md')}`,
     `- Read ${join(docs, 'start-here', 'this-runtime.md')} first.`,
