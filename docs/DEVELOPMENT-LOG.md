@@ -4902,3 +4902,9 @@ binary directly rather than through whatever bare `pnpm` resolves to on
 - `/reload` chat command, `acryl_prepare_publish` dry-run tool (never publishes), pack made a public
   package and a dependency of acryl-cli so release archives and asar include it (`fe9f093ddbec49277ea91045926fd4289a17e3f9`).
 - One human step remains before the next acryl-web npm release: publish `acryl-extension-context` to npm once.
+
+## 2026-09-20 - feat: verify tool, doc pointers, 037 closeout
+
+- `acryl_verify_plugin` (lint + import/shape check, doc ids per finding; a declared-but-uninstalled dependency is
+  a warning, not an error), AGENTS.md and human-doc pointers, spec 037 status and 030/033/034 cross-references (`8fa3aa6c54d037cb7a035e08a5649194695fdb72`).
+- Remaining 037 items and their reasons are listed in `specs/037-guardrailed-self-extension/tasks.md` Status.
