@@ -1,0 +1,3 @@
+- insert:
+    - id: example-greeter-consumer
+      name: acryl-example-greeter-consumer

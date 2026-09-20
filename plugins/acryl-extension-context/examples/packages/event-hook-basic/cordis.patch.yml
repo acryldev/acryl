@@ -1,0 +1,3 @@
+- insert:
+    - id: example-event-hook
+      name: acryl-example-event-hook

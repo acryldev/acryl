@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "packVersion": "0.1.0",
+  "packVersion": "0.2.0",
   "navigation": [
     {
       "title": "Start here",
@@ -10,18 +10,232 @@
           "title": "This runtime: how ACRYL plugins are built, loaded and delivered",
           "path": "start-here/this-runtime.md",
           "when": "Always first: the layers, the plugin and package contracts, and the two delivery paths.",
-          "surfaces": ["tui", "web", "desktop"],
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
           "applies": "all",
-          "examples": ["lifecycle-function.basic"]
+          "examples": [
+            "lifecycle-function.basic"
+          ]
         },
         {
           "id": "start.verify-before-done",
           "title": "Verify before you say it works",
           "path": "start-here/verify-before-done.md",
           "when": "Before claiming a plugin works, stating a live fiber state, or delivering a package.",
-          "surfaces": ["tui", "web", "desktop"],
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
           "applies": "all",
-          "seeAlso": ["start.this-runtime"]
+          "seeAlso": [
+            "start.this-runtime"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Extending ACRYL (by plugin type)",
+      "items": [
+        {
+          "id": "extending.client-slot",
+          "title": "Client slots: add UI to the Web and Desktop app (panel, button, tab, dashboard)",
+          "path": "extending/client-slot.md",
+          "when": "The extension needs any UI in the app: a top-bar button, a panel, a sidebar tab, a board, a dashboard.",
+          "surfaces": [
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "start.this-runtime",
+            "delivery.local-live",
+            "extending.host-route"
+          ],
+          "examples": [
+            "client-slot.header-action"
+          ]
+        },
+        {
+          "id": "extending.tool",
+          "title": "Tool plugins: give the agent a new capability",
+          "path": "extending/tool-plugin.md",
+          "when": "The feature is something the agent should be able to DO (call an API, read a source, run an action).",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "start.this-runtime"
+          ],
+          "examples": [
+            "tool.basic"
+          ]
+        },
+        {
+          "id": "extending.service",
+          "title": "Services: provide a capability, consume it, optional dependencies",
+          "path": "extending/service.md",
+          "when": "Plugins must share a capability, or a plugin is PENDING on a missing service.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "start.this-runtime"
+          ],
+          "examples": [
+            "service.provider",
+            "service.consumer"
+          ]
+        },
+        {
+          "id": "extending.event-hook",
+          "title": "Events: listen, emit, intercept (waterfall)",
+          "path": "extending/event-hook.md",
+          "when": "The feature reacts to, or intercepts, things that happen in the runtime.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "examples": [
+            "event-hook.basic"
+          ]
+        },
+        {
+          "id": "extending.config-schema",
+          "title": "Plugin configuration (Schemastery)",
+          "path": "extending/config-schema.md",
+          "when": "The plugin needs validated settings.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "examples": [
+            "config-schema.basic"
+          ]
+        },
+        {
+          "id": "extending.prompt-contribution",
+          "title": "Prompt contributions: add to the agent system prompt",
+          "path": "extending/prompt-contribution.md",
+          "when": "The feature changes what the agent is told or how it behaves.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "examples": [
+            "prompt-contribution.basic"
+          ]
+        },
+        {
+          "id": "extending.skill-provider",
+          "title": "Skills: on-demand instructions for the agent",
+          "path": "extending/skill-provider.md",
+          "when": "The feature is reusable instructions the agent loads only when needed.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "examples": [
+            "skill-provider.basic"
+          ]
+        },
+        {
+          "id": "extending.host-route",
+          "title": "Host routes: an HTTP API for a web or desktop plugin",
+          "path": "extending/host-route.md",
+          "when": "A client UI needs a backend endpoint, or state must be shared across devices.",
+          "surfaces": [
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "extending.client-slot"
+          ],
+          "examples": [
+            "host-route.basic"
+          ]
+        },
+        {
+          "id": "extending.tui-command",
+          "title": "Terminal commands: slash commands with an overlay",
+          "path": "extending/tui-command.md",
+          "when": "The feature is a terminal (tui) command or overlay.",
+          "surfaces": [
+            "tui"
+          ],
+          "applies": "all",
+          "examples": [
+            "tui-command.basic"
+          ]
+        },
+        {
+          "id": "extending.llm-adapter",
+          "title": "LLM adapters: connect a new model provider",
+          "path": "extending/llm-adapter.md",
+          "when": "The feature connects a new model provider.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all"
+        },
+        {
+          "id": "extending.packaging",
+          "title": "Packaging a plugin, and generated capabilities",
+          "path": "extending/packaging.md",
+          "when": "Writing package.json and the patch, sharing the plugin, or recording a generated capability's permissions and provenance.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "delivery.local-live"
+          ],
+          "examples": [
+            "generated-capability.template"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Delivery",
+      "items": [
+        {
+          "id": "delivery.local-live",
+          "title": "Deliver a plugin live: local install, no restart",
+          "path": "delivery/local-live.md",
+          "when": "The plugin is written and must become live now, or acryl_install_plugin returned an error, or the plugin is PENDING, FAILED or not visible.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "start.verify-before-done",
+            "extending.packaging"
+          ]
         }
       ]
     }
@@ -31,10 +245,166 @@
       "id": "lifecycle-function.basic",
       "type": "lifecycle-function",
       "path": "lifecycle-function-basic",
-      "surfaces": ["tui", "web", "desktop"],
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
       "teaches": "The smallest plugin: named exports name and apply, no dependencies.",
-      "docs": ["start.this-runtime"],
+      "docs": [
+        "start.this-runtime"
+      ],
       "scenario": "lifecycle-function-basic"
+    },
+    {
+      "id": "service.provider",
+      "type": "service-provider",
+      "path": "service-provider-greeter",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "A Service subclass provides a named service; export the class as apply.",
+      "docs": [
+        "extending.service"
+      ]
+    },
+    {
+      "id": "service.consumer",
+      "type": "service-consumer",
+      "path": "service-consumer-greeter",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "inject is a hard dependency (PENDING then ACTIVE); ctx.get is optional.",
+      "docs": [
+        "extending.service"
+      ]
+    },
+    {
+      "id": "tool.basic",
+      "type": "tool",
+      "path": "tool-basic",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "Register a model-callable tool with defineTool.",
+      "docs": [
+        "extending.tool"
+      ]
+    },
+    {
+      "id": "event-hook.basic",
+      "type": "event-hook",
+      "path": "event-hook-basic",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "Listen to and emit an event; waterfall must call next().",
+      "docs": [
+        "extending.event-hook"
+      ]
+    },
+    {
+      "id": "config-schema.basic",
+      "type": "config-schema",
+      "path": "config-schema-basic",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "A Schemastery Config validated before apply.",
+      "docs": [
+        "extending.config-schema"
+      ]
+    },
+    {
+      "id": "prompt-contribution.basic",
+      "type": "prompt-contribution",
+      "path": "prompt-contribution-basic",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "Add a static section to the system prompt.",
+      "docs": [
+        "extending.prompt-contribution"
+      ]
+    },
+    {
+      "id": "skill-provider.basic",
+      "type": "skill-provider",
+      "path": "skill-provider-basic",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "Provide a bundled skill (name and description in context, body on demand).",
+      "docs": [
+        "extending.skill-provider"
+      ]
+    },
+    {
+      "id": "host-route.basic",
+      "type": "host-route",
+      "path": "host-route-basic",
+      "surfaces": [
+        "web",
+        "desktop"
+      ],
+      "teaches": "Serve an HTTP route from a web or desktop host plugin.",
+      "docs": [
+        "extending.host-route"
+      ]
+    },
+    {
+      "id": "client-slot.header-action",
+      "type": "client-slot",
+      "path": "client-slot-header-action",
+      "surfaces": [
+        "web",
+        "desktop"
+      ],
+      "teaches": "A UI plugin with no build step: top-bar button and panel, hand-written client bundle.",
+      "docs": [
+        "extending.client-slot"
+      ]
+    },
+    {
+      "id": "tui-command.basic",
+      "type": "tui-contribution",
+      "path": "tui-command-basic",
+      "surfaces": [
+        "tui"
+      ],
+      "teaches": "A slash command with an overlay in the terminal UI.",
+      "docs": [
+        "extending.tui-command"
+      ]
+    },
+    {
+      "id": "generated-capability.template",
+      "type": "generated-capability",
+      "path": "generated-capability-template",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "The shape of a publishable, reviewable generated capability.",
+      "docs": [
+        "extending.packaging"
+      ]
     }
   ]
 }

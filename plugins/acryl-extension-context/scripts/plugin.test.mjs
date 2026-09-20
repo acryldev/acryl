@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url'
 import { test } from 'node:test'
 import { lintPackageDir, installLocalPlugin } from '../lib/install.js'
 import { resolvePackRoot } from '../lib/pack-root.js'
+import { createSkillProvider, parseSkill } from '../lib/skills.js'
 import { buildRouterText, estimateTokens, ROUTER_TOKEN_BUDGET } from '../lib/router.js'
 
 const manifest = {
@@ -59,7 +60,7 @@ function makePkg(over = {}, { patch = true } = {}) {
 
 test('lint accepts a correct package', () => {
   const dir = makePkg()
-  try { assert.deepEqual(lintPackageDir(dir), { name: 'my-plugin', errors: [] }) } finally { rmSync(dir, { recursive: true, force: true }) }
+  try { assert.deepEqual(lintPackageDir(dir), { name: 'my-plugin', hasClient: false, errors: [] }) } finally { rmSync(dir, { recursive: true, force: true }) }
 })
 
 test('lint catches the measured failures: missing bundle, missing patch file, exports without ./package.json', () => {
@@ -127,4 +128,17 @@ test('install: missing services are reported, not thrown', async () => {
     assert.equal((await installLocalPlugin({ path: dir }, { pnpm: undefined, live: {} })).stage, 'services')
     assert.equal((await installLocalPlugin({ path: dir }, { pnpm: {}, live: undefined })).stage, 'services')
   } finally { rmSync(dir, { recursive: true, force: true }) }
+})
+
+test('skills: frontmatter parses, and the real pack lists its skills with real doc paths', async () => {
+  assert.equal(parseSkill('no frontmatter'), undefined)
+  assert.deepEqual(parseSkill('---\nname: a-b\ndescription: does x\n---\nbody'), { name: 'a-b', description: 'does x', body: 'body' })
+  const root = resolvePackRoot()
+  const provider = createSkillProvider(root)
+  const list = await provider.list()
+  assert.deepEqual(list.map(c => c.name).sort(), ['acryl-add-ui', 'acryl-build-extension', 'acryl-fix-plugin'])
+  assert.ok(list.every(c => c.rank === 600 && c.source === 'bundled'))
+  const skill = await provider.get(list.find(c => c.name === 'acryl-build-extension'))
+  assert.ok(skill.content.includes(join(root, 'docs/start-here/this-runtime.md')))
+  assert.doesNotMatch(skill.content, /\{\{pack\}\}/)
 })

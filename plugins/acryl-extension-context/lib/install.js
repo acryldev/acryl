@@ -25,7 +25,12 @@ export function lintPackageDir(dir, fs = { existsSync, readFileSync }) {
   if (exp !== undefined && (typeof exp !== 'object' || exp === null || !('./package.json' in exp))) {
     errors.push('"exports" must include "./package.json" (for example { ".": "./index.js", "./package.json": "./package.json" }); otherwise the package installs but live activation fails with ERR_PACKAGE_PATH_NOT_EXPORTED')
   }
-  return { name: pkg.name, errors }
+  if (pkg.dsh?.client !== undefined) {
+    const clientExport = exp && typeof exp === 'object' ? exp['./client'] : undefined
+    if (typeof clientExport !== 'string') errors.push('a package with "dsh.client" must export its browser bundle as "./client" in "exports" (for example "./client": "./client.js")')
+    else if (!fs.existsSync(join(dir, clientExport))) errors.push(`the client bundle ${clientExport} does not exist`)
+  }
+  return { name: pkg.name, hasClient: pkg.dsh?.client !== undefined, errors }
 }
 
 async function drain(stream) {
@@ -67,5 +72,7 @@ export async function installLocalPlugin(input, services, fs) {
     const removed = await runPlugin(services.pnpm, ['remove', lint.name], dir)
     return { ok: false, stage: 'activate', errors: [message], rolledBack: removed.ok, next: 'The install was undone. Fix the error above, then call the tool again.' }
   }
-  return { ok: true, package: lint.name, status: services.live.statusOf(lint.name) ?? 'unknown' }
+  const result = { ok: true, package: lint.name, status: services.live.statusOf(lint.name) ?? 'unknown' }
+  if (lint.hasClient) result.next = 'This package has a browser (client) part. Ask the user to reload the page (Web) or window (Desktop) to see the new UI; the host part is already live.'
+  return result
 }

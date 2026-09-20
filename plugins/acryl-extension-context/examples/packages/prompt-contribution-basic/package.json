@@ -1,0 +1,22 @@
+{
+  "name": "acryl-example-prompt",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Adds a section to the agent system prompt",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

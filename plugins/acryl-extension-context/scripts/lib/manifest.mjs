@@ -81,7 +81,7 @@ export function validateManifest(manifest, files) {
     else exampleIds.add(example.id)
     if (!PLUGIN_TYPES.includes(example.type)) problems.push(`${at}: type must be a coverage-matrix type`)
     if (typeof example.teaches !== 'string' || example.teaches.trim() === '') problems.push(`${at}: teaches is required`)
-    if (typeof example.scenario !== 'string' || example.scenario === '') problems.push(`${at}: scenario id is required`)
+    if (example.scenario !== undefined && (typeof example.scenario !== 'string' || example.scenario === '')) problems.push(`${at}: scenario, when present, must be a non-empty id`)
     if (!Array.isArray(example.surfaces) || example.surfaces.length === 0 || example.surfaces.some(s => !SURFACES.includes(s))) problems.push(`${at}: surfaces must be a non-empty subset of ${SURFACES.join(', ')}`)
     if (!isSafeRelative(example.path)) problems.push(`${at}: path must be a safe relative path`)
     else {

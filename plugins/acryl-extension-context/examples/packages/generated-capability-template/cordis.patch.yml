@@ -1,0 +1,3 @@
+- insert:
+    - id: example-capability
+      name: acryl-example-capability

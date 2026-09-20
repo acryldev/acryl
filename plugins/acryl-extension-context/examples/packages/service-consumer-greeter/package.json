@@ -1,0 +1,22 @@
+{
+  "name": "acryl-example-greeter-consumer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Consumes the greeter service",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

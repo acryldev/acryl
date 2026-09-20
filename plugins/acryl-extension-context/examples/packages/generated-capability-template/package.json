@@ -1,0 +1,40 @@
+{
+  "name": "acryl-example-capability",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Template for an agent-generated capability package (constitution V)",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "keywords": [
+    "acryl-package"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/example/acryl-example-capability.git"
+  },
+  "acryl": {
+    "schemaVersion": 1,
+    "artifacts": {
+      "plugins": [
+        "./index.js"
+      ]
+    },
+    "capabilities": [
+      "example-capability"
+    ]
+  }
+}

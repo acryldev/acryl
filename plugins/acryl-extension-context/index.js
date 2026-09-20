@@ -4,8 +4,9 @@
  * agent to its own docs, and gives it the one tool it needs to close the loop:
  * install a plugin it wrote and make it live.
  *
- * Provides: `extensionContext`, the prompt section `acryl:extension-router`,
- * and (when a `tools` service exists) the tool `acryl_install_plugin`.
+ * Provides: `extensionContext`, the prompt section `acryl:extension-router`, bundled
+ * authoring skills (when a `skills` service exists) and the tool `acryl_install_plugin`
+ * (when a `tools` service exists).
  * Requires: `systemPrompt`. `tools`, `desktopPnpm` and `livePluginActivation` are
  * optional and read at call time, never captured (the documented ordering trap).
  */
@@ -14,6 +15,7 @@ import { join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { installLocalPlugin } from './lib/install.js'
 import { resolvePackRoot } from './lib/pack-root.js'
+import { createSkillProvider } from './lib/skills.js'
 import { buildRouterText, INSTALL_TOOL_NAME, ROUTER_SECTION_NAME, ROUTER_SECTION_ORDER } from './lib/router.js'
 
 export const name = 'acryl-extension-context'
@@ -34,6 +36,12 @@ export function apply(ctx) {
       for (const group of manifest.navigation) for (const item of group.items) if (item.id === id) return join(root, 'docs', item.path)
       return undefined
     },
+  })
+
+  // Bundled authoring skills (workflow triggers linking into the docs). Optional: without a
+  // `skills` service the router alone still works.
+  ctx.inject(['skills'], scoped => {
+    scoped.skills.registerProvider(() => createSkillProvider(root))
   })
 
   ctx.inject(['tools'], scoped => {
