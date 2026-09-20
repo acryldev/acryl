@@ -153,3 +153,7 @@ Tracked in `research.md`; each one is a gate on a task in `tasks.md`:
    is no `app.getPath` and no packaged-app resource resolution?
 3. What exactly does the `Settings > Plugins` panel enumerate - and can the
    `tui` surface be served by the same host provider without a client UI?
+
+## Related
+
+- Spec 037 (`guardrailed-self-extension`): local live install and `/reload` build on this spec's `livePluginActivation` seam.

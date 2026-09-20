@@ -7,7 +7,9 @@ files on disk and the live Context can disagree.
 ## The loop
 
 1. Write the package.
-2. Verify it against the surfaces it declares (`acryl plugin verify`). Read every
+2. Verify it with the `acryl_verify_plugin` tool (absolute package path): it lints the package and imports the
+   entry to check its shape. A `dependency-not-installed-yet` warning means the shape could not be checked before
+   install. Read every
    finding. Each finding names the manifest doc that explains the fix: read that doc.
 3. Fix the real cause and verify again. Do not silence a finding by removing the
    thing it checks (an `inject`, an effect, a lint rule).

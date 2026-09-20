@@ -11,13 +11,14 @@
  * optional and read at call time, never captured (the documented ordering trap).
  */
 import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { isAbsolute, join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { installLocalPlugin, listLocalPlugins, reloadLocalPlugins, removeLocalPlugin } from './lib/install.js'
+import { verifyPackage } from './lib/verify.js'
 import { preparePublish } from './lib/publish.js'
 import { resolvePackRoot } from './lib/pack-root.js'
 import { createSkillProvider } from './lib/skills.js'
-import { buildRouterText, INSTALL_TOOL_NAME, LIST_TOOL_NAME, REMOVE_TOOL_NAME, PUBLISH_TOOL_NAME, ROUTER_SECTION_NAME, ROUTER_SECTION_ORDER } from './lib/router.js'
+import { buildRouterText, INSTALL_TOOL_NAME, LIST_TOOL_NAME, REMOVE_TOOL_NAME, PUBLISH_TOOL_NAME, VERIFY_TOOL_NAME, ROUTER_SECTION_NAME, ROUTER_SECTION_ORDER } from './lib/router.js'
 
 export const name = 'acryl-extension-context'
 export const inject = ['systemPrompt']
@@ -90,6 +91,19 @@ export function apply(ctx) {
         const profile = ctx.get('desktopProfiles')
         if (!profile?.current?.dir) throw new Error('the active profile is not available in this runtime')
         return JSON.stringify(listLocalPlugins(profile.current.dir))
+      },
+    }))
+
+    scoped.tools.register(defineTool({
+      name: VERIFY_TOOL_NAME,
+      description: 'Check a plugin package you wrote WITHOUT installing it: install lint plus importing the host entry and checking its Cordis shape. Findings include the exact error and the pack doc ids that explain the fix. Pass the ABSOLUTE package directory.',
+      parameters: {
+        path: { type: 'string', required: true, description: 'ABSOLUTE path of the plugin package directory.' },
+      },
+      output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+      async execute(args) {
+        if (typeof args.path !== 'string' || !isAbsolute(args.path)) throw new Error('path must be the ABSOLUTE package directory')
+        return JSON.stringify(await verifyPackage({ path: args.path }))
       },
     }))
 

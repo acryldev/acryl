@@ -2,6 +2,8 @@
 
 This repository owns the desktop product around an unmodified DeepSeek Harness checkout.
 
+Building or changing an ACRYL plugin, tool, UI slot or skill: start at `plugins/acryl-extension-context/docs/README.md` (routed docs) and `plugins/acryl-extension-context/examples/README.md` (verified examples for every plugin type).
+
 ## Prerequisites and setup
 
 - Use Node.js `^22.19.0` or `>=24.0.0` and the root PNPM `11.8.0` release through Corepack.

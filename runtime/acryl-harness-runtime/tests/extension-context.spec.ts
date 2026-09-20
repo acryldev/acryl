@@ -50,7 +50,7 @@ describe('extension context on the web engine', () => {
       expect(existsSync(join(context!.root, 'docs', 'start-here', 'this-runtime.md'))).toBe(true)
 
       const toolNames = assembly.tools.map(tool => tool.name)
-      expect(toolNames).toEqual(expect.arrayContaining(['acryl_install_plugin', 'acryl_list_plugins', 'acryl_remove_plugin', 'acryl_prepare_publish']))
+      expect(toolNames).toEqual(expect.arrayContaining(['acryl_install_plugin', 'acryl_list_plugins', 'acryl_remove_plugin', 'acryl_prepare_publish', 'acryl_verify_plugin']))
     } finally {
       await host.dispose()
     }

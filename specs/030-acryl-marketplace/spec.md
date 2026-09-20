@@ -192,3 +192,4 @@ stays on the device. The service is stateless catalog data only.
   own ticket; the `dsh-market` recovery-screen incident is the motivation).
 - `cordis-plugin-graph` (`acryldev/cordis-plugin-graph`) - first catalog
   entry and reference publish flow.
+- Spec 037 (`guardrailed-self-extension`): agent-prepared packages reach the catalog through `acryl_prepare_publish`; publishing stays a human step.

@@ -8,6 +8,7 @@ export const ROUTER_SECTION_ORDER = 9500
 export const INSTALL_TOOL_NAME = 'acryl_install_plugin'
 export const LIST_TOOL_NAME = 'acryl_list_plugins'
 export const REMOVE_TOOL_NAME = 'acryl_remove_plugin'
+export const VERIFY_TOOL_NAME = 'acryl_verify_plugin'
 export const PUBLISH_TOOL_NAME = 'acryl_prepare_publish'
 
 export const estimateTokens = text => Math.ceil(text.length / 4)
@@ -44,7 +45,7 @@ export function buildRouterText(root, manifest) {
     `- Write plugin sources in <workspace>/.acryl-extensions/<name>/. To make one live, call ${INSTALL_TOOL_NAME} with that ABSOLUTE path: it checks it, installs it,`,
     '  activates it live, and undoes the install if activation fails. Calling it again on a changed package UPDATES it.',
     `  To change, fix or improve a plugin first call ${LIST_TOOL_NAME} to find its directory, edit the files, then call`,
-    `  ${INSTALL_TOOL_NAME} again. To delete one call ${REMOVE_TOOL_NAME}. Read every result; never claim a plugin works,`,
+    `  ${INSTALL_TOOL_NAME} again. To delete one call ${REMOVE_TOOL_NAME}. Before installing, ${VERIFY_TOOL_NAME} checks a package and points at the docs to fix. Read every result; never claim a plugin works,`,
     '  or state its state, without it. UI (browser) changes need a page reload: tell the user.',
     `- Marketplace: call ${PUBLISH_TOOL_NAME} (a dry run); publishing itself is the user's decision, you cannot publish. The user can type /reload to re-install local plugins.`,
   )

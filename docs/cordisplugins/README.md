@@ -2,6 +2,7 @@
 
 This folder is the local authoring guide for plugins on the current DSH Desktop
 + Cordis setup. Read it before adding ACRYL capabilities.
+Agent-facing docs and verified examples for every plugin type live in `plugins/acryl-extension-context/` (start at its `docs/README.md`).
 
 ## Start here
 

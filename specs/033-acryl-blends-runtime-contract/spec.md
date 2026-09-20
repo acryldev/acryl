@@ -152,3 +152,4 @@ facade), §26 (service contracts) against this repo's actual surfaces:
   is written against.
 - `docs/cordis/cordis_system_guide_for_coding_agents.md` - required reading
   before touching any Loader/service/Fiber code from this plan.
+- Spec 037 (`guardrailed-self-extension`): the extension pack that teaches the agent to write its own plugins.

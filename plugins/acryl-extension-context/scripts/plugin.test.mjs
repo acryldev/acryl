@@ -254,3 +254,19 @@ test('publish prep: catalog metadata is enforced, the dry run runs, nothing is p
     assert.equal((await preparePublish({ path: 'rel/dir' })).ok, false)
   } finally { rmSync(dir, { recursive: true, force: true }) }
 })
+
+test('verify: reports the real import error, the default+named trap, and passes a good package', async () => {
+  const { verifyPackage } = await import('../lib/verify.js')
+  const dir = makePkg()
+  try {
+    writeFileSync(join(dir, 'index.js'), 'export const name = "p"; export function apply(ctx) {}')
+    const good = await verifyPackage({ path: dir }); assert.equal(good.ok, true)
+    writeFileSync(join(dir, 'index.js'), 'throw new Error("kaboom")')
+    const broken = await verifyPackage({ path: dir })
+    assert.equal(broken.ok, false); assert.equal(broken.findings[0].code, 'import-failed'); assert.match(broken.findings[0].message, /kaboom/); assert.ok(broken.docs.length > 0)
+    writeFileSync(join(dir, 'index.js'), 'export const name = "p"; export default function () {}')
+    assert.equal((await verifyPackage({ path: dir })).findings[0].code, 'default-with-named-metadata')
+    writeFileSync(join(dir, 'index.js'), 'export const name = "p"')
+    assert.equal((await verifyPackage({ path: dir })).findings[0].code, 'invalid-plugin-shape')
+  } finally { rmSync(dir, { recursive: true, force: true }) }
+})
