@@ -4957,3 +4957,9 @@ binary directly rather than through whatever bare `pnpm` resolves to on
   read-completely protocol). Router now uses a tagged section and an inline topic map generated from manifest `topic` labels, 768 tokens (`7f1ce800f3f06e3a273e4ee8b635f4008efdd224`).
   A real-model run of build, update, add-tool-and-use and remove passes on the new text. Difference kept and documented in `docs/system-prompt/README.md`:
   ACRYL composes the prompt from harness sections (pinned upstream) rather than one owned builder.
+
+## 2026-09-21 - feat: acryl-system-prompt plugin (spec 037)
+
+- New `plugins/acryl-system-prompt`: pass-through on the harness's `system-prompt/assemble` waterfall (measured on the real Web and CLI engines first): ACRYL identity,
+  pi.dev-style tags, empties dropped, everything else upstream; drift baselines and a test that names changed upstream sections; volatile ports normalized
+  (`e301442b957f008b162ecdcbb5fed0db0e7a43cf`). Engine-swap note (spec 028): the pure shaping logic is isolated in `lib/transform.js`; only the 6-line listener is DSH-specific.
