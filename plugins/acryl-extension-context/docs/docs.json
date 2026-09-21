@@ -2469,18 +2469,18 @@
   ],
   "routes": [
     {
-      "when": "colors, fonts, branding, logo, look and feel, any UI change",
+      "when": "colors, fonts, branding, logo, any UI look and feel",
       "docs": [
         "extending.ui-customization",
         "extending.ui-theme",
-        "extending.ui-branding",
-        "extending.ui-components"
+        "extending.ui-branding"
       ]
     },
     {
-      "when": "a button, panel, tab, card, keyboard shortcut or a custom tool-call card in the Web or Desktop app",
+      "when": "a button, panel, tab, card, shortcut or tool-call card in Web/Desktop",
       "docs": [
-        "extending.client-slot"
+        "extending.client-slot",
+        "extending.ui-components"
       ]
     },
     {
@@ -2503,19 +2503,17 @@
       ]
     },
     {
-      "when": "events, prompt sections, interception hooks",
+      "when": "events, prompt sections, hooks",
       "docs": [
         "extending.event-hook",
-        "extending.prompt-contribution",
-        "maps.events"
+        "extending.prompt-contribution"
       ]
     },
     {
-      "when": "services, dependencies, swappable providers, which Cordis mechanism to use",
+      "when": "services, dependencies, swappable providers, which Cordis mechanism",
       "docs": [
         "extending.service",
-        "extending.three-role-capability",
-        "extending.cordis-core"
+        "extending.three-role-capability"
       ]
     },
     {
@@ -2532,21 +2530,21 @@
       ]
     },
     {
-      "when": "a new model provider or an HTTP/RPC route",
+      "when": "a model provider, an HTTP/RPC route",
       "docs": [
         "extending.llm-adapter",
         "extending.host-route"
       ]
     },
     {
-      "when": "profile, pnpm and live-activation services, the Desktop (Electron) app",
+      "when": "profile, pnpm, live-activation services, the Desktop app",
       "docs": [
         "extending.desktop-main",
         "extending.desktop-app"
       ]
     },
     {
-      "when": "packaging, installing live, updating, removing, sharing on the marketplace",
+      "when": "packaging, installing live, updating, removing, sharing",
       "docs": [
         "extending.packaging",
         "delivery.local-live",
@@ -2554,16 +2552,15 @@
       ]
     },
     {
-      "when": "how plugins are built, safety rules, verifying, or a plugin that is PENDING, FAILED, invisible or stale",
+      "when": "verifying, safety, a plugin that is PENDING, FAILED, invisible or stale",
       "docs": [
-        "start.this-runtime",
         "start.verify-before-done",
         "start.troubleshooting",
         "start.trust-and-safety"
       ]
     },
     {
-      "when": "remember, save, persist or store data, notes, todos, preferences or state; share data between Web and Desktop",
+      "when": "saving data, notes, settings, state; sharing it between Web and Desktop",
       "docs": [
         "extending.state-and-persistence"
       ]

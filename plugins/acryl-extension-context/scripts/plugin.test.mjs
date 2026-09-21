@@ -21,9 +21,11 @@ const manifest = {
 
 test('router names real paths, the policy, the install tool, and omits not-for-authors docs', () => {
   const text = buildRouterText('/pack', manifest)
-  assert.match(text, /\/pack\/docs\/README\.md/)
-  assert.match(text, /\/pack\/docs\/start-here\/this-runtime\.md/)
-  assert.match(text, /\/pack\/example-plugins\/README\.md/)
+  // One absolute pack root; every doc path after it is relative (repeating the root per path was ~150 wasted tokens in every prompt).
+  assert.match(text, /docs: \/pack\./)
+  assert.equal(text.split('/pack').length - 1, 1)
+  assert.match(text, /docs\/README\.md/)
+  assert.match(text, /example-plugins\/README\.md/)
   assert.match(text, /acryl_install_plugin/)
   assert.match(text, /completely/i)
   assert.match(text, /publishing is the user's decision/)

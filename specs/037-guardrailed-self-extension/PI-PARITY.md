@@ -45,3 +45,22 @@ given), **partial**, **gap**. "Verified" means run on the real engine or in a re
 3. **Chat-node takeover example** (deliberately not written: every kind is a takeover of a shipped renderer).
 4. **inject/Config changes and class-form `apply`** need an app restart (documented, warned).
 5. **Eval breadth**: one run per cell, one model; the without-docs baseline is not a true no-docs case because the pack can be found by exploring the repository.
+
+## Startup context budget vs pi (measured 2026-09-21)
+
+Pi's default system prompt is about 490 tokens (its docs block, the part that corresponds to our router, is about 325): tool names with one-line snippets, a few guidelines, docs
+PATHS with a topic map ("read only when the user asks about pi itself"), then AGENTS.md files and skills as name + description + location. Nothing is loaded ahead of need. Ours is the same
+design (references, not loads), measured on the first request of a real Web session (about 25k tokens):
+
+| Part | Tokens | Whose |
+| --- | --- | --- |
+| System prompt | about 5,800 | mostly the harness: "Dynamic Cordis Plugins" guidance about 1,500, tool guidance, app text |
+| Tool definitions (40 tools, full JSON schemas) | about 9,400 | harness; our 7 `acryl_*` tools are about 690 |
+| The workspace's own AGENTS.md | about 4,600 | the user's repository (pi loads its context files in full too) |
+| Skill list (110 skills, name + description) | about 7,100 | mostly the user's global skills; our 12 are about 490 |
+| ACRYL extension router | 919 -> about 600 | ours |
+
+The router was the one part of ours that was bloated (about 2.7 times pi's docs block): three absolute paths repeated, up to four docs per topic and a long tool list that the tool
+definitions already carry. Now one pack root, relative paths, at most three docs per topic; budget 650 (test enforced). Paired real-model eval: no measurable change in outcome or effort (see
+`evals/README.md`). Not changed, and worth a look at the runtime-swap step: the harness's "Dynamic Cordis Plugins" prompt text (about 1,500 tokens plus the `cordis_*` tool schemas, about 1,500)
+is upstream and pushes a competing way to add capabilities; the `acryl-system-prompt` waterfall listener could gate it per surface without forking the harness.

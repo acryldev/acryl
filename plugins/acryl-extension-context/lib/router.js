@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 
 /** The router must stay small: it is in every prompt (spec 037 NFR-002). */
-export const ROUTER_TOKEN_BUDGET = 1500
+export const ROUTER_TOKEN_BUDGET = 650
 export const ROUTER_SECTION_NAME = 'acryl:extension-router'
 /** The XML-style tag wrapping the router text, in pi.dev's per-section tag style. */
 export const ROUTER_TAG = 'acryl_extension_docs'
@@ -26,8 +26,6 @@ export const estimateTokens = text => Math.ceil(text.length / 4)
  * @param {{ navigation: Array<{ items: Array<{ id?: string, topic?: string, title: string, path: string, applies: string }> }> }} manifest
  */
 export function buildRouterText(root, manifest) {
-  const docs = join(root, 'docs')
-  const examples = join(root, 'example-plugins')
   const pathOf = new Map()
   for (const group of manifest.navigation) for (const item of group.items) if (item.id) pathOf.set(item.id, item.path)
   const topics = []
@@ -44,16 +42,11 @@ export function buildRouterText(root, manifest) {
   }
   return [
     `<${ROUTER_TAG}>`,
-    'ACRYL extension documentation (read only when the user asks to build, change, fix, improve, extend or remove something in ACRYL itself: an extension, plugin, tool, panel, button, view, theme, skill, command or LLM adapter):',
-    `- Docs index: ${join(docs, 'README.md')}; or call ${LOOKUP_TOOL_NAME}(topic) for the docs and examples that match a topic`,
-    `- Examples: ${join(examples, 'README.md')} (working, verified plugins for every plugin type and surface)`,
-    `- When reading ACRYL docs, resolve the relative paths below under ${docs}/, not the current working directory`,
-    `- Start with ${join(docs, 'start-here', 'this-runtime.md')}. Where something mounts on the CLI, Web or Desktop, and every plugin type: maps/mount-points.md, maps/slot-contracts.md (props and examples per slot), maps/events.md, maps/taxonomy.md`,
+    `ACRYL extension docs: ${root}. Read only when the user asks to build, change, fix or remove something in ACRYL itself (extension, plugin, tool, panel, button, theme, skill, command, provider); or call ${LOOKUP_TOOL_NAME}(topic).`,
+    '- Paths below are under docs/; indexes: docs/README.md, example-plugins/README.md (verified plugins); start with start-here/this-runtime.md',
     `- When asked about: ${topics.join(', ')}`,
-    '- Reference for the Cordis API and every harness subsystem: reference/ (one file each, listed in the docs index)',
-    '- When working on ACRYL extension topics, read the docs and the nearest example, and follow .md cross-references before implementing',
-    '- Always read ACRYL .md files completely and follow links to related docs',
-    `- Write extensions in <workspace>/.acryl-extensions/<name>/ and deliver with ${INSTALL_TOOL_NAME} (ABSOLUTE path; calling it again updates). Check first with ${VERIFY_TOOL_NAME}; also ${LIST_TOOL_NAME}, ${REMOVE_TOOL_NAME}, ${PUBLISH_TOOL_NAME} (a dry run: publishing is the user's decision). Never claim a plugin works without the tool result; UI needs a page reload (the user can type /reload, which also installs new folders under .acryl-extensions/)`,
+    "- Read .md files completely and the nearest example, follow links before implementing; never guess a plugin's shape from memory",
+    `- Write in <workspace>/.acryl-extensions/<name>/; check with ${VERIFY_TOOL_NAME}; deliver with ${INSTALL_TOOL_NAME} (ABSOLUTE path; again = update). Removing and publish prep have their own tools; publishing is the user's decision. Do not claim it works without the tool result; UI needs a page reload (/reload)`,
     `</${ROUTER_TAG}>`,
   ].join('\n')
 }

@@ -35,3 +35,16 @@ Reading: both variants finished every task, so the pack is not what makes the lo
 tools are). What the router, skills and installed-extensions note buy is effort: about 2.7 times fewer steps and 2 times fewer tool calls, and the agent goes to the
 verified examples instead of exploring. Caveats: one run per cell (no variance), one model, and "without_docs" is not a true no-docs baseline because the agent can
 still find the pack by exploring the repository (16 doc reads even without the router). Treat it as a directional measurement, not a benchmark.
+
+**2026-09-21 (later), same model and tasks, router slimmed from 919 to about 600 tokens (one absolute pack root, at most three docs per route), paired run the same day.**
+
+| | old router (919 tokens) | slim router (about 600) |
+| --- | --- | --- |
+| Tasks with verify ok and install ok | 3 of 3 | 3 of 3 |
+| Steps | 51 | 54 |
+| Tool calls | 77 | 80 |
+| Reads of the pack's docs / examples | 13 / 16 | 15 / 19 |
+| Tool errors | 0 | 0 |
+
+Reading: no measurable loss from the smaller router (3 steps apart, tasks differ in both directions, one run per cell). Note the same old router measured 31 steps and 51 tool calls
+on the earlier run above, so run-to-run variance is larger than the difference: never read a single-run gap as a regression or a win.
