@@ -52,3 +52,34 @@ Facts already measured (2026-09-20, this checkout) and questions still open. Evi
 - **Q8 Terminal light/dark.** Detecting the terminal background (pi-tui has OSC 11 parsing helpers) so the terminal palette can follow it.
 - **Q9 Accessibility.** What minimum the web layer guarantees (roles, focus rings, contrast at both token modes) and how conformance checks it
   headlessly.
+
+## Measured in Slice 0 (2026-09-21)
+
+- **M10 Exposure without a build step (answers Q1).** A package whose `client.js` registers a module id equal to its package name is requirable by any other client
+  bundle that lists that name in `dsh.client.inject`, with no build step: probe library `acryl-ui-probe` and consumer `acryl-ui-probe-consumer`, real browser, the consumer
+  logged `required acryl-ui-probe: keys=AcrylButton,version` and rendered the library's themed button. One trap measured: the client loader treats every module as a plugin, so a pure
+  library that exports only components fails the whole page (`Failed to load plugins ... expect function or object with an "apply" method`). A library must also export an (empty) `apply`.
+- **M11 Terminal palette refactor size (answers Q2).** 18 files under `apps/acryl-cli/src` import the static `theme.ts`; 77 references to a role (`theme.primary` and so on); 55 of
+  them are module-level captures (`const dim = fg(theme.muted)`) evaluated once at import. A compatibility object with getters is therefore NOT enough (the color freezes at import);
+  a lazy per-role function (`fgRole('muted')`, reading the live palette at call time) is, and the 55 sites convert mechanically.
+- **M12 Web library primitives suffice for a skeleton.** Card, Field, SwitchField, EmptyState and Stack were built over `Input`, `Switch` and the `--dsw-alias-*` tokens with no new primitive
+  and rendered themed in a real browser (both light-mode values checked, dark follows the same variables). Accessibility wiring verified live: label associated with the input, error
+  `role=alert` and referenced by `aria-describedby`, `aria-invalid`, card `role=group` labelled by its title.
+- **M13 Token mapping candidates (Q3, partial).** Existing tokens cover most roles: primary -> `brand-primary`, text -> `label-primary`, muted -> `label-tertiary`, success ->
+  `state-success-primary`, error -> `state-error-primary`, warning -> `state-warn-*`, border -> `border-l4`, surface -> `bg-layer-1`. `reasoning` (terminal violet) and `accent` have no
+  web alias yet: they need new tokens or stay terminal-only. Not decided: the curated semantic set and terminal light/dark detection.
+
+## Decisions (Slice 0)
+
+- **Q1 decided:** the library is a normal package with a client bundle (M10). First-party wiring into every surface's composition follows the brand package's route (materialize into the
+  profile, add a Loader row) and touches Web, Desktop and packaging: it is its own task (T011b), not folded into the skeleton.
+- **Q4 decided:** contracts are plain JSON data (`contracts/components.json`: summary, props with type/required/default, children, a11y notes), not Schemastery or JSON Schema. They feed the
+  docs generator, the gallery, the conformance tests and the verifier lint, and the terminal layer reads the same file without importing React. A test asserts the library exports exactly
+  the contracted components (an export without a contract is undocumented, a contract without an export is a lie).
+- **Q5 decided (first cut):** one package per layer: `plugins/acryl-ui-web` now, `acryl-ui-tui` next; tokens and contracts live inside the web package until the terminal layer needs to share
+  them, then move to a data package. Splitting earlier would add packages without a second consumer.
+- **Q2 direction:** lazy `fgRole` plus a mechanical conversion of the 55 sites, behind a live palette; the `tuiTheme` service is Slice 1.
+- **Q7 order proposed:** Market overlay first (already a client slot user), then settings tabs, then TUI overlays; each its own task with tests.
+- **Q9 minimum:** every interactive component names itself (label or `aria-label`), announces errors, and keeps focusable order; checked headlessly by the contract test, then once in a real browser.
+- **Still open:** Q3 (final semantic token set, terminal background detection), Q6 (fabric RFC relation).
+

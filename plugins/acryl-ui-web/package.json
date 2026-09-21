@@ -1,0 +1,21 @@
+{
+  "name": "acryl-ui-web",
+  "version": "0.1.0",
+  "description": "ACRYL UI library for the Web and Desktop client: themed building blocks (Stack, Card, Field, SwitchField, EmptyState) and slot helpers over the app's own primitives",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json",
+    "./client": "./client.js",
+    "./contracts": "./contracts/components.json"
+  },
+  "files": ["index.js", "cordis.patch.yml", "client.js", "contracts", "README.md"],
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "inject": ["@deepseek-ai/dsh-client-ui-primitives"], "platform": "web" }
+  },
+  "acryl": { "apiVersion": 1, "permissions": ["ui"] },
+  "scripts": { "test": "node --test tests/contracts.test.mjs" }
+}

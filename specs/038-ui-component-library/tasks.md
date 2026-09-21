@@ -5,18 +5,18 @@ each landed task in `docs/DEVELOPMENT-LOG.md` in a separate documentation commit
 
 ## Status (2026-09-20)
 
-Not started. Facts M1 to M9 in `research.md` are measured; Q1 to Q9 are open.
+Slice 0 mostly answered and the web skeleton landed (2026-09-21): M10 to M13 and the decisions are in `research.md`; Q3 (final token set, terminal light/dark) and Q6 (fabric RFC) remain open. Next: T006/T007 (tokens, `tuiTheme`), T011b (wire the library into every surface), T013 (gallery).
 
 ## Slice 0 - Research gates
 
-- **T001 Exposure mechanism (Q1).** Measure how a package becomes a requirable client module without a plugin build step, and whether a
+- **T001 Exposure mechanism (Q1). DONE**, see M10. Measure how a package becomes a requirable client module without a plugin build step, and whether a
   workspace package ships in installed builds. **Evidence**: a browser run `require`-ing a probe package; notes in `research.md`.
-- **T002 Terminal theme placement (Q2).** Prototype `tuiTheme` in `acryl-cli`; convert one overlay; measure the diff size for all overlays.
+- **T002 Terminal theme placement (Q2). MEASURED** (M11), prototype not built. Prototype `tuiTheme` in `acryl-cli`; convert one overlay; measure the diff size for all overlays.
   **Evidence**: prototype branch result and test.
 - **T003 Token mapping (Q3, Q8).** Curated semantic set to `--dsw-alias-*` and terminal roles; terminal background detection.
   **Evidence**: mapping table, one restyle demo on web and terminal.
-- **T004 Contract format and layout (Q4, Q5, Q6).** Decide schema format, package layout, fabric RFC relation. **Evidence**: ADR in `plan.md`.
-- **T005 Migration order and a11y minimum (Q7, Q9).** **Evidence**: written list and the headless check design.
+- **T004 Contract format and layout (Q4, Q5, Q6). DECIDED** (Q4, Q5; Q6 open), see research decisions. Decide schema format, package layout, fabric RFC relation. **Evidence**: ADR in `plan.md`.
+- **T005 Migration order and a11y minimum (Q7, Q9). DECIDED**, see research decisions. **Evidence**: written list and the headless check design.
 
 ## Slice 1 - Tokens and terminal theme
 
@@ -27,9 +27,9 @@ Not started. Facts M1 to M9 in `research.md` are measured; Q1 to Q9 are open.
 
 ## Slice 2 - Web layer
 
-- **T010** Contracts: Button, TextField, Switch, Tag, Dialog, Card, Tabs (data package).
-- **T011** `acryl-ui-web` over primitives; requirable module; declared in `dsh.client.inject`.
-- **T012** Slot helpers (`headerAction`, `sidebarTab`, `footerAction`, `settingsCard`).
+- **T010** Contracts: Button, TextField, Switch, Tag, Dialog, Card, Tabs (data package). **Partial**: Stack, Card, Field, SwitchField, EmptyState are contracted in `plugins/acryl-ui-web/contracts/components.json`; Dialog, Tabs, Tag, Button wrappers remain.
+- **T011** `acryl-ui-web` over primitives; requirable module; declared in `dsh.client.inject`. **Partial**: package built, contract-tested (4 tests) and verified in a real browser (Card, Field, SwitchField, EmptyState, footerAction; error announced). **T011b** (open): materialize it into every Web/Desktop profile like the brand package.
+- **T012** Slot helpers (`headerAction`, `sidebarTab`, `footerAction`, `settingsCard`). **Partial**: `footerAction`, `headerAction`, `sidebarTab` done (footerAction verified live); `settingsCard` remains.
 - **T013** Gallery page and web conformance (contract, states, contrast both modes).
 - **T014** Rebuild `client-ui-components` on the library; real browser and Desktop dev-build check.
 

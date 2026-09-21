@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "library": "acryl-ui-web",
+  "surfaces": ["web", "desktop"],
+  "components": {
+    "Stack": {
+      "summary": "Lays children out in a row or a column with a theme-consistent gap.",
+      "props": {
+        "direction": { "type": "'column' | 'row'", "default": "'column'" },
+        "gap": { "type": "'xs' | 'sm' | 'md' | 'lg'", "default": "'md'" },
+        "align": { "type": "'start' | 'center' | 'end' | 'stretch'", "default": "'stretch'" }
+      },
+      "children": true,
+      "a11y": ["no role: it is layout only"]
+    },
+    "Card": {
+      "summary": "A bordered surface with an optional title, body and footer actions.",
+      "props": {
+        "title": { "type": "string" },
+        "footer": { "type": "ReactNode", "description": "actions, right-aligned" }
+      },
+      "children": true,
+      "a11y": ["role=group, labelled by the title when there is one"]
+    },
+    "Field": {
+      "summary": "A labelled text input with hint and error text.",
+      "props": {
+        "label": { "type": "string", "required": true },
+        "value": { "type": "string", "required": true },
+        "onChange": { "type": "(value: string) => void", "required": true, "description": "receives the string, not the event" },
+        "hint": { "type": "string" },
+        "error": { "type": "string", "description": "shown in place of the hint and announced" },
+        "placeholder": { "type": "string" }
+      },
+      "a11y": ["the label is associated with the input", "the error is announced (role=alert) and referenced by aria-describedby"]
+    },
+    "SwitchField": {
+      "summary": "A switch with a label and optional hint.",
+      "props": {
+        "label": { "type": "string", "required": true },
+        "checked": { "type": "boolean", "required": true },
+        "onChange": { "type": "(checked: boolean) => void", "required": true },
+        "hint": { "type": "string" }
+      },
+      "a11y": ["the label is the accessible name"]
+    },
+    "EmptyState": {
+      "summary": "Centered message for a list or view with nothing in it yet.",
+      "props": {
+        "title": { "type": "string", "required": true },
+        "description": { "type": "string" },
+        "action": { "type": "ReactNode" }
+      },
+      "a11y": ["the title is a heading"]
+    }
+  },
+  "helpers": {
+    "footerAction": { "summary": "Register a component in the sidebar footer (root scope, receives { wide }).", "slot": "sidebar.footer.action" },
+    "headerAction": { "summary": "Register a component next to the conversation title (session scope).", "slot": "conversation.session.header.actions" },
+    "sidebarTab": { "summary": "Register a tab in the right sidebar (session scope).", "slot": "sidebar.right.pane.tab" }
+  }
+}
