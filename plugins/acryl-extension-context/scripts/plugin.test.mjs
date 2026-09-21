@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url'
 import { test } from 'node:test'
 import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, syncOnStartup, ensureProfileBundle, pinPublicHoistPattern, describeInstalledExtensions } from '../lib/install.js'
 import { discoverExtensions, globalExtensionsDir, installState } from '../lib/reconcile.js'
+import { captureBlend, verifyBlend, writeBlend, readBundleRows } from '../lib/blend-capture.js'
 import { listInstalledPlugins, originOf, readLockfile } from '../lib/provenance.js'
 import { checkManifest, describePermissions, EXTENSION_API_VERSION } from '../lib/manifest.js'
 import { resolvePackRoot } from '../lib/pack-root.js'
@@ -517,6 +518,43 @@ test('provenance: local, registry, git and linked installs are told apart from w
     const text = describeInstalledExtensions(profile, undefined)
     assert.match(text, /ext-g/); assert.match(text, /Marketplace plugins \(managed, not editable here\): market-plugin@0.2.6/)
     assert.deepEqual(listInstalledPlugins(join(root, 'none')), [])
+  } finally { rmSync(root, { recursive: true, force: true }) }
+})
+
+test('blend capture: marketplace and local plugins become rows and a lock; local sources are vendored; verify catches an edit', () => {
+  const root = mkdtempSync(join(tmpdir(), 'blend-')); const profile = join(root, 'profile'); const globalDir = join(root, 'home', 'extensions'); const stage = join(root, 'stage'); const ws = join(root, 'my-app')
+  const nm = join(profile, 'node_modules')
+  mkdirSync(join(nm, 'market-plugin'), { recursive: true }); mkdirSync(join(globalDir, 'g'), { recursive: true }); mkdirSync(stage, { recursive: true }); mkdirSync(ws, { recursive: true })
+  try {
+    writeFileSync(join(nm, 'market-plugin', 'package.json'), JSON.stringify({ name: 'market-plugin', dsh: { bundle: { patch: './cordis.patch.yml' } } }))
+    writeFileSync(join(nm, 'market-plugin', 'cordis.patch.yml'), "- insert:\n    - id: market-row\n      name: 'market-plugin'\n      config:\n        title: Hello\n")
+    const gsrc = join(globalDir, 'g')
+    writeFileSync(join(gsrc, 'package.json'), JSON.stringify({ name: 'ext-g', version: '0.3.0', type: 'module', main: './index.js', dsh: { bundle: { patch: './cordis.patch.yml' } } }))
+    writeFileSync(join(gsrc, 'cordis.patch.yml'), '- insert:\n    - id: ext-g\n      name: ext-g\n')
+    writeFileSync(join(gsrc, 'index.js'), 'export const name = "ext-g"\nexport function apply() {}\n')
+    const staged = stagePackage(gsrc, stage)
+    // The staged copy is what the profile installs; node_modules/ext-g resolves to it (a symlink in a real profile, a copy here).
+    mkdirSync(join(nm, 'ext-g'), { recursive: true }); writeFileSync(join(nm, 'ext-g', 'package.json'), readFileSync(join(gsrc, 'package.json'))); writeFileSync(join(nm, 'ext-g', 'cordis.patch.yml'), readFileSync(join(gsrc, 'cordis.patch.yml')))
+    writeFileSync(join(profile, 'package.json'), JSON.stringify({ dsh: { profile: { bundles: ['@deepseek-ai/dsh-base', 'market-plugin', 'ext-g'] } }, dependencies: { 'market-plugin': '1.2.0', 'ext-g': `file:${staged.dir}` } }))
+    writeFileSync(join(profile, 'pnpm-lock.yaml'), ["lockfileVersion: '9.0'", '', 'importers:', '', '  .:', '    dependencies:', '      market-plugin:', '        specifier: 1.2.0', '        version: 1.2.0', '', 'packages:', '', '  market-plugin@1.2.0:', '    resolution: {integrity: sha512-zzz==}', ''].join('\n'))
+    writeFileSync(join(profile, 'cordis.patch.yml'), '- id: market-row\n  config:\n    title: Overridden\n')
+    const capture = captureBlend({ profileDir: profile, workspaceDir: ws, globalDir })
+    assert.equal(capture.manifest.kind, 'Blueprint'); assert.equal(capture.manifest.metadata.id, 'local.my-app')
+    assert.deepEqual(capture.manifest.spec.rows.map(r => [r.id, r.name]), [['market-row', 'market-plugin'], ['ext-g', 'ext-g']])
+    assert.deepEqual(capture.manifest.spec.overrides, [{ id: 'market-row', config: { title: 'Overridden' } }])
+    assert.deepEqual(capture.lock.modules.map(m => [m.name, m.origin, m.version]), [['ext-g', 'local', '0.3.0'], ['market-plugin', 'registry', '1.2.0']])
+    assert.equal(capture.lock.modules[1].digest, 'sha512-zzz=='); assert.match(capture.lock.modules[0].digest, /^sha256:[0-9a-f]{64}$/u)
+    assert.equal(captureBlend({ profileDir: profile, workspaceDir: ws, globalDir, lineage: { blueprint: 'acryl.blank', blueprintVersion: '0.1.0' } }).manifest.kind, 'Blend')
+    assert.equal(captureBlend({ profileDir: profile, workspaceDir: ws, globalDir }).lockText, capture.lockText, 'the lock is deterministic')
+    const out = join(ws, '.acryl', 'blend')
+    writeBlend(capture, out)
+    assert.equal(existsSync(join(out, 'extensions', 'ext-g', 'index.js')), true)
+    assert.deepEqual(verifyBlend(out), { ok: true, problems: [], checked: 2 })
+    writeFileSync(join(out, 'extensions', 'ext-g', 'index.js'), 'export const name = "tampered"\n')
+    assert.match(verifyBlend(out).problems[0], /differs from the locked digest/)
+    writeFileSync(join(out, 'blend.yaml'), `${readFileSync(join(out, 'blend.yaml'), 'utf8')}# edited\n`)
+    assert.ok(verifyBlend(out).problems.some(p => /blend\.yaml changed/u.test(p)))
+    assert.equal(readBundleRows(profile, 'not-installed').rows.length, 0)
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
 

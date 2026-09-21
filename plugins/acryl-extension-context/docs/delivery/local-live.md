@@ -83,6 +83,13 @@ derived state: it can be thrown away and rebuilt from the source folders.
 
 The prompt's installed-extensions note lists the local ones with their source and names the marketplace ones as managed, so you do not try to edit them.
 
+## Capturing everything as a Blend
+
+`/blend snapshot` (typed by the human) writes the running composition to `<workspace>/.acryl/blend/`: `blend.yaml` (the manifest, valid against the Blends format), `blend.lock.json`
+(exact versions and digests: marketplace plugins by version and integrity, local extensions by sha256) and `extensions/<name>/` (the source of every local extension, vendored so the
+result is self-contained). Commit it to git to persist and share it. `/blend verify` checks it against its own lock, offline. Plugin data, secrets and ACRYL's own runtime plugins
+are not captured; anything that could not be captured is listed. Design: `specs/036-cordis-ecosystem-and-acryl-blends/blend-instance-design.md`.
+
 ## /reload
 
 The human types `/reload` in the chat. Source is authoritative, so it makes the installs match their source folders and prints one line per extension

@@ -15,6 +15,7 @@ import { isAbsolute, join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { globalExtensionsDir } from './lib/reconcile.js'
 import { listInstalledPlugins } from './lib/provenance.js'
+import { captureBlend, verifyBlend, writeBlend } from './lib/blend-capture.js'
 import { describePermissions } from './lib/manifest.js'
 import { describeInstalledExtensions, installLocalPlugin, syncOnStartup, listLocalPlugins, reloadLocalPlugins, removeLocalPlugin } from './lib/install.js'
 import { lookupExtensionDocs } from './lib/lookup.js'
@@ -132,6 +133,38 @@ export function apply(ctx) {
         },
       })
     }, 'extension-context reload command')
+  })
+
+  // `/blend snapshot` writes the running composition (marketplace plugins AND local extensions) to <workspace>/.acryl/blend/ as a Blend; `/blend verify`
+  // checks it against its own lock. Human-typed, no model tool: capturing state is the user's decision and costs no prompt tokens.
+  ctx.inject(['commands'], scoped => {
+    ctx.effect(function* () {
+      yield scoped.commands.register({
+        name: 'blend',
+        description: 'Capture the installed plugins and local extensions as a Blend, or verify a captured one',
+        input: { hint: '[snapshot|verify]' },
+        async handler(invocation) {
+          const profileDir = ctx.get('desktopProfiles')?.current?.dir
+          const workspaceDir = invocation?.agent?.session?.header?.cwd
+          if (!profileDir) return { kind: 'error', text: 'The active profile is not available in this runtime.' }
+          if (!workspaceDir) return { kind: 'error', text: 'This session has no workspace directory to keep the Blend in.' }
+          const outDir = join(workspaceDir, '.acryl', 'blend')
+          const verb = String(invocation?.rawInput ?? '').trim().split(/\s+/u)[0]
+          if (verb === 'verify') {
+            const result = verifyBlend(outDir)
+            return result.ok ? { kind: 'success', text: `Blend in ${outDir} matches its lock (${result.checked} checks).` } : { kind: 'error', text: `Blend in ${outDir}:\n${result.problems.map(p => `- ${p}`).join('\n')}` }
+          }
+          if (verb !== 'snapshot') return { kind: 'error', text: 'Usage: /blend snapshot (capture the current state) or /blend verify.' }
+          const dshHome = ctx.get('dshHomePath')
+          const capture = captureBlend({ profileDir, workspaceDir, globalDir: globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined) })
+          const files = writeBlend(capture, outDir)
+          const local = capture.lock.modules.filter(m => m.origin === 'local').length
+          const registry = capture.lock.modules.filter(m => m.origin === 'registry').length
+          const notes = capture.notes.length > 0 ? `\nNot captured:\n${capture.notes.map(n => `- ${n}`).join('\n')}` : ''
+          return { kind: 'success', text: `Captured ${capture.manifest.kind} ${capture.manifest.metadata.id}@${capture.manifest.metadata.version}: ${registry} marketplace plugin(s), ${local} local extension(s) vendored.\nWritten to ${outDir}: ${files.join(', ')}${notes}` }
+        },
+      })
+    }, 'extension-context blend command')
   })
 
   ctx.inject(['tools'], scoped => {

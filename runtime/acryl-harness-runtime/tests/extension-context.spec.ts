@@ -254,6 +254,49 @@ describe('/reload on the web engine', () => {
     } finally { await bridge.dispose(); await host.dispose() }
   }, 240_000)
 
+  it('/blend snapshot captures marketplace and local plugins into the workspace, and /blend verify checks it against its lock', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-extension-blend-'))
+    temporaryHomes.push(home)
+    process.env.DSH_HOME = home
+    const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-blend-ws-'))
+    temporaryHomes.push(workspace)
+    const source = new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url).pathname
+    cpSync(source, join(workspace, '.acryl-extensions', 'blend-tool'), { recursive: true })
+    const host = await createAcrylEngineHost({
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      initialEngine: 'dsh',
+      prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+    })
+    const bridge = createAcrylSessionBridge(host.ctx, { profile: 'web', generationId: 'blend', attachment: 'owner', cwd: workspace })
+    try {
+      const sessionId = await bridge.open()
+      const agent = (host.ctx as unknown as { agents: { get(id: unknown): unknown } }).agents.get(SessionId(sessionId))
+      const commands = host.ctx.get('commands' as never) as unknown as {
+        execute(agent: unknown, line: string, attachments: unknown[], signal: AbortSignal): Promise<{ result: { kind: string; text?: string } } | undefined>
+      }
+      const run = async (line: string) => (await commands.execute(agent, line, [], new AbortController().signal))?.result
+      expect((await run('/reload new'))?.text).toContain('installed (new)')
+      const snapshot = await run('/blend snapshot')
+      expect(snapshot?.kind).toBe('success')
+      expect(snapshot?.text).toContain('1 local extension(s) vendored')
+      const out = join(workspace, '.acryl', 'blend')
+      const lock = JSON.parse(readFileSync(join(out, 'blend.lock.json'), 'utf8'))
+      expect(lock.formatVersion).toBe(2)
+      expect(lock.modules).toEqual([expect.objectContaining({ name: 'acryl-example-tool', origin: 'local', source: 'extensions/acryl-example-tool' })])
+      expect(existsSync(join(out, 'extensions', 'acryl-example-tool', 'index.js'))).toBe(true)
+      expect(readFileSync(join(out, 'blend.yaml'), 'utf8')).toContain('name: acryl-example-tool')
+      expect((await run('/blend verify'))?.kind).toBe('success')
+      writeFileSync(join(out, 'extensions', 'acryl-example-tool', 'index.js'), '// tampered\n')
+      const broken = await run('/blend verify')
+      expect(broken?.kind).toBe('error')
+      expect(broken?.text).toContain('differs from the locked digest')
+      expect((await run('/blend nonsense'))?.kind).toBe('error')
+    } finally {
+      await bridge.dispose()
+      await host.dispose()
+    }
+  }, 180_000)
+
   it('host code updates take effect in the running process without a hot shim (automatic reload)', async () => {
     const home = await mkdtemp(join(tmpdir(), 'acryl-extension-hot-'))
     temporaryHomes.push(home)

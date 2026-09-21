@@ -29,13 +29,13 @@ function walk(dir, visit, rel = '') {
 }
 
 /** A short content hash of the package's files (names and bytes), so an unchanged package keeps its version directory. */
-export function hashPackage(dir) {
+export function hashPackage(dir, length = 10) {
   const files = []
   walk(dir, (path, rel) => files.push([rel, path]))
   files.sort(([a], [b]) => (a < b ? -1 : 1))
   const hash = createHash('sha256')
   for (const [rel, path] of files) hash.update(rel).update('\0').update(readFileSync(path)).update('\0')
-  return hash.digest('hex').slice(0, 10)
+  return hash.digest('hex').slice(0, length)
 }
 
 /** The entry file the loader imports, relative to the package root, or undefined when there is no JavaScript ES-module entry to wrap. */
