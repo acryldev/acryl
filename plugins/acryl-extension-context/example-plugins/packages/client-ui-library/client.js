@@ -14,14 +14,44 @@ const ui = require('acryl-ui-web')
 const h = React.createElement
 const { Stack, Card, Field, SwitchField, SettingsRow, SelectField, Segmented, Tabs, Dialog, EmptyState, Button, Tag, Pill } = ui
 
+// Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
+function Section({ name, note, children }) {
+  return h(Card, { title: name }, h('p', { style: { margin: '0 0 12px', color: ui.roles.textMuted, fontSize: 12 } }, note), children)
+}
+
 function Components() {
   const [name, setName] = React.useState('')
   const [on, setOn] = React.useState(true)
+  const [clicks, setClicks] = React.useState(0)
+  const [tab, setTab] = React.useState('one')
+  const [pick, setPick] = React.useState('write')
+  const [seg, setSeg] = React.useState('dark')
+  const [modal, setModal] = React.useState(false)
+  const [answer, setAnswer] = React.useState('nothing yet')
   return h(Stack, { gap: 'md' },
-    h(Card, { title: 'Card with a form', footer: h(Button, { variant: 'primary', size: 'sm', disabled: name === '' }, 'Save') },
+    h(Section, { name: 'Button', note: 'ui.Button: primary, ghost, disabled. Click them.' },
+      h(Stack, { direction: 'row', gap: 'sm', align: 'center' },
+        h(ui.Button, { variant: 'primary', size: 'sm', onClick: () => setClicks(clicks + 1) }, 'Primary (' + clicks + ')'),
+        h(ui.Button, { variant: 'ghost', size: 'sm', onClick: () => setClicks(0) }, 'Reset'),
+        h(ui.Button, { variant: 'primary', size: 'sm', disabled: true }, 'Disabled'))),
+    h(Section, { name: 'Field and SwitchField', note: 'Type in the field; more than 12 characters shows the error state.' },
       h(Field, { label: 'Name', value: name, onChange: setName, hint: 'Shown in the header', error: name.length > 12 ? 'Too long (max 12)' : undefined }),
-      h(SwitchField, { label: 'Loud mode', checked: on, onChange: setOn, hint: 'Uppercase everything' })),
-    h(Stack, { direction: 'row', gap: 'sm', align: 'center' }, h(Tag, null, 'Tag'), h(Pill, null, 'Pill'), h(Button, { variant: 'ghost', size: 'sm' }, 'Ghost button')),
+      h(SwitchField, { label: 'Loud mode', checked: on, onChange: setOn, hint: on ? 'On: uppercase everything' : 'Off' })),
+    h(Section, { name: 'SelectField and Segmented', note: 'Open the menu; pick a tile. The value shown below each is live.' },
+      h(SelectField, { label: 'Permission', value: pick, onChange: setPick, options: [{ id: 'read', label: 'Read Only' }, { id: 'write', label: 'Workspace Write' }, { id: 'full', label: 'Full access' }] }),
+      h(Segmented, { title: 'Appearance', value: seg, onChange: setSeg, options: [{ id: 'light', label: 'Light' }, { id: 'dark', label: 'Dark' }, { id: 'system', label: 'System' }] }),
+      h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, 'permission = ' + pick + ', appearance = ' + seg)),
+    h(Section, { name: 'Tabs', note: 'Arrow keys move between tabs.' },
+      h(ui.Tabs, { label: 'Demo', value: tab, onChange: setTab, tabs: [{ id: 'one', label: 'One' }, { id: 'two', label: 'Two' }] }, h('p', { style: { margin: 0 } }, 'Panel ' + tab))),
+    h(Section, { name: 'Tag, Pill, Tooltip', note: 'Hover the button for the tooltip.' },
+      h(Stack, { direction: 'row', gap: 'sm', align: 'center' },
+        h(ui.Tag, null, 'Tag'), h(ui.Pill, null, 'Pill'),
+        h(ui.Tooltip, { label: 'This is a tooltip' }, h(ui.Button, { variant: 'ghost', size: 'sm' }, 'Hover me')))),
+    h(Section, { name: 'Dialog', note: 'A confirm dialog over the app Modal.' },
+      h(Stack, { direction: 'row', gap: 'sm', align: 'center' },
+        h(ui.Button, { variant: 'primary', size: 'sm', onClick: () => setModal(true) }, 'Open dialog'),
+        h('span', { style: { color: ui.roles.textMuted, fontSize: 12 } }, 'last answer: ' + answer)),
+      h(Dialog, { open: modal, title: 'Delete item?', onClose: () => setModal(false), onConfirm: () => setAnswer('confirmed'), confirmLabel: 'Delete' }, 'This cannot be undone.')),
     h(EmptyState, { title: 'Nothing yet', description: 'Saved items appear here' }))
 }
 
