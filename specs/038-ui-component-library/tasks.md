@@ -55,3 +55,15 @@ Slice 0 mostly answered and the web skeleton landed (2026-09-21): M10 to M13 and
 - **T023** Adopt in one built-in surface at a time (Market overlay, then settings tabs, then TUI overlays), each with tests.
 - **T024** Publish packages, versioning policy, migration notes.
 - **T025 Ledger.** Log every landed task with its full hash; cross-reference specs 033, 034, 037; set `spec.md` status.
+
+## Slice 2b - Rework on DSH's own mechanism (added 2026-09-21 after re-reading the DSH styling document; T-numbers here are in THIS file, spec 038-ui-component-library)
+
+- **T026 Build chain.** Move `plugins/acryl-ui-web` to TSX plus CSS Modules built with the tsdown/Lightning CSS chain (as `dsh-client-ui-brand-acryl` does). **Evidence**: built `lib/client.js` mounts a `<style data-plugin="acryl-ui-web">` and it disappears when the plugin is disabled.
+- **T027 Tokens through the theme service.** Register `accent` and `reasoning` with `ctx.theme` (light and dark) instead of a body stylesheet; keep the role names. **Evidence**: browser check in both color schemes; the contrast test still passes.
+- **T028 Extract three components from DSH source** (Settings row and select, sidebar row, tool-call card) into `registry/<Name>/` with provenance. **Evidence**: each renders identically to the app's own in a real browser, side by side.
+- **T029 Migrate the existing components** (Card, Field, Segmented, Tabs, Dialog, EmptyState, Stack) to `registry/<Name>/` with a spec each; replace the hand-written versions.
+- **T030 Conformance for the style lifecycle.** A test that every component's CSS is plugin-owned, hashed, and removed with the plugin; a lint that rejects hex colors, static tokens and theme selectors in `registry/**/*.module.css` (M22).
+- **T031 Registry command** `acryl ui add <name>` (after T028 to T030).
+- **T032 Pack docs and skill** rewritten from the registry manifests (props from the contract, source provenance shown).
+- **T033 Reconcile the terminal layer** with the same registry idea: `acryl-ui-tui` components stay hand-written (pi-tui has no CSS), but each gets a manifest and shares the contract.
+

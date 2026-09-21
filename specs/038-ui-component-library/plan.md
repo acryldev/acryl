@@ -55,3 +55,26 @@ gallery command. Exit: the `tui-overlay-themed` example rebuilt; a real terminal
 
 Headless first (contracts, width, keyboard, contrast, snapshots); then one real browser pass (Web, Desktop dev build) and one real terminal
 pass per slice, as in spec 037; then the opt-in real-model run. Real GUI confirmation is a separate explicit task, never part of the gate.
+
+## Rework after the DSH styling document (2026-09-21)
+
+Reference: research.md M14 to M22 (this spec). The web layer becomes a **source-owned registry built on DSH's own chain**, not a hand-written bundle:
+
+```text
+plugins/acryl-ui-web/
+  registry/<Name>/{ <Name>.tsx, <Name>.module.css, <Name>.spec.tsx, manifest.yml }   source of truth per component (copied from DSH source where one exists, with provenance in manifest.yml)
+  contracts/{components.json, tokens.json}                                              unchanged: the cross-surface contract and the semantic roles
+  build: tsdown + Lightning CSS (the chain dsh-client-ui-brand-acryl already uses)     -> lib/client.js with plugin-owned <style data-plugin=...> and hashed classes
+  token registration: ctx.theme.register / overrideTokens (light AND dark) for the roles that have no app token
+```
+
+Rules adopted from the doc (M22): components consume only `--dsw-alias-*` and registered `--acryl-*` tokens, no theme selectors, no global stylesheet, inline styles only for runtime layout, a variant is a prop.
+
+**Extraction pipeline.** For each candidate component: (1) locate it in the pinned DSH source (feature package or `ui-primitives`); (2) copy `.tsx` and `.module.css` into `registry/<Name>/` retargeting imports to the primitives the app already exports; (3) record the source path and commit in `manifest.yml`;
+(4) add the contract entry and a spec; (5) build. Because feature packages are behind the purity gate (M21) the copy is the only route; the harness submodule stays read-only.
+
+**Candidates in extraction order** (each needs a look at the source first; none is assumed to be copyable as is): the Settings row and select from `ui-settings-general`; the sidebar navigation row from `ui-sidebar`; the tool-call card from `ui-tool`; message blocks from `ui-chat`;
+tabs and dock layout from `ui-dockkit`; and the design brief in `acryl-ui-design-system/` for what to build beyond what exists.
+
+**Registry command (later).** `acryl ui add <name>` materializes a registry entry into a plugin's own source so an agent can edit it (the doc's shadcn-style model); not before the build chain and three extracted components are proven.
+

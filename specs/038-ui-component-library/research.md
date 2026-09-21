@@ -114,3 +114,41 @@ browser showed it. Dark mode is signalled by `color-scheme`, so CSS `light-dark(
 - **Contrast:** three light-palette colors were below 4.5:1 on a plain white terminal (`secondary` 4.1, `success` 3.8, `textDimmed` 2.6) and a border was under 1.4:1 on a tinted background; all four were adjusted in `tokens.json`. The dark palette is unchanged.
 - **Keys:** arrows must go to the focused control first and switch tabs only when unhandled, so `Tab` and `Shift+Tab` are the always-available tab keys (a `Segmented` inside a tab would otherwise trap the arrows).
 
+## Findings from the DSH styling document (added 2026-09-21; the document was supplied at the start of this spec and was not used properly until now)
+
+Source: `docs/ui-design-styling-sytem/dsh-ui-styling-system-libs-styling-ui-tech-stack.md` (sections cited as "doc section N"). Numbering M14 to M22 continues M1 to M13 above and belongs to THIS file
+(038-ui-component-library/research.md).
+
+- **M14 The pipeline (doc sections 1 to 3, 33 to 35).** A component is `Foo.tsx` plus `Foo.module.css`, composed with `clsx`. DSH's own tsdown/Rolldown build (`packages/client/tsdown.client.ts`) intercepts `*.module.css`, runs
+  Lightning CSS with CSS Modules (`[hash]_[local]`, minified) and emits the compiled CSS and the class map into the bundle. There is no Tailwind and no Vite CSS step for plugins. TypeScript needs only a tiny `*.module.css` declaration.
+- **M15 CSS has plugin identity and lifecycle (sections 15 to 18).** The compiled CSS is mounted as a plugin-owned `<style data-plugin="<package>" data-plugin-css="<package>/<file>">` by the client module system and removed
+  with the plugin (HMR, disable, unload). Global sheets belong to `ui-theme` only; "do not casually create another application-wide stylesheet" (section 39).
+- **M16 Two token levels (section 7).** Static tokens (`--dsw-static-*`) and semantic aliases (`--dsw-alias-*`). Feature components consume only aliases; light and dark are provided by `ui-theme` outside the component (sections 8, 9): no
+  `.dark`/`.light` classes and no theme selectors in components.
+- **M17 The theme is a runtime service (sections 10 to 12).** `ThemeRuntime` (`ctx.theme`) registers themes and `overrideTokens()`; every override MUST define light and dark; `ui-layout`'s presenter projects the state onto the DOM. New tokens
+  are therefore registered through the service, not declared in a stylesheet.
+- **M18 One canonical primitive channel (sections 29, 30, 32).** `ui-primitives` is the shared component source and is static-linked into the baseline client; a variant becomes a prop on the primitive, not a second copy in a feature.
+  The bundle purity gate rejects undeclared cross-plugin value imports, so a plugin cannot import another plugin's components: shared visuals go through `ui-theme` and `ui-primitives` only.
+- **M19 Components are thin (sections 19, 20, 36, 37).** Behavior and structure in TSX, appearance in the module CSS, inline styles only for real runtime layout values (position, width, columns), never as a second theme engine.
+- **M20 The doc's own recommendation (section 41, and 42).** A shadcn-style source-owned registry fits DSH better than a component-library dependency, provided it materializes DSH-native source (`Foo.tsx`, `Foo.module.css`, `Foo.spec.tsx`, a
+  manifest) that uses `--dsw-alias-*` and the DSH compiler: `registry -> local source -> agent can inspect and evolve it -> DSH-style compiler -> plugin-owned capability`.
+- **M21 Why the app's private screens cannot be imported (sections 29, 32).** Feature packages (settings, sidebar, chat) are separate plugins behind the purity gate and export a store or `apply`, not components. Extraction therefore means copying
+  source, not importing it.
+- **M22 What the doc says agents must do (section 39).** Co-locate `Foo.tsx` and `Foo.module.css`; colors only from `var(--dsw-alias-*)`; no hex, no static tokens in features; no theme selectors; inline styles only for runtime dimensions; global
+  CSS only in `ui-theme`; a genuinely shared primitive goes to `ui-primitives`, not three copies.
+
+### Where the current web layer departs from the doc (plugins/acryl-ui-web, built before this reading)
+
+1. **Styles are a JS string injected into one global `<style id="acryl-ui-web-styles">`,** not CSS Modules compiled by the DSH chain: no hashed class names (collisions are possible), no `data-plugin` ownership, and the style
+   is not removed with the plugin (M14, M15).
+2. **The semantic roles are CSS variables declared on `body` from a stylesheet** (`--acryl-*`), and `accent`/`reasoning` use `light-dark()` there. The doc's contract is to register new tokens through `ctx.theme` with light and dark values
+   (M16, M17). The Q3 decision in this file said "registered through the theme service"; the implementation did not do that.
+3. **Components were written from scratch or read off screenshots** (SettingsRow, Segmented, Tabs) instead of being extracted from DSH source as the registry model describes (M20, M21).
+4. **No source-owned layout:** one hand-written `client.js` instead of `Foo.tsx` + `Foo.module.css` + `Foo.spec` per component (M19, M22).
+What is consistent with the doc: components reuse `ui-primitives` (Button, Menu, Modal, Switch, Tag) instead of duplicating them (M18), colors come from `--dsw-alias-*` through the roles, and the library is a client bundle a plugin
+declares in `dsh.client.inject` (the module system's own mechanism).
+
+### Consequence
+
+The web layer needs a rebuild on DSH's own mechanism, not more hand-written components. Decisions and tasks are in plan.md (section "Rework after the DSH styling document") and tasks.md (Slice 2b, T026 to T033), all of this spec.
+
