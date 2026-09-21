@@ -5043,3 +5043,14 @@ binary directly rather than through whatever bare `pnpm` resolves to on
   to the next design step with BLEND packaging (spec 036). `48d65cdff73ef3ce984f201d3beb5412fa913d16`
 - Moved the user's `acryl-header-note` (host-side notes) to `~/.acryl/extensions/` and repointed the install's source record; the next Web start re-syncs it. Note: the Desktop DEV build runs against `~/.acryl-dev`, so it does
   not share `~/.acryl/extensions` (dev and prod homes are isolated on purpose).
+
+## 2026-09-21 - feat: provenance and Blend capture (specs 036 and 037)
+
+- Provenance (`337c5aa6c89772ec4b1036a6a2c1953bbc7b8cf9`): every installed plugin is `local`, `registry`, `git` or `linked`, derived from the dependency spec, the staged source record and the
+  pnpm lockfile (nothing new stored). `acryl_list_plugins` lists all plugins with origin; the prompt note names marketplace plugins as managed. Earlier work had provenance only for local extensions (source and scope).
+- Blend capture (`50aa8cda4627b716c355fb5e7ddc358b1e6539ea`): `/blend snapshot` writes `<workspace>/.acryl/blend/` with `blend.yaml` (validates against and compiles with the sibling blends-core, round-trip checked),
+  `blend.lock.json` `formatVersion: 2` (adds `modules[]`: registry version + integrity, local sha256 + vendored path; deterministic) and `extensions/<name>/` (local sources vendored); `/blend verify` checks it offline.
+  Real-engine test covers snapshot, verify and tamper detection. A capture with no origin is a Blueprint (blends-core requires a Blend to name its lineage).
+- Design in `specs/036-.../blend-instance-design.md`: persistence is git, packaging in three shapes (source, hub Blueprint, private), orchestration reuses the extension pipeline (a Blend's local modules live in the project extension scope),
+  five framework layers with owners. Not built: apply, ledger and Evolution Steps, lock v2 adopted by blends-core, hub publish.
+- Found on the way: the Desktop dev profile still carries a staged `acryl-header-note` whose source record points at the folder that moved; `/reload` reports it STALE.
