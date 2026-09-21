@@ -543,6 +543,9 @@ importers:
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
+      acryl-ui-tui:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-ui-tui
       cordis-plugin-market:
         specifier: workspace:*
         version: link:../../plugins/cordis-plugin-market
@@ -1994,6 +1997,9 @@ importers:
       '@earendil-works/pi-tui':
         specifier: 0.84.2
         version: 0.84.2(patch_hash=5dc0250a1f7f94a22edffa555f19c38ab55dd19672e6d7031592e52d82cf7be5)
+      acryl-ui-tui:
+        specifier: workspace:*
+        version: link:../acryl-ui-tui
 
   plugins/acryl-system-prompt:
     dependencies:
@@ -2004,6 +2010,12 @@ importers:
       '@deepseek-ai/cordis':
         specifier: 4.0.2
         version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
+
+  plugins/acryl-ui-tui:
+    devDependencies:
+      '@earendil-works/pi-tui':
+        specifier: 0.84.2
+        version: 0.84.2(patch_hash=5dc0250a1f7f94a22edffa555f19c38ab55dd19672e6d7031592e52d82cf7be5)
 
   plugins/acryl-ui-web: {}
 
@@ -2735,6 +2747,9 @@ importers:
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
+      acryl-ui-tui:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-ui-tui
       acryl-ui-web:
         specifier: workspace:*
         version: link:../../plugins/acryl-ui-web

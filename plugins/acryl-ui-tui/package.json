@@ -1,0 +1,32 @@
+{
+  "name": "acryl-ui-tui",
+  "version": "0.1.0",
+  "description": "ACRYL UI library for the terminal (CLI): pi-tui components with the same names and contracts as acryl-ui-web (Stack, Card, Field, SwitchField, SettingsRow, SelectField, Segmented, Tabs, Dialog, EmptyState), themed by the shared semantic roles",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json",
+    "./palette": "./palette.js"
+  },
+  "files": [
+    "index.js",
+    "palette.js",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "@earendil-works/pi-tui": "*"
+  },
+  "acryl": {
+    "apiVersion": 1,
+    "permissions": []
+  },
+  "scripts": {
+    "test": "node --test tests/conformance.test.mjs",
+    "check": "node --test tests/conformance.test.mjs"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-tui": "0.84.2"
+  }
+}

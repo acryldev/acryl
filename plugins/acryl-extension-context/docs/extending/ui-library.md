@@ -34,4 +34,21 @@ Rules that keep it correct:
   `success`, `warning`, `error`, `info`, `accent`, `reasoning`. Never write a hex color or an `--dsw-alias-*` name in your own bundle.
 - Interactive components name themselves: give `SelectField`, `Segmented` and `Tabs` a `label`. `Field` announces its error by itself.
 - The client loader treats every module as a plugin: a pure library needs an (empty) `apply`; a consumer that fills a slot declares `inject = ['slots']`.
-- There is no terminal version yet; on the CLI use the overlay guidance in `tui-components.md`.
+
+## In the terminal (`acryl-ui-tui`)
+
+The same component names exist for the CLI, built on pi-tui, and every one is width-safe (no line is ever wider than the terminal) and keyboard-driven. A terminal plugin imports the library
+(it is made resolvable in the CLI profile) and hands it the CLI's palette service so colors follow the terminal's light or dark scheme:
+
+```js
+import { createTuiUi } from 'acryl-ui-tui'
+export function apply(ctx) {
+  const ui = createTuiUi(ctx.get('tuiTheme'))   // omit for the static dark palette; undefined outside the CLI
+  ctx.get('tuiCommands')?.register({ command: '/settings', description: 'Settings', packageName: 'my-plugin', overlay: { width: '70%' },
+    open: ({ close }) => ui.Card({ title: 'Settings', body: [ui.SettingsRow({ label: 'Theme', control: ui.Segmented({ options: [{ id: 'l', label: 'Light' }, { id: 'd', label: 'Dark' }], value: 'd' }) })] }) })
+}
+```
+
+Keys: arrows move a `Segmented`, `SelectField` or `Tabs`; space or enter toggles a `SwitchField`; `y`/enter and `n`/Esc answer a `Dialog`; Tab and Shift+Tab switch `Tabs`. `ctx.get('tuiTheme')` is read-only
+(`mode`, `hex(role)`, `color(role)`, `onChange`); the mode is the user's (`ACRYL_TUI_THEME=dark|light`) or the terminal's, never a plugin's. Example: `../example-plugins/packages/tui-ui-library/` (`/gallery`).
+

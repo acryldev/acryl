@@ -153,6 +153,33 @@ describe('extension pack examples on the real web engine', () => {
     } finally { await host.dispose() }
   }, 60_000)
 
+  it('ui-library.tui-gallery (spec 038-ui-component-library): renders within every width, walks its tabs and settings with the keyboard, resets through a dialog', async () => {
+    const mod = await load('tui-ui-library') as { buildGallery(theme: unknown, close: () => void): { render(width: number): string[]; handleInput(data: string): boolean } }
+    const theme = { mode: 'dark', color: () => (text: string) => text }   // uncolored so visible width is the string length
+    let closed = 0
+    const gallery = mod.buildGallery(theme, () => { closed += 1 })
+    for (const width of [12, 24, 40, 80, 200]) for (const line of gallery.render(width)) expect(visibleWidth(line)).toBeLessThanOrEqual(width)
+    const text = () => gallery.render(80).join('\n')
+    expect(text()).toContain('Card with a form')
+    gallery.handleInput('\t')   // Tab: Settings form
+    expect(text()).toContain('Permission'); expect(text()).toContain('Workspace Write')
+    gallery.handleInput('\x1b[C')   // right on the focused SelectField: next option
+    expect(text()).toContain('Full access')
+    gallery.handleInput('\x1b[B')   // down: Appearance row
+    gallery.handleInput('\x1b[C')   // right: Segmented moves off System
+    expect(text()).toMatch(/\[ Light \]/u)
+    gallery.handleInput('r'); expect(text()).toContain('Reset settings?')
+    gallery.handleInput('y'); expect(text()).not.toContain('Reset settings?'); expect(text()).toContain('[ System ]')
+    gallery.handleInput('\t'); expect(text()).toContain('primary')   // Colors tab
+    gallery.handleInput('\x1b'); expect(closed).toBe(1)
+    const host = await bootHost()
+    try {
+      const fiber = host.ctx.plugin(mod as never) as { state: number }
+      await settle()
+      expect(stateOf(fiber)).toBe('ACTIVE') // a no-op where there is no tuiCommands service
+    } finally { await host.dispose() }
+  }, 60_000)
+
   it('prompt-assemble-hook: the assembled prompt gains the example section and keeps every other section', async () => {
     const host = await bootHost()
     try {

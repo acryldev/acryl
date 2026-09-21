@@ -36,9 +36,25 @@ export function resolvePaletteMode(env: Record<string, string | undefined> = pro
   return 'dark'
 }
 
-/** Switch the live palette. Everything that reads `theme` or a `fgRole` function afterwards uses it. */
+const listeners = new Set<(next: PaletteMode) => void>()
+
+/** Switch the live palette. Everything that reads `theme` or a `fgRole` function afterwards uses it; listeners (the TUI's re-render, plugins through the tuiTheme service) are told once per real change. */
 export function setPaletteMode(next: PaletteMode): void {
+  if (next === mode) return
   mode = next
+  for (const listener of [...listeners]) listener(next)
+}
+
+/** Subscribe to palette changes. @returns the unsubscribe function. */
+export function onPaletteChange(listener: (next: PaletteMode) => void): () => void {
+  listeners.add(listener)
+  return () => { listeners.delete(listener) }
+}
+
+/** True when the user pinned the palette (`ACRYL_TUI_THEME=dark|light`): the terminal is then never asked and never followed. */
+export function isPaletteForced(env: Record<string, string | undefined> = process.env): boolean {
+  const forced = env.ACRYL_TUI_THEME?.trim().toLowerCase()
+  return forced === 'dark' || forced === 'light'
 }
 
 export function getPaletteMode(): PaletteMode {

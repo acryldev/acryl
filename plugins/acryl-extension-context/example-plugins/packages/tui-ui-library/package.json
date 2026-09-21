@@ -1,0 +1,29 @@
+{
+  "name": "acryl-example-tui-ui-library",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Terminal gallery of the ACRYL UI library (acryl-ui-tui): components, a Settings-style form and the color roles, opened with /gallery",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "acryl-ui-tui": "*"
+  },
+  "acryl": {
+    "apiVersion": 1,
+    "permissions": []
+  }
+}

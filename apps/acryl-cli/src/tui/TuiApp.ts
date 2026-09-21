@@ -64,6 +64,7 @@ import type { TuiActions } from './actions.js'
 import type { TuiState, TuiStore } from './store.js'
 import type { TuiCommandOverlayHint, TuiCommandRegistration } from './tui-commands-service.js'
 import { fgRole } from './theme.js'
+import { followTerminalColorScheme } from './themeDetection.js'
 import { ModelProfileOverlay } from './modelProfile/ModelProfileOverlay.js'
 import { LoginOverlay } from './login/LoginOverlay.js'
 import { TrajectoryOverlay } from './trajectory/TrajectoryOverlay.js'
@@ -252,6 +253,8 @@ class TuiApp implements TuiHandle {
   /** Last title string sent to the terminal, so an unrelated store change doesn't re-issue the same OSC 0 write every render. */
   private lastTerminalTitle: string | undefined
   private readonly ctrlCHandler: CtrlCHandler
+  /** Stops following the terminal's light/dark scheme (see themeDetection.ts). */
+  private stopFollowingColorScheme: (() => void) | undefined
 
   constructor(private readonly options: MountOptions) {
     const { store, actions } = options
@@ -439,6 +442,8 @@ class TuiApp implements TuiHandle {
     activeTui = this.tui
     this.pet.start()
     this.tui.start()
+    // Ask the terminal whether it is light or dark and follow it when it changes; the palette re-renders through the normal render request.
+    this.stopFollowingColorScheme = followTerminalColorScheme(this.tui, () => { this.tui.requestRender(true) })
   }
 
   private appendNewTranscriptItems(state: TuiState): void {
@@ -554,6 +559,7 @@ class TuiApp implements TuiHandle {
     if (this.stopped) return
     this.stopped = true
     this.ctrlCHandler.disarm()
+    this.stopFollowingColorScheme?.()
     this.spinner.stop()
     this.pet.stop()
     this.tui.stop(options)

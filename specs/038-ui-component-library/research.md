@@ -107,3 +107,10 @@ Fabric has a schema release; until then record the mapping here, nothing more.
 **Measured while building the web layer.** The app defines its `--dsw-alias-*` tokens on `body`, not `:root`, so the role variables must be declared on `body` too (declared on `:root` they resolved to nothing and borders vanished). Only a real
 browser showed it. Dark mode is signalled by `color-scheme`, so CSS `light-dark()` works for the two new roles. Synthetic `.click()` does not open the app's `Menu` (it listens for pointer events); a real click does.
 
+## Measured while building the terminal layer (2026-09-21)
+
+- **Q8 (terminal background detection) answered:** pi-tui already implements what is needed (`queryTerminalColorScheme` with a timeout, `onTerminalColorSchemeChange` and DEC mode 2031 notifications). ACRYL only wires them to the palette
+  (`apps/acryl-cli/src/tui/themeDetection.ts`): ask once at startup, follow changes, never when the user pinned `ACRYL_TUI_THEME`. Tested with a fake terminal; not tried in a real terminal.
+- **Contrast:** three light-palette colors were below 4.5:1 on a plain white terminal (`secondary` 4.1, `success` 3.8, `textDimmed` 2.6) and a border was under 1.4:1 on a tinted background; all four were adjusted in `tokens.json`. The dark palette is unchanged.
+- **Keys:** arrows must go to the focused control first and switch tabs only when unhandled, so `Tab` and `Shift+Tab` are the always-available tab keys (a `Segmented` inside a tab would otherwise trap the arrows).
+

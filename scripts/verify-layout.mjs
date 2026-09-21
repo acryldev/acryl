@@ -52,6 +52,7 @@ packages:
   - plugins/acryl-extension-context
   - plugins/acryl-system-prompt
   - plugins/acryl-ui-web
+  - plugins/acryl-ui-tui
   - '!deepseek-harness/**'
 
 allowBuilds:

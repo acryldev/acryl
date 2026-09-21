@@ -8,6 +8,7 @@ import {
 } from 'acryl-harness-runtime'
 import type { Context } from '@deepseek-ai/cordis'
 import { TuiCommandsService } from '../tui/tui-commands-service.ts'
+import { TuiThemeService } from '../tui/tui-theme-service.ts'
 
 export interface StartDirectHostOptions {
   readonly profile: string
@@ -49,6 +50,8 @@ export async function startDirectHost(options: StartDirectHostOptions): Promise<
     // construction (spec 034 T009).
     prepare: async hostCtx => {
       await hostCtx.plugin(TuiCommandsService)
+      // The terminal palette for plugins to read and follow (spec 038-ui-component-library).
+      await hostCtx.plugin(TuiThemeService)
     },
   })
   const ctx = host.ctx

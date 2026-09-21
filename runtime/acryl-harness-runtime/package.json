@@ -174,6 +174,7 @@
     "dsh-client-ui-brand-acryl": "workspace:*",
     "acryl-extension-context": "workspace:*",
     "acryl-system-prompt": "workspace:*",
+    "acryl-ui-tui": "workspace:*",
     "acryl-ui-web": "workspace:*",
     "cordis-plugin-market": "workspace:*",
     "koffi": "3.1.5",

@@ -34,8 +34,9 @@ commands (`ctx.commands`) and prompts, which have no visual design.
 - The CLI's own palette is generated from the semantic role file `plugins/acryl-ui-web/contracts/tokens.json` (the same roles the web library uses) into
   `apps/acryl-cli/src/tui/palette.generated.ts`, read through `apps/acryl-cli/src/tui/theme.ts` and adapted to pi-tui in `tui/piTheme.ts`. It has a dark and a
   light palette for nine roles (dark: `primary #4F6BFE`, `secondary #38BDF8`, `accent #818CF8`, `reasoning #A855F7`, `success #34D399`, `warning #FBBF24`,
-  `error #F87171`, `info #4F6BFE`, `muted #94A3B8`). The user picks with `ACRYL_TUI_THEME=dark|light`; otherwise `COLORFGBG` decides, otherwise dark. It is compiled in and
-  NOT exposed to plugins yet: a plugin cannot read or change it, so it carries its own palette (a `tuiTheme` service for plugins is planned in spec 038-ui-component-library).
+  `error #F87171`, `info #4F6BFE`, `muted #94A3B8`). The palette follows the terminal: at startup ACRYL asks the terminal whether its background is light or dark and follows it when it changes;
+`ACRYL_TUI_THEME=dark|light` pins it, `COLORFGBG` is the fallback, dark the default. A plugin reads it through the read-only `tuiTheme` service (`ctx.get('tuiTheme')`: `mode`, `hex(role)`, `color(role)`,
+`onChange`) instead of carrying its own palette, and builds screens with the terminal UI library `acryl-ui-tui` (see `ui-library.md`).
 
 ## Branding in the terminal (source change and rebuild)
 

@@ -123,7 +123,8 @@
           "when": "Any Web or Desktop UI that has forms, settings, lists, dialogs or tabs: use acryl-ui-web instead of hand-styling; semantic color roles for your own colors.",
           "surfaces": [
             "web",
-            "desktop"
+            "desktop",
+            "tui"
           ],
           "applies": "all",
           "seeAlso": [
@@ -132,7 +133,8 @@
             "extending.ui-theme"
           ],
           "examples": [
-            "ui-library.gallery"
+            "ui-library.gallery",
+            "ui-library.tui-gallery"
           ],
           "topic": "screens, forms, settings, dialogs, tabs"
         },
@@ -2497,6 +2499,19 @@
       "teaches": "Build a screen from the ACRYL UI library (acryl-ui-web): cards, fields, settings rows, dropdown, segmented tiles, tabs, dialog, color roles and slot helpers.",
       "docs": [
         "extending.ui-library"
+      ]
+    },
+    {
+      "id": "ui-library.tui-gallery",
+      "type": "tui-contribution",
+      "path": "tui-ui-library",
+      "surfaces": [
+        "tui"
+      ],
+      "teaches": "Build a terminal screen from the ACRYL UI library (acryl-ui-tui): cards, fields, settings rows, select, segmented, tabs, dialog, colors from the shared roles and the tuiTheme service.",
+      "docs": [
+        "extending.ui-library",
+        "extending.tui-components"
       ]
     }
   ],

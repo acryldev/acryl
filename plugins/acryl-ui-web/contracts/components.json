@@ -3,7 +3,8 @@
   "library": "acryl-ui-web",
   "surfaces": [
     "web",
-    "desktop"
+    "desktop",
+    "tui"
   ],
   "components": {
     "Stack": {
@@ -25,6 +26,10 @@
       "children": true,
       "a11y": [
         "no role: it is layout only"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
       ]
     },
     "Card": {
@@ -41,6 +46,10 @@
       "children": true,
       "a11y": [
         "role=group, labelled by the title when there is one"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
       ]
     },
     "Field": {
@@ -73,6 +82,10 @@
       "a11y": [
         "the label is associated with the input",
         "the error is announced (role=alert) and referenced by aria-describedby"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
       ]
     },
     "SwitchField": {
@@ -96,6 +109,10 @@
       },
       "a11y": [
         "the label is the accessible name"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
       ]
     },
     "EmptyState": {
@@ -114,6 +131,10 @@
       },
       "a11y": [
         "the title is a heading"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
       ]
     },
     "SettingsRow": {
@@ -125,11 +146,19 @@
         },
         "description": {
           "type": "string"
+        },
+        "focused": {
+          "type": "boolean",
+          "description": "terminal only: marks the row that has the keyboard focus"
         }
       },
       "children": true,
       "a11y": [
         "the control passed as children keeps its own accessible name"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
       ]
     },
     "SelectField": {
@@ -159,6 +188,10 @@
       "a11y": [
         "trigger has aria-haspopup and aria-expanded",
         "Escape and outside click close it (Menu)"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
       ]
     },
     "Segmented": {
@@ -184,6 +217,10 @@
       "a11y": [
         "role=radiogroup with role=radio tiles and aria-checked",
         "roving tabindex; arrow keys move the choice"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
       ]
     },
     "Tabs": {
@@ -209,6 +246,10 @@
       "a11y": [
         "role=tablist, tab and tabpanel wired with aria-controls and aria-labelledby",
         "roving tabindex; left and right arrows move the tab"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
       ]
     },
     "Dialog": {
@@ -246,6 +287,10 @@
       "children": true,
       "a11y": [
         "focus handling and Escape come from the app's Modal"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
       ]
     }
   },
@@ -277,5 +322,8 @@
   "roles": {
     "note": "Semantic role CSS variables (--acryl-<role>), mapped to the app tokens in contracts/tokens.json.",
     "source": "contracts/tokens.json"
+  },
+  "notes": {
+    "tui": "The terminal library (plugins/acryl-ui-tui) implements every component with pi-tui: the props above, keyboard instead of pointer (arrow keys, space, enter, y/n, escape), and no line ever wider than the terminal."
   }
 }

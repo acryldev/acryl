@@ -274,6 +274,9 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
     materializeProfilePackage(profile.dir, 'acryl-system-prompt', import.meta.url)
     patches.push({ insert: [{ id: 'acryl-system-prompt', name: 'acryl-system-prompt' }] })
   }
+  // ACRYL terminal UI library (spec 038-ui-component-library): a plain library a terminal plugin imports (`import 'acryl-ui-tui'`), so it is only made
+  // resolvable from the profile; there is no Loader row.
+  materializeProfilePackage(profile.dir, 'acryl-ui-tui', import.meta.url)
   // The profile's own user overrides come from the shared store, not from this
   // surface: `acryl plugin disable` on a TUI writes the same file the Desktop
   // panel and the Web surface read, so the next boot of any of them composes

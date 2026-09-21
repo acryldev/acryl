@@ -37,7 +37,7 @@
     ]
   },
   "scripts": {
-    "test": "node --test tests/contracts.test.mjs",
-    "check": "node --test tests/contracts.test.mjs"
+    "test": "node --test tests/contracts.test.mjs tests/contrast.test.mjs",
+    "check": "node --test tests/contracts.test.mjs tests/contrast.test.mjs"
   }
 }
