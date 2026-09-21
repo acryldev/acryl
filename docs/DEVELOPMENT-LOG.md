@@ -5020,3 +5020,14 @@ binary directly rather than through whatever bare `pnpm` resolves to on
   variance exceeds the difference. `32b5f47baca13d3ee0220e2f33be959b270dc175`
 - Recorded, not changed: the harness's "Dynamic Cordis Plugins" prompt text and `cordis_*` schemas (about 3k tokens, upstream) compete with our install path; a per-surface gate in the `acryl-system-prompt` listener is the candidate for the runtime-swap step.
 - Also this window: `acryl-header-note` (workspace extension, untracked) now keeps notes on the host with a one-time import of old browser notes, verified in a real browser.
+
+## 2026-09-21 - feat: pi's storage and loading model - source is authoritative (spec 037)
+
+- From the research doc on pi's extension storage and loading: there is no extension database; the source folder is the truth and the runtime registry is derived and rebuildable.
+  We had per-profile install state with discovery only through `/reload new`, which is why an extension built for Web never reached Desktop and why stale entries appeared after a source folder was moved.
+- New `lib/reconcile.js`: project scope `<workspace>/.acryl-extensions/` and a new global scope `<ACRYL home>/extensions/` (shared by every surface on that home), one level deep, real-path dedupe,
+  project wins a name clash. `/reload` compares each install with its source by content hash: unchanged is skipped (no package-manager run, no restart), changed is updated, a missing source is STALE
+  (`/reload remove-stale` removes it). Output carries the scope; the prompt context flags a missing source. Real-engine tests cover the global scope and the skip; unit tests cover discovery and the states.
+- Docs: `delivery/local-live.md` now states the model (scopes, lifecycle, the three storage layers, what is not done); `PI-PARITY.md` has the full match and gap table. Deliberately not copied: auto-loading
+  discovered code at startup (pi guards it with project trust; a cloned repo can carry code) - the next step is a startup pass that only re-syncs already-trusted changed sources. Also open: an `extension.json`
+  manifest with API version and permissions. `894d076862a9801655fa94cd98804b9fd4a7c5ca`
