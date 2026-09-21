@@ -78,3 +78,40 @@ tabs and dock layout from `ui-dockkit`; and the design brief in `acryl-ui-design
 
 **Registry command (later).** `acryl ui add <name>` materializes a registry entry into a plugin's own source so an agent can edit it (the doc's shadcn-style model); not before the build chain and three extracted components are proven.
 
+
+## Slice 7 - Registry, packaging and hub (added 2026-09-22, spec 038-ui-component-library)
+
+Why: the library is 12 components of our own plus 6 re-exports, while the app's `ui-primitives` holds about 48 and shadcn/ui about 63. A rich library needs a **catalogue that can grow without touching the app**, and a way for an agent to take a component as source (shadcn model) or as a versioned dependency. Reuse first (rule in memory `feedback-reuse-existing-before-building`): the hub form, index generation, ingest validation and CLI already exist in the `blends` repo (`acryl_blends_project/blends`, roadmap decision D6: "a git repo of definition directories plus a generated `index.json`", `packages/blends-cli/src/hub.ts`: `HubIndex`, `HubIndexEntry`, ingest in distribution mode, sha256 digests). The UI registry is that same machinery for a second kind of definition, not a new system.
+
+### Two ways to consume, one source
+
+```text
+acryl-ui-registry  (git repo, hub form D6)          registry/<id>/{item.yaml, <Name>.tsx, <Name>.module.css, <Name>.spec.tsx}   +  index.json (generated)
+        |                                                    ^
+        | built and published from                           | acryl ui add <id>   copies the SOURCE into a plugin (no dependency; the plugin owns and may edit it)
+        v                                                    |
+@acryl/ui-web  (versioned npm package)  <---------  plugin `require('acryl-ui-web')`   (runtime dependency; build-less plugins)
+```
+
+- **Copy source** (`acryl ui add`): for scaffolded, built plugins. Reads `index.json`, verifies the item's sha256, writes the files into the plugin, records `{id, version, digest}` in the plugin's `ui.lock.json` so a later `acryl ui diff` can show local edits against the registry version.
+- **Dependency** (`@acryl/ui-web`): for plugins written as plain `client.js` with no build step (the self-extension path). Same items, prebuilt into one bundle. Package name follows the `@acryl/` scope `blends-core` already uses; the registry item ids are dot-namespaced lowercase per D6 (`acryl.ui.card`).
+
+### Registry item (one directory, generated index)
+
+`item.yaml`: `id` (`acryl.ui.<name>`), `version` (semver, per D6), `surfaces` (`web`, `tui`), `requires` (other item ids; the app primitives it composes), `tokens` (the `--dsw-alias-*` and `--acryl-*` names it reads), `origin` (provenance: `extracted` from the pinned DSH path and commit, `ported` from shadcn with its licence, or `original`), `contract` (the props block from `contracts/components.json`), `a11y`. `index.json` is generated, never hand-edited: `{formatVersion, items: [{id, kind: 'ui-component', version, path, digest, surfaces, requires}]}`, the same shape as `HubIndexEntry` with a new `kind`.
+
+### Ingest gate (distribution mode, as D4 does for `!!js`)
+
+An item is rejected unless: it has `origin` and a licence; its stylesheet passes the lint already written for T030 (no hex colors, no static tokens, no theme selectors, no global selectors); its imports are only `react`, `clsx` and the app primitives; it has a contract entry and a spec; it builds. This is where the shadcn conversion pipeline plugs in: a ported item enters only if it already passes.
+
+### Blends connection (what is decided and what is not)
+
+Nothing in spec 036-cordis-ecosystem-and-acryl-blends blocks this. What I called "the Blends decision" is narrow: **lock v2 (`modules`)** is an additive change to `blends-core`, the `blends` repo's own format, and that repo currently has uncommitted files that are not from this work (`.gitignore`, `.ignore`, `scripts/`), so the change must land there through its own methodology (`docs/workmethodology`, a `specs/00N` folder) and not be edited over someone else's work-in-progress. The plan:
+
+1. UI items reach a Blend as **modules**: a Blueprint that uses the library lists `@acryl/ui-web@<version>` (registry origin) or vendored copied items (local origin, digest-verified) exactly as spec 036 `blend-instance-design.md` section 2 already defines. No new module kind is needed for either.
+2. The registry repo reuses the hub form (D6) and ingest (D16 to D19) with `kind: ui-component`. Adding a `kind` to the index is additive; it is proposed in the `blends` repo's own spec.
+3. The UI library itself is published as one **Blueprint-visible module**, so `acryl init --blend <id>` gets the library without a special path.
+
+### Slice 7 exit
+
+`acryl ui add acryl.ui.card` in a scaffold produces a plugin that builds and renders the component with no dependency on `acryl-ui-web`; `@acryl/ui-web` installs from a registry into a plugin outside this repo; the registry repo validates and regenerates its index in CI; and a Blueprint containing the library round-trips through `/blend snapshot`, `verify` and `apply` on a fresh app.
