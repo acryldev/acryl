@@ -15,13 +15,15 @@ import { Card } from './registry/Card/Card.tsx'
 import { EmptyState } from './registry/EmptyState/EmptyState.tsx'
 import { SwitchField } from './registry/SwitchField/SwitchField.tsx'
 import { Dialog } from './registry/Dialog/Dialog.tsx'
+import { ToolCallCard, type ToolCallCardProps, type ToolCallLabels, type ToolCallState } from './registry/ToolCallCard/ToolCallCard.tsx'
+import { SidebarRow, type SidebarRowProps } from './registry/SidebarRow/SidebarRow.tsx'
 import { Stack } from './registry/Stack.tsx'
 import { Field, Segmented, SelectField, SettingsRow } from './contract-adapters.tsx'
 import { roles } from './roles.ts'
 import { footerAction, headerAction, settingsSection, sidebarTab } from './slot-helpers.ts'
 
-export { ValueField, SecretField, AppearanceCubes, SettingsRow, SelectPill, Tabs, Card, EmptyState, SwitchField, Dialog, Stack, Field, Segmented, SelectField, roles, footerAction, headerAction, settingsSection, sidebarTab }
-export type { FieldProps, CubeOption, SettingsRowProps, SelectOption, TabItem }
+export { ToolCallCard, SidebarRow, ValueField, SecretField, AppearanceCubes, SettingsRow, SelectPill, Tabs, Card, EmptyState, SwitchField, Dialog, Stack, Field, Segmented, SelectField, roles, footerAction, headerAction, settingsSection, sidebarTab }
+export type { ToolCallCardProps, ToolCallLabels, ToolCallState, SidebarRowProps, FieldProps, CubeOption, SettingsRowProps, SelectOption, TabItem }
 // Straight re-exports of the app's primitives, so a consumer needs one import.
 export { Button, Tag, Pill, Toast, Modal, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
 

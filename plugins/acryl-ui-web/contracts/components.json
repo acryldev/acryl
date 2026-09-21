@@ -297,6 +297,78 @@
         "web",
         "tui"
       ]
+    },
+    "SidebarRow": {
+      "summary": "The sidebar's New Session bar: icon and label when the sidebar is wide, a plain icon control with a tooltip on the rail (extracted from DSH's sidebar).",
+      "props": {
+        "icon": {
+          "type": "ReactNode",
+          "required": true
+        },
+        "label": {
+          "type": "string",
+          "required": true,
+          "description": "visible text when wide, tooltip and accessible name on the rail"
+        },
+        "wide": {
+          "type": "boolean",
+          "required": true
+        },
+        "onClick": {
+          "type": "() => void",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "aria-label carries the label in both forms"
+      ]
+    },
+    "ToolCallCard": {
+      "summary": "A collapsible tool-call row as in the conversation: leading icon or state dot, title, summary, expandable IN/OUT card (extracted from DSH's ToolRow).",
+      "props": {
+        "icon": {
+          "type": "ReactNode",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "summary": {
+          "type": "string",
+          "required": true
+        },
+        "state": {
+          "type": "'running' | 'ok' | 'error' | 'stopped'",
+          "required": true
+        },
+        "errorSummary": {
+          "type": "string",
+          "description": "replaces the summary on an error row"
+        },
+        "input": {
+          "type": "string"
+        },
+        "output": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "{ input, output, running, failed, stopped }",
+          "required": true,
+          "description": "copy; the run-state labels are visually hidden text"
+        }
+      },
+      "children": true,
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "expandable rows are disclosure controls (Enter and Space toggle)",
+        "the run state is exposed as visually hidden text, not colour only"
+      ]
     }
   },
   "helpers": {

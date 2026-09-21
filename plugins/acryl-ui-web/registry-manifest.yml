@@ -39,3 +39,11 @@ components:
   - name: Stack
     origin: gap
     dsh_has: per-feature CSS; runtime direction and gap are inline style values, which the styling rules allow
+  - name: ToolCallCard
+    origin: extracted (subset)
+    from: packages/client/ui-tool/src/client/tool/components/ToolRow.tsx and .module.css
+    changed: header, state dot, running sweep, error summary, hidden run-state label and the IN/OUT card kept; tool-specific models, locale, slot renderer and the specialised terminal, diff, read, search, web and image cards left in DSH (the blocks are primitives a consumer passes as children)
+  - name: SidebarRow
+    origin: extracted
+    from: packages/client/ui-sidebar/src/client/SidebarRoot.tsx and .module.css (the New Session bar)
+    changed: the rail form is a class on the button itself instead of an ancestor's `.collapsed`

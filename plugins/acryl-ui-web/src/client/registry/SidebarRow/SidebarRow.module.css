@@ -1,0 +1,62 @@
+/* Extracted from ui-sidebar SidebarRoot.module.css (deepseek-harness 5dda764ed3): the New Session bar, wide and rail forms. `.collapsed .newSession` there depends on an ancestor class; here the same rules use the element's own `collapsed` class. */
+
+/* Wide-only content fades back in on expand remount. */
+.wide {
+  animation: wide-in 200ms var(--ds-ease-in-out);
+}
+
+/* New Session: 38px bar, 12px radius (figma 133:7634 geometry, squared-off
+   corners); collapsed it renders as the rail's plain icon control. */
+.newSession {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 8px 16px;
+  margin: 0 2px 8px;
+  box-sizing: border-box;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: 12px;
+  background: var(--dsw-alias-button-elevated-fill);
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.newSession:hover {
+  background: var(--dsw-alias-button-floating-hover);
+}
+
+.newSession.collapsed {
+  align-self: flex-start;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  margin: 0 0 12px;
+  gap: 0;
+  border-color: transparent;
+  background: transparent;
+}
+
+.newSession.collapsed:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.newSessionLabel {
+  max-width: 200px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.newSession.collapsed .newSessionLabel {
+  max-width: 0;
+}
+
+@keyframes wide-in {
+  from { opacity: 0; }
+}

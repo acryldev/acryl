@@ -9,6 +9,8 @@ import { Field, Segmented, SelectField } from '../src/client/contract-adapters.t
 import { SettingsRow } from '../src/client/registry/SettingsRow/SettingsRow.tsx'
 import { Tabs } from '../src/client/registry/Tabs/Tabs.tsx'
 import { EmptyState } from '../src/client/registry/EmptyState/EmptyState.tsx'
+import { SidebarRow } from '../src/client/registry/SidebarRow/SidebarRow.tsx'
+import { ToolCallCard } from '../src/client/registry/ToolCallCard/ToolCallCard.tsx'
 import { SwitchField } from '../src/client/registry/SwitchField/SwitchField.tsx'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -48,6 +50,30 @@ describe('markup of the extracted components (spec 038-ui-component-library, ext
   })
 })
 
+const labels = { input: 'IN', output: 'OUT', running: 'Running', failed: 'Failed', stopped: 'Stopped' }
+
+describe('ToolCallCard and SidebarRow (extracted from DSH ToolRow and SidebarRoot)', () => {
+  it('ToolCallCard shows the summary collapsed, the IN/OUT card when expandable, and a hidden run-state label', () => {
+    const html = renderToStaticMarkup(<ToolCallCard icon={<i />} title="Read" summary="a.ts" state="running" input="a.ts" output="ok" labels={labels} />)
+    expect(html).toContain('a.ts'); expect(html).toContain('Running'); expect(html).toContain('data-state="running"')
+  })
+
+  it('an error row replaces the summary with the failure line and shows a state dot instead of the icon', () => {
+    const html = renderToStaticMarkup(<ToolCallCard icon={<i data-icon />} title="Bash" summary="npm test" errorSummary="exit 1" state="error" labels={labels} />)
+    expect(html).toContain('exit 1'); expect(html).not.toContain('npm test'); expect(html).toContain('Failed'); expect(html).toContain('data-statedot="error"'); expect(html).not.toContain('data-icon')
+  })
+
+  it('a call with no input, output or children is not expandable', () => {
+    expect(renderToStaticMarkup(<ToolCallCard icon={<i />} title="Ping" summary="" state="ok" labels={labels} />)).toContain('data-expandable="false"')
+  })
+
+  it('SidebarRow is icon plus label when wide and an icon-only labelled control on the rail', () => {
+    const wide = renderToStaticMarkup(<SidebarRow icon={<i />} label="New session" wide onClick={() => {}} />)
+    const rail = renderToStaticMarkup(<SidebarRow icon={<i />} label="New session" wide={false} onClick={() => {}} />)
+    expect(wide).toContain('>New session</span>'); expect(rail).not.toContain('>New session</span>'); expect(rail).toContain('aria-label="New session"'); expect(rail).toMatch(/_collapsed/u)
+  })
+})
+
 describe('provenance: extracted files stay faithful to the pinned DSH source', () => {
   it('fields.tsx is DSH\'s fields.tsx apart from the header, and its stylesheet is byte-identical', () => {
     const body = (text: string): string => text.slice(text.indexOf("import { Tag }"))
@@ -57,6 +83,15 @@ describe('provenance: extracted files stay faithful to the pinned DSH source', (
 
   it('AppearanceCubes.module.css is byte-identical to DSH\'s AppearanceRow.module.css', () => {
     expect(readFileSync(join(root, 'src/client/registry/AppearanceCubes/AppearanceCubes.module.css'), 'utf8')).toBe(readFileSync(join(harness, 'ui-theme/src/client/AppearanceRow.module.css'), 'utf8'))
+  })
+
+  it('every class in the extracted ToolCallCard and SidebarRow stylesheets exists in the DSH stylesheet it came from', () => {
+    const classes = (text: string): Set<string> => new Set([...text.replace(/\/\*[\s\S]*?\*\//gu, '').matchAll(/\.([A-Za-z][\w-]*)/gu)].map(match => match[1] ?? ''))
+    const pairs: Array<[string, string]> = [['ToolCallCard/ToolCallCard.module.css', 'ui-tool/src/client/tool/components/ToolRow.module.css'], ['SidebarRow/SidebarRow.module.css', 'ui-sidebar/src/client/SidebarRoot.module.css']]
+    for (const [ours, theirs] of pairs) {
+      const upstream = classes(readFileSync(join(harness, theirs), 'utf8'))
+      for (const name of classes(readFileSync(join(root, 'src/client/registry', ours), 'utf8'))) expect(upstream.has(name), `${ours}: .${name}`).toBe(true)
+    }
   })
 
   it('every registry component is listed in the manifest with its origin', () => {
