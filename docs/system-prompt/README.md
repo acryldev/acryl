@@ -72,3 +72,27 @@ ACRYL_E2E_KEY_FILE=~/.secure-storage/llmproviders/deepseek/deepseek.json ACRYL_E
 
 ([`e2e-real-model.spec.ts`](../../runtime/acryl-harness-runtime/tests/e2e-real-model.spec.ts); `ACRYL_E2E_ENGINE=tui` runs the terminal engine.) Judge
 by behavior: did it load the skill, read the routed docs and the nearest example, verify, install, and report the status, without over-reading.
+
+## Research: an ACRYL-owned prompt builder without forking (2026-09-21)
+
+Question: can ACRYL own the whole prompt, Pi-style, without diverging from upstream? **Yes, as a pass-through plugin.** Measured on the real Web
+(standard preset) and CLI engines with a throwaway prototype (not committed):
+
+- The harness emits `system-prompt/assemble`, an expert waterfall over the assembled prompt
+  ([`core/system-prompt/src/index.ts`](../../deepseek-harness/packages/core/system-prompt/src/index.ts): "the returned value is authoritative").
+  One global listener received the FULL assembly on both surfaces (Web: 23 named sections; CLI: 18) with names and text, on top of the preset's own
+  sections, and what it returned is exactly what the model received.
+- From that one hook it could: replace the identity (`harness:identity`) with an ACRYL line, wrap every section in a Pi-style tag, reorder, and drop
+  or rewrite named sections. Everything it did not touch flowed through unchanged, so upstream updates to tool guidance still reach the model.
+- Section names are stable and readable (`harness:identity`, `deployment:persona-prefix`, `plan:policy`, `context:file-reference`, `tool:<name>`,
+  `ui:deliverable-file-references`, `harness:source`, `app:web-surface`, `deployment:persona-suffix`, and ours `acryl:extension-router`). The CLI has
+  fewer (no web sections); some render empty (`plan:policy`, an empty persona prefix), which a builder can drop.
+- Limits: a section registered as `complete` is restored after the waterfall, so listeners cannot override a complete persona (the `minimal`
+  preset); registering a second section with an existing name throws (so override in the listener, not by registering); tool descriptions are
+  separate from the prompt and stay upstream.
+
+Recommended shape if we build it (`acryl-system-prompt`, roughly 150 lines): own the ACRYL identity line, tag every section, drop empty ones, fix
+the order, keep the router, and pass every other section through untouched. Add a drift test that records the upstream section names and a hash of
+their text per surface, so a submodule bump shows exactly what changed. Open checks before shipping: the DSH brand guidelines
+([`deepseek-harness/BRAND_GUIDELINES.md`](../../deepseek-harness/BRAND_GUIDELINES.md)) for the identity line, and a real-model regression of the
+four extension prompts, because wrapping tool paragraphs in tags changes what the model reads.
