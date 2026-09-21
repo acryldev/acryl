@@ -4979,3 +4979,11 @@ binary directly rather than through whatever bare `pnpm` resolves to on
 - `acryl_extension_lookup(topic)` (pi research section 73), `maps/slot-contracts.md` (the harness's own catalog, 57 slots with examples), `maps/events.md` hooks with two verified examples, tool-call card example,
   keyboard shortcut pattern verified in a real browser, `evals/` with an off-switch: 31 steps / 51 tool calls with the pack against 85 / 104 without, all tasks completed both ways (directional, one run per cell).
 - CLI archive closure built with the release steps and inspected (both plugins load, all router doc paths exist). Desktop packaging not run (its script would force a production-only install). `PI-PARITY.md` records match, partial and gap per requirement (`7d20530da1e93e0ab9aa92b4dc071341adeaed20`).
+
+## 2026-09-21 - fix: pack examples were missing from Desktop builds; open parity items finished (spec 037)
+
+- Built the unpacked Desktop app (electron-builder `--dir`, pnpm's pre-run dependency check disabled so the workspace is untouched) and inspected it: electron-builder silently drops any
+  `node_modules/<pkg>/examples`, so the pack's examples were absent from installed Desktop builds and the router's example pointers would have dangled. The pack directory is now
+  `example-plugins/`. Verified inside the packaged app's own Electron 43.4.0 runtime: pack root resolves from `app.asar` to `app.asar.unpacked`, 29 router doc paths and 94 example files exist, both plugins load.
+- New verified examples: `tool-policy-hook` (tools/pre-execute deny/allow on the real tool runtime) and `client-chat-message-action` (assistant-actions seam, applied in a real browser); chat-node docs steer to additive seams.
+- Removed the failed notes-button attempt: `dsh plugin remove acryl-notes-panel` on the real Web profile (backup kept out of the repo) and the untracked `.acryl-extensions/notes-panel` folder. A real-model run updates an installed tool's host code and calls it again in the same session (`7246c035e6725f5cf062a3a0628802448d733e8a`).
