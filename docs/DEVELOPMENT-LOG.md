@@ -5077,3 +5077,14 @@ binary directly rather than through whatever bare `pnpm` resolves to on
 - Spec 036 blend-instance-design.md: `/blend apply` (verify first, vendored local sources into the project extension scope without overwriting, marketplace plugins at the locked version with integrity check and rollback,
   idempotent). Real round trip test: captured on one app, applied on a fresh app with a different home and workspace.
 - Fixed on the way: seven test files restored `DSH_HOME` by assigning `undefined` (stored the string "undefined", so the next boot created a `./undefined` profile directory).
+
+## 2026-09-21 - feat: terminal UI layer, tuiTheme, contrast, Blend ledger (specs 038 and 036)
+
+- Spec 038-ui-component-library, tasks.md T015: new `plugins/acryl-ui-tui`, ten pi-tui components with the same names as `acryl-ui-web` (surfaces now in `contracts/components.json`), 8 conformance tests (widths 12/24/40/80/200, keys), made
+  importable in the CLI profile (`engine-dsh.ts`). T016 partial: `/gallery` example `tui-ui-library` (tested at five widths with a keyboard walk through tabs, settings and the reset dialog); `tui-overlay-themed` kept as the raw pi-tui reference.
+  T007: read-only `tuiTheme` service on the CLI host (`mode`, `hex`, `color`, `onChange`). Q8 in research.md: the palette follows the terminal's light/dark scheme through pi-tui's own query and notifications
+  (`themeDetection.ts`, fake-terminal tests; no real terminal pass yet). T013 contrast: WCAG tests for all terminal roles in both palettes and the two web roles; three light colors and a border were darkened (dark palette unchanged).
+- Spec 036 blend-instance-design.md: Evolution Ledger. Once a workspace has captured a Blend, every install, update and removal of a plugin (human or agent) appends one hash-chained line to `.acryl/blend/ledger.jsonl`; `/blend ledger`
+  shows it and `/blend verify` detects an edited or removed line (real-engine test). Lock v2 and hub publish are recorded as a proposal for the `blends` repo (it has its own decision records and uncommitted work).
+- Housekeeping approved by the user: the design-system brief and design-agent output committed; the orphaned `acryl-sidebar-note` staging folder in `~/.acryl-dev` moved to the scratchpad. The Desktop profile refuses `dsh plugin remove`
+  ("managed exclusively by the Electron application"), so the stale `acryl-header-note` entry there is removed with `/reload remove-stale` typed in Desktop.
