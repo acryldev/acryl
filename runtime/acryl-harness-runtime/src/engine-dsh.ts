@@ -299,6 +299,20 @@ export function createDshEngineDefinition(profileName: string): AcrylEngineDefin
 }
 
 /**
+ * Add one declared dependency to a Loader row's `inject` metadata. A patch
+ * replaces the whole value, so the row's own declaration is preserved in either
+ * the list or the map form Cordis accepts.
+ */
+function withDeclaredDependency(inject: unknown, name: string): string[] | Record<string, unknown> {
+  if (Array.isArray(inject)) return inject.includes(name) ? [...inject] : [...inject, name]
+  if (inject !== null && typeof inject === 'object') {
+    const declared = inject as Record<string, unknown>
+    return name in declared ? { ...declared } : { ...declared, [name]: null }
+  }
+  return [name]
+}
+
+/**
  * Symlink one ACRYL-owned package into a profile's own `node_modules`, so
  * Node's ordinary bare-specifier resolution - the only mechanism
  * `HostResolvedRootInclude`'s composed rows use, verified directly by
@@ -415,6 +429,22 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   const officialBrandRow = composeEntries([patches]).find(entry => entry.id === 'ui-brand-official')
   if (officialBrandRow?.name !== '@deepseek-ai/dsh-client-ui-brand-official') {
     throw new Error('ACRYL web profile must use @deepseek-ai/dsh-client-ui-brand-official in the ui-brand-official row')
+  }
+  // `@deepseek-ai/dsh-client-connection` resolves `webServer` from the Context
+  // its own row was built with while registering a caller's
+  // `connection.rpc.handle(...)` channel. Cordis resolves an undeclared name
+  // only along the provider's fiber chain, and the web server row is a sibling
+  // of the connection row, so any third-party profile plugin (for example
+  // acryl-dsh-editor-plugin) failed the whole tree with `cannot get property
+  // "webServer" without inject`. Same declaration acryl-desktop's
+  // prepareDesktopProfile makes for the same row.
+  const connectionRow = composeEntries([patches]).find(entry => entry.id === 'connection')
+  if (connectionRow?.name === '@deepseek-ai/dsh-client-connection') {
+    patches.push({
+      id: 'connection',
+      name: connectionRow.name,
+      inject: withDeclaredDependency(connectionRow.inject, 'webServer'),
+    })
   }
   // dsh-client-ui-brand-acryl is an ACRYL-owned workspace package, not a
   // dependency of @deepseek-ai/dsh itself, so healProfilesModuleFallback's

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { AcrylBrandMark, AcrylBrandName, AcrylHeroBrandMark } from '../src/client/Brand.tsx'
 import { apply, inject } from '../src/client/index.ts'
+import { FOOTER_ACTIONS_LAYOUT_CSS, installFooterActionsLayout } from '../src/client/footer-actions-layout.ts'
 import { brandTitleText, installDocumentTitleBrand } from '../src/client/document-title.ts'
 
 describe('ACRYL brand plugin', () => {
@@ -73,5 +74,21 @@ describe('ACRYL brand plugin', () => {
     expect(disconnected).toBe(true)
     // No DOM: a no-op, never a throw.
     expect(() => installDocumentTitleBrand(undefined, undefined)()).not.toThrow()
+  })
+
+  it('stacks sidebar footer actions instead of clipping them in a row', () => {
+    const removed = vi.fn()
+    const appended: unknown[] = []
+    const style = { textContent: null as string | null, dataset: {} as Record<string, string | undefined>, remove: removed }
+    const dispose = installFooterActionsLayout({
+      head: { appendChild: node => appended.push(node) },
+      createElement: () => style,
+    })
+    expect(appended).toEqual([style])
+    expect(style.textContent).toBe(FOOTER_ACTIONS_LAYOUT_CSS)
+    expect(FOOTER_ACTIONS_LAYOUT_CSS).toContain('flex-direction: column')
+    dispose()
+    expect(removed).toHaveBeenCalledOnce()
+    expect(installFooterActionsLayout(undefined)()).toBeUndefined()
   })
 })

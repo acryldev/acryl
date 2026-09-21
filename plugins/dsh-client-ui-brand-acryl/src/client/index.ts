@@ -12,6 +12,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import { AcrylBrandMark, AcrylBrandName, AcrylHeroBrandMark } from './Brand.tsx'
+import { installFooterActionsLayout, type StyleDocument } from './footer-actions-layout.ts'
 import { installDocumentTitleBrand, type TitleDocument, type TitleObserverConstructor } from './document-title.ts'
 
 export { AcrylBrandMark, AcrylBrandName, AcrylHeroBrandMark } from './Brand.tsx'
@@ -34,6 +35,10 @@ export function apply(ctx: ClientContext): void {
       typeof MutationObserver === 'undefined' ? undefined : MutationObserver as unknown as TitleObserverConstructor,
     ),
     'ui-brand-acryl: document title',
+  )
+  ctx.effect(
+    () => installFooterActionsLayout(typeof document === 'undefined' ? undefined : document as unknown as StyleDocument),
+    'ui-brand-acryl: footer actions layout',
   )
   ctx.slots.inject('sidebar.brand.mark', () =>
     ctx.slots.register({ name: 'sidebar.brand.mark' }, AcrylBrandMark))
