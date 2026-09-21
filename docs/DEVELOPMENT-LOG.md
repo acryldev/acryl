@@ -4997,3 +4997,16 @@ binary directly rather than through whatever bare `pnpm` resolves to on
   past the sidebar edge. Reproduced in a real browser, fixed in `dsh-client-ui-brand-acryl` (footer actions stack) and verified: the row appears above Settings and its panel opens.
 - Safeguard: `reconcileProfileLayout` pins the recorded `nodeLinker` / `publicHoistPattern` into the profile's `pnpm-workspace.yaml` before every Web/CLI `dsh plugin` run, so no pnpm can relink a profile
   another pnpm laid out (`74bd46b8ef7b331f872d6b4e97ad3f8da17959de`). Desktop profiles use Desktop's own pnpm and are not covered. Renaming the `dsh` binary is deferred to the runtime-swap step.
+
+## 2026-09-21 - feat: plugin state and persistence made explicit for the agent (spec 037)
+
+- Trigger: the agent-built Notes button kept its notes in `localStorage`, so Web and Desktop showed different notes. The pack never mentioned persistence
+  (the router had no route for it), so the agent only ever saw the localStorage pattern.
+- New `extending/state-and-persistence.md` (routed by "remember, save, persist, store, notes, share between Web and Desktop"): a table of every option
+  (localStorage, host file behind an RPC channel, workspace file, user settings, harness storage domains, memory) with survival, sharing, agent visibility,
+  surfaces and an example each; pointers added to the host-route and client-slot docs and the add-ui skill; router 919 of 1500 tokens.
+- New examples: `state-host-store` (host JSON file under `<DSH home>/plugin-data/<plugin>` behind `connection.rpc.handle`; verified in a real browser: a saved note
+  survived clearing all browser storage and a reload) and `state-workspace-file` (tools writing `<workspace>/.acryl/notes.md`; tested against a temp workspace).
+  Building the first exposed three RPC pitfalls, now documented: handlers must return `{ok, value}`/`{ok:false, error:{code,message,details}}`, the client must unwrap
+  that envelope (rendering the error object crashed the slot with React #31), and a call needs an object payload. The storage-domain option has no example and is
+  flagged unverified. `b733b6f8c292df4a48883abc7f83c3a7af968a2f`
