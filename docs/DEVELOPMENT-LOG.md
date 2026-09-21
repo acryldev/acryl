@@ -4963,3 +4963,11 @@ binary directly rather than through whatever bare `pnpm` resolves to on
 - New `plugins/acryl-system-prompt`: pass-through on the harness's `system-prompt/assemble` waterfall (measured on the real Web and CLI engines first): ACRYL identity,
   pi.dev-style tags, empties dropped, everything else upstream; drift baselines and a test that names changed upstream sections; volatile ports normalized
   (`e301442b957f008b162ecdcbb5fed0db0e7a43cf`). Engine-swap note (spec 028): the pure shaping logic is isolated in `lib/transform.js`; only the 6-line listener is DSH-specific.
+
+## 2026-09-21 - feat: pi.dev parity gaps closed where possible (spec 037)
+
+- Rechecked against the Pi research doc (sections 65 A-J) and Pi's real source: `specs/037-guardrailed-self-extension/PI-PARITY.md` records match, partial and gap per requirement.
+  Landed: grouped 13-route router (722 tokens); live `acryl:installed-extensions` context (the harness appends changed prompt text mid-session);
+  `/reload` lists and `/reload new` installs workspace extension folders (human opt-in); `maps/events.md` plus a verified prompt-hook example; trust and
+  safety doc; live terminal commands in the CLI (`40e83701761a11183c5fd7155c4156c35f2d9faf`). A real-model run of build, update, tool and remove passes.
+- Still open (recorded): automatic module-cache invalidation for host code, renderer and remaining lifecycle-hook examples, shortcuts, installed-build evidence, eval baselines.
