@@ -4,7 +4,7 @@
 // Teaches:  build a Settings page (`ui.settingsSection`) from `acryl-ui-web` instead of hand-styling: `require('acryl-ui-web')` gives Card, Field, SwitchField, SettingsRow, SelectField,
 //           Segmented, Tabs, Dialog, EmptyState, Stack, the app's Button/Tag/Pill/Toast/Modal re-exported, the semantic color roles, and slot helpers. List
 //           "acryl-ui-web" in `dsh.client.inject` (package.json). The library already follows light and dark; use `ui.roles.<role>` for any color of your own.
-// Expect:   a "UI library" entry in the Settings screen's left navigation; its page has tabs: Components, Settings form, Colors.
+// Expect:   a "UI library" entry in the Settings screen's left navigation; its page has tabs: Components, Settings form, Conversation, Colors (DSH token names).
 // Docs:     extending.ui-library
 window.__ModuleLoader__.load({ id: 'acryl-example-ui-library', factory: (require) => {
 var module = { exports: {} }; var exports = module.exports;
@@ -39,11 +39,28 @@ function SettingsForm() {
     h(Dialog, { open: confirm, title: 'Reset settings?', onClose: () => setConfirm(false), onConfirm: () => { setPermission('write'); setTheme('system'); setQueue(true) }, confirmLabel: 'Reset', danger: true }, 'This restores every setting to its default.'))
 }
 
+// The app's own tokens: each swatch is the DSH token the role resolves to, so nothing here is a color of our own except the two registered through the theme service.
 function Colors() {
   return h(Stack, { gap: 'sm' }, Object.entries(ui.roles).map(([role, value]) =>
     h(Stack, { key: role, direction: 'row', gap: 'md', align: 'center' },
       h('span', { style: { width: 28, height: 28, borderRadius: 8, border: '0.5px solid ' + ui.roles.border, background: value }, 'aria-hidden': true }),
-      h('code', null, role))))
+      h('code', null, value.replace(/^var\((.*)\)$/u, '$1')),
+      h('span', { style: { color: ui.roles.textMuted, fontSize: 12 } }, role))))
+}
+
+const labels = { input: 'IN', output: 'OUT', running: 'Running', failed: 'Failed', stopped: 'Stopped' }
+const dot = h('span', { 'aria-hidden': true }, '\u25B8')
+
+// The conversation's tool-call row and the sidebar's New Session bar, extracted from the app itself.
+function Conversation() {
+  const [wide, setWide] = React.useState(true)
+  return h(Stack, { gap: 'md' },
+    h(ui.ToolCallCard, { icon: dot, title: 'Read', summary: 'src/index.ts', state: 'ok', input: 'src/index.ts', output: '42 lines', labels }),
+    h(ui.ToolCallCard, { icon: dot, title: 'Bash', summary: 'pnpm test', state: 'running', input: 'pnpm test', labels }),
+    h(ui.ToolCallCard, { icon: dot, title: 'Bash', summary: 'pnpm build', errorSummary: 'exit code 1', state: 'error', input: 'pnpm build', output: 'error TS2304', labels }),
+    h(Stack, { direction: 'row', gap: 'md', align: 'center' },
+      h('div', { style: { width: wide ? 220 : 56 } }, h(ui.SidebarRow, { icon: dot, label: 'New session', wide, onClick: () => setWide(!wide) })),
+      h('span', { style: { color: ui.roles.textMuted, fontSize: 12 } }, 'Click to switch between the wide sidebar and the rail')))
 }
 
 // A Settings page, not a dialog: the gallery is a catalogue for people building UI, so it lives in Settings (nav entry "UI library"), out of the everyday screens.
@@ -52,8 +69,8 @@ function Gallery() {
   return h(Stack, { gap: 'md' },
     h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
     h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
-    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'colors', label: 'Colors' }] },
-      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : h(Colors)))
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : h(Colors)))
 }
 
 exports.inject = ['slots']
