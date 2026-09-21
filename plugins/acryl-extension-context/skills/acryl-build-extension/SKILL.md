@@ -11,7 +11,7 @@ description: Use when the user asks you to add a feature, tool, panel, command o
 3. Pick the plugin type(s) the feature needs and open the matching doc from {{pack}}/docs/README.md
    (tool, service, event hook, config, prompt, client UI, host route, tui command). Read it completely and
    follow its cross-references.
-4. Open the closest working example in {{pack}}/examples/README.md and read every file of it. Copy it into a
+4. Open the closest working example in {{pack}}/example-plugins/README.md and read every file of it. Copy it into a
    NEW directory <workspace>/.acryl-extensions/<plugin-name>/ (outside the pack) and change it. Never guess a plugin's shape from memory.
 5. Write the package (package.json, cordis.patch.yml, index.js, and client.js for UI).
 6. Call the acryl_install_plugin tool with the ABSOLUTE path of that directory. Read its result. Fix the named cause and call it

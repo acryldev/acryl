@@ -2,7 +2,7 @@
 
 Use this BEFORE hand-styling any UI. On Web and Desktop the app already ships a themed component library, and a plugin can use it
 today. Working example (verified in a real browser: the modal, input, switch and buttons rendered themed): 
-`../examples/packages/client-ui-components/` (read `client.js` and `package.json`). All component names: `../maps/ui-components.md`.
+`../example-plugins/packages/client-ui-components/` (read `client.js` and `package.json`). All component names: `../maps/ui-components.md`.
 
 ## Web and Desktop: `@deepseek-ai/dsh-client-ui-primitives`
 

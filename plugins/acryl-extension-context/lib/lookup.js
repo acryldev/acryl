@@ -42,7 +42,7 @@ export function lookupExtensionDocs(topic, manifest, root, options = {}) {
   const examples = []
   for (const example of manifest.examples) {
     const s = score(q, [[example.teaches, 1], [example.type, 3], [example.id.replace(/[.-]/gu, ' '), 2]]) + (docs.some(d => example.docs.includes(d.id)) ? 1 : 0)
-    if (s > 0) examples.push({ id: example.id, type: example.type, path: join(root, 'examples', 'packages', example.path), teaches: example.teaches, score: s })
+    if (s > 0) examples.push({ id: example.id, type: example.type, path: join(root, 'example-plugins', 'packages', example.path), teaches: example.teaches, score: s })
   }
   examples.sort((a, b) => b.score - a.score || (a.id < b.id ? -1 : 1))
   const top = docs.slice(0, limit)

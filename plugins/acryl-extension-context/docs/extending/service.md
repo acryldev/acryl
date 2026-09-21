@@ -1,6 +1,6 @@
 # Services: provide a capability, consume it
 
-Examples: `../examples/packages/service-provider-greeter/`, `service-consumer-greeter/`.
+Examples: `../example-plugins/packages/service-provider-greeter/`, `service-consumer-greeter/`.
 
 - **Provide**: `class X extends Service { constructor(ctx) { super(ctx, 'name') } }` and export it
   as `apply` (`export { X as apply }`). Import `Service` from `@deepseek-ai/cordis`.

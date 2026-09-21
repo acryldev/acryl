@@ -1,0 +1,3 @@
+- insert:
+    - id: example-chat-message-action
+      name: acryl-example-chat-message-action

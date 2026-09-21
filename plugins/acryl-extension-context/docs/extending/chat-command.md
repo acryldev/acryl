@@ -3,7 +3,7 @@
 Use this to give the user a `/command` in the chat that runs on the host WITHOUT calling the model: reload something,
 export a file, toggle a mode, show a status. It works on all three surfaces (CLI, Web, Desktop).
 
-Working example: `../examples/packages/chat-command-basic/` (read it fully).
+Working example: `../example-plugins/packages/chat-command-basic/` (read it fully).
 
 ```js
 export const name = 'my-commands'

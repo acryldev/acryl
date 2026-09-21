@@ -1,6 +1,6 @@
 # Prompt contributions
 
-Example: `../examples/packages/prompt-contribution-basic/`.
+Example: `../example-plugins/packages/prompt-contribution-basic/`.
 
 `ctx.systemPrompt.section({ name, order, text })` adds a section and returns its disposer (wrap in
 `ctx.effect`). `text` may be a string or a function of the assembly context. Sections sort by

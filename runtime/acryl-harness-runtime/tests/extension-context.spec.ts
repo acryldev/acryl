@@ -128,7 +128,7 @@ describe('/reload on the web engine', () => {
     process.env.DSH_HOME = home
     const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-ws-'))
     temporaryHomes.push(workspace)
-    const source = new URL('../../../plugins/acryl-extension-context/examples/packages/tool-basic/', import.meta.url).pathname
+    const source = new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url).pathname
     const target = join(workspace, '.acryl-extensions', 'dropped-tool')
     mkdirSync(join(workspace, '.acryl-extensions'), { recursive: true })
     cpSync(source, target, { recursive: true })

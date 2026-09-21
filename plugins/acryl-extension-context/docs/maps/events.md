@@ -6,7 +6,7 @@ pi.dev lets an extension intercept input, prompt construction, context, the prov
 gets the same reach from the harness event bus. Listen with `ctx.on(name, listener)` inside `ctx.effect` (so it leaves with the plugin).
 **Dispatch modes**: `emit` (fire and forget), `parallel` (all run), `serial` and `bail` (in order until a value bails), `waterfall`
 (around-middleware: `ctx.on(name, async (input, next) => { const result = await next(); return result })`; a listener that only observes MUST
-still call `next()` and return its result; the returned value is authoritative). Working example: `examples/packages/prompt-assemble-hook/` (shapes
+still call `next()` and return its result; the returned value is authoritative). Working example: `example-plugins/packages/prompt-assemble-hook/` (shapes
 the system prompt on `system-prompt/assemble`, the same hook `acryl-system-prompt` uses). Read `extending/event-hook.md` first.
 
 79 events:

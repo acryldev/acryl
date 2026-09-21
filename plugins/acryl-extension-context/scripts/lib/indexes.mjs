@@ -14,7 +14,7 @@ export function renderDocsIndex(manifest) {
     '',
     'Read the file for your topic BEFORE implementing. Read it completely, follow its',
     'cross-references and the example it names. Do not guess from memory of a similar',
-    'plugin. Verified working examples: `../examples/README.md`.',
+    'plugin. Verified working examples: `../example-plugins/README.md`.',
     '',
   ]
   for (const group of manifest.navigation) {

@@ -1,7 +1,7 @@
 # Branding: logo, name, tab title, favicon, page shell
 
-Working examples: `../examples/packages/web-page-branding/` (host: title, favicon, CSS row, verified against the real web server
-in a test) and `../examples/packages/client-theme-override/` (client: keeps a custom tab title, recolors). ACRYL's own brand is
+Working examples: `../example-plugins/packages/web-page-branding/` (host: title, favicon, CSS row, verified against the real web server
+in a test) and `../example-plugins/packages/client-theme-override/` (client: keeps a custom tab title, recolors). ACRYL's own brand is
 `plugins/dsh-client-ui-brand-acryl` in the repository (a reference, not something to edit from a plugin).
 
 ## Layers of branding, from most to least pluggable

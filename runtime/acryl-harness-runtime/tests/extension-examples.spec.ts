@@ -13,7 +13,7 @@ import { createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 import { captureSystemPrompt } from '../src/system-prompt-capture.ts'
 
-const examples = new URL('../../../plugins/acryl-extension-context/examples/packages/', import.meta.url)
+const examples = new URL('../../../plugins/acryl-extension-context/example-plugins/packages/', import.meta.url)
 const temporaryHomes: string[] = []
 const initialDshHome = process.env.DSH_HOME
 
@@ -180,6 +180,34 @@ describe('extension pack examples on the real web engine', () => {
       expect(counts.preStep).toBeGreaterThan(0)
       expect(counts.request).toBeGreaterThan(0)
       expect(counts.stream).toBeGreaterThan(0)
+    } finally { await host.dispose() }
+  }, 90_000)
+
+  it('tool-policy-hook: a blocked tool is denied with the reason, another tool still runs', async () => {
+    const host = await bootHost()
+    try {
+      const tools = host.ctx.get('tools' as never) as unknown as {
+        register(definition: unknown): () => void
+        execute(input: { callId: string; name: string; arguments: unknown; signal: AbortSignal }): Promise<{ isError?: boolean; kind?: string; content?: Array<{ type: string; text?: string }> } & Record<string, unknown>>
+      }
+      const make = (toolName: string) => ({
+        name: toolName,
+        description: `example tool ${toolName}`,
+        parameters: {},
+        output: { schema: { type: 'string' }, render: (_args: unknown, value: string) => [{ type: 'text', text: value }] },
+        async execute() { return `${toolName} ran` },
+      })
+      const { defineTool } = await import('@deepseek-ai/dsh-tools')
+      tools.register(defineTool(make('example_allowed') as never))
+      tools.register(defineTool(make('example_forbidden') as never))
+      const fiber = host.ctx.plugin(await load('tool-policy-hook') as never, {} as never) as { state: number }
+      await settle()
+      expect(stateOf(fiber)).toBe('ACTIVE')
+      const allowed = await tools.execute({ callId: 'c1', name: 'example_allowed', arguments: {}, signal: new AbortController().signal })
+      const denied = await tools.execute({ callId: 'c2', name: 'example_forbidden', arguments: {}, signal: new AbortController().signal })
+      expect(JSON.stringify(allowed)).toContain('example_allowed ran')
+      expect(JSON.stringify(denied)).toContain('blocked by the ACRYL example tool policy')
+      expect(JSON.stringify(denied)).not.toContain('example_forbidden ran')
     } finally { await host.dispose() }
   }, 90_000)
 })

@@ -3,7 +3,7 @@
 Use this to give sessions a different composition (tools, prompt sections, skills) or a different identity:
 a read-only reviewer, a minimal two-tool agent, a domain specialist.
 
-Example (a directory, not an npm package): `../examples/packages/agent-preset-reviewer/`.
+Example (a directory, not an npm package): `../example-plugins/packages/agent-preset-reviewer/`.
 
 ## What a preset is
 

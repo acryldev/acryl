@@ -23,7 +23,7 @@ test('router names real paths, the policy, the install tool, and omits not-for-a
   const text = buildRouterText('/pack', manifest)
   assert.match(text, /\/pack\/docs\/README\.md/)
   assert.match(text, /\/pack\/docs\/start-here\/this-runtime\.md/)
-  assert.match(text, /\/pack\/examples\/README\.md/)
+  assert.match(text, /\/pack\/example-plugins\/README\.md/)
   assert.match(text, /acryl_install_plugin/)
   assert.match(text, /completely/i)
   assert.match(text, /publishing is the user's decision/)
@@ -295,7 +295,7 @@ test('every plugin type in the coverage matrix has a doc and an example, and eve
   const missing = PLUGIN_TYPES.filter(type => !covered.has(type) && !docOnly.has(type))
   assert.deepEqual(missing, [])
   for (const example of manifest.examples) {
-    const dir = join(root, 'examples/packages', example.path)
+    const dir = join(root, 'example-plugins/packages', example.path)
     const entry = ['index.js', 'client.js', 'agent.cordis.yml'].map(f => join(dir, f)).find(f => existsSync(f))
     assert.ok(entry, `${example.id}: no entry file`)
     assert.match(readFileSync(entry, 'utf8').slice(0, 400), /Example:/u, `${example.id}: missing Example header`)

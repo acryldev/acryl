@@ -3,7 +3,7 @@
 Use this when a plugin needs to know which profile is active, run a package operation in it, or activate another
 plugin without a restart. These are Host services, not browser code.
 
-Working example: `../examples/packages/desktop-main-profile-info/`.
+Working example: `../example-plugins/packages/desktop-main-profile-info/`.
 
 | Service | Where | What you get |
 | --- | --- | --- |

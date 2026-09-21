@@ -55,7 +55,7 @@ test('an example needs a known type, teaches, scenario, surfaces and files', () 
 
 test('an unlisted doc or example file fails the index-completeness check', () => {
   assert.match(problems(manifest(), files({ docFiles: ['docs.json', 'README.md', 'start-here/this-runtime.md', 'orphan.md'] })).join('\n'), /docs\/orphan\.md is not listed/)
-  assert.match(problems(manifest(), files({ exampleFiles: [...files().exampleFiles, 'packages/stray/index.js'] })).join('\n'), /examples\/packages\/stray\/index\.js is not covered/)
+  assert.match(problems(manifest(), files({ exampleFiles: [...files().exampleFiles, 'packages/stray/index.js'] })).join('\n'), /example-plugins\/packages\/stray\/index\.js is not covered/)
 })
 
 test('example files may not live in test/tests directories (release pruner deletes them)', () => {
@@ -76,8 +76,8 @@ function makePack() {
   const put = (path, content) => { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), content) }
   put('docs/docs.json', JSON.stringify(manifest()))
   put('docs/start-here/this-runtime.md', '# This runtime\n')
-  put('examples/packages/tool-basic/package.json', '{}')
-  put('examples/scenarios.json', '[]')
+  put('example-plugins/packages/tool-basic/package.json', '{}')
+  put('example-plugins/scenarios.json', '[]')
   return { root, put }
 }
 
@@ -88,7 +88,7 @@ test('build writes indexes, then --check passes, then a manifest edit makes them
     const docsIndex = readFileSync(join(root, 'docs/README.md'), 'utf8')
     assert.match(docsIndex, /Generated from docs\.json/)
     assert.match(docsIndex, /\[This runtime\]\(start-here\/this-runtime\.md\)/)
-    assert.match(readFileSync(join(root, 'examples/README.md'), 'utf8'), /tool\.basic/)
+    assert.match(readFileSync(join(root, 'example-plugins/README.md'), 'utf8'), /tool\.basic/)
     assert.equal(buildPack(root, { check: true }).ok, true)
     put('docs/docs.json', JSON.stringify(manifest({ navigation: [{ title: 'Start here', items: [doc({ title: 'Renamed' })] }] })))
     const stale = buildPack(root, { check: true })

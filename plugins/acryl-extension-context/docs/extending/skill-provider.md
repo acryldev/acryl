@@ -1,6 +1,6 @@
 # Skills: on-demand instructions
 
-Example: `../examples/packages/skill-provider-basic/`. A skill is a name and description that sit in
+Example: `../example-plugins/packages/skill-provider-basic/`. A skill is a name and description that sit in
 the agent's context, with the full body loaded only when needed. Register a provider:
 `ctx.skills.registerProvider(() => provider)` where `provider = { name, list(), get(candidate) }`.
 `list()` returns candidates (`name` kebab-case, `description`, `invocation`, `provider`, `source`,

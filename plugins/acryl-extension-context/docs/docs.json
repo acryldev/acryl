@@ -151,7 +151,8 @@
           "examples": [
             "client-slot.header-action",
             "client-slot.sidebar-tab",
-            "client-tool-view.custom-card"
+            "client-tool-view.custom-card",
+            "client-chat-message-action.bookmark"
           ],
           "topic": "a button, panel, tab or card (Web/Desktop)"
         },
@@ -208,7 +209,8 @@
           "examples": [
             "event-hook.basic",
             "prompt-assemble-hook.basic",
-            "lifecycle-hooks.observer"
+            "lifecycle-hooks.observer",
+            "tool-policy-hook.deny"
           ],
           "topic": "events and interception",
           "seeAlso": [
@@ -2377,6 +2379,33 @@
         "desktop"
       ],
       "teaches": "a tool plus its own conversation card via the keyed tool.call.toolview slot (renders running and settled calls).",
+      "docs": [
+        "extending.client-slot"
+      ]
+    },
+    {
+      "id": "tool-policy-hook.deny",
+      "type": "event-hook",
+      "path": "tool-policy-hook",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "a tool policy on the tools/pre-execute waterfall: allow, deny with a reason, or ask; return next() for everything else.",
+      "docs": [
+        "extending.event-hook"
+      ]
+    },
+    {
+      "id": "client-chat-message-action.bookmark",
+      "type": "client-slot",
+      "path": "client-chat-message-action",
+      "surfaces": [
+        "web",
+        "desktop"
+      ],
+      "teaches": "the additive chat-message seams: an action under each finished assistant message (assistant-actions list slot), plus notes on turnTail and chat-node takeovers.",
       "docs": [
         "extending.client-slot"
       ]

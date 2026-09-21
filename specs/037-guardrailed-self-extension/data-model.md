@@ -32,7 +32,7 @@ evals/
   README.md
 scripts/
   sync-corpus.mjs            handbook, cheatsheet, harness docs -> docs/ (idempotent, provenance)
-  build-manifest.mjs         validates and regenerates docs/README.md, examples/README.md, router text
+  build-manifest.mjs         validates and regenerates docs/README.md, example-plugins/README.md, router text
   verify-pack.mjs            the FR-015 gate
 ```
 
@@ -73,7 +73,7 @@ interface ManifestDoc {
 interface ManifestExample {
   id: string                             // e.g. 'tool-plugin.basic'
   type: PluginTypeId                     // one of the coverage-matrix types
-  path: string                           // relative to examples/packages/
+  path: string                           // relative to example-plugins/packages/
   surfaces: AcrylSurface[]
   teaches: string
   docs: string[]                         // doc ids, every id must exist

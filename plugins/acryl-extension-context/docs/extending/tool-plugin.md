@@ -1,7 +1,7 @@
 # Tool plugins: give the agent a new capability
 
 A tool is a plugin that injects `tools` and registers a definition the model can call.
-Example: `../examples/packages/tool-basic/`.
+Example: `../example-plugins/packages/tool-basic/`.
 
 ```js
 import { defineTool } from '@deepseek-ai/dsh-tools'

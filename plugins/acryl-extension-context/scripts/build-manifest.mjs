@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Validates docs/docs.json against the files on disk and regenerates
- * docs/README.md and examples/README.md from it (spec 037 T009).
+ * docs/README.md and example-plugins/README.md from it (spec 037 T009).
  *
  *   node scripts/build-manifest.mjs          validate, then write the indexes
  *   node scripts/build-manifest.mjs --check  validate and fail if an index is stale (gate mode)
@@ -32,12 +32,12 @@ export function buildPack(packRoot, { check }) {
   const manifest = JSON.parse(readFileSync(join(packRoot, 'docs/docs.json'), 'utf8'))
   const problems = validateManifest(manifest, {
     docFiles: listFiles(join(packRoot, 'docs')),
-    exampleFiles: listFiles(join(packRoot, 'examples')),
+    exampleFiles: listFiles(join(packRoot, 'example-plugins')),
   })
   if (problems.length > 0) return { ok: false, problems }
   const targets = [
     [join(packRoot, 'docs/README.md'), renderDocsIndex(manifest)],
-    [join(packRoot, 'examples/README.md'), renderExamplesIndex(manifest)],
+    [join(packRoot, 'example-plugins/README.md'), renderExamplesIndex(manifest)],
   ]
   const stale = []
   for (const [path, content] of targets) {

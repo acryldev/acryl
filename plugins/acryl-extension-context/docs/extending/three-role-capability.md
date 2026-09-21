@@ -4,7 +4,7 @@ Use this when several interchangeable implementations of one capability should e
 formatters) and other plugins must not care which one is mounted.
 
 Working examples, copy from them (each is a real package):
-`../examples/packages/capability-swap-provider-loud/`, `capability-swap-provider-quiet/`, `capability-swap-consumer/`.
+`../example-plugins/packages/capability-swap-provider-loud/`, `capability-swap-provider-quiet/`, `capability-swap-consumer/`.
 
 ## The three roles
 

@@ -1,6 +1,6 @@
 # Theme, colors and fonts for Web and Desktop (the client `theme` service)
 
-Working example, copy from it: `../examples/packages/client-theme-override/` (`client.js` and `index.js`). Verified in a real
+Working example, copy from it: `../example-plugins/packages/client-theme-override/` (`client.js` and `index.js`). Verified in a real
 browser: the accent color, the font, the tab title and the page background all changed.
 Token names: `../maps/theme-tokens.md` (generated, every `--dsw-alias-*` with light and dark values).
 

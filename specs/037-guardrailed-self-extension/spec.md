@@ -142,7 +142,7 @@ that is stated as a gap, not papered over.
 | Small router in the system prompt: index of topics to docs and examples, plus "read fully, follow `.md` cross-references before implementing" | `core/system-prompt.ts` `promptSections.docs` | `PromptSection` via `ctx.systemPrompt` (`dsh-system-prompt`), ordered, static or context-resolved text | the router text and its manifest generator (FR-004) |
 | Paths resolved at runtime so it works installed or bundled | `getReadmePath/getDocsPath/getExamplesPath` | none: docs are not shipped | pack package + runtime path resolution (FR-002, FR-003) |
 | Navigation manifest | `docs/docs.json` | none | `docs.json` manifest, index generated from it (FR-001) |
-| Working examples as the API reference | `examples/extensions/` (78), `examples/README.md`, SDK and plugin examples | one inert demo | verified examples per type x surface (FR-006, FR-007) |
+| Working examples as the API reference | `examples/extensions/` (78), `example-plugins/README.md`, SDK and plugin examples | one inert demo | verified examples per type x surface (FR-006, FR-007) |
 | Project instruction files loaded into context | `resource-loader.ts` (`AGENTS.md`, `CLAUDE.md`) | `dsh-agent-instructions`, default in `dsh-base`, budgeted, durable | a pointer line in this repo's `AGENTS.md`; nothing else (FR-011) |
 | Skills: name and description in context, body loaded on demand | `skills.ts` `formatSkillsForPrompt` | `dsh-skill` family: registry, filesystem provider, `skill` tool; bundled rank 600 | bundled authoring skills (FR-009) |
 | Agent uses its normal tools to read its own docs | `read`, `grep`, `find`, `ls`, `bash` | DSH file tools; the agent already works in a real filesystem | nothing new; a verifier tool for the check step (FR-008) |

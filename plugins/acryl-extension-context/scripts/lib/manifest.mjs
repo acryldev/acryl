@@ -31,7 +31,7 @@ const isSafeRelative = path => typeof path === 'string' && path.length > 0 && !p
 /**
  * @param {unknown} manifest parsed docs.json
  * @param {{ docFiles: readonly string[], exampleFiles: readonly string[] }} files
- *   paths relative to docs/ and to examples/ (posix separators)
+ *   paths relative to docs/ and to example-plugins/ (posix separators)
  * @returns {string[]} violations, empty when valid
  */
 export function validateManifest(manifest, files) {
@@ -97,7 +97,7 @@ export function validateManifest(manifest, files) {
     if (!isSafeRelative(example.path)) problems.push(`${at}: path must be a safe relative path`)
     else {
       const prefix = `packages/${example.path}/`
-      if (![...exampleFiles].some(f => f.startsWith(prefix))) problems.push(`${at}: no files under examples/${prefix}`)
+      if (![...exampleFiles].some(f => f.startsWith(prefix))) problems.push(`${at}: no files under example-plugins/${prefix}`)
       if (PRUNED_DIR.test(example.path)) problems.push(`${at}: path uses a test/tests directory the release pruner deletes`)
       for (const f of exampleFiles) if (f.startsWith(prefix) && PRUNED_DIR.test(f.slice(prefix.length))) problems.push(`${at}: ${f} is inside a test/tests directory the release pruner deletes (use checks/)`)
     }
@@ -111,7 +111,7 @@ export function validateManifest(manifest, files) {
     for (const id of doc.examples ?? []) if (!exampleIds.has(id)) problems.push(`doc ${doc.id}: examples unknown example id ${id}`)
   }
 
-  // Index completeness: nothing under docs/ or examples/ may exist unlisted.
+  // Index completeness: nothing under docs/ or example-plugins/ may exist unlisted.
   const generated = new Set(['docs.json', 'README.md'])
   for (const file of docFiles) {
     if (generated.has(file)) continue
@@ -121,7 +121,7 @@ export function validateManifest(manifest, files) {
   const exampleMeta = new Set(['README.md', 'scenarios.json'])
   for (const file of exampleFiles) {
     if (exampleMeta.has(file)) continue
-    if (![...exampleRoots].some(root => file.startsWith(root))) problems.push(`examples/${file} is not covered by any manifest example`)
+    if (![...exampleRoots].some(root => file.startsWith(root))) problems.push(`example-plugins/${file} is not covered by any manifest example`)
   }
   return problems
 }

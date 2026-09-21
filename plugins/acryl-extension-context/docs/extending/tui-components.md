@@ -1,7 +1,7 @@
 # The terminal UI (CLI): pi-tui components, theming and branding
 
-Working example, copy from it: `../examples/packages/tui-overlay-themed/` (themed `SelectList` overlay; a test renders it at five widths
-and checks no line overflows). Basic command registration: `../examples/packages/tui-command-basic/` and `tui-command.md`.
+Working example, copy from it: `../example-plugins/packages/tui-overlay-themed/` (themed `SelectList` overlay; a test renders it at five widths
+and checks no line overflows). Basic command registration: `../example-plugins/packages/tui-command-basic/` and `tui-command.md`.
 
 ## What a plugin can do in the terminal
 

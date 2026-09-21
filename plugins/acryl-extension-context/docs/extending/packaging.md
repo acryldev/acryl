@@ -1,6 +1,6 @@
 # Packaging a plugin, and generated capabilities
 
-Example: `../examples/packages/generated-capability-template/`.
+Example: `../example-plugins/packages/generated-capability-template/`.
 
 Every plugin ships as an npm package:
 

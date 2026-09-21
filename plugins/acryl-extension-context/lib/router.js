@@ -27,7 +27,7 @@ export const estimateTokens = text => Math.ceil(text.length / 4)
  */
 export function buildRouterText(root, manifest) {
   const docs = join(root, 'docs')
-  const examples = join(root, 'examples')
+  const examples = join(root, 'example-plugins')
   const pathOf = new Map()
   for (const group of manifest.navigation) for (const item of group.items) if (item.id) pathOf.set(item.id, item.path)
   const topics = []

@@ -181,7 +181,7 @@ Decide dependency versus materialization to `<ACRYL_HOME>/context/<version>/`.
 `plugins/acryl-extension-context/scripts/build-manifest.mjs`
 **Do**: private package per `data-model.md`; manifest schema with runtime
 validation; `build-manifest.mjs` validates the manifest and regenerates
-`docs/README.md` and `examples/README.md`. Fail on an unlisted file, a missing
+`docs/README.md` and `example-plugins/README.md`. Fail on an unlisted file, a missing
 path, an unresolved id or an empty `surfaces`.
 **Evidence**: unit tests for every invariant failing as specified; a clean run on
 the seed content.
@@ -193,7 +193,7 @@ tooling passes and fails correctly.
 ## T010 - Seed docs and two examples
 
 **Files**: `plugins/acryl-extension-context/docs/{start-here,extending}/**`,
-`examples/packages/**`, `examples/scenarios.json`
+`example-plugins/packages/**`, `examples/scenarios.json`
 **Do**: write `start-here/this-runtime.md`, `start-here/verify-before-done.md` and
 `extending/tool-plugin.md`; two real example packages (lifecycle function plugin,
 tool plugin) each with header, scenario and tests. Contracts come from measured
@@ -352,7 +352,7 @@ provenance present on every synced file.
 
 ## T023 - Docs and verified examples: core types
 
-**Files**: `docs/extending/`, `examples/packages/`
+**Files**: `docs/extending/`, `example-plugins/packages/`
 **Do**: lifecycle function, service provider, service consumer (hard and optional),
 event hook (including waterfall calling `next()`), config schema (valid and invalid),
 three-role capability with provider swap. One doc, one example, one scenario each,
@@ -362,7 +362,7 @@ on every surface each claims.
 
 ## T024 - Docs and verified examples: agent-facing types
 
-**Files**: `docs/extending/`, `examples/packages/`
+**Files**: `docs/extending/`, `example-plugins/packages/`
 **Do**: tool (already seeded), prompt contribution (`PromptSection` and
 `PromptContext`), skill provider and bundled skill, LLM adapter, agent preset or
 subagent, diagnostics (FAILED, PENDING, leak after reload).
@@ -371,7 +371,7 @@ subagent, diagnostics (FAILED, PENDING, leak after reload).
 
 ## T025 - Docs and verified examples: surface-specific types
 
-**Files**: `docs/extending/`, `docs/surfaces/`, `examples/packages/`
+**Files**: `docs/extending/`, `docs/surfaces/`, `example-plugins/packages/`
 **Do**: Host route or RPC, client slot plugin (settings card), Desktop-main plugin
 (`desktopProfiles`, `desktopPnpm`), TUI contribution (or the recorded "no seam"),
 each declared only for the surfaces that have the seam; the docs say what is absent
@@ -382,7 +382,7 @@ the surface docs match a fresh dump.
 
 ## T026 - Docs and verified examples: packaging and generated capabilities
 
-**Files**: `docs/extending/`, `docs/lifecycle/`, `docs/delivery/`, `examples/packages/`
+**Files**: `docs/extending/`, `docs/lifecycle/`, `docs/delivery/`, `example-plugins/packages/`
 **Do**: packaging (bundle, `cordis.patch.yml`, profile install), the generated
 capability package (manifest, logic, UI projection, permissions, tests,
 provenance, HOT/WARM/COLD), rollback, hot-reload limits, and the two delivery

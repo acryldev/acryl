@@ -3,7 +3,7 @@
 Goal: the user asks for a feature, you write a plugin, it appears without a restart.
 
 1. Write the package in `<the workspace you are working in>/.acryl-extensions/<plugin-name>/` (create it with your normal
-   file tools; never inside the pack or the profile). Copy the closest example from `../examples/README.md` and change it.
+   file tools; never inside the pack or the profile). Copy the closest example from `../example-plugins/README.md` and change it.
    Always pass the tool the ABSOLUTE path of that directory.
 2. Call the **`acryl_install_plugin`** tool with the package directory. It checks the package
    (bundle patch, `exports` including `./package.json`, a client bundle if `dsh.client` is set), runs

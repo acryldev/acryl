@@ -75,6 +75,6 @@ Both start from one package that has passed verification.
 
 ## What to do next
 
-1. Find the closest working example in `../examples/README.md` and read its header.
+1. Find the closest working example in `../example-plugins/README.md` and read its header.
 2. Read the doc it names, completely, and follow its cross-references.
 3. Write the package, then follow `verify-before-done.md`.

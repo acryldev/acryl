@@ -1,7 +1,7 @@
 # LLM adapters: connect a new model provider
 
 Use this to add a provider route (a new hosted API, a local server, a wrapper). Working example:
-`../examples/packages/llm-adapter-echo/` (a network-free adapter that shows the whole contract; read it fully).
+`../example-plugins/packages/llm-adapter-echo/` (a network-free adapter that shows the whole contract; read it fully).
 The complete contract: `reference/cookbook/adding-an-llm-adapter.md` and `reference/subsystems/llm-streaming.md`.
 
 ## The shape
