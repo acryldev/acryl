@@ -7,6 +7,7 @@ import { test } from 'node:test'
 import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, syncOnStartup, ensureProfileBundle, pinPublicHoistPattern, describeInstalledExtensions } from '../lib/install.js'
 import { discoverExtensions, globalExtensionsDir, installState } from '../lib/reconcile.js'
 import { captureBlend, verifyBlend, writeBlend, readBundleRows } from '../lib/blend-capture.js'
+import { applyBlend } from '../lib/blend-apply.js'
 import { listInstalledPlugins, originOf, readLockfile } from '../lib/provenance.js'
 import { checkManifest, describePermissions, EXTENSION_API_VERSION } from '../lib/manifest.js'
 import { resolvePackRoot } from '../lib/pack-root.js'
@@ -555,6 +556,51 @@ test('blend capture: marketplace and local plugins become rows and a lock; local
     writeFileSync(join(out, 'blend.yaml'), `${readFileSync(join(out, 'blend.yaml'), 'utf8')}# edited\n`)
     assert.ok(verifyBlend(out).problems.some(p => /blend\.yaml changed/u.test(p)))
     assert.equal(readBundleRows(profile, 'not-installed').rows.length, 0)
+  } finally { rmSync(root, { recursive: true, force: true }) }
+})
+
+test('blend apply: verifies first, installs local modules from the vendored source, checks registry integrity, never overwrites', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'apply-')); const ws = join(root, 'ws'); const blendDir = join(ws, '.acryl', 'blend'); const profile = join(root, 'profile')
+  mkdirSync(join(blendDir, 'extensions', 'ext-a'), { recursive: true }); mkdirSync(profile, { recursive: true }); mkdirSync(join(ws, '.acryl-extensions'), { recursive: true })
+  try {
+    const src = join(blendDir, 'extensions', 'ext-a')
+    writeFileSync(join(src, 'package.json'), JSON.stringify({ name: 'ext-a', version: '0.1.0', type: 'module', main: './index.js', exports: { '.': './index.js', './package.json': './package.json' }, dsh: { bundle: { patch: './cordis.patch.yml' } }, acryl: { apiVersion: 1, permissions: ['shell'] } }))
+    writeFileSync(join(src, 'cordis.patch.yml'), '- insert:\n    - id: ext-a\n      name: ext-a\n'); writeFileSync(join(src, 'index.js'), 'export const name = "ext-a"\nexport function apply() {}\n')
+    const digest = `sha256:${hashPackage(src, 64)}`
+    const manifestText = 'apiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\n'
+    const { createHash } = await import('node:crypto')
+    const lock = { formatVersion: 2, origin: { id: 'local.x', kind: 'Blueprint', version: '0.1.0', digest: createHash('sha256').update(manifestText).digest('hex') }, rows: [],
+      modules: [{ name: 'ext-a', origin: 'local', version: '0.1.0', digest, source: 'extensions/ext-a' }, { name: 'market-b', origin: 'registry', version: '2.0.0', digest: 'sha512-good==' }, { name: 'git-c', origin: 'git', spec: 'github:a/c' }] }
+    writeFileSync(join(blendDir, 'blend.yaml'), manifestText); writeFileSync(join(blendDir, 'blend.lock.json'), JSON.stringify(lock))
+    writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: {} }))
+    const writeLock = integrity => writeFileSync(join(profile, 'pnpm-lock.yaml'), ["lockfileVersion: '9.0'", '', 'importers:', '', '  .:', '    dependencies:', '      market-b:', '        specifier: 2.0.0', '        version: 2.0.0', '', 'packages:', '', '  market-b@2.0.0:', `    resolution: {integrity: ${integrity}}`, ''].join('\n'))
+
+    // a Blend that no longer matches its lock installs nothing
+    writeFileSync(join(src, 'index.js'), '// edited\n')
+    const stale = await applyBlend(blendDir, { ...fakes(), profileDir: profile }, { workspaceDir: ws })
+    assert.equal(stale.ok, false); assert.match(stale.problems.join(' '), /differs from the locked digest/)
+    writeFileSync(join(src, 'index.js'), 'export const name = "ext-a"\nexport function apply() {}\n')
+
+    writeLock('sha512-good==')
+    const s = { ...fakes(), profileDir: profile }
+    const applied = await applyBlend(blendDir, s, { workspaceDir: ws })
+    const by = Object.fromEntries(applied.results.map(r => [r.name, r]))
+    assert.equal(by['ext-a'].status, 'installed'); assert.equal(by['ext-a'].permissions, 'requests: shell')
+    assert.equal(existsSync(join(ws, '.acryl-extensions', 'ext-a', 'index.js')), true, 'the vendored source was placed in the project extension scope')
+    assert.equal(by['market-b'].status, 'installed'); assert.equal(by['git-c'].status, 'skipped'); assert.equal(applied.ok, true)
+    assert.ok(s.calls.some(c => c.join(' ') === 'run add market-b@2.0.0'))
+
+    // an integrity mismatch undoes the install and fails the apply
+    writeLock('sha512-evil=='); const t = { ...fakes(), profileDir: profile }
+    const bad = await applyBlend(blendDir, t, { workspaceDir: ws })
+    const badB = bad.results.find(r => r.name === 'market-b')
+    assert.equal(badB.status, 'failed'); assert.match(badB.detail, /integrity mismatch/); assert.equal(bad.ok, false)
+    assert.ok(t.calls.some(c => c.join(' ') === 'run remove market-b'), 'the mismatching install was removed')
+
+    // a same-named folder with different content is never overwritten
+    writeFileSync(join(ws, '.acryl-extensions', 'ext-a', 'index.js'), '// my own edit\n')
+    const conflict = await applyBlend(blendDir, { ...fakes(), profileDir: profile }, { workspaceDir: ws })
+    assert.equal(conflict.results.find(r => r.name === 'ext-a').status, 'conflict'); assert.equal(readFileSync(join(ws, '.acryl-extensions', 'ext-a', 'index.js'), 'utf8'), '// my own edit\n')
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
 

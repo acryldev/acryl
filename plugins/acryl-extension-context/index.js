@@ -16,6 +16,7 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import { globalExtensionsDir } from './lib/reconcile.js'
 import { listInstalledPlugins } from './lib/provenance.js'
 import { captureBlend, verifyBlend, writeBlend } from './lib/blend-capture.js'
+import { applyBlend } from './lib/blend-apply.js'
 import { describePermissions } from './lib/manifest.js'
 import { describeInstalledExtensions, installLocalPlugin, syncOnStartup, listLocalPlugins, reloadLocalPlugins, removeLocalPlugin } from './lib/install.js'
 import { lookupExtensionDocs } from './lib/lookup.js'
@@ -141,8 +142,8 @@ export function apply(ctx) {
     ctx.effect(function* () {
       yield scoped.commands.register({
         name: 'blend',
-        description: 'Capture the installed plugins and local extensions as a Blend, or verify a captured one',
-        input: { hint: '[snapshot|verify]' },
+        description: 'Capture the installed plugins and local extensions as a Blend, verify it, or apply a captured one',
+        input: { hint: '[snapshot|verify|apply]' },
         async handler(invocation) {
           const profileDir = ctx.get('desktopProfiles')?.current?.dir
           const workspaceDir = invocation?.agent?.session?.header?.cwd
@@ -154,7 +155,15 @@ export function apply(ctx) {
             const result = verifyBlend(outDir)
             return result.ok ? { kind: 'success', text: `Blend in ${outDir} matches its lock (${result.checked} checks).` } : { kind: 'error', text: `Blend in ${outDir}:\n${result.problems.map(p => `- ${p}`).join('\n')}` }
           }
-          if (verb !== 'snapshot') return { kind: 'error', text: 'Usage: /blend snapshot (capture the current state) or /blend verify.' }
+          if (verb === 'apply') {
+            // Installs code that runs with the user's permissions: human-typed only, the summary shows what each module requests.
+            const result = await applyBlend(outDir, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir }, { workspaceDir })
+            if (result.problems.length > 0) return { kind: 'error', text: `Nothing was installed; the Blend in ${outDir} does not match its lock:\n${result.problems.map(p => `- ${p}`).join('\n')}` }
+            const lines = result.results.map(r => `${r.name} [${r.origin}]: ${r.status}${r.permissions ? ` (${r.permissions})` : ''}${r.detail ? ` - ${r.detail}` : ''}`)
+            const touched = result.results.some(r => ['installed', 'updated'].includes(r.status))
+            return { kind: result.ok ? 'success' : 'error', text: `${lines.join('\n')}${touched ? '\nReload the page (Web) or window (Desktop, Cmd/Ctrl+R) to pick up UI changes.' : ''}` }
+          }
+          if (verb !== 'snapshot') return { kind: 'error', text: 'Usage: /blend snapshot (capture the current state), /blend verify, or /blend apply (re-create a captured Blend here).' }
           const dshHome = ctx.get('dshHomePath')
           const capture = captureBlend({ profileDir, workspaceDir, globalDir: globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined) })
           const files = writeBlend(capture, outDir)

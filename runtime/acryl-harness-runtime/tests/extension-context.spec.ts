@@ -301,6 +301,54 @@ describe('/reload on the web engine', () => {
     }
   }, 180_000)
 
+  it('a Blend captured on one app is re-created on a fresh app with /blend apply (round trip)', async () => {
+    const boot = () => createAcrylEngineHost({
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      initialEngine: 'dsh',
+      prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+    })
+    const runner = async (host: Awaited<ReturnType<typeof boot>>, generationId: string, cwd: string) => {
+      const bridge = createAcrylSessionBridge(host.ctx, { profile: 'web', generationId, attachment: 'owner', cwd })
+      const sessionId = await bridge.open()
+      const agent = (host.ctx as unknown as { agents: { get(id: unknown): unknown } }).agents.get(SessionId(sessionId))
+      const commands = host.ctx.get('commands' as never) as unknown as {
+        execute(agent: unknown, line: string, attachments: unknown[], signal: AbortSignal): Promise<{ result: { kind: string; text?: string } } | undefined>
+      }
+      return { bridge, run: async (line: string) => (await commands.execute(agent, line, [], new AbortController().signal))?.result }
+    }
+    const source = new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url).pathname
+
+    // App A: build a local extension, install it, capture the Blend.
+    const homeA = await mkdtemp(join(tmpdir(), 'acryl-blend-a-')); temporaryHomes.push(homeA)
+    const wsA = await mkdtemp(join(tmpdir(), 'acryl-blend-a-ws-')); temporaryHomes.push(wsA)
+    process.env.DSH_HOME = homeA
+    cpSync(source, join(wsA, '.acryl-extensions', 'round-trip'), { recursive: true })
+    let host = await boot()
+    let session = await runner(host, 'blend-a', wsA)
+    try {
+      expect((await session.run('/reload new'))?.text).toContain('installed (new)')
+      expect((await session.run('/blend snapshot'))?.kind).toBe('success')
+    } finally { await session.bridge.dispose(); await host.dispose() }
+
+    // App B: a different home and a different workspace that only has the captured .acryl/blend directory.
+    const homeB = await mkdtemp(join(tmpdir(), 'acryl-blend-b-')); temporaryHomes.push(homeB)
+    const wsB = await mkdtemp(join(tmpdir(), 'acryl-blend-b-ws-')); temporaryHomes.push(wsB)
+    process.env.DSH_HOME = homeB
+    cpSync(join(wsA, '.acryl', 'blend'), join(wsB, '.acryl', 'blend'), { recursive: true })
+    host = await boot()
+    session = await runner(host, 'blend-b', wsB)
+    try {
+      expect((await session.run('/reload'))?.text).not.toContain('acryl-example-tool')   // nothing installed yet
+      const applied = await session.run('/blend apply')
+      expect(applied?.kind).toBe('success')
+      expect(applied?.text).toContain('acryl-example-tool [local]: installed')
+      expect(existsSync(join(wsB, '.acryl-extensions', 'acryl-example-tool', 'index.js'))).toBe(true)
+      const again = await session.run('/blend apply')
+      expect(again?.text).toContain('acryl-example-tool [local]: unchanged')   // idempotent
+      expect((await session.run('/reload'))?.text).toContain('acryl-example-tool [project]: unchanged')
+    } finally { await session.bridge.dispose(); await host.dispose() }
+  }, 300_000)
+
   it('host code updates take effect in the running process without a hot shim (automatic reload)', async () => {
     const home = await mkdtemp(join(tmpdir(), 'acryl-extension-hot-'))
     temporaryHomes.push(home)

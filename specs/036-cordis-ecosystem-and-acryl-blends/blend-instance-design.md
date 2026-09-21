@@ -1,6 +1,6 @@
 # Blend instance: persistence, packaging, distribution and orchestration
 
-Status: design, with the capture half built and tested (see "Built now"). Follows `spec.md` (the ecosystem map) and builds on spec 033 (runtime
+Status: design, with capture, verify and apply built and tested (see "Built now"). Follows `spec.md` (the ecosystem map) and builds on spec 033 (runtime
 contract) and the `blends` repo (format, `blends-core`). It answers four questions: how a Blend instance is created and persisted from the current state
 of all plugins and local extensions; how it is packaged and distributed; how it orchestrates at runtime; and how ACRYL Blends becomes a framework.
 
@@ -59,7 +59,7 @@ Trust at the edge: the union of the modules' declared `acryl.permissions` is sho
 
 ## 4. Orchestration at runtime (design)
 
-Instantiate (`acryl init --blend <id>` or applying a captured directory):
+Instantiate (`acryl init --blend <id>`, or `/blend apply` on a captured directory, which is built):
 
 ```text
 blend.lock.json  ->  for each module:
@@ -91,9 +91,10 @@ marketplace when worth sharing (the graduation path of `spec.md`, now with prove
 
 ## Built now, and not
 
-Built and tested: provenance (`listInstalledPlugins`), capture with lock v2 (`captureBlend`), vendoring, `/blend snapshot` and `/blend verify` on a booted app,
-and a check that the manifest validates against and compiles with `blends-core`. Not built: applying a Blend (`/blend apply`: install every module from the lock and compile the
-rows), the ledger and Evolution Steps, lock v2 accepted by `blends-core` itself, the hub publish path, the permission diff UI, data adapters. Each is a follow-on ticket under 033.
+Built and tested: provenance (`listInstalledPlugins`), capture with lock v2 (`captureBlend`), vendoring, `/blend snapshot`, `/blend verify` and `/blend apply` on a booted app (a real round trip: captured on one app,
+re-created on a fresh app with a different home and workspace, idempotent), integrity checking of marketplace modules with rollback, and a check that the manifest validates against and compiles with `blends-core`.
+Not built: the ledger and Evolution Steps, lock v2 accepted by `blends-core` itself, the hub publish path, the permission diff UI, data adapters, applying rows/overrides from `blend.yaml` onto a non-empty profile (apply
+installs the modules; the compiled rows come from each package's own bundle patch, so a profile-level override in `blend.yaml` is not yet re-applied). Each is a follow-on ticket under spec 033.
 
 ## Open questions
 
