@@ -149,4 +149,18 @@ describe('extension pack examples on the real web engine', () => {
       expect(stateOf(fiber)).toBe('ACTIVE') // a no-op where there is no tuiCommands service
     } finally { await host.dispose() }
   }, 60_000)
+
+  it('prompt-assemble-hook: the assembled prompt gains the example section and keeps every other section', async () => {
+    const host = await bootHost()
+    try {
+      const systemPrompt = host.ctx.get('systemPrompt' as never) as unknown as { assemble(): Promise<{ sections: Array<{ name: string }> }> }
+      const before = (await systemPrompt.assemble()).sections.map(s => s.name)
+      const fiber = host.ctx.plugin(await load('prompt-assemble-hook') as never) as { state: number }
+      await settle()
+      expect(stateOf(fiber)).toBe('ACTIVE')
+      const after = (await systemPrompt.assemble()).sections.map(s => s.name)
+      expect(after).toContain('example:note')
+      for (const name of before) expect(after).toContain(name)
+    } finally { await host.dispose() }
+  }, 60_000)
 })

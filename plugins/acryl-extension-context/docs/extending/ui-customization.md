@@ -19,7 +19,7 @@ in the last column. All facts here were checked against the source and, where ma
 | A whole named theme (user picks it) | `ctx.theme.register` | same | no | reload | `ui-theme.md` |
 | Logo, brand name in sidebar and hero | client slots `sidebar.brand.mark` / `.name`, `conversation.hero.brand.mark` (single occupant: swap the brand package row) | same | wordmark and banner are source files (`acrylMark.ts`, `bannerText.ts`) | reload / rebuild | `ui-branding.md` |
 | Browser tab title, favicon, page background before boot | host: `webserver/index-inject` rows and `tapIndex` | the window title is native (see below) | none | reload | `ui-branding.md` |
-| Add a button, panel, tab, card | client slots, built from the shared components | same | a `tuiCommands` overlay built from pi-tui components | reload / restart TUI | `ui-components.md`, `client-slot.md`, `tui-components.md`, `../maps/mount-points.md` |
+| Add a button, panel, tab, card | client slots, built from the shared components | same | a `tuiCommands` overlay built from pi-tui components | reload page or window (Web, Desktop); live in the TUI | `ui-components.md`, `client-slot.md`, `tui-components.md`, `../maps/mount-points.md` |
 | Layout (sidebar, columns, main view) | slots (`sidebar`, `rightbar`, `conversation.view`) | plus the `desktop.main` frame slot | none | reload | `../maps/mount-points.md` |
 | Window chrome, title bar, vibrancy, app icon, tray, native menu, installer name | no | Electron main process: source edit and rebuild | no | NOT live (rebuild) | `desktop-app.md` |
 | Terminal palette, banner, mascot, built-in overlays | no | no | source edit and rebuild | NOT live (rebuild) | `tui-components.md` |

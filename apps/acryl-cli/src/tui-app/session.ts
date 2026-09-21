@@ -943,6 +943,9 @@ export async function runAcrylTui(options: RunAcrylTuiOptions): Promise<AcrylTui
     open: ({ tui, close }) => new MarketOverlay(tui, host.ctx, close, refreshDynamicCommands),
   })
   refreshDynamicCommands()
+  // Any later registration change (an agent installing an extension with acryl_install_plugin, a removal, /reload) refreshes the live
+  // command list too, so a new terminal command works without restarting the TUI.
+  const stopWatchingCommands = host.ctx.get('tuiCommands')?.subscribe(refreshDynamicCommands)
   let current: TuiSession | undefined
   let settled = false
 
@@ -958,6 +961,7 @@ export async function runAcrylTui(options: RunAcrylTuiOptions): Promise<AcrylTui
     const sessionId = current.id
     const resumeHint = stripSessionIdPrefix(sessionId)
     // Restore the terminal before handing the resume hint back to the CLI.
+    stopWatchingCommands?.()
     await current.dispose(false)
     await host.dispose()
     settled = true
@@ -971,6 +975,7 @@ export async function runAcrylTui(options: RunAcrylTuiOptions): Promise<AcrylTui
       },
     })
   } catch (error) {
+    stopWatchingCommands?.()
     await current?.dispose(false).catch(() => {})
     await host.dispose()
     throw error

@@ -9,3 +9,6 @@ broadcasts synchronously. Dispatch modes: `emit` (fire and forget), `parallel` (
 `next()`**, otherwise it swallows the downstream default. Use services for calls and events for
 observation or interception. Facts that must survive a restart belong in durable session state,
 not in a Cordis event.
+
+Every lifecycle event (prompt construction, the provider request, streaming, session events) is listed in `../maps/events.md`. Working example of a
+waterfall hook on prompt construction: `../examples/packages/prompt-assemble-hook/`.

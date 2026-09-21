@@ -42,8 +42,7 @@ Web and Desktop, an optional **browser** half (`client.js`, slots). Pick the mou
 
 The terminal has ONE plugin presentation seam: `ctx.get('tuiCommands')?.register({ command: '/name', description, packageName, overlay?, open({ tui, close }) })`.
 `open()` returns a real `pi-tui` `Component` shown as an overlay (full screen by default; pass `overlay: { width, anchor, margin }`
-for a compact popup). It is read once when the TUI starts, so a new command appears after the TUI restarts (or `/reload` then
-reopen). The built-in overlays (`/model`, `/plugins`, `/tools`, `/trajectory`, ...) are not replaceable. Everything else the CLI
+for a compact popup). The command list refreshes live whenever a plugin registers or removes a command, so a newly installed command works without restarting the TUI. The built-in overlays (`/model`, `/plugins`, `/tools`, `/trajectory`, ...) are not replaceable. Everything else the CLI
 shows (chat, tool cards, status) is built in. Example: `examples/packages/tui-command-basic/`; doc: `extending/tui-command.md`.
 
 ## Web and Desktop: client slots

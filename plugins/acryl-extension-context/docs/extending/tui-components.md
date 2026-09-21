@@ -7,7 +7,7 @@ and checks no line overflows). Basic command registration: `../examples/packages
 
 Exactly one presentation seam: `ctx.get('tuiCommands')?.register({ command: '/name', description, packageName, overlay?, open({ tui, close }) })`.
 `open` returns a pi-tui `Component`. The overlay is full screen by default; pass `overlay: { width: '60%', anchor: 'center', margin: 2 }`
-for a popup. The registry is read once when the TUI starts, so a new command appears after a TUI restart. The built-in overlays
+for a popup. The command list refreshes live when a plugin registers or removes a command, so a newly installed command works without restarting the TUI. The built-in overlays
 (`/model`, `/plugins`, `/tools`, `/trajectory`, ...) and the chat view are not replaceable. Everything else works through tools,
 commands (`ctx.commands`) and prompts, which have no visual design.
 

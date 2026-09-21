@@ -13,7 +13,7 @@
 import { readFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { installLocalPlugin, listLocalPlugins, reloadLocalPlugins, removeLocalPlugin } from './lib/install.js'
+import { describeInstalledExtensions, installLocalPlugin, listLocalPlugins, reloadLocalPlugins, removeLocalPlugin } from './lib/install.js'
 import { verifyPackage } from './lib/verify.js'
 import { preparePublish } from './lib/publish.js'
 import { resolvePackRoot } from './lib/pack-root.js'
@@ -46,18 +46,32 @@ export function apply(ctx) {
     scoped.skills.registerProvider(() => createSkillProvider(root))
   })
 
-  // `/reload`: re-install every local plugin from its source directory (human command).
+  // The live view of installed extensions (pi.dev rebuilds its prompt after a reload): a per-assembly dynamic context, empty when none.
+  ctx.inject(['systemPrompt'], scoped => {
+    ctx.effect(() => scoped.systemPrompt.context({
+      name: 'acryl:installed-extensions',
+      order: 9500,
+      text: () => describeInstalledExtensions(ctx.get('desktopProfiles')?.current?.dir, ctx.get('livePluginActivation')),
+    }), 'extension-context: installed extensions context')
+  })
+
+  // `/reload`: re-install every local plugin from its source directory, and install new folders under <workspace>/.acryl-extensions/.
   ctx.inject(['commands'], scoped => {
     ctx.effect(function* () {
       yield scoped.commands.register({
         name: 'reload',
         description: 'Reload local extensions from their source folders',
-        async handler() {
+        async handler(invocation) {
           const profileDir = ctx.get('desktopProfiles')?.current?.dir
           if (!profileDir) return { kind: 'error', text: 'The active profile is not available in this runtime.' }
-          const results = await reloadLocalPlugins({ pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir })
-          if (results.length === 0) return { kind: 'success', text: 'No local extensions installed.' }
-          const lines = results.map(r => r.ok ? `${r.name}: ${r.action}` : `${r.name}: FAILED - ${(r.errors ?? []).join('; ')}`)
+          // The session's workspace, so extension folders dropped under <workspace>/.acryl-extensions/ are discovered too.
+          const workspaceDir = invocation?.agent?.session?.header?.cwd
+          // `/reload new` also installs extension folders found under .acryl-extensions/ that are not installed yet: they run with the
+          // user's permissions, so the human opts in explicitly.
+          const installDiscovered = String(invocation?.rawInput ?? '').trim() === 'new'
+          const results = await reloadLocalPlugins({ pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir }, undefined, { workspaceDir, installDiscovered })
+          if (results.length === 0) return { kind: 'success', text: 'No local extensions installed or found in .acryl-extensions/.' }
+          const lines = results.map(r => r.pending ? `${r.dir}: NEW, not installed. It would run with your permissions: review it, then type /reload new` : r.ok ? `${r.name}: ${r.action}${r.discovered ? ' (new)' : ''}` : `${r.name}: FAILED - ${(r.errors ?? []).join('; ')}`)
           const failed = results.some(r => !r.ok)
           const text = `${lines.join('\n')}\nReload the page (Web) or window (Desktop, Cmd/Ctrl+R) to pick up UI changes.`
           return failed ? { kind: 'error', text } : { kind: 'success', text }

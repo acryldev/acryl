@@ -3,7 +3,7 @@
  * mounts the plugin, the assembled system prompt carries the docs router with
  * paths that exist on disk, and the install tool the agent needs is registered.
  */
-import { existsSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync } from 'node:fs'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -98,7 +98,7 @@ describe('/reload on the web engine', () => {
       }
       expect(commands.list(agent).map(command => command.name)).toContain('reload')
       const execution = await commands.execute(agent, '/reload', [], new AbortController().signal)
-      expect(execution?.result).toMatchObject({ kind: 'success', text: 'No local extensions installed.' })
+      expect(execution?.result).toMatchObject({ kind: 'success', text: 'No local extensions installed or found in .acryl-extensions/.' })
     } finally {
       await bridge.dispose()
       await host.dispose()
@@ -119,4 +119,46 @@ describe('/reload on the web engine', () => {
       expect(process.env.ACRYL_PROFILE).toBe('web')
     } finally { await host.dispose() }
   }, 60_000)
+
+  it('/reload lists a new folder from the session workspace, /reload new installs it, and the prompt then lists it', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-extension-discover-'))
+    temporaryHomes.push(home)
+    process.env.DSH_HOME = home
+    const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-ws-'))
+    temporaryHomes.push(workspace)
+    const source = new URL('../../../plugins/acryl-extension-context/examples/packages/tool-basic/', import.meta.url).pathname
+    const target = join(workspace, '.acryl-extensions', 'dropped-tool')
+    mkdirSync(join(workspace, '.acryl-extensions'), { recursive: true })
+    cpSync(source, target, { recursive: true })
+    const host = await createAcrylEngineHost({
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      initialEngine: 'dsh',
+      prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+    })
+    const bridge = createAcrylSessionBridge(host.ctx, { profile: 'web', generationId: 'discover', attachment: 'owner', cwd: workspace })
+    try {
+      const sessionId = await bridge.open()
+      const agent = (host.ctx as unknown as { agents: { get(id: unknown): unknown } }).agents.get(SessionId(sessionId))
+      const commands = host.ctx.get('commands' as never) as unknown as {
+        execute(agent: unknown, line: string, attachments: unknown[], signal: AbortSignal): Promise<{ result: { kind: string; text?: string } } | undefined>
+      }
+      const before = await (host.ctx.get('systemPrompt' as never) as unknown as { assemble(): Promise<{ contexts: Array<{ name: string; text: string }> }> }).assemble()
+      expect(before.contexts.find(c => c.name === 'acryl:installed-extensions')?.text ?? '').toBe('')
+      // Plain /reload only LISTS a new folder (it would run with the user's permissions); nothing is installed.
+      const listed = await commands.execute(agent, '/reload', [], new AbortController().signal)
+      expect(listed?.result.text).toContain('NEW, not installed')
+      const stillEmpty = await (host.ctx.get('systemPrompt' as never) as unknown as { assemble(): Promise<{ contexts: Array<{ name: string; text: string }> }> }).assemble()
+      expect(stillEmpty.contexts.find(c => c.name === 'acryl:installed-extensions')?.text ?? '').toBe('')
+      const execution = await commands.execute(agent, '/reload new', [], new AbortController().signal)
+      expect(execution?.result.kind).toBe('success')
+      expect(execution?.result.text).toContain('(new)')
+      const after = await (host.ctx.get('systemPrompt' as never) as unknown as { assemble(): Promise<{ contexts: Array<{ name: string; text: string }> }> }).assemble()
+      const listing = after.contexts.find(c => c.name === 'acryl:installed-extensions')?.text ?? ''
+      expect(listing).toContain('acryl-example-tool')
+      expect(listing).toContain('dropped-tool')
+    } finally {
+      await bridge.dispose()
+      await host.dispose()
+    }
+  }, 120_000)
 })

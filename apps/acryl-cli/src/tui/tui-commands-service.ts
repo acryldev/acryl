@@ -120,6 +120,8 @@ declare module '@deepseek-ai/cordis' {
 export class TuiCommandsService extends Service {
   /** Every live registration, keyed by a synthetic id (not `command` - two registrations can share a bare command name). */
   private readonly registrations = new Map<symbol, ResolvedTuiCommand>()
+  /** Called after every registration change, so a live TUI can refresh its command list without a restart (pi.dev rebuilds after a reload). */
+  private readonly listeners = new Set<() => void>()
 
   constructor(ctx: Context) {
     super(ctx, 'tuiCommands')
@@ -141,11 +143,28 @@ export class TuiCommandsService extends Service {
     }
     const id = Symbol(registration.command)
     this.registrations.set(id, { command: registration.command, description: registration.description, open: registration.open, packageName: registration.packageName, overlay: registration.overlay })
+    this.notify()
     let active = true
     return () => {
       if (!active) return
       active = false
       this.registrations.delete(id)
+      this.notify()
+    }
+  }
+
+  /**
+   * Observe registration changes (an installed plugin adding a command, or a removed one taking it away).
+   * @returns a disposer removing this listener.
+   */
+  subscribe(listener: () => void): () => void {
+    this.listeners.add(listener)
+    return () => { this.listeners.delete(listener) }
+  }
+
+  private notify(): void {
+    for (const listener of [...this.listeners]) {
+      try { listener() } catch { /* an observer must never break registration */ }
     }
   }
 

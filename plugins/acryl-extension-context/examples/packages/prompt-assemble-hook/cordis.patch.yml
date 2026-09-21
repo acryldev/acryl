@@ -1,0 +1,3 @@
+- insert:
+    - id: example-prompt-hook
+      name: acryl-example-prompt-hook

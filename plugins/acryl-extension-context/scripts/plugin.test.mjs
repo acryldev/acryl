@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { test } from 'node:test'
-import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, ensureProfileBundle, pinPublicHoistPattern } from '../lib/install.js'
+import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, ensureProfileBundle, pinPublicHoistPattern, discoverWorkspaceExtensions, describeInstalledExtensions } from '../lib/install.js'
 import { resolvePackRoot } from '../lib/pack-root.js'
 import { createSkillProvider, parseSkill } from '../lib/skills.js'
 import { buildRouterText, estimateTokens, ROUTER_TOKEN_BUDGET } from '../lib/router.js'
@@ -327,4 +327,35 @@ test('hoist pattern drift: the recorded pattern is pinned once and the add is re
     assert.equal(pinPublicHoistPattern(profile), false, 'already pinned: no second write')
     assert.equal(pinPublicHoistPattern(join(profile, 'missing')), false)
   } finally { rmSync(dir, { recursive: true, force: true }); rmSync(profile, { recursive: true, force: true }) }
+})
+
+test('workspace discovery finds extension folders, and /reload installs the new ones', async () => {
+  const workspace = mkdtempSync(join(tmpdir(), 'ws-')); const profile = mkdtempSync(join(tmpdir(), 'profile-'))
+  try {
+    const dir = join(workspace, '.acryl-extensions', 'my-plugin'); mkdirSync(dir, { recursive: true })
+    const pkg = makePkg(); // a valid package elsewhere; copy its files into the workspace folder
+    for (const f of ['package.json', 'cordis.patch.yml']) writeFileSync(join(dir, f), readFileSync(join(pkg, f)))
+    mkdirSync(join(workspace, '.acryl-extensions', 'not-a-package'), { recursive: true })
+    assert.deepEqual(discoverWorkspaceExtensions(workspace), [dir])
+    assert.deepEqual(discoverWorkspaceExtensions('relative/path'), [])
+    writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: {} }))
+    const s = { ...fakes(), profileDir: profile }
+    const listed = await reloadLocalPlugins(s, undefined, { workspaceDir: workspace })
+    assert.equal(listed.length, 1); assert.equal(listed[0].pending, true); assert.deepEqual(s.calls, [], 'a new folder is only listed, never installed, by default')
+    const results = await reloadLocalPlugins(s, undefined, { workspaceDir: workspace, installDiscovered: true })
+    assert.equal(results.length, 1); assert.equal(results[0].discovered, true); assert.equal(results[0].ok, true); assert.equal(results[0].action, 'installed')
+    rmSync(pkg, { recursive: true, force: true })
+  } finally { rmSync(workspace, { recursive: true, force: true }); rmSync(profile, { recursive: true, force: true }) }
+})
+
+test('the live extensions context lists installed plugins with their live status, and is empty when there are none', () => {
+  const profile = mkdtempSync(join(tmpdir(), 'profile-'))
+  try {
+    assert.equal(describeInstalledExtensions(profile, undefined), '')
+    assert.equal(describeInstalledExtensions(undefined, undefined), '')
+    writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: { a: 'file:/src/a', b: '^1.0.0' } }))
+    const text = describeInstalledExtensions(profile, { statusOf: name => (name === 'a' ? 'active' : undefined) })
+    assert.match(text, /- a \(active\) source: \/src\/a/)
+    assert.doesNotMatch(text, /- b/)
+  } finally { rmSync(profile, { recursive: true, force: true }) }
 })

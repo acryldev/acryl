@@ -9,7 +9,7 @@
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
-import { classifyRow, collectPrimitiveExports, collectSlots, collectThemeTokens, indexPackages, loadRows, renderMountPoints, renderTaxonomy, renderThemeTokens, renderUiComponents } from './lib/maps.mjs'
+import { classifyRow, collectEvents, collectPrimitiveExports, collectSlots, collectThemeTokens, indexPackages, loadRows, renderEvents, renderMountPoints, renderTaxonomy, renderThemeTokens, renderUiComponents } from './lib/maps.mjs'
 import { fileURLToPath } from 'node:url'
 
 const pack = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -117,6 +117,7 @@ const rows = [...surfacesByName].map(([name, set]) => classifyRow(name, index, s
 mkdirSync(join(pack, 'docs/maps'), { recursive: true })
 writeFileSync(join(pack, 'docs/maps/mount-points.md'), renderMountPoints(slots, HOST_SEAMS))
 writeFileSync(join(pack, 'docs/maps/taxonomy.md'), renderTaxonomy(rows, TYPE_GUIDE))
+writeFileSync(join(pack, 'docs/maps/events.md'), renderEvents(collectEvents(repo, index)))
 const themeTokens = collectThemeTokens(repo)
 writeFileSync(join(pack, 'docs/maps/theme-tokens.md'), renderThemeTokens(themeTokens))
 const TUI_LIST = '`Container`, `VStack`, `HStack`, `Box`, `Text`, `TruncatedText`, `Markdown`, `SelectList`, `SettingsList`, `Input`, `Editor`, `ScrollView`, `Loader`, `CancellableLoader`, `Spacer`, `Image`, plus `truncateToWidth`, `visibleWidth`, `wrapTextWithAnsi`, `matchesKey`/`Key`, `fuzzyFilter`. Contract and rules: `extending/tui-components.md`.'
@@ -132,6 +133,7 @@ manifest.navigation.splice(manifest.navigation.findIndex(g => g.title === 'Deliv
     { id: 'maps.mount-points', title: 'Mount points per surface: where UI and host extensions attach (CLI, Web, Desktop)', path: 'maps/mount-points.md', when: 'You must decide WHERE something mounts: which slot, terminal overlay, host service or Desktop frame, and which surface supports it.', surfaces: ['tui', 'web', 'desktop'], applies: 'all', seeAlso: ['extending.client-slot', 'extending.tui-command'] },
     { id: 'maps.theme-tokens', title: 'Theme tokens: every design token you can override (Web and Desktop)', path: 'maps/theme-tokens.md', when: 'You want to change colors, surfaces, borders, buttons or fonts of the Web or Desktop app: the exact token names with light and dark values.', surfaces: ['web', 'desktop'], applies: 'all', seeAlso: ['extending.ui-theme'] },
     { id: 'maps.ui-components', title: 'UI component libraries available today (web primitives, pi-tui) and the gap', path: 'maps/ui-components.md', when: 'You are about to build UI: which ready-made components exist on each surface so you do not hand-style.', surfaces: ['tui', 'web', 'desktop'], applies: 'all', seeAlso: ['extending.ui-components'] },
+    { id: 'maps.events', title: 'Lifecycle events: where a plugin can hook the agent (prompt, request, stream, session)', path: 'maps/events.md', when: 'You want to intercept or observe the agent lifecycle: prompt construction, the provider request, streaming, tool policy, session events.', surfaces: ['tui', 'web', 'desktop'], applies: 'all', seeAlso: ['extending.event-hook'] },
     { id: 'maps.taxonomy', title: 'Plugin taxonomy: every plugin type and every shipped plugin, per surface', path: 'maps/taxonomy.md', when: 'You want the full list of plugin types, which surfaces have them, whether an agent can author one, and real shipped plugins to study.', surfaces: ['tui', 'web', 'desktop'], applies: 'all', seeAlso: ['extending.cordis-core'] },
   ],
 })

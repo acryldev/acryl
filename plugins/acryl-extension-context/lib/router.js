@@ -27,11 +27,18 @@ export const estimateTokens = text => Math.ceil(text.length / 4)
 export function buildRouterText(root, manifest) {
   const docs = join(root, 'docs')
   const examples = join(root, 'examples')
+  const pathOf = new Map()
+  for (const group of manifest.navigation) for (const item of group.items) if (item.id) pathOf.set(item.id, item.path)
   const topics = []
-  for (const group of manifest.navigation) {
-    for (const item of group.items) {
-      if (item.applies === 'not-for-authors' || item.id?.startsWith('reference.') || item.id?.startsWith('maps.')) continue
-      topics.push(`${item.topic ?? (item.title.length > 48 ? `${item.title.slice(0, 45)}...` : item.title)} (${item.path})`)
+  if (Array.isArray(manifest.routes)) {
+    // Curated routes (pi.dev lists about a dozen "when asked about X (docs)" entries): several docs per route, most important first.
+    for (const route of manifest.routes) topics.push(`${route.when} (${route.docs.map(id => pathOf.get(id)).filter(Boolean).join(', ')})`)
+  } else {
+    for (const group of manifest.navigation) {
+      for (const item of group.items) {
+        if (item.applies === 'not-for-authors' || item.id?.startsWith('reference.') || item.id?.startsWith('maps.')) continue
+        topics.push(`${item.topic ?? (item.title.length > 48 ? `${item.title.slice(0, 45)}...` : item.title)} (${item.path})`)
+      }
     }
   }
   return [
@@ -45,7 +52,7 @@ export function buildRouterText(root, manifest) {
     '- Reference for the Cordis API and every harness subsystem: reference/ (one file each, listed in the docs index)',
     '- When working on ACRYL extension topics, read the docs and the nearest example, and follow .md cross-references before implementing',
     '- Always read ACRYL .md files completely and follow links to related docs',
-    `- Write extensions in <workspace>/.acryl-extensions/<name>/ and deliver with ${INSTALL_TOOL_NAME} (ABSOLUTE path; calling it again updates). Check first with ${VERIFY_TOOL_NAME}; also ${LIST_TOOL_NAME}, ${REMOVE_TOOL_NAME}, ${PUBLISH_TOOL_NAME} (a dry run: publishing is the user's decision). Never claim a plugin works without the tool result; UI needs a page reload (the user can type /reload)`,
+    `- Write extensions in <workspace>/.acryl-extensions/<name>/ and deliver with ${INSTALL_TOOL_NAME} (ABSOLUTE path; calling it again updates). Check first with ${VERIFY_TOOL_NAME}; also ${LIST_TOOL_NAME}, ${REMOVE_TOOL_NAME}, ${PUBLISH_TOOL_NAME} (a dry run: publishing is the user's decision). Never claim a plugin works without the tool result; UI needs a page reload (the user can type /reload, which also installs new folders under .acryl-extensions/)`,
     `</${ROUTER_TAG}>`,
   ].join('\n')
 }

@@ -46,4 +46,12 @@ package for it (`extending/packaging.md`: `acryl-package` keyword, `acryl` manif
 
 ## /reload
 
-The human can type `/reload` in the chat. It re-installs every local plugin from its source folder (same checks and rollback as `acryl_install_plugin`) and prints one line per plugin. Suggest it after the user edits a plugin by hand. UI changes still need a page (Web) or window (Desktop) reload.
+The human types `/reload` in the chat. It re-installs every local plugin from its source folder (same checks and rollback as `acryl_install_plugin`) and
+prints one line per plugin. Suggest it after the user edits a plugin by hand. A NEW extension folder found under `<workspace>/.acryl-extensions/` is only
+listed ("NEW, not installed"): installing new folders takes `/reload new`, typed by the human, because an extension runs with the user's permissions
+(see `../start-here/trust-and-safety.md`). UI changes still need a page (Web) or window (Desktop) reload.
+
+## What you see in your context
+
+Each turn the prompt carries a live `acryl:installed-extensions` note listing the installed local extensions, whether each is mounted, and its source
+folder, so after an install, update or removal you can see the current state without calling `acryl_list_plugins`.

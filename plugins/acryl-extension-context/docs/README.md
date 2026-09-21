@@ -13,6 +13,7 @@ plugin. Verified working examples: `../examples/README.md`.
 | [This runtime: how ACRYL plugins are built, loaded and delivered](start-here/this-runtime.md) | Always first: the layers, the plugin and package contracts, and the two delivery paths. | tui web desktop | all |
 | [Verify before you say it works](start-here/verify-before-done.md) | Before claiming a plugin works, stating a live fiber state, or delivering a package. | tui web desktop | all |
 | [Troubleshooting](start-here/troubleshooting.md) | A plugin is PENDING, FAILED, invisible or running stale code: symptom table and where to look. | tui web desktop | all |
+| [Trust and safety: extensions run with the user's permissions](start-here/trust-and-safety.md) | Before writing or installing any extension: what it can do, the rules for the agent, and what ACRYL does and does not protect. | tui web desktop | all |
 
 ## Extending ACRYL (by plugin type)
 
@@ -55,6 +56,7 @@ plugin. Verified working examples: `../examples/README.md`.
 | [Mount points per surface: where UI and host extensions attach (CLI, Web, Desktop)](maps/mount-points.md) | You must decide WHERE something mounts: which slot, terminal overlay, host service or Desktop frame, and which surface supports it. | tui web desktop | all |
 | [Theme tokens: every design token you can override (Web and Desktop)](maps/theme-tokens.md) | You want to change colors, surfaces, borders, buttons or fonts of the Web or Desktop app: the exact token names with light and dark values. | web desktop | all |
 | [UI component libraries available today (web primitives, pi-tui) and the gap](maps/ui-components.md) | You are about to build UI: which ready-made components exist on each surface so you do not hand-style. | tui web desktop | all |
+| [Lifecycle events: where a plugin can hook the agent (prompt, request, stream, session)](maps/events.md) | You want to intercept or observe the agent lifecycle: prompt construction, the provider request, streaming, tool policy, session events. | tui web desktop | all |
 | [Plugin taxonomy: every plugin type and every shipped plugin, per surface](maps/taxonomy.md) | You want the full list of plugin types, which surfaces have them, whether an agent can author one, and real shipped plugins to study. | tui web desktop | all |
 
 ## Reference (synced)

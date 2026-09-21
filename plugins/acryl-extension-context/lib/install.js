@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { isAbsolute, join, resolve } from 'node:path'
 
 /**
@@ -189,18 +189,63 @@ export async function removeLocalPlugin(input, services) {
 }
 
 /**
- * `/reload`: re-install every local plugin from its source directory, so edits made by hand
- * (or by another tool) go live without asking the agent. Each plugin goes through the same
- * checked install path, so a broken edit is reported and rolled back, never half-applied.
+ * Extension source folders the agent (or the user) put under `<workspace>/.acryl-extensions/<name>/`: every immediate
+ * subdirectory that has a `package.json`. pi.dev discovers extensions from a known directory on start and on `/reload`;
+ * this is the same convention here.
  */
-export async function reloadLocalPlugins(services, fs) {
+export function discoverWorkspaceExtensions(workspaceDir, fs = { existsSync, readFileSync, readdirSync }) {
+  if (!workspaceDir || !isAbsolute(workspaceDir)) return []
+  const root = join(workspaceDir, '.acryl-extensions')
+  if (!fs.existsSync(root)) return []
+  const found = []
+  for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isDirectory() || entry.name.startsWith('.')) continue
+    const dir = join(root, entry.name)
+    if (fs.existsSync(join(dir, 'package.json'))) found.push(dir)
+  }
+  return found.sort()
+}
+
+/**
+ * `/reload`: re-install every local plugin from its source directory, and install any NEW extension folder found under
+ * `<workspace>/.acryl-extensions/`, so edits and drops made by hand (or by another tool) go live without asking the agent
+ * (pi.dev: write the file, then `/reload`). Each plugin goes through the same checked install path, so a broken edit is reported
+ * and rolled back, never half-applied.
+ * @param {object} services `{ pnpm, live, profileDir }`
+ * @param {object} [fs]
+ * @param {{ workspaceDir?: string, installDiscovered?: boolean }} [options] `installDiscovered`: install new folders instead of only listing them
+ */
+export async function reloadLocalPlugins(services, fs, options = {}) {
   const plugins = listLocalPlugins(services.profileDir, fs)
   const results = []
+  const done = new Set()
   for (const plugin of plugins) {
     const dir = plugin.installedFrom
     if (!dir || !isAbsolute(dir)) { results.push({ name: plugin.name, ok: false, errors: [`source directory "${dir}" is not absolute, skipped`] }); continue }
+    done.add(dir)
     const result = await installLocalPlugin({ path: dir }, services, fs)
     results.push({ name: plugin.name, ...result })
   }
+  for (const dir of discoverWorkspaceExtensions(options.workspaceDir)) {
+    if (done.has(dir)) continue
+    // Extensions run with the user's permissions, and a folder in a cloned repository is a prompt-injection surface (pi.dev has project
+    // trust for the same reason): a new folder is only LISTED unless the human explicitly asked to install new ones.
+    if (!options.installDiscovered) { results.push({ name: dir, discovered: true, pending: true, ok: true, dir }); continue }
+    const result = await installLocalPlugin({ path: dir }, services, fs)
+    results.push({ name: result.package ?? dir, discovered: true, ...result })
+  }
   return results
+}
+
+/**
+ * The live view of local extensions for the agent: what is installed, where its source is and whether it is mounted. Evaluated
+ * at every prompt assembly, so it reflects the state after an install, update or remove without the agent calling the list tool
+ * (pi.dev rebuilds its prompt and tool registry after a reload).
+ */
+export function describeInstalledExtensions(profileDir, live, fs) {
+  if (!profileDir) return ''
+  const plugins = listLocalPlugins(profileDir, fs)
+  if (plugins.length === 0) return ''
+  const lines = plugins.map(plugin => `- ${plugin.name} (${live?.statusOf?.(plugin.name) ?? 'not mounted'}) source: ${plugin.installedFrom}`)
+  return `Installed local ACRYL extensions (edit the source, then call acryl_install_plugin to update; /reload re-installs all):\n${lines.join('\n')}`
 }

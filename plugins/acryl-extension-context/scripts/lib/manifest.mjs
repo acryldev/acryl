@@ -75,6 +75,15 @@ export function validateManifest(manifest, files) {
     if (!APPLIES.includes(doc.applies)) problems.push(`${at}: applies must be one of ${APPLIES.join(', ')}`)
   }
 
+  // Router routes (the prompt's "when asked about X (docs)" map): every route names existing docs.
+  if (manifest.routes !== undefined) {
+    if (!Array.isArray(manifest.routes)) problems.push('routes must be an array')
+    else manifest.routes.forEach((route, i) => {
+      if (!isObject(route) || typeof route.when !== 'string' || route.when === '' || !Array.isArray(route.docs) || route.docs.length === 0) { problems.push(`routes[${i}]: needs "when" and a non-empty "docs" array`); return }
+      for (const id of route.docs) if (!docIds.has(id)) problems.push(`routes[${i}] (${route.when}): unknown doc id ${id}`)
+    })
+  }
+
   for (const example of manifest.examples) {
     const at = isObject(example) && typeof example.id === 'string' ? `example ${example.id}` : 'example <no id>'
     if (!isObject(example)) { problems.push(`${at}: not an object`); continue }
