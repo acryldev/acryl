@@ -1,0 +1,22 @@
+{
+  "name": "acryl-example-lifecycle-hooks",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Observes the agent lifecycle: before each step, before each model request, and each model stream (observers that pass everything through)",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

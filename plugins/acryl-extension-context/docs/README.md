@@ -22,7 +22,7 @@ plugin. Verified working examples: `../examples/README.md`.
 | [Changing how ACRYL looks: what, where, how live (all surfaces)](extending/ui-customization.md) | ANY request about colors, fonts, branding, logo, layout, look and feel or restyling: what each surface allows and what needs a rebuild. | tui web desktop | all |
 | [Ready-made UI components: build with the app's own library](extending/ui-components.md) | Before building ANY UI: the themed component library you can require today (Button, Modal, Input, Switch, Tag, ...) and the terminal equivalents. | tui web desktop | all |
 | [Cordis building blocks and where each is documented](extending/cordis-core.md) | You are unsure which Cordis or harness mechanism to use: the model in ten lines and a table from what you are building to its doc and reference. | tui web desktop | all |
-| [Client slots: add UI to the Web and Desktop app (panel, button, tab, dashboard)](extending/client-slot.md) | The extension needs any UI in the app: a top-bar button, a panel, a sidebar tab, a board, a dashboard. | web desktop | all |
+| [Client slots: add UI to the Web and Desktop app (panel, button, tab, dashboard)](extending/client-slot.md) | The extension needs any UI in the app: a top-bar button, a panel, a sidebar tab, a board, a dashboard; also keyboard shortcuts and a custom card for a tool call. | web desktop | all |
 | [Tool plugins: give the agent a new capability](extending/tool-plugin.md) | The feature is something the agent should be able to DO (call an API, read a source, run an action). | tui web desktop | all |
 | [Services: provide a capability, consume it, optional dependencies](extending/service.md) | Plugins must share a capability, or a plugin is PENDING on a missing service. | tui web desktop | all |
 | [Events: listen, emit, intercept (waterfall)](extending/event-hook.md) | The feature reacts to, or intercepts, things that happen in the runtime. | tui web desktop | all |
@@ -57,6 +57,7 @@ plugin. Verified working examples: `../examples/README.md`.
 | [Theme tokens: every design token you can override (Web and Desktop)](maps/theme-tokens.md) | You want to change colors, surfaces, borders, buttons or fonts of the Web or Desktop app: the exact token names with light and dark values. | web desktop | all |
 | [UI component libraries available today (web primitives, pi-tui) and the gap](maps/ui-components.md) | You are about to build UI: which ready-made components exist on each surface so you do not hand-style. | tui web desktop | all |
 | [Lifecycle events: where a plugin can hook the agent (prompt, request, stream, session)](maps/events.md) | You want to intercept or observe the agent lifecycle: prompt construction, the provider request, streaming, tool policy, session events. | tui web desktop | all |
+| [Slot contracts: register options, props, taken keys and an example for every client slot](maps/slot-contracts.md) | You fill a client slot that needs more than name, id and order: its exact register options, the props your component gets, and a worked example. | web desktop | all |
 | [Plugin taxonomy: every plugin type and every shipped plugin, per surface](maps/taxonomy.md) | You want the full list of plugin types, which surfaces have them, whether an agent can author one, and real shipped plugins to study. | tui web desktop | all |
 
 ## Reference (synced)

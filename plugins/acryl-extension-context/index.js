@@ -14,11 +14,12 @@ import { readFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { describeInstalledExtensions, installLocalPlugin, listLocalPlugins, reloadLocalPlugins, removeLocalPlugin } from './lib/install.js'
+import { lookupExtensionDocs } from './lib/lookup.js'
 import { verifyPackage } from './lib/verify.js'
 import { preparePublish } from './lib/publish.js'
 import { resolvePackRoot } from './lib/pack-root.js'
 import { createSkillProvider } from './lib/skills.js'
-import { buildRouterText, INSTALL_TOOL_NAME, LIST_TOOL_NAME, REMOVE_TOOL_NAME, PUBLISH_TOOL_NAME, VERIFY_TOOL_NAME, ROUTER_SECTION_NAME, ROUTER_SECTION_ORDER } from './lib/router.js'
+import { buildRouterText, INSTALL_TOOL_NAME, LIST_TOOL_NAME, REMOVE_TOOL_NAME, PUBLISH_TOOL_NAME, VERIFY_TOOL_NAME, LOOKUP_TOOL_NAME, ROUTER_SECTION_NAME, ROUTER_SECTION_ORDER } from './lib/router.js'
 
 export const name = 'acryl-extension-context'
 export const inject = ['systemPrompt']
@@ -27,9 +28,13 @@ export function apply(ctx) {
   const root = resolvePackRoot()
   const manifest = JSON.parse(readFileSync(join(root, 'docs', 'docs.json'), 'utf8'))
 
+  // Evaluation switch (evals/README.md): ACRYL_EXTENSION_DOCS=off removes the router, the skills and the installed-extensions note, leaving only the tools,
+  // so the same task can be run with and without the docs to measure what they add. Never set it in normal use.
+  const docsOff = process.env.ACRYL_EXTENSION_DOCS === 'off'
+
   // Static for the process lifetime: part of the cacheable prompt prefix.
   const text = buildRouterText(root, manifest)
-  ctx.effect(() => ctx.systemPrompt.section({ name: ROUTER_SECTION_NAME, order: ROUTER_SECTION_ORDER, text }))
+  if (!docsOff) ctx.effect(() => ctx.systemPrompt.section({ name: ROUTER_SECTION_NAME, order: ROUTER_SECTION_ORDER, text }))
 
   ctx.provide('extensionContext', {
     root,
@@ -43,11 +48,12 @@ export function apply(ctx) {
   // Bundled authoring skills (workflow triggers linking into the docs). Optional: without a
   // `skills` service the router alone still works.
   ctx.inject(['skills'], scoped => {
-    scoped.skills.registerProvider(() => createSkillProvider(root))
+    if (!docsOff) scoped.skills.registerProvider(() => createSkillProvider(root))
   })
 
   // The live view of installed extensions (pi.dev rebuilds its prompt after a reload): a per-assembly dynamic context, empty when none.
   ctx.inject(['systemPrompt'], scoped => {
+    if (docsOff) return
     ctx.effect(() => scoped.systemPrompt.context({
       name: 'acryl:installed-extensions',
       order: 9500,
@@ -105,6 +111,20 @@ export function apply(ctx) {
         const profile = ctx.get('desktopProfiles')
         if (!profile?.current?.dir) throw new Error('the active profile is not available in this runtime')
         return JSON.stringify(listLocalPlugins(profile.current.dir))
+      },
+    }))
+
+    scoped.tools.register(defineTool({
+      name: LOOKUP_TOOL_NAME,
+      description: 'Find the ACRYL extension docs and verified examples for a topic (for example "sidebar tab", "accent color", "a tool", "hook the prompt"). Returns absolute paths to read; it only routes, the docs are the authority.',
+      parameters: {
+        topic: { type: 'string', required: true, description: 'What you want to build or change, in a few words.' },
+      },
+      output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+      async execute(args) {
+        const result = lookupExtensionDocs(String(args.topic ?? ''), manifest, root)
+        if (!result.ok) throw new Error(result.error)
+        return JSON.stringify(result)
       },
     }))
 

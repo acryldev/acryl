@@ -11,6 +11,7 @@ import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
+import { captureSystemPrompt } from '../src/system-prompt-capture.ts'
 
 const examples = new URL('../../../plugins/acryl-extension-context/examples/packages/', import.meta.url)
 const temporaryHomes: string[] = []
@@ -163,4 +164,22 @@ describe('extension pack examples on the real web engine', () => {
       for (const name of before) expect(after).toContain(name)
     } finally { await host.dispose() }
   }, 60_000)
+
+  it('lifecycle-hooks-observer: the pre-step, request and stream waterfalls fire during a real turn and pass through', async () => {
+    process.env.DEEPSEEK_API_KEY = 'dummy-key-for-lifecycle-hooks'
+    const host = await bootHost()
+    try {
+      const fiber = host.ctx.plugin(await load('lifecycle-hooks-observer') as never) as { state: number }
+      await settle()
+      expect(stateOf(fiber)).toBe('ACTIVE')
+      const captured = await captureSystemPrompt(host.ctx, { profile: 'web', selectStandardPreset: true })
+      // The turn was fully assembled (system prompt present) although the hooks sat in the middle of the chain: nothing was cut out.
+      expect(captured.system.length).toBeGreaterThan(100)
+      const probe = host.ctx.get('acrylLifecycleProbe' as never) as unknown as { counts(): { preStep: number; request: number; stream: number } }
+      const counts = probe.counts()
+      expect(counts.preStep).toBeGreaterThan(0)
+      expect(counts.request).toBeGreaterThan(0)
+      expect(counts.stream).toBeGreaterThan(0)
+    } finally { await host.dispose() }
+  }, 90_000)
 })

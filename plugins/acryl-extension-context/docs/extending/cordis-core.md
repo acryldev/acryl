@@ -36,7 +36,8 @@ one. Paths below are relative to the docs folder (`docs/`); every one exists in 
 | A skill or skill provider | `extending/skill-provider.md` | `reference/subsystems/skills.md` |
 | A chat slash command (all surfaces) | `extending/chat-command.md` | `reference/subsystems/commands.md` |
 | A terminal overlay (CLI only) | `extending/tui-command.md` | `maps/mount-points.md` |
-| Where something can mount, per surface | `maps/mount-points.md` | `reference/subsystems/slots.md` |
+| Where something can mount, per surface | `maps/mount-points.md` | `maps/slot-contracts.md`, `reference/subsystems/slots.md` |
+| Hooking the agent lifecycle (prompt, request, stream, session) | `maps/events.md` | `examples/packages/prompt-assemble-hook/`, `lifecycle-hooks-observer/` |
 | The full list of plugin types and shipped plugins | `maps/taxonomy.md` | `reference/harness/architecture.md` |
 | A new model provider | `extending/llm-adapter.md` | `reference/cookbook/adding-an-llm-adapter.md`, `reference/subsystems/llm-streaming.md` |
 | An agent preset or persona | `extending/agent-preset.md` | `reference/subsystems/subagent.md`, `reference/subsystems/agent-team.md` |

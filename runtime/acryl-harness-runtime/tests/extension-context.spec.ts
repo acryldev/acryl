@@ -3,7 +3,7 @@
  * mounts the plugin, the assembled system prompt carries the docs router with
  * paths that exist on disk, and the install tool the agent needs is registered.
  */
-import { cpSync, existsSync, mkdirSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -12,6 +12,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { createDshEngineDefinition, createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
+// @ts-expect-error plain JS package
+import { installLocalPlugin } from '../../../plugins/acryl-extension-context/lib/install.js'
 import { createAcrylSessionBridge } from '../src/session-bridge.ts'
 
 const temporaryHomes: string[] = []
@@ -52,7 +54,7 @@ describe('extension context on the web engine', () => {
       expect(existsSync(join(context!.root, 'docs', 'start-here', 'this-runtime.md'))).toBe(true)
 
       const toolNames = assembly.tools.map(tool => tool.name)
-      expect(toolNames).toEqual(expect.arrayContaining(['acryl_install_plugin', 'acryl_list_plugins', 'acryl_remove_plugin', 'acryl_prepare_publish', 'acryl_verify_plugin']))
+      expect(toolNames).toEqual(expect.arrayContaining(['acryl_install_plugin', 'acryl_list_plugins', 'acryl_remove_plugin', 'acryl_prepare_publish', 'acryl_verify_plugin', 'acryl_extension_lookup']))
     } finally {
       await host.dispose()
     }
@@ -160,5 +162,102 @@ describe('/reload on the web engine', () => {
       await bridge.dispose()
       await host.dispose()
     }
+  }, 120_000)
+
+  it('host code updates take effect in the running process without a hot shim (automatic reload)', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-extension-hot-'))
+    temporaryHomes.push(home)
+    process.env.DSH_HOME = home
+    const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-hot-ws-'))
+    temporaryHomes.push(workspace)
+    const dir = join(workspace, '.acryl-extensions', 'probe')
+    mkdirSync(dir, { recursive: true })
+    const write = (entryText: string, helperText: string, extra = '') => {
+      writeFileSync(join(dir, 'package.json'), JSON.stringify({
+        name: 'acryl-probe-hot', version: '0.1.0', type: 'module', main: './index.js',
+        exports: { '.': './index.js', './package.json': './package.json' },
+        files: ['index.js', 'helper.js', 'cordis.patch.yml'],
+        dsh: { bundle: { patch: './cordis.patch.yml' } },
+      }))
+      writeFileSync(join(dir, 'cordis.patch.yml'), '- insert:\n    - id: probe-hot\n      name: acryl-probe-hot\n')
+      writeFileSync(join(dir, 'helper.js'), `export const text = ${JSON.stringify(helperText)}\n`)
+      writeFileSync(join(dir, 'index.js'), [
+        "import { text } from './helper.js'",
+        "export const name = 'acryl-probe-hot'",
+        "export const inject = ['commands']",
+        'export function apply(ctx) {',
+        "  ctx.effect(() => ctx.commands.register({ name: 'probe-hot', description: 'probe', async handler() { return { kind: 'success', text: " + JSON.stringify(entryText) + " + text } } }), 'probe')",
+        '}',
+        extra,
+      ].join('\n'))
+    }
+    write('entry-1:', 'helper-1')
+    const host = await createAcrylEngineHost({
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      initialEngine: 'dsh',
+      prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+    })
+    const bridge = createAcrylSessionBridge(host.ctx, { profile: 'web', generationId: 'hot', attachment: 'owner', cwd: workspace })
+    try {
+      const sessionId = await bridge.open()
+      const agent = (host.ctx as unknown as { agents: { get(id: unknown): unknown } }).agents.get(SessionId(sessionId))
+      const commands = host.ctx.get('commands' as never) as unknown as {
+        execute(agent: unknown, line: string, attachments: unknown[], signal: AbortSignal): Promise<{ result: { kind: string; text?: string } } | undefined>
+      }
+      const services = {
+        pnpm: host.ctx.get('desktopPnpm' as never),
+        live: host.ctx.get('livePluginActivation' as never),
+        profileDir: (host.ctx.get('desktopProfiles' as never) as { current: { dir: string } }).current.dir,
+      }
+      const first = await installLocalPlugin({ path: dir }, services)
+      expect(first).toMatchObject({ ok: true, status: 'active', action: 'installed', hostReload: 'automatic' })
+      expect((await commands.execute(agent, '/probe-hot', [], new AbortController().signal))?.result.text).toBe('entry-1:helper-1')
+
+      // Change BOTH the entry and the file it imports: the running process must pick up both.
+      write('entry-2:', 'helper-2')
+      const second = await installLocalPlugin({ path: dir }, services)
+      expect(second).toMatchObject({ ok: true, status: 'active', action: 'updated', hostReload: 'automatic' })
+      expect(second.warning).toBeUndefined()
+      expect((await commands.execute(agent, '/probe-hot', [], new AbortController().signal))?.result.text).toBe('entry-2:helper-2')
+
+      // /reload re-installs from the SOURCE folder (not the staging copy).
+      write('entry-3:', 'helper-3')
+      const reloaded = await commands.execute(agent, '/reload', [], new AbortController().signal)
+      expect(reloaded?.result.text).toContain('acryl-probe-hot: updated')
+      expect((await commands.execute(agent, '/probe-hot', [], new AbortController().signal))?.result.text).toBe('entry-3:helper-3')
+    } finally {
+      await bridge.dispose()
+      await host.dispose()
+    }
+  }, 180_000)
+
+  it('a staged plugin whose apply throws surfaces its own error and is rolled back', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-extension-throw-'))
+    temporaryHomes.push(home)
+    process.env.DSH_HOME = home
+    const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-throw-ws-'))
+    temporaryHomes.push(workspace)
+    const dir = join(workspace, '.acryl-extensions', 'thrower')
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'acryl-thrower', version: '0.1.0', type: 'module', main: './index.js', exports: { '.': './index.js', './package.json': './package.json' }, dsh: { bundle: { patch: './cordis.patch.yml' } } }))
+    writeFileSync(join(dir, 'cordis.patch.yml'), '- insert:\n    - id: thrower\n      name: acryl-thrower\n')
+    writeFileSync(join(dir, 'index.js'), "export const name = 'acryl-thrower'\nexport function apply() { throw new Error('boom-42 from the plugin') }\n")
+    const host = await createAcrylEngineHost({
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      initialEngine: 'dsh',
+      prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+    })
+    try {
+      const services = {
+        pnpm: host.ctx.get('desktopPnpm' as never),
+        live: host.ctx.get('livePluginActivation' as never),
+        profileDir: (host.ctx.get('desktopProfiles' as never) as { current: { dir: string } }).current.dir,
+      }
+      const result = await installLocalPlugin({ path: dir }, services)
+      expect(result.ok).toBe(false)
+      expect(result.stage).toBe('activate')
+      expect(JSON.stringify(result.errors)).toContain('boom-42 from the plugin')
+      expect(result.rolledBack).toBe(true)
+    } finally { await host.dispose() }
   }, 120_000)
 })

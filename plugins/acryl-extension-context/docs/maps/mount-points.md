@@ -51,7 +51,7 @@ Declared in source as `interface SlotMap` and listed here from those declaration
 `list` (many, ordered by `order`), `keyed` (one per `key`), `chain` (selector-routed). **Scope**: `root` (once for the app),
 `session` (per open conversation), `session-maybe` (also present with no session). Register from `client.js` with
 `ctx.slots.inject(name, () => ctx.slots.register({ name, id, order }, Component))` (see `extending/client-slot.md`). A slot whose
-owner props are non-trivial needs those props: read its declaring package in `reference/subsystems/` before using it. Verified
+owner props are non-trivial needs those props: read its entry in `maps/slot-contracts.md` (register options, exact props, taken keys, worked example) before using it. Verified
 working examples: `conversation.session.header.actions` (header-action) and `sidebar.right.pane.tab` (sidebar-tab).
 
 58 slots:

@@ -42,6 +42,12 @@ Banner and wordmark: `apps/acryl-cli/src/tui/acrylMark.ts` (half-block art), `ba
 (`corepack pnpm run tui` runs the dev build). Only when working inside the ACRYL repository; an installed CLI cannot be restyled by a
 plugin. Say that, and offer a themed overlay instead.
 
+## Keys in the terminal
+
+An overlay receives keys through `handleInput(data)`: match with `matchesKey(data, Key.enter)`, `Key.escape`, `Key.up`, `Key.ctrl('k')`, and so on. Keys apply only
+while your overlay is focused; there is no global shortcut registry for plugins in the CLI, and the built-in editor and overlay key bindings are not
+plugin-changeable. Always handle Escape to close.
+
 ## Rules
 
 1. Width safety first: test `render` at several widths (12, 24, 40, 80, 200). Wide characters (CJK, emoji) need `visibleWidth`.

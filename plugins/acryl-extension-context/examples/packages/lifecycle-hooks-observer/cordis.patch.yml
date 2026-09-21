@@ -1,0 +1,3 @@
+- insert:
+    - id: example-lifecycle-hooks
+      name: acryl-example-lifecycle-hooks

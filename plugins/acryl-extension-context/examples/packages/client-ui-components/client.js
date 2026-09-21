@@ -7,7 +7,8 @@
 //           matches the app with no CSS. Declare the package in `dsh.client.inject` (package.json) so it is loaded first.
 //           This example fills `sidebar.footer.action`, a ROOT-scoped slot (it renders with or without an open session), and gets
 //           `{ wide }` (false when the sidebar is the narrow rail). State lives in localStorage.
-// Expect:   a "Quick notes" button beside Settings; click opens a modal with an input, a "Show done" switch and tagged notes.
+//           Also shows the keyboard-shortcut pattern: Cmd/Ctrl+Shift+K toggles the modal (see the useEffect in QuickNotes).
+// Expect:   a "Quick notes" button beside Settings; click or Cmd/Ctrl+Shift+K opens a modal with an input, a "Show done" switch and tagged notes.
 // Docs:     extending.ui-components
 // Pattern:  plugins/cordis-plugin-market/src/client/index.ts (the Market button fills the same slot)
 window.__ModuleLoader__.load({ id: 'acryl-example-ui-components', factory: (require) => {
@@ -32,6 +33,20 @@ function QuickNotes({ wide }) {
   const save = next => { setNotes(next); try { localStorage.setItem(KEY, JSON.stringify(next)) } catch { /* private mode */ } }
   const add = () => { if (draft.trim()) { save([...notes, { id: Date.now(), text: draft.trim(), done: false }]); setDraft('') } }
   const shown = notes.filter(n => showDone || !n.done)
+
+  // KEYBOARD SHORTCUT. The Web and Desktop client has no plugin shortcut registry, so a plugin owns a guarded keydown listener: a modifier
+  // combination (never a bare key), ignored while the user types in a field or when another handler already used the event, and removed on unmount.
+  React.useEffect(() => {
+    const onKey = event => {
+      if (event.defaultPrevented) return
+      const target = event.target
+      const typing = target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/u.test(target.tagName))
+      if (typing) return
+      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'k') { event.preventDefault(); setOpen(value => !value) }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   return h(React.Fragment, null,
     h(Button, { variant: 'ghost', onClick: () => setOpen(true), title: 'Quick notes' }, wide ? 'Quick notes' : 'N'),

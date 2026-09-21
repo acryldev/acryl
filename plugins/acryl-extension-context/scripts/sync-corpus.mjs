@@ -9,7 +9,7 @@
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
-import { classifyRow, collectEvents, collectPrimitiveExports, collectSlots, collectThemeTokens, indexPackages, loadRows, renderEvents, renderMountPoints, renderTaxonomy, renderThemeTokens, renderUiComponents } from './lib/maps.mjs'
+import { classifyRow, collectEvents, collectPrimitiveExports, collectSlots, collectThemeTokens, loadSlotCatalog, indexPackages, loadRows, renderEvents, renderMountPoints, renderTaxonomy, renderSlotContracts, renderThemeTokens, renderUiComponents } from './lib/maps.mjs'
 import { fileURLToPath } from 'node:url'
 
 const pack = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -121,6 +121,8 @@ writeFileSync(join(pack, 'docs/maps/events.md'), renderEvents(collectEvents(repo
 const themeTokens = collectThemeTokens(repo)
 writeFileSync(join(pack, 'docs/maps/theme-tokens.md'), renderThemeTokens(themeTokens))
 const TUI_LIST = '`Container`, `VStack`, `HStack`, `Box`, `Text`, `TruncatedText`, `Markdown`, `SelectList`, `SettingsList`, `Input`, `Editor`, `ScrollView`, `Loader`, `CancellableLoader`, `Spacer`, `Image`, plus `truncateToWidth`, `visibleWidth`, `wrapTextWithAnsi`, `matchesKey`/`Key`, `fuzzyFilter`. Contract and rules: `extending/tui-components.md`.'
+const slotCatalog = await loadSlotCatalog(repo)
+if (slotCatalog) writeFileSync(join(pack, 'docs/maps/slot-contracts.md'), renderSlotContracts(slotCatalog))
 writeFileSync(join(pack, 'docs/maps/ui-components.md'), renderUiComponents(collectPrimitiveExports(repo), TUI_LIST))
 
 const manifestPath = join(pack, 'docs/docs.json')
@@ -134,6 +136,7 @@ manifest.navigation.splice(manifest.navigation.findIndex(g => g.title === 'Deliv
     { id: 'maps.theme-tokens', title: 'Theme tokens: every design token you can override (Web and Desktop)', path: 'maps/theme-tokens.md', when: 'You want to change colors, surfaces, borders, buttons or fonts of the Web or Desktop app: the exact token names with light and dark values.', surfaces: ['web', 'desktop'], applies: 'all', seeAlso: ['extending.ui-theme'] },
     { id: 'maps.ui-components', title: 'UI component libraries available today (web primitives, pi-tui) and the gap', path: 'maps/ui-components.md', when: 'You are about to build UI: which ready-made components exist on each surface so you do not hand-style.', surfaces: ['tui', 'web', 'desktop'], applies: 'all', seeAlso: ['extending.ui-components'] },
     { id: 'maps.events', title: 'Lifecycle events: where a plugin can hook the agent (prompt, request, stream, session)', path: 'maps/events.md', when: 'You want to intercept or observe the agent lifecycle: prompt construction, the provider request, streaming, tool policy, session events.', surfaces: ['tui', 'web', 'desktop'], applies: 'all', seeAlso: ['extending.event-hook'] },
+    { id: 'maps.slot-contracts', title: 'Slot contracts: register options, props, taken keys and an example for every client slot', path: 'maps/slot-contracts.md', when: 'You fill a client slot that needs more than name, id and order: its exact register options, the props your component gets, and a worked example.', surfaces: ['web', 'desktop'], applies: 'all', seeAlso: ['maps.mount-points', 'extending.client-slot'] },
     { id: 'maps.taxonomy', title: 'Plugin taxonomy: every plugin type and every shipped plugin, per surface', path: 'maps/taxonomy.md', when: 'You want the full list of plugin types, which surfaces have them, whether an agent can author one, and real shipped plugins to study.', surfaces: ['tui', 'web', 'desktop'], applies: 'all', seeAlso: ['extending.cordis-core'] },
   ],
 })

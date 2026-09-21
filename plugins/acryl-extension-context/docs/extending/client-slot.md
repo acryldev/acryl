@@ -7,6 +7,9 @@ has no client slots (see `tui-command.md`).
 BEFORE hand-styling anything read `ui-components.md`: the app's own themed Button, Modal, Input, Switch, Tag and more can be `require`d
 (verified in a browser), so the UI matches the app with no CSS.
 
+For a slot beyond the header action, read its entry in `../maps/slot-contracts.md` (register options, the props your component receives, taken keys, a worked
+example). A custom card for one of your own tools: `../examples/packages/client-tool-view/`.
+
 Working example, copy from it: `../examples/packages/client-slot-header-action/`
 (read `index.js` and `client.js` completely).
 
@@ -80,6 +83,14 @@ zIndex: 9999`; a full view is `inset: 0`. Give it a title bar with a close butto
 strip is not required, or as the fallback if the sidebar tab does not show.
 
 Exact registration reference: `reference/subsystems/sidebar-right.md` and `reference/subsystems/slots.md`.
+
+## Keyboard shortcuts
+
+The Web and Desktop client has no plugin shortcut registry (only built-in behavior such as the sidebar toggle). A plugin owns a guarded `keydown`
+listener: see the `useEffect` in `../examples/packages/client-ui-components/client.js` (Cmd/Ctrl+Shift+K toggles its modal; verified in a real browser).
+Rules: use a modifier combination, never a bare key; ignore the event when `event.defaultPrevented` or while the user types in an input, textarea or
+editable element; call `preventDefault()` only when you act on it; remove the listener in the effect cleanup. Two plugins can collide on a combination:
+say which one you chose. Desktop's native menu accelerators live in the Electron main process (`desktop-app.md`) and are not plugin-changeable.
 
 ## Persisting state
 

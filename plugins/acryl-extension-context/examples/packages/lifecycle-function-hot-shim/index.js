@@ -1,6 +1,7 @@
 // Example: lifecycle-function.hot-shim
 // Type:     lifecycle-function
 // Surfaces: tui web desktop
+// LEGACY:   acryl_install_plugin now reloads host code automatically (docs/delivery/local-live.md); write this shim only if you bypass the installer.
 // Teaches:  make HOST code hot-updatable. Node caches module resolution, so re-installing a changed plugin
 //           keeps running the OLD host code (measured). This shim never changes: each time the plugin mounts
 //           it re-imports impl.js with a unique query string, which bypasses the cache. Put ALL real logic

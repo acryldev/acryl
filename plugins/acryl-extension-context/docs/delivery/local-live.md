@@ -5,7 +5,7 @@ Goal: the user asks for a feature, you write a plugin, it appears without a rest
 1. Write the package in `<the workspace you are working in>/.acryl-extensions/<plugin-name>/` (create it with your normal
    file tools; never inside the pack or the profile). Copy the closest example from `../examples/README.md` and change it.
    Always pass the tool the ABSOLUTE path of that directory.
-2. Call the **`acryl_install_plugin`** tool with the package directory. Write host logic in a hot shim from the start if you may edit it later (below). It checks the package
+2. Call the **`acryl_install_plugin`** tool with the package directory. It checks the package
    (bundle patch, `exports` including `./package.json`, a client bundle if `dsh.client` is set), runs
    `dsh plugin add file:<dir>`, live-activates it, and **removes it again if activation fails**.
 3. Read the result. `ok: true` with status `active` means the host part is live. If the result has a
@@ -19,12 +19,15 @@ Goal: the user asks for a feature, you write a plugin, it appears without a rest
 2. Call `acryl_install_plugin` with that directory again. It detects the existing plugin, takes it down, re-installs the
    changed files and mounts a fresh instance ("action": "updated").
 3. **Browser code (`client.js`)**: the new file is served after a page reload. Tell the user to reload.
-4. **Host code (`index.js` and what it imports)**: Node caches module resolution, so a plain re-install keeps
-   running the OLD host code (measured). Make host code hot-updatable with the **hot shim**: keep `index.js` as the
-   tiny, never-changing shim from `../examples/packages/lifecycle-function-hot-shim/` and put all real logic in
-   `impl.js`; each mount re-imports `impl.js` with a cache-busting query. The tool warns you ("warning") when it
-   updated a plugin that does not use the shim; then the change needs an app restart. A plugin whose host half is
-   empty (a UI-only plugin) has nothing to reload.
+4. **Host code (`index.js` and what it imports)**: updates take effect in the running process AUTOMATICALLY, like pi.dev's reload.
+   Node caches modules by URL, so the installer installs a small staged copy: a generated entry wrapper that, on every
+   activation, imports the newest versioned copy of your code (`acryl-v-*`), so `index.js` and every file it imports are
+   evaluated fresh. The result says `"hostReload": "automatic"`. You do not write or maintain any shim; your source folder
+   is never modified. Limits: a change to `inject` (or the `Config` schema) is only fully applied after an app restart (the
+   wrapper logs a warning); a class-form `apply` (`export { MyService as apply }`) keeps its first version; a plugin whose
+   entry is not a JavaScript ES module (`"type": "module"`) cannot be staged and the result then carries a `warning`. A plugin
+   that carries its own hot shim (the legacy pattern in `lifecycle-function-hot-shim`) is installed as written. A plugin whose
+   host half is empty (a UI-only plugin) has nothing to reload.
 5. To delete a plugin call `acryl_remove_plugin` with its package name (UI plugins: tell the user to reload).
 
 To improve or change UI, edit `client.js` and update as above. Never edit files inside the profile's `node_modules`

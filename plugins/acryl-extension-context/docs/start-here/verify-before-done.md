@@ -18,6 +18,13 @@ files on disk and the live Context can disagree.
 5. After a local install, confirm the live state (`livePluginActivation.statusOf`,
    or the plugin's row and its service) instead of assuming it went live.
 
+## The full self-modification protocol (from pi.dev's mechanism)
+
+After the package is written: (1) `acryl_verify_plugin`; (2) `acryl_install_plugin` and read its result; (3) confirm the capability was discovered: `status: active`
+in the result, and the live `acryl:installed-extensions` note or `acryl_list_plugins` shows it; (4) for a tool, command or prompt hook, USE it in a real turn
+instead of assuming (call the new tool once; ask the user to type the command); (5) if the extension changes prompt or context behavior, inspect the next turn's
+result instead of assuming activation worked; (6) UI: ask the user to reload and look. Say plainly which of these you did and which you could not.
+
 ## What "done" means
 
 | You intended | Proof |

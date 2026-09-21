@@ -1,5 +1,7 @@
 import { existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
+import { pruneOldStages, pruneOldVersions, stagePackage, stagedSource } from './stage.js'
 
 /**
  * Static checks for the two failures measured in spec 037 research Q7 that make
@@ -61,7 +63,11 @@ export function listLocalPlugins(profileDir, fs = { existsSync, readFileSync }) 
   const pkg = JSON.parse(fs.readFileSync(manifest, 'utf8'))
   return Object.entries(pkg.dependencies ?? {})
     .filter(([, spec]) => typeof spec === 'string' && spec.startsWith('file:'))
-    .map(([name, spec]) => ({ name, installedFrom: spec.slice('file:'.length) }))
+    .map(([name, spec]) => {
+      const installed = spec.slice('file:'.length)
+      // A staged install (automatic host hot reload) points at the staging copy; report and re-install from the author's source folder.
+      return { name, installedFrom: stagedSource(installed, fs) ?? installed }
+    })
 }
 
 /**
@@ -158,18 +164,32 @@ export async function installLocalPlugin(input, services, fs) {
       return { ok: false, stage: 'update', errors: [`could not deactivate the running version: ${cause instanceof Error ? cause.message : cause}`] }
     }
   }
-  const added = await addLocalPackage(services, dir, lint.name, services.profileDir, fs)
+  // Automatic host hot reload: install a staged copy whose entry re-imports the newest versioned code on every activation (lib/stage.js).
+  // A plugin that already carries its own hot shim, or whose entry cannot be wrapped, installs as written (and is warned about below).
+  const stageRoot = join(services.profileDir ?? tmpdir(), '.acryl-staged')
+  let installDir = dir
+  let staging = { ok: false, reason: 'the plugin uses its own hot shim' }
+  if (!lint.hotShim) {
+    staging = stagePackage(dir, stageRoot)
+    if (staging.ok) installDir = staging.dir
+  }
+  const added = await addLocalPackage(services, installDir, lint.name, services.profileDir, fs)
   if (!added.ok) return { ok: false, stage: 'install', errors: [`dsh plugin add failed (exit ${added.exitCode})`], detail: added.output }
 
   try {
     await services.live.activate(lint.name)
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : String(cause)
-    const removed = await runPlugin(services.pnpm, ['remove', lint.name], dir)
+    const removed = await runPlugin(services.pnpm, ['remove', lint.name], installDir)
     return { ok: false, stage: 'activate', errors: [message], rolledBack: removed.ok, next: 'The install was undone. Fix the error above, then call the tool again.' }
   }
   const result = { ok: true, package: lint.name, status: services.live.statusOf(lint.name) ?? 'unknown', action: updating ? 'updated' : 'installed' }
-  if (updating && !lint.hotShim) result.warning = 'Updated, but Node caches the host module: changes to HOST code (index.js and what it imports) are NOT picked up until the app restarts, unless the plugin uses the hot shim (docs/delivery/local-live.md, example lifecycle-function.hot-shim). Browser (client.js) changes only need a page reload.'
+  if (staging.ok) {
+    result.hostReload = 'automatic'
+    if (services.profileDir) pruneOldVersions(join(services.profileDir, 'node_modules', lint.name), staging.versionDir)
+    pruneOldStages(stageRoot, lint.name, staging.dir)
+  }
+  else if (updating && !lint.hotShim) result.warning = `Updated, but Node caches the host module and this plugin could not be staged for automatic reload (${staging.reason}): changes to HOST code are NOT picked up until the app restarts, unless the plugin uses the hot shim (docs/delivery/local-live.md). Browser (client.js) changes only need a page reload.`
   if (lint.hasClient) result.next = 'This package has a browser (client) part. Ask the user to reload the page (Web) or window (Desktop) to see the new UI; the host part is already live.'
   return result
 }

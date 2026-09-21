@@ -11,6 +11,7 @@ export const INSTALL_TOOL_NAME = 'acryl_install_plugin'
 export const LIST_TOOL_NAME = 'acryl_list_plugins'
 export const REMOVE_TOOL_NAME = 'acryl_remove_plugin'
 export const VERIFY_TOOL_NAME = 'acryl_verify_plugin'
+export const LOOKUP_TOOL_NAME = 'acryl_extension_lookup'
 export const PUBLISH_TOOL_NAME = 'acryl_prepare_publish'
 
 export const estimateTokens = text => Math.ceil(text.length / 4)
@@ -44,10 +45,10 @@ export function buildRouterText(root, manifest) {
   return [
     `<${ROUTER_TAG}>`,
     'ACRYL extension documentation (read only when the user asks to build, change, fix, improve, extend or remove something in ACRYL itself: an extension, plugin, tool, panel, button, view, theme, skill, command or LLM adapter):',
-    `- Docs index: ${join(docs, 'README.md')}`,
+    `- Docs index: ${join(docs, 'README.md')}; or call ${LOOKUP_TOOL_NAME}(topic) for the docs and examples that match a topic`,
     `- Examples: ${join(examples, 'README.md')} (working, verified plugins for every plugin type and surface)`,
     `- When reading ACRYL docs, resolve the relative paths below under ${docs}/, not the current working directory`,
-    `- Start with ${join(docs, 'start-here', 'this-runtime.md')}. Where something mounts on the CLI, Web or Desktop, and every plugin type: maps/mount-points.md, maps/taxonomy.md`,
+    `- Start with ${join(docs, 'start-here', 'this-runtime.md')}. Where something mounts on the CLI, Web or Desktop, and every plugin type: maps/mount-points.md, maps/slot-contracts.md (props and examples per slot), maps/events.md, maps/taxonomy.md`,
     `- When asked about: ${topics.join(', ')}`,
     '- Reference for the Cordis API and every harness subsystem: reference/ (one file each, listed in the docs index)',
     '- When working on ACRYL extension topics, read the docs and the nearest example, and follow .md cross-references before implementing',

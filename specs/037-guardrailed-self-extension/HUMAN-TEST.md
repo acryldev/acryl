@@ -61,6 +61,9 @@ sources under `<workspace>/.acryl-extensions/<name>/`).
   12 docs and installed a correct both-mode theme plugin with a self-hosted font. Fixed on the way: the tab title said "DeepSeek Harness" at runtime
   (the client rewrites it); the ACRYL brand plugin now keeps "ACRYL". Not changeable by a plugin (documented): the testing-notice copy, Desktop
   window chrome and icon, the CLI's built-in palette and banner. Spec 038 proposes a shared component library.
+- **Host code reloads automatically** (2026-09-21): an update to an extension's host code, and the files it imports, takes effect in the running app with no restart
+  and no hot shim (staged install; real-engine test). Parity with pi.dev is recorded in `PI-PARITY.md`; the agent also has `acryl_extension_lookup(topic)`, a live
+  installed-extensions note, `/reload` and `/reload new`, a lifecycle-events map, slot contracts with examples and a trust and safety doc.
 - Every host example mounts to its declared state on the real engine; the header-action and sidebar-tab client
   bundles load and apply in a real browser without errors (page stays healthy); `/reload` is registered in a session
   and runs; CLI, Web and Desktop compose the pack.

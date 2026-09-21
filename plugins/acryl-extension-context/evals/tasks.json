@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "note": "Each task is one chat prompt on the Web surface (standard preset). Judged from the session events, not the model's prose: did acryl_verify_plugin pass, did acryl_install_plugin return ok, and how much work did it take.",
+  "tasks": [
+    { "id": "kanban-header", "prompt": "Please build a small kanban board extension for ACRYL: a button in the top bar of a conversation that opens a panel with three columns (To do, Doing, Done), where I can add cards and move them between columns. Keep cards saved between reloads. Make it live so I can use it right away." },
+    { "id": "word-count-tool", "prompt": "Add a tool called count_words that counts the words in a text I give it, install it, then use the tool on the text 'the quick brown fox jumps'." },
+    { "id": "restyle-teal", "prompt": "Make the ACRYL web app look warmer: a teal accent color instead of the default, and rename the browser tab to Acme Studio. Make it live." }
+  ]
+}

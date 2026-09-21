@@ -136,7 +136,7 @@
           "id": "extending.client-slot",
           "title": "Client slots: add UI to the Web and Desktop app (panel, button, tab, dashboard)",
           "path": "extending/client-slot.md",
-          "when": "The extension needs any UI in the app: a top-bar button, a panel, a sidebar tab, a board, a dashboard.",
+          "when": "The extension needs any UI in the app: a top-bar button, a panel, a sidebar tab, a board, a dashboard; also keyboard shortcuts and a custom card for a tool call.",
           "surfaces": [
             "web",
             "desktop"
@@ -150,7 +150,8 @@
           ],
           "examples": [
             "client-slot.header-action",
-            "client-slot.sidebar-tab"
+            "client-slot.sidebar-tab",
+            "client-tool-view.custom-card"
           ],
           "topic": "a button, panel, tab or card (Web/Desktop)"
         },
@@ -206,7 +207,8 @@
           "applies": "all",
           "examples": [
             "event-hook.basic",
-            "prompt-assemble-hook.basic"
+            "prompt-assemble-hook.basic",
+            "lifecycle-hooks.observer"
           ],
           "topic": "events and interception",
           "seeAlso": [
@@ -580,6 +582,21 @@
           "applies": "all",
           "seeAlso": [
             "extending.event-hook"
+          ]
+        },
+        {
+          "id": "maps.slot-contracts",
+          "title": "Slot contracts: register options, props, taken keys and an example for every client slot",
+          "path": "maps/slot-contracts.md",
+          "when": "You fill a client slot that needs more than name, id and order: its exact register options, the props your component gets, and a worked example.",
+          "surfaces": [
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "maps.mount-points",
+            "extending.client-slot"
           ]
         },
         {
@@ -2140,7 +2157,7 @@
         "web",
         "desktop"
       ],
-      "teaches": "A host plugin whose code hot-updates: a never-changing shim re-imports impl.js with a cache-busting query.",
+      "teaches": "LEGACY: a hand-written hot shim. The installer now reloads host code automatically; this pattern is only needed if you bypass acryl_install_plugin.",
       "docs": [
         "delivery.local-live"
       ]
@@ -2336,6 +2353,33 @@
       "docs": [
         "extending.event-hook"
       ]
+    },
+    {
+      "id": "lifecycle-hooks.observer",
+      "type": "event-hook",
+      "path": "lifecycle-hooks-observer",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "observe the agent lifecycle on the pre-step, request and llm/stream waterfalls: always call next() and return its result.",
+      "docs": [
+        "extending.event-hook"
+      ]
+    },
+    {
+      "id": "client-tool-view.custom-card",
+      "type": "client-slot",
+      "path": "client-tool-view",
+      "surfaces": [
+        "web",
+        "desktop"
+      ],
+      "teaches": "a tool plus its own conversation card via the keyed tool.call.toolview slot (renders running and settled calls).",
+      "docs": [
+        "extending.client-slot"
+      ]
     }
   ],
   "routes": [
@@ -2349,7 +2393,7 @@
       ]
     },
     {
-      "when": "a button, panel, tab or card in the Web or Desktop app",
+      "when": "a button, panel, tab, card, keyboard shortcut or a custom tool-call card in the Web or Desktop app",
       "docs": [
         "extending.client-slot"
       ]
