@@ -280,3 +280,4 @@ export {
   type CapturedSystemPrompt,
 } from './system-prompt-capture.ts'
 export { pinnedPnpmEnv, resolvePinnedPnpm, type PinnedPnpm } from './pinned-pnpm.ts'
+export { reconcileProfileLayout, type LayoutChange } from './profile-layout.ts'

@@ -24,6 +24,7 @@ import { dirname, join } from 'node:path'
 import { PassThrough, Readable } from 'node:stream'
 import { type Context, Service } from '@deepseek-ai/cordis'
 import { pinnedPnpmEnv } from './pinned-pnpm.ts'
+import { reconcileProfileLayout, type PnpmProfileConfig } from './profile-layout.ts'
 
 /** Matches `cordis-plugin-market`'s own `MarketDesktopProfile` shape. */
 export interface CliMarketProfile {
@@ -93,13 +94,19 @@ export class CliProfilesService extends Service {
  */
 export class CliPnpmService extends Service implements CliMarketPnpm {
   private readonly dshBin: string
+  private readonly profileName: string
+  private readonly profileDir: string
 
-  constructor(ctx: Context, private readonly profileName: string) {
+  constructor(ctx: Context, config: PnpmProfileConfig) {
     super(ctx, 'desktopPnpm')
+    this.profileName = config.name
+    this.profileDir = config.dir
     this.dshBin = resolveDshBin()
   }
 
   runPlugin(args: readonly string[], _invokingDir: string, signal?: AbortSignal): CliMarketPnpmHandle {
+    // Never let a pnpm relink a profile another pnpm laid out (see profile-layout.ts).
+    reconcileProfileLayout(this.profileDir)
     const child = spawn(process.execPath, [this.dshBin, 'plugin', '--profile', this.profileName, ...args, '-w'], {
       // The pinned pnpm, not whatever the machine has on PATH (see pinned-pnpm.ts).
       env: pinnedPnpmEnv(process.env),
@@ -170,5 +177,5 @@ export class CliPnpmService extends Service implements CliMarketPnpm {
  */
 export function provideCliMarketInstall(ctx: Context, profile: CliMarketProfile): void {
   ctx.plugin(CliProfilesService, profile)
-  ctx.plugin(CliPnpmService, profile.name)
+  ctx.plugin(CliPnpmService, { name: profile.name, dir: profile.dir })
 }
