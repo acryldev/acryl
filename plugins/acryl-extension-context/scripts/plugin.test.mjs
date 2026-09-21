@@ -227,6 +227,18 @@ test('reload: re-installs each local plugin from its source folder and reports p
   } finally { rmSync(dir, { recursive: true, force: true }); rmSync(profile, { recursive: true, force: true }) }
 })
 
+test('reload: an install whose source folder is gone is reported stale, and removed only on request', async () => {
+  const profile = mkdtempSync(join(tmpdir(), 'profile-')); const gone = join(tmpdir(), `gone-${Date.now()}`); const s = { ...fakes({ preinstalled: true }), profileDir: profile }
+  try {
+    writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: { 'my-plugin': `file:${gone}` } }))
+    const reported = await reloadLocalPlugins(s)
+    assert.equal(reported.length, 1); assert.equal(reported[0].stale, true); assert.equal(reported[0].ok, true, 'stale is not a failure')
+    assert.deepEqual(s.calls, [], 'nothing is installed or removed by default')
+    const removed = await reloadLocalPlugins(s, undefined, { removeStale: true })
+    assert.equal(removed[0].stale, true); assert.equal(removed[0].removed, true); assert.deepEqual(s.calls, [['deactivate', 'my-plugin'], ['run', 'remove', 'my-plugin']])
+  } finally { rmSync(profile, { recursive: true, force: true }) }
+})
+
 test('plugin registers /reload when a commands service exists and reports an unavailable profile', async () => {
   const { apply } = await import('../index.js')
   const registered = []
@@ -240,7 +252,7 @@ test('plugin registers /reload when a commands service exists and reports an una
   const reload = registered.find(d => d.name === 'reload')
   assert.ok(reload, '/reload is registered')
   // `/reload new` only reaches the handler when the command declares an argument hint; otherwise the client sends it to the model as chat.
-  assert.equal(reload.input?.hint, '[new]', '/reload declares its [new] argument')
+  assert.equal(reload.input?.hint, '[new|remove-stale]', '/reload declares its arguments')
   assert.equal((await reload.handler()).kind, 'error')
 })
 

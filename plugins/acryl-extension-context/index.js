@@ -68,7 +68,7 @@ export function apply(ctx) {
         name: 'reload',
         description: 'Reload local extensions from their source folders',
         // Without `input` the client treats the command as argument-less and sends `/reload new` to the model as chat.
-        input: { hint: '[new]' },
+        input: { hint: '[new|remove-stale]' },
         async handler(invocation) {
           const profileDir = ctx.get('desktopProfiles')?.current?.dir
           if (!profileDir) return { kind: 'error', text: 'The active profile is not available in this runtime.' }
@@ -76,10 +76,13 @@ export function apply(ctx) {
           const workspaceDir = invocation?.agent?.session?.header?.cwd
           // `/reload new` also installs extension folders found under .acryl-extensions/ that are not installed yet: they run with the
           // user's permissions, so the human opts in explicitly.
-          const installDiscovered = String(invocation?.rawInput ?? '').trim() === 'new'
-          const results = await reloadLocalPlugins({ pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir }, undefined, { workspaceDir, installDiscovered })
+          const words = String(invocation?.rawInput ?? '').trim().split(/\s+/u).filter(Boolean)
+          const installDiscovered = words.includes('new')
+          // `/reload remove-stale` removes installs whose source folder is gone; without it they are only reported.
+          const removeStale = words.includes('remove-stale')
+          const results = await reloadLocalPlugins({ pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir }, undefined, { workspaceDir, installDiscovered, removeStale })
           if (results.length === 0) return { kind: 'success', text: 'No local extensions installed or found in .acryl-extensions/.' }
-          const lines = results.map(r => r.pending ? `${r.dir}: NEW, not installed. It would run with your permissions: review it, then type /reload new` : r.ok ? `${r.name}: ${r.action}${r.discovered ? ' (new)' : ''}` : `${r.name}: FAILED - ${(r.errors ?? []).join('; ')}`)
+          const lines = results.map(r => r.stale && r.removed ? `${r.name}: STALE, source folder missing - removed` : r.stale && r.ok ? `${r.name}: STALE - source folder ${r.dir} no longer exists, so it cannot be updated. Type /reload remove-stale to remove it` : r.pending ? `${r.dir}: NEW, not installed. It would run with your permissions: review it, then type /reload new` : r.ok ? `${r.name}: ${r.action}${r.discovered ? ' (new)' : ''}` : `${r.name}: FAILED - ${(r.errors ?? []).join('; ')}`)
           const failed = results.some(r => !r.ok)
           const text = `${lines.join('\n')}\nReload the page (Web) or window (Desktop, Cmd/Ctrl+R) to pick up UI changes.`
           return failed ? { kind: 'error', text } : { kind: 'success', text }

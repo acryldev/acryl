@@ -53,6 +53,7 @@ The human types `/reload` in the chat. It re-installs every local plugin from it
 prints one line per plugin. Suggest it after the user edits a plugin by hand. A NEW extension folder found under `<workspace>/.acryl-extensions/` is only
 listed ("NEW, not installed"): installing new folders takes `/reload new`, typed by the human, because an extension runs with the user's permissions
 (see `../start-here/trust-and-safety.md`). UI changes still need a page (Web) or window (Desktop) reload.
+An install whose source folder was moved or deleted is reported as "STALE" (not a failure); `/reload remove-stale`, typed by the human, removes it. Nothing is removed automatically.
 
 ## What you see in your context
 

@@ -233,7 +233,7 @@ export function discoverWorkspaceExtensions(workspaceDir, fs = { existsSync, rea
  * and rolled back, never half-applied.
  * @param {object} services `{ pnpm, live, profileDir }`
  * @param {object} [fs]
- * @param {{ workspaceDir?: string, installDiscovered?: boolean }} [options] `installDiscovered`: install new folders instead of only listing them
+ * @param {{ workspaceDir?: string, installDiscovered?: boolean, removeStale?: boolean }} [options] `installDiscovered`: install new folders instead of only listing them; `removeStale`: remove installs whose source folder no longer exists (otherwise they are only reported)
  */
 export async function reloadLocalPlugins(services, fs, options = {}) {
   const plugins = listLocalPlugins(services.profileDir, fs)
@@ -243,6 +243,14 @@ export async function reloadLocalPlugins(services, fs, options = {}) {
     const dir = plugin.installedFrom
     if (!dir || !isAbsolute(dir)) { results.push({ name: plugin.name, ok: false, errors: [`source directory "${dir}" is not absolute, skipped`] }); continue }
     done.add(dir)
+    // The source folder was moved or deleted: the install still runs, but it can never be updated. Report it as stale (not a failure);
+    // it is removed only when the human asked for that explicitly (`/reload remove-stale`), never automatically.
+    if (!(fs?.existsSync ?? existsSync)(join(dir, 'package.json'))) {
+      if (!options.removeStale) { results.push({ name: plugin.name, stale: true, ok: true, dir }); continue }
+      const removed = await removeLocalPlugin({ package: plugin.name }, services)
+      results.push({ name: plugin.name, stale: true, dir, ...removed })
+      continue
+    }
     const result = await installLocalPlugin({ path: dir }, services, fs)
     results.push({ name: plugin.name, ...result })
   }
