@@ -13,5 +13,6 @@ means an overlay, not a slot. Then read {{pack}}/docs/extending/ui-components.md
 Key facts: the package has a host half (empty apply) and a browser half client.js exported as "./client" with
 "dsh.client" in package.json. There is no build step: write client.js by hand inside the
 window.__ModuleLoader__.load wrapper, use React.createElement (no JSX, no import), and pick a slot from the
-table in the doc. Persist state in localStorage or behind a host route. Deliver with acryl_install_plugin and
+table in the doc. Decide where state lives first ({{pack}}/docs/extending/state-and-persistence.md): localStorage is per browser and per surface (Web and Desktop never share it), so
+when the data must be the same in both, or survive clearing the browser, keep it on the host behind an RPC channel (example state-host-store); tell the user which you chose. Deliver with acryl_install_plugin and
 tell the user to reload the page or window.

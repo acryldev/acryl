@@ -146,7 +146,8 @@
             "start.this-runtime",
             "delivery.local-live",
             "extending.host-route",
-            "extending.ui-components"
+            "extending.ui-components",
+            "extending.state-and-persistence"
           ],
           "examples": [
             "client-slot.header-action",
@@ -277,12 +278,38 @@
           ],
           "applies": "all",
           "seeAlso": [
-            "extending.client-slot"
+            "extending.client-slot",
+            "extending.state-and-persistence"
           ],
           "examples": [
             "host-route.basic"
           ],
           "topic": "an HTTP or RPC route"
+        },
+        {
+          "id": "extending.state-and-persistence",
+          "title": "State and persistence: where a plugin keeps its data",
+          "path": "extending/state-and-persistence.md",
+          "when": "A plugin must remember something: notes, todos, preferences, a cache, anything that should survive a reload or be shared between Web and Desktop.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "extending.host-route",
+            "extending.client-slot",
+            "extending.config-schema",
+            "reference.subsystems.storage"
+          ],
+          "examples": [
+            "state.host-store",
+            "state.workspace-file",
+            "settings-section.basic",
+            "client-slot.header-action"
+          ],
+          "topic": "saving data, notes, settings or state"
         },
         {
           "id": "extending.tui-command",
@@ -2409,6 +2436,35 @@
       "docs": [
         "extending.client-slot"
       ]
+    },
+    {
+      "id": "state.host-store",
+      "type": "host-route",
+      "path": "state-host-store",
+      "surfaces": [
+        "web",
+        "desktop"
+      ],
+      "teaches": "Keep state on the host (a JSON file under the DSH home) behind an authenticated RPC channel, so Web and Desktop share it and it survives clearing the browser.",
+      "docs": [
+        "extending.state-and-persistence",
+        "extending.host-route"
+      ]
+    },
+    {
+      "id": "state.workspace-file",
+      "type": "tool",
+      "path": "state-workspace-file",
+      "surfaces": [
+        "tui",
+        "web",
+        "desktop"
+      ],
+      "teaches": "Keep project notes in the workspace as .acryl/notes.md via tools, so the agent and the user can read them and git can track them.",
+      "docs": [
+        "extending.state-and-persistence",
+        "extending.tool"
+      ]
     }
   ],
   "routes": [
@@ -2504,6 +2560,12 @@
         "start.verify-before-done",
         "start.troubleshooting",
         "start.trust-and-safety"
+      ]
+    },
+    {
+      "when": "remember, save, persist or store data, notes, todos, preferences or state; share data between Web and Desktop",
+      "docs": [
+        "extending.state-and-persistence"
       ]
     }
   ]

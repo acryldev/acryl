@@ -30,6 +30,7 @@ plugin. Verified working examples: `../example-plugins/README.md`.
 | [Prompt contributions: add to the agent system prompt](extending/prompt-contribution.md) | The feature changes what the agent is told or how it behaves. | tui web desktop | all |
 | [Skills: on-demand instructions for the agent](extending/skill-provider.md) | The feature is reusable instructions the agent loads only when needed. | tui web desktop | all |
 | [Host routes: an HTTP API for a web or desktop plugin](extending/host-route.md) | A client UI needs a backend endpoint, or state must be shared across devices. | web desktop | all |
+| [State and persistence: where a plugin keeps its data](extending/state-and-persistence.md) | A plugin must remember something: notes, todos, preferences, a cache, anything that should survive a reload or be shared between Web and Desktop. | tui web desktop | all |
 | [Terminal commands: slash commands with an overlay](extending/tui-command.md) | The feature is a terminal (tui) command or overlay. | tui | all |
 | [LLM adapters: connect a new model provider](extending/llm-adapter.md) | Connect a new model provider route: the stream protocol and a working network-free adapter. | tui web desktop | all |
 | [Packaging a plugin, and generated capabilities](extending/packaging.md) | Writing package.json and the patch, sharing the plugin, or recording a generated capability's permissions and provenance. | tui web desktop | all |

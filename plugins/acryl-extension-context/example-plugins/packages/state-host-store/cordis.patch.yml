@@ -1,0 +1,3 @@
+- insert:
+    - id: example-state-host
+      name: acryl-example-state-host

@@ -102,8 +102,9 @@ say which one you chose. Desktop's native menu accelerators live in the Electron
 
 ## Persisting state
 
-The example keeps state in `localStorage`. That survives reloads on one machine. For state
-shared across devices or with the agent, add a host route (`host-route.md`) and `fetch` it.
+The example keeps state in `localStorage`. That survives reloads in ONE browser only: Web and Desktop each have their own copy, and clearing site data wipes it. For state
+shared across surfaces, kept on the host, or visible to the agent, read `state-and-persistence.md` (host file behind an RPC channel, workspace file, settings) and
+start from `../example-plugins/packages/state-host-store/`.
 
 ## Getting it live
 

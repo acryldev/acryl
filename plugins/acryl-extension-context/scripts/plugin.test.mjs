@@ -239,6 +239,42 @@ test('reload: an install whose source folder is gone is reported stale, and remo
   } finally { rmSync(profile, { recursive: true, force: true }) }
 })
 
+test('example state.workspace-file: notes persist as .acryl/notes.md in the session workspace and are refused without one', async () => {
+  const { apply } = await import('../example-plugins/packages/state-workspace-file/index.js')
+  const tools = new Map()
+  apply({ tools: { register: def => tools.set(def.name, def) } })
+  assert.deepEqual([...tools.keys()].sort(), ['notes_add', 'notes_list'])
+  const workspace = mkdtempSync(join(tmpdir(), 'ws-'))
+  const exec = { agent: { session: { header: { cwd: workspace } } } }
+  try {
+    assert.equal(await tools.get('notes_list').execute({}, exec), '(no notes yet)')
+    await tools.get('notes_add').execute({ text: 'first\nnote' }, exec)
+    await tools.get('notes_add').execute({ text: 'second' }, exec)
+    const file = join(workspace, '.acryl', 'notes.md')
+    const lines = readFileSync(file, 'utf8').trim().split('\n')
+    assert.equal(lines.length, 2); assert.match(lines[0], /first note$/u); assert.match(lines[1], /second$/u)
+    assert.equal(await tools.get('notes_list').execute({}, exec), readFileSync(file, 'utf8'))
+    await assert.rejects(tools.get('notes_add').execute({ text: '  ' }, exec), /text is required/u)
+    await assert.rejects(tools.get('notes_add').execute({ text: 'x' }, { agent: { session: { header: {} } } }), /no workspace directory/u)
+  } finally { rmSync(workspace, { recursive: true, force: true }) }
+})
+
+test('example state.host-store: the RPC channel persists notes atomically under the DSH home and returns the result envelope', async () => {
+  const { apply, inject } = await import('../example-plugins/packages/state-host-store/index.js')
+  assert.deepEqual(inject, ['connection', 'webServer'])
+  const home = mkdtempSync(join(tmpdir(), 'dshhome-')); let handler
+  try {
+    apply({ get: name => (name === 'dshHomePath' ? (...segments) => join(home, ...segments) : undefined), connection: { rpc: { handle: (_channel, fn) => { handler = fn } } } })
+    assert.deepEqual((await handler('list', {})).value.notes, [])
+    const added = await handler('add', { text: '  hello  ' })
+    assert.equal(added.ok, true); assert.equal(added.value.notes[0].text, 'hello')
+    assert.equal(JSON.parse(readFileSync(join(home, 'plugin-data', 'acryl-example-state-host', 'notes.json'), 'utf8')).length, 1)
+    assert.equal((await handler('add', { text: '' })).ok, false)
+    assert.equal((await handler('nope', {})).error.code, 'bad-request')
+    assert.deepEqual((await handler('remove', { id: added.value.notes[0].id })).value.notes, [])
+  } finally { rmSync(home, { recursive: true, force: true }) }
+})
+
 test('plugin registers /reload when a commands service exists and reports an unavailable profile', async () => {
   const { apply } = await import('../index.js')
   const registered = []

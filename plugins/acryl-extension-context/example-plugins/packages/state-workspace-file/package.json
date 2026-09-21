@@ -1,0 +1,25 @@
+{
+  "name": "acryl-example-state-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Project notes kept in the workspace as .acryl/notes.md: readable by the agent and the user, versionable in git",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh-tools": "0.1.5-alpha.1"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
