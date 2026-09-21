@@ -5,7 +5,7 @@ each landed task in `docs/DEVELOPMENT-LOG.md` in a separate documentation commit
 
 ## Status (2026-09-20)
 
-Slice 0 mostly answered and the web skeleton landed (2026-09-21): M10 to M13 and the decisions are in `research.md`; Q3 (final token set, terminal light/dark) and Q6 (fabric RFC) remain open. Next: T006/T007 (tokens, `tuiTheme`), T011b (wire the library into every surface), T013 (gallery).
+Slice 0 mostly answered and the web skeleton landed (2026-09-21): M10 to M13 and the decisions are in `research.md`; Q3 (final token set, terminal light/dark) and Q6 (fabric RFC) remain open. Web layer landed (2026-09-21): the library is a Loader row on the web engine and in the Desktop profile (T011b), with semantic roles (Q3, approved) and a gallery example (T013 partial). Next: the terminal layer, T006/T007 (`tuiTheme`), then Slice 4 onwards. Every T-number and Q-number here refers to THIS spec (038-ui-component-library): tasks.md for tasks, research.md for Q and M numbers.
 
 ## Slice 0 - Research gates
 
@@ -13,7 +13,7 @@ Slice 0 mostly answered and the web skeleton landed (2026-09-21): M10 to M13 and
   workspace package ships in installed builds. **Evidence**: a browser run `require`-ing a probe package; notes in `research.md`.
 - **T002 Terminal theme placement (Q2). MEASURED** (M11), prototype not built. Prototype `tuiTheme` in `acryl-cli`; convert one overlay; measure the diff size for all overlays.
   **Evidence**: prototype branch result and test.
-- **T003 Token mapping (Q3, Q8).** Curated semantic set to `--dsw-alias-*` and terminal roles; terminal background detection.
+- **T003 Token mapping (Q3, Q8). Q3 DONE** (approved): `plugins/acryl-ui-web/contracts/tokens.json` maps 13 roles to app tokens and terminal palettes (dark and light); the web roles are live. Q8 (terminal background detection) is built with `tuiTheme`. Curated semantic set to `--dsw-alias-*` and terminal roles; terminal background detection.
   **Evidence**: mapping table, one restyle demo on web and terminal.
 - **T004 Contract format and layout (Q4, Q5, Q6). DECIDED** (Q4, Q5; Q6 open), see research decisions. Decide schema format, package layout, fabric RFC relation. **Evidence**: ADR in `plan.md`.
 - **T005 Migration order and a11y minimum (Q7, Q9). DECIDED**, see research decisions. **Evidence**: written list and the headless check design.
@@ -27,10 +27,10 @@ Slice 0 mostly answered and the web skeleton landed (2026-09-21): M10 to M13 and
 
 ## Slice 2 - Web layer
 
-- **T010** Contracts: Button, TextField, Switch, Tag, Dialog, Card, Tabs (data package). **Partial**: Stack, Card, Field, SwitchField, EmptyState are contracted in `plugins/acryl-ui-web/contracts/components.json`; Dialog, Tabs, Tag, Button wrappers remain.
-- **T011** `acryl-ui-web` over primitives; requirable module; declared in `dsh.client.inject`. **Partial**: package built, contract-tested (4 tests) and verified in a real browser (Card, Field, SwitchField, EmptyState, footerAction; error announced). **T011b** (open): materialize it into every Web/Desktop profile like the brand package.
+- **T010** Contracts: Button, TextField, Switch, Tag, Dialog, Card, Tabs (data package). **Done for the web layer**: Stack, Card, Field, SwitchField, SettingsRow, SelectField (over the app's Menu), Segmented, Tabs, Dialog (over the app's Modal), EmptyState are contracted in `plugins/acryl-ui-web/contracts/components.json`; Button, Tag, Pill, Toast, Modal, Tooltip are re-exported from the app's primitives (reuse over rewrite).
+- **T011** `acryl-ui-web` over primitives; requirable module; declared in `dsh.client.inject`. **Partial**: package built, contract-tested (4 tests) and verified in a real browser (Card, Field, SwitchField, EmptyState, footerAction; error announced). **T011b DONE**: `acryl-ui-web` is a workspace package (pnpm-workspace, verify-layout, root test/check scripts, desktop package spec) and a Loader row on the web engine (`engine-dsh.ts`) and in the Desktop profile (`profile.ts`); a consumer plugin gets it with no install (checked live: the profile materialized it by itself). Not wired into the CLI (no browser client).
 - **T012** Slot helpers (`headerAction`, `sidebarTab`, `footerAction`, `settingsCard`). **Partial**: `footerAction`, `headerAction`, `sidebarTab` done (footerAction verified live); `settingsCard` remains.
-- **T013** Gallery page and web conformance (contract, states, contrast both modes).
+- **T013** Gallery page and web conformance (contract, states, contrast both modes). **Partial**: gallery example `client-ui-library` in the extension pack (Components, Settings form, Colors tabs) verified in a real browser; contract tests (7) run headless; contrast in both modes not yet measured.
 - **T014** Rebuild `client-ui-components` on the library; real browser and Desktop dev-build check.
 
 ## Slice 3 - Terminal layer

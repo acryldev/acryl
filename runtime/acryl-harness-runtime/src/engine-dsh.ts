@@ -492,6 +492,9 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   // ACRYL system prompt shaping (pi.dev-like tagged prompt, ACRYL identity), pass-through over the harness's sections.
   materializeProfilePackage(profile.dir, 'acryl-system-prompt', installPackageUrl)
   patches.push({ insert: [{ id: 'acryl-system-prompt', name: 'acryl-system-prompt' }] })
+  // ACRYL UI library (spec 038-ui-component-library): a client-only library that other client bundles `require('acryl-ui-web')`. It fills no slot.
+  materializeProfilePackage(profile.dir, 'acryl-ui-web', installPackageUrl)
+  patches.push({ insert: [{ id: 'acryl-ui-web', name: 'acryl-ui-web' }] })
   // Last, so a user override beats every composition decision above it - the
   // same shared store the CLI and the Desktop panel write (spec 034).
   patches.push(...pluginLifecyclePatches({

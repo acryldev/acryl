@@ -1,0 +1,16 @@
+{
+  "name": "acryl-example-ui-library",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Gallery of the ACRYL UI library (acryl-ui-web): every component, the color roles, and a Settings-style form, opened from the sidebar footer",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "exports": { ".": "./index.js", "./package.json": "./package.json", "./client": "./client.js" },
+  "files": ["index.js", "cordis.patch.yml", "client.js"],
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "inject": ["acryl-ui-web", "@deepseek-ai/dsh-client-ui-sidebar"], "platform": "web" }
+  },
+  "acryl": { "apiVersion": 1, "permissions": ["ui"] }
+}

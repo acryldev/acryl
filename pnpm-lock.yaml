@@ -1303,6 +1303,9 @@ importers:
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
+      acryl-ui-web:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-ui-web
       adm-zip:
         specifier: ^0.6.0
         version: 0.6.0
@@ -1934,6 +1937,9 @@ importers:
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
+      acryl-ui-web:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-ui-web
       cordis-plugin-market:
         specifier: workspace:*
         version: link:../../plugins/cordis-plugin-market
@@ -1998,6 +2004,8 @@ importers:
       '@deepseek-ai/cordis':
         specifier: 4.0.2
         version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
+
+  plugins/acryl-ui-web: {}
 
   plugins/cordis-plugin-market:
     dependencies:
@@ -2727,6 +2735,9 @@ importers:
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
+      acryl-ui-web:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-ui-web
       adm-zip:
         specifier: ^0.6.0
         version: 0.6.0

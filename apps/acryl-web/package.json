@@ -194,6 +194,7 @@
     "diff": "^8.0.4",
     "acryl-extension-context": "workspace:*",
     "acryl-system-prompt": "workspace:*",
+    "acryl-ui-web": "workspace:*",
     "dsh-client-ui-brand-acryl": "workspace:*",
     "cordis-plugin-market": "workspace:*"
   },

@@ -1,7 +1,7 @@
 {
   "name": "acryl-ui-web",
-  "version": "0.1.0",
-  "description": "ACRYL UI library for the Web and Desktop client: themed building blocks (Stack, Card, Field, SwitchField, EmptyState) and slot helpers over the app's own primitives",
+  "version": "0.2.0",
+  "description": "ACRYL UI library for the Web and Desktop client: themed building blocks over the app's own primitives (Stack, Card, Field, SwitchField, SettingsRow, SelectField, Segmented, Tabs, Dialog, EmptyState), semantic color roles and slot helpers",
   "license": "MIT",
   "type": "module",
   "main": "./index.js",
@@ -9,13 +9,35 @@
     ".": "./index.js",
     "./package.json": "./package.json",
     "./client": "./client.js",
-    "./contracts": "./contracts/components.json"
+    "./contracts": "./contracts/components.json",
+    "./tokens": "./contracts/tokens.json"
   },
-  "files": ["index.js", "cordis.patch.yml", "client.js", "contracts", "README.md"],
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "client.js",
+    "contracts",
+    "README.md"
+  ],
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
-    "client": { "inject": ["@deepseek-ai/dsh-client-ui-primitives"], "platform": "web" }
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-primitives"
+      ],
+      "platform": "web"
+    }
   },
-  "acryl": { "apiVersion": 1, "permissions": ["ui"] },
-  "scripts": { "test": "node --test tests/contracts.test.mjs" }
+  "acryl": {
+    "apiVersion": 1,
+    "permissions": [
+      "ui"
+    ]
+  },
+  "scripts": {
+    "test": "node --test tests/contracts.test.mjs",
+    "check": "node --test tests/contracts.test.mjs"
+  }
 }

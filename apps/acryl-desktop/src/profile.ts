@@ -92,6 +92,8 @@ const UI_BRAND_OFFICIAL_ROW_ID = 'ui-brand-official'
 const UI_BRAND_ACRYL_ROW_ID = 'ui-acryl'
 const EXTENSION_CONTEXT_ROW_ID = 'extension-context'
 const EXTENSION_CONTEXT_PACKAGE = 'acryl-extension-context'
+const UI_LIBRARY_ROW_ID = 'acryl-ui-web'
+const UI_LIBRARY_PACKAGE = 'acryl-ui-web'
 const SYSTEM_PROMPT_ROW_ID = 'acryl-system-prompt'
 const SYSTEM_PROMPT_PACKAGE = 'acryl-system-prompt'
 const UI_BRAND_ACRYL_PACKAGE = 'dsh-client-ui-brand-acryl'
@@ -841,6 +843,8 @@ export function prepareDesktopProfile(
   patches.push({ insert: [{ id: EXTENSION_CONTEXT_ROW_ID, name: EXTENSION_CONTEXT_PACKAGE }] })
   // ACRYL system prompt shaping: pi.dev-like tagged prompt with the ACRYL identity, pass-through over the harness's sections.
   patches.push({ insert: [{ id: SYSTEM_PROMPT_ROW_ID, name: SYSTEM_PROMPT_PACKAGE }] })
+  // ACRYL UI library (spec 038-ui-component-library): client-only, required by other client bundles; resolved from this package's own dependency closure.
+  patches.push({ insert: [{ id: UI_LIBRARY_ROW_ID, name: UI_LIBRARY_PACKAGE }] })
   if (mode === 'advanced') {
     for (const [id, packageName] of [
       ['ui-layout', UI_LAYOUT_PACKAGE],

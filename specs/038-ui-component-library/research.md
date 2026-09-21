@@ -83,7 +83,7 @@ Facts already measured (2026-09-20, this checkout) and questions still open. Evi
 - **Q9 minimum:** every interactive component names itself (label or `aria-label`), announces errors, and keeps focusable order; checked headlessly by the contract test, then once in a real browser.
 - **Still open:** Q3 (final semantic token set, terminal background detection), Q6 (fabric RFC relation).
 
-## Proposals awaiting a decision (Q3, Q6)
+## Decisions approved 2026-09-21 (Q3, Q6 in this file)
 
 **Q3 - semantic tokens.** Components and the terminal layer name only these roles; one compile file is the only place that knows the `--dsw-alias-*` names, so an upstream rename touches one file.
 
@@ -103,4 +103,7 @@ palette is a second hex table for the same nine roles. Desktop native accent sta
 stays independent. Keep two alignment points so adoption later is a mapping, not a rewrite: the extension manifest's `permissions` words and `apiVersion` correspond to Fabric's requested capabilities,
 and provenance origin corresponds to its provenance record (RFC 0004); and if Fabric ships, expose the library as a versioned capability (`ui.components@1`) without changing the contract file. Revisit when
 Fabric has a schema release; until then record the mapping here, nothing more.
+
+**Measured while building the web layer.** The app defines its `--dsw-alias-*` tokens on `body`, not `:root`, so the role variables must be declared on `body` too (declared on `:root` they resolved to nothing and borders vanished). Only a real
+browser showed it. Dark mode is signalled by `color-scheme`, so CSS `light-dark()` works for the two new roles. Synthetic `.click()` does not open the app's `Menu` (it listens for pointer events); a real click does.
 

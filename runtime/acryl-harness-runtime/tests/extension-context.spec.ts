@@ -46,6 +46,8 @@ describe('extension context on the web engine', () => {
     try {
       const rows = [...host.ctx.loader.entries()]
       expect(rows.some(entry => entry.options.id === 'extension-context')).toBe(true)
+      // The UI library (spec 038-ui-component-library) is a Loader row on the web engine, so every client bundle can require('acryl-ui-web').
+      expect(rows.some(entry => entry.options.id === 'acryl-ui-web')).toBe(true)
 
       const context = host.ctx.get('extensionContext' as never) as { root: string } | undefined
       expect(context).toBeDefined()

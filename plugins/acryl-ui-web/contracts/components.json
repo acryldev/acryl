@@ -1,62 +1,281 @@
 {
   "schemaVersion": 1,
   "library": "acryl-ui-web",
-  "surfaces": ["web", "desktop"],
+  "surfaces": [
+    "web",
+    "desktop"
+  ],
   "components": {
     "Stack": {
       "summary": "Lays children out in a row or a column with a theme-consistent gap.",
       "props": {
-        "direction": { "type": "'column' | 'row'", "default": "'column'" },
-        "gap": { "type": "'xs' | 'sm' | 'md' | 'lg'", "default": "'md'" },
-        "align": { "type": "'start' | 'center' | 'end' | 'stretch'", "default": "'stretch'" }
+        "direction": {
+          "type": "'column' | 'row'",
+          "default": "'column'"
+        },
+        "gap": {
+          "type": "'xs' | 'sm' | 'md' | 'lg'",
+          "default": "'md'"
+        },
+        "align": {
+          "type": "'start' | 'center' | 'end' | 'stretch'",
+          "default": "'stretch'"
+        }
       },
       "children": true,
-      "a11y": ["no role: it is layout only"]
+      "a11y": [
+        "no role: it is layout only"
+      ]
     },
     "Card": {
       "summary": "A bordered surface with an optional title, body and footer actions.",
       "props": {
-        "title": { "type": "string" },
-        "footer": { "type": "ReactNode", "description": "actions, right-aligned" }
+        "title": {
+          "type": "string"
+        },
+        "footer": {
+          "type": "ReactNode",
+          "description": "actions, right-aligned"
+        }
       },
       "children": true,
-      "a11y": ["role=group, labelled by the title when there is one"]
+      "a11y": [
+        "role=group, labelled by the title when there is one"
+      ]
     },
     "Field": {
       "summary": "A labelled text input with hint and error text.",
       "props": {
-        "label": { "type": "string", "required": true },
-        "value": { "type": "string", "required": true },
-        "onChange": { "type": "(value: string) => void", "required": true, "description": "receives the string, not the event" },
-        "hint": { "type": "string" },
-        "error": { "type": "string", "description": "shown in place of the hint and announced" },
-        "placeholder": { "type": "string" }
+        "label": {
+          "type": "string",
+          "required": true
+        },
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(value: string) => void",
+          "required": true,
+          "description": "receives the string, not the event"
+        },
+        "hint": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string",
+          "description": "shown in place of the hint and announced"
+        },
+        "placeholder": {
+          "type": "string"
+        }
       },
-      "a11y": ["the label is associated with the input", "the error is announced (role=alert) and referenced by aria-describedby"]
+      "a11y": [
+        "the label is associated with the input",
+        "the error is announced (role=alert) and referenced by aria-describedby"
+      ]
     },
     "SwitchField": {
       "summary": "A switch with a label and optional hint.",
       "props": {
-        "label": { "type": "string", "required": true },
-        "checked": { "type": "boolean", "required": true },
-        "onChange": { "type": "(checked: boolean) => void", "required": true },
-        "hint": { "type": "string" }
+        "label": {
+          "type": "string",
+          "required": true
+        },
+        "checked": {
+          "type": "boolean",
+          "required": true
+        },
+        "onChange": {
+          "type": "(checked: boolean) => void",
+          "required": true
+        },
+        "hint": {
+          "type": "string"
+        }
       },
-      "a11y": ["the label is the accessible name"]
+      "a11y": [
+        "the label is the accessible name"
+      ]
     },
     "EmptyState": {
       "summary": "Centered message for a list or view with nothing in it yet.",
       "props": {
-        "title": { "type": "string", "required": true },
-        "description": { "type": "string" },
-        "action": { "type": "ReactNode" }
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "description": {
+          "type": "string"
+        },
+        "action": {
+          "type": "ReactNode"
+        }
       },
-      "a11y": ["the title is a heading"]
+      "a11y": [
+        "the title is a heading"
+      ]
+    },
+    "SettingsRow": {
+      "summary": "A settings-style row: label and description on the left, one control on the right (the layout of the app's own Settings screens).",
+      "props": {
+        "label": {
+          "type": "string",
+          "required": true
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "children": true,
+      "a11y": [
+        "the control passed as children keeps its own accessible name"
+      ]
+    },
+    "SelectField": {
+      "summary": "A dropdown built on the app's own Menu: shows the selected option and opens the option list.",
+      "props": {
+        "options": {
+          "type": "Array<{ id: string, label: string, disabled?: boolean }>",
+          "required": true
+        },
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(id: string) => void",
+          "required": true
+        },
+        "placeholder": {
+          "type": "string",
+          "default": "'Select'"
+        },
+        "label": {
+          "type": "string",
+          "description": "accessible name of the trigger"
+        }
+      },
+      "a11y": [
+        "trigger has aria-haspopup and aria-expanded",
+        "Escape and outside click close it (Menu)"
+      ]
+    },
+    "Segmented": {
+      "summary": "Tile group for a small set of exclusive choices (the Appearance picker in Settings).",
+      "props": {
+        "options": {
+          "type": "Array<{ id: string, label: string, icon?: ReactNode }>",
+          "required": true
+        },
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(id: string) => void",
+          "required": true
+        },
+        "label": {
+          "type": "string",
+          "description": "accessible name of the group"
+        }
+      },
+      "a11y": [
+        "role=radiogroup with role=radio tiles and aria-checked",
+        "roving tabindex; arrow keys move the choice"
+      ]
+    },
+    "Tabs": {
+      "summary": "Tab strip with the active panel as children.",
+      "props": {
+        "tabs": {
+          "type": "Array<{ id: string, label: string }>",
+          "required": true
+        },
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(id: string) => void",
+          "required": true
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "children": true,
+      "a11y": [
+        "role=tablist, tab and tabpanel wired with aria-controls and aria-labelledby",
+        "roving tabindex; left and right arrows move the tab"
+      ]
+    },
+    "Dialog": {
+      "summary": "A confirm dialog over the app's Modal, with cancel and confirm actions.",
+      "props": {
+        "open": {
+          "type": "boolean",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "onClose": {
+          "type": "() => void",
+          "required": true
+        },
+        "onConfirm": {
+          "type": "() => void",
+          "required": true
+        },
+        "confirmLabel": {
+          "type": "string",
+          "default": "'OK'"
+        },
+        "cancelLabel": {
+          "type": "string",
+          "default": "'Cancel'"
+        },
+        "danger": {
+          "type": "boolean",
+          "default": "false"
+        }
+      },
+      "children": true,
+      "a11y": [
+        "focus handling and Escape come from the app's Modal"
+      ]
     }
   },
   "helpers": {
-    "footerAction": { "summary": "Register a component in the sidebar footer (root scope, receives { wide }).", "slot": "sidebar.footer.action" },
-    "headerAction": { "summary": "Register a component next to the conversation title (session scope).", "slot": "conversation.session.header.actions" },
-    "sidebarTab": { "summary": "Register a tab in the right sidebar (session scope).", "slot": "sidebar.right.pane.tab" }
+    "footerAction": {
+      "summary": "Register a component in the sidebar footer (root scope, receives { wide }).",
+      "slot": "sidebar.footer.action"
+    },
+    "headerAction": {
+      "summary": "Register a component next to the conversation title (session scope).",
+      "slot": "conversation.session.header.actions"
+    },
+    "sidebarTab": {
+      "summary": "Register a tab in the right sidebar (session scope).",
+      "slot": "sidebar.right.pane.tab"
+    }
+  },
+  "reexports": {
+    "note": "Straight from the app's primitives so a consumer needs one import.",
+    "names": [
+      "Button",
+      "Tag",
+      "Pill",
+      "Toast",
+      "Modal",
+      "Tooltip"
+    ]
+  },
+  "roles": {
+    "note": "Semantic role CSS variables (--acryl-<role>), mapped to the app tokens in contracts/tokens.json.",
+    "source": "contracts/tokens.json"
   }
 }

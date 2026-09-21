@@ -51,6 +51,7 @@ packages:
   - plugins/cordis-plugin-market
   - plugins/acryl-extension-context
   - plugins/acryl-system-prompt
+  - plugins/acryl-ui-web
   - '!deepseek-harness/**'
 
 allowBuilds:

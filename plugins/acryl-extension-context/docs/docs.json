@@ -117,6 +117,26 @@
           "topic": "building UI from the shared components"
         },
         {
+          "id": "extending.ui-library",
+          "title": "ACRYL UI library: build screens from ready components",
+          "path": "extending/ui-library.md",
+          "when": "Any Web or Desktop UI that has forms, settings, lists, dialogs or tabs: use acryl-ui-web instead of hand-styling; semantic color roles for your own colors.",
+          "surfaces": [
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "extending.ui-components",
+            "extending.client-slot",
+            "extending.ui-theme"
+          ],
+          "examples": [
+            "ui-library.gallery"
+          ],
+          "topic": "screens, forms, settings, dialogs, tabs"
+        },
+        {
           "id": "extending.cordis-core",
           "title": "Cordis building blocks and where each is documented",
           "path": "extending/cordis-core.md",
@@ -2465,6 +2485,19 @@
         "extending.state-and-persistence",
         "extending.tool"
       ]
+    },
+    {
+      "id": "ui-library.gallery",
+      "type": "client-slot",
+      "path": "client-ui-library",
+      "surfaces": [
+        "web",
+        "desktop"
+      ],
+      "teaches": "Build a screen from the ACRYL UI library (acryl-ui-web): cards, fields, settings rows, dropdown, segmented tiles, tabs, dialog, color roles and slot helpers.",
+      "docs": [
+        "extending.ui-library"
+      ]
     }
   ],
   "routes": [
@@ -2479,8 +2512,8 @@
     {
       "when": "a button, panel, tab, card, shortcut or tool-call card in Web/Desktop",
       "docs": [
-        "extending.client-slot",
-        "extending.ui-components"
+        "extending.ui-library",
+        "extending.client-slot"
       ]
     },
     {
