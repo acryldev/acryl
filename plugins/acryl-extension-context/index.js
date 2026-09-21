@@ -14,6 +14,7 @@ import { readFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { globalExtensionsDir } from './lib/reconcile.js'
+import { listInstalledPlugins } from './lib/provenance.js'
 import { describePermissions } from './lib/manifest.js'
 import { describeInstalledExtensions, installLocalPlugin, syncOnStartup, listLocalPlugins, reloadLocalPlugins, removeLocalPlugin } from './lib/install.js'
 import { lookupExtensionDocs } from './lib/lookup.js'
@@ -151,13 +152,16 @@ export function apply(ctx) {
 
     scoped.tools.register(defineTool({
       name: LIST_TOOL_NAME,
-      description: 'List the local plugins installed in the active ACRYL profile and the directory each was installed from, so you can find and edit them.',
+      description: 'List every plugin installed in the active ACRYL profile with its origin: "local" (built here; has a source folder you can edit, and a scope) or "registry" (installed from the marketplace/npm; managed, do not edit, has version and integrity digest).',
       parameters: {},
       output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
       async execute() {
         const profile = ctx.get('desktopProfiles')
         if (!profile?.current?.dir) throw new Error('the active profile is not available in this runtime')
-        return JSON.stringify(listLocalPlugins(profile.current.dir))
+        const dshHome = ctx.get('dshHomePath')
+        const globalDir = globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined)
+        // `installedFrom` is kept for local plugins: it is the name the skills and docs already use for the editable source directory.
+        return JSON.stringify(listInstalledPlugins(profile.current.dir, { globalDir }).map(plugin => (plugin.origin === 'local' ? { ...plugin, installedFrom: plugin.source } : plugin)))
       },
     }))
 

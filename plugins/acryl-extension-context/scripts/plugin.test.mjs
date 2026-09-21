@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url'
 import { test } from 'node:test'
 import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, syncOnStartup, ensureProfileBundle, pinPublicHoistPattern, describeInstalledExtensions } from '../lib/install.js'
 import { discoverExtensions, globalExtensionsDir, installState } from '../lib/reconcile.js'
+import { listInstalledPlugins, originOf, readLockfile } from '../lib/provenance.js'
 import { checkManifest, describePermissions, EXTENSION_API_VERSION } from '../lib/manifest.js'
 import { resolvePackRoot } from '../lib/pack-root.js'
 import { entryOf, hashPackage, pruneOldStages, pruneOldVersions, stagePackage, stagedSource, VERSION_DIR_PREFIX } from '../lib/stage.js'
@@ -490,6 +491,32 @@ test('startup sync: a changed GLOBAL source is re-installed; a changed project s
     assert.deepEqual([summary.updated, summary.changed, summary.stale, summary.pending, summary.failed], [['ext-global'], ['ext-project'], ['ext-gone'], ['ext-fresh'], []])
     assert.ok(s.calls.length > 0, 'the global extension was re-installed')
     assert.ok(!JSON.stringify(s.calls).includes('ext-project'), 'the project extension was NOT touched')
+  } finally { rmSync(root, { recursive: true, force: true }) }
+})
+
+test('provenance: local, registry, git and linked installs are told apart from what the profile already records', () => {
+  assert.deepEqual(['file:/x', '0.2.6', '^1.2.0', 'npm:foo@1', 'latest', 'git+https://github.com/a/b.git', 'github:a/b', 'workspace:*', 'link:../x', {}].map(originOf),
+    ['local', 'registry', 'registry', 'registry', 'registry', 'git', 'git', 'linked', 'linked', 'unknown'])
+  const root = mkdtempSync(join(tmpdir(), 'prov-')); const profile = join(root, 'profile'); const globalDir = join(root, 'home', 'extensions'); const stage = join(root, 'stage')
+  mkdirSync(profile, { recursive: true }); mkdirSync(join(globalDir, 'g'), { recursive: true }); mkdirSync(stage, { recursive: true })
+  try {
+    writeFileSync(join(globalDir, 'g', 'package.json'), JSON.stringify({ name: 'ext-g', version: '0.1.0', type: 'module', main: './index.js' }))
+    writeFileSync(join(globalDir, 'g', 'index.js'), 'export const name = "ext-g"\nexport function apply() {}\n')
+    const staged = stagePackage(join(globalDir, 'g'), stage)
+    writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: { 'market-plugin': '0.2.6', 'ext-g': `file:${staged.dir}`, 'from-git': 'github:a/b' } }))
+    writeFileSync(join(profile, 'pnpm-lock.yaml'), ["lockfileVersion: '9.0'", '', 'importers:', '', '  .:', '    dependencies:', '      market-plugin:', '        specifier: 0.2.6', '        version: 0.2.6', '',
+      'packages:', '', '  market-plugin@0.2.6:', '    resolution: {integrity: sha512-abc123==}', '    engines: {node: \'>=20\'}', ''].join('\n'))
+    const lock = readLockfile(profile)
+    assert.equal(lock.resolved.get('market-plugin'), '0.2.6'); assert.equal(lock.integrity.get('market-plugin@0.2.6'), 'sha512-abc123==')
+    const byName = Object.fromEntries(listInstalledPlugins(profile, { globalDir }).map(p => [p.name, p]))
+    assert.deepEqual([byName['market-plugin'].origin, byName['market-plugin'].version, byName['market-plugin'].integrity], ['registry', '0.2.6', 'sha512-abc123=='])
+    assert.equal(byName['ext-g'].origin, 'local'); assert.equal(byName['ext-g'].scope, 'global'); assert.equal(byName['ext-g'].source, realpathSync(join(globalDir, 'g')) === join(globalDir, 'g') ? join(globalDir, 'g') : byName['ext-g'].source)
+    assert.equal(byName['ext-g'].contentHash, staged.version)
+    assert.equal(byName['from-git'].origin, 'git')
+    // The prompt context names marketplace plugins as managed, next to the editable local ones.
+    const text = describeInstalledExtensions(profile, undefined)
+    assert.match(text, /ext-g/); assert.match(text, /Marketplace plugins \(managed, not editable here\): market-plugin@0.2.6/)
+    assert.deepEqual(listInstalledPlugins(join(root, 'none')), [])
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
 

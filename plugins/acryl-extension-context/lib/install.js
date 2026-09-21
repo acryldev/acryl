@@ -4,6 +4,7 @@ import { isAbsolute, join, resolve, sep } from 'node:path'
 import { hashPackage, pruneOldStages, pruneOldVersions, stagePackage, stagedSource } from './stage.js'
 import { canonical, discoverExtensions, installState } from './reconcile.js'
 import { checkManifest, readManifest } from './manifest.js'
+import { listInstalledPlugins } from './provenance.js'
 
 /**
  * Static checks for the two failures measured in spec 037 research Q7 that make
@@ -309,10 +310,13 @@ export async function syncOnStartup(services, options = {}, fs) {
 export function describeInstalledExtensions(profileDir, live, fs) {
   if (!profileDir) return ''
   const plugins = listLocalPlugins(profileDir, fs)
+  // Marketplace/registry installs are managed by the market: named so the agent does not go looking for a source folder to edit.
+  const managed = listInstalledPlugins(profileDir, {}, fs).filter(plugin => plugin.origin === 'registry')
   if (plugins.length === 0) return ''
   // A source folder that is gone is the one thing worth flagging in every prompt (existence is a cheap check; a content hash is not): the agent can
   // then offer `/reload remove-stale` instead of failing on the next update.
   const check = fs?.existsSync ?? existsSync
   const lines = plugins.map(plugin => `- ${plugin.name} (${live?.statusOf?.(plugin.name) ?? 'not mounted'}) source: ${plugin.installedFrom}${check(join(plugin.installedFrom, 'package.json')) ? '' : ' [SOURCE MISSING: /reload remove-stale removes it]'}`)
-  return `Installed local ACRYL extensions (edit the source, then call acryl_install_plugin to update; /reload re-installs all):\n${lines.join('\n')}`
+  const registry = managed.length > 0 ? `\nMarketplace plugins (managed, not editable here): ${managed.map(plugin => `${plugin.name}@${plugin.version ?? plugin.spec}`).join(', ')}` : ''
+  return `Installed local ACRYL extensions (edit the source, then call acryl_install_plugin to update; /reload re-installs all):\n${lines.join('\n')}${registry}`
 }

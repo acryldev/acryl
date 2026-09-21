@@ -71,6 +71,18 @@ derived state: it can be thrown away and rebuilt from the source folders.
   is only reported in the log (a `git pull` can change code that would then run with the user's permissions), a missing source is reported, and new folders are never installed
   without `/reload new`.
 
+## Local or from the marketplace: the origin of an install
+
+`acryl_list_plugins` tells every installed plugin's origin, derived from what the profile already records (nothing extra is written, so it cannot drift):
+
+| Origin | Meaning | What you can do | Reproduced elsewhere from |
+| --- | --- | --- | --- |
+| `local` | built here from a source folder (`file:` install); has `source`, `scope` (project, global, external) and, when staged, the `contentHash` | edit the source, `acryl_install_plugin`, `/reload` | the source folder (its content hash) |
+| `registry` | installed from npm through the marketplace; has the resolved `version` and the lockfile `integrity` digest | nothing: it is managed by the market, do not look for a source folder | name and version |
+| `git`, `linked` | a git URL, or a workspace/link checkout | reported only | the URL / the checkout |
+
+The prompt's installed-extensions note lists the local ones with their source and names the marketplace ones as managed, so you do not try to edit them.
+
 ## /reload
 
 The human types `/reload` in the chat. Source is authoritative, so it makes the installs match their source folders and prints one line per extension
