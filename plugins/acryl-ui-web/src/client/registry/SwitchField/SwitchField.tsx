@@ -1,5 +1,5 @@
 /**
- * A labelled switch with a hint: the app's own Switch primitive plus the hint style of DSH's plugin fields (fields.module.css .hint). Composition only, no new visual. See manifest.yml.
+ * A labelled switch with a hint: the app's own Switch primitive plus the hint style of DSH's plugin fields (fields.module.css .hint). The DSH primitive Switch carries its label only as an accessible name, so the visible label uses the fields' own head/label styles. Composition only, no new visual. See manifest.yml.
  */
 import { Switch } from '@deepseek-ai/dsh-client-ui-primitives'
 import css from '../fields/fields.module.css'
@@ -19,7 +19,10 @@ export interface SwitchFieldProps {
 export function SwitchField({ label, checked, onChange, hint }: SwitchFieldProps) {
   return (
     <div className={css.field}>
-      <Switch checked={checked} onChange={onChange} label={label} />
+      <div className={css.head}>
+        <span className={css.label}>{label}</span>
+        <Switch checked={checked} onChange={onChange} label={label} />
+      </div>
       {hint !== undefined && <p className={css.hint}>{hint}</p>}
     </div>
   )

@@ -45,7 +45,7 @@ describe('markup of the extracted components (spec 038-ui-component-library, ext
     expect(renderToStaticMarkup(<Segmented label="Theme" value="a" onChange={() => {}} options={[{ id: 'a', label: 'A' }]} />)).toContain('role="group" aria-label="Theme"')
     const card = renderToStaticMarkup(<Card title="Settings" footer="Save">body</Card>)
     expect(card).toMatch(/role="group" aria-labelledby="([^"]+)"/u); expect(card).toContain('Save')
-    expect(renderToStaticMarkup(<SwitchField label="Loud" checked hint="hint" onChange={() => {}} />)).toContain('aria-checked="true"')
+    expect(renderToStaticMarkup(<SwitchField label="Loud" checked hint="hint" onChange={() => {}} />)).toMatch(/>Loud<\/span>[\s\S]*aria-checked="true"/u)
     expect(renderToStaticMarkup(<EmptyState title="Nothing" description="Saved items" />)).toContain('Saved items')
   })
 })
