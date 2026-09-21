@@ -5031,3 +5031,15 @@ binary directly rather than through whatever bare `pnpm` resolves to on
 - Docs: `delivery/local-live.md` now states the model (scopes, lifecycle, the three storage layers, what is not done); `PI-PARITY.md` has the full match and gap table. Deliberately not copied: auto-loading
   discovered code at startup (pi guards it with project trust; a cloned repo can carry code) - the next step is a startup pass that only re-syncs already-trusted changed sources. Also open: an `extension.json`
   manifest with API version and permissions. `894d076862a9801655fa94cd98804b9fd4a7c5ca`
+
+## 2026-09-21 - feat: startup re-sync and extension manifest (spec 037, pi parity follow-up)
+
+- Startup pass: when the app starts, installed GLOBAL extensions whose source changed are re-installed by themselves; a changed project extension (a `git pull` could have changed code that would run with the
+  user's permissions), a missing source and new folders are only reported in the log, never applied. Deferred one tick after boot and never throws into the host. Real-engine test: install, close, edit the
+  source, boot again, the install is in sync without any command.
+- Manifest: the `acryl` block of package.json gains `apiVersion` (refused when newer than the runtime) and `permissions` (fixed vocabulary, unknown words are lint errors), shown on the `/reload` NEW line before
+  the human installs and returned by `acryl_install_plugin`. Declarative, not sandboxed. Deliberately not a second `extension.json`.
+- Decided not to copy pi's package manager: ACRYL already installs through the profile's pnpm and the marketplace; the missing pieces are provenance (marketplace vs local) and one update path, which belong
+  to the next design step with BLEND packaging (spec 036). `48d65cdff73ef3ce984f201d3beb5412fa913d16`
+- Moved the user's `acryl-header-note` (host-side notes) to `~/.acryl/extensions/` and repointed the install's source record; the next Web start re-syncs it. Note: the Desktop DEV build runs against `~/.acryl-dev`, so it does
+  not share `~/.acryl/extensions` (dev and prod homes are isolated on purpose).
