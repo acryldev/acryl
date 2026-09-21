@@ -5063,3 +5063,17 @@ binary directly rather than through whatever bare `pnpm` resolves to on
 - New `plugins/acryl-ui-web` (standalone until T011b): Stack, Card, Field, SwitchField, EmptyState and footerAction/headerAction/sidebarTab over the app's primitives and `--dsw-alias-*` tokens, contracted in
   `contracts/components.json` (data, Q4), 4 contract tests, verified in a real browser (rendered themed, label wired to input, error announced with role=alert and aria-describedby). Decisions Q1, Q4, Q5, Q2 direction,
   Q7 order and Q9 minimum recorded in `specs/038.../research.md`; open: Q3 final token set, Q6. Not done: T011b (materialize into every Web/Desktop profile), gallery, terminal layer, `tuiTheme`. `12b99f105bf44714ca8597e5e7b28ad43d27c639`
+
+## 2026-09-21 - feat: UI library on every Web/Desktop profile, live terminal palette, /blend apply (specs 038, 036)
+
+- Spec 038-ui-component-library, tasks.md T011b, T010, T013 (partial), and Q3 (research.md, approved): `plugins/acryl-ui-web` is a workspace package and a Loader row on the web engine and the Desktop profile (a consumer plugin
+  gets it with no install; checked by booting a copy of the user's real profile). It reuses the app's own Menu, Modal, Switch, Tag, Pill, Toast, Button and adds SettingsRow, SelectField, Segmented, Tabs, Dialog, Card, Field,
+  SwitchField, EmptyState, Stack and slot helpers, contracted in `contracts/components.json`, with 13 semantic roles in `contracts/tokens.json` (`--acryl-<role>`). Real-browser findings: the app defines its `--dsw-alias-*` tokens on
+  `body` not `:root` (roles declared on `:root` resolved to nothing), synthetic `.click()` does not open the app's Menu (a real click does). Gallery example `client-ui-library` (Components, Settings form, Colors) in the extension pack.
+  Lockfile changes must use the pinned pnpm 11.8 (`corepack pnpm`): pnpm 12 rewrote 255 peer-hash lines.
+- Spec 038 T006, T007 (partial), T008: the terminal palette is generated from the same token file (`apps/acryl-cli/scripts/compile-palette.mjs`, stale-output test, dark palette pinned to the old hex values), `theme.ts` is
+  live (`ACRYL_TUI_THEME` then `COLORFGBG`), 59 import-time color captures in 19 files converted to `fgRole`, two lookup tables in `liveText.ts` store roles. 360 CLI tests pass. Not done: a `tuiTheme` service for plugins,
+  OSC 11 detection, the terminal component layer (T015 and T016 in tasks.md), no real terminal pass yet.
+- Spec 036 blend-instance-design.md: `/blend apply` (verify first, vendored local sources into the project extension scope without overwriting, marketplace plugins at the locked version with integrity check and rollback,
+  idempotent). Real round trip test: captured on one app, applied on a fresh app with a different home and workspace.
+- Fixed on the way: seven test files restored `DSH_HOME` by assigning `undefined` (stored the string "undefined", so the next boot created a `./undefined` profile directory).
