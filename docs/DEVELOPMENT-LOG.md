@@ -5054,3 +5054,12 @@ binary directly rather than through whatever bare `pnpm` resolves to on
 - Design in `specs/036-.../blend-instance-design.md`: persistence is git, packaging in three shapes (source, hub Blueprint, private), orchestration reuses the extension pipeline (a Blend's local modules live in the project extension scope),
   five framework layers with owners. Not built: apply, ledger and Evolution Steps, lock v2 adopted by blends-core, hub publish.
 - Found on the way: the Desktop dev profile still carries a staged `acryl-header-note` whose source record points at the folder that moved; `/reload` reports it STALE.
+
+## 2026-09-21 - feat: UI library skeleton and spec 038 Slice 0 (specs 038 and 036)
+
+- Q1 answered by measurement: a package registering a client module id equal to its package name is requirable by any client bundle that lists it in `dsh.client.inject`, no build step. Trap found: the client loader
+  treats every module as a plugin, so a pure library must export an empty `apply` or the whole page fails ("expect function or object with an apply method").
+- Q2 measured: 18 CLI files, 77 role references, 55 import-time color captures, so the terminal theme needs lazy per-role functions, not a getter object.
+- New `plugins/acryl-ui-web` (standalone until T011b): Stack, Card, Field, SwitchField, EmptyState and footerAction/headerAction/sidebarTab over the app's primitives and `--dsw-alias-*` tokens, contracted in
+  `contracts/components.json` (data, Q4), 4 contract tests, verified in a real browser (rendered themed, label wired to input, error announced with role=alert and aria-describedby). Decisions Q1, Q4, Q5, Q2 direction,
+  Q7 order and Q9 minimum recorded in `specs/038.../research.md`; open: Q3 final token set, Q6. Not done: T011b (materialize into every Web/Desktop profile), gallery, terminal layer, `tuiTheme`. `12b99f105bf44714ca8597e5e7b28ad43d27c639`
