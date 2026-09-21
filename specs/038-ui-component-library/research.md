@@ -83,3 +83,24 @@ Facts already measured (2026-09-20, this checkout) and questions still open. Evi
 - **Q9 minimum:** every interactive component names itself (label or `aria-label`), announces errors, and keeps focusable order; checked headlessly by the contract test, then once in a real browser.
 - **Still open:** Q3 (final semantic token set, terminal background detection), Q6 (fabric RFC relation).
 
+## Proposals awaiting a decision (Q3, Q6)
+
+**Q3 - semantic tokens.** Components and the terminal layer name only these roles; one compile file is the only place that knows the `--dsw-alias-*` names, so an upstream rename touches one file.
+
+| Role | Web token | Terminal (dark) |
+| --- | --- | --- |
+| text, textMuted, textDimmed | `label-primary`, `label-tertiary`, `label-dimmed` | terminal default, `#94A3B8`, dim |
+| surface, surfaceRaised, border | `bg-layer-1`, `bg-layer-2`, `border-l4` | none (the terminal owns its background), none, dim rule |
+| primary | `brand-primary` | `#4F6BFE` |
+| success, warning, error | `state-success-primary`, `state-warn-*`, `state-error-primary` | `#34D399`, `#FBBF24`, `#F87171` |
+| info | `button-info-fill` | `#4F6BFE` |
+| accent, reasoning | new `--acryl-accent`, `--acryl-reasoning`, registered through `ctx.theme.register` (never overriding `--dsw-*`) | `#818CF8`, `#A855F7` |
+
+Terminal light/dark: `auto` (default) asks the terminal for its background (OSC 11, 100 ms timeout), falls back to `COLORFGBG`, then to dark; `acryl.terminal.theme: auto | dark | light` overrides. A light
+palette is a second hex table for the same nine roles. Desktop native accent stays out of scope (build time).
+
+**Q6 - Fabric RFC.** Fabric is draft and documentation only (no schema release, runtime or conformance suite), so do not depend on it. A component contract is a UI vocabulary, not a plugin capability, so it
+stays independent. Keep two alignment points so adoption later is a mapping, not a rewrite: the extension manifest's `permissions` words and `apiVersion` correspond to Fabric's requested capabilities,
+and provenance origin corresponds to its provenance record (RFC 0004); and if Fabric ships, expose the library as a versioned capability (`ui.components@1`) without changing the contract file. Revisit when
+Fabric has a schema release; until then record the mapping here, nothing more.
+
