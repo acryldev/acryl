@@ -196,6 +196,8 @@ export async function installLocalPlugin(input, services, fs) {
   }
   else if (updating && !lint.hotShim) result.warning = `Updated, but Node caches the host module and this plugin could not be staged for automatic reload (${staging.reason}): changes to HOST code are NOT picked up until the app restarts, unless the plugin uses the hot shim (docs/delivery/local-live.md). Browser (client.js) changes only need a page reload.`
   if (lint.permissions !== undefined) result.permissions = lint.permissions
+  // Evolution Ledger (blend-ledger.js): when the workspace tracks a Blend, this install or update becomes one line of history.
+  services.record?.({ kind: result.action ?? 'installed', module: lint.name, origin: 'local', version: JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version, digest: `sha256:${hashPackage(dir, 64)}` })
   if (lint.hasClient) result.next = 'This package has a browser (client) part. Ask the user to reload the page (Web) or window (Desktop) to see the new UI; the host part is already live.'
   return result
 }
@@ -211,6 +213,7 @@ export async function removeLocalPlugin(input, services) {
   try { await services.live.deactivate(name) } catch { /* not active: still remove it */ }
   const removed = await runPlugin(services.pnpm, ['remove', name], services.cwd ?? process.cwd())
   if (!removed.ok) return { ok: false, stage: 'remove', errors: [`dsh plugin remove failed (exit ${removed.exitCode})`], detail: removed.output }
+  services.record?.({ kind: 'removed', module: name })
   return { ok: true, package: name, removed: true, next: 'If the plugin had a browser (client) part, ask the user to reload the page or window.' }
 }
 

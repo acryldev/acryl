@@ -93,7 +93,8 @@ marketplace when worth sharing (the graduation path of `spec.md`, now with prove
 
 Built and tested: provenance (`listInstalledPlugins`), capture with lock v2 (`captureBlend`), vendoring, `/blend snapshot`, `/blend verify` and `/blend apply` on a booted app (a real round trip: captured on one app,
 re-created on a fresh app with a different home and workspace, idempotent), integrity checking of marketplace modules with rollback, and a check that the manifest validates against and compiles with `blends-core`.
-Not built: the ledger and Evolution Steps, lock v2 accepted by `blends-core` itself, the hub publish path, the permission diff UI, data adapters, applying rows/overrides from `blend.yaml` onto a non-empty profile (apply
+Also built: the Evolution Ledger (`/blend ledger`: `.acryl/blend/ledger.jsonl`, one hash-chained line per capture, apply, install, update and removal in a tracked workspace, by human or agent; tampering is detected by `/blend verify`).
+Not built: lock v2 accepted by `blends-core` itself (a format decision for the `blends` repo, see "Lock v2 proposal" below), the hub publish path, the permission diff UI, data adapters, applying rows/overrides from `blend.yaml` onto a non-empty profile (apply
 installs the modules; the compiled rows come from each package's own bundle patch, so a profile-level override in `blend.yaml` is not yet re-applied). Each is a follow-on ticket under spec 033.
 
 ## Open questions
@@ -102,3 +103,12 @@ installs the modules; the compiled rows come from each package's own bundle patc
 - Where do a Blend's rows override the profile's patch layer versus replace it when applying onto a non-empty profile (merge policy)?
 - Does applying a Blend on Desktop, Web and CLI produce the same rows? Web and Desktop share the composition; the CLI has its own bundle set (spec 034).
 - Naming of grouping above the single plugin stays open (`spec.md`); a Blend is the first real grouping and may answer it.
+
+## Lock v2 proposal (for the `blends` repo's decision record)
+
+`blends-core`'s lock is `{ formatVersion: 1, generator, origin, rows }` and its `BlendLock` type pins `formatVersion: 1`. Capture writes `{ formatVersion: 2, generator, origin, rows, modules }`, where each module is
+`{ name, origin: 'registry' | 'local' | 'git' | 'linked', version?, spec?, digest?, source? }` (registry: version and integrity digest; local: version, `sha256:` of the vendored tree, and the vendored path; git and linked: the spec only).
+The smallest change on the `blends-core` side is additive: `BlendLock` becomes a union of `formatVersion: 1` and `2`, `generateLock` gains an optional `modules` input (sorted by name, no timestamps, so it stays deterministic), and
+the loader accepts both. Nothing in v1 changes meaning. It is a locked-format decision (D-numbers in `docs/BLENDS-ROADMAP.md`) and the `blends` repo currently has uncommitted work of its own, so it is proposed here and not applied.
+The hub publish path (`acryl.dev/blends`, git hub with `index.json`) belongs to the same repo and follows the same rule: this spec's section 3 is the input to its spec, not a change to it.
+

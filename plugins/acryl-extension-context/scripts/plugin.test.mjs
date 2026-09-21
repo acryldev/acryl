@@ -8,6 +8,7 @@ import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin
 import { discoverExtensions, globalExtensionsDir, installState } from '../lib/reconcile.js'
 import { captureBlend, verifyBlend, writeBlend, readBundleRows } from '../lib/blend-capture.js'
 import { applyBlend } from '../lib/blend-apply.js'
+import { appendLedger, ledgerRecorder, readLedger, trackedBlendDir, verifyLedger } from '../lib/blend-ledger.js'
 import { listInstalledPlugins, originOf, readLockfile } from '../lib/provenance.js'
 import { checkManifest, describePermissions, EXTENSION_API_VERSION } from '../lib/manifest.js'
 import { resolvePackRoot } from '../lib/pack-root.js'
@@ -602,6 +603,47 @@ test('blend apply: verifies first, installs local modules from the vendored sour
     const conflict = await applyBlend(blendDir, { ...fakes(), profileDir: profile }, { workspaceDir: ws })
     assert.equal(conflict.results.find(r => r.name === 'ext-a').status, 'conflict'); assert.equal(readFileSync(join(ws, '.acryl-extensions', 'ext-a', 'index.js'), 'utf8'), '// my own edit\n')
   } finally { rmSync(root, { recursive: true, force: true }) }
+})
+
+test('ledger: append-only JSONL with a hash chain; tampering is detected; nothing is written for a workspace that tracks no Blend', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'ledger-')); const ws = join(root, 'ws'); const dir = join(ws, '.acryl', 'blend')
+  mkdirSync(ws, { recursive: true })
+  try {
+    // an untracked workspace: the recorder does nothing and never throws
+    const record = ledgerRecorder(ws, 'agent'); record({ kind: 'installed', module: 'x' })
+    assert.equal(trackedBlendDir(ws), undefined); assert.equal(existsSync(join(ws, '.acryl')), false)
+    mkdirSync(dir, { recursive: true }); writeFileSync(join(dir, 'blend.yaml'), 'kind: Blueprint\n')
+    assert.equal(trackedBlendDir(ws), dir)
+    record({ kind: 'installed', module: 'a', version: '1.0.0' }); record({ kind: 'updated', module: 'a', version: '1.1.0' }); appendLedger(dir, { actor: 'human', kind: 'removed', module: 'a' })
+    const entries = readLedger(dir)
+    assert.deepEqual(entries.map(e => [e.actor, e.kind, e.module]), [['agent', 'installed', 'a'], ['agent', 'updated', 'a'], ['human', 'removed', 'a']])
+    assert.equal(entries[0].prev, null); assert.match(entries[1].prev, /^[0-9a-f]{64}$/u)
+    assert.deepEqual(verifyLedger(dir), { ok: true, problems: [], entries: 3 })
+    // editing a middle line, or dropping a line, breaks the chain at the following line
+    const file = join(dir, 'ledger.jsonl'); const original = readFileSync(file, 'utf8'); const lines = original.trim().split('\n')
+    writeFileSync(file, `${[lines[0], lines[1].replace('1.1.0', '9.9.9'), lines[2]].join('\n')}\n`)
+    assert.match(verifyLedger(dir).problems[0], /line 3 does not follow line 2/)
+    writeFileSync(file, `${[lines[0], lines[2]].join('\n')}\n`)
+    assert.match(verifyLedger(dir).problems[0], /line 2 does not follow line 1/)
+    writeFileSync(file, `${original}not json\n`)
+    assert.ok(verifyLedger(dir).problems.some(p => /not valid JSON/u.test(p)))
+    assert.equal(readLedger(dir).at(-1).invalid, 'not json')
+  } finally { rmSync(root, { recursive: true, force: true }) }
+})
+
+test('install and remove report to the recorder: a successful install carries its version and content digest', async () => {
+  const dir = makePkg(); const recorded = []
+  try {
+    writeFileSync(join(dir, 'index.js'), 'export const name = "my-plugin"\nexport function apply() {}\n')
+    const s = { ...fakes(), record: entry => recorded.push(entry) }
+    assert.equal((await installLocalPlugin({ path: dir }, s)).ok, true)
+    assert.equal(recorded[0].kind, 'installed'); assert.equal(recorded[0].module, 'my-plugin'); assert.equal(recorded[0].version, '0.1.0'); assert.match(recorded[0].digest, /^sha256:[0-9a-f]{64}$/u)
+    assert.equal((await removeLocalPlugin({ package: 'my-plugin' }, s)).ok, true)
+    assert.deepEqual(recorded[1], { kind: 'removed', module: 'my-plugin' })
+    const failing = { ...fakes({ addExit: 1 }), record: entry => recorded.push(entry) }
+    await installLocalPlugin({ path: dir }, failing)
+    assert.equal(recorded.length, 2, 'a failed install records nothing')
+  } finally { rmSync(dir, { recursive: true, force: true }) }
 })
 
 test('the live extensions context lists installed plugins with their live status, and is empty when there are none', () => {

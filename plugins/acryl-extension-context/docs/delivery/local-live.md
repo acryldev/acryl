@@ -89,7 +89,9 @@ The prompt's installed-extensions note lists the local ones with their source an
 (exact versions and digests: marketplace plugins by version and integrity, local extensions by sha256) and `extensions/<name>/` (the source of every local extension, vendored so the
 result is self-contained). Commit it to git to persist and share it. `/blend verify` checks it against its own lock, offline. `/blend apply` (typed by the human, it installs code) re-creates it in another
 workspace or app: it verifies first, places each local extension in `<workspace>/.acryl-extensions/` (never overwriting a folder that differs), installs marketplace plugins at the locked version and undoes any whose
-integrity does not match the lock, and is safe to repeat. The summary shows the permissions each local module requests. Plugin data, secrets and ACRYL's own runtime plugins
+integrity does not match the lock, and is safe to repeat. The summary shows the permissions each local module requests.
+`/blend ledger` shows the history: once a workspace has captured a Blend, every install, update and removal of a plugin there (by you or by the agent) appends one line to
+`.acryl/blend/ledger.jsonl` with who did it and the version and content digest. Lines are never rewritten and each carries the hash of the line before it, so `/blend verify` detects an edited or removed line. Plugin data, secrets and ACRYL's own runtime plugins
 are not captured; anything that could not be captured is listed. Design: `specs/036-cordis-ecosystem-and-acryl-blends/blend-instance-design.md`.
 
 ## /reload

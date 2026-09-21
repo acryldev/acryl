@@ -17,6 +17,7 @@ import { globalExtensionsDir } from './lib/reconcile.js'
 import { listInstalledPlugins } from './lib/provenance.js'
 import { captureBlend, verifyBlend, writeBlend } from './lib/blend-capture.js'
 import { applyBlend } from './lib/blend-apply.js'
+import { appendLedger, ledgerRecorder, readLedger, trackedBlendDir, verifyLedger } from './lib/blend-ledger.js'
 import { describePermissions } from './lib/manifest.js'
 import { describeInstalledExtensions, installLocalPlugin, syncOnStartup, listLocalPlugins, reloadLocalPlugins, removeLocalPlugin } from './lib/install.js'
 import { lookupExtensionDocs } from './lib/lookup.js'
@@ -116,7 +117,7 @@ export function apply(ctx) {
           const removeStale = words.includes('remove-stale')
           const dshHome = ctx.get('dshHomePath')
           const globalDir = globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined)
-          const results = await reloadLocalPlugins({ pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir }, undefined, { workspaceDir, globalDir, installDiscovered, removeStale })
+          const results = await reloadLocalPlugins({ pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir, record: ledgerRecorder(workspaceDir, 'human') }, undefined, { workspaceDir, globalDir, installDiscovered, removeStale })
           if (results.length === 0) return { kind: 'success', text: 'No local extensions installed or found in <workspace>/.acryl-extensions/ or the global extensions directory.' }
           const tag = r => (r.scope ? ` [${r.scope}]` : '')
           const lines = results.map(r =>
@@ -143,7 +144,7 @@ export function apply(ctx) {
       yield scoped.commands.register({
         name: 'blend',
         description: 'Capture the installed plugins and local extensions as a Blend, verify it, or apply a captured one',
-        input: { hint: '[snapshot|verify|apply]' },
+        input: { hint: '[snapshot|verify|apply|ledger]' },
         async handler(invocation) {
           const profileDir = ctx.get('desktopProfiles')?.current?.dir
           const workspaceDir = invocation?.agent?.session?.header?.cwd
@@ -153,20 +154,29 @@ export function apply(ctx) {
           const verb = String(invocation?.rawInput ?? '').trim().split(/\s+/u)[0]
           if (verb === 'verify') {
             const result = verifyBlend(outDir)
-            return result.ok ? { kind: 'success', text: `Blend in ${outDir} matches its lock (${result.checked} checks).` } : { kind: 'error', text: `Blend in ${outDir}:\n${result.problems.map(p => `- ${p}`).join('\n')}` }
+            const ledger = verifyLedger(outDir)
+            const problems = [...result.problems, ...ledger.problems]
+            return problems.length === 0 ? { kind: 'success', text: `Blend in ${outDir} matches its lock (${result.checked} checks); ledger: ${ledger.entries} entries, chain intact.` } : { kind: 'error', text: `Blend in ${outDir}:\n${problems.map(p => `- ${p}`).join('\n')}` }
+          }
+          if (verb === 'ledger') {
+            if (trackedBlendDir(workspaceDir) === undefined) return { kind: 'error', text: 'This workspace tracks no Blend yet: type /blend snapshot first. The ledger records changes from then on.' }
+            const entries = readLedger(outDir).slice(-20)
+            return { kind: 'success', text: entries.length === 0 ? 'The ledger is empty.' : entries.map(e => `${e.at} ${e.actor ?? '?'} ${e.kind}${e.module ? ` ${e.module}` : ''}${e.version ? `@${e.version}` : ''}`).join('\n') }
           }
           if (verb === 'apply') {
             // Installs code that runs with the user's permissions: human-typed only, the summary shows what each module requests.
-            const result = await applyBlend(outDir, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir }, { workspaceDir })
+            const result = await applyBlend(outDir, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir, record: ledgerRecorder(workspaceDir, 'human') }, { workspaceDir })
+            if (result.problems.length === 0) appendLedger(outDir, { actor: 'human', kind: 'applied', results: result.results.map(r => ({ module: r.name, origin: r.origin, status: r.status })) })
             if (result.problems.length > 0) return { kind: 'error', text: `Nothing was installed; the Blend in ${outDir} does not match its lock:\n${result.problems.map(p => `- ${p}`).join('\n')}` }
             const lines = result.results.map(r => `${r.name} [${r.origin}]: ${r.status}${r.permissions ? ` (${r.permissions})` : ''}${r.detail ? ` - ${r.detail}` : ''}`)
             const touched = result.results.some(r => ['installed', 'updated'].includes(r.status))
             return { kind: result.ok ? 'success' : 'error', text: `${lines.join('\n')}${touched ? '\nReload the page (Web) or window (Desktop, Cmd/Ctrl+R) to pick up UI changes.' : ''}` }
           }
-          if (verb !== 'snapshot') return { kind: 'error', text: 'Usage: /blend snapshot (capture the current state), /blend verify, or /blend apply (re-create a captured Blend here).' }
+          if (verb !== 'snapshot') return { kind: 'error', text: 'Usage: /blend snapshot (capture the current state), /blend verify, /blend apply (re-create a captured Blend here), or /blend ledger (what changed).' }
           const dshHome = ctx.get('dshHomePath')
           const capture = captureBlend({ profileDir, workspaceDir, globalDir: globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined) })
           const files = writeBlend(capture, outDir)
+          appendLedger(outDir, { actor: 'human', kind: 'captured', blend: `${capture.manifest.metadata.id}@${capture.manifest.metadata.version}`, modules: capture.lock.modules.length, digest: capture.lock.origin.digest })
           const local = capture.lock.modules.filter(m => m.origin === 'local').length
           const registry = capture.lock.modules.filter(m => m.origin === 'registry').length
           const notes = capture.notes.length > 0 ? `\nNot captured:\n${capture.notes.map(n => `- ${n}`).join('\n')}` : ''
@@ -184,8 +194,8 @@ export function apply(ctx) {
         path: { type: 'string', required: true, description: 'ABSOLUTE path of the plugin package directory (the folder containing package.json).' },
       },
       output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
-      async execute(args) {
-        const result = await installLocalPlugin({ path: args.path }, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir: ctx.get('desktopProfiles')?.current?.dir })
+      async execute(args, exec) {
+        const result = await installLocalPlugin({ path: args.path }, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir: ctx.get('desktopProfiles')?.current?.dir, record: ledgerRecorder(exec?.agent?.session?.header?.cwd, 'agent') })
         // A thrown error is reported to the model as a tool error with the full detail.
         if (!result.ok) throw new Error(JSON.stringify(result, null, 2))
         return JSON.stringify(result)
@@ -255,8 +265,8 @@ export function apply(ctx) {
         package: { type: 'string', required: true, description: 'Package name of the plugin to remove.' },
       },
       output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
-      async execute(args) {
-        const result = await removeLocalPlugin({ package: args.package }, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation') })
+      async execute(args, exec) {
+        const result = await removeLocalPlugin({ package: args.package }, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), record: ledgerRecorder(exec?.agent?.session?.header?.cwd, 'agent') })
         if (!result.ok) throw new Error(JSON.stringify(result, null, 2))
         return JSON.stringify(result)
       },

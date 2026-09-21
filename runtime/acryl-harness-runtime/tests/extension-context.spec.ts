@@ -289,7 +289,24 @@ describe('/reload on the web engine', () => {
       expect(lock.modules).toEqual([expect.objectContaining({ name: 'acryl-example-tool', origin: 'local', source: 'extensions/acryl-example-tool' })])
       expect(existsSync(join(out, 'extensions', 'acryl-example-tool', 'index.js'))).toBe(true)
       expect(readFileSync(join(out, 'blend.yaml'), 'utf8')).toContain('name: acryl-example-tool')
-      expect((await run('/blend verify'))?.kind).toBe('success')
+      expect((await run('/blend verify'))?.text).toContain('ledger: 1 entries, chain intact')   // the capture itself is the first ledger entry
+      // From now on this workspace tracks a Blend: a plugin installed later is one line of history.
+      cpSync(source, join(workspace, '.acryl-extensions', 'second-tool'), { recursive: true })
+      const secondManifest = JSON.parse(readFileSync(join(workspace, '.acryl-extensions', 'second-tool', 'package.json'), 'utf8'))
+      writeFileSync(join(workspace, '.acryl-extensions', 'second-tool', 'package.json'), JSON.stringify({ ...secondManifest, name: 'acryl-second-tool' }))
+      writeFileSync(join(workspace, '.acryl-extensions', 'second-tool', 'cordis.patch.yml'), '- insert:\n    - id: second-tool\n      name: acryl-second-tool\n')
+      writeFileSync(join(workspace, '.acryl-extensions', 'second-tool', 'index.js'), "export const name = 'acryl-second-tool'\nexport function apply() {}\n")   // registers nothing, so it cannot clash with the first tool
+      const reloadNew = (await run('/reload new'))?.text
+      expect(reloadNew, String(reloadNew)).toContain('installed (new)')
+      const ledger = (await run('/blend ledger'))?.text ?? ''
+      expect(ledger).toContain('human captured'); expect(ledger).toContain('human installed acryl-second-tool@0.1.0')
+      const ledgerFile = join(out, 'ledger.jsonl')
+      expect(readFileSync(ledgerFile, 'utf8').trim().split('\n')).toHaveLength(2)   // captured, then the install
+      // editing history is detected
+      const lines = readFileSync(ledgerFile, 'utf8').trim().split('\n')
+      writeFileSync(ledgerFile, `${[lines[0].replace('captured', 'applied'), lines[1]].join('\n')}\n`)
+      expect((await run('/blend verify'))?.text).toContain('line 2 does not follow line 1')
+      writeFileSync(ledgerFile, `${lines.join('\n')}\n`)
       writeFileSync(join(out, 'extensions', 'acryl-example-tool', 'index.js'), '// tampered\n')
       const broken = await run('/blend verify')
       expect(broken?.kind).toBe('error')

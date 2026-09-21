@@ -1,5 +1,8 @@
 # Ready-made UI components: build with the app's own library
 
+> Start with the ACRYL UI library (`ui-library.md`): `acryl-ui-web` (Web and Desktop) and `acryl-ui-tui` (CLI) already combine the primitives below into cards, fields, settings rows, dropdowns, tabs and dialogs with
+> the same names on every surface. This page lists the primitives underneath, for when the library has nothing that fits, and the example here (`client-ui-components`) shows them used directly.
+
 Use this BEFORE hand-styling any UI. On Web and Desktop the app already ships a themed component library, and a plugin can use it
 today. Working example (verified in a real browser: the modal, input, switch and buttons rendered themed): 
 `../example-plugins/packages/client-ui-components/` (read `client.js` and `package.json`). All component names: `../maps/ui-components.md`.
