@@ -64,3 +64,24 @@ The router was the one part of ours that was bloated (about 2.7 times pi's docs 
 definitions already carry. Now one pack root, relative paths, at most three docs per topic; budget 650 (test enforced). Paired real-model eval: no measurable change in outcome or effort (see
 `evals/README.md`). Not changed, and worth a look at the runtime-swap step: the harness's "Dynamic Cordis Plugins" prompt text (about 1,500 tokens plus the `cordis_*` tool schemas, about 1,500)
 is upstream and pushes a competing way to add capabilities; the `acryl-system-prompt` waterfall listener could gate it per surface without forking the harness.
+
+## Extension storage and loading vs pi (research: `research/pi-self-extensions-storage-mechanism-...md`)
+
+Pi's central rule: the extension is a source folder; the runtime registry is derived from it and can be rebuilt (`RuntimeState = F(sources, config, persisted state)`, never from the previous process).
+
+| Pi idea | ACRYL | Notes |
+| --- | --- | --- |
+| Source folder is authoritative, registry derived | **match (new)** | `/reload` compares each install with its source by content hash: unchanged is skipped, changed is updated, a missing source is reported STALE (removal only on `/reload remove-stale`) |
+| Two scopes: project `.pi/extensions/`, global `~/.pi/agent/extensions/` | **match (new)** | project `<workspace>/.acryl-extensions/`, global `<ACRYL home>/extensions/`; one level deep; a global extension is shared by every surface on that home |
+| Canonical-path dedupe, project precedence | **match (new)** | real-path identity (symlink and `../` spellings load once); a project extension shadows a global one with the same package name |
+| Provenance of each resource (scope, source) | **match (new)** | `/reload` prints the scope per extension; `acryl_list_plugins` and the prompt context show the source path and flag a missing source |
+| No database or registry for the extension itself | partial | The profile keeps an install list (needed by the loader and pnpm); it is derived, and `/reload` reconciles it. A folder never needs a registry entry to be found |
+| Auto-discovery at startup | **gap, by design** | Pi loads what it finds, guarded by project trust. ACRYL lists new folders and installs them only on `/reload new` (a cloned repo can carry code). A startup pass that only re-syncs already-trusted, changed sources is the next step |
+| Transactional load (commit or discard) | match | verify, then install; a failed activation runs a compensating remove (real-engine tested); a throwing `apply` is rolled back |
+| Reload rebuilds tools and prompt | match | live tool and prompt refresh (see G above) |
+| Stale-context invalidation after reload | match (Cordis) | fibers dispose their effects; a captured old context is not reused by the new instance |
+| Three storage layers: source, activation, runtime state | documented | `delivery/local-live.md` and `extending/state-and-persistence.md` name them and keep them apart |
+| `extension.json` manifest (id, API version, permissions, state schema) | gap | ACRYL uses `package.json` plus the lint (`acryl` block); an API-version and permissions manifest is a later phase |
+| Package manager: npm and git install roots, updates, filters | out of scope here | ACRYL delegates to the profile's pnpm and the marketplace; publishing stays the human's decision |
+| Git tracks the source | documented | project extensions are plain folders meant to be committed |
+

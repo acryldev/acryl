@@ -1,7 +1,8 @@
 import { existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
-import { pruneOldStages, pruneOldVersions, stagePackage, stagedSource } from './stage.js'
+import { hashPackage, pruneOldStages, pruneOldVersions, stagePackage, stagedSource } from './stage.js'
+import { canonical, discoverExtensions, installState } from './reconcile.js'
 
 /**
  * Static checks for the two failures measured in spec 037 research Q7 that make
@@ -66,7 +67,7 @@ export function listLocalPlugins(profileDir, fs = { existsSync, readFileSync }) 
     .map(([name, spec]) => {
       const installed = spec.slice('file:'.length)
       // A staged install (automatic host hot reload) points at the staging copy; report and re-install from the author's source folder.
-      return { name, installedFrom: stagedSource(installed, fs) ?? installed }
+      return { name, installedDir: installed, installedFrom: stagedSource(installed, fs) ?? installed }
     })
 }
 
@@ -209,58 +210,48 @@ export async function removeLocalPlugin(input, services) {
 }
 
 /**
- * Extension source folders the agent (or the user) put under `<workspace>/.acryl-extensions/<name>/`: every immediate
- * subdirectory that has a `package.json`. pi.dev discovers extensions from a known directory on start and on `/reload`;
- * this is the same convention here.
- */
-export function discoverWorkspaceExtensions(workspaceDir, fs = { existsSync, readFileSync, readdirSync }) {
-  if (!workspaceDir || !isAbsolute(workspaceDir)) return []
-  const root = join(workspaceDir, '.acryl-extensions')
-  if (!fs.existsSync(root)) return []
-  const found = []
-  for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
-    if (!entry.isDirectory() || entry.name.startsWith('.')) continue
-    const dir = join(root, entry.name)
-    if (fs.existsSync(join(dir, 'package.json'))) found.push(dir)
-  }
-  return found.sort()
-}
-
-/**
- * `/reload`: re-install every local plugin from its source directory, and install any NEW extension folder found under
- * `<workspace>/.acryl-extensions/`, so edits and drops made by hand (or by another tool) go live without asking the agent
+ * `/reload`: bring the installs in line with their source folders (source is authoritative): update the ones whose source changed, skip the ones
+ * that did not, report the ones whose source is gone, and install any NEW extension folder found under `<workspace>/.acryl-extensions/` or the global
+ * extensions directory, so edits and drops made by hand (or by another tool) go live without asking the agent
  * (pi.dev: write the file, then `/reload`). Each plugin goes through the same checked install path, so a broken edit is reported
  * and rolled back, never half-applied.
  * @param {object} services `{ pnpm, live, profileDir }`
  * @param {object} [fs]
- * @param {{ workspaceDir?: string, installDiscovered?: boolean, removeStale?: boolean }} [options] `installDiscovered`: install new folders instead of only listing them; `removeStale`: remove installs whose source folder no longer exists (otherwise they are only reported)
+ * @param {{ workspaceDir?: string, globalDir?: string, installDiscovered?: boolean, removeStale?: boolean }} [options] `globalDir`: the global extensions directory (see reconcile.js); `installDiscovered`: install new folders instead of only listing them; `removeStale`: remove installs whose source folder no longer exists (otherwise they are only reported)
  */
 export async function reloadLocalPlugins(services, fs, options = {}) {
   const plugins = listLocalPlugins(services.profileDir, fs)
+  const discovered = discoverExtensions({ workspaceDir: options.workspaceDir, globalDir: options.globalDir })
+  const scopeOf = new Map(discovered.map(found => [found.dir, found.scope]))
   const results = []
   const done = new Set()
   for (const plugin of plugins) {
     const dir = plugin.installedFrom
     if (!dir || !isAbsolute(dir)) { results.push({ name: plugin.name, ok: false, errors: [`source directory "${dir}" is not absolute, skipped`] }); continue }
-    done.add(dir)
+    done.add(canonical(dir))
+    const scope = scopeOf.get(canonical(dir))
+    const state = installState(plugin, hashPackage, fs)
     // The source folder was moved or deleted: the install still runs, but it can never be updated. Report it as stale (not a failure);
     // it is removed only when the human asked for that explicitly (`/reload remove-stale`), never automatically.
-    if (!(fs?.existsSync ?? existsSync)(join(dir, 'package.json'))) {
+    if (state === 'stale') {
       if (!options.removeStale) { results.push({ name: plugin.name, stale: true, ok: true, dir }); continue }
       const removed = await removeLocalPlugin({ package: plugin.name }, services)
       results.push({ name: plugin.name, stale: true, dir, ...removed })
       continue
     }
+    // Unchanged source: nothing to do (no package-manager run, no restart of a working plugin).
+    if (state === 'in-sync') { results.push({ name: plugin.name, ok: true, action: 'unchanged', scope }); continue }
     const result = await installLocalPlugin({ path: dir }, services, fs)
-    results.push({ name: plugin.name, ...result })
+    results.push({ name: plugin.name, scope, ...result })
   }
-  for (const dir of discoverWorkspaceExtensions(options.workspaceDir)) {
-    if (done.has(dir)) continue
+  for (const found of discovered) {
+    if (done.has(found.dir)) continue
+    if (found.shadowed) { results.push({ name: found.name, discovered: true, shadowed: true, ok: true, dir: found.dir, scope: found.scope }); continue }
     // Extensions run with the user's permissions, and a folder in a cloned repository is a prompt-injection surface (pi.dev has project
     // trust for the same reason): a new folder is only LISTED unless the human explicitly asked to install new ones.
-    if (!options.installDiscovered) { results.push({ name: dir, discovered: true, pending: true, ok: true, dir }); continue }
-    const result = await installLocalPlugin({ path: dir }, services, fs)
-    results.push({ name: result.package ?? dir, discovered: true, ...result })
+    if (!options.installDiscovered) { results.push({ name: found.name, discovered: true, pending: true, ok: true, dir: found.dir, scope: found.scope }); continue }
+    const result = await installLocalPlugin({ path: found.dir }, services, fs)
+    results.push({ name: result.package ?? found.name, discovered: true, scope: found.scope, ...result })
   }
   return results
 }
@@ -274,6 +265,9 @@ export function describeInstalledExtensions(profileDir, live, fs) {
   if (!profileDir) return ''
   const plugins = listLocalPlugins(profileDir, fs)
   if (plugins.length === 0) return ''
-  const lines = plugins.map(plugin => `- ${plugin.name} (${live?.statusOf?.(plugin.name) ?? 'not mounted'}) source: ${plugin.installedFrom}`)
+  // A source folder that is gone is the one thing worth flagging in every prompt (existence is a cheap check; a content hash is not): the agent can
+  // then offer `/reload remove-stale` instead of failing on the next update.
+  const check = fs?.existsSync ?? existsSync
+  const lines = plugins.map(plugin => `- ${plugin.name} (${live?.statusOf?.(plugin.name) ?? 'not mounted'}) source: ${plugin.installedFrom}${check(join(plugin.installedFrom, 'package.json')) ? '' : ' [SOURCE MISSING: /reload remove-stale removes it]'}`)
   return `Installed local ACRYL extensions (edit the source, then call acryl_install_plugin to update; /reload re-installs all):\n${lines.join('\n')}`
 }

@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { test } from 'node:test'
-import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, ensureProfileBundle, pinPublicHoistPattern, discoverWorkspaceExtensions, describeInstalledExtensions } from '../lib/install.js'
+import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, ensureProfileBundle, pinPublicHoistPattern, describeInstalledExtensions } from '../lib/install.js'
+import { discoverExtensions, globalExtensionsDir, installState } from '../lib/reconcile.js'
 import { resolvePackRoot } from '../lib/pack-root.js'
 import { entryOf, hashPackage, pruneOldStages, pruneOldVersions, stagePackage, stagedSource, VERSION_DIR_PREFIX } from '../lib/stage.js'
 import { createSkillProvider, parseSkill } from '../lib/skills.js'
@@ -177,7 +178,7 @@ test('list reads file: dependencies of the profile; remove deactivates then remo
   const profile = mkdtempSync(join(tmpdir(), 'profile-'))
   try {
     writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: { a: 'file:/src/a', b: '^1.0.0' } }))
-    assert.deepEqual(listLocalPlugins(profile), [{ name: 'a', installedFrom: '/src/a' }])
+    assert.deepEqual(listLocalPlugins(profile), [{ name: 'a', installedDir: '/src/a', installedFrom: '/src/a' }])
     assert.deepEqual(listLocalPlugins('/nonexistent-profile'), [])
   } finally { rmSync(profile, { recursive: true, force: true }) }
   const calls = []
@@ -389,8 +390,8 @@ test('workspace discovery finds extension folders, and /reload installs the new 
     const pkg = makePkg(); // a valid package elsewhere; copy its files into the workspace folder
     for (const f of ['package.json', 'cordis.patch.yml']) writeFileSync(join(dir, f), readFileSync(join(pkg, f)))
     mkdirSync(join(workspace, '.acryl-extensions', 'not-a-package'), { recursive: true })
-    assert.deepEqual(discoverWorkspaceExtensions(workspace), [dir])
-    assert.deepEqual(discoverWorkspaceExtensions('relative/path'), [])
+    assert.deepEqual(discoverExtensions({ workspaceDir: workspace }).map(found => found.dir), [realpathSync(dir)])
+    assert.deepEqual(discoverExtensions({ workspaceDir: 'relative/path' }), [])
     writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: {} }))
     const s = { ...fakes(), profileDir: profile }
     const listed = await reloadLocalPlugins(s, undefined, { workspaceDir: workspace })
@@ -399,6 +400,47 @@ test('workspace discovery finds extension folders, and /reload installs the new 
     assert.equal(results.length, 1); assert.equal(results[0].discovered, true); assert.equal(results[0].ok, true); assert.equal(results[0].action, 'installed')
     rmSync(pkg, { recursive: true, force: true })
   } finally { rmSync(workspace, { recursive: true, force: true }); rmSync(profile, { recursive: true, force: true }) }
+})
+
+test('discovery: project and global scopes, one level deep, real-path dedupe, project wins a name clash', () => {
+  const root = mkdtempSync(join(tmpdir(), 'scopes-')); const workspace = join(root, 'ws'); const globalDir = join(root, 'home', 'extensions')
+  const make = (dir, name) => { mkdirSync(dir, { recursive: true }); writeFileSync(join(dir, 'package.json'), JSON.stringify({ name })) }
+  try {
+    make(join(workspace, '.acryl-extensions', 'notes'), 'acryl-notes')
+    make(join(workspace, '.acryl-extensions', 'notes', 'helper'), 'not-an-extension')   // below an extension: never a second extension
+    make(join(globalDir, 'notes-global'), 'acryl-notes')                                // same package name as the project one: shadowed
+    make(join(globalDir, 'shared'), 'acryl-shared')
+    symlinkSync(join(globalDir, 'shared'), join(globalDir, 'shared-link'))              // another spelling of the same folder: loaded once
+    mkdirSync(join(globalDir, '.hidden')); mkdirSync(join(globalDir, 'no-manifest'))
+    const found = discoverExtensions({ workspaceDir: workspace, globalDir })
+    assert.deepEqual(found.map(f => [f.name, f.scope, f.shadowed]), [['acryl-notes', 'project', false], ['acryl-notes', 'global', true], ['acryl-shared', 'global', false]])
+    assert.equal(found[2].dir, realpathSync(join(globalDir, 'shared')))
+    assert.equal(globalExtensionsDir('/home/u/.acryl/.dsh'), '/home/u/.acryl/extensions')
+    assert.equal(globalExtensionsDir('/home/u/.acryl-dev/.dsh'), '/home/u/.acryl-dev/extensions')
+    assert.equal(globalExtensionsDir('/custom/dsh-home'), '/custom/dsh-home/extensions')
+    assert.equal(globalExtensionsDir(undefined), undefined)
+  } finally { rmSync(root, { recursive: true, force: true }) }
+})
+
+test('reload: source is authoritative - unchanged installs are skipped, changed ones updated, gone ones reported', async () => {
+  const dir = makePkg(); const profile = mkdtempSync(join(tmpdir(), 'profile-')); const s = { ...fakes({ preinstalled: true }), profileDir: profile }
+  const stageRoot = mkdtempSync(join(tmpdir(), 'stage-'))
+  try {
+    writeFileSync(join(dir, 'index.js'), 'export const name = "my-plugin"\nexport function apply() {}\n')
+    const staged = stagePackage(dir, stageRoot)
+    assert.equal(staged.ok, true, staged.reason)
+    writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: { 'my-plugin': `file:${staged.dir}` } }))
+    const [plugin] = listLocalPlugins(profile)
+    assert.equal(installState(plugin, hashPackage), 'in-sync')
+    const same = await reloadLocalPlugins(s)
+    assert.equal(same[0].action, 'unchanged'); assert.deepEqual(s.calls, [], 'an unchanged source triggers no package-manager run')
+    writeFileSync(join(dir, 'index.js'), `${readFileSync(join(dir, 'index.js'), 'utf8')}\n// edited\n`)
+    assert.equal(installState(plugin, hashPackage), 'changed')
+    const changed = await reloadLocalPlugins(s)
+    assert.equal(changed[0].action, 'updated'); assert.ok(s.calls.length > 0)
+    rmSync(dir, { recursive: true, force: true })
+    assert.equal(installState(plugin, hashPackage), 'stale')
+  } finally { rmSync(dir, { recursive: true, force: true }); rmSync(profile, { recursive: true, force: true }); rmSync(stageRoot, { recursive: true, force: true }) }
 })
 
 test('the live extensions context lists installed plugins with their live status, and is empty when there are none', () => {

@@ -13,6 +13,7 @@
 import { readFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
+import { globalExtensionsDir } from './lib/reconcile.js'
 import { describeInstalledExtensions, installLocalPlugin, listLocalPlugins, reloadLocalPlugins, removeLocalPlugin } from './lib/install.js'
 import { lookupExtensionDocs } from './lib/lookup.js'
 import { verifyPackage } from './lib/verify.js'
@@ -80,11 +81,22 @@ export function apply(ctx) {
           const installDiscovered = words.includes('new')
           // `/reload remove-stale` removes installs whose source folder is gone; without it they are only reported.
           const removeStale = words.includes('remove-stale')
-          const results = await reloadLocalPlugins({ pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir }, undefined, { workspaceDir, installDiscovered, removeStale })
-          if (results.length === 0) return { kind: 'success', text: 'No local extensions installed or found in .acryl-extensions/.' }
-          const lines = results.map(r => r.stale && r.removed ? `${r.name}: STALE, source folder missing - removed` : r.stale && r.ok ? `${r.name}: STALE - source folder ${r.dir} no longer exists, so it cannot be updated. Type /reload remove-stale to remove it` : r.pending ? `${r.dir}: NEW, not installed. It would run with your permissions: review it, then type /reload new` : r.ok ? `${r.name}: ${r.action}${r.discovered ? ' (new)' : ''}` : `${r.name}: FAILED - ${(r.errors ?? []).join('; ')}`)
+          const dshHome = ctx.get('dshHomePath')
+          const globalDir = globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined)
+          const results = await reloadLocalPlugins({ pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir }, undefined, { workspaceDir, globalDir, installDiscovered, removeStale })
+          if (results.length === 0) return { kind: 'success', text: 'No local extensions installed or found in <workspace>/.acryl-extensions/ or the global extensions directory.' }
+          const tag = r => (r.scope ? ` [${r.scope}]` : '')
+          const lines = results.map(r =>
+            r.stale && r.removed ? `${r.name}: STALE, source folder missing - removed`
+            : r.stale && r.ok ? `${r.name}: STALE - source folder ${r.dir} no longer exists, so it cannot be updated. Type /reload remove-stale to remove it`
+            : r.shadowed ? `${r.dir}: SHADOWED by the project extension "${r.name}" - not loaded`
+            : r.pending ? `${r.dir}${tag(r)}: NEW, not installed. It would run with your permissions: review it, then type /reload new`
+            : r.ok ? `${r.name}${tag(r)}: ${r.action}${r.discovered ? ' (new)' : ''}`
+            : `${r.name}: FAILED - ${(r.errors ?? []).join('; ')}`)
           const failed = results.some(r => !r.ok)
-          const text = `${lines.join('\n')}\nReload the page (Web) or window (Desktop, Cmd/Ctrl+R) to pick up UI changes.`
+          // The reload hint only matters when something was (re)installed or removed.
+          const touched = results.some(r => r.action !== undefined && r.action !== 'unchanged' || r.removed)
+          const text = touched ? `${lines.join('\n')}\nReload the page (Web) or window (Desktop, Cmd/Ctrl+R) to pick up UI changes.` : lines.join('\n')
           return failed ? { kind: 'error', text } : { kind: 'success', text }
         },
       })

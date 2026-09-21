@@ -47,13 +47,38 @@ package for it (`extending/packaging.md`: `acryl-package` keyword, `acryl` manif
 - UI not visible: the page has not been reloaded, or `client.js` failed to load (check the browser console
   for the wrapper `id` and any `import`/JSX in the file).
 
+## Where extensions live: the source folder is the truth
+
+An extension is source code first, a running plugin second, and a package only later (this is pi.dev's model, adapted). The install list in the profile is
+derived state: it can be thrown away and rebuilt from the source folders.
+
+| Scope | Folder | Who sees it |
+| --- | --- | --- |
+| project | `<workspace>/.acryl-extensions/<name>/` | that project only; commit it to the project's git repository |
+| global | `<ACRYL home>/extensions/<name>/` (`~/.acryl/extensions/`) | every project and every surface (Web, Desktop, CLI) running against this ACRYL home |
+
+- Discovery is one level deep: a folder that has a `package.json` is an extension; folders inside it are just its files.
+- The same folder reached by two spellings (a symlink, `../`) is one extension. If a project and a global extension share a package name, the project one
+  wins and the global one is reported as SHADOWED.
+- Lifecycle: write source, then `acryl_verify_plugin`, then `acryl_install_plugin` (live), then edit and re-install (update), then `git commit`, and only later publish
+  (`start-here/trust-and-safety.md`: publishing is the human's decision). An update never needs the package manager when nothing changed (see below).
+- Three different kinds of storage, never mixed: the extension's SOURCE (a folder, in git), its ACTIVATION (the profile's install list, derived), and its
+  RUNTIME DATA (what it remembers: see `../extending/state-and-persistence.md`). Never store data in the source folder and never serialize a running plugin.
+- Not done yet (recorded in the parity table, not to be assumed): a startup pass that re-syncs changed sources by itself, and an `extension.json` manifest
+  with API version, permissions and a state schema. Today a change to a source folder is applied by `acryl_install_plugin` or `/reload`.
+
 ## /reload
 
-The human types `/reload` in the chat. It re-installs every local plugin from its source folder (same checks and rollback as `acryl_install_plugin`) and
-prints one line per plugin. Suggest it after the user edits a plugin by hand. A NEW extension folder found under `<workspace>/.acryl-extensions/` is only
-listed ("NEW, not installed"): installing new folders takes `/reload new`, typed by the human, because an extension runs with the user's permissions
-(see `../start-here/trust-and-safety.md`). UI changes still need a page (Web) or window (Desktop) reload.
-An install whose source folder was moved or deleted is reported as "STALE" (not a failure); `/reload remove-stale`, typed by the human, removes it. Nothing is removed automatically.
+The human types `/reload` in the chat. Source is authoritative, so it makes the installs match their source folders and prints one line per extension
+with its scope:
+
+- source unchanged: `unchanged` (nothing runs, a working plugin is not restarted); source changed: re-installed (same checks and rollback as `acryl_install_plugin`);
+- source folder gone: `STALE` (not a failure); `/reload remove-stale`, typed by the human, removes it. Nothing is removed automatically;
+- a NEW extension folder in either scope is only listed ("NEW, not installed"): installing it takes `/reload new`, typed by the human, because an extension runs
+  with the user's permissions and a cloned repository can contain one (see `../start-here/trust-and-safety.md`);
+- a global extension with the same package name as a project one is `SHADOWED` and not loaded.
+
+UI changes still need a page (Web) or window (Desktop) reload; the command says so only when something was installed or removed.
 
 ## What you see in your context
 

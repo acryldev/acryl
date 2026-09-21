@@ -49,7 +49,8 @@ describe('extension context on the web engine', () => {
       const router = assembly.sections.find(section => section.name === 'acryl:extension-router')
       expect(router).toBeDefined()
       const text = String((router as { text?: unknown }).text)
-      expect(text).toContain(join(context!.root, 'docs', 'README.md'))
+      expect(text).toContain(context!.root)   // one absolute pack root; the doc paths after it are relative
+      expect(text).toContain('docs/README.md')
       expect(text).toContain('acryl_install_plugin')
       expect(existsSync(join(context!.root, 'docs', 'start-here', 'this-runtime.md'))).toBe(true)
 
@@ -100,7 +101,7 @@ describe('/reload on the web engine', () => {
       }
       expect(commands.list(agent).map(command => command.name)).toContain('reload')
       const execution = await commands.execute(agent, '/reload', [], new AbortController().signal)
-      expect(execution?.result).toMatchObject({ kind: 'success', text: 'No local extensions installed or found in .acryl-extensions/.' })
+      expect(execution?.result).toMatchObject({ kind: 'success', text: 'No local extensions installed or found in <workspace>/.acryl-extensions/ or the global extensions directory.' })
     } finally {
       await bridge.dispose()
       await host.dispose()
@@ -164,6 +165,42 @@ describe('/reload on the web engine', () => {
     }
   }, 120_000)
 
+  it('/reload discovers the GLOBAL scope, installs it on request, and skips an unchanged source (shadowing is covered by the pack unit test)', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-extension-global-'))
+    temporaryHomes.push(home)
+    process.env.DSH_HOME = home   // not named .dsh, so the global directory is <home>/extensions
+    const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-global-ws-'))
+    temporaryHomes.push(workspace)
+    const source = new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url).pathname
+    cpSync(source, join(home, 'extensions', 'global-tool'), { recursive: true })
+    const host = await createAcrylEngineHost({
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      initialEngine: 'dsh',
+      prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+    })
+    const bridge = createAcrylSessionBridge(host.ctx, { profile: 'web', generationId: 'global', attachment: 'owner', cwd: workspace })
+    try {
+      const sessionId = await bridge.open()
+      const agent = (host.ctx as unknown as { agents: { get(id: unknown): unknown } }).agents.get(SessionId(sessionId))
+      const commands = host.ctx.get('commands' as never) as unknown as {
+        execute(agent: unknown, line: string, attachments: unknown[], signal: AbortSignal): Promise<{ result: { kind: string; text?: string } } | undefined>
+      }
+      const run = async (line: string) => (await commands.execute(agent, line, [], new AbortController().signal))?.result.text ?? ''
+      expect(await run('/reload')).toContain('[global]: NEW, not installed')
+      expect(await run('/reload new')).toContain('acryl-example-tool [global]: installed (new)')
+      // Nothing changed on disk: the second reload does not run the package manager or restart the plugin.
+      const again = await run('/reload')
+      expect(again).toContain('acryl-example-tool [global]: unchanged')
+      expect(again).not.toContain('Reload the page')
+      // A project folder is listed with its own scope tag.
+      cpSync(source, join(workspace, '.acryl-extensions', 'project-tool'), { recursive: true })
+      expect(await run('/reload')).toContain('[project]: NEW, not installed')
+    } finally {
+      await bridge.dispose()
+      await host.dispose()
+    }
+  }, 180_000)
+
   it('host code updates take effect in the running process without a hot shim (automatic reload)', async () => {
     const home = await mkdtemp(join(tmpdir(), 'acryl-extension-hot-'))
     temporaryHomes.push(home)
@@ -223,7 +260,7 @@ describe('/reload on the web engine', () => {
       // /reload re-installs from the SOURCE folder (not the staging copy).
       write('entry-3:', 'helper-3')
       const reloaded = await commands.execute(agent, '/reload', [], new AbortController().signal)
-      expect(reloaded?.result.text).toContain('acryl-probe-hot: updated')
+      expect(reloaded?.result.text).toContain('acryl-probe-hot [project]: updated')
       expect((await commands.execute(agent, '/probe-hot', [], new AbortController().signal))?.result.text).toBe('entry-3:helper-3')
     } finally {
       await bridge.dispose()
