@@ -4971,3 +4971,11 @@ binary directly rather than through whatever bare `pnpm` resolves to on
   `/reload` lists and `/reload new` installs workspace extension folders (human opt-in); `maps/events.md` plus a verified prompt-hook example; trust and
   safety doc; live terminal commands in the CLI (`40e83701761a11183c5fd7155c4156c35f2d9faf`). A real-model run of build, update, tool and remove passes.
 - Still open (recorded): automatic module-cache invalidation for host code, renderer and remaining lifecycle-hook examples, shortcuts, installed-build evidence, eval baselines.
+
+## 2026-09-21 - feat: automatic host reload, lookup tool, renderer and hook examples, evals; pi.dev parity rechecked (spec 037)
+
+- **Host code reloads automatically** (was the main gap vs pi.dev's module-cache clearing): every install is staged so the entry re-imports the newest versioned copy. Found on the way:
+  pnpm silently skips an unchanged `file:` path, so the staged path is unique per install. Real-engine test changes both an entry and a helper and sees both take effect; a real-model run updates a tool and calls it again.
+- `acryl_extension_lookup(topic)` (pi research section 73), `maps/slot-contracts.md` (the harness's own catalog, 57 slots with examples), `maps/events.md` hooks with two verified examples, tool-call card example,
+  keyboard shortcut pattern verified in a real browser, `evals/` with an off-switch: 31 steps / 51 tool calls with the pack against 85 / 104 without, all tasks completed both ways (directional, one run per cell).
+- CLI archive closure built with the release steps and inspected (both plugins load, all router doc paths exist). Desktop packaging not run (its script would force a production-only install). `PI-PARITY.md` records match, partial and gap per requirement (`7d20530da1e93e0ab9aa92b4dc071341adeaed20`).
