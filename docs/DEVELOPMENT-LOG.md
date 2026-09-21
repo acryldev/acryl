@@ -4987,3 +4987,13 @@ binary directly rather than through whatever bare `pnpm` resolves to on
   `example-plugins/`. Verified inside the packaged app's own Electron 43.4.0 runtime: pack root resolves from `app.asar` to `app.asar.unpacked`, 29 router doc paths and 94 example files exist, both plugins load.
 - New verified examples: `tool-policy-hook` (tools/pre-execute deny/allow on the real tool runtime) and `client-chat-message-action` (assistant-actions seam, applied in a real browser); chat-node docs steer to additive seams.
 - Removed the failed notes-button attempt: `dsh plugin remove acryl-notes-panel` on the real Web profile (backup kept out of the repo) and the untracked `.acryl-extensions/notes-panel` folder. A real-model run updates an installed tool's host code and calls it again in the same session (`7246c035e6725f5cf062a3a0628802448d733e8a`).
+
+## 2026-09-21 - fix: Web startup, clipped sidebar action, pnpm layout safeguard (spec 037)
+
+- `pnpm web` failed with `getSectionOrder is not a function`: `dsh plugin remove` (pinned pnpm 11) relinked a profile that pnpm 9 had laid out isolated (its workspace file said hoisted, which pnpm 9
+  ignored), exposing 65 stale `0.1.0-rc.8` top-level `@deepseek-ai/*` packages that shadowed the harness's. Repaired the real profile (leftovers moved to a backup dir beside it, `nodeLinker: isolated`
+  pinned). Then the editor plugin failed `webServer without inject`: the Web composition lacked the `connection` row declaration Desktop already makes; added (`94dde2b153f1c82c032f3fedc26f273eaf11b97e`).
+- Agent-built sidebar "Note" widget never showed: `sidebar.footer.action` is a nowrap flex row upstream (its own comment says it stacks), the Plugin Market button fills it, so a second action was laid out
+  past the sidebar edge. Reproduced in a real browser, fixed in `dsh-client-ui-brand-acryl` (footer actions stack) and verified: the row appears above Settings and its panel opens.
+- Safeguard: `reconcileProfileLayout` pins the recorded `nodeLinker` / `publicHoistPattern` into the profile's `pnpm-workspace.yaml` before every Web/CLI `dsh plugin` run, so no pnpm can relink a profile
+  another pnpm laid out (`74bd46b8ef7b331f872d6b4e97ad3f8da17959de`). Desktop profiles use Desktop's own pnpm and are not covered. Renaming the `dsh` binary is deferred to the runtime-swap step.
