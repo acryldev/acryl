@@ -239,6 +239,8 @@ test('plugin registers /reload when a commands service exists and reports an una
   try { apply(ctx) } catch { /* other seams are not under test */ }
   const reload = registered.find(d => d.name === 'reload')
   assert.ok(reload, '/reload is registered')
+  // `/reload new` only reaches the handler when the command declares an argument hint; otherwise the client sends it to the model as chat.
+  assert.equal(reload.input?.hint, '[new]', '/reload declares its [new] argument')
   assert.equal((await reload.handler()).kind, 'error')
 })
 

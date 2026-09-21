@@ -67,6 +67,8 @@ export function apply(ctx) {
       yield scoped.commands.register({
         name: 'reload',
         description: 'Reload local extensions from their source folders',
+        // Without `input` the client treats the command as argument-less and sends `/reload new` to the model as chat.
+        input: { hint: '[new]' },
         async handler(invocation) {
           const profileDir = ctx.get('desktopProfiles')?.current?.dir
           if (!profileDir) return { kind: 'error', text: 'The active profile is not available in this runtime.' }
