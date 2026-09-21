@@ -1,10 +1,10 @@
 // Example: ui-library.gallery  (browser half)
 // Type:     client-slot
 // Surfaces: web desktop
-// Teaches:  build a screen from `acryl-ui-web` instead of hand-styling: `require('acryl-ui-web')` gives Card, Field, SwitchField, SettingsRow, SelectField,
+// Teaches:  build a Settings page (`ui.settingsSection`) from `acryl-ui-web` instead of hand-styling: `require('acryl-ui-web')` gives Card, Field, SwitchField, SettingsRow, SelectField,
 //           Segmented, Tabs, Dialog, EmptyState, Stack, the app's Button/Tag/Pill/Toast/Modal re-exported, the semantic color roles, and slot helpers. List
 //           "acryl-ui-web" in `dsh.client.inject` (package.json). The library already follows light and dark; use `ui.roles.<role>` for any color of your own.
-// Expect:   a "UI library" button in the sidebar footer; it opens a dialog with tabs: Components, Settings form, Colors.
+// Expect:   a "UI library" entry in the Settings screen's left navigation; its page has tabs: Components, Settings form, Colors.
 // Docs:     extending.ui-library
 window.__ModuleLoader__.load({ id: 'acryl-example-ui-library', factory: (require) => {
 var module = { exports: {} }; var exports = module.exports;
@@ -12,7 +12,7 @@ var module = { exports: {} }; var exports = module.exports;
 const React = require('react')
 const ui = require('acryl-ui-web')
 const h = React.createElement
-const { Stack, Card, Field, SwitchField, SettingsRow, SelectField, Segmented, Tabs, Dialog, EmptyState, Button, Tag, Pill, Modal } = ui
+const { Stack, Card, Field, SwitchField, SettingsRow, SelectField, Segmented, Tabs, Dialog, EmptyState, Button, Tag, Pill } = ui
 
 function Components() {
   const [name, setName] = React.useState('')
@@ -46,17 +46,17 @@ function Colors() {
       h('code', null, role))))
 }
 
+// A Settings page, not a dialog: the gallery is a catalogue for people building UI, so it lives in Settings (nav entry "UI library"), out of the everyday screens.
 function Gallery() {
-  const [open, setOpen] = React.useState(false)
   const [tab, setTab] = React.useState('components')
-  return h(React.Fragment, null,
-    h(Button, { variant: 'ghost', onClick: () => setOpen(true), title: 'UI library' }, 'UI library'),
-    h(Modal, { open, onClose: () => setOpen(false), title: 'ACRYL UI library', closeLabel: 'Close' },
-      h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'colors', label: 'Colors' }] },
-        tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : h(Colors))))
+  return h(Stack, { gap: 'md' },
+    h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
+    h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : h(Colors)))
 }
 
 exports.inject = ['slots']
-exports.apply = function apply(ctx) { ui.footerAction(ctx, { id: 'example-ui-library', order: 70 }, Gallery) }
+exports.apply = function apply(ctx) { ui.settingsSection(ctx, { id: 'example-ui-library', order: 90, label: 'UI library' }, Gallery) }
 
 return module.exports; } });

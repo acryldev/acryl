@@ -306,6 +306,10 @@
     "sidebarTab": {
       "summary": "Register a tab in the right sidebar (session scope).",
       "slot": "sidebar.right.pane.tab"
+    },
+    "settingsSection": {
+      "summary": "Add a page to the Settings screen (a nav entry beside General, Models, Plugins). Give `label` for the nav text.",
+      "slot": "settings.section"
     }
   },
   "reexports": {

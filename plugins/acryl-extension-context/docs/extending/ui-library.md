@@ -10,7 +10,7 @@ Use this instead of hand-styling. It is a client-only package that every Web and
 const ui = require('acryl-ui-web')   // then ui.Card, ui.Field, ui.SettingsRow ...
 ```
 
-Example: `../example-plugins/packages/client-ui-library/` (a gallery: every component, the color roles, a Settings-style form). The single source of truth for props and accessibility is
+Example: `../example-plugins/packages/client-ui-library/` (a gallery as a Settings page: every component, the color roles, a Settings-style form). The single source of truth for props and accessibility is
 `contracts/components.json` in the package (`plugins/acryl-ui-web/`); the semantic colors are `contracts/tokens.json`.
 
 | Need | Use |
@@ -26,7 +26,7 @@ Example: `../example-plugins/packages/client-ui-library/` (a gallery: every comp
 | Confirm or destructive action | `Dialog` (built on the app's Modal) |
 | Nothing to show | `EmptyState` |
 | Button, Tag, Pill, Toast, Modal, Tooltip | re-exported from the app's primitives |
-| Register in the app | `footerAction`, `headerAction`, `sidebarTab` (slot helpers; the slot is waited for) |
+| Register in the app | `settingsSection` (a Settings page), `footerAction`, `headerAction`, `sidebarTab` (slot helpers; the slot is waited for) |
 
 Rules that keep it correct:
 

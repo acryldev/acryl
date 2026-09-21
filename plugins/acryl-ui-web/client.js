@@ -167,6 +167,7 @@ const slotHelper = slot => (ctx, { id, order = 50, label }, component) =>
 exports.footerAction = slotHelper('sidebar.footer.action')
 exports.headerAction = slotHelper('conversation.session.header.actions')
 exports.sidebarTab = slotHelper('sidebar.right.pane.tab')
+exports.settingsSection = slotHelper('settings.section')
 
 exports.version = '0.2.0'
 exports.apply = function apply() {}
