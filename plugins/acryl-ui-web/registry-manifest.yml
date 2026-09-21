@@ -1,0 +1,41 @@
+# Provenance of every component in src/client/registry (spec 038-ui-component-library, plan.md "Rework after the DSH styling document").
+# origin: extracted = copied from the pinned deepseek-harness source (commit 5dda764ed3) with only the coupling removed; composed = built only from the app's own primitives
+# and DSH stylesheets; gap = DSH has nothing equivalent, so it is written here (each names what DSH has instead).
+source: deepseek-harness 5dda764ed3
+components:
+  - name: fields
+    origin: extracted (verbatim)
+    from: packages/client/ui-settings-plugins/src/client/fields.tsx, fields.module.css
+    test: byte comparison against the DSH files (tests/library.spec.tsx)
+  - name: AppearanceCubes
+    origin: extracted
+    from: packages/client/ui-theme/src/client/AppearanceRow.tsx, AppearanceRow.module.css
+    changed: slot, store and locale coupling replaced by plain props; stylesheet byte-identical
+  - name: SettingsRow
+    origin: extracted
+    from: packages/client/ui-permission-presets/src/client/PermissionRow.tsx and .module.css (row layout)
+    changed: the host-backed preference and the risk confirmation stay in the DSH feature
+  - name: SelectPill
+    origin: extracted
+    from: packages/client/ui-permission-presets/src/client/PermissionRow.tsx and .module.css (selector pill over the app's Menu)
+    changed: preset store and risk confirmation removed
+  - name: Tabs
+    origin: extracted
+    from: packages/client/ui-settings-plugins/src/client/PluginsSettingsSection.tsx and .module.css (tab strip, panel, keyboard handling)
+    changed: slot rendering and locale replaced by plain props
+  - name: Card
+    origin: extracted (surface only)
+    from: packages/client/ui-settings-plugins/src/client/PluginCard.module.css (.card, .cardOpen)
+    changed: PluginCard's disclosure behavior stays in the feature; title and footer layout are written here
+  - name: SwitchField
+    origin: composed
+    from: the app's Switch primitive plus fields.module.css .hint
+  - name: Dialog
+    origin: composed
+    from: the app's Modal and Button primitives (DSH's RiskConfirmation covers the acknowledge-first variant)
+  - name: EmptyState
+    origin: gap
+    dsh_has: a bare paragraph with the .empty style in PluginsSettingsSection
+  - name: Stack
+    origin: gap
+    dsh_has: per-feature CSS; runtime direction and gap are inline style values, which the styling rules allow

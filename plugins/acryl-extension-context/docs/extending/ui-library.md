@@ -21,7 +21,7 @@ Example: `../example-plugins/packages/client-ui-library/` (a gallery as a Settin
 | On/off | `SwitchField` |
 | A settings screen row | `SettingsRow` (label and description left, control right) |
 | Dropdown | `SelectField` (built on the app's own Menu) |
-| Few exclusive tiles (Light, Dark, System) | `Segmented` |
+| Few exclusive tiles (Light, Dark, System) | `Segmented` (a full-width row with its own `title`, like the app's Appearance picker; do not put it inside a `SettingsRow`) |
 | Sections | `Tabs` (active panel as children) |
 | Confirm or destructive action | `Dialog` (built on the app's Modal) |
 | Nothing to show | `EmptyState` |
@@ -30,8 +30,8 @@ Example: `../example-plugins/packages/client-ui-library/` (a gallery as a Settin
 
 Rules that keep it correct:
 
-- The library follows light and dark by itself. For any color of your own use `ui.roles.<role>` (a CSS `var(--acryl-<role>)`): `text`, `textMuted`, `textDimmed`, `surface`, `surfaceRaised`, `border`, `primary`,
-  `success`, `warning`, `error`, `info`, `accent`, `reasoning`. Never write a hex color or an `--dsw-alias-*` name in your own bundle.
+- The library follows light and dark by itself. For any color of your own use `ui.roles.<role>` (the app's own `var(--dsw-alias-*)` token, or for `accent` and `reasoning` the tokens the library registers with the theme service): `text`, `textMuted`, `textDimmed`, `surface`, `surfaceRaised`, `border`, `primary`,
+  `success`, `warning`, `error`, `info`, `accent`, `reasoning`. Never write a hex color in your own bundle.
 - Interactive components name themselves: give `SelectField`, `Segmented` and `Tabs` a `label`. `Field` announces its error by itself.
 - The client loader treats every module as a plugin: a pure library needs an (empty) `apply`; a consumer that fills a slot declares `inject = ['slots']`.
 
@@ -52,3 +52,8 @@ export function apply(ctx) {
 Keys: arrows move a `Segmented`, `SelectField` or `Tabs`; space or enter toggles a `SwitchField`; `y`/enter and `n`/Esc answer a `Dialog`; Tab and Shift+Tab switch `Tabs`. `ctx.get('tuiTheme')` is read-only
 (`mode`, `hex(role)`, `color(role)`, `onChange`); the mode is the user's (`ACRYL_TUI_THEME=dark|light`) or the terminal's, never a plugin's. Example: `../example-plugins/packages/tui-ui-library/` (`/gallery`).
 
+
+## Where the parts come from
+
+The web components are copied from DSH's own source, not redrawn (`plugins/acryl-ui-web/registry-manifest.yml` lists the origin of each and `tests/library.spec.tsx` guards it): the Appearance tiles, the Permission pill and row layout, the tab strip, the plugin field controls and the card surface. They are built with CSS Modules the way DSH builds its own client, so
+the styles are plugin-owned and follow the app's tokens. Only `EmptyState` and `Stack` are new, because DSH has no equivalent.

@@ -2017,7 +2017,50 @@ importers:
         specifier: 0.84.2
         version: 0.84.2(patch_hash=5dc0250a1f7f94a22edffa555f19c38ab55dd19672e6d7031592e52d82cf7be5)
 
-  plugins/acryl-ui-web: {}
+  plugins/acryl-ui-web:
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.2
+        version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
+      '@deepseek-ai/dsh-client-ui-primitives':
+        specifier: 0.1.5-alpha.1
+        version: 0.1.5-alpha.1(@deepseek-ai/cordis@4.0.2)
+      '@deepseek-ai/dsh-client-ui-slots':
+        specifier: 0.1.5-alpha.1
+        version: 0.1.5-alpha.1(@deepseek-ai/cordis@4.0.2)
+      '@deepseek-ai/dsh-client-ui-theme':
+        specifier: 0.1.5-alpha.1
+        version: 0.1.5-alpha.1(@deepseek-ai/cordis@4.0.2)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      '@types/react':
+        specifier: ^18
+        version: 18.3.31
+      '@types/react-dom':
+        specifier: ^18
+        version: 18.3.7(@types/react@18.3.31)
+      clsx:
+        specifier: 2.1.1
+        version: 2.1.1
+      lightningcss:
+        specifier: 1.32.0
+        version: 1.32.0
+      react:
+        specifier: 18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: 18.3.1
+        version: 18.3.1(react@18.3.1)
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.8
+        version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@8.2.1(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
 
   plugins/cordis-plugin-market:
     dependencies:

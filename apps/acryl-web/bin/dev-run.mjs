@@ -26,6 +26,8 @@ const watchedSourceDirs = [
   resolve(packageRoot, 'src'),
   resolve(root, 'runtime/acryl-control/src'),
   resolve(root, 'runtime/acryl-harness-runtime/src'),
+  // The UI library is built by acryl-web's prebuild; its source changing must rebuild it (its lib/client.js is what the profile serves).
+  resolve(root, 'plugins/acryl-ui-web/src'),
 ]
 
 function newestSourceMtime(dir) {

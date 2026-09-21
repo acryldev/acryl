@@ -1,0 +1,40 @@
+/* Card surface, extracted from PluginCard.module.css (deepseek-harness 5dda764ed3): border, radius, layered background. */
+
+.card {
+  list-style: none;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: 16px;
+  background: var(--dsw-alias-bg-layer-3);
+  transition: border-color .16s, background .16s;
+}
+
+.card:hover {
+  border-color: var(--dsw-alias-label-dimmed);
+}
+
+.cardOpen {
+  background: var(--dsw-alias-bg-layer-2);
+  border-color: var(--dsw-alias-label-dimmed);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+

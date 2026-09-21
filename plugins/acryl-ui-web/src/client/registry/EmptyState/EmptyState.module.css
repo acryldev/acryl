@@ -1,0 +1,23 @@
+/* Empty message, extracted from PluginsSettingsSection.module.css (.empty), plus a title line. */
+
+.empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 24px 16px;
+  text-align: center;
+}

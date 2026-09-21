@@ -195,7 +195,7 @@
       ]
     },
     "Segmented": {
-      "summary": "Tile group for a small set of exclusive choices (the Appearance picker in Settings).",
+      "summary": "Tile group for a small set of exclusive choices: DSH's Appearance picker (Light, Dark, System), a full-width row.",
       "props": {
         "options": {
           "type": "Array<{ id: string, label: string, icon?: ReactNode }>",
@@ -212,6 +212,10 @@
         "label": {
           "type": "string",
           "description": "accessible name of the group"
+        },
+        "title": {
+          "type": "string",
+          "description": "visible title above the tiles (DSH shows one). The row is full width: do not put it inside a SettingsRow's right-hand control."
         }
       },
       "a11y": [
@@ -281,7 +285,8 @@
         },
         "danger": {
           "type": "boolean",
-          "default": "false"
+          "default": "false",
+          "description": "terminal only (paints the confirm action with the error role). On the web use the app's RiskConfirmation primitive for destructive confirmations: its Button has no danger variant."
         }
       },
       "children": true,

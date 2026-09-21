@@ -24,6 +24,7 @@ apps/acryl-desktop/lib/
 
 plugins/cordis-plugin-market/lib/
 plugins/dsh-client-ui-brand-acryl/lib/
+plugins/acryl-ui-web/lib/
 
 apps/acryl-web/lib/
 release-artifacts/
