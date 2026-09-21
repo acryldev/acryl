@@ -1,6 +1,6 @@
 # Current system prompt: desktop
 
-<!-- Generated on 2026-09-20 by the system-prompt capture (see ../README.md). Do not edit; regenerate. -->
+<!-- Generated on 2026-09-21 by the system-prompt capture (see ../README.md). Do not edit; regenerate. -->
 
 What the model receives on the first turn of a new session on the desktop surface (headless Desktop composition, standard preset), after path scrubbing.
 Temporary paths are shown as `<workspace>`, `<dsh-home>` and `<acryl-repo>`. The tool list follows the system prompt.

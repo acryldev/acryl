@@ -269,6 +269,11 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
     materializeProfilePackage(profile.dir, 'acryl-extension-context', import.meta.url)
     patches.push({ insert: [{ id: 'extension-context', name: 'acryl-extension-context' }] })
   }
+  // ACRYL system prompt shaping (pi.dev-like tagged prompt, ACRYL identity), pass-through over the harness's sections.
+  if (!existingRowIds.has('acryl-system-prompt')) {
+    materializeProfilePackage(profile.dir, 'acryl-system-prompt', import.meta.url)
+    patches.push({ insert: [{ id: 'acryl-system-prompt', name: 'acryl-system-prompt' }] })
+  }
   // The profile's own user overrides come from the shared store, not from this
   // surface: `acryl plugin disable` on a TUI writes the same file the Desktop
   // panel and the Web surface read, so the next boot of any of them composes
@@ -454,6 +459,9 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   // dependency closure.
   materializeProfilePackage(profile.dir, 'acryl-extension-context', installPackageUrl)
   patches.push({ insert: [{ id: 'extension-context', name: 'acryl-extension-context' }] })
+  // ACRYL system prompt shaping (pi.dev-like tagged prompt, ACRYL identity), pass-through over the harness's sections.
+  materializeProfilePackage(profile.dir, 'acryl-system-prompt', installPackageUrl)
+  patches.push({ insert: [{ id: 'acryl-system-prompt', name: 'acryl-system-prompt' }] })
   // Last, so a user override beats every composition decision above it - the
   // same shared store the CLI and the Desktop panel write (spec 034).
   patches.push(...pluginLifecyclePatches({

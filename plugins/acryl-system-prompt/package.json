@@ -1,0 +1,45 @@
+{
+  "name": "acryl-system-prompt",
+  "version": "0.1.0",
+  "description": "ACRYL's own shaping of the system prompt on top of the harness's sections: ACRYL identity, pi.dev-style tagged sections, no empty sections, and a drift record of what upstream contributes",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/acryl-system-prompt"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-system-prompt#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json",
+    "./transform": "./lib/transform.js"
+  },
+  "files": [
+    "index.js",
+    "lib/**",
+    "drift/**",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test scripts/transform.test.mjs",
+    "check": "pnpm run test"
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "main": "./index.js",
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.1"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.2"
+  }
+}

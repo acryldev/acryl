@@ -80,7 +80,7 @@ describe('published package surface', () => {
     expect(workspaceManifest.scripts?.typecheck)
       .toBe('pnpm --filter acryl-control run typecheck && pnpm --filter acryl-cli run typecheck && pnpm --filter acryl-web run typecheck && pnpm --filter dsh-client-ui-brand-acryl run typecheck && pnpm --filter acryl-desktop run typecheck && pnpm --filter cordis-plugin-market run typecheck')
     expect(workspaceManifest.scripts?.test)
-      .toBe('pnpm --filter acryl-control run test && pnpm --filter acryl-cli run test && pnpm --filter acryl-web run test && pnpm --filter dsh-client-ui-brand-acryl run test && pnpm --filter acryl-desktop run test && pnpm --filter cordis-plugin-market run test && pnpm --filter acryl-extension-context run test')
+      .toBe('pnpm --filter acryl-control run test && pnpm --filter acryl-cli run test && pnpm --filter acryl-web run test && pnpm --filter dsh-client-ui-brand-acryl run test && pnpm --filter acryl-desktop run test && pnpm --filter cordis-plugin-market run test && pnpm --filter acryl-extension-context run test && pnpm --filter acryl-system-prompt run test')
     expect(pnpmWorkspace).toContain("  - '!deepseek-harness/**'")
     expect(pnpmWorkspace).toContain('node-pty: true')
   })

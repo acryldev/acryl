@@ -92,6 +92,8 @@ const UI_BRAND_OFFICIAL_ROW_ID = 'ui-brand-official'
 const UI_BRAND_ACRYL_ROW_ID = 'ui-acryl'
 const EXTENSION_CONTEXT_ROW_ID = 'extension-context'
 const EXTENSION_CONTEXT_PACKAGE = 'acryl-extension-context'
+const SYSTEM_PROMPT_ROW_ID = 'acryl-system-prompt'
+const SYSTEM_PROMPT_PACKAGE = 'acryl-system-prompt'
 const UI_BRAND_ACRYL_PACKAGE = 'dsh-client-ui-brand-acryl'
 /**
  * Selects which browser-brand package occupies the sidebar and
@@ -837,6 +839,8 @@ export function prepareDesktopProfile(
   // plugin it wrote. Resolved from this package's own dependency closure like the
   // brand and market packages above.
   patches.push({ insert: [{ id: EXTENSION_CONTEXT_ROW_ID, name: EXTENSION_CONTEXT_PACKAGE }] })
+  // ACRYL system prompt shaping: pi.dev-like tagged prompt with the ACRYL identity, pass-through over the harness's sections.
+  patches.push({ insert: [{ id: SYSTEM_PROMPT_ROW_ID, name: SYSTEM_PROMPT_PACKAGE }] })
   if (mode === 'advanced') {
     for (const [id, packageName] of [
       ['ui-layout', UI_LAYOUT_PACKAGE],

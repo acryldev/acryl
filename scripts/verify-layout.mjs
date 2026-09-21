@@ -50,6 +50,7 @@ packages:
   - plugins/dsh-community-fabric
   - plugins/cordis-plugin-market
   - plugins/acryl-extension-context
+  - plugins/acryl-system-prompt
   - '!deepseek-harness/**'
 
 allowBuilds:

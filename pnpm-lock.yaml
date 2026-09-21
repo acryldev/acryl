@@ -540,6 +540,9 @@ importers:
       acryl-harness-runtime:
         specifier: workspace:*
         version: link:../../runtime/acryl-harness-runtime
+      acryl-system-prompt:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-system-prompt
       cordis-plugin-market:
         specifier: workspace:*
         version: link:../../plugins/cordis-plugin-market
@@ -1297,6 +1300,9 @@ importers:
       acryl-harness-runtime:
         specifier: workspace:*
         version: link:../../runtime/acryl-harness-runtime
+      acryl-system-prompt:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-system-prompt
       adm-zip:
         specifier: ^0.6.0
         version: 0.6.0
@@ -1925,6 +1931,9 @@ importers:
       acryl-extension-context:
         specifier: workspace:*
         version: link:../../plugins/acryl-extension-context
+      acryl-system-prompt:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-system-prompt
       cordis-plugin-market:
         specifier: workspace:*
         version: link:../../plugins/cordis-plugin-market
@@ -1976,6 +1985,16 @@ importers:
       '@earendil-works/pi-tui':
         specifier: 0.84.2
         version: 0.84.2(patch_hash=5dc0250a1f7f94a22edffa555f19c38ab55dd19672e6d7031592e52d82cf7be5)
+
+  plugins/acryl-system-prompt:
+    dependencies:
+      '@deepseek-ai/schemastery':
+        specifier: ^3.18.1
+        version: 3.18.2
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.2
+        version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
 
   plugins/cordis-plugin-market:
     dependencies:
@@ -2702,6 +2721,9 @@ importers:
       acryl-extension-context:
         specifier: workspace:*
         version: link:../../plugins/acryl-extension-context
+      acryl-system-prompt:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-system-prompt
       adm-zip:
         specifier: ^0.6.0
         version: 0.6.0

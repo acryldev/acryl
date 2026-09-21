@@ -19,6 +19,17 @@ ACRYL_DUMP_SYSTEM_PROMPT=docs/system-prompt/current \
 The generator is [`tests/dump-system-prompt.spec.ts`](../../runtime/acryl-harness-runtime/tests/dump-system-prompt.spec.ts) (opt-in, no model
 call succeeds, a dummy key is used; temp paths are scrubbed). Desktop uses the same runtime and the same client as Web, so it shares the Web copy.
 
+## The ACRYL shaping plugin (pi.dev-like)
+
+[`plugins/acryl-system-prompt`](../../plugins/acryl-system-prompt/index.js) applies pi.dev's prompt shape to the harness's sections: on the harness's
+`system-prompt/assemble` waterfall it puts the ACRYL identity line first (replacing "You are an AI agent powered by DeepSeek Harness."), wraps every other
+section in a tag (`<persona>`, `<tool_read>`, `<acryl_extension_docs>`, `<cwd>`), and drops empty sections. Every other section keeps its upstream text
+unchanged, so harness updates still reach the model. Pure logic (identity, tag names, drift snapshot):
+[`lib/transform.js`](../../plugins/acryl-system-prompt/lib/transform.js); the listener is 6 lines in `index.js`. Config on its row: `identity`, `tagSections`,
+`dropEmpty`. **Drift check:** [`plugins/acryl-system-prompt/drift/`](../../plugins/acryl-system-prompt/drift) records a hash of every section upstream contributes,
+per surface; [`tests/system-prompt-shape.spec.ts`](../../runtime/acryl-harness-runtime/tests/system-prompt-shape.spec.ts) fails when a harness update adds, removes or
+changes one, naming it. After reviewing, refresh with `ACRYL_UPDATE_DRIFT=1` (same command as the test).
+
 ## How the prompt is assembled
 
 1. **Sections.** Plugins call `ctx.systemPrompt.section({ name, order, text })`. Lower `order` comes first. The registry, the built-in order
@@ -52,13 +63,14 @@ call succeeds, a dummy key is used; temp paths are scrubbed). Desktop uses the s
 | The self-extension instructions (router) | [`router.js`](../../plugins/acryl-extension-context/lib/router.js) | Must stay under the token budget (1500, enforced by `scripts/plugin.test.mjs`). Static text is cached across turns: keep it stable; put dynamic facts in `PromptContext`. |
 | Which docs the router lists | [`docs.json`](../../plugins/acryl-extension-context/docs/docs.json), then `node scripts/build-manifest.mjs` in the pack | The topic list is generated from the manifest; `reference.*` docs are intentionally omitted from it. |
 | A skill's wording | `plugins/acryl-extension-context/skills/<name>/SKILL.md` | Name and description are what sits in context; the body loads on demand. |
-| The identity or working-directory line | the persona row in the preset [`agent.cordis.yml`](../../deepseek-harness/packages/preset/agent-presets/presets/standard/agent.cordis.yml) | It is in the read-only harness submodule: change it through a user preset or a Loader patch, never by editing `deepseek-harness/` (constitution III). A user preset lives in `<dshHome>/.agent-presets/<id>/`. |
+| The identity line (ACRYL) or the tagging | [`acryl-system-prompt`](../../plugins/acryl-system-prompt/index.js) config or `lib/transform.js` | Pass-through: only the identity is replaced; other sections keep upstream text. |
+| The persona or working-directory line | the persona row in the preset [`agent.cordis.yml`](../../deepseek-harness/packages/preset/agent-presets/presets/standard/agent.cordis.yml) | It is in the read-only harness submodule: change it through a user preset or a Loader patch, never by editing `deepseek-harness/` (constitution III). A user preset lives in `<dshHome>/.agent-presets/<id>/`. |
 | Per-project or per-user standing instructions | `AGENTS.md` or `CLAUDE.md` in the workspace, or `<dshHome>/AGENTS.md` | Loaded by agent-instructions; no code change; good for "you can extend ACRYL yourself, offer it when a feature is missing". |
 | A new prompt section from a plugin | `ctx.systemPrompt.section({ name, order, text })` | See [`extending/prompt-contribution.md`](../../plugins/acryl-extension-context/docs/extending/prompt-contribution.md). Use an order that places it where you want; the router uses `9500` (last). |
 | Tool guidance or tool descriptions | the tool's package (`dsh-tool-*`) | Upstream for harness tools; for a tool you write, its `description` and its section. |
 
-Known: the identity line still reads "You are an AI agent powered by DeepSeek Harness." because it is the harness's unconditional opener
-(`includeHarnessIdentity`), not an ACRYL section. Changing it needs a supported switch upstream or a preset persona that shadows the prefix.
+Attribution: the identity line is ACRYL's; "built on DeepSeek Harness" belongs in the README and About text (the license is MIT; the brand guidelines only ask that the
+name not be used as a project name or to imply endorsement).
 
 ## Tune it with evidence
 

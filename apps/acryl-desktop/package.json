@@ -385,6 +385,7 @@
     "adm-zip": "^0.6.0",
     "commander": "^15.0.0",
     "acryl-extension-context": "workspace:*",
+    "acryl-system-prompt": "workspace:*",
     "dsh-client-ui-brand-acryl": "workspace:*",
     "cordis-plugin-market": "workspace:*",
     "dshmarket": "1.17.1",

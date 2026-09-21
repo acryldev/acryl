@@ -1,0 +1,70 @@
+[
+  {
+    "name": "harness:identity",
+    "hash": "1dd6363fa551"
+  },
+  {
+    "name": "deployment:persona-prefix",
+    "hash": "e3b0c44298fc"
+  },
+  {
+    "name": "plan:policy",
+    "hash": "e3b0c44298fc"
+  },
+  {
+    "name": "tool:bash",
+    "hash": "647bd85ba2e8"
+  },
+  {
+    "name": "tool:read",
+    "hash": "360f3b4090b4"
+  },
+  {
+    "name": "tool:write",
+    "hash": "b362c190e7b4"
+  },
+  {
+    "name": "tool:edit",
+    "hash": "a5cc9d7f5568"
+  },
+  {
+    "name": "tool:glob",
+    "hash": "fea278627cd2"
+  },
+  {
+    "name": "tool:grep",
+    "hash": "5cf488ba882d"
+  },
+  {
+    "name": "tool:jobs",
+    "hash": "ba71da85048b"
+  },
+  {
+    "name": "tool:web_search",
+    "hash": "b1134f16a10a"
+  },
+  {
+    "name": "tool:web_fetch",
+    "hash": "7460d60c1307"
+  },
+  {
+    "name": "tool:goal",
+    "hash": "9b4617faaa51"
+  },
+  {
+    "name": "tool:workflow",
+    "hash": "4e6240cecbf5"
+  },
+  {
+    "name": "tool:ralph",
+    "hash": "b9e63bed0a54"
+  },
+  {
+    "name": "tool:subagent",
+    "hash": "33e80771e437"
+  },
+  {
+    "name": "deployment:persona-suffix",
+    "hash": "e3b0c44298fc"
+  }
+]
