@@ -5010,3 +5010,13 @@ binary directly rather than through whatever bare `pnpm` resolves to on
   Building the first exposed three RPC pitfalls, now documented: handlers must return `{ok, value}`/`{ok:false, error:{code,message,details}}`, the client must unwrap
   that envelope (rendering the error object crashed the slot with React #31), and a call needs an object payload. The storage-domain option has no example and is
   flagged unverified. `b733b6f8c292df4a48883abc7f83c3a7af968a2f`
+
+## 2026-09-21 - perf: startup context checked against pi, router slimmed (spec 037)
+
+- Measured the first request of a real Web session (about 25k tokens: system 5.8k, 40 tool schemas 9.4k, the repo's AGENTS.md 4.6k, 110 skills 7.1k) and read pi's real prompt builder
+  (`pi-coding-agent` 0.84.4, `core/system-prompt.js`): about 490 tokens by default, docs as paths plus a topic map, skills as name/description/location. Our design already matches (references, not
+  loads); the one bloated part of ours was the extension router (919 tokens vs pi's about 325 docs block). Now about 600 (one pack root, relative paths, at most three docs per topic), test budget 650.
+- Paired real-model eval, same day: old router 51 steps / 77 tool calls, slim 54 / 80, all tasks verify and install ok both ways; the earlier recorded run of the old router was 31 / 51, so single-run
+  variance exceeds the difference. `32b5f47baca13d3ee0220e2f33be959b270dc175`
+- Recorded, not changed: the harness's "Dynamic Cordis Plugins" prompt text and `cordis_*` schemas (about 3k tokens, upstream) compete with our install path; a per-surface gate in the `acryl-system-prompt` listener is the candidate for the runtime-swap step.
+- Also this window: `acryl-header-note` (workspace extension, untracked) now keeps notes on the host with a one-time import of old browser notes, verified in a real browser.
