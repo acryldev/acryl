@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs'
 import { basename, dirname, isAbsolute, join } from 'node:path'
+import { readManifest } from './manifest.js'
 import { SOURCE_FILE } from './stage.js'
 
 /**
@@ -28,7 +29,7 @@ export function canonical(path, fs = { realpathSync }) {
 /**
  * Extension folders under the project and global roots.
  * @param {{ workspaceDir?: string, globalDir?: string }} roots
- * @returns {Array<{ name: string, dir: string, scope: 'project' | 'global', shadowed: boolean }>}
+ * @returns {Array<{ name: string, dir: string, scope: 'project' | 'global', shadowed: boolean, permissions?: string[] }>}
  */
 export function discoverExtensions({ workspaceDir, globalDir }, fs = { existsSync, readdirSync, readFileSync, realpathSync }) {
   const found = []
@@ -48,8 +49,13 @@ export function discoverExtensions({ workspaceDir, globalDir }, fs = { existsSyn
       if (seenDirs.has(dir)) continue
       seenDirs.add(dir)
       let name = entry.name
-      try { const declared = JSON.parse(fs.readFileSync(manifest, 'utf8')).name; if (typeof declared === 'string' && declared !== '') name = declared } catch { /* lint reports it on install */ }
-      found.push({ name, dir, scope, shadowed: claimedNames.has(name) })
+      let permissions
+      try {
+        const pkg = JSON.parse(fs.readFileSync(manifest, 'utf8'))
+        if (typeof pkg.name === 'string' && pkg.name !== '') name = pkg.name
+        permissions = readManifest(pkg).permissions
+      } catch { /* lint reports it on install */ }
+      found.push({ name, dir, scope, shadowed: claimedNames.has(name), permissions })
       claimedNames.add(name)
     }
   }

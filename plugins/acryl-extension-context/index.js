@@ -14,7 +14,8 @@ import { readFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { globalExtensionsDir } from './lib/reconcile.js'
-import { describeInstalledExtensions, installLocalPlugin, listLocalPlugins, reloadLocalPlugins, removeLocalPlugin } from './lib/install.js'
+import { describePermissions } from './lib/manifest.js'
+import { describeInstalledExtensions, installLocalPlugin, syncOnStartup, listLocalPlugins, reloadLocalPlugins, removeLocalPlugin } from './lib/install.js'
 import { lookupExtensionDocs } from './lib/lookup.js'
 import { verifyPackage } from './lib/verify.js'
 import { preparePublish } from './lib/publish.js'
@@ -62,6 +63,35 @@ export function apply(ctx) {
     }), 'extension-context: installed extensions context')
   })
 
+  // Startup pass (pi.dev re-discovers extensions on every start): re-sync changed GLOBAL extensions, report everything else. Deferred one tick so it
+  // never runs inside the engine's own boot, and it never throws into the host. See syncOnStartup for why project scope is only reported.
+  ctx.inject(['desktopProfiles', 'desktopPnpm', 'livePluginActivation'], scoped => {
+    scoped.effect(() => {
+      let disposed = false
+      const timer = setTimeout(async () => {
+        if (disposed) return
+        try {
+          const profileDir = scoped.get('desktopProfiles')?.current?.dir
+          if (!profileDir) return
+          const dshHome = scoped.get('dshHomePath')
+          const summary = await syncOnStartup(
+            { pnpm: scoped.get('desktopPnpm'), live: scoped.get('livePluginActivation'), profileDir },
+            { globalDir: globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined) },
+          )
+          const parts = [
+            summary.updated.length > 0 ? `re-synced ${summary.updated.join(', ')}` : '',
+            summary.changed.length > 0 ? `source changed since install (type /reload to apply): ${summary.changed.join(', ')}` : '',
+            summary.stale.length > 0 ? `source folder missing (/reload remove-stale): ${summary.stale.join(', ')}` : '',
+            summary.pending.length > 0 ? `new global extensions not installed (/reload new): ${summary.pending.join(', ')}` : '',
+            ...summary.failed.map(f => `FAILED ${f.name}: ${f.error}`),
+          ].filter(Boolean)
+          if (parts.length > 0) ctx.logger.info(`[extension-context] startup: ${parts.join('; ')}`)
+        } catch (cause) { ctx.logger.warn(`[extension-context] startup sync failed: ${cause instanceof Error ? cause.message : String(cause)}`) }
+      }, 0)
+      return () => { disposed = true; clearTimeout(timer) }
+    }, 'extension-context: startup sync')
+  })
+
   // `/reload`: re-install every local plugin from its source directory, and install new folders under <workspace>/.acryl-extensions/.
   ctx.inject(['commands'], scoped => {
     ctx.effect(function* () {
@@ -90,7 +120,7 @@ export function apply(ctx) {
             r.stale && r.removed ? `${r.name}: STALE, source folder missing - removed`
             : r.stale && r.ok ? `${r.name}: STALE - source folder ${r.dir} no longer exists, so it cannot be updated. Type /reload remove-stale to remove it`
             : r.shadowed ? `${r.dir}: SHADOWED by the project extension "${r.name}" - not loaded`
-            : r.pending ? `${r.dir}${tag(r)}: NEW, not installed. It would run with your permissions: review it, then type /reload new`
+            : r.pending ? `${r.dir}${tag(r)}: NEW, not installed - ${describePermissions(r.permissions)}. It would run with your permissions: review it, then type /reload new`
             : r.ok ? `${r.name}${tag(r)}: ${r.action}${r.discovered ? ' (new)' : ''}`
             : `${r.name}: FAILED - ${(r.errors ?? []).join('; ')}`)
           const failed = results.some(r => !r.ok)

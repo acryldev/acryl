@@ -64,8 +64,12 @@ derived state: it can be thrown away and rebuilt from the source folders.
   (`start-here/trust-and-safety.md`: publishing is the human's decision). An update never needs the package manager when nothing changed (see below).
 - Three different kinds of storage, never mixed: the extension's SOURCE (a folder, in git), its ACTIVATION (the profile's install list, derived), and its
   RUNTIME DATA (what it remembers: see `../extending/state-and-persistence.md`). Never store data in the source folder and never serialize a running plugin.
-- Not done yet (recorded in the parity table, not to be assumed): a startup pass that re-syncs changed sources by itself, and an `extension.json` manifest
-  with API version, permissions and a state schema. Today a change to a source folder is applied by `acryl_install_plugin` or `/reload`.
+- Manifest: the `acryl` block of `package.json` (the same block the marketplace reads; there is no second `extension.json`) carries `apiVersion` (an integer; refused when the
+  runtime provides an older API) and `permissions` (from a fixed list: `fs.read`, `fs.write`, `net`, `shell`, `secrets`, `ui`). The permissions are shown to the human on the `NEW,
+  not installed` line before `/reload new`. They are declarative: declare what the code really does, and expect the human to check; they are not enforced by a sandbox.
+- Startup: when the app starts, installed GLOBAL extensions whose source changed are re-installed automatically (nobody but the user writes to that folder). A changed PROJECT extension
+  is only reported in the log (a `git pull` can change code that would then run with the user's permissions), a missing source is reported, and new folders are never installed
+  without `/reload new`.
 
 ## /reload
 

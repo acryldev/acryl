@@ -3,7 +3,7 @@
  * mounts the plugin, the assembled system prompt carries the docs router with
  * paths that exist on disk, and the install tool the agent needs is registered.
  */
-import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -13,7 +13,11 @@ import { createDshEngineDefinition, createWebEngineDefinition } from '../src/eng
 import { SessionId } from '@deepseek-ai/dsh-session'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 // @ts-expect-error plain JS package
-import { installLocalPlugin } from '../../../plugins/acryl-extension-context/lib/install.js'
+import { installLocalPlugin, listLocalPlugins } from '../../../plugins/acryl-extension-context/lib/install.js'
+// @ts-expect-error plain JS package
+import { stagedInfo } from '../../../plugins/acryl-extension-context/lib/reconcile.js'
+// @ts-expect-error plain JS package
+import { hashPackage } from '../../../plugins/acryl-extension-context/lib/stage.js'
 import { createAcrylSessionBridge } from '../src/session-bridge.ts'
 
 const temporaryHomes: string[] = []
@@ -200,6 +204,55 @@ describe('/reload on the web engine', () => {
       await host.dispose()
     }
   }, 180_000)
+
+  it('the startup pass re-syncs a changed GLOBAL extension by itself, and /reload shows the permissions a NEW one requests', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-extension-startup-'))
+    temporaryHomes.push(home)
+    process.env.DSH_HOME = home   // not named .dsh, so the global directory is <home>/extensions
+    const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-startup-ws-'))
+    temporaryHomes.push(workspace)
+    const source = new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url).pathname
+    const target = join(home, 'extensions', 'startup-tool')
+    cpSync(source, target, { recursive: true })
+    const manifestPath = join(target, 'package.json')
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
+    writeFileSync(manifestPath, JSON.stringify({ ...manifest, acryl: { apiVersion: 1, permissions: ['shell'] } }))
+    const boot = () => createAcrylEngineHost({
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      initialEngine: 'dsh',
+      prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+    })
+    // First run: the human installs it (permissions are shown first), then the app closes.
+    let host = await boot()
+    let bridge = createAcrylSessionBridge(host.ctx, { profile: 'web', generationId: 'startup-1', attachment: 'owner', cwd: workspace })
+    let profileDir: string
+    try {
+      const sessionId = await bridge.open()
+      const agent = (host.ctx as unknown as { agents: { get(id: unknown): unknown } }).agents.get(SessionId(sessionId))
+      const commands = host.ctx.get('commands' as never) as unknown as {
+        execute(agent: unknown, line: string, attachments: unknown[], signal: AbortSignal): Promise<{ result: { text?: string } } | undefined>
+      }
+      const listed = (await commands.execute(agent, '/reload', [], new AbortController().signal))?.result.text ?? ''
+      expect(listed).toContain('requests: shell')
+      expect((await commands.execute(agent, '/reload new', [], new AbortController().signal))?.result.text).toContain('installed (new)')
+      profileDir = (host.ctx.get('desktopProfiles' as never) as { current: { dir: string } }).current.dir
+    } finally { await bridge.dispose(); await host.dispose() }
+
+    // The source changes while the app is closed (an edit, a sync). Booting again must apply it without any command.
+    writeFileSync(join(target, 'index.js'), `${readFileSync(join(target, 'index.js'), 'utf8')}\n// changed while closed\n`)
+    const inSync = () => {
+      const [plugin] = listLocalPlugins(profileDir) as Array<{ installedDir: string; installedFrom: string }>
+      return plugin !== undefined && stagedInfo(plugin.installedDir)?.version === hashPackage(plugin.installedFrom)
+    }
+    expect(inSync()).toBe(false)
+    host = await boot()
+    bridge = createAcrylSessionBridge(host.ctx, { profile: 'web', generationId: 'startup-2', attachment: 'owner', cwd: workspace })
+    try {
+      const deadline = Date.now() + 90_000
+      while (!inSync() && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 500))
+      expect(inSync()).toBe(true)
+    } finally { await bridge.dispose(); await host.dispose() }
+  }, 240_000)
 
   it('host code updates take effect in the running process without a hot shim (automatic reload)', async () => {
     const home = await mkdtemp(join(tmpdir(), 'acryl-extension-hot-'))

@@ -35,6 +35,8 @@
     },
     "capabilities": [
       "example-capability"
-    ]
+    ],
+    "apiVersion": 1,
+    "permissions": []
   }
 }

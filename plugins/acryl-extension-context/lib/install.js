@@ -1,8 +1,9 @@
 import { existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { isAbsolute, join, resolve } from 'node:path'
+import { isAbsolute, join, resolve, sep } from 'node:path'
 import { hashPackage, pruneOldStages, pruneOldVersions, stagePackage, stagedSource } from './stage.js'
 import { canonical, discoverExtensions, installState } from './reconcile.js'
+import { checkManifest, readManifest } from './manifest.js'
 
 /**
  * Static checks for the two failures measured in spec 037 research Q7 that make
@@ -33,7 +34,9 @@ export function lintPackageDir(dir, fs = { existsSync, readFileSync }) {
     if (typeof clientExport !== 'string') errors.push('a package with "dsh.client" must export its browser bundle as "./client" in "exports" (for example "./client": "./client.js")')
     else if (!fs.existsSync(join(dir, clientExport))) errors.push(`the client bundle ${clientExport} does not exist`)
   }
-  return { name: pkg.name, hasClient: pkg.dsh?.client !== undefined, hotShim: usesHotShim(dir, pkg, fs), errors }
+  errors.push(...checkManifest(pkg))
+  const { apiVersion, permissions } = readManifest(pkg)
+  return { name: pkg.name, hasClient: pkg.dsh?.client !== undefined, hotShim: usesHotShim(dir, pkg, fs), apiVersion, permissions, errors }
 }
 
 /** True when the plugin's host entry re-imports its implementation with a cache-busting query (the hot shim). */
@@ -191,6 +194,7 @@ export async function installLocalPlugin(input, services, fs) {
     pruneOldStages(stageRoot, lint.name, staging.dir)
   }
   else if (updating && !lint.hotShim) result.warning = `Updated, but Node caches the host module and this plugin could not be staged for automatic reload (${staging.reason}): changes to HOST code are NOT picked up until the app restarts, unless the plugin uses the hot shim (docs/delivery/local-live.md). Browser (client.js) changes only need a page reload.`
+  if (lint.permissions !== undefined) result.permissions = lint.permissions
   if (lint.hasClient) result.next = 'This package has a browser (client) part. Ask the user to reload the page (Web) or window (Desktop) to see the new UI; the host part is already live.'
   return result
 }
@@ -249,11 +253,52 @@ export async function reloadLocalPlugins(services, fs, options = {}) {
     if (found.shadowed) { results.push({ name: found.name, discovered: true, shadowed: true, ok: true, dir: found.dir, scope: found.scope }); continue }
     // Extensions run with the user's permissions, and a folder in a cloned repository is a prompt-injection surface (pi.dev has project
     // trust for the same reason): a new folder is only LISTED unless the human explicitly asked to install new ones.
-    if (!options.installDiscovered) { results.push({ name: found.name, discovered: true, pending: true, ok: true, dir: found.dir, scope: found.scope }); continue }
+    if (!options.installDiscovered) { results.push({ name: found.name, discovered: true, pending: true, ok: true, dir: found.dir, scope: found.scope, permissions: found.permissions }); continue }
     const result = await installLocalPlugin({ path: found.dir }, services, fs)
     results.push({ name: result.package ?? found.name, discovered: true, scope: found.scope, ...result })
   }
   return results
+}
+
+/**
+ * The startup pass: bring already-installed extensions up to date with their source, without asking, ONLY where that cannot run code the user
+ * did not put there. pi.dev auto-loads what it finds, guarded by project trust; ACRYL's equivalent guard is:
+ *
+ *  - GLOBAL scope (`<ACRYL home>/extensions/`): a directory only the user (or their agent) writes to, never arrives through `git clone` or `git pull`.
+ *    A changed source there is re-installed at startup.
+ *  - PROJECT scope and anything else: a `git pull` can change code that then runs with the user's permissions at the next start. A changed source
+ *    is only REPORTED (`/reload` applies it). New folders are never installed here in either scope: that is `/reload new`.
+ *  - A missing source is only reported; nothing is removed.
+ *
+ * Never throws: a failure in one extension is recorded and the others still run.
+ * @param {object} services `{ pnpm, live, profileDir }`
+ * @param {{ globalDir?: string }} [options]
+ * @returns {Promise<{ updated: string[], changed: string[], stale: string[], pending: string[], failed: Array<{ name: string, error: string }> }>}
+ */
+export async function syncOnStartup(services, options = {}, fs) {
+  const summary = { updated: [], changed: [], stale: [], pending: [], failed: [] }
+  const plugins = listLocalPlugins(services.profileDir, fs)
+  const globalRoot = options.globalDir ? canonical(options.globalDir) : undefined
+  const inGlobal = dir => globalRoot !== undefined && canonical(dir).startsWith(`${globalRoot}${sep}`)
+  const installed = new Set()
+  for (const plugin of plugins) {
+    if (!plugin.installedFrom || !isAbsolute(plugin.installedFrom)) continue
+    installed.add(canonical(plugin.installedFrom))
+    let state
+    try { state = installState(plugin, hashPackage, fs) } catch (cause) { summary.failed.push({ name: plugin.name, error: String(cause?.message ?? cause) }); continue }
+    if (state === 'stale') { summary.stale.push(plugin.name); continue }
+    if (state === 'in-sync') continue
+    if (!inGlobal(plugin.installedFrom)) { summary.changed.push(plugin.name); continue }
+    try {
+      const result = await installLocalPlugin({ path: plugin.installedFrom }, services, fs)
+      if (result.ok) summary.updated.push(plugin.name)
+      else summary.failed.push({ name: plugin.name, error: (result.errors ?? []).join('; ') || 'install failed' })
+    } catch (cause) { summary.failed.push({ name: plugin.name, error: String(cause?.message ?? cause) }) }
+  }
+  for (const found of discoverExtensions({ globalDir: options.globalDir })) {
+    if (!installed.has(found.dir) && !found.shadowed) summary.pending.push(found.name)
+  }
+  return summary
 }
 
 /**

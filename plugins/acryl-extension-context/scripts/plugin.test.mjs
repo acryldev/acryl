@@ -4,8 +4,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { test } from 'node:test'
-import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, ensureProfileBundle, pinPublicHoistPattern, describeInstalledExtensions } from '../lib/install.js'
+import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, syncOnStartup, ensureProfileBundle, pinPublicHoistPattern, describeInstalledExtensions } from '../lib/install.js'
 import { discoverExtensions, globalExtensionsDir, installState } from '../lib/reconcile.js'
+import { checkManifest, describePermissions, EXTENSION_API_VERSION } from '../lib/manifest.js'
 import { resolvePackRoot } from '../lib/pack-root.js'
 import { entryOf, hashPackage, pruneOldStages, pruneOldVersions, stagePackage, stagedSource, VERSION_DIR_PREFIX } from '../lib/stage.js'
 import { createSkillProvider, parseSkill } from '../lib/skills.js'
@@ -66,7 +67,7 @@ function makePkg(over = {}, { patch = true } = {}) {
 
 test('lint accepts a correct package', () => {
   const dir = makePkg()
-  try { assert.deepEqual(lintPackageDir(dir), { name: 'my-plugin', hasClient: false, hotShim: false, errors: [] }) } finally { rmSync(dir, { recursive: true, force: true }) }
+  try { assert.deepEqual(lintPackageDir(dir), { name: 'my-plugin', hasClient: false, hotShim: false, apiVersion: undefined, permissions: undefined, errors: [] }) } finally { rmSync(dir, { recursive: true, force: true }) }
 })
 
 test('lint catches the measured failures: missing bundle, missing patch file, exports without ./package.json', () => {
@@ -441,6 +442,55 @@ test('reload: source is authoritative - unchanged installs are skipped, changed 
     rmSync(dir, { recursive: true, force: true })
     assert.equal(installState(plugin, hashPackage), 'stale')
   } finally { rmSync(dir, { recursive: true, force: true }); rmSync(profile, { recursive: true, force: true }); rmSync(stageRoot, { recursive: true, force: true }) }
+})
+
+test('manifest: apiVersion and permissions are validated, and shown before a NEW extension is installed', () => {
+  assert.deepEqual(checkManifest({}), [])
+  assert.deepEqual(checkManifest({ acryl: { apiVersion: 1, permissions: ['shell', 'net'] } }), [])
+  assert.match(checkManifest({ acryl: { apiVersion: EXTENSION_API_VERSION + 1 } })[0], /needs ACRYL extension API version/)
+  assert.match(checkManifest({ acryl: { apiVersion: 'one' } })[0], /positive integer/)
+  assert.match(checkManifest({ acryl: { permissions: ['shel'] } })[0], /unknown permission "shel"/)
+  assert.match(checkManifest({ acryl: { permissions: 'shell' } })[0], /must be an array/)
+  assert.equal(describePermissions(undefined), 'declares no permissions (unknown)')
+  assert.equal(describePermissions([]), 'requests no special permissions')
+  assert.equal(describePermissions(['shell', 'net']), 'requests: shell, net')
+  const dir = makePkg({ acryl: { schemaVersion: 1, artifacts: { plugins: ['./index.js'] }, apiVersion: 1, permissions: ['fs.write'] } })
+  const root = mkdtempSync(join(tmpdir(), 'perm-')); const ws = join(root, 'ws'); mkdirSync(join(ws, '.acryl-extensions', 'p'), { recursive: true })
+  try {
+    writeFileSync(join(ws, '.acryl-extensions', 'p', 'package.json'), readFileSync(join(dir, 'package.json')))
+    assert.deepEqual(discoverExtensions({ workspaceDir: ws })[0].permissions, ['fs.write'])
+    assert.deepEqual(lintPackageDir(dir).permissions, ['fs.write'])
+    const bad = makePkg({ acryl: { permissions: ['everything'] } })
+    assert.match(lintPackageDir(bad).errors.join(' '), /unknown permission "everything"/); rmSync(bad, { recursive: true, force: true })
+  } finally { rmSync(dir, { recursive: true, force: true }); rmSync(root, { recursive: true, force: true }) }
+})
+
+test('startup sync: a changed GLOBAL source is re-installed; a changed project source, a missing source and a new folder are only reported', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'startup-')); const globalDir = join(root, 'extensions'); const profile = join(root, 'profile'); const stageRoot = join(root, 'stage')
+  mkdirSync(profile, { recursive: true }); mkdirSync(stageRoot, { recursive: true })
+  const make = (dir, name) => {
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, 'package.json'), JSON.stringify({ name, version: '0.1.0', type: 'module', main: './index.js', exports: { '.': './index.js', './package.json': './package.json' }, dsh: { bundle: { patch: './cordis.patch.yml' } } }))
+    writeFileSync(join(dir, 'cordis.patch.yml'), `- insert:\n    - id: ${name}\n      name: ${name}\n`)
+    writeFileSync(join(dir, 'index.js'), `export const name = ${JSON.stringify(name)}\nexport function apply() {}\n`)
+  }
+  const globalSrc = join(globalDir, 'g'); const projectSrc = join(root, 'ws', '.acryl-extensions', 'p'); const goneSrc = join(root, 'gone')
+  make(globalSrc, 'ext-global'); make(projectSrc, 'ext-project'); make(goneSrc, 'ext-gone'); make(join(globalDir, 'fresh'), 'ext-fresh')
+  const deps = {}
+  for (const [name, src] of [['ext-global', globalSrc], ['ext-project', projectSrc], ['ext-gone', goneSrc]]) deps[name] = `file:${stagePackage(src, stageRoot).dir}`
+  writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: deps }))
+  const s = { ...fakes({ preinstalled: true }), profileDir: profile }
+  try {
+    assert.deepEqual(await syncOnStartup(s, { globalDir }), { updated: [], changed: [], stale: [], pending: ['ext-fresh'], failed: [] }, 'in sync: nothing to do except list the new global folder')
+    assert.deepEqual(s.calls, [])
+    writeFileSync(join(globalSrc, 'index.js'), 'export const name = "ext-global"\nexport function apply() { /* v2 */ }\n')
+    writeFileSync(join(projectSrc, 'index.js'), 'export const name = "ext-project"\nexport function apply() { /* v2 */ }\n')
+    rmSync(goneSrc, { recursive: true, force: true })
+    const summary = await syncOnStartup(s, { globalDir })
+    assert.deepEqual([summary.updated, summary.changed, summary.stale, summary.pending, summary.failed], [['ext-global'], ['ext-project'], ['ext-gone'], ['ext-fresh'], []])
+    assert.ok(s.calls.length > 0, 'the global extension was re-installed')
+    assert.ok(!JSON.stringify(s.calls).includes('ext-project'), 'the project extension was NOT touched')
+  } finally { rmSync(root, { recursive: true, force: true }) }
 })
 
 test('the live extensions context lists installed plugins with their live status, and is empty when there are none', () => {
