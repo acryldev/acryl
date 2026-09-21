@@ -63,7 +63,7 @@ import type { YlyState as YlyMode } from '../yly/yly-programs.js'
 import type { TuiActions } from './actions.js'
 import type { TuiState, TuiStore } from './store.js'
 import type { TuiCommandOverlayHint, TuiCommandRegistration } from './tui-commands-service.js'
-import { theme, fg } from './theme.js'
+import { fgRole } from './theme.js'
 import { ModelProfileOverlay } from './modelProfile/ModelProfileOverlay.js'
 import { LoginOverlay } from './login/LoginOverlay.js'
 import { TrajectoryOverlay } from './trajectory/TrajectoryOverlay.js'
@@ -74,7 +74,7 @@ import { AgentPresetsOverlay } from './agentPresets/AgentPresetsOverlay.js'
 import { ApprovalOverlay } from './interaction/ApprovalOverlay.js'
 import { QuestionOverlay } from './interaction/QuestionOverlay.js'
 
-const secondary = fg(theme.secondary)
+const secondary = fgRole('secondary')
 
 export interface MountOptions {
   readonly store: TuiStore
@@ -364,7 +364,7 @@ class TuiApp implements TuiHandle {
     // ACRYL mark + session info. Unlike the old whale banner this does not
     // scroll with the transcript — the pet stays put while the conversation
     // scrolls.
-    const headerMark = new DynamicText(() => ACRYL_MARK_ROWS.map(row => fg(theme.primary)(row)).join('\n'))
+    const headerMark = new DynamicText(() => ACRYL_MARK_ROWS.map(row => fgRole('primary')(row)).join('\n'))
     const header = new HStack(
       [
         { component: this.pet, basis: 34, shrink: 0 },
@@ -382,7 +382,7 @@ class TuiApp implements TuiHandle {
     const buildStamp = `build ${BUILD_COMMIT ?? '(no git)'} · ${new Date(BUILD_TIME).toLocaleTimeString()}`
     const sessionInfo = new DynamicText(() => {
       const { provider, model, cwd } = options
-      return [`${provider}/${model}`, cwd, fg(theme.muted)(buildStamp)].join('\n')
+      return [`${provider}/${model}`, cwd, fgRole('muted')(buildStamp)].join('\n')
     })
 
     const layoutRoot = new VStack(

@@ -24,11 +24,11 @@ import type { TuiActions } from './actions.js'
 import { matchSlashCommands, parseGoalCommand, parsePlanCommand, runSlashCommand } from './commands.js'
 import { editorTheme, shellModeEditorBorderColor } from './piTheme.js'
 import { PromptAutocompleteProvider, type GetFileCandidates } from './promptAutocomplete.js'
-import { theme, fg } from './theme.js'
+import { fgRole } from './theme.js'
 
 const EXIT_ARM_TIMEOUT_MS = 2000
-const armedHint = fg(theme.muted)
-const shellModeHint = fg(theme.warning)
+const armedHint = fgRole('muted')
+const shellModeHint = fgRole('warning')
 
 export interface CustomEditorDeps {
   readonly getStatus: () => AgentStatus

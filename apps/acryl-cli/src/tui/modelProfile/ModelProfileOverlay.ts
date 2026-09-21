@@ -20,13 +20,13 @@ import type { ModelProfileOverlayState, TuiStore } from '../store.js'
 import { emptyMiniTextField, miniTextFieldInput, renderMiniTextField, type MiniTextFieldState } from '../miniTextField.js'
 import { listWindow, visibleRange } from '../listWindow.js'
 import { deriveApiKeyRef, type ModelEntry, type ProviderDraft, type ProviderRow } from './types.js'
-import { theme, fg } from '../theme.js'
+import { fgRole } from '../theme.js'
 
 const bold = (s: string): string => `\x1b[1m${s}\x1b[0m`
-const secondary = fg(theme.secondary)
-const muted = fg(theme.muted)
-const warning = fg(theme.warning)
-const errorColor = fg(theme.error)
+const secondary = fgRole('secondary')
+const muted = fgRole('muted')
+const warning = fgRole('warning')
+const errorColor = fgRole('error')
 const invert = (s: string): string => `\x1b[7m${s}\x1b[0m`
 
 type TextField = 'route' | 'displayName' | 'baseURL' | 'apiKey'

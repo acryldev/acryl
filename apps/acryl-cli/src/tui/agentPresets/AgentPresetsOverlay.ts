@@ -11,12 +11,12 @@ import type { Component } from '@earendil-works/pi-tui'
 import { Key, matchesKey } from '@earendil-works/pi-tui'
 import type { TuiActions } from '../actions.js'
 import type { TuiStore } from '../store.js'
-import { theme, fg } from '../theme.js'
+import { fgRole } from '../theme.js'
 
 const bold = (s: string): string => `\x1b[1m${s}\x1b[0m`
-const secondary = fg(theme.secondary)
-const muted = fg(theme.muted)
-const errorColor = fg(theme.error)
+const secondary = fgRole('secondary')
+const muted = fgRole('muted')
+const errorColor = fgRole('error')
 const invert = (s: string): string => `\x1b[7m${s}\x1b[0m`
 
 export class AgentPresetsOverlay implements Component {

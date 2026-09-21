@@ -10,11 +10,11 @@ import { Key, matchesKey } from '@earendil-works/pi-tui'
 import type { TuiActions } from '../actions.js'
 import type { TuiStore } from '../store.js'
 import { contextBreakdownRows, contextOccupancy, formatTokens } from '../statsFormat.js'
-import { theme, fg } from '../theme.js'
+import { fgRole } from '../theme.js'
 
 const bold = (s: string): string => `\x1b[1m${s}\x1b[0m`
-const secondary = fg(theme.secondary)
-const muted = fg(theme.muted)
+const secondary = fgRole('secondary')
+const muted = fgRole('muted')
 
 const BAR_WIDTH = 30
 

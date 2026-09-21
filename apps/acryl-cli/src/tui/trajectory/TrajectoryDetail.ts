@@ -13,9 +13,9 @@ import { wrapTextWithAnsi } from '@earendil-works/pi-tui'
 import type { RenderOptions } from '../../render.js'
 import { buildDetail } from './detail.js'
 import { detailTabsFor, type TrajectoryDetailTab, type TrajectoryRecord } from './types.js'
-import { theme, fg } from '../theme.js'
+import { fgRole } from '../theme.js'
 
-const muted = fg(theme.muted)
+const muted = fgRole('muted')
 
 /** Left padding for the panel's body, under its flush-left tab-bar heading — mirrors the ledger's own "Turn" header / indented "Step" row convention (`TrajectoryLedger.ts`). */
 const DETAIL_INDENT = '  '

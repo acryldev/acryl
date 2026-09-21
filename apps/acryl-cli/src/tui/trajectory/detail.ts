@@ -7,10 +7,10 @@
 
 import type { RenderOptions } from '../../render.js'
 import { renderMarkdown } from '../../markdown.js'
-import { theme, fg } from '../theme.js'
+import { fgRole } from '../theme.js'
 import type { TrajectoryDetailTab, TrajectoryRecord } from './types.js'
 
-const violet = fg(theme.reasoning)
+const violet = fgRole('reasoning')
 
 function formatTime(ms: number): string {
   return new Date(ms).toLocaleTimeString()

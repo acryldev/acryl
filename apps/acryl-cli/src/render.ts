@@ -15,7 +15,7 @@ import type { ToolCallId } from '@deepseek-ai/dsh-llm/brand'
 import type { SessionEvent } from '@deepseek-ai/dsh-session'
 import type { FileDiff, ToolCallView, ToolDefinition, ToolResult, ToolResultView } from '@deepseek-ai/dsh-tools'
 import { renderMarkdown } from './markdown.js'
-import { theme, fg } from './tui/theme.js'
+import { fgRole } from './tui/theme.js'
 
 /** Rendering context: replay walks history already in the log. */
 export interface RenderOptions {
@@ -27,12 +27,12 @@ export interface RenderOptions {
   getToolCall?: (callId: ToolCallId) => { name: string; arguments: string } | undefined
 }
 
-const dim = fg(theme.muted)
-const cyan = fg(theme.secondary)
-const red = fg(theme.error)
-const green = fg(theme.success)
-const yellow = fg(theme.warning)
-const violet = fg(theme.reasoning)
+const dim = fgRole('muted')
+const cyan = fgRole('secondary')
+const red = fgRole('error')
+const green = fgRole('success')
+const yellow = fgRole('warning')
+const violet = fgRole('reasoning')
 
 /** Line cap for a settled shell-escape (`!`) run's body in the permanent transcript; `<Static>` prints can't be redrawn, so a long run is summarized there — tool calls/results don't use this cap, since the transcript only ever shows their one-line collapsed summary (see `formatToolCardSummary`), with full detail available via `formatToolCardDetail` in the Tool Cards overlay. */
 const MAX_CARD_LINES = 20

@@ -7,13 +7,13 @@
  */
 
 import type { TrajectoryRecord, TrajectoryRow } from './types.js'
-import { theme, fg } from '../theme.js'
+import { theme, fg, fgRole } from '../theme.js'
 
 const bold = (s: string): string => `\x1b[1m${s}\x1b[0m`
 const invert = (s: string): string => `\x1b[7m${s}\x1b[0m`
-const secondary = fg(theme.secondary)
-const muted = fg(theme.muted)
-const errorColor = fg(theme.error)
+const secondary = fgRole('secondary')
+const muted = fgRole('muted')
+const errorColor = fgRole('error')
 
 function recordGlyph(record: TrajectoryRecord): string {
   if (record.kind === 'tool') return record.isError ? '✖' : '⚙'

@@ -25,13 +25,13 @@ import type {
   CliMarketPnpm,
   CliMarketProfile,
 } from 'acryl-harness-runtime'
-import { fg, theme } from '../theme.ts'
+import { fgRole } from '../theme.ts'
 
 const bold = (s: string): string => `\x1b[1m${s}\x1b[0m`
-const secondary = fg(theme.secondary)
-const muted = fg(theme.muted)
-const errorColor = fg(theme.error)
-const success = fg(theme.success)
+const secondary = fgRole('secondary')
+const muted = fgRole('muted')
+const errorColor = fgRole('error')
+const success = fgRole('success')
 
 const CATALOG_URL = 'https://acryl.dev/v1/plugins'
 const NPM_REGISTRY_ORIGIN = 'https://registry.npmjs.org'

@@ -64,9 +64,9 @@ test('the color roles in client.js are exactly the ones in tokens.json, and only
   const tokens = JSON.parse(read('contracts/tokens.json')).roles
   const css = read('client.js')
   const kebab = role => role.replace(/[A-Z]/gu, c => `-${c.toLowerCase()}`)
-  for (const [role, { web }] of Object.entries(tokens)) assert.ok(css.includes(`--acryl-${kebab(role)}: ${web};`), `role ${role} is missing or differs from tokens.json`)
+  for (const [role, { web }] of Object.entries(tokens).filter(([, value]) => value.web !== null)) assert.ok(css.includes(`--acryl-${kebab(role)}: ${web};`), `role ${role} is missing or differs from tokens.json`)
   const rootLine = css.split('\n').find(line => line.startsWith('body { --acryl-'))
-  assert.equal((rootLine.match(/--acryl-[a-z-]+:/gu) ?? []).length, Object.keys(tokens).length, 'client.js defines a role that tokens.json does not')
+  assert.equal((rootLine.match(/--acryl-[a-z-]+:/gu) ?? []).length, Object.values(tokens).filter(value => value.web !== null).length, 'client.js defines a role that tokens.json does not')
   const elsewhere = css.split('\n').filter(line => line !== rootLine && /var\(--dsw-/u.test(line))
   assert.deepEqual(elsewhere, [], 'only the roles line may reference app tokens (an upstream rename must touch one line)')
   for (const role of Object.values(tokens)) assert.deepEqual(Object.keys(role.terminal).sort(), ['dark', 'light'])

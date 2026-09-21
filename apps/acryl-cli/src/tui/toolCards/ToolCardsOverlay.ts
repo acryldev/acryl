@@ -13,11 +13,11 @@ import type { SessionEvent } from '@deepseek-ai/dsh-session'
 import { formatToolCardDetail, formatToolCardSummary, type RenderOptions } from '../../render.js'
 import type { TuiActions } from '../actions.js'
 import type { TuiStore } from '../store.js'
-import { theme, fg } from '../theme.js'
+import { fgRole } from '../theme.js'
 
 const bold = (s: string): string => `\x1b[1m${s}\x1b[0m`
-const secondary = fg(theme.secondary)
-const muted = fg(theme.muted)
+const secondary = fgRole('secondary')
+const muted = fgRole('muted')
 
 /**
  * One row of the overlay: a `tool/call` and its `tool/result`, paired by

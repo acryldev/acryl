@@ -23,13 +23,13 @@ import type { TuiStore } from '../store.js'
 import { emptyMiniTextField, miniTextFieldInput, renderMiniTextField, type MiniTextFieldState } from '../miniTextField.js'
 import { listWindow, visibleRange } from '../listWindow.js'
 import type { AuthorizationFlowRow, LoginOverlayState, LoginPromptState } from './types.js'
-import { theme, fg } from '../theme.js'
+import { fgRole } from '../theme.js'
 
 const bold = (s: string): string => `\x1b[1m${s}\x1b[0m`
-const secondary = fg(theme.secondary)
-const muted = fg(theme.muted)
-const errorColor = fg(theme.error)
-const successColor = fg(theme.success)
+const secondary = fgRole('secondary')
+const muted = fgRole('muted')
+const errorColor = fgRole('error')
+const successColor = fgRole('success')
 const invert = (s: string): string => `\x1b[7m${s}\x1b[0m`
 
 /** A non-secret reminder that replacing an API-key prompt will overwrite an existing stored key. */

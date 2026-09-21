@@ -24,14 +24,14 @@ import type { Component, TUI } from '@earendil-works/pi-tui'
 import { Key, matchesKey } from '@earendil-works/pi-tui'
 import type { TuiActions } from '../actions.js'
 import type { PluginRow } from './types.js'
-import { theme, fg } from '../theme.js'
+import { fgRole } from '../theme.js'
 
 const bold = (s: string): string => `\x1b[1m${s}\x1b[0m`
-const secondary = fg(theme.secondary)
-const muted = fg(theme.muted)
-const errorColor = fg(theme.error)
-const success = fg(theme.success)
-const accent = fg(theme.primary)
+const secondary = fgRole('secondary')
+const muted = fgRole('muted')
+const errorColor = fgRole('error')
+const success = fgRole('success')
+const accent = fgRole('primary')
 
 /**
  * Case-insensitive subsequence fuzzy match: every character of `query`, in

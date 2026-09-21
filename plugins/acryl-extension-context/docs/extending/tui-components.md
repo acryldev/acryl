@@ -31,9 +31,11 @@ commands (`ctx.commands`) and prompts, which have no visual design.
   panel backgrounds.
 - Keep a semantic `PALETTE` (primary, secondary, muted, success, warning, error, info) in one object and build the theme
   objects from it (the example does). Use 24-bit color (`\x1b[38;2;r;g;bm`); do not assume a light or dark terminal.
-- The CLI's own palette lives in `apps/acryl-cli/src/tui/theme.ts` (`primary #4F6BFE`, `secondary #38BDF8`, `accent #818CF8`,
-  `reasoning #A855F7`, `success #34D399`, `warning #FBBF24`, `error #F87171`, `muted #94A3B8`) and is adapted to pi-tui in
-  `tui/piTheme.ts`. It is compiled in and NOT exposed to plugins: a plugin cannot read or change it, so it carries its own.
+- The CLI's own palette is generated from the semantic role file `plugins/acryl-ui-web/contracts/tokens.json` (the same roles the web library uses) into
+  `apps/acryl-cli/src/tui/palette.generated.ts`, read through `apps/acryl-cli/src/tui/theme.ts` and adapted to pi-tui in `tui/piTheme.ts`. It has a dark and a
+  light palette for nine roles (dark: `primary #4F6BFE`, `secondary #38BDF8`, `accent #818CF8`, `reasoning #A855F7`, `success #34D399`, `warning #FBBF24`,
+  `error #F87171`, `info #4F6BFE`, `muted #94A3B8`). The user picks with `ACRYL_TUI_THEME=dark|light`; otherwise `COLORFGBG` decides, otherwise dark. It is compiled in and
+  NOT exposed to plugins yet: a plugin cannot read or change it, so it carries its own palette (a `tuiTheme` service for plugins is planned in spec 038-ui-component-library).
 
 ## Branding in the terminal (source change and rebuild)
 

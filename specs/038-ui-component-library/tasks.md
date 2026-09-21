@@ -20,9 +20,9 @@ Slice 0 mostly answered and the web skeleton landed (2026-09-21): M10 to M13 and
 
 ## Slice 1 - Tokens and terminal theme
 
-- **T006** Token source file and compilers (web theme, terminal palette) with a stale-output gate.
-- **T007** `tuiTheme` service, provided before rows mount, persisted preference, `overrideTokens`, change event; tests.
-- **T008** Built-in CLI overlays read the service (migrate `theme.ts` to a live object); no visual regression (snapshot tests).
+- **T006** Token source file and compilers (web theme, terminal palette) with a stale-output gate. **Terminal side DONE**: `apps/acryl-cli/scripts/compile-palette.mjs` generates `palette.generated.ts` from `plugins/acryl-ui-web/contracts/tokens.json`, a test fails when it is stale and pins the dark palette to the previous hex values. Web side: the role CSS is hand-written and a test asserts it matches `tokens.json` exactly (a generator is not needed until a second web consumer exists).
+- **T007** `tuiTheme` service, provided before rows mount, persisted preference, `overrideTokens`, change event; tests. **Partial**: a live module-level theme (`theme.ts`: `setPaletteMode`, `resolvePaletteMode` from `ACRYL_TUI_THEME` then `COLORFGBG`, `fgRole`) with tests. Not done: exposing it as a service to plugins, a persisted preference, `overrideTokens`, the change event, and OSC 11 background detection (Q8 in research.md).
+- **T008** Built-in CLI overlays read the service (migrate `theme.ts` to a live object); no visual regression (snapshot tests). **DONE**: 59 import-time captures in 19 files converted to `fgRole`, two lookup tables in `liveText.ts` now store roles; typecheck clean, 360 CLI tests pass, the dark palette equals the old one.
 - **T009** Document the terminal theme API in the extension pack (`extending/tui-components.md`, mount-points map, skill).
 
 ## Slice 2 - Web layer

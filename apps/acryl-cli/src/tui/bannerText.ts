@@ -8,7 +8,7 @@
 
 import { truncate } from '../render.js'
 import { LOGO_HALF_BLOCK } from './logoArt.generated.js'
-import { theme, fg } from './theme.js'
+import { fgRole } from './theme.js'
 
 export interface BannerContent {
   readonly version: string
@@ -20,8 +20,8 @@ export interface BannerContent {
 const ESC = '\x1b['
 const bold = (s: string): string => `${ESC}1m${s}${ESC}0m`
 
-const dim = fg(theme.muted)
-const primary = fg(theme.primary)
+const dim = fgRole('muted')
+const primary = fgRole('primary')
 
 // eslint-disable-next-line no-control-regex -- \x1b deliberately matches the ANSI escape byte, not a typo.
 const ANSI_RE = /\x1b\[[0-9;?]*[a-zA-Z]/g

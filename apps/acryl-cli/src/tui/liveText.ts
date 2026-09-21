@@ -15,11 +15,11 @@ import type { UserMessage } from '@deepseek-ai/dsh-session'
 import { truncate } from '../render.js'
 import { stripSessionIdPrefix } from '../sessionId.js'
 import type { PermissionState } from './store.js'
-import { theme, fg } from './theme.js'
+import { fgRole, type Role } from './theme.js'
 
-const dim = fg(theme.muted)
-const accent = fg(theme.accent)
-const warning = fg(theme.warning)
+const dim = fgRole('muted')
+const accent = fgRole('accent')
+const warning = fgRole('warning')
 
 export interface StatusBarParams {
   readonly sessionId: string
@@ -74,11 +74,12 @@ const PERMISSION_ICONS: Record<string, string> = {
   custom: '⊛',
 }
 
-const PERMISSION_COLORS: Record<string, string> = {
-  'read-only': theme.info,
-  'workspace-write': theme.success,
-  'danger-full-access': theme.error,
-  custom: theme.muted,
+// Roles, not colors: resolved at each use so the palette can change (a color captured here at import would be frozen).
+const PERMISSION_ROLES: Record<string, Role> = {
+  'read-only': 'info',
+  'workspace-write': 'success',
+  'danger-full-access': 'error',
+  custom: 'muted',
 }
 
 /**
@@ -99,7 +100,7 @@ export function buildPermissionText(permission: PermissionState | undefined): st
   if (permission === undefined) return ''
   const icon = PERMISSION_ICONS[permission.current] ?? '•'
   const label = PERMISSION_LABELS[permission.current] ?? permission.current
-  const color = fg(PERMISSION_COLORS[permission.current] ?? theme.muted)
+  const color = fgRole(PERMISSION_ROLES[permission.current] ?? 'muted')
   return `${color(`${icon} ${label}`)}${dim(' (shift+tab to cycle)')}`
 }
 
@@ -114,10 +115,10 @@ export function goalPhaseLabel(phase: GoalPhase): string {
 }
 
 /** Phase color for the goal glyph + label; active reads green, paused amber, blocked coral. */
-const GOAL_PHASE_COLORS: Record<string, string> = {
-  active: theme.success,
-  paused: theme.warning,
-  blocked: theme.error,
+const GOAL_PHASE_ROLES: Record<string, Role> = {
+  active: 'success',
+  paused: 'warning',
+  blocked: 'error',
 }
 
 /** Long-objective cap for the goal strip, matching the queued-preview cap. */
@@ -147,7 +148,7 @@ export function buildTerminalTitle(title: string | null | undefined): string {
 export function buildGoalBarText(goal: GoalProjection | null | undefined): string {
   if (goal === undefined || goal === null || goal.goal.phase === 'complete') return ''
   const snapshot = goal.goal
-  const color = fg(GOAL_PHASE_COLORS[snapshot.phase] ?? theme.muted)
+  const color = fgRole(GOAL_PHASE_ROLES[snapshot.phase] ?? 'muted')
   const label = goalPhaseLabel(snapshot.phase)
   const objective = truncate(snapshot.objective, GOAL_OBJECTIVE_LIMIT)
   const blocker = snapshot.phase === 'blocked' && snapshot.blockedReason !== undefined

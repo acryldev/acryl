@@ -12,13 +12,13 @@
 import type { Component } from '@earendil-works/pi-tui'
 import { Key, matchesKey } from '@earendil-works/pi-tui'
 import type { TuiActions } from '../actions.js'
-import { theme, fg } from '../theme.js'
+import { fgRole } from '../theme.js'
 import { emptyMiniTextField, miniTextFieldInput, renderMiniTextField, type MiniTextFieldState } from '../miniTextField.js'
 import type { QuestionPromptState } from './types.js'
 
 const bold = (s: string): string => `\x1b[1m${s}\x1b[0m`
-const secondary = fg(theme.secondary)
-const muted = fg(theme.muted)
+const secondary = fgRole('secondary')
+const muted = fgRole('muted')
 const invert = (s: string): string => `\x1b[7m${s}\x1b[0m`
 
 /** Detail (e.g. a plan-review's plan markdown) line cap. */

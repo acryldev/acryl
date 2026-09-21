@@ -8,14 +8,14 @@
 import type { Component } from '@earendil-works/pi-tui'
 import { Key, matchesKey } from '@earendil-works/pi-tui'
 import type { TuiActions } from '../actions.js'
-import { theme, fg } from '../theme.js'
+import { fgRole } from '../theme.js'
 import type { ApprovalPromptState } from './types.js'
 
 const bold = (s: string): string => `\x1b[1m${s}\x1b[0m`
-const warning = fg(theme.warning)
-const muted = fg(theme.muted)
-const success = fg(theme.success)
-const errorColor = fg(theme.error)
+const warning = fgRole('warning')
+const muted = fgRole('muted')
+const success = fgRole('success')
+const errorColor = fgRole('error')
 const invert = (s: string): string => `\x1b[7m${s}\x1b[0m`
 
 const CHOICES = [

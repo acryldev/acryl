@@ -21,11 +21,11 @@ import { buildLedgerLines } from './TrajectoryLedger.js'
 import { buildDetailLines } from './TrajectoryDetail.js'
 import { detailTabsFor, type TrajectoryDetailTab, type TrajectoryRecord, type TrajectoryRow } from './types.js'
 import { emptyMiniTextField, miniTextFieldInput, renderMiniTextField, type MiniTextFieldState } from '../miniTextField.js'
-import { theme, fg } from '../theme.js'
+import { fgRole } from '../theme.js'
 
 const bold = (s: string): string => `\x1b[1m${s}\x1b[0m`
-const secondary = fg(theme.secondary)
-const muted = fg(theme.muted)
+const secondary = fgRole('secondary')
+const muted = fgRole('muted')
 
 type RecordRow = Extract<TrajectoryRow, { kind: 'record' }>
 

@@ -8,13 +8,13 @@
  * @module @tomowang/dsh-tui/markdown
  */
 
-import { theme, fg } from './tui/theme.js'
+import { fgRole } from './tui/theme.js'
 
 const ESC = '\x1b['
 
-const dim = fg(theme.muted)
-const cyan = fg(theme.secondary)
-const primary = fg(theme.primary)
+const dim = fgRole('muted')
+const cyan = fgRole('secondary')
+const primary = fgRole('primary')
 const bold = (s: string): string => `${ESC}1m${s}${ESC}0m`
 const italic = (s: string): string => `${ESC}3m${s}${ESC}0m`
 const strike = (s: string): string => `${ESC}9m${s}${ESC}0m`
