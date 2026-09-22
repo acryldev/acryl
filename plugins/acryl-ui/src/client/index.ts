@@ -19,12 +19,19 @@ import { ToolCallCard, type ToolCallCardProps, type ToolCallLabels, type ToolCal
 import { SidebarRow, type SidebarRowProps } from './registry/SidebarRow/SidebarRow.tsx'
 import { Stack } from './registry/Stack.tsx'
 import { Kbd, type KbdProps } from './registry/Kbd/Kbd.tsx'
+import { Badge, type BadgeProps, type BadgeVariant } from './registry/Badge/Badge.tsx'
+import { Skeleton, type SkeletonProps } from './registry/Skeleton/Skeleton.tsx'
+import { Spinner, type SpinnerProps } from './registry/Spinner/Spinner.tsx'
+import { Alert, type AlertProps, type AlertVariant } from './registry/Alert/Alert.tsx'
+import { Separator, type SeparatorProps } from './registry/Separator/Separator.tsx'
+import { Progress, type ProgressProps } from './registry/Progress/Progress.tsx'
+import { Avatar, type AvatarProps, type AvatarSize } from './registry/Avatar/Avatar.tsx'
 import { Field, Segmented, SelectField, SettingsRow } from './contract-adapters.tsx'
 import { roles } from './roles.ts'
 import { footerAction, headerAction, settingsSection, sidebarTab } from './slot-helpers.ts'
 
-export { Kbd, ToolCallCard, SidebarRow, ValueField, SecretField, AppearanceCubes, SettingsRow, SelectPill, Tabs, Card, EmptyState, SwitchField, Dialog, Stack, Field, Segmented, SelectField, roles, footerAction, headerAction, settingsSection, sidebarTab }
-export type { KbdProps, ToolCallCardProps, ToolCallLabels, ToolCallState, SidebarRowProps, FieldProps, CubeOption, SettingsRowProps, SelectOption, TabItem }
+export { Kbd, Badge, Skeleton, Spinner, Alert, Separator, Progress, Avatar, ToolCallCard, SidebarRow, ValueField, SecretField, AppearanceCubes, SettingsRow, SelectPill, Tabs, Card, EmptyState, SwitchField, Dialog, Stack, Field, Segmented, SelectField, roles, footerAction, headerAction, settingsSection, sidebarTab }
+export type { KbdProps, BadgeProps, BadgeVariant, SkeletonProps, SpinnerProps, AlertProps, AlertVariant, SeparatorProps, ProgressProps, AvatarProps, AvatarSize, ToolCallCardProps, ToolCallLabels, ToolCallState, SidebarRowProps, FieldProps, CubeOption, SettingsRowProps, SelectOption, TabItem }
 // Straight re-exports of the app's primitives, so a consumer needs one import.
 export {
   Button, Tag, Pill, Toast, Modal, Tooltip,

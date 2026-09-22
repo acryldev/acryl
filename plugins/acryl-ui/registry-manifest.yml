@@ -51,3 +51,31 @@ components:
     origin: ported
     from: shadcn/ui registry item `kbd` (style new-york-v4), https://ui.shadcn.com/docs/components/kbd, MIT licence, fetched 2026-09-22
     changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; cn() replaced by clsx; KbdGroup not ported (use this library's Stack instead)
+  - name: Badge
+    origin: ported
+    from: shadcn/ui registry item `badge` (style new-york-v4), https://ui.shadcn.com/docs/components/badge, MIT licence, fetched 2026-09-22
+    changed: cva variants replaced by a CSS Module; asChild/Slot (Radix) dropped; variant names changed to this library's own roles
+  - name: Skeleton
+    origin: ported
+    from: shadcn/ui registry item `skeleton` (style new-york-v4), https://ui.shadcn.com/docs/components/skeleton, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module keyframe
+  - name: Spinner
+    origin: ported
+    from: shadcn/ui registry item `spinner` (style new-york-v4), https://ui.shadcn.com/docs/components/spinner, MIT licence, fetched 2026-09-22
+    changed: lucide-react's Loader2Icon replaced by a plain inline SVG arc (no new dependency)
+  - name: Alert
+    origin: ported
+    from: shadcn/ui registry item `alert` (style new-york-v4), https://ui.shadcn.com/docs/components/alert, MIT licence, fetched 2026-09-22
+    changed: cva variants and the has-[>svg] grid trick replaced by a CSS Module flex layout
+  - name: Separator
+    origin: ported
+    from: shadcn/ui registry item `separator` (style new-york-v4), https://ui.shadcn.com/docs/components/separator, MIT licence, fetched 2026-09-22
+    changed: Radix Separator.Root dropped (a decorative separator needs no interactive behavior); plain div with the same ARIA role
+  - name: Progress
+    origin: ported
+    from: shadcn/ui registry item `progress` (style new-york-v4), https://ui.shadcn.com/docs/components/progress, MIT licence, fetched 2026-09-22
+    changed: Radix Progress.Root/Indicator dropped; the same ARIA attributes set directly
+  - name: Avatar
+    origin: ported
+    from: shadcn/ui registry item `avatar` (style new-york-v4), https://ui.shadcn.com/docs/components/avatar, MIT licence, fetched 2026-09-22
+    changed: Radix Avatar.Root/Image/Fallback dropped, reproduced with a plain onError state; AvatarBadge/AvatarGroup/AvatarGroupCount not ported (composition-only, no behavior of their own)

@@ -1,0 +1,9 @@
+.spinner {
+  width: 16px;
+  height: 16px;
+  color: var(--dsw-alias-label-tertiary);
+  animation: acryl-ui-spinner-spin 0.75s linear infinite;
+}
+@keyframes acryl-ui-spinner-spin {
+  to { transform: rotate(360deg); }
+}

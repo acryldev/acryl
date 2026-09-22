@@ -14,6 +14,7 @@ const ui = require('@acryl/ui')
 const h = React.createElement
 const { Stack, Card, Field, SwitchField, SettingsRow, SelectField, Segmented, Tabs, Dialog, EmptyState, Button, Tag, Pill } = ui
 const { StateDot, DisclosureRow, Switch, Input, JsonTree, TerminalBlock, ReadBlock, DiffBlock, RiskConfirmation, ConnectionIndicator, WebBlock, CodeBlock, JsonBlock, MarkdownText, ReferenceIcon, LinkIcon, DocumentFileIcon } = ui
+const { Badge, Skeleton, Spinner, Alert, Separator, Progress, Avatar } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -71,6 +72,30 @@ function Blocks2() {
       h(JsonBlock, { label: 'Payload', payload: { ok: true, count: 3 }, truncatedLabel: n => 'Truncated (' + n + ' chars)' })),
     h(Section, { name: 'MarkdownText', note: 'Full markdown rendering: headings, lists, code.' },
       h(MarkdownText, { text: '## Heading\n\nSome **bold** text and a list:\n\n- one\n- two\n\n```ts\nconst x = 1\n```', labels: markdownLabels })))
+}
+
+// shadcn/ui conversions (spec 038-ui-component-library T040): ported source, no Radix or lucide-react.
+function ShadcnBatch() {
+  const [progress, setProgress] = React.useState(40)
+  return h(Stack, { gap: 'md' },
+    h(Section, { name: 'Badge', note: 'Five variants.' },
+      h(Stack, { direction: 'row', gap: 'sm' },
+        h(Badge, null, 'Default'), h(Badge, { variant: 'primary' }, 'Primary'), h(Badge, { variant: 'success' }, 'Success'), h(Badge, { variant: 'warning' }, 'Warning'), h(Badge, { variant: 'error' }, 'Error'))),
+    h(Section, { name: 'Avatar', note: 'Falls back to initials when there is no image or it fails to load.' },
+      h(Stack, { direction: 'row', gap: 'sm', align: 'center' },
+        h(Avatar, { fallback: 'AM', size: 'sm' }), h(Avatar, { fallback: 'AM' }), h(Avatar, { fallback: 'AM', size: 'lg' }), h(Avatar, { src: 'https://broken.invalid/x.png', fallback: 'Broken image ->' }))),
+    h(Section, { name: 'Alert', note: 'Default and error variants.' },
+      h(Alert, { title: 'Heads up' }, 'This is a default alert.'),
+      h(Alert, { variant: 'error', title: 'Something failed' }, 'This is an error alert.')),
+    h(Section, { name: 'Progress', note: 'Click to advance.' },
+      h(Progress, { value: progress }),
+      h(Button, { variant: 'ghost', size: 'sm', onClick: () => setProgress(p => (p + 20) % 120) }, 'Advance')),
+    h(Section, { name: 'Skeleton and Spinner', note: 'A loading placeholder and a rotating indicator.' },
+      h(Stack, { direction: 'row', gap: 'md', align: 'center' },
+        h(Skeleton, { style: { width: 120, height: 16 } }), h(Spinner, null))),
+    h(Section, { name: 'Separator', note: 'Horizontal between two lines; vertical between two words.' },
+      h('div', null, 'Above'), h(Separator, null), h('div', null, 'Below'),
+      h(Stack, { direction: 'row', gap: 'sm', align: 'center' }, h('span', null, 'Left'), h('div', { style: { height: 16 } }, h(Separator, { orientation: 'vertical', decorative: true })), h('span', null, 'Right'))))
 }
 
 // The 15 primitives re-exported straight from the app this pass (spec 038-ui-component-library T035). Each one below is real, live output, not a mock; the tool
@@ -146,8 +171,8 @@ function Gallery() {
   return h(Stack, { gap: 'md' },
     h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
     h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
-    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'colors', label: 'Colors' }] },
-      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : h(Colors)))
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : h(Colors)))
 }
 
 exports.inject = ['slots']

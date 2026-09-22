@@ -674,6 +674,133 @@
         "web"
       ],
       "reexport": true
+    },
+    "Badge": {
+      "summary": "A small status/count pill (ported from shadcn/ui's Badge).",
+      "props": {
+        "children": {
+          "type": "ReactNode"
+        },
+        "variant": {
+          "type": "'default' | 'primary' | 'success' | 'warning' | 'error'"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Skeleton": {
+      "summary": "A pulsing placeholder shape for loading content (ported from shadcn/ui's Skeleton).",
+      "props": {
+        "className": {
+          "type": "string"
+        },
+        "style": {
+          "type": "{ width?, height? }"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Spinner": {
+      "summary": "A rotating loading indicator (ported from shadcn/ui's Spinner; no lucide-react dependency).",
+      "props": {
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Alert": {
+      "summary": "A titled message box with an optional icon (ported from shadcn/ui's Alert).",
+      "props": {
+        "icon": {
+          "type": "ReactNode"
+        },
+        "title": {
+          "type": "ReactNode"
+        },
+        "children": {
+          "type": "ReactNode"
+        },
+        "variant": {
+          "type": "'default' | 'error'"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "role=alert"
+      ]
+    },
+    "Separator": {
+      "summary": "A thin dividing line, horizontal or vertical (ported from shadcn/ui's Separator; no Radix dependency).",
+      "props": {
+        "orientation": {
+          "type": "'horizontal' | 'vertical'"
+        },
+        "decorative": {
+          "type": "boolean"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Progress": {
+      "summary": "A determinate progress bar, 0 to 100 (ported from shadcn/ui's Progress; no Radix dependency).",
+      "props": {
+        "value": {
+          "type": "number",
+          "required": true
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "role=progressbar with aria-valuenow/min/max"
+      ]
+    },
+    "Avatar": {
+      "summary": "An image avatar with a fallback shown when there is no image or it fails to load (ported from shadcn/ui's Avatar; no Radix dependency).",
+      "props": {
+        "src": {
+          "type": "string"
+        },
+        "alt": {
+          "type": "string"
+        },
+        "fallback": {
+          "type": "ReactNode",
+          "required": true
+        },
+        "size": {
+          "type": "'sm' | 'default' | 'lg'"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
     }
   },
   "helpers": {
