@@ -79,4 +79,27 @@ describe('parseAcrylArgs', () => {
     expect(() => parseAcrylArgs(['plugin', 'enable', 'a', 'b'])).toThrow('unexpected argument for plugin enable')
     expect(() => parseAcrylArgs(['plugin', 'list', '--resume', 'abc'])).toThrow('--resume applies to the tui command')
   })
+
+  it('lists a registry when the ui command has no action', () => {
+    expect(parseAcrylArgs(['ui'])).toEqual({ kind: 'ui', action: 'list', json: false, version: false, help: false })
+  })
+
+  it('parses ui add and diff with their id, target directory, --surface and --registry', () => {
+    expect(parseAcrylArgs(['ui', 'add', 'acryl.ui.card', '/tmp/plugin', '--surface', 'tui', '--registry', '/tmp/reg'])).toEqual({
+      kind: 'ui', action: 'add', id: 'acryl.ui.card', targetDir: '/tmp/plugin', surface: 'tui', registryDir: '/tmp/reg',
+      json: false, version: false, help: false,
+    })
+    expect(parseAcrylArgs(['ui', 'diff', 'acryl.ui.card', '/tmp/plugin'])).toEqual({
+      kind: 'ui', action: 'diff', id: 'acryl.ui.card', targetDir: '/tmp/plugin', json: false, version: false, help: false,
+    })
+  })
+
+  it('rejects ui arguments that do not match the action', () => {
+    expect(() => parseAcrylArgs(['ui', 'list', 'extra'])).toThrow('unexpected argument for ui list')
+    expect(() => parseAcrylArgs(['ui', 'add'])).toThrow('requires an item id')
+    expect(() => parseAcrylArgs(['ui', 'add', 'acryl.ui.card'])).toThrow('requires a target directory')
+    expect(() => parseAcrylArgs(['ui', 'install'])).toThrow('unknown ui action')
+    expect(() => parseAcrylArgs(['ui', 'add', 'a', 'b', 'c'])).toThrow('unexpected argument for ui add')
+    expect(() => parseAcrylArgs(['ui', 'list', '--resume', 'abc'])).toThrow('--resume applies to the tui command')
+  })
 })

@@ -29,7 +29,57 @@ export interface AcrylPluginInvocation extends AcrylInvocationFlags {
   readonly entryId?: string
 }
 
-export type AcrylInvocation = AcrylSurfaceInvocation | AcrylPluginInvocation
+/** What `acryl ui` can do (spec 038-ui-component-library, T038): copy or inspect a registry item. */
+export type AcrylUiAction = 'list' | 'add' | 'diff'
+
+export interface AcrylUiInvocation extends AcrylInvocationFlags {
+  readonly kind: 'ui'
+  readonly action: AcrylUiAction
+  readonly id?: string
+  readonly targetDir?: string
+  readonly surface?: string
+  /** Registry directory (a local clone of `acryl-ui-registry`, or a path shaped like it); defaults to `ACRYL_UI_REGISTRY` or the cwd. */
+  readonly registryDir?: string
+}
+
+export type AcrylInvocation = AcrylSurfaceInvocation | AcrylPluginInvocation | AcrylUiInvocation
+
+const UI_ACTIONS = new Set<AcrylUiAction>(['list', 'add', 'diff'])
+/** Actions that name a registry item. */
+const UI_TARGET_ACTIONS = new Set<AcrylUiAction>(['add', 'diff'])
+
+function uiAction(value: string): AcrylUiAction | undefined {
+  return UI_ACTIONS.has(value as AcrylUiAction) ? value as AcrylUiAction : undefined
+}
+
+/** `acryl ui …`: the command word plus its own arguments (id, target directory) and flags (`--surface`, `--registry`). */
+function parseUiInvocation(
+  rest: readonly string[],
+  flags: AcrylInvocationFlags,
+  surface: string | undefined,
+  registryDir: string | undefined,
+): AcrylUiInvocation {
+  const [rawAction, ...positional] = rest
+  const action = rawAction === undefined ? 'list' : uiAction(rawAction)
+  if (action === undefined) throw new Error(`unknown ui action: ${rawAction}`)
+  if (action === 'list') {
+    if (positional.length > 0) throw new Error(`unexpected argument for ui list: ${positional[0]}`)
+    return { ...flags, kind: 'ui', action, ...(registryDir === undefined ? {} : { registryDir }) }
+  }
+  const [id, targetDir, ...extra] = positional
+  if (extra.length > 0) throw new Error(`unexpected argument for ui ${action}: ${extra[0]}`)
+  if (id === undefined) throw new Error(`ui ${action} requires an item id`)
+  if (UI_TARGET_ACTIONS.has(action) && targetDir === undefined) throw new Error(`ui ${action} requires a target directory`)
+  return {
+    ...flags,
+    kind: 'ui',
+    action,
+    id,
+    ...(targetDir === undefined ? {} : { targetDir }),
+    ...(surface === undefined ? {} : { surface }),
+    ...(registryDir === undefined ? {} : { registryDir }),
+  }
+}
 
 const HOST_COMMANDS = new Set<AcrylHostCommand>(['tui', 'gui', 'web'])
 
@@ -88,6 +138,8 @@ function parsePluginInvocation(
 export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
   let profile: string | undefined
   let resumeSessionId: string | undefined
+  let uiSurface: string | undefined
+  let uiRegistryDir: string | undefined
   let json = false
   let version = false
   let help = false
@@ -130,6 +182,22 @@ export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
       json = true
       continue
     }
+    if (argument === '--surface') {
+      if (uiSurface !== undefined) throw new Error('--surface may be provided only once')
+      const value = args[index + 1]
+      if (value === undefined || value.startsWith('--') || value.trim() === '') throw new Error('--surface requires a value')
+      uiSurface = value
+      index += 1
+      continue
+    }
+    if (argument === '--registry') {
+      if (uiRegistryDir !== undefined) throw new Error('--registry may be provided only once')
+      const value = args[index + 1]
+      if (value === undefined || value.startsWith('--') || value.trim() === '') throw new Error('--registry requires a value')
+      uiRegistryDir = value
+      index += 1
+      continue
+    }
     if (argument.startsWith('-')) throw new Error(`unknown option: ${argument}`)
     positional.push(argument)
   }
@@ -146,6 +214,10 @@ export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
       ...flags,
       ...(resumeSessionId === undefined ? {} : { resumeSessionId }),
     })
+  }
+  if (command === 'ui') {
+    if (resumeSessionId !== undefined) throw new Error('--resume applies to the tui command, not to ui commands')
+    return parseUiInvocation(rest, flags, uiSurface, uiRegistryDir)
   }
   const surface = command === undefined ? 'tui' : hostCommand(command)
   if (surface === undefined) throw new Error(`unknown command: ${command}`)

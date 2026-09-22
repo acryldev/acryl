@@ -6,8 +6,10 @@ import {
 } from '../host/plugin-command.ts'
 import { runAcrylTui } from '../tui-app/session.ts'
 import { ACRYL_VERSION } from '../version.ts'
-import { parseAcrylArgs, type AcrylPluginInvocation } from './grammar.ts'
+import { runUiCommand } from '../host/ui-command.ts'
+import { parseAcrylArgs, type AcrylPluginInvocation, type AcrylUiInvocation } from './grammar.ts'
 import { renderPluginCommand } from './plugin-render.ts'
+import { renderUiCommand } from './ui-render.ts'
 
 interface RunningDirectHost {
   readonly runtimeState: 'ready' | 'unavailable'
@@ -88,6 +90,30 @@ async function runPluginInvocation(
 }
 
 /**
+ * Resolve a registry directory when `--registry` is not given: the
+ * `ACRYL_UI_REGISTRY` environment variable, then the current directory (so
+ * running the command from inside a cloned `acryl-ui-registry` just works).
+ * Never guesses a network location - a registry is a directory on disk,
+ * local clone or otherwise; fetching one is the user's own `git clone`.
+ */
+function defaultUiRegistryDir(): string {
+  return process.env['ACRYL_UI_REGISTRY'] ?? process.cwd()
+}
+
+function runUiInvocation(invocation: AcrylUiInvocation, dependencies: AcrylCliDependencies): void {
+  const result = runUiCommand({
+    action: invocation.action,
+    registryDir: invocation.registryDir ?? defaultUiRegistryDir(),
+    ...(invocation.id === undefined ? {} : { id: invocation.id }),
+    ...(invocation.targetDir === undefined ? {} : { targetDir: invocation.targetDir }),
+    ...(invocation.surface === undefined ? {} : { surface: invocation.surface }),
+  })
+  const rendered = renderUiCommand(result, invocation.json)
+  for (const line of rendered.lines) dependencies.write(line)
+  if (rendered.exitCode !== 0) dependencies.exit(rendered.exitCode)
+}
+
+/**
  * Run the ACRYL terminal host. `--json` is a short-lived, scriptable
  * readiness probe; interactive mode mounts the pi-tui session via the
  * runtime bridge until a normal exit, then prints a resumable session id.
@@ -113,6 +139,9 @@ export async function runAcryl(
         '  plugin enable <id>               Enable a plugin for this profile',
         '  plugin disable <id>              Disable a plugin for this profile',
         '  plugin doctor                    Check a profile\'s plugin layer',
+        '  ui list                          List a UI component registry\'s items',
+        '  ui add <id> <dir>                Copy a component\'s source into <dir>/ui/',
+        '  ui diff <id> <dir>               Compare an added component against the registry',
         '',
         'Options:',
         '  -h, --help          Show this help',
@@ -120,6 +149,8 @@ export async function runAcryl(
         '  --json              Emit machine-readable output',
         '  --profile <name>    Use a named ACRYL profile',
         '  --resume <id>       Resume a session',
+        '  --registry <dir>    Registry directory for ui commands (default: $ACRYL_UI_REGISTRY or cwd)',
+        '  --surface <name>    web or tui, for `ui add` (default: the item\'s first surface)',
         '',
         'The browser (`acryl web`) and Electron (`acryl gui`) surfaces are ',
         'separate distributions. Install them individually.',
@@ -131,6 +162,11 @@ export async function runAcryl(
 
   if (invocation.version) {
     dependencies.write(ACRYL_VERSION)
+    return
+  }
+
+  if (invocation.kind === 'ui') {
+    runUiInvocation(invocation, dependencies)
     return
   }
 
