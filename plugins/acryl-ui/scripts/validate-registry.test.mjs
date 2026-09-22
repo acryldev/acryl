@@ -98,6 +98,17 @@ test('an undocumented static token is rejected', () => {
   }
 })
 
+test('a cross-item relative import is rejected (real bug: SwitchField once imported ../fields/fields.module.css)', () => {
+  const { root } = scratchRegistry(GOOD_YAML, GOOD_CSS, "import css from '../other-item/other.module.css'\nexport const X = () => null\n")
+  try {
+    const result = runOn(root)
+    assert.equal(result.ok, false)
+    assert.match(result.out, /cross-item import '\.\.\/other-item\/other\.module\.css'/u)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
 test('a disallowed import is rejected', () => {
   const { root } = scratchRegistry(GOOD_YAML, GOOD_CSS, "import axios from 'axios'\nexport const X = () => null\n")
   try {

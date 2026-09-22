@@ -45,7 +45,11 @@ function checkItem(id) {
       const source = readFileSync(file, 'utf8')
       for (const match of source.matchAll(/^import\s+(?:type\s+)?(?:[\s\S]*?)\s+from\s+['"]([^'"]+)['"]/gmu)) {
         const specifier = match[1]
-        if (specifier?.startsWith('.') === true) continue   // local module (its own .module.css, etc.)
+        // `../` escapes the item's own directory - a cross-item dependency, which breaks the
+        // moment this item is consumed on its own (acryl ui add copies one item's directory,
+        // never a sibling's). `./` (its own .module.css, etc.) is fine.
+        if (specifier?.startsWith('../') === true) { problems.push(`cross-item import '${specifier}' in ${file.split('/').pop()} (an item must be self-contained)`); continue }
+        if (specifier?.startsWith('.') === true) continue
         if (specifier !== undefined && !ALLOWED_IMPORTS.has(specifier)) problems.push(`disallowed import '${specifier}' in ${file.split('/').pop()}`)
       }
     }

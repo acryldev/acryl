@@ -1,0 +1,26 @@
+/* The .field/.head/.label/.hint rules SwitchField needs, copied from ../fields/fields.module.css so this item is self-contained (spec 038-ui-component-library: an item consumed on its own, e.g. via `acryl ui add`, must not depend on another item's files). */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 0;
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.label {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-primary);
+}
+.hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-tertiary);
+}

@@ -1,8 +1,8 @@
 /**
- * A labelled switch with a hint: the app's own Switch primitive plus the hint style of DSH's plugin fields (fields.module.css .hint). The DSH primitive Switch carries its label only as an accessible name, so the visible label uses the fields' own head/label styles. Composition only, no new visual. See manifest.yml.
+ * A labelled switch with a hint: the app's own Switch primitive plus the hint style of DSH's plugin fields (fields.module.css .hint). The DSH primitive Switch carries its label only as an accessible name, so the visible label uses the fields' own head/label styles. Composition only, no new visual. Its stylesheet is a self-contained copy of the four fields.module.css rules it uses (field, head, label, hint), so this item has no cross-item dependency when consumed on its own. See manifest.yml.
  */
 import { Switch } from '@deepseek-ai/dsh-client-ui-primitives'
-import css from '../fields/fields.module.css'
+import css from './SwitchField.module.css'
 
 export interface SwitchFieldProps {
   label: string
