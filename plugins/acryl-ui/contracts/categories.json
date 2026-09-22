@@ -162,7 +162,9 @@
     },
     {
       "name": "Context Menu",
-      "componentIds": []
+      "componentIds": [
+        "ContextMenu"
+      ]
     },
     {
       "name": "Contribution Graph",

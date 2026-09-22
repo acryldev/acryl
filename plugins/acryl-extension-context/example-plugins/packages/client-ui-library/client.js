@@ -29,6 +29,8 @@ const { Drawer, DrawerTrigger, DrawerClose, DrawerContent, DrawerHeader, DrawerF
 const { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandShortcut, CommandSeparator } = ui
 // T045 batch 5b: Combobox, single-select core, with InputGroup's chrome restated for its field.
 const { Combobox, ComboboxInput, ComboboxTrigger, ComboboxClear, ComboboxContent, ComboboxList, ComboboxGroup, ComboboxLabel, ComboboxEmpty, ComboboxSeparator, ComboboxItem } = ui
+// T045 batch 6a: ContextMenu, the anchored-listbox shape anchored at the pointer.
+const { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuCheckboxItem, ContextMenuRadioGroup, ContextMenuRadioItem, ContextMenuLabel, ContextMenuSeparator, ContextMenuShortcut } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -471,14 +473,39 @@ function T045Batch5() {
   return h(Stack, { gap: 'md' }, commandSection, comboboxSection)
 }
 
+// T045 batch 6a: ContextMenu. A real right-click opens it at the pointer, with checkbox and radio rows.
+function T045Batch6() {
+  const [log, setLog] = React.useState('nothing yet')
+  const [wrap, setWrap] = React.useState(true)
+  const [sort, setSort] = React.useState('name')
+  const readout = text => h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, text)
+  const row = (label, shortcut) => h(ContextMenuItem, { key: label, onSelect: () => setLog(label) }, label, shortcut === undefined ? null : h(ContextMenuShortcut, null, shortcut))
+  const area = h('div', { style: { padding: 24, border: '1px dashed var(--dsw-alias-border-l4)', borderRadius: 6, color: ui.roles.textMuted, fontSize: 13 } }, 'Right-click anywhere in this box')
+  const menuContent = h(ContextMenuContent, null,
+    h(ContextMenuLabel, { inset: true }, 'Clipboard'),
+    row('Copy', 'C'),
+    row('Paste', 'V'),
+    h(ContextMenuSeparator, null),
+    h(ContextMenuCheckboxItem, { checked: wrap, onCheckedChange: setWrap }, 'Wrap lines'),
+    h(ContextMenuRadioGroup, { value: sort, onValueChange: setSort },
+      h(ContextMenuRadioItem, { value: 'name' }, 'Sort by name'),
+      h(ContextMenuRadioItem, { value: 'date' }, 'Sort by date')),
+    h(ContextMenuSeparator, null),
+    h(ContextMenuItem, { variant: 'destructive', onSelect: () => setLog('Delete') }, 'Delete'))
+  const menuSection = h(Section, { name: 'Context menu', note: 'Right-click the box below. The arrow keys and Enter work too; Escape or a press outside closes it. The checkbox and radio rows hold their own state.' },
+    h(ContextMenu, null, h(ContextMenuTrigger, null, area), menuContent),
+    readout('chosen = ' + log + '   wrap = ' + wrap + '   sort = ' + sort))
+  return h(Stack, { gap: 'md' }, menuSection)
+}
+
 // A Settings page, not a dialog: the gallery is a catalogue for people building UI, so it lives in Settings (nav entry "UI library"), out of the everyday screens.
 function Gallery() {
   const [tab, setTab] = React.useState('components')
   return h(Stack, { gap: 'md' },
     h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
     h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
-    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 't045b3', label: 'T045 ports 3' }, { id: 't045b4', label: 'T045 ports 4' }, { id: 't045b5', label: 'T045 ports 5' }, { id: 'colors', label: 'Colors' }] },
-      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : tab === 't045b3' ? h(T045Batch3) : tab === 't045b4' ? h(T045Batch4) : tab === 't045b5' ? h(T045Batch5) : h(Colors)))
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 't045b3', label: 'T045 ports 3' }, { id: 't045b4', label: 'T045 ports 4' }, { id: 't045b5', label: 'T045 ports 5' }, { id: 't045b6', label: 'T045 ports 6' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : tab === 't045b3' ? h(T045Batch3) : tab === 't045b4' ? h(T045Batch4) : tab === 't045b5' ? h(T045Batch5) : tab === 't045b6' ? h(T045Batch6) : h(Colors)))
 }
 
 exports.inject = ['slots']

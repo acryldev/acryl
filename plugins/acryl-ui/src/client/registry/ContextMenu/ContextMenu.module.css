@@ -1,0 +1,17 @@
+.content { position: fixed; z-index: 50; min-width: 192px; overflow: hidden; border-radius: 6px; border: 1px solid var(--dsw-alias-border-l4); background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-primary); padding: 4px; outline: none; }
+/* A real box, not `display: contents`: the wrapper has to be focusable for focus to return to it on close and for a
+   keyboard user to reach it, and a boxless element cannot take focus at all. */
+.trigger { display: block; }
+.item { position: relative; display: flex; cursor: default; align-items: center; gap: 8px; border-radius: 4px; padding: 6px 8px; font-size: 13px; outline: none; user-select: none; }
+.item[data-highlighted='true'] { background: var(--dsw-alias-interactive-bg-hover); }
+.item[data-disabled='true'] { pointer-events: none; opacity: 0.5; }
+.item[data-inset='true'] { padding-left: 32px; }
+.item[data-variant='destructive'] { color: var(--dsw-alias-state-error-primary); }
+.item[data-variant='destructive'][data-highlighted='true'] { background: color-mix(in oklab, var(--dsw-alias-state-error-primary) 12%, transparent); }
+.item svg { pointer-events: none; flex-shrink: 0; }
+.item svg:not([class*='size-']) { width: 16px; height: 16px; }
+.indicator { pointer-events: none; position: absolute; left: 8px; display: flex; width: 16px; height: 16px; align-items: center; justify-content: center; }
+.label { padding: 6px 8px; font-size: 12px; font-weight: 500; color: var(--dsw-alias-label-tertiary); }
+.label[data-inset='true'] { padding-left: 32px; }
+.separator { margin: 4px -4px; height: 1px; background: var(--dsw-alias-border-l4); }
+.shortcut { margin-left: auto; font-size: 12px; letter-spacing: 0.1em; color: var(--dsw-alias-label-tertiary); }

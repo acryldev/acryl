@@ -32,6 +32,7 @@ import { Sheet, SheetTrigger, SheetClose, SheetContent, SheetHeader, SheetFooter
 import { Drawer, DrawerTrigger, DrawerClose, DrawerContent, DrawerHeader, DrawerFooter, DrawerTitle, DrawerDescription } from '../src/client/registry/Drawer/Drawer.tsx'
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandSeparator } from '../src/client/registry/Command/Command.tsx'
 import { Combobox, ComboboxInput, ComboboxTrigger, ComboboxClear, ComboboxContent, ComboboxList, ComboboxGroup, ComboboxLabel, ComboboxEmpty, ComboboxSeparator, ComboboxItem } from '../src/client/registry/Combobox/Combobox.tsx'
+import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuCheckboxItem, ContextMenuRadioGroup, ContextMenuRadioItem, ContextMenuLabel, ContextMenuSeparator, ContextMenuShortcut, ContextMenuGroup } from '../src/client/registry/ContextMenu/ContextMenu.tsx'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const harness = resolve(root, '../../deepseek-harness/packages/client')
@@ -454,6 +455,55 @@ describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 bat
     expect(html).toContain('data-disabled="true"'); expect(html).toContain('aria-disabled="true"')
     expect(html).toContain('data-slot="combobox-label"'); expect(html).toContain('role="separator"')
     expect(html).toContain('data-slot="combobox-empty"')
+  })
+})
+
+describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 batch 6a: ContextMenu)', () => {
+  const menu = (
+    <ContextMenu open>
+      <ContextMenuTrigger><div>Right-click area</div></ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuLabel inset>Actions</ContextMenuLabel>
+        <ContextMenuGroup>
+          <ContextMenuItem inset onSelect={() => {}}>Copy<ContextMenuShortcut>C</ContextMenuShortcut></ContextMenuItem>
+          <ContextMenuItem variant="destructive" disabled>Delete</ContextMenuItem>
+        </ContextMenuGroup>
+        <ContextMenuSeparator />
+        <ContextMenuCheckboxItem checked onCheckedChange={() => {}}>Wrap</ContextMenuCheckboxItem>
+        <ContextMenuRadioGroup value="b">
+          <ContextMenuRadioItem value="a">A</ContextMenuRadioItem>
+          <ContextMenuRadioItem value="b">B</ContextMenuRadioItem>
+        </ContextMenuRadioGroup>
+      </ContextMenuContent>
+    </ContextMenu>
+  )
+
+  it('the trigger is a focusable region and the panel is a menu with menu-item roles', () => {
+    const html = renderToStaticMarkup(menu)
+    expect(html).toContain('data-slot="context-menu-trigger"'); expect(html).toContain('tabindex="0"')
+    expect(html).toContain('role="menu"'); expect(html).toContain('tabindex="-1"')
+    expect(html).toContain('role="menuitem"'); expect(html).toContain('role="menuitemcheckbox"'); expect(html).toContain('role="menuitemradio"')
+    expect(html).toContain('role="group"'); expect(html).toContain('role="separator"')
+    expect(html).toContain('data-slot="context-menu-shortcut"')
+    expect(html).not.toMatch(/\bmin-w-\[8rem\]\b|\bbg-popover\b|\bflex-1\b/u)
+  })
+
+  it('checkbox and radio rows report their state, and inset/destructive/disabled carry through', () => {
+    const html = renderToStaticMarkup(menu)
+    expect(html).toContain('aria-checked="true"')                      // the checked box and the selected radio
+    expect(html.match(/aria-checked="false"/gu)?.length ?? 0).toBeGreaterThanOrEqual(1)
+    expect(html).toContain('data-disabled="true"'); expect(html).toContain('aria-disabled="true"')
+    expect(html).toContain('data-variant="destructive"'); expect(html).toContain('data-inset="true"')
+    expect(html).toContain('data-slot="context-menu-indicator"')
+    expect(html.match(/data-highlighted="false"/gu)?.length ?? 0).toBeGreaterThanOrEqual(4)
+  })
+
+  it('nothing renders while closed', () => {
+    const closed = renderToStaticMarkup(
+      <ContextMenu><ContextMenuTrigger>area</ContextMenuTrigger><ContextMenuContent><ContextMenuItem>Copy</ContextMenuItem></ContextMenuContent></ContextMenu>,
+    )
+    expect(closed).toContain('data-slot="context-menu-trigger"')
+    expect(closed).not.toContain('data-slot="context-menu-content"')
   })
 })
 

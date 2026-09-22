@@ -1524,6 +1524,29 @@
       "a11y": [
         "the field is role=combobox with aria-expanded and aria-controls naming the listbox, and aria-activedescendant pointing at the active row while open; rows are role=option with aria-selected and the source's data-highlighted hook for the active one; a filtered-out row is display-none, leaving the accessibility tree with the layout; the panel is not portalled, so an ancestor with overflow hidden or a transform can clip it. Single-select only in this pass - the multi-select chips family is a recorded follow-up"
       ]
+    },
+    "ContextMenu": {
+      "summary": "A menu opened by a right-click, anchored at the pointer rather than at a field, with checkbox and radio rows (ported from shadcn/ui's Context Menu; Radix's primitive is replaced by hand).",
+      "props": {
+        "open": {
+          "type": "boolean"
+        },
+        "defaultOpen": {
+          "type": "boolean"
+        },
+        "onOpenChange": {
+          "type": "(open: boolean) => void"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the trigger is a focusable region that opens the menu on a right-click and is where focus returns on close; the panel is role=menu with arrow keys, Home/End and Enter/Space walking and activating its rows; rows are menuitem, menuitemcheckbox or menuitemradio with aria-checked where it applies, and a disabled row reports aria-disabled. The submenu family is not ported in this pass, and the panel is not portalled"
+      ]
     }
   },
   "helpers": {
