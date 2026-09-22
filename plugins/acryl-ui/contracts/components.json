@@ -633,6 +633,47 @@
       "surfaces": [
         "web"
       ]
+    },
+    "ReferenceIcon": {
+      "summary": "The glyph for one inline reference domain (file, web, terminal, and so on).",
+      "props": {
+        "kind": {
+          "type": "ReferenceIconKind",
+          "required": true
+        },
+        "size": {
+          "type": "number"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "LinkIcon": {
+      "summary": "The glyph for a file-type or web link, chosen from a path's extension.",
+      "props": {
+        "kind": {
+          "type": "LinkIconKind",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "DocumentFileIcon": {
+      "summary": "A generic document/file glyph.",
+      "props": {
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
     }
   },
   "helpers": {
@@ -661,7 +702,8 @@
       "Pill",
       "Toast",
       "Modal",
-      "Tooltip"
+      "Tooltip",
+      "classifyLinkPath"
     ]
   },
   "roles": {

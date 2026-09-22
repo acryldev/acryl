@@ -13,7 +13,7 @@ const React = require('react')
 const ui = require('@acryl/ui')
 const h = React.createElement
 const { Stack, Card, Field, SwitchField, SettingsRow, SelectField, Segmented, Tabs, Dialog, EmptyState, Button, Tag, Pill } = ui
-const { StateDot, DisclosureRow, Switch, Input, JsonTree, TerminalBlock, ReadBlock, DiffBlock, RiskConfirmation, ConnectionIndicator } = ui
+const { StateDot, DisclosureRow, Switch, Input, JsonTree, TerminalBlock, ReadBlock, DiffBlock, RiskConfirmation, ConnectionIndicator, WebBlock, CodeBlock, JsonBlock, MarkdownText, ReferenceIcon, LinkIcon, DocumentFileIcon } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -54,6 +54,23 @@ function Components() {
         h('span', { style: { color: ui.roles.textMuted, fontSize: 12 } }, 'last answer: ' + answer)),
       h(Dialog, { open: modal, title: 'Delete item?', onClose: () => setModal(false), onConfirm: () => setAnswer('confirmed'), confirmLabel: 'Delete' }, 'This cannot be undone.')),
     h(EmptyState, { title: 'Nothing yet', description: 'Saved items appear here' }))
+}
+
+function Blocks2() {
+  const codeLabels = { copyLabel: 'Copy', copiedLabel: 'Copied' }
+  const markdownLabels = { code: codeLabels, footnotes: 'Footnotes' }
+  return h(Stack, { gap: 'md' },
+    h(Section, { name: 'ReferenceIcon, LinkIcon, DocumentFileIcon', note: 'Small glyphs used in mentions and attachments.' },
+      h(Stack, { direction: 'row', gap: 'md', align: 'center' },
+        h(ReferenceIcon, { kind: 'file' }), h(ReferenceIcon, { kind: 'folder' }), h(ReferenceIcon, { kind: 'session' }),
+        h(LinkIcon, { kind: 'code' }), h(DocumentFileIcon, null))),
+    h(Section, { name: 'WebBlock', note: 'A web-search result card with two sources.' },
+      h(WebBlock, { kind: 'search', labels: { noResults: 'No results', sourcesTruncated: 'More sources hidden', http: 'HTTP', contentTruncated: 'Content truncated', markdown: markdownLabels }, answer: 'Cordis is a lifecycle framework.', sources: [{ url: 'https://example.test/a', title: 'Example A', snippet: 'First source.' }, { url: 'https://example.test/b', title: 'Example B' }], truncated: false })),
+    h(Section, { name: 'CodeBlock and JsonBlock', note: 'Used inside MarkdownText for fenced code and JSON.' },
+      h(CodeBlock, { code: 'export const x = 1', lang: 'ts' }),
+      h(JsonBlock, { label: 'Payload', payload: { ok: true, count: 3 }, truncatedLabel: n => 'Truncated (' + n + ' chars)' })),
+    h(Section, { name: 'MarkdownText', note: 'Full markdown rendering: headings, lists, code.' },
+      h(MarkdownText, { text: '## Heading\n\nSome **bold** text and a list:\n\n- one\n- two\n\n```ts\nconst x = 1\n```', labels: markdownLabels })))
 }
 
 // The 15 primitives re-exported straight from the app this pass (spec 038-ui-component-library T035). Each one below is real, live output, not a mock; the tool
@@ -129,8 +146,8 @@ function Gallery() {
   return h(Stack, { gap: 'md' },
     h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
     h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
-    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'colors', label: 'Colors' }] },
-      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : h(Colors)))
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : h(Colors)))
 }
 
 exports.inject = ['slots']
