@@ -9,7 +9,7 @@
  * this TUI renders to native scrollback (no painted panel backgrounds), so
  * DeepSeek's `surface`/`bg-dark`/`border-dim` tokens are deliberately not
  * represented here.
- * The hex values are generated from the UI library's semantic role file (`plugins/acryl-ui-web/contracts/tokens.json`, spec 038-ui-component-library) into
+ * The hex values are generated from the UI library's semantic role file (`plugins/acryl-ui/contracts/tokens.json`, spec 038-ui-component-library) into
  * `palette.generated.ts`; a light-background palette exists for the same nine roles.
  * @module @tomowang/dsh-tui/tui/theme
  */

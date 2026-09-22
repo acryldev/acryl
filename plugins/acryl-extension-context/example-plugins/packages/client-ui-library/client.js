@@ -1,16 +1,16 @@
 // Example: ui-library.gallery  (browser half)
 // Type:     client-slot
 // Surfaces: web desktop
-// Teaches:  build a Settings page (`ui.settingsSection`) from `acryl-ui-web` instead of hand-styling: `require('acryl-ui-web')` gives Card, Field, SwitchField, SettingsRow, SelectField,
+// Teaches:  build a Settings page (`ui.settingsSection`) from `@acryl/ui` instead of hand-styling: `require('@acryl/ui')` gives Card, Field, SwitchField, SettingsRow, SelectField,
 //           Segmented, Tabs, Dialog, EmptyState, Stack, the app's Button/Tag/Pill/Toast/Modal re-exported, the semantic color roles, and slot helpers. List
-//           "acryl-ui-web" in `dsh.client.inject` (package.json). The library already follows light and dark; use `ui.roles.<role>` for any color of your own.
+//           "@acryl/ui" in `dsh.client.inject` (package.json). The library already follows light and dark; use `ui.roles.<role>` for any color of your own.
 // Expect:   a "UI library" entry in the Settings screen's left navigation; its page has tabs: Components, Settings form, Conversation, Colors (DSH token names).
 // Docs:     extending.ui-library
 window.__ModuleLoader__.load({ id: 'acryl-example-ui-library', factory: (require) => {
 var module = { exports: {} }; var exports = module.exports;
 
 const React = require('react')
-const ui = require('acryl-ui-web')
+const ui = require('@acryl/ui')
 const h = React.createElement
 const { Stack, Card, Field, SwitchField, SettingsRow, SelectField, Segmented, Tabs, Dialog, EmptyState, Button, Tag, Pill } = ui
 const { StateDot, DisclosureRow, Switch, Input, JsonTree, TerminalBlock, ReadBlock, DiffBlock, RiskConfirmation, ConnectionIndicator } = ui

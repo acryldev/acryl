@@ -7,7 +7,7 @@ import { createTuiUi, defaultTheme } from '../index.js'
 import * as library from '../index.js'
 import { palettes } from '../palette.js'
 
-const contract = JSON.parse(readFileSync(fileURLToPath(new URL('../../acryl-ui-web/contracts/components.json', import.meta.url)), 'utf8'))
+const contract = JSON.parse(readFileSync(fileURLToPath(new URL('../../acryl-ui/contracts/components.json', import.meta.url)), 'utf8'))
 const RIGHT = '\x1b[C'; const LEFT = '\x1b[D'; const ENTER = '\r'; const ESC = '\x1b'
 const WIDTHS = [12, 24, 40, 80, 200]
 const LONG = 'A label that is far longer than any of the narrow terminals in this test can show'

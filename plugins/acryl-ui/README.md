@@ -1,10 +1,10 @@
-# acryl-ui-web
+# @acryl/ui
 
 ACRYL UI library for the Web and Desktop client (spec 038): themed building blocks over the app's own primitives, and slot helpers.
 
 ```js
-// in a client bundle whose package.json lists "acryl-ui-web" in dsh.client.inject
-const ui = require('acryl-ui-web')
+// in a client bundle whose package.json lists "@acryl/ui" in dsh.client.inject
+const ui = require('@acryl/ui')
 ui.footerAction(ctx, { id: 'my-panel' }, function Panel() {
   const [name, setName] = React.useState('')
   return React.createElement(ui.Card, { title: 'Settings' }, React.createElement(ui.Field, { label: 'Name', value: name, onChange: setName }))

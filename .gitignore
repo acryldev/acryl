@@ -46,3 +46,5 @@ release-artifacts/
 
 #worktrees are used by git to manage multiple working trees attached to the same repository. They are not typically needed in the main repository and can be ignored.
 .worktrees/
+
+plugins/acryl-ui/.scratch-validate-registry-tests/

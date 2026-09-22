@@ -580,6 +580,9 @@ importers:
 
   apps/acryl-desktop:
     dependencies:
+      '@acryl/ui':
+        specifier: workspace:*
+        version: link:../../plugins/acryl-ui
       '@deepseek-ai/cordis':
         specifier: 4.0.2
         version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
@@ -1306,9 +1309,6 @@ importers:
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
-      acryl-ui-web:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-ui-web
       adm-zip:
         specifier: ^0.6.0
         version: 0.6.0
@@ -1430,6 +1430,9 @@ importers:
 
   apps/acryl-web:
     dependencies:
+      '@acryl/ui':
+        specifier: workspace:*
+        version: link:../../plugins/acryl-ui
       '@deepseek-ai/cordis':
         specifier: 4.0.2
         version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
@@ -1940,9 +1943,6 @@ importers:
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
-      acryl-ui-web:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-ui-web
       cordis-plugin-market:
         specifier: workspace:*
         version: link:../../plugins/cordis-plugin-market
@@ -2011,13 +2011,11 @@ importers:
         specifier: 4.0.2
         version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
 
-  plugins/acryl-ui-tui:
-    devDependencies:
-      '@earendil-works/pi-tui':
-        specifier: 0.84.2
-        version: 0.84.2(patch_hash=5dc0250a1f7f94a22edffa555f19c38ab55dd19672e6d7031592e52d82cf7be5)
-
-  plugins/acryl-ui-web:
+  plugins/acryl-ui:
+    dependencies:
+      yaml:
+        specifier: ^2.9.0
+        version: 2.9.0
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.2
@@ -2061,6 +2059,12 @@ importers:
       vitest:
         specifier: 4.1.8
         version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@8.2.1(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+
+  plugins/acryl-ui-tui:
+    devDependencies:
+      '@earendil-works/pi-tui':
+        specifier: 0.84.2
+        version: 0.84.2(patch_hash=5dc0250a1f7f94a22edffa555f19c38ab55dd19672e6d7031592e52d82cf7be5)
 
   plugins/cordis-plugin-market:
     dependencies:
@@ -2334,6 +2338,9 @@ importers:
 
   runtime/acryl-harness-runtime:
     dependencies:
+      '@acryl/ui':
+        specifier: workspace:*
+        version: link:../../plugins/acryl-ui
       '@deepseek-ai/cordis-plugin-group':
         specifier: 1.0.2
         version: 1.0.2(@deepseek-ai/cordis-plugin-loader@1.0.3)(@deepseek-ai/cordis@4.0.2)
@@ -2793,9 +2800,6 @@ importers:
       acryl-ui-tui:
         specifier: workspace:*
         version: link:../../plugins/acryl-ui-tui
-      acryl-ui-web:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-ui-web
       adm-zip:
         specifier: ^0.6.0
         version: 0.6.0

@@ -11,6 +11,7 @@ import { Tabs } from '../src/client/registry/Tabs/Tabs.tsx'
 import { EmptyState } from '../src/client/registry/EmptyState/EmptyState.tsx'
 import { SidebarRow } from '../src/client/registry/SidebarRow/SidebarRow.tsx'
 import { ToolCallCard } from '../src/client/registry/ToolCallCard/ToolCallCard.tsx'
+import { Kbd } from '../src/client/registry/Kbd/Kbd.tsx'
 import { SwitchField } from '../src/client/registry/SwitchField/SwitchField.tsx'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -47,6 +48,12 @@ describe('markup of the extracted components (spec 038-ui-component-library, ext
     expect(card).toMatch(/role="group" aria-labelledby="([^"]+)"/u); expect(card).toContain('Save')
     expect(renderToStaticMarkup(<SwitchField label="Loud" checked hint="hint" onChange={() => {}} />)).toMatch(/>Loud<\/span>[\s\S]*aria-checked="true"/u)
     expect(renderToStaticMarkup(<EmptyState title="Nothing" description="Saved items" />)).toContain('Saved items')
+  })
+
+  it('Kbd renders one key, ported from shadcn/ui onto hashed classes, no Tailwind utility classes', () => {
+    const html = renderToStaticMarkup(<Kbd>{'\u2318K'}</Kbd>)
+    expect(html).toMatch(/<kbd class="[^"]+">.KK?<\/kbd>|<kbd class="[^"]+">/u)
+    expect(html).not.toMatch(/\bbg-muted\b|\btext-muted-foreground\b/u)
   })
 })
 

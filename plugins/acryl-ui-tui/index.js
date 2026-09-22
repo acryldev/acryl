@@ -1,4 +1,4 @@
-// acryl-ui-tui: terminal components with the same names and contracts as acryl-ui-web (plugins/acryl-ui-web/contracts/components.json, spec 038-ui-component-library).
+// acryl-ui-tui: terminal components with the same names and contracts as @acryl/ui (plugins/acryl-ui/contracts/components.json, spec 038-ui-component-library).
 // Every component is a pi-tui Component: `render(width) -> string[]` (no line is ever wider than `width`: the conformance test checks 12, 24, 40, 80 and 200 columns),
 // optional `handleInput(data)` for keys, and `invalidate()`. Colors come from a theme object with `color(role) -> (text) => text`; pass the CLI's `tuiTheme` service
 // (`ctx.get('tuiTheme')`) so colors follow the terminal's light/dark scheme, or nothing for the built-in dark palette.

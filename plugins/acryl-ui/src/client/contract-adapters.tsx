@@ -1,5 +1,5 @@
 /**
- * The contract names of the cross-surface UI contract (plugins/acryl-ui-web/contracts/components.json) as thin adapters over the extracted DSH components: same behavior and
+ * The contract names of the cross-surface UI contract (plugins/acryl-ui/contracts/components.json) as thin adapters over the extracted DSH components: same behavior and
  * markup, the contract's simpler props. Kept separate from registry/ so the extracted files stay as close to DSH's originals as possible.
  */
 import { useId } from 'react'

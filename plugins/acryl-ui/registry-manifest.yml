@@ -47,3 +47,7 @@ components:
     origin: extracted
     from: packages/client/ui-sidebar/src/client/SidebarRoot.tsx and .module.css (the New Session bar)
     changed: the rail form is a class on the button itself instead of an ancestor's `.collapsed`
+  - name: Kbd
+    origin: ported
+    from: shadcn/ui registry item `kbd` (style new-york-v4), https://ui.shadcn.com/docs/components/kbd, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; cn() replaced by clsx; KbdGroup not ported (use this library's Stack instead)

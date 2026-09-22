@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "library": "acryl-ui-web",
+  "library": "@acryl/ui",
   "surfaces": [
     "web",
     "desktop",
@@ -619,6 +619,20 @@
         "web"
       ],
       "reexport": true
+    },
+    "Kbd": {
+      "summary": "One keyboard key or shortcut segment (ported from shadcn/ui's Kbd). Group several with this library's Stack.",
+      "props": {
+        "children": {
+          "type": "ReactNode"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
     }
   },
   "helpers": {

@@ -1,5 +1,5 @@
 /**
- * ACRYL UI library for the Web and Desktop client (spec 038-ui-component-library). A LIBRARY: it fills no slot itself; other client bundles `require('acryl-ui-web')` after
+ * ACRYL UI library for the Web and Desktop client (spec 038-ui-component-library). A LIBRARY: it fills no slot itself; other client bundles `require('@acryl/ui')` after
  * listing it in `dsh.client.inject`. The parts come from DSH's own source (see registry/manifest.yml for each one's origin) and read the app's `--dsw-alias-*` tokens; the two
  * colors DSH has no token for (accent, reasoning) are registered through the theme service with a light and a dark value, never through a stylesheet.
  * The client loader treats every module as a plugin, so a library exports an `apply` too.
@@ -18,12 +18,13 @@ import { Dialog } from './registry/Dialog/Dialog.tsx'
 import { ToolCallCard, type ToolCallCardProps, type ToolCallLabels, type ToolCallState } from './registry/ToolCallCard/ToolCallCard.tsx'
 import { SidebarRow, type SidebarRowProps } from './registry/SidebarRow/SidebarRow.tsx'
 import { Stack } from './registry/Stack.tsx'
+import { Kbd, type KbdProps } from './registry/Kbd/Kbd.tsx'
 import { Field, Segmented, SelectField, SettingsRow } from './contract-adapters.tsx'
 import { roles } from './roles.ts'
 import { footerAction, headerAction, settingsSection, sidebarTab } from './slot-helpers.ts'
 
-export { ToolCallCard, SidebarRow, ValueField, SecretField, AppearanceCubes, SettingsRow, SelectPill, Tabs, Card, EmptyState, SwitchField, Dialog, Stack, Field, Segmented, SelectField, roles, footerAction, headerAction, settingsSection, sidebarTab }
-export type { ToolCallCardProps, ToolCallLabels, ToolCallState, SidebarRowProps, FieldProps, CubeOption, SettingsRowProps, SelectOption, TabItem }
+export { Kbd, ToolCallCard, SidebarRow, ValueField, SecretField, AppearanceCubes, SettingsRow, SelectPill, Tabs, Card, EmptyState, SwitchField, Dialog, Stack, Field, Segmented, SelectField, roles, footerAction, headerAction, settingsSection, sidebarTab }
+export type { KbdProps, ToolCallCardProps, ToolCallLabels, ToolCallState, SidebarRowProps, FieldProps, CubeOption, SettingsRowProps, SelectOption, TabItem }
 // Straight re-exports of the app's primitives, so a consumer needs one import.
 export {
   Button, Tag, Pill, Toast, Modal, Tooltip,
@@ -53,5 +54,5 @@ export const inject = ['theme']
 export function apply(ctx: Context): void {
   const theme = (ctx as Context & { theme?: { overrideTokens(source: string, tokens: typeof EXTRA_TOKENS): () => void } }).theme
   if (theme === undefined) return
-  ctx.effect(() => theme.overrideTokens('acryl-ui-web', EXTRA_TOKENS), 'acryl-ui-web: extra theme tokens')
+  ctx.effect(() => theme.overrideTokens('@acryl/ui', EXTRA_TOKENS), '@acryl/ui: extra theme tokens')
 }

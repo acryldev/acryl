@@ -35,7 +35,7 @@ function loadBuilt(): LoadedModule {
 describe.skipIf(!existsSync(bundlePath))('the built lib/client.js (run `pnpm run build` first)', () => {
   it('registers under the package name and requires only react and the app primitives from the loader', () => {
     const { id } = loadBuilt()
-    expect(id).toBe('acryl-ui-web')
+    expect(id).toBe('@acryl/ui')
     const source = readFileSync(bundlePath, 'utf8')
     expect([...source.matchAll(/require\("([^"]+)"\)/gu)].map(m => m[1]).sort()).toEqual(['@deepseek-ai/dsh-client-ui-primitives', 'react', 'react/jsx-runtime'])
   })
@@ -54,7 +54,7 @@ describe.skipIf(!existsSync(bundlePath))('the built lib/client.js (run `pnpm run
     const { styleTags } = loadBuilt()
     expect(styleTags.length).toBeGreaterThanOrEqual(8)
     for (const tag of styleTags) {
-      expect(tag.plugin).toBe('acryl-ui-web'); expect(tag.pluginCss).toMatch(/^acryl-ui-web\/[A-Za-z]+\.module\.css$/u)
+      expect(tag.plugin).toBe('@acryl/ui'); expect(tag.pluginCss).toMatch(/^@acryl\/ui\/[A-Za-z]+\.module\.css$/u)
       expect(tag.text).not.toMatch(/(^|\})\s*(body|html|:root)\s*\{/u)   // no global selectors
       expect(tag.text).toMatch(/\.[A-Za-z0-9_-]{5,}_[a-zA-Z]+/u)   // [hash]_[local]
     }
@@ -67,7 +67,7 @@ describe.skipIf(!existsSync(bundlePath))('the built lib/client.js (run `pnpm run
     let disposed = 0
     const ctx = { theme: { overrideTokens: (source: string, tokens: Record<string, { light: string, dark: string }>) => { registered.push({ source, tokens }); return () => { disposed += 1 } } }, effect: (fn: () => () => void) => fn() }
     ;(exports.apply as (c: unknown) => void)(ctx)
-    expect(registered).toHaveLength(1); expect(registered[0]?.source).toBe('acryl-ui-web')
+    expect(registered).toHaveLength(1); expect(registered[0]?.source).toBe('@acryl/ui')
     expect(Object.keys(registered[0]?.tokens ?? {}).sort()).toEqual(['--acryl-accent', '--acryl-reasoning'])
     for (const pair of Object.values(registered[0]?.tokens ?? {})) { expect(pair.light).toMatch(/^#[0-9A-Fa-f]{6}$/u); expect(pair.dark).toMatch(/^#[0-9A-Fa-f]{6}$/u) }
     expect(disposed).toBe(0)

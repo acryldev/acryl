@@ -194,12 +194,12 @@
     "diff": "^8.0.4",
     "acryl-extension-context": "workspace:*",
     "acryl-system-prompt": "workspace:*",
-    "acryl-ui-web": "workspace:*",
+    "@acryl/ui": "workspace:*",
     "dsh-client-ui-brand-acryl": "workspace:*",
     "cordis-plugin-market": "workspace:*"
   },
   "scripts": {
-    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter dsh-client-ui-brand-acryl run build && pnpm --filter acryl-ui-web run build && pnpm --filter cordis-plugin-market run build",
+    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter dsh-client-ui-brand-acryl run build && pnpm --filter @acryl/ui run build && pnpm --filter cordis-plugin-market run build",
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",

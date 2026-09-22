@@ -1,19 +1,19 @@
-# ACRYL UI library (`acryl-ui-web`): build screens from ready components
+# ACRYL UI library (`@acryl/ui`): build screens from ready components
 
 Use this instead of hand-styling. It is a client-only package that every Web and Desktop profile carries; a client bundle requires it after listing it in `package.json`:
 
 ```json
-"dsh": { "client": { "inject": ["acryl-ui-web", "@deepseek-ai/dsh-client-ui-sidebar"], "platform": "web" } }
+"dsh": { "client": { "inject": ["@acryl/ui", "@deepseek-ai/dsh-client-ui-sidebar"], "platform": "web" } }
 ```
 
 ```js
-const ui = require('acryl-ui-web')   // then ui.Card, ui.Field, ui.SettingsRow ...
+const ui = require('@acryl/ui')   // then ui.Card, ui.Field, ui.SettingsRow ...
 ```
 
 Example: `../example-plugins/packages/client-ui-library/` (a gallery as a Settings page: every component, the color roles, a Settings-style form). Like every example in this pack it is
 **opt-in**, not something a default profile carries: install it yourself with `acryl_install_plugin` (or copy it and run `/reload new`) when you want to browse the catalogue in a
 running app, and remove it with `/reload remove-stale` (or `acryl_install_plugin` with `remove: true`) once you're done, the same as any other local extension you're finished with. The
-single source of truth for props and accessibility is `contracts/components.json` in the package (`plugins/acryl-ui-web/`); the semantic colors are `contracts/tokens.json`.
+single source of truth for props and accessibility is `contracts/components.json` in the package (`plugins/acryl-ui/`); the semantic colors are `contracts/tokens.json`.
 
 | Need | Use |
 | --- | --- |
@@ -57,5 +57,5 @@ Keys: arrows move a `Segmented`, `SelectField` or `Tabs`; space or enter toggles
 
 ## Where the parts come from
 
-The web components are copied from DSH's own source, not redrawn (`plugins/acryl-ui-web/registry-manifest.yml` lists the origin of each and `tests/library.spec.tsx` guards it): the Appearance tiles, the Permission pill and row layout, the tab strip, the plugin field controls and the card surface. They are built with CSS Modules the way DSH builds its own client, so
+The web components are copied from DSH's own source, not redrawn (`plugins/acryl-ui/registry-manifest.yml` lists the origin of each and `tests/library.spec.tsx` guards it): the Appearance tiles, the Permission pill and row layout, the tab strip, the plugin field controls and the card surface. They are built with CSS Modules the way DSH builds its own client, so
 the styles are plugin-owned and follow the app's tokens. Only `EmptyState` and `Stack` are new, because DSH has no equivalent.
