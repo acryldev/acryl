@@ -1055,6 +1055,67 @@
       "surfaces": [
         "web"
       ]
+    },
+    "RadioGroup": {
+      "summary": "A classic radio-dot list for a set of mutually exclusive plain-text options (ported from shadcn/ui's RadioGroup; a native input[type=radio] group, no Radix dependency). Distinct from AppearanceCubes/Segmented (icon-and-label tiles).",
+      "props": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "options": {
+          "type": "RadioOption[]",
+          "required": true
+        },
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(value: string) => void",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Collapsible": {
+      "summary": "The bare collapsible primitive (trigger + content, no chrome) - ported from shadcn/ui's Collapsible. Distinct from DisclosureRow, which is a fully-chromed row (icon, title, chevron).",
+      "props": {
+        "defaultOpen": {
+          "type": "boolean"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "ToggleGroup": {
+      "summary": "A row of toggle buttons sharing one single- or multiple-selection model (ported from shadcn/ui's ToggleGroup; plain state, no Radix dependency).",
+      "props": {
+        "type": {
+          "type": "'single' | 'multiple'",
+          "required": true
+        },
+        "value": {
+          "type": "string | string[]",
+          "required": true
+        },
+        "onChange": {
+          "type": "(value: string | string[]) => void",
+          "required": true
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
     }
   },
   "helpers": {

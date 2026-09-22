@@ -45,7 +45,7 @@ describe.skipIf(!existsSync(bundlePath))('the built lib/client.js (run `pnpm run
     const webComponents = Object.entries(contract.components).filter(([, c]) => c.surfaces.includes('web')).map(([name]) => name)
     // Composite items export named sub-parts alongside their headline name (their own contract
     // entry is the whole composite, e.g. "Breadcrumb" covers BreadcrumbList/Item/Link/... too).
-    const compositeSubExports = ['BreadcrumbList', 'BreadcrumbItem', 'BreadcrumbLink', 'BreadcrumbPage', 'BreadcrumbSeparator', 'BreadcrumbEllipsis', 'AccordionItem', 'AccordionTrigger', 'AccordionContent', 'ButtonGroupText', 'ButtonGroupSeparator']
+    const compositeSubExports = ['BreadcrumbList', 'BreadcrumbItem', 'BreadcrumbLink', 'BreadcrumbPage', 'BreadcrumbSeparator', 'BreadcrumbEllipsis', 'AccordionItem', 'AccordionTrigger', 'AccordionContent', 'ButtonGroupText', 'ButtonGroupSeparator', 'CollapsibleTrigger', 'CollapsibleContent', 'ToggleGroupItem']
     const expected = new Set([...webComponents, ...Object.keys(contract.helpers), ...contract.reexports.names, 'apply', 'inject', 'roles', 'version', 'ValueField', 'SecretField', 'AppearanceCubes', 'SelectPill', ...compositeSubExports])
     for (const name of webComponents) expect(typeof exports[name], name).toBe('function')
     for (const name of Object.keys(contract.helpers)) expect(typeof exports[name], name).toBe('function')

@@ -124,7 +124,8 @@
     {
       "name": "Collapsible",
       "componentIds": [
-        "DisclosureRow"
+        "DisclosureRow",
+        "Collapsible"
       ]
     },
     {
@@ -357,8 +358,9 @@
     {
       "name": "Radio Group",
       "componentIds": [
+        "AppearanceCubes",
         "Segmented",
-        "AppearanceCubes"
+        "RadioGroup"
       ]
     },
     {
@@ -498,7 +500,9 @@
     },
     {
       "name": "Toggle Group",
-      "componentIds": []
+      "componentIds": [
+        "ToggleGroup"
+      ]
     },
     {
       "name": "Tooltip",

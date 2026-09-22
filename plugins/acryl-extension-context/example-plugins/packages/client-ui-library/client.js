@@ -14,7 +14,7 @@ const ui = require('@acryl/ui')
 const h = React.createElement
 const { Stack, Card, Field, SwitchField, SettingsRow, SelectField, Segmented, Tabs, Dialog, EmptyState, Button, Tag, Pill } = ui
 const { StateDot, DisclosureRow, Switch, Input, JsonTree, TerminalBlock, ReadBlock, DiffBlock, RiskConfirmation, ConnectionIndicator, WebBlock, CodeBlock, JsonBlock, MarkdownText, ReferenceIcon, LinkIcon, DocumentFileIcon } = ui
-const { Badge, Skeleton, Spinner, Alert, Separator, Progress, Avatar, Label, Textarea, Checkbox, AspectRatio, Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator, Toggle, ButtonGroup, ButtonGroupText, ButtonGroupSeparator, Accordion, AccordionItem, AccordionTrigger, AccordionContent } = ui
+const { Badge, Skeleton, Spinner, Alert, Separator, Progress, Avatar, Label, Textarea, Checkbox, AspectRatio, Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator, Toggle, ButtonGroup, ButtonGroupText, ButtonGroupSeparator, Accordion, AccordionItem, AccordionTrigger, AccordionContent, RadioGroup, Collapsible, CollapsibleTrigger, CollapsibleContent, ToggleGroup, ToggleGroupItem } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -72,6 +72,23 @@ function Blocks2() {
       h(JsonBlock, { label: 'Payload', payload: { ok: true, count: 3 }, truncatedLabel: n => 'Truncated (' + n + ' chars)' })),
     h(Section, { name: 'MarkdownText', note: 'Full markdown rendering: headings, lists, code.' },
       h(MarkdownText, { text: '## Heading\n\nSome **bold** text and a list:\n\n- one\n- two\n\n```ts\nconst x = 1\n```', labels: markdownLabels })))
+}
+
+function ShadcnBatch3() {
+  const [radio, setRadio] = React.useState('a')
+  const [multi, setMulti] = React.useState(['bold'])
+  return h(Stack, { gap: 'md' },
+    h(Section, { name: 'RadioGroup', note: 'Classic radio dots, distinct from the tile-style AppearanceCubes.' },
+      h(RadioGroup, { name: 'demo-radio', value: radio, onChange: setRadio, options: [{ id: 'a', label: 'Option A' }, { id: 'b', label: 'Option B' }, { id: 'c', label: 'Option C' }] })),
+    h(Section, { name: 'Collapsible', note: 'The bare primitive: no icon or chevron chrome.' },
+      h(Collapsible, { defaultOpen: false },
+        h(CollapsibleTrigger, null, 'Toggle details'),
+        h(CollapsibleContent, null, h('p', { style: { margin: '8px 0 0' } }, 'Plain content, no chrome.')))),
+    h(Section, { name: 'ToggleGroup', note: 'Multiple selection: click to toggle bold/italic independently.' },
+      h(ToggleGroup, { type: 'multiple', value: multi, onChange: setMulti },
+        h(ToggleGroupItem, { value: 'bold' }, 'B'),
+        h(ToggleGroupItem, { value: 'italic' }, 'I'),
+        h(ToggleGroupItem, { value: 'underline' }, 'U'))))
 }
 
 function ShadcnBatch2() {
@@ -199,8 +216,8 @@ function Gallery() {
   return h(Stack, { gap: 'md' },
     h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
     h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
-    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'colors', label: 'Colors' }] },
-      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : h(Colors)))
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : h(Colors)))
 }
 
 exports.inject = ['slots']

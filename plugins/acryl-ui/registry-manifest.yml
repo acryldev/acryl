@@ -111,3 +111,15 @@ components:
     origin: ported
     from: shadcn/ui registry item `accordion` (style new-york-v4), https://ui.shadcn.com/docs/components/accordion, MIT licence, fetched 2026-09-22
     changed: Radix Accordion.Root/Item/Trigger/Content dropped for plain React state (an open-item id set); lucide-react's ChevronDownIcon replaced by a plain inline SVG
+  - name: RadioGroup
+    origin: ported
+    from: shadcn/ui registry item `radio-group` (style new-york-v4), https://ui.shadcn.com/docs/components/radio-group, MIT licence, fetched 2026-09-22
+    changed: Radix RadioGroup.Root/Item/Indicator dropped for native input[type=radio] controls grouped by name; lucide-react's CircleIcon replaced by a plain CSS dot
+  - name: Collapsible
+    origin: ported
+    from: shadcn/ui registry item `collapsible` (style new-york-v4), https://ui.shadcn.com/docs/components/collapsible, MIT licence, fetched 2026-09-22
+    changed: Radix Collapsible.Root/CollapsibleTrigger/CollapsibleContent dropped for plain React state
+  - name: ToggleGroup
+    origin: ported
+    from: shadcn/ui registry item `toggle-group` (style new-york-v4), https://ui.shadcn.com/docs/components/toggle-group, MIT licence, fetched 2026-09-22
+    changed: Radix ToggleGroup.Root/Item dropped for plain state; its item buttons restate this library's Toggle styling locally instead of importing that item (self-containment)
