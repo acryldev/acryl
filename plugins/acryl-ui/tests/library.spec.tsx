@@ -28,6 +28,7 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupText, InputGro
 import { FormField, FieldLabel, FieldContent, FieldDescription, FieldError } from '../src/client/registry/FormField/FormField.tsx'
 import { Popover, PopoverTrigger, PopoverContent, PopoverTitle } from '../src/client/registry/Popover/Popover.tsx'
 import { Slider } from '../src/client/registry/Slider/Slider.tsx'
+import { Sheet, SheetTrigger, SheetClose, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../src/client/registry/Sheet/Sheet.tsx'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const harness = resolve(root, '../../deepseek-harness/packages/client')
@@ -259,6 +260,40 @@ describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 bat
   it('a disabled Slider takes its thumbs out of the tab order', () => {
     const html = renderToStaticMarkup(<Slider value={40} disabled label="Volume" />)
     expect(html).toContain('data-disabled="true"'); expect(html).toContain('aria-disabled="true"'); expect(html).toContain('tabindex="-1"')
+  })
+})
+
+describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 batch 4: Sheet)', () => {
+  it('Sheet renders its trigger always, and the overlay and panel only while open', () => {
+    const closed = renderToStaticMarkup(
+      <Sheet><SheetTrigger label="Open sheet">Open</SheetTrigger><SheetContent label="Filters">content</SheetContent></Sheet>,
+    )
+    expect(closed).toContain('data-slot="sheet-trigger"'); expect(closed).toContain('aria-haspopup="dialog"'); expect(closed).toContain('aria-expanded="false"')
+    expect(closed).not.toContain('data-slot="sheet-content"'); expect(closed).not.toContain('data-slot="sheet-overlay"')
+
+    const open = renderToStaticMarkup(
+      <Sheet open>
+        <SheetTrigger>Open</SheetTrigger>
+        <SheetContent side="left" label="Filters">
+          <SheetHeader><SheetTitle>Filters</SheetTitle><SheetDescription>Narrow the list.</SheetDescription></SheetHeader>
+          <SheetFooter>actions</SheetFooter>
+        </SheetContent>
+      </Sheet>,
+    )
+    expect(open).toContain('data-slot="sheet-overlay"')
+    expect(open).toContain('role="dialog"'); expect(open).toContain('aria-modal="true"'); expect(open).toContain('aria-label="Filters"')
+    expect(open).toContain('data-side="left"'); expect(open).toContain('tabindex="-1"')
+    expect(open).toContain('data-slot="sheet-title"'); expect(open).toContain('data-slot="sheet-description"')
+    expect(open).toContain('aria-label="Close"')   // the built-in close button
+    expect(open).not.toMatch(/\binset-y-0\b|\bbg-black\/50\b|\bw-3\/4\b/u)
+  })
+
+  it('SheetContent can omit its close button, and SheetClose dismisses from inside', () => {
+    const html = renderToStaticMarkup(
+      <Sheet open><SheetContent side="bottom" showCloseButton={false} label="Actions"><SheetClose label="Cancel">Cancel</SheetClose></SheetContent></Sheet>,
+    )
+    expect(html).not.toContain('aria-label="Close"')
+    expect(html).toContain('data-side="bottom"'); expect(html).toContain('data-slot="sheet-close"'); expect(html).toContain('aria-label="Cancel"')
   })
 })
 

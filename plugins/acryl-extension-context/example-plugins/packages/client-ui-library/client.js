@@ -21,6 +21,8 @@ const { Table, TableCaption, TableHeader, TableBody, TableFooter, TableRow, Tabl
 const { ScrollArea, InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator, Item, ItemGroup, ItemSeparator, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions, Attachment, AttachmentGroup, AttachmentMedia, AttachmentContent, AttachmentTitle, AttachmentDescription, AttachmentActions, AttachmentAction, AttachmentTrigger, InputGroup, InputGroupAddon, InputGroupButton, InputGroupText, InputGroupInput, FormField, FieldSet, FieldLegend, FieldGroup, FieldContent, FieldLabel, FieldDescription, FieldSeparator, FieldError } = ui
 // T045 batch 3 (spec 038-ui-component-library): Radix overlays and input primitives rewritten by hand.
 const { Popover, PopoverTrigger, PopoverContent, PopoverHeader, PopoverTitle, PopoverDescription, Slider } = ui
+// T045 batch 4: Sheet, built on the overlay pattern Popover's port established.
+const { Sheet, SheetTrigger, SheetClose, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -390,14 +392,34 @@ function T045Batch3() {
   return h(Stack, { gap: 'md' }, popoverSection, sliderSection)
 }
 
+// T045 batch 4: Sheet. Radix's Dialog replaced by hand, reusing the overlay pattern Popover's port established.
+function T045Batch4() {
+  const [side, setSide] = React.useState('right')
+  const [open, setOpen] = React.useState(false)
+  const readout = text => h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, text)
+  const sheetSection = h(Section, { name: 'Sheet', note: 'An edge panel: pick a side, open it, then dismiss it with Escape, the close button, or a press on the overlay. Tab and Shift-Tab wrap inside the panel.' },
+    h(Stack, { direction: 'row', gap: 'sm', align: 'center' },
+      ['top', 'right', 'bottom', 'left'].map(name => h(Button, { key: name, variant: side === name ? 'default' : 'outline', size: 'sm', onClick: () => setSide(name) }, name))),
+    h(Sheet, { open, onOpenChange: setOpen },
+      h(SheetTrigger, null, 'Open sheet'),
+      h(SheetContent, { side, label: 'Sheet demonstration' },
+        h(SheetHeader, null,
+          h(SheetTitle, null, 'From the ' + side + ' edge'),
+          h(SheetDescription, null, 'Escape, the close button and an overlay press all dismiss this panel.')),
+        h(SheetFooter, null,
+          h(SheetClose, null, h(Button, { variant: 'outline', size: 'sm' }, 'Close from the footer'))))),
+    readout('open = ' + open + '   side = ' + side))
+  return h(Stack, { gap: 'md' }, sheetSection)
+}
+
 // A Settings page, not a dialog: the gallery is a catalogue for people building UI, so it lives in Settings (nav entry "UI library"), out of the everyday screens.
 function Gallery() {
   const [tab, setTab] = React.useState('components')
   return h(Stack, { gap: 'md' },
     h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
     h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
-    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 't045b3', label: 'T045 ports 3' }, { id: 'colors', label: 'Colors' }] },
-      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : tab === 't045b3' ? h(T045Batch3) : h(Colors)))
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 't045b3', label: 'T045 ports 3' }, { id: 't045b4', label: 'T045 ports 4' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : tab === 't045b3' ? h(T045Batch3) : tab === 't045b4' ? h(T045Batch4) : h(Colors)))
 }
 
 exports.inject = ['slots']

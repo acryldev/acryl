@@ -450,7 +450,9 @@
     },
     {
       "name": "Sheet",
-      "componentIds": []
+      "componentIds": [
+        "Sheet"
+      ]
     },
     {
       "name": "Skeleton",

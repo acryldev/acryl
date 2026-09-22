@@ -1423,6 +1423,29 @@
       "a11y": [
         "each thumb is role=slider with aria-valuemin, aria-valuemax, aria-valuenow and aria-orientation; arrows move by one step, PageUp/PageDown by ten, Home/End jump to the ends; a disabled slider takes its thumbs out of the tab order and reports aria-disabled"
       ]
+    },
+    "Sheet": {
+      "summary": "A panel that slides in from an edge - top, right, bottom or left - over an overlay, dismissed by Escape, an overlay press or the close button (ported from shadcn/ui's Sheet; Radix's Dialog is replaced by hand).",
+      "props": {
+        "open": {
+          "type": "boolean"
+        },
+        "defaultOpen": {
+          "type": "boolean"
+        },
+        "onOpenChange": {
+          "type": "(open: boolean) => void"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "role=dialog with aria-modal=true and the caller's label; focus moves onto the panel as it opens and back to the trigger on close; Tab wraps inside the panel. The page behind is NOT made inert, so assistive tech can still reach it - recorded in the manifest rather than claimed as done"
+      ]
     }
   },
   "helpers": {
