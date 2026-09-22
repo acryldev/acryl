@@ -1,4 +1,4 @@
-.inputGroup { position: relative; display: flex; width: 100%; min-width: 0; height: 36px; align-items: center; border-radius: 6px; border: 1px solid var(--dsw-alias-border-l4); outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+.inputGroup { position: relative; display: flex; width: 100%; min-width: 0; height: 36px; align-items: center; border-radius: 6px; border: 1px solid var(--dsw-alias-border-l4); outline: none; }
 .inputGroup:has(> textarea) { height: auto; }
 .inputGroup:has(> [data-align='inline-start']) > input { padding-left: 8px; }
 .inputGroup:has(> [data-align='inline-end']) > input { padding-right: 8px; }
