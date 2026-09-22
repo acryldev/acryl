@@ -1389,7 +1389,7 @@
         "web"
       ],
       "a11y": [
-        "the trigger carries aria-haspopup=dialog and aria-expanded; the panel is role=dialog with the caller's label and is programmatically focusable (tabindex -1); Escape closes it and returns focus to the trigger; a press outside closes it and leaves focus where the user pressed. Focus-into-panel on open is NOT yet achieved - observed in Chromium, focus stays on the trigger."
+        "the trigger carries aria-haspopup=dialog and aria-expanded; the panel is role=dialog with the caller's label and takes focus once it is positioned; Escape closes it and returns focus to the trigger; a press outside closes it and leaves focus where the user pressed"
       ]
     },
     "Slider": {

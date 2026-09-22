@@ -98,9 +98,10 @@ export function PopoverContent({ align = 'center', sideOffset = 4, label, childr
   const context = useContext(PopoverContext)
   const isOpen = context?.isOpen ?? false
   const [style, setStyle] = useState<CSSProperties>({ visibility: 'hidden' })
+  const [positioned, setPositioned] = useState(false)
 
   useLayoutEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) { setPositioned(false); return }
     const measure = (): void => {
       const reference = context?.anchorRef.current ?? context?.triggerRef.current
       const panel = context?.contentRef.current
@@ -113,16 +114,22 @@ export function PopoverContent({ align = 'center', sideOffset = 4, label, childr
       const below = rect.bottom + sideOffset
       const top = below + height > window.innerHeight - 8 ? Math.max(8, rect.top - sideOffset - height) : below
       setStyle({ left, top })
+      setPositioned(true)
     }
     measure()
-    // Focus here, in the layout effect, not in the passive one below: the panel only becomes focusable once the first
-    // measure has replaced the initial `visibility: hidden`, and a real pointer press has just focused the trigger, so
-    // the focus call has to land after both. (Learned the hard way: from the passive effect it lost to the trigger.)
-    context?.contentRef.current?.focus()
     window.addEventListener('resize', measure)
     window.addEventListener('scroll', measure, true)
     return () => { window.removeEventListener('resize', measure); window.removeEventListener('scroll', measure, true) }
   }, [isOpen, align, sideOffset, context])
+
+  // Focus once the panel is actually visible. The first measure lands through a state update, so focusing beside it (or
+  // from the passive effect below) runs while the element is still `visibility: hidden` and is silently a no-op on a
+  // hidden element - that is why focus used to stay on the trigger. Keyed on `positioned`, this runs after the commit
+  // that applies the position.
+  useEffect(() => {
+    if (!isOpen || !positioned) return
+    context?.contentRef.current?.focus()
+  }, [isOpen, positioned, context])
 
   useEffect(() => {
     if (!isOpen || context === null) return
