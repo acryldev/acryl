@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
@@ -6,6 +6,28 @@ import { describe, expect, it } from 'vitest'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const bundlePath = join(root, 'lib/client.js')
+
+/** Every file the bundle is built from, so a stale artifact cannot pass as a verified one. */
+function builtFrom(dir: string): string[] {
+  return readdirSync(dir).flatMap((name) => {
+    const path = join(dir, name)
+    return statSync(path).isDirectory() ? builtFrom(path) : [path]
+  }).filter(file => /\.(?:ts|tsx|css)$/u.test(file))
+}
+const sourceFiles = builtFrom(join(root, 'src/client'))
+
+/**
+ * Sources newer than the bundle. Absent artifact is reported by `pnpm run verify:artifact` in the
+ * gate rather than here, because a bare `vitest run` on a fresh clone legitimately has no build; but
+ * a *stale* artifact must never read as green - that is how a served @acryl/ui without its newest
+ * components reached the app during T045 while these tests passed.
+ */
+function staleSources(): string[] {
+  if (!existsSync(bundlePath)) return []
+  const bundleMtime = statSync(bundlePath).mtimeMs
+  return sourceFiles.filter(file => statSync(file).mtimeMs > bundleMtime).map(file => file.slice(root.length + 1))
+}
+
 const contract = JSON.parse(readFileSync(join(root, 'contracts/components.json'), 'utf8')) as {
   components: Record<string, { surfaces: string[] }>
   helpers: Record<string, unknown>
@@ -33,6 +55,11 @@ function loadBuilt(): LoadedModule {
 }
 
 describe.skipIf(!existsSync(bundlePath))('the built lib/client.js (run `pnpm run build` first)', () => {
+  it('is not older than the sources it was built from', () => {
+    const stale = staleSources()
+    expect(stale, `lib/client.js is older than ${stale.length} source file(s) (${stale.slice(0, 5).join(', ')}): rebuild before trusting the assertions below`).toEqual([])
+  })
+
   it('registers under the package name and requires only react and the app primitives from the loader', () => {
     const { id } = loadBuilt()
     expect(id).toBe('@acryl/ui')

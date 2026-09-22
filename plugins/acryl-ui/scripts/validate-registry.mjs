@@ -67,6 +67,21 @@ function checkItem(id) {
 }
 
 function main() {
+  // Refuse to validate a seed that predates the inputs it was generated from. Without this the gate
+  // reports "N item(s) passed" against a stale seed while the manifest itself fails to parse (which
+  // is how a colon-space in manifest prose slipped past the gate twice during T045).
+  const newestInput = Math.max(
+    statSync(join(ROOT, 'registry-manifest.yml')).mtimeMs,
+    statSync(join(ROOT, 'contracts', 'components.json')).mtimeMs,
+    ...walk(join(ROOT, 'src', 'client', 'registry')).map(file => statSync(file).mtimeMs),
+  )
+  if (newestInput > statSync(join(REGISTRY_DIR, 'index.json')).mtimeMs) {
+    console.error('registry-seed is stale: registry-manifest.yml or src/client/registry changed after the last generation.')
+    console.error('Run scripts/generate-registry.mjs first (or `pnpm run registry`, which does both).')
+    process.exitCode = 1
+    return
+  }
+
   const index = JSON.parse(readFileSync(join(REGISTRY_DIR, 'index.json'), 'utf8'))
   let failures = 0
   for (const entry of index.items) {
