@@ -121,3 +121,7 @@ The registry lives at `github.com/acryldev/acryl-ui-registry` (hub form D6: defi
 ### Slice 7 exit
 
 `acryl ui add acryl.ui.card` in a scaffold produces a plugin that builds and renders the component with no dependency on `@acryl/ui`; `acryl ui add acryl.ui.card --surface tui` does the same for a terminal plugin from the same catalogue entry; `@acryl/ui` installs from the registry into a plugin outside this repo on either surface; the registry repo validates and regenerates its index in CI; and a Blueprint containing the library round-trips through `/blend snapshot`, `verify` and `apply` on a fresh app.
+
+## Taxonomy reference (added 2026-09-22)
+
+For classification only, not code: shadcnblocks.com/components lists 106 category names (Accordion, Alert, Avatar, Badge, Button, Card, Combobox, Dialog, Empty, Field, Kbd, Select, Sheet, Skeleton, Slider, Table, Tabs, Toggle, Tooltip, Tree, and so on). As the registry grows past a handful of items, group `item.yaml`'s (not yet present) `category` field against this same vocabulary, so ids stay recognizable across ecosystems (`acryl.ui.<category>.<name>` becomes viable once there's enough volume to need it). Nothing from that site's code, markup or assets is used; only the naming scheme.
