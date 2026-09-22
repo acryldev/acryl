@@ -14,8 +14,10 @@
 .addon > svg:not([class*='size-']) { width: 16px; height: 16px; }
 .alignStart { order: -1; padding-left: 12px; }
 .alignStart:has(> button) { margin-left: -7px; }
+.alignStart:has(> kbd) { margin-left: -6px; }
 .alignEnd { order: 1; padding-right: 12px; }
 .alignEnd:has(> button) { margin-right: -7px; }
+.alignEnd:has(> kbd) { margin-right: -6px; }
 .alignBlockStart { order: -1; width: 100%; justify-content: flex-start; padding: 12px 12px 0; }
 .inputGroup:has(> input) .alignBlockStart { padding-top: 10px; }
 .alignBlockEnd { order: 1; width: 100%; justify-content: flex-start; padding: 0 12px 12px; }
