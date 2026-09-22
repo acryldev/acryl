@@ -1,0 +1,11 @@
+.pagination { margin: 0 auto; display: flex; width: 100%; justify-content: center; }
+.content { display: flex; flex-direction: row; align-items: center; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.link { display: inline-flex; align-items: center; justify-content: center; gap: 4px; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid transparent; background: none; color: var(--dsw-alias-label-primary); font-size: 13px; font-weight: 500; text-decoration: none; cursor: pointer; }
+.link:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.link:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--dsw-alias-interactive-bg-hover); }
+.icon { width: 36px; height: 36px; padding: 0; }
+.active { border-color: var(--dsw-alias-border-l4); }
+.ellipsis { display: flex; width: 36px; height: 36px; align-items: center; justify-content: center; color: var(--dsw-alias-label-tertiary); }
+.label { display: block; }
+@media (max-width: 639px) { .label { display: none; } }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

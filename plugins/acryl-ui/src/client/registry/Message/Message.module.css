@@ -1,0 +1,11 @@
+.group { display: flex; min-width: 0; flex-direction: column; gap: 8px; }
+.message { position: relative; display: flex; width: 100%; min-width: 0; gap: 8px; font-size: 13px; }
+.message[data-align='end'] { flex-direction: row-reverse; }
+.avatar { display: flex; width: fit-content; min-width: 32px; flex-shrink: 0; align-items: center; justify-content: center; align-self: flex-end; overflow: hidden; border-radius: 9999px; background: var(--dsw-alias-bg-layer-2); }
+.message:has([data-slot='message-footer']) .avatar { transform: translateY(-32px); }
+.content { display: flex; width: 100%; min-width: 0; flex-direction: column; gap: 10px; overflow-wrap: break-word; }
+.message[data-align='end'] .content > [data-slot] { align-self: flex-end; }
+.header { display: flex; max-width: 100%; min-width: 0; align-items: center; padding: 0 12px; font-size: 12px; font-weight: 500; color: var(--dsw-alias-label-tertiary); }
+.footer { display: flex; max-width: 100%; min-width: 0; align-items: center; padding: 0 12px; font-size: 12px; font-weight: 500; color: var(--dsw-alias-label-tertiary); }
+.message[data-align='end'] .footer { justify-content: flex-end; }
+.message:has([data-variant='ghost']) .header, .message:has([data-variant='ghost']) .footer { padding: 0; }

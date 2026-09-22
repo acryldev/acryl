@@ -123,3 +123,31 @@ components:
     origin: ported
     from: shadcn/ui registry item `toggle-group` (style new-york-v4), https://ui.shadcn.com/docs/components/toggle-group, MIT licence, fetched 2026-09-22
     changed: Radix ToggleGroup.Root/Item dropped for plain state; its item buttons restate this library's Toggle styling locally instead of importing that item (self-containment)
+  - name: Table
+    origin: ported
+    from: shadcn/ui registry item `table` (style new-york-v4), https://ui.shadcn.com/docs/components/table, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; cn() replaced by clsx; the source's [&_tr]-style descendant utilities became descendant selectors and bg-muted/50 became --dsw-alias-interactive-bg-hover; no Radix primitive involved
+  - name: DirectionProvider
+    origin: ported
+    from: shadcn/ui registry item `direction` (style new-york-v4), https://ui.shadcn.com/docs/components/direction, MIT licence, fetched 2026-09-22
+    changed: Radix Direction.DirectionProvider/useDirection dropped for a plain createContext with the same public API (dir, the direction alias, useDirection); the source requires dir, this port defaults to ltr as Radix itself does; no stylesheet, so no .module.css
+  - name: Marker
+    origin: ported
+    from: shadcn/ui registry item `marker` (style new-york-v4), https://ui.shadcn.com/docs/components/marker, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; cva variants became classes; asChild/Slot dropped; the source's group-data-[variant=separator] rule became the .separator .content descendant selector; markerVariants not exported (the source exported its cva result)
+  - name: Message
+    origin: ported
+    from: shadcn/ui registry item `message` (style new-york-v4), https://ui.shadcn.com/docs/components/message, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; the source's two group utilities that reach across the row became :has() and child-attribute selectors; the parts keep their data-slot attributes because those selectors key off them
+  - name: Bubble
+    origin: ported
+    from: shadcn/ui registry item `bubble` (style new-york-v4), https://ui.shadcn.com/docs/components/bubble, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; cva variants became classes; asChild/Slot dropped; the source colours the child [data-slot=bubble-content] from the parent, reproduced with .bubble[data-variant=...] .content descendant selectors; the `tinted` variant's oklch relative-colour expressions have no token equivalent and are approximated with color-mix over --acryl-accent
+  - name: Pagination
+    origin: ported
+    from: shadcn/ui registry item `pagination` (style new-york-v4), https://ui.shadcn.com/docs/components/pagination, MIT licence, fetched 2026-09-22
+    changed: PaginationLink is built on shadcn's own Button item in the source (buttonVariants); the ghost/outline link look is restated locally in this module instead of importing that item (self-containment); lucide-react chevrons replaced by plain inline SVGs; hidden sm:block kept as a width query
+  - name: NativeSelect
+    origin: ported
+    from: shadcn/ui registry item `native-select` (style new-york-v4), https://ui.shadcn.com/docs/components/native-select, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; the source's five-way IconPlaceholder reduced to one plain inline SVG; its dark-mode variant utilities dropped because the alias tokens carry both schemes (no theme selectors); NativeSelectOption/OptGroup kept as pass-throughs that deliberately add nothing, leaving the popup to the platform

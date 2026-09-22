@@ -13,6 +13,13 @@ import { SidebarRow } from '../src/client/registry/SidebarRow/SidebarRow.tsx'
 import { ToolCallCard } from '../src/client/registry/ToolCallCard/ToolCallCard.tsx'
 import { Kbd } from '../src/client/registry/Kbd/Kbd.tsx'
 import { SwitchField } from '../src/client/registry/SwitchField/SwitchField.tsx'
+import { Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell, TableCaption } from '../src/client/registry/Table/Table.tsx'
+import { DirectionProvider, useDirection } from '../src/client/registry/DirectionProvider/DirectionProvider.tsx'
+import { Marker, MarkerIcon, MarkerContent } from '../src/client/registry/Marker/Marker.tsx'
+import { Message, MessageAvatar, MessageContent, MessageHeader, MessageFooter } from '../src/client/registry/Message/Message.tsx'
+import { Bubble, BubbleContent, BubbleReactions } from '../src/client/registry/Bubble/Bubble.tsx'
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext, PaginationEllipsis } from '../src/client/registry/Pagination/Pagination.tsx'
+import { NativeSelect, NativeSelectOption, NativeSelectOptGroup } from '../src/client/registry/NativeSelect/NativeSelect.tsx'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const harness = resolve(root, '../../deepseek-harness/packages/client')
@@ -54,6 +61,82 @@ describe('markup of the extracted components (spec 038-ui-component-library, ext
     const html = renderToStaticMarkup(<Kbd>{'\u2318K'}</Kbd>)
     expect(html).toMatch(/<kbd class="[^"]+">.KK?<\/kbd>|<kbd class="[^"]+">/u)
     expect(html).not.toMatch(/\bbg-muted\b|\btext-muted-foreground\b/u)
+  })
+})
+
+describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 batch 1: Table, Direction, Marker, Message, Bubble, Pagination, NativeSelect)', () => {
+  it('Table renders real table semantics, in its own scroll container, with no Tailwind utility classes', () => {
+    const html = renderToStaticMarkup(
+      <Table>
+        <TableCaption>Totals</TableCaption>
+        <TableHeader><TableRow><TableHead>Name</TableHead></TableRow></TableHeader>
+        <TableBody><TableRow><TableCell>alpha</TableCell></TableRow></TableBody>
+        <TableFooter><TableRow><TableCell>1</TableCell></TableRow></TableFooter>
+      </Table>,
+    )
+    expect(html).toMatch(/^<div[^>]*class="[^"]+"><table[^>]*class="[^"]+"/u)   // the wrapper div is the first element
+    expect(html).toContain('<caption'); expect(html).toContain('<thead'); expect(html).toContain('<tbody'); expect(html).toContain('<tfoot')
+    expect(html).not.toMatch(/\bw-full\b|\bwhitespace-nowrap\b|\boverflow-x-auto\b|\bcaption-bottom\b/u)
+  })
+
+  it('DirectionProvider and useDirection carry the direction through context, and default to ltr', () => {
+    const Reader = (): JSX.Element => <span>{useDirection()}</span>
+    expect(renderToStaticMarkup(<Reader />)).toContain('ltr')
+    expect(renderToStaticMarkup(<DirectionProvider dir="rtl"><Reader /></DirectionProvider>)).toContain('rtl')
+    expect(renderToStaticMarkup(<DirectionProvider direction="rtl"><Reader /></DirectionProvider>)).toContain('rtl')
+  })
+
+  it('Marker exposes the variant its stylesheet keys off, and its icon is decorative', () => {
+    const html = renderToStaticMarkup(<Marker variant="separator"><MarkerIcon>i</MarkerIcon><MarkerContent>Today</MarkerContent></Marker>)
+    expect(html).toContain('data-variant="separator"'); expect(html).toContain('aria-hidden="true"'); expect(html).toContain('Today')
+  })
+
+  it('Message and Bubble carry alignment and variant on the element the stylesheet keys off', () => {
+    const html = renderToStaticMarkup(
+      <Message align="end">
+        <MessageAvatar>AM</MessageAvatar>
+        <MessageContent>
+          <MessageHeader>Ada</MessageHeader>
+          <Bubble variant="ghost" align="end">
+            <BubbleContent>hi</BubbleContent>
+            <BubbleReactions side="top">+1</BubbleReactions>
+          </Bubble>
+        </MessageContent>
+        <MessageFooter>now</MessageFooter>
+      </Message>,
+    )
+    expect(html).toContain('data-align="end"'); expect(html).toContain('data-variant="ghost"'); expect(html).toContain('data-side="top"')
+    expect(html).toContain('data-slot="message-footer"'); expect(html).toContain('data-slot="bubble-content"')
+    expect(html).not.toMatch(/\bmax-w-\[80%\]\b|\brounded-xl\b|\btext-muted-foreground\b/u)
+  })
+
+  it('Pagination marks the current page and labels the landmark and the ellipsis', () => {
+    const html = renderToStaticMarkup(
+      <Pagination>
+        <PaginationContent>
+          <PaginationItem><PaginationPrevious href="#" /></PaginationItem>
+          <PaginationItem><PaginationLink href="#" isActive>2</PaginationLink></PaginationItem>
+          <PaginationItem><PaginationLink href="#">3</PaginationLink></PaginationItem>
+          <PaginationItem><PaginationEllipsis /></PaginationItem>
+          <PaginationItem><PaginationNext href="#" /></PaginationItem>
+        </PaginationContent>
+      </Pagination>,
+    )
+    expect(html).toContain('aria-label="pagination"')
+    expect(html.match(/aria-current="page"/gu)).toHaveLength(1)
+    expect(html).toContain('More pages'); expect(html).toContain('Go to previous page'); expect(html).toContain('Go to next page')
+  })
+
+  it('NativeSelect is the platform select, not a menu over it', () => {
+    const html = renderToStaticMarkup(
+      <NativeSelect size="sm" defaultValue="b" aria-label="Mode">
+        <NativeSelectOptGroup label="one"><NativeSelectOption value="a">A</NativeSelectOption></NativeSelectOptGroup>
+        <NativeSelectOption value="b">B</NativeSelectOption>
+      </NativeSelect>,
+    )
+    expect(html).toMatch(/<select[^>]*class="[^"]+"/u)
+    expect(html).toContain('<optgroup'); expect(html.match(/<option/gu)).toHaveLength(2)
+    expect(html).not.toContain('role="menu"'); expect(html).not.toMatch(/\bappearance-none\b|\bpr-8\b/u)
   })
 })
 

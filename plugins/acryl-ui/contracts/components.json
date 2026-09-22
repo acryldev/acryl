@@ -1116,6 +1116,126 @@
       "surfaces": [
         "web"
       ]
+    },
+    "Table": {
+      "summary": "A data table: header, body, footer, row, head, cell and caption, each in its own horizontal scroll container (ported from shadcn/ui's Table; no Radix primitive involved).",
+      "props": {
+        "children": {
+          "type": "ReactNode"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "native table semantics; the scroll container keeps a wide table from widening the page instead of clipping it"
+      ]
+    },
+    "DirectionProvider": {
+      "summary": "A text-direction provider for descendants, with the source's dir prop and direction alias, and a useDirection hook (ported from shadcn/ui's Direction; a plain context instead of Radix).",
+      "props": {
+        "dir": {
+          "type": "'ltr' | 'rtl'"
+        },
+        "direction": {
+          "type": "'ltr' | 'rtl'"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "consumers set dir on the subtree, which is what decides the browser's own bidi behavior"
+      ]
+    },
+    "Marker": {
+      "summary": "A muted label line between message groups: plain, ruled on both sides, or underlined at the bottom (ported from shadcn/ui's Marker).",
+      "props": {
+        "variant": {
+          "type": "'default' | 'separator' | 'border'"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the icon part is aria-hidden, so a decorative glyph is never announced"
+      ]
+    },
+    "Message": {
+      "summary": "A message row around a Bubble: group, avatar, content, header and footer, with an end alignment for the reader's own turns (ported from shadcn/ui's Message).",
+      "props": {
+        "align": {
+          "type": "'start' | 'end'"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": []
+    },
+    "Bubble": {
+      "summary": "A chat bubble with seven variants and a reaction pill, meant to sit inside this library's Message (ported from shadcn/ui's Bubble; no Radix, no cva).",
+      "props": {
+        "variant": {
+          "type": "'default' | 'secondary' | 'muted' | 'tinted' | 'outline' | 'ghost' | 'destructive'"
+        },
+        "align": {
+          "type": "'start' | 'end'"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "interactive content inside a bubble keeps its own focus ring (border plus a 3px shadow) rather than having its outline removed"
+      ]
+    },
+    "Pagination": {
+      "summary": "A pagination landmark: content, item, link, previous, next and an ellipsis, with the current page marked for assistive tech (ported from shadcn/ui's Pagination; the Button item's look is restated locally to stay self-contained).",
+      "props": {
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "nav aria-label=pagination; the current page is aria-current=page; the ellipsis has a screen-reader-only label"
+      ]
+    },
+    "NativeSelect": {
+      "summary": "The platform's own <select>, styled to match the library's inputs, for a short static option list (ported from shadcn/ui's Native Select; not the same control as this library's SelectField, which opens a menu).",
+      "props": {
+        "size": {
+          "type": "'sm' | 'default'"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "native select semantics, keyboard behavior and typeahead are kept; an invalid control is styleable through aria-invalid"
+      ]
     }
   },
   "helpers": {

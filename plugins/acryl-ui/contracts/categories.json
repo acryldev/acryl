@@ -1,6 +1,6 @@
 {
-  "source": "shadcnblocks.com/components category names, fetched 2026-09-22 (classification only; no code, markup or assets used from that site)",
-  "note": "Every category is listed, built or not, so the catalog shows the shape of what a rich UI library covers. componentIds map to plugins/acryl-ui/contracts/components.json.",
+  "source": "shadcnblocks.com/components category names, fetched 2026-09-22 (classification only; no code, markup or assets used from that site), plus four names taken from shadcn/ui's own component list (ui.shadcn.com/docs/components) on 2026-09-22: Bubble, Direction, Marker, Message",
+  "note": "Every category is listed, built or not, so the catalog shows the shape of what a rich UI library covers. componentIds map to plugins/acryl-ui/contracts/components.json. Bubble, Direction, Marker and Message are shadcn/ui's own component names, added because shadcnblocks' taxonomy has no chat, label-line or text-direction category at all - forcing them into Separator, List or a similar neighbour would have been a bad match. Both sites render a component only inside a category, so a ported component with no category here would be invisible rather than merely uncategorised.",
   "categories": [
     {
       "name": "Accordion",
@@ -72,6 +72,12 @@
       "name": "Breadcrumb",
       "componentIds": [
         "Breadcrumb"
+      ]
+    },
+    {
+      "name": "Bubble",
+      "componentIds": [
+        "Bubble"
       ]
     },
     {
@@ -182,6 +188,12 @@
     {
       "name": "Dialog Stack",
       "componentIds": []
+    },
+    {
+      "name": "Direction",
+      "componentIds": [
+        "DirectionProvider"
+      ]
     },
     {
       "name": "Drawer",
@@ -315,8 +327,20 @@
       "componentIds": []
     },
     {
+      "name": "Marker",
+      "componentIds": [
+        "Marker"
+      ]
+    },
+    {
       "name": "Menubar",
       "componentIds": []
+    },
+    {
+      "name": "Message",
+      "componentIds": [
+        "Message"
+      ]
     },
     {
       "name": "Mini Calendar",
@@ -328,7 +352,9 @@
     },
     {
       "name": "Pagination",
-      "componentIds": []
+      "componentIds": [
+        "Pagination"
+      ]
     },
     {
       "name": "Pill",
@@ -395,7 +421,8 @@
       "name": "Select",
       "componentIds": [
         "SelectField",
-        "SelectPill"
+        "SelectPill",
+        "NativeSelect"
       ]
     },
     {
@@ -458,7 +485,9 @@
     },
     {
       "name": "Table",
-      "componentIds": []
+      "componentIds": [
+        "Table"
+      ]
     },
     {
       "name": "Tabs",

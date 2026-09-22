@@ -15,6 +15,8 @@ const h = React.createElement
 const { Stack, Card, Field, SwitchField, SettingsRow, SelectField, Segmented, Tabs, Dialog, EmptyState, Button, Tag, Pill } = ui
 const { StateDot, DisclosureRow, Switch, Input, JsonTree, TerminalBlock, ReadBlock, DiffBlock, RiskConfirmation, ConnectionIndicator, WebBlock, CodeBlock, JsonBlock, MarkdownText, ReferenceIcon, LinkIcon, DocumentFileIcon } = ui
 const { Badge, Skeleton, Spinner, Alert, Separator, Progress, Avatar, Label, Textarea, Checkbox, AspectRatio, Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator, Toggle, ButtonGroup, ButtonGroupText, ButtonGroupSeparator, Accordion, AccordionItem, AccordionTrigger, AccordionContent, RadioGroup, Collapsible, CollapsibleTrigger, CollapsibleContent, ToggleGroup, ToggleGroupItem } = ui
+// T045 batch 1 (spec 038-ui-component-library): ported from shadcn/ui, no Radix.
+const { Table, TableCaption, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell, DirectionProvider, useDirection, Marker, MarkerContent, MarkerIcon, Message, MessageGroup, MessageAvatar, MessageContent, MessageHeader, MessageFooter, Bubble, BubbleContent, BubbleReactions, Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext, PaginationEllipsis, NativeSelect, NativeSelectOption } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -210,14 +212,81 @@ function Conversation() {
       h('span', { style: { color: ui.roles.textMuted, fontSize: 12 } }, 'Click to switch between the wide sidebar and the rail')))
 }
 
+// T045 batch 1 (spec 038-ui-component-library): Table, Direction, Marker, Message, Bubble, Pagination and NativeSelect, all ported from
+// shadcn/ui's own source (new-york-v4, MIT) onto --dsw-alias-* tokens with no Radix and no new dependency.
+function DirReadout() {
+  return h('code', null, useDirection())
+}
+
+function T045Batch1() {
+  const [page, setPage] = React.useState(2)
+  const [mode, setMode] = React.useState('write')
+  const [dir, setDir] = React.useState('ltr')
+  const go = (event, next) => { event.preventDefault(); setPage(next) }
+  const rows = [{ file: 'src/index.ts', lines: 42 }, { file: 'README.md', lines: 8 }, { file: 'package.json', lines: 31 }]
+  const total = rows.reduce((sum, row) => sum + row.lines, 0)
+  return h(Stack, { gap: 'md' },
+    h(Section, { name: 'Table', note: 'A real table: caption, header, body and a footer total. Hover a row.' },
+      h(Table, null,
+        h(TableCaption, null, rows.length + ' files'),
+        h(TableHeader, null, h(TableRow, null, h(TableHead, null, 'File'), h(TableHead, null, 'Lines'))),
+        h(TableBody, null, rows.map(row => h(TableRow, { key: row.file }, h(TableCell, null, row.file), h(TableCell, null, String(row.lines))))),
+        h(TableFooter, null, h(TableRow, null, h(TableCell, null, 'Total'), h(TableCell, null, String(total))))),
+      h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, 'Rendered with this library\'s Table, not hand-rolled markup.')),
+    h(Section, { name: 'Pagination', note: 'Click a page number, or Previous/Next. The current page carries aria-current=page.' },
+      h(Pagination, null, h(PaginationContent, null,
+        h(PaginationItem, null, h(PaginationPrevious, { href: '#', onClick: e => go(e, Math.max(1, page - 1)) })),
+        [1, 2, 3].map(n => h(PaginationItem, { key: n }, h(PaginationLink, { href: '#', isActive: page === n, onClick: e => go(e, n) }, String(n)))),
+        h(PaginationItem, null, h(PaginationEllipsis, null)),
+        h(PaginationItem, null, h(PaginationNext, { href: '#', onClick: e => go(e, Math.min(3, page + 1)) })))),
+      h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, 'page = ' + page)),
+    h(Section, { name: 'NativeSelect', note: 'The platform\'s own dropdown - not the menu-overlay SelectField. Open it and pick a mode.' },
+      h(NativeSelect, { value: mode, onChange: e => setMode(e.target.value), 'aria-label': 'Default permission mode' },
+        h(NativeSelectOption, { value: 'read' }, 'Read Only'),
+        h(NativeSelectOption, { value: 'write' }, 'Workspace Write'),
+        h(NativeSelectOption, { value: 'full' }, 'Full access')),
+      h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, 'mode = ' + mode)),
+    h(Section, { name: 'Marker, Message and Bubble', note: 'A chat exchange: Marker as the day divider, Message rows around Bubble content (ghost and destructive variants below), a reaction pill on the second.' },
+      h(Stack, { direction: 'row', gap: 'sm', align: 'center' },
+        h(Button, { variant: 'outline', size: 'sm', onClick: () => setDir(dir === 'ltr' ? 'rtl' : 'ltr') }, 'Toggle direction'),
+        h('span', { style: { color: ui.roles.textMuted, fontSize: 12 } }, 'useDirection() inside = '),
+        h(DirectionProvider, { dir }, h(DirReadout))),
+      h(DirectionProvider, { dir },
+        h(MessageGroup, null,
+          h(Marker, { variant: 'separator' }, h(MarkerContent, null, 'Today')),
+          h(Message, null,
+            h(MessageAvatar, null, 'A'),
+            h(MessageContent, null,
+              h(MessageHeader, null, 'Ada'),
+              h(Bubble, null, h(BubbleContent, null, 'Is the table ported yet?')),
+              h(MessageFooter, null, '10:04'))),
+          h(Message, { align: 'end' },
+            h(MessageAvatar, null, 'M'),
+            h(MessageContent, null,
+              h(MessageHeader, null, 'You'),
+              h(Bubble, { variant: 'secondary', align: 'end' },
+                h(BubbleContent, null, 'Yes - and so is this bubble.'),
+                h(BubbleReactions, { side: 'bottom', align: 'end' }, '+1')),
+              h(MessageFooter, null, '10:05'))),
+          h(Message, null,
+            h(MessageContent, null,
+              h(Bubble, { variant: 'ghost' }, h(BubbleContent, null, 'ghost variant: no chrome at all')),
+              h(MessageFooter, null, '10:06'))),
+          h(Message, null,
+            h(MessageContent, null,
+              h(Bubble, { variant: 'destructive' }, h(BubbleContent, null, 'destructive variant: the run failed')),
+              h(MessageFooter, null, '10:07'))),
+          h(Marker, { variant: 'border' }, h(MarkerIcon, null, '\u2022'), h(MarkerContent, null, 'end of the demo'))))))
+}
+
 // A Settings page, not a dialog: the gallery is a catalogue for people building UI, so it lives in Settings (nav entry "UI library"), out of the everyday screens.
 function Gallery() {
   const [tab, setTab] = React.useState('components')
   return h(Stack, { gap: 'md' },
     h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
     h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
-    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 'colors', label: 'Colors' }] },
-      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : h(Colors)))
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : h(Colors)))
 }
 
 exports.inject = ['slots']
