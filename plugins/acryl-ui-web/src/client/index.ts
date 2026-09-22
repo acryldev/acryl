@@ -25,7 +25,16 @@ import { footerAction, headerAction, settingsSection, sidebarTab } from './slot-
 export { ToolCallCard, SidebarRow, ValueField, SecretField, AppearanceCubes, SettingsRow, SelectPill, Tabs, Card, EmptyState, SwitchField, Dialog, Stack, Field, Segmented, SelectField, roles, footerAction, headerAction, settingsSection, sidebarTab }
 export type { ToolCallCardProps, ToolCallLabels, ToolCallState, SidebarRowProps, FieldProps, CubeOption, SettingsRowProps, SelectOption, TabItem }
 // Straight re-exports of the app's primitives, so a consumer needs one import.
-export { Button, Tag, Pill, Toast, Modal, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
+export {
+  Button, Tag, Pill, Toast, Modal, Tooltip,
+  StateDot, DisclosureRow, Menu, Switch, Input, HoverCard, RiskConfirmation, ConnectionIndicator,
+  JsonTree, TerminalBlock, ReadBlock, DiffBlock, SearchBlock, WebBlock, CodeBlock, JsonBlock, MarkdownText,
+} from '@deepseek-ai/dsh-client-ui-primitives'
+export type {
+  StateDotState, DisclosureRowProps, MenuEntry, RiskConfirmationProps, ConnectionIndicatorState,
+  JsonTreeProps, JsonTreeLabels, TerminalBlockProps, TerminalBlockLabels, ReadBlockProps, ReadBlockLabels,
+  DiffBlockProps, DiffBlockLabels, SearchBlockLabels, WebBlockProps, CodeBlockProps, MarkdownLabels,
+} from '@deepseek-ai/dsh-client-ui-primitives'
 
 export const version = '0.3.0'
 

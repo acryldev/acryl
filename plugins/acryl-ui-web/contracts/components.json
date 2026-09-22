@@ -369,6 +369,256 @@
         "expandable rows are disclosure controls (Enter and Space toggle)",
         "the run state is exposed as visually hidden text, not colour only"
       ]
+    },
+    "StateDot": {
+      "summary": "A small coloured status dot (done, warning, ongoing, error, idle).",
+      "props": {
+        "state": {
+          "type": "'done' | 'warning' | 'ongoing' | 'error' | 'idle'",
+          "required": true
+        },
+        "size": {
+          "type": "number"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "DisclosureRow": {
+      "summary": "A collapsible row: leading icon, title, optional collapsed summary, expand on click or chevron.",
+      "props": {
+        "icon": {
+          "type": "ReactNode"
+        },
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "open": {
+          "type": "boolean",
+          "required": true
+        },
+        "expandable": {
+          "type": "boolean",
+          "required": true
+        },
+        "onToggle": {
+          "type": "() => void",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "Menu": {
+      "summary": "A positioned menu of items, separators and labels (built by SelectField).",
+      "props": {
+        "entries": {
+          "type": "MenuEntry[]",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "Switch": {
+      "summary": "A toggle switch with an accessible name only; pair it with a visible label (see SwitchField).",
+      "props": {
+        "checked": {
+          "type": "boolean",
+          "required": true
+        },
+        "onChange": {
+          "type": "(checked: boolean) => void",
+          "required": true
+        },
+        "label": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "Input": {
+      "summary": "A plain text input (used by Field for its label, hint and error wiring).",
+      "props": {
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(value: string) => void",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "HoverCard": {
+      "summary": "Content shown on hover/focus near a trigger.",
+      "props": {
+        "trigger": {
+          "type": "ReactNode",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "RiskConfirmation": {
+      "summary": "The app's own destructive-confirmation control (has a danger state Dialog does not; terminal parity note in Dialog).",
+      "props": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "onConfirm": {
+          "type": "() => void",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "ConnectionIndicator": {
+      "summary": "A connection-state dot (connecting, connected, error, and so on).",
+      "props": {
+        "state": {
+          "type": "ConnectionIndicatorState",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "JsonTree": {
+      "summary": "A collapsible tree view of a JSON value.",
+      "props": {
+        "value": {
+          "type": "unknown",
+          "required": true
+        },
+        "labels": {
+          "type": "JsonTreeLabels"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "TerminalBlock": {
+      "summary": "A scrollback view for terminal tool output, capped and expandable.",
+      "props": {
+        "lines": {
+          "type": "string[]",
+          "required": true
+        },
+        "labels": {
+          "type": "TerminalBlockLabels"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "ReadBlock": {
+      "summary": "A file-read tool card body: numbered lines with a max before truncation.",
+      "props": {
+        "lines": {
+          "type": "ReadBlockLine[]",
+          "required": true
+        },
+        "labels": {
+          "type": "ReadBlockLabels"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "DiffBlock": {
+      "summary": "A unified diff view, capped and expandable, with add/remove totals.",
+      "props": {
+        "hunks": {
+          "type": "DiffHunk[]",
+          "required": true
+        },
+        "labels": {
+          "type": "DiffBlockLabels"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "SearchBlock": {
+      "summary": "A search-tool result list, capped and expandable.",
+      "props": {
+        "labels": {
+          "type": "object"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "WebBlock": {
+      "summary": "A web-fetch tool result card.",
+      "props": {},
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "CodeBlock": {
+      "summary": "A syntax-highlighted code block used inside markdown.",
+      "props": {},
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "JsonBlock": {
+      "summary": "A formatted JSON block used inside markdown.",
+      "props": {},
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "MarkdownText": {
+      "summary": "Renders assistant/user markdown with the app's own extensions (file mentions, path images, code).",
+      "props": {
+        "labels": {
+          "type": "MarkdownLabels"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
     }
   },
   "helpers": {
