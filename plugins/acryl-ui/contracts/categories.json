@@ -150,7 +150,9 @@
     },
     {
       "name": "Command",
-      "componentIds": []
+      "componentIds": [
+        "Command"
+      ]
     },
     {
       "name": "Comparison",

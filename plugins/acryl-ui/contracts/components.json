@@ -1472,6 +1472,29 @@
       "a11y": [
         "role=dialog with aria-modal=true and the caller's label; focus moves onto the panel as it opens and back to the trigger on close; Tab wraps inside the panel; a press that starts on a control inside the panel belongs to that control rather than to the drag. The page behind is NOT inert, as recorded for Sheet. Dismissal is by distance only - vaul's velocity flick is not implemented"
       ]
+    },
+    "Command": {
+      "summary": "A searchable command menu: an input, a filtered list with groups and headings, an empty state, and keyboard selection (ported from shadcn/ui's Command; cmdk is replaced by hand).",
+      "props": {
+        "label": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "onQueryChange": {
+          "type": "(query: string) => void"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the root is role=combobox with aria-controls pointing at the listbox and the caller's label; the input carries aria-activedescendant pointing at the active option and aria-autocomplete=list; each row is role=option with aria-selected; a filtered-out row is display-none, so it leaves the accessibility tree as well as the layout. CommandDialog is not ported (it composes the Dialog item), so a consumer places this Command inside this library's Dialog"
+      ]
     }
   },
   "helpers": {

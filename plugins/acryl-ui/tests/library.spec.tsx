@@ -30,6 +30,7 @@ import { Popover, PopoverTrigger, PopoverContent, PopoverTitle } from '../src/cl
 import { Slider } from '../src/client/registry/Slider/Slider.tsx'
 import { Sheet, SheetTrigger, SheetClose, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../src/client/registry/Sheet/Sheet.tsx'
 import { Drawer, DrawerTrigger, DrawerClose, DrawerContent, DrawerHeader, DrawerFooter, DrawerTitle, DrawerDescription } from '../src/client/registry/Drawer/Drawer.tsx'
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandSeparator } from '../src/client/registry/Command/Command.tsx'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const harness = resolve(root, '../../deepseek-harness/packages/client')
@@ -334,6 +335,60 @@ describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 bat
       <Drawer open><DrawerContent label="Drag"><DrawerClose label="Dismiss">Dismiss</DrawerClose></DrawerContent></Drawer>,
     )
     expect(html).toContain('data-slot="drawer-close"'); expect(html).toContain('aria-label="Dismiss"')
+  })
+})
+
+describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 batch 5a: Command)', () => {
+  const menu = (
+    <Command label="Commands">
+      <CommandInput placeholder="Type a command" />
+      <CommandList>
+        <CommandGroup heading="Actions">
+          <CommandItem value="New session">New session</CommandItem>
+          <CommandItem value="Open settings">Open settings</CommandItem>
+          {null}
+        </CommandGroup>
+        <CommandSeparator />
+        <CommandEmpty>Nothing matches.</CommandEmpty>
+      </CommandList>
+    </Command>
+  )
+
+  it('Command publishes the combobox/listbox/option shape the keyboard needs', () => {
+    const html = renderToStaticMarkup(menu)
+    expect(html).toContain('data-slot="command"'); expect(html).toContain('role="combobox"'); expect(html).toContain('aria-label="Commands"')
+    expect(html).toContain('aria-controls="')            // the root points at its list
+    expect(html).toContain('data-slot="command-input"'); expect(html).toContain('role="combobox"'); expect(html).toContain('aria-autocomplete="list"')
+    expect(html).toContain('role="listbox"'); expect(html).toContain('role="option"')
+    expect(html).toContain('data-slot="command-group-heading"'); expect(html).toContain('role="group"')
+    expect(html).toContain('role="separator"')
+    expect(html).not.toMatch(/\bplaceholder:text-muted-foreground\b|\bmax-h-\[300px\]\b|\bcmdk-/u)
+  })
+
+  it('every item is visible until the registry filters it, and the empty state waits for the registry', () => {
+    const html = renderToStaticMarkup(menu)
+    // Registration happens in an effect, so a server render has no registry: "unknown" must mean visible, or every
+    // row would be display-none on the first paint and this render would show an empty menu.
+    expect(html.match(/data-hidden="false"/gu)).toHaveLength(2)
+    expect(html).not.toContain('data-hidden="true"')
+    expect(html).not.toContain('data-slot="command-empty"')
+  })
+
+  it('an unregistered item is not judged yet, so a query alone cannot hide it before mount', () => {
+    // Filtering by query is deliberately NOT asserted here: it depends on the item registry, which only exists after
+    // the mount effects have run. It is verified in a real browser instead (chromium-check9), where the effects run.
+    const html = renderToStaticMarkup(
+      <Command label="Commands" query="zzzz"><CommandList><CommandItem value="New session">New session</CommandItem></CommandList></Command>,
+    )
+    expect(html).toContain('data-hidden="false"')   // unregistered, so not judged yet
+    expect(html).not.toContain('data-slot="command-empty"')
+  })
+
+  it('a disabled item reports itself to assistive tech and is skipped by the keyboard', () => {
+    const html = renderToStaticMarkup(
+      <Command label="Commands"><CommandList><CommandItem value="Blocked" disabled>Blocked</CommandItem></CommandList></Command>,
+    )
+    expect(html).toContain('data-disabled="true"'); expect(html).toContain('aria-disabled="true"')
   })
 })
 
