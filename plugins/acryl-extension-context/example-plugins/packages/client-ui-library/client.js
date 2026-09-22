@@ -27,6 +27,8 @@ const { Sheet, SheetTrigger, SheetClose, SheetContent, SheetHeader, SheetFooter,
 const { Drawer, DrawerTrigger, DrawerClose, DrawerContent, DrawerHeader, DrawerFooter, DrawerTitle, DrawerDescription } = ui
 // T045 batch 5a: Command, cmdk rewritten by hand.
 const { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandShortcut, CommandSeparator } = ui
+// T045 batch 5b: Combobox, single-select core, with InputGroup's chrome restated for its field.
+const { Combobox, ComboboxInput, ComboboxTrigger, ComboboxClear, ComboboxContent, ComboboxList, ComboboxGroup, ComboboxLabel, ComboboxEmpty, ComboboxSeparator, ComboboxItem } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -433,6 +435,7 @@ function T045Batch4() {
 // T045 batch 5a: Command. cmdk's filtering and keyboard listbox written by hand.
 function T045Batch5() {
   const [chosen, setChosen] = React.useState('nothing yet')
+  const [picked, setPicked] = React.useState(null)
   const readout = text => h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, text)
   const commandItem = (value, label, shortcut) => h(CommandItem, { key: value, value, onSelect: () => setChosen(value) }, label, shortcut === undefined ? null : h(CommandShortcut, null, shortcut))
   const commandSection = h(Section, { name: 'Command', note: 'Type to filter, walk the list with the arrow keys and choose with Enter. A junk query shows the empty state, and a chosen item reports itself below.' },
@@ -448,7 +451,24 @@ function T045Batch5() {
           commandItem('Delete workspace', 'Delete workspace')),
         h(CommandEmpty, null, 'Nothing matches.'))),
     readout('chosen = ' + chosen))
-  return h(Stack, { gap: 'md' }, commandSection)
+  const workspaceItem = value => h(ComboboxItem, { key: value, value }, value)
+  const comboboxSection = h(Section, { name: 'Combobox', note: 'A single-select combobox: focus the field to open the panel, type to filter, walk with the arrow keys and choose with Enter. The clear button empties it. Its field restates InputGroup chrome, so the group carries the focus ring.' },
+    h(Combobox, { value: picked, onValueChange: setPicked },
+      h(ComboboxInput, { placeholder: 'Pick a workspace', 'aria-label': 'Workspace' }),
+      h(ComboboxContent, null,
+        h(ComboboxList, null,
+          h(ComboboxGroup, null,
+            h(ComboboxLabel, null, 'Recent'),
+            workspaceItem('alpha'),
+            workspaceItem('beta')),
+          h(ComboboxSeparator, null),
+          h(ComboboxGroup, null,
+            h(ComboboxLabel, null, 'All'),
+            workspaceItem('gamma'),
+            workspaceItem('delta')),
+          h(ComboboxEmpty, null, 'No workspace matches.')))),
+    readout('picked = ' + String(picked)))
+  return h(Stack, { gap: 'md' }, commandSection, comboboxSection)
 }
 
 // A Settings page, not a dialog: the gallery is a catalogue for people building UI, so it lives in Settings (nav entry "UI library"), out of the everyday screens.

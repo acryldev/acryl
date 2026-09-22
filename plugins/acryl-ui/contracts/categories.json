@@ -146,7 +146,9 @@
     },
     {
       "name": "Combobox",
-      "componentIds": []
+      "componentIds": [
+        "Combobox"
+      ]
     },
     {
       "name": "Command",

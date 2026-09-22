@@ -1495,6 +1495,35 @@
       "a11y": [
         "the root is role=combobox with aria-controls pointing at the listbox and the caller's label; the input carries aria-activedescendant pointing at the active option and aria-autocomplete=list; each row is role=option with aria-selected; a filtered-out row is display-none, so it leaves the accessibility tree as well as the layout. CommandDialog is not ported (it composes the Dialog item), so a consumer places this Command inside this library's Dialog"
       ]
+    },
+    "Combobox": {
+      "summary": "A searchable single-select combobox: a field that filters a list, an anchored panel, groups with labels, an empty state and keyboard selection (ported from shadcn/ui's Combobox; Base UI's primitive is replaced by hand).",
+      "props": {
+        "open": {
+          "type": "boolean"
+        },
+        "defaultOpen": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": "string | null"
+        },
+        "defaultValue": {
+          "type": "string | null"
+        },
+        "onValueChange": {
+          "type": "(value: string | null) => void"
+        },
+        "onOpenChange": {
+          "type": "(open: boolean) => void"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the field is role=combobox with aria-expanded and aria-controls naming the listbox, and aria-activedescendant pointing at the active row while open; rows are role=option with aria-selected and the source's data-highlighted hook for the active one; a filtered-out row is display-none, leaving the accessibility tree with the layout; the panel is not portalled, so an ancestor with overflow hidden or a transform can clip it. Single-select only in this pass - the multi-select chips family is a recorded follow-up"
+      ]
     }
   },
   "helpers": {
