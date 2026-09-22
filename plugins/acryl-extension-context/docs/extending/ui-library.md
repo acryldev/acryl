@@ -10,8 +10,10 @@ Use this instead of hand-styling. It is a client-only package that every Web and
 const ui = require('acryl-ui-web')   // then ui.Card, ui.Field, ui.SettingsRow ...
 ```
 
-Example: `../example-plugins/packages/client-ui-library/` (a gallery as a Settings page: every component, the color roles, a Settings-style form). The single source of truth for props and accessibility is
-`contracts/components.json` in the package (`plugins/acryl-ui-web/`); the semantic colors are `contracts/tokens.json`.
+Example: `../example-plugins/packages/client-ui-library/` (a gallery as a Settings page: every component, the color roles, a Settings-style form). Like every example in this pack it is
+**opt-in**, not something a default profile carries: install it yourself with `acryl_install_plugin` (or copy it and run `/reload new`) when you want to browse the catalogue in a
+running app, and remove it with `/reload remove-stale` (or `acryl_install_plugin` with `remove: true`) once you're done, the same as any other local extension you're finished with. The
+single source of truth for props and accessibility is `contracts/components.json` in the package (`plugins/acryl-ui-web/`); the semantic colors are `contracts/tokens.json`.
 
 | Need | Use |
 | --- | --- |
