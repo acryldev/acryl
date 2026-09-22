@@ -1,7 +1,8 @@
 /**
  * Ported from shadcn/ui's ButtonGroup (https://ui.shadcn.com/docs/components/button-group, MIT licence, registry item `button-group`, style
  * new-york-v4, fetched 2026-09-22). cva's variant classes replaced by a CSS Module; `ButtonGroupSeparator`'s dependency on shadcn's own Separator is
- * replaced by this library's own `Separator` (registry/Separator); `asChild`/Slot (a Radix dependency) dropped from `ButtonGroupText`. See manifest.yml.
+ * NOT replaced by this library's own `Separator` (registry/Separator) - that would be a cross-item import, breaking self-containment - it restates
+ * the same two-rule divider locally instead (see the component below). `asChild`/Slot (a Radix dependency) dropped from `ButtonGroupText`. See manifest.yml.
  */
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
