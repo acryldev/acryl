@@ -907,6 +907,154 @@
       "surfaces": [
         "web"
       ]
+    },
+    "Label": {
+      "summary": "A form label (ported from shadcn/ui's Label; no Radix dependency).",
+      "props": {
+        "htmlFor": {
+          "type": "string"
+        },
+        "children": {
+          "type": "ReactNode"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Textarea": {
+      "summary": "A multi-line text input (ported from shadcn/ui's Textarea).",
+      "props": {
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(value: string) => void",
+          "required": true
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "rows": {
+          "type": "number"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Checkbox": {
+      "summary": "A checkbox with its accessible label (ported from shadcn/ui's Checkbox; a native input, no Radix dependency).",
+      "props": {
+        "checked": {
+          "type": "boolean",
+          "required": true
+        },
+        "onChange": {
+          "type": "(checked: boolean) => void",
+          "required": true
+        },
+        "label": {
+          "type": "string",
+          "required": true
+        },
+        "disabled": {
+          "type": "boolean"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "AspectRatio": {
+      "summary": "A box held to a fixed width:height ratio (ported from shadcn/ui's AspectRatio; pure CSS, no Radix dependency).",
+      "props": {
+        "ratio": {
+          "type": "number",
+          "required": true
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Breadcrumb": {
+      "summary": "A breadcrumb trail: list, item, link, current page, separator and an ellipsis for a collapsed middle (ported from shadcn/ui's Breadcrumb).",
+      "props": {
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "nav aria-label=breadcrumb; the current page is aria-current=page"
+      ]
+    },
+    "Toggle": {
+      "summary": "A two-state pressed button (ported from shadcn/ui's Toggle; a native aria-pressed button, no Radix dependency).",
+      "props": {
+        "pressed": {
+          "type": "boolean",
+          "required": true
+        },
+        "onPressedChange": {
+          "type": "(pressed: boolean) => void",
+          "required": true
+        },
+        "children": {
+          "type": "ReactNode"
+        },
+        "variant": {
+          "type": "'default' | 'outline'"
+        },
+        "size": {
+          "type": "'sm' | 'default' | 'lg'"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "ButtonGroup": {
+      "summary": "A row (or column) of controls with merged corners (ported from shadcn/ui's ButtonGroup).",
+      "props": {
+        "children": {
+          "type": "ReactNode"
+        },
+        "orientation": {
+          "type": "'horizontal' | 'vertical'"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Accordion": {
+      "summary": "One or more collapsible items sharing an open/close model, single or multiple open (ported from shadcn/ui's Accordion; plain state, no Radix dependency).",
+      "props": {
+        "type": {
+          "type": "'single' | 'multiple'",
+          "required": true
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
     }
   },
   "helpers": {

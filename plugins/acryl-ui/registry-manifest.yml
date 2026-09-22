@@ -79,3 +79,35 @@ components:
     origin: ported
     from: shadcn/ui registry item `avatar` (style new-york-v4), https://ui.shadcn.com/docs/components/avatar, MIT licence, fetched 2026-09-22
     changed: Radix Avatar.Root/Image/Fallback dropped, reproduced with a plain onError state; AvatarBadge/AvatarGroup/AvatarGroupCount not ported (composition-only, no behavior of their own)
+  - name: Label
+    origin: ported
+    from: shadcn/ui registry item `label` (style new-york-v4), https://ui.shadcn.com/docs/components/label, MIT licence, fetched 2026-09-22
+    changed: Radix Label.Root dropped; a native <label for> needs no interactive behavior
+  - name: Textarea
+    origin: ported
+    from: shadcn/ui registry item `textarea` (style new-york-v4), https://ui.shadcn.com/docs/components/textarea, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module
+  - name: Checkbox
+    origin: ported
+    from: shadcn/ui registry item `checkbox` (style new-york-v4), https://ui.shadcn.com/docs/components/checkbox, MIT licence, fetched 2026-09-22
+    changed: Radix Checkbox.Root/Indicator dropped for a native input; lucide-react's CheckIcon replaced by a plain inline SVG
+  - name: AspectRatio
+    origin: ported
+    from: shadcn/ui registry item `aspect-ratio` (style new-york-v4), https://ui.shadcn.com/docs/components/aspect-ratio, MIT licence, fetched 2026-09-22
+    changed: Radix AspectRatio.Root dropped; CSS aspect-ratio needs no JS behavior at all
+  - name: Breadcrumb
+    origin: ported
+    from: shadcn/ui registry item `breadcrumb` (style new-york-v4), https://ui.shadcn.com/docs/components/breadcrumb, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module; asChild/Slot dropped from BreadcrumbLink; lucide-react icons replaced by plain inline SVGs
+  - name: Toggle
+    origin: ported
+    from: shadcn/ui registry item `toggle` (style new-york-v4), https://ui.shadcn.com/docs/components/toggle, MIT licence, fetched 2026-09-22
+    changed: Radix Toggle.Root dropped for a native aria-pressed button; cva variants replaced by a CSS Module
+  - name: ButtonGroup
+    origin: ported
+    from: shadcn/ui registry item `button-group` (style new-york-v4), https://ui.shadcn.com/docs/components/button-group, MIT licence, fetched 2026-09-22
+    changed: cva variants replaced by a CSS Module; ButtonGroupSeparator no longer depends on this library's own Separator item (would break self-containment) - its own small inline divider instead; asChild/Slot dropped from ButtonGroupText
+  - name: Accordion
+    origin: ported
+    from: shadcn/ui registry item `accordion` (style new-york-v4), https://ui.shadcn.com/docs/components/accordion, MIT licence, fetched 2026-09-22
+    changed: Radix Accordion.Root/Item/Trigger/Content dropped for plain React state (an open-item id set); lucide-react's ChevronDownIcon replaced by a plain inline SVG

@@ -14,7 +14,7 @@ const ui = require('@acryl/ui')
 const h = React.createElement
 const { Stack, Card, Field, SwitchField, SettingsRow, SelectField, Segmented, Tabs, Dialog, EmptyState, Button, Tag, Pill } = ui
 const { StateDot, DisclosureRow, Switch, Input, JsonTree, TerminalBlock, ReadBlock, DiffBlock, RiskConfirmation, ConnectionIndicator, WebBlock, CodeBlock, JsonBlock, MarkdownText, ReferenceIcon, LinkIcon, DocumentFileIcon } = ui
-const { Badge, Skeleton, Spinner, Alert, Separator, Progress, Avatar } = ui
+const { Badge, Skeleton, Spinner, Alert, Separator, Progress, Avatar, Label, Textarea, Checkbox, AspectRatio, Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator, Toggle, ButtonGroup, ButtonGroupText, ButtonGroupSeparator, Accordion, AccordionItem, AccordionTrigger, AccordionContent } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -72,6 +72,34 @@ function Blocks2() {
       h(JsonBlock, { label: 'Payload', payload: { ok: true, count: 3 }, truncatedLabel: n => 'Truncated (' + n + ' chars)' })),
     h(Section, { name: 'MarkdownText', note: 'Full markdown rendering: headings, lists, code.' },
       h(MarkdownText, { text: '## Heading\n\nSome **bold** text and a list:\n\n- one\n- two\n\n```ts\nconst x = 1\n```', labels: markdownLabels })))
+}
+
+function ShadcnBatch2() {
+  const [checked, setChecked] = React.useState(false)
+  const [pressed, setPressed] = React.useState(false)
+  const [text, setText] = React.useState('')
+  return h(Stack, { gap: 'md' },
+    h(Section, { name: 'Label, Textarea, Checkbox', note: 'A native label, a growable textarea and a checkbox.' },
+      h(Label, { htmlFor: 'demo-textarea' }, 'Notes'),
+      h(Textarea, { value: text, onChange: setText, placeholder: 'Type something...' }),
+      h(Checkbox, { checked, onChange: setChecked, label: 'I agree' })),
+    h(Section, { name: 'Toggle', note: 'Click to press/unpress.' },
+      h(Toggle, { pressed, onPressedChange: setPressed, variant: 'outline' }, pressed ? 'Pressed' : 'Not pressed')),
+    h(Section, { name: 'Breadcrumb', note: 'A trail with the current page last.' },
+      h(Breadcrumb, null, h(BreadcrumbList, null,
+        h(BreadcrumbItem, null, h(BreadcrumbLink, { href: '#' }, 'Home')),
+        h(BreadcrumbSeparator, null),
+        h(BreadcrumbItem, null, h(BreadcrumbLink, { href: '#' }, 'Settings')),
+        h(BreadcrumbSeparator, null),
+        h(BreadcrumbItem, null, h(BreadcrumbPage, null, 'UI library'))))),
+    h(Section, { name: 'AspectRatio', note: '16:9 box.' },
+      h(AspectRatio, { ratio: 16 / 9 }, h('div', { style: { width: '100%', height: '100%', background: ui.roles.surfaceRaised, display: 'flex', alignItems: 'center', justifyContent: 'center' } }, '16:9'))),
+    h(Section, { name: 'ButtonGroup', note: 'Corners merge between adjacent controls.' },
+      h(ButtonGroup, null, h(Button, { variant: 'outline', size: 'sm' }, 'Left'), h(Button, { variant: 'outline', size: 'sm' }, 'Middle'), h(Button, { variant: 'outline', size: 'sm' }, 'Right'))),
+    h(Section, { name: 'Accordion', note: 'Single mode: opening one closes the other.' },
+      h(Accordion, { type: 'single' },
+        h(AccordionItem, { value: 'a' }, h(AccordionTrigger, null, 'Section A'), h(AccordionContent, null, 'Content of A.')),
+        h(AccordionItem, { value: 'b' }, h(AccordionTrigger, null, 'Section B'), h(AccordionContent, null, 'Content of B.')))))
 }
 
 // shadcn/ui conversions (spec 038-ui-component-library T040): ported source, no Radix or lucide-react.
@@ -171,8 +199,8 @@ function Gallery() {
   return h(Stack, { gap: 'md' },
     h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
     h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
-    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'colors', label: 'Colors' }] },
-      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : h(Colors)))
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : h(Colors)))
 }
 
 exports.inject = ['slots']

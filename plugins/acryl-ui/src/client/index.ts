@@ -26,12 +26,20 @@ import { Alert, type AlertProps, type AlertVariant } from './registry/Alert/Aler
 import { Separator, type SeparatorProps } from './registry/Separator/Separator.tsx'
 import { Progress, type ProgressProps } from './registry/Progress/Progress.tsx'
 import { Avatar, type AvatarProps, type AvatarSize } from './registry/Avatar/Avatar.tsx'
+import { Label, type LabelProps } from './registry/Label/Label.tsx'
+import { Textarea, type TextareaProps } from './registry/Textarea/Textarea.tsx'
+import { Checkbox, type CheckboxProps } from './registry/Checkbox/Checkbox.tsx'
+import { AspectRatio, type AspectRatioProps } from './registry/AspectRatio/AspectRatio.tsx'
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator, BreadcrumbEllipsis } from './registry/Breadcrumb/Breadcrumb.tsx'
+import { Toggle, type ToggleProps, type ToggleVariant, type ToggleSize } from './registry/Toggle/Toggle.tsx'
+import { ButtonGroup, ButtonGroupText, ButtonGroupSeparator, type ButtonGroupProps } from './registry/ButtonGroup/ButtonGroup.tsx'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent, type AccordionProps } from './registry/Accordion/Accordion.tsx'
 import { Field, Segmented, SelectField, SettingsRow } from './contract-adapters.tsx'
 import { roles } from './roles.ts'
 import { footerAction, headerAction, settingsSection, sidebarTab } from './slot-helpers.ts'
 
-export { Kbd, Badge, Skeleton, Spinner, Alert, Separator, Progress, Avatar, ToolCallCard, SidebarRow, ValueField, SecretField, AppearanceCubes, SettingsRow, SelectPill, Tabs, Card, EmptyState, SwitchField, Dialog, Stack, Field, Segmented, SelectField, roles, footerAction, headerAction, settingsSection, sidebarTab }
-export type { KbdProps, BadgeProps, BadgeVariant, SkeletonProps, SpinnerProps, AlertProps, AlertVariant, SeparatorProps, ProgressProps, AvatarProps, AvatarSize, ToolCallCardProps, ToolCallLabels, ToolCallState, SidebarRowProps, FieldProps, CubeOption, SettingsRowProps, SelectOption, TabItem }
+export { Kbd, Badge, Skeleton, Spinner, Alert, Separator, Progress, Avatar, Label, Textarea, Checkbox, AspectRatio, Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator, BreadcrumbEllipsis, Toggle, ButtonGroup, ButtonGroupText, ButtonGroupSeparator, Accordion, AccordionItem, AccordionTrigger, AccordionContent, ToolCallCard, SidebarRow, ValueField, SecretField, AppearanceCubes, SettingsRow, SelectPill, Tabs, Card, EmptyState, SwitchField, Dialog, Stack, Field, Segmented, SelectField, roles, footerAction, headerAction, settingsSection, sidebarTab }
+export type { KbdProps, BadgeProps, BadgeVariant, SkeletonProps, SpinnerProps, AlertProps, AlertVariant, SeparatorProps, ProgressProps, AvatarProps, AvatarSize, LabelProps, TextareaProps, CheckboxProps, AspectRatioProps, ToggleProps, ToggleVariant, ToggleSize, ButtonGroupProps, AccordionProps, ToolCallCardProps, ToolCallLabels, ToolCallState, SidebarRowProps, FieldProps, CubeOption, SettingsRowProps, SelectOption, TabItem }
 // Straight re-exports of the app's primitives, so a consumer needs one import.
 export {
   Button, Tag, Pill, Toast, Modal, Tooltip,
