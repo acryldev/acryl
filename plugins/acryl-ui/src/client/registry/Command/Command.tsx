@@ -2,6 +2,9 @@
  * Ported from shadcn/ui's Command (https://ui.shadcn.com/docs/components/command, MIT licence, registry item `command`, style new-york-v4, fetched
  * 2026-09-22). The searchable command menu: an input, a filtered list, groups with headings, an empty state and keyboard selection.
  *
+ * Restates the anchored-listbox shape written down in docs/pattern-anchored-listbox.md (points 6, 7 and 8) — a shared pattern each item restates,
+ * never an importable module, because a cross-item import is what this registry's ingest gate rejects.
+ *
  * cmdk is dropped and its behaviour written by hand. The root owns the query and a registry of the items mounted under it (each item's filter text,
  * its disabled flag and its select handler); matching is a case-insensitive substring, falling back to "every word of the query is present", which is a
  * substitution for cmdk's fuzzy scorer and is recorded in manifest.yml. Items apply their own visibility from the query, so a filtered-out item is

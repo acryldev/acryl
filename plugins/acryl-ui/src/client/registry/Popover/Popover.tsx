@@ -1,9 +1,12 @@
 /**
  * Ported from shadcn/ui's Popover (https://ui.shadcn.com/docs/components/popover, MIT licence, registry item `popover`, style new-york-v4, fetched
  * 2026-09-22). Radix's Popover primitive is dropped and its behaviour reproduced by hand, because a popover is one piece of state plus three pieces of
- * platform behaviour: the root owns open state (controlled `open`/`onOpenChange`, or `defaultOpen`), the trigger toggles it, and the content renders in a
- * portal positioned against the trigger's own rect, closing on Escape and on a pointerdown outside, moving focus into the panel when it opens and back to
- * the trigger when it closes. Positioning flips above the trigger when the panel would overflow the viewport bottom, and re-measures on resize and scroll.
+ * platform behaviour: the root owns open state (controlled `open`/`onOpenChange`, or `defaultOpen`), the trigger toggles it, and the content is positioned
+ * against the trigger's own rect, closing on Escape and on a pointerdown outside, moving focus into the panel when it opens and back to the trigger when it
+ * closes. Positioning flips above the trigger when the panel would overflow the viewport bottom, and re-measures on resize and scroll.
+ *
+ * Restates the anchored-listbox shape written down in docs/pattern-anchored-listbox.md (points 1 to 5, its anchoring half) — a shared pattern each item
+ * restates, never an importable module, because a cross-item import is what this registry's ingest gate rejects.
  *
  * `asChild`/Slot are dropped from the trigger and the anchor; `PopoverAnchor` is a wrapper element that registers itself as the position reference, which
  * is what Radix's Anchor does to the child it clones. Three substitutions to name. (1) The source renders through a portal to `document.body`; this port
