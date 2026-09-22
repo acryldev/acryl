@@ -86,15 +86,17 @@ Why: the library is 12 components of our own plus 6 re-exports, while the app's 
 ### Two ways to consume, one source
 
 ```text
-acryl-ui-registry  (git repo, hub form D6)          registry/<id>/{item.yaml, <Name>.tsx, <Name>.module.css, <Name>.spec.tsx}   +  index.json (generated)
-        |                                                    ^
-        | built and published from                           | acryl ui add <id>   copies the SOURCE into a plugin (no dependency; the plugin owns and may edit it)
-        v                                                    |
-@acryl/ui-web  (versioned npm package)  <---------  plugin `require('acryl-ui-web')`   (runtime dependency; build-less plugins)
+github.com/acryldev/acryl-ui-registry  (hub form D6)     registry/<id>/{item.yaml, web/<Name>.tsx+.module.css, tui/<Name>.ts, <Name>.spec.tsx}   +  index.json (generated)
+        |                                                                    ^
+        | built and published from                                          | acryl ui add <id> [--surface web|tui]   copies the SOURCE into a plugin (no dependency; the plugin owns and may edit it)
+        v                                                                    |
+@acryl/ui  (one versioned npm package, both surfaces)  <---------  plugin `require('@acryl/ui')`   (runtime dependency; build-less plugins; the loader picks the web or tui export by host)
 ```
 
-- **Copy source** (`acryl ui add`): for scaffolded, built plugins. Reads `index.json`, verifies the item's sha256, writes the files into the plugin, records `{id, version, digest}` in the plugin's `ui.lock.json` so a later `acryl ui diff` can show local edits against the registry version.
-- **Dependency** (`@acryl/ui-web`): for plugins written as plain `client.js` with no build step (the self-extension path). Same items, prebuilt into one bundle. Package name follows the `@acryl/` scope `blends-core` already uses; the registry item ids are dot-namespaced lowercase per D6 (`acryl.ui.card`).
+Decided 2026-09-22: one package, one registry, `web` folded in. `acryl-ui-web` (the plugin id) and `acryl-ui-tui` are renamed to `@acryl/ui` (npm package) / `acryl-ui` (installed plugin id), each item carries both a `web` and/or `tui` implementation under the same id, and an agent picks the surface it needs from one catalogue instead of two package names. `ui-web`/`ui-tui` naming stays only inside the source tree (`registry/<id>/web/`, `registry/<id>/tui/`) as an implementation detail, never in the public name.
+
+- **Copy source** (`acryl ui add <id> [--surface web|tui]`): for scaffolded, built (web) or plain-JS (tui) plugins. Reads `index.json`, verifies the item's sha256, writes the files for the requested surface into the plugin, records `{id, version, digest, surface}` in the plugin's `ui.lock.json` so a later `acryl ui diff` can show local edits against the registry version. `acryl ui list` shows both surfaces per id so an agent sees the whole range before choosing.
+- **Dependency** (`@acryl/ui`): for plugins written as plain `client.js` (web) or the CLI host (tui) with no build step. Same items, prebuilt; the package exports `client.js` (web, DSH client loader) and a `tui` entry (pi-tui components) side by side, so `require('@acryl/ui')` on Web/Desktop and `require('@acryl/ui/tui')` in the CLI draw from the same catalogue. Registry item ids stay dot-namespaced lowercase per D6 (`acryl.ui.card`).
 
 ### Registry item (one directory, generated index)
 
@@ -112,6 +114,10 @@ Nothing in spec 036-cordis-ecosystem-and-acryl-blends blocks this. What I called
 2. The registry repo reuses the hub form (D6) and ingest (D16 to D19) with `kind: ui-component`. Adding a `kind` to the index is additive; it is proposed in the `blends` repo's own spec.
 3. The UI library itself is published as one **Blueprint-visible module**, so `acryl init --blend <id>` gets the library without a special path.
 
+### Repo
+
+The registry lives at `github.com/acryldev/acryl-ui-registry` (hub form D6: definition directories plus generated `index.json`), separate from this product repo, matching how `acryl_blends_project/blends` is its own repo with its own methodology.
+
 ### Slice 7 exit
 
-`acryl ui add acryl.ui.card` in a scaffold produces a plugin that builds and renders the component with no dependency on `acryl-ui-web`; `@acryl/ui-web` installs from a registry into a plugin outside this repo; the registry repo validates and regenerates its index in CI; and a Blueprint containing the library round-trips through `/blend snapshot`, `verify` and `apply` on a fresh app.
+`acryl ui add acryl.ui.card` in a scaffold produces a plugin that builds and renders the component with no dependency on `@acryl/ui`; `acryl ui add acryl.ui.card --surface tui` does the same for a terminal plugin from the same catalogue entry; `@acryl/ui` installs from the registry into a plugin outside this repo on either surface; the registry repo validates and regenerates its index in CI; and a Blueprint containing the library round-trips through `/blend snapshot`, `verify` and `apply` on a fresh app.
