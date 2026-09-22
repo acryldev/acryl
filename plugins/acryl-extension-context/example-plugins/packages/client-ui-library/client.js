@@ -13,6 +13,7 @@ const React = require('react')
 const ui = require('acryl-ui-web')
 const h = React.createElement
 const { Stack, Card, Field, SwitchField, SettingsRow, SelectField, Segmented, Tabs, Dialog, EmptyState, Button, Tag, Pill } = ui
+const { StateDot, DisclosureRow, Switch, Input, JsonTree, TerminalBlock, ReadBlock, DiffBlock, RiskConfirmation, ConnectionIndicator } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -53,6 +54,35 @@ function Components() {
         h('span', { style: { color: ui.roles.textMuted, fontSize: 12 } }, 'last answer: ' + answer)),
       h(Dialog, { open: modal, title: 'Delete item?', onClose: () => setModal(false), onConfirm: () => setAnswer('confirmed'), confirmLabel: 'Delete' }, 'This cannot be undone.')),
     h(EmptyState, { title: 'Nothing yet', description: 'Saved items appear here' }))
+}
+
+// The 15 primitives re-exported straight from the app this pass (spec 038-ui-component-library T035). Each one below is real, live output, not a mock; the tool
+// blocks are given real-shaped fixture data so the truncation, copy button and status pill all behave as they would on a real tool call.
+function Blocks() {
+  const [open, setOpen] = React.useState(false)
+  const [risk, setRisk] = React.useState(false)
+  const [ack, setAck] = React.useState(false)
+  return h(Stack, { gap: 'md' },
+    h(Section, { name: 'StateDot and ConnectionIndicator', note: 'Status dots used by ToolCallCard and the connection banner.' },
+      h(Stack, { direction: 'row', gap: 'md', align: 'center' },
+        h(StateDot, { state: 'done' }), h(StateDot, { state: 'error' }), h(StateDot, { state: 'ongoing' }),
+        h(ConnectionIndicator, { state: 'connected' }))),
+    h(Section, { name: 'DisclosureRow', note: 'The collapsible row ToolCallCard is built on.' },
+      h(DisclosureRow, { icon: h(StateDot, { state: 'done' }), title: 'Read', open, expandable: true, onToggle: () => setOpen(!open), collapsedContent: h('span', null, 'a.ts') }, h('p', { style: { margin: 0 } }, 'expanded body')),
+      h('span', { style: { color: ui.roles.textMuted, fontSize: 12 } }, 'open = ' + open)),
+    h(Section, { name: 'Switch and Input (bare)', note: 'The primitives SwitchField and Field build on; Switch needs its own visible label, Input has none.' },
+      h(Stack, { direction: 'row', gap: 'md', align: 'center' },
+        h(Switch, { checked: risk, onChange: setRisk, label: 'Bare switch' }), h(Input, { value: '', onChange: () => {} }))),
+    h(Section, { name: 'TerminalBlock', note: 'A settled command with a non-zero exit.' },
+      h(TerminalBlock, { command: 'pnpm test', output: '1 failing\n  expected true to be false', exitCode: 1, labels: { signal: s => 'signal ' + s, exitCode: c => 'exit ' + c, running: 'Running', failed: 'Failed', done: 'Done', copy: 'Copy', copied: 'Copied', noOutput: 'No output', collapseAria: 'Collapse', expandAria: n => 'Show ' + n + ' more' } })),
+    h(Section, { name: 'ReadBlock', note: 'A file window with line numbers.' },
+      h(ReadBlock, { label: 'src/index.ts', totalLines: 42, lines: [{ number: 1, text: 'export const x = 1' }, { number: 2, text: 'export const y = 2' }], labels: { window: (n, t) => 'Showing ' + n + ' of ' + t, copy: 'Copy', copied: 'Copied', collapseAria: 'Collapse', expandAria: n => 'Show ' + n + ' more', collapse: 'Collapse', expand: n => 'Show ' + n + ' more' } })),
+    h(Section, { name: 'DiffBlock', note: 'One hunk, added and removed lines.' },
+      h(DiffBlock, { diffs: [{ path: 'src/index.ts', oldText: 'const x = 1\n', newText: 'const x = 2\n' }], labels: { copy: 'Copy', copied: 'Copied', collapseAria: 'Collapse', expandAria: n => 'Show ' + n + ' more', collapse: 'Collapse', expand: n => 'Show ' + n + ' more', files: n => n + ' file' } })),
+    h(Section, { name: 'JsonTree', note: 'A collapsible tree; click a row to expand.' },
+      h(JsonTree, { data: { name: 'acryl', tags: ['ui', 'cordis'] }, label: 'Demo JSON', labels: { copyValue: 'Copy value', copyJson: 'Copy JSON', copyPath: 'Copy path', copyPrettyJson: 'Copy pretty', copyCompactJson: 'Copy compact', copied: 'Copied', copyFailed: 'Copy failed', collapseNode: 'Collapse', expandNode: 'Expand' } })),
+    h(Section, { name: 'RiskConfirmation', note: 'The app\'s own destructive-confirmation control (Dialog has no danger state on web); the confirm button stays disabled until acknowledged is checked.' },
+      h(RiskConfirmation, { open: true, title: 'Delete workspace?', description: 'This removes every session in it. This cannot be undone.', acknowledgeLabel: 'I understand this cannot be undone', cancelLabel: 'Cancel', closeLabel: 'Close', confirmLabel: 'Delete', acknowledged: ack, onAcknowledgedChange: setAck, onCancel: () => setAck(false), onConfirm: () => {} })))
 }
 
 function SettingsForm() {
@@ -99,8 +129,8 @@ function Gallery() {
   return h(Stack, { gap: 'md' },
     h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
     h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
-    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'colors', label: 'Colors' }] },
-      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : h(Colors)))
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : h(Colors)))
 }
 
 exports.inject = ['slots']
