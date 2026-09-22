@@ -23,6 +23,8 @@ const { ScrollArea, InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator, It
 const { Popover, PopoverTrigger, PopoverContent, PopoverHeader, PopoverTitle, PopoverDescription, Slider } = ui
 // T045 batch 4: Sheet, built on the overlay pattern Popover's port established.
 const { Sheet, SheetTrigger, SheetClose, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } = ui
+// T045 batch 4b: Drawer, the same overlay with drag-to-dismiss.
+const { Drawer, DrawerTrigger, DrawerClose, DrawerContent, DrawerHeader, DrawerFooter, DrawerTitle, DrawerDescription } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -392,14 +394,17 @@ function T045Batch3() {
   return h(Stack, { gap: 'md' }, popoverSection, sliderSection)
 }
 
-// T045 batch 4: Sheet. Radix's Dialog replaced by hand, reusing the overlay pattern Popover's port established.
+// T045 batch 4: Sheet, then Drawer - the same overlay pattern plus drag-to-dismiss. Both replace their Radix/vaul primitive by hand.
 function T045Batch4() {
   const [side, setSide] = React.useState('right')
   const [open, setOpen] = React.useState(false)
+  const [drawerOpen, setDrawerOpen] = React.useState(false)
+  const [direction, setDirection] = React.useState('bottom')
   const readout = text => h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, text)
+  const sideButtons = (current, choose) => h(Stack, { direction: 'row', gap: 'sm', align: 'center' },
+    ['top', 'right', 'bottom', 'left'].map(name => h(Button, { key: name, variant: current === name ? 'default' : 'outline', size: 'sm', onClick: () => choose(name) }, name)))
   const sheetSection = h(Section, { name: 'Sheet', note: 'An edge panel: pick a side, open it, then dismiss it with Escape, the close button, or a press on the overlay. Tab and Shift-Tab wrap inside the panel.' },
-    h(Stack, { direction: 'row', gap: 'sm', align: 'center' },
-      ['top', 'right', 'bottom', 'left'].map(name => h(Button, { key: name, variant: side === name ? 'default' : 'outline', size: 'sm', onClick: () => setSide(name) }, name))),
+    sideButtons(side, setSide),
     h(Sheet, { open, onOpenChange: setOpen },
       h(SheetTrigger, null, 'Open sheet'),
       h(SheetContent, { side, label: 'Sheet demonstration' },
@@ -409,7 +414,18 @@ function T045Batch4() {
         h(SheetFooter, null,
           h(SheetClose, null, h(Button, { variant: 'outline', size: 'sm' }, 'Close from the footer'))))),
     readout('open = ' + open + '   side = ' + side))
-  return h(Stack, { gap: 'md' }, sheetSection)
+  const drawerSection = h(Section, { name: 'Drawer', note: 'The same overlay with a drag: pull the handle past a quarter of the panel and it dismisses, a shorter pull springs back, and a press on a button inside never starts a drag.' },
+    sideButtons(direction, setDirection),
+    h(Drawer, { open: drawerOpen, onOpenChange: setDrawerOpen, direction },
+      h(DrawerTrigger, null, 'Open drawer'),
+      h(DrawerContent, { label: 'Drawer demonstration' },
+        h(DrawerHeader, null,
+          h(DrawerTitle, null, 'From the ' + direction + ' edge'),
+          h(DrawerDescription, null, 'Drag the handle, or dismiss from the footer.')),
+        h(DrawerFooter, null,
+          h(DrawerClose, null, h(Button, { variant: 'outline', size: 'sm' }, 'Close from the footer'))))),
+    readout('drawer open = ' + drawerOpen + '   direction = ' + direction))
+  return h(Stack, { gap: 'md' }, sheetSection, drawerSection)
 }
 
 // A Settings page, not a dialog: the gallery is a catalogue for people building UI, so it lives in Settings (nav entry "UI library"), out of the everyday screens.

@@ -29,6 +29,7 @@ import { FormField, FieldLabel, FieldContent, FieldDescription, FieldError } fro
 import { Popover, PopoverTrigger, PopoverContent, PopoverTitle } from '../src/client/registry/Popover/Popover.tsx'
 import { Slider } from '../src/client/registry/Slider/Slider.tsx'
 import { Sheet, SheetTrigger, SheetClose, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../src/client/registry/Sheet/Sheet.tsx'
+import { Drawer, DrawerTrigger, DrawerClose, DrawerContent, DrawerHeader, DrawerFooter, DrawerTitle, DrawerDescription } from '../src/client/registry/Drawer/Drawer.tsx'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const harness = resolve(root, '../../deepseek-harness/packages/client')
@@ -294,6 +295,45 @@ describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 bat
     )
     expect(html).not.toContain('aria-label="Close"')
     expect(html).toContain('data-side="bottom"'); expect(html).toContain('data-slot="sheet-close"'); expect(html).toContain('aria-label="Cancel"')
+  })
+})
+
+describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 batch 4b: Drawer)', () => {
+  it('Drawer renders its trigger always, and the overlay, handle and panel only while open', () => {
+    const closed = renderToStaticMarkup(
+      <Drawer><DrawerTrigger label="Open drawer">Open</DrawerTrigger><DrawerContent label="Actions">body</DrawerContent></Drawer>,
+    )
+    expect(closed).toContain('data-slot="drawer-trigger"'); expect(closed).toContain('aria-haspopup="dialog"'); expect(closed).toContain('aria-expanded="false"')
+    expect(closed).not.toContain('data-slot="drawer-content"'); expect(closed).not.toContain('data-slot="drawer-overlay"')
+
+    const open = renderToStaticMarkup(
+      <Drawer open direction="bottom">
+        <DrawerTrigger>Open</DrawerTrigger>
+        <DrawerContent label="Actions">
+          <DrawerHeader><DrawerTitle>Actions</DrawerTitle><DrawerDescription>Pick one.</DrawerDescription></DrawerHeader>
+          <DrawerFooter>buttons</DrawerFooter>
+        </DrawerContent>
+      </Drawer>,
+    )
+    expect(open).toContain('data-slot="drawer-overlay"')
+    expect(open).toContain('role="dialog"'); expect(open).toContain('aria-modal="true"'); expect(open).toContain('aria-label="Actions"')
+    expect(open).toContain('data-direction="bottom"'); expect(open).toContain('data-shows-handle="true"'); expect(open).toContain('data-dragging="false"')
+    expect(open).toContain('data-slot="drawer-handle"'); expect(open).toContain('data-slot="drawer-title"'); expect(open).toContain('tabindex="-1"')
+    expect(open).not.toMatch(/\bmax-h-\[80vh\]\b|\bbg-black\/50\b|\brounded-t-lg\b|\bgroup\/drawer-content\b/u)
+  })
+
+  it('the handle is claimed only for the horizontal edges, and can be turned off', () => {
+    const right = renderToStaticMarkup(<Drawer open direction="right"><DrawerContent label="Side">body</DrawerContent></Drawer>)
+    expect(right).toContain('data-direction="right"'); expect(right).toContain('data-shows-handle="false"')
+    const off = renderToStaticMarkup(<Drawer open direction="bottom"><DrawerContent showHandle={false} label="No handle">body</DrawerContent></Drawer>)
+    expect(off).toContain('data-shows-handle="false"')
+  })
+
+  it('DrawerClose dismisses from inside the panel', () => {
+    const html = renderToStaticMarkup(
+      <Drawer open><DrawerContent label="Drag"><DrawerClose label="Dismiss">Dismiss</DrawerClose></DrawerContent></Drawer>,
+    )
+    expect(html).toContain('data-slot="drawer-close"'); expect(html).toContain('aria-label="Dismiss"')
   })
 })
 

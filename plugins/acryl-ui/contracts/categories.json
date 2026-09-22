@@ -203,7 +203,9 @@
     },
     {
       "name": "Drawer",
-      "componentIds": []
+      "componentIds": [
+        "Drawer"
+      ]
     },
     {
       "name": "Dropdown Menu",

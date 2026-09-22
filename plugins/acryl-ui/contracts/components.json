@@ -1446,6 +1446,32 @@
       "a11y": [
         "role=dialog with aria-modal=true and the caller's label; focus moves onto the panel as it opens and back to the trigger on close; Tab wraps inside the panel. The page behind is NOT made inert, so assistive tech can still reach it - recorded in the manifest rather than claimed as done"
       ]
+    },
+    "Drawer": {
+      "summary": "A sheet you can flick away: a panel from any edge, with a drag handle on the horizontal edges and dismissal by dragging past a quarter of its extent (ported from shadcn/ui's Drawer; vaul is replaced by hand).",
+      "props": {
+        "open": {
+          "type": "boolean"
+        },
+        "defaultOpen": {
+          "type": "boolean"
+        },
+        "direction": {
+          "type": "'top' | 'right' | 'bottom' | 'left'"
+        },
+        "onOpenChange": {
+          "type": "(open: boolean) => void"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "role=dialog with aria-modal=true and the caller's label; focus moves onto the panel as it opens and back to the trigger on close; Tab wraps inside the panel; a press that starts on a control inside the panel belongs to that control rather than to the drag. The page behind is NOT inert, as recorded for Sheet. Dismissal is by distance only - vaul's velocity flick is not implemented"
+      ]
     }
   },
   "helpers": {
