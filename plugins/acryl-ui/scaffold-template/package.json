@@ -1,0 +1,42 @@
+{
+  "name": "my-ui-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Scaffold for a plugin built from @acryl/ui registry components as copied source (spec 038-ui-component-library, T039). Rename this package before publishing.",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./lib/client.js"
+  },
+  "scripts": {
+    "build": "node scripts/clean.mjs && tsdown",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit",
+    "check": "pnpm run build && pnpm run typecheck"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": ["@deepseek-ai/dsh-client-ui-primitives"],
+      "platform": "web"
+    }
+  },
+  "acryl": {
+    "apiVersion": 1,
+    "permissions": ["ui"]
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh-client-ui-primitives": "0.1.5-alpha.1",
+    "@types/node": "^22.20.0",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "clsx": "2.1.1",
+    "lightningcss": "1.32.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3"
+  }
+}

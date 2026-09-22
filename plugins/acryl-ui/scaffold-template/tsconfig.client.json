@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "rootDir": ".",
+    "noEmit": true
+  },
+  "exclude": [],
+  "include": ["src/client/**/*.ts", "src/client/**/*.tsx", "src/css-modules.d.ts", "ui/**/*.tsx"]
+}
