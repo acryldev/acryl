@@ -31,6 +31,7 @@ import { Slider } from '../src/client/registry/Slider/Slider.tsx'
 import { Sheet, SheetTrigger, SheetClose, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../src/client/registry/Sheet/Sheet.tsx'
 import { Drawer, DrawerTrigger, DrawerClose, DrawerContent, DrawerHeader, DrawerFooter, DrawerTitle, DrawerDescription } from '../src/client/registry/Drawer/Drawer.tsx'
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandSeparator } from '../src/client/registry/Command/Command.tsx'
+import { Combobox, ComboboxInput, ComboboxTrigger, ComboboxClear, ComboboxContent, ComboboxList, ComboboxGroup, ComboboxLabel, ComboboxEmpty, ComboboxSeparator, ComboboxItem } from '../src/client/registry/Combobox/Combobox.tsx'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const harness = resolve(root, '../../deepseek-harness/packages/client')
@@ -389,6 +390,70 @@ describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 bat
       <Command label="Commands"><CommandList><CommandItem value="Blocked" disabled>Blocked</CommandItem></CommandList></Command>,
     )
     expect(html).toContain('data-disabled="true"'); expect(html).toContain('aria-disabled="true"')
+  })
+})
+
+describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 batch 5b: Combobox)', () => {
+  const picker = (
+    <Combobox open label="Workspace picker">
+      <ComboboxInput placeholder="Pick one" aria-label="Workspace" />
+      <ComboboxContent>
+        <ComboboxList>
+          <ComboboxGroup>
+            <ComboboxLabel>Recent</ComboboxLabel>
+            <ComboboxItem value="alpha">alpha</ComboboxItem>
+            <ComboboxItem value="beta" disabled>beta</ComboboxItem>
+          </ComboboxGroup>
+          <ComboboxSeparator />
+          <ComboboxEmpty>Nothing matches.</ComboboxEmpty>
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
+  )
+
+  it('the field restates InputGroup chrome and carries the combobox ARIA', () => {
+    const html = renderToStaticMarkup(picker)
+    // The restatement is the point: these are InputGroup's own hooks, not new ones, so a caller's styles survive.
+    expect(html).toContain('data-slot="combobox"'); expect(html).toContain('data-slot="input-group"')
+    expect(html).toContain('data-slot="input-group-control"'); expect(html).toContain('data-slot="input-group-addon"')
+    expect(html).toContain('data-align="inline-end"')
+    expect(html).toContain('role="combobox"'); expect(html).toContain('aria-expanded="true"')
+    expect(html).toContain('aria-autocomplete="list"'); expect(html).toContain('aria-controls="')
+    expect(html).not.toMatch(/\brounded-none\b|\bflex-1\b|\bbg-popover\b|\bmin-w-\[8rem\]\b/u)
+  })
+
+  it('the panel renders only while open, and the clear button is inert until something is chosen', () => {
+    // Its own closed tree: content returns null when closed, so the item-bearing tree above would prove nothing here.
+    const closed = renderToStaticMarkup(
+      <Combobox><ComboboxInput aria-label="Workspace" /><ComboboxContent><ComboboxList><ComboboxItem value="alpha">alpha</ComboboxItem></ComboboxList></ComboboxContent></Combobox>,
+    )
+    expect(closed).not.toContain('data-slot="combobox-content"')
+    expect(closed).toContain('data-slot="combobox-clear"'); expect(closed).toContain('disabled=""')
+    expect(closed).toContain('data-slot="combobox-trigger"'); expect(closed).toContain('aria-haspopup="listbox"')
+
+    const open = renderToStaticMarkup(
+      <Combobox open value="alpha">
+        <ComboboxInput aria-label="Workspace" />
+        <ComboboxContent><ComboboxList><ComboboxItem value="alpha">alpha</ComboboxItem></ComboboxList></ComboboxContent>
+      </Combobox>,
+    )
+    expect(open).toContain('data-slot="combobox-content"'); expect(open).toContain('data-open="true"')
+    expect(open).toContain('role="listbox"')
+    expect(open).toContain('data-selected="true"'); expect(open).toContain('data-slot="combobox-item-indicator"')
+    expect(open).toContain('aria-expanded="true"')
+  })
+
+  it('an unregistered item is not judged yet, and a disabled one reports itself to assistive tech', () => {
+    const html = renderToStaticMarkup(picker)
+    // Registration runs in an effect, so "unknown" must read as visible or every row would be display-none here.
+    // Asserted as separate facts rather than one tag-spanning regex: the order React writes attributes in is not
+    // something an assertion should depend on (a first version of this did, and failed for that reason alone).
+    expect(html.match(/data-slot="combobox-item"/gu)).toHaveLength(2)
+    expect(html).toContain('data-hidden="false"')
+    expect(html).not.toContain('data-hidden="true"')
+    expect(html).toContain('data-disabled="true"'); expect(html).toContain('aria-disabled="true"')
+    expect(html).toContain('data-slot="combobox-label"'); expect(html).toContain('role="separator"')
+    expect(html).toContain('data-slot="combobox-empty"')
   })
 })
 
