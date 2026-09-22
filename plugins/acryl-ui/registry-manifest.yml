@@ -151,3 +151,27 @@ components:
     origin: ported
     from: shadcn/ui registry item `native-select` (style new-york-v4), https://ui.shadcn.com/docs/components/native-select, MIT licence, fetched 2026-09-22
     changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; the source's five-way IconPlaceholder reduced to one plain inline SVG; its dark-mode variant utilities dropped because the alias tokens carry both schemes (no theme selectors); NativeSelectOption/OptGroup kept as pass-throughs that deliberately add nothing, leaving the popup to the platform
+  - name: ScrollArea
+    origin: ported
+    from: shadcn/ui registry item `scroll-area` (style new-york-v4), https://ui.shadcn.com/docs/components/scroll-area, MIT licence, fetched 2026-09-22
+    changed: Radix Root/Viewport/ScrollAreaScrollbar/Thumb/Corner dropped - the platform's own scroller already does what Radix reimplements in JavaScript, so the viewport keeps overflow:auto and the module styles the real scrollbar with --dsw-alias-scrollbar-* tokens; ScrollBar is not exported, because a separate thumb element would be decoration with no behaviour behind it; overscroll-behavior replaces Radix's scroll-chaining guard; the Root keeps its full div attributes (className, style) as the source's Root does, which is what lets a caller set the definite height a scroller needs - a first pass narrowed these to className only, and the real-browser check caught the result: the viewport grew to its content instead of scrolling
+  - name: InputOTP
+    origin: ported
+    from: shadcn/ui registry item `input-otp` (style new-york-v4), https://ui.shadcn.com/docs/components/input-otp, MIT licence, fetched 2026-09-22
+    changed: the input-otp package dropped for one real <input> covering a row of slots plus a context carrying each slot's character, active state and caret blink - typing, backspace, arrows and paste stay the platform's own behaviour rather than a reimplementation; lucide-react MinusIcon replaced by a plain inline SVG; the dark-mode variant utilities dropped because the alias tokens carry both schemes
+  - name: Item
+    origin: ported
+    from: shadcn/ui registry item `item` (style new-york-v4), https://ui.shadcn.com/docs/components/item, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; cva variants became classes; asChild/Slot dropped; ItemSeparator restates a one-rule divider locally instead of importing this library's Separator item (self-containment, the ButtonGroupSeparator precedent); the source's group-has-[[data-slot=item-description]] rule became a :has() selector and its sibling rule a sibling selector
+  - name: Attachment
+    origin: ported
+    from: shadcn/ui registry item `attachment` (style new-york-v4), https://ui.shadcn.com/docs/components/attachment, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; cva variants became classes; asChild/Slot dropped from AttachmentTrigger, which is a real button type=button; AttachmentAction's ghost icon-button look is restated locally instead of importing the Button item (self-containment); the group-data-[...] reach-across utilities became descendant selectors keyed off the root's data-state/data-size/data-orientation; the shimmer utility is written out as the gradient-and-clip animation it is; scroll-fade-x and scrollbar-none on AttachmentGroup are a mask-image gradient and a hidden scrollbar, which is what those utilities compile to
+  - name: InputGroup
+    origin: ported
+    from: shadcn/ui registry item `input-group` (style new-york-v4), https://ui.shadcn.com/docs/components/input-group, MIT licence, fetched 2026-09-22
+    changed: shadcn builds this out of its own Input, Textarea and Button items; the two controls and the addon button are plain locally-styled elements instead, so the item has no cross-item import - the exact dependency T040 left this item unported over; the source's has-* variant utilities became :has() selectors on the group, its group-data-[...] utilities descendant selectors, and its dark-mode background utilities dropped because the alias tokens carry both schemes; InputGroupAddon keeps the source's click-to-focus behavior
+  - name: FormField
+    origin: ported
+    from: shadcn/ui registry item `field` (style new-york-v4), https://ui.shadcn.com/docs/components/field, MIT licence, fetched 2026-09-22
+    changed: renamed to FormField because this library already exports a Field (the labelled-input adapter in contract-adapters) and a port taking that name would collide with it; FieldLabel and FieldSeparator restate their Label and Separator look locally instead of importing those items (self-containment); data-[variant=...] and group-data-[...] utilities became attribute and descendant selectors; @md/field-group became a real @container query inside the module; the invalid/disabled props set the data-invalid/data-disabled attributes the source's own styles key off but expect the caller to set; the source's [&>.sr-only]:w-auto accommodation is not carried over, because a consumer cannot reach a hashed module class

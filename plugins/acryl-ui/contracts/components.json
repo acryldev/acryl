@@ -1236,6 +1236,138 @@
       "a11y": [
         "native select semantics, keyboard behavior and typeahead are kept; an invalid control is styleable through aria-invalid"
       ]
+    },
+    "ScrollArea": {
+      "summary": "A scroll container that stays in its own box: the platform's styled scrollbars, and reaching an end does not scroll the page behind it (ported from shadcn/ui's Scroll Area; Radix's JavaScript scroller is dropped for the platform's own).",
+      "props": {
+        "children": {
+          "type": "ReactNode"
+        },
+        "className": {
+          "type": "string"
+        },
+        "style": {
+          "type": "CSSProperties"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the viewport is focusable, so a keyboard user can scroll it without a pointer, and its focus ring is visible"
+      ]
+    },
+    "InputOTP": {
+      "summary": "A one-time-code input: one real input over a row of slots, so typing, paste and arrow keys are the platform's behaviour (ported from shadcn/ui's Input OTP; the input-otp package is dropped for it).",
+      "props": {
+        "value": {
+          "type": "string"
+        },
+        "onChange": {
+          "type": "(value: string) => void"
+        },
+        "maxLength": {
+          "type": "number"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "label": {
+          "type": "string"
+        },
+        "containerClassName": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the real input carries inputMode=numeric, autoComplete=one-time-code and the caller's label; the active slot shows a blinking caret in place of the one the platform would draw on an invisible field"
+      ]
+    },
+    "Item": {
+      "summary": "One row of a list: group, media, content, title, description, actions, header and footer (ported from shadcn/ui's Item; no Radix, no cva, and no cross-item Separator import).",
+      "props": {
+        "variant": {
+          "type": "'default' | 'outline' | 'muted'"
+        },
+        "size": {
+          "type": "'default' | 'sm'"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the group is a list (role=list); the separator is decorative (role=none)"
+      ]
+    },
+    "Attachment": {
+      "summary": "A file chip for a composer: media, title, description, actions and a whole-chip trigger, with idle, uploading, processing, error and done states (ported from shadcn/ui's Attachment).",
+      "props": {
+        "state": {
+          "type": "'idle' | 'uploading' | 'processing' | 'error' | 'done'"
+        },
+        "size": {
+          "type": "'default' | 'sm' | 'xs'"
+        },
+        "orientation": {
+          "type": "'horizontal' | 'vertical'"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the trigger and each action are real buttons with accessible names, the trigger covering the whole chip; the uploading and processing states are conveyed by the title shimmer and the state attribute, not by colour alone"
+      ]
+    },
+    "InputGroup": {
+      "summary": "One bordered field grouping an input or textarea with addons before, after, above or below it; the wrapper carries the focus ring and the error tint (ported from shadcn/ui's Input Group).",
+      "props": {
+        "disabled": {
+          "type": "boolean"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "role=group, with each addon its own group; clicking an addon focuses the control, so a prefix behaves like part of the field; an aria-invalid control tints the whole group rather than only itself"
+      ]
+    },
+    "FormField": {
+      "summary": "The layout around one field's parts - set, group, legend, label, title, content, description, separator and error - in vertical, horizontal or container-responsive orientation (ported from shadcn/ui's Field, renamed so it cannot collide with this library's own Field).",
+      "props": {
+        "orientation": {
+          "type": "'vertical' | 'horizontal' | 'responsive'"
+        },
+        "invalid": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "role=group on the field and role=alert on its error; FieldLabel is a real label element; a multi-message error renders as a list rather than one run-on line"
+      ]
     }
   },
   "helpers": {

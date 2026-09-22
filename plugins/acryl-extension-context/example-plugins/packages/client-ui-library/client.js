@@ -17,6 +17,8 @@ const { StateDot, DisclosureRow, Switch, Input, JsonTree, TerminalBlock, ReadBlo
 const { Badge, Skeleton, Spinner, Alert, Separator, Progress, Avatar, Label, Textarea, Checkbox, AspectRatio, Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator, Toggle, ButtonGroup, ButtonGroupText, ButtonGroupSeparator, Accordion, AccordionItem, AccordionTrigger, AccordionContent, RadioGroup, Collapsible, CollapsibleTrigger, CollapsibleContent, ToggleGroup, ToggleGroupItem } = ui
 // T045 batch 1 (spec 038-ui-component-library): ported from shadcn/ui, no Radix.
 const { Table, TableCaption, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell, DirectionProvider, useDirection, Marker, MarkerContent, MarkerIcon, Message, MessageGroup, MessageAvatar, MessageContent, MessageHeader, MessageFooter, Bubble, BubbleContent, BubbleReactions, Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext, PaginationEllipsis, NativeSelect, NativeSelectOption } = ui
+// T045 batch 2 (spec 038-ui-component-library): the items that compose shadcn siblings - resolved without a single cross-item import.
+const { ScrollArea, InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator, Item, ItemGroup, ItemSeparator, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions, Attachment, AttachmentGroup, AttachmentMedia, AttachmentContent, AttachmentTitle, AttachmentDescription, AttachmentActions, AttachmentAction, AttachmentTrigger, InputGroup, InputGroupAddon, InputGroupButton, InputGroupText, InputGroupInput, FormField, FieldSet, FieldLegend, FieldGroup, FieldContent, FieldLabel, FieldDescription, FieldSeparator, FieldError } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -279,14 +281,89 @@ function T045Batch1() {
           h(Marker, { variant: 'border' }, h(MarkerIcon, null, '\u2022'), h(MarkerContent, null, 'end of the demo'))))))
 }
 
+// T045 batch 2: ScrollArea, InputOTP, Item, Attachment, InputGroup, FormField. Every one of these composes shadcn sibling items in its
+// source (Input, Textarea, Button, Label, Separator); each resolves that by styling the part locally, so none imports another item's file.
+function T045Batch2() {
+  const [otp, setOtp] = React.useState('12')
+  const [invalid, setInvalid] = React.useState(false)
+  const [copied, setCopied] = React.useState('')
+  const [opened, setOpened] = React.useState('')
+  const [removed, setRemoved] = React.useState('')
+  const chips = [
+    { state: 'done', title: 'notes.md', description: '12 KB' },
+    { state: 'uploading', title: 'report.pdf', description: '1.4 MB' },
+    { state: 'idle', title: 'drop a file here', description: 'idle' },
+    { state: 'error', title: 'broken.png', description: 'upload failed' }
+  ]
+  const files = [
+    { title: 'Table.tsx', description: 'A data table, ported first', size: 'default', variant: 'default' },
+    { title: 'InputGroup.tsx', description: 'One border around a control and its addons', size: 'default', variant: 'outline' },
+    { title: 'FormField.tsx', description: 'The layout around a field', size: 'sm', variant: 'muted' }
+  ]
+  return h(Stack, { gap: 'md' },
+    h(Section, { name: 'ScrollArea', note: 'A fixed-height box that scrolls inside itself: the scrollbar is the platform\'s, styled, and reaching the end does not scroll the page behind it. The height goes on ScrollArea itself - that is the element that has to be definite.' },
+      h(ScrollArea, { style: { height: 120 } }, Array.from({ length: 18 }, (_, index) => h('p', { key: index, style: { margin: '0 0 8px', color: ui.roles.textMuted, fontSize: 12 } }, 'line ' + (index + 1) + ' - scroll to the end and the page stays put')))),
+    h(Section, { name: 'InputOTP', note: 'Type, paste, or arrow around: it is one real input covering the slots, so the platform handles all of it. The active slot blinks a caret.' },
+      h(InputOTP, { value: otp, onChange: setOtp, maxLength: 6, label: 'Verification code' },
+        h(InputOTPGroup, null, [0, 1, 2].map(index => h(InputOTPSlot, { key: index, index }))),
+        h(InputOTPSeparator, null),
+        h(InputOTPGroup, null, [3, 4, 5].map(index => h(InputOTPSlot, { key: index, index })))),
+      h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, 'code = ' + (otp === '' ? '(empty)' : otp))),
+    h(Section, { name: 'Item', note: 'List rows: media, content, description and actions, in the default, outline and muted variants with a separator between them.' },
+      h(ItemGroup, null,
+        h(Item, { variant: files[0].variant, size: 'default' },
+          h(ItemMedia, { variant: 'icon' }, h('span', null, 'T')),
+          h(ItemContent, null, h(ItemTitle, null, files[0].title), h(ItemDescription, null, files[0].description)),
+          h(ItemActions, null, h(Button, { variant: 'outline', size: 'sm', onClick: () => setOpened(files[0].title) }, 'Open'))),
+        h(ItemSeparator, null),
+        h(Item, { variant: files[1].variant, size: 'default' },
+          h(ItemMedia, { variant: 'icon' }, h('span', null, 'I')),
+          h(ItemContent, null, h(ItemTitle, null, files[1].title), h(ItemDescription, null, files[1].description)),
+          h(ItemActions, null, h(Button, { variant: 'outline', size: 'sm', onClick: () => setOpened(files[1].title) }, 'Open'))),
+        h(ItemSeparator, null),
+        h(Item, { variant: files[2].variant, size: 'sm' },
+          h(ItemMedia, { variant: 'icon' }, h('span', null, 'F')),
+          h(ItemContent, null, h(ItemTitle, null, files[2].title), h(ItemDescription, null, files[2].description)),
+          h(ItemActions, null, h(Button, { variant: 'outline', size: 'sm', onClick: () => setOpened(files[2].title) }, 'Open')))),
+      h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, 'opened = ' + (opened === '' ? 'nothing yet' : opened))),
+    h(Section, { name: 'Attachment', note: 'File chips in every state, in a snapping row. The whole chip is the trigger; the x is its own action, so it never fires the trigger.' },
+      h(AttachmentGroup, null, chips.map(chip => h(Attachment, { key: chip.title, state: chip.state },
+        h(AttachmentMedia, { variant: 'icon' }, h('span', null, '\u2022')),
+        h(AttachmentContent, null, h(AttachmentTitle, null, chip.title), h(AttachmentDescription, null, chip.description)),
+        h(AttachmentActions, null, h(AttachmentAction, { label: 'Remove ' + chip.title, onClick: () => setRemoved(chip.title) }, h('span', null, '\u00d7'))),
+        h(AttachmentTrigger, { label: 'Open ' + chip.title, onClick: () => setOpened(chip.title) })))),
+      h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, 'opened = ' + (opened === '' ? '-' : opened) + '   removed = ' + (removed === '' ? '-' : removed))),
+    h(Section, { name: 'InputGroup', note: 'One border around the control and its addons, so the focus ring and the error tint wrap the whole thing. Click the https:// prefix: the control focuses.' },
+      h(InputGroup, null,
+        h(InputGroupAddon, null, h(InputGroupText, null, 'https://')),
+        h(InputGroupInput, { defaultValue: 'ui.shadcn.com', 'aria-label': 'URL', 'aria-invalid': invalid }),
+        h(InputGroupAddon, { align: 'inline-end' }, h(InputGroupButton, { label: 'Copy URL', onClick: () => setCopied('ui.shadcn.com') }, 'Copy'))),
+      h(Stack, { direction: 'row', gap: 'sm', align: 'center' },
+        h(Button, { variant: 'outline', size: 'sm', onClick: () => setInvalid(!invalid) }, 'Toggle aria-invalid'),
+        h('span', { style: { color: ui.roles.textMuted, fontSize: 12 } }, 'copied = ' + (copied === '' ? 'not yet' : copied)))),
+    h(Section, { name: 'FormField', note: 'A field set with a legend, a horizontal field, a separator and an error that appears on the same toggle as the group above.' },
+      h(FieldSet, null,
+        h(FieldLegend, null, 'Permissions'),
+        h(FieldGroup, null,
+          h(FormField, { orientation: 'horizontal', invalid },
+            h(FieldLabel, null, 'Workspace write'),
+            h(FieldContent, null,
+              h(FieldDescription, null, 'Let the agent write files in this workspace.'),
+              invalid && h(FieldError, { errors: [{ message: 'Workspace write needs full access mode' }] }))),
+          h(FieldSeparator, null, 'or'),
+          h(FormField, { invalid },
+            h(FieldLabel, null, 'Read only'),
+            h(FieldContent, null, h(FieldDescription, null, 'Everything stays readable, and nothing is written.')))))))
+}
+
 // A Settings page, not a dialog: the gallery is a catalogue for people building UI, so it lives in Settings (nav entry "UI library"), out of the everyday screens.
 function Gallery() {
   const [tab, setTab] = React.useState('components')
   return h(Stack, { gap: 'md' },
     h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
     h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
-    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 'colors', label: 'Colors' }] },
-      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : h(Colors)))
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : h(Colors)))
 }
 
 exports.inject = ['slots']

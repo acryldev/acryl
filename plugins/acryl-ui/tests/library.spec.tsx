@@ -20,6 +20,12 @@ import { Message, MessageAvatar, MessageContent, MessageHeader, MessageFooter } 
 import { Bubble, BubbleContent, BubbleReactions } from '../src/client/registry/Bubble/Bubble.tsx'
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext, PaginationEllipsis } from '../src/client/registry/Pagination/Pagination.tsx'
 import { NativeSelect, NativeSelectOption, NativeSelectOptGroup } from '../src/client/registry/NativeSelect/NativeSelect.tsx'
+import { ScrollArea } from '../src/client/registry/ScrollArea/ScrollArea.tsx'
+import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from '../src/client/registry/InputOTP/InputOTP.tsx'
+import { Item, ItemSeparator, ItemMedia, ItemContent, ItemTitle, ItemDescription } from '../src/client/registry/Item/Item.tsx'
+import { Attachment, AttachmentMedia, AttachmentContent, AttachmentTitle, AttachmentTrigger } from '../src/client/registry/Attachment/Attachment.tsx'
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupText, InputGroupInput } from '../src/client/registry/InputGroup/InputGroup.tsx'
+import { FormField, FieldLabel, FieldContent, FieldDescription, FieldError } from '../src/client/registry/FormField/FormField.tsx'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const harness = resolve(root, '../../deepseek-harness/packages/client')
@@ -137,6 +143,84 @@ describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 bat
     expect(html).toMatch(/<select[^>]*class="[^"]+"/u)
     expect(html).toContain('<optgroup'); expect(html.match(/<option/gu)).toHaveLength(2)
     expect(html).not.toContain('role="menu"'); expect(html).not.toMatch(/\bappearance-none\b|\bpr-8\b/u)
+  })
+})
+
+describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 batch 2: ScrollArea, InputOTP, Item, Attachment, InputGroup, FormField)', () => {
+  it('ScrollArea passes its props to the scroll root - the element a caller has to give a height', () => {
+    // The real-browser check caught a first pass that forwarded only `className`: the viewport then grew to its
+    // content (414px) instead of scrolling inside a 120px box, because a percentage height with no definite
+    // parent resolves to auto. This is the assertion that would have caught it without a browser.
+    const html = renderToStaticMarkup(<ScrollArea style={{ height: 120 }} className="custom">content</ScrollArea>)
+    expect(html).toMatch(/^<div[^>]*data-slot="scroll-area"[^>]*style="height:120px"[^>]*>/u)
+    expect(html).toContain('custom')
+    expect(html).toContain('data-slot="scroll-area-viewport"'); expect(html).toContain('tabindex="0"')
+    expect(html).not.toMatch(/\boverflow-auto\b|\brounded-\[inherit\]\b/u)
+  })
+
+  it('InputOTP is one numeric input over the slots, with the OTP semantics the platform needs', () => {
+    const html = renderToStaticMarkup(
+      <InputOTP value="12" onChange={() => {}} maxLength={6} label="Verification code">
+        <InputOTPGroup><InputOTPSlot index={0} /><InputOTPSlot index={1} /><InputOTPSlot index={2} /></InputOTPGroup>
+        <InputOTPSeparator />
+      </InputOTP>,
+    )
+    // renderToStaticMarkup writes these three in React's own camelCase; the live DOM values
+    // (inputmode/autocomplete/maxlength) were confirmed in a real browser.
+    expect(html).toContain('inputMode="numeric"'); expect(html).toContain('autoComplete="one-time-code"')
+    expect(html).toContain('aria-label="Verification code"'); expect(html).toContain('maxLength="6"')
+    expect(html.match(/data-slot="input-otp-slot"/gu)).toHaveLength(3)
+    expect(html).toContain('role="separator"'); expect(html).toContain('>1<'); expect(html).toContain('>2<')
+  })
+
+  it('Item and Attachment carry the attributes their stylesheets key off, and no Tailwind classes', () => {
+    const item = renderToStaticMarkup(
+      <Item variant="outline" size="sm"><ItemMedia variant="icon">m</ItemMedia><ItemContent><ItemTitle>T</ItemTitle><ItemDescription>D</ItemDescription></ItemContent></Item>,
+    )
+    expect(item).toMatch(/data-slot="item"[^>]*data-variant="outline"[^>]*data-size="sm"/u)
+    expect(item).toContain('data-slot="item-description"')
+    expect(item).not.toMatch(/\bflex-wrap\b|\btext-muted-foreground\b|\bline-clamp-2\b/u)
+    const chip = renderToStaticMarkup(
+      <Attachment state="uploading" size="xs" orientation="vertical">
+        <AttachmentMedia />
+        <AttachmentContent><AttachmentTitle>f</AttachmentTitle></AttachmentContent>
+        <AttachmentTrigger label="Open f" />
+      </Attachment>,
+    )
+    expect(chip).toMatch(/data-slot="attachment"[^>]*data-state="uploading"[^>]*data-orientation="vertical"/u)
+    expect(chip).toContain('aria-label="Open f"'); expect(chip).toContain('type="button"')
+  })
+
+  it('ItemSeparator is a local decorative rule, not this library Separator item', () => {
+    const sep = renderToStaticMarkup(<ItemSeparator />)
+    expect(sep).toContain('role="none"'); expect(sep).toMatch(/class="[^"]+"/u)
+    expect(sep).not.toContain('data-orientation')   // that attribute belongs to the Separator item this must not import
+  })
+
+  it('InputGroup groups the control with its addons and marks the control its rules key off', () => {
+    const html = renderToStaticMarkup(
+      <InputGroup>
+        <InputGroupAddon><InputGroupText>https://</InputGroupText></InputGroupAddon>
+        <InputGroupInput defaultValue="x" aria-label="URL" />
+        <InputGroupAddon align="inline-end"><InputGroupButton label="Copy">Copy</InputGroupButton></InputGroupAddon>
+      </InputGroup>,
+    )
+    expect(html).toContain('role="group"'); expect(html).toContain('data-slot="input-group-control"')
+    expect(html).toContain('data-align="inline-end"'); expect(html).toContain('aria-label="Copy"')
+    expect(html).not.toMatch(/\brounded-none\b|\bborder-0\b|\bflex-1\b/u)
+  })
+
+  it('FormField renders its parts, and FieldError appears only when there is an error to show', () => {
+    const clean = renderToStaticMarkup(
+      <FormField><FieldLabel>L</FieldLabel><FieldContent><FieldDescription>d</FieldDescription><FieldError errors={[]} /></FieldContent></FormField>,
+    )
+    expect(clean).toContain('role="group"'); expect(clean).toContain('data-orientation="vertical"'); expect(clean).toContain('data-invalid="false"')
+    expect(clean).not.toContain('role="alert"')
+    const bad = renderToStaticMarkup(<FormField orientation="horizontal" invalid><FieldError errors={[{ message: 'too long' }]} /></FormField>)
+    expect(bad).toContain('data-orientation="horizontal"'); expect(bad).toContain('data-invalid="true"')
+    expect(bad).toMatch(/role="alert"[^>]*>too long/u)
+    const many = renderToStaticMarkup(<FieldError errors={[{ message: 'a' }, { message: 'b' }, { message: 'a' }]} />)
+    expect(many).toContain('<ul'); expect(many.match(/<li/gu)).toHaveLength(2)   // duplicates collapse to the distinct messages
   })
 })
 
