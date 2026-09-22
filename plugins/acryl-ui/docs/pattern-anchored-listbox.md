@@ -71,9 +71,8 @@ Read off the source (registry item `combobox`, style `new-york-v4`; fetch any it
 
 1. **Its source composes two other items.** `ComboboxInput` is an `InputGroup` containing an
    `InputGroupInput`, an `InputGroupAddon` and an `InputGroupButton`, and `ComboboxClear` renders
-   shadcn's `Button`. Neither import is allowed here. So Combobox either restates that input-group
-   chrome a third time, or drops to a plain input — a real fidelity decision, not a detail, and the
-   reason this belongs in this document rather than in a comment somebody has to find.
+   shadcn's `Button`. Neither import is allowed here, so Combobox **restates that chrome locally** —
+   ruled, not open; see "Restating InputGroup's chrome" at the end of this section.
 2. **Base UI's positioner variables have no equivalent.** The content is sized and placed with
    `--anchor-width`, `--available-width`, `--available-height` and `--transform-origin`, all published
    by Base UI's Positioner. Here, anchoring is the shape above: measure the anchor's rect yourself,
@@ -88,3 +87,33 @@ Read off the source (registry item `combobox`, style `new-york-v4`; fetch any it
 4. **Data attributes carry state**, as in the rest of this library: `data-open`, `data-empty`,
    `data-chips`, `data-side`. Keep them, they are what a caller styles against, and they replace the
    `data-open:animate-in`/`zoom-in-95` animations that are deliberately not ported.
+
+## Restating InputGroup's chrome
+
+Ruled, not open: Combobox restates it.
+
+`InputGroup` is the original of a shape now restated by more than one item — the registry item
+`InputGroup` itself, and `Combobox`, whose source wraps its input in one (an `InputGroupAddon` on the
+inline-start or end, an icon-xs ghost `InputGroupButton`, and the group's own focus and invalid ring).
+`Command` restates the *anchored-listbox* shape in this document, not this chrome — its search field is
+its own wrapper, not an input group.
+
+The rule stays absolute: a cross-item import is what the ingest gate rejects, so Combobox cannot import
+`InputGroup`. What it does instead is what `ButtonGroupSeparator`, `ItemSeparator`, `ToggleGroupItem`,
+`PaginationLink`, `AttachmentAction` and `Command` already do — restate the shape, and say so in the
+manifest's `changed` field. **Reducing fidelity to dodge the restatement is the one option that is not
+available**: dropping the addon and button affordances would make the search field a plain input, a real
+behavioural downgrade from upstream, where restating costs lines and buys nothing but duplicated code.
+That is the ruling this project applies wherever self-containment forces the question.
+
+When restating, keep the same parts and hooks so a caller's styles keep working:
+`data-slot="input-group"`, `data-align` on the addon, the `input-group-control` slot that the group's
+focus and invalid rules key off, and the group's own `data-disabled`. Then cite this section from the
+item's doc comment.
+
+## Scope ruling for Combobox
+
+Single-select core first; the multi-select chips family is an explicit, documented follow-up rather
+than part of the first pass. Both halves of that need recording when the item lands — the follow-up in
+`manifest.yml`'s `changed` field (the home for a deliberate partial) and in the item's doc comment, per
+"a partial, verified batch is worth more than an unverified pile". A silent partial is not an option.
