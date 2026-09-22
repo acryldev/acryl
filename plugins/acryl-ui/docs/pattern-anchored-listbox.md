@@ -62,3 +62,29 @@ because both depend on mount effects. Filtering, arrow movement and Enter belong
 check (see the CDP recipe in project memory: cached Chromium driven over `Runtime.evaluate` and
 `Input.dispatchKeyEvent`, no npm install). Clearing a controlled input in such a check needs React's
 own value setter — setting `.value` directly silently concatenates the next query instead.
+
+## Known constraints for Combobox (read before starting it)
+
+Read off the source (registry item `combobox`, style `new-york-v4`; fetch any item as JSON from
+`https://ui.shadcn.com/r/styles/new-york-v4/<slug>.json`). Combobox is the largest item in this set —
+19 exports — and three of its properties decide the port before any code is written:
+
+1. **Its source composes two other items.** `ComboboxInput` is an `InputGroup` containing an
+   `InputGroupInput`, an `InputGroupAddon` and an `InputGroupButton`, and `ComboboxClear` renders
+   shadcn's `Button`. Neither import is allowed here. So Combobox either restates that input-group
+   chrome a third time, or drops to a plain input — a real fidelity decision, not a detail, and the
+   reason this belongs in this document rather than in a comment somebody has to find.
+2. **Base UI's positioner variables have no equivalent.** The content is sized and placed with
+   `--anchor-width`, `--available-width`, `--available-height` and `--transform-origin`, all published
+   by Base UI's Positioner. Here, anchoring is the shape above: measure the anchor's rect yourself,
+   decide the panel's width from it, and bound the list's height by the space left in the viewport.
+   There is no portal, so the clipping caveat in point 3 applies.
+3. **It is both a combobox and a multi-select.** Beyond input/content/list/item/group/label/empty/
+   separator, it carries a four-part chips family (`ComboboxChips`, `ComboboxChip`,
+   `ComboboxChipsInput`) plus `ComboboxValue`, `ComboboxTrigger`, `ComboboxClear` and a
+   `useComboboxAnchor` hook. Decide explicitly whether the first pass is the single-select core with the
+   chips family recorded as a follow-up, and record the answer in `manifest.yml` — a documented partial
+   is acceptable, a silent one is not.
+4. **Data attributes carry state**, as in the rest of this library: `data-open`, `data-empty`,
+   `data-chips`, `data-side`. Keep them, they are what a caller styles against, and they replace the
+   `data-open:animate-in`/`zoom-in-95` animations that are deliberately not ported.
