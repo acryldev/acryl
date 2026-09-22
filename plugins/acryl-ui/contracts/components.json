@@ -801,6 +801,112 @@
       "surfaces": [
         "web"
       ]
+    },
+    "ValueField": {
+      "summary": "A settings-style field bound to a text value, with an override badge and reset action.",
+      "props": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "label": {
+          "type": "string",
+          "required": true
+        },
+        "hint": {
+          "type": "string",
+          "required": true
+        },
+        "numeric": {
+          "type": "boolean"
+        },
+        "placeholder": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "SecretField": {
+      "summary": "A settings-style field for a credential reference: shows whether it is configured, edits without ever displaying the secret.",
+      "props": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "label": {
+          "type": "string",
+          "required": true
+        },
+        "hint": {
+          "type": "string",
+          "required": true
+        },
+        "configured": {
+          "type": "boolean",
+          "required": true
+        },
+        "stateLabel": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "SelectPill": {
+      "summary": "A pill-shaped dropdown selector built on the app's own Menu.",
+      "props": {
+        "options": {
+          "type": "SelectOption[]",
+          "required": true
+        },
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(value: string) => void",
+          "required": true
+        },
+        "label": {
+          "type": "string"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "AppearanceCubes": {
+      "summary": "A row of icon-and-label tiles for a small exclusive choice (Light/Dark/System), pressed state on the selected one.",
+      "props": {
+        "title": {
+          "type": "string"
+        },
+        "options": {
+          "type": "CubeOption[]",
+          "required": true
+        },
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(value: string) => void",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
     }
   },
   "helpers": {
