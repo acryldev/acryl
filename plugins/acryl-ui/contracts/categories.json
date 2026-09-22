@@ -378,7 +378,9 @@
     },
     {
       "name": "Popover",
-      "componentIds": []
+      "componentIds": [
+        "Popover"
+      ]
     },
     {
       "name": "Price",
@@ -458,7 +460,9 @@
     },
     {
       "name": "Slider",
-      "componentIds": []
+      "componentIds": [
+        "Slider"
+      ]
     },
     {
       "name": "Snippet",

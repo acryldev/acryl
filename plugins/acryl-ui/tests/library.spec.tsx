@@ -26,6 +26,8 @@ import { Item, ItemSeparator, ItemMedia, ItemContent, ItemTitle, ItemDescription
 import { Attachment, AttachmentMedia, AttachmentContent, AttachmentTitle, AttachmentTrigger } from '../src/client/registry/Attachment/Attachment.tsx'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupText, InputGroupInput } from '../src/client/registry/InputGroup/InputGroup.tsx'
 import { FormField, FieldLabel, FieldContent, FieldDescription, FieldError } from '../src/client/registry/FormField/FormField.tsx'
+import { Popover, PopoverTrigger, PopoverContent, PopoverTitle } from '../src/client/registry/Popover/Popover.tsx'
+import { Slider } from '../src/client/registry/Slider/Slider.tsx'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const harness = resolve(root, '../../deepseek-harness/packages/client')
@@ -221,6 +223,42 @@ describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 bat
     expect(bad).toMatch(/role="alert"[^>]*>too long/u)
     const many = renderToStaticMarkup(<FieldError errors={[{ message: 'a' }, { message: 'b' }, { message: 'a' }]} />)
     expect(many).toContain('<ul'); expect(many.match(/<li/gu)).toHaveLength(2)   // duplicates collapse to the distinct messages
+  })
+})
+
+describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 batch 3: Popover, Slider)', () => {
+  it('Popover renders its trigger always, and its panel only while open', () => {
+    const closed = renderToStaticMarkup(
+      <Popover><PopoverTrigger label="Notifications">Notifications</PopoverTrigger><PopoverContent label="Notification settings"><PopoverTitle>Notifications</PopoverTitle></PopoverContent></Popover>,
+    )
+    expect(closed).toContain('data-slot="popover-trigger"')
+    expect(closed).toContain('aria-haspopup="dialog"'); expect(closed).toContain('aria-expanded="false"')
+    expect(closed).not.toContain('data-slot="popover-content"')
+
+    const open = renderToStaticMarkup(
+      <Popover open><PopoverTrigger>Notifications</PopoverTrigger><PopoverContent label="Notification settings"><PopoverTitle>Notifications</PopoverTitle></PopoverContent></Popover>,
+    )
+    expect(open).toContain('data-slot="popover-content"')
+    expect(open).toContain('role="dialog"'); expect(open).toContain('aria-label="Notification settings"')
+    expect(open).toContain('aria-expanded="true"'); expect(open).toContain('tabindex="-1"')
+  })
+
+  it('Slider renders one thumb per value with the slider role and its value attributes', () => {
+    const one = renderToStaticMarkup(<Slider value={40} label="Volume" />)
+    expect(one).toContain('data-slot="slider"'); expect(one).toContain('data-slot="slider-track"'); expect(one).toContain('data-slot="slider-range"')
+    expect(one.match(/data-slot="slider-thumb"/gu)).toHaveLength(1)
+    expect(one).toContain('role="slider"'); expect(one).toContain('aria-valuenow="40"')
+    expect(one).toContain('aria-valuemin="0"'); expect(one).toContain('aria-valuemax="100"'); expect(one).toContain('aria-orientation="horizontal"')
+
+    const range = renderToStaticMarkup(<Slider value={[20, 80]} step={5} label="Band" />)
+    expect(range.match(/data-slot="slider-thumb"/gu)).toHaveLength(2)
+    expect(range.match(/aria-valuenow="(20|80)"/gu)).toHaveLength(2)
+    expect(range).toContain('left:20%'); expect(range).toContain('width:60%')   // the range fill spans lowest to highest
+  })
+
+  it('a disabled Slider takes its thumbs out of the tab order', () => {
+    const html = renderToStaticMarkup(<Slider value={40} disabled label="Volume" />)
+    expect(html).toContain('data-disabled="true"'); expect(html).toContain('aria-disabled="true"'); expect(html).toContain('tabindex="-1"')
   })
 })
 

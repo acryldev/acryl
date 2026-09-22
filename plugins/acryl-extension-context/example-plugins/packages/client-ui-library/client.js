@@ -19,6 +19,8 @@ const { Badge, Skeleton, Spinner, Alert, Separator, Progress, Avatar, Label, Tex
 const { Table, TableCaption, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell, DirectionProvider, useDirection, Marker, MarkerContent, MarkerIcon, Message, MessageGroup, MessageAvatar, MessageContent, MessageHeader, MessageFooter, Bubble, BubbleContent, BubbleReactions, Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext, PaginationEllipsis, NativeSelect, NativeSelectOption } = ui
 // T045 batch 2 (spec 038-ui-component-library): the items that compose shadcn siblings - resolved without a single cross-item import.
 const { ScrollArea, InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator, Item, ItemGroup, ItemSeparator, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions, Attachment, AttachmentGroup, AttachmentMedia, AttachmentContent, AttachmentTitle, AttachmentDescription, AttachmentActions, AttachmentAction, AttachmentTrigger, InputGroup, InputGroupAddon, InputGroupButton, InputGroupText, InputGroupInput, FormField, FieldSet, FieldLegend, FieldGroup, FieldContent, FieldLabel, FieldDescription, FieldSeparator, FieldError } = ui
+// T045 batch 3 (spec 038-ui-component-library): Radix overlays and input primitives rewritten by hand.
+const { Popover, PopoverTrigger, PopoverContent, PopoverHeader, PopoverTitle, PopoverDescription, Slider } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -356,14 +358,42 @@ function T045Batch2() {
             h(FieldContent, null, h(FieldDescription, null, 'Everything stays readable, and nothing is written.')))))))
 }
 
+// T045 batch 3: Popover and Slider. Both drop a Radix primitive for behaviour written by hand - open state plus
+// outside-click/Escape/focus handling, and thumb arithmetic plus pointer and keyboard input respectively.
+function T045Batch3() {
+  const [notify, setNotify] = React.useState(true)
+  const [open, setOpen] = React.useState(false)
+  const [volume, setVolume] = React.useState([40])
+  const [band, setBand] = React.useState([20, 80])
+  const readout = text => h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, text)
+  const popoverSection = h(Section, { name: 'Popover', note: 'A floating panel: click the trigger to open it, then click outside to close. Focus moves into the panel and back to the trigger. The width is fixed at 288px.' },
+    h(Popover, { open, onOpenChange: setOpen },
+      h(PopoverTrigger, { className: 'acryl-popover-trigger' }, 'Notifications'),
+      h(PopoverContent, { label: 'Notification settings' },
+        h(PopoverHeader, null,
+          h(PopoverTitle, null, 'Notifications'),
+          h(PopoverDescription, null, 'How the app tells you a run finished.')),
+        h(Stack, { gap: 'sm' },
+          h(SwitchField, { label: 'Notify on finish', checked: notify, onChange: setNotify }),
+          h(Button, { variant: 'outline', size: 'sm', onClick: () => setOpen(false) }, 'Done')))),
+    readout('open = ' + open + '   notify = ' + notify))
+  const sliderSection = h(Section, { name: 'Slider', note: 'One thumb for a value, two for a range. Drag a thumb, or click anywhere on the track to move the nearest one. Each thumb takes arrow keys, PageUp/PageDown and Home/End.' },
+    h(Slider, { value: volume, onValueChange: setVolume, label: 'Volume' }),
+    readout('volume = ' + volume.join(', ')),
+    h('div', { style: { height: 12 } }),
+    h(Slider, { value: band, onValueChange: setBand, step: 5, label: 'Frequency band' }),
+    readout('band = ' + band.join(' - ')))
+  return h(Stack, { gap: 'md' }, popoverSection, sliderSection)
+}
+
 // A Settings page, not a dialog: the gallery is a catalogue for people building UI, so it lives in Settings (nav entry "UI library"), out of the everyday screens.
 function Gallery() {
   const [tab, setTab] = React.useState('components')
   return h(Stack, { gap: 'md' },
     h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
     h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
-    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 'colors', label: 'Colors' }] },
-      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : h(Colors)))
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 't045b3', label: 'T045 ports 3' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : tab === 't045b3' ? h(T045Batch3) : h(Colors)))
 }
 
 exports.inject = ['slots']

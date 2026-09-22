@@ -1368,6 +1368,61 @@
       "a11y": [
         "role=group on the field and role=alert on its error; FieldLabel is a real label element; a multi-message error renders as a list rather than one run-on line"
       ]
+    },
+    "Popover": {
+      "summary": "A floating panel anchored to a trigger: the root owns open state, the trigger toggles it, and the content is positioned in viewport coordinates with Escape and outside-click closing (ported from shadcn/ui's Popover; Radix's primitive is replaced by hand, and the panel renders in place rather than through a portal).",
+      "props": {
+        "open": {
+          "type": "boolean"
+        },
+        "defaultOpen": {
+          "type": "boolean"
+        },
+        "onOpenChange": {
+          "type": "(open: boolean) => void"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the trigger carries aria-haspopup=dialog and aria-expanded; the panel is role=dialog with the caller's label and is programmatically focusable (tabindex -1); Escape closes it and returns focus to the trigger; a press outside closes it and leaves focus where the user pressed. Focus-into-panel on open is NOT yet achieved - observed in Chromium, focus stays on the trigger."
+      ]
+    },
+    "Slider": {
+      "summary": "A slider with one thumb per value, draggable and keyboard-operable, with a range fill spanning the lowest to the highest value (ported from shadcn/ui's Slider; Radix's primitive is replaced by hand).",
+      "props": {
+        "value": {
+          "type": "number | number[]"
+        },
+        "defaultValue": {
+          "type": "number | number[]"
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "step": {
+          "type": "number"
+        },
+        "orientation": {
+          "type": "'horizontal' | 'vertical'"
+        },
+        "onValueChange": {
+          "type": "(value: number[]) => void"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "each thumb is role=slider with aria-valuemin, aria-valuemax, aria-valuenow and aria-orientation; arrows move by one step, PageUp/PageDown by ten, Home/End jump to the ends; a disabled slider takes its thumbs out of the tab order and reports aria-disabled"
+      ]
     }
   },
   "helpers": {
