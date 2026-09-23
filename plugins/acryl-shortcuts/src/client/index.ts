@@ -4,6 +4,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 // Type-only: pulls the SettingsScope Context merge (ctx.settingsScope) and the
 // 'settings.section' SlotMap declaration.
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
+import { registerOpenSettingsShortcut } from './open-settings.ts'
 import { ShortcutsRegistry, SHORTCUTS_SETTINGS_NAMESPACE } from './shortcuts-service.ts'
 import { ShortcutsSection } from './ShortcutsSection.tsx'
 
@@ -33,4 +34,6 @@ export function apply(ctx: ClientContext): void {
     label: 'Shortcuts',
     inject: () => ({ shortcuts: registry }),
   }, ShortcutsSection))
+
+  ctx.effect(() => registerOpenSettingsShortcut(registry), 'acryl-shortcuts: Cmd+, opens Settings')
 }

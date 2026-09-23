@@ -81,10 +81,32 @@ export function ShortcutsSection({ shortcuts }: ShortcutsSectionProps) {
   const handleReset = useCallback((id: string) => {
     void shortcuts.resetCombo(id)
   }, [shortcuts])
+  const anyCustomized = actions.some(action => shortcuts.getCombo(action.id) !== action.defaultCombo)
 
   return (
     <div style={{ padding: '4px 0' }}>
-      <h2 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 4px' }}>Shortcuts</h2>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 4px' }}>Shortcuts</h2>
+        {anyCustomized && (
+          <button
+            type="button"
+            onClick={() => { void shortcuts.resetAll() }}
+            title="Reset every shortcut back to its default - a safety net if a reassignment left things unworkable"
+            style={{
+              font: '12px ui-sans-serif, system-ui, sans-serif',
+              padding: '4px 10px',
+              borderRadius: 6,
+              border: '1px solid var(--dsw-alias-border-l4, #33333340)',
+              background: 'transparent',
+              color: 'inherit',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Reset to defaults
+          </button>
+        )}
+      </div>
       <p style={{ fontSize: 12, opacity: 0.7, margin: '0 0 16px' }}>
         Every tool that registers a shortcut is listed here. Click a combo to reassign it.
       </p>

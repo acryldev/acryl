@@ -57,6 +57,15 @@ export class ShortcutsRegistry {
     return this.scope.unset(id)
   }
 
+  /**
+   * Reset every registered action back to its default in one go - the safety net for a user who
+   * reassigned combos into an unworkable state and just wants the defaults back, without hunting
+   * down each row's own Reset button one at a time.
+   */
+  async resetAll(): Promise<void> {
+    await Promise.all([...this.actions.keys()].map(id => this.resetCombo(id)))
+  }
+
   /** Observe combo changes (a save from this tab or, once the settings mirror updates, another). */
   subscribe(listener: () => void): () => void {
     return this.scope.subscribe(listener)
