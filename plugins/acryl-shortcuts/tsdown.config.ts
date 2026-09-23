@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown'
 
-const PACKAGE_NAME = 'acryl-mount-anchors'
+const PACKAGE_NAME = 'acryl-shortcuts'
 
 export default defineConfig([
   {
@@ -30,7 +30,6 @@ export default defineConfig([
     external: [
       'react',
       'react/jsx-runtime',
-      'react-dom/client',
       '@deepseek-ai/cordis',
       '@deepseek-ai/dsh-client-runtime/client',
     ],

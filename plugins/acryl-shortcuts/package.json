@@ -1,14 +1,14 @@
 {
-  "name": "acryl-mount-anchors",
+  "name": "acryl-shortcuts",
   "version": "0.1.0",
-  "description": "Visual mount-anchor inspector (spec 039-visual-mount-anchors, Scope A): point at ACRYL's own running UI, click an element, resolve it to its real Cordis slot and source file",
+  "description": "Shared keyboard-shortcut registry and Settings page: every plugin registers its action's id/label/default combo, the user reassigns it from Settings > Shortcuts, and the override persists through ctx.settingsScope on both Desktop and Web",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-mount-anchors"
+    "directory": "plugins/acryl-shortcuts"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-mount-anchors#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-shortcuts#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -31,7 +31,10 @@
       "patch": "./cordis.patch.yml"
     },
     "client": {
-      "inject": ["acryl-shortcuts"],
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-settings"
+      ],
       "platform": "web"
     }
   },
@@ -57,7 +60,10 @@
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.2",
-    "acryl-shortcuts": "workspace:*",
+    "@deepseek-ai/dsh-client-ui-renderer": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-client-ui-settings": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-settings": "0.1.5-alpha.1",
+    "@deepseek-ai/schemastery": "^3.18.1",
     "@types/node": "^22.20.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
@@ -87,7 +93,8 @@
       }
     },
     "capabilities": [
-      "mount-anchor-inspector"
+      "shortcuts-registry",
+      "shortcuts-settings-page"
     ]
   }
 }

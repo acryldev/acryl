@@ -498,6 +498,17 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   // ACRYL UI library (spec 038-ui-component-library): a client-only library that other client bundles `require('@acryl/ui')`. It fills no slot.
   materializeProfilePackage(profile.dir, '@acryl/ui', installPackageUrl)
   patches.push({ insert: [{ id: '@acryl/ui', name: '@acryl/ui' }] })
+  // Shared keyboard-shortcut registry + Settings > Shortcuts page: provides `ctx.shortcuts`,
+  // which other rows (mount-anchors below) inject to read their live, user-reassignable combo.
+  // Must precede any row that injects it.
+  materializeProfilePackage(profile.dir, 'acryl-shortcuts', installPackageUrl)
+  patches.push({ insert: [{ id: 'acryl-shortcuts', name: 'acryl-shortcuts' }] })
+  // Visual mount-anchor inspector (spec 039-visual-mount-anchors): mounts its own React root
+  // directly (react-dom/client is a real platform seed word), independent of any slot - so it
+  // works here on Web the same way it works on Desktop, even though Web has no advanced-shell
+  // slots (sidebar/desktop.main/details) at all.
+  materializeProfilePackage(profile.dir, 'acryl-mount-anchors', installPackageUrl)
+  patches.push({ insert: [{ id: 'acryl-mount-anchors', name: 'acryl-mount-anchors' }] })
   // Last, so a user override beats every composition decision above it - the
   // same shared store the CLI and the Desktop panel write (spec 034).
   patches.push(...pluginLifecyclePatches({

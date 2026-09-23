@@ -1,37 +1,43 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-// Type-only, matches every other `shell.overlay` contributor's pattern
-// (`cordis-plugin-market`): the `ctx.slots` Context augmentation lives in
-// `dsh-client-ui-renderer`, and a real import (not a bare `import type {}`)
-// reliably pulls in its ambient `declare module` augmentation. `shell.overlay`
-// itself is declared by `dsh-client-ui-layout` (a real, shared upstream slot -
-// checked directly, not assumed - `apps/acryl-desktop`'s AdvancedFrame just
-// re-exposes it as one of the root slot's children, it doesn't own the type).
-import '@deepseek-ai/dsh-client-ui-renderer/client'
-import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
+import { createElement } from 'react'
+import { createRoot } from 'react-dom/client'
+// Type-only: pulls the ShortcutsRegistry Context merge (ctx.shortcuts).
+import type {} from 'acryl-shortcuts/client'
 import { MountAnchorInspector } from './MountAnchorInspector.tsx'
 
 export const name = 'acryl-mount-anchors-client'
-export const inject = ['slots']
+export const inject = ['shortcuts']
+
+/** Stable id this inspector registers its toggle under (spec 039's Settings > Shortcuts page). */
+const TOGGLE_ACTION_ID = 'acryl-mount-anchors.toggle'
 
 /**
- * Contribute the mount-anchor inspector to the desktop shell's overlay list.
- * Advanced-mode only (`shell.overlay` is declared only by the advanced shell,
- * same guard `acryl-workspace`/the reference canvas plugin use): the inject
- * throws in compatibility mode, where the slot is undeclared, so this is
- * caught and treated as "nothing to contribute" rather than a load failure.
+ * Mount the inspector directly - not through the `shell.overlay` slot. That slot only exists
+ * where `apps/acryl-desktop`'s `AdvancedFrame` declares it, so a slot-based version worked on
+ * Desktop and silently did nothing at all on Web (confirmed: `apps/acryl-web` has no advanced
+ * shell, no `sidebar`/`desktop.main`/`details`/`shell.overlay` slots declared anywhere). Mounting
+ * an independent React root directly onto `document.body` needs no slot to exist at all, so the
+ * exact same plugin now works on both surfaces. `react-dom/client`'s `createRoot` is a genuine
+ * platform seed word (`deepseek-harness/packages/client/web/src/seed.ts`), not a workaround.
  */
 export function apply(ctx: ClientContext): void {
-  try {
-    ctx.slots.inject('shell.overlay', () => ctx.slots.register({
-      name: 'shell.overlay',
-      id: 'acryl-mount-anchors',
-      order: 90, // renders after other overlays (e.g. the Market modal) so its veil/toast sit on top
-    }, MountAnchorInspector))
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('is not declared')) return
-    throw error
-  }
+  ctx.shortcuts.register({
+    id: TOGGLE_ACTION_ID,
+    label: 'Toggle mount-anchor inspector',
+    defaultCombo: 'cmd+shift+.',
+  })
+  ctx.effect(() => {
+    const container = document.createElement('div')
+    container.id = 'acryl-mount-anchors-root'
+    document.body.appendChild(container)
+    const root = createRoot(container)
+    root.render(createElement(MountAnchorInspector, { shortcuts: ctx.shortcuts, actionId: TOGGLE_ACTION_ID }))
+    return () => {
+      root.unmount()
+      container.remove()
+    }
+  }, 'acryl-mount-anchors: overlay root')
 }
 
 export { MountAnchorInspector } from './MountAnchorInspector.tsx'
-export type { MountAnchor, MountAnchorComponent } from './MountAnchorInspector.tsx'
+export type { MountAnchor, MountAnchorComponent, MountAnchorTarget } from './MountAnchorInspector.tsx'

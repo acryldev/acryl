@@ -94,6 +94,8 @@ const EXTENSION_CONTEXT_ROW_ID = 'extension-context'
 const EXTENSION_CONTEXT_PACKAGE = 'acryl-extension-context'
 const UI_LIBRARY_ROW_ID = '@acryl/ui'
 const UI_LIBRARY_PACKAGE = '@acryl/ui'
+const SHORTCUTS_ROW_ID = 'acryl-shortcuts'
+const SHORTCUTS_PACKAGE = 'acryl-shortcuts'
 const MOUNT_ANCHORS_ROW_ID = 'acryl-mount-anchors'
 const MOUNT_ANCHORS_PACKAGE = 'acryl-mount-anchors'
 const SYSTEM_PROMPT_ROW_ID = 'acryl-system-prompt'
@@ -847,8 +849,12 @@ export function prepareDesktopProfile(
   patches.push({ insert: [{ id: SYSTEM_PROMPT_ROW_ID, name: SYSTEM_PROMPT_PACKAGE }] })
   // ACRYL UI library (spec 038-ui-component-library): client-only, required by other client bundles; resolved from this package's own dependency closure.
   patches.push({ insert: [{ id: UI_LIBRARY_ROW_ID, name: UI_LIBRARY_PACKAGE }] })
-  // Visual mount-anchor inspector (spec 039-visual-mount-anchors): advanced-mode only (guards
-  // itself on the undeclared shell.overlay slot in compatibility mode), so safe to always insert.
+  // Shared keyboard-shortcut registry + Settings > Shortcuts page: provides `ctx.shortcuts`,
+  // which other rows (mount-anchors below) inject to read their live, user-reassignable combo.
+  // Independent of mode/slots, so safe to always insert; must precede any row that injects it.
+  patches.push({ insert: [{ id: SHORTCUTS_ROW_ID, name: SHORTCUTS_PACKAGE }] })
+  // Visual mount-anchor inspector (spec 039-visual-mount-anchors): mounts its own React root
+  // directly, independent of any slot, so safe to always insert regardless of mode.
   patches.push({ insert: [{ id: MOUNT_ANCHORS_ROW_ID, name: MOUNT_ANCHORS_PACKAGE }] })
   if (mode === 'advanced') {
     for (const [id, packageName] of [
