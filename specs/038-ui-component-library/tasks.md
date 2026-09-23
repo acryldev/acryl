@@ -177,3 +177,18 @@ Order matters: T034 and T035 first (cheap, our own stack), then the registry and
   explicitly listed as skipped with a one-line reason, the registry and both sites agree on the
   same item count, and everything is pushed. **Owner: a directed agent (not Claude); Claude
   reviews the result** - do not mark this DONE in this file; leave that to the review.
+
+## Slice 9 - Additional components from shadcnblocks inspiration (added 2026-09-23; building components not covered by shadcn/ui's core list)
+
+Builds components inspired by shadcnblocks patterns that are not in shadcn/ui's own component list.
+Each is ported onto ACRYL's own tokens and follows the same process as Slice 8 items (no cross-item
+imports, CSS Modules, contracts, registry manifest, tests).
+
+- **T046 Announcement. DONE (2026-09-23, commit 44c9018).** A compact pill-shaped badge-link for
+  top-of-page promotional messages with an optional coloured dot, custom icon slot, and trailing
+  arrow. Ported from shadcn/ui's announcement component (MIT, apps/v4/components/announcement.tsx)
+  and inspired by shadcnblocks announcement patterns. 71 tests pass.
+- **T047 Banner.** A full-width dismissible horizontal strip for product announcements. Inspired by
+  shadcnblocks Banner1.
+- **T048 Avatar Group / Avatar Stack.** Compositions of the existing Avatar component.
+- **T049 (more TBD as the list is walked).**
