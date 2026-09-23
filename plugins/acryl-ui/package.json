@@ -50,6 +50,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit",
     "test": "vitest run",
     "registry": "node scripts/generate-registry.mjs && node scripts/validate-registry.mjs",
+    "reexports": "node scripts/generate-reexports.mjs",
     "verify:manifest": "node scripts/verify-manifest.mjs",
     "verify:artifact": "node scripts/verify-artifact.mjs",
     "check": "pnpm run verify:manifest && pnpm run build && pnpm run verify:artifact && pnpm run registry && pnpm run typecheck && vitest run"
