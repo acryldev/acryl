@@ -188,7 +188,8 @@ imports, CSS Modules, contracts, registry manifest, tests).
   top-of-page promotional messages with an optional coloured dot, custom icon slot, and trailing
   arrow. Ported from shadcn/ui's announcement component (MIT, apps/v4/components/announcement.tsx)
   and inspired by shadcnblocks announcement patterns. 71 tests pass.
-- **T047 Banner.** A full-width dismissible horizontal strip for product announcements. Inspired by
-  shadcnblocks Banner1.
+- **T047 Banner. DONE (2026-09-23, commit c4240dd).** A full-width dismissible horizontal strip for
+  product announcements with title, description, optional link, and dismiss button. Inspired by
+  shadcnblocks Banner1. 73 tests pass.
 - **T048 Avatar Group / Avatar Stack.** Compositions of the existing Avatar component.
 - **T049 (more TBD as the list is walked).**
