@@ -1547,6 +1547,29 @@
       "a11y": [
         "the trigger is a focusable region that opens the menu on a right-click and is where focus returns on close; the panel is role=menu with arrow keys, Home/End and Enter/Space walking and activating its rows; rows are menuitem, menuitemcheckbox or menuitemradio with aria-checked where it applies, and a disabled row reports aria-disabled. The submenu family is not ported in this pass, and the panel is not portalled"
       ]
+    },
+    "Carousel": {
+      "summary": "A sliding track of full-viewport items with previous/next controls: the platform's own scroller with snap points, and an api a caller can drive (ported from shadcn/ui's Carousel; embla is dropped for CSS scroll snap).",
+      "props": {
+        "orientation": {
+          "type": "'horizontal' | 'vertical'"
+        },
+        "setApi": {
+          "type": "(api: CarouselApi) => void"
+        },
+        "children": {
+          "type": "ReactNode"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the root is a role=region named by aria-roledescription=carousel, each slide is a role=group with aria-roledescription=slide, and each arrow carries screen-reader-only text; ArrowLeft and ArrowRight are handled on the root in the capture phase, so a focused arrow still moves the track, and an arrow is disabled when the track cannot move that way. A vertical carousel needs a definite height on CarouselContent. embla's wider api (its events, scroll options, drag physics and plugins) is not ported"
+      ]
     }
   },
   "helpers": {

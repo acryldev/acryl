@@ -1,0 +1,37 @@
+.root { position: relative; }
+
+/* The source hides its overflow and lets embla move an inner track. Without embla the viewport IS the scroller: the platform's own scrolling (wheel,
+   trackpad, touch drag) moves it, and the snap points below decide where it comes to rest. The scrollbar is hidden because a carousel's chrome is its
+   arrows, not a bar - keyboard and programmatic scrolling are untouched.
+   `box-sizing: border-box` is declared rather than assumed: this library ships no global reset, and under the initial `content-box` an item's
+   `flex-basis: 100%` excludes its own padding, so a slide came out 16px wider than the viewport it is meant to fill (426px against 410px, measured in the
+   browser) and a vertical slide 16px taller than the height its caller set. */
+.content { box-sizing: border-box; overscroll-behavior: contain; scrollbar-width: none; }
+.content::-webkit-scrollbar { display: none; }
+.content[data-orientation='horizontal'] { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; }
+.content[data-orientation='vertical'] { overflow-x: hidden; overflow-y: auto; scroll-snap-type: y mandatory; }
+
+.track { box-sizing: border-box; display: flex; }
+/* A definite height, so an item's `flex-basis: 100%` has something to resolve against in a column container - the same requirement ScrollArea has: a
+   vertical carousel whose height a caller cannot set is a carousel that grows instead of sliding. */
+.track[data-orientation='vertical'] { flex-direction: column; height: 100%; }
+
+/* The source puts the gap on the leading edge (`-ml-4` on the track, `pl-4` on every item) and lets embla measure the result. Here it sits on the
+   trailing edge instead, so an item's border box is exactly the viewport's width and "one step" is exactly one item with no accumulated drift. */
+.item { box-sizing: border-box; flex: 0 0 100%; min-width: 0; min-height: 0; scroll-snap-align: start; }
+.item[data-orientation='horizontal'] { padding-inline-end: 16px; }
+.item[data-orientation='vertical'] { padding-block-end: 16px; }
+
+/* shadcn's Button (outline variant, icon size, round), restated locally: the ingest gate rejects the cross-item import, and PaginationLink,
+   AttachmentAction and ToggleGroupItem already restate the same chrome. */
+.arrow { box-sizing: border-box; position: absolute; z-index: 10; display: inline-flex; width: 32px; height: 32px; align-items: center; justify-content: center; border-radius: 9999px; border: 1px solid var(--dsw-alias-border-l4); background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-primary); cursor: pointer; outline: none; }
+.arrow:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.arrow:focus-visible { box-shadow: 0 0 0 3px var(--dsw-alias-interactive-bg-hover); outline: 1px solid var(--dsw-alias-border-l3); }
+.arrow:disabled { pointer-events: none; opacity: 0.5; }
+.arrow[data-orientation='horizontal'].previous { top: 50%; left: -48px; transform: translateY(-50%); }
+.arrow[data-orientation='horizontal'].next { top: 50%; right: -48px; transform: translateY(-50%); }
+.arrow[data-orientation='vertical'].previous { top: -48px; left: 50%; transform: translateX(-50%) rotate(90deg); }
+.arrow[data-orientation='vertical'].next { bottom: -48px; left: 50%; transform: translateX(-50%) rotate(90deg); }
+
+.icon { width: 16px; height: 16px; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

@@ -31,6 +31,8 @@ const { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandI
 const { Combobox, ComboboxInput, ComboboxTrigger, ComboboxClear, ComboboxContent, ComboboxList, ComboboxGroup, ComboboxLabel, ComboboxEmpty, ComboboxSeparator, ComboboxItem } = ui
 // T045 batch 6a: ContextMenu, the anchored-listbox shape anchored at the pointer.
 const { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuCheckboxItem, ContextMenuRadioGroup, ContextMenuRadioItem, ContextMenuLabel, ContextMenuSeparator, ContextMenuShortcut } = ui
+// T045 batch 6b: Carousel, the platform's scroller with snap points in place of embla.
+const { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -498,14 +500,59 @@ function T045Batch6() {
   return h(Stack, { gap: 'md' }, menuSection)
 }
 
+// T045 batch 6b: Carousel. Both axes, and the api the component hands out through setApi - which is what the readouts below are: the live answers to
+// canScrollPrev/canScrollNext/selectedIndex, refreshed on scroll, after each arrow press and on resize.
+function T045Batch6b() {
+  const [api, setApi] = React.useState(null)
+  const [horizontal, setHorizontal] = React.useState('waiting for the api')
+  const [verticalApi, setVerticalApi] = React.useState(null)
+  const [vertical, setVertical] = React.useState('waiting for the api')
+  const horizontalRoot = React.useRef(null)
+  const verticalRoot = React.useRef(null)
+  const readout = text => h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, text)
+  // Scroll events do not bubble, so the listener is registered in the capture phase on the region that contains the track.
+  const bind = (carouselApi, root, setter) => {
+    const node = root.current
+    if (node === null || carouselApi === null) return undefined
+    const read = () => setter('prev=' + carouselApi.canScrollPrev() + ' next=' + carouselApi.canScrollNext() + ' index=' + carouselApi.selectedIndex())
+    read()
+    node.addEventListener('scroll', read, true)
+    window.addEventListener('resize', read)
+    return () => { node.removeEventListener('scroll', read, true); window.removeEventListener('resize', read) }
+  }
+  React.useEffect(() => bind(api, horizontalRoot, setHorizontal), [api])
+  React.useEffect(() => bind(verticalApi, verticalRoot, setVertical), [verticalApi])
+  const slide = (n, height) => h(CarouselItem, { key: n },
+    // boxSizing is explicit here for the same reason Carousel's own module declares it: the app ships no global reset, so a height plus a border would
+    // otherwise overflow the slide by the border's width.
+    h('div', { style: { height, boxSizing: 'border-box', borderRadius: 6, border: '1px solid var(--dsw-alias-border-l4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ui.roles.text, fontSize: 13 } }, 'Slide ' + n))
+  // Both carousels are given room with margin rather than padding: the arrows are placed just OUTSIDE the track (the source's own -left-12/-top-12), so
+  // the space they need is space the caller leaves around the component, not space inside it.
+  const horizontalSection = h(Section, { name: 'Carousel', note: 'One slide at a time, with the platform doing the scrolling: a trackpad or a touch drag moves it and the snap points decide where it rests. The arrows are disabled while the track cannot move that way, and the arrow keys work from anywhere inside it. The arrows sit just outside the track, so leave room around the component. The readout is the api the component hands out through setApi.' },
+    h('div', { ref: horizontalRoot },
+      h(Carousel, { setApi: setApi, style: { margin: '0 56px' } },
+        h(CarouselContent, null, [1, 2, 3].map(n => slide(n, 120))),
+        h(CarouselPrevious, null),
+        h(CarouselNext, null))),
+    readout('horizontal: ' + horizontal))
+  const verticalSection = h(Section, { name: 'Carousel, vertical', note: 'The same component on the other axis. A vertical carousel needs a definite height on CarouselContent: that height is what an item resolves its own height against, which is why a vertical one whose height a caller cannot set would grow instead of sliding.' },
+    h('div', { ref: verticalRoot },
+      h(Carousel, { orientation: 'vertical', setApi: setVerticalApi, style: { margin: '56px 0', width: 260 } },
+        h(CarouselContent, { style: { height: 120 } }, [1, 2, 3].map(n => slide(n, 120))),
+        h(CarouselPrevious, null),
+        h(CarouselNext, null))),
+    readout('vertical: ' + vertical))
+  return h(Stack, { gap: 'md' }, horizontalSection, verticalSection)
+}
+
 // A Settings page, not a dialog: the gallery is a catalogue for people building UI, so it lives in Settings (nav entry "UI library"), out of the everyday screens.
 function Gallery() {
   const [tab, setTab] = React.useState('components')
   return h(Stack, { gap: 'md' },
     h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
     h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
-    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 't045b3', label: 'T045 ports 3' }, { id: 't045b4', label: 'T045 ports 4' }, { id: 't045b5', label: 'T045 ports 5' }, { id: 't045b6', label: 'T045 ports 6' }, { id: 'colors', label: 'Colors' }] },
-      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : tab === 't045b3' ? h(T045Batch3) : tab === 't045b4' ? h(T045Batch4) : tab === 't045b5' ? h(T045Batch5) : tab === 't045b6' ? h(T045Batch6) : h(Colors)))
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 't045b3', label: 'T045 ports 3' }, { id: 't045b4', label: 'T045 ports 4' }, { id: 't045b5', label: 'T045 ports 5' }, { id: 't045b6', label: 'T045 ports 6' }, { id: 't045b6b', label: 'T045 ports 6b' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : tab === 't045b3' ? h(T045Batch3) : tab === 't045b4' ? h(T045Batch4) : tab === 't045b5' ? h(T045Batch5) : tab === 't045b6' ? h(T045Batch6) : tab === 't045b6b' ? h(T045Batch6b) : h(Colors)))
 }
 
 exports.inject = ['slots']

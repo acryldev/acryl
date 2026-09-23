@@ -33,6 +33,7 @@ import { Drawer, DrawerTrigger, DrawerClose, DrawerContent, DrawerHeader, Drawer
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandSeparator } from '../src/client/registry/Command/Command.tsx'
 import { Combobox, ComboboxInput, ComboboxTrigger, ComboboxClear, ComboboxContent, ComboboxList, ComboboxGroup, ComboboxLabel, ComboboxEmpty, ComboboxSeparator, ComboboxItem } from '../src/client/registry/Combobox/Combobox.tsx'
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuCheckboxItem, ContextMenuRadioGroup, ContextMenuRadioItem, ContextMenuLabel, ContextMenuSeparator, ContextMenuShortcut, ContextMenuGroup } from '../src/client/registry/ContextMenu/ContextMenu.tsx'
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '../src/client/registry/Carousel/Carousel.tsx'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const harness = resolve(root, '../../deepseek-harness/packages/client')
@@ -504,6 +505,51 @@ describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 bat
     )
     expect(closed).toContain('data-slot="context-menu-trigger"')
     expect(closed).not.toContain('data-slot="context-menu-content"')
+  })
+})
+
+describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 batch 6b: Carousel)', () => {
+  const slides = (
+    <Carousel>
+      <CarouselContent>
+        <CarouselItem>One</CarouselItem>
+        <CarouselItem>Two</CarouselItem>
+      </CarouselContent>
+      <CarouselPrevious />
+      <CarouselNext />
+    </Carousel>
+  )
+
+  it('the root is a carousel region, the viewport is the scroller, and each slide is its own group', () => {
+    const html = renderToStaticMarkup(slides)
+    expect(html).toContain('role="region"'); expect(html).toContain('aria-roledescription="carousel"')
+    expect(html).toContain('data-slot="carousel-content"'); expect(html).toContain('data-slot="carousel-item"')
+    expect(html).toContain('role="group"'); expect(html).toContain('aria-roledescription="slide"')
+    expect(html.match(/data-slot="carousel-item"/gu)?.length ?? 0).toBe(2)
+    expect(html).not.toMatch(/\bbasis-full\b|\boverflow-hidden\b|\btranslate-y-1\/2\b/u)
+  })
+
+  it('the arrows are real buttons carrying screen-reader-only text, both disabled while the track cannot move', () => {
+    const html = renderToStaticMarkup(slides)
+    expect(html).toContain('data-slot="carousel-previous"'); expect(html).toContain('data-slot="carousel-next"')
+    expect(html.match(/type="button"/gu)?.length ?? 0).toBe(2)
+    expect(html).toContain('Previous slide'); expect(html).toContain('Next slide')
+    expect(html.match(/disabled=""/gu)?.length ?? 0).toBe(2)
+    expect(html.match(/aria-hidden="true"/gu)?.length ?? 0).toBe(2)
+    expect(renderToStaticMarkup(<CarouselPrevious label="Back" />)).toContain('Back')
+  })
+
+  it('orientation travels as an attribute on the viewport, the slides and the arrows', () => {
+    const horizontal = renderToStaticMarkup(slides)
+    expect(horizontal.match(/data-orientation="horizontal"/gu)?.length ?? 0).toBe(6)   // viewport, track, two slides, two arrows
+    const vertical = renderToStaticMarkup(
+      <Carousel orientation="vertical">
+        <CarouselContent className="h-40"><CarouselItem>One</CarouselItem></CarouselContent>
+        <CarouselPrevious />
+      </Carousel>,
+    )
+    expect(vertical.match(/data-orientation="vertical"/gu)?.length ?? 0).toBe(4)
+    expect(vertical).toContain('h-40')   // a caller's own height reaches the scroller, which is the element that needs it
   })
 })
 

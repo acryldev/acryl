@@ -110,7 +110,9 @@
     },
     {
       "name": "Carousel",
-      "componentIds": []
+      "componentIds": [
+        "Carousel"
+      ]
     },
     {
       "name": "Chart",
