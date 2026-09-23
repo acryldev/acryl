@@ -1,7 +1,7 @@
 # ACRYL ADE wireframes: where we are, where we go
 
 **Status**: draft, 2026-09-23. Structural only, no visual styling.
-**Related**: [spec 040](../../../specs/040-agentic-multiplexer-ade/spec.md), [parity plan](../../../specs/040-agentic-multiplexer-ade/parity-plan.md), mockups v1 (Lovable) and v2 (Base44) under `acryldev/ux-ui-design-mockup-acryl/`.
+**Related**: [spec 040](../spec.md), [parity plan](../parity-plan.md), mockups v1 (Lovable) and v2 (Base44) under `acryldev/ux-ui-design-mockup-acryl/`.
 
 **How "current" was established.** Read from source (`plugins/acryl-workspace`, `apps/acryl-desktop`), not from a running app or screenshot. Areas owned by upstream DSH are drawn from slot names only, so their exact contents are unverified. Correct this doc after a real launch.
 

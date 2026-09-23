@@ -1,6 +1,6 @@
 # Feature Parity Plan: Orca and Nimbalyst into the ACRYL ADE
 
-**Spec**: [spec.md](./spec.md) (040, Scope A is the target of this plan) | **Plan**: [plan.md](./plan.md)
+**Spec**: [spec.md](./spec.md) (040, Scope A is the target of this plan) | **Plan**: [plan.md](./plan.md)  | **Wireframes**: [design/wireframes-current-vs-planned.md](./design/wireframes-current-vs-planned.md)
 **Written**: 2026-09-23 | **Status**: draft for review, no code changed
 
 ## Purpose
