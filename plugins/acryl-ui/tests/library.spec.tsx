@@ -34,6 +34,7 @@ import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, Command
 import { Combobox, ComboboxInput, ComboboxTrigger, ComboboxClear, ComboboxContent, ComboboxList, ComboboxGroup, ComboboxLabel, ComboboxEmpty, ComboboxSeparator, ComboboxItem } from '../src/client/registry/Combobox/Combobox.tsx'
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuCheckboxItem, ContextMenuRadioGroup, ContextMenuRadioItem, ContextMenuLabel, ContextMenuSeparator, ContextMenuShortcut, ContextMenuGroup } from '../src/client/registry/ContextMenu/ContextMenu.tsx'
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '../src/client/registry/Carousel/Carousel.tsx'
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../src/client/registry/ResizablePanelGroup/ResizablePanelGroup.tsx'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const harness = resolve(root, '../../deepseek-harness/packages/client')
@@ -550,6 +551,42 @@ describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 bat
     )
     expect(vertical.match(/data-orientation="vertical"/gu)?.length ?? 0).toBe(4)
     expect(vertical).toContain('h-40')   // a caller's own height reaches the scroller, which is the element that needs it
+  })
+})
+
+describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 batch 6c: Resizable)', () => {
+  const group = (
+    <ResizablePanelGroup orientation="horizontal">
+      <ResizablePanel defaultSize="50%">One</ResizablePanel>
+      <ResizableHandle withHandle />
+      <ResizablePanel defaultSize={30} minSize={20} maxSize={80} collapsible collapsedSize={10}>Two</ResizablePanel>
+    </ResizablePanelGroup>
+  )
+
+  it('the group carries the orientation, and every panel is a sized flex box carrying its declared share', () => {
+    const html = renderToStaticMarkup(group)
+    expect(html).toContain('data-slot="resizable-panel-group"'); expect(html).toContain('data-orientation="horizontal"')
+    expect(html.match(/data-panel="true"/gu)?.length ?? 0).toBe(2)
+    expect(html).toContain('data-slot="resizable-panel"')
+    expect(html).toContain('flex-grow:50'); expect(html).toContain('flex-grow:30')
+    expect(html).toContain('flex-basis:0'); expect(html).toContain('flex-shrink:0')
+    expect(html).not.toMatch(/\bh-full\b|\bw-px\b|\bflex-1\b/u)
+  })
+
+  it('the divider is a separator on the opposite axis, focusable and reachable, with a decorative grip', () => {
+    const html = renderToStaticMarkup(group)
+    expect(html).toContain('data-slot="resizable-handle"')
+    expect(html).toContain('role="separator"'); expect(html).toContain('aria-orientation="vertical"')
+    expect(html).toContain('tabindex="0"'); expect(html).toContain('data-dragging="false"')
+    expect(html).toContain('aria-hidden="true"')                      // the grip
+    expect(html).not.toContain('aria-valuenow')                       // the values arrive with the first measured layout, asserted in the browser
+    const bare = renderToStaticMarkup(<ResizablePanelGroup><ResizablePanel>a</ResizablePanel><ResizableHandle /></ResizablePanelGroup>)
+    expect(bare).toContain('role="separator"'); expect(bare).not.toContain('aria-hidden="true"')
+  })
+
+  it('a vertical group turns the divider with it', () => {
+    const html = renderToStaticMarkup(<ResizablePanelGroup orientation="vertical"><ResizablePanel>a</ResizablePanel><ResizableHandle /></ResizablePanelGroup>)
+    expect(html).toContain('data-orientation="vertical"'); expect(html).toContain('aria-orientation="horizontal"')
   })
 })
 

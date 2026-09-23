@@ -33,6 +33,8 @@ const { Combobox, ComboboxInput, ComboboxTrigger, ComboboxClear, ComboboxContent
 const { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuCheckboxItem, ContextMenuRadioGroup, ContextMenuRadioItem, ContextMenuLabel, ContextMenuSeparator, ContextMenuShortcut } = ui
 // T045 batch 6b: Carousel, the platform's scroller with snap points in place of embla.
 const { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } = ui
+// T045 batch 6c: ResizablePanelGroup, drag or key the dividers between panels.
+const { ResizablePanelGroup, ResizablePanel, ResizableHandle } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -545,14 +547,45 @@ function T045Batch6b() {
   return h(Stack, { gap: 'md' }, horizontalSection, verticalSection)
 }
 
+// T045 batch 6c: ResizablePanelGroup. Both axes, a panel held inside its limits, and one that collapses - so the drag, the arrow keys, Home/End, the Enter
+// toggle and the reported layout are all reachable by hand and by the browser check.
+function T045Batch6c() {
+  const [horizontal, setHorizontal] = React.useState({})
+  const [collapsing, setCollapsing] = React.useState({})
+  const [vertical, setVertical] = React.useState({})
+  const readout = text => h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, text)
+  const asText = layout => Object.keys(layout).length === 0 ? 'not measured yet' : Object.keys(layout).sort().map(id => id + '=' + Math.round(layout[id])).join('  ')
+  const frame = { height: '100%', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: ui.roles.textMuted }
+  const box = { height: 160, border: '1px solid var(--dsw-alias-border-l4)', borderRadius: 6 }
+  const horizontalSection = h(Section, { name: 'Resizable', note: 'Drag the divider, or focus it and resize from the keyboard: the arrows move it 5 points at a time, and Home and End take it as far as it can go. Panel a is held between 20 and 70, and panel b cannot shrink below 30, so End stops where b runs out rather than at a max.' },
+    h(ResizablePanelGroup, { orientation: 'horizontal', onLayoutChange: setHorizontal, style: box },
+      h(ResizablePanel, { id: 'a', defaultSize: '50%', minSize: 20, maxSize: 70 }, h('div', { style: frame }, 'a')),
+      h(ResizableHandle, { withHandle: true }),
+      h(ResizablePanel, { id: 'b', defaultSize: '50%', minSize: 30 }, h('div', { style: frame }, 'b'))),
+    readout('layout: ' + asText(horizontal)))
+  const collapseSection = h(Section, { name: 'Resizable, collapsing', note: 'Enter on a focused divider collapses the panel BEFORE it and brings it back - the same panel upstream collapses. Panel c collapses to 10.' },
+    h(ResizablePanelGroup, { orientation: 'horizontal', onLayoutChange: setCollapsing, style: box },
+      h(ResizablePanel, { id: 'c', defaultSize: '50%', collapsible: true, collapsedSize: 10 }, h('div', { style: frame }, 'c')),
+      h(ResizableHandle, { withHandle: true }),
+      h(ResizablePanel, { id: 'd', defaultSize: '50%' }, h('div', { style: frame }, 'd'))),
+    readout('layout: ' + asText(collapsing)))
+  const verticalSection = h(Section, { name: 'Resizable, vertical', note: 'The same group on the other axis: the divider is a horizontal rule, and the arrow keys that move it are the vertical ones.' },
+    h(ResizablePanelGroup, { orientation: 'vertical', onLayoutChange: setVertical, style: box },
+      h(ResizablePanel, { id: 'top', defaultSize: '25%' }, h('div', { style: frame }, 'top')),
+      h(ResizableHandle, { withHandle: true }),
+      h(ResizablePanel, { id: 'bottom', defaultSize: '75%' }, h('div', { style: frame }, 'bottom'))),
+    readout('layout: ' + asText(vertical)))
+  return h(Stack, { gap: 'md' }, horizontalSection, collapseSection, verticalSection)
+}
+
 // A Settings page, not a dialog: the gallery is a catalogue for people building UI, so it lives in Settings (nav entry "UI library"), out of the everyday screens.
 function Gallery() {
   const [tab, setTab] = React.useState('components')
   return h(Stack, { gap: 'md' },
     h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
     h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
-    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 't045b3', label: 'T045 ports 3' }, { id: 't045b4', label: 'T045 ports 4' }, { id: 't045b5', label: 'T045 ports 5' }, { id: 't045b6', label: 'T045 ports 6' }, { id: 't045b6b', label: 'T045 ports 6b' }, { id: 'colors', label: 'Colors' }] },
-      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : tab === 't045b3' ? h(T045Batch3) : tab === 't045b4' ? h(T045Batch4) : tab === 't045b5' ? h(T045Batch5) : tab === 't045b6' ? h(T045Batch6) : tab === 't045b6b' ? h(T045Batch6b) : h(Colors)))
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 't045b3', label: 'T045 ports 3' }, { id: 't045b4', label: 'T045 ports 4' }, { id: 't045b5', label: 'T045 ports 5' }, { id: 't045b6', label: 'T045 ports 6' }, { id: 't045b6b', label: 'T045 ports 6b' }, { id: 't045b6c', label: 'T045 ports 6c' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : tab === 't045b3' ? h(T045Batch3) : tab === 't045b4' ? h(T045Batch4) : tab === 't045b5' ? h(T045Batch5) : tab === 't045b6' ? h(T045Batch6) : tab === 't045b6b' ? h(T045Batch6b) : tab === 't045b6c' ? h(T045Batch6c) : h(Colors)))
 }
 
 exports.inject = ['slots']

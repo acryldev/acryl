@@ -428,7 +428,9 @@
     },
     {
       "name": "Resizable",
-      "componentIds": []
+      "componentIds": [
+        "ResizablePanelGroup"
+      ]
     },
     {
       "name": "Sandbox",

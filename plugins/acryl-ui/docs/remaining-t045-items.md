@@ -67,7 +67,7 @@ CDP, no npm install). The expensive mistakes, all made repeatedly:
 | item | what it actually is | expected delta |
 |---|---|---|
 | `carousel` | self-contained: scroll-snap track, prev/next buttons, dots, keyboard | DONE - ported and verified in the browser (16/16 assertions); the design notes below are what shipped |
-| `resizable` | self-contained: pointer-drag handles between panels | small; the Drawer port's pointer-capture maths is the precedent |
+| `resizable` | self-contained: pointer-drag handles between panels | DONE - ported and verified in the browser (18/18 assertions); see the notes at the end |
 | `calendar` | self-contained: month grid, date arithmetic, single and range selection | medium; `react-day-picker` is dropped, so the grid is hand-rolled |
 | `menubar` | a bar of menus: several anchored panels, open/switch on hover and arrows | restatement plus a hover-intent delta |
 | `navigation-menu` | same family as menubar with a viewport-wide panel and delayed hover | restatement plus hover-intent; read its source before assuming |
@@ -120,3 +120,34 @@ this one is mostly platform behaviour.
   returning and re-disabling itself, the arrow key working from a focused arrow, the end clamping and
   disabling Next, and the vertical track scrolling on the other axis with an item height that resolves
   against the height the caller set.
+## ResizablePanelGroup: what shipped (ported, verified, committed)
+
+`ResizablePanelGroup`, `ResizablePanel`, `ResizableHandle` (plus the `ResizableOrientation`, `ResizableLayout` and
+`ResizableBounds` types). The contract key is the export that is the item's root, because shadcn's `resizable`
+item exports no component called `Resizable` and a contract key has to be a real runtime export - the rename
+`DirectionProvider` already took for shadcn's `direction` item. The catalogue's category stays `Resizable`.
+
+- **Drop `react-resizable-panels` for arithmetic on the group's own rect.** The group owns the layout as a map
+  of panel id to percentage and renders a flex container; the panels register their own sizes and limits, and
+  one pass in a layout effect turns those declarations into a normalised layout (panels without a declared size
+  share what the others leave). A size prop is a percentage in every form (`"50%"`, `"50"`, `50`); the upstream
+  library reads a bare number as pixels, which is why its own docs write `defaultSize="50%"`.
+- **Drag**: pointer capture on the divider (the Drawer port's precedent), projecting the movement onto the
+  group's own rect as a percentage of the pair's total. **Keyboard**: the source's own steps - 5 percent per
+  arrow on the group's axis, Home/End to the end of what the pair allows, Enter to collapse the panel *before*
+  the divider. The pair's total is kept constant, so the neighbour can never be pushed past its own limits.
+- **Reading the pair from the DOM, not from a registry**: React runs child effects in tree order, so a registry
+  built from them is bottom-up. A divider reads its own `previousElementSibling`/`nextElementSibling`, which is
+  correct whatever order the children mounted in.
+- **`aria-valuemin`/`aria-valuemax` are pair-aware**, as the source's delta simulation is: the divider cannot
+  move a panel past what its neighbour can give up.
+- The browser check asserted 18 things and passes 18: the measured layout, the divider being the element at its
+  own centre, a real pointer drag moving the panel by the distance dragged, `aria-valuenow` following the drag,
+  the arrow key moving 5 points, Home/End stopping at the floor and at what the pair allows, four cases of Enter
+  (no-op when the panel before it cannot collapse, collapse, and restore), and the same drag and arrow key on
+  the vertical axis. The demo grew a third group (a collapsible panel before the divider) when the first run of
+  the check showed Enter correctly doing nothing on a group whose collapsible panel sat *after* the divider.
+
+Partial (recorded in manifest.yml): pixel sizes, `collapsedThreshold`, `groupResizeBehavior`, `defaultLayout`,
+`disabled`, `resizePreviewMode`/`SeparatorOverlay`, the imperative handles, `useDefaultLayout` persistence, the
+`isUserInteraction` argument, F6 between separators, the double-click reset, and RTL mirroring.

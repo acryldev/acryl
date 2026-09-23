@@ -1570,6 +1570,29 @@
       "a11y": [
         "the root is a role=region named by aria-roledescription=carousel, each slide is a role=group with aria-roledescription=slide, and each arrow carries screen-reader-only text; ArrowLeft and ArrowRight are handled on the root in the capture phase, so a focused arrow still moves the track, and an arrow is disabled when the track cannot move that way. A vertical carousel needs a definite height on CarouselContent. embla's wider api (its events, scroll options, drag physics and plugins) is not ported"
       ]
+    },
+    "ResizablePanelGroup": {
+      "summary": "A group of panels with draggable dividers between them: drag a divider or resize it from the keyboard, and each panel keeps its own limits (ported from shadcn/ui's Resizable; react-resizable-panels is replaced by hand).",
+      "props": {
+        "orientation": {
+          "type": "'horizontal' | 'vertical'"
+        },
+        "onLayoutChange": {
+          "type": "(layout: Record<string, number>) => void"
+        },
+        "children": {
+          "type": "ReactNode"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "a divider is role=separator, focusable and reachable by Tab, with aria-orientation on the opposite axis to the group, aria-controls naming the panel before it and aria-valuenow/aria-valuemin/aria-valuemax reporting that panel's current share and the window the divider can actually move it through, narrowed by whatever its neighbour can give up; the arrow keys move the pair by 5 percent (on the group's own axis), Home and End send it to an end, and Enter collapses a collapsible panel to its collapsed size and brings it back. Give the group a size: it fills its parent, and every size in this port is a percentage (a pixel size is not supported)"
+      ]
     }
   },
   "helpers": {
