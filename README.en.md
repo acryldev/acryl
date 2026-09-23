@@ -225,7 +225,7 @@ corepack pnpm dev
 ### Development scripts
 
 Run root package scripts through `corepack pnpm <script>`. Corepack selects the
-repository-pinned PNPM 11.8.0 release; do not use `npm run` or install dependencies
+repository-pinned PNPM 11.11.0 release; do not use `npm run` or install dependencies
 with npm in this workspace.
 
 #### Daily development session

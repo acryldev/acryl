@@ -181,7 +181,7 @@
     "cordis-plugin-market": "workspace:*",
     "koffi": "3.1.5",
     "node-addon-require-builtin": "^0.1.4",
-    "pnpm": "11.8.0",
+    "pnpm": "11.11.0",
     "react": "18.3.1",
     "semver": "^7.8.5",
     "yaml": "^2.9.0"
@@ -193,7 +193,7 @@
     "@types/semver": "^7.7.1",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
-    "vitest": "4.1.8"
+    "vitest": "4.1.11"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "4.0.2"

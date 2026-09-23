@@ -8,7 +8,7 @@ Building or changing an ACRYL plugin, tool, UI slot or skill: start at `plugins/
 
 ## Prerequisites and setup
 
-- Use Node.js `^22.19.0` or `>=24.0.0` and the root PNPM `11.8.0` release through Corepack.
+- Use Node.js `^22.19.0` or `>=24.0.0` and the root PNPM `11.11.0` release through Corepack.
 - Initialize the pinned upstream checkout with `corepack pnpm run upstream:sync`.
 - Install root dependencies with `corepack pnpm install --frozen-lockfile`.
 

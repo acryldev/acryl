@@ -11,7 +11,7 @@ afterEach(async () => { await Promise.all(dirs.splice(0).map(dir => rm(dir, { fo
 describe('pinned pnpm for Web and CLI installs', () => {
   it('resolves the pnpm this runtime depends on', () => {
     const pinned = resolvePinnedPnpm()
-    expect(pinned?.version).toBe('11.8.0')
+    expect(pinned?.version).toBe('11.11.0')
   })
 
   it('puts a shim for the pinned pnpm first on PATH and it runs that exact version', async () => {
@@ -22,7 +22,7 @@ describe('pinned pnpm for Web and CLI installs', () => {
     expect(env.PATH).toContain('/usr/bin')
     if (process.platform !== 'win32') {
       const out = execFileSync(join(binDir, 'pnpm'), ['--version'], { env: { ...env, PATH: env.PATH ?? '' }, encoding: 'utf8' })
-      expect(out.trim()).toBe('11.8.0')
+      expect(out.trim()).toBe('11.11.0')
     }
     // Idempotent: a second call rewrites nothing and returns the same shape.
     expect(pinnedPnpmEnv({ PATH: '/usr/bin' }, binDir, 'linux').PATH).toBe(env.PATH)

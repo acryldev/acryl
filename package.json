@@ -4,14 +4,14 @@
   "private": true,
   "description": "ACRYL local-first plugin-native agent workspace",
   "license": "MIT",
-  "packageManager": "pnpm@11.8.0",
+  "packageManager": "pnpm@11.11.0",
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
   },
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "11.8.0",
+      "version": "11.11.0",
       "onFail": "warn"
     }
   },
