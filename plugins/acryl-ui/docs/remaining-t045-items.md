@@ -46,7 +46,7 @@ CDP, no npm install). The expensive mistakes, all made repeatedly:
 
 | item | what it actually is | expected delta |
 |---|---|---|
-| `carousel` | self-contained: scroll-snap track, prev/next buttons, dots, keyboard | **smallest of the eight** - no overlay, no anchor, no registry |
+| `carousel` | self-contained: scroll-snap track, prev/next buttons, dots, keyboard | scoped below - ready to execute |
 | `resizable` | self-contained: pointer-drag handles between panels | small; the Drawer port's pointer-capture maths is the precedent |
 | `calendar` | self-contained: month grid, date arithmetic, single and range selection | medium; `react-day-picker` is dropped, so the grid is hand-rolled |
 | `menubar` | a bar of menus: several anchored panels, open/switch on hover and arrows | restatement plus a hover-intent delta |
@@ -58,3 +58,32 @@ CDP, no npm install). The expensive mistakes, all made repeatedly:
 Default per the operator's standing ruling: **ship the narrower verified core and record the rest in
 `manifest.yml` as a deliberate partial**, unless something about the item makes that wrong - and if so,
 say so rather than deciding silently.
+
+## Carousel: design decided (read the source, no open questions)
+
+Six exports: `Carousel`, `CarouselContent`, `CarouselItem`, `CarouselPrevious`, `CarouselNext`, plus the
+`CarouselApi` type. Self-contained - no overlay, no anchor, no registry, and no `:has()` state rules, so
+this one is mostly platform behaviour.
+
+- **Drop `embla-carousel-react` for CSS scroll-snap.** The track is `overflow: auto` +
+  `scroll-snap-type: x mandatory`, each item `flex: 0 0 100%` + `scroll-snap-align: start`. Prev/Next
+  scroll by one item (`scrollBy` by the track's client width), and `canScrollPrev`/`canScrollNext` come
+  from `scrollLeft > 0` and `scrollLeft < scrollWidth - clientWidth`, recomputed on `scroll` and resize.
+  This is the same call ScrollArea made (the platform already does what the library reimplemented).
+- **The API surface shrinks and must be documented.** Embla's api (`reInit` events, `scrollTo` with
+  options, drag physics, plugins) is not reproduced. Define a local `CarouselApi` with `scrollPrev`,
+  `scrollNext`, `scrollTo(index)`, `canScrollPrev()`, `canScrollNext()`, `selectedIndex()`, keep the
+  `setApi` prop so a caller can still drive it, and record in the manifest that the rest of embla's api
+  and its plugin system are a deliberate partial. Same shape of decision as vaul's velocity flick in
+  Drawer and Base UI's positioner variables in Combobox.
+- **`CarouselPrevious`/`Next` restate shadcn's Button locally** (outline, icon, round, absolutely placed
+  at the track's sides) - a cross-item import is not available, and this is the same restatement
+  `PaginationLink` and `AttachmentAction` already do.
+- Keep the source's hooks: `role="region"` + `aria-roledescription="carousel"` on the root, `role="group"`
+  + `aria-roledescription="slide"` per item, `ArrowLeft`/`ArrowRight` handled on the root (capture, so a
+  focused button inside still moves the track), a screen-reader-only label on each arrow button, and
+  `disabled` from the can-scroll state. Keep `data-slot` names and both orientations.
+- No `:has()`-driven state and no transition on a property a `:has()` rule sets, so nothing here is
+  exposed to the engine split that InputGroup hit. Add the markup test (roles, slots, disabled state,
+  no Tailwind leakage) and verify in the browser by scrolling: pressing Next must change `scrollLeft` and
+  flip `canScrollPrev`, which is the whole behaviour in one assertion.
