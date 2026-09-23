@@ -26,6 +26,8 @@ plugins/cordis-plugin-market/lib/
 plugins/dsh-client-ui-brand-acryl/lib/
 plugins/acryl-ui/lib/
 plugins/acryl-ui/registry-seed/
+plugins/acryl-mount-anchors/lib/
+plugins/acryl-workspace/lib/
 
 apps/acryl-web/lib/
 release-artifacts/

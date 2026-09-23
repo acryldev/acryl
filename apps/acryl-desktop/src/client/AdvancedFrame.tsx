@@ -108,16 +108,16 @@ export function AdvancedFrame({ layout, platform, renderSlot, useSessions, Sessi
       {platform === 'darwin' && <div className="dshDesktopMacCaptionRow" aria-hidden="true" />}
       {platform === 'win32' && <div className="dshDesktopWindowsCaptionRow" aria-hidden="true" />}
       <aside className="dshDesktopSidebarSurface">
-        <div className="dshDesktopUpstreamSidebar">
+        <div className="dshDesktopUpstreamSidebar" data-acryl-slot="sidebar">
           {renderSlot('sidebar', { collapsed, width: sidebarOwnerWidth })}
         </div>
       </aside>
-      <main className="dshDesktopConversationSurface">
+      <main className="dshDesktopConversationSurface" data-acryl-slot="desktop.main">
         {renderSlot('desktop.main', {
-          renderConversation: () => renderSlot('conversation', {}),
+          renderConversation: () => <div data-acryl-slot="conversation">{renderSlot('conversation', {})}</div>,
         })}
       </main>
-      <aside className="dshDesktopDetailsSurface">
+      <aside className="dshDesktopDetailsSurface" data-acryl-slot="details">
         {/* Strict session entry: with no session there is no surface, and the
             column is an empty zero-width track (matches ui-layout's
             AppFrame/rightbar - SessionProvider withholds the strict entry

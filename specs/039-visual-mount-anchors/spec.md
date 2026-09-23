@@ -1,12 +1,10 @@
 # Visual mount anchors: point at a running screen, hand an agent the real location
 
-**Tracking:** to be filed (`acryldev/acryl` issue) when this moves to `ready-for-agent`
+**Tracking:** to be filed (`acryldev/acryl` issue)
 
 **Feature Directory**: `specs/039-visual-mount-anchors`
 **Created**: 2026-09-22
-**Status**: idea captured, not started. Parked deliberately while `specs/038-ui-component-library`
-(a directed agent porting the remaining shadcn/ui components, T045) has priority. This file exists
-so the idea survives until someone picks it up - it is a stub, not a plan.
+**Status**: **Scope A built and verified, 2026-09-23** - not a stub anymore. Built as `plugins/acryl-mount-anchors` (Cmd+Shift+. toggles point mode; hover highlights the nearest `data-acryl-slot` ancestor; click resolves the real slot + source file and copies it as JSON), required in advanced mode via `apps/acryl-desktop/src/profile.ts`. The missing DOM-boundary marking this spec named as the real gap is closed without touching `deepseek-harness` at all: `apps/acryl-desktop/src/client/AdvancedFrame.tsx` now stamps `data-acryl-slot="sidebar"` / `"desktop.main"` / `"conversation"` / `"details"` at the four `renderSlot(...)` call sites it already owns. Verified end-to-end in the real, running Electron app (not a mock, not headless-only): attached to the live renderer over its own DevTools Protocol port, dispatched a real keydown and a real click, and got back `sidebar · @deepseek-ai/dsh-client-ui-sidebar/SidebarRoot.module.css` for a real sidebar element and an honest `desktop.main · no source resolved` for a real element with no CSS Module class - not a guess, not a canned string. One real bug found and fixed in the process: the point-mode veil element was itself intercepting `elementFromPoint`, resolving every anchor to "unresolved" regardless of what was actually clicked, until it was made `pointerEvents: 'none'` and the crosshair cursor moved to a `document.body.style.cursor` toggle instead. Scope B (CLI/TUI) is untouched, still genuinely parked - this work was pulled forward specifically to inform `specs/040-agentic-multiplexer-ade`'s Desktop/Web mounting decisions, per explicit user direction, not because Scope B's priority changed.
 **Authority**: `specs/038-ui-component-library` (the registry and its provenance mechanism Scope A
 would read from), DSH `packages/client/modules` (the client-module loader whose `data-plugin`/
 `data-plugin-css` markers Scope A reads), DSH `packages/client/ui-slots` (the slot registration
@@ -80,15 +78,24 @@ Checked in-session, not assumed:
   cross-referenced against the loaded `data-plugin-css` tags, already resolves to **the exact
   component file** that rendered it - not just the package. This exists today; nothing to build.
 
-## What's missing (the real gap, Scope A)
+## What was missing (the real gap, Scope A) - closed 2026-09-23
 
 `packages/client/ui-slots`' `register(options, component)` never marks the DOM boundary it renders
 into with the slot's own `name`/`id` (checked: no `data-slot`-equivalent attribute exists at the
 slot-boundary level; `data-slot` attributes seen elsewhere are shadcn-ported components' own internal
-styling hooks, unrelated to Cordis slots). So today you can resolve "this exact file rendered this
-pixel" but not "this is the `sidebar.footer.action` slot, filled by plugin X." That is the one thing
-genuinely worth building for ACRYL specifically - most apps have no slot system at all, so this isn't
-something to copy from Lavish or Orca, it has no equivalent there.
+styling hooks, unrelated to Cordis slots). So you could resolve "this exact file rendered this pixel"
+but not "this is the `sidebar` slot, filled by plugin X."
+
+That gap is closed, but not by patching `ui-slots` itself - `deepseek-harness` is a pinned, read-only
+upstream submodule (Constitution Principle III), and this is exactly a case where the seam is
+insufficient but the real fix doesn't need a CORE EXTENSION PROPOSAL: the marking doesn't need to live
+in the generic `register()` call at all. `apps/acryl-desktop/src/client/AdvancedFrame.tsx` already
+owns every `renderSlot(...)` call site for the slots that matter here (`sidebar`, `desktop.main`,
+`conversation`, `details`) - four lines there, in a file ACRYL already owns, do the whole job. This
+is a narrower answer than "mark every slot everywhere," and it is honest about that narrowness: a
+plugin's *own* internal sub-slots (if any) aren't marked by this, only the four root-level ones
+`AdvancedFrame` itself renders. Good enough for what `specs/040` needs; a broader mechanism (if ever
+needed) would still require the CORE EXTENSION PROPOSAL path this spec originally pointed at.
 
 ## Proposed shape (not designed in depth - a stub)
 
