@@ -47,6 +47,10 @@ components:
     origin: extracted
     from: packages/client/ui-sidebar/src/client/SidebarRoot.tsx and .module.css (the New Session bar)
     changed: the rail form is a class on the button itself instead of an ancestor's `.collapsed`
+  - name: Announcement
+    origin: ported
+    from: shadcn/ui's announcement component (apps/v4/components/announcement.tsx, commit 094edfcf, MIT, fetched 2026-09-23) and shadcnblocks announcement patterns
+    changed: does not compose shadcn's own Badge item (self-containment - the ingest gate rejects a cross-item import); pill chrome and link behaviour written here; lucide-react ArrowRightIcon replaced by a plain inline SVG
   - name: Kbd
     origin: ported
     from: shadcn/ui registry item `kbd` (style new-york-v4), https://ui.shadcn.com/docs/components/kbd, MIT licence, fetched 2026-09-22

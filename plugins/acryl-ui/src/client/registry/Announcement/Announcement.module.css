@@ -1,0 +1,73 @@
+/**
+ * Announcement - a compact, pill-shaped badge-link for top-of-page promotional messages.
+ * Inspired by shadcn/ui's Announcement component (apps/v4/components/announcement.tsx, MIT)
+ * and shadcnblocks announcement patterns. Styled on the app's own --dsw-alias-* tokens.
+ */
+.announcement {
+  display: inline-flex;
+  width: fit-content;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  overflow: hidden;
+  border-radius: 9999px;
+  border: 1px solid var(--dsw-alias-border-l4);
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--dsw-alias-label-primary);
+  background: transparent;
+  text-decoration: none;
+  line-height: 1.4;
+  transition: border-color 0.15s ease, color 0.15s ease;
+  cursor: default;
+}
+
+/* Link behaviour */
+a.announcement {
+  cursor: pointer;
+}
+a.announcement:hover {
+  border-color: var(--dsw-alias-interactive-bg-hover);
+  color: var(--acryl-accent);
+}
+a.announcement:focus-visible {
+  outline: 2px solid var(--acryl-accent);
+  outline-offset: 2px;
+}
+
+/* Colored dot indicator */
+.dot {
+  display: inline-flex;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Arrow icon (trailing) */
+.arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: var(--dsw-alias-label-tertiary);
+  transition: transform 0.15s ease;
+}
+a.announcement:hover .arrow {
+  transform: translateX(1px);
+}
+
+/* Custom icon slot (replaces dot when provided) */
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}

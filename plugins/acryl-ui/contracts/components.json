@@ -1056,6 +1056,37 @@
         "web"
       ]
     },
+    "Announcement": {
+      "summary": "A compact, pill-shaped badge-link for top-of-page promotional messages, with an optional coloured dot and trailing arrow icon (ported from shadcn/ui's Announcement component).",
+      "props": {
+        "href": {
+          "type": "string",
+          "description": "Link target. When provided the announcement renders as an <a>."
+        },
+        "dot": {
+          "type": "boolean",
+          "description": "Show a coloured dot indicator (default accent)."
+        },
+        "dotColor": {
+          "type": "string",
+          "description": "Custom dot colour (any CSS colour value)."
+        },
+        "icon": {
+          "type": "ReactNode",
+          "description": "Custom icon element. When provided, replaces the dot."
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "a11y": [
+        "role=link when href is set",
+        "no role when it is a plain span"
+      ],
+      "surfaces": [
+        "web"
+      ]
+    },
     "RadioGroup": {
       "summary": "A classic radio-dot list for a set of mutually exclusive plain-text options (ported from shadcn/ui's RadioGroup; a native input[type=radio] group, no Radix dependency). Distinct from AppearanceCubes/Segmented (icon-and-label tiles).",
       "props": {

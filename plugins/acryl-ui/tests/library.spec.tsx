@@ -37,6 +37,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../src/client/registry/ResizablePanelGroup/ResizablePanelGroup.tsx'
 import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarGroup, MenubarLabel, MenubarItem, MenubarShortcut, MenubarCheckboxItem, MenubarRadioGroup, MenubarRadioItem, MenubarSeparator } from '../src/client/registry/Menubar/Menubar.tsx'
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink, NavigationMenuViewport } from '../src/client/registry/NavigationMenu/NavigationMenu.tsx'
+import { Announcement } from '../src/client/registry/Announcement/Announcement.tsx'
 import { Calendar } from '../src/client/registry/Calendar/Calendar.tsx'
 import { SidebarProvider, Sidebar, SidebarTrigger, SidebarRail, SidebarInset, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarMenuAction, SidebarMenuBadge, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from '../src/client/registry/Sidebar/Sidebar.tsx'
 
@@ -815,6 +816,21 @@ describe('ToolCallCard and SidebarRow (extracted from DSH ToolRow and SidebarRoo
     const wide = renderToStaticMarkup(<SidebarRow icon={<i />} label="New session" wide onClick={() => {}} />)
     const rail = renderToStaticMarkup(<SidebarRow icon={<i />} label="New session" wide={false} onClick={() => {}} />)
     expect(wide).toContain('>New session</span>'); expect(rail).not.toContain('>New session</span>'); expect(rail).toContain('aria-label="New session"'); expect(rail).toMatch(/_collapsed/u)
+  })
+})
+
+describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T046: Announcement)', () => {
+  it('Announcement renders as a span with text when no href is given, and as a link with an arrow when href is set', () => {
+    const plain = renderToStaticMarkup(<Announcement>New version</Announcement>)
+    expect(plain).toMatch(/^<span[^>]*>/u); expect(plain).toContain('New version'); expect(plain).not.toContain('href')
+    const linked = renderToStaticMarkup(<Announcement href="/changelog" dot>New version</Announcement>)
+    expect(linked).toMatch(/^<a[^>]*href="\/changelog"[^>]*>/u); expect(linked).toContain('New version')
+    expect(linked).toContain('<span class='); expect(linked).toContain('svg')
+  })
+
+  it('Announcement accepts a custom icon element in place of the dot', () => {
+    const html = renderToStaticMarkup(<Announcement href="/docs" icon={<span data-testid="custom-icon">*</span>}>Custom</Announcement>)
+    expect(html).toContain('custom-icon'); expect(html).not.toContain('class="dot"')
   })
 })
 
