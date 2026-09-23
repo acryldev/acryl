@@ -69,6 +69,11 @@ CDP, no npm install). The expensive mistakes, all made repeatedly:
   direction of travel, and only then move both.
 - **When focus is part of the state, focus from an effect keyed on that state**, never from a node captured in the handler: a node captured before the commit
   is what left the Calendar's keyboard in the previous day (Popover's port hit the same rule with its panel's first focus).
+- **A collapsed rail must not clip the affordance that brings it back.** The Sidebar's grab strip lives inside the rail's inner box, so hiding that box outright
+  took the strip with it - measured at 0x0 in the page's corner, which also put the check's click on the app's own top-left corner. The inner is now merely
+  invisible (`visibility: hidden`, with the strip re-showing itself) and clipped by its own `overflow`, so the strip stays anchored to the rail.
+- **A parent sized to its content takes back whatever a collapse frees.** The first Sidebar demo had a fit-content frame, so collapsing the rail shrank the frame
+  and the inset never grew - which looks like the inset failing rather than the demo. A rail needs a parent with a real width.
 - **A parent cannot measure a child in the same effect pass that mounts the child**: the child publishes
   the attribute the parent's query looks for only after its own state lands, one commit later. The
   navigation menu's shared surface kept a `visibility: hidden` box until a window resize forced it to
@@ -85,7 +90,7 @@ CDP, no npm install). The expensive mistakes, all made repeatedly:
 | `calendar` | self-contained: month grid, date arithmetic, single and range selection | DONE - ported and verified in the browser (15/15 assertions) |
 | `menubar` | a bar of menus: several anchored panels, open/switch on hover and arrows | DONE - ported and verified in the browser (23/23 with navigation-menu) |
 | `navigation-menu` | same family as menubar with a viewport-wide panel and delayed hover | DONE - ported and verified in the browser; see the notes at the end |
-| `sidebar` | many parts (provider, collapsible rail, mobile sheet, persistence) | **largest remaining**; decide the partial explicitly and record it |
+| `sidebar` | many parts (provider, collapsible rail, mobile sheet, persistence) | DONE - ported with the mobile sheet, the cookie and the tooltips recorded as partials (10/10 browser assertions) |
 | `questionnaire` | only exists in the `base-nova` style family, deps `@shadcn/react` | BLOCKED - see below |
 | `message-scroller` | deps `@shadcn/react` | BLOCKED - see below |
 
@@ -232,3 +237,25 @@ Carousel for CSS scroll snap.
 Partial (recorded in manifest.yml): multi-month, the dropdown caption layout, week numbers, the `formatters`/`classNames`/`components` extension points,
 uncontrolled `defaultSelected`, react-day-picker's rich disabled matchers (dates, ranges, day-of-week sets - this port takes a predicate), and its
 `CalendarDayButton` export.
+
+## Sidebar: what shipped (ported, verified, committed)
+
+The largest remaining item, ported with its partial decided up front rather than discovered: the whole **desktop** rail. `SidebarProvider` owning the open state with
+the `Mod+B` shortcut and the width variables, `useSidebar`, the rail with its `side`/`variant`/`collapsible` attributes, the trigger, the grab strip, the inset,
+header/footer/content/separator, the group parts, the menu parts down to the submenu, and the action and badge affordances - 23 exports of the source's 24.
+
+**The partial, named before the work started**: the mobile rail is not ported. Upstream renders it inside a Sheet, and a Sheet exists here as its own registry item
+that this one may not import - self-containment is what the ingest gate enforces - so `isMobile` is false and the rail stays the desktop rail. Also not ported, and
+recorded: the `sidebar_state` cookie (a caller owns `open` and can persist it), the collapsed-state tooltips (they need the Tooltip item), `SidebarInput`, and
+`SidebarMenuSkeleton` (a skeleton is the Skeleton item restated).
+
+- The rail is a flex sibling of the inset rather than a fixed overlay, so collapsing it is the only thing that moves and the inset takes the freed width.
+- `collapsible="icon"` narrows to the icon width and hides the last span inside a row, the same convention upstream's markup relies on.
+- The active row reports `aria-current="page"`, which upstream leaves to `data-active` alone.
+- **The bug the browser found**: the grab strip lives inside the rail's inner box, so collapsing it away took the strip too - the strip was 0x0 in the page's
+  corner, and the check's click landed on the app's own top-left corner. The inner is now only invisible, with the strip re-showing itself and staying anchored to
+  the rail. The second finding was the demo's: a fit-content frame takes back whatever the collapse frees, so the inset never grew; a rail needs a parent with a
+  real width.
+- Verified in the running app, 10/10: both rails' starting widths and states, the label hidden in the icon rail, `useSidebar` reporting to a child, the trigger
+  collapsing the rail to nothing and handing the width to the inset, the strip being the topmost element at its own point while the rail is gone and bringing it
+  back, `Mod+B` collapsing and restoring, and the icon rail widening again with its labels.

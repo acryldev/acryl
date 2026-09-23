@@ -40,6 +40,8 @@ const { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarGroup, Menu
 const { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink } = ui
 // T045 batch 8: Calendar, the hand-rolled month grid.
 const { Calendar } = ui
+// T045 batch 9: the Sidebar rail.
+const { SidebarProvider, Sidebar, SidebarTrigger, SidebarRail, SidebarInset, SidebarHeader, SidebarContent, SidebarFooter, SidebarSeparator, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarMenuAction, SidebarMenuBadge, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton, useSidebar } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -647,14 +649,64 @@ function T045Batch8() {
   return h(Stack, { gap: 'md' }, singleSection, rangeSection)
 }
 
+// T045 batch 9: Sidebar. Two rails: one that slides away and one that narrows to icons. Mod+B toggles either, as does the trigger inside the inset, and the
+// strip on the rail's edge.
+function T045Batch9() {
+  const readout = text => h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, text)
+  const StateReadout = () => {
+    const sidebar = useSidebar()
+    return readout('state = ' + sidebar.state + '   isMobile = ' + String(sidebar.isMobile))
+  }
+  const rows = h(SidebarGroupContent, null,
+    h(SidebarMenu, null,
+      h(SidebarMenuItem, null,
+        h(SidebarMenuButton, { isActive: true }, h('span', null, '\u25a0'), h('span', null, 'Overview')),
+        h(SidebarMenuBadge, null, '3')),
+      h(SidebarMenuItem, null,
+        h(SidebarMenuButton, null, h('span', null, '\u25a1'), h('span', null, 'Sessions')),
+        h(SidebarMenuAction, { onClick: () => undefined, title: 'New session' }, '+')),
+      h(SidebarMenuItem, null,
+        h(SidebarMenuButton, null, h('span', null, '\u25c7'), h('span', null, 'Settings')),
+        h(SidebarMenuSub, null,
+          h(SidebarMenuSubItem, null, h(SidebarMenuSubButton, { href: '#appearance', isActive: true }, 'Appearance')),
+          h(SidebarMenuSubItem, null, h(SidebarMenuSubButton, { href: '#models' }, 'Models'))))))
+  // A definite width, not a fit-content one: the rail and the inset share this box, so a parent that shrank to its content would take the freed width with
+  // it and the inset would never grow. This is the one thing a caller has to get right for a rail to be worth collapsing.
+  const frame = { width: 480, height: 260, border: '1px solid var(--dsw-alias-border-l4)', borderRadius: 6, overflow: 'hidden', display: 'flex' }
+  const slidingSection = h(Section, { name: 'Sidebar', note: 'The rail is a flex sibling of the inset, so collapsing it is the only thing that moves. Mod+B toggles it, the trigger in the inset toggles it, and the strip on the rail\'s right edge brings a slid-away rail back. An active row reports aria-current.' },
+    h('div', null,
+      h(SidebarProvider, null,
+        h('div', { style: frame },
+          h(Sidebar, null,
+            h(SidebarHeader, null, h('strong', { style: { fontSize: 13, color: ui.roles.text } }, 'Workspace')),
+            h(SidebarContent, null, rows),
+            h(SidebarSeparator, null),
+            h(SidebarFooter, null, h('span', { style: { fontSize: 12, color: ui.roles.textMuted } }, 'v0.2.0')),
+            h(SidebarRail, null)),
+          h(SidebarInset, null,
+            h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, padding: 8 } }, h(SidebarTrigger, null), h('span', { style: { fontSize: 13, color: ui.roles.text } }, 'Content')),
+            h('div', { style: { padding: '0 8px' } }, h(StateReadout, null))))),
+      readout('Mod+B or the trigger toggles the rail.')))
+  const iconSection = h(Section, { name: 'Sidebar, collapsed to icons', note: 'The same rail with collapsible="icon" starting closed: it narrows to the icon width and the label at the end of each row is hidden, which is the convention the row uses - icon first, label last.' },
+    h(SidebarProvider, { defaultOpen: false },
+      h('div', { style: frame },
+        h(Sidebar, { collapsible: 'icon' },
+          h(SidebarContent, null, rows),
+          h(SidebarRail, null)),
+        h(SidebarInset, null,
+          h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, padding: 8 } }, h(SidebarTrigger, null), h('span', { style: { fontSize: 13, color: ui.roles.text } }, 'Content')),
+          h('div', { style: { padding: '0 8px' } }, h(StateReadout, null))))))
+  return h(Stack, { gap: 'md' }, slidingSection, iconSection)
+}
+
 // A Settings page, not a dialog: the gallery is a catalogue for people building UI, so it lives in Settings (nav entry "UI library"), out of the everyday screens.
 function Gallery() {
   const [tab, setTab] = React.useState('components')
   return h(Stack, { gap: 'md' },
     h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
     h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
-    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 't045b3', label: 'T045 ports 3' }, { id: 't045b4', label: 'T045 ports 4' }, { id: 't045b5', label: 'T045 ports 5' }, { id: 't045b6', label: 'T045 ports 6' }, { id: 't045b6b', label: 'T045 ports 6b' }, { id: 't045b6c', label: 'T045 ports 6c' }, { id: 't045b7', label: 'T045 ports 7' }, { id: 't045b8', label: 'T045 ports 8' }, { id: 'colors', label: 'Colors' }] },
-      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : tab === 't045b3' ? h(T045Batch3) : tab === 't045b4' ? h(T045Batch4) : tab === 't045b5' ? h(T045Batch5) : tab === 't045b6' ? h(T045Batch6) : tab === 't045b6b' ? h(T045Batch6b) : tab === 't045b6c' ? h(T045Batch6c) : tab === 't045b7' ? h(T045Batch7) : tab === 't045b8' ? h(T045Batch8) : h(Colors)))
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 't045b3', label: 'T045 ports 3' }, { id: 't045b4', label: 'T045 ports 4' }, { id: 't045b5', label: 'T045 ports 5' }, { id: 't045b6', label: 'T045 ports 6' }, { id: 't045b6b', label: 'T045 ports 6b' }, { id: 't045b6c', label: 'T045 ports 6c' }, { id: 't045b7', label: 'T045 ports 7' }, { id: 't045b8', label: 'T045 ports 8' }, { id: 't045b9', label: 'T045 ports 9' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : tab === 't045b3' ? h(T045Batch3) : tab === 't045b4' ? h(T045Batch4) : tab === 't045b5' ? h(T045Batch5) : tab === 't045b6' ? h(T045Batch6) : tab === 't045b6b' ? h(T045Batch6b) : tab === 't045b6c' ? h(T045Batch6c) : tab === 't045b7' ? h(T045Batch7) : tab === 't045b8' ? h(T045Batch8) : tab === 't045b9' ? h(T045Batch9) : h(Colors)))
 }
 
 exports.inject = ['slots']

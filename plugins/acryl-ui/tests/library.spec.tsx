@@ -38,6 +38,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../src/cli
 import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarGroup, MenubarLabel, MenubarItem, MenubarShortcut, MenubarCheckboxItem, MenubarRadioGroup, MenubarRadioItem, MenubarSeparator } from '../src/client/registry/Menubar/Menubar.tsx'
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink, NavigationMenuViewport } from '../src/client/registry/NavigationMenu/NavigationMenu.tsx'
 import { Calendar } from '../src/client/registry/Calendar/Calendar.tsx'
+import { SidebarProvider, Sidebar, SidebarTrigger, SidebarRail, SidebarInset, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarMenuAction, SidebarMenuBadge, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from '../src/client/registry/Sidebar/Sidebar.tsx'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const harness = resolve(root, '../../deepseek-harness/packages/client')
@@ -723,6 +724,73 @@ describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 bat
     const html = renderToStaticMarkup(<Calendar defaultMonth={march} weekStartsOn={1} />)
     expect(html).toContain('Mon')
     expect(html.indexOf('Mon')).toBeLessThan(html.indexOf('Sun'))
+  })
+})
+
+describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 batch 9: Sidebar)', () => {
+  const rail = (
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton isActive><span>icon</span><span>Overview</span></SidebarMenuButton>
+                <SidebarMenuAction>More</SidebarMenuAction>
+                <SidebarMenuBadge>3</SidebarMenuBadge>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton><span>icon</span><span>Settings</span></SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuSub>
+                  <SidebarMenuSubItem><SidebarMenuSubButton href="#a" isActive>Sub a</SidebarMenuSubButton></SidebarMenuSubItem>
+                </SidebarMenuSub>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+      <SidebarInset><SidebarTrigger /></SidebarInset>
+    </SidebarProvider>
+  )
+
+  it('the provider holds the state and the rail publishes it', () => {
+    const html = renderToStaticMarkup(rail)
+    expect(html).toContain('data-slot="sidebar-wrapper"'); expect(html).toContain('data-state="expanded"')
+    expect(html).toContain('data-slot="sidebar"'); expect(html).toContain('data-side="left"')
+    expect(html).toContain('data-variant="sidebar"')
+    expect(html).not.toMatch(/\bgroup-data-\[|\bhyphens-auto\b|\bupside-down\b/u)
+  })
+
+  it('the toggle is a labelled button and the grab strip is hidden from assistive tech', () => {
+    const html = renderToStaticMarkup(rail)
+    expect(html).toContain('data-slot="sidebar-trigger"'); expect(html).toContain('aria-label="Toggle the sidebar"')
+    const withRail = renderToStaticMarkup(<SidebarProvider><Sidebar><SidebarRail /></Sidebar></SidebarProvider>)
+    expect(withRail).toContain('data-slot="sidebar-rail"'); expect(withRail).toContain('aria-hidden="true"')
+  })
+
+  it('an active row reports aria-current and the rows carry their hooks', () => {
+    const html = renderToStaticMarkup(rail)
+    expect(html.match(/aria-current="page"/gu)?.length ?? 0).toBe(2)   // the row and the nested link
+    expect(html.match(/data-active="true"/gu)?.length ?? 0).toBe(2)
+    expect(html.match(/data-active="false"/gu)?.length ?? 0).toBe(1)
+    expect(html).toContain('data-slot="sidebar-menu-action"'); expect(html).toContain('data-slot="sidebar-menu-badge"')
+    expect(html).toContain('role="list"'); expect(html).toContain('data-slot="sidebar-menu-sub-button"')
+    expect(html).toContain('<a'); expect(html).toContain('href="#a"')
+  })
+
+  it('a collapsed rail says what collapsing does, and a plain one is not a rail at all', () => {
+    const collapsed = renderToStaticMarkup(<SidebarProvider defaultOpen={false}><Sidebar collapsible="icon">rows</Sidebar></SidebarProvider>)
+    expect(collapsed).toContain('data-state="collapsed"'); expect(collapsed).toContain('data-collapsible="icon"')
+    const plain = renderToStaticMarkup(<SidebarProvider><Sidebar collapsible="none">rows</Sidebar></SidebarProvider>)
+    expect(plain).not.toContain('data-collapsible'); expect(plain).not.toContain('data-slot="sidebar-inner"')
+  })
+
+  it('the sub-parts are exported as themselves', () => {
+    expect(typeof SidebarInset).toBe('function'); expect(typeof SidebarGroupLabel).toBe('function')
+    expect(typeof SidebarMenuSubButton).toBe('function'); expect(typeof SidebarMenuBadge).toBe('function')
   })
 })
 

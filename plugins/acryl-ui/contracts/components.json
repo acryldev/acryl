@@ -1677,6 +1677,41 @@
       "a11y": [
         "the days are a real grid: role=grid with column headers for the weekdays, one aria-selected per cell, and each day button's accessible name is its full date; the keyboard model is roving - one day holds the tab stop, the arrows move by day and by week, Home and End reach the week's ends, PageUp/PageDown change the month and the grid follows the focused day, and Enter or Space chooses. A disabled day is a disabled button. Multi-month, week numbers, the dropdown caption and react-day-picker's matchers are not ported"
       ]
+    },
+    "Sidebar": {
+      "summary": "A collapsible rail with groups of rows and an inset for the content beside it, with one keyboard shortcut and one state (ported from shadcn/ui's Sidebar; every part is written by hand).",
+      "props": {
+        "defaultOpen": {
+          "type": "boolean"
+        },
+        "open": {
+          "type": "boolean"
+        },
+        "onOpenChange": {
+          "type": "(open: boolean) => void"
+        },
+        "side": {
+          "type": "'left' | 'right'"
+        },
+        "variant": {
+          "type": "'sidebar' | 'floating' | 'inset'"
+        },
+        "collapsible": {
+          "type": "'offcanvas' | 'icon' | 'none'"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the toggle is a real button with a screen-reader label and Mod+B does the same thing from the keyboard, so the state is reachable either way; the active row reports aria-current=page, a group is grouped markup and the separator is role=separator; the rail strip that a reader grabs to bring a collapsed rail back is aria-hidden, because the trigger and the shortcut are the accessible paths. The mobile rail (a Sheet upstream), the collapsed-state tooltips and the cookie that remembers the state are not ported"
+      ]
     }
   },
   "helpers": {
