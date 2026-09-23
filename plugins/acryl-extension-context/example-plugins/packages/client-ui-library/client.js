@@ -35,6 +35,9 @@ const { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, Co
 const { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } = ui
 // T045 batch 6c: ResizablePanelGroup, drag or key the dividers between panels.
 const { ResizablePanelGroup, ResizablePanel, ResizableHandle } = ui
+// T045 batch 7: Menubar and NavigationMenu, the two bars.
+const { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarGroup, MenubarLabel, MenubarItem, MenubarShortcut, MenubarCheckboxItem, MenubarRadioGroup, MenubarRadioItem, MenubarSeparator } = ui
+const { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -578,14 +581,61 @@ function T045Batch6c() {
   return h(Stack, { gap: 'md' }, horizontalSection, collapseSection, verticalSection)
 }
 
+// T045 batch 7: the two bars. The menubar is one Tab stop with arrow keys, hover-switching and a menu panel; the navigation bar opens its panel after a
+// hover that rests and paints one shared surface under the whole bar.
+function T045Batch7() {
+  const [log, setLog] = React.useState('nothing yet')
+  const [wrap, setWrap] = React.useState(true)
+  const [sort, setSort] = React.useState('name')
+  const readout = text => h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, text)
+  const menuSection = h(Section, { name: 'Menubar', note: 'One Tab stop: the arrow keys walk the triggers, and with a menu open they open the one they land on. A pointer sliding across the bar switches menus too. Escape closes and returns focus; the checkbox and radio rows keep the panel open.' },
+    h(Menubar, null,
+      h(MenubarMenu, null,
+        h(MenubarTrigger, null, 'File'),
+        h(MenubarContent, null,
+          h(MenubarLabel, { inset: true }, 'File'),
+          h(MenubarItem, { onSelect: () => setLog('New') }, 'New', h(MenubarShortcut, null, '\u2318N')),
+          h(MenubarItem, { onSelect: () => setLog('Open') }, 'Open'),
+          h(MenubarSeparator, null),
+          h(MenubarCheckboxItem, { checked: wrap, onCheckedChange: setWrap }, 'Wrap lines'),
+          h(MenubarRadioGroup, { value: sort, onValueChange: setSort },
+            h(MenubarRadioItem, { value: 'name' }, 'Sort by name'),
+            h(MenubarRadioItem, { value: 'date' }, 'Sort by date')),
+          h(MenubarSeparator, null),
+          h(MenubarItem, { variant: 'destructive', onSelect: () => setLog('Delete') }, 'Delete'))),
+      h(MenubarMenu, null,
+        h(MenubarTrigger, null, 'Edit'),
+        h(MenubarContent, null,
+          h(MenubarItem, { onSelect: () => setLog('Copy') }, 'Copy', h(MenubarShortcut, null, '\u2318C')),
+          h(MenubarItem, { disabled: true }, 'Paste')))),
+    readout('chosen = ' + log + '   wrap = ' + wrap + '   sort = ' + sort))
+  const navSection = h(Section, { name: 'Navigation menu', note: 'Hover a trigger and hold: the panel opens after a moment, because a pointer crossing the bar should not flash panels. With one open, moving to another trigger switches at once. Every panel is painted on one shared surface under the bar, so switching does not move it.' },
+    h(NavigationMenu, { style: { border: '1px solid var(--dsw-alias-border-l4)', borderRadius: 6, padding: '0 8px', width: 'fit-content' } },
+      h(NavigationMenuList, null,
+        h(NavigationMenuItem, null,
+          h(NavigationMenuTrigger, null, 'Products'),
+          h(NavigationMenuContent, null,
+            h('div', { style: { display: 'grid', gap: 4, width: 260 } },
+              h(NavigationMenuLink, { href: '#products-overview', active: true }, 'Overview'),
+              h(NavigationMenuLink, { href: '#products-changelog' }, 'Changelog')))),
+        h(NavigationMenuItem, null,
+          h(NavigationMenuTrigger, null, 'Docs'),
+          h(NavigationMenuContent, null,
+            h('div', { style: { display: 'grid', gap: 4, width: 220 } },
+              h(NavigationMenuLink, { href: '#docs-start' }, 'Getting started'),
+              h(NavigationMenuLink, { href: '#docs-api' }, 'API')))),
+        h(NavigationMenuItem, null, h(NavigationMenuLink, { href: '#pricing' }, 'Pricing')))))
+  return h(Stack, { gap: 'md' }, menuSection, navSection)
+}
+
 // A Settings page, not a dialog: the gallery is a catalogue for people building UI, so it lives in Settings (nav entry "UI library"), out of the everyday screens.
 function Gallery() {
   const [tab, setTab] = React.useState('components')
   return h(Stack, { gap: 'md' },
     h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
     h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
-    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 't045b3', label: 'T045 ports 3' }, { id: 't045b4', label: 'T045 ports 4' }, { id: 't045b5', label: 'T045 ports 5' }, { id: 't045b6', label: 'T045 ports 6' }, { id: 't045b6b', label: 'T045 ports 6b' }, { id: 't045b6c', label: 'T045 ports 6c' }, { id: 'colors', label: 'Colors' }] },
-      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : tab === 't045b3' ? h(T045Batch3) : tab === 't045b4' ? h(T045Batch4) : tab === 't045b5' ? h(T045Batch5) : tab === 't045b6' ? h(T045Batch6) : tab === 't045b6b' ? h(T045Batch6b) : tab === 't045b6c' ? h(T045Batch6c) : h(Colors)))
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 't045b3', label: 'T045 ports 3' }, { id: 't045b4', label: 'T045 ports 4' }, { id: 't045b5', label: 'T045 ports 5' }, { id: 't045b6', label: 'T045 ports 6' }, { id: 't045b6b', label: 'T045 ports 6b' }, { id: 't045b6c', label: 'T045 ports 6c' }, { id: 't045b7', label: 'T045 ports 7' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : tab === 't045b3' ? h(T045Batch3) : tab === 't045b4' ? h(T045Batch4) : tab === 't045b5' ? h(T045Batch5) : tab === 't045b6' ? h(T045Batch6) : tab === 't045b6b' ? h(T045Batch6b) : tab === 't045b6c' ? h(T045Batch6c) : tab === 't045b7' ? h(T045Batch7) : h(Colors)))
 }
 
 exports.inject = ['slots']

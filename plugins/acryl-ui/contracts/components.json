@@ -1593,6 +1593,46 @@
       "a11y": [
         "a divider is role=separator, focusable and reachable by Tab, with aria-orientation on the opposite axis to the group, aria-controls naming the panel before it and aria-valuenow/aria-valuemin/aria-valuemax reporting that panel's current share and the window the divider can actually move it through, narrowed by whatever its neighbour can give up; the arrow keys move the pair by 5 percent (on the group's own axis), Home and End send it to an end, and Enter collapses a collapsible panel to its collapsed size and brings it back. Give the group a size: it fills its parent, and every size in this port is a percentage (a pixel size is not supported)"
       ]
+    },
+    "Menubar": {
+      "summary": "A bar of menus in one Tab stop: the arrow keys walk its triggers and a pointer sliding along it switches menus (ported from shadcn/ui's Menubar; Radix's primitive is replaced by hand).",
+      "props": {
+        "onValueChange": {
+          "type": "(menuId: string | null) => void"
+        },
+        "children": {
+          "type": "ReactNode"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the bar is role=menubar with aria-orientation=horizontal and is a single Tab stop, the arrow keys plus Home/End walking its triggers and opening the one they land on when a menu is already open; each trigger is a menuitem with aria-haspopup, aria-expanded and aria-controls, and a panel is role=menu whose rows are menuitem, menuitemcheckbox or menuitemradio, walked by the same keys a menu uses, with Escape closing and focusing the trigger. The submenu family is not ported in this pass, and panels are not portalled"
+      ]
+    },
+    "NavigationMenu": {
+      "summary": "A navigation bar whose panels share one surface under the whole bar, opening after a hover that rests (ported from shadcn/ui's Navigation Menu; Radix's primitive is replaced by hand).",
+      "props": {
+        "viewport": {
+          "type": "boolean"
+        },
+        "children": {
+          "type": "ReactNode"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the bar is a nav whose list is one Tab stop, aria-expanded and aria-controls tying each trigger to its panel, and the arrow keys plus Home/End walking the triggers; Escape closes the open panel and returns focus to its trigger; links mark the current page with aria-current=page. Indicator and the panel morph animation are not ported"
+      ]
     }
   },
   "helpers": {

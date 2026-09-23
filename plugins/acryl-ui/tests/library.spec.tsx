@@ -35,6 +35,8 @@ import { Combobox, ComboboxInput, ComboboxTrigger, ComboboxClear, ComboboxConten
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuCheckboxItem, ContextMenuRadioGroup, ContextMenuRadioItem, ContextMenuLabel, ContextMenuSeparator, ContextMenuShortcut, ContextMenuGroup } from '../src/client/registry/ContextMenu/ContextMenu.tsx'
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '../src/client/registry/Carousel/Carousel.tsx'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../src/client/registry/ResizablePanelGroup/ResizablePanelGroup.tsx'
+import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarGroup, MenubarLabel, MenubarItem, MenubarShortcut, MenubarCheckboxItem, MenubarRadioGroup, MenubarRadioItem, MenubarSeparator } from '../src/client/registry/Menubar/Menubar.tsx'
+import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink, NavigationMenuViewport } from '../src/client/registry/NavigationMenu/NavigationMenu.tsx'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const harness = resolve(root, '../../deepseek-harness/packages/client')
@@ -587,6 +589,98 @@ describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 bat
   it('a vertical group turns the divider with it', () => {
     const html = renderToStaticMarkup(<ResizablePanelGroup orientation="vertical"><ResizablePanel>a</ResizablePanel><ResizableHandle /></ResizablePanelGroup>)
     expect(html).toContain('data-orientation="vertical"'); expect(html).toContain('aria-orientation="horizontal"')
+  })
+})
+
+describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 batch 7: Menubar, NavigationMenu)', () => {
+  const bar = (
+    <Menubar>
+      <MenubarMenu>
+        <MenubarTrigger>File</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem>New</MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
+      <MenubarMenu>
+        <MenubarTrigger>Edit</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem>Copy</MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
+    </Menubar>
+  )
+
+  it('the bar is a menubar of menuitem triggers, each tied to the panel it would open', () => {
+    const html = renderToStaticMarkup(bar)
+    expect(html).toContain('role="menubar"'); expect(html).toContain('aria-orientation="horizontal"')
+    expect(html.match(/role="menuitem"/gu)?.length ?? 0).toBe(2)
+    expect(html.match(/aria-haspopup="menu"/gu)?.length ?? 0).toBe(2)
+    expect(html.match(/aria-expanded="false"/gu)?.length ?? 0).toBe(2)
+    expect(html.match(/aria-controls="[^"]*-content"/gu)?.length ?? 0).toBe(2)
+    expect(html.match(/data-state="closed"/gu)?.length ?? 0).toBe(2)
+    expect(html).not.toContain('data-slot="menubar-content"')       // nothing renders while every menu is closed
+    expect(html).not.toMatch(/\bbg-popover\b|\bmin-w-\[8rem\]\b/u)
+  })
+
+  it('the rows carry the roles, states and hooks a menu needs, and render standalone', () => {
+    const rows = renderToStaticMarkup(
+      <div>
+        <MenubarGroup>
+          <MenubarLabel inset>Actions</MenubarLabel>
+          <MenubarItem inset variant="destructive" disabled>Delete<MenubarShortcut>D</MenubarShortcut></MenubarItem>
+          <MenubarCheckboxItem checked>Wrap</MenubarCheckboxItem>
+          <MenubarRadioGroup value="b">
+            <MenubarRadioItem value="a">A</MenubarRadioItem>
+            <MenubarRadioItem value="b">B</MenubarRadioItem>
+          </MenubarRadioGroup>
+          <MenubarSeparator />
+        </MenubarGroup>
+      </div>,
+    )
+    expect(rows).toContain('role="group"'); expect(rows).toContain('role="separator"')
+    expect(rows).toContain('role="menuitem"'); expect(rows).toContain('role="menuitemcheckbox"'); expect(rows).toContain('role="menuitemradio"')
+    expect(rows).toContain('aria-checked="true"')                    // the checked box and the selected radio
+    expect(rows).toContain('aria-disabled="true"'); expect(rows).toContain('data-disabled="true"')
+    expect(rows).toContain('data-variant="destructive"'); expect(rows).toContain('data-inset="true"')
+    expect(rows).toContain('data-slot="menubar-shortcut"'); expect(rows).toContain('data-slot="menubar-indicator"')
+  })
+
+  it('the navigation bar is a nav of one Tab stop whose triggers name their panels, and a link marks the current page', () => {
+    const html = renderToStaticMarkup(
+      <NavigationMenu>
+        <NavigationMenuList>
+          <NavigationMenuItem>
+            <NavigationMenuTrigger>Products</NavigationMenuTrigger>
+            <NavigationMenuContent><NavigationMenuLink active href="#one">One</NavigationMenuLink></NavigationMenuContent>
+          </NavigationMenuItem>
+          <NavigationMenuItem>
+            <NavigationMenuTrigger>Docs</NavigationMenuTrigger>
+            <NavigationMenuContent><NavigationMenuLink href="#two">Two</NavigationMenuLink></NavigationMenuContent>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>,
+    )
+    expect(html).toContain('data-slot="navigation-menu"'); expect(html).toContain('data-viewport="true"')
+    expect(html).toContain('<ul'); expect(html).toContain('data-slot="navigation-menu-list"')
+    expect(html.match(/aria-expanded="false"/gu)?.length ?? 0).toBe(2)
+    expect(html.match(/aria-controls="[^"]*-content"/gu)?.length ?? 0).toBe(2)
+    expect(html).not.toContain('aria-haspopup')                      // a navigation panel is not a menu
+    expect(html).not.toContain('data-slot="navigation-menu-content"')
+    expect(html).not.toContain('data-slot="navigation-menu-viewport"')
+    const link = renderToStaticMarkup(<NavigationMenuLink active href="#one">One</NavigationMenuLink>)
+    expect(link).toContain('href="#one"'); expect(link).toContain('aria-current="page"'); expect(link).toContain('data-active="true"')
+    const inactive = renderToStaticMarkup(<NavigationMenuLink href="#two">Two</NavigationMenuLink>)
+    expect(inactive).not.toContain('aria-current')
+  })
+
+  it('a bar without a viewport says so, so its panels draw their own surface', () => {
+    const html = renderToStaticMarkup(
+      <NavigationMenu viewport={false}>
+        <NavigationMenuList><NavigationMenuItem><NavigationMenuTrigger>One</NavigationMenuTrigger></NavigationMenuItem></NavigationMenuList>
+      </NavigationMenu>,
+    )
+    expect(html).toContain('data-viewport="false"')
+    expect(renderToStaticMarkup(<NavigationMenuViewport />)).toBe('')  // nothing to paint while every item is closed
   })
 })
 

@@ -60,7 +60,16 @@ CDP, no npm install). The expensive mistakes, all made repeatedly:
 - **A poll that waits for a scroll to settle must sleep before its first sample**, or two identical
   pre-scroll reads look settled and the assertion fails on a component that works.
 - A selector like `[data-slot="carousel"]:nth-of-type(1)` does not mean "the second carousel" - both are
-  the first `div` among their own siblings. Index the NodeList instead.
+  the first `div` among their own siblings. **The same trap bit again in a second shape**: the navigation
+  menu's triggers each sit inside their own `<li>`, so every one of them is *the first button among its own
+  siblings* and `:nth-of-type(2)` matched nothing - the check silently moved the pointer to nowhere and
+  reported a component bug that was not there. Index the NodeList (`[...querySelectorAll(slot)][i]`).
+- **A parent cannot measure a child in the same effect pass that mounts the child**: the child publishes
+  the attribute the parent's query looks for only after its own state lands, one commit later. The
+  navigation menu's shared surface kept a `visibility: hidden` box until a window resize forced it to
+  re-measure; it now measures itself on the next frame and follows the panel with a resize observer. If a
+  measurement depends on another component's commit, schedule it (frame or observer) rather than taking it
+  in the effect.
 
 ## Per-item deltas
 
@@ -69,11 +78,11 @@ CDP, no npm install). The expensive mistakes, all made repeatedly:
 | `carousel` | self-contained: scroll-snap track, prev/next buttons, dots, keyboard | DONE - ported and verified in the browser (16/16 assertions); the design notes below are what shipped |
 | `resizable` | self-contained: pointer-drag handles between panels | DONE - ported and verified in the browser (18/18 assertions); see the notes at the end |
 | `calendar` | self-contained: month grid, date arithmetic, single and range selection | medium; `react-day-picker` is dropped, so the grid is hand-rolled |
-| `menubar` | a bar of menus: several anchored panels, open/switch on hover and arrows | restatement plus a hover-intent delta |
-| `navigation-menu` | same family as menubar with a viewport-wide panel and delayed hover | restatement plus hover-intent; read its source before assuming |
+| `menubar` | a bar of menus: several anchored panels, open/switch on hover and arrows | DONE - ported and verified in the browser (23/23 with navigation-menu) |
+| `navigation-menu` | same family as menubar with a viewport-wide panel and delayed hover | DONE - ported and verified in the browser; see the notes at the end |
 | `sidebar` | many parts (provider, collapsible rail, mobile sheet, persistence) | **largest remaining**; decide the partial explicitly and record it |
-| `questionnaire` | only exists in the `base-nova` style family, deps `@shadcn/react` | read the source first |
-| `message-scroller` | deps `@shadcn/react` | read the source first - if the primitive is the substance, it is blocked like `chart`/`form` |
+| `questionnaire` | only exists in the `base-nova` style family, deps `@shadcn/react` | BLOCKED - see below |
+| `message-scroller` | deps `@shadcn/react` | BLOCKED - see below |
 
 Default per the operator's standing ruling: **ship the narrower verified core and record the rest in
 `manifest.yml` as a deliberate partial**, unless something about the item makes that wrong - and if so,
@@ -151,3 +160,46 @@ item exports no component called `Resizable` and a contract key has to be a real
 Partial (recorded in manifest.yml): pixel sizes, `collapsedThreshold`, `groupResizeBehavior`, `defaultLayout`,
 `disabled`, `resizePreviewMode`/`SeparatorOverlay`, the imperative handles, `useDefaultLayout` persistence, the
 `isUserInteraction` argument, F6 between separators, the double-click reset, and RTL mirroring.
+
+## Menubar and NavigationMenu: what shipped (ported, verified, committed)
+
+Both bars restate the anchored-listbox shape (`docs/pattern-anchored-listbox.md`) for their panels and add the
+one thing a bar has that a menu does not.
+
+- **Menubar** - roving focus, so the bar is a single Tab stop and the arrow keys plus Home/End walk its
+  triggers and open the one they land on when a menu is already open, and hover intent, so a pointer sliding
+  onto a sibling switches menus. The panel closes when focus leaves the bar entirely, which works only because
+  the panel is a child of the bar element rather than a portal. `MenubarPortal` and the submenu family
+  (`MenubarSub`, `MenubarSubTrigger`, `MenubarSubContent`) are recorded partials, the same calls Sheet,
+  Popover and ContextMenu already took.
+- **NavigationMenu** - delayed hover (150 ms), because a pointer crossing a bar should not flash panels, an
+  immediate switch once one is open, and a close grace period (250 ms) measured from bar and panel together so
+  a pointer crossing the gap between them does not dismiss it. Every item's panel is placed at the same
+  coordinates under the whole list, so switching does not move the panel a reader is looking at; upstream
+  achieves that by moving the open panel into one viewport box, which needs a portal, so
+  `NavigationMenuViewport` paints the same surface at the open panel's own box instead and a panel draws no
+  surface while a viewport is in play. `NavigationMenuIndicator`, the panel morph animation, and
+  `navigationMenuTriggerStyle` as a `cva` string are recorded partials.
+- Verified in the running app, 23/23 across both: one Tab stop each, ArrowRight/ArrowLeft walking the menubar,
+  ArrowDown opening a menu with focus inside and the panel below its trigger, the arrow keys walking the rows,
+  a real click re-opening a menu and a row activation running it and closing, a pointer sliding onto a sibling
+  switching menus, Escape closing; and for the navigation bar, no panel on a 60 ms pass-through hover, the
+  panel opening after the hover rests with its own links and the shared surface exactly on its box, an
+  immediate switch on the sibling, the panel surviving 120 ms away and closing after the grace period, the
+  arrows opening the trigger they land on, and Escape taking the surface with it.
+
+## Blocked, with the evidence (questionnaire, message-scroller)
+
+Both are the same class as `chart` (recharts) and `form` (react-hook-form): the registry item is a set of thin
+wrappers over a primitive that carries the substance.
+
+- `message-scroller` is 131 lines of Tailwind class strings over `@shadcn/react/message-scroller`, and it
+  re-exports that primitive's own hooks (`useMessageScroller`, `useMessageScrollerScrollable`,
+  `useMessageScrollerVisibility`). The behaviour - auto-scroll pinning, scroll anchors, the pending-scroll and
+  autoscrolling states - lives in the primitive; the wrapper alone does nothing, and hand-porting it would be
+  reimplementing a scroll-anchoring engine, not porting this item.
+- `questionnaire` is 333 lines of the same shape over `@shadcn/react/questionnaire` (Root, Progress, Item,
+  Title, Description, Choices, ...), **plus two extra reasons**: it exists only in the `base-nova` style family
+  rather than new-york-v4 (`/r/styles/new-york-v4/questionnaire.json` returns the docs page, not an item), and
+  its own source imports `@/app/(create)/components/icon-placeholder`, a private module of the docs site that
+  is not published at all.

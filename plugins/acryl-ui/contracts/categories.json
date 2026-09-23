@@ -357,7 +357,9 @@
     },
     {
       "name": "Menubar",
-      "componentIds": []
+      "componentIds": [
+        "Menubar"
+      ]
     },
     {
       "name": "Message",
@@ -371,7 +373,9 @@
     },
     {
       "name": "Navigation Menu",
-      "componentIds": []
+      "componentIds": [
+        "NavigationMenu"
+      ]
     },
     {
       "name": "Pagination",
