@@ -98,6 +98,8 @@ const SHORTCUTS_ROW_ID = 'acryl-shortcuts'
 const SHORTCUTS_PACKAGE = 'acryl-shortcuts'
 const MOUNT_ANCHORS_ROW_ID = 'acryl-mount-anchors'
 const MOUNT_ANCHORS_PACKAGE = 'acryl-mount-anchors'
+const WORKSPACE_ROW_ID = 'acryl-workspace'
+const WORKSPACE_PACKAGE = 'acryl-workspace'
 const SYSTEM_PROMPT_ROW_ID = 'acryl-system-prompt'
 const SYSTEM_PROMPT_PACKAGE = 'acryl-system-prompt'
 const UI_BRAND_ACRYL_PACKAGE = 'dsh-client-ui-brand-acryl'
@@ -856,6 +858,14 @@ export function prepareDesktopProfile(
   // Visual mount-anchor inspector (spec 039-visual-mount-anchors): mounts its own React root
   // directly, independent of any slot, so safe to always insert regardless of mode.
   patches.push({ insert: [{ id: MOUNT_ANCHORS_ROW_ID, name: MOUNT_ANCHORS_PACKAGE }] })
+  // ACRYL Workspace (spec 040-agentic-multiplexer-ade, Scope A): a tile-based canvas
+  // (Chat/Terminal/File/Browser/Diff/Kanban/Doc) that fills the advanced shell's `desktop.main`
+  // slot at higher priority than DefaultDesktopMain. Still uses `ui-conversation`'s own
+  // `renderConversation()` for its Chat tile - this does not replace or disable ui-conversation,
+  // only wraps it in a tab alongside everything else. Compatibility mode has no `desktop.main`
+  // slot at all; the client half already guards that (an undeclared-slot inject is a no-op), so
+  // this is safe to always insert regardless of mode, matching mount-anchors above.
+  patches.push({ insert: [{ id: WORKSPACE_ROW_ID, name: WORKSPACE_PACKAGE }] })
   if (mode === 'advanced') {
     for (const [id, packageName] of [
       ['ui-layout', UI_LAYOUT_PACKAGE],

@@ -1315,6 +1315,9 @@ importers:
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
+      acryl-workspace:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-workspace
       adm-zip:
         specifier: ^0.6.0
         version: 0.6.0
