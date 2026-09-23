@@ -37,6 +37,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../src/client/registry/ResizablePanelGroup/ResizablePanelGroup.tsx'
 import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarGroup, MenubarLabel, MenubarItem, MenubarShortcut, MenubarCheckboxItem, MenubarRadioGroup, MenubarRadioItem, MenubarSeparator } from '../src/client/registry/Menubar/Menubar.tsx'
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink, NavigationMenuViewport } from '../src/client/registry/NavigationMenu/NavigationMenu.tsx'
+import { Calendar } from '../src/client/registry/Calendar/Calendar.tsx'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const harness = resolve(root, '../../deepseek-harness/packages/client')
@@ -681,6 +682,47 @@ describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 bat
     )
     expect(html).toContain('data-viewport="false"')
     expect(renderToStaticMarkup(<NavigationMenuViewport />)).toBe('')  // nothing to paint while every item is closed
+  })
+})
+
+describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T045 batch 8: Calendar)', () => {
+  const march = new Date(2026, 2, 15)
+
+  it('the grid has a column per weekday, a row per week, and one tab stop', () => {
+    const html = renderToStaticMarkup(<Calendar defaultMonth={march} selected={march} />)
+    expect(html).toContain('role="grid"'); expect(html).toContain('aria-labelledby')
+    expect(html.match(/scope="col"/gu)?.length ?? 0).toBe(7)
+    expect(html).toContain('March 2026')
+    expect(html.match(/role="gridcell"/gu)?.length ?? 0).toBe(35)          // March 2026 needs five weeks of seven
+    expect(html.match(/tabindex="0"/gu)?.length ?? 0).toBe(1)              // a roving tab stop, on the chosen day
+    expect(html.match(/data-outside="true"/gu)?.length ?? 0).toBe(4)       // 35 cells for 31 days
+    expect(html).not.toMatch(/\bhas-focus\b|\baspect-square\b/u)
+  })
+
+  it('the chosen day is the one reported selected, and a range publishes its edges and its middle', () => {
+    const single = renderToStaticMarkup(<Calendar defaultMonth={march} selected={march} />)
+    expect(single.match(/aria-selected="true"/gu)?.length ?? 0).toBe(1)
+    expect(single).toContain('data-today=')
+    const range = renderToStaticMarkup(<Calendar mode="range" defaultMonth={march} selected={{ from: new Date(2026, 2, 10), to: new Date(2026, 2, 12) }} />)
+    expect(range.match(/data-range-start="true"/gu)?.length ?? 0).toBe(1)
+    expect(range.match(/data-range-end="true"/gu)?.length ?? 0).toBe(1)
+    expect(range.match(/data-range-middle="true"/gu)?.length ?? 0).toBe(1)
+    expect(range.match(/aria-selected="true"/gu)?.length ?? 0).toBe(2)     // only the two edges are chosen; the middle is shaded, not chosen
+  })
+
+  it('a disabled day is a disabled button, and hiding the outside days empties their cells', () => {
+    const html = renderToStaticMarkup(<Calendar defaultMonth={march} disabled={date => date.getDay() === 0} />)
+    expect(html.match(/disabled=""/gu)?.length ?? 0).toBeGreaterThanOrEqual(4)
+    expect(html).toContain('data-disabled="true"')
+    const trimmed = renderToStaticMarkup(<Calendar defaultMonth={new Date(2026, 3, 15)} showOutsideDays={false} />)
+    expect(trimmed).toContain('data-outside="false"')
+    expect(trimmed.match(/<td class="[^"]*"><\/td>/gu)?.length ?? 0).toBeGreaterThan(0)   // April 2026 has outside days in its first and last weeks
+  })
+
+  it('a week can start on Monday', () => {
+    const html = renderToStaticMarkup(<Calendar defaultMonth={march} weekStartsOn={1} />)
+    expect(html).toContain('Mon')
+    expect(html.indexOf('Mon')).toBeLessThan(html.indexOf('Sun'))
   })
 })
 

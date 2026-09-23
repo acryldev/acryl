@@ -100,7 +100,9 @@
     },
     {
       "name": "Calendar",
-      "componentIds": []
+      "componentIds": [
+        "Calendar"
+      ]
     },
     {
       "name": "Card",

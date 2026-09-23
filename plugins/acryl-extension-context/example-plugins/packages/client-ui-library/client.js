@@ -38,6 +38,8 @@ const { ResizablePanelGroup, ResizablePanel, ResizableHandle } = ui
 // T045 batch 7: Menubar and NavigationMenu, the two bars.
 const { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarGroup, MenubarLabel, MenubarItem, MenubarShortcut, MenubarCheckboxItem, MenubarRadioGroup, MenubarRadioItem, MenubarSeparator } = ui
 const { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink } = ui
+// T045 batch 8: Calendar, the hand-rolled month grid.
+const { Calendar } = ui
 
 // Every part below is live: type, click, toggle, open. The catalogue is the point, so each entry is a working instance, not a picture.
 function Section({ name, note, children }) {
@@ -628,14 +630,31 @@ function T045Batch7() {
   return h(Stack, { gap: 'md' }, menuSection, navSection)
 }
 
+// T045 batch 8: Calendar. Both modes and a disabled predicate. The months are pinned rather than "this month", so the example reads the same every day and the
+// browser check has fixed days to press.
+function T045Batch8() {
+  const [day, setDay] = React.useState(new Date(2026, 2, 17))
+  const [span, setSpan] = React.useState({ from: new Date(2026, 3, 10), to: null })
+  const [caption, setCaption] = React.useState('March 2026')
+  const readout = text => h('p', { style: { margin: '8px 0 0', color: ui.roles.textMuted, fontSize: 12 } }, text)
+  const asText = date => date === null || date === undefined ? 'none' : date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')
+  const singleSection = h(Section, { name: 'Calendar', note: 'One day at a time, with weekends disabled through a predicate. Tab reaches the chosen day, the arrows move by day and by week, Home and End go to the week\'s ends, PageUp and PageDown change the month, and Enter chooses.' },
+    h(Calendar, { defaultMonth: new Date(2026, 2, 15), selected: day, onSelect: value => setDay(value), onMonthChange: month => setCaption(new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(month)), disabled: date => date.getDay() === 0 || date.getDay() === 6 }),
+    readout('chosen = ' + asText(day) + '   month = ' + caption))
+  const rangeSection = h(Section, { name: 'Calendar, range', note: 'Press a start and then an end, whichever side of the start it falls on. The two edges are chosen and the days between them are shaded.' },
+    h(Calendar, { mode: 'range', defaultMonth: new Date(2026, 3, 15), selected: span, onSelect: value => setSpan(value) }),
+    readout('from = ' + asText(span.from) + '  to = ' + asText(span.to)))
+  return h(Stack, { gap: 'md' }, singleSection, rangeSection)
+}
+
 // A Settings page, not a dialog: the gallery is a catalogue for people building UI, so it lives in Settings (nav entry "UI library"), out of the everyday screens.
 function Gallery() {
   const [tab, setTab] = React.useState('components')
   return h(Stack, { gap: 'md' },
     h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 500, color: ui.roles.text } }, 'ACRYL UI library'),
     h('p', { style: { margin: 0, color: ui.roles.textMuted, fontSize: 13 } }, 'Ready-made parts for building screens: use them instead of hand-styling.'),
-    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 't045b3', label: 'T045 ports 3' }, { id: 't045b4', label: 'T045 ports 4' }, { id: 't045b5', label: 'T045 ports 5' }, { id: 't045b6', label: 'T045 ports 6' }, { id: 't045b6b', label: 'T045 ports 6b' }, { id: 't045b6c', label: 'T045 ports 6c' }, { id: 't045b7', label: 'T045 ports 7' }, { id: 'colors', label: 'Colors' }] },
-      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : tab === 't045b3' ? h(T045Batch3) : tab === 't045b4' ? h(T045Batch4) : tab === 't045b5' ? h(T045Batch5) : tab === 't045b6' ? h(T045Batch6) : tab === 't045b6b' ? h(T045Batch6b) : tab === 't045b6c' ? h(T045Batch6c) : tab === 't045b7' ? h(T045Batch7) : h(Colors)))
+    h(Tabs, { label: 'Gallery sections', value: tab, onChange: setTab, tabs: [{ id: 'components', label: 'Components' }, { id: 'settings', label: 'Settings form' }, { id: 'conversation', label: 'Conversation' }, { id: 'blocks', label: 'Blocks' }, { id: 'blocks2', label: 'More blocks' }, { id: 'shadcn', label: 'shadcn ports' }, { id: 'shadcn2', label: 'shadcn ports 2' }, { id: 'shadcn3', label: 'shadcn ports 3' }, { id: 't045b1', label: 'T045 ports 1' }, { id: 't045b2', label: 'T045 ports 2' }, { id: 't045b3', label: 'T045 ports 3' }, { id: 't045b4', label: 'T045 ports 4' }, { id: 't045b5', label: 'T045 ports 5' }, { id: 't045b6', label: 'T045 ports 6' }, { id: 't045b6b', label: 'T045 ports 6b' }, { id: 't045b6c', label: 'T045 ports 6c' }, { id: 't045b7', label: 'T045 ports 7' }, { id: 't045b8', label: 'T045 ports 8' }, { id: 'colors', label: 'Colors' }] },
+      tab === 'components' ? h(Components) : tab === 'settings' ? h(SettingsForm) : tab === 'conversation' ? h(Conversation) : tab === 'blocks' ? h(Blocks) : tab === 'blocks2' ? h(Blocks2) : tab === 'shadcn' ? h(ShadcnBatch) : tab === 'shadcn2' ? h(ShadcnBatch2) : tab === 'shadcn3' ? h(ShadcnBatch3) : tab === 't045b1' ? h(T045Batch1) : tab === 't045b2' ? h(T045Batch2) : tab === 't045b3' ? h(T045Batch3) : tab === 't045b4' ? h(T045Batch4) : tab === 't045b5' ? h(T045Batch5) : tab === 't045b6' ? h(T045Batch6) : tab === 't045b6b' ? h(T045Batch6b) : tab === 't045b6c' ? h(T045Batch6c) : tab === 't045b7' ? h(T045Batch7) : tab === 't045b8' ? h(T045Batch8) : h(Colors)))
 }
 
 exports.inject = ['slots']

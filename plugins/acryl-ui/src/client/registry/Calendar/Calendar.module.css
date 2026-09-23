@@ -1,0 +1,29 @@
+.root { box-sizing: border-box; display: inline-block; border-radius: 8px; border: 1px solid var(--dsw-alias-border-l4); background: var(--dsw-alias-bg-layer-1); padding: 12px; }
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.navButton { box-sizing: border-box; display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 6px; border: 0; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; outline: none; }
+.navButton:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.navButton:focus-visible { outline: 1px solid var(--dsw-alias-border-l3); }
+.icon { width: 16px; height: 16px; }
+.caption { flex: 1; text-align: center; font-size: 13px; font-weight: 500; color: var(--dsw-alias-label-primary); }
+
+.grid { border-collapse: collapse; margin-top: 8px; }
+.weekday { width: 32px; padding: 4px 0; font-size: 11px; font-weight: 400; color: var(--dsw-alias-label-tertiary); }
+.cell { padding: 1px; text-align: center; }
+.empty { padding: 1px; }
+.day { box-sizing: border-box; width: 32px; height: 32px; border-radius: 6px; border: 0; background: transparent; font: inherit; font-size: 13px; color: var(--dsw-alias-label-primary); cursor: pointer; outline: none; }
+.day:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.day:focus-visible { box-shadow: 0 0 0 2px var(--dsw-alias-interactive-bg-hover); outline: 1px solid var(--dsw-alias-border-l3); }
+.day:disabled { cursor: default; opacity: 0.5; }
+
+/* The chosen day is a fill and the accent carries a foreground, the pairing Checkbox and Slider already use. */
+.cell[data-selected='true'] .day { background: var(--acryl-accent); color: var(--dsw-alias-label-primary-foreground); }
+.cell[data-range-middle='true'] { background: var(--dsw-alias-interactive-bg-hover); }
+.cell[data-range-start='true'] .day, .cell[data-range-end='true'] .day { background: var(--acryl-accent); color: var(--dsw-alias-label-primary-foreground); }
+.cell[data-range-start='true'] .day { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.cell[data-range-end='true'] .day { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.cell[data-selected='true'] .day[data-focused='true'] { box-shadow: 0 0 0 2px var(--dsw-alias-interactive-bg-hover); }
+
+/* Today is a rule around the day, so it does not compete with a chosen one. */
+.cell[data-today='true'] .day { box-shadow: inset 0 0 0 1px var(--dsw-alias-border-l3); }
+.cell[data-today='true'][data-selected='true'] .day { box-shadow: none; }
+.cell[data-outside='true'] .day { color: var(--dsw-alias-label-tertiary); }

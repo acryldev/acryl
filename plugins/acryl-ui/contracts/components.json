@@ -1633,6 +1633,50 @@
       "a11y": [
         "the bar is a nav whose list is one Tab stop, aria-expanded and aria-controls tying each trigger to its panel, and the arrow keys plus Home/End walking the triggers; Escape closes the open panel and returns focus to its trigger; links mark the current page with aria-current=page. Indicator and the panel morph animation are not ported"
       ]
+    },
+    "Calendar": {
+      "summary": "A month grid that reports the day the reader chooses, or a range of them (ported from shadcn/ui's Calendar; react-day-picker and date-fns are replaced by the platform's own date arithmetic).",
+      "props": {
+        "mode": {
+          "type": "'single' | 'range'"
+        },
+        "selected": {
+          "type": "Date | CalendarRange"
+        },
+        "onSelect": {
+          "type": "(selection: CalendarSelection) => void"
+        },
+        "month": {
+          "type": "Date"
+        },
+        "defaultMonth": {
+          "type": "Date"
+        },
+        "onMonthChange": {
+          "type": "(month: Date) => void"
+        },
+        "showOutsideDays": {
+          "type": "boolean"
+        },
+        "weekStartsOn": {
+          "type": "0 | 1 | 2 | 3 | 4 | 5 | 6"
+        },
+        "locale": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "(date: Date) => boolean"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the days are a real grid: role=grid with column headers for the weekdays, one aria-selected per cell, and each day button's accessible name is its full date; the keyboard model is roving - one day holds the tab stop, the arrows move by day and by week, Home and End reach the week's ends, PageUp/PageDown change the month and the grid follows the focused day, and Enter or Space chooses. A disabled day is a disabled button. Multi-month, week numbers, the dropdown caption and react-day-picker's matchers are not ported"
+      ]
     }
   },
   "helpers": {

@@ -64,6 +64,11 @@ CDP, no npm install). The expensive mistakes, all made repeatedly:
   menu's triggers each sit inside their own `<li>`, so every one of them is *the first button among its own
   siblings* and `:nth-of-type(2)` matched nothing - the check silently moved the pointer to nowhere and
   reported a component bug that was not there. Index the NodeList (`[...querySelectorAll(slot)][i]`).
+- **A roving focus must skip what cannot take focus.** The Calendar's keyboard walk advanced its own state to a disabled (weekend) button, whose element refuses
+  focus - so the state had moved and the reader's focus had not, which looks exactly like a dead key. Step past anything the predicate disables, in the
+  direction of travel, and only then move both.
+- **When focus is part of the state, focus from an effect keyed on that state**, never from a node captured in the handler: a node captured before the commit
+  is what left the Calendar's keyboard in the previous day (Popover's port hit the same rule with its panel's first focus).
 - **A parent cannot measure a child in the same effect pass that mounts the child**: the child publishes
   the attribute the parent's query looks for only after its own state lands, one commit later. The
   navigation menu's shared surface kept a `visibility: hidden` box until a window resize forced it to
@@ -77,7 +82,7 @@ CDP, no npm install). The expensive mistakes, all made repeatedly:
 |---|---|---|
 | `carousel` | self-contained: scroll-snap track, prev/next buttons, dots, keyboard | DONE - ported and verified in the browser (16/16 assertions); the design notes below are what shipped |
 | `resizable` | self-contained: pointer-drag handles between panels | DONE - ported and verified in the browser (18/18 assertions); see the notes at the end |
-| `calendar` | self-contained: month grid, date arithmetic, single and range selection | medium; `react-day-picker` is dropped, so the grid is hand-rolled |
+| `calendar` | self-contained: month grid, date arithmetic, single and range selection | DONE - ported and verified in the browser (15/15 assertions) |
 | `menubar` | a bar of menus: several anchored panels, open/switch on hover and arrows | DONE - ported and verified in the browser (23/23 with navigation-menu) |
 | `navigation-menu` | same family as menubar with a viewport-wide panel and delayed hover | DONE - ported and verified in the browser; see the notes at the end |
 | `sidebar` | many parts (provider, collapsible rail, mobile sheet, persistence) | **largest remaining**; decide the partial explicitly and record it |
@@ -203,3 +208,27 @@ wrappers over a primitive that carries the substance.
   rather than new-york-v4 (`/r/styles/new-york-v4/questionnaire.json` returns the docs page, not an item), and
   its own source imports `@/app/(create)/components/icon-placeholder`, a private module of the docs site that
   is not published at all.
+
+## Calendar: what shipped (ported, verified, committed)
+
+`react-day-picker` and `date-fns` are dropped and the month grid is hand-rolled, because the item upstream is a theme over a date-picker engine and the engine is
+the part this library can write with the platform's own date arithmetic and `Intl` for the names - the same call ScrollArea made for the platform's scroller and
+Carousel for CSS scroll snap.
+
+- One month at a time, built from `startOfMonth`/`daysInMonth` and a `weekStartsOn` week layout; a real `<table role="grid">` with a column per weekday, one
+  `aria-selected` per cell, and each day button's accessible name is its full date through `Intl`.
+- Selection is controlled: `single` or `range`, with the range's edges and the days between them published as `data-range-start`/`-middle`/`-end`. `today` is
+  marked, `showOutsideDays` decides whether the neighbouring months' days are shown, and a day-level `disabled` predicate is honoured.
+- The keyboard model a date grid needs: a roving tab stop, arrows by day and by week, Home/End to the week's ends, PageUp/PageDown by month, Enter or Space to
+  choose, the displayed month following the focused day, and `addMonths` clamped so that 31 March plus a month is not 1 May.
+- **Two bugs only the browser could show**: the walk could land on a disabled day (its button refuses focus, so the state advanced while the reader's focus
+  did not - it now steps past anything the predicate disables), and focusing a node captured before the commit left the keyboard in the previous day (it now
+  focuses from an effect keyed on the focused day).
+- The browser check asserted 15 things and passes 15: the grid's shape, the chosen day as the only tab stop, the weekend predicate disabling exactly the
+  Sundays and Saturdays on screen, a real click choosing and reporting, the arrow key skipping the weekend with state and real focus together, ArrowDown by a
+  week, Home/End landing on the first and last day they can reach (and the grid following into the next month), PageDown/PageUp turning the month and skipping
+  a disabled landing day, Enter and Space choosing the focused day, and a range's second press closing it with the middle shaded rather than chosen.
+
+Partial (recorded in manifest.yml): multi-month, the dropdown caption layout, week numbers, the `formatters`/`classNames`/`components` extension points,
+uncontrolled `defaultSelected`, react-day-picker's rich disabled matchers (dates, ranges, day-of-week sets - this port takes a predicate), and its
+`CalendarDayButton` export.
