@@ -100,12 +100,13 @@ async function harness(overrides: Partial<PluginLifecycleHost> = {}): Promise<Ha
   const logPath = join(root, 'lifecycle.log')
   const flagPath = join(root, 'boom.flag')
   writeFileSync(join(root, 'plugin.mjs'), pluginModule(logPath, flagPath, 'test-plugin'))
+  writeFileSync(join(root, 'protected-plugin.mjs'), pluginModule(logPath, flagPath, 'protected-plugin'))
 
   const ctx = new Context()
   await ctx.plugin(Loader, { baseUrl: `file://${root}/` })
   const managedId = await ctx.loader.create({ name: './plugin.mjs' })
   const otherId = await ctx.loader.create({ name: './plugin.mjs' })
-  const protectedId = await ctx.loader.create({ name: './plugin.mjs' })
+  const protectedId = await ctx.loader.create({ name: './protected-plugin.mjs' })
   await ctx.loader.await()
 
   const persistence = { calls: [] as Array<{ entryId: string, enabled: boolean }> }
