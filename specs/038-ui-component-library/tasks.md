@@ -83,3 +83,97 @@ Order matters: T034 and T035 first (cheap, our own stack), then the registry and
 - **T042 Blends module and lock v2. DONE.** `acryldev/blends` `specs/004-lock-v2-and-ui-registry-kind/spec.md` proposed, then implemented and pushed (commits `6f35b32`, `edd149f`, `4b4ac99`): `BlendLock` is a `formatVersion` 1|2 union with `modules[]` (v1 unchanged); `ingestHub` scans a `registry/` directory for `ui-component` entries (structural validation, real file digests recomputed from disk, not declared). 81 blends-core + 31 blends-cli tests pass. Real end-to-end check: freshly cloned `acryldev/acryl-ui-registry` (not a fixture) ingests through this code with zero problems, all 9 items. Not done: the `/blend snapshot`/`verify`/`apply` round trip with a captured Blueprint (a separate, larger check).
 - **T043 Hub publish. PARTIAL, further along.** The registry is real hub form and `acryl ui add` works against it (T036/T038); `ingestHub` now recognizes it as `kind: ui-component` (T042). Not done: wiring the CLI's `list`/`index` commands to actually run `ingestHub` end to end for a mixed hub and print `ui-component` rows; a library Blueprint has not been captured or published.
 - **T044 Pack docs and skill** from the registry manifests (this is T032 folded in): props from the contract, provenance shown, the two consumption modes explained.
+
+## Slice 8 - Remaining shadcn/ui core components (added 2026-09-22, for a directed agent; T-numbers here are in THIS file, spec 038-ui-component-library)
+
+- **T045 Port the remaining ~44 shadcn/ui core components.** T040 ported 19 so far (`Kbd`, `Badge`,
+  `Skeleton`, `Spinner`, `Alert`, `Separator`, `Progress`, `Avatar`, `Label`, `Textarea`, `Checkbox`,
+  `AspectRatio`, `Breadcrumb`, `Toggle`, `ButtonGroup`, `Accordion`, `RadioGroup`, `Collapsible`,
+  `ToggleGroup`) and deliberately skipped `Switch` and `Empty` (redundant with this library's own
+  `Switch` re-export and `EmptyState`). This task is the rest of shadcn/ui's own component list
+  (ui.shadcn.com/docs/components) not already covered.
+
+  **Already covered, do not re-port** (redundant with an existing item or re-export; skip with the
+  same one-line reasoning `Switch`/`Empty` used if a candidate turns out to overlap another one not
+  listed here): `Card` (this library's `Card`), `Dialog`/`Alert Dialog` (`Dialog`), `Tabs` (`Tabs`),
+  `Hover Card` (`HoverCard` re-export), `Tooltip` (`Tooltip` re-export), `Button` (`Button`
+  re-export), `Input` (`Input` re-export), `Dropdown Menu` (`Menu` re-export), `Select`/`Native
+  Select` (`SelectField`/`SelectPill`), `Sonner`/`Toast` (`Toast` re-export), `Switch`, `Empty`.
+
+  **Port** (fetch each real source from `https://ui.shadcn.com/r/styles/new-york-v4/<slug>.json`,
+  same as every component ported so far - a name here is the likely slug, confirm against the
+  fetched item): Calendar, Carousel, Chart, Combobox, Command, Context Menu, Data Table, Date
+  Picker, Drawer, Field, Form, Input Group, Input OTP, Item, Menubar, Navigation Menu, Pagination,
+  Popover, Resizable, Scroll Area, Sheet, Sidebar, Slider, Table, Typography, and any other real
+  entries on ui.shadcn.com/docs/components not named above (the docs page is the source of truth
+  for the exact list; this one may be incomplete - note any addition or removal in the PR).
+
+  **Process, identical to every component ported in T040** (read the existing ones in
+  `plugins/acryl-ui/src/client/registry/` for the pattern before starting):
+  1. Fetch the real source (registry item JSON above). Note its licence (MIT) and the exact URL
+     fetched, with today's date, in both the component's own doc comment and
+     `registry-manifest.yml`.
+  2. Port onto `--dsw-alias-*` tokens (see `contracts/tokens.json` for the role names) in a
+     `.module.css` file. No hex colors, no theme selectors (`.dark`, `prefers-color-scheme`), no
+     `--dsw-static-*` token outside the one documented exception - `validate-registry.mjs` enforces
+     this and will reject the item if you get it wrong.
+  3. Drop every Radix primitive it wraps. Most of shadcn/ui's components need no Radix behavior at
+     all once native HTML/plain React state stands in (see `Checkbox`, `RadioGroup`, `Accordion`,
+     `ToggleGroup` for the pattern: a native input, a native attribute like `aria-pressed` or
+     `aria-expanded`, or a small `createContext`-based open/selected state). A genuinely complex one
+     (`Combobox`, `Command`, `Context Menu`, `Menubar`, `Navigation Menu`, `Popover`, `Slider`,
+     `Sidebar`) may need real positioning/keyboard logic ported by hand from the Radix source it
+     wraps, not a Radix dependency added back - if that looks impractical for one specific
+     component, stop and describe the blocker in the PR rather than silently reducing its behavior
+     or reintroducing a dependency.
+  4. **Self-containment, no exceptions**: an item's files must never import another item's file
+     (`../OtherItem/...`). If two components need the same small chunk of styling or logic, each
+     gets its own local copy - this exact bug shipped twice already (`SwitchField` importing
+     `fields.module.css`, `ButtonGroup`/`ToggleGroup` importing `Separator`/`Toggle`) and
+     `validate-registry.mjs` now rejects it, so a real mistake here fails loudly rather than
+     shipping a third time.
+  5. Add the contract entry (`contracts/components.json`) and wire the export in
+     `src/client/index.ts` - composite components (several named exports, e.g. `Breadcrumb`'s
+     `BreadcrumbList`/`Item`/`Link`/...) need every sub-export added to
+     `tests/built-bundle.spec.ts`'s `compositeSubExports` list too, or the exports test fails.
+  6. **Add it to `contracts/categories.json` in the same commit as the contract entry** - this was
+     forgotten once already (T040 batch 2) and both sites silently kept showing a real, working
+     component as "not yet built" until caught by hand. Match the category name to
+     ui.shadcn.com/docs's own name where one exists in `categories.json`'s 106 entries; if none
+     fits, say so rather than forcing a bad match.
+  7. Rebuild the seed (`node scripts/generate-registry.mjs`), run the ingest gate
+     (`node scripts/validate-registry.mjs`) - must report every item passing, then `corepack pnpm
+     exec vitest run` in `plugins/acryl-ui` - all tests green.
+  8. Add a live demo to the gallery example
+     (`plugins/acryl-extension-context/example-plugins/packages/client-ui-library/client.js`) and
+     check it for real: copy it into `~/.acryl/extensions/acryl-example-ui-library/client.js`,
+     start a scratch profile copy (never the user's own running server - copy `ACRYL_HOME` to a
+     scratchpad directory first, confirm the user's real port is untouched before and after), open
+     it in a real browser, and actually click/type/toggle each new component - an assertion that a
+     button exists is not verification; the reviewer (Claude) will re-run this same check and will
+     send it back if a component only renders without working.
+  9. Push the updated registry to `acryldev/acryl-ui-registry` (clone fresh, rsync
+     `registry-seed/` over `registry/`, copy `contracts/categories.json` to the repo root, commit,
+     push) and verify with a **second, independent fresh clone** that it ingests with zero problems
+     (`node -e "require('acryldev/blends...hub.js').ingestHub(...)"` pattern used throughout this
+     spec, or `acryl ui list --registry <clone>/registry`).
+  10. Re-sync both websites (`node scripts/sync-ui-registry.mjs <fresh-clone>/registry
+      <acryl-ui-package>/contracts` in each of `acryldev.github.io` and
+      `acryl_blends_project/acrylblends.github.io`), add the new demos to each site's
+      `src/ui-registry/demos.tsx`, typecheck, build, and check in a real browser (serve `dist/`
+      locally, click through) - both sites must agree on the same "N built" count afterward.
+  11. Commit and push all four repos separately with clear messages (`acryldev/acryl`,
+      `acryldev/acryl-ui-registry`, `acryldev/acryldev.github.io`, `acrylblends/acrylblends.github.io`),
+      following this spec's existing commit style (what was ported, what was dropped and why, what
+      was verified and how - "tests pass" alone is not enough, name the real browser check that was
+      run).
+
+  Work in small batches (3-8 components each, matching T040's batches) with the full process above
+  for every batch, not one giant batch at the end - a partial, verified batch is worth more than an
+  unverified pile. Report progress against this task's own checklist per batch.
+
+  Done when: every real entry on ui.shadcn.com/docs/components is either ported (with its own
+  `registry-manifest.yml` line, contract entry, category, and a real-browser-verified demo) or
+  explicitly listed as skipped with a one-line reason, the registry and both sites agree on the
+  same item count, and everything is pushed. **Owner: a directed agent (not Claude); Claude
+  reviews the result** - do not mark this DONE in this file; leave that to the review.
