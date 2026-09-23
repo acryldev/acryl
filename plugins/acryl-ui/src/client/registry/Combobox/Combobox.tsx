@@ -382,11 +382,19 @@ export function ComboboxItem({ value, disabled = false, onSelect, children, clas
   const ref = useRef<HTMLDivElement | null>(null)
   const handleSelect = useCallback((selected: string) => { onSelect?.(selected) }, [onSelect])
 
+  // Depends on `register`/`unregister` themselves, not the whole `context` object: `context` is a `useMemo` that gets
+  // a new identity whenever `items` or `query` change (through `isVisible`/`labelFor`, which are keyed on both), but
+  // `register`/`unregister` are their own `useCallback`s with no dependencies, so they never change identity. Depending
+  // on `context` here re-ran this effect on every registration - unregistering then re-registering every item on every
+  // keystroke, which is itself another `items` change, which is another `context` identity change: an infinite loop
+  // (React error #185), found by typing into a real Combobox in a real browser, not by any static check.
+  const register = context?.register
+  const unregister = context?.unregister
   useEffect(() => {
-    if (context === null) return
-    context.register(id, { text: value ?? (ref.current?.textContent ?? ''), disabled }, handleSelect)
-    return () => { context.unregister(id) }
-  }, [context, id, value, disabled, handleSelect])
+    if (register === undefined || unregister === undefined) return
+    register(id, { text: value ?? (ref.current?.textContent ?? ''), disabled }, handleSelect)
+    return () => { unregister(id) }
+  }, [register, unregister, id, value, disabled, handleSelect])
 
   const text = value ?? ''
   // The chosen value IS an item's text, so selecting is a straight comparison - no label lookup needed here.

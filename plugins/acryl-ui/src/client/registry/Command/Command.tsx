@@ -224,11 +224,17 @@ export function CommandItem({ value, disabled = false, onSelect, children, class
   const ref = useRef<HTMLDivElement | null>(null)
   const handleSelect = useCallback(() => { onSelect?.() }, [onSelect])
 
+  // Depends on `register`/`unregister` themselves, not the whole `context` object: same fix, same reason, as
+  // Combobox's identical registration effect (see that file's comment) - `context` changes identity whenever
+  // `items`/`query` change, which re-ran this effect on every registration and looped forever once someone typed.
+  // Found the same way: a real browser, typing into a real Command, not a static check.
+  const register = context?.register
+  const unregister = context?.unregister
   useEffect(() => {
-    if (context === null) return
-    context.register(id, { text: value ?? (ref.current?.textContent ?? ''), disabled }, handleSelect)
-    return () => { context.unregister(id) }
-  }, [context, id, value, disabled, handleSelect])
+    if (register === undefined || unregister === undefined) return
+    register(id, { text: value ?? (ref.current?.textContent ?? ''), disabled }, handleSelect)
+    return () => { unregister(id) }
+  }, [register, unregister, id, value, disabled, handleSelect])
 
   const visible = context === null || context.isVisible(id)
   return (
