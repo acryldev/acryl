@@ -692,6 +692,42 @@
         "web"
       ]
     },
+    "Banner": {
+      "summary": "A full-width dismissible horizontal strip for product announcements, with title, description, optional link, and a dismiss button (inspired by shadcnblocks Banner1).",
+      "props": {
+        "title": {
+          "type": "ReactNode",
+          "description": "Semibold title text."
+        },
+        "description": {
+          "type": "ReactNode",
+          "description": "Muted descriptive text."
+        },
+        "linkLabel": {
+          "type": "string",
+          "description": "Label for the inline link."
+        },
+        "linkHref": {
+          "type": "string",
+          "description": "URL for the inline link (opens in a new tab)."
+        },
+        "defaultVisible": {
+          "type": "boolean",
+          "description": "Whether the banner is visible by default."
+        },
+        "onDismiss": {
+          "type": "() => void",
+          "description": "Called when the banner is dismissed."
+        }
+      },
+      "a11y": [
+        "role=banner with aria-label=announcement",
+        "dismiss button has aria-label=Dismiss"
+      ],
+      "surfaces": [
+        "web"
+      ]
+    },
     "Skeleton": {
       "summary": "A pulsing placeholder shape for loading content (ported from shadcn/ui's Skeleton).",
       "props": {

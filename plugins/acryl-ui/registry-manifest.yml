@@ -51,6 +51,10 @@ components:
     origin: ported
     from: shadcn/ui's announcement component (apps/v4/components/announcement.tsx, commit 094edfcf, MIT, fetched 2026-09-23) and shadcnblocks announcement patterns
     changed: does not compose shadcn's own Badge item (self-containment - the ingest gate rejects a cross-item import); pill chrome and link behaviour written here; lucide-react ArrowRightIcon replaced by a plain inline SVG
+  - name: Banner
+    origin: inspired
+    from: shadcnblocks Banner1 design (full-width dismissible strip with title, description, link, and dismiss button)
+    changed: built on ACRYL's own --dsw-alias-* tokens; no external dependencies; X dismiss icon is a plain inline SVG
   - name: Kbd
     origin: ported
     from: shadcn/ui registry item `kbd` (style new-york-v4), https://ui.shadcn.com/docs/components/kbd, MIT licence, fetched 2026-09-22

@@ -38,6 +38,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../src/cli
 import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarGroup, MenubarLabel, MenubarItem, MenubarShortcut, MenubarCheckboxItem, MenubarRadioGroup, MenubarRadioItem, MenubarSeparator } from '../src/client/registry/Menubar/Menubar.tsx'
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink, NavigationMenuViewport } from '../src/client/registry/NavigationMenu/NavigationMenu.tsx'
 import { Announcement } from '../src/client/registry/Announcement/Announcement.tsx'
+import { Banner } from '../src/client/registry/Banner/Banner.tsx'
 import { Calendar } from '../src/client/registry/Calendar/Calendar.tsx'
 import { SidebarProvider, Sidebar, SidebarTrigger, SidebarRail, SidebarInset, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarMenuAction, SidebarMenuBadge, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from '../src/client/registry/Sidebar/Sidebar.tsx'
 
@@ -831,6 +832,23 @@ describe('markup of the shadcn/ui ports (spec 038-ui-component-library, T046: An
   it('Announcement accepts a custom icon element in place of the dot', () => {
     const html = renderToStaticMarkup(<Announcement href="/docs" icon={<span data-testid="custom-icon">*</span>}>Custom</Announcement>)
     expect(html).toContain('custom-icon'); expect(html).not.toContain('class="dot"')
+  })
+})
+
+describe('markup of the shadcnblocks-inspired components (spec 038-ui-component-library, T047: Banner)', () => {
+  it('Banner renders a full-width strip with title, description, link, and dismiss button', () => {
+    const html = renderToStaticMarkup(
+      <Banner title="New" description="Nix flake support added" linkLabel="Learn more" linkHref="/docs/nix" />
+    )
+    expect(html).toMatch(/^<div[^>]*role="banner"[^>]*>/u)
+    expect(html).toContain('New'); expect(html).toContain('Nix flake support added')
+    expect(html).toContain('Learn more'); expect(html).toContain('href="/docs/nix"')
+    expect(html).toContain('aria-label="Dismiss"')
+  })
+
+  it('Banner returns null when defaultVisible is false', () => {
+    const html = renderToStaticMarkup(<Banner title="Hidden" defaultVisible={false} />)
+    expect(html).toBe('')
   })
 })
 
