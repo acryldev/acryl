@@ -1,9 +1,34 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/main/plugins/schemas/devbox.json",
   "packages": {
-    "nodejs_22": "latest",
-    "pnpm_11": "latest",
-    "esbuild": "latest"
+    "nodejs_22": {
+      "version": "latest",
+      "excluded_platforms": ["x86_64-darwin"]
+    },
+    "github:nixos/nixpkgs/f6107e546a5012172d93e79f1f7950da02ad798f#nodejs_22": {
+      "platforms": ["x86_64-darwin"]
+    },
+    "pnpm_11": {
+      "version": "latest",
+      "excluded_platforms": ["x86_64-darwin"]
+    },
+    "github:nixos/nixpkgs/f6107e546a5012172d93e79f1f7950da02ad798f#pnpm_11": {
+      "platforms": ["x86_64-darwin"]
+    },
+    "esbuild": {
+      "version": "latest",
+      "excluded_platforms": ["x86_64-darwin"]
+    },
+    "github:nixos/nixpkgs/f6107e546a5012172d93e79f1f7950da02ad798f#esbuild": {
+      "platforms": ["x86_64-darwin"]
+    },
+    "act": {
+      "version": "latest",
+      "excluded_platforms": ["x86_64-darwin"]
+    },
+    "github:nixos/nixpkgs/f6107e546a5012172d93e79f1f7950da02ad798f#act": {
+      "platforms": ["x86_64-darwin"]
+    }
   },
   "shell": {
     "init_hook": [
@@ -16,6 +41,6 @@
     }
   },
   "nixpkgs": {
-    "commit": "nixpkgs-unstable"
+    "commit": "f6107e546a5012172d93e79f1f7950da02ad798f"
   }
 }
