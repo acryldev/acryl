@@ -37,6 +37,10 @@ function fakeApi(overrides: Partial<WorkspaceGitApi> = {}): WorkspaceGitApi & { 
     async diff(path, file) {
       return { path, file, text: '', binary: false, truncated: false }
     },
+    async createWorktree(_cwd, branch) {
+      const repo = { name: 'p', root: '/p', current: '/p', worktrees: [{ path: '/p', branch: 'main', head: 'a', main: true }, { path: `/p.worktrees/${branch}`, branch, head: 'b', main: false }] }
+      return { path: `/p.worktrees/${branch}`, branch, repo }
+    },
     ...overrides,
   }
 }

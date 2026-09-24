@@ -39,6 +39,8 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
   const sessions = useSessions(state => state)
   const workspaceKey = useSyncExternalStore(projects.subscribeWorkspaces, () => projects.workspaceKey())
   const [notice, setNotice] = useState<string | null>(null)
+  /** The repository whose "new branch" form is open. */
+  const [creatingIn, setCreatingIn] = useState<string | null>(null)
 
   // Registered workspace folders are projects even before they have a chat.
   useEffect(() => {
@@ -67,6 +69,19 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
     shell.select(path)
     // Each branch has its own chat: show the one for this worktree, or start one there.
     void projects.showChat(path).then((result) => { if (!result.ok) setNotice(result.reason) })
+  }
+
+  const newChat = (path: string): void => {
+    setNotice(null)
+    shell.select(path)
+    void projects.newChat(path).then((result) => { if (!result.ok) setNotice(result.reason) })
+  }
+
+  const createWorktree = async (repoRoot: string, branch: string): Promise<void> => {
+    setNotice(null)
+    const result = await projects.newWorktree(repoRoot, branch)
+    if (result.ok) setCreatingIn(null)
+    else setNotice(result.reason)
   }
 
   const addProject = async (): Promise<void> => {
@@ -124,22 +139,97 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
             </div>
           )}
           {repos.map(repo => (
-            <RepoSection key={repo.root} repo={repo} onSelect={pickWorktree} />
+            <RepoSection
+              key={repo.root}
+              repo={repo}
+              onSelect={pickWorktree}
+              onNewChat={newChat}
+              creating={creatingIn === repo.root}
+              onToggleCreate={() => { setNotice(null); setCreatingIn(creatingIn === repo.root ? null : repo.root) }}
+              onCreate={(branch) => createWorktree(repo.root, branch)}
+            />
           ))}
+          <div className="dshWorkspaceSideFoot">
+            <button
+              type="button"
+              className="dshWorkspaceSideFootButton"
+              onClick={() => {
+                const result = projects.openSettings()
+                setNotice(result.ok ? null : result.reason)
+              }}
+            >
+              Settings
+            </button>
+          </div>
         </div>
       )}
     </div>
   )
 }
 
-function RepoSection({ repo, onSelect }: { repo: RepoRow; onSelect: (path: string) => void }) {
+interface RepoSectionProps {
+  readonly repo: RepoRow
+  readonly onSelect: (path: string) => void
+  readonly onNewChat: (path: string) => void
+  readonly creating: boolean
+  readonly onToggleCreate: () => void
+  readonly onCreate: (branch: string) => Promise<void>
+}
+
+function RepoSection({ repo, onSelect, onNewChat, creating, onToggleCreate, onCreate }: RepoSectionProps) {
+  const [branch, setBranch] = useState('')
+  const [busy, setBusy] = useState(false)
+  const submit = async (): Promise<void> => {
+    const name = branch.trim()
+    if (name === '' || busy) return
+    setBusy(true)
+    await onCreate(name)
+    setBusy(false)
+  }
   return (
     <section className="dshWorkspaceRepo" aria-label={repo.name}>
-      <h3 className="dshWorkspaceRepoName" title={repo.root}>{repo.name}</h3>
+      <div className="dshWorkspaceRepoHead">
+        <h3 className="dshWorkspaceRepoName" title={repo.root}>{repo.name}</h3>
+        <button
+          type="button"
+          className="dshWorkspaceSideAdd"
+          aria-label={`New branch in ${repo.name}`}
+          title="Create a new branch in its own worktree"
+          aria-expanded={creating}
+          onClick={onToggleCreate}
+        >
+          +
+        </button>
+      </div>
+      {creating && (
+        <form
+          className="dshWorkspaceNewBranch"
+          onSubmit={(event) => { event.preventDefault(); void submit() }}
+        >
+          <input
+            aria-label="New branch name"
+            placeholder="feature/my-change"
+            autoFocus
+            value={branch}
+            onChange={(event) => { setBranch(event.target.value) }}
+            onKeyDown={(event) => { if (event.key === 'Escape') onToggleCreate() }}
+          />
+          <button type="submit" disabled={busy || branch.trim() === ''}>{busy ? 'Creating...' : 'Create'}</button>
+        </form>
+      )}
       <ul className="dshWorkspaceWorktrees">
         {repo.rows.map(row => (
-          <li key={row.path}>
+          <li key={row.path} className="dshWorkspaceWorktreeItem">
             <WorktreeButton row={row} onSelect={onSelect} />
+            <button
+              type="button"
+              className="dshWorkspaceWorktreeNew"
+              aria-label={`New chat on ${row.label}`}
+              title={`New chat on ${row.label}`}
+              onClick={() => { onNewChat(row.path) }}
+            >
+              +
+            </button>
           </li>
         ))}
       </ul>

@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { IWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import { describe, expect, it, vi } from 'vitest'
@@ -17,8 +19,24 @@ function gitApi(isRepo: (cwd: string) => boolean = () => true): WorkspaceGitApi 
         ],
       }
     },
-    async status(path) { return { path, branch: 'main', changes: [], truncated: false } },
+    async status(path) {
+      // Report the branch each path really has, or refreshing status would rename the listed worktrees.
+      const branch = path === '/p/proj' ? 'main' : path === '/p/proj/.wt/x' || path === '/p/proj.worktrees/x' ? 'feature/x' : path.replace('/p/proj.worktrees/', '')
+      return { path, branch, changes: [], truncated: false }
+    },
     async diff(path, file) { return { path, file, text: '', binary: false, truncated: false } },
+    async createWorktree(_cwd, branch) {
+      if (branch === 'dup') throw new Error('the branch dup already exists')
+      const repo = {
+        name: 'proj', root: '/p/proj', current: '/p/proj',
+        worktrees: [
+          { path: '/p/proj', branch: 'main', head: 'a', main: true },
+          { path: '/p/proj.worktrees/x', branch: 'feature/x', head: 'b', main: false },
+          { path: `/p/proj.worktrees/${branch}`, branch, head: 'c', main: false },
+        ],
+      }
+      return { path: `/p/proj.worktrees/${branch}`, branch, repo }
+    },
   }
 }
 
@@ -39,7 +57,8 @@ function world(options: {
   createSession?: () => Promise<string>
   hasSessions?: boolean
 } = {}): World {
-  const shell = new WorkspaceShellState(gitApi(options.isRepo))
+  const api = gitApi(options.isRepo)
+  const shell = new WorkspaceShellState(api)
   const rows = options.sessions ?? []
   const created: unknown[] = []
   const opened: string[] = []
@@ -64,6 +83,7 @@ function world(options: {
   } as unknown as IWorkspaces
   const control = createProjectsControl({
     shell,
+    gitApi: api,
     getWorkspaces: () => workspaces,
     getSessions: () => (options.hasSessions === false ? undefined : sessions),
     directory: () => options.seams ?? { pickDirectory: async () => '/p/proj' },
@@ -104,6 +124,54 @@ describe('ProjectsControl.showChat', () => {
     expect(result).toEqual({ ok: false, reason: expect.stringContaining('host down') })
     expect(unpin).toHaveBeenCalled()
     expect(await world({ hasSessions: false }).control.showChat('/p/proj')).toMatchObject({ ok: false })
+  })
+})
+
+describe('ProjectsControl.newChat', () => {
+  it('always starts a new chat, even when the worktree already has one', async () => {
+    const w = world({ sessions: [{ id: 's1', cwd: '/p/proj', blank: false, updatedAt: 3 }] })
+    await w.shell.discover('/p/proj')
+    expect(await w.control.newChat('/p/proj')).toEqual({ ok: true })
+    expect(w.created).toEqual([{ cwd: '/p/proj' }])
+    expect(w.opened).toEqual(['new-session'])
+  })
+})
+
+describe('ProjectsControl.newWorktree', () => {
+  it('creates the worktree, shows it in the list, selects it and opens a new chat there', async () => {
+    const w = world()
+    await w.shell.discover('/p/proj')
+    expect(await w.control.newWorktree('/p/proj', 'feature/login')).toEqual({ ok: true })
+    const branches = w.shell.getSnapshot().repos[0]?.worktrees.map(t => t.branch)
+    expect(branches).toContain('feature/login')
+    expect(w.shell.getSnapshot().selectedPath).toBe('/p/proj.worktrees/feature/login')
+    expect(w.created).toEqual([{ cwd: '/p/proj.worktrees/feature/login' }])
+    expect(w.opened).toEqual(['new-session'])
+  })
+
+  it('returns the reason and selects nothing when creation is refused', async () => {
+    const w = world()
+    await w.shell.discover('/p/proj')
+    expect(await w.control.newWorktree('/p/proj', 'dup')).toEqual({ ok: false, reason: 'the branch dup already exists' })
+    expect(w.created).toEqual([])
+    expect(w.shell.getSnapshot().selectedPath).toBeUndefined()
+  })
+})
+
+describe('ProjectsControl.openSettings', () => {
+  it('clicks the Settings trigger (the dialog button with no aria-label) and ignores other dialog buttons', () => {
+    document.body.innerHTML = `
+      <button id="market" aria-haspopup="dialog" aria-expanded="false" aria-label="Plugin Market"></button>
+      <button id="settings" aria-haspopup="dialog" aria-expanded="false"></button>`
+    const clicks: string[] = []
+    for (const id of ['market', 'settings']) document.getElementById(id)!.addEventListener('click', () => { clicks.push(id) })
+    expect(world().control.openSettings()).toEqual({ ok: true })
+    expect(clicks).toEqual(['settings'])
+  })
+
+  it('reports when there is no Settings trigger', () => {
+    document.body.innerHTML = ''
+    expect(world().control.openSettings()).toMatchObject({ ok: false })
   })
 })
 

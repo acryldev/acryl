@@ -115,6 +115,11 @@ export class WorkspaceShellState {
     return probe
   }
 
+  /** Take a repository view the caller already has (for example the answer to creating a worktree). */
+  applyRepo(view: GitRepoView): void {
+    if (!this.disposed) this.mergeRepo(view)
+  }
+
   /**
    * Select the worktree that contains `cwd` unless the user has picked one by hand.
    * Used to follow the current chat session.

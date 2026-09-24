@@ -5,6 +5,7 @@
 
 import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { IWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/client'
+import type { WorkspaceGitApi } from './git-api.ts'
 import { pickSession, type SessionRef } from './session-pick.ts'
 import type { WorkspaceShellState } from './shell-state.ts'
 
@@ -20,10 +21,17 @@ export interface ProjectsControl {
   addProject(): Promise<ProjectAction>
   /** Show the chat for a worktree: its latest one, or a new one started there. */
   showChat(worktreePath: string): Promise<ProjectAction>
+  /** Start an additional chat in a worktree that may already have some. */
+  newChat(worktreePath: string): Promise<ProjectAction>
+  /** Create a branch and worktree in a repository, select it and open a chat there. */
+  newWorktree(repoRoot: string, branch: string): Promise<ProjectAction>
+  /** Open the app's Settings dialog. */
+  openSettings(): ProjectAction
 }
 
 export interface ProjectsControlDeps {
   readonly shell: WorkspaceShellState
+  readonly gitApi: WorkspaceGitApi
   readonly getWorkspaces: () => IWorkspaces | undefined
   readonly getSessions: () => ISessions | undefined
   /** Looked up when needed, because the desktop installs its folder-picker seam after this plugin loads. */
@@ -106,16 +114,25 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
         refs.push({ id, blank: row.blank, updatedAt: row.updatedAt, ...(row.cwd === undefined ? {} : { cwd: row.cwd }) })
       }
       const existing = pickSession(shell.getSnapshot().repos, refs, worktreePath)
+      if (existing === undefined) return this.newChat(worktreePath)
+      const id = state.ids.find(candidate => candidate === existing)
+      if (id === undefined) return fail('That chat is no longer available.')
       try {
-        if (existing !== undefined) {
-          const id = state.ids.find(candidate => candidate === existing)
-          if (id === undefined) return fail('That chat is no longer available.')
-          sessions.open(id)
-          return { ok: true }
-        }
-        const owner = workspaceItems()
-          .filter(item => isInside(worktreePath, item.path))
-          .sort((a, b) => b.path.length - a.path.length)[0]
+        sessions.open(id)
+        return { ok: true }
+      } catch (cause) {
+        shell.unpin()
+        return fail(`Could not open a chat for this branch: ${message(cause)}`)
+      }
+    },
+
+    async newChat(worktreePath) {
+      const sessions = deps.getSessions()
+      if (sessions === undefined) return fail('Chats are not available yet.')
+      const owner = workspaceItems()
+        .filter(item => isInside(worktreePath, item.path))
+        .sort((a, b) => b.path.length - a.path.length)[0]
+      try {
         const created = await sessions.create({
           cwd: worktreePath,
           ...(owner === undefined ? {} : { workspaceId: owner.workspaceId }),
@@ -126,6 +143,29 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
         shell.unpin()
         return fail(`Could not open a chat for this branch: ${message(cause)}`)
       }
+    },
+
+    async newWorktree(repoRoot, branch) {
+      let created
+      try {
+        created = await deps.gitApi.createWorktree(repoRoot, branch)
+      } catch (cause) {
+        return fail(message(cause))
+      }
+      shell.applyRepo(created.repo)
+      shell.select(created.path)
+      const shown = await this.newChat(created.path)
+      if (!shown.ok) shell.unpin()
+      return shown
+    },
+
+    openSettings() {
+      // Settings keeps its open state inside a component, with no service to call. As the Cmd+, shortcut
+      // does (see acryl-shortcuts), activate its real trigger: the one dialog button with no aria-label.
+      const trigger = document.querySelector<HTMLButtonElement>('button[aria-haspopup="dialog"][aria-expanded]:not([aria-label])')
+      if (trigger === null) return fail('Settings is not available in this window.')
+      trigger.click()
+      return { ok: true }
     },
   }
 }

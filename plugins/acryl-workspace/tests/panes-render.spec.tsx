@@ -52,6 +52,10 @@ function api(overrides: Partial<WorkspaceGitApi> = {}): WorkspaceGitApi {
     async diff(path, file): Promise<GitDiffView> {
       return { path, file, text: DIFF_TEXT, binary: false, truncated: false }
     },
+    async createWorktree(_cwd, branch) {
+      const repo = { name: 'p', root: '/p', current: '/p', worktrees: [{ path: '/p', branch: 'main', head: 'a', main: true }, { path: `/p.worktrees/${branch}`, branch, head: 'b', main: false }] }
+      return { path: `/p.worktrees/${branch}`, branch, repo }
+    },
     ...overrides,
   }
 }
@@ -79,6 +83,9 @@ function fakeProjects(overrides: Partial<ProjectsControl> = {}): ProjectsControl
     subscribeWorkspaces: () => () => {},
     addProject: async (): Promise<ProjectAction> => ({ ok: true }),
     showChat: async (path): Promise<ProjectAction> => { shown.push(path); return { ok: true } },
+    newChat: async (path): Promise<ProjectAction> => { shown.push(`new:${path}`); return { ok: true } },
+    newWorktree: async (root, branch): Promise<ProjectAction> => { shown.push(`worktree:${root}:${branch}`); return { ok: true } },
+    openSettings: (): ProjectAction => ({ ok: true }),
     ...overrides,
   }
 }
@@ -135,7 +142,7 @@ describe('ProjectsSidebar', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
     await waitFor(() => { expect(shell.getSnapshot().selectedPath).toBe('/p/proj') })
 
-    const other = await screen.findByRole('button', { name: /feature\/x/ })
+    const other = await screen.findByTitle('/p/proj-x')
     fireEvent.click(other)
     await waitFor(() => { expect(other.getAttribute('aria-pressed')).toBe('true') })
     expect(shell.getSnapshot().selectedPath).toBe('/p/proj-x')
@@ -183,6 +190,57 @@ describe('ProjectsSidebar', () => {
     const projects = fakeProjects({ workspacePaths: () => ['/registered/project'], workspaceKey: () => '/registered/project' })
     render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
     await waitFor(() => { expect(seen).toContain('/registered/project') })
+    shell.dispose()
+  })
+
+  it('creates a new branch from the repo header form and closes it on success', async () => {
+    const shell = new WorkspaceShellState(api())
+    const projects = fakeProjects()
+    render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'New branch in proj' }))
+    const submit = screen.getByRole('button', { name: 'Create' }) as HTMLButtonElement
+    expect(submit.disabled).toBe(true)
+    fireEvent.change(screen.getByRole('textbox', { name: 'New branch name' }), { target: { value: ' feature/login ' } })
+    fireEvent.click(submit)
+    await waitFor(() => { expect(projects.shown).toContain('worktree:/p/proj:feature/login') })
+    await waitFor(() => { expect(screen.queryByRole('textbox', { name: 'New branch name' })).toBeNull() })
+    shell.dispose()
+  })
+
+  it('keeps the form open and shows the reason when the branch cannot be created', async () => {
+    const shell = new WorkspaceShellState(api())
+    const projects = fakeProjects({ newWorktree: async () => ({ ok: false, reason: 'the branch dup already exists' }) })
+    render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'New branch in proj' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'New branch name' }), { target: { value: 'dup' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('already exists')
+    expect(screen.getByRole('textbox', { name: 'New branch name' })).toBeTruthy()
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'New branch name' }), { key: 'Escape' })
+    expect(screen.queryByRole('textbox', { name: 'New branch name' })).toBeNull()
+    shell.dispose()
+  })
+
+  it('starts an additional chat on a branch from its + button', async () => {
+    const shell = new WorkspaceShellState(api())
+    const projects = fakeProjects()
+    render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'New chat on feature/x' }))
+    await waitFor(() => { expect(projects.shown).toContain('new:/p/proj-x') })
+    shell.dispose()
+  })
+
+  it('opens Settings from the Projects view, and says so when it cannot', async () => {
+    const shell = new WorkspaceShellState(api())
+    const openSettings = vi.fn((): ProjectAction => ({ ok: false, reason: 'Settings is not available in this window.' }))
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ openSettings }))} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    expect(openSettings).toHaveBeenCalledTimes(1)
+    expect((await screen.findByRole('alert')).textContent).toContain('not available')
     shell.dispose()
   })
 

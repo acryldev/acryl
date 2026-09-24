@@ -68,6 +68,7 @@ export function apply(ctx: ClientContext): void {
   const agent = createAgentBridge(() => ctx.get('sessions'))
   const projects = createProjectsControl({
     shell,
+    gitApi,
     getWorkspaces: () => ctx.get('workspaces'),
     getSessions: () => ctx.get('sessions'),
     directory: () => desktopDirectorySeams(),

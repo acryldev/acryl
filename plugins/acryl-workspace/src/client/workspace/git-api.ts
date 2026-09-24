@@ -4,12 +4,15 @@ import {
   WORKSPACE_GIT_DIFF_PATH,
   WORKSPACE_GIT_REPO_PATH,
   WORKSPACE_GIT_STATUS_PATH,
+  WORKSPACE_GIT_WORKTREE_PATH,
   parseGitDiffView,
   parseGitRepoView,
   parseGitStatusView,
+  parseGitWorktreeCreatedView,
   type GitDiffView,
   type GitRepoView,
   type GitStatusView,
+  type GitWorktreeCreatedView,
 } from '../../workspace-git-contract.ts'
 
 export interface WorkspaceGitApi {
@@ -17,6 +20,11 @@ export interface WorkspaceGitApi {
   repo(cwd: string): Promise<GitRepoView | null>
   status(path: string): Promise<GitStatusView>
   diff(path: string, file: string): Promise<GitDiffView>
+  /**
+   * Create a branch and its worktree.
+   * @throws an Error whose message is fit to show the user (for example "the branch x already exists").
+   */
+  createWorktree(cwd: string, branch: string): Promise<GitWorktreeCreatedView>
 }
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
@@ -53,6 +61,27 @@ export function createWorkspaceGitApi(fetchImpl: FetchLike = (input, init) => fe
       const { status, body } = await getJson(WORKSPACE_GIT_STATUS_PATH, { path })
       if (status !== 200) throw failure('status', status, body)
       return parseGitStatusView(body)
+    },
+    async createWorktree(cwd, branch) {
+      const response = await fetchImpl(WORKSPACE_GIT_WORKTREE_PATH, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ cwd, branch }),
+      })
+      let body: unknown = null
+      try {
+        body = await response.json()
+      } catch {
+        body = null
+      }
+      if (response.status !== 200) {
+        const detail = typeof body === 'object' && body !== null && 'error' in body && typeof body.error === 'string'
+          ? body.error
+          : `the request failed (HTTP ${String(response.status)})`
+        throw new Error(detail)
+      }
+      return parseGitWorktreeCreatedView(body)
     },
     async diff(path, file) {
       const { status, body } = await getJson(WORKSPACE_GIT_DIFF_PATH, { path, file })

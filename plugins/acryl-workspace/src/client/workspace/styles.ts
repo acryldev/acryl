@@ -88,6 +88,19 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceSideNotice { margin: 4px 8px; padding: 6px 8px; border-left: 2px solid #f87171; color: #fca5a5; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSideEmpty { padding: 12px 6px; color: var(--dsw-alias-fg-l2); font: 12px/1.5 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceRepo { margin: 6px 0 10px; }
+.dshWorkspaceRepoHead { display: flex; align-items: center; justify-content: space-between; }
+.dshWorkspaceNewBranch { display: flex; gap: 6px; margin: 2px 8px 6px; }
+.dshWorkspaceNewBranch input { flex: 1; min-width: 0; box-sizing: border-box; padding: 5px 8px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceNewBranch button { appearance: none; padding: 4px 10px; border: 0; border-radius: 6px; background: #4d6bfe; color: #fff; cursor: pointer; font: 12px/1.3 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceNewBranch button:disabled { opacity: .5; cursor: default; }
+.dshWorkspaceWorktreeItem { position: relative; display: flex; align-items: center; }
+.dshWorkspaceWorktreeItem > .dshWorkspaceWorktree { flex: 1; min-width: 0; }
+.dshWorkspaceWorktreeNew { appearance: none; position: absolute; right: 4px; width: 22px; height: 22px; border: 0; border-radius: 6px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-fg); opacity: 0; cursor: pointer; font: 500 16px/1 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceWorktreeItem:hover > .dshWorkspaceWorktreeNew, .dshWorkspaceWorktreeNew:focus-visible { opacity: 1; }
+.dshWorkspaceWorktreeNew:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); }
+.dshWorkspaceSideFoot { margin-top: 14px; padding: 8px 8px 0; border-top: 1px solid var(--dsw-alias-border-l2); }
+.dshWorkspaceSideFootButton { appearance: none; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 13px/1.3 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceSideFootButton:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg); }
 .dshWorkspaceRepoName { margin: 0; padding: 4px 8px; color: var(--dsw-alias-fg-l2); font: 600 11px/1.4 ui-sans-serif, system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 .dshWorkspaceWorktrees { list-style: none; margin: 0; padding: 0; }
 .dshWorkspaceWorktree { appearance: none; display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; text-align: left; font: 13px/1.3 ui-sans-serif, system-ui, sans-serif; }
