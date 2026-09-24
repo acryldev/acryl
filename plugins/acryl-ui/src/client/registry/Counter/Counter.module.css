@@ -1,0 +1,42 @@
+/**
+ * Counter — numeric badge/display.
+ * Styled on the app's own --dsw-alias-* tokens.
+ */
+.counter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/* Sizes */
+.size--sm {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+}
+.size--default {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  font-size: 12px;
+}
+
+/* Variants */
+.variant--default {
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-primary);
+}
+.variant--primary {
+  background: var(--acryl-accent);
+  color: var(--dsw-alias-label-primary-foreground);
+}
+.variant--danger {
+  background: color-mix(in oklab, var(--dsw-alias-state-error-primary) 12%, transparent);
+  color: var(--dsw-alias-state-error-primary);
+}

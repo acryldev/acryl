@@ -1,0 +1,43 @@
+/**
+ * Status — colored dot indicator.
+ * Styled on the app's own --dsw-alias-* tokens.
+ */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  display: inline-block;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.label {
+  font-size: inherit;
+  color: var(--dsw-alias-label-primary);
+  line-height: 1;
+}
+
+/* Sizes */
+.size--sm .dot {
+  width: 6px;
+  height: 6px;
+}
+.size--default .dot {
+  width: 8px;
+  height: 8px;
+}
+.size--lg .dot {
+  width: 10px;
+  height: 10px;
+}
+
+/* Variants */
+.status--online { background: var(--dsw-alias-state-success-primary); }
+.status--offline { background: var(--dsw-alias-label-tertiary); }
+.status--busy { background: var(--dsw-alias-state-error-primary); }
+.status--away { background: var(--dsw-alias-state-warn-primary); }
+.status--warning { background: var(--dsw-alias-state-warn-primary); }
+.status--error { background: var(--dsw-alias-state-error-primary); }

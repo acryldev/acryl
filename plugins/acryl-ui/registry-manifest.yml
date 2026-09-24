@@ -59,6 +59,18 @@ components:
     origin: inspired
     from: shadcnblocks avatar-stack patterns and shadcn/ui's AvatarGroup (composition-only, not ported by T040)
     changed: fully self-contained — renders small circular avatars directly without importing from the Avatar component; includes an inline AvatarCircle implementation to avoid cross-item imports
+  - name: Counter
+    origin: inspired
+    from: common notification/step-counter badge patterns
+    changed: built on ACRYL's own --dsw-alias-* tokens; no external dependencies; three variants (default, primary, danger) with optional max overflow
+  - name: Rating
+    origin: inspired
+    from: common star rating UI patterns
+    changed: built on ACRYL's own --dsw-alias-* tokens; inline SVG star icons (no lucide-react dependency); supports read-only and interactive modes with keyboard accessibility
+  - name: Status
+    origin: inspired
+    from: common status indicator dot patterns (online, offline, busy, away, warning, error)
+    changed: built on ACRYL's own --dsw-alias-* tokens; self-contained dot implementation with optional label
   - name: Kbd
     origin: ported
     from: shadcn/ui registry item `kbd` (style new-york-v4), https://ui.shadcn.com/docs/components/kbd, MIT licence, fetched 2026-09-22

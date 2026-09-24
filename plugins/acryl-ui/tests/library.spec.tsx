@@ -38,6 +38,9 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../src/cli
 import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarGroup, MenubarLabel, MenubarItem, MenubarShortcut, MenubarCheckboxItem, MenubarRadioGroup, MenubarRadioItem, MenubarSeparator } from '../src/client/registry/Menubar/Menubar.tsx'
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink, NavigationMenuViewport } from '../src/client/registry/NavigationMenu/NavigationMenu.tsx'
 import { AvatarGroup } from '../src/client/registry/AvatarGroup/AvatarGroup.tsx'
+import { Counter } from '../src/client/registry/Counter/Counter.tsx'
+import { Rating } from '../src/client/registry/Rating/Rating.tsx'
+import { Status } from '../src/client/registry/Status/Status.tsx'
 import { Announcement } from '../src/client/registry/Announcement/Announcement.tsx'
 import { Banner } from '../src/client/registry/Banner/Banner.tsx'
 import { Calendar } from '../src/client/registry/Calendar/Calendar.tsx'
@@ -870,6 +873,44 @@ describe('markup of the shadcnblocks-inspired components (spec 038-ui-component-
     expect(html).toContain('+2')
     expect(html).not.toContain('C')
     expect(html).not.toContain('D')
+  })
+})
+
+describe('markup of the shadcnblocks-inspired components (spec 038-ui-component-library, T049: Counter, Status, Rating)', () => {
+  it('Counter renders a numeric badge', () => {
+    const html = renderToStaticMarkup(<Counter value={42} />)
+    expect(html).toContain('42')
+  })
+
+  it('Counter shows +max when value exceeds max', () => {
+    const html = renderToStaticMarkup(<Counter value={150} max={99} />)
+    expect(html).toContain('+99'); expect(html).not.toContain('150')
+  })
+
+  it('Counter renders variant classes', () => {
+    const html = renderToStaticMarkup(<Counter value={1} variant="primary" />)
+    expect(html).toContain('1')
+  })
+
+  it('Status renders a colored dot with label', () => {
+    const html = renderToStaticMarkup(<Status variant="online">Online</Status>)
+    expect(html).toContain('Online')
+    expect(html).toMatch(/^<span[^>]*>/u)
+  })
+
+  it('Status renders without label', () => {
+    const html = renderToStaticMarkup(<Status variant="busy" />)
+    expect(html).toContain('aria-hidden')
+  })
+
+  it('Rating renders the specified number of stars', () => {
+    const html = renderToStaticMarkup(<Rating value={3} max={5} />)
+    expect(html).toContain('3 out of 5 stars')
+  })
+
+  it('Rating renders with read-only role', () => {
+    const html = renderToStaticMarkup(<Rating value={4} max={5} />)
+    expect(html).toMatch(/role="img"/u)
   })
 })
 

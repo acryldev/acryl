@@ -862,6 +862,87 @@
         "web"
       ]
     },
+    "Counter": {
+      "summary": "A numeric badge/display for counts, steps, and notification numbers (inspired by common badge patterns).",
+      "props": {
+        "value": {
+          "type": "number",
+          "required": true,
+          "description": "The numeric value to display."
+        },
+        "max": {
+          "type": "number",
+          "description": "Maximum value before showing +N (e.g. max=99 shows +99)."
+        },
+        "variant": {
+          "type": "'default' | 'primary' | 'danger'",
+          "description": "Visual variant."
+        },
+        "size": {
+          "type": "'sm' | 'default'",
+          "description": "Size."
+        }
+      },
+      "a11y": [
+        "no interactive role; purely decorative or informative"
+      ],
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Rating": {
+      "summary": "A star rating component with read-only or interactive mode (inspired by common star rating patterns).",
+      "props": {
+        "value": {
+          "type": "number",
+          "required": true,
+          "description": "Current rating value (0 to max)."
+        },
+        "max": {
+          "type": "number",
+          "description": "Maximum number of stars."
+        },
+        "onChange": {
+          "type": "(value: number) => void",
+          "description": "Called when user clicks a star. When omitted, rating is read-only."
+        },
+        "size": {
+          "type": "'sm' | 'default' | 'lg'",
+          "description": "Size."
+        }
+      },
+      "a11y": [
+        "role=img with aria-label='N out of M stars' when read-only",
+        "role=radiogroup with radio roles for each star when interactive",
+        "keyboard accessible: Enter/Space to select a star"
+      ],
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Status": {
+      "summary": "A colored dot status indicator with optional label (inspired by common status patterns).",
+      "props": {
+        "variant": {
+          "type": "'online' | 'offline' | 'busy' | 'away' | 'warning' | 'error'",
+          "description": "The status variant."
+        },
+        "children": {
+          "type": "ReactNode",
+          "description": "Optional label shown beside the dot."
+        },
+        "size": {
+          "type": "'sm' | 'default' | 'lg'",
+          "description": "Size."
+        }
+      },
+      "a11y": [
+        "aria-hidden on the dot; semantic meaning conveyed by context or the optional label"
+      ],
+      "surfaces": [
+        "web"
+      ]
+    },
     "ValueField": {
       "summary": "A settings-style field bound to a text value, with an override badge and reset action.",
       "props": {
