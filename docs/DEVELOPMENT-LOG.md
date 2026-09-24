@@ -1,3 +1,29 @@
+## 2026-09-24 - 040 Projects tab grows up: new worktrees, per-branch chats, persistence, split
+
+Commits: `98cb67621d1639d824ca69aef5764c747e9088cc`, `837ebcf3076c9cb2dca781f916b2135972f2f5d0`, `9b6a2982c9e472a41358ec25ef164233f9e86780`, `3ca780d5a0a8117fac10876b62e0d5d88b7f7629`
+
+Built after the right pane was fixed, all in `acryl-workspace`, each verified headless (package check, 186 tests) but not
+yet driven in a real window by the agent.
+
+- **New branch and worktree from the UI.** A Host route (`POST /api/acryl-workspace/git/worktree`) runs `git worktree add -b`
+  into a sibling `<repo>.worktrees/<branch>` folder, so the repository is never dirtied. It is the only route that changes a
+  repository: same-origin POST, a conservative branch-name filter and then `git check-ref-format`, 409 for an existing branch
+  or folder, 120s timeout for large checkouts. The Projects tab has a `+` per repository (inline form) and a `+` per branch
+  for an additional chat; a Settings button reaches the Settings dialog the same way Cmd+, does (that dialog exposes no service).
+- **Add a git project** (folder chooser, git check, registered as a workspace) and **a chat per branch** shipped just before,
+  in `fbc6ea3`.
+- **Restart persistence.** Per worktree, the tabs whose content lives in the renderer (files, git diffs, browser pages, docs,
+  boards), the active tab and the split are saved after each change and restored when the worktree is first opened. Terminals
+  are not saved (their Host process ends with the app). Loading is defensive by design: invalid data is dropped, never thrown.
+- **Optional split.** A tab opens beside the active one; selecting the split tab swaps panes; a diff opened from the Changes
+  list while the chat is showing lands beside the chat. The rule that the same tab is never in both panes is tested over a
+  sequence of operations.
+
+Findings worth keeping: a test fake whose `status()` reports one branch for every path silently renames worktrees, because
+status results overwrite the listed branch. It bit three separate tests; fakes should report the branch each path really has.
+
+Not built yet: Review and Checks tabs, multi-line diff comments, dragging the split divider, saving terminal tabs.
+
 ## 2026-09-24 - 040 correction: the right pane had no host in the advanced frame
 
 Commits: `3ed6149a92cfb1c481491fcfcc75f7d68685cf4d`, `fbc6ea3d05acf4cd9d30d2f0d368e16c5435b920`
