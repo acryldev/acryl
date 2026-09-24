@@ -39,6 +39,8 @@ export interface SavedGroup {
   readonly tiles: readonly SavedTile[]
   /** Index into `tiles` of the active tab, or -1 when the chat tab was active. */
   readonly active: number
+  /** Index into `tiles` of the tab in the split pane, or -1 when there was no split. */
+  readonly split: number
 }
 
 export interface SavedWorkspace {
@@ -131,10 +133,12 @@ export function parseSavedWorkspace(raw: string | null): SavedWorkspace | undefi
       const tile = parseTile(entry)
       return tile === undefined ? [] : [tile]
     })
-    const active = typeof group.active === 'number' && Number.isInteger(group.active) && group.active < tiles.length
-      ? Math.max(-1, group.active)
-      : -1
-    groups[key] = { tiles, active }
+    const index = (candidate: unknown): number => (
+      typeof candidate === 'number' && Number.isInteger(candidate) && candidate < tiles.length ? Math.max(-1, candidate) : -1
+    )
+    const active = index(group.active)
+    const split = index(group.split)
+    groups[key] = { tiles, active, split: split === active ? -1 : split }
   }
   return { version: 1, mode: value.mode, groups }
 }
@@ -146,6 +150,7 @@ export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups): st
     const snapshot = groups.stateFor(key).getSnapshot()
     const tiles: SavedTile[] = []
     let active = -1
+    let split = -1
     for (const tile of snapshot.tiles) {
       const kind = RESTORABLE_KINDS.find(candidate => candidate === tile.kind)
       if (kind === undefined) continue
@@ -160,9 +165,10 @@ export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups): st
       if (tile.board !== undefined) entry.board = tile.board
       if (tile.docText !== undefined) entry.docText = tile.docText
       if (tile.id === snapshot.activeId) active = tiles.length
+      if (tile.id === snapshot.splitId) split = tiles.length
       tiles.push(entry)
     }
-    if (tiles.length > 0 || active !== -1) saved[key] = { tiles: tiles.slice(0, MAX_TILES), active }
+    if (tiles.length > 0 || active !== -1) saved[key] = { tiles: tiles.slice(0, MAX_TILES), active, split }
   }
   let json = JSON.stringify({ version: 1, mode, groups: saved })
   // Oversized text (a pasted file, a long doc) is the only thing that can blow the cap: shed it.

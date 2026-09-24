@@ -103,6 +103,25 @@ describe('serialize and restore', () => {
     expect(restored.stateFor('/p/other').getSnapshot().tiles.map(t => t.kind)).toEqual(['chat'])
   })
 
+  it('round-trips the split pane, and treats a missing or clashing split as none', () => {
+    const groups = groupsWith()
+    const state = groups.stateFor('/p')
+    const doc = state.addTile('doc')!
+    state.addTile('kanban')
+    state.openInSplit(doc.id)
+    const saved = parseSavedWorkspace(serializeWorkspace('chats', groups))
+    const group = saved?.groups['/p']
+    expect(group?.split).toBeGreaterThanOrEqual(0)
+    expect(group?.split).not.toBe(group?.active)
+    const restored = new WorkspaceGroups(() => new WorkspaceState({ createId: ids() }), saved?.groups).stateFor('/p').getSnapshot()
+    expect(restored.tiles.find(t => t.id === restored.splitId)?.kind).toBe('doc')
+
+    const legacy = parseSavedWorkspace(JSON.stringify({ version: 1, mode: 'chats', groups: { g: { active: 0, tiles: [{ kind: 'doc', title: 'D' }] } } }))
+    expect(legacy?.groups.g?.split).toBe(-1)
+    const clash = parseSavedWorkspace(JSON.stringify({ version: 1, mode: 'chats', groups: { g: { active: 0, split: 0, tiles: [{ kind: 'doc', title: 'D' }] } } }))
+    expect(clash?.groups.g?.split).toBe(-1)
+  })
+
   it('keeps the chat focused when it was the active tab', () => {
     const groups = groupsWith()
     const state = groups.stateFor('/p')

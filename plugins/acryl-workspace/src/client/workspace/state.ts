@@ -38,6 +38,8 @@ export interface WorkspaceTile {
 export interface WorkspaceSnapshot {
   readonly tiles: readonly WorkspaceTile[]
   readonly activeId: string | undefined
+  /** The tab shown in the optional second pane beside the active one. Never equal to `activeId`. */
+  readonly splitId: string | undefined
   readonly menuOpen: boolean
 }
 
@@ -79,6 +81,7 @@ export class WorkspaceState {
     this.snapshot = Object.freeze({
       tiles: Object.freeze([chat]),
       activeId: chat.id,
+      splitId: undefined,
       menuOpen: false,
     })
   }
@@ -100,14 +103,43 @@ export class WorkspaceState {
     this.replace({ ...this.snapshot, menuOpen })
   }
 
-  /** Focus one existing tile. */
+  /** Focus one existing tile. Selecting the tab in the split pane swaps the two panes. */
   selectTile(id: string): void {
     if (this.snapshot.activeId === id) {
       if (this.snapshot.menuOpen) this.replace({ ...this.snapshot, menuOpen: false })
       return
     }
     if (!this.snapshot.tiles.some(tile => tile.id === id)) return
-    this.replace({ ...this.snapshot, activeId: id, menuOpen: false })
+    const swap = id === this.snapshot.splitId
+    this.replace({
+      ...this.snapshot,
+      activeId: id,
+      splitId: swap ? this.snapshot.activeId : this.snapshot.splitId,
+      menuOpen: false,
+    })
+  }
+
+  /**
+   * Show a tab in the second pane, beside the active one. There is one split at most; a new one
+   * replaces the old. Moving the active tab focuses a neighbour first, so both stay visible.
+   */
+  openInSplit(id: string): void {
+    const tiles = this.snapshot.tiles
+    const index = tiles.findIndex(tile => tile.id === id)
+    if (index < 0) return
+    let activeId = this.snapshot.activeId
+    if (activeId === id || activeId === undefined) {
+      const neighbour = tiles[index - 1] ?? tiles[index + 1]
+      if (neighbour === undefined) return
+      activeId = neighbour.id
+    }
+    this.replace({ ...this.snapshot, activeId, splitId: id, menuOpen: false })
+  }
+
+  /** Close the second pane; its tab stays open as an ordinary tab. */
+  closeSplit(): void {
+    if (this.snapshot.splitId === undefined) return
+    this.replace({ ...this.snapshot, splitId: undefined })
   }
 
   /**
@@ -123,8 +155,11 @@ export class WorkspaceState {
     }
     const tile = this.createTile(kind, options)
     this.replace({
+      ...this.snapshot,
       tiles: Object.freeze([...this.snapshot.tiles, tile]),
       activeId: tile.id,
+      // Never the same tab in both panes.
+      splitId: this.snapshot.splitId === tile.id ? undefined : this.snapshot.splitId,
       menuOpen: false,
     })
     return tile
@@ -135,14 +170,17 @@ export class WorkspaceState {
    * @param saved - tiles without ids (terminals are never saved).
    * @param active - index into `saved` of the tab to focus, or -1 to keep the chat focused.
    */
-  restore(saved: readonly Omit<WorkspaceTile, 'id'>[], active: number): void {
+  restore(saved: readonly Omit<WorkspaceTile, 'id'>[], active: number, split = -1): void {
     if (saved.length === 0) return
     const restored = saved.map(tile => Object.freeze({ ...tile, id: this.createId() }) as WorkspaceTile)
     const tiles = [...this.snapshot.tiles, ...restored]
-    const focused = restored[active]
+    const activeId = restored[active]?.id ?? this.snapshot.activeId
+    const splitId = restored[split]?.id
     this.replace({
+      ...this.snapshot,
       tiles: Object.freeze(tiles),
-      activeId: focused?.id ?? this.snapshot.activeId,
+      activeId,
+      splitId: splitId === activeId ? undefined : splitId,
       menuOpen: false,
     })
   }
@@ -152,15 +190,26 @@ export class WorkspaceState {
    * @param worktree - absolute worktree path.
    * @param file - path relative to that worktree.
    */
-  openDiff(worktree: string, file: string): WorkspaceTile | undefined {
+  openDiff(worktree: string, file: string, options: { readonly beside?: boolean } = {}): WorkspaceTile | undefined {
+    const previous = this.snapshot.activeId
     const existing = this.snapshot.tiles.find(
       tile => tile.kind === 'diff' && tile.diffWorktree === worktree && tile.diffFile === file,
     )
+    // Beside: keep what the user is looking at (usually the chat) and put the diff next to it.
+    const beside = options.beside === true && previous !== undefined
     if (existing !== undefined) {
-      this.selectTile(existing.id)
+      if (beside && previous !== existing.id) {
+        this.replace({ ...this.snapshot, splitId: existing.id, activeId: previous, menuOpen: false })
+      } else {
+        this.selectTile(existing.id)
+      }
       return existing
     }
-    return this.addTile('diff', { title: basename(file), diffWorktree: worktree, diffFile: file })
+    const tile = this.addTile('diff', { title: basename(file), diffWorktree: worktree, diffFile: file })
+    if (tile !== undefined && beside) {
+      this.replace({ ...this.snapshot, splitId: tile.id, activeId: previous, menuOpen: false })
+    }
+    return tile
   }
 
   /**
@@ -173,12 +222,18 @@ export class WorkspaceState {
     if (index < 0) return undefined
     const tile = tiles[index]
     const nextTiles = tiles.filter(entry => entry.id !== id)
-    const nextActive = this.snapshot.activeId === id
-      ? nextTiles[Math.max(0, index - 1)]?.id
-      : this.snapshot.activeId
+    const splitId = this.snapshot.splitId === id ? undefined : this.snapshot.splitId
+    let nextActive = this.snapshot.activeId
+    if (nextActive === id) {
+      // Prefer a neighbour that is not already showing in the other pane.
+      const candidates = nextTiles.filter(entry => entry.id !== splitId)
+      nextActive = (candidates[Math.max(0, index - 1)] ?? candidates[0] ?? nextTiles[0])?.id
+    }
     this.replace({
+      ...this.snapshot,
       tiles: Object.freeze(nextTiles),
       activeId: nextActive,
+      splitId: splitId === nextActive ? undefined : splitId,
       menuOpen: false,
     })
     return tile

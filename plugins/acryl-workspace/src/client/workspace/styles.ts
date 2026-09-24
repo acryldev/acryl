@@ -17,7 +17,16 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceMenuItem { appearance: none; display: block; width: 100%; margin: 0; padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; text-align: left; font: 13px/1.2 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceMenuItem:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
 .dshWorkspaceMenuRule { height: 1px; margin: 6px 4px; background: var(--dsw-alias-border-l2); }
-.dshWorkspaceStage { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; background: var(--dsw-alias-bg-base); }
+.dshWorkspaceStage { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: row; background: var(--dsw-alias-bg-base); }
+.dshWorkspacePane { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.dshWorkspaceStage[data-split] > .dshWorkspacePane + .dshWorkspacePane { border-left: 1px solid var(--dsw-alias-border-l1); }
+.dshWorkspaceSplitHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; padding: 0 8px 0 12px; border-bottom: 1px solid var(--dsw-alias-border-l1); background: color-mix(in srgb, var(--dsw-alias-bg-base) 92%, black); font: 12px/1 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg); }
+.dshWorkspaceSplitTitle { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshWorkspaceSplitClose { appearance: none; width: 22px; height: 22px; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 14px; }
+.dshWorkspaceSplitClose:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg); }
+.dshWorkspaceTabSplit { appearance: none; width: 22px; margin: 6px 0; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 13px; opacity: 0; }
+.dshWorkspaceTab:hover .dshWorkspaceTabSplit, .dshWorkspaceTab[data-split] .dshWorkspaceTabSplit, .dshWorkspaceTabSplit:focus-visible { opacity: 1; }
+.dshWorkspaceTab[data-split] { box-shadow: inset 0 -2px 0 #a5b4fc; }
 .dshWorkspaceChat, .dshWorkspacePty, .dshWorkspaceFile, .dshWorkspaceBrowser, .dshWorkspaceDiff, .dshWorkspaceKanban, .dshWorkspaceDoc { display: flex; flex: 1; flex-direction: column; min-height: 0; min-width: 0; }
 /* The conversation is built to fill a flex-column parent (its root is flex: 1; min-height: 0). The frame wraps it in a plain div, so make that wrapper fill the Chat tile with a bounded height; otherwise the message list grows to its content, is clipped, and cannot scroll. */
 .dshWorkspaceChat > [data-acryl-slot="conversation"] { display: flex; flex: 1 1 0; flex-direction: column; min-height: 0; min-width: 0; }

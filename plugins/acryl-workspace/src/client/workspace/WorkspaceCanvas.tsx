@@ -69,6 +69,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
   const previousCurrent = useRef<string | undefined>(sessions.current)
   const menuRef = useRef<HTMLDivElement>(null)
   const active = snapshot.tiles.find(tile => tile.id === snapshot.activeId)
+  const splitTile = snapshot.tiles.find(tile => tile.id === snapshot.splitId)
 
   useLayoutEffect(() => {
     const current = sessions.current
@@ -90,8 +91,33 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
   }, [api, workspace])
 
   useEffect(() => shell.onOpenDiff((request) => {
-    groups.stateFor(request.worktree).openDiff(request.worktree, request.file)
+    const state = groups.stateFor(request.worktree)
+    const current = state.getSnapshot()
+    // From the chat, open the diff beside it so the conversation stays visible.
+    const fromChat = current.tiles.find(tile => tile.id === current.activeId)?.kind === 'chat'
+    state.openDiff(request.worktree, request.file, { beside: fromChat })
   }), [shell, groups])
+
+  /** The pane for one tile, used for both the primary pane and the split pane. */
+  const renderTile = (tile: WorkspaceTile): ReactNode => {
+    if (tile.kind === 'chat') return <div className="dshWorkspaceChat">{renderConversation()}</div>
+    if (tile.kind === 'pty') return <PtyPane tile={tile} api={api} />
+    if (tile.kind === 'file') return <FilePane tile={tile} workspace={workspace} />
+    if (tile.kind === 'browser') return <BrowserPane tile={tile} workspace={workspace} />
+    if (tile.kind === 'kanban') return <KanbanPane tile={tile} workspace={workspace} />
+    if (tile.kind === 'doc') return <DocPane tile={tile} workspace={workspace} />
+    if (tile.diffFile !== undefined) {
+      return (
+        <GitDiffPane
+          tile={tile}
+          shell={shell}
+          gitApi={gitApi}
+          sendComment={input => agent.sendToCurrentSession(buildReviewComment({ ...input, branch: groupBranch }))}
+        />
+      )
+    }
+    return <DiffPane tile={tile} workspace={workspace} />
+  }
 
   const openPty = useCallback(async (commandId: WorkspacePtyCommandId, title: string) => {
     const tile = workspace.addTile('pty', { commandId, title })
@@ -141,6 +167,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
                 key={tile.id}
                 className="dshWorkspaceTab"
                 data-active={selected || undefined}
+                data-split={tile.id === snapshot.splitId || undefined}
                 data-tile-kind={tile.kind}
               >
                 <button
@@ -153,6 +180,17 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
                   <span className="dshWorkspaceTabGlyph" aria-hidden="true">{glyph(tile.kind)}</span>
                   <span className="dshWorkspaceTabLabel">{tile.title}</span>
                 </button>
+                {snapshot.tiles.length > 1 && !selected && (
+                  <button
+                    type="button"
+                    className="dshWorkspaceTabSplit"
+                    aria-label={tile.id === snapshot.splitId ? 'Close split' : `Open ${tile.title} beside the current tab`}
+                    title={tile.id === snapshot.splitId ? 'Close the split' : 'Open beside the current tab'}
+                    onClick={() => { if (tile.id === snapshot.splitId) workspace.closeSplit(); else workspace.openInSplit(tile.id) }}
+                  >
+                    ◫
+                  </button>
+                )}
                 <button
                   type="button"
                   className="dshWorkspaceTabClose"
@@ -211,40 +249,34 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
           )}
         </div>
       </div>
-      <div className="dshWorkspaceStage" role="tabpanel">
-        {active === undefined && (
-          <div className="dshWorkspaceEmpty">
-            Press + to open a terminal, file, browser, diff, board, doc, or coding agent.
+      <div className="dshWorkspaceStage" role="tabpanel" data-split={splitTile !== undefined || undefined}>
+        <div className="dshWorkspacePane" data-pane="primary">
+          {active === undefined
+            ? (
+                <div className="dshWorkspaceEmpty">
+                  Press + to open a terminal, file, browser, diff, board, doc, or coding agent.
+                </div>
+              )
+            : renderTile(active)}
+        </div>
+        {splitTile !== undefined && (
+          <div className="dshWorkspacePane" data-pane="split">
+            <div className="dshWorkspaceSplitHead">
+              <span className="dshWorkspaceSplitTitle">
+                <span aria-hidden="true">{glyph(splitTile.kind)}</span> {splitTile.title}
+              </span>
+              <button
+                type="button"
+                className="dshWorkspaceSplitClose"
+                aria-label="Close split"
+                title="Close the split (the tab stays open)"
+                onClick={() => { workspace.closeSplit() }}
+              >
+                ×
+              </button>
+            </div>
+            {renderTile(splitTile)}
           </div>
-        )}
-        {active?.kind === 'chat' && (
-          <div className="dshWorkspaceChat">{renderConversation()}</div>
-        )}
-        {active?.kind === 'pty' && (
-          <PtyPane tile={active} api={api} />
-        )}
-        {active?.kind === 'file' && (
-          <FilePane tile={active} workspace={workspace} />
-        )}
-        {active?.kind === 'browser' && (
-          <BrowserPane tile={active} workspace={workspace} />
-        )}
-        {active?.kind === 'diff' && active.diffFile !== undefined && (
-          <GitDiffPane
-            tile={active}
-            shell={shell}
-            gitApi={gitApi}
-            sendComment={input => agent.sendToCurrentSession(buildReviewComment({ ...input, branch: groupBranch }))}
-          />
-        )}
-        {active?.kind === 'diff' && active.diffFile === undefined && (
-          <DiffPane tile={active} workspace={workspace} />
-        )}
-        {active?.kind === 'kanban' && (
-          <KanbanPane tile={active} workspace={workspace} />
-        )}
-        {active?.kind === 'doc' && (
-          <DocPane tile={active} workspace={workspace} />
         )}
       </div>
     </div>

@@ -30,7 +30,7 @@ export class WorkspaceGroups {
     if (state === undefined) {
       state = this.create()
       const previous = this.saved[key]
-      if (previous !== undefined) state.restore(previous.tiles, previous.active)
+      if (previous !== undefined) state.restore(previous.tiles, previous.active, previous.split)
       this.states.set(key, state)
       state.subscribe(() => { this.notify() })
       this.notify()
