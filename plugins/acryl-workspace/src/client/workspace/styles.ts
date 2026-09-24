@@ -97,6 +97,30 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceDot[data-dot="error"] { background: #f87171; }
 .dshWorkspaceDot[data-dot="loading"] { background: #6b7280; opacity: .5; }
 @keyframes dshWorkspacePulse { 50% { opacity: .35; } }
+.dshWorkspaceChanges { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow-y: auto; color: var(--dsw-alias-fg); font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceChangesHead { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--dsw-alias-border-l2); }
+.dshWorkspaceChangesTitle { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.dshWorkspaceChangesTitle strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshWorkspaceChangesMeta { color: var(--dsw-alias-fg-l2); font-size: 11px; }
+.dshWorkspaceChangesRefresh { appearance: none; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 14px; }
+.dshWorkspaceChangesRefresh:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg); }
+.dshWorkspaceChangesEmpty, .dshWorkspaceChangesError { margin: 0; padding: 12px; color: var(--dsw-alias-fg-l2); font-size: 12px; }
+.dshWorkspaceChangesError { color: #fca5a5; }
+.dshWorkspaceChangeList { list-style: none; margin: 0; padding: 4px 6px 12px; }
+.dshWorkspaceChange { appearance: none; display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 6px; border: 0; border-radius: 6px; background: transparent; color: inherit; cursor: pointer; text-align: left; font: inherit; }
+.dshWorkspaceChange:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
+.dshWorkspaceChangeCode { flex: none; width: 14px; font: 700 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; text-align: center; }
+.dshWorkspaceChangeCode[data-code="M"] { color: #f5b942; }
+.dshWorkspaceChangeCode[data-code="A"], .dshWorkspaceChangeCode[data-code="?"] { color: #4ade80; }
+.dshWorkspaceChangeCode[data-code="D"], .dshWorkspaceChangeCode[data-code="U"] { color: #f87171; }
+.dshWorkspaceChangeCode[data-code="R"] { color: #60a5fa; }
+.dshWorkspaceChangePath { flex: 1; min-width: 0; display: flex; gap: 6px; align-items: baseline; overflow: hidden; }
+.dshWorkspaceChangeName { flex: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshWorkspaceChangeDir { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dsw-alias-fg-l2); font-size: 11px; direction: rtl; text-align: left; }
+.dshWorkspaceChangeStaged { flex: none; padding: 0 4px; border-radius: 4px; background: color-mix(in srgb, #4d6bfe 25%, transparent); color: #a5b4fc; font: 700 9px/14px ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceChangeStat { flex: none; color: var(--dsw-alias-fg-l2); font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dshWorkspaceChangeStat [data-kind="add"] { color: #4ade80; }
+.dshWorkspaceChangeStat [data-kind="remove"] { color: #f87171; }
 `
 
 /** Install styles owned by one Workspace Client Fiber. */

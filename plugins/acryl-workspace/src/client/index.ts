@@ -6,6 +6,7 @@ import '@deepseek-ai/dsh-client-ui-renderer/client'
 import '@deepseek-ai/dsh-client-ui-session/client'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type { ReactNode } from 'react'
+import { changesTabPlugin } from './workspace/changes-tab.ts'
 import { createWorkspaceGitApi } from './workspace/git-api.ts'
 import { ProjectsSidebar, type ProjectsSidebarOwnerProps } from './workspace/ProjectsSidebar.tsx'
 import { createWorkspacePtyApi } from './workspace/pty-api.ts'
@@ -55,6 +56,7 @@ export function apply(ctx: ClientContext): void {
   const shell = new WorkspaceShellState(createWorkspaceGitApi())
   ctx.effect(() => startShellPolling(shell), 'acryl-workspace: git state polling')
   ctx.effect(() => installWorkspaceStyles(), 'acryl-workspace: styles')
+  ctx.plugin(changesTabPlugin(shell))
 
   whenSlotDeclared(() => {
     ctx.slots.inject('desktop.main', () => {

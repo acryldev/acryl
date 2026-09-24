@@ -53,6 +53,7 @@ export class WorkspaceShellState {
   private readonly probes = new Map<string, Promise<string | undefined>>()
   private readonly statusInflight = new Map<string, Promise<void>>()
   private pinned = false
+  private reveal: (() => void) | undefined
   private disposed = false
 
   constructor(private readonly api: WorkspaceGitApi) {}
@@ -108,10 +109,16 @@ export class WorkspaceShellState {
     this.selectInternal(current)
   }
 
-  /** The user picked a worktree: keep it selected even when the chat session changes. */
+  /** The user picked a worktree: keep it selected even when the chat session changes, and reveal its changes. */
   select(path: string): void {
     this.pinned = true
     this.selectInternal(path)
+    this.reveal?.()
+  }
+
+  /** Register (or clear) how to bring the Changes tab into view. Owned by the Changes tab plugin. */
+  setReveal(reveal: (() => void) | undefined): void {
+    this.reveal = reveal
   }
 
   /** Reload the worktree list of every known repository and the status of every worktree. */
