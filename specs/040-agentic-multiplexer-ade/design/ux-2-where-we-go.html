@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ACRYL ADE - Where We Go</title>
+<style>
+  /* Design source: ACRYL's own token system, copied from the v2 mockup
+     (ux-ui-design-mockup-acryl-desktop-and-web-v2/src/index.css, dark). Layout and data follow
+     that mockup's LeftRail / RightPanel / TerminalStrip / StatusBar and mockData.js. */
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, td, th, .chip) { overflow-wrap: anywhere; }
+  :root {
+    --background: hsl(222 20% 7%); --foreground: hsl(220 16% 92%);
+    --panel: hsl(222 18% 10%); --panel2: hsl(222 16% 13%); --panel3: hsl(222 14% 16%);
+    --border: hsl(222 12% 20%); --border-strong: hsl(222 12% 28%);
+    --muted: hsl(220 10% 52%); --soft: hsl(220 8% 38%);
+    --brand: hsl(186 92% 52%); --brand-fg: hsl(222 40% 8%); --brand-soft: hsl(186 60% 16%);
+    --blue: hsl(208 90% 60%); --ok: hsl(152 58% 52%); --ok-soft: hsl(152 50% 16%);
+    --bad: hsl(0 72% 62%); --bad-soft: hsl(0 60% 16%);
+    --warn: hsl(38 92% 58%); --warn-soft: hsl(38 70% 16%);
+    --added: hsl(152 52% 50%); --added-soft: hsl(152 44% 14%);
+    --removed: hsl(0 64% 58%); --removed-soft: hsl(0 50% 14%);
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  html { background: var(--background); color: var(--foreground); font: 14px/1.55 var(--sans); }
+  body { margin: 0; padding: 32px 16px 90px; }
+  main { max-width: 1240px; margin: 0 auto; }
+  h1 { font-size: 28px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  h2 { font-size: 18px; margin: 44px 0 6px; }
+  .eyebrow { font: 600 11px/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--brand); margin-bottom: 10px; }
+  p.lede { color: var(--muted); margin: 0 0 16px; max-width: 80ch; }
+  code { font-family: var(--mono); font-size: 12px; color: var(--brand); }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+  .chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font: 600 11px/1.7 var(--sans); border: 1px solid; white-space: nowrap; }
+  .built { color: var(--ok); border-color: hsl(152 58% 52% / .4); background: var(--ok-soft); }
+  .plan { color: var(--blue); border-color: hsl(208 90% 60% / .4); background: hsl(208 60% 16%); }
+  .new { color: var(--brand); border-color: hsl(186 92% 52% / .4); background: var(--brand-soft); }
+  .gap { color: var(--warn); border-color: hsl(38 92% 58% / .4); background: var(--warn-soft); }
+
+  /* the ADE mock */
+  .ade { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--background); box-shadow: 0 24px 70px -30px #000; font-size: 12px; }
+  .top { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px; background: var(--panel); border-bottom: 1px solid var(--border); position: relative; }
+  .logo { font-weight: 700; letter-spacing: .1em; color: var(--brand); }
+  .crumb { color: var(--muted); }
+  .pill { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--panel2); color: var(--foreground); }
+  .pill.brand { background: var(--brand-soft); border-color: hsl(186 92% 52% / .35); color: var(--brand); }
+  .pill.mono { font-family: var(--mono); }
+  .sp { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: var(--soft); }
+  .dot.run { background: var(--brand); animation: pulse 1.8s ease-in-out infinite; }
+  .dot.rev { background: var(--warn); } .dot.clean { background: var(--ok); } .dot.need { background: var(--bad); }
+  @keyframes pulse { 50% { opacity: .4; } }
+
+  .body { display: grid; grid-template-columns: 228px minmax(0, 1fr) 280px; height: 560px; position: relative; }
+  .rail { border-right: 1px solid var(--border); background: var(--panel); overflow: auto; padding: 10px 8px; position: relative; }
+  .rail h6, .panel h6 { margin: 10px 6px 6px; font: 600 10px var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--soft); }
+  .proj { margin: 4px 0; }
+  .proj > div.p { padding: 4px 6px; font-weight: 600; }
+  .br { display: flex; align-items: center; gap: 6px; padding: 4px 6px 4px 14px; border-radius: 6px; color: var(--foreground); }
+  .br.sel { background: var(--panel3); }
+  .br .n { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .br .s { font: 10px var(--mono); color: var(--muted); }
+  .br .s i { font-style: normal; color: var(--added); } .br .s u { text-decoration: none; color: var(--removed); }
+  .att { border: 1px solid var(--border); border-radius: 8px; background: var(--panel2); padding: 6px 8px; margin: 4px 0; }
+  .att b { display: block; font-weight: 600; } .att span { color: var(--muted); }
+
+  .canvas { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--background); position: relative; }
+  .strip { display: flex; height: 34px; border-bottom: 1px solid var(--border); background: var(--panel); }
+  .tab { display: flex; align-items: center; gap: 6px; padding: 0 12px; color: var(--muted); border-right: 1px solid var(--border); }
+  .tab.on { color: var(--foreground); background: var(--background); box-shadow: inset 0 -2px 0 var(--brand); }
+  .tab.plus { margin-left: auto; border: 0; border-left: 1px solid var(--border); }
+  .tiles { flex: 1; display: grid; grid-template-columns: 1fr 1fr; min-height: 0; }
+  .tile { border-right: 1px solid var(--border); display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; }
+  .tile:last-child { border-right: 0; }
+  .tile header { padding: 7px 10px; border-bottom: 1px solid var(--border); color: var(--muted); display: flex; gap: 8px; align-items: center; }
+  .tile header b { color: var(--foreground); }
+  .msg { padding: 8px 12px; } .msg .who { color: var(--brand); font-weight: 600; } .msg p { margin: 2px 0 8px; color: var(--foreground); }
+  .tool { margin: 4px 12px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel2); font-family: var(--mono); color: var(--muted); }
+  .approve { display: flex; gap: 6px; margin: 8px 12px; align-items: center; padding: 8px; border: 1px solid hsl(38 92% 58% / .4); background: var(--warn-soft); border-radius: 8px; }
+  .btn { height: 24px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--border-strong); background: var(--panel2); color: var(--foreground); font: 600 11px var(--sans); cursor: pointer; }
+  .btn.pri { background: var(--brand); color: var(--brand-fg); border-color: var(--brand); }
+  .file { padding: 6px 10px; font-family: var(--mono); color: var(--muted); border-bottom: 1px solid var(--border); }
+  .dl { display: flex; gap: 8px; padding: 0 10px; font: 11.5px/1.6 var(--mono); }
+  .dl .ln { width: 24px; color: var(--soft); text-align: right; }
+  .dl.add { background: var(--added-soft); color: var(--added); } .dl.rm { background: var(--removed-soft); color: var(--removed); }
+  .thread { margin: 6px 10px 6px 42px; padding: 8px 10px; border: 1px solid hsl(186 92% 52% / .35); background: var(--brand-soft); border-radius: 8px; font-family: var(--sans); }
+  .thread small { color: var(--muted); display: block; margin-top: 4px; }
+
+  .panel { border-left: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; min-width: 0; position: relative; }
+  .ptabs { display: flex; border-bottom: 1px solid var(--border); }
+  .ptab { flex: 1; text-align: center; padding: 9px 4px; color: var(--muted); border: 0; background: transparent; font: 12px var(--sans); cursor: pointer; border-bottom: 2px solid transparent; }
+  .ptab[aria-selected="true"] { color: var(--foreground); border-bottom-color: var(--brand); }
+  .ptab em { font-style: normal; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--panel3); font-size: 10px; }
+  .pv { display: none; padding: 8px; overflow: auto; flex: 1; }
+  .pv.on { display: block; }
+  .row { display: flex; gap: 8px; align-items: center; padding: 4px 6px; border-radius: 6px; }
+  .row:hover { background: var(--panel3); }
+  .row .st { font: 700 10px var(--mono); width: 14px; }
+  .st.M { color: var(--warn); } .st.A { color: var(--added); } .st.D { color: var(--removed); }
+  .row .n { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); font-size: 11px; }
+  .commit { margin-top: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 8px; background: var(--panel2); color: var(--muted); }
+  .commit .btn { margin-top: 6px; width: 100%; }
+
+  .strip2 { border-top: 1px solid var(--border); background: hsl(222 22% 5%); font: 11.5px/1.6 var(--mono); padding: 8px 12px; height: 74px; overflow: hidden; }
+  .strip2 .hd { color: var(--muted); font-family: var(--sans); display: flex; gap: 12px; margin-bottom: 2px; }
+  .strip2 .hd b { color: var(--foreground); }
+  .status { display: flex; gap: 14px; align-items: center; height: 26px; padding: 0 12px; background: var(--panel); border-top: 1px solid var(--border); color: var(--muted); }
+  .status .sp { margin-left: auto; }
+
+  /* numbered callouts */
+  .no { position: absolute; z-index: 3; width: 20px; height: 20px; border-radius: 50%; background: var(--brand); color: var(--brand-fg); font: 700 11px/20px var(--sans); text-align: center; box-shadow: 0 0 0 3px hsl(186 92% 52% / .25); pointer-events: none; }
+  .add-menu { position: absolute; right: 10px; top: 38px; z-index: 4; width: 210px; padding: 6px; border: 1px solid var(--border-strong); background: hsl(222 18% 12%); border-radius: 8px; box-shadow: 0 12px 32px #000a; }
+  .add-menu div { padding: 5px 8px; border-radius: 6px; color: var(--foreground); }
+  .add-menu div small { color: var(--soft); margin-left: 6px; }
+  .add-menu .sep { height: 1px; padding: 0; margin: 4px 0; background: var(--border); }
+  .add-menu .build { color: var(--brand); }
+
+  /* map table + decisions */
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .08em; }
+  td .no2 { display: inline-block; width: 20px; height: 20px; border-radius: 50%; background: var(--brand); color: var(--brand-fg); font: 700 11px/20px var(--sans); text-align: center; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-top: 12px; }
+  .box { border: 1px solid var(--border); background: var(--panel); border-radius: 12px; padding: 16px 18px; }
+  .box h3 { margin: 0 0 4px; font-size: 15px; }
+  .box .q { color: var(--muted); margin: 0 0 10px; }
+  .opt { display: block; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 8px 0; cursor: pointer; background: var(--panel2); }
+  .opt:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); }
+  .opt input { margin-right: 8px; accent-color: hsl(186 92% 42%); }
+  .opt b { font-weight: 600; } .opt small { display: block; color: var(--muted); margin: 3px 0 0 24px; }
+  .opt .rec { float: right; }
+  .box textarea { width: 100%; min-height: 54px; margin-top: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--background); color: var(--foreground); padding: 8px; font: 13px var(--sans); }
+  .queue { margin-top: 10px; height: 32px; padding: 0 14px; border-radius: 8px; border: 0; background: var(--brand); color: var(--brand-fg); font: 600 13px var(--sans); cursor: pointer; }
+  .queued { margin-left: 10px; color: var(--ok); font-size: 12px; }
+  .nav { display: flex; gap: 10px; margin-top: 40px; }
+  .nav a { color: var(--foreground); text-decoration: none; border: 1px solid var(--border); background: var(--panel); padding: 10px 16px; border-radius: 8px; }
+  .nav a:hover { border-color: var(--brand); }
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">ACRYL ADE / Spec 040 / Page 2 of 2</div>
+  <h1>Where we go</h1>
+  <p class="lede">The target ADE: a worktree-aware rail, an agent attention queue, a tile canvas that can show an agent next to its diff, a Files / Changes / Review / Checks panel, a persistent terminal dock and a status bar. Layout and data follow the v2 mockup; the numbered markers key into the build map below. Click the panel tabs to explore.</p>
+  <div class="legend">
+    <span class="chip built">built</span> exists today
+    <span class="chip plan">plan</span> in spec 040 stories A1-A5
+    <span class="chip new">new</span> proposed by the parity plan (A6-A11)
+    <span class="chip gap">decision</span> needs your call below
+  </div>
+
+  <div class="ade" aria-label="Planned ACRYL ADE mock">
+    <div class="top">
+      <span class="logo">ACRYL</span><span class="crumb">acryl / fix/workspace-sidebar-state</span>
+      <span class="pill brand"><span class="dot run"></span> Active BLEND: acryl-demo</span>
+      <div class="sp">
+        <span class="pill">Cmd+K</span>
+        <span class="pill">Fan-out</span>
+        <span class="pill brand"><span class="dot run"></span> 3 agents running</span>
+        <span class="pill mono">$ 4.72</span>
+      </div>
+      <span class="no" style="left:8px;top:12px">1</span>
+    </div>
+
+    <div class="body">
+      <aside class="rail">
+        <span class="no" style="right:6px;top:6px">2</span>
+        <h6>Projects</h6>
+        <div class="proj"><div class="p">acryl</div>
+          <div class="br"><span class="dot clean"></span><span class="n">master</span><span class="s">now</span></div>
+          <div class="br sel"><span class="dot run"></span><span class="n">fix/workspace-sidebar-state</span><span class="s"><i>+140</i> <u>-49</u></span></div>
+          <div class="br"><span class="dot rev"></span><span class="n">feat/git-action-dropdown</span><span class="s"><i>+1136</i> <u>-184</u></span></div>
+          <div class="br"><span class="dot run"></span><span class="n">feat/meta-chat</span><span class="s"><i>+5518</i> <u>-169</u></span></div>
+          <div class="br"><span class="dot"></span><span class="n">fix/shared-context-isolation</span><span class="s">1h</span></div>
+        </div>
+        <div class="proj"><div class="p">acrylamide_project</div>
+          <div class="br"><span class="dot run"></span><span class="n">main</span><span class="s"><i>+848</i></span></div>
+        </div>
+        <h6>Attention <span class="chip new" style="margin-left:4px">new</span></h6>
+        <div class="att"><span class="dot need"></span> <b>Needs you (2)</b><span>Codex: approve plan, Claude: commit proposal</span></div>
+        <div class="att"><span class="dot run"></span> <b>Running (3)</b><span>Claude Code, Codex, DSH Agent</span></div>
+        <div class="att"><span class="dot clean"></span> <b>Done, unread (1)</b><span>feat/rate-limit</span></div>
+        <span class="no" style="right:6px;bottom:10px">3</span>
+      </aside>
+
+      <section class="canvas">
+        <div class="strip">
+          <div class="tab on">◎ Claude Code - checkout-flow-v2</div>
+          <div class="tab">± Diff</div>
+          <div class="tab">▧ spec.md</div>
+          <div class="tab">▦ Sessions</div>
+          <div class="tab plus">+</div>
+        </div>
+        <div class="add-menu" aria-label="Add to canvas picker">
+          <div>Terminal<small>pty</small></div><div>Editor<small>file</small></div><div>Browser<small>design mode</small></div>
+          <div>Diff</div><div>Agent</div><div>Kanban</div><div>Compare<small>fan-out</small></div>
+          <div class="sep"></div><div class="build">Build a card type<small>agent scaffolds a plugin</small></div>
+        </div>
+        <div class="tiles">
+          <div class="tile">
+            <header><span class="dot run"></span><b>Claude Code</b> Opus, worktree fix/workspace-sidebar-state</header>
+            <div class="msg"><span class="who">You</span><p>Make the branch rail re-scope open tiles when I switch worktree.</p></div>
+            <div class="tool">edit  src/rail/state.ts  (+38 -4)</div>
+            <div class="tool">bash  pnpm run typecheck  - pass</div>
+            <div class="approve"><span>2 edits pending review</span><button class="btn">Reject</button><button class="btn pri">Approve all</button></div>
+          </div>
+          <div class="tile">
+            <header><b>Diff</b> src/rail/state.ts <span class="chip new" style="margin-left:auto">line comments</span></header>
+            <div class="file">src/rail/state.ts</div>
+            <div class="dl"><span class="ln">41</span> export function select(id) {</div>
+            <div class="dl rm"><span class="ln">42</span> - state.active = id</div>
+            <div class="dl add"><span class="ln">42</span> + state.active = id</div>
+            <div class="dl add"><span class="ln">43</span> + rescopeTiles(state, id)</div>
+            <div class="thread"><b>You</b> on line 43: dispose the old PTY before re-scoping.<small>Sent to Claude Code as a structured message. Stored as a room event.</small></div>
+            <div class="dl"><span class="ln">44</span> }</div>
+          </div>
+        </div>
+        <span class="no" style="left:8px;top:40px">4</span>
+        <span class="no" style="right:222px;top:40px">5</span>
+        <span class="no" style="left:8px;bottom:8px">6</span>
+      </section>
+
+      <aside class="panel">
+        <span class="no" style="left:-10px;top:6px">7</span>
+        <div class="ptabs" role="tablist">
+          <button class="ptab" role="tab" data-t="files" aria-selected="false">Files</button>
+          <button class="ptab" role="tab" data-t="changes" aria-selected="true">Changes<em>7</em></button>
+          <button class="ptab" role="tab" data-t="review" aria-selected="false">Review<em>3</em></button>
+          <button class="ptab" role="tab" data-t="checks" aria-selected="false">Checks<em>1</em></button>
+        </div>
+        <div class="pv" data-v="files">
+          <div class="row"><span class="n">▾ src</span></div><div class="row"><span class="n">&nbsp;&nbsp;▾ rail</span></div>
+          <div class="row"><span class="n">&nbsp;&nbsp;&nbsp;&nbsp;state.ts</span></div><div class="row"><span class="n">&nbsp;&nbsp;&nbsp;&nbsp;Rail.tsx</span></div>
+          <div class="row"><span class="n">▸ docs</span></div><div class="row"><span class="n">▸ specs</span></div>
+        </div>
+        <div class="pv on" data-v="changes">
+          <div class="row"><span class="st M">M</span><span class="n">src/rail/state.ts</span><span class="added" style="color:var(--added)">+38</span></div>
+          <div class="row"><span class="st A">A</span><span class="n">src/rail/Rail.tsx</span><span style="color:var(--added)">+212</span></div>
+          <div class="row"><span class="st M">M</span><span class="n">src/index.ts</span><span style="color:var(--added)">+4</span></div>
+          <div class="row"><span class="st D">D</span><span class="n">src/old-sidebar.tsx</span><span style="color:var(--removed)">-96</span></div>
+          <div class="commit">Staged - 7 files<br><span style="color:var(--foreground)">feat(rail): re-scope tiles on worktree switch</span><button class="btn pri">Commit and push</button></div>
+        </div>
+        <div class="pv" data-v="review">
+          <div class="row"><span class="dot rev"></span><span class="n">state.ts:43 dispose PTY first</span></div>
+          <div class="row"><span class="dot rev"></span><span class="n">Rail.tsx:88 filter is case sensitive</span></div>
+          <div class="row"><span class="dot clean"></span><span class="n" style="text-decoration:line-through;color:var(--muted)">index.ts:12 unused import</span></div>
+        </div>
+        <div class="pv" data-v="checks">
+          <div class="row"><span class="dot clean"></span><span class="n">typecheck</span><span style="color:var(--muted)">41s</span></div>
+          <div class="row"><span class="dot clean"></span><span class="n">unit tests 14/14</span><span style="color:var(--muted)">1m</span></div>
+          <div class="row"><span class="dot run"></span><span class="n">build desktop</span><span style="color:var(--muted)">running</span></div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="strip2">
+      <div class="hd"><b>Terminal</b><span>zsh - ~/acryl/.worktrees/fix-workspace-sidebar-state</span><span style="margin-left:auto">expand</span></div>
+      <span style="color:var(--ok)">$</span> pnpm run test<br>14 passed
+      <span class="no" style="right:10px;top:8px">8</span>
+    </div>
+    <div class="status"><span class="dot run"></span> Claude Code - Opus<span>context 64%</span><span>rate limit ok</span><span class="sp">worktree fix/workspace-sidebar-state</span><span>SSH dev-box connected</span><span class="no" style="position:static;display:inline-block">9</span></div>
+  </div>
+
+  <h2>Build map</h2>
+  <p class="lede">Each marker is one area. "Copy from" points at the MIT-licensed reference clones under <code>acryldev/_reference_projects/</code>; rows marked verify still need the source read before a task is written. Component names were checked against <code>plugins/acryl-ui/registry-manifest.yml</code>.</p>
+  <table>
+    <thead><tr><th>#</th><th>Area</th><th>Status</th><th>Plugin</th><th>@acryl/ui</th><th>Copy from</th></tr></thead>
+    <tbody>
+      <tr><td><span class="no2">1</span></td><td>Top bar: project, branch, BLEND badge, fan-out, cost, palette</td><td><span class="chip new">new</span></td><td><code>acryl-workspace</code> <code>topbar/</code>; BLEND from desktop <code>desktop-blend.ts</code></td><td><code>Menubar</code> <code>Command</code> <code>Badge</code></td><td>Orca <code>cmd-j</code>; v2 <code>TopChrome</code></td></tr>
+      <tr><td><span class="no2">2</span></td><td>Worktree rail with live status dots and branch filter</td><td><span class="chip plan">plan A1</span></td><td><code>acryl-workspace</code> <code>rail/</code>, replaces upstream sidebar row</td><td><code>Sidebar</code> <code>Collapsible</code> <code>InputGroup</code></td><td>Orca <code>AgentStateDot.tsx</code>, <code>store/worktree-*</code> (verify)</td></tr>
+      <tr><td><span class="no2">3</span></td><td>Attention queue: needs you / running / done</td><td><span class="chip new">new A7</span></td><td><code>acryl-workspace</code> <code>rail/attention</code></td><td><code>Sidebar</code> <code>ScrollArea</code></td><td>Orca <code>components/dashboard/</code> bucket logic (verify)</td></tr>
+      <tr><td><span class="no2">4</span></td><td>Tab strip and add-picker with "build a card type"</td><td><span class="chip built">built</span> <span class="chip plan">plan</span></td><td><code>acryl-workspace</code></td><td><code>Tabs</code> <code>Popover</code> <code>Command</code></td><td>v2 <code>CanvasAddPicker</code></td></tr>
+      <tr><td><span class="no2">5</span></td><td>Diff tile with line comments sent to the agent</td><td><span class="chip built">shell</span> <span class="chip new">new A8</span></td><td><code>acryl-workspace</code> <code>tiles/diff</code>; comments as room events in <code>acryl-control</code></td><td><code>Table</code> <code>ScrollArea</code></td><td>Orca <code>components/diff-comments/</code> anchor and range math (code); Nimbalyst <code>PendingReviewBanner.tsx</code></td></tr>
+      <tr><td><span class="no2">6</span></td><td>Chat tile bound to a worktree, with approve or reject of agent edits</td><td><span class="chip built">built</span> <span class="chip new">new A8</span></td><td><code>acryl-workspace</code> plus upstream conversation</td><td><code>Message</code> <code>ToolCallCard</code></td><td>Nimbalyst <code>PendingReviewBanner.tsx</code>, <code>interactivePromptTools.ts</code></td></tr>
+      <tr><td><span class="no2">7</span></td><td>Side panel: Files, Changes, Review, Checks, commit box</td><td><span class="chip plan">plan A2</span></td><td><code>acryl-workspace</code> <code>panel/</code>; git Host service</td><td><code>Tabs</code> <code>Table</code> <code>ScrollArea</code> <code>InputGroup</code></td><td>Orca <code>github-checks-tab-state.ts</code>; v2 <code>RightPanel</code></td></tr>
+      <tr><td><span class="no2">8</span></td><td>Persistent terminal dock</td><td><span class="chip plan">plan</span></td><td><code>acryl-workspace</code>; reuses the built PTY route</td><td><code>ResizablePanelGroup</code></td><td>v2 <code>TerminalStrip</code></td></tr>
+      <tr><td><span class="no2">9</span></td><td>Status bar: agent, context use, rate limit, worktree, remote</td><td><span class="chip new">new</span></td><td><code>acryl-workspace</code>; usage from <code>acryl-control</code></td><td><code>Badge</code> <code>Kbd</code></td><td>Nimbalyst context-usage and rate-limit widgets; Orca <code>rate-limits</code> (verify)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Decisions</h2>
+  <p class="lede">Pick and queue each answer; nothing is sent until you press its button. These two block the first build slice.</p>
+  <div class="grid2">
+    <form class="box" data-lavish-question="layout" onsubmit="event.preventDefault(); var v=new FormData(this).get('layout'); if(!v) return; var n=this.querySelector('textarea').value; window.lavish.queuePrompt('Canvas layout decision: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Layout: ' + v, element: this, data: { question: 'layout', answer: v, note: n } }); this.querySelector('.queued').textContent='Queued: ' + v;">
+      <h3>1. Canvas layout</h3>
+      <p class="q">Today one tile shows at a time. What should the canvas do? This decides how far <code>WorkspaceState</code> changes.</p>
+      <label class="opt"><input type="radio" name="layout" value="Tabs only"><b>Tabs only</b><small>Keep today's model. Cheapest. You cannot watch an agent and its diff together, which is the weakest demo.</small></label>
+      <label class="opt"><input type="radio" name="layout" value="Tabs plus one optional split" checked><b>Tabs plus one optional split</b> <span class="chip new rec">recommended</span><small>Small state change, and it produces the agent-next-to-diff view shown above.</small></label>
+      <label class="opt"><input type="radio" name="layout" value="Full split panes"><b>Full split panes</b><small>Orca-style, best for power users. Needs a layout tree and resize handling; biggest cost.</small></label>
+      <textarea placeholder="Optional note"></textarea>
+      <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
+    </form>
+
+    <form class="box" data-lavish-question="slice" onsubmit="event.preventDefault(); var v=new FormData(this).get('slice'); if(!v) return; var n=this.querySelector('textarea').value; window.lavish.queuePrompt('First build slice: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'First slice: ' + v, element: this, data: { question: 'slice', answer: v, note: n } }); this.querySelector('.queued').textContent='Queued: ' + v;">
+      <h3>2. First build slice</h3>
+      <p class="q">Given the pitch, what should exist first?</p>
+      <label class="opt"><input type="radio" name="slice" value="Worktree rail plus git Host service"><b>Worktree rail plus git Host service</b><small>Unblocks the rail, panel and attention queue. Least visible on its own.</small></label>
+      <label class="opt"><input type="radio" name="slice" value="Real diff tile with line comments to the agent" checked><b>Real diff tile with line comments to the agent</b> <span class="chip new rec">recommended</span><small>The most demo-visible feature and copies well from Orca.</small></label>
+      <label class="opt"><input type="radio" name="slice" value="BLEND badge and live fork demo"><b>BLEND badge and live fork demo</b><small>The differentiator nobody else has. Blends M4 territory.</small></label>
+      <label class="opt"><input type="radio" name="slice" value="Fan-out compare tile"><b>Fan-out compare tile</b><small>Strong visual, needs the git service and session source first.</small></label>
+      <textarea placeholder="Optional note"></textarea>
+      <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
+    </form>
+  </div>
+
+  <div class="nav"><a href="ux-1-where-we-are.html">Back: where we are</a></div>
+</main>
+<script>
+  (function () {
+    var tabs = document.querySelectorAll('.ptab'), views = document.querySelectorAll('.pv');
+    tabs.forEach(function (t) {
+      t.addEventListener('click', function () {
+        tabs.forEach(function (x) { x.setAttribute('aria-selected', x === t ? 'true' : 'false'); });
+        views.forEach(function (v) { v.classList.toggle('on', v.getAttribute('data-v') === t.getAttribute('data-t')); });
+      });
+    });
+  })();
+</script>
+</body>
+</html>

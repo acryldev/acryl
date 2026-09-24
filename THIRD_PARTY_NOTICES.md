@@ -18,6 +18,14 @@ text applies to those portions.
 - License: MIT
 - Copyright (c) 2024-2026 Nimbalyst Inc.
 
+## lavish-axi
+
+- Repository: https://github.com/kunchenguid/lavish-axi
+- Snapshot: 69574a8897 (2026-09-24)
+- License: MIT
+- Copyright: see the LICENSE file in the upstream repository (verify the exact copyright line before the first adapted file lands)
+- Status: used as a tool for design prototyping today; candidate to remake as an ACRYL-native feature (see specs/040 parity plan row E1).
+
 ## MIT License text
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

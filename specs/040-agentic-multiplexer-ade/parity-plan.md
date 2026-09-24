@@ -81,6 +81,14 @@ Priority: P1 core parity, P2 strong differentiator, P3 later.
 | D5 | Mobile companion (iOS/Android) | `mobile/` | `packages/ios`, `android` | Nothing | Reject for this milestone | n/a |
 | D6 | Team collaboration, shared docs, E2E encrypted share links | none | `collab-*`, `IDENTITY_AUTH_AND_ROOMS.md` | Nothing | Reject. Depends on Nimbalyst's hosted sync server, which is not part of the MIT repo | n/a |
 
+### E. Prototype and feedback loop
+
+| # | Feature | Source | ACRYL today | Verdict | Pri |
+|---|---|---|---|---|---|
+| E1 | Agent writes an HTML prototype, the human annotates elements or text live in the browser, queued feedback returns to the agent by long-poll (`lavish-axi <file>` / `poll`, Mermaid to editable whiteboard, export and share) | `kunchenguid/lavish-axi` (MIT, npm `lavish-axi`), installed globally and used for the spec 040 UX pages | Browser tile has no annotate mode; spec 039 mount anchors cover only ACRYL's own UI | Take-code, remake as ACRYL-native and ship as a standard part of the ADE and coding-agent environment. Overlaps C3 (Design Mode) and spec 039, so plan those three together | P1 |
+
+Rationale from the maintainer: HTML is the best prototype format for both humans and agents, and annotating a live prototype is the shortest feedback loop.
+
 ## What this adds to spec 040
 
 Existing stories A1-A5 are unchanged. The plan proposes these new stories, each needing its own acceptance scenarios before tasks are written:

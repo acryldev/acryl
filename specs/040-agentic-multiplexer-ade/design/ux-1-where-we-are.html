@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ACRYL ADE - Where We Are</title>
+<style>
+  /* Design source: the real acryl-workspace plugin. Colors and metrics are copied from
+     plugins/acryl-workspace/src/client/workspace/styles.ts (DSH --dsw-alias tokens, #4d6bfe accent,
+     #0b0d12 terminal). Page chrome around the mock uses the same dark family. */
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, td, th, .chip) { overflow-wrap: anywhere; }
+  :root {
+    --bg: #0e1015; --panel: #14171d; --panel2: #1a1e26; --base: #101319;
+    --fg: #e6e8ee; --fg2: #9aa1b0; --border: #262b36; --border2: #1e222b;
+    --accent: #4d6bfe; --ok: #4ade80; --warn: #f5b942; --bad: #f87171; --term: #0b0d12;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  html { background: var(--bg); color: var(--fg); font: 14px/1.55 var(--sans); }
+  body { margin: 0; padding: 32px 16px 80px; }
+  main { max-width: 1120px; margin: 0 auto; }
+  h1 { font-size: 28px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  h2 { font-size: 18px; margin: 40px 0 6px; }
+  p.lede { color: var(--fg2); margin: 0 0 18px; max-width: 78ch; }
+  .eyebrow { font: 600 11px/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+  .note { border: 1px solid var(--border); border-left: 3px solid var(--warn); background: var(--panel); border-radius: 8px; padding: 10px 14px; color: var(--fg2); margin: 0 0 22px; max-width: 90ch; }
+  .note b { color: var(--fg); }
+
+  /* window mock */
+  .win { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--base); box-shadow: 0 20px 60px -30px #000; }
+  .winbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--border); color: var(--fg2); font: 12px var(--sans); }
+  .dots span { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #3a4050; margin-right: 5px; }
+  .shell { display: grid; grid-template-columns: 210px minmax(0, 1fr); height: 470px; }
+  .side { border-right: 1px dashed var(--border); padding: 14px; color: var(--fg2); background: repeating-linear-gradient(135deg, transparent 0 10px, #ffffff05 10px 20px); font-size: 12px; }
+  .side b { color: var(--fg); display: block; margin-bottom: 4px; }
+  .side code { font-family: var(--mono); color: var(--warn); }
+  .ws { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--base); position: relative; }
+  .strip { display: flex; align-items: stretch; min-height: 36px; border-bottom: 1px solid var(--border); background: #0c0f14; }
+  .tabs { display: flex; flex: 1; min-width: 0; overflow-x: auto; }
+  .tab { display: flex; align-items: center; gap: 6px; max-width: 220px; min-width: 88px; padding: 0 6px 0 10px; border: 0; border-right: 1px solid var(--border2); background: transparent; color: var(--fg2); font: 12px var(--sans); cursor: pointer; }
+  .tab[aria-selected="true"] { background: var(--base); color: var(--fg); box-shadow: inset 0 -2px 0 var(--accent); }
+  .tab .g { opacity: .7; }
+  .tab .x { margin-left: auto; opacity: .5; }
+  .plusw { position: relative; display: flex; align-items: center; padding: 0 6px; }
+  .plus { width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); font: 600 18px/1 var(--sans); cursor: pointer; }
+  .plus:hover, .plus[aria-expanded="true"] { background: #ffffff14; }
+  .menu { position: absolute; top: calc(100% + 4px); right: 4px; z-index: 5; width: 240px; padding: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel2); box-shadow: 0 12px 32px #0009; }
+  .menu[hidden] { display: none; }
+  .menu button { display: block; width: 100%; text-align: left; padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); font: 13px var(--sans); cursor: pointer; }
+  .menu button:hover { background: #ffffff10; }
+  .menu hr { border: 0; height: 1px; margin: 6px 4px; background: var(--border); }
+  .menu .agents { display: grid; grid-template-columns: 1fr 1fr; }
+  .stage { flex: 1; min-height: 0; display: flex; }
+  .pane { display: none; flex: 1; min-width: 0; min-height: 0; }
+  .pane.on { display: flex; flex-direction: column; }
+  .empty { display: grid; place-items: center; flex: 1; color: var(--fg2); text-align: center; padding: 20px; }
+  .bar { display: flex; gap: 8px; align-items: center; padding: 6px 10px; border-bottom: 1px solid var(--border2); font-size: 12px; }
+  .bar input { flex: 1; background: transparent; border: 1px solid var(--border2); border-radius: 6px; color: var(--fg); padding: 5px 8px; font: 12px var(--mono); }
+  .bar .go { background: var(--accent); color: #fff; border-radius: 6px; padding: 4px 10px; }
+  .term { flex: 1; background: var(--term); padding: 10px 12px; font: 12px/1.6 var(--mono); color: #c9d1d9; }
+  .term .p { color: var(--ok); }
+  .split2 { display: flex; flex: 1; min-height: 0; }
+  .split2 > * { flex: 1; min-width: 0; }
+  .ta { border-right: 1px solid var(--border2); padding: 10px 12px; font: 12px/1.5 var(--mono); color: var(--fg2); }
+  .ta small { display: block; color: var(--fg2); font: 11px var(--sans); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
+  .dl { display: flex; gap: 8px; padding: 0 10px; font: 12px/1.5 var(--mono); white-space: pre-wrap; }
+  .dl.add { background: #22c55e24; color: #86efac; } .dl.rm { background: #ef444424; color: #fca5a5; }
+  .cols { display: flex; gap: 10px; padding: 12px; flex: 1; overflow-x: auto; }
+  .col { flex: 1; min-width: 150px; border: 1px solid var(--border2); border-radius: 10px; background: #ffffff05; }
+  .col h4 { margin: 0; padding: 10px 12px 6px; font: 600 12px var(--sans); }
+  .card { margin: 6px 10px; padding: 8px 10px; border: 1px solid var(--border2); border-radius: 8px; background: var(--base); font-size: 12px; }
+  .addc { margin: 8px 10px; padding: 6px 8px; border: 1px dashed var(--border2); border-radius: 6px; color: var(--fg2); font-size: 12px; }
+  .doc { padding: 14px 18px; font-size: 13px; }
+  .doc h5 { margin: .2em 0 .3em; font-size: 15px; }
+  .frame { flex: 1; background: #fff; color: #333; display: grid; place-items: center; font-size: 12px; }
+  .cap { padding: 8px 12px; color: var(--fg2); font-size: 12px; border-top: 1px solid var(--border); background: var(--panel); }
+
+  /* tables and chips */
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border2); vertical-align: top; }
+  th { color: var(--fg2); font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .08em; }
+  td code, code { font-family: var(--mono); font-size: 12px; color: #b8c4ff; }
+  .chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font: 600 11px/1.7 var(--sans); border: 1px solid; white-space: nowrap; }
+  .c-ok { color: var(--ok); border-color: #4ade8055; background: #4ade8012; }
+  .c-warn { color: var(--warn); border-color: #f5b94255; background: #f5b94212; }
+  .c-bad { color: var(--bad); border-color: #f8717155; background: #f8717112; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 12px; }
+  .box { border: 1px solid var(--border); background: var(--panel); border-radius: 10px; padding: 14px 16px; }
+  .box h3 { margin: 0 0 6px; font-size: 14px; }
+  .box p { margin: 0; color: var(--fg2); }
+  .nav { display: flex; gap: 10px; margin-top: 40px; }
+  .nav a { color: var(--fg); text-decoration: none; border: 1px solid var(--border); background: var(--panel); padding: 10px 16px; border-radius: 8px; }
+  .nav a:hover { border-color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">ACRYL ADE / Spec 040 / Page 1 of 2</div>
+  <h1>Where we are</h1>
+  <p class="lede">The shipped Scope A slice: <code>acryl-workspace</code> takes over the <code>desktop.main</code> slot in advanced mode and renders one tabbed canvas. One tile is visible at a time. Click the tabs and the <b>+</b> below to explore the mock; it copies the real structure, labels and colors.</p>
+  <div class="note"><b>Evidence level.</b> Built from source (<code>WorkspaceCanvas.tsx</code>, <code>state.ts</code>, <code>styles.ts</code>, <code>agent-commands.ts</code>), not from a screenshot of the running app. The dashed left area is the upstream DSH sidebar: only its slot name (<code>sidebar.workspaces</code>) is known, so its contents are deliberately not drawn. Annotate anything that looks wrong versus the real app.</div>
+
+  <div class="win" aria-label="Current ACRYL desktop workspace mock">
+    <div class="winbar"><span class="dots"><span></span><span></span><span></span></span> ACRYL Desktop - advanced mode</div>
+    <div class="shell">
+      <aside class="side">
+        <b>Sidebar (upstream DSH)</b>
+        slot <code>sidebar.workspaces</code><br><br>
+        Contents unverified. Not owned by ACRYL today, so it has no worktree, branch or agent-status awareness from us.
+      </aside>
+      <section class="ws">
+        <div class="strip" role="tablist" aria-label="ACRYL Workspace">
+          <div class="tabs" id="tabs">
+            <button class="tab" role="tab" data-k="chat" aria-selected="true"><span class="g">◎</span>Chat<span class="x">×</span></button>
+            <button class="tab" role="tab" data-k="pty" aria-selected="false"><span class="g">❯</span>Terminal<span class="x">×</span></button>
+            <button class="tab" role="tab" data-k="file" aria-selected="false"><span class="g">▤</span>untitled<span class="x">×</span></button>
+            <button class="tab" role="tab" data-k="browser" aria-selected="false"><span class="g">◍</span>Browser<span class="x">×</span></button>
+            <button class="tab" role="tab" data-k="diff" aria-selected="false"><span class="g">±</span>Diff<span class="x">×</span></button>
+            <button class="tab" role="tab" data-k="kanban" aria-selected="false"><span class="g">▦</span>Board<span class="x">×</span></button>
+            <button class="tab" role="tab" data-k="doc" aria-selected="false"><span class="g">▧</span>Doc<span class="x">×</span></button>
+          </div>
+          <div class="plusw">
+            <button class="plus" id="plus" aria-label="New tab" aria-expanded="false" aria-haspopup="menu">+</button>
+            <div class="menu" id="menu" role="menu" hidden>
+              <button role="menuitem">New Terminal</button>
+              <button role="menuitem">New Browser Tab</button>
+              <button role="menuitem">New File</button>
+              <button role="menuitem">New Diff</button>
+              <button role="menuitem">New Board</button>
+              <button role="menuitem">New Doc</button>
+              <hr>
+              <div class="agents">
+                <button role="menuitem">Claude</button><button role="menuitem">Codex</button>
+                <button role="menuitem">OpenCode</button><button role="menuitem">Gemini</button>
+                <button role="menuitem">Pi</button><button role="menuitem">Grok</button>
+                <button role="menuitem">Aider</button><button role="menuitem">Goose</button>
+                <button role="menuitem">Amp</button><button role="menuitem">Kimi</button>
+                <button role="menuitem">Cursor</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="stage" role="tabpanel">
+          <div class="pane on" data-p="chat"><div class="empty"><div><b>Upstream conversation</b><br>Rendered by <code>renderConversation()</code> from DSH.<br>Not bound to a worktree or branch.</div></div></div>
+          <div class="pane" data-p="pty">
+            <div class="bar"><b>Terminal</b><span style="margin-left:auto;color:var(--fg2)">host PTY, disposed with the tile</span></div>
+            <div class="term"><span class="p">~/acryl</span> $ pnpm run typecheck<br>&gt; acryl@ typecheck<br>&gt; tsc -b<br><span class="p">~/acryl</span> $ <span style="background:#c9d1d9;color:#0b0d12"> </span></div>
+          </div>
+          <div class="pane" data-p="file">
+            <div class="bar"><input value="src/main.ts" aria-label="File path"></div>
+            <div class="term" style="background:transparent;color:var(--fg2)">A path box and a plain text area. No file tree, no search, no syntax highlighting.</div>
+          </div>
+          <div class="pane" data-p="browser">
+            <div class="bar"><input value="http://localhost:5173" aria-label="Browser address"><span class="go">Go</span></div>
+            <div class="frame">embedded frame (no design or annotate mode)</div>
+          </div>
+          <div class="pane" data-p="diff">
+            <div class="split2">
+              <div class="ta"><small>Before (pasted)</small>const a = 1<br>const b = 2</div>
+              <div>
+                <div class="ta" style="border:0;padding-bottom:4px"><small>Result</small></div>
+                <div class="dl"> <span>&nbsp;</span>const a = 1</div>
+                <div class="dl rm"><span>-</span>const b = 2</div>
+                <div class="dl add"><span>+</span>const b = 3</div>
+                <div class="dl add"><span>+</span>const c = 4</div>
+              </div>
+            </div>
+            <div class="cap">Two texts compared line by line in the client. Not connected to git.</div>
+          </div>
+          <div class="pane" data-p="kanban">
+            <div class="cols">
+              <div class="col"><h4>Todo</h4><div class="card">wire rail to sessions</div><div class="card">git host service</div><div class="addc">+ add card</div></div>
+              <div class="col"><h4>Doing</h4><div class="card">tile canvas</div><div class="addc">+ add card</div></div>
+              <div class="col"><h4>Done</h4><div class="addc">+ add card</div></div>
+            </div>
+            <div class="cap">One local board per tile. Not connected to real sessions or agent phases.</div>
+          </div>
+          <div class="pane" data-p="doc">
+            <div class="split2">
+              <div class="ta"># Notes<br>- first point<br>- second point</div>
+              <div class="doc"><h5>Notes</h5><ul><li>first point</li><li>second point</li></ul></div>
+            </div>
+            <div class="cap">Minimal built-in markdown formatter. Not connected to spec files.</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <h2>What each tile really does today</h2>
+  <p class="lede">Seven tile kinds exist in <code>WorkspaceTileKind</code>. Spec 040 still says three; the spec is stale.</p>
+  <table>
+    <thead><tr><th>Tile</th><th>Real data behind it?</th><th>Gap versus a working ADE</th></tr></thead>
+    <tbody>
+      <tr><td><code>chat</code></td><td><span class="chip c-ok">real</span></td><td>Upstream conversation. Not tied to a worktree.</td></tr>
+      <tr><td><code>pty</code></td><td><span class="chip c-ok">real</span></td><td>Host-owned PTY over a route. No split, no scrollback restore.</td></tr>
+      <tr><td><code>file</code></td><td><span class="chip c-warn">partial</span></td><td>Path box plus text area. No tree, search or highlighting.</td></tr>
+      <tr><td><code>browser</code></td><td><span class="chip c-warn">partial</span></td><td>Address bar plus frame. No design or annotate mode.</td></tr>
+      <tr><td><code>diff</code></td><td><span class="chip c-bad">shell only</span></td><td>Compares two pasted texts. No git, no line comments, no agent hand-off.</td></tr>
+      <tr><td><code>kanban</code></td><td><span class="chip c-bad">shell only</span></td><td>Local cards. Not keyed to session phase.</td></tr>
+      <tr><td><code>doc</code></td><td><span class="chip c-bad">shell only</span></td><td>Pasted text. Does not open real spec or plan files.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>What is missing versus the mockups</h2>
+  <div class="grid3">
+    <div class="box"><h3>No worktree rail</h3><p>Nothing shows projects, branches, or a live agent-status dot. The sidebar is upstream's.</p></div>
+    <div class="box"><h3>No side panel</h3><p>No Files, Changes, Review or Checks view, and no commit box.</p></div>
+    <div class="box"><h3>One tile at a time</h3><p>You cannot watch an agent and its diff side by side. No splits.</p></div>
+    <div class="box"><h3>No attention queue</h3><p>No view of which agents need you, are running, or finished.</p></div>
+    <div class="box"><h3>No persistent terminal dock</h3><p>Terminals are tabs, not a bottom strip that stays visible.</p></div>
+    <div class="box"><h3>No status bar, no BLEND identity</h3><p>Branch, agent, context use and the active BLEND are not shown in the shell.</p></div>
+  </div>
+
+  <div class="nav"><a href="ux-2-where-we-go.html">Next: where we go</a></div>
+</main>
+<script>
+  (function () {
+    var tabs = document.querySelectorAll('.tab'), panes = document.querySelectorAll('.pane');
+    tabs.forEach(function (t) {
+      t.addEventListener('click', function () {
+        tabs.forEach(function (x) { x.setAttribute('aria-selected', x === t ? 'true' : 'false'); });
+        panes.forEach(function (p) { p.classList.toggle('on', p.getAttribute('data-p') === t.getAttribute('data-k')); });
+      });
+    });
+    var plus = document.getElementById('plus'), menu = document.getElementById('menu');
+    plus.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = menu.hidden;
+      menu.hidden = !open;
+      plus.setAttribute('aria-expanded', String(open));
+    });
+    document.addEventListener('click', function (e) {
+      if (!menu.hidden && !menu.contains(e.target)) { menu.hidden = true; plus.setAttribute('aria-expanded', 'false'); }
+    });
+  })();
+</script>
+</body>
+</html>
