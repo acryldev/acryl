@@ -71,11 +71,13 @@ export async function handleWorkspacePtyRequest(
     if (cause instanceof BodyTooLargeError) return finishJson(res, 413, error('body too large'))
     return finishJson(res, 400, error('invalid workspace PTY request'))
   }
-  if (!isObject(body) || !isWorkspacePtyCommandId(body.commandId) || Object.keys(body).length !== 1) {
+  const extraKeys = isObject(body) ? Object.keys(body).filter(key => key !== 'commandId' && key !== 'cwd') : []
+  if (!isObject(body) || !isWorkspacePtyCommandId(body.commandId) || extraKeys.length > 0
+    || (body.cwd !== undefined && (typeof body.cwd !== 'string' || body.cwd.length === 0))) {
     return finishJson(res, 400, error('invalid workspace PTY request'))
   }
   try {
-    return finishJson(res, 200, registry.start(body.commandId))
+    return finishJson(res, 200, registry.start(body.commandId, body.cwd))
   } catch (cause) {
     reportError('start workspace PTY', cause)
     return finishJson(res, 500, error(cause instanceof Error ? cause.message : 'workspace PTY spawn failed'))

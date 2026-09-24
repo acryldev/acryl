@@ -151,6 +151,15 @@ export function planWorkspacePtyCommand(
   return { command: commandId, args: [] }
 }
 
+function isExistingAbsoluteDirectory(path: string): boolean {
+  if (path.length === 0 || path.includes('\0') || !isAbsolute(path)) return false
+  try {
+    return statSync(path).isDirectory()
+  } catch {
+    return false
+  }
+}
+
 function appendOutput(current: string, chunk: string): string {
   const next = current + chunk
   if (next.length <= MAX_OUTPUT_CHARS) return next
@@ -179,10 +188,14 @@ export class WorkspacePtyRegistry {
   /**
    * Start one allowlisted command inside a real terminal.
    * @param commandId - catalog id from the Terminal/agent tab.
+   * @param cwd - optional working directory (a worktree); must be an existing absolute directory.
    */
-  start(commandId: string): WorkspacePtyView {
+  start(commandId: string, cwd?: string): WorkspacePtyView {
     if (!isWorkspacePtyCommandId(commandId)) {
       throw new Error('acryl-workspace: unknown workspace PTY command')
+    }
+    if (cwd !== undefined && !isExistingAbsoluteDirectory(cwd)) {
+      throw new Error('acryl-workspace: workspace PTY cwd must be an existing absolute directory')
     }
     const plan = planWorkspacePtyCommand(commandId, this.platform, this.env)
     const id = this.createId()
@@ -193,7 +206,7 @@ export class WorkspacePtyRegistry {
         throw new Error(`workspace PTY command not found in PATH: ${plan.command}`)
       }
       process = this.spawnImpl(resolved ?? plan.command, plan.args, {
-        cwd: this.cwd,
+        cwd: cwd ?? this.cwd,
         env: { ...this.env, TERM: this.env.TERM ?? 'xterm-256color' },
         name: 'xterm-256color',
         cols: DEFAULT_COLS,

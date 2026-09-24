@@ -13,13 +13,13 @@ export class WorkspacePtyClient implements WorkspacePtyApi {
 
   constructor(private readonly api: WorkspacePtyApi) {}
 
-  async start(commandId: WorkspacePtyCommandId): Promise<WorkspacePtyView> {
+  async start(commandId: WorkspacePtyCommandId, cwd?: string): Promise<WorkspacePtyView> {
     if (this.disposed) throw new Error('Workspace PTY client is disposed')
     let settle!: () => void
     const completion = new Promise<void>(resolve => { settle = resolve })
     this.starting.add(completion)
     try {
-      const view = await this.api.start(commandId)
+      const view = await this.api.start(commandId, cwd)
       if (this.disposed) {
         await this.api.close(view.id).catch(() => {})
         throw new Error('Workspace PTY client is disposed')

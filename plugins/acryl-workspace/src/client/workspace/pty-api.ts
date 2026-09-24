@@ -41,7 +41,8 @@ async function readJson(response: Response): Promise<unknown> {
 }
 
 export interface WorkspacePtyApi {
-  start(commandId: WorkspacePtyCommandId): Promise<WorkspacePtyView>
+  /** @param cwd - optional worktree directory to start in. */
+  start(commandId: WorkspacePtyCommandId, cwd?: string): Promise<WorkspacePtyView>
   read(id: string): Promise<WorkspacePtyView>
   write(id: string, data: string): Promise<void>
   resize(id: string, cols: number, rows: number): Promise<void>
@@ -51,12 +52,12 @@ export interface WorkspacePtyApi {
 /** @param fetcher - injected for tests; defaults to window.fetch. */
 export function createWorkspacePtyApi(fetcher: FetchLike = fetch): WorkspacePtyApi {
   return {
-    async start(commandId) {
+    async start(commandId, cwd) {
       const response = await fetcher(WORKSPACE_PTY_PATH, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ commandId }),
+        body: JSON.stringify(cwd === undefined ? { commandId } : { commandId, cwd }),
       })
       const body = await readJson(response)
       if (!response.ok) {
