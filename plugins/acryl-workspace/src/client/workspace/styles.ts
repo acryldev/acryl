@@ -73,9 +73,11 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceDocList { margin: 0.3em 0; padding-left: 1.4em; }
 .dshWorkspaceDocParagraph { margin: 0.3em 0; }
 .dshWorkspaceSide { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; }
-.dshWorkspaceSideSwitch { display: flex; gap: 2px; margin: 8px 10px 4px; padding: 2px; border-radius: 8px; background: color-mix(in srgb, var(--dsw-alias-fg) 7%, transparent); flex: none; }
-.dshWorkspaceSideSwitch button { appearance: none; flex: 1; padding: 4px 0; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 500 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceSideSwitch { display: flex; gap: 2px; margin: 14px 16px 10px; padding: 3px; border-radius: 10px; background: color-mix(in srgb, var(--dsw-alias-fg) 7%, transparent); flex: none; }
+.dshWorkspaceSideSwitch button { appearance: none; flex: 1; padding: 6px 0; border: 0; border-radius: 7px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 500 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSideSwitch button[aria-selected="true"] { background: var(--dsw-alias-bg-base); color: var(--dsw-alias-fg); box-shadow: 0 0 0 1px var(--dsw-alias-border-l2); }
+/* macOS: the window's traffic-light buttons sit in the top-left; keep the switch clear of them. */
+.dshDesktopFrame[data-desktop-platform="darwin"] .dshWorkspaceSideSwitch { margin-top: 26px; }
 .dshWorkspaceSideChats { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .dshWorkspaceSideChats > * { flex: 1 1 0; min-height: 0; min-width: 0; }
 .dshWorkspaceSideChats[hidden] { display: none; }
