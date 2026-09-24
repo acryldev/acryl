@@ -53,10 +53,6 @@ function message(cause: unknown): string {
   return cause instanceof Error ? cause.message : String(cause)
 }
 
-function isInside(path: string, root: string): boolean {
-  return path === root || path.startsWith(root.endsWith('/') ? root : `${root}/`)
-}
-
 export function createProjectsControl(deps: ProjectsControlDeps): ProjectsControl {
   const { shell } = deps
 
@@ -107,10 +103,13 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       const sessions = deps.getSessions()
       if (sessions === undefined) return fail('Chats are not available yet.')
       const state = sessions.list.getSnapshot()
+      // An empty chat that belongs to no workspace is the kind that asks "Choose workspace" and cannot
+      // start; reusing one would bring that prompt back, so only bound or non-empty chats are candidates.
+      const bound = new Set<string>(workspaceItems().flatMap(item => item.sessionIds))
       const refs: SessionRef[] = []
       for (const id of state.ids) {
         const row = state.byId[id]
-        if (row === undefined) continue
+        if (row === undefined || (row.blank && !bound.has(id))) continue
         refs.push({ id, blank: row.blank, updatedAt: row.updatedAt, ...(row.cwd === undefined ? {} : { cwd: row.cwd }) })
       }
       const existing = pickSession(shell.getSnapshot().repos, refs, worktreePath)
@@ -128,15 +127,15 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
 
     async newChat(worktreePath) {
       const sessions = deps.getSessions()
-      if (sessions === undefined) return fail('Chats are not available yet.')
-      const owner = workspaceItems()
-        .filter(item => isInside(worktreePath, item.path))
-        .sort((a, b) => b.path.length - a.path.length)[0]
+      const workspaces = deps.getWorkspaces()
+      if (sessions === undefined || workspaces === undefined) return fail('Chats are not available yet.')
       try {
-        const created = await sessions.create({
-          cwd: worktreePath,
-          ...(owner === undefined ? {} : { workspaceId: owner.workspaceId }),
-        })
+        // A chat belongs to a workspace, and its directory is the workspace's. Without one the chat
+        // opens unbound and asks the user to choose (and choosing the repository moves it to main).
+        // So each worktree is registered as its own workspace the first time it gets a chat.
+        let workspaceId = workspaceItems().find(item => item.path === worktreePath)?.workspaceId
+        if (workspaceId === undefined) workspaceId = (await workspaces.create({ path: worktreePath })).workspaceId
+        const created = await sessions.create({ cwd: worktreePath, workspaceId })
         sessions.open(created)
         return { ok: true }
       } catch (cause) {
@@ -176,9 +175,38 @@ interface DesktopDirectoryWindow {
   __DSH_DESKTOP_VALIDATE_DIRECTORY__?: (path: string) => Promise<boolean>
 }
 
-export function desktopDirectorySeams(view: DesktopDirectoryWindow = window as Window & DesktopDirectoryWindow): DirectorySeams {
+/**
+ * The desktop Host's native folder chooser, called directly. It is registered on every platform
+ * (see `directory-picker-contract.ts` in acryl-desktop, which owns this path); the window seam above
+ * is only published on Windows, so relying on it alone left macOS with no way to add a project.
+ */
+export const PICK_DIRECTORY_ROUTE = '/_dsh/desktop/pick-directory'
+
+type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
+
+/** @returns the chosen absolute path, or null when the user cancelled. */
+export async function pickDirectoryViaHost(fetchImpl: FetchLike = (input, init) => fetch(input, init)): Promise<string | null> {
+  const response = await fetchImpl(PICK_DIRECTORY_ROUTE, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { accept: 'application/json' },
+  })
+  if (!response.ok) throw new Error('ACRYL could not open the system folder picker')
+  const body: unknown = await response.json()
+  if (typeof body !== 'object' || body === null || !('path' in body) || (body.path !== null && typeof body.path !== 'string')) {
+    throw new Error('ACRYL received an invalid response from the system folder picker')
+  }
+  return body.path
+}
+
+export function desktopDirectorySeams(
+  view: DesktopDirectoryWindow = window as Window & DesktopDirectoryWindow,
+  fetchImpl?: FetchLike,
+): DirectorySeams {
+  const seam = view.__DSH_DESKTOP_PICK_DIRECTORY__
+  const validate = view.__DSH_DESKTOP_VALIDATE_DIRECTORY__
   return {
-    pickDirectory: view.__DSH_DESKTOP_PICK_DIRECTORY__ === undefined ? undefined : () => view.__DSH_DESKTOP_PICK_DIRECTORY__!(),
-    validateDirectory: view.__DSH_DESKTOP_VALIDATE_DIRECTORY__ === undefined ? undefined : path => view.__DSH_DESKTOP_VALIDATE_DIRECTORY__!(path),
+    pickDirectory: seam === undefined ? () => pickDirectoryViaHost(fetchImpl) : () => seam(),
+    validateDirectory: validate === undefined ? undefined : path => validate(path),
   }
 }

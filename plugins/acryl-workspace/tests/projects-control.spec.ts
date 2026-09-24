@@ -4,7 +4,7 @@ import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { IWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import { describe, expect, it, vi } from 'vitest'
 import type { WorkspaceGitApi } from '../src/client/workspace/git-api.ts'
-import { createProjectsControl, type DirectorySeams } from '../src/client/workspace/projects-control.ts'
+import { createProjectsControl, desktopDirectorySeams, pickDirectoryViaHost, type DirectorySeams } from '../src/client/workspace/projects-control.ts'
 import { WorkspaceShellState } from '../src/client/workspace/shell-state.ts'
 
 function gitApi(isRepo: (cwd: string) => boolean = () => true): WorkspaceGitApi {
@@ -51,6 +51,8 @@ interface World {
 function world(options: {
   sessions?: { id: string; cwd?: string; blank: boolean; updatedAt: number }[]
   workspaces?: { workspaceId: string; path: string }[]
+  /** Session ids that belong to some workspace. */
+  boundSessions?: string[]
   seams?: DirectorySeams
   isRepo?: (cwd: string) => boolean
   createWorkspace?: () => Promise<unknown>
@@ -63,7 +65,7 @@ function world(options: {
   const created: unknown[] = []
   const opened: string[] = []
   const workspaceCreates: { path: string }[] = []
-  const items = [...(options.workspaces ?? [])]
+  const items = (options.workspaces ?? []).map(w => ({ ...w, sessionIds: options.boundSessions ?? [] }))
   const sessions = {
     list: { getSnapshot: () => ({ ids: rows.map(r => r.id), byId: Object.fromEntries(rows.map(r => [r.id, r])) }) },
     open: (id: string) => { opened.push(id) },
@@ -77,8 +79,9 @@ function world(options: {
     create: async (input: { path: string }) => {
       workspaceCreates.push(input)
       if (options.createWorkspace !== undefined) await options.createWorkspace()
-      items.push({ workspaceId: `w${String(items.length)}`, path: input.path })
-      return {}
+      const view = { workspaceId: `w${String(items.length)}`, path: input.path, sessionIds: [] as string[] }
+      items.push(view)
+      return view
     },
   } as unknown as IWorkspaces
   const control = createProjectsControl({
@@ -100,19 +103,57 @@ describe('ProjectsControl.showChat', () => {
     expect(w.created).toEqual([])
   })
 
-  it('starts a chat in the worktree when it has none, inside the owning workspace', async () => {
+  it('registers the worktree as its own workspace, then starts its chat there', async () => {
+    // A chat opened without a workspace asks the user to choose one, and choosing the repository
+    // moves it to main; so the worktree itself must be the workspace, even inside a parent's folder.
     const w = world({ sessions: [{ id: 's1', cwd: '/p/proj', blank: false, updatedAt: 3 }], workspaces: [{ workspaceId: 'w0', path: '/p/proj' }] })
     await w.shell.discover('/p/proj')
     expect(await w.control.showChat('/p/proj/.wt/x')).toEqual({ ok: true })
-    expect(w.created).toEqual([{ cwd: '/p/proj/.wt/x', workspaceId: 'w0' }])
+    expect(w.workspaceCreates).toEqual([{ path: '/p/proj/.wt/x' }])
+    expect(w.created).toEqual([{ cwd: '/p/proj/.wt/x', workspaceId: 'w1' }])
     expect(w.opened).toEqual(['new-session'])
   })
 
-  it('starts a chat without a workspace id when none owns the folder', async () => {
+  it('does not reuse an empty chat that belongs to no workspace, but does reuse a bound one', async () => {
+    const unbound = world({ sessions: [{ id: 'blank-unbound', cwd: '/p/proj', blank: true, updatedAt: 9 }] })
+    await unbound.shell.discover('/p/proj')
+    await unbound.control.showChat('/p/proj')
+    expect(unbound.opened).toEqual(['new-session'])
+
+    const bound = world({
+      sessions: [{ id: 'blank-bound', cwd: '/p/proj', blank: true, updatedAt: 9 }],
+      workspaces: [{ workspaceId: 'w0', path: '/p/proj' }],
+      boundSessions: ['blank-bound'],
+    })
+    await bound.shell.discover('/p/proj')
+    await bound.control.showChat('/p/proj')
+    expect(bound.opened).toEqual(['blank-bound'])
+  })
+
+  it('reuses a workspace whose folder is exactly the worktree instead of registering another', async () => {
+    const w = world({ workspaces: [{ workspaceId: 'w0', path: '/p/proj' }] })
+    await w.shell.discover('/p/proj')
+    await w.control.showChat('/p/proj')
+    expect(w.workspaceCreates).toEqual([])
+    expect(w.created).toEqual([{ cwd: '/p/proj', workspaceId: 'w0' }])
+  })
+
+  it('registers a workspace for a folder that has none', async () => {
     const w = world()
     await w.shell.discover('/p/proj')
     await w.control.showChat('/p/proj')
-    expect(w.created).toEqual([{ cwd: '/p/proj' }])
+    expect(w.workspaceCreates).toEqual([{ path: '/p/proj' }])
+    expect(w.created).toEqual([{ cwd: '/p/proj', workspaceId: 'w0' }])
+  })
+
+  it('reports a workspace that cannot be registered, without creating a chat', async () => {
+    const w = world({ createWorkspace: async () => { throw new Error('read-only volume') } })
+    await w.shell.discover('/p/proj')
+    w.shell.select('/p/proj')
+    const unpin = vi.spyOn(w.shell, 'unpin')
+    expect(await w.control.showChat('/p/proj')).toMatchObject({ ok: false, reason: expect.stringContaining('read-only volume') })
+    expect(w.created).toEqual([])
+    expect(unpin).toHaveBeenCalled()
   })
 
   it('reports why it failed, and releases the manual pick', async () => {
@@ -132,7 +173,7 @@ describe('ProjectsControl.newChat', () => {
     const w = world({ sessions: [{ id: 's1', cwd: '/p/proj', blank: false, updatedAt: 3 }] })
     await w.shell.discover('/p/proj')
     expect(await w.control.newChat('/p/proj')).toEqual({ ok: true })
-    expect(w.created).toEqual([{ cwd: '/p/proj' }])
+    expect(w.created).toEqual([{ cwd: '/p/proj', workspaceId: 'w0' }])
     expect(w.opened).toEqual(['new-session'])
   })
 })
@@ -145,7 +186,8 @@ describe('ProjectsControl.newWorktree', () => {
     const branches = w.shell.getSnapshot().repos[0]?.worktrees.map(t => t.branch)
     expect(branches).toContain('feature/login')
     expect(w.shell.getSnapshot().selectedPath).toBe('/p/proj.worktrees/feature/login')
-    expect(w.created).toEqual([{ cwd: '/p/proj.worktrees/feature/login' }])
+    expect(w.workspaceCreates).toEqual([{ path: '/p/proj.worktrees/feature/login' }])
+    expect(w.created).toEqual([{ cwd: '/p/proj.worktrees/feature/login', workspaceId: 'w0' }])
     expect(w.opened).toEqual(['new-session'])
   })
 
@@ -221,5 +263,34 @@ describe('ProjectsControl.addProject', () => {
     const w = world({ workspaces: [{ workspaceId: 'w0', path: '/a' }, { workspaceId: 'w1', path: '/b' }] })
     expect(w.control.workspacePaths()).toEqual(['/a', '/b'])
     expect(w.control.workspaceKey()).toBe('/a\n/b')
+  })
+})
+
+describe('the desktop folder chooser', () => {
+  const json = (status: number, body: unknown): Response =>
+    new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
+
+  it('asks the Host route directly, which exists on every platform', async () => {
+    let seen: { url: string; method: string | undefined } | undefined
+    const path = await pickDirectoryViaHost(async (url, init) => { seen = { url, method: init?.method }; return json(200, { path: '/Users/me/repo' }) })
+    expect(path).toBe('/Users/me/repo')
+    expect(seen).toEqual({ url: '/_dsh/desktop/pick-directory', method: 'POST' })
+  })
+
+  it('returns null when the user cancels, and rejects a failing or malformed answer', async () => {
+    expect(await pickDirectoryViaHost(async () => json(200, { path: null }))).toBeNull()
+    await expect(pickDirectoryViaHost(async () => json(500, { error: 'x' }))).rejects.toThrow(/could not open/)
+    await expect(pickDirectoryViaHost(async () => json(200, { path: 5 }))).rejects.toThrow(/invalid response/)
+    await expect(pickDirectoryViaHost(async () => json(200, {}))).rejects.toThrow(/invalid response/)
+  })
+
+  it('prefers the window seam when the desktop publishes one, and always offers a chooser otherwise', async () => {
+    const withSeam = desktopDirectorySeams({ __DSH_DESKTOP_PICK_DIRECTORY__: async () => '/from/seam', __DSH_DESKTOP_VALIDATE_DIRECTORY__: async () => true })
+    expect(await withSeam.pickDirectory?.()).toBe('/from/seam')
+    expect(await withSeam.validateDirectory?.('/x')).toBe(true)
+
+    const without = desktopDirectorySeams({}, async () => json(200, { path: '/from/host' }))
+    expect(await without.pickDirectory?.()).toBe('/from/host')
+    expect(without.validateDirectory).toBeUndefined()
   })
 })
