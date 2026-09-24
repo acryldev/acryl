@@ -7,16 +7,46 @@
 
 | ID | Story | Status | Deps |
 |----|-------|--------|------|
-| 01 | ACP JSON-RPC over stdio client | [ ] Pending | — |
-| 02 | Devin ACP transport config + factory | [ ] Pending | 01 |
-| 03 | Devin ACP transport — spawn + initialize + session/new | [ ] Pending | 02 |
-| 04 | Devin ACP transport — session/prompt + session/update + cancel | [ ] Pending | 03 |
-| 05 | Devin ACP transport — disposal + lifecycle + SIGTERM | [ ] Pending | 04 |
-| 06 | Wire devinAcpTransport into acpProvider + export from index | [ ] Pending | 05 |
-| 07 | Desktop settings for Devin ACP (binary path, auth mode, model) | [ ] Pending | 06 |
-| 08 | Tests — JSON-RPC client unit tests | [ ] Pending | 01 |
-| 09 | Tests — transport lifecycle + cancellation + collision | [ ] Pending | 05, 06 |
-| 10 | Verify — typecheck + test + build pass | [ ] Pending | 09 |
+| 01 | ACP JSON-RPC over stdio client | [x] Done (8ee8d8e) | — |
+| 02 | Devin ACP transport config + factory | [x] Done (8ee8d8e) | 01 |
+| 03 | Devin ACP transport — spawn + initialize + session/new | [x] Done (8ee8d8e) | 02 |
+| 04 | Devin ACP transport — session/prompt + session/update + cancel | [x] Done (8ee8d8e) | 03 |
+| 05 | Devin ACP transport — disposal + lifecycle + SIGTERM | [x] Done (8ee8d8e) | 04 |
+| 06 | Wire devinAcpTransport into acpProvider + export from index | [x] Done (8ee8d8e) | 05 |
+| 07 | Desktop settings for Devin ACP (binary path, auth mode, model) | [x] Done (8ee8d8e) | 06 |
+| 08 | Tests — JSON-RPC client unit tests | [x] Done (8ee8d8e) | 01 |
+| 09 | Tests — transport lifecycle + cancellation + collision | [x] Done (8ee8d8e) | 05, 06 |
+| 10 | Verify — typecheck + test + build pass | [x] Done (2026-09-24 rebase) | 09 |
+
+## Post-rebase verification notes (2026-09-24)
+
+Rebased onto `upstream/main` (316a375); package moved to
+`runtime/acryl-control/` per the repo layout regroup. Verified:
+
+- `corepack pnpm run typecheck` — clean across all packages
+- `corepack pnpm run build` — clean
+- `corepack pnpm --filter acryl-control run test` — 57/57 pass
+  (8 new JSON-RPC + 8 new transport lifecycle tests)
+
+Pre-existing upstream failures unrelated to this branch:
+
+- `apps/acryl-cli` `tests/direct.spec.ts` — 5s timeout flake under
+  full-suite parallel load (passes standalone)
+- `apps/acryl-desktop` `tests/plugin-lifecycle-controller.spec.ts` —
+  references `acryl-development-canvas`, a package upstream removed in
+  095dd57 (canvas is now Market-installed)
+- `plugins/acryl-ui` provenance tests — byte-identity drift after the
+  DSH pin bump to `dsh-v0.1.5-alpha.1`
+
+## Remaining follow-ups (beyond this PRD)
+
+- Compose `acpProvider(devinAcpTransport(config))` into a profile via a
+  Cordis plugin / Loader row (nothing instantiates any provider yet —
+  the agent-control surface is still pre-M4 scaffolding)
+- `session-bridge.ts` provider-neutral routing (M2/M4)
+- Interactive `authenticate` flow (currently throws)
+- Settings UI wiring for `DevinAcpSettings` (type-only today)
+- Upstream PR
 
 ## Story Details
 
