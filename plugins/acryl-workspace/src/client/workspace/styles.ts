@@ -142,6 +142,17 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceGitDiffLine[data-kind="add"] .dshWorkspaceGitDiffMarker, .dshWorkspaceGitDiffLine[data-kind="add"] .dshWorkspaceGitDiffText { color: #86efac; }
 .dshWorkspaceGitDiffLine[data-kind="remove"] .dshWorkspaceGitDiffMarker, .dshWorkspaceGitDiffLine[data-kind="remove"] .dshWorkspaceGitDiffText { color: #fca5a5; }
 .dshWorkspaceGitDiffText { flex: 1; padding-right: 16px; }
+.dshWorkspaceGitDiffAdd { flex: none; width: 20px; height: 18px; margin: 0; padding: 0; border: 0; background: transparent; color: transparent; font: 700 13px/18px ui-sans-serif, system-ui, sans-serif; text-align: center; cursor: pointer; }
+.dshWorkspaceGitDiffLine:hover .dshWorkspaceGitDiffAdd { color: #a5b4fc; }
+.dshWorkspaceGitDiffAdd:hover, .dshWorkspaceGitDiffAdd:focus-visible { background: #4d6bfe; color: #fff !important; border-radius: 4px; }
+.dshWorkspaceGitDiffComposer { margin: 4px 12px 8px 36px; padding: 8px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 8px; background: color-mix(in srgb, var(--dsw-alias-fg) 5%, transparent); font-family: ui-sans-serif, system-ui, sans-serif; white-space: normal; min-width: 0; max-width: 640px; }
+.dshWorkspaceGitDiffComposer textarea { display: block; width: 100%; box-sizing: border-box; min-height: 56px; resize: vertical; padding: 6px 8px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceGitDiffComposerActions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+.dshWorkspaceGitDiffComposerActions button { appearance: none; padding: 4px 10px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: 12px/1.3 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceGitDiffComposerActions button[type="submit"] { border-color: #4d6bfe; background: #4d6bfe; color: #fff; }
+.dshWorkspaceGitDiffComposerActions button:disabled { opacity: .5; cursor: default; }
+.dshWorkspaceGitDiffComposerError { flex: 1; color: #fca5a5; font-size: 12px; }
+.dshWorkspaceGitDiffSent { margin: 2px 12px 6px 36px; padding: 4px 8px; border-left: 2px solid #4ade80; color: var(--dsw-alias-fg-l2); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; white-space: normal; }
 `
 
 /** Install styles owned by one Workspace Client Fiber. */

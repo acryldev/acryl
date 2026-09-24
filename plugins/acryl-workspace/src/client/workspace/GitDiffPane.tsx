@@ -1,7 +1,9 @@
 /** Diff tile, git mode: one changed file's unified diff against HEAD, with line numbers. */
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import type { GitDiffView } from '../../workspace-git-contract.ts'
+import type { SendResult } from './agent-bridge.ts'
+import type { CommentSide, ReviewCommentInput } from './comment-message.ts'
 import type { WorkspaceGitApi } from './git-api.ts'
 import type { WorkspaceShellState } from './shell-state.ts'
 import type { WorkspaceTile } from './state.ts'
@@ -35,15 +37,28 @@ export interface GitDiffPaneProps {
   readonly tile: WorkspaceTile
   readonly shell: WorkspaceShellState
   readonly gitApi: WorkspaceGitApi
+  /**
+   * Deliver a line comment to the agent. When absent the diff is read-only (no comment buttons).
+   * The pane supplies the file and line; the caller adds anything else the message needs.
+   */
+  readonly sendComment?: (input: Omit<ReviewCommentInput, 'branch'>) => Promise<SendResult>
 }
 
-export function GitDiffPane({ tile, shell, gitApi }: GitDiffPaneProps) {
+export function GitDiffPane({ tile, shell, gitApi, sendComment }: GitDiffPaneProps) {
   const worktree = tile.diffWorktree ?? ''
   const file = tile.diffFile ?? ''
   const subscribe = useCallback((listener: () => void) => shell.subscribe(listener), [shell])
   const signature = useSyncExternalStore(subscribe, () => changeSignature(shell, worktree, file))
   const [load, setLoad] = useState<Load>({ phase: 'loading' })
   const [reloads, setReloads] = useState(0)
+  // Line comments: which line's composer is open, its draft, and what was already sent this view.
+  const [composer, setComposer] = useState<string | null>(null)
+  const [draft, setDraft] = useState('')
+  const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState<string | null>(null)
+  const [sent, setSent] = useState<Readonly<Record<string, readonly string[]>>>({})
+  const mounted = useRef(true)
+  useEffect(() => () => { mounted.current = false }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -92,20 +107,87 @@ export function GitDiffPane({ tile, shell, gitApi }: GitDiffPaneProps) {
         {load.phase === 'ready' && !load.view.binary && rows.length === 0 && (
           <p className="dshWorkspaceGitDiffNote">No differences against HEAD.</p>
         )}
-        {shown.map((row, index) => (
-          row.kind === 'meta'
-            ? null
-            : (
-                <div key={index} className="dshWorkspaceGitDiffLine" data-kind={row.kind}>
-                  <span className="dshWorkspaceGitDiffNo">{row.oldNo ?? ''}</span>
-                  <span className="dshWorkspaceGitDiffNo">{row.newNo ?? ''}</span>
-                  <span className="dshWorkspaceGitDiffMarker">
-                    {row.kind === 'add' ? '+' : row.kind === 'remove' ? '-' : row.kind === 'hunk' ? '' : ' '}
-                  </span>
-                  <span className="dshWorkspaceGitDiffText">{row.text}</span>
-                </div>
-              )
-        ))}
+        {shown.map((row, index) => {
+          if (row.kind === 'meta') return null
+          const side: CommentSide = row.kind === 'remove' ? 'old' : 'new'
+          const line = row.kind === 'remove' ? row.oldNo : row.newNo
+          const key = row.kind === 'hunk' || line === undefined ? undefined : `${side}:${String(line)}`
+          const commentKind = row.kind === 'add' || row.kind === 'remove' || row.kind === 'context' ? row.kind : undefined
+          const submit = async (): Promise<void> => {
+            if (sendComment === undefined || key === undefined || line === undefined || commentKind === undefined) return
+            const text = draft.trim()
+            if (text === '' || sending) return
+            setSending(true)
+            setSendError(null)
+            const result = await sendComment({ file, side, line, kind: commentKind, lineText: row.text, comment: text })
+            if (!mounted.current) return
+            setSending(false)
+            if (result.ok) {
+              setSent(previous => ({ ...previous, [key]: [...(previous[key] ?? []), text] }))
+              setComposer(null)
+              setDraft('')
+            } else {
+              setSendError(result.reason)
+            }
+          }
+          return (
+            <Fragment key={index}>
+              <div className="dshWorkspaceGitDiffLine" data-kind={row.kind}>
+                {sendComment !== undefined && key !== undefined
+                  ? (
+                      <button
+                        type="button"
+                        className="dshWorkspaceGitDiffAdd"
+                        aria-label={`Comment on ${side} line ${String(line)}`}
+                        title="Comment for the agent"
+                        onClick={() => { setComposer(key); setDraft(''); setSendError(null) }}
+                      >
+                        +
+                      </button>
+                    )
+                  : <span className="dshWorkspaceGitDiffAdd" />}
+                <span className="dshWorkspaceGitDiffNo">{row.oldNo ?? ''}</span>
+                <span className="dshWorkspaceGitDiffNo">{row.newNo ?? ''}</span>
+                <span className="dshWorkspaceGitDiffMarker">
+                  {row.kind === 'add' ? '+' : row.kind === 'remove' ? '-' : row.kind === 'hunk' ? '' : ' '}
+                </span>
+                <span className="dshWorkspaceGitDiffText">{row.text}</span>
+              </div>
+              {key !== undefined && (sent[key] ?? []).map((text, sentIndex) => (
+                <div key={sentIndex} className="dshWorkspaceGitDiffSent">Sent to the agent: {text}</div>
+              ))}
+              {key !== undefined && composer === key && (
+                <form
+                  className="dshWorkspaceGitDiffComposer"
+                  onSubmit={(event) => { event.preventDefault(); void submit() }}
+                >
+                  <textarea
+                    aria-label="Comment for the agent"
+                    placeholder="Tell the agent what to change here (Cmd/Ctrl+Enter to send)"
+                    autoFocus
+                    value={draft}
+                    onChange={(event) => { setDraft(event.target.value) }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+                        event.preventDefault()
+                        void submit()
+                      } else if (event.key === 'Escape') {
+                        setComposer(null)
+                      }
+                    }}
+                  />
+                  <div className="dshWorkspaceGitDiffComposerActions">
+                    {sendError !== null && <span className="dshWorkspaceGitDiffComposerError" role="alert">{sendError}</span>}
+                    <button type="button" onClick={() => { setComposer(null) }}>Cancel</button>
+                    <button type="submit" disabled={sending || draft.trim() === ''}>
+                      {sending ? 'Sending...' : 'Send to agent'}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </Fragment>
+          )
+        })}
         {rows.length > MAX_RENDERED_ROWS && (
           <p className="dshWorkspaceGitDiffNote">Showing the first {MAX_RENDERED_ROWS} of {rows.length} lines.</p>
         )}

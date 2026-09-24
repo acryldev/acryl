@@ -6,6 +6,7 @@ import '@deepseek-ai/dsh-client-ui-renderer/client'
 import '@deepseek-ai/dsh-client-ui-session/client'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type { ReactNode } from 'react'
+import { createAgentBridge } from './workspace/agent-bridge.ts'
 import { changesTabPlugin } from './workspace/changes-tab.ts'
 import { createWorkspaceGitApi } from './workspace/git-api.ts'
 import { ProjectsSidebar, type ProjectsSidebarOwnerProps } from './workspace/ProjectsSidebar.tsx'
@@ -55,6 +56,7 @@ function whenSlotDeclared(contribute: () => void): void {
 export function apply(ctx: ClientContext): void {
   const gitApi = createWorkspaceGitApi()
   const shell = new WorkspaceShellState(gitApi)
+  const agent = createAgentBridge(() => ctx.get('sessions'))
   ctx.effect(() => startShellPolling(shell), 'acryl-workspace: git state polling')
   ctx.effect(() => installWorkspaceStyles(), 'acryl-workspace: styles')
   ctx.plugin(changesTabPlugin(shell))
@@ -65,7 +67,7 @@ export function apply(ctx: ClientContext): void {
       const removeSlot = ctx.slots.register({
         name: 'desktop.main',
         priority: 0,
-        inject: () => ({ ptyApi: ptyClient, shell, gitApi }),
+        inject: () => ({ ptyApi: ptyClient, shell, gitApi, agent }),
       }, WorkspaceCanvas)
 
       return async () => {

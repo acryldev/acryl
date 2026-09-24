@@ -17,6 +17,8 @@ import {
   labelForCommand,
 } from './agent-commands.ts'
 import { diffLines } from './diff.ts'
+import type { AgentBridge } from './agent-bridge.ts'
+import { buildReviewComment } from './comment-message.ts'
 import type { WorkspaceGitApi } from './git-api.ts'
 import { GitDiffPane } from './GitDiffPane.tsx'
 import { GLOBAL_GROUP, WorkspaceGroups } from './groups.ts'
@@ -39,6 +41,8 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   /** Shared shell state: which worktree is selected, and the channel for open-diff requests. */
   readonly shell: WorkspaceShellState
   readonly gitApi: WorkspaceGitApi
+  /** Delivers diff line comments to the open chat's agent. */
+  readonly agent: AgentBridge
 }
 
 /**
@@ -47,7 +51,7 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell, gitApi }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell, gitApi, agent }: WorkspaceCanvasProps) {
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
   const groups = useMemo(() => new WorkspaceGroups(), [])
@@ -224,7 +228,12 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
           <BrowserPane tile={active} workspace={workspace} />
         )}
         {active?.kind === 'diff' && active.diffFile !== undefined && (
-          <GitDiffPane tile={active} shell={shell} gitApi={gitApi} />
+          <GitDiffPane
+            tile={active}
+            shell={shell}
+            gitApi={gitApi}
+            sendComment={input => agent.sendToCurrentSession(buildReviewComment({ ...input, branch: groupBranch }))}
+          />
         )}
         {active?.kind === 'diff' && active.diffFile === undefined && (
           <DiffPane tile={active} workspace={workspace} />

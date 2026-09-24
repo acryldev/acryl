@@ -5,7 +5,7 @@ import type { UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ChangesBody, splitPath, type ChangesBodyProps } from '../src/client/workspace/ChangesBody.tsx'
 import type { WorkspaceGitApi } from '../src/client/workspace/git-api.ts'
-import { GitDiffPane, changeSignature } from '../src/client/workspace/GitDiffPane.tsx'
+import { GitDiffPane, changeSignature, type GitDiffPaneProps } from '../src/client/workspace/GitDiffPane.tsx'
 import { ProjectsSidebar, type ProjectsSidebarProps } from '../src/client/workspace/ProjectsSidebar.tsx'
 import { WorkspaceShellState } from '../src/client/workspace/shell-state.ts'
 import type { WorkspaceTile } from '../src/client/workspace/state.ts'
@@ -250,6 +250,89 @@ describe('GitDiffPane', () => {
     await act(async () => { await shell.refreshStatus('/p/proj') })
     // The status for this worktree now lists changes, but not this file: still 'none', so no refetch.
     expect(diff).toHaveBeenCalledTimes(1)
+    shell.dispose()
+  })
+})
+
+describe('GitDiffPane line comments', () => {
+  const tile = (): WorkspaceTile => ({ id: 't1', kind: 'diff', title: 'a.ts', diffWorktree: '/p/proj', diffFile: 'src/a.ts' })
+  const setup = (sendComment?: GitDiffPaneProps['sendComment']) => {
+    const shell = new WorkspaceShellState(api())
+    render(<GitDiffPane tile={tile()} shell={shell} gitApi={api()} {...(sendComment === undefined ? {} : { sendComment })} />)
+    return shell
+  }
+
+  it('offers no comment buttons when the diff is read-only', async () => {
+    const shell = setup()
+    await screen.findByText('new line')
+    expect(screen.queryByRole('button', { name: /Comment on/ })).toBeNull()
+    shell.dispose()
+  })
+
+  it('offers a comment button per code line, but not on hunk headers', async () => {
+    const shell = setup(async () => ({ ok: true }))
+    await screen.findByText('new line')
+    expect(screen.getByRole('button', { name: 'Comment on new line 1' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Comment on old line 2' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Comment on new line 2' })).toBeTruthy()
+    expect(screen.getAllByRole('button', { name: /Comment on/ })).toHaveLength(3)
+    shell.dispose()
+  })
+
+  it('sends the comment with the file, side, line and text, then shows it as sent', async () => {
+    const send = vi.fn(async () => ({ ok: true as const }))
+    const shell = setup(send)
+    await screen.findByText('new line')
+    fireEvent.click(screen.getByRole('button', { name: 'Comment on new line 2' }))
+    const box = screen.getByRole('textbox', { name: 'Comment for the agent' })
+    const submit = screen.getByRole('button', { name: 'Send to agent' }) as HTMLButtonElement
+    expect(submit.disabled).toBe(true)
+    fireEvent.change(box, { target: { value: 'rename this' } })
+    expect(submit.disabled).toBe(false)
+    fireEvent.click(submit)
+    await waitFor(() => { expect(screen.getByText(/Sent to the agent: rename this/)).toBeTruthy() })
+    expect(send).toHaveBeenCalledWith({
+      file: 'src/a.ts', side: 'new', line: 2, kind: 'add', lineText: 'new line', comment: 'rename this',
+    })
+    expect(screen.queryByRole('textbox', { name: 'Comment for the agent' })).toBeNull()
+    shell.dispose()
+  })
+
+  it('comments on a removed line against the old file version', async () => {
+    const send = vi.fn(async () => ({ ok: true as const }))
+    const shell = setup(send)
+    await screen.findByText('old line')
+    fireEvent.click(screen.getByRole('button', { name: 'Comment on old line 2' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Comment for the agent' }), { target: { value: 'why removed?' } })
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Comment for the agent' }), { key: 'Enter', metaKey: true })
+    await waitFor(() => { expect(send).toHaveBeenCalledTimes(1) })
+    expect(send).toHaveBeenCalledWith(expect.objectContaining({ side: 'old', line: 2, kind: 'remove', lineText: 'old line' }))
+    shell.dispose()
+  })
+
+  it('keeps the composer and shows the reason when the agent cannot take it, and Cancel closes it', async () => {
+    const send = vi.fn(async () => ({ ok: false as const, reason: 'open a chat first, then send the comment' }))
+    const shell = setup(send)
+    await screen.findByText('new line')
+    fireEvent.click(screen.getByRole('button', { name: 'Comment on new line 1' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Comment for the agent' }), { target: { value: 'hi' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Send to agent' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('open a chat first')
+    expect(screen.getByRole('textbox', { name: 'Comment for the agent' })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('textbox', { name: 'Comment for the agent' })).toBeNull()
+    shell.dispose()
+  })
+
+  it('closes the composer on Escape without sending', async () => {
+    const send = vi.fn(async () => ({ ok: true as const }))
+    const shell = setup(send)
+    await screen.findByText('new line')
+    fireEvent.click(screen.getByRole('button', { name: 'Comment on new line 1' }))
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Comment for the agent' }), { key: 'Escape' })
+    expect(screen.queryByRole('textbox', { name: 'Comment for the agent' })).toBeNull()
+    expect(send).not.toHaveBeenCalled()
     shell.dispose()
   })
 })
