@@ -53,7 +53,8 @@ function whenSlotDeclared(contribute: () => void): void {
  * refreshed by one owned polling effect.
  */
 export function apply(ctx: ClientContext): void {
-  const shell = new WorkspaceShellState(createWorkspaceGitApi())
+  const gitApi = createWorkspaceGitApi()
+  const shell = new WorkspaceShellState(gitApi)
   ctx.effect(() => startShellPolling(shell), 'acryl-workspace: git state polling')
   ctx.effect(() => installWorkspaceStyles(), 'acryl-workspace: styles')
   ctx.plugin(changesTabPlugin(shell))
@@ -64,7 +65,7 @@ export function apply(ctx: ClientContext): void {
       const removeSlot = ctx.slots.register({
         name: 'desktop.main',
         priority: 0,
-        inject: () => ({ ptyApi: ptyClient }),
+        inject: () => ({ ptyApi: ptyClient, shell, gitApi }),
       }, WorkspaceCanvas)
 
       return async () => {

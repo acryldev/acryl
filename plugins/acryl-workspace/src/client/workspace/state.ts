@@ -26,6 +26,9 @@ export interface WorkspaceTile {
   /** diff tile: two texts compared line-by-line client-side (no external diff library - see spec 040 open question 5). */
   readonly diffBefore?: string
   readonly diffAfter?: string
+  /** diff tile, git mode: the worktree and the file (relative to it) whose diff against HEAD is shown. */
+  readonly diffWorktree?: string
+  readonly diffFile?: string
   /** kanban tile: one local board per tile. */
   readonly board?: KanbanBoard
   /** doc tile: raw markdown-ish text, rendered with a minimal built-in formatter. */
@@ -45,6 +48,8 @@ export interface WorkspaceStateOptions {
 export interface AddTileOptions {
   readonly commandId?: WorkspacePtyCommandId
   readonly title?: string
+  readonly diffWorktree?: string
+  readonly diffFile?: string
 }
 
 const TITLES: Record<WorkspaceTileKind, string> = {
@@ -123,6 +128,22 @@ export class WorkspaceState {
       menuOpen: false,
     })
     return tile
+  }
+
+  /**
+   * Show one changed file's git diff: focus the tile already showing it, or open a new one.
+   * @param worktree - absolute worktree path.
+   * @param file - path relative to that worktree.
+   */
+  openDiff(worktree: string, file: string): WorkspaceTile | undefined {
+    const existing = this.snapshot.tiles.find(
+      tile => tile.kind === 'diff' && tile.diffWorktree === worktree && tile.diffFile === file,
+    )
+    if (existing !== undefined) {
+      this.selectTile(existing.id)
+      return existing
+    }
+    return this.addTile('diff', { title: basename(file), diffWorktree: worktree, diffFile: file })
   }
 
   /**
@@ -207,7 +228,10 @@ export class WorkspaceState {
       ...(kind === 'pty' ? { commandId: options.commandId ?? 'shell' } : {}),
       ...(kind === 'file' ? { path: '', content: '' } : {}),
       ...(kind === 'browser' ? { url: 'https://example.com' } : {}),
-      ...(kind === 'diff' ? { diffBefore: '', diffAfter: '' } : {}),
+      ...(kind === 'diff' && options.diffFile !== undefined && options.diffWorktree !== undefined
+        ? { diffWorktree: options.diffWorktree, diffFile: options.diffFile }
+        : {}),
+      ...(kind === 'diff' && options.diffFile === undefined ? { diffBefore: '', diffAfter: '' } : {}),
       ...(kind === 'kanban' ? { board: EMPTY_BOARD } : {}),
       ...(kind === 'doc' ? { docText: '' } : {}),
     }

@@ -82,3 +82,39 @@ describe('WorkspaceState', () => {
     expect(calls).toBe(1)
   })
 })
+
+describe('WorkspaceState git diff tiles', () => {
+  const ids = (): (() => string) => { let n = 0; return () => `id${String(++n)}` }
+
+  it('opens a git diff tile titled by the file name', () => {
+    const workspace = new WorkspaceState({ createId: ids() })
+    const tile = workspace.openDiff('/p/proj', 'src/deep/a.ts')
+    expect(tile).toMatchObject({ kind: 'diff', title: 'a.ts', diffWorktree: '/p/proj', diffFile: 'src/deep/a.ts' })
+    expect(tile?.diffBefore).toBeUndefined()
+    expect(workspace.getSnapshot().activeId).toBe(tile?.id)
+  })
+
+  it('focuses the existing tile for the same file instead of opening a second', () => {
+    const workspace = new WorkspaceState({ createId: ids() })
+    const first = workspace.openDiff('/p/proj', 'a.ts')
+    workspace.addTile('kanban')
+    const again = workspace.openDiff('/p/proj', 'a.ts')
+    expect(again?.id).toBe(first?.id)
+    expect(workspace.getSnapshot().activeId).toBe(first?.id)
+    expect(workspace.getSnapshot().tiles.filter(t => t.kind === 'diff')).toHaveLength(1)
+  })
+
+  it('treats the same file in another worktree as a different tile', () => {
+    const workspace = new WorkspaceState({ createId: ids() })
+    workspace.openDiff('/p/proj', 'a.ts')
+    workspace.openDiff('/p/proj-x', 'a.ts')
+    expect(workspace.getSnapshot().tiles.filter(t => t.kind === 'diff')).toHaveLength(2)
+  })
+
+  it('keeps the manual before/after diff for a plain New Diff tile', () => {
+    const workspace = new WorkspaceState({ createId: ids() })
+    const tile = workspace.addTile('diff')
+    expect(tile).toMatchObject({ diffBefore: '', diffAfter: '' })
+    expect(tile?.diffFile).toBeUndefined()
+  })
+})

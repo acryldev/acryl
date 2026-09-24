@@ -17,6 +17,10 @@ import {
   labelForCommand,
 } from './agent-commands.ts'
 import { diffLines } from './diff.ts'
+import type { WorkspaceGitApi } from './git-api.ts'
+import { GitDiffPane } from './GitDiffPane.tsx'
+import { GLOBAL_GROUP, WorkspaceGroups } from './groups.ts'
+import type { WorkspaceShellState } from './shell-state.ts'
 import { parseDoc, parseInline } from './doc-format.ts'
 import { createWorkspacePtyApi, type WorkspacePtyApi } from './pty-api.ts'
 import { synchronizeWorkspaceWithSessionNavigation } from './session-navigation.ts'
@@ -32,6 +36,9 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   readonly renderConversation: () => ReactNode
   readonly ptyApi?: WorkspacePtyApi
   readonly useSessions: UseSessions
+  /** Shared shell state: which worktree is selected, and the channel for open-diff requests. */
+  readonly shell: WorkspaceShellState
+  readonly gitApi: WorkspaceGitApi
 }
 
 /**
@@ -40,8 +47,15 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions }: WorkspaceCanvasProps) {
-  const workspace = useMemo(() => new WorkspaceState(), [])
+export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell, gitApi }: WorkspaceCanvasProps) {
+  // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
+  // tabs of the branch you left (terminals, agents) keep running until they are closed.
+  const groups = useMemo(() => new WorkspaceGroups(), [])
+  const subscribeShell = useCallback((listener: () => void) => shell.subscribe(listener), [shell])
+  const shellSnapshot = useSyncExternalStore(subscribeShell, () => shell.getSnapshot())
+  const groupKey = shellSnapshot.selectedPath ?? GLOBAL_GROUP
+  const groupBranch = shell.selectedWorktree()?.branch
+  const workspace = groups.stateFor(groupKey)
   const api = useMemo(() => ptyApi ?? createWorkspacePtyApi(), [ptyApi])
   const subscribe = useCallback((listener: () => void) => workspace.subscribe(listener), [workspace])
   const snapshot = useSyncExternalStore(subscribe, () => workspace.getSnapshot())
@@ -69,18 +83,23 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions }: Wor
     }
   }, [api, workspace])
 
+  useEffect(() => shell.onOpenDiff((request) => {
+    groups.stateFor(request.worktree).openDiff(request.worktree, request.file)
+  }), [shell, groups])
+
   const openPty = useCallback(async (commandId: WorkspacePtyCommandId, title: string) => {
     const tile = workspace.addTile('pty', { commandId, title })
     if (tile === undefined) return
     try {
-      const view = await api.start(commandId)
+      // Terminals and agents start in the selected worktree, so each branch works in its own checkout.
+      const view = await api.start(commandId, groupKey === GLOBAL_GROUP ? undefined : groupKey)
       workspace.updateTile(tile.id, { sessionId: view.id })
     } catch (cause) {
       workspace.updateTile(tile.id, {
         error: cause instanceof Error ? cause.message : 'spawn failed',
       })
     }
-  }, [api, workspace])
+  }, [api, workspace, groupKey])
 
   useEffect(() => {
     if (!snapshot.menuOpen) return
@@ -103,6 +122,11 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions }: Wor
   return (
     <div className="dshWorkspace" data-acryl-workspace="true" data-workspace-mode="tabs">
       <div className="dshWorkspaceTabstrip" role="tablist" aria-label="ACRYL Workspace">
+        {groupKey !== GLOBAL_GROUP && (
+          <div className="dshWorkspaceGroup" title={groupKey} data-tab-group={groupKey}>
+            <span aria-hidden="true">⎇</span> {groupBranch ?? 'detached'}
+          </div>
+        )}
         <div className="dshWorkspaceTabs">
           {snapshot.tiles.map((tile) => {
             const selected = tile.id === snapshot.activeId
@@ -199,7 +223,10 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions }: Wor
         {active?.kind === 'browser' && (
           <BrowserPane tile={active} workspace={workspace} />
         )}
-        {active?.kind === 'diff' && (
+        {active?.kind === 'diff' && active.diffFile !== undefined && (
+          <GitDiffPane tile={active} shell={shell} gitApi={gitApi} />
+        )}
+        {active?.kind === 'diff' && active.diffFile === undefined && (
           <DiffPane tile={active} workspace={workspace} />
         )}
         {active?.kind === 'kanban' && (
