@@ -838,6 +838,30 @@
         "web"
       ]
     },
+    "AvatarGroup": {
+      "summary": "An overlapping stack of avatars with an overflow count badge (inspired by shadcnblocks avatar-stack patterns).",
+      "props": {
+        "items": {
+          "type": "AvatarGroupItem[]",
+          "required": true,
+          "description": "Avatars to display, from left (front) to right (back)."
+        },
+        "max": {
+          "type": "number",
+          "description": "Max number of avatars to show before the overflow count."
+        },
+        "size": {
+          "type": "'sm' | 'default' | 'lg'",
+          "description": "Size of each avatar."
+        }
+      },
+      "a11y": [
+        "role=group with aria-label=Avatar group"
+      ],
+      "surfaces": [
+        "web"
+      ]
+    },
     "ValueField": {
       "summary": "A settings-style field bound to a text value, with an override badge and reset action.",
       "props": {

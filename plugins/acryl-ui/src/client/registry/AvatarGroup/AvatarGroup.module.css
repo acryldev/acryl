@@ -1,0 +1,92 @@
+/**
+ * AvatarGroup — overlapping stack of avatars with an overflow count.
+ * Styled on the app's own --dsw-alias-* tokens.
+ */
+.group {
+  display: inline-flex;
+  align-items: center;
+  flex-direction: row-reverse;
+}
+
+.item {
+  display: inline-flex;
+  margin-left: -6px;
+}
+.item:first-child {
+  margin-left: 0;
+}
+
+/* Circle — local avatar implementation */
+.circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-primary);
+  font-weight: 500;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border: 2px solid var(--dsw-alias-bg-layer-0);
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  user-select: none;
+}
+
+/* Sizes */
+.size--sm {
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+}
+.size--default {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+}
+.size--lg {
+  width: 40px;
+  height: 40px;
+  font-size: 15px;
+}
+
+/* Overflow count badge */
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-tertiary);
+  font-weight: 500;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border: 2px solid var(--dsw-alias-bg-layer-0);
+}
+.count.size--sm {
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+}
+.count.size--default {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+}
+.count.size--lg {
+  width: 40px;
+  height: 40px;
+  font-size: 15px;
+}

@@ -37,6 +37,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../src/client/registry/ResizablePanelGroup/ResizablePanelGroup.tsx'
 import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarGroup, MenubarLabel, MenubarItem, MenubarShortcut, MenubarCheckboxItem, MenubarRadioGroup, MenubarRadioItem, MenubarSeparator } from '../src/client/registry/Menubar/Menubar.tsx'
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink, NavigationMenuViewport } from '../src/client/registry/NavigationMenu/NavigationMenu.tsx'
+import { AvatarGroup } from '../src/client/registry/AvatarGroup/AvatarGroup.tsx'
 import { Announcement } from '../src/client/registry/Announcement/Announcement.tsx'
 import { Banner } from '../src/client/registry/Banner/Banner.tsx'
 import { Calendar } from '../src/client/registry/Calendar/Calendar.tsx'
@@ -849,6 +850,26 @@ describe('markup of the shadcnblocks-inspired components (spec 038-ui-component-
   it('Banner returns null when defaultVisible is false', () => {
     const html = renderToStaticMarkup(<Banner title="Hidden" defaultVisible={false} />)
     expect(html).toBe('')
+  })
+})
+
+describe('markup of the shadcnblocks-inspired components (spec 038-ui-component-library, T048: AvatarGroup)', () => {
+  it('AvatarGroup renders overlapping avatars', () => {
+    const html = renderToStaticMarkup(
+      <AvatarGroup items={[{ fallback: 'A' }, { fallback: 'B' }, { fallback: 'C' }]} />
+    )
+    expect(html).toMatch(/^<div[^>]*role="group"[^>]*>/u)
+    expect(html).toContain('A'); expect(html).toContain('B'); expect(html).toContain('C')
+  })
+
+  it('AvatarGroup shows overflow count when max is exceeded', () => {
+    const html = renderToStaticMarkup(
+      <AvatarGroup items={[{ fallback: 'A' }, { fallback: 'B' }, { fallback: 'C' }, { fallback: 'D' }]} max={2} />
+    )
+    expect(html).toContain('A'); expect(html).toContain('B')
+    expect(html).toContain('+2')
+    expect(html).not.toContain('C')
+    expect(html).not.toContain('D')
   })
 })
 

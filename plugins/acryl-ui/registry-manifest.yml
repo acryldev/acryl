@@ -55,6 +55,10 @@ components:
     origin: inspired
     from: shadcnblocks Banner1 design (full-width dismissible strip with title, description, link, and dismiss button)
     changed: built on ACRYL's own --dsw-alias-* tokens; no external dependencies; X dismiss icon is a plain inline SVG
+  - name: AvatarGroup
+    origin: inspired
+    from: shadcnblocks avatar-stack patterns and shadcn/ui's AvatarGroup (composition-only, not ported by T040)
+    changed: fully self-contained — renders small circular avatars directly without importing from the Avatar component; includes an inline AvatarCircle implementation to avoid cross-item imports
   - name: Kbd
     origin: ported
     from: shadcn/ui registry item `kbd` (style new-york-v4), https://ui.shadcn.com/docs/components/kbd, MIT licence, fetched 2026-09-22
