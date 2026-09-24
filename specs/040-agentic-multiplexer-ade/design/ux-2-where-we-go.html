@@ -104,15 +104,32 @@
   .commit { margin-top: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 8px; background: var(--panel2); color: var(--muted); }
   .commit .btn { margin-top: 6px; width: 100%; }
 
-  .strip2 { border-top: 1px solid var(--border); background: hsl(222 22% 5%); font: 11.5px/1.6 var(--mono); padding: 8px 12px; height: 74px; overflow: hidden; }
+  .strip2 { border-top: 1px solid var(--border); background: hsl(222 22% 5%); font: 11.5px/1.6 var(--mono); padding: 8px 12px; height: 82px; overflow: hidden; }
   .strip2 .hd { color: var(--muted); font-family: var(--sans); display: flex; gap: 12px; margin-bottom: 2px; }
   .strip2 .hd b { color: var(--foreground); }
   .status { display: flex; gap: 14px; align-items: center; height: 26px; padding: 0 12px; background: var(--panel); border-top: 1px solid var(--border); color: var(--muted); }
   .status .sp { margin-left: auto; }
 
+  .seg { display: flex; padding: 2px; margin: 2px 2px 8px; border-radius: 8px; background: var(--panel3); }
+  .seg span { flex: 1; text-align: center; padding: 4px 0; border-radius: 6px; color: var(--muted); }
+  .seg span.on { background: var(--background); color: var(--foreground); box-shadow: 0 0 0 1px var(--border); }
+  .tg { padding: 0 6px 4px 30px; color: var(--soft); font-size: 10.5px; }
+  .tg b { color: var(--muted); font-weight: 500; }
+  .grp { display: flex; align-items: center; padding: 0 10px; color: var(--brand); border-right: 1px solid var(--border); font-size: 11px; white-space: nowrap; }
+  .dock-tabs { display: flex; align-items: center; gap: 2px; margin-bottom: 4px; font-family: var(--sans); }
+  .dt { display: inline-flex; gap: 6px; align-items: center; padding: 2px 10px; border-radius: 6px 6px 0 0; color: var(--muted); border: 1px solid transparent; }
+  .dt.on { color: var(--foreground); background: var(--panel2); border-color: var(--border); }
+  .dt .x { opacity: .5; }
+  .dt.plus { color: var(--brand); font-weight: 700; }
+  .tabset { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; margin-top: 12px; }
+  .tabset label { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel2); cursor: pointer; }
+  .tabset input { margin-top: 3px; accent-color: hsl(186 92% 42%); }
+  .tabset small { display: block; color: var(--muted); }
+  .presets { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
   /* numbered callouts */
   .no { position: absolute; z-index: 3; width: 20px; height: 20px; border-radius: 50%; background: var(--brand); color: var(--brand-fg); font: 700 11px/20px var(--sans); text-align: center; box-shadow: 0 0 0 3px hsl(186 92% 52% / .25); pointer-events: none; }
-  .add-menu { position: absolute; right: 10px; top: 38px; z-index: 4; width: 210px; padding: 6px; border: 1px solid var(--border-strong); background: hsl(222 18% 12%); border-radius: 8px; box-shadow: 0 12px 32px #000a; }
+  .add-menu { position: absolute; right: 10px; top: 38px; z-index: 4; width: 250px; padding: 6px; border: 1px solid var(--border-strong); background: hsl(222 18% 12%); border-radius: 8px; box-shadow: 0 12px 32px #000a; }
   .add-menu div { padding: 5px 8px; border-radius: 6px; color: var(--foreground); }
   .add-menu div small { color: var(--soft); margin-left: 6px; }
   .add-menu .sep { height: 1px; padding: 0; margin: 4px 0; background: var(--border); }
@@ -168,12 +185,15 @@
     <div class="body">
       <aside class="rail">
         <span class="no" style="right:6px;top:6px">2</span>
-        <h6>Projects</h6>
+        <div class="seg" role="tablist" aria-label="Side panel mode"><span>Chats</span><span class="on">Projects</span></div>
         <div class="proj"><div class="p">acryl</div>
           <div class="br"><span class="dot clean"></span><span class="n">master</span><span class="s">now</span></div>
+          <div class="tg"><b>tabs:</b> Browser, Claude Code, Codex</div>
           <div class="br sel"><span class="dot run"></span><span class="n">fix/workspace-sidebar-state</span><span class="s"><i>+140</i> <u>-49</u></span></div>
+          <div class="tg"><b>tabs:</b> Claude Code, Diff, spec.md, Prototype</div>
           <div class="br"><span class="dot rev"></span><span class="n">feat/git-action-dropdown</span><span class="s"><i>+1136</i> <u>-184</u></span></div>
           <div class="br"><span class="dot run"></span><span class="n">feat/meta-chat</span><span class="s"><i>+5518</i> <u>-169</u></span></div>
+          <div class="tg"><b>tabs:</b> MD doc, Qwen, Pi</div>
           <div class="br"><span class="dot"></span><span class="n">fix/shared-context-isolation</span><span class="s">1h</span></div>
         </div>
         <div class="proj"><div class="p">acrylamide_project</div>
@@ -188,16 +208,19 @@
 
       <section class="canvas">
         <div class="strip">
-          <div class="tab on">◎ Claude Code - checkout-flow-v2</div>
+          <div class="grp">tab group: fix/workspace-sidebar-state</div>
+          <div class="tab on">◎ Claude Code</div>
           <div class="tab">± Diff</div>
           <div class="tab">▧ spec.md</div>
-          <div class="tab">▦ Sessions</div>
+          <div class="tab">◍ Prototype</div>
           <div class="tab plus">+</div>
         </div>
         <div class="add-menu" aria-label="Add to canvas picker">
-          <div>Terminal<small>pty</small></div><div>Editor<small>file</small></div><div>Browser<small>design mode</small></div>
-          <div>Diff</div><div>Agent</div><div>Kanban</div><div>Compare<small>fan-out</small></div>
+          <div>Chat<small>conversation</small></div><div>Coding agent<small>Claude, Codex, Qwen, Pi</small></div><div>Terminal<small>pty</small></div>
+          <div>Browser<small>design mode</small></div><div>File<small>editor</small></div><div>MD view</div>
+          <div>HTML prototype<small>Lavish loop</small></div><div>Diff</div><div>Kanban</div><div>Compare<small>fan-out</small></div>
           <div class="sep"></div><div class="build">Build a card type<small>agent scaffolds a plugin</small></div>
+          <div class="sep"></div><div style="color:var(--muted)">Choose which appear<small>Settings &gt; Workspace</small></div>
         </div>
         <div class="tiles">
           <div class="tile">
@@ -257,32 +280,72 @@
     </div>
 
     <div class="strip2">
-      <div class="hd"><b>Terminal</b><span>zsh - ~/acryl/.worktrees/fix-workspace-sidebar-state</span><span style="margin-left:auto">expand</span></div>
+      <div class="dock-tabs"><span class="dt on">❯ zsh <span class="x">×</span></span><span class="dt">❯ pnpm test <span class="x">×</span></span><span class="dt">❯ dev server <span class="x">×</span></span><span class="dt plus">+</span><span style="margin-left:auto;color:var(--muted)">worktree cwd - expand</span></div>
       <span style="color:var(--ok)">$</span> pnpm run test<br>14 passed
       <span class="no" style="right:10px;top:8px">8</span>
     </div>
     <div class="status"><span class="dot run"></span> Claude Code - Opus<span>context 64%</span><span>rate limit ok</span><span class="sp">worktree fix/workspace-sidebar-state</span><span>SSH dev-box connected</span><span class="no" style="position:static;display:inline-block">9</span></div>
   </div>
 
+  <h2>Tab types and what a branch owns</h2>
+  <p class="lede">The canvas is the tabs pane. <b>Chat</b> is simply one tab type: the conversation DSH and ACRYL already have. Everything else is another tab type opened from <b>+</b>. Which types are offered is a setting; the default is all of them, and a developer can pick a minimal set.</p>
+  <div class="box">
+    <h3>Settings &gt; Workspace &gt; Tab types</h3>
+    <div class="tabset" role="group" aria-label="Enabled tab types (local preview only)">
+      <label><input type="checkbox" checked><span><b>Chat</b> <span class="chip built">built</span><small>The existing DSH conversation</small></span></label>
+      <label><input type="checkbox" checked><span><b>Coding agent</b> <span class="chip built">built</span><small>Claude, Codex, OpenCode, Gemini, Pi, Qwen...</small></span></label>
+      <label><input type="checkbox" checked><span><b>Terminal (PTY)</b> <span class="chip built">built</span><small>Also the dock's tab type</small></span></label>
+      <label><input type="checkbox" checked><span><b>Browser</b> <span class="chip built">built</span><small>Design mode later</small></span></label>
+      <label><input type="checkbox" checked><span><b>File</b> <span class="chip built">built</span><small>Editor</small></span></label>
+      <label><input type="checkbox" checked><span><b>MD view</b> <span class="chip built">built as Doc</span><small>Renders real spec and plan files</small></span></label>
+      <label><input type="checkbox" checked><span><b>HTML prototype</b> <span class="chip new">new</span><small>Lavish-style annotate and feedback loop</small></span></label>
+      <label><input type="checkbox" checked><span><b>Diff</b> <span class="chip built">shell</span><small>Real git diff and line comments planned</small></span></label>
+      <label><input type="checkbox" checked><span><b>Kanban</b> <span class="chip built">shell</span><small>Keyed to session phase</small></span></label>
+      <label><input type="checkbox" checked><span><b>Compare</b> <span class="chip new">new</span><small>Fan-out results, merge winner</small></span></label>
+    </div>
+    <div class="presets"><span class="chip plan">Preset: All (default)</span><span class="chip plan">Preset: Minimal - Chat, Agent, Terminal</span></div>
+    <p class="q" style="margin-top:12px">The checkboxes above are a local preview and do not save. Tab types come from plugins, so a type only appears here if its plugin is loaded.</p>
+  </div>
+  <div class="grid2">
+    <div class="box"><h3>Model change this implies</h3><p class="q"><code>WorkspaceState</code> today holds one flat list of tiles for the whole shell. The new model is <b>project &gt; branch or worktree &gt; tab group</b>: each branch owns its own ordered tabs and active tab, and selecting a branch swaps the canvas to that group. The terminal dock follows the same rule. Tab groups must persist across restarts.</p></div>
+    <div class="box"><h3>Example</h3><p class="q">On <code>master</code> of the website: a Browser tab, Claude Code and Codex. Click <code>feat/meta-chat</code>: the canvas re-renders with its own MD doc, Qwen and Pi. Click back: the first group returns exactly as left.</p></div>
+  </div>
+
+  <h2>Architecture: every feature is a plugin you can turn off</h2>
+  <p class="lede">Each tab type, the rail, the panel, the dock, the top bar and the status bar is its own Cordis plugin with its own Loader row. Turning one off is a profile patch (<code>disabled: true</code>), the same mechanism <code>acryl-development-canvas</code> already documents. <code>acryl-workspace</code> stays small: it owns the shell layout, per-worktree tab groups, and one service that tab-type plugins register into. Names below are proposed; per repo rule the Loader row id equals the package name.</p>
+  <table>
+    <thead><tr><th>Plugin</th><th>Provides</th><th>Consumes (inject)</th><th>When turned off</th></tr></thead>
+    <tbody>
+      <tr><td><code>acryl-workspace</code></td><td>Shell layout, tab groups per worktree, the <code>workspaceTabs</code> registry service</td><td><code>slots</code></td><td>Advanced shell falls back to upstream's default main area</td></tr>
+      <tr><td><code>acryl-tab-chat</code></td><td>Tab type <code>chat</code> (the existing DSH conversation, incl. Trajectory)</td><td><code>workspaceTabs</code></td><td>No chat tab offered</td></tr>
+      <tr><td><code>acryl-tab-agent</code></td><td>Tab type <code>agent</code> (Claude, Codex, OpenCode, Pi, Qwen...)</td><td><code>workspaceTabs</code>, <code>acryl-control</code></td><td>Agents are not launchable from <b>+</b></td></tr>
+      <tr><td><code>acryl-tab-terminal</code></td><td>Tab type <code>terminal</code>, the PTY Host route, the dock's session type</td><td><code>workspaceTabs</code>, <code>webServer</code></td><td>No terminals, and the dock has nothing to host</td></tr>
+      <tr><td><code>acryl-tab-browser</code>, <code>-file</code>, <code>-md</code>, <code>-diff</code>, <code>-kanban</code>, <code>-compare</code>, <code>-prototype</code></td><td>One tab type each. <code>-prototype</code> is the Lavish-style annotate and feedback loop</td><td><code>workspaceTabs</code>; diff and compare also <code>acryl-git</code></td><td>That type disappears from <b>+</b>; existing tabs of it show a "plugin off" placeholder</td></tr>
+      <tr><td><code>acryl-git</code></td><td>Worktree, status and diff Host service</td><td><code>webServer</code></td><td>Rail loses branch data, panel loses Changes, diff and compare go PENDING</td></tr>
+      <tr><td><code>acryl-workspace-projects</code>, <code>-panel</code>, <code>-dock</code>, <code>-topbar</code>, <code>-statusbar</code></td><td>The five chrome areas</td><td><code>workspaceTabs</code>, <code>acryl-git</code> (optional)</td><td>That area is not rendered; the rest of the shell still works</td></tr>
+    </tbody>
+  </table>
+  <p class="lede" style="margin-top:10px">Consequence to design for: a consumer whose provider is missing is PENDING, not broken, and must reactivate when the provider returns. That is exactly what the Cordis lifecycle gives us, so tab-type plugins hard-inject <code>workspaceTabs</code> and treat <code>acryl-git</code> as optional.</p>
+
   <h2>Build map</h2>
   <p class="lede">Each marker is one area. "Copy from" points at the MIT-licensed reference clones under <code>acryldev/_reference_projects/</code>; rows marked verify still need the source read before a task is written. Component names were checked against <code>plugins/acryl-ui/registry-manifest.yml</code>.</p>
   <table>
     <thead><tr><th>#</th><th>Area</th><th>Status</th><th>Plugin</th><th>@acryl/ui</th><th>Copy from</th></tr></thead>
     <tbody>
-      <tr><td><span class="no2">1</span></td><td>Top bar: project, branch, BLEND badge, fan-out, cost, palette</td><td><span class="chip new">new</span></td><td><code>acryl-workspace</code> <code>topbar/</code>; BLEND from desktop <code>desktop-blend.ts</code></td><td><code>Menubar</code> <code>Command</code> <code>Badge</code></td><td>Orca <code>cmd-j</code>; v2 <code>TopChrome</code></td></tr>
-      <tr><td><span class="no2">2</span></td><td>Worktree rail with live status dots and branch filter</td><td><span class="chip plan">plan A1</span></td><td><code>acryl-workspace</code> <code>rail/</code>, replaces upstream sidebar row</td><td><code>Sidebar</code> <code>Collapsible</code> <code>InputGroup</code></td><td>Orca <code>AgentStateDot.tsx</code>, <code>store/worktree-*</code> (verify)</td></tr>
-      <tr><td><span class="no2">3</span></td><td>Attention queue: needs you / running / done</td><td><span class="chip new">new A7</span></td><td><code>acryl-workspace</code> <code>rail/attention</code></td><td><code>Sidebar</code> <code>ScrollArea</code></td><td>Orca <code>components/dashboard/</code> bucket logic (verify)</td></tr>
-      <tr><td><span class="no2">4</span></td><td>Tab strip and add-picker with "build a card type"</td><td><span class="chip built">built</span> <span class="chip plan">plan</span></td><td><code>acryl-workspace</code></td><td><code>Tabs</code> <code>Popover</code> <code>Command</code></td><td>v2 <code>CanvasAddPicker</code></td></tr>
-      <tr><td><span class="no2">5</span></td><td>Diff tile with line comments sent to the agent</td><td><span class="chip built">shell</span> <span class="chip new">new A8</span></td><td><code>acryl-workspace</code> <code>tiles/diff</code>; comments as room events in <code>acryl-control</code></td><td><code>Table</code> <code>ScrollArea</code></td><td>Orca <code>components/diff-comments/</code> anchor and range math (code); Nimbalyst <code>PendingReviewBanner.tsx</code></td></tr>
-      <tr><td><span class="no2">6</span></td><td>Chat tile bound to a worktree, with approve or reject of agent edits</td><td><span class="chip built">built</span> <span class="chip new">new A8</span></td><td><code>acryl-workspace</code> plus upstream conversation</td><td><code>Message</code> <code>ToolCallCard</code></td><td>Nimbalyst <code>PendingReviewBanner.tsx</code>, <code>interactivePromptTools.ts</code></td></tr>
-      <tr><td><span class="no2">7</span></td><td>Side panel: Files, Changes, Review, Checks, commit box</td><td><span class="chip plan">plan A2</span></td><td><code>acryl-workspace</code> <code>panel/</code>; git Host service</td><td><code>Tabs</code> <code>Table</code> <code>ScrollArea</code> <code>InputGroup</code></td><td>Orca <code>github-checks-tab-state.ts</code>; v2 <code>RightPanel</code></td></tr>
-      <tr><td><span class="no2">8</span></td><td>Persistent terminal dock</td><td><span class="chip plan">plan</span></td><td><code>acryl-workspace</code>; reuses the built PTY route</td><td><code>ResizablePanelGroup</code></td><td>v2 <code>TerminalStrip</code></td></tr>
-      <tr><td><span class="no2">9</span></td><td>Status bar: agent, context use, rate limit, worktree, remote</td><td><span class="chip new">new</span></td><td><code>acryl-workspace</code>; usage from <code>acryl-control</code></td><td><code>Badge</code> <code>Kbd</code></td><td>Nimbalyst context-usage and rate-limit widgets; Orca <code>rate-limits</code> (verify)</td></tr>
+      <tr><td><span class="no2">1</span></td><td>Top bar: project, branch, BLEND badge, fan-out, cost, palette</td><td><span class="chip new">new</span></td><td><code>acryl-workspace-topbar</code>; BLEND from desktop <code>desktop-blend.ts</code></td><td><code>Menubar</code> <code>Command</code> <code>Badge</code></td><td>Orca <code>cmd-j</code>; v2 <code>TopChrome</code></td></tr>
+      <tr><td><span class="no2">2</span></td><td>Side panel with a <b>Chats | Projects</b> switch. Chats is today's DSH view (workspaces, chats). Projects is the worktree and branch tree with live status dots and filter. Selecting a branch swaps the canvas to that branch's own tab group</td><td><span class="chip plan">plan A1</span></td><td><code>acryl-workspace-projects</code>, wraps the upstream sidebar row as the Chats mode</td><td><code>Sidebar</code> <code>Collapsible</code> <code>InputGroup</code></td><td>Orca <code>AgentStateDot.tsx</code>, <code>store/worktree-*</code> (verify)</td></tr>
+      <tr><td><span class="no2">3</span></td><td>Attention queue: needs you / running / done</td><td><span class="chip new">new A7</span></td><td><code>acryl-workspace-projects</code> (attention section)</td><td><code>Sidebar</code> <code>ScrollArea</code></td><td>Orca <code>components/dashboard/</code> bucket logic (verify)</td></tr>
+      <tr><td><span class="no2">4</span></td><td>Tabs pane of the Development canvas: the tab types below, each openable from <b>+</b>. Tab types are configurable in Settings (all by default, minimal set on request)</td><td><span class="chip built">built</span> <span class="chip plan">plan</span></td><td><code>acryl-workspace</code> (core, provides the tab-type registry)</td><td><code>Tabs</code> <code>Popover</code> <code>Command</code></td><td>v2 <code>CanvasAddPicker</code></td></tr>
+      <tr><td><span class="no2">5</span></td><td>Diff tile with line comments sent to the agent</td><td><span class="chip built">shell</span> <span class="chip new">new A8</span></td><td><code>acryl-tab-diff</code>; comments as room events in <code>acryl-control</code></td><td><code>Table</code> <code>ScrollArea</code></td><td>Orca <code>components/diff-comments/</code> anchor and range math (code); Nimbalyst <code>PendingReviewBanner.tsx</code></td></tr>
+      <tr><td><span class="no2">6</span></td><td>Chat tile bound to a worktree, with approve or reject of agent edits</td><td><span class="chip built">built</span> <span class="chip new">new A8</span></td><td><code>acryl-tab-chat</code> plus upstream conversation</td><td><code>Message</code> <code>ToolCallCard</code></td><td>Nimbalyst <code>PendingReviewBanner.tsx</code>, <code>interactivePromptTools.ts</code></td></tr>
+      <tr><td><span class="no2">7</span></td><td>Side panel: Files, Changes, Review, Checks, commit box</td><td><span class="chip plan">plan A2</span></td><td><code>acryl-workspace-panel</code>; <code>acryl-git</code> Host service</td><td><code>Tabs</code> <code>Table</code> <code>ScrollArea</code> <code>InputGroup</code></td><td>Orca <code>github-checks-tab-state.ts</code>; v2 <code>RightPanel</code></td></tr>
+      <tr><td><span class="no2">8</span></td><td>Persistent terminal dock (Codex App / OpenCode style) with its own <b>+</b> and tabs for multiple terminals, cwd bound to the selected worktree</td><td><span class="chip plan">plan</span></td><td><code>acryl-workspace-dock</code> and <code>acryl-tab-terminal</code>; one PTY session per dock tab</td><td><code>ResizablePanelGroup</code></td><td>v2 <code>TerminalStrip</code></td></tr>
+      <tr><td><span class="no2">9</span></td><td>Status bar: agent, context use, rate limit, worktree, remote</td><td><span class="chip new">new</span></td><td><code>acryl-workspace-statusbar</code>; usage from <code>acryl-control</code></td><td><code>Badge</code> <code>Kbd</code></td><td>Nimbalyst context-usage and rate-limit widgets; Orca <code>rate-limits</code> (verify)</td></tr>
     </tbody>
   </table>
 
   <h2>Decisions</h2>
-  <p class="lede">Pick and queue each answer; nothing is sent until you press its button. These two block the first build slice.</p>
+  <p class="lede">Pick and queue each answer; nothing is sent until you press its button. The first two block the first build slice; 3 and 4 shape the architecture.</p>
   <div class="grid2">
     <form class="box" data-lavish-question="layout" onsubmit="event.preventDefault(); var v=new FormData(this).get('layout'); if(!v) return; var n=this.querySelector('textarea').value; window.lavish.queuePrompt('Canvas layout decision: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Layout: ' + v, element: this, data: { question: 'layout', answer: v, note: n } }); this.querySelector('.queued').textContent='Queued: ' + v;">
       <h3>1. Canvas layout</h3>
@@ -301,6 +364,26 @@
       <label class="opt"><input type="radio" name="slice" value="Real diff tile with line comments to the agent" checked><b>Real diff tile with line comments to the agent</b> <span class="chip new rec">recommended</span><small>The most demo-visible feature and copies well from Orca.</small></label>
       <label class="opt"><input type="radio" name="slice" value="BLEND badge and live fork demo"><b>BLEND badge and live fork demo</b><small>The differentiator nobody else has. Blends M4 territory.</small></label>
       <label class="opt"><input type="radio" name="slice" value="Fan-out compare tile"><b>Fan-out compare tile</b><small>Strong visual, needs the git service and session source first.</small></label>
+      <textarea placeholder="Optional note"></textarea>
+      <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
+    </form>
+  </div>
+  <div class="grid2">
+    <form class="box" data-lavish-question="branchswitch" onsubmit="event.preventDefault(); var v=new FormData(this).get('branchswitch'); if(!v) return; var n=this.querySelector('textarea').value; window.lavish.queuePrompt('Branch switch behavior: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Branch switch: ' + v, element: this, data: { question: 'branchswitch', answer: v, note: n } }); this.querySelector('.queued').textContent='Queued: ' + v;">
+      <h3>3. Switching branch</h3>
+      <p class="q">When you click another branch, what happens to the tabs of the branch you left, especially running agents and terminals?</p>
+      <label class="opt"><input type="radio" name="branchswitch" value="Keep running in the background" checked><b>Keep running in the background</b> <span class="chip new rec">recommended</span><small>Agents keep working and the status dot stays live. Costs PTY and process count, matches the attention-queue idea.</small></label>
+      <label class="opt"><input type="radio" name="branchswitch" value="Suspend and resume"><b>Suspend and resume</b><small>Frees resources but stops agents mid-task and needs resume support per runtime.</small></label>
+      <label class="opt"><input type="radio" name="branchswitch" value="Close them"><b>Close them</b><small>Simplest, and loses work in flight. Conflicts with agents-are-disposable only if state is not durable.</small></label>
+      <textarea placeholder="Optional note"></textarea>
+      <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
+    </form>
+    <form class="box" data-lavish-question="basis" onsubmit="event.preventDefault(); var v=new FormData(this).get('basis'); if(!v) return; var n=this.querySelector('textarea').value; window.lavish.queuePrompt('Code basis: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Basis: ' + v, element: this, data: { question: 'basis', answer: v, note: n } }); this.querySelector('.queued').textContent='Queued: ' + v;">
+      <h3>4. Code basis</h3>
+      <p class="q">Checked: <code>acryl-workspace</code>'s PTY files are a rename-copy of <code>acryl-development-canvas</code> (both <code>canvas-pty.ts</code> and <code>workspace-pty.ts</code> are 333 lines), and its <code>state.ts</code> is the same shape. So "take development-canvas" is already what shipped, and the glitchy PTY came along with it.</p>
+      <label class="opt"><input type="radio" name="basis" value="Evolve acryl-workspace in place" checked><b>Evolve <code>acryl-workspace</code> in place</b> <span class="chip new rec">recommended</span><small>Keep its Host and Fiber pattern and profile wiring. Split each tile into its own plugin, rewrite the tab model as per-worktree groups, and rebuild the PTY plugin with the glitch root-caused first.</small></label>
+      <label class="opt"><input type="radio" name="basis" value="Re-base on published acryl-development-canvas"><b>Re-base on the published <code>acryl-development-canvas</code></b><small>A separate repo and market-only plugin. Adds an external dependency for code we already forked, so little gain.</small></label>
+      <label class="opt"><input type="radio" name="basis" value="From scratch on the ACRYL UI library"><b>From scratch on <code>@acryl/ui</code></b><small>Cleanest UI, and the registry already has 45 ports. Throws away the proven Host PTY and Fiber ownership code, so rebuild and re-verify all of it.</small></label>
       <textarea placeholder="Optional note"></textarea>
       <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
     </form>
