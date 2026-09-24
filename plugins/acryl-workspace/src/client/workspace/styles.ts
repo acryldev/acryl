@@ -19,6 +19,8 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceMenuRule { height: 1px; margin: 6px 4px; background: var(--dsw-alias-border-l2); }
 .dshWorkspaceStage { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; background: var(--dsw-alias-bg-base); }
 .dshWorkspaceChat, .dshWorkspacePty, .dshWorkspaceFile, .dshWorkspaceBrowser, .dshWorkspaceDiff, .dshWorkspaceKanban, .dshWorkspaceDoc { display: flex; flex: 1; flex-direction: column; min-height: 0; min-width: 0; }
+/* The conversation is built to fill a flex-column parent (its root is flex: 1; min-height: 0). The frame wraps it in a plain div, so make that wrapper fill the Chat tile with a bounded height; otherwise the message list grows to its content, is clipped, and cannot scroll. */
+.dshWorkspaceChat > [data-acryl-slot="conversation"] { display: flex; flex: 1 1 0; flex-direction: column; min-height: 0; min-width: 0; }
 .dshWorkspaceEmpty { display: grid; place-items: center; flex: 1; color: var(--dsw-alias-fg-l2); font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspacePtyToolbar, .dshWorkspaceBrowserBar { display: flex; gap: 8px; align-items: center; padding: 6px 10px; border-bottom: 1px solid var(--dsw-alias-border-l2); }
 .dshWorkspacePtyName { font: 600 12px/1 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg); }
