@@ -41,6 +41,8 @@ import { AvatarGroup } from '../src/client/registry/AvatarGroup/AvatarGroup.tsx'
 import { Counter } from '../src/client/registry/Counter/Counter.tsx'
 import { Rating } from '../src/client/registry/Rating/Rating.tsx'
 import { Status } from '../src/client/registry/Status/Status.tsx'
+import { Choicebox } from '../src/client/registry/Choicebox/Choicebox.tsx'
+import { Stepper } from '../src/client/registry/Stepper/Stepper.tsx'
 import { Announcement } from '../src/client/registry/Announcement/Announcement.tsx'
 import { Banner } from '../src/client/registry/Banner/Banner.tsx'
 import { Calendar } from '../src/client/registry/Calendar/Calendar.tsx'
@@ -901,6 +903,32 @@ describe('markup of the shadcnblocks-inspired components (spec 038-ui-component-
   it('Status renders without label', () => {
     const html = renderToStaticMarkup(<Status variant="busy" />)
     expect(html).toContain('aria-hidden')
+  })
+
+  it('Choicebox renders a selectable card', () => {
+    const html = renderToStaticMarkup(<Choicebox title="Option A" description="This is option A" />)
+    expect(html).toContain('Option A'); expect(html).toContain('This is option A')
+    expect(html).toMatch(/role="radio"/u)
+  })
+
+  it('Choicebox renders with selected state', () => {
+    const html = renderToStaticMarkup(<Choicebox title="Selected" selected />)
+    expect(html).toMatch(/aria-checked=".*true/u)
+  })
+
+  it('Stepper renders steps with active and completed states', () => {
+    const html = renderToStaticMarkup(
+      <Stepper steps={[{ label: 'Step 1' }, { label: 'Step 2' }, { label: 'Step 3' }]} current={1} />
+    )
+    expect(html).toContain('Step 1'); expect(html).toContain('Step 2'); expect(html).toContain('Step 3')
+    expect(html).toMatch(/role="navigation"/u)
+  })
+
+  it('Stepper renders with vertical orientation', () => {
+    const html = renderToStaticMarkup(
+      <Stepper steps={[{ label: 'A' }, { label: 'B' }]} current={0} orientation="vertical" />
+    )
+    expect(html).toContain('A'); expect(html).toContain('B')
   })
 
   it('Rating renders the specified number of stars', () => {

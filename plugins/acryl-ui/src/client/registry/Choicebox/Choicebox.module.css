@@ -1,0 +1,66 @@
+/**
+ * Choicebox — card-style selectable option.
+ * Styled on the app's own --dsw-alias-* tokens.
+ */
+.choicebox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid var(--dsw-alias-border-l4);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-0);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--dsw-alias-label-primary);
+  transition: border-color 0.15s ease, background 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.choicebox:hover {
+  border-color: var(--acryl-accent);
+}
+
+.choicebox:focus-visible {
+  outline: 2px solid var(--acryl-accent);
+  outline-offset: 2px;
+}
+
+.choicebox--selected {
+  border-color: var(--acryl-accent);
+  background: color-mix(in oklab, var(--acryl-accent) 6%, transparent);
+}
+
+.choicebox--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-primary);
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.description {
+  font-size: 13px;
+  color: var(--dsw-alias-label-tertiary);
+  line-height: 1.4;
+}

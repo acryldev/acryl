@@ -943,6 +943,69 @@
         "web"
       ]
     },
+    "Choicebox": {
+      "summary": "A card-style selectable option with radio semantics (inspired by common choicebox patterns).",
+      "props": {
+        "selected": {
+          "type": "boolean",
+          "description": "Whether this option is selected."
+        },
+        "disabled": {
+          "type": "boolean",
+          "description": "Whether this option is disabled."
+        },
+        "onClick": {
+          "type": "() => void",
+          "description": "Called when the user clicks/taps this option."
+        },
+        "title": {
+          "type": "ReactNode",
+          "required": true,
+          "description": "Title text."
+        },
+        "description": {
+          "type": "ReactNode",
+          "description": "Optional description."
+        },
+        "icon": {
+          "type": "ReactNode",
+          "description": "Optional icon shown above the title."
+        }
+      },
+      "a11y": [
+        "role=radio with aria-checked",
+        "disabled state via aria-disabled"
+      ],
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Stepper": {
+      "summary": "A step progress indicator for multi-step workflows (inspired by common stepper patterns).",
+      "props": {
+        "steps": {
+          "type": "Step[]",
+          "required": true,
+          "description": "Ordered list of steps (label + optional description)."
+        },
+        "current": {
+          "type": "number",
+          "required": true,
+          "description": "Index of the current active step (0-based)."
+        },
+        "orientation": {
+          "type": "'horizontal' | 'vertical'",
+          "description": "Orientation."
+        }
+      },
+      "a11y": [
+        "role=navigation with aria-label=Progress",
+        "completed, active, and pending step states distinguished visually"
+      ],
+      "surfaces": [
+        "web"
+      ]
+    },
     "ValueField": {
       "summary": "A settings-style field bound to a text value, with an override badge and reset action.",
       "props": {

@@ -71,6 +71,14 @@ components:
     origin: inspired
     from: common status indicator dot patterns (online, offline, busy, away, warning, error)
     changed: built on ACRYL's own --dsw-alias-* tokens; self-contained dot implementation with optional label
+  - name: Choicebox
+    origin: inspired
+    from: common card-style selection patterns
+    changed: built on ACRYL's own --dsw-alias-* tokens; uses native button element with radio ARIA role; no external dependencies
+  - name: Stepper
+    origin: inspired
+    from: common multi-step workflow progress patterns
+    changed: built on ACRYL's own --dsw-alias-* tokens; supports horizontal and vertical orientations; inline SVG checkmark for completed steps
   - name: Kbd
     origin: ported
     from: shadcn/ui registry item `kbd` (style new-york-v4), https://ui.shadcn.com/docs/components/kbd, MIT licence, fetched 2026-09-22

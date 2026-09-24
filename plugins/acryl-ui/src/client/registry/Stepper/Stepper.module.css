@@ -1,0 +1,113 @@
+/**
+ * Stepper — step progress indicator.
+ * Styled on the app's own --dsw-alias-* tokens.
+ */
+.stepper {
+  display: flex;
+  gap: 0;
+}
+
+.orientation--horizontal {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.orientation--vertical {
+  flex-direction: column;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.orientation--vertical .step {
+  flex: 0;
+}
+
+/* Indicator circle */
+.indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+  border: 2px solid var(--dsw-alias-border-l4);
+  background: var(--dsw-alias-bg-layer-0);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.indicator--active {
+  border-color: var(--acryl-accent);
+  color: var(--acryl-accent);
+}
+
+.indicator--completed {
+  background: var(--acryl-accent);
+  border-color: var(--acryl-accent);
+  color: var(--dsw-alias-label-primary-foreground);
+}
+
+/* Label */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 4px;
+}
+
+.orientation--horizontal .body {
+  display: none;
+}
+
+.orientation--horizontal .step--active .body,
+.orientation--horizontal .step--completed .body {
+  display: flex;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.label--active {
+  color: var(--dsw-alias-label-primary);
+  font-weight: 600;
+}
+
+.label--completed {
+  color: var(--dsw-alias-label-primary);
+}
+
+.description {
+  font-size: 12px;
+  color: var(--dsw-alias-label-tertiary);
+  line-height: 1.4;
+}
+
+/* Connector line */
+.connector {
+  flex: 1;
+  height: 2px;
+  background: var(--dsw-alias-border-l4);
+  margin: 13px 8px 0;
+  min-width: 24px;
+}
+
+.orientation--vertical .connector {
+  width: 2px;
+  height: 24px;
+  margin: 0 0 0 13px;
+  flex: 0;
+}
+
+.connector--completed {
+  background: var(--acryl-accent);
+}
