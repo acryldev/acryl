@@ -22,6 +22,7 @@ import { buildReviewComment } from './comment-message.ts'
 import type { WorkspaceGitApi } from './git-api.ts'
 import { GitDiffPane } from './GitDiffPane.tsx'
 import { GLOBAL_GROUP, WorkspaceGroups } from './groups.ts'
+import { formatProbe, probeChatLayout } from './layout-probe.ts'
 import type { WorkspaceShellState } from './shell-state.ts'
 import { parseDoc, parseInline } from './doc-format.ts'
 import { createWorkspacePtyApi, type WorkspacePtyApi } from './pty-api.ts'
@@ -91,6 +92,19 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
   useEffect(() => shell.onOpenDiff((request) => {
     groups.stateFor(request.worktree).openDiff(request.worktree, request.file)
   }), [shell, groups])
+
+  // TEMPORARY diagnostic for the chat-scrolling report: log the chat's height chain after it mounts
+  // and again once its history has loaded. console.error lands in the app's log file. Remove once fixed.
+  const chatVisible = workspace.getSnapshot().tiles.find(tile => tile.id === snapshot.activeId)?.kind === 'chat'
+  useEffect(() => {
+    if (!chatVisible) return
+    const run = (): void => {
+      const wrapper = document.querySelector('.dshWorkspaceChat > [data-acryl-slot="conversation"]')
+      if (wrapper !== null) console.error(formatProbe(probeChatLayout(wrapper)))
+    }
+    const timers = [setTimeout(run, 800), setTimeout(run, 4000)]
+    return () => { for (const timer of timers) clearTimeout(timer) }
+  }, [chatVisible, groupKey])
 
   const openPty = useCallback(async (commandId: WorkspacePtyCommandId, title: string) => {
     const tile = workspace.addTile('pty', { commandId, title })

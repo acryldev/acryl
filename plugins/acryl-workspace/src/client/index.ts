@@ -28,6 +28,14 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 }
 
+/**
+ * Slot priority for the Workspace canvas. Lower renders. The older `acryl-development-canvas`
+ * market plugin registers `desktop.main` at 0, and a single slot throws on a second registration at
+ * the same priority, which failed this whole plugin. -1 shadows it deliberately: the Workspace is
+ * its successor, and disabling either plugin leaves the other working.
+ */
+export const WORKSPACE_MAIN_PRIORITY = -1
+
 export const name = 'acryl-workspace-client'
 export const inject = ['slots']
 
@@ -64,25 +72,38 @@ export function apply(ctx: ClientContext): void {
   whenSlotDeclared(() => {
     ctx.slots.inject('desktop.main', () => {
       const ptyClient = new WorkspacePtyClient(createWorkspacePtyApi())
-      const removeSlot = ctx.slots.register({
-        name: 'desktop.main',
-        priority: 0,
-        inject: () => ({ ptyApi: ptyClient, shell, gitApi, agent }),
-      }, WorkspaceCanvas)
+      let removeSlot: (() => void) | undefined
+      try {
+        removeSlot = ctx.slots.register({
+          name: 'desktop.main',
+          priority: WORKSPACE_MAIN_PRIORITY,
+          inject: () => ({ ptyApi: ptyClient, shell, gitApi, agent }),
+        }, WorkspaceCanvas)
+      } catch (cause) {
+        // A registration conflict must not take the left pane and the Changes tab down with it.
+        ctx.logger.warn(`acryl-workspace: could not register the canvas: ${cause instanceof Error ? cause.message : String(cause)}`)
+      }
 
       return async () => {
-        removeSlot()
+        removeSlot?.()
         await ptyClient.dispose()
       }
     })
   })
 
   whenSlotDeclared(() => {
-    ctx.slots.inject('desktop.sidebar', () => ctx.slots.register({
-      name: 'desktop.sidebar',
-      priority: 0,
-      inject: () => ({ shell }),
-    }, ProjectsSidebar))
+    ctx.slots.inject('desktop.sidebar', () => {
+      try {
+        return ctx.slots.register({
+          name: 'desktop.sidebar',
+          priority: 0,
+          inject: () => ({ shell }),
+        }, ProjectsSidebar)
+      } catch (cause) {
+        ctx.logger.warn(`acryl-workspace: could not register the left pane: ${cause instanceof Error ? cause.message : String(cause)}`)
+        return () => {}
+      }
+    })
   })
 }
 

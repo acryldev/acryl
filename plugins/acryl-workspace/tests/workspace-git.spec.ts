@@ -301,14 +301,14 @@ describe('routes', () => {
   it('serves the repo view to a same-origin request', async () => {
     const { status, body } = await get(`/repo?cwd=${encodeURIComponent(main)}`, true)
     expect(status).toBe(200)
-    expect(body).toMatchObject({ name: 'proj', root: main })
+    expect(body).toMatchObject({ repo: { name: 'proj', root: main } })
   })
 
-  it('answers 400 for a bad path and 404 for a non-repository', async () => {
+  it('answers 400 for a bad path, and 200 with a null repo for a directory that is not one', async () => {
     expect((await get('/status?path=relative', true)).status).toBe(400)
     expect((await get('/status', true)).status).toBe(400)
     const plain = join(root, 'plain')
-    expect((await get(`/repo?cwd=${encodeURIComponent(plain)}`, true)).status).toBe(404)
+    expect(await get(`/repo?cwd=${encodeURIComponent(plain)}`, true)).toEqual({ status: 200, body: { repo: null } })
   })
 
   it('answers 400 for a traversal file argument', async () => {

@@ -45,9 +45,9 @@ export function createWorkspaceGitApi(fetchImpl: FetchLike = (input, init) => fe
   return {
     async repo(cwd) {
       const { status, body } = await getJson(WORKSPACE_GIT_REPO_PATH, { cwd })
-      if (status === 404) return null
       if (status !== 200) throw failure('repo', status, body)
-      return parseGitRepoView(body)
+      if (typeof body !== 'object' || body === null || !('repo' in body)) throw new Error('git repo: invalid response')
+      return body.repo === null ? null : parseGitRepoView(body.repo)
     },
     async status(path) {
       const { status, body } = await getJson(WORKSPACE_GIT_STATUS_PATH, { path })

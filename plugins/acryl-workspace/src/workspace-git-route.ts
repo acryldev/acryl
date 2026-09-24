@@ -46,7 +46,9 @@ export function handleWorkspaceGitRepoRequest(
   reportError: ReportError,
 ): Promise<void> {
   return handleGet(req, res, expectedOrigin, 'read git repo', reportError,
-    params => git.repo(required(params, 'cwd')))
+    // 200 with `{ repo: null }` for a directory that is not a repository: that is an ordinary answer,
+    // and a 404 would print a console error for every temporary folder a chat session uses.
+    async params => ({ repo: await git.repo(required(params, 'cwd')) }))
 }
 
 /** GET changed files for `?path=`. */
