@@ -2,6 +2,17 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-host-webserver'
+import { WorkspaceGit } from './workspace-git.ts'
+import {
+  WORKSPACE_GIT_DIFF_PATH,
+  WORKSPACE_GIT_REPO_PATH,
+  WORKSPACE_GIT_STATUS_PATH,
+} from './workspace-git-contract.ts'
+import {
+  handleWorkspaceGitDiffRequest,
+  handleWorkspaceGitRepoRequest,
+  handleWorkspaceGitStatusRequest,
+} from './workspace-git-route.ts'
 import { WorkspacePtyRegistry } from './workspace-pty.ts'
 import {
   WORKSPACE_PTY_CLOSE_PATH,
@@ -39,6 +50,7 @@ export function apply(ctx: Context): void {
   }
   ctx.effect(() => {
     const workspacePty = new WorkspacePtyRegistry()
+    const workspaceGit = new WorkspaceGit()
     const releases: Array<() => void> = []
     try {
       const ptyRoutes = [
@@ -54,13 +66,26 @@ export function apply(ctx: Context): void {
           handler: (req, res) => handler(req, res, rendererOrigin, workspacePty, reportHostError),
         }))
       }
+      const gitRoutes = [
+        [WORKSPACE_GIT_REPO_PATH, handleWorkspaceGitRepoRequest],
+        [WORKSPACE_GIT_STATUS_PATH, handleWorkspaceGitStatusRequest],
+        [WORKSPACE_GIT_DIFF_PATH, handleWorkspaceGitDiffRequest],
+      ] as const
+      for (const [path, handler] of gitRoutes) {
+        releases.push(ctx.webServer.register({
+          kind: 'exact',
+          path,
+          handler: (req, res) => handler(req, res, rendererOrigin, workspaceGit, reportHostError),
+        }))
+      }
     } catch (cause) {
       for (const release of releases.reverse()) release()
+      void workspaceGit.dispose()
       throw cause
     }
     return async () => {
       for (const release of releases.reverse()) release()
-      await workspacePty.disposeAll()
+      await Promise.all([workspacePty.disposeAll(), workspaceGit.dispose()])
     }
-  }, 'acryl-workspace: routes and PTY table')
+  }, 'acryl-workspace: routes, PTY table and git service')
 }
