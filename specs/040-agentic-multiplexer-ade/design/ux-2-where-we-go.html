@@ -344,49 +344,21 @@
     </tbody>
   </table>
 
-  <h2>Decisions</h2>
-  <p class="lede">Pick and queue each answer; nothing is sent until you press its button. The first two block the first build slice; 3 and 4 shape the architecture.</p>
+  <h2>Decisions (made 2026-09-24)</h2>
+  <p class="lede">Resolved through this page. They are now the working baseline for spec 040 Scope A.</p>
+  <table>
+    <thead><tr><th>#</th><th>Question</th><th>Decision</th><th>What it means</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Canvas layout</td><td><b>Tabs plus one optional split</b></td><td>Keep <code>WorkspaceState</code> close to today's shape; add a single split so an agent can sit next to its diff.</td></tr>
+      <tr><td>2</td><td>First build slice</td><td><b>Real diff tile with line comments sent to the agent</b></td><td>Needs the tab-type registry, an <code>acryl-git</code> Host service, then <code>acryl-tab-diff</code>. Comments become room events.</td></tr>
+      <tr><td>3</td><td>Switching branch</td><td><b>Keep other branches' tabs running in the background</b></td><td>Agents and terminals in an unselected branch keep working; the rail dot stays live. Process count needs a cap and a visible indicator.</td></tr>
+      <tr><td>4</td><td>Code basis</td><td><b>Evolve <code>acryl-workspace</code> in place</b></td><td>Split each tile into its own plugin, move to per-worktree tab groups, extract the PTY as it is into <code>acryl-tab-terminal</code>.</td></tr>
+    </tbody>
+  </table>
+  <h2>Open items</h2>
   <div class="grid2">
-    <form class="box" data-lavish-question="layout" onsubmit="event.preventDefault(); var v=new FormData(this).get('layout'); if(!v) return; var n=this.querySelector('textarea').value; window.lavish.queuePrompt('Canvas layout decision: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Layout: ' + v, element: this, data: { question: 'layout', answer: v, note: n } }); this.querySelector('.queued').textContent='Queued: ' + v;">
-      <h3>1. Canvas layout</h3>
-      <p class="q">Today one tile shows at a time. What should the canvas do? This decides how far <code>WorkspaceState</code> changes.</p>
-      <label class="opt"><input type="radio" name="layout" value="Tabs only"><b>Tabs only</b><small>Keep today's model. Cheapest. You cannot watch an agent and its diff together, which is the weakest demo.</small></label>
-      <label class="opt"><input type="radio" name="layout" value="Tabs plus one optional split" checked><b>Tabs plus one optional split</b> <span class="chip new rec">recommended</span><small>Small state change, and it produces the agent-next-to-diff view shown above.</small></label>
-      <label class="opt"><input type="radio" name="layout" value="Full split panes"><b>Full split panes</b><small>Orca-style, best for power users. Needs a layout tree and resize handling; biggest cost.</small></label>
-      <textarea placeholder="Optional note"></textarea>
-      <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
-    </form>
-
-    <form class="box" data-lavish-question="slice" onsubmit="event.preventDefault(); var v=new FormData(this).get('slice'); if(!v) return; var n=this.querySelector('textarea').value; window.lavish.queuePrompt('First build slice: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'First slice: ' + v, element: this, data: { question: 'slice', answer: v, note: n } }); this.querySelector('.queued').textContent='Queued: ' + v;">
-      <h3>2. First build slice</h3>
-      <p class="q">Given the pitch, what should exist first?</p>
-      <label class="opt"><input type="radio" name="slice" value="Worktree rail plus git Host service"><b>Worktree rail plus git Host service</b><small>Unblocks the rail, panel and attention queue. Least visible on its own.</small></label>
-      <label class="opt"><input type="radio" name="slice" value="Real diff tile with line comments to the agent" checked><b>Real diff tile with line comments to the agent</b> <span class="chip new rec">recommended</span><small>The most demo-visible feature and copies well from Orca.</small></label>
-      <label class="opt"><input type="radio" name="slice" value="BLEND badge and live fork demo"><b>BLEND badge and live fork demo</b><small>The differentiator nobody else has. Blends M4 territory.</small></label>
-      <label class="opt"><input type="radio" name="slice" value="Fan-out compare tile"><b>Fan-out compare tile</b><small>Strong visual, needs the git service and session source first.</small></label>
-      <textarea placeholder="Optional note"></textarea>
-      <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
-    </form>
-  </div>
-  <div class="grid2">
-    <form class="box" data-lavish-question="branchswitch" onsubmit="event.preventDefault(); var v=new FormData(this).get('branchswitch'); if(!v) return; var n=this.querySelector('textarea').value; window.lavish.queuePrompt('Branch switch behavior: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Branch switch: ' + v, element: this, data: { question: 'branchswitch', answer: v, note: n } }); this.querySelector('.queued').textContent='Queued: ' + v;">
-      <h3>3. Switching branch</h3>
-      <p class="q">When you click another branch, what happens to the tabs of the branch you left, especially running agents and terminals?</p>
-      <label class="opt"><input type="radio" name="branchswitch" value="Keep running in the background" checked><b>Keep running in the background</b> <span class="chip new rec">recommended</span><small>Agents keep working and the status dot stays live. Costs PTY and process count, matches the attention-queue idea.</small></label>
-      <label class="opt"><input type="radio" name="branchswitch" value="Suspend and resume"><b>Suspend and resume</b><small>Frees resources but stops agents mid-task and needs resume support per runtime.</small></label>
-      <label class="opt"><input type="radio" name="branchswitch" value="Close them"><b>Close them</b><small>Simplest, and loses work in flight. Conflicts with agents-are-disposable only if state is not durable.</small></label>
-      <textarea placeholder="Optional note"></textarea>
-      <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
-    </form>
-    <form class="box" data-lavish-question="basis" onsubmit="event.preventDefault(); var v=new FormData(this).get('basis'); if(!v) return; var n=this.querySelector('textarea').value; window.lavish.queuePrompt('Code basis: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Basis: ' + v, element: this, data: { question: 'basis', answer: v, note: n } }); this.querySelector('.queued').textContent='Queued: ' + v;">
-      <h3>4. Code basis</h3>
-      <p class="q">Checked: <code>acryl-workspace</code>'s PTY files are a rename-copy of <code>acryl-development-canvas</code> (both <code>canvas-pty.ts</code> and <code>workspace-pty.ts</code> are 333 lines), and its <code>state.ts</code> is the same shape. So "take development-canvas" is already what shipped, and any PTY glitch would be inherited from it too (one intermittent glitch was seen earlier, none now).</p>
-      <label class="opt"><input type="radio" name="basis" value="Evolve acryl-workspace in place" checked><b>Evolve <code>acryl-workspace</code> in place</b> <span class="chip new rec">recommended</span><small>Keep its Host and Fiber pattern and profile wiring. Split each tile into its own plugin and rewrite the tab model as per-worktree groups. Extract the PTY as it is into <code>acryl-tab-terminal</code>; it works today and the earlier glitch was intermittent, so only rework it if the glitch returns and can be reproduced.</small></label>
-      <label class="opt"><input type="radio" name="basis" value="Re-base on published acryl-development-canvas"><b>Re-base on the published <code>acryl-development-canvas</code></b><small>A separate repo and market-only plugin. Adds an external dependency for code we already forked, so little gain.</small></label>
-      <label class="opt"><input type="radio" name="basis" value="From scratch on the ACRYL UI library"><b>From scratch on <code>@acryl/ui</code></b><small>Cleanest UI, and the registry already has 45 ports. Throws away the proven Host PTY and Fiber ownership code, so rebuild and re-verify all of it.</small></label>
-      <textarea placeholder="Optional note"></textarea>
-      <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
-    </form>
+    <div class="box"><h3>Before code</h3><p class="q">Write the Cordis mini-design (capability boundary, provides and consumes, effects and disposal, config, events, verification) for <code>workspaceTabs</code>, <code>acryl-git</code> and <code>acryl-tab-diff</code>, then <code>tasks.md</code>.</p></div>
+    <div class="box"><h3>Still unverified</h3><p class="q">Which real session or agent-team state backs the rail dots and attention queue (spec 040 open question 2). The Web surface has no advanced shell, so this layout is Desktop-only for now.</p></div>
   </div>
 
   <div class="nav"><a href="ux-1-where-we-are.html">Back: where we are</a></div>

@@ -118,3 +118,14 @@ Mobile apps, hosted collaboration and share links, a second extension SDK, an in
 2. **Where do review comments and approvals live** so they are durable and agent-independent: the room event log, a `.acryl` file per worktree, or both? Constitution principle IV constrains this.
 3. **Is code copying acceptable at all**, or is this design-only? The plan assumes copying pure logic is fine under MIT with notices. If the preference is clean-room, rows marked Take-code become Take-design.
 4. **v2 mockup drift.** Several proposed stories (A6, A8) appear in v2 only as static UI. Update the mockup first, or let the spec lead?
+
+## Decisions (2026-09-24)
+
+Made on the HTML prototype [design/ux-2-where-we-go.html](./design/ux-2-where-we-go.html) and recorded here so they outlive the page.
+
+1. **Canvas layout**: tabs plus one optional split.
+2. **First build slice**: real diff tile with line comments sent to the agent (matrix B3).
+3. **Branch switch**: tabs of the branch you leave keep running in the background.
+4. **Code basis**: evolve `acryl-workspace` in place. It shares its PTY code with `acryl-development-canvas` (rename-copy, verified 333 lines each), so that basis is already in use.
+
+Also settled in the same review: canvas tab types are separate Cordis plugins, each toggleable through its Loader row, with all enabled by default and a minimal preset. The side panel gains a Chats | Projects switch, and each branch or worktree owns its own tab group. Open question 3 of this plan (code copying) is answered: copying and adapting are both fine, with the MIT notice kept.

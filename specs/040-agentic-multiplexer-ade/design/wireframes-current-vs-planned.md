@@ -1,6 +1,6 @@
 # ACRYL ADE wireframes: where we are, where we go
 
-**Status**: draft, 2026-09-23. Structural only, no visual styling.
+**Status**: superseded by the interactive pages [ux-1-where-we-are.html](./ux-1-where-we-are.html) and [ux-2-where-we-go.html](./ux-2-where-we-go.html), which carry the 2026-09-24 decisions (per-worktree tab groups, Chats | Projects switch, one plugin per tab type). Kept as a plain-text reference.
 **Related**: [spec 040](../spec.md), [parity plan](../parity-plan.md), mockups v1 (Lovable) and v2 (Base44) under `acryldev/ux-ui-design-mockup-acryl/`.
 
 **How "current" was established.** Read from source (`plugins/acryl-workspace`, `apps/acryl-desktop`), not from a running app or screenshot. Areas owned by upstream DSH are drawn from slot names only, so their exact contents are unverified. Correct this doc after a real launch.
@@ -89,7 +89,7 @@ Reconciles spec 040 (stories A1-A5), the parity plan (A6-A11), and mockup v2's l
 +--------------------------------------------------------------------------------+
 ```
 
-### Open layout decision (blocks A1/A2 work)
+### Layout decision (resolved 2026-09-24: tabs plus one optional split)
 
 Current canvas is **one tile at a time**. Spec 015 and the parity plan assume **tiles**, and Orca's terminal splits imply **side-by-side**. Pick before building:
 
