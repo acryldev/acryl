@@ -28,8 +28,8 @@ agent; that is the human test.
 Deliberate deviations from `design/cordis-mini-design.md`, per the direction to aggregate into bigger plugins and
 detach later: the git service lives inside `acryl-workspace` (files under `src/workspace-git*.ts`) instead of a new
 `acryl-git` package, and the `workspaceTabs` registry was not built, because the right pane's registry already exists
-upstream and the canvas tile kinds stay in-package for now. Not built yet: Review and Checks tabs, line comments to
-the agent, the optional split, and settings access while the Projects view is showing (use the Chats view or the
+upstream and the canvas tile kinds stay in-package for now. Line comments to the agent were added afterwards in `80d5c205195fb1d1660db9e5cb4225fe1f41ba8c`. Not built yet: Review and Checks tabs, multi-line comments,
+the optional split, and settings access while the Projects view is showing (use the Chats view or the
 existing shortcut).
 
 ## 2026-09-20 - 037 self-extension: update, list, remove, Desktop path; ready for human test
