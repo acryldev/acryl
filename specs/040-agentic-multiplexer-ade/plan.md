@@ -59,7 +59,9 @@ specs/040-agentic-multiplexer-ade/
 ├── plan.md              (this file)
 ├── research.md          (not yet written — open questions in spec.md feed it)
 ├── data-model.md         (not yet written — Tile/Pane/PTY-session shape, extending specs/015's)
-├── tasks.md              (not yet written — do not write until open questions 1-5 in spec.md are resolved)
+├── design/               (UX prototypes, decisions, cordis-mini-design.md for slice 1)
+├── parity-plan.md        (Orca/Nimbalyst feature parity, decisions of 2026-09-24)
+├── tasks.md              (slice 1 only; written 2026-09-24. Open question 2 (session/phase seam) is still open and blocks the rail and attention queue, not slice 1)
 ```
 
 ### Source code — Scope A (first-party, inside this workspace — corrected 2026-09-23)
