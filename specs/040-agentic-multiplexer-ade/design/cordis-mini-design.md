@@ -87,12 +87,12 @@ Security notes for the Host routes (loopback is not a sandbox):
 
 Loader rows: `id` equals package name for both new packages (`acryl-git`, `acryl-tab-diff`), per the repo rule. Neither is a deliberately shared multi-provider slot, so no exception applies. Both rows are added in advanced mode only, next to the existing `acryl-workspace` row in `apps/acryl-desktop/src/profile.ts`.
 
-User-facing toggling: reuse the existing Plugin Lifecycle mechanism (`desktop.pluginLifecycle` slot and `pluginLifecyclePatches`) rather than building a second enable/disable system. A "Workspace > Tab types" settings page is a thin `settings.section` (same slot `acryl-shortcuts` uses) that lists registered tab types and links each to its lifecycle row. T003 verifies this is workable before any UI is built.
+User-facing toggling: reuse the existing Plugin Lifecycle mechanism rather than building a second enable/disable system (verified in T003, see [research.md](../research.md)). Toggles apply live and persist in the shared profile override file. The one requirement is that `include:acryl-git` and `include:acryl-tab-diff` are added to `MANAGED_PLUGIN_LIFECYCLE_ENTRIES`; `acryl-workspace` stays protected on purpose. A friendlier "Tab types" page is deferred and would only be a view over the same controller.
 
 ## 5. Events and durability
 
 - No new Cordis events in this slice. State flows through the registry's `subscribe` and through fetches.
-- Line comments (slice 1b) are a durable, model-visible fact, so per guide section 48 they must not live only in a live event or component state. Design: a comment is delivered to the agent as an ordinary user message in the session, carrying a structured header (file, side, line range, base ref). The session log is then the durable record, and no second store is introduced. How a Client plugin appends a message to the current session is unconfirmed (T002); until then this section is a hypothesis.
+- Line comments (slice 1b) are a durable, model-visible fact, so per guide section 48 they must not live only in a live event or component state. Design: a comment is delivered to the agent as an ordinary user message in the session, carrying a structured header (file, side, line range, base ref). The session log is then the durable record, and no second store is introduced. Confirmed in T002: a Client plugin injects `sessions` and calls `sessionOf(scope(id)).prompt(...)`, so the session log is the durable record.
 - Diff tab view state (selected file, scroll) is ephemeral UI state and may be lost on reload. Tab groups persistence belongs to the per-worktree slice, not this one.
 
 ## 6. Verification
@@ -116,7 +116,7 @@ The git Host tests use a real temporary repository with two worktrees, created i
 
 ## Risks and unknowns
 
-1. **Client-to-Client service seam**: `acryl-shortcuts` proves `ctx.provide` plus `inject` on the Client, but PENDING and reactivation across two Client plugins is not yet demonstrated for this repo (T001).
-2. **Session write seam** for line comments is unconfirmed (T002). If a Client plugin cannot append a session message, comments need a Host route through `acryl-control`, which changes the design of slice 1b.
+1. ~~Client-to-Client service seam~~ Resolved in T001: PENDING and reactivation demonstrated on real Cordis 4.0.2; T032 asserts it through the real Loader.
+2. ~~Session write seam~~ Resolved in T002: `ctx.sessions`, no Host route needed. Still to confirm in T041: the current-selection accessor outside React.
 3. **Web surface**: `acryl-web` has no advanced shell, so the tab layout is Desktop-only for now; `acryl-git` itself has no such limit.
 4. **Copied logic**: the comment anchor and range math candidate (Orca `diff-comment-line-range.ts`) must be read before adoption, kept under an upstream provenance header, and covered by `THIRD_PARTY_NOTICES.md` (already in place).

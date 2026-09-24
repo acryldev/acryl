@@ -7,9 +7,9 @@ Conventions: `[P]` can run in parallel with its phase peers. Every task ends wit
 
 ## Phase 0: spikes (answer the unknowns before designing further)
 
-- [ ] **T001** Spike: prove a Client plugin can provide a service via `ctx.provide` that a second Client plugin injects, that the consumer goes PENDING when the provider is absent, and reactivates when it appears. Model on `plugins/acryl-shortcuts`. Output: a short note appended to the mini-design and a passing throwaway test.
-- [ ] **T002** [P] Spike: find how a Client plugin can append a user message to the current session (`dsh-client-ui-session`, `dsh-api-session-controller`). Output: the exact call, or a finding that it needs a Host route through `acryl-control`. Gates T041.
-- [ ] **T003** [P] Spike: read how the Plugin Lifecycle tab (`desktop.pluginLifecycle`, `pluginLifecyclePatches`) toggles Loader rows, and whether a "Workspace > Tab types" `settings.section` can drive it. Output: yes/no with the extension point.
+- [x] **T001** Spike: prove a Client plugin can provide a service via `ctx.provide` that a second Client plugin injects, that the consumer goes PENDING when the provider is absent, and reactivates when it appears. Model on `plugins/acryl-shortcuts`. Output: see [research.md](./research.md). Done 2026-09-24: PENDING, reactivation and disposal proven on real Cordis 4.0.2. T032 still asserts it through the real Loader.
+- [x] **T002** [P] Spike: find how a Client plugin can append a user message to the current session (`dsh-client-ui-session`, `dsh-api-session-controller`). Output: the exact call, or a finding that it needs a Host route through `acryl-control`. Done: `ctx.sessions` (inject `sessions`) then `sessionOf(scope(id)).prompt(...)`; no Host route needed. See research.md.
+- [x] **T003** [P] Spike: read how the Plugin Lifecycle tab (`desktop.pluginLifecycle`, `pluginLifecyclePatches`) toggles Loader rows, and whether a "Workspace > Tab types" `settings.section` can drive it. Done: yes, live, but new rows must be added to `MANAGED_PLUGIN_LIFECYCLE_ENTRIES`. See research.md.
 
 ## Phase 1: the `workspaceTabs` registry (in `acryl-workspace`)
 
@@ -29,12 +29,12 @@ Conventions: `[P]` can run in parallel with its phase peers. Every task ends wit
 - [ ] **T030** Scaffold `plugins/acryl-tab-diff`, row id `acryl-tab-diff`, registered in the workspace file and layout check. Registers tab type `diff` inside one `ctx.effect`; hard-injects `workspaceTabs` and `acrylGit`.
 - [ ] **T031** Diff tab UI: pick a worktree and a changed file, render the unified diff with add and remove lines from real data, using `@acryl/ui` components. Remove the pasted-text `diffBefore` and `diffAfter` fields from `acryl-workspace` state, with a migration note in the commit message.
 - [ ] **T032** Lifecycle tests with a real Loader: PENDING without `acryl-git`, reactivation when it appears, disable and re-enable restores an open tab, no duplicate registrations after 10 reloads.
-- [ ] **T033** Add both rows to `apps/acryl-desktop/src/profile.ts` in advanced mode; verify a headless boot (no graphical launch without your say-so).
+- [ ] **T033** Add both rows to `apps/acryl-desktop/src/profile.ts` in advanced mode, and add both entries (`include:acryl-git`, `include:acryl-tab-diff`) to `MANAGED_PLUGIN_LIFECYCLE_ENTRIES` in `apps/acryl-desktop/src/plugin-lifecycle-state.ts` so the Lifecycle tab can toggle them (otherwise they show as protected). Update the profile and lifecycle specs that assert those lists. Verify a headless boot (no graphical launch without your say-so).
 
 ## Phase 4: line comments to the agent
 
 - [ ] **T040** Read Orca `components/diff-comments/diff-comment-line-range.ts` and decide adopt or rewrite. If adopted: provenance header naming the upstream path, confirm the copyright line in `THIRD_PARTY_NOTICES.md`, unit tests for range math. UI: select a line or range in the diff, write a comment.
-- [ ] **T041** Deliver the comment to the agent as a durable session message with a structured header (file, side, line range, base ref), using the seam found in T002. Test that the message reaches the session log.
+- [ ] **T041** Deliver the comment to the agent as a durable session message with a structured header (file, side, line range, base ref), through `ctx.sessions` as found in T002 (`prompt` with `queue` as the default mode, optional `beginSubmission` echo). Confirm the current-selection accessor outside React. Test that the message reaches the session log.
 
 ## Phase 5: optional split (decision 1)
 
