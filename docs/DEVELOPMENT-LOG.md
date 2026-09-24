@@ -1,3 +1,24 @@
+## 2026-09-24 - 040 correction: the right pane had no host in the advanced frame
+
+Commits: `3ed6149a92cfb1c481491fcfcc75f7d68685cf4d`, `fbc6ea3d05acf4cd9d30d2f0d368e16c5435b920`
+
+The entry below ("left, center and right panes ready for human test") said the right pane loads in advanced
+mode. That was wrong. It was based on the upstream `ui-sidebar-right` Loader row being enabled, which is not the
+same as the panel having somewhere to render. The right sidebar registers its panel into a `rightbar` slot that
+only DSH's own layout package declares and renders; the advanced shell disables that package and its frame
+declared a `details` slot that nothing registers into. Clicking the corner button marked the panel open (which
+hides the button) and nothing appeared. Found from the user's console paste and by comparing with the original DSH
+desktop.
+
+Fixed by hosting `rightbar` in the frame the way DSH does: owner props `{ width, viewportWidth, canShow }`,
+`layout.openRightbar(track, fullscreen)` and `closeRightbar()` as the panel's presentation report, 400px protected
+for the conversation, docked when it fits and fullscreen when it does not. The frame decision is a pure,
+tested function (`solveFrame`). Also in this pass: picking a branch now opens that worktree's chat, and the
+Projects tab has a + to add a git project (folder chooser, git-repository check, registered as a workspace).
+
+Lesson kept: "the row is enabled" does not show a feature works. Check that every slot a plugin registers into is
+declared and rendered by the frame that is actually in use.
+
 ## 2026-09-24 - 040 ADE shell: left, center and right panes ready for human test
 
 Commits: `e941635cb0a7b11b7d2092acc9a07c8db502f9d5`, `856c923a8698e58d16c573e7eb54a2246dd67e29`, `333183337262cd4c5c6a5b1ba9257492299fd177`, `b05b88b0dde78250028f998316f58bc40c9890fd`, `a4efaf89fcaa544720f8810f2666d7f34e85fabb`, `f166cc7b6bbcd4c794a69367146db2e3fe1689f1`
