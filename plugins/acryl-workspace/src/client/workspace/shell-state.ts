@@ -214,6 +214,13 @@ export class WorkspaceShellState {
       repos: Object.freeze(repos),
       selectedPath: selectedGone ? undefined : this.snapshot.selectedPath,
     })
+    // A worktree seen for the first time gets its status now, so its dot does not sit on "loading"
+    // until the next poll tick.
+    for (const worktree of worktrees) {
+      if (previous?.worktrees.some(before => before.path === worktree.path) !== true) {
+        void this.refreshStatus(worktree.path)
+      }
+    }
   }
 
   private patchWorktree(path: string, patch: Partial<WorktreeState>): void {
