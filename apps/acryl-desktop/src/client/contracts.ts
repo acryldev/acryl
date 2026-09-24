@@ -14,6 +14,12 @@ export interface DesktopSidebarOwnerProps {
   width: number
 }
 
+/** Left-pane surface interface offered by the desktop advanced frame. */
+export interface DesktopSidebarSurfaceOwnerProps extends DesktopSidebarOwnerProps {
+  /** Render the upstream sidebar (brand, sessions, settings) inside a contribution that wraps it. */
+  renderUpstream(): ReactNode
+}
+
 /** Public panel transitions consumed by conversation and sidebar plugins. */
 export interface DesktopLayoutService {
   /** Toggle the sidebar between wide and compact presentation. */
@@ -35,6 +41,8 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface SlotMap {
     /** Replaceable main surface inside the desktop advanced frame. */
     'desktop.main': { kind: 'single'; scope: 'root'; owner: DesktopMainOwnerProps }
+    /** Replaceable left-pane surface; by default it only renders the upstream `sidebar`. */
+    'desktop.sidebar': { kind: 'single'; scope: 'root'; owner: DesktopSidebarSurfaceOwnerProps }
     /** Upstream sidebar hosted by the desktop advanced frame. */
     'sidebar': { kind: 'single'; scope: 'root'; owner: DesktopSidebarOwnerProps }
     /** Unchanged upstream conversation surface. */

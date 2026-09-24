@@ -70,6 +70,33 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceDocHeading { margin: 0.6em 0 0.3em; font-weight: 700; }
 .dshWorkspaceDocList { margin: 0.3em 0; padding-left: 1.4em; }
 .dshWorkspaceDocParagraph { margin: 0.3em 0; }
+.dshWorkspaceSide { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; }
+.dshWorkspaceSideSwitch { display: flex; gap: 2px; margin: 8px 10px 4px; padding: 2px; border-radius: 8px; background: color-mix(in srgb, var(--dsw-alias-fg) 7%, transparent); flex: none; }
+.dshWorkspaceSideSwitch button { appearance: none; flex: 1; padding: 4px 0; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 500 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceSideSwitch button[aria-selected="true"] { background: var(--dsw-alias-bg-base); color: var(--dsw-alias-fg); box-shadow: 0 0 0 1px var(--dsw-alias-border-l2); }
+.dshWorkspaceSideChats { flex: 1; min-height: 0; }
+.dshWorkspaceSideChats[hidden] { display: none; }
+.dshWorkspaceSideProjects { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 8px 12px; }
+.dshWorkspaceSideEmpty { padding: 12px 6px; color: var(--dsw-alias-fg-l2); font: 12px/1.5 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceRepo { margin: 6px 0 10px; }
+.dshWorkspaceRepoName { margin: 0; padding: 4px 8px; color: var(--dsw-alias-fg-l2); font: 600 11px/1.4 ui-sans-serif, system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.dshWorkspaceWorktrees { list-style: none; margin: 0; padding: 0; }
+.dshWorkspaceWorktree { appearance: none; display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; text-align: left; font: 13px/1.3 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceWorktree:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
+.dshWorkspaceWorktree[aria-pressed="true"] { background: color-mix(in srgb, #4d6bfe 18%, transparent); box-shadow: inset 2px 0 0 #4d6bfe; }
+.dshWorkspaceWorktreeLabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshWorkspaceWorktreeSessions { flex: none; min-width: 16px; padding: 0 5px; border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-fg) 12%, transparent); color: var(--dsw-alias-fg-l2); font: 600 10px/16px ui-sans-serif, system-ui, sans-serif; text-align: center; }
+.dshWorkspaceWorktreeStat { flex: none; color: var(--dsw-alias-fg-l2); font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dshWorkspaceWorktreeStat [data-kind="add"] { color: #4ade80; }
+.dshWorkspaceWorktreeStat [data-kind="remove"] { color: #f87171; }
+.dshWorkspaceDot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #6b7280; }
+.dshWorkspaceDot[data-dot="running"] { background: #4d6bfe; animation: dshWorkspacePulse 1.6s ease-in-out infinite; }
+.dshWorkspaceDot[data-dot="done"] { background: #4ade80; }
+.dshWorkspaceDot[data-dot="dirty"] { background: #f5b942; }
+.dshWorkspaceDot[data-dot="clean"] { background: color-mix(in srgb, #4ade80 55%, transparent); }
+.dshWorkspaceDot[data-dot="error"] { background: #f87171; }
+.dshWorkspaceDot[data-dot="loading"] { background: #6b7280; opacity: .5; }
+@keyframes dshWorkspacePulse { 50% { opacity: .35; } }
 `
 
 /** Install styles owned by one Workspace Client Fiber. */

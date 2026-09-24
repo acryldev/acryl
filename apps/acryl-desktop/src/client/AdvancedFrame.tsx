@@ -17,7 +17,7 @@ export interface AdvancedFrameInjected {
 
 /** Full advanced root slot props. */
 export type AdvancedFrameProps = PropsRuntime<'root'>
-  & PropsRenderSlots<'desktop.main' | 'sidebar' | 'conversation' | 'details' | 'shell.overlay'>
+  & PropsRenderSlots<'desktop.main' | 'desktop.sidebar' | 'sidebar' | 'conversation' | 'details' | 'shell.overlay'>
   & AdvancedFrameInjected
 
 /** Desktop-owned transparent frame around the unchanged product surfaces. */
@@ -109,7 +109,11 @@ export function AdvancedFrame({ layout, platform, renderSlot, useSessions, Sessi
       {platform === 'win32' && <div className="dshDesktopWindowsCaptionRow" aria-hidden="true" />}
       <aside className="dshDesktopSidebarSurface">
         <div className="dshDesktopUpstreamSidebar" data-acryl-slot="sidebar">
-          {renderSlot('sidebar', { collapsed, width: sidebarOwnerWidth })}
+          {renderSlot('desktop.sidebar', {
+            collapsed,
+            width: sidebarOwnerWidth,
+            renderUpstream: () => renderSlot('sidebar', { collapsed, width: sidebarOwnerWidth }),
+          })}
         </div>
       </aside>
       <main className="dshDesktopConversationSurface" data-acryl-slot="desktop.main">

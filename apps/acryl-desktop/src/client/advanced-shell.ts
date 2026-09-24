@@ -1,6 +1,6 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
-import type { DesktopMainOwnerProps } from './contracts.ts'
+import type { DesktopMainOwnerProps, DesktopSidebarSurfaceOwnerProps } from './contracts.ts'
 import type { DesktopClientEnvironment } from './environment.ts'
 import { AdvancedFrame } from './AdvancedFrame.tsx'
 import { DesktopLayoutState } from './layout-state.ts'
@@ -10,6 +10,10 @@ import { DesktopThemePresenter } from './theme-presenter.ts'
 
 function DefaultDesktopMain({ renderConversation }: DesktopMainOwnerProps) {
   return renderConversation()
+}
+
+function DefaultDesktopSidebar({ renderUpstream }: DesktopSidebarSurfaceOwnerProps) {
+  return renderUpstream()
 }
 
 /**
@@ -44,6 +48,11 @@ export function applyAdvancedShell(ctx: ClientContext, environment: DesktopClien
     priority: 100,
   }, DefaultDesktopMain))
 
+  ctx.slots.inject('desktop.sidebar', () => ctx.slots.register({
+    name: 'desktop.sidebar',
+    priority: 100,
+  }, DefaultDesktopSidebar))
+
   ctx.effect(() => {
     const presenter = new DesktopThemePresenter()
     presenter.apply(ctx.theme.getTheme())
@@ -58,6 +67,7 @@ export function applyAdvancedShell(ctx: ClientContext, environment: DesktopClien
     name: 'root',
     children: {
       'desktop.main': { kind: 'single', scope: 'root' },
+      'desktop.sidebar': { kind: 'single', scope: 'root' },
       'sidebar': { kind: 'single', scope: 'root' },
       'conversation': { kind: 'single', scope: 'session-maybe' },
       'details': { kind: 'single', scope: 'session' },
