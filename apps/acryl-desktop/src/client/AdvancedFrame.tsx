@@ -1,11 +1,8 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { PropsRenderSlots, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from './contracts.ts'
 import type { DesktopClientPlatform } from './environment.ts'
-import {
-  computeDesktopColumns, DesktopLayoutState, MACOS_SIDEBAR_COLLAPSED,
-  SIDEBAR_AUTO_COLLAPSE, SIDEBAR_COLLAPSED, SIDEBAR_DEFAULT,
-} from './layout-state.ts'
+import { DesktopLayoutState, MACOS_SIDEBAR_COLLAPSED, SIDEBAR_COLLAPSED, solveFrame } from './layout-state.ts'
 
 /** Private values assembled by the advanced-shell registration. */
 export interface AdvancedFrameInjected {
@@ -17,30 +14,30 @@ export interface AdvancedFrameInjected {
 
 /** Full advanced root slot props. */
 export type AdvancedFrameProps = PropsRuntime<'root'>
-  & PropsRenderSlots<'desktop.main' | 'desktop.sidebar' | 'sidebar' | 'conversation' | 'details' | 'shell.overlay'>
+  & PropsRenderSlots<'desktop.main' | 'desktop.sidebar' | 'sidebar' | 'conversation' | 'rightbar' | 'shell.overlay'>
   & AdvancedFrameInjected
 
 /** Desktop-owned transparent frame around the unchanged product surfaces. */
-export function AdvancedFrame({ layout, platform, renderSlot, useSessions, SessionProvider }: AdvancedFrameProps) {
+export function AdvancedFrame({ layout, platform, renderSlot, SessionProvider }: AdvancedFrameProps) {
   const subscribeLayout = useCallback((listener: () => void) => layout.subscribe(listener), [layout])
   const readLayout = useCallback(() => layout.getSnapshot(), [layout])
   const panels = useSyncExternalStore(subscribeLayout, readLayout)
   const frameRef = useRef<HTMLDivElement>(null)
   const [viewport, setViewport] = useState(() => window.innerWidth)
-  const detailsSession = useSessions((state) => {
-    const current = state.current
-    return current !== undefined && state.byId[current]?.blank === false ? current : undefined
-  })
 
   useEffect(() => {
     const element = frameRef.current
     if (element === null) return
+    layout.setViewport(element.getBoundingClientRect().width)
     let raf: number | null = null
     const observer = new ResizeObserver(() => {
       raf ??= requestAnimationFrame(() => {
         raf = null
         const width = element.getBoundingClientRect().width
-        if (width > 0) setViewport(width)
+        if (width > 0) {
+          setViewport(width)
+          layout.setViewport(width)
+        }
       })
     })
     observer.observe(element)
@@ -50,31 +47,16 @@ export function AdvancedFrame({ layout, platform, renderSlot, useSessions, Sessi
     }
   }, [])
 
-  const narrow = viewport < SIDEBAR_AUTO_COLLAPSE
+  const railWidth = platform === 'darwin' ? MACOS_SIDEBAR_COLLAPSED : SIDEBAR_COLLAPSED
+  const { narrow, collapsed, normal, columns, rightbar } = solveFrame(viewport, panels, railWidth)
   useEffect(() => { layout.setNarrow(narrow) }, [layout, narrow])
-
-  const previousSession = useRef(detailsSession)
-  useLayoutEffect(() => {
-    if (detailsSession === undefined) return
-    if (previousSession.current !== undefined && previousSession.current !== detailsSession) {
-      layout.closeDetails()
-    }
-    previousSession.current = detailsSession
-  }, [detailsSession, layout])
-
-  const collapsed = narrow ? !panels.narrowExpanded : panels.sidebar === 0
-  const sidebarPreference = collapsed ? 0 : panels.sidebar === 0 ? SIDEBAR_DEFAULT : panels.sidebar
-  const columns = computeDesktopColumns(
-    viewport,
-    sidebarPreference,
-    detailsSession === undefined ? 0 : panels.details,
-    platform === 'darwin' ? MACOS_SIDEBAR_COLLAPSED : SIDEBAR_COLLAPSED,
-  )
   // macOS keeps a wider native rail around the centered upstream sidebar,
   // while the public owner contract still reports the rendered 56px rail.
   const sidebarOwnerWidth = collapsed ? SIDEBAR_COLLAPSED : columns.sidebar
   const columnsRef = useRef(columns)
   columnsRef.current = columns
+  const normalRef = useRef(normal)
+  normalRef.current = normal
 
   const sidebarBase = useRef(0)
   const detailsBase = useRef(0)
@@ -85,7 +67,7 @@ export function AdvancedFrame({ layout, platform, renderSlot, useSessions, Sessi
     setDragging(true)
   }, [])
   const onDetailsStart = useCallback(() => {
-    detailsBase.current = columnsRef.current.details
+    detailsBase.current = normalRef.current.details
     setDragging(true)
   }, [])
   const onSidebarDrag = useCallback((dx: number) => {
@@ -102,6 +84,7 @@ export function AdvancedFrame({ layout, platform, renderSlot, useSessions, Sessi
       data-desktop-platform={platform}
       data-sidebar-collapsed={collapsed || undefined}
       data-details-collapsed={columns.details === 0 || undefined}
+      data-details-fullscreen={panels.detailsFullscreen || undefined}
       data-dragging={dragging || undefined}
       style={{ gridTemplateColumns: `${columns.sidebar}px minmax(0, 1fr) ${columns.details}px` }}
     >
@@ -121,13 +104,15 @@ export function AdvancedFrame({ layout, platform, renderSlot, useSessions, Sessi
           renderConversation: () => <div data-acryl-slot="conversation">{renderSlot('conversation', {})}</div>,
         })}
       </main>
-      <aside className="dshDesktopDetailsSurface" data-acryl-slot="details">
+      <aside className="dshDesktopDetailsSurface" data-acryl-slot="rightbar">
         {/* Strict session entry: with no session there is no surface, and the
             column is an empty zero-width track (matches ui-layout's
             AppFrame/rightbar - SessionProvider withholds the strict entry
             while no session is current instead of rendering it into a
             scope with no binding, which throws SlotAssemblyError). */}
-        <SessionProvider>{renderSlot('details', {})}</SessionProvider>
+        <SessionProvider>
+          {renderSlot('rightbar', rightbar)}
+        </SessionProvider>
       </aside>
       <div className="dshDesktopOverlay" data-shell-overlay>
         {renderSlot('shell.overlay', {})}
@@ -141,10 +126,10 @@ export function AdvancedFrame({ layout, platform, renderSlot, useSessions, Sessi
           onEnd={onDragEnd}
         />
       )}
-      {columns.details > 0 && (
+      {panels.detailsShown && !panels.detailsFullscreen && normal.details > 0 && (
         <ResizeHandle
           side="details"
-          left={viewport - columns.details}
+          left={viewport - normal.details}
           onStart={onDetailsStart}
           onDrag={onDetailsDrag}
           onEnd={onDragEnd}

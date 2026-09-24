@@ -70,7 +70,7 @@ export function applyAdvancedShell(ctx: ClientContext, environment: DesktopClien
       'desktop.sidebar': { kind: 'single', scope: 'root' },
       'sidebar': { kind: 'single', scope: 'root' },
       'conversation': { kind: 'single', scope: 'session-maybe' },
-      'details': { kind: 'single', scope: 'session' },
+      'rightbar': { kind: 'single', scope: 'session' },
       'shell.overlay': { kind: 'list', scope: 'root' },
     },
     inject: () => ({ layout: desktopLayout, platform: environment.platform }),

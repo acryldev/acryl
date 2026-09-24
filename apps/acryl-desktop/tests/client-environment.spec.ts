@@ -4,7 +4,7 @@ import { apply } from '../src/client/index.ts'
 import { provideDesktopLayout } from '../src/client/layout-service.ts'
 import { parseDesktopClientEnvironment } from '../src/client/environment.ts'
 import {
-  computeDesktopColumns, DesktopLayoutState, MACOS_SIDEBAR_COLLAPSED, SIDEBAR_COLLAPSED,
+  computeDesktopColumns, DesktopLayoutState, MACOS_SIDEBAR_COLLAPSED, SIDEBAR_COLLAPSED, solveFrame,
 } from '../src/client/layout-state.ts'
 import { installAdvancedStyles } from '../src/client/styles.ts'
 import {
@@ -130,18 +130,93 @@ describe('advanced desktop layout', () => {
     expect(MACOS_SIDEBAR_COLLAPSED).toBe(90)
   })
 
-  it('publishes mirrored panel transitions', () => {
+  it('publishes the right panel transitions the upstream right sidebar reports', () => {
     const layout = new DesktopLayoutState()
+    layout.setViewport(1440)
     const snapshots: object[] = []
     layout.subscribe(() => { snapshots.push(layout.getSnapshot()) })
     layout.toggleSidebar()
-    layout.openDetails()
-    layout.closeDetails()
+    layout.openRightbar(true, false)
+    layout.closeRightbar()
     expect(snapshots).toEqual([
-      { sidebar: 0, details: 0, narrow: false, narrowExpanded: false },
-      { sidebar: 0, details: 360, narrow: false, narrowExpanded: false },
-      { sidebar: 0, details: 0, narrow: false, narrowExpanded: false },
+      { sidebar: 0, details: 0, narrow: false, narrowExpanded: false, detailsShown: false, detailsTrack: false, detailsFullscreen: false },
+      { sidebar: 0, details: 648, narrow: false, narrowExpanded: false, detailsShown: true, detailsTrack: true, detailsFullscreen: false },
+      { sidebar: 0, details: 648, narrow: false, narrowExpanded: false, detailsShown: false, detailsTrack: false, detailsFullscreen: false },
     ])
+  })
+
+  it('ignores a repeated report and a close while already closed', () => {
+    const layout = new DesktopLayoutState()
+    let count = 0
+    layout.subscribe(() => { count += 1 })
+    layout.closeRightbar()
+    layout.openRightbar(true, false)
+    layout.openRightbar(true, false)
+    layout.closeRightbar()
+    layout.closeRightbar()
+    expect(count).toBe(2)
+  })
+
+  it('keeps the compatibility names working', () => {
+    const layout = new DesktopLayoutState()
+    layout.openDetails()
+    expect(layout.getSnapshot()).toMatchObject({ detailsShown: true, detailsTrack: true, detailsFullscreen: false })
+    layout.closeDetails()
+    expect(layout.getSnapshot()).toMatchObject({ detailsShown: false })
+  })
+
+  it('opens fullscreen without a docked track when the window is too small to dock', () => {
+    const layout = new DesktopLayoutState()
+    layout.setViewport(700)
+    layout.openRightbar(false, true)
+    expect(layout.getSnapshot()).toMatchObject({ detailsShown: true, detailsTrack: false, detailsFullscreen: true })
+  })
+
+  it('limits and remembers the panel width the user drags to', () => {
+    const layout = new DesktopLayoutState()
+    layout.setViewport(1000)
+    layout.setDetails(50)
+    expect(layout.getSnapshot().details).toBe(300)
+    layout.setDetails(5000)
+    expect(layout.getSnapshot().details).toBe(700)
+    layout.setDetails(420)
+    expect(layout.getSnapshot().details).toBe(420)
+  })
+
+  it('solves columns like upstream DSH: 400px protected for the conversation, panel shrinks or drops', () => {
+    // Room: 1440 - 280 - 400 = 760, so a 648px request fits.
+    expect(computeDesktopColumns(1440, 280, 648)).toEqual({ sidebar: 280, center: 512, details: 648 })
+    // Narrower: 1000 - 280 - 400 = 320 available, request 450 is cut to 320.
+    expect(computeDesktopColumns(1000, 280, 450)).toEqual({ sidebar: 280, center: 400, details: 320 })
+    // No room for even the 300px minimum beside an expanded sidebar: no docked track.
+    expect(computeDesktopColumns(900, 280, 405)).toEqual({ sidebar: 280, center: 620, details: 0 })
+    // With the sidebar on its rail the same window does have room.
+    expect(computeDesktopColumns(900, 0, 405, MACOS_SIDEBAR_COLLAPSED)).toEqual({ sidebar: 90, center: 405, details: 405 })
+    // A request of 0 means no track at all.
+    expect(computeDesktopColumns(1440, 280, 0).details).toBe(0)
+  })
+
+  it('tells the right panel the room it would have docked, so it can choose docked or fullscreen', () => {
+    const closed = new DesktopLayoutState().getSnapshot()
+    // 1400 window, 280 sidebar, 400 protected center: 720 available; the default request is 45% = 630.
+    expect(solveFrame(1400, closed, SIDEBAR_COLLAPSED).rightbar).toEqual({ width: 630, viewportWidth: 1400, canShow: true })
+    // Closed panels get no grid column.
+    expect(solveFrame(1400, closed, SIDEBAR_COLLAPSED).columns.details).toBe(0)
+    // A narrow window folds the sidebar to its rail, which is what makes room for the panel.
+    expect(solveFrame(900, closed, SIDEBAR_COLLAPSED).rightbar.canShow).toBe(true)
+    // Below the rail's own limit there is no docked room: the panel must go fullscreen.
+    expect(solveFrame(700, closed, SIDEBAR_COLLAPSED).rightbar).toEqual({ width: 0, viewportWidth: 700, canShow: false })
+  })
+
+  it('gives the panel a grid column only when it asks to be docked, and none while fullscreen', () => {
+    const layout = new DesktopLayoutState()
+    layout.setViewport(1400)
+    layout.openRightbar(true, false)
+    expect(solveFrame(1400, layout.getSnapshot(), SIDEBAR_COLLAPSED).columns).toEqual({ sidebar: 280, center: 490, details: 630 })
+    layout.openRightbar(false, true)
+    expect(solveFrame(1400, layout.getSnapshot(), SIDEBAR_COLLAPSED).columns.details).toBe(0)
+    layout.closeRightbar()
+    expect(solveFrame(1400, layout.getSnapshot(), SIDEBAR_COLLAPSED).columns.details).toBe(0)
   })
 
   it('lets the rail re-expand without losing its wide preference on narrow windows', () => {

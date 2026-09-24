@@ -20,13 +20,26 @@ export interface DesktopSidebarSurfaceOwnerProps extends DesktopSidebarOwnerProp
   renderUpstream(): ReactNode
 }
 
-/** Public panel transitions consumed by conversation and sidebar plugins. */
+/** What the frame tells the right panel: the room it would get if docked, and the window width. */
+export interface DesktopRightbarOwnerProps {
+  /** Width of the docked panel if it were shown now (0 when there is no room). */
+  width: number
+  viewportWidth: number
+  /** Whether the docked presentation fits; when it does not, the panel closes or goes fullscreen. */
+  canShow: boolean
+}
+
+/** Public panel transitions consumed by conversation and sidebar plugins. Mirrors upstream `ILayout`. */
 export interface DesktopLayoutService {
   /** Toggle the sidebar between wide and compact presentation. */
   toggleSidebar(): void
-  /** Open the current session's details panel. */
+  /** The right panel is open: dock it in its own column (`track`), or let it cover the window. */
+  openRightbar(track: boolean, fullscreen: boolean): void
+  /** The right panel is closed. */
+  closeRightbar(): void
+  /** Compatibility: open the right panel docked. */
   openDetails(): void
-  /** Close the details panel. */
+  /** Compatibility: close the right panel. */
   closeDetails(): void
 }
 
@@ -47,8 +60,8 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
     'sidebar': { kind: 'single'; scope: 'root'; owner: DesktopSidebarOwnerProps }
     /** Unchanged upstream conversation surface. */
     'conversation': { kind: 'single'; scope: 'session-maybe'; owner: Record<never, never> }
-    /** Unchanged upstream details surface. */
-    'details': { kind: 'single'; scope: 'session'; owner: Record<never, never> }
+    /** The right panel, hosted like upstream DSH's `rightbar`: the right sidebar registers here. */
+    'rightbar': { kind: 'single'; scope: 'session'; owner: DesktopRightbarOwnerProps }
     /** Frame-wide additive overlays. */
     'shell.overlay': { kind: 'list'; scope: 'root' }
   }
