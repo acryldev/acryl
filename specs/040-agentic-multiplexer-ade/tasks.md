@@ -5,6 +5,26 @@
 
 Conventions: `[P]` can run in parallel with its phase peers. Every task ends with a green `corepack pnpm run check` for the packages it touched and a focused commit, on `main`, explicit `git add` paths.
 
+## Progress ledger (2026-09-24)
+
+The three-pane shell was built in one run, aggregating into `acryl-workspace` as directed (git Host service in the
+same package, no separate `acryl-git`). Status against the tasks below:
+
+| Task | Status | Note |
+|---|---|---|
+| T001-T003 | done | See `research.md` |
+| T010-T012 registry | not built | The right pane uses upstream's existing `sidebarRightTabs` registry; canvas tile kinds stay in-package. Revisit when a second tab type wants to live outside the package |
+| T020-T023 git service | done, in `acryl-workspace` | `src/workspace-git*.ts`, client `git-api.ts`; tested against real temporary repositories incl. disposal |
+| T030-T032 `acryl-tab-diff` | partly | The diff tile reads real git data (`GitDiffPane`) but lives in-package; the manual before/after mode is kept for a plain New Diff tab |
+| T033 profile rows and lifecycle allowlist | n/a for now | No new packages, so no new Loader rows |
+| T040-T041 line comments | not started | |
+| T050 optional split | not started | |
+| T060 spec ledger | done | `spec.md` status and tile-kind statement corrected |
+| T061 dev log | done | 2026-09-24 entry |
+
+Also built and not in the original list: the `desktop.sidebar` slot and Chats | Projects left pane, per-worktree tab
+groups in the canvas, and worktree-scoped PTY start (`cwd`).
+
 ## Phase 0: spikes (answer the unknowns before designing further)
 
 - [x] **T001** Spike: prove a Client plugin can provide a service via `ctx.provide` that a second Client plugin injects, that the consumer goes PENDING when the provider is absent, and reactivates when it appears. Model on `plugins/acryl-shortcuts`. Output: see [research.md](./research.md). Done 2026-09-24: PENDING, reactivation and disposal proven on real Cordis 4.0.2. T032 still asserts it through the real Loader.

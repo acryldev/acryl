@@ -1,3 +1,37 @@
+## 2026-09-24 - 040 ADE shell: left, center and right panes ready for human test
+
+Commits: `e941635cb0a7b11b7d2092acc9a07c8db502f9d5`, `856c923a8698e58d16c573e7eb54a2246dd67e29`, `333183337262cd4c5c6a5b1ba9257492299fd177`, `b05b88b0dde78250028f998316f58bc40c9890fd`, `a4efaf89fcaa544720f8810f2666d7f34e85fabb`, `f166cc7b6bbcd4c794a69367146db2e3fe1689f1`
+
+The advanced desktop now has all three parts of the multiplexer shell, built on the decisions recorded in
+`specs/040-agentic-multiplexer-ade/parity-plan.md` and verified headless (package check, desktop typecheck and
+851 tests, `verify:closure`, `verify:profile`, `verify:loader`). It has not been driven in a real window by the
+agent; that is the human test.
+
+- **Host**: read-only git routes in `acryl-workspace` (`/api/acryl-workspace/git/{repo,status,diff}`), run through
+  `execFile` with argument arrays, timeout and output cap, same-origin checked, disposed with the Host effect.
+  Findings worth keeping: `git status` polling must run with `GIT_OPTIONAL_LOCKS=0` or it can take the index lock an
+  agent's own git call needs; and `execFile`'s callback fires as soon as an abort is requested, before the process has
+  exited, so disposal must wait on the child's `close` event (a killed process is a zombie until then). PTY start also
+  accepts an optional validated `cwd`, so a terminal or agent opened in a branch starts in that worktree.
+- **Left pane**: the advanced frame gains a replaceable `desktop.sidebar` slot (default renders the unchanged upstream
+  sidebar, mirroring `desktop.main`). `acryl-workspace` contributes a Chats | Projects switch that keeps the upstream
+  sidebar mounted, and a Projects list of every repository and worktree behind the open chat sessions. Status dots come
+  from real state (session `running` and `completed` flags, else uncommitted changes, else clean), which settles spec
+  040 open question 2 for this slice.
+- **Right pane**: not a new panel. Upstream already ships a docking right sidebar with a tab-type registry
+  (`ctx.sidebarRightTabs`) and a Files tab. A `changes` tab type registers through that public path as a
+  dependency-gated child plugin (PENDING, not failed, without the upstream sidebar), tested against real Cordis.
+- **Center**: one tab workspace per selected worktree (tabs of the branch you left keep running), the branch shown in
+  the tab strip, and a diff tile that renders the real unified diff with line numbers and refetches when git's view of
+  the file changes.
+
+Deliberate deviations from `design/cordis-mini-design.md`, per the direction to aggregate into bigger plugins and
+detach later: the git service lives inside `acryl-workspace` (files under `src/workspace-git*.ts`) instead of a new
+`acryl-git` package, and the `workspaceTabs` registry was not built, because the right pane's registry already exists
+upstream and the canvas tile kinds stay in-package for now. Not built yet: Review and Checks tabs, line comments to
+the agent, the optional split, and settings access while the Projects view is showing (use the Chats view or the
+existing shortcut).
+
 ## 2026-09-20 - 037 self-extension: update, list, remove, Desktop path; ready for human test
 
 Commits: `6dd728c90a798d95f22e9aa8ddc90c3e010cc1a0`, `1aaeb877d0d700abf0600f0f5be94d2a1c453a71`, `501827f0add6498d8cdf8da7e5057fbe53d80486`

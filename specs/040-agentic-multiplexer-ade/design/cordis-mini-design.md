@@ -120,3 +120,23 @@ The git Host tests use a real temporary repository with two worktrees, created i
 2. ~~Session write seam~~ Resolved in T002: `ctx.sessions`, no Host route needed. Still to confirm in T041: the current-selection accessor outside React.
 3. **Web surface**: `acryl-web` has no advanced shell, so the tab layout is Desktop-only for now; `acryl-git` itself has no such limit.
 4. **Copied logic**: the comment anchor and range math candidate (Orca `diff-comment-line-range.ts`) must be read before adoption, kept under an upstream provenance header, and covered by `THIRD_PARTY_NOTICES.md` (already in place).
+
+## Implementation notes (2026-09-24)
+
+What was built differs from the sections above in four places, all in the direction of fewer packages:
+
+1. **Git in `acryl-workspace`.** The read-only git Host service and its Client API live in the existing package
+   (`src/workspace-git*.ts`, `src/client/workspace/git-api.ts`), not a new `acryl-git`. The seam is the same: the Host
+   owns child processes and disposes them with its effect, and the Client talks to same-origin routes. Detach it into its
+   own package if a second consumer or a second provider appears.
+2. **No `workspaceTabs` registry yet.** The right pane is filled through upstream's existing tab-type registry
+   (`ctx.sidebarRightTabs`) as a dependency-gated child plugin, so it already has the PENDING and reactivation behavior
+   this design asked for, and the canvas tile kinds remain in-package.
+3. **Left pane through a slot.** The advanced frame declares `desktop.sidebar` (default: upstream sidebar unchanged) and
+   `acryl-workspace` contributes at priority 0, so disabling the plugin restores the default with no other change.
+4. **Session state as the status source.** Status dots read the session list's `running` and `completed` flags plus git
+   status, which resolves the "which real seam backs status" question for this slice.
+
+Verification that exists: real-repository tests for the git service (including abort-and-reap disposal), pure tests for
+the shell state, sidebar view-model, diff parser, tab groups and PTY `cwd`, and real-Cordis lifecycle tests for the Changes
+tab plugin. Not covered by automated tests: React rendering of the three panes, which needs a real window.
