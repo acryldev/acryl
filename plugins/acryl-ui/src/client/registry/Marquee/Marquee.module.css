@@ -1,0 +1,38 @@
+/**
+ * Marquee — scrolling text container.
+ * Styled on the app's own --dsw-alias-* tokens.
+ */
+.marquee {
+  overflow: hidden;
+  width: 100%;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.track {
+  display: inline-flex;
+  white-space: nowrap;
+}
+
+.track--scrolling {
+  animation: marquee-scroll linear infinite;
+}
+
+.track--paused {
+  animation-play-state: paused;
+}
+
+.content {
+  display: inline-block;
+  padding-right: 2rem;
+  color: var(--dsw-alias-label-primary);
+}
+
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}

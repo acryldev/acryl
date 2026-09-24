@@ -1,0 +1,91 @@
+/**
+ * Tree — hierarchical tree view.
+ * Styled on the app's own --dsw-alias-* tokens.
+ */
+.tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: default;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--dsw-alias-label-primary);
+  transition: background 0.1s ease;
+}
+
+.row:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--dsw-alias-label-tertiary);
+  padding: 0;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.toggle:hover {
+  color: var(--dsw-alias-label-primary);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--acryl-accent);
+  outline-offset: 1px;
+}
+
+.toggle--expanded {
+  transform: rotate(90deg);
+}
+
+.spacer {
+  display: inline-block;
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  font-size: 14px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}

@@ -1006,6 +1006,68 @@
         "web"
       ]
     },
+    "Bento": {
+      "summary": "A bento-grid layout of styled tiles with configurable spans (inspired by common bento-grid patterns).",
+      "props": {
+        "items": {
+          "type": "BentoItem[]",
+          "required": true,
+          "description": "Tiles to display (id, children, optional colSpan/rowSpan/variant)."
+        },
+        "columns": {
+          "type": "2 | 3 | 4",
+          "description": "Number of columns in the grid."
+        }
+      },
+      "a11y": [
+        "no interactive role; purely presentational layout"
+      ],
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Marquee": {
+      "summary": "A scrolling/horizontal-sliding container for overflowing text (inspired by common marquee patterns).",
+      "props": {
+        "children": {
+          "type": "ReactNode",
+          "required": true,
+          "description": "Content to scroll."
+        },
+        "paused": {
+          "type": "boolean",
+          "description": "Whether the animation is paused (e.g. on hover)."
+        },
+        "duration": {
+          "type": "number",
+          "description": "Animation duration in seconds."
+        }
+      },
+      "a11y": [
+        "duplicate content uses aria-hidden to avoid redundant screen-reader output"
+      ],
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Tree": {
+      "summary": "A hierarchical tree view with expand/collapse (inspired by common tree view patterns).",
+      "props": {
+        "nodes": {
+          "type": "TreeNode[]",
+          "required": true,
+          "description": "Root nodes (id, label, optional children/icon/defaultExpanded)."
+        }
+      },
+      "a11y": [
+        "role=tree on root container",
+        "toggle buttons have aria-expanded and aria-label=Expand/Collapse",
+        "keyboard accessible via native button elements"
+      ],
+      "surfaces": [
+        "web"
+      ]
+    },
     "ValueField": {
       "summary": "A settings-style field bound to a text value, with an override badge and reset action.",
       "props": {

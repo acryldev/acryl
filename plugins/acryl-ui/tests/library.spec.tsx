@@ -43,6 +43,9 @@ import { Rating } from '../src/client/registry/Rating/Rating.tsx'
 import { Status } from '../src/client/registry/Status/Status.tsx'
 import { Choicebox } from '../src/client/registry/Choicebox/Choicebox.tsx'
 import { Stepper } from '../src/client/registry/Stepper/Stepper.tsx'
+import { Bento } from '../src/client/registry/Bento/Bento.tsx'
+import { Marquee } from '../src/client/registry/Marquee/Marquee.tsx'
+import { Tree } from '../src/client/registry/Tree/Tree.tsx'
 import { Announcement } from '../src/client/registry/Announcement/Announcement.tsx'
 import { Banner } from '../src/client/registry/Banner/Banner.tsx'
 import { Calendar } from '../src/client/registry/Calendar/Calendar.tsx'
@@ -929,6 +932,26 @@ describe('markup of the shadcnblocks-inspired components (spec 038-ui-component-
       <Stepper steps={[{ label: 'A' }, { label: 'B' }]} current={0} orientation="vertical" />
     )
     expect(html).toContain('A'); expect(html).toContain('B')
+  })
+
+  it('Bento renders tiles in a grid', () => {
+    const html = renderToStaticMarkup(
+      <Bento items={[{ id: 'a', children: 'Tile A' }, { id: 'b', children: 'Tile B' }]} />
+    )
+    expect(html).toContain('Tile A'); expect(html).toContain('Tile B')
+  })
+
+  it('Marquee renders content', () => {
+    const html = renderToStaticMarkup(<Marquee>Scrolling text</Marquee>)
+    expect(html).toContain('Scrolling text')
+  })
+
+  it('Tree renders hierarchical nodes', () => {
+    const html = renderToStaticMarkup(
+      <Tree nodes={[{ id: 'root', label: 'Root', defaultExpanded: true, children: [{ id: 'child', label: 'Child' }] }]} />
+    )
+    expect(html).toContain('Root'); expect(html).toContain('Child')
+    expect(html).toMatch(/role="tree"/u)
   })
 
   it('Rating renders the specified number of stars', () => {

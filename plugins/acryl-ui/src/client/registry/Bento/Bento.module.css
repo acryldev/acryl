@@ -1,0 +1,39 @@
+/**
+ * Bento — bento-grid layout of styled tiles.
+ * Styled on the app's own --dsw-alias-* tokens.
+ */
+.grid {
+  display: grid;
+  gap: 12px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-layer-1);
+  border: 1px solid var(--dsw-alias-border-l4);
+  box-sizing: border-box;
+  min-height: 80px;
+}
+
+.variant--accent {
+  background: color-mix(in oklab, var(--acryl-accent) 8%, var(--dsw-alias-bg-layer-0));
+  border-color: var(--acryl-accent);
+}
+
+.variant--subtle {
+  background: var(--dsw-alias-bg-layer-0);
+  border-color: var(--dsw-alias-border-l5);
+}
+
+/* Column spans */
+.col-span--2 { grid-column: span 2; }
+.col-span--3 { grid-column: span 3; }
+.row-span--2 { grid-row: span 2; }
+
+/* Column count */
+.columns--2 { grid-template-columns: repeat(2, 1fr); }
+.columns--3 { grid-template-columns: repeat(3, 1fr); }
+.columns--4 { grid-template-columns: repeat(4, 1fr); }

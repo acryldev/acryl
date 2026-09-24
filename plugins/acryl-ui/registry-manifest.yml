@@ -79,6 +79,18 @@ components:
     origin: inspired
     from: common multi-step workflow progress patterns
     changed: built on ACRYL's own --dsw-alias-* tokens; supports horizontal and vertical orientations; inline SVG checkmark for completed steps
+  - name: Bento
+    origin: inspired
+    from: common bento-grid layout patterns
+    changed: built on ACRYL's own --dsw-alias-* tokens; configurable column count, tile spans, and variants (default/accent/subtle)
+  - name: Marquee
+    origin: inspired
+    from: common scrolling text/carousel patterns
+    changed: built on ACRYL's own --dsw-alias-* tokens; uses CSS animation with ResizeObserver for overflow detection; only activates when content overflows
+  - name: Tree
+    origin: inspired
+    from: common hierarchical tree view patterns
+    changed: built on ACRYL's own --dsw-alias-* tokens; self-contained recursive implementation with expand/collapse chevron
   - name: Kbd
     origin: ported
     from: shadcn/ui registry item `kbd` (style new-york-v4), https://ui.shadcn.com/docs/components/kbd, MIT licence, fetched 2026-09-22
