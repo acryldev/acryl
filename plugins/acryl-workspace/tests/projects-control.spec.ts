@@ -46,11 +46,12 @@ interface World {
   readonly created: unknown[]
   readonly opened: string[]
   readonly workspaceCreates: { path: string }[]
+  readonly renames: { workspaceId: string; title: string }[]
 }
 
 function world(options: {
   sessions?: { id: string; cwd?: string; blank: boolean; updatedAt: number }[]
-  workspaces?: { workspaceId: string; path: string }[]
+  workspaces?: { workspaceId: string; path: string; title?: string }[]
   /** Session ids that belong to some workspace. */
   boundSessions?: string[]
   seams?: DirectorySeams
@@ -65,21 +66,28 @@ function world(options: {
   const created: unknown[] = []
   const opened: string[] = []
   const workspaceCreates: { path: string }[] = []
-  const items = (options.workspaces ?? []).map(w => ({ ...w, sessionIds: options.boundSessions ?? [] }))
+  const renames: { workspaceId: string; title: string }[] = []
+  const items = (options.workspaces ?? []).map(w => ({ title: w.path.split('/').pop() ?? w.path, ...w, sessionIds: options.boundSessions ?? [] }))
   const sessions = {
     list: { getSnapshot: () => ({ ids: rows.map(r => r.id), byId: Object.fromEntries(rows.map(r => [r.id, r])) }) },
     open: (id: string) => { opened.push(id) },
-    create: async (input: unknown) => {
+    create: async (input: { workspaceId?: string; cwd?: string }) => {
+      // The Host rejects a request that names both, so the fake does too.
+      if (input.workspaceId !== undefined && input.cwd !== undefined) throw new Error('session.create accepts workspaceId or cwd, not both')
       created.push(input)
       return options.createSession === undefined ? 'new-session' : options.createSession()
     },
   } as unknown as ISessions
   const workspaces = {
     list: { getSnapshot: () => ({ items }), subscribe: () => () => {} },
+    rename: async (workspaceId: string, title: string) => {
+      renames.push({ workspaceId, title })
+      return {}
+    },
     create: async (input: { path: string }) => {
       workspaceCreates.push(input)
       if (options.createWorkspace !== undefined) await options.createWorkspace()
-      const view = { workspaceId: `w${String(items.length)}`, path: input.path, sessionIds: [] as string[] }
+      const view = { workspaceId: `w${String(items.length)}`, path: input.path, title: input.path.split('/').pop() ?? input.path, sessionIds: [] as string[] }
       items.push(view)
       return view
     },
@@ -91,7 +99,7 @@ function world(options: {
     getSessions: () => (options.hasSessions === false ? undefined : sessions),
     directory: () => options.seams ?? { pickDirectory: async () => '/p/proj' },
   })
-  return { control, shell, created, opened, workspaceCreates }
+  return { control, shell, created, opened, workspaceCreates, renames }
 }
 
 describe('ProjectsControl.showChat', () => {
@@ -110,7 +118,7 @@ describe('ProjectsControl.showChat', () => {
     await w.shell.discover('/p/proj')
     expect(await w.control.showChat('/p/proj/.wt/x')).toEqual({ ok: true })
     expect(w.workspaceCreates).toEqual([{ path: '/p/proj/.wt/x' }])
-    expect(w.created).toEqual([{ cwd: '/p/proj/.wt/x', workspaceId: 'w1' }])
+    expect(w.created).toEqual([{ workspaceId: 'w1' }])
     expect(w.opened).toEqual(['new-session'])
   })
 
@@ -130,12 +138,43 @@ describe('ProjectsControl.showChat', () => {
     expect(bound.opened).toEqual(['blank-bound'])
   })
 
+  it('names a branch\'s workspace after its project, and leaves the main checkout\'s default name', async () => {
+    const w = world()
+    await w.shell.discover('/p/proj')
+    await w.control.showChat('/p/proj/.wt/x')
+    expect(w.renames).toEqual([{ workspaceId: 'w0', title: 'proj: feature/x' }])
+    const main = world()
+    await main.shell.discover('/p/proj')
+    await main.control.showChat('/p/proj')
+    expect(main.renames).toEqual([])
+  })
+
+  it('renames a branch workspace registered earlier under its bare folder name, but not one the user renamed', async () => {
+    const early = world({ workspaces: [{ workspaceId: 'w0', path: '/p/proj/.wt/x' }] })
+    await early.shell.discover('/p/proj')
+    await early.control.showChat('/p/proj/.wt/x')
+    expect(early.renames).toEqual([{ workspaceId: 'w0', title: 'proj: feature/x' }])
+    expect(early.workspaceCreates).toEqual([])
+
+    const custom = world({ workspaces: [{ workspaceId: 'w0', path: '/p/proj/.wt/x', title: 'My name' }] })
+    await custom.shell.discover('/p/proj')
+    await custom.control.showChat('/p/proj/.wt/x')
+    expect(custom.renames).toEqual([])
+  })
+
+  it('never names both a workspace and a directory when creating a chat (the Host rejects that)', async () => {
+    const w = world()
+    await w.shell.discover('/p/proj')
+    expect(await w.control.newChat('/p/proj')).toEqual({ ok: true })
+    expect(w.created.every(input => !('cwd' in (input as object)))).toBe(true)
+  })
+
   it('reuses a workspace whose folder is exactly the worktree instead of registering another', async () => {
     const w = world({ workspaces: [{ workspaceId: 'w0', path: '/p/proj' }] })
     await w.shell.discover('/p/proj')
     await w.control.showChat('/p/proj')
     expect(w.workspaceCreates).toEqual([])
-    expect(w.created).toEqual([{ cwd: '/p/proj', workspaceId: 'w0' }])
+    expect(w.created).toEqual([{ workspaceId: 'w0' }])
   })
 
   it('registers a workspace for a folder that has none', async () => {
@@ -143,7 +182,7 @@ describe('ProjectsControl.showChat', () => {
     await w.shell.discover('/p/proj')
     await w.control.showChat('/p/proj')
     expect(w.workspaceCreates).toEqual([{ path: '/p/proj' }])
-    expect(w.created).toEqual([{ cwd: '/p/proj', workspaceId: 'w0' }])
+    expect(w.created).toEqual([{ workspaceId: 'w0' }])
   })
 
   it('reports a workspace that cannot be registered, without creating a chat', async () => {
@@ -173,7 +212,7 @@ describe('ProjectsControl.newChat', () => {
     const w = world({ sessions: [{ id: 's1', cwd: '/p/proj', blank: false, updatedAt: 3 }] })
     await w.shell.discover('/p/proj')
     expect(await w.control.newChat('/p/proj')).toEqual({ ok: true })
-    expect(w.created).toEqual([{ cwd: '/p/proj', workspaceId: 'w0' }])
+    expect(w.created).toEqual([{ workspaceId: 'w0' }])
     expect(w.opened).toEqual(['new-session'])
   })
 })
@@ -187,7 +226,7 @@ describe('ProjectsControl.newWorktree', () => {
     expect(branches).toContain('feature/login')
     expect(w.shell.getSnapshot().selectedPath).toBe('/p/proj.worktrees/feature/login')
     expect(w.workspaceCreates).toEqual([{ path: '/p/proj.worktrees/feature/login' }])
-    expect(w.created).toEqual([{ cwd: '/p/proj.worktrees/feature/login', workspaceId: 'w0' }])
+    expect(w.created).toEqual([{ workspaceId: 'w0' }])
     expect(w.opened).toEqual(['new-session'])
   })
 
@@ -240,7 +279,7 @@ describe('ProjectsControl.addProject', () => {
     expect(await w.control.addProject()).toEqual({ ok: true })
     expect(w.workspaceCreates).toEqual([{ path: '/p/proj' }])
     expect(w.shell.getSnapshot().selectedPath).toBe('/p/proj')
-    expect(w.created).toEqual([{ cwd: '/p/proj', workspaceId: 'w0' }])
+    expect(w.created).toEqual([{ workspaceId: 'w0' }])
     expect(w.opened).toEqual(['new-session'])
   })
 

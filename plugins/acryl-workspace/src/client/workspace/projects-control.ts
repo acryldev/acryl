@@ -49,6 +49,20 @@ function fail(reason: string): ProjectAction {
   return { ok: false, reason }
 }
 
+/** "project: branch", so a branch's workspace reads as part of its project in the workspace list. */
+function worktreeTitle(shell: WorkspaceShellState, worktreePath: string): string | undefined {
+  for (const repo of shell.getSnapshot().repos) {
+    const worktree = repo.worktrees.find(entry => entry.path === worktreePath)
+    if (worktree === undefined) continue
+    return worktree.main || worktree.branch === null ? undefined : `${repo.name}: ${worktree.branch}`
+  }
+  return undefined
+}
+
+function folderName(path: string): string {
+  return path.replace(/[\\/]+$/, '').split(/[\\/]/).pop() ?? path
+}
+
 function message(cause: unknown): string {
   return cause instanceof Error ? cause.message : String(cause)
 }
@@ -130,12 +144,24 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       const workspaces = deps.getWorkspaces()
       if (sessions === undefined || workspaces === undefined) return fail('Chats are not available yet.')
       try {
-        // A chat belongs to a workspace, and its directory is the workspace's. Without one the chat
-        // opens unbound and asks the user to choose (and choosing the repository moves it to main).
-        // So each worktree is registered as its own workspace the first time it gets a chat.
-        let workspaceId = workspaceItems().find(item => item.path === worktreePath)?.workspaceId
-        if (workspaceId === undefined) workspaceId = (await workspaces.create({ path: worktreePath })).workspaceId
-        const created = await sessions.create({ cwd: worktreePath, workspaceId })
+        // In this app a chat runs in exactly its workspace's folder, and the Host rejects a request that
+        // names both a workspace and a directory. An unbound chat cannot be sent ("Choose workspace"), and
+        // choosing the repository would move it to main. So a worktree, being a different folder, is
+        // registered as a workspace the first time it gets a chat, named after its project and branch.
+        const existing = workspaceItems().find(item => item.path === worktreePath)
+        let workspaceId = existing?.workspaceId
+        if (existing !== undefined && existing.title === folderName(worktreePath)) {
+          // Registered earlier under its bare folder name: give it the project-and-branch name too.
+          const title = worktreeTitle(shell, worktreePath)
+          if (title !== undefined) await workspaces.rename(existing.workspaceId, title).catch(() => undefined)
+        }
+        if (workspaceId === undefined) {
+          const view = await workspaces.create({ path: worktreePath })
+          workspaceId = view.workspaceId
+          const title = worktreeTitle(shell, worktreePath)
+          if (title !== undefined) await workspaces.rename(workspaceId, title).catch(() => undefined)
+        }
+        const created = await sessions.create({ workspaceId })
         sessions.open(created)
         return { ok: true }
       } catch (cause) {
