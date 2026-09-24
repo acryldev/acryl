@@ -42,6 +42,22 @@ export interface OpenDiffRequest {
   readonly file: string
 }
 
+function sameChanges(a: readonly GitChange[], b: readonly GitChange[]): boolean {
+  return a.length === b.length && a.every((change, index) => {
+    const other = b[index]
+    return other !== undefined
+      && change.path === other.path && change.code === other.code && change.staged === other.staged
+      && change.added === other.added && change.removed === other.removed && change.oldPath === other.oldPath
+  })
+}
+
+/** Value equality for one worktree's state, so a refresh that learned nothing new emits nothing. */
+function sameWorktree(a: WorktreeState, b: WorktreeState): boolean {
+  return a.path === b.path && a.branch === b.branch && a.main === b.main && a.phase === b.phase
+    && a.added === b.added && a.removed === b.removed && a.truncated === b.truncated && a.error === b.error
+    && sameChanges(a.changes, b.changes)
+}
+
 function freshWorktree(path: string, branch: string | null, main: boolean): WorktreeState {
   return { path, branch, main, phase: 'idle', changes: [], added: 0, removed: 0, truncated: false }
 }
@@ -203,6 +219,13 @@ export class WorkspaceShellState {
         : { ...before, branch: listed.branch, main: listed.main }
     })
     const next: RepoState = { root: view.root, name: view.name, worktrees }
+    if (previous !== undefined && previous.name === next.name && previous.worktrees.length === worktrees.length
+      && previous.worktrees.every((before, index) => {
+        const after = worktrees[index]
+        return after !== undefined && sameWorktree(before, after)
+      })) {
+      return
+    }
     const others = this.snapshot.repos.filter(repo => repo.root !== view.root)
     const repos = [...others, next].sort((a, b) => a.name.localeCompare(b.name))
     const selectedGone = this.snapshot.selectedPath !== undefined
@@ -226,12 +249,15 @@ export class WorkspaceShellState {
   private patchWorktree(path: string, patch: Partial<WorktreeState>): void {
     let changed = false
     const repos = this.snapshot.repos.map((repo) => {
-      if (!repo.worktrees.some(worktree => worktree.path === path)) return repo
+      const index = repo.worktrees.findIndex(worktree => worktree.path === path)
+      const before = repo.worktrees[index]
+      if (before === undefined) return repo
+      const after: WorktreeState = { ...before, ...patch }
+      // A poll that returns what we already know must not notify: every notification re-renders the
+      // canvas, and the chat inside it, for nothing.
+      if (sameWorktree(before, after)) return repo
       changed = true
-      return {
-        ...repo,
-        worktrees: repo.worktrees.map(worktree => worktree.path === path ? { ...worktree, ...patch } : worktree),
-      }
+      return { ...repo, worktrees: repo.worktrees.map((worktree, position) => position === index ? after : worktree) }
     })
     if (changed) this.replace({ ...this.snapshot, repos: Object.freeze(repos) })
   }

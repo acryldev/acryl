@@ -151,3 +151,38 @@ describe('WorkspaceShellState', () => {
     expect(seen).toEqual(['/p/proj:a.ts'])
   })
 })
+
+describe('WorkspaceShellState notifications', () => {
+  it('does not notify when a poll returns exactly what is already known', async () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    await shell.discover('/p/proj')
+    await shell.refreshAll()
+    let notified = 0
+    shell.subscribe(() => { notified += 1 })
+    await shell.refreshAll()
+    await shell.refreshAll()
+    expect(notified).toBe(0)
+  })
+
+  it('notifies when a file changes, and again only when it changes back', async () => {
+    let added = 3
+    const base = fakeApi()
+    const shell = new WorkspaceShellState({
+      ...base,
+      status: async (path) => ({
+        path, branch: path === '/p/proj-x' ? 'feature/x' : 'main', truncated: false,
+        changes: [{ path: 'a.ts', code: 'M', staged: false, added, removed: 1 }],
+      }),
+    })
+    await shell.discover('/p/proj')
+    await shell.refreshAll()
+    let notified = 0
+    shell.subscribe(() => { notified += 1 })
+    await shell.refreshAll()
+    expect(notified).toBe(0)
+    added = 4
+    await shell.refreshAll()
+    expect(notified).toBeGreaterThan(0)
+    expect(shell.getSnapshot().repos[0]?.worktrees[0]?.added).toBe(4)
+  })
+})

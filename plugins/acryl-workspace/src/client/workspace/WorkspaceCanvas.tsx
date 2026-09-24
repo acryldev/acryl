@@ -55,10 +55,11 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
   const groups = useMemo(() => new WorkspaceGroups(), [])
+  // Subscribe to primitives, not the whole shell snapshot: git polling updates that snapshot often,
+  // and re-rendering the canvas re-renders the chat conversation inside it.
   const subscribeShell = useCallback((listener: () => void) => shell.subscribe(listener), [shell])
-  const shellSnapshot = useSyncExternalStore(subscribeShell, () => shell.getSnapshot())
-  const groupKey = shellSnapshot.selectedPath ?? GLOBAL_GROUP
-  const groupBranch = shell.selectedWorktree()?.branch
+  const groupKey = useSyncExternalStore(subscribeShell, () => shell.getSnapshot().selectedPath ?? GLOBAL_GROUP)
+  const groupBranch = useSyncExternalStore(subscribeShell, () => shell.selectedWorktree()?.branch ?? null)
   const workspace = groups.stateFor(groupKey)
   const api = useMemo(() => ptyApi ?? createWorkspacePtyApi(), [ptyApi])
   const subscribe = useCallback((listener: () => void) => workspace.subscribe(listener), [workspace])
