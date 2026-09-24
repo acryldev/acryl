@@ -2,7 +2,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { WorkspacePtyRegistry } from './workspace-pty.ts'
-import { error, finishJson, isSameOriginLoopbackRequest } from './workspace-http.ts'
+import { BodyTooLargeError, error, finishJson, isSameOriginLoopbackRequest, readJson } from './workspace-http.ts'
 import {
   WORKSPACE_PTY_CLOSE_PATH,
   WORKSPACE_PTY_INPUT_PATH,
@@ -10,28 +10,6 @@ import {
   WORKSPACE_PTY_RESIZE_PATH,
   isWorkspacePtyCommandId,
 } from './workspace-pty-contract.ts'
-
-const MAX_BODY_BYTES = 16 * 1024
-
-class BodyTooLargeError extends Error {}
-
-async function readJson(req: IncomingMessage): Promise<unknown> {
-  const declaredLength = req.headers['content-length']
-  if (declaredLength !== undefined) {
-    if (!/^\d+$/.test(declaredLength)) throw new SyntaxError('invalid content length')
-    if (Number(declaredLength) > MAX_BODY_BYTES) throw new BodyTooLargeError()
-  }
-  let size = 0
-  const chunks: Buffer[] = []
-  for await (const chunk of req) {
-    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array)
-    size += buffer.byteLength
-    if (size > MAX_BODY_BYTES) throw new BodyTooLargeError()
-    chunks.push(buffer)
-  }
-  if (chunks.length === 0) return {}
-  return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown
-}
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)

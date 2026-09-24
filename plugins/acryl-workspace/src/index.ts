@@ -7,11 +7,13 @@ import {
   WORKSPACE_GIT_DIFF_PATH,
   WORKSPACE_GIT_REPO_PATH,
   WORKSPACE_GIT_STATUS_PATH,
+  WORKSPACE_GIT_WORKTREE_PATH,
 } from './workspace-git-contract.ts'
 import {
   handleWorkspaceGitDiffRequest,
   handleWorkspaceGitRepoRequest,
   handleWorkspaceGitStatusRequest,
+  handleWorkspaceGitWorktreeRequest,
 } from './workspace-git-route.ts'
 import { WorkspacePtyRegistry } from './workspace-pty.ts'
 import {
@@ -70,6 +72,7 @@ export function apply(ctx: Context): void {
         [WORKSPACE_GIT_REPO_PATH, handleWorkspaceGitRepoRequest],
         [WORKSPACE_GIT_STATUS_PATH, handleWorkspaceGitStatusRequest],
         [WORKSPACE_GIT_DIFF_PATH, handleWorkspaceGitDiffRequest],
+        [WORKSPACE_GIT_WORKTREE_PATH, handleWorkspaceGitWorktreeRequest],
       ] as const
       for (const [path, handler] of gitRoutes) {
         releases.push(ctx.webServer.register({

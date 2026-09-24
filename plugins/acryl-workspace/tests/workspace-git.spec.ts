@@ -15,6 +15,7 @@ import {
   handleWorkspaceGitDiffRequest,
   handleWorkspaceGitRepoRequest,
   handleWorkspaceGitStatusRequest,
+  handleWorkspaceGitWorktreeRequest,
 } from '../src/workspace-git-route.ts'
 
 function git(cwd: string, ...args: string[]): string {
@@ -194,6 +195,75 @@ describe('WorkspaceGit against a real repository', () => {
   })
 })
 
+describe('createWorktree', () => {
+  function freshRepo(name: string): string {
+    const dir = join(root, name)
+    mkdirSync(dir)
+    git(dir, 'init', '-q', '-b', 'main')
+    writeFileSync(join(dir, 'a.txt'), 'one\n')
+    git(dir, 'add', '.')
+    git(dir, 'commit', '-q', '-m', 'init')
+    return dir
+  }
+
+  it('creates the branch and its worktree in a sibling <repo>.worktrees folder and leaves the repo clean', async () => {
+    const repo = freshRepo('wt-repo')
+    const created = await service().createWorktree(repo, 'feature/login')
+    expect(created.branch).toBe('feature/login')
+    expect(created.path).toBe(join(root, 'wt-repo.worktrees', 'feature-login'))
+    expect(created.repo.worktrees.map(w => [w.path, w.branch, w.main])).toEqual([
+      [repo, 'main', true],
+      [created.path, 'feature/login', false],
+    ])
+    expect(git(created.path, 'branch', '--show-current').trim()).toBe('feature/login')
+    // Placement outside the repository means the main checkout has nothing new to commit.
+    expect(git(repo, 'status', '--porcelain')).toBe('')
+  })
+
+  it('accepts any directory inside the repository, including a linked worktree', async () => {
+    const repo = freshRepo('wt-from-linked')
+    const svc = service()
+    const first = await svc.createWorktree(repo, 'one')
+    const second = await svc.createWorktree(first.path, 'two')
+    expect(second.path).toBe(join(root, 'wt-from-linked.worktrees', 'two'))
+    expect(second.repo.worktrees).toHaveLength(3)
+  })
+
+  it('refuses a branch that already exists and a folder that already exists', async () => {
+    const repo = freshRepo('wt-conflict')
+    const svc = service()
+    await svc.createWorktree(repo, 'dup')
+    await expect(svc.createWorktree(repo, 'dup')).rejects.toMatchObject({ kind: 'conflict' })
+    mkdirSync(join(root, 'wt-conflict.worktrees', 'taken'), { recursive: true })
+    await expect(svc.createWorktree(repo, 'taken')).rejects.toMatchObject({ kind: 'conflict' })
+    await expect(svc.createWorktree(repo, 'main')).rejects.toMatchObject({ kind: 'conflict' })
+  })
+
+  it.each([
+    ['empty', ''],
+    ['option-looking', '--orphan'],
+    ['leading dash', '-x'],
+    ['parent traversal', 'a/../b'],
+    ['double slash', 'a//b'],
+    ['space', 'a b'],
+    ['trailing slash', 'a/'],
+    ['.lock suffix', 'a.lock'],
+    ['ref syntax', 'a@{1}'],
+    ['glob', 'a*'],
+    ['leading dot', '.hidden'],
+  ])('rejects a %s branch name without creating anything', async (_name, branch) => {
+    const repo = freshRepo(`wt-bad-${String(Math.abs([...branch].reduce((h, c) => h * 31 + c.charCodeAt(0), 7)))}`)
+    await expect(service().createWorktree(repo, branch)).rejects.toMatchObject({ kind: 'invalid' })
+    expect(git(repo, 'worktree', 'list').trim().split('\n')).toHaveLength(1)
+  })
+
+  it('reports a directory that is not a repository', async () => {
+    const plain = join(root, 'wt-plain')
+    mkdirSync(plain)
+    await expect(service().createWorktree(plain, 'x')).rejects.toMatchObject({ kind: 'not-repo' })
+  })
+})
+
 describe('request validation', () => {
   it.each([
     ['relative path', 'proj'],
@@ -264,7 +334,8 @@ describe('routes', () => {
     server = createServer((req, res) => {
       const path = new URL(req.url ?? '', 'http://x').pathname
       const report = (): void => {}
-      if (path === '/repo') void handleWorkspaceGitRepoRequest(req, res, origin, routeGit, report)
+      if (path === '/worktree') void handleWorkspaceGitWorktreeRequest(req, res, origin, routeGit, report)
+      else if (path === '/repo') void handleWorkspaceGitRepoRequest(req, res, origin, routeGit, report)
       else if (path === '/status') void handleWorkspaceGitStatusRequest(req, res, origin, routeGit, report)
       else void handleWorkspaceGitDiffRequest(req, res, origin, routeGit, report)
     })
@@ -309,6 +380,42 @@ describe('routes', () => {
     expect((await get('/status', true)).status).toBe(400)
     const plain = join(root, 'plain')
     expect(await get(`/repo?cwd=${encodeURIComponent(plain)}`, true)).toEqual({ status: 200, body: { repo: null } })
+  })
+
+  function post(path: string, body: unknown, sameOrigin: boolean): Promise<{ status: number; body: unknown }> {
+    return new Promise((resolve, reject) => {
+      const payload = typeof body === 'string' ? body : JSON.stringify(body)
+      const headers: Record<string, string> = { 'content-type': 'application/json', 'content-length': String(Buffer.byteLength(payload)) }
+      if (sameOrigin) { headers.origin = origin; headers['sec-fetch-site'] = 'same-origin' }
+      const req = request({ host: '127.0.0.1', port, path, method: 'POST', headers }, (res) => {
+        let text = ''
+        res.on('data', (chunk: Buffer) => { text += chunk.toString('utf8') })
+        res.on('end', () => { resolve({ status: res.statusCode ?? 0, body: JSON.parse(text) as unknown }) })
+      })
+      req.on('error', reject)
+      req.end(payload)
+    })
+  }
+
+  it('creates a worktree over POST, and maps refusals to 403, 400, 405 and 409', async () => {
+    const repo = join(root, 'route-repo')
+    mkdirSync(repo)
+    git(repo, 'init', '-q', '-b', 'main')
+    writeFileSync(join(repo, 'a.txt'), 'x\n')
+    git(repo, 'add', '.')
+    git(repo, 'commit', '-q', '-m', 'init')
+
+    expect((await post('/worktree', { cwd: repo, branch: 'r1' }, false)).status).toBe(403)
+    expect((await post('/worktree', { cwd: repo }, true)).status).toBe(400)
+    expect((await post('/worktree', { cwd: repo, branch: 'r1', extra: 1 }, true)).status).toBe(400)
+    expect((await post('/worktree', 'not json', true)).status).toBe(400)
+    expect((await post('/worktree', { cwd: repo, branch: '--bad' }, true)).status).toBe(400)
+    expect((await get(`/worktree?cwd=${encodeURIComponent(repo)}`, true)).status).toBe(405)
+
+    const ok = await post('/worktree', { cwd: repo, branch: 'r1' }, true)
+    expect(ok.status).toBe(200)
+    expect(ok.body).toMatchObject({ branch: 'r1', repo: { name: 'route-repo' } })
+    expect((await post('/worktree', { cwd: repo, branch: 'r1' }, true)).status).toBe(409)
   })
 
   it('answers 400 for a traversal file argument', async () => {

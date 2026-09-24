@@ -3,6 +3,7 @@
 export const WORKSPACE_GIT_REPO_PATH = '/api/acryl-workspace/git/repo'
 export const WORKSPACE_GIT_STATUS_PATH = '/api/acryl-workspace/git/status'
 export const WORKSPACE_GIT_DIFF_PATH = '/api/acryl-workspace/git/diff'
+export const WORKSPACE_GIT_WORKTREE_PATH = '/api/acryl-workspace/git/worktree'
 
 /** One worktree of a repository, as `git worktree list` reports it. */
 export interface GitWorktree {
@@ -64,6 +65,15 @@ export interface GitDiffView {
   readonly truncated: boolean
 }
 
+/** The result of creating a branch and its worktree. */
+export interface GitWorktreeCreatedView {
+  /** Absolute path of the new worktree. */
+  readonly path: string
+  readonly branch: string
+  /** The repository after the change, so the caller does not need a second request. */
+  readonly repo: GitRepoView
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
@@ -117,4 +127,12 @@ export function parseGitDiffView(value: unknown): GitDiffView {
     throw new Error('invalid git diff response')
   }
   return { path: value.path, file: value.file, text: value.text, binary: value.binary, truncated: value.truncated }
+}
+
+/** @param value - unknown JSON from the worktree route. */
+export function parseGitWorktreeCreatedView(value: unknown): GitWorktreeCreatedView {
+  if (!isRecord(value) || typeof value.path !== 'string' || typeof value.branch !== 'string') {
+    throw new Error('invalid git worktree response')
+  }
+  return { path: value.path, branch: value.branch, repo: parseGitRepoView(value.repo) }
 }

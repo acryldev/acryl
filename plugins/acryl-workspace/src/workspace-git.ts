@@ -7,8 +7,8 @@
  */
 
 import { execFile } from 'node:child_process'
-import { realpath, stat } from 'node:fs/promises'
-import { basename, isAbsolute } from 'node:path'
+import { mkdir, realpath, stat } from 'node:fs/promises'
+import { basename, dirname, isAbsolute, join } from 'node:path'
 import type {
   GitChange,
   GitChangeCode,
@@ -16,6 +16,7 @@ import type {
   GitRepoView,
   GitStatusView,
   GitWorktree,
+  GitWorktreeCreatedView,
 } from './workspace-git-contract.ts'
 
 const DEFAULT_MAX_OUTPUT_BYTES = 1024 * 1024
@@ -34,9 +35,12 @@ export interface WorkspaceGitOptions {
   readonly maxChanges?: number
 }
 
-/** A request the caller got wrong (400), a directory that is not a repository (404), or a git failure (500). */
+/**
+ * A request the caller got wrong (400), a directory that is not a repository (404), something that
+ * already exists (409), or a git failure (500).
+ */
 export class WorkspaceGitError extends Error {
-  constructor(message: string, readonly kind: 'invalid' | 'not-repo' | 'failed') {
+  constructor(message: string, readonly kind: 'invalid' | 'not-repo' | 'conflict' | 'failed') {
     super(message)
     this.name = 'WorkspaceGitError'
   }
@@ -139,6 +143,36 @@ export class WorkspaceGit {
     return { path: dir, file, text: binary ? '' : result.stdout, binary, truncated: result.truncated }
   }
 
+  /**
+   * Create a branch and a worktree for it in the repository's sibling `<repo>.worktrees/` folder,
+   * which never dirties the repository. The branch starts at the main worktree's current commit.
+   * @param cwd - any directory inside the repository.
+   * @param branch - the new branch name.
+   */
+  async createWorktree(cwd: string, branch: string): Promise<GitWorktreeCreatedView> {
+    assertBranchName(branch)
+    const view = await this.repo(cwd)
+    if (view === null) throw new WorkspaceGitError('not a git repository', 'not-repo')
+    // Git has the last word on what a valid branch name is.
+    try {
+      await this.run(['check-ref-format', '--branch', branch], view.root)
+    } catch {
+      throw new WorkspaceGitError('that is not a valid branch name', 'invalid')
+    }
+    if ((await this.run(['branch', '--list', branch], view.root)).stdout.trim() !== '') {
+      throw new WorkspaceGitError(`the branch ${branch} already exists`, 'conflict')
+    }
+    const parent = join(dirname(view.root), `${basename(view.root)}.worktrees`)
+    const target = join(parent, branch.replace(/\//g, '-'))
+    if (await pathExists(target)) throw new WorkspaceGitError('that worktree folder already exists', 'conflict')
+    await mkdir(parent, { recursive: true })
+    await this.run(['worktree', 'add', '-b', branch, target], view.root, undefined, WORKTREE_ADD_TIMEOUT_MS)
+    const path = await realpath(target)
+    const after = await this.repo(path)
+    if (after === null) throw new WorkspaceGitError('the new worktree is not readable', 'failed')
+    return { path, branch, repo: after }
+  }
+
   /** Abort every in-flight `git` process and wait for each to exit. Later calls reject. */
   async dispose(): Promise<void> {
     this.disposed = true
@@ -161,7 +195,7 @@ export class WorkspaceGit {
     return real
   }
 
-  private run(args: readonly string[], cwd: string, acceptExit?: number): Promise<RunResult> {
+  private run(args: readonly string[], cwd: string, acceptExit?: number, timeoutMs?: number): Promise<RunResult> {
     if (this.disposed) return Promise.reject(new WorkspaceGitError('git service is disposed', 'failed'))
     const controller = new AbortController()
     let settle!: () => void
@@ -187,7 +221,7 @@ export class WorkspaceGit {
           env,
           encoding: 'utf8',
           maxBuffer: this.maxOutputBytes,
-          timeout: this.timeoutMs,
+          timeout: timeoutMs ?? this.timeoutMs,
           signal: controller.signal,
         },
         (failure, stdout, stderr) => {
@@ -220,6 +254,31 @@ export class WorkspaceGit {
       child.once('close', finished)
       child.once('error', finished)
     })
+  }
+}
+
+/** Checking out a large repository can take far longer than a status call. */
+const WORKTREE_ADD_TIMEOUT_MS = 120_000
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await stat(path)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * A conservative first filter, before git's own check: letters, digits, `.`, `_`, `-` and `/`
+ * separators, starting with a letter, digit or underscore. It keeps the branch usable as one folder
+ * name and can never look like an option or a path escape.
+ */
+function assertBranchName(branch: string): void {
+  if (typeof branch !== 'string' || branch.length === 0 || branch.length > 200
+    || !/^[A-Za-z0-9_][A-Za-z0-9._/-]*$/.test(branch)
+    || branch.includes('..') || branch.includes('//') || branch.endsWith('/') || branch.endsWith('.') || branch.endsWith('.lock')) {
+    throw new WorkspaceGitError('branch names use letters, digits, ".", "_", "-" and "/", and start with a letter, digit or "_"', 'invalid')
   }
 }
 

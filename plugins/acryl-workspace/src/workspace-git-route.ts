@@ -1,7 +1,7 @@
 /** Same-origin GET handlers for the read-only ACRYL Workspace git routes. */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { error, finishJson, isSameOriginLoopbackRequest } from './workspace-http.ts'
+import { BodyTooLargeError, error, finishJson, isSameOriginLoopbackRequest, readJson } from './workspace-http.ts'
 import { WorkspaceGitError, type WorkspaceGit } from './workspace-git.ts'
 
 type ReportError = (operation: string, cause: unknown) => void
@@ -22,13 +22,18 @@ async function handleGet(
     if (view === null) return finishJson(res, 404, error('not a git repository'), 'GET')
     return finishJson(res, 200, view, 'GET')
   } catch (cause) {
-    if (cause instanceof WorkspaceGitError) {
-      if (cause.kind === 'invalid') return finishJson(res, 400, error(cause.message))
-      if (cause.kind === 'not-repo') return finishJson(res, 404, error('not a git repository'))
-    }
-    reportError(operation, cause)
-    return finishJson(res, 500, error('git request failed'))
+    return respondError(res, cause, operation, reportError)
   }
+}
+
+function respondError(res: ServerResponse, cause: unknown, operation: string, reportError: ReportError): void {
+  if (cause instanceof WorkspaceGitError) {
+    if (cause.kind === 'invalid') return finishJson(res, 400, error(cause.message))
+    if (cause.kind === 'conflict') return finishJson(res, 409, error(cause.message))
+    if (cause.kind === 'not-repo') return finishJson(res, 404, error('not a git repository'))
+  }
+  reportError(operation, cause)
+  return finishJson(res, 500, error('git request failed'))
 }
 
 function required(params: URLSearchParams, name: string): string {
@@ -73,4 +78,33 @@ export function handleWorkspaceGitDiffRequest(
 ): Promise<void> {
   return handleGet(req, res, expectedOrigin, 'read git diff', reportError,
     params => git.diff(required(params, 'path'), required(params, 'file')))
+}
+
+/** POST `{ cwd, branch }`: create a branch and its worktree. The only route that changes a repository. */
+export async function handleWorkspaceGitWorktreeRequest(
+  req: IncomingMessage,
+  res: ServerResponse,
+  expectedOrigin: string,
+  git: WorkspaceGit,
+  reportError: ReportError,
+): Promise<void> {
+  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
+  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
+  let body: unknown
+  try {
+    body = await readJson(req)
+  } catch (cause) {
+    if (cause instanceof BodyTooLargeError) return finishJson(res, 413, error('body too large'))
+    return finishJson(res, 400, error('invalid worktree request'))
+  }
+  if (typeof body !== 'object' || body === null || Array.isArray(body)
+    || !('cwd' in body) || typeof body.cwd !== 'string' || !('branch' in body) || typeof body.branch !== 'string'
+    || Object.keys(body).length !== 2) {
+    return finishJson(res, 400, error('invalid worktree request'))
+  }
+  try {
+    return finishJson(res, 200, await git.createWorktree(body.cwd, body.branch))
+  } catch (cause) {
+    return respondError(res, cause, 'create git worktree', reportError)
+  }
 }
