@@ -61,6 +61,7 @@
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
     "@deepseek-ai/dsh-api-session-controller": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-api-workspace-controller": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-store": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-ui-renderer": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-ui-session": "0.1.5-alpha.1",
@@ -74,6 +75,7 @@
     "@acryl/ui": "workspace:*",
     "@deepseek-ai/cordis": "4.0.2",
     "@deepseek-ai/dsh-api-session-controller": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-api-workspace-controller": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-store": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-ui-renderer": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-ui-session": "0.1.5-alpha.1",

@@ -82,6 +82,10 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceSideChats > * { flex: 1 1 0; min-height: 0; min-width: 0; }
 .dshWorkspaceSideChats[hidden] { display: none; }
 .dshWorkspaceSideProjects { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 8px 12px; }
+.dshWorkspaceSideProjectsHead { display: flex; align-items: center; justify-content: space-between; padding: 2px 8px 4px; color: var(--dsw-alias-fg-l2); font: 600 11px/1.4 ui-sans-serif, system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.dshWorkspaceSideAdd { appearance: none; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: 500 18px/1 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceSideAdd:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
+.dshWorkspaceSideNotice { margin: 4px 8px; padding: 6px 8px; border-left: 2px solid #f87171; color: #fca5a5; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSideEmpty { padding: 12px 6px; color: var(--dsw-alias-fg-l2); font: 12px/1.5 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceRepo { margin: 6px 0 10px; }
 .dshWorkspaceRepoName { margin: 0; padding: 4px 8px; color: var(--dsw-alias-fg-l2); font: 600 11px/1.4 ui-sans-serif, system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; }

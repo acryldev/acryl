@@ -1,0 +1,144 @@
+/**
+ * Actions behind the Projects tab: add a git project, and show the chat that belongs to a worktree.
+ * Every dependency is injected so the flows are testable without a browser or a Host.
+ */
+
+import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
+import type { IWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/client'
+import { pickSession, type SessionRef } from './session-pick.ts'
+import type { WorkspaceShellState } from './shell-state.ts'
+
+export type ProjectAction = { readonly ok: true } | { readonly ok: false; readonly reason: string }
+
+export interface ProjectsControl {
+  /** Change-detection key for the registered workspace folders (a primitive, safe to subscribe to). */
+  workspaceKey(): string
+  /** Registered workspace folders, so a project appears even before it has a chat. */
+  workspacePaths(): readonly string[]
+  subscribeWorkspaces(listener: () => void): () => void
+  /** Pick a folder, require a git repository, register it as a workspace and open a chat in it. */
+  addProject(): Promise<ProjectAction>
+  /** Show the chat for a worktree: its latest one, or a new one started there. */
+  showChat(worktreePath: string): Promise<ProjectAction>
+}
+
+export interface ProjectsControlDeps {
+  readonly shell: WorkspaceShellState
+  readonly getWorkspaces: () => IWorkspaces | undefined
+  readonly getSessions: () => ISessions | undefined
+  /** Looked up when needed, because the desktop installs its folder-picker seam after this plugin loads. */
+  readonly directory: () => DirectorySeams
+}
+
+export interface DirectorySeams {
+  /** Open the platform folder chooser; null when the user cancels. Undefined outside the desktop app. */
+  readonly pickDirectory: (() => Promise<string | null>) | undefined
+  /** Ask the desktop whether a folder is safe to persist as a workspace. */
+  readonly validateDirectory?: ((path: string) => Promise<boolean>) | undefined
+}
+
+function fail(reason: string): ProjectAction {
+  return { ok: false, reason }
+}
+
+function message(cause: unknown): string {
+  return cause instanceof Error ? cause.message : String(cause)
+}
+
+function isInside(path: string, root: string): boolean {
+  return path === root || path.startsWith(root.endsWith('/') ? root : `${root}/`)
+}
+
+export function createProjectsControl(deps: ProjectsControlDeps): ProjectsControl {
+  const { shell } = deps
+
+  const workspaceItems = () => deps.getWorkspaces()?.list.getSnapshot().items ?? []
+
+  return {
+    workspaceKey: () => workspaceItems().map(item => item.path).join('\n'),
+    workspacePaths: () => workspaceItems().map(item => item.path),
+    subscribeWorkspaces: listener => deps.getWorkspaces()?.list.subscribe(listener) ?? (() => {}),
+
+    async addProject() {
+      const seams = deps.directory()
+      if (seams.pickDirectory === undefined) return fail('Adding a project needs the desktop app\'s folder picker.')
+      const workspaces = deps.getWorkspaces()
+      if (workspaces === undefined) return fail('Workspaces are not available yet.')
+      let picked: string | null
+      try {
+        picked = await seams.pickDirectory()
+      } catch (cause) {
+        return fail(message(cause))
+      }
+      if (picked === null) return { ok: true }
+
+      // A project is a git repository: check before registering anything.
+      const worktree = await shell.discover(picked)
+      if (worktree === undefined) return fail('That folder is not a git repository.')
+      if (seams.validateDirectory !== undefined) {
+        try {
+          if (!(await seams.validateDirectory(worktree))) return fail('That folder cannot be added as a project.')
+        } catch (cause) {
+          return fail(message(cause))
+        }
+      }
+      if (!workspaceItems().some(item => item.path === worktree)) {
+        try {
+          await workspaces.create({ path: worktree })
+        } catch (cause) {
+          return fail(`Could not add the project: ${message(cause)}`)
+        }
+      }
+      shell.select(worktree)
+      const shown = await this.showChat(worktree)
+      if (!shown.ok) shell.unpin()
+      return shown
+    },
+
+    async showChat(worktreePath) {
+      const sessions = deps.getSessions()
+      if (sessions === undefined) return fail('Chats are not available yet.')
+      const state = sessions.list.getSnapshot()
+      const refs: SessionRef[] = []
+      for (const id of state.ids) {
+        const row = state.byId[id]
+        if (row === undefined) continue
+        refs.push({ id, blank: row.blank, updatedAt: row.updatedAt, ...(row.cwd === undefined ? {} : { cwd: row.cwd }) })
+      }
+      const existing = pickSession(shell.getSnapshot().repos, refs, worktreePath)
+      try {
+        if (existing !== undefined) {
+          const id = state.ids.find(candidate => candidate === existing)
+          if (id === undefined) return fail('That chat is no longer available.')
+          sessions.open(id)
+          return { ok: true }
+        }
+        const owner = workspaceItems()
+          .filter(item => isInside(worktreePath, item.path))
+          .sort((a, b) => b.path.length - a.path.length)[0]
+        const created = await sessions.create({
+          cwd: worktreePath,
+          ...(owner === undefined ? {} : { workspaceId: owner.workspaceId }),
+        })
+        sessions.open(created)
+        return { ok: true }
+      } catch (cause) {
+        shell.unpin()
+        return fail(`Could not open a chat for this branch: ${message(cause)}`)
+      }
+    },
+  }
+}
+
+/** The desktop's folder chooser and path check, exposed on `window` for exactly this kind of caller. */
+interface DesktopDirectoryWindow {
+  __DSH_DESKTOP_PICK_DIRECTORY__?: () => Promise<string | null>
+  __DSH_DESKTOP_VALIDATE_DIRECTORY__?: (path: string) => Promise<boolean>
+}
+
+export function desktopDirectorySeams(view: DesktopDirectoryWindow = window as Window & DesktopDirectoryWindow): DirectorySeams {
+  return {
+    pickDirectory: view.__DSH_DESKTOP_PICK_DIRECTORY__ === undefined ? undefined : () => view.__DSH_DESKTOP_PICK_DIRECTORY__!(),
+    validateDirectory: view.__DSH_DESKTOP_VALIDATE_DIRECTORY__ === undefined ? undefined : path => view.__DSH_DESKTOP_VALIDATE_DIRECTORY__!(path),
+  }
+}

@@ -121,8 +121,17 @@ export class WorkspaceShellState {
    */
   async follow(cwd: string): Promise<void> {
     const current = await this.discover(cwd)
-    if (current === undefined || this.pinned || this.disposed) return
+    if (current === undefined || this.disposed) return
+    // The chat switched to the worktree the user picked: the pick has taken effect, so from now on
+    // the selection follows the chat again.
+    if (this.pinned && current === this.snapshot.selectedPath) this.pinned = false
+    if (this.pinned) return
     this.selectInternal(current)
+  }
+
+  /** Release a manual pick (for example when opening its chat failed) so the selection follows the chat again. */
+  unpin(): void {
+    this.pinned = false
   }
 
   /** The user picked a worktree: keep it selected even when the chat session changes, and reveal its changes. */

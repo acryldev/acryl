@@ -8,6 +8,7 @@ import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type { ReactNode } from 'react'
 import { createAgentBridge } from './workspace/agent-bridge.ts'
 import { changesTabPlugin } from './workspace/changes-tab.ts'
+import { createProjectsControl, desktopDirectorySeams } from './workspace/projects-control.ts'
 import { createWorkspaceGitApi } from './workspace/git-api.ts'
 import { ProjectsSidebar, type ProjectsSidebarOwnerProps } from './workspace/ProjectsSidebar.tsx'
 import { createWorkspacePtyApi } from './workspace/pty-api.ts'
@@ -65,6 +66,12 @@ export function apply(ctx: ClientContext): void {
   const gitApi = createWorkspaceGitApi()
   const shell = new WorkspaceShellState(gitApi)
   const agent = createAgentBridge(() => ctx.get('sessions'))
+  const projects = createProjectsControl({
+    shell,
+    getWorkspaces: () => ctx.get('workspaces'),
+    getSessions: () => ctx.get('sessions'),
+    directory: () => desktopDirectorySeams(),
+  })
   ctx.effect(() => startShellPolling(shell), 'acryl-workspace: git state polling')
   ctx.effect(() => installWorkspaceStyles(), 'acryl-workspace: styles')
   ctx.plugin(changesTabPlugin(shell))
@@ -97,7 +104,7 @@ export function apply(ctx: ClientContext): void {
         return ctx.slots.register({
           name: 'desktop.sidebar',
           priority: 0,
-          inject: () => ({ shell }),
+          inject: () => ({ shell, projects }),
         }, ProjectsSidebar)
       } catch (cause) {
         ctx.logger.warn(`acryl-workspace: could not register the left pane: ${cause instanceof Error ? cause.message : String(cause)}`)

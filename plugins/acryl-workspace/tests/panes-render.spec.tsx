@@ -7,6 +7,7 @@ import { ChangesBody, splitPath, type ChangesBodyProps } from '../src/client/wor
 import type { WorkspaceGitApi } from '../src/client/workspace/git-api.ts'
 import { GitDiffPane, changeSignature, type GitDiffPaneProps } from '../src/client/workspace/GitDiffPane.tsx'
 import { ProjectsSidebar, type ProjectsSidebarProps } from '../src/client/workspace/ProjectsSidebar.tsx'
+import type { ProjectAction, ProjectsControl } from '../src/client/workspace/projects-control.ts'
 import { WorkspaceShellState } from '../src/client/workspace/shell-state.ts'
 import type { WorkspaceTile } from '../src/client/workspace/state.ts'
 import type { GitDiffView, GitStatusView } from '../src/workspace-git-contract.ts'
@@ -69,13 +70,27 @@ const SESSIONS = {
   },
 }
 
-function sidebarProps(shell: WorkspaceShellState, collapsed = false): ProjectsSidebarProps {
+function fakeProjects(overrides: Partial<ProjectsControl> = {}): ProjectsControl & { shown: string[] } {
+  const shown: string[] = []
+  return {
+    shown,
+    workspaceKey: () => '',
+    workspacePaths: () => [],
+    subscribeWorkspaces: () => () => {},
+    addProject: async (): Promise<ProjectAction> => ({ ok: true }),
+    showChat: async (path): Promise<ProjectAction> => { shown.push(path); return { ok: true } },
+    ...overrides,
+  }
+}
+
+function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: ProjectsControl = fakeProjects()): ProjectsSidebarProps {
   return {
     collapsed,
     width: 280,
     renderUpstream: () => <div data-testid="upstream">upstream sidebar</div>,
     useSessions: sessionsHook(SESSIONS),
     shell,
+    projects,
   } as ProjectsSidebarProps
 }
 
@@ -127,11 +142,55 @@ describe('ProjectsSidebar', () => {
     shell.dispose()
   })
 
+  it('shows the chat that belongs to a branch when it is picked', async () => {
+    const shell = new WorkspaceShellState(api())
+    const projects = fakeProjects()
+    render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
+    fireEvent.click(await screen.findByTitle('/p/proj-x'))
+    await waitFor(() => { expect(projects.shown).toEqual(['/p/proj-x']) })
+    shell.dispose()
+  })
+
+  it('says why a branch chat could not be opened', async () => {
+    const shell = new WorkspaceShellState(api())
+    const projects = fakeProjects({ showChat: async () => ({ ok: false, reason: 'Could not open a chat for this branch: host down' }) })
+    render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
+    fireEvent.click(await screen.findByTitle('/p/proj-x'))
+    expect((await screen.findByRole('alert')).textContent).toContain('host down')
+    shell.dispose()
+  })
+
+  it('has an Add project button that reports a refusal and clears it on the next action', async () => {
+    const shell = new WorkspaceShellState(api())
+    const addProject = vi.fn(async (): Promise<ProjectAction> => ({ ok: false, reason: 'That folder is not a git repository.' }))
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ addProject }))} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Add git project' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('not a git repository')
+    expect(addProject).toHaveBeenCalledTimes(1)
+    // The repo heading and the main worktree button share the path as their title; pick the button.
+    await waitFor(() => { expect(screen.getAllByTitle('/p/proj').some(el => el.tagName === 'BUTTON')).toBe(true) })
+    fireEvent.click(screen.getAllByTitle('/p/proj').find(el => el.tagName === 'BUTTON')!)
+    await waitFor(() => { expect(screen.queryByRole('alert')).toBeNull() })
+    shell.dispose()
+  })
+
+  it('discovers registered workspace folders as projects even without a chat', async () => {
+    const seen: string[] = []
+    const shell = new WorkspaceShellState({ ...api(), repo: async (cwd) => { seen.push(cwd); return null } })
+    const projects = fakeProjects({ workspacePaths: () => ['/registered/project'], workspaceKey: () => '/registered/project' })
+    render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
+    await waitFor(() => { expect(seen).toContain('/registered/project') })
+    shell.dispose()
+  })
+
   it('explains an empty Projects list', async () => {
     const shell = new WorkspaceShellState(api({ repo: async () => null }))
     render(<ProjectsSidebar {...sidebarProps(shell)} />)
     fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
-    expect(await screen.findByText(/No git repositories yet/)).toBeTruthy()
+    expect(await screen.findByText(/No git projects yet/)).toBeTruthy()
     shell.dispose()
   })
 })
