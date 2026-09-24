@@ -8,6 +8,9 @@ import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type { ReactNode } from 'react'
 import { createAgentBridge } from './workspace/agent-bridge.ts'
 import { changesTabPlugin } from './workspace/changes-tab.ts'
+import { WorkspaceGroups } from './workspace/groups.ts'
+import { browserStorage, parseSavedWorkspace, STORAGE_KEY } from './workspace/persistence.ts'
+import { startWorkspacePersistence } from './workspace/persist.ts'
 import { createProjectsControl, desktopDirectorySeams } from './workspace/projects-control.ts'
 import { createWorkspaceGitApi } from './workspace/git-api.ts'
 import { ProjectsSidebar, type ProjectsSidebarOwnerProps } from './workspace/ProjectsSidebar.tsx'
@@ -65,6 +68,12 @@ function whenSlotDeclared(contribute: () => void): void {
 export function apply(ctx: ClientContext): void {
   const gitApi = createWorkspaceGitApi()
   const shell = new WorkspaceShellState(gitApi)
+  // Restore what a previous run saved, then keep saving. Bad or missing data simply means a fresh start.
+  const storage = browserStorage()
+  const saved = parseSavedWorkspace(storage?.getItem(STORAGE_KEY) ?? null)
+  const groups = new WorkspaceGroups(undefined, saved?.groups)
+  if (saved !== undefined) shell.setMode(saved.mode)
+  ctx.effect(() => startWorkspacePersistence({ groups, shell, storage }), 'acryl-workspace: save tabs and view')
   const agent = createAgentBridge(() => ctx.get('sessions'))
   const projects = createProjectsControl({
     shell,
@@ -85,7 +94,7 @@ export function apply(ctx: ClientContext): void {
         removeSlot = ctx.slots.register({
           name: 'desktop.main',
           priority: WORKSPACE_MAIN_PRIORITY,
-          inject: () => ({ ptyApi: ptyClient, shell, gitApi, agent }),
+          inject: () => ({ ptyApi: ptyClient, shell, groups, gitApi, agent }),
         }, WorkspaceCanvas)
       } catch (cause) {
         // A registration conflict must not take the left pane and the Changes tab down with it.

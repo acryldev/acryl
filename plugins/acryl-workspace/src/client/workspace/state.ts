@@ -131,6 +131,23 @@ export class WorkspaceState {
   }
 
   /**
+   * Re-create tabs saved by a previous run, after the initial chat tab. Each gets a fresh id.
+   * @param saved - tiles without ids (terminals are never saved).
+   * @param active - index into `saved` of the tab to focus, or -1 to keep the chat focused.
+   */
+  restore(saved: readonly Omit<WorkspaceTile, 'id'>[], active: number): void {
+    if (saved.length === 0) return
+    const restored = saved.map(tile => Object.freeze({ ...tile, id: this.createId() }) as WorkspaceTile)
+    const tiles = [...this.snapshot.tiles, ...restored]
+    const focused = restored[active]
+    this.replace({
+      tiles: Object.freeze(tiles),
+      activeId: focused?.id ?? this.snapshot.activeId,
+      menuOpen: false,
+    })
+  }
+
+  /**
    * Show one changed file's git diff: focus the tile already showing it, or open a new one.
    * @param worktree - absolute worktree path.
    * @param file - path relative to that worktree.

@@ -21,7 +21,7 @@ import type { AgentBridge } from './agent-bridge.ts'
 import { buildReviewComment } from './comment-message.ts'
 import type { WorkspaceGitApi } from './git-api.ts'
 import { GitDiffPane } from './GitDiffPane.tsx'
-import { GLOBAL_GROUP, WorkspaceGroups } from './groups.ts'
+import { GLOBAL_GROUP, type WorkspaceGroups } from './groups.ts'
 import type { WorkspaceShellState } from './shell-state.ts'
 import { parseDoc, parseInline } from './doc-format.ts'
 import { createWorkspacePtyApi, type WorkspacePtyApi } from './pty-api.ts'
@@ -40,6 +40,8 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   readonly useSessions: UseSessions
   /** Shared shell state: which worktree is selected, and the channel for open-diff requests. */
   readonly shell: WorkspaceShellState
+  /** One tab workspace per worktree. Owned by the plugin so it can be saved and restored. */
+  readonly groups: WorkspaceGroups
   readonly gitApi: WorkspaceGitApi
   /** Delivers diff line comments to the open chat's agent. */
   readonly agent: AgentBridge
@@ -51,10 +53,9 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell, gitApi, agent }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell, groups, gitApi, agent }: WorkspaceCanvasProps) {
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
-  const groups = useMemo(() => new WorkspaceGroups(), [])
   // Subscribe to primitives, not the whole shell snapshot: git polling updates that snapshot often,
   // and re-rendering the canvas re-renders the chat conversation inside it.
   const subscribeShell = useCallback((listener: () => void) => shell.subscribe(listener), [shell])
