@@ -5086,7 +5086,6 @@ into the temp profile rather than symlinking them, making them resolvable in
 the isolated context. Verified: `corepack pnpm --filter acryl-desktop run check`
 now passes end to end with exit code 0.
 
-<<<<<<< HEAD
 ## 2026-09-15/16 - feat(cli): /plugins fuzzy search + navigation-while-filtering fix
 
 Commits: `82d316c`, `2785545`
@@ -5433,5 +5432,12 @@ binary directly rather than through whatever bare `pnpm` resolves to on
 - Not done, on purpose or by decision: steps 9-11 of T045's own checklist - push the registry, resync both sites (acryldev.github.io/ui and acrylblends.github.io/ui) and push the commits - were reserved for the operator at review time, so everything above is
   committed locally and unPushed. `questionnaire` and `message-scroller` stay blocked rather than ported narrower. Nothing else in T045 is open: the 26 ports are in the manifest, contracted, categorised (both sites render a component only inside a category, so an
   uncategorised port is invisible - a bug class that shipped twice before the ingest gate checked it), tested and browser-verified.
-=======
->>>>>>> 9a172dc (docs(dev-log): record v0.1.36 bump, hash automation, and rebase)
+
+## 2026-09-25 - Milestone 041 Agent Control (spec only) and a stray conflict marker
+
+- **Decision:** a new milestone, `specs/041-agent-control` (first named `041-agent-ui-control`, renamed the same day because it covers settings, plugins, install and repair, not only the UI). Its thesis: agents can operate ACRYL itself through one governed tool vocabulary (`settings.*`, `plugin.*`, `workspace.*`, `ui.*`), from inside the app (Scope A) and from outside through the ACRYL CLI as an operator and rescue tool (Scope B), including when Desktop or Web will not launch.
+- **What exists:** `spec.md` (precedents, three layers, user stories, requirements, open questions), `plan.md` (Cordis mini-design for a new `acryl-ui-control` plugin and for runtime-side repair services), `tasks.md` (spikes first). No code. Scope B builds on files already in the repo: the shared plugin override file, `plugin-doctor.ts` and the CLI market install.
+- **Decided for Scope B:** a lock file per profile doubles as the discovery record and blocks offline edits while the app runs (they route through the online channel); unattended repair is limited to an allowlist of two reversible recipes plus read-only diagnosis, and anything that installs code, deletes data or touches credentials or approval policy always needs a human; keep the last five known-good boot snapshots (metadata only).
+- **Open, first spike:** the Connection RPC is unary Client to Host, so how a Host-side tool reaches the page is undecided (spike T001).
+- **Commits:** `bf023d4` (spec, plan, tasks), `9c6e14d` (Scope B), `e86fb74` (expanded questions), `de07710389b23701c770afe92e35b67a4af8ef0d` (rename and decisions). Earlier same-day code checkpoint: `d6ae2a7` (branch click no longer forces the right pane open, always-visible right-pane toggle, bordered Chats/Projects tabs, worktree path shown, Add project through the upstream folder flow).
+- **Housekeeping found on the way:** this log ended with an unresolved merge-conflict block (`<<<<<<< HEAD` / `=======` / `>>>>>>> 9a172dc`, theirs side empty). The three marker lines were removed and no text was lost.
