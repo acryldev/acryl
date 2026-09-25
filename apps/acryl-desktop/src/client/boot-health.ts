@@ -1,10 +1,10 @@
 import {
   RENDERER_BOOT_REPORT_PATH,
   type RendererBootReport,
-} from '../renderer-boot-contract.ts'
+} from '../startup/renderer-boot-contract.ts'
 
-export { RENDERER_BOOT_REPORT_PATH } from '../renderer-boot-contract.ts'
-export type { RendererBootReport } from '../renderer-boot-contract.ts'
+export { RENDERER_BOOT_REPORT_PATH } from '../startup/renderer-boot-contract.ts'
+export type { RendererBootReport } from '../startup/renderer-boot-contract.ts'
 
 /** Browser Loader state needed to decide whether one desktop generation is healthy. */
 export interface RendererBootLoader {

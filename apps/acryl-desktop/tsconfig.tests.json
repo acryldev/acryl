@@ -5,13 +5,15 @@
     "noEmit": true,
     "emitDeclarationOnly": false
   },
-  "include": ["scripts/**/*.ts", "src/*.ts", "tests/**/*.ts", "tests/**/*.tsx"],
+  "include": ["scripts/**/*.ts", "src/**/*.ts", "tests/**/*.ts", "tests/**/*.tsx"],
   "exclude": [
+    "src/client/**",
+    "src/native-ui/**",
     "tests/client-acryl-brand.spec.ts",
     "tests/client-boot-health.spec.ts",
-    "tests/client-desktop-settings.spec.ts",
-    "tests/client-environment.spec.ts",
-    "tests/theme-presenter.spec.ts",
-    "tests/client-workspace-folder-drop.spec.ts"
+    "tests/client/settings/client-desktop-settings.spec.ts",
+    "tests/client/layout/client-environment.spec.ts",
+    "tests/client/layout/theme-presenter.spec.ts",
+    "tests/client/workspaces/client-workspace-folder-drop.spec.ts"
   ]
 }

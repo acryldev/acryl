@@ -32,7 +32,7 @@
       "default": "./lib/client.js"
     },
     "./webserver": {
-      "types": "./lib/types/webserver.d.ts",
+      "types": "./lib/types/runtime/webserver.d.ts",
       "default": "./lib/webserver.js"
     },
     "./windows-pwsh-sandbox": {
@@ -40,43 +40,43 @@
       "default": "./lib/windows-pwsh-sandbox.js"
     },
     "./windows-agent-presets": {
-      "types": "./lib/types/windows-agent-presets.d.ts",
+      "types": "./lib/types/windows/windows-agent-presets.d.ts",
       "default": "./lib/windows-agent-presets.js"
     },
     "./terminal": {
-      "types": "./lib/types/terminal.d.ts",
+      "types": "./lib/types/terminal/terminal.d.ts",
       "default": "./lib/terminal.js"
     },
     "./hello-world": {
-      "types": "./lib/types/hello-world.d.ts",
+      "types": "./lib/types/plugins/hello-world.d.ts",
       "default": "./lib/hello-world.js"
     },
     "./pnpm": {
-      "types": "./lib/types/pnpm.d.ts",
+      "types": "./lib/types/plugins/pnpm.d.ts",
       "default": "./lib/pnpm.js"
     },
     "./profile-service": {
-      "types": "./lib/types/profile-service.d.ts",
+      "types": "./lib/types/profile/profile-service.d.ts",
       "default": "./lib/profile-service.js"
     },
     "./desktop-plugins": {
-      "types": "./lib/types/desktop-plugins.d.ts",
+      "types": "./lib/types/plugins/desktop-plugins.d.ts",
       "default": "./lib/desktop-plugins.js"
     },
     "./profiles": {
-      "types": "./lib/types/profiles.d.ts",
+      "types": "./lib/types/profile/profiles.d.ts",
       "default": "./lib/profiles.js"
     },
     "./diagnostics": {
-      "types": "./lib/types/diagnostics.d.ts",
+      "types": "./lib/types/diagnostics/diagnostics.d.ts",
       "default": "./lib/diagnostics.js"
     },
     "./notifications": {
-      "types": "./lib/types/notifications.d.ts",
+      "types": "./lib/types/shell/notifications.d.ts",
       "default": "./lib/notifications.js"
     },
     "./updates": {
-      "types": "./lib/types/updates.d.ts",
+      "types": "./lib/types/updates/updates.d.ts",
       "default": "./lib/updates.js"
     },
     "./package.json": "./package.json"
@@ -130,7 +130,7 @@
     "verify:licenses": "node scripts/verify-licenses.mjs",
     "verify:notices": "node scripts/verify-licenses.mjs --notices THIRD_PARTY_NOTICES.md",
     "check": "pnpm run build && pnpm run typecheck && pnpm run test && pnpm run verify:closure && pnpm run verify:cli && pnpm run verify:loader && pnpm run verify:profile && pnpm run verify:licenses",
-    "check:win-package": "pnpm --filter cordis-plugin-market run build && pnpm run build && pnpm run typecheck && vitest run tests/package.spec.ts tests/package-win.spec.ts tests/update-checker.spec.ts tests/update-download.spec.ts tests/verify-win-installer.spec.ts tests/verify-win-portable.spec.ts tests/verify-packaged-runtime.spec.ts tests/windows-agent-presets.spec.ts tests/windows-pwsh-sandbox.spec.ts tests/windows-volume-diagnostics.spec.ts tests/window-options.spec.ts && pnpm run verify:closure",
+    "check:win-package": "pnpm --filter cordis-plugin-market run build && pnpm run build && pnpm run typecheck && vitest run tests/package.spec.ts tests/package-win.spec.ts tests/updates/update-checker.spec.ts tests/updates/update-download.spec.ts tests/verify-win-installer.spec.ts tests/verify-win-portable.spec.ts tests/verify-packaged-runtime.spec.ts tests/windows/windows-agent-presets.spec.ts tests/windows/windows-pwsh-sandbox.spec.ts tests/workspaces/windows-volume-diagnostics.spec.ts tests/shell/window-options.spec.ts && pnpm run verify:closure",
     "check:mac-package": "pnpm --filter cordis-plugin-market run build && pnpm run build && pnpm run typecheck && vitest run tests/package.spec.ts tests/package-mac.spec.ts tests/verify-mac-smoke.spec.ts tests/verify-packaged-runtime.spec.ts tests/mac-universal.spec.ts && pnpm run verify:closure",
     "start": "node lib/bin.js",
     "dev": "pnpm run build && pnpm run verify:loader && node scripts/launch-dev.mjs",

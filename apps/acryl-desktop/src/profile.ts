@@ -28,27 +28,27 @@ import FileSettingsProvider, {
   type Config as SettingsFileConfig,
 } from '@deepseek-ai/dsh-settings-file'
 import { parseDocument } from 'yaml'
-import { unpackedAsarPath } from './packaged-runtime-path.ts'
-import { findOverlayPackage, resolveOverlayPackage } from './package-overlay.ts'
-import { DESKTOP_DEFAULT_WEB_PORT } from './desktop-port.ts'
-import type { DesktopShellMode } from './runtime.ts'
+import { unpackedAsarPath } from './runtime/packaged-runtime-path.ts'
+import { findOverlayPackage, resolveOverlayPackage } from './plugins/package-overlay.ts'
+import { DESKTOP_DEFAULT_WEB_PORT } from './runtime/desktop-port.ts'
+import type { DesktopShellMode } from './shell/runtime.ts'
 import {
   activeDesktopProfileLayers,
   desktopPluginBundleMutable,
   readDesktopDisabledBundles,
-} from './desktop-plugins.ts'
+} from './plugins/desktop-plugins.ts'
 import {
   DESKTOP_MARKET_IDENTITIES,
   desktopMarketSnapshotWithEffective,
   type DesktopMarketProvider,
   type DesktopMarketSnapshot,
-} from './desktop-market.ts'
+} from './plugins/desktop-market.ts'
 import {
   assertNoBlendRowCollisions,
   blendInsertPatch,
   readDesktopBlend,
   type DesktopBlendProjection,
-} from './desktop-blend.ts'
+} from './profile/desktop-blend.ts'
 
 /** Persistent profile managed by the desktop launcher and the ordinary dsh plugin command. */
 export const DESKTOP_PROFILE_NAME = 'desktop'

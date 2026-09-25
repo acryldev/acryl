@@ -9,7 +9,7 @@
  * `AcrPluginLifecycleController` (spec 034 T005) the CLI's own `acryl
  * plugin enable/disable` and Desktop's Lifecycle tab already drive - this
  * file is only the market-shaped view over it, matching how
- * `acryl-desktop/src/desktop-plugins.ts` is Desktop's own view over the
+ * `acryl-desktop/src/plugins/desktop-plugins.ts` is Desktop's own view over the
  * identical shared controller.
  *
  * `bundleId` here is simply the Loader `entryId` - Web owns both sides of
@@ -152,7 +152,7 @@ export class WebPluginsService extends Service {
  * Web's own `livePluginActivation` (spec 034 T006 follow-up, prompted by a
  * real user hitting the gap: installing through the Market left the new
  * plugin inactive until a full server-process restart). Matches Desktop's
- * own `LivePluginActivationService` (`acryl-desktop/src/plugin-lifecycle-
+ * own `LivePluginActivationService` (`acryl-desktop/src/plugins/lifecycle/plugin-lifecycle-
  * controller.ts`) almost line for line - both are thin wrappers over the
  * exact same shared `AcrPluginLifecycleController` (spec 034 T005), whose
  * `activate()`/`deactivate()`/`setEnabledByPackageName()`/`statusOfPackage()`

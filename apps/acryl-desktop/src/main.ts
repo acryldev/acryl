@@ -23,38 +23,38 @@ import {
 import {
   installDesktopDshRuntime,
   installDesktopPnpmRuntime,
-} from './desktop-runtime-environment.ts'
+} from './terminal/desktop-runtime-environment.ts'
 import { desktopProductVersion, ElectronDesktopRuntime } from './electron-runtime.ts'
 import {
   ElectronStderrLogger,
   installDesktopChildProcessLogging,
   installDesktopUncaughtExceptionLogging,
   type DesktopLogger,
-} from './desktop-logger.ts'
+} from './diagnostics/desktop-logger.ts'
 import {
   beginDesktopRun,
   startDesktopCrashReporting,
   type DesktopRun,
-} from './crash-evidence.ts'
+} from './shell/crash-evidence.ts'
 import { exportDesktopDiagnostics } from './diagnostic-export.ts'
-import { createDesktopLifecycleRecorder } from './lifecycle-events.ts'
+import { createDesktopLifecycleRecorder } from './startup/lifecycle-events.ts'
 import type {
   DesktopLifecycleFailureReason,
   DesktopLifecycleRendererFailureReason,
-} from './lifecycle-events.ts'
-import { FileExporter } from './file-exporter.ts'
+} from './startup/lifecycle-events.ts'
+import { FileExporter } from './diagnostics/file-exporter.ts'
 import { DESKTOP_SETTINGS_NAMESPACE, type DesktopSettings } from './index.ts'
-import { LogFileSink } from './log-files.ts'
-import { maskSecrets } from './mask-secrets.ts'
-import { resolveDesktopShellEnvironment } from './shell-environment.ts'
+import { LogFileSink } from './diagnostics/log-files.ts'
+import { maskSecrets } from './diagnostics/mask-secrets.ts'
+import { resolveDesktopShellEnvironment } from './terminal/shell-environment.ts'
 import { installProfilePackageResolver } from './module-resolution.ts'
-import { packagedDependencyPath } from './packaged-runtime-path.ts'
+import { packagedDependencyPath } from './runtime/packaged-runtime-path.ts'
 import {
   DesktopInstallRecoveryStore,
   desktopInstallRecoveryStatePath,
   type DesktopInstallRecoveryFailureReason,
   type DesktopInstallRecoveryTransaction,
-} from './install-recovery.ts'
+} from './plugins/install-recovery.ts'
 import {
   beginDesktopProfileStartup,
   assertDesktopProfileName,
@@ -65,50 +65,50 @@ import {
   readDesktopProfileState,
   selectDesktopProfile,
   type DesktopProfileStartup,
-} from './profile-manager.ts'
-import { DesktopProfileService } from './profile-service.ts'
-import { DesktopActionsService } from './desktop-actions.ts'
-import { clearDesktopProfilePluginState, DesktopPluginsService } from './desktop-plugins.ts'
+} from './profile/profile-manager.ts'
+import { DesktopProfileService } from './profile/profile-service.ts'
+import { DesktopActionsService } from './shell/desktop-actions.ts'
+import { clearDesktopProfilePluginState, DesktopPluginsService } from './plugins/desktop-plugins.ts'
 import {
   desktopMarketSnapshotWithEffective,
   readDesktopMarketStateForUserData,
   selectDesktopMarketProvider,
-} from './desktop-market.ts'
-import DesktopSettingsController from './desktop-settings-controller.ts'
-import { DesktopStartupRecoveryController } from './startup-recovery-controller.ts'
+} from './plugins/desktop-market.ts'
+import DesktopSettingsController from './settings/desktop-settings-controller.ts'
+import { DesktopStartupRecoveryController } from './startup/startup-recovery-controller.ts'
 import {
   DesktopStartupRecoveryWindow,
   type DesktopStartupRecoveryConfigurationPaths,
   type DesktopStartupRecoveryProfileActions,
   type DesktopStartupFailureStage,
 } from './startup-recovery-window.ts'
-import { routeDesktopStartupFailure } from './startup-failure-routing.ts'
-import { DesktopStartupGeneration } from './startup-generation.ts'
-import { DesktopStartupStateCommit } from './startup-state-commit.ts'
+import { routeDesktopStartupFailure } from './startup/startup-failure-routing.ts'
+import { DesktopStartupGeneration } from './startup/startup-generation.ts'
+import { DesktopStartupStateCommit } from './startup/startup-state-commit.ts'
 import {
   desktopInstallAnchor,
   prepareDesktopProfile,
   type SkippedOptionalEntry,
 } from './profile.ts'
-import { clearDesktopProfileCheckpoint, DesktopProfileCheckpoint } from './profile-checkpoint.ts'
-import { materializeProfile, ProfileMaterializationError } from './profile-materializer.ts'
-import type { DesktopPnpmBootstrap } from './pnpm.ts'
-import type {} from './plugin-lifecycle-state.ts'
+import { clearDesktopProfileCheckpoint, DesktopProfileCheckpoint } from './profile/profile-checkpoint.ts'
+import { materializeProfile, ProfileMaterializationError } from './profile/profile-materializer.ts'
+import type { DesktopPnpmBootstrap } from './plugins/pnpm.ts'
+import type {} from './plugins/lifecycle/plugin-lifecycle-state.ts'
 import {
   createDesktopExitCoordinator,
   createDesktopShutdown,
   DESKTOP_DEV_RESTART_EXIT_CODE,
   installShutdownRequests,
   type DesktopShutdown,
-} from './shutdown.ts'
+} from './shell/shutdown.ts'
 import {
   diagnoseWindowsVolumes,
   formatWindowsVolumeConcern,
   type WindowsVolumeConcern,
-} from './windows-volume-diagnostics.ts'
-import type { RendererBootReport } from './renderer-boot-contract.ts'
-import { desktopLocaleFromLanguageTag } from './tray-locale.ts'
-import { resolveDesktopUserDataOverride } from './desktop-user-data.ts'
+} from './workspaces/windows-volume-diagnostics.ts'
+import type { RendererBootReport } from './startup/renderer-boot-contract.ts'
+import { desktopLocaleFromLanguageTag } from './shell/tray-locale.ts'
+import { resolveDesktopUserDataOverride } from './shell/desktop-user-data.ts'
 
 const BIN_NAME = 'acryl-desktop'
 const PRODUCT_NAME = 'ACRYL'

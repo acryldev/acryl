@@ -20,5 +20,7 @@
     "verbatimModuleSyntax": true,
     "types": ["node"]
   },
-  "include": ["src/*.ts"]
+  "include": ["src/**/*.ts"],
+  // The client and native UI have their own configs and environments.
+  "exclude": ["src/client/**", "src/native-ui/**"]
 }

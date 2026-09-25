@@ -21,8 +21,8 @@ import {
   DESKTOP_LIFECYCLE_EVIDENCE_ENTRY,
   DESKTOP_LIFECYCLE_SUMMARY_ENTRY,
   summarizeDesktopLifecycleEvidence,
-} from './lifecycle-events.ts'
-import { isDesktopLogFileName } from './log-files.ts'
+} from './startup/lifecycle-events.ts'
+import { isDesktopLogFileName } from './diagnostics/log-files.ts'
 
 const DIAGNOSTIC_ARCHIVE = /^diagnostics-\d+(?:-[0-9a-f-]+)?\.zip$/u
 const MAX_DIAGNOSTIC_ARCHIVES = 3

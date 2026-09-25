@@ -100,40 +100,40 @@ describe('published package surface', () => {
       default: './lib/windows-pwsh-sandbox.js',
     })
     expect(manifest.exports).toHaveProperty('./windows-agent-presets', {
-      types: './lib/types/windows-agent-presets.d.ts',
+      types: './lib/types/windows/windows-agent-presets.d.ts',
       default: './lib/windows-agent-presets.js',
     })
     expect(manifest.exports).toHaveProperty('./terminal', {
-      types: './lib/types/terminal.d.ts',
+      types: './lib/types/terminal/terminal.d.ts',
       default: './lib/terminal.js',
     })
     expect(manifest.exports).not.toHaveProperty('./development-canvas')
     expect(manifest.exports).toHaveProperty('./hello-world', {
-      types: './lib/types/hello-world.d.ts',
+      types: './lib/types/plugins/hello-world.d.ts',
       default: './lib/hello-world.js',
     })
     expect(manifest.exports).toHaveProperty('./pnpm', {
-      types: './lib/types/pnpm.d.ts',
+      types: './lib/types/plugins/pnpm.d.ts',
       default: './lib/pnpm.js',
     })
     expect(manifest.exports).toHaveProperty('./profile-service', {
-      types: './lib/types/profile-service.d.ts',
+      types: './lib/types/profile/profile-service.d.ts',
       default: './lib/profile-service.js',
     })
     expect(manifest.exports).toHaveProperty('./profiles', {
-      types: './lib/types/profiles.d.ts',
+      types: './lib/types/profile/profiles.d.ts',
       default: './lib/profiles.js',
     })
     expect(manifest.exports).toHaveProperty('./diagnostics', {
-      types: './lib/types/diagnostics.d.ts',
+      types: './lib/types/diagnostics/diagnostics.d.ts',
       default: './lib/diagnostics.js',
     })
     expect(manifest.exports).toHaveProperty('./updates', {
-      types: './lib/types/updates.d.ts',
+      types: './lib/types/updates/updates.d.ts',
       default: './lib/updates.js',
     })
     expect(manifest.exports).toHaveProperty('./notifications', {
-      types: './lib/types/notifications.d.ts',
+      types: './lib/types/shell/notifications.d.ts',
       default: './lib/notifications.js',
     })
     expect(manifest.exports).not.toHaveProperty('./windows-acl-runner')
@@ -327,25 +327,25 @@ describe('published package surface', () => {
     const config = readFileSync(new URL('tsdown.config.ts', packageRoot), 'utf8')
 
     expect(config).toContain("'windows-pwsh-sandbox': 'src/windows-pwsh-sandbox.ts'")
-    expect(config).toContain("'windows-agent-presets': 'src/windows-agent-presets.ts'")
+    expect(config).toContain("'windows-agent-presets': 'src/windows/windows-agent-presets.ts'")
     expect(config).toContain("'windows-acl-runner': 'src/windows-acl-runner.ts'")
     expect(config).toContain("'desktop-cli': 'src/desktop-cli.ts'")
-    expect(config).toContain("'desktop-runtime-environment': 'src/desktop-runtime-environment.ts'")
-    expect(config).toContain("'desktop-terminal': 'src/desktop-terminal.ts'")
-    expect(config).toContain("'profile-manager': 'src/profile-manager.ts'")
-    expect(config).toContain("'profile-service': 'src/profile-service.ts'")
-    expect(config).toContain("pnpm: 'src/pnpm.ts'")
-    expect(config).toContain("profiles: 'src/profiles.ts'")
-    expect(config).toContain("diagnostics: 'src/diagnostics.ts'")
-    expect(config).toContain("notifications: 'src/notifications.ts'")
+    expect(config).toContain("'desktop-runtime-environment': 'src/terminal/desktop-runtime-environment.ts'")
+    expect(config).toContain("'desktop-terminal': 'src/terminal/desktop-terminal.ts'")
+    expect(config).toContain("'profile-manager': 'src/profile/profile-manager.ts'")
+    expect(config).toContain("'profile-service': 'src/profile/profile-service.ts'")
+    expect(config).toContain("pnpm: 'src/plugins/pnpm.ts'")
+    expect(config).toContain("profiles: 'src/profile/profiles.ts'")
+    expect(config).toContain("diagnostics: 'src/diagnostics/diagnostics.ts'")
+    expect(config).toContain("notifications: 'src/shell/notifications.ts'")
     expect(config).toContain("'diagnostic-export-worker': 'src/diagnostic-export-worker.ts'")
     expect(config).toContain("entry: { preload: 'src/preload.ts' }")
     expect(config).toContain("entryFileNames: 'preload.cjs'")
-    expect(config).toContain("terminal: 'src/terminal.ts'")
-    expect(config).toContain("'hello-world': 'src/hello-world.ts'")
+    expect(config).toContain("terminal: 'src/terminal/terminal.ts'")
+    expect(config).toContain("'hello-world': 'src/plugins/hello-world.ts'")
     expect(config).not.toContain("'development-canvas': 'src/development-canvas.ts'")
-    expect(config).toContain("'update-download': 'src/update-download.ts'")
-    expect(config).toContain("updates: 'src/updates.ts'")
+    expect(config).toContain("'update-download': 'src/updates/update-download.ts'")
+    expect(config).toContain("updates: 'src/updates/updates.ts'")
   })
 
   it('installs Host command PATHs after the launch snapshot and before profile boot', () => {
@@ -374,7 +374,7 @@ describe('published package surface', () => {
     expect(main).toContain("'acryl-desktop: packaged dsh runtime PATH'")
     expect(main).toContain("args: ['--host', '127.0.0.1', '--port', String(prepared.port)]")
     expect(main).not.toContain("'--port', '0'")
-    expect(main).toContain("import { DesktopStartupGeneration } from './startup-generation.ts'")
+    expect(main).toContain("import { DesktopStartupGeneration } from './startup/startup-generation.ts'")
     expect(main).toContain('async () => { await generation.release() }')
     expect(main).not.toContain('disposePnpmRuntime')
     expect(main).not.toContain('disposeDshRuntime')
@@ -431,7 +431,7 @@ describe('published package surface', () => {
     const commitStateHealthy = main.indexOf('await stateCommit.commitHealthy()', commitHealthy)
 
     expect(fixedStatePath).toBeGreaterThanOrEqual(0)
-    expect(main).toContain("import { DesktopStartupStateCommit } from './startup-state-commit.ts'")
+    expect(main).toContain("import { DesktopStartupStateCommit } from './startup/startup-state-commit.ts'")
     expect(main).not.toContain("desktopInstallRecoveryStatePath(app.getPath('userData'), process.env)")
     expect(main).not.toContain('process.env[DESKTOP_INSTALL_RECOVERY_STATE_ENV]')
     expect(beginProfile).toBeGreaterThan(fixedStatePath)
@@ -465,7 +465,7 @@ describe('published package surface', () => {
     const failPendingRenderer = main.indexOf('lifecycleRecorder.failRendererBootIfPending(')
     const catchFailStartup = main.indexOf('lifecycleRecorder.failStartup(', failPendingRenderer)
 
-    expect(main).toContain("import { createDesktopLifecycleRecorder } from './lifecycle-events.ts'")
+    expect(main).toContain("import { createDesktopLifecycleRecorder } from './startup/lifecycle-events.ts'")
     expect(createRecorder).toBeGreaterThanOrEqual(0)
     expect(startRun).toBeGreaterThan(createRecorder)
     for (const stage of [
@@ -524,7 +524,7 @@ describe('published package surface', () => {
   })
 
   it('uses the upstream child-environment scrub around login-shell recovery', () => {
-    const shellEnvironment = readFileSync(new URL('src/shell-environment.ts', packageRoot), 'utf8')
+    const shellEnvironment = readFileSync(new URL('src/terminal/shell-environment.ts', packageRoot), 'utf8')
 
     expect(shellEnvironment).toContain('scrubbedParentEnv')
     expect(shellEnvironment).toContain('SENSITIVE_ENV_PATTERN')
@@ -615,9 +615,9 @@ describe('published package surface', () => {
     expect(manifest.scripts?.['check:win-package']).toContain('pnpm run typecheck')
     expect(manifest.scripts?.['check:win-package']).toContain('tests/package-win.spec.ts')
     expect(manifest.scripts?.['check:win-package']).toContain('tests/verify-win-portable.spec.ts')
-    expect(manifest.scripts?.['check:win-package']).toContain('tests/update-checker.spec.ts')
-    expect(manifest.scripts?.['check:win-package']).toContain('tests/update-download.spec.ts')
-    expect(manifest.scripts?.['check:win-package']).toContain('tests/windows-volume-diagnostics.spec.ts')
+    expect(manifest.scripts?.['check:win-package']).toContain('tests/updates/update-checker.spec.ts')
+    expect(manifest.scripts?.['check:win-package']).toContain('tests/updates/update-download.spec.ts')
+    expect(manifest.scripts?.['check:win-package']).toContain('tests/workspaces/windows-volume-diagnostics.spec.ts')
     expect(manifest.scripts?.['check:win-package']).toContain('pnpm run verify:closure')
     expect(manifest.scripts?.['check:mac-package']).toContain('pnpm --filter cordis-plugin-market run build')
     expect(manifest.scripts?.['check:mac-package']).toContain('pnpm run build')

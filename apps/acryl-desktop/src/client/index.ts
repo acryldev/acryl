@@ -16,48 +16,48 @@ import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
-import { applyAdvancedShell } from './advanced-shell.ts'
+import { applyAdvancedShell } from './layout/advanced-shell.ts'
 import { startRendererBootReporter } from './boot-health.ts'
-import { applyDesktopSettings } from './desktop-settings.ts'
-import { installDesktopDirectoryPickerBridge, requestDesktopDirectoryValidation } from './directory-picker.ts'
+import { applyDesktopSettings } from './settings/desktop-settings.ts'
+import { installDesktopDirectoryPickerBridge, requestDesktopDirectoryValidation } from './workspaces/directory-picker.ts'
 import { parseDesktopClientEnvironment } from './environment.ts'
-import { applyPluginLifecycleSettings } from './plugin-lifecycle-settings.ts'
-import { installWorkspaceFolderDrop } from './workspace-folder-drop.ts'
+import { applyPluginLifecycleSettings } from './plugin-lifecycle/plugin-lifecycle-settings.ts'
+import { installWorkspaceFolderDrop } from './workspaces/workspace-folder-drop.ts'
 
-export { applyAdvancedShell } from './advanced-shell.ts'
-export { applyDesktopSettings } from './desktop-settings.ts'
-export { PluginArchitectureSettingsTab } from './PluginArchitectureSettingsTab.tsx'
+export { applyAdvancedShell } from './layout/advanced-shell.ts'
+export { applyDesktopSettings } from './settings/desktop-settings.ts'
+export { PluginArchitectureSettingsTab } from './plugin-architecture/PluginArchitectureSettingsTab.tsx'
 export type {
   PluginArchitectureSettingsTabInjected,
   PluginArchitectureSettingsTabProps,
-} from './PluginArchitectureSettingsTab.tsx'
-export { PluginLifecycleSettingsTab } from './PluginLifecycleSettingsTab.tsx'
+} from './plugin-architecture/PluginArchitectureSettingsTab.tsx'
+export { PluginLifecycleSettingsTab } from './plugin-lifecycle/PluginLifecycleSettingsTab.tsx'
 export type {
   PluginLifecycleSettingsTabInjected,
   PluginLifecycleSettingsTabProps,
-} from './PluginLifecycleSettingsTab.tsx'
+} from './plugin-lifecycle/PluginLifecycleSettingsTab.tsx'
 export {
   createPluginArchitectureApi,
   parseCordisPlaneSnapshot,
-} from './plugin-architecture-api.ts'
-export type { PluginArchitectureApi } from './plugin-architecture-api.ts'
+} from './plugin-architecture/plugin-architecture-api.ts'
+export type { PluginArchitectureApi } from './plugin-architecture/plugin-architecture-api.ts'
 export {
   createPluginLifecycleApi,
   parsePluginLifecycleSnapshot,
-} from './plugin-lifecycle-api.ts'
+} from './plugin-lifecycle/plugin-lifecycle-api.ts'
 export type {
   PluginLifecycleApi,
   PluginLifecycleClientEntryView,
   PluginLifecycleClientSnapshot,
-} from './plugin-lifecycle-api.ts'
-export { applyPluginLifecycleSettings } from './plugin-lifecycle-settings.ts'
+} from './plugin-lifecycle/plugin-lifecycle-api.ts'
+export { applyPluginLifecycleSettings } from './plugin-lifecycle/plugin-lifecycle-settings.ts'
 export {
   createDesktopSettingsApi,
   desktopSettingsPaths,
   parseDesktopActionAcceptance,
   parseDesktopRestartAcceptance,
   parseDesktopSettingsView,
-} from './desktop-settings-api.ts'
+} from './settings/desktop-settings-api.ts'
 export type {
   DesktopMarketProvider,
   DesktopMarketView,
@@ -65,19 +65,19 @@ export type {
   DesktopRestartAcceptance,
   DesktopSettingsApi,
   DesktopSettingsView,
-} from './desktop-settings-api.ts'
-export { DesktopSettingsSection } from './DesktopSettingsSection.tsx'
-export { DesktopTerminalSettingsAction } from './DesktopTerminalSettingsAction.tsx'
+} from './settings/desktop-settings-api.ts'
+export { DesktopSettingsSection } from './settings/DesktopSettingsSection.tsx'
+export { DesktopTerminalSettingsAction } from './settings/DesktopTerminalSettingsAction.tsx'
 export type {
   DesktopTerminalSettingsActionInjected,
   DesktopTerminalSettingsActionProps,
-} from './DesktopTerminalSettingsAction.tsx'
+} from './settings/DesktopTerminalSettingsAction.tsx'
 export type {
   DesktopNotificationSettings,
   DesktopSettingsSectionInjected,
   DesktopSettingsSectionProps,
   DesktopShellSettings,
-} from './DesktopSettingsSection.tsx'
+} from './settings/DesktopSettingsSection.tsx'
 export {
   RENDERER_BOOT_REPORT_PATH,
   rendererBootReport,

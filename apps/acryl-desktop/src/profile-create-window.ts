@@ -2,7 +2,7 @@
 
 import { BrowserWindow } from 'electron'
 import { fileURLToPath } from 'node:url'
-import type { DesktopLocale } from './runtime.ts'
+import type { DesktopLocale } from './shell/runtime.ts'
 
 const PROFILE_CREATE_SCHEME = 'dsh-profile-create:'
 const MAX_NAME_QUERY_BYTES = 1024

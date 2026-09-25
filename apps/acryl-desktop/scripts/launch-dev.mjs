@@ -20,7 +20,7 @@ const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)))
 const PRODUCT_NAME = 'ACRYL'
 const DEVELOPMENT_BUNDLE_ID = 'dev.acryl.desktop.development'
 const DEV_ENTITLEMENTS_PATH = join(packageRoot, 'build', 'entitlements.dev.plist')
-// Must match `DESKTOP_DEV_RESTART_EXIT_CODE` in `../src/shutdown.ts`. That
+// Must match `DESKTOP_DEV_RESTART_EXIT_CODE` in `../src/shell/shutdown.ts`. That
 // module is compiled TypeScript and this is a standalone script run directly
 // by Node, so the two sides mirror the literal rather than sharing an import.
 export const DEV_RESTART_EXIT_CODE = 43

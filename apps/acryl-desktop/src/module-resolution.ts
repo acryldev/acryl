@@ -12,9 +12,9 @@
 
 import { installProfilePackageResolver as sharedInstallProfilePackageResolver } from 'acryl-harness-runtime'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { unpackedAsarPath } from './packaged-runtime-path.ts'
+import { unpackedAsarPath } from './runtime/packaged-runtime-path.ts'
 
-export { findOverlayPackage, packageNameFromSpecifier, resolveOverlayPackage } from './package-overlay.ts'
+export { findOverlayPackage, packageNameFromSpecifier, resolveOverlayPackage } from './plugins/package-overlay.ts'
 
 const LOADER_ENTRY_URL = import.meta.resolve('@deepseek-ai/cordis-plugin-loader')
 const DESKTOP_ENTRY_URL = pathToFileURL(

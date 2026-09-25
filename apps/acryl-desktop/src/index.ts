@@ -22,15 +22,15 @@ import {
 import {
   handleRendererBootRequest,
   RENDERER_BOOT_REPORT_PATH,
-} from './renderer-boot.ts'
+} from './startup/renderer-boot.ts'
 import {
   DESKTOP_DIRECTORY_PICKER_PATH,
   DESKTOP_DIRECTORY_VALIDATOR_PATH,
-} from './directory-picker-contract.ts'
+} from './workspaces/directory-picker-contract.ts'
 import {
   handleDesktopDirectoryPickerRequest,
   handleDesktopDirectoryValidationRequest,
-} from './directory-picker-route.ts'
+} from './workspaces/directory-picker-route.ts'
 import {
   DESKTOP_DIAGNOSTICS_EXPORT_PATH,
   DESKTOP_MARKET_SELECT_PATH,
@@ -41,7 +41,7 @@ import {
   DESKTOP_PROFILE_SELECT_PATH,
   DESKTOP_SETTINGS_PATH,
   DESKTOP_TERMINAL_OPEN_PATH,
-} from './desktop-settings-contract.ts'
+} from './settings/desktop-settings-contract.ts'
 import {
   handleDesktopDiagnosticsExportRequest,
   handleDesktopMarketSelectRequest,
@@ -52,30 +52,30 @@ import {
   handleDesktopProfileSelectRequest,
   handleDesktopSettingsRequest,
   handleDesktopTerminalOpenRequest,
-} from './desktop-settings-route.ts'
-import type {} from './desktop-settings-controller.ts'
-import { PLUGIN_ARCHITECTURE_PATH } from './plugin-architecture-contract.ts'
-import { inspectCordisContext } from './plugin-architecture-inspector.ts'
-import { handlePluginArchitectureSnapshotRequest } from './plugin-architecture-route.ts'
+} from './settings/desktop-settings-route.ts'
+import type {} from './settings/desktop-settings-controller.ts'
+import { PLUGIN_ARCHITECTURE_PATH } from './plugins/architecture/plugin-architecture-contract.ts'
+import { inspectCordisContext } from './plugins/architecture/plugin-architecture-inspector.ts'
+import { handlePluginArchitectureSnapshotRequest } from './plugins/architecture/plugin-architecture-route.ts'
 import {
   PLUGIN_LIFECYCLE_DISABLE_PATH,
   PLUGIN_LIFECYCLE_ENABLE_PATH,
   PLUGIN_LIFECYCLE_PATH,
   PLUGIN_LIFECYCLE_RELOAD_PATH,
-} from './plugin-lifecycle-contract.ts'
-import { LivePluginActivationService, PluginLifecycleController } from './plugin-lifecycle-controller.ts'
-import { installPluginWatchers, parsePluginWatchSpec } from './desktop-plugin-watch.ts'
+} from './plugins/lifecycle/plugin-lifecycle-contract.ts'
+import { LivePluginActivationService, PluginLifecycleController } from './plugins/lifecycle/plugin-lifecycle-controller.ts'
+import { installPluginWatchers, parsePluginWatchSpec } from './plugins/desktop-plugin-watch.ts'
 import {
   handlePluginLifecycleDisableRequest,
   handlePluginLifecycleEnableRequest,
   handlePluginLifecycleReloadRequest,
   handlePluginLifecycleSnapshotRequest,
-} from './plugin-lifecycle-route.ts'
-import type {} from './plugin-lifecycle-state.ts'
-import { desktopBootRecoveryInjections } from './desktop-boot-recovery.ts'
-import { desktopRootSlotRecoveryInjections } from './desktop-root-slot-recovery.ts'
-import type { DesktopLocale, DesktopShellMode } from './runtime.ts'
-import type {} from './runtime.ts'
+} from './plugins/lifecycle/plugin-lifecycle-route.ts'
+import type {} from './plugins/lifecycle/plugin-lifecycle-state.ts'
+import { desktopBootRecoveryInjections } from './startup/desktop-boot-recovery.ts'
+import { desktopRootSlotRecoveryInjections } from './startup/desktop-root-slot-recovery.ts'
+import type { DesktopLocale, DesktopShellMode } from './shell/runtime.ts'
+import type {} from './shell/runtime.ts'
 
 /**
  * Narrow `dsh-client-locale`'s open, plugin-extensible `LocaleId` down to the
@@ -87,7 +87,7 @@ import type {} from './runtime.ts'
 function toDesktopLocale(preference: string | undefined): DesktopLocale | undefined {
   return LOCALE_IDS.includes(preference as (typeof LOCALE_IDS)[number]) ? (preference as DesktopLocale) : undefined
 }
-import { DESKTOP_DEFAULT_WEB_PORT } from './desktop-port.ts'
+import { DESKTOP_DEFAULT_WEB_PORT } from './runtime/desktop-port.ts'
 
 /** Stable Cordis plugin name. */
 export const name = 'desktop-shell'

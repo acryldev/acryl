@@ -4,7 +4,7 @@ import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { Worker } from 'node:worker_threads'
 import type { DiagnosticExportWorkerResult } from './diagnostic-export-worker.ts'
-import { desktopLifecycleEvidencePath } from './lifecycle-events.ts'
+import { desktopLifecycleEvidencePath } from './startup/lifecycle-events.ts'
 
 /** Bound both worker memory and the amount of potentially sensitive log history exported. */
 export const MAX_DIAGNOSTIC_EVIDENCE_BYTES = 50 * 1024 * 1024

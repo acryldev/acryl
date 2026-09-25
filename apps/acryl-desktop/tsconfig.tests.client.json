@@ -1,21 +1,23 @@
 {
   "extends": "./tsconfig.client.json",
+  "exclude": [],
   "compilerOptions": {
     "rootDir": ".",
     "noEmit": true,
     "emitDeclarationOnly": false
   },
   "include": [
+    "src/client/layout/advanced-shell.ts",
     "src/client/**/*.ts",
     "src/client/**/*.tsx",
     "tests/client-acryl-brand.spec.ts",
     "tests/client-boot-health.spec.ts",
-    "tests/client-directory-picker.spec.ts",
-    "tests/client-desktop-settings.spec.ts",
-    "tests/client-environment.spec.ts",
-    "tests/client-plugin-architecture-api.spec.ts",
-    "tests/client-plugin-lifecycle-api.spec.ts",
-    "tests/client-workspace-folder-drop.spec.ts",
-    "tests/theme-presenter.spec.ts"
+    "tests/client/workspaces/client-directory-picker.spec.ts",
+    "tests/client/settings/client-desktop-settings.spec.ts",
+    "tests/client/layout/client-environment.spec.ts",
+    "tests/plugins/architecture/client-plugin-architecture-api.spec.ts",
+    "tests/client/plugin-lifecycle/client-plugin-lifecycle-api.spec.ts",
+    "tests/client/workspaces/client-workspace-folder-drop.spec.ts",
+    "tests/client/layout/theme-presenter.spec.ts"
   ]
 }

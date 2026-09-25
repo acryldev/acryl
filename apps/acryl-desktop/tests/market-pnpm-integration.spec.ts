@@ -14,7 +14,7 @@ import {
   inject as desktopPnpmInject,
   name as desktopPnpmName,
   type DesktopPnpmBootstrap,
-} from '../src/pnpm.js'
+} from '../src/plugins/pnpm.js'
 
 const PACKAGE_NAME = 'dsh-plugin-market-integration'
 const PACKAGE_VERSION = '1.2.3'

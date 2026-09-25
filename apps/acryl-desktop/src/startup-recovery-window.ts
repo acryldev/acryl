@@ -5,14 +5,14 @@ import { execFile } from 'node:child_process'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { basename, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { DesktopLocale } from './runtime.ts'
-import { applicationNeedsReveal, revealApplication } from './electron-reveal.ts'
+import type { DesktopLocale } from './shell/runtime.ts'
+import { applicationNeedsReveal, revealApplication } from './shell/electron-reveal.ts'
 import {
   DesktopStartupRecoveryController,
   type DesktopStartupRecoveryDisablePreview,
   type DesktopStartupRecoveryInstallPreview,
   type DesktopStartupRecoverySnapshot,
-} from './startup-recovery-controller.ts'
+} from './startup/startup-recovery-controller.ts'
 
 const RECOVERY_SCHEME = 'dsh-recovery:'
 const RECOVERY_DOCUMENT = fileURLToPath(new URL('./native-ui/recovery.html', import.meta.url))

@@ -12,11 +12,11 @@ import { spawn } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { desktopTerminalStateDirectory, openDesktopTerminal } from './desktop-terminal.ts'
-import { desktopInstallRecoveryStatePath } from './install-recovery.ts'
-import { packagedDependencyPath } from './packaged-runtime-path.ts'
-import { ElectronShellGeneration } from './electron-shell-generation.ts'
-import { electronPlatformStrategy, type ElectronPlatformStrategy } from './electron-platform.ts'
+import { desktopTerminalStateDirectory, openDesktopTerminal } from './terminal/desktop-terminal.ts'
+import { desktopInstallRecoveryStatePath } from './plugins/install-recovery.ts'
+import { packagedDependencyPath } from './runtime/packaged-runtime-path.ts'
+import { ElectronShellGeneration } from './shell/electron-shell-generation.ts'
+import { electronPlatformStrategy, type ElectronPlatformStrategy } from './shell/electron-platform.ts'
 import type {
   DesktopNotification,
   DesktopLocale,
@@ -29,21 +29,21 @@ import type {
   DesktopTrayItemGroup,
   DesktopTrayItemRegistration,
   DesktopUpdateAdapter,
-} from './runtime.ts'
-import type { RendererBootReport } from './renderer-boot-contract.ts'
+} from './shell/runtime.ts'
+import type { RendererBootReport } from './startup/renderer-boot-contract.ts'
 import {
   DesktopRendererHealthGate,
   type DesktopRendererHealthGateOptions,
   type RendererHealthFailureReason,
   type RendererHealthVerdict,
-} from './renderer-health.ts'
-import type { DesktopLogger } from './desktop-logger.ts'
+} from './startup/renderer-health.ts'
+import type { DesktopLogger } from './diagnostics/desktop-logger.ts'
 import { exportDesktopDiagnostics } from './diagnostic-export.ts'
 import {
   desktopDiagnosticsPrivacyCopy,
   desktopLocaleFromLanguageTag,
   desktopTrayLabel,
-} from './tray-locale.ts'
+} from './shell/tray-locale.ts'
 import {
   desktopUpdateFilename,
   downloadDesktopUpdate,
@@ -51,12 +51,12 @@ import {
   recordDesktopUpdateArtifact,
   resolveDesktopUpdateArtifact,
   type DesktopUpdateArtifact,
-} from './update-download.ts'
-import type { UpdateCheckResult } from './update-checker.ts'
+} from './updates/update-download.ts'
+import type { UpdateCheckResult } from './updates/update-checker.ts'
 import {
   type WindowsVolumeQuery,
-} from './windows-volume-diagnostics.ts'
-import { ElectronWorkspaceAdmission } from './workspace-admission.ts'
+} from './workspaces/windows-volume-diagnostics.ts'
+import { ElectronWorkspaceAdmission } from './workspaces/workspace-admission.ts'
 import { ProfileCreateWindow, type ProfileCreateWindowOptions } from './profile-create-window.ts'
 
 /** Return the presentation mode opposite the active generation. */

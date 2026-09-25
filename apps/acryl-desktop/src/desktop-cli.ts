@@ -7,9 +7,9 @@ import {
   DESKTOP_INSTALL_RECOVERY_STATE_ENV,
   DesktopInstallRecoveryStore,
   desktopInstallRecoveryStatePath,
-} from './install-recovery.ts'
-import { packagedDependencyPath } from './packaged-runtime-path.ts'
-import { assertDesktopProfileName } from './profile-manager.ts'
+} from './plugins/install-recovery.ts'
+import { packagedDependencyPath } from './runtime/packaged-runtime-path.ts'
+import { assertDesktopProfileName } from './profile/profile-manager.ts'
 
 const RUN_AS_NODE = 'ELECTRON_RUN_AS_NODE'
 const DEFAULT_PROFILE = 'DSH_DESKTOP_DEFAULT_PROFILE'
