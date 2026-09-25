@@ -216,6 +216,7 @@
           <div class="tab on">◎ Chat</div>
           <div class="tab">± src/state.ts</div>
           <div class="tab f">❯ pnpm run check</div>
+          <div class="tab f">▤ state.ts ●</div>
           <div class="tab tog f" title="Show or hide the right panel"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.7" y="2.7" width="12.6" height="10.6" rx="2"/><path d="M10 2.9v10.2"/></svg></div>
         </div>
         <div class="stage">
@@ -243,7 +244,7 @@
           <button class="ptab" role="tab" data-t="changes" aria-selected="true">Changes<em>7</em></button>
           <button class="ptab f" role="tab" data-t="review" aria-selected="false">Review<em>2</em></button>
           <button class="ptab f" role="tab" data-t="checks" aria-selected="false">Checks</button>
-          <button class="ptab" role="tab" data-t="files" aria-selected="false" style="opacity:.45" title="not built">Files</button>
+          <button class="ptab f" role="tab" data-t="files" aria-selected="false">Files</button>
         </div>
         <div class="pv on" data-tabs-view="now" data-v="changes">
           <div style="padding:2px 6px"><b>fix/workspace-sidebar-state</b><span class="fnote">path shown</span></div>
@@ -266,10 +267,18 @@
           <div class="card2 f" style="display:flex;align-items:center;gap:8px"><div style="flex:1"><b>dev</b><br><code>vite</code></div><span class="runbtn">Run</span></div>
           <div style="color:var(--muted);padding:4px 6px">Run opens a terminal tab in this worktree and types the command.</div>
         </div>
-        <div class="pv" data-tabs-view="now" data-v="files"><div class="absent"><b>Files</b><br>Not built. The File tab is still a scratch text box.</div></div>
+        <div class="pv" data-tabs-view="now" data-v="files">
+          <div style="padding:2px 6px;color:var(--muted)">worktree files <span class="fnote">new</span></div>
+          <div class="row f"><span class="n">▾ src</span></div>
+          <div class="row f"><span class="n">&nbsp;&nbsp;&nbsp;&nbsp;state.ts</span></div>
+          <div class="row f"><span class="n">&nbsp;&nbsp;&nbsp;&nbsp;Rail.tsx</span></div>
+          <div class="row f"><span class="n">▸ docs</span></div>
+          <div class="row f"><span class="n">&nbsp;README.md</span></div>
+          <div style="color:var(--muted);padding:4px 6px">Click a file to edit it in a tab. Filter by name over opened folders.</div>
+        </div>
       </aside>
     </div>
-    <div class="absent" style="margin:8px 10px"><b>Not built yet:</b> top bar (BLEND, fan-out, cost), persistent terminal dock, status bar, attention queue, approve or reject of agent edits.</div>
+    <div class="absent" style="margin:8px 10px"><b>Not built yet:</b> repo-wide file search, creating and renaming files, top bar (BLEND, fan-out, cost), persistent terminal dock, status bar, attention queue, approve or reject of agent edits.</div>
   </div>
 
   <h3 style="margin:22px 0 4px">What each tile really does today</h3>
@@ -279,7 +288,7 @@
       <tr><td><code>chat</code></td><td><span class="chip built">real</span></td><td>Upstream conversation, bound to a workspace (its worktree). A blank chat with no workspace cannot send.</td></tr>
       <tr><td><code>pty</code></td><td><span class="chip built">real</span> <span class="chip fresh">run from Checks</span></td><td>Host PTY started in the worktree folder. Tabs are not restored after a restart.</td></tr>
       <tr><td><code>diff</code></td><td><span class="chip built">real git</span></td><td>Unified diff with single-line comments to the agent. Multi-line ranges not built. The old "two pasted texts" mode remains for a plain New Diff tab.</td></tr>
-      <tr><td><code>file</code></td><td><span class="chip gap">partial</span></td><td>Path box plus text area. No tree, search or highlighting, and it does not read or save real files.</td></tr>
+      <tr><td><code>file</code></td><td><span class="chip built">real editor</span> <span class="chip fresh">added</span></td><td>Files tab opens a real file in a CodeMirror editor: syntax highlighting for the major languages, in-file search, save with Cmd or Ctrl+S, a dot while unsaved, drafts kept when you switch tabs, and a warning if the file changed on disk. The plain New File tab is still a scratch box.</td></tr>
       <tr><td><code>browser</code></td><td><span class="chip gap">partial</span></td><td>Address bar plus frame. No design or annotate mode.</td></tr>
       <tr><td><code>kanban</code>, <code>doc</code></td><td><span class="chip" style="color:var(--bad);border-color:hsl(0 72% 62% / .4);background:var(--bad-soft)">shell only</span></td><td>Local cards and pasted text. Not tied to sessions or to real spec files.</td></tr>
     </tbody>
@@ -298,11 +307,13 @@
       <tr><td>Real diff tab</td><td><span class="chip built">built</span></td><td>Unified diff from real git data, with a line-comment composer that sends your comment to the agent as a queued message.</td></tr>
       <tr><td>Right pane: Changes</td><td><span class="chip built">built</span> <span class="chip fresh">path, no forced open, toggle</span></td><td>Changed files of the selected worktree with status letters and +/- counts, plus the worktree's full path. Picking a branch no longer forces the pane open; the toggle icon is always visible.</td></tr>
       <tr><td>Right pane: Review</td><td><span class="chip fresh">added</span></td><td>Every comment you send is listed per worktree with file:line. Click to jump to the diff; resolve, reopen or remove. Remembered across restarts.</td></tr>
+      <tr><td>Right pane: Files and editor</td><td><span class="chip fresh">added</span></td><td>Lazy file tree of the worktree and a real CodeMirror editor tab with save, conflict handling and drafts. Files are read and written through a confined Host route (git worktree root only, atomic save).</td></tr>
+      <tr><td>Code organization</td><td><span class="chip fresh">added</span></td><td><code>acryl-workspace</code> is now organized by domain (git, pty, files, canvas, worktrees, projects, sessions, diff, review, checks) instead of one flat folder, with a README describing the layout. One right-panel opener only.</td></tr>
       <tr><td>Right pane: Checks</td><td><span class="chip fresh">added</span></td><td>Lists the worktree's package scripts (check, test, lint, build first) and a Run button that opens a terminal tab in that worktree and types the command with the project's own package manager.</td></tr>
     </tbody>
   </table>
   <div class="grid2" style="margin-top:12px">
-    <div class="box"><h3>Next in 040</h3><p class="q">Files tab, stage and commit box, attention queue in the Projects list, status bar, persistent terminal dock, multi-line diff comments, approve or reject of agent edits.</p></div>
+    <div class="box"><h3>Next in 040</h3><p class="q">Stage and commit box, repo-wide search, file create and rename, attention queue in the Projects list, status bar, persistent terminal dock, multi-line diff comments, approve or reject of agent edits.</p></div>
     <div class="box"><h3>New milestone: 041 Agent Control</h3><p class="q">Agents operate ACRYL itself, from inside the app and, through the ACRYL CLI, from outside: change settings, enable and install plugins, drive the UI, and repair Desktop or Web when it will not launch. Spec, Cordis design and spike-first tasks are written; no code yet. See <code>specs/041-agent-control</code>.</p></div>
   </div>
 
