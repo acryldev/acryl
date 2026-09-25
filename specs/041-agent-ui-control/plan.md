@@ -8,6 +8,7 @@
 |---|---|---|
 | `acryl-ui-control` (Host + Client) | new, under `plugins/`, row id `acryl-ui-control` | Distinct lifecycle and security surface; user must be able to turn it off; plausible second provider (a WebMCP or Electron-CDP backend) |
 | Layer 1 tools | not here | Each owning package (settings, workspace, lifecycle) registers its own tools; this plugin only owns generic UI driving |
+| CLI operator and rescue (Scope B) | commands and an agent toolset in `apps/acryl-cli`; shared logic in `runtime/acryl-harness-runtime` | The CLI is a surface (renders and drives); repair and config logic belongs in the stable runtime so Desktop, Web and CLI share it. Nothing under `runtime/` may depend on `apps/` |
 | MCP exposure for external agents (US5) | later, separate row `acryl-ui-control-mcp` | Different consumer and off by default |
 
 ## 1. Capability and plugin boundary
@@ -66,3 +67,48 @@ Tests use real Cordis Loader activation, real DOM (jsdom) for the driver, and ne
 1. The Host to Client transport may need a Harness change; if so it goes in a separate upstream-pin-style change, never an edit inside `deepseek-harness/`.
 2. Poor accessibility names in existing components; an `aria-label` pass may be needed across `@acryl/ui` and upstream slots.
 3. Security is the product here: an over-permissive default is worse than no feature. Default is approval-required for every mutating UI action until the user relaxes it.
+
+## Scope B design: CLI operator and rescue
+
+### 1. Boundary
+Two seams, both inside existing packages, so no new Loader row is needed for offline work:
+- **Offline repair and config** live in `runtime/acryl-harness-runtime` next to `plugin-lifecycle-state.ts` and `plugin-doctor.ts` (extend, do not fork): a `ProfileInspector` (read-only diagnosis of profile, overrides, packages, boot logs), a `RepairPlan` (ordered, reversible steps) and a `ProfileBackup` (pre-image store with undo).
+- **Online control** is a client of the Scope A channel: the CLI speaks the same `ui.*`, `settings.*`, `plugin.*` tools to a running instance.
+The CLI (`apps/acryl-cli`) only renders reports, asks for approval and calls those services.
+
+### 2. Provides and consumes
+| Piece | Provides | Consumes |
+|---|---|---|
+| Runtime `ProfileInspector` | typed findings (extends `PluginHealthFinding`) | profile layout, overrides, package manifests, logs |
+| Runtime `RepairPlan` + `ProfileBackup` | dry-run plan, apply, undo | inspector findings, atomic file writes |
+| CLI commands | `acryl doctor`, `acryl repair [--dry-run\|--undo]`, `acryl config get/set`, `acryl plugin install/enable/disable`, `acryl app open/click/type` | the runtime services above and the online channel |
+| CLI agent toolset | the same operations as tools plus orientation tools (`repo.map`, `docs.route`, `graft`) | CLI runtime |
+| Online channel (Host side, in the app) | authenticated local endpoint exposing the Scope A tool contract | `tools`, profile secret |
+
+### 3. Effects and disposal
+Offline commands hold no long-lived resources: each mutation is one backup, one atomic write, one log line, and is fully undoable. The online channel client owns one connection with an abort signal and closes it on exit. The in-app endpoint is one `ctx.effect` (listener, secret file) with a disposer that closes the socket and removes the discovery file.
+
+### 4. Configuration
+The CLI reads the target profile from `--profile` or the default resolution in `acryl-home.ts`. Recipes (named, versioned repair steps) are data, not code paths, so they can be reviewed and added without editing the engine. The per-profile secret lives in the profile home with owner-only permissions and is regenerated on request.
+
+### 5. Events and durability
+The audit log from Scope A is shared. Backups are durable facts under the profile home. Diagnosis reports are ephemeral unless the user saves them.
+
+### 6. Verification
+| Case | Expected |
+|---|---|
+| Profile with a plugin that fails activation | `acryl doctor` names it; `acryl repair` disables that row only; undo restores it; app boots |
+| Corrupt override file | detected, backed up, replaced with the last valid content; nothing else touched |
+| pnpm store mismatch | diagnosed with the exact known cause (see the profile-homes note), fix is proposed, not guessed |
+| Offline edit while the app runs | refused, routed through the online channel |
+| Online: enable three plugins by request | applied live, state read back and matches, audit lines written |
+| Install plugin into Desktop | installed, row enabled, live reload; dependency missing reports PENDING, not failure; failed activation rolls back |
+| Channel security | wrong secret rejected, non-loopback refused, secret file has owner-only mode |
+| Interrupted repair (kill mid-apply) | atomic write means the previous state or the new state, never a partial file |
+
+Tests use temporary profile homes and real files, never the user's home.
+
+### Risks
+1. The strongest power in the product sits behind a local secret; the threat model (another local process, a malicious plugin reading the secret file) must be written before the channel ships.
+2. A repair engine that guesses is worse than none; every step must be a named recipe with a precondition and an undo, or it does not ship.
+3. Keeping the CLI runnable when the build itself is broken means it must not import the app bundle; it depends on `runtime/` only.
