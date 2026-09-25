@@ -10,6 +10,9 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceTabLabel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshWorkspaceTabClose { appearance: none; width: 22px; margin: 6px 6px 6px 0; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 14px; }
 .dshWorkspaceTabClose:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg); }
+/* One opener only: the canvas tab strip carries the always-present right-panel toggle, so upstream's own
+   header opener (a documented data hook of the right sidebar) is hidden inside the canvas. */
+.dshWorkspace [data-sidebar-right-expand] { display: none; }
 .dshWorkspaceRightToggle { appearance: none; align-self: center; flex: none; width: 28px; height: 28px; margin: 0 8px 0 2px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; display: grid; place-items: center; }
 .dshWorkspaceRightToggle:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg); }
 .dshWorkspacePlusWrap { position: relative; flex: none; display: flex; align-items: center; padding: 0 6px; }
