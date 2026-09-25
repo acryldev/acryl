@@ -49,6 +49,7 @@ export function ChangesBody({ shell }: ChangesBodyProps) {
       <header className="dshWorkspaceChangesHead">
         <div className="dshWorkspaceChangesTitle">
           <strong>{branchTitle(worktree.branch, worktree.path)}</strong>
+          <span className="dshWorkspaceChangesPath" title={worktree.path}>{worktree.path}</span>
           <span className="dshWorkspaceChangesMeta">
             {worktree.changes.length} changed{staged > 0 ? `, ${String(staged)} staged` : ''}
           </span>

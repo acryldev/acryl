@@ -10,6 +10,8 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceTabLabel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshWorkspaceTabClose { appearance: none; width: 22px; margin: 6px 6px 6px 0; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 14px; }
 .dshWorkspaceTabClose:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg); }
+.dshWorkspaceRightToggle { appearance: none; align-self: center; flex: none; width: 28px; height: 28px; margin: 0 8px 0 2px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; display: grid; place-items: center; }
+.dshWorkspaceRightToggle:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg); }
 .dshWorkspacePlusWrap { position: relative; flex: none; display: flex; align-items: center; padding: 0 6px; }
 .dshWorkspacePlus { appearance: none; width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: 600 18px/1 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspacePlus:hover, .dshWorkspacePlus[aria-expanded="true"] { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
@@ -82,9 +84,11 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceDocList { margin: 0.3em 0; padding-left: 1.4em; }
 .dshWorkspaceDocParagraph { margin: 0.3em 0; }
 .dshWorkspaceSide { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; }
-.dshWorkspaceSideSwitch { display: flex; gap: 2px; margin: 14px 16px 10px; padding: 3px; border-radius: 10px; background: color-mix(in srgb, var(--dsw-alias-fg) 7%, transparent); flex: none; }
-.dshWorkspaceSideSwitch button { appearance: none; flex: 1; padding: 6px 0; border: 0; border-radius: 7px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 500 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
-.dshWorkspaceSideSwitch button[aria-selected="true"] { background: var(--dsw-alias-bg-base); color: var(--dsw-alias-fg); box-shadow: 0 0 0 1px var(--dsw-alias-border-l2); }
+.dshWorkspaceSideSwitch { display: flex; gap: 6px; margin: 14px 16px 10px; flex: none; }
+.dshWorkspaceSideSwitch button { appearance: none; flex: 1; padding: 6px 12px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 500 13px/1.3 ui-sans-serif, system-ui, sans-serif; transition: border-color .12s, background-color .12s, color .12s; }
+.dshWorkspaceSideSwitch button:hover { border-color: color-mix(in srgb, var(--dsw-alias-fg) 22%, transparent); color: var(--dsw-alias-fg); }
+.dshWorkspaceSideSwitch button[aria-selected="true"] { border-color: color-mix(in srgb, var(--dsw-alias-fg) 34%, transparent); background: color-mix(in srgb, var(--dsw-alias-fg) 10%, transparent); color: var(--dsw-alias-fg); }
+.dshWorkspaceSideSwitch button:focus-visible { outline: 2px solid #4d6bfe; outline-offset: 1px; }
 /* macOS: the window's traffic-light buttons sit in the top-left; keep the switch clear of them. */
 .dshDesktopFrame[data-desktop-platform="darwin"] .dshWorkspaceSideSwitch { margin-top: 26px; }
 .dshWorkspaceSideChats { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -94,6 +98,7 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceSideProjectsHead { display: flex; align-items: center; justify-content: space-between; padding: 2px 8px 4px; color: var(--dsw-alias-fg-l2); font: 600 11px/1.4 ui-sans-serif, system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 .dshWorkspaceSideAdd { appearance: none; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: 500 18px/1 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSideAdd:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
+.dshWorkspaceSideHint { margin: 4px 8px; padding: 6px 8px; border-left: 2px solid #4d6bfe; color: var(--dsw-alias-fg-l2); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSideNotice { margin: 4px 8px; padding: 6px 8px; border-left: 2px solid #f87171; color: #fca5a5; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSideEmpty { padding: 12px 6px; color: var(--dsw-alias-fg-l2); font: 12px/1.5 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceRepo { margin: 6px 0 10px; }
@@ -132,6 +137,7 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceChangesHead { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--dsw-alias-border-l2); }
 .dshWorkspaceChangesTitle { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .dshWorkspaceChangesTitle strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshWorkspaceChangesPath { color: var(--dsw-alias-fg-l2); font: 11px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
 .dshWorkspaceChangesMeta { color: var(--dsw-alias-fg-l2); font-size: 11px; }
 .dshWorkspaceChangesRefresh { appearance: none; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 14px; }
 .dshWorkspaceChangesRefresh:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg); }

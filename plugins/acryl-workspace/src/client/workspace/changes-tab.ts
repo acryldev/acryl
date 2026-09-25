@@ -38,12 +38,13 @@ export function changesTabPlugin(shell: WorkspaceShellState) {
           key: CHANGES_ID,
           inject: () => ({ shell }),
         }, ChangesBody)
-        // Picking a worktree in the left pane reveals this tab (the user asked to look at it).
+        // Picking a worktree in the left pane switches an OPEN right panel to its changes. It never opens
+        // a closed panel: that would pop a large panel over the chat every time a branch is clicked.
         shell.setReveal(() => {
           try {
-            ctx.sidebarRight.openTab(CHANGES_KIND)
+            if (ctx.sidebarRight.isExpanded()) ctx.sidebarRight.openTab(CHANGES_KIND)
           } catch {
-            // No current chat session means there is no right sidebar to open into.
+            // No current chat session means there is no right sidebar to show it in.
           }
         })
         return () => {

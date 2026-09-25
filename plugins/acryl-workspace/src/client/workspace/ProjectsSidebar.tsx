@@ -39,6 +39,8 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
   const sessions = useSessions(state => state)
   const workspaceKey = useSyncExternalStore(projects.subscribeWorkspaces, () => projects.workspaceKey())
   const [notice, setNotice] = useState<string | null>(null)
+  /** A neutral hint (not an error), for actions that continue in another part of the UI. */
+  const [hint, setHint] = useState<string | null>(null)
   /** The repository whose "new branch" form is open. */
   const [creatingIn, setCreatingIn] = useState<string | null>(null)
 
@@ -86,8 +88,10 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
 
   const addProject = async (): Promise<void> => {
     setNotice(null)
+    setHint(null)
     const result = await projects.addProject()
     if (!result.ok) setNotice(result.reason)
+    else if (result.note !== undefined) setHint(result.note)
   }
 
   if (collapsed) return <>{renderUpstream()}</>
@@ -131,6 +135,9 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
           </div>
           {notice !== null && (
             <p className="dshWorkspaceSideNotice" role="alert">{notice}</p>
+          )}
+          {hint !== null && (
+            <p className="dshWorkspaceSideHint" role="status">{hint}</p>
           )}
           {repos.length === 0 && (
             <div className="dshWorkspaceSideEmpty">

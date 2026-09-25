@@ -37,14 +37,16 @@ interface Fakes {
   readonly opened: string[]
   readonly tabs: { register(def: { id: string; kind: string }): () => void }
   readonly slots: { register(def: { key: string }): () => void }
-  readonly sidebarRight: { openTab(kind: string): void }
+  readonly sidebarRight: { openTab(kind: string): void; isExpanded(): boolean }
+  expanded: boolean
 }
 
 function fakes(): Fakes {
   const types: string[] = []
   const bodies: string[] = []
   const opened: string[] = []
-  return {
+  const f: Fakes = {
+    expanded: false,
     types,
     bodies,
     opened,
@@ -60,8 +62,9 @@ function fakes(): Fakes {
         return () => { bodies.splice(bodies.indexOf(def.key), 1) }
       },
     },
-    sidebarRight: { openTab(kind) { opened.push(kind) } },
+    sidebarRight: { openTab(kind) { opened.push(kind) }, isExpanded: () => f.expanded },
   }
+  return f
 }
 
 const settle = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 10))
@@ -89,7 +92,7 @@ describe('Changes tab plugin lifecycle', () => {
     await fiber.dispose()
   })
 
-  it('reveals the Changes tab when the user picks a worktree, but not when following a session', async () => {
+  it('switches an open right panel to Changes when the user picks a worktree, and never opens a closed one or reacts to following a session', async () => {
     const shell = new WorkspaceShellState(fakeGit())
     const f = fakes()
     const root = new Context()
@@ -103,6 +106,10 @@ describe('Changes tab plugin lifecycle', () => {
     await shell.discover('/p')
     await shell.follow('/p')
     expect(f.opened).toEqual([])
+    shell.select('/p')
+    // A closed right panel stays closed: opening it on every branch click is intrusive.
+    expect(f.opened).toEqual([])
+    f.expanded = true
     shell.select('/p')
     expect(f.opened).toEqual([CHANGES_KIND])
     await fiber.dispose()

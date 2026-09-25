@@ -75,6 +75,15 @@ export function apply(ctx: ClientContext): void {
   if (saved !== undefined) shell.setMode(saved.mode)
   ctx.effect(() => startWorkspacePersistence({ groups, shell, storage }), 'acryl-workspace: save tabs and view')
   const agent = createAgentBridge(() => ctx.get('sessions'))
+  const rightPanel = {
+    toggle(): void {
+      try {
+        ctx.get('sidebarRight')?.toggleExpanded()
+      } catch {
+        // No current chat session means there is no right panel to toggle.
+      }
+    },
+  }
   const projects = createProjectsControl({
     shell,
     gitApi,
@@ -94,7 +103,7 @@ export function apply(ctx: ClientContext): void {
         removeSlot = ctx.slots.register({
           name: 'desktop.main',
           priority: WORKSPACE_MAIN_PRIORITY,
-          inject: () => ({ ptyApi: ptyClient, shell, groups, gitApi, agent }),
+          inject: () => ({ ptyApi: ptyClient, shell, groups, gitApi, agent, rightPanel }),
         }, WorkspaceCanvas)
       } catch (cause) {
         // A registration conflict must not take the left pane and the Changes tab down with it.

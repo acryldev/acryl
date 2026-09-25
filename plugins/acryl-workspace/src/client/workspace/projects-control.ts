@@ -9,7 +9,9 @@ import type { WorkspaceGitApi } from './git-api.ts'
 import { pickSession, type SessionRef } from './session-pick.ts'
 import type { WorkspaceShellState } from './shell-state.ts'
 
-export type ProjectAction = { readonly ok: true } | { readonly ok: false; readonly reason: string }
+export type ProjectAction =
+  | { readonly ok: true; /** A hint to show the user, when the action continues elsewhere. */ readonly note?: string }
+  | { readonly ok: false; readonly reason: string }
 
 export interface ProjectsControl {
   /** Change-detection key for the registered workspace folders (a primitive, safe to subscribe to). */
@@ -79,7 +81,14 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
 
     async addProject() {
       const seams = deps.directory()
-      if (seams.pickDirectory === undefined) return fail('Adding a project needs the desktop app\'s folder picker.')
+      if (seams.pickDirectory === undefined) {
+        // No picker seam (macOS): use the app's own Add workspace flow in the Chats view. A git folder
+        // registered there appears under Projects by itself, because registered workspaces are projects.
+        shell.setMode('chats')
+        await new Promise<void>((resolve) => { setTimeout(resolve, 60) })
+        if (!clickAddWorkspaceTrigger()) return fail('Could not find the Add workspace control in Chats.')
+        return { ok: true, note: 'Choose the folder here. If it is a git repository it will appear under Projects.' }
+      }
       const workspaces = deps.getWorkspaces()
       if (workspaces === undefined) return fail('Workspaces are not available yet.')
       let picked: string | null
@@ -201,38 +210,31 @@ interface DesktopDirectoryWindow {
   __DSH_DESKTOP_VALIDATE_DIRECTORY__?: (path: string) => Promise<boolean>
 }
 
-/**
- * The desktop Host's native folder chooser, called directly. It is registered on every platform
- * (see `directory-picker-contract.ts` in acryl-desktop, which owns this path); the window seam above
- * is only published on Windows, so relying on it alone left macOS with no way to add a project.
- */
-export const PICK_DIRECTORY_ROUTE = '/_dsh/desktop/pick-directory'
-
-type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
-
-/** @returns the chosen absolute path, or null when the user cancelled. */
-export async function pickDirectoryViaHost(fetchImpl: FetchLike = (input, init) => fetch(input, init)): Promise<string | null> {
-  const response = await fetchImpl(PICK_DIRECTORY_ROUTE, {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: { accept: 'application/json' },
-  })
-  if (!response.ok) throw new Error('ACRYL could not open the system folder picker')
-  const body: unknown = await response.json()
-  if (typeof body !== 'object' || body === null || !('path' in body) || (body.path !== null && typeof body.path !== 'string')) {
-    throw new Error('ACRYL received an invalid response from the system folder picker')
-  }
-  return body.path
-}
-
-export function desktopDirectorySeams(
-  view: DesktopDirectoryWindow = window as Window & DesktopDirectoryWindow,
-  fetchImpl?: FetchLike,
-): DirectorySeams {
+export function desktopDirectorySeams(view: DesktopDirectoryWindow = window as Window & DesktopDirectoryWindow): DirectorySeams {
   const seam = view.__DSH_DESKTOP_PICK_DIRECTORY__
   const validate = view.__DSH_DESKTOP_VALIDATE_DIRECTORY__
   return {
-    pickDirectory: seam === undefined ? () => pickDirectoryViaHost(fetchImpl) : () => seam(),
+    pickDirectory: seam === undefined ? undefined : () => seam(),
     validateDirectory: validate === undefined ? undefined : path => validate(path),
   }
+}
+
+const ADD_WORKSPACE_LABELS = ['Add workspace', '添加工作区']
+
+/**
+ * Open the upstream "Add workspace" flow, which drives the native folder chooser and registers the
+ * workspace. The desktop publishes a picker seam on Windows only; on macOS the workspace flow drives
+ * the chooser itself. Its trigger lives in the Chats view of the sidebar (kept mounted, hidden while
+ * Projects shows), so the caller shows Chats first. Like the Settings trigger, it exposes no service.
+ * @returns whether the trigger was found and activated.
+ */
+export function clickAddWorkspaceTrigger(root: ParentNode = document): boolean {
+  for (const label of ADD_WORKSPACE_LABELS) {
+    const trigger = root.querySelector<HTMLButtonElement>(`.dshWorkspaceSideChats button[aria-label="${label}"]`)
+    if (trigger !== null) {
+      trigger.click()
+      return true
+    }
+  }
+  return false
 }

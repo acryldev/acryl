@@ -45,6 +45,8 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   readonly gitApi: WorkspaceGitApi
   /** Delivers diff line comments to the open chat's agent. */
   readonly agent: AgentBridge
+  /** Opens and closes the right panel. Always available, even for a chat that has no header yet. */
+  readonly rightPanel?: { toggle(): void }
 }
 
 /**
@@ -53,7 +55,7 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell, groups, gitApi, agent }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell, groups, gitApi, agent, rightPanel }: WorkspaceCanvasProps) {
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
   // Subscribe to primitives, not the whole shell snapshot: git polling updates that snapshot often,
@@ -248,6 +250,20 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
             </div>
           )}
         </div>
+        {rightPanel !== undefined && (
+          <button
+            type="button"
+            className="dshWorkspaceRightToggle"
+            aria-label="Toggle right panel"
+            title="Show or hide the right panel (files, changes)"
+            onClick={() => { rightPanel.toggle() }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+              <rect x="1.7" y="2.7" width="12.6" height="10.6" rx="2" />
+              <path d="M10 2.9v10.2" />
+            </svg>
+          </button>
+        )}
       </div>
       <div className="dshWorkspaceStage" role="tabpanel" data-split={splitTile !== undefined || undefined}>
         <div className="dshWorkspacePane" data-pane="primary">

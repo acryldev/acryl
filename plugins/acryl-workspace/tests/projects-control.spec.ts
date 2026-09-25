@@ -4,7 +4,7 @@ import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { IWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import { describe, expect, it, vi } from 'vitest'
 import type { WorkspaceGitApi } from '../src/client/workspace/git-api.ts'
-import { createProjectsControl, desktopDirectorySeams, pickDirectoryViaHost, type DirectorySeams } from '../src/client/workspace/projects-control.ts'
+import { createProjectsControl, desktopDirectorySeams, clickAddWorkspaceTrigger, type DirectorySeams } from '../src/client/workspace/projects-control.ts'
 import { WorkspaceShellState } from '../src/client/workspace/shell-state.ts'
 
 function gitApi(isRepo: (cwd: string) => boolean = () => true): WorkspaceGitApi {
@@ -257,9 +257,16 @@ describe('ProjectsControl.openSettings', () => {
 })
 
 describe('ProjectsControl.addProject', () => {
-  it('needs the desktop folder picker', async () => {
+  it('continues through the upstream Add workspace control when there is no window picker', async () => {
     const w = world({ seams: { pickDirectory: undefined } })
-    expect(await w.control.addProject()).toMatchObject({ ok: false, reason: expect.stringContaining('desktop') })
+    document.body.innerHTML = '<div class="dshWorkspaceSideChats"><button aria-label="Add workspace"></button></div>'
+    let clicks = 0
+    document.querySelector('button')?.addEventListener('click', () => { clicks += 1 })
+    const result = await w.control.addProject()
+    expect(clicks).toBe(1)
+    expect(result).toMatchObject({ ok: true, note: expect.stringContaining('folder') })
+    document.body.innerHTML = ''
+    expect(await w.control.addProject()).toMatchObject({ ok: false, reason: expect.stringContaining('Add workspace') })
   })
 
   it('does nothing when the user cancels the chooser', async () => {
@@ -306,30 +313,21 @@ describe('ProjectsControl.addProject', () => {
 })
 
 describe('the desktop folder chooser', () => {
-  const json = (status: number, body: unknown): Response =>
-    new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
-
-  it('asks the Host route directly, which exists on every platform', async () => {
-    let seen: { url: string; method: string | undefined } | undefined
-    const path = await pickDirectoryViaHost(async (url, init) => { seen = { url, method: init?.method }; return json(200, { path: '/Users/me/repo' }) })
-    expect(path).toBe('/Users/me/repo')
-    expect(seen).toEqual({ url: '/_dsh/desktop/pick-directory', method: 'POST' })
-  })
-
-  it('returns null when the user cancels, and rejects a failing or malformed answer', async () => {
-    expect(await pickDirectoryViaHost(async () => json(200, { path: null }))).toBeNull()
-    await expect(pickDirectoryViaHost(async () => json(500, { error: 'x' }))).rejects.toThrow(/could not open/)
-    await expect(pickDirectoryViaHost(async () => json(200, { path: 5 }))).rejects.toThrow(/invalid response/)
-    await expect(pickDirectoryViaHost(async () => json(200, {}))).rejects.toThrow(/invalid response/)
-  })
-
-  it('prefers the window seam when the desktop publishes one, and always offers a chooser otherwise', async () => {
+  it('uses the window seams when the desktop publishes them, and offers none otherwise', async () => {
     const withSeam = desktopDirectorySeams({ __DSH_DESKTOP_PICK_DIRECTORY__: async () => '/from/seam', __DSH_DESKTOP_VALIDATE_DIRECTORY__: async () => true })
     expect(await withSeam.pickDirectory?.()).toBe('/from/seam')
     expect(await withSeam.validateDirectory?.('/x')).toBe(true)
 
-    const without = desktopDirectorySeams({}, async () => json(200, { path: '/from/host' }))
-    expect(await without.pickDirectory?.()).toBe('/from/host')
+    const without = desktopDirectorySeams({})
+    expect(without.pickDirectory).toBeUndefined()
     expect(without.validateDirectory).toBeUndefined()
+  })
+
+  it('finds the Add workspace trigger only inside the upstream chats list', () => {
+    document.body.innerHTML = '<button aria-label="Add workspace"></button>'
+    expect(clickAddWorkspaceTrigger()).toBe(false)
+    document.body.innerHTML = '<div class="dshWorkspaceSideChats"><button aria-label="添加工作区"></button></div>'
+    expect(clickAddWorkspaceTrigger()).toBe(true)
+    document.body.innerHTML = ''
   })
 })
