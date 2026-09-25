@@ -68,6 +68,18 @@ export function handleWorkspaceGitStatusRequest(
     params => git.status(required(params, 'path')))
 }
 
+/** GET the runnable checks (package scripts) for `?path=`. */
+export function handleWorkspaceGitChecksRequest(
+  req: IncomingMessage,
+  res: ServerResponse,
+  expectedOrigin: string,
+  git: WorkspaceGit,
+  reportError: ReportError,
+): Promise<void> {
+  return handleGet(req, res, expectedOrigin, 'read checks', reportError,
+    params => git.checks(required(params, 'path')))
+}
+
 /** GET one file's diff for `?path=&file=`. */
 export function handleWorkspaceGitDiffRequest(
   req: IncomingMessage,

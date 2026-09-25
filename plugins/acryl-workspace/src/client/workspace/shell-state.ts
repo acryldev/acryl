@@ -37,6 +37,15 @@ export interface ShellSnapshot {
   readonly selectedPath: string | undefined
 }
 
+/** A request to run one check (a package script) in a terminal tab of a worktree. */
+export interface RunCheckRequest {
+  readonly worktree: string
+  /** Title for the terminal tab, for example `pnpm run check`. */
+  readonly title: string
+  /** The command line to type into the shell. Built from a validated script name only. */
+  readonly commandLine: string
+}
+
 export interface OpenDiffRequest {
   readonly worktree: string
   readonly file: string
@@ -66,6 +75,7 @@ export class WorkspaceShellState {
   private snapshot: ShellSnapshot = Object.freeze({ mode: 'chats', repos: Object.freeze([]), selectedPath: undefined })
   private readonly listeners = new Set<() => void>()
   private readonly diffListeners = new Set<(request: OpenDiffRequest) => void>()
+  private readonly runListeners = new Set<(request: RunCheckRequest) => void>()
   private readonly probes = new Map<string, Promise<string | undefined>>()
   private readonly statusInflight = new Map<string, Promise<void>>()
   private pinned = false
@@ -204,10 +214,22 @@ export class WorkspaceShellState {
     return () => { this.diffListeners.delete(listener) }
   }
 
+  /** Ask the canvas to run a check in a terminal tab of that worktree. */
+  runCheck(request: RunCheckRequest): void {
+    for (const listener of this.runListeners) listener(request)
+  }
+
+  /** @returns disposer. */
+  onRunCheck(listener: (request: RunCheckRequest) => void): () => void {
+    this.runListeners.add(listener)
+    return () => { this.runListeners.delete(listener) }
+  }
+
   dispose(): void {
     this.disposed = true
     this.listeners.clear()
     this.diffListeners.clear()
+    this.runListeners.clear()
   }
 
   private selectInternal(path: string): void {

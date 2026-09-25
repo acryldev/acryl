@@ -49,6 +49,7 @@ function api(overrides: Partial<WorkspaceGitApi> = {}): WorkspaceGitApi {
       }
     },
     async status(path) { return { ...STATUS, path, branch: path === '/p/proj-x' ? 'feature/x' : 'main' } },
+    async checks(path) { return { path, manager: 'pnpm', scripts: [{ name: 'check', command: 'vitest run', primary: true }, { name: 'dev', command: 'vite', primary: false }] } },
     async diff(path, file): Promise<GitDiffView> {
       return { path, file, text: DIFF_TEXT, binary: false, truncated: false }
     },
@@ -499,5 +500,33 @@ describe('ReviewBody', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reopen' }))
     fireEvent.click(screen.getByRole('button', { name: 'Remove comment' }))
     expect(screen.getByText(/No comments yet/)).toBeTruthy()
+  })
+})
+
+describe('ChecksBody', () => {
+  it('lists the scripts of the selected worktree and asks the shell to run one', async () => {
+    const { ChecksBody } = await import('../src/client/workspace/ChecksBody.tsx')
+    const shell = new WorkspaceShellState(api())
+    await shell.discover('/p/proj')
+    shell.select('/p/proj')
+    const runs: unknown[] = []
+    shell.onRunCheck(request => { runs.push(request) })
+    const props = { shell, gitApi: api() } as unknown as Parameters<typeof ChecksBody>[0]
+
+    render(<ChecksBody {...props} />)
+    expect(await screen.findByText('vitest run')).toBeTruthy()
+    expect(screen.getByText(/runs with pnpm/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Run pnpm run check' }))
+    expect(runs).toEqual([{ worktree: '/p/proj', title: 'pnpm run check', commandLine: 'pnpm run check' }])
+  })
+
+  it('shows a readable error when the scripts cannot be read', async () => {
+    const { ChecksBody } = await import('../src/client/workspace/ChecksBody.tsx')
+    const shell = new WorkspaceShellState(api())
+    await shell.discover('/p/proj')
+    shell.select('/p/proj')
+    const props = { shell, gitApi: api({ checks: () => Promise.reject(new Error('git checks: nope')) }) } as unknown as Parameters<typeof ChecksBody>[0]
+    render(<ChecksBody {...props} />)
+    expect((await screen.findByRole('alert')).textContent).toContain('nope')
   })
 })

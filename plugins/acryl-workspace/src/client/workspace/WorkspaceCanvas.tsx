@@ -112,6 +112,22 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
     state.openDiff(request.worktree, request.file, { beside: fromChat })
   }), [shell, groups])
 
+  // A check run from the Checks tab: a terminal tab in that worktree that types the command for you.
+  useEffect(() => shell.onRunCheck((request) => {
+    const state = groups.stateFor(request.worktree)
+    const tile = state.addTile('pty', { commandId: 'shell', title: request.title })
+    if (tile === undefined) return
+    void (async () => {
+      try {
+        const view = await api.start('shell', request.worktree)
+        state.updateTile(tile.id, { sessionId: view.id })
+        await api.write(view.id, `${request.commandLine}\r`)
+      } catch (cause) {
+        state.updateTile(tile.id, { error: cause instanceof Error ? cause.message : 'spawn failed' })
+      }
+    })()
+  }), [shell, groups, api])
+
   /** The pane for one tile, used for both the primary pane and the split pane. */
   const renderTile = (tile: WorkspaceTile): ReactNode => {
     if (tile.kind === 'chat') return <div className="dshWorkspaceChat">{renderConversation()}</div>

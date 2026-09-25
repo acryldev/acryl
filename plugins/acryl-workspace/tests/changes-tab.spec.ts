@@ -21,6 +21,7 @@ function fakeGit(): WorkspaceGitApi {
     async status(path) {
       return { path, branch: 'main', changes: [], truncated: false }
     },
+    async checks(path) { return { path, manager: 'pnpm', scripts: [] } },
     async diff(path, file) {
       return { path, file, text: '', binary: false, truncated: false }
     },

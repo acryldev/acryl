@@ -34,6 +34,7 @@ function fakeApi(overrides: Partial<WorkspaceGitApi> = {}): WorkspaceGitApi & { 
         ],
       }
     },
+    async checks(path) { return { path, manager: 'pnpm', scripts: [] } },
     async diff(path, file) {
       return { path, file, text: '', binary: false, truncated: false }
     },
@@ -188,5 +189,23 @@ describe('WorkspaceShellState notifications', () => {
     await shell.refreshAll()
     expect(notified).toBeGreaterThan(0)
     expect(shell.getSnapshot().repos[0]?.worktrees[0]?.added).toBe(4)
+  })
+})
+
+describe('run-check channel', () => {
+  it('delivers a run request to listeners until they unsubscribe or the shell is disposed', () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    const seen: unknown[] = []
+    const off = shell.onRunCheck(request => { seen.push(request) })
+    const request = { worktree: '/p/proj', title: 'pnpm run check', commandLine: 'pnpm run check' }
+    shell.runCheck(request)
+    expect(seen).toEqual([request])
+    off()
+    shell.runCheck(request)
+    expect(seen).toHaveLength(1)
+    shell.onRunCheck(r => { seen.push(r) })
+    shell.dispose()
+    shell.runCheck(request)
+    expect(seen).toHaveLength(1)
   })
 })

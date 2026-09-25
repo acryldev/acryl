@@ -8,6 +8,7 @@ import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type { ReactNode } from 'react'
 import { createAgentBridge } from './workspace/agent-bridge.ts'
 import { changesTabPlugin } from './workspace/changes-tab.ts'
+import { checksTabPlugin } from './workspace/checks-tab.ts'
 import { parseSavedThreads, REVIEW_STORAGE_KEY, ReviewStore, startReviewPersistence } from './workspace/review-store.ts'
 import { reviewTabPlugin } from './workspace/review-tab.ts'
 import { WorkspaceGroups } from './workspace/groups.ts'
@@ -99,6 +100,7 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => installWorkspaceStyles(), 'acryl-workspace: styles')
   ctx.plugin(changesTabPlugin(shell))
   ctx.plugin(reviewTabPlugin(shell, review))
+  ctx.plugin(checksTabPlugin(shell, gitApi))
 
   whenSlotDeclared(() => {
     ctx.slots.inject('desktop.main', () => {

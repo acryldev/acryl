@@ -24,6 +24,7 @@ function gitApi(isRepo: (cwd: string) => boolean = () => true): WorkspaceGitApi 
       const branch = path === '/p/proj' ? 'main' : path === '/p/proj/.wt/x' || path === '/p/proj.worktrees/x' ? 'feature/x' : path.replace('/p/proj.worktrees/', '')
       return { path, branch, changes: [], truncated: false }
     },
+    async checks(path) { return { path, manager: 'pnpm', scripts: [] } },
     async diff(path, file) { return { path, file, text: '', binary: false, truncated: false } },
     async createWorktree(_cwd, branch) {
       if (branch === 'dup') throw new Error('the branch dup already exists')

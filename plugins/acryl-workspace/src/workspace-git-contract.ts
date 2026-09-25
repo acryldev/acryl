@@ -4,6 +4,7 @@ export const WORKSPACE_GIT_REPO_PATH = '/api/acryl-workspace/git/repo'
 export const WORKSPACE_GIT_STATUS_PATH = '/api/acryl-workspace/git/status'
 export const WORKSPACE_GIT_DIFF_PATH = '/api/acryl-workspace/git/diff'
 export const WORKSPACE_GIT_WORKTREE_PATH = '/api/acryl-workspace/git/worktree'
+export const WORKSPACE_GIT_CHECKS_PATH = '/api/acryl-workspace/git/checks'
 
 /** One worktree of a repository, as `git worktree list` reports it. */
 export interface GitWorktree {
@@ -74,6 +75,25 @@ export interface GitWorktreeCreatedView {
   readonly repo: GitRepoView
 }
 
+export type CheckManager = 'pnpm' | 'npm' | 'yarn' | 'bun'
+
+export interface CheckScript {
+  /** A plain script name (letters, digits and `:_.-`), safe to type into a shell. */
+  readonly name: string
+  /** The script's command line, for display only. */
+  readonly command: string
+  /** True for check-like names (check, test, lint, typecheck, build, format, ...). */
+  readonly primary: boolean
+}
+
+/** What a worktree can run: its package scripts and the package manager its lockfile names. */
+export interface GitChecksView {
+  readonly path: string
+  /** The project's own manager, or null when no lockfile says (then `npm` is the neutral default). */
+  readonly manager: CheckManager | null
+  readonly scripts: readonly CheckScript[]
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
@@ -135,4 +155,30 @@ export function parseGitWorktreeCreatedView(value: unknown): GitWorktreeCreatedV
     throw new Error('invalid git worktree response')
   }
   return { path: value.path, branch: value.branch, repo: parseGitRepoView(value.repo) }
+}
+
+const MANAGERS = new Set<string>(['pnpm', 'npm', 'yarn', 'bun'])
+const SAFE_NAME = /^[A-Za-z0-9][A-Za-z0-9:_.-]{0,63}$/
+
+function isCheckScript(value: unknown): value is CheckScript {
+  return isRecord(value)
+    && typeof value.name === 'string' && SAFE_NAME.test(value.name)
+    && typeof value.command === 'string'
+    && typeof value.primary === 'boolean'
+}
+
+/** @param value - unknown JSON from the checks route. */
+export function parseGitChecksView(value: unknown): GitChecksView {
+  if (!isRecord(value) || typeof value.path !== 'string'
+    || (value.manager !== null && !(typeof value.manager === 'string' && MANAGERS.has(value.manager)))
+    || !Array.isArray(value.scripts) || !value.scripts.every(isCheckScript)) {
+    throw new Error('invalid git checks response')
+  }
+  return { path: value.path, manager: value.manager as CheckManager | null, scripts: value.scripts }
+}
+
+/** The command line to type for one script, using the project's own package manager. */
+export function checkCommandLine(manager: CheckManager | null, script: string): string {
+  if (!SAFE_NAME.test(script)) throw new Error('unsafe script name')
+  return `${manager ?? 'npm'} run ${script}`
 }

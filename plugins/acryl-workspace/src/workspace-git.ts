@@ -12,12 +12,14 @@ import { basename, dirname, isAbsolute, join } from 'node:path'
 import type {
   GitChange,
   GitChangeCode,
+  GitChecksView,
   GitDiffView,
   GitRepoView,
   GitStatusView,
   GitWorktree,
   GitWorktreeCreatedView,
 } from './workspace-git-contract.ts'
+import { readWorktreeChecks } from './workspace-checks.ts'
 
 const DEFAULT_MAX_OUTPUT_BYTES = 1024 * 1024
 const DEFAULT_TIMEOUT_MS = 10_000
@@ -114,6 +116,14 @@ export class WorkspaceGit {
       changes: all.slice(0, this.maxChanges),
       truncated,
     }
+  }
+
+  /**
+   * The scripts a worktree can run as checks, and its package manager.
+   * @param path - absolute worktree directory.
+   */
+  async checks(path: string): Promise<GitChecksView> {
+    return readWorktreeChecks(await this.resolveDirectory(path))
   }
 
   /**

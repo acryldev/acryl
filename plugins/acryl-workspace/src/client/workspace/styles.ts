@@ -153,6 +153,14 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceThreadActions { display: flex; gap: 6px; }
 .dshWorkspaceThreadActions button { appearance: none; padding: 2px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 11px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceThreadActions button:hover { border-color: color-mix(in srgb, var(--dsw-alias-fg) 30%, transparent); color: var(--dsw-alias-fg); }
+.dshWorkspaceCheckList { list-style: none; margin: 0; padding: 4px 8px 12px; display: flex; flex-direction: column; gap: 4px; }
+.dshWorkspaceCheck { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg); }
+.dshWorkspaceCheck[data-primary] { border-color: color-mix(in srgb, #4d6bfe 45%, transparent); }
+.dshWorkspaceCheckText { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.dshWorkspaceCheckName { font-weight: 600; }
+.dshWorkspaceCheckCommand { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dsw-alias-fg-l2); font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dshWorkspaceCheckRun { appearance: none; flex: none; padding: 3px 12px; border: 1px solid color-mix(in srgb, var(--dsw-alias-fg) 30%, transparent); border-radius: 999px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: 600 11px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceCheckRun:hover { border-color: #4d6bfe; color: #4d6bfe; }
 .dshWorkspaceChangesMeta { color: var(--dsw-alias-fg-l2); font-size: 11px; }
 .dshWorkspaceChangesRefresh { appearance: none; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 14px; }
 .dshWorkspaceChangesRefresh:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg); }

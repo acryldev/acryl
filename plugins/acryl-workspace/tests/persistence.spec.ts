@@ -13,6 +13,7 @@ const groupsWith = (): WorkspaceGroups => new WorkspaceGroups(() => new Workspac
 const shellStub = (): WorkspaceShellState => new WorkspaceShellState({
   repo: async () => null,
   status: async path => ({ path, branch: null, changes: [], truncated: false }),
+  checks: async path => ({ path, manager: 'pnpm', scripts: [] }),
   diff: async (path, file) => ({ path, file, text: '', binary: false, truncated: false }),
   createWorktree: async () => { throw new Error('unused') },
 })

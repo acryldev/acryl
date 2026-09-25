@@ -1,14 +1,17 @@
 /** Same-origin browser client for the read-only Workspace git routes. */
 
 import {
+  WORKSPACE_GIT_CHECKS_PATH,
   WORKSPACE_GIT_DIFF_PATH,
   WORKSPACE_GIT_REPO_PATH,
   WORKSPACE_GIT_STATUS_PATH,
   WORKSPACE_GIT_WORKTREE_PATH,
+  parseGitChecksView,
   parseGitDiffView,
   parseGitRepoView,
   parseGitStatusView,
   parseGitWorktreeCreatedView,
+  type GitChecksView,
   type GitDiffView,
   type GitRepoView,
   type GitStatusView,
@@ -20,6 +23,8 @@ export interface WorkspaceGitApi {
   repo(cwd: string): Promise<GitRepoView | null>
   status(path: string): Promise<GitStatusView>
   diff(path: string, file: string): Promise<GitDiffView>
+  /** The package scripts a worktree can run as checks, with its package manager. */
+  checks(path: string): Promise<GitChecksView>
   /**
    * Create a branch and its worktree.
    * @throws an Error whose message is fit to show the user (for example "the branch x already exists").
@@ -82,6 +87,11 @@ export function createWorkspaceGitApi(fetchImpl: FetchLike = (input, init) => fe
         throw new Error(detail)
       }
       return parseGitWorktreeCreatedView(body)
+    },
+    async checks(path) {
+      const { status, body } = await getJson(WORKSPACE_GIT_CHECKS_PATH, { path })
+      if (status !== 200) throw failure('checks', status, body)
+      return parseGitChecksView(body)
     },
     async diff(path, file) {
       const { status, body } = await getJson(WORKSPACE_GIT_DIFF_PATH, { path, file })

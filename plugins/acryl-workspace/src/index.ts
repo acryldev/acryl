@@ -4,12 +4,14 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import { WorkspaceGit } from './workspace-git.ts'
 import {
+  WORKSPACE_GIT_CHECKS_PATH,
   WORKSPACE_GIT_DIFF_PATH,
   WORKSPACE_GIT_REPO_PATH,
   WORKSPACE_GIT_STATUS_PATH,
   WORKSPACE_GIT_WORKTREE_PATH,
 } from './workspace-git-contract.ts'
 import {
+  handleWorkspaceGitChecksRequest,
   handleWorkspaceGitDiffRequest,
   handleWorkspaceGitRepoRequest,
   handleWorkspaceGitStatusRequest,
@@ -72,6 +74,7 @@ export function apply(ctx: Context): void {
         [WORKSPACE_GIT_REPO_PATH, handleWorkspaceGitRepoRequest],
         [WORKSPACE_GIT_STATUS_PATH, handleWorkspaceGitStatusRequest],
         [WORKSPACE_GIT_DIFF_PATH, handleWorkspaceGitDiffRequest],
+        [WORKSPACE_GIT_CHECKS_PATH, handleWorkspaceGitChecksRequest],
         [WORKSPACE_GIT_WORKTREE_PATH, handleWorkspaceGitWorktreeRequest],
       ] as const
       for (const [path, handler] of gitRoutes) {

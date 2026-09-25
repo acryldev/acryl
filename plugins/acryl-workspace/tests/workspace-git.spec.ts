@@ -12,6 +12,7 @@ import {
   parseWorktrees,
 } from '../src/workspace-git.ts'
 import {
+  handleWorkspaceGitChecksRequest,
   handleWorkspaceGitDiffRequest,
   handleWorkspaceGitRepoRequest,
   handleWorkspaceGitStatusRequest,
@@ -336,6 +337,7 @@ describe('routes', () => {
       const report = (): void => {}
       if (path === '/worktree') void handleWorkspaceGitWorktreeRequest(req, res, origin, routeGit, report)
       else if (path === '/repo') void handleWorkspaceGitRepoRequest(req, res, origin, routeGit, report)
+      else if (path === '/checks') void handleWorkspaceGitChecksRequest(req, res, origin, routeGit, report)
       else if (path === '/status') void handleWorkspaceGitStatusRequest(req, res, origin, routeGit, report)
       else void handleWorkspaceGitDiffRequest(req, res, origin, routeGit, report)
     })
@@ -380,6 +382,14 @@ describe('routes', () => {
     expect((await get('/status', true)).status).toBe(400)
     const plain = join(root, 'plain')
     expect(await get(`/repo?cwd=${encodeURIComponent(plain)}`, true)).toEqual({ status: 200, body: { repo: null } })
+  })
+
+  it('serves the checks of a worktree and refuses cross-origin and relative paths', async () => {
+    expect((await get(`/checks?path=${encodeURIComponent(main)}`, false)).status).toBe(403)
+    expect((await get('/checks?path=relative', true)).status).toBe(400)
+    const { status, body } = await get(`/checks?path=${encodeURIComponent(main)}`, true)
+    expect(status).toBe(200)
+    expect(body).toMatchObject({ manager: null, scripts: [] })
   })
 
   function post(path: string, body: unknown, sameOrigin: boolean): Promise<{ status: number; body: unknown }> {
