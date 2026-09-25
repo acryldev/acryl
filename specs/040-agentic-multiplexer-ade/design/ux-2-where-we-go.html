@@ -159,7 +159,7 @@
 </head>
 <body>
 <main>
-  <div class="eyebrow">ACRYL ADE / Spec 040 / Page 2 of 2</div>
+  <div class="eyebrow">ACRYL ADE / Spec 040 / Page 2 of 2 / progress updated 2026-09-26</div>
   <h1>Where we go</h1>
   <p class="lede">The target ADE: a worktree-aware rail, an agent attention queue, a tile canvas that can show an agent next to its diff, a Files / Changes / Review / Checks panel, a persistent terminal dock and a status bar. Layout and data follow the v2 mockup; the numbered markers key into the build map below. Click the panel tabs to explore.</p>
   <div class="legend">
@@ -167,6 +167,25 @@
     <span class="chip plan">plan</span> in spec 040 stories A1-A5
     <span class="chip new">new</span> proposed by the parity plan (A6-A11)
     <span class="chip gap">decision</span> needs your call below
+  </div>
+
+
+  <h2>Progress: what is built and running today</h2>
+  <p class="lede">Everything below is in <code>acryl-workspace</code>, committed and pushed, with tests. "Built" means it exists and is covered by automated tests; the layout itself still needs your eyes in the running app.</p>
+  <table>
+    <thead><tr><th>Area</th><th>Status</th><th>What you can do now</th></tr></thead>
+    <tbody>
+      <tr><td>Left pane: Chats | Projects</td><td><span class="chip built">built</span></td><td>Switch between the classic chat list and a project tree. Bordered pill tabs. Each branch is a git worktree with a live status dot. Add a project (through the upstream folder chooser), create a branch and worktree with <b>+</b>, start an extra chat per branch.</td></tr>
+      <tr><td>Center: tabs per worktree</td><td><span class="chip built">built</span></td><td>Each worktree keeps its own tabs; other branches keep running when you switch. Terminal, file, browser, diff, board and doc tabs. Tabs and the Chats/Projects choice survive a restart.</td></tr>
+      <tr><td>Optional split</td><td><span class="chip built">built</span></td><td>Open any tab beside the current one. The divider is now <b>draggable</b> (also arrow keys, double-click to reset to half) and remembers its width.</td></tr>
+      <tr><td>Real diff tab</td><td><span class="chip built">built</span></td><td>Unified diff from real git data, with a line-comment composer that sends your comment to the agent as a queued message.</td></tr>
+      <tr><td>Right pane: Changes</td><td><span class="chip built">built</span></td><td>Changed files of the selected worktree with status letters and +/- counts, plus the worktree's full path. Picking a branch no longer forces the pane open; the toggle icon is always visible.</td></tr>
+      <tr><td>Right pane: Review</td><td><span class="chip built">new today</span></td><td>Every comment you send is listed per worktree with file:line. Click to jump to the diff; resolve, reopen or remove. Remembered across restarts.</td></tr>
+    </tbody>
+  </table>
+  <div class="grid2" style="margin-top:12px">
+    <div class="box"><h3>Next in 040</h3><p class="q">Checks tab (run the project's own checks from the worktree), Files tab, stage and commit box, attention queue in the Projects list, status bar, persistent terminal dock, multi-line diff comments, approve or reject of agent edits.</p></div>
+    <div class="box"><h3>New milestone: 041 Agent Control</h3><p class="q">Agents operate ACRYL itself, from inside the app and, through the ACRYL CLI, from outside: change settings, enable and install plugins, drive the UI, and repair Desktop or Web when it will not launch. Spec, Cordis design and spike-first tasks are written; no code yet. See <code>specs/041-agent-control</code>.</p></div>
   </div>
 
   <div class="ade" aria-label="Planned ACRYL ADE mock">
@@ -333,12 +352,12 @@
     <thead><tr><th>#</th><th>Area</th><th>Status</th><th>Plugin</th><th>@acryl/ui</th><th>Copy from</th></tr></thead>
     <tbody>
       <tr><td><span class="no2">1</span></td><td>Top bar: project, branch, BLEND badge, fan-out, cost, palette</td><td><span class="chip new">new</span></td><td><code>acryl-workspace-topbar</code>; BLEND from desktop <code>desktop-blend.ts</code></td><td><code>Menubar</code> <code>Command</code> <code>Badge</code></td><td>Orca <code>cmd-j</code>; v2 <code>TopChrome</code></td></tr>
-      <tr><td><span class="no2">2</span></td><td>Side panel with a <b>Chats | Projects</b> switch. Chats is today's DSH view (workspaces, chats). Projects is the worktree and branch tree with live status dots and filter. Selecting a branch swaps the canvas to that branch's own tab group</td><td><span class="chip plan">plan A1</span></td><td><code>acryl-workspace-projects</code>, wraps the upstream sidebar row as the Chats mode</td><td><code>Sidebar</code> <code>Collapsible</code> <code>InputGroup</code></td><td>Orca <code>AgentStateDot.tsx</code>, <code>store/worktree-*</code> (verify)</td></tr>
+      <tr><td><span class="no2">2</span></td><td>Side panel with a <b>Chats | Projects</b> switch. Chats is today's DSH view (workspaces, chats). Projects is the worktree and branch tree with live status dots and filter. Selecting a branch swaps the canvas to that branch's own tab group</td><td><span class="chip built">built</span> <span class="chip plan">attention queue A7</span></td><td><code>acryl-workspace-projects</code>, wraps the upstream sidebar row as the Chats mode</td><td><code>Sidebar</code> <code>Collapsible</code> <code>InputGroup</code></td><td>Orca <code>AgentStateDot.tsx</code>, <code>store/worktree-*</code> (verify)</td></tr>
       <tr><td><span class="no2">3</span></td><td>Attention queue: needs you / running / done</td><td><span class="chip new">new A7</span></td><td><code>acryl-workspace-projects</code> (attention section)</td><td><code>Sidebar</code> <code>ScrollArea</code></td><td>Orca <code>components/dashboard/</code> bucket logic (verify)</td></tr>
       <tr><td><span class="no2">4</span></td><td>Tabs pane of the Development canvas: the tab types below, each openable from <b>+</b>. Tab types are configurable in Settings (all by default, minimal set on request)</td><td><span class="chip built">built</span> <span class="chip plan">plan</span></td><td><code>acryl-workspace</code> (core, provides the tab-type registry)</td><td><code>Tabs</code> <code>Popover</code> <code>Command</code></td><td>v2 <code>CanvasAddPicker</code></td></tr>
-      <tr><td><span class="no2">5</span></td><td>Diff tile with line comments sent to the agent</td><td><span class="chip built">shell</span> <span class="chip new">new A8</span></td><td><code>acryl-tab-diff</code>; comments as room events in <code>acryl-control</code></td><td><code>Table</code> <code>ScrollArea</code></td><td>Orca <code>components/diff-comments/</code> anchor and range math (code); Nimbalyst <code>PendingReviewBanner.tsx</code></td></tr>
+      <tr><td><span class="no2">5</span></td><td>Diff tile with line comments sent to the agent</td><td><span class="chip built">built</span> <span class="chip plan">multi-line, approve/reject</span></td><td><code>acryl-tab-diff</code>; comments as room events in <code>acryl-control</code></td><td><code>Table</code> <code>ScrollArea</code></td><td>Orca <code>components/diff-comments/</code> anchor and range math (code); Nimbalyst <code>PendingReviewBanner.tsx</code></td></tr>
       <tr><td><span class="no2">6</span></td><td>Chat tile bound to a worktree, with approve or reject of agent edits</td><td><span class="chip built">built</span> <span class="chip new">new A8</span></td><td><code>acryl-tab-chat</code> plus upstream conversation</td><td><code>Message</code> <code>ToolCallCard</code></td><td>Nimbalyst <code>PendingReviewBanner.tsx</code>, <code>interactivePromptTools.ts</code></td></tr>
-      <tr><td><span class="no2">7</span></td><td>Side panel: Files, Changes, Review, Checks, commit box</td><td><span class="chip plan">plan A2</span></td><td><code>acryl-workspace-panel</code>; <code>acryl-git</code> Host service</td><td><code>Tabs</code> <code>Table</code> <code>ScrollArea</code> <code>InputGroup</code></td><td>Orca <code>github-checks-tab-state.ts</code>; v2 <code>RightPanel</code></td></tr>
+      <tr><td><span class="no2">7</span></td><td>Side panel: Files, Changes, Review, Checks, commit box</td><td><span class="chip built">Changes, Review</span> <span class="chip plan">Files, Checks, commit box</span></td><td><code>acryl-workspace-panel</code>; <code>acryl-git</code> Host service</td><td><code>Tabs</code> <code>Table</code> <code>ScrollArea</code> <code>InputGroup</code></td><td>Orca <code>github-checks-tab-state.ts</code>; v2 <code>RightPanel</code></td></tr>
       <tr><td><span class="no2">8</span></td><td>Persistent terminal dock (Codex App / OpenCode style) with its own <b>+</b> and tabs for multiple terminals, cwd bound to the selected worktree</td><td><span class="chip plan">plan</span></td><td><code>acryl-workspace-dock</code> and <code>acryl-tab-terminal</code>; one PTY session per dock tab</td><td><code>ResizablePanelGroup</code></td><td>v2 <code>TerminalStrip</code></td></tr>
       <tr><td><span class="no2">9</span></td><td>Status bar: agent, context use, rate limit, worktree, remote</td><td><span class="chip new">new</span></td><td><code>acryl-workspace-statusbar</code>; usage from <code>acryl-control</code></td><td><code>Badge</code> <code>Kbd</code></td><td>Nimbalyst context-usage and rate-limit widgets; Orca <code>rate-limits</code> (verify)</td></tr>
     </tbody>

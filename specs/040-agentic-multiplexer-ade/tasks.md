@@ -18,9 +18,11 @@ same package, no separate `acryl-git`). Status against the tasks below:
 | T030-T032 `acryl-tab-diff` | partly | The diff tile reads real git data (`GitDiffPane`) but lives in-package; the manual before/after mode is kept for a plain New Diff tab |
 | T033 profile rows and lifecycle allowlist | n/a for now | No new packages, so no new Loader rows |
 | T040-T041 line comments | done (single line) | `+` in the diff gutter, composer, sent as a queued user turn via `ctx.sessions` (`agent-bridge.ts`, `comment-message.ts`). T040 chose to write the line handling fresh rather than adapt Orca's range math, so nothing was copied and no notice entry is needed. Multi-line ranges are not built |
-| T050 optional split | done | Tab hover button, split header, swap on select, diffs open beside the chat. Divider is fixed 50/50; dragging is not built |
+| T050 optional split | done | Tab hover button, split header, swap on select, diffs open beside the chat. Divider is draggable since 2026-09-26 |
 | T060 spec ledger | done | `spec.md` status and tile-kind statement corrected |
 | T061 dev log | done | 2026-09-24 entry |
+
+2026-09-26 additions: draggable, keyboard-operable split divider with remembered width (`SplitDivider.tsx`, `split-ratio.ts`), and a Review right-pane tab that lists sent line comments per worktree with resolve, reopen and remove (`review-store.ts`, `ReviewBody.tsx`, `review-tab.ts`). Still open: Checks and Files tabs, stage and commit box, multi-line comments, terminal tab persistence, attention queue, status bar.
 
 Also built and not in the original list: creating a branch and worktree from the Projects tab, an extra chat per branch, adding git projects, restart persistence of tabs and the split, hosting the right panel in the frame (a gap found in testing), and the `desktop.sidebar` slot and Chats | Projects left pane, per-worktree tab
 groups in the canvas, and worktree-scoped PTY start (`cwd`).
