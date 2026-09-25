@@ -3,14 +3,14 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ChangesBody, splitPath, type ChangesBodyProps } from '../src/client/workspace/ChangesBody.tsx'
-import type { WorkspaceGitApi } from '../src/client/workspace/git-api.ts'
-import { GitDiffPane, changeSignature, type GitDiffPaneProps } from '../src/client/workspace/GitDiffPane.tsx'
-import { ProjectsSidebar, type ProjectsSidebarProps } from '../src/client/workspace/ProjectsSidebar.tsx'
-import type { ProjectAction, ProjectsControl } from '../src/client/workspace/projects-control.ts'
-import { WorkspaceShellState } from '../src/client/workspace/shell-state.ts'
-import type { WorkspaceTile } from '../src/client/workspace/state.ts'
-import type { GitDiffView, GitStatusView } from '../src/workspace-git-contract.ts'
+import { ChangesBody, splitPath, type ChangesBodyProps } from '../src/client/changes/ChangesBody.tsx'
+import type { WorkspaceGitApi } from '../src/client/git/git-api.ts'
+import { GitDiffPane, changeSignature, type GitDiffPaneProps } from '../src/client/diff/GitDiffPane.tsx'
+import { ProjectsSidebar, type ProjectsSidebarProps } from '../src/client/projects/ProjectsSidebar.tsx'
+import type { ProjectAction, ProjectsControl } from '../src/client/projects/projects-control.ts'
+import { WorkspaceShellState } from '../src/client/worktrees/shell-state.ts'
+import type { WorkspaceTile } from '../src/client/canvas/state.ts'
+import type { GitDiffView, GitStatusView } from '../src/git/contract.ts'
 
 afterEach(cleanup)
 
@@ -471,8 +471,8 @@ describe('changeSignature', () => {
 
 describe('ReviewBody', () => {
   it('lists the selected worktree comments, opens the diff, and resolves, reopens and removes them', async () => {
-    const { ReviewBody } = await import('../src/client/workspace/ReviewBody.tsx')
-    const { ReviewStore } = await import('../src/client/workspace/review-store.ts')
+    const { ReviewBody } = await import('../src/client/review/ReviewBody.tsx')
+    const { ReviewStore } = await import('../src/client/review/review-store.ts')
     const api: WorkspaceGitApi = {
       repo: async () => ({ root: '/p/proj', worktrees: [{ path: '/p/proj', branch: 'main', head: 'abc', isMain: true }] }),
       status: async () => STATUS,
@@ -505,7 +505,7 @@ describe('ReviewBody', () => {
 
 describe('ChecksBody', () => {
   it('lists the scripts of the selected worktree and asks the shell to run one', async () => {
-    const { ChecksBody } = await import('../src/client/workspace/ChecksBody.tsx')
+    const { ChecksBody } = await import('../src/client/checks/ChecksBody.tsx')
     const shell = new WorkspaceShellState(api())
     await shell.discover('/p/proj')
     shell.select('/p/proj')
@@ -521,7 +521,7 @@ describe('ChecksBody', () => {
   })
 
   it('shows a readable error when the scripts cannot be read', async () => {
-    const { ChecksBody } = await import('../src/client/workspace/ChecksBody.tsx')
+    const { ChecksBody } = await import('../src/client/checks/ChecksBody.tsx')
     const shell = new WorkspaceShellState(api())
     await shell.discover('/p/proj')
     shell.select('/p/proj')

@@ -2,34 +2,34 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-host-webserver'
-import { WorkspaceGit } from './workspace-git.ts'
+import { WorkspaceGit } from './git/service.ts'
 import {
   WORKSPACE_GIT_CHECKS_PATH,
   WORKSPACE_GIT_DIFF_PATH,
   WORKSPACE_GIT_REPO_PATH,
   WORKSPACE_GIT_STATUS_PATH,
   WORKSPACE_GIT_WORKTREE_PATH,
-} from './workspace-git-contract.ts'
+} from './git/contract.ts'
 import {
   handleWorkspaceGitChecksRequest,
   handleWorkspaceGitDiffRequest,
   handleWorkspaceGitRepoRequest,
   handleWorkspaceGitStatusRequest,
   handleWorkspaceGitWorktreeRequest,
-} from './workspace-git-route.ts'
-import { WorkspacePtyRegistry } from './workspace-pty.ts'
+} from './git/route.ts'
+import { WorkspacePtyRegistry } from './pty/service.ts'
 import {
   WORKSPACE_PTY_CLOSE_PATH,
   WORKSPACE_PTY_INPUT_PATH,
   WORKSPACE_PTY_PATH,
   WORKSPACE_PTY_RESIZE_PATH,
-} from './workspace-pty-contract.ts'
+} from './pty/contract.ts'
 import {
   handleWorkspacePtyCloseRequest,
   handleWorkspacePtyInputRequest,
   handleWorkspacePtyRequest,
   handleWorkspacePtyResizeRequest,
-} from './workspace-pty-route.ts'
+} from './pty/route.ts'
 
 /** Stable Cordis plugin name. */
 export const name = 'acryl-workspace'
