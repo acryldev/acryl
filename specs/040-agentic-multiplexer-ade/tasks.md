@@ -27,6 +27,8 @@ same package, no separate `acryl-git`). Status against the tasks below:
 Also built and not in the original list: creating a branch and worktree from the Projects tab, an extra chat per branch, adding git projects, restart persistence of tabs and the split, hosting the right panel in the frame (a gap found in testing), and the `desktop.sidebar` slot and Chats | Projects left pane, per-worktree tab
 groups in the canvas, and worktree-scoped PTY start (`cwd`).
 
+Design page: [ux-ade-now-and-next.html](./design/ux-ade-now-and-next.html) is the single living Lavish document (where we are now with the latest additions in violet, and where we go). The older two pages (`ux-1-where-we-are.html`, `ux-2-where-we-go.html`) are kept for history and are no longer updated.
+
 Related milestone: [041 Agent Control](../041-agent-control/spec.md) lets agents operate this ADE (and the rest of ACRYL) through governed tools; it is separate so 040 stays scoped.
 
 ## Phase 0: spikes (answer the unknowns before designing further)

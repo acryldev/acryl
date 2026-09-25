@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ACRYL ADE - Now and Next</title>
+<style>
+  /* Design source: ACRYL's own token system, copied from the v2 mockup
+     (ux-ui-design-mockup-acryl-desktop-and-web-v2/src/index.css, dark). Layout and data follow
+     that mockup's LeftRail / RightPanel / TerminalStrip / StatusBar and mockData.js. */
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, td, th, .chip) { overflow-wrap: anywhere; }
+  :root {
+    --background: hsl(222 20% 7%); --foreground: hsl(220 16% 92%);
+    --panel: hsl(222 18% 10%); --panel2: hsl(222 16% 13%); --panel3: hsl(222 14% 16%);
+    --border: hsl(222 12% 20%); --border-strong: hsl(222 12% 28%);
+    --muted: hsl(220 10% 52%); --soft: hsl(220 8% 38%);
+    --brand: hsl(186 92% 52%); --brand-fg: hsl(222 40% 8%); --brand-soft: hsl(186 60% 16%);
+    --blue: hsl(208 90% 60%); --ok: hsl(152 58% 52%); --ok-soft: hsl(152 50% 16%);
+    --bad: hsl(0 72% 62%); --bad-soft: hsl(0 60% 16%);
+    --warn: hsl(38 92% 58%); --warn-soft: hsl(38 70% 16%);
+    --added: hsl(152 52% 50%); --added-soft: hsl(152 44% 14%);
+    --removed: hsl(0 64% 58%); --removed-soft: hsl(0 50% 14%);
+    --fresh: hsl(268 92% 74%); --fresh-soft: hsl(268 50% 17%);
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  html { background: var(--background); color: var(--foreground); font: 14px/1.55 var(--sans); }
+  body { margin: 0; padding: 32px 16px 90px; }
+  main { max-width: 1240px; margin: 0 auto; }
+  h1 { font-size: 28px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  h2 { font-size: 18px; margin: 44px 0 6px; }
+  .eyebrow { font: 600 11px/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--brand); margin-bottom: 10px; }
+  p.lede { color: var(--muted); margin: 0 0 16px; max-width: 80ch; }
+  code { font-family: var(--mono); font-size: 12px; color: var(--brand); }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+  .chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font: 600 11px/1.7 var(--sans); border: 1px solid; white-space: nowrap; }
+  .built { color: var(--ok); border-color: hsl(152 58% 52% / .4); background: var(--ok-soft); }
+  .plan { color: var(--blue); border-color: hsl(208 90% 60% / .4); background: hsl(208 60% 16%); }
+  .new { color: var(--brand); border-color: hsl(186 92% 52% / .4); background: var(--brand-soft); }
+  .gap { color: var(--warn); border-color: hsl(38 92% 58% / .4); background: var(--warn-soft); }
+
+  .fresh { color: var(--fresh); border-color: hsl(268 92% 74% / .45); background: var(--fresh-soft); }
+  /* additions since the last review: a violet ring on the element itself */
+  .f { box-shadow: inset 0 0 0 1.5px var(--fresh) !important; border-radius: 6px; }
+  .fnote { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--fresh-soft); color: var(--fresh); border: 1px solid hsl(268 92% 74% / .45); font: 600 9.5px/16px var(--sans); text-transform: uppercase; letter-spacing: .06em; }
+  .absent { border: 1.5px dashed var(--border-strong); border-radius: 8px; padding: 8px 10px; margin: 6px 0; color: var(--soft); font: 11.5px/1.5 var(--sans); }
+  .absent b { color: var(--muted); }
+  .divider { width: 5px; flex: none; background: var(--border-strong); cursor: col-resize; box-shadow: 0 0 0 1.5px var(--fresh); }
+  .now .body { height: 470px; }
+  .now .stage { flex: 1; display: flex; min-height: 0; }
+  .now .pane { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .now .tab.tog { margin-left: auto; border-right: 0; border-left: 1px solid var(--border); padding: 0 10px; }
+  .now .tab.tog svg { display: block; }
+  .now .seg span { border: 1px solid transparent; }
+  .now .seg span.on { border-color: hsl(220 16% 92% / .3); background: hsl(220 16% 92% / .1); }
+  .now .seg { background: transparent; gap: 6px; padding: 0; }
+  .now .seg span { border-radius: 999px; }
+  .now .pathline { font: 10px var(--mono); color: var(--muted); padding: 2px 6px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
+  .now .runbtn { padding: 1px 10px; border: 1px solid var(--border-strong); border-radius: 999px; font: 600 10.5px var(--sans); color: var(--foreground); }
+  .now .tabs-inline { display: flex; }
+  .now .card2 { border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; margin: 4px 0; background: var(--panel2); }
+  .now .card2 code { color: var(--muted); }
+  /* the ADE mock */
+  .ade { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--background); box-shadow: 0 24px 70px -30px #000; font-size: 12px; }
+  .top { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px; background: var(--panel); border-bottom: 1px solid var(--border); position: relative; }
+  .logo { font-weight: 700; letter-spacing: .1em; color: var(--brand); }
+  .crumb { color: var(--muted); }
+  .pill { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--panel2); color: var(--foreground); }
+  .pill.brand { background: var(--brand-soft); border-color: hsl(186 92% 52% / .35); color: var(--brand); }
+  .pill.mono { font-family: var(--mono); }
+  .sp { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: var(--soft); }
+  .dot.run { background: var(--brand); animation: pulse 1.8s ease-in-out infinite; }
+  .dot.rev { background: var(--warn); } .dot.clean { background: var(--ok); } .dot.need { background: var(--bad); }
+  @keyframes pulse { 50% { opacity: .4; } }
+
+  .body { display: grid; grid-template-columns: 228px minmax(0, 1fr) 280px; height: 560px; position: relative; }
+  .rail { border-right: 1px solid var(--border); background: var(--panel); overflow: auto; padding: 10px 8px; position: relative; }
+  .rail h6, .panel h6 { margin: 10px 6px 6px; font: 600 10px var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--soft); }
+  .proj { margin: 4px 0; }
+  .proj > div.p { padding: 4px 6px; font-weight: 600; }
+  .br { display: flex; align-items: center; gap: 6px; padding: 4px 6px 4px 14px; border-radius: 6px; color: var(--foreground); }
+  .br.sel { background: var(--panel3); }
+  .br .n { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .br .s { font: 10px var(--mono); color: var(--muted); }
+  .br .s i { font-style: normal; color: var(--added); } .br .s u { text-decoration: none; color: var(--removed); }
+  .att { border: 1px solid var(--border); border-radius: 8px; background: var(--panel2); padding: 6px 8px; margin: 4px 0; }
+  .att b { display: block; font-weight: 600; } .att span { color: var(--muted); }
+
+  .canvas { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--background); position: relative; }
+  .strip { display: flex; height: 34px; border-bottom: 1px solid var(--border); background: var(--panel); }
+  .tab { display: flex; align-items: center; gap: 6px; padding: 0 12px; color: var(--muted); border-right: 1px solid var(--border); }
+  .tab.on { color: var(--foreground); background: var(--background); box-shadow: inset 0 -2px 0 var(--brand); }
+  .tab.plus { margin-left: auto; border: 0; border-left: 1px solid var(--border); }
+  .tiles { flex: 1; display: grid; grid-template-columns: 1fr 1fr; min-height: 0; }
+  .tile { border-right: 1px solid var(--border); display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; }
+  .tile:last-child { border-right: 0; }
+  .tile header { padding: 7px 10px; border-bottom: 1px solid var(--border); color: var(--muted); display: flex; gap: 8px; align-items: center; }
+  .tile header b { color: var(--foreground); }
+  .msg { padding: 8px 12px; } .msg .who { color: var(--brand); font-weight: 600; } .msg p { margin: 2px 0 8px; color: var(--foreground); }
+  .tool { margin: 4px 12px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel2); font-family: var(--mono); color: var(--muted); }
+  .approve { display: flex; gap: 6px; margin: 8px 12px; align-items: center; padding: 8px; border: 1px solid hsl(38 92% 58% / .4); background: var(--warn-soft); border-radius: 8px; }
+  .btn { height: 24px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--border-strong); background: var(--panel2); color: var(--foreground); font: 600 11px var(--sans); cursor: pointer; }
+  .btn.pri { background: var(--brand); color: var(--brand-fg); border-color: var(--brand); }
+  .file { padding: 6px 10px; font-family: var(--mono); color: var(--muted); border-bottom: 1px solid var(--border); }
+  .dl { display: flex; gap: 8px; padding: 0 10px; font: 11.5px/1.6 var(--mono); }
+  .dl .ln { width: 24px; color: var(--soft); text-align: right; }
+  .dl.add { background: var(--added-soft); color: var(--added); } .dl.rm { background: var(--removed-soft); color: var(--removed); }
+  .thread { margin: 6px 10px 6px 42px; padding: 8px 10px; border: 1px solid hsl(186 92% 52% / .35); background: var(--brand-soft); border-radius: 8px; font-family: var(--sans); }
+  .thread small { color: var(--muted); display: block; margin-top: 4px; }
+
+  .panel { border-left: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; min-width: 0; position: relative; }
+  .ptabs { display: flex; border-bottom: 1px solid var(--border); }
+  .ptab { flex: 1; text-align: center; padding: 9px 4px; color: var(--muted); border: 0; background: transparent; font: 12px var(--sans); cursor: pointer; border-bottom: 2px solid transparent; }
+  .ptab[aria-selected="true"] { color: var(--foreground); border-bottom-color: var(--brand); }
+  .ptab em { font-style: normal; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--panel3); font-size: 10px; }
+  .pv { display: none; padding: 8px; overflow: auto; flex: 1; }
+  .pv.on { display: block; }
+  .row { display: flex; gap: 8px; align-items: center; padding: 4px 6px; border-radius: 6px; }
+  .row:hover { background: var(--panel3); }
+  .row .st { font: 700 10px var(--mono); width: 14px; }
+  .st.M { color: var(--warn); } .st.A { color: var(--added); } .st.D { color: var(--removed); }
+  .row .n { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); font-size: 11px; }
+  .commit { margin-top: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 8px; background: var(--panel2); color: var(--muted); }
+  .commit .btn { margin-top: 6px; width: 100%; }
+
+  .strip2 { border-top: 1px solid var(--border); background: hsl(222 22% 5%); font: 11.5px/1.6 var(--mono); padding: 8px 12px; height: 82px; overflow: hidden; }
+  .strip2 .hd { color: var(--muted); font-family: var(--sans); display: flex; gap: 12px; margin-bottom: 2px; }
+  .strip2 .hd b { color: var(--foreground); }
+  .status { display: flex; gap: 14px; align-items: center; height: 26px; padding: 0 12px; background: var(--panel); border-top: 1px solid var(--border); color: var(--muted); }
+  .status .sp { margin-left: auto; }
+
+  .seg { display: flex; padding: 2px; margin: 2px 2px 8px; border-radius: 8px; background: var(--panel3); }
+  .seg span { flex: 1; text-align: center; padding: 4px 0; border-radius: 6px; color: var(--muted); }
+  .seg span.on { background: var(--background); color: var(--foreground); box-shadow: 0 0 0 1px var(--border); }
+  .tg { padding: 0 6px 4px 30px; color: var(--soft); font-size: 10.5px; }
+  .tg b { color: var(--muted); font-weight: 500; }
+  .grp { display: flex; align-items: center; padding: 0 10px; color: var(--brand); border-right: 1px solid var(--border); font-size: 11px; white-space: nowrap; }
+  .dock-tabs { display: flex; align-items: center; gap: 2px; margin-bottom: 4px; font-family: var(--sans); }
+  .dt { display: inline-flex; gap: 6px; align-items: center; padding: 2px 10px; border-radius: 6px 6px 0 0; color: var(--muted); border: 1px solid transparent; }
+  .dt.on { color: var(--foreground); background: var(--panel2); border-color: var(--border); }
+  .dt .x { opacity: .5; }
+  .dt.plus { color: var(--brand); font-weight: 700; }
+  .tabset { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; margin-top: 12px; }
+  .tabset label { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel2); cursor: pointer; }
+  .tabset input { margin-top: 3px; accent-color: hsl(186 92% 42%); }
+  .tabset small { display: block; color: var(--muted); }
+  .presets { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+  /* numbered callouts */
+  .no { position: absolute; z-index: 3; width: 20px; height: 20px; border-radius: 50%; background: var(--brand); color: var(--brand-fg); font: 700 11px/20px var(--sans); text-align: center; box-shadow: 0 0 0 3px hsl(186 92% 52% / .25); pointer-events: none; }
+  .add-menu { position: absolute; right: 10px; top: 38px; z-index: 4; width: 250px; padding: 6px; border: 1px solid var(--border-strong); background: hsl(222 18% 12%); border-radius: 8px; box-shadow: 0 12px 32px #000a; }
+  .add-menu div { padding: 5px 8px; border-radius: 6px; color: var(--foreground); }
+  .add-menu div small { color: var(--soft); margin-left: 6px; }
+  .add-menu .sep { height: 1px; padding: 0; margin: 4px 0; background: var(--border); }
+  .add-menu .build { color: var(--brand); }
+
+  /* map table + decisions */
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .08em; }
+  td .no2 { display: inline-block; width: 20px; height: 20px; border-radius: 50%; background: var(--brand); color: var(--brand-fg); font: 700 11px/20px var(--sans); text-align: center; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-top: 12px; }
+  .box { border: 1px solid var(--border); background: var(--panel); border-radius: 12px; padding: 16px 18px; }
+  .box h3 { margin: 0 0 4px; font-size: 15px; }
+  .box .q { color: var(--muted); margin: 0 0 10px; }
+  .opt { display: block; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 8px 0; cursor: pointer; background: var(--panel2); }
+  .opt:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); }
+  .opt input { margin-right: 8px; accent-color: hsl(186 92% 42%); }
+  .opt b { font-weight: 600; } .opt small { display: block; color: var(--muted); margin: 3px 0 0 24px; }
+  .opt .rec { float: right; }
+  .box textarea { width: 100%; min-height: 54px; margin-top: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--background); color: var(--foreground); padding: 8px; font: 13px var(--sans); }
+  .queue { margin-top: 10px; height: 32px; padding: 0 14px; border-radius: 8px; border: 0; background: var(--brand); color: var(--brand-fg); font: 600 13px var(--sans); cursor: pointer; }
+  .queued { margin-left: 10px; color: var(--ok); font-size: 12px; }
+  .nav { display: flex; gap: 10px; margin-top: 40px; }
+  .nav a { color: var(--foreground); text-decoration: none; border: 1px solid var(--border); background: var(--panel); padding: 10px 16px; border-radius: 8px; }
+  .nav a:hover { border-color: var(--brand); }
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">ACRYL ADE / Spec 040 / one page: now and next / updated 2026-09-26</div>
+  <h1>Where we are, and where we go</h1>
+  <div class="legend">
+    <span class="chip fresh">added since last review</span> outlined in violet in the mock below
+    <span class="chip built">built</span> exists and is tested
+    <span class="chip plan">plan</span> in spec 040 stories A1-A5
+    <span class="chip new">new</span> proposed by the parity plan (A6-A11)
+    <span class="chip gap">decision</span> needs your call
+  </div>
+  <p class="lede">Part 1 is the app as it runs today, rebuilt from the real code and styles. Part 2 is the target. Anything violet in part 1 was added since the last version of this page (2026-09-25 and 2026-09-26). The mock is interactive: click the right-panel tabs.</p>
+
+  <h2>Part 1: where we are now</h2>
+  <div class="ade now" aria-label="Current ACRYL ADE mock">
+    <div class="body">
+      <aside class="rail">
+        <div class="seg" role="tablist" aria-label="Side panel mode"><span class="f">Chats</span><span class="on f">Projects</span></div>
+        <div class="proj"><div class="p" style="display:flex;align-items:center">acryl<span style="margin-left:auto;color:var(--muted)" title="new branch">+</span></div>
+          <div class="br"><span class="dot clean"></span><span class="n">main</span><span class="s">now</span></div>
+          <div class="br sel"><span class="dot run"></span><span class="n">fix/workspace-sidebar-state</span><span class="s"><i>+140</i> <u>-49</u></span></div>
+          <div class="br"><span class="dot rev"></span><span class="n">feat/git-action-dropdown</span><span class="s"><i>+1136</i> <u>-184</u></span></div>
+          <div class="br"><span class="dot"></span><span class="n">fix/shared-context</span><span class="s">1h</span></div>
+        </div>
+        <div class="proj"><div class="p">acrylamide_project</div>
+          <div class="br"><span class="dot run"></span><span class="n">main</span><span class="s"><i>+848</i></span></div>
+        </div>
+        <div style="margin:8px 6px;color:var(--muted)"><span class="f" style="padding:2px 8px;border-radius:999px;display:inline-block">+ Add git project</span> <span class="fnote">added</span></div>
+        <div class="absent"><b>Attention queue</b><br>needs you / running / done. Not built.</div>
+      </aside>
+
+      <section class="canvas">
+        <div class="strip">
+          <div class="grp">worktree: fix/workspace-sidebar-state</div>
+          <div class="tab on">◎ Chat</div>
+          <div class="tab">± src/state.ts</div>
+          <div class="tab f">❯ pnpm run check</div>
+          <div class="tab tog f" title="Show or hide the right panel"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.7" y="2.7" width="12.6" height="10.6" rx="2"/><path d="M10 2.9v10.2"/></svg></div>
+        </div>
+        <div class="stage">
+          <div class="pane">
+            <div class="msg"><span class="who">You</span><p>Re-scope open tabs when I switch worktree.</p></div>
+            <div class="tool">edit  src/state.ts  (+38 -4)</div>
+            <div class="tool">bash  pnpm run typecheck  - pass</div>
+            <div class="msg"><span class="who">Agent</span><p>Done. Disposing the old PTY first, as you asked.</p></div>
+          </div>
+          <div class="divider" title="Drag to resize. Arrow keys work, double-click resets to half."></div>
+          <div class="pane">
+            <div class="file">src/state.ts</div>
+            <div class="dl"><span class="ln">41</span> export function select(id) {</div>
+            <div class="dl rm"><span class="ln">42</span> - state.active = id</div>
+            <div class="dl add"><span class="ln">42</span> + state.active = id</div>
+            <div class="dl add"><span class="ln">43</span> + rescopeTiles(state, id)</div>
+            <div class="thread"><b>You</b> on line 43: dispose the old PTY first.<small>Sent to the agent as a queued message.</small></div>
+            <div class="dl"><span class="ln">44</span> }</div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="ptabs" role="tablist" data-tabs="now">
+          <button class="ptab" role="tab" data-t="changes" aria-selected="true">Changes<em>7</em></button>
+          <button class="ptab f" role="tab" data-t="review" aria-selected="false">Review<em>2</em></button>
+          <button class="ptab f" role="tab" data-t="checks" aria-selected="false">Checks</button>
+          <button class="ptab" role="tab" data-t="files" aria-selected="false" style="opacity:.45" title="not built">Files</button>
+        </div>
+        <div class="pv on" data-tabs-view="now" data-v="changes">
+          <div style="padding:2px 6px"><b>fix/workspace-sidebar-state</b><span class="fnote">path shown</span></div>
+          <div class="pathline f" style="margin:0 2px 6px">/Users/you/code/acryl.worktrees/fix-workspace-sidebar-state</div>
+          <div class="row"><span class="st M">M</span><span class="n">src/state.ts</span><span style="color:var(--added)">+38</span></div>
+          <div class="row"><span class="st A">A</span><span class="n">src/Rail.tsx</span><span style="color:var(--added)">+212</span></div>
+          <div class="row"><span class="st D">D</span><span class="n">src/old-sidebar.tsx</span><span style="color:var(--removed)">-96</span></div>
+          <div class="absent"><b>Stage and commit box</b><br>Not built.</div>
+        </div>
+        <div class="pv" data-tabs-view="now" data-v="review">
+          <div class="card2 f"><code>state.ts:43 new</code><br>dispose the old PTY first<div style="margin-top:4px"><span class="runbtn">Resolve</span> <span class="runbtn">Remove</span></div></div>
+          <div class="card2 f"><code>Rail.tsx:88 new</code><br>filter is case sensitive<div style="margin-top:4px"><span class="runbtn">Resolve</span> <span class="runbtn">Remove</span></div></div>
+          <div class="card2 f" style="opacity:.6"><code>index.ts:12 new</code><br><s>unused import</s> resolved<div style="margin-top:4px"><span class="runbtn">Reopen</span></div></div>
+          <div style="color:var(--muted);padding:4px 6px">Comments you send from a diff are listed here. Click one to open its diff.</div>
+        </div>
+        <div class="pv" data-tabs-view="now" data-v="checks">
+          <div style="padding:2px 6px;color:var(--muted)">runs with pnpm</div>
+          <div class="card2 f" style="display:flex;align-items:center;gap:8px;border-color:var(--fresh)"><div style="flex:1"><b>check</b><br><code>vitest run</code></div><span class="runbtn">Run</span></div>
+          <div class="card2 f" style="display:flex;align-items:center;gap:8px"><div style="flex:1"><b>typecheck</b><br><code>tsc -p tsconfig.json</code></div><span class="runbtn">Run</span></div>
+          <div class="card2 f" style="display:flex;align-items:center;gap:8px"><div style="flex:1"><b>dev</b><br><code>vite</code></div><span class="runbtn">Run</span></div>
+          <div style="color:var(--muted);padding:4px 6px">Run opens a terminal tab in this worktree and types the command.</div>
+        </div>
+        <div class="pv" data-tabs-view="now" data-v="files"><div class="absent"><b>Files</b><br>Not built. The File tab is still a scratch text box.</div></div>
+      </aside>
+    </div>
+    <div class="absent" style="margin:8px 10px"><b>Not built yet:</b> top bar (BLEND, fan-out, cost), persistent terminal dock, status bar, attention queue, approve or reject of agent edits.</div>
+  </div>
+
+  <h3 style="margin:22px 0 4px">What each tile really does today</h3>
+  <table>
+    <thead><tr><th>Tile or pane</th><th>Data behind it</th><th>Gap versus a working ADE</th></tr></thead>
+    <tbody>
+      <tr><td><code>chat</code></td><td><span class="chip built">real</span></td><td>Upstream conversation, bound to a workspace (its worktree). A blank chat with no workspace cannot send.</td></tr>
+      <tr><td><code>pty</code></td><td><span class="chip built">real</span> <span class="chip fresh">run from Checks</span></td><td>Host PTY started in the worktree folder. Tabs are not restored after a restart.</td></tr>
+      <tr><td><code>diff</code></td><td><span class="chip built">real git</span></td><td>Unified diff with single-line comments to the agent. Multi-line ranges not built. The old "two pasted texts" mode remains for a plain New Diff tab.</td></tr>
+      <tr><td><code>file</code></td><td><span class="chip gap">partial</span></td><td>Path box plus text area. No tree, search or highlighting, and it does not read or save real files.</td></tr>
+      <tr><td><code>browser</code></td><td><span class="chip gap">partial</span></td><td>Address bar plus frame. No design or annotate mode.</td></tr>
+      <tr><td><code>kanban</code>, <code>doc</code></td><td><span class="chip" style="color:var(--bad);border-color:hsl(0 72% 62% / .4);background:var(--bad-soft)">shell only</span></td><td>Local cards and pasted text. Not tied to sessions or to real spec files.</td></tr>
+    </tbody>
+  </table>
+
+
+
+  <h2>What changed, in one table</h2>
+  <p class="lede">Everything below is in <code>acryl-workspace</code>, committed and pushed, with tests. "Built" means it exists and is covered by automated tests; the layout itself still needs your eyes in the running app.</p>
+  <table>
+    <thead><tr><th>Area</th><th>Status</th><th>What you can do now</th></tr></thead>
+    <tbody>
+      <tr><td>Left pane: Chats | Projects</td><td><span class="chip built">built</span> <span class="chip fresh">restyled, add-project fixed</span></td><td>Switch between the classic chat list and a project tree. Bordered pill tabs. Each branch is a git worktree with a live status dot. Add a project (through the upstream folder chooser), create a branch and worktree with <b>+</b>, start an extra chat per branch.</td></tr>
+      <tr><td>Center: tabs per worktree</td><td><span class="chip built">built</span></td><td>Each worktree keeps its own tabs; other branches keep running when you switch. Terminal, file, browser, diff, board and doc tabs. Tabs and the Chats/Projects choice survive a restart.</td></tr>
+      <tr><td>Optional split</td><td><span class="chip built">built</span> <span class="chip fresh">draggable divider</span></td><td>Open any tab beside the current one. The divider is now <b>draggable</b> (also arrow keys, double-click to reset to half) and remembers its width.</td></tr>
+      <tr><td>Real diff tab</td><td><span class="chip built">built</span></td><td>Unified diff from real git data, with a line-comment composer that sends your comment to the agent as a queued message.</td></tr>
+      <tr><td>Right pane: Changes</td><td><span class="chip built">built</span> <span class="chip fresh">path, no forced open, toggle</span></td><td>Changed files of the selected worktree with status letters and +/- counts, plus the worktree's full path. Picking a branch no longer forces the pane open; the toggle icon is always visible.</td></tr>
+      <tr><td>Right pane: Review</td><td><span class="chip fresh">added</span></td><td>Every comment you send is listed per worktree with file:line. Click to jump to the diff; resolve, reopen or remove. Remembered across restarts.</td></tr>
+      <tr><td>Right pane: Checks</td><td><span class="chip fresh">added</span></td><td>Lists the worktree's package scripts (check, test, lint, build first) and a Run button that opens a terminal tab in that worktree and types the command with the project's own package manager.</td></tr>
+    </tbody>
+  </table>
+  <div class="grid2" style="margin-top:12px">
+    <div class="box"><h3>Next in 040</h3><p class="q">Files tab, stage and commit box, attention queue in the Projects list, status bar, persistent terminal dock, multi-line diff comments, approve or reject of agent edits.</p></div>
+    <div class="box"><h3>New milestone: 041 Agent Control</h3><p class="q">Agents operate ACRYL itself, from inside the app and, through the ACRYL CLI, from outside: change settings, enable and install plugins, drive the UI, and repair Desktop or Web when it will not launch. Spec, Cordis design and spike-first tasks are written; no code yet. See <code>specs/041-agent-control</code>.</p></div>
+  </div>
+
+  <h2>Part 2: where we go</h2>
+  <p class="lede">The target ADE: a worktree-aware rail with an attention queue, tabs that can show an agent beside its diff, a Files / Changes / Review / Checks panel with a commit box, a persistent terminal dock and a status bar. Numbered markers refer to the build map below.</p>
+  <div class="ade" aria-label="Planned ACRYL ADE mock">
+    <div class="top">
+      <span class="logo">ACRYL</span><span class="crumb">acryl / fix/workspace-sidebar-state</span>
+      <span class="pill brand"><span class="dot run"></span> Active BLEND: acryl-demo</span>
+      <div class="sp">
+        <span class="pill">Cmd+K</span>
+        <span class="pill">Fan-out</span>
+        <span class="pill brand"><span class="dot run"></span> 3 agents running</span>
+        <span class="pill mono">$ 4.72</span>
+      </div>
+      <span class="no" style="left:8px;top:12px">1</span>
+    </div>
+
+    <div class="body">
+      <aside class="rail">
+        <span class="no" style="right:6px;top:6px">2</span>
+        <div class="seg" role="tablist" aria-label="Side panel mode"><span>Chats</span><span class="on">Projects</span></div>
+        <div class="proj"><div class="p">acryl</div>
+          <div class="br"><span class="dot clean"></span><span class="n">master</span><span class="s">now</span></div>
+          <div class="tg"><b>tabs:</b> Browser, Claude Code, Codex</div>
+          <div class="br sel"><span class="dot run"></span><span class="n">fix/workspace-sidebar-state</span><span class="s"><i>+140</i> <u>-49</u></span></div>
+          <div class="tg"><b>tabs:</b> Claude Code, Diff, spec.md, Prototype</div>
+          <div class="br"><span class="dot rev"></span><span class="n">feat/git-action-dropdown</span><span class="s"><i>+1136</i> <u>-184</u></span></div>
+          <div class="br"><span class="dot run"></span><span class="n">feat/meta-chat</span><span class="s"><i>+5518</i> <u>-169</u></span></div>
+          <div class="tg"><b>tabs:</b> MD doc, Qwen, Pi</div>
+          <div class="br"><span class="dot"></span><span class="n">fix/shared-context-isolation</span><span class="s">1h</span></div>
+        </div>
+        <div class="proj"><div class="p">acrylamide_project</div>
+          <div class="br"><span class="dot run"></span><span class="n">main</span><span class="s"><i>+848</i></span></div>
+        </div>
+        <h6>Attention <span class="chip new" style="margin-left:4px">new</span></h6>
+        <div class="att"><span class="dot need"></span> <b>Needs you (2)</b><span>Codex: approve plan, Claude: commit proposal</span></div>
+        <div class="att"><span class="dot run"></span> <b>Running (3)</b><span>Claude Code, Codex, DSH Agent</span></div>
+        <div class="att"><span class="dot clean"></span> <b>Done, unread (1)</b><span>feat/rate-limit</span></div>
+        <span class="no" style="right:6px;bottom:10px">3</span>
+      </aside>
+
+      <section class="canvas">
+        <div class="strip">
+          <div class="grp">tab group: fix/workspace-sidebar-state</div>
+          <div class="tab on">◎ Claude Code</div>
+          <div class="tab">± Diff</div>
+          <div class="tab">▧ spec.md</div>
+          <div class="tab">◍ Prototype</div>
+          <div class="tab plus">+</div>
+        </div>
+        <div class="add-menu" aria-label="Add to canvas picker">
+          <div>Chat<small>conversation</small></div><div>Coding agent<small>Claude, Codex, Qwen, Pi</small></div><div>Terminal<small>pty</small></div>
+          <div>Browser<small>design mode</small></div><div>File<small>editor</small></div><div>MD view</div>
+          <div>HTML prototype<small>Lavish loop</small></div><div>Diff</div><div>Kanban</div><div>Compare<small>fan-out</small></div>
+          <div class="sep"></div><div class="build">Build a card type<small>agent scaffolds a plugin</small></div>
+          <div class="sep"></div><div style="color:var(--muted)">Choose which appear<small>Settings &gt; Workspace</small></div>
+        </div>
+        <div class="tiles">
+          <div class="tile">
+            <header><span class="dot run"></span><b>Claude Code</b> Opus, worktree fix/workspace-sidebar-state</header>
+            <div class="msg"><span class="who">You</span><p>Make the branch rail re-scope open tiles when I switch worktree.</p></div>
+            <div class="tool">edit  src/rail/state.ts  (+38 -4)</div>
+            <div class="tool">bash  pnpm run typecheck  - pass</div>
+            <div class="approve"><span>2 edits pending review</span><button class="btn">Reject</button><button class="btn pri">Approve all</button></div>
+          </div>
+          <div class="tile">
+            <header><b>Diff</b> src/rail/state.ts <span class="chip new" style="margin-left:auto">line comments</span></header>
+            <div class="file">src/rail/state.ts</div>
+            <div class="dl"><span class="ln">41</span> export function select(id) {</div>
+            <div class="dl rm"><span class="ln">42</span> - state.active = id</div>
+            <div class="dl add"><span class="ln">42</span> + state.active = id</div>
+            <div class="dl add"><span class="ln">43</span> + rescopeTiles(state, id)</div>
+            <div class="thread"><b>You</b> on line 43: dispose the old PTY before re-scoping.<small>Sent to Claude Code as a structured message. Stored as a room event.</small></div>
+            <div class="dl"><span class="ln">44</span> }</div>
+          </div>
+        </div>
+        <span class="no" style="left:8px;top:40px">4</span>
+        <span class="no" style="right:222px;top:40px">5</span>
+        <span class="no" style="left:8px;bottom:8px">6</span>
+      </section>
+
+      <aside class="panel">
+        <span class="no" style="left:-10px;top:6px">7</span>
+        <div class="ptabs" role="tablist">
+          <button class="ptab" role="tab" data-t="files" aria-selected="false">Files</button>
+          <button class="ptab" role="tab" data-t="changes" aria-selected="true">Changes<em>7</em></button>
+          <button class="ptab" role="tab" data-t="review" aria-selected="false">Review<em>3</em></button>
+          <button class="ptab" role="tab" data-t="checks" aria-selected="false">Checks<em>1</em></button>
+        </div>
+        <div class="pv" data-v="files">
+          <div class="row"><span class="n">▾ src</span></div><div class="row"><span class="n">&nbsp;&nbsp;▾ rail</span></div>
+          <div class="row"><span class="n">&nbsp;&nbsp;&nbsp;&nbsp;state.ts</span></div><div class="row"><span class="n">&nbsp;&nbsp;&nbsp;&nbsp;Rail.tsx</span></div>
+          <div class="row"><span class="n">▸ docs</span></div><div class="row"><span class="n">▸ specs</span></div>
+        </div>
+        <div class="pv on" data-v="changes">
+          <div class="row"><span class="st M">M</span><span class="n">src/rail/state.ts</span><span class="added" style="color:var(--added)">+38</span></div>
+          <div class="row"><span class="st A">A</span><span class="n">src/rail/Rail.tsx</span><span style="color:var(--added)">+212</span></div>
+          <div class="row"><span class="st M">M</span><span class="n">src/index.ts</span><span style="color:var(--added)">+4</span></div>
+          <div class="row"><span class="st D">D</span><span class="n">src/old-sidebar.tsx</span><span style="color:var(--removed)">-96</span></div>
+          <div class="commit">Staged - 7 files<br><span style="color:var(--foreground)">feat(rail): re-scope tiles on worktree switch</span><button class="btn pri">Commit and push</button></div>
+        </div>
+        <div class="pv" data-v="review">
+          <div class="row"><span class="dot rev"></span><span class="n">state.ts:43 dispose PTY first</span></div>
+          <div class="row"><span class="dot rev"></span><span class="n">Rail.tsx:88 filter is case sensitive</span></div>
+          <div class="row"><span class="dot clean"></span><span class="n" style="text-decoration:line-through;color:var(--muted)">index.ts:12 unused import</span></div>
+        </div>
+        <div class="pv" data-v="checks">
+          <div class="row"><span class="dot clean"></span><span class="n">typecheck</span><span style="color:var(--muted)">41s</span></div>
+          <div class="row"><span class="dot clean"></span><span class="n">unit tests 14/14</span><span style="color:var(--muted)">1m</span></div>
+          <div class="row"><span class="dot run"></span><span class="n">build desktop</span><span style="color:var(--muted)">running</span></div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="strip2">
+      <div class="dock-tabs"><span class="dt on">❯ zsh <span class="x">×</span></span><span class="dt">❯ pnpm test <span class="x">×</span></span><span class="dt">❯ dev server <span class="x">×</span></span><span class="dt plus">+</span><span style="margin-left:auto;color:var(--muted)">worktree cwd - expand</span></div>
+      <span style="color:var(--ok)">$</span> pnpm run test<br>14 passed
+      <span class="no" style="right:10px;top:8px">8</span>
+    </div>
+    <div class="status"><span class="dot run"></span> Claude Code - Opus<span>context 64%</span><span>rate limit ok</span><span class="sp">worktree fix/workspace-sidebar-state</span><span>SSH dev-box connected</span><span class="no" style="position:static;display:inline-block">9</span></div>
+  </div>
+
+  <h2>Tab types and what a branch owns</h2>
+  <p class="lede">The canvas is the tabs pane. <b>Chat</b> is simply one tab type: the conversation DSH and ACRYL already have. Everything else is another tab type opened from <b>+</b>. Which types are offered is a setting; the default is all of them, and a developer can pick a minimal set.</p>
+  <div class="box">
+    <h3>Settings &gt; Workspace &gt; Tab types</h3>
+    <div class="tabset" role="group" aria-label="Enabled tab types (local preview only)">
+      <label><input type="checkbox" checked><span><b>Chat</b> <span class="chip built">built</span><small>The existing DSH conversation</small></span></label>
+      <label><input type="checkbox" checked><span><b>Coding agent</b> <span class="chip built">built</span><small>Claude, Codex, OpenCode, Gemini, Pi, Qwen...</small></span></label>
+      <label><input type="checkbox" checked><span><b>Terminal (PTY)</b> <span class="chip built">built</span><small>Also the dock's tab type</small></span></label>
+      <label><input type="checkbox" checked><span><b>Browser</b> <span class="chip built">built</span><small>Design mode later</small></span></label>
+      <label><input type="checkbox" checked><span><b>File</b> <span class="chip built">built</span><small>Editor</small></span></label>
+      <label><input type="checkbox" checked><span><b>MD view</b> <span class="chip built">built as Doc</span><small>Renders real spec and plan files</small></span></label>
+      <label><input type="checkbox" checked><span><b>HTML prototype</b> <span class="chip new">new</span><small>Lavish-style annotate and feedback loop</small></span></label>
+      <label><input type="checkbox" checked><span><b>Diff</b> <span class="chip built">shell</span><small>Real git diff and line comments planned</small></span></label>
+      <label><input type="checkbox" checked><span><b>Kanban</b> <span class="chip built">shell</span><small>Keyed to session phase</small></span></label>
+      <label><input type="checkbox" checked><span><b>Compare</b> <span class="chip new">new</span><small>Fan-out results, merge winner</small></span></label>
+    </div>
+    <div class="presets"><span class="chip plan">Preset: All (default)</span><span class="chip plan">Preset: Minimal - Chat, Agent, Terminal</span></div>
+    <p class="q" style="margin-top:12px">The checkboxes above are a local preview and do not save. Tab types come from plugins, so a type only appears here if its plugin is loaded.</p>
+  </div>
+  <div class="grid2">
+    <div class="box"><h3>Model change this implies</h3><p class="q"><code>WorkspaceState</code> today holds one flat list of tiles for the whole shell. The new model is <b>project &gt; branch or worktree &gt; tab group</b>: each branch owns its own ordered tabs and active tab, and selecting a branch swaps the canvas to that group. The terminal dock follows the same rule. Tab groups must persist across restarts.</p></div>
+    <div class="box"><h3>Example</h3><p class="q">On <code>master</code> of the website: a Browser tab, Claude Code and Codex. Click <code>feat/meta-chat</code>: the canvas re-renders with its own MD doc, Qwen and Pi. Click back: the first group returns exactly as left.</p></div>
+  </div>
+
+  <h2>Architecture: every feature is a plugin you can turn off</h2>
+  <p class="lede">Each tab type, the rail, the panel, the dock, the top bar and the status bar is its own Cordis plugin with its own Loader row. Turning one off is a profile patch (<code>disabled: true</code>), the same mechanism <code>acryl-development-canvas</code> already documents. <code>acryl-workspace</code> stays small: it owns the shell layout, per-worktree tab groups, and one service that tab-type plugins register into. Names below are proposed; per repo rule the Loader row id equals the package name.</p>
+  <table>
+    <thead><tr><th>Plugin</th><th>Provides</th><th>Consumes (inject)</th><th>When turned off</th></tr></thead>
+    <tbody>
+      <tr><td><code>acryl-workspace</code></td><td>Shell layout, tab groups per worktree, the <code>workspaceTabs</code> registry service</td><td><code>slots</code></td><td>Advanced shell falls back to upstream's default main area</td></tr>
+      <tr><td><code>acryl-tab-chat</code></td><td>Tab type <code>chat</code> (the existing DSH conversation, incl. Trajectory)</td><td><code>workspaceTabs</code></td><td>No chat tab offered</td></tr>
+      <tr><td><code>acryl-tab-agent</code></td><td>Tab type <code>agent</code> (Claude, Codex, OpenCode, Pi, Qwen...)</td><td><code>workspaceTabs</code>, <code>acryl-control</code></td><td>Agents are not launchable from <b>+</b></td></tr>
+      <tr><td><code>acryl-tab-terminal</code></td><td>Tab type <code>terminal</code>, the PTY Host route, the dock's session type</td><td><code>workspaceTabs</code>, <code>webServer</code></td><td>No terminals, and the dock has nothing to host</td></tr>
+      <tr><td><code>acryl-tab-browser</code>, <code>-file</code>, <code>-md</code>, <code>-diff</code>, <code>-kanban</code>, <code>-compare</code>, <code>-prototype</code></td><td>One tab type each. <code>-prototype</code> is the Lavish-style annotate and feedback loop</td><td><code>workspaceTabs</code>; diff and compare also <code>acryl-git</code></td><td>That type disappears from <b>+</b>; existing tabs of it show a "plugin off" placeholder</td></tr>
+      <tr><td><code>acryl-git</code></td><td>Worktree, status and diff Host service</td><td><code>webServer</code></td><td>Rail loses branch data, panel loses Changes, diff and compare go PENDING</td></tr>
+      <tr><td><code>acryl-workspace-projects</code>, <code>-panel</code>, <code>-dock</code>, <code>-topbar</code>, <code>-statusbar</code></td><td>The five chrome areas</td><td><code>workspaceTabs</code>, <code>acryl-git</code> (optional)</td><td>That area is not rendered; the rest of the shell still works</td></tr>
+    </tbody>
+  </table>
+  <p class="lede" style="margin-top:10px">Consequence to design for: a consumer whose provider is missing is PENDING, not broken, and must reactivate when the provider returns. That is exactly what the Cordis lifecycle gives us, so tab-type plugins hard-inject <code>workspaceTabs</code> and treat <code>acryl-git</code> as optional.</p>
+
+  <h2>Build map</h2>
+  <p class="lede">Each marker is one area. "Copy from" points at the MIT-licensed reference clones under <code>acryldev/_reference_projects/</code>; rows marked verify still need the source read before a task is written. Component names were checked against <code>plugins/acryl-ui/registry-manifest.yml</code>.</p>
+  <table>
+    <thead><tr><th>#</th><th>Area</th><th>Status</th><th>Plugin</th><th>@acryl/ui</th><th>Copy from</th></tr></thead>
+    <tbody>
+      <tr><td><span class="no2">1</span></td><td>Top bar: project, branch, BLEND badge, fan-out, cost, palette</td><td><span class="chip new">new</span></td><td><code>acryl-workspace-topbar</code>; BLEND from desktop <code>desktop-blend.ts</code></td><td><code>Menubar</code> <code>Command</code> <code>Badge</code></td><td>Orca <code>cmd-j</code>; v2 <code>TopChrome</code></td></tr>
+      <tr><td><span class="no2">2</span></td><td>Side panel with a <b>Chats | Projects</b> switch. Chats is today's DSH view (workspaces, chats). Projects is the worktree and branch tree with live status dots and filter. Selecting a branch swaps the canvas to that branch's own tab group</td><td><span class="chip built">built</span> <span class="chip plan">attention queue A7</span></td><td><code>acryl-workspace-projects</code>, wraps the upstream sidebar row as the Chats mode</td><td><code>Sidebar</code> <code>Collapsible</code> <code>InputGroup</code></td><td>Orca <code>AgentStateDot.tsx</code>, <code>store/worktree-*</code> (verify)</td></tr>
+      <tr><td><span class="no2">3</span></td><td>Attention queue: needs you / running / done</td><td><span class="chip new">new A7</span></td><td><code>acryl-workspace-projects</code> (attention section)</td><td><code>Sidebar</code> <code>ScrollArea</code></td><td>Orca <code>components/dashboard/</code> bucket logic (verify)</td></tr>
+      <tr><td><span class="no2">4</span></td><td>Tabs pane of the Development canvas: the tab types below, each openable from <b>+</b>. Tab types are configurable in Settings (all by default, minimal set on request)</td><td><span class="chip built">built</span> <span class="chip plan">plan</span></td><td><code>acryl-workspace</code> (core, provides the tab-type registry)</td><td><code>Tabs</code> <code>Popover</code> <code>Command</code></td><td>v2 <code>CanvasAddPicker</code></td></tr>
+      <tr><td><span class="no2">5</span></td><td>Diff tile with line comments sent to the agent</td><td><span class="chip built">built</span> <span class="chip plan">multi-line, approve/reject</span></td><td><code>acryl-tab-diff</code>; comments as room events in <code>acryl-control</code></td><td><code>Table</code> <code>ScrollArea</code></td><td>Orca <code>components/diff-comments/</code> anchor and range math (code); Nimbalyst <code>PendingReviewBanner.tsx</code></td></tr>
+      <tr><td><span class="no2">6</span></td><td>Chat tile bound to a worktree, with approve or reject of agent edits</td><td><span class="chip built">built</span> <span class="chip new">new A8</span></td><td><code>acryl-tab-chat</code> plus upstream conversation</td><td><code>Message</code> <code>ToolCallCard</code></td><td>Nimbalyst <code>PendingReviewBanner.tsx</code>, <code>interactivePromptTools.ts</code></td></tr>
+      <tr><td><span class="no2">7</span></td><td>Side panel: Files, Changes, Review, Checks, commit box</td><td><span class="chip built">Changes, Review, Checks</span> <span class="chip plan">Files, commit box</span></td><td><code>acryl-workspace-panel</code>; <code>acryl-git</code> Host service</td><td><code>Tabs</code> <code>Table</code> <code>ScrollArea</code> <code>InputGroup</code></td><td>Orca <code>github-checks-tab-state.ts</code>; v2 <code>RightPanel</code></td></tr>
+      <tr><td><span class="no2">8</span></td><td>Persistent terminal dock (Codex App / OpenCode style) with its own <b>+</b> and tabs for multiple terminals, cwd bound to the selected worktree</td><td><span class="chip plan">plan</span></td><td><code>acryl-workspace-dock</code> and <code>acryl-tab-terminal</code>; one PTY session per dock tab</td><td><code>ResizablePanelGroup</code></td><td>v2 <code>TerminalStrip</code></td></tr>
+      <tr><td><span class="no2">9</span></td><td>Status bar: agent, context use, rate limit, worktree, remote</td><td><span class="chip new">new</span></td><td><code>acryl-workspace-statusbar</code>; usage from <code>acryl-control</code></td><td><code>Badge</code> <code>Kbd</code></td><td>Nimbalyst context-usage and rate-limit widgets; Orca <code>rate-limits</code> (verify)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Decisions (made 2026-09-24)</h2>
+  <p class="lede">Resolved through this page. They are now the working baseline for spec 040 Scope A.</p>
+  <table>
+    <thead><tr><th>#</th><th>Question</th><th>Decision</th><th>What it means</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Canvas layout</td><td><b>Tabs plus one optional split</b></td><td>Keep <code>WorkspaceState</code> close to today's shape; add a single split so an agent can sit next to its diff.</td></tr>
+      <tr><td>2</td><td>First build slice</td><td><b>Real diff tile with line comments sent to the agent</b></td><td>Needs the tab-type registry, an <code>acryl-git</code> Host service, then <code>acryl-tab-diff</code>. Comments become room events.</td></tr>
+      <tr><td>3</td><td>Switching branch</td><td><b>Keep other branches' tabs running in the background</b></td><td>Agents and terminals in an unselected branch keep working; the rail dot stays live. Process count needs a cap and a visible indicator.</td></tr>
+      <tr><td>4</td><td>Code basis</td><td><b>Evolve <code>acryl-workspace</code> in place</b></td><td>Split each tile into its own plugin, move to per-worktree tab groups, extract the PTY as it is into <code>acryl-tab-terminal</code>.</td></tr>
+    </tbody>
+  </table>
+  <h2>Open items</h2>
+  <div class="grid2">
+    <div class="box"><h3>Before code</h3><p class="q">Write the Cordis mini-design (capability boundary, provides and consumes, effects and disposal, config, events, verification) for <code>workspaceTabs</code>, <code>acryl-git</code> and <code>acryl-tab-diff</code>, then <code>tasks.md</code>.</p></div>
+    <div class="box"><h3>Still unverified</h3><p class="q">Which real session or agent-team state backs the rail dots and attention queue (spec 040 open question 2). The Web surface has no advanced shell, so this layout is Desktop-only for now.</p></div>
+  </div>
+
+
+</main>
+<script>
+  (function () {
+    document.querySelectorAll('.ptabs').forEach(function (bar) {
+      var group = bar.getAttribute('data-tabs');
+      var tabs = bar.querySelectorAll('.ptab');
+      var views = group
+        ? document.querySelectorAll('.pv[data-tabs-view="' + group + '"]')
+        : bar.parentNode.querySelectorAll('.pv:not([data-tabs-view])');
+      tabs.forEach(function (t) {
+        t.addEventListener('click', function () {
+          tabs.forEach(function (x) { x.setAttribute('aria-selected', x === t ? 'true' : 'false'); });
+          views.forEach(function (v) { v.classList.toggle('on', v.getAttribute('data-v') === t.getAttribute('data-t')); });
+        });
+      });
+    });
+  })();
+</script>
+</body>
+</html>
