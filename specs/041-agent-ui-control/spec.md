@@ -127,9 +127,17 @@ Controlling other applications or the OS (that is Anthropic computer use), recor
 3. **Accessibility quality.** How many of our controls have real roles and names? Poor names make refs useless, so the milestone may need an `aria-label` pass, tracked as a task, not hidden.
 4. **Approval granularity** for UI clicks: per action, per task, or per surface region.
 
-Scope B questions (5 to 8):
+Scope B questions (5 to 8), each with the situation, the risk, and the proposed answer:
 
-5. **Offline vs online arbitration.** If the app is running, does an offline edit fight it? Proposal: detect a live instance (lock or socket) and refuse offline writes to state the app owns, routing through the online channel instead.
-6. **Trust of the CLI agent.** The CLI agent has a model behind it too. Should destructive repair always require a human, or may a pre-approved repair recipe run unattended (for example in CI)?
-7. **Channel discovery.** How the CLI finds the running instance and its secret: a well-known file in the profile home with restrictive permissions is the leading option.
-8. **Known-good snapshots.** Whether repair keeps rolling profile snapshots at each successful boot, so "restore last known good" always has something to restore.
+5. **Offline edit vs a running app.**
+   - *Situation:* Desktop is open. In a terminal the user runs `acryl plugin disable X`. The CLI changes the override file on disk, but the running app already loaded its state and may overwrite the file with its own copy a moment later, so the change silently vanishes or, worse, half applies.
+   - *Proposal:* the app writes a small lock file in the profile home while it runs (pid, start time, channel address). Every offline write first checks it. If a live instance is found, the CLI does not write the file; it sends the same change through the online channel so the app applies it live and persists it itself. If the lock is stale (process gone), the CLI removes it and proceeds offline. Rescue of a broken app is unaffected, because a broken app that is not running holds no live lock.
+6. **Unattended repair (CI, scripts, "just fix it").**
+   - *Situation:* a nightly CI job or a teammate's script finds the app cannot boot, and nobody is there to approve.
+   - *Proposal:* three tiers. Read-only diagnosis (`doctor`) always runs unattended. Repairs from a small allowlist of safe recipes (disable the failing plugin row, restore the last valid override file) may run unattended only when the caller passes `--yes` and names the recipes explicitly. Anything that installs code, deletes data, touches credentials or approval policy always needs a human, with no flag to bypass it. Every unattended run writes the audit log and a backup, so it is undoable afterward.
+7. **How the CLI finds the running app.**
+   - *Situation:* the user has Desktop, Web and a dev profile open, or two profiles. "Click X in Acryl-Desktop" must reach the right one and not an attacker's fake listener.
+   - *Proposal:* the same lock file from question 5 is the discovery record, one per profile home: address (Unix socket on macOS and Linux, named pipe on Windows, loopback port only as fallback), pid, surface (desktop or web) and a random secret in a separate owner-only file. `--profile` and `--target` pick the record; with several running instances the CLI lists them and asks. The CLI verifies the pid is alive and owned by the same user before sending the secret.
+8. **Known-good snapshots ("restore last working").**
+   - *Situation:* an update or a new plugin breaks boot, and the user does not know which change did it.
+   - *Proposal:* yes, keep a small rolling set. After each successful boot (app reached ready and stayed up a short grace period) the runtime snapshots the small state that decides boot: the profile config, the plugin override file and the installed package list, not user data. Keep the last five. `acryl repair --restore-last-good` restores the newest one, and because it is a pre-image backup like any repair, it is itself undoable. Snapshots are metadata only, so they stay small and hold no secrets.
