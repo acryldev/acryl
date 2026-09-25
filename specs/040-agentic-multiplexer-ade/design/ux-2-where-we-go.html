@@ -159,7 +159,7 @@
 </head>
 <body>
 <main>
-  <div class="eyebrow">ACRYL ADE / Spec 040 / Page 2 of 2 / progress updated 2026-09-26</div>
+  <div class="eyebrow">ACRYL ADE / Spec 040 / Page 2 of 2 / progress updated 2026-09-26 (Checks added)</div>
   <h1>Where we go</h1>
   <p class="lede">The target ADE: a worktree-aware rail, an agent attention queue, a tile canvas that can show an agent next to its diff, a Files / Changes / Review / Checks panel, a persistent terminal dock and a status bar. Layout and data follow the v2 mockup; the numbered markers key into the build map below. Click the panel tabs to explore.</p>
   <div class="legend">
@@ -184,7 +184,7 @@
     </tbody>
   </table>
   <div class="grid2" style="margin-top:12px">
-    <div class="box"><h3>Next in 040</h3><p class="q">Checks tab (run the project's own checks from the worktree), Files tab, stage and commit box, attention queue in the Projects list, status bar, persistent terminal dock, multi-line diff comments, approve or reject of agent edits.</p></div>
+    <div class="box"><h3>Next in 040</h3><p class="q">Files tab, stage and commit box, attention queue in the Projects list, status bar, persistent terminal dock, multi-line diff comments, approve or reject of agent edits.</p></div>
     <div class="box"><h3>New milestone: 041 Agent Control</h3><p class="q">Agents operate ACRYL itself, from inside the app and, through the ACRYL CLI, from outside: change settings, enable and install plugins, drive the UI, and repair Desktop or Web when it will not launch. Spec, Cordis design and spike-first tasks are written; no code yet. See <code>specs/041-agent-control</code>.</p></div>
   </div>
 
@@ -357,7 +357,7 @@
       <tr><td><span class="no2">4</span></td><td>Tabs pane of the Development canvas: the tab types below, each openable from <b>+</b>. Tab types are configurable in Settings (all by default, minimal set on request)</td><td><span class="chip built">built</span> <span class="chip plan">plan</span></td><td><code>acryl-workspace</code> (core, provides the tab-type registry)</td><td><code>Tabs</code> <code>Popover</code> <code>Command</code></td><td>v2 <code>CanvasAddPicker</code></td></tr>
       <tr><td><span class="no2">5</span></td><td>Diff tile with line comments sent to the agent</td><td><span class="chip built">built</span> <span class="chip plan">multi-line, approve/reject</span></td><td><code>acryl-tab-diff</code>; comments as room events in <code>acryl-control</code></td><td><code>Table</code> <code>ScrollArea</code></td><td>Orca <code>components/diff-comments/</code> anchor and range math (code); Nimbalyst <code>PendingReviewBanner.tsx</code></td></tr>
       <tr><td><span class="no2">6</span></td><td>Chat tile bound to a worktree, with approve or reject of agent edits</td><td><span class="chip built">built</span> <span class="chip new">new A8</span></td><td><code>acryl-tab-chat</code> plus upstream conversation</td><td><code>Message</code> <code>ToolCallCard</code></td><td>Nimbalyst <code>PendingReviewBanner.tsx</code>, <code>interactivePromptTools.ts</code></td></tr>
-      <tr><td><span class="no2">7</span></td><td>Side panel: Files, Changes, Review, Checks, commit box</td><td><span class="chip built">Changes, Review</span> <span class="chip plan">Files, Checks, commit box</span></td><td><code>acryl-workspace-panel</code>; <code>acryl-git</code> Host service</td><td><code>Tabs</code> <code>Table</code> <code>ScrollArea</code> <code>InputGroup</code></td><td>Orca <code>github-checks-tab-state.ts</code>; v2 <code>RightPanel</code></td></tr>
+      <tr><td><span class="no2">7</span></td><td>Side panel: Files, Changes, Review, Checks, commit box</td><td><span class="chip built">Changes, Review, Checks</span> <span class="chip plan">Files, commit box</span></td><td><code>acryl-workspace-panel</code>; <code>acryl-git</code> Host service</td><td><code>Tabs</code> <code>Table</code> <code>ScrollArea</code> <code>InputGroup</code></td><td>Orca <code>github-checks-tab-state.ts</code>; v2 <code>RightPanel</code></td></tr>
       <tr><td><span class="no2">8</span></td><td>Persistent terminal dock (Codex App / OpenCode style) with its own <b>+</b> and tabs for multiple terminals, cwd bound to the selected worktree</td><td><span class="chip plan">plan</span></td><td><code>acryl-workspace-dock</code> and <code>acryl-tab-terminal</code>; one PTY session per dock tab</td><td><code>ResizablePanelGroup</code></td><td>v2 <code>TerminalStrip</code></td></tr>
       <tr><td><span class="no2">9</span></td><td>Status bar: agent, context use, rate limit, worktree, remote</td><td><span class="chip new">new</span></td><td><code>acryl-workspace-statusbar</code>; usage from <code>acryl-control</code></td><td><code>Badge</code> <code>Kbd</code></td><td>Nimbalyst context-usage and rate-limit widgets; Orca <code>rate-limits</code> (verify)</td></tr>
     </tbody>
