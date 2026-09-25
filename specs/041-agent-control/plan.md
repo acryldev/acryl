@@ -1,4 +1,4 @@
-# Plan and Cordis mini-design: Agent UI Control
+# Plan and Cordis mini-design: Agent Control
 
 **Spec**: [spec.md](./spec.md). **Status**: draft, nothing built. Follows the six-point protocol in root `CLAUDE.md`.
 

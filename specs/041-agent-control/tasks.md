@@ -1,4 +1,4 @@
-# Tasks: Agent UI Control, first slice
+# Tasks: Agent Control, first slice
 
 Conventions: `[P]` parallel; every task ends with a green `corepack pnpm run check` for the touched packages and a focused commit on `main` with explicit `git add` paths.
 

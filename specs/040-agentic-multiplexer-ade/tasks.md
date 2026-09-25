@@ -25,7 +25,7 @@ same package, no separate `acryl-git`). Status against the tasks below:
 Also built and not in the original list: creating a branch and worktree from the Projects tab, an extra chat per branch, adding git projects, restart persistence of tabs and the split, hosting the right panel in the frame (a gap found in testing), and the `desktop.sidebar` slot and Chats | Projects left pane, per-worktree tab
 groups in the canvas, and worktree-scoped PTY start (`cwd`).
 
-Related milestone: [041 Agent UI Control](../041-agent-ui-control/spec.md) lets agents operate this ADE (and the rest of ACRYL) through governed tools; it is separate so 040 stays scoped.
+Related milestone: [041 Agent Control](../041-agent-control/spec.md) lets agents operate this ADE (and the rest of ACRYL) through governed tools; it is separate so 040 stays scoped.
 
 ## Phase 0: spikes (answer the unknowns before designing further)
 

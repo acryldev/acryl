@@ -1,8 +1,10 @@
-# Feature Specification: Agent UI Control (agents operate ACRYL itself)
+# Feature Specification: Agent Control (agents operate ACRYL itself, from inside and from outside)
+
+> Renamed from `041-agent-ui-control` on 2026-09-25: the milestone covers settings, plugins, install, repair and CLI control, not only the UI.
 
 **Tracking:** to be filed (`acryldev/acryl` issue) when this leaves `needs-triage`
 
-**Feature Directory**: `specs/041-agent-ui-control`
+**Feature Directory**: `specs/041-agent-control`
 **Created**: 2026-09-25
 **Status**: needs-triage. Nothing is built. This spec, `plan.md` (the Cordis mini-design) and `tasks.md` (spikes first) are the whole deliverable of the first pass.
 **Authority**: `.specify/memory/constitution.md` (everything is a plugin; canonical state durable), root `CLAUDE.md` (Cordis development protocol, boundaries), `docs/cordis/cordis_system_guide_for_coding_agents.md`, `specs/037-guardrailed-self-extension` (an agent that edits ACRYL through guarded seams), `specs/040-agentic-multiplexer-ade` (the ADE surfaces this makes drivable). Related but separate: `specs/015-development-canvas`.
@@ -127,7 +129,7 @@ Controlling other applications or the OS (that is Anthropic computer use), recor
 3. **Accessibility quality.** How many of our controls have real roles and names? Poor names make refs useless, so the milestone may need an `aria-label` pass, tracked as a task, not hidden.
 4. **Approval granularity** for UI clicks: per action, per task, or per surface region.
 
-Scope B questions (5 to 8), each with the situation, the risk, and the proposed answer:
+Scope B questions (5 to 8). **Decided 2026-09-25: the proposals below are accepted as the working design** (question 6's allowlist stays exactly two recipes and can only grow by a reviewed change). Each shows the situation and the decision:
 
 5. **Offline edit vs a running app.**
    - *Situation:* Desktop is open. In a terminal the user runs `acryl plugin disable X`. The CLI changes the override file on disk, but the running app already loaded its state and may overwrite the file with its own copy a moment later, so the change silently vanishes or, worse, half applies.
