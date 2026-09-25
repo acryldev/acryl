@@ -467,3 +467,37 @@ describe('changeSignature', () => {
     shell.dispose()
   })
 })
+
+describe('ReviewBody', () => {
+  it('lists the selected worktree comments, opens the diff, and resolves, reopens and removes them', async () => {
+    const { ReviewBody } = await import('../src/client/workspace/ReviewBody.tsx')
+    const { ReviewStore } = await import('../src/client/workspace/review-store.ts')
+    const api: WorkspaceGitApi = {
+      repo: async () => ({ root: '/p/proj', worktrees: [{ path: '/p/proj', branch: 'main', head: 'abc', isMain: true }] }),
+      status: async () => STATUS,
+      diff: async () => { throw new Error('unused') },
+      createWorktree: async () => { throw new Error('unused') },
+    } as unknown as WorkspaceGitApi
+    const shell = new WorkspaceShellState(api)
+    await shell.discover('/p/proj')
+    shell.select('/p/proj')
+    const review = new ReviewStore()
+    const opened: unknown[] = []
+    shell.onOpenDiff(request => { opened.push(request) })
+    const props = { shell, review } as unknown as Parameters<typeof ReviewBody>[0]
+
+    render(<ReviewBody {...props} />)
+    expect(screen.getByText(/No comments yet/)).toBeTruthy()
+
+    act(() => { review.add({ worktree: '/p/proj', file: 'src/deep/a.ts', side: 'new', line: 7, lineText: 'let x', comment: 'use const' }) })
+    expect(screen.getByText('use const')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /a\.ts:7/ }))
+    expect(opened).toEqual([{ worktree: '/p/proj', file: 'src/deep/a.ts' }])
+
+    fireEvent.click(screen.getByRole('button', { name: 'Resolve' }))
+    expect(screen.getByText(/0 open, 1 resolved/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Reopen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Remove comment' }))
+    expect(screen.getByText(/No comments yet/)).toBeTruthy()
+  })
+})

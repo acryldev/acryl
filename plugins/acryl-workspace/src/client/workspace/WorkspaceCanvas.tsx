@@ -21,6 +21,7 @@ import type { AgentBridge } from './agent-bridge.ts'
 import { buildReviewComment } from './comment-message.ts'
 import type { WorkspaceGitApi } from './git-api.ts'
 import { GitDiffPane } from './GitDiffPane.tsx'
+import type { ReviewStore } from './review-store.ts'
 import { SplitDivider } from './SplitDivider.tsx'
 import { clampSplit, readSplitRatio, writeSplitRatio } from './split-ratio.ts'
 import { GLOBAL_GROUP, type WorkspaceGroups } from './groups.ts'
@@ -47,6 +48,8 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   readonly gitApi: WorkspaceGitApi
   /** Delivers diff line comments to the open chat's agent. */
   readonly agent: AgentBridge
+  /** Remembers each comment sent, for the Review tab. */
+  readonly review: ReviewStore
   /** Opens and closes the right panel. Always available, even for a chat that has no header yet. */
   readonly rightPanel?: { toggle(): void }
 }
@@ -57,7 +60,7 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell, groups, gitApi, agent, rightPanel }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell, groups, gitApi, agent, review, rightPanel }: WorkspaceCanvasProps) {
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
   // Subscribe to primitives, not the whole shell snapshot: git polling updates that snapshot often,
@@ -123,7 +126,13 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
           tile={tile}
           shell={shell}
           gitApi={gitApi}
-          sendComment={input => agent.sendToCurrentSession(buildReviewComment({ ...input, branch: groupBranch }))}
+          sendComment={async (input) => {
+            const result = await agent.sendToCurrentSession(buildReviewComment({ ...input, branch: groupBranch }))
+            if (result.ok && tile.diffWorktree !== undefined) {
+              review.add({ worktree: tile.diffWorktree, file: input.file, side: input.side, line: input.line, lineText: input.lineText, comment: input.comment })
+            }
+            return result
+          }}
         />
       )
     }

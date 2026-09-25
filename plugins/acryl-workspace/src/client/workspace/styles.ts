@@ -142,6 +142,17 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceChangesTitle { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .dshWorkspaceChangesTitle strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshWorkspaceChangesPath { color: var(--dsw-alias-fg-l2); font: 11px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
+.dshWorkspaceThreadList { list-style: none; margin: 0; padding: 4px 8px 12px; display: flex; flex-direction: column; gap: 8px; }
+.dshWorkspaceThread { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg); }
+.dshWorkspaceThread[data-resolved] { opacity: .6; }
+.dshWorkspaceThreadWhere { appearance: none; align-self: flex-start; padding: 0; border: 0; background: transparent; color: #4d6bfe; cursor: pointer; font: 600 12px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dshWorkspaceThreadWhere:hover { text-decoration: underline; }
+.dshWorkspaceThreadSide { margin-left: 6px; color: var(--dsw-alias-fg-l2); font-weight: 400; }
+.dshWorkspaceThreadLine { overflow: hidden; text-overflow: ellipsis; white-space: pre; padding: 2px 6px; border-radius: 4px; background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 6%)); font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dshWorkspaceThreadText { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.dshWorkspaceThreadActions { display: flex; gap: 6px; }
+.dshWorkspaceThreadActions button { appearance: none; padding: 2px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 11px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceThreadActions button:hover { border-color: color-mix(in srgb, var(--dsw-alias-fg) 30%, transparent); color: var(--dsw-alias-fg); }
 .dshWorkspaceChangesMeta { color: var(--dsw-alias-fg-l2); font-size: 11px; }
 .dshWorkspaceChangesRefresh { appearance: none; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 14px; }
 .dshWorkspaceChangesRefresh:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg); }

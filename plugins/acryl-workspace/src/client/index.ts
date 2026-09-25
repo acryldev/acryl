@@ -8,6 +8,8 @@ import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type { ReactNode } from 'react'
 import { createAgentBridge } from './workspace/agent-bridge.ts'
 import { changesTabPlugin } from './workspace/changes-tab.ts'
+import { parseSavedThreads, REVIEW_STORAGE_KEY, ReviewStore, startReviewPersistence } from './workspace/review-store.ts'
+import { reviewTabPlugin } from './workspace/review-tab.ts'
 import { WorkspaceGroups } from './workspace/groups.ts'
 import { browserStorage, parseSavedWorkspace, STORAGE_KEY } from './workspace/persistence.ts'
 import { startWorkspacePersistence } from './workspace/persist.ts'
@@ -74,6 +76,8 @@ export function apply(ctx: ClientContext): void {
   const groups = new WorkspaceGroups(undefined, saved?.groups)
   if (saved !== undefined) shell.setMode(saved.mode)
   ctx.effect(() => startWorkspacePersistence({ groups, shell, storage }), 'acryl-workspace: save tabs and view')
+  const review = new ReviewStore(parseSavedThreads(storage?.getItem(REVIEW_STORAGE_KEY) ?? null))
+  ctx.effect(() => startReviewPersistence(review, storage), 'acryl-workspace: save review comments')
   const agent = createAgentBridge(() => ctx.get('sessions'))
   const rightPanel = {
     toggle(): void {
@@ -94,6 +98,7 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => startShellPolling(shell), 'acryl-workspace: git state polling')
   ctx.effect(() => installWorkspaceStyles(), 'acryl-workspace: styles')
   ctx.plugin(changesTabPlugin(shell))
+  ctx.plugin(reviewTabPlugin(shell, review))
 
   whenSlotDeclared(() => {
     ctx.slots.inject('desktop.main', () => {
@@ -103,7 +108,7 @@ export function apply(ctx: ClientContext): void {
         removeSlot = ctx.slots.register({
           name: 'desktop.main',
           priority: WORKSPACE_MAIN_PRIORITY,
-          inject: () => ({ ptyApi: ptyClient, shell, groups, gitApi, agent, rightPanel }),
+          inject: () => ({ ptyApi: ptyClient, shell, groups, gitApi, agent, review, rightPanel }),
         }, WorkspaceCanvas)
       } catch (cause) {
         // A registration conflict must not take the left pane and the Changes tab down with it.
