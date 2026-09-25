@@ -29,6 +29,11 @@ export interface WorkspaceTile {
   /** diff tile, git mode: the worktree and the file (relative to it) whose diff against HEAD is shown. */
   readonly diffWorktree?: string
   readonly diffFile?: string
+  /** file tile, editor mode: the worktree and the file (relative to it) being edited. `content` then holds an unsaved draft. */
+  readonly fileWorktree?: string
+  readonly fileRel?: string
+  /** editor tile: the disk modification time the `content` draft is based on. */
+  readonly fileMtimeMs?: number
   /** kanban tile: one local board per tile. */
   readonly board?: KanbanBoard
   /** doc tile: raw markdown-ish text, rendered with a minimal built-in formatter. */
@@ -50,6 +55,8 @@ export interface WorkspaceStateOptions {
 export interface AddTileOptions {
   readonly commandId?: WorkspacePtyCommandId
   readonly title?: string
+  readonly fileWorktree?: string
+  readonly fileRel?: string
   readonly diffWorktree?: string
   readonly diffFile?: string
 }
@@ -190,6 +197,32 @@ export class WorkspaceState {
    * @param worktree - absolute worktree path.
    * @param file - path relative to that worktree.
    */
+  /**
+   * Edit one file of a worktree: focus the tab already editing it, or open a new one.
+   * @param worktree - absolute worktree path.
+   * @param file - path relative to that worktree.
+   */
+  openFile(worktree: string, file: string, options: { readonly beside?: boolean } = {}): WorkspaceTile | undefined {
+    const previous = this.snapshot.activeId
+    const existing = this.snapshot.tiles.find(
+      tile => tile.kind === 'file' && tile.fileWorktree === worktree && tile.fileRel === file,
+    )
+    const beside = options.beside === true && previous !== undefined
+    if (existing !== undefined) {
+      if (beside && previous !== existing.id) {
+        this.replace({ ...this.snapshot, splitId: existing.id, activeId: previous, menuOpen: false })
+      } else {
+        this.selectTile(existing.id)
+      }
+      return existing
+    }
+    const tile = this.addTile('file', { title: basename(file), fileWorktree: worktree, fileRel: file })
+    if (tile !== undefined && beside) {
+      this.replace({ ...this.snapshot, splitId: tile.id, activeId: previous, menuOpen: false })
+    }
+    return tile
+  }
+
   openDiff(worktree: string, file: string, options: { readonly beside?: boolean } = {}): WorkspaceTile | undefined {
     const previous = this.snapshot.activeId
     const existing = this.snapshot.tiles.find(
@@ -244,6 +277,21 @@ export class WorkspaceState {
    * @param id - tile id.
    * @param patch - fields to replace.
    */
+  /** Remember an unsaved editor draft and the disk version it is based on, so it survives switching tabs. */
+  setFileDraft(id: string, content: string, mtimeMs: number): void {
+    this.updateTile(id, { content, fileMtimeMs: mtimeMs })
+  }
+
+  /** Forget an editor tab's draft (it was saved, discarded or matches the disk again). */
+  clearFileDraft(id: string): void {
+    const tiles = this.snapshot.tiles.map((tile) => {
+      if (tile.id !== id || (tile.content === undefined && tile.fileMtimeMs === undefined)) return tile
+      const { content: _content, fileMtimeMs: _mtime, ...rest } = tile
+      return Object.freeze(rest)
+    })
+    this.replace({ ...this.snapshot, tiles: Object.freeze(tiles) })
+  }
+
   updateTile(id: string, patch: Partial<Omit<WorkspaceTile, 'id' | 'kind'>>): void {
     const tiles = this.snapshot.tiles.map((tile) => {
       if (tile.id !== id) return tile
@@ -298,7 +346,10 @@ export class WorkspaceState {
       kind,
       title: options.title ?? TITLES[kind],
       ...(kind === 'pty' ? { commandId: options.commandId ?? 'shell' } : {}),
-      ...(kind === 'file' ? { path: '', content: '' } : {}),
+      ...(kind === 'file' && options.fileRel !== undefined && options.fileWorktree !== undefined
+        ? { fileWorktree: options.fileWorktree, fileRel: options.fileRel }
+        : {}),
+      ...(kind === 'file' && options.fileRel === undefined ? { path: '', content: '' } : {}),
       ...(kind === 'browser' ? { url: 'https://example.com' } : {}),
       ...(kind === 'diff' && options.diffFile !== undefined && options.diffWorktree !== undefined
         ? { diffWorktree: options.diffWorktree, diffFile: options.diffFile }

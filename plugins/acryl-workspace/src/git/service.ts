@@ -119,6 +119,24 @@ export class WorkspaceGit {
   }
 
   /**
+   * Confirm `path` is the root of a git worktree and return its real path. The file routes use this so
+   * they only ever touch a checkout, never an arbitrary directory.
+   * @throws WorkspaceGitError `invalid` when the path is not a worktree root.
+   */
+  async worktreeRoot(path: string): Promise<string> {
+    const dir = await this.resolveDirectory(path)
+    const top = (await this.run(['rev-parse', '--show-toplevel'], dir)).stdout.trim()
+    let real: string
+    try {
+      real = await realpath(top)
+    } catch {
+      throw new WorkspaceGitError('path is not a git worktree', 'invalid')
+    }
+    if (real !== dir) throw new WorkspaceGitError('path is not the root of a git worktree', 'invalid')
+    return dir
+  }
+
+  /**
    * The scripts a worktree can run as checks, and its package manager.
    * @param path - absolute worktree directory.
    */

@@ -73,19 +73,19 @@ const MAX_BODY_BYTES = 16 * 1024
 /** Thrown when a request body exceeds the cap. */
 export class BodyTooLargeError extends Error {}
 
-/** Read a small JSON body, or throw. */
-export async function readJson(req: IncomingMessage): Promise<unknown> {
+/** Read a JSON body of at most `maxBytes` (a small default), or throw. */
+export async function readJson(req: IncomingMessage, maxBytes: number = MAX_BODY_BYTES): Promise<unknown> {
   const declaredLength = req.headers['content-length']
   if (declaredLength !== undefined) {
     if (!/^\d+$/.test(declaredLength)) throw new SyntaxError('invalid content length')
-    if (Number(declaredLength) > MAX_BODY_BYTES) throw new BodyTooLargeError()
+    if (Number(declaredLength) > maxBytes) throw new BodyTooLargeError()
   }
   let size = 0
   const chunks: Buffer[] = []
   for await (const chunk of req) {
     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array)
     size += buffer.byteLength
-    if (size > MAX_BODY_BYTES) throw new BodyTooLargeError()
+    if (size > maxBytes) throw new BodyTooLargeError()
     chunks.push(buffer)
   }
   if (chunks.length === 0) return {}

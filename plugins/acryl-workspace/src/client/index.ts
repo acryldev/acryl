@@ -7,6 +7,8 @@ import '@deepseek-ai/dsh-client-ui-session/client'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type { ReactNode } from 'react'
 import { createAgentBridge } from './sessions/agent-bridge.ts'
+import { createWorkspaceFilesApi } from './files/files-api.ts'
+import { filesTabPlugin } from './files/files-tab.ts'
 import { changesTabPlugin } from './changes/changes-tab.ts'
 import { checksTabPlugin } from './checks/checks-tab.ts'
 import { parseSavedThreads, REVIEW_STORAGE_KEY, ReviewStore, startReviewPersistence } from './review/review-store.ts'
@@ -70,6 +72,7 @@ function whenSlotDeclared(contribute: () => void): void {
  */
 export function apply(ctx: ClientContext): void {
   const gitApi = createWorkspaceGitApi()
+  const filesApi = createWorkspaceFilesApi()
   const shell = new WorkspaceShellState(gitApi)
   // Restore what a previous run saved, then keep saving. Bad or missing data simply means a fresh start.
   const storage = browserStorage()
@@ -101,6 +104,7 @@ export function apply(ctx: ClientContext): void {
   ctx.plugin(changesTabPlugin(shell))
   ctx.plugin(reviewTabPlugin(shell, review))
   ctx.plugin(checksTabPlugin(shell, gitApi))
+  ctx.plugin(filesTabPlugin(shell, filesApi))
 
   whenSlotDeclared(() => {
     ctx.slots.inject('desktop.main', () => {
@@ -110,7 +114,7 @@ export function apply(ctx: ClientContext): void {
         removeSlot = ctx.slots.register({
           name: 'desktop.main',
           priority: WORKSPACE_MAIN_PRIORITY,
-          inject: () => ({ ptyApi: ptyClient, shell, groups, gitApi, agent, review, rightPanel }),
+          inject: () => ({ ptyApi: ptyClient, shell, groups, gitApi, filesApi, agent, review, rightPanel }),
         }, WorkspaceCanvas)
       } catch (cause) {
         // A registration conflict must not take the left pane and the Changes tab down with it.

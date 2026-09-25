@@ -46,6 +46,13 @@ export interface RunCheckRequest {
   readonly commandLine: string
 }
 
+/** A request to open one file of a worktree in an editor tab. */
+export interface OpenFileRequest {
+  readonly worktree: string
+  /** Path relative to the worktree. */
+  readonly file: string
+}
+
 export interface OpenDiffRequest {
   readonly worktree: string
   readonly file: string
@@ -76,6 +83,7 @@ export class WorkspaceShellState {
   private readonly listeners = new Set<() => void>()
   private readonly diffListeners = new Set<(request: OpenDiffRequest) => void>()
   private readonly runListeners = new Set<(request: RunCheckRequest) => void>()
+  private readonly fileListeners = new Set<(request: OpenFileRequest) => void>()
   private readonly probes = new Map<string, Promise<string | undefined>>()
   private readonly statusInflight = new Map<string, Promise<void>>()
   private pinned = false
@@ -214,6 +222,17 @@ export class WorkspaceShellState {
     return () => { this.diffListeners.delete(listener) }
   }
 
+  /** Ask the canvas to open (or focus) an editor tab for one file. */
+  openFile(request: OpenFileRequest): void {
+    for (const listener of this.fileListeners) listener(request)
+  }
+
+  /** @returns disposer. */
+  onOpenFile(listener: (request: OpenFileRequest) => void): () => void {
+    this.fileListeners.add(listener)
+    return () => { this.fileListeners.delete(listener) }
+  }
+
   /** Ask the canvas to run a check in a terminal tab of that worktree. */
   runCheck(request: RunCheckRequest): void {
     for (const listener of this.runListeners) listener(request)
@@ -230,6 +249,7 @@ export class WorkspaceShellState {
     this.listeners.clear()
     this.diffListeners.clear()
     this.runListeners.clear()
+    this.fileListeners.clear()
   }
 
   private selectInternal(path: string): void {

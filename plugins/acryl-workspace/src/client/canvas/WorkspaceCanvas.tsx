@@ -20,6 +20,8 @@ import { diffLines } from '../diff/line-diff.ts'
 import type { AgentBridge } from '../sessions/agent-bridge.ts'
 import { buildReviewComment } from '../diff/comment-message.ts'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
+import { FileEditorPane } from '../files/FileEditorPane.tsx'
+import type { WorkspaceFilesApi } from '../files/files-api.ts'
 import { GitDiffPane } from '../diff/GitDiffPane.tsx'
 import type { ReviewStore } from '../review/review-store.ts'
 import { SplitDivider } from './SplitDivider.tsx'
@@ -46,6 +48,8 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   /** One tab workspace per worktree. Owned by the plugin so it can be saved and restored. */
   readonly groups: WorkspaceGroups
   readonly gitApi: WorkspaceGitApi
+  /** Reads and saves real files for the editor tabs. */
+  readonly filesApi: WorkspaceFilesApi
   /** Delivers diff line comments to the open chat's agent. */
   readonly agent: AgentBridge
   /** Remembers each comment sent, for the Review tab. */
@@ -60,7 +64,7 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell, groups, gitApi, agent, review, rightPanel }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell, groups, gitApi, filesApi, agent, review, rightPanel }: WorkspaceCanvasProps) {
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
   // Subscribe to primitives, not the whole shell snapshot: git polling updates that snapshot often,
@@ -112,6 +116,14 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
     state.openDiff(request.worktree, request.file, { beside: fromChat })
   }), [shell, groups])
 
+  useEffect(() => shell.onOpenFile((request) => {
+    const state = groups.stateFor(request.worktree)
+    const current = state.getSnapshot()
+    // From the chat, open the file beside it so the conversation stays visible.
+    const fromChat = current.tiles.find(tile => tile.id === current.activeId)?.kind === 'chat'
+    state.openFile(request.worktree, request.file, { beside: fromChat })
+  }), [shell, groups])
+
   // A check run from the Checks tab: a terminal tab in that worktree that types the command for you.
   useEffect(() => shell.onRunCheck((request) => {
     const state = groups.stateFor(request.worktree)
@@ -132,6 +144,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
   const renderTile = (tile: WorkspaceTile): ReactNode => {
     if (tile.kind === 'chat') return <div className="dshWorkspaceChat">{renderConversation()}</div>
     if (tile.kind === 'pty') return <PtyPane tile={tile} api={api} />
+    if (tile.kind === 'file' && tile.fileRel !== undefined) return <FileEditorPane tile={tile} workspace={workspace} filesApi={filesApi} />
     if (tile.kind === 'file') return <FilePane tile={tile} workspace={workspace} />
     if (tile.kind === 'browser') return <BrowserPane tile={tile} workspace={workspace} />
     if (tile.kind === 'kanban') return <KanbanPane tile={tile} workspace={workspace} />
@@ -214,7 +227,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
                   onClick={() => { workspace.selectTile(tile.id) }}
                 >
                   <span className="dshWorkspaceTabGlyph" aria-hidden="true">{glyph(tile.kind)}</span>
-                  <span className="dshWorkspaceTabLabel">{tile.title}</span>
+                  <span className="dshWorkspaceTabLabel">{tile.title}{tile.fileRel !== undefined && tile.content !== undefined ? ' \u25CF' : ''}</span>
                 </button>
                 {snapshot.tiles.length > 1 && !selected && (
                   <button

@@ -209,3 +209,21 @@ describe('run-check channel', () => {
     expect(seen).toHaveLength(1)
   })
 })
+
+describe('open-file channel', () => {
+  it('delivers an open request to listeners until they unsubscribe or the shell is disposed', () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    const seen: unknown[] = []
+    const off = shell.onOpenFile(request => { seen.push(request) })
+    shell.openFile({ worktree: '/p/proj', file: 'src/a.ts' })
+    expect(seen).toEqual([{ worktree: '/p/proj', file: 'src/a.ts' }])
+    off()
+    shell.openFile({ worktree: '/p/proj', file: 'b.ts' })
+    expect(seen).toHaveLength(1)
+    shell.onOpenFile(r => { seen.push(r) })
+    shell.dispose()
+    shell.openFile({ worktree: '/p/proj', file: 'c.ts' })
+    expect(seen).toHaveLength(1)
+  })
+})
+

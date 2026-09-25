@@ -31,6 +31,8 @@ export interface SavedTile {
   readonly diffAfter?: string
   readonly diffWorktree?: string
   readonly diffFile?: string
+  readonly fileWorktree?: string
+  readonly fileRel?: string
   readonly board?: KanbanBoard
   readonly docText?: string
 }
@@ -97,7 +99,7 @@ function parseTile(value: unknown): SavedTile | undefined {
   const title = text(value.title)
   if (kind === undefined || title === undefined) return undefined
   const tile: { -readonly [K in keyof SavedTile]: SavedTile[K] } = { kind, title }
-  for (const key of ['path', 'content', 'url', 'diffBefore', 'diffAfter', 'diffWorktree', 'diffFile', 'docText'] as const) {
+  for (const key of ['path', 'content', 'url', 'diffBefore', 'diffAfter', 'diffWorktree', 'diffFile', 'fileWorktree', 'fileRel', 'docText'] as const) {
     const field = text(value[key])
     if (field !== undefined) tile[key] = field
   }
@@ -108,6 +110,7 @@ function parseTile(value: unknown): SavedTile | undefined {
   }
   // A git diff tile with only half of its identity cannot be shown; drop it rather than guess.
   if (kind === 'diff' && (tile.diffFile === undefined) !== (tile.diffWorktree === undefined)) return undefined
+  if (kind === 'file' && (tile.fileRel === undefined) !== (tile.fileWorktree === undefined)) return undefined
   return tile
 }
 
@@ -156,12 +159,15 @@ export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups): st
       if (kind === undefined) continue
       const entry: { -readonly [K in keyof SavedTile]: SavedTile[K] } = { kind, title: tile.title }
       if (tile.path !== undefined) entry.path = tile.path
-      if (tile.content !== undefined) entry.content = tile.content
+      // An editor tab remembers which file it shows; an unsaved draft is never written to storage.
+      if (tile.content !== undefined && tile.fileRel === undefined) entry.content = tile.content
       if (tile.url !== undefined) entry.url = tile.url
       if (tile.diffBefore !== undefined) entry.diffBefore = tile.diffBefore
       if (tile.diffAfter !== undefined) entry.diffAfter = tile.diffAfter
       if (tile.diffWorktree !== undefined) entry.diffWorktree = tile.diffWorktree
       if (tile.diffFile !== undefined) entry.diffFile = tile.diffFile
+      if (tile.fileWorktree !== undefined) entry.fileWorktree = tile.fileWorktree
+      if (tile.fileRel !== undefined) entry.fileRel = tile.fileRel
       if (tile.board !== undefined) entry.board = tile.board
       if (tile.docText !== undefined) entry.docText = tile.docText
       if (tile.id === snapshot.activeId) active = tiles.length

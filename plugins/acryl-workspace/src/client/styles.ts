@@ -164,6 +164,28 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceCheckCommand { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dsw-alias-fg-l2); font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dshWorkspaceCheckRun { appearance: none; flex: none; padding: 3px 12px; border: 1px solid color-mix(in srgb, var(--dsw-alias-fg) 30%, transparent); border-radius: 999px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: 600 11px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceCheckRun:hover { border-color: #4d6bfe; color: #4d6bfe; }
+.dshWorkspaceFilesFilter { margin: 4px 8px 6px; padding: 5px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceFilesFilter:focus { outline: 2px solid #4d6bfe; outline-offset: -1px; }
+.dshWorkspaceFileTree { list-style: none; margin: 0; padding: 0 0 12px; }
+.dshWorkspaceFileRow { appearance: none; display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px 8px; border: 0; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; text-align: left; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dshWorkspaceFileRow:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
+.dshWorkspaceFileGlyph { width: 10px; flex: none; color: var(--dsw-alias-fg-l2); }
+.dshWorkspaceFileName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshWorkspaceFileHint { color: var(--dsw-alias-fg-l2); font-size: 10.5px; }
+.dshWorkspaceFileHint[data-error] { color: #f87171; }
+.dshWorkspaceEditor { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
+.dshWorkspaceEditorBar { display: flex; align-items: center; gap: 10px; min-height: 34px; padding: 0 10px; border-bottom: 1px solid var(--dsw-alias-border-l1); font: 12px/1.3 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg); }
+.dshWorkspaceEditorPath { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dshWorkspaceEditorStatus { color: var(--dsw-alias-fg-l2); }
+.dshWorkspaceEditorStatus[data-kind="error"], .dshWorkspaceEditorStatus[data-kind="conflict"] { color: #f87171; }
+.dshWorkspaceEditorStatus[data-kind="saved"] { color: #4ade80; }
+.dshWorkspaceEditorButton { appearance: none; padding: 3px 14px; border: 1px solid color-mix(in srgb, var(--dsw-alias-fg) 30%, transparent); border-radius: 999px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: 600 11px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceEditorButton:hover:not(:disabled) { border-color: #4d6bfe; color: #4d6bfe; }
+.dshWorkspaceEditorButton:disabled { opacity: .5; cursor: default; }
+.dshWorkspaceEditorBanner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 10px; background: color-mix(in srgb, #f5b942 16%, transparent); border-bottom: 1px solid var(--dsw-alias-border-l1); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg); }
+.dshWorkspaceEditorBanner button { appearance: none; padding: 2px 10px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: 11px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceCodeEditor { flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
+.dshWorkspaceCodeEditor .cm-editor { height: 100%; }
 .dshWorkspaceChangesMeta { color: var(--dsw-alias-fg-l2); font-size: 11px; }
 .dshWorkspaceChangesRefresh { appearance: none; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 14px; }
 .dshWorkspaceChangesRefresh:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg); }

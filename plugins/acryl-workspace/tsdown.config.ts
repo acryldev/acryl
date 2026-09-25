@@ -36,6 +36,9 @@ export default defineConfig([
     ],
     noExternal: (id: string) => id.startsWith('@deepseek-ai/') ? undefined : true,
     outputOptions: {
+      // The Module Loader evaluates this one file, so the editor's on-demand language packs must be
+      // inlined into it rather than emitted as separate chunk files that nothing would load.
+      inlineDynamicImports: true,
       entryFileNames: 'client.js',
       banner: `window.__ModuleLoader__.load({ id: ${JSON.stringify(PACKAGE_NAME)}, factory: (require) => {`,
       footer: 'return module.exports; } });',

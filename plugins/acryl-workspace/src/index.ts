@@ -2,7 +2,18 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-host-webserver'
-import { WorkspaceGit } from './git/service.ts'
+import {
+  WORKSPACE_FILES_READ_PATH,
+  WORKSPACE_FILES_TREE_PATH,
+  WORKSPACE_FILES_WRITE_PATH,
+} from './files/contract.ts'
+import {
+  handleWorkspaceFilesReadRequest,
+  handleWorkspaceFilesTreeRequest,
+  handleWorkspaceFilesWriteRequest,
+} from './files/route.ts'
+import { WorkspaceFiles, WorkspaceFilesError } from './files/service.ts'
+import { WorkspaceGit, WorkspaceGitError } from './git/service.ts'
 import {
   WORKSPACE_GIT_CHECKS_PATH,
   WORKSPACE_GIT_DIFF_PATH,
@@ -55,6 +66,17 @@ export function apply(ctx: Context): void {
   ctx.effect(() => {
     const workspacePty = new WorkspacePtyRegistry()
     const workspaceGit = new WorkspaceGit()
+    const workspaceFiles = new WorkspaceFiles({
+      // Only a git worktree root is a place the editor may touch; a failed check surfaces as a bad path.
+      resolveWorktree: async (path) => {
+        try {
+          return await workspaceGit.worktreeRoot(path)
+        } catch (cause) {
+          if (cause instanceof WorkspaceGitError && cause.kind === 'invalid') throw new WorkspaceFilesError(cause.message, 'invalid')
+          throw cause
+        }
+      },
+    })
     const releases: Array<() => void> = []
     try {
       const ptyRoutes = [
@@ -77,6 +99,18 @@ export function apply(ctx: Context): void {
         [WORKSPACE_GIT_CHECKS_PATH, handleWorkspaceGitChecksRequest],
         [WORKSPACE_GIT_WORKTREE_PATH, handleWorkspaceGitWorktreeRequest],
       ] as const
+      const filesRoutes = [
+        [WORKSPACE_FILES_TREE_PATH, handleWorkspaceFilesTreeRequest],
+        [WORKSPACE_FILES_READ_PATH, handleWorkspaceFilesReadRequest],
+        [WORKSPACE_FILES_WRITE_PATH, handleWorkspaceFilesWriteRequest],
+      ] as const
+      for (const [path, handler] of filesRoutes) {
+        releases.push(ctx.webServer.register({
+          kind: 'exact',
+          path,
+          handler: (req, res) => handler(req, res, rendererOrigin, workspaceFiles, reportHostError),
+        }))
+      }
       for (const [path, handler] of gitRoutes) {
         releases.push(ctx.webServer.register({
           kind: 'exact',
