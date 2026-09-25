@@ -21,6 +21,8 @@ import type { AgentBridge } from './agent-bridge.ts'
 import { buildReviewComment } from './comment-message.ts'
 import type { WorkspaceGitApi } from './git-api.ts'
 import { GitDiffPane } from './GitDiffPane.tsx'
+import { SplitDivider } from './SplitDivider.tsx'
+import { clampSplit, readSplitRatio, writeSplitRatio } from './split-ratio.ts'
 import { GLOBAL_GROUP, type WorkspaceGroups } from './groups.ts'
 import type { WorkspaceShellState } from './shell-state.ts'
 import { parseDoc, parseInline } from './doc-format.ts'
@@ -70,6 +72,13 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
   const sessions = useSessions(state => state)
   const previousCurrent = useRef<string | undefined>(sessions.current)
   const menuRef = useRef<HTMLDivElement>(null)
+  const stageRef = useRef<HTMLDivElement>(null)
+  const [splitRatio, setSplitRatio] = useState(() => readSplitRatio(safeStorage()))
+  const changeSplitRatio = useCallback((ratio: number): void => {
+    const next = clampSplit(ratio)
+    setSplitRatio(next)
+    writeSplitRatio(safeStorage(), next)
+  }, [])
   const active = snapshot.tiles.find(tile => tile.id === snapshot.activeId)
   const splitTile = snapshot.tiles.find(tile => tile.id === snapshot.splitId)
 
@@ -265,8 +274,8 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
           </button>
         )}
       </div>
-      <div className="dshWorkspaceStage" role="tabpanel" data-split={splitTile !== undefined || undefined}>
-        <div className="dshWorkspacePane" data-pane="primary">
+      <div ref={stageRef} className="dshWorkspaceStage" role="tabpanel" data-split={splitTile !== undefined || undefined}>
+        <div className="dshWorkspacePane" data-pane="primary" style={splitTile === undefined ? undefined : { flexBasis: `${splitRatio * 100}%`, flexGrow: 0 }}>
           {active === undefined
             ? (
                 <div className="dshWorkspaceEmpty">
@@ -275,6 +284,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
               )
             : renderTile(active)}
         </div>
+        {splitTile !== undefined && <SplitDivider stage={stageRef} ratio={splitRatio} onRatio={changeSplitRatio} />}
         {splitTile !== undefined && (
           <div className="dshWorkspacePane" data-pane="split">
             <div className="dshWorkspaceSplitHead">
@@ -633,4 +643,12 @@ function inlineNode(segment: { text: string, bold: boolean, italic: boolean }, i
   if (segment.italic) node = <em>{node}</em>
   // eslint-disable-next-line react/no-array-index-key -- inline segments have no stable identity
   return <span key={index}>{node}</span>
+}
+
+function safeStorage(): Storage | undefined {
+  try {
+    return window.localStorage
+  } catch {
+    return undefined
+  }
 }

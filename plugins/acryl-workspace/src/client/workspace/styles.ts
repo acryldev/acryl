@@ -21,7 +21,11 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceMenuRule { height: 1px; margin: 6px 4px; background: var(--dsw-alias-border-l2); }
 .dshWorkspaceStage { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: row; background: var(--dsw-alias-bg-base); }
 .dshWorkspacePane { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
-.dshWorkspaceStage[data-split] > .dshWorkspacePane + .dshWorkspacePane { border-left: 1px solid var(--dsw-alias-border-l1); }
+.dshWorkspaceStage[data-split] > .dshWorkspacePane[data-pane="split"] { flex: 1 1 0; }
+.dshWorkspaceDivider { flex: none; position: relative; width: 1px; background: var(--dsw-alias-border-l1); cursor: col-resize; touch-action: none; }
+.dshWorkspaceDivider::before { content: ''; position: absolute; inset: 0 -4px; }
+.dshWorkspaceDivider:hover, .dshWorkspaceDivider:focus-visible { background: #4d6bfe; outline: none; }
+.dshWorkspaceDivider:hover::after, .dshWorkspaceDivider:focus-visible::after { content: ''; position: absolute; inset: 0 -1px; background: #4d6bfe; }
 .dshWorkspaceSplitHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; padding: 0 8px 0 12px; border-bottom: 1px solid var(--dsw-alias-border-l1); background: color-mix(in srgb, var(--dsw-alias-bg-base) 92%, black); font: 12px/1 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg); }
 .dshWorkspaceSplitTitle { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshWorkspaceSplitClose { appearance: none; width: 22px; height: 22px; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 14px; }
