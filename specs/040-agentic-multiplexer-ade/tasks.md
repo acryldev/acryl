@@ -25,6 +25,8 @@ same package, no separate `acryl-git`). Status against the tasks below:
 Also built and not in the original list: creating a branch and worktree from the Projects tab, an extra chat per branch, adding git projects, restart persistence of tabs and the split, hosting the right panel in the frame (a gap found in testing), and the `desktop.sidebar` slot and Chats | Projects left pane, per-worktree tab
 groups in the canvas, and worktree-scoped PTY start (`cwd`).
 
+Related milestone: [041 Agent UI Control](../041-agent-ui-control/spec.md) lets agents operate this ADE (and the rest of ACRYL) through governed tools; it is separate so 040 stays scoped.
+
 ## Phase 0: spikes (answer the unknowns before designing further)
 
 - [x] **T001** Spike: prove a Client plugin can provide a service via `ctx.provide` that a second Client plugin injects, that the consumer goes PENDING when the provider is absent, and reactivates when it appears. Model on `plugins/acryl-shortcuts`. Output: see [research.md](./research.md). Done 2026-09-24: PENDING, reactivation and disposal proven on real Cordis 4.0.2. T032 still asserts it through the real Loader.
