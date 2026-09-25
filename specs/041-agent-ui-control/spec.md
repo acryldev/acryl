@@ -120,14 +120,15 @@ The agent (or CI) runs scripted end-to-end scenarios against a real window using
 
 Controlling other applications or the OS (that is Anthropic computer use), recording user macros, autonomous background operation without a visible indicator, and a public marketplace API for third-party UI drivers.
 
-## Open questions (continued for Scope B below)
-
 ## Open questions
 
 1. **Host to Client transport.** The Connection RPC is unary Client to Host. A Host-side agent tool must reach the page. Options: a Client-initiated long-poll or stream the page holds open, or a Client-side Harness tool executor if one exists. Spike T001 decides.
 2. **Where the tools execute.** Tools run in the Host, the DOM lives in the Client. Confirm whether the Harness supports a tool whose `execute` is delegated to the connected Client and how it behaves with several windows.
 3. **Accessibility quality.** How many of our controls have real roles and names? Poor names make refs useless, so the milestone may need an `aria-label` pass, tracked as a task, not hidden.
 4. **Approval granularity** for UI clicks: per action, per task, or per surface region.
+
+Scope B questions (5 to 8):
+
 5. **Offline vs online arbitration.** If the app is running, does an offline edit fight it? Proposal: detect a live instance (lock or socket) and refuse offline writes to state the app owns, routing through the online channel instead.
 6. **Trust of the CLI agent.** The CLI agent has a model behind it too. Should destructive repair always require a human, or may a pre-approved repair recipe run unattended (for example in CI)?
 7. **Channel discovery.** How the CLI finds the running instance and its secret: a well-known file in the profile home with restrictive permissions is the leading option.
