@@ -1324,6 +1324,9 @@ importers:
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
+      acryl-ui-control:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-ui-control
       acryl-workspace:
         specifier: workspace:*
         version: link:../../plugins/acryl-workspace

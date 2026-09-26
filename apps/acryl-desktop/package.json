@@ -391,6 +391,7 @@
     "acryl-mount-anchors": "workspace:*",
     "acryl-plugin-admin": "workspace:*",
     "acryl-shortcuts": "workspace:*",
+    "acryl-ui-control": "workspace:*",
     "acryl-workspace": "workspace:*",
     "@acryl/ui": "workspace:*",
     "dsh-client-ui-brand-acryl": "workspace:*",
