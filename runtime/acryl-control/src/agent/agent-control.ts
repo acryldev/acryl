@@ -103,6 +103,7 @@ export type AcrAgentControlErrorCode =
   | 'session-collision'
   | 'cancelled'
   | 'transport-unavailable'
+  | 'invalid-result'
 
 export class AcrAgentControlError extends Error {
   constructor(readonly code: AcrAgentControlErrorCode, message: string) {
@@ -142,24 +143,60 @@ function resultRecord(result: unknown): Record<string, unknown> {
   return result !== null && typeof result === 'object' ? result as Record<string, unknown> : {}
 }
 
+/** Statuses that imply a live runtime; a merge may not produce them while
+ * clearing `runtimeId`. */
+const LIVE_STATUSES: readonly AgentStatus[] = ['idle', 'running', 'waiting']
+
 /**
  * Fold a provider command result into the stored immutable binding. `start`
  * and `resume` adopt the runtime/session identities the lazily-spawned
  * transport reports; `stop` releases them. Other kinds leave the binding
  * untouched.
+ *
+ * Merge-time invariants keep `inspect()` truthful: a runtime id the result
+ * claims must not already belong to another worker, and internally
+ * contradictory results (a `stop` that reports a live status, a `start`
+ * that clears the runtime) are rejected rather than stored.
  */
 function mergeCommandResult(
   binding: AgentSnapshot,
   kind: AgentCommandKind,
   result: unknown,
+  bindings: ReadonlyMap<AcrWorkerId, AgentSnapshot>,
 ): AgentSnapshot {
   const record = resultRecord(result)
   if (kind === 'start' || kind === 'resume') {
+    if (record.runtimeId === null) {
+      throw new AcrAgentControlError(
+        'invalid-result',
+        `Provider ${binding.providerId} cleared the runtime id on ${kind}.`,
+      )
+    }
     const runtimeId = typeof record.runtimeId === 'string' ? record.runtimeId : binding.runtimeId
     const providerSessionRef = typeof record.sessionId === 'string'
       ? record.sessionId
       : binding.providerSessionRef
-    const status = isAgentStatus(record.status) ? record.status : binding.status
+    // A start/resume that reports no status produced a live runtime, so the
+    // honest default is 'idle' — not a stale terminal status like 'stopped'.
+    const status = isAgentStatus(record.status)
+      ? record.status
+      : LIVE_STATUSES.includes(binding.status) ? binding.status : 'idle'
+    if (!LIVE_STATUSES.includes(status)) {
+      throw new AcrAgentControlError(
+        'invalid-result',
+        `Provider ${binding.providerId} reported status "${status}" for ${kind}.`,
+      )
+    }
+    if (runtimeId !== null) {
+      for (const [otherWorkerId, other] of bindings) {
+        if (otherWorkerId !== binding.workerId && other.runtimeId === runtimeId) {
+          throw new AcrAgentControlError(
+            'runtime-collision',
+            `Runtime ${runtimeId} is already bound to worker ${otherWorkerId}.`,
+          )
+        }
+      }
+    }
     if (
       runtimeId === binding.runtimeId
       && providerSessionRef === binding.providerSessionRef
@@ -170,7 +207,19 @@ function mergeCommandResult(
     return Object.freeze({ ...binding, runtimeId, providerSessionRef, status })
   }
   if (kind === 'stop') {
+    if (record.runtimeId !== undefined && record.runtimeId !== null) {
+      throw new AcrAgentControlError(
+        'invalid-result',
+        `Provider ${binding.providerId} returned a runtime id for stop.`,
+      )
+    }
     const status = isAgentStatus(record.status) ? record.status : 'stopped'
+    if (LIVE_STATUSES.includes(status)) {
+      throw new AcrAgentControlError(
+        'invalid-result',
+        `Provider ${binding.providerId} reported live status "${status}" for stop.`,
+      )
+    }
     if (binding.runtimeId === null && status === binding.status) return binding
     return Object.freeze({ ...binding, runtimeId: null, status })
   }
@@ -194,6 +243,20 @@ export class AcrAgentControlService extends Service implements AcrAgentControl {
       this.providers.set(provider.id, provider)
       return () => {
         if (this.providers.get(provider.id) === provider) this.providers.delete(provider.id)
+        // Bindings outlive their provider in the map; an unmounted provider
+        // can never be dispatched again, so its workers must not keep
+        // reporting a live runtime.
+        for (const [workerId, binding] of this.bindings) {
+          if (binding.providerId !== provider.id) continue
+          if (
+            binding.runtimeId === null
+            && (binding.status === 'stopped' || binding.status === 'failed')
+          ) {
+            continue
+          }
+          const status: AgentStatus = binding.status === 'failed' ? 'failed' : 'stopped'
+          this.bindings.set(workerId, Object.freeze({ ...binding, runtimeId: null, status }))
+        }
       }
     }, `acryl-control: agent provider ${provider.id}`)
   }
@@ -211,6 +274,16 @@ export class AcrAgentControlService extends Service implements AcrAgentControl {
           `Provider ${request.providerId} does not declare capability ${capability}.`,
         )
       }
+    }
+    // Attaching over a live binding would orphan its runtime: the old
+    // runtime keeps running but becomes unaddressable. Require stop/detach
+    // first; re-attaching over a stopped or unbound binding is allowed.
+    const existing = this.bindings.get(request.workerId)
+    if (existing !== undefined && existing.runtimeId !== null) {
+      throw new AcrAgentControlError(
+        'runtime-collision',
+        `Worker ${request.workerId} already has a live runtime ${existing.runtimeId}. Stop it before attaching again.`,
+      )
     }
     const binding = await provider.attach(request)
     for (const existing of this.bindings.values()) {
@@ -259,7 +332,7 @@ export class AcrAgentControlService extends Service implements AcrAgentControl {
       throw new AcrAgentControlError('unknown-worker', `Worker ${workerId} has no live runtime.`)
     }
     const result = await provider.execute(binding, command, signal)
-    const stored = mergeCommandResult(binding, command.kind, result)
+    const stored = mergeCommandResult(binding, command.kind, result, this.bindings)
     if (stored !== binding) this.bindings.set(workerId, stored)
     const runtimeId = stored.runtimeId ?? binding.runtimeId
     if (runtimeId === null) {
