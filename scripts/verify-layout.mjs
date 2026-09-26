@@ -60,6 +60,7 @@ packages:
   - plugins/acryl-workspace
   - plugins/acryl-plugin-admin
   - plugins/acryl-support
+  - plugins/acryl-ui-control
   - '!deepseek-harness/**'
 
 allowBuilds:

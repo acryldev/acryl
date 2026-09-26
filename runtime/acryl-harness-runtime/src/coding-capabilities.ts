@@ -31,6 +31,7 @@ export type AcrylCodingCapabilityId =
   | 'workspace'
   | 'plugin-admin'
   | 'support'
+  | 'agent-control-ui'
   | 'advanced-shell'
 
 /**
@@ -180,6 +181,17 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     requiresPackages: ['acryl-support'],
     loaderPatches: [
       { insert: [{ id: 'acryl-support', name: 'acryl-support' }] },
+    ],
+  },
+  {
+    // Agent Control (spec 041): the agent can look at and operate the ACRYL window, on the same terms on both
+    // surfaces. One package (Host tools plus the in-page driver), joined by a same-origin WebSocket; every
+    // click, type, select and key press is approved per call. A TUI has no page, so it is not declared here.
+    id: 'agent-control-ui',
+    surfaces: ['desktop', 'web'],
+    requiresPackages: ['acryl-ui-control'],
+    loaderPatches: [
+      { insert: [{ id: 'acryl-ui-control', name: 'acryl-ui-control' }] },
     ],
   },
   {

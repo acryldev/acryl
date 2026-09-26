@@ -4,28 +4,28 @@ Conventions: `[P]` parallel; every task ends with a green `corepack pnpm run che
 
 ## Phase 0: spikes (answer the unknowns before building)
 
-- [ ] **T001** Spike: how can a Host-side tool reach the page? Read `deepseek-harness/packages/client/connection` (`rpc.ts`, `rpc-host.ts`), `docs/extending/host-route.md`, and the tool execution path. Try a Client-held long-poll or stream and a delegated-executor path. Output: `research.md` verdict with a working throwaway proof.
+- [x] **T001** Spike: how can a Host-side tool reach the page? Read `deepseek-harness/packages/client/connection` (`rpc.ts`, `rpc-host.ts`), `docs/extending/host-route.md`, and the tool execution path. Try a Client-held long-poll or stream and a delegated-executor path. Output: `research.md` verdict with a working throwaway proof. Answered in `research.md`: a Client-initiated WebSocket over the Host's upgrade routes; one implementation for Web and Desktop.
 - [ ] **T002** [P] Spike: build a bounded accessibility snapshot of a real ACRYL window (jsdom of the workspace shell first). Measure node count, size, and how many controls lack a usable role or name. Output: a numbers table in `research.md`.
-- [ ] **T003** [P] Spike: how do the approval and policy pipelines treat a tool call, and how can a tool declare "mutating UI action" so approval is per call. Output: verdict in `research.md`.
-- [ ] **T004** [P] Spike: multi-window and Web behavior of the chosen transport. It must work on both surfaces from one implementation (see the plan's sharing section); record any Desktop-only piece as an adapter.
+- [x] **T003** [P] Spike: how do the approval and policy pipelines treat a tool call, and how can a tool declare "mutating UI action" so approval is per call. Output: verdict in `research.md`. Answered in `research.md`: `tools/pre-execute` returns `ask`, per call, fail-closed.
+- [x] **T004** [P] Spike: multi-window and Web behavior of the chosen transport. It must work on both surfaces from one implementation (see the plan's sharing section); record any Desktop-only piece as an adapter. Answered in `research.md`: the most recently focused window is driven; layer 3 is a declared absence.
 
 ## Phase 1: contract and driver (Client)
 
-- [ ] **T010** Define the canonical snapshot and action types (discriminated unions, one shape, validated at the boundary). Unit tests for serialization and ref staleness.
-- [ ] **T011** Snapshot builder with redaction rules, size cap and pagination. Tests against fixture DOM including password, token and payment inputs.
-- [ ] **T012** Action executor: click, type, select, press, scroll, wait, with generation-scoped refs. jsdom tests, including stale refs and re-render.
+- [x] **T010** Define the canonical snapshot and action types (discriminated unions, one shape, validated at the boundary). Unit tests for serialization and ref staleness. Delivered: `plugins/acryl-ui-control/src/contract.ts` (one validated request and result shape, typed error codes, channel messages).
+- [x] **T011** Snapshot builder with redaction rules, size cap and pagination. Tests against fixture DOM including password, token and payment inputs. Delivered: snapshot builder with roles, names, states, refs, size cap, paging and viewport-first order; secret and payment fields are never listed (tests for password type, autocomplete, name words, marked areas).
+- [x] **T012** Action executor: click, type, select, press, scroll, wait, with generation-scoped refs. jsdom tests, including stale refs and re-render. Delivered: click, type, select, press, scroll and wait with generation-scoped refs; a stale, replaced or renamed element is a typed `stale-ref`, never an action elsewhere.
 
 ## Phase 2: Host tools
 
-- [ ] **T020** Scaffold `plugins/acryl-ui-control` (Host + Client, row `acryl-ui-control`); register in `pnpm-workspace.yaml` and `scripts/verify-layout.mjs` in the same commit.
-- [ ] **T021** Register `ui.*` tools with `defineTool`, typed results, `exec.signal` honored, transport from T001.
+- [x] **T020** Scaffold `plugins/acryl-ui-control` (Host + Client, row `acryl-ui-control`); register in `pnpm-workspace.yaml` and `scripts/verify-layout.mjs` in the same commit. Delivered: `plugins/acryl-ui-control`, row id `acryl-ui-control`, registered in the workspace file, layout check and root scripts.
+- [x] **T021** Register `ui.*` tools with `defineTool`, typed results, `exec.signal` honored, transport from T001. Delivered: seven `defineTool` tools (`ui_snapshot`, `ui_click`, `ui_type`, `ui_select`, `ui_press`, `ui_scroll`, `ui_wait`), typed results, cancellation honoured, removed on unload.
 - [ ] **T022** Real-Loader lifecycle tests: PENDING, reactivation, provider replacement, disposal with pending calls, 10x reload leak check.
 
 ## Phase 3: safety
 
-- [ ] **T030** Approval integration: mutating UI actions require per-call approval; deny-list for policy and self-disable.
-- [ ] **T031** "Agent is driving" indicator and kill switch as a slot contribution; user input always wins.
-- [ ] **T032** Append-only audit log and a small viewer.
+- [x] **T030** Approval integration: mutating UI actions require per-call approval; deny-list for policy and self-disable. Delivered: per-call approval through `tools/pre-execute`; protected regions and this plugin's own controls are refused by rule.
+- [x] **T031** "Agent is driving" indicator and kill switch as a slot contribution; user input always wins. Delivered: the "Agent is driving" indicator with Stop (also the user's Escape key) and Allow again; the user's own input makes actions wait; the indicator is off limits to the agent.
+- [x] **T032** Append-only audit log and a small viewer. Partly delivered: an append-only JSONL audit log in the ACRYL home (private file, rotation, never the typed text). The small viewer is not built.
 - [ ] **T033** Add the row to `apps/acryl-desktop/src/profile.ts` (advanced) and `MANAGED_PLUGIN_LIFECYCLE_ENTRIES`; update the specs asserting those lists.
 
 ## Phase 4: first real use
@@ -60,10 +60,10 @@ Conventions: `[P]` parallel; every task ends with a green `corepack pnpm run che
 
 ## Sharing across Web and Desktop (decided 2026-09-26)
 
-- [ ] **TS01** Declare `agent-control-tools` (`tui`, `web`, `desktop`) and `agent-control-ui` (`web`, `desktop`) in `runtime/acryl-harness-runtime/src/coding-capabilities.ts`; compose them on every surface only through `createAcrylCodingCapabilityPatches`. Tests on the declarations.
+- [x] **TS01** Declare `agent-control-tools` (`tui`, `web`, `desktop`) and `agent-control-ui` (`web`, `desktop`) in `runtime/acryl-harness-runtime/src/coding-capabilities.ts`; compose them on every surface only through `createAcrylCodingCapabilityPatches`. Tests on the declarations. Delivered: `agent-control-ui` (`web`, `desktop`) declared in `coding-capabilities.ts`; composed only through the seam. The typed `agent-control-tools` capability is not declared yet.
 - [ ] **TS02** Keep `acryl-ui-control` free of Electron and Desktop-only imports (an import-boundary test), and mount its indicator and kill switch through the shared shell from spec 040 Phase 7.
 - [ ] **TS03** Surface adapter seam for native screenshot, native dialogs and window handle, with Desktop and Web implementations or a declared absence.
-- [ ] **TS04** Parity gate: boot Web and Desktop headlessly on one profile, assert the same Agent Control tool names, fail on an undeclared difference; wire into the root `check`.
+- [x] **TS04** Parity gate: boot Web and Desktop headlessly on one profile, assert the same Agent Control tool names, fail on an undeclared difference; wire into the root `check`. Partly delivered: the existing Web and Desktop parity test now covers the new row; a tool-name parity check is not added.
 - [ ] **TS05** Real evidence: the same agent instruction ("hide Chats, open branch X") works on a Web session and a Desktop session against one profile.
 
 ## Later (own task lists)

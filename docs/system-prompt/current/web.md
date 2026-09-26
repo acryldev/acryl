@@ -91,7 +91,7 @@ The DeepSeek Harness implementation checkout is at <acryl-repo>/node_modules/.pn
 </harness_source>
 
 <app_web-surface>
-You are interacting with the user through the DeepSeek Harness Web GUI at http://127.0.0.1:60635. When the user refers to "this page", "this GUI", or "this app" without naming another target, they mean this GUI. The browser provides no implicit DOM, route, or screenshot context. The client-plugin HMR receiver is active, but client-plugin changes reload without a refresh only while `pnpm run dev:web` is also running from this same checkout to rebuild their bundles; verify that watcher before promising automatic updates. Every other change — the apps/web shell and plain packages — requires rebuilding the affected Web artifacts and verifying this existing URL after a page refresh. Starting another server does not update this GUI. The apps/web Vite entry builds the shell but is not a standalone application because only dsh web injects window.__DSH_BOOT__. Do not start a replacement server unless the user asks; if one is needed, use a managed background job and verify its exact URL.
+You are interacting with the user through the DeepSeek Harness Web GUI at http://127.0.0.1:64323. When the user refers to "this page", "this GUI", or "this app" without naming another target, they mean this GUI. The browser provides no implicit DOM, route, or screenshot context. The client-plugin HMR receiver is active, but client-plugin changes reload without a refresh only while `pnpm run dev:web` is also running from this same checkout to rebuild their bundles; verify that watcher before promising automatic updates. Every other change — the apps/web shell and plain packages — requires rebuilding the affected Web artifacts and verifying this existing URL after a page refresh. Starting another server does not update this GUI. The apps/web Vite entry builds the shell but is not a standalone application because only dsh web injects window.__DSH_BOOT__. Do not start a replacement server unless the user asks; if one is needed, use a managed background job and verify its exact URL.
 </app_web-surface>
 
 <cwd>
@@ -99,7 +99,7 @@ Your working directory is <workspace>.
 </cwd>
 ```
 
-## Tools (33)
+## Tools (40)
 
 | Tool | Description (first line) |
 | --- | --- |
@@ -131,6 +131,13 @@ Your working directory is <workspace>.
 | `subagent` | Delegate a self-contained task to a subagent (a separate agent that works in its own context) to offload focused, independent work — research, a scoped implemen |
 | `subagent_fork` | Delegate a task to a subagent that inherits this conversation: a child agent seeded with all completed turns so far (it does not see the current in-flight turn) |
 | `todo_write` | Record and update a structured task list for the current work. Send the ENTIRE list every call — it REPLACES the previous list (there are no partial updates, no |
+| `ui_click` | Click a control by ref. The user approves each call. |
+| `ui_press` | Press a key (a character, Enter, Escape, Tab, Backspace, Delete, Space, Arrow*, Home, End, PageUp/Down) on a ref or the focused control. The user approves each  |
+| `ui_scroll` | Scroll the page, or a ref. |
+| `ui_select` | Choose an option (text or value) in a select by ref. The user approves each call. |
+| `ui_snapshot` | List the ACRYL window's controls (role, name, state) with refs to act on. Secrets are never shown. Long pages: pass nextCursor as cursor. |
+| `ui_type` | Type into a text field by ref (replaces its text unless clear is false). Never password, token or payment fields. The user approves each call. |
+| `ui_wait` | Wait up to 10s for text, or a role and name, to appear (or, with gone, disappear). |
 | `update_goal` | Update the exact current goal revision. edit, pause, and resume require a direct top-level human request. During an automatic continuation of the current goal,  |
 | `web_fetch` | Fetch the content of a specific HTTP(S) URL and return it decoded to text. |
 | `web_search` | Search the web for current information. Provide 1–4 queries in the required queries array. Returns an optional summary answer and a list of source URLs. |
