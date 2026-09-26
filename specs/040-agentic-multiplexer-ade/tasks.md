@@ -93,6 +93,41 @@ Every later ADE feature (commit box, search, attention queue, status bar) builds
 
 **Delivered inside `plugins/acryl-workspace` (2026-09-26), not as the separate packages T020-T041 name.** The git, diff and review work landed in the one shared workspace package (one Host plugin, dependency-gated Client tabs), so the packages `acryl-git` and `acryl-tab-diff` were never created. Read T020-T041 as the intent; this list is what exists: read-only worktree list, status and diff; side-by-side and unified diff with multi-line range comments sent to the agent (`0592b87`, `f21066b`); stage, unstage and commit, never push (`e1a1bde`); repo-wide name and content search (`3ca526c`); file create, rename and delete, never overwriting or recursing (`32cb6c9`); live session board and read-only Doc tab (`0592b87`). Each has Host tests on real temporary repositories and jsdom tests for the UI. None has had a real-browser run yet, which is T076. Not built: attention queue (the session list carries no "needs approval" signal, only running and updated-at, so a "needs you" state has no honest source yet), status bar, terminal dock persistence, Settings tab-type toggles, T081, T074 remainder.
 
+## Phase 9: owner feedback backlog (2026-09-26, so nothing is lost)
+
+Source: the owner's reviews of the running Web surface, with reference screenshots of super.engineering, Orca and superset.sh (the target feel: very ergonomic, clean, functional). `[x]` = shipped and pushed, `[ ]` = open. Add new ideas here as they arrive.
+
+**Tab strip**
+- [x] **T090** Tab strip scrolls sideways (wheel, hidden scrollbar, edge fades), active tab always scrolled into view, tabs keep their width instead of shrinking (`7044775`).
+- [x] **T091** Tabs are renamable in place (double-click or F2; Enter keeps, Escape cancels, empty restores the tab's own name) and are visibly cleaner: flat, accent underline on the active tab, close button on hover or active.
+- [x] **T092** Agent icon badges on agent tabs and in the + menu (neutral letter badges, not vendor logos).
+- [ ] **T093** Real agent icons (vendor logos) where their licence allows, else keep neutral badges; per-agent icon set defined in one place.
+- [ ] **T094** Tab right-click context menu: Rename, Duplicate, Close others, Close to the right, Open beside.
+- [ ] **T095** Per-tab activity marker for agent tabs (running spinner, finished dot) like superset.
+- [ ] **T096** Pixel pass of the strip against superset/Orca references in a real browser (spacing, hover, dark and light themes).
+
+**The + menu and agents**
+- [x] **T097** The + menu lists every supported agent by default with icons; "Configure agents..." lets the user hide the ones they never use (remembered per browser).
+- [ ] **T098** Add your own agents: user-defined command entries (name, command, icon) as Host configuration validated against a safe shape and confirmed by the user, never a free-form command from the page. Needs a Host allowlist design before any code.
+- [ ] **T099** Split control next to + (chevron menu like superset: default agent for the + button, remembered).
+
+**Terminal quality (native feel)**
+- [x] **T100** Terminals rebuilt on an ordered WebSocket stream with cursor resume, sessions that survive tab switches, xterm's real stylesheet, UTF-8/truecolor environment (`3c37265`). Root causes found: a 64KB sliding string replayed on every poll, per-keystroke HTTP posts that could reorder, a hand-copied partial stylesheet, terminals rebuilt from a mid-stream tail on every tab switch.
+- [ ] **T101** Perfect reattach after a page reload or a long disconnect: keep a headless terminal (xterm headless plus serialize addon) on the Host so a reconnecting view gets the exact screen, not a replayed tail.
+- [ ] **T102** GPU renderer (WebGL addon) with automatic fallback, ligature-free crisp box drawing; measure on a real TUI (Claude, Codex, Grok).
+- [ ] **T103** Start the process at the pane's real size (size sent with the start request) so the first frame is not drawn at 120x40.
+- [ ] **T104** Terminal niceties: clickable links, search in scrollback, copy/paste and selection behaviour on par with a native terminal, tab title from the terminal title.
+- [ ] **T105** Real-browser regression run with a full-screen TUI: resize, rapid typing, switching tabs back and forth, reload, dropped connection.
+
+**Layout and chrome (super.engineering, Orca, superset.sh)**
+- [ ] **T106** Status line: N agents running (pill shipped in the tab strip, `0daf74f`), plus cost or context pressure, quick actions (open in editor, run), a PR badge; needs the shell frame's row structure changed with a real browser check.
+- [ ] **T107** Sidebar like Orca and superset: workspaces grouped by project, each with branch, change counts, and the agent icons running in it; attention queue (needs you, running, done) once the session list carries a real "needs approval" signal.
+- [ ] **T108** Right panel like superset: Files, Changes, Review as clean tabs with +/- totals and a branch chip; Names and Contents search shipped in Code (`3ca526c`).
+- [ ] **T109** Agent-finished toast with a summary and Preview (superset), fed by the same attention service as T081.
+- [ ] **T110** Run button and per-worktree run script.
+
+**Already open from earlier**: terminal dock persistence, Settings tab-type toggles (T-list above), notifications (T081), the rest of T074, real-browser evidence (T076).
+
 ## Dependencies
 
 T070 -> T071 -> T072 -> T073 -> T074 -> T075 -> T076 (Phase 7 goes before further ADE features). T001 -> T010. T010 -> T011 -> T012. T020 -> T021 -> T022, T023. T012 + T023 -> T030 -> T031 -> T032 -> T033. T002 -> T041. T031 -> T040 -> T041. T012 -> T050 (T050 does not need the diff work and can start once the registry exists).
