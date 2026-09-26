@@ -113,6 +113,59 @@ describe('AcrAgentControl', () => {
     await dispose()
   })
 
+  it('folds a lazy start result into the stored binding and releases it on stop', async () => {
+    const { ctx, service, dispose } = await booted()
+    const capabilities = ['agent.start', 'agent.send', 'agent.cancel', 'agent.stop', 'agent.resume'] as const
+    const lazy = provider({
+      capabilities: [...capabilities],
+      async attach(req) {
+        const base = await provider().attach(req)
+        return Object.freeze({ ...base, runtimeId: null })
+      },
+      async execute(_binding, command) {
+        if (command.kind === 'start' || command.kind === 'resume') {
+          return { sessionId: 'session-1', runtimeId: 'runtime-lazy', status: 'idle' }
+        }
+        if (command.kind === 'stop') {
+          return { stopped: true }
+        }
+        return { kind: command.kind, payload: command.payload, ok: true }
+      },
+    })
+    service.registerProvider(ctx, lazy)
+    const attached = await service.attach(request({ capabilities: [...capabilities] }))
+    expect(attached.runtimeId).toBeNull()
+
+    // Non-start commands still require a live runtime.
+    await expect(service.dispatch('worker-1', { kind: 'send', payload: 'x' }))
+      .rejects.toMatchObject({ code: 'unknown-worker' })
+
+    const started = await service.dispatch('worker-1', { kind: 'start', payload: null })
+    expect(started.runtimeId).toBe('runtime-lazy')
+
+    const running = (await service.snapshot({ workerId: 'worker-1' }))[0]
+    expect(running?.runtimeId).toBe('runtime-lazy')
+    expect(running?.providerSessionRef).toBe('session-1')
+    expect(running?.status).toBe('idle')
+
+    const sent = await service.dispatch('worker-1', { kind: 'send', payload: 'hi' })
+    expect(sent.runtimeId).toBe('runtime-lazy')
+
+    const stopped = await service.dispatch('worker-1', { kind: 'stop', payload: null })
+    expect(stopped.runtimeId).toBe('runtime-lazy')
+
+    const after = (await service.snapshot({ workerId: 'worker-1' }))[0]
+    expect(after?.runtimeId).toBeNull()
+    expect(after?.status).toBe('stopped')
+
+    // The released runtime lets the worker start again.
+    const restarted = await service.dispatch('worker-1', { kind: 'resume', payload: null })
+    expect(restarted.runtimeId).toBe('runtime-lazy')
+    const resumed = (await service.snapshot({ workerId: 'worker-1' }))[0]
+    expect(resumed?.runtimeId).toBe('runtime-lazy')
+    await dispose()
+  })
+
   it('returns a structured result for a dispatched command', async () => {
     const { ctx, service, dispose } = await booted()
     service.registerProvider(ctx, provider())

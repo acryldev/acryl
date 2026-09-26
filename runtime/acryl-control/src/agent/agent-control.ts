@@ -125,6 +125,58 @@ const COMMAND_CAPABILITY: Readonly<Record<AgentCommandKind, AgentCapability>> = 
   resume: 'agent.resume',
 }
 
+const AGENT_STATUSES: readonly AgentStatus[] = [
+  'idle',
+  'running',
+  'waiting',
+  'stopping',
+  'stopped',
+  'failed',
+]
+
+function isAgentStatus(value: unknown): value is AgentStatus {
+  return typeof value === 'string' && (AGENT_STATUSES as readonly string[]).includes(value)
+}
+
+function resultRecord(result: unknown): Record<string, unknown> {
+  return result !== null && typeof result === 'object' ? result as Record<string, unknown> : {}
+}
+
+/**
+ * Fold a provider command result into the stored immutable binding. `start`
+ * and `resume` adopt the runtime/session identities the lazily-spawned
+ * transport reports; `stop` releases them. Other kinds leave the binding
+ * untouched.
+ */
+function mergeCommandResult(
+  binding: AgentSnapshot,
+  kind: AgentCommandKind,
+  result: unknown,
+): AgentSnapshot {
+  const record = resultRecord(result)
+  if (kind === 'start' || kind === 'resume') {
+    const runtimeId = typeof record.runtimeId === 'string' ? record.runtimeId : binding.runtimeId
+    const providerSessionRef = typeof record.sessionId === 'string'
+      ? record.sessionId
+      : binding.providerSessionRef
+    const status = isAgentStatus(record.status) ? record.status : binding.status
+    if (
+      runtimeId === binding.runtimeId
+      && providerSessionRef === binding.providerSessionRef
+      && status === binding.status
+    ) {
+      return binding
+    }
+    return Object.freeze({ ...binding, runtimeId, providerSessionRef, status })
+  }
+  if (kind === 'stop') {
+    const status = isAgentStatus(record.status) ? record.status : 'stopped'
+    if (binding.runtimeId === null && status === binding.status) return binding
+    return Object.freeze({ ...binding, runtimeId: null, status })
+  }
+  return binding
+}
+
 export class AcrAgentControlService extends Service implements AcrAgentControl {
   private readonly providers = new Map<string, AgentProvider>()
   private readonly bindings = new Map<AcrWorkerId, AgentSnapshot>()
@@ -203,14 +255,23 @@ export class AcrAgentControlService extends Service implements AcrAgentControl {
     if (provider === undefined) {
       throw new AcrAgentControlError('unknown-provider', `Unknown agent provider ${binding.providerId}.`)
     }
-    if (binding.runtimeId === null) {
+    if (binding.runtimeId === null && command.kind !== 'start' && command.kind !== 'resume') {
       throw new AcrAgentControlError('unknown-worker', `Worker ${workerId} has no live runtime.`)
     }
     const result = await provider.execute(binding, command, signal)
+    const stored = mergeCommandResult(binding, command.kind, result)
+    if (stored !== binding) this.bindings.set(workerId, stored)
+    const runtimeId = stored.runtimeId ?? binding.runtimeId
+    if (runtimeId === null) {
+      throw new AcrAgentControlError(
+        'transport-unavailable',
+        `Provider ${binding.providerId} returned no runtime id for ${command.kind}.`,
+      )
+    }
     return Object.freeze({
       accepted: true,
       workerId,
-      runtimeId: binding.runtimeId,
+      runtimeId,
       kind: command.kind,
       result,
     })
