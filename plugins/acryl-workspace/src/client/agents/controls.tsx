@@ -25,3 +25,12 @@ export function ExternalLinkIcon() {
     </svg>
   )
 }
+
+/** A small chevron that points down, or up when `open`. */
+export function ChevronIcon({ open }: { readonly open: boolean }) {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={open ? 'M2.5 7.5L6 4l3.5 3.5' : 'M2.5 4.5L6 8l3.5-3.5'} />
+    </svg>
+  )
+}

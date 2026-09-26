@@ -5,7 +5,7 @@ import type { AgentSettingsEntry } from '../../agents/contract.ts'
 import type { PreferencesPatch } from '../../agents/preferences.ts'
 import { joinArguments, splitArguments } from '../../agents/argument-text.ts'
 import { AgentIcon } from '../tabs/AgentIcon.tsx'
-import { ExternalLinkIcon, Segmented } from './controls.tsx'
+import { ChevronIcon, ExternalLinkIcon, Segmented } from './controls.tsx'
 
 export interface AgentRowProps {
   readonly entry: AgentSettingsEntry
@@ -55,7 +55,8 @@ export function AgentRow({ entry, isDefault, onChange, onRemove }: AgentRowProps
         {entry.homepageUrl !== null && (
           <a className="dshAgentsIconLink" href={entry.homepageUrl} target="_blank" rel="noopener noreferrer" aria-label={`${entry.label} install and docs page`} title="Install and docs page"><ExternalLinkIcon /></a>
         )}
-        <button type="button" className="dshAgentsChevron" aria-expanded={open} aria-label={`${entry.label} launch settings`} onClick={() => { setOpen(!open) }}>{open ? '▴' : '▾'}</button>
+        {entry.homepageUrl === null && <span className="dshAgentsIconLink" aria-hidden="true" />}
+        <button type="button" className="dshAgentsChevron" aria-expanded={open} aria-label={`${entry.label} launch settings`} onClick={() => { setOpen(!open) }}><ChevronIcon open={open} /></button>
       </div>
       {open && (
         <div className="dshAgentsRowDetail">

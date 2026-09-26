@@ -30,7 +30,8 @@ const CSS = `
 .dshAgentsRowLabel { font-weight: 600; }
 .dshAgentsRowCommand { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dsw-alias-label-secondary, inherit); font: 11.5px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dshAgentsBadge { margin-left: 8px; padding: 0 6px; border-radius: 4px; background: rgb(248 113 113 / 16%); color: #f87171; font-size: 10.5px; font-weight: 500; }
-.dshAgentsDefault { flex: none; padding: 4px 10px; border-radius: 8px; background: color-mix(in srgb, #4d6bfe 20%, transparent); font-size: 12px; white-space: nowrap; }
+.dshAgentsDefault, .dshAgentsRowMain > .dshAgentsButton { flex: none; box-sizing: border-box; width: 96px; text-align: center; padding: 4px 10px; font-size: 12px; white-space: nowrap; }
+.dshAgentsDefault { border-radius: 8px; background: color-mix(in srgb, #4d6bfe 20%, transparent); }
 .dshAgentsButton { appearance: none; flex: none; padding: 4px 10px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; background: transparent; color: inherit; cursor: pointer; font: inherit; font-size: 12px; white-space: nowrap; }
 .dshAgentsButton:hover:not(:disabled) { border-color: #4d6bfe; }
 .dshAgentsButton:disabled { opacity: 0.45; cursor: default; }
