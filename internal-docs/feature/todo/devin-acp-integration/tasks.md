@@ -18,7 +18,7 @@
 | 09 | Tests — transport lifecycle + cancellation + collision | [x] Done (8ee8d8e) | 05, 06 |
 | 10 | Verify — typecheck + test + build pass | [x] Done (2026-09-24 rebase) | 09 |
 | 11 | Composition — `acryl-agent-devin` plugin package + Loader rows + settings wiring + dispatch binding fix | [x] Done (88b9771) | 06, 07 |
-| 12 | `session/request_permission` — JSON-RPC response fix + permissionMode/onPermissionRequest | [ ] Todo | 11 |
+| 12 | `session/request_permission` — JSON-RPC response fix + permissionMode/onPermissionRequest | [x] Done (672d413) | 11 |
 | 13 | `session-bridge.ts` provider-neutral routing via `acrAgentControl.dispatch()` | [ ] Todo | 11 |
 | 14 | Loader-activation verification suite + E2E stub round-trip + gated real smoke | [ ] Todo | 11, 12, 13 |
 
@@ -54,7 +54,9 @@ rest stay deferred:
 - ~~`session/request_permission` routing~~ → story 12 (see
   `mini-design-composition.md` §5 for the `ctx.approval` decision —
   DSH `Agent`+open-turn precondition cannot host `AgentSnapshot`
-  identities today)
+  identities today). The `onPermissionRequest` callback is the seam; a
+  worker-scoped approval adapter bridging it to `ctx.approval` (or a
+  Desktop answerer plugin) is a deferred follow-up — blocker-report item.
 - Interactive `authenticate` flow (currently throws) — deferred
 - Settings UI wiring for `DevinAcpSettings` (settings-file parsing lands
   in story 11; the renderer UI is a separate follow-up) — deferred
