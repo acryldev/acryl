@@ -1,5 +1,7 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/cordis-plugin-loader'
+// The advanced shell's slot declarations and `ctx.layout` now live in the shared workspace package.
+import type {} from 'acryl-workspace/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 // Type-only service and SlotMap convergence for the Desktop settings section.
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
@@ -16,7 +18,6 @@ import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
-import { applyAdvancedShell } from './layout/advanced-shell.ts'
 import { startRendererBootReporter } from './boot-health.ts'
 import { applyDesktopSettings } from './settings/desktop-settings.ts'
 import { installDesktopDirectoryPickerBridge, requestDesktopDirectoryValidation } from './workspaces/directory-picker.ts'
@@ -24,7 +25,6 @@ import { parseDesktopClientEnvironment } from './environment.ts'
 import { applyPluginLifecycleSettings } from './plugin-lifecycle/plugin-lifecycle-settings.ts'
 import { installWorkspaceFolderDrop } from './workspaces/workspace-folder-drop.ts'
 
-export { applyAdvancedShell } from './layout/advanced-shell.ts'
 export { applyDesktopSettings } from './settings/desktop-settings.ts'
 export { PluginArchitectureSettingsTab } from './plugin-architecture/PluginArchitectureSettingsTab.tsx'
 export type {
@@ -130,5 +130,6 @@ export function apply(ctx: ClientContext): void {
       'acryl-desktop: native directory picker bridge',
     )
   }
-  if (environment.mode === 'advanced') applyAdvancedShell(ctx, environment)
+  // The advanced shell itself (frame, layout service, slots) is the shared `acryl-workspace` client
+  // plugin, so Web and Desktop render the identical shell; Desktop supplies only its native parts above.
 }

@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { DesktopThemePresenter } from '../../../src/client/layout/theme-presenter.ts'
+import { DesktopThemePresenter } from '../../src/client/shell/theme-presenter.ts'
 
 type StyleStub = {
   readonly setProperty: ReturnType<typeof vi.fn>

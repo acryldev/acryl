@@ -4,7 +4,7 @@ import {
   MACOS_TRAFFIC_LIGHT_SAFE_WIDTH,
   WINDOWS_CAPTION_CONTROLS_WIDTH,
   WINDOWS_TITLEBAR_HEIGHT,
-} from '../../shell/window-chrome.ts'
+} from './chrome-metrics.ts'
 import { SIDEBAR_COLLAPSED } from './layout-state.ts'
 
 /** Advanced-shell stylesheet kept as a plain string so the package client bundle stays self-contained. */
@@ -54,8 +54,8 @@ html:has([aria-modal="true"]) .dshDesktopSidebarSurface::before { -webkit-app-re
 /** Install and remove the advanced shell's global native-window styles. @returns the style disposer. */
 export function installAdvancedStyles(): () => void {
   const style = document.createElement('style')
-  style.dataset.plugin = 'acryl-desktop'
-  style.dataset.pluginCss = 'acryl-desktop/advanced-shell'
+  style.dataset.plugin = 'acryl-workspace'
+  style.dataset.pluginCss = 'acryl-workspace/advanced-shell'
   style.textContent = ADVANCED_STYLES
   document.head.appendChild(style)
   return () => { style.remove() }

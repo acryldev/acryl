@@ -21,7 +21,9 @@ src/
   workspaces/    native workspace selection: directory picker, admission policy, Windows volume checks
   windows/       Windows-only adapters for upstream agent presets and the ACL sandbox
   runtime/       web server wrapper, port policy, packaged-runtime paths
-  client/        browser half (its own tsconfig): layout, settings, plugin lifecycle, plugin architecture, workspaces
+  client/        browser half (its own tsconfig): settings, plugin lifecycle, plugin architecture, workspaces.
+                 The advanced shell (frame, layout, slots) is no longer here: it moved to `plugins/acryl-workspace/src/client/shell`
+                 so Web and Desktop share it. Desktop keeps only its native parts.
   native-ui/     framework-free HTML pages and their scripts (its own tsconfig and Vite build)
 tests/           mirrors src/ by domain; packaging and release tests stay at the root
 ```
@@ -43,7 +45,7 @@ test for it.
 
 - `tsconfig.json` includes `src/**/*.ts` and excludes `src/client` and `src/native-ui`, which have their own
   configs (which reset `exclude`).
-- The client configs list `src/client/layout/advanced-shell.ts` first on purpose: the order in which TypeScript
-  loads the Cordis declaration files changes how a circular `Context` type resolves, and with a different first
-  file `ctx.effect` disappears from the type. Keep that entry first.
+- If a client typecheck suddenly reports `ctx.effect` or `ctx.get` missing on `Context`, suspect file order: the
+  order in which TypeScript loads the Cordis declaration files changes how a circular `Context` type resolves.
+  Listing a file that pulls the augmentations in early (the advanced shell did this before it moved) fixes it.
 - `package.json` `exports[*].types` follow `lib/types/<folder>/<file>.d.ts`; `tests/package.spec.ts` asserts them.

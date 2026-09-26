@@ -1,5 +1,5 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '../contracts.ts'
+import type {} from './contracts.ts'
 import type { DesktopLayoutState } from './layout-state.ts'
 
 /**

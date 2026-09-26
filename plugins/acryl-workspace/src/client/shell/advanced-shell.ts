@@ -1,7 +1,7 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
-import type { DesktopMainOwnerProps, DesktopSidebarSurfaceOwnerProps } from '../contracts.ts'
-import type { DesktopClientEnvironment } from '../environment.ts'
+import type { DesktopMainOwnerProps, DesktopSidebarSurfaceOwnerProps } from './contracts.ts'
+import type { ShellEnvironment } from './environment.ts'
 import { AdvancedFrame } from './AdvancedFrame.tsx'
 import { DesktopLayoutState } from './layout-state.ts'
 import { provideDesktopLayout } from './layout-service.ts'
@@ -21,15 +21,15 @@ function DefaultDesktopSidebar({ renderUpstream }: DesktopSidebarSurfaceOwnerPro
  * @param ctx - active browser Cordis context.
  * @param environment - validated mode and platform marker.
  */
-export function applyAdvancedShell(ctx: ClientContext, environment: DesktopClientEnvironment): void {
+export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnvironment): void {
   if (environment.mode !== 'advanced') {
-    throw new Error(`acryl-desktop: advanced shell received mode ${JSON.stringify(environment.mode)}`)
+    throw new Error(`acryl-workspace: advanced shell received mode ${JSON.stringify(environment.mode)}`)
   }
 
   const desktopLayout = new DesktopLayoutState()
   ctx.effect(
     () => provideDesktopLayout(ctx, desktopLayout),
-    'desktop: layout service',
+    'acryl-workspace: shell layout service',
   )
 
   ctx.effect(() => {
@@ -41,7 +41,7 @@ export function applyAdvancedShell(ctx: ClientContext, environment: DesktopClien
       delete document.body.dataset.dshDesktopMode
       delete document.body.dataset.dshDesktopPlatform
     }
-  }, 'desktop: advanced shell styles')
+  }, 'acryl-workspace: shell advanced shell styles')
 
   ctx.slots.inject('desktop.main', () => ctx.slots.register({
     name: 'desktop.main',
@@ -61,7 +61,7 @@ export function applyAdvancedShell(ctx: ClientContext, environment: DesktopClien
       off()
       presenter.dispose()
     }
-  }, 'desktop: theme presenter')
+  }, 'acryl-workspace: shell theme presenter')
 
   ctx.effect(() => ctx.slots.register({
     name: 'root',
@@ -74,5 +74,5 @@ export function applyAdvancedShell(ctx: ClientContext, environment: DesktopClien
       'shell.overlay': { kind: 'list', scope: 'root' },
     },
     inject: () => ({ layout: desktopLayout, platform: environment.platform }),
-  }, AdvancedFrame), 'desktop: advanced root slot')
+  }, AdvancedFrame), 'acryl-workspace: shell advanced root slot')
 }

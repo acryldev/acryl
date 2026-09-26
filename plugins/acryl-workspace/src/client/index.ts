@@ -5,7 +5,11 @@
 import '@deepseek-ai/dsh-client-ui-renderer/client'
 import '@deepseek-ai/dsh-client-ui-session/client'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type { ReactNode } from 'react'
+// Pulls the shell's slot declarations (`desktop.main`, `desktop.sidebar`, `rightbar`, ...) and the `ctx.layout`
+// augmentation into every program that imports this package's types.
+import type {} from './shell/contracts.ts'
+import { applyAdvancedShell } from './shell/advanced-shell.ts'
+import { resolveShellEnvironment } from './shell/environment.ts'
 import { createAgentBridge } from './sessions/agent-bridge.ts'
 import { createWorkspaceFilesApi } from './files/files-api.ts'
 import { filesTabPlugin } from './files/files-tab.ts'
@@ -18,24 +22,13 @@ import { browserStorage, parseSavedWorkspace, STORAGE_KEY } from './canvas/persi
 import { startWorkspacePersistence } from './canvas/persist.ts'
 import { createProjectsControl, desktopDirectorySeams } from './projects/projects-control.ts'
 import { createWorkspaceGitApi } from './git/git-api.ts'
-import { ProjectsSidebar, type ProjectsSidebarOwnerProps } from './projects/ProjectsSidebar.tsx'
+import { ProjectsSidebar } from './projects/ProjectsSidebar.tsx'
 import { createWorkspacePtyApi } from './terminal/pty-api.ts'
 import { WorkspacePtyClient } from './sessions/session-client.ts'
 import { startShellPolling } from './worktrees/shell-polling.ts'
 import { WorkspaceShellState } from './worktrees/shell-state.ts'
 import { installWorkspaceStyles } from './styles.ts'
 import { WorkspaceCanvas } from './canvas/WorkspaceCanvas.tsx'
-
-interface DesktopMainOwnerProps {
-  renderConversation(): ReactNode
-}
-
-declare module '@deepseek-ai/dsh-client-ui-slots' {
-  interface SlotMap {
-    'desktop.main': { kind: 'single'; scope: 'root'; owner: DesktopMainOwnerProps }
-    'desktop.sidebar': { kind: 'single'; scope: 'root'; owner: ProjectsSidebarOwnerProps }
-  }
-}
 
 /**
  * Slot priority for the Workspace canvas. Lower renders. The older `acryl-development-canvas`
@@ -49,28 +42,16 @@ export const name = 'acryl-workspace-client'
 export const inject = ['slots']
 
 /**
- * Run a slot contribution only while its slot declaration is live. `desktop.main` and
- * `desktop.sidebar` are declared only by the desktop's advanced shell. In compatibility mode (and
- * on Web) they are undeclared, so the inject would throw and fail the whole client plugin tree
- * ('Failed to load plugins'). Skip instead - the Workspace is an advanced-mode feature - and
- * rethrow anything that is not the undeclared-slot guard.
- */
-function whenSlotDeclared(contribute: () => void): void {
-  try {
-    contribute()
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('is not declared')) return
-    throw error
-  }
-}
-
-/**
- * Contribute the Workspace to the advanced shell: the tile canvas in `desktop.main` and the
- * Chats | Projects left pane in `desktop.sidebar`, both at priority 0 so they win over the
- * defaults (priority 100; lower wins for a `single` slot). One shell state feeds every pane and is
- * refreshed by one owned polling effect.
+ * The ACRYL shell and workspace, identical on Web and Desktop. In the advanced shell this plugin owns the
+ * frame (`shell/`) and contributes the tile canvas to `desktop.main` and the Chats | Projects left pane to
+ * `desktop.sidebar`, ahead of the defaults (priority 100; lower wins for a `single` slot). Desktop's
+ * compatibility mode keeps the stock frame, so only the right-panel tabs are registered there. One shell
+ * state feeds every pane and is refreshed by one owned polling effect.
  */
 export function apply(ctx: ClientContext): void {
+  const environment = resolveShellEnvironment(window.location.hash)
+  const advanced = environment.mode === 'advanced'
+  if (advanced) applyAdvancedShell(ctx, environment)
   const gitApi = createWorkspaceGitApi()
   const filesApi = createWorkspaceFilesApi()
   const shell = new WorkspaceShellState(gitApi)
@@ -106,7 +87,7 @@ export function apply(ctx: ClientContext): void {
   ctx.plugin(checksTabPlugin(shell, gitApi))
   ctx.plugin(filesTabPlugin(shell, filesApi))
 
-  whenSlotDeclared(() => {
+  if (advanced) {
     ctx.slots.inject('desktop.main', () => {
       const ptyClient = new WorkspacePtyClient(createWorkspacePtyApi())
       let removeSlot: (() => void) | undefined
@@ -126,9 +107,7 @@ export function apply(ctx: ClientContext): void {
         await ptyClient.dispose()
       }
     })
-  })
 
-  whenSlotDeclared(() => {
     ctx.slots.inject('desktop.sidebar', () => {
       try {
         return ctx.slots.register({
@@ -141,7 +120,7 @@ export function apply(ctx: ClientContext): void {
         return () => {}
       }
     })
-  })
+  }
 }
 
 export { WorkspaceCanvas } from './canvas/WorkspaceCanvas.tsx'

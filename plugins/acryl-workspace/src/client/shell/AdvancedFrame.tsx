@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { PropsRenderSlots, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
-import type {} from '../contracts.ts'
-import type { DesktopClientPlatform } from '../environment.ts'
+import type {} from './contracts.ts'
+import type { ShellPlatform } from './environment.ts'
 import { DesktopLayoutState, MACOS_SIDEBAR_COLLAPSED, SIDEBAR_COLLAPSED, solveFrame } from './layout-state.ts'
 
 /** Private values assembled by the advanced-shell registration. */
@@ -9,7 +9,7 @@ export interface AdvancedFrameInjected {
   /** Desktop-owned panel state exposed through the standard layout service. */
   layout: DesktopLayoutState
   /** Host platform controlling native title-bar spacing. */
-  platform: DesktopClientPlatform
+  platform: ShellPlatform
 }
 
 /** Full advanced root slot props. */

@@ -48,6 +48,14 @@ describe('the ACRYL workspace on the Web surface', () => {
       expect(server?.port).toBeGreaterThan(0)
       const origin = `http://127.0.0.1:${String(server?.port)}`
       const headers = { origin, 'sec-fetch-site': 'same-origin' }
+      // The served page's client manifest names the workspace bundle, so the browser loads the shell and the workspace.
+      const connection = host.ctx.get('connection') as { authenticatedUrl(base: string): string } | undefined
+      const entry = await fetch(connection?.authenticatedUrl(origin) ?? origin, { redirect: 'manual' })
+      const cookie = entry.headers.getSetCookie().map(value => value.split(';')[0]).join('; ')
+      const page = await fetch(origin, { headers: { cookie } })
+      expect(page.status).toBe(200)
+      const html = await page.text()
+      expect(html).toContain('acryl-workspace')
       const repoRoute = await fetch(`${origin}/api/acryl-workspace/git/repo?cwd=${encodeURIComponent(repo)}`, { headers })
       expect(repoRoute.status).toBe(200)
       expect(await repoRoute.json()).toMatchObject({ repo: { root: repo } })

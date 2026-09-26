@@ -1,17 +1,15 @@
 /** Left pane: a Chats | Projects switch around the upstream sidebar, with the git-aware Projects list. */
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
 import type { ProjectsControl } from './projects-control.ts'
 import { buildProjectRows, type RepoRow, type WorktreeDot, type WorktreeRow } from './sidebar-model.ts'
+import type { DesktopSidebarSurfaceOwnerProps } from '../shell/contracts.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 
-export interface ProjectsSidebarOwnerProps {
-  readonly collapsed: boolean
-  readonly width: number
-  readonly renderUpstream: () => ReactNode
-}
+/** The left-pane owner interface the frame offers: the same one the frame's default sidebar receives. */
+export type ProjectsSidebarOwnerProps = DesktopSidebarSurfaceOwnerProps
 
 export type ProjectsSidebarProps = Omit<PropsRuntime<'root'>, 'useSessions'> & ProjectsSidebarOwnerProps & {
   readonly useSessions: UseSessions
