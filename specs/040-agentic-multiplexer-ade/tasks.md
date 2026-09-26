@@ -126,6 +126,13 @@ Source: the owner's reviews of the running Web surface, with reference screensho
 - [ ] **T109** Agent-finished toast with a summary and Preview (superset), fed by the same attention service as T081.
 - [ ] **T110** Run button and per-worktree run script.
 
+**Engineering debt found in a self-audit against the owner's rule books (Clean Architecture, Domain-Driven Design; 2026-09-26)**
+- [x] **T111** Removed a component cycle I had introduced (canvas state imported the tabs domain, which imports canvas state): tab naming now lives with the canvas state it constrains. `PtyPane` moved into the terminal domain, the terminal registry is owned by the composition root (`client/index.ts`) and disposed with the slot registration, and the Code tab's edit rules are pure and tested (`files/file-edit.ts`).
+- [ ] **T112** `git/service.ts` (519 lines) is becoming a god service: repo, status, diff, checks, worktree creation, stage, commit and search in one class. Split by use case into bounded modules (for example `git/changes`, `git/commit`, `search`) behind one shared, confined command runner.
+- [ ] **T113** Ubiquitous language: "session" means both a chat session (`SessionSummary`) and a terminal's Host process (`tile.sessionId`, `WorkspacePtyRegistry` sessions). Rename the terminal one to "terminal" (`terminalId`) with a migration for saved tabs.
+- [ ] **T114** `WorkspaceCanvas.tsx` (about 440 lines) still holds several tile panes (file, browser, diff, doc); move each into its own domain folder like `PtyPane`.
+- [ ] **T115** Core rules that still sit in delivery code: the Host `WorkspacePtyRegistry` mixes the session table with process spawning; separate a `TerminalProcess` port (spawn, write, resize, kill) from the session policy, so the policy tests never touch node-pty.
+
 **Already open from earlier**: terminal dock persistence, Settings tab-type toggles (T-list above), notifications (T081), the rest of T074, real-browser evidence (T076).
 
 ## Dependencies

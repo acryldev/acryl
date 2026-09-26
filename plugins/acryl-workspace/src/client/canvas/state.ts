@@ -1,7 +1,7 @@
 /** In-memory ACRYL Workspace tabs. Host PTY sessions bind through tile.sessionId. */
 
 import { labelForCommand } from '../terminal/agent-commands.ts'
-import { normalizeTabTitle } from '../tabs/tab-title.ts'
+import { normalizeTabTitle } from './tab-title.ts'
 import type { WorkspacePtyCommandId } from '../../pty/contract.ts'
 
 export type WorkspaceTileKind = 'chat' | 'pty' | 'file' | 'browser' | 'diff' | 'kanban' | 'doc'

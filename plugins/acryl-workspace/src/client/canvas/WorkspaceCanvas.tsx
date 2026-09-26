@@ -20,7 +20,8 @@ import type { WorkspaceFilesApi } from '../files/files-api.ts'
 import { GitDiffPane } from '../diff/GitDiffPane.tsx'
 import type { ReviewStore } from '../review/review-store.ts'
 import { countRunning, runningLabel } from '../sessions/running-agents.ts'
-import { TerminalRegistry, type TerminalSessionSnapshot } from '../terminal/terminal-session.ts'
+import { PtyPane } from '../terminal/PtyPane.tsx'
+import type { TerminalRegistry } from '../terminal/terminal-session.ts'
 import { TabStrip } from '../tabs/TabStrip.tsx'
 import { SplitDivider } from './SplitDivider.tsx'
 import { clampSplit, readSplitRatio, writeSplitRatio } from './split-ratio.ts'
@@ -40,6 +41,8 @@ import {
 export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   readonly renderConversation: () => ReactNode
   readonly ptyApi?: WorkspacePtyApi
+  /** The live terminals, owned by the composition root so they end with the plugin, not with a render. */
+  readonly terminals: TerminalRegistry
   readonly useSessions: UseSessions
   /** Shared shell state: which worktree is selected, and the channel for open-diff requests. */
   readonly shell: WorkspaceShellState
@@ -64,7 +67,7 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
   // Subscribe to primitives, not the whole shell snapshot: git polling updates that snapshot often,
@@ -99,10 +102,6 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
       },
     )
   }, [workspace, sessions])
-
-  // Terminals live as long as the canvas does, so switching tabs never rebuilds one.
-  const terminals = useMemo(() => new TerminalRegistry(), [])
-  useEffect(() => () => { terminals.disposeAll() }, [terminals])
 
   const closeTile = useCallback(async (tile: WorkspaceTile) => {
     const removed = workspace.closeTile(tile.id)
@@ -252,52 +251,6 @@ function glyph(kind: WorkspaceTile['kind']): string {
   if (kind === 'kanban') return '▦'
   if (kind === 'doc') return '▧'
   return '◉'
-}
-
-function PtyPane({
-  tile,
-  terminals,
-}: {
-  tile: WorkspaceTile
-  terminals: TerminalRegistry
-}) {
-  const terminalHost = useRef<HTMLDivElement>(null)
-  const session = tile.sessionId === undefined ? undefined : terminals.ensure(tile.sessionId)
-  const snapshot = useSyncExternalStore(
-    session?.subscribe ?? NO_SUBSCRIPTION,
-    session?.getSnapshot ?? (() => STARTING),
-  )
-
-  // The terminal is moved into this pane while the tab shows it and back out when it does not.
-  useEffect(() => {
-    const host = terminalHost.current
-    if (session === undefined || host === null) return
-    session.attach(host)
-    return () => { session.detach() }
-  }, [session])
-
-  const status = tile.error !== undefined ? 'error' : statusText(snapshot)
-  return (
-    <div className="dshWorkspacePty" onMouseDown={() => { session?.focus() }}>
-      <div className="dshWorkspacePtyToolbar">
-        <span className="dshWorkspacePtyName">{tile.title}</span>
-        <span className="dshWorkspacePtyStatus" data-status={snapshot.status}>{status}</span>
-      </div>
-      <div ref={terminalHost} className="dshWorkspaceXterm" aria-label={`${tile.title} terminal`} />
-      {tile.error !== undefined && <div className="dshWorkspacePtyError">{tile.error}</div>}
-    </div>
-  )
-}
-
-const NO_SUBSCRIPTION = (): (() => void) => () => {}
-const STARTING: TerminalSessionSnapshot = { status: 'connecting', exitCode: null, error: null }
-
-function statusText(snapshot: TerminalSessionSnapshot): string {
-  if (snapshot.status === 'live') return 'running'
-  if (snapshot.status === 'exited') return snapshot.exitCode === null ? 'exited' : `exited (${String(snapshot.exitCode)})`
-  if (snapshot.status === 'reconnecting') return 'reconnecting...'
-  if (snapshot.status === 'lost') return 'session ended'
-  return 'starting'
 }
 
 function FilePane({

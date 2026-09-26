@@ -6,6 +6,7 @@ import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import type { GitSearchMode, GitSearchView } from '../../git/contract.ts'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
 import type { WorkspaceFilesApi } from './files-api.ts'
+import { changeFor, fileToOpenAfter, type PendingEdit } from './file-edit.ts'
 import { visibleRows, type DirState } from './tree-model.ts'
 
 export type FilesBodyProps = PropsRuntime<'sidebar.right.pane.tab'> & {
@@ -13,12 +14,6 @@ export type FilesBodyProps = PropsRuntime<'sidebar.right.pane.tab'> & {
   readonly filesApi: WorkspaceFilesApi
   readonly gitApi: WorkspaceGitApi
 }
-
-/** The one inline edit open at a time: the name being typed, or a delete awaiting confirmation. */
-type Pending =
-  | { readonly type: 'create'; readonly entry: 'file' | 'dir'; readonly value: string }
-  | { readonly type: 'rename'; readonly file: string; readonly value: string }
-  | { readonly type: 'delete'; readonly file: string; readonly isDir: boolean }
 
 type SearchState =
   | { readonly phase: 'idle' }
@@ -41,7 +36,7 @@ export function FilesBody({ shell, filesApi, gitApi }: FilesBodyProps) {
   const [reload, setReload] = useState(0)
   const [query, setQuery] = useState('')
   const [mode, setMode] = useState<GitSearchMode>('name')
-  const [pending, setPending] = useState<Pending | null>(null)
+  const [pending, setPending] = useState<PendingEdit | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
   const [search, setSearch] = useState<SearchState>({ phase: 'idle' })
 
@@ -98,18 +93,15 @@ export function FilesBody({ shell, filesApi, gitApi }: FilesBodyProps) {
 
   const submit = (): void => {
     if (path === undefined || pending === null) return
-    const change = pending.type === 'create'
-      ? { op: 'create', kind: pending.entry, file: pending.value.trim() } as const
-      : pending.type === 'rename'
-        ? { op: 'rename', file: pending.file, to: pending.value.trim() } as const
-        : { op: 'delete', file: pending.file } as const
-    if (change.op !== 'delete' && (change.op === 'create' ? change.file : change.to) === '') return
+    const change = changeFor(pending)
+    if (change === null) return
     filesApi.change(path, change).then(
       (done) => {
         setPending(null)
         setEditError(null)
         setReload(n => n + 1)
-        if (change.op === 'create' && change.kind === 'file' && done.file !== null) shell.openFile({ worktree: path, file: done.file })
+        const opened = fileToOpenAfter(change, done.file)
+        if (opened !== null) shell.openFile({ worktree: path, file: opened })
       },
       (cause: unknown) => { setEditError(cause instanceof Error ? cause.message : 'That change failed.') },
     )

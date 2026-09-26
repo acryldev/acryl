@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { WORKSPACE_PTY_COMMAND_IDS } from '../../src/pty/contract.ts'
 import { WORKSPACE_AGENT_COMMANDS } from '../../src/client/terminal/agent-commands.ts'
 import { HIDDEN_AGENTS_KEY, readHiddenAgents, toggleAgent, visibleAgents, writeHiddenAgents } from '../../src/client/tabs/agent-visibility.ts'
-import { MAX_TAB_TITLE, normalizeTabTitle } from '../../src/client/tabs/tab-title.ts'
+import { MAX_TAB_TITLE, normalizeTabTitle } from '../../src/client/canvas/tab-title.ts'
 
 describe('normalizeTabTitle', () => {
   it('trims, collapses whitespace and caps the length', () => {
