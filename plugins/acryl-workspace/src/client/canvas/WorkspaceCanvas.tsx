@@ -20,6 +20,7 @@ import type { WorkspaceFilesApi } from '../files/files-api.ts'
 import { GitDiffPane } from '../diff/GitDiffPane.tsx'
 import type { ReviewStore } from '../review/review-store.ts'
 import { countRunning, runningLabel } from '../sessions/running-agents.ts'
+import { estimateTerminalSize } from '../terminal/terminal-size.ts'
 import { PtyPane } from '../terminal/PtyPane.tsx'
 import type { TerminalRegistry } from '../terminal/terminal-session.ts'
 import { TabStrip } from '../tabs/TabStrip.tsx'
@@ -184,7 +185,9 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, useSess
     if (tile === undefined) return
     try {
       // Terminals and agents start in the selected worktree, so each branch works in its own checkout.
-      const view = await api.start(commandId, groupKey === GLOBAL_GROUP ? undefined : groupKey)
+      const stage = stageRef.current
+      const size = stage === null ? undefined : estimateTerminalSize(stage.clientWidth, stage.clientHeight)
+      const view = await api.start(commandId, groupKey === GLOBAL_GROUP ? undefined : groupKey, size)
       workspace.updateTile(tile.id, { sessionId: view.id })
     } catch (cause) {
       workspace.updateTile(tile.id, {

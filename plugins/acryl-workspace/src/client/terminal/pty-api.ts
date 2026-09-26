@@ -40,9 +40,17 @@ async function readJson(response: Response): Promise<unknown> {
   return JSON.parse(text) as unknown
 }
 
+export interface TerminalSize {
+  readonly cols: number
+  readonly rows: number
+}
+
 export interface WorkspacePtyApi {
-  /** @param cwd - optional worktree directory to start in. */
-  start(commandId: WorkspacePtyCommandId, cwd?: string): Promise<WorkspacePtyView>
+  /**
+   * @param cwd - optional worktree directory to start in.
+   * @param size - the size the terminal will be shown at, so the first frame already fits.
+   */
+  start(commandId: WorkspacePtyCommandId, cwd?: string, size?: TerminalSize): Promise<WorkspacePtyView>
   read(id: string): Promise<WorkspacePtyView>
   write(id: string, data: string): Promise<void>
   resize(id: string, cols: number, rows: number): Promise<void>
@@ -52,12 +60,12 @@ export interface WorkspacePtyApi {
 /** @param fetcher - injected for tests; defaults to window.fetch. */
 export function createWorkspacePtyApi(fetcher: FetchLike = fetch): WorkspacePtyApi {
   return {
-    async start(commandId, cwd) {
+    async start(commandId, cwd, size) {
       const response = await fetcher(WORKSPACE_PTY_PATH, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(cwd === undefined ? { commandId } : { commandId, cwd }),
+        body: JSON.stringify({ commandId, ...(cwd === undefined ? {} : { cwd }), ...(size === undefined ? {} : size) }),
       })
       const body = await readJson(response)
       if (!response.ok) {

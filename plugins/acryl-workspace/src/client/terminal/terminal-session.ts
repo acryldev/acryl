@@ -8,6 +8,7 @@
 
 import { FitAddon } from '@xterm/addon-fit'
 import { Terminal as XtermTerminal } from '@xterm/xterm'
+import { enableGpuRenderer } from './gpu-renderer.ts'
 import { PtyStream, type PtyStreamState, type StreamSocketFactory } from './pty-stream.ts'
 
 export type TerminalStatus = PtyStreamState
@@ -88,6 +89,7 @@ export class TerminalSession {
     if (!this.opened) {
       this.opened = true
       this.terminal.open(this.element)
+      enableGpuRenderer(this.terminal)
     }
     this.observer = new ResizeObserver(() => { this.scheduleFit() })
     this.observer.observe(host)

@@ -7,8 +7,9 @@ import { homedir } from 'node:os'
 import { isAbsolute, join } from 'node:path'
 import { spawn as spawnPty } from 'node-pty'
 import type { WorkspacePtyCommandId, WorkspacePtyStatus, WorkspacePtyView } from './contract.ts'
-import { isWorkspacePtyCommandId } from './contract.ts'
+import { MAX_PTY_COLS, MAX_PTY_ROWS, isWorkspacePtyCommandId } from './contract.ts'
 import { Scrollback, type Replay } from './scrollback.ts'
+import { ScreenModel } from './screen-model.ts'
 
 const KILL_GRACE_MS = 1_000
 const DEFAULT_COLS = 120
@@ -127,6 +128,7 @@ interface LiveSession {
   readonly subscriptions: readonly { dispose(): void }[]
   status: WorkspacePtyStatus
   readonly scrollback: Scrollback
+  readonly screen: ScreenModel
   readonly listeners: Set<(event: WorkspacePtyEvent) => void>
   exitCode: number | null
   error: string | null
@@ -205,12 +207,17 @@ export class WorkspacePtyRegistry {
    * @param commandId - catalog id from the Terminal/agent tab.
    * @param cwd - optional working directory (a worktree); must be an existing absolute directory.
    */
-  start(commandId: string, cwd?: string): WorkspacePtyView {
+  start(commandId: string, cwd?: string, size?: { readonly cols: number; readonly rows: number }): WorkspacePtyView {
     if (!isWorkspacePtyCommandId(commandId)) {
       throw new Error('acryl-workspace: unknown workspace PTY command')
     }
     if (cwd !== undefined && !isExistingAbsoluteDirectory(cwd)) {
       throw new Error('acryl-workspace: workspace PTY cwd must be an existing absolute directory')
+    }
+    const cols = size?.cols ?? DEFAULT_COLS
+    const rows = size?.rows ?? DEFAULT_ROWS
+    if (!Number.isInteger(cols) || !Number.isInteger(rows) || cols < 2 || cols > MAX_PTY_COLS || rows < 1 || rows > MAX_PTY_ROWS) {
+      throw new Error('acryl-workspace: workspace PTY size is out of range')
     }
     const plan = planWorkspacePtyCommand(commandId, this.platform, this.env)
     const id = this.createId()
@@ -224,8 +231,8 @@ export class WorkspacePtyRegistry {
         cwd: cwd ?? this.cwd,
         env: terminalEnvironment(this.env),
         name: 'xterm-256color',
-        cols: DEFAULT_COLS,
-        rows: DEFAULT_ROWS,
+        cols,
+        rows,
       })
     } catch (cause) {
       throw new Error(
@@ -239,12 +246,14 @@ export class WorkspacePtyRegistry {
       subscriptions,
       status: 'running',
       scrollback: new Scrollback(),
+      screen: new ScreenModel(cols, rows),
       listeners: new Set(),
       exitCode: null,
       error: null,
     }
     subscriptions.push(process.onData((chunk) => {
       session.scrollback.append(chunk)
+      session.screen.write(chunk, session.scrollback.cursor)
       const event: WorkspacePtyEvent = { kind: 'data', data: chunk, cursor: session.scrollback.cursor }
       for (const listener of [...session.listeners]) listener(event)
     }))
@@ -275,6 +284,7 @@ export class WorkspacePtyRegistry {
     const session = this.require(id)
     if (session.status !== 'running') return
     session.process.resize(cols, rows)
+    session.screen.resize(cols, rows)
   }
 
   /**
@@ -293,12 +303,28 @@ export class WorkspacePtyRegistry {
     const session = this.require(id)
     session.listeners.add(listener)
     return {
-      replay: session.scrollback.replay(since),
+      replay: this.replayFor(session, since),
       status: session.status,
       exitCode: session.exitCode,
       error: session.error,
       dispose: () => { session.listeners.delete(listener) },
     }
+  }
+
+  /**
+   * A subscriber that can resume from its cursor gets just what it missed. Any other (first attach,
+   * reload, a gap larger than the kept tail) gets the screen as it is now, then what was written since.
+   */
+  private replayFor(session: LiveSession, since: number): Replay {
+    if (since > 0) {
+      const direct = session.scrollback.replay(since)
+      if (!direct.replace) return direct
+    }
+    const { screen, cursor } = session.screen.snapshot()
+    const tail = session.scrollback.replay(cursor)
+    return tail.replace
+      ? tail
+      : { data: screen + tail.data, cursor: tail.cursor, replace: true }
   }
 
   /** Snapshot one session for the renderer. */
@@ -312,6 +338,7 @@ export class WorkspacePtyRegistry {
     if (session === undefined) return
     await stopPty(session)
     for (const subscription of session.subscriptions) subscription.dispose()
+    session.screen.dispose()
     this.sessions.delete(id)
   }
 

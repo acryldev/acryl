@@ -85,9 +85,11 @@ describe('terminal stream', () => {
   it('replays what already happened, then streams new output batched and in order', async () => {
     process.emit('early ')
     const { ws, messages } = await open('id=pty_test&since=0')
-    await until(() => outputOf(messages) === 'early ')
+    await until(() => outputOf(messages).includes('early '))
+    // A fresh attach starts the client's terminal from the Host's picture of the screen.
+    expect(messages[0]).toMatchObject({ t: 'out', replace: true })
     for (const part of ['a', 'b', 'c', 'd']) process.emit(part)
-    await until(() => outputOf(messages) === 'early abcd')
+    await until(() => outputOf(messages).endsWith('abcd'))
     const last = messages[messages.length - 1]
     expect(last).toMatchObject({ t: 'out', cursor: 10, replace: false })
     ws.close()
