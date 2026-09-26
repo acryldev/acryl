@@ -99,6 +99,25 @@ describe('the ACRYL workspace on the Web surface', () => {
         headers: { ...headers, 'content-type': 'application/json' },
         body: JSON.stringify({ id: terminal.id }),
       })
+      // A custom agent is added by the user, saved in the ACRYL home, and started by id only.
+      const added = await fetch(`${origin}/api/acryl-workspace/agents`, {
+        method: 'POST',
+        headers: { ...headers, 'content-type': 'application/json' },
+        body: JSON.stringify({ agent: { id: 'echo-agent', label: 'Echo', command: '/bin/echo', args: ['custom-agent-ran'], badge: { letter: 'E', color: '#10a37f' } } }),
+      })
+      expect(added.status).toBe(200)
+      expect(JSON.parse(await readFile(join(home, 'workspace', 'agents.json'), 'utf8'))).toHaveLength(1)
+      const custom = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'echo-agent', cwd: repo }) })
+      expect(custom.status).toBe(200)
+      const customId = (await custom.json() as { id: string }).id
+      let customOutput = ''
+      for (let attempt = 0; attempt < 40 && !customOutput.includes('custom-agent-ran'); attempt += 1) {
+        await new Promise(resolve => { setTimeout(resolve, 100) })
+        customOutput = ((await (await fetch(`${origin}/api/acryl-workspace/pty?id=${customId}`, { headers })).json()) as { output: string }).output
+      }
+      expect(customOutput).toContain('custom-agent-ran')
+      const smuggled = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'sh -c id' }) })
+      expect(smuggled.status).toBe(500)
       const tree = await fetch(`${origin}/api/acryl-workspace/files/tree?path=${encodeURIComponent(repo)}&dir=`, { headers })
       expect(tree.status).toBe(200)
       expect(await tree.json()).toMatchObject({ entries: [{ name: 'a.txt', kind: 'file' }] })

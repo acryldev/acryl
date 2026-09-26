@@ -5,11 +5,12 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { WorkspacePtyCommandId } from '../../pty/contract.ts'
+import type { AgentId } from '../../pty/contract.ts'
 import type { WorkspaceSnapshot, WorkspaceState, WorkspaceTile } from '../canvas/state.ts'
-import { labelForCommand, WORKSPACE_AGENT_COMMANDS, WORKSPACE_SURFACE_ACTIONS } from '../terminal/agent-commands.ts'
+import type { CustomAgent } from '../../agents/definition.ts'
+import { labelForCommand } from '../terminal/agent-commands.ts'
 import { AgentIcon } from './AgentIcon.tsx'
-import { readHiddenAgents, toggleAgent, visibleAgents, writeHiddenAgents } from './agent-visibility.ts'
+import { NewTabMenu } from './NewTabMenu.tsx'
 import { hiddenEdges, scrollToReveal, wheelToScroll } from './tab-scroll.ts'
 
 export interface TabStripProps {
@@ -22,7 +23,10 @@ export interface TabStripProps {
   readonly rightPanel?: { toggle(): void }
   readonly storage: Storage | undefined
   onClose(tile: WorkspaceTile): void
-  onOpenPty(commandId: WorkspacePtyCommandId, title: string): void
+  readonly customAgents: readonly CustomAgent[]
+  onOpenPty(commandId: AgentId, title: string): void
+  onAddAgent(agent: CustomAgent): Promise<void>
+  onRemoveAgent(id: string): Promise<void>
 }
 
 function kindGlyph(kind: WorkspaceTile['kind']): string {
@@ -35,13 +39,10 @@ function kindGlyph(kind: WorkspaceTile['kind']): string {
   return '◉'
 }
 
-export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, storage, onClose, onOpenPty }: TabStripProps) {
-  const menuRef = useRef<HTMLDivElement>(null)
+export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, storage, customAgents, onClose, onOpenPty, onAddAgent, onRemoveAgent }: TabStripProps) {
   const tabsRef = useRef<HTMLDivElement>(null)
   const [edges, setEdges] = useState({ start: false, end: false })
   const [editing, setEditing] = useState<{ readonly id: string; readonly value: string } | null>(null)
-  const [hidden, setHidden] = useState<ReadonlySet<string>>(() => readHiddenAgents(storage))
-  const [configuring, setConfiguring] = useState(false)
 
   const syncEdges = useCallback((): void => {
     const el = tabsRef.current
@@ -76,39 +77,11 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
     syncEdges()
   }, [snapshot.activeId, snapshot.tiles.length, syncEdges])
 
-  // The menu closes on a click elsewhere or Escape.
-  useEffect(() => {
-    if (!snapshot.menuOpen) return
-    const onPointer = (event: PointerEvent): void => {
-      if (menuRef.current?.contains(event.target as Node) !== true) {
-        workspace.setMenuOpen(false)
-        setConfiguring(false)
-      }
-    }
-    const onKey = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') { workspace.setMenuOpen(false); setConfiguring(false) }
-    }
-    document.addEventListener('pointerdown', onPointer)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('pointerdown', onPointer)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [workspace, snapshot.menuOpen])
-
   const commitRename = (): void => {
     if (editing === null) return
     workspace.renameTile(editing.id, editing.value)
     setEditing(null)
   }
-
-  const flipAgent = (id: string): void => {
-    const next = toggleAgent(hidden, id)
-    setHidden(next)
-    writeHiddenAgents(storage, next)
-  }
-
-  const closeMenu = (): void => { workspace.setMenuOpen(false); setConfiguring(false) }
 
   return (
     <div className="dshWorkspaceTabstrip" role="tablist" aria-label="ACRYL Workspace">
@@ -155,7 +128,7 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
                   onKeyDown={(event) => { if (event.key === 'F2') { event.preventDefault(); setEditing({ id: tile.id, value: tile.title }) } }}
                 >
                   <span className="dshWorkspaceTabGlyph" aria-hidden="true">
-                    {tile.kind === 'pty' ? <AgentIcon commandId={tile.commandId ?? 'shell'} /> : kindGlyph(tile.kind)}
+                    {tile.kind === 'pty' ? <AgentIcon commandId={tile.commandId ?? 'shell'} custom={customAgents.find(agent => agent.id === tile.commandId)?.badge} /> : kindGlyph(tile.kind)}
                   </span>
                   <span className="dshWorkspaceTabLabel">{tile.title}{tile.fileRel !== undefined && tile.content !== undefined ? ' ●' : ''}</span>
                 </button>
@@ -191,76 +164,19 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
           {runningText}
         </button>
       )}
-      <div className="dshWorkspacePlusWrap" ref={menuRef}>
-        <button
-          type="button"
-          className="dshWorkspacePlus"
-          aria-label="New tab"
-          aria-expanded={snapshot.menuOpen}
-          aria-haspopup="menu"
-          onClick={() => { workspace.setMenuOpen(!snapshot.menuOpen); setConfiguring(false) }}
-        >
-          +
-        </button>
-        {snapshot.menuOpen && !configuring && (
-          <div className="dshWorkspaceMenu" role="menu">
-            {WORKSPACE_SURFACE_ACTIONS.map(action => (
-              <button
-                key={action.label}
-                type="button"
-                role="menuitem"
-                className="dshWorkspaceMenuItem"
-                onClick={() => {
-                  if (action.kind === 'pty') onOpenPty(action.commandId ?? 'shell', labelForCommand(action.commandId ?? 'shell'))
-                  else workspace.addTile(action.kind)
-                  closeMenu()
-                }}
-              >
-                {action.kind === 'pty' && <AgentIcon commandId="shell" />}
-                {action.label}
-              </button>
-            ))}
-            <div className="dshWorkspaceMenuRule" />
-            {visibleAgents(WORKSPACE_AGENT_COMMANDS, hidden).map(command => (
-              <button
-                key={command.id}
-                type="button"
-                role="menuitem"
-                className="dshWorkspaceMenuItem"
-                onClick={() => { onOpenPty(command.id, command.label); closeMenu() }}
-              >
-                <AgentIcon commandId={command.id} />
-                {command.label}
-              </button>
-            ))}
-            <div className="dshWorkspaceMenuRule" />
-            <button type="button" role="menuitem" className="dshWorkspaceMenuItem" data-muted onClick={() => { setConfiguring(true) }}>
-              Configure agents...
-            </button>
-          </div>
-        )}
-        {snapshot.menuOpen && configuring && (
-          <div className="dshWorkspaceMenu" role="menu" aria-label="Configure agents">
-            <div className="dshWorkspaceMenuHint">Choose the agents the + menu lists.</div>
-            {WORKSPACE_AGENT_COMMANDS.map(command => (
-              <button
-                key={command.id}
-                type="button"
-                role="menuitemcheckbox"
-                aria-checked={!hidden.has(command.id)}
-                className="dshWorkspaceMenuItem"
-                onClick={() => { flipAgent(command.id) }}
-              >
-                <AgentIcon commandId={command.id} />
-                <span className="dshWorkspaceMenuGrow">{command.label}</span>
-                <span className="dshWorkspaceMenuCheck" aria-hidden="true">{hidden.has(command.id) ? '' : '✓'}</span>
-              </button>
-            ))}
-            <div className="dshWorkspaceMenuRule" />
-            <button type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { setConfiguring(false) }}>Done</button>
-          </div>
-        )}
-      </div>
+      <NewTabMenu
+        open={snapshot.menuOpen}
+        customAgents={customAgents}
+        storage={storage}
+        setOpen={(open) => { workspace.setMenuOpen(open) }}
+        onSurface={(action) => {
+          if (action.kind === 'pty') onOpenPty(action.commandId ?? 'shell', labelForCommand(action.commandId ?? 'shell'))
+          else workspace.addTile(action.kind)
+        }}
+        onOpenAgent={onOpenPty}
+        onAddAgent={onAddAgent}
+        onRemoveAgent={onRemoveAgent}
+      />
       {rightPanel !== undefined && (
         <button
           type="button"

@@ -3,6 +3,8 @@
  * plain neutral badges, not vendor logos.
  */
 
+import type { AgentBadge } from '../../agents/definition.ts'
+import { isWorkspacePtyCommandId } from '../../pty/contract.ts'
 import type { WorkspacePtyCommandId } from '../../pty/contract.ts'
 
 interface Badge {
@@ -27,8 +29,11 @@ const BADGES: Record<WorkspacePtyCommandId, Badge> = {
   qwen: { letter: 'Q', color: '#8b5cf6' },
 }
 
-export function AgentIcon({ commandId }: { readonly commandId: WorkspacePtyCommandId }) {
-  const badge = BADGES[commandId]
+const UNKNOWN: Badge = { letter: '?', color: '#94a3b8' }
+
+/** @param custom - the badge of a custom agent; built-in agents use their own. */
+export function AgentIcon({ commandId, custom }: { readonly commandId: string; readonly custom?: AgentBadge | undefined }) {
+  const badge: Badge = custom ?? (isWorkspacePtyCommandId(commandId) ? BADGES[commandId] : UNKNOWN)
   return (
     <span className="dshWorkspaceAgentIcon" style={{ color: badge.color, borderColor: badge.color }} aria-hidden="true" data-agent={commandId}>
       {badge.letter}

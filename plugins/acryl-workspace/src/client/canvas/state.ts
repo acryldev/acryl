@@ -2,7 +2,7 @@
 
 import { labelForCommand } from '../terminal/agent-commands.ts'
 import { normalizeTabTitle } from './tab-title.ts'
-import type { WorkspacePtyCommandId } from '../../pty/contract.ts'
+import type { AgentId } from '../../pty/contract.ts'
 
 export type WorkspaceTileKind = 'chat' | 'pty' | 'file' | 'browser' | 'diff' | 'kanban' | 'doc'
 
@@ -19,7 +19,7 @@ export interface WorkspaceTile {
   readonly id: string
   readonly kind: WorkspaceTileKind
   readonly title: string
-  readonly commandId?: WorkspacePtyCommandId
+  readonly commandId?: AgentId
   readonly sessionId?: string
   readonly path?: string
   readonly content?: string
@@ -58,7 +58,7 @@ export interface WorkspaceStateOptions {
 }
 
 export interface AddTileOptions {
-  readonly commandId?: WorkspacePtyCommandId
+  readonly commandId?: AgentId
   readonly title?: string
   readonly fileWorktree?: string
   readonly fileRel?: string

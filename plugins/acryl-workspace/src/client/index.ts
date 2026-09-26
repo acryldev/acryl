@@ -26,6 +26,8 @@ import { createWorkspaceGitApi } from './git/git-api.ts'
 import { ProjectsSidebar } from './projects/ProjectsSidebar.tsx'
 import { createWorkspacePtyApi } from './terminal/pty-api.ts'
 import { WorkspacePtyClient } from './sessions/session-client.ts'
+import { createWorkspaceAgentsApi } from './agents/agents-api.ts'
+import { AgentsState } from './agents/agents-state.ts'
 import { TerminalRegistry } from './terminal/terminal-session.ts'
 import { startShellPolling } from './worktrees/shell-polling.ts'
 import { WorkspaceShellState } from './worktrees/shell-state.ts'
@@ -96,12 +98,14 @@ export function apply(ctx: ClientContext): void {
       const ptyClient = new WorkspacePtyClient(createWorkspacePtyApi())
       // Terminals live as long as this registration, so switching tabs never rebuilds one.
       const terminals = new TerminalRegistry()
+      const agents = new AgentsState(createWorkspaceAgentsApi())
+      void agents.refresh()
       let removeSlot: (() => void) | undefined
       try {
         removeSlot = ctx.slots.register({
           name: 'desktop.main',
           priority: WORKSPACE_MAIN_PRIORITY,
-          inject: () => ({ ptyApi: ptyClient, terminals, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }),
+          inject: () => ({ ptyApi: ptyClient, terminals, agents, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }),
         }, WorkspaceCanvas)
       } catch (cause) {
         // A registration conflict must not take the left pane and the Changes tab down with it.

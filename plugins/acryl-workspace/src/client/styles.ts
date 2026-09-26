@@ -24,6 +24,24 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceMenuItem[data-muted] { color: var(--dsw-alias-fg-l2); }
 .dshWorkspaceMenuGrow { flex: 1; }
 .dshWorkspaceMenuCheck { width: 14px; text-align: right; color: #4d6bfe; }
+.dshWorkspaceMenuRow { display: flex; align-items: center; }
+.dshWorkspaceMenuRemove { appearance: none; flex: none; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; }
+.dshWorkspaceMenuRemove:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); color: #f87171; }
+.dshWorkspaceMenuError { margin: 4px 10px; color: #f87171; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceAgentForm { display: flex; flex-direction: column; gap: 8px; width: 300px; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg); }
+.dshWorkspaceAgentForm label { display: flex; flex-direction: column; gap: 3px; padding: 0 4px; color: var(--dsw-alias-fg-l2); }
+.dshWorkspaceAgentForm input, .dshWorkspaceAgentForm textarea { padding: 5px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dshWorkspaceAgentBadgeRow { display: flex; align-items: flex-end; gap: 10px; }
+.dshWorkspaceAgentLetter { width: 44px; text-align: center; }
+.dshWorkspaceAgentColors { display: flex; flex-wrap: wrap; gap: 5px; padding-bottom: 4px; }
+.dshWorkspaceAgentColor { width: 16px; height: 16px; padding: 0; border: 2px solid transparent; border-radius: 50%; cursor: pointer; }
+.dshWorkspaceAgentColor[aria-checked="true"] { border-color: var(--dsw-alias-fg); }
+.dshWorkspaceAgentPreview { padding: 4px 6px; border-radius: 6px; background: var(--dsw-alias-fill-hover, rgb(127 127 127 / 10%)); overflow-wrap: anywhere; }
+.dshWorkspaceAgentPreview [data-muted] { color: var(--dsw-alias-fg-l2); }
+.dshWorkspaceAgentFormActions { display: flex; justify-content: flex-end; gap: 6px; }
+.dshWorkspaceAgentFormActions button { padding: 5px 12px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: inherit; }
+.dshWorkspaceAgentFormActions button[type="submit"] { background: #4d6bfe; border-color: #4d6bfe; color: #fff; }
+.dshWorkspaceAgentFormActions button:disabled { opacity: 0.45; cursor: not-allowed; }
 .dshWorkspaceMenuHint { padding: 6px 10px 8px; color: var(--dsw-alias-fg-l2); font: 11.5px/1.4 ui-sans-serif, system-ui, sans-serif; }
 /* One opener only: the canvas tab strip carries the always-present right-panel toggle, so upstream's own
    header opener (a documented data hook of the right sidebar) is hidden inside the canvas. */

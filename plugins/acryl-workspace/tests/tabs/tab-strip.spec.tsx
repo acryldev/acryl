@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useSyncExternalStore } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { CustomAgent } from '../../src/agents/definition.ts'
 import { WorkspaceState } from '../../src/client/canvas/state.ts'
 import { TabStrip } from '../../src/client/tabs/TabStrip.tsx'
 import { HIDDEN_AGENTS_KEY } from '../../src/client/tabs/agent-visibility.ts'
@@ -25,15 +26,15 @@ function memoryStorage(initial: Record<string, string> = {}): Storage {
   }
 }
 
-function Harness({ workspace, storage, onOpenPty }: { workspace: WorkspaceState; storage: Storage; onOpenPty: (id: string, title: string) => void }) {
+function Harness({ workspace, storage, onOpenPty, custom = [], onAdd = async () => {}, onRemove = async () => {} }: { workspace: WorkspaceState; storage: Storage; onOpenPty: (id: string, title: string) => void; custom?: readonly CustomAgent[]; onAdd?: (agent: CustomAgent) => Promise<void>; onRemove?: (id: string) => Promise<void> }) {
   const snapshot = useSyncExternalStore(l => workspace.subscribe(l), () => workspace.getSnapshot())
-  return <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={storage} onClose={() => {}} onOpenPty={onOpenPty} />
+  return <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={storage} customAgents={custom} onClose={() => {}} onOpenPty={onOpenPty} onAddAgent={onAdd} onRemoveAgent={onRemove} />
 }
 
-function setup(storage = memoryStorage()) {
+function setup(storage = memoryStorage(), extra: { custom?: readonly CustomAgent[]; onAdd?: (agent: CustomAgent) => Promise<void>; onRemove?: (id: string) => Promise<void> } = {}) {
   const workspace = new WorkspaceState()
   const onOpenPty = vi.fn()
-  render(<Harness workspace={workspace} storage={storage} onOpenPty={onOpenPty} />)
+  render(<Harness workspace={workspace} storage={storage} onOpenPty={onOpenPty} {...extra} />)
   return { workspace, storage, onOpenPty }
 }
 
@@ -86,5 +87,54 @@ describe('TabStrip', () => {
     setup(memoryStorage({ [HIDDEN_AGENTS_KEY]: JSON.stringify(['goose']) }))
     fireEvent.click(screen.getByRole('button', { name: 'New tab' }))
     expect(screen.queryByRole('menuitem', { name: /Goose/ })).toBeNull()
+  })
+
+  const mine: CustomAgent = { id: 'my-agent', label: 'My Agent', command: 'my-agent', args: ['--fast'], badge: { letter: 'M', color: '#10a37f' } }
+
+  it('lists custom agents in the + menu with their own badge and starts them by id', () => {
+    const { onOpenPty } = setup(memoryStorage(), { custom: [mine] })
+    fireEvent.click(screen.getByRole('button', { name: 'New tab' }))
+    expect(document.querySelector('[role="menu"] [data-agent="my-agent"]')).not.toBeNull()
+    fireEvent.click(screen.getByRole('menuitem', { name: /My Agent/ }))
+    expect(onOpenPty).toHaveBeenCalledWith('my-agent', 'My Agent')
+  })
+
+  it('adds an agent from the form, showing the exact command first and refusing unsafe input', async () => {
+    const onAdd = vi.fn(async () => {})
+    setup(memoryStorage(), { onAdd })
+    fireEvent.click(screen.getByRole('button', { name: 'New tab' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Configure agents...' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Add an agent...' }))
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'My Agent' } })
+    fireEvent.change(screen.getByLabelText('Command'), { target: { value: 'my-agent && rm -rf ~' } })
+    expect((screen.getByRole('button', { name: 'Add agent' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText(/without spaces or shell characters/)).toBeTruthy()
+    fireEvent.change(screen.getByLabelText('Command'), { target: { value: 'my-agent' } })
+    fireEvent.change(screen.getByLabelText('Arguments (one per line)'), { target: { value: '--model\nfast model' } })
+    expect(screen.getByText('my-agent --model "fast model"')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Add agent' }))
+    await waitFor(() => { expect(onAdd).toHaveBeenCalledTimes(1) })
+    expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({ id: 'my-agent', command: 'my-agent', args: ['--model', 'fast model'] }))
+  })
+
+  it("shows the Host's own refusal and keeps the form open", async () => {
+    setup(memoryStorage(), { onAdd: () => Promise.reject(new Error('"my-agent" was not found on this machine')) })
+    fireEvent.click(screen.getByRole('button', { name: 'New tab' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Configure agents...' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Add an agent...' }))
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'My Agent' } })
+    fireEvent.change(screen.getByLabelText('Command'), { target: { value: 'my-agent' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add agent' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('was not found on this machine')
+    expect(screen.getByLabelText('Command')).toBeTruthy()
+  })
+
+  it('removes a custom agent from Configure agents', async () => {
+    const onRemove = vi.fn(async () => {})
+    setup(memoryStorage(), { custom: [mine], onRemove })
+    fireEvent.click(screen.getByRole('button', { name: 'New tab' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Configure agents...' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Remove My Agent' }))
+    await waitFor(() => { expect(onRemove).toHaveBeenCalledWith('my-agent') })
   })
 })

@@ -8,7 +8,6 @@ import {
   WORKSPACE_PTY_INPUT_PATH,
   WORKSPACE_PTY_PATH,
   WORKSPACE_PTY_RESIZE_PATH,
-  isWorkspacePtyCommandId,
 } from './contract.ts'
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -50,7 +49,7 @@ export async function handleWorkspacePtyRequest(
     return finishJson(res, 400, error('invalid workspace PTY request'))
   }
   const extraKeys = isObject(body) ? Object.keys(body).filter(key => key !== 'commandId' && key !== 'cwd' && key !== 'cols' && key !== 'rows') : []
-  if (!isObject(body) || !isWorkspacePtyCommandId(body.commandId) || extraKeys.length > 0
+  if (!isObject(body) || typeof body.commandId !== 'string' || body.commandId.length === 0 || body.commandId.length > 32 || extraKeys.length > 0
     || (body.cwd !== undefined && (typeof body.cwd !== 'string' || body.cwd.length === 0))) {
     return finishJson(res, 400, error('invalid workspace PTY request'))
   }

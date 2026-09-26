@@ -96,3 +96,6 @@ export function parsePtyServerMessage(text: string): PtyServerMessage {
   }
   throw new Error('acryl-workspace: invalid terminal stream message')
 }
+
+/** Any agent id the Host may be asked to start: a built-in one or one from the user's catalog. */
+export type AgentId = string

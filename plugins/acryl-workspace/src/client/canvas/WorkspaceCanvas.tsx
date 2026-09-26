@@ -8,7 +8,7 @@ import type { UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
 // compilations drop entirely) reliably pulls that augmentation into this
 // program even though nothing here holds a value of it.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
-import type { WorkspacePtyCommandId } from '../../pty/contract.ts'
+import type { AgentId } from '../../pty/contract.ts'
 import { diffLines } from '../diff/line-diff.ts'
 import type { AgentBridge } from '../sessions/agent-bridge.ts'
 import { buildReviewComment } from '../diff/comment-message.ts'
@@ -23,6 +23,7 @@ import { countRunning, runningLabel } from '../sessions/running-agents.ts'
 import { estimateTerminalSize } from '../terminal/terminal-size.ts'
 import { PtyPane } from '../terminal/PtyPane.tsx'
 import type { TerminalRegistry } from '../terminal/terminal-session.ts'
+import type { AgentsState } from '../agents/agents-state.ts'
 import { TabStrip } from '../tabs/TabStrip.tsx'
 import { SplitDivider } from './SplitDivider.tsx'
 import { clampSplit, readSplitRatio, writeSplitRatio } from './split-ratio.ts'
@@ -44,6 +45,8 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   readonly ptyApi?: WorkspacePtyApi
   /** The live terminals, owned by the composition root so they end with the plugin, not with a render. */
   readonly terminals: TerminalRegistry
+  /** The user's custom agents, for the "+" menu and the tab icons. */
+  readonly agents: AgentsState
   readonly useSessions: UseSessions
   /** Shared shell state: which worktree is selected, and the channel for open-diff requests. */
   readonly shell: WorkspaceShellState
@@ -68,7 +71,7 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents: agentsState, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
   // Subscribe to primitives, not the whole shell snapshot: git polling updates that snapshot often,
@@ -180,7 +183,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, useSess
     return <DiffPane tile={tile} workspace={workspace} />
   }
 
-  const openPty = useCallback(async (commandId: WorkspacePtyCommandId, title: string) => {
+  const openPty = useCallback(async (commandId: AgentId, title: string) => {
     const tile = workspace.addTile('pty', { commandId, title })
     if (tile === undefined) return
     try {
@@ -196,6 +199,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, useSess
     }
   }, [api, workspace, groupKey])
 
+  const customAgents = useSyncExternalStore(agentsState.subscribe, agentsState.getSnapshot)
   const runningText = runningLabel(countRunning(sessions.ids.flatMap((id) => { const row = sessions.byId[id]; return row === undefined ? [] : [row] })))
 
   return (
@@ -209,7 +213,10 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, useSess
         {...(rightPanel === undefined ? {} : { rightPanel })}
         storage={safeStorage()}
         onClose={(tile) => { void closeTile(tile) }}
+        customAgents={customAgents}
         onOpenPty={(commandId, title) => { void openPty(commandId, title) }}
+        onAddAgent={agent => agentsState.add(agent)}
+        onRemoveAgent={id => agentsState.remove(id)}
       />
       <div ref={stageRef} className="dshWorkspaceStage" role="tabpanel" data-split={splitTile !== undefined || undefined}>
         <div className="dshWorkspacePane" data-pane="primary" style={splitTile === undefined ? undefined : { flexBasis: `${splitRatio * 100}%`, flexGrow: 0 }}>

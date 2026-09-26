@@ -1,4 +1,4 @@
-import type { WorkspacePtyCommandId, WorkspacePtyView } from '../../pty/contract.ts'
+import type { AgentId, WorkspacePtyView } from '../../pty/contract.ts'
 import type { TerminalSize, WorkspacePtyApi } from '../terminal/pty-api.ts'
 
 /**
@@ -13,7 +13,7 @@ export class WorkspacePtyClient implements WorkspacePtyApi {
 
   constructor(private readonly api: WorkspacePtyApi) {}
 
-  async start(commandId: WorkspacePtyCommandId, cwd?: string, size?: TerminalSize): Promise<WorkspacePtyView> {
+  async start(commandId: AgentId, cwd?: string, size?: TerminalSize): Promise<WorkspacePtyView> {
     if (this.disposed) throw new Error('Workspace PTY client is disposed')
     let settle!: () => void
     const completion = new Promise<void>(resolve => { settle = resolve })

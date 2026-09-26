@@ -6,7 +6,7 @@ import { statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { isAbsolute, join } from 'node:path'
 import { spawn as spawnPty } from 'node-pty'
-import type { WorkspacePtyCommandId, WorkspacePtyStatus, WorkspacePtyView } from './contract.ts'
+import type { AgentId, WorkspacePtyCommandId, WorkspacePtyStatus, WorkspacePtyView } from './contract.ts'
 import { MAX_PTY_COLS, MAX_PTY_ROWS, isWorkspacePtyCommandId } from './contract.ts'
 import { Scrollback, type Replay } from './scrollback.ts'
 import { ScreenModel } from './screen-model.ts'
@@ -114,7 +114,13 @@ export interface WorkspacePtySpawnPlan {
   readonly args: readonly string[]
 }
 
+/** Resolves an agent id that is not built in (the user's catalog). */
+export interface CustomAgentResolver {
+  resolve(id: string): { readonly command: string; readonly args: readonly string[] } | undefined
+}
+
 export interface WorkspacePtyRegistryOptions {
+  readonly agents?: CustomAgentResolver
   readonly spawn?: WorkspacePtySpawn
   readonly env?: NodeJS.ProcessEnv
   readonly cwd?: string
@@ -192,6 +198,7 @@ export class WorkspacePtyRegistry {
   private readonly platform: NodeJS.Platform
   private readonly createId: () => string
   private readonly spawnDirs: string[]
+  private readonly agents: CustomAgentResolver | undefined
 
   constructor(options: WorkspacePtyRegistryOptions = {}) {
     this.spawnImpl = options.spawn ?? defaultSpawn
@@ -200,6 +207,7 @@ export class WorkspacePtyRegistry {
     this.platform = options.platform ?? process.platform
     this.createId = options.createId ?? (() => `pty_${randomUUID()}`)
     this.spawnDirs = workspacePtySpawnDirs(this.env, this.platform)
+    this.agents = options.agents
   }
 
   /**
@@ -207,8 +215,9 @@ export class WorkspacePtyRegistry {
    * @param commandId - catalog id from the Terminal/agent tab.
    * @param cwd - optional working directory (a worktree); must be an existing absolute directory.
    */
-  start(commandId: string, cwd?: string, size?: { readonly cols: number; readonly rows: number }): WorkspacePtyView {
-    if (!isWorkspacePtyCommandId(commandId)) {
+  start(commandId: AgentId, cwd?: string, size?: { readonly cols: number; readonly rows: number }): WorkspacePtyView {
+    const custom = isWorkspacePtyCommandId(commandId) ? undefined : this.agents?.resolve(commandId)
+    if (!isWorkspacePtyCommandId(commandId) && custom === undefined) {
       throw new Error('acryl-workspace: unknown workspace PTY command')
     }
     if (cwd !== undefined && !isExistingAbsoluteDirectory(cwd)) {
@@ -219,7 +228,7 @@ export class WorkspacePtyRegistry {
     if (!Number.isInteger(cols) || !Number.isInteger(rows) || cols < 2 || cols > MAX_PTY_COLS || rows < 1 || rows > MAX_PTY_ROWS) {
       throw new Error('acryl-workspace: workspace PTY size is out of range')
     }
-    const plan = planWorkspacePtyCommand(commandId, this.platform, this.env)
+    const plan: WorkspacePtySpawnPlan = custom ?? planWorkspacePtyCommand(commandId as WorkspacePtyCommandId, this.platform, this.env)
     const id = this.createId()
     let process: WorkspacePtyProcess
     try {
@@ -268,6 +277,19 @@ export class WorkspacePtyRegistry {
     }))
     this.sessions.set(id, session)
     return this.view(session)
+  }
+
+  /** True when `command` is an absolute executable file or a program on the search path. */
+  canRun(command: string): boolean {
+    if (isAbsolute(command)) {
+      try {
+        const info = statSync(command)
+        return info.isFile() && (this.platform === 'win32' || (info.mode & 0o111) !== 0)
+      } catch {
+        return false
+      }
+    }
+    return resolveWorkspacePtyCommand(command, this.spawnDirs, this.platform) !== undefined
   }
 
   /** Write exact terminal input bytes. */

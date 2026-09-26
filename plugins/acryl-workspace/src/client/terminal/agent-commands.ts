@@ -1,7 +1,7 @@
 /** Labels for allowlisted Terminal / agent tabs. */
 
 import type { WorkspacePtyCommandId } from '../../pty/contract.ts'
-import { WORKSPACE_PTY_COMMAND_IDS } from '../../pty/contract.ts'
+import { WORKSPACE_PTY_COMMAND_IDS, isWorkspacePtyCommandId } from '../../pty/contract.ts'
 
 export interface WorkspaceAgentCommand {
   readonly id: WorkspacePtyCommandId
@@ -44,6 +44,7 @@ export const WORKSPACE_AGENT_COMMANDS: readonly WorkspaceAgentCommand[] = WORKSP
   .filter(id => id !== 'shell')
   .map(id => ({ id, label: LABELS[id] }))
 
-export function labelForCommand(id: WorkspacePtyCommandId): string {
-  return LABELS[id]
+/** The name of an agent id; a custom agent's own name is used by the caller that knows it. */
+export function labelForCommand(id: string): string {
+  return isWorkspacePtyCommandId(id) ? LABELS[id] : id
 }

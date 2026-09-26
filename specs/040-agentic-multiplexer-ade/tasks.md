@@ -108,16 +108,16 @@ Source: the owner's reviews of the running Web surface, with reference screensho
 
 **The + menu and agents**
 - [x] **T097** The + menu lists every supported agent by default with icons; "Configure agents..." lets the user hide the ones they never use (remembered per browser).
-- [ ] **T098** Add your own agents: user-defined command entries (name, command, icon) as Host configuration validated against a safe shape and confirmed by the user, never a free-form command from the page. Needs a Host allowlist design before any code.
+- [x] **T098** Add your own agents: user-defined command entries (name, command, icon) as Host configuration validated against a safe shape and confirmed by the user, never a free-form command from the page. Needs a Host allowlist design before any code. Delivered (design in `design-phase-9.md`): a catalog in the user's ACRYL home, validated definitions (no shell, no metacharacters, palette badges), refusal messages, same-origin add and remove routes, a form that shows the exact command line; a worktree can never add an agent. Tests are adversarial (injection attempts) and the real Web boot starts a custom agent.
 - [ ] **T099** Split control next to + (chevron menu like superset: default agent for the + button, remembered).
 
 **Terminal quality (native feel)**
 - [x] **T100** Terminals rebuilt on an ordered WebSocket stream with cursor resume, sessions that survive tab switches, xterm's real stylesheet, UTF-8/truecolor environment (`3c37265`). Root causes found: a 64KB sliding string replayed on every poll, per-keystroke HTTP posts that could reorder, a hand-copied partial stylesheet, terminals rebuilt from a mid-stream tail on every tab switch.
-- [ ] **T101** Perfect reattach after a page reload or a long disconnect: keep a headless terminal (xterm headless plus serialize addon) on the Host so a reconnecting view gets the exact screen, not a replayed tail.
-- [ ] **T102** GPU renderer (WebGL addon) with automatic fallback, ligature-free crisp box drawing; measure on a real TUI (Claude, Codex, Grok).
-- [ ] **T103** Start the process at the pane's real size (size sent with the start request) so the first frame is not drawn at 120x40.
+- [x] **T101** Perfect reattach after a page reload or a long disconnect: keep a headless terminal (xterm headless plus serialize addon) on the Host so a reconnecting view gets the exact screen, not a replayed tail. Delivered: a Host-side headless screen model per terminal; a view that attaches without a usable cursor gets the exact screen (including a full-screen program's alternate screen). Tested on a real PTY.
+- [x] **T102** GPU renderer (WebGL addon) with automatic fallback, ligature-free crisp box drawing; measure on a real TUI (Claude, Codex, Grok). Delivered: WebGL renderer with fallback to the DOM renderer where WebGL2 is missing or the context is lost. Not measured on a real GPU yet.
+- [x] **T103** Start the process at the pane's real size (size sent with the start request) so the first frame is not drawn at 120x40. Delivered: the pane's estimated size is sent with the start request; the real size follows on attach.
 - [ ] **T104** Terminal niceties: clickable links, search in scrollback, copy/paste and selection behaviour on par with a native terminal, tab title from the terminal title.
-- [ ] **T105** Real-browser regression run with a full-screen TUI: resize, rapid typing, switching tabs back and forth, reload, dropped connection.
+- [~] **T105** Real-browser regression run with a full-screen TUI: resize, rapid typing, switching tabs back and forth, reload, dropped connection. Automated part delivered (real PTY, alternate screen, resize, a 30,000-line burst); the manual browser run with Claude, Codex or Grok is still open.
 
 **Layout and chrome (super.engineering, Orca, superset.sh)**
 - [ ] **T106** Status line: N agents running (pill shipped in the tab strip, `0daf74f`), plus cost or context pressure, quick actions (open in editor, run), a PR badge; needs the shell frame's row structure changed with a real browser check.

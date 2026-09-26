@@ -38,6 +38,10 @@ import {
   handleWorkspaceGitUnstageRequest,
   handleWorkspaceGitWorktreeRequest,
 } from './git/route.ts'
+import { AgentCatalog } from './agents/catalog.ts'
+import { WORKSPACE_AGENTS_PATH, WORKSPACE_AGENTS_REMOVE_PATH } from './agents/contract.ts'
+import { createFileCatalogStore, defaultAgentsFile } from './agents/file-store.ts'
+import { handleWorkspaceAgentsRemoveRequest, handleWorkspaceAgentsRequest } from './agents/route.ts'
 import { WorkspacePtyRegistry } from './pty/service.ts'
 import {
   WORKSPACE_PTY_CLOSE_PATH,
@@ -76,7 +80,11 @@ export function apply(ctx: Context): void {
     )
   }
   ctx.effect(() => {
-    const workspacePty = new WorkspacePtyRegistry()
+    // The user's custom agents live in their ACRYL home; the registry asks the catalog what an id means.
+    let catalog: AgentCatalog | undefined
+    const workspacePty = new WorkspacePtyRegistry({ agents: { resolve: id => catalog?.resolve(id) } })
+    catalog = new AgentCatalog(createFileCatalogStore(defaultAgentsFile()), command => workspacePty.canRun(command))
+    void catalog.load().catch(reportHostError.bind(undefined, 'load custom agents'))
     const workspaceGit = new WorkspaceGit()
     const workspaceFiles = new WorkspaceFiles({
       // Only a git worktree root is a place the editor may touch; a failed check surfaces as a bad path.
@@ -110,6 +118,17 @@ export function apply(ctx: Context): void {
         path: WORKSPACE_PTY_STREAM_PATH,
         handler: (req, socket, head) => { ptyStream.handleUpgrade(req, socket, head) },
       }))
+      const agentRoutes = [
+        [WORKSPACE_AGENTS_PATH, handleWorkspaceAgentsRequest],
+        [WORKSPACE_AGENTS_REMOVE_PATH, handleWorkspaceAgentsRemoveRequest],
+      ] as const
+      for (const [path, handler] of agentRoutes) {
+        releases.push(ctx.webServer.register({
+          kind: 'exact',
+          path,
+          handler: (req, res) => handler(req, res, rendererOrigin, catalog, reportHostError),
+        }))
+      }
       const gitRoutes = [
         [WORKSPACE_GIT_REPO_PATH, handleWorkspaceGitRepoRequest],
         [WORKSPACE_GIT_STATUS_PATH, handleWorkspaceGitStatusRequest],

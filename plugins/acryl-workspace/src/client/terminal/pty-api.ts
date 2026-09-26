@@ -5,7 +5,7 @@ import {
   WORKSPACE_PTY_INPUT_PATH,
   WORKSPACE_PTY_PATH,
   WORKSPACE_PTY_RESIZE_PATH,
-  type WorkspacePtyCommandId,
+  type AgentId,
   type WorkspacePtyView,
 } from '../../pty/contract.ts'
 
@@ -50,7 +50,7 @@ export interface WorkspacePtyApi {
    * @param cwd - optional worktree directory to start in.
    * @param size - the size the terminal will be shown at, so the first frame already fits.
    */
-  start(commandId: WorkspacePtyCommandId, cwd?: string, size?: TerminalSize): Promise<WorkspacePtyView>
+  start(commandId: AgentId, cwd?: string, size?: TerminalSize): Promise<WorkspacePtyView>
   read(id: string): Promise<WorkspacePtyView>
   write(id: string, data: string): Promise<void>
   resize(id: string, cols: number, rows: number): Promise<void>
