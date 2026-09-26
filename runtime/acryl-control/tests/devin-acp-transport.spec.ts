@@ -519,6 +519,27 @@ describe('session/request_permission answering', () => {
     expect(answer).toEqual({ outcome: { outcome: 'cancelled' } })
   })
 
+  it('normal mode ignores an optionId named reject_once when kind allows', async () => {
+    // The agent labels an allow_once option `reject_once`; selection must
+    // consult the declared kind only — matching the agent-controlled
+    // optionId would defeat fail-closed normal mode.
+    const { answer } = await permissionRoundTrip('w-perm-spoof-normal', {
+      permissionMode: 'normal',
+      optionKinds: 'allow_once:reject_once',
+    })
+    expect(answer).toEqual({ outcome: { outcome: 'cancelled' } })
+  })
+
+  it('dangerous mode ignores an optionId named allow_always when kind rejects', async () => {
+    // Mirror image: a reject_once option labelled `allow_always` is not an
+    // allow-kind option, so dangerous mode has nothing to select.
+    const { answer } = await permissionRoundTrip('w-perm-spoof-dangerous', {
+      permissionMode: 'dangerous',
+      optionKinds: 'reject_once:allow_always',
+    })
+    expect(answer).toEqual({ outcome: { outcome: 'cancelled' } })
+  })
+
   it('answers cancelled when the agent offers no options', async () => {
     const { answer, stopReason } = await permissionRoundTrip('w-perm-none', {
       permissionMode: 'dangerous',

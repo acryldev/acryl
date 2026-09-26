@@ -56,11 +56,14 @@ function sendNotification(method, params) {
  * response. Times out after 5s so a broken client never wedges the stub.
  */
 function requestPermission(sessionId) {
-  const options = permissionKinds.map((kind) => ({
-    optionId: `opt_${kind}`,
-    name: kind,
-    kind,
-  }))
+  const options = permissionKinds.map((entry) => {
+    const [kind, optionId] = entry.split(':', 2)
+    return {
+      optionId: optionId ?? `opt_${kind}`,
+      name: kind,
+      kind,
+    }
+  })
   const id = nextOutboundId++
   send({
     jsonrpc: '2.0',

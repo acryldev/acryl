@@ -84,12 +84,12 @@ const PERMISSION_OPTION_KINDS: readonly DevinAcpPermissionOptionKind[] = [
 ]
 
 /**
- * Option-kind/optionId preference order per `permissionMode`. The plain
- * `reject` token covers agents that name a refusal option `reject` without
- * the spec suffix.
+ * Option-kind preference order per `permissionMode`. `kind` is the only
+ * semantic field — it comes from the spec vocabulary, while `optionId` is
+ * agent-controlled and must never steer selection.
  */
 const ALLOW_PREFERENCE = ['allow_always', 'allow_once'] as const
-const REJECT_PREFERENCE = ['reject_once', 'reject_always', 'reject'] as const
+const REJECT_PREFERENCE = ['reject_once', 'reject_always'] as const
 
 /** Default bound on an `onPermissionRequest` callback resolving. */
 const DEFAULT_PERMISSION_TIMEOUT_MS = 60_000
@@ -184,13 +184,18 @@ function racePermissionAnswer(
   })
 }
 
-/** Pick the first option matching the mode's preference order. */
+/**
+ * Pick the first option matching the mode's preference order. Selection
+ * consults the declared `kind` only: matching `optionId` would let an agent
+ * label an `allow_*` option `reject_once` and defeat fail-closed `normal`
+ * mode (the id is echoed back, so the label survives either way).
+ */
 function selectPermissionOption(
   options: readonly DevinAcpPermissionOption[],
   preference: readonly string[],
 ): DevinAcpPermissionResponse {
   for (const token of preference) {
-    const found = options.find((o) => o.kind === token || o.optionId === token)
+    const found = options.find((o) => o.kind === token)
     if (found !== undefined) {
       return { outcome: { outcome: 'selected', optionId: found.optionId } }
     }
