@@ -373,11 +373,17 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
         // explicit credentials — in practice, devin acp reads them from disk.
       }
 
-      // 3. Session new
-      sessionResult = await rpc.call<{ sessionId: string }>('session/new', {
+      // 3. Session new. A malformed agent can answer `result: {}`; an
+      // absent sessionId must fail the start here rather than leak into
+      // session/prompt as `undefined`.
+      const newSession = await rpc.call<{ sessionId?: unknown }>('session/new', {
         cwd,
         mcpServers: [],
       }, { signal })
+      if (typeof newSession.sessionId !== 'string' || newSession.sessionId === '') {
+        throw new Error('Devin ACP session/new returned no usable sessionId')
+      }
+      sessionResult = { sessionId: newSession.sessionId }
 
       state.sessionId = sessionResult.sessionId
     } catch (error) {
@@ -421,14 +427,21 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
         ? command.payload
         : [{ type: 'text', text: String(command.payload) }]
 
-    if (signal?.aborted) {
-      state.rpc.notify('session/cancel', { sessionId: state.sessionId })
+    let result: { stopReason: string }
+    try {
+      result = await state.rpc.call<{ stopReason: string }>('session/prompt', {
+        sessionId: state.sessionId,
+        prompt,
+      }, { signal })
+    } catch (error) {
+      // An abort (or a pre-aborted signal) rejects the local call but leaves
+      // the agent's turn running server-side — cancel best-effort so the
+      // turn actually stops.
+      if (signal?.aborted) {
+        state.rpc.notify('session/cancel', { sessionId: state.sessionId })
+      }
+      throw error
     }
-
-    const result = await state.rpc.call<{ stopReason: string }>('session/prompt', {
-      sessionId: state.sessionId,
-      prompt,
-    }, { signal })
 
     return {
       stopReason: result.stopReason,
@@ -513,15 +526,18 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
       state.process.once('exit', finish)
       state.process.once('error', finish)
 
-      // SIGTERM first, SIGKILL after 2s
+      // SIGTERM first, SIGKILL after 2s. `process.killed` only reports that
+      // a signal was *sent* (our own SIGTERM already sets it), so the
+      // escalation must consult `state.dead` — the flag the 'exit'/'close'/
+      // 'error' listeners set — or a SIGTERM-ignoring agent leaks.
       try {
         state.process.kill('SIGTERM')
       } catch {
         // The process died between the dead check and now; 'exit'/'error'
         // listeners or the fallback timer still settle the promise.
       }
-      setTimeout(() => {
-        if (!state.process.killed) {
+      const graceTimer = setTimeout(() => {
+        if (!state.dead) {
           try {
             state.process.kill('SIGKILL')
           } catch {
@@ -529,6 +545,8 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
           }
         }
       }, 2000)
+      // The grace-period timer is a fallback, not work the host must wait on.
+      graceTimer.unref?.()
 
       // Don't wait more than 3s total
       setTimeout(finish, 3000)

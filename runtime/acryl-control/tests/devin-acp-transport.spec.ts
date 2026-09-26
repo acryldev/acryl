@@ -428,6 +428,92 @@ describe('devinAcpTransport', () => {
     await transport.execute(snapshot('w-cap', result.runtimeId), { kind: 'stop', payload: null })
     transport.dispose()
   })
+
+  it('treats a session/new result without a sessionId as a failed start', async () => {
+    const wrapper = createWrapperScript()
+    const transport = devinAcpTransport({
+      binaryPath: wrapper,
+      cwd: '/tmp',
+      env: { STUB_ACP_SESSION_NEW_EMPTY: '1' },
+    })
+
+    await expect(
+      transport.execute(snapshot('w-badsession', null), { kind: 'start', payload: null }),
+    ).rejects.toThrow('no usable sessionId')
+
+    // The half-started worker was released: a retry reaches the same
+    // sessionId failure, not 'already has an active Devin ACP session'.
+    await expect(
+      transport.execute(snapshot('w-badsession', null), { kind: 'start', payload: null }),
+    ).rejects.toThrow('no usable sessionId')
+
+    transport.dispose()
+  })
+
+  it('sends session/cancel when a prompt is aborted mid-turn', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'devin-acp-abort-'))
+    const captureFile = join(dir, 'capture.jsonl')
+    const wrapper = createWrapperScript()
+    const transport = devinAcpTransport({
+      binaryPath: wrapper,
+      cwd: '/tmp',
+      env: { STUB_ACP_CAPTURE: captureFile, STUB_ACP_HANG: 'session/prompt' },
+    })
+
+    const started = await transport.execute(
+      snapshot('w-send-abort', null),
+      { kind: 'start', payload: null },
+    ) as { runtimeId: string }
+
+    const controller = new AbortController()
+    const pending = transport.execute(
+      snapshot('w-send-abort', started.runtimeId),
+      { kind: 'send', payload: 'hang on this' },
+      controller.signal,
+    )
+    // Give the prompt a moment to reach the stub, then abort mid-turn.
+    await new Promise((resolve) => setTimeout(resolve, 150))
+    controller.abort()
+    await expect(pending).rejects.toThrow(/abort/i)
+
+    // The stub observed the prompt followed by the best-effort cancel —
+    // the local rejection alone would leave the agent's turn running.
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    const methods = readFileSync(captureFile, 'utf8')
+      .trim()
+      .split('\n')
+      .map((line) => (JSON.parse(line) as { method?: string }).method)
+    const promptIndex = methods.indexOf('session/prompt')
+    expect(promptIndex).toBeGreaterThanOrEqual(0)
+    expect(methods.indexOf('session/cancel')).toBeGreaterThan(promptIndex)
+
+    await transport.execute(snapshot('w-send-abort', started.runtimeId), { kind: 'stop', payload: null })
+    transport.dispose()
+  })
+
+  it('escalates to SIGKILL when the agent ignores SIGTERM', async () => {
+    const wrapper = createWrapperScript()
+    const transport = devinAcpTransport({
+      binaryPath: wrapper,
+      cwd: '/tmp',
+      env: { STUB_ACP_IGNORE_SIGTERM: '1' },
+    })
+
+    const started = await transport.execute(
+      snapshot('w-stubborn', null),
+      { kind: 'start', payload: null },
+    ) as { runtimeId: string }
+    const pid = parseInt(started.runtimeId, 10)
+    expect(pid).toBeGreaterThan(0)
+
+    // The stub swallows SIGTERM; only the SIGKILL escalation after the 2s
+    // grace period can reap it.
+    await transport.execute(snapshot('w-stubborn', started.runtimeId), { kind: 'stop', payload: null })
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    expect(() => process.kill(pid, 0)).toThrow()
+
+    transport.dispose()
+  })
 })
 
 describe('session/request_permission answering', () => {

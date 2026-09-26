@@ -21,8 +21,14 @@
  *   client's answer before replying. The answer is echoed back as an
  *   `agent_message_chunk` update whose text is `permission:<json>`.
  * - STUB_ACP_PERMISSION_OPTIONS: comma-separated option kinds offered in
- *   the permission request (optionId = `opt_<kind>`). `none` offers no
- *   options. Default: `allow_once,reject_once`.
+ *   the permission request (optionId = `opt_<kind>`). An entry written as
+ *   `kind:optionId` offers a mismatched pair (tests that an agent-controlled
+ *   optionId never steers kind-based selection). `none` offers no options.
+ *   Default: `allow_once,reject_once`.
+ * - STUB_ACP_SESSION_NEW_EMPTY: when `1`, session/new replies `result: {}`
+ *   (malformed-result tests).
+ * - STUB_ACP_IGNORE_SIGTERM: when `1`, the stub swallows SIGTERM so the
+ *   client's SIGKILL escalation is exercised (kill tests).
  */
 
 import * as readline from 'node:readline'
@@ -37,6 +43,11 @@ const permissionPrompt = process.env.STUB_ACP_PERMISSION_PROMPT === '1'
 const permissionKinds = (process.env.STUB_ACP_PERMISSION_OPTIONS ?? 'allow_once,reject_once')
   .split(',')
   .filter((kind) => kind !== '' && kind !== 'none')
+const sessionNewEmpty = process.env.STUB_ACP_SESSION_NEW_EMPTY === '1'
+
+if (process.env.STUB_ACP_IGNORE_SIGTERM === '1') {
+  process.on('SIGTERM', () => {})
+}
 
 let nextSessionId = 1
 let nextOutboundId = 100000
@@ -134,6 +145,11 @@ rl.on('line', (line) => {
       },
     })
   } else if (msg.method === 'session/new') {
+    if (sessionNewEmpty) {
+      // Malformed agent: a result object without a sessionId.
+      send({ jsonrpc: '2.0', id: msg.id, result: {} })
+      return
+    }
     const sessionId = `sess_${nextSessionId++}`
     sessions.set(sessionId, { cwd: msg.params?.cwd, history: [] })
     send({ jsonrpc: '2.0', id: msg.id, result: { sessionId } })
