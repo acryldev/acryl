@@ -198,6 +198,33 @@ describe('JsonRpcClient', () => {
     })
   })
 
+  it('ignores scalar and array JSON lines instead of crashing the host', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc)
+
+    // Each of these parses successfully but is not a JSON-RPC message;
+    // `'id' in <scalar>` would throw a TypeError inside the stdout 'data'
+    // listener (uncaughtException → host crash).
+    proc._sendLine('null')
+    proc._sendLine('42')
+    proc._sendLine('true')
+    proc._sendLine('"text"')
+    proc._sendLine('[1, 2]')
+
+    await new Promise((resolve) => setImmediate(resolve))
+
+    // No response was produced for any of them.
+    expect(proc._captured).toHaveLength(0)
+
+    // The client still works afterwards.
+    proc.on('input', (chunk: string) => {
+      const msg = JSON.parse(chunk.trim())
+      proc._sendLine(JSON.stringify({ jsonrpc: '2.0', id: msg.id, result: 'ok' }))
+    })
+    await expect(client.call('test')).resolves.toBe('ok')
+    client.dispose()
+  })
+
   it('rejects pending calls with TransportError when the process errors, then refuses new calls', async () => {
     const proc = createStubProcess()
     const client = new JsonRpcClient(proc)
@@ -273,5 +300,148 @@ describe('JsonRpcClient', () => {
     proc._emitExit(0, null)
     await expect(client.call('late')).rejects.toBeInstanceOf(TransportError)
     client.dispose()
+  })
+
+  it('writes an onRequest handler result back as the JSON-RPC response', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc)
+
+    client.onRequest('session/request_permission', () => ({ outcome: { outcome: 'cancelled' } }))
+    proc._sendLine(JSON.stringify({
+      jsonrpc: '2.0',
+      id: 77,
+      method: 'session/request_permission',
+      params: { sessionId: 's1' },
+    }))
+
+    await new Promise((resolve) => setImmediate(resolve))
+
+    const responses = proc._captured.map((line) => JSON.parse(line))
+    expect(responses).toHaveLength(1)
+    expect(responses[0]).toEqual({
+      jsonrpc: '2.0',
+      id: 77,
+      result: { outcome: { outcome: 'cancelled' } },
+    })
+    client.dispose()
+  })
+
+  it('writes an async onRequest handler result back as the response', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc)
+
+    let received: unknown = null
+    client.onRequest('ask', async (params) => {
+      received = params
+      await new Promise((resolve) => setImmediate(resolve))
+      return { ok: true }
+    })
+    proc._sendLine(JSON.stringify({ jsonrpc: '2.0', id: 9, method: 'ask', params: { q: 1 } }))
+
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    expect(received).toEqual({ q: 1 })
+    const responses = proc._captured.map((line) => JSON.parse(line))
+    expect(responses).toEqual([{ jsonrpc: '2.0', id: 9, result: { ok: true } }])
+    client.dispose()
+  })
+
+  it('writes a -32603 error response when a request handler throws', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc)
+
+    client.onRequest('boom', () => {
+      throw new Error('handler exploded')
+    })
+    proc._sendLine(JSON.stringify({ jsonrpc: '2.0', id: 5, method: 'boom' }))
+
+    await new Promise((resolve) => setImmediate(resolve))
+
+    const responses = proc._captured.map((line) => JSON.parse(line))
+    expect(responses).toEqual([{
+      jsonrpc: '2.0',
+      id: 5,
+      error: { code: -32603, message: 'handler exploded' },
+    }])
+    client.dispose()
+  })
+
+  it('writes a -32603 error response when a request handler rejects', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc)
+
+    client.onRequest('boom', () => Promise.reject(new Error('rejected async')))
+    proc._sendLine(JSON.stringify({ jsonrpc: '2.0', id: 6, method: 'boom' }))
+
+    await new Promise((resolve) => setImmediate(resolve))
+
+    const responses = proc._captured.map((line) => JSON.parse(line))
+    expect(responses).toEqual([{
+      jsonrpc: '2.0',
+      id: 6,
+      error: { code: -32603, message: 'rejected async' },
+    }])
+    client.dispose()
+  })
+
+  it('answers -32601 for an inbound request with no registered handler', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc)
+
+    proc._sendLine(JSON.stringify({ jsonrpc: '2.0', id: 12, method: 'fs/read_text_file' }))
+
+    await new Promise((resolve) => setImmediate(resolve))
+
+    const responses = proc._captured.map((line) => JSON.parse(line))
+    expect(responses).toEqual([{
+      jsonrpc: '2.0',
+      id: 12,
+      error: { code: -32601, message: 'Method not found: fs/read_text_file' },
+    }])
+    client.dispose()
+  })
+
+  it('echoes a string request id back verbatim', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc)
+
+    client.onRequest('ask', () => 'yes')
+    proc._sendLine(JSON.stringify({ jsonrpc: '2.0', id: 'req-abc', method: 'ask' }))
+
+    await new Promise((resolve) => setImmediate(resolve))
+
+    const responses = proc._captured.map((line) => JSON.parse(line))
+    expect(responses).toEqual([{ jsonrpc: '2.0', id: 'req-abc', result: 'yes' }])
+    client.dispose()
+  })
+
+  it('echoes a request id of 0 back verbatim', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc)
+
+    client.onRequest('ask', () => 'zero')
+    proc._sendLine(JSON.stringify({ jsonrpc: '2.0', id: 0, method: 'ask' }))
+
+    await new Promise((resolve) => setImmediate(resolve))
+
+    const responses = proc._captured.map((line) => JSON.parse(line))
+    expect(responses).toEqual([{ jsonrpc: '2.0', id: 0, result: 'zero' }])
+    client.dispose()
+  })
+
+  it('does not write a response when the handler settles after dispose', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc)
+
+    let release: (() => void) | undefined
+    client.onRequest('slow', () => new Promise<void>((resolve) => { release = () => resolve(undefined) }))
+    proc._sendLine(JSON.stringify({ jsonrpc: '2.0', id: 21, method: 'slow' }))
+    await new Promise((resolve) => setImmediate(resolve))
+
+    client.dispose()
+    release?.()
+    await new Promise((resolve) => setImmediate(resolve))
+
+    expect(proc._captured).toHaveLength(0)
   })
 })

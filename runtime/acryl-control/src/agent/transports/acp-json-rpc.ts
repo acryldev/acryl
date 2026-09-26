@@ -10,7 +10,8 @@ import { EventEmitter } from 'node:events'
 
 export interface JsonRpcRequest {
   jsonrpc: '2.0'
-  id: number
+  /** JSON-RPC allows string ids as well; echoed back verbatim. */
+  id: number | string
   method: string
   params?: unknown
 }
@@ -23,7 +24,7 @@ export interface JsonRpcNotification {
 
 export interface JsonRpcResponse {
   jsonrpc: '2.0'
-  id: number
+  id: number | string
   result?: unknown
   error?: { code: number; message: string; data?: unknown }
 }
@@ -93,6 +94,18 @@ export class JsonRpcClient {
   private readonly emitter = new EventEmitter()
   private nextId = 1
   private readonly pending = new Map<number, PendingCall>()
+  /**
+   * Inbound request handlers are a Map, not the emitter: an agent request
+   * has exactly one answerer and the handler's return value must reach the
+   * wire, which `emit`'s boolean cannot carry.
+   */
+  private readonly requestHandlers = new Map<string, RequestHandler>()
+  /**
+   * In-flight inbound request handler tasks. Tracked so `dispose()` can drop
+   * the references; a task that settles after disposal never writes to the
+   * dead stdin.
+   */
+  private readonly inflightRequests = new Set<Promise<void>>()
   private readonly stderrHandler: ((line: string) => void) | undefined
   private readonly requestTimeoutMs: number
   private disposed = false
@@ -215,9 +228,16 @@ export class JsonRpcClient {
     this.emitter.on(`notification:${method}`, handler)
   }
 
-  /** Register a handler for an inbound request method. */
+  /**
+   * Register the handler for an inbound request method. One handler per
+   * method; re-registering replaces the previous handler.
+   *
+   * The handler may be sync or async. Its return value is written back to
+   * the peer as the JSON-RPC `result`; a throw or rejection becomes a
+   * `-32603` error response.
+   */
   onRequest(method: string, handler: RequestHandler): void {
-    this.emitter.on(`request:${method}`, handler)
+    this.requestHandlers.set(method, handler)
   }
 
   /** Remove all listeners, reject pending calls. Safe to call multiple times. */
@@ -229,6 +249,8 @@ export class JsonRpcClient {
       reject(new TransportError('JsonRpcClient disposed'))
     }
     this.pending.clear()
+    this.requestHandlers.clear()
+    this.inflightRequests.clear()
     this.emitter.removeAllListeners()
   }
 
@@ -257,6 +279,7 @@ export class JsonRpcClient {
     if (
       stdin === null
       || this.dead
+      || this.disposed
       || stdin.destroyed
       || stdin.writableEnded
       || this.process.killed
@@ -272,7 +295,7 @@ export class JsonRpcClient {
   }
 
   private handleLine(line: string): void {
-    let message: JsonRpcMessage
+    let message: unknown
     try {
       message = JSON.parse(line)
     } catch {
@@ -280,28 +303,27 @@ export class JsonRpcClient {
       return
     }
 
+    // JSON.parse also succeeds on scalars (`null`, `42`, `true`, `"text"`)
+    // and arrays — none of them can be a JSON-RPC message. Without this
+    // guard the `in` checks below throw a TypeError inside the stdout
+    // 'data' listener, an uncaughtException that kills the host.
+    if (typeof message !== 'object' || message === null || Array.isArray(message)) {
+      return
+    }
+
     if ('id' in message && 'method' in message) {
       // Inbound request
       const req = message as JsonRpcRequest
-      Promise.resolve(this.emitter.emit(`request:${req.method}`, req.params))
-        .then((handled) => {
-          if (!handled && !this.disposed) {
-            // Respond with method-not-found error
-            this.send({
-              jsonrpc: '2.0',
-              id: req.id,
-              error: { code: -32601, message: `Method not found: ${req.method}` },
-            })
-          }
-        })
-        .catch(() => {})
+      this.handleInboundRequest(req)
     } else if ('method' in message && !('id' in message)) {
       // Inbound notification
       const notif = message as JsonRpcNotification
       this.emitter.emit(`notification:${notif.method}`, notif.params)
     } else if ('id' in message && !('method' in message)) {
-      // Response to our request
+      // Response to our request. Outbound ids are always numbers; a
+      // non-numeric id can only be a stray/duplicate and is ignored.
       const resp = message as JsonRpcResponse
+      if (typeof resp.id !== 'number') return
       const pending = this.pending.get(resp.id)
       if (pending !== undefined) {
         this.pending.delete(resp.id)
@@ -313,5 +335,56 @@ export class JsonRpcClient {
         }
       }
     }
+  }
+
+  /**
+   * Dispatch an inbound request to its registered handler and write the
+   * handler's settled value back as the JSON-RPC response.
+   *
+   * The handler resolves asynchronously, so awaiting it never blocks the
+   * stdout reader: later lines (responses to our own calls, notifications)
+   * keep processing while the answer is produced. `undefined` results are
+   * serialized as `null` — an absent `result` key is not a valid response.
+   * Every settled handler produces exactly one response; a handler that
+   * settles after `dispose()` writes nothing.
+   */
+  private handleInboundRequest(req: JsonRpcRequest): void {
+    const handler = this.requestHandlers.get(req.method)
+    if (handler === undefined) {
+      if (!this.disposed) {
+        this.send({
+          jsonrpc: '2.0',
+          id: req.id,
+          error: { code: -32601, message: `Method not found: ${req.method}` },
+        })
+      }
+      return
+    }
+
+    const task: Promise<void> = Promise.resolve()
+      .then(() => handler(req.params))
+      .then((result) => {
+        if (this.disposed) return
+        this.send({
+          jsonrpc: '2.0',
+          id: req.id,
+          result: result === undefined ? null : result,
+        })
+      })
+      .catch((error: unknown) => {
+        if (this.disposed) return
+        this.send({
+          jsonrpc: '2.0',
+          id: req.id,
+          error: {
+            code: -32603,
+            message: error instanceof Error ? error.message : String(error),
+          },
+        })
+      })
+      .finally(() => {
+        this.inflightRequests.delete(task)
+      })
+    this.inflightRequests.add(task)
   }
 }

@@ -4,6 +4,11 @@ import { describe, expect, it } from 'vitest'
 import type { AgentCapability, AgentSnapshot, AgentWorkspace } from '../src/agent/agent-control.ts'
 import { devinAcpTransport } from '../src/agent/transports/devin-acp.ts'
 import { TransportError } from '../src/agent/transports/acp-json-rpc.ts'
+import type {
+  DevinAcpPermissionRequest,
+  DevinAcpPermissionResponse,
+  DevinAcpTransportConfig,
+} from '../src/agent/transports/devin-acp-config.ts'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const STUB_SERVER = join(__dirname, 'stub-acp-server.mjs')
@@ -422,5 +427,257 @@ describe('devinAcpTransport', () => {
 
     await transport.execute(snapshot('w-cap', result.runtimeId), { kind: 'stop', payload: null })
     transport.dispose()
+  })
+
+  it('treats a session/new result without a sessionId as a failed start', async () => {
+    const wrapper = createWrapperScript()
+    const transport = devinAcpTransport({
+      binaryPath: wrapper,
+      cwd: '/tmp',
+      env: { STUB_ACP_SESSION_NEW_EMPTY: '1' },
+    })
+
+    await expect(
+      transport.execute(snapshot('w-badsession', null), { kind: 'start', payload: null }),
+    ).rejects.toThrow('no usable sessionId')
+
+    // The half-started worker was released: a retry reaches the same
+    // sessionId failure, not 'already has an active Devin ACP session'.
+    await expect(
+      transport.execute(snapshot('w-badsession', null), { kind: 'start', payload: null }),
+    ).rejects.toThrow('no usable sessionId')
+
+    transport.dispose()
+  })
+
+  it('sends session/cancel when a prompt is aborted mid-turn', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'devin-acp-abort-'))
+    const captureFile = join(dir, 'capture.jsonl')
+    const wrapper = createWrapperScript()
+    const transport = devinAcpTransport({
+      binaryPath: wrapper,
+      cwd: '/tmp',
+      env: { STUB_ACP_CAPTURE: captureFile, STUB_ACP_HANG: 'session/prompt' },
+    })
+
+    const started = await transport.execute(
+      snapshot('w-send-abort', null),
+      { kind: 'start', payload: null },
+    ) as { runtimeId: string }
+
+    const controller = new AbortController()
+    const pending = transport.execute(
+      snapshot('w-send-abort', started.runtimeId),
+      { kind: 'send', payload: 'hang on this' },
+      controller.signal,
+    )
+    // Give the prompt a moment to reach the stub, then abort mid-turn.
+    await new Promise((resolve) => setTimeout(resolve, 150))
+    controller.abort()
+    await expect(pending).rejects.toThrow(/abort/i)
+
+    // The stub observed the prompt followed by the best-effort cancel —
+    // the local rejection alone would leave the agent's turn running.
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    const methods = readFileSync(captureFile, 'utf8')
+      .trim()
+      .split('\n')
+      .map((line) => (JSON.parse(line) as { method?: string }).method)
+    const promptIndex = methods.indexOf('session/prompt')
+    expect(promptIndex).toBeGreaterThanOrEqual(0)
+    expect(methods.indexOf('session/cancel')).toBeGreaterThan(promptIndex)
+
+    await transport.execute(snapshot('w-send-abort', started.runtimeId), { kind: 'stop', payload: null })
+    transport.dispose()
+  })
+
+  it('escalates to SIGKILL when the agent ignores SIGTERM', async () => {
+    const wrapper = createWrapperScript()
+    const transport = devinAcpTransport({
+      binaryPath: wrapper,
+      cwd: '/tmp',
+      env: { STUB_ACP_IGNORE_SIGTERM: '1' },
+    })
+
+    const started = await transport.execute(
+      snapshot('w-stubborn', null),
+      { kind: 'start', payload: null },
+    ) as { runtimeId: string }
+    const pid = parseInt(started.runtimeId, 10)
+    expect(pid).toBeGreaterThan(0)
+
+    // The stub swallows SIGTERM; only the SIGKILL escalation after the 2s
+    // grace period can reap it.
+    await transport.execute(snapshot('w-stubborn', started.runtimeId), { kind: 'stop', payload: null })
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    expect(() => process.kill(pid, 0)).toThrow()
+
+    transport.dispose()
+  })
+})
+
+describe('session/request_permission answering', () => {
+  /** The stub echoes the client's answer in a `permission:<json>` chunk. */
+  function permissionAnswer(updates: unknown[]): DevinAcpPermissionResponse | undefined {
+    for (const update of updates) {
+      const text = (update as { update?: { content?: { text?: unknown } } })
+        ?.update?.content?.text
+      if (typeof text === 'string' && text.startsWith('permission:')) {
+        return JSON.parse(text.slice('permission:'.length)) as DevinAcpPermissionResponse
+      }
+    }
+    return undefined
+  }
+
+  async function permissionRoundTrip(
+    workerId: string,
+    config: Omit<DevinAcpTransportConfig, 'binaryPath' | 'cwd' | 'env'> & { optionKinds?: string },
+  ): Promise<{ answer: DevinAcpPermissionResponse | undefined; stopReason: string }> {
+    const { optionKinds, ...rest } = config
+    const wrapper = createWrapperScript()
+    const transport = devinAcpTransport({
+      ...rest,
+      binaryPath: wrapper,
+      cwd: '/tmp',
+      env: {
+        STUB_ACP_PERMISSION_PROMPT: '1',
+        ...(optionKinds !== undefined ? { STUB_ACP_PERMISSION_OPTIONS: optionKinds } : {}),
+      },
+    })
+    try {
+      const started = await transport.execute(
+        snapshot(workerId, null),
+        { kind: 'start', payload: null },
+      ) as { runtimeId: string }
+
+      // The stub holds the prompt turn open until the client answers its
+      // session/request_permission — both sides must resolve.
+      const sent = await transport.execute(
+        snapshot(workerId, started.runtimeId),
+        { kind: 'send', payload: 'privileged op' },
+      ) as { stopReason: string; updates: unknown[] }
+
+      await transport.execute(snapshot(workerId, started.runtimeId), { kind: 'stop', payload: null })
+      return { answer: permissionAnswer(sent.updates), stopReason: sent.stopReason }
+    } finally {
+      transport.dispose()
+    }
+  }
+
+  it('dangerous mode prefers an allow_always option', async () => {
+    const { answer, stopReason } = await permissionRoundTrip('w-perm-aa', {
+      permissionMode: 'dangerous',
+      optionKinds: 'reject_once,allow_once,allow_always',
+    })
+    expect(answer).toEqual({ outcome: { outcome: 'selected', optionId: 'opt_allow_always' } })
+    expect(stopReason).toBe('end_turn')
+  })
+
+  it('dangerous mode falls back to allow_once when allow_always is absent', async () => {
+    const { answer } = await permissionRoundTrip('w-perm-ao', {
+      permissionMode: 'dangerous',
+      optionKinds: 'reject_once,allow_once',
+    })
+    expect(answer).toEqual({ outcome: { outcome: 'selected', optionId: 'opt_allow_once' } })
+  })
+
+  it('bypass mode answers like dangerous', async () => {
+    const { answer } = await permissionRoundTrip('w-perm-bypass', {
+      permissionMode: 'bypass',
+      optionKinds: 'reject_once,allow_once',
+    })
+    expect(answer).toEqual({ outcome: { outcome: 'selected', optionId: 'opt_allow_once' } })
+  })
+
+  it('normal mode selects a reject-kind option (fail closed)', async () => {
+    const { answer } = await permissionRoundTrip('w-perm-normal', {
+      permissionMode: 'normal',
+      optionKinds: 'allow_once,reject_once',
+    })
+    expect(answer).toEqual({ outcome: { outcome: 'selected', optionId: 'opt_reject_once' } })
+  })
+
+  it('normal mode cancels when no reject-kind option exists', async () => {
+    const { answer } = await permissionRoundTrip('w-perm-norej', {
+      permissionMode: 'normal',
+      optionKinds: 'allow_once,allow_always',
+    })
+    expect(answer).toEqual({ outcome: { outcome: 'cancelled' } })
+  })
+
+  it('normal mode ignores an optionId named reject_once when kind allows', async () => {
+    // The agent labels an allow_once option `reject_once`; selection must
+    // consult the declared kind only — matching the agent-controlled
+    // optionId would defeat fail-closed normal mode.
+    const { answer } = await permissionRoundTrip('w-perm-spoof-normal', {
+      permissionMode: 'normal',
+      optionKinds: 'allow_once:reject_once',
+    })
+    expect(answer).toEqual({ outcome: { outcome: 'cancelled' } })
+  })
+
+  it('dangerous mode ignores an optionId named allow_always when kind rejects', async () => {
+    // Mirror image: a reject_once option labelled `allow_always` is not an
+    // allow-kind option, so dangerous mode has nothing to select.
+    const { answer } = await permissionRoundTrip('w-perm-spoof-dangerous', {
+      permissionMode: 'dangerous',
+      optionKinds: 'reject_once:allow_always',
+    })
+    expect(answer).toEqual({ outcome: { outcome: 'cancelled' } })
+  })
+
+  it('answers cancelled when the agent offers no options', async () => {
+    const { answer, stopReason } = await permissionRoundTrip('w-perm-none', {
+      permissionMode: 'dangerous',
+      optionKinds: 'none',
+    })
+    expect(answer).toEqual({ outcome: { outcome: 'cancelled' } })
+    expect(stopReason).toBe('end_turn')
+  })
+
+  it('onPermissionRequest wins over permissionMode and sees parsed params', async () => {
+    let seen: DevinAcpPermissionRequest | undefined
+    const { answer } = await permissionRoundTrip('w-perm-cb', {
+      permissionMode: 'dangerous',
+      optionKinds: 'allow_once,reject_once',
+      onPermissionRequest: (params) => {
+        seen = params
+        return Promise.resolve({ outcome: { outcome: 'selected', optionId: 'opt_reject_once' } })
+      },
+    })
+    expect(answer).toEqual({ outcome: { outcome: 'selected', optionId: 'opt_reject_once' } })
+    expect(seen?.sessionId).toMatch(/^sess_/)
+    expect(seen?.toolCall.toolCallId).toBe('call_perm')
+    expect(seen?.options.map((o) => o.kind)).toEqual(['allow_once', 'reject_once'])
+  })
+
+  it('a throwing onPermissionRequest still answers cancelled', async () => {
+    const { answer, stopReason } = await permissionRoundTrip('w-perm-throw', {
+      permissionMode: 'dangerous',
+      optionKinds: 'allow_once',
+      onPermissionRequest: () => Promise.reject(new Error('answerer down')),
+    })
+    expect(answer).toEqual({ outcome: { outcome: 'cancelled' } })
+    expect(stopReason).toBe('end_turn')
+  })
+
+  it('a hung onPermissionRequest is answered cancelled after permissionTimeoutMs', async () => {
+    const { answer, stopReason } = await permissionRoundTrip('w-perm-hang', {
+      permissionMode: 'dangerous',
+      optionKinds: 'allow_once',
+      permissionTimeoutMs: 50,
+      onPermissionRequest: () => new Promise<DevinAcpPermissionResponse>(() => {}),
+    })
+    expect(answer).toEqual({ outcome: { outcome: 'cancelled' } })
+    expect(stopReason).toBe('end_turn')
+  })
+
+  it('a malformed onPermissionRequest result still answers cancelled', async () => {
+    const { answer } = await permissionRoundTrip('w-perm-bad', {
+      permissionMode: 'dangerous',
+      optionKinds: 'allow_once',
+      onPermissionRequest: () => Promise.resolve({} as DevinAcpPermissionResponse),
+    })
+    expect(answer).toEqual({ outcome: { outcome: 'cancelled' } })
   })
 })
