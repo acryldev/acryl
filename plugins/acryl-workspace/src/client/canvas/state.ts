@@ -1,4 +1,4 @@
-/** In-memory ACRYL Workspace tabs. Host PTY sessions bind through tile.sessionId. */
+/** In-memory ACRYL Workspace tabs. Host PTY sessions bind through tile.terminalId. */
 
 import { labelForCommand } from '../terminal/agent-commands.ts'
 import { normalizeTabTitle } from './tab-title.ts'
@@ -20,7 +20,7 @@ export interface WorkspaceTile {
   readonly kind: WorkspaceTileKind
   readonly title: string
   readonly commandId?: AgentId
-  readonly sessionId?: string
+  readonly terminalId?: string
   readonly path?: string
   readonly content?: string
   readonly url?: string
@@ -279,7 +279,7 @@ export class WorkspaceState {
   }
 
   /**
-   * Remove one tile. Caller disposes a Host PTY when `sessionId` was set.
+   * Remove one tile. Caller disposes a Host PTY when `terminalId` was set.
    * @param id - tile id.
    */
   closeTile(id: string): WorkspaceTile | undefined {

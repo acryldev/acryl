@@ -17,7 +17,7 @@ function statusText(snapshot: TerminalSessionSnapshot): string {
 
 export function PtyPane({ tile, terminals }: { readonly tile: WorkspaceTile; readonly terminals: TerminalRegistry }) {
   const terminalHost = useRef<HTMLDivElement>(null)
-  const session = tile.sessionId === undefined ? undefined : terminals.ensure(tile.sessionId)
+  const session = tile.terminalId === undefined ? undefined : terminals.ensure(tile.terminalId)
   const snapshot = useSyncExternalStore(
     session?.subscribe ?? NO_SUBSCRIPTION,
     session?.getSnapshot ?? (() => STARTING),

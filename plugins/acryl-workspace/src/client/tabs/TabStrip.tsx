@@ -185,7 +185,7 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
                     {tile.kind === 'pty' ? <AgentIcon commandId={tile.commandId ?? 'shell'} custom={customAgents.find(agent => agent.id === tile.commandId)?.badge} /> : kindGlyph(tile.kind)}
                   </span>
                   {tile.kind === 'pty' && tile.commandId !== undefined && tile.commandId !== 'shell' && (
-                    <TabActivity session={tile.sessionId === undefined ? undefined : terminals.ensure(tile.sessionId)} />
+                    <TabActivity session={tile.terminalId === undefined ? undefined : terminals.ensure(tile.terminalId)} />
                   )}
                   <span className="dshWorkspaceTabLabel">{tile.title}{tile.fileRel !== undefined && tile.content !== undefined ? ' ●' : ''}</span>
                 </button>

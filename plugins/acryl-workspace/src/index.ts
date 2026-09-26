@@ -42,6 +42,7 @@ import { AgentCatalog } from './agents/catalog.ts'
 import { WORKSPACE_AGENTS_PATH, WORKSPACE_AGENTS_REMOVE_PATH } from './agents/contract.ts'
 import { createFileCatalogStore, defaultAgentsFile } from './agents/file-store.ts'
 import { handleWorkspaceAgentsRemoveRequest, handleWorkspaceAgentsRequest } from './agents/route.ts'
+import { spawnNodePty } from './pty/node-pty-spawn.ts'
 import { WorkspacePtyRegistry } from './pty/service.ts'
 import {
   WORKSPACE_PTY_CLOSE_PATH,
@@ -82,7 +83,7 @@ export function apply(ctx: Context): void {
   ctx.effect(() => {
     // The user's custom agents live in their ACRYL home; the registry asks the catalog what an id means.
     let catalog: AgentCatalog | undefined
-    const workspacePty = new WorkspacePtyRegistry({ agents: { resolve: id => catalog?.resolve(id) } })
+    const workspacePty = new WorkspacePtyRegistry({ spawn: spawnNodePty, agents: { resolve: id => catalog?.resolve(id) } })
     catalog = new AgentCatalog(createFileCatalogStore(defaultAgentsFile()), command => workspacePty.canRun(command))
     void catalog.load().catch(reportHostError.bind(undefined, 'load custom agents'))
     const workspaceGit = new WorkspaceGit()

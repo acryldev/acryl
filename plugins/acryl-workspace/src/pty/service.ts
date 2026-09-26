@@ -5,7 +5,6 @@ import { randomUUID } from 'node:crypto'
 import { statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { isAbsolute, join } from 'node:path'
-import { spawn as spawnPty } from 'node-pty'
 import type { AgentId, WorkspacePtyCommandId, WorkspacePtyStatus, WorkspacePtyView } from './contract.ts'
 import { MAX_PTY_COLS, MAX_PTY_ROWS, isWorkspacePtyCommandId } from './contract.ts'
 import { Scrollback, type Replay } from './scrollback.ts'
@@ -121,7 +120,8 @@ export interface CustomAgentResolver {
 
 export interface WorkspacePtyRegistryOptions {
   readonly agents?: CustomAgentResolver
-  readonly spawn?: WorkspacePtySpawn
+  /** Starts a real process behind a terminal. Injected: the policy here never loads a native module. */
+  readonly spawn: WorkspacePtySpawn
   readonly env?: NodeJS.ProcessEnv
   readonly cwd?: string
   readonly platform?: NodeJS.Platform
@@ -200,8 +200,8 @@ export class WorkspacePtyRegistry {
   private readonly spawnDirs: string[]
   private readonly agents: CustomAgentResolver | undefined
 
-  constructor(options: WorkspacePtyRegistryOptions = {}) {
-    this.spawnImpl = options.spawn ?? defaultSpawn
+  constructor(options: WorkspacePtyRegistryOptions) {
+    this.spawnImpl = options.spawn
     this.env = options.env ?? process.env
     this.cwd = options.cwd ?? defaultSpawnCwd()
     this.platform = options.platform ?? process.platform
@@ -387,26 +387,6 @@ export class WorkspacePtyRegistry {
       error: session.error,
     }
   }
-}
-
-function defaultSpawn(
-  command: string,
-  args: readonly string[],
-  options: {
-    readonly cwd: string
-    readonly env: NodeJS.ProcessEnv
-    readonly name: string
-    readonly cols: number
-    readonly rows: number
-  },
-): WorkspacePtyProcess {
-  return spawnPty(command, [...args], {
-    cwd: options.cwd,
-    env: options.env as Record<string, string>,
-    name: options.name,
-    cols: options.cols,
-    rows: options.rows,
-  })
 }
 
 async function stopPty(session: LiveSession): Promise<void> {

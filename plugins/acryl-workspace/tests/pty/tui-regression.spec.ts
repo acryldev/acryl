@@ -1,5 +1,6 @@
 import { Terminal } from '@xterm/headless'
 import { afterAll, describe, expect, it } from 'vitest'
+import { spawnNodePty } from '../../src/pty/node-pty-spawn.ts'
 import { WorkspacePtyRegistry } from '../../src/pty/service.ts'
 
 /**
@@ -7,7 +8,7 @@ import { WorkspacePtyRegistry } from '../../src/pty/service.ts'
  * cursor addressing, a burst of output, a resize. A view that attaches afterwards (reload, reconnect)
  * must be given exactly the screen that is showing, which replaying raw history cannot do.
  */
-const registry = new WorkspacePtyRegistry({ env: { ...process.env, SHELL: '/bin/sh', PATH: '/usr/bin:/bin' }, platform: process.platform })
+const registry = new WorkspacePtyRegistry({ spawn: spawnNodePty, env: { ...process.env, SHELL: '/bin/sh', PATH: '/usr/bin:/bin' }, platform: process.platform })
 afterAll(async () => { await registry.disposeAll() })
 
 async function until(check: () => boolean, ms = 8000): Promise<void> {

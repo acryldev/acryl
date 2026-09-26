@@ -9,7 +9,7 @@ import type { UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
 // program even though nothing here holds a value of it.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import type { AgentId } from '../../pty/contract.ts'
-import { diffLines } from '../diff/line-diff.ts'
+import { TextDiffPane } from '../diff/TextDiffPane.tsx'
 import type { AgentBridge } from '../sessions/agent-bridge.ts'
 import { buildReviewComment } from '../diff/comment-message.ts'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
@@ -34,15 +34,12 @@ import { clampSplit, readSplitRatio, writeSplitRatio } from './split-ratio.ts'
 import { GLOBAL_GROUP, type WorkspaceGroups } from './groups.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { DocFilePane } from '../docs/DocFilePane.tsx'
-import { DocView } from '../docs/DocView.tsx'
-import { parseDoc } from '../docs/doc-format.ts'
+import { DocPane } from '../docs/DocPane.tsx'
+import { BrowserPane } from '../browser/BrowserPane.tsx'
+import { ScratchFilePane } from '../files/ScratchFilePane.tsx'
 import { createWorkspacePtyApi, type WorkspacePtyApi } from '../terminal/pty-api.ts'
 import { synchronizeWorkspaceWithSessionNavigation } from '../sessions/session-navigation.ts'
-import {
-  WorkspaceState,
-  normalizeBrowserUrl,
-  type WorkspaceTile,
-} from './state.ts'
+import type { WorkspaceTile } from './state.ts'
 
 export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   readonly renderConversation: () => ReactNode
@@ -115,9 +112,9 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
 
   const closeTile = useCallback(async (tile: WorkspaceTile) => {
     const removed = workspace.closeTile(tile.id)
-    if (removed?.sessionId !== undefined) {
-      terminals.release(removed.sessionId)
-      await api.close(removed.sessionId).catch(() => {})
+    if (removed?.terminalId !== undefined) {
+      terminals.release(removed.terminalId)
+      await api.close(removed.terminalId).catch(() => {})
     }
   }, [api, workspace, terminals])
 
@@ -152,7 +149,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
     void (async () => {
       try {
         const view = await api.start('shell', request.worktree)
-        state.updateTile(tile.id, { sessionId: view.id })
+        state.updateTile(tile.id, { terminalId: view.id })
         await api.write(view.id, `${request.commandLine}\r`)
       } catch (cause) {
         state.updateTile(tile.id, { error: cause instanceof Error ? cause.message : 'spawn failed' })
@@ -166,7 +163,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
     if (tile.kind === 'pty') return <PtyPane tile={tile} terminals={terminals} />
     if (tile.kind === 'doc' && tile.docRel !== undefined) return <DocFilePane tile={tile} shell={shell} filesApi={filesApi} />
     if (tile.kind === 'file' && tile.fileRel !== undefined) return <FileEditorPane tile={tile} workspace={workspace} filesApi={filesApi} />
-    if (tile.kind === 'file') return <FilePane tile={tile} workspace={workspace} />
+    if (tile.kind === 'file') return <ScratchFilePane tile={tile} workspace={workspace} />
     if (tile.kind === 'browser') return <BrowserPane tile={tile} workspace={workspace} />
     if (tile.kind === 'kanban') return <SessionBoardPane tile={tile} workspace={workspace} shell={shell} useSessions={useSessions} navigator={sessionNavigator} />
     if (tile.kind === 'doc') return <DocPane tile={tile} workspace={workspace} />
@@ -186,7 +183,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
         />
       )
     }
-    return <DiffPane tile={tile} workspace={workspace} />
+    return <TextDiffPane tile={tile} workspace={workspace} />
   }
 
   const openPty = useCallback(async (commandId: AgentId, title: string) => {
@@ -197,7 +194,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
       const stage = stageRef.current
       const size = stage === null ? undefined : estimateTerminalSize(stage.clientWidth, stage.clientHeight)
       const view = await api.start(commandId, groupKey === GLOBAL_GROUP ? undefined : groupKey, size)
-      workspace.updateTile(tile.id, { sessionId: view.id })
+      workspace.updateTile(tile.id, { terminalId: view.id })
     } catch (cause) {
       workspace.updateTile(tile.id, {
         error: cause instanceof Error ? cause.message : 'spawn failed',
@@ -211,15 +208,15 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
     const ensureAll = (): void => {
       for (const key of groups.keys()) {
         for (const tile of groups.stateFor(key).getSnapshot().tiles) {
-          if (tile.kind === 'pty' && tile.sessionId !== undefined) terminals.ensure(tile.sessionId)
+          if (tile.kind === 'pty' && tile.terminalId !== undefined) terminals.ensure(tile.terminalId)
         }
       }
     }
     ensureAll()
     const stopGroups = groups.onChange(ensureAll)
-    const stopExit = terminals.onExit((sessionId, exitCode) => {
+    const stopExit = terminals.onExit((terminalId, exitCode) => {
       for (const key of groups.keys()) {
-        const tile = groups.stateFor(key).getSnapshot().tiles.find(candidate => candidate.sessionId === sessionId)
+        const tile = groups.stateFor(key).getSnapshot().tiles.find(candidate => candidate.terminalId === terminalId)
         if (tile === undefined) continue
         if (tile.commandId !== undefined && tile.commandId !== 'shell') toasts.push(describeFinish(tile.title, exitCode), { group: key, tabId: tile.id })
         return
@@ -311,138 +308,6 @@ function glyph(kind: WorkspaceTile['kind']): string {
   if (kind === 'kanban') return '▦'
   if (kind === 'doc') return '▧'
   return '◉'
-}
-
-function FilePane({
-  tile,
-  workspace,
-}: {
-  tile: WorkspaceTile
-  workspace: WorkspaceState
-}) {
-  return (
-    <div className="dshWorkspaceFile">
-      <input
-        aria-label="File path"
-        placeholder="/absolute/or/workspace/path.ts"
-        value={tile.path ?? ''}
-        onChange={(event) => { workspace.updateTile(tile.id, { path: event.target.value }) }}
-      />
-      <textarea
-        aria-label="File editor"
-        spellCheck={false}
-        value={tile.content ?? ''}
-        onChange={(event) => { workspace.updateTile(tile.id, { content: event.target.value }) }}
-      />
-    </div>
-  )
-}
-
-function BrowserPane({
-  tile,
-  workspace,
-}: {
-  tile: WorkspaceTile
-  workspace: WorkspaceState
-}) {
-  const [draft, setDraft] = useState(tile.url ?? '')
-  const href = tile.url ?? ''
-  return (
-    <div className="dshWorkspaceBrowser">
-      <form
-        className="dshWorkspaceBrowserBar"
-        onSubmit={(event) => {
-          event.preventDefault()
-          const next = normalizeBrowserUrl(draft)
-          if (next !== undefined) workspace.updateTile(tile.id, { url: next })
-        }}
-      >
-        <input
-          aria-label="Browser address"
-          value={draft}
-          onChange={(event) => { setDraft(event.target.value) }}
-        />
-        <button type="submit">Go</button>
-      </form>
-      {href.length > 0 && (
-        <iframe
-          className="dshWorkspaceBrowserFrame"
-          title="Browser tab"
-          src={href}
-          sandbox="allow-scripts allow-forms allow-same-origin"
-        />
-      )}
-    </div>
-  )
-}
-
-/** Two-pane text-in, unified-diff-out view (spec 040's own dependency-free diff, `diff.ts`). */
-function DiffPane({
-  tile,
-  workspace,
-}: {
-  tile: WorkspaceTile
-  workspace: WorkspaceState
-}) {
-  const before = tile.diffBefore ?? ''
-  const after = tile.diffAfter ?? ''
-  const lines = useMemo(() => diffLines(before, after), [before, after])
-  return (
-    <div className="dshWorkspaceDiff">
-      <div className="dshWorkspaceDiffInputs">
-        <textarea
-          aria-label="Before"
-          placeholder="Before"
-          spellCheck={false}
-          value={before}
-          onChange={(event) => { workspace.updateTile(tile.id, { diffBefore: event.target.value }) }}
-        />
-        <textarea
-          aria-label="After"
-          placeholder="After"
-          spellCheck={false}
-          value={after}
-          onChange={(event) => { workspace.updateTile(tile.id, { diffAfter: event.target.value }) }}
-        />
-      </div>
-      <div className="dshWorkspaceDiffOutput" aria-label="Diff result">
-        {lines.map((line, index) => (
-          // eslint-disable-next-line react/no-array-index-key -- diff lines have no stable identity
-          <div key={index} className="dshWorkspaceDiffLine" data-diff-kind={line.kind}>
-            <span className="dshWorkspaceDiffMarker">{line.kind === 'add' ? '+' : line.kind === 'remove' ? '-' : ' '}</span>
-            <span className="dshWorkspaceDiffText">{line.text.length === 0 ? ' ' : line.text}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-/** Split editor/preview doc tile using the dependency-free `doc-format.ts` renderer. */
-function DocPane({
-  tile,
-  workspace,
-}: {
-  tile: WorkspaceTile
-  workspace: WorkspaceState
-}) {
-  const text = tile.docText ?? ''
-  const blocks = useMemo(() => parseDoc(text), [text])
-  return (
-    <div className="dshWorkspaceDoc">
-      <textarea
-        aria-label="Doc source"
-        className="dshWorkspaceDocEditor"
-        spellCheck={false}
-        placeholder="# Heading&#10;&#10;- bullet&#10;- **bold** and *italic*"
-        value={text}
-        onChange={(event) => { workspace.updateTile(tile.id, { docText: event.target.value }) }}
-      />
-      <div className="dshWorkspaceDocPreview" aria-label="Doc preview">
-        <DocView blocks={blocks} />
-      </div>
-    </div>
-  )
 }
 
 function safeStorage(): Storage | undefined {
