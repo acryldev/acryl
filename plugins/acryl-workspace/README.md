@@ -28,6 +28,8 @@ src/                     Host half (Node)
     index.ts             composition root: wires the panes and tab plugins into the advanced shell
     styles.ts            all CSS of the package
     shell/               the ACRYL frame shared by Web and Desktop: slots, layout state and service, theme, environment
+    board/               the Kanban tile: chats by phase (Ready, Running, Done) from the live session list, plus local notes
+    docs/                markdown parser and renderer; the read-only, live-updating Doc tab for a real file
     canvas/              the tab canvas: tiles, per-worktree groups, split, persistence
     worktrees/           the shared worktree shell state (selection, status, polling)
     projects/            the Projects left pane and its control

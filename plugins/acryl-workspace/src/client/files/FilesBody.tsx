@@ -89,7 +89,7 @@ export function FilesBody({ shell, filesApi }: FilesBodyProps) {
       )}
       <ul className="dshWorkspaceFileTree" role="tree">
         {rows.map(row => (
-          <li key={row.path} role="none">
+          <li key={row.path} role="none" className="dshWorkspaceFileItem">
             <button
               type="button"
               role="treeitem"
@@ -107,6 +107,28 @@ export function FilesBody({ shell, filesApi }: FilesBodyProps) {
               {row.status === 'loading' && <span className="dshWorkspaceFileHint">loading</span>}
               {row.status === 'error' && <span className="dshWorkspaceFileHint" data-error>failed</span>}
             </button>
+            {row.kind === 'file' && /\.(md|markdown|mdx)$/i.test(row.name) && (
+              <button
+                type="button"
+                className="dshWorkspaceFilePreview"
+                aria-label={`Preview ${row.path}`}
+                title="Preview as a document"
+                onClick={() => { shell.openDoc({ worktree: path, file: row.path }) }}
+              >
+                Preview
+              </button>
+            )}
+            {row.kind === 'file' && /\.(md|markdown|mdx)$/i.test(row.name) && (
+              <button
+                type="button"
+                className="dshWorkspaceFilePreview"
+                aria-label={`Preview ${row.path}`}
+                title="Preview as a document"
+                onClick={() => { shell.openDoc({ worktree: path, file: row.path }) }}
+              >
+                Preview
+              </button>
+            )}
           </li>
         ))}
       </ul>

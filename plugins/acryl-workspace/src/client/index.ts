@@ -11,6 +11,7 @@ import type {} from './shell/contracts.ts'
 import { applyAdvancedShell } from './shell/advanced-shell.ts'
 import { resolveShellEnvironment } from './shell/environment.ts'
 import { createAgentBridge } from './sessions/agent-bridge.ts'
+import { createSessionNavigator } from './sessions/session-navigator.ts'
 import { createWorkspaceFilesApi } from './files/files-api.ts'
 import { filesTabPlugin } from './files/files-tab.ts'
 import { changesTabPlugin } from './changes/changes-tab.ts'
@@ -65,6 +66,7 @@ export function apply(ctx: ClientContext): void {
   const review = new ReviewStore(parseSavedThreads(storage?.getItem(REVIEW_STORAGE_KEY) ?? null))
   ctx.effect(() => startReviewPersistence(review, storage), 'acryl-workspace: save review comments')
   const agent = createAgentBridge(() => ctx.get('sessions'))
+  const sessionNavigator = createSessionNavigator(() => ctx.get('sessions'))
   const rightPanel = {
     toggle(): void {
       try {
@@ -96,7 +98,7 @@ export function apply(ctx: ClientContext): void {
         removeSlot = ctx.slots.register({
           name: 'desktop.main',
           priority: WORKSPACE_MAIN_PRIORITY,
-          inject: () => ({ ptyApi: ptyClient, shell, groups, gitApi, filesApi, agent, review, rightPanel }),
+          inject: () => ({ ptyApi: ptyClient, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }),
         }, WorkspaceCanvas)
       } catch (cause) {
         // A registration conflict must not take the left pane and the Changes tab down with it.

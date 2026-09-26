@@ -33,6 +33,8 @@ export interface SavedTile {
   readonly diffFile?: string
   readonly fileWorktree?: string
   readonly fileRel?: string
+  readonly docWorktree?: string
+  readonly docRel?: string
   readonly board?: KanbanBoard
   readonly docText?: string
 }
@@ -99,7 +101,7 @@ function parseTile(value: unknown): SavedTile | undefined {
   const title = text(value.title)
   if (kind === undefined || title === undefined) return undefined
   const tile: { -readonly [K in keyof SavedTile]: SavedTile[K] } = { kind, title }
-  for (const key of ['path', 'content', 'url', 'diffBefore', 'diffAfter', 'diffWorktree', 'diffFile', 'fileWorktree', 'fileRel', 'docText'] as const) {
+  for (const key of ['path', 'content', 'url', 'diffBefore', 'diffAfter', 'diffWorktree', 'diffFile', 'fileWorktree', 'fileRel', 'docWorktree', 'docRel', 'docText'] as const) {
     const field = text(value[key])
     if (field !== undefined) tile[key] = field
   }
@@ -111,6 +113,7 @@ function parseTile(value: unknown): SavedTile | undefined {
   // A git diff tile with only half of its identity cannot be shown; drop it rather than guess.
   if (kind === 'diff' && (tile.diffFile === undefined) !== (tile.diffWorktree === undefined)) return undefined
   if (kind === 'file' && (tile.fileRel === undefined) !== (tile.fileWorktree === undefined)) return undefined
+  if (kind === 'doc' && (tile.docRel === undefined) !== (tile.docWorktree === undefined)) return undefined
   return tile
 }
 
@@ -168,6 +171,8 @@ export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups): st
       if (tile.diffFile !== undefined) entry.diffFile = tile.diffFile
       if (tile.fileWorktree !== undefined) entry.fileWorktree = tile.fileWorktree
       if (tile.fileRel !== undefined) entry.fileRel = tile.fileRel
+      if (tile.docWorktree !== undefined) entry.docWorktree = tile.docWorktree
+      if (tile.docRel !== undefined) entry.docRel = tile.docRel
       if (tile.board !== undefined) entry.board = tile.board
       if (tile.docText !== undefined) entry.docText = tile.docText
       if (tile.id === snapshot.activeId) active = tiles.length

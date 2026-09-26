@@ -82,6 +82,13 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceKanbanColumnTitle { padding: 10px 12px 6px; font: 600 12px/1.2 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg); }
 .dshWorkspaceKanbanCards { display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 40px; padding: 0 10px; overflow-y: auto; }
 .dshWorkspaceKanbanCard { padding: 8px 10px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 8px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-fg); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; cursor: grab; }
+.dshWorkspaceKanbanCount { margin-left: 4px; padding: 0 6px; border-radius: 999px; background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg-l2); font-weight: 500; }
+.dshWorkspaceKanbanEmpty { padding: 6px 2px; color: var(--dsw-alias-fg-l2); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceKanbanSessionCard { appearance: none; display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; cursor: pointer; color: var(--dsw-alias-fg); }
+.dshWorkspaceKanbanSessionCard:hover { border-color: #4d6bfe; }
+.dshWorkspaceKanbanSessionCard[data-running] { border-color: color-mix(in srgb, #4d6bfe 60%, transparent); }
+.dshWorkspaceKanbanBranch { font: 600 12px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshWorkspaceKanbanMeta { color: var(--dsw-alias-fg-l2); font: 11px/1.3 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceKanbanAdd { padding: 8px 10px; }
 .dshWorkspaceKanbanAdd input { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px dashed var(--dsw-alias-border-l2); border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceDoc { flex-direction: row !important; gap: 0; }
@@ -173,6 +180,32 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceFileName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshWorkspaceFileHint { color: var(--dsw-alias-fg-l2); font-size: 10.5px; }
 .dshWorkspaceFileHint[data-error] { color: #f87171; }
+.dshWorkspaceFileItem { position: relative; display: flex; align-items: center; }
+.dshWorkspaceFileItem > .dshWorkspaceFileRow { flex: 1; min-width: 0; }
+.dshWorkspaceFilePreview { appearance: none; flex: none; margin-right: 8px; padding: 1px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 10.5px/1.5 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceFilePreview:hover { border-color: #4d6bfe; color: #4d6bfe; }
+.dshWorkspaceDocFile { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
+.dshWorkspaceDocFileBody { flex: 1; min-height: 0; overflow: auto; padding: 16px 24px; }
+.dshWorkspaceDocCode { padding: 1px 5px; border-radius: 4px; background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); font: 0.92em ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dshWorkspaceDocPre { overflow: auto; margin: 8px 0; padding: 10px 12px; border-radius: 8px; background: #0b0d12; color: #d7e0ea; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dshWorkspaceDocQuote { margin: 8px 0; padding: 2px 12px; border-left: 3px solid var(--dsw-alias-border-l2); color: var(--dsw-alias-fg-l2); }
+.dshWorkspaceDocRule { border: 0; border-top: 1px solid var(--dsw-alias-border-l1); margin: 14px 0; }
+.dshWorkspaceDocTable { border-collapse: collapse; margin: 8px 0; font: 12.5px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceDocTable th, .dshWorkspaceDocTable td { padding: 5px 10px; border: 1px solid var(--dsw-alias-border-l1); text-align: left; vertical-align: top; }
+.dshWorkspaceDocTable th { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 6%)); }
+.dshWorkspaceFileItem { position: relative; display: flex; align-items: center; }
+.dshWorkspaceFileItem > .dshWorkspaceFileRow { flex: 1; min-width: 0; }
+.dshWorkspaceFilePreview { appearance: none; flex: none; margin-right: 8px; padding: 1px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 10.5px/1.5 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceFilePreview:hover { border-color: #4d6bfe; color: #4d6bfe; }
+.dshWorkspaceDocFile { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
+.dshWorkspaceDocFileBody { flex: 1; min-height: 0; overflow: auto; padding: 16px 24px; }
+.dshWorkspaceDocCode { padding: 1px 5px; border-radius: 4px; background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); font: 0.92em ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dshWorkspaceDocPre { overflow: auto; margin: 8px 0; padding: 10px 12px; border-radius: 8px; background: #0b0d12; color: #d7e0ea; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dshWorkspaceDocQuote { margin: 8px 0; padding: 2px 12px; border-left: 3px solid var(--dsw-alias-border-l2); color: var(--dsw-alias-fg-l2); }
+.dshWorkspaceDocRule { border: 0; border-top: 1px solid var(--dsw-alias-border-l1); margin: 14px 0; }
+.dshWorkspaceDocTable { border-collapse: collapse; margin: 8px 0; font: 12.5px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceDocTable th, .dshWorkspaceDocTable td { padding: 5px 10px; border: 1px solid var(--dsw-alias-border-l1); text-align: left; vertical-align: top; }
+.dshWorkspaceDocTable th { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 6%)); }
 .dshWorkspaceEditor { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
 .dshWorkspaceEditorBar { display: flex; align-items: center; gap: 10px; min-height: 34px; padding: 0 10px; border-bottom: 1px solid var(--dsw-alias-border-l1); font: 12px/1.3 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg); }
 .dshWorkspaceEditorPath { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }

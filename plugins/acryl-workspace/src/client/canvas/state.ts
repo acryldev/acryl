@@ -32,6 +32,9 @@ export interface WorkspaceTile {
   /** file tile, editor mode: the worktree and the file (relative to it) being edited. `content` then holds an unsaved draft. */
   readonly fileWorktree?: string
   readonly fileRel?: string
+  /** doc tile, file mode: the worktree and the markdown file (relative to it) shown read-only. */
+  readonly docWorktree?: string
+  readonly docRel?: string
   /** editor tile: the disk modification time the `content` draft is based on. */
   readonly fileMtimeMs?: number
   /** kanban tile: one local board per tile. */
@@ -59,6 +62,8 @@ export interface AddTileOptions {
   readonly fileRel?: string
   readonly diffWorktree?: string
   readonly diffFile?: string
+  readonly docWorktree?: string
+  readonly docRel?: string
 }
 
 const TITLES: Record<WorkspaceTileKind, string> = {
@@ -223,6 +228,32 @@ export class WorkspaceState {
     return tile
   }
 
+  /**
+   * Preview one markdown file of a worktree read-only: focus the tab already showing it, or open a new one.
+   * @param worktree - absolute worktree path.
+   * @param file - path relative to that worktree.
+   */
+  openDoc(worktree: string, file: string, options: { readonly beside?: boolean } = {}): WorkspaceTile | undefined {
+    const previous = this.snapshot.activeId
+    const existing = this.snapshot.tiles.find(
+      tile => tile.kind === 'doc' && tile.docWorktree === worktree && tile.docRel === file,
+    )
+    const beside = options.beside === true && previous !== undefined
+    if (existing !== undefined) {
+      if (beside && previous !== existing.id) {
+        this.replace({ ...this.snapshot, splitId: existing.id, activeId: previous, menuOpen: false })
+      } else {
+        this.selectTile(existing.id)
+      }
+      return existing
+    }
+    const tile = this.addTile('doc', { title: basename(file), docWorktree: worktree, docRel: file })
+    if (tile !== undefined && beside) {
+      this.replace({ ...this.snapshot, splitId: tile.id, activeId: previous, menuOpen: false })
+    }
+    return tile
+  }
+
   openDiff(worktree: string, file: string, options: { readonly beside?: boolean } = {}): WorkspaceTile | undefined {
     const previous = this.snapshot.activeId
     const existing = this.snapshot.tiles.find(
@@ -356,7 +387,10 @@ export class WorkspaceState {
         : {}),
       ...(kind === 'diff' && options.diffFile === undefined ? { diffBefore: '', diffAfter: '' } : {}),
       ...(kind === 'kanban' ? { board: EMPTY_BOARD } : {}),
-      ...(kind === 'doc' ? { docText: '' } : {}),
+      ...(kind === 'doc' && options.docRel !== undefined && options.docWorktree !== undefined
+        ? { docWorktree: options.docWorktree, docRel: options.docRel }
+        : {}),
+      ...(kind === 'doc' && options.docRel === undefined ? { docText: '' } : {}),
     }
     return Object.freeze(tile)
   }

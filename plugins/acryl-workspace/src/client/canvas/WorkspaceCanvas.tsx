@@ -20,6 +20,8 @@ import { diffLines } from '../diff/line-diff.ts'
 import type { AgentBridge } from '../sessions/agent-bridge.ts'
 import { buildReviewComment } from '../diff/comment-message.ts'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
+import { SessionBoardPane } from '../board/SessionBoardPane.tsx'
+import type { SessionNavigator } from '../sessions/session-navigator.ts'
 import { FileEditorPane } from '../files/FileEditorPane.tsx'
 import type { WorkspaceFilesApi } from '../files/files-api.ts'
 import { GitDiffPane } from '../diff/GitDiffPane.tsx'
@@ -28,14 +30,14 @@ import { SplitDivider } from './SplitDivider.tsx'
 import { clampSplit, readSplitRatio, writeSplitRatio } from './split-ratio.ts'
 import { GLOBAL_GROUP, type WorkspaceGroups } from './groups.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
-import { parseDoc, parseInline } from './doc-format.ts'
+import { DocFilePane } from '../docs/DocFilePane.tsx'
+import { DocView } from '../docs/DocView.tsx'
+import { parseDoc } from '../docs/doc-format.ts'
 import { createWorkspacePtyApi, type WorkspacePtyApi } from '../terminal/pty-api.ts'
 import { synchronizeWorkspaceWithSessionNavigation } from '../sessions/session-navigation.ts'
 import {
   WorkspaceState,
   normalizeBrowserUrl,
-  type KanbanBoard,
-  type KanbanColumnId,
   type WorkspaceTile,
 } from './state.ts'
 
@@ -52,6 +54,8 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   readonly filesApi: WorkspaceFilesApi
   /** Delivers diff line comments to the open chat's agent. */
   readonly agent: AgentBridge
+  /** Opens a chat by id, for the board's cards. */
+  readonly sessionNavigator: SessionNavigator
   /** Remembers each comment sent, for the Review tab. */
   readonly review: ReviewStore
   /** Opens and closes the right panel. Always available, even for a chat that has no header yet. */
@@ -64,7 +68,7 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell, groups, gitApi, filesApi, agent, review, rightPanel }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
   // Subscribe to primitives, not the whole shell snapshot: git polling updates that snapshot often,
@@ -124,6 +128,13 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
     state.openFile(request.worktree, request.file, { beside: fromChat })
   }), [shell, groups])
 
+  useEffect(() => shell.onOpenDoc((request) => {
+    const state = groups.stateFor(request.worktree)
+    const current = state.getSnapshot()
+    const fromChat = current.tiles.find(tile => tile.id === current.activeId)?.kind === 'chat'
+    state.openDoc(request.worktree, request.file, { beside: fromChat })
+  }), [shell, groups])
+
   // A check run from the Checks tab: a terminal tab in that worktree that types the command for you.
   useEffect(() => shell.onRunCheck((request) => {
     const state = groups.stateFor(request.worktree)
@@ -144,10 +155,11 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
   const renderTile = (tile: WorkspaceTile): ReactNode => {
     if (tile.kind === 'chat') return <div className="dshWorkspaceChat">{renderConversation()}</div>
     if (tile.kind === 'pty') return <PtyPane tile={tile} api={api} />
+    if (tile.kind === 'doc' && tile.docRel !== undefined) return <DocFilePane tile={tile} shell={shell} filesApi={filesApi} />
     if (tile.kind === 'file' && tile.fileRel !== undefined) return <FileEditorPane tile={tile} workspace={workspace} filesApi={filesApi} />
     if (tile.kind === 'file') return <FilePane tile={tile} workspace={workspace} />
     if (tile.kind === 'browser') return <BrowserPane tile={tile} workspace={workspace} />
-    if (tile.kind === 'kanban') return <KanbanPane tile={tile} workspace={workspace} />
+    if (tile.kind === 'kanban') return <SessionBoardPane tile={tile} workspace={workspace} shell={shell} useSessions={useSessions} navigator={sessionNavigator} />
     if (tile.kind === 'doc') return <DocPane tile={tile} workspace={workspace} />
     if (tile.diffFile !== undefined) {
       return (
@@ -557,76 +569,6 @@ function DiffPane({
   )
 }
 
-const KANBAN_COLUMNS: readonly { readonly id: KanbanColumnId, readonly label: string }[] = [
-  { id: 'todo', label: 'To do' },
-  { id: 'doing', label: 'Doing' },
-  { id: 'done', label: 'Done' },
-]
-
-/** A real, locally-interactive kanban board: add cards, move them between columns. */
-function KanbanPane({
-  tile,
-  workspace,
-}: {
-  tile: WorkspaceTile
-  workspace: WorkspaceState
-}) {
-  const board: KanbanBoard = tile.board ?? { todo: [], doing: [], done: [] }
-  const [drafts, setDrafts] = useState<Record<KanbanColumnId, string>>({ todo: '', doing: '', done: '' })
-  const [dragging, setDragging] = useState<string | undefined>(undefined)
-
-  return (
-    <div className="dshWorkspaceKanban">
-      {KANBAN_COLUMNS.map((column) => (
-        <div
-          key={column.id}
-          className="dshWorkspaceKanbanColumn"
-          onDragOver={(event) => { event.preventDefault() }}
-          onDrop={(event) => {
-            event.preventDefault()
-            if (dragging === undefined) return
-            workspace.moveCard(tile.id, dragging, column.id, board[column.id].length)
-            setDragging(undefined)
-          }}
-        >
-          <div className="dshWorkspaceKanbanColumnTitle">{column.label}</div>
-          <div className="dshWorkspaceKanbanCards">
-            {board[column.id].map(card => (
-              <div
-                key={card.id}
-                className="dshWorkspaceKanbanCard"
-                draggable
-                onDragStart={() => { setDragging(card.id) }}
-                onDragEnd={() => { setDragging(undefined) }}
-              >
-                {card.text}
-              </div>
-            ))}
-          </div>
-          <form
-            className="dshWorkspaceKanbanAdd"
-            onSubmit={(event) => {
-              event.preventDefault()
-              workspace.addCard(tile.id, column.id, drafts[column.id])
-              setDrafts(previous => ({ ...previous, [column.id]: '' }))
-            }}
-          >
-            <input
-              aria-label={`Add card to ${column.label}`}
-              placeholder="Add card…"
-              value={drafts[column.id]}
-              onChange={(event) => {
-                const value = event.target.value
-                setDrafts(previous => ({ ...previous, [column.id]: value }))
-              }}
-            />
-          </form>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 /** Split editor/preview doc tile using the dependency-free `doc-format.ts` renderer. */
 function DocPane({
   tile,
@@ -648,39 +590,10 @@ function DocPane({
         onChange={(event) => { workspace.updateTile(tile.id, { docText: event.target.value }) }}
       />
       <div className="dshWorkspaceDocPreview" aria-label="Doc preview">
-        {blocks.map((block, index) => (
-          // eslint-disable-next-line react/no-array-index-key -- blocks have no stable identity
-          <DocBlockView key={index} block={block} />
-        ))}
+        <DocView blocks={blocks} />
       </div>
     </div>
   )
-}
-
-function DocBlockView({ block }: { block: ReturnType<typeof parseDoc>[number] }) {
-  if (block.kind === 'heading') {
-    const Tag = block.level === 1 ? 'h1' : block.level === 2 ? 'h2' : 'h3'
-    return <Tag className="dshWorkspaceDocHeading">{parseInline(block.text).map(inlineNode)}</Tag>
-  }
-  if (block.kind === 'bullet') {
-    return (
-      <ul className="dshWorkspaceDocList">
-        {block.items.map((item, index) => (
-          // eslint-disable-next-line react/no-array-index-key -- items have no stable identity
-          <li key={index}>{parseInline(item).map(inlineNode)}</li>
-        ))}
-      </ul>
-    )
-  }
-  return <p className="dshWorkspaceDocParagraph">{parseInline(block.text).map(inlineNode)}</p>
-}
-
-function inlineNode(segment: { text: string, bold: boolean, italic: boolean }, index: number): ReactNode {
-  let node: ReactNode = segment.text
-  if (segment.bold) node = <strong>{node}</strong>
-  if (segment.italic) node = <em>{node}</em>
-  // eslint-disable-next-line react/no-array-index-key -- inline segments have no stable identity
-  return <span key={index}>{node}</span>
 }
 
 function safeStorage(): Storage | undefined {

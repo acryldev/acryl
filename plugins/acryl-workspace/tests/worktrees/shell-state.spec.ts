@@ -227,3 +227,20 @@ describe('open-file channel', () => {
   })
 })
 
+describe('open-doc channel', () => {
+  it('delivers a preview request to listeners until they unsubscribe or the shell is disposed', () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    const seen: unknown[] = []
+    const off = shell.onOpenDoc(request => { seen.push(request) })
+    shell.openDoc({ worktree: '/p/proj', file: 'README.md' })
+    expect(seen).toEqual([{ worktree: '/p/proj', file: 'README.md' }])
+    off()
+    shell.openDoc({ worktree: '/p/proj', file: 'b.md' })
+    expect(seen).toHaveLength(1)
+    shell.onOpenDoc(r => { seen.push(r) })
+    shell.dispose()
+    shell.openDoc({ worktree: '/p/proj', file: 'c.md' })
+    expect(seen).toHaveLength(1)
+  })
+})
+

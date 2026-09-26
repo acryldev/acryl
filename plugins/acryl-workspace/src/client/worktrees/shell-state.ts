@@ -53,6 +53,9 @@ export interface OpenFileRequest {
   readonly file: string
 }
 
+/** A request to preview one markdown file of a worktree in a Doc tab. */
+export type OpenDocRequest = OpenFileRequest
+
 export interface OpenDiffRequest {
   readonly worktree: string
   readonly file: string
@@ -84,6 +87,7 @@ export class WorkspaceShellState {
   private readonly diffListeners = new Set<(request: OpenDiffRequest) => void>()
   private readonly runListeners = new Set<(request: RunCheckRequest) => void>()
   private readonly fileListeners = new Set<(request: OpenFileRequest) => void>()
+  private readonly docListeners = new Set<(request: OpenDocRequest) => void>()
   private readonly probes = new Map<string, Promise<string | undefined>>()
   private readonly statusInflight = new Map<string, Promise<void>>()
   private pinned = false
@@ -233,6 +237,17 @@ export class WorkspaceShellState {
     return () => { this.fileListeners.delete(listener) }
   }
 
+  /** Ask the canvas to open (or focus) a read-only Doc tab for one markdown file. */
+  openDoc(request: OpenDocRequest): void {
+    for (const listener of this.docListeners) listener(request)
+  }
+
+  /** @returns disposer. */
+  onOpenDoc(listener: (request: OpenDocRequest) => void): () => void {
+    this.docListeners.add(listener)
+    return () => { this.docListeners.delete(listener) }
+  }
+
   /** Ask the canvas to run a check in a terminal tab of that worktree. */
   runCheck(request: RunCheckRequest): void {
     for (const listener of this.runListeners) listener(request)
@@ -250,6 +265,7 @@ export class WorkspaceShellState {
     this.diffListeners.clear()
     this.runListeners.clear()
     this.fileListeners.clear()
+    this.docListeners.clear()
   }
 
   private selectInternal(path: string): void {

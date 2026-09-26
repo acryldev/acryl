@@ -83,3 +83,34 @@ describe('editor tabs in persistence', () => {
     expect(parseSavedWorkspace(serializeWorkspace('chats', groups))?.groups['/p']?.tiles[0]).toMatchObject({ kind: 'file', path: 'notes.txt', content: 'hello' })
   })
 })
+
+describe('file-backed doc tiles', () => {
+  it('opens a markdown file once, beside the chat when asked, and remembers it across a restart', () => {
+    const groups = new WorkspaceGroups()
+    const state = groups.stateFor('/p')
+    const chatId = state.getSnapshot().activeId
+    const tile = state.openDoc('/p', 'specs/plan.md', { beside: true })
+    expect(tile).toMatchObject({ kind: 'doc', title: 'plan.md', docWorktree: '/p', docRel: 'specs/plan.md' })
+    expect(tile?.docText).toBeUndefined()
+    expect(state.getSnapshot().activeId).toBe(chatId)
+    expect(state.getSnapshot().splitId).toBe(tile?.id)
+    expect(state.openDoc('/p', 'specs/plan.md')?.id).toBe(tile?.id)
+    expect(state.getSnapshot().tiles.filter(t => t.kind === 'doc')).toHaveLength(1)
+
+    const saved = parseSavedWorkspace(serializeWorkspace('projects', groups))
+    const restored = new WorkspaceGroups(undefined, saved?.groups)
+    expect(restored.stateFor('/p').getSnapshot().tiles.find(t => t.kind === 'doc')).toMatchObject({ docWorktree: '/p', docRel: 'specs/plan.md' })
+  })
+
+  it('drops a doc tab that has only half of its identity, and still saves the scratch doc text', () => {
+    const raw = JSON.stringify({ version: 1, mode: 'projects', groups: { '/p': { tiles: [{ kind: 'doc', title: 'a', docRel: 'a.md' }], active: -1, split: -1 } } })
+    expect(parseSavedWorkspace(raw)?.groups['/p']?.tiles).toEqual([])
+    const groups = new WorkspaceGroups()
+    const state = groups.stateFor('/p')
+    const scratch = state.addTile('doc')
+    if (scratch === undefined) throw new Error('no tile')
+    state.updateTile(scratch.id, { docText: '# notes' })
+    expect(parseSavedWorkspace(serializeWorkspace('chats', groups))?.groups['/p']?.tiles[0]).toMatchObject({ kind: 'doc', docText: '# notes' })
+  })
+})
+
