@@ -14,6 +14,9 @@ import { readHiddenAgents, toggleAgent, visibleAgents, writeHiddenAgents } from 
 
 type View = 'menu' | 'configure' | 'add'
 
+/** A tab type is hidden by this key in the same remembered set as agents (agent ids never contain a colon). */
+const surfaceKey = (action: WorkspaceSurfaceAction): string => `surface:${action.kind}`
+
 export interface NewTabMenuProps {
   readonly open: boolean
   readonly customAgents: readonly CustomAgent[]
@@ -71,7 +74,7 @@ export function NewTabMenu({ open, customAgents, storage, setOpen, onSurface, on
       </button>
       {open && view === 'menu' && (
         <div className="dshWorkspaceMenu" role="menu">
-          {WORKSPACE_SURFACE_ACTIONS.map(action => (
+          {WORKSPACE_SURFACE_ACTIONS.filter(action => !hidden.has(surfaceKey(action))).map(action => (
             <button key={action.label} type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onSurface(action); close() }}>
               {action.kind === 'pty' && <AgentIcon commandId="shell" />}
               {action.label}
@@ -96,7 +99,14 @@ export function NewTabMenu({ open, customAgents, storage, setOpen, onSurface, on
       )}
       {open && view === 'configure' && (
         <div className="dshWorkspaceMenu" role="menu" aria-label="Configure agents">
-          <div className="dshWorkspaceMenuHint">Choose the agents the + menu lists.</div>
+          <div className="dshWorkspaceMenuHint">Choose what the + menu lists.</div>
+          {WORKSPACE_SURFACE_ACTIONS.filter(action => action.kind !== 'pty').map(action => (
+            <button key={action.label} type="button" role="menuitemcheckbox" aria-checked={!hidden.has(surfaceKey(action))} className="dshWorkspaceMenuItem" onClick={() => { flip(surfaceKey(action)) }}>
+              <span className="dshWorkspaceMenuGrow">{action.label.replace(/^New /, '')} tabs</span>
+              <span className="dshWorkspaceMenuCheck" aria-hidden="true">{hidden.has(surfaceKey(action)) ? '' : '✓'}</span>
+            </button>
+          ))}
+          <div className="dshWorkspaceMenuRule" />
           {WORKSPACE_AGENT_COMMANDS.map(command => (
             <button key={command.id} type="button" role="menuitemcheckbox" aria-checked={!hidden.has(command.id)} className="dshWorkspaceMenuItem" onClick={() => { flip(command.id) }}>
               <AgentIcon commandId={command.id} />

@@ -1,7 +1,9 @@
 /**
- * What survives a restart: the Chats | Projects choice and, per worktree, the tabs whose content
- * lives in the renderer (files, diffs, browser pages, docs, boards). Terminal and agent tabs are not
- * saved because their Host process ends with the app; the chat itself is the session's own record.
+ * What survives a restart or a page reload: the Chats | Projects choice and, per worktree, the tabs
+ * whose content lives in the renderer (files, diffs, browser pages, docs, boards), and the terminal and
+ * agent tabs by the id of the Host terminal behind them. The Host keeps a terminal running across a
+ * page reload, so the tab reattaches to the exact screen; when the Host itself restarted the terminal is
+ * gone, the tab finds that out on reconnecting and closes itself. The chat is the session's own record.
  *
  * Stored in the renderer's storage as a convenience, so every read is defensive: anything that does
  * not validate is dropped, never thrown, and never able to break startup.
@@ -17,7 +19,7 @@ const MAX_TEXT = 200_000
 const MAX_TOTAL = 1_000_000
 const MAX_GROUPS = 50
 const MAX_TILES = 40
-const RESTORABLE_KINDS = ['file', 'browser', 'diff', 'kanban', 'doc'] as const
+const RESTORABLE_KINDS = ['file', 'browser', 'diff', 'kanban', 'doc', 'pty'] as const
 
 export type SavedTileKind = (typeof RESTORABLE_KINDS)[number]
 
@@ -37,6 +39,9 @@ export interface SavedTile {
   readonly docRel?: string
   readonly board?: KanbanBoard
   readonly docText?: string
+  /** A terminal or agent tab: the Host terminal it shows and the agent it runs. */
+  readonly terminalId?: string
+  readonly commandId?: string
 }
 
 export interface SavedGroup {
@@ -101,7 +106,7 @@ function parseTile(value: unknown): SavedTile | undefined {
   const title = text(value.title)
   if (kind === undefined || title === undefined) return undefined
   const tile: { -readonly [K in keyof SavedTile]: SavedTile[K] } = { kind, title }
-  for (const key of ['path', 'content', 'url', 'diffBefore', 'diffAfter', 'diffWorktree', 'diffFile', 'fileWorktree', 'fileRel', 'docWorktree', 'docRel', 'docText'] as const) {
+  for (const key of ['path', 'content', 'url', 'diffBefore', 'diffAfter', 'diffWorktree', 'diffFile', 'fileWorktree', 'fileRel', 'docWorktree', 'docRel', 'docText', 'terminalId', 'commandId'] as const) {
     const field = text(value[key])
     if (field !== undefined) tile[key] = field
   }
@@ -110,6 +115,8 @@ function parseTile(value: unknown): SavedTile | undefined {
     if (board === undefined) return undefined
     tile.board = board
   }
+  // A terminal tab is only worth restoring with the terminal it shows and the agent it runs.
+  if (kind === 'pty' && (tile.terminalId === undefined || tile.commandId === undefined || tile.terminalId.length > 80 || tile.commandId.length > 32)) return undefined
   // A git diff tile with only half of its identity cannot be shown; drop it rather than guess.
   if (kind === 'diff' && (tile.diffFile === undefined) !== (tile.diffWorktree === undefined)) return undefined
   if (kind === 'file' && (tile.fileRel === undefined) !== (tile.fileWorktree === undefined)) return undefined
@@ -160,6 +167,8 @@ export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups): st
     for (const tile of snapshot.tiles) {
       const kind = RESTORABLE_KINDS.find(candidate => candidate === tile.kind)
       if (kind === undefined) continue
+      // A terminal that never started (or failed to) has nothing to reattach to.
+      if (kind === 'pty' && (tile.terminalId === undefined || tile.commandId === undefined)) continue
       const entry: { -readonly [K in keyof SavedTile]: SavedTile[K] } = { kind, title: tile.title }
       if (tile.path !== undefined) entry.path = tile.path
       // An editor tab remembers which file it shows; an unsaved draft is never written to storage.
@@ -175,6 +184,8 @@ export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups): st
       if (tile.docRel !== undefined) entry.docRel = tile.docRel
       if (tile.board !== undefined) entry.board = tile.board
       if (tile.docText !== undefined) entry.docText = tile.docText
+      if (kind === 'pty' && tile.terminalId !== undefined) entry.terminalId = tile.terminalId
+      if (kind === 'pty' && tile.commandId !== undefined) entry.commandId = tile.commandId
       if (tile.id === snapshot.activeId) active = tiles.length
       if (tile.id === snapshot.splitId) split = tiles.length
       tiles.push(entry)

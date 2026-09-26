@@ -222,7 +222,18 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
         return
       }
     })
-    return () => { stopGroups(); stopExit() }
+    // A terminal the Host no longer has (the Host restarted since this tab was saved) closes its tab.
+    const stopLost = terminals.onLost((terminalId) => {
+      for (const key of groups.keys()) {
+        const state = groups.stateFor(key)
+        const tile = state.getSnapshot().tiles.find(candidate => candidate.terminalId === terminalId)
+        if (tile === undefined) continue
+        state.closeTile(tile.id)
+        terminals.release(terminalId)
+        return
+      }
+    })
+    return () => { stopGroups(); stopExit(); stopLost() }
   }, [groups, terminals, toasts])
 
   const customAgents = useSyncExternalStore(agentsState.subscribe, agentsState.getSnapshot)

@@ -158,4 +158,16 @@ describe('TabStrip', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Rename' }))
     expect(screen.getByLabelText(/^Rename /)).toBeTruthy()
   })
+
+  it('lets the user hide tab types (never the terminal) from the + menu', () => {
+    setup()
+    fireEvent.click(screen.getByRole('button', { name: 'New tab' }))
+    expect(screen.getByRole('menuitem', { name: 'New Board' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Configure agents...' }))
+    expect(screen.queryByRole('menuitemcheckbox', { name: /Terminal/ })).toBeNull()
+    fireEvent.click(screen.getByRole('menuitemcheckbox', { name: /Board tabs/ }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Done' }))
+    expect(screen.queryByRole('menuitem', { name: 'New Board' })).toBeNull()
+    expect(screen.getByRole('menuitem', { name: 'New Terminal' })).toBeTruthy()
+  })
 })

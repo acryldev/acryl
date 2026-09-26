@@ -12,6 +12,7 @@ class FakeSocket implements StreamSocket {
   readyState = 1
   send(): void {}
   close(): void {}
+  drop(code: number): void { this.readyState = 3; this.onclose?.(new CloseEvent('close', { code })) }
   deliver(message: object): void { this.onmessage?.(new MessageEvent('message', { data: JSON.stringify(message) })) }
 }
 
@@ -38,6 +39,20 @@ describe('TerminalRegistry', () => {
     const first = registry.ensure('pty_1')
     registry.release('pty_1')
     expect(registry.ensure('pty_1')).not.toBe(first)
+    registry.disposeAll()
+  })
+
+  it('tells listeners once when the Host no longer knows a terminal, and does not when it merely reconnects', () => {
+    const sockets: FakeSocket[] = []
+    const registry = new TerminalRegistry({ createSocket: () => { const s = new FakeSocket(); sockets.push(s); return s }, urlFor: id => `ws://x/${id}` })
+    const lost: string[] = []
+    registry.onLost(id => { lost.push(id) })
+    registry.ensure('pty_1')
+    registry.ensure('pty_2')
+    sockets[0]?.drop(1006)
+    expect(lost).toEqual([])
+    sockets[1]?.drop(4404)
+    expect(lost).toEqual(['pty_2'])
     registry.disposeAll()
   })
 })

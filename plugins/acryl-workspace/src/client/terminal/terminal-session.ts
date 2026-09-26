@@ -24,6 +24,8 @@ const FONT_FAMILY = '"SF Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Con
 export interface TerminalSessionOptions {
   /** Called once when the process behind a session ends. */
   readonly onExit?: (terminalId: string, exitCode: number | null) => void
+  /** Called once when the Host no longer knows the terminal (it restarted, or the terminal was closed elsewhere). */
+  readonly onLost?: (terminalId: string) => void
   readonly createSocket?: StreamSocketFactory
   readonly urlFor?: (id: string, cursor: number) => string
 }
@@ -68,7 +70,7 @@ export class TerminalSession {
         if (replace) this.terminal.reset()
         this.terminal.write(data)
       },
-      state: (status) => { this.update({ status }) },
+      state: (status) => { this.update({ status }); if (status === 'lost') options.onLost?.(id) },
       exit: (exitCode, error) => { this.update({ exitCode, error }); options.onExit?.(id, exitCode) },
     }, options.createSocket, options.urlFor)
     this.terminal.onData((data) => { this.stream.input(data) })
@@ -146,9 +148,16 @@ export class TerminalSession {
 export class TerminalRegistry {
   private readonly sessions = new Map<string, TerminalSession>()
 
+  private readonly lostListeners = new Set<(terminalId: string) => void>()
   private readonly exitListeners = new Set<(terminalId: string, exitCode: number | null) => void>()
 
   constructor(private readonly options: TerminalSessionOptions = {}) {}
+
+  /** Be told when the Host no longer knows a terminal. @returns disposer. */
+  onLost(listener: (terminalId: string) => void): () => void {
+    this.lostListeners.add(listener)
+    return () => { this.lostListeners.delete(listener) }
+  }
 
   /** Be told when any session's process ends. @returns disposer. */
   onExit(listener: (terminalId: string, exitCode: number | null) => void): () => void {
@@ -161,6 +170,10 @@ export class TerminalRegistry {
     if (session === undefined) {
       session = new TerminalSession(id, {
         ...this.options,
+        onLost: (terminalId) => {
+          this.options.onLost?.(terminalId)
+          for (const listener of [...this.lostListeners]) listener(terminalId)
+        },
         onExit: (terminalId, exitCode) => {
           this.options.onExit?.(terminalId, exitCode)
           for (const listener of [...this.exitListeners]) listener(terminalId, exitCode)

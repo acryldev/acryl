@@ -133,7 +133,10 @@ Source: the owner's reviews of the running Web surface, with reference screensho
 - [x] **T114** `WorkspaceCanvas.tsx` (about 440 lines) still holds several tile panes (file, browser, diff, doc); move each into its own domain folder like `PtyPane`. Delivered: the file, browser, diff and doc scratch panes live in their own domain folders; `WorkspaceCanvas.tsx` is 322 lines and only composes.
 - [x] **T115** Core rules that still sit in delivery code: the Host `WorkspacePtyRegistry` mixes the session table with process spawning; separate a `TerminalProcess` port (spawn, write, resize, kill) from the session policy, so the policy tests never touch node-pty. Delivered: node-pty sits in one adapter (`pty/node-pty-spawn.ts`) injected at the composition root; the session policy never loads a native module.
 
-**Already open from earlier**: terminal dock persistence, Settings tab-type toggles (T-list above), notifications (T081), the rest of T074, real-browser evidence (T076).
+- [x] **T116** Terminal tabs survive a page reload: they are saved by the Host terminal id and reattach to the exact screen; when the Host restarted and no longer has the terminal, the tab closes itself. (Was "terminal dock persistence".)
+- [x] **T117** Tab types (Browser, File, Diff, Board, Doc) can be hidden from the + menu in Configure, next to the agents (was "Settings tab-type toggles"; kept in the + menu, not the Settings page).
+
+**Still open from earlier**: system notifications outside the page (T081), the rest of T074, T093, T096, T099, T110, the manual browser passes (T076, T105), and the attention queue.
 
 ## Dependencies
 

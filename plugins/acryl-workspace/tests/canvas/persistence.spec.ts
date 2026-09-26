@@ -80,6 +80,34 @@ describe('parseSavedWorkspace', () => {
   })
 })
 
+describe('terminal tabs', () => {
+  it('save and restore a started terminal by its Host id, and skip one that never started', () => {
+    const groups = groupsWith()
+    const state = groups.stateFor('/p/main')
+    const started = state.addTile('pty', { commandId: 'claude', title: 'api work' })
+    state.updateTile(started!.id, { terminalId: 'pty_abc' })
+    state.addTile('pty', { commandId: 'shell' })
+    const saved = parseSavedWorkspace(serializeWorkspace('projects', groups))
+    expect(saved?.groups['/p/main']?.tiles).toEqual([{ kind: 'pty', title: 'api work', terminalId: 'pty_abc', commandId: 'claude' }])
+    const restored = new WorkspaceGroups(() => new WorkspaceState({ createId: ids() }), saved?.groups)
+    expect(restored.stateFor('/p/main').getSnapshot().tiles[1]).toMatchObject({ kind: 'pty', title: 'api work', terminalId: 'pty_abc', commandId: 'claude' })
+  })
+
+  it('drops a saved terminal that is missing its id or agent, or has oversized ones', () => {
+    const saved = parseSavedWorkspace(JSON.stringify({
+      version: 1,
+      mode: 'chats',
+      groups: { g: { active: -1, tiles: [
+        { kind: 'pty', title: 'a', commandId: 'claude' },
+        { kind: 'pty', title: 'b', terminalId: 'pty_1' },
+        { kind: 'pty', title: 'c', terminalId: 'x'.repeat(81), commandId: 'claude' },
+        { kind: 'pty', title: 'd', terminalId: 'pty_1', commandId: 'y'.repeat(33) },
+      ] } },
+    }))
+    expect(saved?.groups.g?.tiles).toEqual([])
+  })
+})
+
 describe('serialize and restore', () => {
   it('round-trips tabs per worktree, skipping the chat and terminal tabs, and restores focus', () => {
     const groups = groupsWith()
