@@ -25,6 +25,9 @@ function gitApi(isRepo: (cwd: string) => boolean = () => true): WorkspaceGitApi 
       return { path, branch, changes: [], truncated: false }
     },
     async checks(path) { return { path, manager: 'pnpm', scripts: [] } },
+    async stage(path) { return { path, branch: 'main', changes: [], truncated: false } },
+    async unstage(path) { return { path, branch: 'main', changes: [], truncated: false } },
+    async commit(path) { return { hash: 'abc1234', subject: 'x', status: { path, branch: 'main', changes: [], truncated: false } } },
     async diff(path, file) { return { path, file, text: '', binary: false, truncated: false } },
     async createWorktree(_cwd, branch) {
       if (branch === 'dup') throw new Error('the branch dup already exists')

@@ -50,6 +50,9 @@ function api(overrides: Partial<WorkspaceGitApi> = {}): WorkspaceGitApi {
     },
     async status(path) { return { ...STATUS, path, branch: path === '/p/proj-x' ? 'feature/x' : 'main' } },
     async checks(path) { return { path, manager: 'pnpm', scripts: [{ name: 'check', command: 'vitest run', primary: true }, { name: 'dev', command: 'vite', primary: false }] } },
+    async stage(path) { return { path, branch: 'main', changes: [], truncated: false } },
+    async unstage(path) { return { path, branch: 'main', changes: [], truncated: false } },
+    async commit(path) { return { hash: 'abc1234', subject: 'x', status: { path, branch: 'main', changes: [], truncated: false } } },
     async diff(path, file): Promise<GitDiffView> {
       return { path, file, text: DIFF_TEXT, binary: false, truncated: false }
     },
@@ -255,7 +258,7 @@ describe('ProjectsSidebar', () => {
 })
 
 describe('ChangesBody', () => {
-  const props = (shell: WorkspaceShellState): ChangesBodyProps => ({ shell }) as ChangesBodyProps
+  const props = (shell: WorkspaceShellState): ChangesBodyProps => ({ shell, gitApi: api() }) as ChangesBodyProps
 
   it('asks for a selection when no worktree is selected', () => {
     const shell = new WorkspaceShellState(api())

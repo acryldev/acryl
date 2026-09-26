@@ -2,16 +2,21 @@
 
 import {
   WORKSPACE_GIT_CHECKS_PATH,
+  WORKSPACE_GIT_COMMIT_PATH,
+  WORKSPACE_GIT_STAGE_PATH,
+  WORKSPACE_GIT_UNSTAGE_PATH,
   WORKSPACE_GIT_DIFF_PATH,
   WORKSPACE_GIT_REPO_PATH,
   WORKSPACE_GIT_STATUS_PATH,
   WORKSPACE_GIT_WORKTREE_PATH,
   parseGitChecksView,
+  parseGitCommitView,
   parseGitDiffView,
   parseGitRepoView,
   parseGitStatusView,
   parseGitWorktreeCreatedView,
   type GitChecksView,
+  type GitCommitView,
   type GitDiffView,
   type GitRepoView,
   type GitStatusView,
@@ -25,6 +30,17 @@ export interface WorkspaceGitApi {
   diff(path: string, file: string): Promise<GitDiffView>
   /** The package scripts a worktree can run as checks, with its package manager. */
   checks(path: string): Promise<GitChecksView>
+  /**
+   * Stage files, answering the worktree's status afterwards.
+   * @throws an Error whose message is fit to show the user.
+   */
+  stage(path: string, files: readonly string[]): Promise<GitStatusView>
+  unstage(path: string, files: readonly string[]): Promise<GitStatusView>
+  /**
+   * Commit what is staged (never pushes).
+   * @throws an Error whose message says what to fix (no message, nothing staged, no git identity).
+   */
+  commit(path: string, message: string): Promise<GitCommitView>
   /**
    * Create a branch and its worktree.
    * @throws an Error whose message is fit to show the user (for example "the branch x already exists").
@@ -46,6 +62,28 @@ export function createWorkspaceGitApi(fetchImpl: FetchLike = (input, init) => fe
       body = null
     }
     return { status: response.status, body }
+  }
+
+  async function postJson(path: string, payload: object): Promise<unknown> {
+    const response = await fetchImpl(path, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    let body: unknown = null
+    try {
+      body = await response.json()
+    } catch {
+      body = null
+    }
+    if (response.status !== 200) {
+      const detail = typeof body === 'object' && body !== null && 'error' in body && typeof body.error === 'string'
+        ? body.error
+        : `the request failed (HTTP ${String(response.status)})`
+      throw new Error(detail)
+    }
+    return body
   }
 
   function failure(operation: string, status: number, body: unknown): Error {
@@ -87,6 +125,15 @@ export function createWorkspaceGitApi(fetchImpl: FetchLike = (input, init) => fe
         throw new Error(detail)
       }
       return parseGitWorktreeCreatedView(body)
+    },
+    async stage(path, files) {
+      return parseGitStatusView(await postJson(WORKSPACE_GIT_STAGE_PATH, { path, files }))
+    },
+    async unstage(path, files) {
+      return parseGitStatusView(await postJson(WORKSPACE_GIT_UNSTAGE_PATH, { path, files }))
+    },
+    async commit(path, message) {
+      return parseGitCommitView(await postJson(WORKSPACE_GIT_COMMIT_PATH, { path, message }))
     },
     async checks(path) {
       const { status, body } = await getJson(WORKSPACE_GIT_CHECKS_PATH, { path })

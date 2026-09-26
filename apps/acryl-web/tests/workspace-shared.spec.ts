@@ -95,6 +95,22 @@ describe('the ACRYL workspace on the Web surface', () => {
       const tree = await fetch(`${origin}/api/acryl-workspace/files/tree?path=${encodeURIComponent(repo)}&dir=`, { headers })
       expect(tree.status).toBe(200)
       expect(await tree.json()).toMatchObject({ entries: [{ name: 'a.txt', kind: 'file' }] })
+      // Staging and committing work the same: the workspace's git write routes are the shared plugin's, on Web too.
+      execFileSync('git', ['config', 'user.email', 't@t'], { cwd: repo })
+      execFileSync('git', ['config', 'user.name', 't'], { cwd: repo })
+      const stage = await fetch(`${origin}/api/acryl-workspace/git/stage`, {
+        method: 'POST',
+        headers: { ...headers, 'content-type': 'application/json' },
+        body: JSON.stringify({ path: repo, files: ['a.txt'] }),
+      })
+      expect(stage.status).toBe(200)
+      const commit = await fetch(`${origin}/api/acryl-workspace/git/commit`, {
+        method: 'POST',
+        headers: { ...headers, 'content-type': 'application/json' },
+        body: JSON.stringify({ path: repo, message: 'first commit from web' }),
+      })
+      expect(commit.status).toBe(200)
+      expect(await commit.json()).toMatchObject({ subject: 'first commit from web' })
       // Editing works the same: read a file, save it through the confined route, and see it on disk.
       const read = await (await fetch(`${origin}/api/acryl-workspace/files/read?path=${encodeURIComponent(repo)}&file=a.txt`, { headers })).json() as { mtimeMs: number }
       const saved = await fetch(`${origin}/api/acryl-workspace/files/write`, {

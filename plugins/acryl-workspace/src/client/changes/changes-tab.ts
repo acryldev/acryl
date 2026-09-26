@@ -3,6 +3,7 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
 import { ChangesBody } from './ChangesBody.tsx'
+import type { WorkspaceGitApi } from '../git/git-api.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 
 /** The tab kind this plugin owns. */
@@ -15,8 +16,9 @@ export const CHANGES_ID = 'acryl-workspace/changes'
  * absent, and mounts by itself when it appears, so it can never take the canvas or the left pane
  * down with it. Both registrations live inside one effect, so they unwind together.
  * @param shell - shared shell state the body reads and the reveal callback belongs to.
+ * @param gitApi - the git routes the stage and commit controls call.
  */
-export function changesTabPlugin(shell: WorkspaceShellState) {
+export function changesTabPlugin(shell: WorkspaceShellState, gitApi: WorkspaceGitApi) {
   return {
     name: 'acryl-workspace-changes-tab',
     inject: ['sidebarRightTabs', 'sidebarRight', 'slots'],
@@ -36,7 +38,7 @@ export function changesTabPlugin(shell: WorkspaceShellState) {
         const removeBody = ctx.slots.register({
           name: 'sidebar.right.pane.tab',
           key: CHANGES_ID,
-          inject: () => ({ shell }),
+          inject: () => ({ shell, gitApi }),
         }, ChangesBody)
         // Picking a worktree in the left pane switches an OPEN right panel to its changes. It never opens
         // a closed panel: that would pop a large panel over the chat every time a branch is clicked.

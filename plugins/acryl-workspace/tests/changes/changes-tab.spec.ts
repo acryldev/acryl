@@ -22,6 +22,9 @@ function fakeGit(): WorkspaceGitApi {
       return { path, branch: 'main', changes: [], truncated: false }
     },
     async checks(path) { return { path, manager: 'pnpm', scripts: [] } },
+    async stage(path) { return { path, branch: 'main', changes: [], truncated: false } },
+    async unstage(path) { return { path, branch: 'main', changes: [], truncated: false } },
+    async commit(path) { return { hash: 'abc1234', subject: 'x', status: { path, branch: 'main', changes: [], truncated: false } } },
     async diff(path, file) {
       return { path, file, text: '', binary: false, truncated: false }
     },
@@ -75,7 +78,7 @@ describe('Changes tab plugin lifecycle', () => {
     const shell = new WorkspaceShellState(fakeGit())
     const f = fakes()
     const root = new Context()
-    const fiber = root.plugin(changesTabPlugin(shell))
+    const fiber = root.plugin(changesTabPlugin(shell, fakeGit()))
     await settle()
     expect(fiber.state).toBe(PENDING)
     expect(f.types).toEqual([])
@@ -100,7 +103,7 @@ describe('Changes tab plugin lifecycle', () => {
     root.provide('slots', f.slots)
     root.provide('sidebarRight', f.sidebarRight)
     root.provide('sidebarRightTabs', f.tabs)
-    const fiber = root.plugin(changesTabPlugin(shell))
+    const fiber = root.plugin(changesTabPlugin(shell, fakeGit()))
     await settle()
     expect(fiber.state).toBe(ACTIVE)
 
@@ -126,7 +129,7 @@ describe('Changes tab plugin lifecycle', () => {
       name: 'tabs-provider',
       apply(ctx: Context) { ctx.provide('sidebarRightTabs', f.tabs) },
     })
-    const fiber = root.plugin(changesTabPlugin(shell))
+    const fiber = root.plugin(changesTabPlugin(shell, fakeGit()))
     await settle()
     expect(fiber.state).toBe(ACTIVE)
     expect(f.types).toHaveLength(1)
@@ -160,7 +163,7 @@ describe('Changes tab plugin lifecycle', () => {
     root.provide('sidebarRight', f.sidebarRight)
     root.provide('sidebarRightTabs', f.tabs)
     for (let cycle = 0; cycle < 10; cycle += 1) {
-      const fiber = root.plugin(changesTabPlugin(shell))
+      const fiber = root.plugin(changesTabPlugin(shell, fakeGit()))
       await settle()
       expect(f.types).toHaveLength(1)
       expect(f.bodies).toHaveLength(1)

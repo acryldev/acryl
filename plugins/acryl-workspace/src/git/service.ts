@@ -13,6 +13,7 @@ import type {
   GitChange,
   GitChangeCode,
   GitChecksView,
+  GitCommitView,
   GitDiffView,
   GitRepoView,
   GitStatusView,
@@ -20,7 +21,9 @@ import type {
   GitWorktreeCreatedView,
 } from './contract.ts'
 import { readWorktreeChecks } from './checks.ts'
+import { MAX_COMMIT_MESSAGE, MAX_STAGE_FILES } from './contract.ts'
 
+const COMMIT_TIMEOUT_MS = 120_000
 const DEFAULT_MAX_OUTPUT_BYTES = 1024 * 1024
 const DEFAULT_TIMEOUT_MS = 10_000
 const DEFAULT_MAX_CHANGES = 1000
@@ -116,6 +119,63 @@ export class WorkspaceGit {
       changes: all.slice(0, this.maxChanges),
       truncated,
     }
+  }
+
+  /**
+   * Stage files (`git add`), then report the worktree's status.
+   * @param path - absolute worktree directory.
+   * @param files - paths relative to that worktree.
+   */
+  async stage(path: string, files: readonly string[]): Promise<GitStatusView> {
+    const dir = await this.resolveDirectory(path)
+    assertFileList(files)
+    await this.run(['add', '--', ...files], dir)
+    return this.status(dir)
+  }
+
+  /**
+   * Unstage files, keeping their working-tree changes, then report the status. Works before the first commit too.
+   */
+  async unstage(path: string, files: readonly string[]): Promise<GitStatusView> {
+    const dir = await this.resolveDirectory(path)
+    assertFileList(files)
+    try {
+      await this.run(['reset', '-q', 'HEAD', '--', ...files], dir)
+    } catch {
+      // No HEAD yet (an empty repository): dropping the paths from the index is the same thing.
+      await this.run(['rm', '--cached', '-r', '-q', '--', ...files], dir)
+    }
+    return this.status(dir)
+  }
+
+  /**
+   * Commit what is staged. Refuses an empty message, nothing staged, or a missing git identity with a reason the
+   * user can act on; never pushes, and never bypasses hooks.
+   */
+  async commit(path: string, message: string): Promise<GitCommitView> {
+    const dir = await this.resolveDirectory(path)
+    const text = typeof message === 'string' ? message.trim() : ''
+    if (text === '' || text.length > MAX_COMMIT_MESSAGE || text.includes('\0')) {
+      throw new WorkspaceGitError('write a commit message (up to 5000 characters)', 'invalid')
+    }
+    if ((await this.run(['diff', '--cached', '--name-only', '-z'], dir)).stdout === '') {
+      throw new WorkspaceGitError('nothing is staged to commit', 'conflict')
+    }
+    try {
+      await this.run(['var', 'GIT_AUTHOR_IDENT'], dir)
+    } catch {
+      throw new WorkspaceGitError('git does not know who you are: set user.name and user.email first', 'conflict')
+    }
+    try {
+      await this.run(['commit', '-q', '-m', text], dir, undefined, COMMIT_TIMEOUT_MS)
+    } catch {
+      throw new WorkspaceGitError('git could not commit (a commit hook may have refused it)', 'conflict')
+    }
+    const [hash, subject] = await Promise.all([
+      this.run(['rev-parse', '--short', 'HEAD'], dir),
+      this.run(['log', '-1', '--format=%s'], dir),
+    ])
+    return { hash: hash.stdout.trim(), subject: subject.stdout.trim(), status: await this.status(dir) }
   }
 
   /**
@@ -312,6 +372,13 @@ function assertBranchName(branch: string): void {
 
 function emptyResult(): RunResult {
   return { stdout: '', truncated: false }
+}
+
+function assertFileList(files: readonly string[]): void {
+  if (!Array.isArray(files) || files.length === 0 || files.length > MAX_STAGE_FILES) {
+    throw new WorkspaceGitError(`name between 1 and ${String(MAX_STAGE_FILES)} files`, 'invalid')
+  }
+  for (const file of files) assertRelativeFile(file)
 }
 
 function assertRelativeFile(file: string): void {

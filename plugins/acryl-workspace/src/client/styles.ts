@@ -219,6 +219,19 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceEditorBanner button { appearance: none; padding: 2px 10px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: 11px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceCodeEditor { flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
 .dshWorkspaceCodeEditor .cm-editor { height: 100%; }
+.dshWorkspaceChangeItem { display: flex; align-items: center; }
+.dshWorkspaceChangeItem > .dshWorkspaceChange { flex: 1; min-width: 0; }
+.dshWorkspaceChangeStage { appearance: none; flex: none; width: 22px; height: 22px; margin: 0 4px 0 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 600 14px/1 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceChangeStage:hover:not(:disabled) { border-color: #4d6bfe; color: #4d6bfe; }
+.dshWorkspaceChangeStage:disabled, .dshWorkspaceChangesAll:disabled { opacity: .5; cursor: default; }
+.dshWorkspaceChangesAll { appearance: none; margin-right: 4px; padding: 2px 10px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 11px/1.5 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceChangesAll:hover:not(:disabled) { border-color: #4d6bfe; color: #4d6bfe; }
+.dshWorkspaceCommit { display: flex; flex-direction: column; gap: 6px; margin: 8px; padding: 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; }
+.dshWorkspaceCommit textarea { resize: vertical; padding: 6px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceCommit textarea:focus { outline: 2px solid #4d6bfe; outline-offset: -1px; }
+.dshWorkspaceCommitButton { appearance: none; padding: 5px 12px; border: 1px solid #4d6bfe; border-radius: 999px; background: #4d6bfe; color: #fff; cursor: pointer; font: 600 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceCommitButton:disabled { opacity: .45; cursor: default; }
+.dshWorkspaceCommitOk { margin: 0; color: #4ade80; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; overflow-wrap: anywhere; }
 .dshWorkspaceChangesMeta { color: var(--dsw-alias-fg-l2); font-size: 11px; }
 .dshWorkspaceChangesRefresh { appearance: none; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 14px; }
 .dshWorkspaceChangesRefresh:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg); }

@@ -14,6 +14,9 @@ const shellStub = (): WorkspaceShellState => new WorkspaceShellState({
   repo: async () => null,
   status: async path => ({ path, branch: null, changes: [], truncated: false }),
   checks: async path => ({ path, manager: 'pnpm', scripts: [] }),
+  stage: async path => ({ path, branch: 'main', changes: [], truncated: false }),
+  unstage: async path => ({ path, branch: 'main', changes: [], truncated: false }),
+  commit: async path => ({ hash: 'abc1234', subject: 'x', status: { path, branch: 'main', changes: [], truncated: false } }),
   diff: async (path, file) => ({ path, file, text: '', binary: false, truncated: false }),
   createWorktree: async () => { throw new Error('unused') },
 })

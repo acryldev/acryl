@@ -85,7 +85,7 @@ export function apply(ctx: ClientContext): void {
   })
   ctx.effect(() => startShellPolling(shell), 'acryl-workspace: git state polling')
   ctx.effect(() => installWorkspaceStyles(), 'acryl-workspace: styles')
-  ctx.plugin(changesTabPlugin(shell))
+  ctx.plugin(changesTabPlugin(shell, gitApi))
   ctx.plugin(reviewTabPlugin(shell, review))
   ctx.plugin(checksTabPlugin(shell, gitApi))
   ctx.plugin(filesTabPlugin(shell, filesApi))

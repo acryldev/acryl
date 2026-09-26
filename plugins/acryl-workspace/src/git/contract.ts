@@ -5,6 +5,14 @@ export const WORKSPACE_GIT_STATUS_PATH = '/api/acryl-workspace/git/status'
 export const WORKSPACE_GIT_DIFF_PATH = '/api/acryl-workspace/git/diff'
 export const WORKSPACE_GIT_WORKTREE_PATH = '/api/acryl-workspace/git/worktree'
 export const WORKSPACE_GIT_CHECKS_PATH = '/api/acryl-workspace/git/checks'
+export const WORKSPACE_GIT_STAGE_PATH = '/api/acryl-workspace/git/stage'
+export const WORKSPACE_GIT_UNSTAGE_PATH = '/api/acryl-workspace/git/unstage'
+export const WORKSPACE_GIT_COMMIT_PATH = '/api/acryl-workspace/git/commit'
+
+/** The most files one stage or unstage request may name. */
+export const MAX_STAGE_FILES = 1000
+/** The longest commit message the commit route accepts. */
+export const MAX_COMMIT_MESSAGE = 5000
 
 /** One worktree of a repository, as `git worktree list` reports it. */
 export interface GitWorktree {
@@ -94,6 +102,15 @@ export interface GitChecksView {
   readonly scripts: readonly CheckScript[]
 }
 
+/** The result of a commit: the new commit and the worktree's status afterwards. */
+export interface GitCommitView {
+  /** Abbreviated hash of the new commit. */
+  readonly hash: string
+  /** First line of its message. */
+  readonly subject: string
+  readonly status: GitStatusView
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
@@ -181,4 +198,12 @@ export function parseGitChecksView(value: unknown): GitChecksView {
 export function checkCommandLine(manager: CheckManager | null, script: string): string {
   if (!SAFE_NAME.test(script)) throw new Error('unsafe script name')
   return `${manager ?? 'npm'} run ${script}`
+}
+
+/** @param value - unknown JSON from the commit route. */
+export function parseGitCommitView(value: unknown): GitCommitView {
+  if (!isRecord(value) || typeof value.hash !== 'string' || typeof value.subject !== 'string') {
+    throw new Error('invalid git commit response')
+  }
+  return { hash: value.hash, subject: value.subject, status: parseGitStatusView(value.status) }
 }

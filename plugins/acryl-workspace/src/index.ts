@@ -16,16 +16,22 @@ import { WorkspaceFiles, WorkspaceFilesError } from './files/service.ts'
 import { WorkspaceGit, WorkspaceGitError } from './git/service.ts'
 import {
   WORKSPACE_GIT_CHECKS_PATH,
+  WORKSPACE_GIT_COMMIT_PATH,
   WORKSPACE_GIT_DIFF_PATH,
   WORKSPACE_GIT_REPO_PATH,
+  WORKSPACE_GIT_STAGE_PATH,
   WORKSPACE_GIT_STATUS_PATH,
+  WORKSPACE_GIT_UNSTAGE_PATH,
   WORKSPACE_GIT_WORKTREE_PATH,
 } from './git/contract.ts'
 import {
   handleWorkspaceGitChecksRequest,
+  handleWorkspaceGitCommitRequest,
   handleWorkspaceGitDiffRequest,
   handleWorkspaceGitRepoRequest,
+  handleWorkspaceGitStageRequest,
   handleWorkspaceGitStatusRequest,
+  handleWorkspaceGitUnstageRequest,
   handleWorkspaceGitWorktreeRequest,
 } from './git/route.ts'
 import { WorkspacePtyRegistry } from './pty/service.ts'
@@ -98,6 +104,9 @@ export function apply(ctx: Context): void {
         [WORKSPACE_GIT_DIFF_PATH, handleWorkspaceGitDiffRequest],
         [WORKSPACE_GIT_CHECKS_PATH, handleWorkspaceGitChecksRequest],
         [WORKSPACE_GIT_WORKTREE_PATH, handleWorkspaceGitWorktreeRequest],
+        [WORKSPACE_GIT_STAGE_PATH, handleWorkspaceGitStageRequest],
+        [WORKSPACE_GIT_UNSTAGE_PATH, handleWorkspaceGitUnstageRequest],
+        [WORKSPACE_GIT_COMMIT_PATH, handleWorkspaceGitCommitRequest],
       ] as const
       const filesRoutes = [
         [WORKSPACE_FILES_TREE_PATH, handleWorkspaceFilesTreeRequest],

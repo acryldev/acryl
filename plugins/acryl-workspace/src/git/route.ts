@@ -120,3 +120,63 @@ export async function handleWorkspaceGitWorktreeRequest(
     return respondError(res, cause, 'create git worktree', reportError)
   }
 }
+
+type Parse<T> = (body: Record<string, unknown>) => T | undefined
+
+/** POST a small JSON body, parse it strictly, run one git write, and answer with its result. */
+async function handlePost<T>(
+  req: IncomingMessage,
+  res: ServerResponse,
+  expectedOrigin: string,
+  operation: string,
+  reportError: ReportError,
+  parse: Parse<T>,
+  compute: (input: T) => Promise<object>,
+): Promise<void> {
+  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
+  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
+  let body: unknown
+  try {
+    body = await readJson(req)
+  } catch (cause) {
+    if (cause instanceof BodyTooLargeError) return finishJson(res, 413, error('body too large'))
+    return finishJson(res, 400, error(`invalid ${operation} request`))
+  }
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) return finishJson(res, 400, error(`invalid ${operation} request`))
+  const input = parse(body as Record<string, unknown>)
+  if (input === undefined) return finishJson(res, 400, error(`invalid ${operation} request`))
+  try {
+    return finishJson(res, 200, await compute(input))
+  } catch (cause) {
+    return respondError(res, cause, operation, reportError)
+  }
+}
+
+function parseFiles(body: Record<string, unknown>): { path: string; files: string[] } | undefined {
+  if (Object.keys(body).length !== 2 || typeof body.path !== 'string' || !Array.isArray(body.files)) return undefined
+  if (!body.files.every((file): file is string => typeof file === 'string')) return undefined
+  return { path: body.path, files: body.files }
+}
+
+/** POST `{ path, files }`: stage files, answering the worktree's status. */
+export function handleWorkspaceGitStageRequest(req: IncomingMessage, res: ServerResponse, expectedOrigin: string, git: WorkspaceGit, reportError: ReportError): Promise<void> {
+  return handlePost(req, res, expectedOrigin, 'stage', reportError, parseFiles, input => git.stage(input.path, input.files))
+}
+
+/** POST `{ path, files }`: unstage files, answering the worktree's status. */
+export function handleWorkspaceGitUnstageRequest(req: IncomingMessage, res: ServerResponse, expectedOrigin: string, git: WorkspaceGit, reportError: ReportError): Promise<void> {
+  return handlePost(req, res, expectedOrigin, 'unstage', reportError, parseFiles, input => git.unstage(input.path, input.files))
+}
+
+/** POST `{ path, message }`: commit what is staged. Never pushes. */
+export function handleWorkspaceGitCommitRequest(req: IncomingMessage, res: ServerResponse, expectedOrigin: string, git: WorkspaceGit, reportError: ReportError): Promise<void> {
+  return handlePost(
+    req, res, expectedOrigin, 'commit', reportError,
+    (body) => {
+      if (Object.keys(body).length !== 2 || typeof body.path !== 'string' || typeof body.message !== 'string') return undefined
+      return { path: body.path, message: body.message }
+    },
+    input => git.commit(input.path, input.message),
+  )
+}
+
