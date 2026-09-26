@@ -38,16 +38,16 @@ Conventions: `[P]` parallel; every task ends with a green `corepack pnpm run che
 ## Scope B: CLI operator and rescue
 
 ### Phase B0: spikes
-- [ ] **TB01** Spike: inventory what `acryl doctor`-style diagnosis can already conclude from `plugin-doctor.ts`, and list the real failure modes seen on this machine (pnpm store mismatch, failed plugin activation, corrupt override file, broken profile home). Output: findings table in `research.md`.
-- [ ] **TB02** [P] Spike: does the CLI run when the Desktop bundle is broken? Trace which imports `apps/acryl-cli` needs and confirm it depends on `runtime/` only.
+- [x] **TB01** Spike: inventory what `acryl doctor`-style diagnosis can already conclude from `plugin-doctor.ts`, and list the real failure modes seen on this machine (pnpm store mismatch, failed plugin activation, corrupt override file, broken profile home). Output: findings table in `research.md`. Answered in `research.md`.
+- [x] **TB02** [P] Spike: does the CLI run when the Desktop bundle is broken? Trace which imports `apps/acryl-cli` needs and confirm it depends on `runtime/` only. Answered in `research.md`: the CLI depends on the runtime only.
 - [ ] **TB03** [P] Spike: channel discovery and auth (profile-home discovery file with owner-only mode, per-profile secret, loopback or Unix socket). Output: threat model in `research.md`.
 - [ ] **TB04** [P] Spike: detect a live instance so offline writes can be refused.
 
 ### Phase B1: offline rescue (no app needed)
-- [ ] **TB10** `ProfileBackup`: pre-image store, atomic write, undo. Tests including kill-mid-write.
-- [ ] **TB11** `ProfileInspector`: read-only diagnosis extending `PluginHealthFinding`, static only, never starts the app. Tests against temporary broken profiles.
-- [ ] **TB12** `RepairPlan` and recipes: named steps with precondition, dry-run diff and undo. First recipes: disable failing row, restore last valid override file, pnpm store mismatch guidance.
-- [ ] **TB13** CLI commands `acryl doctor` and `acryl repair [--dry-run|--undo]`, readable report plus JSON.
+- [x] **TB10** `ProfileBackup`: pre-image store, atomic write, undo. Tests including kill-mid-write. Delivered: `profile-repair/backup.ts` - pre-image copies, a checksummed manifest written last and atomically, restore that verifies everything first and removes what a repair created, refusal of any file outside the ACRYL home. Tested including an interrupted backup and a tampered one.
+- [x] **TB11** `ProfileInspector`: read-only diagnosis extending `PluginHealthFinding`, static only, never starts the app. Tests against temporary broken profiles. Delivered: `inspectProfile`, static only and read-only (a test proves it changes no byte), with typed findings.
+- [x] **TB12** `RepairPlan` and recipes: named steps with precondition, dry-run diff and undo. First recipes: disable failing row, restore last valid override file, pnpm store mismatch guidance. Delivered: two named recipes with preconditions, dry-run text naming the file and row, rollback on failure, and undo. The pnpm store mismatch is diagnosed with guidance and never auto-fixed.
+- [x] **TB13** CLI commands `acryl doctor` and `acryl repair [--dry-run|--undo]`, readable report plus JSON. Delivered: `acryl doctor` (readable and `--json`, exit 1 on an error finding) and `acryl repair` with `--dry-run`, `--recipe`, `--yes` (only with named recipes), `--undo`, and `--home` to repair another profile home.
 
 ### Phase B2: configuration and install from the CLI
 - [ ] **TB20** `acryl config get/set` and `acryl plugin enable/disable` offline through the shared override file; refuse when a live instance owns the state.

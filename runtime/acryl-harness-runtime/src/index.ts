@@ -296,3 +296,29 @@ export {
 } from './system-prompt-capture.ts'
 export { pinnedPnpmEnv, resolvePinnedPnpm, type PinnedPnpm } from './pinned-pnpm.ts'
 export { reconcileProfileLayout, type LayoutChange } from './profile-layout.ts'
+
+export {
+  SAFE_RECIPES,
+  applyRepairPlan,
+  backupsDir,
+  createBackup,
+  describePlan,
+  inspectProfile,
+  isSafeRecipe,
+  listBackups,
+  planRepairs,
+  restoreBackup,
+  undoRepair,
+} from './profile-repair/index.ts'
+export type {
+  BackupEntry,
+  BackupManifest,
+  InspectOptions,
+  ProfileDiagnosis,
+  ProfileFinding,
+  ProfileFindingCode,
+  RecipeId,
+  RepairPlan,
+  RepairResult,
+  RepairStep,
+} from './profile-repair/index.ts'

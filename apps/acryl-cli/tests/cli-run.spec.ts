@@ -77,6 +77,7 @@ function dependencies(overrides: Partial<AcrylCliDependencies> = {}): AcrylCliDe
     },
     exit: code => { events.push(`exit:${code}`) },
     write: line => { events.push(`write:${line}`) },
+    confirm: async () => false,
     ...overrides,
   }
 }
