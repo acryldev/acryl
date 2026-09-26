@@ -7,8 +7,14 @@
  * which cannot reproduce a screen that was drawn by cursor movement.
  */
 
-import { SerializeAddon } from '@xterm/addon-serialize'
-import { Terminal } from '@xterm/headless'
+import serializeModule from '@xterm/addon-serialize'
+import type { SerializeAddon as SerializeAddonType } from '@xterm/addon-serialize'
+import headlessModule from '@xterm/headless'
+import type { Terminal as HeadlessTerminal } from '@xterm/headless'
+
+// Both packages are CommonJS, whose named exports Node's ESM loader cannot see; take them from the default.
+const { Terminal } = headlessModule
+const { SerializeAddon } = serializeModule
 
 const SCROLLBACK_LINES = 5000
 
@@ -20,8 +26,8 @@ export interface ScreenSnapshot {
 }
 
 export class ScreenModel {
-  private readonly terminal: Terminal
-  private readonly serializer = new SerializeAddon()
+  private readonly terminal: HeadlessTerminal
+  private readonly serializer: SerializeAddonType = new SerializeAddon()
   private applied = 0
 
   constructor(cols: number, rows: number) {
