@@ -30,6 +30,7 @@ export type AcrylCodingCapabilityId =
   | 'authorization'
   | 'workspace'
   | 'plugin-admin'
+  | 'support'
   | 'advanced-shell'
 
 /**
@@ -169,6 +170,16 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     requiresPackages: ['acryl-plugin-admin'],
     loaderPatches: [
       { insert: [{ id: 'acryl-plugin-admin', name: 'acryl-plugin-admin' }] },
+    ],
+  },
+  {
+    // Web keeps log files and offers Settings > Support > Export diagnostics. Desktop already has both natively
+    // (the file logger in the main process and the tray export), so this stays off Desktop on purpose.
+    id: 'support',
+    surfaces: ['web'],
+    requiresPackages: ['acryl-support'],
+    loaderPatches: [
+      { insert: [{ id: 'acryl-support', name: 'acryl-support' }] },
     ],
   },
   {

@@ -11,7 +11,7 @@ import {
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { LogFileSink, logFileName } from '../../src/diagnostics/log-files.ts'
+import { LogFileSink, logFileName } from '../src/log-files.ts'
 
 function todaySuffix(): string {
   const now = new Date()

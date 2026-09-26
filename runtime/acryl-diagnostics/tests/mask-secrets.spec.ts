@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { maskSecrets } from '../../src/diagnostics/mask-secrets.ts'
+import { maskSecrets } from '../src/mask-secrets.ts'
 
 describe('maskSecrets', () => {
   it('masks API key values', () => {

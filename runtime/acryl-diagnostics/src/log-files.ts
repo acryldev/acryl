@@ -8,8 +8,8 @@ import { maskSecrets } from './mask-secrets.ts'
 
 const OWNED_LOG_FILE = /^dsh-\d{4}-\d{2}-\d{2}(?:\.error)?(?:\.\d+)?\.log$/u
 
-/** Return whether a leaf name belongs to the desktop diagnostic log set. */
-export function isDesktopLogFileName(name: string): boolean {
+/** Return whether a leaf name belongs to the diagnostic log set. */
+export function isDiagnosticLogFileName(name: string): boolean {
   return OWNED_LOG_FILE.test(name)
 }
 
@@ -73,15 +73,15 @@ export class LogFileSink {
     this.maxFileBytes = options.maxFileBytes
     this.maxDirectoryBytes = options.maxDirectoryBytes
     if (this.maxFileBytes < 2 || this.maxDirectoryBytes < 1) {
-      throw new Error('acryl-desktop: log size limits must be positive')
+      throw new Error('acryl-diagnostics: log size limits must be positive')
     }
     if (!existsSync(directory)) mkdirSync(directory, { recursive: true })
     const directoryStats = lstatSync(directory)
     if (directoryStats.isSymbolicLink()) {
-      throw new Error('acryl-desktop: refusing linked log directory')
+      throw new Error('acryl-diagnostics: refusing linked log directory')
     }
     if (!directoryStats.isDirectory()) {
-      throw new Error('acryl-desktop: log path is not a directory')
+      throw new Error('acryl-diagnostics: log path is not a directory')
     }
     this.directoryBytes = this.measureDirectoryBytes()
   }
@@ -229,7 +229,7 @@ export class LogFileSink {
   private ownedFiles(): OwnedLogFile[] {
     const entries: OwnedLogFile[] = []
     for (const name of readdirSync(this.directory)) {
-      if (!isDesktopLogFileName(name)) continue
+      if (!isDiagnosticLogFileName(name)) continue
       const path = join(this.directory, name)
       try {
         const stats = lstatSync(path)

@@ -42,10 +42,8 @@ import type {
   DesktopLifecycleFailureReason,
   DesktopLifecycleRendererFailureReason,
 } from './startup/lifecycle-events.ts'
-import { FileExporter } from './diagnostics/file-exporter.ts'
 import { DESKTOP_SETTINGS_NAMESPACE, type DesktopSettings } from './index.ts'
-import { LogFileSink } from './diagnostics/log-files.ts'
-import { maskSecrets } from './diagnostics/mask-secrets.ts'
+import { FileExporter, LogFileSink, maskSecrets } from 'acryl-diagnostics'
 import { resolveDesktopShellEnvironment } from './terminal/shell-environment.ts'
 import { installProfilePackageResolver } from './module-resolution.ts'
 import { packagedDependencyPath } from './runtime/packaged-runtime-path.ts'

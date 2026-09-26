@@ -4,7 +4,7 @@
  * plus one real Host route, so a Web that drifts from Desktop fails here rather than in a user's browser.
  */
 import { execFileSync } from 'node:child_process'
-import { mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readdir, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -118,6 +118,17 @@ describe('the ACRYL workspace on the Web surface', () => {
       expect(customOutput).toContain('custom-agent-ran')
       const smuggled = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'sh -c id' }) })
       expect(smuggled.status).toBe(500)
+      // Web keeps log files and serves a diagnostics archive (Settings > Support downloads it).
+      expect(rows.get('acryl-support')?.fiber).toBeDefined()
+      const support = await fetch(`${origin}/api/acryl-support/diagnostics`, { headers: { ...headers, referer: `${origin}/` } })
+      expect(support.status).toBe(200)
+      expect(support.headers.get('content-type')).toBe('application/zip')
+      expect(support.headers.get('content-disposition')).toMatch(/^attachment; filename="acryl-diagnostics-[A-Za-z0-9_.-]+\.zip"$/)
+      expect(Buffer.from(await support.arrayBuffer()).subarray(0, 2).toString('latin1')).toBe('PK')
+      const foreign = await fetch(`${origin}/api/acryl-support/diagnostics`, { headers: { 'sec-fetch-site': 'cross-site', referer: 'http://evil.example/' } })
+      expect(foreign.status).toBe(403)
+      const logFiles = (await readdir(join(home, '.dsh', 'logs'))).filter(name => /^dsh-\d{4}-\d{2}-\d{2}(\.error)?\.log$/.test(name))
+      expect(logFiles.length).toBeGreaterThan(0)
       const tree = await fetch(`${origin}/api/acryl-workspace/files/tree?path=${encodeURIComponent(repo)}&dir=`, { headers })
       expect(tree.status).toBe(200)
       expect(await tree.json()).toMatchObject({ entries: [{ name: 'a.txt', kind: 'file' }] })

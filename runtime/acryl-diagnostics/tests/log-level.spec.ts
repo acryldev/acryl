@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isErrorType, shouldEmit } from '../../src/diagnostics/log-level.ts'
+import { isErrorType, shouldEmit } from '../src/log-level.ts'
 
 describe('shouldEmit', () => {
   it('emits nothing above the threshold', () => {
