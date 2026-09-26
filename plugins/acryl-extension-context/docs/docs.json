@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "packVersion": "0.10.0",
+  "packVersion": "0.11.0",
   "navigation": [
     {
       "title": "Start here",
@@ -20,6 +20,23 @@
             "lifecycle-function.basic"
           ],
           "topic": "how plugins are built and delivered"
+        },
+        {
+          "id": "start.blueprints",
+          "title": "Blueprints, Blends and the blank canvas",
+          "path": "start-here/blueprints.md",
+          "when": "When the instance may be the blank canvas, when the user wants the product branded as their own, or when capturing what was grown as a Blend.",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "start.this-runtime",
+            "extending.ui-branding"
+          ],
+          "topic": "the blank canvas, branding and capturing a Blend"
         },
         {
           "id": "start.verify-before-done",

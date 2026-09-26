@@ -11,6 +11,7 @@ plugin. Verified working examples: `../example-plugins/README.md`.
 | Doc | Read it when | Surfaces | Applies |
 | --- | --- | --- | --- |
 | [This runtime: how ACRYL plugins are built, loaded and delivered](start-here/this-runtime.md) | Always first: the layers, the plugin and package contracts, and the two delivery paths. | tui web desktop | all |
+| [Blueprints, Blends and the blank canvas](start-here/blueprints.md) | When the instance may be the blank canvas, when the user wants the product branded as their own, or when capturing what was grown as a Blend. | tui web desktop | all |
 | [Verify before you say it works](start-here/verify-before-done.md) | Before claiming a plugin works, stating a live fiber state, or delivering a package. | tui web desktop | all |
 | [Troubleshooting](start-here/troubleshooting.md) | A plugin is PENDING, FAILED, invisible or running stale code: symptom table and where to look. | tui web desktop | all |
 | [Trust and safety: extensions run with the user's permissions](start-here/trust-and-safety.md) | Before writing or installing any extension: what it can do, the rules for the agent, and what ACRYL does and does not protect. | tui web desktop | all |
