@@ -9,6 +9,8 @@ import { describe, expect, it } from 'vitest'
 import {
   ACRYL_CODING_CAPABILITIES,
   createAcrylCodingCapabilityPatches,
+  acrylCodingCapabilityPackages,
+  createAcrylShellCapabilityPatches,
   type AcrylSurface,
 } from '../src/coding-capabilities.ts'
 
@@ -30,8 +32,8 @@ const expectedComposition: Record<AcrylSurface, PatchShape> = {
     idRows: ['system-prompt'],
     insertedIds: ['agent-presets', 'session-stats', 'authorization'],
   },
-  web: { idRows: [], insertedIds: ['authorization'] },
-  desktop: { idRows: [], insertedIds: ['authorization'] },
+  web: { idRows: [], insertedIds: ['authorization', 'acryl-workspace'] },
+  desktop: { idRows: [], insertedIds: ['authorization', 'acryl-workspace'] },
 }
 
 function shapeOf(patches: readonly unknown[]): PatchShape {
@@ -110,7 +112,7 @@ describe('createAcrylCodingCapabilityPatches', () => {
       const composedIds = Object.values(shapeOf(patches)).flat()
       const declaredForSurface = new Set(
         ACRYL_CODING_CAPABILITIES
-          .filter(capability => capability.surfaces.includes(surface))
+          .filter(capability => capability.surfaces.includes(surface) && capability.shellMode === undefined)
           .flatMap(capability => capability.loaderPatches.flatMap((patch) => {
             const rows = [
               ...('id' in patch && typeof patch.id === 'string' ? [patch.id] : []),
@@ -125,11 +127,11 @@ describe('createAcrylCodingCapabilityPatches', () => {
 
   it('unions multiple requested surfaces without duplicating a row', () => {
     const both = shapeOf(createAcrylCodingCapabilityPatches(new Set(['web', 'desktop'])))
-    expect(both.insertedIds).toEqual(['authorization'])
+    expect(both.insertedIds).toEqual(['authorization', 'acryl-workspace'])
 
     const all = shapeOf(createAcrylCodingCapabilityPatches(new Set(SURFACES)))
     expect(all.idRows).toEqual(['system-prompt'])
-    expect(all.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization'])
+    expect(all.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization', 'acryl-workspace'])
   })
 
   it('composes nothing for a surface set no capability declares', () => {
@@ -176,5 +178,47 @@ describe('createAcrylCodingCapabilityPatches', () => {
     const second = createAcrylCodingCapabilityPatches(new Set(['tui']))
     expect(second[0]?.id).toBe('system-prompt')
     expect(JSON.stringify(ACRYL_CODING_CAPABILITIES)).not.toContain('mutated-system-prompt')
+  })
+})
+
+describe('the workspace and the ACRYL shell are shared by Web and Desktop (spec 040, surface sharing)', () => {
+  it('declares the workspace for exactly the surfaces that render it, never TUI', () => {
+    const workspace = ACRYL_CODING_CAPABILITIES.find(capability => capability.id === 'workspace')
+    expect(workspace?.surfaces).toEqual(['desktop', 'web'])
+    expect(workspace?.requiresPackages).toEqual(['acryl-workspace'])
+    expect(createAcrylCodingCapabilityPatches(new Set(['tui'])).flatMap(p => 'insert' in p ? p.insert ?? [] : []).map(r => r.id)).not.toContain('acryl-workspace')
+  })
+
+  it('composes the identical workspace rows and the identical shell patches on Web and Desktop', () => {
+    const rows = (surface: AcrylSurface): unknown => shapeOf(createAcrylCodingCapabilityPatches(new Set([surface])))
+    expect(rows('web')).toEqual(rows('desktop'))
+    const shell = (surface: AcrylSurface): unknown => createAcrylShellCapabilityPatches(new Set([surface]), 'advanced')
+    expect(shell('web')).toEqual(shell('desktop'))
+    expect(shell('web')).toEqual([
+      { id: 'ui-layout', disabled: true },
+      { id: 'ui-sidebar', disabled: false },
+      { id: 'ui-conversation', disabled: false },
+    ])
+  })
+
+  it('composes no shell patches for compatibility mode or for TUI', () => {
+    expect(createAcrylShellCapabilityPatches(new Set(['desktop']), 'compatibility')).toEqual([])
+    expect(createAcrylShellCapabilityPatches(new Set(['tui']), 'advanced')).toEqual([])
+    // Shell-mode capabilities never leak into the plain composition, whatever the surface.
+    for (const surface of SURFACES) {
+      expect(JSON.stringify(createAcrylCodingCapabilityPatches(new Set([surface])))).not.toContain('ui-layout')
+    }
+  })
+
+  it('names the ACRYL packages each surface must make resolvable, the same on Web and Desktop', () => {
+    expect(acrylCodingCapabilityPackages(new Set(['web']))).toEqual(['acryl-workspace'])
+    expect(acrylCodingCapabilityPackages(new Set(['desktop']))).toEqual(['acryl-workspace'])
+    expect(acrylCodingCapabilityPackages(new Set(['tui']))).toEqual([])
+  })
+
+  it('returns fresh objects each call so one surface cannot edit the next one\'s patches', () => {
+    const first = createAcrylShellCapabilityPatches(new Set(['web']), 'advanced')
+    ;(first[0] as { disabled?: boolean }).disabled = false
+    expect(createAcrylShellCapabilityPatches(new Set(['web']), 'advanced')[0]).toEqual({ id: 'ui-layout', disabled: true })
   })
 })

@@ -197,6 +197,7 @@
     "@acryl/ui": "workspace:*",
     "acryl-shortcuts": "workspace:*",
     "acryl-mount-anchors": "workspace:*",
+    "acryl-workspace": "workspace:*",
     "dsh-client-ui-brand-acryl": "workspace:*",
     "cordis-plugin-market": "workspace:*"
   },

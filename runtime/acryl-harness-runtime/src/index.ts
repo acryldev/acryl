@@ -1,7 +1,10 @@
 export {
   ACRYL_CODING_CAPABILITIES,
+  acrylCodingCapabilityPackages,
   createAcrylCodingCapabilityPatches,
+  createAcrylShellCapabilityPatches,
   type AcrylCodingCapability,
+  type AcrylShellMode,
   type AcrylSurface,
 } from './coding-capabilities.ts'
 export type {
@@ -148,7 +151,12 @@ import {
 } from '@deepseek-ai/dsh-app-boot'
 
 import { resolveAcrylDshHome } from './acryl-home.ts'
-import { createAcrylCodingCapabilityPatches } from './coding-capabilities.ts'
+import {
+  acrylCodingCapabilityPackages,
+  createAcrylCodingCapabilityPatches,
+  createAcrylShellCapabilityPatches,
+} from './coding-capabilities.ts'
+import { materializeProfilePackage } from './engine-dsh.ts'
 import { installAcrylWorkspaceStatusTool } from './plugin-acryl-workspace-status.ts'
 import { installSessionLogExporter } from './session-log-exporter.ts'
 
@@ -245,9 +253,16 @@ export async function bootAcrylWebProfile(
   const profile = loadProfile('web', profileName, dshInstallAnchor)
   const rootConfig = join(profile.dir, 'cordis.yml')
   writeFileSync(rootConfig, profileRoot)
+  // Same composition as the engine-host Web path: the shared workspace and shell declarations, with the ACRYL
+  // packages they name made resolvable from this profile.
+  const webSurfaces = new Set(['web'] as const)
+  for (const packageName of acrylCodingCapabilityPackages(webSurfaces)) {
+    materializeProfilePackage(profile.dir, packageName, import.meta.url)
+  }
   const patches = structuredClone([
     ...profile.layers.flatMap(layer => layer.patches),
-    ...createAcrylCodingCapabilityPatches(new Set(['web'])),
+    ...createAcrylCodingCapabilityPatches(webSurfaces),
+    ...createAcrylShellCapabilityPatches(webSurfaces, 'advanced'),
     ...profile.patches,
   ])
   const cmdlineArgs = options.cmdlineArgs ?? []

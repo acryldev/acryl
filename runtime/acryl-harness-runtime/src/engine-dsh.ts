@@ -44,7 +44,11 @@ import type {} from '@deepseek-ai/dsh-host-webserver'
 import { resolveAcrylDshHome } from './acryl-home.ts'
 import { provideCliMarketInstall } from './cli-market-install.ts'
 import { provideCliMarketPlugins } from './cli-market-plugins.ts'
-import { createAcrylCodingCapabilityPatches } from './coding-capabilities.ts'
+import {
+  acrylCodingCapabilityPackages,
+  createAcrylCodingCapabilityPatches,
+  createAcrylShellCapabilityPatches,
+} from './coding-capabilities.ts'
 import type { AcrylEngineDefinition } from './engine-host.ts'
 import { installAcrylWorkspaceStatusTool } from './plugin-acryl-workspace-status.ts'
 import { pluginLifecyclePatches, resolvePluginLifecycleStatePath } from './plugin-lifecycle-state.ts'
@@ -346,7 +350,7 @@ function withDeclaredDependency(inject: unknown, name: string): string[] | Recor
  * all, just one process inheriting another, earlier process's leftover
  * dangling link.)
  */
-function materializeProfilePackage(profileDir: string, packageName: string, installPackageUrl: string): void {
+export function materializeProfilePackage(profileDir: string, packageName: string, installPackageUrl: string): void {
   const manifestPath = findPackageJSON(packageName, installPackageUrl)
   if (manifestPath === undefined) {
     throw new Error(`ACRYL web profile: cannot resolve package ${JSON.stringify(packageName)} from the acryl-web installation`)
@@ -414,9 +418,16 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   // already compose a row ACRYL's own capability table would otherwise insert
   // a second time (spec 034 T008).
   const existingRowIds = new Set(composeEntries([profileLayerPatches]).map(entry => entry.id))
+  // Web runs the same ACRYL shell and workspace Desktop does (spec 040, "Surface sharing"): both come from the
+  // shared capability declarations, and the ACRYL packages they name are made resolvable from this profile.
+  const webSurfaces = new Set(['web'] as const)
+  for (const packageName of acrylCodingCapabilityPackages(webSurfaces)) {
+    materializeProfilePackage(profile.dir, packageName, installPackageUrl)
+  }
   const patches = structuredClone([
     ...profileLayerPatches,
-    ...createAcrylCodingCapabilityPatches(new Set(['web']), existingRowIds),
+    ...createAcrylCodingCapabilityPatches(webSurfaces, existingRowIds),
+    ...createAcrylShellCapabilityPatches(webSurfaces, 'advanced', existingRowIds),
     ...profile.patches,
   ])
   // Brand swap: same technique and same row id as acryl-desktop's own

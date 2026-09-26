@@ -28,6 +28,15 @@ export type AcrylCodingCapabilityId =
   | 'agent-roster'
   | 'session-stats'
   | 'authorization'
+  | 'workspace'
+  | 'advanced-shell'
+
+/**
+ * The shell a surface renders the coding UI in. `advanced` replaces the stock DSH frame with the ACRYL
+ * shell (Projects list, tabbed canvas, right panel); `compatibility` keeps the stock frame. Desktop lets
+ * the user choose; Web always runs `advanced`, so both surfaces share one workspace.
+ */
+export type AcrylShellMode = 'compatibility' | 'advanced'
 
 export interface AcrylCodingCapability {
   readonly id: AcrylCodingCapabilityId
@@ -39,6 +48,16 @@ export interface AcrylCodingCapability {
    */
   readonly surfaces: readonly AcrylSurface[]
   readonly loaderPatches: readonly PatchOptions[]
+  /**
+   * ACRYL-owned packages the composing surface must make resolvable from its profile before the row can
+   * load (Web links them into the profile's `node_modules`; Desktop resolves them through its own hook).
+   */
+  readonly requiresPackages?: readonly string[]
+  /**
+   * When set, the capability composes only for a surface running that shell mode, through
+   * {@link createAcrylShellCapabilityPatches}; it is left out of {@link createAcrylCodingCapabilityPatches}.
+   */
+  readonly shellMode?: AcrylShellMode
 }
 
 const require = createRequire(import.meta.url)
@@ -130,6 +149,29 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
       { insert: [{ id: 'authorization', name: '@deepseek-ai/dsh-authorization' }] },
     ],
   },
+  {
+    // The ACRYL workspace (spec 040): Projects list, per-worktree tabbed canvas, Changes, Review, Checks and
+    // Files panels, and the file editor. Composed once for both surfaces that render it; TUI has no slot for
+    // it. Its client half only takes over the frame when the shell mode is `advanced`.
+    id: 'workspace',
+    surfaces: ['desktop', 'web'],
+    requiresPackages: ['acryl-workspace'],
+    loaderPatches: [
+      { insert: [{ id: 'acryl-workspace', name: 'acryl-workspace' }] },
+    ],
+  },
+  {
+    // Rows toggled so the ACRYL shell owns the frame: the stock layout off, the sidebar and conversation on.
+    // The rows exist in the shared `dsh-web-app` bundle both surfaces build on.
+    id: 'advanced-shell',
+    surfaces: ['desktop', 'web'],
+    shellMode: 'advanced',
+    loaderPatches: [
+      { id: 'ui-layout', disabled: true },
+      { id: 'ui-sidebar', disabled: false },
+      { id: 'ui-conversation', disabled: false },
+    ],
+  },
 ]
 
 /**
@@ -155,7 +197,45 @@ export function createAcrylCodingCapabilityPatches(
   surfaces: ReadonlySet<AcrylSurface>,
   existingRowIds: ReadonlySet<string> = new Set(),
 ): readonly PatchOptions[] {
-  const patches = ACRYL_CODING_CAPABILITIES
+  return composePatches(
+    ACRYL_CODING_CAPABILITIES.filter(capability => capability.shellMode === undefined),
+    surfaces,
+    existingRowIds,
+  )
+}
+
+/**
+ * The patches that put a surface into one shell mode. Kept apart from
+ * {@link createAcrylCodingCapabilityPatches} because Desktop learns its mode only after the base rows
+ * (and its settings file) are composed, while Web is always `advanced`.
+ */
+export function createAcrylShellCapabilityPatches(
+  surfaces: ReadonlySet<AcrylSurface>,
+  shellMode: AcrylShellMode,
+  existingRowIds: ReadonlySet<string> = new Set(),
+): readonly PatchOptions[] {
+  return composePatches(
+    ACRYL_CODING_CAPABILITIES.filter(capability => capability.shellMode === shellMode),
+    surfaces,
+    existingRowIds,
+  )
+}
+
+/** The ACRYL-owned packages a surface must make resolvable for the capabilities it composes. */
+export function acrylCodingCapabilityPackages(surfaces: ReadonlySet<AcrylSurface>): readonly string[] {
+  return [...new Set(
+    ACRYL_CODING_CAPABILITIES
+      .filter(capability => capability.surfaces.some(surface => surfaces.has(surface)))
+      .flatMap(capability => capability.requiresPackages ?? []),
+  )]
+}
+
+function composePatches(
+  capabilities: readonly AcrylCodingCapability[],
+  surfaces: ReadonlySet<AcrylSurface>,
+  existingRowIds: ReadonlySet<string>,
+): readonly PatchOptions[] {
+  const patches = capabilities
     .filter(capability => capability.surfaces.some(surface => surfaces.has(surface)))
     .flatMap(capability => capability.loaderPatches)
     .flatMap((patch): readonly PatchOptions[] => {

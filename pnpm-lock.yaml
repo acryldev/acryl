@@ -1949,6 +1949,9 @@ importers:
       acryl-extension-context:
         specifier: workspace:*
         version: link:../../plugins/acryl-extension-context
+      acryl-workspace:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-workspace
       acryl-mount-anchors:
         specifier: workspace:*
         version: link:../../plugins/acryl-mount-anchors
@@ -2975,6 +2978,9 @@ importers:
       acryl-extension-context:
         specifier: workspace:*
         version: link:../../plugins/acryl-extension-context
+      acryl-workspace:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-workspace
       acryl-mount-anchors:
         specifier: workspace:*
         version: link:../../plugins/acryl-mount-anchors
