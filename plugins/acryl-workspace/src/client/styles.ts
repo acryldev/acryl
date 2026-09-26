@@ -1,8 +1,13 @@
 const WORKSPACE_STYLES = `
 .dshWorkspace { position: relative; display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; height: 100%; background: var(--dsw-alias-bg-base); }
 .dshWorkspaceTabstrip { display: flex; align-items: stretch; min-height: 36px; border-bottom: 1px solid var(--dsw-alias-border-l1); background: color-mix(in srgb, var(--dsw-alias-bg-base) 92%, black); -webkit-app-region: no-drag; }
-.dshWorkspaceTabs { display: flex; flex: 1; min-width: 0; overflow-x: auto; }
-.dshWorkspaceTab { display: flex; align-items: stretch; max-width: 220px; min-width: 88px; border-right: 1px solid var(--dsw-alias-border-l2); background: transparent; }
+.dshWorkspaceTabs { display: flex; flex: 1; min-width: 0; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; scroll-behavior: smooth; }
+.dshWorkspaceTabs::-webkit-scrollbar { display: none; }
+/* Edge fades tell the user more tabs are hidden on that side; they follow the scroll position. */
+.dshWorkspaceTabs[data-more-start] { -webkit-mask-image: linear-gradient(to right, transparent, #000 28px); mask-image: linear-gradient(to right, transparent, #000 28px); }
+.dshWorkspaceTabs[data-more-end] { -webkit-mask-image: linear-gradient(to left, transparent, #000 28px); mask-image: linear-gradient(to left, transparent, #000 28px); }
+.dshWorkspaceTabs[data-more-start][data-more-end] { -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
+.dshWorkspaceTab { display: flex; flex: none; align-items: stretch; max-width: 220px; min-width: 120px; border-right: 1px solid var(--dsw-alias-border-l2); background: transparent; }
 .dshWorkspaceTab[data-active] { background: var(--dsw-alias-bg-base); }
 .dshWorkspaceTabButton { appearance: none; display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; margin: 0; padding: 0 4px 0 10px; border: 0; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 12px/1.2 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceTab[data-active] .dshWorkspaceTabButton { color: var(--dsw-alias-fg); }
@@ -201,13 +206,6 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceFilePreview:hover { border-color: #4d6bfe; color: #4d6bfe; }
 .dshWorkspaceDocFile { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
 .dshWorkspaceDocFileBody { flex: 1; min-height: 0; overflow: auto; padding: 16px 24px; }
-.dshWorkspaceDocCode { padding: 1px 5px; border-radius: 4px; background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); font: 0.92em ui-monospace, SFMono-Regular, Menlo, monospace; }
-.dshWorkspaceDocPre { overflow: auto; margin: 8px 0; padding: 10px 12px; border-radius: 8px; background: #0b0d12; color: #d7e0ea; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
-.dshWorkspaceDocQuote { margin: 8px 0; padding: 2px 12px; border-left: 3px solid var(--dsw-alias-border-l2); color: var(--dsw-alias-fg-l2); }
-.dshWorkspaceDocRule { border: 0; border-top: 1px solid var(--dsw-alias-border-l1); margin: 14px 0; }
-.dshWorkspaceDocTable { border-collapse: collapse; margin: 8px 0; font: 12.5px/1.4 ui-sans-serif, system-ui, sans-serif; }
-.dshWorkspaceDocTable th, .dshWorkspaceDocTable td { padding: 5px 10px; border: 1px solid var(--dsw-alias-border-l1); text-align: left; vertical-align: top; }
-.dshWorkspaceDocTable th { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 6%)); }
 .dshWorkspaceDocCode { padding: 1px 5px; border-radius: 4px; background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); font: 0.92em ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dshWorkspaceDocPre { overflow: auto; margin: 8px 0; padding: 10px 12px; border-radius: 8px; background: #0b0d12; color: #d7e0ea; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dshWorkspaceDocQuote { margin: 8px 0; padding: 2px 12px; border-left: 3px solid var(--dsw-alias-border-l2); color: var(--dsw-alias-fg-l2); }

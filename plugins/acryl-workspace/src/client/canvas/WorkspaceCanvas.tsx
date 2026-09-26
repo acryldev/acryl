@@ -27,6 +27,7 @@ import type { WorkspaceFilesApi } from '../files/files-api.ts'
 import { GitDiffPane } from '../diff/GitDiffPane.tsx'
 import type { ReviewStore } from '../review/review-store.ts'
 import { SplitDivider } from './SplitDivider.tsx'
+import { hiddenEdges, scrollToReveal, wheelToScroll } from './tab-scroll.ts'
 import { clampSplit, readSplitRatio, writeSplitRatio } from './split-ratio.ts'
 import { GLOBAL_GROUP, type WorkspaceGroups } from './groups.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
@@ -212,6 +213,39 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
     }
   }, [workspace, snapshot.menuOpen])
 
+  const tabsRef = useRef<HTMLDivElement>(null)
+  const [edges, setEdges] = useState({ start: false, end: false })
+  const syncEdges = useCallback((): void => {
+    const el = tabsRef.current
+    if (el === null) return
+    const next = hiddenEdges({ scrollLeft: el.scrollLeft, clientWidth: el.clientWidth, scrollWidth: el.scrollWidth })
+    setEdges(previous => (previous.start === next.start && previous.end === next.end ? previous : next))
+  }, [])
+  // A vertical wheel scrolls the strip sideways; React's onWheel is passive, so this listener is native.
+  useEffect(() => {
+    const el = tabsRef.current
+    if (el === null) return
+    const onWheel = (event: WheelEvent): void => {
+      const by = wheelToScroll(event.deltaX, event.deltaY)
+      if (by === null || el.scrollWidth <= el.clientWidth) return
+      event.preventDefault()
+      el.scrollLeft += by
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    const observer = new ResizeObserver(syncEdges)
+    observer.observe(el)
+    return () => { el.removeEventListener('wheel', onWheel); observer.disconnect() }
+  }, [syncEdges])
+  // The active tab (also a newly opened one) is always brought into view.
+  useEffect(() => {
+    const el = tabsRef.current
+    const tab = el?.querySelector<HTMLElement>('[data-tab-id][data-active]')
+    if (el === null || el === undefined || tab === null || tab === undefined) return
+    const to = scrollToReveal({ scrollLeft: el.scrollLeft, clientWidth: el.clientWidth, scrollWidth: el.scrollWidth }, tab.offsetLeft, tab.offsetWidth)
+    if (to !== null) el.scrollLeft = to
+    syncEdges()
+  }, [snapshot.activeId, snapshot.tiles.length, syncEdges])
+
   return (
     <div className="dshWorkspace" data-acryl-workspace="true" data-workspace-mode="tabs">
       <div className="dshWorkspaceTabstrip" role="tablist" aria-label="ACRYL Workspace">
@@ -220,7 +254,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
             <span aria-hidden="true">⎇</span> {groupBranch ?? 'detached'}
           </div>
         )}
-        <div className="dshWorkspaceTabs">
+        <div className="dshWorkspaceTabs" ref={tabsRef} onScroll={syncEdges} data-more-start={edges.start || undefined} data-more-end={edges.end || undefined}>
           {snapshot.tiles.map((tile) => {
             const selected = tile.id === snapshot.activeId
             return (
@@ -230,6 +264,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
                 data-active={selected || undefined}
                 data-split={tile.id === snapshot.splitId || undefined}
                 data-tile-kind={tile.kind}
+                data-tab-id={tile.id}
               >
                 <button
                   type="button"
