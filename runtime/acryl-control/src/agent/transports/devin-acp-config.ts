@@ -9,14 +9,27 @@ export interface DevinAcpTransportConfig {
   readonly binaryPath?: string
   /** Authentication mode. Default: 'devin-auth' (use stored credentials). */
   readonly authMode?: DevinAcpAuthMode
-  /** Working directory for the devin acp subprocess. */
-  readonly cwd: string
+  /**
+   * Fallback working directory for the devin acp subprocess. The bound
+   * worker's `workspace.cwd` wins when set; `process.cwd()` is the last
+   * resort.
+   */
+  readonly cwd?: string
   /** Additional environment variables for the subprocess. */
   readonly env?: Record<string, string>
-  /** Default model to use (passed via ACP configOptions or --model). */
+  /** Default model to use (spawned as `devin acp --model <model>`). */
   readonly model?: string
-  /** Permission mode passthrough. */
+  /**
+   * Permission mode passthrough. There is no `devin acp` CLI flag for it;
+   * the value is consumed by the `session/request_permission` policy
+   * handler.
+   */
   readonly permissionMode?: 'normal' | 'dangerous' | 'bypass'
+  /**
+   * Per-request JSON-RPC timeout in milliseconds. `0` disables. Default:
+   * 30_000 (see `JsonRpcClient`).
+   */
+  readonly requestTimeoutMs?: number
 }
 
 /**
@@ -62,23 +75,25 @@ export function devinEnv(config: DevinAcpTransportConfig): Record<string, string
 }
 
 /** Apply defaults to a partial config. */
-export function normalizeDevinAcpConfig(partial: Partial<DevinAcpTransportConfig> & { cwd: string }): DevinAcpTransportConfig {
+export function normalizeDevinAcpConfig(partial: Partial<DevinAcpTransportConfig> = {}): DevinAcpTransportConfig {
   const config: MutableConfig = {
     authMode: partial.authMode ?? 'devin-auth',
-    cwd: partial.cwd,
     permissionMode: partial.permissionMode ?? 'normal',
   }
   if (partial.binaryPath !== undefined) config.binaryPath = partial.binaryPath
+  if (partial.cwd !== undefined) config.cwd = partial.cwd
   if (partial.env !== undefined) config.env = partial.env
   if (partial.model !== undefined) config.model = partial.model
+  if (partial.requestTimeoutMs !== undefined) config.requestTimeoutMs = partial.requestTimeoutMs
   return Object.freeze(config) as DevinAcpTransportConfig
 }
 
 type MutableConfig = {
   binaryPath?: string
   authMode: DevinAcpAuthMode
-  cwd: string
+  cwd?: string
   env?: Record<string, string>
   model?: string
   permissionMode: 'normal' | 'dangerous' | 'bypass'
+  requestTimeoutMs?: number
 }

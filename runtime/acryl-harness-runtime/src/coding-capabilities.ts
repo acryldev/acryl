@@ -28,6 +28,8 @@ export type AcrylCodingCapabilityId =
   | 'agent-roster'
   | 'session-stats'
   | 'authorization'
+  | 'agent-control'
+  | 'devin-acp'
 
 export interface AcrylCodingCapability {
   readonly id: AcrylCodingCapabilityId
@@ -128,6 +130,25 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     surfaces: ['tui', 'web', 'desktop'],
     loaderPatches: [
       { insert: [{ id: 'authorization', name: '@deepseek-ai/dsh-authorization' }] },
+    ],
+  },
+  // Provider-neutral agent-control plane (devin-acp-integration): every
+  // surface composes the service row so ACP-style providers have somewhere
+  // to register. Devin itself is an opt-in provider plugin behind the shared
+  // `acp` provider kind - disabled by default so non-Devin surfaces never
+  // pay for it or probe a `devin` binary at mount.
+  {
+    id: 'agent-control',
+    surfaces: ['tui', 'web', 'desktop'],
+    loaderPatches: [
+      { insert: [{ id: 'acryl-control', name: 'acryl-control' }] },
+    ],
+  },
+  {
+    id: 'devin-acp',
+    surfaces: ['tui', 'web', 'desktop'],
+    loaderPatches: [
+      { insert: [{ id: 'acryl-agent-devin', name: 'acryl-agent-devin', disabled: true }] },
     ],
   },
 ]

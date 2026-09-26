@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events'
 import { Readable, Writable } from 'node:stream'
 import { describe, expect, it } from 'vitest'
-import { JsonRpcClient } from '../src/agent/transports/acp-json-rpc.ts'
+import { JsonRpcClient, TransportError } from '../src/agent/transports/acp-json-rpc.ts'
 
 /** A minimal stub process with stdin/stdout/stderr for testing. */
 function createStubProcess() {
@@ -26,6 +26,10 @@ function createStubProcess() {
     emitter.emit('exit', code, signal)
   }
 
+  function emitError(error: Error) {
+    emitter.emit('error', error)
+  }
+
   const state = { killed: false }
   const process = {
     stdin,
@@ -42,11 +46,13 @@ function createStubProcess() {
     readonly _captured: string[]
     readonly _sendLine: (line: string) => void
     readonly _emitExit: (code: number | null, signal: NodeJS.Signals | null) => void
+    readonly _emitError: (error: Error) => void
   }
 
   Object.defineProperty(process, '_captured', { value: captured })
   Object.defineProperty(process, '_sendLine', { value: sendLine })
   Object.defineProperty(process, '_emitExit', { value: emitExit })
+  Object.defineProperty(process, '_emitError', { value: emitError })
 
   return process
 }
@@ -190,5 +196,82 @@ describe('JsonRpcClient', () => {
       expect(result).toBe('ok')
       client.dispose()
     })
+  })
+
+  it('rejects pending calls with TransportError when the process errors, then refuses new calls', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc)
+
+    const pending = client.call('hang')
+    proc._emitError(new Error('spawn ENOENT'))
+
+    await expect(pending).rejects.toBeInstanceOf(TransportError)
+    await expect(pending).rejects.toThrow('JSON-RPC process failed: spawn ENOENT')
+
+    // The client is dead: further calls reject instead of writing to stdin.
+    await expect(client.call('again')).rejects.toBeInstanceOf(TransportError)
+    // Notifications are swallowed rather than thrown into a dead stream.
+    expect(() => client.notify('session/cancel')).not.toThrow()
+    client.dispose()
+  })
+
+  it('rejects a call when the request timeout elapses and keeps working after', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc, { requestTimeoutMs: 40 })
+
+    await expect(client.call('hang')).rejects.toThrow('timed out after 40ms')
+
+    // A subsequent call still gets its response.
+    proc.on('input', (chunk: string) => {
+      const msg = JSON.parse(chunk.trim())
+      proc._sendLine(JSON.stringify({ jsonrpc: '2.0', id: msg.id, result: 'ok' }))
+    })
+    await expect(client.call('test')).resolves.toBe('ok')
+    client.dispose()
+  })
+
+  it('supports a per-call timeout override', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc, { requestTimeoutMs: 60_000 })
+
+    await expect(client.call('hang', undefined, { timeoutMs: 30 }))
+      .rejects.toThrow('timed out after 30ms')
+    client.dispose()
+  })
+
+  it('rejects a pending call when the abort signal fires', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc)
+    const controller = new AbortController()
+
+    const pending = client.call('hang', undefined, { signal: controller.signal })
+    controller.abort()
+
+    await expect(pending).rejects.toThrow(/abort/i)
+    client.dispose()
+  })
+
+  it('rejects an already-aborted call without writing to stdin', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc)
+    const controller = new AbortController()
+    controller.abort()
+
+    let wrote = false
+    proc.on('input', () => { wrote = true })
+
+    await expect(client.call('nope', undefined, { signal: controller.signal }))
+      .rejects.toThrow(/abort/i)
+    expect(wrote).toBe(false)
+    client.dispose()
+  })
+
+  it('rejects a call placed after the process exited', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc)
+
+    proc._emitExit(0, null)
+    await expect(client.call('late')).rejects.toBeInstanceOf(TransportError)
+    client.dispose()
   })
 })

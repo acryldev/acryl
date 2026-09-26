@@ -113,6 +113,174 @@ describe('AcrAgentControl', () => {
     await dispose()
   })
 
+  it('folds a lazy start result into the stored binding and releases it on stop', async () => {
+    const { ctx, service, dispose } = await booted()
+    const capabilities = ['agent.start', 'agent.send', 'agent.cancel', 'agent.stop', 'agent.resume'] as const
+    const lazy = provider({
+      capabilities: [...capabilities],
+      async attach(req) {
+        const base = await provider().attach(req)
+        return Object.freeze({ ...base, runtimeId: null })
+      },
+      async execute(_binding, command) {
+        if (command.kind === 'start' || command.kind === 'resume') {
+          return { sessionId: 'session-1', runtimeId: 'runtime-lazy', status: 'idle' }
+        }
+        if (command.kind === 'stop') {
+          return { stopped: true }
+        }
+        return { kind: command.kind, payload: command.payload, ok: true }
+      },
+    })
+    service.registerProvider(ctx, lazy)
+    const attached = await service.attach(request({ capabilities: [...capabilities] }))
+    expect(attached.runtimeId).toBeNull()
+
+    // Non-start commands still require a live runtime.
+    await expect(service.dispatch('worker-1', { kind: 'send', payload: 'x' }))
+      .rejects.toMatchObject({ code: 'unknown-worker' })
+
+    const started = await service.dispatch('worker-1', { kind: 'start', payload: null })
+    expect(started.runtimeId).toBe('runtime-lazy')
+
+    const running = (await service.snapshot({ workerId: 'worker-1' }))[0]
+    expect(running?.runtimeId).toBe('runtime-lazy')
+    expect(running?.providerSessionRef).toBe('session-1')
+    expect(running?.status).toBe('idle')
+
+    const sent = await service.dispatch('worker-1', { kind: 'send', payload: 'hi' })
+    expect(sent.runtimeId).toBe('runtime-lazy')
+
+    const stopped = await service.dispatch('worker-1', { kind: 'stop', payload: null })
+    expect(stopped.runtimeId).toBe('runtime-lazy')
+
+    const after = (await service.snapshot({ workerId: 'worker-1' }))[0]
+    expect(after?.runtimeId).toBeNull()
+    expect(after?.status).toBe('stopped')
+
+    // The released runtime lets the worker start again.
+    const restarted = await service.dispatch('worker-1', { kind: 'resume', payload: null })
+    expect(restarted.runtimeId).toBe('runtime-lazy')
+    const resumed = (await service.snapshot({ workerId: 'worker-1' }))[0]
+    expect(resumed?.runtimeId).toBe('runtime-lazy')
+    await dispose()
+  })
+
+  it('rejects attach over a live binding and allows it after stop', async () => {
+    const { ctx, service, dispose } = await booted()
+    service.registerProvider(ctx, provider({
+      capabilities: ['agent.start', 'agent.send', 'agent.cancel', 'agent.stop'],
+    }))
+    await service.attach(request({ capabilities: ['agent.start', 'agent.send', 'agent.cancel', 'agent.stop'] }))
+
+    // A second attach for the same worker would orphan the live runtime.
+    await expect(service.attach(request({ capabilities: ['agent.start', 'agent.send', 'agent.cancel', 'agent.stop'] })))
+      .rejects.toMatchObject({ code: 'runtime-collision' })
+
+    // After stop the binding is unbound, so re-attaching is fine.
+    await service.dispatch('worker-1', { kind: 'stop', payload: null })
+    const reattached = await service.attach(request({ capabilities: ['agent.start', 'agent.send', 'agent.cancel', 'agent.stop'] }))
+    expect(reattached.workerId).toBe('worker-1')
+    await dispose()
+  })
+
+  it('marks a provider\'s bindings stopped when the provider unregisters', async () => {
+    const { ctx, service, dispose } = await booted()
+    const fiber = ctx.plugin({
+      name: 'ephemeral-provider',
+      inject: ['acrAgentControl'],
+      apply(child) {
+        child.acrAgentControl.registerProvider(child, provider({ id: 'ephemeral' }))
+      },
+    })
+    await fiber
+    const attached = await service.attach(request({ providerId: 'ephemeral' }))
+    expect(attached.runtimeId).toBe('runtime-worker-1')
+
+    await fiber.dispose()
+
+    const after = (await service.snapshot({ workerId: 'worker-1' }))[0]
+    expect(after?.runtimeId).toBeNull()
+    expect(after?.status).toBe('stopped')
+    await dispose()
+  })
+
+  it('rejects a start result whose runtimeId is bound to another worker', async () => {
+    const { ctx, service, dispose } = await booted()
+    service.registerProvider(ctx, provider())
+    await service.attach(request())
+
+    const greedy = provider({
+      id: 'greedy',
+      capabilities: ['agent.start'],
+      async attach(req) {
+        const base = await provider().attach(req)
+        return Object.freeze({ ...base, runtimeId: null })
+      },
+      async execute() {
+        return { sessionId: 's-1', runtimeId: 'runtime-worker-1', status: 'idle' }
+      },
+    })
+    service.registerProvider(ctx, greedy)
+    await service.attach(request({
+      providerId: 'greedy',
+      workerId: 'worker-2',
+      capabilities: ['agent.start'],
+    }))
+
+    await expect(service.dispatch('worker-2', { kind: 'start', payload: null }))
+      .rejects.toMatchObject({ code: 'runtime-collision' })
+
+    // The failed merge left worker-2's binding untouched.
+    const binding = (await service.snapshot({ workerId: 'worker-2' }))[0]
+    expect(binding?.runtimeId).toBeNull()
+    await dispose()
+  })
+
+  it('rejects a contradictory stop result that reports a live status', async () => {
+    const { ctx, service, dispose } = await booted()
+    const liar = provider({
+      capabilities: ['agent.start', 'agent.stop'],
+      async execute(_binding, command) {
+        if (command.kind === 'stop') {
+          return { stopped: true, status: 'running' }
+        }
+        return { ok: true }
+      },
+    })
+    service.registerProvider(ctx, liar)
+    await service.attach(request({ capabilities: ['agent.start', 'agent.stop'] }))
+
+    await expect(service.dispatch('worker-1', { kind: 'stop', payload: null }))
+      .rejects.toMatchObject({ code: 'invalid-result' })
+
+    // The binding still reports the live runtime honestly.
+    const binding = (await service.snapshot({ workerId: 'worker-1' }))[0]
+    expect(binding?.runtimeId).toBe('runtime-worker-1')
+    await dispose()
+  })
+
+  it('rejects a start result that clears the runtime id', async () => {
+    const { ctx, service, dispose } = await booted()
+    const confused = provider({
+      id: 'confused',
+      capabilities: ['agent.start'],
+      async attach(req) {
+        const base = await provider().attach(req)
+        return Object.freeze({ ...base, runtimeId: null })
+      },
+      async execute() {
+        return { sessionId: 's-1', runtimeId: null, status: 'idle' }
+      },
+    })
+    service.registerProvider(ctx, confused)
+    await service.attach(request({ providerId: 'confused', capabilities: ['agent.start'] }))
+
+    await expect(service.dispatch('worker-1', { kind: 'start', payload: null }))
+      .rejects.toMatchObject({ code: 'invalid-result' })
+    await dispose()
+  })
+
   it('returns a structured result for a dispatched command', async () => {
     const { ctx, service, dispose } = await booted()
     service.registerProvider(ctx, provider())

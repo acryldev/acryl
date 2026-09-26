@@ -73,6 +73,7 @@ jobs:
         run: |
           corepack pnpm --filter acryl-control run build
           corepack pnpm --filter acryl-harness-runtime run build
+          corepack pnpm --filter acryl-agent-devin run build
           corepack pnpm --filter dsh-community-market run build
           corepack pnpm --filter cordis-plugin-market run build
           corepack pnpm --filter dsh-client-ui-brand-acryl run build

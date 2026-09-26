@@ -25,7 +25,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter cordis-plugin-market run build && node scripts/generate-build-info.mjs",
+    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter acryl-agent-devin run build && pnpm --filter cordis-plugin-market run build && node scripts/generate-build-info.mjs",
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "pretypecheck": "node scripts/generate-build-info.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
@@ -139,6 +139,7 @@
     "@deepseek-ai/dsh-workflow-worker-thread": "0.1.5-alpha.1",
     "@earendil-works/pi-tui": "0.84.2",
     "acryl-control": "workspace:*",
+    "acryl-agent-devin": "workspace:*",
     "acryl-extension-context": "workspace:*",
     "acryl-system-prompt": "workspace:*",
     "acryl-ui-tui": "workspace:*",
