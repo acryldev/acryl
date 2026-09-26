@@ -29,6 +29,7 @@ export type AcrylCodingCapabilityId =
   | 'session-stats'
   | 'authorization'
   | 'workspace'
+  | 'plugin-admin'
   | 'advanced-shell'
 
 /**
@@ -158,6 +159,16 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     requiresPackages: ['acryl-workspace'],
     loaderPatches: [
       { insert: [{ id: 'acryl-workspace', name: 'acryl-workspace' }] },
+    ],
+  },
+  {
+    // Settings > Plugins > Lifecycle and Architecture: one Cordis plugin (Host routes, Client tabs) driven by
+    // the `ctx.acrPluginLifecycle` service every surface publishes. It was Desktop-only inside `acryl-desktop`.
+    id: 'plugin-admin',
+    surfaces: ['desktop', 'web'],
+    requiresPackages: ['acryl-plugin-admin'],
+    loaderPatches: [
+      { insert: [{ id: 'acryl-plugin-admin', name: 'acryl-plugin-admin' }] },
     ],
   },
   {

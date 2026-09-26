@@ -178,6 +178,7 @@
     "@acryl/ui": "workspace:*",
     "acryl-shortcuts": "workspace:*",
     "acryl-mount-anchors": "workspace:*",
+    "acryl-plugin-admin": "workspace:*",
     "acryl-workspace": "workspace:*",
     "cordis-plugin-market": "workspace:*",
     "koffi": "3.1.5",

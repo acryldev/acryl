@@ -4,29 +4,25 @@
  * The lifecycle itself - resolution, dependent cascade, transaction ordering,
  * rollback, Fiber restart, persistence - is the one controller in
  * `acryl-harness-runtime`/`acryl-control` that the CLI and the Web surface run
- * too. What this file adds is Desktop's surface concerns: which of its profile
- * rows the user may toggle, the cross-plane Client view the Lifecycle tab
- * renders, the Blend identity of the current generation, and the
- * plugin-market bridge that mounts a just-installed bundle without a restart.
+ * too, and its renderer-facing projection (client graph, Blend, receipts) is the
+ * shared `acryl-plugin-admin` view. What this file adds is Desktop's surface
+ * concerns: which of its profile rows the user may toggle, and the plugin-market
+ * bridge that mounts a just-installed bundle without a restart.
  */
 
-import { readFileSync } from 'node:fs'
-import { createRequire } from 'node:module'
 import { type Context, Service } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-client-modules'
 import {
   AcrPluginLifecycleService,
   createAcrylPluginLifecycle,
   type AcrPluginLifecycleController,
-  type PluginLifecycleReceipt as SharedReceipt,
 } from 'acryl-harness-runtime'
+import {
+  PluginLifecycleView,
+  type PluginLifecycleReceipt,
+  type PluginLifecycleSnapshot,
+} from 'acryl-plugin-admin'
 import { removeDesktopDisabledBundle } from '../desktop-plugins.ts'
 import { assertDesktopProfileName } from '../../profile/profile-manager.ts'
-import type {
-  PluginLifecycleEntryView,
-  PluginLifecycleReceipt,
-  PluginLifecycleSnapshot,
-} from './plugin-lifecycle-contract.ts'
 import {
   MANAGED_PLUGIN_LIFECYCLE_ENTRIES,
   type PluginLifecycleStateBootstrap,
@@ -64,29 +60,11 @@ declare module '@deepseek-ai/cordis' {
 
 const LEGACY_MUTABLE_ENTRY_IDS: ReadonlySet<string> = new Set(Object.keys(MANAGED_PLUGIN_LIFECYCLE_ENTRIES))
 
-interface PackageManifest {
-  readonly name?: unknown
-  readonly exports?: unknown
-  readonly dsh?: unknown
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
-}
-
-function declaresClientFace(manifest: PackageManifest, moduleName: string): boolean {
-  if (manifest.name !== moduleName || !isRecord(manifest.dsh)) return false
-  const client = manifest.dsh.client
-  if (!isRecord(client) || client.platform !== 'web') return false
-  if (!isRecord(manifest.exports)) return false
-  return Object.prototype.hasOwnProperty.call(manifest.exports, './client')
-}
-
 /** Desktop's view and market bridge over the shared lifecycle service. */
 export class PluginLifecycleController {
   private readonly lifecycle: AcrPluginLifecycleController
-  private readonly clientFaces = new Map<string, boolean>()
-  private readonly resolvePackageJson: ((specifier: string) => string) | undefined
+  /** The renderer-facing projection shared with every surface (`acryl-plugin-admin`). */
+  private readonly view: PluginLifecycleView
   /** Row ids this profile admits to user control, in both runtime spellings. */
   private readonly mutableEntryIds: ReadonlySet<string>
 
@@ -94,10 +72,6 @@ export class PluginLifecycleController {
     private readonly ctx: Context,
     private readonly bootstrap: PluginLifecycleStateBootstrap,
   ) {
-    const require = ctx.baseUrl === undefined ? undefined : createRequire(ctx.baseUrl)
-    this.resolvePackageJson = require === undefined
-      ? undefined
-      : specifier => require.resolve(`${specifier}/package.json`)
     const mutable = new Set(LEGACY_MUTABLE_ENTRY_IDS)
     for (const row of bootstrap.blend?.rows ?? []) {
       mutable.add(row.id)
@@ -119,6 +93,7 @@ export class PluginLifecycleController {
       afterDeactivate: packageName => this.pruneStaleDisable(packageName),
       warn: message => { this.ctx.logger?.warn?.(`acryl-desktop: ${message}`) },
     })
+    this.view = new PluginLifecycleView(ctx, this.lifecycle, () => bootstrap.blend)
   }
 
   /**
@@ -131,55 +106,34 @@ export class PluginLifecycleController {
     return new AcrPluginLifecycleService(this.ctx, this.lifecycle)
   }
 
-  /** Read every non-group Host entry and current Client graph membership. */
+  /** Every non-group Host entry and current Client graph membership. */
   snapshot(): PluginLifecycleSnapshot {
-    const graph = this.ctx.get('clientModules')?.graph()
-    const clientGraph = new Set(graph?.entries.map(entry => entry.id) ?? [])
-    const entries: PluginLifecycleEntryView[] = this.lifecycle.snapshot().entries.map((entry) => {
-      const clientPackage = this.clientPackage(entry.moduleName, clientGraph)
-      return Object.freeze({
-        ...entry,
-        clientPackage,
-        clientInBootGraph: clientPackage !== null && clientGraph.has(clientPackage),
-      })
-    })
-    const blend = this.bootstrap.blend
-    return Object.freeze({
-      entries: Object.freeze(entries),
-      blend: blend === undefined ? null : Object.freeze({
-        id: blend.origin.id,
-        kind: blend.origin.kind,
-        version: blend.origin.version,
-        digest: blend.origin.digest,
-        lockPath: blend.lockPath,
-        rows: blend.rows.length,
-      }),
-    })
+    return this.view.snapshot()
   }
 
   /** Persist and apply one managed entry's enablement, dependents included. */
   async setEnabled(entryId: string, enabled: boolean): Promise<PluginLifecycleReceipt> {
-    return this.desktopReceipt(await this.lifecycle.setEnabled(entryId, enabled))
+    return this.view.setEnabled(entryId, enabled)
   }
 
   /** Restart one entry, or every enabled entry of this profile's own seed. */
   async reload(entryId?: string): Promise<PluginLifecycleReceipt> {
-    return this.desktopReceipt(await this.lifecycle.reload(entryId))
+    return this.view.reload(entryId)
   }
 
   /** Mount a just-installed profile bundle without a restart. Idempotent. */
   async activate(packageName: string): Promise<PluginLifecycleReceipt> {
-    return this.desktopReceipt(await this.lifecycle.activate(packageName))
+    return this.view.receipt(await this.lifecycle.activate(packageName))
   }
 
   /** Unmount an uninstalled package, then let the market prune its record. */
   async deactivate(packageName: string): Promise<PluginLifecycleReceipt> {
-    return this.desktopReceipt(await this.lifecycle.deactivate(packageName))
+    return this.view.receipt(await this.lifecycle.deactivate(packageName))
   }
 
   /** Restart the fiber of a mounted plugin. Used by the development watcher. */
   async reloadByPackage(packageName: string): Promise<PluginLifecycleReceipt> {
-    return this.desktopReceipt(await this.lifecycle.reloadByPackage(packageName))
+    return this.view.receipt(await this.lifecycle.reloadByPackage(packageName))
   }
 
   /** Toggle a mounted entry by package name for a caller outside the Lifecycle tab. */
@@ -200,32 +154,6 @@ export class PluginLifecycleController {
       this.bootstrap.profileName,
       packageName,
     )
-  }
-
-  private clientPackage(moduleName: string, graph: ReadonlySet<string>): string | null {
-    if (graph.has(moduleName)) return moduleName
-    const cached = this.clientFaces.get(moduleName)
-    if (cached !== undefined) return cached ? moduleName : null
-    let declared = false
-    if (!moduleName.startsWith('cordis:') && this.resolvePackageJson !== undefined) {
-      try {
-        const manifest = JSON.parse(readFileSync(this.resolvePackageJson(moduleName), 'utf8')) as PackageManifest
-        declared = declaresClientFace(manifest, moduleName)
-      } catch {
-        declared = false
-      }
-    }
-    this.clientFaces.set(moduleName, declared)
-    return declared ? moduleName : null
-  }
-
-  /** Desktop's receipt: the Host fiber already restarted, the renderer must follow. */
-  private desktopReceipt(receipt: SharedReceipt): PluginLifecycleReceipt {
-    return Object.freeze({
-      ...receipt,
-      rendererReloadRequired: true,
-      snapshot: this.snapshot(),
-    })
   }
 }
 

@@ -22,35 +22,9 @@ import { startRendererBootReporter } from './boot-health.ts'
 import { applyDesktopSettings } from './settings/desktop-settings.ts'
 import { installDesktopDirectoryPickerBridge, requestDesktopDirectoryValidation } from './workspaces/directory-picker.ts'
 import { parseDesktopClientEnvironment } from './environment.ts'
-import { applyPluginLifecycleSettings } from './plugin-lifecycle/plugin-lifecycle-settings.ts'
 import { installWorkspaceFolderDrop } from './workspaces/workspace-folder-drop.ts'
 
 export { applyDesktopSettings } from './settings/desktop-settings.ts'
-export { PluginArchitectureSettingsTab } from './plugin-architecture/PluginArchitectureSettingsTab.tsx'
-export type {
-  PluginArchitectureSettingsTabInjected,
-  PluginArchitectureSettingsTabProps,
-} from './plugin-architecture/PluginArchitectureSettingsTab.tsx'
-export { PluginLifecycleSettingsTab } from './plugin-lifecycle/PluginLifecycleSettingsTab.tsx'
-export type {
-  PluginLifecycleSettingsTabInjected,
-  PluginLifecycleSettingsTabProps,
-} from './plugin-lifecycle/PluginLifecycleSettingsTab.tsx'
-export {
-  createPluginArchitectureApi,
-  parseCordisPlaneSnapshot,
-} from './plugin-architecture/plugin-architecture-api.ts'
-export type { PluginArchitectureApi } from './plugin-architecture/plugin-architecture-api.ts'
-export {
-  createPluginLifecycleApi,
-  parsePluginLifecycleSnapshot,
-} from './plugin-lifecycle/plugin-lifecycle-api.ts'
-export type {
-  PluginLifecycleApi,
-  PluginLifecycleClientEntryView,
-  PluginLifecycleClientSnapshot,
-} from './plugin-lifecycle/plugin-lifecycle-api.ts'
-export { applyPluginLifecycleSettings } from './plugin-lifecycle/plugin-lifecycle-settings.ts'
 export {
   createDesktopSettingsApi,
   desktopSettingsPaths,
@@ -109,7 +83,6 @@ export function apply(ctx: ClientContext): void {
   // a standalone swappable counterpart to `@deepseek-ai/dsh-client-ui-brand-official`
   // - see profile.ts), not applied inline from this plugin.
   applyDesktopSettings(ctx, environment)
-  applyPluginLifecycleSettings(ctx)
   ctx.effect(
     () => startRendererBootReporter(ctx.loader),
     'acryl-desktop: renderer boot health report',

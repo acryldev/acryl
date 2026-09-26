@@ -1,0 +1,4 @@
+/** Locale dictionaries for the plugin lifecycle Settings tab. */
+export type PluginLifecycleLocaleKey = 'tab' | 'loading' | 'error' | 'retry' | 'search' | 'catalog' | 'empty' | 'host' | 'client' | 'configuration' | 'enabled' | 'disabled' | 'mounted' | 'notMounted' | 'notApplicable' | 'pending' | 'loadingPhase' | 'active' | 'failed' | 'unloading' | 'protected' | 'enable' | 'disable' | 'reload' | 'reloadAll' | 'confirmDisable' | 'cancel' | 'shortcut' | 'architectureTab' | 'architectureIntro' | 'fibers' | 'services' | 'dependencies' | 'provides' | 'effects' | 'loaderEntry' | 'module' | 'parentFiber' | 'rootFiber' | 'available' | 'missing' | 'resolvedBy' | 'none' | 'alsoDisables' | 'blend' | 'blendRows';
+export declare const en: Record<PluginLifecycleLocaleKey, string>;
+export declare const zh: Record<PluginLifecycleLocaleKey, string>;

@@ -32,8 +32,8 @@ const expectedComposition: Record<AcrylSurface, PatchShape> = {
     idRows: ['system-prompt'],
     insertedIds: ['agent-presets', 'session-stats', 'authorization'],
   },
-  web: { idRows: [], insertedIds: ['authorization', 'acryl-workspace'] },
-  desktop: { idRows: [], insertedIds: ['authorization', 'acryl-workspace'] },
+  web: { idRows: [], insertedIds: ['authorization', 'acryl-workspace', 'acryl-plugin-admin'] },
+  desktop: { idRows: [], insertedIds: ['authorization', 'acryl-workspace', 'acryl-plugin-admin'] },
 }
 
 function shapeOf(patches: readonly unknown[]): PatchShape {
@@ -127,11 +127,11 @@ describe('createAcrylCodingCapabilityPatches', () => {
 
   it('unions multiple requested surfaces without duplicating a row', () => {
     const both = shapeOf(createAcrylCodingCapabilityPatches(new Set(['web', 'desktop'])))
-    expect(both.insertedIds).toEqual(['authorization', 'acryl-workspace'])
+    expect(both.insertedIds).toEqual(['authorization', 'acryl-workspace', 'acryl-plugin-admin'])
 
     const all = shapeOf(createAcrylCodingCapabilityPatches(new Set(SURFACES)))
     expect(all.idRows).toEqual(['system-prompt'])
-    expect(all.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization', 'acryl-workspace'])
+    expect(all.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization', 'acryl-workspace', 'acryl-plugin-admin'])
   })
 
   it('composes nothing for a surface set no capability declares', () => {
@@ -211,8 +211,8 @@ describe('the workspace and the ACRYL shell are shared by Web and Desktop (spec 
   })
 
   it('names the ACRYL packages each surface must make resolvable, the same on Web and Desktop', () => {
-    expect(acrylCodingCapabilityPackages(new Set(['web']))).toEqual(['acryl-workspace'])
-    expect(acrylCodingCapabilityPackages(new Set(['desktop']))).toEqual(['acryl-workspace'])
+    expect(acrylCodingCapabilityPackages(new Set(['web']))).toEqual(['acryl-workspace', 'acryl-plugin-admin'])
+    expect(acrylCodingCapabilityPackages(new Set(['desktop']))).toEqual(['acryl-workspace', 'acryl-plugin-admin'])
     expect(acrylCodingCapabilityPackages(new Set(['tui']))).toEqual([])
   })
 

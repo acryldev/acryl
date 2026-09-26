@@ -2,12 +2,7 @@
   "extends": "./tsconfig.json",
   "exclude": [],
   "include": [
-    "src/client/layout/advanced-shell.ts",
     "src/client/**/*.ts",
-    "src/client/**/*.tsx",
-    "src/canvas-pty-contract.ts",
-    "src/plugins/architecture/plugin-architecture-contract.ts",
-    "src/plugins/architecture/plugin-architecture-inspector.ts",
-    "src/plugins/lifecycle/plugin-lifecycle-contract.ts"
+    "src/client/**/*.tsx"
   ]
 }

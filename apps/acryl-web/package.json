@@ -197,12 +197,13 @@
     "@acryl/ui": "workspace:*",
     "acryl-shortcuts": "workspace:*",
     "acryl-mount-anchors": "workspace:*",
+    "acryl-plugin-admin": "workspace:*",
     "acryl-workspace": "workspace:*",
     "dsh-client-ui-brand-acryl": "workspace:*",
     "cordis-plugin-market": "workspace:*"
   },
   "scripts": {
-    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter dsh-client-ui-brand-acryl run build && pnpm --filter @acryl/ui run build && pnpm --filter acryl-shortcuts run build && pnpm --filter acryl-mount-anchors run build && pnpm --filter acryl-workspace run build && pnpm --filter cordis-plugin-market run build",
+    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter dsh-client-ui-brand-acryl run build && pnpm --filter @acryl/ui run build && pnpm --filter acryl-shortcuts run build && pnpm --filter acryl-mount-anchors run build && pnpm --filter acryl-workspace run build && pnpm --filter acryl-plugin-admin run build && pnpm --filter cordis-plugin-market run build",
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",

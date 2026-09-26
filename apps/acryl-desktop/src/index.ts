@@ -54,23 +54,8 @@ import {
   handleDesktopTerminalOpenRequest,
 } from './settings/desktop-settings-route.ts'
 import type {} from './settings/desktop-settings-controller.ts'
-import { PLUGIN_ARCHITECTURE_PATH } from './plugins/architecture/plugin-architecture-contract.ts'
-import { inspectCordisContext } from './plugins/architecture/plugin-architecture-inspector.ts'
-import { handlePluginArchitectureSnapshotRequest } from './plugins/architecture/plugin-architecture-route.ts'
-import {
-  PLUGIN_LIFECYCLE_DISABLE_PATH,
-  PLUGIN_LIFECYCLE_ENABLE_PATH,
-  PLUGIN_LIFECYCLE_PATH,
-  PLUGIN_LIFECYCLE_RELOAD_PATH,
-} from './plugins/lifecycle/plugin-lifecycle-contract.ts'
 import { LivePluginActivationService, PluginLifecycleController } from './plugins/lifecycle/plugin-lifecycle-controller.ts'
 import { installPluginWatchers, parsePluginWatchSpec } from './plugins/desktop-plugin-watch.ts'
-import {
-  handlePluginLifecycleDisableRequest,
-  handlePluginLifecycleEnableRequest,
-  handlePluginLifecycleReloadRequest,
-  handlePluginLifecycleSnapshotRequest,
-} from './plugins/lifecycle/plugin-lifecycle-route.ts'
 import type {} from './plugins/lifecycle/plugin-lifecycle-state.ts'
 import { desktopBootRecoveryInjections } from './startup/desktop-boot-recovery.ts'
 import { desktopRootSlotRecoveryInjections } from './startup/desktop-root-slot-recovery.ts'
@@ -228,17 +213,6 @@ export function apply(ctx: Context, config: Config): void {
       `acryl-desktop: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`,
     )
   }
-  // Enabling/disabling/reloading a managed plugin hot-reloads its Host fiber in
-  // place (the Loader entry / fiber restart in PluginLifecycleController), and the
-  // renderer re-composes its own client boot graph via the renderer reload the
-  // lifecycle API already requests (reloadPage -> location.reload()). A full
-  // Desktop generation restart is NOT required here and would relaunch the whole
-  // app, so this callback deliberately performs no restart — the client owns the
-  // reload for the surface change, the Host owns the hot plugin swap.
-  const afterPluginLifecycleMutation = (): void => {
-    // Deliberate no-op: the Host fiber was already hot-reloaded and the client
-    // reloads itself through the lifecycle receipt's rendererReloadRequired.
-  }
   const pluginLifecycleBootstrap = ctx.get('desktopPluginLifecycleBootstrap')
   if (pluginLifecycleBootstrap === undefined) {
     throw new Error('acryl-desktop: launcher did not provide plugin lifecycle persistence')
@@ -268,43 +242,9 @@ export function apply(ctx: Context, config: Config): void {
       'acryl-desktop: local plugin development watchers',
     )
   }
-  ctx.effect(
-    () => ctx.webServer.register({
-      kind: 'exact',
-      path: PLUGIN_ARCHITECTURE_PATH,
-      handler: (req, res) => handlePluginArchitectureSnapshotRequest(
-        req,
-        res,
-        rendererOrigin,
-        { snapshot: () => inspectCordisContext(ctx, 'host') },
-        reportHostError,
-      ),
-    }),
-    'acryl-desktop: private Cordis architecture route',
-  )
-  const lifecycleRoutes = [
-    [PLUGIN_LIFECYCLE_PATH, handlePluginLifecycleSnapshotRequest],
-    [PLUGIN_LIFECYCLE_ENABLE_PATH, handlePluginLifecycleEnableRequest],
-    [PLUGIN_LIFECYCLE_DISABLE_PATH, handlePluginLifecycleDisableRequest],
-    [PLUGIN_LIFECYCLE_RELOAD_PATH, handlePluginLifecycleReloadRequest],
-  ] as const
-  for (const [path, handler] of lifecycleRoutes) {
-    ctx.effect(
-      () => ctx.webServer.register({
-        kind: 'exact',
-        path,
-        handler: (req, res) => handler(
-          req,
-          res,
-          rendererOrigin,
-          pluginLifecycle,
-          reportHostError,
-          afterPluginLifecycleMutation,
-        ),
-      }),
-      `acryl-desktop: private plugin lifecycle route ${path}`,
-    )
-  }
+  // The Settings > Plugins Lifecycle and Architecture routes are the shared `acryl-plugin-admin` plugin's,
+  // composed for every surface; this Host only publishes the lifecycle authority they drive
+  // (`ctx.acrPluginLifecycle`, above).
   ctx.inject(['commands'], (commandCtx) => {
     commandCtx.effect(() => commandCtx.commands.register({
       name: 'reload',

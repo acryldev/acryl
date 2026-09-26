@@ -48,6 +48,15 @@ describe('the ACRYL workspace on the Web surface', () => {
       expect(server?.port).toBeGreaterThan(0)
       const origin = `http://127.0.0.1:${String(server?.port)}`
       const headers = { origin, 'sec-fetch-site': 'same-origin' }
+      // Plugin administration is the same shared plugin as on Desktop: composed, and its routes answer.
+      expect(rows.get('acryl-plugin-admin')?.fiber).toBeDefined()
+      const lifecycle = await fetch(`${origin}/api/acryl-plugin-admin/lifecycle`, { headers })
+      expect(lifecycle.status).toBe(200)
+      const snapshot = await lifecycle.json() as { entries: { entryId: string; moduleName: string }[]; blend: unknown }
+      expect(snapshot.entries.some(entry => entry.moduleName === 'acryl-workspace')).toBe(true)
+      expect(snapshot.blend).toBeNull()
+      const architecture = await fetch(`${origin}/api/acryl-plugin-admin/architecture`, { headers })
+      expect(architecture.status).toBe(200)
       // The served page's client manifest names the workspace bundle, so the browser loads the shell and the workspace.
       const connection = host.ctx.get('connection') as { authenticatedUrl(base: string): string } | undefined
       const entry = await fetch(connection?.authenticatedUrl(origin) ?? origin, { redirect: 'manual' })

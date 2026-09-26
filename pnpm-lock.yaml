@@ -1309,6 +1309,9 @@ importers:
       acryl-mount-anchors:
         specifier: workspace:*
         version: link:../../plugins/acryl-mount-anchors
+      acryl-plugin-admin:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-plugin-admin
       acryl-shortcuts:
         specifier: workspace:*
         version: link:../../plugins/acryl-shortcuts
@@ -1949,18 +1952,21 @@ importers:
       acryl-extension-context:
         specifier: workspace:*
         version: link:../../plugins/acryl-extension-context
-      acryl-workspace:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-workspace
       acryl-mount-anchors:
         specifier: workspace:*
         version: link:../../plugins/acryl-mount-anchors
+      acryl-plugin-admin:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-plugin-admin
       acryl-shortcuts:
         specifier: workspace:*
         version: link:../../plugins/acryl-shortcuts
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
+      acryl-workspace:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-workspace
       cordis-plugin-market:
         specifier: workspace:*
         version: link:../../plugins/cordis-plugin-market
@@ -2049,6 +2055,69 @@ importers:
         specifier: 6.0.3
         version: 6.0.3
 
+  plugins/acryl-plugin-admin:
+    dependencies:
+      acryl-harness-runtime:
+        specifier: workspace:*
+        version: link:../../runtime/acryl-harness-runtime
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.2
+        version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
+      '@deepseek-ai/cordis-plugin-loader':
+        specifier: 1.0.3
+        version: 1.0.3(@deepseek-ai/cordis@4.0.2)(node-addon-require-builtin@0.1.5)
+      '@deepseek-ai/dsh-client-locale':
+        specifier: 0.1.5-alpha.1
+        version: 0.1.5-alpha.1(@deepseek-ai/cordis@4.0.2)
+      '@deepseek-ai/dsh-client-modules':
+        specifier: 0.1.5-alpha.1
+        version: 0.1.5-alpha.1(@deepseek-ai/cordis@4.0.2)
+      '@deepseek-ai/dsh-client-ui-renderer':
+        specifier: 0.1.5-alpha.1
+        version: 0.1.5-alpha.1(@deepseek-ai/cordis@4.0.2)(react@18.3.1)
+      '@deepseek-ai/dsh-client-ui-settings':
+        specifier: 0.1.5-alpha.1
+        version: 0.1.5-alpha.1(@deepseek-ai/cordis@4.0.2)
+      '@deepseek-ai/dsh-client-ui-slots':
+        specifier: 0.1.5-alpha.1
+        version: 0.1.5-alpha.1(@deepseek-ai/cordis@4.0.2)
+      '@deepseek-ai/dsh-host-webserver':
+        specifier: 0.1.5-alpha.1
+        version: 0.1.5-alpha.1(@deepseek-ai/cordis@4.0.2)(supports-color@7.2.0)
+      '@testing-library/dom':
+        specifier: ^10.4.1
+        version: 10.4.1
+      '@testing-library/react':
+        specifier: ^16.3.2
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      '@types/react':
+        specifier: ^18
+        version: 18.3.31
+      '@types/react-dom':
+        specifier: ^18
+        version: 18.3.7(@types/react@18.3.31)
+      jsdom:
+        specifier: 29.1.1
+        version: 29.1.1(@noble/hashes@2.3.0)
+      react:
+        specifier: 18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: 18.3.1
+        version: 18.3.1(react@18.3.1)
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.8
+        version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@8.2.1(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
   plugins/acryl-shortcuts:
     devDependencies:
       '@deepseek-ai/cordis':
@@ -2980,12 +3049,12 @@ importers:
       acryl-extension-context:
         specifier: workspace:*
         version: link:../../plugins/acryl-extension-context
-      acryl-workspace:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-workspace
       acryl-mount-anchors:
         specifier: workspace:*
         version: link:../../plugins/acryl-mount-anchors
+      acryl-plugin-admin:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-plugin-admin
       acryl-shortcuts:
         specifier: workspace:*
         version: link:../../plugins/acryl-shortcuts
@@ -2995,6 +3064,9 @@ importers:
       acryl-ui-tui:
         specifier: workspace:*
         version: link:../../plugins/acryl-ui-tui
+      acryl-workspace:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-workspace
       adm-zip:
         specifier: ^0.6.0
         version: 0.6.0
@@ -3044,7 +3116,6 @@ importers:
       vitest:
         specifier: 4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@8.2.1(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
-
 packages:
 
   '@agentclientprotocol/sdk@1.4.0':

@@ -56,6 +56,7 @@ packages:
   - plugins/acryl-mount-anchors
   - plugins/acryl-shortcuts
   - plugins/acryl-workspace
+  - plugins/acryl-plugin-admin
   - '!deepseek-harness/**'
 
 allowBuilds:
