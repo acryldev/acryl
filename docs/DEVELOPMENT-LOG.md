@@ -1,3 +1,24 @@
+## 2026-09-26 - 036 The blank canvas: Blueprints, a configurable brand, and the first grown Blend
+
+Commits: `3351fa8d1d6394b373b6f2cf0c24e395cdba5842`, `2ee37f2d5f96e8e462b55f8b49c1279eb32b57cc`, `818fbc7c607adf4b8e761de6dae57840cfa1dae1`, `63e91a72b5f8542b221a859908d3481c95d02bd5` (branch `036-cordis-ecosystem-and-acryl-blends`, not pushed); the recipes are in the blends repo on the same branch name.
+
+- **Blueprints.** A Blueprint is pure data naming capabilities and optional rows (`runtime/acryl-harness-runtime/src/blueprint/`): `acryl.blank`
+  (agent, model choice, extension pack, prompt shaping, UI library) and `acryl.full` (today's product, still the default). `ACRYL_BLUEPRINT` selects one;
+  `ACRYL_BRAND_*` rebrands it. Web, CLI and Desktop all compose their ACRYL-owned rows through one pure function; Desktop keeps its own Market switch.
+  Design and the reason for each row: `specs/036-cordis-ecosystem-and-acryl-blends/blank-canvas-blend.md`.
+- **`acryl-brand`.** A new reversible plugin: name, mark, accent, font, title and favicon from the row's config, so a team can ship a closed-source or internal product
+  under its own name without forking. Seen in a real browser (sidebar and tab read the configured name).
+- **First use case.** `examples/acryl-organizer` (to-dos, calendar, overlap-refusing meeting booking). `organizer-growth.spec` builds it live from Blank, uses it through
+  the real tool runtime, captures a Blend and re-creates it on a fresh app. A real DeepSeek run from Blank also built, installed and used its own organizer.
+- **Recipes** in the blends repo: `acryl.blank` (Blueprint) and `acryl.organizer` (Blend, lineage `acryl.blank`), validated and compiled by a test.
+- **Agent knowledge.** Pack 0.11.0 adds `start-here/blueprints.md`.
+- Fixed on the way: a stale hardcoded script string in `apps/acryl-desktop/tests/package.spec.ts` (it failed on main).
+
+Findings worth keeping: the real agent found the reference organizer in the repo after building its own, so a from-scratch run must keep references out of reach; a
+`freeze()` on a literal widens it, so annotate before freezing.
+
+Not built yet: Electron window chrome and terminal branding, Blueprints from a YAML file or hub, a suppressible first-launch notice for white-label products, more starters.
+
 ## 2026-09-24 - 040 Projects tab grows up: new worktrees, per-branch chats, persistence, split
 
 Commits: `98cb67621d1639d824ca69aef5764c747e9088cc`, `837ebcf3076c9cb2dca781f916b2135972f2f5d0`, `9b6a2982c9e472a41358ec25ef164233f9e86780`, `3ca780d5a0a8117fac10876b62e0d5d88b7f7629`
