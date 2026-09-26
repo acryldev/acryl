@@ -259,3 +259,39 @@ See `research.md` finding R15.
   - Acceptance: pi-tui == `0.85.1`, patch applies, TUI boots and passes PTY smoke.
 
 **Checkpoint (Phase 6):** DSH family and pi-tui both on latest, patches re-ported, gate green.
+
+## Phase 7 - Prompt and tool-definition size [REMINDER, not scheduled]
+
+Recorded 2026-09-26 from the owner's first real chat on ACRYL Web (screenshots of the turn-usage and context-usage popovers).
+Fine for now; review later and see whether it can be trimmed.
+
+**What was measured** (same model, `deepseek-flash`, 1M context):
+
+| | System prompt | Tool definitions | Notes |
+|---|---|---|---|
+| Stock DSH Desktop (default DeepSeek Harness) | about 2.6K tok | about 7.3K tok | reference |
+| ACRYL Web (first turn) | about 4.6K tok | about 8.7K tok | about 2.0K more system prompt, about 1.4K more tool definitions |
+
+The very first turn of "what model are you and what tools do you have" reported 41,873 tok of usage (18,693 uncached input, 22,400 cached
+input, 780 output of which 200 reasoning; cache hit 54.5%). The context popover on the same session showed about 18.9K of 1M in use
+(system prompt 4.6K, tools 8.7K, messages 6.7K). The cost is paid on every turn until the provider cache warms, so it matters most on
+short sessions and on cheaper or smaller-context models.
+
+**Suspected sources (from the composition, to be confirmed by measuring):**
+- ACRYL's own system prompt shaping (`acryl-system-prompt`: the tagged, pi.dev-style layout and identity) on top of the harness sections.
+- The extension router section (`acryl:extension-router`) that points the agent at ACRYL's routed docs and examples.
+- The self-extension tool definitions: `acryl_extension_lookup`, `acryl_verify_plugin`, `acryl_install_plugin`, `acryl_list_plugins`,
+  `acryl_remove_plugin`, `acryl_prepare_publish`, and `acryl_workspace_status`.
+
+- [ ] T028 Measure, do not guess: dump per-section token counts of the system prompt and per-tool definition token counts for the Web,
+  Desktop and CLI compositions (the existing `dump:system-prompt` script and `captureSystemPrompt` already produce the raw text under
+  `docs/system-prompt/current`), and record the table next to the stock DSH numbers above.
+  - Acceptance: a checked-in table of tokens per section and per tool, for each surface, reproducible by one command.
+- [ ] T029 Decide what can shrink, keeping behavior: candidates are shorter router text, tighter tool descriptions and parameter docs,
+  merging `acryl_workspace_status` into the prompt or dropping it, and exposing the self-extension tools only when the user is
+  extending ACRYL (a lazy or on-demand tool set) instead of on every turn.
+  - Acceptance: a reviewed proposal with the expected savings per change and the behavior risk of each.
+- [ ] T030 Add a budget guard once trimmed: extend the existing prompt-shape drift test with a token ceiling for the system prompt and the
+  tool definitions, so growth is a deliberate decision, not an accident.
+  - Acceptance: the test fails when either total grows past the agreed ceiling without updating it.
+

@@ -5496,3 +5496,9 @@ binary directly rather than through whatever bare `pnpm` resolves to on
 - **CI blind spots (found by the audit, fixed):** the root `typecheck`, `test` and `check` scripts never ran `acryl-harness-runtime`, `acryl-workspace`, `acryl-plugin-admin`, `acryl-shortcuts` or `acryl-mount-anchors`. They do now.
 - **Kept honest:** the loopback same-origin helpers are now three copies (workspace, plugin-admin, Desktop settings); extracting one library is tracked as T084.
 
+## 2026-09-26 - the shared Web surface works end to end; prompt and tool size recorded as tech debt
+
+- **Owner check:** the ACRYL Web surface ran in a real browser with the shared workspace and shell, and a first chat answered ("what model, what tools") using ACRYL's self-extension tools and the workspace status tool.
+- **Cost observed:** the first turn reported 41,873 tok. The context popover put ACRYL Web at about 4.6K for the system prompt and 8.7K for tool definitions, against about 2.6K and 7.3K on stock DSH Desktop: roughly 2.0K more prompt and 1.4K more tool definitions. Not urgent.
+- **Recorded:** `specs/001-acryl-refactor-improvements-and-tech-debt/tasks.md`, Phase 7 (T028 to T030): measure per section and per tool, decide what to trim (the extension router, the self-extension tool set, `acryl_workspace_status`), then add a token budget guard.
+
