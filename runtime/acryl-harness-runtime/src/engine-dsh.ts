@@ -22,6 +22,7 @@
  * file trusted the pattern.
  */
 
+import { applyWebFavicon } from './web-favicon.ts'
 import { lstatSync, mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { createRequire, findPackageJSON } from 'node:module'
 import { basename, dirname, join } from 'node:path'
@@ -161,12 +162,12 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   // IndexInjection row exists for this", per its own doc comment) -
   // registering a tap here, rather than editing the vendored
   // dsh-web-frontend package, which the project's own repo rules forbid.
-  // Only the title is fixed here; a matching ACRYL favicon needs a real
-  // static asset plus a route to serve it, tracked separately.
+  // The same tap swaps the favicon for the ACRYL logo, inlined as a data URL
+  // (web-favicon.ts), so no route or static asset is needed.
   if (composition.surface === 'web') {
     ctx.inject(['webServer'], webServerCtx => {
       const disposeTap = webServerCtx.webServer.tapIndex(
-        html => html.replace(/<title>[^<]*<\/title>/i, '<title>ACRYL</title>'),
+        html => applyWebFavicon(html.replace(/<title>[^<]*<\/title>/i, '<title>ACRYL</title>')),
       )
       ctx.effect(() => disposeTap)
     })
