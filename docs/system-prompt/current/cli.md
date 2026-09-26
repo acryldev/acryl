@@ -1,6 +1,6 @@
 # Current system prompt: cli
 
-<!-- Generated on 2026-09-21 by the system-prompt capture (see ../README.md). Do not edit; regenerate. -->
+<!-- Generated on 2026-09-26 by the system-prompt capture (see ../README.md). Do not edit; regenerate. -->
 
 What the model receives on the first turn of a new session on the cli surface (terminal engine), after path scrubbing.
 Temporary paths are shown as `<workspace>`, `<dsh-home>` and `<acryl-repo>`. The tool list follows the system prompt.

@@ -1,0 +1,10 @@
+{
+  "web": {
+    "systemChars": 9700,
+    "toolsChars": 29300
+  },
+  "cli": {
+    "systemChars": 7500,
+    "toolsChars": 27600
+  }
+}

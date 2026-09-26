@@ -9,6 +9,8 @@ copy of what the model actually receives.
 - [Web and Desktop, standard preset](current/web.md): system prompt text and tool list.
 - [CLI (terminal engine)](current/cli.md): system prompt text and tool list.
 
+[Size budget](budget.md): the system prompt by section and every tool definition, per surface, with a token estimate; the same command regenerates it, and `runtime/acryl-harness-runtime/tests/system-prompt-shape.spec.ts` enforces the ceilings in `plugins/acryl-system-prompt/drift/budget.json`. Proposal for trimming: [`specs/001-.../prompt-size-proposal.md`](../../specs/001-acryl-refactor-improvements-and-tech-debt/prompt-size-proposal.md).
+
 Regenerate after any change (the copy is captured from the real engine, so it cannot drift):
 
 ```bash
