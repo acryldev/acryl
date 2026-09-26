@@ -20,6 +20,11 @@ const WORKSPACE_STYLES = `
 .dshWorkspace [data-sidebar-right-expand] { display: none; }
 .dshWorkspaceRightToggle { appearance: none; align-self: center; flex: none; width: 28px; height: 28px; margin: 0 8px 0 2px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; display: grid; place-items: center; }
 .dshWorkspaceRightToggle:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg); }
+.dshWorkspaceRunning { appearance: none; flex: none; display: flex; align-items: center; gap: 6px; align-self: center; margin: 0 4px; padding: 2px 10px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 12px/1.6 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceRunning:hover { border-color: #4d6bfe; color: var(--dsw-alias-fg); }
+.dshWorkspaceRunningDot { width: 7px; height: 7px; border-radius: 50%; background: #34d399; animation: dshWorkspacePulse 1.4s ease-in-out infinite; }
+@keyframes dshWorkspacePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .dshWorkspaceRunningDot { animation: none; } }
 .dshWorkspacePlusWrap { position: relative; flex: none; display: flex; align-items: center; padding: 0 6px; }
 .dshWorkspacePlus { appearance: none; width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: 600 18px/1 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspacePlus:hover, .dshWorkspacePlus[aria-expanded="true"] { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }

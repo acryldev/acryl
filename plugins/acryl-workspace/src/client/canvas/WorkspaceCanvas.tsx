@@ -26,6 +26,7 @@ import { FileEditorPane } from '../files/FileEditorPane.tsx'
 import type { WorkspaceFilesApi } from '../files/files-api.ts'
 import { GitDiffPane } from '../diff/GitDiffPane.tsx'
 import type { ReviewStore } from '../review/review-store.ts'
+import { countRunning, runningLabel } from '../sessions/running-agents.ts'
 import { SplitDivider } from './SplitDivider.tsx'
 import { hiddenEdges, scrollToReveal, wheelToScroll } from './tab-scroll.ts'
 import { clampSplit, readSplitRatio, writeSplitRatio } from './split-ratio.ts'
@@ -213,6 +214,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
     }
   }, [workspace, snapshot.menuOpen])
 
+  const runningText = runningLabel(countRunning(sessions.ids.flatMap((id) => { const row = sessions.byId[id]; return row === undefined ? [] : [row] })))
   const tabsRef = useRef<HTMLDivElement>(null)
   const [edges, setEdges] = useState({ start: false, end: false })
   const syncEdges = useCallback((): void => {
@@ -299,6 +301,21 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
             )
           })}
         </div>
+        {runningText !== null && (
+          <button
+            type="button"
+            className="dshWorkspaceRunning"
+            title="Open the live board"
+            onClick={() => {
+              const board = snapshot.tiles.find(tile => tile.kind === 'kanban')
+              if (board !== undefined) workspace.selectTile(board.id)
+              else workspace.addTile('kanban')
+            }}
+          >
+            <span className="dshWorkspaceRunningDot" aria-hidden="true" />
+            {runningText}
+          </button>
+        )}
         <div className="dshWorkspacePlusWrap" ref={menuRef}>
           <button
             type="button"
