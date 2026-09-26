@@ -1,23 +1,11 @@
 /** Allowlisted ACRYL Workspace PTY commands and loopback routes. */
 
-export const WORKSPACE_PTY_COMMAND_IDS = [
-  'shell',
-  'claude',
-  'codex',
-  'opencode',
-  'gemini',
-  'pi',
-  'grok',
-  'aider',
-  'goose',
-  'amp',
-  'kimi',
-  'cursor',
-  'hermes',
-  'qwen',
-] as const
+import { KNOWN_AGENT_IDS, type KnownAgentId } from '../agents/known-agents.ts'
 
-export type WorkspacePtyCommandId = (typeof WORKSPACE_PTY_COMMAND_IDS)[number]
+/** The terminal, then every agent ACRYL knows by name (`agents/known-agents.ts` owns that list). */
+export const WORKSPACE_PTY_COMMAND_IDS = ['shell', ...KNOWN_AGENT_IDS] as const
+
+export type WorkspacePtyCommandId = 'shell' | KnownAgentId
 
 export const WORKSPACE_PTY_PATH = '/api/acryl-workspace/pty'
 export const WORKSPACE_PTY_INPUT_PATH = '/api/acryl-workspace/pty/input'

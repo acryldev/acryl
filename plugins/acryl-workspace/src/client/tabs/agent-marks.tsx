@@ -17,7 +17,8 @@ const CLAUDE_RAYS = Array.from({ length: 8 }, (_, i) => {
   return { x1: 12 + Math.cos(angle) * inner, y1: 12 + Math.sin(angle) * inner, x2: 12 + Math.cos(angle) * outer, y2: 12 + Math.sin(angle) * outer }
 })
 
-export const AGENT_MARKS: Record<WorkspacePtyCommandId, ReactNode> = {
+/** A mark per agent that has one; the rest show their letter badge (`known-agents.ts`). */
+export const AGENT_MARKS: Partial<Record<WorkspacePtyCommandId, ReactNode>> = {
   shell: <path d="M5 7l5 5-5 5M12 18h7" stroke="currentColor" {...line} />,
   claude: (
     <g stroke="#d97757" strokeWidth={2.2} strokeLinecap="round">

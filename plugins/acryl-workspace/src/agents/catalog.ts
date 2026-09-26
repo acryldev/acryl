@@ -5,6 +5,7 @@
  * process table. The catalog is the only source of custom agents; a worktree can never contribute one.
  */
 
+import type { AgentLaunch } from './launch.ts'
 import { AgentDefinitionError, MAX_CUSTOM_AGENTS, parseCustomAgent, type CustomAgent } from './definition.ts'
 
 /** Where the definitions are kept (a file in the user's own ACRYL home). */
@@ -16,11 +17,6 @@ export interface CatalogStore {
 
 /** Answers whether a command names a real executable on this machine. */
 export type CommandExists = (command: string) => boolean
-
-export interface AgentLaunch {
-  readonly command: string
-  readonly args: readonly string[]
-}
 
 export class AgentCatalog {
   private agents: readonly CustomAgent[] = []

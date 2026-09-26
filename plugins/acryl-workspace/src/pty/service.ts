@@ -6,6 +6,7 @@ import { statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { isAbsolute, join } from 'node:path'
 import type { AgentId, WorkspacePtyCommandId, WorkspacePtyStatus, WorkspacePtyView } from './contract.ts'
+import { knownAgent } from '../agents/known-agents.ts'
 import { MAX_PTY_COLS, MAX_PTY_ROWS, isWorkspacePtyCommandId } from './contract.ts'
 import { Scrollback, type Replay } from './scrollback.ts'
 import { ScreenModel } from './screen-model.ts'
@@ -111,15 +112,17 @@ export type WorkspacePtySpawn = (
 export interface WorkspacePtySpawnPlan {
   readonly command: string
   readonly args: readonly string[]
+  /** Added to the terminal's environment for this launch. */
+  readonly env?: Readonly<Record<string, string>>
 }
 
-/** Resolves an agent id that is not built in (the user's catalog). */
-export interface CustomAgentResolver {
-  resolve(id: string): { readonly command: string; readonly args: readonly string[] } | undefined
+/** Says what an agent id runs: the user's settings for a known agent, or a custom agent's definition. */
+export interface AgentResolver {
+  resolve(id: string): WorkspacePtySpawnPlan | undefined
 }
 
 export interface WorkspacePtyRegistryOptions {
-  readonly agents?: CustomAgentResolver
+  readonly agents?: AgentResolver
   /** Starts a real process behind a terminal. Injected: the policy here never loads a native module. */
   readonly spawn: WorkspacePtySpawn
   readonly env?: NodeJS.ProcessEnv
@@ -198,7 +201,7 @@ export class WorkspacePtyRegistry {
   private readonly platform: NodeJS.Platform
   private readonly createId: () => string
   private readonly spawnDirs: string[]
-  private readonly agents: CustomAgentResolver | undefined
+  private readonly agents: AgentResolver | undefined
 
   constructor(options: WorkspacePtyRegistryOptions) {
     this.spawnImpl = options.spawn
@@ -216,8 +219,12 @@ export class WorkspacePtyRegistry {
    * @param cwd - optional working directory (a worktree); must be an existing absolute directory.
    */
   start(commandId: AgentId, cwd?: string, size?: { readonly cols: number; readonly rows: number }): WorkspacePtyView {
-    const custom = isWorkspacePtyCommandId(commandId) ? undefined : this.agents?.resolve(commandId)
-    if (!isWorkspacePtyCommandId(commandId) && custom === undefined) {
+    // The terminal is planned here; any other id is an agent, and the resolver (when there is one) knows the user's settings.
+    const known = isWorkspacePtyCommandId(commandId) ? knownAgent(commandId) : undefined
+    const agentPlan: WorkspacePtySpawnPlan | undefined = commandId === 'shell'
+      ? undefined
+      : this.agents?.resolve(commandId) ?? (known === undefined ? undefined : { command: known.command, args: [] })
+    if (commandId !== 'shell' && agentPlan === undefined) {
       throw new Error('acryl-workspace: unknown workspace PTY command')
     }
     if (cwd !== undefined && !isExistingAbsoluteDirectory(cwd)) {
@@ -228,7 +235,7 @@ export class WorkspacePtyRegistry {
     if (!Number.isInteger(cols) || !Number.isInteger(rows) || cols < 2 || cols > MAX_PTY_COLS || rows < 1 || rows > MAX_PTY_ROWS) {
       throw new Error('acryl-workspace: workspace PTY size is out of range')
     }
-    const plan: WorkspacePtySpawnPlan = custom ?? planWorkspacePtyCommand(commandId as WorkspacePtyCommandId, this.platform, this.env)
+    const plan: WorkspacePtySpawnPlan = agentPlan ?? planWorkspacePtyCommand('shell', this.platform, this.env)
     const id = this.createId()
     let process: WorkspacePtyProcess
     try {
@@ -238,7 +245,7 @@ export class WorkspacePtyRegistry {
       }
       process = this.spawnImpl(resolved ?? plan.command, plan.args, {
         cwd: cwd ?? this.cwd,
-        env: terminalEnvironment(this.env),
+        env: { ...terminalEnvironment(this.env), ...plan.env },
         name: 'xterm-256color',
         cols,
         rows,

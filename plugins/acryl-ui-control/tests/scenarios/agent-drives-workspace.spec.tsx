@@ -9,6 +9,7 @@
 import { act, cleanup, render } from '@testing-library/react'
 import { useSyncExternalStore } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { AgentsPanel } from '../../../acryl-workspace/src/client/agents/AgentsSection.tsx'
 import { AgentsState } from '../../../acryl-workspace/src/client/agents/agents-state.ts'
 import { WorkspaceGroups } from '../../../acryl-workspace/src/client/canvas/groups.ts'
 import { WorkspaceState } from '../../../acryl-workspace/src/client/canvas/state.ts'
@@ -70,7 +71,7 @@ describe('scenario: "add my repo at /p/proj as a project" (US2, T042)', () => {
     const props = {
       collapsed: false, width: 280, renderUpstream: () => <div>upstream</div>, useSessions: sessionsHook, shell,
       projects: fakeProjects({ addProjectByPath }), groups: new WorkspaceGroups(),
-      agents: new AgentsState({ list: async () => [], add: async () => [], remove: async () => [] }),
+      agents: new AgentsState({ list: async () => [], add: async () => [], remove: async () => [], settings: async () => { throw new Error('none') }, change: async () => { throw new Error('none') } }),
     } as unknown as ProjectsSidebarProps
     render(<ProjectsSidebar {...props} />)
     const ai = agent()
@@ -91,27 +92,40 @@ describe('scenario: "add my repo at /p/proj as a project" (US2, T042)', () => {
   })
 })
 
-describe('scenario: "add a coding agent to the + menu" through several menus', () => {
-  it('opens the menu, walks Configure agents to the form, fills it and saves', async () => {
+describe('scenario: settings for coding agents, through the + menu and Settings > Agents', () => {
+  it('walks the + menu into Configure tabs, hides a tab type and comes back', async () => {
     const workspace = new WorkspaceState()
-    const onAdd = vi.fn(async () => {})
     function Harness() {
       const snapshot = useSyncExternalStore(l => workspace.subscribe(l), () => workspace.getSnapshot())
       const terminals = new TerminalRegistry({ createSocket: () => ({ send() {}, close() {}, onopen: null, onmessage: null, onclose: null, onerror: null, readyState: 0 }), urlFor: id => `ws://x/${id}` })
-      return <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={undefined} customAgents={[]} terminals={terminals} onClose={() => {}} onOpenPty={() => {}} onAddAgent={onAdd} onRemoveAgent={async () => {}} />
+      return <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={undefined} customAgents={[]} terminals={terminals} onClose={() => {}} onOpenPty={() => {}} agentSettings={null} onManageAgents={() => true} />
     }
     render(<Harness />)
     const ai = agent()
     await ai.do({ op: 'click', ref: find(await ai.look(), 'button', 'Choose what to open') })
-    await ai.do({ op: 'click', ref: find(await ai.look(), 'menuitem', 'Configure agents...') })
-    await ai.do({ op: 'click', ref: find(await ai.look(), 'menuitem', 'Add an agent...') })
+    await ai.do({ op: 'click', ref: find(await ai.look(), 'menuitem', 'Configure tabs...') })
+    const page = await ai.look()
+    expect(unnamed(page)).toEqual([])
+    await ai.do({ op: 'click', ref: find(page, 'menuitemcheckbox', 'Board tabs') })
+    await ai.do({ op: 'click', ref: find(await ai.look(), 'menuitem', 'Done') })
+    const back = await ai.look()
+    expect(back.nodes.some(n => n.name === 'New Board')).toBe(false)
+    expect(back.nodes.some(n => n.name === 'New Terminal')).toBe(true)
+  })
+
+  it('adds an agent from Settings > Agents by name and command, without knowing the page', async () => {
+    const add = vi.fn(async () => [])
+    const agents = new AgentsState({ list: async () => [], add, remove: async () => [], settings: async () => ({ permissions: 'manual', defaultAgent: 'auto', agents: [] }), change: async () => { throw new Error('none') } })
+    await agents.refresh()
+    render(<AgentsPanel agents={agents} />)
+    const ai = agent()
     let page = await ai.look()
     expect(unnamed(page)).toEqual([])
     await ai.do({ op: 'type', ref: find(page, 'textbox', 'Name'), text: 'My Agent' })
     await ai.do({ op: 'type', ref: find(page, 'textbox', 'Command'), text: 'my-agent' })
     page = await ai.look()
     await ai.do({ op: 'click', ref: find(page, 'button', 'Add agent') })
-    expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({ id: 'my-agent', command: 'my-agent' }))
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({ id: 'my-agent', command: 'my-agent' }))
   })
 
   it('cannot be turned against the user: a sensitive-looking field the menu never lists stays out of reach', async () => {

@@ -1,17 +1,21 @@
 import { createServer, request, type Server } from 'node:http'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { AgentCatalog } from '../../src/agents/catalog.ts'
-import { handleWorkspaceAgentsRemoveRequest, handleWorkspaceAgentsRequest } from '../../src/agents/route.ts'
+import { handleWorkspaceAgentSettingsRequest, handleWorkspaceAgentsRemoveRequest, handleWorkspaceAgentsRequest } from '../../src/agents/route.ts'
+import { AgentSettings } from '../../src/agents/settings.ts'
 import { WorkspacePtyRegistry, type WorkspacePtyProcess } from '../../src/pty/service.ts'
 
 const stored: { text: string | null } = { text: null }
 const catalog = new AgentCatalog({ read: async () => stored.text, write: async (t) => { stored.text = t } }, command => command !== 'ghost')
+const settingsText: { text: string | null } = { text: null }
+const settings = new AgentSettings({ read: async () => settingsText.text, write: async (t) => { settingsText.text = t } }, catalog, command => command === 'claude')
 let server: Server
 let origin = ''
 let port = 0
 
 beforeAll(async () => {
   server = createServer((req, res) => {
+    if (req.url?.startsWith('/settings')) { void handleWorkspaceAgentSettingsRequest(req, res, origin, settings, () => {}); return }
     const handler = req.url?.startsWith('/remove') ? handleWorkspaceAgentsRemoveRequest : handleWorkspaceAgentsRequest
     void handler(req, res, origin, catalog, () => {})
   })
@@ -39,6 +43,25 @@ function call(path: string, method: string, body?: unknown, sameOrigin = true): 
 }
 
 const mine = { id: 'my-agent', label: 'Mine', command: 'my-agent', args: ['--fast'], badge: { letter: 'M', color: '#10a37f' } }
+
+describe('agent settings route', () => {
+  it('shows the view, applies one change at a time, and refuses bad or foreign requests', async () => {
+    const first = await call('/settings', 'GET')
+    expect(first.status).toBe(200)
+    expect(first.json.permissions).toBe('manual')
+    const changed = await call('/settings', 'POST', { permissions: 'yolo' })
+    expect(changed.json.permissions).toBe('yolo')
+    const claude = (changed.json.agents as Array<Record<string, unknown>>).find(entry => entry.id === 'claude')
+    expect(claude).toMatchObject({ installed: true, preview: 'claude --dangerously-skip-permissions' })
+    const bad = await call('/settings', 'POST', { agent: { id: 'claude', command: 'a b' } })
+    expect(bad.status).toBe(400)
+    expect(String(bad.json.error)).toContain('command')
+    expect((await call('/settings', 'POST', { agent: { id: 'nope', enabled: false } })).status).toBe(400)
+    expect((await call('/settings', 'GET', undefined, false)).status).toBe(403)
+    expect((await call('/settings', 'POST', { permissions: 'manual' }, false)).status).toBe(403)
+    expect((await call('/settings', 'DELETE')).status).toBe(405)
+  })
+})
 
 describe('agents routes', () => {
   it('lists, adds, refuses with a message, and removes', async () => {
@@ -85,5 +108,19 @@ describe('starting a custom agent', () => {
     expect(registry.canRun('/bin/echo')).toBe(true)
     expect(registry.canRun('/nonexistent/tool')).toBe(false)
     expect(registry.canRun('definitely-not-installed-xyz')).toBe(false)
+  })
+
+  it('starts a known agent with the user\'s settings: command, flags and environment', () => {
+    const spawned: Array<{ file: string; args: readonly string[]; env: NodeJS.ProcessEnv }> = []
+    const registry = new WorkspacePtyRegistry({
+      spawn: (file, args, options) => { spawned.push({ file, args, env: options.env }); return fakeProcess() },
+      agents: { resolve: id => (id === 'goose' ? { command: '/bin/echo', args: ['--x'], env: { GOOSE_MODE: 'auto' } } : undefined) },
+      env: { SHELL: '/bin/sh', PATH: '/usr/bin:/bin' },
+      platform: 'darwin',
+    })
+    registry.start('goose')
+    expect(spawned[0]).toMatchObject({ file: '/bin/echo', args: ['--x'] })
+    expect(spawned[0]?.env.GOOSE_MODE).toBe('auto')
+    expect(() => registry.start('not-an-agent')).toThrow('unknown workspace PTY command')
   })
 })

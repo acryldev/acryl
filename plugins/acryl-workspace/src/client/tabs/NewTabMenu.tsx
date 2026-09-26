@@ -1,44 +1,56 @@
 /**
- * The "+" button and its menu: surfaces (terminal, browser, file, ...), the agents the user chose to list,
- * "Configure agents..." (show or hide each one, remove a custom one) and "Add an agent..." (a form that
- * shows the exact command line before anything is saved).
+ * The "+" button and its menu: surfaces (terminal, browser, file, ...) and the agents that are installed and
+ * enabled. The plain "+" opens the default agent chosen in Settings > Agents (or the last thing opened when
+ * the default is Auto). Which agents exist, their flags and the default are all set in Settings; this menu
+ * only lists and opens them, and "Configure tabs..." hides tab types you never use.
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { BADGE_COLORS, type CustomAgent } from '../../agents/definition.ts'
-import type { AgentDraft } from '../agents/agent-draft.ts'
-import { draftToAgent, EMPTY_DRAFT, previewCommand } from '../agents/agent-draft.ts'
-import { labelForCommand, WORKSPACE_AGENT_COMMANDS, WORKSPACE_SURFACE_ACTIONS, type WorkspaceSurfaceAction } from '../terminal/agent-commands.ts'
+import type { AgentSettingsView } from '../../agents/contract.ts'
+import type { CustomAgent } from '../../agents/definition.ts'
+import { menuAgents, primaryAction } from '../agents/agents-section-model.ts'
+import { labelForCommand, WORKSPACE_SURFACE_ACTIONS, type WorkspaceSurfaceAction } from '../terminal/agent-commands.ts'
 import { AgentIcon } from './AgentIcon.tsx'
 import { readLastTab, writeLastTab, type LastTab } from './last-tab.ts'
-import { readHiddenAgents, toggleAgent, visibleAgents, writeHiddenAgents } from './agent-visibility.ts'
+import { readHiddenAgents, toggleAgent, writeHiddenAgents } from './agent-visibility.ts'
 
-type View = 'menu' | 'configure' | 'add'
+type View = 'menu' | 'configure'
 
-/** A tab type is hidden by this key in the same remembered set as agents (agent ids never contain a colon). */
+/** A tab type is hidden by this key in the remembered set (agent ids never contain a colon). */
 const surfaceKey = (action: WorkspaceSurfaceAction): string => `surface:${action.kind}`
 
 export interface NewTabMenuProps {
   readonly open: boolean
   readonly customAgents: readonly CustomAgent[]
+  /** What Settings > Agents says (installed, enabled, default), or null before the Host has answered. */
+  readonly settings: AgentSettingsView | null
   readonly storage: Storage | undefined
   setOpen(open: boolean): void
   onSurface(action: WorkspaceSurfaceAction): void
   onOpenAgent(id: string, title: string): void
-  onAddAgent(agent: CustomAgent): Promise<void>
-  onRemoveAgent(id: string): Promise<void>
+  /** Opens Settings on the Agents section; false when the Settings panel could not be found. */
+  onManageAgents(): boolean
 }
 
-export function NewTabMenu({ open, customAgents, storage, setOpen, onSurface, onOpenAgent, onAddAgent, onRemoveAgent }: NewTabMenuProps) {
+export function NewTabMenu({ open, customAgents, settings, storage, setOpen, onSurface, onOpenAgent, onManageAgents }: NewTabMenuProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const [view, setView] = useState<View>('menu')
   const [hidden, setHidden] = useState<ReadonlySet<string>>(() => readHiddenAgents(storage))
-  const [draft, setDraft] = useState<AgentDraft>(EMPTY_DRAFT)
-  const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [last, setLast] = useState<LastTab>(() => readLastTab(storage))
 
   const remember = (tab: LastTab): void => { setLast(tab); writeLastTab(storage, tab) }
   const lastLabel = last.kind === 'agent' ? last.label : WORKSPACE_SURFACE_ACTIONS.find(action => action.kind === last.surface)?.label.replace(/^New /, '') ?? 'Terminal'
+  const openTerminal = (): void => {
+    const action = WORKSPACE_SURFACE_ACTIONS.find(candidate => candidate.kind === 'pty')
+    if (action !== undefined) onSurface(action)
+  }
+  const openPrimary = (): void => {
+    const primary = primaryAction(settings)
+    if (primary.kind === 'agent') onOpenAgent(primary.id, primary.label)
+    else if (primary.kind === 'terminal') openTerminal()
+    else openLast()
+  }
   const openLast = (): void => {
     if (last.kind === 'agent') onOpenAgent(last.id, last.label)
     else {
@@ -47,7 +59,7 @@ export function NewTabMenu({ open, customAgents, storage, setOpen, onSurface, on
     }
   }
 
-  const close = (): void => { setOpen(false); setView('menu'); setError(null) }
+  const close = (): void => { setOpen(false); setView('menu'); setNotice(null) }
 
   // The menu closes on a click elsewhere or Escape.
   useEffect(() => {
@@ -70,11 +82,12 @@ export function NewTabMenu({ open, customAgents, storage, setOpen, onSurface, on
     writeHiddenAgents(storage, next)
   }
 
-  const built = draftToAgent(draft)
+  const primary = primaryAction(settings)
+  const primaryLabel = primary.kind === 'agent' ? primary.label : primary.kind === 'terminal' ? 'Terminal' : lastLabel
 
   return (
     <div className="dshWorkspacePlusWrap" ref={wrapRef}>
-      <button type="button" className="dshWorkspacePlus" aria-label={`New tab: ${lastLabel}`} title={`New ${lastLabel} tab`} onClick={() => { close(); openLast() }}>+</button>
+      <button type="button" className="dshWorkspacePlus" aria-label={`New tab: ${primaryLabel}`} title={`New ${primaryLabel} tab`} onClick={() => { close(); openPrimary() }}>+</button>
       <button
         type="button"
         className="dshWorkspaceChevron"
@@ -94,25 +107,22 @@ export function NewTabMenu({ open, customAgents, storage, setOpen, onSurface, on
             </button>
           ))}
           <div className="dshWorkspaceMenuRule" />
-          {visibleAgents(WORKSPACE_AGENT_COMMANDS, hidden).map(command => (
-            <button key={command.id} type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onOpenAgent(command.id, command.label); remember({ kind: 'agent', id: command.id, label: command.label }); close() }}>
-              <AgentIcon commandId={command.id} />
-              {command.label}
-            </button>
-          ))}
-          {customAgents.filter(agent => !hidden.has(agent.id)).map(agent => (
+          {menuAgents(settings, customAgents).map(agent => (
             <button key={agent.id} type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onOpenAgent(agent.id, agent.label); remember({ kind: 'agent', id: agent.id, label: agent.label }); close() }}>
-              <AgentIcon commandId={agent.id} custom={agent.badge} />
-              {agent.label}
+              <AgentIcon commandId={agent.id} custom={agent.custom} />
+              <span className="dshWorkspaceMenuGrow">{agent.label}</span>
+              {agent.isDefault && <span className="dshWorkspaceMenuTag">default</span>}
             </button>
           ))}
           <div className="dshWorkspaceMenuRule" />
-          <button type="button" role="menuitem" className="dshWorkspaceMenuItem" data-muted onClick={() => { setView('configure') }}>Configure agents...</button>
+          <button type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { if (onManageAgents()) close(); else setNotice('Open Settings, then Agents, to manage agents.') }}>Manage agents...</button>
+          <button type="button" role="menuitem" className="dshWorkspaceMenuItem" data-muted onClick={() => { setView('configure') }}>Configure tabs...</button>
+          {notice !== null && <div className="dshWorkspaceMenuHint" role="status">{notice}</div>}
         </div>
       )}
       {open && view === 'configure' && (
-        <div className="dshWorkspaceMenu" role="menu" aria-label="Configure agents">
-          <div className="dshWorkspaceMenuHint">Choose what the + menu lists.</div>
+        <div className="dshWorkspaceMenu" role="menu" aria-label="Configure tabs">
+          <div className="dshWorkspaceMenuHint">Choose which tab types the + menu lists. Agents are managed in Settings.</div>
           {WORKSPACE_SURFACE_ACTIONS.filter(action => action.kind !== 'pty').map(action => (
             <button key={action.label} type="button" role="menuitemcheckbox" aria-checked={!hidden.has(surfaceKey(action))} className="dshWorkspaceMenuItem" onClick={() => { flip(surfaceKey(action)) }}>
               <span className="dshWorkspaceMenuGrow">{action.label.replace(/^New /, '')} tabs</span>
@@ -120,63 +130,8 @@ export function NewTabMenu({ open, customAgents, storage, setOpen, onSurface, on
             </button>
           ))}
           <div className="dshWorkspaceMenuRule" />
-          {WORKSPACE_AGENT_COMMANDS.map(command => (
-            <button key={command.id} type="button" role="menuitemcheckbox" aria-checked={!hidden.has(command.id)} className="dshWorkspaceMenuItem" onClick={() => { flip(command.id) }}>
-              <AgentIcon commandId={command.id} />
-              <span className="dshWorkspaceMenuGrow">{command.label}</span>
-              <span className="dshWorkspaceMenuCheck" aria-hidden="true">{hidden.has(command.id) ? '' : '✓'}</span>
-            </button>
-          ))}
-          {customAgents.map(agent => (
-            <div key={agent.id} className="dshWorkspaceMenuRow">
-              <button type="button" role="menuitemcheckbox" aria-checked={!hidden.has(agent.id)} className="dshWorkspaceMenuItem dshWorkspaceMenuGrow" onClick={() => { flip(agent.id) }}>
-                <AgentIcon commandId={agent.id} custom={agent.badge} />
-                <span className="dshWorkspaceMenuGrow">{agent.label}</span>
-                <span className="dshWorkspaceMenuCheck" aria-hidden="true">{hidden.has(agent.id) ? '' : '✓'}</span>
-              </button>
-              <button type="button" className="dshWorkspaceMenuRemove" aria-label={`Remove ${agent.label}`} title="Remove this agent" onClick={() => { void onRemoveAgent(agent.id).catch((cause: unknown) => { setError(cause instanceof Error ? cause.message : 'could not remove') }) }}>×</button>
-            </div>
-          ))}
-          {error !== null && <div className="dshWorkspaceMenuError" role="alert">{error}</div>}
-          <div className="dshWorkspaceMenuRule" />
-          <button type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { setError(null); setView('add') }}>Add an agent...</button>
           <button type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { setView('menu') }}>Done</button>
         </div>
-      )}
-      {open && view === 'add' && (
-        <form
-          className="dshWorkspaceMenu dshWorkspaceAgentForm"
-          aria-label="Add an agent"
-          onSubmit={(event) => {
-            event.preventDefault()
-            if (!built.ok) { setError(built.message); return }
-            onAddAgent(built.agent).then(
-              () => { setDraft(EMPTY_DRAFT); setError(null); setView('configure') },
-              (cause: unknown) => { setError(cause instanceof Error ? cause.message : 'could not save') },
-            )
-          }}
-        >
-          <div className="dshWorkspaceMenuHint">Add a coding agent that runs in a terminal tab. It runs only what you enter here, only from this menu.</div>
-          <label>Name<input value={draft.name} onChange={(event) => { setDraft({ ...draft, name: event.target.value }) }} placeholder="My Agent" autoFocus /></label>
-          <label>Command<input value={draft.command} onChange={(event) => { setDraft({ ...draft, command: event.target.value }) }} placeholder="my-agent or /path/to/my-agent" spellCheck={false} /></label>
-          <label>Arguments (one per line)<textarea rows={3} value={draft.args} onChange={(event) => { setDraft({ ...draft, args: event.target.value }) }} spellCheck={false} /></label>
-          <div className="dshWorkspaceAgentBadgeRow">
-            <label>Badge<input className="dshWorkspaceAgentLetter" maxLength={2} value={draft.letter} onChange={(event) => { setDraft({ ...draft, letter: [...event.target.value].slice(0, 1).join('') }) }} placeholder={([...draft.name.trim()][0] ?? 'A').toUpperCase()} /></label>
-            <div className="dshWorkspaceAgentColors" role="radiogroup" aria-label="Badge colour">
-              {BADGE_COLORS.map(color => (
-                <button key={color} type="button" role="radio" aria-checked={draft.color === color} aria-label={color} className="dshWorkspaceAgentColor" style={{ background: color }} onClick={() => { setDraft({ ...draft, color }) }} />
-              ))}
-            </div>
-          </div>
-          <div className="dshWorkspaceAgentPreview" aria-live="polite">
-            {built.ok ? <>Runs: <code>{previewCommand(built.agent)}</code></> : <span data-muted>{draft.name === '' && draft.command === '' ? 'Fill in a name and a command.' : built.message}</span>}
-          </div>
-          {error !== null && <div className="dshWorkspaceMenuError" role="alert">{error}</div>}
-          <div className="dshWorkspaceAgentFormActions">
-            <button type="button" onClick={() => { setError(null); setView('configure') }}>Cancel</button>
-            <button type="submit" disabled={!built.ok}>Add agent</button>
-          </div>
-        </form>
       )}
     </div>
   )

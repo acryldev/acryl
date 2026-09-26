@@ -50,6 +50,7 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceAgentFormActions button { padding: 5px 12px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: inherit; }
 .dshWorkspaceAgentFormActions button[type="submit"] { background: #4d6bfe; border-color: #4d6bfe; color: #fff; }
 .dshWorkspaceAgentFormActions button:disabled { opacity: 0.45; cursor: not-allowed; }
+.dshWorkspaceMenuTag { margin-left: 6px; padding: 0 6px; border-radius: 4px; background: color-mix(in srgb, #4d6bfe 20%, transparent); color: var(--dsw-alias-fg-l2); font-size: 10.5px; }
 .dshWorkspaceMenuHint { padding: 6px 10px 8px; color: var(--dsw-alias-fg-l2); font: 11.5px/1.4 ui-sans-serif, system-ui, sans-serif; }
 /* One opener only: the canvas tab strip carries the always-present right-panel toggle, so upstream's own
    header opener (a documented data hook of the right sidebar) is hidden inside the canvas. */

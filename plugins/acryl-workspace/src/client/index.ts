@@ -27,6 +27,7 @@ import { ProjectsSidebar } from './projects/ProjectsSidebar.tsx'
 import { createWorkspacePtyApi } from './terminal/pty-api.ts'
 import { WorkspacePtyClient } from './sessions/session-client.ts'
 import { createWorkspaceAgentsApi } from './agents/agents-api.ts'
+import { agentsSettingsPlugin } from './agents/agents-settings-plugin.ts'
 import { AgentsState } from './agents/agents-state.ts'
 import { createBrowserNoticePort } from './notifications/system-notice.ts'
 import { ToastState } from './notifications/toast-state.ts'
@@ -99,7 +100,8 @@ export function apply(ctx: ClientContext): void {
   if (advanced) {
     // Shared by the "+" menu, the tab icons and the Projects list.
     const agents = new AgentsState(createWorkspaceAgentsApi())
-    ctx.effect(() => { void agents.refresh(); return () => {} }, 'acryl-workspace: load custom agents')
+    ctx.effect(() => { void agents.refresh(); return () => {} }, 'acryl-workspace: load agents')
+    ctx.plugin(agentsSettingsPlugin(agents))
     ctx.slots.inject('desktop.main', () => {
       const ptyClient = new WorkspacePtyClient(createWorkspacePtyApi())
       // Terminals live as long as this registration, so switching tabs never rebuilds one.

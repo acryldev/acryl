@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { WORKSPACE_PTY_COMMAND_IDS } from '../../src/pty/contract.ts'
-import { WORKSPACE_AGENT_COMMANDS } from '../../src/client/terminal/agent-commands.ts'
-import { HIDDEN_AGENTS_KEY, readHiddenAgents, toggleAgent, visibleAgents, writeHiddenAgents } from '../../src/client/tabs/agent-visibility.ts'
+import { HIDDEN_AGENTS_KEY, readHiddenAgents, toggleAgent, writeHiddenAgents } from '../../src/client/tabs/agent-visibility.ts'
 import { MAX_TAB_TITLE, normalizeTabTitle } from '../../src/client/canvas/tab-title.ts'
 
 describe('normalizeTabTitle', () => {
@@ -18,22 +16,19 @@ describe('normalizeTabTitle', () => {
   })
 })
 
-describe('agent visibility', () => {
+describe('hidden tab types', () => {
   const store = (initial?: string) => {
     let value = initial
     return { getItem: () => value ?? null, setItem: (_key: string, next: string) => { value = next } }
   }
-  it('lists every agent by default', () => {
-    expect(visibleAgents(WORKSPACE_AGENT_COMMANDS, readHiddenAgents(undefined))).toHaveLength(WORKSPACE_PTY_COMMAND_IDS.length - 1)
-  })
-  it('hides and shows agents and remembers the choice', () => {
+  it('hides and shows tab types and remembers the choice', () => {
     const s = store()
-    let hidden = toggleAgent(new Set(), 'aider')
-    hidden = toggleAgent(hidden, 'goose')
+    let hidden = toggleAgent(new Set(), 'surface:diff')
+    hidden = toggleAgent(hidden, 'surface:kanban')
     writeHiddenAgents(s, hidden)
     const again = readHiddenAgents(s)
-    expect(visibleAgents(WORKSPACE_AGENT_COMMANDS, again).map(a => a.id)).not.toContain('aider')
-    expect(toggleAgent(again, 'aider').has('aider')).toBe(false)
+    expect(again).toEqual(new Set(['surface:diff', 'surface:kanban']))
+    expect(toggleAgent(again, 'surface:diff').has('surface:diff')).toBe(false)
   })
   it('treats damaged storage as nothing hidden', () => {
     expect(readHiddenAgents(store('{not json')).size).toBe(0)

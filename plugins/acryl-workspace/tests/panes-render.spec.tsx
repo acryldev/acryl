@@ -102,7 +102,7 @@ function fakeProjects(overrides: Partial<ProjectsControl> = {}): ProjectsControl
 function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: ProjectsControl = fakeProjects(), groups: WorkspaceGroups = new WorkspaceGroups()): ProjectsSidebarProps {
   return {
     groups,
-    agents: new AgentsState({ list: async () => [], add: async () => [], remove: async () => [] }),
+    agents: new AgentsState({ list: async () => [], add: async () => [], remove: async () => [], settings: async () => { throw new Error('no settings') }, change: async () => { throw new Error('no settings') } }),
     collapsed,
     width: 280,
     renderUpstream: () => <div data-testid="upstream">upstream sidebar</div>,

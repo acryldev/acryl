@@ -116,6 +116,25 @@ describe('the ACRYL workspace on the Web surface', () => {
         customOutput = ((await (await fetch(`${origin}/api/acryl-workspace/pty?id=${customId}`, { headers })).json()) as { output: string }).output
       }
       expect(customOutput).toContain('custom-agent-ran')
+      // Agent settings: the user's permission mode and a command override decide what a known agent launches.
+      const settingsUrl = `${origin}/api/acryl-workspace/agents/settings`
+      const post = (body: unknown) => fetch(settingsUrl, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify(body) })
+      const before = await (await fetch(settingsUrl, { headers })).json() as { permissions: string; agents: Array<{ id: string; installed: boolean; kind: string }> }
+      expect(before.permissions).toBe('manual')
+      expect(before.agents.find(agent => agent.id === 'echo-agent')).toMatchObject({ kind: 'custom', installed: true })
+      expect((await post({ permissions: 'yolo' })).status).toBe(200)
+      expect((await post({ agent: { id: 'aider', command: '/bin/echo', args: ['settings-applied'] } })).status).toBe(200)
+      expect((await post({ agent: { id: 'aider', command: 'rm -rf /' } })).status).toBe(400)
+      expect(JSON.parse(await readFile(join(home, 'workspace', 'agent-settings.json'), 'utf8')).permissions).toBe('yolo')
+      const configured = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'aider', cwd: repo }) })
+      expect(configured.status).toBe(200)
+      const configuredId = (await configured.json() as { id: string }).id
+      let configuredOutput = ''
+      for (let attempt = 0; attempt < 40 && !configuredOutput.includes('settings-applied'); attempt += 1) {
+        await new Promise(resolve => { setTimeout(resolve, 100) })
+        configuredOutput = ((await (await fetch(`${origin}/api/acryl-workspace/pty?id=${configuredId}`, { headers })).json()) as { output: string }).output
+      }
+      expect(configuredOutput).toContain('--yes-always settings-applied')
       const smuggled = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'sh -c id' }) })
       expect(smuggled.status).toBe(500)
       // Web keeps log files and serves a diagnostics archive (Settings > Support downloads it).

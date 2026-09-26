@@ -36,6 +36,7 @@ import { GLOBAL_GROUP, type WorkspaceGroups } from './groups.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { DocFilePane } from '../docs/DocFilePane.tsx'
 import { DocPane } from '../docs/DocPane.tsx'
+import { openAgentSettings } from '../agents/open-settings.ts'
 import { BrowserPane } from '../browser/BrowserPane.tsx'
 import { ScratchFilePane } from '../files/ScratchFilePane.tsx'
 import { createWorkspacePtyApi, type WorkspacePtyApi } from '../terminal/pty-api.ts'
@@ -251,6 +252,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
   }, [groups, terminals, toasts, notices])
 
   const customAgents = useSyncExternalStore(agentsState.subscribe, agentsState.getSnapshot)
+  const agentSettings = useSyncExternalStore(agentsState.subscribe, agentsState.getSettings)
   // Primitives only, so git polling that changes nothing here does not re-render the canvas.
   const changedFiles = useSyncExternalStore(subscribeShell, () => shell.selectedWorktree()?.changes.length ?? 0)
   const addedLines = useSyncExternalStore(subscribeShell, () => shell.selectedWorktree()?.added ?? 0)
@@ -279,8 +281,8 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
         customAgents={customAgents}
         terminals={terminals}
         onOpenPty={(commandId, title) => { void openPty(commandId, title) }}
-        onAddAgent={agent => agentsState.add(agent)}
-        onRemoveAgent={id => agentsState.remove(id)}
+        agentSettings={agentSettings}
+        onManageAgents={() => openAgentSettings()}
       />
       <div ref={stageRef} className="dshWorkspaceStage" role="tabpanel" data-split={splitTile !== undefined || undefined}>
         <div className="dshWorkspacePane" data-pane="primary" style={splitTile === undefined ? undefined : { flexBasis: `${splitRatio * 100}%`, flexGrow: 0 }}>
