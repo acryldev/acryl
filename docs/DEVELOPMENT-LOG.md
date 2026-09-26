@@ -1,3 +1,48 @@
+## 2026-09-26 - Devin ACP permission answering: inbound request responses + permissionMode policy
+
+Commits: `0ec13e2a20eb3dcfa6ed682302a33c6b97285e42`, `672d413870e18edf75d7ed7bb6d8f734f4f1af78`
+
+Story 12 of `devin-acp-integration` makes `session/request_permission` answerable end
+to end: the agent's inbound JSON-RPC requests now get real wire responses, and the
+transport answers permission prompts per `permissionMode` without a human.
+
+- **JSON-RPC inbound requests** — `JsonRpcClient` replaced the `request:<method>`
+  emitter (whose `emit` boolean could never carry a handler's return value) with a
+  `Map<method, handler>` — one answerer per method. A settled handler value is
+  written back as `{jsonrpc:'2.0', id, result}` (`undefined` → `null`), a throw or
+  rejection becomes `-32603`, and an unregistered method keeps the `-32601` path.
+  Resolution stays asynchronous so it never blocks the stdout reader; in-flight
+  tasks are tracked and a settlement after `dispose()` writes nothing. Request and
+  response ids widen to `number|string`, echoed back verbatim.
+- **Permission policy** — every spawned worker registers a
+  `session/request_permission` handler that resolves in order:
+  `config.onPermissionRequest` (typed callback seam — the future worker-scoped
+  approval adapter plugs in here; the DSH `ApprovalService` needs a DSH `Agent`
+  plus an open turn an `AgentSnapshot` cannot supply, per mini-design §5), then
+  `permissionMode` (`dangerous`/`bypass` prefer `allow_always` then `allow_once`;
+  `normal` fails closed on `reject`-kind options), then the cancelled outcome when
+  no option matches. The handler never errors and never leaves the agent pending:
+  a thrown, timed-out (`permissionTimeoutMs`, default 60 s), or malformed callback
+  answer collapses to cancelled — still a real `RequestPermissionResponse`.
+- **Wire shapes verified** against the vendored `@agentclientprotocol/sdk@1.4.0`
+  schema types and `deepseek-harness` `subagent-acp` usage: params
+  `{sessionId, toolCall: ToolCallUpdate, options[]}`, response
+  `{outcome: {outcome:'selected', optionId} | {outcome:'cancelled'}}`, option kinds
+  `allow_once`/`allow_always`/`reject_once`/`reject_always`. `devin acp --help`
+  confirms there is no permission flag — policy is enforced client-side.
+- **Stub + tests** — `stub-acp-server.mjs` gains `STUB_ACP_PERMISSION_PROMPT`/
+  `STUB_ACP_PERMISSION_OPTIONS` hooks that emit the request mid-turn and hold the
+  `session/prompt` open until the client answers, echoing the answer back in an
+  update chunk. acp-json-rpc covers result/throw/reject/-32601/string-id/dispose;
+  devin-acp-transport covers all modes, no-match cancellation, callback wins,
+  throw/hang/malformed fallback — all inside an in-flight prompt.
+
+Verified: `pnpm --filter acryl-control run test` 96/96 (21 JSON-RPC + 28 transport),
+`pnpm --filter acryl-agent-devin run test` 6/6 unchanged, `pnpm run typecheck` clean.
+The `acryl-agent-devin` plugin needed no change: `permissionMode` already flows
+through `Config` → `normalizeDevinAcpConfig`; `onPermissionRequest` stays unset —
+the seam is the deliverable, and `approval.respond` remains undeclared.
+
 ## 2026-09-25 - Devin ACP provider composition: acryl-agent-devin package, capability rows, desktop settings
 
 Commits: `d3be1435956d78d2dc4fe03a5ca81c5d353d857b`, `c674c8f53095c3c9b678dc8c9bbd2faaca227987`, `6a9ed4a327cd9a6a5a08c34834267c173a480b41`, `6b9a98d27b3ac1a733a092db9d71e4520d10599d`
