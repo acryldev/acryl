@@ -1,39 +1,22 @@
 /**
- * A small badge that tells agents apart at a glance. Each agent has its own letter and colour; these are
- * plain neutral badges, not vendor logos.
+ * The badge that tells agents apart. Built-in agents show their own mark (`agent-marks.tsx`); a custom
+ * agent shows the letter and colour its author chose.
  */
 
 import type { AgentBadge } from '../../agents/definition.ts'
 import { isWorkspacePtyCommandId } from '../../pty/contract.ts'
-import type { WorkspacePtyCommandId } from '../../pty/contract.ts'
+import { AGENT_MARKS } from './agent-marks.tsx'
 
-interface Badge {
-  readonly letter: string
-  readonly color: string
-}
-
-const BADGES: Record<WorkspacePtyCommandId, Badge> = {
-  shell: { letter: '>', color: '#94a3b8' },
-  claude: { letter: 'C', color: '#d97757' },
-  codex: { letter: 'X', color: '#10a37f' },
-  opencode: { letter: 'O', color: '#64748b' },
-  gemini: { letter: 'G', color: '#4285f4' },
-  pi: { letter: 'π', color: '#a78bfa' },
-  grok: { letter: 'K', color: '#e2e8f0' },
-  aider: { letter: 'A', color: '#34d399' },
-  goose: { letter: 'g', color: '#f59e0b' },
-  amp: { letter: 'M', color: '#ef4444' },
-  kimi: { letter: 'k', color: '#38bdf8' },
-  cursor: { letter: 'U', color: '#cbd5e1' },
-  hermes: { letter: 'H', color: '#fb923c' },
-  qwen: { letter: 'Q', color: '#8b5cf6' },
-}
-
-const UNKNOWN: Badge = { letter: '?', color: '#94a3b8' }
-
-/** @param custom - the badge of a custom agent; built-in agents use their own. */
+/** @param custom - the badge of a custom agent; built-in agents use their own mark. */
 export function AgentIcon({ commandId, custom }: { readonly commandId: string; readonly custom?: AgentBadge | undefined }) {
-  const badge: Badge = custom ?? (isWorkspacePtyCommandId(commandId) ? BADGES[commandId] : UNKNOWN)
+  if (custom === undefined && isWorkspacePtyCommandId(commandId)) {
+    return (
+      <span className="dshWorkspaceAgentMark" aria-hidden="true" data-agent={commandId}>
+        <svg viewBox="0 0 24 24" width="100%" height="100%">{AGENT_MARKS[commandId]}</svg>
+      </span>
+    )
+  }
+  const badge = custom ?? { letter: '?', color: '#94a3b8' }
   return (
     <span className="dshWorkspaceAgentIcon" style={{ color: badge.color, borderColor: badge.color }} aria-hidden="true" data-agent={commandId}>
       {badge.letter}

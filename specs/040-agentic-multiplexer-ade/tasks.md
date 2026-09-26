@@ -101,7 +101,7 @@ Source: the owner's reviews of the running Web surface, with reference screensho
 - [x] **T090** Tab strip scrolls sideways (wheel, hidden scrollbar, edge fades), active tab always scrolled into view, tabs keep their width instead of shrinking (`7044775`).
 - [x] **T091** Tabs are renamable in place (double-click or F2; Enter keeps, Escape cancels, empty restores the tab's own name) and are visibly cleaner: flat, accent underline on the active tab, close button on hover or active.
 - [x] **T092** Agent icon badges on agent tabs and in the + menu (neutral letter badges, not vendor logos).
-- [ ] **T093** Real agent icons (vendor logos) where their licence allows, else keep neutral badges; per-agent icon set defined in one place.
+- [x] **T093** Real agent icons (vendor logos) where their licence allows, else keep neutral badges; per-agent icon set defined in one place. Delivered as original simple SVG marks (not vendor artwork), one per built-in agent, theme-aware where a fixed colour would vanish; a custom agent keeps its letter badge. Also fixed: the terminal used about half the pane because its wrapper element had no size.
 - [x] **T094** Tab right-click context menu: Rename, Duplicate, Close others, Close to the right, Open beside. Delivered: right-click a tab for Rename, Open beside, Close, Close others, Close to the right.
 - [x] **T095** Per-tab activity marker for agent tabs (running spinner, finished dot) like superset. Delivered: a pulsing dot on a running agent tab, a grey dot once it ended.
 - [ ] **T096** Pixel pass of the strip against superset/Orca references in a real browser (spacing, hover, dark and light themes).

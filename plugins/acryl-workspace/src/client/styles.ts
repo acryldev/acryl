@@ -26,6 +26,8 @@ const WORKSPACE_STYLES = `
 @media (prefers-reduced-motion: reduce) { .dshWorkspaceTabActivity[data-state="live"] { animation: none; } }
 .dshWorkspaceTabMenu { width: 220px; }
 .dshWorkspaceTabMenu .dshWorkspaceMenuItem:disabled { opacity: 0.4; cursor: default; }
+.dshWorkspaceAgentMark { display: inline-grid; place-items: center; width: 18px; height: 18px; flex: none; color: var(--dsw-alias-fg); }
+.dshWorkspaceWorktreeAgents .dshWorkspaceAgentMark { width: 14px; height: 14px; }
 .dshWorkspaceAgentIcon { display: inline-grid; place-items: center; width: 16px; height: 16px; flex: none; border: 1px solid currentColor; border-radius: 5px; font: 700 9.5px/1 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceMenuItem[data-muted] { color: var(--dsw-alias-fg-l2); }
 .dshWorkspaceMenuGrow { flex: 1; }
@@ -96,6 +98,7 @@ const WORKSPACE_STYLES = `
 .dshWorkspacePtyToolbar, .dshWorkspaceBrowserBar { display: flex; gap: 8px; align-items: center; padding: 6px 10px; border-bottom: 1px solid var(--dsw-alias-border-l2); }
 .dshWorkspacePtyName { font: 600 12px/1 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg); }
 .dshWorkspacePtyStatus { margin-left: auto; font: 11px/1 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg-l2); }
+.dshWorkspaceXtermScreen { width: 100%; height: 100%; }
 .dshWorkspaceXterm { position: relative; flex: 1; min-width: 0; min-height: 0; padding: 8px 10px; overflow: hidden; background: #0b0d12; }
 .dshWorkspacePtyError { position: absolute; inset: 50% auto auto 50%; translate: -50% -50%; max-width: min(520px, 80%); color: #fca5a5; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dshWorkspaceXterm .xterm { position: relative; width: 100%; height: 100%; }
