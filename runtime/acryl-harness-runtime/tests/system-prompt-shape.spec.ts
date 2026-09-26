@@ -63,7 +63,10 @@ describe.each(['web', 'cli'] as const)('acryl-system-prompt on the %s engine', k
       return
     }
     const baseline = JSON.parse(readFileSync(baselinePath, 'utf8')) as Array<{ name: string; hash: string }>
-    const byName = (list: Array<{ name: string; hash: string }>) => new Map(list.map(section => [section.name, section.hash]))
+    // `harness:source` states where this machine's harness checkout lives on disk, so its hash differs per
+    // checkout location and says nothing about what the harness contributes; it is not part of the shape.
+    const MACHINE_SPECIFIC = new Set(['harness:source'])
+    const byName = (list: Array<{ name: string; hash: string }>) => new Map(list.filter(section => !MACHINE_SPECIFIC.has(section.name)).map(section => [section.name, section.hash]))
     const before = byName(baseline)
     const now = byName(upstream)
     const added = [...now.keys()].filter(name => !before.has(name))

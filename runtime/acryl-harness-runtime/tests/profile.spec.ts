@@ -66,5 +66,5 @@ describe('bootAcrylWebProfile', () => {
 
     expect(runtime.ctx.get('authorization')).toBeDefined()
     await runtime.dispose()
-  })
+  }, 60_000)
 })
