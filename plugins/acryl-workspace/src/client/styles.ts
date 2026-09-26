@@ -128,6 +128,8 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceKanbanColumnTitle { padding: 10px 12px 6px; font: 600 12px/1.2 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg); }
 .dshWorkspaceKanbanCards { display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 40px; padding: 0 10px; overflow-y: auto; }
 .dshWorkspaceKanbanCard { padding: 8px 10px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 8px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-fg); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; cursor: grab; }
+.dshWorkspaceKanbanColumn[data-over] { border-color: #4d6bfe; }
+.dshWorkspaceKanbanCard[draggable="true"]:active { cursor: grabbing; opacity: 0.7; }
 .dshWorkspaceKanbanCount { margin-left: 4px; padding: 0 6px; border-radius: 999px; background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg-l2); font-weight: 500; }
 .dshWorkspaceKanbanEmpty { padding: 6px 2px; color: var(--dsw-alias-fg-l2); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceKanbanSessionCard { appearance: none; display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; cursor: pointer; color: var(--dsw-alias-fg); }
