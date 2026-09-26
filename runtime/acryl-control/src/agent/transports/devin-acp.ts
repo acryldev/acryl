@@ -7,10 +7,11 @@
  */
 
 import { spawn, type ChildProcess } from 'node:child_process'
-import type {
-  AgentCommand,
-  AgentSnapshot,
-  AgentTransport,
+import {
+  AcrAgentControlError,
+  type AgentCommand,
+  type AgentSnapshot,
+  type AgentTransport,
 } from '../agent-control.ts'
 import { JsonRpcClient } from './acp-json-rpc.ts'
 import {
@@ -25,6 +26,15 @@ interface WorkerState {
   readonly rpc: JsonRpcClient
   sessionId: string | null
   updates: unknown[]
+  /** Set once the process exits/closes/errors so cleanup never waits on it. */
+  dead: boolean
+}
+
+/** The `devin acp` subprocess runs in the bound worker's workspace when the
+ * attach carried one; config cwd and the host cwd are only fallbacks — in a
+ * packaged Electron host `process.cwd()` is `/`. */
+function resolveWorkerCwd(binding: AgentSnapshot, config: DevinAcpTransportConfig): string {
+  return binding.workspace?.cwd ?? config.cwd ?? process.cwd()
 }
 
 /** Result of a start command. */
@@ -101,16 +111,23 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
     if (workers.has(binding.workerId)) {
       throw new Error(`Worker ${binding.workerId} already has an active Devin ACP session`)
     }
+    if (signal?.aborted) {
+      throw new AcrAgentControlError('cancelled', 'Command start was cancelled.')
+    }
 
     const binaryPath = resolveDevinBinary(config)
     const env = devinEnv(config)
-    const childProcess = spawn(binaryPath, ['acp'], {
-      cwd: config.cwd,
+    const cwd = resolveWorkerCwd(binding, config)
+    const args = ['acp']
+    if (config.model !== undefined) args.push('--model', config.model)
+    const childProcess = spawn(binaryPath, args, {
+      cwd,
       env,
       stdio: ['pipe', 'pipe', 'pipe'],
     })
 
     const rpc = new JsonRpcClient(childProcess, {
+      requestTimeoutMs: config.requestTimeoutMs,
       onStderr: (line) => {
         // Surface stderr via console for debugging; a production integration
         // would route this to a Desktop log surface.
@@ -124,10 +141,69 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
       updates.push(params)
     })
 
-    const state: WorkerState = { process: childProcess, rpc, sessionId: null, updates }
+    const state: WorkerState = { process: childProcess, rpc, sessionId: null, updates, dead: false }
     workers.set(binding.workerId, state)
 
-    // Abort handler
+    // A workers entry must never outlive its process: a natural exit or a
+    // failed spawn releases the worker so a later start can retry.
+    const markDead = () => {
+      if (state.dead) return
+      state.dead = true
+      state.rpc.dispose()
+      if (workers.get(binding.workerId) === state) workers.delete(binding.workerId)
+    }
+    childProcess.once('exit', markDead)
+    childProcess.once('close', markDead)
+    childProcess.once('error', markDead)
+
+    // 1. Initialize → 2. auth check → 3. session/new. Any failure (RPC error,
+    // auth rejection, timeout, abort, or the process dying mid-handshake)
+    // must tear the half-started worker down: without this the dead entry
+    // wedges every retry behind 'already has an active Devin ACP session'.
+    let sessionResult: { sessionId: string }
+    try {
+      const initResult = await rpc.call<{
+        protocolVersion: number
+        agentCapabilities: { loadSession?: boolean }
+        authMethods: unknown[]
+      }>('initialize', {
+        protocolVersion: 1,
+        // Advertise only what this client actually handles; claiming fs or
+        // terminal support without handlers would fail mid-session with
+        // -32601. A follow-up story adds session/request_permission.
+        clientCapabilities: {
+          fs: { readTextFile: false, writeTextFile: false },
+          terminal: false,
+        },
+        clientInfo: { name: 'acryl-desktop', title: 'ACRYL Desktop', version: '0.1.0' },
+      }, { signal })
+
+      // 2. Authenticate if needed
+      if (initResult.authMethods.length > 0) {
+        if (config.authMode === 'interactive') {
+          throw new Error(
+            'Devin ACP requires authentication and authMode is "interactive", which is not yet supported. Use "devin auth login" first or set WINDSURF_API_KEY.',
+          )
+        }
+        // For devin-auth and windsurf-key modes, the credentials are picked up
+        // from the environment / stored credentials by the devin binary itself.
+        // The ACP authenticate method is called by the agent if it needs
+        // explicit credentials — in practice, devin acp reads them from disk.
+      }
+
+      // 3. Session new
+      sessionResult = await rpc.call<{ sessionId: string }>('session/new', {
+        cwd,
+        mcpServers: [],
+      }, { signal })
+
+      state.sessionId = sessionResult.sessionId
+    } catch (error) {
+      await killWorker(binding.workerId)
+      throw error
+    }
+
+    // Once a session exists, an abort also cancels the in-flight turn.
     if (signal !== undefined) {
       signal.addEventListener('abort', () => {
         if (state.sessionId !== null) {
@@ -135,41 +211,6 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
         }
       }, { once: true })
     }
-
-    // 1. Initialize
-    const initResult = await rpc.call<{
-      protocolVersion: number
-      agentCapabilities: { loadSession?: boolean }
-      authMethods: unknown[]
-    }>('initialize', {
-      protocolVersion: 1,
-      clientCapabilities: {
-        fs: { readTextFile: true, writeTextFile: true },
-        terminal: true,
-      },
-      clientInfo: { name: 'acryl-desktop', title: 'ACRYL Desktop', version: '0.1.0' },
-    })
-
-    // 2. Authenticate if needed
-    if (initResult.authMethods.length > 0) {
-      if (config.authMode === 'interactive') {
-        throw new Error(
-          'Devin ACP requires authentication and authMode is "interactive", which is not yet supported. Use "devin auth login" first or set WINDSURF_API_KEY.',
-        )
-      }
-      // For devin-auth and windsurf-key modes, the credentials are picked up
-      // from the environment / stored credentials by the devin binary itself.
-      // The ACP authenticate method is called by the agent if it needs
-      // explicit credentials — in practice, devin acp reads them from disk.
-    }
-
-    // 3. Session new
-    const sessionResult = await rpc.call<{ sessionId: string }>('session/new', {
-      cwd: config.cwd,
-      mcpServers: [],
-    })
-
-    state.sessionId = sessionResult.sessionId
 
     return {
       sessionId: sessionResult.sessionId,
@@ -205,7 +246,7 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
     const result = await state.rpc.call<{ stopReason: string }>('session/prompt', {
       sessionId: state.sessionId,
       prompt,
-    })
+    }, { signal })
 
     return {
       stopReason: result.stopReason,
@@ -246,9 +287,9 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
       try {
         await state.rpc.call('session/load', {
           sessionId: state.sessionId,
-          cwd: config.cwd,
+          cwd: resolveWorkerCwd(binding, config),
           mcpServers: [],
-        })
+        }, { signal })
         return {
           sessionId: state.sessionId,
           runtimeId: String(state.process.pid ?? 'unknown'),
@@ -267,6 +308,16 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
   function killWorker(workerId: string): Promise<void> {
     const state = workers.get(workerId)
     if (state === undefined) return Promise.resolve()
+    // Release the worker immediately so a retry is never blocked by a kill
+    // still in flight.
+    workers.delete(workerId)
+
+    // A failed spawn or an already-exited child has nothing left to kill —
+    // 'exit' may never arrive, so waiting on it would hang the caller.
+    if (state.dead) {
+      state.rpc.dispose()
+      return Promise.resolve()
+    }
 
     return new Promise<void>((resolve) => {
       let resolved = false
@@ -274,14 +325,19 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
         if (resolved) return
         resolved = true
         state.rpc.dispose()
-        workers.delete(workerId)
         resolve()
       }
 
       state.process.once('exit', finish)
+      state.process.once('error', finish)
 
       // SIGTERM first, SIGKILL after 2s
-      state.process.kill('SIGTERM')
+      try {
+        state.process.kill('SIGTERM')
+      } catch {
+        // The process died between the dead check and now; 'exit'/'error'
+        // listeners or the fallback timer still settle the promise.
+      }
       setTimeout(() => {
         if (!state.process.killed) {
           try {

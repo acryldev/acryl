@@ -7,11 +7,25 @@
  *
  * Usage: node stub-acp-server.mjs
  * Reads JSON-RPC messages from stdin (line-delimited), writes to stdout.
+ *
+ * Test hooks via environment:
+ * - STUB_ACP_CAPTURE: path to a file; every inbound message is appended as
+ *   one JSON line (lets tests inspect e.g. initialize params).
+ * - STUB_ACP_HANG: comma-separated method names the stub never answers
+ *   (timeout/abort tests).
+ * - STUB_ACP_FAIL_ONCE_FILE: path to a marker file; the first initialize on
+ *   the first process that finds the file absent writes it and replies with
+ *   a JSON-RPC error — later spawns succeed (retry tests).
  */
 
 import * as readline from 'node:readline'
+import { appendFileSync, existsSync, writeFileSync } from 'node:fs'
 
 const rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity })
+
+const captureFile = process.env.STUB_ACP_CAPTURE
+const hangMethods = new Set((process.env.STUB_ACP_HANG ?? '').split(',').filter(Boolean))
+const failOnceFile = process.env.STUB_ACP_FAIL_ONCE_FILE
 
 let nextSessionId = 1
 const sessions = new Map()
@@ -32,7 +46,19 @@ rl.on('line', (line) => {
     return
   }
 
+  if (captureFile) appendFileSync(captureFile, line.trim() + '\n')
+  if (typeof msg.method === 'string' && hangMethods.has(msg.method)) return
+
   if (msg.method === 'initialize') {
+    if (failOnceFile && !existsSync(failOnceFile)) {
+      writeFileSync(failOnceFile, 'failed')
+      send({
+        jsonrpc: '2.0',
+        id: msg.id,
+        error: { code: -32603, message: 'stub initialize failure (fail-once)' },
+      })
+      return
+    }
     send({
       jsonrpc: '2.0',
       id: msg.id,
