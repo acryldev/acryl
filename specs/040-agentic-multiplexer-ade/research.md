@@ -68,3 +68,22 @@ Decisions that follow:
 - Mini-design risk 1 and 2 are resolved; risk 3 (Web has no advanced shell) stands.
 - T041 no longer needs a Host route; it uses `ctx.sessions`.
 - T033 gains the allowlist change, and the earlier idea of building a Tab types settings page is dropped from slice 1.
+
+## T070: what is shared, what needs a seam, what is native (2026-09-26)
+
+Method: read `apps/acryl-desktop/src/profile.ts`, its client (`src/client`), `runtime/acryl-harness-runtime/src/{coding-capabilities,engine-dsh}.ts` and `apps/acryl-web`, then verified by booting the real Web engine on a throwaway home (`apps/acryl-web/tests/workspace-shared.spec.ts`).
+
+| Piece | Before | Now | Kind |
+|---|---|---|---|
+| Composition of the workspace row | hand-written Desktop row in `profile.ts` | `workspace` capability (`surfaces: ['desktop','web']`) in `coding-capabilities.ts`; Web links `acryl-workspace` into its profile through `requiresPackages` | shared |
+| Rows that hand the frame to the ACRYL shell (`ui-layout` off, `ui-sidebar`, `ui-conversation` on) | inline in Desktop `profile.ts` | `advanced-shell` capability, `createAcrylShellCapabilityPatches(surfaces, mode)`; Desktop passes its mode, Web is always `advanced` | shared |
+| Frame, layout state and service, slot declarations, theme presenter | `apps/acryl-desktop/src/client` | `plugins/acryl-workspace/src/client/shell` | shared |
+| Workspace UI (canvas, Projects list, Changes, Review, Checks, Files, editor) | `acryl-workspace` (already package-neutral) | unchanged | shared |
+| Host routes (git, files, pty, checks) | `acryl-workspace` Host half on the shared web server | unchanged; proven on Web: repo, tree, save and a real terminal answer | shared |
+| Which shell and platform a page runs | Electron URL fragment only | `shell/environment.ts`: same fragment contract; a page without markers is `web` and runs the ACRYL shell | seam |
+| Native window chrome (macOS traffic lights, Windows caption controls) | constants in Desktop `window-chrome.ts` | copy in `shell/chrome-metrics.ts`, reserved only for `darwin`/`win32`; a test compares the two files | seam (guarded) |
+| Adding a project | Desktop window folder picker (Windows) or upstream Add workspace | same code; on Web the upstream Add workspace flow browses the server's folders | seam (already both) |
+| Folder drag-drop, native directory-picker bridge, native menu, tray, notifications, updates | Desktop | stays in `apps/acryl-desktop` | Desktop-native |
+
+Open on Web: compatibility mode does not exist (Web always renders the ACRYL shell, by decision, so the Host toggles and the client cannot disagree); the Desktop-only Settings tabs (plugin lifecycle, plugin architecture) are not part of this slice (spec 034); `acryl-web` now ships `node-pty` through `acryl-workspace`, which matters for its npm closure.
+

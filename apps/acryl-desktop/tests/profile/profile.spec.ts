@@ -249,6 +249,8 @@ describe('desktop profile composition', {
       name: '@deepseek-ai/dsh-client-ui-layout',
       disabled: true,
     }))
+    // The workspace is composed from the shared capability declaration (the same one Web uses), exactly once.
+    expect(rows.filter(row => row.id === 'acryl-workspace')).toEqual([{ id: 'acryl-workspace', name: 'acryl-workspace' }])
     for (const [id, name] of [
       ['ui-sidebar', '@deepseek-ai/dsh-client-ui-sidebar'],
       ['ui-conversation', '@deepseek-ai/dsh-client-ui-conversation'],

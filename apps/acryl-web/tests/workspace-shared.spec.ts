@@ -4,7 +4,7 @@
  * plus one real Host route, so a Web that drifts from Desktop fails here rather than in a user's browser.
  */
 import { execFileSync } from 'node:child_process'
-import { mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
@@ -59,9 +59,42 @@ describe('the ACRYL workspace on the Web surface', () => {
       const repoRoute = await fetch(`${origin}/api/acryl-workspace/git/repo?cwd=${encodeURIComponent(repo)}`, { headers })
       expect(repoRoute.status).toBe(200)
       expect(await repoRoute.json()).toMatchObject({ repo: { root: repo } })
+      // A real terminal starts in the worktree on Web exactly as it does on Desktop, and reads back its own output.
+      const started = await fetch(`${origin}/api/acryl-workspace/pty`, {
+        method: 'POST',
+        headers: { ...headers, 'content-type': 'application/json' },
+        body: JSON.stringify({ commandId: 'shell', cwd: repo }),
+      })
+      expect(started.status).toBe(200)
+      const terminal = await started.json() as { id: string }
+      await fetch(`${origin}/api/acryl-workspace/pty/input`, {
+        method: 'POST',
+        headers: { ...headers, 'content-type': 'application/json' },
+        body: JSON.stringify({ id: terminal.id, data: 'pwd\r' }),
+      })
+      let output = ''
+      for (let attempt = 0; attempt < 40 && !output.includes(repo); attempt += 1) {
+        await new Promise(resolve => { setTimeout(resolve, 100) })
+        output = ((await (await fetch(`${origin}/api/acryl-workspace/pty?id=${terminal.id}`, { headers })).json()) as { output: string }).output
+      }
+      expect(output).toContain(repo)
+      await fetch(`${origin}/api/acryl-workspace/pty/close`, {
+        method: 'POST',
+        headers: { ...headers, 'content-type': 'application/json' },
+        body: JSON.stringify({ id: terminal.id }),
+      })
       const tree = await fetch(`${origin}/api/acryl-workspace/files/tree?path=${encodeURIComponent(repo)}&dir=`, { headers })
       expect(tree.status).toBe(200)
       expect(await tree.json()).toMatchObject({ entries: [{ name: 'a.txt', kind: 'file' }] })
+      // Editing works the same: read a file, save it through the confined route, and see it on disk.
+      const read = await (await fetch(`${origin}/api/acryl-workspace/files/read?path=${encodeURIComponent(repo)}&file=a.txt`, { headers })).json() as { mtimeMs: number }
+      const saved = await fetch(`${origin}/api/acryl-workspace/files/write`, {
+        method: 'POST',
+        headers: { ...headers, 'content-type': 'application/json' },
+        body: JSON.stringify({ path: repo, file: 'a.txt', content: 'saved on web\n', expectedMtimeMs: read.mtimeMs }),
+      })
+      expect(saved.status).toBe(200)
+      expect(await readFile(join(repo, 'a.txt'), 'utf8')).toBe('saved on web\n')
     } finally {
       await host.dispose()
     }
