@@ -59,7 +59,7 @@
       # own Node runtime and native addons (node-pty, koffi, sharp).
       # v0.1.36 does not ship a darwin-x64 tarball, so #prebuilt is not
       # available on x86_64-darwin — use #default or #acryl there.
-      releaseVersion = "0.1.36";
+      releaseVersion = "0.1.44";
       prebuiltAssets = {
         "x86_64-linux" = {
           url = "https://github.com/acryldev/acryl/releases/download/v${releaseVersion}/acryl-cli-linux-x64.tar.gz";
