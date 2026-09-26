@@ -82,6 +82,7 @@ export function apply(ctx: ClientContext): void {
     },
   }
   const projects = createProjectsControl({
+    platform: environment.platform,
     shell,
     gitApi,
     getWorkspaces: () => ctx.get('workspaces'),

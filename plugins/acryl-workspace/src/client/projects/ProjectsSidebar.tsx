@@ -50,6 +50,10 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
   const [hint, setHint] = useState<string | null>(null)
   /** The repository whose "new branch" form is open. */
   const [creatingIn, setCreatingIn] = useState<string | null>(null)
+  /** The "add by path" form (Web has no native folder chooser). */
+  const [addingByPath, setAddingByPath] = useState(false)
+  const [projectPath, setProjectPath] = useState('')
+  const [addingBusy, setAddingBusy] = useState(false)
 
   // Registered workspace folders are projects even before they have a chat.
   useEffect(() => {
@@ -102,9 +106,23 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
   const addProject = async (): Promise<void> => {
     setNotice(null)
     setHint(null)
+    if (projects.chooserKind() === 'path') {
+      setAddingByPath(open => !open)
+      return
+    }
     const result = await projects.addProject()
     if (!result.ok) setNotice(result.reason)
     else if (result.note !== undefined) setHint(result.note)
+  }
+
+  const submitPath = async (): Promise<void> => {
+    if (addingBusy) return
+    setAddingBusy(true)
+    setNotice(null)
+    const result = await projects.addProjectByPath(projectPath)
+    setAddingBusy(false)
+    if (result.ok) { setAddingByPath(false); setProjectPath('') }
+    else setNotice(result.reason)
   }
 
   if (collapsed) return <>{renderUpstream()}</>
@@ -146,6 +164,20 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
               +
             </button>
           </div>
+          {addingByPath && (
+            <form className="dshWorkspaceNewBranch" aria-label="Add a git project by path" onSubmit={(event) => { event.preventDefault(); void submitPath() }}>
+              <input
+                aria-label="Project folder path"
+                placeholder="/absolute/path/to/a/git/repository"
+                autoFocus
+                spellCheck={false}
+                value={projectPath}
+                onChange={(event) => { setProjectPath(event.target.value) }}
+                onKeyDown={(event) => { if (event.key === 'Escape') setAddingByPath(false) }}
+              />
+              <button type="submit" disabled={addingBusy || projectPath.trim() === ''}>{addingBusy ? 'Adding...' : 'Add'}</button>
+            </form>
+          )}
           {notice !== null && (
             <p className="dshWorkspaceSideNotice" role="alert">{notice}</p>
           )}

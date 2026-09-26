@@ -3,6 +3,7 @@
  * Every dependency is injected so the flows are testable without a browser or a Host.
  */
 
+import type { ShellPlatform } from '../shell/environment.ts'
 import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { IWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
@@ -19,8 +20,15 @@ export interface ProjectsControl {
   /** Registered workspace folders, so a project appears even before it has a chat. */
   workspacePaths(): readonly string[]
   subscribeWorkspaces(listener: () => void): () => void
-  /** Pick a folder, require a git repository, register it as a workspace and open a chat in it. */
+  /**
+   * How a folder is chosen here: the window's own picker, the app's upstream "Add workspace" flow (desktop
+   * without a picker seam), or by typing the folder's path (Web, where the page cannot open a native chooser).
+   */
+  chooserKind(): FolderChooserKind
+  /** Choose a folder (by the picker or the upstream flow), require a git repository, register it and open a chat in it. */
   addProject(): Promise<ProjectAction>
+  /** The same, for a folder path the user typed; the Host checks it is a real git worktree. */
+  addProjectByPath(path: string): Promise<ProjectAction>
   /** Show the chat for a worktree: its latest one, or a new one started there. */
   showChat(worktreePath: string): Promise<ProjectAction>
   /** Start an additional chat in a worktree that may already have some. */
@@ -31,7 +39,11 @@ export interface ProjectsControl {
   openSettings(): ProjectAction
 }
 
+export type FolderChooserKind = 'picker' | 'upstream' | 'path'
+
 export interface ProjectsControlDeps {
+  /** Which surface this page is: only the web has no native chooser of any kind. */
+  readonly platform: ShellPlatform
   readonly shell: WorkspaceShellState
   readonly gitApi: WorkspaceGitApi
   readonly getWorkspaces: () => IWorkspaces | undefined
@@ -79,18 +91,22 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     workspacePaths: () => workspaceItems().map(item => item.path),
     subscribeWorkspaces: listener => deps.getWorkspaces()?.list.subscribe(listener) ?? (() => {}),
 
+    chooserKind() {
+      if (deps.directory().pickDirectory !== undefined) return 'picker'
+      return deps.platform === 'web' ? 'path' : 'upstream'
+    },
+
     async addProject() {
       const seams = deps.directory()
       if (seams.pickDirectory === undefined) {
-        // No picker seam (macOS): use the app's own Add workspace flow in the Chats view. A git folder
-        // registered there appears under Projects by itself, because registered workspaces are projects.
+        if (deps.platform === 'web') return fail('Type the path of a git repository folder to add it.')
+        // Desktop without a picker seam (macOS): the app's own Add workspace flow in the Chats view drives the
+        // native chooser. A git folder registered there appears under Projects by itself.
         shell.setMode('chats')
         await new Promise<void>((resolve) => { setTimeout(resolve, 60) })
         if (!clickAddWorkspaceTrigger()) return fail('Could not find the Add workspace control in Chats.')
         return { ok: true, note: 'Choose the folder here. If it is a git repository it will appear under Projects.' }
       }
-      const workspaces = deps.getWorkspaces()
-      if (workspaces === undefined) return fail('Workspaces are not available yet.')
       let picked: string | null
       try {
         picked = await seams.pickDirectory()
@@ -98,9 +114,17 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
         return fail(message(cause))
       }
       if (picked === null) return { ok: true }
+      return this.addProjectByPath(picked)
+    },
 
+    async addProjectByPath(path) {
+      const seams = deps.directory()
+      const workspaces = deps.getWorkspaces()
+      if (workspaces === undefined) return fail('Workspaces are not available yet.')
+      const typed = path.trim()
+      if (typed === '') return fail('Type the path of a git repository folder.')
       // A project is a git repository: check before registering anything.
-      const worktree = await shell.discover(picked)
+      const worktree = await shell.discover(typed)
       if (worktree === undefined) return fail('That folder is not a git repository.')
       if (seams.validateDirectory !== undefined) {
         try {

@@ -88,7 +88,9 @@ function fakeProjects(overrides: Partial<ProjectsControl> = {}): ProjectsControl
     workspaceKey: () => '',
     workspacePaths: () => [],
     subscribeWorkspaces: () => () => {},
+    chooserKind: () => 'picker',
     addProject: async (): Promise<ProjectAction> => ({ ok: true }),
+    addProjectByPath: async (): Promise<ProjectAction> => ({ ok: true }),
     showChat: async (path): Promise<ProjectAction> => { shown.push(path); return { ok: true } },
     newChat: async (path): Promise<ProjectAction> => { shown.push(`new:${path}`); return { ok: true } },
     newWorktree: async (root, branch): Promise<ProjectAction> => { shown.push(`worktree:${root}:${branch}`); return { ok: true } },
@@ -142,6 +144,32 @@ describe('ProjectsSidebar', () => {
       expect(within(repo).getByRole('img', { name: 'Uncommitted changes' })).toBeTruthy()
     })
     expect(screen.getByTestId('upstream')).toBeTruthy()
+    shell.dispose()
+  })
+
+  it('on Web, + opens a path form and adds what was typed', async () => {
+    const shell = new WorkspaceShellState(api())
+    const addProjectByPath = vi.fn(async (): Promise<ProjectAction> => ({ ok: true }))
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ chooserKind: () => 'path', addProjectByPath }))} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Add git project' }))
+    fireEvent.change(screen.getByLabelText('Project folder path'), { target: { value: '/p/proj' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }))
+    await waitFor(() => { expect(addProjectByPath).toHaveBeenCalledWith('/p/proj') })
+    await waitFor(() => { expect(screen.queryByLabelText('Project folder path')).toBeNull() })
+    shell.dispose()
+  })
+
+  it('shows why a typed path was refused and keeps the form open', async () => {
+    const shell = new WorkspaceShellState(api())
+    const addProjectByPath = async (): Promise<ProjectAction> => ({ ok: false, reason: 'That folder is not a git repository.' })
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ chooserKind: () => 'path', addProjectByPath }))} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Add git project' }))
+    fireEvent.change(screen.getByLabelText('Project folder path'), { target: { value: '/nope' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('not a git repository')
+    expect(screen.getByLabelText('Project folder path')).toBeTruthy()
     shell.dispose()
   })
 
