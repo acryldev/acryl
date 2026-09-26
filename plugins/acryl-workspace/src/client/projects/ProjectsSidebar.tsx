@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
+import type { CustomAgent } from '../../agents/definition.ts'
+import type { AgentsState } from '../agents/agents-state.ts'
+import type { WorkspaceGroups } from '../canvas/groups.ts'
+import { agentsByWorktree, MAX_ROW_AGENTS } from '../chrome/worktree-agents.ts'
+import { AgentIcon } from '../tabs/AgentIcon.tsx'
 import type { ProjectsControl } from './projects-control.ts'
 import { buildProjectRows, type RepoRow, type WorktreeDot, type WorktreeRow } from './sidebar-model.ts'
 import type { DesktopSidebarSurfaceOwnerProps } from '../shell/contracts.ts'
@@ -15,6 +20,10 @@ export type ProjectsSidebarProps = Omit<PropsRuntime<'root'>, 'useSessions'> & P
   readonly useSessions: UseSessions
   readonly shell: WorkspaceShellState
   readonly projects: ProjectsControl
+  /** The tab groups, to show which agents are open in each worktree. */
+  readonly groups: WorkspaceGroups
+  /** The user's custom agents, for their badges. */
+  readonly agents: AgentsState
 }
 
 const DOT_LABEL: Record<WorktreeDot, string> = {
@@ -31,7 +40,7 @@ const DOT_LABEL: Record<WorktreeDot, string> = {
  * its search and scroll survive a switch); Projects mode lists every git repository and worktree
  * behind the open chat sessions, with a status dot per worktree.
  */
-export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell, projects }: ProjectsSidebarProps) {
+export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell, projects, groups, agents }: ProjectsSidebarProps) {
   const subscribe = useCallback((listener: () => void) => shell.subscribe(listener), [shell])
   const snapshot = useSyncExternalStore(subscribe, () => shell.getSnapshot())
   const sessions = useSessions(state => state)
@@ -56,12 +65,18 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
     if (currentCwd !== undefined) void shell.follow(currentCwd)
   }, [shell, sessions])
 
+  // The agents open per worktree, kept as a stable text key so unrelated tab changes do not re-render the list.
+  const agentsKey = useSyncExternalStore(
+    useCallback((listener: () => void) => groups.onChange(listener), [groups]),
+    () => JSON.stringify([...agentsByWorktree(new Map(groups.keys().map(key => [key, groups.stateFor(key).getSnapshot().tiles] as const)))]),
+  )
+  const customAgents = useSyncExternalStore(agents.subscribe, agents.getSnapshot)
   const repos = useMemo(
     () => buildProjectRows(snapshot, sessions.ids.flatMap((id) => {
       const row = sessions.byId[id]
       return row === undefined ? [] : [row]
-    })),
-    [snapshot, sessions],
+    }), new Map(JSON.parse(agentsKey) as Array<[string, string[]]>)),
+    [snapshot, sessions, agentsKey],
   )
 
   const pickWorktree = (path: string): void => {
@@ -149,6 +164,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
               repo={repo}
               onSelect={pickWorktree}
               onNewChat={newChat}
+              customAgents={customAgents}
               creating={creatingIn === repo.root}
               onToggleCreate={() => { setNotice(null); setCreatingIn(creatingIn === repo.root ? null : repo.root) }}
               onCreate={(branch) => createWorktree(repo.root, branch)}
@@ -176,12 +192,13 @@ interface RepoSectionProps {
   readonly repo: RepoRow
   readonly onSelect: (path: string) => void
   readonly onNewChat: (path: string) => void
+  readonly customAgents: readonly CustomAgent[]
   readonly creating: boolean
   readonly onToggleCreate: () => void
   readonly onCreate: (branch: string) => Promise<void>
 }
 
-function RepoSection({ repo, onSelect, onNewChat, creating, onToggleCreate, onCreate }: RepoSectionProps) {
+function RepoSection({ repo, onSelect, onNewChat, customAgents, creating, onToggleCreate, onCreate }: RepoSectionProps) {
   const [branch, setBranch] = useState('')
   const [busy, setBusy] = useState(false)
   const submit = async (): Promise<void> => {
@@ -225,7 +242,7 @@ function RepoSection({ repo, onSelect, onNewChat, creating, onToggleCreate, onCr
       <ul className="dshWorkspaceWorktrees">
         {repo.rows.map(row => (
           <li key={row.path} className="dshWorkspaceWorktreeItem">
-            <WorktreeButton row={row} onSelect={onSelect} />
+            <WorktreeButton row={row} onSelect={onSelect} customAgents={customAgents} />
             <button
               type="button"
               className="dshWorkspaceWorktreeNew"
@@ -242,7 +259,7 @@ function RepoSection({ repo, onSelect, onNewChat, creating, onToggleCreate, onCr
   )
 }
 
-function WorktreeButton({ row, onSelect }: { row: WorktreeRow; onSelect: (path: string) => void }) {
+function WorktreeButton({ row, onSelect, customAgents }: { row: WorktreeRow; onSelect: (path: string) => void; customAgents: readonly CustomAgent[] }) {
   return (
     <button
       type="button"
@@ -253,6 +270,12 @@ function WorktreeButton({ row, onSelect }: { row: WorktreeRow; onSelect: (path: 
     >
       <span className="dshWorkspaceDot" data-dot={row.dot} role="img" aria-label={DOT_LABEL[row.dot]} />
       <span className="dshWorkspaceWorktreeLabel">{row.label}</span>
+      {row.agents.length > 0 && (
+        <span className="dshWorkspaceWorktreeAgents" title={`Agents open here: ${row.agents.join(', ')}`}>
+          {row.agents.slice(0, MAX_ROW_AGENTS).map(id => <AgentIcon key={id} commandId={id} custom={customAgents.find(agent => agent.id === id)?.badge} />)}
+          {row.agents.length > MAX_ROW_AGENTS && <span className="dshWorkspaceWorktreeMore">+{row.agents.length - MAX_ROW_AGENTS}</span>}
+        </span>
+      )}
       {row.sessions > 0 && <span className="dshWorkspaceWorktreeSessions" title="Chat sessions here">{row.sessions}</span>}
       {(row.added > 0 || row.removed > 0) && (
         <span className="dshWorkspaceWorktreeStat">

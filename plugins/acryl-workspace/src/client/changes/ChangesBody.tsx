@@ -87,6 +87,11 @@ export function ChangesBody({ shell, gitApi }: ChangesBodyProps) {
           <span className="dshWorkspaceChangesMeta">
             {worktree.changes.length} changed{staged > 0 ? `, ${String(staged)} staged` : ''}
           </span>
+          {worktree.added + worktree.removed > 0 && (
+            <span className="dshWorkspaceChangesTotals" title="Lines added and removed across all changes">
+              <span data-kind="add">+{worktree.added}</span> <span data-kind="remove">-{worktree.removed}</span>
+            </span>
+          )}
         </div>
         {worktree.changes.length > 0 && (
           <button

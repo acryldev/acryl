@@ -8,6 +8,8 @@ import type { WorkspaceGitApi } from '../src/client/git/git-api.ts'
 import { GitDiffPane, changeSignature, type GitDiffPaneProps } from '../src/client/diff/GitDiffPane.tsx'
 import { ProjectsSidebar, type ProjectsSidebarProps } from '../src/client/projects/ProjectsSidebar.tsx'
 import type { ProjectAction, ProjectsControl } from '../src/client/projects/projects-control.ts'
+import { AgentsState } from '../src/client/agents/agents-state.ts'
+import { WorkspaceGroups } from '../src/client/canvas/groups.ts'
 import { WorkspaceShellState } from '../src/client/worktrees/shell-state.ts'
 import type { WorkspaceTile } from '../src/client/canvas/state.ts'
 import type { GitDiffView, GitStatusView } from '../src/git/contract.ts'
@@ -95,8 +97,10 @@ function fakeProjects(overrides: Partial<ProjectsControl> = {}): ProjectsControl
   }
 }
 
-function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: ProjectsControl = fakeProjects()): ProjectsSidebarProps {
+function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: ProjectsControl = fakeProjects(), groups: WorkspaceGroups = new WorkspaceGroups()): ProjectsSidebarProps {
   return {
+    groups,
+    agents: new AgentsState({ list: async () => [], add: async () => [], remove: async () => [] }),
     collapsed,
     width: 280,
     renderUpstream: () => <div data-testid="upstream">upstream sidebar</div>,
@@ -138,6 +142,22 @@ describe('ProjectsSidebar', () => {
       expect(within(repo).getByRole('img', { name: 'Uncommitted changes' })).toBeTruthy()
     })
     expect(screen.getByTestId('upstream')).toBeTruthy()
+    shell.dispose()
+  })
+
+  it('shows the agents open in a worktree as icons on its row, not plain terminals', async () => {
+    const shell = new WorkspaceShellState(api())
+    const groups = new WorkspaceGroups()
+    act(() => {
+      groups.stateFor('/p/proj-x').addTile('pty', { commandId: 'claude', title: 'Claude' })
+      groups.stateFor('/p/proj-x').addTile('pty', { commandId: 'shell', title: 'Terminal' })
+    })
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects(), groups)} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
+    const repo = await screen.findByRole('region', { name: 'proj' })
+    await waitFor(() => { expect(within(repo).getByText('feature/x')).toBeTruthy() })
+    const icons = repo.querySelectorAll('.dshWorkspaceWorktreeAgents [data-agent]')
+    expect([...icons].map(icon => icon.getAttribute('data-agent'))).toEqual(['claude'])
     shell.dispose()
   })
 

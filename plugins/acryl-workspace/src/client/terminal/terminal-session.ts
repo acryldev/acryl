@@ -22,6 +22,8 @@ export interface TerminalSessionSnapshot {
 const FONT_FAMILY = '"SF Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace'
 
 export interface TerminalSessionOptions {
+  /** Called once when the process behind a session ends. */
+  readonly onExit?: (sessionId: string, exitCode: number | null) => void
   readonly createSocket?: StreamSocketFactory
   readonly urlFor?: (id: string, cursor: number) => string
 }
@@ -67,7 +69,7 @@ export class TerminalSession {
         this.terminal.write(data)
       },
       state: (status) => { this.update({ status }) },
-      exit: (exitCode, error) => { this.update({ exitCode, error }) },
+      exit: (exitCode, error) => { this.update({ exitCode, error }); options.onExit?.(id, exitCode) },
     }, options.createSocket, options.urlFor)
     this.terminal.onData((data) => { this.stream.input(data) })
     this.stream.connect()
@@ -144,12 +146,26 @@ export class TerminalSession {
 export class TerminalRegistry {
   private readonly sessions = new Map<string, TerminalSession>()
 
+  private readonly exitListeners = new Set<(sessionId: string, exitCode: number | null) => void>()
+
   constructor(private readonly options: TerminalSessionOptions = {}) {}
+
+  /** Be told when any session's process ends. @returns disposer. */
+  onExit(listener: (sessionId: string, exitCode: number | null) => void): () => void {
+    this.exitListeners.add(listener)
+    return () => { this.exitListeners.delete(listener) }
+  }
 
   ensure(id: string): TerminalSession {
     let session = this.sessions.get(id)
     if (session === undefined) {
-      session = new TerminalSession(id, this.options)
+      session = new TerminalSession(id, {
+        ...this.options,
+        onExit: (sessionId, exitCode) => {
+          this.options.onExit?.(sessionId, exitCode)
+          for (const listener of [...this.exitListeners]) listener(sessionId, exitCode)
+        },
+      })
       this.sessions.set(id, session)
     }
     return session

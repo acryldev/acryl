@@ -24,6 +24,8 @@ export interface WorktreeRow {
   /** Chat sessions whose working directory is inside this worktree. */
   readonly sessions: number
   readonly selected: boolean
+  /** Agents (not plain terminals) open in this worktree's tabs, for the icons on the row. */
+  readonly agents: readonly string[]
 }
 
 export interface RepoRow {
@@ -70,7 +72,11 @@ function dotFor(worktree: WorktreeState, running: number, done: number): Worktre
  * @param sessions - chat sessions; blank ones are ignored.
  * @returns one entry per repository, worktrees in git order.
  */
-export function buildProjectRows(snapshot: ShellSnapshot, sessions: readonly SessionLike[]): RepoRow[] {
+export function buildProjectRows(
+  snapshot: ShellSnapshot,
+  sessions: readonly SessionLike[],
+  agentsByPath: ReadonlyMap<string, readonly string[]> = new Map(),
+): RepoRow[] {
   const perWorktree = new Map<string, { sessions: number; running: number; done: number }>()
   for (const session of sessions) {
     if (session.blank || session.cwd === undefined) continue
@@ -97,6 +103,7 @@ export function buildProjectRows(snapshot: ShellSnapshot, sessions: readonly Ses
         removed: worktree.removed,
         sessions: counts.sessions,
         selected: snapshot.selectedPath === worktree.path,
+        agents: agentsByPath.get(worktree.path) ?? [],
       }
     }),
   }))

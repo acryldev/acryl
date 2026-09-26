@@ -28,6 +28,7 @@ import { createWorkspacePtyApi } from './terminal/pty-api.ts'
 import { WorkspacePtyClient } from './sessions/session-client.ts'
 import { createWorkspaceAgentsApi } from './agents/agents-api.ts'
 import { AgentsState } from './agents/agents-state.ts'
+import { ToastState } from './notifications/toast-state.ts'
 import { TerminalRegistry } from './terminal/terminal-session.ts'
 import { startShellPolling } from './worktrees/shell-polling.ts'
 import { WorkspaceShellState } from './worktrees/shell-state.ts'
@@ -94,18 +95,20 @@ export function apply(ctx: ClientContext): void {
   ctx.plugin(filesTabPlugin(shell, filesApi, gitApi))
 
   if (advanced) {
+    // Shared by the "+" menu, the tab icons and the Projects list.
+    const agents = new AgentsState(createWorkspaceAgentsApi())
+    ctx.effect(() => { void agents.refresh(); return () => {} }, 'acryl-workspace: load custom agents')
     ctx.slots.inject('desktop.main', () => {
       const ptyClient = new WorkspacePtyClient(createWorkspacePtyApi())
       // Terminals live as long as this registration, so switching tabs never rebuilds one.
       const terminals = new TerminalRegistry()
-      const agents = new AgentsState(createWorkspaceAgentsApi())
-      void agents.refresh()
+      const toasts = new ToastState()
       let removeSlot: (() => void) | undefined
       try {
         removeSlot = ctx.slots.register({
           name: 'desktop.main',
           priority: WORKSPACE_MAIN_PRIORITY,
-          inject: () => ({ ptyApi: ptyClient, terminals, agents, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }),
+          inject: () => ({ ptyApi: ptyClient, terminals, agents, toasts, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }),
         }, WorkspaceCanvas)
       } catch (cause) {
         // A registration conflict must not take the left pane and the Changes tab down with it.
@@ -124,7 +127,7 @@ export function apply(ctx: ClientContext): void {
         return ctx.slots.register({
           name: 'desktop.sidebar',
           priority: 0,
-          inject: () => ({ shell, projects }),
+          inject: () => ({ shell, projects, groups, agents }),
         }, ProjectsSidebar)
       } catch (cause) {
         ctx.logger.warn(`acryl-workspace: could not register the left pane: ${cause instanceof Error ? cause.message : String(cause)}`)

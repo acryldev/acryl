@@ -23,6 +23,10 @@ import { countRunning, runningLabel } from '../sessions/running-agents.ts'
 import { estimateTerminalSize } from '../terminal/terminal-size.ts'
 import { PtyPane } from '../terminal/PtyPane.tsx'
 import type { TerminalRegistry } from '../terminal/terminal-session.ts'
+import { Toasts } from '../notifications/Toasts.tsx'
+import { describeFinish, type ToastState } from '../notifications/toast-state.ts'
+import { StatusLine } from '../chrome/StatusLine.tsx'
+import { buildStatusLine } from '../chrome/status-line.ts'
 import type { AgentsState } from '../agents/agents-state.ts'
 import { TabStrip } from '../tabs/TabStrip.tsx'
 import { SplitDivider } from './SplitDivider.tsx'
@@ -47,6 +51,8 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   readonly terminals: TerminalRegistry
   /** The user's custom agents, for the "+" menu and the tab icons. */
   readonly agents: AgentsState
+  /** Notices such as "Claude finished", fed from the terminals' exits. */
+  readonly toasts: ToastState
   readonly useSessions: UseSessions
   /** Shared shell state: which worktree is selected, and the channel for open-diff requests. */
   readonly shell: WorkspaceShellState
@@ -71,7 +77,7 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents: agentsState, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents: agentsState, toasts, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
   // Subscribe to primitives, not the whole shell snapshot: git polling updates that snapshot often,
@@ -199,7 +205,42 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
     }
   }, [api, workspace, groupKey])
 
+  // Every open agent tab keeps its stream (also in a worktree that is not shown), and an agent that
+  // ends raises a notice that leads back to its tab.
+  useEffect(() => {
+    const ensureAll = (): void => {
+      for (const key of groups.keys()) {
+        for (const tile of groups.stateFor(key).getSnapshot().tiles) {
+          if (tile.kind === 'pty' && tile.sessionId !== undefined) terminals.ensure(tile.sessionId)
+        }
+      }
+    }
+    ensureAll()
+    const stopGroups = groups.onChange(ensureAll)
+    const stopExit = terminals.onExit((sessionId, exitCode) => {
+      for (const key of groups.keys()) {
+        const tile = groups.stateFor(key).getSnapshot().tiles.find(candidate => candidate.sessionId === sessionId)
+        if (tile === undefined) continue
+        if (tile.commandId !== undefined && tile.commandId !== 'shell') toasts.push(describeFinish(tile.title, exitCode), { group: key, tabId: tile.id })
+        return
+      }
+    })
+    return () => { stopGroups(); stopExit() }
+  }, [groups, terminals, toasts])
+
   const customAgents = useSyncExternalStore(agentsState.subscribe, agentsState.getSnapshot)
+  // Primitives only, so git polling that changes nothing here does not re-render the canvas.
+  const changedFiles = useSyncExternalStore(subscribeShell, () => shell.selectedWorktree()?.changes.length ?? 0)
+  const addedLines = useSyncExternalStore(subscribeShell, () => shell.selectedWorktree()?.added ?? 0)
+  const removedLines = useSyncExternalStore(subscribeShell, () => shell.selectedWorktree()?.removed ?? 0)
+  const statusSegments = buildStatusLine({
+    branch: groupKey === GLOBAL_GROUP ? undefined : groupBranch,
+    changedFiles,
+    added: addedLines,
+    removed: removedLines,
+    runningAgents: countRunning(sessions.ids.flatMap((id) => { const row = sessions.byId[id]; return row === undefined ? [] : [row] })),
+    terminals: snapshot.tiles.filter(tile => tile.kind === 'pty').length,
+  })
   const runningText = runningLabel(countRunning(sessions.ids.flatMap((id) => { const row = sessions.byId[id]; return row === undefined ? [] : [row] })))
 
   return (
@@ -249,6 +290,14 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
           </div>
         )}
       </div>
+      <StatusLine segments={statusSegments} />
+      <Toasts
+        state={toasts}
+        onOpen={(target) => {
+          if (target.group !== GLOBAL_GROUP) shell.select(target.group)
+          groups.stateFor(target.group).selectTile(target.tabId)
+        }}
+      />
     </div>
   )
 }
