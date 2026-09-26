@@ -7,13 +7,14 @@ describe('applyWebFavicon', () => {
     const out = applyWebFavicon(html)
     expect(out).not.toContain('/favicon.svg')
     expect(out).not.toContain('/a.ico')
-    expect(out.match(/rel="icon"/g)).toHaveLength(1)
+    expect(out.match(/rel="icon"/g)).toHaveLength(3)
+    expect(out.match(/rel="apple-touch-icon"/g)).toHaveLength(1)
     expect(out).toContain(`${WEB_FAVICON_LINKS}</head>`)
   })
 
   it('leaves other links alone and works when there was no icon', () => {
     const out = applyWebFavicon('<head><link rel="stylesheet" href="/s.css"></head>')
     expect(out).toContain('rel="stylesheet"')
-    expect(out).toContain('data:image/png;base64,')
+    expect(out).toContain('data:image/x-icon;base64,')
   })
 })
