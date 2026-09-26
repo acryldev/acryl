@@ -255,6 +255,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
         storage={safeStorage()}
         onClose={(tile) => { void closeTile(tile) }}
         customAgents={customAgents}
+        terminals={terminals}
         onOpenPty={(commandId, title) => { void openPty(commandId, title) }}
         onAddAgent={agent => agentsState.add(agent)}
         onRemoveAgent={id => agentsState.remove(id)}

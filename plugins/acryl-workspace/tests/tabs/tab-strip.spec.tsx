@@ -4,13 +4,15 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { useSyncExternalStore } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { CustomAgent } from '../../src/agents/definition.ts'
-import { WorkspaceState } from '../../src/client/canvas/state.ts'
+import { WorkspaceState, type WorkspaceTile } from '../../src/client/canvas/state.ts'
 import { TabStrip } from '../../src/client/tabs/TabStrip.tsx'
+import { TerminalRegistry } from '../../src/client/terminal/terminal-session.ts'
 import { HIDDEN_AGENTS_KEY } from '../../src/client/tabs/agent-visibility.ts'
 
 // jsdom has no ResizeObserver; the strip only uses it to keep the edge fades honest.
 class NoopObserver { observe() {} disconnect() {} unobserve() {} }
 globalThis.ResizeObserver = NoopObserver as unknown as typeof ResizeObserver
+const terminals = new TerminalRegistry({ createSocket: () => ({ send() {}, close() {}, onopen: null, onmessage: null, onclose: null, onerror: null, readyState: 0 }), urlFor: id => `ws://x/${id}` })
 
 afterEach(cleanup)
 
@@ -26,12 +28,12 @@ function memoryStorage(initial: Record<string, string> = {}): Storage {
   }
 }
 
-function Harness({ workspace, storage, onOpenPty, custom = [], onAdd = async () => {}, onRemove = async () => {} }: { workspace: WorkspaceState; storage: Storage; onOpenPty: (id: string, title: string) => void; custom?: readonly CustomAgent[]; onAdd?: (agent: CustomAgent) => Promise<void>; onRemove?: (id: string) => Promise<void> }) {
+function Harness({ workspace, storage, onOpenPty, onClose = () => {}, custom = [], onAdd = async () => {}, onRemove = async () => {} }: { workspace: WorkspaceState; storage: Storage; onOpenPty: (id: string, title: string) => void; onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; onAdd?: (agent: CustomAgent) => Promise<void>; onRemove?: (id: string) => Promise<void> }) {
   const snapshot = useSyncExternalStore(l => workspace.subscribe(l), () => workspace.getSnapshot())
-  return <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={storage} customAgents={custom} onClose={() => {}} onOpenPty={onOpenPty} onAddAgent={onAdd} onRemoveAgent={onRemove} />
+  return <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={storage} customAgents={custom} terminals={terminals} onClose={onClose} onOpenPty={onOpenPty} onAddAgent={onAdd} onRemoveAgent={onRemove} />
 }
 
-function setup(storage = memoryStorage(), extra: { custom?: readonly CustomAgent[]; onAdd?: (agent: CustomAgent) => Promise<void>; onRemove?: (id: string) => Promise<void> } = {}) {
+function setup(storage = memoryStorage(), extra: { onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; onAdd?: (agent: CustomAgent) => Promise<void>; onRemove?: (id: string) => Promise<void> } = {}) {
   const workspace = new WorkspaceState()
   const onOpenPty = vi.fn()
   render(<Harness workspace={workspace} storage={storage} onOpenPty={onOpenPty} {...extra} />)
@@ -136,5 +138,24 @@ describe('TabStrip', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Configure agents...' }))
     fireEvent.click(screen.getByRole('button', { name: 'Remove My Agent' }))
     await waitFor(() => { expect(onRemove).toHaveBeenCalledWith('my-agent') })
+  })
+
+  it('offers tab actions on right-click: rename, close others, close to the right', () => {
+    const onClose = vi.fn()
+    const { workspace } = setup(memoryStorage(), { onClose })
+    act(() => { workspace.addTile('doc'); workspace.addTile('kanban'); workspace.addTile('diff') })
+    const tabs = screen.getAllByRole('tab')
+    // The workspace starts with its chat tab: chat, doc, board, diff.
+    expect(tabs.length).toBe(4)
+    fireEvent.contextMenu(tabs[1] as HTMLElement)
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Close to the right' }))
+    expect(onClose).toHaveBeenCalledTimes(2)
+    onClose.mockClear()
+    fireEvent.contextMenu(screen.getAllByRole('tab')[1] as HTMLElement)
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Close others' }))
+    expect(onClose).toHaveBeenCalledTimes(3)
+    fireEvent.contextMenu(screen.getAllByRole('tab')[0] as HTMLElement)
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Rename' }))
+    expect(screen.getByLabelText(/^Rename /)).toBeTruthy()
   })
 })

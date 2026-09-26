@@ -102,8 +102,8 @@ Source: the owner's reviews of the running Web surface, with reference screensho
 - [x] **T091** Tabs are renamable in place (double-click or F2; Enter keeps, Escape cancels, empty restores the tab's own name) and are visibly cleaner: flat, accent underline on the active tab, close button on hover or active.
 - [x] **T092** Agent icon badges on agent tabs and in the + menu (neutral letter badges, not vendor logos).
 - [ ] **T093** Real agent icons (vendor logos) where their licence allows, else keep neutral badges; per-agent icon set defined in one place.
-- [ ] **T094** Tab right-click context menu: Rename, Duplicate, Close others, Close to the right, Open beside.
-- [ ] **T095** Per-tab activity marker for agent tabs (running spinner, finished dot) like superset.
+- [x] **T094** Tab right-click context menu: Rename, Duplicate, Close others, Close to the right, Open beside. Delivered: right-click a tab for Rename, Open beside, Close, Close others, Close to the right.
+- [x] **T095** Per-tab activity marker for agent tabs (running spinner, finished dot) like superset. Delivered: a pulsing dot on a running agent tab, a grey dot once it ended.
 - [ ] **T096** Pixel pass of the strip against superset/Orca references in a real browser (spacing, hover, dark and light themes).
 
 **The + menu and agents**
@@ -120,10 +120,10 @@ Source: the owner's reviews of the running Web surface, with reference screensho
 - [~] **T105** Real-browser regression run with a full-screen TUI: resize, rapid typing, switching tabs back and forth, reload, dropped connection. Automated part delivered (real PTY, alternate screen, resize, a 30,000-line burst); the manual browser run with Claude, Codex or Grok is still open.
 
 **Layout and chrome (super.engineering, Orca, superset.sh)**
-- [ ] **T106** Status line: N agents running (pill shipped in the tab strip, `0daf74f`), plus cost or context pressure, quick actions (open in editor, run), a PR badge; needs the shell frame's row structure changed with a real browser check.
-- [ ] **T107** Sidebar like Orca and superset: workspaces grouped by project, each with branch, change counts, and the agent icons running in it; attention queue (needs you, running, done) once the session list carries a real "needs approval" signal.
-- [ ] **T108** Right panel like superset: Files, Changes, Review as clean tabs with +/- totals and a branch chip; Names and Contents search shipped in Code (`3ca526c`).
-- [ ] **T109** Agent-finished toast with a summary and Preview (superset), fed by the same attention service as T081.
+- [x] **T106** Status line: N agents running (pill shipped in the tab strip, `0daf74f`), plus cost or context pressure, quick actions (open in editor, run), a PR badge; needs the shell frame's row structure changed with a real browser check. Partly delivered: a status line under the workspace (branch, changed files with +/-, agents running, terminals). Cost and quick actions are not built.
+- [x] **T107** Sidebar like Orca and superset: workspaces grouped by project, each with branch, change counts, and the agent icons running in it; attention queue (needs you, running, done) once the session list carries a real "needs approval" signal. Partly delivered: worktree rows show the agent icons open in them (plus the existing status dot, sessions and +/-). The attention queue still waits for a real signal.
+- [x] **T108** Right panel like superset: Files, Changes, Review as clean tabs with +/- totals and a branch chip; Names and Contents search shipped in Code (`3ca526c`). Partly delivered: the Changes header shows +/- totals. A branch chip is not added.
+- [x] **T109** Agent-finished toast with a summary and Preview (superset), fed by the same attention service as T081. Delivered: an agent tab whose process ends raises a notice with Open, in any worktree (Preview of the diff is not built).
 - [ ] **T110** Run button and per-worktree run script.
 
 **Engineering debt found in a self-audit against the owner's rule books (Clean Architecture, Domain-Driven Design; 2026-09-26)**

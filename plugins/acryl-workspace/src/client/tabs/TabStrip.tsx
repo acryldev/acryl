@@ -10,7 +10,10 @@ import type { WorkspaceSnapshot, WorkspaceState, WorkspaceTile } from '../canvas
 import type { CustomAgent } from '../../agents/definition.ts'
 import { labelForCommand } from '../terminal/agent-commands.ts'
 import { AgentIcon } from './AgentIcon.tsx'
+import type { TerminalRegistry } from '../terminal/terminal-session.ts'
 import { NewTabMenu } from './NewTabMenu.tsx'
+import { TabActivity } from './TabActivity.tsx'
+import { tabsToClose } from './tab-close.ts'
 import { hiddenEdges, scrollToReveal, wheelToScroll } from './tab-scroll.ts'
 
 export interface TabStripProps {
@@ -24,9 +27,58 @@ export interface TabStripProps {
   readonly storage: Storage | undefined
   onClose(tile: WorkspaceTile): void
   readonly customAgents: readonly CustomAgent[]
+  /** The live terminals, for the activity marker on agent tabs. */
+  readonly terminals: TerminalRegistry
   onOpenPty(commandId: AgentId, title: string): void
   onAddAgent(agent: CustomAgent): Promise<void>
   onRemoveAgent(id: string): Promise<void>
+}
+
+interface TabContextMenuProps {
+  readonly x: number
+  readonly y: number
+  readonly tiles: readonly WorkspaceTile[]
+  readonly anchorId: string
+  readonly splitId: string | undefined
+  onClose(): void
+  onRename(id: string): void
+  onCloseTab(tile: WorkspaceTile): void
+  onOpenBeside(id: string): void
+  onCloseSplit(): void
+}
+
+function TabContextMenu({ x, y, tiles, anchorId, splitId, onClose, onRename, onCloseTab, onOpenBeside, onCloseSplit }: TabContextMenuProps) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const away = (event: PointerEvent): void => { if (ref.current?.contains(event.target as Node) !== true) onClose() }
+    const key = (event: KeyboardEvent): void => { if (event.key === 'Escape') onClose() }
+    document.addEventListener('pointerdown', away)
+    document.addEventListener('keydown', key)
+    return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', key) }
+  }, [onClose])
+  const ids = tiles.map(tile => tile.id)
+  const closing = (scope: 'others' | 'right'): void => {
+    for (const id of tabsToClose(ids, anchorId, scope)) {
+      const tile = tiles.find(candidate => candidate.id === id)
+      if (tile !== undefined) onCloseTab(tile)
+    }
+  }
+  const anchor = tiles.find(tile => tile.id === anchorId)
+  const item = (label: string, run: () => void, disabled = false) => (
+    <button type="button" role="menuitem" className="dshWorkspaceMenuItem" disabled={disabled} onClick={() => { run(); onClose() }}>{label}</button>
+  )
+  return (
+    <div ref={ref} className="dshWorkspaceMenu dshWorkspaceTabMenu" role="menu" aria-label="Tab actions" style={{ position: 'fixed', top: y, left: x, right: 'auto' }}>
+      {item('Rename', () => { onRename(anchorId) })}
+      {tiles.length > 1 && (anchorId === splitId
+        ? item('Close split', onCloseSplit)
+        : item('Open beside the current tab', () => { onOpenBeside(anchorId) }))}
+      <div className="dshWorkspaceMenuRule" />
+      {anchor !== undefined && item('Close', () => { onCloseTab(anchor) })}
+      {item('Close others', () => { closing('others') }, tiles.length < 2)}
+      {item('Close to the right', () => { closing('right') }, tabsToClose(ids, anchorId, 'right').length === 0)}
+    </div>
+  )
 }
 
 function kindGlyph(kind: WorkspaceTile['kind']): string {
@@ -39,9 +91,10 @@ function kindGlyph(kind: WorkspaceTile['kind']): string {
   return '◉'
 }
 
-export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, storage, customAgents, onClose, onOpenPty, onAddAgent, onRemoveAgent }: TabStripProps) {
+export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, storage, customAgents, terminals, onClose, onOpenPty, onAddAgent, onRemoveAgent }: TabStripProps) {
   const tabsRef = useRef<HTMLDivElement>(null)
   const [edges, setEdges] = useState({ start: false, end: false })
+  const [tabMenu, setTabMenu] = useState<{ readonly id: string; readonly x: number; readonly y: number } | null>(null)
   const [editing, setEditing] = useState<{ readonly id: string; readonly value: string } | null>(null)
 
   const syncEdges = useCallback((): void => {
@@ -102,6 +155,7 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
               data-split={tile.id === snapshot.splitId || undefined}
               data-tile-kind={tile.kind}
               data-tab-id={tile.id}
+              onContextMenu={(event) => { event.preventDefault(); setTabMenu({ id: tile.id, x: event.clientX, y: event.clientY }) }}
             >
               {renaming ? (
                 <form className="dshWorkspaceTabButton" onSubmit={(event) => { event.preventDefault(); commitRename() }}>
@@ -130,6 +184,9 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
                   <span className="dshWorkspaceTabGlyph" aria-hidden="true">
                     {tile.kind === 'pty' ? <AgentIcon commandId={tile.commandId ?? 'shell'} custom={customAgents.find(agent => agent.id === tile.commandId)?.badge} /> : kindGlyph(tile.kind)}
                   </span>
+                  {tile.kind === 'pty' && tile.commandId !== undefined && tile.commandId !== 'shell' && (
+                    <TabActivity session={tile.sessionId === undefined ? undefined : terminals.ensure(tile.sessionId)} />
+                  )}
                   <span className="dshWorkspaceTabLabel">{tile.title}{tile.fileRel !== undefined && tile.content !== undefined ? ' ●' : ''}</span>
                 </button>
               )}
@@ -190,6 +247,20 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
             <path d="M10 2.9v10.2" />
           </svg>
         </button>
+      )}
+      {tabMenu !== null && (
+        <TabContextMenu
+          x={tabMenu.x}
+          y={tabMenu.y}
+          tiles={snapshot.tiles}
+          anchorId={tabMenu.id}
+          splitId={snapshot.splitId}
+          onClose={() => { setTabMenu(null) }}
+          onRename={(id) => { const tile = snapshot.tiles.find(candidate => candidate.id === id); if (tile !== undefined) setEditing({ id, value: tile.title }) }}
+          onCloseTab={onClose}
+          onOpenBeside={(id) => { workspace.openInSplit(id) }}
+          onCloseSplit={() => { workspace.closeSplit() }}
+        />
       )}
     </div>
   )

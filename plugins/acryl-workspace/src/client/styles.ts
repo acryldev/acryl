@@ -20,6 +20,12 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceTabClose { appearance: none; width: 20px; height: 20px; align-self: center; margin: 0 6px 0 2px; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 14px; line-height: 1; opacity: 0; }
 .dshWorkspaceTab:hover .dshWorkspaceTabClose, .dshWorkspaceTab[data-active] .dshWorkspaceTabClose, .dshWorkspaceTabClose:focus-visible { opacity: 1; }
 .dshWorkspaceTabClose:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); color: var(--dsw-alias-fg); }
+.dshWorkspaceTabActivity { flex: none; width: 7px; height: 7px; border-radius: 50%; }
+.dshWorkspaceTabActivity[data-state="live"] { background: #34d399; animation: dshWorkspacePulse 1.4s ease-in-out infinite; }
+.dshWorkspaceTabActivity[data-state="ended"] { background: var(--dsw-alias-fg-l2); opacity: 0.6; }
+@media (prefers-reduced-motion: reduce) { .dshWorkspaceTabActivity[data-state="live"] { animation: none; } }
+.dshWorkspaceTabMenu { width: 220px; }
+.dshWorkspaceTabMenu .dshWorkspaceMenuItem:disabled { opacity: 0.4; cursor: default; }
 .dshWorkspaceAgentIcon { display: inline-grid; place-items: center; width: 16px; height: 16px; flex: none; border: 1px solid currentColor; border-radius: 5px; font: 700 9.5px/1 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceMenuItem[data-muted] { color: var(--dsw-alias-fg-l2); }
 .dshWorkspaceMenuGrow { flex: 1; }
