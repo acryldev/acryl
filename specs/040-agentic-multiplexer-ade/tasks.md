@@ -86,7 +86,7 @@ Every later ADE feature (commit box, search, attention queue, status bar) builds
 ## Phase 8: everything else Desktop had, shared (2026-09-26)
 
 - [x] **T080** Extract Settings > Plugins Lifecycle and Architecture (Host routes, projection, Client tabs) out of `acryl-desktop` into the shared `plugins/acryl-plugin-admin` plugin, composed for Web and Desktop through the `plugin-admin` capability; Desktop's controller reuses the shared view. `623b24b`.
-- [ ] **T081** Web attention: a shared attention service fed by session events, with the Electron notification as the Desktop adapter and the browser Notification API (permission requested from a user gesture) as the Web adapter.
+- [x] **T081** Web attention: a shared attention service fed by session events, with the Electron notification as the Desktop adapter and the browser Notification API (permission requested from a user gesture) as the Web adapter. Delivered as one shared implementation for Web and Desktop (the browser Notification API, which Desktop's renderer has too): permission is asked for by a status-line button, never on load; a system notice is raised only when an agent finishes while the page is not in front. In-page notices already existed.
 - [ ] **T082** Diagnostics on Web: give the Web surface file logging, then expose the same export (shared masking and bundling) as a download from Settings; the tray action stays the Desktop adapter.
 - [ ] **T083** Blends on Web: decide with spec 033 whether Web composes a selected Blend the way the Desktop launcher does, then share the composition and the Lifecycle tab's Blend view.
 - [ ] **T084** Extract one loopback-HTTP library for the three private-route implementations (`acryl-workspace`, `acryl-plugin-admin`, Desktop settings), which are copies of the same security checks today.
@@ -109,7 +109,7 @@ Source: the owner's reviews of the running Web surface, with reference screensho
 **The + menu and agents**
 - [x] **T097** The + menu lists every supported agent by default with icons; "Configure agents..." lets the user hide the ones they never use (remembered per browser).
 - [x] **T098** Add your own agents: user-defined command entries (name, command, icon) as Host configuration validated against a safe shape and confirmed by the user, never a free-form command from the page. Needs a Host allowlist design before any code. Delivered (design in `design-phase-9.md`): a catalog in the user's ACRYL home, validated definitions (no shell, no metacharacters, palette badges), refusal messages, same-origin add and remove routes, a form that shows the exact command line; a worktree can never add an agent. Tests are adversarial (injection attempts) and the real Web boot starts a custom agent.
-- [ ] **T099** Split control next to + (chevron menu like superset: default agent for the + button, remembered).
+- [x] **T099** Split control next to + (chevron menu like superset: default agent for the + button, remembered). Delivered: the + button opens the last thing you opened (a terminal at first), and a chevron next to it opens the full menu.
 
 **Terminal quality (native feel)**
 - [x] **T100** Terminals rebuilt on an ordered WebSocket stream with cursor resume, sessions that survive tab switches, xterm's real stylesheet, UTF-8/truecolor environment (`3c37265`). Root causes found: a 64KB sliding string replayed on every poll, per-keystroke HTTP posts that could reorder, a hand-copied partial stylesheet, terminals rebuilt from a mid-stream tail on every tab switch.

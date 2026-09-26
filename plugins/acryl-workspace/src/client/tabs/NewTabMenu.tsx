@@ -10,6 +10,7 @@ import type { AgentDraft } from '../agents/agent-draft.ts'
 import { draftToAgent, EMPTY_DRAFT, previewCommand } from '../agents/agent-draft.ts'
 import { labelForCommand, WORKSPACE_AGENT_COMMANDS, WORKSPACE_SURFACE_ACTIONS, type WorkspaceSurfaceAction } from '../terminal/agent-commands.ts'
 import { AgentIcon } from './AgentIcon.tsx'
+import { readLastTab, writeLastTab, type LastTab } from './last-tab.ts'
 import { readHiddenAgents, toggleAgent, visibleAgents, writeHiddenAgents } from './agent-visibility.ts'
 
 type View = 'menu' | 'configure' | 'add'
@@ -34,6 +35,17 @@ export function NewTabMenu({ open, customAgents, storage, setOpen, onSurface, on
   const [hidden, setHidden] = useState<ReadonlySet<string>>(() => readHiddenAgents(storage))
   const [draft, setDraft] = useState<AgentDraft>(EMPTY_DRAFT)
   const [error, setError] = useState<string | null>(null)
+  const [last, setLast] = useState<LastTab>(() => readLastTab(storage))
+
+  const remember = (tab: LastTab): void => { setLast(tab); writeLastTab(storage, tab) }
+  const lastLabel = last.kind === 'agent' ? last.label : WORKSPACE_SURFACE_ACTIONS.find(action => action.kind === last.surface)?.label.replace(/^New /, '') ?? 'Terminal'
+  const openLast = (): void => {
+    if (last.kind === 'agent') onOpenAgent(last.id, last.label)
+    else {
+      const action = WORKSPACE_SURFACE_ACTIONS.find(candidate => candidate.kind === last.surface)
+      if (action !== undefined) onSurface(action)
+    }
+  }
 
   const close = (): void => { setOpen(false); setView('menu'); setError(null) }
 
@@ -62,33 +74,34 @@ export function NewTabMenu({ open, customAgents, storage, setOpen, onSurface, on
 
   return (
     <div className="dshWorkspacePlusWrap" ref={wrapRef}>
+      <button type="button" className="dshWorkspacePlus" aria-label={`New tab: ${lastLabel}`} title={`New ${lastLabel} tab`} onClick={() => { close(); openLast() }}>+</button>
       <button
         type="button"
-        className="dshWorkspacePlus"
-        aria-label="New tab"
+        className="dshWorkspaceChevron"
+        aria-label="Choose what to open"
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => { if (open) close(); else setOpen(true) }}
       >
-        +
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M2 3.5l3 3 3-3" /></svg>
       </button>
       {open && view === 'menu' && (
         <div className="dshWorkspaceMenu" role="menu">
           {WORKSPACE_SURFACE_ACTIONS.filter(action => !hidden.has(surfaceKey(action))).map(action => (
-            <button key={action.label} type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onSurface(action); close() }}>
+            <button key={action.label} type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onSurface(action); remember({ kind: 'surface', surface: action.kind }); close() }}>
               {action.kind === 'pty' && <AgentIcon commandId="shell" />}
               {action.label}
             </button>
           ))}
           <div className="dshWorkspaceMenuRule" />
           {visibleAgents(WORKSPACE_AGENT_COMMANDS, hidden).map(command => (
-            <button key={command.id} type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onOpenAgent(command.id, command.label); close() }}>
+            <button key={command.id} type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onOpenAgent(command.id, command.label); remember({ kind: 'agent', id: command.id, label: command.label }); close() }}>
               <AgentIcon commandId={command.id} />
               {command.label}
             </button>
           ))}
           {customAgents.filter(agent => !hidden.has(agent.id)).map(agent => (
-            <button key={agent.id} type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onOpenAgent(agent.id, agent.label); close() }}>
+            <button key={agent.id} type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onOpenAgent(agent.id, agent.label); remember({ kind: 'agent', id: agent.id, label: agent.label }); close() }}>
               <AgentIcon commandId={agent.id} custom={agent.badge} />
               {agent.label}
             </button>

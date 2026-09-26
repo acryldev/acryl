@@ -23,6 +23,7 @@ import { countRunning, runningLabel } from '../sessions/running-agents.ts'
 import { estimateTerminalSize } from '../terminal/terminal-size.ts'
 import { PtyPane } from '../terminal/PtyPane.tsx'
 import type { TerminalRegistry } from '../terminal/terminal-session.ts'
+import { shouldRaiseSystemNotice, type SystemNoticePort } from '../notifications/system-notice.ts'
 import { Toasts } from '../notifications/Toasts.tsx'
 import { describeFinish, type ToastState } from '../notifications/toast-state.ts'
 import { StatusLine } from '../chrome/StatusLine.tsx'
@@ -50,6 +51,8 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   readonly agents: AgentsState
   /** Notices such as "Claude finished", fed from the terminals' exits. */
   readonly toasts: ToastState
+  /** Notices outside the page; permission is asked for by a button, never on load. */
+  readonly notices: SystemNoticePort
   readonly useSessions: UseSessions
   /** Shared shell state: which worktree is selected, and the channel for open-diff requests. */
   readonly shell: WorkspaceShellState
@@ -74,7 +77,7 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents: agentsState, toasts, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents: agentsState, toasts, notices, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
   // Subscribe to primitives, not the whole shell snapshot: git polling updates that snapshot often,
@@ -202,6 +205,12 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
     }
   }, [api, workspace, groupKey])
 
+  const openTarget = useCallback((target: { readonly group: string; readonly tabId: string }): void => {
+    if (target.group !== GLOBAL_GROUP) shell.select(target.group)
+    groups.stateFor(target.group).selectTile(target.tabId)
+  }, [shell, groups])
+  const [noticePermission, setNoticePermission] = useState(() => notices.permission())
+
   // Every open agent tab keeps its stream (also in a worktree that is not shown), and an agent that
   // ends raises a notice that leads back to its tab.
   useEffect(() => {
@@ -218,7 +227,12 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
       for (const key of groups.keys()) {
         const tile = groups.stateFor(key).getSnapshot().tiles.find(candidate => candidate.terminalId === terminalId)
         if (tile === undefined) continue
-        if (tile.commandId !== undefined && tile.commandId !== 'shell') toasts.push(describeFinish(tile.title, exitCode), { group: key, tabId: tile.id })
+        if (tile.commandId !== undefined && tile.commandId !== 'shell') {
+          const text = describeFinish(tile.title, exitCode)
+          const target = { group: key, tabId: tile.id }
+          toasts.push(text, target)
+          if (shouldRaiseSystemNotice(notices)) notices.show('ACRYL', text, () => { openTarget(target) })
+        }
         return
       }
     })
@@ -234,7 +248,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
       }
     })
     return () => { stopGroups(); stopExit(); stopLost() }
-  }, [groups, terminals, toasts])
+  }, [groups, terminals, toasts, notices])
 
   const customAgents = useSyncExternalStore(agentsState.subscribe, agentsState.getSnapshot)
   // Primitives only, so git polling that changes nothing here does not re-render the canvas.
@@ -299,13 +313,15 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
           </div>
         )}
       </div>
-      <StatusLine segments={statusSegments} />
+      <StatusLine
+        segments={statusSegments}
+        {...(noticePermission === 'default'
+          ? { action: { label: 'Enable notifications', title: 'Get a system notice when an agent finishes while you are in another app', run: () => { void notices.request().then(setNoticePermission) } } }
+          : {})}
+      />
       <Toasts
         state={toasts}
-        onOpen={(target) => {
-          if (target.group !== GLOBAL_GROUP) shell.select(target.group)
-          groups.stateFor(target.group).selectTile(target.tabId)
-        }}
+        onOpen={openTarget}
       />
     </div>
   )

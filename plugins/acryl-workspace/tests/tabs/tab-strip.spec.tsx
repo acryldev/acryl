@@ -68,7 +68,7 @@ describe('TabStrip', () => {
 
   it('lists the agents with icons in the + menu and starts one', () => {
     const { onOpenPty } = setup()
-    fireEvent.click(screen.getByRole('button', { name: 'New tab' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
     expect(document.querySelectorAll('[role="menu"] [data-agent]').length).toBeGreaterThan(5)
     fireEvent.click(screen.getByRole('menuitem', { name: /Codex/ }))
     expect(onOpenPty).toHaveBeenCalledWith('codex', 'Codex')
@@ -76,7 +76,7 @@ describe('TabStrip', () => {
 
   it('lets the user hide agents from the + menu and remembers it', () => {
     const { storage } = setup()
-    fireEvent.click(screen.getByRole('button', { name: 'New tab' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
     fireEvent.click(screen.getByRole('menuitem', { name: 'Configure agents...' }))
     fireEvent.click(screen.getByRole('menuitemcheckbox', { name: /Aider/ }))
     expect(JSON.parse(storage.getItem(HIDDEN_AGENTS_KEY) ?? '[]')).toEqual(['aider'])
@@ -87,7 +87,7 @@ describe('TabStrip', () => {
 
   it('starts with the agents already hidden in a previous visit', () => {
     setup(memoryStorage({ [HIDDEN_AGENTS_KEY]: JSON.stringify(['goose']) }))
-    fireEvent.click(screen.getByRole('button', { name: 'New tab' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
     expect(screen.queryByRole('menuitem', { name: /Goose/ })).toBeNull()
   })
 
@@ -95,7 +95,7 @@ describe('TabStrip', () => {
 
   it('lists custom agents in the + menu with their own badge and starts them by id', () => {
     const { onOpenPty } = setup(memoryStorage(), { custom: [mine] })
-    fireEvent.click(screen.getByRole('button', { name: 'New tab' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
     expect(document.querySelector('[role="menu"] [data-agent="my-agent"]')).not.toBeNull()
     fireEvent.click(screen.getByRole('menuitem', { name: /My Agent/ }))
     expect(onOpenPty).toHaveBeenCalledWith('my-agent', 'My Agent')
@@ -104,7 +104,7 @@ describe('TabStrip', () => {
   it('adds an agent from the form, showing the exact command first and refusing unsafe input', async () => {
     const onAdd = vi.fn(async () => {})
     setup(memoryStorage(), { onAdd })
-    fireEvent.click(screen.getByRole('button', { name: 'New tab' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
     fireEvent.click(screen.getByRole('menuitem', { name: 'Configure agents...' }))
     fireEvent.click(screen.getByRole('menuitem', { name: 'Add an agent...' }))
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'My Agent' } })
@@ -121,7 +121,7 @@ describe('TabStrip', () => {
 
   it("shows the Host's own refusal and keeps the form open", async () => {
     setup(memoryStorage(), { onAdd: () => Promise.reject(new Error('"my-agent" was not found on this machine')) })
-    fireEvent.click(screen.getByRole('button', { name: 'New tab' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
     fireEvent.click(screen.getByRole('menuitem', { name: 'Configure agents...' }))
     fireEvent.click(screen.getByRole('menuitem', { name: 'Add an agent...' }))
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'My Agent' } })
@@ -134,7 +134,7 @@ describe('TabStrip', () => {
   it('removes a custom agent from Configure agents', async () => {
     const onRemove = vi.fn(async () => {})
     setup(memoryStorage(), { custom: [mine], onRemove })
-    fireEvent.click(screen.getByRole('button', { name: 'New tab' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
     fireEvent.click(screen.getByRole('menuitem', { name: 'Configure agents...' }))
     fireEvent.click(screen.getByRole('button', { name: 'Remove My Agent' }))
     await waitFor(() => { expect(onRemove).toHaveBeenCalledWith('my-agent') })
@@ -161,7 +161,7 @@ describe('TabStrip', () => {
 
   it('lets the user hide tab types (never the terminal) from the + menu', () => {
     setup()
-    fireEvent.click(screen.getByRole('button', { name: 'New tab' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
     expect(screen.getByRole('menuitem', { name: 'New Board' })).toBeTruthy()
     fireEvent.click(screen.getByRole('menuitem', { name: 'Configure agents...' }))
     expect(screen.queryByRole('menuitemcheckbox', { name: /Terminal/ })).toBeNull()
@@ -169,5 +169,21 @@ describe('TabStrip', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Done' }))
     expect(screen.queryByRole('menuitem', { name: 'New Board' })).toBeNull()
     expect(screen.getByRole('menuitem', { name: 'New Terminal' })).toBeTruthy()
+  })
+
+  it('opens the last thing you opened when + is clicked, starting with a terminal', () => {
+    const { workspace, onOpenPty, storage } = setup()
+    fireEvent.click(screen.getByRole('button', { name: 'New tab: Terminal' }))
+    expect(onOpenPty).toHaveBeenCalledWith('shell', 'Terminal')
+    fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: /Codex/ }))
+    expect(onOpenPty).toHaveBeenLastCalledWith('codex', 'Codex')
+    expect(storage.getItem('acryl-workspace:last-tab')).toContain('codex')
+    fireEvent.click(screen.getByRole('button', { name: 'New tab: Codex' }))
+    expect(onOpenPty).toHaveBeenLastCalledWith('codex', 'Codex')
+    fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'New Board' }))
+    fireEvent.click(screen.getByRole('button', { name: 'New tab: Board' }))
+    expect(workspace.getSnapshot().tiles.filter(tile => tile.kind === 'kanban')).toHaveLength(2)
   })
 })

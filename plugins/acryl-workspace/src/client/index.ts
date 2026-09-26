@@ -28,6 +28,7 @@ import { createWorkspacePtyApi } from './terminal/pty-api.ts'
 import { WorkspacePtyClient } from './sessions/session-client.ts'
 import { createWorkspaceAgentsApi } from './agents/agents-api.ts'
 import { AgentsState } from './agents/agents-state.ts'
+import { createBrowserNoticePort } from './notifications/system-notice.ts'
 import { ToastState } from './notifications/toast-state.ts'
 import { TerminalRegistry } from './terminal/terminal-session.ts'
 import { startShellPolling } from './worktrees/shell-polling.ts'
@@ -103,12 +104,13 @@ export function apply(ctx: ClientContext): void {
       // Terminals live as long as this registration, so switching tabs never rebuilds one.
       const terminals = new TerminalRegistry()
       const toasts = new ToastState()
+      const notices = createBrowserNoticePort()
       let removeSlot: (() => void) | undefined
       try {
         removeSlot = ctx.slots.register({
           name: 'desktop.main',
           priority: WORKSPACE_MAIN_PRIORITY,
-          inject: () => ({ ptyApi: ptyClient, terminals, agents, toasts, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }),
+          inject: () => ({ ptyApi: ptyClient, terminals, agents, toasts, notices, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }),
         }, WorkspaceCanvas)
       } catch (cause) {
         // A registration conflict must not take the left pane and the Changes tab down with it.

@@ -63,6 +63,8 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceToastOpen:hover { border-color: #4d6bfe; color: #4d6bfe; }
 .dshWorkspaceToastClose { appearance: none; border: 0; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 15px; line-height: 1; }
 .dshWorkspaceStatusLine { display: flex; align-items: center; gap: 14px; flex: none; min-height: 24px; padding: 0 12px; border-top: 1px solid var(--dsw-alias-border-l2); color: var(--dsw-alias-fg-l2); font: 11.5px/1 ui-sans-serif, system-ui, sans-serif; overflow: hidden; white-space: nowrap; }
+.dshWorkspaceStatusAction { appearance: none; margin-left: auto; padding: 2px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: inherit; cursor: pointer; font: inherit; }
+.dshWorkspaceStatusAction:hover { border-color: #4d6bfe; color: #4d6bfe; }
 .dshWorkspaceStatusSegment[data-segment="branch"] { color: #a5b4fc; font-weight: 600; }
 .dshWorkspaceStatusSegment[data-segment="running"] { color: #34d399; }
 .dshWorkspaceRunning { appearance: none; flex: none; display: flex; align-items: center; gap: 6px; align-self: center; margin: 0 4px; padding: 2px 10px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 12px/1.6 ui-sans-serif, system-ui, sans-serif; }
@@ -72,6 +74,8 @@ const WORKSPACE_STYLES = `
 @media (prefers-reduced-motion: reduce) { .dshWorkspaceRunningDot { animation: none; } }
 .dshWorkspacePlusWrap { position: relative; flex: none; display: flex; align-items: center; padding: 0 6px; }
 .dshWorkspacePlus { appearance: none; width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: 600 18px/1 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceChevron { appearance: none; width: 18px; height: 28px; margin-left: -4px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; display: grid; place-items: center; }
+.dshWorkspaceChevron:hover, .dshWorkspaceChevron[aria-expanded="true"] { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg); }
 .dshWorkspacePlus:hover, .dshWorkspacePlus[aria-expanded="true"] { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
 .dshWorkspaceMenu { position: absolute; top: calc(100% + 4px); right: 4px; z-index: 40; width: 240px; max-height: min(70vh, 520px); overflow: auto; padding: 6px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; background: var(--dsw-alias-bg-base); box-shadow: 0 16px 40px rgb(0 0 0 / 28%); }
 .dshWorkspaceMenuItem { appearance: none; display: flex; align-items: center; gap: 10px; width: 100%; margin: 0; padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; text-align: left; font: 13px/1.2 ui-sans-serif, system-ui, sans-serif; }
