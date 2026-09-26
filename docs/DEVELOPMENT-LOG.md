@@ -1,3 +1,41 @@
+## 2026-09-25 - Devin ACP provider composition: acryl-agent-devin package, capability rows, desktop settings
+
+Commits: `d3be1435956d78d2dc4fe03a5ca81c5d353d857b`, `c674c8f53095c3c9b678dc8c9bbd2faaca227987`, `6a9ed4a327cd9a6a5a08c34834267c173a480b41`, `6b9a98d27b3ac1a733a092db9d71e4520d10599d`
+
+Story 11 of `devin-acp-integration` makes the Devin provider installable: `devin acp`
+now composes through the capability table into every surface's profile and is flipped
+on from Desktop settings — no parallel lifecycle, DI, or provider framework anywhere.
+
+- **`plugins/acryl-agent-devin`** — installable Cordis provider package (Loader row id
+  equals the package name). `apply` builds `devinAcpTransport` lazily (no `devin` probe at
+  mount), mounts `acpProvider(transport)` as an owned child fiber, and registers
+  `transport.dispose()` on its own fiber. Hard `inject: ['acrAgentControl']` keeps it
+  PENDING until the service exists; disposal removes the provider registration.
+- **Dispatch fix** — `AcrAgentControlService.dispatch` now allows `start`/`resume` on
+  bindings with `runtimeId: null`, folds the provider's returned `runtimeId`/`sessionId`/
+  `status` into a fresh frozen `AgentSnapshot`, clears the runtime on `stop`, and still
+  requires a runtime id in the receipt.
+- **Capability rows** — `coding-capabilities.ts` gains `agent-control` (inserts the
+  enabled `acryl-control` row) and `devin-acp` (inserts `acryl-agent-devin` disabled) on
+  all three surfaces. Both packages are materialized into profile `node_modules` so the
+  Loader resolves them. Caught late: `export *` never re-exports `default`, so the
+  `acryl-control` row resolved to a bare module namespace and the Loader rejected it as
+  an invalid plugin — fixed by naming the `default` export in `acryl-control/src/index.ts`.
+- **Desktop settings** — `dsh-desktop.devin-acp` validates `enabled`, `binaryPath`,
+  `authMode`, `model`, `permissionMode` (defaults `DEFAULT_DEVIN_ACP_SETTINGS`); after
+  settings resolution an id-targeted patch sets `disabled: !devin.enabled` plus the
+  user config. `cwd` stays unset — the plugin defaults to `process.cwd()`. Approval
+  handling is Story 12; no `approval.respond` capability is declared.
+
+Verified: `pnpm run typecheck` (7 packages), `verify-layout`, and the affected suites —
+acryl-control 58, acryl-agent-devin 6, harness-runtime 96, desktop profile 34. Remaining
+harness-runtime failures (extension-context `/reload` staging, `harness:source` prompt
+baseline) reproduce identically on the untouched sibling worktree — environmental, not
+from this change. Note: `pnpm install` cannot complete linking in this sandbox (event
+loop idles after resolution); `node_modules` was reconstructed by cloning the sibling
+worktree's install plus hand-added links, and `pnpm-lock.yaml` importer entries were
+edited by hand to match.
+
 ## 2026-09-24 - 040 Projects tab grows up: new worktrees, per-branch chats, persistence, split
 
 Commits: `98cb67621d1639d824ca69aef5764c747e9088cc`, `837ebcf3076c9cb2dca781f916b2135972f2f5d0`, `9b6a2982c9e472a41358ec25ef164233f9e86780`, `3ca780d5a0a8117fac10876b62e0d5d88b7f7629`
