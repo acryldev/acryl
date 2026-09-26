@@ -17,7 +17,7 @@
 | 08 | Tests — JSON-RPC client unit tests | [x] Done (8ee8d8e) | 01 |
 | 09 | Tests — transport lifecycle + cancellation + collision | [x] Done (8ee8d8e) | 05, 06 |
 | 10 | Verify — typecheck + test + build pass | [x] Done (2026-09-24 rebase) | 09 |
-| 11 | Composition — `acryl-agent-devin` plugin package + Loader rows + settings wiring + dispatch binding fix | [ ] Todo | 06, 07 |
+| 11 | Composition — `acryl-agent-devin` plugin package + Loader rows + settings wiring + dispatch binding fix | [x] Done (88b9771) | 06, 07 |
 | 12 | `session/request_permission` — JSON-RPC response fix + permissionMode/onPermissionRequest | [ ] Todo | 11 |
 | 13 | `session-bridge.ts` provider-neutral routing via `acrAgentControl.dispatch()` | [ ] Todo | 11 |
 | 14 | Loader-activation verification suite + E2E stub round-trip + gated real smoke | [ ] Todo | 11, 12, 13 |
