@@ -87,3 +87,27 @@ Method: read `apps/acryl-desktop/src/profile.ts`, its client (`src/client`), `ru
 
 Open on Web: compatibility mode does not exist (Web always renders the ACRYL shell, by decision, so the Host toggles and the client cannot disagree); the Desktop-only Settings tabs (plugin lifecycle, plugin architecture) are not part of this slice (spec 034); `acryl-web` now ships `node-pty` through `acryl-workspace`, which matters for its npm closure.
 
+## Phase 7 parity audit, measured (2026-09-26)
+
+Composed the real Desktop profile and the real Web engine and diffed the Loader rows (now a permanent gate: `apps/acryl-desktop/tests/surface-parity.spec.ts`).
+
+**Before the second extraction** Desktop had nine rows Web lacked, all inside the monolithic `acryl-desktop` package, and the Settings > Plugins Lifecycle and Architecture tabs (Host routes, Client tabs, projection) existed only there.
+
+**Now shared, from one declaration, and identical on both:** `authorization`, `acryl-workspace` (with the ACRYL shell), `acryl-plugin-admin` (new: Settings > Plugins Lifecycle and Architecture, Host routes plus Client tabs, driven by `ctx.acrPluginLifecycle`), the shell toggles, brand, system prompt, extension context, UI library, shortcuts, mount anchors.
+
+**Native to Desktop, each with a reason in the gate:**
+
+| Row | Why it stays Desktop-only | Web counterpart |
+|---|---|---|
+| `desktop-shell` | Electron window, tray, menu; Desktop settings (profiles, market provider, mode); native folder drop; directory-picker bridge | none needed; Web has the page itself |
+| `desktop-webserver`, `desktop-profiles`, `desktop-pnpm` | Desktop owns its loopback server, profile selection and package manager | Web serves one profile through its own install service |
+| `desktop-terminal` | native tray terminal | workspace terminals in the page (shared) |
+| `desktop-updates` | application updates | npm package updates |
+| `desktop-notifications` | native OS attention for finished turns | **gap:** a Web equivalent (browser Notification API from a client plugin fed by the same session events) is not built |
+| `desktop-diagnostics` | native diagnostic export of log files | **gap:** Web writes no log files, so there is nothing to export yet |
+| `desktop-hello-world` | research proof | none |
+
+Not part of this parity slice and still Desktop-only in behaviour: BLEND selection (composed only by the Desktop launcher), which is a Blends-runtime question (spec 033) rather than a plugin extraction.
+
+**Method note:** the audit also found that the root `typecheck`, `test` and `check` scripts never ran `acryl-harness-runtime`, `acryl-workspace`, `acryl-plugin-admin`, `acryl-shortcuts` or `acryl-mount-anchors`; they do now.
+

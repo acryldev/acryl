@@ -11,8 +11,8 @@ src/
   shell/         native Electron shell: windows, tray, menu, platform differences, notifications, shutdown
   profile/       desktop profiles: discovery, selection, checkpoint, materialization, BLEND consumption
   plugins/       plugin inventory, reconcile, watch, market selection, install recovery, package manager
-    lifecycle/   Desktop projection of the shared plugin lifecycle: contract, controller, route, state
-    architecture/  read-only projection of the native Cordis runtime graph: contract, inspector, route
+    lifecycle/   Desktop's lifecycle authority (which rows the user may toggle, the market bridge) and its state; the
+                 renderer-facing view, routes and Settings tabs are the shared `plugins/acryl-plugin-admin`
   startup/       startup generation, recovery window and controller, failure routing, renderer boot health
   diagnostics/   logging, log files, secret masking, diagnostic export
   updates/       update checks, downloads, lifecycle, scheduling
