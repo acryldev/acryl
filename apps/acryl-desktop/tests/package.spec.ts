@@ -77,10 +77,16 @@ const releaseDesktopWorkflow = readFileSync(
 describe('published package surface', () => {
   it('runs owned-workspace typechecks and tests through PNPM filters', () => {
     expect(workspaceManifest.packageManager).toBe('pnpm@11.11.0')
-    expect(workspaceManifest.scripts?.typecheck)
-      .toBe('pnpm --filter acryl-control run typecheck && pnpm --filter acryl-cli run typecheck && pnpm --filter acryl-web run typecheck && pnpm --filter dsh-client-ui-brand-acryl run typecheck && pnpm --filter acryl-desktop run typecheck && pnpm --filter cordis-plugin-market run typecheck')
-    expect(workspaceManifest.scripts?.test)
-      .toBe('pnpm --filter acryl-control run test && pnpm --filter acryl-cli run test && pnpm --filter acryl-web run test && pnpm --filter dsh-client-ui-brand-acryl run test && pnpm --filter acryl-desktop run test && pnpm --filter cordis-plugin-market run test && pnpm --filter acryl-extension-context run test && pnpm --filter acryl-system-prompt run test && pnpm --filter @acryl/ui run test && pnpm --filter acryl-ui-tui run test')
+    // Each owned package that ships a script is run through a PNPM filter from the root. The list is the contract, not a copy of the
+    // whole command line, so adding a package adds one entry here instead of rewriting a 600-character string.
+    const typecheck = workspaceManifest.scripts?.typecheck ?? ''
+    for (const owned of ['acryl-control', 'acryl-cli', 'acryl-web', 'dsh-client-ui-brand-acryl', 'acryl-desktop', 'cordis-plugin-market']) {
+      expect(typecheck, owned).toContain(`pnpm --filter ${owned} run typecheck`)
+    }
+    const test = workspaceManifest.scripts?.test ?? ''
+    for (const owned of ['acryl-control', 'acryl-cli', 'acryl-web', 'dsh-client-ui-brand-acryl', 'acryl-desktop', 'cordis-plugin-market', 'acryl-extension-context', 'acryl-brand', 'acryl-system-prompt', '@acryl/ui', 'acryl-ui-tui']) {
+      expect(test, owned).toContain(`pnpm --filter ${owned} run test`)
+    }
     expect(pnpmWorkspace).toContain("  - '!deepseek-harness/**'")
     expect(pnpmWorkspace).toContain('node-pty: true')
   })

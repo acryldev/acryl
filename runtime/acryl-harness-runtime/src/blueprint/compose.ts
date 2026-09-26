@@ -21,14 +21,14 @@ interface RowDeclaration {
   readonly libraryOnly?: readonly AcrylSurface[]
 }
 
-/** Declaration order is mount order. */
+/** Declaration order is mount order. The Market is Web-only here: Desktop owns its own provider switch. */
 const ROWS: readonly RowDeclaration[] = [
   { id: 'community-market', surfaces: ['web'], rowId: 'community-market', packageName: 'cordis-plugin-market' },
-  { id: 'extension-context', surfaces: ['tui', 'web'], rowId: 'extension-context', packageName: 'acryl-extension-context' },
-  { id: 'system-prompt', surfaces: ['tui', 'web'], rowId: 'acryl-system-prompt', packageName: 'acryl-system-prompt' },
-  { id: 'ui-library', surfaces: ['tui', 'web'], rowId: '@acryl/ui', packageName: '@acryl/ui', libraryOnly: ['tui'] },
-  { id: 'shortcuts', surfaces: ['web'], rowId: 'acryl-shortcuts', packageName: 'acryl-shortcuts' },
-  { id: 'mount-anchors', surfaces: ['web'], rowId: 'acryl-mount-anchors', packageName: 'acryl-mount-anchors' },
+  { id: 'extension-context', surfaces: ['tui', 'web', 'desktop'], rowId: 'extension-context', packageName: 'acryl-extension-context' },
+  { id: 'system-prompt', surfaces: ['tui', 'web', 'desktop'], rowId: 'acryl-system-prompt', packageName: 'acryl-system-prompt' },
+  { id: 'ui-library', surfaces: ['tui', 'web', 'desktop'], rowId: '@acryl/ui', packageName: '@acryl/ui', libraryOnly: ['tui'] },
+  { id: 'shortcuts', surfaces: ['web', 'desktop'], rowId: 'acryl-shortcuts', packageName: 'acryl-shortcuts' },
+  { id: 'mount-anchors', surfaces: ['web', 'desktop'], rowId: 'acryl-mount-anchors', packageName: 'acryl-mount-anchors' },
 ]
 
 /** The terminal library is a differently named package than the browser one. */
@@ -53,7 +53,7 @@ export function composeBlueprintRows(
   const patches: PatchOptions[] = []
 
   // Brand first: it swaps the stock identity row and must exist before any client row reads it.
-  if (surface === 'web') {
+  if (surface === 'web' || surface === 'desktop') {
     if (blueprint.brand.kind === 'acryl') {
       packages.push('dsh-client-ui-brand-acryl')
       patches.push(
