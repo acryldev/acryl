@@ -71,9 +71,21 @@ Related milestone: [041 Agent Control](../041-agent-control/spec.md) lets agents
 - [ ] **T060** Update `spec.md` to match reality: the shipped canvas has seven tile kinds (it says three), story A3 status, and the resolved open questions 1 and 5. Add the decisions to `plan.md`.
 - [ ] **T061** Add the `DEVELOPMENT-LOG.md` entry as a separate documentation commit after the implementation hashes exist.
 
+## Phase 7: share across Web and Desktop (decided 2026-09-26, before more features)
+
+Every later ADE feature (commit box, search, attention queue, status bar) builds on this, so it comes first. Spec section: "Surface sharing".
+
+- [ ] **T070** Spike: inventory what `apps/acryl-desktop/src/client` (layout, `AdvancedFrame`, slot declarations, right-panel hosting) and `profile.ts` do for the workspace, and what `apps/acryl-web` composes today. Output: a table in `research.md` of each piece as shared-ready, needs an adapter, or Desktop-native. Also confirm how the Web profile mounts Client plugins and whether the same `desktop.main`/`rightbar` slots can be declared there.
+- [ ] **T071** Add a `workspace` capability to `runtime/acryl-harness-runtime/src/coding-capabilities.ts` (`surfaces: ['desktop', 'web']`, Loader patches for `acryl-workspace`), and make Desktop compose it through `createAcrylCodingCapabilityPatches` instead of the hand-written row in `profile.ts`. Tests: the declaration, and that Desktop's composed rows are unchanged.
+- [ ] **T072** Extract the advanced shell into a shared surface-neutral package (proposed `plugins/acryl-shell`, row id equal to package name): slot declarations, layout state and service, `AdvancedFrame`, right-panel host, with the layout-order tsconfig constraint documented. Desktop consumes it; behavior unchanged; Desktop tests stay green. Update `pnpm-workspace.yaml` and `scripts/verify-layout.mjs` in the same commit.
+- [ ] **T073** Compose the shared shell and `acryl-workspace` on the Web surface through the same capability declaration. Real headless Web boot: the plugin rows are ACTIVE, the Host routes answer, no Electron import is reachable from the Web bundle.
+- [ ] **T074** Surface adapters for the parts that differ, as typed seams with a Desktop and a Web implementation: add-project folder chooser (Web: server-side directory browser or path entry with validation), folder drag-drop, window chrome. Replace the DOM-click workaround in `projects-control.ts` with the adapter.
+- [ ] **T075** Parity gate (spec 034 FR-008 applied): one profile, both surfaces booted headlessly, assert identical workspace plugin ids, right-panel tab types and Host route paths, wired into the root `check`. A deliberate slot absence must be declared in the capability data or the gate fails.
+- [ ] **T076** Real evidence, not unit tests alone: cold-start Web and Desktop on one throwaway profile, open the same project on both, confirm the same branches, Changes, Review, Checks and Files, and that an edit saved on one shows on the other. Record in `research.md` and the dev log.
+
 ## Dependencies
 
-T001 -> T010. T010 -> T011 -> T012. T020 -> T021 -> T022, T023. T012 + T023 -> T030 -> T031 -> T032 -> T033. T002 -> T041. T031 -> T040 -> T041. T012 -> T050 (T050 does not need the diff work and can start once the registry exists).
+T070 -> T071 -> T072 -> T073 -> T074 -> T075 -> T076 (Phase 7 goes before further ADE features). T001 -> T010. T010 -> T011 -> T012. T020 -> T021 -> T022, T023. T012 + T023 -> T030 -> T031 -> T032 -> T033. T002 -> T041. T031 -> T040 -> T041. T012 -> T050 (T050 does not need the diff work and can start once the registry exists).
 
 ## Definition of done for slice 1
 

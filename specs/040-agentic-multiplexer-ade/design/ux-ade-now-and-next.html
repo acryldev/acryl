@@ -296,6 +296,8 @@
 
 
 
+  <div class="absent" style="border-color:hsl(268 92% 74% / .6);color:var(--foreground)"><b>Surface gap:</b> everything in Part 1 runs on <b>Desktop only</b> today. The decision (2026-09-26) is one implementation shared by Web and Desktop, so making Web run it is the next slice (spec 040, Phase 7) before more features.</div>
+
   <h2>What changed, in one table</h2>
   <p class="lede">Everything below is in <code>acryl-workspace</code>, committed and pushed, with tests. "Built" means it exists and is covered by automated tests; the layout itself still needs your eyes in the running app.</p>
   <table>
@@ -503,6 +505,7 @@
       <tr><td>2</td><td>First build slice</td><td><b>Real diff tile with line comments sent to the agent</b></td><td>Needs the tab-type registry, an <code>acryl-git</code> Host service, then <code>acryl-tab-diff</code>. Comments become room events.</td></tr>
       <tr><td>3</td><td>Switching branch</td><td><b>Keep other branches' tabs running in the background</b></td><td>Agents and terminals in an unselected branch keep working; the rail dot stays live. Process count needs a cap and a visible indicator.</td></tr>
       <tr><td>4</td><td>Code basis</td><td><b>Evolve <code>acryl-workspace</code> in place</b></td><td>Split each tile into its own plugin, move to per-worktree tab groups, extract the PTY as it is into <code>acryl-tab-terminal</code>.</td></tr>
+      <tr><td>5</td><td>Surfaces</td><td><b>One shared implementation for Web and Desktop</b> <span class="chip fresh">decided 2026-09-26</span></td><td>Composed once through <code>coding-capabilities.ts</code> (<code>surfaces: [desktop, web]</code>), shared shell package, typed adapters only for native bits (folder chooser, drag-drop), and a parity gate. Today it is Desktop-only, which is a defect against this decision. Spec 041 Agent Control follows the same rule.</td></tr>
     </tbody>
   </table>
   <h2>Open items</h2>

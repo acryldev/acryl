@@ -11,6 +11,15 @@
 | CLI operator and rescue (Scope B) | commands and an agent toolset in `apps/acryl-cli`; shared logic in `runtime/acryl-harness-runtime` | The CLI is a surface (renders and drives); repair and config logic belongs in the stable runtime so Desktop, Web and CLI share it. Nothing under `runtime/` may depend on `apps/` |
 | MCP exposure for external agents (US5) | later, separate row `acryl-ui-control-mcp` | Different consumer and off by default |
 
+## Sharing across Web and Desktop (decided 2026-09-26)
+
+- **Declaration:** two entries in `coding-capabilities.ts`: `agent-control-tools` (`surfaces: ['tui', 'web', 'desktop']`, the typed layer 1 tools registered through `ctx.tools`) and `agent-control-ui` (`surfaces: ['web', 'desktop']`, the `acryl-ui-control` package with the DOM driver and its Host tools). Composition comes from that data; a caller never adds the row by hand.
+- **One driver:** the Client half runs unchanged in the Electron renderer and in the Web page. It must not import Electron or a Desktop-only service. The Host half registers its tools and channel through the shared Host, not through `apps/acryl-desktop`.
+- **Transport:** the Host to page channel (spike T001) is chosen so it works on both surfaces, which rules out anything Electron-IPC-only. Electron's debugging access remains an optional Desktop adapter for screenshots and native dialogs only.
+- **Adapters:** a small typed seam for what genuinely differs (native screenshot, native dialogs, window handle), with a Desktop and a Web implementation and a documented absence where one cannot exist.
+- **Parity gate:** boot both surfaces headlessly for one profile, list the composed tool names, assert equality, and fail on any undeclared difference. Wired into the root `check`.
+- **Dependency:** the shared shell extraction in spec 040 Phase 7 (T072, T073) provides the Web slot host the indicator and kill switch mount into, so 041's indicator work follows that phase.
+
 ## 1. Capability and plugin boundary
 
 `acryl-ui-control` owns exactly one capability: a governed, snapshot-and-act interface to the accessibility tree of the current ACRYL window. It does not own settings, sessions or approvals; it consumes them.

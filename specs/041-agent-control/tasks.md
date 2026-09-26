@@ -7,7 +7,7 @@ Conventions: `[P]` parallel; every task ends with a green `corepack pnpm run che
 - [ ] **T001** Spike: how can a Host-side tool reach the page? Read `deepseek-harness/packages/client/connection` (`rpc.ts`, `rpc-host.ts`), `docs/extending/host-route.md`, and the tool execution path. Try a Client-held long-poll or stream and a delegated-executor path. Output: `research.md` verdict with a working throwaway proof.
 - [ ] **T002** [P] Spike: build a bounded accessibility snapshot of a real ACRYL window (jsdom of the workspace shell first). Measure node count, size, and how many controls lack a usable role or name. Output: a numbers table in `research.md`.
 - [ ] **T003** [P] Spike: how do the approval and policy pipelines treat a tool call, and how can a tool declare "mutating UI action" so approval is per call. Output: verdict in `research.md`.
-- [ ] **T004** [P] Spike: multi-window and Web behavior of the chosen transport.
+- [ ] **T004** [P] Spike: multi-window and Web behavior of the chosen transport. It must work on both surfaces from one implementation (see the plan's sharing section); record any Desktop-only piece as an adapter.
 
 ## Phase 1: contract and driver (Client)
 
@@ -58,9 +58,17 @@ Conventions: `[P]` parallel; every task ends with a green `corepack pnpm run che
 - [ ] **TB32** CLI agent toolset: the operations above as tools, plus orientation tools (`repo.map`, `docs.route`, graft, verified examples) so it knows where to patch.
 - [ ] **TB33** End-to-end: "hide Chats and open branch-123, enable plugins 1, 4, 6" against a real headless instance; state read back and verified.
 
+## Sharing across Web and Desktop (decided 2026-09-26)
+
+- [ ] **TS01** Declare `agent-control-tools` (`tui`, `web`, `desktop`) and `agent-control-ui` (`web`, `desktop`) in `runtime/acryl-harness-runtime/src/coding-capabilities.ts`; compose them on every surface only through `createAcrylCodingCapabilityPatches`. Tests on the declarations.
+- [ ] **TS02** Keep `acryl-ui-control` free of Electron and Desktop-only imports (an import-boundary test), and mount its indicator and kill switch through the shared shell from spec 040 Phase 7.
+- [ ] **TS03** Surface adapter seam for native screenshot, native dialogs and window handle, with Desktop and Web implementations or a declared absence.
+- [ ] **TS04** Parity gate: boot Web and Desktop headlessly on one profile, assert the same Agent Control tool names, fail on an undeclared difference; wire into the root `check`.
+- [ ] **TS05** Real evidence: the same agent instruction ("hide Chats, open branch X") works on a Web session and a Desktop session against one profile.
+
 ## Later (own task lists)
 
-Web parity hardening (US4), MCP exposure for external agents (US5), scripted self-testing harness (US6), `aria-label` pass across components.
+MCP exposure for external agents (US5), scripted self-testing harness (US6), `aria-label` pass across components.
 
 ## Definition of done for the Scope B first slice
 

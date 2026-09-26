@@ -17,6 +17,15 @@
 
 Both scopes share one typed tool vocabulary (`settings.*`, `plugin.*`, `workspace.*`, `ui.*`), so an instruction works the same whether the agent is inside the app or the CLI is outside it.
 
+## Surfaces: one implementation for Web and Desktop (decided 2026-09-26)
+
+Users run both surfaces, so Agent Control is **one shared implementation for Web and Desktop**, following the surface contract (`docs/ACRYL-RUNTIME-SURFACE-CONTRACT.md`), the shared composition seam (`runtime/acryl-harness-runtime/src/coding-capabilities.ts`) and `specs/034-plugins-on-every-surface`. See also the "Surface sharing" section of `specs/040-agentic-multiplexer-ade/spec.md`.
+
+- The typed tools (layer 1) belong to the runtime and are declared for every surface that can host them (`tui`, `web`, `desktop`), so the in-app agent and the CLI use the same vocabulary.
+- The UI driver (layers 2 and 3) needs a DOM, so it is declared for `web` and `desktop` only. Both run the same renderer code; there is no Desktop-only driver and no Web port later.
+- Only the last-resort screenshot layer and native dialogs may differ by surface, behind a typed adapter with a Desktop and a Web implementation. A tool that works on one and not the other needs a written slot-absence reason.
+- A parity gate boots both surfaces headlessly for one profile and fails if the tool set differs.
+
 ## Why this exists
 
 An ACRYL agent can today edit files and run commands, but it cannot operate the product it lives in. A user has to add a project, flip a plugin, change a model or set up a workspace by hand, and every time we lacked a service for something we wrote a fragile DOM click (fixed real instances: the Settings trigger and the "Add workspace" trigger in `acryl-workspace`). This milestone replaces those one-offs with one governed capability, and makes "ask the agent to set it up" a real workflow (onboarding, self-configuration, guided support, end-to-end self-testing of the app).
@@ -61,9 +70,9 @@ An agent is asked "add my repo at `~/code/foo` as a project". It calls `ui.snaps
 - Every call is recorded in an audit log the user can read.
 **Independent test**: each rule has a test that tries to violate it and fails closed.
 
-### US4 (P2): Web parity
+### US4 (P1): Web and Desktop parity
 
-The same layer 1 and 2 tools work in `acryl-web`. Only layer 3 differs (no native screenshot).
+The same layer 1 and 2 tools work on `acryl-web` and `acryl-desktop` from one implementation, declared through the shared capability seam. Only layer 3 (native screenshot) may differ, behind an adapter. Raised from P2: parity is the default, not a follow-up.
 
 ### US5 (P2): External agents
 
@@ -116,6 +125,7 @@ The agent (or CI) runs scripted end-to-end scenarios against a real window using
 - **FR-009** (Scope B) Offline operations depend only on files and the shared runtime package, never on starting Desktop or Web.
 - **FR-010** (Scope B) Every mutation, offline or online, is reversible: pre-image backup, atomic write, and a documented undo.
 - **FR-011** (Scope B) The online channel is authenticated per profile, local-only, and reuses the same tool contract as Scope A; there is no second, CLI-only vocabulary.
+- **FR-013** (Surfaces) Agent Control is composed through `coding-capabilities.ts`: typed tools with `surfaces: ['tui', 'web', 'desktop']`, the UI driver with `surfaces: ['web', 'desktop']`. No surface adds it by a hand-written row, and a parity check fails when the composed tool sets differ.
 - **FR-012** (Scope B) Diagnosis output is machine-readable and human-readable, and every proposed fix names the file or row it will change before anything is written.
 
 ## Out of scope

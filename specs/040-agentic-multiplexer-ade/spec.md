@@ -40,6 +40,27 @@ Two kinds in the mockup catalog are **not** part of this milestone and are calle
 
 ---
 
+## Surface sharing: one implementation for Web and Desktop (decided 2026-09-26)
+
+Users run both surfaces against the same profile, so the workspace is **one implementation shared by Web and Desktop**, not a Desktop feature with a Web port later. This restates decisions already made and gives the ADE work its place in them:
+
+- `docs/ACRYL-RUNTIME-SURFACE-CONTRACT.md` (2026-08-28): behavior is implemented once in the runtime; TUI, Desktop and Web only render it and add surface-appropriate views.
+- Dev log 2026-08-31 (`ad6a510`): "all applicable user-facing coding capabilities are composed once and exposed through TUI, Web, and Desktop." The seam is `runtime/acryl-harness-runtime/src/coding-capabilities.ts` (`ACRYL_CODING_CAPABILITIES`, each declaring its `surfaces`; `createAcrylCodingCapabilityPatches(surfaces)`). A per-surface `if` in a caller is named there as the bug the file exists to remove.
+- `specs/034-plugins-on-every-surface`: one implementation, surfaces declared per plugin, composition derived from the declarations, and a parity check (FR-008) that fails when surfaces differ.
+
+**Correction recorded.** The slice-1 work (2026-09-24 to 2026-09-26) put `acryl-workspace` into `apps/acryl-desktop/src/profile.ts` as a Desktop-only row and put the layout slots (`desktop.main`, `desktop.sidebar`, the right-panel host) in the Desktop app. That bypassed the seam above and is a defect against this decision, not a design choice. Web currently has none of it.
+
+Requirements that follow (each one is also a task in `tasks.md`, Phase 7):
+
+- **SH-001** `acryl-workspace` is declared in `coding-capabilities.ts` with `surfaces: ['desktop', 'web']` (TUI has no slot for it and stays out, which the file header defines as slot absence, not an error). No surface adds it by a hand-written row.
+- **SH-002** The advanced shell (the `desktop.main` and `desktop.sidebar` slots, the right-panel host, layout state) moves out of `apps/acryl-desktop` into a shared, surface-neutral package that both surfaces load. Desktop keeps only what is native.
+- **SH-003** Everything the workspace needs from a server is a same-origin route on the shared Host (git, files, checks, terminals). Nothing in `acryl-workspace` may import Electron or a Desktop-only service.
+- **SH-004** Surface-specific parts sit behind small typed seams with a Desktop adapter and a Web adapter: the folder chooser for adding a project (Desktop: native picker; Web: a server-side directory browser or path entry), drag-drop of folders, window chrome. A feature is not "done" until both adapters exist or the absence is declared and documented.
+- **SH-005** A parity gate (spec 034 FR-008 applied here) boots both surfaces headlessly for one profile and fails if the workspace plugin, its right-panel tab types, or its Host routes are present on one and absent on the other.
+- **SH-006** New ADE features are built shared first. A change that only works on one surface needs an explicit, written slot-absence reason.
+
+Consequence for the Web surface: the earlier note that "Web has no advanced shell, so the tab layout is Desktop-only for now" is withdrawn as a plan and kept only as the description of today's gap. Spec 041 (Agent Control) follows the same rule.
+
 ## Scope A — Desktop/Web ADE
 
 ### User Scenarios & Testing *(mandatory)*
