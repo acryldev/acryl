@@ -16,6 +16,13 @@
  * - STUB_ACP_FAIL_ONCE_FILE: path to a marker file; the first initialize on
  *   the first process that finds the file absent writes it and replies with
  *   a JSON-RPC error — later spawns succeed (retry tests).
+ * - STUB_ACP_PERMISSION_PROMPT: when `1`, every session/prompt sends a
+ *   `session/request_permission` request mid-turn and waits for the
+ *   client's answer before replying. The answer is echoed back as an
+ *   `agent_message_chunk` update whose text is `permission:<json>`.
+ * - STUB_ACP_PERMISSION_OPTIONS: comma-separated option kinds offered in
+ *   the permission request (optionId = `opt_<kind>`). `none` offers no
+ *   options. Default: `allow_once,reject_once`.
  */
 
 import * as readline from 'node:readline'
@@ -26,9 +33,15 @@ const rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity 
 const captureFile = process.env.STUB_ACP_CAPTURE
 const hangMethods = new Set((process.env.STUB_ACP_HANG ?? '').split(',').filter(Boolean))
 const failOnceFile = process.env.STUB_ACP_FAIL_ONCE_FILE
+const permissionPrompt = process.env.STUB_ACP_PERMISSION_PROMPT === '1'
+const permissionKinds = (process.env.STUB_ACP_PERMISSION_OPTIONS ?? 'allow_once,reject_once')
+  .split(',')
+  .filter((kind) => kind !== '' && kind !== 'none')
 
 let nextSessionId = 1
+let nextOutboundId = 100000
 const sessions = new Map()
+const outbound = new Map()
 
 function send(msg) {
   process.stdout.write(JSON.stringify(msg) + '\n')
@@ -36,6 +49,40 @@ function send(msg) {
 
 function sendNotification(method, params) {
   send({ jsonrpc: '2.0', method, params })
+}
+
+/**
+ * Send a session/request_permission request to the client and wait for its
+ * response. Times out after 5s so a broken client never wedges the stub.
+ */
+function requestPermission(sessionId) {
+  const options = permissionKinds.map((kind) => ({
+    optionId: `opt_${kind}`,
+    name: kind,
+    kind,
+  }))
+  const id = nextOutboundId++
+  send({
+    jsonrpc: '2.0',
+    id,
+    method: 'session/request_permission',
+    params: {
+      sessionId,
+      toolCall: {
+        toolCallId: 'call_perm',
+        title: 'Privileged operation',
+        kind: 'execute',
+        status: 'pending',
+      },
+      options,
+    },
+  })
+  return new Promise((resolve) => {
+    outbound.set(id, resolve)
+    setTimeout(() => {
+      if (outbound.delete(id)) resolve({ timeout: true })
+    }, 5000)
+  })
 }
 
 rl.on('line', (line) => {
@@ -47,6 +94,17 @@ rl.on('line', (line) => {
   }
 
   if (captureFile) appendFileSync(captureFile, line.trim() + '\n')
+
+  // A response to one of the stub's own outbound requests (no method field).
+  if (msg.method === undefined && msg.id !== undefined) {
+    const resolve = outbound.get(msg.id)
+    if (resolve !== undefined) {
+      outbound.delete(msg.id)
+      resolve(msg)
+    }
+    return
+  }
+
   if (typeof msg.method === 'string' && hangMethods.has(msg.method)) return
 
   if (msg.method === 'initialize') {
@@ -104,14 +162,34 @@ rl.on('line', (line) => {
       update: { sessionUpdate: 'tool_call_update', toolCallId: 'call_1', status: 'completed' },
     })
 
-    // Final message
-    sendNotification('session/update', {
-      sessionId,
-      update: { sessionUpdate: 'agent_message_chunk', messageId: 'msg_2', content: { type: 'text', text: 'Done!' } },
-    })
+    const finish = () => {
+      // Final message
+      sendNotification('session/update', {
+        sessionId,
+        update: { sessionUpdate: 'agent_message_chunk', messageId: 'msg_2', content: { type: 'text', text: 'Done!' } },
+      })
 
-    // Respond with stop reason
-    send({ jsonrpc: '2.0', id: msg.id, result: { stopReason: 'end_turn' } })
+      // Respond with stop reason
+      send({ jsonrpc: '2.0', id: msg.id, result: { stopReason: 'end_turn' } })
+    }
+
+    if (permissionPrompt) {
+      // Ask for permission mid-turn; the turn completes only after the
+      // client answers (or the request times out).
+      void requestPermission(sessionId).then((answer) => {
+        sendNotification('session/update', {
+          sessionId,
+          update: {
+            sessionUpdate: 'agent_message_chunk',
+            messageId: 'msg_perm',
+            content: { type: 'text', text: `permission:${JSON.stringify(answer?.result ?? answer?.error ?? answer)}` },
+          },
+        })
+        finish()
+      })
+    } else {
+      finish()
+    }
   } else if (msg.method === 'session/cancel') {
     // Notification — no response. The pending session/prompt call will
     // get a cancelled stop reason from the stub.
@@ -131,8 +209,9 @@ rl.on('line', (line) => {
       })
     }
   } else if (msg.method === 'session/request_permission') {
-    // Not used in stub tests
-    send({ jsonrpc: '2.0', id: msg.id, result: { outcome: 'granted' } })
+    // Client→agent direction is unused; answer with a spec-valid cancelled
+    // outcome rather than an invented shape.
+    send({ jsonrpc: '2.0', id: msg.id, result: { outcome: { outcome: 'cancelled' } } })
   }
 })
 

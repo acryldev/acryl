@@ -15,6 +15,11 @@ import {
 } from '../agent-control.ts'
 import { JsonRpcClient } from './acp-json-rpc.ts'
 import {
+  type DevinAcpPermissionOption,
+  type DevinAcpPermissionOptionKind,
+  type DevinAcpPermissionRequest,
+  type DevinAcpPermissionResponse,
+  type DevinAcpPermissionToolCall,
   type DevinAcpTransportConfig,
   devinEnv,
   resolveDevinBinary,
@@ -65,6 +70,171 @@ interface ResumeResult {
   readonly sessionId: string
   readonly runtimeId: string
   readonly status: 'idle'
+}
+
+/* ------------------------------------------------------------------ */
+/* session/request_permission answering                                */
+/* ------------------------------------------------------------------ */
+
+const PERMISSION_OPTION_KINDS: readonly DevinAcpPermissionOptionKind[] = [
+  'allow_once',
+  'allow_always',
+  'reject_once',
+  'reject_always',
+]
+
+/**
+ * Option-kind/optionId preference order per `permissionMode`. The plain
+ * `reject` token covers agents that name a refusal option `reject` without
+ * the spec suffix.
+ */
+const ALLOW_PREFERENCE = ['allow_always', 'allow_once'] as const
+const REJECT_PREFERENCE = ['reject_once', 'reject_always', 'reject'] as const
+
+/** Default bound on an `onPermissionRequest` callback resolving. */
+const DEFAULT_PERMISSION_TIMEOUT_MS = 60_000
+
+/** Sentinel distinguishing a timed-out callback from a settled answer. */
+const PERMISSION_ANSWER_TIMEOUT = Symbol('permission-answer-timeout')
+
+const CANCELLED_PERMISSION_RESPONSE: DevinAcpPermissionResponse = {
+  outcome: { outcome: 'cancelled' },
+}
+
+function isPermissionOptionKind(kind: unknown): kind is DevinAcpPermissionOptionKind {
+  return typeof kind === 'string' && (PERMISSION_OPTION_KINDS as readonly string[]).includes(kind)
+}
+
+/**
+ * Project wire params onto {@link DevinAcpPermissionRequest}. This is a wire
+ * boundary, so the projection is defensive: non-object params yield an
+ * empty request, options without a usable `optionId` are dropped, and
+ * option kinds outside the spec vocabulary are dropped (fail closed — an
+ * unrecognized option can never be selected by policy).
+ */
+function parsePermissionRequest(params: unknown): DevinAcpPermissionRequest {
+  const p = (typeof params === 'object' && params !== null ? params : {}) as {
+    sessionId?: unknown
+    toolCall?: unknown
+    options?: unknown
+  }
+  const options: DevinAcpPermissionOption[] = []
+  if (Array.isArray(p.options)) {
+    for (const raw of p.options as unknown[]) {
+      if (typeof raw !== 'object' || raw === null) continue
+      const option = raw as { optionId?: unknown; name?: unknown; kind?: unknown }
+      if (typeof option.optionId !== 'string' || option.optionId === '') continue
+      if (!isPermissionOptionKind(option.kind)) continue
+      options.push({
+        optionId: option.optionId,
+        name: typeof option.name === 'string' ? option.name : option.optionId,
+        kind: option.kind,
+      })
+    }
+  }
+  const rawToolCall = (typeof p.toolCall === 'object' && p.toolCall !== null ? p.toolCall : {}) as {
+    toolCallId?: unknown
+  }
+  const toolCall: DevinAcpPermissionToolCall = {
+    ...(rawToolCall as DevinAcpPermissionToolCall),
+    toolCallId: typeof rawToolCall.toolCallId === 'string' ? rawToolCall.toolCallId : '',
+  }
+  return {
+    sessionId: typeof p.sessionId === 'string' ? p.sessionId : '',
+    toolCall,
+    options,
+  }
+}
+
+/** Structural check on a callback-supplied response before it hits the wire. */
+function isPermissionResponse(value: unknown): value is DevinAcpPermissionResponse {
+  if (typeof value !== 'object' || value === null) return false
+  const outcome = (value as { outcome?: unknown }).outcome
+  if (typeof outcome !== 'object' || outcome === null) return false
+  const tag = (outcome as { outcome?: unknown }).outcome
+  if (tag === 'cancelled') return true
+  return tag === 'selected' && typeof (outcome as { optionId?: unknown }).optionId === 'string'
+}
+
+/**
+ * Bound a callback answer so a hung answerer can never wedge the agent.
+ * The losing branch is released with its timer; a rejected answer settles
+ * as the timeout sentinel so the caller answers cancelled.
+ */
+function racePermissionAnswer(
+  config: DevinAcpTransportConfig,
+  answer: Promise<DevinAcpPermissionResponse>,
+): Promise<DevinAcpPermissionResponse | typeof PERMISSION_ANSWER_TIMEOUT> {
+  const timeoutMs = config.permissionTimeoutMs ?? DEFAULT_PERMISSION_TIMEOUT_MS
+  if (timeoutMs <= 0) return answer
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(PERMISSION_ANSWER_TIMEOUT), timeoutMs)
+    // A pending answerer must never hold the host process open.
+    timer.unref?.()
+    answer.then(
+      (response) => {
+        clearTimeout(timer)
+        resolve(response)
+      },
+      () => {
+        clearTimeout(timer)
+        resolve(PERMISSION_ANSWER_TIMEOUT)
+      },
+    )
+  })
+}
+
+/** Pick the first option matching the mode's preference order. */
+function selectPermissionOption(
+  options: readonly DevinAcpPermissionOption[],
+  preference: readonly string[],
+): DevinAcpPermissionResponse {
+  for (const token of preference) {
+    const found = options.find((o) => o.kind === token || o.optionId === token)
+    if (found !== undefined) {
+      return { outcome: { outcome: 'selected', optionId: found.optionId } }
+    }
+  }
+  return CANCELLED_PERMISSION_RESPONSE
+}
+
+/**
+ * Answer one inbound `session/request_permission`. Resolution order:
+ *
+ * 1. `config.onPermissionRequest` — the extension seam for a future
+ *    worker-scoped approval adapter. The DSH `ApprovalService` cannot fill
+ *    this role: it requires a DSH `Agent` and an open session turn, which
+ *    an `AgentSnapshot` binding cannot supply (mini-design §5).
+ * 2. `config.permissionMode` — `dangerous`/`bypass` prefer `allow_always`
+ *    then `allow_once`; `normal` fails closed on reject-kind options.
+ * 3. No suitable option → the cancelled outcome.
+ *
+ * The handler never throws and never returns `undefined`: a thrown,
+ * timed-out, or malformed callback answer collapses to cancelled, so the
+ * agent always receives a real `RequestPermissionResponse` result rather
+ * than an error frame or silence.
+ */
+async function answerPermissionRequest(
+  config: DevinAcpTransportConfig,
+  params: unknown,
+): Promise<DevinAcpPermissionResponse> {
+  const request = parsePermissionRequest(params)
+  const answerer = config.onPermissionRequest
+  if (answerer !== undefined) {
+    try {
+      const response = await racePermissionAnswer(config, answerer(request))
+      if (response !== PERMISSION_ANSWER_TIMEOUT && isPermissionResponse(response)) {
+        return response
+      }
+    } catch {
+      // The callback threw synchronously — fall through to the safe answer.
+    }
+    return CANCELLED_PERMISSION_RESPONSE
+  }
+  const mode = config.permissionMode ?? 'normal'
+  return mode === 'dangerous' || mode === 'bypass'
+    ? selectPermissionOption(request.options, ALLOW_PREFERENCE)
+    : selectPermissionOption(request.options, REJECT_PREFERENCE)
 }
 
 /**
@@ -141,6 +311,13 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
       updates.push(params)
     })
 
+    // Answer agent permission requests per config: onPermissionRequest
+    // first, then the permissionMode policy. The handler always produces a
+    // response — an unanswered agent stalls the prompt turn.
+    rpc.onRequest('session/request_permission', (params) =>
+      answerPermissionRequest(config, params),
+    )
+
     const state: WorkerState = { process: childProcess, rpc, sessionId: null, updates, dead: false }
     workers.set(binding.workerId, state)
 
@@ -170,7 +347,7 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
         protocolVersion: 1,
         // Advertise only what this client actually handles; claiming fs or
         // terminal support without handlers would fail mid-session with
-        // -32601. A follow-up story adds session/request_permission.
+        // -32601. `session/request_permission` is already answered above.
         clientCapabilities: {
           fs: { readTextFile: false, writeTextFile: false },
           terminal: false,
