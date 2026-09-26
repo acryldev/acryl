@@ -88,7 +88,7 @@ export function apply(ctx: ClientContext): void {
   ctx.plugin(changesTabPlugin(shell, gitApi))
   ctx.plugin(reviewTabPlugin(shell, review))
   ctx.plugin(checksTabPlugin(shell, gitApi))
-  ctx.plugin(filesTabPlugin(shell, filesApi))
+  ctx.plugin(filesTabPlugin(shell, filesApi, gitApi))
 
   if (advanced) {
     ctx.slots.inject('desktop.main', () => {

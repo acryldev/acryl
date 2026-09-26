@@ -5,9 +5,15 @@ export const WORKSPACE_GIT_STATUS_PATH = '/api/acryl-workspace/git/status'
 export const WORKSPACE_GIT_DIFF_PATH = '/api/acryl-workspace/git/diff'
 export const WORKSPACE_GIT_WORKTREE_PATH = '/api/acryl-workspace/git/worktree'
 export const WORKSPACE_GIT_CHECKS_PATH = '/api/acryl-workspace/git/checks'
+export const WORKSPACE_GIT_SEARCH_PATH = '/api/acryl-workspace/git/search'
 export const WORKSPACE_GIT_STAGE_PATH = '/api/acryl-workspace/git/stage'
 export const WORKSPACE_GIT_UNSTAGE_PATH = '/api/acryl-workspace/git/unstage'
 export const WORKSPACE_GIT_COMMIT_PATH = '/api/acryl-workspace/git/commit'
+
+/** The most hits one search returns. */
+export const MAX_SEARCH_RESULTS = 200
+/** The longest query the search route accepts. */
+export const MAX_SEARCH_QUERY = 200
 
 /** The most files one stage or unstage request may name. */
 export const MAX_STAGE_FILES = 1000
@@ -100,6 +106,25 @@ export interface GitChecksView {
   /** The project's own manager, or null when no lockfile says (then `npm` is the neutral default). */
   readonly manager: CheckManager | null
   readonly scripts: readonly CheckScript[]
+}
+
+export type GitSearchMode = 'name' | 'content'
+
+/** One search hit: a file, and for a content search the line and its text. */
+export interface GitSearchHit {
+  readonly file: string
+  readonly line?: number
+  readonly text?: string
+}
+
+/** Search results over the tracked and untracked (not ignored) files of a worktree. */
+export interface GitSearchView {
+  readonly path: string
+  readonly query: string
+  readonly mode: GitSearchMode
+  readonly hits: readonly GitSearchHit[]
+  /** True when there were more matches than the cap. */
+  readonly truncated: boolean
 }
 
 /** The result of a commit: the new commit and the worktree's status afterwards. */
@@ -206,4 +231,20 @@ export function parseGitCommitView(value: unknown): GitCommitView {
     throw new Error('invalid git commit response')
   }
   return { hash: value.hash, subject: value.subject, status: parseGitStatusView(value.status) }
+}
+
+function isHit(value: unknown): value is GitSearchHit {
+  return isRecord(value) && typeof value.file === 'string'
+    && (value.line === undefined || typeof value.line === 'number')
+    && (value.text === undefined || typeof value.text === 'string')
+}
+
+/** @param value - unknown JSON from the search route. */
+export function parseGitSearchView(value: unknown): GitSearchView {
+  if (!isRecord(value) || typeof value.path !== 'string' || typeof value.query !== 'string'
+    || (value.mode !== 'name' && value.mode !== 'content') || typeof value.truncated !== 'boolean'
+    || !Array.isArray(value.hits) || !value.hits.every(isHit)) {
+    throw new Error('invalid git search response')
+  }
+  return { path: value.path, query: value.query, mode: value.mode, hits: value.hits, truncated: value.truncated }
 }

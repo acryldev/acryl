@@ -173,6 +173,17 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceCheckRun:hover { border-color: #4d6bfe; color: #4d6bfe; }
 .dshWorkspaceFilesFilter { margin: 4px 8px 6px; padding: 5px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceFilesFilter:focus { outline: 2px solid #4d6bfe; outline-offset: -1px; }
+.dshWorkspaceFilesSearch { display: flex; align-items: center; gap: 4px; }
+.dshWorkspaceFilesSearch .dshWorkspaceFilesFilter { flex: 1; min-width: 0; }
+.dshWorkspaceFilesSearchMode { display: flex; margin-right: 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; overflow: hidden; }
+.dshWorkspaceFilesSearchMode button { border: 0; background: transparent; color: var(--dsw-alias-fg); padding: 4px 8px; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; cursor: pointer; }
+.dshWorkspaceFilesSearchMode button[aria-pressed="true"] { background: #4d6bfe; color: #fff; }
+.dshWorkspaceFilesResults { overflow: auto; min-height: 0; flex: 1; }
+.dshWorkspaceSearchHits { list-style: none; margin: 0; padding: 0; }
+.dshWorkspaceSearchHit { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; padding: 4px 10px; border: 0; background: transparent; color: var(--dsw-alias-fg); text-align: left; cursor: pointer; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceSearchHit:hover { background: var(--dsw-alias-bg-hover, rgba(127,127,127,.12)); }
+.dshWorkspaceSearchFile { font-weight: 600; overflow-wrap: anywhere; }
+.dshWorkspaceSearchText { opacity: .7; font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
 .dshWorkspaceFileTree { list-style: none; margin: 0; padding: 0 0 12px; }
 .dshWorkspaceFileRow { appearance: none; display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px 8px; border: 0; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; text-align: left; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dshWorkspaceFileRow:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }

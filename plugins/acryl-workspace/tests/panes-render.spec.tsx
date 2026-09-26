@@ -52,6 +52,7 @@ function api(overrides: Partial<WorkspaceGitApi> = {}): WorkspaceGitApi {
     async checks(path) { return { path, manager: 'pnpm', scripts: [{ name: 'check', command: 'vitest run', primary: true }, { name: 'dev', command: 'vite', primary: false }] } },
     async stage(path) { return { path, branch: 'main', changes: [], truncated: false } },
     async unstage(path) { return { path, branch: 'main', changes: [], truncated: false } },
+    async search(path, query, mode) { return { path, query, mode, hits: [], truncated: false } },
     async commit(path) { return { hash: 'abc1234', subject: 'x', status: { path, branch: 'main', changes: [], truncated: false } } },
     async diff(path, file): Promise<GitDiffView> {
       return { path, file, text: DIFF_TEXT, binary: false, truncated: false }

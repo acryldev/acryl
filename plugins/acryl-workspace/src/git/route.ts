@@ -80,6 +80,20 @@ export function handleWorkspaceGitChecksRequest(
     params => git.checks(required(params, 'path')))
 }
 
+/** GET a search: `?path=&q=&mode=name|content`. */
+export function handleWorkspaceGitSearchRequest(
+  req: IncomingMessage,
+  res: ServerResponse,
+  expectedOrigin: string,
+  git: WorkspaceGit,
+  reportError: ReportError,
+): Promise<void> {
+  return handleGet(req, res, expectedOrigin, 'search', reportError, (params) => {
+    const mode = params.get('mode')
+    return git.search(required(params, 'path'), required(params, 'q'), mode === 'content' ? 'content' : mode === 'name' ? 'name' : 'name')
+  })
+}
+
 /** GET one file's diff for `?path=&file=`. */
 export function handleWorkspaceGitDiffRequest(
   req: IncomingMessage,

@@ -16,7 +16,7 @@ describe('Files tab plugin lifecycle', () => {
     const bodies: string[] = []
     const shell = new WorkspaceShellState({} as unknown as WorkspaceGitApi)
     const root = new Context()
-    const fiber = root.plugin(filesTabPlugin(shell, {} as unknown as WorkspaceFilesApi))
+    const fiber = root.plugin(filesTabPlugin(shell, {} as unknown as WorkspaceFilesApi, {} as unknown as WorkspaceGitApi))
     await settle()
     expect(fiber.state).toBe(PENDING)
     root.provide('slots', { register(def: { key: string }) { bodies.push(def.key); return () => { bodies.splice(bodies.indexOf(def.key), 1) } } })

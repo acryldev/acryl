@@ -37,6 +37,42 @@ function makeFilesApi(overrides: Partial<WorkspaceFilesApi> = {}): WorkspaceFile
 }
 
 describe('FilesBody', () => {
+  it('searches names, then content, and opens a hit in the editor', async () => {
+    const shell = new WorkspaceShellState(gitApi)
+    await shell.discover('/p')
+    shell.select('/p')
+    const opened: unknown[] = []
+    shell.onOpenFile(request => { opened.push(request) })
+    const search = vi.fn(async (path: string, query: string, mode: 'name' | 'content') => ({
+      path, query, mode, truncated: false,
+      hits: mode === 'name' ? [{ file: 'src/widget.ts' }] : [{ file: 'src/other.ts', line: 3, text: '  const widget = 1' }],
+    }))
+    const props = { shell, filesApi: makeFilesApi(), gitApi: { ...gitApi, search } } as unknown as FilesBodyProps
+    render(<FilesBody {...props} />)
+    fireEvent.change(screen.getByLabelText('Search the repository'), { target: { value: 'widget' } })
+    const nameHit = await screen.findByRole('button', { name: /src\/widget\.ts/ })
+    expect(search).toHaveBeenLastCalledWith('/p', 'widget', 'name')
+    fireEvent.click(screen.getByRole('button', { name: 'Content' }))
+    const contentHit = await screen.findByText('src/other.ts:3')
+    expect(search).toHaveBeenLastCalledWith('/p', 'widget', 'content')
+    expect(screen.getByText('const widget = 1')).toBeTruthy()
+    fireEvent.click(contentHit)
+    expect(opened).toEqual([{ worktree: '/p', file: 'src/other.ts' }])
+    expect(nameHit).toBeTruthy()
+    fireEvent.change(screen.getByLabelText('Search the repository'), { target: { value: '' } })
+    expect(await screen.findByText('README.md')).toBeTruthy()
+  })
+
+  it('shows a search failure instead of an empty list', async () => {
+    const shell = new WorkspaceShellState(gitApi)
+    await shell.discover('/p')
+    shell.select('/p')
+    const props = { shell, filesApi: makeFilesApi(), gitApi: { ...gitApi, search: () => Promise.reject(new Error('git is unavailable')) } } as unknown as FilesBodyProps
+    render(<FilesBody {...props} />)
+    fireEvent.change(screen.getByLabelText('Search the repository'), { target: { value: 'x' } })
+    expect((await screen.findByRole('alert')).textContent).toBe('git is unavailable')
+  })
+
   async function selectedShell(): Promise<WorkspaceShellState> {
     const shell = new WorkspaceShellState(gitApi)
     await shell.discover('/p')
@@ -49,7 +85,7 @@ describe('FilesBody', () => {
     const opened: unknown[] = []
     shell.onOpenFile(request => { opened.push(request) })
     const filesApi = makeFilesApi()
-    const props = { shell, filesApi } as unknown as FilesBodyProps
+    const props = { shell, filesApi, gitApi } as unknown as FilesBodyProps
     render(<FilesBody {...props} />)
     expect(await screen.findByText('README.md')).toBeTruthy()
     fireEvent.click(screen.getByRole('treeitem', { name: /src/ }))
@@ -60,14 +96,14 @@ describe('FilesBody', () => {
 
   it('filters opened files by name and shows a readable error when the root cannot be read', async () => {
     const shell = await selectedShell()
-    const props = { shell, filesApi: makeFilesApi() } as unknown as FilesBodyProps
+    const props = { shell, filesApi: makeFilesApi(), gitApi } as unknown as FilesBodyProps
     render(<FilesBody {...props} />)
     await screen.findByText('README.md')
     fireEvent.change(screen.getByLabelText('Filter files'), { target: { value: 'read' } })
     expect(screen.getByText('README.md')).toBeTruthy()
     expect(screen.queryByText('src')).toBeNull()
     cleanup()
-    const failing = { shell, filesApi: makeFilesApi({ tree: () => Promise.reject(new Error('cannot read')) }) } as unknown as FilesBodyProps
+    const failing = { shell, gitApi, filesApi: makeFilesApi({ tree: () => Promise.reject(new Error('cannot read')) }) } as unknown as FilesBodyProps
     render(<FilesBody {...failing} />)
     expect((await screen.findByRole('alert')).textContent).toContain('cannot read')
   })

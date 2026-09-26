@@ -7,18 +7,22 @@ import {
   WORKSPACE_GIT_UNSTAGE_PATH,
   WORKSPACE_GIT_DIFF_PATH,
   WORKSPACE_GIT_REPO_PATH,
+  WORKSPACE_GIT_SEARCH_PATH,
   WORKSPACE_GIT_STATUS_PATH,
   WORKSPACE_GIT_WORKTREE_PATH,
   parseGitChecksView,
   parseGitCommitView,
   parseGitDiffView,
   parseGitRepoView,
+  parseGitSearchView,
   parseGitStatusView,
   parseGitWorktreeCreatedView,
   type GitChecksView,
   type GitCommitView,
   type GitDiffView,
   type GitRepoView,
+  type GitSearchMode,
+  type GitSearchView,
   type GitStatusView,
   type GitWorktreeCreatedView,
 } from '../../git/contract.ts'
@@ -41,6 +45,11 @@ export interface WorkspaceGitApi {
    * @throws an Error whose message says what to fix (no message, nothing staged, no git identity).
    */
   commit(path: string, message: string): Promise<GitCommitView>
+  /**
+   * Find files by name or lines by content in a worktree (literal text, capped).
+   * @throws an Error whose message is fit to show the user.
+   */
+  search(path: string, query: string, mode: GitSearchMode): Promise<GitSearchView>
   /**
    * Create a branch and its worktree.
    * @throws an Error whose message is fit to show the user (for example "the branch x already exists").
@@ -125,6 +134,13 @@ export function createWorkspaceGitApi(fetchImpl: FetchLike = (input, init) => fe
         throw new Error(detail)
       }
       return parseGitWorktreeCreatedView(body)
+    },
+    async search(path, query, mode) {
+      const { status, body } = await getJson(WORKSPACE_GIT_SEARCH_PATH, { path, q: query, mode })
+      if (status !== 200) {
+        throw new Error(typeof body === 'object' && body !== null && 'error' in body && typeof body.error === 'string' ? body.error : `search failed (HTTP ${String(status)})`)
+      }
+      return parseGitSearchView(body)
     },
     async stage(path, files) {
       return parseGitStatusView(await postJson(WORKSPACE_GIT_STAGE_PATH, { path, files }))

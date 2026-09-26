@@ -14,6 +14,8 @@ import type {
   GitChangeCode,
   GitChecksView,
   GitCommitView,
+  GitSearchMode,
+  GitSearchView,
   GitDiffView,
   GitRepoView,
   GitStatusView,
@@ -21,7 +23,7 @@ import type {
   GitWorktreeCreatedView,
 } from './contract.ts'
 import { readWorktreeChecks } from './checks.ts'
-import { MAX_COMMIT_MESSAGE, MAX_STAGE_FILES } from './contract.ts'
+import { MAX_COMMIT_MESSAGE, MAX_SEARCH_QUERY, MAX_SEARCH_RESULTS, MAX_STAGE_FILES } from './contract.ts'
 
 const COMMIT_TIMEOUT_MS = 120_000
 const DEFAULT_MAX_OUTPUT_BYTES = 1024 * 1024
@@ -119,6 +121,45 @@ export class WorkspaceGit {
       changes: all.slice(0, this.maxChanges),
       truncated,
     }
+  }
+
+  /**
+   * Find files by name, or lines by content, among the tracked and untracked files git does not ignore.
+   * Case-insensitive and literal (the query is never a pattern), so it cannot be a regular-expression trap.
+   * @param path - absolute worktree directory.
+   * @param query - what to look for.
+   */
+  async search(path: string, query: string, mode: GitSearchMode): Promise<GitSearchView> {
+    const dir = await this.resolveDirectory(path)
+    const text = typeof query === 'string' ? query.trim() : ''
+    if (text === '' || text.length > MAX_SEARCH_QUERY || text.includes('\0') || (mode !== 'name' && mode !== 'content')) {
+      throw new WorkspaceGitError('type something to search for (up to 200 characters)', 'invalid')
+    }
+    if (mode === 'name') {
+      const listed = await this.run(['ls-files', '-z', '--cached', '--others', '--exclude-standard'], dir)
+      const needle = text.toLowerCase()
+      const matches = listed.stdout.split('\0').filter(file => file !== '' && file.toLowerCase().includes(needle))
+      // A match in the file's own name outranks one in a folder name; then shorter and alphabetical.
+      const inName = (file: string): boolean => (file.split('/').pop() ?? file).toLowerCase().includes(needle)
+      matches.sort((a, b) => Number(inName(b)) - Number(inName(a)) || a.length - b.length || a.localeCompare(b))
+      return {
+        path: dir, query: text, mode,
+        hits: matches.slice(0, MAX_SEARCH_RESULTS).map(file => ({ file })),
+        truncated: matches.length > MAX_SEARCH_RESULTS || listed.truncated,
+      }
+    }
+    const found = await this.run(['grep', '-n', '-I', '-i', '-F', '-z', '--untracked', '-e', text, '--'], dir, 1)
+    const hits: { file: string; line: number; text: string }[] = []
+    let truncated = found.truncated
+    // With -z each hit is `file NUL line NUL text` and hits are separated by a newline.
+    for (const record of found.stdout.split('\n')) {
+      if (record === '') continue
+      const [file, line, ...rest] = record.split('\0')
+      if (file === undefined || line === undefined || !/^\d+$/.test(line)) continue
+      if (hits.length >= MAX_SEARCH_RESULTS) { truncated = true; break }
+      hits.push({ file, line: Number(line), text: rest.join('\0').slice(0, 300) })
+    }
+    return { path: dir, query: text, mode, hits, truncated }
   }
 
   /**
