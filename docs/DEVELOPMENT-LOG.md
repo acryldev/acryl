@@ -5502,3 +5502,15 @@ binary directly rather than through whatever bare `pnpm` resolves to on
 - **Cost observed:** the first turn reported 41,873 tok. The context popover put ACRYL Web at about 4.6K for the system prompt and 8.7K for tool definitions, against about 2.6K and 7.3K on stock DSH Desktop: roughly 2.0K more prompt and 1.4K more tool definitions. Not urgent.
 - **Recorded:** `specs/001-acryl-refactor-improvements-and-tech-debt/tasks.md`, Phase 7 (T028 to T030): measure per section and per tool, decide what to trim (the extension router, the self-extension tool set, `acryl_workspace_status`), then add a token budget guard.
 
+
+## 2026-09-26 - Code-tab and review features added to the shared workspace (spec 040 ADE)
+
+All of these live in `plugins/acryl-workspace` as one Host route plus one Client plugin, composed for Web and Desktop by the same capability declaration. Nothing imports Electron.
+
+- **Live session board** (`0592b87cafeda6086bad24fd476d1a005e9072c7`): a Kanban keyed to the chat phase (Ready = blank chats, Running, Done capped at 30, subagent rows excluded, worktree branch label) plus a Notes column reusing the canvas todo tile. **Doc tabs** in the same commit: a read-only, file-backed markdown view that follows the file on disk (poll by mtime), with an Edit button that opens the editor.
+- **Diff review** (`f21066bbda15b651efd4d0e58d854fd886894238`): Unified or Side by side layout (remembered), and shift-click line ranges whose comments go to the agent as `name:41-44`.
+- **Stage, unstage, commit** (`e1a1bde89e7e956c0e210752616ea98d76f1f116`): confined git write routes (argument arrays, caps, timeouts, never pushes) and a Changes-tab commit box.
+- **Repo-wide search** (`3ca526c5092169897076b46d1a9bebda1541604b`): Names or Content search in the Code tab through `GET /api/acryl-workspace/git/search`. The query is always literal text (never a pattern or a git option), tracked plus untracked files, ignored and binary files skipped, capped at 200 hits with a truncated flag.
+- **File create, rename, delete** (`32cb6c905db486cb74e3be128061930d8480e6a0`): `POST /api/acryl-workspace/files/entry`. Never overwrites (an existing name or a dangling link is a conflict), never recurses (delete removes a file or an empty folder only), paths confined to the worktree and `.git` refused, a symlink is renamed or deleted as the link and its target is never touched. Found by the tests: deleting a symlink to a folder used `stat` (which follows the link) and failed; it uses `lstat` now. The UI asks before deleting.
+- **Also fixed on the way:** the Code tab rendered its Preview button twice per Markdown row, and the stylesheet carried a duplicated block; both removed.
+- **Not verified in a browser yet:** the search and file-operation UIs are covered by jsdom tests and real-repository Host tests, not by a real browser run (T076 is still open).
