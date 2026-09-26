@@ -35,12 +35,18 @@ export interface Config {
   binaryPath?: string
   /** Authentication mode. Default: `devin-auth` (stored credentials). */
   authMode?: DevinAcpAuthMode
-  /** Working directory for the `devin acp` subprocess. Default: `process.cwd()`. */
+  /**
+   * Fallback working directory for the `devin acp` subprocess. The bound
+   * worker's `workspace.cwd` wins when set; `process.cwd()` is the last
+   * resort.
+   */
   cwd?: string
   /** Default model selection passed to the Devin agent. */
   model?: string
   /** Permission mode passthrough. Default: `normal`. */
   permissionMode?: 'normal' | 'dangerous' | 'bypass'
+  /** Per-request JSON-RPC timeout in milliseconds. `0` disables. Default: 30_000. */
+  requestTimeoutMs?: number
 }
 
 /** Schemastery validation for {@link Config}. */
@@ -50,6 +56,7 @@ export const Config: z<Config> = z.object({
   cwd: z.string(),
   model: z.string(),
   permissionMode: z.union(['normal', 'dangerous', 'bypass'] as const).default('normal'),
+  requestTimeoutMs: z.number(),
 })
 
 /**
@@ -58,10 +65,10 @@ export const Config: z<Config> = z.object({
  * @param config - Validated Devin ACP composition settings.
  */
 export function apply(ctx: Context, config: Config): void {
-  const transport = devinAcpTransport(normalizeDevinAcpConfig({
-    ...config,
-    cwd: config.cwd ?? process.cwd(),
-  }))
+  // `cwd` stays optional through composition: the transport resolves
+  // `binding.workspace.cwd ?? config.cwd ?? process.cwd()` per worker at
+  // spawn time, so a packaged host never pins workers to `/`.
+  const transport = devinAcpTransport(normalizeDevinAcpConfig({ ...config }))
   ctx.plugin(acpProvider(transport))
   ctx.effect(() => () => transport.dispose())
 }
