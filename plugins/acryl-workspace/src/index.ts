@@ -44,6 +44,7 @@ import {
   WORKSPACE_PTY_INPUT_PATH,
   WORKSPACE_PTY_PATH,
   WORKSPACE_PTY_RESIZE_PATH,
+  WORKSPACE_PTY_STREAM_PATH,
 } from './pty/contract.ts'
 import {
   handleWorkspacePtyCloseRequest,
@@ -51,6 +52,7 @@ import {
   handleWorkspacePtyRequest,
   handleWorkspacePtyResizeRequest,
 } from './pty/route.ts'
+import { createWorkspacePtyStream } from './pty/stream.ts'
 
 /** Stable Cordis plugin name. */
 export const name = 'acryl-workspace'
@@ -102,6 +104,12 @@ export function apply(ctx: Context): void {
           handler: (req, res) => handler(req, res, rendererOrigin, workspacePty, reportHostError),
         }))
       }
+      const ptyStream = createWorkspacePtyStream(workspacePty, rendererOrigin, reportHostError)
+      releases.push(() => { ptyStream.close() })
+      releases.push(ctx.webServer.registerUpgrade({
+        path: WORKSPACE_PTY_STREAM_PATH,
+        handler: (req, socket, head) => { ptyStream.handleUpgrade(req, socket, head) },
+      }))
       const gitRoutes = [
         [WORKSPACE_GIT_REPO_PATH, handleWorkspaceGitRepoRequest],
         [WORKSPACE_GIT_STATUS_PATH, handleWorkspaceGitStatusRequest],

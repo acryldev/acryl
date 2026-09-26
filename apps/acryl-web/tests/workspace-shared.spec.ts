@@ -5,12 +5,14 @@
  */
 import { execFileSync } from 'node:child_process'
 import { mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { createAcrylEngineHost, createWebEngineDefinition } from 'acryl-harness-runtime'
 import { afterEach, describe, expect, it } from 'vitest'
 
+const require = createRequire(import.meta.url)
 const temporaryHomes: string[] = []
 const initialAcrylHome = process.env.ACRYL_HOME
 
@@ -76,17 +78,22 @@ describe('the ACRYL workspace on the Web surface', () => {
       })
       expect(started.status).toBe(200)
       const terminal = await started.json() as { id: string }
-      await fetch(`${origin}/api/acryl-workspace/pty/input`, {
-        method: 'POST',
-        headers: { ...headers, 'content-type': 'application/json' },
-        body: JSON.stringify({ id: terminal.id, data: 'pwd\r' }),
-      })
+      // Live output and keystrokes travel over the ordered stream (WebSocket), the same one the browser terminal uses.
+      const { WebSocket } = createRequire(require.resolve('acryl-workspace/package.json'))('ws') as typeof import('ws')
+      const socket = new WebSocket(`${origin.replace('http', 'ws')}/api/acryl-workspace/pty/stream?id=${terminal.id}&since=0`, { headers: { ...headers, origin } })
       let output = ''
-      for (let attempt = 0; attempt < 40 && !output.includes(repo); attempt += 1) {
+      socket.on('message', (raw) => {
+        const message = JSON.parse(raw.toString('utf8')) as { t: string; data?: string }
+        if (message.t === 'out') output += message.data ?? ''
+      })
+      await new Promise<void>((resolve, reject) => { socket.once('open', () => { resolve() }); socket.once('error', reject) })
+      socket.send(JSON.stringify({ t: 'resize', cols: 200, rows: 40 }))
+      socket.send(JSON.stringify({ t: 'in', data: 'pwd\r' }))
+      for (let attempt = 0; attempt < 60 && !output.includes(repo); attempt += 1) {
         await new Promise(resolve => { setTimeout(resolve, 100) })
-        output = ((await (await fetch(`${origin}/api/acryl-workspace/pty?id=${terminal.id}`, { headers })).json()) as { output: string }).output
       }
       expect(output).toContain(repo)
+      socket.close()
       await fetch(`${origin}/api/acryl-workspace/pty/close`, {
         method: 'POST',
         headers: { ...headers, 'content-type': 'application/json' },

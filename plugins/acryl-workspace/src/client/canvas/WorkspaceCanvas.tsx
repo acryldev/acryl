@@ -1,7 +1,5 @@
 /** Advanced-mode ADE workspace: one tile fills the main content area. */
 
-import { FitAddon } from '@xterm/addon-fit'
-import { Terminal as XtermTerminal } from '@xterm/xterm'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
 // `GlobalStandardProps.useSessions` (destructured below) is merged in by
@@ -27,6 +25,7 @@ import type { WorkspaceFilesApi } from '../files/files-api.ts'
 import { GitDiffPane } from '../diff/GitDiffPane.tsx'
 import type { ReviewStore } from '../review/review-store.ts'
 import { countRunning, runningLabel } from '../sessions/running-agents.ts'
+import { TerminalRegistry, type TerminalSessionSnapshot } from '../terminal/terminal-session.ts'
 import { SplitDivider } from './SplitDivider.tsx'
 import { hiddenEdges, scrollToReveal, wheelToScroll } from './tab-scroll.ts'
 import { clampSplit, readSplitRatio, writeSplitRatio } from './split-ratio.ts'
@@ -107,12 +106,17 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
     )
   }, [workspace, sessions])
 
+  // Terminals live as long as the canvas does, so switching tabs never rebuilds one.
+  const terminals = useMemo(() => new TerminalRegistry(), [])
+  useEffect(() => () => { terminals.disposeAll() }, [terminals])
+
   const closeTile = useCallback(async (tile: WorkspaceTile) => {
     const removed = workspace.closeTile(tile.id)
     if (removed?.sessionId !== undefined) {
+      terminals.release(removed.sessionId)
       await api.close(removed.sessionId).catch(() => {})
     }
-  }, [api, workspace])
+  }, [api, workspace, terminals])
 
   useEffect(() => shell.onOpenDiff((request) => {
     const state = groups.stateFor(request.worktree)
@@ -156,7 +160,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
   /** The pane for one tile, used for both the primary pane and the split pane. */
   const renderTile = (tile: WorkspaceTile): ReactNode => {
     if (tile.kind === 'chat') return <div className="dshWorkspaceChat">{renderConversation()}</div>
-    if (tile.kind === 'pty') return <PtyPane tile={tile} api={api} />
+    if (tile.kind === 'pty') return <PtyPane tile={tile} terminals={terminals} />
     if (tile.kind === 'doc' && tile.docRel !== undefined) return <DocFilePane tile={tile} shell={shell} filesApi={filesApi} />
     if (tile.kind === 'file' && tile.fileRel !== undefined) return <FileEditorPane tile={tile} workspace={workspace} filesApi={filesApi} />
     if (tile.kind === 'file') return <FilePane tile={tile} workspace={workspace} />
@@ -423,97 +427,48 @@ function glyph(kind: WorkspaceTile['kind']): string {
 
 function PtyPane({
   tile,
-  api,
+  terminals,
 }: {
   tile: WorkspaceTile
-  api: WorkspacePtyApi
+  terminals: TerminalRegistry
 }) {
-  const [status, setStatus] = useState(tile.sessionId === undefined ? 'starting' : 'running')
   const terminalHost = useRef<HTMLDivElement>(null)
+  const session = tile.sessionId === undefined ? undefined : terminals.ensure(tile.sessionId)
+  const snapshot = useSyncExternalStore(
+    session?.subscribe ?? NO_SUBSCRIPTION,
+    session?.getSnapshot ?? (() => STARTING),
+  )
 
+  // The terminal is moved into this pane while the tab shows it and back out when it does not.
   useEffect(() => {
-    const sessionId = tile.sessionId
     const host = terminalHost.current
-    if (sessionId === undefined || host === null) {
-      setStatus(tile.error === undefined ? 'starting' : 'error')
-      return
-    }
+    if (session === undefined || host === null) return
+    session.attach(host)
+    return () => { session.detach() }
+  }, [session])
 
-    const terminal = new XtermTerminal({
-      cursorBlink: true,
-      convertEol: false,
-      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-      fontSize: 13,
-      lineHeight: 1.2,
-      scrollback: 5_000,
-      theme: {
-        background: '#0b0d12',
-        foreground: '#d7e0ea',
-        cursor: '#d7e0ea',
-        selectionBackground: '#334155',
-      },
-    })
-    const fit = new FitAddon()
-    terminal.loadAddon(fit)
-    terminal.open(host)
-    terminal.focus()
-
-    let cancelled = false
-    let rendered = ''
-    let dimensions = ''
-    const resize = (): void => {
-      if (cancelled || host.clientWidth === 0 || host.clientHeight === 0) return
-      fit.fit()
-      const next = `${String(terminal.cols)}x${String(terminal.rows)}`
-      if (dimensions === next) return
-      dimensions = next
-      void api.resize(sessionId, terminal.cols, terminal.rows).catch(() => { setStatus('error') })
-    }
-    const observer = new ResizeObserver(resize)
-    observer.observe(host)
-    const animationFrame = requestAnimationFrame(resize)
-
-    const input = terminal.onData((data) => {
-      void api.write(sessionId, data).catch(() => { setStatus('error') })
-    })
-    const tick = async (): Promise<void> => {
-      try {
-        const view = await api.read(sessionId)
-        if (cancelled) return
-        if (!view.output.startsWith(rendered)) {
-          terminal.reset()
-          rendered = ''
-        }
-        const delta = view.output.slice(rendered.length)
-        if (delta.length > 0) terminal.write(delta)
-        rendered = view.output
-        setStatus(view.status)
-      } catch {
-        if (!cancelled) setStatus('error')
-      }
-    }
-    void tick()
-    const timer = window.setInterval(() => { void tick() }, 100)
-    return () => {
-      cancelled = true
-      cancelAnimationFrame(animationFrame)
-      window.clearInterval(timer)
-      observer.disconnect()
-      input.dispose()
-      terminal.dispose()
-    }
-  }, [api, tile.error, tile.sessionId])
-
+  const status = tile.error !== undefined ? 'error' : statusText(snapshot)
   return (
-    <div className="dshWorkspacePty">
+    <div className="dshWorkspacePty" onMouseDown={() => { session?.focus() }}>
       <div className="dshWorkspacePtyToolbar">
         <span className="dshWorkspacePtyName">{tile.title}</span>
-        <span className="dshWorkspacePtyStatus">{status}</span>
+        <span className="dshWorkspacePtyStatus" data-status={snapshot.status}>{status}</span>
       </div>
       <div ref={terminalHost} className="dshWorkspaceXterm" aria-label={`${tile.title} terminal`} />
       {tile.error !== undefined && <div className="dshWorkspacePtyError">{tile.error}</div>}
     </div>
   )
+}
+
+const NO_SUBSCRIPTION = (): (() => void) => () => {}
+const STARTING: TerminalSessionSnapshot = { status: 'connecting', exitCode: null, error: null }
+
+function statusText(snapshot: TerminalSessionSnapshot): string {
+  if (snapshot.status === 'live') return 'running'
+  if (snapshot.status === 'exited') return snapshot.exitCode === null ? 'exited' : `exited (${String(snapshot.exitCode)})`
+  if (snapshot.status === 'reconnecting') return 'reconnecting...'
+  if (snapshot.status === 'lost') return 'session ended'
+  return 'starting'
 }
 
 function FilePane({

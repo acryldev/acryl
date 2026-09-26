@@ -1,0 +1,166 @@
+/**
+ * One terminal that outlives its tab.
+ *
+ * The xterm instance and its live stream belong to the session, not to the pane that shows it. Switching
+ * tabs only moves the terminal's element out of and back into the page, so the screen is exactly as the
+ * process left it: no replayed history, no redraw glitches. The session ends when its tab is closed.
+ */
+
+import { FitAddon } from '@xterm/addon-fit'
+import { Terminal as XtermTerminal } from '@xterm/xterm'
+import { PtyStream, type PtyStreamState, type StreamSocketFactory } from './pty-stream.ts'
+
+export type TerminalStatus = PtyStreamState
+
+export interface TerminalSessionSnapshot {
+  readonly status: TerminalStatus
+  readonly exitCode: number | null
+  readonly error: string | null
+}
+
+const FONT_FAMILY = '"SF Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace'
+
+export interface TerminalSessionOptions {
+  readonly createSocket?: StreamSocketFactory
+  readonly urlFor?: (id: string, cursor: number) => string
+}
+
+export class TerminalSession {
+  private readonly terminal: XtermTerminal
+  private readonly fit = new FitAddon()
+  private readonly stream: PtyStream
+  private readonly element: HTMLDivElement
+  private readonly listeners = new Set<() => void>()
+  private snapshot: TerminalSessionSnapshot = { status: 'connecting', exitCode: null, error: null }
+  private opened = false
+  private host: HTMLElement | undefined
+  private observer: ResizeObserver | undefined
+  private frame: number | undefined
+  private dims = ''
+  private disposed = false
+
+  constructor(readonly id: string, options: TerminalSessionOptions = {}) {
+    this.element = document.createElement('div')
+    this.element.className = 'dshWorkspaceXtermScreen'
+    this.terminal = new XtermTerminal({
+      cursorBlink: true,
+      convertEol: false,
+      fontFamily: FONT_FAMILY,
+      fontSize: 13,
+      // 1.0 keeps box-drawing lines continuous between rows, which every TUI relies on.
+      lineHeight: 1,
+      scrollback: 10_000,
+      macOptionIsMeta: true,
+      scrollOnUserInput: true,
+      theme: {
+        background: '#0b0d12',
+        foreground: '#d7e0ea',
+        cursor: '#d7e0ea',
+        selectionBackground: '#334155',
+      },
+    })
+    this.terminal.loadAddon(this.fit)
+    this.stream = new PtyStream(id, {
+      output: (data, replace) => {
+        if (replace) this.terminal.reset()
+        this.terminal.write(data)
+      },
+      state: (status) => { this.update({ status }) },
+      exit: (exitCode, error) => { this.update({ exitCode, error }) },
+    }, options.createSocket, options.urlFor)
+    this.terminal.onData((data) => { this.stream.input(data) })
+    this.stream.connect()
+  }
+
+  getSnapshot = (): TerminalSessionSnapshot => this.snapshot
+
+  subscribe = (listener: () => void): (() => void) => {
+    this.listeners.add(listener)
+    return () => { this.listeners.delete(listener) }
+  }
+
+  /** Show this terminal in `host` (a pane), replacing whatever showed it before. */
+  attach(host: HTMLElement): void {
+    if (this.disposed) return
+    this.detach()
+    this.host = host
+    host.appendChild(this.element)
+    if (!this.opened) {
+      this.opened = true
+      this.terminal.open(this.element)
+    }
+    this.observer = new ResizeObserver(() => { this.scheduleFit() })
+    this.observer.observe(host)
+    this.scheduleFit()
+    this.terminal.focus()
+  }
+
+  /** Take the terminal out of the page; it keeps running and keeps its screen. */
+  detach(): void {
+    if (this.frame !== undefined) cancelAnimationFrame(this.frame)
+    this.frame = undefined
+    this.observer?.disconnect()
+    this.observer = undefined
+    if (this.element.parentElement === this.host) this.element.remove()
+    this.host = undefined
+  }
+
+  focus(): void {
+    this.terminal.focus()
+  }
+
+  /** End the session's view of the process (the tab was closed); closing the process itself is the caller's. */
+  dispose(): void {
+    if (this.disposed) return
+    this.disposed = true
+    this.detach()
+    this.stream.dispose()
+    this.terminal.dispose()
+    this.listeners.clear()
+  }
+
+  private scheduleFit(): void {
+    this.frame ??= requestAnimationFrame(() => {
+      this.frame = undefined
+      const host = this.host
+      if (this.disposed || host === undefined || host.clientWidth === 0 || host.clientHeight === 0) return
+      this.fit.fit()
+      const next = `${String(this.terminal.cols)}x${String(this.terminal.rows)}`
+      if (next === this.dims) return
+      this.dims = next
+      this.stream.resize(this.terminal.cols, this.terminal.rows)
+    })
+  }
+
+  private update(change: Partial<TerminalSessionSnapshot>): void {
+    this.snapshot = { ...this.snapshot, ...change }
+    for (const listener of [...this.listeners]) listener()
+  }
+}
+
+/** The live terminals of one workspace canvas, by Host session id. */
+export class TerminalRegistry {
+  private readonly sessions = new Map<string, TerminalSession>()
+
+  constructor(private readonly options: TerminalSessionOptions = {}) {}
+
+  ensure(id: string): TerminalSession {
+    let session = this.sessions.get(id)
+    if (session === undefined) {
+      session = new TerminalSession(id, this.options)
+      this.sessions.set(id, session)
+    }
+    return session
+  }
+
+  /** The tab was closed: end the session's view. */
+  release(id: string): void {
+    this.sessions.get(id)?.dispose()
+    this.sessions.delete(id)
+  }
+
+  disposeAll(): void {
+    for (const session of this.sessions.values()) session.dispose()
+    this.sessions.clear()
+  }
+}

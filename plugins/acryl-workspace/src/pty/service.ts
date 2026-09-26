@@ -8,8 +8,8 @@ import { isAbsolute, join } from 'node:path'
 import { spawn as spawnPty } from 'node-pty'
 import type { WorkspacePtyCommandId, WorkspacePtyStatus, WorkspacePtyView } from './contract.ts'
 import { isWorkspacePtyCommandId } from './contract.ts'
+import { Scrollback, type Replay } from './scrollback.ts'
 
-const MAX_OUTPUT_CHARS = 64 * 1024
 const KILL_GRACE_MS = 1_000
 const DEFAULT_COLS = 120
 const DEFAULT_ROWS = 40
@@ -126,10 +126,16 @@ interface LiveSession {
   readonly process: WorkspacePtyProcess
   readonly subscriptions: readonly { dispose(): void }[]
   status: WorkspacePtyStatus
-  output: string
+  readonly scrollback: Scrollback
+  readonly listeners: Set<(event: WorkspacePtyEvent) => void>
   exitCode: number | null
   error: string | null
 }
+
+/** What a live subscriber to one session is told. */
+export type WorkspacePtyEvent =
+  | { readonly kind: 'data'; readonly data: string; readonly cursor: number }
+  | { readonly kind: 'exit'; readonly exitCode: number | null; readonly error: string | null }
 
 /**
  * Resolve argv for one allowlisted workspace command.
@@ -151,6 +157,21 @@ export function planWorkspacePtyCommand(
   return { command: commandId, args: [] }
 }
 
+/**
+ * The environment a terminal process starts with: a real terminal type, true color, and a UTF-8 locale
+ * (an app launched from Finder has none, which makes shells and TUIs draw wrong glyphs).
+ */
+export function terminalEnvironment(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const locale = env.LC_ALL ?? env.LC_CTYPE ?? env.LANG
+  return {
+    ...env,
+    TERM: env.TERM ?? 'xterm-256color',
+    COLORTERM: env.COLORTERM ?? 'truecolor',
+    TERM_PROGRAM: 'ACRYL',
+    ...(locale === undefined || !/utf-?8/i.test(locale) ? { LANG: 'en_US.UTF-8' } : {}),
+  }
+}
+
 function isExistingAbsoluteDirectory(path: string): boolean {
   if (path.length === 0 || path.includes('\0') || !isAbsolute(path)) return false
   try {
@@ -158,12 +179,6 @@ function isExistingAbsoluteDirectory(path: string): boolean {
   } catch {
     return false
   }
-}
-
-function appendOutput(current: string, chunk: string): string {
-  const next = current + chunk
-  if (next.length <= MAX_OUTPUT_CHARS) return next
-  return next.slice(next.length - MAX_OUTPUT_CHARS)
 }
 
 /** Table of live native PTY sessions for one ACRYL Workspace Host fiber. */
@@ -207,7 +222,7 @@ export class WorkspacePtyRegistry {
       }
       process = this.spawnImpl(resolved ?? plan.command, plan.args, {
         cwd: cwd ?? this.cwd,
-        env: { ...this.env, TERM: this.env.TERM ?? 'xterm-256color' },
+        env: terminalEnvironment(this.env),
         name: 'xterm-256color',
         cols: DEFAULT_COLS,
         rows: DEFAULT_ROWS,
@@ -223,12 +238,15 @@ export class WorkspacePtyRegistry {
       process,
       subscriptions,
       status: 'running',
-      output: '',
+      scrollback: new Scrollback(),
+      listeners: new Set(),
       exitCode: null,
       error: null,
     }
     subscriptions.push(process.onData((chunk) => {
-      session.output = appendOutput(session.output, chunk)
+      session.scrollback.append(chunk)
+      const event: WorkspacePtyEvent = { kind: 'data', data: chunk, cursor: session.scrollback.cursor }
+      for (const listener of [...session.listeners]) listener(event)
     }))
     subscriptions.push(process.onExit(({ exitCode, signal }) => {
       session.status = 'exited'
@@ -236,6 +254,8 @@ export class WorkspacePtyRegistry {
       if (session.error === null && signal !== undefined && signal !== 0) {
         session.error = `signal ${String(signal)}`
       }
+      const event: WorkspacePtyEvent = { kind: 'exit', exitCode: session.exitCode, error: session.error }
+      for (const listener of [...session.listeners]) listener(event)
     }))
     this.sessions.set(id, session)
     return this.view(session)
@@ -255,6 +275,30 @@ export class WorkspacePtyRegistry {
     const session = this.require(id)
     if (session.status !== 'running') return
     session.process.resize(cols, rows)
+  }
+
+  /**
+   * Follow one session live. `replay` is what the subscriber has not seen yet (from `since`, or the kept
+   * tail when it missed more than is kept); everything after it arrives through `listener`, in order,
+   * with nothing lost or repeated in between.
+   * @param since - the cursor the subscriber already reached, 0 for a first attach.
+   */
+  subscribe(id: string, since: number, listener: (event: WorkspacePtyEvent) => void): {
+    readonly replay: Replay
+    readonly status: WorkspacePtyStatus
+    readonly exitCode: number | null
+    readonly error: string | null
+    dispose(): void
+  } {
+    const session = this.require(id)
+    session.listeners.add(listener)
+    return {
+      replay: session.scrollback.replay(since),
+      status: session.status,
+      exitCode: session.exitCode,
+      error: session.error,
+      dispose: () => { session.listeners.delete(listener) },
+    }
   }
 
   /** Snapshot one session for the renderer. */
@@ -289,7 +333,7 @@ export class WorkspacePtyRegistry {
     return {
       id: session.id,
       status: session.status,
-      output: session.output,
+      output: session.scrollback.replay(0).data,
       exitCode: session.exitCode,
       error: session.error,
     }

@@ -1,4 +1,5 @@
 import { defineConfig } from 'tsdown'
+import { xtermCssPlugin } from './scripts/xterm-css-plugin.mjs'
 
 const PACKAGE_NAME = 'acryl-workspace'
 
@@ -27,6 +28,8 @@ export default defineConfig([
     dts: false,
     clean: false,
     sourcemap: true,
+    // The client is one JS file, so xterm's own stylesheet is inlined as text and injected with ours.
+    plugins: [xtermCssPlugin()],
     external: [
       'react',
       'react/jsx-runtime',

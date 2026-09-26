@@ -1,3 +1,5 @@
+import xtermCss from 'virtual:xterm-css'
+
 const WORKSPACE_STYLES = `
 .dshWorkspace { position: relative; display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; height: 100%; background: var(--dsw-alias-bg-base); }
 .dshWorkspaceTabstrip { display: flex; align-items: stretch; min-height: 36px; border-bottom: 1px solid var(--dsw-alias-border-l1); background: color-mix(in srgb, var(--dsw-alias-bg-base) 92%, black); -webkit-app-region: no-drag; }
@@ -55,22 +57,8 @@ const WORKSPACE_STYLES = `
 .dshWorkspacePtyStatus { margin-left: auto; font: 11px/1 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg-l2); }
 .dshWorkspaceXterm { position: relative; flex: 1; min-width: 0; min-height: 0; padding: 8px 10px; overflow: hidden; background: #0b0d12; }
 .dshWorkspacePtyError { position: absolute; inset: 50% auto auto 50%; translate: -50% -50%; max-width: min(520px, 80%); color: #fca5a5; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
-.dshWorkspaceXterm .xterm { position: relative; width: 100%; height: 100%; cursor: text; user-select: none; }
-.dshWorkspaceXterm .xterm.focus, .dshWorkspaceXterm .xterm:focus { outline: none; }
-.dshWorkspaceXterm .xterm-helpers { position: absolute; top: 0; z-index: 5; }
-.dshWorkspaceXterm .xterm-helper-textarea { position: absolute; z-index: -5; top: 0; left: -9999em; width: 0; height: 0; margin: 0; padding: 0; overflow: hidden; border: 0; opacity: 0; resize: none; white-space: nowrap; }
-.dshWorkspaceXterm .composition-view { position: absolute; z-index: 1; display: none; color: white; background: black; white-space: nowrap; }
-.dshWorkspaceXterm .composition-view.active { display: block; }
-.dshWorkspaceXterm .xterm-viewport { position: absolute; inset: 0; overflow-y: scroll; cursor: default; background: #0b0d12; }
-.dshWorkspaceXterm .xterm-screen { position: relative; }
-.dshWorkspaceXterm .xterm-screen canvas { position: absolute; top: 0; left: 0; }
-.dshWorkspaceXterm .xterm-scroll-area { visibility: hidden; }
-.dshWorkspaceXterm .xterm-char-measure-element { position: absolute; top: 0; left: -9999em; display: inline-block; visibility: hidden; line-height: normal; }
-.dshWorkspaceXterm .xterm.enable-mouse-events { cursor: default; }
-.dshWorkspaceXterm .xterm-cursor-pointer { cursor: pointer; }
-.dshWorkspaceXterm .xterm-accessibility:not(.debug), .dshWorkspaceXterm .xterm-message { position: absolute; z-index: 10; inset: 0; color: transparent; pointer-events: none; }
-.dshWorkspaceXterm .xterm-accessibility-tree { user-select: text; white-space: pre; }
-.dshWorkspaceXterm .live-region { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.dshWorkspaceXterm .xterm { position: relative; width: 100%; height: 100%; }
+.dshWorkspaceXterm .xterm .xterm-viewport { background-color: #0b0d12; }
 .dshWorkspaceFile input, .dshWorkspaceFile textarea, .dshWorkspaceBrowserBar input { flex: 1; min-width: 0; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dshWorkspaceFile { gap: 0; }
 .dshWorkspaceFile input { padding: 8px 12px; border-bottom: 1px solid var(--dsw-alias-border-l2); border-radius: 0; }
@@ -315,7 +303,7 @@ const WORKSPACE_STYLES = `
 export function installWorkspaceStyles(): () => void {
   const style = document.createElement('style')
   style.dataset.plugin = 'acryl-workspace'
-  style.textContent = WORKSPACE_STYLES
+  style.textContent = xtermCss + WORKSPACE_STYLES
   document.head.appendChild(style)
   return () => { style.remove() }
 }
