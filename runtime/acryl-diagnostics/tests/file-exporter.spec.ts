@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, readdirSync } from 'node:fs'
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -20,6 +20,13 @@ function exporter(threshold: 'debug' | 'info' | 'warn' | 'error' = 'info'): { e:
 }
 
 describe('FileExporter', () => {
+  it('never throws into the caller when the disk write fails (a removed log directory)', () => {
+    const { e, dir } = exporter('info')
+    rmSync(dir, { recursive: true, force: true })
+    expect(() => { e.export({ sn: 0, ts: Date.now(), name: 'test', type: 'warn', level: 1, args: ['after the directory is gone'] }) }).not.toThrow()
+  })
+
+
   it('renders and writes a message with a level and name prefix', () => {
     const { e, dir } = exporter('info')
     e.export({ sn: 0, ts: Date.now(), name: 'test', type: 'info', level: 1, args: ['hello'] })

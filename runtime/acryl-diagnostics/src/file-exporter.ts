@@ -28,7 +28,13 @@ export class FileExporter implements Exporter {
 
   export(message: Message): void {
     if (!shouldEmit(message.type, this.threshold)) return
-    this.sink.write(message.type, this.render(message))
+    // Logging never fails its caller: a removed or full disk must not turn a `logger.warn` into an exception
+    // (the failure has nowhere to be logged to, so the line is dropped).
+    try {
+      this.sink.write(message.type, this.render(message))
+    } catch {
+      // Dropped on purpose.
+    }
   }
 
   /** Close the underlying sink (used by tests and shutdown). */
