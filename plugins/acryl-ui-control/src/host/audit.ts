@@ -8,19 +8,9 @@
 import { closeSync, mkdirSync, openSync, readFileSync, renameSync, statSync, writeSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
+import type { AuditEntry } from '../contract.ts'
 
-export interface AuditEntry {
-  /** ISO time of the call. */
-  readonly at: string
-  readonly tool: string
-  /** The control touched, when the call had one. */
-  readonly target?: { readonly role: string; readonly name: string }
-  readonly outcome: 'ok' | 'refused' | 'failed'
-  /** The error code for a refusal or failure, or a short note for a success. */
-  readonly detail?: string
-  /** Whether the user was asked first (`asked`) or approval was switched off (`none`). */
-  readonly approval: 'asked' | 'none' | 'not-needed'
-}
+export type { AuditEntry } from '../contract.ts'
 
 const MAX_LOG_BYTES = 5 * 1024 * 1024
 

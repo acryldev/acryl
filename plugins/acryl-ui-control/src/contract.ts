@@ -190,3 +190,17 @@ export function parseChannelToHost(text: string): ChannelToHost | null {
   }
   return null
 }
+
+/** One line of the audit log: what the agent did, never what it typed. */
+export interface AuditEntry {
+  /** ISO time of the call. */
+  readonly at: string
+  readonly tool: string
+  /** The control touched, when the call had one. */
+  readonly target?: { readonly role: string; readonly name: string }
+  readonly outcome: 'ok' | 'refused' | 'failed'
+  /** The error code for a refusal or failure, or a short note for a success. */
+  readonly detail?: string
+  /** Whether the user was asked first (`asked`) or approval was switched off (`none`). */
+  readonly approval: 'asked' | 'none' | 'not-needed'
+}

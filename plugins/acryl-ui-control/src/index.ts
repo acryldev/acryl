@@ -11,6 +11,7 @@ import type {} from '@deepseek-ai/dsh-host-webserver'
 import type {} from '@deepseek-ai/dsh-tools'
 import { createApprovalPolicy } from './host/approval.ts'
 import { AuditLog, defaultAuditPath } from './host/audit.ts'
+import { createAuditRequestHandler, UI_CONTROL_AUDIT_PATH } from './host/audit-route.ts'
 import { UiChannel } from './host/channel.ts'
 import { parseConfig } from './host/config.ts'
 import { createUiControlStream, UI_CONTROL_CHANNEL_PATH } from './host/stream.ts'
@@ -33,6 +34,8 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
         path: UI_CONTROL_CHANNEL_PATH,
         handler: (req, socket, head) => { stream.handleUpgrade(req, socket, head) },
       }))
+      const handleAudit = createAuditRequestHandler(audit)
+      releases.push(ctx.webServer.register({ kind: 'exact', path: UI_CONTROL_AUDIT_PATH, handler: (req, res) => { handleAudit(req, res, origin) } }))
       releases.push(registerUiTools(ctx, { channel, audit, refs, approval: config.approval === 'none' ? 'none' : 'asked' }))
       releases.push(ctx.on('tools/pre-execute', createApprovalPolicy(refs, config.approval)))
     } catch (cause) {
@@ -50,4 +53,5 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
 }
 
 export { UI_CONTROL_CHANNEL_PATH } from './host/stream.ts'
+export { UI_CONTROL_AUDIT_PATH } from './host/audit-route.ts'
 export { UiControlError } from './contract.ts'

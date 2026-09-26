@@ -36,6 +36,8 @@ Changes 1 to 4 together save about 1,250 tokens (roughly two thirds of ACRYL's o
 
 - 2026-09-27: the seven Agent Control tools (`ui_snapshot`, `ui_click`, `ui_type`, `ui_select`, `ui_press`, `ui_scroll`, `ui_wait`, spec 041) were added on Web and Desktop. Untrimmed they cost about 3,470 characters (about 1,000 tokens) every turn; with one-line descriptions and no parameter prose they cost 2,118 characters (about 620 tokens). The Web tool-definition ceiling was raised on purpose to match. They are only useful when the user asks the agent to operate the app, so the larger lever is to expose them on demand (proposal 3 applies the same way): a candidate for the next pass.
 
+- 2026-09-27: `acryl_plugin_list` and `acryl_plugin_set_enabled` (Agent Control layer 1, in `acryl-plugin-admin`) add 529 characters (about 155 tokens) on Web and Desktop. The Web ceiling was raised to match. Like the `ui_*` tools they are candidates for on-demand exposure.
+
 ## Guard
 
 `plugins/acryl-system-prompt/drift/budget.json` holds a ceiling for the system prompt (machine-specific sections excluded) and for the tool definitions, per surface. `runtime/acryl-harness-runtime/tests/system-prompt-shape.spec.ts` fails, naming what grew, when either passes its ceiling. Raise it on purpose with `ACRYL_UPDATE_DRIFT=1` after reading `docs/system-prompt/budget.md`.

@@ -7,7 +7,7 @@ Characters are exact; tokens are an estimate for comparing changes. Ceilings liv
 
 ## web and desktop (standard preset)
 
-Total: system prompt 10221 chars (about 3006 tokens), tool definitions 31326 chars (about 9214 tokens), 40 tools.
+Total: system prompt 10221 chars (about 3006 tokens), tool definitions 31855 chars (about 9369 tokens), 42 tools.
 
 ### System prompt by section
 
@@ -69,6 +69,7 @@ Total: system prompt 10221 chars (about 3006 tokens), tool definitions 31326 cha
 | `web_search` | 397 | 117 |
 | `skill` | 376 | 111 |
 | `acryl_list_plugins` | 345 | 101 |
+| `acryl_plugin_set_enabled` | 332 | 98 |
 | `acryl_workspace_status` | 320 | 94 |
 | `get_goal` | 319 | 94 |
 | `ui_press` | 314 | 92 |
@@ -79,6 +80,7 @@ Total: system prompt 10221 chars (about 3006 tokens), tool definitions 31326 cha
 | `ui_scroll` | 275 | 81 |
 | `web_fetch` | 242 | 71 |
 | `ui_click` | 226 | 66 |
+| `acryl_plugin_list` | 197 | 58 |
 | `job_list` | 168 | 49 |
 
 ## cli (terminal engine)

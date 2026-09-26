@@ -91,7 +91,7 @@ The DeepSeek Harness implementation checkout is at <acryl-repo>/node_modules/.pn
 </harness_source>
 
 <app_web-surface>
-You are interacting with the user through the DeepSeek Harness Web GUI at http://127.0.0.1:64323. When the user refers to "this page", "this GUI", or "this app" without naming another target, they mean this GUI. The browser provides no implicit DOM, route, or screenshot context. The client-plugin HMR receiver is active, but client-plugin changes reload without a refresh only while `pnpm run dev:web` is also running from this same checkout to rebuild their bundles; verify that watcher before promising automatic updates. Every other change — the apps/web shell and plain packages — requires rebuilding the affected Web artifacts and verifying this existing URL after a page refresh. Starting another server does not update this GUI. The apps/web Vite entry builds the shell but is not a standalone application because only dsh web injects window.__DSH_BOOT__. Do not start a replacement server unless the user asks; if one is needed, use a managed background job and verify its exact URL.
+You are interacting with the user through the DeepSeek Harness Web GUI at http://127.0.0.1:49196. When the user refers to "this page", "this GUI", or "this app" without naming another target, they mean this GUI. The browser provides no implicit DOM, route, or screenshot context. The client-plugin HMR receiver is active, but client-plugin changes reload without a refresh only while `pnpm run dev:web` is also running from this same checkout to rebuild their bundles; verify that watcher before promising automatic updates. Every other change — the apps/web shell and plain packages — requires rebuilding the affected Web artifacts and verifying this existing URL after a page refresh. Starting another server does not update this GUI. The apps/web Vite entry builds the shell but is not a standalone application because only dsh web injects window.__DSH_BOOT__. Do not start a replacement server unless the user asks; if one is needed, use a managed background job and verify its exact URL.
 </app_web-surface>
 
 <cwd>
@@ -99,13 +99,15 @@ Your working directory is <workspace>.
 </cwd>
 ```
 
-## Tools (40)
+## Tools (42)
 
 | Tool | Description (first line) |
 | --- | --- |
 | `acryl_extension_lookup` | Find the ACRYL extension docs and verified examples for a topic (for example "sidebar tab", "accent color", "a tool", "hook the prompt"). Returns absolute paths |
 | `acryl_install_plugin` | Install a plugin package you wrote into the active ACRYL profile and activate it live (no restart), or UPDATE it if it is already installed. Checks the package  |
 | `acryl_list_plugins` | List every plugin installed in the active ACRYL profile with its origin: "local" (built here; has a source folder you can edit, and a scope) or "registry" (inst |
+| `acryl_plugin_list` | List the ACRYL plugins with their entry id, whether each is on, its state, and whether you may change it. |
+| `acryl_plugin_set_enabled` | Switch a plugin on or off by entry id (from acryl_plugin_list). The user approves each change. Core plugins and Agent Control cannot be changed. |
 | `acryl_prepare_publish` | Check that a local plugin package is ready for the marketplace (install checks, catalog metadata, npm pack dry run). It NEVER publishes: publishing is done by t |
 | `acryl_remove_plugin` | Remove a local plugin from the active ACRYL profile and unmount it live. Pass the package name (see the list tool). |
 | `acryl_verify_plugin` | Check a plugin package you wrote WITHOUT installing it: install lint plus importing the host entry and checking its Cordis shape. Findings include the exact err |

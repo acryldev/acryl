@@ -10,6 +10,7 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-host-webserver'
+import type {} from '@deepseek-ai/dsh-tools'
 import { inspectCordisContext } from './architecture/inspector.ts'
 import { PLUGIN_ARCHITECTURE_PATH } from './architecture/contract.ts'
 import { handlePluginArchitectureSnapshotRequest } from './architecture/route.ts'
@@ -25,6 +26,7 @@ import {
   handlePluginLifecycleReloadRequest,
   handlePluginLifecycleSnapshotRequest,
 } from './lifecycle/route.ts'
+import { registerPluginTools } from './tools/plugin-tools.ts'
 import { PluginLifecycleView, type PluginLifecycleBlendSource } from './lifecycle/view.ts'
 
 export const name = 'acryl-plugin-admin'
@@ -90,6 +92,17 @@ export function apply(ctx: Context): void {
           `acryl-plugin-admin: plugin lifecycle route ${path}`,
         )
       }
+    },
+  })
+
+  // Layer 1 of Agent Control: the agent lists and switches plugins through the same lifecycle service. It is a
+  // separate child so a surface without the tool registry still gets the routes above.
+  ctx.plugin({
+    name: 'acryl-plugin-admin-agent-tools',
+    inject: ['tools', 'acrPluginLifecycle'],
+    apply(child: Context): void {
+      const view = new PluginLifecycleView(child, child.acrPluginLifecycle, () => undefined)
+      child.effect(() => registerPluginTools(child, view), 'acryl-plugin-admin: plugin lifecycle agent tools')
     },
   })
 }

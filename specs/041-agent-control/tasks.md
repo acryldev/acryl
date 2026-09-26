@@ -25,14 +25,15 @@ Conventions: `[P]` parallel; every task ends with a green `corepack pnpm run che
 
 - [x] **T030** Approval integration: mutating UI actions require per-call approval; deny-list for policy and self-disable. Delivered: per-call approval through `tools/pre-execute`; protected regions and this plugin's own controls are refused by rule.
 - [x] **T031** "Agent is driving" indicator and kill switch as a slot contribution; user input always wins. Delivered: the "Agent is driving" indicator with Stop (also the user's Escape key) and Allow again; the user's own input makes actions wait; the indicator is off limits to the agent.
-- [x] **T032** Append-only audit log and a small viewer. Partly delivered: an append-only JSONL audit log in the ACRYL home (private file, rotation, never the typed text). The small viewer is not built.
-- [ ] **T033** Add the row to `apps/acryl-desktop/src/profile.ts` (advanced) and `MANAGED_PLUGIN_LIFECYCLE_ENTRIES`; update the specs asserting those lists.
+- [x] **T032** Append-only audit log and a small viewer.
+- [x] **T033** Add the row to `apps/acryl-desktop/src/profile.ts` (advanced) and `MANAGED_PLUGIN_LIFECYCLE_ENTRIES`; update the specs asserting those lists. Delivered through the shared seam: Desktop composes the row from `coding-capabilities.ts` and lists `acryl-ui-control` as a direct dependency (its loader smoke, profile boot and closure checks pass). It is not in `MANAGED_PLUGIN_LIFECYCLE_ENTRIES`: that table holds only entries outside the profile bundle list, and `acryl-workspace` and `acryl-plugin-admin` are not in it either.
 
 ## Phase 4: first real use
 
 - [ ] **T040** Replace the DOM-click helpers in `acryl-workspace` (`clickAddWorkspaceTrigger`, Settings trigger) with the new driver, or with layer 1 tools where a service exists.
-- [ ] **T041** Layer 1 pilot: `settings.get/set` and `plugin.enable/disable` provided by their owning packages.
-- [ ] **T042** End-to-end scenario: agent adds a git project through the Projects tab with a real headless window.
+- [x] **T041** Layer 1 pilot: `settings.get/set` and `plugin.enable/disable` provided by their owning packages. Delivered as a pilot: `acryl_plugin_list` and `acryl_plugin_set_enabled` provided by `acryl-plugin-admin` through the same lifecycle service the Settings tab uses; each change is asked about, and the agent can never switch off Agent Control or a core plugin. `settings.get/set` is not built.
+- [x] **T042** End-to-end scenario: agent adds a git project through the Projects tab with a real headless window. Delivered as a jsdom scenario against the real workspace components (`tests/scenarios/agent-drives-workspace.spec.tsx`): the agent adds a project through the Projects tab's path form and adds a coding agent through the + menu, finding controls by their accessible names. A real-window headless run is not done.
+- [ ] **T050** Accessibility-name audit on the real tree in a real browser (Web and Desktop): list every control the snapshot reports with an empty name and add `aria-label`s in `@acryl/ui` and the workspace. The jsdom scenarios found none in the Projects path form and the + menu.
 
 ## Scope B: CLI operator and rescue
 
@@ -61,7 +62,7 @@ Conventions: `[P]` parallel; every task ends with a green `corepack pnpm run che
 ## Sharing across Web and Desktop (decided 2026-09-26)
 
 - [x] **TS01** Declare `agent-control-tools` (`tui`, `web`, `desktop`) and `agent-control-ui` (`web`, `desktop`) in `runtime/acryl-harness-runtime/src/coding-capabilities.ts`; compose them on every surface only through `createAcrylCodingCapabilityPatches`. Tests on the declarations. Delivered: `agent-control-ui` (`web`, `desktop`) declared in `coding-capabilities.ts`; composed only through the seam. The typed `agent-control-tools` capability is not declared yet.
-- [ ] **TS02** Keep `acryl-ui-control` free of Electron and Desktop-only imports (an import-boundary test), and mount its indicator and kill switch through the shared shell from spec 040 Phase 7.
+- [x] **TS02** Keep `acryl-ui-control` free of Electron and Desktop-only imports (an import-boundary test), and mount its indicator and kill switch through the shared shell from spec 040 Phase 7. Delivered: an import-boundary test fails if the package imports Electron, Desktop or an app, or if the Host and the driver reach into each other.
 - [ ] **TS03** Surface adapter seam for native screenshot, native dialogs and window handle, with Desktop and Web implementations or a declared absence.
 - [x] **TS04** Parity gate: boot Web and Desktop headlessly on one profile, assert the same Agent Control tool names, fail on an undeclared difference; wire into the root `check`. Partly delivered: the existing Web and Desktop parity test now covers the new row; a tool-name parity check is not added.
 - [ ] **TS05** Real evidence: the same agent instruction ("hide Chats, open branch X") works on a Web session and a Desktop session against one profile.

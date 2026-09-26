@@ -33,6 +33,8 @@ export function roleOf(el: Element): string | null {
     return INPUT_ROLES[type] ?? 'textbox'
   }
   if (el.hasAttribute('contenteditable') && el.getAttribute('contenteditable') !== 'false') return 'textbox'
+  // A form is only a landmark when it has a name; an unnamed one is noise in a snapshot.
+  if (tag === 'form') return el.hasAttribute('aria-label') || el.hasAttribute('aria-labelledby') ? 'form' : null
   return LANDMARKS[tag] ?? null
 }
 

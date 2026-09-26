@@ -8,6 +8,15 @@ const CSS = `
 .acrylDrivingDot { width: 8px; height: 8px; border-radius: 50%; background: #4d6bfe; animation: acrylDrivingPulse 1.2s ease-in-out infinite; }
 .acrylDrivingBar button { appearance: none; padding: 3px 12px; border: 1px solid currentColor; border-radius: 999px; background: transparent; color: inherit; cursor: pointer; font: inherit; }
 .acrylDrivingBar button:hover { background: rgb(127 127 127 / 15%); }
+.dshAgentControlSection { display: grid; gap: 10px; padding: 4px 0 24px; color: var(--dsw-alias-label-primary); }
+.dshAgentControlHeading { margin: 0; font: 600 15px/1.3 ui-sans-serif, system-ui, sans-serif; }
+.dshAgentControlText { margin: 0; font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; }
+.dshAgentControlText[data-error] { color: #f87171; }
+.dshAgentControlButton { justify-self: start; padding: 6px 14px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; background: transparent; color: inherit; cursor: pointer; font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshAgentControlTable { width: 100%; border-collapse: collapse; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshAgentControlTable th, .dshAgentControlTable td { padding: 4px 8px; border-bottom: 1px solid var(--dsw-alias-border-l2); text-align: left; vertical-align: top; }
+.dshAgentControlTable tr[data-outcome="refused"] td:last-child { color: #f59e0b; }
+.dshAgentControlTable tr[data-outcome="failed"] td:last-child { color: #f87171; }
 @keyframes acrylDrivingPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) { .acrylDrivingDot { animation: none; } }
 `
