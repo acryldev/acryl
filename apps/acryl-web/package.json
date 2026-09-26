@@ -195,6 +195,7 @@
     "acryl-extension-context": "workspace:*",
     "acryl-system-prompt": "workspace:*",
     "@acryl/ui": "workspace:*",
+    "acryl-brand": "workspace:*",
     "acryl-shortcuts": "workspace:*",
     "acryl-mount-anchors": "workspace:*",
     "acryl-plugin-admin": "workspace:*",

@@ -176,6 +176,7 @@
     "acryl-system-prompt": "workspace:*",
     "acryl-ui-tui": "workspace:*",
     "@acryl/ui": "workspace:*",
+    "acryl-brand": "workspace:*",
     "acryl-shortcuts": "workspace:*",
     "acryl-mount-anchors": "workspace:*",
     "acryl-plugin-admin": "workspace:*",

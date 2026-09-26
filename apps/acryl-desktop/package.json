@@ -388,6 +388,7 @@
     "acryl-system-prompt": "workspace:*",
     "acryl-mount-anchors": "workspace:*",
     "acryl-plugin-admin": "workspace:*",
+    "acryl-brand": "workspace:*",
     "acryl-shortcuts": "workspace:*",
     "acryl-workspace": "workspace:*",
     "@acryl/ui": "workspace:*",

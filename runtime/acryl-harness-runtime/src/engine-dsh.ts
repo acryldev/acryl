@@ -51,6 +51,7 @@ import {
 } from './coding-capabilities.ts'
 import type { AcrylEngineDefinition } from './engine-host.ts'
 import { installAcrylWorkspaceStatusTool } from './plugin-acryl-workspace-status.ts'
+import { blueprintFromEnvironment, composeBlueprintRows } from './blueprint/index.ts'
 import { pluginLifecyclePatches, resolvePluginLifecycleStatePath } from './plugin-lifecycle-state.ts'
 import { installSessionLogExporter } from './session-log-exporter.ts'
 import { provideWebMarketInstall } from './web-market-install.ts'
@@ -68,6 +69,12 @@ export interface DshEngineComposition {
   readonly bareModuleBaseUrl?: string
   /** Which ACRYL surface this is (`tui`, `web`, `desktop`) - becomes part of the durable session-log filename. */
   readonly surface: string
+  /** The product name the page title carries (the Blueprint's brand); defaults to `ACRYL`. */
+  readonly productName?: string
+}
+
+function escapeHtml(text: string): string {
+  return text.replace(/[&<>"']/gu, character => `&#${String(character.charCodeAt(0))};`)
 }
 
 /**
@@ -165,8 +172,9 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   // static asset plus a route to serve it, tracked separately.
   if (composition.surface === 'web') {
     ctx.inject(['webServer'], webServerCtx => {
+      const title = composition.productName ?? 'ACRYL'
       const disposeTap = webServerCtx.webServer.tapIndex(
-        html => html.replace(/<title>[^<]*<\/title>/i, '<title>ACRYL</title>'),
+        html => html.replace(/<title>[^<]*<\/title>/i, () => `<title>${escapeHtml(title)}</title>`),
       )
       ctx.effect(() => disposeTap)
     })
@@ -261,26 +269,19 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
   // session-stats natively. Without this, ACRYL's own tui-only insert of the
   // same row ids collides at boot (spec 034 T008).
   const existingRowIds = new Set(composeEntries([profileLayerPatches]).map(entry => entry.id))
+  const blueprint = blueprintFromEnvironment()
+  process.env.ACRYL_BLUEPRINT_ID = blueprint.id
+  const rowsComposition = composeBlueprintRows(blueprint, 'tui', existingRowIds)
   const patches = structuredClone([
     ...profileLayerPatches,
-    ...createAcrylCodingCapabilityPatches(new Set(['tui']), existingRowIds),
+    ...createAcrylCodingCapabilityPatches(new Set(['tui']), existingRowIds, new Set(blueprint.capabilities)),
     ...profile.patches,
   ])
-  // Extension Context Pack (spec 037), CLI flavor: anchored on this runtime
-  // package, which depends on the pack. Skipped when the profile already
-  // composes the row (a Desktop/Web-shaped profile booted through the CLI).
-  if (!existingRowIds.has('extension-context')) {
-    materializeProfilePackage(profile.dir, 'acryl-extension-context', import.meta.url)
-    patches.push({ insert: [{ id: 'extension-context', name: 'acryl-extension-context' }] })
-  }
-  // ACRYL system prompt shaping (pi.dev-like tagged prompt, ACRYL identity), pass-through over the harness's sections.
-  if (!existingRowIds.has('acryl-system-prompt')) {
-    materializeProfilePackage(profile.dir, 'acryl-system-prompt', import.meta.url)
-    patches.push({ insert: [{ id: 'acryl-system-prompt', name: 'acryl-system-prompt' }] })
-  }
-  // ACRYL terminal UI library (spec 038-ui-component-library): a plain library a terminal plugin imports (`import 'acryl-ui-tui'`), so it is only made
-  // resolvable from the profile; there is no Loader row.
-  materializeProfilePackage(profile.dir, 'acryl-ui-tui', import.meta.url)
+  // The Blueprint's ACRYL-owned rows (extension pack, prompt shaping) and the terminal UI library (a plain library a
+  // terminal plugin imports, so it is only made resolvable). Rows the profile's own bundle already composes are skipped
+  // by `composeBlueprintRows` (a Desktop/Web-shaped profile booted through the CLI).
+  for (const packageName of rowsComposition.packages) materializeProfilePackage(profile.dir, packageName, import.meta.url)
+  patches.push(...rowsComposition.patches)
   // The profile's own user overrides come from the shared store, not from this
   // surface: `acryl plugin disable` on a TUI writes the same file the Desktop
   // panel and the Web surface read, so the next boot of any of them composes
@@ -420,14 +421,18 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   const existingRowIds = new Set(composeEntries([profileLayerPatches]).map(entry => entry.id))
   // Web runs the same ACRYL shell and workspace Desktop does (spec 040, "Surface sharing"): both come from the
   // shared capability declarations, and the ACRYL packages they name are made resolvable from this profile.
+  const blueprint = blueprintFromEnvironment()
+  process.env.ACRYL_BLUEPRINT_ID = blueprint.id
   const webSurfaces = new Set(['web'] as const)
-  for (const packageName of acrylCodingCapabilityPackages(webSurfaces)) {
+  const capabilities = new Set(blueprint.capabilities)
+  const rowsComposition = composeBlueprintRows(blueprint, 'web', existingRowIds)
+  for (const packageName of [...acrylCodingCapabilityPackages(webSurfaces, capabilities), ...rowsComposition.packages]) {
     materializeProfilePackage(profile.dir, packageName, installPackageUrl)
   }
   const patches = structuredClone([
     ...profileLayerPatches,
-    ...createAcrylCodingCapabilityPatches(webSurfaces, existingRowIds),
-    ...createAcrylShellCapabilityPatches(webSurfaces, 'advanced', existingRowIds),
+    ...createAcrylCodingCapabilityPatches(webSurfaces, existingRowIds, capabilities),
+    ...createAcrylShellCapabilityPatches(webSurfaces, 'advanced', existingRowIds, capabilities),
     ...profile.patches,
   ])
   // Brand swap: same technique and same row id as acryl-desktop's own
@@ -460,73 +465,18 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
       inject: withDeclaredDependency(connectionRow.inject, 'webServer'),
     })
   }
-  // dsh-client-ui-brand-acryl is an ACRYL-owned workspace package, not a
-  // dependency of @deepseek-ai/dsh itself, so healProfilesModuleFallback's
-  // installAnchor-rooted closure (above) can never resolve it - reproduced
-  // directly: a real Loader activation failed with "Cannot find package
-  // 'dsh-client-ui-brand-acryl'" even after declaring it everywhere, because
-  // that fallback mechanism is fundamentally rooted at @deepseek-ai/dsh's own
-  // dependency tree, never the calling surface's own. Materializing it
-  // directly into this profile's own node_modules (matching this profile
-  // directory's own resolution base, verified by logging every resolve()
-  // call HostResolvedRootInclude's composed rows make) is what actually
-  // makes it resolvable - a resolution-hook overlay (acryl-desktop's
-  // installProfilePackageResolver) does not apply to this composition style
-  // at all, confirmed the same way.
-  materializeProfilePackage(profile.dir, 'dsh-client-ui-brand-acryl', installPackageUrl)
-  patches.push(
-    { id: 'ui-brand-official', disabled: true },
-    { insert: [{ id: 'ui-acryl', name: 'dsh-client-ui-brand-acryl', disabled: false }] },
-  )
-  // Community Market: same row id/name acryl-desktop's own profile.ts uses
-  // (DESKTOP_MARKET_IDENTITIES.community), same materialization technique as
-  // the brand swap above - cordis-plugin-market is another ACRYL-owned
-  // workspace package outside @deepseek-ai/dsh's own dependency closure.
-  // Unlike Desktop, Web has no on/off provider switch (Desktop's Market is
-  // disabled by default and user-toggleable via desktop-market.ts) - Web has
-  // no such setting surface yet, so this row is simply always present.
-  // cordis-plugin-market's own top-level inject (['webServer', 'settings'])
-  // needs nothing Desktop-specific - its host code's own comment documents
-  // this deliberately ("Browsing remains portable"): Discover/Installable/
-  // Sources activate on any surface with webServer+settings, while real
-  // install/uninstall is a second, nested `ctx.inject(['desktopProfiles',
-  // 'desktopPnpm'], ...)` that simply stays PENDING (no error, no crash) on
-  // Web today. Web-side desktopProfiles/desktopPnpm equivalents - and so
-  // Market install/uninstall parity with Desktop - remain a separate,
-  // unstarted piece of work; this row only turns on browsing.
-  materializeProfilePackage(profile.dir, 'cordis-plugin-market', installPackageUrl)
-  patches.push({ insert: [{ id: 'community-market', name: 'cordis-plugin-market' }] })
-  // Extension Context Pack (spec 037): routes the agent to ACRYL's own extension
-  // docs and verified examples and gives it the install tool that makes a plugin
-  // it wrote live. Same materialization technique as the two owned packages
-  // above: it is an ACRYL-owned workspace package outside @deepseek-ai/dsh's own
-  // dependency closure.
-  materializeProfilePackage(profile.dir, 'acryl-extension-context', installPackageUrl)
-  patches.push({ insert: [{ id: 'extension-context', name: 'acryl-extension-context' }] })
-  // ACRYL system prompt shaping (pi.dev-like tagged prompt, ACRYL identity), pass-through over the harness's sections.
-  materializeProfilePackage(profile.dir, 'acryl-system-prompt', installPackageUrl)
-  patches.push({ insert: [{ id: 'acryl-system-prompt', name: 'acryl-system-prompt' }] })
-  // ACRYL UI library (spec 038-ui-component-library): a client-only library that other client bundles `require('@acryl/ui')`. It fills no slot.
-  materializeProfilePackage(profile.dir, '@acryl/ui', installPackageUrl)
-  patches.push({ insert: [{ id: '@acryl/ui', name: '@acryl/ui' }] })
-  // Shared keyboard-shortcut registry + Settings > Shortcuts page: provides `ctx.shortcuts`,
-  // which other rows (mount-anchors below) inject to read their live, user-reassignable combo.
-  // Must precede any row that injects it.
-  materializeProfilePackage(profile.dir, 'acryl-shortcuts', installPackageUrl)
-  patches.push({ insert: [{ id: 'acryl-shortcuts', name: 'acryl-shortcuts' }] })
-  // Visual mount-anchor inspector (spec 039-visual-mount-anchors): mounts its own React root
-  // directly (react-dom/client is a real platform seed word), independent of any slot - so it
-  // works here on Web the same way it works on Desktop, even though Web has no advanced-shell
-  // slots (sidebar/desktop.main/details) at all.
-  materializeProfilePackage(profile.dir, 'acryl-mount-anchors', installPackageUrl)
-  patches.push({ insert: [{ id: 'acryl-mount-anchors', name: 'acryl-mount-anchors' }] })
+  // Every ACRYL-owned row (brand, Market, extension pack, prompt shaping, UI library, shortcuts, mount anchors) comes from
+  // the selected Blueprint (spec 036): the row table lives in `blueprint/compose.ts`, and the packages were made resolvable
+  // from this profile above (they are ACRYL-owned workspace packages outside @deepseek-ai/dsh's dependency closure, so
+  // `healProfilesModuleFallback` cannot find them; see `materializeProfilePackage`).
+  patches.push(...rowsComposition.patches)
   // Last, so a user override beats every composition decision above it - the
   // same shared store the CLI and the Desktop panel write (spec 034).
   patches.push(...pluginLifecyclePatches({
     profileName,
     statePath: resolvePluginLifecycleStatePath(),
   }))
-  return { rootConfig, patches, surface: 'web' }
+  return { rootConfig, patches, surface: 'web', productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL' }
 }
 
 /**

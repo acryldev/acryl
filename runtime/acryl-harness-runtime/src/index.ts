@@ -296,3 +296,22 @@ export {
 } from './system-prompt-capture.ts'
 export { pinnedPnpmEnv, resolvePinnedPnpm, type PinnedPnpm } from './pinned-pnpm.ts'
 export { reconcileProfileLayout, type LayoutChange } from './profile-layout.ts'
+export {
+  BLANK_BLUEPRINT,
+  FULL_BLUEPRINT,
+  InvalidBrandIdentityError,
+  UnknownBlueprintError,
+  blueprintFromEnvironment,
+  brandIdentity,
+  builtInCatalog,
+  composeBlueprintRows,
+  identityLine,
+  selectBlueprint,
+  withBrand,
+  type Blueprint,
+  type BlueprintBrand,
+  type BlueprintCatalog,
+  type BlueprintComposition,
+  type BlueprintRowId,
+  type BrandIdentity,
+} from './blueprint/index.ts'

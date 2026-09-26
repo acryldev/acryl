@@ -17,6 +17,7 @@ packages:
   - plugins/acryl-ui-tui
   - plugins/acryl-mount-anchors
   - plugins/acryl-shortcuts
+  - plugins/acryl-brand
   - plugins/acryl-workspace
   - plugins/acryl-plugin-admin
   - '!deepseek-harness/**'

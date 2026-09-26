@@ -207,12 +207,18 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
 export function createAcrylCodingCapabilityPatches(
   surfaces: ReadonlySet<AcrylSurface>,
   existingRowIds: ReadonlySet<string> = new Set(),
+  only?: ReadonlySet<AcrylCodingCapabilityId>,
 ): readonly PatchOptions[] {
   return composePatches(
-    ACRYL_CODING_CAPABILITIES.filter(capability => capability.shellMode === undefined),
+    ACRYL_CODING_CAPABILITIES.filter(capability => capability.shellMode === undefined && isSelected(capability, only)),
     surfaces,
     existingRowIds,
   )
+}
+
+/** `only` undefined means every declared capability; a Blueprint passes the subset it composes. */
+function isSelected(capability: AcrylCodingCapability, only: ReadonlySet<AcrylCodingCapabilityId> | undefined): boolean {
+  return only === undefined || only.has(capability.id)
 }
 
 /**
@@ -224,19 +230,23 @@ export function createAcrylShellCapabilityPatches(
   surfaces: ReadonlySet<AcrylSurface>,
   shellMode: AcrylShellMode,
   existingRowIds: ReadonlySet<string> = new Set(),
+  only?: ReadonlySet<AcrylCodingCapabilityId>,
 ): readonly PatchOptions[] {
   return composePatches(
-    ACRYL_CODING_CAPABILITIES.filter(capability => capability.shellMode === shellMode),
+    ACRYL_CODING_CAPABILITIES.filter(capability => capability.shellMode === shellMode && isSelected(capability, only)),
     surfaces,
     existingRowIds,
   )
 }
 
 /** The ACRYL-owned packages a surface must make resolvable for the capabilities it composes. */
-export function acrylCodingCapabilityPackages(surfaces: ReadonlySet<AcrylSurface>): readonly string[] {
+export function acrylCodingCapabilityPackages(
+  surfaces: ReadonlySet<AcrylSurface>,
+  only?: ReadonlySet<AcrylCodingCapabilityId>,
+): readonly string[] {
   return [...new Set(
     ACRYL_CODING_CAPABILITIES
-      .filter(capability => capability.surfaces.some(surface => surfaces.has(surface)))
+      .filter(capability => isSelected(capability, only) && capability.surfaces.some(surface => surfaces.has(surface)))
       .flatMap(capability => capability.requiresPackages ?? []),
   )]
 }
