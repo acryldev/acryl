@@ -382,6 +382,7 @@
     "@vscode/ripgrep-linux-x64": "1.18.0",
     "@vscode/ripgrep-win32-x64": "1.18.0",
     "acryl-harness-runtime": "workspace:*",
+    "acryl-loopback-http": "workspace:*",
     "adm-zip": "^0.6.0",
     "commander": "^15.0.0",
     "acryl-extension-context": "workspace:*",

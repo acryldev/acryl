@@ -42,6 +42,7 @@ packages:
   - examples/acryl-blend-demo
   - runtime/acryl-control
   - runtime/acryl-harness-runtime
+  - runtime/acryl-loopback-http
   - distribution/acryl-npm-launcher
   - apps/acryl-cli
   - apps/acryl-web

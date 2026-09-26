@@ -6,7 +6,7 @@ import {
   error,
   finishJson,
   isSameOriginLoopbackRequest,
-} from '../http.ts'
+} from 'acryl-loopback-http'
 
 export interface PluginArchitectureRouteController {
   snapshot(): CordisPlaneSnapshot

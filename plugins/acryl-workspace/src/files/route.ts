@@ -1,7 +1,7 @@
 /** Same-origin handlers for the worktree file routes: two reads and one save. */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { BodyTooLargeError, error, finishJson, isSameOriginLoopbackRequest, readJson } from '../http.ts'
+import { BodyTooLargeError, error, finishJson, isSameOriginLoopbackRequest, readJsonBody } from 'acryl-loopback-http'
 import { MAX_EDITABLE_BYTES, parseFileEntryChange } from './contract.ts'
 import { WorkspaceFilesError, type WorkspaceFiles } from './service.ts'
 
@@ -76,7 +76,7 @@ export async function handleWorkspaceFilesWriteRequest(
   if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
   let body: unknown
   try {
-    body = await readJson(req, MAX_EDITABLE_BYTES + 64 * 1024)
+    body = await readJsonBody(req, MAX_EDITABLE_BYTES + 64 * 1024)
   } catch (cause) {
     if (cause instanceof BodyTooLargeError) return finishJson(res, 413, error('body too large'))
     return finishJson(res, 400, error('invalid save request'))
@@ -108,7 +108,7 @@ export async function handleWorkspaceFilesEntryRequest(
   if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
   let body: unknown
   try {
-    body = await readJson(req, 16 * 1024)
+    body = await readJsonBody(req, 16 * 1024)
   } catch (cause) {
     if (cause instanceof BodyTooLargeError) return finishJson(res, 413, error('body too large'))
     return finishJson(res, 400, error('invalid change request'))

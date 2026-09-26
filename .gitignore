@@ -29,6 +29,8 @@ plugins/acryl-ui/registry-seed/
 plugins/acryl-mount-anchors/lib/
 plugins/acryl-shortcuts/lib/
 plugins/acryl-workspace/lib/
+plugins/acryl-plugin-admin/lib/
+runtime/acryl-loopback-http/lib/
 
 apps/acryl-web/lib/
 release-artifacts/

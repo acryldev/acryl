@@ -57,7 +57,8 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "acryl-harness-runtime": "workspace:*"
+    "acryl-harness-runtime": "workspace:*",
+    "acryl-loopback-http": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",

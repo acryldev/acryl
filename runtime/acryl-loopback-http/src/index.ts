@@ -1,16 +1,21 @@
 /**
- * Strict loopback HTTP helpers for this plugin's private routes: same-origin checks on the socket, Host and
- * Origin, a bounded JSON body, and uniform JSON responses. Same behaviour as the checks behind Desktop's own
- * settings routes (`apps/acryl-desktop/src/settings/desktop-settings-route.ts`) and the workspace routes
- * (`plugins/acryl-workspace/src/http.ts`); a follow-up should extract one shared library for all three.
+ * Strict loopback HTTP helpers for private Host routes.
+ *
+ * Every private route (the workspace's terminal, git and files routes, plugin administration, Desktop's
+ * settings) must be reachable only from the app's own page on the loopback interface. This is the single
+ * implementation of that check, plus a bounded JSON body reader and uniform JSON responses, so a fix lands
+ * once for all of them.
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
 
-const MAX_BODY_BYTES = 16 * 1024
+/** The default cap on a JSON request body. */
+export const DEFAULT_MAX_BODY_BYTES = 16 * 1024
 
-class BodyTooLargeError extends Error {}
+/** Thrown by {@link readJsonBody} when the body is larger than allowed. */
+export class BodyTooLargeError extends Error {}
 
+/** Write one JSON response with the no-store and nosniff headers every private route uses. */
 export function finishJson(
   res: ServerResponse,
   statusCode: number,
@@ -33,13 +38,11 @@ function isLoopbackHostname(hostname: string): boolean {
   return hostname === '127.0.0.1' || hostname === '[::1]'
 }
 
-function isLoopbackAddress(address: string | undefined): boolean {
+/** True for the IPv4 and IPv6 loopback addresses, including an IPv4 address mapped into IPv6. */
+export function isLoopbackAddress(address: string | undefined): boolean {
   if (address === undefined) return false
   if (address === '::1' || address === '127.0.0.1') return true
-  if (address.startsWith('::ffff:')) {
-    const mapped = address.slice('::ffff:'.length)
-    return mapped.startsWith('127.')
-  }
+  if (address.startsWith('::ffff:')) return address.slice('::ffff:'.length).startsWith('127.')
   return address.startsWith('127.')
 }
 
@@ -79,6 +82,7 @@ function referrerOrigin(value: string | undefined): string | undefined {
  * A mutating request must carry the exact Origin. A read-only browser GET may
  * use the standard same-origin fetch metadata plus its same-origin referrer,
  * because browsers commonly omit Origin on same-origin GET requests.
+ * A WebSocket upgrade is treated as mutating: it must carry the exact Origin.
  */
 export function isSameOriginLoopbackRequest(
   req: IncomingMessage,
@@ -96,43 +100,54 @@ export function isSameOriginLoopbackRequest(
     && referrerOrigin(req.headers.referer) === expected.origin
 }
 
-function isJsonRequest(req: IncomingMessage): boolean {
+/** True when the request declares a JSON body (`application/json`, any parameters). */
+export function isJsonRequest(req: IncomingMessage): boolean {
   return req.headers['content-type']?.split(';', 1)[0]?.trim().toLowerCase() === 'application/json'
 }
 
-async function readJson(req: IncomingMessage): Promise<unknown> {
+/**
+ * Read a JSON body of at most `maxBytes`.
+ * @throws BodyTooLargeError when the body (declared or actual) exceeds the cap.
+ * @throws SyntaxError for a malformed length or malformed JSON.
+ */
+export async function readJsonBody(req: IncomingMessage, maxBytes: number = DEFAULT_MAX_BODY_BYTES): Promise<unknown> {
   const declaredLength = req.headers['content-length']
   if (declaredLength !== undefined) {
     if (!/^\d+$/.test(declaredLength)) throw new SyntaxError('invalid content length')
-    if (Number(declaredLength) > MAX_BODY_BYTES) throw new BodyTooLargeError()
+    if (Number(declaredLength) > maxBytes) throw new BodyTooLargeError()
   }
   let size = 0
   const chunks: Buffer[] = []
   for await (const chunk of req) {
     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array)
     size += buffer.byteLength
-    if (size > MAX_BODY_BYTES) throw new BodyTooLargeError()
+    if (size > maxBytes) throw new BodyTooLargeError()
     chunks.push(buffer)
   }
   return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown
 }
 
-export async function parsePostBody(
+/** Returned by {@link parseJsonPostBody} after it has already answered the request with an error. */
+export const INVALID_BODY = Symbol('invalid body')
+
+/**
+ * Read a POST body that must be JSON. On a wrong content type (415), an oversized body (413) or malformed JSON
+ * (400) it answers the request itself and returns {@link INVALID_BODY}; the caller just stops.
+ */
+export async function parseJsonPostBody(
   req: IncomingMessage,
   res: ServerResponse,
+  maxBytes: number = DEFAULT_MAX_BODY_BYTES,
 ): Promise<unknown | typeof INVALID_BODY> {
   if (!isJsonRequest(req)) {
     finishJson(res, 415, error('content type must be application/json'))
     return INVALID_BODY
   }
   try {
-    return await readJson(req)
+    return await readJsonBody(req, maxBytes)
   } catch (cause) {
     const tooLarge = cause instanceof BodyTooLargeError
     finishJson(res, tooLarge ? 413 : 400, error(tooLarge ? 'request body is too large' : 'invalid JSON request'))
     return INVALID_BODY
   }
 }
-
-export const INVALID_BODY = Symbol('invalid body')
-

@@ -1,7 +1,7 @@
 /** Same-origin handlers for the custom agent catalog. */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { error, finishJson, isSameOriginLoopbackRequest, readJson } from '../http.ts'
+import { error, finishJson, isSameOriginLoopbackRequest, readJsonBody } from 'acryl-loopback-http'
 import type { AgentCatalog } from './catalog.ts'
 import { AgentDefinitionError } from './definition.ts'
 
@@ -27,7 +27,7 @@ export async function handleWorkspaceAgentsRequest(
   if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
   let body: unknown
   try {
-    body = await readJson(req)
+    body = await readJsonBody(req)
   } catch {
     return finishJson(res, 400, error('invalid agent request'))
   }
@@ -54,7 +54,7 @@ export async function handleWorkspaceAgentsRemoveRequest(
   if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
   let body: unknown
   try {
-    body = await readJson(req)
+    body = await readJsonBody(req)
   } catch {
     return finishJson(res, 400, error('invalid agent request'))
   }

@@ -12,8 +12,8 @@ import {
   error,
   finishJson,
   isSameOriginLoopbackRequest,
-  parsePostBody,
-} from '../http.ts'
+  parseJsonPostBody,
+} from 'acryl-loopback-http'
 
 const MAX_ENTRY_ID_LENGTH = 512
 
@@ -88,7 +88,7 @@ async function entryAction(
   if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) {
     return finishJson(res, 403, error('forbidden'))
   }
-  const value = await parsePostBody(req, res)
+  const value = await parseJsonPostBody(req, res)
   if (value === INVALID_BODY) return
   const request = parseEntryRequest(value)
   if (request === undefined) {
@@ -139,7 +139,7 @@ export async function handlePluginLifecycleReloadRequest(
   if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) {
     return finishJson(res, 403, error('forbidden'))
   }
-  const value = await parsePostBody(req, res)
+  const value = await parseJsonPostBody(req, res)
   if (value === INVALID_BODY) return
   const request = parseReloadRequest(value)
   if (request === undefined) {
