@@ -295,11 +295,19 @@ export class JsonRpcClient {
   }
 
   private handleLine(line: string): void {
-    let message: JsonRpcMessage
+    let message: unknown
     try {
       message = JSON.parse(line)
     } catch {
       // Ignore malformed lines (could be agent banner output)
+      return
+    }
+
+    // JSON.parse also succeeds on scalars (`null`, `42`, `true`, `"text"`)
+    // and arrays — none of them can be a JSON-RPC message. Without this
+    // guard the `in` checks below throw a TypeError inside the stdout
+    // 'data' listener, an uncaughtException that kills the host.
+    if (typeof message !== 'object' || message === null || Array.isArray(message)) {
       return
     }
 

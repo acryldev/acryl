@@ -198,6 +198,33 @@ describe('JsonRpcClient', () => {
     })
   })
 
+  it('ignores scalar and array JSON lines instead of crashing the host', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc)
+
+    // Each of these parses successfully but is not a JSON-RPC message;
+    // `'id' in <scalar>` would throw a TypeError inside the stdout 'data'
+    // listener (uncaughtException → host crash).
+    proc._sendLine('null')
+    proc._sendLine('42')
+    proc._sendLine('true')
+    proc._sendLine('"text"')
+    proc._sendLine('[1, 2]')
+
+    await new Promise((resolve) => setImmediate(resolve))
+
+    // No response was produced for any of them.
+    expect(proc._captured).toHaveLength(0)
+
+    // The client still works afterwards.
+    proc.on('input', (chunk: string) => {
+      const msg = JSON.parse(chunk.trim())
+      proc._sendLine(JSON.stringify({ jsonrpc: '2.0', id: msg.id, result: 'ok' }))
+    })
+    await expect(client.call('test')).resolves.toBe('ok')
+    client.dispose()
+  })
+
   it('rejects pending calls with TransportError when the process errors, then refuses new calls', async () => {
     const proc = createStubProcess()
     const client = new JsonRpcClient(proc)
@@ -385,6 +412,20 @@ describe('JsonRpcClient', () => {
 
     const responses = proc._captured.map((line) => JSON.parse(line))
     expect(responses).toEqual([{ jsonrpc: '2.0', id: 'req-abc', result: 'yes' }])
+    client.dispose()
+  })
+
+  it('echoes a request id of 0 back verbatim', async () => {
+    const proc = createStubProcess()
+    const client = new JsonRpcClient(proc)
+
+    client.onRequest('ask', () => 'zero')
+    proc._sendLine(JSON.stringify({ jsonrpc: '2.0', id: 0, method: 'ask' }))
+
+    await new Promise((resolve) => setImmediate(resolve))
+
+    const responses = proc._captured.map((line) => JSON.parse(line))
+    expect(responses).toEqual([{ jsonrpc: '2.0', id: 0, result: 'zero' }])
     client.dispose()
   })
 
