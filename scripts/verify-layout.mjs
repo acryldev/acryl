@@ -49,6 +49,7 @@ packages:
   - plugins/dsh-client-ui-brand-acryl
   - plugins/dsh-community-fabric
   - plugins/cordis-plugin-market
+  - plugins/acryl-agent-devin
   - plugins/acryl-extension-context
   - plugins/acryl-system-prompt
   - plugins/acryl-ui
@@ -110,9 +111,11 @@ for (const [name, manifest] of [
   ['acryl-web', web],
   ['dsh-community-fabric', fabric],
   ['cordis-plugin-market', market],
+  ['acryl-agent-devin', readJson('plugins/acryl-agent-devin/package.json')],
 ]) {
   if (manifest.packageManager !== undefined) fail(`${name} must inherit the root PNPM release`)
 }
+if (readJson('plugins/acryl-agent-devin/package.json').name !== 'acryl-agent-devin') fail('the Devin provider workspace must own acryl-agent-devin')
 if (control.name !== 'acryl-control') fail('the control workspace must own acryl-control')
 if (readJson('distribution/acryl-npm-launcher/package.json').name !== 'acryl') fail('the npm selector workspace must own the public acryl selector package')
 if (cli.name !== 'acryl-cli') fail('the CLI workspace must own acryl-cli')
