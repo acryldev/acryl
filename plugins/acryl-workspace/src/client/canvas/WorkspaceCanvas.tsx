@@ -9,11 +9,6 @@ import type { UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
 // program even though nothing here holds a value of it.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import type { WorkspacePtyCommandId } from '../../pty/contract.ts'
-import {
-  WORKSPACE_AGENT_COMMANDS,
-  WORKSPACE_SURFACE_ACTIONS,
-  labelForCommand,
-} from '../terminal/agent-commands.ts'
 import { diffLines } from '../diff/line-diff.ts'
 import type { AgentBridge } from '../sessions/agent-bridge.ts'
 import { buildReviewComment } from '../diff/comment-message.ts'
@@ -26,8 +21,8 @@ import { GitDiffPane } from '../diff/GitDiffPane.tsx'
 import type { ReviewStore } from '../review/review-store.ts'
 import { countRunning, runningLabel } from '../sessions/running-agents.ts'
 import { TerminalRegistry, type TerminalSessionSnapshot } from '../terminal/terminal-session.ts'
+import { TabStrip } from '../tabs/TabStrip.tsx'
 import { SplitDivider } from './SplitDivider.tsx'
-import { hiddenEdges, scrollToReveal, wheelToScroll } from './tab-scroll.ts'
 import { clampSplit, readSplitRatio, writeSplitRatio } from './split-ratio.ts'
 import { GLOBAL_GROUP, type WorkspaceGroups } from './groups.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
@@ -83,7 +78,6 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
   const snapshot = useSyncExternalStore(subscribe, () => workspace.getSnapshot())
   const sessions = useSessions(state => state)
   const previousCurrent = useRef<string | undefined>(sessions.current)
-  const menuRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const [splitRatio, setSplitRatio] = useState(() => readSplitRatio(safeStorage()))
   const changeSplitRatio = useCallback((ratio: number): void => {
@@ -200,186 +194,21 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
     }
   }, [api, workspace, groupKey])
 
-  useEffect(() => {
-    if (!snapshot.menuOpen) return
-    const onPointer = (event: PointerEvent): void => {
-      if (menuRef.current?.contains(event.target as Node) !== true) {
-        workspace.setMenuOpen(false)
-      }
-    }
-    const onKey = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') workspace.setMenuOpen(false)
-    }
-    document.addEventListener('pointerdown', onPointer)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('pointerdown', onPointer)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [workspace, snapshot.menuOpen])
-
   const runningText = runningLabel(countRunning(sessions.ids.flatMap((id) => { const row = sessions.byId[id]; return row === undefined ? [] : [row] })))
-  const tabsRef = useRef<HTMLDivElement>(null)
-  const [edges, setEdges] = useState({ start: false, end: false })
-  const syncEdges = useCallback((): void => {
-    const el = tabsRef.current
-    if (el === null) return
-    const next = hiddenEdges({ scrollLeft: el.scrollLeft, clientWidth: el.clientWidth, scrollWidth: el.scrollWidth })
-    setEdges(previous => (previous.start === next.start && previous.end === next.end ? previous : next))
-  }, [])
-  // A vertical wheel scrolls the strip sideways; React's onWheel is passive, so this listener is native.
-  useEffect(() => {
-    const el = tabsRef.current
-    if (el === null) return
-    const onWheel = (event: WheelEvent): void => {
-      const by = wheelToScroll(event.deltaX, event.deltaY)
-      if (by === null || el.scrollWidth <= el.clientWidth) return
-      event.preventDefault()
-      el.scrollLeft += by
-    }
-    el.addEventListener('wheel', onWheel, { passive: false })
-    const observer = new ResizeObserver(syncEdges)
-    observer.observe(el)
-    return () => { el.removeEventListener('wheel', onWheel); observer.disconnect() }
-  }, [syncEdges])
-  // The active tab (also a newly opened one) is always brought into view.
-  useEffect(() => {
-    const el = tabsRef.current
-    const tab = el?.querySelector<HTMLElement>('[data-tab-id][data-active]')
-    if (el === null || el === undefined || tab === null || tab === undefined) return
-    const to = scrollToReveal({ scrollLeft: el.scrollLeft, clientWidth: el.clientWidth, scrollWidth: el.scrollWidth }, tab.offsetLeft, tab.offsetWidth)
-    if (to !== null) el.scrollLeft = to
-    syncEdges()
-  }, [snapshot.activeId, snapshot.tiles.length, syncEdges])
 
   return (
     <div className="dshWorkspace" data-acryl-workspace="true" data-workspace-mode="tabs">
-      <div className="dshWorkspaceTabstrip" role="tablist" aria-label="ACRYL Workspace">
-        {groupKey !== GLOBAL_GROUP && (
-          <div className="dshWorkspaceGroup" title={groupKey} data-tab-group={groupKey}>
-            <span aria-hidden="true">⎇</span> {groupBranch ?? 'detached'}
-          </div>
-        )}
-        <div className="dshWorkspaceTabs" ref={tabsRef} onScroll={syncEdges} data-more-start={edges.start || undefined} data-more-end={edges.end || undefined}>
-          {snapshot.tiles.map((tile) => {
-            const selected = tile.id === snapshot.activeId
-            return (
-              <div
-                key={tile.id}
-                className="dshWorkspaceTab"
-                data-active={selected || undefined}
-                data-split={tile.id === snapshot.splitId || undefined}
-                data-tile-kind={tile.kind}
-                data-tab-id={tile.id}
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={selected}
-                  className="dshWorkspaceTabButton"
-                  onClick={() => { workspace.selectTile(tile.id) }}
-                >
-                  <span className="dshWorkspaceTabGlyph" aria-hidden="true">{glyph(tile.kind)}</span>
-                  <span className="dshWorkspaceTabLabel">{tile.title}{tile.fileRel !== undefined && tile.content !== undefined ? ' \u25CF' : ''}</span>
-                </button>
-                {snapshot.tiles.length > 1 && !selected && (
-                  <button
-                    type="button"
-                    className="dshWorkspaceTabSplit"
-                    aria-label={tile.id === snapshot.splitId ? 'Close split' : `Open ${tile.title} beside the current tab`}
-                    title={tile.id === snapshot.splitId ? 'Close the split' : 'Open beside the current tab'}
-                    onClick={() => { if (tile.id === snapshot.splitId) workspace.closeSplit(); else workspace.openInSplit(tile.id) }}
-                  >
-                    ◫
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className="dshWorkspaceTabClose"
-                  aria-label={`Close ${tile.title}`}
-                  onClick={() => { void closeTile(tile) }}
-                >
-                  ×
-                </button>
-              </div>
-            )
-          })}
-        </div>
-        {runningText !== null && (
-          <button
-            type="button"
-            className="dshWorkspaceRunning"
-            title="Open the live board"
-            onClick={() => {
-              const board = snapshot.tiles.find(tile => tile.kind === 'kanban')
-              if (board !== undefined) workspace.selectTile(board.id)
-              else workspace.addTile('kanban')
-            }}
-          >
-            <span className="dshWorkspaceRunningDot" aria-hidden="true" />
-            {runningText}
-          </button>
-        )}
-        <div className="dshWorkspacePlusWrap" ref={menuRef}>
-          <button
-            type="button"
-            className="dshWorkspacePlus"
-            aria-label="New tab"
-            aria-expanded={snapshot.menuOpen}
-            aria-haspopup="menu"
-            onClick={() => { workspace.setMenuOpen(!snapshot.menuOpen) }}
-          >
-            +
-          </button>
-          {snapshot.menuOpen && (
-            <div className="dshWorkspaceMenu" role="menu">
-              {WORKSPACE_SURFACE_ACTIONS.map((action) => (
-                <button
-                  key={action.label}
-                  type="button"
-                  role="menuitem"
-                  className="dshWorkspaceMenuItem"
-                  onClick={() => {
-                    if (action.kind === 'pty') {
-                      void openPty(action.commandId ?? 'shell', labelForCommand(action.commandId ?? 'shell'))
-                      return
-                    }
-                    workspace.addTile(action.kind)
-                  }}
-                >
-                  {action.label}
-                </button>
-              ))}
-              <div className="dshWorkspaceMenuRule" />
-              {WORKSPACE_AGENT_COMMANDS.map((command) => (
-                <button
-                  key={command.id}
-                  type="button"
-                  role="menuitem"
-                  className="dshWorkspaceMenuItem"
-                  onClick={() => { void openPty(command.id, command.label) }}
-                >
-                  {command.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        {rightPanel !== undefined && (
-          <button
-            type="button"
-            className="dshWorkspaceRightToggle"
-            aria-label="Toggle right panel"
-            title="Show or hide the right panel (files, changes)"
-            onClick={() => { rightPanel.toggle() }}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
-              <rect x="1.7" y="2.7" width="12.6" height="10.6" rx="2" />
-              <path d="M10 2.9v10.2" />
-            </svg>
-          </button>
-        )}
-      </div>
+      <TabStrip
+        snapshot={snapshot}
+        workspace={workspace}
+        branchLabel={groupKey === GLOBAL_GROUP ? null : (groupBranch ?? 'detached')}
+        branchTitle={groupKey}
+        runningText={runningText}
+        {...(rightPanel === undefined ? {} : { rightPanel })}
+        storage={safeStorage()}
+        onClose={(tile) => { void closeTile(tile) }}
+        onOpenPty={(commandId, title) => { void openPty(commandId, title) }}
+      />
       <div ref={stageRef} className="dshWorkspaceStage" role="tabpanel" data-split={splitTile !== undefined || undefined}>
         <div className="dshWorkspacePane" data-pane="primary" style={splitTile === undefined ? undefined : { flexBasis: `${splitRatio * 100}%`, flexGrow: 0 }}>
           {active === undefined

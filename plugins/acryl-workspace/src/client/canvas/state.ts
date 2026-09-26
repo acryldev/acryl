@@ -1,5 +1,7 @@
 /** In-memory ACRYL Workspace tabs. Host PTY sessions bind through tile.sessionId. */
 
+import { labelForCommand } from '../terminal/agent-commands.ts'
+import { normalizeTabTitle } from '../tabs/tab-title.ts'
 import type { WorkspacePtyCommandId } from '../../pty/contract.ts'
 
 export type WorkspaceTileKind = 'chat' | 'pty' | 'file' | 'browser' | 'diff' | 'kanban' | 'doc'
@@ -321,6 +323,23 @@ export class WorkspaceState {
       return Object.freeze(rest)
     })
     this.replace({ ...this.snapshot, tiles: Object.freeze(tiles) })
+  }
+
+  /**
+   * Give a tab the name the user typed; typing nothing gives it back its own name (the agent, the file or
+   * the site it shows).
+   */
+  renameTile(id: string, raw: string): void {
+    const tile = this.snapshot.tiles.find(candidate => candidate.id === id)
+    if (tile === undefined) return
+    this.updateTile(id, { title: normalizeTabTitle(raw) ?? this.defaultTitle(tile) })
+  }
+
+  private defaultTitle(tile: WorkspaceTile): string {
+    if (tile.kind === 'pty') return labelForCommand(tile.commandId ?? 'shell')
+    if (tile.kind === 'file') return (tile.fileRel !== undefined ? basename(tile.fileRel) : basename(tile.path ?? '')) || TITLES.file
+    if (tile.kind === 'browser') return hostname(tile.url ?? '') || TITLES.browser
+    return TITLES[tile.kind]
   }
 
   updateTile(id: string, patch: Partial<Omit<WorkspaceTile, 'id' | 'kind'>>): void {

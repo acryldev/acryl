@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { hiddenEdges, scrollToReveal, wheelToScroll } from '../../src/client/canvas/tab-scroll.ts'
+import { hiddenEdges, scrollToReveal, wheelToScroll } from '../../src/client/tabs/tab-scroll.ts'
 
 const g = (scrollLeft: number) => ({ scrollLeft, clientWidth: 400, scrollWidth: 1000 })
 

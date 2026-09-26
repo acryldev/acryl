@@ -9,14 +9,22 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceTabs[data-more-start] { -webkit-mask-image: linear-gradient(to right, transparent, #000 28px); mask-image: linear-gradient(to right, transparent, #000 28px); }
 .dshWorkspaceTabs[data-more-end] { -webkit-mask-image: linear-gradient(to left, transparent, #000 28px); mask-image: linear-gradient(to left, transparent, #000 28px); }
 .dshWorkspaceTabs[data-more-start][data-more-end] { -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
-.dshWorkspaceTab { display: flex; flex: none; align-items: stretch; max-width: 220px; min-width: 120px; border-right: 1px solid var(--dsw-alias-border-l2); background: transparent; }
-.dshWorkspaceTab[data-active] { background: var(--dsw-alias-bg-base); }
-.dshWorkspaceTabButton { appearance: none; display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; margin: 0; padding: 0 4px 0 10px; border: 0; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 12px/1.2 ui-sans-serif, system-ui, sans-serif; }
-.dshWorkspaceTab[data-active] .dshWorkspaceTabButton { color: var(--dsw-alias-fg); }
-.dshWorkspaceTabGlyph { flex: none; opacity: 0.7; }
+.dshWorkspaceTab { position: relative; display: flex; flex: none; align-items: stretch; max-width: 200px; min-width: 110px; border-bottom: 2px solid transparent; background: transparent; }
+.dshWorkspaceTab:hover { background: var(--dsw-alias-fill-hover, rgb(127 127 127 / 10%)); }
+.dshWorkspaceTab[data-active] { background: var(--dsw-alias-bg-base); border-bottom-color: #4d6bfe; }
+.dshWorkspaceTabButton { appearance: none; display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0; margin: 0; padding: 0 2px 0 12px; border: 0; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 12.5px/1.2 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceTab[data-active] .dshWorkspaceTabButton { color: var(--dsw-alias-fg); font-weight: 500; }
+.dshWorkspaceTabGlyph { flex: none; display: inline-flex; align-items: center; opacity: 0.8; }
 .dshWorkspaceTabLabel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dshWorkspaceTabClose { appearance: none; width: 22px; margin: 6px 6px 6px 0; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 14px; }
-.dshWorkspaceTabClose:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg); }
+.dshWorkspaceTabRename { width: 100%; min-width: 0; padding: 2px 6px; border: 1px solid #4d6bfe; border-radius: 4px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-fg); font: 12.5px/1.3 ui-sans-serif, system-ui, sans-serif; outline: none; }
+.dshWorkspaceTabClose { appearance: none; width: 20px; height: 20px; align-self: center; margin: 0 6px 0 2px; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 14px; line-height: 1; opacity: 0; }
+.dshWorkspaceTab:hover .dshWorkspaceTabClose, .dshWorkspaceTab[data-active] .dshWorkspaceTabClose, .dshWorkspaceTabClose:focus-visible { opacity: 1; }
+.dshWorkspaceTabClose:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); color: var(--dsw-alias-fg); }
+.dshWorkspaceAgentIcon { display: inline-grid; place-items: center; width: 16px; height: 16px; flex: none; border: 1px solid currentColor; border-radius: 5px; font: 700 9.5px/1 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceMenuItem[data-muted] { color: var(--dsw-alias-fg-l2); }
+.dshWorkspaceMenuGrow { flex: 1; }
+.dshWorkspaceMenuCheck { width: 14px; text-align: right; color: #4d6bfe; }
+.dshWorkspaceMenuHint { padding: 6px 10px 8px; color: var(--dsw-alias-fg-l2); font: 11.5px/1.4 ui-sans-serif, system-ui, sans-serif; }
 /* One opener only: the canvas tab strip carries the always-present right-panel toggle, so upstream's own
    header opener (a documented data hook of the right sidebar) is hidden inside the canvas. */
 .dshWorkspace [data-sidebar-right-expand] { display: none; }
@@ -31,7 +39,7 @@ const WORKSPACE_STYLES = `
 .dshWorkspacePlus { appearance: none; width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: 600 18px/1 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspacePlus:hover, .dshWorkspacePlus[aria-expanded="true"] { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
 .dshWorkspaceMenu { position: absolute; top: calc(100% + 4px); right: 4px; z-index: 40; width: 240px; max-height: min(70vh, 520px); overflow: auto; padding: 6px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; background: var(--dsw-alias-bg-base); box-shadow: 0 16px 40px rgb(0 0 0 / 28%); }
-.dshWorkspaceMenuItem { appearance: none; display: block; width: 100%; margin: 0; padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; text-align: left; font: 13px/1.2 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceMenuItem { appearance: none; display: flex; align-items: center; gap: 10px; width: 100%; margin: 0; padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; text-align: left; font: 13px/1.2 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceMenuItem:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
 .dshWorkspaceMenuRule { height: 1px; margin: 6px 4px; background: var(--dsw-alias-border-l2); }
 .dshWorkspaceStage { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: row; background: var(--dsw-alias-bg-base); }
