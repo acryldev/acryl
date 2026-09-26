@@ -14,6 +14,10 @@ export interface ReviewCommentInput {
   readonly kind: CommentLineKind
   /** The diff line's text, without its +/- marker. */
   readonly lineText: string
+  /** Last line of a multi-line comment (same side); absent for a single line. */
+  readonly endLine?: number
+  /** For a multi-line comment, every line in the range with its own kind, so the block shows real markers. */
+  readonly rangeLines?: readonly { readonly kind: CommentLineKind; readonly text: string }[]
   readonly comment: string
 }
 
@@ -25,13 +29,16 @@ const MARKER: Record<CommentLineKind, string> = { add: '+', remove: '-', context
  * The session log then holds the comment durably, with no separate store.
  */
 export function buildReviewComment(input: ReviewCommentInput): string {
-  const where = `${input.side === 'new' ? 'new' : 'old'} line ${String(input.line)}`
+  const range = input.endLine !== undefined && input.endLine > input.line
+  const where = `${input.side === 'new' ? 'new' : 'old'} ${range ? 'lines' : 'line'} ${String(input.line)}${range ? `-${String(input.endLine)}` : ''}`
   const branch = input.branch === null || input.branch === undefined ? '' : `, branch ${input.branch}`
   return [
     `Review comment on \`${input.file}\` (${where}${branch}):`,
     '',
     '```diff',
-    `${MARKER[input.kind]}${input.lineText}`,
+    ...(range && input.rangeLines !== undefined && input.rangeLines.length > 0
+      ? input.rangeLines.map(line => `${MARKER[line.kind]}${line.text}`)
+      : [`${MARKER[input.kind]}${input.lineText}`]),
     '```',
     '',
     input.comment.trim(),

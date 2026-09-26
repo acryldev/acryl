@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseUnifiedDiff } from '../../src/client/diff/unified-diff.ts'
+import { pairRows, parseUnifiedDiff, rowsInRange } from '../../src/client/diff/unified-diff.ts'
 
 const SAMPLE = [
   'diff --git a/a.txt b/a.txt',
@@ -52,5 +52,40 @@ describe('parseUnifiedDiff', () => {
     const rows = parseUnifiedDiff('@@ -1 +1 @@\n--- comment\n+++ comment2\n')
     expect(rows[1]).toMatchObject({ kind: 'remove', text: '-- comment' })
     expect(rows[2]).toMatchObject({ kind: 'add', text: '++ comment2' })
+  })
+})
+
+describe('pairRows and rowsInRange', () => {
+  const diff = [
+    'diff --git a/x b/x', '--- a/x', '+++ b/x',
+    '@@ -1,5 +1,6 @@',
+    ' keep',
+    '-old one',
+    '-old two',
+    '+new one',
+    '+new two',
+    '+new three',
+    ' tail',
+    '@@ -20,1 +21,1 @@',
+    '-gone',
+    ' end',
+  ].join('\n')
+
+  it('zips each run of removals with the additions after it, context on both sides, drops meta rows', () => {
+    const pairs = pairRows(parseUnifiedDiff(diff))
+    expect(pairs.map(p => p.kind === 'hunk' ? 'H' : `${p.left?.text ?? '_'}|${p.right?.text ?? '_'}`)).toEqual([
+      'H', 'keep|keep', 'old one|new one', 'old two|new two', '_|new three', 'tail|tail', 'H', 'gone|_', 'end|end',
+    ])
+  })
+
+  it('returns the rows of one file version between two lines, inclusive', () => {
+    const rows = parseUnifiedDiff(diff)
+    expect(rowsInRange(rows, 'new', 2, 4).map(r => r.text)).toEqual(['new one', 'new two', 'new three'])
+    expect(rowsInRange(rows, 'old', 2, 3).map(r => r.text)).toEqual(['old one', 'old two'])
+    expect(rowsInRange(rows, 'new', 100, 200)).toEqual([])
+  })
+
+  it('handles an empty diff', () => {
+    expect(pairRows([])).toEqual([])
   })
 })

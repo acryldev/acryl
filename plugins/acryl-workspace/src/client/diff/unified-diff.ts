@@ -55,3 +55,45 @@ export function parseUnifiedDiff(text: string): UnifiedRow[] {
   }
   return rows
 }
+
+/** One display row of the side-by-side layout: a hunk header, or an old-side cell next to a new-side cell. */
+export type SplitRow =
+  | { readonly kind: 'hunk'; readonly text: string }
+  | { readonly kind: 'pair'; readonly left?: UnifiedRow; readonly right?: UnifiedRow }
+
+/**
+ * Lay unified rows out side by side: context on both sides, and each run of removals next to the run of
+ * additions that follows it (zipped, the shorter side left empty). Meta rows are dropped.
+ */
+export function pairRows(rows: readonly UnifiedRow[]): SplitRow[] {
+  const out: SplitRow[] = []
+  let index = 0
+  while (index < rows.length) {
+    const row = rows[index]
+    if (row === undefined) break
+    if (row.kind === 'meta') { index += 1; continue }
+    if (row.kind === 'hunk') { out.push({ kind: 'hunk', text: row.text }); index += 1; continue }
+    if (row.kind === 'context') { out.push({ kind: 'pair', left: row, right: row }); index += 1; continue }
+    const removed: UnifiedRow[] = []
+    const added: UnifiedRow[] = []
+    while (rows[index]?.kind === 'remove') { removed.push(rows[index] as UnifiedRow); index += 1 }
+    while (rows[index]?.kind === 'add') { added.push(rows[index] as UnifiedRow); index += 1 }
+    const length = Math.max(removed.length, added.length)
+    for (let i = 0; i < length; i += 1) {
+      const left = removed[i]
+      const right = added[i]
+      out.push({ kind: 'pair', ...(left === undefined ? {} : { left }), ...(right === undefined ? {} : { right }) })
+    }
+  }
+  return out
+}
+
+/** The rows of one file version between two line numbers, inclusive, in diff order. */
+export function rowsInRange(rows: readonly UnifiedRow[], side: 'old' | 'new', from: number, to: number): UnifiedRow[] {
+  return rows.filter((row) => {
+    if (row.kind === 'meta' || row.kind === 'hunk') return false
+    const no = side === 'old' ? row.oldNo : row.newNo
+    return no !== undefined && no >= from && no <= to
+  })
+}
+

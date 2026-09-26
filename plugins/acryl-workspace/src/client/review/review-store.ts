@@ -14,6 +14,8 @@ export interface ReviewThread {
   readonly file: string
   readonly side: CommentSide
   readonly line: number
+  /** Last line of a multi-line comment, when it covers more than one. */
+  readonly endLine?: number
   /** The diff line the comment was made on, without its marker. */
   readonly lineText: string
   readonly comment: string
@@ -35,6 +37,7 @@ function isThread(value: unknown): value is ReviewThread {
     && typeof v.file === 'string'
     && (v.side === 'old' || v.side === 'new')
     && typeof v.line === 'number' && Number.isInteger(v.line) && v.line >= 0
+    && (v.endLine === undefined || (typeof v.endLine === 'number' && Number.isInteger(v.endLine) && v.endLine > v.line))
     && typeof v.lineText === 'string'
     && typeof v.comment === 'string'
     && typeof v.sentAt === 'number' && Number.isFinite(v.sentAt)

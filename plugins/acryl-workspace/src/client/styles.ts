@@ -255,6 +255,19 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceGitDiffLine[data-kind="add"] { background: color-mix(in srgb, #22c55e 14%, transparent); }
 .dshWorkspaceGitDiffLine[data-kind="remove"] { background: color-mix(in srgb, #ef4444 14%, transparent); }
 .dshWorkspaceGitDiffLine[data-kind="hunk"] { background: color-mix(in srgb, #4d6bfe 12%, transparent); color: #a5b4fc; }
+.dshWorkspaceGitDiffLayout { display: inline-flex; flex: none; gap: 4px; }
+.dshWorkspaceGitDiffLayout button { appearance: none; padding: 2px 10px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 11px/1.5 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceGitDiffLayout button:hover { border-color: color-mix(in srgb, var(--dsw-alias-fg) 22%, transparent); }
+.dshWorkspaceGitDiffLayout button[aria-pressed="true"] { border-color: color-mix(in srgb, var(--dsw-alias-fg) 34%, transparent); background: color-mix(in srgb, var(--dsw-alias-fg) 10%, transparent); color: var(--dsw-alias-fg); }
+.dshWorkspaceGitDiffLine[data-selected], .dshWorkspaceGitDiffCell[data-selected] { outline: 1px solid #4d6bfe; outline-offset: -1px; background-image: linear-gradient(color-mix(in srgb, #4d6bfe 16%, transparent), color-mix(in srgb, #4d6bfe 16%, transparent)); }
+.dshWorkspaceGitDiffPair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-width: 0; }
+.dshWorkspaceGitDiffCell { display: flex; min-width: 0; white-space: pre; overflow: hidden; border-right: 1px solid var(--dsw-alias-border-l1); }
+.dshWorkspaceGitDiffCell:last-child { border-right: 0; }
+.dshWorkspaceGitDiffCell[data-kind="add"] { background: color-mix(in srgb, #22c55e 14%, transparent); }
+.dshWorkspaceGitDiffCell[data-kind="remove"] { background: color-mix(in srgb, #ef4444 14%, transparent); }
+.dshWorkspaceGitDiffCell[data-kind="empty"] { background: color-mix(in srgb, var(--dsw-alias-fg) 4%, transparent); }
+.dshWorkspaceGitDiffCell[data-kind="add"] .dshWorkspaceGitDiffText, .dshWorkspaceGitDiffCell[data-kind="add"] .dshWorkspaceGitDiffMarker { color: #86efac; }
+.dshWorkspaceGitDiffCell[data-kind="remove"] .dshWorkspaceGitDiffText, .dshWorkspaceGitDiffCell[data-kind="remove"] .dshWorkspaceGitDiffMarker { color: #fca5a5; }
 .dshWorkspaceGitDiffNo { flex: none; width: 4.5ch; padding-right: 1ch; text-align: right; color: var(--dsw-alias-fg-l2); opacity: .7; user-select: none; }
 .dshWorkspaceGitDiffMarker { flex: none; width: 2ch; text-align: center; user-select: none; }
 .dshWorkspaceGitDiffLine[data-kind="add"] .dshWorkspaceGitDiffMarker, .dshWorkspaceGitDiffLine[data-kind="add"] .dshWorkspaceGitDiffText { color: #86efac; }

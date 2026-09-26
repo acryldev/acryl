@@ -71,7 +71,7 @@ function Thread(props: {
   return (
     <div className="dshWorkspaceThread" data-resolved={thread.resolved || undefined}>
       <button type="button" className="dshWorkspaceThreadWhere" title={thread.file} onClick={props.onOpen}>
-        {name}:{thread.line}
+        {name}:{thread.line}{thread.endLine === undefined ? '' : `-${String(thread.endLine)}`}
         <span className="dshWorkspaceThreadSide">{thread.side === 'new' ? 'new' : 'old'}</span>
       </button>
       <code className="dshWorkspaceThreadLine">{thread.lineText}</code>

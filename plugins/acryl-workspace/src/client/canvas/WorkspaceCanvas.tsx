@@ -170,7 +170,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, useSessions, shell
           sendComment={async (input) => {
             const result = await agent.sendToCurrentSession(buildReviewComment({ ...input, branch: groupBranch }))
             if (result.ok && tile.diffWorktree !== undefined) {
-              review.add({ worktree: tile.diffWorktree, file: input.file, side: input.side, line: input.line, lineText: input.lineText, comment: input.comment })
+              review.add({ worktree: tile.diffWorktree, file: input.file, side: input.side, line: input.line, ...(input.endLine === undefined ? {} : { endLine: input.endLine }), lineText: input.lineText, comment: input.comment })
             }
             return result
           }}
