@@ -5480,3 +5480,11 @@ binary directly rather than through whatever bare `pnpm` resolves to on
 - **Evidence:** the real Web engine boots on a throwaway home and serves the workspace: the `acryl-workspace` row is composed, `ui-layout` is disabled, the served page lists the workspace client bundle, and the git, files (including a save that lands on disk) and terminal routes answer (`apps/acryl-web/tests/workspace-shared.spec.ts`). Runtime, Desktop (844 tests) and workspace (285 tests) suites pass. Not done: a real browser rendering the Web page, which needs the running app; spec 040 T076.
 - **Notes:** `acryl-web` now depends on `acryl-workspace`, so its npm closure carries `node-pty`. The runtime test `system-prompt-shape` (upstream prompt drift baseline) was already failing before this work and still fails.
 
+## 2026-09-26 - first real browser run of the shared Web surface found two defects the tests could not
+
+- **How:** the Web surface was started on a throwaway home with a sample repository and opened in Chrome. The route and composition tests had all passed.
+- **Defect 1:** `acryl-workspace: cannot get property "theme" without inject`. The shell moved out of the Desktop client, whose `inject` list had declared `theme`; the workspace plugin had not. Fixed by declaring `theme` in its `inject`.
+- **Defect 2:** `sidebarRight: tab kind "files" is already registered (builtin)`. DSH's own `sidebar-files` plugin owns that kind, so our Files tab made the whole client plugin tree fail. This would have hit Desktop on its next launch too. The tab's kind is now `worktree-files` and it is titled Code; `tests/shell/tab-kinds.spec.ts` scans the upstream client packages so a future collision fails a test.
+- **Result:** the Web page now renders the ACRYL shell (Chats | Projects switch, tab strip with the always-present right-panel toggle) behind DSH's first-run "Internal Testing Notice", which was not dismissed because accepting a notice needs the owner's say-so. Projects, the right-panel tabs and the editor were not yet exercised in the browser.
+- **Lesson:** a Loader row that passes server-side composition can still fail in the browser; client plugin trees need a real browser check before a shared-surface change is called done.
+

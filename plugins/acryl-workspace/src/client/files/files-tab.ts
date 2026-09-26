@@ -6,7 +6,11 @@ import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { FilesBody } from './FilesBody.tsx'
 import type { WorkspaceFilesApi } from './files-api.ts'
 
-export const FILES_KIND = 'files'
+/**
+ * Not `files`: DSH's own `sidebar-files` plugin already registers that right-panel tab kind, and the tab
+ * registry rejects a second registration, which fails the whole client plugin tree.
+ */
+export const FILES_KIND = 'worktree-files'
 export const FILES_ID = 'acryl-workspace/files'
 
 /** PENDING (not failed) while the upstream right sidebar is absent; both registrations unwind together. */
@@ -20,10 +24,10 @@ export function filesTabPlugin(shell: WorkspaceShellState, filesApi: WorkspaceFi
           id: FILES_ID,
           kind: FILES_KIND,
           priority: 'builtin',
-          title: () => 'Files',
+          title: () => 'Code',
           guide: [{
             order: 10,
-            title: () => 'Files',
+            title: () => 'Code',
             description: () => 'Browse the worktree and open a file in the editor',
           }],
         })

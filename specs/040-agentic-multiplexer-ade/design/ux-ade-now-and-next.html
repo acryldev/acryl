@@ -244,7 +244,7 @@
           <button class="ptab" role="tab" data-t="changes" aria-selected="true">Changes<em>7</em></button>
           <button class="ptab f" role="tab" data-t="review" aria-selected="false">Review<em>2</em></button>
           <button class="ptab f" role="tab" data-t="checks" aria-selected="false">Checks</button>
-          <button class="ptab f" role="tab" data-t="files" aria-selected="false">Files</button>
+          <button class="ptab f" role="tab" data-t="files" aria-selected="false">Code</button>
         </div>
         <div class="pv on" data-tabs-view="now" data-v="changes">
           <div style="padding:2px 6px"><b>fix/workspace-sidebar-state</b><span class="fnote">path shown</span></div>
@@ -268,7 +268,7 @@
           <div style="color:var(--muted);padding:4px 6px">Run opens a terminal tab in this worktree and types the command.</div>
         </div>
         <div class="pv" data-tabs-view="now" data-v="files">
-          <div style="padding:2px 6px;color:var(--muted)">worktree files <span class="fnote">new</span></div>
+          <div style="padding:2px 6px;color:var(--muted)">worktree files (tab named Code) <span class="fnote">new</span></div>
           <div class="row f"><span class="n">▾ src</span></div>
           <div class="row f"><span class="n">&nbsp;&nbsp;&nbsp;&nbsp;state.ts</span></div>
           <div class="row f"><span class="n">&nbsp;&nbsp;&nbsp;&nbsp;Rail.tsx</span></div>
@@ -309,7 +309,7 @@
       <tr><td>Real diff tab</td><td><span class="chip built">built</span></td><td>Unified diff from real git data, with a line-comment composer that sends your comment to the agent as a queued message.</td></tr>
       <tr><td>Right pane: Changes</td><td><span class="chip built">built</span> <span class="chip fresh">path, no forced open, toggle</span></td><td>Changed files of the selected worktree with status letters and +/- counts, plus the worktree's full path. Picking a branch no longer forces the pane open; the toggle icon is always visible.</td></tr>
       <tr><td>Right pane: Review</td><td><span class="chip fresh">added</span></td><td>Every comment you send is listed per worktree with file:line. Click to jump to the diff; resolve, reopen or remove. Remembered across restarts.</td></tr>
-      <tr><td>Right pane: Files and editor</td><td><span class="chip fresh">added</span></td><td>Lazy file tree of the worktree and a real CodeMirror editor tab with save, conflict handling and drafts. Files are read and written through a confined Host route (git worktree root only, atomic save).</td></tr>
+      <tr><td>Right pane: Code (file tree) and editor</td><td><span class="chip fresh">added</span></td><td>Lazy file tree of the worktree and a real CodeMirror editor tab with save, conflict handling and drafts. Files are read and written through a confined Host route (git worktree root only, atomic save).</td></tr>
       <tr><td>Code organization</td><td><span class="chip fresh">added</span></td><td><code>acryl-workspace</code> is now organized by domain (git, pty, files, canvas, worktrees, projects, sessions, diff, review, checks) instead of one flat folder, with a README describing the layout. <code>apps/acryl-desktop</code> got the same treatment by bounded context (shell, profile, plugins, startup, diagnostics, updates, settings, terminal, workspaces, windows, runtime), with the layout-coupled files deliberately kept beside the entry points. One right-panel opener only.</td></tr>
       <tr><td>Right pane: Checks</td><td><span class="chip fresh">added</span></td><td>Lists the worktree's package scripts (check, test, lint, build first) and a Run button that opens a terminal tab in that worktree and types the command with the project's own package manager.</td></tr>
     </tbody>
@@ -401,7 +401,7 @@
       <aside class="panel">
         <span class="no" style="left:-10px;top:6px">7</span>
         <div class="ptabs" role="tablist">
-          <button class="ptab" role="tab" data-t="files" aria-selected="false">Files</button>
+          <button class="ptab" role="tab" data-t="files" aria-selected="false">Code</button>
           <button class="ptab" role="tab" data-t="changes" aria-selected="true">Changes<em>7</em></button>
           <button class="ptab" role="tab" data-t="review" aria-selected="false">Review<em>3</em></button>
           <button class="ptab" role="tab" data-t="checks" aria-selected="false">Checks<em>1</em></button>
