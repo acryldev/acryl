@@ -41,7 +41,19 @@ export function roleOf(el: Element): string | null {
 const collapse = (value: string): string => value.replace(/\s+/g, ' ').trim()
 const clip = (value: string, max: number): string => (value.length > max ? `${value.slice(0, max - 1)}…` : value)
 
-const textOf = (el: Element, max: number): string => clip(collapse(el.textContent ?? ''), max)
+/** The text a reader would hear: like `textContent`, but leaving out what is `aria-hidden` or `hidden` (a check mark, an icon glyph). */
+function readableText(root: Node): string {
+  const parts: string[] = []
+  const walk = (node: Node): void => {
+    if (node.nodeType === Node.TEXT_NODE) parts.push(node.textContent ?? '')
+    else if (!(node instanceof Element && (node.getAttribute('aria-hidden') === 'true' || node.hasAttribute('hidden')))) node.childNodes.forEach(walk)
+  }
+  // The element being named is never skipped itself; only what it contains.
+  root.childNodes.forEach(walk)
+  return parts.join('')
+}
+
+const textOf = (el: Element, max: number): string => clip(collapse(readableText(el)), max)
 
 /** ARIA-style accessible name, kept short. */
 export function nameOf(el: Element, role: string): string {
@@ -56,7 +68,8 @@ export function nameOf(el: Element, role: string): string {
     const id = el.id
     const explicit = id === '' ? null : el.ownerDocument.querySelector(`label[for="${CSS.escape(id)}"]`)
     const wrapping = el.closest('label')
-    const labelText = collapse((explicit ?? wrapping)?.textContent ?? '')
+    const label = explicit ?? wrapping
+    const labelText = label === null ? '' : collapse(readableText(label))
     if (labelText !== '') return clip(labelText, 120)
     if (el instanceof HTMLInputElement && (el.type === 'button' || el.type === 'submit' || el.type === 'reset') && el.value !== '') return clip(el.value, 120)
     const placeholder = el.getAttribute('placeholder')?.trim()
