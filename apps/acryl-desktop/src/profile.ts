@@ -49,6 +49,10 @@ import {
   readDesktopBlend,
   type DesktopBlendProjection,
 } from './desktop-blend.ts'
+import {
+  DEFAULT_DEVIN_ACP_SETTINGS,
+  type DevinAcpSettings,
+} from './desktop-settings-contract.ts'
 
 /** Persistent profile managed by the desktop launcher and the ordinary dsh plugin command. */
 export const DESKTOP_PROFILE_NAME = 'desktop'
@@ -102,6 +106,7 @@ const WORKSPACE_ROW_ID = 'acryl-workspace'
 const WORKSPACE_PACKAGE = 'acryl-workspace'
 const SYSTEM_PROMPT_ROW_ID = 'acryl-system-prompt'
 const SYSTEM_PROMPT_PACKAGE = 'acryl-system-prompt'
+const DEVIN_ACP_ROW_ID = 'acryl-agent-devin'
 const UI_BRAND_ACRYL_PACKAGE = 'dsh-client-ui-brand-acryl'
 /**
  * Selects which browser-brand package occupies the sidebar and
@@ -153,6 +158,8 @@ export interface DesktopStartupSettings {
   port: number
   /** BLEND selection: path to an owned Blend directory or lock file, or null. */
   blend: string | null
+  /** Devin ACP provider opt-in state for the `acryl-agent-devin` Loader row. */
+  devin: DevinAcpSettings
 }
 
 /** Parse the requested BLEND selection and reject malformed values. */
@@ -160,6 +167,53 @@ export function parseDesktopBlend(value: unknown): string | null {
   if (value === undefined || value === null) return null
   if (typeof value === 'string' && value.length > 0 && value.length <= 4096) return value
   throw new Error(`${BIN_NAME}: ${DESKTOP_SETTINGS_NAMESPACE}.blend must be a non-empty path of at most 4096 characters`)
+}
+
+const DEVIN_ACP_SECTION = `${DESKTOP_SETTINGS_NAMESPACE}.devin-acp`
+
+/** Parse one optional Devin ACP field that must be a non-empty string or null. */
+function parseDevinAcpNullableString(value: unknown, field: string): string | null {
+  if (value === undefined || value === null) return null
+  if (typeof value === 'string' && value.length > 0) return value
+  throw new Error(`${BIN_NAME}: ${DEVIN_ACP_SECTION}.${field} must be a non-empty string or null`)
+}
+
+/**
+ * Parse the `devin-acp` section of the Desktop settings document.
+ * @param section - untrusted `dsh-desktop.devin-acp` value.
+ * @returns validated Devin ACP settings; an absent section yields the defaults.
+ */
+export function parseDesktopDevinAcp(section: unknown): DevinAcpSettings {
+  if (section === undefined) return DEFAULT_DEVIN_ACP_SETTINGS
+  if (typeof section !== 'object' || section === null || Array.isArray(section)) {
+    throw new Error(`${BIN_NAME}: ${DEVIN_ACP_SECTION} settings must be a map`)
+  }
+  const values = section as Record<string, unknown>
+  const enabled = values.enabled
+  if (enabled !== undefined && typeof enabled !== 'boolean') {
+    throw new Error(`${BIN_NAME}: ${DEVIN_ACP_SECTION}.enabled must be a boolean`)
+  }
+  const authMode = values.authMode
+  if (authMode !== undefined
+    && authMode !== 'devin-auth'
+    && authMode !== 'windsurf-key'
+    && authMode !== 'interactive') {
+    throw new Error(`${BIN_NAME}: ${DEVIN_ACP_SECTION}.authMode must be "devin-auth", "windsurf-key", or "interactive"`)
+  }
+  const permissionMode = values.permissionMode
+  if (permissionMode !== undefined
+    && permissionMode !== 'normal'
+    && permissionMode !== 'dangerous'
+    && permissionMode !== 'bypass') {
+    throw new Error(`${BIN_NAME}: ${DEVIN_ACP_SECTION}.permissionMode must be "normal", "dangerous", or "bypass"`)
+  }
+  return {
+    enabled: enabled ?? DEFAULT_DEVIN_ACP_SETTINGS.enabled,
+    binaryPath: parseDevinAcpNullableString(values.binaryPath, 'binaryPath'),
+    authMode: authMode ?? DEFAULT_DEVIN_ACP_SETTINGS.authMode,
+    model: parseDevinAcpNullableString(values.model, 'model'),
+    permissionMode: permissionMode ?? DEFAULT_DEVIN_ACP_SETTINGS.permissionMode,
+  }
 }
 
 /**
@@ -173,7 +227,7 @@ export function desktopStartupSettingsFromSettings(document: unknown): DesktopSt
   }
   const section = (document as Record<string, unknown>)[DESKTOP_SETTINGS_NAMESPACE]
   if (section === undefined) {
-    return { mode: DEFAULT_DESKTOP_SHELL_MODE, port: DEFAULT_DESKTOP_PORT, blend: null }
+    return { mode: DEFAULT_DESKTOP_SHELL_MODE, port: DEFAULT_DESKTOP_PORT, blend: null, devin: DEFAULT_DEVIN_ACP_SETTINGS }
   }
   if (typeof section !== 'object' || section === null || Array.isArray(section)) {
     throw new Error(`${BIN_NAME}: ${DESKTOP_SETTINGS_NAMESPACE} settings must be a map`)
@@ -183,6 +237,7 @@ export function desktopStartupSettingsFromSettings(document: unknown): DesktopSt
     mode: parseDesktopShellMode(values.mode),
     port: parseDesktopPort(values.port),
     blend: parseDesktopBlend(values.blend),
+    devin: parseDesktopDevinAcp(values['devin-acp']),
   }
 }
 
@@ -203,7 +258,7 @@ export function readDesktopStartupSettings(config: SettingsFileConfig): DesktopS
     text = readFileSync(spec.filename, 'utf8')
   } catch (cause) {
     if ((cause as NodeJS.ErrnoException).code === 'ENOENT') {
-      return { mode: DEFAULT_DESKTOP_SHELL_MODE, port: DEFAULT_DESKTOP_PORT, blend: null }
+      return { mode: DEFAULT_DESKTOP_SHELL_MODE, port: DEFAULT_DESKTOP_PORT, blend: null, devin: DEFAULT_DEVIN_ACP_SETTINGS }
     }
     throw cause
   }
@@ -810,10 +865,25 @@ export function prepareDesktopProfile(
   } as SettingsFileConfig)
   const settingsDocument = resolveSettingsFileSpec(settingsConfig).filename
   hooks.onSettingsDocumentResolved?.(settingsDocument)
-  const { mode, port, blend: blendPath } = readDesktopStartupSettings(settingsConfig)
+  const { mode, port, blend: blendPath, devin } = readDesktopStartupSettings(settingsConfig)
   patches.push({
     id: 'settings',
     config: settingsConfig,
+  })
+  // Devin ACP provider (devin-acp-integration): the `agent-control`/`devin-acp`
+  // capability inserts compose the row disabled; this id-targeted patch flips
+  // it on only when the user opted in through settings. `cwd` is deliberately
+  // not settable here - the plugin's Config falls back to the process cwd.
+  const devinConfig: Record<string, unknown> = {
+    authMode: devin.authMode,
+    permissionMode: devin.permissionMode,
+  }
+  if (devin.binaryPath !== null) devinConfig.binaryPath = devin.binaryPath
+  if (devin.model !== null) devinConfig.model = devin.model
+  patches.push({
+    id: DEVIN_ACP_ROW_ID,
+    disabled: !devin.enabled,
+    config: devinConfig,
   })
   // BLEND composition (D24): the selected owned Blend's lock becomes one
   // insert patch, pushed after the settings row and before the desktop

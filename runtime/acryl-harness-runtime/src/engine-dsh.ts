@@ -277,6 +277,12 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
   // ACRYL terminal UI library (spec 038-ui-component-library): a plain library a terminal plugin imports (`import 'acryl-ui-tui'`), so it is only made
   // resolvable from the profile; there is no Loader row.
   materializeProfilePackage(profile.dir, 'acryl-ui-tui', import.meta.url)
+  // The `agent-control`/`devin-acp` capability inserts name ACRYL-owned
+  // workspace packages outside @deepseek-ai/dsh's dependency closure;
+  // `acryl-agent-devin` composes disabled but is materialized up front so
+  // enabling it later never requires re-materializing the profile.
+  materializeProfilePackage(profile.dir, 'acryl-control', import.meta.url)
+  materializeProfilePackage(profile.dir, 'acryl-agent-devin', import.meta.url)
   // The profile's own user overrides come from the shared store, not from this
   // surface: `acryl plugin disable` on a TUI writes the same file the Desktop
   // panel and the Web surface read, so the next boot of any of them composes
@@ -509,6 +515,12 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   // slots (sidebar/desktop.main/details) at all.
   materializeProfilePackage(profile.dir, 'acryl-mount-anchors', installPackageUrl)
   patches.push({ insert: [{ id: 'acryl-mount-anchors', name: 'acryl-mount-anchors' }] })
+  // The `agent-control`/`devin-acp` capability inserts: same materialization
+  // reasoning as the owned packages above. `acryl-agent-devin` composes
+  // disabled but is materialized up front so enabling it later never
+  // requires re-materializing the profile.
+  materializeProfilePackage(profile.dir, 'acryl-control', installPackageUrl)
+  materializeProfilePackage(profile.dir, 'acryl-agent-devin', installPackageUrl)
   // Last, so a user override beats every composition decision above it - the
   // same shared store the CLI and the Desktop panel write (spec 034).
   patches.push(...pluginLifecyclePatches({

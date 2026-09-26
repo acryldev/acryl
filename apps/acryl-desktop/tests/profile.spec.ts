@@ -10,12 +10,14 @@ import {
   desktopStartupSettingsFromSettings,
   desktopBundleList,
   ensureDesktopProfile,
+  parseDesktopDevinAcp,
   prepareDesktopProfile,
   readDesktopShellMode,
   shippedPresetRoot,
   validateDshMarketBundlePatches,
 } from '../src/profile.ts'
 import { DESKTOP_MARKET_IDENTITIES } from '../src/desktop-market.ts'
+import { DEFAULT_DEVIN_ACP_SETTINGS } from '../src/desktop-settings-contract.ts'
 
 const homes: string[] = []
 
@@ -647,13 +649,74 @@ describe('desktop profile composition', {
       mode: 'advanced',
       port: 43_189,
       blend: null,
+      devin: DEFAULT_DEVIN_ACP_SETTINGS,
     })
     expect(desktopStartupSettingsFromSettings({ 'dsh-desktop': { mode: 'advanced' } })).toEqual({
       mode: 'advanced',
       port: 43_120,
       blend: null,
+      devin: DEFAULT_DEVIN_ACP_SETTINGS,
     })
     expect(desktopShellModeFromSettings({ unrelated: { enabled: true } })).toBe('advanced')
+  })
+
+  it('defaults an absent devin-acp section to the shipped Devin ACP defaults', () => {
+    expect(desktopStartupSettingsFromSettings({ 'dsh-desktop': {} }).devin).toEqual(DEFAULT_DEVIN_ACP_SETTINGS)
+    expect(desktopStartupSettingsFromSettings({}).devin).toEqual(DEFAULT_DEVIN_ACP_SETTINGS)
+    expect(parseDesktopDevinAcp(undefined)).toEqual(DEFAULT_DEVIN_ACP_SETTINGS)
+  })
+
+  it('parses an explicit devin-acp section and composes the enabled provider row', () => {
+    const home = temporaryHome()
+    writeFileSync(join(home, 'settings.yaml'), [
+      'dsh-desktop:',
+      '  devin-acp:',
+      '    enabled: true',
+      '    binaryPath: /opt/devin/bin/devin',
+      '    authMode: windsurf-key',
+      '    model: claude-sonnet-4',
+      '    permissionMode: dangerous',
+      '',
+    ].join('\n'))
+
+    const prepared = prepareDesktopProfile(undefined, home, 'darwin')
+    const rows = composeEntries([prepared.patches])
+
+    expect(rows.find(row => row.id === 'acryl-agent-devin')).toEqual(expect.objectContaining({
+      name: 'acryl-agent-devin',
+      disabled: false,
+      config: {
+        binaryPath: '/opt/devin/bin/devin',
+        authMode: 'windsurf-key',
+        model: 'claude-sonnet-4',
+        permissionMode: 'dangerous',
+      },
+    }))
+  })
+
+  it('composes the Devin ACP row disabled when the section is absent or opted out', () => {
+    const home = temporaryHome()
+
+    const prepared = prepareDesktopProfile(undefined, home, 'darwin')
+    const rows = composeEntries([prepared.patches])
+
+    expect(rows.find(row => row.id === 'acryl-agent-devin')).toEqual(expect.objectContaining({
+      name: 'acryl-agent-devin',
+      disabled: true,
+      config: { authMode: 'devin-auth', permissionMode: 'normal' },
+    }))
+  })
+
+  it('rejects malformed devin-acp settings values', () => {
+    expect(() => parseDesktopDevinAcp(true)).toThrow('devin-acp settings must be a map')
+    expect(() => parseDesktopDevinAcp({ enabled: 'yes' })).toThrow('devin-acp.enabled must be a boolean')
+    expect(() => parseDesktopDevinAcp({ binaryPath: 42 })).toThrow('devin-acp.binaryPath must be a non-empty string or null')
+    expect(() => parseDesktopDevinAcp({ binaryPath: '' })).toThrow('devin-acp.binaryPath must be a non-empty string or null')
+    expect(() => parseDesktopDevinAcp({ authMode: 'oauth' })).toThrow('devin-acp.authMode')
+    expect(() => parseDesktopDevinAcp({ model: {} })).toThrow('devin-acp.model must be a non-empty string or null')
+    expect(() => parseDesktopDevinAcp({ permissionMode: 'yolo' })).toThrow('devin-acp.permissionMode')
+    expect(() => desktopStartupSettingsFromSettings({ 'dsh-desktop': { 'devin-acp': { enabled: 'yes' } } }))
+      .toThrow('devin-acp.enabled must be a boolean')
   })
 
   it('rejects invalid settings roots, sections, modes, and YAML', () => {

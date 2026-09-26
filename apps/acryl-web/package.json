@@ -192,6 +192,8 @@
     "@deepseek-ai/dsh-workflow-worker-thread": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-workspace": "0.1.5-alpha.1",
     "diff": "^8.0.4",
+    "acryl-control": "workspace:*",
+    "acryl-agent-devin": "workspace:*",
     "acryl-extension-context": "workspace:*",
     "acryl-system-prompt": "workspace:*",
     "@acryl/ui": "workspace:*",
@@ -211,7 +213,6 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.2",
     "@types/node": "^22.20.0",
-    "acryl-control": "workspace:*",
     "acryl-harness-runtime": "workspace:*",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
