@@ -9,11 +9,13 @@
  */
 
 import { randomBytes } from 'node:crypto'
-import { chmod, readdir, readFile, realpath, rename, stat, unlink, writeFile } from 'node:fs/promises'
+import { chmod, lstat, mkdir, readdir, readFile, realpath, rename, rmdir, stat, unlink, writeFile } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, sep } from 'node:path'
 import {
   MAX_EDITABLE_BYTES,
   type FileContentView,
+  type FileEntryChange,
+  type FileEntryChangedView,
   type FileEntry,
   type FileSavedView,
   type FilesTreeView,
@@ -105,6 +107,44 @@ export class WorkspaceFiles {
     const saved = await stat(real)
     return { path: root, file, size: saved.size, mtimeMs: saved.mtimeMs }
   }
+
+  /**
+   * Create, rename or delete one entry. Never overwrites, never recurses: a delete removes a file or an
+   * empty folder only, and a create or rename refuses a name that is already taken.
+   */
+  async change(worktree: string, change: FileEntryChange): Promise<FileEntryChangedView> {
+    const root = await this.options.resolveWorktree(worktree)
+    if (change.op === 'create') {
+      const target = await confineNew(root, change.file)
+      try {
+        if (change.kind === 'dir') await mkdir(target)
+        else await writeFile(target, '', { flag: 'wx' })
+      } catch {
+        throw new WorkspaceFilesError('that could not be created', 'failed')
+      }
+      return { path: root, op: 'create', file: change.file }
+    }
+    if (change.op === 'rename') {
+      const source = await confineEntry(root, change.file)
+      const target = await confineNew(root, change.to)
+      try {
+        await rename(source, target)
+      } catch {
+        throw new WorkspaceFilesError('that could not be renamed', 'failed')
+      }
+      return { path: root, op: 'rename', file: change.to }
+    }
+    const target = await confineEntry(root, change.file)
+    try {
+      if ((await lstat(target)).isDirectory()) await rmdir(target)
+      else await unlink(target)
+    } catch (cause) {
+      const code = typeof cause === 'object' && cause !== null && 'code' in cause ? cause.code : undefined
+      if (code === 'ENOTEMPTY' || code === 'EEXIST') throw new WorkspaceFilesError('only an empty folder can be deleted', 'conflict')
+      throw new WorkspaceFilesError('that could not be deleted', 'failed')
+    }
+    return { path: root, op: 'delete', file: null }
+  }
 }
 
 async function statFile(real: string): Promise<{ size: number; mtimeMs: number; mode: number }> {
@@ -153,4 +193,58 @@ export async function confine(root: string, relative: string): Promise<string> {
   }
   if (!isInside(root, real)) throw new WorkspaceFilesError('that path leaves the worktree', 'invalid')
   return real
+}
+
+function segmentsOf(relative: string): string[] {
+  if (typeof relative !== 'string' || relative.length === 0 || relative.includes('\0') || isAbsolute(relative)) {
+    throw new WorkspaceFilesError('path must be relative to the worktree', 'invalid')
+  }
+  const segments = relative.split(/[\\/]+/).filter(segment => segment.length > 0)
+  if (segments.length === 0 || segments.some(segment => segment === '..' || segment === '.' || segment.toLowerCase() === '.git')) {
+    throw new WorkspaceFilesError('that path is not allowed', 'invalid')
+  }
+  return segments
+}
+
+/**
+ * The real path of an entry that will be created: its folder must exist inside the worktree and the name
+ * must be free (a dangling symlink counts as taken).
+ */
+export async function confineNew(root: string, relative: string): Promise<string> {
+  const segments = segmentsOf(relative)
+  const name = segments[segments.length - 1] as string
+  let parent: string
+  try {
+    parent = await realpath(join(root, ...segments.slice(0, -1)))
+  } catch {
+    throw new WorkspaceFilesError('the folder does not exist', 'not-found')
+  }
+  if (!isInside(root, parent)) throw new WorkspaceFilesError('that path leaves the worktree', 'invalid')
+  const target = join(parent, name)
+  try {
+    await lstat(target)
+  } catch {
+    return target
+  }
+  throw new WorkspaceFilesError('something with that name already exists', 'conflict')
+}
+
+/** The path of an existing entry itself: a symlink is renamed or deleted as the link, never followed. */
+async function confineEntry(root: string, relative: string): Promise<string> {
+  const segments = segmentsOf(relative)
+  const name = segments[segments.length - 1] as string
+  let parent: string
+  try {
+    parent = await realpath(join(root, ...segments.slice(0, -1)))
+  } catch {
+    throw new WorkspaceFilesError('that path does not exist', 'not-found')
+  }
+  if (!isInside(root, parent)) throw new WorkspaceFilesError('that path leaves the worktree', 'invalid')
+  const target = join(parent, name)
+  try {
+    await lstat(target)
+  } catch {
+    throw new WorkspaceFilesError('that path does not exist', 'not-found')
+  }
+  return target
 }

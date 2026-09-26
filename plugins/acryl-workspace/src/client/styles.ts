@@ -173,6 +173,10 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceCheckRun:hover { border-color: #4d6bfe; color: #4d6bfe; }
 .dshWorkspaceFilesFilter { margin: 4px 8px 6px; padding: 5px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceFilesFilter:focus { outline: 2px solid #4d6bfe; outline-offset: -1px; }
+.dshWorkspaceFilesEdit { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin: 0 8px 6px; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg); }
+.dshWorkspaceFilesEdit input { flex: 1; min-width: 0; padding: 5px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: inherit; font: inherit; }
+.dshWorkspaceFilesEdit button { padding: 4px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.dshWorkspaceFilesEditText { flex-basis: 100%; overflow-wrap: anywhere; }
 .dshWorkspaceFilesSearch { display: flex; align-items: center; gap: 4px; }
 .dshWorkspaceFilesSearch .dshWorkspaceFilesFilter { flex: 1; min-width: 0; }
 .dshWorkspaceFilesSearchMode { display: flex; margin-right: 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; overflow: hidden; }
@@ -204,12 +208,6 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceDocTable { border-collapse: collapse; margin: 8px 0; font: 12.5px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceDocTable th, .dshWorkspaceDocTable td { padding: 5px 10px; border: 1px solid var(--dsw-alias-border-l1); text-align: left; vertical-align: top; }
 .dshWorkspaceDocTable th { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 6%)); }
-.dshWorkspaceFileItem { position: relative; display: flex; align-items: center; }
-.dshWorkspaceFileItem > .dshWorkspaceFileRow { flex: 1; min-width: 0; }
-.dshWorkspaceFilePreview { appearance: none; flex: none; margin-right: 8px; padding: 1px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 10.5px/1.5 ui-sans-serif, system-ui, sans-serif; }
-.dshWorkspaceFilePreview:hover { border-color: #4d6bfe; color: #4d6bfe; }
-.dshWorkspaceDocFile { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
-.dshWorkspaceDocFileBody { flex: 1; min-height: 0; overflow: auto; padding: 16px 24px; }
 .dshWorkspaceDocCode { padding: 1px 5px; border-radius: 4px; background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); font: 0.92em ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dshWorkspaceDocPre { overflow: auto; margin: 8px 0; padding: 10px 12px; border-radius: 8px; background: #0b0d12; color: #d7e0ea; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dshWorkspaceDocQuote { margin: 8px 0; padding: 2px 12px; border-left: 3px solid var(--dsw-alias-border-l2); color: var(--dsw-alias-fg-l2); }

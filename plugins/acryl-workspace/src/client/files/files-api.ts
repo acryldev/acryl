@@ -1,13 +1,17 @@
 /** Same-origin browser client for the worktree file routes. */
 
 import {
+  WORKSPACE_FILES_ENTRY_PATH,
   WORKSPACE_FILES_READ_PATH,
   WORKSPACE_FILES_TREE_PATH,
   WORKSPACE_FILES_WRITE_PATH,
   parseFileContentView,
+  parseFileEntryChangedView,
   parseFileSavedView,
   parseFilesTreeView,
   type FileContentView,
+  type FileEntryChange,
+  type FileEntryChangedView,
   type FileSavedView,
   type FilesTreeView,
 } from '../../files/contract.ts'
@@ -30,6 +34,11 @@ export interface WorkspaceFilesApi {
    * @throws an Error whose message is fit to show the user for any other refusal.
    */
   write(worktree: string, file: string, content: string, expectedMtimeMs: number): Promise<FileSavedView>
+  /**
+   * Create a file or empty folder, rename or move an entry, or delete a file or empty folder.
+   * Never overwrites. @throws an Error whose message is fit to show the user.
+   */
+  change(worktree: string, change: FileEntryChange): Promise<FileEntryChangedView>
 }
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
@@ -63,6 +72,17 @@ export function createWorkspaceFilesApi(fetchImpl: FetchLike = (input, init) => 
     },
     async read(worktree, file) {
       return parseFileContentView(await get(WORKSPACE_FILES_READ_PATH, { path: worktree, file }))
+    },
+    async change(worktree, change) {
+      const response = await fetchImpl(WORKSPACE_FILES_ENTRY_PATH, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ path: worktree, ...change }),
+      })
+      const body = await json(response)
+      if (response.status !== 200) throw new Error(detail(body, response.status))
+      return parseFileEntryChangedView(body)
     },
     async write(worktree, file, content, expectedMtimeMs) {
       const response = await fetchImpl(WORKSPACE_FILES_WRITE_PATH, {

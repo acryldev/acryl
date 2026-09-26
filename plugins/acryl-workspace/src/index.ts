@@ -3,11 +3,13 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import {
+  WORKSPACE_FILES_ENTRY_PATH,
   WORKSPACE_FILES_READ_PATH,
   WORKSPACE_FILES_TREE_PATH,
   WORKSPACE_FILES_WRITE_PATH,
 } from './files/contract.ts'
 import {
+  handleWorkspaceFilesEntryRequest,
   handleWorkspaceFilesReadRequest,
   handleWorkspaceFilesTreeRequest,
   handleWorkspaceFilesWriteRequest,
@@ -115,6 +117,7 @@ export function apply(ctx: Context): void {
         [WORKSPACE_FILES_TREE_PATH, handleWorkspaceFilesTreeRequest],
         [WORKSPACE_FILES_READ_PATH, handleWorkspaceFilesReadRequest],
         [WORKSPACE_FILES_WRITE_PATH, handleWorkspaceFilesWriteRequest],
+        [WORKSPACE_FILES_ENTRY_PATH, handleWorkspaceFilesEntryRequest],
       ] as const
       for (const [path, handler] of filesRoutes) {
         releases.push(ctx.webServer.register({

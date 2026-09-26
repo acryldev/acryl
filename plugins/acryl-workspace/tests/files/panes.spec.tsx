@@ -31,12 +31,59 @@ function makeFilesApi(overrides: Partial<WorkspaceFilesApi> = {}): WorkspaceFile
       ? { path: '/p', dir, truncated: false, entries: [{ name: 'src', kind: 'dir' }, { name: 'README.md', kind: 'file' }] }
       : { path: '/p', dir, truncated: false, entries: [{ name: 'a.ts', kind: 'file' }] },
     read: async (_w, file) => ({ path: '/p', file, content: 'disk text', binary: false, size: 9, mtimeMs: 100 }),
+    change: async (path, change) => ({ path, op: change.op, file: change.op === 'delete' ? null : change.op === 'rename' ? change.to : change.file }),
     write: async (...args) => { writes.push(args); return { path: '/p', file: 'a.ts', size: 1, mtimeMs: 200 } },
     ...overrides,
   }
 }
 
 describe('FilesBody', () => {
+  it('creates a file (and opens it), renames an entry, and asks before deleting', async () => {
+    const shell = new WorkspaceShellState(gitApi)
+    await shell.discover('/p')
+    shell.select('/p')
+    const opened: unknown[] = []
+    shell.onOpenFile(request => { opened.push(request) })
+    const change = vi.fn(async (path: string, c: { op: string; file?: string; to?: string }) => ({ path, op: c.op, file: c.op === 'delete' ? null : (c.to ?? c.file ?? null) }))
+    const props = { shell, gitApi, filesApi: makeFilesApi({ change } as Partial<WorkspaceFilesApi>) } as unknown as FilesBodyProps
+    render(<FilesBody {...props} />)
+    await screen.findByText('README.md')
+
+    fireEvent.click(screen.getByRole('button', { name: 'New file' }))
+    fireEvent.change(screen.getByLabelText('New file path'), { target: { value: ' src/new.ts ' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+    await waitFor(() => { expect(opened).toEqual([{ worktree: '/p', file: 'src/new.ts' }]) })
+    expect(change).toHaveBeenLastCalledWith('/p', { op: 'create', kind: 'file', file: 'src/new.ts' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Rename README.md' }))
+    fireEvent.change(screen.getByLabelText('New path'), { target: { value: 'docs/README.md' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Rename' }))
+    await waitFor(() => { expect(change).toHaveBeenLastCalledWith('/p', { op: 'rename', file: 'README.md', to: 'docs/README.md' }) })
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete README.md' }))
+    expect(change).toHaveBeenCalledTimes(2)
+    expect(screen.getByText(/cannot be undone/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(change).toHaveBeenCalledTimes(2)
+    fireEvent.click(screen.getByRole('button', { name: 'Delete README.md' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    await waitFor(() => { expect(change).toHaveBeenLastCalledWith('/p', { op: 'delete', file: 'README.md' }) })
+  })
+
+  it('shows why a change was refused and keeps the form open', async () => {
+    const shell = new WorkspaceShellState(gitApi)
+    await shell.discover('/p')
+    shell.select('/p')
+    const props = { shell, gitApi, filesApi: makeFilesApi({ change: () => Promise.reject(new Error('something with that name already exists')) } as Partial<WorkspaceFilesApi>) } as unknown as FilesBodyProps
+    render(<FilesBody {...props} />)
+    await screen.findByText('README.md')
+    fireEvent.click(screen.getByRole('button', { name: 'New folder' }))
+    fireEvent.change(screen.getByLabelText('New folder path'), { target: { value: 'src' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+    expect((await screen.findByRole('alert')).textContent).toBe('something with that name already exists')
+    expect(screen.getByLabelText('New folder path')).toBeTruthy()
+  })
+
   it('searches names, then content, and opens a hit in the editor', async () => {
     const shell = new WorkspaceShellState(gitApi)
     await shell.discover('/p')

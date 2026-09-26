@@ -14,6 +14,12 @@ export type FilesBodyProps = PropsRuntime<'sidebar.right.pane.tab'> & {
   readonly gitApi: WorkspaceGitApi
 }
 
+/** The one inline edit open at a time: the name being typed, or a delete awaiting confirmation. */
+type Pending =
+  | { readonly type: 'create'; readonly entry: 'file' | 'dir'; readonly value: string }
+  | { readonly type: 'rename'; readonly file: string; readonly value: string }
+  | { readonly type: 'delete'; readonly file: string; readonly isDir: boolean }
+
 type SearchState =
   | { readonly phase: 'idle' }
   | { readonly phase: 'loading' }
@@ -35,6 +41,8 @@ export function FilesBody({ shell, filesApi, gitApi }: FilesBodyProps) {
   const [reload, setReload] = useState(0)
   const [query, setQuery] = useState('')
   const [mode, setMode] = useState<GitSearchMode>('name')
+  const [pending, setPending] = useState<Pending | null>(null)
+  const [editError, setEditError] = useState<string | null>(null)
   const [search, setSearch] = useState<SearchState>({ phase: 'idle' })
 
   const load = useCallback((root: string, dir: string, isCurrent: () => boolean): void => {
@@ -53,6 +61,8 @@ export function FilesBody({ shell, filesApi, gitApi }: FilesBodyProps) {
     setOpen(new Set())
     setFilter('')
     setQuery('')
+    setPending(null)
+    setEditError(null)
     load(path, ROOT, () => current)
     return () => { current = false }
   }, [path, reload, load])
@@ -86,6 +96,25 @@ export function FilesBody({ shell, filesApi, gitApi }: FilesBodyProps) {
     if (!isOpen && dirs.get(dir)?.phase !== 'ready') load(path, dir, () => true)
   }
 
+  const submit = (): void => {
+    if (path === undefined || pending === null) return
+    const change = pending.type === 'create'
+      ? { op: 'create', kind: pending.entry, file: pending.value.trim() } as const
+      : pending.type === 'rename'
+        ? { op: 'rename', file: pending.file, to: pending.value.trim() } as const
+        : { op: 'delete', file: pending.file } as const
+    if (change.op !== 'delete' && (change.op === 'create' ? change.file : change.to) === '') return
+    filesApi.change(path, change).then(
+      (done) => {
+        setPending(null)
+        setEditError(null)
+        setReload(n => n + 1)
+        if (change.op === 'create' && change.kind === 'file' && done.file !== null) shell.openFile({ worktree: path, file: done.file })
+      },
+      (cause: unknown) => { setEditError(cause instanceof Error ? cause.message : 'That change failed.') },
+    )
+  }
+
   const rows = useMemo(() => visibleRows(dirs, open, filter), [dirs, open, filter])
   const rootState = dirs.get(ROOT)
 
@@ -104,6 +133,8 @@ export function FilesBody({ shell, filesApi, gitApi }: FilesBodyProps) {
           <strong>{worktree.branch ?? 'detached'}</strong>
           <span className="dshWorkspaceChangesMeta">files</span>
         </div>
+        <button type="button" className="dshWorkspaceChangesRefresh" aria-label="New file" title="New file" onClick={() => { setEditError(null); setPending({ type: 'create', entry: 'file', value: '' }) }}>+</button>
+        <button type="button" className="dshWorkspaceChangesRefresh" aria-label="New folder" title="New folder" onClick={() => { setEditError(null); setPending({ type: 'create', entry: 'dir', value: '' }) }}>▣</button>
         <button type="button" className="dshWorkspaceChangesRefresh" aria-label="Reload files" title="Reload" onClick={() => { setReload(n => n + 1) }}>↻</button>
       </header>
       <input
@@ -114,6 +145,24 @@ export function FilesBody({ shell, filesApi, gitApi }: FilesBodyProps) {
         value={filter}
         onChange={(event) => { setFilter(event.target.value) }}
       />
+      {pending !== null && (
+        <form className="dshWorkspaceFilesEdit" onSubmit={(event) => { event.preventDefault(); submit() }}>
+          {pending.type === 'delete' ? (
+            <span className="dshWorkspaceFilesEditText">Delete {pending.isDir ? 'empty folder' : 'file'} <strong>{pending.file}</strong>? This cannot be undone here.</span>
+          ) : (
+            <input
+              autoFocus
+              aria-label={pending.type === 'create' ? (pending.entry === 'file' ? 'New file path' : 'New folder path') : 'New path'}
+              placeholder={pending.type === 'create' ? 'path/relative/to/the/worktree' : 'new path'}
+              value={pending.value}
+              onChange={(event) => { setPending({ ...pending, value: event.target.value }) }}
+            />
+          )}
+          <button type="submit">{pending.type === 'delete' ? 'Delete' : pending.type === 'rename' ? 'Rename' : 'Create'}</button>
+          <button type="button" onClick={() => { setPending(null); setEditError(null) }}>Cancel</button>
+        </form>
+      )}
+      {editError !== null && <p className="dshWorkspaceChangesError" role="alert">{editError}</p>}
       <div className="dshWorkspaceFilesSearch">
         <input
           className="dshWorkspaceFilesFilter"
@@ -175,6 +224,8 @@ export function FilesBody({ shell, filesApi, gitApi }: FilesBodyProps) {
               {row.status === 'loading' && <span className="dshWorkspaceFileHint">loading</span>}
               {row.status === 'error' && <span className="dshWorkspaceFileHint" data-error>failed</span>}
             </button>
+            <button type="button" className="dshWorkspaceFilePreview" aria-label={`Rename ${row.path}`} title="Rename or move" onClick={() => { setEditError(null); setPending({ type: 'rename', file: row.path, value: row.path }) }}>Rename</button>
+            <button type="button" className="dshWorkspaceFilePreview" aria-label={`Delete ${row.path}`} title="Delete" onClick={() => { setEditError(null); setPending({ type: 'delete', file: row.path, isDir: row.kind === 'dir' }) }}>Delete</button>
             {row.kind === 'file' && /\.(md|markdown|mdx)$/i.test(row.name) && (
               <button
                 type="button"

@@ -2,7 +2,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { BodyTooLargeError, error, finishJson, isSameOriginLoopbackRequest, readJson } from '../http.ts'
-import { MAX_EDITABLE_BYTES } from './contract.ts'
+import { MAX_EDITABLE_BYTES, parseFileEntryChange } from './contract.ts'
 import { WorkspaceFilesError, type WorkspaceFiles } from './service.ts'
 
 type ReportError = (operation: string, cause: unknown) => void
@@ -93,5 +93,33 @@ export async function handleWorkspaceFilesWriteRequest(
     return finishJson(res, 200, await files.write(body.path, body.file, body.content, body.expectedMtimeMs))
   } catch (cause) {
     return respondError(res, cause, 'save file', reportError)
+  }
+}
+
+/** POST `{ path, op: 'create' | 'rename' | 'delete', file, kind?, to? }`: one structural change. */
+export async function handleWorkspaceFilesEntryRequest(
+  req: IncomingMessage,
+  res: ServerResponse,
+  expectedOrigin: string,
+  files: WorkspaceFiles,
+  reportError: ReportError,
+): Promise<void> {
+  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
+  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
+  let body: unknown
+  try {
+    body = await readJson(req, 16 * 1024)
+  } catch (cause) {
+    if (cause instanceof BodyTooLargeError) return finishJson(res, 413, error('body too large'))
+    return finishJson(res, 400, error('invalid change request'))
+  }
+  const change = parseFileEntryChange(body)
+  if (change === null || typeof body !== 'object' || body === null || !('path' in body) || typeof body.path !== 'string') {
+    return finishJson(res, 400, error('invalid change request'))
+  }
+  try {
+    return finishJson(res, 200, await files.change(body.path, change))
+  } catch (cause) {
+    return respondError(res, cause, 'change file', reportError)
   }
 }
