@@ -1,4 +1,5 @@
 import { vi } from 'vitest'
+import { AgentStatusState } from '../../src/client/status/agent-status-state.ts'
 import { DockController } from '../../src/client/dock/dock-controller.ts'
 import type { WorkspacePtyApi } from '../../src/client/terminal/pty-api.ts'
 import { TerminalRegistry } from '../../src/client/terminal/terminal-session.ts'
@@ -39,4 +40,11 @@ export function makeDock(storage = memoryStorage()) {
   const timers: Array<() => void> = []
   const controller = new DockController({ api: pty.api, terminals, storage, setTimer: (cb) => { timers.push(cb); return timers.length }, clearTimer: () => {} })
   return { controller, terminals, pty, storage, timers }
+}
+
+/** An agent status state whose Host answers with whatever `set` last received. */
+export function makeStatus() {
+  let list: Array<{ terminalId: string; state: 'working' | 'waiting' | 'done'; at: number }> = []
+  const state = new AgentStatusState({ list: async () => list })
+  return { state, set: (next: typeof list) => { list = next } }
 }

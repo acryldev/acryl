@@ -36,7 +36,7 @@ describe('AgentSettings', () => {
     const view = settings.view()
     expect(view.permissions).toBe('manual')
     expect(view.defaultAgent).toBe('auto')
-    expect(settings.resolve('claude')).toEqual({ command: 'claude', args: [] })
+    expect(settings.resolve('claude')).toEqual({ command: 'claude', args: [], statusHooks: 'claude' })
     const claude = view.agents.find(entry => entry.id === 'claude')
     expect(claude).toMatchObject({ enabled: true, installed: true, preview: 'claude', permissionArgs: [] })
     expect(view.agents.find(entry => entry.id === 'codex')?.installed).toBe(false)
@@ -45,7 +45,7 @@ describe('AgentSettings', () => {
   it('yolo adds each agent\'s own flags, and goose gets its environment', async () => {
     const { settings } = make()
     await settings.apply({ permissions: 'yolo' })
-    expect(settings.resolve('claude')).toEqual({ command: 'claude', args: ['--dangerously-skip-permissions'] })
+    expect(settings.resolve('claude')).toEqual({ command: 'claude', args: ['--dangerously-skip-permissions'], statusHooks: 'claude' })
     expect(settings.resolve('goose')).toEqual({ command: 'goose', args: [], env: { GOOSE_MODE: 'auto' } })
     const view = settings.view()
     expect(view.agents.find(entry => entry.id === 'goose')?.preview).toBe('GOOSE_MODE=auto goose')

@@ -28,6 +28,8 @@ import { createWorkspaceAgentsApi } from './agents/agents-api.ts'
 import { agentsSettingsPlugin } from './agents/agents-settings-plugin.ts'
 import { PaletteConfigState } from './palette/palette-config.ts'
 import { paletteSettingsPlugin } from './palette/palette-settings-plugin.ts'
+import { createAgentStatusApi } from './status/agent-status-api.ts'
+import { AgentStatusState } from './status/agent-status-state.ts'
 import { createTerminalStack } from './dock/terminal-stack.ts'
 import { WorkspaceTabRegistry } from './tabs/registry/tab-registry.ts'
 import { provideWorkspaceTabs } from './tabs/registry/provide.ts'
@@ -112,6 +114,9 @@ export function apply(ctx: ClientContext): void {
 
   if (advanced && terminalStack !== undefined) {
     const { ptyClient, terminals, dock } = terminalStack
+    // What terminal agents report through their hooks: the attention queue reads it.
+    const agentStatus = new AgentStatusState(createAgentStatusApi())
+    ctx.effect(() => agentStatus.start(), 'acryl-workspace: agent status polling')
     // Shared by the "+" menu, the tab icons and the Projects list.
     const agents = new AgentsState(createWorkspaceAgentsApi())
     ctx.effect(() => { void agents.refresh(); return () => {} }, 'acryl-workspace: load agents')
@@ -132,7 +137,7 @@ export function apply(ctx: ClientContext): void {
         removeSlot = ctx.slots.register({
           name: 'desktop.main',
           priority: WORKSPACE_MAIN_PRIORITY,
-          inject: () => ({ ptyApi: ptyClient, terminals, dock, agents, tabTypes, tabRegistry, paletteConfig, toasts, notices, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }),
+          inject: () => ({ ptyApi: ptyClient, terminals, dock, agentStatus, agents, tabTypes, tabRegistry, paletteConfig, toasts, notices, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }),
         }, WorkspaceCanvas)
       } catch (cause) {
         // A registration conflict must not take the left pane and the Changes tab down with it.
@@ -147,7 +152,7 @@ export function apply(ctx: ClientContext): void {
         return ctx.slots.register({
           name: 'desktop.sidebar',
           priority: 0,
-          inject: () => ({ shell, projects, groups, agents }),
+          inject: () => ({ shell, projects, groups, agents, status: agentStatus }),
         }, ProjectsSidebar)
       } catch (cause) {
         ctx.logger.warn(`acryl-workspace: could not register the left pane: ${cause instanceof Error ? cause.message : String(cause)}`)

@@ -9,7 +9,7 @@
 import { act, cleanup, render } from '@testing-library/react'
 import { useSyncExternalStore } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { makeDock } from '../../../acryl-workspace/tests/dock/dock-fixtures.ts'
+import { makeDock, makeStatus } from '../../../acryl-workspace/tests/dock/dock-fixtures.ts'
 import { WorkspaceTabRegistry } from '../../../acryl-workspace/src/client/tabs/registry/tab-registry.ts'
 import { TabTypesState } from '../../../acryl-workspace/src/client/tabs/tab-types-state.ts'
 import { TabsPanel } from '../../../acryl-workspace/src/client/tabs/TabsPanel.tsx'
@@ -76,7 +76,7 @@ describe('scenario: "add my repo at /p/proj as a project" (US2, T042)', () => {
     const shell = new WorkspaceShellState(gitApi)
     const props = {
       collapsed: false, width: 280, renderUpstream: () => <div>upstream</div>, useSessions: sessionsHook, shell,
-      projects: fakeProjects({ addProjectByPath }), groups: new WorkspaceGroups(),
+      projects: fakeProjects({ addProjectByPath }), groups: new WorkspaceGroups(), status: makeStatus().state,
       agents: new AgentsState({ list: async () => [], add: async () => [], remove: async () => [], settings: async () => { throw new Error('none') }, change: async () => { throw new Error('none') } }),
     } as unknown as ProjectsSidebarProps
     render(<ProjectsSidebar {...props} />)
@@ -108,7 +108,7 @@ describe('scenario: settings for coding agents, through the + menu and Settings 
       const terminals = new TerminalRegistry({ createSocket: () => ({ send() {}, close() {}, onopen: null, onmessage: null, onclose: null, onerror: null, readyState: 0 }), urlFor: id => `ws://x/${id}` })
       return (
         <>
-          <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={undefined} customAgents={[]} terminals={terminals} onClose={() => {}} onOpenPty={() => {}} agentSettings={null} tabTypes={tabTypes} tabRegistry={registry} dock={dock} onSetAgentEnabled={async () => {}} onManageSettings={() => true} />
+          <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={undefined} customAgents={[]} terminals={terminals} onClose={() => {}} onOpenPty={() => {}} agentSettings={null} tabTypes={tabTypes} tabRegistry={registry} dock={dock} agentStatus={makeStatus().state} onSetAgentEnabled={async () => {}} onManageSettings={() => true} />
           <TabsPanel tabTypes={tabTypes} tabRegistry={registry} />
         </>
       )
@@ -126,7 +126,7 @@ describe('scenario: settings for coding agents, through the + menu and Settings 
 
   it('adds an agent from Settings > Agents by name and command, without knowing the page', async () => {
     const add = vi.fn(async () => [])
-    const agents = new AgentsState({ list: async () => [], add, remove: async () => [], settings: async () => ({ permissions: 'manual', defaultAgent: 'auto', agents: [] }), change: async () => { throw new Error('none') } })
+    const agents = new AgentsState({ list: async () => [], add, remove: async () => [], settings: async () => ({ permissions: 'manual', defaultAgent: 'auto', statusHooks: true, agents: [] }), change: async () => { throw new Error('none') } })
     await agents.refresh()
     render(<AgentsPanel agents={agents} />)
     const ai = agent()

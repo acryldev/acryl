@@ -39,6 +39,7 @@ import { DocPane } from '../docs/DocPane.tsx'
 import { openSettingsSection } from '../settings/open-settings.ts'
 import { CustomTabPane } from '../tabs/registry/CustomTabPane.tsx'
 import type { WorkspaceTabRegistry } from '../tabs/registry/tab-registry.ts'
+import type { AgentStatusState } from '../status/agent-status-state.ts'
 import type { DockController } from '../dock/dock-controller.ts'
 import type { RightPaneHandle } from '../dock/DockButtons.tsx'
 import { CommandPalette } from '../palette/CommandPalette.tsx'
@@ -86,6 +87,8 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   readonly rightPanel?: RightPaneHandle
   /** The terminal dock: its buttons sit in the tab strip, and the frame places its panel. */
   readonly dock: DockController
+  /** What terminal agents report (working, waiting for you, done). */
+  readonly agentStatus: AgentStatusState
 }
 
 /**
@@ -94,7 +97,7 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, agents: agentsState, tabTypes, tabRegistry, paletteConfig, toasts, notices, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, agentStatus, agents: agentsState, tabTypes, tabRegistry, paletteConfig, toasts, notices, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
   // Subscribe to primitives, not the whole shell snapshot: git polling updates that snapshot often,
@@ -271,8 +274,20 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
         if (groups.stateFor(key).applyTerminalTitle(terminalId, title)) return
       }
     })
-    return () => { stopGroups(); stopExit(); stopLost(); stopTitle() }
-  }, [groups, terminals, toasts, notices])
+    // An agent that starts needing you (a permission, a question) raises a notice that leads to its tab.
+    const stopNeeds = agentStatus.onNeedsYou((terminalId) => {
+      for (const key of groups.keys()) {
+        const tile = groups.stateFor(key).getSnapshot().tiles.find(candidate => candidate.terminalId === terminalId)
+        if (tile === undefined) continue
+        const text = `${tile.title} needs you`
+        const target = { group: key, tabId: tile.id }
+        toasts.push(text, target)
+        if (shouldRaiseSystemNotice(notices)) notices.show('ACRYL', text, () => { openTarget(target) })
+        return
+      }
+    })
+    return () => { stopGroups(); stopExit(); stopLost(); stopTitle(); stopNeeds() }
+  }, [groups, terminals, toasts, notices, agentStatus])
 
   const customAgents = useSyncExternalStore(agentsState.subscribe, agentsState.getSnapshot)
   const agentSettings = useSyncExternalStore(agentsState.subscribe, agentsState.getSettings)
@@ -305,6 +320,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
         runningText={runningText}
         {...(rightPanel === undefined ? {} : { rightPanel })}
         dock={dock}
+        agentStatus={agentStatus}
         storage={safeStorage()}
         onClose={(tile) => { void closeTile(tile) }}
         customAgents={customAgents}

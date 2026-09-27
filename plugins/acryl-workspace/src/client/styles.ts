@@ -22,8 +22,10 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceTabClose:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); color: var(--dsw-alias-fg); }
 .dshWorkspaceTabActivity { flex: none; width: 7px; height: 7px; border-radius: 50%; }
 .dshWorkspaceTabActivity[data-state="live"] { background: #34d399; animation: dshWorkspacePulse 1.4s ease-in-out infinite; }
+.dshWorkspaceTabActivity[data-state="waiting"] { background: #f5b942; animation: dshWorkspacePulse 1s ease-in-out infinite; }
+.dshWorkspaceTabActivity[data-state="idle"] { background: #4d6bfe; }
 .dshWorkspaceTabActivity[data-state="ended"] { background: var(--dsw-alias-fg-l2); opacity: 0.6; }
-@media (prefers-reduced-motion: reduce) { .dshWorkspaceTabActivity[data-state="live"] { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .dshWorkspaceTabActivity[data-state="live"], .dshWorkspaceTabActivity[data-state="waiting"], .dshWorkspaceDot[data-dot="attention"] { animation: none; } }
 .dshWorkspaceTabMenu { width: 220px; }
 .dshWorkspaceTabMenu .dshWorkspaceMenuItem:disabled { opacity: 0.4; cursor: default; }
 .dshWorkspaceAgentMark { display: inline-grid; place-items: center; width: 18px; height: 18px; flex: none; color: var(--dsw-alias-fg); }
@@ -247,6 +249,7 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceWorktreeStat [data-kind="remove"] { color: #f87171; }
 .dshWorkspaceDot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #6b7280; }
 .dshWorkspaceDot[data-dot="running"] { background: #4d6bfe; animation: dshWorkspacePulse 1.6s ease-in-out infinite; }
+.dshWorkspaceDot[data-dot="attention"] { background: #f5b942; box-shadow: 0 0 0 3px color-mix(in srgb, #f5b942 30%, transparent); animation: dshWorkspacePulse 1s ease-in-out infinite; }
 .dshWorkspaceDot[data-dot="done"] { background: #4ade80; }
 .dshWorkspaceDot[data-dot="dirty"] { background: #f5b942; }
 .dshWorkspaceDot[data-dot="clean"] { background: color-mix(in srgb, #4ade80 55%, transparent); }

@@ -8,6 +8,7 @@ import type { WorkspaceGitApi } from '../src/client/git/git-api.ts'
 import { GitDiffPane, changeSignature, type GitDiffPaneProps } from '../src/client/diff/GitDiffPane.tsx'
 import { ProjectsSidebar, type ProjectsSidebarProps } from '../src/client/projects/ProjectsSidebar.tsx'
 import type { ProjectAction, ProjectsControl } from '../src/client/projects/projects-control.ts'
+import { makeStatus } from './dock/dock-fixtures.ts'
 import { AgentsState } from '../src/client/agents/agents-state.ts'
 import { WorkspaceGroups } from '../src/client/canvas/groups.ts'
 import { WorkspaceShellState } from '../src/client/worktrees/shell-state.ts'
@@ -102,6 +103,7 @@ function fakeProjects(overrides: Partial<ProjectsControl> = {}): ProjectsControl
 function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: ProjectsControl = fakeProjects(), groups: WorkspaceGroups = new WorkspaceGroups()): ProjectsSidebarProps {
   return {
     groups,
+    status: makeStatus().state,
     agents: new AgentsState({ list: async () => [], add: async () => [], remove: async () => [], settings: async () => { throw new Error('no settings') }, change: async () => { throw new Error('no settings') } }),
     collapsed,
     width: 280,

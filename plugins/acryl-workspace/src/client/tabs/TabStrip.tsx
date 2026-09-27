@@ -4,7 +4,7 @@
  * right-panel toggle.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { AgentId } from '../../pty/contract.ts'
 import type { WorkspaceSnapshot, WorkspaceState, WorkspaceTile } from '../canvas/state.ts'
 import type { CustomAgent } from '../../agents/definition.ts'
@@ -12,6 +12,7 @@ import { labelForCommand } from '../terminal/agent-commands.ts'
 import { AgentIcon } from './AgentIcon.tsx'
 import type { TerminalRegistry } from '../terminal/terminal-session.ts'
 import type { AgentSettingsView } from '../../agents/contract.ts'
+import type { AgentStatusState } from '../status/agent-status-state.ts'
 import type { DockController } from '../dock/dock-controller.ts'
 import { DockButtons, type RightPaneHandle } from '../dock/DockButtons.tsx'
 import type { WorkspaceTabRegistry } from './registry/tab-registry.ts'
@@ -31,6 +32,8 @@ export interface TabStripProps {
   readonly rightPanel?: RightPaneHandle
   /** The terminal dock, for its two buttons. */
   readonly dock: DockController
+  /** What terminal agents report, for the marker on their tabs. */
+  readonly agentStatus: AgentStatusState
   readonly storage: Storage | undefined
   onClose(tile: WorkspaceTile): void
   readonly customAgents: readonly CustomAgent[]
@@ -105,8 +108,9 @@ function kindGlyph(kind: WorkspaceTile['kind']): string {
   return '◉'
 }
 
-export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, dock, storage, customAgents, terminals, onClose, onOpenPty, agentSettings, tabTypes, tabRegistry, onSetAgentEnabled, onManageSettings }: TabStripProps) {
+export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, dock, agentStatus, storage, customAgents, terminals, onClose, onOpenPty, agentSettings, tabTypes, tabRegistry, onSetAgentEnabled, onManageSettings }: TabStripProps) {
   const tabsRef = useRef<HTMLDivElement>(null)
+  const agentStates = useSyncExternalStore(agentStatus.subscribe, agentStatus.getSnapshot)
   const [edges, setEdges] = useState({ start: false, end: false })
   const [tabMenu, setTabMenu] = useState<{ readonly id: string; readonly x: number; readonly y: number } | null>(null)
   const [editing, setEditing] = useState<{ readonly id: string; readonly value: string } | null>(null)
@@ -199,7 +203,7 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
                     {tile.kind === 'pty' ? <AgentIcon commandId={tile.commandId ?? 'shell'} custom={customAgents.find(agent => agent.id === tile.commandId)?.badge} /> : tile.kind === 'custom' ? (tabRegistry.get(tile.customType ?? '')?.glyph ?? '◉') : kindGlyph(tile.kind)}
                   </span>
                   {tile.kind === 'pty' && tile.commandId !== undefined && tile.commandId !== 'shell' && (
-                    <TabActivity session={tile.terminalId === undefined ? undefined : terminals.ensure(tile.terminalId)} />
+                    <TabActivity session={tile.terminalId === undefined ? undefined : terminals.ensure(tile.terminalId)} state={tile.terminalId === undefined ? undefined : agentStates.get(tile.terminalId)} />
                   )}
                   <span className="dshWorkspaceTabLabel">{tile.title}{tile.fileRel !== undefined && tile.content !== undefined ? ' ●' : ''}</span>
                 </button>

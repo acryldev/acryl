@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { parseSavedWorkspace, serializeWorkspace } from '../../src/client/canvas/persistence.ts'
 import { WorkspaceGroups } from '../../src/client/canvas/groups.ts'
 import { WorkspaceState } from '../../src/client/canvas/state.ts'
-import { makeDock } from '../dock/dock-fixtures.ts'
+import { makeDock, makeStatus } from '../dock/dock-fixtures.ts'
 import { WorkspaceShellState } from '../../src/client/worktrees/shell-state.ts'
 import { CustomTabPane } from '../../src/client/tabs/registry/CustomTabPane.tsx'
 import { TabTypeError, WorkspaceTabRegistry, type WorkspaceTabProps, type WorkspaceTabType } from '../../src/client/tabs/registry/tab-registry.ts'
@@ -126,7 +126,7 @@ describe('plugin tab types in the + menu and Settings', () => {
       const snapshot = useSyncExternalStore(l => workspace.subscribe(l), () => workspace.getSnapshot())
       return (
         <>
-          <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={undefined} customAgents={[]} terminals={terminals} onClose={() => {}} onOpenPty={() => {}} agentSettings={null} tabTypes={tabTypes} tabRegistry={registry} dock={dock} onSetAgentEnabled={async () => {}} onManageSettings={() => true} />
+          <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={undefined} customAgents={[]} terminals={terminals} onClose={() => {}} onOpenPty={() => {}} agentSettings={null} tabTypes={tabTypes} tabRegistry={registry} dock={dock} agentStatus={makeStatus().state} onSetAgentEnabled={async () => {}} onManageSettings={() => true} />
           <TabsPanel tabTypes={tabTypes} tabRegistry={registry} />
         </>
       )

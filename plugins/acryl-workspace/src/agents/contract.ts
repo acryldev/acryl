@@ -51,6 +51,8 @@ export interface AgentSettingsView {
   readonly permissions: 'yolo' | 'manual'
   /** `auto`, `none`, or the id of an existing agent. */
   readonly defaultAgent: string
+  /** Agents that support hooks report working, waiting and done (the attention queue). */
+  readonly statusHooks: boolean
   readonly agents: readonly AgentSettingsEntry[]
 }
 
@@ -76,8 +78,8 @@ function parseEntry(value: unknown): AgentSettingsEntry {
 
 /** @param value - unknown JSON from the settings route. */
 export function parseAgentSettingsView(value: unknown): AgentSettingsView {
-  if (!isObject(value) || (value.permissions !== 'yolo' && value.permissions !== 'manual') || typeof value.defaultAgent !== 'string' || !Array.isArray(value.agents)) {
+  if (!isObject(value) || (value.permissions !== 'yolo' && value.permissions !== 'manual') || typeof value.defaultAgent !== 'string' || typeof value.statusHooks !== 'boolean' || !Array.isArray(value.agents)) {
     throw new Error('invalid agent settings response')
   }
-  return { permissions: value.permissions, defaultAgent: value.defaultAgent, agents: value.agents.map(parseEntry) }
+  return { permissions: value.permissions, defaultAgent: value.defaultAgent, statusHooks: value.statusHooks, agents: value.agents.map(parseEntry) }
 }

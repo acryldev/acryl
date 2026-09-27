@@ -21,5 +21,5 @@ export function entry(id: string, over: Partial<AgentSettingsEntry> = {}): Agent
 }
 
 export function view(agents: readonly AgentSettingsEntry[], over: Partial<AgentSettingsView> = {}): AgentSettingsView {
-  return { permissions: 'manual', defaultAgent: 'auto', agents, ...over }
+  return { permissions: 'manual', defaultAgent: 'auto', statusHooks: true, agents, ...over }
 }
