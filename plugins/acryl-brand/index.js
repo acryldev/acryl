@@ -4,7 +4,7 @@
  * the Web and Desktop app wears it: sidebar name and mark, conversation hero, tab or window title, favicon, accent color.
  * Disabling the row restores the stock look; nothing else is touched. The browser half is ./client.js.
  *
- * Provides: `acrylBrand` ({ identity }). Optional: `webServer` (absent on the CLI, where there is no page to brand).
+ * Provides: `acrylBrand` ({ identity }). Optional: `webServer` and its `tapIndex` seam (absent on the CLI, and on servers that do not rewrite the index).
  */
 import Schema from '@deepseek-ai/schemastery'
 import { escapeHtml, faviconDataUrl, parseIdentity } from './lib/identity.js'
@@ -29,7 +29,9 @@ export function apply(ctx, config) {
     table.push({ kind: 'html', placement: 'head', html: `<link rel="icon" type="image/svg+xml" href="${faviconDataUrl(identity)}">` })
   }), 'acryl-brand: index rows')
   const server = ctx.get('webServer')
-  if (server) {
+  // Desktop's own web server (and test doubles) may serve the page without the index seam: there is no HTML to rewrite there, and the
+  // native window title is set by the main process, so the tap is optional the same way the service is.
+  if (typeof server?.tapIndex === 'function') {
     ctx.effect(() => server.tapIndex(html => html.replace(/<title>[^<]*<\/title>/iu, () => `<title>${escapeHtml(identity.name)}</title>`)), 'acryl-brand: title')
   }
 }
