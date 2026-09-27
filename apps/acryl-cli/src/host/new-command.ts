@@ -81,7 +81,7 @@ function writeFromSource(options: NewAppCommandOptions, launcher: string, source
   // A carried runtime brings its launcher along (the framework launcher and its one library), so the app never reads the framework again.
   const { git } = writeNewApp(planned, {
     git: options.skipGit !== true,
-    ...(source === undefined ? {} : { extensionsFrom: join(source, 'extensions') }),
+    ...(source === undefined ? {} : { extensionsFrom: join(source, 'extensions'), blueprintsFrom: join(source, 'blueprints') }),
     ...(options.runtime === undefined ? {} : { runtimeDir: resolve(options.runtime), launcherFiles: carriedLauncher(launcher) }),
   })
   return { git, root: planned.root, title: options.title ?? planned.name, blueprint: planned.blueprint.id, files: Object.keys(planned.files) }

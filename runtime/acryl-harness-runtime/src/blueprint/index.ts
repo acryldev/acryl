@@ -15,5 +15,5 @@ export {
 export { blueprintRowForPackage, composeBlueprintRows, packageForBlueprintRow, type BlueprintComposition } from './compose.ts'
 export { blueprintFromEnvironment } from './selection.ts'
 export { InvalidBlueprintError, parseBlueprint } from './definition.ts'
-export { readBlueprintFile } from './selection.ts'
-export { BLENDS_API_VERSION, BRAND_PACKAGE, appManifest, blueprintFromManifest, isBlendsManifest } from './manifest.ts'
+export { readBlueprintFile, readStarters } from './selection.ts'
+export { BLENDS_API_VERSION, BRAND_PACKAGE, appManifest, blueprintFromManifest, catalogWithStarters, isBlendsManifest } from './manifest.ts'

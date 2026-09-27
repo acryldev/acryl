@@ -9,13 +9,13 @@
  * @module acryl-harness-runtime/blueprint/selection
  */
 
-import { readFileSync } from 'node:fs'
-import { extname } from 'node:path'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { dirname, extname, join } from 'node:path'
 import { parse } from 'yaml'
 import { brandIdentity } from './brand-identity.ts'
 import { selectBlueprint, withBrand, type Blueprint } from './blueprint.ts'
 import { InvalidBlueprintError, parseBlueprint } from './definition.ts'
-import { blueprintFromManifest, isBlendsManifest } from './manifest.ts'
+import { blueprintFromManifest, catalogWithStarters, isBlendsManifest } from './manifest.ts'
 
 const BRAND_ENV: readonly (readonly [string, string])[] = [
   ['ACRYL_BRAND_NAME', 'name'],
@@ -42,8 +42,21 @@ export function readBlueprintFile(path: string): Blueprint {
   } catch (cause) {
     throw new InvalidBlueprintError(`${path} is not valid YAML: ${cause instanceof Error ? cause.message.split('\n')[0] : String(cause)}`)
   }
-  // An app's `blend.yaml` is a Blends manifest; a short runtime definition is also accepted.
-  return isBlendsManifest(data) ? blueprintFromManifest(data) : parseBlueprint(data)
+  // An app's `blend.yaml` is a Blends manifest (with the starters it grew from kept beside it in blueprints/); a short runtime definition is also accepted.
+  return isBlendsManifest(data) ? blueprintFromManifest(data, catalogWithStarters(readStarters(join(dirname(path), 'blueprints')))) : parseBlueprint(data)
+}
+
+/** The starter definitions an app keeps in its `blueprints/` folder, each a Blends manifest of kind Blueprint. */
+export function readStarters(folder: string): Array<{ id: string, document: unknown }> {
+  if (!existsSync(folder)) return []
+  return readdirSync(folder).filter(file => /\.ya?ml$/u.test(file)).map(file => {
+    const path = join(folder, file)
+    let document: unknown
+    try { document = parse(readFileSync(path, 'utf8')) } catch (cause) { throw new InvalidBlueprintError(`${path} is not valid YAML: ${cause instanceof Error ? cause.message.split('\n')[0] : String(cause)}`) }
+    const id = (document as { metadata?: { id?: unknown } } | null)?.metadata?.id
+    if (typeof id !== 'string') throw new InvalidBlueprintError(`${path} has no metadata.id`)
+    return { id, document }
+  })
 }
 
 export function blueprintFromEnvironment(env: NodeJS.ProcessEnv = process.env): Blueprint {

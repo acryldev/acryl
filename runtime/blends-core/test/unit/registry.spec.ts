@@ -31,7 +31,7 @@ describe('registry index', () => {
     ])
     expect(problems).toEqual([])
     expect(index.entries.map(entry => entry.id)).toEqual(['acme.accounting', 'acme.sound'])
-    expect(index.entries[0]).toMatchObject({ kind: 'Blend', lineage: 'acryl.blank', license: 'MIT', category: 'business', path: 'blends/acme.accounting' })
+    expect(index.entries[0]).toMatchObject({ kind: 'Blend', parent: 'acryl.blank', license: 'MIT', category: 'business', path: 'blends/acme.accounting' })
   })
 
   it('refuses private, unlicensed, misplaced, duplicate and invalid entries, naming each', () => {

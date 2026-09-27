@@ -62,14 +62,20 @@ export function blueprintFromManifest(input: unknown, catalog: BlueprintCatalog 
   if (typeof id !== 'string' || !ID.test(id)) throw new InvalidBlueprintError('"metadata.id" must be a dot-namespaced id such as acryl.blank.orbit')
   const kind = document.kind
   let base: Blueprint | undefined
-  if (kind === 'Blueprint') base = catalog.get(id)
-  else if (kind === 'Blend') {
+  if (kind === 'Blueprint') {
+    // A built-in Blueprint (the blank canvas), or a starter kit that extends one: accounting, sound stage, video editor...
+    // A starter resolves through its parent; only a Blueprint without `extends` is looked up by its own id (a built-in).
+    if (typeof spec.extends === 'string') {
+      base = catalog.get(spec.extends)
+      if (base === undefined) throw new InvalidBlueprintError(`"spec.extends" names ${JSON.stringify(spec.extends)}, which is not a known blueprint (a starter's parent must be built in or kept in the app's blueprints/ folder)`)
+    } else base = catalog.get(id)
+  } else if (kind === 'Blend') {
     const lineage = record(spec.lineage, '"spec.lineage"')
     if (typeof lineage.blueprint !== 'string') throw new InvalidBlueprintError('"spec.lineage.blueprint" is required for a Blend')
     base = catalog.get(lineage.blueprint)
-    if (base === undefined) throw new InvalidBlueprintError(`"spec.lineage.blueprint" names ${JSON.stringify(lineage.blueprint)}, which is not a known blueprint`)
+    if (base === undefined) throw new InvalidBlueprintError(`"spec.lineage.blueprint" names ${JSON.stringify(lineage.blueprint)}, which is not a known blueprint (a project keeps the starter it grew from in its blueprints/ folder)`)
   } else throw new InvalidBlueprintError('"kind" must be Blueprint or Blend')
-  if (base === undefined) throw new InvalidBlueprintError(`${JSON.stringify(id)} is not a known blueprint; an app grows from one with kind: Blend and spec.lineage`)
+  if (base === undefined) throw new InvalidBlueprintError(`${JSON.stringify(id)} is not a known blueprint: a starter names its parent with spec.extends, a project names what it grew from with kind: Blend and spec.lineage`)
 
   const rows = new Set<BlueprintRowId>(base.rows)
   let brand: Blueprint['brand'] = base.brand
@@ -107,4 +113,33 @@ export function appManifest(input: { id: string, name: string, blueprint: Bluepr
       rows: [brandRow, ...input.blueprint.rows.map(id => { const row = packageForBlueprintRow(id); return { id: row.rowId, name: row.packageName } })],
     },
   }
+}
+
+/**
+ * The Blueprints an app can grow from: the built-ins, plus the starter definitions it keeps in its `blueprints/` folder (`acryl new --from <starter>` copies
+ * the starter there, like a lock of the parent). A starter may extend another starter; each is resolved on first use, and a cycle is refused.
+ */
+export function catalogWithStarters(starters: ReadonlyArray<{ readonly id: string, readonly document: unknown }>, base: BlueprintCatalog = builtInCatalog()): BlueprintCatalog {
+  const resolved = new Map<string, Blueprint>()
+  const resolving = new Set<string>()
+  const byId = new Map(starters.map(starter => [starter.id, starter.document]))
+  const catalog: BlueprintCatalog = {
+    get(id) {
+      const builtIn = base.get(id)
+      if (builtIn !== undefined) return builtIn
+      const cached = resolved.get(id)
+      if (cached !== undefined) return cached
+      const document = byId.get(id)
+      if (document === undefined) return undefined
+      if (resolving.has(id)) throw new InvalidBlueprintError(`the starters in blueprints/ extend each other in a cycle (${[...resolving, id].join(' -> ')})`)
+      resolving.add(id)
+      try {
+        const blueprint = blueprintFromManifest(document, catalog)
+        resolved.set(id, blueprint)
+        return blueprint
+      } finally { resolving.delete(id) }
+    },
+    list() { return [...base.list(), ...starters.map(starter => catalog.get(starter.id)).filter((entry): entry is Blueprint => entry !== undefined)] },
+  }
+  return catalog
 }

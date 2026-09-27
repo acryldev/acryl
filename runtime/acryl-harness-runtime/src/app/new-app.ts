@@ -74,6 +74,8 @@ export function planNewApp(dir: string, options: NewAppOptions): PlannedApp {
   const files: Record<string, string> = {
     [APP_MANIFEST_FILE]: manifestText,
     ...(derived?.lockText === undefined ? {} : { 'blend.lock.json': derived.lockText }),
+    ...(derived?.starter === undefined ? {} : { [`blueprints/${derived.starter.id}.yaml`]: derived.starter.text }),
+    ...(derived?.notice === undefined ? {} : { 'THIRD-PARTY.md': derived.notice }),
     [`${APP_EXTENSIONS_DIR}/README.md`]: `# extensions\n\nThis app's own plugins, one folder each. The agent inside the app builds them here when you ask for something\n("add a to-do list"), and every folder here loads when the app starts. Delete a folder to remove that plugin.\n`,
     'AGENTS.md': agentsMd(title),
     'bin/acryl': `#!/usr/bin/env bash\n# Start ${title}:  bin/acryl web | desktop | cli   (flags: --port 3105)\nset -euo pipefail\napp="$(cd "$(dirname "$0")/.." && pwd)"\nexec node ${JSON.stringify(options.launcher)} "\${1:-web}" --dir "$app" "\${@:2}"\n`,
@@ -97,19 +99,34 @@ licensed; if you distribute a copy of the framework (for example a carried \`run
 }
 
 /**
- * The source's definition under the new app's id and name (comments kept), and its lock re-pinned to that definition. Only the identity changes: rows,
- * brand colors and lineage are what the source grew, and local module digests stay valid because `extensions/` is copied verbatim.
+ * A new project from an existing starter or project (the three levels: the blank canvas, a Blueprint starter kit, a project). The source's rows, brand
+ * colors and plugins are kept; the identity becomes the new project's, which is the user's own work: private and Proprietary until they say otherwise.
+ *
+ *   from a starter (kind: Blueprint, spec.extends)  ->  a Blend whose lineage names the starter; the starter is kept in blueprints/<id>.yaml
+ *   from a project (kind: Blend, spec.lineage)       ->  a Blend with the same lineage; the source's blueprints/ travel with it
+ *
+ * Comments are kept, and the lock is re-pinned to the new definition with the format's digest (local module digests stay valid: extensions/ is copied as is).
  */
-function fromExistingApp(source: { readonly manifestText: string, readonly lockText?: string }, id: string, title: string, brand: Partial<Omit<BrandIdentity, 'name'>> | undefined): { manifestText: string, lockText?: string } {
+function fromExistingApp(source: { readonly manifestText: string, readonly lockText?: string }, id: string, title: string, brand: Partial<Omit<BrandIdentity, 'name'>> | undefined): { manifestText: string, lockText?: string, starter?: { id: string, text: string }, notice?: string } {
   const document = parseDocument(source.manifestText)
-  const parsed = document.toJS() as { kind?: unknown, metadata?: { id?: unknown }, spec?: { lineage?: { blueprint?: unknown } } } | null
-  if (parsed?.kind !== 'Blend' || typeof parsed.spec?.lineage?.blueprint !== 'string' || builtInCatalog().get(parsed.spec.lineage.blueprint) === undefined) {
-    throw new NewAppError('--from needs an app or captured Blend that grew from a known Blueprint (kind: Blend with spec.lineage)')
+  const parsed = document.toJS() as { kind?: unknown, metadata?: { id?: unknown, version?: unknown, license?: unknown, name?: unknown }, spec?: { lineage?: { blueprint?: unknown }, extends?: unknown } } | null
+  const sourceId = typeof parsed?.metadata?.id === 'string' ? parsed.metadata.id : undefined
+  const sourceVersion = typeof parsed?.metadata?.version === 'string' ? parsed.metadata.version : '0.1.0'
+  let starter: { id: string, text: string } | undefined
+  if (parsed?.kind === 'Blueprint' && sourceId !== undefined && builtInCatalog().get(sourceId) === undefined) {
+    if (typeof parsed.spec?.extends !== 'string') throw new NewAppError(`the starter ${sourceId} names no parent (spec.extends)`)
+    starter = { id: sourceId, text: source.manifestText }
+    document.set('kind', 'Blend')
+    document.deleteIn(['spec', 'extends'])
+    document.setIn(['spec', 'lineage'], document.createNode({ blueprint: sourceId, blueprintVersion: sourceVersion }))
+  } else if (parsed?.kind !== 'Blend' || typeof parsed.spec?.lineage?.blueprint !== 'string') {
+    throw new NewAppError('--from needs a starter (kind: Blueprint with spec.extends) or a project (kind: Blend with spec.lineage)')
   }
-  const sourceId = String(parsed.metadata?.id ?? 'another app')
   document.setIn(['metadata', 'id'], id)
   document.setIn(['metadata', 'name'], title)
-  document.setIn(['metadata', 'description'], `${title}, created from ${sourceId}.`)
+  document.setIn(['metadata', 'description'], `${title}, created from ${sourceId ?? 'another app'}.`)
+  document.setIn(['metadata', 'license'], 'Proprietary')
+  document.setIn(['metadata', 'visibility'], 'private')
   const rows = document.getIn(['spec', 'rows'])
   if (isSeq(rows)) {
     for (const row of rows.items) {
@@ -120,10 +137,15 @@ function fromExistingApp(source: { readonly manifestText: string, readonly lockT
     }
   }
   const manifestText = String(document)
-  if (source.lockText === undefined) return { manifestText }
+  const sourceLicense = typeof parsed.metadata?.license === 'string' ? parsed.metadata.license : undefined
+  // The source's code (its extensions) keeps its own license: its notice travels with the copy.
+  const notice = sourceLicense === undefined || sourceLicense === 'Proprietary' ? undefined
+    : `# Third-party code\n\nThis project was created from ${sourceId ?? 'another app'}${typeof parsed.metadata?.name === 'string' ? ` (${parsed.metadata.name})` : ''}, licensed ${sourceLicense}. Code copied from it into\nextensions/ remains under that license; keep this notice, and the source's license text where it requires one, with any copy you distribute.\n`
+  const extra = { ...(starter === undefined ? {} : { starter }), ...(notice === undefined ? {} : { notice }) }
+  if (source.lockText === undefined) return { manifestText, ...extra }
   const lock = JSON.parse(source.lockText) as { origin?: Record<string, unknown> }
-  lock.origin = { ...lock.origin, id, digest: manifestDigest(manifestText) }
-  return { manifestText, lockText: `${JSON.stringify(lock, null, 2)}\n` }
+  lock.origin = { ...lock.origin, id, kind: 'Blend', digest: manifestDigest(manifestText) }
+  return { manifestText, lockText: `${JSON.stringify(lock, null, 2)}\n`, ...extra }
 }
 
 function agentsMd(title: string): string {
@@ -145,7 +167,7 @@ belong to the user: commit with clear messages when a change works and the user 
 /** A file of the launcher an app carries: copied from the framework, or written with the given content. */
 export type LauncherFile = { readonly from: string } | { readonly content: string }
 
-export function writeNewApp(planned: PlannedApp, options: { readonly runtimeDir?: string, readonly launcherFiles?: Readonly<Record<string, LauncherFile>>, readonly git?: boolean, readonly extensionsFrom?: string } = {}): { readonly git: 'initialized' | 'skipped' | 'unavailable' } {
+export function writeNewApp(planned: PlannedApp, options: { readonly runtimeDir?: string, readonly launcherFiles?: Readonly<Record<string, LauncherFile>>, readonly git?: boolean, readonly extensionsFrom?: string, readonly blueprintsFrom?: string } = {}): { readonly git: 'initialized' | 'skipped' | 'unavailable' } {
   if (existsSync(planned.root) && readdirSync(planned.root).length > 0) throw new NewAppError(`${planned.root} is not empty; acryl new only creates a new app`)
   if (options.runtimeDir !== undefined && !existsSync(join(options.runtimeDir, 'lib', 'bin.js'))) throw new NewAppError(`${options.runtimeDir} is not an ACRYL Web runtime (no lib/bin.js)`)
   for (const [relative, content] of Object.entries(planned.files)) {
@@ -155,6 +177,10 @@ export function writeNewApp(planned: PlannedApp, options: { readonly runtimeDir?
   }
   chmodSync(join(planned.root, 'bin', 'acryl'), 0o755)
   // An app created from another brings that app's own plugins, verbatim so the lock's digests still hold (never its node_modules or git history).
+  // The starters the source itself grew from travel with it, so the whole chain back to a built-in Blueprint resolves in the new app.
+  if (options.blueprintsFrom !== undefined && existsSync(options.blueprintsFrom)) {
+    cpSync(options.blueprintsFrom, join(planned.root, 'blueprints'), { recursive: true, force: false, errorOnExist: false })
+  }
   if (options.extensionsFrom !== undefined && existsSync(options.extensionsFrom)) {
     cpSync(options.extensionsFrom, join(planned.root, APP_EXTENSIONS_DIR), { recursive: true, filter: source => !['node_modules', '.git'].includes(basename(source)) })
   }

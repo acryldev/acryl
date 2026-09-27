@@ -22,6 +22,21 @@ Anything can grow from the same empty house: a music editor, live-stage sound pr
 agentic coding IDE, is one of them**: the Blend `acryl.ide`, grown from `acryl.blank` into a development environment. It is the flagship example of the framework,
 not the framework.
 
+## Three levels: Blank, Blueprint, Project
+
+Decided with the owner 2026-09-27. Every app is one of three levels, and each is one `blend.yaml`:
+
+| Level | What it is | In `blend.yaml` | Where it lives |
+| --- | --- | --- | --- |
+| **1. Blank** | the empty house: core plugins, the builder, the whole infrastructure, a blank canvas | `kind: Blueprint`, built in (`acryl.blank`) | ships with ACRYL |
+| **2. Blueprint** (starter kit, boilerplate) | an app specialized enough to start from: accounting, sound stage, video editor, SMM manager | `kind: Blueprint`, `spec.extends: acryl.blank` (or another Blueprint) | the public registry, a company's private registry, or any git repository |
+| **3. Project** | the user's own, grown from Blank or from a Blueprint into a unique product fitted to their business | `kind: Blend`, `spec.lineage.blueprint` names what it grew from | the user's own repository: private and commercial, or open source; publishable to the registry |
+
+`acryl new <dir>` starts a Project from Blank; `acryl new <dir> --from <starter id | git URL | folder>` starts it from a Blueprint or another Project. A Project
+keeps the Blueprint it grew from in its `blueprints/` folder (like a lock of its parent), so it boots anywhere, and it is the user's own from the first second:
+private and Proprietary, with the starter's license kept in `THIRD-PARTY.md`. Publishing a Project as a Blueprint for others is a separate, explicit step.
+Saving, remotes, registries and their guards: `persistence-and-registries.md`.
+
 ## Conventions (convention over configuration)
 
 | Rails | ACRYL Blends | |

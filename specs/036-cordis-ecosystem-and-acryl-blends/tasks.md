@@ -24,6 +24,11 @@ Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository
 - [ ] T011 Remaining migration steps in `repositories.md` (registry content and CI, `acryl pull`/`push`, archive `acryldev/blends`)
 - [x] T012 One Blend shape: an app folder is its Blend (`/blend snapshot` records into it, `/blend apply` installs in place), an app installs its own
       extensions and locked marketplace plugins at start (a fresh clone works), `acryl new --from <app or Blend folder>` (registry ids come with T014)
+- [x] T012b Registries are git repositories: registry index and `blends-registry-index` (CI), `acryl new --from` a git URL or a registry starter id
+- [x] T012c App persistence: `acryl save`, `acryl remote connect`, `/app save`, `/app connect`; the secret check and the private-to-public guard; new apps are private and Proprietary
+- [x] T012d Three levels (Blank, Blueprint, Project): starters extend a Blueprint and boot as they are; a Project keeps its starter in `blueprints/` and its license in `THIRD-PARTY.md`
+- [ ] T019 Publish `@acryl/blends-core` and `@acryl/app-persistence` to npm (the owner's decision), then add the CI workflow to `acryl new` (validate `blend.yaml`, run the app's checks)
+- [ ] T020 `acryl publish`: a Project becomes a Blueprint in a registry through a reviewed pull request (public only; refused for private apps)
 - [ ] T013 `acryl new` and the app lifecycle commands in the published CLI (today the launcher needs a framework checkout)
 - [ ] T014 Registry and catalog on acrylblends.github.io: validated `index.json`, `acryl pull`/`acryl push`, starters by category
 - [ ] T015 The rest of the brand: the harness's first-launch notice, the terminal banner and palette, the Electron window and Dock icon

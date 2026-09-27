@@ -18,8 +18,8 @@ export interface RegistryEntry {
   license: string
   category?: string
   description?: string
-  /** The Blueprint a Blend grew from. */
-  lineage?: string
+  /** What it grew from: a starter's parent (`spec.extends`) or a project's Blueprint (`spec.lineage`). */
+  parent?: string
 }
 
 export interface RegistryIndex {
@@ -61,7 +61,7 @@ export function buildRegistryIndex(sources: ReadonlyArray<{ path: string, manife
       license: metadata.license,
       ...(metadata.category === undefined ? {} : { category: metadata.category }),
       ...(metadata.description === undefined ? {} : { description: metadata.description }),
-      ...(doc.spec.lineage === undefined ? {} : { lineage: doc.spec.lineage.blueprint }),
+      ...(doc.spec.lineage !== undefined ? { parent: doc.spec.lineage.blueprint } : doc.spec.extends !== undefined ? { parent: doc.spec.extends } : {}),
     })
   }
   entries.sort((a, b) => a.id.localeCompare(b.id))
