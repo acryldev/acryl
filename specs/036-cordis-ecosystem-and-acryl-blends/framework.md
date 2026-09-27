@@ -54,10 +54,31 @@ the composition root, Pessimistic Offline Lock, Registry), the rules for contrib
 one `AppInstance`, chosen once at startup by one selector and passed inward; plugins read it from the `appInstance` service; a test forbids looking it up
 anywhere else, and another boots two apps at once and checks they share nothing.
 
+## Run modes: shared in development, self-contained when shipped
+
+Decided 2026-09-27. Like Rails (gems shared on the machine, bundled for deployment) and Next.js (`next dev`, then `next build` standalone):
+
+| Mode | What it is | Sharing |
+| --- | --- | --- |
+| **Attached** (develop, run in-house) | app folders run by one installed ACRYL runtime (`bin/acryl`) | the runtime on disk is shared; every app is its own process and bulkhead (Docker's model: one engine binary, many containers) |
+| **Standalone** (ship a product) | `acryl package` bundles the runtime and only the plugins the app's `blend.yaml` names into its own branded Electron app or Web server | none; each product carries its own runtime, as every Electron app on the market does (VS Code, Slack, Obsidian). The saving is that a product contains only its own plugins |
+
+**One process per app, no exceptions.** Electron cannot share one runtime between independently built apps, and a shared process would give up isolation (shared
+fate on a crash, colliding row ids, one home, port and window) for a memory saving that is small next to an app's own sessions and plugin state: there is a
+risk case and no efficiency case. A multi-Blend-in-one-process mode, if ever built, is its own named, opt-in feature with its own threat model (who can see
+whose data, what a crash takes down, how row ids are namespaced), not something that follows from Loader rows being able to coexist.
+
+Not the same claim: ACRYL's own multi-worktree workspace (many tabs, terminals and agents in one Desktop process) is one app working on several of its operator's
+tasks under one trust boundary; there is no "which app is this" question in it.
+
+The lightest distribution for a product that does not need a native window is the Web surface.
+
 ## The three repositories
 
-Proposed (awaiting decision, `repositories.md`): **acryl** is the engine and every lifecycle command, like Docker Engine and its CLI, and takes in the Blend
-format package. **acrylblends.github.io** is the registry and catalog, like Docker Hub. **acryldev/blends** is archived once its code has moved.
+Decided 2026-09-27 (`repositories.md`): **acryl** is the one monorepo for the engine, every lifecycle verb (new, ps, stop, rm, snapshot, apply, push, pull,
+package) and the Blend format package `blends-core`: one team, one codebase. **acrylblends.github.io** is the registry and catalog only: content from many
+parties on its own schedule, a real trust boundary, so it stays a separate repository gated by reviewed pull requests. **acryldev/blends** is archived once the
+move lands.
 
 ## What exists
 

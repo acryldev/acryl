@@ -1,6 +1,6 @@
 # Where each part of ACRYL Blends lives: acryl, blends, acrylblends.github.io
 
-Status: **Proposed**, awaiting the owner's decision. Nothing has moved yet.
+Status: **Accepted** 2026-09-27 by the owner. Migration in progress (see the steps below and `tasks.md` T011).
 
 ## The question
 

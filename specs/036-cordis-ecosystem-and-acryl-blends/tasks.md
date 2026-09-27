@@ -19,10 +19,12 @@ Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository
 
 ## Next
 
-- [ ] T011 Decide the repository organization (`repositories.md`), then follow its migration steps
+- [x] T011a Repository organization decided (`repositories.md`, accepted) and run modes decided (`framework.md`: attached and standalone, one process per app)
+- [ ] T011 Follow the migration steps in `repositories.md` (blends-core into the monorepo first)
 - [ ] T012 One Blend shape: `/blend snapshot` writes into the app folder; `acryl new --from <file|registry id>`
 - [ ] T013 `acryl new` and the app lifecycle commands in the published CLI (today the launcher needs a framework checkout)
 - [ ] T014 Registry and catalog on acrylblends.github.io: validated `index.json`, `acryl pull`/`acryl push`, starters by category
 - [ ] T015 The rest of the brand: the harness's first-launch notice, the terminal banner and palette, the Electron window and Dock icon
 - [ ] T016 Replace the pre-framework `dsh-desktop.blend` setting with app folders
+- [ ] T018 `acryl package`: a standalone product from an app folder, a Web server tarball and a branded Electron app (name, app id, icon from `blend.yaml`), bundling only the plugins the app names
 - [ ] T017 Real-app Desktop test of two branded apps side by side (Web is verified; Desktop is verified headless only)
