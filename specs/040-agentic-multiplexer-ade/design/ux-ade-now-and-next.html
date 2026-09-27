@@ -181,7 +181,7 @@
 </head>
 <body>
 <main>
-  <div class="eyebrow">ACRYL ADE / Spec 040 / one page: now and next / updated 2026-09-26</div>
+  <div class="eyebrow">ACRYL ADE / Spec 040 / one page: now and next / updated 2026-09-27</div>
   <h1>Where we are, and where we go</h1>
   <div class="legend">
     <span class="chip fresh">added since last review</span> outlined in violet in the mock below
@@ -278,7 +278,7 @@
         </div>
       </aside>
     </div>
-    <div class="absent" style="margin:8px 10px"><b>Not built yet:</b> repo-wide file search, creating and renaming files, top bar (BLEND, fan-out, cost), persistent terminal dock, status bar, attention queue, approve or reject of agent edits.</div>
+    <div class="absent" style="margin:8px 10px"><b>Not built yet:</b> top bar (BLEND, fan-out, cost), attention queue, attention queue, approve or reject of agent edits.</div>
   </div>
 
   <h3 style="margin:22px 0 4px">What each tile really does today</h3>
@@ -312,11 +312,18 @@
       <tr><td>Right pane: Code (file tree) and editor</td><td><span class="chip fresh">added</span></td><td>Lazy file tree of the worktree and a real CodeMirror editor tab with save, conflict handling and drafts. Files are read and written through a confined Host route (git worktree root only, atomic save).</td></tr>
       <tr><td>Code organization</td><td><span class="chip fresh">added</span></td><td><code>acryl-workspace</code> is now organized by domain (git, pty, files, canvas, worktrees, projects, sessions, diff, review, checks) instead of one flat folder, with a README describing the layout. <code>apps/acryl-desktop</code> got the same treatment by bounded context (shell, profile, plugins, startup, diagnostics, updates, settings, terminal, workspaces, windows, runtime), with the layout-coupled files deliberately kept beside the entry points. One right-panel opener only.</td></tr>
       <tr><td>Right pane: Checks</td><td><span class="chip fresh">added</span></td><td>Lists the worktree's package scripts (check, test, lint, build first) and a Run button that opens a terminal tab in that worktree and types the command with the project's own package manager.</td></tr>
+      <tr><td>Terminals and agent tabs</td><td><span class="chip built">built</span> <span class="chip fresh">rebuilt</span></td><td>A real terminal: ordered stream over a WebSocket, exact screen restore after a reload, WebGL rendering, full-pane size. Agent tabs get an icon, a running marker, rename in place, and a system notice when an agent finishes.</td></tr>
+      <tr><td>Settings &gt; Agents</td><td><span class="chip fresh">added</span></td><td>Default agent (Auto, blank terminal, or an installed agent), Yolo or Manual permissions (Manual by default), and per agent: enabled, command, extra arguments, install link, live "installed here" check. Two lists: installed, and "Try other agents that can be installed". Your own agents are added here. Shared by Web and Desktop; the + menu lists installed agents and + opens the default.</td></tr>
+      <tr><td>Command palette</td><td><span class="chip fresh">added</span></td><td>Cmd or Ctrl+Shift+K: fuzzy search over commands, agents, open tabs, worktrees, settings sections and files (names, or contents with Tab). Settings &gt; Command palette hides groups or single entries.</td></tr>
+      <tr><td>Settings &gt; Tabs and plugin tab types</td><td><span class="chip fresh">added</span></td><td>Turn each tab type on or off; the + menu, palette and Settings follow at once. A plugin can register a tab type of its own (a whiteboard is the worked example) that appears in all three; if the plugin is off its tabs keep their content. "Add your own tab type..." in the + menu opens the pane.</td></tr>
+      <tr><td>Board</td><td><span class="chip fresh">fixed</span></td><td>Chats by what their agent is doing, plus notes you drag between To do, Doing and Done.</td></tr>
+      <tr><td>Agent Control (041)</td><td><span class="chip fresh">added</span></td><td>An agent can look at and operate the ACRYL window (snapshot, click, type, select, press, scroll, wait), each call asked first, with an audit log; plugin lifecycle tools; <code>acryl doctor</code> and <code>acryl repair</code> for a profile that will not start.</td></tr>
+      <tr><td>Web page identity</td><td><span class="chip fresh">added</span></td><td>Tab title "ACRYL" and the ACRYL favicon (black on white, smooth).</td></tr>
     </tbody>
   </table>
   <div class="grid2" style="margin-top:12px">
-    <div class="box"><h3>Next in 040</h3><p class="q">Stage and commit box, repo-wide search, file create and rename, attention queue in the Projects list, status bar, persistent terminal dock, multi-line diff comments, approve or reject of agent edits.</p></div>
-    <div class="box"><h3>New milestone: 041 Agent Control</h3><p class="q">Agents operate ACRYL itself, from inside the app and, through the ACRYL CLI, from outside: change settings, enable and install plugins, drive the UI, and repair Desktop or Web when it will not launch. Spec, Cordis design and spike-first tasks are written; no code yet. See <code>specs/041-agent-control</code>.</p></div>
+    <div class="box"><h3>Next in 040</h3><p class="q">Real-browser passes (T076, T096, T105); the attention queue (needs a real "needs approval" signal); cost and context in the status bar (needs a verified data shape); Blends on the Web (T083, your decision); status hooks and auto tab titles for agents (T122); drawn icons for the agents that show a letter badge.</p></div>
+    <div class="box"><h3>New milestone: 041 Agent Control</h3><p class="q">Scope A is built for Web and Desktop (the agent drives the window, asked per call, audited) and Scope B offline (<code>acryl doctor</code>, <code>acryl repair</code>). Open: the authenticated online channel for the CLI, screenshot support, and a real-window run. On hold until 040 is done. See <code>specs/041-agent-control</code>.</p></div>
   </div>
 
   <h2>Part 2: where we go</h2>
