@@ -1,3 +1,16 @@
+## 2026-09-27 - 036 Saving an app is its own Cordis plugin; CI in every new app; main merged in
+
+Commits: `6776e94340f7cd0fd200705d5fd846286094c017` (acryl-app-save, bins, app workflow), `e6625ad9b0a08b39b06c7d33bedd51790184cca0` (merge of main).
+
+- **`/app save` and `/app connect` moved out of the extension pack into `plugins/acryl-app-save`**, a Blueprint row (`app-save`) in Blank and so in the IDE.
+  Removing the row removes the commands; the extension pack no longer depends on `@acryl/app-persistence`. Everything is a plugin, including saving.
+- **Libraries stay libraries.** `@acryl/blends-core` (the format) and `@acryl/app-persistence` (save, connect, the secret check) are used by the CLI and by CI,
+  which are not Cordis hosts, so they are ordinary packages in `runtime/`, not plugins. They gained bins: `blends-validate` and `acryl-secret-check`.
+- **Every new app has CI from its first commit**: `acryl new` writes `.github/workflows/app.yml`, which validates `blend.yaml` and runs the secret check through
+  those bins from npm.
+- **Merged main** (Agent Control rename to `acryl-agent-control`, workspace agent status). Main's new code follows the app-instance rule: the Agent Control audit
+  log and the workspace's agent files live under the app's home, read from the `appInstance` service.
+
 ## 2026-09-27 - 036 Everything is a git repository: registries, private starters, saving an app, three levels
 
 Commits: `9c7fdf3e1c96fe8cb87eccb06fd1409be7cae9e9` (registry format, `--from` git and registry), `44931eb70f470ec1d69d7a601c10a2e9aac3a4d1` (app persistence), `9751822079f2c99721d61cdf86aa0a6f165f9a63` (three levels); site: acrylblends/acrylblends.github.io PR #1.

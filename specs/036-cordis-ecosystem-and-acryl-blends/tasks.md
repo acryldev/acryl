@@ -1,7 +1,7 @@
 # 036 milestone: ACRYL Blends, the framework (builder included)
 
 Ledger of what the milestone delivers. Product definition: `framework.md`. Design notes: `blank-canvas-blend.md`, `blend-instance-design.md`.
-Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository organization: `repositories.md` (proposed). Human walkthrough: `HUMAN-TEST.md`.
+Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository organization: `repositories.md` (accepted). Human walkthrough: `HUMAN-TEST.md`.
 
 ## Done (branch `036-cordis-ecosystem-and-acryl-blends`)
 
@@ -27,7 +27,9 @@ Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository
 - [x] T012b Registries are git repositories: registry index and `blends-registry-index` (CI), `acryl new --from` a git URL or a registry starter id
 - [x] T012c App persistence: `acryl save`, `acryl remote connect`, `/app save`, `/app connect`; the secret check and the private-to-public guard; new apps are private and Proprietary
 - [x] T012d Three levels (Blank, Blueprint, Project): starters extend a Blueprint and boot as they are; a Project keeps its starter in `blueprints/` and its license in `THIRD-PARTY.md`
-- [ ] T019 Publish `@acryl/blends-core` and `@acryl/app-persistence` to npm (the owner's decision), then add the CI workflow to `acryl new` (validate `blend.yaml`, run the app's checks)
+- [x] T019a `/app save` and `/app connect` are their own swappable plugin (`acryl-app-save`, Blueprint row `app-save`); `acryl new` writes the CI workflow
+      (`blends-validate`, `acryl-secret-check`)
+- [ ] T019 Publish `@acryl/blends-core` and `@acryl/app-persistence` to npm, so the CI workflow in new apps runs (approved by the owner 2026-09-27)
 - [ ] T020 `acryl publish`: a Project becomes a Blueprint in a registry through a reviewed pull request (public only; refused for private apps)
 - [ ] T013 `acryl new` and the app lifecycle commands in the published CLI (today the launcher needs a framework checkout)
 - [x] T014a The public registry on acrylblends.github.io: `registry/` with Blank and the organizer starter, CI validation, `/registry/` served, the Blends page listing real entries (PR acrylblends/acrylblends.github.io#1, deploys on merge)
