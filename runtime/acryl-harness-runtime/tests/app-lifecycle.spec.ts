@@ -3,6 +3,7 @@
  * record it with /blend snapshot (into the app folder), create a second app from it (like a fresh clone of the app's git repository), and start that one:
  * its plugins install themselves too, from the app's own files, with the lock verified.
  */
+import { spawnSync } from 'node:child_process'
 import { cpSync, existsSync, readFileSync, realpathSync } from 'node:fs'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -69,6 +70,14 @@ describe('an app is its Blend', () => {
       expect(JSON.parse(readFileSync(join(a, 'blend.lock.json'), 'utf8')).modules).toEqual([expect.objectContaining({ name: 'acryl-organizer', origin: 'local', source: 'extensions/acryl-organizer' })])
       expect((await app.run('/blend verify'))?.text).toContain('matches its lock')
       expect(existsSync(join(a, '.acryl'))).toBe(false)   // nothing written into a hidden side folder: the app folder is the Blend
+      // Saved from its own chat into its own repository: the app's files, never its runtime data.
+      Object.assign(process.env, { GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' })
+      const saved = await app.run('/app save the planner with its organizer')
+      expect(saved?.kind, String(saved?.text)).toBe('success')
+      expect(saved?.text).toMatch(/Saved [0-9a-f]{8}\. It has no remote yet/u)
+      const tracked = spawnSync('git', ['ls-files'], { cwd: a, encoding: 'utf8' }).stdout.split('\n')
+      expect(tracked).toContain('blend.lock.json')
+      expect(tracked.some(file => file.startsWith('.dsh/'))).toBe(false)
     } finally { await app.stop() }
 
     // App B: created from A (what a fresh clone of A's repository amounts to: definition, lock and extensions, nothing installed).

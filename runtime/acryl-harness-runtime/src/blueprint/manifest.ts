@@ -99,7 +99,8 @@ export function appManifest(input: { id: string, name: string, blueprint: Bluepr
   return {
     apiVersion: BLENDS_API_VERSION,
     kind: 'Blend',
-    metadata: { id: input.id, name: input.name, version: '0.1.0', description: input.description ?? `${input.name}, grown from ${input.blueprint.id}.` },
+    // Private and proprietary until the owner says otherwise: saving refuses a public remote for a private app, and a registry refuses to list it.
+    metadata: { id: input.id, name: input.name, version: '0.1.0', description: input.description ?? `${input.name}, grown from ${input.blueprint.id}.`, license: 'Proprietary', visibility: 'private' },
     spec: {
       runtime: 'cordis',
       lineage: { blueprint: input.blueprint.id, blueprintVersion: '0.1.0' },

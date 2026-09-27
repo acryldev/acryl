@@ -18,6 +18,7 @@ import { listInstalledPlugins } from './lib/provenance.js'
 import { captureApp, captureBlend, verifyBlend, writeAppBlend, writeBlend } from './lib/blend-capture.js'
 import { applyBlend } from './lib/blend-apply.js'
 import { appHomeDir, blendDir, useAppInstance } from './lib/scopes.js'
+import { connectRemote, gitCli, githubHosting, saveApp } from '@acryl/app-persistence'
 import { appendLedger, ledgerRecorder, readLedger, trackedBlendDir, verifyLedger } from './lib/blend-ledger.js'
 import { describePermissions } from './lib/manifest.js'
 import { describeInstalledExtensions, installLocalPlugin, syncOnStartup, listLocalPlugins, reloadLocalPlugins, removeLocalPlugin } from './lib/install.js'
@@ -210,6 +211,43 @@ export function apply(ctx) {
         },
       })
     }, 'extension-context blend command')
+  })
+
+  // `/app save` and `/app connect` (spec 036, persistence-and-registries.md): keep an app in its own git repository from inside the app, for users who never
+  // open a terminal. Human-typed only, like `/blend apply`: saving publishes the user's work to a remote, so it is the user's decision; the agent may suggest
+  // it, never run it. The rules (secret check, a private app never reaches a public remote) are @acryl/app-persistence's.
+  ctx.inject(['commands'], scoped => {
+    ctx.effect(function* () {
+      yield scoped.commands.register({
+        name: 'app',
+        description: 'Save this app to its own git repository, or connect it to one (private unless the app says public)',
+        input: { hint: 'save [message] | connect [public|private] [repository name]' },
+        async handler(invocation) {
+          const app = appHomeDir()
+          if (app === undefined) return { kind: 'error', text: 'This is not an app created with acryl new, so it has no repository of its own to save to.' }
+          const [verb = '', ...rest] = String(invocation?.rawInput ?? '').trim().split(/\s+/u).filter(Boolean)
+          const manifestText = readFileSync(join(app, 'blend.yaml'), 'utf8')
+          try {
+            if (verb === 'save') {
+              const result = saveApp({ manifestText, message: rest.join(' ') || `Save ${new Date().toISOString().slice(0, 16).replace('T', ' ')}` }, gitCli(app), githubHosting(app))
+              if (result.status === 'saved') return { kind: 'success', text: `Saved ${result.commit.slice(0, 8)}${result.pushed ? ` and pushed to ${result.remote}` : '. It has no remote yet: type /app connect to create a private GitHub repository for it.'}` }
+              if (result.status === 'nothing-to-save') return { kind: 'success', text: 'Nothing to save: no changes since the last save.' }
+              return { kind: 'error', text: `Not saved: ${result.reason}${(result.secrets ?? []).map(found => `\n- ${found.path}${found.line > 0 ? `:${found.line}` : ''} (${found.kind})`).join('')}` }
+            }
+            if (verb === 'connect') {
+              const visibility = rest[0] === 'public' || rest[0] === 'private' ? rest.shift() : undefined
+              const result = connectRemote({ manifestText, name: rest[0] ?? app.split(/[\\/]/u).at(-1), ...(visibility === undefined ? {} : { visibility }) }, gitCli(app), githubHosting(app))
+              return result.status === 'connected'
+                ? { kind: 'success', text: `${result.created ? 'Created' : 'Connected'} the ${result.visibility} repository ${result.remote}. Type /app save to push the app to it.` }
+                : { kind: 'error', text: `Not connected: ${result.reason}` }
+            }
+          } catch (cause) {
+            return { kind: 'error', text: String(cause?.message ?? cause) }
+          }
+          return { kind: 'error', text: 'Usage: /app save [message], or /app connect [public|private] [repository name].' }
+        },
+      })
+    }, 'extension-context app command')
   })
 
   ctx.inject(['tools'], scoped => {
