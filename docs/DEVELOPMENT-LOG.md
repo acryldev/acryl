@@ -1,3 +1,20 @@
+## 2026-09-27 - 036 One monorepo, one Blend shape: blends-core moves in, an app is its Blend
+
+Commits: `988f5ad70c4f081f2bc632946a6d175e1cd14391` (decisions), `daa54d168023b13195f925924d788aee42d0cbf8` (blends-core), `6acda9f809d71f3c9d51b9a38509d315e0d95952` (Desktop boot race), `1456a528aaf2a83309e80fdc6a1f4b1733e8b40f` (app lifecycle).
+
+- **Decided with the owner.** One process per app, no exceptions (a shared process is a risk case with no efficiency case); two run modes, attached (one
+  installed runtime, many app folders) and standalone (`acryl package`, later); `acryl` is the one monorepo for the engine, every lifecycle verb and the format;
+  acrylblends.github.io is the registry only; `acryldev/blends` will be archived. Recorded in `specs/036-cordis-ecosystem-and-acryl-blends/framework.md` and
+  `repositories.md` (accepted).
+- **blends-core in the monorepo** (`runtime/blends-core`, 84 tests). The runtime validates `blend.yaml` through it, and `manifestDigest` (how a lock names its
+  manifest) is defined there once. TypeScript 6 drops the JSON import attribute in declarations, which broke every NodeNext consumer: the schema type is declared now.
+- **An app is its Blend.** `/blend snapshot` records into the app folder (the user's `blend.yaml` kept, comments too; only missing rows appended; the lock written),
+  `/blend apply` installs in place, an app installs its own extensions and locked marketplace plugins at start (so a fresh clone of an app's repository works), and
+  `acryl new --from <app>` creates a sibling app. Proven end to end on real engines (`tests/app-lifecycle.spec.ts`).
+- **A real Desktop race fixed.** The profile module-link repair was fired and forgotten, so a fresh home's first boot (every new app, every smoke run) could start before
+  the links existed; the profile smoke failed about one run in five. The repair is now returned and awaited by every boot: 20/20 and 10/10 runs.
+- A `Claude-Session:` trailer slipped into one commit and was removed with an amend and force-push, per the standing rule.
+
 ## 2026-09-27 - 036 Apps are bulkheads: one AppInstance family, no ambient home anywhere
 
 Commits: `e3be4551826ae245fe2b8e3ca7174e281f694fd7` (worktree isolation), `9627d7a86a228245d12a79d1a06523212b944a84` (profile owner guard), `1b10c17cf7cab20a745befa2f59ed7f1c017338a` (the refactor). Design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`.
