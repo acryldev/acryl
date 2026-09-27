@@ -13,6 +13,20 @@ Answers are from the code that shipped on 2026-09-27 (`plugins/acryl-agent-contr
 
 The snapshot builder lists interactive controls, headings, landmarks, status regions and dialogs with role, name and state. A control with no accessible name is listed with an empty name and is still operable by its ref, but an empty name makes approval prompts and audit lines weak. The audit is therefore a standing task: components in `@acryl/ui` and the workspace need `aria-label`s where a control is an icon. Tracked as T050 below; measured on the real tree in a browser pass, not in jsdom.
 
+**Measured (2026-09-27), jsdom of a composed real scene** (`ProjectsSidebar` with two worktrees and one running session, `TabStrip` with a Claude tab plus File, Browser, Diff, Kanban and Doc tiles - a first-order approximation of a real window, not the full app with Settings, the palette or the terminal dock open):
+
+| metric | value |
+| --- | --- |
+| real accessible nodes (`snapshot.total`) | 29 |
+| nodes at `maxNodes: 1000` | 29 (no truncation this small) |
+| nodes at the default cap (300) | 29 |
+| rendered text size (`renderSnapshot`) | 1,207 characters |
+| JSON size (`JSON.stringify`) | 2,311 characters |
+| interactive controls with an empty accessible name | 0 |
+| roles present | `button` 18, `tab` 9, `tablist` 2 |
+
+A scene this size (29 nodes) sits nowhere near `MAX_SNAPSHOT_NODES` (1000) or the default page size (300), so pagination is not yet exercised by a real window; a larger scene (Settings open, the palette open, a long Projects list) would be needed to measure that path, and is deferred to the real-browser pass (T050) rather than approximated further in jsdom. Zero unnamed interactive controls in this scene is consistent with T050's own finding ("the jsdom scenarios found none in the Projects path form and the + menu"), extended here to the wider tab strip and sidebar - encouraging, but still not the same claim as a clean real-browser audit.
+
 ## T003: approval and policy
 
 **Verdict: the Harness's own pre-execute policy does it, per call.** A `tools/pre-execute` hook can return `{kind:'ask', reason}`; the harness then makes one `ctx.approval` request, and only `allowed-once` proceeds (`rejected`, `cancelled` and `unavailable` deny). The plugin's hook asks for `ui_click`, `ui_type`, `ui_select` and `ui_press` every time, in words that name the control ("Click the button \"Delete project\"") using the refs of the latest snapshot. It calls `next()` first, so another plugin's denial still wins. Verified against the real engine: with nobody to answer, a click is denied and never reaches the page. `ui_snapshot`, `ui_scroll` and `ui_wait` only look, so they are not asked about.
