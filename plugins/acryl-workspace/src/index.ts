@@ -41,7 +41,7 @@ import {
 } from './git/route.ts'
 import { AgentCatalog } from './agents/catalog.ts'
 import { WORKSPACE_AGENT_SETTINGS_PATH, WORKSPACE_AGENTS_PATH, WORKSPACE_AGENTS_REMOVE_PATH } from './agents/contract.ts'
-import { createFileCatalogStore, defaultAgentSettingsFile, defaultAgentsFile } from './agents/file-store.ts'
+import { agentSettingsFile, agentsFile, createFileCatalogStore } from './agents/file-store.ts'
 import { handleWorkspaceAgentSettingsRequest, handleWorkspaceAgentsRemoveRequest, handleWorkspaceAgentsRequest } from './agents/route.ts'
 import { AgentSettings } from './agents/settings.ts'
 import { AgentStatusStore, WORKSPACE_AGENT_STATUS_PATH } from './agents/status/agent-status.ts'
@@ -66,8 +66,23 @@ import { createWorkspacePtyStream } from './pty/stream.ts'
 /** Stable Cordis plugin name. */
 export const name = 'acryl-workspace'
 
-/** Loopback Web server required to publish canvas routes. */
-export const inject = ['webServer']
+/**
+ * The part of the runtime's `appInstance` service ACRYL plugins read (a separated interface: plugins do not import the runtime). Every plugin declares
+ * exactly this shape, so the Context augmentations agree in any program that loads several of them.
+ */
+interface AppInstanceService {
+  readonly home: string
+  readonly dshHome: string
+}
+
+declare module '@deepseek-ai/cordis' {
+  interface Context {
+    appInstance: AppInstanceService
+  }
+}
+
+/** Loopback Web server required to publish canvas routes; the app instance says where this app keeps its data. */
+export const inject = ['webServer', 'appInstance']
 
 /**
  * Activate Development Canvas as a neighboring, required Host plugin.
@@ -96,8 +111,8 @@ export function apply(ctx: Context): void {
       agentStatus: { url: `${rendererOrigin}${WORKSPACE_AGENT_STATUS_PATH}`, token: statusToken },
     })
     const agentStatus = new AgentStatusStore(id => workspacePty.has(id))
-    const catalog = new AgentCatalog(createFileCatalogStore(defaultAgentsFile()), command => workspacePty.canRun(command))
-    const agentSettings = new AgentSettings(createFileCatalogStore(defaultAgentSettingsFile()), catalog, command => workspacePty.canRun(command))
+    const catalog = new AgentCatalog(createFileCatalogStore(agentsFile(ctx.appInstance.home)), command => workspacePty.canRun(command))
+    const agentSettings = new AgentSettings(createFileCatalogStore(agentSettingsFile(ctx.appInstance.home)), catalog, command => workspacePty.canRun(command))
     settings = agentSettings
     void catalog.load().catch(reportHostError.bind(undefined, 'load custom agents'))
     void agentSettings.load().catch(reportHostError.bind(undefined, 'load agent settings'))

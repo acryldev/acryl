@@ -17,7 +17,7 @@ import { DSH_LAUNCH_ENVIRONMENT_KEY } from '@deepseek-ai/dsh-launch-environment'
 import {
   createAcrylEngineHost,
   createDshEngineDefinitionFromComposition,
-  resolveAcrylDshHome,
+  selectInstance,
   resolvePluginLifecycleStatePath,
 } from 'acryl-harness-runtime'
 import {
@@ -107,9 +107,11 @@ import {
 import type { RendererBootReport } from './startup/renderer-boot-contract.ts'
 import { desktopLocaleFromLanguageTag } from './shell/tray-locale.ts'
 import { resolveDesktopUserDataOverride } from './shell/desktop-user-data.ts'
+import { resolveProductName } from './shell/product-name.ts'
 
 const BIN_NAME = 'acryl-desktop'
-const PRODUCT_NAME = 'ACRYL'
+// The Dock, menu and diagnostics name: `ACRYL`, or the instance's brand (see shell/product-name.ts) so several Desktop instances are distinguishable.
+const PRODUCT_NAME = resolveProductName()
 
 /**
  * True when this process is the ephemeral dev-mode bundle `launch-dev.mjs`
@@ -472,12 +474,11 @@ async function start(): Promise<void> {
       platform: process.platform,
     })
     for (const [name, value] of Object.entries(shellEnvironmentResolution.updates)) process.env[name] = value
-    // ACRYL's own root nests each engine's data under it (`~/.acryl/.dsh` for
-    // the DSH engine) so it never silently shares state with a stock DSH
-    // Desktop install (dshdesktop.com), which uses plain `~/.dsh` — an
-    // explicit $DSH_HOME still wins, same precedence as resolveDshHome() itself.
-    process.env.DSH_HOME = resolveAcrylDshHome()
-    const homeDir = process.env.DSH_HOME
+    // Desktop's composition root chooses the app instance once (runtime instance/): which home, engine home and user data this window belongs to. The
+    // pinned harness reads its home from DSH_HOME, so the instance crosses that boundary through the environment.
+    const instance = selectInstance()
+    process.env.DSH_HOME = instance.dshHome
+    const homeDir = instance.dshHome
     const windowsVolumeConcerns = diagnoseWindowsVolumes(process.platform, [
       { label: 'application install', path: process.execPath },
       { label: 'desktop user data', path: app.getPath('userData') },
@@ -684,6 +685,8 @@ async function start(): Promise<void> {
         `${BIN_NAME}: requested Market provider ${prepared.market.requested} was disabled for this generation: ${prepared.marketFailure}`,
       )
     }
+    // A fresh home (an app's first start) must have its module links before anything resolves a package from the profile.
+    await prepared.moduleFallback
     startupStage = 'runtime-bootstrap'
     lifecycleRecorder.transitionStartupStage(startupStage)
     const dshBootstrapPath = fileURLToPath(new URL('./desktop-cli.js', import.meta.url))

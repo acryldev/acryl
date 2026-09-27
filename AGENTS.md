@@ -6,6 +6,8 @@ The agent's system prompt (where it comes from, how to change it, and a generate
 
 Building or changing an ACRYL plugin, tool, UI slot or skill: start at `plugins/acryl-extension-context/docs/README.md` (routed docs) and `plugins/acryl-extension-context/example-plugins/README.md` (verified examples for every plugin type).
 
+Where an ACRYL app keeps anything (home, engine home, port, Electron user data, project folders): only through the `AppInstance` family in `runtime/acryl-harness-runtime/src/instance/` (chosen once by `select.ts`, read by plugins from the `appInstance` service). Never call `homedir()` or read `ACRYL_HOME`/`DSH_HOME`/`ACRYL_WEB_PORT` anywhere else; `tests/bulkhead.spec.ts` enforces it. Design and rules: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`.
+
 ## Prerequisites and setup
 
 - Use Node.js `^22.19.0` or `>=24.0.0` and the root PNPM `11.11.0` release through Corepack.

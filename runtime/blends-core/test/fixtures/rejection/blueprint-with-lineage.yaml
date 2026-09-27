@@ -1,0 +1,14 @@
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+
+metadata:
+  id: rejection.blueprint-with-lineage
+  name: Blueprint with lineage
+  version: 0.1.0
+
+spec:
+  runtime: cordis
+  lineage:
+    blueprint: acryl.crm
+    blueprintVersion: 0.1.0
+  rows: []

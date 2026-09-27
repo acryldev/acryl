@@ -43,6 +43,8 @@ packages:
   - runtime/acryl-control
   - runtime/acryl-diagnostics
   - runtime/acryl-harness-runtime
+  - runtime/blends-core
+  - runtime/app-persistence
   - runtime/acryl-loopback-http
   - distribution/acryl-npm-launcher
   - apps/acryl-cli
@@ -57,6 +59,8 @@ packages:
   - plugins/acryl-ui-tui
   - plugins/acryl-mount-anchors
   - plugins/acryl-shortcuts
+  - plugins/acryl-brand
+  - plugins/acryl-app-save
   - plugins/acryl-workspace
   - plugins/acryl-plugin-admin
   - plugins/acryl-support

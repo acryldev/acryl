@@ -10,13 +10,14 @@
  * Requires: `systemPrompt`. `tools`, `desktopPnpm` and `livePluginActivation` are
  * optional and read at call time, never captured (the documented ordering trap).
  */
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { globalExtensionsDir } from './lib/reconcile.js'
 import { listInstalledPlugins } from './lib/provenance.js'
-import { captureBlend, verifyBlend, writeBlend } from './lib/blend-capture.js'
+import { captureApp, captureBlend, verifyBlend, writeAppBlend, writeBlend } from './lib/blend-capture.js'
 import { applyBlend } from './lib/blend-apply.js'
+import { appHomeDir, blendDir, useAppInstance } from './lib/scopes.js'
 import { appendLedger, ledgerRecorder, readLedger, trackedBlendDir, verifyLedger } from './lib/blend-ledger.js'
 import { describePermissions } from './lib/manifest.js'
 import { describeInstalledExtensions, installLocalPlugin, syncOnStartup, listLocalPlugins, reloadLocalPlugins, removeLocalPlugin } from './lib/install.js'
@@ -37,6 +38,9 @@ export function apply(ctx) {
   // Evaluation switch (evals/README.md): ACRYL_EXTENSION_DOCS=off removes the router, the skills and the installed-extensions note, leaving only the tools,
   // so the same task can be run with and without the docs to measure what they add. Never set it in normal use.
   const docsOff = process.env.ACRYL_EXTENSION_DOCS === 'off'
+
+  // Where this app keeps what its builder writes, from the runtime's app instance (optional: a stock harness host has none and keeps the classic folders).
+  ctx.effect(() => useAppInstance(ctx.get('appInstance')), 'extension-context: app instance scopes')
 
   // Static for the process lifetime: part of the cacheable prompt prefix.
   const text = buildRouterText(root, manifest)
@@ -78,11 +82,23 @@ export function apply(ctx) {
           const profileDir = scoped.get('desktopProfiles')?.current?.dir
           if (!profileDir) return
           const dshHome = scoped.get('dshHomePath')
-          const summary = await syncOnStartup(
-            { pnpm: scoped.get('desktopPnpm'), live: scoped.get('livePluginActivation'), profileDir },
-            { globalDir: globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined) },
-          )
+          const services = { pnpm: scoped.get('desktopPnpm'), live: scoped.get('livePluginActivation'), profileDir }
+          // An app (`acryl new`) installs its own committed extensions at start: a fresh clone has them in extensions/ but nothing installed yet.
+          const app = appHomeDir()
+          const summary = await syncOnStartup(services, { globalDir: globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined), installPending: app !== undefined })
+          // ...and the marketplace plugins its lock names, when the lock still matches the app's definition (a stale lock is reported, never guessed).
+          let lockNote = ''
+          if (app !== undefined && verifyBlend(app).ok) {
+            const applied = await applyBlend(app, services, {})
+            const installed = applied.results.filter(r => r.origin === 'registry' && r.status === 'installed').map(r => r.name)
+            const failed = applied.results.filter(r => ['failed', 'conflict'].includes(r.status)).map(r => `${r.name} (${r.detail ?? r.status})`)
+            lockNote = [installed.length > 0 ? `installed from the app lock: ${installed.join(', ')}` : '', failed.length > 0 ? `FAILED from the app lock: ${failed.join(', ')}` : ''].filter(Boolean).join('; ')
+          } else if (app !== undefined && existsSync(join(app, 'blend.lock.json'))) {
+            lockNote = 'the app lock no longer matches blend.yaml (type /blend snapshot to refresh it); marketplace plugins were not installed from it'
+          }
           const parts = [
+            summary.installed.length > 0 ? `installed the app's extensions ${summary.installed.join(', ')}` : '',
+            lockNote,
             summary.updated.length > 0 ? `re-synced ${summary.updated.join(', ')}` : '',
             summary.changed.length > 0 ? `source changed since install (type /reload to apply): ${summary.changed.join(', ')}` : '',
             summary.stale.length > 0 ? `source folder missing (/reload remove-stale): ${summary.stale.join(', ')}` : '',
@@ -149,8 +165,8 @@ export function apply(ctx) {
           const profileDir = ctx.get('desktopProfiles')?.current?.dir
           const workspaceDir = invocation?.agent?.session?.header?.cwd
           if (!profileDir) return { kind: 'error', text: 'The active profile is not available in this runtime.' }
-          if (!workspaceDir) return { kind: 'error', text: 'This session has no workspace directory to keep the Blend in.' }
-          const outDir = join(workspaceDir, '.acryl', 'blend')
+          if (!workspaceDir && appHomeDir() === undefined) return { kind: 'error', text: 'This session has no workspace directory to keep the Blend in.' }
+          const outDir = blendDir(workspaceDir)
           const verb = String(invocation?.rawInput ?? '').trim().split(/\s+/u)[0]
           if (verb === 'verify') {
             const result = verifyBlend(outDir)
@@ -174,6 +190,16 @@ export function apply(ctx) {
           }
           if (verb !== 'snapshot') return { kind: 'error', text: 'Usage: /blend snapshot (capture the current state), /blend verify, /blend apply (re-create a captured Blend here), or /blend ledger (what changed).' }
           const dshHome = ctx.get('dshHomePath')
+          const app = appHomeDir()
+          if (app !== undefined) {
+            // An app IS its Blend: record into the app folder, keeping the user's blend.yaml and adding only rows it does not name yet.
+            const capture = captureApp({ profileDir, appHome: app, globalDir: globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined) })
+            const files = writeAppBlend(capture, app)
+            appendLedger(app, { actor: 'human', kind: 'captured', blend: `${capture.manifest.metadata?.id}@${capture.manifest.metadata?.version}`, modules: capture.lock.modules.length, digest: capture.lock.origin.digest })
+            const added = capture.addedRows.length > 0 ? ` Added to blend.yaml: ${capture.addedRows.join(', ')}.` : ''
+            const notes = capture.notes.length > 0 ? `\nNot captured:\n${capture.notes.map(n => `- ${n}`).join('\n')}` : ''
+            return { kind: 'success', text: `Recorded the app in ${app}: ${capture.lock.modules.length} module(s) locked.${added} Written: ${files.join(', ')}. Commit the app folder to keep this state.${notes}` }
+          }
           const capture = captureBlend({ profileDir, workspaceDir, globalDir: globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined) })
           const files = writeBlend(capture, outDir)
           appendLedger(outDir, { actor: 'human', kind: 'captured', blend: `${capture.manifest.metadata.id}@${capture.manifest.metadata.version}`, modules: capture.lock.modules.length, digest: capture.lock.origin.digest })

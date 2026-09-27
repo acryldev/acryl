@@ -1,3 +1,106 @@
+## 2026-09-27 - 036 Saving an app is its own Cordis plugin; CI in every new app; main merged in
+
+Commits: `6776e94340f7cd0fd200705d5fd846286094c017` (acryl-app-save, bins, app workflow), `e6625ad9b0a08b39b06c7d33bedd51790184cca0` (merge of main).
+
+- **`/app save` and `/app connect` moved out of the extension pack into `plugins/acryl-app-save`**, a Blueprint row (`app-save`) in Blank and so in the IDE.
+  Removing the row removes the commands; the extension pack no longer depends on `@acryl/app-persistence`. Everything is a plugin, including saving.
+- **Libraries stay libraries.** `@acryl/blends-core` (the format) and `@acryl/app-persistence` (save, connect, the secret check) are used by the CLI and by CI,
+  which are not Cordis hosts, so they are ordinary packages in `runtime/`, not plugins. They gained bins: `blends-validate` and `acryl-secret-check`.
+- **Every new app has CI from its first commit**: `acryl new` writes `.github/workflows/app.yml`, which validates `blend.yaml` and runs the secret check through
+  those bins from npm.
+- **Merged main** (Agent Control rename to `acryl-agent-control`, workspace agent status). Main's new code follows the app-instance rule: the Agent Control audit
+  log and the workspace's agent files live under the app's home, read from the `appInstance` service.
+
+## 2026-09-27 - 036 Everything is a git repository: registries, private starters, saving an app, three levels
+
+Commits: `9c7fdf3e1c96fe8cb87eccb06fd1409be7cae9e9` (registry format, `--from` git and registry), `44931eb70f470ec1d69d7a601c10a2e9aac3a4d1` (app persistence), `9751822079f2c99721d61cdf86aa0a6f165f9a63` (three levels); site: acrylblends/acrylblends.github.io PR #1.
+Design: `specs/036-cordis-ecosystem-and-acryl-blends/persistence-and-registries.md`; levels: `framework.md`.
+
+- **Registries are git repositories** with one layout (`blends/<id>/`, CI-built `index.json`). `@acryl/blends-core` builds and checks the index
+  (`blends-registry-index`); the format gained `license` and `visibility`. The public registry lives in acrylblends.github.io (`registry/`, served at `/registry/`,
+  CI refuses private, unlicensed or stale entries). A private starter needs no registry: `acryl new my-app --from <git URL>` uses the user's own git login.
+- **Three levels, decided with the owner:** Blank (built-in Blueprint), Blueprint starter kits (`extends` a Blueprint, boot as they are), Projects (Blends grown from
+  either, kept with their starter in `blueprints/`, private and Proprietary from the first second, the starter's license in `THIRD-PARTY.md`).
+- **An app saves to its own repository:** `acryl save`, `acryl remote connect`, and `/app save`, `/app connect` inside the app (human-typed). Every save runs a secret
+  check and refuses on a hit; a private app never reaches a public remote; repositories are created through the user's own `gh` login and no token is ever handled.
+- Proven: a project created from the registry's organizer starter boots on a real engine with the plugin installed; `/app save` keeps `.dsh` out of git.
+
+Waiting on the owner: publishing `@acryl/blends-core` and `@acryl/app-persistence` to npm (then CI in new apps), merging the registry PR (deploys the site),
+archiving `acryldev/blends` (its local checkout has uncommitted work).
+
+## 2026-09-27 - 036 One monorepo, one Blend shape: blends-core moves in, an app is its Blend
+
+Commits: `988f5ad70c4f081f2bc632946a6d175e1cd14391` (decisions), `daa54d168023b13195f925924d788aee42d0cbf8` (blends-core), `6acda9f809d71f3c9d51b9a38509d315e0d95952` (Desktop boot race), `1456a528aaf2a83309e80fdc6a1f4b1733e8b40f` (app lifecycle).
+
+- **Decided with the owner.** One process per app, no exceptions (a shared process is a risk case with no efficiency case); two run modes, attached (one
+  installed runtime, many app folders) and standalone (`acryl package`, later); `acryl` is the one monorepo for the engine, every lifecycle verb and the format;
+  acrylblends.github.io is the registry only; `acryldev/blends` will be archived. Recorded in `specs/036-cordis-ecosystem-and-acryl-blends/framework.md` and
+  `repositories.md` (accepted).
+- **blends-core in the monorepo** (`runtime/blends-core`, 84 tests). The runtime validates `blend.yaml` through it, and `manifestDigest` (how a lock names its
+  manifest) is defined there once. TypeScript 6 drops the JSON import attribute in declarations, which broke every NodeNext consumer: the schema type is declared now.
+- **An app is its Blend.** `/blend snapshot` records into the app folder (the user's `blend.yaml` kept, comments too; only missing rows appended; the lock written),
+  `/blend apply` installs in place, an app installs its own extensions and locked marketplace plugins at start (so a fresh clone of an app's repository works), and
+  `acryl new --from <app>` creates a sibling app. Proven end to end on real engines (`tests/app-lifecycle.spec.ts`).
+- **A real Desktop race fixed.** The profile module-link repair was fired and forgotten, so a fresh home's first boot (every new app, every smoke run) could start before
+  the links existed; the profile smoke failed about one run in five. The repair is now returned and awaited by every boot: 20/20 and 10/10 runs.
+- A `Claude-Session:` trailer slipped into one commit and was removed with an amend and force-push, per the standing rule.
+
+## 2026-09-27 - 036 Apps are bulkheads: one AppInstance family, no ambient home anywhere
+
+Commits: `e3be4551826ae245fe2b8e3ca7174e281f694fd7` (worktree isolation), `9627d7a86a228245d12a79d1a06523212b944a84` (profile owner guard), `1b10c17cf7cab20a745befa2f59ed7f1c017338a` (the refactor). Design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`.
+
+- **The incident.** A Web run from the 036 worktree used the shared `~/.acryl`, re-linked the running main app's Web profile to the worktree's packages, and the
+  main app rendered blank; a leftover `dsh-desktop.blend` setting (Sep 11 demo) separately pointed a shared Desktop profile at a demo Blend. Both were repaired
+  (links restored, the setting removed with a backup).
+- **The diagnosis.** "The ACRYL home" was a hidden Singleton: about a dozen places resolved it ambiently and fell back to `~/.acryl`. Fixing one path never
+  isolated the app; the repeated one-file fixes were the signal.
+- **The design, named from the engineering rule books.** Apps are Bulkheads (Release It!). Each kind of app is an Abstract Factory producing one consistent family
+  (home, engine home, port, Electron user data, run lock, project scope), a deep module (Ousterhout) chosen once at each composition root (Clean Architecture)
+  by `instance/select.ts` and passed inward; plugins read the `appInstance` service. Run claims and the profile guard share a Pessimistic Offline Lock and
+  running apps form a Registry (PoEAA). The launcher scripts import the same TypeScript module, so every rule exists once.
+- **Enforced.** `tests/bulkhead.spec.ts` fails on any `homedir()` or placement-variable read outside the selector, and boots two apps at once to prove they share
+  no home, profile, port, user data or project scope and write only inside their own folders.
+- **Found by the new tests:** `managedApp('../x')` escaped the managed root; two direct boot paths and both Desktop smokes did not provide the instance.
+
+Behavior changes: a legacy DSH_HOME now moves the ACRYL home with it; the main checkout's `pnpm run dev` Desktop owns `~/.acryl-dev` completely (custom agents:
+`cp -R ~/.acryl/workspace ~/.acryl-dev/` once). Proposed next (awaiting decision): `specs/036-cordis-ecosystem-and-acryl-blends/repositories.md`.
+
+## 2026-09-27 - 036 ACRYL Blends as a framework: acryl new, builder included, apps that share nothing
+
+Commits: `2d2c1efecefed510e5101044033cba3529d01ade`, `d10d40d4d4d79ee958a887791dcacce9b66df01b`, `4eff7311cd132b5ce45233e7ff6ffe054519af0d`, `027310eabd5764a7b2f7ece5734a2538c085027a`, `1ee4c3b94cb6eb7b43f4ae72b2a5e9f9766af372`, `bdc9cc9da09cdfab5eada305feb1e27dd1efbc9d`, `72a3ac3f1e5a086aa5c6880aa8d935ec86603a04`, `59048005ef1221dbaa5a4cc996db85a7da519c38` (branch `036-cordis-ecosystem-and-acryl-blends`).
+
+- **Framework, not a product.** `acryl new <dir>` creates an app the Rails way (`blend.yaml`, `extensions/`, `AGENTS.md`, `bin/acryl`, its own git repository).
+  The app is the user's product: its brand everywhere a user looks, license of their choice. Definition: `specs/036-cordis-ecosystem-and-acryl-blends/framework.md`.
+- **One format.** `blend.yaml` is a Blends manifest (`blends.acryl.dev/v1alpha1`) that the runtime boots from; the IDE on `main` is now the `acryl.ide` Blend, defined as blank plus what it added.
+- **Many apps, no clashes.** Each app folder is its own ACRYL home, with a stable port, its own Electron user data and Dock name, a running claim, and a
+  namespaced project scope; `scripts/instances.mjs ps|stop|rm`. Verified with two same-named apps running at once.
+- **Fixes from real use:** Desktop Blank loaded the shared dev home (now isolated), `acryl-brand` failed on Desktop's web server, the Web launcher printed a dead
+  URL on a moved port, a stop left the server listening (now a process group), and a symlinked path silently ran nothing.
+- **The builder** is told to build into the app's `extensions/`; its docs no longer make it re-verify `@acryl/ui` (a real run spent ~15 calls on it).
+
+Not built yet: `acryl new` in the published CLI, `/blend snapshot` writing into the app folder (one Blend shape), a starter catalog on acrylblends.github.io.
+
+## 2026-09-26 - 036 The blank canvas: Blueprints, a configurable brand, and the first grown Blend
+
+Commits: `3351fa8d1d6394b373b6f2cf0c24e395cdba5842`, `2ee37f2d5f96e8e462b55f8b49c1279eb32b57cc`, `818fbc7c607adf4b8e761de6dae57840cfa1dae1`, `63e91a72b5f8542b221a859908d3481c95d02bd5` (branch `036-cordis-ecosystem-and-acryl-blends`, not pushed); the recipes are in the blends repo on the same branch name.
+
+- **Blueprints.** A Blueprint is pure data naming capabilities and optional rows (`runtime/acryl-harness-runtime/src/blueprint/`): `acryl.blank`
+  (agent, model choice, extension pack, prompt shaping, UI library) and `acryl.full` (today's product, still the default). `ACRYL_BLUEPRINT` selects one;
+  `ACRYL_BRAND_*` rebrands it. Web, CLI and Desktop all compose their ACRYL-owned rows through one pure function; Desktop keeps its own Market switch.
+  Design and the reason for each row: `specs/036-cordis-ecosystem-and-acryl-blends/blank-canvas-blend.md`.
+- **`acryl-brand`.** A new reversible plugin: name, mark, accent, font, title and favicon from the row's config, so a team can ship a closed-source or internal product
+  under its own name without forking. Seen in a real browser (sidebar and tab read the configured name).
+- **First use case.** `examples/acryl-organizer` (to-dos, calendar, overlap-refusing meeting booking). `organizer-growth.spec` builds it live from Blank, uses it through
+  the real tool runtime, captures a Blend and re-creates it on a fresh app. A real DeepSeek run from Blank also built, installed and used its own organizer.
+- **Recipes** in the blends repo: `acryl.blank` (Blueprint) and `acryl.organizer` (Blend, lineage `acryl.blank`), validated and compiled by a test.
+- **Agent knowledge.** Pack 0.11.0 adds `start-here/blueprints.md`.
+- Fixed on the way: a stale hardcoded script string in `apps/acryl-desktop/tests/package.spec.ts` (it failed on main).
+
+Findings worth keeping: the real agent found the reference organizer in the repo after building its own, so a from-scratch run must keep references out of reach; a
+`freeze()` on a literal widens it, so annotate before freezing.
+
+Not built yet: Electron window chrome and terminal branding, Blueprints from a YAML file or hub, a suppressible first-launch notice for white-label products, more starters.
+
 ## 2026-09-24 - 040 Projects tab grows up: new worktrees, per-branch chats, persistence, split
 
 Commits: `98cb67621d1639d824ca69aef5764c747e9088cc`, `837ebcf3076c9cb2dca781f916b2135972f2f5d0`, `9b6a2982c9e472a41358ec25ef164233f9e86780`, `3ca780d5a0a8117fac10876b62e0d5d88b7f7629`

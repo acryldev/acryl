@@ -1,0 +1,15 @@
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+
+metadata:
+  id: rejection.duplicate-row-id
+  name: Duplicate row id
+  version: 0.1.0
+
+spec:
+  runtime: cordis
+  rows:
+    - id: contacts
+      name: '@acryl/contacts'
+    - id: contacts
+      name: '@acryl/contacts-v2'

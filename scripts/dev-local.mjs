@@ -3,49 +3,34 @@
 
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { homedir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { instanceEnvironment, osHomeDirectory, selectInstance } from './lib/instance-module.mjs'
 
-// Deliberately its own root, sibling to (not nested inside) ACRYL's normal
-// `~/.acryl` — an isolated dev run must never collide with the home a real
-// packaged ACRYL install uses (`resolveAcrylDshHome()`'s `~/.acryl/.dsh`
-// default, see runtime/acryl-harness-runtime/src/acryl-home.ts), or with a stock DSH
-// Desktop install (dshdesktop.com), which uses plain `~/.dsh`.
-export const ACRYL_DEV_HOME_DIR_NAME = '.acryl-dev'
-export const ACRYL_DSH_ENGINE_DIR_NAME = '.dsh'
-export const ACRYL_USER_DATA_PRODUCT_NAME = 'ACRYL Development'
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
 /**
- * Resolve isolated persistence roots for a local ACRYL/Desktop launch.
- * @param platform - process.platform
- * @param homeDirectory - os.homedir()
- * @param environment - process.env
+ * The app instance this Desktop launch runs as, from the runtime's instance module (spec 036, "Self-containment"): an app or home the caller pinned, else
+ * this checkout's worktree instance, else the main checkout's isolated development app (`~/.acryl-dev`, Electron "ACRYL Development"). Never the installed
+ * app's `~/.acryl`.
  */
-export function resolveLocalDesktopRoots(
-  platform = process.platform,
-  homeDirectory = homedir(),
-  environment = process.env,
-) {
-  const dshHome = join(homeDirectory, ACRYL_DEV_HOME_DIR_NAME, ACRYL_DSH_ENGINE_DIR_NAME)
+export function localDesktopInstance(environment = process.env, osHome = osHomeDirectory(), checkout = repoRoot) {
+  return selectInstance({ env: environment, osHome, checkout, development: true })
+}
+
+/**
+ * Where Electron keeps this instance's user data: the platform's application-data root plus the instance's own user-data name, so the window state,
+ * storage and single-instance lock of two apps never meet.
+ */
+export function localUserDataRoot(instance, platform = process.platform, osHome = osHomeDirectory(), environment = process.env) {
   if (platform === 'win32') {
     const appData = environment.APPDATA
-    if (typeof appData !== 'string' || appData.length === 0) {
-      throw new Error('APPDATA is unavailable; cannot isolate Desktop user data')
-    }
-    return { dshHome, userData: join(appData, ACRYL_USER_DATA_PRODUCT_NAME) }
+    if (typeof appData !== 'string' || appData.length === 0) throw new Error('APPDATA is unavailable; cannot isolate Desktop user data')
+    return join(appData, instance.userDataName)
   }
-  if (platform === 'darwin') {
-    return {
-      dshHome,
-      userData: join(homeDirectory, 'Library', 'Application Support', ACRYL_USER_DATA_PRODUCT_NAME),
-    }
-  }
+  if (platform === 'darwin') return join(osHome, 'Library', 'Application Support', instance.userDataName)
   const config = environment.XDG_CONFIG_HOME
-  const configHome = typeof config === 'string' && config.length > 0
-    ? config
-    : join(homeDirectory, '.config')
-  return { dshHome, userData: join(configHome, ACRYL_USER_DATA_PRODUCT_NAME) }
+  return join(typeof config === 'string' && config.length > 0 ? config : join(osHome, '.config'), instance.userDataName)
 }
 
 /**
@@ -93,19 +78,16 @@ function runPnpm(args, env) {
 
 export async function runDevLocal(argv = process.argv.slice(2), environment = process.env) {
   const skipBuild = argv.includes('--skip-build')
-  const roots = resolveLocalDesktopRoots(process.platform, homedir(), environment)
-  mkdirSync(roots.dshHome, { recursive: true, mode: 0o700 })
-  mkdirSync(roots.userData, { recursive: true, mode: 0o700 })
-  const mode = ensureLocalAdvancedMode(roots.dshHome)
-  process.stdout.write(`dev:local DSH_HOME=${roots.dshHome}\n`)
-  process.stdout.write(`dev:local userData=${roots.userData}\n`)
+  const instance = localDesktopInstance(environment)
+  const userData = localUserDataRoot(instance, process.platform, osHomeDirectory(), environment)
+  mkdirSync(instance.dshHome, { recursive: true, mode: 0o700 })
+  mkdirSync(userData, { recursive: true, mode: 0o700 })
+  // The development app starts in advanced mode so Development Canvas is visible; an app keeps its own defaults.
+  const mode = instance.kind === 'development' || instance.kind === 'worktree' ? ensureLocalAdvancedMode(instance.dshHome) : 'app-default'
+  process.stdout.write(`dev:local app=${instance.id} (${instance.kind}) home=${instance.home}\n`)
+  process.stdout.write(`dev:local userData=${userData}\n`)
   process.stdout.write(`dev:local desktop mode=${mode}\n`)
-  process.stdout.write('dev:local quit the installed ACRYL app if it is still running\n')
-  const env = {
-    ...environment,
-    DSH_HOME: roots.dshHome,
-    DSH_DESKTOP_USER_DATA: roots.userData,
-  }
+  const env = { ...environment, ...instanceEnvironment(instance), DSH_DESKTOP_USER_DATA: userData }
   if (!skipBuild) {
     const marketCode = await runPnpm(['--filter', 'cordis-plugin-market', 'run', 'build'], env)
     if (marketCode !== 0) return marketCode

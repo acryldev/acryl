@@ -1,0 +1,38 @@
+# Golden fixture 3: the white-label story.
+# An owned Blend grown from the CRM stem cell. Proves: lineage, single-parent
+# extends, explicit ops (rows insert / overrides merge), disable of an
+# inherited row, and the layering guarantee - composed over
+# acryl.crm.expected.patch.yml, these ops reproduce this Blend's resolved
+# rows (SC-006). The shallow-merge semantics (D13) are intentional: the
+# inherited contacts.greeting still reads "Hello from My Organization" in the
+# resolved state, because the override only replaces the keys it sets.
+# Its expected patch is a pure delta over acryl.crm's compiled output: one
+# insert op with the Blend's new rows, then one override op per changed
+# inherited row in the Blend's declaration order (override ops carry only the
+# keys the Blend sets).
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blend
+
+metadata:
+  id: acme.crm
+  name: ACME CRM
+  version: 0.1.0
+  description: ACME's owned CRM, grown from the CRM stem cell.
+
+spec:
+  lineage:
+    blueprint: acryl.crm
+    blueprintVersion: 0.1.0
+  runtime: cordis
+  rows:
+    - id: brand
+      name: '@acme/brand'
+      config:
+        mark: acme
+  overrides:
+    - id: contacts
+      config:
+        title: People
+        org: ACME Corp
+    - id: pipeline
+      disabled: true

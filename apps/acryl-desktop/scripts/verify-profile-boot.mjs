@@ -10,7 +10,7 @@ import {
   createLaunchEnvironmentSnapshot,
   DSH_LAUNCH_ENVIRONMENT_KEY,
 } from '@deepseek-ai/dsh-launch-environment'
-import { applyIsolatedDevHomeDefault } from 'acryl-harness-runtime'
+import { applyIsolatedDevHomeDefault, selectInstance } from 'acryl-harness-runtime'
 import { DESKTOP_SETTINGS_NAMESPACE } from '../lib/index.js'
 
 // See the matching comment in verify-loader-boot.mjs.
@@ -122,6 +122,8 @@ try {
     async requestRestart() {},
     prepareToQuit() {},
   }
+  // The profile's module links must exist before the boot resolves anything from a fresh home (prepareDesktopProfile returns the repair as a promise).
+  await prepared.moduleFallback
   ctx = await boot(
     BIN_NAME,
     prepared.rootConfig,
@@ -129,6 +131,8 @@ try {
     async (host) => {
       host.provide(DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([]))
       host.provide('desktopRuntime', runtime)
+      // This smoke is its own composition root: the app instance is its throwaway engine home (runtime instance/), as the real Desktop's engine mount provides it.
+      host.provide('appInstance', selectInstance({ env: { DSH_HOME: home } }))
       host.provide('desktopPluginLifecycleBootstrap', {
         profileName: 'desktop',
         statePath: join(home, 'plugin-lifecycle', 'state.json'),

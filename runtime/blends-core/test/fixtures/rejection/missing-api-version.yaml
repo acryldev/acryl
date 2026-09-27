@@ -1,0 +1,10 @@
+kind: Blueprint
+
+metadata:
+  id: rejection.missing-api-version
+  name: Missing apiVersion
+  version: 0.1.0
+
+spec:
+  runtime: cordis
+  rows: []

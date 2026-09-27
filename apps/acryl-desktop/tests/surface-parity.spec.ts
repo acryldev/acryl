@@ -62,7 +62,9 @@ async function composeBoth(): Promise<{
   webAgentControlToolNames: string[]
 }> {
   const desktopHome = mkdtempSync(join(tmpdir(), 'acryl-parity-d-'))
-  const desktop = summarize(composeEntries([prepareDesktopProfile(undefined, desktopHome, 'darwin').patches]))
+  // Telemetry opt-out given explicitly ('' = not opted out): `undefined` would fall back to the runner's
+  // DSH_TELEMETRY_DISABLED (CI sets it), and Desktop's opt-out row would read as a parity difference.
+  const desktop = summarize(composeEntries([prepareDesktopProfile('', desktopHome, 'darwin').patches]))
   process.env.ACRYL_HOME = mkdtempSync(join(tmpdir(), 'acryl-parity-w-'))
   const host = await createAcrylEngineHost({
     engines: [createWebEngineDefinition(new URL('../../acryl-web/package.json', import.meta.url).href)],

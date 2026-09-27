@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
 import { AgentCatalog, type CatalogStore } from '../../src/agents/catalog.ts'
 import { AgentDefinitionError, MAX_CUSTOM_AGENTS } from '../../src/agents/definition.ts'
-import { createFileCatalogStore, defaultAgentsFile } from '../../src/agents/file-store.ts'
+import { agentsFile, createFileCatalogStore } from '../../src/agents/file-store.ts'
 
 const agent = (id: string, command = id) => ({ id, label: id.toUpperCase(), command, args: [], badge: { letter: 'A', color: '#10a37f' } })
 
@@ -79,7 +79,6 @@ describe('file catalog store', () => {
   })
 
   it('keeps the file in the ACRYL home, never anywhere a repository controls', () => {
-    expect(defaultAgentsFile({ ACRYL_HOME: '/data/acryl' })).toBe('/data/acryl/workspace/agents.json')
-    expect(defaultAgentsFile({})).toMatch(/\.acryl\/workspace\/agents\.json$/)
+    expect(agentsFile('/data/acryl')).toBe('/data/acryl/workspace/agents.json')
   })
 })

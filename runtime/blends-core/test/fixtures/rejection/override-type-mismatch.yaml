@@ -1,0 +1,19 @@
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+
+metadata:
+  id: rejection.override-type-mismatch
+  name: Override with mismatched parameter type
+  version: 0.1.0
+
+spec:
+  runtime: cordis
+  parameters:
+    maxDealValue:
+      type: number
+      default: 1000000
+  rows:
+    - id: pipeline
+      name: '@acryl/pipeline'
+      config:
+        maxDealValue: '{{parameters.maxDealValue}}'

@@ -1,0 +1,11 @@
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blend
+
+metadata:
+  id: rejection.blend-without-lineage
+  name: Blend without lineage
+  version: 0.1.0
+
+spec:
+  runtime: cordis
+  rows: []

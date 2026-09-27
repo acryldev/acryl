@@ -1,0 +1,8 @@
+- insert:
+    - id: welcome
+      name: "@acryl/welcome"
+      config:
+        title: ACRYL Zero
+    - id: pipeline-preview
+      name: "@acryl/pipeline"
+      disabled: true

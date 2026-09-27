@@ -1,0 +1,11 @@
+apiVersion: blends.acryl.dev/v1beta1
+kind: Blueprint
+
+metadata:
+  id: rejection.wrong-api-version
+  name: Wrong apiVersion
+  version: 0.1.0
+
+spec:
+  runtime: cordis
+  rows: []

@@ -1,0 +1,26 @@
+{
+  "name": "acryl-organizer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "To-do list, calendar and meeting booking grown from the Blank Blueprint: the reference for what a Blend adds",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "lib/**",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  }
+}

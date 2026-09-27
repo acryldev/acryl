@@ -22,7 +22,7 @@ import {
   type ProfileManifest,
 } from '@deepseek-ai/dsh-app-boot'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
-import { createAcrylCodingCapabilityPatches, createAcrylShellCapabilityPatches, pluginLifecyclePatches } from 'acryl-harness-runtime'
+import { blueprintFromEnvironment, composeBlueprintRows, createAcrylCodingCapabilityPatches, createAcrylShellCapabilityPatches, pluginLifecyclePatches, type Blueprint } from 'acryl-harness-runtime'
 import FileSettingsProvider, {
   resolveSpec as resolveSettingsFileSpec,
   type Config as SettingsFileConfig,
@@ -89,30 +89,6 @@ const UI_LAYOUT_PACKAGE = '@deepseek-ai/dsh-client-ui-layout'
 const UI_SIDEBAR_PACKAGE = '@deepseek-ai/dsh-client-ui-sidebar'
 const UI_CONVERSATION_PACKAGE = '@deepseek-ai/dsh-client-ui-conversation'
 const UI_BRAND_OFFICIAL_ROW_ID = 'ui-brand-official'
-const UI_BRAND_ACRYL_ROW_ID = 'ui-acryl'
-const EXTENSION_CONTEXT_ROW_ID = 'extension-context'
-const EXTENSION_CONTEXT_PACKAGE = 'acryl-extension-context'
-const UI_LIBRARY_ROW_ID = '@acryl/ui'
-const UI_LIBRARY_PACKAGE = '@acryl/ui'
-const SHORTCUTS_ROW_ID = 'acryl-shortcuts'
-const SHORTCUTS_PACKAGE = 'acryl-shortcuts'
-const MOUNT_ANCHORS_ROW_ID = 'acryl-mount-anchors'
-const MOUNT_ANCHORS_PACKAGE = 'acryl-mount-anchors'
-const SYSTEM_PROMPT_ROW_ID = 'acryl-system-prompt'
-const SYSTEM_PROMPT_PACKAGE = 'acryl-system-prompt'
-const UI_BRAND_ACRYL_PACKAGE = 'dsh-client-ui-brand-acryl'
-/**
- * Selects which browser-brand package occupies the sidebar and
- * conversation-hero brand slots (`sidebar.brand.mark`/`.name`,
- * `conversation.hero.brand.mark`) - exactly one of two standalone,
- * independently swappable Cordis Client plugins carrying the same slot
- * contract: `@deepseek-ai/dsh-client-ui-brand-official` (stock DeepSeek
- * Harness identity, already composed by the base `dsh-web-app` bundle) or
- * `dsh-client-ui-brand-acryl` (ACRYL identity). Flipping this constant and
- * rebuilding proves the swap; a Settings-driven runtime toggle is a
- * follow-up once this composition-level swap is validated.
- */
-const DESKTOP_BRAND: 'official' | 'acryl' = 'acryl'
 const DEFAULT_DESKTOP_MARKET_SNAPSHOT: DesktopMarketSnapshot = Object.freeze({
   requested: 'disabled',
   effective: 'disabled',
@@ -258,6 +234,12 @@ export interface PreparedDesktopProfile {
   marketFailure?: string
   /** Trusted lock projection for the configured BLEND, when one is selected. */
   blend?: DesktopBlendProjection
+  /**
+   * Settles when the profiles' module-fallback links are in place. Preparation itself stays synchronous; every caller that boots the profile awaits
+   * this first, because a fresh home (a new app's first start, a smoke's temporary home) has no links yet and would fail to resolve its packages.
+   * Never rejects: a failed repair surfaces as the boot's own resolution error.
+   */
+  moduleFallback: Promise<void>
 }
 
 /** Optional observations emitted before profile preparation can fail. */
@@ -675,16 +657,15 @@ export function prepareDesktopProfile(
   marketSelection: DesktopMarketSnapshot = DEFAULT_DESKTOP_MARKET_SNAPSHOT,
   recoveryStatePath?: string,
   hooks: DesktopProfilePreparationHooks = {},
+  blueprint: Blueprint = blueprintFromEnvironment(),
 ): PreparedDesktopProfile {
   const profileDir = profileName === DESKTOP_PROFILE_NAME
     ? ensureDesktopProfile(home)
     : resolveProfileDir(profileName, home)
-  // Best-effort background repair of the profile's module-fallback symlink
-  // farm; `prepareDesktopProfile` itself stays synchronous and must not wait
-  // on or fail from this. Swallow so a torn-down or unwritable profiles
-  // directory surfaces as a silent no-op heal rather than an unhandled
-  // rejection outliving this call.
-  void healProfilesModuleFallback({ installAnchor: INSTALL_ANCHOR, home }).catch(() => {})
+  // Repair of the profile's module-fallback symlink farm. `prepareDesktopProfile` itself stays synchronous, so the repair is returned as a promise
+  // (`moduleFallback`) that every boot awaits: firing and forgetting it raced a fresh home's first boot, which then could not resolve its packages.
+  // Swallowed so a torn-down or unwritable profiles directory surfaces as the boot's own error rather than an unhandled rejection.
+  const moduleFallback = healProfilesModuleFallback({ installAnchor: INSTALL_ANCHOR, home }).then(() => undefined, () => undefined)
   // `plugin-management` is the community market's user-facing scope. Startup
   // recovery has its own state file so switching to another provider cannot
   // reapply a stale community-market disable, while a recovery disable always
@@ -717,7 +698,8 @@ export function prepareDesktopProfile(
   const desktopPatches = loadOverlayPatches(BIN_NAME, DESKTOP_PATCH_PATH)
   const bundlePatches: PatchOptions[] = []
   const desktopOverlayPatches: PatchOptions[] = []
-  const sharedDesktopPatches = createAcrylCodingCapabilityPatches(new Set(['desktop']))
+  const capabilities = new Set(blueprint.capabilities)
+  const sharedDesktopPatches = createAcrylCodingCapabilityPatches(new Set(['desktop']), new Set(), capabilities)
   let dshMarketPatches: PatchOptions[] | undefined
   let desktopLayerInserted = false
   const providerAwareDisabledBundles = new Set(disabledBundles)
@@ -832,30 +814,10 @@ export function prepareDesktopProfile(
   if (officialBrandRow?.name !== '@deepseek-ai/dsh-client-ui-brand-official') {
     throw new Error(`${BIN_NAME}: desktop profile must use @deepseek-ai/dsh-client-ui-brand-official in the ${UI_BRAND_OFFICIAL_ROW_ID} row`)
   }
-  patches.push(
-    { id: UI_BRAND_OFFICIAL_ROW_ID, disabled: DESKTOP_BRAND !== 'official' },
-    { insert: [{
-      id: UI_BRAND_ACRYL_ROW_ID,
-      name: UI_BRAND_ACRYL_PACKAGE,
-      disabled: DESKTOP_BRAND !== 'acryl',
-    }] },
-  )
-  // Extension Context Pack (spec 037): routes the agent to ACRYL's own extension
-  // docs and examples and provides the tool that installs and live-activates a
-  // plugin it wrote. Resolved from this package's own dependency closure like the
-  // brand and market packages above.
-  patches.push({ insert: [{ id: EXTENSION_CONTEXT_ROW_ID, name: EXTENSION_CONTEXT_PACKAGE }] })
-  // ACRYL system prompt shaping: pi.dev-like tagged prompt with the ACRYL identity, pass-through over the harness's sections.
-  patches.push({ insert: [{ id: SYSTEM_PROMPT_ROW_ID, name: SYSTEM_PROMPT_PACKAGE }] })
-  // ACRYL UI library (spec 038-ui-component-library): client-only, required by other client bundles; resolved from this package's own dependency closure.
-  patches.push({ insert: [{ id: UI_LIBRARY_ROW_ID, name: UI_LIBRARY_PACKAGE }] })
-  // Shared keyboard-shortcut registry + Settings > Shortcuts page: provides `ctx.shortcuts`,
-  // which other rows (mount-anchors below) inject to read their live, user-reassignable combo.
-  // Independent of mode/slots, so safe to always insert; must precede any row that injects it.
-  patches.push({ insert: [{ id: SHORTCUTS_ROW_ID, name: SHORTCUTS_PACKAGE }] })
-  // Visual mount-anchor inspector (spec 039-visual-mount-anchors): mounts its own React root
-  // directly, independent of any slot, so safe to always insert regardless of mode.
-  patches.push({ insert: [{ id: MOUNT_ANCHORS_ROW_ID, name: MOUNT_ANCHORS_PACKAGE }] })
+  // The selected Blueprint's ACRYL-owned rows (spec 036): brand, extension pack, prompt shaping, UI library, shortcuts and
+  // mount anchors, in mount order. The packages resolve from this package's own dependency closure like the market package above.
+  // Desktop's Market keeps its own provider switch, so the Blueprint never composes it here.
+  patches.push(...composeBlueprintRows(blueprint, 'desktop').patches)
   // ACRYL Workspace (spec 040): composed once for both Web and Desktop through the shared capability
   // declaration (`workspace` in `acryl-harness-runtime`'s coding-capabilities, part of
   // `sharedDesktopPatches`), not by a Desktop-only row here. Its client half takes over the frame only
@@ -871,7 +833,7 @@ export function prepareDesktopProfile(
       }
     }
     // The rows toggled to hand the frame to the ACRYL shell are shared data, the same for Web.
-    patches.push(...createAcrylShellCapabilityPatches(new Set(['desktop']), 'advanced'))
+    patches.push(...createAcrylShellCapabilityPatches(new Set(['desktop']), 'advanced', new Set(), capabilities))
   }
   const presets = rows.get(AGENT_PRESETS_ROW_ID)
   if (presets !== undefined) {
@@ -1044,6 +1006,7 @@ export function prepareDesktopProfile(
     market: desktopMarketSnapshotWithEffective(marketSelection, effectiveMarket),
     ...(marketFailure === undefined ? {} : { marketFailure }),
     ...(blend === undefined ? {} : { blend }),
+    moduleFallback,
   }
 }
 

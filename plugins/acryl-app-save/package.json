@@ -1,0 +1,38 @@
+{
+  "name": "acryl-app-save",
+  "version": "0.1.0",
+  "description": "Save an ACRYL app to its own git repository from inside the app (/app save, /app connect): the secret check and the private-to-public guard, through the user's own git and gh",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/acryl-app-save"
+  },
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "pnpm run test"
+  },
+  "dependencies": {
+    "@acryl/app-persistence": "workspace:*"
+  }
+}

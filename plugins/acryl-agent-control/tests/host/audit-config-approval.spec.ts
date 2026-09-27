@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
 import type { PreToolDecision, ToolExecution } from '@deepseek-ai/dsh-tools'
 import { createApprovalPolicy } from '../../src/host/approval.ts'
-import { AuditLog, defaultAuditPath, type AuditEntry } from '../../src/host/audit.ts'
+import { AuditLog, auditPath, type AuditEntry } from '../../src/host/audit.ts'
 import { parseConfig } from '../../src/host/config.ts'
 import { describeCall, RefDirectory, TOOL_NAMES } from '../../src/host/tools.ts'
 
@@ -42,8 +42,7 @@ describe('AuditLog', () => {
   })
 
   it('lives in the ACRYL home', () => {
-    expect(defaultAuditPath({ ACRYL_HOME: '/data/acryl' })).toBe('/data/acryl/audit/ui-control.jsonl')
-    expect(defaultAuditPath({})).toMatch(/\.acryl\/audit\/ui-control\.jsonl$/)
+    expect(auditPath('/data/acryl')).toBe('/data/acryl/audit/ui-control.jsonl')
   })
 })
 

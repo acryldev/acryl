@@ -1,0 +1,14 @@
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+
+metadata:
+  id: rejection.unknown-row-field
+  name: Unknown row field
+  version: 0.1.0
+
+spec:
+  runtime: cordis
+  rows:
+    - id: contacts
+      name: '@acryl/contacts'
+      priority: 1

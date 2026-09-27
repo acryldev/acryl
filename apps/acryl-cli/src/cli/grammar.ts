@@ -66,7 +66,114 @@ export interface AcrylRepairInvocation extends AcrylInvocationFlags {
   readonly undo?: string
 }
 
-export type AcrylInvocation = AcrylSurfaceInvocation | AcrylPluginInvocation | AcrylUiInvocation | AcrylDoctorInvocation | AcrylRepairInvocation
+/** `acryl new <dir>`: create an ACRYL Blends app (spec 036), like `rails new`. */
+export interface AcrylNewInvocation extends AcrylInvocationFlags {
+  readonly kind: 'new'
+  readonly dir: string
+  readonly title?: string
+  readonly blueprint?: string
+  readonly accent?: string
+  readonly tagline?: string
+  /** An extracted ACRYL Web release archive the app carries, so it starts with nothing of the framework but Node. */
+  readonly runtime?: string
+  /** Do not create a git repository in the new app. */
+  readonly skipGit?: boolean
+  /** Create the app from an app or Blend folder, a git repository, or a registry starter id, instead of a Blueprint. */
+  readonly from?: string
+  /** The registry a starter id is looked up in (a git URL, `#<folder>` allowed, or a folder); the public registry by default. */
+  readonly registry?: string
+}
+
+/** `acryl save`: commit the app and push it to its remote (secret check and private/public guard first). */
+export interface AcrylSaveInvocation extends AcrylInvocationFlags {
+  readonly kind: 'save'
+  readonly dir: string
+  readonly message?: string
+}
+
+/** `acryl remote connect`: give the app a remote repository (created through the user's own gh login, or an existing URL). */
+export interface AcrylRemoteInvocation extends AcrylInvocationFlags {
+  readonly kind: 'remote'
+  readonly dir: string
+  readonly name?: string
+  readonly url?: string
+  readonly visibility?: 'private' | 'public'
+}
+
+export type AcrylInvocation = AcrylSurfaceInvocation | AcrylPluginInvocation | AcrylUiInvocation | AcrylDoctorInvocation | AcrylRepairInvocation | AcrylNewInvocation | AcrylSaveInvocation | AcrylRemoteInvocation
+
+/** Options of the app persistence commands: `--dir` (default the current folder) and command-specific values. */
+function parseAppOptions(args: readonly string[], valued: ReadonlySet<string>, flags: ReadonlySet<string>): { values: Map<string, string>, set: Set<string>, json: boolean } {
+  const values = new Map<string, string>()
+  const set = new Set<string>()
+  let json = false
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index] ?? ''
+    if (argument === '--json') { json = true; continue }
+    if (valued.has(argument)) {
+      const value = args[index + 1]
+      if (value === undefined || value.startsWith('--') || value.trim() === '') throw new Error(`${argument} requires a value`)
+      if (values.has(argument)) throw new Error(`${argument} may be provided only once`)
+      values.set(argument, value)
+      index += 1
+      continue
+    }
+    if (flags.has(argument)) { set.add(argument); continue }
+    throw new Error(`unknown argument: ${argument}`)
+  }
+  return { values, set, json }
+}
+
+function parseSaveInvocation(args: readonly string[]): AcrylSaveInvocation {
+  const { values, json } = parseAppOptions(args, new Set(['--dir', '-m', '--message']), new Set())
+  const message = values.get('-m') ?? values.get('--message')
+  return { kind: 'save', dir: values.get('--dir') ?? '.', json, version: false, help: false, ...(message === undefined ? {} : { message }) }
+}
+
+function parseRemoteInvocation(args: readonly string[]): AcrylRemoteInvocation {
+  if (args[0] !== 'connect') throw new Error('usage: acryl remote connect [--dir <app>] [--name <repository>] [--public | --private] [--url <existing repository>]')
+  const { values, set, json } = parseAppOptions(args.slice(1), new Set(['--dir', '--name', '--url']), new Set(['--public', '--private']))
+  if (set.has('--public') && set.has('--private')) throw new Error('--public and --private are alternatives')
+  const name = values.get('--name')
+  const url = values.get('--url')
+  return {
+    kind: 'remote', dir: values.get('--dir') ?? '.', json, version: false, help: false,
+    ...(name === undefined ? {} : { name }), ...(url === undefined ? {} : { url }),
+    ...(set.has('--public') ? { visibility: 'public' as const } : set.has('--private') ? { visibility: 'private' as const } : {}),
+  }
+}
+
+const NEW_OPTIONS: Readonly<Record<string, 'title' | 'blueprint' | 'accent' | 'tagline' | 'runtime' | 'from' | 'registry'>> = { '--name': 'title', '--blueprint': 'blueprint', '--accent': 'accent', '--tagline': 'tagline', '--runtime': 'runtime', '--from': 'from', '--registry': 'registry' }
+
+/** `new` has its own options, so it is parsed on its own rather than threaded through every other command's flags. */
+function parseNewInvocation(args: readonly string[]): AcrylNewInvocation {
+  const values: { title?: string, blueprint?: string, accent?: string, tagline?: string, runtime?: string, from?: string, registry?: string } = {}
+  const positional: string[] = []
+  let json = false
+  let help = false
+  let skipGit = false
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index] ?? ''
+    if (argument === '--json') { json = true; continue }
+    if (argument === '--help' || argument === '-h') { help = true; continue }
+    if (argument === '--skip-git') { skipGit = true; continue }
+    const key = NEW_OPTIONS[argument]
+    if (key !== undefined) {
+      const value = args[index + 1]
+      if (value === undefined || value.startsWith('--') || value.trim() === '') throw new Error(`${argument} requires a value`)
+      if (values[key] !== undefined) throw new Error(`${argument} may be provided only once`)
+      values[key] = value
+      index += 1
+      continue
+    }
+    if (argument.startsWith('-')) throw new Error(`unknown option for new: ${argument}`)
+    positional.push(argument)
+  }
+  if (help) return { kind: 'new', dir: '', json, version: false, help: true }
+  if (values.from !== undefined && values.blueprint !== undefined) throw new Error('--from and --blueprint are alternatives: an app grows from one of them')
+  if (positional.length !== 1) throw new Error('usage: acryl new <dir> [--name "My App"] [--blueprint acryl.blank] [--accent "#e8590c"] [--tagline "..."] [--runtime <extracted acryl-web archive>] [--from <app folder | git URL | starter id>] [--registry <git URL | folder>]')
+  return { kind: 'new', dir: positional[0] ?? '', json, version: false, help: false, ...values, ...(skipGit ? { skipGit } : {}) }
+}
 
 const UI_ACTIONS = new Set<AcrylUiAction>(['list', 'add', 'diff'])
 /** Actions that name a registry item. */
@@ -160,6 +267,9 @@ function parsePluginInvocation(
 }
 
 export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
+  if (args[0] === 'new') return parseNewInvocation(args.slice(1))
+  if (args[0] === 'save') return parseSaveInvocation(args.slice(1))
+  if (args[0] === 'remote') return parseRemoteInvocation(args.slice(1))
   let profile: string | undefined
   let resumeSessionId: string | undefined
   let uiSurface: string | undefined

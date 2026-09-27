@@ -1,0 +1,19 @@
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+
+metadata:
+  id: rejection.param-unknown-type
+  name: Parameter with unknown type
+  version: 0.1.0
+
+spec:
+  runtime: cordis
+  parameters:
+    appTitle:
+      type: emoji
+      default: hi
+  rows:
+    - id: welcome
+      name: '@acryl/welcome'
+      config:
+        title: '{{parameters.appTitle}}'

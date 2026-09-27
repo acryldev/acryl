@@ -1,0 +1,10 @@
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+
+metadata:
+  id: rejection.missing-version
+  name: Missing version
+
+spec:
+  runtime: cordis
+  rows: []

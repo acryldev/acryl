@@ -1,0 +1,45 @@
+# The blank-canvas Blueprint: the stem cell of the framework (ACRYL spec 036, blank-canvas-blend.md).
+# An agent to talk to, a model chooser, an input, and the extension pack so the agent can grow the rest.
+# No workspace, no Market, no admin panel: each of those is added later as an ordinary Cordis plugin.
+# Rebrand it by changing the brand parameters; nothing else needs editing to ship it under your own name.
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+
+metadata:
+  id: acryl.blank
+  name: Blank
+  version: 0.1.0
+  category: starter
+  description: The smallest working agent that can grow itself. Add plugins, or ask the agent to build them.
+
+spec:
+  runtime: cordis
+  parameters:
+    brandName:
+      type: string
+      default: Blank
+    brandTagline:
+      type: string
+      default: Ask for what you need. It builds it.
+    brandAccent:
+      type: string
+      default: '#3b6ef5'
+    brandAccentDark:
+      type: string
+      default: '#7c9dff'
+  rows:
+    - id: brand
+      name: 'acryl-brand'
+      config:
+        name: '{{parameters.brandName}}'
+        tagline: '{{parameters.brandTagline}}'
+        accent: '{{parameters.brandAccent}}'
+        accentDark: '{{parameters.brandAccentDark}}'
+    - id: extension-context
+      name: 'acryl-extension-context'
+    - id: acryl-system-prompt
+      name: 'acryl-system-prompt'
+    - id: '@acryl/ui'
+      name: '@acryl/ui'
+    - id: acryl-app-save
+      name: 'acryl-app-save'

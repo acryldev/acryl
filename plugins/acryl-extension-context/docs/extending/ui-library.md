@@ -1,5 +1,10 @@
 # ACRYL UI library (`@acryl/ui`): build screens from ready components
 
+**It is available; do not spend calls verifying it.** `@acryl/ui` is composed as its own row on every Web and Desktop profile, the full product and the blank canvas alike, and the
+serving app resolves `require('@acryl/ui')` for any client bundle that lists it in `dsh.client.inject`. It is not in `@deepseek-ai/dsh-web-app`'s dependencies because it is a row, not a
+dependency: searching the harness packages for it finds nothing and proves nothing. Confirm it with `acryl_list_plugins` (row `@acryl/ui` ACTIVE), then build. Its `Calendar` (a month grid),
+`Sheet`, `Modal`, `Tabs`, `Card` and `Field` cover most organizer-style screens; the header action or the sidebar footer action slot is the mount point for a first version.
+
 Use this instead of hand-styling. It is a client-only package that every Web and Desktop profile carries; a client bundle requires it after listing it in `package.json`:
 
 ```json

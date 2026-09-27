@@ -1,0 +1,13 @@
+# A private, closed-source product built on the blank canvas: your own name, colors and font, and nothing of ACRYL's own product.
+# Run it:  node scripts/blank.mjs web --blueprint specs/036-cordis-ecosystem-and-acryl-blends/samples/private-brand.blueprint.yaml
+id: acme.notes
+name: Acme Notes
+description: Acme's internal notes assistant.
+extends: acryl.blank
+brand:
+  name: Acme Notes
+  tagline: Notes that write themselves.
+  accent: '#0a7d4b'
+  accentDark: '#3ecf8e'
+  fontFamily: Georgia, serif
+  mark: A

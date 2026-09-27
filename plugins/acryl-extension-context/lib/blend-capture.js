@@ -1,7 +1,8 @@
-import { createHash } from 'node:crypto'
 import { cpSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
-import { basename, dirname, join } from 'node:path'
-import { parse, stringify } from 'yaml'
+import { basename, dirname, join, relative, sep } from 'node:path'
+import { manifestDigest } from '@acryl/blends-core'
+import { isMap, isSeq, parse, parseDocument, stringify } from 'yaml'
+import { canonical } from './reconcile.js'
 import { hashPackage } from './stage.js'
 import { listInstalledPlugins } from './provenance.js'
 
@@ -24,7 +25,8 @@ import { listInstalledPlugins } from './provenance.js'
  */
 
 const BASE_BUNDLES = new Set(['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', '@deepseek-ai/dsh-sdk-minimal'])
-const sha256 = data => createHash('sha256').update(data).digest('hex')
+// How a lock names its manifest is the format's rule (@acryl/blends-core), shared with every other reader and writer of a lock.
+const sha256 = manifestDigest
 const slug = text => String(text).toLowerCase().replace(/[^a-z0-9]+/gu, '-').replace(/^-+|-+$/gu, '') || 'blend'
 
 /** The rows a package inserts (`- insert: [{ id, name, config? }]` in its bundle patch). */
@@ -93,7 +95,7 @@ export function captureBlend(options, fs = { existsSync, readFileSync }) {
       try { version = JSON.parse(fs.readFileSync(join(plugin.source, 'package.json'), 'utf8')).version ?? version } catch { notes.push(`${name}: its source folder is gone (${plugin.source}), it cannot be vendored`); continue }
       const dir = `extensions/${name.replace(/^@/u, '').replace(/\//gu, '__')}`
       modules.push({ name, origin: 'local', version, digest: `sha256:${hashPackage(plugin.source, 64)}`, source: dir })
-      vendored.push({ from: plugin.source, to: dir })
+      vendored.push({ name, from: plugin.source, to: dir })
     } else {
       modules.push({ name, origin: plugin.origin, spec: plugin.spec })
       notes.push(`${name}: origin "${plugin.origin}" is recorded by spec only, reproducing it needs that spec to stay reachable`)
@@ -168,4 +170,68 @@ export function verifyBlend(outDir, fs = { existsSync, readFileSync }) {
     if (`sha256:${hashPackage(dir, 64)}` !== module.digest) problems.push(`${module.name}: the vendored source differs from the locked digest (edited after capture)`)
   }
   return { ok: problems.length === 0, problems, checked }
+}
+
+/**
+ * Capture inside an app (`acryl new`): the app folder is the Blend, so nothing is written elsewhere and nothing the user wrote is regenerated.
+ *
+ *   blend.yaml       the user's own definition is kept, comments and all; a row is appended only for an installed plugin it does not name yet
+ *   blend.lock.json  regenerated from that definition: digest, rows, and every module; an extension already in the app's `extensions/` is recorded in
+ *                    place (source `extensions/<folder>`), one installed from anywhere else is vendored into `extensions/`
+ *
+ * @param {{ profileDir: string, appHome: string, globalDir?: string }} options
+ */
+export function captureApp(options, fs = { existsSync, readFileSync }) {
+  const base = captureBlend({ profileDir: options.profileDir, globalDir: options.globalDir }, fs)
+  const appReal = canonical(options.appHome)
+  const inApp = path => { const real = canonical(path); return real === appReal || real.startsWith(`${appReal}${sep}`) }
+  const vendored = []
+  const modules = base.lock.modules.map(module => {
+    if (module.origin !== 'local') return module
+    const copy = base.vendored.find(entry => entry.name === module.name)
+    if (copy !== undefined && inApp(copy.from)) return { ...module, source: relative(appReal, canonical(copy.from)).split(sep).join('/') }
+    if (copy !== undefined) vendored.push(copy)
+    return module
+  })
+  const manifestPath = join(options.appHome, 'blend.yaml')
+  const original = fs.readFileSync(manifestPath, 'utf8')
+  const document = parseDocument(original)
+  const notes = [...base.notes]
+  if (!isMap(document.get('spec'))) throw new Error(`${manifestPath} has no spec map; it is not an app definition`)
+  if (!isSeq(document.getIn(['spec', 'rows']))) document.setIn(['spec', 'rows'], document.createNode([]))
+  const named = new Set((document.toJS().spec.rows ?? []).map(row => row.id))
+  const added = []
+  for (const row of base.lock.rows) {
+    if (named.has(row.id)) continue
+    document.addIn(['spec', 'rows'], document.createNode(row))
+    named.add(row.id)
+    added.push(row.id)
+  }
+  const manifestText = added.length === 0 ? original : String(document)
+  const manifest = document.toJS()
+  const lock = {
+    ...base.lock,
+    origin: { id: manifest.metadata?.id, kind: manifest.kind, version: manifest.metadata?.version, digest: sha256(manifestText) },
+    rows: manifest.spec.rows ?? [],
+    modules,
+  }
+  return { manifest, manifestText, manifestChanged: added.length > 0, addedRows: added, lock, lockText: `${JSON.stringify(lock, null, 2)}\n`, vendored, notes }
+}
+
+/** Write an app capture into the app folder (atomic per file). Vendoring never replaces a folder that is already the app's own extension. */
+export function writeAppBlend(capture, appHome) {
+  const write = (name, text) => { const temp = join(appHome, `${name}.tmp`); writeFileSync(temp, text); renameSync(temp, join(appHome, name)) }
+  const files = []
+  if (capture.manifestChanged) { write('blend.yaml', capture.manifestText); files.push('blend.yaml') }
+  write('blend.lock.json', capture.lockText)
+  files.push('blend.lock.json')
+  for (const { from, to } of capture.vendored) {
+    const target = join(appHome, to)
+    if (existsSync(join(target, 'package.json')) && canonical(target) !== canonical(from)) { capture.notes.push(`${to} already exists in the app; ${from} was not vendored over it`); continue }
+    rmSync(target, { recursive: true, force: true })
+    mkdirSync(dirname(target), { recursive: true })
+    cpSync(from, target, { recursive: true, filter: source => !['node_modules', '.git'].includes(basename(source)) })
+    files.push(`${to}/`)
+  }
+  return files
 }

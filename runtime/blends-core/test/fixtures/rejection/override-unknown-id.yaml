@@ -1,0 +1,16 @@
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+
+metadata:
+  id: rejection.override-unknown-id
+  name: Override of unknown row id
+  version: 0.1.0
+
+spec:
+  runtime: cordis
+  extends: rejection.parent
+  rows: []
+  overrides:
+    - id: ghost
+      config:
+        x: 1

@@ -1,0 +1,18 @@
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+
+metadata:
+  id: rejection.param-no-default
+  name: Parameter without default
+  version: 0.1.0
+
+spec:
+  runtime: cordis
+  parameters:
+    appTitle:
+      type: string
+  rows:
+    - id: welcome
+      name: '@acryl/welcome'
+      config:
+        title: '{{parameters.appTitle}}'

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { canonical, stagedInfo } from './reconcile.js'
+import { isProjectExtensionPath } from './scopes.js'
 
 /**
  * Where an installed plugin came from. Derived from what the profile already records (its package.json dependency spec, the staged install's
@@ -74,7 +75,7 @@ export function listInstalledPlugins(profileDir, options = {}, fs = { existsSync
       const staged = stagedInfo(installedDir, fs)
       const source = staged?.source ?? installedDir
       const real = canonical(source)
-      const scope = globalRoot !== undefined && real.startsWith(`${globalRoot}/`) ? 'global' : real.includes('/.acryl-extensions/') ? 'project' : 'external'
+      const scope = globalRoot !== undefined && real.startsWith(`${globalRoot}/`) ? 'global' : isProjectExtensionPath(real) ? 'project' : 'external'
       return { name, origin, spec, source, installedDir, scope, ...(staged?.version ? { contentHash: staged.version } : {}) }
     }
     if (origin === 'registry') {

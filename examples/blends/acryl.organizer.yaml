@@ -1,0 +1,35 @@
+# A Blend grown from acryl.blank: a to-do list, a calendar and meeting booking (ACRYL spec 036, the first use case).
+# Same rows as its Blueprint plus the one plugin the agent built. Lineage names the Blueprint it grew from.
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blend
+
+metadata:
+  id: acryl.organizer
+  name: Organizer
+  version: 0.1.0
+  category: productivity
+  description: To-dos, a calendar and meeting booking that refuses overlaps, grown from the blank canvas.
+
+spec:
+  runtime: cordis
+  lineage:
+    blueprint: acryl.blank
+    blueprintVersion: 0.1.0
+  rows:
+    - id: brand
+      name: 'acryl-brand'
+      config:
+        name: Organizer
+        tagline: Plan your day by talking to it.
+        accent: '#e8590c'
+        accentDark: '#ff922b'
+    - id: extension-context
+      name: 'acryl-extension-context'
+    - id: acryl-system-prompt
+      name: 'acryl-system-prompt'
+    - id: '@acryl/ui'
+      name: '@acryl/ui'
+    - id: acryl-app-save
+      name: 'acryl-app-save'
+    - id: acryl-organizer
+      name: 'acryl-organizer'

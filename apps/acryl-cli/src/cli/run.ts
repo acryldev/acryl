@@ -8,6 +8,8 @@ import { runAcrylTui } from '../tui-app/session.ts'
 import { ACRYL_VERSION } from '../version.ts'
 import { runDoctor, runRepair, type Confirm } from '../host/rescue-command.ts'
 import { runUiCommand } from '../host/ui-command.ts'
+import { runNewApp } from '../host/new-command.ts'
+import { describeConnect, describeSave, runRemoteConnect, runSave } from '../host/save-command.ts'
 import { parseAcrylArgs, type AcrylPluginInvocation, type AcrylUiInvocation } from './grammar.ts'
 import { renderPluginCommand } from './plugin-render.ts'
 import { renderRescue } from './rescue-render.ts'
@@ -150,6 +152,10 @@ export async function runAcryl(
         `Usage: acryl [command] [options]`,
         '',
         'Commands:',
+        '  new <dir>                        Create an app on the ACRYL Blends framework, as its own git repository',
+        '                                   (--name, --blueprint, --from <app folder>, --accent, --tagline, --runtime <dir>, --skip-git)',
+        '  save [-m <message>] [--dir <app>]  Commit the app and push it to its remote (refuses secrets and private-to-public)',
+        '  remote connect [--public|--private] [--name <repo>] [--url <repo>]  Give the app a remote repository (your own gh login)',
         '  tui                              Run the terminal client (default)',
         '  plugin                           List this profile\'s plugins (default action)',
         '  plugin list                      List plugins and their current state',
@@ -187,6 +193,20 @@ export async function runAcryl(
 
   if (invocation.kind === 'ui') {
     runUiInvocation(invocation, dependencies)
+    return
+  }
+
+  if (invocation.kind === 'save' || invocation.kind === 'remote') {
+    const described = invocation.kind === 'save' ? describeSave(runSave(invocation)) : describeConnect(runRemoteConnect(invocation))
+    for (const line of described.lines) dependencies.write(line)
+    if (described.exitCode !== 0) dependencies.exit(described.exitCode)
+    return
+  }
+
+  if (invocation.kind === 'new') {
+    const created = runNewApp(invocation)
+    if (invocation.json) dependencies.write(JSON.stringify(created))
+    else dependencies.write([`Created ${created.title} in ${created.root} (from ${created.blueprint}${created.git === 'initialized' ? ', git repository initialized' : ''}).`, '', 'Start it:', `  ${created.root}/bin/acryl web      (or desktop, cli)`, '', 'Then tell the agent inside what to build.'].join('\n'))
     return
   }
 

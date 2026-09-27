@@ -3,7 +3,7 @@
  * missing, reactivation when they appear, restart on provider replacement, settling every pending call on
  * disposal, and no leak across repeated reloads. Mounted through a real `@deepseek-ai/cordis-plugin-loader`
  * Loader, a real HTTP server standing in for `webServer`, and a fake `tools` service that captures what was
- * registered so a mount can be counted.
+ * registered so a mount can be counted. The `appInstance` service points the audit log at a temporary home.
  */
 
 import { createServer, type Server } from 'node:http'
@@ -90,6 +90,9 @@ async function mount(): Promise<{ ctx: Context; entryId: string; root: string }>
   roots.push(root)
   writeFileSync(join(root, 'row.mjs'), `export * from ${JSON.stringify(BUILT_ENTRY)}\n`)
   const ctx = new Context()
+  // The app this plugin runs in (its audit log lives under the app's home): provided by every composition root, so
+  // present from the start here too; the lifecycle under test is the one around webServer and tools.
+  ctx.provide('appInstance' as never, { home: root, dshHome: join(root, '.dsh') } as never)
   await ctx.plugin(Loader, { baseUrl: `file://${root}/` })
   const entryId = await ctx.loader.create({ name: './row.mjs' })
   await ctx.loader.await()
