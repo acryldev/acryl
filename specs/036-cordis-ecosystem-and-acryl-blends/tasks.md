@@ -21,7 +21,7 @@ Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository
 
 - [x] T011a Repository organization decided (`repositories.md`, accepted) and run modes decided (`framework.md`: attached and standalone, one process per app)
 - [x] T011b `blends-core` moved into the monorepo (`runtime/blends-core`); the runtime and the extension pack read and lock the format through it
-- [ ] T011 Archive `acryldev/blends` (waits on the owner: its local checkout has uncommitted work that would be stranded)
+- [x] T011 Archive `acryldev/blends` (read-only, history intact; local checkouts untouched - archiving a GitHub repo does not touch a clone)
 - [x] T012 One Blend shape: an app folder is its Blend (`/blend snapshot` records into it, `/blend apply` installs in place), an app installs its own
       extensions and locked marketplace plugins at start (a fresh clone works), `acryl new --from <app or Blend folder>` (registry ids come with T014)
 - [x] T012b Registries are git repositories: registry index and `blends-registry-index` (CI), `acryl new --from` a git URL or a registry starter id
@@ -29,7 +29,8 @@ Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository
 - [x] T012d Three levels (Blank, Blueprint, Project): starters extend a Blueprint and boot as they are; a Project keeps its starter in `blueprints/` and its license in `THIRD-PARTY.md`
 - [x] T019a `/app save` and `/app connect` are their own swappable plugin (`acryl-app-save`, Blueprint row `app-save`); `acryl new` writes the CI workflow
       (`blends-validate`, `acryl-secret-check`)
-- [ ] T019 Publish `@webboxes/blends-core` and `@webboxes/app-persistence` to npm, so the CI workflow in new apps runs (approved by the owner 2026-09-27)
+- [x] T019 Publish `@webboxes/blends-core` and `@webboxes/app-persistence` to npm (both `0.1.0`; renamed from `@acryl/*`, an unverified scope), so the CI
+      workflow in new apps runs
 - [ ] T020 `acryl publish`: a Project becomes a Blueprint in a registry through a reviewed pull request (public only; refused for private apps)
 - [ ] T013 `acryl new` and the app lifecycle commands in the published CLI (today the launcher needs a framework checkout)
 - [x] T014a The public registry on acrylblends.github.io: `registry/` with Blank and the organizer starter, CI validation, `/registry/` served, the Blends page listing real entries (PR acrylblends/acrylblends.github.io#1, deploys on merge)

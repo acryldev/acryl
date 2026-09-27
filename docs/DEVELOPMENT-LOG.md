@@ -1,3 +1,22 @@
+## 2026-09-27 - 036 Merged to main, published, registry live, acryldev/blends archived
+
+Commits: `d4b1b222833257840038fc139b9dc5cf177fc346` (merge of PR acryldev/acryl#55 into main), `99bd765` and `ab2c296` (CI/Nix fixes found by reproducing the PR's CI failures in a clean clone before merging), `ada904ae45d1e1e7526a46ef8f9fa9cedaaf4138` (rename to `@webboxes/*`).
+
+- **Spec 036 landed on `main`**: PR acryldev/acryl#55, merged with a merge commit (not squashed) so the branch's full history stays readable from `main`.
+  Before merging, its CI was reproduced end to end in a clean clone: the fresh-checkout build was missing `@acryl/blends-core` and `@acryl/app-persistence`
+  in the type-provider build order, the Web/Desktop prebuilds needed `acryl-loopback-http` and `acryl-diagnostics` built first, the Web/Desktop parity test
+  read the CI runner's `DSH_TELEMETRY_DISABLED` instead of an explicit value, and the Nix flake's pinned pnpm-deps hash was stale for the current lockfile.
+  All four fixed and pushed to the PR; the merge itself went in without waiting on the hosted multi-platform Nix builds, at the owner's direction.
+- **`@acryl/blends-core` and `@acryl/app-persistence` are `@webboxes/blends-core` and `@webboxes/app-persistence`.** The `@acryl` npm scope is unverified
+  (the org listing 403s and nothing is published under it); `webboxescom`, the account that already owns `@webboxes` and publishes ACRYL's other packages,
+  does not own `@acryl`. Renamed both packages and every reference to them across the workspace (imports, `package.json` dependencies, the CI workflow,
+  docs), rebuilt, and reran typecheck and the full test suite clean on `main` before pushing the rename directly. Both published to npm as `0.1.0`.
+- **The public registry is live.** acrylblends/acrylblends.github.io PR #1 merged: the Blank starter's row list now includes `acryl-app-save`, its CI pin
+  moved to this merge, and the registry index check passes.
+- **`acryldev/blends` is archived**, read-only, history intact. Its two local checkouts were left untouched (one holds small uncommitted scratch changes);
+  archiving a GitHub repo does not touch a local clone. An archived repo cannot be pushed to, so the planned "README pointing at the two new homes" step
+  from `repositories.md` could not be done after archiving - the new homes are `runtime/blends-core` (the format) and acrylblends.github.io (the registry).
+
 ## 2026-09-27 - 036 Saving an app is its own Cordis plugin; CI in every new app; main merged in
 
 Commits: `6776e94340f7cd0fd200705d5fd846286094c017` (acryl-app-save, bins, app workflow), `e6625ad9b0a08b39b06c7d33bedd51790184cca0` (merge of main).
