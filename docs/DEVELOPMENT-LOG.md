@@ -1,3 +1,53 @@
+## 2026-09-26 - Devin ACP session bridge: provider-neutral routing through acrAgentControl
+
+Commits: `3fadf5ee3407e413d0f5736a214f382b2748df7c`, `fb2832a5e13319c15c8c38ff0e896e1d088cf2be`
+
+Story 13 of `devin-acp-integration` makes `AcrylSessionBridge` provider-neutral:
+sessions bound to a non-`dsh-native` provider route every lifecycle operation
+through `AcrAgentControlService.attach`/`dispatch` instead of the DSH-native
+`ctx.agents`/`AgentHandle` path.
+
+- **Routing condition** — `AcrylSessionBridgeOptions.agentProvider` selects the
+  binding. A `providerId !== 'dsh-native'` activates the provider path; the
+  service is resolved with `ctx.get('acrAgentControl')` (optional, PENDING-safe)
+  and a selection without a mounted service throws
+  `AcrAgentControlError('service-unavailable')` rather than silently falling
+  back. No selection, or `providerId: 'dsh-native'`, keeps the native path
+  byte-for-byte.
+- **Identity model** — the bridge session id callers receive IS the `workerId`
+  (`acryl-session-<uuid>` by default, overridable via `agentProvider.workerId`).
+  `open` attaches `{workerId, providerId, workspace, capabilities, fidelity}`
+  then dispatches `start` — or `resume` when `open(resumeSessionId)` passes the
+  id through as `providerSessionRef` (the vendor session id is the resume
+  handle; `agent.resume` joins the advertised capabilities). Each snapshot
+  carries `provider: {providerId, workerId, runtimeId, providerSessionRef,
+  status}` so the caller can correlate logical, runtime, and vendor identities.
+- **Lifecycle dispatch** — `submitPrompt` → `{kind:'send'}` (each send is one
+  synthesized assistant-stream attempt), `cancel` → `{kind:'cancel'}` (terminal
+  `end` frame, `finishReason: 'stop'`), `dispose` → `{kind:'stop'}` per live
+  provider session — best-effort, disposal outlives the failure. `subscribe`
+  listeners get notified after provider turns via the same snapshot path.
+- **Honest projection** — `send` results map `stopReason` → `FinishReason` and
+  project `updates[]` (`agent_message_chunk`, `tool_call`, `tool_call_update`,
+  `plan`) into the bridge's own `chunk`/`end` frames and presentation
+  transcript. `events()` returns an empty durable log for provider sessions:
+  ACP structured updates are semantic events, never promoted into a DSH
+  `SessionEvent` transcript they did not come from. `selectModel` throws
+  unsupported for provider sessions — model selection stays DSH-only.
+- **Contract** — `AcrylSessionProviderBinding` +
+  `parseAcrylSessionSnapshot` validation for the optional `provider` field:
+  all five keys required, status constrained to `AgentStatus`.
+- **Failure propagation** — `AcrAgentControlError` passes through unchanged; a
+  failed start/resume best-effort dispatches `stop` so the attach binding is
+  not left looking live, then rethrows the start failure.
+
+Verified: `pnpm --filter acryl-control run test` 104/104 across 9 files
+(incl. 3 contract + 14 agent-control), session-bridge suite 8 provider tests
+green alongside the native-path specs, `pnpm run typecheck` clean,
+`verify-layout` consistent. Pre-existing environment flakes (cold-start
+timeouts, extension-context, system-prompt-shape drift) unchanged on this
+base.
+
 ## 2026-09-26 - Devin ACP permission answering: inbound request responses + permissionMode policy
 
 Commits: `0ec13e2a20eb3dcfa6ed682302a33c6b97285e42`, `672d413870e18edf75d7ed7bb6d8f734f4f1af78`

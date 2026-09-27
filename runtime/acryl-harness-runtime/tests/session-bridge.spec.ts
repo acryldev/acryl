@@ -1,12 +1,20 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { Context } from '@deepseek-ai/cordis'
 import { DEFAULT_PROFILE_BUNDLES, initProfile, resolveProfileDir } from '@deepseek-ai/dsh-app-boot'
 import { createAssistantMessage, createToolResultMessage } from '@deepseek-ai/dsh-llm'
 import { SessionId } from '@deepseek-ai/dsh-session'
+import {
+  AcrAgentControlError,
+  AcrAgentControlService,
+  type AgentCommand,
+  type AgentProvider,
+  type AttachAgentRequest,
+} from 'acryl-control'
 import { bootAcrylHarnessProfile } from '../src/index.ts'
-import { createAcrylSessionBridge } from '../src/session-bridge.ts'
+import { createAcrylSessionBridge, type AssistantStreamFrame } from '../src/session-bridge.ts'
 
 const temporaryHomes: string[] = []
 const initialDshHome = process.env.DSH_HOME
@@ -277,6 +285,287 @@ describe('createAcrylSessionBridge', () => {
       await expect(bridge.snapshot(sessionId)).resolves.toMatchObject({
         transcript: [{ author: 'user', text: 'Persist this prompt' }],
       })
+    } finally {
+      await bridge.dispose()
+      await runtime.dispose()
+    }
+  })
+})
+
+/** Stub `acp`-id provider that records attach requests and dispatched commands. */
+function stubAcpProvider(options: {
+  readonly sendResult?: unknown
+  readonly sendError?: Error
+} = {}): {
+  provider: AgentProvider
+  attachRequests: AttachAgentRequest[]
+  commands: AgentCommand[]
+} {
+  const attachRequests: AttachAgentRequest[] = []
+  const commands: AgentCommand[] = []
+  const provider: AgentProvider = {
+    id: 'acp',
+    fidelity: 'structured',
+    capabilities: Object.freeze([
+      'agent.start',
+      'agent.stop',
+      'agent.send',
+      'agent.cancel',
+      'agent.resume',
+      'agent.snapshot',
+      'output.structured',
+      'tool.calls',
+    ]),
+    async attach(request) {
+      attachRequests.push(request)
+      return Object.freeze({
+        workerId: request.workerId,
+        runtimeId: null,
+        providerId: request.providerId,
+        providerSessionRef: request.providerSessionRef ?? null,
+        harnessSessionId: request.harnessSessionId ?? null,
+        workspace: request.workspace,
+        capabilities: Object.freeze([...request.capabilities]),
+        fidelity: request.fidelity,
+        status: 'idle',
+      })
+    },
+    async execute(_binding, command) {
+      commands.push(command)
+      if (command.kind === 'start' || command.kind === 'resume') {
+        return { sessionId: 'acp-session-1', runtimeId: 'runtime-1', status: 'idle' }
+      }
+      if (command.kind === 'send') {
+        if (options.sendError !== undefined) throw options.sendError
+        return options.sendResult ?? { stopReason: 'end_turn', updates: [] }
+      }
+      if (command.kind === 'cancel') return { cancelled: true }
+      return { stopped: true }
+    },
+  }
+  return { provider, attachRequests, commands }
+}
+
+/** A bare Cordis root with the agent-control service mounted (no DSH profile). */
+async function bootedControl() {
+  const ctx = new Context()
+  const fiber = ctx.plugin(AcrAgentControlService)
+  await fiber
+  return { ctx, control: ctx.acrAgentControl, dispose: () => fiber.dispose() }
+}
+
+describe('createAcrylSessionBridge — acrAgentControl provider routing', () => {
+  it('routes open, prompt, cancel and dispose through attach + dispatch', async () => {
+    const { ctx, control, dispose } = await bootedControl()
+    const stub = stubAcpProvider()
+    control.registerProvider(ctx, stub.provider)
+    const bridge = createAcrylSessionBridge(ctx, {
+      profile: 'acryl-test',
+      generationId: 'generation-test',
+      attachment: 'owner',
+      cwd: process.cwd(),
+      agentProvider: { providerId: 'acp', workerId: 'worker-acp' },
+    })
+    try {
+      const sessionId = await bridge.open()
+      expect(sessionId).toBe('worker-acp')
+      expect(stub.attachRequests).toHaveLength(1)
+      expect(stub.attachRequests[0]).toMatchObject({
+        workerId: 'worker-acp',
+        providerId: 'acp',
+        workspace: { identity: 'acryl-test', cwd: process.cwd() },
+      })
+      expect(stub.commands.map(command => command.kind)).toEqual(['start'])
+
+      await bridge.submitPrompt({ sessionId, text: 'Hello agent' })
+      await bridge.cancel(sessionId)
+      expect(stub.commands.map(command => command.kind)).toEqual(['start', 'send', 'cancel'])
+      expect(stub.commands[1]).toMatchObject({ kind: 'send', payload: 'Hello agent' })
+    } finally {
+      await bridge.dispose()
+      await dispose()
+    }
+    expect(stub.commands.map(command => command.kind)).toEqual(['start', 'send', 'cancel', 'stop'])
+  })
+
+  it('propagates binding identity and projects send updates into stream frames and the snapshot', async () => {
+    const { ctx, control, dispose } = await bootedControl()
+    const stub = stubAcpProvider({
+      sendResult: {
+        stopReason: 'end_turn',
+        updates: [
+          { sessionId: 'acp-session-1', update: { sessionUpdate: 'agent_message_chunk', messageId: 'm1', content: { type: 'text', text: 'Hello' } } },
+          { sessionId: 'acp-session-1', update: { sessionUpdate: 'agent_message_chunk', messageId: 'm1', content: { type: 'text', text: ' world' } } },
+          { sessionId: 'acp-session-1', update: { sessionUpdate: 'tool_call', toolCallId: 'call_1', title: 'Read file', kind: 'other', status: 'pending' } },
+          { sessionId: 'acp-session-1', update: { sessionUpdate: 'tool_call_update', toolCallId: 'call_1', status: 'completed' } },
+        ],
+      },
+    })
+    control.registerProvider(ctx, stub.provider)
+    const bridge = createAcrylSessionBridge(ctx, {
+      profile: 'acryl-test',
+      generationId: 'generation-test',
+      attachment: 'owner',
+      cwd: process.cwd(),
+      agentProvider: { providerId: 'acp', workerId: 'worker-acp' },
+    })
+    try {
+      const sessionId = await bridge.open()
+      const frames: AssistantStreamFrame[] = []
+      await bridge.subscribeAssistantStream(sessionId, frame => frames.push(frame))
+      await bridge.submitPrompt({ sessionId, text: 'Hi' })
+
+      expect(frames[0]).toMatchObject({ type: 'start', turn: 1 })
+      const deltas = frames.flatMap(frame =>
+        frame.type === 'chunk' && frame.chunk.type === 'text-delta' ? [frame.chunk.text] : [])
+      expect(deltas).toEqual(['Hello', ' world'])
+      expect(frames.some(frame => frame.type === 'chunk' && frame.chunk.type === 'tool-call-delta')).toBe(true)
+      // No durable DSH settlement exists for a provider turn — the end frame
+      // must report 'abandoned' rather than a fabricated committed seq.
+      expect(frames.at(-1)).toMatchObject({ type: 'end', outcome: { kind: 'abandoned' } })
+
+      await expect(bridge.snapshot(sessionId)).resolves.toMatchObject({
+        sessionId: 'worker-acp',
+        agentStatus: 'idle',
+        transcript: [
+          { author: 'user', text: 'Hi' },
+          { author: 'assistant', text: 'Hello world' },
+        ],
+        tools: [{ callId: 'call_1', name: 'Read file', status: 'succeeded' }],
+        provider: {
+          providerId: 'acp',
+          workerId: 'worker-acp',
+          runtimeId: 'runtime-1',
+          providerSessionRef: 'acp-session-1',
+          status: 'idle',
+        },
+      })
+      expect(bridge.events(sessionId)).toEqual([])
+    } finally {
+      await bridge.dispose()
+      await dispose()
+    }
+  })
+
+  it('resumes through dispatch resume carrying the provider session ref', async () => {
+    const { ctx, control, dispose } = await bootedControl()
+    const stub = stubAcpProvider()
+    control.registerProvider(ctx, stub.provider)
+    const bridge = createAcrylSessionBridge(ctx, {
+      profile: 'acryl-test',
+      generationId: 'generation-test',
+      attachment: 'owner',
+      cwd: process.cwd(),
+      agentProvider: { providerId: 'acp', workerId: 'worker-acp' },
+    })
+    try {
+      await bridge.open('acp-session-9')
+      expect(stub.attachRequests[0]).toMatchObject({ providerSessionRef: 'acp-session-9' })
+      expect(stub.attachRequests[0]?.capabilities).toContain('agent.resume')
+      expect(stub.commands.map(command => command.kind)).toEqual(['resume'])
+    } finally {
+      await bridge.dispose()
+      await dispose()
+    }
+  })
+
+  it('surfaces dispatch failures to the caller in the service error shape', async () => {
+    const { ctx, control, dispose } = await bootedControl()
+    const stub = stubAcpProvider({
+      sendError: new AcrAgentControlError('transport-unavailable', 'provider transport blew up'),
+    })
+    control.registerProvider(ctx, stub.provider)
+    const bridge = createAcrylSessionBridge(ctx, {
+      profile: 'acryl-test',
+      generationId: 'generation-test',
+      attachment: 'owner',
+      cwd: process.cwd(),
+      agentProvider: { providerId: 'acp', workerId: 'worker-acp' },
+    })
+    try {
+      const sessionId = await bridge.open()
+      await expect(bridge.submitPrompt({ sessionId, text: 'Hi' }))
+        .rejects.toMatchObject({ code: 'transport-unavailable', message: 'provider transport blew up' })
+    } finally {
+      await bridge.dispose()
+      await dispose()
+    }
+  })
+
+  it('refuses live model selection on a provider session', async () => {
+    const { ctx, control, dispose } = await bootedControl()
+    const stub = stubAcpProvider()
+    control.registerProvider(ctx, stub.provider)
+    const bridge = createAcrylSessionBridge(ctx, {
+      profile: 'acryl-test',
+      generationId: 'generation-test',
+      attachment: 'owner',
+      cwd: process.cwd(),
+      agentProvider: { providerId: 'acp' },
+    })
+    try {
+      const sessionId = await bridge.open()
+      await expect(bridge.selectModel({ sessionId, provider: 'deepseek', model: 'x' }))
+        .rejects.toThrow('does not support live model selection')
+    } finally {
+      await bridge.dispose()
+      await dispose()
+    }
+  })
+
+  it('fails loudly when a provider is selected but acrAgentControl is not mounted', async () => {
+    const ctx = new Context()
+    const bridge = createAcrylSessionBridge(ctx, {
+      profile: 'acryl-test',
+      generationId: 'generation-test',
+      attachment: 'owner',
+      cwd: process.cwd(),
+      agentProvider: { providerId: 'acp' },
+    })
+    await expect(bridge.open()).rejects.toThrow('acrAgentControl')
+    await bridge.dispose()
+  })
+
+  it('keeps the DSH-native path when no provider is selected', async () => {
+    const runtime = await bootRuntime('acryl-test')
+    const createSpy = vi.spyOn(runtime.ctx.agents, 'create')
+    const attachSpy = vi.spyOn(runtime.ctx.acrAgentControl, 'attach')
+    const dispatchSpy = vi.spyOn(runtime.ctx.acrAgentControl, 'dispatch')
+    const bridge = createAcrylSessionBridge(runtime.ctx, {
+      profile: 'acryl-test',
+      generationId: 'generation-test',
+      attachment: 'owner',
+      cwd: process.cwd(),
+    })
+    try {
+      const sessionId = await bridge.open()
+      expect(createSpy).toHaveBeenCalledTimes(1)
+      expect(attachSpy).not.toHaveBeenCalled()
+      await bridge.submitPrompt({ sessionId, text: 'native path' })
+      expect(dispatchSpy).not.toHaveBeenCalled()
+      expect(await bridge.snapshot(sessionId)).not.toMatchObject({ provider: expect.anything() })
+    } finally {
+      await bridge.dispose()
+      await runtime.dispose()
+    }
+  })
+
+  it('keeps the DSH-native path when the selection names dsh-native', async () => {
+    const runtime = await bootRuntime('acryl-test')
+    const createSpy = vi.spyOn(runtime.ctx.agents, 'create')
+    const attachSpy = vi.spyOn(runtime.ctx.acrAgentControl, 'attach')
+    const bridge = createAcrylSessionBridge(runtime.ctx, {
+      profile: 'acryl-test',
+      generationId: 'generation-test',
+      attachment: 'owner',
+      cwd: process.cwd(),
+      agentProvider: { providerId: 'dsh-native' },
+    })
+    try {
+      const sessionId = await bridge.open()
+      expect(createSpy).toHaveBeenCalledTimes(1)
+      expect(attachSpy).not.toHaveBeenCalled()
+      expect(runtime.ctx.agents.get(SessionId(sessionId))).toBeDefined()
     } finally {
       await bridge.dispose()
       await runtime.dispose()
