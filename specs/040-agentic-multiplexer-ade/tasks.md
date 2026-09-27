@@ -68,7 +68,7 @@ Related milestone: [041 Agent Control](../041-agent-control/spec.md) lets agents
 
 ## Phase 6: ledger and docs
 
-- [ ] **T060** Update `spec.md` to match reality: the shipped canvas has seven tile kinds (it says three), story A3 status, and the resolved open questions 1 and 5. Add the decisions to `plan.md`.
+- [x] **T060** Update `spec.md` to match reality: the shipped canvas has seven tile kinds (it says three), story A3 status, and the resolved open questions 1 and 5. Add the decisions to `plan.md`. Delivered: all five open questions resolved (not only 1 and 5, since 2 also had a real answer once T127 shipped), FR-A005 and story A3 annotated with what was actually delivered, decisions recorded in `plan.md`.
 - [ ] **T061** Add the `DEVELOPMENT-LOG.md` entry as a separate documentation commit after the implementation hashes exist.
 
 ## Phase 7: share across Web and Desktop (decided 2026-09-26, before more features)

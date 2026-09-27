@@ -99,9 +99,11 @@ A right-hand panel with four tabs — Files, Changes, Review, Checks — gives t
 
 ---
 
-#### User Story A3 - Diff tile (Priority: P1)
+#### User Story A3 - Diff tile (Priority: P1) — DELIVERED
 
 A canvas tile kind, addable from the existing "+" picker (`specs/015`'s `CanvasAddPicker`, now growing its catalog), that renders a real diff — side-by-side or inline, toggle between the two — for a file, a commit, or the whole worktree's pending changes.
+
+**Delivered as built**: opened from the Changes panel or the "+" menu; unified diff (not side-by-side) against real git data, with a line-comment composer that queues the comment to the current chat's agent (FR aligned, presentation choice diverged from "side-by-side or inline toggle" — unified only, decided during Phase 7/8 delivery, not revisited here).
 
 **Why this priority**: diffs are the connective tissue between "an agent changed something" and "a human decides whether that's right." Every competitor treats this as core, not optional.
 
@@ -160,7 +162,7 @@ A tile kind that renders a markdown doc (a `spec.md`, `plan.md`, `README`) read-
 - **FR-A002**: Each branch/worktree row MUST show a live status derived from real agent-session lifecycle state (not a client-side mock or stale timer).
 - **FR-A003**: Selecting a branch/worktree in the rail MUST re-scope every worktree-bound open tile to that worktree.
 - **FR-A004**: A right-hand panel MUST provide Files, Changes, Review, and Checks tabs, each sourced from real git/CI state for the current worktree.
-- **FR-A005**: The canvas "+" picker MUST grow to include Diff, Kanban, and Doc tile kinds, contributed the same way Terminal/File/Browser already are — as canvas-card slot entries, not a shell-level special case.
+- **FR-A005**: The canvas "+" picker MUST grow to include Diff, Kanban, and Doc tile kinds, contributed the same way Terminal/File/Browser already are — as canvas-card slot entries, not a shell-level special case. Delivered: the canvas ships seven tile kinds (Chat, Terminal, File, Browser, Diff, Kanban, Doc) plus an eighth, `custom`, for tile kinds a plugin registers through the `workspaceTabs` service (spec 040 T125) — the open-ended growth path FR-A005 asked for, built as a real registry rather than left as a future intent.
 - **FR-A006**: Diff tiles MUST support both side-by-side and inline layouts and MUST follow the existing one-tile-per-target de-duplication rule.
 - **FR-A007**: Kanban tiles MUST derive columns and cards from real session/task phase state and MUST update live on phase transitions.
 - **FR-A008**: Doc tiles MUST render markdown read-only and MUST NOT be able to mutate the source file.
@@ -284,8 +286,8 @@ A pane (or a mode of the file tree) showing changed files with status letters, a
 
 ## Open Questions (not answered here — resolve before `plan.md`)
 
-1. **Scope A or Scope B first?** Scope A extends a shipped, well-understood surface; Scope B is a genuinely new surface with the single hardest unknown (embedded PTY-in-TUI-pane rendering) in the whole spec. Worth a spike on that one unknown, isolated, before committing either scope's ordering.
-2. **Which real DSH seam backs "session/task phase" for Kanban and rail status dots?** Named as an assumption above, not yet confirmed against real `ctx.sessions`/`ctx.agentTeams` shape.
+1. **Scope A or Scope B first?** Resolved by delivery: Scope A came first and shipped (custom agents, terminal fidelity, layout, sharing between Web and Desktop, Settings > Agents/Tabs/Command palette, plugin tab types, terminal dock, attention queue for Claude Code). Scope B (the ACRYL CLI multi-pane TUI) is a separate track; its own spike, `research.md`, ran the embedded-PTY question directly rather than deferring it.
+2. **Which real DSH seam backs "session/task phase" for Kanban and rail status dots?** Resolved: the Kanban board reads the real session list (`SessionSummary.running`/`blank`/`updatedAt`) through `useSessions`, not `ctx.agentTeams`, which this milestone never needed. Rail status dots read the same session list plus, for the attention ("needs you") state, the agent status store fed by an agent's own hooks (T127) - the harness's own chat sessions carry no such signal yet, so a harness chat cannot show "needs you", only running/done.
 3. **Scope B worktree re-scoping**: silent live re-scope (matching Scope A's rail) or explicit close-and-reopen? Flagged as an edge case above, deliberately left open.
 4. **Does Scope B ship as part of `acryl` CLI directly, or as a separate, optionally-installed surface** (the user's own "we can experiment and even maybe make it a separate surface" framing) — affects packaging, default-on/off, and how much of FR-B008's cut scope is ever revisited.
-5. **Kanban/Diagram/Spreadsheet tile provenance**: are these to be built ACRYL-native, or is there a real shadcn/ui or third-party source to port from, matching the discipline `specs/038` already established for every other component in this library? Not researched in this pass.
+5. **Kanban/Diagram/Spreadsheet tile provenance**: resolved for Kanban - built ACRYL-native (`client/board/`), not ported: it is a thin live view over real session state plus small local note cards, not a general board component `specs/038`'s library discipline would apply to. Diagram and Spreadsheet tile kinds remain cut from this milestone (FR-A011), so their provenance is still unresearched and stays an open question for whichever milestone picks them up.
