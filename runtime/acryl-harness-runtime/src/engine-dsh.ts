@@ -53,6 +53,7 @@ import {
 import type { AcrylEngineDefinition } from './engine-host.ts'
 import { installAcrylWorkspaceStatusTool } from './plugin-acryl-workspace-status.ts'
 import { blueprintFromEnvironment, composeBlueprintRows } from './blueprint/index.ts'
+import { findFreeWebPort, webPortFromEnvironment, webPortPatch } from './web-port.ts'
 import { pluginLifecyclePatches, resolvePluginLifecycleStatePath } from './plugin-lifecycle-state.ts'
 import { installSessionLogExporter } from './session-log-exporter.ts'
 import { provideWebMarketInstall } from './web-market-install.ts'
@@ -475,6 +476,13 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   // from this profile above (they are ACRYL-owned workspace packages outside @deepseek-ai/dsh's dependency closure, so
   // `healProfilesModuleFallback` cannot find them; see `materializeProfilePackage`).
   patches.push(...rowsComposition.patches)
+  // A second instance beside one on the default port (spec 036): ACRYL_WEB_PORT moves the server.
+  const preferredPort = webPortFromEnvironment()
+  if (preferredPort !== undefined) {
+    const webPort = await findFreeWebPort(preferredPort)
+    if (webPort !== preferredPort) process.stdout.write(`ACRYL: port ${String(preferredPort)} is in use, using ${String(webPort)}\n`)
+    patches.push(webPortPatch(webPort))
+  }
   // Last, so a user override beats every composition decision above it - the
   // same shared store the CLI and the Desktop panel write (spec 034).
   patches.push(...pluginLifecyclePatches({

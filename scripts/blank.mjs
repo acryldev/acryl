@@ -9,7 +9,6 @@
  * Web and CLI run in `~/.acryl-blank/.dsh`; the Web server listens on port 3081 unless `--port` says otherwise: 3080 belongs to the main-branch app.
  */
 import { spawn } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -27,27 +26,11 @@ export function blankLaunchPlan(surface, flags, environment, home = homedir(), r
   if (surface === 'web') {
     const port = Number(flags.port ?? DEFAULT_BLANK_WEB_PORT)
     if (!Number.isInteger(port) || port < 1024 || port > 65_535) throw new Error(`--port must be a port number from 1024 to 65535, got ${String(flags.port)}`)
-    return { command: process.execPath, args: [join(root, 'apps/acryl-web/bin/dev-run.mjs'), '--no-open'], env: { ...env, DSH_HOME: isolated }, webPort: port, home: isolated }
+    return { command: process.execPath, args: [join(root, 'apps/acryl-web/bin/dev-run.mjs'), '--no-open'], env: { ...env, DSH_HOME: isolated, ACRYL_WEB_PORT: String(port) }, webPort: port, home: isolated }
   }
   if (surface === 'cli') return { command: process.execPath, args: [join(root, 'apps/acryl-cli/bin/dev-run.mjs')], env: { ...env, DSH_HOME: isolated }, home: isolated }
   if (surface === 'desktop') return { command: process.execPath, args: [join(root, 'scripts/dev-local.mjs')], env }
   throw new Error(`unknown surface ${JSON.stringify(surface)}; use web, cli or desktop`)
-}
-
-const MANAGED_MARKER = '# managed by scripts/blank.mjs'
-
-/**
- * The Web profile's own patch layer that moves the server off 3080. This script owns the file while it carries the marker (so a changed
- * `--port` takes effect); a file without the marker is the user's and is never touched. Returns whether it wrote.
- */
-export function ensureWebPort(homeDir, port) {
-  const patch = join(homeDir, 'profiles', 'web', 'cordis.patch.yml')
-  if (existsSync(patch) && !readFileSync(patch, 'utf8').startsWith(MANAGED_MARKER)) return false
-  const body = `${MANAGED_MARKER}\n- id: webserver\n  config:\n    host: 127.0.0.1\n    port: ${port}\n`
-  if (existsSync(patch) && readFileSync(patch, 'utf8') === body) return false
-  mkdirSync(dirname(patch), { recursive: true })
-  writeFileSync(patch, body)
-  return true
 }
 
 export function parseFlags(argv) {
@@ -65,7 +48,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const [surface = '', ...rest] = process.argv.slice(2)
   try {
     const plan = blankLaunchPlan(surface, parseFlags(rest), process.env)
-    if (plan.webPort !== undefined && ensureWebPort(plan.home, plan.webPort)) process.stdout.write(`blank: Web will listen on 127.0.0.1:${plan.webPort}\n`)
+    if (plan.webPort !== undefined) process.stdout.write(`blank: Web will listen on 127.0.0.1:${plan.webPort}\n`)
     if (plan.home !== undefined) process.stdout.write(`blank: DSH_HOME=${plan.home}\n`)
     spawn(plan.command, plan.args, { env: plan.env, stdio: 'inherit' }).on('exit', code => { process.exitCode = code ?? 0 })
   } catch (error) {

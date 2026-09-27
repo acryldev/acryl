@@ -3,13 +3,24 @@
 You need a model key configured the way you normally use ACRYL (sign in from the app, or a provider key). Everything below runs in its own home, so your real
 ACRYL profile is never touched. From the worktree root, once: `corepack pnpm install --frozen-lockfile` and `corepack pnpm run build` (or run your usual dev build).
 
-## 1. See the blank canvas (2 minutes)
+## 1. Start the blank canvas (2 minutes)
 
-```bash
-node scripts/blank.mjs web --name Orbit --accent '#e8590c'      # then open the "dsh web:" URL it prints (port 3081; 3080 is the main-branch app)
-node scripts/blank.mjs cli --name Orbit                          # terminal
-node scripts/blank.mjs desktop --name Orbit                      # Electron, isolated dev home
-```
+From the worktree root, either the package scripts or the shell scripts (same thing):
+
+| Surface | pnpm | shell |
+| --- | --- | --- |
+| Web (browser) | `corepack pnpm run acryl-blank-web` | `./scripts/acryl-blank-web.sh` |
+| Desktop (Electron) | `corepack pnpm run acryl-blank-desktop` | `./scripts/acryl-blank-desktop.sh` |
+| CLI (terminal) | `corepack pnpm run acryl-blank-cli` | `./scripts/acryl-blank-cli.sh` |
+
+**Web:** it builds if needed, then prints `ACRYL web: http://127.0.0.1:3081/?token=...`. **Open exactly that URL in your browser** (the token is required). Leave the terminal running; stop with Ctrl+C.
+**Desktop:** it builds, then a window opens by itself. **CLI:** the terminal becomes the chat.
+
+Options (after the script name, or after `--` with pnpm): `--name Orbit --accent '#e8590c'` to rebrand, `--blueprint <file.yaml>` for your own definition, `--port 3090` for Web.
+Example: `./scripts/acryl-blank-web.sh --name Orbit`.
+
+This branch never fights the main-branch app: `pnpm run web` and `blank.mjs web` start from port **3081** and move to the next free port (3082, 3083, ...) if it is taken; the
+port actually used is printed (`ACRYL web: ...`). `ACRYL_WEB_PORT=<n>` chooses another starting port; a plain `acryl-web` binary without it still uses 3080.
 
 Expect on Web: the sidebar and the tab title say **Orbit** with an orange mark, a plain chat, and none of the product's Projects, workspace, Market or Plugins panel.
 The first launch shows the harness's "Internal Testing Notice"; that is upstream text, listed under known gaps.

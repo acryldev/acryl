@@ -64,6 +64,8 @@ if (isStale()) {
   }
 }
 
+// This branch (spec 036) runs beside the main-branch app, which owns 3080; ACRYL_WEB_PORT still overrides.
+process.env.ACRYL_WEB_PORT ??= '3081'
 const result = spawnSync(process.execPath, [bin, ...process.argv.slice(2)], {
   cwd: root,
   stdio: 'inherit',

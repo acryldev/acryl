@@ -344,3 +344,4 @@ export type {
   RepairResult,
   RepairStep,
 } from './profile-repair/index.ts'
+export { WEB_PORT_ATTEMPTS, findFreeWebPort, loopbackPortIsFree, webPortFromEnvironment, webPortPatch } from './web-port.ts'

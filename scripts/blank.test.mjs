@@ -1,9 +1,6 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import test from 'node:test'
-import { blankLaunchPlan, ensureWebPort, parseFlags } from './blank.mjs'
+import { blankLaunchPlan, parseFlags } from './blank.mjs'
 
 test('web runs the blank blueprint in its own home and never on 3080', () => {
   const plan = blankLaunchPlan('web', { name: 'Orbit' }, { PATH: 'x' }, '/h', '/r')
@@ -23,17 +20,8 @@ test('bad surface and bad port fail loudly', () => {
   assert.throws(() => blankLaunchPlan('web', { port: '80' }, {}), /1024/)
 })
 
-test('the web port patch is written once and never overwrites the user\'s own', () => {
-  const home = mkdtempSync(join(tmpdir(), 'blank-'))
-  try {
-    assert.equal(ensureWebPort(home, 4000), true)
-    assert.match(readFileSync(join(home, 'profiles', 'web', 'cordis.patch.yml'), 'utf8'), /port: 4000/)
-    assert.equal(ensureWebPort(home, 4000), false)   // unchanged: nothing to write
-    assert.equal(ensureWebPort(home, 5000), true)    // our own managed file follows a changed --port
-    assert.match(readFileSync(join(home, 'profiles', 'web', 'cordis.patch.yml'), 'utf8'), /port: 5000/)
-    writeFileSync(join(home, 'profiles', 'web', 'cordis.patch.yml'), '- id: x\n')
-    assert.equal(ensureWebPort(home, 6000), false)   // the user's own file is never overwritten
-  } finally { rmSync(home, { recursive: true, force: true }) }
+test('web passes its port through ACRYL_WEB_PORT', () => {
+  assert.equal(blankLaunchPlan('web', { port: '4000' }, {}, '/h', '/r').env.ACRYL_WEB_PORT, '4000')
 })
 
 test('flags parse in both forms', () => {
