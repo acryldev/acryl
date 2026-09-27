@@ -296,6 +296,8 @@ describe('createAcrylSessionBridge', () => {
 function stubAcpProvider(options: {
   readonly sendResult?: unknown
   readonly sendError?: Error
+  /** Full send override; used to gate or order concurrent sends. */
+  readonly sendHandler?: (payload: unknown) => Promise<unknown>
 } = {}): {
   provider: AgentProvider
   attachRequests: AttachAgentRequest[]
@@ -336,6 +338,7 @@ function stubAcpProvider(options: {
         return { sessionId: 'acp-session-1', runtimeId: 'runtime-1', status: 'idle' }
       }
       if (command.kind === 'send') {
+        if (options.sendHandler !== undefined) return options.sendHandler(command.payload)
         if (options.sendError !== undefined) throw options.sendError
         return options.sendResult ?? { stopReason: 'end_turn', updates: [] }
       }
@@ -467,6 +470,57 @@ describe('createAcrylSessionBridge — acrAgentControl provider routing', () => 
       await bridge.dispose()
       await dispose()
     }
+  })
+
+  it('serializes concurrent provider sends on one session', async () => {
+    const { ctx, control, dispose } = await bootedControl()
+    const completed: string[] = []
+    let releaseFirst!: () => void
+    const gate = new Promise<void>((resolve) => { releaseFirst = resolve })
+    const stub = stubAcpProvider({
+      sendHandler: async (payload) => {
+        // The first send blocks until released; a serialized bridge must not
+        // dispatch the second while the first is in flight.
+        if (payload === 'first') await gate
+        completed.push(payload as string)
+        return { stopReason: 'end_turn', updates: [] }
+      },
+    })
+    control.registerProvider(ctx, stub.provider)
+    const bridge = createAcrylSessionBridge(ctx, {
+      profile: 'acryl-test',
+      generationId: 'generation-test',
+      attachment: 'owner',
+      cwd: process.cwd(),
+      agentProvider: { providerId: 'acp', workerId: 'worker-acp' },
+    })
+    try {
+      const sessionId = await bridge.open()
+      const first = bridge.submitPrompt({ sessionId, text: 'first' })
+      const second = bridge.submitPrompt({ sessionId, text: 'second' })
+      await new Promise((resolve) => setTimeout(resolve, 25))
+      // The second send is queued behind the still-running first turn.
+      expect(completed).toEqual([])
+      releaseFirst()
+      await Promise.all([first, second])
+      expect(completed).toEqual(['first', 'second'])
+      expect(stub.commands.filter(command => command.kind === 'send').map(command => command.payload))
+        .toEqual(['first', 'second'])
+    } finally {
+      await bridge.dispose()
+      await dispose()
+    }
+  })
+
+  it('rejects an empty provider workerId at construction', () => {
+    const ctx = new Context()
+    expect(() => createAcrylSessionBridge(ctx, {
+      profile: 'acryl-test',
+      generationId: 'generation-test',
+      attachment: 'owner',
+      cwd: process.cwd(),
+      agentProvider: { providerId: 'acp', workerId: '   ' },
+    })).toThrow('workerId')
   })
 
   it('surfaces dispatch failures to the caller in the service error shape', async () => {

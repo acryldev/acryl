@@ -153,6 +153,13 @@ interface ProviderSessionState {
   /** ACP `messageId` → transcript index, so streamed chunks merge into one item. */
   readonly transcriptIndexByMessage: Map<string, number>
   readonly tools: Map<string, AcrylToolProjection>
+  /**
+   * Always-resolving tail of the per-session send queue. ACP transports hold
+   * one `updates` buffer per worker, so concurrent `send` dispatches would
+   * interleave and lose each other's updates — sends serialize here the way
+   * DSH-native followups serialize inside the agent.
+   */
+  sendTail: Promise<void>
 }
 
 /** Commands the bridge dispatches on a provider session; `agent.resume` joins when `open` resumes. */
@@ -342,6 +349,11 @@ export function createAcrylSessionBridge(
   const providerSelection = options.agentProvider !== undefined && options.agentProvider.providerId !== 'dsh-native'
     ? options.agentProvider
     : undefined
+  // The worker id is the session identity the caller dispatches with; an
+  // empty one would mint an unaddressable binding.
+  if (providerSelection?.workerId !== undefined && providerSelection.workerId.trim() === '') {
+    throw new Error('ACRYL agent provider workerId must be a non-empty string')
+  }
 
   const agentControl = (): AcrAgentControl => {
     const control = ctx.get('acrAgentControl')
@@ -486,6 +498,7 @@ export function createAcrylSessionBridge(
           transcript: [],
           transcriptIndexByMessage: new Map(),
           tools: new Map(),
+          sendTail: Promise.resolve(),
         }
         providerSessions.set(workerId, session)
         try {
@@ -603,16 +616,22 @@ export function createAcrylSessionBridge(
         if (disposed) throw new Error('ACRYL session bridge is disposed')
         if (input.text.trim() === '') throw new Error('ACRYL prompt must not be empty')
         const control = agentControl()
-        const receipt = await control.dispatch(providerSession.workerId, { kind: 'send', payload: input.text })
-        await refreshProviderBinding(control, providerSession)
-        providerSession.transcript.push(Object.freeze({
-          id: `${providerSession.workerId}-prompt-${providerSession.turn + 1}`,
-          author: 'user',
-          text: input.text,
-        }))
-        emitAssistantFrames(providerSession.workerId, projectProviderTurn(providerSession, receipt.result))
-        notify(providerSession.workerId)
-        return
+        // Serialize provider sends: the transport owns one update buffer per
+        // worker, so overlapping `session/prompt` turns would race. The tail
+        // never rejects, so one failed send does not wedge the queue.
+        const sendTurn = providerSession.sendTail.then(async () => {
+          const receipt = await control.dispatch(providerSession.workerId, { kind: 'send', payload: input.text })
+          await refreshProviderBinding(control, providerSession)
+          providerSession.transcript.push(Object.freeze({
+            id: `${providerSession.workerId}-prompt-${providerSession.turn + 1}`,
+            author: 'user',
+            text: input.text,
+          }))
+          emitAssistantFrames(providerSession.workerId, projectProviderTurn(providerSession, receipt.result))
+          notify(providerSession.workerId)
+        })
+        providerSession.sendTail = sendTurn.then(() => undefined, () => undefined)
+        return sendTurn
       }
       const agent = agentFor(input.sessionId)
       if (input.text.trim() === '') throw new Error('ACRYL prompt must not be empty')
