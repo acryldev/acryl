@@ -6,9 +6,9 @@ Follows `spec.md` (open question 3: the blank-canvas Blend's literal minimal plu
 ## What it is
 
 `acryl.blank` is the smallest ACRYL that is still a working agent, and everything else is grown from it by adding Cordis plugins, local first,
-published when worth sharing. `acryl.full` is today's product: the most differentiated Blend the team ships, and still the default.
+published when worth sharing. `acryl.ide` is today's product: the most differentiated Blend the team ships, and still the default.
 
-Select one with `ACRYL_BLUEPRINT=acryl.blank` (a built-in id; unset means `acryl.full`). Rebrand any Blueprint without editing a file with
+Select one with `ACRYL_BLUEPRINT=acryl.blank` (a built-in id; unset means `acryl.ide`). Rebrand any Blueprint without editing a file with
 `ACRYL_BRAND_NAME`, `ACRYL_BRAND_TAGLINE`, `ACRYL_BRAND_ACCENT`, `ACRYL_BRAND_ACCENT_DARK`, `ACRYL_BRAND_FONT`, `ACRYL_BRAND_MARK`.
 
 ## The minimal set, and why each row is in
@@ -31,7 +31,7 @@ Select one with `ACRYL_BLUEPRINT=acryl.blank` (a built-in id; unset means `acryl
 | `acryl-shortcuts`, `acryl-mount-anchors` | conveniences and a developer inspector |
 | Development Canvas | a developer surface of the full product |
 
-Nothing is deleted from the product: `acryl.full` composes all of them exactly as before, and a user can enable any row in a blank instance with
+Nothing is deleted from the product: `acryl.ide` composes all of them exactly as before, and a user can enable any row in a blank instance with
 the same reversible row edit (`acryl plugin enable`, the Lifecycle panel, or a line in a Blend file).
 
 ## Branding: your product, not ours

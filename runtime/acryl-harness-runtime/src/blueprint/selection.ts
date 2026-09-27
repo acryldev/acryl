@@ -2,8 +2,8 @@
  * The boundary that reads the environment to choose a Blueprint. Kept apart from the pure domain modules so the only
  * `process.env` access in the blueprint context is in one named place.
  *
- * `ACRYL_BLUEPRINT` names a built-in Blueprint id (`acryl.blank`, `acryl.full`) or a `.yaml`, `.yml` or `.json` file that defines one
- * (see `definition.ts`); unset means `acryl.full`.
+ * `ACRYL_BLUEPRINT` names a built-in Blueprint id (`acryl.blank`, `acryl.ide`) or a `.yaml`, `.yml` or `.json` file that defines one
+ * (see `definition.ts`); unset means `acryl.ide`.
  * `ACRYL_BRAND_NAME` (and the other `ACRYL_BRAND_*` values) rebrand the selected Blueprint without editing any file.
  *
  * @module acryl-harness-runtime/blueprint/selection
@@ -15,6 +15,7 @@ import { parse } from 'yaml'
 import { brandIdentity } from './brand-identity.ts'
 import { selectBlueprint, withBrand, type Blueprint } from './blueprint.ts'
 import { InvalidBlueprintError, parseBlueprint } from './definition.ts'
+import { blueprintFromManifest, isBlendsManifest } from './manifest.ts'
 
 const BRAND_ENV: readonly (readonly [string, string])[] = [
   ['ACRYL_BRAND_NAME', 'name'],
@@ -41,7 +42,8 @@ export function readBlueprintFile(path: string): Blueprint {
   } catch (cause) {
     throw new InvalidBlueprintError(`${path} is not valid YAML: ${cause instanceof Error ? cause.message.split('\n')[0] : String(cause)}`)
   }
-  return parseBlueprint(data)
+  // An app's `blend.yaml` is a Blends manifest; a short runtime definition is also accepted.
+  return isBlendsManifest(data) ? blueprintFromManifest(data) : parseBlueprint(data)
 }
 
 export function blueprintFromEnvironment(env: NodeJS.ProcessEnv = process.env): Blueprint {

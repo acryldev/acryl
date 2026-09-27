@@ -51,3 +51,10 @@ test('two instances opening one project see only their own extensions and their 
     delete process.env.ACRYL_INSTANCE; assert.equal(trackedBlendDir(ws), undefined)
   } finally { delete process.env.ACRYL_INSTANCE; rmSync(ws, { recursive: true, force: true }) }
 })
+
+test('inside an app (its home has blend.yaml) plugins go to the app\'s extensions folder', async () => {
+  const { appExtensionsDir } = await import('../lib/scopes.js')
+  assert.equal(appExtensionsDir({ ACRYL_HOME: '/apps/stage' }, path => path === '/apps/stage/blend.yaml'), '/apps/stage/extensions')
+  assert.equal(appExtensionsDir({ ACRYL_HOME: '/apps/stage' }, () => false), undefined)
+  assert.equal(appExtensionsDir({}, () => true), undefined)
+})

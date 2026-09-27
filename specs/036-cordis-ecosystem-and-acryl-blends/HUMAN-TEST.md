@@ -3,6 +3,17 @@
 You need a model key configured the way you normally use ACRYL (sign in from the app, or a provider key). Everything below runs as a named instance in its own home, so your real
 ACRYL profile is never touched. From the worktree root, once: `corepack pnpm install --frozen-lockfile` and `corepack pnpm run build` (or run your usual dev build).
 
+## 0. The framework way: create your own app (3 minutes)
+
+```bash
+node apps/acryl-cli/bin/dev-run.mjs new ~/apps/stage-sound --name "Stage Sound" --accent '#e8590c'
+~/apps/stage-sound/bin/acryl web          # open the "ACRYL web:" URL it prints; or: desktop, cli
+```
+
+Expect: a new folder with `blend.yaml`, `extensions/`, `AGENTS.md`, `bin/acryl`, a README and its own git repository; the app shows **Stage Sound**, never ACRYL.
+Ask the builder inside for something ("add a setlist with tempo per song"); it builds it into `~/apps/stage-sound/extensions/`. `git status` in the app shows it.
+The product definition is `framework.md`.
+
 ## 1. Start the blank canvas (2 minutes)
 
 From the worktree root, either the package scripts or the shell scripts (same thing):

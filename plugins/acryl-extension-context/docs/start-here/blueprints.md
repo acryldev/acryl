@@ -1,13 +1,13 @@
 # Blueprints, Blends and the blank canvas
 
 An ACRYL instance is a **composition of Cordis rows**. A **Blueprint** is a named starting composition; a **Blend** is what one grew into (a Blueprint plus the plugins
-added to it, with its lineage). You may be running the full product (`acryl.full`) or the **blank canvas** (`acryl.blank`): an agent, a model chooser, an input and this
+added to it, with its lineage). You may be running the full product (`acryl.ide`) or the **blank canvas** (`acryl.blank`): an agent, a model chooser, an input and this
 extension pack, and nothing else. On the blank canvas, everything the user wants beyond chat is something you build as a plugin.
 
 ## Which one am I in?
 
 - `acryl_list_plugins` shows what is installed; the runtime context and `acryl_workspace_status` report the surface and profile.
-- The blueprint id is in the environment as `ACRYL_BLUEPRINT` (unset means `acryl.full`). Do not guess: if a surface, workspace or Market UI the user mentions is not
+- The blueprint id is in the environment as `ACRYL_BLUEPRINT` (unset means `acryl.ide`). Do not guess: if a surface, workspace or Market UI the user mentions is not
   there, the instance is probably the blank canvas, and the right move is to build the capability (docs `start.this-runtime`), not to look for a missing menu.
 
 ## Growing a blank canvas

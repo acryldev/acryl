@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { projectExtensionsLabel } from './scopes.js'
+import { appExtensionsDir, projectExtensionsLabel } from './scopes.js'
 
 /** The router must stay small: it is in every prompt (spec 037 NFR-002). */
 export const ROUTER_TOKEN_BUDGET = 650
@@ -43,11 +43,13 @@ export function buildRouterText(root, manifest) {
   }
   return [
     `<${ROUTER_TAG}>`,
-    `ACRYL extension docs: ${root}. Read only when the user asks to build, change, fix or remove something in ACRYL itself (extension, plugin, tool, panel, button, theme, skill, command, provider); or call ${LOOKUP_TOOL_NAME}(topic).`,
+    `ACRYL extension docs: ${root}. Read only when the user asks to build, change, fix or remove something in ${appExtensionsDir() === undefined ? 'ACRYL' : 'this app'} itself (extension, plugin, tool, panel, button, theme, skill, command, provider); or call ${LOOKUP_TOOL_NAME}(topic).`,
     '- Paths below are under docs/; indexes: docs/README.md, example-plugins/README.md (verified plugins); start with start-here/this-runtime.md',
     `- When asked about: ${topics.join(', ')}`,
     "- Read .md files completely and the nearest example, follow links before implementing; never guess a plugin's shape from memory",
-    `- Write in ${projectExtensionsLabel()} (this project) or <ACRYL home>/extensions/<name>/ (all projects); check with ${VERIFY_TOOL_NAME}; deliver with ${INSTALL_TOOL_NAME} (ABSOLUTE path; again = update). Removing and publish prep have their own tools; publishing is the user's decision. Do not claim it works without the tool result; UI needs a page reload (/reload)`,
+    appExtensionsDir() === undefined
+      ? `- Write in ${projectExtensionsLabel()} (this project) or <ACRYL home>/extensions/<name>/ (all projects); check with ${VERIFY_TOOL_NAME}; deliver with ${INSTALL_TOOL_NAME} (ABSOLUTE path; again = update). Removing and publish prep have their own tools; publishing is the user's decision. Do not claim it works without the tool result; UI needs a page reload (/reload)`
+      : `- This is an app: write every plugin in ${appExtensionsDir()}/<name>/ (it loads at every start and is committed with the app); check with ${VERIFY_TOOL_NAME}; deliver with ${INSTALL_TOOL_NAME} (ABSOLUTE path; again = update). Removing and publish prep have their own tools.`,
     `</${ROUTER_TAG}>`,
   ].join('\n')
 }

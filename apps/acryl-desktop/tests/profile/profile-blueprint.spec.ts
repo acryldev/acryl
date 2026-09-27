@@ -8,13 +8,13 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { composeEntries } from '@deepseek-ai/dsh-app-boot'
-import { BLANK_BLUEPRINT, FULL_BLUEPRINT, withBrand, brandIdentity } from 'acryl-harness-runtime'
+import { BLANK_BLUEPRINT, IDE_BLUEPRINT, withBrand, brandIdentity } from 'acryl-harness-runtime'
 import { prepareDesktopProfile } from '../../src/profile.ts'
 
 const homes: string[] = []
 afterEach(() => { for (const home of homes.splice(0)) rmSync(home, { force: true, recursive: true }) })
 
-function rowsFor(blueprint: typeof FULL_BLUEPRINT) {
+function rowsFor(blueprint: typeof IDE_BLUEPRINT) {
   const home = mkdtempSync(join(tmpdir(), 'acryl-desktop-blueprint-'))
   homes.push(home)
   const prepared = prepareDesktopProfile(undefined, home, 'darwin', undefined, undefined, undefined, undefined, {}, blueprint)
@@ -23,7 +23,7 @@ function rowsFor(blueprint: typeof FULL_BLUEPRINT) {
 
 describe('desktop profile under a Blueprint', () => {
   it('the full product keeps every ACRYL row', () => {
-    const rows = rowsFor(FULL_BLUEPRINT)
+    const rows = rowsFor(IDE_BLUEPRINT)
     for (const id of ['acryl-workspace', 'acryl-plugin-admin', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-shortcuts', 'acryl-mount-anchors', 'ui-acryl']) {
       expect(rows.has(id), id).toBe(true)
     }

@@ -70,5 +70,6 @@ export function brandIdentity(input: unknown): BrandIdentity {
 
 /** The agent's opening identity line under this brand (what the system prompt says the agent is). */
 export function identityLine(brand: BrandIdentity): string {
-  return `You are the assistant inside ${brand.name}, a coding agent that can extend itself with plugins. You help users by reading files, executing commands, editing code, and writing new files, and by building, changing and removing extensions of ${brand.name} when asked.`
+  // Domain-neutral on purpose: the app may be a music editor, an accounting tool or an IDE. It is the user's product, so it is named, not ACRYL.
+  return `You are the assistant inside ${brand.name}. You help its users with what they ask, and you can extend ${brand.name} itself from the inside: when asked, you build, change and remove its plugins (tools, screens, commands) while it runs, and you can read files, run commands and write code to do so.`
 }

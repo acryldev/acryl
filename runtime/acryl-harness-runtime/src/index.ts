@@ -298,11 +298,14 @@ export { pinnedPnpmEnv, resolvePinnedPnpm, type PinnedPnpm } from './pinned-pnpm
 export { reconcileProfileLayout, type LayoutChange } from './profile-layout.ts'
 export {
   BLANK_BLUEPRINT,
-  FULL_BLUEPRINT,
+  IDE_BLUEPRINT,
   BLUEPRINT_ROW_IDS,
   InvalidBlueprintError,
   InvalidBrandIdentityError,
   UnknownBlueprintError,
+  appManifest,
+  blueprintFromManifest,
+  isBlendsManifest,
   parseBlueprint,
   readBlueprintFile,
   blueprintFromEnvironment,
@@ -345,3 +348,4 @@ export type {
   RepairStep,
 } from './profile-repair/index.ts'
 export { WEB_PORT_ATTEMPTS, findFreeWebPort, loopbackPortIsFree, webPortFromEnvironment, webPortPatch } from './web-port.ts'
+export { APP_EXTENSIONS_DIR, APP_MANIFEST_FILE, NewAppError, planNewApp, writeNewApp, type NewAppOptions, type PlannedApp } from './app/new-app.ts'

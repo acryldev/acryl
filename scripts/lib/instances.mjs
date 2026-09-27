@@ -45,11 +45,12 @@ export function instancesRoot(home = homedir()) {
   return join(home, INSTANCES_DIR_NAME)
 }
 
-export const BLUEPRINT_FILE = 'acryl.instance.yaml'
+/** The app's definition, a Blends manifest (`acryl new` writes it). */
+export const BLUEPRINT_FILE = 'blend.yaml'
 
 /**
- * An instance is a folder (the scaffold `init` creates). The folder IS the ACRYL home: what the user owns and commits sits at the top
- * (`acryl.instance.yaml`, `extensions/`), what the runtime keeps is under `.dsh/` and `instance.json` (both git-ignored). The instance name is
+ * An instance is a folder (an app `acryl new` creates). The folder IS the ACRYL home: what the user owns and commits sits at the top
+ * (`blend.yaml`, `extensions/`), what the runtime keeps is under `.dsh/` and `instance.json` (both git-ignored). The instance name is
  * the folder's name, so nothing beyond the folder itself has to be registered anywhere.
  */
 export function resolveInstanceAt(dir, home = homedir()) {

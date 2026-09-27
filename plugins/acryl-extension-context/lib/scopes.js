@@ -6,7 +6,8 @@
  * folder, so everything it authors lives under `<workspace>/.acryl/instances/<name>/`. Two Blends opening one project then see only their own extensions, their
  * own captured Blend and their own ledger. The instance-wide (global) scope is already private, because it lives under that instance's own ACRYL home.
  */
-import { join } from 'node:path'
+import { existsSync } from 'node:fs'
+import { isAbsolute, join } from 'node:path'
 
 const NAME = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u
 
@@ -38,4 +39,14 @@ export function isProjectExtensionPath(path) {
 /** How the router names the project location the agent writes to. */
 export function projectExtensionsLabel(instance = currentInstance()) {
   return instance === undefined ? '<workspace>/.acryl-extensions/<name>/' : `<workspace>/.acryl/instances/${instance}/extensions/<name>/`
+}
+
+/**
+ * An app created by `acryl new` is its own ACRYL home (it has `blend.yaml` at the top). Its plugins belong in `<app>/extensions/`, which is the home's
+ * extension scope, so they load at every start and are committed with the app. Returns that folder, or undefined outside an app.
+ */
+export function appExtensionsDir(env = process.env, exists = existsSync) {
+  const home = env.ACRYL_HOME
+  if (typeof home !== 'string' || !isAbsolute(home) || !exists(join(home, 'blend.yaml'))) return undefined
+  return join(home, 'extensions')
 }

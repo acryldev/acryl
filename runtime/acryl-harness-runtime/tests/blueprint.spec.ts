@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 import {
   ACRYL_CODING_CAPABILITIES,
   BLANK_BLUEPRINT,
-  FULL_BLUEPRINT,
+  IDE_BLUEPRINT,
   InvalidBrandIdentityError,
   UnknownBlueprintError,
   blueprintFromEnvironment,
@@ -38,8 +38,8 @@ describe('brand identity', () => {
 
 describe('blueprint selection', () => {
   it('defaults to the full ACRYL, resolves built-ins, and fails loud on an unknown id', () => {
-    expect(selectBlueprint(undefined)).toBe(FULL_BLUEPRINT)
-    expect(selectBlueprint('  ')).toBe(FULL_BLUEPRINT)
+    expect(selectBlueprint(undefined)).toBe(IDE_BLUEPRINT)
+    expect(selectBlueprint('  ')).toBe(IDE_BLUEPRINT)
     expect(selectBlueprint('acryl.blank')).toBe(BLANK_BLUEPRINT)
     expect(() => selectBlueprint('acryl.nope')).toThrow(UnknownBlueprintError)
   })
@@ -53,12 +53,18 @@ describe('blueprint selection', () => {
 })
 
 describe('what each Blueprint composes', () => {
+  it('the IDE is a Blend grown from blank: it keeps every capability and row of the blank canvas and says so', () => {
+    expect(IDE_BLUEPRINT.grewFrom).toBe(BLANK_BLUEPRINT.id)
+    for (const capability of BLANK_BLUEPRINT.capabilities) expect(IDE_BLUEPRINT.capabilities).toContain(capability)
+    for (const row of BLANK_BLUEPRINT.rows) expect(IDE_BLUEPRINT.rows).toContain(row)
+  })
+
   it('full ACRYL composes every declared capability, including ones added later', () => {
-    expect([...FULL_BLUEPRINT.capabilities].sort()).toEqual(ACRYL_CODING_CAPABILITIES.map(capability => capability.id).sort())
+    expect([...IDE_BLUEPRINT.capabilities].sort()).toEqual(ACRYL_CODING_CAPABILITIES.map(capability => capability.id).sort())
   })
 
   it('full ACRYL keeps today\'s web rows in mount order', () => {
-    const { patches, packages } = composeBlueprintRows(FULL_BLUEPRINT, 'web')
+    const { patches, packages } = composeBlueprintRows(IDE_BLUEPRINT, 'web')
     expect(insertedIds(patches)).toEqual(['ui-acryl', 'community-market', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-shortcuts', 'acryl-mount-anchors'])
     expect(packages).toContain('dsh-client-ui-brand-acryl')
   })

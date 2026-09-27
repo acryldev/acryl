@@ -34,6 +34,18 @@ const ROWS: readonly RowDeclaration[] = [
 /** The terminal library is a differently named package than the browser one. */
 const TUI_LIBRARY_PACKAGE = 'acryl-ui-tui'
 
+/** Which Blueprint row a package is, if it is one of ACRYL's own rows (used to read a Blends manifest's rows back into a Blueprint). */
+export function blueprintRowForPackage(packageName: string): BlueprintRowId | undefined {
+  return ROWS.find(row => row.packageName === packageName)?.id
+}
+
+/** The package that fills a Blueprint row (used to write a Blueprint as a Blends manifest). */
+export function packageForBlueprintRow(id: BlueprintRowId): { readonly rowId: string, readonly packageName: string } {
+  const row = ROWS.find(candidate => candidate.id === id)
+  if (row === undefined) throw new Error(`no row declaration for ${id}`)
+  return { rowId: row.rowId, packageName: row.packageName }
+}
+
 export interface BlueprintComposition {
   /** ACRYL-owned packages to make resolvable from the profile. */
   readonly packages: readonly string[]

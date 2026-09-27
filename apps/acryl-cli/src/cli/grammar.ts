@@ -66,7 +66,52 @@ export interface AcrylRepairInvocation extends AcrylInvocationFlags {
   readonly undo?: string
 }
 
-export type AcrylInvocation = AcrylSurfaceInvocation | AcrylPluginInvocation | AcrylUiInvocation | AcrylDoctorInvocation | AcrylRepairInvocation
+/** `acryl new <dir>`: create an ACRYL Blends app (spec 036), like `rails new`. */
+export interface AcrylNewInvocation extends AcrylInvocationFlags {
+  readonly kind: 'new'
+  readonly dir: string
+  readonly title?: string
+  readonly blueprint?: string
+  readonly accent?: string
+  readonly tagline?: string
+  /** An extracted ACRYL Web release archive the app carries, so it starts with nothing of the framework but Node. */
+  readonly runtime?: string
+  /** Do not create a git repository in the new app. */
+  readonly skipGit?: boolean
+}
+
+export type AcrylInvocation = AcrylSurfaceInvocation | AcrylPluginInvocation | AcrylUiInvocation | AcrylDoctorInvocation | AcrylRepairInvocation | AcrylNewInvocation
+
+const NEW_OPTIONS: Readonly<Record<string, 'title' | 'blueprint' | 'accent' | 'tagline' | 'runtime'>> = { '--name': 'title', '--blueprint': 'blueprint', '--accent': 'accent', '--tagline': 'tagline', '--runtime': 'runtime' }
+
+/** `new` has its own options, so it is parsed on its own rather than threaded through every other command's flags. */
+function parseNewInvocation(args: readonly string[]): AcrylNewInvocation {
+  const values: { title?: string, blueprint?: string, accent?: string, tagline?: string, runtime?: string } = {}
+  const positional: string[] = []
+  let json = false
+  let help = false
+  let skipGit = false
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index] ?? ''
+    if (argument === '--json') { json = true; continue }
+    if (argument === '--help' || argument === '-h') { help = true; continue }
+    if (argument === '--skip-git') { skipGit = true; continue }
+    const key = NEW_OPTIONS[argument]
+    if (key !== undefined) {
+      const value = args[index + 1]
+      if (value === undefined || value.startsWith('--') || value.trim() === '') throw new Error(`${argument} requires a value`)
+      if (values[key] !== undefined) throw new Error(`${argument} may be provided only once`)
+      values[key] = value
+      index += 1
+      continue
+    }
+    if (argument.startsWith('-')) throw new Error(`unknown option for new: ${argument}`)
+    positional.push(argument)
+  }
+  if (help) return { kind: 'new', dir: '', json, version: false, help: true }
+  if (positional.length !== 1) throw new Error('usage: acryl new <dir> [--name "My App"] [--blueprint acryl.blank] [--accent "#e8590c"] [--tagline "..."] [--runtime <extracted acryl-web archive>]')
+  return { kind: 'new', dir: positional[0] ?? '', json, version: false, help: false, ...values, ...(skipGit ? { skipGit } : {}) }
+}
 
 const UI_ACTIONS = new Set<AcrylUiAction>(['list', 'add', 'diff'])
 /** Actions that name a registry item. */
@@ -160,6 +205,7 @@ function parsePluginInvocation(
 }
 
 export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
+  if (args[0] === 'new') return parseNewInvocation(args.slice(1))
   let profile: string | undefined
   let resumeSessionId: string | undefined
   let uiSurface: string | undefined

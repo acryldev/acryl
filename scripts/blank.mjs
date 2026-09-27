@@ -4,7 +4,7 @@
  *
  *   node scripts/blank.mjs web     [--instance orbit] [--name Orbit] [--accent '#e8590c'] [--port 3105] [--blueprint my.blueprint.yaml]
  *   node scripts/blank.mjs cli     [--instance orbit] [--name Orbit]
- *   node scripts/blank.mjs web --dir ~/instances/orbit     run an instance scaffolded by `node scripts/init-instance.mjs ~/instances/orbit`
+ *   node scripts/blank.mjs web --dir ~/apps/orbit          run an app created by `acryl new ~/apps/orbit` (its bin/acryl does this)
  *   node scripts/blank.mjs desktop [--instance orbit] [--name Orbit]
  *
  * `--instance` (default `blank`) names the instance. Its home, Electron user data, web port and project-scope folders all derive from that name
@@ -24,7 +24,7 @@ const FLAG_TO_ENV = { name: 'ACRYL_BRAND_NAME', tagline: 'ACRYL_BRAND_TAGLINE', 
 
 /** Pure: what to run, in which environment, for one surface and instance. */
 export function blankLaunchPlan(surface, flags, environment, home = homedir(), root = resolve(dirname(fileURLToPath(import.meta.url)), '..'), runningSurfaces = []) {
-  // `--dir <folder>` runs the instance a scaffold created (`init-instance.mjs`); otherwise a managed instance named by `--instance` (default `blank`).
+  // `--dir <folder>` runs an app `acryl new` created; otherwise a managed instance named by `--instance` (default `blank`).
   const instance = flags.dir === undefined ? resolveInstance(String(flags.instance ?? DEFAULT_INSTANCE), home) : resolveInstanceAt(String(flags.dir), home)
   const definition = flags.dir !== undefined && flags.blueprint === undefined && existsSync(instance.blueprintFile) ? instance.blueprintFile : undefined
   const brandEnv = Object.fromEntries(Object.entries(FLAG_TO_ENV).flatMap(([flag, variable]) => (flags[flag] === undefined ? [] : [[variable, String(flags[flag])]])))
@@ -38,7 +38,7 @@ export function blankLaunchPlan(surface, flags, environment, home = homedir(), r
     ...brandEnv,
   }
   const base = { instance, blueprint: env.ACRYL_BLUEPRINT }
-  // A house that carries its own runtime (`init --runtime`, the extracted ACRYL Web release archive) runs from it and needs nothing else of the framework.
+  // An app that carries its own runtime (`acryl new --runtime`, the extracted ACRYL Web release archive) runs from it and needs nothing else of the framework.
   const carried = flags.dir !== undefined && existsSync(join(instance.root, 'runtime', 'lib', 'bin.js')) ? join(instance.root, 'runtime') : undefined
   if (carried !== undefined) {
     if (surface !== 'web') throw new InstanceError(`this instance carries only the Web runtime; "${surface}" needs the framework (run it from a framework checkout)`)
