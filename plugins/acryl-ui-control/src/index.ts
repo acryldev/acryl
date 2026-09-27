@@ -10,7 +10,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import type {} from '@deepseek-ai/dsh-tools'
 import { createApprovalPolicy } from './host/approval.ts'
-import { AuditLog, defaultAuditPath } from './host/audit.ts'
+import { AuditLog, auditPath } from './host/audit.ts'
 import { createAuditRequestHandler, UI_CONTROL_AUDIT_PATH } from './host/audit-route.ts'
 import { UiChannel } from './host/channel.ts'
 import { parseConfig } from './host/config.ts'
@@ -18,7 +18,22 @@ import { createUiControlStream, UI_CONTROL_CHANNEL_PATH } from './host/stream.ts
 import { RefDirectory, registerUiTools } from './host/tools.ts'
 
 export const name = 'acryl-ui-control'
-export const inject = ['webServer', 'tools']
+/**
+ * The part of the runtime's `appInstance` service ACRYL plugins read (a separated interface: plugins do not import the runtime). Every plugin declares
+ * exactly this shape, so the Context augmentations agree in any program that loads several of them.
+ */
+interface AppInstanceService {
+  readonly home: string
+  readonly dshHome: string
+}
+
+declare module '@deepseek-ai/cordis' {
+  interface Context {
+    appInstance: AppInstanceService
+  }
+}
+
+export const inject = ['webServer', 'tools', 'appInstance']
 
 export function apply(ctx: Context, rawConfig?: unknown): void {
   const config = parseConfig(rawConfig)
@@ -26,7 +41,7 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
   ctx.effect(() => {
     const channel = new UiChannel()
     const stream = createUiControlStream(channel, origin)
-    const audit = new AuditLog(config.auditLog ?? defaultAuditPath())
+    const audit = new AuditLog(config.auditLog ?? auditPath(ctx.appInstance.home))
     const refs = new RefDirectory()
     const releases: Array<() => void> = []
     try {

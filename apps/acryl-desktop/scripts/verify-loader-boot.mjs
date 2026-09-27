@@ -10,7 +10,7 @@ import {
   createLaunchEnvironmentSnapshot,
   DSH_LAUNCH_ENVIRONMENT_KEY,
 } from '@deepseek-ai/dsh-launch-environment'
-import { applyIsolatedDevHomeDefault } from 'acryl-harness-runtime'
+import { applyIsolatedDevHomeDefault, selectInstance } from 'acryl-harness-runtime'
 import { installDesktopPnpmRuntime } from '../lib/desktop-runtime-environment.js'
 
 // Match the isolated `~/.acryl-dev` home `pnpm run dev` (the root
@@ -164,6 +164,8 @@ try {
       host.loader.internal = undefined
       host.provide(DSH_LAUNCH_ENVIRONMENT_KEY, launchEnvironment)
       host.provide('desktopRuntime', runtime)
+      // This smoke is its own composition root: the app instance is its throwaway engine home (runtime instance/), as the real Desktop's engine mount provides it.
+      host.provide('appInstance', selectInstance({ env: { DSH_HOME: home } }))
       host.provide('desktopPluginLifecycleBootstrap', {
         profileName: 'desktop',
         statePath: join(home, 'plugin-lifecycle', 'state.json'),

@@ -26,9 +26,7 @@
  * @module acryl-harness-runtime/acryl-home
  */
 
-import { homedir } from 'node:os'
-import { join } from 'node:path'
-import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
+import { developmentInstance, instanceEnvironment, osHomeDirectory, selectInstance } from './instance/index.ts'
 
 /** ACRYL's own root directory name under the OS home. */
 export const ACRYL_HOME_DIR_NAME = '.acryl'
@@ -36,14 +34,12 @@ export const ACRYL_HOME_DIR_NAME = '.acryl'
 /** The DSH engine's directory name, nested under ACRYL's root. */
 export const ACRYL_DSH_ENGINE_DIR_NAME = '.dsh'
 
-function isSet(value: string | undefined): boolean {
-  return value !== undefined && value.trim() !== ''
-}
 
 /** ACRYL's own root — `~/.acryl` unless `$ACRYL_HOME` overrides it. */
 export function resolveAcrylHome(env: Record<string, string | undefined> = process.env): string {
-  const overridden = env.ACRYL_HOME?.trim()
-  return overridden && overridden !== '' ? overridden : join(homedir(), ACRYL_HOME_DIR_NAME)
+  // Delegates to the one selector (instance/select.ts). A legacy DSH_HOME now also moves the ACRYL home (its parent when it is named `.dsh`), so state that
+  // lives beside the engine home (the pinned pnpm shim, global extensions) is isolated with it instead of landing in the shared ~/.acryl.
+  return selectInstance({ env }).home
 }
 
 /**
@@ -64,8 +60,7 @@ export function resolveAcrylHome(env: Record<string, string | undefined> = proce
  * clean-room test written that way passes while never being isolated.
  */
 export function resolveAcrylDshHome(env: Record<string, string | undefined> = process.env): string {
-  if (!isSet(env.ACRYL_HOME) && isSet(env.DSH_HOME)) return resolveDshHome(undefined, env)
-  return resolveDshHome(join(resolveAcrylHome(env), ACRYL_DSH_ENGINE_DIR_NAME), env)
+  return selectInstance({ env }).dshHome
 }
 
 /**
@@ -92,7 +87,7 @@ export const ACRYL_DEV_HOME_DIR_NAME = '.acryl-dev'
 
 /** The isolated local-dev DSH home - see {@link ACRYL_DEV_HOME_DIR_NAME}'s doc comment. */
 export function resolveAcrylDevDshHome(): string {
-  return join(homedir(), ACRYL_DEV_HOME_DIR_NAME, ACRYL_DSH_ENGINE_DIR_NAME)
+  return developmentInstance(osHomeDirectory()).dshHome
 }
 
 /**
@@ -102,6 +97,7 @@ export function resolveAcrylDevDshHome(): string {
  * anything else reads the environment.
  */
 export function applyIsolatedDevHomeDefault(env: Record<string, string | undefined> = process.env): void {
-  if (isSet(env.ACRYL_HOME) || isSet(env.DSH_HOME)) return
-  env.DSH_HOME = resolveAcrylDevDshHome()
+  // Nothing chosen yet (the default instance): become the isolated development app, the same family `scripts/dev-local.mjs` launches.
+  if (selectInstance({ env }).kind !== 'default') return
+  Object.assign(env, instanceEnvironment(developmentInstance(osHomeDirectory())))
 }

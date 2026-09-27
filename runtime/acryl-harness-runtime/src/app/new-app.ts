@@ -103,7 +103,10 @@ belong to the user: commit with clear messages when a change works and the user 
 }
 
 /** Write the app. The folder must not exist or must be empty: `new` never overwrites. `runtimeDir` hands the app its own Web runtime (see below). */
-export function writeNewApp(planned: PlannedApp, options: { readonly runtimeDir?: string, readonly launcherFiles?: Readonly<Record<string, string>>, readonly git?: boolean } = {}): { readonly git: 'initialized' | 'skipped' | 'unavailable' } {
+/** A file of the launcher an app carries: copied from the framework, or written with the given content. */
+export type LauncherFile = { readonly from: string } | { readonly content: string }
+
+export function writeNewApp(planned: PlannedApp, options: { readonly runtimeDir?: string, readonly launcherFiles?: Readonly<Record<string, LauncherFile>>, readonly git?: boolean } = {}): { readonly git: 'initialized' | 'skipped' | 'unavailable' } {
   if (existsSync(planned.root) && readdirSync(planned.root).length > 0) throw new NewAppError(`${planned.root} is not empty; acryl new only creates a new app`)
   if (options.runtimeDir !== undefined && !existsSync(join(options.runtimeDir, 'lib', 'bin.js'))) throw new NewAppError(`${options.runtimeDir} is not an ACRYL Web runtime (no lib/bin.js)`)
   for (const [relative, content] of Object.entries(planned.files)) {
@@ -115,10 +118,11 @@ export function writeNewApp(planned: PlannedApp, options: { readonly runtimeDir?
   if (options.runtimeDir !== undefined) {
     // The app carries its own runtime: it then starts with nothing of the framework but Node. Symlinks stay relative to the copy.
     cpSync(options.runtimeDir, join(planned.root, 'runtime'), { recursive: true, verbatimSymlinks: true })
-    for (const [relative, source] of Object.entries(options.launcherFiles ?? {})) {
+    for (const [relative, file] of Object.entries(options.launcherFiles ?? {})) {
       const target = join(planned.root, '.app', relative)
       mkdirSync(dirname(target), { recursive: true })
-      cpSync(source, target)
+      if ('from' in file) cpSync(file.from, target)
+      else writeFileSync(target, file.content)
     }
     writeFileSync(join(planned.root, 'bin', 'acryl'), `#!/usr/bin/env bash\n# Start this app:  bin/acryl web\nset -euo pipefail\napp="$(cd "$(dirname "$0")/.." && pwd)"\nexec node "$app/.app/launch.mjs" "\${1:-web}" --dir "$app" "\${@:2}"\n`)
     chmodSync(join(planned.root, 'bin', 'acryl'), 0o755)

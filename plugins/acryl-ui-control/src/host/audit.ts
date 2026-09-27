@@ -6,7 +6,6 @@
  */
 
 import { closeSync, mkdirSync, openSync, readFileSync, renameSync, statSync, writeSync } from 'node:fs'
-import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import type { AuditEntry } from '../contract.ts'
 
@@ -14,10 +13,9 @@ export type { AuditEntry } from '../contract.ts'
 
 const MAX_LOG_BYTES = 5 * 1024 * 1024
 
-/** The single place this package reads `ACRYL_HOME`: `~/.acryl` unless it is set. */
-export function defaultAuditPath(env: NodeJS.ProcessEnv = process.env): string {
-  const home = env.ACRYL_HOME !== undefined && env.ACRYL_HOME !== '' ? env.ACRYL_HOME : join(homedir(), '.acryl')
-  return join(home, 'audit', 'ui-control.jsonl')
+/** The audit log in the app's ACRYL home (from the `appInstance` service: this package never looks up a home itself). */
+export function auditPath(appHome: string): string {
+  return join(appHome, 'audit', 'ui-control.jsonl')
 }
 
 export class AuditLog {

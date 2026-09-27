@@ -17,7 +17,7 @@ import { globalExtensionsDir } from './lib/reconcile.js'
 import { listInstalledPlugins } from './lib/provenance.js'
 import { captureBlend, verifyBlend, writeBlend } from './lib/blend-capture.js'
 import { applyBlend } from './lib/blend-apply.js'
-import { blendDir } from './lib/scopes.js'
+import { blendDir, useAppInstance } from './lib/scopes.js'
 import { appendLedger, ledgerRecorder, readLedger, trackedBlendDir, verifyLedger } from './lib/blend-ledger.js'
 import { describePermissions } from './lib/manifest.js'
 import { describeInstalledExtensions, installLocalPlugin, syncOnStartup, listLocalPlugins, reloadLocalPlugins, removeLocalPlugin } from './lib/install.js'
@@ -38,6 +38,9 @@ export function apply(ctx) {
   // Evaluation switch (evals/README.md): ACRYL_EXTENSION_DOCS=off removes the router, the skills and the installed-extensions note, leaving only the tools,
   // so the same task can be run with and without the docs to measure what they add. Never set it in normal use.
   const docsOff = process.env.ACRYL_EXTENSION_DOCS === 'off'
+
+  // Where this app keeps what its builder writes, from the runtime's app instance (optional: a stock harness host has none and keeps the classic folders).
+  ctx.effect(() => useAppInstance(ctx.get('appInstance')), 'extension-context: app instance scopes')
 
   // Static for the process lifetime: part of the cacheable prompt prefix.
   const text = buildRouterText(root, manifest)

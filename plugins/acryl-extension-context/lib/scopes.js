@@ -1,20 +1,38 @@
 /**
  * Where an ACRYL instance keeps what it authors inside a project (spec 036, "Many instances").
  *
- * An unnamed ACRYL (the main app) keeps the classic shared locations: `<workspace>/.acryl-extensions/` and `<workspace>/.acryl/blend/`, which belong to the project
- * and can be committed. A NAMED instance (`ACRYL_INSTANCE`, set by the launcher) must never leak into, or load from, another instance that happens to open the same
- * folder, so everything it authors lives under `<workspace>/.acryl/instances/<name>/`. Two Blends opening one project then see only their own extensions, their
- * own captured Blend and their own ledger. The instance-wide (global) scope is already private, because it lives under that instance's own ACRYL home.
+ * An unscoped ACRYL (the default or development app) keeps the classic shared locations: `<workspace>/.acryl-extensions/` and `<workspace>/.acryl/blend/`, which
+ * belong to the project and can be committed. An app with a project scope must never leak into, or load from, another app that opens the same folder, so
+ * everything it authors lives under `<workspace>/.acryl/instances/<scope>/`. The instance-wide (global) scope is already private: it lives in the app's own home.
+ *
+ * The scope comes from the runtime's `appInstance` service, configured once when the pack is applied (`useAppInstance`); this module never reads the
+ * environment. Invalid scope values are ignored, never used to build a path.
  */
 import { existsSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 
-const NAME = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u
+const SCOPE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u
+const SCOPE_MAX = 64
 
-/** The named instance this process runs as, or undefined for the main app. An invalid name is ignored, never used to build a path. */
-export function currentInstance(env = process.env) {
-  const value = env.ACRYL_INSTANCE
-  return typeof value === 'string' && value.length <= 32 && NAME.test(value) ? value : undefined
+let active = { projectScope: undefined, appHome: undefined }
+
+/**
+ * Configure the scopes from the app instance this pack runs in (the `appInstance` service: `{ home, projectScope?, definitionFile? }`). Returns the disposer
+ * that restores the previous configuration, so it belongs in an effect.
+ */
+export function useAppInstance(instance, exists = existsSync) {
+  const previous = active
+  const scope = instance?.projectScope
+  active = {
+    projectScope: typeof scope === 'string' && scope.length <= SCOPE_MAX && SCOPE.test(scope) ? scope : undefined,
+    appHome: typeof instance?.definitionFile === 'string' && typeof instance.home === 'string' && isAbsolute(instance.home) && exists(instance.definitionFile) ? instance.home : undefined,
+  }
+  return () => { active = previous }
+}
+
+/** The project scope this app writes under, or undefined for the classic shared locations. */
+export function currentInstance() {
+  return active.projectScope
 }
 
 function instanceRoot(workspaceDir, instance) {
@@ -42,11 +60,9 @@ export function projectExtensionsLabel(instance = currentInstance()) {
 }
 
 /**
- * An app created by `acryl new` is its own ACRYL home (it has `blend.yaml` at the top). Its plugins belong in `<app>/extensions/`, which is the home's
- * extension scope, so they load at every start and are committed with the app. Returns that folder, or undefined outside an app.
+ * An app created by `acryl new` is its own ACRYL home (it has `blend.yaml`). Its plugins belong in `<app>/extensions/`, the home's extension scope, so they
+ * load at every start and are committed with the app. Returns that folder, or undefined outside an app.
  */
-export function appExtensionsDir(env = process.env, exists = existsSync) {
-  const home = env.ACRYL_HOME
-  if (typeof home !== 'string' || !isAbsolute(home) || !exists(join(home, 'blend.yaml'))) return undefined
-  return join(home, 'extensions')
+export function appExtensionsDir() {
+  return active.appHome === undefined ? undefined : join(active.appHome, 'extensions')
 }

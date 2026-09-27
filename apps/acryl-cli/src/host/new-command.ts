@@ -5,10 +5,10 @@
  * The launcher is the framework's `scripts/blank.mjs`, which a framework checkout has. A published CLI does not carry it yet, so `new` says so instead of
  * writing an app that cannot start.
  */
-import { existsSync } from 'node:fs'
+import { existsSync, readdirSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { planNewApp, writeNewApp } from 'acryl-harness-runtime'
+import { planNewApp, writeNewApp, type LauncherFile } from 'acryl-harness-runtime'
 
 export interface NewAppCommandOptions {
   readonly dir: string
@@ -40,6 +40,22 @@ export function findLauncher(from: string = dirname(fileURLToPath(import.meta.ur
   }
 }
 
+/**
+ * What an app that carries its own runtime needs to start without the framework: the launcher, its instance adapter, and a copy of the runtime's instance
+ * module (the same isolation rules, loaded as TypeScript source by Node) with a one-line module file pointing at the copy.
+ */
+function carriedLauncher(launcher: string): Record<string, LauncherFile> {
+  const scripts = dirname(launcher)
+  const instanceSource = join(scripts, '..', 'runtime', 'acryl-harness-runtime', 'src', 'instance')
+  const files: Record<string, LauncherFile> = {
+    'launch.mjs': { from: launcher },
+    'lib/instances.mjs': { from: join(scripts, 'lib', 'instances.mjs') },
+    'lib/instance-module.mjs': { content: "export * from './instance/index.ts'\n" },
+  }
+  for (const file of readdirSync(instanceSource)) if (file.endsWith('.ts')) files[`lib/instance/${file}`] = { from: join(instanceSource, file) }
+  return files
+}
+
 /** `launcher` null means there is no framework checkout (a default parameter would swallow an explicit `undefined`). */
 export function runNewApp(options: NewAppCommandOptions, launcher: string | null = findLauncher() ?? null): NewAppCommandResult {
   if (launcher === null) throw new Error('acryl new needs the ACRYL framework checkout for now (its launcher, scripts/blank.mjs, is not part of the published CLI yet)')
@@ -52,10 +68,7 @@ export function runNewApp(options: NewAppCommandOptions, launcher: string | null
   // A carried runtime brings its launcher along (the framework launcher and its one library), so the app never reads the framework again.
   const { git } = writeNewApp(planned, {
     git: options.skipGit !== true,
-    ...(options.runtime === undefined ? {} : {
-      runtimeDir: resolve(options.runtime),
-      launcherFiles: { 'launch.mjs': launcher, 'lib/instances.mjs': join(dirname(launcher), 'lib', 'instances.mjs') },
-    }),
+    ...(options.runtime === undefined ? {} : { runtimeDir: resolve(options.runtime), launcherFiles: carriedLauncher(launcher) }),
   })
   return { git, root: planned.root, title: options.title ?? planned.name, blueprint: planned.blueprint.id, files: Object.keys(planned.files) }
 }

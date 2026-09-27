@@ -2,7 +2,7 @@
 
 import { spawn } from 'node:child_process'
 import { readFileSync } from 'node:fs'
-import { homedir } from 'node:os'
+import { osHomeDirectory, selectInstance } from 'acryl-harness-runtime'
 import { posix, resolve, win32 } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { exportDesktopDiagnostics } from './diagnostic-export.ts'
@@ -45,19 +45,21 @@ function packageVersion(): string {
 export function defaultDesktopUserDataDirectory(
   platform: NodeJS.Platform = process.platform,
   environment: NodeJS.ProcessEnv = process.env,
-  homeDirectory: string = homedir(),
+  homeDirectory: string = osHomeDirectory(),
 ): string {
+  // The app's own user-data folder: diagnostics of one app must not read another's (runtime instance/).
+  const userDataName = selectInstance({ env: environment, osHome: homeDirectory }).userDataName
   const path = platform === 'win32' ? win32 : posix
   if (platform === 'win32') {
     const appData = environment.APPDATA
     if (appData === undefined || appData.length === 0) {
       throw new Error('APPDATA is unavailable; cannot locate ACRYL diagnostics')
     }
-    return path.join(appData, 'ACRYL')
+    return path.join(appData, userDataName)
   }
-  if (platform === 'darwin') return path.join(homeDirectory, 'Library', 'Application Support', 'ACRYL')
+  if (platform === 'darwin') return path.join(homeDirectory, 'Library', 'Application Support', userDataName)
   const config = environment.XDG_CONFIG_HOME
-  return path.join(config === undefined || config.length === 0 ? path.join(homeDirectory, '.config') : config, 'ACRYL')
+  return path.join(config === undefined || config.length === 0 ? path.join(homeDirectory, '.config') : config, userDataName)
 }
 
 export interface DesktopCliOptions {

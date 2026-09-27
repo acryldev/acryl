@@ -15,6 +15,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
+import { selectInstance } from './instance/index.ts'
 
 /** Cordis plugin name used by loader diagnostics. */
 export const name = 'acryl-workspace-status'
@@ -36,7 +37,7 @@ interface AcrylWorkspaceContext {
 function readWorkspaceContext(): AcrylWorkspaceContext {
   return {
     cwd: process.cwd(),
-    dshHome: process.env.DSH_HOME ?? '',
+    dshHome: selectInstance().dshHome,
     profile: process.env.ACRYL_PROFILE ?? '',
     surface: process.env.ACRYL_SURFACE ?? '',
   }

@@ -1,21 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { createServer } from 'node:net'
-import { WEB_PORT_ATTEMPTS, findFreeWebPort, loopbackPortIsFree, webPortFromEnvironment, webPortPatch } from '../src/web-port.ts'
+import { WEB_PORT_ATTEMPTS, findFreeWebPort, loopbackPortIsFree, webPortPatch } from '../src/web-port.ts'
 
-describe('ACRYL_WEB_PORT', () => {
-  it('is optional, parsed, and never silently falls back when wrong', () => {
-    expect(webPortFromEnvironment({})).toBeUndefined()
-    expect(webPortFromEnvironment({ ACRYL_WEB_PORT: ' ' })).toBeUndefined()
-    expect(webPortFromEnvironment({ ACRYL_WEB_PORT: '3081' })).toBe(3081)
-    for (const bad of ['80', '99999', 'abc', '30.5']) expect(() => webPortFromEnvironment({ ACRYL_WEB_PORT: bad }), bad).toThrow(/ACRYL_WEB_PORT/)
-  })
-
+describe('finding a free port', () => {
   it('moves the server on the loopback address only', () => {
     expect(webPortPatch(3081)).toEqual({ id: 'webserver', config: { host: '127.0.0.1', port: 3081 } })
   })
-})
 
-describe('finding a free port', () => {
   it('starts at the preferred port and moves up one at a time', async () => {
     expect(await findFreeWebPort(3081, async () => true)).toBe(3081)
     const taken = new Set([3081, 3082])

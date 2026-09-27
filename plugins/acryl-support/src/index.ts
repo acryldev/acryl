@@ -10,14 +10,28 @@
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
-import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import { buildDiagnosticsArchive, FileExporter, LogFileSink } from 'acryl-diagnostics'
 import { SUPPORT_DIAGNOSTICS_PATH } from './contract.ts'
 import { createDiagnosticsRequestHandler } from './route.ts'
 
 export const name = 'acryl-support'
-export const inject = ['webServer']
+/**
+ * The part of the runtime's `appInstance` service ACRYL plugins read (a separated interface: plugins do not import the runtime). Every plugin declares
+ * exactly this shape, so the Context augmentations agree in any program that loads several of them.
+ */
+interface AppInstanceService {
+  readonly home: string
+  readonly dshHome: string
+}
+
+declare module '@deepseek-ai/cordis' {
+  interface Context {
+    appInstance: AppInstanceService
+  }
+}
+
+export const inject = ['webServer', 'appInstance']
 
 const pluginVersion = (createRequire(import.meta.url)('../package.json') as { version: string }).version
 
@@ -26,8 +40,8 @@ export function apply(ctx: Context): void {
   const report = (operation: string, cause: unknown): void => {
     ctx.logger.error(`acryl-support: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
   }
-  // Where the DSH home puts logs (`ACRYL_HOME` has already pointed `DSH_HOME` at its `.dsh`).
-  const logsDir = join(resolveDshHome(), 'logs')
+  // Where this app's engine home keeps logs (from the `appInstance` service, never a looked-up home).
+  const logsDir = join(ctx.appInstance.dshHome, 'logs')
 
   ctx.effect(() => {
     let sink: LogFileSink | undefined

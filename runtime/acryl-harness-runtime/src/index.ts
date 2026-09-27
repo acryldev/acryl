@@ -150,7 +150,7 @@ import {
   resolveProfileDir,
 } from '@deepseek-ai/dsh-app-boot'
 
-import { resolveAcrylDshHome } from './acryl-home.ts'
+import { selectInstance, type AppInstance } from './instance/index.ts'
 import {
   acrylCodingCapabilityPackages,
   createAcrylCodingCapabilityPatches,
@@ -169,6 +169,14 @@ export interface BootAcrylHarnessProfileOptions {
   readonly prepare?: (ctx: Context) => Promise<void> | void
 }
 
+/** Provide the chosen app instance before any profile entry mounts, then run the caller's own host setup. */
+function withAppInstance(instance: AppInstance, prepare?: (ctx: Context) => Promise<void> | void): (ctx: Context) => Promise<void> {
+  return async ctx => {
+    ctx.provide('appInstance', instance)
+    await prepare?.(ctx)
+  }
+}
+
 export interface AcrylHarnessRuntime {
   readonly ctx: Context
   readonly profileDirectory: string
@@ -180,7 +188,9 @@ export async function bootAcrylHarnessProfile(
   options: BootAcrylHarnessProfileOptions,
 ): Promise<AcrylHarnessRuntime> {
   if (options.profile.trim() === '') throw new Error('ACRYL Harness profile must not be empty')
-  process.env.DSH_HOME = resolveAcrylDshHome()
+  // This boot is its own composition root: it chooses the app instance once and provides it to plugins (runtime instance/).
+  const instance = selectInstance()
+  process.env.DSH_HOME = instance.dshHome
   const profileDirectory = resolveProfileDir(options.profile)
   initProfile(profileDirectory, DEFAULT_PROFILE_BUNDLES)
   await healProfilesModuleFallback({ installAnchor: dshInstallAnchor })
@@ -198,7 +208,7 @@ export async function bootAcrylHarnessProfile(
       'ACRYL profile enables Cordis HMR and must be launched with Node --expose-internals',
     )
   }
-  const ctx = await boot('acryl', rootConfig, patches, options.prepare)
+  const ctx = await boot('acryl', rootConfig, patches, withAppInstance(instance, options.prepare))
   if ((ctx as { tools?: unknown }).tools) installAcrylWorkspaceStatusTool(ctx)
   installSessionLogExporter(ctx, { surface: 'tui' })
   let disposed = false
@@ -239,7 +249,9 @@ export async function bootAcrylWebProfile(
   options: BootAcrylWebProfileOptions = {},
 ): Promise<AcrylWebRuntime> {
   const profileName = 'web'
-  process.env.DSH_HOME = resolveAcrylDshHome()
+  // This boot is its own composition root: it chooses the app instance once and provides it to plugins (runtime instance/).
+  const instance = selectInstance()
+  process.env.DSH_HOME = instance.dshHome
   const profileDirectory = resolveProfileDir(profileName)
   // See engine-dsh.ts's resolveWebEngineComposition for the full rationale:
   // DEFAULT_PROFILE_BUNDLES (dsh-base only) pre-empts loadProfile()'s own
@@ -266,15 +278,15 @@ export async function bootAcrylWebProfile(
     ...profile.patches,
   ])
   const cmdlineArgs = options.cmdlineArgs ?? []
-  const ctx = await boot('web', rootConfig, patches, hostCtx => {
+  const ctx = await boot('web', rootConfig, patches, withAppInstance(instance, hostCtx => {
     provideCmdline(hostCtx, { args: [...cmdlineArgs], exit: code => { process.exitCode = code } })
     return options.prepare?.(hostCtx)
-  })
+  }))
   if ((ctx as { tools?: unknown }).tools) installAcrylWorkspaceStatusTool(ctx)
   installSessionLogExporter(ctx, { surface: 'web' })
   const startup = ctx.get('webStartup') as { host?: string; port?: number } | undefined
   const host = startup?.host ?? '127.0.0.1'
-  const port = startup?.port ?? 3080
+  const port = startup?.port ?? instance.webPort.start
   const url = `http://${host}:${port}`
   let disposed = false
   return Object.freeze({
@@ -347,6 +359,37 @@ export type {
   RepairResult,
   RepairStep,
 } from './profile-repair/index.ts'
-export { WEB_PORT_ATTEMPTS, findFreeWebPort, loopbackPortIsFree, webPortFromEnvironment, webPortPatch } from './web-port.ts'
-export { APP_EXTENSIONS_DIR, APP_MANIFEST_FILE, NewAppError, planNewApp, writeNewApp, type NewAppOptions, type PlannedApp } from './app/new-app.ts'
+export { WEB_PORT_ATTEMPTS, findFreeWebPort, loopbackPortIsFree, webPortPatch } from './web-port.ts'
+export { APP_EXTENSIONS_DIR, APP_MANIFEST_FILE, NewAppError, planNewApp, writeNewApp, type LauncherFile, type NewAppOptions, type PlannedApp } from './app/new-app.ts'
 export { PROFILE_OWNER_FILE, ProfileInUseError, claimProfile, type ProfileOwner } from './profile-owner.ts'
+export {
+  APP_DEFINITION_FILE,
+  AppInstanceError,
+  LockHeldError,
+  acquireLock,
+  announce,
+  appFolder,
+  appFolderInstance,
+  appName,
+  defaultInstance,
+  developmentInstance,
+  instanceEnvironment,
+  isGitWorktree,
+  listRunning,
+  managedApp,
+  osHomeDirectory,
+  pinnedInstance,
+  processIsAlive,
+  profileDir,
+  readLock,
+  releaseLock,
+  selectInstance,
+  stablePort,
+  withdraw,
+  worktreeInstance,
+  type AppInstance,
+  type AppInstanceKind,
+  type LockHolder,
+  type RunningApp,
+  type SelectInstanceOptions,
+} from './instance/index.ts'

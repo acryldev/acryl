@@ -17,7 +17,7 @@ import { DSH_LAUNCH_ENVIRONMENT_KEY } from '@deepseek-ai/dsh-launch-environment'
 import {
   createAcrylEngineHost,
   createDshEngineDefinitionFromComposition,
-  resolveAcrylDshHome,
+  selectInstance,
   resolvePluginLifecycleStatePath,
 } from 'acryl-harness-runtime'
 import {
@@ -474,12 +474,11 @@ async function start(): Promise<void> {
       platform: process.platform,
     })
     for (const [name, value] of Object.entries(shellEnvironmentResolution.updates)) process.env[name] = value
-    // ACRYL's own root nests each engine's data under it (`~/.acryl/.dsh` for
-    // the DSH engine) so it never silently shares state with a stock DSH
-    // Desktop install (dshdesktop.com), which uses plain `~/.dsh` — an
-    // explicit $DSH_HOME still wins, same precedence as resolveDshHome() itself.
-    process.env.DSH_HOME = resolveAcrylDshHome()
-    const homeDir = process.env.DSH_HOME
+    // Desktop's composition root chooses the app instance once (runtime instance/): which home, engine home and user data this window belongs to. The
+    // pinned harness reads its home from DSH_HOME, so the instance crosses that boundary through the environment.
+    const instance = selectInstance()
+    process.env.DSH_HOME = instance.dshHome
+    const homeDir = instance.dshHome
     const windowsVolumeConcerns = diagnoseWindowsVolumes(process.platform, [
       { label: 'application install', path: process.execPath },
       { label: 'desktop user data', path: app.getPath('userData') },

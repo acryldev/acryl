@@ -1,8 +1,6 @@
 /**
- * The one boundary that decides which port the Web surface listens on, so several ACRYL instances (the main-branch app on 3080, a
- * feature branch from 3081) run side by side. Unset means the harness default. `ACRYL_WEB_PORT` is the port to start from: if it is
- * taken, the next ones are tried in turn, so a second instance just works. A set-but-invalid value fails loudly: silently falling
- * back to 3080 would collide with the very app the value was set to avoid.
+ * Finding and applying the Web port of an app. Which port an app starts from is part of its instance family (`instance/`, which also reads
+ * `ACRYL_WEB_PORT`); this module only scans for a free loopback port from there and turns it into the web server's Loader patch.
  *
  * @module acryl-harness-runtime/web-port
  */
@@ -11,14 +9,6 @@ import { createServer } from 'node:net'
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 
 const HOST = '127.0.0.1'
-
-export function webPortFromEnvironment(env: NodeJS.ProcessEnv = process.env): number | undefined {
-  const raw = env.ACRYL_WEB_PORT?.trim()
-  if (raw === undefined || raw === '') return undefined
-  const port = Number(raw)
-  if (!Number.isInteger(port) || port < 1024 || port > 65_535) throw new Error(`ACRYL_WEB_PORT must be a port number from 1024 to 65535, got ${JSON.stringify(raw)}`)
-  return port
-}
 
 /** The Loader patch that moves the web server to `port`, on the loopback address only. */
 export function webPortPatch(port: number): PatchOptions {

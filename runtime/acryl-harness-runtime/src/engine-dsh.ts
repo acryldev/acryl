@@ -42,7 +42,6 @@ import {
 import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 
-import { resolveAcrylDshHome } from './acryl-home.ts'
 import { provideCliMarketInstall } from './cli-market-install.ts'
 import { provideCliMarketPlugins } from './cli-market-plugins.ts'
 import {
@@ -53,7 +52,8 @@ import {
 import type { AcrylEngineDefinition } from './engine-host.ts'
 import { installAcrylWorkspaceStatusTool } from './plugin-acryl-workspace-status.ts'
 import { blueprintFromEnvironment, composeBlueprintRows } from './blueprint/index.ts'
-import { findFreeWebPort, webPortFromEnvironment, webPortPatch } from './web-port.ts'
+import { findFreeWebPort, webPortPatch } from './web-port.ts'
+import { selectInstance, type AppInstance } from './instance/index.ts'
 import { claimProfile } from './profile-owner.ts'
 import { pluginLifecyclePatches, resolvePluginLifecycleStatePath } from './plugin-lifecycle-state.ts'
 import { installSessionLogExporter } from './session-log-exporter.ts'
@@ -74,6 +74,8 @@ export interface DshEngineComposition {
   readonly surface: string
   /** The product name the page title carries (the Blueprint's brand); defaults to `ACRYL`. */
   readonly productName?: string
+  /** The app this composition belongs to; provided to plugins as the `appInstance` service. Chosen by the surface's composition root. */
+  readonly instance?: AppInstance
 }
 
 function escapeHtml(text: string): string {
@@ -114,6 +116,8 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   // rather than disposed per engine swap - re-providing it on a later
   // re-mount of `dsh` would otherwise throw "service already registered".
   if (ctx.root.get('dshHomePath') === undefined) ctx.root.provide('dshHomePath', dshHomePath)
+  // The app's resource family (instance/): plugins read where their app keeps things from here, never from the environment or the OS home.
+  if (ctx.root.get('appInstance' as never) === undefined) ctx.root.provide('appInstance', composition.instance ?? selectInstance())
   const entry = await mountRootInclude(ctx, composition.rootConfig, composition.patches, composition.bareModuleBaseUrl)
   // mountRootInclude creates its Include row at the Loader's own top level -
   // it has no `parent` parameter and is not scoped to this plugin's own
@@ -257,9 +261,18 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   }
 }
 
+/** An app folder's own definition is its Blueprint unless one was chosen explicitly. */
+function instanceBlueprintEnvironment(instance: AppInstance): NodeJS.ProcessEnv {
+  const explicit = process.env.ACRYL_BLUEPRINT
+  return explicit === undefined || explicit.trim() === '' ? { ...process.env, ...(instance.definitionFile === undefined ? {} : { ACRYL_BLUEPRINT: instance.definitionFile }) } : process.env
+}
+
 /** Resolve the pinned Harness `acryl` profile by name into a mountable composition (the CLI/TUI flavor). */
 async function resolveDshEngineComposition(profileName: string): Promise<DshEngineComposition> {
-  process.env.DSH_HOME = resolveAcrylDshHome()
+  // The composition root for the CLI surface: the app instance is chosen here, once. The pinned harness reads its home from DSH_HOME, so the instance is
+  // handed across that boundary through the environment.
+  const instance = selectInstance()
+  process.env.DSH_HOME = instance.dshHome
   // Read by `acryl_workspace_status`: the agent must learn the real surface and profile, not a fallback label.
   process.env.ACRYL_SURFACE = 'tui'
   process.env.ACRYL_PROFILE = profileName
@@ -278,7 +291,7 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
   // session-stats natively. Without this, ACRYL's own tui-only insert of the
   // same row ids collides at boot (spec 034 T008).
   const existingRowIds = new Set(composeEntries([profileLayerPatches]).map(entry => entry.id))
-  const blueprint = blueprintFromEnvironment()
+  const blueprint = blueprintFromEnvironment(instanceBlueprintEnvironment(instance))
   process.env.ACRYL_BLUEPRINT_ID = blueprint.id
   const rowsComposition = composeBlueprintRows(blueprint, 'tui', existingRowIds)
   const patches = structuredClone([
@@ -299,7 +312,7 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
     profileName,
     statePath: resolvePluginLifecycleStatePath(),
   }))
-  return { rootConfig, patches, surface: 'tui' }
+  return { rootConfig, patches, surface: 'tui', instance }
 }
 
 /**
@@ -404,7 +417,9 @@ export function materializeProfilePackage(profileDir: string, packageName: strin
 /** Resolve the pinned Harness `web` profile into a mountable composition (the Web flavor). */
 async function resolveWebEngineComposition(installPackageUrl: string): Promise<DshEngineComposition> {
   const profileName = 'web'
-  process.env.DSH_HOME = resolveAcrylDshHome()
+  // The composition root for the Web surface: the app instance is chosen here, once (see the CLI flavor above).
+  const instance = selectInstance()
+  process.env.DSH_HOME = instance.dshHome
   process.env.ACRYL_SURFACE = 'web'
   process.env.ACRYL_PROFILE = profileName
   const profileDirectory = resolveProfileDir(profileName)
@@ -437,7 +452,7 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   const existingRowIds = new Set(composeEntries([profileLayerPatches]).map(entry => entry.id))
   // Web runs the same ACRYL shell and workspace Desktop does (spec 040, "Surface sharing"): both come from the
   // shared capability declarations, and the ACRYL packages they name are made resolvable from this profile.
-  const blueprint = blueprintFromEnvironment()
+  const blueprint = blueprintFromEnvironment(instanceBlueprintEnvironment(instance))
   process.env.ACRYL_BLUEPRINT_ID = blueprint.id
   const webSurfaces = new Set(['web'] as const)
   const capabilities = new Set(blueprint.capabilities)
@@ -487,10 +502,10 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   // `healProfilesModuleFallback` cannot find them; see `materializeProfilePackage`).
   patches.push(...rowsComposition.patches)
   // A second instance beside one on the default port (spec 036): ACRYL_WEB_PORT moves the server.
-  const preferredPort = webPortFromEnvironment()
-  if (preferredPort !== undefined) {
-    const webPort = await findFreeWebPort(preferredPort)
-    if (webPort !== preferredPort) process.stdout.write(`ACRYL: port ${String(preferredPort)} is in use, using ${String(webPort)}\n`)
+  // The port is part of the app's family: a stable start, and the next free one when it is taken (never a fight with another app).
+  if (instance.webPort.scan) {
+    const webPort = await findFreeWebPort(instance.webPort.start)
+    if (webPort !== instance.webPort.start) process.stdout.write(`ACRYL: port ${String(instance.webPort.start)} is in use, using ${String(webPort)}\n`)
     patches.push(webPortPatch(webPort))
   }
   // Last, so a user override beats every composition decision above it - the
@@ -499,7 +514,7 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
     profileName,
     statePath: resolvePluginLifecycleStatePath(),
   }))
-  return { rootConfig, patches, surface: 'web', productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL' }
+  return { rootConfig, patches, surface: 'web', instance, productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL' }
 }
 
 /**
