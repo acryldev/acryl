@@ -3,13 +3,15 @@
 const STYLE_ID = 'acryl-workspace-settings-styles'
 
 const CSS = `
-.dshAgentsSection { display: grid; gap: 18px; padding: 4px 0 28px; color: var(--dsw-alias-label-primary); font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; }
+.dshAgentsSection { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; min-width: 0; padding: 4px 0 28px; color: var(--dsw-alias-label-primary); font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; }
 .dshAgentsHeading { margin: 0; font-size: 15px; font-weight: 600; }
 .dshAgentsSubheading { margin: 0; font-size: 13px; font-weight: 600; }
 .dshAgentsText, .dshAgentsHint { margin: 0; color: var(--dsw-alias-label-secondary, inherit); }
 .dshAgentsHint { font-size: 12px; opacity: 0.85; }
-.dshAgentsBlock { display: grid; gap: 8px; }
-.dshAgentsInline { grid-template-columns: 1fr auto; align-items: center; gap: 16px; }
+.dshAgentsBlock { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0; }
+/* The Settings panel is 800px wide upstream; these sections need more room for their controls, so the panel widens (up to the window) while one of them is showing. */
+[role="dialog"][aria-modal="true"]:has(.dshAgentsSection) { width: min(1120px, calc(100vw - 48px)) !important; }
+.dshAgentsInline { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px; }
 .dshAgentsChips { display: flex; flex-wrap: wrap; gap: 6px; }
 .dshAgentsChip { appearance: none; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; background: transparent; color: inherit; cursor: pointer; font: inherit; }
 .dshAgentsChip:hover { border-color: #4d6bfe; }
@@ -23,10 +25,11 @@ const CSS = `
 .dshAgentsList { display: grid; margin: 0; padding: 0; list-style: none; border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; }
 .dshAgentsRow { padding: 8px 12px; }
 .dshAgentsRow + .dshAgentsRow { border-top: 1px solid var(--dsw-alias-border-l1); }
-.dshAgentsRow[data-disabled] .dshAgentsRowName { opacity: 0.55; }
+.dshAgentsRow[data-disabled] .dshAgentsRowControls { display: flex; align-items: center; gap: 10px; flex: none; margin-left: auto; }
+.dshAgentsRowName { opacity: 0.55; }
 .dshAgentsList[data-available] .dshAgentsRowName { opacity: 0.75; }
-.dshAgentsRowMain { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.dshAgentsRowName { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.dshAgentsRowMain { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; min-width: 0; }
+.dshAgentsRowName { display: flex; flex-direction: column; flex: 1 1 220px; min-width: 0; }
 .dshAgentsRowLabel { font-weight: 600; }
 .dshAgentsRowCommand { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dsw-alias-label-secondary, inherit); font: 11.5px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dshAgentsBadge { margin-left: 8px; padding: 0 6px; border-radius: 4px; background: rgb(248 113 113 / 16%); color: #f87171; font-size: 10.5px; font-weight: 500; }
