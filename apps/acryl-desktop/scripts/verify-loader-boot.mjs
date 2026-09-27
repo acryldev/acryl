@@ -136,6 +136,8 @@ try {
     console.error('rootConfig content:', readFileSync(prepared.rootConfig, 'utf8'))
     console.error('patches count:', prepared.patches.length, JSON.stringify(prepared.patches).slice(0, 3000))
   }
+  // The profile's module links must exist before the boot resolves anything from a fresh home (prepareDesktopProfile returns the repair as a promise).
+  await prepared.moduleFallback
   ctx = await boot(
     BIN_NAME,
     prepared.rootConfig,

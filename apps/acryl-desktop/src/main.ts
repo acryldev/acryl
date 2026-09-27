@@ -685,6 +685,8 @@ async function start(): Promise<void> {
         `${BIN_NAME}: requested Market provider ${prepared.market.requested} was disabled for this generation: ${prepared.marketFailure}`,
       )
     }
+    // A fresh home (an app's first start) must have its module links before anything resolves a package from the profile.
+    await prepared.moduleFallback
     startupStage = 'runtime-bootstrap'
     lifecycleRecorder.transitionStartupStage(startupStage)
     const dshBootstrapPath = fileURLToPath(new URL('./desktop-cli.js', import.meta.url))

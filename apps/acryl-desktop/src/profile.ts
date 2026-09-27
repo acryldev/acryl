@@ -234,6 +234,12 @@ export interface PreparedDesktopProfile {
   marketFailure?: string
   /** Trusted lock projection for the configured BLEND, when one is selected. */
   blend?: DesktopBlendProjection
+  /**
+   * Settles when the profiles' module-fallback links are in place. Preparation itself stays synchronous; every caller that boots the profile awaits
+   * this first, because a fresh home (a new app's first start, a smoke's temporary home) has no links yet and would fail to resolve its packages.
+   * Never rejects: a failed repair surfaces as the boot's own resolution error.
+   */
+  moduleFallback: Promise<void>
 }
 
 /** Optional observations emitted before profile preparation can fail. */
@@ -656,12 +662,10 @@ export function prepareDesktopProfile(
   const profileDir = profileName === DESKTOP_PROFILE_NAME
     ? ensureDesktopProfile(home)
     : resolveProfileDir(profileName, home)
-  // Best-effort background repair of the profile's module-fallback symlink
-  // farm; `prepareDesktopProfile` itself stays synchronous and must not wait
-  // on or fail from this. Swallow so a torn-down or unwritable profiles
-  // directory surfaces as a silent no-op heal rather than an unhandled
-  // rejection outliving this call.
-  void healProfilesModuleFallback({ installAnchor: INSTALL_ANCHOR, home }).catch(() => {})
+  // Repair of the profile's module-fallback symlink farm. `prepareDesktopProfile` itself stays synchronous, so the repair is returned as a promise
+  // (`moduleFallback`) that every boot awaits: firing and forgetting it raced a fresh home's first boot, which then could not resolve its packages.
+  // Swallowed so a torn-down or unwritable profiles directory surfaces as the boot's own error rather than an unhandled rejection.
+  const moduleFallback = healProfilesModuleFallback({ installAnchor: INSTALL_ANCHOR, home }).then(() => undefined, () => undefined)
   // `plugin-management` is the community market's user-facing scope. Startup
   // recovery has its own state file so switching to another provider cannot
   // reapply a stale community-market disable, while a recovery disable always
@@ -1002,6 +1006,7 @@ export function prepareDesktopProfile(
     market: desktopMarketSnapshotWithEffective(marketSelection, effectiveMarket),
     ...(marketFailure === undefined ? {} : { marketFailure }),
     ...(blend === undefined ? {} : { blend }),
+    moduleFallback,
   }
 }
 

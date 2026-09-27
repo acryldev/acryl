@@ -122,6 +122,8 @@ try {
     async requestRestart() {},
     prepareToQuit() {},
   }
+  // The profile's module links must exist before the boot resolves anything from a fresh home (prepareDesktopProfile returns the repair as a promise).
+  await prepared.moduleFallback
   ctx = await boot(
     BIN_NAME,
     prepared.rootConfig,
