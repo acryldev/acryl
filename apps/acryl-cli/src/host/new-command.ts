@@ -8,7 +8,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { planNewApp, writeNewApp, type LauncherFile } from 'acryl-harness-runtime'
+import { planNewApp, resolveStartSource, writeNewApp, type LauncherFile } from 'acryl-harness-runtime'
 
 export interface NewAppCommandOptions {
   readonly dir: string
@@ -19,6 +19,7 @@ export interface NewAppCommandOptions {
   readonly runtime?: string
   readonly skipGit?: boolean
   readonly from?: string
+  readonly registry?: string
 }
 
 export interface NewAppCommandResult {
@@ -60,8 +61,16 @@ function carriedLauncher(launcher: string): Record<string, LauncherFile> {
 /** `launcher` null means there is no framework checkout (a default parameter would swallow an explicit `undefined`). */
 export function runNewApp(options: NewAppCommandOptions, launcher: string | null = findLauncher() ?? null): NewAppCommandResult {
   if (launcher === null) throw new Error('acryl new needs the ACRYL framework checkout for now (its launcher, scripts/blank.mjs, is not part of the published CLI yet)')
-  const source = options.from === undefined ? undefined : resolve(options.from)
-  if (source !== undefined && !existsSync(join(source, 'blend.yaml'))) throw new Error(`${source} has no blend.yaml; --from takes an app folder or a captured Blend folder`)
+  // A folder, a git repository (the user's own git login) or a registry starter, resolved to a local folder for as long as the new app is written.
+  const resolved = options.from === undefined ? undefined : resolveStartSource(options.from, options.registry === undefined ? {} : { registry: options.registry })
+  try {
+    return writeFromSource(options, launcher, resolved?.folder)
+  } finally {
+    resolved?.dispose()
+  }
+}
+
+function writeFromSource(options: NewAppCommandOptions, launcher: string, source: string | undefined): NewAppCommandResult {
   const planned = planNewApp(options.dir, {
     ...(source === undefined ? {} : { from: { manifestText: readFileSync(join(source, 'blend.yaml'), 'utf8'), ...(existsSync(join(source, 'blend.lock.json')) ? { lockText: readFileSync(join(source, 'blend.lock.json'), 'utf8') } : {}) } }),
     launcher,

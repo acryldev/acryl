@@ -44,6 +44,18 @@
         },
         "description": {
           "type": "string"
+        },
+        "license": {
+          "type": "string",
+          "minLength": 1,
+          "description": "SPDX license id, or a free-form statement such as 'Proprietary'."
+        },
+        "visibility": {
+          "enum": [
+            "private",
+            "public"
+          ],
+          "description": "Who may see this definition. A private app is never pushed to a public remote or published to a registry."
         }
       }
     },

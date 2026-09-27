@@ -393,3 +393,4 @@ export {
   type RunningApp,
   type SelectInstanceOptions,
 } from './instance/index.ts'
+export { PUBLIC_REGISTRY, StartSourceError, classifyStartSource, gitClone, resolveStartSource, type GitClone, type ResolvedStartSource, type StartSource } from './app/start-source.ts'

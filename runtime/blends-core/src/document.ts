@@ -46,6 +46,10 @@ export interface BlendMetadata {
   version: string
   category?: string
   description?: string
+  /** SPDX license id, or a free-form statement such as `Proprietary`. */
+  license?: string
+  /** Who may see this definition: a `private` one is never pushed to a public remote or published to a registry. */
+  visibility?: 'private' | 'public'
 }
 
 export interface BlendSpec {

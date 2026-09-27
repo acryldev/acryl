@@ -49,5 +49,8 @@
     "@types/node": "22.20.1",
     "typescript": "6.0.3",
     "vitest": "4.1.11"
+  },
+  "bin": {
+    "blends-registry-index": "./dist/bin/registry-index.js"
   }
 }

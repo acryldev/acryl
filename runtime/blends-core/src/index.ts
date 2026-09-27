@@ -12,6 +12,7 @@ export { compileDefinition, type CompileResult } from './compile.js'
 export { inspectDefinition } from './inspect.js'
 export { generateLock, BLENDS_CORE_VERSION, type LockResult } from './lock.js'
 export { manifestDigest } from './digest.js'
+export { REGISTRY_INDEX_FORMAT, buildRegistryIndex, parseRegistryIndex, type RegistryEntry, type RegistryIndex, type RegistryProblem } from './registry.js'
 
 // Document model and identity.
 export {

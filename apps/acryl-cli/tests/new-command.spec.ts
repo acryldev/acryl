@@ -94,3 +94,18 @@ describe('acryl new --from', () => {
     expect(() => parseAcrylArgs(['new', 'x', '--from', 'a', '--blueprint', 'acryl.blank'])).toThrow(/alternatives/)
   })
 })
+
+describe('acryl new --from a git repository', () => {
+  it('starts an app from a (private) starter repository, through the user\'s own git', async () => {
+    const { spawnSync } = await import('node:child_process')
+    const { readFileSync } = await import('node:fs')
+    const root = mkdtempSync(join(tmpdir(), 'acryl-new-git-')); dirs.push(root)
+    const starter = join(root, 'accounting-starter')
+    runNewApp({ dir: starter, title: 'Accounting', skipGit: true })
+    for (const args of [['init', '--quiet'], ['add', '.'], ['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '--quiet', '-m', 'starter']]) {
+      expect(spawnSync('git', args, { cwd: starter }).status).toBe(0)
+    }
+    const created = runNewApp({ dir: join(root, 'firm-books'), title: 'Firm Books', from: `file://${starter}`, skipGit: true })
+    expect(readFileSync(join(created.root, 'blend.yaml'), 'utf8')).toMatch(/created from app\.accounting-starter/u)
+  })
+})
