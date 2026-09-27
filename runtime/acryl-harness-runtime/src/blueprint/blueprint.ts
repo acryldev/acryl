@@ -23,6 +23,9 @@ export type BlueprintRowId =
   | 'shortcuts'
   | 'mount-anchors'
 
+/** Every row id, as data: what a Blueprint file may name. Kept next to the type so the two cannot drift (a test asserts it). */
+export const BLUEPRINT_ROW_IDS: readonly BlueprintRowId[] = ['extension-context', 'system-prompt', 'ui-library', 'community-market', 'shortcuts', 'mount-anchors']
+
 /** `acryl`: the stock ACRYL brand plugin. `custom`: the configurable `acryl-brand` plugin carrying this identity. */
 export type BlueprintBrand =
   | { readonly kind: 'acryl' }

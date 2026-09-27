@@ -299,8 +299,12 @@ export { reconcileProfileLayout, type LayoutChange } from './profile-layout.ts'
 export {
   BLANK_BLUEPRINT,
   FULL_BLUEPRINT,
+  BLUEPRINT_ROW_IDS,
+  InvalidBlueprintError,
   InvalidBrandIdentityError,
   UnknownBlueprintError,
+  parseBlueprint,
+  readBlueprintFile,
   blueprintFromEnvironment,
   brandIdentity,
   builtInCatalog,

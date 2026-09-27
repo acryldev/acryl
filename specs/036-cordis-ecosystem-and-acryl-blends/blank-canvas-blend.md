@@ -1,6 +1,6 @@
 # The blank-canvas Blend: the stem cell of the framework
 
-Status: built for Web and CLI, verified headless and with a real model (see "Verification"). Desktop consumption is a follow-on (see "Not built").
+Status: built for Web, CLI and Desktop, verified headless and with a real model (see "Verification"). Human walkthrough: `HUMAN-TEST.md`.
 Follows `spec.md` (open question 3: the blank-canvas Blend's literal minimal plugin set) and `blend-instance-design.md` (capture, apply, ledger).
 
 ## What it is
@@ -77,12 +77,16 @@ becomes a source of Blueprints later without touching the domain.
 - A real browser run of Blank on Web shows the configured brand in the sidebar and the tab title.
 - Real model run: see the log in `docs/DEVELOPMENT-LOG.md` (2026-09-26 entry).
 
+## Blueprints from a file
+
+`ACRYL_BLUEPRINT` also accepts a `.yaml`, `.yml` or `.json` file (`runtime/.../blueprint/definition.ts`): `id`, optional `name`, `description`, `extends` (a known Blueprint), `capabilities`, `rows`,
+`shell` and `brand`. Unknown keys, rows and capabilities are rejected at start-up. A sample private brand is in `samples/private-brand.blueprint.yaml`. `node scripts/blank.mjs <surface>` launches
+any surface in its own home (`--blueprint`, `--name`, `--accent`, `--port`).
+
 ## Not built (follow-ons)
 
-- **Desktop** consumes a Blueprint through its own profile pipeline (`apps/acryl-desktop/src/profile.ts`, which also reads a Blend lock at `dsh-desktop.blend`).
-  It needs the same `composeBlueprintRows` call and lock v2. Its Electron chrome (window title, dock icon, tray, menu) is owned by the main process and needs its
-  own brand seam. Until then Desktop always runs `acryl.full`.
-- Blueprints from a YAML file or a hub (`blends.acryl.dev` manifests) instead of the two built-ins: the `BlueprintCatalog` port is the seam.
+- Desktop's Electron chrome (window title, dock icon, tray, menu) is owned by the main process and needs its own brand seam. Desktop composes the Blueprint's rows and brand today, but has not been launched from this branch.
+- Booting a Blend (`blend.yaml` and lock) directly as the composition, so a captured Blend is a starting point and not only something `/blend apply` re-creates; and Blueprints from a hub (`blends.acryl.dev`).
 - A suppressible first-launch notice for white-label products (client plugin).
 - Terminal branding beyond the prompt identity (the CLI's compiled palette and banner).
 - More starters than `blank` (the 100-category taxonomy); each should be a Blueprint plus the plugins it names, grown from `blank` the way the organizer is.
