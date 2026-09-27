@@ -1,3 +1,23 @@
+## 2026-09-27 - 036 Apps are bulkheads: one AppInstance family, no ambient home anywhere
+
+Commits: `e3be4551826ae245fe2b8e3ca7174e281f694fd7` (worktree isolation), `9627d7a86a228245d12a79d1a06523212b944a84` (profile owner guard), `1b10c17cf7cab20a745befa2f59ed7f1c017338a` (the refactor). Design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`.
+
+- **The incident.** A Web run from the 036 worktree used the shared `~/.acryl`, re-linked the running main app's Web profile to the worktree's packages, and the
+  main app rendered blank; a leftover `dsh-desktop.blend` setting (Sep 11 demo) separately pointed a shared Desktop profile at a demo Blend. Both were repaired
+  (links restored, the setting removed with a backup).
+- **The diagnosis.** "The ACRYL home" was a hidden Singleton: about a dozen places resolved it ambiently and fell back to `~/.acryl`. Fixing one path never
+  isolated the app; the repeated one-file fixes were the signal.
+- **The design, named from the engineering rule books.** Apps are Bulkheads (Release It!). Each kind of app is an Abstract Factory producing one consistent family
+  (home, engine home, port, Electron user data, run lock, project scope), a deep module (Ousterhout) chosen once at each composition root (Clean Architecture)
+  by `instance/select.ts` and passed inward; plugins read the `appInstance` service. Run claims and the profile guard share a Pessimistic Offline Lock and
+  running apps form a Registry (PoEAA). The launcher scripts import the same TypeScript module, so every rule exists once.
+- **Enforced.** `tests/bulkhead.spec.ts` fails on any `homedir()` or placement-variable read outside the selector, and boots two apps at once to prove they share
+  no home, profile, port, user data or project scope and write only inside their own folders.
+- **Found by the new tests:** `managedApp('../x')` escaped the managed root; two direct boot paths and both Desktop smokes did not provide the instance.
+
+Behavior changes: a legacy DSH_HOME now moves the ACRYL home with it; the main checkout's `pnpm run dev` Desktop owns `~/.acryl-dev` completely (custom agents:
+`cp -R ~/.acryl/workspace ~/.acryl-dev/` once). Proposed next (awaiting decision): `specs/036-cordis-ecosystem-and-acryl-blends/repositories.md`.
+
 ## 2026-09-27 - 036 ACRYL Blends as a framework: acryl new, builder included, apps that share nothing
 
 Commits: `2d2c1efecefed510e5101044033cba3529d01ade`, `d10d40d4d4d79ee958a887791dcacce9b66df01b`, `4eff7311cd132b5ce45233e7ff6ffe054519af0d`, `027310eabd5764a7b2f7ece5734a2538c085027a`, `1ee4c3b94cb6eb7b43f4ae72b2a5e9f9766af372`, `bdc9cc9da09cdfab5eada305feb1e27dd1efbc9d`, `72a3ac3f1e5a086aa5c6880aa8d935ec86603a04`, `59048005ef1221dbaa5a4cc996db85a7da519c38` (branch `036-cordis-ecosystem-and-acryl-blends`).
