@@ -107,9 +107,11 @@ import {
 import type { RendererBootReport } from './startup/renderer-boot-contract.ts'
 import { desktopLocaleFromLanguageTag } from './shell/tray-locale.ts'
 import { resolveDesktopUserDataOverride } from './shell/desktop-user-data.ts'
+import { resolveProductName } from './shell/product-name.ts'
 
 const BIN_NAME = 'acryl-desktop'
-const PRODUCT_NAME = 'ACRYL'
+// The Dock, menu and diagnostics name: `ACRYL`, or the instance's brand (see shell/product-name.ts) so several Desktop instances are distinguishable.
+const PRODUCT_NAME = resolveProductName()
 
 /**
  * True when this process is the ephemeral dev-mode bundle `launch-dev.mjs`

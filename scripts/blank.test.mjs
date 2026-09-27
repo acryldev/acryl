@@ -35,6 +35,12 @@ test('brand flags and a blueprint file are passed through, and bad input fails l
   assert.throws(() => blankLaunchPlan('web', { instance: '../evil' }, {}), /instance name/)
 })
 
+test('a second Desktop instance starts from the existing build instead of rebuilding under the first', () => {
+  assert.deepEqual(blankLaunchPlan('desktop', {}, {}, '/h', '/r', []).args.filter(arg => arg === '--skip-build'), [])
+  assert.deepEqual(blankLaunchPlan('desktop', { instance: 'b' }, {}, '/h', '/r', ['web']).args.filter(arg => arg === '--skip-build'), [])
+  assert.deepEqual(blankLaunchPlan('desktop', { instance: 'b' }, {}, '/h', '/r', ['desktop']).args.filter(arg => arg === '--skip-build'), ['--skip-build'])
+})
+
 test('flags parse in both forms', () => {
   assert.deepEqual(parseFlags(['--name', 'Orbit', '--accent=#112233']), { name: 'Orbit', accent: '#112233' })
 })

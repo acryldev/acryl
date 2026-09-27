@@ -14,14 +14,14 @@ import { spawn } from 'node:child_process'
 import { dirname, join, resolve } from 'node:path'
 import { homedir } from 'node:os'
 import { fileURLToPath } from 'node:url'
-import { InstanceError, claimInstance, releaseInstance, resolveInstance } from './lib/instances.mjs'
+import { InstanceError, claimInstance, listInstances, releaseInstance, resolveInstance } from './lib/instances.mjs'
 
 export const DEFAULT_INSTANCE = 'blank'
 
 const FLAG_TO_ENV = { name: 'ACRYL_BRAND_NAME', tagline: 'ACRYL_BRAND_TAGLINE', accent: 'ACRYL_BRAND_ACCENT', 'accent-dark': 'ACRYL_BRAND_ACCENT_DARK', font: 'ACRYL_BRAND_FONT', mark: 'ACRYL_BRAND_MARK' }
 
 /** Pure: what to run, in which environment, for one surface and instance. */
-export function blankLaunchPlan(surface, flags, environment, home = homedir(), root = resolve(dirname(fileURLToPath(import.meta.url)), '..')) {
+export function blankLaunchPlan(surface, flags, environment, home = homedir(), root = resolve(dirname(fileURLToPath(import.meta.url)), '..'), runningSurfaces = []) {
   const instance = resolveInstance(String(flags.instance ?? DEFAULT_INSTANCE), home)
   const brandEnv = Object.fromEntries(Object.entries(FLAG_TO_ENV).flatMap(([flag, variable]) => (flags[flag] === undefined ? [] : [[variable, String(flags[flag])]])))
   // ACRYL_HOME is authoritative for every ACRYL path (profile, sessions, settings, global extensions, plugin state); an ambient DSH_HOME must not leak in.
@@ -42,7 +42,10 @@ export function blankLaunchPlan(surface, flags, environment, home = homedir(), r
   if (surface === 'cli') return { ...base, surface, command: process.execPath, args: [join(root, 'apps/acryl-cli/bin/dev-run.mjs')], env }
   if (surface === 'desktop') {
     // Its own Electron user-data folder: the single-instance lock, window state and local storage are per instance.
-    return { ...base, surface, command: process.execPath, args: [join(root, 'scripts/dev-local.mjs')], env: { ...env, ACRYL_LOCAL_PRODUCT_NAME: instance.userDataName } }
+    // Every Desktop instance runs the same built app (apps/acryl-desktop/lib). Building cleans that folder, so a second launch must not rebuild
+    // underneath an instance that is already running from it: it starts from the existing build instead.
+    const alreadyRunning = runningSurfaces.includes('desktop')
+    return { ...base, surface, skipBuild: alreadyRunning, command: process.execPath, args: [join(root, 'scripts/dev-local.mjs'), ...(alreadyRunning ? ['--skip-build'] : [])], env: { ...env, ACRYL_LOCAL_PRODUCT_NAME: instance.userDataName } }
   }
   throw new Error(`unknown surface ${JSON.stringify(surface)}; use web, cli or desktop`)
 }
@@ -61,7 +64,9 @@ export function parseFlags(argv) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const [surface = '', ...rest] = process.argv.slice(2)
   try {
-    const plan = blankLaunchPlan(surface, parseFlags(rest), process.env)
+    const running = listInstances().filter(instance => instance.running).map(instance => instance.surface)
+    const plan = blankLaunchPlan(surface, parseFlags(rest), process.env, undefined, undefined, running)
+    if (plan.skipBuild) process.stdout.write('blank: another Desktop instance is running from the current build, so this one starts without rebuilding\n')
     claimInstance(plan.instance, { pid: process.pid, surface: plan.surface, blueprint: plan.blueprint, ...(plan.webPort === undefined ? {} : { port: plan.webPort }) })
     process.stdout.write(`blank: instance "${plan.instance.name}" in ${plan.instance.root}\n`)
     if (plan.webPort !== undefined) process.stdout.write(`blank: Web starts at 127.0.0.1:${plan.webPort} (moves to the next free port if taken)\n`)
