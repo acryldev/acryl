@@ -50,8 +50,11 @@ export async function serveWeb(
   })
   const ctx = host.ctx
   const startup = ctx.get('webStartup') as { host?: string; port?: number } | undefined
-  const startupHost = startup?.host ?? '127.0.0.1'
-  const port = startup?.port ?? 3080
+  // The listening server is the source of truth: a profile that moves the `webserver` row to another port (a second instance beside
+  // one on 3080) would otherwise print the startup default and hand the user a dead URL.
+  const listening = ctx.get('webServer') as { host?: string; port?: number } | undefined
+  const startupHost = listening?.host ?? startup?.host ?? '127.0.0.1'
+  const port = listening?.port ?? startup?.port ?? 3080
   const baseUrl = `http://${startupHost}:${port}`
   // The served index requires this process's launch token as its sole
   // authentication input (dsh-client-connection's authorizeIndex) - a bare

@@ -4,6 +4,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import {
+  ACRYL_CODING_CAPABILITIES,
   BLANK_BLUEPRINT,
   FULL_BLUEPRINT,
   InvalidBrandIdentityError,
@@ -52,6 +53,10 @@ describe('blueprint selection', () => {
 })
 
 describe('what each Blueprint composes', () => {
+  it('full ACRYL composes every declared capability, including ones added later', () => {
+    expect([...FULL_BLUEPRINT.capabilities].sort()).toEqual(ACRYL_CODING_CAPABILITIES.map(capability => capability.id).sort())
+  })
+
   it('full ACRYL keeps today\'s web rows in mount order', () => {
     const { patches, packages } = composeBlueprintRows(FULL_BLUEPRINT, 'web')
     expect(insertedIds(patches)).toEqual(['ui-acryl', 'community-market', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-shortcuts', 'acryl-mount-anchors'])

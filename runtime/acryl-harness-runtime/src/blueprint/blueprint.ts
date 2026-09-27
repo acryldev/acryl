@@ -11,7 +11,7 @@
  * @module acryl-harness-runtime/blueprint/blueprint
  */
 
-import type { AcrylCodingCapabilityId, AcrylShellMode } from '../coding-capabilities.ts'
+import { ACRYL_CODING_CAPABILITIES, type AcrylCodingCapabilityId, type AcrylShellMode } from '../coding-capabilities.ts'
 import { brandIdentity, type BrandIdentity } from './brand-identity.ts'
 
 /** ACRYL-owned rows a Blueprint may include on top of the capabilities. Each is one independently replaceable plugin. */
@@ -50,7 +50,8 @@ export const FULL_BLUEPRINT: Blueprint = freezeBlueprint({
   id: 'acryl.full',
   name: 'ACRYL',
   description: 'The complete ACRYL: workspace, Market, plugin admin, shortcuts and mount anchors.',
-  capabilities: ['persona', 'agent-roster', 'session-stats', 'authorization', 'workspace', 'plugin-admin', 'advanced-shell'],
+  // Every declared capability, derived so a capability added to the table is part of the full product without a second edit here.
+  capabilities: ACRYL_CODING_CAPABILITIES.map(capability => capability.id),
   rows: ['extension-context', 'system-prompt', 'ui-library', 'community-market', 'shortcuts', 'mount-anchors'],
   brand: { kind: 'acryl' },
   shell: 'advanced',

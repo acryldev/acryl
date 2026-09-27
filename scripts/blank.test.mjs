@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -10,7 +10,7 @@ test('web runs the blank blueprint in its own home and never on 3080', () => {
   assert.equal(plan.env.ACRYL_BLUEPRINT, 'acryl.blank')
   assert.equal(plan.env.ACRYL_BRAND_NAME, 'Orbit')
   assert.equal(plan.env.DSH_HOME, '/h/.acryl-blank/.dsh')
-  assert.equal(plan.webPort, 3391)
+  assert.equal(plan.webPort, 3081)
 })
 
 test('cli shares the isolated home, desktop keeps the dev-local isolation', () => {
@@ -28,7 +28,11 @@ test('the web port patch is written once and never overwrites the user\'s own', 
   try {
     assert.equal(ensureWebPort(home, 4000), true)
     assert.match(readFileSync(join(home, 'profiles', 'web', 'cordis.patch.yml'), 'utf8'), /port: 4000/)
-    assert.equal(ensureWebPort(home, 5000), false)
+    assert.equal(ensureWebPort(home, 4000), false)   // unchanged: nothing to write
+    assert.equal(ensureWebPort(home, 5000), true)    // our own managed file follows a changed --port
+    assert.match(readFileSync(join(home, 'profiles', 'web', 'cordis.patch.yml'), 'utf8'), /port: 5000/)
+    writeFileSync(join(home, 'profiles', 'web', 'cordis.patch.yml'), '- id: x\n')
+    assert.equal(ensureWebPort(home, 6000), false)   // the user's own file is never overwritten
   } finally { rmSync(home, { recursive: true, force: true }) }
 })
 

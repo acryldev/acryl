@@ -6,13 +6,12 @@ ACRYL profile is never touched. From the worktree root, once: `corepack pnpm ins
 ## 1. See the blank canvas (2 minutes)
 
 ```bash
-node scripts/blank.mjs web --name Orbit --accent '#e8590c'      # then open the "dsh web:" URL it prints (port 3391)
+node scripts/blank.mjs web --name Orbit --accent '#e8590c'      # then open the "dsh web:" URL it prints (port 3081; 3080 is the main-branch app)
 node scripts/blank.mjs cli --name Orbit                          # terminal
 node scripts/blank.mjs desktop --name Orbit                      # Electron, isolated dev home
 ```
 
 Expect on Web: the sidebar and the tab title say **Orbit** with an orange mark, a plain chat, and none of the product's Projects, workspace, Market or Plugins panel.
-(The line `ACRYL web: http://127.0.0.1:3080/...` is a known cosmetic bug in the launcher output; use the `dsh web:` line.)
 The first launch shows the harness's "Internal Testing Notice"; that is upstream text, listed under known gaps.
 
 ## 2. The core idea: grow it into an organizer (10 minutes)
@@ -30,7 +29,7 @@ Expect the overlapping booking to be refused. Ask it to change something ("also 
 ## 3. Capture it and restore it (5 minutes)
 
 In the chat run `/blend snapshot`, then `/blend verify`. A directory `.acryl/blend/` appears in the workspace: `blend.yaml` (intent), `blend.lock.json` (digests) and
-`extensions/` (the source of what was built). Start a second blank instance (`node scripts/blank.mjs web --port 3393`), open the same workspace folder, run `/blend apply`, and
+`extensions/` (the source of what was built). Start a second blank instance (`node scripts/blank.mjs web --port 3082`), open the same workspace folder, run `/blend apply`, and
 the organizer is back. `/blend ledger` shows the history.
 
 ## 4. Make it your own product (5 minutes)

@@ -2,20 +2,20 @@
 /**
  * Launch the blank canvas (`acryl.blank`, spec 036) on one surface, in its own home so your real ACRYL profile is never touched.
  *
- *   node scripts/blank.mjs web     [--name Orbit] [--accent '#e8590c'] [--port 3391] [--blueprint my.blueprint.yaml]
+ *   node scripts/blank.mjs web     [--name Orbit] [--accent '#e8590c'] [--port 3081] [--blueprint my.blueprint.yaml]
  *   node scripts/blank.mjs cli     [--name Orbit]
  *   node scripts/blank.mjs desktop [--name Orbit]        (uses the isolated ~/.acryl-dev home, like `pnpm run dev`)
  *
- * Web and CLI run in `~/.acryl-blank/.dsh`; the Web server listens on port 3391 unless `--port` says otherwise, so it never fights an app on 3080.
+ * Web and CLI run in `~/.acryl-blank/.dsh`; the Web server listens on port 3081 unless `--port` says otherwise: 3080 belongs to the main-branch app.
  */
 import { spawn } from 'node:child_process'
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export const BLANK_HOME_DIR_NAME = '.acryl-blank'
-export const DEFAULT_BLANK_WEB_PORT = 3391
+export const DEFAULT_BLANK_WEB_PORT = 3081
 
 const FLAG_TO_ENV = { name: 'ACRYL_BRAND_NAME', tagline: 'ACRYL_BRAND_TAGLINE', accent: 'ACRYL_BRAND_ACCENT', 'accent-dark': 'ACRYL_BRAND_ACCENT_DARK', font: 'ACRYL_BRAND_FONT', mark: 'ACRYL_BRAND_MARK' }
 
@@ -34,12 +34,19 @@ export function blankLaunchPlan(surface, flags, environment, home = homedir(), r
   throw new Error(`unknown surface ${JSON.stringify(surface)}; use web, cli or desktop`)
 }
 
-/** The Web profile's own patch layer that moves the server off 3080. Written once, before the first boot. */
+const MANAGED_MARKER = '# managed by scripts/blank.mjs'
+
+/**
+ * The Web profile's own patch layer that moves the server off 3080. This script owns the file while it carries the marker (so a changed
+ * `--port` takes effect); a file without the marker is the user's and is never touched. Returns whether it wrote.
+ */
 export function ensureWebPort(homeDir, port) {
   const patch = join(homeDir, 'profiles', 'web', 'cordis.patch.yml')
-  if (existsSync(patch)) return false
+  if (existsSync(patch) && !readFileSync(patch, 'utf8').startsWith(MANAGED_MARKER)) return false
+  const body = `${MANAGED_MARKER}\n- id: webserver\n  config:\n    host: 127.0.0.1\n    port: ${port}\n`
+  if (existsSync(patch) && readFileSync(patch, 'utf8') === body) return false
   mkdirSync(dirname(patch), { recursive: true })
-  writeFileSync(patch, `- id: webserver\n  config:\n    host: 127.0.0.1\n    port: ${port}\n`)
+  writeFileSync(patch, body)
   return true
 }
 
