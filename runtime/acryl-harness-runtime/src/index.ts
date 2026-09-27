@@ -349,3 +349,4 @@ export type {
 } from './profile-repair/index.ts'
 export { WEB_PORT_ATTEMPTS, findFreeWebPort, loopbackPortIsFree, webPortFromEnvironment, webPortPatch } from './web-port.ts'
 export { APP_EXTENSIONS_DIR, APP_MANIFEST_FILE, NewAppError, planNewApp, writeNewApp, type NewAppOptions, type PlannedApp } from './app/new-app.ts'
+export { PROFILE_OWNER_FILE, ProfileInUseError, claimProfile, type ProfileOwner } from './profile-owner.ts'

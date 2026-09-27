@@ -45,6 +45,26 @@ not the framework.
 - Many apps run on one machine without touching each other: each app folder is its own home, with its own port, Electron user data, running claim and project
   scope (`blank-canvas-blend.md`, "Many instances").
 
+## Self-containment: many apps on one machine
+
+A user works on several apps at once (a music editor, a social-media content machine, a UX wireframe tool) while also running ACRYL itself. Each must behave like a
+container: nothing it does may reach another. This was learned from a real failure: a Web run from a second checkout used the shared `~/.acryl`, re-linked the
+running main app's profile to its own packages, and the main app rendered blank; separately, a leftover global setting (`dsh-desktop.blend`) made a shared
+Desktop profile boot a demo Blend. Three causes, three rules:
+
+| Cause | Rule | Where it is enforced |
+| --- | --- | --- |
+| A run fell back to a shared default home | **An app's home is its folder.** Every way of starting an app (`bin/acryl`, the launchers, a worktree dev run) sets its home explicitly; only a plain, unconfigured ACRYL uses `~/.acryl` | `bin/acryl` (ACRYL_HOME = app folder), `scripts/lib/instances.mjs`, `scripts/lib/checkout-isolation.mjs` (a git worktree gets `~/.acryl-worktrees/<folder>`) |
+| A shared profile let the last run win | **One profile, one live installation.** A profile records its owner; another installation refuses to boot it while the owner runs, naming it | `runtime/.../profile-owner.ts`, checked before any package is linked |
+| A per-app choice lived in a global setting | **Per-app choices live in the app.** Which Blend an app is, its brand and its rows are in its `blend.yaml`; nothing app-specific belongs in a shared settings file | `blend.yaml`; the Desktop `dsh-desktop.blend` key is a pre-framework mechanism and should be replaced by app folders |
+
+Everything else an app could share is derived from its identity (folder name plus a digest of its path): its Web port (stable, then the next free one), its
+Electron user data and single-instance lock, its Dock name, its running claim, and the project-scope folders its builder writes. Nothing is installed globally
+and nothing is written outside the app folder and the project folders the user opens. `scripts/instances.mjs ps` shows every running app; `stop` and `rm` act on one.
+
+The guard only protects a profile that both sides know about: an installation older than this rule (today's main branch) does not record itself as owner, so
+until this lands everywhere, per-app homes are the protection.
+
 ## The three repositories
 
 | Repository | Role | Analogy |

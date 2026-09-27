@@ -26,7 +26,7 @@ import { applyWebFavicon } from './web-favicon.ts'
 import { lstatSync, mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { createRequire, findPackageJSON } from 'node:module'
 import { basename, dirname, join } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import {
@@ -54,6 +54,7 @@ import type { AcrylEngineDefinition } from './engine-host.ts'
 import { installAcrylWorkspaceStatusTool } from './plugin-acryl-workspace-status.ts'
 import { blueprintFromEnvironment, composeBlueprintRows } from './blueprint/index.ts'
 import { findFreeWebPort, webPortFromEnvironment, webPortPatch } from './web-port.ts'
+import { claimProfile } from './profile-owner.ts'
 import { pluginLifecyclePatches, resolvePluginLifecycleStatePath } from './plugin-lifecycle-state.ts'
 import { installSessionLogExporter } from './session-log-exporter.ts'
 import { provideWebMarketInstall } from './web-market-install.ts'
@@ -267,6 +268,8 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
   await healProfilesModuleFallback({ installAnchor: dshInstallAnchor })
   const profile = loadProfile('acryl', profileName, dshInstallAnchor)
   const rootConfig = join(profile.dir, 'cordis.yml')
+  // Refuse to re-link a profile another live ACRYL installation is running from (profile-owner.ts).
+  claimProfile(profile.dir, installationRoot(import.meta.url))
   writeFileSync(rootConfig, profileRoot)
   const profileLayerPatches = profile.layers.flatMap(layer => layer.patches)
   // A profile directory booted through this CLI/TUI flavor is not necessarily
@@ -357,6 +360,12 @@ function withDeclaredDependency(inject: unknown, name: string): string[] | Recor
  * all, just one process inheriting another, earlier process's leftover
  * dangling link.)
  */
+/** The installation a module belongs to: the directory of its nearest package.json (the runtime or surface package of that checkout or install). */
+function installationRoot(moduleUrl: string): string {
+  const manifest = findPackageJSON(moduleUrl)
+  return manifest === undefined ? fileURLToPath(moduleUrl) : dirname(manifest)
+}
+
 export function materializeProfilePackage(profileDir: string, packageName: string, installPackageUrl: string): void {
   const manifestPath = findPackageJSON(packageName, installPackageUrl)
   if (manifestPath === undefined) {
@@ -419,6 +428,7 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   await healProfilesModuleFallback({ installAnchor: dshInstallAnchor })
   const profile = loadProfile('web', profileName, dshInstallAnchor)
   const rootConfig = join(profile.dir, 'cordis.yml')
+  claimProfile(profile.dir, installationRoot(installPackageUrl))
   writeFileSync(rootConfig, profileRoot)
   const profileLayerPatches = profile.layers.flatMap(layer => layer.patches)
   // Same reasoning as the CLI/TUI flavor above: this profile's own bundle may
