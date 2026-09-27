@@ -1,0 +1,14 @@
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+
+metadata:
+  id: rejection.insert-id-collision
+  name: Insert id collision
+  version: 0.1.0
+
+spec:
+  runtime: cordis
+  extends: rejection.parent
+  rows:
+    - id: contacts
+      name: '@acryl/contacts'

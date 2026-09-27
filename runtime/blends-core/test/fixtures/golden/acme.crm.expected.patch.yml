@@ -1,0 +1,11 @@
+- insert:
+    - id: brand
+      name: "@acme/brand"
+      config:
+        mark: acme
+- id: contacts
+  config:
+    title: People
+    org: ACME Corp
+- id: pipeline
+  disabled: true

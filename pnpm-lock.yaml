@@ -2820,6 +2820,9 @@ importers:
 
   runtime/acryl-harness-runtime:
     dependencies:
+      '@acryl/blends-core':
+        specifier: workspace:*
+        version: link:../blends-core
       '@acryl/ui':
         specifier: workspace:*
         version: link:../../plugins/acryl-ui
@@ -3346,6 +3349,25 @@ importers:
       tsdown:
         specifier: 0.22.2
         version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@8.2.1(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+
+  runtime/blends-core:
+    dependencies:
+      ajv:
+        specifier: 8.20.0
+        version: 8.20.0
+      yaml:
+        specifier: 2.9.0
+        version: 2.9.0
+    devDependencies:
+      '@types/node':
+        specifier: 22.20.1
+        version: 22.20.1
       typescript:
         specifier: 6.0.3
         version: 6.0.3

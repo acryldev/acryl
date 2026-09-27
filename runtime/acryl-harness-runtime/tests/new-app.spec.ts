@@ -95,6 +95,6 @@ describe('reading a Blends manifest', () => {
     expect(() => blueprintFromManifest({ ...blend([]), kind: 'Thing' })).toThrow(/kind/)
     expect(() => blueprintFromManifest({ ...blend([]), metadata: { id: 'noDots' } })).toThrow(/metadata.id/)
     expect(() => blueprintFromManifest({ ...blend([]), spec: { runtime: 'cordis', lineage: { blueprint: 'acryl.nope' } } })).toThrow(InvalidBlueprintError)
-    expect(() => blueprintFromManifest({ ...blend([{ id: 'x' }]) })).toThrow(/string id and name/)
+    expect(() => blueprintFromManifest({ ...blend([{ id: 'x' }]) })).toThrow(/spec\.rows\[0\]\.name/)
   })
 })

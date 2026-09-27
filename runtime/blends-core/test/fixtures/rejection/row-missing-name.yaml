@@ -1,0 +1,12 @@
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+
+metadata:
+  id: rejection.row-missing-name
+  name: Row missing name
+  version: 0.1.0
+
+spec:
+  runtime: cordis
+  rows:
+    - id: lonely

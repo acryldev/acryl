@@ -1,0 +1,27 @@
+# Golden fixture 1: the smallest living ACRYL app.
+# Proves: minimal valid Blueprint, one whole-token string parameter,
+# a disabled row preserved in compiled output.
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+
+metadata:
+  id: acryl.zero
+  name: ACRYL Zero
+  version: 0.1.0
+  category: starter
+  description: The smallest living ACRYL app - empty but alive.
+
+spec:
+  runtime: cordis
+  parameters:
+    appTitle:
+      type: string
+      default: ACRYL Zero
+  rows:
+    - id: welcome
+      name: '@acryl/welcome'
+      config:
+        title: '{{parameters.appTitle}}'
+    - id: pipeline-preview
+      name: '@acryl/pipeline'
+      disabled: true

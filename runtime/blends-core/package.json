@@ -1,0 +1,53 @@
+{
+  "name": "@acryl/blends-core",
+  "version": "0.1.0",
+  "description": "The ACRYL Blends format (blends.acryl.dev/v1alpha1): parse, validate, resolve, compile, lock and inspect Blueprint and Blend manifests. Host-independent: no Cordis, DSH or surface dependencies.",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "runtime/blends-core"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/runtime/blends-core#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./schema/blend-manifest.v1alpha1.schema.json": "./src/schema/blend-manifest.v1alpha1.schema.json"
+  },
+  "files": [
+    "dist",
+    "src/schema",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json",
+    "test": "vitest run",
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "yaml": "2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "typescript": "6.0.3",
+    "vitest": "4.1.11"
+  }
+}

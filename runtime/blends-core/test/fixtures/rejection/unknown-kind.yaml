@@ -1,0 +1,11 @@
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Boilerplate
+
+metadata:
+  id: rejection.unknown-kind
+  name: Unknown kind
+  version: 0.1.0
+
+spec:
+  runtime: cordis
+  rows: []

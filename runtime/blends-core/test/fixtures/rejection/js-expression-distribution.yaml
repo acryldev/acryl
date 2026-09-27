@@ -1,0 +1,14 @@
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+
+metadata:
+  id: rejection.js-expression-distribution
+  name: JS expression in distribution mode
+  version: 0.0.0
+
+spec:
+  runtime: cordis
+  rows:
+    - id: gate
+      name: '@acryl/gate'
+      disabled: !!js process.platform === 'linux'

@@ -1,0 +1,14 @@
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+
+metadata:
+  id: rejection.multi-parent
+  name: Multi-parent extends
+  version: 0.1.0
+
+spec:
+  runtime: cordis
+  extends:
+    - rejection.a
+    - rejection.b
+  rows: []

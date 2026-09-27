@@ -1,0 +1,14 @@
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+
+metadata:
+  id: rejection.unknown-root-field
+  name: Unknown root field
+  version: 0.1.0
+
+# The targeted flaw is the undeclared root-level field.
+extra: 1
+
+spec:
+  runtime: cordis
+  rows: []

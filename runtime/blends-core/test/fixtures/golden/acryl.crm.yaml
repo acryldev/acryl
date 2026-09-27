@@ -1,0 +1,46 @@
+# Golden fixture 2: the CRM stem cell.
+# Proves: substring string substitution (greeting), whole-token typed
+# substitution (pipelineEnabled boolean, maxDealValue number), rows without
+# config, a disabled optional row, declaration-order preservation.
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+
+metadata:
+  id: acryl.crm
+  name: CRM
+  version: 0.1.0
+  category: crm
+  description: Minimal CRM stem cell.
+
+spec:
+  runtime: cordis
+  parameters:
+    contactTitle:
+      type: string
+      default: Contacts
+    orgName:
+      type: string
+      default: My Organization
+    pipelineEnabled:
+      type: boolean
+      default: true
+    maxDealValue:
+      type: number
+      default: 1000000
+  rows:
+    - id: contacts
+      name: '@acryl/contacts'
+      config:
+        title: '{{parameters.contactTitle}}'
+        org: '{{parameters.orgName}}'
+        greeting: 'Hello from {{parameters.orgName}}'
+    - id: tasks
+      name: '@acryl/tasks'
+    - id: pipeline
+      name: '@acryl/pipeline'
+      config:
+        enabled: '{{parameters.pipelineEnabled}}'
+        maxDealValue: '{{parameters.maxDealValue}}'
+    - id: invoicing
+      name: '@acryl/invoicing'
+      disabled: true

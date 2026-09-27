@@ -1,0 +1,17 @@
+- insert:
+    - id: contacts
+      name: "@acryl/contacts"
+      config:
+        title: Contacts
+        org: My Organization
+        greeting: Hello from My Organization
+    - id: tasks
+      name: "@acryl/tasks"
+    - id: pipeline
+      name: "@acryl/pipeline"
+      config:
+        enabled: true
+        maxDealValue: 1000000
+    - id: invoicing
+      name: "@acryl/invoicing"
+      disabled: true

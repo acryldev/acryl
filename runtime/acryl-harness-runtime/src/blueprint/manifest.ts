@@ -1,7 +1,7 @@
 /**
- * The app definition file (`blend.yaml`) is a Blends manifest (`blends.acryl.dev/v1alpha1`, the format the `blends` repo owns and validates), so one file
- * is both what the Blends tooling reads, captures and publishes and what this runtime boots from. This module is the translation between the two
- * vocabularies, pure and in both directions:
+ * The app definition file (`blend.yaml`) is a Blends manifest (`blends.acryl.dev/v1alpha1`), so one file is both what the Blends tooling reads, captures
+ * and publishes and what this runtime boots from. The format itself (schema, structural rules, lineage) is validated by `@acryl/blends-core`, the one
+ * reader of the format; this module is only the translation between the two vocabularies, pure and in both directions:
  *
  *   manifest -> Blueprint   `kind: Blend` grows from `spec.lineage.blueprint` (a known Blueprint); `kind: Blueprint` names one. Rows whose package is one of
  *                           ACRYL's own rows turn that capability on (or off with `disabled: true`); the `acryl-brand` row's config is the brand. Any other
@@ -11,6 +11,7 @@
  * @module acryl-harness-runtime/blueprint/manifest
  */
 
+import { validateDefinition } from '@acryl/blends-core'
 import { brandIdentity, type BrandIdentity } from './brand-identity.ts'
 import { builtInCatalog, type Blueprint, type BlueprintCatalog, type BlueprintRowId } from './blueprint.ts'
 import { blueprintRowForPackage, packageForBlueprintRow } from './compose.ts'
@@ -52,6 +53,9 @@ function rowsOf(spec: Record<string, unknown>): readonly ManifestRow[] {
 export function blueprintFromManifest(input: unknown, catalog: BlueprintCatalog = builtInCatalog()): Blueprint {
   const document = record(input, 'the manifest')
   if (document.apiVersion !== BLENDS_API_VERSION) throw new InvalidBlueprintError(`apiVersion must be ${BLENDS_API_VERSION}`)
+  // The format's own rules first (schema, row ids, lineage), from the format package; `distribution` also refuses executable `!!js` values in an app definition.
+  const problems = validateDefinition(input, 'distribution')
+  if (problems.length > 0) throw new InvalidBlueprintError(problems.map(problem => `${problem.path}: ${problem.message}`).join('; '))
   const metadata = record(document.metadata, '"metadata"')
   const spec = record(document.spec, '"spec"')
   const id = metadata.id

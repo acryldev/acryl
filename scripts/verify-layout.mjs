@@ -43,6 +43,7 @@ packages:
   - runtime/acryl-control
   - runtime/acryl-diagnostics
   - runtime/acryl-harness-runtime
+  - runtime/blends-core
   - runtime/acryl-loopback-http
   - distribution/acryl-npm-launcher
   - apps/acryl-cli
