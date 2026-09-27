@@ -78,15 +78,17 @@ export interface AcrylNewInvocation extends AcrylInvocationFlags {
   readonly runtime?: string
   /** Do not create a git repository in the new app. */
   readonly skipGit?: boolean
+  /** Create the app from an existing app or captured Blend folder instead of a Blueprint. */
+  readonly from?: string
 }
 
 export type AcrylInvocation = AcrylSurfaceInvocation | AcrylPluginInvocation | AcrylUiInvocation | AcrylDoctorInvocation | AcrylRepairInvocation | AcrylNewInvocation
 
-const NEW_OPTIONS: Readonly<Record<string, 'title' | 'blueprint' | 'accent' | 'tagline' | 'runtime'>> = { '--name': 'title', '--blueprint': 'blueprint', '--accent': 'accent', '--tagline': 'tagline', '--runtime': 'runtime' }
+const NEW_OPTIONS: Readonly<Record<string, 'title' | 'blueprint' | 'accent' | 'tagline' | 'runtime' | 'from'>> = { '--name': 'title', '--blueprint': 'blueprint', '--accent': 'accent', '--tagline': 'tagline', '--runtime': 'runtime', '--from': 'from' }
 
 /** `new` has its own options, so it is parsed on its own rather than threaded through every other command's flags. */
 function parseNewInvocation(args: readonly string[]): AcrylNewInvocation {
-  const values: { title?: string, blueprint?: string, accent?: string, tagline?: string, runtime?: string } = {}
+  const values: { title?: string, blueprint?: string, accent?: string, tagline?: string, runtime?: string, from?: string } = {}
   const positional: string[] = []
   let json = false
   let help = false
@@ -109,7 +111,8 @@ function parseNewInvocation(args: readonly string[]): AcrylNewInvocation {
     positional.push(argument)
   }
   if (help) return { kind: 'new', dir: '', json, version: false, help: true }
-  if (positional.length !== 1) throw new Error('usage: acryl new <dir> [--name "My App"] [--blueprint acryl.blank] [--accent "#e8590c"] [--tagline "..."] [--runtime <extracted acryl-web archive>]')
+  if (values.from !== undefined && values.blueprint !== undefined) throw new Error('--from and --blueprint are alternatives: an app grows from one of them')
+  if (positional.length !== 1) throw new Error('usage: acryl new <dir> [--name "My App"] [--blueprint acryl.blank] [--accent "#e8590c"] [--tagline "..."] [--runtime <extracted acryl-web archive>] [--from <app or Blend folder>]')
   return { kind: 'new', dir: positional[0] ?? '', json, version: false, help: false, ...values, ...(skipGit ? { skipGit } : {}) }
 }
 

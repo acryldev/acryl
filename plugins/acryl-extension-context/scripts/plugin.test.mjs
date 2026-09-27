@@ -485,7 +485,7 @@ test('startup sync: a changed GLOBAL source is re-installed; a changed project s
   writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: deps }))
   const s = { ...fakes({ preinstalled: true }), profileDir: profile }
   try {
-    assert.deepEqual(await syncOnStartup(s, { globalDir }), { updated: [], changed: [], stale: [], pending: ['ext-fresh'], failed: [] }, 'in sync: nothing to do except list the new global folder')
+    assert.deepEqual(await syncOnStartup(s, { globalDir }), { updated: [], installed: [], changed: [], stale: [], pending: ['ext-fresh'], failed: [] }, 'in sync: nothing to do except list the new global folder')
     assert.deepEqual(s.calls, [])
     writeFileSync(join(globalSrc, 'index.js'), 'export const name = "ext-global"\nexport function apply() { /* v2 */ }\n')
     writeFileSync(join(projectSrc, 'index.js'), 'export const name = "ext-project"\nexport function apply() { /* v2 */ }\n')
@@ -494,6 +494,9 @@ test('startup sync: a changed GLOBAL source is re-installed; a changed project s
     assert.deepEqual([summary.updated, summary.changed, summary.stale, summary.pending, summary.failed], [['ext-global'], ['ext-project'], ['ext-gone'], ['ext-fresh'], []])
     assert.ok(s.calls.length > 0, 'the global extension was re-installed')
     assert.ok(!JSON.stringify(s.calls).includes('ext-project'), 'the project extension was NOT touched')
+    // Inside an app (installPending) a new folder in the app's extensions is the app's own code: it is installed, not just reported.
+    const inApp = await syncOnStartup(s, { globalDir, installPending: true })
+    assert.deepEqual([inApp.installed, inApp.pending], [['ext-fresh'], []])
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
 

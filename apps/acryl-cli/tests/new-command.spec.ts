@@ -59,3 +59,38 @@ describe('an app that carries its own runtime', () => {
     expect(cli.stderr).toMatch(/carries only the Web runtime/)
   })
 })
+
+describe('acryl new --from', () => {
+  it('creates an app from an existing one: its own id and name, the source\'s rows, brand and plugins, and a lock re-pinned to the new definition', async () => {
+    const { mkdirSync, readFileSync, writeFileSync } = await import('node:fs')
+    const { createHash } = await import('node:crypto')
+    const { readBlueprintFile } = await import('acryl-harness-runtime')
+    // The format's lock digest (@acryl/blends-core manifestDigest): lowercase hex SHA-256 of the manifest bytes.
+    const manifestDigest = (text: string): string => createHash('sha256').update(text).digest('hex')
+    const root = mkdtempSync(join(tmpdir(), 'acryl-new-from-')); dirs.push(root)
+    const source = join(root, 'ledger')
+    runNewApp({ dir: source, title: 'Ledger', accent: '#0a7d4b', skipGit: true })
+    mkdirSync(join(source, 'extensions', 'invoices'), { recursive: true })
+    writeFileSync(join(source, 'extensions', 'invoices', 'package.json'), '{"name":"invoices","version":"0.1.0"}')
+    const sourceText = readFileSync(join(source, 'blend.yaml'), 'utf8')
+    writeFileSync(join(source, 'blend.lock.json'), JSON.stringify({ formatVersion: 2, origin: { id: 'app.ledger', kind: 'Blend', version: '0.1.0', digest: manifestDigest(sourceText) }, rows: [], modules: [] }))
+
+    const created = runNewApp({ dir: join(root, 'ledger-eu'), title: 'Ledger EU', from: source, skipGit: true })
+    const text = readFileSync(join(created.root, 'blend.yaml'), 'utf8')
+    expect(text).toMatch(/id: app\.ledger-eu/u)
+    expect(text).toMatch(/description: Ledger EU, created from app\.ledger\./u)
+    const blueprint = readBlueprintFile(join(created.root, 'blend.yaml'))
+    expect(blueprint.id).toBe('app.ledger-eu')
+    expect(blueprint.brand).toEqual({ kind: 'custom', identity: expect.objectContaining({ name: 'Ledger EU', accent: '#0a7d4b' }) })
+    expect(text).toContain('# Ledger')   // the source's comments travel with it
+    expect(readFileSync(join(created.root, 'extensions', 'invoices', 'package.json'), 'utf8')).toContain('invoices')
+    const lock = JSON.parse(readFileSync(join(created.root, 'blend.lock.json'), 'utf8')) as { origin: { id: string, digest: string } }
+    expect(lock.origin).toMatchObject({ id: 'app.ledger-eu', digest: manifestDigest(text) })
+  })
+
+  it('refuses a folder without a definition, and --from together with --blueprint', () => {
+    const root = mkdtempSync(join(tmpdir(), 'acryl-new-from-bad-')); dirs.push(root)
+    expect(() => runNewApp({ dir: join(root, 'x'), from: root })).toThrow(/has no blend.yaml/)
+    expect(() => parseAcrylArgs(['new', 'x', '--from', 'a', '--blueprint', 'acryl.blank'])).toThrow(/alternatives/)
+  })
+})

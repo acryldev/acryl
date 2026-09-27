@@ -18,7 +18,8 @@
 import { spawnSync } from 'node:child_process'
 import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
-import { stringify } from 'yaml'
+import { manifestDigest } from '@acryl/blends-core'
+import { isMap, isSeq, parseDocument, stringify } from 'yaml'
 import { brandIdentity, type BrandIdentity } from '../blueprint/brand-identity.ts'
 import { builtInCatalog, type Blueprint } from '../blueprint/blueprint.ts'
 import { appManifest } from '../blueprint/manifest.ts'
@@ -43,6 +44,11 @@ export interface NewAppOptions {
   readonly brand?: Partial<Omit<BrandIdentity, 'name'>>
   /** Absolute path of the launcher `bin/acryl` hands off to (the framework's `scripts/blank.mjs`). */
   readonly launcher: string
+  /**
+   * Create the app from an existing app or captured Blend (its `blend.yaml`, and its `blend.lock.json` when it has one) instead of a Blueprint: the new
+   * app keeps what the source grew (rows, brand, lineage) under its own name and id. Its `extensions/` are copied by `writeNewApp`.
+   */
+  readonly from?: { readonly manifestText: string, readonly lockText?: string }
 }
 
 export interface PlannedApp {
@@ -62,9 +68,12 @@ export function planNewApp(dir: string, options: NewAppOptions): PlannedApp {
   if (blueprint === undefined) throw new NewAppError(`unknown blueprint ${JSON.stringify(blueprintId)}; known: ${builtInCatalog().list().map(entry => entry.id).join(', ')}`)
   const title = options.title?.trim() || name
   const brand = brandIdentity({ ...(blueprint.brand.kind === 'custom' ? blueprint.brand.identity : {}), ...options.brand, name: title })
-  const manifest = appManifest({ id: `app.${name}`, name: title, blueprint, brand })
+  const derived = options.from === undefined ? undefined : fromExistingApp(options.from, `app.${name}`, title, options.brand)
+  const manifestText = derived?.manifestText
+    ?? `# ${title}: what this app is (name, brand, what it grew from). Edit it and restart. Format: blends.acryl.dev/v1alpha1.\n${stringify(appManifest({ id: `app.${name}`, name: title, blueprint, brand }), { lineWidth: 0 })}`
   const files: Record<string, string> = {
-    [APP_MANIFEST_FILE]: `# ${title}: what this app is (name, brand, what it grew from). Edit it and restart. Format: blends.acryl.dev/v1alpha1.\n${stringify(manifest, { lineWidth: 0 })}`,
+    [APP_MANIFEST_FILE]: manifestText,
+    ...(derived?.lockText === undefined ? {} : { 'blend.lock.json': derived.lockText }),
     [`${APP_EXTENSIONS_DIR}/README.md`]: `# extensions\n\nThis app's own plugins, one folder each. The agent inside the app builds them here when you ask for something\n("add a to-do list"), and every folder here loads when the app starts. Delete a folder to remove that plugin.\n`,
     'AGENTS.md': agentsMd(title),
     'bin/acryl': `#!/usr/bin/env bash\n# Start ${title}:  bin/acryl web | desktop | cli   (flags: --port 3105)\nset -euo pipefail\napp="$(cd "$(dirname "$0")/.." && pwd)"\nexec node ${JSON.stringify(options.launcher)} "\${1:-web}" --dir "$app" "\${@:2}"\n`,
@@ -87,6 +96,36 @@ licensed; if you distribute a copy of the framework (for example a carried \`run
   return { root, name, blueprint, files }
 }
 
+/**
+ * The source's definition under the new app's id and name (comments kept), and its lock re-pinned to that definition. Only the identity changes: rows,
+ * brand colors and lineage are what the source grew, and local module digests stay valid because `extensions/` is copied verbatim.
+ */
+function fromExistingApp(source: { readonly manifestText: string, readonly lockText?: string }, id: string, title: string, brand: Partial<Omit<BrandIdentity, 'name'>> | undefined): { manifestText: string, lockText?: string } {
+  const document = parseDocument(source.manifestText)
+  const parsed = document.toJS() as { kind?: unknown, metadata?: { id?: unknown }, spec?: { lineage?: { blueprint?: unknown } } } | null
+  if (parsed?.kind !== 'Blend' || typeof parsed.spec?.lineage?.blueprint !== 'string' || builtInCatalog().get(parsed.spec.lineage.blueprint) === undefined) {
+    throw new NewAppError('--from needs an app or captured Blend that grew from a known Blueprint (kind: Blend with spec.lineage)')
+  }
+  const sourceId = String(parsed.metadata?.id ?? 'another app')
+  document.setIn(['metadata', 'id'], id)
+  document.setIn(['metadata', 'name'], title)
+  document.setIn(['metadata', 'description'], `${title}, created from ${sourceId}.`)
+  const rows = document.getIn(['spec', 'rows'])
+  if (isSeq(rows)) {
+    for (const row of rows.items) {
+      if (isMap(row) && row.get('name') === 'acryl-brand') {
+        row.setIn(['config', 'name'], title)
+        for (const [key, value] of Object.entries(brand ?? {})) if (value !== undefined) row.setIn(['config', key], value)
+      }
+    }
+  }
+  const manifestText = String(document)
+  if (source.lockText === undefined) return { manifestText }
+  const lock = JSON.parse(source.lockText) as { origin?: Record<string, unknown> }
+  lock.origin = { ...lock.origin, id, digest: manifestDigest(manifestText) }
+  return { manifestText, lockText: `${JSON.stringify(lock, null, 2)}\n` }
+}
+
 function agentsMd(title: string): string {
   return `# ${title}: conventions for the builder inside
 
@@ -106,7 +145,7 @@ belong to the user: commit with clear messages when a change works and the user 
 /** A file of the launcher an app carries: copied from the framework, or written with the given content. */
 export type LauncherFile = { readonly from: string } | { readonly content: string }
 
-export function writeNewApp(planned: PlannedApp, options: { readonly runtimeDir?: string, readonly launcherFiles?: Readonly<Record<string, LauncherFile>>, readonly git?: boolean } = {}): { readonly git: 'initialized' | 'skipped' | 'unavailable' } {
+export function writeNewApp(planned: PlannedApp, options: { readonly runtimeDir?: string, readonly launcherFiles?: Readonly<Record<string, LauncherFile>>, readonly git?: boolean, readonly extensionsFrom?: string } = {}): { readonly git: 'initialized' | 'skipped' | 'unavailable' } {
   if (existsSync(planned.root) && readdirSync(planned.root).length > 0) throw new NewAppError(`${planned.root} is not empty; acryl new only creates a new app`)
   if (options.runtimeDir !== undefined && !existsSync(join(options.runtimeDir, 'lib', 'bin.js'))) throw new NewAppError(`${options.runtimeDir} is not an ACRYL Web runtime (no lib/bin.js)`)
   for (const [relative, content] of Object.entries(planned.files)) {
@@ -115,6 +154,10 @@ export function writeNewApp(planned: PlannedApp, options: { readonly runtimeDir?
     writeFileSync(target, content)
   }
   chmodSync(join(planned.root, 'bin', 'acryl'), 0o755)
+  // An app created from another brings that app's own plugins, verbatim so the lock's digests still hold (never its node_modules or git history).
+  if (options.extensionsFrom !== undefined && existsSync(options.extensionsFrom)) {
+    cpSync(options.extensionsFrom, join(planned.root, APP_EXTENSIONS_DIR), { recursive: true, filter: source => !['node_modules', '.git'].includes(basename(source)) })
+  }
   if (options.runtimeDir !== undefined) {
     // The app carries its own runtime: it then starts with nothing of the framework but Node. Symlinks stay relative to the copy.
     cpSync(options.runtimeDir, join(planned.root, 'runtime'), { recursive: true, verbatimSymlinks: true })

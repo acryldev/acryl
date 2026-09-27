@@ -280,7 +280,7 @@ export async function reloadLocalPlugins(services, fs, options = {}) {
  * @returns {Promise<{ updated: string[], changed: string[], stale: string[], pending: string[], failed: Array<{ name: string, error: string }> }>}
  */
 export async function syncOnStartup(services, options = {}, fs) {
-  const summary = { updated: [], changed: [], stale: [], pending: [], failed: [] }
+  const summary = { updated: [], installed: [], changed: [], stale: [], pending: [], failed: [] }
   const plugins = listLocalPlugins(services.profileDir, fs)
   const globalRoot = options.globalDir ? canonical(options.globalDir) : undefined
   const inGlobal = dir => globalRoot !== undefined && canonical(dir).startsWith(`${globalRoot}${sep}`)
@@ -300,7 +300,15 @@ export async function syncOnStartup(services, options = {}, fs) {
     } catch (cause) { summary.failed.push({ name: plugin.name, error: String(cause?.message ?? cause) }) }
   }
   for (const found of discoverExtensions({ globalDir: options.globalDir })) {
-    if (!installed.has(found.dir) && !found.shadowed) summary.pending.push(found.name)
+    if (installed.has(found.dir) || found.shadowed) continue
+    // An app's own extensions (its committed `extensions/`, e.g. in a fresh clone) are the app's code: they install at start. Elsewhere a new
+    // global folder is only reported, because installing runs code the user has not asked for yet.
+    if (options.installPending !== true) { summary.pending.push(found.name); continue }
+    try {
+      const result = await installLocalPlugin({ path: found.dir }, services, fs)
+      if (result.ok) summary.installed.push(found.name)
+      else summary.failed.push({ name: found.name, error: (result.errors ?? []).join('; ') || 'install failed' })
+    } catch (cause) { summary.failed.push({ name: found.name, error: String(cause?.message ?? cause) }) }
   }
   return summary
 }

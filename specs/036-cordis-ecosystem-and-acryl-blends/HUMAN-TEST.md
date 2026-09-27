@@ -12,6 +12,9 @@ node apps/acryl-cli/bin/dev-run.mjs new ~/apps/stage-sound --name "Stage Sound" 
 
 Expect: a new folder with `blend.yaml`, `extensions/`, `AGENTS.md`, `bin/acryl`, a README and its own git repository; the app shows **Stage Sound**, never ACRYL.
 Ask the builder inside for something ("add a setlist with tempo per song"); it builds it into `~/apps/stage-sound/extensions/`. `git status` in the app shows it.
+Then `/blend snapshot` in the app's chat records it into the app folder (`blend.yaml` keeps your edits; `blend.lock.json` pins every plugin); commit the folder.
+Make a sibling app from it: `node apps/acryl-cli/bin/dev-run.mjs new ~/apps/stage-sound-eu --name "Stage Sound EU" --from ~/apps/stage-sound`. It starts with the same
+plugins, under its own name, port and data. A fresh `git clone` of an app starts the same way: its plugins install themselves.
 The product definition is `framework.md`.
 
 ## 1. Start the blank canvas (2 minutes)

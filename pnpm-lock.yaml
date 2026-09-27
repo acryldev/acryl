@@ -2023,6 +2023,9 @@ importers:
 
   plugins/acryl-extension-context:
     dependencies:
+      '@acryl/blends-core':
+        specifier: workspace:*
+        version: link:../../runtime/blends-core
       '@deepseek-ai/dsh-tools':
         specifier: 0.1.5-alpha.1
         version: 0.1.5-alpha.1(239eb910b4462b7c15b6b44661457a15)

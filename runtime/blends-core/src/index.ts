@@ -11,6 +11,7 @@ export { resolveDefinition, resolutionParentOf, type ResolveOptions, type Resolv
 export { compileDefinition, type CompileResult } from './compile.js'
 export { inspectDefinition } from './inspect.js'
 export { generateLock, BLENDS_CORE_VERSION, type LockResult } from './lock.js'
+export { manifestDigest } from './digest.js'
 
 // Document model and identity.
 export {

@@ -20,8 +20,10 @@ Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository
 ## Next
 
 - [x] T011a Repository organization decided (`repositories.md`, accepted) and run modes decided (`framework.md`: attached and standalone, one process per app)
-- [ ] T011 Follow the migration steps in `repositories.md` (blends-core into the monorepo first)
-- [ ] T012 One Blend shape: `/blend snapshot` writes into the app folder; `acryl new --from <file|registry id>`
+- [x] T011b `blends-core` moved into the monorepo (`runtime/blends-core`); the runtime and the extension pack read and lock the format through it
+- [ ] T011 Remaining migration steps in `repositories.md` (registry content and CI, `acryl pull`/`push`, archive `acryldev/blends`)
+- [x] T012 One Blend shape: an app folder is its Blend (`/blend snapshot` records into it, `/blend apply` installs in place), an app installs its own
+      extensions and locked marketplace plugins at start (a fresh clone works), `acryl new --from <app or Blend folder>` (registry ids come with T014)
 - [ ] T013 `acryl new` and the app lifecycle commands in the published CLI (today the launcher needs a framework checkout)
 - [ ] T014 Registry and catalog on acrylblends.github.io: validated `index.json`, `acryl pull`/`acryl push`, starters by category
 - [ ] T015 The rest of the brand: the harness's first-launch notice, the terminal banner and palette, the Electron window and Dock icon

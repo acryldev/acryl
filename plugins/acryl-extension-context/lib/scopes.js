@@ -44,9 +44,18 @@ export function projectExtensionsDir(workspaceDir, instance = currentInstance())
   return instance === undefined ? join(workspaceDir, '.acryl-extensions') : join(instanceRoot(workspaceDir, instance), 'extensions')
 }
 
-/** Captured Blend folder (manifest, lock, vendored sources, ledger). */
+/**
+ * Captured Blend folder (manifest, lock, vendored sources, ledger). Inside an app it is the app folder itself: an app IS its Blend (one shape for
+ * creating, capturing and restoring), whatever project the session has open.
+ */
 export function blendDir(workspaceDir, instance = currentInstance()) {
+  if (active.appHome !== undefined) return active.appHome
   return instance === undefined ? join(workspaceDir, '.acryl', 'blend') : join(instanceRoot(workspaceDir, instance), 'blend')
+}
+
+/** The app folder when this process runs an app from `acryl new`, else undefined. */
+export function appHomeDir() {
+  return active.appHome
 }
 
 /** Does this real path sit in some project extensions folder (classic or instance-namespaced)? */

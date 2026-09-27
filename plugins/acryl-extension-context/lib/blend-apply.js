@@ -6,7 +6,7 @@ import { verifyBlend } from './blend-capture.js'
 import { readLockfile } from './provenance.js'
 import { hashPackage } from './stage.js'
 import { describePermissions, readManifest } from './manifest.js'
-import { projectExtensionsDir } from './scopes.js'
+import { appHomeDir, projectExtensionsDir } from './scopes.js'
 
 /**
  * Re-create a captured Blend (see blend-capture.js) in the active profile: the inverse of `/blend snapshot`. Human-typed, like `/reload new`, because it installs code
@@ -34,7 +34,8 @@ export async function applyBlend(blendDir, services, options, fs = { existsSync,
   for (const module of lock.modules ?? []) {
     if (module.origin === 'local') {
       const vendored = join(blendDir, module.source)
-      const folder = join(projectExtensionsDir(options.workspaceDir), basename(module.source))
+      // In an app the Blend folder is the app: its modules are already in their place and install from there.
+      const folder = appHomeDir() !== undefined ? vendored : join(projectExtensionsDir(options.workspaceDir), basename(module.source))
       // A folder of the same name that differs from the locked source is somebody's work: report, never overwrite.
       if (fs.existsSync(join(folder, 'package.json')) && `sha256:${hashPackage(folder, 64)}` !== module.digest) {
         results.push({ name: module.name, origin: 'local', status: 'conflict', detail: `${folder} already exists and differs from the locked source; move it or re-capture` })

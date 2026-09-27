@@ -152,7 +152,7 @@ export async function runAcryl(
         '',
         'Commands:',
         '  new <dir>                        Create an app on the ACRYL Blends framework, as its own git repository',
-        '                                   (--name, --blueprint, --accent, --tagline, --runtime <dir>, --skip-git)',
+        '                                   (--name, --blueprint, --from <app folder>, --accent, --tagline, --runtime <dir>, --skip-git)',
         '  tui                              Run the terminal client (default)',
         '  plugin                           List this profile\'s plugins (default action)',
         '  plugin list                      List plugins and their current state',
