@@ -11,22 +11,22 @@ Conventions: `[P]` parallel; every task ends with a green `corepack pnpm run che
 
 ## Phase 1: contract and driver (Client)
 
-- [x] **T010** Define the canonical snapshot and action types (discriminated unions, one shape, validated at the boundary). Unit tests for serialization and ref staleness. Delivered: `plugins/acryl-ui-control/src/contract.ts` (one validated request and result shape, typed error codes, channel messages).
+- [x] **T010** Define the canonical snapshot and action types (discriminated unions, one shape, validated at the boundary). Unit tests for serialization and ref staleness. Delivered: `plugins/acryl-agent-control/src/contract.ts` (one validated request and result shape, typed error codes, channel messages).
 - [x] **T011** Snapshot builder with redaction rules, size cap and pagination. Tests against fixture DOM including password, token and payment inputs. Delivered: snapshot builder with roles, names, states, refs, size cap, paging and viewport-first order; secret and payment fields are never listed (tests for password type, autocomplete, name words, marked areas).
 - [x] **T012** Action executor: click, type, select, press, scroll, wait, with generation-scoped refs. jsdom tests, including stale refs and re-render. Delivered: click, type, select, press, scroll and wait with generation-scoped refs; a stale, replaced or renamed element is a typed `stale-ref`, never an action elsewhere.
 
 ## Phase 2: Host tools
 
-- [x] **T020** Scaffold `plugins/acryl-ui-control` (Host + Client, row `acryl-ui-control`); register in `pnpm-workspace.yaml` and `scripts/verify-layout.mjs` in the same commit. Delivered: `plugins/acryl-ui-control`, row id `acryl-ui-control`, registered in the workspace file, layout check and root scripts.
+- [x] **T020** Scaffold `plugins/acryl-agent-control` (Host + Client, row `acryl-agent-control`); register in `pnpm-workspace.yaml` and `scripts/verify-layout.mjs` in the same commit. Delivered: `plugins/acryl-agent-control`, row id `acryl-agent-control`, registered in the workspace file, layout check and root scripts.
 - [x] **T021** Register `ui.*` tools with `defineTool`, typed results, `exec.signal` honored, transport from T001. Delivered: seven `defineTool` tools (`ui_snapshot`, `ui_click`, `ui_type`, `ui_select`, `ui_press`, `ui_scroll`, `ui_wait`), typed results, cancellation honoured, removed on unload.
-- [ ] **T022** Real-Loader lifecycle tests: PENDING, reactivation, provider replacement, disposal with pending calls, 10x reload leak check.
+- [x] **T022** Real-Loader lifecycle tests: PENDING, reactivation, provider replacement, disposal with pending calls, 10x reload leak check. Delivered: `tests/host/loader-lifecycle.spec.ts` against a real `@deepseek-ai/cordis-plugin-loader` Loader mounting the built package, a real HTTP server standing in for `webServer`, and a `tools` fake that counts registrations - PENDING without `webServer`/`tools`, reactivation the moment both exist, a `tools` provider swap with no doubled registrations, an in-flight `ui_snapshot` call rejecting with `unloaded` the moment the row is disabled, and ten disable/enable cycles ending with exactly one live registration of each kind.
 
 ## Phase 3: safety
 
 - [x] **T030** Approval integration: mutating UI actions require per-call approval; deny-list for policy and self-disable. Delivered: per-call approval through `tools/pre-execute`; protected regions and this plugin's own controls are refused by rule.
 - [x] **T031** "Agent is driving" indicator and kill switch as a slot contribution; user input always wins. Delivered: the "Agent is driving" indicator with Stop (also the user's Escape key) and Allow again; the user's own input makes actions wait; the indicator is off limits to the agent.
 - [x] **T032** Append-only audit log and a small viewer.
-- [x] **T033** Add the row to `apps/acryl-desktop/src/profile.ts` (advanced) and `MANAGED_PLUGIN_LIFECYCLE_ENTRIES`; update the specs asserting those lists. Delivered through the shared seam: Desktop composes the row from `coding-capabilities.ts` and lists `acryl-ui-control` as a direct dependency (its loader smoke, profile boot and closure checks pass). It is not in `MANAGED_PLUGIN_LIFECYCLE_ENTRIES`: that table holds only entries outside the profile bundle list, and `acryl-workspace` and `acryl-plugin-admin` are not in it either.
+- [x] **T033** Add the row to `apps/acryl-desktop/src/profile.ts` (advanced) and `MANAGED_PLUGIN_LIFECYCLE_ENTRIES`; update the specs asserting those lists. Delivered through the shared seam: Desktop composes the row from `coding-capabilities.ts` and lists `acryl-agent-control` as a direct dependency (its loader smoke, profile boot and closure checks pass). It is not in `MANAGED_PLUGIN_LIFECYCLE_ENTRIES`: that table holds only entries outside the profile bundle list, and `acryl-workspace` and `acryl-plugin-admin` are not in it either.
 
 ## Phase 4: first real use
 
@@ -62,7 +62,7 @@ Conventions: `[P]` parallel; every task ends with a green `corepack pnpm run che
 ## Sharing across Web and Desktop (decided 2026-09-26)
 
 - [x] **TS01** Declare `agent-control-tools` (`tui`, `web`, `desktop`) and `agent-control-ui` (`web`, `desktop`) in `runtime/acryl-harness-runtime/src/coding-capabilities.ts`; compose them on every surface only through `createAcrylCodingCapabilityPatches`. Tests on the declarations. Delivered: `agent-control-ui` (`web`, `desktop`) declared in `coding-capabilities.ts`; composed only through the seam. The typed `agent-control-tools` capability is not declared yet.
-- [x] **TS02** Keep `acryl-ui-control` free of Electron and Desktop-only imports (an import-boundary test), and mount its indicator and kill switch through the shared shell from spec 040 Phase 7. Delivered: an import-boundary test fails if the package imports Electron, Desktop or an app, or if the Host and the driver reach into each other.
+- [x] **TS02** Keep `acryl-agent-control` free of Electron and Desktop-only imports (an import-boundary test), and mount its indicator and kill switch through the shared shell from spec 040 Phase 7. Delivered: an import-boundary test fails if the package imports Electron, Desktop or an app, or if the Host and the driver reach into each other.
 - [ ] **TS03** Surface adapter seam for native screenshot, native dialogs and window handle, with Desktop and Web implementations or a declared absence.
 - [x] **TS04** Parity gate: boot Web and Desktop headlessly on one profile, assert the same Agent Control tool names, fail on an undeclared difference; wire into the root `check`. Partly delivered: the existing Web and Desktop parity test now covers the new row; a tool-name parity check is not added.
 - [ ] **TS05** Real evidence: the same agent instruction ("hide Chats, open branch X") works on a Web session and a Desktop session against one profile.

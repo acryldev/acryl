@@ -14,7 +14,7 @@ export const PLUGIN_LIST_TOOL = 'acryl_plugin_list'
 export const PLUGIN_SET_ENABLED_TOOL = 'acryl_plugin_set_enabled'
 
 /** The plugin the agent may never switch off: it is the agent's own leash. */
-const AGENT_CONTROL_MODULE = 'acryl-ui-control'
+const AGENT_CONTROL_MODULE = 'acryl-agent-control'
 
 /** What the tools need from the lifecycle view. */
 export interface PluginLifecycleTools {

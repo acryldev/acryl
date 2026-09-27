@@ -6,7 +6,7 @@ import type { RefTable } from './ref-table.ts'
 import { isProtected, isSensitive } from './sensitivity.ts'
 
 /** Marks the driver's own UI (the indicator), which a snapshot never lists. */
-export const DRIVER_UI_ATTRIBUTE = 'data-acryl-ui-control'
+export const DRIVER_UI_ATTRIBUTE = 'data-acryl-agent-control'
 
 /** The most elements one snapshot considers, however large the page. */
 const MAX_CANDIDATES = 5000

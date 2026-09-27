@@ -9,7 +9,7 @@
 import { UiControlError, parseChannelToPage, type ChannelToHost } from '../contract.ts'
 import type { UiDriver } from './driver/driver.ts'
 
-export const CHANNEL_PATH = '/api/acryl-ui-control/channel'
+export const CHANNEL_PATH = '/api/acryl-agent-control/channel'
 
 /** The slice of a WebSocket the channel uses, so tests can supply their own. */
 export interface ChannelSocket {

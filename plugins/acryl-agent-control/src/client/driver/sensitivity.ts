@@ -21,7 +21,7 @@ export function isSensitive(el: Element): boolean {
 }
 
 /** Areas whose controls the agent may look at but never operate. */
-const PROTECTED_REGION = /approval|permission|policy|agent control|ui control|acryl-ui-control|kill switch/i
+const PROTECTED_REGION = /approval|permission|policy|agent control|ui control|acryl-agent-control|kill switch/i
 
 /** The text an ancestor uses to name itself, for region rules. */
 function ancestorName(el: Element): string {

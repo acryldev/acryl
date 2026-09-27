@@ -173,13 +173,13 @@ describe('the ACRYL workspace on the Web surface', () => {
       const logFiles = (await readdir(join(home, '.dsh', 'logs'))).filter(name => /^dsh-\d{4}-\d{2}-\d{2}(\.error)?\.log$/.test(name))
       expect(logFiles.length).toBeGreaterThan(0)
       // Agent Control: the tools are composed, a page connects over the same-origin channel, and a call reaches it.
-      expect(rows.get('acryl-ui-control')?.fiber).toBeDefined()
+      expect(rows.get('acryl-agent-control')?.fiber).toBeDefined()
       const uiTools = host.ctx.tools as unknown as { get(name: string): unknown; execute(input: { callId: string; name: string; arguments: unknown; signal: AbortSignal }): Promise<{ isError?: boolean; content?: Array<{ text?: string }> }> }
       for (const toolName of ['ui_snapshot', 'ui_click', 'ui_type', 'ui_select', 'ui_press', 'ui_scroll', 'ui_wait']) expect(uiTools.get(toolName), toolName).toBeDefined()
       const { WebSocket: PageSocket } = createRequire(require.resolve('acryl-workspace/package.json'))('ws') as typeof import('ws')
-      const foreignPage = new PageSocket(`${origin.replace('http', 'ws')}/api/acryl-ui-control/channel`, { headers: { origin: 'http://evil.example' } })
+      const foreignPage = new PageSocket(`${origin.replace('http', 'ws')}/api/acryl-agent-control/channel`, { headers: { origin: 'http://evil.example' } })
       await new Promise<void>((resolve) => { foreignPage.once('error', () => { resolve() }); foreignPage.once('unexpected-response', () => { resolve() }) })
-      const uiPage = new PageSocket(`${origin.replace('http', 'ws')}/api/acryl-ui-control/channel`, { headers: { ...headers, origin } })
+      const uiPage = new PageSocket(`${origin.replace('http', 'ws')}/api/acryl-agent-control/channel`, { headers: { ...headers, origin } })
       uiPage.on('message', (raw) => {
         const call = JSON.parse(raw.toString('utf8')) as { id: number; request: { op: string } }
         uiPage.send(JSON.stringify({ t: 'result', id: call.id, value: { generation: 1, title: 'ACRYL', total: 1, nodes: [{ ref: '1.1', role: 'button', name: 'Add project', depth: 0, states: [] }] } }))

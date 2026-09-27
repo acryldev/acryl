@@ -13,12 +13,12 @@ export interface UiControlConfig {
 /** @throws Error naming the bad field. An unknown value never falls back to something looser. */
 export function parseConfig(raw: unknown): UiControlConfig {
   if (raw === undefined || raw === null) return { approval: 'every-call' }
-  if (typeof raw !== 'object' || Array.isArray(raw)) throw new Error('acryl-ui-control: config must be an object')
+  if (typeof raw !== 'object' || Array.isArray(raw)) throw new Error('acryl-agent-control: config must be an object')
   const config = raw as Record<string, unknown>
   const unknown = Object.keys(config).find(key => key !== 'approval' && key !== 'auditLog')
-  if (unknown !== undefined) throw new Error(`acryl-ui-control: unknown config field "${unknown}"`)
+  if (unknown !== undefined) throw new Error(`acryl-agent-control: unknown config field "${unknown}"`)
   const approval = config.approval ?? 'every-call'
-  if (approval !== 'every-call' && approval !== 'none') throw new Error('acryl-ui-control: approval must be "every-call" or "none"')
-  if (config.auditLog !== undefined && (typeof config.auditLog !== 'string' || config.auditLog === '')) throw new Error('acryl-ui-control: auditLog must be a path')
+  if (approval !== 'every-call' && approval !== 'none') throw new Error('acryl-agent-control: approval must be "every-call" or "none"')
+  if (config.auditLog !== undefined && (typeof config.auditLog !== 'string' || config.auditLog === '')) throw new Error('acryl-agent-control: auditLog must be a path')
   return { approval, ...(config.auditLog === undefined ? {} : { auditLog: config.auditLog as string }) }
 }

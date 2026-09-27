@@ -1,6 +1,6 @@
 /** Styles for the driving indicator, installed for the plugin's lifetime. */
 
-const STYLE_ID = 'acryl-ui-control-styles'
+const STYLE_ID = 'acryl-agent-control-styles'
 
 const CSS = `
 .acrylDrivingBar { position: fixed; left: 50%; bottom: 44px; transform: translateX(-50%); z-index: 2147483000; display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 14px; border: 1px solid #4d6bfe; border-radius: 999px; background: var(--dsw-alias-bg-base, #fff); color: var(--dsw-alias-fg, #111); box-shadow: 0 8px 28px rgb(0 0 0 / 30%); font: 13px/1.3 ui-sans-serif, system-ui, sans-serif; pointer-events: auto; }

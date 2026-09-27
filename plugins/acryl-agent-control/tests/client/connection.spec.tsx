@@ -123,7 +123,7 @@ describe('AgentDrivingIndicator', () => {
     busy.catch(() => {})
     await screen.findByRole('status')
     const bar = document.querySelector('.acrylDrivingBar')!
-    expect(bar.hasAttribute('data-acryl-ui-control')).toBe(true)
+    expect(bar.hasAttribute('data-acryl-agent-control')).toBe(true)
     expect(bar.hasAttribute('data-acryl-no-agent')).toBe(true)
     driver.kill()
     await busy.catch(() => {})

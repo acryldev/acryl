@@ -15,7 +15,7 @@ function sources(dir: string): string[] {
 
 const files = sources(join(process.cwd(), 'src'))
 
-describe('acryl-ui-control boundaries', () => {
+describe('acryl-agent-control boundaries', () => {
   it('has source to check', () => {
     expect(files.length).toBeGreaterThan(10)
   })

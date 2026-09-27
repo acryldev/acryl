@@ -28,7 +28,7 @@ export function AgentDrivingIndicator({ driver }: IndicatorProps) {
 
   if (!activity.busy && !activity.killed) return null
   return (
-    <div className="acrylDrivingBar" data-acryl-ui-control data-acryl-no-agent role="status" aria-live="polite" data-killed={activity.killed || undefined}>
+    <div className="acrylDrivingBar" data-acryl-agent-control data-acryl-no-agent role="status" aria-live="polite" data-killed={activity.killed || undefined}>
       {activity.killed ? (
         <>
           <span>Agent stopped. It cannot use the window until you allow it.</span>

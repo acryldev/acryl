@@ -4,7 +4,7 @@
 
 ## What's shipping (Scope A)
 
-A plugin (`acryl-ui-control`) that gives agents running inside ACRYL Desktop and Web the ability to:
+A plugin (`acryl-agent-control`) that gives agents running inside ACRYL Desktop and Web the ability to:
 
 1. **Take snapshots of the current window** (`ui_snapshot`): accessibility tree with roles, names, states, and stable short-lived refs
    - Redacted snapshots: password, API key, token, and payment fields never appear
@@ -116,7 +116,7 @@ Both commands work offline (no app needed) and include `--dry-run` to show the c
 
 ## Commits that shipped this
 
-- `8bc13c0`: acryl-ui-control - the core plugin with typed tools, WebSocket transport, snapshots, approval, kill switch, audit log
+- `8bc13c0`: acryl-agent-control - the core plugin with typed tools, WebSocket transport, snapshots, approval, kill switch, audit log
 - `23edc2e`: Desktop integration and direct dependency
 - `35f5855`: audit viewer, layer 1 tools pilot (plugin.enable/disable)
 - `9293f12`: acryl doctor and acryl repair - offline diagnosis and reversible repair with pre-image backups

@@ -2,7 +2,7 @@
 
 import type { AuditEntry } from '../contract.ts'
 
-export const AUDIT_PATH = '/api/acryl-ui-control/audit'
+export const AUDIT_PATH = '/api/acryl-agent-control/audit'
 
 export interface AuditApi {
   /** @throws an Error whose message is fit to show the user. */

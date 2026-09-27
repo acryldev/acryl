@@ -28,7 +28,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 }
 
-export const name = 'acryl-ui-control-client'
+export const name = 'acryl-agent-control-client'
 /** `slots` for the indicator and the audit section, `locale` for its dictionary. */
 export const inject = ['slots', 'locale']
 
@@ -38,8 +38,8 @@ export function apply(ctx: ClientContext): void {
   const windowId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `w-${String(Date.now())}-${String(Math.random()).slice(2, 8)}`
   const focused = (): boolean => document.visibilityState === 'visible' && document.hasFocus()
 
-  ctx.effect(() => installIndicatorStyles(), 'acryl-ui-control: styles')
-  ctx.effect(() => ctx.locale.register(AGENT_CONTROL_LOCALE_NAMESPACE, { zh, en }), 'acryl-ui-control: dictionaries')
+  ctx.effect(() => installIndicatorStyles(), 'acryl-agent-control: styles')
+  ctx.effect(() => ctx.locale.register(AGENT_CONTROL_LOCALE_NAMESPACE, { zh, en }), 'acryl-agent-control: dictionaries')
   const t = ctx.locale.bind(AGENT_CONTROL_LOCALE_NAMESPACE)
   const auditApi = createAuditApi()
   ctx.slots.inject('settings.section', () => ctx.slots.register({
@@ -68,11 +68,11 @@ export function apply(ctx: ClientContext): void {
       // Pending calls settle as `unloaded` and every ref goes stale.
       driver.dispose()
     }
-  }, 'acryl-ui-control: page channel and driver')
+  }, 'acryl-agent-control: page channel and driver')
 
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay',
-    id: 'acryl-ui-control-indicator',
+    id: 'acryl-agent-control-indicator',
     order: 1000,
     inject: () => ({ driver }),
   }, AgentDrivingIndicator))

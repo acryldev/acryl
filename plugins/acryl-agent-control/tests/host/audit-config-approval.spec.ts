@@ -55,7 +55,7 @@ describe('parseConfig', () => {
   })
   it('refuses anything it does not understand rather than loosening', () => {
     for (const bad of ['yes', [], { approval: 'sometimes' }, { approval: true }, { extra: 1 }, { auditLog: '' }, { auditLog: 3 }]) {
-      expect(() => parseConfig(bad)).toThrow(/acryl-ui-control/)
+      expect(() => parseConfig(bad)).toThrow(/acryl-agent-control/)
     }
   })
 })

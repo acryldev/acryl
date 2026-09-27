@@ -1,14 +1,14 @@
 {
-  "name": "acryl-ui-control",
+  "name": "acryl-agent-control",
   "version": "0.1.0",
   "description": "Agent Control (spec 041): a governed, snapshot-and-act interface to ACRYL's own window for the agent, one Cordis plugin for Web and Desktop. Host tools reach the page over a same-origin WebSocket; the in-page driver builds accessibility snapshots with short-lived refs, redacts sensitive fields, refuses protected controls, and shows an \"agent is driving\" indicator with a kill switch",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-ui-control"
+    "directory": "plugins/acryl-agent-control"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-ui-control#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-agent-control#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },

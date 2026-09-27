@@ -59,7 +59,7 @@ describe('snapshot', () => {
     document.body.innerHTML = `
       <button hidden>Ghost</button><div aria-hidden="true"><button>Aria hidden</button></div>
       <div style="display:none"><button>Not shown</button></div>
-      <div data-acryl-ui-control><button>Stop</button></div>
+      <div data-acryl-agent-control><button>Stop</button></div>
       <button>Real</button>`
     const names = (await snap(makeDriver())).nodes.map(n => n.name)
     expect(names).toEqual(['Real'])

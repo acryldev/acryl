@@ -4,7 +4,7 @@
  * rule instead of each reading `aria-label` by hand). Deliberately small: `aria-label`, else the button's own
  * trimmed text — the two cases every control ACRYL's own code has ever needed to find this way. A caller that
  * needs the fuller ARIA accessible-name algorithm (labelled inputs, `aria-labelledby`, roles other than button)
- * has that in `acryl-ui-control`'s driver; this stays a workspace-local primitive so the two packages do not
+ * has that in `acryl-agent-control`'s driver; this stays a workspace-local primitive so the two packages do not
  * depend on each other for one function.
  */
 

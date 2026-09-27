@@ -2,7 +2,7 @@
  * Cordis Host plugin: Agent Control tools for the ACRYL window (spec 041), for every surface that has a page.
  *
  * The tools live here, the DOM lives in the page. The page connects over a same-origin WebSocket
- * (`/api/acryl-ui-control/channel`) and the tools send it calls. One effect owns the channel, the route, the
+ * (`/api/acryl-agent-control/channel`) and the tools send it calls. One effect owns the channel, the route, the
  * tools and the approval policy; disposing the plugin closes the channel and settles every pending call.
  */
 
@@ -17,7 +17,7 @@ import { parseConfig } from './host/config.ts'
 import { createUiControlStream, UI_CONTROL_CHANNEL_PATH } from './host/stream.ts'
 import { RefDirectory, registerUiTools } from './host/tools.ts'
 
-export const name = 'acryl-ui-control'
+export const name = 'acryl-agent-control'
 export const inject = ['webServer', 'tools']
 
 export function apply(ctx: Context, rawConfig?: unknown): void {
@@ -49,7 +49,7 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
       stream.close()
       channel.close()
     }
-  }, 'acryl-ui-control: page channel, tools and approval policy')
+  }, 'acryl-agent-control: page channel, tools and approval policy')
 }
 
 export { UI_CONTROL_CHANNEL_PATH } from './host/stream.ts'

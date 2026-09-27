@@ -12,7 +12,7 @@ import { WebSocketServer, type WebSocket } from 'ws'
 import { parseChannelToHost } from '../contract.ts'
 import type { UiChannel } from './channel.ts'
 
-export const UI_CONTROL_CHANNEL_PATH = '/api/acryl-ui-control/channel'
+export const UI_CONTROL_CHANNEL_PATH = '/api/acryl-agent-control/channel'
 
 const MAX_FRAME_BYTES = 1024 * 1024
 const PING_MS = 30_000
