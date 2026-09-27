@@ -43,20 +43,22 @@ export function AgentRow({ entry, isDefault, onChange, onRemove }: AgentRowProps
           <span className="dshAgentsRowLabel">{entry.label}{!entry.installed && <span className="dshAgentsBadge" title={`"${entry.command}" was not found on this machine`}>not found</span>}</span>
           <code className="dshAgentsRowCommand">{entry.preview}</code>
         </div>
-        <Segmented
-          label={`${entry.label} in the + menu`}
-          value={entry.enabled ? 'on' : 'off'}
-          options={[{ id: 'on', label: 'Enabled' }, { id: 'off', label: 'Disabled' }]}
-          onChange={(id) => { run(onChange({ agent: { id: entry.id, enabled: id === 'on' } })) }}
-        />
-        {isDefault
-          ? <span className="dshAgentsDefault" aria-label={`${entry.label} is the default`}>✓ Default</span>
-          : <button type="button" className="dshAgentsButton" disabled={!entry.installed || !entry.enabled} onClick={() => { run(onChange({ defaultAgent: entry.id })) }}>Set default</button>}
-        {entry.homepageUrl !== null && (
-          <a className="dshAgentsIconLink" href={entry.homepageUrl} target="_blank" rel="noopener noreferrer" aria-label={`${entry.label} install and docs page`} title="Install and docs page"><ExternalLinkIcon /></a>
-        )}
-        {entry.homepageUrl === null && <span className="dshAgentsIconLink" aria-hidden="true" />}
-        <button type="button" className="dshAgentsChevron" aria-expanded={open} aria-label={`${entry.label} launch settings`} onClick={() => { setOpen(!open) }}><ChevronIcon open={open} /></button>
+        <div className="dshAgentsRowControls">
+          <Segmented
+            label={`${entry.label} in the + menu`}
+            value={entry.enabled ? 'on' : 'off'}
+            options={[{ id: 'on', label: 'Enabled' }, { id: 'off', label: 'Disabled' }]}
+            onChange={(id) => { run(onChange({ agent: { id: entry.id, enabled: id === 'on' } })) }}
+          />
+          {isDefault
+            ? <span className="dshAgentsDefault" aria-label={`${entry.label} is the default`}>✓ Default</span>
+            : <button type="button" className="dshAgentsButton" disabled={!entry.installed || !entry.enabled} onClick={() => { run(onChange({ defaultAgent: entry.id })) }}>Set default</button>}
+          {entry.homepageUrl !== null && (
+            <a className="dshAgentsIconLink" href={entry.homepageUrl} target="_blank" rel="noopener noreferrer" aria-label={`${entry.label} install and docs page`} title="Install and docs page"><ExternalLinkIcon /></a>
+          )}
+          {entry.homepageUrl === null && <span className="dshAgentsIconLink" aria-hidden="true" />}
+          <button type="button" className="dshAgentsChevron" aria-expanded={open} aria-label={`${entry.label} launch settings`} onClick={() => { setOpen(!open) }}><ChevronIcon open={open} /></button>
+        </div>
       </div>
       {open && (
         <div className="dshAgentsRowDetail">

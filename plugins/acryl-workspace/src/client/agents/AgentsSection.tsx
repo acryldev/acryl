@@ -70,6 +70,18 @@ export function AgentsPanel({ agents }: AgentsSectionInjected) {
           onChange={(id) => { change({ permissions: id === 'yolo' ? 'yolo' : 'manual' }).catch((cause: unknown) => { setError(cause instanceof Error ? cause.message : 'could not save') }) }}
         />
       </div>
+      <div className="dshAgentsBlock dshAgentsInline">
+        <div>
+          <h4 className="dshAgentsSubheading">Agent status hooks</h4>
+          <p className="dshAgentsHint">Agents that support hooks (Claude Code) tell ACRYL when they are working, need you, or are done, so the Projects list can show which branch needs you. ACRYL adds the hooks to that agent's launch only; your own settings files are not touched.</p>
+        </div>
+        <Segmented
+          label="Agent status hooks"
+          value={view.statusHooks ? 'on' : 'off'}
+          options={[{ id: 'on', label: 'On' }, { id: 'off', label: 'Off' }]}
+          onChange={(id) => { change({ statusHooks: id === 'on' }).catch((cause: unknown) => { setError(cause instanceof Error ? cause.message : 'could not save') }) }}
+        />
+      </div>
       {error !== null && <div className="dshAgentsError" role="alert">{error}</div>}
 
       <div className="dshAgentsBlock">

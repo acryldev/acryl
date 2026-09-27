@@ -3,15 +3,17 @@
  * engine on a throwaway home and checks the composition that the shared capability declarations promise,
  * plus one real Host route, so a Web that drifts from Desktop fails here rather than in a user's browser.
  */
-import { execFileSync } from 'node:child_process'
+import { execFile, execFileSync } from 'node:child_process'
 import { mkdtemp, readdir, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { promisify } from 'node:util'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { createAcrylEngineHost, createWebEngineDefinition } from 'acryl-harness-runtime'
 import { afterEach, describe, expect, it } from 'vitest'
 
+const execFileAsync = promisify(execFile)
 const require = createRequire(import.meta.url)
 const temporaryHomes: string[] = []
 const initialAcrylHome = process.env.ACRYL_HOME
@@ -135,6 +137,28 @@ describe('the ACRYL workspace on the Web surface', () => {
         configuredOutput = ((await (await fetch(`${origin}/api/acryl-workspace/pty?id=${configuredId}`, { headers })).json()) as { output: string }).output
       }
       expect(configuredOutput).toContain('--yes-always settings-applied')
+      // Attention: a Claude launch carries hooks and this terminal's credentials; running a hook command as a real shell
+      // makes the Host report the state, and the page's status list shows it.
+      const fakeClaude = join(home, 'fake-claude.sh')
+      await writeFile(fakeClaude, '#!/bin/sh\necho "TOKEN=$ACRYL_STATUS_TOKEN"\necho "URL=$ACRYL_STATUS_URL"\necho "TERM_ID=$ACRYL_TERMINAL_ID"\necho "SETTINGS=$2"\nsleep 30\n', { mode: 0o755 })
+      expect((await post({ agent: { id: 'claude', command: fakeClaude } })).status).toBe(200)
+      const claude = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'claude', cwd: repo }) })
+      expect(claude.status).toBe(200)
+      const claudeId = (await claude.json() as { id: string }).id
+      let claudeOutput = ''
+      for (let attempt = 0; attempt < 50 && !claudeOutput.includes('SETTINGS='); attempt += 1) {
+        await new Promise(resolve => { setTimeout(resolve, 100) })
+        claudeOutput = ((await (await fetch(`${origin}/api/acryl-workspace/pty?id=${claudeId}`, { headers })).json()) as { output: string }).output
+      }
+      const field = (name: string): string => new RegExp(`${name}=(.*?)\\r?\\n`).exec(claudeOutput)?.[1] ?? ''
+      const hooks = JSON.parse(field('SETTINGS')) as { hooks: { Notification: Array<{ hooks: Array<{ command: string }> }> } }
+      const hookCommand = hooks.hooks.Notification[0]?.hooks[0]?.command ?? ''
+      expect(field('TERM_ID')).toBe(claudeId)
+      await execFileAsync('sh', ['-c', hookCommand], { env: { PATH: process.env.PATH, ACRYL_STATUS_TOKEN: field('TOKEN'), ACRYL_STATUS_URL: field('URL'), ACRYL_TERMINAL_ID: field('TERM_ID') } })
+      const statusList = await (await fetch(`${origin}/api/acryl-workspace/agent-status`, { headers })).json() as { statuses: Array<{ terminalId: string; state: string }> }
+      expect(statusList.statuses).toContainEqual(expect.objectContaining({ terminalId: claudeId, state: 'waiting' }))
+      const forged = await fetch(field('URL'), { method: 'POST', headers: { authorization: 'Bearer wrong', 'content-type': 'application/json' }, body: JSON.stringify({ terminal: claudeId, state: 'done' }) })
+      expect(forged.status).toBe(403)
       const smuggled = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'sh -c id' }) })
       expect(smuggled.status).toBe(500)
       // Web keeps log files and serves a diagnostics archive (Settings > Support downloads it).
@@ -149,13 +173,13 @@ describe('the ACRYL workspace on the Web surface', () => {
       const logFiles = (await readdir(join(home, '.dsh', 'logs'))).filter(name => /^dsh-\d{4}-\d{2}-\d{2}(\.error)?\.log$/.test(name))
       expect(logFiles.length).toBeGreaterThan(0)
       // Agent Control: the tools are composed, a page connects over the same-origin channel, and a call reaches it.
-      expect(rows.get('acryl-ui-control')?.fiber).toBeDefined()
+      expect(rows.get('acryl-agent-control')?.fiber).toBeDefined()
       const uiTools = host.ctx.tools as unknown as { get(name: string): unknown; execute(input: { callId: string; name: string; arguments: unknown; signal: AbortSignal }): Promise<{ isError?: boolean; content?: Array<{ text?: string }> }> }
       for (const toolName of ['ui_snapshot', 'ui_click', 'ui_type', 'ui_select', 'ui_press', 'ui_scroll', 'ui_wait']) expect(uiTools.get(toolName), toolName).toBeDefined()
       const { WebSocket: PageSocket } = createRequire(require.resolve('acryl-workspace/package.json'))('ws') as typeof import('ws')
-      const foreignPage = new PageSocket(`${origin.replace('http', 'ws')}/api/acryl-ui-control/channel`, { headers: { origin: 'http://evil.example' } })
+      const foreignPage = new PageSocket(`${origin.replace('http', 'ws')}/api/acryl-agent-control/channel`, { headers: { origin: 'http://evil.example' } })
       await new Promise<void>((resolve) => { foreignPage.once('error', () => { resolve() }); foreignPage.once('unexpected-response', () => { resolve() }) })
-      const uiPage = new PageSocket(`${origin.replace('http', 'ws')}/api/acryl-ui-control/channel`, { headers: { ...headers, origin } })
+      const uiPage = new PageSocket(`${origin.replace('http', 'ws')}/api/acryl-agent-control/channel`, { headers: { ...headers, origin } })
       uiPage.on('message', (raw) => {
         const call = JSON.parse(raw.toString('utf8')) as { id: number; request: { op: string } }
         uiPage.send(JSON.stringify({ t: 'result', id: call.id, value: { generation: 1, title: 'ACRYL', total: 1, nodes: [{ ref: '1.1', role: 'button', name: 'Add project', depth: 0, states: [] }] } }))

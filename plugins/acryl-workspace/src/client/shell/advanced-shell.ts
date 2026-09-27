@@ -2,6 +2,7 @@ import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
 import type { DesktopMainOwnerProps, DesktopSidebarSurfaceOwnerProps } from './contracts.ts'
 import type { ShellEnvironment } from './environment.ts'
+import type { DockHost } from '../dock/dock-host.ts'
 import { AdvancedFrame } from './AdvancedFrame.tsx'
 import { DesktopLayoutState } from './layout-state.ts'
 import { provideDesktopLayout } from './layout-service.ts'
@@ -20,8 +21,9 @@ function DefaultDesktopSidebar({ renderUpstream }: DesktopSidebarSurfaceOwnerPro
  * Provide the advanced layout service and own the desktop root slot.
  * @param ctx - active browser Cordis context.
  * @param environment - validated mode and platform marker.
+ * @param dock - the terminal dock the frame places in its columns; without it the frame has no terminal panel.
  */
-export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnvironment): void {
+export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnvironment, dock?: DockHost): void {
   if (environment.mode !== 'advanced') {
     throw new Error(`acryl-workspace: advanced shell received mode ${JSON.stringify(environment.mode)}`)
   }
@@ -73,6 +75,6 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
       'rightbar': { kind: 'single', scope: 'session' },
       'shell.overlay': { kind: 'list', scope: 'root' },
     },
-    inject: () => ({ layout: desktopLayout, platform: environment.platform }),
+    inject: () => ({ layout: desktopLayout, platform: environment.platform, dock }),
   }, AdvancedFrame), 'acryl-workspace: shell advanced root slot')
 }

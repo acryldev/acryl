@@ -1,5 +1,6 @@
 /** Cordis Host plugin: ACRYL Workspace PTY table and loopback routes. */
 
+import { randomBytes } from 'node:crypto'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import {
@@ -43,6 +44,8 @@ import { WORKSPACE_AGENT_SETTINGS_PATH, WORKSPACE_AGENTS_PATH, WORKSPACE_AGENTS_
 import { agentSettingsFile, agentsFile, createFileCatalogStore } from './agents/file-store.ts'
 import { handleWorkspaceAgentSettingsRequest, handleWorkspaceAgentsRemoveRequest, handleWorkspaceAgentsRequest } from './agents/route.ts'
 import { AgentSettings } from './agents/settings.ts'
+import { AgentStatusStore, WORKSPACE_AGENT_STATUS_PATH } from './agents/status/agent-status.ts'
+import { handleAgentStatusRequest } from './agents/status/route.ts'
 import { spawnNodePty } from './pty/node-pty-spawn.ts'
 import { WorkspacePtyRegistry } from './pty/service.ts'
 import {
@@ -100,7 +103,14 @@ export function apply(ctx: Context): void {
     // The user's custom agents live in their ACRYL home; the registry asks the catalog what an id means.
     // The registry asks the settings what an id runs; the settings ask the catalog and the registry's own PATH search.
     let settings: AgentSettings | undefined
-    const workspacePty = new WorkspacePtyRegistry({ spawn: spawnNodePty, agents: { resolve: id => settings?.resolve(id) } })
+    // Agents that support hooks report working, waiting and done here; the secret is known only to their terminals.
+    const statusToken = randomBytes(24).toString('hex')
+    const workspacePty = new WorkspacePtyRegistry({
+      spawn: spawnNodePty,
+      agents: { resolve: id => settings?.resolve(id) },
+      agentStatus: { url: `${rendererOrigin}${WORKSPACE_AGENT_STATUS_PATH}`, token: statusToken },
+    })
+    const agentStatus = new AgentStatusStore(id => workspacePty.has(id))
     const catalog = new AgentCatalog(createFileCatalogStore(agentsFile(ctx.appInstance.home)), command => workspacePty.canRun(command))
     const agentSettings = new AgentSettings(createFileCatalogStore(agentSettingsFile(ctx.appInstance.home)), catalog, command => workspacePty.canRun(command))
     settings = agentSettings
@@ -154,6 +164,11 @@ export function apply(ctx: Context): void {
         kind: 'exact',
         path: WORKSPACE_AGENT_SETTINGS_PATH,
         handler: (req, res) => handleWorkspaceAgentSettingsRequest(req, res, rendererOrigin, agentSettings, reportHostError),
+      }))
+      releases.push(ctx.webServer.register({
+        kind: 'exact',
+        path: WORKSPACE_AGENT_STATUS_PATH,
+        handler: (req, res) => handleAgentStatusRequest(req, res, rendererOrigin, statusToken, agentStatus, reportHostError),
       }))
       const gitRoutes = [
         [WORKSPACE_GIT_REPO_PATH, handleWorkspaceGitRepoRequest],

@@ -1,6 +1,6 @@
 # Feature Specification: Agent Control (agents operate ACRYL itself, from inside and from outside)
 
-> Renamed from `041-agent-ui-control` on 2026-09-25: the milestone covers settings, plugins, install, repair and CLI control, not only the UI.
+> Renamed from `041-agent-ui-control` on 2026-09-25: the milestone covers settings, plugins, install, repair and CLI control, not only the UI. The implementation package followed on 2026-09-27: `plugins/acryl-ui-control` renamed to `plugins/acryl-agent-control` (row id, package name, and its `/api/acryl-agent-control/...` routes), for the same reason - it already governs plugin enable/disable (Layer 1 tools) alongside the UI driver, and non-UI control (settings, install) is the direction this milestone is growing in.
 
 **Tracking:** to be filed (`acryldev/acryl` issue) when this leaves `needs-triage`
 

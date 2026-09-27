@@ -1,10 +1,10 @@
 # Research: Agent Control (spikes T001 to T004, answered by building)
 
-Answers are from the code that shipped on 2026-09-27 (`plugins/acryl-ui-control`), not from guesses.
+Answers are from the code that shipped on 2026-09-27 (`plugins/acryl-agent-control`), not from guesses.
 
 ## T001: how a Host-side tool reaches the page
 
-**Verdict: a Client-initiated WebSocket to the Host.** The Host web server already supports exact-path upgrade routes (`ctx.webServer.registerUpgrade`, the same mechanism the workspace terminals use). The page opens `wss://<host>/api/acryl-ui-control/channel`; the Host tools send `{t:'call', id, request}` and the page answers `{t:'result'|'error', id, ...}`. No Harness change was needed, nothing is Electron-IPC-only, and a Desktop window is just a page served by the same Host, so **one implementation serves Web and Desktop**.
+**Verdict: a Client-initiated WebSocket to the Host.** The Host web server already supports exact-path upgrade routes (`ctx.webServer.registerUpgrade`, the same mechanism the workspace terminals use). The page opens `wss://<host>/api/acryl-agent-control/channel`; the Host tools send `{t:'call', id, request}` and the page answers `{t:'result'|'error', id, ...}`. No Harness change was needed, nothing is Electron-IPC-only, and a Desktop window is just a page served by the same Host, so **one implementation serves Web and Desktop**.
 - The upgrade uses the same strict same-origin loopback check as every private route (`runtime/acryl-loopback-http`), with the exact `Origin` required, so another web page cannot connect (tested against a real socket).
 - Only the window a call was sent to may answer it (a second window cannot forge a result).
 - Calls have a timeout, honour cancellation, and settle as `unloaded` when the plugin is disposed and as `no-window` when the page goes away.
@@ -12,6 +12,20 @@ Answers are from the code that shipped on 2026-09-27 (`plugins/acryl-ui-control`
 ## T002: accessibility quality
 
 The snapshot builder lists interactive controls, headings, landmarks, status regions and dialogs with role, name and state. A control with no accessible name is listed with an empty name and is still operable by its ref, but an empty name makes approval prompts and audit lines weak. The audit is therefore a standing task: components in `@acryl/ui` and the workspace need `aria-label`s where a control is an icon. Tracked as T050 below; measured on the real tree in a browser pass, not in jsdom.
+
+**Measured (2026-09-27), jsdom of a composed real scene** (`ProjectsSidebar` with two worktrees and one running session, `TabStrip` with a Claude tab plus File, Browser, Diff, Kanban and Doc tiles - a first-order approximation of a real window, not the full app with Settings, the palette or the terminal dock open):
+
+| metric | value |
+| --- | --- |
+| real accessible nodes (`snapshot.total`) | 29 |
+| nodes at `maxNodes: 1000` | 29 (no truncation this small) |
+| nodes at the default cap (300) | 29 |
+| rendered text size (`renderSnapshot`) | 1,207 characters |
+| JSON size (`JSON.stringify`) | 2,311 characters |
+| interactive controls with an empty accessible name | 0 |
+| roles present | `button` 18, `tab` 9, `tablist` 2 |
+
+A scene this size (29 nodes) sits nowhere near `MAX_SNAPSHOT_NODES` (1000) or the default page size (300), so pagination is not yet exercised by a real window; a larger scene (Settings open, the palette open, a long Projects list) would be needed to measure that path, and is deferred to the real-browser pass (T050) rather than approximated further in jsdom. Zero unnamed interactive controls in this scene is consistent with T050's own finding ("the jsdom scenarios found none in the Projects path form and the + menu"), extended here to the wider tab strip and sidebar - encouraging, but still not the same claim as a clean real-browser audit.
 
 ## T003: approval and policy
 

@@ -14,10 +14,12 @@ export interface AgentPreferences {
   readonly permissions: PermissionMode
   readonly defaultAgent: DefaultAgent
   readonly overrides: Readonly<Record<string, AgentOverride>>
+  /** Agents that support hooks report working, waiting and done to ACRYL (the attention queue). */
+  readonly statusHooks: boolean
 }
 
 /** Manual is the default: an agent that skips approvals is something the user turns on. */
-export const DEFAULT_PREFERENCES: AgentPreferences = { permissions: 'manual', defaultAgent: 'auto', overrides: {} }
+export const DEFAULT_PREFERENCES: AgentPreferences = { permissions: 'manual', defaultAgent: 'auto', overrides: {}, statusHooks: true }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -49,6 +51,7 @@ export function parseStoredPreferences(value: unknown): AgentPreferences {
     permissions: isMode(value.permissions) ? value.permissions : DEFAULT_PREFERENCES.permissions,
     defaultAgent: typeof value.defaultAgent === 'string' && value.defaultAgent !== '' ? value.defaultAgent : DEFAULT_PREFERENCES.defaultAgent,
     overrides,
+    statusHooks: typeof value.statusHooks === 'boolean' ? value.statusHooks : DEFAULT_PREFERENCES.statusHooks,
   }
 }
 
@@ -56,6 +59,7 @@ export function parseStoredPreferences(value: unknown): AgentPreferences {
 export interface PreferencesPatch {
   readonly permissions?: PermissionMode
   readonly defaultAgent?: DefaultAgent
+  readonly statusHooks?: boolean
   readonly agent?: {
     readonly id: string
     readonly enabled?: boolean
@@ -67,9 +71,9 @@ export interface PreferencesPatch {
 /** @param value - untrusted JSON from the route. @throws AgentDefinitionError with a message fit to show. */
 export function parsePreferencesPatch(value: unknown): PreferencesPatch {
   if (!isRecord(value)) throw new AgentDefinitionError('invalid agent settings request')
-  const extra = Object.keys(value).find(key => key !== 'permissions' && key !== 'defaultAgent' && key !== 'agent')
+  const extra = Object.keys(value).find(key => key !== 'permissions' && key !== 'defaultAgent' && key !== 'agent' && key !== 'statusHooks')
   if (extra !== undefined) throw new AgentDefinitionError(`unknown field: ${extra}`)
-  const patch: { permissions?: PermissionMode; defaultAgent?: DefaultAgent; agent?: NonNullable<PreferencesPatch['agent']> } = {}
+  const patch: { permissions?: PermissionMode; defaultAgent?: DefaultAgent; statusHooks?: boolean; agent?: NonNullable<PreferencesPatch['agent']> } = {}
   if (value.permissions !== undefined) {
     if (!isMode(value.permissions)) throw new AgentDefinitionError('permissions is yolo or manual')
     patch.permissions = value.permissions
@@ -77,6 +81,10 @@ export function parsePreferencesPatch(value: unknown): PreferencesPatch {
   if (value.defaultAgent !== undefined) {
     if (typeof value.defaultAgent !== 'string' || value.defaultAgent === '' || value.defaultAgent.length > 40) throw new AgentDefinitionError('defaultAgent is auto, none or an agent id')
     patch.defaultAgent = value.defaultAgent
+  }
+  if (value.statusHooks !== undefined) {
+    if (typeof value.statusHooks !== 'boolean') throw new AgentDefinitionError('statusHooks is true or false')
+    patch.statusHooks = value.statusHooks
   }
   if (value.agent !== undefined) {
     const agent = value.agent
@@ -103,6 +111,7 @@ export function parsePreferencesPatch(value: unknown): PreferencesPatch {
 export function applyPreferencesPatch(current: AgentPreferences, patch: PreferencesPatch, isAgent: (id: string) => boolean): AgentPreferences {
   let next = current
   if (patch.permissions !== undefined) next = { ...next, permissions: patch.permissions }
+  if (patch.statusHooks !== undefined) next = { ...next, statusHooks: patch.statusHooks }
   if (patch.defaultAgent !== undefined) {
     if (patch.defaultAgent !== 'auto' && patch.defaultAgent !== 'none' && !isAgent(patch.defaultAgent)) throw new AgentDefinitionError(`"${patch.defaultAgent}" is not an agent`)
     next = { ...next, defaultAgent: patch.defaultAgent }

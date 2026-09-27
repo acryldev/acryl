@@ -64,7 +64,7 @@ packages:
   - plugins/acryl-workspace
   - plugins/acryl-plugin-admin
   - plugins/acryl-support
-  - plugins/acryl-ui-control
+  - plugins/acryl-agent-control
   - '!deepseek-harness/**'
 
 allowBuilds:

@@ -1,5 +1,6 @@
 /** Pure view-model for the Projects list in the left pane. */
 
+import type { WorktreeAttention } from '../status/attention-model.ts'
 import type { RepoState, ShellSnapshot, WorktreeState } from '../worktrees/shell-state.ts'
 
 /** The slice of a session row the model needs. */
@@ -11,7 +12,7 @@ export interface SessionLike {
 }
 
 /** What a worktree's status dot means, most urgent first. */
-export type WorktreeDot = 'error' | 'running' | 'done' | 'loading' | 'dirty' | 'clean'
+export type WorktreeDot = 'error' | 'attention' | 'running' | 'done' | 'loading' | 'dirty' | 'clean'
 
 export interface WorktreeRow {
   readonly path: string
@@ -59,8 +60,10 @@ export function owningWorktree(repos: readonly RepoState[], cwd: string): string
   return best
 }
 
-function dotFor(worktree: WorktreeState, running: number, done: number): WorktreeDot {
+function dotFor(worktree: WorktreeState, running: number, done: number, waiting: number): WorktreeDot {
   if (worktree.phase === 'error') return 'error'
+  // An agent that needs you outranks everything else: it is the one thing that cannot wait.
+  if (waiting > 0) return 'attention'
   if (running > 0) return 'running'
   if (done > 0) return 'done'
   if (worktree.phase === 'idle' || worktree.phase === 'loading') return 'loading'
@@ -76,6 +79,7 @@ export function buildProjectRows(
   snapshot: ShellSnapshot,
   sessions: readonly SessionLike[],
   agentsByPath: ReadonlyMap<string, readonly string[]> = new Map(),
+  attention: ReadonlyMap<string, WorktreeAttention> = new Map(),
 ): RepoRow[] {
   const perWorktree = new Map<string, { sessions: number; running: number; done: number }>()
   for (const session of sessions) {
@@ -93,11 +97,12 @@ export function buildProjectRows(
     name: repo.name,
     rows: repo.worktrees.map((worktree) => {
       const counts = perWorktree.get(worktree.path) ?? { sessions: 0, running: 0, done: 0 }
+      const terminalAgents = attention.get(worktree.path) ?? { waiting: 0, working: 0 }
       return {
         path: worktree.path,
         label: worktree.branch ?? `${basename(worktree.path)} (detached)`,
         main: worktree.main,
-        dot: dotFor(worktree, counts.running, counts.done),
+        dot: dotFor(worktree, counts.running + terminalAgents.working, counts.done, terminalAgents.waiting),
         changeCount: worktree.changes.length,
         added: worktree.added,
         removed: worktree.removed,

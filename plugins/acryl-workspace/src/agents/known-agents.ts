@@ -21,6 +21,8 @@ export interface KnownAgent {
   readonly yoloEnv?: Readonly<Record<string, string>>
   /** Where the agent's install instructions live. */
   readonly homepageUrl: string
+  /** How this agent reports what it is doing, when it can (hooks): its own launch settings carry the reporting. */
+  readonly statusHooks?: 'claude'
   /** The letter and colour of its tab icon when no drawn mark exists. */
   readonly badge: { readonly letter: string; readonly color: string }
 }
@@ -35,7 +37,7 @@ const agent = (
 
 /** In the order the lists show them. Ids of agents that shipped earlier keep their spelling. */
 export const KNOWN_AGENTS = [
-  agent('claude', 'Claude', 'claude', 'https://code.claude.com/docs', '#d97757', ['--dangerously-skip-permissions']),
+  { ...agent('claude', 'Claude', 'claude', 'https://code.claude.com/docs', '#d97757', ['--dangerously-skip-permissions']), statusHooks: 'claude' as const },
   agent('codex', 'Codex', 'codex', 'https://github.com/openai/codex', '#10a37f', ['--dangerously-bypass-approvals-and-sandbox']),
   agent('grok', 'Grok', 'grok', 'https://x.ai/cli', '#94a3b8', ['--permission-mode', 'bypassPermissions']),
   agent('copilot', 'GitHub Copilot', 'copilot', 'https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli', '#a78bfa', ['--yolo']),

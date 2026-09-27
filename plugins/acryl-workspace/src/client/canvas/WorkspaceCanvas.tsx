@@ -36,7 +36,16 @@ import { GLOBAL_GROUP, type WorkspaceGroups } from './groups.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { DocFilePane } from '../docs/DocFilePane.tsx'
 import { DocPane } from '../docs/DocPane.tsx'
-import { openAgentSettings } from '../agents/open-settings.ts'
+import { openSettingsSection } from '../settings/open-settings.ts'
+import { CustomTabPane } from '../tabs/registry/CustomTabPane.tsx'
+import type { WorkspaceTabRegistry } from '../tabs/registry/tab-registry.ts'
+import type { AgentStatusState } from '../status/agent-status-state.ts'
+import type { DockController } from '../dock/dock-controller.ts'
+import type { RightPaneHandle } from '../dock/DockButtons.tsx'
+import { CommandPalette } from '../palette/CommandPalette.tsx'
+import type { PaletteConfigState } from '../palette/palette-config.ts'
+import { useWorkspacePalette } from '../palette/use-workspace-palette.ts'
+import type { TabTypesState } from '../tabs/tab-types-state.ts'
 import { BrowserPane } from '../browser/BrowserPane.tsx'
 import { ScratchFilePane } from '../files/ScratchFilePane.tsx'
 import { createWorkspacePtyApi, type WorkspacePtyApi } from '../terminal/pty-api.ts'
@@ -50,6 +59,12 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   readonly terminals: TerminalRegistry
   /** The user's custom agents, for the "+" menu and the tab icons. */
   readonly agents: AgentsState
+  /** Which tab types are turned on (Settings > Tabs). */
+  readonly tabTypes: TabTypesState
+  /** The tab types plugins registered. */
+  readonly tabRegistry: WorkspaceTabRegistry
+  /** What the command palette lists (Settings > Command palette). */
+  readonly paletteConfig: PaletteConfigState
   /** Notices such as "Claude finished", fed from the terminals' exits. */
   readonly toasts: ToastState
   /** Notices outside the page; permission is asked for by a button, never on load. */
@@ -69,7 +84,11 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   /** Remembers each comment sent, for the Review tab. */
   readonly review: ReviewStore
   /** Opens and closes the right panel. Always available, even for a chat that has no header yet. */
-  readonly rightPanel?: { toggle(): void }
+  readonly rightPanel?: RightPaneHandle
+  /** The terminal dock: its buttons sit in the tab strip, and the frame places its panel. */
+  readonly dock: DockController
+  /** What terminal agents report (working, waiting for you, done). */
+  readonly agentStatus: AgentStatusState
 }
 
 /**
@@ -78,7 +97,7 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents: agentsState, toasts, notices, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, agentStatus, agents: agentsState, tabTypes, tabRegistry, paletteConfig, toasts, notices, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
   // Subscribe to primitives, not the whole shell snapshot: git polling updates that snapshot often,
@@ -171,6 +190,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
     if (tile.kind === 'browser') return <BrowserPane tile={tile} workspace={workspace} />
     if (tile.kind === 'kanban') return <SessionBoardPane tile={tile} workspace={workspace} shell={shell} useSessions={useSessions} navigator={sessionNavigator} />
     if (tile.kind === 'doc') return <DocPane tile={tile} workspace={workspace} />
+    if (tile.kind === 'custom') return <CustomTabPane tile={tile} workspace={workspace} registry={tabRegistry} />
     if (tile.diffFile !== undefined) {
       return (
         <GitDiffPane
@@ -248,8 +268,26 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
         return
       }
     })
-    return () => { stopGroups(); stopExit(); stopLost() }
-  }, [groups, terminals, toasts, notices])
+    // A shell that sets its title (the directory, the running command) names its tab, unless the user renamed it.
+    const stopTitle = terminals.onTitle((terminalId, title) => {
+      for (const key of groups.keys()) {
+        if (groups.stateFor(key).applyTerminalTitle(terminalId, title)) return
+      }
+    })
+    // An agent that starts needing you (a permission, a question) raises a notice that leads to its tab.
+    const stopNeeds = agentStatus.onNeedsYou((terminalId) => {
+      for (const key of groups.keys()) {
+        const tile = groups.stateFor(key).getSnapshot().tiles.find(candidate => candidate.terminalId === terminalId)
+        if (tile === undefined) continue
+        const text = `${tile.title} needs you`
+        const target = { group: key, tabId: tile.id }
+        toasts.push(text, target)
+        if (shouldRaiseSystemNotice(notices)) notices.show('ACRYL', text, () => { openTarget(target) })
+        return
+      }
+    })
+    return () => { stopGroups(); stopExit(); stopLost(); stopTitle(); stopNeeds() }
+  }, [groups, terminals, toasts, notices, agentStatus])
 
   const customAgents = useSyncExternalStore(agentsState.subscribe, agentsState.getSnapshot)
   const agentSettings = useSyncExternalStore(agentsState.subscribe, agentsState.getSettings)
@@ -265,6 +303,11 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
     runningAgents: countRunning(sessions.ids.flatMap((id) => { const row = sessions.byId[id]; return row === undefined ? [] : [row] })),
     terminals: snapshot.tiles.filter(tile => tile.kind === 'pty').length,
   })
+  const palette = useWorkspacePalette({
+    workspace, groups, groupKey, snapshot, shell, gitApi, toasts, agentSettings, customAgents, tabTypes, tabRegistry, dock, config: paletteConfig, rightPanel,
+    openPty: (commandId, title) => { void openPty(commandId, title) },
+    closeTile: (tileId) => { const tile = snapshot.tiles.find(candidate => candidate.id === tileId); if (tile !== undefined) void closeTile(tile) },
+  })
   const runningText = runningLabel(countRunning(sessions.ids.flatMap((id) => { const row = sessions.byId[id]; return row === undefined ? [] : [row] })))
 
   return (
@@ -276,13 +319,18 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
         branchTitle={groupKey}
         runningText={runningText}
         {...(rightPanel === undefined ? {} : { rightPanel })}
+        dock={dock}
+        agentStatus={agentStatus}
         storage={safeStorage()}
         onClose={(tile) => { void closeTile(tile) }}
         customAgents={customAgents}
         terminals={terminals}
         onOpenPty={(commandId, title) => { void openPty(commandId, title) }}
         agentSettings={agentSettings}
-        onManageAgents={() => openAgentSettings()}
+        tabTypes={tabTypes}
+        tabRegistry={tabRegistry}
+        onSetAgentEnabled={(id, enabled) => agentsState.change({ agent: { id, enabled } })}
+        onManageSettings={section => openSettingsSection(section)}
       />
       <div ref={stageRef} className="dshWorkspaceStage" role="tabpanel" data-split={splitTile !== undefined || undefined}>
         <div className="dshWorkspacePane" data-pane="primary" style={splitTile === undefined ? undefined : { flexBasis: `${splitRatio * 100}%`, flexGrow: 0 }}>
@@ -321,6 +369,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
           ? { action: { label: 'Enable notifications', title: 'Get a system notice when an agent finishes while you are in another app', run: () => { void notices.request().then(setNoticePermission) } } }
           : {})}
       />
+      <CommandPalette palette={palette} />
       <Toasts
         state={toasts}
         onOpen={openTarget}

@@ -36,7 +36,7 @@ export class AgentSettings {
   /** @returns what to run for an agent id (a known agent with the user's settings, or a custom agent), or undefined. */
   resolve(id: string): AgentLaunch | undefined {
     const known = knownAgent(id)
-    if (known !== undefined) return planKnownLaunch(known, this.preferences.overrides[id] ?? DEFAULT_OVERRIDE, this.preferences.permissions)
+    if (known !== undefined) return planKnownLaunch(known, this.preferences.overrides[id] ?? DEFAULT_OVERRIDE, this.preferences.permissions, this.preferences.statusHooks)
     return this.catalog.resolve(id)
   }
 
@@ -51,7 +51,7 @@ export class AgentSettings {
 
   /** The list Settings shows: known agents first, then the user's own. Detection is fresh on every call. */
   view(): AgentSettingsView {
-    const { permissions, overrides } = this.preferences
+    const { permissions, overrides, statusHooks } = this.preferences
     const known: AgentSettingsEntry[] = KNOWN_AGENTS.map((agent) => {
       const override = overrides[agent.id] ?? DEFAULT_OVERRIDE
       const launch = planKnownLaunch(agent, override, permissions)
@@ -90,7 +90,7 @@ export class AgentSettings {
     // A default that no longer names an agent (a removed custom agent) reads as automatic.
     const stored = this.preferences.defaultAgent
     const defaultAgent = stored === 'auto' || stored === 'none' || agents.some(entry => entry.id === stored) ? stored : 'auto'
-    return { permissions, defaultAgent, agents }
+    return { permissions, defaultAgent, statusHooks, agents }
   }
 
   private isAgent(id: string): boolean {

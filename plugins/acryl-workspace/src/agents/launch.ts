@@ -21,16 +21,19 @@ export interface AgentLaunch {
   readonly command: string
   readonly args: readonly string[]
   readonly env?: Readonly<Record<string, string>>
+  /** This launch reports its state through hooks of this kind; the Host adds the reporting at start. */
+  readonly statusHooks?: 'claude'
 }
 
 /** @returns the launch for a known agent: `yolo` adds the agent's own skip-approvals flags first. */
-export function planKnownLaunch(agent: KnownAgent, override: AgentOverride, mode: PermissionMode): AgentLaunch {
+export function planKnownLaunch(agent: KnownAgent, override: AgentOverride, mode: PermissionMode, statusHooks = false): AgentLaunch {
   const yolo = mode === 'yolo'
   const env = yolo ? agent.yoloEnv : undefined
   return {
     command: override.command ?? agent.command,
     args: [...(yolo ? agent.yoloArgs : []), ...override.args],
     ...(env === undefined ? {} : { env }),
+    ...(statusHooks && agent.statusHooks !== undefined ? { statusHooks: agent.statusHooks } : {}),
   }
 }
 

@@ -4,7 +4,7 @@ import { labelForCommand } from '../terminal/agent-commands.ts'
 import { normalizeTabTitle } from './tab-title.ts'
 import type { AgentId } from '../../pty/contract.ts'
 
-export type WorkspaceTileKind = 'chat' | 'pty' | 'file' | 'browser' | 'diff' | 'kanban' | 'doc'
+export type WorkspaceTileKind = 'chat' | 'pty' | 'file' | 'browser' | 'diff' | 'kanban' | 'doc' | 'custom'
 
 export interface KanbanCard {
   readonly id: string
@@ -43,6 +43,11 @@ export interface WorkspaceTile {
   readonly board?: KanbanBoard
   /** doc tile: raw markdown-ish text, rendered with a minimal built-in formatter. */
   readonly docText?: string
+  /** custom tile: the kind of the plugin tab type it shows (`owner.name`) and the state that plugin saved in it. */
+  readonly customType?: string
+  readonly customState?: string
+  /** terminal tile: the last title this tab took from its program (so a title you typed yourself is never overwritten). */
+  readonly autoTitle?: string
 }
 
 export interface WorkspaceSnapshot {
@@ -66,6 +71,8 @@ export interface AddTileOptions {
   readonly diffFile?: string
   readonly docWorktree?: string
   readonly docRel?: string
+  /** A plugin tab: its registered kind. */
+  readonly customType?: string
 }
 
 const TITLES: Record<WorkspaceTileKind, string> = {
@@ -76,6 +83,7 @@ const TITLES: Record<WorkspaceTileKind, string> = {
   diff: 'Diff',
   kanban: 'Board',
   doc: 'Doc',
+  custom: 'Tab',
 }
 
 const EMPTY_BOARD: KanbanBoard = Object.freeze({ todo: [], doing: [], done: [] })
@@ -335,6 +343,21 @@ export class WorkspaceState {
     this.updateTile(id, { title: normalizeTabTitle(raw) ?? this.defaultTitle(tile) })
   }
 
+  /**
+   * A shell program set its terminal's title: the tab follows it, unless the user renamed the tab.
+   * A tab counts as renamed when its title is neither the default nor the last title taken from the program.
+   * @returns true when the tab title changed.
+   */
+  applyTerminalTitle(terminalId: string, raw: string): boolean {
+    const tile = this.snapshot.tiles.find(candidate => candidate.terminalId === terminalId)
+    if (tile === undefined || tile.kind !== 'pty' || tile.commandId !== 'shell') return false
+    const next = normalizeTabTitle(raw)
+    if (next === null || next === tile.title) return false
+    if (tile.title !== (tile.autoTitle ?? this.defaultTitle(tile))) return false
+    this.updateTile(tile.id, { title: next, autoTitle: next })
+    return true
+  }
+
   private defaultTitle(tile: WorkspaceTile): string {
     if (tile.kind === 'pty') return labelForCommand(tile.commandId ?? 'shell')
     if (tile.kind === 'file') return (tile.fileRel !== undefined ? basename(tile.fileRel) : basename(tile.path ?? '')) || TITLES.file
@@ -410,6 +433,7 @@ export class WorkspaceState {
         ? { docWorktree: options.docWorktree, docRel: options.docRel }
         : {}),
       ...(kind === 'doc' && options.docRel === undefined ? { docText: '' } : {}),
+      ...(kind === 'custom' && options.customType !== undefined ? { customType: options.customType } : {}),
     }
     return Object.freeze(tile)
   }

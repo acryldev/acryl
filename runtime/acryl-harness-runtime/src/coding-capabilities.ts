@@ -189,9 +189,9 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     // click, type, select and key press is approved per call. A TUI has no page, so it is not declared here.
     id: 'agent-control-ui',
     surfaces: ['desktop', 'web'],
-    requiresPackages: ['acryl-ui-control'],
+    requiresPackages: ['acryl-agent-control'],
     loaderPatches: [
-      { insert: [{ id: 'acryl-ui-control', name: 'acryl-ui-control' }] },
+      { insert: [{ id: 'acryl-agent-control', name: 'acryl-agent-control' }] },
     ],
   },
   {

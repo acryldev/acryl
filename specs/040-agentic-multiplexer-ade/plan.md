@@ -99,4 +99,13 @@ pi/packages/coding-agent/
 
 ## Phase 0 / Phase 1
 
-Not yet written. Per this repo's own process (`specs/README.md`): resolve `spec.md`'s five open questions first (especially open question 1 — Scope A-or-B-first — and the Scope B PTY-embedding spike), then produce `research.md` (the PTY-embedding spike's findings belong here), `data-model.md` (Tile/Pane/PTY-session shapes for both scopes), and only then `tasks.md`. Writing `tasks.md` before the PTY-embedding unknown is spiked would produce task estimates for Scope B's hardest piece that are guesses dressed as a plan — worth naming plainly rather than doing.
+Superseded by delivery: `tasks.md` was written and executed without waiting for a separate `research.md` / `data-model.md` pair, because Scope A's shape (grow the existing canvas) needed no PTY-embedding spike — that unknown belongs to Scope B only, and Scope B stayed untouched here (own track, `pi/packages/`). All five of `spec.md`'s open questions are now resolved there, against what shipped, not against a plan written in advance of it.
+
+## Decisions made during delivery (recorded here per `spec.md`'s open questions, added 2026-09-27)
+
+- **Scope ordering (open question 1)**: Scope A first, executed directly against `tasks.md` (Phases 1-10) rather than through a separate `research.md`/`data-model.md` step — the canvas extension had no unresolved unknown of Scope B's kind. Scope B was never started under this plan.
+- **Session/task-phase seam (open question 2)**: the real session list (`SessionSummary` via `useSessions`), not `ctx.agentTeams`. The attention ("needs you") signal is a separate store fed by an agent's own hooks (T127, Claude Code only so far); it is not part of the session model and the harness's own chats do not yet report it.
+- **Kanban/Diagram/Spreadsheet provenance (open question 5)**: Kanban was built ACRYL-native (`plugins/acryl-workspace/src/client/board/`) as a thin live view over session state, not ported from a component library — `specs/038`'s shadcn/ui discipline did not apply, since this is a live projection, not a reusable UI primitive. Diagram and Spreadsheet stayed cut (FR-A011) and their provenance is still open for whichever milestone builds them.
+- **Diff presentation**: unified diff only was delivered, not the side-by-side/inline toggle `spec.md`'s story A3 asked for; revisit if the owner wants the toggle.
+- **The open-ended tile catalog** FR-A005 named ("a plugin, scaffolded by an agent, is how the catalog grows") is now real: `workspaceTabs` (spec 040 T125) is a registry a plugin registers a tile kind into, with a worked example and docs, not left as an unimplemented intent.
+

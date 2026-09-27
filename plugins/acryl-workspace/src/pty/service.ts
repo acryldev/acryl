@@ -7,6 +7,7 @@ import { homedir } from 'node:os'
 import { isAbsolute, join } from 'node:path'
 import type { AgentId, WorkspacePtyCommandId, WorkspacePtyStatus, WorkspacePtyView } from './contract.ts'
 import { knownAgent } from '../agents/known-agents.ts'
+import { STATUS_ENV, statusHookArgs } from '../agents/status/claude-hooks.ts'
 import { MAX_PTY_COLS, MAX_PTY_ROWS, isWorkspacePtyCommandId } from './contract.ts'
 import { Scrollback, type Replay } from './scrollback.ts'
 import { ScreenModel } from './screen-model.ts'
@@ -114,6 +115,8 @@ export interface WorkspacePtySpawnPlan {
   readonly args: readonly string[]
   /** Added to the terminal's environment for this launch. */
   readonly env?: Readonly<Record<string, string>>
+  /** The agent reports its state through hooks of this kind; the registry adds the reporting when it can. */
+  readonly statusHooks?: 'claude'
 }
 
 /** Says what an agent id runs: the user's settings for a known agent, or a custom agent's definition. */
@@ -123,6 +126,8 @@ export interface AgentResolver {
 
 export interface WorkspacePtyRegistryOptions {
   readonly agents?: AgentResolver
+  /** Where agents report their state, and the secret they present. Without it no reporting is added. */
+  readonly agentStatus?: { readonly url: string; readonly token: string }
   /** Starts a real process behind a terminal. Injected: the policy here never loads a native module. */
   readonly spawn: WorkspacePtySpawn
   readonly env?: NodeJS.ProcessEnv
@@ -202,6 +207,7 @@ export class WorkspacePtyRegistry {
   private readonly createId: () => string
   private readonly spawnDirs: string[]
   private readonly agents: AgentResolver | undefined
+  private readonly agentStatus: { readonly url: string; readonly token: string } | undefined
 
   constructor(options: WorkspacePtyRegistryOptions) {
     this.spawnImpl = options.spawn
@@ -211,6 +217,7 @@ export class WorkspacePtyRegistry {
     this.createId = options.createId ?? (() => `pty_${randomUUID()}`)
     this.spawnDirs = workspacePtySpawnDirs(this.env, this.platform)
     this.agents = options.agents
+    this.agentStatus = options.agentStatus
   }
 
   /**
@@ -243,9 +250,15 @@ export class WorkspacePtyRegistry {
       if (resolved === undefined && !plan.command.includes('/') && !plan.command.includes('\\')) {
         throw new Error(`workspace PTY command not found in PATH: ${plan.command}`)
       }
-      process = this.spawnImpl(resolved ?? plan.command, plan.args, {
+      // An agent that reports through hooks gets the reporting launch settings and the terminal's own credentials.
+      const reporting = plan.statusHooks !== undefined && this.agentStatus !== undefined
+      const args = reporting && plan.statusHooks !== undefined ? [...statusHookArgs(plan.statusHooks), ...plan.args] : plan.args
+      const reportingEnv = reporting && this.agentStatus !== undefined
+        ? { [STATUS_ENV.terminal]: id, [STATUS_ENV.url]: this.agentStatus.url, [STATUS_ENV.token]: this.agentStatus.token }
+        : {}
+      process = this.spawnImpl(resolved ?? plan.command, args, {
         cwd: cwd ?? this.cwd,
-        env: { ...terminalEnvironment(this.env), ...plan.env },
+        env: { ...terminalEnvironment(this.env), ...plan.env, ...reportingEnv },
         name: 'xterm-256color',
         cols,
         rows,
@@ -284,6 +297,11 @@ export class WorkspacePtyRegistry {
     }))
     this.sessions.set(id, session)
     return this.view(session)
+  }
+
+  /** True when a live terminal has this id. */
+  has(id: string): boolean {
+    return this.sessions.has(id)
   }
 
   /** True when `command` is an absolute executable file or a program on the search path. */

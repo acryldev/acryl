@@ -9,6 +9,8 @@ import type { WorkspaceGroups } from '../canvas/groups.ts'
 import { agentsByWorktree, MAX_ROW_AGENTS } from '../chrome/worktree-agents.ts'
 import { AgentIcon } from '../tabs/AgentIcon.tsx'
 import type { ProjectsControl } from './projects-control.ts'
+import { attentionByWorktree, type WorktreeAttention } from '../status/attention-model.ts'
+import type { AgentStatusState } from '../status/agent-status-state.ts'
 import { buildProjectRows, type RepoRow, type WorktreeDot, type WorktreeRow } from './sidebar-model.ts'
 import type { DesktopSidebarSurfaceOwnerProps } from '../shell/contracts.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
@@ -24,10 +26,13 @@ export type ProjectsSidebarProps = Omit<PropsRuntime<'root'>, 'useSessions'> & P
   readonly groups: WorkspaceGroups
   /** The user's custom agents, for their badges. */
   readonly agents: AgentsState
+  /** What each terminal agent reports it is doing, for the "needs you" dot. */
+  readonly status: AgentStatusState
 }
 
 const DOT_LABEL: Record<WorktreeDot, string> = {
   error: 'Status unavailable',
+  attention: 'An agent needs you',
   running: 'Agent running',
   done: 'Agent finished, not yet opened',
   loading: 'Loading',
@@ -40,7 +45,7 @@ const DOT_LABEL: Record<WorktreeDot, string> = {
  * its search and scroll survive a switch); Projects mode lists every git repository and worktree
  * behind the open chat sessions, with a status dot per worktree.
  */
-export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell, projects, groups, agents }: ProjectsSidebarProps) {
+export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell, projects, groups, agents, status }: ProjectsSidebarProps) {
   const subscribe = useCallback((listener: () => void) => shell.subscribe(listener), [shell])
   const snapshot = useSyncExternalStore(subscribe, () => shell.getSnapshot())
   const sessions = useSessions(state => state)
@@ -74,13 +79,22 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
     useCallback((listener: () => void) => groups.onChange(listener), [groups]),
     () => JSON.stringify([...agentsByWorktree(new Map(groups.keys().map(key => [key, groups.stateFor(key).getSnapshot().tiles] as const)))]),
   )
+  // Which worktrees have an agent that needs you or is busy, as a stable text key for the same reason.
+  const attentionKey = useSyncExternalStore(
+    useCallback((listener: () => void) => {
+      const stopGroups = groups.onChange(listener)
+      const stopStatus = status.subscribe(listener)
+      return () => { stopGroups(); stopStatus() }
+    }, [groups, status]),
+    () => JSON.stringify([...attentionByWorktree(new Map(groups.keys().map(key => [key, groups.stateFor(key).getSnapshot().tiles] as const)), status.getSnapshot())]),
+  )
   const customAgents = useSyncExternalStore(agents.subscribe, agents.getSnapshot)
   const repos = useMemo(
     () => buildProjectRows(snapshot, sessions.ids.flatMap((id) => {
       const row = sessions.byId[id]
       return row === undefined ? [] : [row]
-    }), new Map(JSON.parse(agentsKey) as Array<[string, string[]]>)),
-    [snapshot, sessions, agentsKey],
+    }), new Map(JSON.parse(agentsKey) as Array<[string, string[]]>), new Map(JSON.parse(attentionKey) as Array<[string, WorktreeAttention]>)),
+    [snapshot, sessions, agentsKey, attentionKey],
   )
 
   const pickWorktree = (path: string): void => {

@@ -12,7 +12,7 @@ const SNAPSHOT: PluginLifecycleSnapshot = {
   entries: [
     entry({ entryId: 'include:acryl-workspace', moduleName: 'acryl-workspace', dependents: ['include:acryl-dev-canvas'] }),
     entry({ entryId: 'include:core', moduleName: 'core', mutable: false, protectedReason: 'core capability' }),
-    entry({ entryId: 'include:acryl-ui-control', moduleName: 'acryl-ui-control' }),
+    entry({ entryId: 'include:acryl-agent-control', moduleName: 'acryl-agent-control' }),
     entry({ entryId: 'include:off', moduleName: 'off', enabled: false, hostPhase: null }),
   ],
 }
@@ -33,7 +33,7 @@ describe('plugin lifecycle agent tools', () => {
   it('lists every plugin and says which the agent may change', async () => {
     const t = setup()
     const rows = (await t.tools.get(PLUGIN_LIST_TOOL)!.execute({} as never, {})) as Array<{ entryId: string; changeable: boolean; reason?: string }>
-    expect(rows.map(r => [r.entryId, r.changeable])).toEqual([['include:acryl-workspace', true], ['include:core', false], ['include:acryl-ui-control', false], ['include:off', true]])
+    expect(rows.map(r => [r.entryId, r.changeable])).toEqual([['include:acryl-workspace', true], ['include:core', false], ['include:acryl-agent-control', false], ['include:off', true]])
     expect(rows[1]!.reason).toBe('core capability')
     expect(rows[2]!.reason).toContain('Agent Control')
     expect(t.tools.get(PLUGIN_LIST_TOOL)!.output.render({}, rows as never)[0]!.text).toContain('locked: core capability')
@@ -51,7 +51,7 @@ describe('plugin lifecycle agent tools', () => {
     const run = (entryId: string) => t.tools.get(PLUGIN_SET_ENABLED_TOOL)!.execute({ entryId, enabled: false } as never, {})
     await expect(run('include:nope')).rejects.toThrow('unknown plugin entry')
     await expect(run('include:core')).rejects.toThrow('protected: core capability')
-    await expect(run('include:acryl-ui-control')).rejects.toThrow('Agent Control cannot be switched off')
+    await expect(run('include:acryl-agent-control')).rejects.toThrow('Agent Control cannot be switched off')
     expect(t.setEnabled).not.toHaveBeenCalled()
   })
 

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
 import type { PropsRenderSlots, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from './contracts.ts'
 import type { ShellPlatform } from './environment.ts'
+import { CenterColumn, RightColumn } from '../dock/DockColumns.tsx'
+import type { DockHost } from '../dock/dock-host.ts'
 import { DesktopLayoutState, MACOS_SIDEBAR_COLLAPSED, SIDEBAR_COLLAPSED, solveFrame } from './layout-state.ts'
 
 /** Private values assembled by the advanced-shell registration. */
@@ -10,6 +12,8 @@ export interface AdvancedFrameInjected {
   layout: DesktopLayoutState
   /** Host platform controlling native title-bar spacing. */
   platform: ShellPlatform
+  /** The terminal dock, placed in the centre or right column by its mode; absent means no terminal panel. */
+  dock: DockHost | undefined
 }
 
 /** Full advanced root slot props. */
@@ -18,7 +22,7 @@ export type AdvancedFrameProps = PropsRuntime<'root'>
   & AdvancedFrameInjected
 
 /** Desktop-owned transparent frame around the unchanged product surfaces. */
-export function AdvancedFrame({ layout, platform, renderSlot, SessionProvider }: AdvancedFrameProps) {
+export function AdvancedFrame({ layout, platform, dock, renderSlot, SessionProvider }: AdvancedFrameProps) {
   const subscribeLayout = useCallback((listener: () => void) => layout.subscribe(listener), [layout])
   const readLayout = useCallback(() => layout.getSnapshot(), [layout])
   const panels = useSyncExternalStore(subscribeLayout, readLayout)
@@ -100,9 +104,12 @@ export function AdvancedFrame({ layout, platform, renderSlot, SessionProvider }:
         </div>
       </aside>
       <main className="dshDesktopConversationSurface" data-acryl-slot="desktop.main">
-        {renderSlot('desktop.main', {
-          renderConversation: () => <div data-acryl-slot="conversation">{renderSlot('conversation', {})}</div>,
-        })}
+        {(() => {
+          const main = renderSlot('desktop.main', {
+            renderConversation: () => <div data-acryl-slot="conversation">{renderSlot('conversation', {})}</div>,
+          })
+          return dock === undefined ? main : <CenterColumn host={dock}>{main}</CenterColumn>
+        })()}
       </main>
       <aside className="dshDesktopDetailsSurface" data-acryl-slot="rightbar">
         {/* Strict session entry: with no session there is no surface, and the
@@ -110,9 +117,14 @@ export function AdvancedFrame({ layout, platform, renderSlot, SessionProvider }:
             AppFrame/rightbar - SessionProvider withholds the strict entry
             while no session is current instead of rendering it into a
             scope with no binding, which throws SlotAssemblyError). */}
-        <SessionProvider>
-          {renderSlot('rightbar', rightbar)}
-        </SessionProvider>
+        {(() => {
+          const panel = (
+            <SessionProvider>
+              {renderSlot('rightbar', rightbar)}
+            </SessionProvider>
+          )
+          return dock === undefined ? panel : <RightColumn host={dock} rightbar={panel} />
+        })()}
       </aside>
       <div className="dshDesktopOverlay" data-shell-overlay>
         {renderSlot('shell.overlay', {})}

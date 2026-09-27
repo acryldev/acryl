@@ -9,6 +9,7 @@
  * not validate is dropped, never thrown, and never able to break startup.
  */
 
+import { MAX_TAB_KIND_LENGTH, TAB_KIND_PATTERN } from '../tabs/registry/tab-registry.ts'
 import type { KanbanBoard, KanbanCard, KanbanColumnId } from './state.ts'
 import type { ShellMode } from '../worktrees/shell-state.ts'
 import type { WorkspaceGroups } from './groups.ts'
@@ -19,7 +20,7 @@ const MAX_TEXT = 200_000
 const MAX_TOTAL = 1_000_000
 const MAX_GROUPS = 50
 const MAX_TILES = 40
-const RESTORABLE_KINDS = ['file', 'browser', 'diff', 'kanban', 'doc', 'pty'] as const
+const RESTORABLE_KINDS = ['file', 'browser', 'diff', 'kanban', 'doc', 'pty', 'custom'] as const
 
 export type SavedTileKind = (typeof RESTORABLE_KINDS)[number]
 
@@ -39,6 +40,9 @@ export interface SavedTile {
   readonly docRel?: string
   readonly board?: KanbanBoard
   readonly docText?: string
+  /** A plugin tab: its kind and the state the plugin saved. */
+  readonly customType?: string
+  readonly customState?: string
   /** A terminal or agent tab: the Host terminal it shows and the agent it runs. */
   readonly terminalId?: string
   readonly commandId?: string
@@ -106,7 +110,7 @@ function parseTile(value: unknown): SavedTile | undefined {
   const title = text(value.title)
   if (kind === undefined || title === undefined) return undefined
   const tile: { -readonly [K in keyof SavedTile]: SavedTile[K] } = { kind, title }
-  for (const key of ['path', 'content', 'url', 'diffBefore', 'diffAfter', 'diffWorktree', 'diffFile', 'fileWorktree', 'fileRel', 'docWorktree', 'docRel', 'docText', 'terminalId', 'commandId'] as const) {
+  for (const key of ['path', 'content', 'url', 'diffBefore', 'diffAfter', 'diffWorktree', 'diffFile', 'fileWorktree', 'fileRel', 'docWorktree', 'docRel', 'docText', 'terminalId', 'commandId', 'customType', 'customState'] as const) {
     const field = text(value[key])
     if (field !== undefined) tile[key] = field
   }
@@ -121,6 +125,8 @@ function parseTile(value: unknown): SavedTile | undefined {
   if (kind === 'diff' && (tile.diffFile === undefined) !== (tile.diffWorktree === undefined)) return undefined
   if (kind === 'file' && (tile.fileRel === undefined) !== (tile.fileWorktree === undefined)) return undefined
   if (kind === 'doc' && (tile.docRel === undefined) !== (tile.docWorktree === undefined)) return undefined
+  // A plugin tab is only worth restoring with the tab type it belongs to.
+  if (kind === 'custom' && (tile.customType === undefined || !TAB_KIND_PATTERN.test(tile.customType) || tile.customType.length > MAX_TAB_KIND_LENGTH)) return undefined
   return tile
 }
 
@@ -184,6 +190,9 @@ export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups): st
       if (tile.docRel !== undefined) entry.docRel = tile.docRel
       if (tile.board !== undefined) entry.board = tile.board
       if (tile.docText !== undefined) entry.docText = tile.docText
+      if (kind === 'custom' && tile.customType === undefined) continue
+      if (tile.customType !== undefined) entry.customType = tile.customType
+      if (tile.customState !== undefined) entry.customState = tile.customState
       if (kind === 'pty' && tile.terminalId !== undefined) entry.terminalId = tile.terminalId
       if (kind === 'pty' && tile.commandId !== undefined) entry.commandId = tile.commandId
       if (tile.id === snapshot.activeId) active = tiles.length
@@ -200,6 +209,7 @@ export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups): st
         const mutable = tile as { -readonly [K in keyof SavedTile]: SavedTile[K] }
         if ((mutable.content?.length ?? 0) > 20_000) delete mutable.content
         if ((mutable.docText?.length ?? 0) > 20_000) delete mutable.docText
+        if ((mutable.customState?.length ?? 0) > 100_000) delete mutable.customState
         void index
       })
     }
