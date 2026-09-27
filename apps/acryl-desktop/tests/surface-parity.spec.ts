@@ -50,7 +50,17 @@ function summarize(rows: readonly { id?: unknown; name?: unknown; disabled?: unk
   return map
 }
 
-async function composeBoth(): Promise<{ desktop: Map<string, { name: string; disabled: boolean }>; web: Map<string, { name: string; disabled: boolean }> }> {
+/**
+ * The seven `ui_*` tools `acryl-agent-control` registers (spec 041 TS04): fixed here so a change to the set
+ * (one added, removed, or renamed) fails this cross-surface test, not only a unit test local to that package.
+ */
+const AGENT_CONTROL_TOOL_NAMES = ['ui_click', 'ui_press', 'ui_scroll', 'ui_select', 'ui_snapshot', 'ui_type', 'ui_wait'] as const
+
+async function composeBoth(): Promise<{
+  desktop: Map<string, { name: string; disabled: boolean }>
+  web: Map<string, { name: string; disabled: boolean }>
+  webAgentControlToolNames: string[]
+}> {
   const desktopHome = mkdtempSync(join(tmpdir(), 'acryl-parity-d-'))
   const desktop = summarize(composeEntries([prepareDesktopProfile(undefined, desktopHome, 'darwin').patches]))
   process.env.ACRYL_HOME = mkdtempSync(join(tmpdir(), 'acryl-parity-w-'))
@@ -61,7 +71,11 @@ async function composeBoth(): Promise<{ desktop: Map<string, { name: string; dis
   })
   try {
     const web = summarize([...host.ctx.loader.entries()].map(entry => entry.options))
-    return { desktop, web }
+    // `ctx.tools` has no listing method, so each expected name is asked for directly; an added, removed or
+    // renamed tool shows up as `undefined` here rather than silently passing.
+    const tools = host.ctx.get('tools' as never) as undefined | { get(name: string): unknown }
+    const webAgentControlToolNames = AGENT_CONTROL_TOOL_NAMES.filter(name => tools?.get(name) !== undefined)
+    return { desktop, web, webAgentControlToolNames }
   } finally {
     await host.dispose()
   }
@@ -84,6 +98,16 @@ describe('Web and Desktop compose the same ACRYL features', () => {
     for (const id of ['ui-layout', 'ui-sidebar', 'ui-conversation']) {
       expect(web.get(id), id).toEqual(desktop.get(id))
     }
+  }, 120_000)
+
+  it('registers the same Agent Control tools on Web as on Desktop (spec 041 TS04)', async () => {
+    // Desktop composes the identical `acryl-agent-control` row (proven above: same package, same enabled
+    // state), and that package registers its tools with no surface branching - so the live Web tool names
+    // checked here are the same set Desktop registers when it mounts the same row. A real Electron boot to
+    // enumerate Desktop's live `ctx.tools` too is out of scope for a headless gate.
+    const { desktop, webAgentControlToolNames } = await composeBoth()
+    expect(desktop.get('acryl-agent-control')).toBeDefined()
+    expect(webAgentControlToolNames).toEqual([...AGENT_CONTROL_TOOL_NAMES])
   }, 120_000)
 
   it('differs only by rows that are native to one surface, each with a stated reason', async () => {
