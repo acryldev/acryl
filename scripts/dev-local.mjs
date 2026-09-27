@@ -4,8 +4,9 @@
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { checkoutIsolation } from './lib/checkout-isolation.mjs'
 
 // Deliberately its own root, sibling to (not nested inside) ACRYL's normal
 // `~/.acryl` — an isolated dev run must never collide with the home a real
@@ -103,7 +104,9 @@ function runPnpm(args, env) {
   })
 }
 
-export async function runDevLocal(argv = process.argv.slice(2), environment = process.env) {
+export async function runDevLocal(argv = process.argv.slice(2), baseEnvironment = process.env) {
+  // A worktree checkout gets its own home and Electron user data, so it never shares a profile or the single-instance lock with the main checkout.
+  const environment = { ...baseEnvironment, ...checkoutIsolation(resolve(dirname(fileURLToPath(import.meta.url)), '..'), baseEnvironment) }
   const skipBuild = argv.includes('--skip-build')
   const roots = resolveLocalDesktopRoots(process.platform, homedir(), environment)
   mkdirSync(roots.dshHome, { recursive: true, mode: 0o700 })

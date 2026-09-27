@@ -17,6 +17,7 @@ import { spawnSync } from 'node:child_process'
 import { existsSync, readdirSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { checkoutIsolation } from '../../../scripts/lib/checkout-isolation.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const packageRoot = resolve(here, '..')
@@ -64,8 +65,8 @@ if (isStale()) {
   }
 }
 
-// This branch (spec 036) runs beside the main-branch app, which owns 3080; ACRYL_WEB_PORT still overrides.
-process.env.ACRYL_WEB_PORT ??= '3081'
+// A worktree checkout runs beside the main one without touching it: its own home, and a port from 3081 (see checkout-isolation.mjs).
+Object.assign(process.env, checkoutIsolation(root))
 const result = spawnSync(process.execPath, [bin, ...process.argv.slice(2)], {
   cwd: root,
   stdio: 'inherit',

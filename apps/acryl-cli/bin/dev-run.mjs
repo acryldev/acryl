@@ -18,6 +18,7 @@ import { spawnSync } from 'node:child_process'
 import { existsSync, readdirSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { checkoutIsolation } from '../../../scripts/lib/checkout-isolation.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const packageRoot = resolve(here, '..')
@@ -63,6 +64,8 @@ if (isStale()) {
   }
 }
 
+// A worktree checkout never touches the main checkout's home (see checkout-isolation.mjs).
+Object.assign(process.env, checkoutIsolation(root))
 const result = spawnSync(process.execPath, [bin, ...process.argv.slice(2)], {
   cwd: root,
   stdio: 'inherit',
