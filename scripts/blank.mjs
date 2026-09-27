@@ -4,6 +4,7 @@
  *
  *   node scripts/blank.mjs web     [--instance orbit] [--name Orbit] [--accent '#e8590c'] [--port 3105] [--blueprint my.blueprint.yaml]
  *   node scripts/blank.mjs cli     [--instance orbit] [--name Orbit]
+ *   node scripts/blank.mjs web --dir ~/instances/orbit     run an instance scaffolded by `node scripts/init-instance.mjs ~/instances/orbit`
  *   node scripts/blank.mjs desktop [--instance orbit] [--name Orbit]
  *
  * `--instance` (default `blank`) names the instance. Its home, Electron user data, web port and project-scope folders all derive from that name
@@ -14,7 +15,8 @@ import { spawn } from 'node:child_process'
 import { dirname, join, resolve } from 'node:path'
 import { homedir } from 'node:os'
 import { fileURLToPath } from 'node:url'
-import { InstanceError, claimInstance, listInstances, releaseInstance, resolveInstance } from './lib/instances.mjs'
+import { existsSync } from 'node:fs'
+import { InstanceError, claimInstance, listInstances, releaseInstance, resolveInstance, resolveInstanceAt } from './lib/instances.mjs'
 
 export const DEFAULT_INSTANCE = 'blank'
 
@@ -22,15 +24,17 @@ const FLAG_TO_ENV = { name: 'ACRYL_BRAND_NAME', tagline: 'ACRYL_BRAND_TAGLINE', 
 
 /** Pure: what to run, in which environment, for one surface and instance. */
 export function blankLaunchPlan(surface, flags, environment, home = homedir(), root = resolve(dirname(fileURLToPath(import.meta.url)), '..'), runningSurfaces = []) {
-  const instance = resolveInstance(String(flags.instance ?? DEFAULT_INSTANCE), home)
+  // `--dir <folder>` runs the instance a scaffold created (`init-instance.mjs`); otherwise a managed instance named by `--instance` (default `blank`).
+  const instance = flags.dir === undefined ? resolveInstance(String(flags.instance ?? DEFAULT_INSTANCE), home) : resolveInstanceAt(String(flags.dir), home)
+  const definition = flags.dir !== undefined && flags.blueprint === undefined && existsSync(instance.blueprintFile) ? instance.blueprintFile : undefined
   const brandEnv = Object.fromEntries(Object.entries(FLAG_TO_ENV).flatMap(([flag, variable]) => (flags[flag] === undefined ? [] : [[variable, String(flags[flag])]])))
   // ACRYL_HOME is authoritative for every ACRYL path (profile, sessions, settings, global extensions, plugin state); an ambient DSH_HOME must not leak in.
   const { DSH_HOME: _ambient, ...clean } = environment
   const env = {
     ...clean,
-    ACRYL_INSTANCE: instance.name,
+    ACRYL_INSTANCE: instance.id,
     ACRYL_HOME: instance.root,
-    ACRYL_BLUEPRINT: flags.blueprint === undefined ? 'acryl.blank' : resolve(String(flags.blueprint)),
+    ACRYL_BLUEPRINT: definition ?? (flags.blueprint === undefined ? 'acryl.blank' : resolve(String(flags.blueprint))),
     ...brandEnv,
   }
   const base = { instance, blueprint: env.ACRYL_BLUEPRINT }

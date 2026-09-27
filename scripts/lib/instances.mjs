@@ -10,9 +10,10 @@
  * Pure functions plus a small file boundary; the launcher (`blank.mjs`) is the only caller today, and the same module is what a
  * framework `acryl init` / `acryl instance` command will use.
  */
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { basename, dirname, join, resolve } from 'node:path'
 
 export const INSTANCES_DIR_NAME = '.acryl-instances'
 export const CLAIM_FILE = 'instance.json'
@@ -43,10 +44,26 @@ export function instancesRoot(home = homedir()) {
   return join(home, INSTANCES_DIR_NAME)
 }
 
+export const BLUEPRINT_FILE = 'acryl.instance.yaml'
+
+/**
+ * An instance is a folder (the scaffold `init` creates). The folder IS the ACRYL home: what the user owns and commits sits at the top
+ * (`acryl.instance.yaml`, `extensions/`), what the runtime keeps is under `.dsh/` and `instance.json` (both git-ignored). The instance name is
+ * the folder's name, so nothing beyond the folder itself has to be registered anywhere.
+ */
+export function resolveInstanceAt(dir, home = homedir()) {
+  const root = resolve(dir)
+  const name = instanceName(basename(root))
+  // Two folders may share a name (`~/a/orbit`, `~/b/orbit`). The id is what must never repeat: it seeds the port, names the Electron user data and namespaces
+  // project scope. A managed instance's name is already unique; a folder gets a short digest of where it lives, like a container id.
+  const managed = dirname(root) === join(home, INSTANCES_DIR_NAME)
+  const id = managed ? name : `${name}-${createHash('sha1').update(root).digest('hex').slice(0, 4)}`
+  return { name, id, root, dshHome: join(root, '.dsh'), userDataName: `ACRYL ${id}`, preferredPort: stablePort(id), claimFile: join(root, CLAIM_FILE), blueprintFile: join(root, BLUEPRINT_FILE), managed }
+}
+
+/** A managed instance: the same folder layout, kept under `~/.acryl-instances/<name>` when the user has not picked a folder. */
 export function resolveInstance(name, home = homedir()) {
-  const valid = instanceName(name)
-  const root = join(instancesRoot(home), valid)
-  return { name: valid, root, dshHome: join(root, '.dsh'), userDataName: `ACRYL ${valid}`, preferredPort: stablePort(valid), claimFile: join(root, CLAIM_FILE) }
+  return resolveInstanceAt(join(instancesRoot(home), instanceName(name)), home)
 }
 
 /** Is a process with this pid alive? `EPERM` means alive but not ours. */
@@ -68,43 +85,87 @@ function readClaim(file) {
   }
 }
 
+/** Where running instances announce themselves so `ps` finds them wherever their folder is (like the daemon's container list). One small file per instance. */
+export function runningDir(home = homedir()) {
+  return join(instancesRoot(home), '.running')
+}
+
 /**
  * Take the instance for this process. A live holder refuses the claim, naming it; a dead holder (crash, kill -9) is replaced, so a stale
  * file never locks anyone out.
  */
-export function claimInstance(instance, info, isAlive = processIsAlive) {
+export function claimInstance(instance, info, isAlive = processIsAlive, home = homedir()) {
   const held = readClaim(instance.claimFile)
   if (held !== undefined && isAlive(held.pid)) {
     throw new InstanceError(`instance "${instance.name}" is already running (pid ${held.pid}${held.surface ? `, ${held.surface}` : ''}${held.port ? `, port ${held.port}` : ''}). Stop it (node scripts/instances.mjs stop ${instance.name}) or pick another name with --instance.`)
   }
   mkdirSync(instance.root, { recursive: true, mode: 0o700 })
-  writeFileSync(instance.claimFile, `${JSON.stringify({ name: instance.name, ...info, startedAt: new Date().toISOString() }, null, 2)}\n`, { mode: 0o600 })
+  const claim = { name: instance.name, id: instance.id, root: instance.root, ...info, startedAt: new Date().toISOString() }
+  writeFileSync(instance.claimFile, `${JSON.stringify(claim, null, 2)}\n`, { mode: 0o600 })
+  mkdirSync(runningDir(home), { recursive: true, mode: 0o700 })
+  writeFileSync(join(runningDir(home), `${instance.id}.json`), `${JSON.stringify(claim, null, 2)}\n`, { mode: 0o600 })
 }
 
 /** Release only our own claim: never remove one a newer process took after ours was replaced. */
-export function releaseInstance(instance, pid = process.pid) {
+export function releaseInstance(instance, pid = process.pid, home = homedir()) {
   if (readClaim(instance.claimFile)?.pid === pid) rmSync(instance.claimFile, { force: true })
+  if (readClaim(join(runningDir(home), `${instance.id}.json`))?.pid === pid) rmSync(join(runningDir(home), `${instance.id}.json`), { force: true })
 }
 
-/** Every instance with a folder, and whether its claim is live. Stale claims are reported as stopped. */
+/**
+ * Every instance: the managed ones (folders under `~/.acryl-instances`, running or not) and any running one anywhere (from the running registry). A stale
+ * announcement, whose process is gone, is dropped.
+ */
 export function listInstances(home = homedir(), isAlive = processIsAlive) {
+  const byId = new Map()
   const root = instancesRoot(home)
-  if (!existsSync(root)) return []
-  return readdirSync(root, { withFileTypes: true })
-    .filter(entry => entry.isDirectory() && NAME.test(entry.name))
-    .map(entry => {
-      const claim = readClaim(join(root, entry.name, CLAIM_FILE))
+  if (existsSync(root)) {
+    for (const entry of readdirSync(root, { withFileTypes: true })) {
+      if (!entry.isDirectory() || !NAME.test(entry.name)) continue
+      const folder = join(root, entry.name)
+      const claim = readClaim(join(folder, CLAIM_FILE))
       const running = claim !== undefined && isAlive(claim.pid)
-      return { name: entry.name, root: join(root, entry.name), running, ...(running ? { pid: claim.pid, surface: claim.surface, blueprint: claim.blueprint, port: claim.port, startedAt: claim.startedAt } : {}) }
-    })
-    .sort((a, b) => a.name.localeCompare(b.name))
+      byId.set(entry.name, { name: entry.name, id: entry.name, root: folder, running, ...(running ? summary(claim) : {}) })
+    }
+  }
+  const registry = runningDir(home)
+  if (existsSync(registry)) {
+    for (const entry of readdirSync(registry)) {
+      const claim = readClaim(join(registry, entry))
+      if (claim === undefined) continue
+      if (!isAlive(claim.pid)) { rmSync(join(registry, entry), { force: true }); continue }
+      byId.set(claim.id ?? claim.name, { name: claim.name, id: claim.id ?? claim.name, root: claim.root, running: true, ...summary(claim) })
+    }
+  }
+  return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id))
+}
+
+function summary(claim) {
+  return { pid: claim.pid, surface: claim.surface, blueprint: claim.blueprint, port: claim.port, startedAt: claim.startedAt }
 }
 
 /** Ask a running instance to stop (SIGTERM, which every surface handles as a clean shutdown). */
 export function stopInstance(name, home = homedir(), kill = (pid, signal) => process.kill(pid, signal)) {
-  const found = listInstances(home).find(instance => instance.name === instanceName(name))
+  const found = listInstances(home).find(instance => instance.id === name || instance.name === name)
   if (found === undefined) throw new InstanceError(`there is no instance "${name}"`)
   if (!found.running) return false
   kill(found.pid, 'SIGTERM')
   return true
+}
+
+/**
+ * Remove a MANAGED instance (one under `~/.acryl-instances`), like `docker rm`: its home, data and extensions are deleted. Refuses a running instance, and
+ * refuses anything that is not a direct child of the instances root, so a name can never reach outside it. An instance the user scaffolded into their own
+ * folder is theirs to delete; this never removes one.
+ */
+export function removeInstance(name, home = homedir(), isAlive = processIsAlive) {
+  const instance = resolveInstance(name, home)
+  if (!existsSync(instance.root)) throw new InstanceError(`there is no instance "${instance.name}"`)
+  const root = realpathSync(instancesRoot(home))
+  const target = realpathSync(instance.root)
+  if (join(root, instance.name) !== target) throw new InstanceError(`refusing to remove ${target}: it is not a managed instance folder`)
+  const claim = readClaim(instance.claimFile)
+  if (claim !== undefined && isAlive(claim.pid)) throw new InstanceError(`instance "${instance.name}" is running (pid ${claim.pid}); stop it first`)
+  rmSync(target, { recursive: true, force: true })
+  return target
 }

@@ -1,18 +1,21 @@
 #!/usr/bin/env node
 /**
- *   node scripts/instances.mjs list           every instance, and what is running
+ *   node scripts/instances.mjs ps             every managed instance, and what is running (alias: list)
  *   node scripts/instances.mjs stop <name>    ask a running instance to shut down
- *   node scripts/instances.mjs path <name>    where an instance keeps its data (delete that folder to reset it)
+ *   node scripts/instances.mjs path <name>    where an instance keeps its data
+ *   node scripts/instances.mjs rm <name>      delete a stopped managed instance and everything it kept (like docker rm)
+ *
+ * Create one with `node scripts/init-instance.mjs <folder>`; start it with `<folder>/run.sh web|desktop|cli`. Docker's words: image = Blueprint/Blend, container = instance.
  */
 import { fileURLToPath } from 'node:url'
-import { InstanceError, listInstances, resolveInstance, stopInstance } from './lib/instances.mjs'
+import { InstanceError, listInstances, removeInstance, resolveInstance, stopInstance } from './lib/instances.mjs'
 
 export function run(argv, out = text => process.stdout.write(text)) {
   const [command = 'list', name] = argv
-  if (command === 'list') {
+  if (command === 'list' || command === 'ps') {
     const all = listInstances()
     if (all.length === 0) out('no instances yet (start one with: node scripts/blank.mjs web --instance <name>)\n')
-    for (const instance of all) out(`${instance.name.padEnd(20)} ${instance.running ? `running  pid ${instance.pid}  ${instance.surface ?? ''}  ${instance.blueprint ?? ''}${instance.port ? `  port ${instance.port}` : ''}` : 'stopped'}\n`)
+    for (const instance of all) out(`${instance.id.padEnd(20)} ${instance.running ? `running  pid ${instance.pid}  ${instance.surface ?? ''}  ${instance.blueprint ? String(instance.blueprint).split('/').at(-1) : ''}${instance.port ? `  port ${instance.port}` : ''}  ${instance.root}` : 'stopped'}\n`)
     return 0
   }
   if (command === 'stop') {
@@ -25,7 +28,12 @@ export function run(argv, out = text => process.stdout.write(text)) {
     out(`${resolveInstance(name).root}\n`)
     return 0
   }
-  throw new InstanceError(`unknown command ${JSON.stringify(command)}; use list, stop or path`)
+  if (command === 'rm') {
+    if (name === undefined) throw new InstanceError('usage: instances.mjs rm <name>')
+    out(`removed ${removeInstance(name)}\n`)
+    return 0
+  }
+  throw new InstanceError(`unknown command ${JSON.stringify(command)}; use ps, stop, path or rm`)
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
