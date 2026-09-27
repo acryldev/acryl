@@ -1,3 +1,20 @@
+## 2026-09-27 - 036 Everything is a git repository: registries, private starters, saving an app, three levels
+
+Commits: `9c7fdf3e1c96fe8cb87eccb06fd1409be7cae9e9` (registry format, `--from` git and registry), `44931eb70f470ec1d69d7a601c10a2e9aac3a4d1` (app persistence), `9751822079f2c99721d61cdf86aa0a6f165f9a63` (three levels); site: acrylblends/acrylblends.github.io PR #1.
+Design: `specs/036-cordis-ecosystem-and-acryl-blends/persistence-and-registries.md`; levels: `framework.md`.
+
+- **Registries are git repositories** with one layout (`blends/<id>/`, CI-built `index.json`). `@acryl/blends-core` builds and checks the index
+  (`blends-registry-index`); the format gained `license` and `visibility`. The public registry lives in acrylblends.github.io (`registry/`, served at `/registry/`,
+  CI refuses private, unlicensed or stale entries). A private starter needs no registry: `acryl new my-app --from <git URL>` uses the user's own git login.
+- **Three levels, decided with the owner:** Blank (built-in Blueprint), Blueprint starter kits (`extends` a Blueprint, boot as they are), Projects (Blends grown from
+  either, kept with their starter in `blueprints/`, private and Proprietary from the first second, the starter's license in `THIRD-PARTY.md`).
+- **An app saves to its own repository:** `acryl save`, `acryl remote connect`, and `/app save`, `/app connect` inside the app (human-typed). Every save runs a secret
+  check and refuses on a hit; a private app never reaches a public remote; repositories are created through the user's own `gh` login and no token is ever handled.
+- Proven: a project created from the registry's organizer starter boots on a real engine with the plugin installed; `/app save` keeps `.dsh` out of git.
+
+Waiting on the owner: publishing `@acryl/blends-core` and `@acryl/app-persistence` to npm (then CI in new apps), merging the registry PR (deploys the site),
+archiving `acryldev/blends` (its local checkout has uncommitted work).
+
 ## 2026-09-27 - 036 One monorepo, one Blend shape: blends-core moves in, an app is its Blend
 
 Commits: `988f5ad70c4f081f2bc632946a6d175e1cd14391` (decisions), `daa54d168023b13195f925924d788aee42d0cbf8` (blends-core), `6acda9f809d71f3c9d51b9a38509d315e0d95952` (Desktop boot race), `1456a528aaf2a83309e80fdc6a1f4b1733e8b40f` (app lifecycle).

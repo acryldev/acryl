@@ -21,7 +21,7 @@ Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository
 
 - [x] T011a Repository organization decided (`repositories.md`, accepted) and run modes decided (`framework.md`: attached and standalone, one process per app)
 - [x] T011b `blends-core` moved into the monorepo (`runtime/blends-core`); the runtime and the extension pack read and lock the format through it
-- [ ] T011 Remaining migration steps in `repositories.md` (registry content and CI, `acryl pull`/`push`, archive `acryldev/blends`)
+- [ ] T011 Archive `acryldev/blends` (waits on the owner: its local checkout has uncommitted work that would be stranded)
 - [x] T012 One Blend shape: an app folder is its Blend (`/blend snapshot` records into it, `/blend apply` installs in place), an app installs its own
       extensions and locked marketplace plugins at start (a fresh clone works), `acryl new --from <app or Blend folder>` (registry ids come with T014)
 - [x] T012b Registries are git repositories: registry index and `blends-registry-index` (CI), `acryl new --from` a git URL or a registry starter id
@@ -30,7 +30,8 @@ Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository
 - [ ] T019 Publish `@acryl/blends-core` and `@acryl/app-persistence` to npm (the owner's decision), then add the CI workflow to `acryl new` (validate `blend.yaml`, run the app's checks)
 - [ ] T020 `acryl publish`: a Project becomes a Blueprint in a registry through a reviewed pull request (public only; refused for private apps)
 - [ ] T013 `acryl new` and the app lifecycle commands in the published CLI (today the launcher needs a framework checkout)
-- [ ] T014 Registry and catalog on acrylblends.github.io: validated `index.json`, `acryl pull`/`acryl push`, starters by category
+- [x] T014a The public registry on acrylblends.github.io: `registry/` with Blank and the organizer starter, CI validation, `/registry/` served, the Blends page listing real entries (PR acrylblends/acrylblends.github.io#1, deploys on merge)
+- [ ] T014 More starters by category; `acryl pull` for updating a project from its starter
 - [ ] T015 The rest of the brand: the harness's first-launch notice, the terminal banner and palette, the Electron window and Dock icon
 - [ ] T016 Replace the pre-framework `dsh-desktop.blend` setting with app folders
 - [ ] T018 `acryl package`: a standalone product from an app folder, a Web server tarball and a branded Electron app (name, app id, icon from `blend.yaml`), bundling only the plugins the app names
