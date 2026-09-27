@@ -54,7 +54,12 @@ export interface AgentCommand {
 export interface CommandReceipt {
   readonly accepted: true
   readonly workerId: AcrWorkerId
-  readonly runtimeId: AgentRuntimeId
+  /**
+   * The runtime the command ran against; `null` only for a `stop` dispatched
+   * while the worker was never bound to a runtime — the cleanup case after a
+   * failed start where the provider spawned a process the merge rejected.
+   */
+  readonly runtimeId: AgentRuntimeId | null
   readonly kind: AgentCommandKind
   readonly result: unknown
 }
@@ -328,14 +333,20 @@ export class AcrAgentControlService extends Service implements AcrAgentControl {
     if (provider === undefined) {
       throw new AcrAgentControlError('unknown-provider', `Unknown agent provider ${binding.providerId}.`)
     }
-    if (binding.runtimeId === null && command.kind !== 'start' && command.kind !== 'resume') {
+    // `start` and `resume` exist precisely to bind a runtime, and `stop` must
+    // reach a transport that spawned a process whose start result then failed
+    // the merge — otherwise failed-start cleanup orphans the child. Every
+    // other command still requires a live runtime.
+    const runtimeOptional =
+      command.kind === 'start' || command.kind === 'resume' || command.kind === 'stop'
+    if (binding.runtimeId === null && !runtimeOptional) {
       throw new AcrAgentControlError('unknown-worker', `Worker ${workerId} has no live runtime.`)
     }
     const result = await provider.execute(binding, command, signal)
     const stored = mergeCommandResult(binding, command.kind, result, this.bindings)
     if (stored !== binding) this.bindings.set(workerId, stored)
     const runtimeId = stored.runtimeId ?? binding.runtimeId
-    if (runtimeId === null) {
+    if (runtimeId === null && command.kind !== 'stop') {
       throw new AcrAgentControlError(
         'transport-unavailable',
         `Provider ${binding.providerId} returned no runtime id for ${command.kind}.`,

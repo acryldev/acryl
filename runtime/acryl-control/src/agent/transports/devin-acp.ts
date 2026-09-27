@@ -31,6 +31,8 @@ interface WorkerState {
   readonly rpc: JsonRpcClient
   sessionId: string | null
   updates: unknown[]
+  /** `agentCapabilities.loadSession` from initialize — gates `session/load`. */
+  loadSession: boolean
   /** Set once the process exits/closes/errors so cleanup never waits on it. */
   dead: boolean
 }
@@ -278,16 +280,19 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
     }
   }
 
-  async function handleStart(
-    binding: AgentSnapshot,
-    _command: AgentCommand,
-    signal?: AbortSignal,
-  ): Promise<StartResult> {
+  /**
+   * Spawn `devin acp` for one worker, wire the JSON-RPC client, and run the
+   * initialize handshake. The worker is registered before the handshake so a
+   * failure — RPC error, auth rejection, timeout, abort, or the process dying
+   * mid-handshake — tears the half-started worker down rather than wedging
+   * every retry behind 'already has an active Devin ACP session'.
+   */
+  async function spawnWorker(binding: AgentSnapshot, signal?: AbortSignal): Promise<WorkerState> {
     if (workers.has(binding.workerId)) {
       throw new Error(`Worker ${binding.workerId} already has an active Devin ACP session`)
     }
     if (signal?.aborted) {
-      throw new AcrAgentControlError('cancelled', 'Command start was cancelled.')
+      throw new AcrAgentControlError('cancelled', 'Command was cancelled.')
     }
 
     const binaryPath = resolveDevinBinary(config)
@@ -323,7 +328,14 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
       answerPermissionRequest(config, params),
     )
 
-    const state: WorkerState = { process: childProcess, rpc, sessionId: null, updates, dead: false }
+    const state: WorkerState = {
+      process: childProcess,
+      rpc,
+      sessionId: null,
+      updates,
+      loadSession: false,
+      dead: false,
+    }
     workers.set(binding.workerId, state)
 
     // A workers entry must never outlive its process: a natural exit or a
@@ -338,11 +350,6 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
     childProcess.once('close', markDead)
     childProcess.once('error', markDead)
 
-    // 1. Initialize → 2. auth check → 3. session/new. Any failure (RPC error,
-    // auth rejection, timeout, abort, or the process dying mid-handshake)
-    // must tear the half-started worker down: without this the dead entry
-    // wedges every retry behind 'already has an active Devin ACP session'.
-    let sessionResult: { sessionId: string }
     try {
       const initResult = await rpc.call<{
         protocolVersion: number
@@ -359,8 +366,9 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
         },
         clientInfo: { name: 'acryl-desktop', title: 'ACRYL Desktop', version: '0.1.0' },
       }, { signal })
+      state.loadSession = initResult.agentCapabilities.loadSession === true
 
-      // 2. Authenticate if needed
+      // Authenticate if needed
       if (initResult.authMethods.length > 0) {
         if (config.authMode === 'interactive') {
           throw new Error(
@@ -372,20 +380,6 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
         // The ACP authenticate method is called by the agent if it needs
         // explicit credentials — in practice, devin acp reads them from disk.
       }
-
-      // 3. Session new. A malformed agent can answer `result: {}`; an
-      // absent sessionId must fail the start here rather than leak into
-      // session/prompt as `undefined`.
-      const newSession = await rpc.call<{ sessionId?: unknown }>('session/new', {
-        cwd,
-        mcpServers: [],
-      }, { signal })
-      if (typeof newSession.sessionId !== 'string' || newSession.sessionId === '') {
-        throw new Error('Devin ACP session/new returned no usable sessionId')
-      }
-      sessionResult = { sessionId: newSession.sessionId }
-
-      state.sessionId = sessionResult.sessionId
     } catch (error) {
       await killWorker(binding.workerId)
       throw error
@@ -400,9 +394,47 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
       }, { once: true })
     }
 
+    return state
+  }
+
+  /**
+   * `session/new` on a spawned worker; binds the returned session id. A
+   * malformed agent can answer `result: {}`; an absent sessionId must fail
+   * here rather than leak into session/prompt as `undefined`.
+   */
+  async function openSession(
+    binding: AgentSnapshot,
+    state: WorkerState,
+    signal?: AbortSignal,
+  ): Promise<string> {
+    const newSession = await state.rpc.call<{ sessionId?: unknown }>('session/new', {
+      cwd: resolveWorkerCwd(binding, config),
+      mcpServers: [],
+    }, { signal })
+    if (typeof newSession.sessionId !== 'string' || newSession.sessionId === '') {
+      throw new Error('Devin ACP session/new returned no usable sessionId')
+    }
+    state.sessionId = newSession.sessionId
+    return newSession.sessionId
+  }
+
+  async function handleStart(
+    binding: AgentSnapshot,
+    _command: AgentCommand,
+    signal?: AbortSignal,
+  ): Promise<StartResult> {
+    const state = await spawnWorker(binding, signal)
+    let sessionId: string
+    try {
+      sessionId = await openSession(binding, state, signal)
+    } catch (error) {
+      await killWorker(binding.workerId)
+      throw error
+    }
+
     return {
-      sessionId: sessionResult.sessionId,
-      runtimeId: String(childProcess.pid ?? 'unknown'),
+      sessionId,
+      runtimeId: String(state.process.pid ?? 'unknown'),
       status: 'idle',
     }
   }
@@ -476,18 +508,18 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
     _command: AgentCommand,
     signal?: AbortSignal,
   ): Promise<ResumeResult> {
-    const state = workers.get(binding.workerId)
-    if (state !== undefined && state.sessionId !== null) {
+    const existing = workers.get(binding.workerId)
+    if (existing !== undefined && existing.sessionId !== null) {
       // Already has a session — try session/load if supported
       try {
-        await state.rpc.call('session/load', {
-          sessionId: state.sessionId,
+        await existing.rpc.call('session/load', {
+          sessionId: existing.sessionId,
           cwd: resolveWorkerCwd(binding, config),
           mcpServers: [],
         }, { signal })
         return {
-          sessionId: state.sessionId,
-          runtimeId: String(state.process.pid ?? 'unknown'),
+          sessionId: existing.sessionId,
+          runtimeId: String(existing.process.pid ?? 'unknown'),
           status: 'idle',
         }
       } catch {
@@ -495,7 +527,46 @@ export function devinAcpTransport(config: DevinAcpTransportConfig): AgentTranspo
       }
     }
 
-    // No existing session or load failed — start fresh
+    // No live worker: the binding's attach-time providerSessionRef is the
+    // resume target, so the freshly spawned process must try session/load
+    // for it first — silently opening session/new would abandon the
+    // provider-side session the caller asked to reattach.
+    const resumeRef = binding.providerSessionRef
+    if (existing === undefined && resumeRef !== null && resumeRef !== '') {
+      const state = await spawnWorker(binding, signal)
+      try {
+        if (!state.loadSession) {
+          throw new Error('agent does not advertise loadSession')
+        }
+        await state.rpc.call('session/load', {
+          sessionId: resumeRef,
+          cwd: resolveWorkerCwd(binding, config),
+          mcpServers: [],
+        }, { signal })
+        state.sessionId = resumeRef
+        return {
+          sessionId: resumeRef,
+          runtimeId: String(state.process.pid ?? 'unknown'),
+          status: 'idle',
+        }
+      } catch {
+        // The agent no longer knows the ref (or cannot load sessions) —
+        // fall back to a fresh session on the already-spawned process.
+        try {
+          const sessionId = await openSession(binding, state, signal)
+          return {
+            sessionId,
+            runtimeId: String(state.process.pid ?? 'unknown'),
+            status: 'idle',
+          }
+        } catch (error) {
+          await killWorker(binding.workerId)
+          throw error
+        }
+      }
+    }
+
+    // No existing session and no resume ref — start fresh
     const result = await handleStart(binding, { kind: 'start', payload: null }, signal)
     return result
   }

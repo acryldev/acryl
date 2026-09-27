@@ -29,6 +29,9 @@
  *   (malformed-result tests).
  * - STUB_ACP_IGNORE_SIGTERM: when `1`, the stub swallows SIGTERM so the
  *   client's SIGKILL escalation is exercised (kill tests).
+ * - STUB_ACP_KNOWN_SESSIONS: comma-separated session ids the stub pretends
+ *   to have persisted — session/load succeeds for them on a freshly spawned
+ *   process (attach-time resume tests).
  */
 
 import * as readline from 'node:readline'
@@ -52,6 +55,9 @@ if (process.env.STUB_ACP_IGNORE_SIGTERM === '1') {
 let nextSessionId = 1
 let nextOutboundId = 100000
 const sessions = new Map()
+for (const id of (process.env.STUB_ACP_KNOWN_SESSIONS ?? '').split(',').filter(Boolean)) {
+  sessions.set(id, { cwd: '/', history: [] })
+}
 const outbound = new Map()
 
 function send(msg) {

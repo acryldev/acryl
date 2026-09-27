@@ -1,7 +1,15 @@
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it } from 'vitest'
-import type { AgentCapability, AgentSnapshot, AgentWorkspace } from '../src/agent/agent-control.ts'
+import {
+  AcrAgentControlService,
+  type AgentCapability,
+  type AgentSnapshot,
+  type AgentTransport,
+  type AgentWorkspace,
+} from '../src/agent/agent-control.ts'
+import { acpProvider } from '../src/agent/providers/acp.ts'
 import { devinAcpTransport } from '../src/agent/transports/devin-acp.ts'
 import { TransportError } from '../src/agent/transports/acp-json-rpc.ts'
 import type {
@@ -681,3 +689,200 @@ describe('session/request_permission answering', () => {
     expect(answer).toEqual({ outcome: { outcome: 'cancelled' } })
   })
 })
+
+describe('resume honoring the attach-time providerSessionRef', () => {
+  function boundSnapshot(workerId: string, providerSessionRef: string | null): AgentSnapshot {
+    return Object.freeze({ ...snapshot(workerId, null), providerSessionRef })
+  }
+
+  function capturedMethods(captureFile: string): Array<{ method?: string; sessionId?: string }> {
+    return readFileSync(captureFile, 'utf8')
+      .trim()
+      .split('\n')
+      .map((line) => {
+        const msg = JSON.parse(line) as { method?: string; params?: { sessionId?: string } }
+        return { method: msg.method, sessionId: msg.params?.sessionId }
+      })
+  }
+
+  it('runs session/load for the carried ref on the freshly spawned process', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'devin-acp-resume-'))
+    const captureFile = join(dir, 'capture.jsonl')
+    const wrapper = createWrapperScript()
+    const transport = devinAcpTransport({
+      binaryPath: wrapper,
+      cwd: '/tmp',
+      env: { STUB_ACP_CAPTURE: captureFile, STUB_ACP_KNOWN_SESSIONS: 'sess_persisted_9' },
+    })
+
+    const binding = boundSnapshot('w-resume', 'sess_persisted_9')
+    const result = await transport.execute(
+      binding,
+      { kind: 'resume', payload: null },
+    ) as { sessionId: string; runtimeId: string }
+
+    // The load succeeded: the resume keeps the attach-time session identity.
+    expect(result.sessionId).toBe('sess_persisted_9')
+    const methods = capturedMethods(captureFile)
+    const load = methods.find((m) => m.method === 'session/load')
+    expect(load?.sessionId).toBe('sess_persisted_9')
+    expect(methods.some((m) => m.method === 'session/new')).toBe(false)
+
+    await transport.execute(
+      Object.freeze({ ...binding, runtimeId: result.runtimeId }),
+      { kind: 'stop', payload: null },
+    )
+    transport.dispose()
+  })
+
+  it('falls back to session/new when the provider no longer knows the ref', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'devin-acp-resume-'))
+    const captureFile = join(dir, 'capture.jsonl')
+    const wrapper = createWrapperScript()
+    const transport = devinAcpTransport({
+      binaryPath: wrapper,
+      cwd: '/tmp',
+      env: { STUB_ACP_CAPTURE: captureFile },
+    })
+
+    const binding = boundSnapshot('w-resume-gone', 'sess_gone')
+    const result = await transport.execute(
+      binding,
+      { kind: 'resume', payload: null },
+    ) as { sessionId: string; runtimeId: string }
+
+    expect(result.sessionId).toMatch(/^sess_/)
+    const methods = capturedMethods(captureFile)
+    const loadIndex = methods.findIndex((m) => m.method === 'session/load')
+    const newIndex = methods.findIndex((m) => m.method === 'session/new')
+    expect(loadIndex).toBeGreaterThanOrEqual(0)
+    expect(methods[loadIndex]?.sessionId).toBe('sess_gone')
+    expect(newIndex).toBeGreaterThan(loadIndex)
+
+    await transport.execute(
+      Object.freeze({ ...binding, runtimeId: result.runtimeId }),
+      { kind: 'stop', payload: null },
+    )
+    transport.dispose()
+  })
+
+  it('starts a fresh session when the binding carries no ref', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'devin-acp-resume-'))
+    const captureFile = join(dir, 'capture.jsonl')
+    const wrapper = createWrapperScript()
+    const transport = devinAcpTransport({
+      binaryPath: wrapper,
+      cwd: '/tmp',
+      env: { STUB_ACP_CAPTURE: captureFile },
+    })
+
+    const binding = boundSnapshot('w-resume-none', null)
+    const result = await transport.execute(
+      binding,
+      { kind: 'resume', payload: null },
+    ) as { sessionId: string; runtimeId: string }
+
+    expect(result.sessionId).toMatch(/^sess_/)
+    const methods = capturedMethods(captureFile)
+    expect(methods.some((m) => m.method === 'session/load')).toBe(false)
+    expect(methods.some((m) => m.method === 'session/new')).toBe(true)
+
+    await transport.execute(
+      Object.freeze({ ...binding, runtimeId: result.runtimeId }),
+      { kind: 'stop', payload: null },
+    )
+    transport.dispose()
+  })
+})
+
+describe('failed-start cleanup through the control service', () => {
+  it('a stop after a merge-rejected start reaches the transport and kills the child', async () => {
+    const wrapper = createWrapperScript()
+    const inner = devinAcpTransport({ binaryPath: wrapper, cwd: '/tmp' })
+
+    // The hijack reports worker-B's spawned runtime as worker-A's live
+    // runtime id, so the merge rejects it with a runtime collision while a
+    // real subprocess is running underneath the never-bound binding.
+    let occupiedRuntimeId = ''
+    let spawnedPid: string | null = null
+    const transport: AgentTransport = {
+      async execute(binding, command, signal) {
+        const result = await inner.execute(binding, command, signal)
+        if (command.kind === 'start' && binding.workerId === 'worker-b') {
+          const record = result as { runtimeId: string }
+          spawnedPid = record.runtimeId
+          return { ...record, runtimeId: occupiedRuntimeId }
+        }
+        return result
+      },
+    }
+
+    const ctx = new Context()
+    const controlFiber = ctx.plugin(AcrAgentControlService)
+    await controlFiber
+    const providerFiber = ctx.plugin(acpProvider(transport))
+    await providerFiber
+    const service = ctx.acrAgentControl
+
+    await service.attach({
+      workerId: 'worker-a',
+      providerId: 'acp',
+      workspace: { identity: 'test', cwd: '/tmp' },
+      capabilities: ACP_CAPABILITIES,
+      fidelity: 'structured',
+    })
+    const started = await service.dispatch('worker-a', { kind: 'start', payload: null })
+    occupiedRuntimeId = started.runtimeId ?? ''
+
+    await service.attach({
+      workerId: 'worker-b',
+      providerId: 'acp',
+      workspace: { identity: 'test', cwd: '/tmp' },
+      capabilities: ACP_CAPABILITIES,
+      fidelity: 'structured',
+    })
+    await expect(service.dispatch('worker-b', { kind: 'start', payload: null }))
+      .rejects.toMatchObject({ code: 'runtime-collision' })
+    expect(spawnedPid).not.toBeNull()
+    const pid = parseInt(spawnedPid ?? '0', 10)
+    expect(() => process.kill(pid, 0)).not.toThrow()
+
+    // runtimeId is still null on the stored binding; the cleanup stop must
+    // still be dispatched to the transport.
+    const binding = (await service.snapshot({ workerId: 'worker-b' }))[0]
+    expect(binding?.runtimeId).toBeNull()
+    const stop = await service.dispatch('worker-b', { kind: 'stop', payload: null })
+    expect(stop.accepted).toBe(true)
+    expect(stop.runtimeId).toBeNull()
+
+    await expectAliveDead(pid, false)
+
+    // Release worker-A's child; acpProvider() alone does not own transport
+    // disposal (the acryl-agent-devin plugin wires it via ctx.effect).
+    await service.dispatch('worker-a', { kind: 'stop', payload: null })
+    await inner.dispose()
+    await providerFiber.dispose()
+    await controlFiber.dispose()
+  })
+})
+
+async function expectAliveDead(pid: number, alive: boolean): Promise<void> {
+  for (let i = 0; i < 50; i++) {
+    try {
+      process.kill(pid, 0)
+      if (!alive) {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        continue
+      }
+      return
+    } catch {
+      if (!alive) return
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+  }
+  if (alive) {
+    expect(() => process.kill(pid, 0)).not.toThrow()
+  } else {
+    expect(() => process.kill(pid, 0)).toThrow()
+  }
+}

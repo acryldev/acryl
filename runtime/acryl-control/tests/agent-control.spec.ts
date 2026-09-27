@@ -237,6 +237,43 @@ describe('AcrAgentControl', () => {
     await dispose()
   })
 
+  it('permits stop on a never-bound worker so failed-start cleanup reaches the transport', async () => {
+    const { ctx, service, dispose } = await booted()
+    const commands: string[] = []
+    const lazy = provider({
+      capabilities: ['agent.start', 'agent.send', 'agent.stop'],
+      async attach(req) {
+        const base = await provider().attach(req)
+        return Object.freeze({ ...base, runtimeId: null })
+      },
+      async execute(_binding, command) {
+        commands.push(command.kind)
+        if (command.kind === 'stop') return { stopped: true }
+        return { kind: command.kind, payload: command.payload, ok: true }
+      },
+    })
+    service.registerProvider(ctx, lazy)
+    await service.attach(request({ capabilities: ['agent.start', 'agent.send', 'agent.stop'] }))
+
+    // Commands that need a live runtime are still refused.
+    await expect(service.dispatch('worker-1', { kind: 'send', payload: 'x' }))
+      .rejects.toMatchObject({ code: 'unknown-worker' })
+    await expect(service.dispatch('worker-1', { kind: 'cancel', payload: null }))
+      .rejects.toMatchObject({ code: 'capability-rejected' })
+
+    // Stop is dispatched anyway: it is the cleanup path after a start whose
+    // result failed the merge, and must reach the transport.
+    const receipt = await service.dispatch('worker-1', { kind: 'stop', payload: null })
+    expect(receipt.accepted).toBe(true)
+    expect(receipt.runtimeId).toBeNull()
+    expect(commands).toEqual(['stop'])
+
+    const after = (await service.snapshot({ workerId: 'worker-1' }))[0]
+    expect(after?.runtimeId).toBeNull()
+    expect(after?.status).toBe('stopped')
+    await dispose()
+  })
+
   it('rejects a contradictory stop result that reports a live status', async () => {
     const { ctx, service, dispose } = await booted()
     const liar = provider({
