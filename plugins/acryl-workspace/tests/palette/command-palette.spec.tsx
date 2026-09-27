@@ -8,6 +8,7 @@ import { PalettePanel } from '../../src/client/palette/PalettePanel.tsx'
 import { DEFAULT_PALETTE_CONFIG, type PaletteItem } from '../../src/client/palette/palette-items.ts'
 import { startPaletteShortcut } from '../../src/client/palette/palette-shortcut.ts'
 import { PaletteState } from '../../src/client/palette/palette-state.ts'
+import { WorkspaceTabRegistry } from '../../src/client/tabs/registry/tab-registry.ts'
 import { TabTypesState } from '../../src/client/tabs/tab-types-state.ts'
 import { TabsPanel } from '../../src/client/tabs/TabsPanel.tsx'
 
@@ -113,7 +114,7 @@ describe('Settings > Command palette', () => {
 describe('Settings > Tabs', () => {
   it('lists every tab type, keeps the terminal on, and toggles the rest through the shared state', () => {
     const tabTypes = new TabTypesState(undefined)
-    render(<TabsPanel tabTypes={tabTypes} />)
+    render(<TabsPanel tabTypes={tabTypes} tabRegistry={new WorkspaceTabRegistry()} />)
     expect(screen.getByLabelText('The terminal is always on')).toBeTruthy()
     const board = document.querySelector('[data-tab-type="kanban"]') as HTMLElement
     fireEvent.click(within(board).getByRole('radio', { name: 'Disabled' }))
@@ -121,6 +122,6 @@ describe('Settings > Tabs', () => {
     expect(within(board).getByRole('radio', { name: 'Disabled' }).getAttribute('aria-checked')).toBe('true')
     fireEvent.click(within(board).getByRole('radio', { name: 'Enabled' }))
     expect(tabTypes.isEnabled('kanban')).toBe(true)
-    expect(screen.getByText(/registry for plugin tabs/)).toBeTruthy()
+    expect(screen.getByText(/ctx.workspaceTabs.register/)).toBeTruthy()
   })
 })

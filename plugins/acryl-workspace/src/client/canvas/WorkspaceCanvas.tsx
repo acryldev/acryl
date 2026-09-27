@@ -37,6 +37,8 @@ import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { DocFilePane } from '../docs/DocFilePane.tsx'
 import { DocPane } from '../docs/DocPane.tsx'
 import { openSettingsSection } from '../settings/open-settings.ts'
+import { CustomTabPane } from '../tabs/registry/CustomTabPane.tsx'
+import type { WorkspaceTabRegistry } from '../tabs/registry/tab-registry.ts'
 import { CommandPalette } from '../palette/CommandPalette.tsx'
 import type { PaletteConfigState } from '../palette/palette-config.ts'
 import { useWorkspacePalette } from '../palette/use-workspace-palette.ts'
@@ -56,6 +58,8 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   readonly agents: AgentsState
   /** Which tab types are turned on (Settings > Tabs). */
   readonly tabTypes: TabTypesState
+  /** The tab types plugins registered. */
+  readonly tabRegistry: WorkspaceTabRegistry
   /** What the command palette lists (Settings > Command palette). */
   readonly paletteConfig: PaletteConfigState
   /** Notices such as "Claude finished", fed from the terminals' exits. */
@@ -86,7 +90,7 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents: agentsState, tabTypes, paletteConfig, toasts, notices, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents: agentsState, tabTypes, tabRegistry, paletteConfig, toasts, notices, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
   // Subscribe to primitives, not the whole shell snapshot: git polling updates that snapshot often,
@@ -179,6 +183,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
     if (tile.kind === 'browser') return <BrowserPane tile={tile} workspace={workspace} />
     if (tile.kind === 'kanban') return <SessionBoardPane tile={tile} workspace={workspace} shell={shell} useSessions={useSessions} navigator={sessionNavigator} />
     if (tile.kind === 'doc') return <DocPane tile={tile} workspace={workspace} />
+    if (tile.kind === 'custom') return <CustomTabPane tile={tile} workspace={workspace} registry={tabRegistry} />
     if (tile.diffFile !== undefined) {
       return (
         <GitDiffPane
@@ -274,7 +279,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
     terminals: snapshot.tiles.filter(tile => tile.kind === 'pty').length,
   })
   const palette = useWorkspacePalette({
-    workspace, groups, groupKey, snapshot, shell, gitApi, toasts, agentSettings, customAgents, tabTypes, config: paletteConfig, rightPanel,
+    workspace, groups, groupKey, snapshot, shell, gitApi, toasts, agentSettings, customAgents, tabTypes, tabRegistry, config: paletteConfig, rightPanel,
     openPty: (commandId, title) => { void openPty(commandId, title) },
     closeTile: (tileId) => { const tile = snapshot.tiles.find(candidate => candidate.id === tileId); if (tile !== undefined) void closeTile(tile) },
   })
@@ -296,6 +301,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
         onOpenPty={(commandId, title) => { void openPty(commandId, title) }}
         agentSettings={agentSettings}
         tabTypes={tabTypes}
+        tabRegistry={tabRegistry}
         onManageSettings={section => openSettingsSection(section)}
       />
       <div ref={stageRef} className="dshWorkspaceStage" role="tabpanel" data-split={splitTile !== undefined || undefined}>

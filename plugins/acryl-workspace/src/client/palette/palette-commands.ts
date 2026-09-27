@@ -11,6 +11,8 @@ import type { PaletteItem } from './palette-items.ts'
 export interface PaletteActions {
   openSurface(kind: WorkspaceSurfaceAction['kind']): void
   openAgent(id: string, label: string): void
+  /** Opens a tab of a plugin's registered type. */
+  openCustomTab(kind: string, label: string): void
   /** @returns false when the Settings panel could not be opened. */
   openSettings(section: SettingsSectionKey): boolean
   toggleRightPanel(): void
@@ -24,6 +26,8 @@ export interface PaletteActions {
 export interface PaletteView {
   /** The tab types the + menu offers right now (a disabled type is not listed). */
   readonly surfaces: readonly WorkspaceSurfaceAction[]
+  /** Tab types plugins registered and the user has not turned off. */
+  readonly customTabs: readonly { readonly kind: string; readonly label: string; readonly description: string }[]
   /** Agents that can be launched: installed and enabled. */
   readonly agents: readonly { readonly id: string; readonly label: string }[]
   readonly worktrees: readonly { readonly path: string; readonly label: string }[]
@@ -74,6 +78,9 @@ export function buildPaletteItems(actions: PaletteActions, view: PaletteView, no
   const items: PaletteItem[] = []
   for (const surface of view.surfaces) {
     items.push({ id: surfaceId(surface.kind), group: 'command', title: surface.label, keywords: ['open', 'create', 'tab', surface.kind], run: () => { actions.openSurface(surface.kind) } })
+  }
+  for (const custom of view.customTabs) {
+    items.push({ id: `command:custom:${custom.kind}`, group: 'command', title: `New ${custom.label}`, subtitle: custom.description, keywords: ['open', 'create', 'tab', custom.kind], run: () => { actions.openCustomTab(custom.kind, custom.label) } })
   }
   for (const command of FIXED_COMMANDS) {
     items.push({ id: command.id, group: 'command', title: command.title, keywords: command.keywords, run: () => { command.run(actions) } })

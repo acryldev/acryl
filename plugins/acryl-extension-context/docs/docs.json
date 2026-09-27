@@ -180,6 +180,25 @@
           "topic": "a button, panel, tab or card (Web/Desktop)"
         },
         {
+          "id": "extending.workspace-tab",
+          "title": "Workspace tab types: add a new kind of tab (whiteboard, board, viewer)",
+          "path": "extending/workspace-tab.md",
+          "when": "The user wants a new kind of tab in the workspace (a whiteboard, a board of their own, a viewer): a plugin registers a tab type that appears in the + menu, the command palette and Settings > Tabs.",
+          "surfaces": [
+            "web",
+            "desktop"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "extending.client-slot",
+            "extending.state-and-persistence"
+          ],
+          "examples": [
+            "client-workspace-tab.whiteboard"
+          ],
+          "topic": "a new kind of workspace tab (Web/Desktop)"
+        },
+        {
           "id": "extending.tool",
           "title": "Tool plugins: give the agent a new capability",
           "path": "extending/tool-plugin.md",
@@ -2308,6 +2327,19 @@
       "teaches": "a right-sidebar tab in two stages (tab type, then body) with no build step.",
       "docs": [
         "extending.client-slot"
+      ]
+    },
+    {
+      "id": "client-workspace-tab.whiteboard",
+      "type": "client-slot",
+      "path": "client-workspace-tab",
+      "surfaces": [
+        "web",
+        "desktop"
+      ],
+      "teaches": "a tab type of your own registered in ctx.workspaceTabs: kind, label, glyph and a component whose state the workspace saves.",
+      "docs": [
+        "extending.workspace-tab"
       ]
     },
     {

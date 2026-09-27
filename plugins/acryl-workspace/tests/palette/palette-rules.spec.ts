@@ -99,6 +99,7 @@ describe('built-in items', () => {
   const actions = () => ({
     openSurface: vi.fn<PaletteActions['openSurface']>(),
     openAgent: vi.fn<PaletteActions['openAgent']>(),
+    openCustomTab: vi.fn<PaletteActions['openCustomTab']>(),
     openSettings: vi.fn<PaletteActions['openSettings']>(() => true),
     toggleRightPanel: vi.fn<PaletteActions['toggleRightPanel']>(),
     setShellMode: vi.fn<PaletteActions['setShellMode']>(),
@@ -107,7 +108,7 @@ describe('built-in items', () => {
     closeActiveTab: vi.fn<PaletteActions['closeActiveTab']>(),
     openFile: vi.fn<PaletteActions['openFile']>(),
   })
-  const view = { surfaces: WORKSPACE_SURFACE_ACTIONS.filter(s => s.kind !== 'diff'), agents: [{ id: 'claude', label: 'Claude' }], worktrees: [{ path: '/p', label: 'proj: main' }], tabs: [{ id: 't1', title: 'Claude', kind: 'pty' }] }
+  const view = { customTabs: [{ kind: 'acme.board', label: 'Whiteboard', description: 'Draw' }], surfaces: WORKSPACE_SURFACE_ACTIONS.filter(s => s.kind !== 'diff'), agents: [{ id: 'claude', label: 'Claude' }], worktrees: [{ path: '/p', label: 'proj: main' }], tabs: [{ id: 't1', title: 'Claude', kind: 'pty' }] }
 
   it('builds every kind of item and runs the matching action', () => {
     const a = actions()
@@ -116,6 +117,7 @@ describe('built-in items', () => {
     const byId = new Map(items.map(i => [i.id, i]))
     byId.get('command:surface:browser')?.run()
     byId.get('agent:claude')?.run()
+    byId.get('command:custom:acme.board')?.run()
     byId.get('tab:t1')?.run()
     byId.get('worktree:/p')?.run()
     byId.get('command:right-panel')?.run()
@@ -124,6 +126,7 @@ describe('built-in items', () => {
     byId.get('setting:tabs')?.run()
     expect(a.openSurface).toHaveBeenCalledWith('browser')
     expect(a.openAgent).toHaveBeenCalledWith('claude', 'Claude')
+    expect(a.openCustomTab).toHaveBeenCalledWith('acme.board', 'Whiteboard')
     expect(a.focusTab).toHaveBeenCalledWith('t1')
     expect(a.selectWorktree).toHaveBeenCalledWith('/p')
     expect(a.toggleRightPanel).toHaveBeenCalled()

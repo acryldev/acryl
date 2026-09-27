@@ -7,8 +7,9 @@
 import type { WorkspaceSurfaceAction } from '../terminal/agent-commands.ts'
 import { readHiddenAgents, toggleAgent, writeHiddenAgents } from './agent-visibility.ts'
 
-/** The remembered set holds `surface:<kind>` entries. */
+/** The remembered set holds `surface:<kind>` entries, and `custom:<kind>` for a plugin's tab type. */
 export const tabTypeKey = (kind: WorkspaceSurfaceAction['kind']): string => `surface:${kind}`
+export const customTabTypeKey = (kind: string): string => `custom:${kind}`
 
 export class TabTypesState {
   private hidden: ReadonlySet<string>
@@ -33,6 +34,17 @@ export class TabTypesState {
   setEnabled(kind: WorkspaceSurfaceAction['kind'], enabled: boolean): void {
     if (kind === 'pty' || this.isEnabled(kind) === enabled) return
     this.hidden = toggleAgent(this.hidden, tabTypeKey(kind))
+    writeHiddenAgents(this.storage, this.hidden)
+    for (const listener of [...this.listeners]) listener()
+  }
+
+  isCustomEnabled(kind: string): boolean {
+    return !this.hidden.has(customTabTypeKey(kind))
+  }
+
+  setCustomEnabled(kind: string, enabled: boolean): void {
+    if (this.isCustomEnabled(kind) === enabled) return
+    this.hidden = toggleAgent(this.hidden, customTabTypeKey(kind))
     writeHiddenAgents(this.storage, this.hidden)
     for (const listener of [...this.listeners]) listener()
   }

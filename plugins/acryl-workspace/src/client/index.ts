@@ -30,6 +30,8 @@ import { createWorkspaceAgentsApi } from './agents/agents-api.ts'
 import { agentsSettingsPlugin } from './agents/agents-settings-plugin.ts'
 import { PaletteConfigState } from './palette/palette-config.ts'
 import { paletteSettingsPlugin } from './palette/palette-settings-plugin.ts'
+import { WorkspaceTabRegistry } from './tabs/registry/tab-registry.ts'
+import { provideWorkspaceTabs } from './tabs/registry/provide.ts'
 import { TabTypesState } from './tabs/tab-types-state.ts'
 import { tabsSettingsPlugin } from './tabs/tabs-settings-plugin.ts'
 import { AgentsState } from './agents/agents-state.ts'
@@ -107,9 +109,12 @@ export function apply(ctx: ClientContext): void {
     ctx.effect(() => { void agents.refresh(); return () => {} }, 'acryl-workspace: load agents')
     // Shared by the + menu, the palette and Settings, so a change in one shows up in the others at once.
     const tabTypes = new TabTypesState(storage)
+    // Plugins add tab types through this service; it lives as long as this plugin, and so do the types they registered.
+    const tabRegistry = new WorkspaceTabRegistry()
+    ctx.effect(() => provideWorkspaceTabs(ctx, tabRegistry), 'acryl-workspace: workspaceTabs service')
     const paletteConfig = new PaletteConfigState(storage)
     ctx.plugin(agentsSettingsPlugin(agents))
-    ctx.plugin(tabsSettingsPlugin(tabTypes))
+    ctx.plugin(tabsSettingsPlugin(tabTypes, tabRegistry))
     ctx.plugin(paletteSettingsPlugin(paletteConfig))
     ctx.slots.inject('desktop.main', () => {
       const ptyClient = new WorkspacePtyClient(createWorkspacePtyApi())
@@ -122,7 +127,7 @@ export function apply(ctx: ClientContext): void {
         removeSlot = ctx.slots.register({
           name: 'desktop.main',
           priority: WORKSPACE_MAIN_PRIORITY,
-          inject: () => ({ ptyApi: ptyClient, terminals, agents, tabTypes, paletteConfig, toasts, notices, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }),
+          inject: () => ({ ptyApi: ptyClient, terminals, agents, tabTypes, tabRegistry, paletteConfig, toasts, notices, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }),
         }, WorkspaceCanvas)
       } catch (cause) {
         // A registration conflict must not take the left pane and the Changes tab down with it.

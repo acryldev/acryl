@@ -9,6 +9,7 @@
 import { act, cleanup, render } from '@testing-library/react'
 import { useSyncExternalStore } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { WorkspaceTabRegistry } from '../../../acryl-workspace/src/client/tabs/registry/tab-registry.ts'
 import { TabTypesState } from '../../../acryl-workspace/src/client/tabs/tab-types-state.ts'
 import { TabsPanel } from '../../../acryl-workspace/src/client/tabs/TabsPanel.tsx'
 import { AgentsPanel } from '../../../acryl-workspace/src/client/agents/AgentsSection.tsx'
@@ -98,13 +99,14 @@ describe('scenario: settings for coding agents, through the + menu and Settings 
   it('walks the + menu to Settings > Tabs, turns a tab type off and finds it gone from the menu', async () => {
     const workspace = new WorkspaceState()
     const tabTypes = new TabTypesState(undefined)
+    const registry = new WorkspaceTabRegistry()
     function Harness() {
       const snapshot = useSyncExternalStore(l => workspace.subscribe(l), () => workspace.getSnapshot())
       const terminals = new TerminalRegistry({ createSocket: () => ({ send() {}, close() {}, onopen: null, onmessage: null, onclose: null, onerror: null, readyState: 0 }), urlFor: id => `ws://x/${id}` })
       return (
         <>
-          <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={undefined} customAgents={[]} terminals={terminals} onClose={() => {}} onOpenPty={() => {}} agentSettings={null} tabTypes={tabTypes} onManageSettings={() => true} />
-          <TabsPanel tabTypes={tabTypes} />
+          <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={undefined} customAgents={[]} terminals={terminals} onClose={() => {}} onOpenPty={() => {}} agentSettings={null} tabTypes={tabTypes} tabRegistry={registry} onManageSettings={() => true} />
+          <TabsPanel tabTypes={tabTypes} tabRegistry={registry} />
         </>
       )
     }

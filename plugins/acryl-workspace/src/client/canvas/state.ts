@@ -4,7 +4,7 @@ import { labelForCommand } from '../terminal/agent-commands.ts'
 import { normalizeTabTitle } from './tab-title.ts'
 import type { AgentId } from '../../pty/contract.ts'
 
-export type WorkspaceTileKind = 'chat' | 'pty' | 'file' | 'browser' | 'diff' | 'kanban' | 'doc'
+export type WorkspaceTileKind = 'chat' | 'pty' | 'file' | 'browser' | 'diff' | 'kanban' | 'doc' | 'custom'
 
 export interface KanbanCard {
   readonly id: string
@@ -43,6 +43,9 @@ export interface WorkspaceTile {
   readonly board?: KanbanBoard
   /** doc tile: raw markdown-ish text, rendered with a minimal built-in formatter. */
   readonly docText?: string
+  /** custom tile: the kind of the plugin tab type it shows (`owner.name`) and the state that plugin saved in it. */
+  readonly customType?: string
+  readonly customState?: string
 }
 
 export interface WorkspaceSnapshot {
@@ -66,6 +69,8 @@ export interface AddTileOptions {
   readonly diffFile?: string
   readonly docWorktree?: string
   readonly docRel?: string
+  /** A plugin tab: its registered kind. */
+  readonly customType?: string
 }
 
 const TITLES: Record<WorkspaceTileKind, string> = {
@@ -76,6 +81,7 @@ const TITLES: Record<WorkspaceTileKind, string> = {
   diff: 'Diff',
   kanban: 'Board',
   doc: 'Doc',
+  custom: 'Tab',
 }
 
 const EMPTY_BOARD: KanbanBoard = Object.freeze({ todo: [], doing: [], done: [] })
@@ -410,6 +416,7 @@ export class WorkspaceState {
         ? { docWorktree: options.docWorktree, docRel: options.docRel }
         : {}),
       ...(kind === 'doc' && options.docRel === undefined ? { docText: '' } : {}),
+      ...(kind === 'custom' && options.customType !== undefined ? { customType: options.customType } : {}),
     }
     return Object.freeze(tile)
   }

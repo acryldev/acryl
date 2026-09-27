@@ -12,7 +12,8 @@ import { menuAgents, primaryAction } from '../agents/agents-section-model.ts'
 import { labelForCommand, WORKSPACE_SURFACE_ACTIONS, type WorkspaceSurfaceAction } from '../terminal/agent-commands.ts'
 import { AgentIcon } from './AgentIcon.tsx'
 import { readLastTab, writeLastTab, type LastTab } from './last-tab.ts'
-import { tabTypeKey, type TabTypesState } from './tab-types-state.ts'
+import { customTabTypeKey, tabTypeKey, type TabTypesState } from './tab-types-state.ts'
+import type { WorkspaceTabRegistry } from './registry/tab-registry.ts'
 
 export interface NewTabMenuProps {
   readonly open: boolean
@@ -22,6 +23,10 @@ export interface NewTabMenuProps {
   readonly storage: Storage | undefined
   /** Which tab types are turned on (Settings > Tabs). */
   readonly tabTypes: TabTypesState
+  /** The tab types plugins registered; the enabled ones follow the built-in ones. */
+  readonly tabRegistry: WorkspaceTabRegistry
+  /** Opens a tab of a plugin's type. */
+  onCustomTab(kind: string, label: string): void
   setOpen(open: boolean): void
   onSurface(action: WorkspaceSurfaceAction): void
   onOpenAgent(id: string, title: string): void
@@ -29,9 +34,10 @@ export interface NewTabMenuProps {
   onManageSettings(section: 'agents' | 'tabs'): boolean
 }
 
-export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, setOpen, onSurface, onOpenAgent, onManageSettings }: NewTabMenuProps) {
+export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, tabRegistry, onCustomTab, setOpen, onSurface, onOpenAgent, onManageSettings }: NewTabMenuProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const hidden = useSyncExternalStore(tabTypes.subscribe, tabTypes.getSnapshot)
+  const pluginTabs = useSyncExternalStore(tabRegistry.subscribe, tabRegistry.getSnapshot)
   const [notice, setNotice] = useState<string | null>(null)
   const [last, setLast] = useState<LastTab>(() => readLastTab(storage))
 
@@ -97,6 +103,12 @@ export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, se
             <button key={action.label} type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onSurface(action); remember({ kind: 'surface', surface: action.kind }); close() }}>
               {action.kind === 'pty' && <AgentIcon commandId="shell" />}
               {action.label}
+            </button>
+          ))}
+          {pluginTabs.filter(type => !hidden.has(customTabTypeKey(type.kind))).map(type => (
+            <button key={type.kind} type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onCustomTab(type.kind, type.label); close() }}>
+              <span className="dshWorkspaceTabGlyph" aria-hidden="true">{type.glyph}</span>
+              {type.label}
             </button>
           ))}
           <div className="dshWorkspaceMenuRule" />

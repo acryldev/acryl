@@ -12,6 +12,7 @@ import { labelForCommand } from '../terminal/agent-commands.ts'
 import { AgentIcon } from './AgentIcon.tsx'
 import type { TerminalRegistry } from '../terminal/terminal-session.ts'
 import type { AgentSettingsView } from '../../agents/contract.ts'
+import type { WorkspaceTabRegistry } from './registry/tab-registry.ts'
 import type { TabTypesState } from './tab-types-state.ts'
 import { NewTabMenu } from './NewTabMenu.tsx'
 import { TabActivity } from './TabActivity.tsx'
@@ -36,6 +37,8 @@ export interface TabStripProps {
   readonly agentSettings: AgentSettingsView | null
   /** Which tab types are turned on, shared with Settings > Tabs and the palette. */
   readonly tabTypes: TabTypesState
+  /** The tab types plugins registered: their glyphs draw the tabs and they are listed in the + menu. */
+  readonly tabRegistry: WorkspaceTabRegistry
   onManageSettings(section: 'agents' | 'tabs'): boolean
 }
 
@@ -96,7 +99,7 @@ function kindGlyph(kind: WorkspaceTile['kind']): string {
   return '◉'
 }
 
-export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, storage, customAgents, terminals, onClose, onOpenPty, agentSettings, tabTypes, onManageSettings }: TabStripProps) {
+export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, storage, customAgents, terminals, onClose, onOpenPty, agentSettings, tabTypes, tabRegistry, onManageSettings }: TabStripProps) {
   const tabsRef = useRef<HTMLDivElement>(null)
   const [edges, setEdges] = useState({ start: false, end: false })
   const [tabMenu, setTabMenu] = useState<{ readonly id: string; readonly x: number; readonly y: number } | null>(null)
@@ -187,7 +190,7 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
                   onKeyDown={(event) => { if (event.key === 'F2') { event.preventDefault(); setEditing({ id: tile.id, value: tile.title }) } }}
                 >
                   <span className="dshWorkspaceTabGlyph" aria-hidden="true">
-                    {tile.kind === 'pty' ? <AgentIcon commandId={tile.commandId ?? 'shell'} custom={customAgents.find(agent => agent.id === tile.commandId)?.badge} /> : kindGlyph(tile.kind)}
+                    {tile.kind === 'pty' ? <AgentIcon commandId={tile.commandId ?? 'shell'} custom={customAgents.find(agent => agent.id === tile.commandId)?.badge} /> : tile.kind === 'custom' ? (tabRegistry.get(tile.customType ?? '')?.glyph ?? '◉') : kindGlyph(tile.kind)}
                   </span>
                   {tile.kind === 'pty' && tile.commandId !== undefined && tile.commandId !== 'shell' && (
                     <TabActivity session={tile.terminalId === undefined ? undefined : terminals.ensure(tile.terminalId)} />
@@ -238,6 +241,8 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
         onOpenAgent={onOpenPty}
         settings={agentSettings}
         tabTypes={tabTypes}
+        tabRegistry={tabRegistry}
+        onCustomTab={(kind, label) => { workspace.addTile('custom', { customType: kind, title: label }) }}
         onManageSettings={onManageSettings}
       />
       {rightPanel !== undefined && (

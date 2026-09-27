@@ -13,6 +13,7 @@ import type { WorkspaceSnapshot, WorkspaceState } from '../canvas/state.ts'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
 import type { ToastState } from '../notifications/toast-state.ts'
 import { openSettingsSection } from '../settings/open-settings.ts'
+import type { WorkspaceTabRegistry } from '../tabs/registry/tab-registry.ts'
 import type { TabTypesState } from '../tabs/tab-types-state.ts'
 import { WORKSPACE_SURFACE_ACTIONS } from '../terminal/agent-commands.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
@@ -33,6 +34,7 @@ export interface WorkspacePaletteDeps {
   readonly agentSettings: AgentSettingsView | null
   readonly customAgents: readonly CustomAgent[]
   readonly tabTypes: TabTypesState
+  readonly tabRegistry: WorkspaceTabRegistry
   readonly config: PaletteConfigState
   readonly rightPanel: { toggle(): void } | undefined
   openPty(commandId: string, title: string): void
@@ -50,6 +52,7 @@ export function useWorkspacePalette(deps: WorkspacePaletteDeps): PaletteState {
         else latest.current.workspace.addTile(kind)
       },
       openAgent: (id, label) => { latest.current.openPty(id, label) },
+      openCustomTab: (kind, label) => { latest.current.workspace.addTile('custom', { customType: kind, title: label }) },
       openSettings: section => openSettingsSection(section),
       toggleRightPanel: () => { latest.current.rightPanel?.toggle() },
       setShellMode: (mode) => { latest.current.shell.setMode(mode) },
@@ -70,6 +73,7 @@ export function useWorkspacePalette(deps: WorkspacePaletteDeps): PaletteState {
       const snapshot = now.shell.getSnapshot()
       return {
         surfaces: now.tabTypes.enabled(WORKSPACE_SURFACE_ACTIONS),
+        customTabs: now.tabRegistry.getSnapshot().filter(type => now.tabTypes.isCustomEnabled(type.kind)).map(type => ({ kind: type.kind, label: type.label, description: type.description })),
         agents: menuAgents(now.agentSettings, now.customAgents).map(agent => ({ id: agent.id, label: agent.label })),
         worktrees: snapshot.repos.flatMap(repo => repo.worktrees.map(worktree => ({ path: worktree.path, label: `${repo.name}: ${worktree.branch ?? worktree.path}` }))),
         tabs: now.snapshot.tiles.map(tile => ({ id: tile.id, title: tile.title, kind: tile.kind })),
@@ -93,6 +97,7 @@ export function useWorkspacePalette(deps: WorkspacePaletteDeps): PaletteState {
   // What exists changed under an open palette (a tab opened, an agent turned off): list it again.
   useEffect(() => { palette.refresh() }, [palette, deps.snapshot, deps.agentSettings, deps.customAgents])
   useEffect(() => deps.tabTypes.subscribe(() => { palette.refresh() }), [palette, deps.tabTypes])
+  useEffect(() => deps.tabRegistry.subscribe(() => { palette.refresh() }), [palette, deps.tabRegistry])
 
   return palette
 }
