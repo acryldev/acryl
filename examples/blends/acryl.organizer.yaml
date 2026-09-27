@@ -29,5 +29,7 @@ spec:
       name: 'acryl-system-prompt'
     - id: '@acryl/ui'
       name: '@acryl/ui'
+    - id: acryl-app-save
+      name: 'acryl-app-save'
     - id: acryl-organizer
       name: 'acryl-organizer'

@@ -27,6 +27,8 @@ const ROWS: readonly RowDeclaration[] = [
   { id: 'extension-context', surfaces: ['tui', 'web', 'desktop'], rowId: 'extension-context', packageName: 'acryl-extension-context' },
   { id: 'system-prompt', surfaces: ['tui', 'web', 'desktop'], rowId: 'acryl-system-prompt', packageName: 'acryl-system-prompt' },
   { id: 'ui-library', surfaces: ['tui', 'web', 'desktop'], rowId: '@acryl/ui', packageName: '@acryl/ui', libraryOnly: ['tui'] },
+  // Saving an app to its own repository (/app save, /app connect): a command, so it works on every surface.
+  { id: 'app-save', surfaces: ['tui', 'web', 'desktop'], rowId: 'acryl-app-save', packageName: 'acryl-app-save' },
   { id: 'shortcuts', surfaces: ['web', 'desktop'], rowId: 'acryl-shortcuts', packageName: 'acryl-shortcuts' },
   { id: 'mount-anchors', surfaces: ['web', 'desktop'], rowId: 'acryl-mount-anchors', packageName: 'acryl-mount-anchors' },
 ]

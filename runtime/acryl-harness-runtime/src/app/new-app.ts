@@ -80,6 +80,7 @@ export function planNewApp(dir: string, options: NewAppOptions): PlannedApp {
     'AGENTS.md': agentsMd(title),
     'bin/acryl': `#!/usr/bin/env bash\n# Start ${title}:  bin/acryl web | desktop | cli   (flags: --port 3105)\nset -euo pipefail\napp="$(cd "$(dirname "$0")/.." && pwd)"\nexec node ${JSON.stringify(options.launcher)} "\${1:-web}" --dir "$app" "\${@:2}"\n`,
     '.gitignore': '# what the runtime keeps for this app\n.dsh/\ninstance.json\n',
+    '.github/workflows/app.yml': appWorkflow(title),
     'README.md': `# ${title}
 
 \`\`\`bash
@@ -146,6 +147,35 @@ function fromExistingApp(source: { readonly manifestText: string, readonly lockT
   const lock = JSON.parse(source.lockText) as { origin?: Record<string, unknown> }
   lock.origin = { ...lock.origin, id, kind: 'Blend', digest: manifestDigest(manifestText) }
   return { manifestText, lockText: `${JSON.stringify(lock, null, 2)}\n`, ...extra }
+}
+
+/**
+ * CI from the first commit (spec 036, T019): on every push and pull request the app definition must validate the way the engine and the registry validate it,
+ * and no tracked file may hold a secret (the same check \`acryl save\` runs, so a key committed outside ACRYL is caught too). Pinned to the published tools.
+ */
+function appWorkflow(title: string): string {
+  return `name: ${JSON.stringify(title)}
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: The app definition is valid
+        run: npx --yes --package @acryl/blends-core@0.1 blends-validate blend.yaml
+      - name: No secrets in the repository
+        run: npx --yes --package @acryl/app-persistence@0.1 acryl-secret-check .
+`
 }
 
 function agentsMd(title: string): string {

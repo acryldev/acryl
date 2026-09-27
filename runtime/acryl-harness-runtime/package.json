@@ -171,6 +171,7 @@
     "@deepseek-ai/dsh-workflow": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-workflow-worker-thread": "0.1.5-alpha.1",
     "@deepseek-ai/schemastery": "^3.18.1",
+    "acryl-app-save": "workspace:*",
     "acryl-brand": "workspace:*",
     "acryl-control": "workspace:*",
     "acryl-extension-context": "workspace:*",

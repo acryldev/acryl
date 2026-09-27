@@ -25,7 +25,7 @@ describe('starter recipes', () => {
     const { patch, diagnostics: compileDiagnostics } = compileDefinition(definition!)
     expect(compileDiagnostics).toEqual([])
     const rows = (patch!.ops as unknown as { insert: { id: string, config?: { name?: string } }[] }[]).flatMap(entry => entry.insert)
-    expect(rows.map(row => row.id)).toEqual(['brand', 'extension-context', 'acryl-system-prompt', '@acryl/ui'])
+    expect(rows.map(row => row.id)).toEqual(['brand', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save'])
     expect(rows[0]?.config?.name).toBe('Orbit')
   })
 

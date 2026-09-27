@@ -583,6 +583,9 @@ importers:
 
   apps/acryl-desktop:
     dependencies:
+      acryl-app-save:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-app-save
       '@acryl/ui':
         specifier: workspace:*
         version: link:../../plugins/acryl-ui
@@ -1457,6 +1460,9 @@ importers:
 
   apps/acryl-web:
     dependencies:
+      acryl-app-save:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-app-save
       '@acryl/ui':
         specifier: workspace:*
         version: link:../../plugins/acryl-ui
@@ -2026,9 +2032,6 @@ importers:
 
   plugins/acryl-extension-context:
     dependencies:
-      '@acryl/app-persistence':
-        specifier: workspace:*
-        version: link:../../runtime/app-persistence
       '@acryl/blends-core':
         specifier: workspace:*
         version: link:../../runtime/blends-core
@@ -2154,6 +2157,12 @@ importers:
       vitest:
         specifier: 4.1.8
         version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@8.2.1(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+
+  plugins/acryl-app-save:
+    dependencies:
+      '@acryl/app-persistence':
+        specifier: workspace:*
+        version: link:../../runtime/app-persistence
 
   plugins/acryl-brand:
     dependencies:
@@ -2829,6 +2838,9 @@ importers:
 
   runtime/acryl-harness-runtime:
     dependencies:
+      acryl-app-save:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-app-save
       '@acryl/blends-core':
         specifier: workspace:*
         version: link:../blends-core

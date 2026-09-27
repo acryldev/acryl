@@ -51,6 +51,7 @@
     "vitest": "4.1.11"
   },
   "bin": {
-    "blends-registry-index": "./dist/bin/registry-index.js"
+    "blends-registry-index": "./dist/bin/registry-index.js",
+    "blends-validate": "./dist/bin/validate.js"
   }
 }

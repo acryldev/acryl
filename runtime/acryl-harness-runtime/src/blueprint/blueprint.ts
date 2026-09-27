@@ -23,9 +23,10 @@ export type BlueprintRowId =
   | 'community-market'
   | 'shortcuts'
   | 'mount-anchors'
+  | 'app-save'
 
 /** Every row id, as data: what a Blueprint file may name. Kept next to the type so the two cannot drift (a test asserts it). */
-export const BLUEPRINT_ROW_IDS: readonly BlueprintRowId[] = ['extension-context', 'system-prompt', 'ui-library', 'community-market', 'shortcuts', 'mount-anchors']
+export const BLUEPRINT_ROW_IDS: readonly BlueprintRowId[] = ['extension-context', 'system-prompt', 'ui-library', 'app-save', 'community-market', 'shortcuts', 'mount-anchors']
 
 /** `acryl`: the stock ACRYL brand plugin. `custom`: the configurable `acryl-brand` plugin carrying this identity. */
 export type BlueprintBrand =
@@ -57,7 +58,7 @@ export const BLANK_BLUEPRINT: Blueprint = freezeBlueprint({
   name: 'Blank',
   description: 'The smallest working agent that can grow itself: chat, model choice, and the extension pack.',
   capabilities: ['persona', 'agent-roster', 'session-stats', 'authorization'],
-  rows: ['extension-context', 'system-prompt', 'ui-library'],
+  rows: ['extension-context', 'system-prompt', 'ui-library', 'app-save'],
   brand: { kind: 'custom', identity: brandIdentity({ name: 'Blank', tagline: 'Ask for what you need. It builds it.', accent: '#3b6ef5', accentDark: '#7c9dff' }) },
   shell: 'compatibility',
 })

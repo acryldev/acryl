@@ -24,7 +24,8 @@ const launcher = '/framework/scripts/blank.mjs'
 describe('acryl new', () => {
   it('plans the conventional app shape', () => {
     const app = planNewApp('/apps/stage-sound', { title: 'Stage Sound', brand: { accent: '#e8590c' }, launcher })
-    expect(Object.keys(app.files).sort()).toEqual(['.gitignore', 'AGENTS.md', 'README.md', 'bin/acryl', 'blend.yaml', 'extensions/README.md'])
+    expect(Object.keys(app.files).sort()).toEqual(['.github/workflows/app.yml', '.gitignore', 'AGENTS.md', 'README.md', 'bin/acryl', 'blend.yaml', 'extensions/README.md'])
+    expect(app.files['.github/workflows/app.yml']).toMatch(/blends-validate blend\.yaml[\s\S]*acryl-secret-check \./u)
     const manifest = parse(app.files['blend.yaml']!) as Record<string, any>
     expect(manifest).toMatchObject({ apiVersion: 'blends.acryl.dev/v1alpha1', kind: 'Blend', metadata: { id: 'app.stage-sound', name: 'Stage Sound' }, spec: { lineage: { blueprint: 'acryl.blank' } } })
     expect(manifest.spec.rows[0]).toMatchObject({ id: 'brand', name: 'acryl-brand', config: { name: 'Stage Sound', accent: '#e8590c' } })
@@ -69,7 +70,7 @@ describe('acryl new', () => {
     expect(existsSync(join(dir, 'extensions'))).toBe(true)
     const blueprint = blueprintFromEnvironment({ ACRYL_BLUEPRINT: join(dir, 'blend.yaml') })
     expect(blueprint.id).toBe('app.video-cut')
-    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', 'extension-context', 'acryl-system-prompt', '@acryl/ui'])
+    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save'])
   })
 })
 
