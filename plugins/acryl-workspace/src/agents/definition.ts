@@ -53,6 +53,24 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
+/** @param value - untrusted JSON. @returns a command that is an absolute path or a bare program name. @throws AgentDefinitionError. */
+export function parseAgentCommand(value: unknown): string {
+  if (typeof value !== 'string' || !COMMAND_PATTERN.test(value) || value.includes('..')) {
+    throw new AgentDefinitionError('the command must be an absolute path or a bare program name, without spaces or shell characters (put options in the arguments)')
+  }
+  return value
+}
+
+/** @param value - untrusted JSON; absent means no arguments. @throws AgentDefinitionError. */
+export function parseAgentArgs(value: unknown): readonly string[] {
+  const list = value === undefined ? [] : value
+  if (!Array.isArray(list) || list.length > MAX_AGENT_ARGS
+    || !list.every((arg): arg is string => typeof arg === 'string' && arg.length <= MAX_AGENT_ARG_LENGTH && !arg.includes('\0'))) {
+    throw new AgentDefinitionError(`up to ${String(MAX_AGENT_ARGS)} arguments of up to ${String(MAX_AGENT_ARG_LENGTH)} characters each`)
+  }
+  return list
+}
+
 /** @param value - untrusted JSON. @throws AgentDefinitionError with a user-facing message. */
 export function parseCustomAgent(value: unknown): CustomAgent {
   if (!isRecord(value)) throw new AgentDefinitionError('an agent needs an id, a name, a command and a badge')
@@ -62,17 +80,11 @@ export function parseCustomAgent(value: unknown): CustomAgent {
   if (typeof id !== 'string' || !ID_PATTERN.test(id)) throw new AgentDefinitionError('the id must be 2 to 32 characters: lowercase letters, digits and dashes, starting with a letter')
   if (isBuiltinAgentId(id)) throw new AgentDefinitionError(`"${id}" is a built-in agent`)
   if (typeof label !== 'string' || label.trim() === '' || [...label.trim()].length > MAX_AGENT_LABEL) throw new AgentDefinitionError(`the name must be 1 to ${String(MAX_AGENT_LABEL)} characters`)
-  if (typeof command !== 'string' || !COMMAND_PATTERN.test(command) || command.includes('..')) {
-    throw new AgentDefinitionError('the command must be an absolute path or a bare program name, without spaces or shell characters (put options in the arguments)')
-  }
-  const argList = args === undefined ? [] : args
-  if (!Array.isArray(argList) || argList.length > MAX_AGENT_ARGS
-    || !argList.every((arg): arg is string => typeof arg === 'string' && arg.length <= MAX_AGENT_ARG_LENGTH && !arg.includes('\0'))) {
-    throw new AgentDefinitionError(`up to ${String(MAX_AGENT_ARGS)} arguments of up to ${String(MAX_AGENT_ARG_LENGTH)} characters each`)
-  }
+  const commandText = parseAgentCommand(command)
+  const argList = parseAgentArgs(args)
   if (!isRecord(badge) || typeof badge.letter !== 'string' || [...badge.letter].length !== 1
     || !(BADGE_COLORS as readonly unknown[]).includes(badge.color)) {
     throw new AgentDefinitionError('the badge needs one character and one of the offered colours')
   }
-  return { id, label: label.trim(), command, args: argList, badge: { letter: badge.letter, color: badge.color as AgentBadge['color'] } }
+  return { id, label: label.trim(), command: commandText, args: argList, badge: { letter: badge.letter, color: badge.color as AgentBadge['color'] } }
 }

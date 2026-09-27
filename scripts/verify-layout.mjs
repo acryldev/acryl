@@ -41,7 +41,9 @@ const OWNED_WORKSPACE_POLICY = `nodeLinker: isolated
 packages:
   - examples/acryl-blend-demo
   - runtime/acryl-control
+  - runtime/acryl-diagnostics
   - runtime/acryl-harness-runtime
+  - runtime/acryl-loopback-http
   - distribution/acryl-npm-launcher
   - apps/acryl-cli
   - apps/acryl-web
@@ -58,6 +60,8 @@ packages:
   - plugins/acryl-brand
   - plugins/acryl-workspace
   - plugins/acryl-plugin-admin
+  - plugins/acryl-support
+  - plugins/acryl-ui-control
   - '!deepseek-harness/**'
 
 allowBuilds:

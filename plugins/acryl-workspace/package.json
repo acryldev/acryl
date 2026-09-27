@@ -32,6 +32,8 @@
     },
     "client": {
       "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-settings",
         "@deepseek-ai/dsh-client-ui-sidebar-right",
         "@deepseek-ai/dsh-client-ui-theme"
       ],
@@ -65,6 +67,7 @@
     "@xterm/addon-webgl": "0.18.0",
     "@xterm/headless": "5.5.0",
     "@xterm/xterm": "5.5.0",
+    "acryl-loopback-http": "workspace:*",
     "codemirror": "6.0.2",
     "node-pty": "1.2.0-beta.15",
     "ws": "8.21.3"
@@ -73,9 +76,11 @@
     "@deepseek-ai/cordis": "^4.0.2",
     "@deepseek-ai/dsh-api-session-controller": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-api-workspace-controller": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-client-locale": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-store": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-ui-renderer": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-ui-session": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-client-ui-settings": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-ui-sidebar-right": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-ui-slots": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-host-webserver": "0.1.5-alpha.1",
@@ -87,9 +92,11 @@
     "@deepseek-ai/cordis": "4.0.2",
     "@deepseek-ai/dsh-api-session-controller": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-api-workspace-controller": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-client-locale": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-store": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-ui-renderer": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-ui-session": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-client-ui-settings": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-ui-sidebar-right": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-ui-slots": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-client-ui-theme": "0.1.5-alpha.1",

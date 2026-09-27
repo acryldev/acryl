@@ -1,7 +1,7 @@
 /** Labels for allowlisted Terminal / agent tabs. */
 
 import type { WorkspacePtyCommandId } from '../../pty/contract.ts'
-import { WORKSPACE_PTY_COMMAND_IDS, isWorkspacePtyCommandId } from '../../pty/contract.ts'
+import { KNOWN_AGENTS, knownAgent } from '../../agents/known-agents.ts'
 
 export interface WorkspaceAgentCommand {
   readonly id: WorkspacePtyCommandId
@@ -14,23 +14,6 @@ export interface WorkspaceSurfaceAction {
   readonly label: string
 }
 
-const LABELS: Record<WorkspacePtyCommandId, string> = {
-  shell: 'Terminal',
-  claude: 'Claude',
-  codex: 'Codex',
-  opencode: 'OpenCode',
-  gemini: 'Gemini',
-  pi: 'Pi',
-  grok: 'Grok',
-  aider: 'Aider',
-  goose: 'Goose',
-  amp: 'Amp',
-  kimi: 'Kimi',
-  cursor: 'Cursor',
-  hermes: 'Hermes',
-  qwen: 'Qwen Code',
-}
-
 export const WORKSPACE_SURFACE_ACTIONS: readonly WorkspaceSurfaceAction[] = [
   { kind: 'pty', commandId: 'shell', label: 'New Terminal' },
   { kind: 'browser', label: 'New Browser Tab' },
@@ -40,11 +23,9 @@ export const WORKSPACE_SURFACE_ACTIONS: readonly WorkspaceSurfaceAction[] = [
   { kind: 'doc', label: 'New Doc' },
 ]
 
-export const WORKSPACE_AGENT_COMMANDS: readonly WorkspaceAgentCommand[] = WORKSPACE_PTY_COMMAND_IDS
-  .filter(id => id !== 'shell')
-  .map(id => ({ id, label: LABELS[id] }))
+export const WORKSPACE_AGENT_COMMANDS: readonly WorkspaceAgentCommand[] = KNOWN_AGENTS.map(entry => ({ id: entry.id, label: entry.label }))
 
 /** The name of an agent id; a custom agent's own name is used by the caller that knows it. */
 export function labelForCommand(id: string): string {
-  return isWorkspacePtyCommandId(id) ? LABELS[id] : id
+  return id === 'shell' ? 'Terminal' : knownAgent(id)?.label ?? id
 }

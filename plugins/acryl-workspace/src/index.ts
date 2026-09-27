@@ -39,9 +39,10 @@ import {
   handleWorkspaceGitWorktreeRequest,
 } from './git/route.ts'
 import { AgentCatalog } from './agents/catalog.ts'
-import { WORKSPACE_AGENTS_PATH, WORKSPACE_AGENTS_REMOVE_PATH } from './agents/contract.ts'
-import { createFileCatalogStore, defaultAgentsFile } from './agents/file-store.ts'
-import { handleWorkspaceAgentsRemoveRequest, handleWorkspaceAgentsRequest } from './agents/route.ts'
+import { WORKSPACE_AGENT_SETTINGS_PATH, WORKSPACE_AGENTS_PATH, WORKSPACE_AGENTS_REMOVE_PATH } from './agents/contract.ts'
+import { createFileCatalogStore, defaultAgentSettingsFile, defaultAgentsFile } from './agents/file-store.ts'
+import { handleWorkspaceAgentSettingsRequest, handleWorkspaceAgentsRemoveRequest, handleWorkspaceAgentsRequest } from './agents/route.ts'
+import { AgentSettings } from './agents/settings.ts'
 import { spawnNodePty } from './pty/node-pty-spawn.ts'
 import { WorkspacePtyRegistry } from './pty/service.ts'
 import {
@@ -82,10 +83,14 @@ export function apply(ctx: Context): void {
   }
   ctx.effect(() => {
     // The user's custom agents live in their ACRYL home; the registry asks the catalog what an id means.
-    let catalog: AgentCatalog | undefined
-    const workspacePty = new WorkspacePtyRegistry({ spawn: spawnNodePty, agents: { resolve: id => catalog?.resolve(id) } })
-    catalog = new AgentCatalog(createFileCatalogStore(defaultAgentsFile()), command => workspacePty.canRun(command))
+    // The registry asks the settings what an id runs; the settings ask the catalog and the registry's own PATH search.
+    let settings: AgentSettings | undefined
+    const workspacePty = new WorkspacePtyRegistry({ spawn: spawnNodePty, agents: { resolve: id => settings?.resolve(id) } })
+    const catalog = new AgentCatalog(createFileCatalogStore(defaultAgentsFile()), command => workspacePty.canRun(command))
+    const agentSettings = new AgentSettings(createFileCatalogStore(defaultAgentSettingsFile()), catalog, command => workspacePty.canRun(command))
+    settings = agentSettings
     void catalog.load().catch(reportHostError.bind(undefined, 'load custom agents'))
+    void agentSettings.load().catch(reportHostError.bind(undefined, 'load agent settings'))
     const workspaceGit = new WorkspaceGit()
     const workspaceFiles = new WorkspaceFiles({
       // Only a git worktree root is a place the editor may touch; a failed check surfaces as a bad path.
@@ -130,6 +135,11 @@ export function apply(ctx: Context): void {
           handler: (req, res) => handler(req, res, rendererOrigin, catalog, reportHostError),
         }))
       }
+      releases.push(ctx.webServer.register({
+        kind: 'exact',
+        path: WORKSPACE_AGENT_SETTINGS_PATH,
+        handler: (req, res) => handleWorkspaceAgentSettingsRequest(req, res, rendererOrigin, agentSettings, reportHostError),
+      }))
       const gitRoutes = [
         [WORKSPACE_GIT_REPO_PATH, handleWorkspaceGitRepoRequest],
         [WORKSPACE_GIT_STATUS_PATH, handleWorkspaceGitStatusRequest],

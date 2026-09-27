@@ -3,9 +3,8 @@ import { mkdtempSync, readFileSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { FileExporter, LogFileSink } from 'acryl-diagnostics'
 import { ElectronStderrLogger } from '../../src/diagnostics/desktop-logger.ts'
-import { FileExporter } from '../../src/diagnostics/file-exporter.ts'
-import { LogFileSink } from '../../src/diagnostics/log-files.ts'
 
 function todaySuffix(): string {
   const now = new Date()

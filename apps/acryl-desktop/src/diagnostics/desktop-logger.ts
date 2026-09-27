@@ -1,5 +1,4 @@
-import type { LogFileSink } from './log-files.ts'
-import { maskSecrets } from './mask-secrets.ts'
+import { maskSecrets, type LogFileSink } from 'acryl-diagnostics'
 
 /** Logger for Electron-main-scope messages that bypass Cordis `ctx.logger`. */
 export interface DesktopLogger {

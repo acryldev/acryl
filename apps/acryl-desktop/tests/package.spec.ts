@@ -77,16 +77,19 @@ const releaseDesktopWorkflow = readFileSync(
 describe('published package surface', () => {
   it('runs owned-workspace typechecks and tests through PNPM filters', () => {
     expect(workspaceManifest.packageManager).toBe('pnpm@11.11.0')
-    // Each owned package that ships a script is run through a PNPM filter from the root. The list is the contract, not a copy of the
-    // whole command line, so adding a package adds one entry here instead of rewriting a 600-character string.
-    const typecheck = workspaceManifest.scripts?.typecheck ?? ''
-    for (const owned of ['acryl-control', 'acryl-cli', 'acryl-web', 'dsh-client-ui-brand-acryl', 'acryl-desktop', 'cordis-plugin-market']) {
-      expect(typecheck, owned).toContain(`pnpm --filter ${owned} run typecheck`)
+    // Every owned package that has the script is run through a PNPM filter. The exact list grows with the
+    // repository, so this asserts membership rather than one frozen string.
+    const filtersOf = (script: unknown): string[] => [...(typeof script === 'string' ? script : '').matchAll(/pnpm --filter (\S+) run/g)].map(match => match[1] ?? '')
+    const typecheck = filtersOf(workspaceManifest.scripts?.typecheck)
+    const test = filtersOf(workspaceManifest.scripts?.test)
+    for (const owned of ['acryl-control', 'acryl-harness-runtime', 'acryl-loopback-http', 'acryl-diagnostics', 'acryl-cli', 'acryl-web', 'acryl-desktop', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-ui-control', 'dsh-client-ui-brand-acryl', 'cordis-plugin-market']) {
+      expect(typecheck, `typecheck runs ${owned}`).toContain(owned)
     }
-    const test = workspaceManifest.scripts?.test ?? ''
-    for (const owned of ['acryl-control', 'acryl-cli', 'acryl-web', 'dsh-client-ui-brand-acryl', 'acryl-desktop', 'cordis-plugin-market', 'acryl-extension-context', 'acryl-brand', 'acryl-system-prompt', '@acryl/ui', 'acryl-ui-tui']) {
-      expect(test, owned).toContain(`pnpm --filter ${owned} run test`)
+    for (const owned of ['acryl-control', 'acryl-harness-runtime', 'acryl-loopback-http', 'acryl-diagnostics', 'acryl-cli', 'acryl-web', 'acryl-desktop', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-ui-control', 'acryl-extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-ui-tui']) {
+      expect(test, `test runs ${owned}`).toContain(owned)
     }
+    expect(new Set(typecheck).size, 'no package is typechecked twice').toBe(typecheck.length)
+    expect(new Set(test).size, 'no package is tested twice').toBe(test.length)
     expect(pnpmWorkspace).toContain("  - '!deepseek-harness/**'")
     expect(pnpmWorkspace).toContain('node-pty: true')
   })

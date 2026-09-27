@@ -12,6 +12,11 @@ export function defaultAgentsFile(env: NodeJS.ProcessEnv = process.env): string 
   return join(home, 'workspace', 'agents.json')
 }
 
+/** The preferences file, next to the catalog. */
+export function defaultAgentSettingsFile(env: NodeJS.ProcessEnv = process.env): string {
+  return join(dirname(defaultAgentsFile(env)), 'agent-settings.json')
+}
+
 export function createFileCatalogStore(path: string): CatalogStore {
   return {
     async read() {

@@ -1,10 +1,8 @@
 /**
- * Which coding agents the "+" menu lists. Every agent the Host can start is listed by default; the user
- * hides the ones they never use from "Configure agents". The choice is remembered in the browser storage
- * (a per-viewer convenience: the Host allowlist, not this list, decides what can run).
+ * Which tab types the "+" menu lists. Every type is listed by default; the user hides the ones they never use
+ * from "Configure tabs" (an entry like `surface:diff`). Agents are not here: which agents are listed is set
+ * in Settings > Agents. The choice is remembered in the browser storage (a per-viewer convenience).
  */
-
-import type { WorkspaceAgentCommand } from '../terminal/agent-commands.ts'
 
 export const HIDDEN_AGENTS_KEY = 'acryl-workspace:hidden-agents'
 
@@ -26,10 +24,6 @@ export function writeHiddenAgents(storage: Pick<Storage, 'setItem'> | undefined,
   } catch {
     // Storage is a convenience; a blocked write just means the choice is not remembered.
   }
-}
-
-export function visibleAgents(all: readonly WorkspaceAgentCommand[], hidden: ReadonlySet<string>): readonly WorkspaceAgentCommand[] {
-  return all.filter(agent => !hidden.has(agent.id))
 }
 
 /** @returns a new set with the agent shown or hidden. */

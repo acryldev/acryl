@@ -11,6 +11,7 @@ import type { CustomAgent } from '../../agents/definition.ts'
 import { labelForCommand } from '../terminal/agent-commands.ts'
 import { AgentIcon } from './AgentIcon.tsx'
 import type { TerminalRegistry } from '../terminal/terminal-session.ts'
+import type { AgentSettingsView } from '../../agents/contract.ts'
 import { NewTabMenu } from './NewTabMenu.tsx'
 import { TabActivity } from './TabActivity.tsx'
 import { tabsToClose } from './tab-close.ts'
@@ -30,8 +31,9 @@ export interface TabStripProps {
   /** The live terminals, for the activity marker on agent tabs. */
   readonly terminals: TerminalRegistry
   onOpenPty(commandId: AgentId, title: string): void
-  onAddAgent(agent: CustomAgent): Promise<void>
-  onRemoveAgent(id: string): Promise<void>
+  /** What Settings > Agents says, for the "+" menu. */
+  readonly agentSettings: AgentSettingsView | null
+  onManageAgents(): boolean
 }
 
 interface TabContextMenuProps {
@@ -91,7 +93,7 @@ function kindGlyph(kind: WorkspaceTile['kind']): string {
   return '◉'
 }
 
-export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, storage, customAgents, terminals, onClose, onOpenPty, onAddAgent, onRemoveAgent }: TabStripProps) {
+export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, storage, customAgents, terminals, onClose, onOpenPty, agentSettings, onManageAgents }: TabStripProps) {
   const tabsRef = useRef<HTMLDivElement>(null)
   const [edges, setEdges] = useState({ start: false, end: false })
   const [tabMenu, setTabMenu] = useState<{ readonly id: string; readonly x: number; readonly y: number } | null>(null)
@@ -231,8 +233,8 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
           else workspace.addTile(action.kind)
         }}
         onOpenAgent={onOpenPty}
-        onAddAgent={onAddAgent}
-        onRemoveAgent={onRemoveAgent}
+        settings={agentSettings}
+        onManageAgents={onManageAgents}
       />
       {rightPanel !== undefined && (
         <button

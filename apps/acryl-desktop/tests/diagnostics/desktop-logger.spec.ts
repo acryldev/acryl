@@ -8,7 +8,7 @@ import {
   installDesktopChildProcessLogging,
   installDesktopUncaughtExceptionLogging,
 } from '../../src/diagnostics/desktop-logger.ts'
-import { LogFileSink } from '../../src/diagnostics/log-files.ts'
+import { LogFileSink } from 'acryl-diagnostics'
 
 function todaySuffix(): string {
   const now = new Date()

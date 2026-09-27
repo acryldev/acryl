@@ -2,7 +2,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { WorkspacePtyRegistry } from './service.ts'
-import { BodyTooLargeError, error, finishJson, isSameOriginLoopbackRequest, readJson } from '../http.ts'
+import { BodyTooLargeError, error, finishJson, isSameOriginLoopbackRequest, readJsonBody } from 'acryl-loopback-http'
 import {
   WORKSPACE_PTY_CLOSE_PATH,
   WORKSPACE_PTY_INPUT_PATH,
@@ -43,7 +43,7 @@ export async function handleWorkspacePtyRequest(
   }
   let body: unknown
   try {
-    body = await readJson(req)
+    body = await readJsonBody(req)
   } catch (cause) {
     if (cause instanceof BodyTooLargeError) return finishJson(res, 413, error('body too large'))
     return finishJson(res, 400, error('invalid workspace PTY request'))
@@ -77,7 +77,7 @@ export async function handleWorkspacePtyInputRequest(
   }
   let body: unknown
   try {
-    body = await readJson(req)
+    body = await readJsonBody(req)
   } catch {
     return finishJson(res, 400, error('invalid workspace PTY input'))
   }
@@ -108,7 +108,7 @@ export async function handleWorkspacePtyResizeRequest(
   }
   let body: unknown
   try {
-    body = await readJson(req)
+    body = await readJsonBody(req)
   } catch {
     return finishJson(res, 400, error('invalid workspace PTY resize'))
   }
@@ -142,7 +142,7 @@ export async function handleWorkspacePtyCloseRequest(
   }
   let body: unknown
   try {
-    body = await readJson(req)
+    body = await readJsonBody(req)
   } catch {
     return finishJson(res, 400, error('invalid workspace PTY close'))
   }

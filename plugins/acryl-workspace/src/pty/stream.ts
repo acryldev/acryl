@@ -10,7 +10,7 @@
 import type { IncomingMessage } from 'node:http'
 import type { Duplex } from 'node:stream'
 import { WebSocketServer, type WebSocket } from 'ws'
-import { isSameOriginLoopbackRequest } from '../http.ts'
+import { isSameOriginLoopbackRequest } from 'acryl-loopback-http'
 import { parsePtyClientMessage, type PtyServerMessage } from './contract.ts'
 import type { WorkspacePtyRegistry } from './service.ts'
 

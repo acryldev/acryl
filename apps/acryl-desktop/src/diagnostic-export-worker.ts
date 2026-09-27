@@ -22,7 +22,7 @@ import {
   DESKTOP_LIFECYCLE_SUMMARY_ENTRY,
   summarizeDesktopLifecycleEvidence,
 } from './startup/lifecycle-events.ts'
-import { isDesktopLogFileName } from './diagnostics/log-files.ts'
+import { isDiagnosticLogFileName } from 'acryl-diagnostics'
 
 const DIAGNOSTIC_ARCHIVE = /^diagnostics-\d+(?:-[0-9a-f-]+)?\.zip$/u
 const MAX_DIAGNOSTIC_ARCHIVES = 3
@@ -56,7 +56,7 @@ function skippableFileError(cause: unknown): boolean {
 }
 
 function regularLogEntry(logsDir: string, name: string): LogEntry | undefined {
-  if (!isDesktopLogFileName(name)) return undefined
+  if (!isDiagnosticLogFileName(name)) return undefined
   const path = join(logsDir, name)
   try {
     const stats = lstatSync(path)

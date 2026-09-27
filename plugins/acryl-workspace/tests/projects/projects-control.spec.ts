@@ -64,6 +64,7 @@ function world(options: {
   createWorkspace?: () => Promise<unknown>
   createSession?: () => Promise<string>
   hasSessions?: boolean
+  platform?: 'darwin' | 'web'
 } = {}): World {
   const api = gitApi(options.isRepo)
   const shell = new WorkspaceShellState(api)
@@ -98,6 +99,7 @@ function world(options: {
     },
   } as unknown as IWorkspaces
   const control = createProjectsControl({
+    platform: options.platform ?? 'darwin',
     shell,
     gitApi: api,
     getWorkspaces: () => workspaces,
@@ -258,6 +260,24 @@ describe('ProjectsControl.openSettings', () => {
   it('reports when there is no Settings trigger', () => {
     document.body.innerHTML = ''
     expect(world().control.openSettings()).toMatchObject({ ok: false })
+  })
+})
+
+describe('ProjectsControl folder chooser', () => {
+  it('names how a folder is chosen: the window picker, the upstream flow on desktop, a typed path on Web', () => {
+    expect(world().control.chooserKind()).toBe('picker')
+    expect(world({ seams: { pickDirectory: undefined } }).control.chooserKind()).toBe('upstream')
+    expect(world({ seams: { pickDirectory: undefined }, platform: 'web' }).control.chooserKind()).toBe('path')
+  })
+
+  it('adds a typed path on Web: it must be a git repository, is registered once, and opens a chat', async () => {
+    const w = world({ seams: { pickDirectory: undefined }, platform: 'web', isRepo: cwd => cwd === '/p/proj' })
+    expect(await w.control.addProject()).toMatchObject({ ok: false, reason: expect.stringContaining('Type the path') })
+    expect(await w.control.addProjectByPath('   ')).toMatchObject({ ok: false })
+    expect(await w.control.addProjectByPath('/not/a/repo')).toEqual({ ok: false, reason: 'That folder is not a git repository.' })
+    expect(w.workspaceCreates).toEqual([])
+    expect(await w.control.addProjectByPath(' /p/proj ')).toEqual({ ok: true })
+    expect(w.workspaceCreates).toEqual([{ path: '/p/proj' }])
   })
 })
 

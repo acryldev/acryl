@@ -4,7 +4,7 @@
  * plus one real Host route, so a Web that drifts from Desktop fails here rather than in a user's browser.
  */
 import { execFileSync } from 'node:child_process'
-import { mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readdir, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -116,8 +116,60 @@ describe('the ACRYL workspace on the Web surface', () => {
         customOutput = ((await (await fetch(`${origin}/api/acryl-workspace/pty?id=${customId}`, { headers })).json()) as { output: string }).output
       }
       expect(customOutput).toContain('custom-agent-ran')
+      // Agent settings: the user's permission mode and a command override decide what a known agent launches.
+      const settingsUrl = `${origin}/api/acryl-workspace/agents/settings`
+      const post = (body: unknown) => fetch(settingsUrl, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify(body) })
+      const before = await (await fetch(settingsUrl, { headers })).json() as { permissions: string; agents: Array<{ id: string; installed: boolean; kind: string }> }
+      expect(before.permissions).toBe('manual')
+      expect(before.agents.find(agent => agent.id === 'echo-agent')).toMatchObject({ kind: 'custom', installed: true })
+      expect((await post({ permissions: 'yolo' })).status).toBe(200)
+      expect((await post({ agent: { id: 'aider', command: '/bin/echo', args: ['settings-applied'] } })).status).toBe(200)
+      expect((await post({ agent: { id: 'aider', command: 'rm -rf /' } })).status).toBe(400)
+      expect(JSON.parse(await readFile(join(home, 'workspace', 'agent-settings.json'), 'utf8')).permissions).toBe('yolo')
+      const configured = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'aider', cwd: repo }) })
+      expect(configured.status).toBe(200)
+      const configuredId = (await configured.json() as { id: string }).id
+      let configuredOutput = ''
+      for (let attempt = 0; attempt < 40 && !configuredOutput.includes('settings-applied'); attempt += 1) {
+        await new Promise(resolve => { setTimeout(resolve, 100) })
+        configuredOutput = ((await (await fetch(`${origin}/api/acryl-workspace/pty?id=${configuredId}`, { headers })).json()) as { output: string }).output
+      }
+      expect(configuredOutput).toContain('--yes-always settings-applied')
       const smuggled = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'sh -c id' }) })
       expect(smuggled.status).toBe(500)
+      // Web keeps log files and serves a diagnostics archive (Settings > Support downloads it).
+      expect(rows.get('acryl-support')?.fiber).toBeDefined()
+      const support = await fetch(`${origin}/api/acryl-support/diagnostics`, { headers: { ...headers, referer: `${origin}/` } })
+      expect(support.status).toBe(200)
+      expect(support.headers.get('content-type')).toBe('application/zip')
+      expect(support.headers.get('content-disposition')).toMatch(/^attachment; filename="acryl-diagnostics-[A-Za-z0-9_.-]+\.zip"$/)
+      expect(Buffer.from(await support.arrayBuffer()).subarray(0, 2).toString('latin1')).toBe('PK')
+      const foreign = await fetch(`${origin}/api/acryl-support/diagnostics`, { headers: { 'sec-fetch-site': 'cross-site', referer: 'http://evil.example/' } })
+      expect(foreign.status).toBe(403)
+      const logFiles = (await readdir(join(home, '.dsh', 'logs'))).filter(name => /^dsh-\d{4}-\d{2}-\d{2}(\.error)?\.log$/.test(name))
+      expect(logFiles.length).toBeGreaterThan(0)
+      // Agent Control: the tools are composed, a page connects over the same-origin channel, and a call reaches it.
+      expect(rows.get('acryl-ui-control')?.fiber).toBeDefined()
+      const uiTools = host.ctx.tools as unknown as { get(name: string): unknown; execute(input: { callId: string; name: string; arguments: unknown; signal: AbortSignal }): Promise<{ isError?: boolean; content?: Array<{ text?: string }> }> }
+      for (const toolName of ['ui_snapshot', 'ui_click', 'ui_type', 'ui_select', 'ui_press', 'ui_scroll', 'ui_wait']) expect(uiTools.get(toolName), toolName).toBeDefined()
+      const { WebSocket: PageSocket } = createRequire(require.resolve('acryl-workspace/package.json'))('ws') as typeof import('ws')
+      const foreignPage = new PageSocket(`${origin.replace('http', 'ws')}/api/acryl-ui-control/channel`, { headers: { origin: 'http://evil.example' } })
+      await new Promise<void>((resolve) => { foreignPage.once('error', () => { resolve() }); foreignPage.once('unexpected-response', () => { resolve() }) })
+      const uiPage = new PageSocket(`${origin.replace('http', 'ws')}/api/acryl-ui-control/channel`, { headers: { ...headers, origin } })
+      uiPage.on('message', (raw) => {
+        const call = JSON.parse(raw.toString('utf8')) as { id: number; request: { op: string } }
+        uiPage.send(JSON.stringify({ t: 'result', id: call.id, value: { generation: 1, title: 'ACRYL', total: 1, nodes: [{ ref: '1.1', role: 'button', name: 'Add project', depth: 0, states: [] }] } }))
+      })
+      await new Promise<void>((resolve, reject) => { uiPage.once('open', () => { resolve() }); uiPage.once('error', reject) })
+      uiPage.send(JSON.stringify({ t: 'hello', windowId: 'e2e', focused: true }))
+      await new Promise(resolve => { setTimeout(resolve, 200) })
+      const looked = await uiTools.execute({ callId: 'e2e-1', name: 'ui_snapshot', arguments: {}, signal: new AbortController().signal })
+      expect(looked.isError ?? false).toBe(false)
+      expect(JSON.stringify(looked)).toContain('Add project')
+      // Approval is per call: with nobody to answer, a click is denied and never reaches the uiPage.
+      const clicked = await uiTools.execute({ callId: 'e2e-2', name: 'ui_click', arguments: { ref: '1.1' }, signal: new AbortController().signal })
+      expect(clicked.isError).toBe(true)
+      uiPage.close()
       const tree = await fetch(`${origin}/api/acryl-workspace/files/tree?path=${encodeURIComponent(repo)}&dir=`, { headers })
       expect(tree.status).toBe(200)
       expect(await tree.json()).toMatchObject({ entries: [{ name: 'a.txt', kind: 'file' }] })

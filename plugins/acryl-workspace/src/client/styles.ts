@@ -26,6 +26,8 @@ const WORKSPACE_STYLES = `
 @media (prefers-reduced-motion: reduce) { .dshWorkspaceTabActivity[data-state="live"] { animation: none; } }
 .dshWorkspaceTabMenu { width: 220px; }
 .dshWorkspaceTabMenu .dshWorkspaceMenuItem:disabled { opacity: 0.4; cursor: default; }
+.dshWorkspaceAgentMark { display: inline-grid; place-items: center; width: 18px; height: 18px; flex: none; color: var(--dsw-alias-fg); }
+.dshWorkspaceWorktreeAgents .dshWorkspaceAgentMark { width: 14px; height: 14px; }
 .dshWorkspaceAgentIcon { display: inline-grid; place-items: center; width: 16px; height: 16px; flex: none; border: 1px solid currentColor; border-radius: 5px; font: 700 9.5px/1 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceMenuItem[data-muted] { color: var(--dsw-alias-fg-l2); }
 .dshWorkspaceMenuGrow { flex: 1; }
@@ -48,6 +50,7 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceAgentFormActions button { padding: 5px 12px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: inherit; }
 .dshWorkspaceAgentFormActions button[type="submit"] { background: #4d6bfe; border-color: #4d6bfe; color: #fff; }
 .dshWorkspaceAgentFormActions button:disabled { opacity: 0.45; cursor: not-allowed; }
+.dshWorkspaceMenuTag { margin-left: 6px; padding: 0 6px; border-radius: 4px; background: color-mix(in srgb, #4d6bfe 20%, transparent); color: var(--dsw-alias-fg-l2); font-size: 10.5px; }
 .dshWorkspaceMenuHint { padding: 6px 10px 8px; color: var(--dsw-alias-fg-l2); font: 11.5px/1.4 ui-sans-serif, system-ui, sans-serif; }
 /* One opener only: the canvas tab strip carries the always-present right-panel toggle, so upstream's own
    header opener (a documented data hook of the right sidebar) is hidden inside the canvas. */
@@ -61,6 +64,8 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceToastOpen:hover { border-color: #4d6bfe; color: #4d6bfe; }
 .dshWorkspaceToastClose { appearance: none; border: 0; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 15px; line-height: 1; }
 .dshWorkspaceStatusLine { display: flex; align-items: center; gap: 14px; flex: none; min-height: 24px; padding: 0 12px; border-top: 1px solid var(--dsw-alias-border-l2); color: var(--dsw-alias-fg-l2); font: 11.5px/1 ui-sans-serif, system-ui, sans-serif; overflow: hidden; white-space: nowrap; }
+.dshWorkspaceStatusAction { appearance: none; margin-left: auto; padding: 2px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: inherit; cursor: pointer; font: inherit; }
+.dshWorkspaceStatusAction:hover { border-color: #4d6bfe; color: #4d6bfe; }
 .dshWorkspaceStatusSegment[data-segment="branch"] { color: #a5b4fc; font-weight: 600; }
 .dshWorkspaceStatusSegment[data-segment="running"] { color: #34d399; }
 .dshWorkspaceRunning { appearance: none; flex: none; display: flex; align-items: center; gap: 6px; align-self: center; margin: 0 4px; padding: 2px 10px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: 12px/1.6 ui-sans-serif, system-ui, sans-serif; }
@@ -70,6 +75,8 @@ const WORKSPACE_STYLES = `
 @media (prefers-reduced-motion: reduce) { .dshWorkspaceRunningDot { animation: none; } }
 .dshWorkspacePlusWrap { position: relative; flex: none; display: flex; align-items: center; padding: 0 6px; }
 .dshWorkspacePlus { appearance: none; width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: 600 18px/1 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceChevron { appearance: none; width: 18px; height: 28px; margin-left: -4px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; display: grid; place-items: center; }
+.dshWorkspaceChevron:hover, .dshWorkspaceChevron[aria-expanded="true"] { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg); }
 .dshWorkspacePlus:hover, .dshWorkspacePlus[aria-expanded="true"] { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
 .dshWorkspaceMenu { position: absolute; top: calc(100% + 4px); right: 4px; z-index: 40; width: 240px; max-height: min(70vh, 520px); overflow: auto; padding: 6px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; background: var(--dsw-alias-bg-base); box-shadow: 0 16px 40px rgb(0 0 0 / 28%); }
 .dshWorkspaceMenuItem { appearance: none; display: flex; align-items: center; gap: 10px; width: 100%; margin: 0; padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; text-align: left; font: 13px/1.2 ui-sans-serif, system-ui, sans-serif; }
@@ -96,6 +103,7 @@ const WORKSPACE_STYLES = `
 .dshWorkspacePtyToolbar, .dshWorkspaceBrowserBar { display: flex; gap: 8px; align-items: center; padding: 6px 10px; border-bottom: 1px solid var(--dsw-alias-border-l2); }
 .dshWorkspacePtyName { font: 600 12px/1 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg); }
 .dshWorkspacePtyStatus { margin-left: auto; font: 11px/1 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg-l2); }
+.dshWorkspaceXtermScreen { width: 100%; height: 100%; }
 .dshWorkspaceXterm { position: relative; flex: 1; min-width: 0; min-height: 0; padding: 8px 10px; overflow: hidden; background: #0b0d12; }
 .dshWorkspacePtyError { position: absolute; inset: 50% auto auto 50%; translate: -50% -50%; max-width: min(520px, 80%); color: #fca5a5; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dshWorkspaceXterm .xterm { position: relative; width: 100%; height: 100%; }
@@ -121,6 +129,8 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceKanbanColumnTitle { padding: 10px 12px 6px; font: 600 12px/1.2 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg); }
 .dshWorkspaceKanbanCards { display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 40px; padding: 0 10px; overflow-y: auto; }
 .dshWorkspaceKanbanCard { padding: 8px 10px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 8px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-fg); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; cursor: grab; }
+.dshWorkspaceKanbanColumn[data-over] { border-color: #4d6bfe; }
+.dshWorkspaceKanbanCard[draggable="true"]:active { cursor: grabbing; opacity: 0.7; }
 .dshWorkspaceKanbanCount { margin-left: 4px; padding: 0 6px; border-radius: 999px; background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-fg-l2); font-weight: 500; }
 .dshWorkspaceKanbanEmpty { padding: 6px 2px; color: var(--dsw-alias-fg-l2); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceKanbanSessionCard { appearance: none; display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; cursor: pointer; color: var(--dsw-alias-fg); }

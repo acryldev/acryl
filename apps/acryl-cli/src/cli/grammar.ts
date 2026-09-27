@@ -42,7 +42,31 @@ export interface AcrylUiInvocation extends AcrylInvocationFlags {
   readonly registryDir?: string
 }
 
-export type AcrylInvocation = AcrylSurfaceInvocation | AcrylPluginInvocation | AcrylUiInvocation
+/**
+ * `acryl doctor`: diagnose a profile from its files and logs, without starting the app (spec 041, Scope B).
+ * Works when Desktop or Web cannot launch.
+ */
+export interface AcrylDoctorInvocation extends AcrylInvocationFlags {
+  readonly kind: 'doctor'
+  /** The engine home to inspect, for repairing another profile home (a dev home) from a working one. */
+  readonly home?: string
+}
+
+/** `acryl repair`: plan, apply or undo the safe repairs for what `acryl doctor` finds. */
+export interface AcrylRepairInvocation extends AcrylInvocationFlags {
+  readonly kind: 'repair'
+  readonly home?: string
+  /** Print the plan and stop. */
+  readonly dryRun: boolean
+  /** Apply without asking; only allowed together with named recipes. */
+  readonly yes: boolean
+  /** The recipes to run (default: every safe recipe that has a matching finding). */
+  readonly recipes: readonly string[]
+  /** Put back the files a previous repair changed, by the backup id it printed. */
+  readonly undo?: string
+}
+
+export type AcrylInvocation = AcrylSurfaceInvocation | AcrylPluginInvocation | AcrylUiInvocation | AcrylDoctorInvocation | AcrylRepairInvocation
 
 const UI_ACTIONS = new Set<AcrylUiAction>(['list', 'add', 'diff'])
 /** Actions that name a registry item. */
@@ -140,6 +164,11 @@ export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
   let resumeSessionId: string | undefined
   let uiSurface: string | undefined
   let uiRegistryDir: string | undefined
+  let home: string | undefined
+  let dryRun = false
+  let yes = false
+  let undo: string | undefined
+  const recipes: string[] = []
   let json = false
   let version = false
   let help = false
@@ -198,6 +227,17 @@ export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
       index += 1
       continue
     }
+    if (argument === '--home' || argument === '--recipe' || argument === '--undo') {
+      const value = args[index + 1]
+      if (value === undefined || value.startsWith('--') || value.trim() === '') throw new Error(`${argument} requires a value`)
+      if (argument === '--home') { if (home !== undefined) throw new Error('--home may be provided only once'); home = value }
+      else if (argument === '--undo') { if (undo !== undefined) throw new Error('--undo may be provided only once'); undo = value }
+      else recipes.push(value)
+      index += 1
+      continue
+    }
+    if (argument === '--dry-run') { dryRun = true; continue }
+    if (argument === '--yes') { yes = true; continue }
     if (argument.startsWith('-')) throw new Error(`unknown option: ${argument}`)
     positional.push(argument)
   }
@@ -209,6 +249,24 @@ export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
     ...(profile === undefined ? {} : { profile }),
   }
   const [command, ...rest] = positional
+  const rescueOnly = (name: string): void => {
+    if (resumeSessionId !== undefined) throw new Error(`--resume applies to the tui command, not to ${name}`)
+    if (rest.length > 0) throw new Error(`unexpected argument for ${name}: ${rest[0]}`)
+  }
+  if (command === 'doctor') {
+    rescueOnly('doctor')
+    if (dryRun || yes || undo !== undefined || recipes.length > 0) throw new Error('doctor takes no repair options; use `acryl repair`')
+    return { ...flags, kind: 'doctor', ...(home === undefined ? {} : { home }) }
+  }
+  if (command === 'repair') {
+    rescueOnly('repair')
+    if (undo !== undefined && (dryRun || yes || recipes.length > 0)) throw new Error('--undo cannot be combined with other repair options')
+    if (yes && recipes.length === 0 && undo === undefined) throw new Error('--yes needs the recipes named with --recipe, so an unattended run only does what you listed')
+    return { ...flags, kind: 'repair', dryRun, yes, recipes, ...(home === undefined ? {} : { home }), ...(undo === undefined ? {} : { undo }) }
+  }
+  if (home !== undefined || dryRun || yes || undo !== undefined || recipes.length > 0) {
+    throw new Error('--home, --dry-run, --yes, --recipe and --undo belong to `acryl doctor` and `acryl repair`')
+  }
   if (command === 'plugin') {
     return parsePluginInvocation(rest, {
       ...flags,

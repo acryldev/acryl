@@ -60,4 +60,32 @@ describe('SessionBoardPane', () => {
     render(<SessionBoardPane tile={tile} workspace={workspace} shell={shell} useSessions={sessionsHook({ ids: [], byId: {} })} navigator={{ open: () => false }} />)
     expect(screen.getAllByText('No chats')).toHaveLength(3)
   })
+
+  it('moves a note between columns and before another note by dragging', () => {
+    const shell = new WorkspaceShellState(gitApi)
+    const workspace = new WorkspaceState()
+    const tile = workspace.addTile('kanban')
+    if (tile === undefined) throw new Error('no tile')
+    workspace.addCard(tile.id, 'todo', 'first')
+    workspace.addCard(tile.id, 'todo', 'second')
+    const current = () => workspace.getSnapshot().tiles.find(t => t.id === tile.id)
+    const view = () => {
+      const now = current()
+      if (now === undefined) throw new Error('no tile')
+      return <SessionBoardPane tile={now} workspace={workspace} shell={shell} useSessions={sessionsHook({ ids: [], byId: {} })} navigator={{ open: () => false }} />
+    }
+    const { rerender } = render(view())
+    const data = new Map<string, string>()
+    const dataTransfer = { types: ['application/x-acryl-note'], setData: (k: string, v: string) => { data.set(k, v) }, getData: (k: string) => data.get(k) ?? '', effectAllowed: '', dropEffect: '' }
+    const first = document.querySelector('[data-note]') as HTMLElement
+    fireEvent.dragStart(first, { dataTransfer })
+    fireEvent.drop(document.querySelector('[data-column="note-doing"]') as HTMLElement, { dataTransfer })
+    expect(current()?.board?.doing.map(c => c.text)).toEqual(['first'])
+    expect(current()?.board?.todo.map(c => c.text)).toEqual(['second'])
+
+    rerender(view())
+    fireEvent.dragStart(document.querySelector('[data-column="note-doing"] [data-note]') as HTMLElement, { dataTransfer })
+    fireEvent.drop(document.querySelector('[data-column="note-todo"] [data-note]') as HTMLElement, { dataTransfer })
+    expect(current()?.board?.todo.map(c => c.text)).toEqual(['first', 'second'])
+  })
 })

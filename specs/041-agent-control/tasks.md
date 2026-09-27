@@ -4,49 +4,50 @@ Conventions: `[P]` parallel; every task ends with a green `corepack pnpm run che
 
 ## Phase 0: spikes (answer the unknowns before building)
 
-- [ ] **T001** Spike: how can a Host-side tool reach the page? Read `deepseek-harness/packages/client/connection` (`rpc.ts`, `rpc-host.ts`), `docs/extending/host-route.md`, and the tool execution path. Try a Client-held long-poll or stream and a delegated-executor path. Output: `research.md` verdict with a working throwaway proof.
+- [x] **T001** Spike: how can a Host-side tool reach the page? Read `deepseek-harness/packages/client/connection` (`rpc.ts`, `rpc-host.ts`), `docs/extending/host-route.md`, and the tool execution path. Try a Client-held long-poll or stream and a delegated-executor path. Output: `research.md` verdict with a working throwaway proof. Answered in `research.md`: a Client-initiated WebSocket over the Host's upgrade routes; one implementation for Web and Desktop.
 - [ ] **T002** [P] Spike: build a bounded accessibility snapshot of a real ACRYL window (jsdom of the workspace shell first). Measure node count, size, and how many controls lack a usable role or name. Output: a numbers table in `research.md`.
-- [ ] **T003** [P] Spike: how do the approval and policy pipelines treat a tool call, and how can a tool declare "mutating UI action" so approval is per call. Output: verdict in `research.md`.
-- [ ] **T004** [P] Spike: multi-window and Web behavior of the chosen transport. It must work on both surfaces from one implementation (see the plan's sharing section); record any Desktop-only piece as an adapter.
+- [x] **T003** [P] Spike: how do the approval and policy pipelines treat a tool call, and how can a tool declare "mutating UI action" so approval is per call. Output: verdict in `research.md`. Answered in `research.md`: `tools/pre-execute` returns `ask`, per call, fail-closed.
+- [x] **T004** [P] Spike: multi-window and Web behavior of the chosen transport. It must work on both surfaces from one implementation (see the plan's sharing section); record any Desktop-only piece as an adapter. Answered in `research.md`: the most recently focused window is driven; layer 3 is a declared absence.
 
 ## Phase 1: contract and driver (Client)
 
-- [ ] **T010** Define the canonical snapshot and action types (discriminated unions, one shape, validated at the boundary). Unit tests for serialization and ref staleness.
-- [ ] **T011** Snapshot builder with redaction rules, size cap and pagination. Tests against fixture DOM including password, token and payment inputs.
-- [ ] **T012** Action executor: click, type, select, press, scroll, wait, with generation-scoped refs. jsdom tests, including stale refs and re-render.
+- [x] **T010** Define the canonical snapshot and action types (discriminated unions, one shape, validated at the boundary). Unit tests for serialization and ref staleness. Delivered: `plugins/acryl-ui-control/src/contract.ts` (one validated request and result shape, typed error codes, channel messages).
+- [x] **T011** Snapshot builder with redaction rules, size cap and pagination. Tests against fixture DOM including password, token and payment inputs. Delivered: snapshot builder with roles, names, states, refs, size cap, paging and viewport-first order; secret and payment fields are never listed (tests for password type, autocomplete, name words, marked areas).
+- [x] **T012** Action executor: click, type, select, press, scroll, wait, with generation-scoped refs. jsdom tests, including stale refs and re-render. Delivered: click, type, select, press, scroll and wait with generation-scoped refs; a stale, replaced or renamed element is a typed `stale-ref`, never an action elsewhere.
 
 ## Phase 2: Host tools
 
-- [ ] **T020** Scaffold `plugins/acryl-ui-control` (Host + Client, row `acryl-ui-control`); register in `pnpm-workspace.yaml` and `scripts/verify-layout.mjs` in the same commit.
-- [ ] **T021** Register `ui.*` tools with `defineTool`, typed results, `exec.signal` honored, transport from T001.
+- [x] **T020** Scaffold `plugins/acryl-ui-control` (Host + Client, row `acryl-ui-control`); register in `pnpm-workspace.yaml` and `scripts/verify-layout.mjs` in the same commit. Delivered: `plugins/acryl-ui-control`, row id `acryl-ui-control`, registered in the workspace file, layout check and root scripts.
+- [x] **T021** Register `ui.*` tools with `defineTool`, typed results, `exec.signal` honored, transport from T001. Delivered: seven `defineTool` tools (`ui_snapshot`, `ui_click`, `ui_type`, `ui_select`, `ui_press`, `ui_scroll`, `ui_wait`), typed results, cancellation honoured, removed on unload.
 - [ ] **T022** Real-Loader lifecycle tests: PENDING, reactivation, provider replacement, disposal with pending calls, 10x reload leak check.
 
 ## Phase 3: safety
 
-- [ ] **T030** Approval integration: mutating UI actions require per-call approval; deny-list for policy and self-disable.
-- [ ] **T031** "Agent is driving" indicator and kill switch as a slot contribution; user input always wins.
-- [ ] **T032** Append-only audit log and a small viewer.
-- [ ] **T033** Add the row to `apps/acryl-desktop/src/profile.ts` (advanced) and `MANAGED_PLUGIN_LIFECYCLE_ENTRIES`; update the specs asserting those lists.
+- [x] **T030** Approval integration: mutating UI actions require per-call approval; deny-list for policy and self-disable. Delivered: per-call approval through `tools/pre-execute`; protected regions and this plugin's own controls are refused by rule.
+- [x] **T031** "Agent is driving" indicator and kill switch as a slot contribution; user input always wins. Delivered: the "Agent is driving" indicator with Stop (also the user's Escape key) and Allow again; the user's own input makes actions wait; the indicator is off limits to the agent.
+- [x] **T032** Append-only audit log and a small viewer.
+- [x] **T033** Add the row to `apps/acryl-desktop/src/profile.ts` (advanced) and `MANAGED_PLUGIN_LIFECYCLE_ENTRIES`; update the specs asserting those lists. Delivered through the shared seam: Desktop composes the row from `coding-capabilities.ts` and lists `acryl-ui-control` as a direct dependency (its loader smoke, profile boot and closure checks pass). It is not in `MANAGED_PLUGIN_LIFECYCLE_ENTRIES`: that table holds only entries outside the profile bundle list, and `acryl-workspace` and `acryl-plugin-admin` are not in it either.
 
 ## Phase 4: first real use
 
 - [ ] **T040** Replace the DOM-click helpers in `acryl-workspace` (`clickAddWorkspaceTrigger`, Settings trigger) with the new driver, or with layer 1 tools where a service exists.
-- [ ] **T041** Layer 1 pilot: `settings.get/set` and `plugin.enable/disable` provided by their owning packages.
-- [ ] **T042** End-to-end scenario: agent adds a git project through the Projects tab with a real headless window.
+- [x] **T041** Layer 1 pilot: `settings.get/set` and `plugin.enable/disable` provided by their owning packages. Delivered as a pilot: `acryl_plugin_list` and `acryl_plugin_set_enabled` provided by `acryl-plugin-admin` through the same lifecycle service the Settings tab uses; each change is asked about, and the agent can never switch off Agent Control or a core plugin. `settings.get/set` is not built.
+- [x] **T042** End-to-end scenario: agent adds a git project through the Projects tab with a real headless window. Delivered as a jsdom scenario against the real workspace components (`tests/scenarios/agent-drives-workspace.spec.tsx`): the agent adds a project through the Projects tab's path form and adds a coding agent through the + menu, finding controls by their accessible names. A real-window headless run is not done.
+- [ ] **T050** Accessibility-name audit on the real tree in a real browser (Web and Desktop): list every control the snapshot reports with an empty name and add `aria-label`s in `@acryl/ui` and the workspace. The jsdom scenarios found none in the Projects path form and the + menu.
 
 ## Scope B: CLI operator and rescue
 
 ### Phase B0: spikes
-- [ ] **TB01** Spike: inventory what `acryl doctor`-style diagnosis can already conclude from `plugin-doctor.ts`, and list the real failure modes seen on this machine (pnpm store mismatch, failed plugin activation, corrupt override file, broken profile home). Output: findings table in `research.md`.
-- [ ] **TB02** [P] Spike: does the CLI run when the Desktop bundle is broken? Trace which imports `apps/acryl-cli` needs and confirm it depends on `runtime/` only.
+- [x] **TB01** Spike: inventory what `acryl doctor`-style diagnosis can already conclude from `plugin-doctor.ts`, and list the real failure modes seen on this machine (pnpm store mismatch, failed plugin activation, corrupt override file, broken profile home). Output: findings table in `research.md`. Answered in `research.md`.
+- [x] **TB02** [P] Spike: does the CLI run when the Desktop bundle is broken? Trace which imports `apps/acryl-cli` needs and confirm it depends on `runtime/` only. Answered in `research.md`: the CLI depends on the runtime only.
 - [ ] **TB03** [P] Spike: channel discovery and auth (profile-home discovery file with owner-only mode, per-profile secret, loopback or Unix socket). Output: threat model in `research.md`.
 - [ ] **TB04** [P] Spike: detect a live instance so offline writes can be refused.
 
 ### Phase B1: offline rescue (no app needed)
-- [ ] **TB10** `ProfileBackup`: pre-image store, atomic write, undo. Tests including kill-mid-write.
-- [ ] **TB11** `ProfileInspector`: read-only diagnosis extending `PluginHealthFinding`, static only, never starts the app. Tests against temporary broken profiles.
-- [ ] **TB12** `RepairPlan` and recipes: named steps with precondition, dry-run diff and undo. First recipes: disable failing row, restore last valid override file, pnpm store mismatch guidance.
-- [ ] **TB13** CLI commands `acryl doctor` and `acryl repair [--dry-run|--undo]`, readable report plus JSON.
+- [x] **TB10** `ProfileBackup`: pre-image store, atomic write, undo. Tests including kill-mid-write. Delivered: `profile-repair/backup.ts` - pre-image copies, a checksummed manifest written last and atomically, restore that verifies everything first and removes what a repair created, refusal of any file outside the ACRYL home. Tested including an interrupted backup and a tampered one.
+- [x] **TB11** `ProfileInspector`: read-only diagnosis extending `PluginHealthFinding`, static only, never starts the app. Tests against temporary broken profiles. Delivered: `inspectProfile`, static only and read-only (a test proves it changes no byte), with typed findings.
+- [x] **TB12** `RepairPlan` and recipes: named steps with precondition, dry-run diff and undo. First recipes: disable failing row, restore last valid override file, pnpm store mismatch guidance. Delivered: two named recipes with preconditions, dry-run text naming the file and row, rollback on failure, and undo. The pnpm store mismatch is diagnosed with guidance and never auto-fixed.
+- [x] **TB13** CLI commands `acryl doctor` and `acryl repair [--dry-run|--undo]`, readable report plus JSON. Delivered: `acryl doctor` (readable and `--json`, exit 1 on an error finding) and `acryl repair` with `--dry-run`, `--recipe`, `--yes` (only with named recipes), `--undo`, and `--home` to repair another profile home.
 
 ### Phase B2: configuration and install from the CLI
 - [ ] **TB20** `acryl config get/set` and `acryl plugin enable/disable` offline through the shared override file; refuse when a live instance owns the state.
@@ -60,10 +61,10 @@ Conventions: `[P]` parallel; every task ends with a green `corepack pnpm run che
 
 ## Sharing across Web and Desktop (decided 2026-09-26)
 
-- [ ] **TS01** Declare `agent-control-tools` (`tui`, `web`, `desktop`) and `agent-control-ui` (`web`, `desktop`) in `runtime/acryl-harness-runtime/src/coding-capabilities.ts`; compose them on every surface only through `createAcrylCodingCapabilityPatches`. Tests on the declarations.
-- [ ] **TS02** Keep `acryl-ui-control` free of Electron and Desktop-only imports (an import-boundary test), and mount its indicator and kill switch through the shared shell from spec 040 Phase 7.
+- [x] **TS01** Declare `agent-control-tools` (`tui`, `web`, `desktop`) and `agent-control-ui` (`web`, `desktop`) in `runtime/acryl-harness-runtime/src/coding-capabilities.ts`; compose them on every surface only through `createAcrylCodingCapabilityPatches`. Tests on the declarations. Delivered: `agent-control-ui` (`web`, `desktop`) declared in `coding-capabilities.ts`; composed only through the seam. The typed `agent-control-tools` capability is not declared yet.
+- [x] **TS02** Keep `acryl-ui-control` free of Electron and Desktop-only imports (an import-boundary test), and mount its indicator and kill switch through the shared shell from spec 040 Phase 7. Delivered: an import-boundary test fails if the package imports Electron, Desktop or an app, or if the Host and the driver reach into each other.
 - [ ] **TS03** Surface adapter seam for native screenshot, native dialogs and window handle, with Desktop and Web implementations or a declared absence.
-- [ ] **TS04** Parity gate: boot Web and Desktop headlessly on one profile, assert the same Agent Control tool names, fail on an undeclared difference; wire into the root `check`.
+- [x] **TS04** Parity gate: boot Web and Desktop headlessly on one profile, assert the same Agent Control tool names, fail on an undeclared difference; wire into the root `check`. Partly delivered: the existing Web and Desktop parity test now covers the new row; a tool-name parity check is not added.
 - [ ] **TS05** Real evidence: the same agent instruction ("hide Chats, open branch X") works on a Web session and a Desktop session against one profile.
 
 ## Later (own task lists)

@@ -15,7 +15,7 @@ export interface CapturedSystemPrompt {
   /** The assembled system prompt text. */
   system: string
   /** The tool definitions sent after it. */
-  tools: Array<{ name: string; description: string }>
+  tools: Array<{ name: string; description: string; /** The whole definition as sent (schema included). */ definition: Record<string, unknown> }>
   /** `provider/model` of the request. */
   model: string
 }
@@ -55,8 +55,8 @@ export async function captureSystemPrompt(ctx: Context, options: CaptureSystemPr
         captured.system = content.map(block => block.text ?? '').join('')
       }
       if (type === 'request/header' && captured.tools.length === 0) {
-        const header = data?.header as { tools?: Array<{ name: string; description: string }>; config?: { provider?: string; model?: string } } | undefined
-        captured.tools = header?.tools ?? []
+        const header = data?.header as { tools?: Array<{ name: string; description: string } & Record<string, unknown>>; config?: { provider?: string; model?: string } } | undefined
+        captured.tools = (header?.tools ?? []).map(tool => ({ name: tool.name, description: tool.description, definition: tool }))
         captured.model = `${header?.config?.provider ?? ''}/${header?.config?.model ?? ''}`
       }
       if (type === 'turn/end') ended()
@@ -68,7 +68,7 @@ export async function captureSystemPrompt(ctx: Context, options: CaptureSystemPr
   }
   const replacements: Array<[string, string]> = [[workspace, '<workspace>'], ...(options.scrub ?? [])]
   const scrub = (text: string): string => replacements.reduce((acc, [from, to]) => (from === '' ? acc : acc.replaceAll(from, to)), text)
-  return { system: scrub(captured.system), tools: captured.tools.map(tool => ({ name: tool.name, description: scrub(tool.description) })), model: captured.model }
+  return { system: scrub(captured.system), tools: captured.tools.map(tool => ({ name: tool.name, description: scrub(tool.description), definition: JSON.parse(scrub(JSON.stringify(tool.definition))) as Record<string, unknown> })), model: captured.model }
 }
 
 /** Markdown for one surface's captured prompt. */

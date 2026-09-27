@@ -1,7 +1,7 @@
 /** Same-origin GET handlers for the read-only ACRYL Workspace git routes. */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { BodyTooLargeError, error, finishJson, isSameOriginLoopbackRequest, readJson } from '../http.ts'
+import { BodyTooLargeError, error, finishJson, isSameOriginLoopbackRequest, readJsonBody } from 'acryl-loopback-http'
 import { WorkspaceGitError, type WorkspaceGit } from './service.ts'
 
 type ReportError = (operation: string, cause: unknown) => void
@@ -118,7 +118,7 @@ export async function handleWorkspaceGitWorktreeRequest(
   if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
   let body: unknown
   try {
-    body = await readJson(req)
+    body = await readJsonBody(req)
   } catch (cause) {
     if (cause instanceof BodyTooLargeError) return finishJson(res, 413, error('body too large'))
     return finishJson(res, 400, error('invalid worktree request'))
@@ -151,7 +151,7 @@ async function handlePost<T>(
   if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
   let body: unknown
   try {
-    body = await readJson(req)
+    body = await readJsonBody(req)
   } catch (cause) {
     if (cause instanceof BodyTooLargeError) return finishJson(res, 413, error('body too large'))
     return finishJson(res, 400, error(`invalid ${operation} request`))

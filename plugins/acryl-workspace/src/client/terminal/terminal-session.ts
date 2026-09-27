@@ -47,6 +47,9 @@ export class TerminalSession {
   constructor(readonly id: string, options: TerminalSessionOptions = {}) {
     this.element = document.createElement('div')
     this.element.className = 'dshWorkspaceXtermScreen'
+    // The fit addon measures this element's parent chain; without an explicit size it would fit the content.
+    this.element.style.width = '100%'
+    this.element.style.height = '100%'
     this.terminal = new XtermTerminal({
       cursorBlink: true,
       convertEol: false,

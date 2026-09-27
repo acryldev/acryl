@@ -315,3 +315,28 @@ export {
   type BlueprintRowId,
   type BrandIdentity,
 } from './blueprint/index.ts'
+export {
+  SAFE_RECIPES,
+  applyRepairPlan,
+  backupsDir,
+  createBackup,
+  describePlan,
+  inspectProfile,
+  isSafeRecipe,
+  listBackups,
+  planRepairs,
+  restoreBackup,
+  undoRepair,
+} from './profile-repair/index.ts'
+export type {
+  BackupEntry,
+  BackupManifest,
+  InspectOptions,
+  ProfileDiagnosis,
+  ProfileFinding,
+  ProfileFindingCode,
+  RecipeId,
+  RepairPlan,
+  RepairResult,
+  RepairStep,
+} from './profile-repair/index.ts'

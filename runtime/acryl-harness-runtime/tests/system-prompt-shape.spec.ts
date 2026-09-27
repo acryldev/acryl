@@ -12,6 +12,7 @@ import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createDshEngineDefinition, createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
+import { ceilingsFor, measurePromptBudget, overBudget, type BudgetCeilings } from '../src/prompt-budget.ts'
 import { captureSystemPrompt } from '../src/system-prompt-capture.ts'
 
 const driftDir = new URL('../../../plugins/acryl-system-prompt/drift/', import.meta.url).pathname
@@ -73,5 +74,18 @@ describe.each(['web', 'cli'] as const)('acryl-system-prompt on the %s engine', k
     const removed = [...before.keys()].filter(name => !now.has(name))
     const changed = [...now.keys()].filter(name => before.has(name) && before.get(name) !== now.get(name))
     expect({ added, removed, changed }, 'the harness changed its prompt sections; review, then refresh with ACRYL_UPDATE_DRIFT=1').toEqual({ added: [], removed: [], changed: [] })
+  }, 90_000)
+
+  it('stays within the committed size ceilings for the system prompt and the tool definitions', async () => {
+    const { captured } = await capture(kind)
+    const budget = measurePromptBudget(captured)
+    const path = join(driftDir, 'budget.json')
+    const all = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) as Record<string, BudgetCeilings> : {}
+    if (process.env.ACRYL_UPDATE_DRIFT === '1' || all[kind] === undefined) {
+      writeFileSync(path, `${JSON.stringify({ ...all, [kind]: ceilingsFor(budget) }, null, 2)}\n`)
+      return
+    }
+    // Growth is a decision: raise the ceiling on purpose (ACRYL_UPDATE_DRIFT=1) after reviewing docs/system-prompt/budget.md.
+    expect(overBudget(budget, all[kind])).toEqual([])
   }, 90_000)
 })

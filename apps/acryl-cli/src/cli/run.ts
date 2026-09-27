@@ -6,9 +6,11 @@ import {
 } from '../host/plugin-command.ts'
 import { runAcrylTui } from '../tui-app/session.ts'
 import { ACRYL_VERSION } from '../version.ts'
+import { runDoctor, runRepair, type Confirm } from '../host/rescue-command.ts'
 import { runUiCommand } from '../host/ui-command.ts'
 import { parseAcrylArgs, type AcrylPluginInvocation, type AcrylUiInvocation } from './grammar.ts'
 import { renderPluginCommand } from './plugin-render.ts'
+import { renderRescue } from './rescue-render.ts'
 import { renderUiCommand } from './ui-render.ts'
 
 interface RunningDirectHost {
@@ -25,6 +27,8 @@ export interface AcrylCliDependencies {
   readonly runPluginCommand: (options: PluginCommandOptions) => Promise<PluginCommandResult>
   readonly exit: (code: number) => void
   readonly write: (line: string) => void
+  /** Asks a yes or no question on the terminal; used by `acryl repair` before it changes anything. */
+  readonly confirm: Confirm
 }
 
 /**
@@ -44,12 +48,25 @@ function surfaceError(command: 'web' | 'gui'): Error {
   )
 }
 
+/** A yes or no on the terminal; anything but yes is no, and with no terminal it is no. */
+async function terminalConfirm(question: string): Promise<boolean> {
+  if (!process.stdin.isTTY || !process.stdout.isTTY) return false
+  const { createInterface } = await import('node:readline/promises')
+  const rl = createInterface({ input: process.stdin, output: process.stdout })
+  try {
+    return /^y(?:es)?$/i.test((await rl.question(question)).trim())
+  } finally {
+    rl.close()
+  }
+}
+
 const defaults: AcrylCliDependencies = {
   startDirectHost,
   runTui: runAcrylTui,
   runPluginCommand,
   exit: code => { process.exitCode = code },
   write: line => { process.stdout.write(`${line}\n`) },
+  confirm: terminalConfirm,
 }
 
 function statusLine(host: RunningDirectHost): string {
@@ -139,6 +156,8 @@ export async function runAcryl(
         '  plugin enable <id>               Enable a plugin for this profile',
         '  plugin disable <id>              Disable a plugin for this profile',
         '  plugin doctor                    Check a profile\'s plugin layer',
+        '  doctor                           Diagnose a profile from its files and logs (works when the app cannot start)',
+        '  repair                           Plan and apply the safe repairs doctor finds (--dry-run, --recipe <id>, --yes, --undo <id>)',
         '  ui list                          List a UI component registry\'s items',
         '  ui add <id> <dir>                Copy a component\'s source into <dir>/ui/',
         '  ui diff <id> <dir>               Compare an added component against the registry',
@@ -151,6 +170,7 @@ export async function runAcryl(
         '  --resume <id>       Resume a session',
         '  --registry <dir>    Registry directory for ui commands (default: $ACRYL_UI_REGISTRY or cwd)',
         '  --surface <name>    web or tui, for `ui add` (default: the item\'s first surface)',
+        '  --home <dir>        Engine home for doctor and repair (default: from $ACRYL_HOME)',
         '',
         'The browser (`acryl web`) and Electron (`acryl gui`) surfaces are ',
         'separate distributions. Install them individually.',
@@ -167,6 +187,28 @@ export async function runAcryl(
 
   if (invocation.kind === 'ui') {
     runUiInvocation(invocation, dependencies)
+    return
+  }
+
+  if (invocation.kind === 'doctor') {
+    const rendered = renderRescue(runDoctor({ profile: invocation.profile ?? 'acryl', ...(invocation.home === undefined ? {} : { home: invocation.home }) }), invocation.json)
+    for (const line of rendered.lines) dependencies.write(line)
+    if (rendered.exitCode !== 0) dependencies.exit(rendered.exitCode)
+    return
+  }
+
+  if (invocation.kind === 'repair') {
+    const result = await runRepair({
+      profile: invocation.profile ?? 'acryl',
+      dryRun: invocation.dryRun,
+      yes: invocation.yes,
+      recipes: invocation.recipes,
+      ...(invocation.home === undefined ? {} : { home: invocation.home }),
+      ...(invocation.undo === undefined ? {} : { undo: invocation.undo }),
+    }, dependencies.confirm)
+    const rendered = renderRescue(result, invocation.json)
+    for (const line of rendered.lines) dependencies.write(line)
+    if (rendered.exitCode !== 0) dependencies.exit(rendered.exitCode)
     return
   }
 

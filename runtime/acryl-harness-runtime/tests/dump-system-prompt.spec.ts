@@ -11,12 +11,13 @@ import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { it } from 'vitest'
 import { createDshEngineDefinition, createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
+import { measurePromptBudget, renderBudgetDoc, type PromptBudget } from '../src/prompt-budget.ts'
 import { captureSystemPrompt, renderSystemPromptDoc } from '../src/system-prompt-capture.ts'
 
 const outDir = process.env.ACRYL_DUMP_SYSTEM_PROMPT
 const repoRoot = resolve(new URL('../../..', import.meta.url).pathname)
 
-async function surface(kind: 'web' | 'cli'): Promise<string> {
+async function surface(kind: 'web' | 'cli'): Promise<{ doc: string; budget: PromptBudget }> {
   process.env.DEEPSEEK_API_KEY = 'dummy-key-for-prompt-capture'
   const home = mkdtempSync(join(tmpdir(), 'acryl-prompt-'))
   process.env.DSH_HOME = home
@@ -33,12 +34,22 @@ async function surface(kind: 'web' | 'cli'): Promise<string> {
       selectStandardPreset: kind === 'web',
       scrub: [[home, '<dsh-home>'], [repoRoot, '<acryl-repo>']],
     })
-    return renderSystemPromptDoc(kind === 'web' ? 'web' : 'cli', kind === 'web' ? 'standard preset' : 'terminal engine', captured)
+    return {
+      doc: renderSystemPromptDoc(kind === 'web' ? 'web' : 'cli', kind === 'web' ? 'standard preset' : 'terminal engine', captured),
+      budget: measurePromptBudget(captured),
+    }
   } finally { await host.dispose() }
 }
 
 it.skipIf(outDir === undefined)('dumps the current system prompt for web and cli', async () => {
   const dir = resolve(repoRoot, outDir ?? '')
   mkdirSync(dir, { recursive: true })
-  for (const kind of ['web', 'cli'] as const) writeFileSync(join(dir, `${kind}.md`), await surface(kind))
+  const budgets: Record<string, PromptBudget> = {}
+  for (const kind of ['web', 'cli'] as const) {
+    const { doc, budget } = await surface(kind)
+    writeFileSync(join(dir, `${kind}.md`), doc)
+    budgets[kind === 'web' ? 'web and desktop (standard preset)' : 'cli (terminal engine)'] = budget
+  }
+  // One table for every surface: per section and per tool, reproducible with this same command.
+  writeFileSync(join(dir, '..', 'budget.md'), renderBudgetDoc(budgets))
 }, 240_000)
