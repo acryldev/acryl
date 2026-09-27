@@ -1,7 +1,27 @@
+import type {
+  AcrWorkerId,
+  AgentRuntimeId,
+  AgentStatus,
+  ProviderSessionRef,
+} from '../agent/agent-control.ts'
+
 export type AcrylSessionAttachment = 'owner' | 'attached'
 export type AcrylSessionAgentStatus = 'idle' | 'running' | 'waiting' | 'failed'
 export type AcrylTranscriptAuthor = 'user' | 'assistant'
 export type AcrylToolStatus = 'pending' | 'running' | 'succeeded' | 'failed'
+
+/**
+ * Provider-binding provenance carried by sessions routed through
+ * `acrAgentControl` instead of the DSH-native agent path. Absent on
+ * DSH-native sessions.
+ */
+export interface AcrylSessionProviderBinding {
+  readonly providerId: string
+  readonly workerId: AcrWorkerId
+  readonly runtimeId: AgentRuntimeId | null
+  readonly providerSessionRef: ProviderSessionRef | null
+  readonly status: AgentStatus
+}
 
 export interface AcrylTranscriptItem {
   readonly id: string
@@ -23,6 +43,8 @@ export interface AcrylSessionSnapshot {
   readonly agentStatus: AcrylSessionAgentStatus
   readonly transcript: readonly AcrylTranscriptItem[]
   readonly tools: readonly AcrylToolProjection[]
+  /** Provider-binding provenance; present only on `acrAgentControl`-routed sessions. */
+  readonly provider?: AcrylSessionProviderBinding
 }
 
 export interface AcrylSessionSubscription {
@@ -66,6 +88,26 @@ function oneOf<T extends string>(
   return value as T
 }
 
+function nullable(value: unknown, message: string): string | null {
+  if (value === null) return null
+  if (typeof value !== 'string') throw new Error(message)
+  return value
+}
+
+const AGENT_STATUSES = ['idle', 'running', 'waiting', 'stopping', 'stopped', 'failed'] as const
+
+function parseProviderBinding(value: unknown): AcrylSessionProviderBinding {
+  const source = record(value)
+  if (source === undefined) throw new Error('invalid ACRYL provider binding')
+  return Object.freeze({
+    providerId: nonEmpty(source.providerId, 'invalid ACRYL provider id'),
+    workerId: nonEmpty(source.workerId, 'invalid ACRYL provider worker id'),
+    runtimeId: nullable(source.runtimeId, 'invalid ACRYL provider runtime id'),
+    providerSessionRef: nullable(source.providerSessionRef, 'invalid ACRYL provider session ref'),
+    status: oneOf<AgentStatus>(source.status, AGENT_STATUSES, 'invalid ACRYL provider status'),
+  })
+}
+
 function parseTranscript(value: unknown): readonly AcrylTranscriptItem[] {
   if (!Array.isArray(value)) throw new Error('invalid ACRYL transcript')
   return Object.freeze(value.map((item) => {
@@ -104,5 +146,6 @@ export function parseAcrylSessionSnapshot(value: unknown): AcrylSessionSnapshot 
     agentStatus: oneOf(source.agentStatus, ['idle', 'running', 'waiting', 'failed'], 'invalid ACRYL agent status'),
     transcript: parseTranscript(source.transcript),
     tools: parseTools(source.tools),
+    ...(source.provider === undefined ? {} : { provider: parseProviderBinding(source.provider) }),
   })
 }
