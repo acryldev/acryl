@@ -77,6 +77,30 @@ becomes a source of Blueprints later without touching the domain.
 - A real browser run of Blank on Web shows the configured brand in the sidebar and the tab title.
 - Real model run: see the log in `docs/DEVELOPMENT-LOG.md` (2026-09-26 entry).
 
+## Many instances: no clashes, no pollution
+
+A team (or a client) runs many Blends on one machine: the flagship, an internal tool, three customer products. The rule is that **an instance shares nothing with any other by
+construction**, so nothing has to be coordinated at run time. Every place ACRYL keeps or claims state is derived from one thing, the instance name.
+
+| What could collide | Before | Now (named instance `<name>`) |
+| --- | --- | --- |
+| Profile, sessions, settings, plugin state, global extensions | one `~/.acryl` | `~/.acryl-instances/<name>` (`ACRYL_HOME`, which the runtime already treats as a complete isolation switch); an ambient `DSH_HOME` is dropped |
+| Web port | 3080 for everyone | starts at a port derived from the name (3100 + hash % 900), stable across runs, then the next free one; the port used is printed |
+| Electron user data, window state, single-instance lock | one product folder | `ACRYL <name>` (`ACRYL_LOCAL_PRODUCT_NAME`), so two Desktop instances can run together |
+| Two runs of the same instance (both writing one home) | possible | refused, naming the holder (`<home>/instance.json`, live pid); a crashed holder is replaced |
+| Extensions an instance builds, in a project both open | shared `<workspace>/.acryl-extensions/` | `<workspace>/.acryl/instances/<name>/extensions/` (`ACRYL_INSTANCE`); the classic shared folder stays for the main app and for plugins a team commits on purpose |
+| The Blend an instance captures and its ledger | shared `<workspace>/.acryl/blend/` | `<workspace>/.acryl/instances/<name>/blend/`, so `/blend apply` in a shared project applies your own capture, never another instance's |
+| Stopping one | a signal reached only the launcher, leaving the server listening | the app runs in its own process group and a stop reaches all of it |
+
+Not shared with the system either: no global installs, no writes outside the instance home and the project folders above. `node scripts/instances.mjs list|stop|path <name>` shows what runs, stops one,
+and prints where an instance keeps its data (delete that folder to reset it). Data a plugin keeps in the project on purpose (`<workspace>/.acryl/organizer.json`) stays shared by design: it is the
+project's, not the instance's.
+
+Where this lives today: naming, port, claim and listing are `scripts/lib/instances.mjs` (launcher level); the project-scope seam is `plugins/acryl-extension-context/lib/scopes.js`. When the framework
+gets a proper `acryl init <name>`, that command owns instance creation and these two modules move into the runtime unchanged. Open: enforcing at run time that a plugin cannot write outside its
+instance (today this is the extension pack's placement rules and the agent's docs, not a sandbox), and a per-instance `acryl.json` recording blueprint, brand and surface so an instance can be
+re-created from its folder alone.
+
 ## Blueprints from a file
 
 `ACRYL_BLUEPRINT` also accepts a `.yaml`, `.yml` or `.json` file (`runtime/.../blueprint/definition.ts`): `id`, optional `name`, `description`, `extends` (a known Blueprint), `capabilities`, `rows`,

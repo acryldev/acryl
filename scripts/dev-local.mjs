@@ -30,7 +30,9 @@ export function resolveLocalDesktopRoots(
   // Another product (the blank canvas, spec 036) may run in its own home and user-data folder so it shares nothing with the development app.
   const homeDirName = localName(environment.ACRYL_LOCAL_HOME_DIR, ACRYL_DEV_HOME_DIR_NAME, 'ACRYL_LOCAL_HOME_DIR')
   const productName = localName(environment.ACRYL_LOCAL_PRODUCT_NAME, ACRYL_USER_DATA_PRODUCT_NAME, 'ACRYL_LOCAL_PRODUCT_NAME')
-  const dshHome = join(homeDirectory, homeDirName, ACRYL_DSH_ENGINE_DIR_NAME)
+  // An instance (scripts/lib/instances.mjs) pins ACRYL_HOME; the engine home nests inside it, exactly as the runtime resolves it.
+  const pinnedHome = environment.ACRYL_HOME
+  const dshHome = typeof pinnedHome === 'string' && pinnedHome !== '' ? join(pinnedHome, ACRYL_DSH_ENGINE_DIR_NAME) : join(homeDirectory, homeDirName, ACRYL_DSH_ENGINE_DIR_NAME)
   if (platform === 'win32') {
     const appData = environment.APPDATA
     if (typeof appData !== 'string' || appData.length === 0) {
@@ -107,7 +109,7 @@ export async function runDevLocal(argv = process.argv.slice(2), environment = pr
   mkdirSync(roots.dshHome, { recursive: true, mode: 0o700 })
   mkdirSync(roots.userData, { recursive: true, mode: 0o700 })
   // The development home starts in advanced mode so Development Canvas is visible; a product with its own home (the blank canvas) keeps the app's defaults.
-  const mode = environment.ACRYL_LOCAL_HOME_DIR === undefined ? ensureLocalAdvancedMode(roots.dshHome) : 'app-default'
+  const mode = environment.ACRYL_LOCAL_HOME_DIR === undefined && !environment.ACRYL_HOME ? ensureLocalAdvancedMode(roots.dshHome) : 'app-default'
   process.stdout.write(`dev:local DSH_HOME=${roots.dshHome}\n`)
   process.stdout.write(`dev:local userData=${roots.userData}\n`)
   process.stdout.write(`dev:local desktop mode=${mode}\n`)

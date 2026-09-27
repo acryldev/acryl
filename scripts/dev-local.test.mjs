@@ -38,3 +38,8 @@ test('another product can have its own home and user-data folder, and only a pla
   assert.throws(() => resolveLocalDesktopRoots('darwin', '/Users/example', { ACRYL_LOCAL_HOME_DIR: '../evil' }), /plain folder name/)
   assert.throws(() => resolveLocalDesktopRoots('darwin', '/Users/example', { ACRYL_LOCAL_PRODUCT_NAME: 'a/b' }), /plain folder name/)
 })
+
+test('a pinned ACRYL_HOME places the engine home inside it', () => {
+  const roots = resolveLocalDesktopRoots('darwin', '/Users/example', { ACRYL_HOME: '/x/.acryl-instances/orbit', ACRYL_LOCAL_PRODUCT_NAME: 'ACRYL orbit' })
+  assert.equal(roots.dshHome, join('/x/.acryl-instances/orbit', '.dsh'))
+})

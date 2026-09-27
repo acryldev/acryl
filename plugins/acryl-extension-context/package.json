@@ -34,7 +34,7 @@
     "sync:corpus": "node scripts/sync-corpus.mjs",
     "build:manifest": "node scripts/build-manifest.mjs",
     "verify:manifest": "node scripts/build-manifest.mjs --check",
-    "test": "node --test scripts/manifest.test.mjs scripts/plugin.test.mjs",
+    "test": "node --test scripts/manifest.test.mjs scripts/plugin.test.mjs scripts/scopes.test.mjs",
     "check": "pnpm run test && pnpm run verify:manifest"
   },
   "engines": {

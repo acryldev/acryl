@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs'
 import { basename, dirname, isAbsolute, join } from 'node:path'
 import { readManifest } from './manifest.js'
 import { SOURCE_FILE } from './stage.js'
+import { projectExtensionsDir } from './scopes.js'
 
 /**
  * The source folder is authoritative; the profile's install list is derived state (pi.dev: "the extension filesystem is authoritative, the
@@ -36,7 +37,7 @@ export function discoverExtensions({ workspaceDir, globalDir }, fs = { existsSyn
   const seenDirs = new Set()
   const claimedNames = new Set()
   const roots = [
-    ['project', workspaceDir && isAbsolute(workspaceDir) ? join(workspaceDir, '.acryl-extensions') : undefined],
+    ['project', workspaceDir && isAbsolute(workspaceDir) ? projectExtensionsDir(workspaceDir) : undefined],
     ['global', globalDir && isAbsolute(globalDir) ? globalDir : undefined],
   ]
   for (const [scope, root] of roots) {

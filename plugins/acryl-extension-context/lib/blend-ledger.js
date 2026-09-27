@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { blendDir } from './scopes.js'
 
 /**
  * The Evolution Ledger of a Blend (governing Blends spec section 16, spec 036 blend-instance-design.md): an append-only record of what changed in a tracked composition,
@@ -16,7 +17,7 @@ const sha256 = text => createHash('sha256').update(text).digest('hex')
 /** The directory of a tracked Blend for a workspace, or undefined when the workspace has none. */
 export function trackedBlendDir(workspaceDir, fs = { existsSync }) {
   if (typeof workspaceDir !== 'string' || workspaceDir === '') return undefined
-  const dir = join(workspaceDir, '.acryl', 'blend')
+  const dir = blendDir(workspaceDir)
   return fs.existsSync(join(dir, 'blend.yaml')) ? dir : undefined
 }
 

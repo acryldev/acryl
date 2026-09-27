@@ -17,6 +17,7 @@ import { globalExtensionsDir } from './lib/reconcile.js'
 import { listInstalledPlugins } from './lib/provenance.js'
 import { captureBlend, verifyBlend, writeBlend } from './lib/blend-capture.js'
 import { applyBlend } from './lib/blend-apply.js'
+import { blendDir } from './lib/scopes.js'
 import { appendLedger, ledgerRecorder, readLedger, trackedBlendDir, verifyLedger } from './lib/blend-ledger.js'
 import { describePermissions } from './lib/manifest.js'
 import { describeInstalledExtensions, installLocalPlugin, syncOnStartup, listLocalPlugins, reloadLocalPlugins, removeLocalPlugin } from './lib/install.js'
@@ -150,7 +151,7 @@ export function apply(ctx) {
           const workspaceDir = invocation?.agent?.session?.header?.cwd
           if (!profileDir) return { kind: 'error', text: 'The active profile is not available in this runtime.' }
           if (!workspaceDir) return { kind: 'error', text: 'This session has no workspace directory to keep the Blend in.' }
-          const outDir = join(workspaceDir, '.acryl', 'blend')
+          const outDir = blendDir(workspaceDir)
           const verb = String(invocation?.rawInput ?? '').trim().split(/\s+/u)[0]
           if (verb === 'verify') {
             const result = verifyBlend(outDir)

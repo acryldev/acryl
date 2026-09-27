@@ -1,6 +1,6 @@
 # Human test: the blank canvas, branding, and growing a Blend
 
-You need a model key configured the way you normally use ACRYL (sign in from the app, or a provider key). Everything below runs in its own home, so your real
+You need a model key configured the way you normally use ACRYL (sign in from the app, or a provider key). Everything below runs as a named instance in its own home, so your real
 ACRYL profile is never touched. From the worktree root, once: `corepack pnpm install --frozen-lockfile` and `corepack pnpm run build` (or run your usual dev build).
 
 ## 1. Start the blank canvas (2 minutes)
@@ -15,6 +15,10 @@ From the worktree root, either the package scripts or the shell scripts (same th
 
 **Web:** it builds if needed, then prints `ACRYL web: http://127.0.0.1:3081/?token=...`. **Open exactly that URL in your browser** (the token is required). Leave the terminal running; stop with Ctrl+C.
 **Desktop:** it builds, then a window opens by itself. **CLI:** the terminal becomes the chat.
+
+**Instances.** Every launch is a named instance (default `blank`) with its own home `~/.acryl-instances/<name>`, its own stable port and its own Desktop user data, so several run together
+without touching each other or your real ACRYL: `./scripts/acryl-blank-web.sh --instance orbit`, then `--instance acme` in another terminal. A second start of the same name is refused.
+`node scripts/instances.mjs list` shows what is running, `stop <name>` stops one, `path <name>` prints where its data lives (delete it to reset). Ctrl+C in the launcher's terminal also stops it cleanly.
 
 Options (after the script name, or after `--` with pnpm): `--name Orbit --accent '#e8590c'` to rebrand, `--blueprint <file.yaml>` for your own definition, `--port 3090` for Web.
 Example: `./scripts/acryl-blank-web.sh --name Orbit`.
