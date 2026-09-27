@@ -1,23 +1,18 @@
 /**
  * The "+" button and its menu: surfaces (terminal, browser, file, ...) and the agents that are installed and
  * enabled. The plain "+" opens the default agent chosen in Settings > Agents (or the last thing opened when
- * the default is Auto). Which agents exist, their flags and the default are all set in Settings; this menu
- * only lists and opens them, and "Configure tabs..." hides tab types you never use.
+ * the default is Auto). Which agents exist, their flags and the default are set in Settings > Agents, and which
+ * tab types exist in Settings > Tabs; this menu only lists and opens them, and links to both.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { AgentSettingsView } from '../../agents/contract.ts'
 import type { CustomAgent } from '../../agents/definition.ts'
 import { menuAgents, primaryAction } from '../agents/agents-section-model.ts'
 import { labelForCommand, WORKSPACE_SURFACE_ACTIONS, type WorkspaceSurfaceAction } from '../terminal/agent-commands.ts'
 import { AgentIcon } from './AgentIcon.tsx'
 import { readLastTab, writeLastTab, type LastTab } from './last-tab.ts'
-import { readHiddenAgents, toggleAgent, writeHiddenAgents } from './agent-visibility.ts'
-
-type View = 'menu' | 'configure'
-
-/** A tab type is hidden by this key in the remembered set (agent ids never contain a colon). */
-const surfaceKey = (action: WorkspaceSurfaceAction): string => `surface:${action.kind}`
+import { tabTypeKey, type TabTypesState } from './tab-types-state.ts'
 
 export interface NewTabMenuProps {
   readonly open: boolean
@@ -25,17 +20,18 @@ export interface NewTabMenuProps {
   /** What Settings > Agents says (installed, enabled, default), or null before the Host has answered. */
   readonly settings: AgentSettingsView | null
   readonly storage: Storage | undefined
+  /** Which tab types are turned on (Settings > Tabs). */
+  readonly tabTypes: TabTypesState
   setOpen(open: boolean): void
   onSurface(action: WorkspaceSurfaceAction): void
   onOpenAgent(id: string, title: string): void
-  /** Opens Settings on the Agents section; false when the Settings panel could not be found. */
-  onManageAgents(): boolean
+  /** Opens Settings on a section; false when the Settings panel could not be found. */
+  onManageSettings(section: 'agents' | 'tabs'): boolean
 }
 
-export function NewTabMenu({ open, customAgents, settings, storage, setOpen, onSurface, onOpenAgent, onManageAgents }: NewTabMenuProps) {
+export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, setOpen, onSurface, onOpenAgent, onManageSettings }: NewTabMenuProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
-  const [view, setView] = useState<View>('menu')
-  const [hidden, setHidden] = useState<ReadonlySet<string>>(() => readHiddenAgents(storage))
+  const hidden = useSyncExternalStore(tabTypes.subscribe, tabTypes.getSnapshot)
   const [notice, setNotice] = useState<string | null>(null)
   const [last, setLast] = useState<LastTab>(() => readLastTab(storage))
 
@@ -45,12 +41,6 @@ export function NewTabMenu({ open, customAgents, settings, storage, setOpen, onS
     const action = WORKSPACE_SURFACE_ACTIONS.find(candidate => candidate.kind === 'pty')
     if (action !== undefined) onSurface(action)
   }
-  const openPrimary = (): void => {
-    const primary = primaryAction(settings)
-    if (primary.kind === 'agent') onOpenAgent(primary.id, primary.label)
-    else if (primary.kind === 'terminal') openTerminal()
-    else openLast()
-  }
   const openLast = (): void => {
     if (last.kind === 'agent') onOpenAgent(last.id, last.label)
     else {
@@ -58,8 +48,15 @@ export function NewTabMenu({ open, customAgents, settings, storage, setOpen, onS
       if (action !== undefined) onSurface(action)
     }
   }
+  const primary = primaryAction(settings)
+  const openPrimary = (): void => {
+    if (primary.kind === 'agent') onOpenAgent(primary.id, primary.label)
+    else if (primary.kind === 'terminal') openTerminal()
+    else openLast()
+  }
+  const primaryLabel = primary.kind === 'agent' ? primary.label : primary.kind === 'terminal' ? 'Terminal' : lastLabel
 
-  const close = (): void => { setOpen(false); setView('menu'); setNotice(null) }
+  const close = (): void => { setOpen(false); setNotice(null) }
 
   // The menu closes on a click elsewhere or Escape.
   useEffect(() => {
@@ -76,14 +73,10 @@ export function NewTabMenu({ open, customAgents, settings, storage, setOpen, onS
     }
   })
 
-  const flip = (id: string): void => {
-    const next = toggleAgent(hidden, id)
-    setHidden(next)
-    writeHiddenAgents(storage, next)
+  const manage = (section: 'agents' | 'tabs', fallback: string): void => {
+    if (onManageSettings(section)) close()
+    else setNotice(fallback)
   }
-
-  const primary = primaryAction(settings)
-  const primaryLabel = primary.kind === 'agent' ? primary.label : primary.kind === 'terminal' ? 'Terminal' : lastLabel
 
   return (
     <div className="dshWorkspacePlusWrap" ref={wrapRef}>
@@ -98,9 +91,9 @@ export function NewTabMenu({ open, customAgents, settings, storage, setOpen, onS
       >
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M2 3.5l3 3 3-3" /></svg>
       </button>
-      {open && view === 'menu' && (
+      {open && (
         <div className="dshWorkspaceMenu" role="menu">
-          {WORKSPACE_SURFACE_ACTIONS.filter(action => !hidden.has(surfaceKey(action))).map(action => (
+          {WORKSPACE_SURFACE_ACTIONS.filter(action => action.kind === 'pty' || !hidden.has(tabTypeKey(action.kind))).map(action => (
             <button key={action.label} type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onSurface(action); remember({ kind: 'surface', surface: action.kind }); close() }}>
               {action.kind === 'pty' && <AgentIcon commandId="shell" />}
               {action.label}
@@ -115,22 +108,9 @@ export function NewTabMenu({ open, customAgents, settings, storage, setOpen, onS
             </button>
           ))}
           <div className="dshWorkspaceMenuRule" />
-          <button type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { if (onManageAgents()) close(); else setNotice('Open Settings, then Agents, to manage agents.') }}>Manage agents...</button>
-          <button type="button" role="menuitem" className="dshWorkspaceMenuItem" data-muted onClick={() => { setView('configure') }}>Configure tabs...</button>
+          <button type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { manage('agents', 'Open Settings, then Agents, to manage agents.') }}>Manage agents...</button>
+          <button type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { manage('tabs', 'Open Settings, then Tabs, to manage tab types.') }}>Add your own tab type...</button>
           {notice !== null && <div className="dshWorkspaceMenuHint" role="status">{notice}</div>}
-        </div>
-      )}
-      {open && view === 'configure' && (
-        <div className="dshWorkspaceMenu" role="menu" aria-label="Configure tabs">
-          <div className="dshWorkspaceMenuHint">Choose which tab types the + menu lists. Agents are managed in Settings.</div>
-          {WORKSPACE_SURFACE_ACTIONS.filter(action => action.kind !== 'pty').map(action => (
-            <button key={action.label} type="button" role="menuitemcheckbox" aria-checked={!hidden.has(surfaceKey(action))} className="dshWorkspaceMenuItem" onClick={() => { flip(surfaceKey(action)) }}>
-              <span className="dshWorkspaceMenuGrow">{action.label.replace(/^New /, '')} tabs</span>
-              <span className="dshWorkspaceMenuCheck" aria-hidden="true">{hidden.has(surfaceKey(action)) ? '' : '✓'}</span>
-            </button>
-          ))}
-          <div className="dshWorkspaceMenuRule" />
-          <button type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { setView('menu') }}>Done</button>
         </div>
       )}
     </div>

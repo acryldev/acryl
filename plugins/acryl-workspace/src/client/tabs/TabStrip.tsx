@@ -12,6 +12,7 @@ import { labelForCommand } from '../terminal/agent-commands.ts'
 import { AgentIcon } from './AgentIcon.tsx'
 import type { TerminalRegistry } from '../terminal/terminal-session.ts'
 import type { AgentSettingsView } from '../../agents/contract.ts'
+import type { TabTypesState } from './tab-types-state.ts'
 import { NewTabMenu } from './NewTabMenu.tsx'
 import { TabActivity } from './TabActivity.tsx'
 import { tabsToClose } from './tab-close.ts'
@@ -33,7 +34,9 @@ export interface TabStripProps {
   onOpenPty(commandId: AgentId, title: string): void
   /** What Settings > Agents says, for the "+" menu. */
   readonly agentSettings: AgentSettingsView | null
-  onManageAgents(): boolean
+  /** Which tab types are turned on, shared with Settings > Tabs and the palette. */
+  readonly tabTypes: TabTypesState
+  onManageSettings(section: 'agents' | 'tabs'): boolean
 }
 
 interface TabContextMenuProps {
@@ -93,7 +96,7 @@ function kindGlyph(kind: WorkspaceTile['kind']): string {
   return '◉'
 }
 
-export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, storage, customAgents, terminals, onClose, onOpenPty, agentSettings, onManageAgents }: TabStripProps) {
+export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, storage, customAgents, terminals, onClose, onOpenPty, agentSettings, tabTypes, onManageSettings }: TabStripProps) {
   const tabsRef = useRef<HTMLDivElement>(null)
   const [edges, setEdges] = useState({ start: false, end: false })
   const [tabMenu, setTabMenu] = useState<{ readonly id: string; readonly x: number; readonly y: number } | null>(null)
@@ -234,7 +237,8 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
         }}
         onOpenAgent={onOpenPty}
         settings={agentSettings}
-        onManageAgents={onManageAgents}
+        tabTypes={tabTypes}
+        onManageSettings={onManageSettings}
       />
       {rightPanel !== undefined && (
         <button

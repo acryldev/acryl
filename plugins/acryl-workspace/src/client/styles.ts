@@ -50,6 +50,23 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceAgentFormActions button { padding: 5px 12px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: inherit; }
 .dshWorkspaceAgentFormActions button[type="submit"] { background: #4d6bfe; border-color: #4d6bfe; color: #fff; }
 .dshWorkspaceAgentFormActions button:disabled { opacity: 0.45; cursor: not-allowed; }
+.dshPaletteOverlay { position: fixed; inset: 0; z-index: 60; display: flex; justify-content: center; align-items: flex-start; padding-top: 12vh; background: rgb(0 0 0 / 40%); }
+.dshPalette { display: flex; flex-direction: column; width: min(680px, calc(100vw - 32px)); max-height: 70vh; border: 1px solid var(--dsw-alias-border-l1); border-radius: 12px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-fg); box-shadow: 0 18px 60px rgb(0 0 0 / 45%); overflow: hidden; font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshPaletteScopes { display: flex; gap: 2px; padding: 6px 8px 0; border-bottom: 1px solid var(--dsw-alias-border-l1); }
+.dshPaletteScope { appearance: none; padding: 6px 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font: inherit; }
+.dshPaletteScope[aria-selected="true"] { border-bottom-color: #4d6bfe; color: var(--dsw-alias-fg); }
+.dshPaletteInput { box-sizing: border-box; width: 100%; padding: 14px 16px; border: 0; border-bottom: 1px solid var(--dsw-alias-border-l1); background: transparent; color: inherit; font: inherit; font-size: 15px; outline: none; }
+.dshPaletteList { flex: 1; min-height: 60px; overflow-y: auto; padding: 4px 6px 8px; scrollbar-width: thin; scrollbar-color: var(--dsw-alias-border-l1) transparent; }
+.dshPaletteGroup { padding: 10px 10px 4px; color: var(--dsw-alias-fg-l2); font-size: 11.5px; }
+.dshPaletteItem { display: flex; align-items: baseline; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+.dshPaletteItem[data-selected] { background: var(--dsw-alias-fill-hover, rgb(127 127 127 / 16%)); }
+.dshPaletteTitle { flex: none; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshPaletteSubtitle { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dsw-alias-fg-l2); font-size: 12px; }
+.dshPaletteMark { background: transparent; color: #7c93ff; font-weight: 600; }
+.dshPaletteKey { margin-left: auto; padding: 1px 6px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 5px; color: var(--dsw-alias-fg-l2); font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dshPaletteEmpty { padding: 14px 12px; color: var(--dsw-alias-fg-l2); }
+.dshPaletteFooter { display: flex; gap: 16px; padding: 8px 14px; border-top: 1px solid var(--dsw-alias-border-l1); color: var(--dsw-alias-fg-l2); font-size: 12px; }
+.dshPaletteFooter .dshPaletteKey { margin-left: 0; margin-right: 4px; }
 .dshWorkspaceMenuTag { margin-left: 6px; padding: 0 6px; border-radius: 4px; background: color-mix(in srgb, #4d6bfe 20%, transparent); color: var(--dsw-alias-fg-l2); font-size: 10.5px; }
 .dshWorkspaceMenuHint { padding: 6px 10px 8px; color: var(--dsw-alias-fg-l2); font: 11.5px/1.4 ui-sans-serif, system-ui, sans-serif; }
 /* One opener only: the canvas tab strip carries the always-present right-panel toggle, so upstream's own

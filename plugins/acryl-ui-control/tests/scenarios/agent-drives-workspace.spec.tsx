@@ -9,6 +9,8 @@
 import { act, cleanup, render } from '@testing-library/react'
 import { useSyncExternalStore } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { TabTypesState } from '../../../acryl-workspace/src/client/tabs/tab-types-state.ts'
+import { TabsPanel } from '../../../acryl-workspace/src/client/tabs/TabsPanel.tsx'
 import { AgentsPanel } from '../../../acryl-workspace/src/client/agents/AgentsSection.tsx'
 import { AgentsState } from '../../../acryl-workspace/src/client/agents/agents-state.ts'
 import { WorkspaceGroups } from '../../../acryl-workspace/src/client/canvas/groups.ts'
@@ -93,24 +95,28 @@ describe('scenario: "add my repo at /p/proj as a project" (US2, T042)', () => {
 })
 
 describe('scenario: settings for coding agents, through the + menu and Settings > Agents', () => {
-  it('walks the + menu into Configure tabs, hides a tab type and comes back', async () => {
+  it('walks the + menu to Settings > Tabs, turns a tab type off and finds it gone from the menu', async () => {
     const workspace = new WorkspaceState()
+    const tabTypes = new TabTypesState(undefined)
     function Harness() {
       const snapshot = useSyncExternalStore(l => workspace.subscribe(l), () => workspace.getSnapshot())
       const terminals = new TerminalRegistry({ createSocket: () => ({ send() {}, close() {}, onopen: null, onmessage: null, onclose: null, onerror: null, readyState: 0 }), urlFor: id => `ws://x/${id}` })
-      return <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={undefined} customAgents={[]} terminals={terminals} onClose={() => {}} onOpenPty={() => {}} agentSettings={null} onManageAgents={() => true} />
+      return (
+        <>
+          <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={undefined} customAgents={[]} terminals={terminals} onClose={() => {}} onOpenPty={() => {}} agentSettings={null} tabTypes={tabTypes} onManageSettings={() => true} />
+          <TabsPanel tabTypes={tabTypes} />
+        </>
+      )
     }
     render(<Harness />)
     const ai = agent()
-    await ai.do({ op: 'click', ref: find(await ai.look(), 'button', 'Choose what to open') })
-    await ai.do({ op: 'click', ref: find(await ai.look(), 'menuitem', 'Configure tabs...') })
-    const page = await ai.look()
+    let page = await ai.look()
     expect(unnamed(page)).toEqual([])
-    await ai.do({ op: 'click', ref: find(page, 'menuitemcheckbox', 'Board tabs') })
-    await ai.do({ op: 'click', ref: find(await ai.look(), 'menuitem', 'Done') })
-    const back = await ai.look()
-    expect(back.nodes.some(n => n.name === 'New Board')).toBe(false)
-    expect(back.nodes.some(n => n.name === 'New Terminal')).toBe(true)
+    await ai.do({ op: 'click', ref: find(page, 'radio', 'Disabled') })
+    await ai.do({ op: 'click', ref: find(await ai.look(), 'button', 'Choose what to open') })
+    page = await ai.look()
+    expect(page.nodes.some(n => n.name === 'New Terminal')).toBe(true)
+    expect(page.nodes.filter(n => n.role === 'menuitem' && n.name.startsWith('New ')).length).toBe(5)
   })
 
   it('adds an agent from Settings > Agents by name and command, without knowing the page', async () => {

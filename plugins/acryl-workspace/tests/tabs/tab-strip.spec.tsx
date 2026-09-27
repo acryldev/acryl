@@ -9,6 +9,7 @@ import { TabStrip } from '../../src/client/tabs/TabStrip.tsx'
 import { TerminalRegistry } from '../../src/client/terminal/terminal-session.ts'
 import type { AgentSettingsView } from '../../src/agents/contract.ts'
 import { entry, view } from '../agents/fixtures.ts'
+import { TabTypesState } from '../../src/client/tabs/tab-types-state.ts'
 
 // jsdom has no ResizeObserver; the strip only uses it to keep the edge fades honest.
 class NoopObserver { observe() {} disconnect() {} unobserve() {} }
@@ -29,12 +30,12 @@ function memoryStorage(initial: Record<string, string> = {}): Storage {
   }
 }
 
-function Harness({ workspace, storage, onOpenPty, onClose = () => {}, custom = [], settings = null, onManage = () => true }: { workspace: WorkspaceState; storage: Storage; onOpenPty: (id: string, title: string) => void; onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: () => boolean }) {
+function Harness({ workspace, storage, onOpenPty, onClose = () => {}, custom = [], settings = null, onManage = () => true, tabTypes }: { workspace: WorkspaceState; storage: Storage; onOpenPty: (id: string, title: string) => void; onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: (section: 'agents' | 'tabs') => boolean; tabTypes?: TabTypesState }) {
   const snapshot = useSyncExternalStore(l => workspace.subscribe(l), () => workspace.getSnapshot())
-  return <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={storage} customAgents={custom} terminals={terminals} onClose={onClose} onOpenPty={onOpenPty} agentSettings={settings} onManageAgents={onManage} />
+  return <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={storage} customAgents={custom} terminals={terminals} onClose={onClose} onOpenPty={onOpenPty} agentSettings={settings} tabTypes={tabTypes ?? new TabTypesState(storage)} onManageSettings={onManage} />
 }
 
-function setup(storage = memoryStorage(), extra: { onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: () => boolean } = {}) {
+function setup(storage = memoryStorage(), extra: { onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: (section: 'agents' | 'tabs') => boolean; tabTypes?: TabTypesState } = {}) {
   const workspace = new WorkspaceState()
   const onOpenPty = vi.fn()
   render(<Harness workspace={workspace} storage={storage} onOpenPty={onOpenPty} {...extra} />)
@@ -84,11 +85,11 @@ describe('TabStrip', () => {
   })
 
   it('opens Settings from Manage agents, and says where to go when it cannot', () => {
-    const onManage = vi.fn(() => false)
+    const onManage = vi.fn((_section: 'agents' | 'tabs') => false)
     setup(memoryStorage(), { onManage })
     fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
     fireEvent.click(screen.getByRole('menuitem', { name: 'Manage agents...' }))
-    expect(onManage).toHaveBeenCalledTimes(1)
+    expect(onManage).toHaveBeenCalledWith('agents')
     expect(screen.getByRole('status').textContent).toContain('Settings')
     onManage.mockReturnValue(true)
     fireEvent.click(screen.getByRole('menuitem', { name: 'Manage agents...' }))
@@ -134,16 +135,24 @@ describe('TabStrip', () => {
     expect(screen.getByLabelText(/^Rename /)).toBeTruthy()
   })
 
-  it('lets the user hide tab types (never the terminal) from the + menu', () => {
-    setup()
+  it('lists only the tab types that are turned on, never dropping the terminal, and follows a change at once', () => {
+    const storage = memoryStorage()
+    const tabTypes = new TabTypesState(storage)
+    setup(storage, { tabTypes })
     fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
     expect(screen.getByRole('menuitem', { name: 'New Board' })).toBeTruthy()
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Configure tabs...' }))
-    expect(screen.queryByRole('menuitemcheckbox', { name: /Terminal/ })).toBeNull()
-    fireEvent.click(screen.getByRole('menuitemcheckbox', { name: /Board tabs/ }))
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Done' }))
+    act(() => { tabTypes.setEnabled('kanban', false); tabTypes.setEnabled('pty', false) })
     expect(screen.queryByRole('menuitem', { name: 'New Board' })).toBeNull()
     expect(screen.getByRole('menuitem', { name: 'New Terminal' })).toBeTruthy()
+    expect(new TabTypesState(storage).isEnabled('kanban')).toBe(false)
+  })
+
+  it('links "Add your own tab type" to Settings > Tabs', () => {
+    const onManage = vi.fn(() => true)
+    setup(memoryStorage(), { onManage })
+    fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Add your own tab type...' }))
+    expect(onManage).toHaveBeenCalledWith('tabs')
   })
 
   it('opens the last thing you opened when + is clicked, starting with a terminal', () => {

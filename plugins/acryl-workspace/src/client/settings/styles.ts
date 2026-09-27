@@ -1,6 +1,6 @@
-/** Styles for the Agents settings section, installed for the plugin's lifetime. */
+/** Styles for the Settings sections this package adds (Agents, Tabs, Command palette), installed for the plugin's lifetime. */
 
-const STYLE_ID = 'acryl-workspace-agents-styles'
+const STYLE_ID = 'acryl-workspace-settings-styles'
 
 const CSS = `
 .dshAgentsSection { display: grid; gap: 18px; padding: 4px 0 28px; color: var(--dsw-alias-label-primary); font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; }
@@ -57,7 +57,7 @@ const CSS = `
 `
 
 /** @returns disposer, for one owning `ctx.effect`. */
-export function installAgentsStyles(): () => void {
+export function installSettingsStyles(): () => void {
   const style = document.createElement('style')
   style.id = STYLE_ID
   style.textContent = CSS
