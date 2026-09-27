@@ -19,7 +19,7 @@
 | 10 | Verify — typecheck + test + build pass | [x] Done (2026-09-24 rebase) | 09 |
 | 11 | Composition — `acryl-agent-devin` plugin package + Loader rows + settings wiring + dispatch binding fix | [x] Done (88b9771) | 06, 07 |
 | 12 | `session/request_permission` — JSON-RPC response fix + permissionMode/onPermissionRequest | [x] Done (672d413) | 11 |
-| 13 | `session-bridge.ts` provider-neutral routing via `acrAgentControl.dispatch()` | [ ] Todo | 11 |
+| 13 | `session-bridge.ts` provider-neutral routing via `acrAgentControl.dispatch()` | [x] Done (de3133c) | 11 |
 | 14 | Loader-activation verification suite + E2E stub round-trip + gated real smoke | [ ] Todo | 11, 12, 13 |
 
 ## Post-rebase verification notes (2026-09-24)
