@@ -1,3 +1,18 @@
+## 2026-09-27 - 036 ACRYL Blends as a framework: acryl new, builder included, apps that share nothing
+
+Commits: `2d2c1efecefed510e5101044033cba3529d01ade`, `d10d40d4d4d79ee958a887791dcacce9b66df01b`, `4eff7311cd132b5ce45233e7ff6ffe054519af0d`, `027310eabd5764a7b2f7ece5734a2538c085027a`, `1ee4c3b94cb6eb7b43f4ae72b2a5e9f9766af372`, `bdc9cc9da09cdfab5eada305feb1e27dd1efbc9d`, `72a3ac3f1e5a086aa5c6880aa8d935ec86603a04`, `59048005ef1221dbaa5a4cc996db85a7da519c38` (branch `036-cordis-ecosystem-and-acryl-blends`).
+
+- **Framework, not a product.** `acryl new <dir>` creates an app the Rails way (`blend.yaml`, `extensions/`, `AGENTS.md`, `bin/acryl`, its own git repository).
+  The app is the user's product: its brand everywhere a user looks, license of their choice. Definition: `specs/036-cordis-ecosystem-and-acryl-blends/framework.md`.
+- **One format.** `blend.yaml` is a Blends manifest (`blends.acryl.dev/v1alpha1`) that the runtime boots from; the IDE on `main` is now the `acryl.ide` Blend, defined as blank plus what it added.
+- **Many apps, no clashes.** Each app folder is its own ACRYL home, with a stable port, its own Electron user data and Dock name, a running claim, and a
+  namespaced project scope; `scripts/instances.mjs ps|stop|rm`. Verified with two same-named apps running at once.
+- **Fixes from real use:** Desktop Blank loaded the shared dev home (now isolated), `acryl-brand` failed on Desktop's web server, the Web launcher printed a dead
+  URL on a moved port, a stop left the server listening (now a process group), and a symlinked path silently ran nothing.
+- **The builder** is told to build into the app's `extensions/`; its docs no longer make it re-verify `@acryl/ui` (a real run spent ~15 calls on it).
+
+Not built yet: `acryl new` in the published CLI, `/blend snapshot` writing into the app folder (one Blend shape), a starter catalog on acrylblends.github.io.
+
 ## 2026-09-26 - 036 The blank canvas: Blueprints, a configurable brand, and the first grown Blend
 
 Commits: `3351fa8d1d6394b373b6f2cf0c24e395cdba5842`, `2ee37f2d5f96e8e462b55f8b49c1279eb32b57cc`, `818fbc7c607adf4b8e761de6dae57840cfa1dae1`, `63e91a72b5f8542b221a859908d3481c95d02bd5` (branch `036-cordis-ecosystem-and-acryl-blends`, not pushed); the recipes are in the blends repo on the same branch name.
