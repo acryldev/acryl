@@ -27,25 +27,35 @@ export function resolveLocalDesktopRoots(
   homeDirectory = homedir(),
   environment = process.env,
 ) {
-  const dshHome = join(homeDirectory, ACRYL_DEV_HOME_DIR_NAME, ACRYL_DSH_ENGINE_DIR_NAME)
+  // Another product (the blank canvas, spec 036) may run in its own home and user-data folder so it shares nothing with the development app.
+  const homeDirName = localName(environment.ACRYL_LOCAL_HOME_DIR, ACRYL_DEV_HOME_DIR_NAME, 'ACRYL_LOCAL_HOME_DIR')
+  const productName = localName(environment.ACRYL_LOCAL_PRODUCT_NAME, ACRYL_USER_DATA_PRODUCT_NAME, 'ACRYL_LOCAL_PRODUCT_NAME')
+  const dshHome = join(homeDirectory, homeDirName, ACRYL_DSH_ENGINE_DIR_NAME)
   if (platform === 'win32') {
     const appData = environment.APPDATA
     if (typeof appData !== 'string' || appData.length === 0) {
       throw new Error('APPDATA is unavailable; cannot isolate Desktop user data')
     }
-    return { dshHome, userData: join(appData, ACRYL_USER_DATA_PRODUCT_NAME) }
+    return { dshHome, userData: join(appData, productName) }
   }
   if (platform === 'darwin') {
     return {
       dshHome,
-      userData: join(homeDirectory, 'Library', 'Application Support', ACRYL_USER_DATA_PRODUCT_NAME),
+      userData: join(homeDirectory, 'Library', 'Application Support', productName),
     }
   }
   const config = environment.XDG_CONFIG_HOME
   const configHome = typeof config === 'string' && config.length > 0
     ? config
     : join(homeDirectory, '.config')
-  return { dshHome, userData: join(configHome, ACRYL_USER_DATA_PRODUCT_NAME) }
+  return { dshHome, userData: join(configHome, productName) }
+}
+
+/** A single folder name from the environment, never a path: a value with a separator or `..` would escape the home directory. */
+function localName(value, fallback, variable) {
+  if (value === undefined || value === '') return fallback
+  if (!/^[A-Za-z0-9.][A-Za-z0-9._ -]{0,63}$/u.test(value) || value.includes('..')) throw new Error(`${variable} must be a plain folder name, got ${JSON.stringify(value)}`)
+  return value
 }
 
 /**
@@ -96,7 +106,8 @@ export async function runDevLocal(argv = process.argv.slice(2), environment = pr
   const roots = resolveLocalDesktopRoots(process.platform, homedir(), environment)
   mkdirSync(roots.dshHome, { recursive: true, mode: 0o700 })
   mkdirSync(roots.userData, { recursive: true, mode: 0o700 })
-  const mode = ensureLocalAdvancedMode(roots.dshHome)
+  // The development home starts in advanced mode so Development Canvas is visible; a product with its own home (the blank canvas) keeps the app's defaults.
+  const mode = environment.ACRYL_LOCAL_HOME_DIR === undefined ? ensureLocalAdvancedMode(roots.dshHome) : 'app-default'
   process.stdout.write(`dev:local DSH_HOME=${roots.dshHome}\n`)
   process.stdout.write(`dev:local userData=${roots.userData}\n`)
   process.stdout.write(`dev:local desktop mode=${mode}\n`)

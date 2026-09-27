@@ -10,9 +10,11 @@ test('web runs the blank blueprint in its own home and never on 3080', () => {
   assert.equal(plan.webPort, 3081)
 })
 
-test('cli shares the isolated home, desktop keeps the dev-local isolation', () => {
+test('cli shares the isolated home, desktop gets its own home and user data', () => {
   assert.equal(blankLaunchPlan('cli', {}, {}, '/h', '/r').env.DSH_HOME, '/h/.acryl-blank/.dsh')
-  assert.equal(blankLaunchPlan('desktop', {}, {}, '/h', '/r').env.DSH_HOME, undefined)
+  const desktop = blankLaunchPlan('desktop', {}, {}, '/h', '/r')
+  assert.equal(desktop.env.ACRYL_LOCAL_HOME_DIR, '.acryl-blank')
+  assert.equal(desktop.env.ACRYL_LOCAL_PRODUCT_NAME, 'ACRYL Blank')
 })
 
 test('bad surface and bad port fail loudly', () => {

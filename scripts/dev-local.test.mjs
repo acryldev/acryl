@@ -30,3 +30,11 @@ test('seeds advanced mode so Development Canvas can mount', () => {
   assert.equal(ensureLocalAdvancedMode(home), 'switched')
   assert.match(readFileSync(join(home, 'settings.yaml'), 'utf8'), /mode: advanced/u)
 })
+
+test('another product can have its own home and user-data folder, and only a plain folder name is accepted', () => {
+  const roots = resolveLocalDesktopRoots('darwin', '/Users/example', { ACRYL_LOCAL_HOME_DIR: '.acryl-blank', ACRYL_LOCAL_PRODUCT_NAME: 'ACRYL Blank' })
+  assert.equal(roots.dshHome, join('/Users/example', '.acryl-blank', '.dsh'))
+  assert.equal(roots.userData, join('/Users/example', 'Library', 'Application Support', 'ACRYL Blank'))
+  assert.throws(() => resolveLocalDesktopRoots('darwin', '/Users/example', { ACRYL_LOCAL_HOME_DIR: '../evil' }), /plain folder name/)
+  assert.throws(() => resolveLocalDesktopRoots('darwin', '/Users/example', { ACRYL_LOCAL_PRODUCT_NAME: 'a/b' }), /plain folder name/)
+})

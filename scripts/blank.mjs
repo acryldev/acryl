@@ -4,9 +4,9 @@
  *
  *   node scripts/blank.mjs web     [--name Orbit] [--accent '#e8590c'] [--port 3081] [--blueprint my.blueprint.yaml]
  *   node scripts/blank.mjs cli     [--name Orbit]
- *   node scripts/blank.mjs desktop [--name Orbit]        (uses the isolated ~/.acryl-dev home, like `pnpm run dev`)
+ *   node scripts/blank.mjs desktop [--name Orbit]        (own home ~/.acryl-blank and own Electron user data "ACRYL Blank")
  *
- * Web and CLI run in `~/.acryl-blank/.dsh`; the Web server listens on port 3081 unless `--port` says otherwise: 3080 belongs to the main-branch app.
+ * Every surface runs in `~/.acryl-blank/.dsh`; the Web server listens on port 3081 unless `--port` says otherwise: 3080 belongs to the main-branch app.
  */
 import { spawn } from 'node:child_process'
 import { homedir } from 'node:os'
@@ -29,7 +29,8 @@ export function blankLaunchPlan(surface, flags, environment, home = homedir(), r
     return { command: process.execPath, args: [join(root, 'apps/acryl-web/bin/dev-run.mjs'), '--no-open'], env: { ...env, DSH_HOME: isolated, ACRYL_WEB_PORT: String(port) }, webPort: port, home: isolated }
   }
   if (surface === 'cli') return { command: process.execPath, args: [join(root, 'apps/acryl-cli/bin/dev-run.mjs')], env: { ...env, DSH_HOME: isolated }, home: isolated }
-  if (surface === 'desktop') return { command: process.execPath, args: [join(root, 'scripts/dev-local.mjs')], env }
+  // Its own DSH home and Electron user-data folder: shares no profile, history, market setting or single-instance lock with the development app.
+  if (surface === 'desktop') return { command: process.execPath, args: [join(root, 'scripts/dev-local.mjs')], env: { ...env, ACRYL_LOCAL_HOME_DIR: BLANK_HOME_DIR_NAME, ACRYL_LOCAL_PRODUCT_NAME: 'ACRYL Blank' } }
   throw new Error(`unknown surface ${JSON.stringify(surface)}; use web, cli or desktop`)
 }
 
