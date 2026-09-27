@@ -1,10 +1,10 @@
 /**
  * `acryl save` and `acryl remote connect` (spec 036, persistence-and-registries.md): an app's own repository, driven from the command line with the
- * user's own git and gh. The rules (secret check, private/public guard) are `@acryl/app-persistence`'s; this adapter finds the app and reports.
+ * user's own git and gh. The rules (secret check, private/public guard) are `@webboxes/app-persistence`'s; this adapter finds the app and reports.
  */
 import { existsSync, readFileSync } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
-import { connectRemote, gitCli, githubHosting, saveApp, type ConnectResult, type SaveResult } from '@acryl/app-persistence'
+import { connectRemote, gitCli, githubHosting, saveApp, type ConnectResult, type SaveResult } from '@webboxes/app-persistence'
 
 function appDefinition(dir: string): { root: string, manifestText: string } {
   const root = resolve(dir)

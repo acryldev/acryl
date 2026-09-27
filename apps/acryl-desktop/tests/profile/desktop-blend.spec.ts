@@ -20,7 +20,7 @@ const FIXTURE_LOCK_DIR = fileURLToPath(new URL('../fixtures/blend/acryl-demo', i
 function validLock(): Record<string, unknown> {
   return {
     formatVersion: 1,
-    generator: { name: '@acryl/blends-core', version: '0.1.0' },
+    generator: { name: '@webboxes/blends-core', version: '0.1.0' },
     origin: {
       id: 'acryl.crm',
       kind: 'Blueprint',
@@ -42,7 +42,7 @@ describe('parseBlendLock', () => {
   it('projects a well-formed lock with frozen rows carrying config and disabled', () => {
     const projection = parseBlendLock(validLock(), '/tmp/lock.json')
     expect(projection.lockPath).toBe('/tmp/lock.json')
-    expect(projection.generator).toEqual({ name: '@acryl/blends-core', version: '0.1.0' })
+    expect(projection.generator).toEqual({ name: '@webboxes/blends-core', version: '0.1.0' })
     expect(projection.origin).toEqual({
       id: 'acryl.crm',
       kind: 'Blueprint',

@@ -37,7 +37,7 @@ layout on a private host. The registries a user reads from are their own setting
   to the app's own private remote may be allowed after the user opts in once.
 - **Secrets in git.** Runtime data (`.dsh/`) is ignored from the first commit. Every save runs a secret check on what is about to be committed and refuses on a hit.
 - **No stored credentials.** Git and `gh` use the user's own credential helpers; ACRYL never reads or writes tokens.
-- **Moderation.** The public registry accepts starters by reviewed pull request; the index is built by CI only from entries that validate with `@acryl/blends-core`.
+- **Moderation.** The public registry accepts starters by reviewed pull request; the index is built by CI only from entries that validate with `@webboxes/blends-core`.
 
 ## Registry layout
 
@@ -52,7 +52,7 @@ Registry ids are the manifest ids (`acryl.blank`, `acme.accounting`). Categories
 
 ## Build order
 
-1. Registry format and index generator in `@acryl/blends-core`; `acryl new --from <git URL | registry id | folder>` with git as the transport. Local only.
+1. Registry format and index generator in `@webboxes/blends-core`; `acryl new --from <git URL | registry id | folder>` with git as the transport. Local only.
 2. App persistence: `visibility` and `license` in the app definition, `acryl remote connect`, `acryl save` with the secret check and the visibility guard, the CI
    workflow in `acryl new`.
 3. The public registry on acrylblends.github.io (blank and the first starters, CI building `index.json`, a catalog page), and `acryl publish`.

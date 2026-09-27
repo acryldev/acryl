@@ -1,6 +1,6 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, relative, sep } from 'node:path'
-import { manifestDigest } from '@acryl/blends-core'
+import { manifestDigest } from '@webboxes/blends-core'
 import { isMap, isSeq, parse, parseDocument, stringify } from 'yaml'
 import { canonical } from './reconcile.js'
 import { hashPackage } from './stage.js'
@@ -25,7 +25,7 @@ import { listInstalledPlugins } from './provenance.js'
  */
 
 const BASE_BUNDLES = new Set(['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', '@deepseek-ai/dsh-sdk-minimal'])
-// How a lock names its manifest is the format's rule (@acryl/blends-core), shared with every other reader and writer of a lock.
+// How a lock names its manifest is the format's rule (@webboxes/blends-core), shared with every other reader and writer of a lock.
 const sha256 = manifestDigest
 const slug = text => String(text).toLowerCase().replace(/[^a-z0-9]+/gu, '-').replace(/^-+|-+$/gu, '') || 'blend'
 

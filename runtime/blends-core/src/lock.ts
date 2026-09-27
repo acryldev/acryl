@@ -15,7 +15,7 @@ export interface LockResult {
   json: string
 }
 
-const DEFAULT_GENERATOR: LockGenerator = { name: '@acryl/blends-core', version: BLENDS_CORE_VERSION }
+const DEFAULT_GENERATOR: LockGenerator = { name: '@webboxes/blends-core', version: BLENDS_CORE_VERSION }
 
 /**
  * Generate a lock (spec-004, FR-M4-2): v1 by default, or v2 when `modules`

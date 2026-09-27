@@ -1,5 +1,5 @@
 // Public-surface spec (T015): everything consumers get must come from the
-// barrel. This spec imports @acryl/blends-core's surface only through
+// barrel. This spec imports @webboxes/blends-core's surface only through
 // src/index.js - never from an implementation module.
 import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'

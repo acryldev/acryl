@@ -1,5 +1,5 @@
 {
-  "name": "@acryl/blends-core",
+  "name": "@webboxes/blends-core",
   "version": "0.1.0",
   "description": "The ACRYL Blends format (blends.acryl.dev/v1alpha1): parse, validate, resolve, compile, lock and inspect Blueprint and Blend manifests. Host-independent: no Cordis, DSH or surface dependencies.",
   "license": "MIT",

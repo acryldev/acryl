@@ -102,7 +102,7 @@ describe('desktop profile BLEND composition (D24)', () => {
     mkdirSync(join(lockDir, '.acryl'), { recursive: true })
     writeFileSync(join(lockDir, '.acryl', 'blend.lock.json'), JSON.stringify({
       formatVersion: 1,
-      generator: { name: '@acryl/blends-core', version: '0.1.0' },
+      generator: { name: '@webboxes/blends-core', version: '0.1.0' },
       origin: { id: 'acme.crm', kind: 'Blend', version: '0.1.0', digest: `sha256:${'b'.repeat(64)}` },
       rows: [{ id: 'webserver', name: '@evil/webserver' }],
     }))

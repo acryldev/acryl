@@ -12,7 +12,7 @@ import { spawnSync } from 'node:child_process'
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { parseRegistryIndex } from '@acryl/blends-core'
+import { parseRegistryIndex } from '@webboxes/blends-core'
 
 /** The public registry: a folder of the acrylblends.github.io repository. `#<folder>` names the folder inside a repository. */
 export const PUBLIC_REGISTRY = 'https://github.com/acrylblends/acrylblends.github.io.git#registry'

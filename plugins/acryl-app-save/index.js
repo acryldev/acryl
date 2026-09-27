@@ -6,11 +6,11 @@
  *
  * One swappable Cordis plugin: disable its row and the commands go; nothing else changes. Human-typed only: saving sends the user's work to a remote, so it is the
  * user's decision; the agent may suggest it, never run it. The rules (a secret check on every save, a private app never reaching a public remote, no token ever
- * handled) are @acryl/app-persistence's. Requires: `commands`. Reads the optional `appInstance` service: outside an app the commands say so and do nothing.
+ * handled) are @webboxes/app-persistence's. Requires: `commands`. Reads the optional `appInstance` service: outside an app the commands say so and do nothing.
  */
 import { existsSync, readFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
-import { connectRemote, gitCli, githubHosting, saveApp } from '@acryl/app-persistence'
+import { connectRemote, gitCli, githubHosting, saveApp } from '@webboxes/app-persistence'
 
 export const name = 'acryl-app-save'
 export const inject = ['commands']

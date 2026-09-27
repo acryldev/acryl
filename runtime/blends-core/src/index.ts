@@ -1,4 +1,4 @@
-// Public surface of @acryl/blends-core (contracts/blends-core.api.md).
+// Public surface of @webboxes/blends-core (contracts/blends-core.api.md).
 // Consumers (CLI in M2, desktop in M3, hub tooling later) import from here
 // only. Additions are allowed; removals or shape changes require a format
 // version bump (v1alpha1 discipline).

@@ -3,8 +3,8 @@
 Commits: `6776e94340f7cd0fd200705d5fd846286094c017` (acryl-app-save, bins, app workflow), `e6625ad9b0a08b39b06c7d33bedd51790184cca0` (merge of main).
 
 - **`/app save` and `/app connect` moved out of the extension pack into `plugins/acryl-app-save`**, a Blueprint row (`app-save`) in Blank and so in the IDE.
-  Removing the row removes the commands; the extension pack no longer depends on `@acryl/app-persistence`. Everything is a plugin, including saving.
-- **Libraries stay libraries.** `@acryl/blends-core` (the format) and `@acryl/app-persistence` (save, connect, the secret check) are used by the CLI and by CI,
+  Removing the row removes the commands; the extension pack no longer depends on `@webboxes/app-persistence`. Everything is a plugin, including saving.
+- **Libraries stay libraries.** `@webboxes/blends-core` (the format) and `@webboxes/app-persistence` (save, connect, the secret check) are used by the CLI and by CI,
   which are not Cordis hosts, so they are ordinary packages in `runtime/`, not plugins. They gained bins: `blends-validate` and `acryl-secret-check`.
 - **Every new app has CI from its first commit**: `acryl new` writes `.github/workflows/app.yml`, which validates `blend.yaml` and runs the secret check through
   those bins from npm.
@@ -16,7 +16,7 @@ Commits: `6776e94340f7cd0fd200705d5fd846286094c017` (acryl-app-save, bins, app w
 Commits: `9c7fdf3e1c96fe8cb87eccb06fd1409be7cae9e9` (registry format, `--from` git and registry), `44931eb70f470ec1d69d7a601c10a2e9aac3a4d1` (app persistence), `9751822079f2c99721d61cdf86aa0a6f165f9a63` (three levels); site: acrylblends/acrylblends.github.io PR #1.
 Design: `specs/036-cordis-ecosystem-and-acryl-blends/persistence-and-registries.md`; levels: `framework.md`.
 
-- **Registries are git repositories** with one layout (`blends/<id>/`, CI-built `index.json`). `@acryl/blends-core` builds and checks the index
+- **Registries are git repositories** with one layout (`blends/<id>/`, CI-built `index.json`). `@webboxes/blends-core` builds and checks the index
   (`blends-registry-index`); the format gained `license` and `visibility`. The public registry lives in acrylblends.github.io (`registry/`, served at `/registry/`,
   CI refuses private, unlicensed or stale entries). A private starter needs no registry: `acryl new my-app --from <git URL>` uses the user's own git login.
 - **Three levels, decided with the owner:** Blank (built-in Blueprint), Blueprint starter kits (`extends` a Blueprint, boot as they are), Projects (Blends grown from
@@ -25,7 +25,7 @@ Design: `specs/036-cordis-ecosystem-and-acryl-blends/persistence-and-registries.
   check and refuses on a hit; a private app never reaches a public remote; repositories are created through the user's own `gh` login and no token is ever handled.
 - Proven: a project created from the registry's organizer starter boots on a real engine with the plugin installed; `/app save` keeps `.dsh` out of git.
 
-Waiting on the owner: publishing `@acryl/blends-core` and `@acryl/app-persistence` to npm (then CI in new apps), merging the registry PR (deploys the site),
+Waiting on the owner: publishing `@webboxes/blends-core` and `@webboxes/app-persistence` to npm (then CI in new apps), merging the registry PR (deploys the site),
 archiving `acryldev/blends` (its local checkout has uncommitted work).
 
 ## 2026-09-27 - 036 One monorepo, one Blend shape: blends-core moves in, an app is its Blend
@@ -3167,7 +3167,7 @@ BLENDs (the `blends.acryl.dev/v1alpha1` package format, developed in the
 standalone `blends` repo, M1 format/compiler and M2 hub/CLI/lock) now compose
 into the Desktop. The desktop consumes the **lock artifact**, not the BLEND
 language: `.acryl/blend.lock.json` already holds the complete resolved Cordis
-rows plus origin identity, so no `@acryl/blends-core` dependency enters this
+rows plus origin identity, so no `@webboxes/blends-core` dependency enters this
 repo and the D12 host-vocabulary separation stays intact.
 
 - **Selection surface** `dsh-desktop.blend` in the settings file: a path to an

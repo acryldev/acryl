@@ -41,6 +41,6 @@ test('outside an app it says so; inside one it saves, and refuses a secret', () 
 })
 
 // The real git adapter, from the library.
-import { gitCli } from '@acryl/app-persistence'
+import { gitCli } from '@webboxes/app-persistence'
 const gitPort = (dir) => gitCli(dir)
 void spawnSync

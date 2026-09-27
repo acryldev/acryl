@@ -231,7 +231,7 @@ importers:
 
   apps/acryl-cli:
     dependencies:
-      '@acryl/app-persistence':
+      '@webboxes/app-persistence':
         specifier: workspace:*
         version: link:../../runtime/app-persistence
       '@deepseek-ai/cordis-plugin-group':
@@ -2108,7 +2108,7 @@ importers:
 
   plugins/acryl-extension-context:
     dependencies:
-      '@acryl/blends-core':
+      '@webboxes/blends-core':
         specifier: workspace:*
         version: link:../../runtime/blends-core
       '@deepseek-ai/dsh-tools':
@@ -2236,7 +2236,7 @@ importers:
 
   plugins/acryl-app-save:
     dependencies:
-      '@acryl/app-persistence':
+      '@webboxes/app-persistence':
         specifier: workspace:*
         version: link:../../runtime/app-persistence
 
@@ -2841,7 +2841,7 @@ importers:
       acryl-app-save:
         specifier: workspace:*
         version: link:../../plugins/acryl-app-save
-      '@acryl/blends-core':
+      '@webboxes/blends-core':
         specifier: workspace:*
         version: link:../blends-core
       '@acryl/ui':

@@ -25,7 +25,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter @acryl/blends-core run build && pnpm --filter @acryl/app-persistence run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter cordis-plugin-market run build && node scripts/generate-build-info.mjs",
+    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter @webboxes/blends-core run build && pnpm --filter @webboxes/app-persistence run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter cordis-plugin-market run build && node scripts/generate-build-info.mjs",
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "pretypecheck": "node scripts/generate-build-info.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
@@ -38,7 +38,7 @@
     "@deepseek-ai/cordis": "4.0.2"
   },
   "dependencies": {
-    "@acryl/app-persistence": "workspace:*",
+    "@webboxes/app-persistence": "workspace:*",
     "@deepseek-ai/cordis-plugin-group": "1.0.2",
     "@deepseek-ai/cordis-plugin-hmr": "1.0.17",
     "@deepseek-ai/cordis-plugin-include": "1.0.7",

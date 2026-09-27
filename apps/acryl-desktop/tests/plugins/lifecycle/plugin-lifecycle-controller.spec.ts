@@ -104,7 +104,7 @@ const BLEND_PACKAGE = 'acryl-blend-row-package'
 function blendProjection(): DesktopBlendProjection {
   return {
     lockPath: join('/tmp', 'acryl-crm', '.acryl', 'blend.lock.json'),
-    generator: { name: '@acryl/blends-core', version: '0.1.0' },
+    generator: { name: '@webboxes/blends-core', version: '0.1.0' },
     origin: { id: 'acryl.crm', kind: 'Blueprint', version: '0.1.0', digest: `sha256:${'a'.repeat(64)}` },
     rows: [{ id: 'blend-row', name: BLEND_PACKAGE }],
   }

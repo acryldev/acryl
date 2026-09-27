@@ -18,7 +18,7 @@
 import { spawnSync } from 'node:child_process'
 import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
-import { manifestDigest } from '@acryl/blends-core'
+import { manifestDigest } from '@webboxes/blends-core'
 import { isMap, isSeq, parseDocument, stringify } from 'yaml'
 import { brandIdentity, type BrandIdentity } from '../blueprint/brand-identity.ts'
 import { builtInCatalog, type Blueprint } from '../blueprint/blueprint.ts'
@@ -172,9 +172,9 @@ jobs:
         with:
           node-version: 24
       - name: The app definition is valid
-        run: npx --yes --package @acryl/blends-core@0.1 blends-validate blend.yaml
+        run: npx --yes --package @webboxes/blends-core@0.1 blends-validate blend.yaml
       - name: No secrets in the repository
-        run: npx --yes --package @acryl/app-persistence@0.1 acryl-secret-check .
+        run: npx --yes --package @webboxes/app-persistence@0.1 acryl-secret-check .
 `
 }
 

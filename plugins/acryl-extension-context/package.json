@@ -42,7 +42,7 @@
   },
   "main": "./index.js",
   "dependencies": {
-    "@acryl/blends-core": "workspace:*",
+    "@webboxes/blends-core": "workspace:*",
     "@deepseek-ai/dsh-tools": "0.1.5-alpha.1",
     "yaml": "^2.9.0"
   },

@@ -14,13 +14,13 @@
   },
   "scripts": {
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
-    "typecheck": "pnpm --filter @acryl/blends-core run build && tsc -p tsconfig.json --noEmit",
-    "test": "pnpm --filter @acryl/blends-core run build && vitest run",
+    "typecheck": "pnpm --filter @webboxes/blends-core run build && tsc -p tsconfig.json --noEmit",
+    "test": "pnpm --filter @webboxes/blends-core run build && vitest run",
     "check": "pnpm run build && pnpm run typecheck && pnpm run test",
     "prepublishOnly": "pnpm run check"
   },
   "dependencies": {
-    "@acryl/blends-core": "workspace:*",
+    "@webboxes/blends-core": "workspace:*",
     "@acryl/ui": "workspace:*",
     "@deepseek-ai/cordis-plugin-group": "1.0.2",
     "@deepseek-ai/cordis-plugin-hmr": "1.0.17",

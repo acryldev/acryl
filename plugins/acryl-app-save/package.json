@@ -33,6 +33,6 @@
     "check": "pnpm run test"
   },
   "dependencies": {
-    "@acryl/app-persistence": "workspace:*"
+    "@webboxes/app-persistence": "workspace:*"
   }
 }

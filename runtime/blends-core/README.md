@@ -1,4 +1,4 @@
-# @acryl/blends-core
+# @webboxes/blends-core
 
 The ACRYL Blends format, `blends.acryl.dev/v1alpha1`: the manifest an app's `blend.yaml` is, and the library that parses, validates, resolves (Blueprint
 inheritance and parameters), compiles (to Cordis Loader patches) and locks it. Host-independent: no Cordis, DSH or surface dependencies, so the engine, the

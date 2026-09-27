@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
   "generator": {
-    "name": "@acryl/blends-core",
+    "name": "@webboxes/blends-core",
     "version": "0.1.0"
   },
   "origin": {

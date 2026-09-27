@@ -65,7 +65,7 @@ describe('acryl new --from', () => {
     const { mkdirSync, readFileSync, writeFileSync } = await import('node:fs')
     const { createHash } = await import('node:crypto')
     const { readBlueprintFile } = await import('acryl-harness-runtime')
-    // The format's lock digest (@acryl/blends-core manifestDigest): lowercase hex SHA-256 of the manifest bytes.
+    // The format's lock digest (@webboxes/blends-core manifestDigest): lowercase hex SHA-256 of the manifest bytes.
     const manifestDigest = (text: string): string => createHash('sha256').update(text).digest('hex')
     const root = mkdtempSync(join(tmpdir(), 'acryl-new-from-')); dirs.push(root)
     const source = join(root, 'ledger')

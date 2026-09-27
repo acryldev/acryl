@@ -39,12 +39,12 @@ separate "manager" beside the engine: `push`, `pull` and `commit` are engine com
 1. **Everything an app does over its life is ACRYL** (the engine). Create, run, list, stop, remove, snapshot, apply, push, pull are `acryl` commands and plugins,
    because the builder inside the app must be able to use them too (snapshot and restore from the inside is the framework's promise). The interim scripts
    become those commands.
-2. **The format moves into the monorepo as its own package** (`runtime/blends-core`, published to npm as `@acryl/blends-core`), with the specification as that
+2. **The format moves into the monorepo as its own package** (`runtime/blends-core`, published to npm as `@webboxes/blends-core`), with the specification as that
    package's docs. It stays a small library with no runtime dependencies, so other runtimes and the registry can use it, but it versions and tests with the
    engine that depends on it, and there is one reader of `blend.yaml`. Then the three shapes become one (an app folder is the Blend; `/blend snapshot` writes
    into it; `acryl pull` creates one).
 3. **acrylblends.github.io becomes the registry and catalog**: a content repository of Blueprints and Blends by category (`blends/<category>/<id>/blend.yaml`,
-   plus README and screenshots), a CI job that validates every entry with `@acryl/blends-core` and generates `index.json`, and the website that renders the
+   plus README and screenshots), a CI job that validates every entry with `@webboxes/blends-core` and generates `index.json`, and the website that renders the
    catalog from it. Publishing is a pull request, reviewed by a human, which matches "publishing is the user's decision". `acryl pull <id>` reads
    `index.json`; `acryl push` opens that pull request. A private registry is the same repository shape on a company's own git host.
 4. **`acryldev/blends` is archived** once its code has moved, with a README pointing at the two new homes. Its history stays readable.

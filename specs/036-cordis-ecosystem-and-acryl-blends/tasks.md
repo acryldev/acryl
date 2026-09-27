@@ -29,7 +29,7 @@ Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository
 - [x] T012d Three levels (Blank, Blueprint, Project): starters extend a Blueprint and boot as they are; a Project keeps its starter in `blueprints/` and its license in `THIRD-PARTY.md`
 - [x] T019a `/app save` and `/app connect` are their own swappable plugin (`acryl-app-save`, Blueprint row `app-save`); `acryl new` writes the CI workflow
       (`blends-validate`, `acryl-secret-check`)
-- [ ] T019 Publish `@acryl/blends-core` and `@acryl/app-persistence` to npm, so the CI workflow in new apps runs (approved by the owner 2026-09-27)
+- [ ] T019 Publish `@webboxes/blends-core` and `@webboxes/app-persistence` to npm, so the CI workflow in new apps runs (approved by the owner 2026-09-27)
 - [ ] T020 `acryl publish`: a Project becomes a Blueprint in a registry through a reviewed pull request (public only; refused for private apps)
 - [ ] T013 `acryl new` and the app lifecycle commands in the published CLI (today the launcher needs a framework checkout)
 - [x] T014a The public registry on acrylblends.github.io: `registry/` with Blank and the organizer starter, CI validation, `/registry/` served, the Blends page listing real entries (PR acrylblends/acrylblends.github.io#1, deploys on merge)
