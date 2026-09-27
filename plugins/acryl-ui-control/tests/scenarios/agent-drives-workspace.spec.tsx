@@ -9,6 +9,7 @@
 import { act, cleanup, render } from '@testing-library/react'
 import { useSyncExternalStore } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { makeDock } from '../../../acryl-workspace/tests/dock/dock-fixtures.ts'
 import { WorkspaceTabRegistry } from '../../../acryl-workspace/src/client/tabs/registry/tab-registry.ts'
 import { TabTypesState } from '../../../acryl-workspace/src/client/tabs/tab-types-state.ts'
 import { TabsPanel } from '../../../acryl-workspace/src/client/tabs/TabsPanel.tsx'
@@ -31,6 +32,8 @@ globalThis.ResizeObserver = NoopObserver as unknown as typeof ResizeObserver
 afterEach(() => { cleanup(); document.body.innerHTML = '' })
 
 /** An agent: every call goes through the driver, inside `act` so React settles like it would in the page. */
+const dock = makeDock().controller
+
 function agent() {
   const driver = new UiDriver({ document: () => document, sleep: async () => { await Promise.resolve() } })
   return {
@@ -105,7 +108,7 @@ describe('scenario: settings for coding agents, through the + menu and Settings 
       const terminals = new TerminalRegistry({ createSocket: () => ({ send() {}, close() {}, onopen: null, onmessage: null, onclose: null, onerror: null, readyState: 0 }), urlFor: id => `ws://x/${id}` })
       return (
         <>
-          <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={undefined} customAgents={[]} terminals={terminals} onClose={() => {}} onOpenPty={() => {}} agentSettings={null} tabTypes={tabTypes} tabRegistry={registry} onSetAgentEnabled={async () => {}} onManageSettings={() => true} />
+          <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={undefined} customAgents={[]} terminals={terminals} onClose={() => {}} onOpenPty={() => {}} agentSettings={null} tabTypes={tabTypes} tabRegistry={registry} dock={dock} onSetAgentEnabled={async () => {}} onManageSettings={() => true} />
           <TabsPanel tabTypes={tabTypes} tabRegistry={registry} />
         </>
       )

@@ -67,6 +67,39 @@ const WORKSPACE_STYLES = `
 .dshPaletteEmpty { padding: 14px 12px; color: var(--dsw-alias-fg-l2); }
 .dshPaletteFooter { display: flex; gap: 16px; padding: 8px 14px; border-top: 1px solid var(--dsw-alias-border-l1); color: var(--dsw-alias-fg-l2); font-size: 12px; }
 .dshPaletteFooter .dshPaletteKey { margin-left: 0; margin-right: 4px; }
+.dshDockCenter { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
+.dshDockCenterMain { display: flex; flex-direction: column; flex: 1 1 0; min-width: 0; min-height: 0; }
+.dshDockBottom { display: flex; flex: none; min-height: 0; overflow: hidden; background: var(--dsw-alias-bg-base); }
+.dshDockRight { display: flex; flex-direction: column; width: 100%; height: 100%; min-width: 0; min-height: 0; }
+.dshDockRightTop { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; position: relative; }
+.dshDockRightTop[hidden] { display: none; }
+.dshDockRightTop > * { flex: 1 1 auto; min-height: 0; }
+.dshDockRightBottom { display: flex; min-height: 0; overflow: hidden; background: var(--dsw-alias-bg-base); }
+.dshDockDivider { position: relative; flex: none; height: 5px; border-top: 1px solid var(--dsw-alias-border-l1); cursor: row-resize; touch-action: none; outline: none; }
+.dshDockDivider::after { content: ""; position: absolute; left: 0; right: 0; top: -3px; bottom: -2px; }
+.dshDockDivider:hover, .dshDockDivider:focus-visible { border-top-color: #4d6bfe; }
+.dshDockSwitcher { display: flex; flex: none; justify-content: center; gap: 6px; padding: 6px; border-top: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-base); }
+.dshDockSwitcher button { appearance: none; display: inline-grid; place-items: center; width: 34px; height: 26px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; }
+.dshDockSwitcher button:hover { color: var(--dsw-alias-fg); background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
+.dshDockSwitcher button[aria-selected="true"] { color: var(--dsw-alias-fg); border-color: var(--dsw-alias-border-l1); }
+.dshDockPanel { display: flex; flex-direction: column; flex: 1; width: 100%; min-width: 0; min-height: 0; }
+.dshDockTabs { display: flex; flex: none; align-items: center; gap: 4px; padding: 6px 10px; overflow-x: auto; scrollbar-width: none; font: 12.5px/1.2 ui-sans-serif, system-ui, sans-serif; }
+.dshDockTabs::-webkit-scrollbar { display: none; }
+.dshDockTab { display: flex; flex: none; align-items: center; border: 1px solid transparent; border-radius: 999px; color: var(--dsw-alias-fg-l2); }
+.dshDockTab:hover { color: var(--dsw-alias-fg); }
+.dshDockTab[data-active] { border-color: var(--dsw-alias-border-l1); color: var(--dsw-alias-fg); }
+.dshDockTabButton { appearance: none; padding: 5px 4px 5px 12px; border: 0; background: transparent; color: inherit; cursor: pointer; font: inherit; white-space: nowrap; }
+.dshDockTabClose { appearance: none; width: 20px; height: 20px; margin-right: 6px; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; opacity: 0; font: inherit; }
+.dshDockTab:hover .dshDockTabClose, .dshDockTab[data-active] .dshDockTabClose, .dshDockTabClose:focus-visible { opacity: 0.8; }
+.dshDockTabClose:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); }
+.dshDockTabRename { width: 110px; margin: 2px 6px; padding: 3px 8px; border: 1px solid #4d6bfe; border-radius: 999px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-fg); font: inherit; outline: none; }
+.dshDockAdd, .dshDockHide { appearance: none; flex: none; display: inline-grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 8px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 16px; }
+.dshDockAdd:hover, .dshDockHide:hover { color: var(--dsw-alias-fg); background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
+.dshDockGrow { flex: 1; }
+.dshDockBody { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
+.dshDockEmpty { padding: 16px; color: var(--dsw-alias-fg-l2); font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; }
+.dshDockEmpty button { margin-left: 6px; padding: 3px 10px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); cursor: pointer; font: inherit; }
+.dshDockButtons { display: flex; align-items: center; flex: none; }
 .dshWorkspaceMenuTag { margin-left: 6px; padding: 0 6px; border-radius: 4px; background: color-mix(in srgb, #4d6bfe 20%, transparent); color: var(--dsw-alias-fg-l2); font-size: 10.5px; }
 .dshWorkspaceMenuHint { padding: 6px 10px 8px; color: var(--dsw-alias-fg-l2); font: 11.5px/1.4 ui-sans-serif, system-ui, sans-serif; }
 /* One opener only: the canvas tab strip carries the always-present right-panel toggle, so upstream's own
@@ -130,6 +163,7 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceXterm { position: relative; flex: 1; min-width: 0; min-height: 0; padding: 8px 10px; overflow: hidden; background: #0b0d12; }
 .dshWorkspacePtyError { position: absolute; inset: 50% auto auto 50%; translate: -50% -50%; max-width: min(520px, 80%); color: #fca5a5; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dshWorkspaceXterm .xterm { position: relative; width: 100%; height: 100%; }
+.dshWorkspaceXterm .xterm .xterm-viewport { scrollbar-width: thin; scrollbar-color: #3a3f4b transparent; }
 .dshWorkspaceXterm .xterm .xterm-viewport { background-color: #0b0d12; }
 .dshWorkspaceFile input, .dshWorkspaceFile textarea, .dshWorkspaceBrowserBar input { flex: 1; min-width: 0; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dshWorkspaceFile { gap: 0; }

@@ -102,6 +102,8 @@ describe('built-in items', () => {
     openCustomTab: vi.fn<PaletteActions['openCustomTab']>(),
     openSettings: vi.fn<PaletteActions['openSettings']>(() => true),
     toggleRightPanel: vi.fn<PaletteActions['toggleRightPanel']>(),
+    toggleTerminalPanel: vi.fn<PaletteActions['toggleTerminalPanel']>(),
+    setTerminalMode: vi.fn<PaletteActions['setTerminalMode']>(),
     setShellMode: vi.fn<PaletteActions['setShellMode']>(),
     selectWorktree: vi.fn<PaletteActions['selectWorktree']>(),
     focusTab: vi.fn<PaletteActions['focusTab']>(),
@@ -121,6 +123,8 @@ describe('built-in items', () => {
     byId.get('tab:t1')?.run()
     byId.get('worktree:/p')?.run()
     byId.get('command:right-panel')?.run()
+    byId.get('command:terminal-panel')?.run()
+    byId.get('command:terminal-side')?.run()
     byId.get('command:close-tab')?.run()
     byId.get('command:mode-projects')?.run()
     byId.get('setting:tabs')?.run()
@@ -130,6 +134,8 @@ describe('built-in items', () => {
     expect(a.focusTab).toHaveBeenCalledWith('t1')
     expect(a.selectWorktree).toHaveBeenCalledWith('/p')
     expect(a.toggleRightPanel).toHaveBeenCalled()
+    expect(a.toggleTerminalPanel).toHaveBeenCalled()
+    expect(a.setTerminalMode).toHaveBeenCalledWith('side')
     expect(a.closeActiveTab).toHaveBeenCalled()
     expect(a.setShellMode).toHaveBeenCalledWith('projects')
     expect(a.openSettings).toHaveBeenCalledWith('tabs')

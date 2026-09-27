@@ -12,6 +12,8 @@ import { labelForCommand } from '../terminal/agent-commands.ts'
 import { AgentIcon } from './AgentIcon.tsx'
 import type { TerminalRegistry } from '../terminal/terminal-session.ts'
 import type { AgentSettingsView } from '../../agents/contract.ts'
+import type { DockController } from '../dock/dock-controller.ts'
+import { DockButtons, type RightPaneHandle } from '../dock/DockButtons.tsx'
 import type { WorkspaceTabRegistry } from './registry/tab-registry.ts'
 import type { TabTypesState } from './tab-types-state.ts'
 import { NewTabMenu } from './NewTabMenu.tsx'
@@ -26,7 +28,9 @@ export interface TabStripProps {
   readonly branchLabel: string | null
   readonly branchTitle: string
   readonly runningText: string | null
-  readonly rightPanel?: { toggle(): void }
+  readonly rightPanel?: RightPaneHandle
+  /** The terminal dock, for its two buttons. */
+  readonly dock: DockController
   readonly storage: Storage | undefined
   onClose(tile: WorkspaceTile): void
   readonly customAgents: readonly CustomAgent[]
@@ -101,7 +105,7 @@ function kindGlyph(kind: WorkspaceTile['kind']): string {
   return '◉'
 }
 
-export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, storage, customAgents, terminals, onClose, onOpenPty, agentSettings, tabTypes, tabRegistry, onSetAgentEnabled, onManageSettings }: TabStripProps) {
+export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, dock, storage, customAgents, terminals, onClose, onOpenPty, agentSettings, tabTypes, tabRegistry, onSetAgentEnabled, onManageSettings }: TabStripProps) {
   const tabsRef = useRef<HTMLDivElement>(null)
   const [edges, setEdges] = useState({ start: false, end: false })
   const [tabMenu, setTabMenu] = useState<{ readonly id: string; readonly x: number; readonly y: number } | null>(null)
@@ -248,6 +252,7 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
         onSetAgentEnabled={onSetAgentEnabled}
         onManageSettings={onManageSettings}
       />
+      <DockButtons controller={dock} rightPane={rightPanel} />
       {rightPanel !== undefined && (
         <button
           type="button"

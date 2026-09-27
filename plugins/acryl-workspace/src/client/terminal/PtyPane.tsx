@@ -16,7 +16,7 @@ function statusText(snapshot: TerminalSessionSnapshot): string {
   return 'starting'
 }
 
-export function PtyPane({ tile, terminals }: { readonly tile: WorkspaceTile; readonly terminals: TerminalRegistry }) {
+export function PtyPane({ tile, terminals, compact = false }: { readonly tile: WorkspaceTile; readonly terminals: TerminalRegistry; /** Hide the name and status line (the dock's tab strip already names the terminal). */ readonly compact?: boolean }) {
   const terminalHost = useRef<HTMLDivElement>(null)
   const session = tile.terminalId === undefined ? undefined : terminals.ensure(tile.terminalId)
   const snapshot = useSyncExternalStore(
@@ -38,10 +38,12 @@ export function PtyPane({ tile, terminals }: { readonly tile: WorkspaceTile; rea
   const status = tile.error !== undefined ? 'error' : statusText(snapshot)
   return (
     <div className="dshWorkspacePty" onMouseDown={() => { session?.focus() }}>
-      <div className="dshWorkspacePtyToolbar">
-        <span className="dshWorkspacePtyName">{tile.title}</span>
-        <span className="dshWorkspacePtyStatus" data-status={snapshot.status}>{status}</span>
-      </div>
+      {!compact && (
+        <div className="dshWorkspacePtyToolbar">
+          <span className="dshWorkspacePtyName">{tile.title}</span>
+          <span className="dshWorkspacePtyStatus" data-status={snapshot.status}>{status}</span>
+        </div>
+      )}
       {searching && session !== undefined && <TerminalSearchBar session={session} onClose={() => { setSearching(false); session.focus() }} />}
       <div ref={terminalHost} className="dshWorkspaceXterm" aria-label={`${tile.title} terminal`} />
       {tile.error !== undefined && <div className="dshWorkspacePtyError">{tile.error}</div>}

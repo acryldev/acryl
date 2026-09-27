@@ -39,6 +39,8 @@ import { DocPane } from '../docs/DocPane.tsx'
 import { openSettingsSection } from '../settings/open-settings.ts'
 import { CustomTabPane } from '../tabs/registry/CustomTabPane.tsx'
 import type { WorkspaceTabRegistry } from '../tabs/registry/tab-registry.ts'
+import type { DockController } from '../dock/dock-controller.ts'
+import type { RightPaneHandle } from '../dock/DockButtons.tsx'
 import { CommandPalette } from '../palette/CommandPalette.tsx'
 import type { PaletteConfigState } from '../palette/palette-config.ts'
 import { useWorkspacePalette } from '../palette/use-workspace-palette.ts'
@@ -81,7 +83,9 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   /** Remembers each comment sent, for the Review tab. */
   readonly review: ReviewStore
   /** Opens and closes the right panel. Always available, even for a chat that has no header yet. */
-  readonly rightPanel?: { toggle(): void }
+  readonly rightPanel?: RightPaneHandle
+  /** The terminal dock: its buttons sit in the tab strip, and the frame places its panel. */
+  readonly dock: DockController
 }
 
 /**
@@ -90,7 +94,7 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents: agentsState, tabTypes, tabRegistry, paletteConfig, toasts, notices, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, agents: agentsState, tabTypes, tabRegistry, paletteConfig, toasts, notices, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
   // Subscribe to primitives, not the whole shell snapshot: git polling updates that snapshot often,
@@ -285,7 +289,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
     terminals: snapshot.tiles.filter(tile => tile.kind === 'pty').length,
   })
   const palette = useWorkspacePalette({
-    workspace, groups, groupKey, snapshot, shell, gitApi, toasts, agentSettings, customAgents, tabTypes, tabRegistry, config: paletteConfig, rightPanel,
+    workspace, groups, groupKey, snapshot, shell, gitApi, toasts, agentSettings, customAgents, tabTypes, tabRegistry, dock, config: paletteConfig, rightPanel,
     openPty: (commandId, title) => { void openPty(commandId, title) },
     closeTile: (tileId) => { const tile = snapshot.tiles.find(candidate => candidate.id === tileId); if (tile !== undefined) void closeTile(tile) },
   })
@@ -300,6 +304,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
         branchTitle={groupKey}
         runningText={runningText}
         {...(rightPanel === undefined ? {} : { rightPanel })}
+        dock={dock}
         storage={safeStorage()}
         onClose={(tile) => { void closeTile(tile) }}
         customAgents={customAgents}

@@ -24,12 +24,11 @@ import { startWorkspacePersistence } from './canvas/persist.ts'
 import { createProjectsControl, desktopDirectorySeams } from './projects/projects-control.ts'
 import { createWorkspaceGitApi } from './git/git-api.ts'
 import { ProjectsSidebar } from './projects/ProjectsSidebar.tsx'
-import { createWorkspacePtyApi } from './terminal/pty-api.ts'
-import { WorkspacePtyClient } from './sessions/session-client.ts'
 import { createWorkspaceAgentsApi } from './agents/agents-api.ts'
 import { agentsSettingsPlugin } from './agents/agents-settings-plugin.ts'
 import { PaletteConfigState } from './palette/palette-config.ts'
 import { paletteSettingsPlugin } from './palette/palette-settings-plugin.ts'
+import { createTerminalStack } from './dock/terminal-stack.ts'
 import { WorkspaceTabRegistry } from './tabs/registry/tab-registry.ts'
 import { provideWorkspaceTabs } from './tabs/registry/provide.ts'
 import { TabTypesState } from './tabs/tab-types-state.ts'
@@ -37,7 +36,6 @@ import { tabsSettingsPlugin } from './tabs/tabs-settings-plugin.ts'
 import { AgentsState } from './agents/agents-state.ts'
 import { createBrowserNoticePort } from './notifications/system-notice.ts'
 import { ToastState } from './notifications/toast-state.ts'
-import { TerminalRegistry } from './terminal/terminal-session.ts'
 import { startShellPolling } from './worktrees/shell-polling.ts'
 import { WorkspaceShellState } from './worktrees/shell-state.ts'
 import { installWorkspaceStyles } from './styles.ts'
@@ -65,7 +63,6 @@ export const inject = ['slots', 'theme']
 export function apply(ctx: ClientContext): void {
   const environment = resolveShellEnvironment(window.location.hash)
   const advanced = environment.mode === 'advanced'
-  if (advanced) applyAdvancedShell(ctx, environment)
   const gitApi = createWorkspaceGitApi()
   const filesApi = createWorkspaceFilesApi()
   const shell = new WorkspaceShellState(gitApi)
@@ -74,6 +71,9 @@ export function apply(ctx: ClientContext): void {
   const saved = parseSavedWorkspace(storage?.getItem(STORAGE_KEY) ?? null)
   const groups = new WorkspaceGroups(undefined, saved?.groups)
   if (saved !== undefined) shell.setMode(saved.mode)
+  // The terminals and the dock are shared by the frame (which places the dock) and the canvas (its terminal tabs).
+  const terminalStack = advanced ? createTerminalStack(ctx, storage, shell) : undefined
+  if (advanced) applyAdvancedShell(ctx, environment, terminalStack?.host)
   ctx.effect(() => startWorkspacePersistence({ groups, shell, storage }), 'acryl-workspace: save tabs and view')
   const review = new ReviewStore(parseSavedThreads(storage?.getItem(REVIEW_STORAGE_KEY) ?? null))
   ctx.effect(() => startReviewPersistence(review, storage), 'acryl-workspace: save review comments')
@@ -85,6 +85,13 @@ export function apply(ctx: ClientContext): void {
         ctx.get('sidebarRight')?.toggleExpanded()
       } catch {
         // No current chat session means there is no right panel to toggle.
+      }
+    },
+    isOpen(): boolean {
+      try {
+        return ctx.get('sidebarRight')?.isExpanded() === true
+      } catch {
+        return false
       }
     },
   }
@@ -103,7 +110,8 @@ export function apply(ctx: ClientContext): void {
   ctx.plugin(checksTabPlugin(shell, gitApi))
   ctx.plugin(filesTabPlugin(shell, filesApi, gitApi))
 
-  if (advanced) {
+  if (advanced && terminalStack !== undefined) {
+    const { ptyClient, terminals, dock } = terminalStack
     // Shared by the "+" menu, the tab icons and the Projects list.
     const agents = new AgentsState(createWorkspaceAgentsApi())
     ctx.effect(() => { void agents.refresh(); return () => {} }, 'acryl-workspace: load agents')
@@ -117,9 +125,6 @@ export function apply(ctx: ClientContext): void {
     ctx.plugin(tabsSettingsPlugin(tabTypes, tabRegistry))
     ctx.plugin(paletteSettingsPlugin(paletteConfig))
     ctx.slots.inject('desktop.main', () => {
-      const ptyClient = new WorkspacePtyClient(createWorkspacePtyApi())
-      // Terminals live as long as this registration, so switching tabs never rebuilds one.
-      const terminals = new TerminalRegistry()
       const toasts = new ToastState()
       const notices = createBrowserNoticePort()
       let removeSlot: (() => void) | undefined
@@ -127,18 +132,14 @@ export function apply(ctx: ClientContext): void {
         removeSlot = ctx.slots.register({
           name: 'desktop.main',
           priority: WORKSPACE_MAIN_PRIORITY,
-          inject: () => ({ ptyApi: ptyClient, terminals, agents, tabTypes, tabRegistry, paletteConfig, toasts, notices, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }),
+          inject: () => ({ ptyApi: ptyClient, terminals, dock, agents, tabTypes, tabRegistry, paletteConfig, toasts, notices, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }),
         }, WorkspaceCanvas)
       } catch (cause) {
         // A registration conflict must not take the left pane and the Changes tab down with it.
         ctx.logger.warn(`acryl-workspace: could not register the canvas: ${cause instanceof Error ? cause.message : String(cause)}`)
       }
 
-      return async () => {
-        removeSlot?.()
-        terminals.disposeAll()
-        await ptyClient.dispose()
-      }
+      return () => { removeSlot?.() }
     })
 
     ctx.slots.inject('desktop.sidebar', () => {
