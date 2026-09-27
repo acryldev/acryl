@@ -120,6 +120,12 @@ const WORKSPACE_STYLES = `
 .dshWorkspacePtyToolbar, .dshWorkspaceBrowserBar { display: flex; gap: 8px; align-items: center; padding: 6px 10px; border-bottom: 1px solid var(--dsw-alias-border-l2); }
 .dshWorkspacePtyName { font: 600 12px/1 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg); }
 .dshWorkspacePtyStatus { margin-left: auto; font: 11px/1 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-fg-l2); }
+.dshWorkspaceTermSearch { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-base); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceTermSearch input { flex: 1; min-width: 0; padding: 4px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: var(--dsw-alias-fg); font: inherit; outline: none; }
+.dshWorkspaceTermSearch input:focus { border-color: #4d6bfe; }
+.dshWorkspaceTermSearch button { appearance: none; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; }
+.dshWorkspaceTermSearch button:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 10%)); color: var(--dsw-alias-fg); }
+.dshWorkspaceTermSearchCount { min-width: 64px; color: var(--dsw-alias-fg-l2); }
 .dshWorkspaceXtermScreen { width: 100%; height: 100%; }
 .dshWorkspaceXterm { position: relative; flex: 1; min-width: 0; min-height: 0; padding: 8px 10px; overflow: hidden; background: #0b0d12; }
 .dshWorkspacePtyError { position: absolute; inset: 50% auto auto 50%; translate: -50% -50%; max-width: min(520px, 80%); color: #fca5a5; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }

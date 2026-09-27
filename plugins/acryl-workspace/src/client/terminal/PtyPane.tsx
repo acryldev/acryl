@@ -1,7 +1,8 @@
 /** A terminal or agent tab: shows the session's live terminal and its status. */
 
-import { useEffect, useRef, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { WorkspaceTile } from '../canvas/state.ts'
+import { TerminalSearchBar } from './TerminalSearchBar.tsx'
 import type { TerminalRegistry, TerminalSessionSnapshot } from './terminal-session.ts'
 
 const NO_SUBSCRIPTION = (): (() => void) => () => {}
@@ -23,6 +24,9 @@ export function PtyPane({ tile, terminals }: { readonly tile: WorkspaceTile; rea
     session?.getSnapshot ?? (() => STARTING),
   )
 
+  const [searching, setSearching] = useState(false)
+  useEffect(() => session?.onSearchRequest(() => { setSearching(true) }), [session])
+
   // The terminal is moved into this pane while the tab shows it and back out when it does not.
   useEffect(() => {
     const host = terminalHost.current
@@ -38,6 +42,7 @@ export function PtyPane({ tile, terminals }: { readonly tile: WorkspaceTile; rea
         <span className="dshWorkspacePtyName">{tile.title}</span>
         <span className="dshWorkspacePtyStatus" data-status={snapshot.status}>{status}</span>
       </div>
+      {searching && session !== undefined && <TerminalSearchBar session={session} onClose={() => { setSearching(false); session.focus() }} />}
       <div ref={terminalHost} className="dshWorkspaceXterm" aria-label={`${tile.title} terminal`} />
       {tile.error !== undefined && <div className="dshWorkspacePtyError">{tile.error}</div>}
     </div>

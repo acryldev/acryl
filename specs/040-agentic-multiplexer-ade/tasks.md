@@ -39,9 +39,9 @@ Related milestone: [041 Agent Control](../041-agent-control/spec.md) lets agents
 
 ## Phase 1: the `workspaceTabs` registry (in `acryl-workspace`)
 
-- [ ] **T010** Define the `WorkspaceTabType` contract and the `workspaceTabs` registry (`register` returning a disposer, `list`, `subscribe`) and provide it with `ctx.provide`. Unit tests for register, dispose, duplicate `kind` rejection, subscription notification.
-- [ ] **T011** Route the `+` menu and tab rendering through the registry, and register the existing seven kinds through it in-package. No behavior change: the existing `acryl-workspace` tests stay green unmodified.
-- [ ] **T012** Render a "plugin off" placeholder for a tab whose type is not registered, preserving the tab's state so re-registering restores it. Test both directions.
+- [x] **T010** (delivered in `acryl-workspace`, see T125) Define the `WorkspaceTabType` contract and the `workspaceTabs` registry (`register` returning a disposer, `list`, `subscribe`) and provide it with `ctx.provide`. Unit tests for register, dispose, duplicate `kind` rejection, subscription notification.
+- [ ] **T011** (decided not to do for now, see design-phase-10.md) Route the `+` menu and tab rendering through the registry, and register the existing seven kinds through it in-package. No behavior change: the existing `acryl-workspace` tests stay green unmodified.
+- [x] **T012** (delivered, T125) Render a "plugin off" placeholder for a tab whose type is not registered, preserving the tab's state so re-registering restores it. Test both directions.
 
 ## Phase 2: `acryl-git` (new package under `plugins/`)
 
@@ -64,7 +64,7 @@ Related milestone: [041 Agent Control](../041-agent-control/spec.md) lets agents
 
 ## Phase 5: optional split (decision 1)
 
-- [ ] **T050** Extend `WorkspaceState` with one optional second pane: open in split, close split, active pane, both panes' tabs restored. Tests on the state machine; render two tabs side by side in `WorkspaceCanvas`.
+- [x] **T050** (built: optional split with a draggable divider) Extend `WorkspaceState` with one optional second pane: open in split, close split, active pane, both panes' tabs restored. Tests on the state machine; render two tabs side by side in `WorkspaceCanvas`.
 
 ## Phase 6: ledger and docs
 
@@ -116,7 +116,7 @@ Source: the owner's reviews of the running Web surface, with reference screensho
 - [x] **T101** Perfect reattach after a page reload or a long disconnect: keep a headless terminal (xterm headless plus serialize addon) on the Host so a reconnecting view gets the exact screen, not a replayed tail. Delivered: a Host-side headless screen model per terminal; a view that attaches without a usable cursor gets the exact screen (including a full-screen program's alternate screen). Tested on a real PTY.
 - [x] **T102** GPU renderer (WebGL addon) with automatic fallback, ligature-free crisp box drawing; measure on a real TUI (Claude, Codex, Grok). Delivered: WebGL renderer with fallback to the DOM renderer where WebGL2 is missing or the context is lost. Not measured on a real GPU yet.
 - [x] **T103** Start the process at the pane's real size (size sent with the start request) so the first frame is not drawn at 120x40. Delivered: the pane's estimated size is sent with the start request; the real size follows on attach.
-- [ ] **T104** Terminal niceties: clickable links, search in scrollback, copy/paste and selection behaviour on par with a native terminal, tab title from the terminal title.
+- [x] **T104** (delivered except a copy and paste parity check, which needs a native comparison) Delivered: clickable http and https links, search in scrollback (Cmd+F on macOS, Ctrl+Shift+F elsewhere; Enter and Shift+Enter step through matches; checked in a real browser with fixture output), and a shell tab named from its program's terminal title unless you renamed it. Terminal niceties: clickable links, search in scrollback, copy/paste and selection behaviour on par with a native terminal, tab title from the terminal title.
 - [~] **T105** Real-browser regression run with a full-screen TUI: resize, rapid typing, switching tabs back and forth, reload, dropped connection. Automated part delivered (real PTY, alternate screen, resize, a 30,000-line burst); the manual browser run with Claude, Codex or Grok is still open.
 
 **Layout and chrome (super.engineering, Orca, superset.sh)**

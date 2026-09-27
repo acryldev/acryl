@@ -261,7 +261,13 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
         return
       }
     })
-    return () => { stopGroups(); stopExit(); stopLost() }
+    // A shell that sets its title (the directory, the running command) names its tab, unless the user renamed it.
+    const stopTitle = terminals.onTitle((terminalId, title) => {
+      for (const key of groups.keys()) {
+        if (groups.stateFor(key).applyTerminalTitle(terminalId, title)) return
+      }
+    })
+    return () => { stopGroups(); stopExit(); stopLost(); stopTitle() }
   }, [groups, terminals, toasts, notices])
 
   const customAgents = useSyncExternalStore(agentsState.subscribe, agentsState.getSnapshot)
