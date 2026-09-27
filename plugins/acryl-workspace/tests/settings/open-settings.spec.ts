@@ -35,4 +35,24 @@ describe('openSettingsSection', () => {
     while (frames.length > 0) frames.shift()?.()
     expect(pressed).toEqual(['palette'])
   })
+
+  it('does not press the Marketplace launcher or other labelled dialog buttons, only the Settings trigger in the left pane', () => {
+    document.body.innerHTML = [
+      '<button aria-haspopup="dialog" aria-label="Marketplace" class="dshMarketLauncher" id="market">Marketplace</button>',
+      '<div data-acryl-slot="sidebar">',
+      '<button aria-haspopup="dialog" aria-label="Usage" id="usage">Usage</button>',
+      '<button aria-haspopup="dialog" class="dshMarketLauncher" id="market2"></button>',
+      '<button aria-haspopup="dialog" id="settings">Settings</button>',
+      '</div>',
+    ].join('')
+    const pressed: string[] = []
+    for (const id of ['market', 'usage', 'market2', 'settings']) document.getElementById(id)?.addEventListener('click', () => { pressed.push(id) })
+    expect(openSettingsSection('agents', document, () => {})).toBe(true)
+    expect(pressed).toEqual(['settings'])
+  })
+
+  it('finds no Settings trigger when the only dialog buttons are labelled ones', () => {
+    document.body.innerHTML = '<div data-acryl-slot="sidebar"><button aria-haspopup="dialog" aria-label="Marketplace">M</button></div>'
+    expect(openSettingsSection('agents', document, () => {})).toBe(false)
+  })
 })

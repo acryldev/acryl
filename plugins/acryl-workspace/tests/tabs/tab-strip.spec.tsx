@@ -32,12 +32,12 @@ function memoryStorage(initial: Record<string, string> = {}): Storage {
   }
 }
 
-function Harness({ workspace, storage, onOpenPty, onClose = () => {}, custom = [], settings = null, onManage = () => true, tabTypes }: { workspace: WorkspaceState; storage: Storage; onOpenPty: (id: string, title: string) => void; onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: (section: 'agents' | 'tabs') => boolean; tabTypes?: TabTypesState }) {
+function Harness({ workspace, storage, onOpenPty, onClose = () => {}, custom = [], settings = null, onManage = () => true, tabTypes, onSetEnabled = async () => {} }: { workspace: WorkspaceState; storage: Storage; onOpenPty: (id: string, title: string) => void; onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: (section: 'agents' | 'tabs') => boolean; tabTypes?: TabTypesState; onSetEnabled?: (id: string, enabled: boolean) => Promise<void> }) {
   const snapshot = useSyncExternalStore(l => workspace.subscribe(l), () => workspace.getSnapshot())
-  return <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={storage} customAgents={custom} terminals={terminals} onClose={onClose} onOpenPty={onOpenPty} agentSettings={settings} tabTypes={tabTypes ?? new TabTypesState(storage)} tabRegistry={tabRegistry} onManageSettings={onManage} />
+  return <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={storage} customAgents={custom} terminals={terminals} onClose={onClose} onOpenPty={onOpenPty} agentSettings={settings} tabTypes={tabTypes ?? new TabTypesState(storage)} tabRegistry={tabRegistry} onSetAgentEnabled={onSetEnabled} onManageSettings={onManage} />
 }
 
-function setup(storage = memoryStorage(), extra: { onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: (section: 'agents' | 'tabs') => boolean; tabTypes?: TabTypesState } = {}) {
+function setup(storage = memoryStorage(), extra: { onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: (section: 'agents' | 'tabs') => boolean; tabTypes?: TabTypesState; onSetEnabled?: (id: string, enabled: boolean) => Promise<void> } = {}) {
   const workspace = new WorkspaceState()
   const onOpenPty = vi.fn()
   render(<Harness workspace={workspace} storage={storage} onOpenPty={onOpenPty} {...extra} />)
@@ -86,16 +86,33 @@ describe('TabStrip', () => {
     expect(screen.queryByRole('menuitem', { name: /Aider/ })).toBeNull()
   })
 
-  it('opens Settings from Manage agents, and says where to go when it cannot', () => {
+  it('turns the agent list into checkboxes with Manage agents, showing disabled agents too, and toggles right there', async () => {
+    const onSetEnabled = vi.fn(async (_id: string, _enabled: boolean) => {})
+    setup(memoryStorage(), { settings: view([entry('claude'), entry('codex', { enabled: false }), entry('aider', { installed: false })]), onSetEnabled })
+    fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Manage agents...' }))
+    const claude = screen.getByRole('menuitemcheckbox', { name: /Claude/ })
+    expect(claude.getAttribute('aria-checked')).toBe('true')
+    expect(screen.getByRole('menuitemcheckbox', { name: /Codex/ }).getAttribute('aria-checked')).toBe('false')
+    expect(screen.queryByRole('menuitemcheckbox', { name: /Aider/ })).toBeNull()
+    fireEvent.click(claude)
+    fireEvent.click(screen.getByRole('menuitemcheckbox', { name: /Codex/ }))
+    expect(onSetEnabled).toHaveBeenNthCalledWith(1, 'claude', false)
+    expect(onSetEnabled).toHaveBeenNthCalledWith(2, 'codex', true)
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Done' }))
+    expect(screen.queryByRole('menuitemcheckbox')).toBeNull()
+  })
+
+  it('opens Settings > Agents from Add more agents, and says where to go when it cannot', () => {
     const onManage = vi.fn((_section: 'agents' | 'tabs') => false)
     setup(memoryStorage(), { onManage })
     fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Manage agents...' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Add more agents...' }))
     expect(onManage).toHaveBeenCalledWith('agents')
     expect(screen.getByRole('status').textContent).toContain('Settings')
     onManage.mockReturnValue(true)
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Manage agents...' }))
-    expect(screen.queryByRole('menuitem', { name: 'Manage agents...' })).toBeNull()
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Add more agents...' }))
+    expect(screen.queryByRole('menuitem', { name: 'Add more agents...' })).toBeNull()
   })
 
   it('opens the default agent from Settings when + is clicked, and a blank terminal for No agent', () => {

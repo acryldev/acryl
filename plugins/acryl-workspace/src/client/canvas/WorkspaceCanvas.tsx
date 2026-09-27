@@ -308,6 +308,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, agents:
         agentSettings={agentSettings}
         tabTypes={tabTypes}
         tabRegistry={tabRegistry}
+        onSetAgentEnabled={(id, enabled) => agentsState.change({ agent: { id, enabled } })}
         onManageSettings={section => openSettingsSection(section)}
       />
       <div ref={stageRef} className="dshWorkspaceStage" role="tabpanel" data-split={splitTile !== undefined || undefined}>

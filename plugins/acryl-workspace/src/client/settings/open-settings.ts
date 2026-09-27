@@ -11,6 +11,21 @@ import { en, zh, type SettingsSectionKey } from './locales.ts'
 
 const MAX_FRAMES = 30
 
+/**
+ * The button that opens the Settings panel. Other buttons in the page also open dialogs (the Marketplace launcher,
+ * usage panels), so this looks only in the left pane and skips anything that carries an `aria-label` or belongs to
+ * the Marketplace: the Settings trigger is the one dialog button there with no label of its own.
+ */
+export function findSettingsTrigger(doc: Document): HTMLButtonElement | null {
+  const inPane = doc.querySelectorAll<HTMLButtonElement>('[data-acryl-slot="sidebar"] button[aria-haspopup="dialog"]')
+  const candidates = inPane.length > 0 ? inPane : doc.querySelectorAll<HTMLButtonElement>('button[aria-haspopup="dialog"]')
+  for (const button of candidates) {
+    if (button.hasAttribute('aria-label') || button.className.includes('Market')) continue
+    return button
+  }
+  return null
+}
+
 /** @returns true when the Settings button was found and pressed; the section is then selected as soon as it appears. */
 export function openSettingsSection(
   section: SettingsSectionKey,
@@ -18,7 +33,7 @@ export function openSettingsSection(
   schedule: (callback: () => void) => void = callback => { requestAnimationFrame(callback) },
 ): boolean {
   const labels: readonly string[] = [en[`${section}Nav`], zh[`${section}Nav`]]
-  const trigger = doc.querySelector<HTMLButtonElement>('button[aria-haspopup="dialog"]')
+  const trigger = findSettingsTrigger(doc)
   if (trigger === null) return false
   trigger.click()
   let frames = 0

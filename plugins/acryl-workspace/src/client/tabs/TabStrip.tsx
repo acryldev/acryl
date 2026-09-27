@@ -39,6 +39,8 @@ export interface TabStripProps {
   readonly tabTypes: TabTypesState
   /** The tab types plugins registered: their glyphs draw the tabs and they are listed in the + menu. */
   readonly tabRegistry: WorkspaceTabRegistry
+  /** Turns one agent on or off in the + menu. */
+  onSetAgentEnabled(id: string, enabled: boolean): Promise<void>
   onManageSettings(section: 'agents' | 'tabs'): boolean
 }
 
@@ -99,7 +101,7 @@ function kindGlyph(kind: WorkspaceTile['kind']): string {
   return '◉'
 }
 
-export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, storage, customAgents, terminals, onClose, onOpenPty, agentSettings, tabTypes, tabRegistry, onManageSettings }: TabStripProps) {
+export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, storage, customAgents, terminals, onClose, onOpenPty, agentSettings, tabTypes, tabRegistry, onSetAgentEnabled, onManageSettings }: TabStripProps) {
   const tabsRef = useRef<HTMLDivElement>(null)
   const [edges, setEdges] = useState({ start: false, end: false })
   const [tabMenu, setTabMenu] = useState<{ readonly id: string; readonly x: number; readonly y: number } | null>(null)
@@ -243,6 +245,7 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
         tabTypes={tabTypes}
         tabRegistry={tabRegistry}
         onCustomTab={(kind, label) => { workspace.addTile('custom', { customType: kind, title: label }) }}
+        onSetAgentEnabled={onSetAgentEnabled}
         onManageSettings={onManageSettings}
       />
       {rightPanel !== undefined && (

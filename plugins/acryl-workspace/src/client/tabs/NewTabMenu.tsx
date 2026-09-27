@@ -1,8 +1,9 @@
 /**
  * The "+" button and its menu: surfaces (terminal, browser, file, ...) and the agents that are installed and
  * enabled. The plain "+" opens the default agent chosen in Settings > Agents (or the last thing opened when
- * the default is Auto). Which agents exist, their flags and the default are set in Settings > Agents, and which
- * tab types exist in Settings > Tabs; this menu only lists and opens them, and links to both.
+ * the default is Auto). "Manage agents..." turns the list into checkboxes so an agent can be enabled or disabled
+ * right here; "Add more agents..." opens Settings > Agents (flags, default, install links), and "Add your own tab
+ * type..." opens Settings > Tabs.
  */
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
@@ -30,15 +31,18 @@ export interface NewTabMenuProps {
   setOpen(open: boolean): void
   onSurface(action: WorkspaceSurfaceAction): void
   onOpenAgent(id: string, title: string): void
+  /** Turns one agent on or off in the + menu (a Host setting, shared with Settings > Agents). */
+  onSetAgentEnabled(id: string, enabled: boolean): Promise<void>
   /** Opens Settings on a section; false when the Settings panel could not be found. */
   onManageSettings(section: 'agents' | 'tabs'): boolean
 }
 
-export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, tabRegistry, onCustomTab, setOpen, onSurface, onOpenAgent, onManageSettings }: NewTabMenuProps) {
+export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, tabRegistry, onCustomTab, setOpen, onSurface, onOpenAgent, onSetAgentEnabled, onManageSettings }: NewTabMenuProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const hidden = useSyncExternalStore(tabTypes.subscribe, tabTypes.getSnapshot)
   const pluginTabs = useSyncExternalStore(tabRegistry.subscribe, tabRegistry.getSnapshot)
   const [notice, setNotice] = useState<string | null>(null)
+  const [managing, setManaging] = useState(false)
   const [last, setLast] = useState<LastTab>(() => readLastTab(storage))
 
   const remember = (tab: LastTab): void => { setLast(tab); writeLastTab(storage, tab) }
@@ -62,7 +66,7 @@ export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, ta
   }
   const primaryLabel = primary.kind === 'agent' ? primary.label : primary.kind === 'terminal' ? 'Terminal' : lastLabel
 
-  const close = (): void => { setOpen(false); setNotice(null) }
+  const close = (): void => { setOpen(false); setNotice(null); setManaging(false) }
 
   // The menu closes on a click elsewhere or Escape.
   useEffect(() => {
@@ -112,15 +116,33 @@ export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, ta
             </button>
           ))}
           <div className="dshWorkspaceMenuRule" />
-          {menuAgents(settings, customAgents).map(agent => (
-            <button key={agent.id} type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onOpenAgent(agent.id, agent.label); remember({ kind: 'agent', id: agent.id, label: agent.label }); close() }}>
-              <AgentIcon commandId={agent.id} custom={agent.custom} />
-              <span className="dshWorkspaceMenuGrow">{agent.label}</span>
-              {agent.isDefault && <span className="dshWorkspaceMenuTag">default</span>}
-            </button>
-          ))}
+          {managing && settings !== null
+            ? settings.agents.filter(entry => entry.installed || entry.kind === 'custom').map(entry => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  role="menuitemcheckbox"
+                  aria-checked={entry.enabled}
+                  className="dshWorkspaceMenuItem"
+                  onClick={() => { onSetAgentEnabled(entry.id, !entry.enabled).catch((cause: unknown) => { setNotice(cause instanceof Error ? cause.message : 'could not save') }) }}
+                >
+                  <AgentIcon commandId={entry.id} custom={entry.badge ?? undefined} />
+                  <span className="dshWorkspaceMenuGrow">{entry.label}</span>
+                  <span className="dshWorkspaceMenuCheck" aria-hidden="true">{entry.enabled ? '✓' : ''}</span>
+                </button>
+              ))
+            : menuAgents(settings, customAgents).map(agent => (
+                <button key={agent.id} type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onOpenAgent(agent.id, agent.label); remember({ kind: 'agent', id: agent.id, label: agent.label }); close() }}>
+                  <AgentIcon commandId={agent.id} custom={agent.custom} />
+                  <span className="dshWorkspaceMenuGrow">{agent.label}</span>
+                  {agent.isDefault && <span className="dshWorkspaceMenuTag">default</span>}
+                </button>
+              ))}
           <div className="dshWorkspaceMenuRule" />
-          <button type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { manage('agents', 'Open Settings, then Agents, to manage agents.') }}>Manage agents...</button>
+          {managing
+            ? <button type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { setManaging(false); setNotice(null) }}>Done</button>
+            : settings !== null && <button type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { setManaging(true) }}>Manage agents...</button>}
+          <button type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { manage('agents', 'Open Settings, then Agents, to add more agents.') }}>Add more agents...</button>
           <button type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { manage('tabs', 'Open Settings, then Tabs, to manage tab types.') }}>Add your own tab type...</button>
           {notice !== null && <div className="dshWorkspaceMenuHint" role="status">{notice}</div>}
         </div>
