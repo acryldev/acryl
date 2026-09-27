@@ -14,6 +14,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 export const INSTANCES_DIR_NAME = '.acryl-instances'
 export const CLAIM_FILE = 'instance.json'
@@ -52,11 +53,12 @@ export const BLUEPRINT_FILE = 'acryl.instance.yaml'
  * the folder's name, so nothing beyond the folder itself has to be registered anywhere.
  */
 export function resolveInstanceAt(dir, home = homedir()) {
-  const root = resolve(dir)
+  // The real path: one folder reached by two spellings (a symlink, `..`) must be one instance, or the same home could be started twice under two ids.
+  const root = existsSync(dir) ? realpathSync(dir) : resolve(dir)
   const name = instanceName(basename(root))
   // Two folders may share a name (`~/a/orbit`, `~/b/orbit`). The id is what must never repeat: it seeds the port, names the Electron user data and namespaces
   // project scope. A managed instance's name is already unique; a folder gets a short digest of where it lives, like a container id.
-  const managed = dirname(root) === join(home, INSTANCES_DIR_NAME)
+  const managed = dirname(root) === (existsSync(join(home, INSTANCES_DIR_NAME)) ? realpathSync(join(home, INSTANCES_DIR_NAME)) : join(home, INSTANCES_DIR_NAME))
   const id = managed ? name : `${name}-${createHash('sha1').update(root).digest('hex').slice(0, 4)}`
   return { name, id, root, dshHome: join(root, '.dsh'), userDataName: `ACRYL ${id}`, preferredPort: stablePort(id), claimFile: join(root, CLAIM_FILE), blueprintFile: join(root, BLUEPRINT_FILE), managed }
 }
@@ -168,4 +170,17 @@ export function removeInstance(name, home = homedir(), isAlive = processIsAlive)
   if (claim !== undefined && isAlive(claim.pid)) throw new InstanceError(`instance "${instance.name}" is running (pid ${claim.pid}); stop it first`)
   rmSync(target, { recursive: true, force: true })
   return target
+}
+
+/**
+ * Is this module the one node was started with? Compared by real path: a folder reached through a symlink (macOS keeps /var -> /private/var, and a house may live
+ * anywhere) has a different argv path than its module URL, and a plain string compare then silently runs nothing.
+ */
+export function isMainModule(importMetaUrl, argv1 = process.argv[1]) {
+  if (argv1 === undefined) return false
+  try {
+    return realpathSync(argv1) === realpathSync(fileURLToPath(importMetaUrl))
+  } catch {
+    return false
+  }
 }

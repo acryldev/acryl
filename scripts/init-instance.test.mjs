@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -45,8 +46,38 @@ test('running a scaffolded folder makes the folder the ACRYL home and its defini
   const target = join(dir, 'orbit')
   writeScaffold(target, { name: 'Orbit' }, '/fw')
   const plan = blankLaunchPlan('web', { dir: target }, {}, '/h', '/r')
-  assert.equal(plan.env.ACRYL_HOME, target)
+  const real = realpathSync(target)   // an instance is identified by its real path
+  assert.equal(plan.env.ACRYL_HOME, real)
   assert.match(plan.env.ACRYL_INSTANCE, /^orbit-[0-9a-f]{4}$/u)
-  assert.equal(plan.env.ACRYL_BLUEPRINT, join(target, 'acryl.instance.yaml'))
-  assert.equal(plan.instance.claimFile, join(target, 'instance.json'))
+  assert.equal(plan.env.ACRYL_BLUEPRINT, join(real, 'acryl.instance.yaml'))
+  assert.equal(plan.instance.claimFile, join(real, 'instance.json'))
+}))
+
+test('a house that carries its runtime starts with the framework gone, and only the Web runtime', () => temp(dir => {
+  // A stand-in for the extracted acryl-web release archive: bin.js records what it was started with.
+  const runtime = join(dir, 'archive'); mkdirSync(join(runtime, 'lib'), { recursive: true })
+  writeFileSync(join(runtime, 'lib', 'bin.js'), "require('node:fs').writeFileSync(process.env.PROOF, JSON.stringify({ args: process.argv.slice(2), home: process.env.ACRYL_HOME, instance: process.env.ACRYL_INSTANCE, blueprint: process.env.ACRYL_BLUEPRINT, port: process.env.ACRYL_WEB_PORT, cwd: process.cwd() }))\n")
+  const framework = join(dir, 'framework'); mkdirSync(join(framework, 'scripts', 'lib'), { recursive: true })
+  for (const file of ['blank.mjs', 'lib/instances.mjs']) writeFileSync(join(framework, 'scripts', file), readFileSync(new URL(`./${file}`, import.meta.url)))
+  const house = join(dir, 'orbit')
+  writeScaffold(house, { name: 'Orbit', runtime }, framework)
+  assert.ok(existsSync(join(house, 'runtime', 'lib', 'bin.js')) && existsSync(join(house, '.house', 'launch.mjs')))
+  assert.doesNotMatch(readFileSync(join(house, 'run.sh'), 'utf8'), /framework/)
+  rmSync(framework, { recursive: true, force: true })   // the construction company leaves
+  const proof = join(dir, 'proof.json')
+  const home = join(dir, 'home'); mkdirSync(home)
+  const result = spawnSync(join(house, 'run.sh'), ['web'], { env: { ...process.env, HOME: home, PROOF: proof }, encoding: 'utf8' })
+  assert.equal(result.status, 0, result.stderr)
+  const seen = JSON.parse(readFileSync(proof, 'utf8'))
+  assert.equal(seen.home, realpathSync(house)); assert.match(seen.instance, /^orbit-[0-9a-f]{4}$/u)
+  assert.equal(seen.blueprint, join(realpathSync(house), 'acryl.instance.yaml')); assert.deepEqual(seen.args, ['--no-open'])
+  assert.ok(Number(seen.port) >= 3100 && Number(seen.port) < 4000)
+  assert.ok(!existsSync(join(house, 'instance.json')), 'the name is freed when the app exits')
+  const cli = spawnSync(join(house, 'run.sh'), ['cli'], { env: { ...process.env, HOME: home, PROOF: proof }, encoding: 'utf8' })
+  assert.notEqual(cli.status, 0); assert.match(cli.stderr, /carries only the Web runtime/)
+}))
+
+test('a runtime that is not an ACRYL Web runtime is rejected before anything is written', () => temp(dir => {
+  assert.throws(() => writeScaffold(join(dir, 'orbit'), { runtime: dir }, '/fw'), /not an ACRYL Web runtime/)
+  assert.ok(!existsSync(join(dir, 'orbit')))
 }))

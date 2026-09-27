@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { mkdirSync, realpathSync } from 'node:fs'
+import { mkdirSync, realpathSync, symlinkSync } from 'node:fs'
 import { resolveInstanceAt } from './lib/instances.mjs'
 import { InstanceError, PORT_BASE, removeInstance, PORT_SPAN, claimInstance, instanceName, listInstances, releaseInstance, resolveInstance, stablePort, stopInstance } from './lib/instances.mjs'
 
@@ -84,8 +84,14 @@ test('an instance running in any folder is listed from the running registry, and
   claimInstance(instance, { pid: 77, surface: 'desktop', blueprint: 'x.yaml' }, () => false, home)
   const listed = listInstances(home, pid => pid === 77)
   assert.deepEqual(listed.map(i => [i.id, i.running, i.surface]), [[instance.id, true, 'desktop']])
-  assert.equal(listed[0].root, named)
+  assert.equal(listed[0].root, realpathSync(named))
   assert.deepEqual(listInstances(home, () => false), [])
   releaseInstance(instance, 77, home)
   rmSync(folder, { recursive: true, force: true })
+}))
+
+test('one folder reached through a symlink is one instance, with one id', () => withHome(home => {
+  const real = join(home, 'real', 'orbit'); mkdirSync(real, { recursive: true })
+  symlinkSync(join(home, 'real'), join(home, 'alias'))
+  assert.equal(resolveInstanceAt(join(home, 'alias', 'orbit'), home).id, resolveInstanceAt(real, home).id)
 }))

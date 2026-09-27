@@ -16,7 +16,7 @@ import { dirname, join, resolve } from 'node:path'
 import { homedir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { existsSync } from 'node:fs'
-import { InstanceError, claimInstance, listInstances, releaseInstance, resolveInstance, resolveInstanceAt } from './lib/instances.mjs'
+import { InstanceError, claimInstance, isMainModule, listInstances, releaseInstance, resolveInstance, resolveInstanceAt } from './lib/instances.mjs'
 
 export const DEFAULT_INSTANCE = 'blank'
 
@@ -38,6 +38,13 @@ export function blankLaunchPlan(surface, flags, environment, home = homedir(), r
     ...brandEnv,
   }
   const base = { instance, blueprint: env.ACRYL_BLUEPRINT }
+  // A house that carries its own runtime (`init --runtime`, the extracted ACRYL Web release archive) runs from it and needs nothing else of the framework.
+  const carried = flags.dir !== undefined && existsSync(join(instance.root, 'runtime', 'lib', 'bin.js')) ? join(instance.root, 'runtime') : undefined
+  if (carried !== undefined) {
+    if (surface !== 'web') throw new InstanceError(`this instance carries only the Web runtime; "${surface}" needs the framework (run it from a framework checkout)`)
+    const port = Number(flags.port ?? instance.preferredPort)
+    return { ...base, surface, carried: true, command: process.execPath, args: [join(carried, 'lib', 'bin.js'), '--no-open'], env: { ...env, ACRYL_WEB_PORT: String(port) }, webPort: port }
+  }
   if (surface === 'web') {
     const port = Number(flags.port ?? instance.preferredPort)
     if (!Number.isInteger(port) || port < 1024 || port > 65_535) throw new Error(`--port must be a port number from 1024 to 65535, got ${String(flags.port)}`)
@@ -65,7 +72,7 @@ export function parseFlags(argv) {
   return flags
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMainModule(import.meta.url)) {
   const [surface = '', ...rest] = process.argv.slice(2)
   try {
     const running = listInstances().filter(instance => instance.running).map(instance => instance.surface)

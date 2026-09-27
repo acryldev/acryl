@@ -8,7 +8,7 @@
  * Create one with `node scripts/init-instance.mjs <folder>`; start it with `<folder>/run.sh web|desktop|cli`. Docker's words: image = Blueprint/Blend, container = instance.
  */
 import { fileURLToPath } from 'node:url'
-import { InstanceError, listInstances, removeInstance, resolveInstance, stopInstance } from './lib/instances.mjs'
+import { InstanceError, isMainModule, listInstances, removeInstance, resolveInstance, stopInstance } from './lib/instances.mjs'
 
 export function run(argv, out = text => process.stdout.write(text)) {
   const [command = 'list', name] = argv
@@ -36,7 +36,7 @@ export function run(argv, out = text => process.stdout.write(text)) {
   throw new InstanceError(`unknown command ${JSON.stringify(command)}; use ps, stop, path or rm`)
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMainModule(import.meta.url)) {
   try {
     process.exitCode = run(process.argv.slice(2))
   } catch (error) {

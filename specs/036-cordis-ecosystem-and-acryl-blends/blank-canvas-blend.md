@@ -101,6 +101,34 @@ gets a proper `acryl init <name>`, that command owns instance creation and these
 instance (today this is the extension pack's placement rules and the agent's docs, not a sandbox), and a per-instance `acryl.json` recording blueprint, brand and surface so an instance can be
 re-created from its folder alone.
 
+## Who owns what: the `blends` repo manages Blends, ACRYL runs them
+
+The `blends` repo (`acryl_blends_project/blends`) exists to hold the machinery for managing Blends: persist their state, and instantiate instances from a Blend's YAML snapshot. ACRYL is what an
+instance runs. The boundary is a small contract, so neither side imports the other:
+
+| Concern | Owner | Today |
+| --- | --- | --- |
+| The Blend format: manifest, lock, compile, validation, hub index | `blends` (`blends-core`, `blends-cli`) | built (specs 001-004) |
+| Creating an instance from a Blueprint or a Blend snapshot, listing, stopping, removing, upgrading it | `blends` (`blends-cli`) | **interim copy in this repo's `scripts/`** (`init-instance`, `instances`, `blank`) |
+| Capturing what a running instance grew into (`/blend snapshot`, `verify`, `apply`, ledger) | ACRYL (extension pack) | built (spec 036/037) |
+| Booting an instance: the runtime contract (`ACRYL_HOME`, `ACRYL_INSTANCE`, `ACRYL_BLUEPRINT`, `ACRYL_WEB_PORT`, `ACRYL_BRAND_*`) | ACRYL runtime | built (this spec) |
+
+The scripts in `scripts/` are a working prototype of the lifecycle, kept here only so it can be tested end to end today; their canonical home is `blends-cli`, and they speak to ACRYL only through the
+environment contract above.
+
+### Three shapes of "a Blend" exist today, and they must become one
+
+| Shape | Written by | Layout |
+| --- | --- | --- |
+| Owned Blend (D19) | `blends init <id> <dir>` (blends-cli) | `<dir>/acryl.blend.yaml`, `<dir>/.acryl/blend.lock.json`, `.acryl/checkpoints/` (Desktop reads the lock through `dsh-desktop.blend`) |
+| Captured Blend | `/blend snapshot` (ACRYL) | `<workspace>/.acryl/blend/{blend.yaml, blend.lock.json (v2, modules), extensions/, ledger.jsonl}` |
+| Instance folder | `scripts/init-instance.mjs` (this prototype) | `<dir>/acryl.instance.yaml` (a runtime Blueprint definition: extends, brand, capability ids), `extensions/`, `.dsh/` |
+
+Proposal: **the instance is the owned Blend directory**, one layout for creating, capturing and restoring: `acryl.blend.yaml` (intent), `.acryl/blend.lock.json` (lock v2, digests and modules), `.acryl/checkpoints/`,
+`extensions/` (vendored module sources), and `.dsh/` (runtime data, git-ignored). `/blend snapshot` then writes into the instance's own directory, `blends instantiate <snapshot>` reads exactly that, and the ACRYL runtime
+boots from the lock's rows (Desktop already does). The runtime Blueprint definition (`acryl.instance.yaml`) stays as the way to pick capabilities, and is referenced from the manifest rather than being a second source of
+truth. Migration is additive: nothing above is removed until the unified layout is in place and tested; the interim scripts are deleted when `blends-cli` has the same commands.
+
 ## Blueprints from a file
 
 `ACRYL_BLUEPRINT` also accepts a `.yaml`, `.yml` or `.json` file (`runtime/.../blueprint/definition.ts`): `id`, optional `name`, `description`, `extends` (a known Blueprint), `capabilities`, `rows`,
