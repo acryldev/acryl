@@ -7,6 +7,7 @@
  * missing (a different shell) it does nothing and says so, and the caller tells the user where to go.
  */
 
+import { findButtonByName } from '../dom/find-by-name.ts'
 import { en, zh, type SettingsSectionKey } from './locales.ts'
 
 const MAX_FRAMES = 30
@@ -38,9 +39,9 @@ export function openSettingsSection(
   trigger.click()
   let frames = 0
   const selectSection = (): void => {
-    const nav = [...doc.querySelectorAll<HTMLButtonElement>('[role="dialog"] nav button')]
-      .find(button => labels.includes(button.textContent?.trim() ?? ''))
-    if (nav !== undefined) { nav.click(); return }
+    const dialog = doc.querySelector('[role="dialog"] nav')
+    const nav = dialog === null ? null : findButtonByName(dialog, labels)
+    if (nav !== null) { nav.click(); return }
     frames += 1
     if (frames < MAX_FRAMES) schedule(selectSection)
   }

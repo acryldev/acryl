@@ -7,6 +7,7 @@ import type { ShellPlatform } from '../shell/environment.ts'
 import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { IWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
+import { clickButtonByName } from '../dom/find-by-name.ts'
 import { pickSession, type SessionRef } from '../sessions/session-pick.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 
@@ -253,12 +254,6 @@ const ADD_WORKSPACE_LABELS = ['Add workspace', '添加工作区']
  * @returns whether the trigger was found and activated.
  */
 export function clickAddWorkspaceTrigger(root: ParentNode = document): boolean {
-  for (const label of ADD_WORKSPACE_LABELS) {
-    const trigger = root.querySelector<HTMLButtonElement>(`.dshWorkspaceSideChats button[aria-label="${label}"]`)
-    if (trigger !== null) {
-      trigger.click()
-      return true
-    }
-  }
-  return false
+  const chats = root.querySelector('.dshWorkspaceSideChats')
+  return chats !== null && clickButtonByName(chats, ADD_WORKSPACE_LABELS)
 }
