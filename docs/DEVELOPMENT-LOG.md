@@ -5557,3 +5557,10 @@ Design: `specs/040-agentic-multiplexer-ade/design-phase-9.md`. Tasks T090 to T11
 - **Custom tab types are not built.** They need the `workspaceTabs` registry that T010 to T012 described and that was never delivered; recorded as T125 with the questions a design note must answer.
 - **Structure:** the three Settings sections are built with one `settingsSectionPlugin`, each section's registration lives in its own domain folder, and `open-settings` now opens any of them by label in either shipped language.
 - **Not verified in the real app:** typing into the palette and the sections inside the real Settings dialog. The palette layout was checked in a real browser with fixture data; typing was covered by jsdom tests only.
+
+## 2026-09-27 - plugin tab types and terminal niceties
+
+- **Plugin tab types (T125):** design in `specs/040-agentic-multiplexer-ade/design-phase-10.md`. `acryl-workspace` provides a `workspaceTabs` client service; a plugin registers a tab type (namespaced kind, label, description, glyph, React component) and it appears in the + menu, the command palette and Settings > Tabs. A plugin tab is saved with its type and text state; while the plugin is off the tab shows a note and keeps its content. Docs page `extending/workspace-tab.md` and a whiteboard example in the extension pack. Built-in types were deliberately not moved behind the registry.
+- **Terminal niceties (T104):** clickable http and https links, search in scrollback (Cmd+F on macOS, Ctrl+Shift+F elsewhere), and a shell tab that takes its program's title unless you renamed it. Search and the shortcut were exercised in a real browser with fixture output; link clicks and title changes are covered by unit tests on the rules only.
+- **Combined design page** brought up to date; it is the only Lavish document in use.
+- **Ledger:** T010, T012 and T050 marked as delivered, T011 recorded as not done on purpose.
