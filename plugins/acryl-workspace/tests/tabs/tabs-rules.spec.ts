@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import { HIDDEN_AGENTS_KEY, readHiddenAgents, toggleAgent, writeHiddenAgents } from '../../src/client/tabs/agent-visibility.ts'
+import { AGENT_MARKS } from '../../src/client/tabs/agent-marks.tsx'
 import { MAX_TAB_TITLE, normalizeTabTitle } from '../../src/client/canvas/tab-title.ts'
+import { KNOWN_AGENT_IDS } from '../../src/agents/known-agents.ts'
+
+describe('agent marks', () => {
+  it('draws every known agent, not just the letter badge fallback', () => {
+    for (const id of KNOWN_AGENT_IDS) {
+      expect(AGENT_MARKS[id], `${id} has no drawn mark`).toBeDefined()
+    }
+    expect(AGENT_MARKS.shell).toBeDefined()
+  })
+})
 
 describe('normalizeTabTitle', () => {
   it('trims, collapses whitespace and caps the length', () => {
