@@ -1,3 +1,29 @@
+## 2026-09-28 - Devin ACP ship-fix pass: nix packaging, manifest deps, spec-sync
+
+Commits: `1fe6bf9a7bd174dad8b652a9b1f6e9832c51abf6` (nix + manifest),
+`18728d83ba5ce34b54c444f3141fe231ac743115` (test expectations), plus
+`b67bec5add47e0d8bf9abc7bfe5fafb34f1c0587` (earlier dev-log rebase repair)
+
+Holistic pre-PR review found and fixed the last cross-surface gaps:
+
+- **flake.nix** — the `acryl` (TUI) and `acryl-desktop` nix derivations now
+  build and `installWorkspacePackage` `plugins/acryl-agent-devin`, and copy
+  `cordis.patch.yml` alongside it (`dsh.bundle.patch` is read at composition
+  time, not bundled into `lib/`). Without this, the packaged artifact's
+  workspace symlink dangled and `materializeProfilePackage` threw during
+  every profile composition.
+- **Manifest** — `acryl-agent-devin`'s runtime imports
+  (`@deepseek-ai/schemastery`, `acryl-control`) moved to `peerDependencies`
+  (peer+dev pattern per `cordis-plugin-market`); `files` no longer lists
+  nonexistent `README.md`/`LICENSE`.
+- **Ledger sync** — PRD/mini-design updated to the shipped row name
+  (`acryl-agent-devin`) and landed per-worker `cwd` semantics; test
+  expectations updated for the new root-script filter entry and the `devin`
+  defaults now present in the desktop startup-settings projection.
+- **DEVELOPMENT-LOG repair** — earlier commit removed leftover
+  `<<<<<<<`/`=======`/`>>>>>>>` conflict markers, a jammed header, and a
+  duplicated v0.1.36 entry left over from the integration-branch rebase.
+
 ## 2026-09-27 - Devin ACP Loader verification: real-composition lifecycle suite + review-fold fixes
 
 Commits: `5ed910c833ab3567aab4cd459657313a0f6f65d3`, `61d5032c44589ad98f942d3c484e3f27f5c1b81a`, `d40dea4348ba34a9f225ef6bc5a5fe2221098905`, `310032e9579c21d52f843291eda1dc13620e0551`
