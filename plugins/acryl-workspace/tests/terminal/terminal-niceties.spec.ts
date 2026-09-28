@@ -62,13 +62,14 @@ describe('tab title from the terminal', () => {
     return { workspace, tile, title }
   }
 
-  it('follows the program while the tab has its default or an earlier program title', () => {
+  // A shell's own title is commonly `user@host: cwd` (zsh's default precmd), long and not useful in a narrow
+  // tab strip, so a plain shell tab deliberately keeps its short default name instead of following it.
+  it('never follows the shell program title; the tab keeps its short default name', () => {
     const { workspace, title } = setup()
-    expect(workspace.applyTerminalTitle('t1', 'acryl: pnpm test')).toBe(true)
-    expect(title()).toBe('acryl: pnpm test')
-    expect(workspace.applyTerminalTitle('t1', 'acryl: vim')).toBe(true)
-    expect(title()).toBe('acryl: vim')
-    expect(workspace.applyTerminalTitle('t1', 'acryl: vim')).toBe(false)
+    expect(workspace.applyTerminalTitle('t1', 'acryl: pnpm test')).toBe(false)
+    expect(title()).toBe('Terminal')
+    expect(workspace.applyTerminalTitle('t1', 'musichen@MacBook-Pro: ~/some/long/path')).toBe(false)
+    expect(title()).toBe('Terminal')
   })
 
   it('never overwrites a title the user typed, and ignores agents and unknown terminals', () => {

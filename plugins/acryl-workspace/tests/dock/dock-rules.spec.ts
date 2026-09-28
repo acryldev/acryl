@@ -58,13 +58,14 @@ describe('DockTabsState', () => {
     expect(state.getSnapshot().tabs[0]?.title).toBe('Terminal')
   })
 
-  it('follows the shell title until the user renames the tab', () => {
+  // Deliberate no-op: a shell's own title (commonly `user@host: cwd`) is too long for a narrow tab strip, so a
+  // dock tab keeps its short default name instead of following it.
+  it('never follows the shell title; the tab keeps its short default name', () => {
     const state = new DockTabsState(ids())
     const tab = state.add()
     state.update(tab?.id ?? '', { terminalId: 'T1' })
-    expect(state.applyTerminalTitle('T1', 'proj: vim')).toBe(true)
-    expect(state.applyTerminalTitle('T1', 'proj: htop')).toBe(true)
-    expect(state.getSnapshot().tabs[0]?.title).toBe('proj: htop')
+    expect(state.applyTerminalTitle('T1', 'proj: vim')).toBe(false)
+    expect(state.getSnapshot().tabs[0]?.title).toBe('Terminal')
     state.rename(tab?.id ?? '', 'mine')
     expect(state.applyTerminalTitle('T1', 'other')).toBe(false)
     expect(state.getSnapshot().tabs[0]?.title).toBe('mine')
@@ -137,7 +138,7 @@ describe('DockController', () => {
     expect(controller.getPrefs()).toEqual(DEFAULT_DOCK_PREFS)
   })
 
-  it('while connected: keeps every terminal alive, drops a tab whose terminal the Host lost, names tabs from the shell, saves on disconnect', async () => {
+  it('while connected: keeps every terminal alive, ignores the shell title (no-op), saves on disconnect', async () => {
     const { controller, terminals, storage } = makeDock()
     const ensure = vi.spyOn(terminals, 'ensure')
     await controller.openTab('/w', '/w')
@@ -147,8 +148,8 @@ describe('DockController', () => {
     const session = terminals.ensure('term-1')
     expect(session).toBeDefined()
     controller.groups.stateFor('/w').applyTerminalTitle('term-1', 'proj: vim')
-    expect(controller.groups.stateFor('/w').getSnapshot().tabs[0]?.title).toBe('proj: vim')
+    expect(controller.groups.stateFor('/w').getSnapshot().tabs[0]?.title).toBe('Terminal')
     stop()
-    expect(JSON.parse(storage.data.get(DOCK_STORAGE_KEY) ?? '{}').groups['/w'].tabs[0].title).toBe('proj: vim')
+    expect(JSON.parse(storage.data.get(DOCK_STORAGE_KEY) ?? '{}').groups['/w'].tabs[0].title).toBe('Terminal')
   })
 })

@@ -344,18 +344,14 @@ export class WorkspaceState {
   }
 
   /**
-   * A shell program set its terminal's title: the tab follows it, unless the user renamed the tab.
-   * A tab counts as renamed when its title is neither the default nor the last title taken from the program.
+   * A shell program set its terminal's title. Deliberately a no-op: shells commonly set this to `user@host: cwd`
+   * (zsh's default `precmd`), which is long and not useful in a narrow tab strip, so a plain shell tab keeps its
+   * short default name ("Terminal", "Terminal 2", ...) instead of following it. Kept as a named function (rather
+   * than removed) so a future, shorter derivation (e.g. just the cwd's basename) can plug back in here.
    * @returns true when the tab title changed.
    */
-  applyTerminalTitle(terminalId: string, raw: string): boolean {
-    const tile = this.snapshot.tiles.find(candidate => candidate.terminalId === terminalId)
-    if (tile === undefined || tile.kind !== 'pty' || tile.commandId !== 'shell') return false
-    const next = normalizeTabTitle(raw)
-    if (next === null || next === tile.title) return false
-    if (tile.title !== (tile.autoTitle ?? this.defaultTitle(tile))) return false
-    this.updateTile(tile.id, { title: next, autoTitle: next })
-    return true
+  applyTerminalTitle(_terminalId: string, _raw: string): boolean {
+    return false
   }
 
   private defaultTitle(tile: WorkspaceTile): string {

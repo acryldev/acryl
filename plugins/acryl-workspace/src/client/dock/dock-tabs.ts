@@ -74,15 +74,14 @@ export class DockTabsState {
     this.update(id, next === null ? { title: this.nextTitle(id), autoTitle: undefined } : { title: next })
   }
 
-  /** A shell set its terminal's title: the tab follows it unless the user renamed the tab. @returns true when it changed. */
-  applyTerminalTitle(terminalId: string, raw: string): boolean {
-    const tab = this.snapshot.tabs.find(candidate => candidate.terminalId === terminalId)
-    const next = normalizeTabTitle(raw)
-    if (tab === undefined || next === null || next === tab.title) return false
-    const untouched = tab.autoTitle === undefined ? /^Terminal( \d+)?$/.test(tab.title) : tab.title === tab.autoTitle
-    if (!untouched) return false
-    this.update(tab.id, { title: next, autoTitle: next })
-    return true
+  /**
+   * A shell set its terminal's title. Deliberately a no-op (see the matching WorkspaceState.applyTerminalTitle):
+   * shells commonly set this to `user@host: cwd`, too long for a narrow tab strip, so a dock tab keeps its short
+   * default name ("Terminal", "Terminal 2", ...) instead of following it.
+   * @returns true when the title changed.
+   */
+  applyTerminalTitle(_terminalId: string, _raw: string): boolean {
+    return false
   }
 
   /** Re-create tabs saved by a previous run. */
