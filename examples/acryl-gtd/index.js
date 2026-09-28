@@ -5,11 +5,15 @@
  * same shape as acryl-organizer. The data lives in `<workspace>/.acryl/gtd.json`. Remove the plugin and the tools
  * go; the data file stays with the project.
  *
- * The board (`gtd_board`) is interactive: its client half (`client.js`) renders a real console - buckets, an
- * inline-triage list with a context-tag filter, a kanban board, a day/week/month calendar and project progress
- * cards - reading and writing the same `.acryl/gtd.json` the tools use, through two same-origin loopback routes
- * this plugin owns (a `tool.call.toolview` card has no built-in way to call another tool; it can only render its
- * own call, so real interactivity needs its own Host route - see `docs/extending/workspace-tab.md`'s note on that).
+ * The board is its own page (`/gtd`, `lib/board-page.js`), not a chat card: buckets, an inline-triage list with
+ * a context-tag filter, a kanban board, a day/week/month calendar and project progress, reading and writing the
+ * same `.acryl/gtd.json` the tools use, through same-origin loopback routes this plugin owns. It started as a
+ * `tool.call.toolview` card instead - wrong on two counts, found live: a card has no built-in way to call another
+ * tool (real interactivity needs its own Host route regardless), and every tool call in this chat collapses
+ * behind a "N tool calls" row the user must click (dsh-client-ui-chat hardcodes that expand state to `false`, no
+ * override a plugin can set) - a todo app whose own board only shows up after asking a chat bot to open it and
+ * then clicking to expand is broken UX. `client.js` is now just a link to `/gtd`, not a second implementation of
+ * the board (two divergent copies of the same view is the mistake DRY exists to name).
  * `lib/http.js` inlines the loopback/JSON-body checks rather than depending on `acryl-loopback-http`: this
  * extension is vendored into whatever project grows from the Blueprint, outside the monorepo's own workspace
  * linking, and (discovered live, in a Blank-grown app) nothing guarantees that package is resolvable there -
@@ -20,15 +24,22 @@
 import { isAbsolute, join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import * as domain from './lib/domain.js'
+import { boardPageHtml } from './lib/board-page.js'
 import { error, finishJson, isSameOriginLoopbackRequest, parseJsonPostBody, INVALID_BODY } from './lib/http.js'
 import { fileStore, storeFor } from './lib/store.js'
 
 export const name = 'acryl-gtd'
 export const inject = ['tools', 'webServer']
 
-/** The board route body always names its own workspace; validated once, used by every route below. */
-function requireCwd(value) {
-  if (typeof value !== 'string' || value.trim() === '' || !isAbsolute(value)) throw new Error('cwd must be an absolute path')
+/**
+ * The board route body may name its own workspace (`cwd`); when it does not, the data lives with the app itself
+ * (the directory the app process runs from) - a todo app's own tasks belong to the app, not to whatever coding
+ * workspace happens to be selected in chat. This is also what makes the board a URL you can just open: no query
+ * param, no chat message, required.
+ */
+function resolveCwd(value) {
+  if (value === undefined || value === null || value === '') return process.cwd()
+  if (typeof value !== 'string' || !isAbsolute(value)) throw new Error('cwd must be an absolute path')
   return value
 }
 const storeForCwd = cwd => fileStore(join(cwd, '.acryl', 'gtd.json'))
@@ -84,12 +95,28 @@ export function apply(ctx) {
       (state, args) => { const due = domain.agenda(state, args.day); return `Due ${args.day}:\n${list(due.map(itemLine))}` }),
     useCase({ name: 'gtd_upcoming', description: 'What is due over the next few days (default 7).', parameters: { from: { type: 'string', required: true, description: 'First day, YYYY-MM-DD' }, days: { type: 'number', description: 'How many days (default 7)' } } },
       (state, args) => { const weeks = domain.upcoming(state, args.from, args.days === undefined ? 7 : Number(args.days)); return weeks.length === 0 ? '(nothing due)' : weeks.map(day => `${day.day}:\n${list(day.items.map(itemLine))}`).join('\n') }),
-    useCase({ name: 'gtd_board', description: 'Open the interactive GTD board: buckets, an inline-triage list with a context filter, a kanban board, a day/week/month calendar and project progress. Call this whenever the user wants to see or work their GTD system visually, not just hear about it.', parameters: {} },
-      state => `Opened the board: ${state.items.length} item(s) across ${domain.projects(state).length} project(s).`),
+    useCase({ name: 'gtd_board', description: 'Point to the GTD board (a page at /gtd, not a chat view): buckets, an inline-triage list with a context filter, a kanban board, a day/week/month calendar and project progress. Call this once to tell the user where it lives; they should bookmark it rather than ask for it again.', parameters: {} },
+      state => `The board lives at /gtd - open it directly, it's the app's own page: ${state.items.length} item(s) across ${domain.projects(state).length} project(s) right now.`),
   ]
   for (const tool of tools) ctx.effect(() => ctx.tools.register(tool), `acryl-gtd: ${tool.name}`)
 
   const origin = `http://127.0.0.1:${String(ctx.webServer.port)}`
+
+  // The board page itself: a plain top-level navigation (a pasted or bookmarked URL), not a fetch() call - it
+  // carries no Origin header and no same-origin Sec-Fetch-Site, so the mutating-style same-origin check below
+  // (right for the API routes, which this page's own script calls with real fetch metadata) would refuse the
+  // page's own load. It relies on the same session-cookie gate every route in this app already sits behind.
+  ctx.effect(() => ctx.webServer.register({
+    kind: 'exact',
+    path: '/gtd',
+    handler: (req, res) => {
+      if (req.method !== 'GET') { res.statusCode = 405; res.setHeader('allow', 'GET'); res.end(); return }
+      res.statusCode = 200
+      res.setHeader('content-type', 'text/html; charset=utf-8')
+      res.setHeader('cache-control', 'no-store')
+      res.end(boardPageHtml())
+    },
+  }), 'acryl-gtd: board page')
 
   ctx.effect(() => ctx.webServer.register({
     kind: 'exact',
@@ -98,7 +125,7 @@ export function apply(ctx) {
       if (req.method !== 'GET') return finishJson(res, 405, error('method not allowed'), 'GET')
       if (!isSameOriginLoopbackRequest(req, origin, false)) return finishJson(res, 403, error('forbidden'))
       let cwd
-      try { cwd = requireCwd(new URL(req.url ?? '', origin).searchParams.get('cwd')) } catch (cause) { return finishJson(res, 400, error(cause.message)) }
+      try { cwd = resolveCwd(new URL(req.url ?? '', origin).searchParams.get('cwd')) } catch (cause) { return finishJson(res, 400, error(cause.message)) }
       finishJson(res, 200, storeForCwd(cwd).load())
     },
   }), 'acryl-gtd: state route')
@@ -112,7 +139,7 @@ export function apply(ctx) {
       const body = await parseJsonPostBody(req, res)
       if (body === INVALID_BODY) return
       try {
-        const cwd = requireCwd(body?.cwd)
+        const cwd = resolveCwd(body?.cwd)
         const store = storeForCwd(cwd)
         const next = domain.capture(store.load(), body)
         store.save(next)
@@ -132,7 +159,7 @@ export function apply(ctx) {
       const body = await parseJsonPostBody(req, res)
       if (body === INVALID_BODY) return
       try {
-        const cwd = requireCwd(body?.cwd)
+        const cwd = resolveCwd(body?.cwd)
         const store = storeForCwd(cwd)
         const next = domain.triage(store.load(), { ...body, id: Number(body?.id) })
         store.save(next)

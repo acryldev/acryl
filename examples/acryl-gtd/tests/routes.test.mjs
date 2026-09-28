@@ -40,9 +40,13 @@ function fakeReq({ method = 'GET', url = '/', origin = ORIGIN, host = `127.0.0.1
 }
 
 function fakeRes() {
-  const res = { statusCode: 0, headers: {}, body: undefined }
+  const res = { statusCode: 0, headers: {}, body: undefined, rawBody: undefined }
   res.setHeader = (key, value) => { res.headers[key] = value }
-  res.end = text => { res.body = text === undefined ? undefined : JSON.parse(text) }
+  res.end = text => {
+    res.rawBody = text
+    if (text === undefined) return
+    try { res.body = JSON.parse(text) } catch { /* not JSON, e.g. the board page's HTML - rawBody carries it */ }
+  }
   return res
 }
 
@@ -57,7 +61,7 @@ async function withCtx(run) {
   }
 }
 
-test('state: empty for a fresh workspace, rejects a relative or missing cwd', async () => {
+test('state: empty for a fresh workspace, rejects a relative cwd', async () => {
   await withCtx(async (ctx, dir) => {
     const handler = ctx.routes.get('/api/acryl-gtd/state')
     const res = fakeRes()
@@ -117,5 +121,33 @@ test('an unknown bucket is refused with 422, not silently accepted', async () =>
 test('gtd_board is registered alongside the other tools', async () => {
   await withCtx(async ctx => {
     assert.ok(ctx.tools_.has('gtd_board'))
+  })
+})
+
+test('the board page is served at /gtd as HTML, not gated by the mutating-style same-origin check', async () => {
+  await withCtx(async ctx => {
+    const handler = ctx.routes.get('/gtd')
+    // No Origin header at all: a pasted or bookmarked URL is a top-level navigation, never a fetch() call, and
+    // never carries one - the API routes' strict same-origin check is right for them and wrong for this page.
+    const req = fakeReq({ url: '/gtd' })
+    delete req.headers.origin
+    delete req.headers['sec-fetch-site']
+    const res = fakeRes()
+    await handler(req, res)
+    assert.equal(res.statusCode, 200)
+    assert.match(res.headers['content-type'], /text\/html/)
+    assert.match(res.rawBody, /GTD Board/)
+    assert.match(res.rawBody, /api\/acryl-gtd\/state/)
+  })
+})
+
+test('state with no cwd defaults to the app\'s own directory (process.cwd()), not a blank error', async () => {
+  await withCtx(async ctx => {
+    const handler = ctx.routes.get('/api/acryl-gtd/state')
+    const res = fakeRes()
+    await handler(fakeReq({ url: '/api/acryl-gtd/state' }), res)
+    // Whatever process.cwd() resolves to here, the route must not refuse an absent cwd - only an invalid one.
+    assert.equal(res.statusCode, 200)
+    assert.ok(Array.isArray(res.body.items))
   })
 })
