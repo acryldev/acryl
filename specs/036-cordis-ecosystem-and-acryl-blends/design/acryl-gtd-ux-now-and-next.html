@@ -300,8 +300,8 @@
   <div class="grid2">
     <div class="box"><h3>1. Is a dedicated UI worth it at all? <span class="chip built" style="margin-left:6px">resolved</span></h3><p class="q">Yes, on top of the chat, never in place of it (owner feedback, 2026-09-28): every ACRYL Blend keeps its builder agent as the anchor - "build from inside," "build agentic apps from day one" - so the bucket rail and list only add faster scanning and one-click triage; they cannot replace the chat that built them.</p></div>
     <div class="box"><h3>2. If yes, where does it live?</h3><p class="q">A workspace tab type (like the reference page's <code>acryl-tab-diff</code> pattern) so it opens from <b>+</b> in the advanced shell, or a standalone panel inside <code>acryl-gtd</code> itself that any surface can mount. The tab-type route reuses more of what's already built for spec 040.</p></div>
-    <div class="box"><h3>3. Contexts (<code>@calls</code>, <code>@errands</code>) - filter or ignore?</h3><p class="q">The domain already tracks tags; mindwtr's Contexts view filters by them. Cheap to wire into the Next Actions list as a chip filter, easy to skip for a first UI pass.</p></div>
-    <div class="box"><h3>4. Board view (mindwtr's swimlanes)?</h3><p class="q">Not modeled here. If wanted, it is a fourth rendering of the same data (by project or by bucket, kanban-style) - no new domain concept, same as the list and calendar above.</p></div>
+    <div class="box"><h3>3. Contexts (<code>@calls</code>, <code>@errands</code>) - filter or ignore? <span class="chip built" style="margin-left:6px">built</span></h3><p class="q">Built as a chip filter in the List view (owner approved 2026-09-28): click a tag to show only items carrying it, click again to clear. Client-side, no extra Host round trip.</p></div>
+    <div class="box"><h3>4. Board view (mindwtr's swimlanes)? <span class="chip built" style="margin-left:6px">built</span></h3><p class="q">Built (owner approved 2026-09-28): kanban columns per bucket, one card per item. Click-to-move, not drag-and-drop - moving a card calls the same Host route the list's inline triage buttons call.</p></div>
   </div>
 </main>
 <script>
