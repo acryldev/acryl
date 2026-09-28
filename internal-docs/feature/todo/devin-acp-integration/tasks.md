@@ -44,6 +44,8 @@ Pre-existing upstream failures unrelated to this branch:
 
 ## Remaining follow-ups (beyond this PRD)
 
+See `blocker-report.md` in this folder for the complete landed-state account.
+
 Stories 11–14 below absorb the composition/routing/verification items. The
 rest stay deferred:
 
@@ -60,8 +62,8 @@ rest stay deferred:
 - Interactive `authenticate` flow (currently throws) — deferred
 - Settings UI wiring for `DevinAcpSettings` (settings-file parsing lands
   in story 11; the renderer UI is a separate follow-up) — deferred
-- Per-worker workspace `cwd` (transport `cwd` is per-provider today) —
-  deferred
+- ~~Per-worker workspace `cwd`~~ → landed (story 11 fix-up): spawn cwd is
+  `binding.workspace?.cwd ?? config.cwd ?? process.cwd()`
 - `acp-work` branch reconciliation (keep `3132bc1`+`f0bb3bc` Direction-B
   ACP server; drop `256e287`+`a78e4b7` subpar TUI subagent) — decision
   recorded in blocker report, executed after this feature lands
