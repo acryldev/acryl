@@ -40,7 +40,7 @@ Conventions: `[P]` parallel; every task ends with a green `corepack pnpm run che
 ### Phase B0: spikes
 - [x] **TB01** Spike: inventory what `acryl doctor`-style diagnosis can already conclude from `plugin-doctor.ts`, and list the real failure modes seen on this machine (pnpm store mismatch, failed plugin activation, corrupt override file, broken profile home). Output: findings table in `research.md`. Answered in `research.md`.
 - [x] **TB02** [P] Spike: does the CLI run when the Desktop bundle is broken? Trace which imports `apps/acryl-cli` needs and confirm it depends on `runtime/` only. Answered in `research.md`: the CLI depends on the runtime only.
-- [ ] **TB03** [P] Spike: channel discovery and auth (profile-home discovery file with owner-only mode, per-profile secret, loopback or Unix socket). Output: threat model in `research.md`.
+- [x] **TB03** [P] Spike: channel discovery and auth (profile-home discovery file with owner-only mode, per-profile secret, loopback or Unix socket). Output: threat model in `research.md`. Answered in `research.md`, against the merged 036 `AppInstance`/Registry design: discovery is already solved (the Registry, `0o700`/`0o600`, same-OS-user only); the channel reuses `acryl-agent-control`'s own status-route pattern (a per-instance secret file next to the run lock, loopback-only, `timingSafeEqual`); recommendation is loopback HTTP over a Unix socket, for one implementation across platforms matching every other private route in this codebase. Named plainly what it does not defend against (same-OS-user code execution, matching the boundary the offline lock and Registry already accept).
 - [ ] **TB04** [P] Spike: detect a live instance so offline writes can be refused.
 
 ### Phase B1: offline rescue (no app needed)
