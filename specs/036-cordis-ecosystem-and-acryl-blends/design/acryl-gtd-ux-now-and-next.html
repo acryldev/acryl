@@ -53,7 +53,7 @@
 
   .body { display: grid; grid-template-columns: 228px minmax(0, 1fr); height: 560px; position: relative; }
   .now .body { display: grid; grid-template-columns: 228px minmax(0, 1fr); height: 480px; }
-  .next .body { display: grid; grid-template-columns: 228px minmax(0, 1fr) 300px; height: 560px; }
+  .next .body { display: grid; grid-template-columns: 228px minmax(0, 1fr) 300px; height: 620px; }
   .rail { border-right: 1px solid var(--border); background: var(--panel); overflow: auto; padding: 10px 8px; }
   .rail h6, .panel h6 { margin: 10px 6px 6px; font: 600 10px var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--soft); }
   .ws { padding: 6px 8px; border-radius: 6px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
@@ -98,6 +98,21 @@
   .triage-row { display: flex; gap: 6px; margin-left: 8px; }
   .tbtn { height: 22px; padding: 0 8px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--panel3); color: var(--muted); font: 600 10px var(--sans); }
   .tbtn:hover { color: var(--foreground); border-color: var(--brand2); }
+
+  /* the builder-agent chat stays anchored under the canvas - "build from inside" is not optional (owner feedback) */
+  .canvas-top { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }
+  .agentbar { flex: none; height: 168px; border-top: 1px solid var(--border-strong); background: var(--panel); display: flex; flex-direction: column; box-shadow: 0 -8px 20px -12px #000; }
+  .agentbar .ahd { display: flex; align-items: center; gap: 6px; padding: 6px 10px; color: var(--muted); font: 600 10px var(--sans); text-transform: uppercase; letter-spacing: .08em; border-bottom: 1px solid var(--border); }
+  .agentbar .ahd .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+  .agentbar .amsg { padding: 6px 10px 0; font-size: 12px; color: var(--muted); }
+  .agentbar .amsg b { color: var(--foreground); }
+  .agentbar .composer { flex: 1; margin: 8px 10px 10px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--panel2); display: flex; flex-direction: column; padding: 10px 12px; }
+  .agentbar .composer .ph { color: var(--soft); flex: 1; }
+  .agentbar .composer .crow { display: flex; align-items: center; gap: 8px; }
+  .agentbar .composer .crow .sp { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .agentbar .composer .icn { width: 26px; height: 26px; border-radius: 999px; background: var(--panel3); color: var(--muted); display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .agentbar .composer .mpill { font-size: 11px; color: var(--muted); }
+  .agentbar .composer .send { width: 26px; height: 26px; border-radius: 999px; background: var(--brand); color: var(--brand-fg); display: flex; align-items: center; justify-content: center; }
 
   .rp { border-left: 1px solid var(--border); background: var(--panel); padding: 10px; overflow: auto; }
   .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 4px; }
@@ -190,7 +205,7 @@
   </table>
 
   <h2>Part 2: a dedicated workspace, if it's worth building</h2>
-  <p class="lede">The chat above already does everything GTD needs. This is what trades that away for at-a-glance structure: a bucket rail instead of remembering what you triaged where, a list you can scan and act on directly, and a calendar strip. <b>Click a bucket on the left</b> to switch the list.</p>
+  <p class="lede">A structured view on top of the chat, never instead of it: "build from inside" - a chat or PTY with the builder agent - is the main strength of every ACRYL Blends app, from day one, and this mock does not remove it. The bucket rail and list are new; the <b>Builder Agent bar stays anchored under the canvas</b>, always visible, whichever bucket you're looking at. <b>Click a bucket on the left</b> to switch the list above the agent bar.</p>
 
   <div class="ade next" aria-label="Proposed GTD workspace mock">
     <div class="top">
@@ -212,33 +227,46 @@
       </aside>
 
       <section class="canvas">
-        <div class="listhead"><h3 data-title-for="next">Next Actions</h3><span class="cap">+ Capture</span></div>
-        <div class="items" data-list="inbox" hidden>
-          <div class="item"><span class="id">#5</span><div class="t">Book the anniversary dinner</div><div class="triage-row"><span class="tbtn">Next</span><span class="tbtn">Waiting</span><span class="tbtn">Someday</span><span class="tbtn">Reference</span></div></div>
+        <div class="canvas-top">
+          <div class="listhead"><h3 data-title-for="next">Next Actions</h3><span class="cap">+ Capture</span></div>
+          <div class="items" data-list="inbox" hidden>
+            <div class="item"><span class="id">#5</span><div class="t">Book the anniversary dinner</div><div class="triage-row"><span class="tbtn">Next</span><span class="tbtn">Waiting</span><span class="tbtn">Someday</span><span class="tbtn">Reference</span></div></div>
+          </div>
+          <div class="items" data-list="next">
+            <div class="item"><span class="id">#1</span><div class="t">Renew passport</div><span class="proj">Travel</span><span class="due">due Oct 15</span></div>
+            <div class="item"><span class="id">#6</span><div class="t">Book flights to Lisbon</div><span class="proj">Travel</span></div>
+            <div class="item"><span class="id">#7</span><div class="t">Draft the Q4 budget</div><span class="proj">Work</span><span class="tag">@computer</span></div>
+            <div class="item"><span class="id">#8</span><div class="t">Pick up dry cleaning</div><span class="tag">@errands</span></div>
+          </div>
+          <div class="items" data-list="waiting" hidden>
+            <div class="item"><span class="id">#2</span><div class="t">Call the dentist</div></div>
+            <div class="item"><span class="id">#9</span><div class="t">Landlord to fix the heater<small>Asked Sep 20</small></div></div>
+          </div>
+          <div class="items" data-list="someday" hidden>
+            <div class="item"><span class="id">#3</span><div class="t">Learn to sail</div></div>
+            <div class="item"><span class="id">#10</span><div class="t">Rebuild the garden shed</div></div>
+            <div class="item"><span class="id">#11</span><div class="t">Learn Portuguese</div></div>
+          </div>
+          <div class="items" data-list="reference" hidden>
+            <div class="item"><span class="id">#4</span><div class="t">The warranty card<small>For the espresso machine</small></div></div>
+            <div class="item"><span class="id">#12</span><div class="t">Landlord's contact details</div></div>
+          </div>
+          <div class="items" data-list="projects" hidden>
+            <div class="proj-card"><b>Travel</b><span style="color:var(--muted)">1 open, 0 done</span><div class="bar"><i style="width:0%"></i></div></div>
+            <div class="proj-card"><b>Work</b><span style="color:var(--muted)">3 open, 2 done</span><div class="bar"><i style="width:40%"></i></div></div>
+            <div class="proj-card"><b>Home</b><span style="color:var(--muted)">1 open, 1 done</span><div class="bar"><i style="width:50%"></i></div></div>
+          </div>
         </div>
-        <div class="items" data-list="next">
-          <div class="item"><span class="id">#1</span><div class="t">Renew passport</div><span class="proj">Travel</span><span class="due">due Oct 15</span></div>
-          <div class="item"><span class="id">#6</span><div class="t">Book flights to Lisbon</div><span class="proj">Travel</span></div>
-          <div class="item"><span class="id">#7</span><div class="t">Draft the Q4 budget</div><span class="proj">Work</span><span class="tag">@computer</span></div>
-          <div class="item"><span class="id">#8</span><div class="t">Pick up dry cleaning</div><span class="tag">@errands</span></div>
-        </div>
-        <div class="items" data-list="waiting" hidden>
-          <div class="item"><span class="id">#2</span><div class="t">Call the dentist</div></div>
-          <div class="item"><span class="id">#9</span><div class="t">Landlord to fix the heater<small>Asked Sep 20</small></div></div>
-        </div>
-        <div class="items" data-list="someday" hidden>
-          <div class="item"><span class="id">#3</span><div class="t">Learn to sail</div></div>
-          <div class="item"><span class="id">#10</span><div class="t">Rebuild the garden shed</div></div>
-          <div class="item"><span class="id">#11</span><div class="t">Learn Portuguese</div></div>
-        </div>
-        <div class="items" data-list="reference" hidden>
-          <div class="item"><span class="id">#4</span><div class="t">The warranty card<small>For the espresso machine</small></div></div>
-          <div class="item"><span class="id">#12</span><div class="t">Landlord's contact details</div></div>
-        </div>
-        <div class="items" data-list="projects" hidden>
-          <div class="proj-card"><b>Travel</b><span style="color:var(--muted)">1 open, 0 done</span><div class="bar"><i style="width:0%"></i></div></div>
-          <div class="proj-card"><b>Work</b><span style="color:var(--muted)">3 open, 2 done</span><div class="bar"><i style="width:40%"></i></div></div>
-          <div class="proj-card"><b>Home</b><span style="color:var(--muted)">1 open, 1 done</span><div class="bar"><i style="width:50%"></i></div></div>
+        <div class="agentbar" aria-label="Builder agent, anchored under any GTD view">
+          <div class="ahd"><span class="dot"></span>Builder Agent <span class="fnote" style="margin-left:6px">always here</span></div>
+          <div class="amsg"><b>Agent</b> - triaged 4 items into Next, Waiting, Someday, Reference. Anything else to sort?</div>
+          <div class="composer">
+            <div class="ph">hi, please set up my agenda for today based on the most&nbsp;priority items in the inbox this week</div>
+            <div class="crow">
+              <span class="icn">+</span><span class="icn">📎</span><span class="pill" style="height:22px;font-size:11px">Full access</span>
+              <span class="sp"><span class="mpill">deepseek-flash · High</span><span class="send">↑</span></span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -260,6 +288,7 @@
     <thead><tr><th>Area</th><th>Status</th><th>What it is</th></tr></thead>
     <tbody>
       <tr><td>Chat + 12 tools</td><td><span class="chip built">built</span></td><td><code>examples/acryl-gtd/</code>, grown from <code>acryl.blank</code>; captured as a Blend, published as a registry Blueprint.</td></tr>
+      <tr><td>Builder agent bar (chat/PTY)</td><td><span class="chip built">kept</span></td><td>Not removed. It is ACRYL's core promise - every Blend can be built and rebuilt by talking to it, from inside itself - so it stays anchored under the canvas in every bucket, exactly the composer the plain Blank app already has.</td></tr>
       <tr><td>Bucket rail + list panel</td><td><span class="chip new">proposed</span></td><td>A client tab type reading the same <code>.acryl/gtd.json</code> the tools write - no new data model, just a view over it (the whole point of ACRYL's tool-first design: the UI is optional, the data isn't tool-shaped).</td></tr>
       <tr><td>Inline triage buttons</td><td><span class="chip new">proposed</span></td><td>A click calls the same <code>gtd_triage</code> tool the agent calls; no separate "UI logic" to keep in sync.</td></tr>
       <tr><td>Calendar strip</td><td><span class="chip new">proposed</span></td><td>Renders <code>gtd_upcoming</code>'s output as a week strip instead of text.</td></tr>
@@ -269,7 +298,7 @@
 
   <h2>Decisions</h2>
   <div class="grid2">
-    <div class="box"><h3>1. Is a dedicated UI worth it at all?</h3><p class="q">The chat already does the whole GTD loop. A UI adds no new capability, only faster scanning and one-click triage. This is the "toy app to explore ACRYL Blends concepts" - the honest answer may be "chat is the product, skip the UI."</p></div>
+    <div class="box"><h3>1. Is a dedicated UI worth it at all? <span class="chip built" style="margin-left:6px">resolved</span></h3><p class="q">Yes, on top of the chat, never in place of it (owner feedback, 2026-09-28): every ACRYL Blend keeps its builder agent as the anchor - "build from inside," "build agentic apps from day one" - so the bucket rail and list only add faster scanning and one-click triage; they cannot replace the chat that built them.</p></div>
     <div class="box"><h3>2. If yes, where does it live?</h3><p class="q">A workspace tab type (like the reference page's <code>acryl-tab-diff</code> pattern) so it opens from <b>+</b> in the advanced shell, or a standalone panel inside <code>acryl-gtd</code> itself that any surface can mount. The tab-type route reuses more of what's already built for spec 040.</p></div>
     <div class="box"><h3>3. Contexts (<code>@calls</code>, <code>@errands</code>) - filter or ignore?</h3><p class="q">The domain already tracks tags; mindwtr's Contexts view filters by them. Cheap to wire into the Next Actions list as a chip filter, easy to skip for a first UI pass.</p></div>
     <div class="box"><h3>4. Board view (mindwtr's swimlanes)?</h3><p class="q">Not modeled here. If wanted, it is a fourth rendering of the same data (by project or by bucket, kanban-style) - no new domain concept, same as the list and calendar above.</p></div>
