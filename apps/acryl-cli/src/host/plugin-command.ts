@@ -18,8 +18,11 @@ import {
   diagnosePluginLifecycle,
   entryPatchId,
   mountAcrylPluginLifecycle,
+  processIsAlive,
+  readLock,
   resolveAcrylDshHome,
   resolvePluginLifecycleStatePath,
+  runLockFileForDshHome,
   type PluginHealthReport,
   type PluginLifecycleReceipt,
   type PluginLifecycleSnapshot,
@@ -82,6 +85,15 @@ export function resolvePluginEntryId(
  * its child processes) behind.
  */
 export async function runPluginCommand(options: PluginCommandOptions): Promise<PluginCommandResult> {
+  // TB04/TB20: a write here boots a second host against the same engine home a live instance already owns -
+  // its own Loader composition (and the override file this ends up writing) would race that instance's. `list`
+  // and `doctor` only read, so they are left to boot as before; this refuses only the two actions that write.
+  if (options.action === 'enable' || options.action === 'disable') {
+    const holder = readLock(runLockFileForDshHome(resolveAcrylDshHome()))
+    if (holder !== undefined && processIsAlive(holder.pid)) {
+      throw new Error(`the app running this profile (pid ${String(holder.pid)}) is live; stop it before changing plugins from the CLI, or use its own Lifecycle panel instead`)
+    }
+  }
   const host = await startDirectHost({ profile: options.profile })
   try {
     // The composition resolved the profile while booting, so DSH_HOME - and
