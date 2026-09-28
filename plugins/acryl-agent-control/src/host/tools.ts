@@ -6,7 +6,7 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { MUTATING_OPS, parseUiRequest, UiControlError, type UiActionResult, type UiOp, type UiRequest, type UiSnapshot } from '../contract.ts'
+import { MUTATING_OPS, parseUiRequest, UiControlError, type AuditEntry, type UiActionResult, type UiOp, type UiRequest, type UiResult, type UiSnapshot } from '../contract.ts'
 import { renderSnapshot } from '../snapshot-text.ts'
 import type { AuditLog } from './audit.ts'
 import type { UiChannel } from './channel.ts'
@@ -98,13 +98,21 @@ export interface ToolDeps {
   readonly approval: 'asked' | 'none'
 }
 
-/** Run one call on the page and record it, turning every refusal into an error the model can read. */
-async function perform(deps: ToolDeps, toolName: string, args: unknown, signal: AbortSignal): Promise<UiSnapshot | UiActionResult> {
-  const mutating = MUTATING_TOOL_NAMES.has(toolName)
-  const approval = mutating ? deps.approval : 'not-needed'
-  let request: UiRequest
+/**
+ * Run one already-parsed call on the page and record it in the shared audit log - the one piece of logic both
+ * the model's own tools ({@link perform}) and the online channel ({@link runOnlineCall}, spec 041 TB30) share,
+ * so a click from either path leaves one consistent trail and neither can bypass the other's bookkeeping.
+ * @throws UiControlError, unwrapped, so a caller can map its `code` (the online route to JSON, `perform` to
+ * a model-readable message).
+ */
+async function callAndRecord(
+  deps: Pick<ToolDeps, 'channel' | 'audit' | 'refs'>,
+  toolName: string,
+  request: UiRequest,
+  signal: AbortSignal,
+  approval: AuditEntry['approval'],
+): Promise<UiResult> {
   try {
-    request = parseUiRequest({ ...(args as object), op: Object.entries(TOOL_NAMES).find(([, name]) => name === toolName)?.[0] })
     const value = await deps.channel.call(request, { signal, ...(request.op === 'wait' ? { timeoutMs: (request.timeoutMs ?? 3000) + 5000 } : {}) })
     if ('nodes' in value) deps.refs.remember(value)
     const target = 'target' in value ? value.target : undefined
@@ -114,6 +122,29 @@ async function perform(deps: ToolDeps, toolName: string, args: unknown, signal: 
     const code = cause instanceof UiControlError ? cause.code : 'failed'
     const refused = cause instanceof UiControlError && ['protected', 'sensitive', 'killed', 'invalid', 'stale-ref', 'unknown-ref', 'not-actionable'].includes(cause.code)
     deps.audit.record({ at: new Date().toISOString(), tool: toolName, outcome: refused ? 'refused' : 'failed', detail: code, approval })
+    throw cause
+  }
+}
+
+/**
+ * The online channel's own entry point (TB30): a request the HTTP route already parsed with
+ * {@link parseUiRequest}, authorized by the instance secret rather than a per-call interactive approval (TB03:
+ * same OS-user trust, the online channel's own boundary, not the model's).
+ * @throws UiControlError.
+ */
+export async function runOnlineCall(deps: Pick<ToolDeps, 'channel' | 'audit' | 'refs'>, request: UiRequest, signal: AbortSignal): Promise<UiResult> {
+  return callAndRecord(deps, TOOL_NAMES[request.op], request, signal, 'token')
+}
+
+/** Run one call on the page and record it, turning every refusal into an error the model can read. */
+async function perform(deps: ToolDeps, toolName: string, args: unknown, signal: AbortSignal): Promise<UiSnapshot | UiActionResult> {
+  const mutating = MUTATING_TOOL_NAMES.has(toolName)
+  const approval = mutating ? deps.approval : 'not-needed'
+  let request: UiRequest
+  try {
+    request = parseUiRequest({ ...(args as object), op: Object.entries(TOOL_NAMES).find(([, name]) => name === toolName)?.[0] })
+    return await callAndRecord(deps, toolName, request, signal, approval) as UiSnapshot | UiActionResult
+  } catch (cause) {
     if (cause instanceof UiControlError) throw new Error(`${cause.code}: ${cause.message}`)
     throw cause
   }

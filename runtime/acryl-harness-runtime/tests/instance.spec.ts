@@ -2,7 +2,7 @@
  * The app-instance module (spec 036, "Self-containment"): Bulkheads built from one Abstract Factory per kind of app, chosen once by the selector, handed
  * across processes by one environment contract, and guarded by a Pessimistic Offline Lock and a Registry.
  */
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -16,8 +16,12 @@ import {
   instanceEnvironment,
   listRunning,
   managedApp,
+  onlineSecretPath,
+  readOnlineSecret,
   releaseLock,
+  removeOnlineSecret,
   selectInstance,
+  writeOnlineSecret,
   withdraw,
   type AppInstance,
 } from '../src/instance/index.ts'
@@ -115,6 +119,29 @@ describe('Pessimistic Offline Lock', () => {
     expect(JSON.parse(readFileSync(file, 'utf8')).pid).toBe(30)
     releaseLock(file, 30)
     expect(() => readFileSync(file)).toThrow()
+  })
+})
+
+describe('online channel secret (spec 041 TB30)', () => {
+  it('is absent until written, then readable back, private, and gone after removal', () => {
+    const home = temp()
+    expect(readOnlineSecret(home)).toBeUndefined()
+    const secret = writeOnlineSecret(home)
+    expect(secret).toMatch(/^[0-9a-f]{48}$/)
+    expect(readOnlineSecret(home)).toBe(secret)
+    if (process.platform !== 'win32') {
+      expect(statSync(onlineSecretPath(home)).mode & 0o777).toBe(0o600)
+    }
+    removeOnlineSecret(home)
+    expect(readOnlineSecret(home)).toBeUndefined()
+  })
+
+  it('writes a fresh secret each time (a restart rotates it, TB03)', () => {
+    const home = temp()
+    const first = writeOnlineSecret(home)
+    const second = writeOnlineSecret(home)
+    expect(second).not.toBe(first)
+    expect(readOnlineSecret(home)).toBe(second)
   })
 })
 

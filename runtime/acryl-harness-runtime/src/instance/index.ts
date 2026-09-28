@@ -24,5 +24,12 @@ export {
   type AppInstanceKind,
 } from './app-instance.ts'
 export { LockHeldError, acquireLock, processIsAlive, readLock, releaseLock, type LockHolder } from './offline-lock.ts'
+export {
+  ONLINE_SECRET_FILE_NAME,
+  onlineSecretPath,
+  readOnlineSecret,
+  removeOnlineSecret,
+  writeOnlineSecret,
+} from './online-secret.ts'
 export { announce, listRunning, registryDir, withdraw, type RunningApp } from './registry.ts'
 export { appFolder, isGitWorktree, managedApp, osHomeDirectory, selectInstance, type SelectInstanceOptions } from './select.ts'

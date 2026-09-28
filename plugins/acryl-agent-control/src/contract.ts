@@ -201,6 +201,11 @@ export interface AuditEntry {
   readonly outcome: 'ok' | 'refused' | 'failed'
   /** The error code for a refusal or failure, or a short note for a success. */
   readonly detail?: string
-  /** Whether the user was asked first (`asked`) or approval was switched off (`none`). */
-  readonly approval: 'asked' | 'none' | 'not-needed'
+  /**
+   * Whether the user was asked first (`asked`), approval was switched off (`none`), the call needed no
+   * approval (`not-needed`), or it came through the online channel (`token`, spec 041 TB30) - authorized by
+   * the per-instance secret only OS-user file permissions gate, not a per-call interactive prompt (the same
+   * trust boundary the Registry and the offline lock already accept).
+   */
+  readonly approval: 'asked' | 'none' | 'not-needed' | 'token'
 }

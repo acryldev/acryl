@@ -14,8 +14,10 @@ import { AuditLog, auditPath } from './host/audit.ts'
 import { createAuditRequestHandler, UI_CONTROL_AUDIT_PATH } from './host/audit-route.ts'
 import { UiChannel } from './host/channel.ts'
 import { parseConfig } from './host/config.ts'
+import { ONLINE_CALL_PATH, handleOnlineCallRequest } from './host/online-route.ts'
+import { removeOnlineSecret, writeOnlineSecret } from './host/online-secret.ts'
 import { createUiControlStream, UI_CONTROL_CHANNEL_PATH } from './host/stream.ts'
-import { RefDirectory, registerUiTools } from './host/tools.ts'
+import { RefDirectory, registerUiTools, runOnlineCall } from './host/tools.ts'
 
 export const name = 'acryl-agent-control'
 /**
@@ -38,12 +40,16 @@ export const inject = ['webServer', 'tools', 'appInstance']
 export function apply(ctx: Context, rawConfig?: unknown): void {
   const config = parseConfig(rawConfig)
   const origin = `http://127.0.0.1:${String(ctx.webServer.port)}`
+  const reportError = (operation: string, cause: unknown): void => {
+    ctx.logger?.error?.(`acryl-agent-control: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
+  }
   ctx.effect(() => {
     const channel = new UiChannel()
     const stream = createUiControlStream(channel, origin)
     const audit = new AuditLog(config.auditLog ?? auditPath(ctx.appInstance.home))
     const refs = new RefDirectory()
     const releases: Array<() => void> = []
+    let onlineSecret: string | undefined
     try {
       releases.push(ctx.webServer.registerUpgrade({
         path: UI_CONTROL_CHANNEL_PATH,
@@ -53,14 +59,27 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
       releases.push(ctx.webServer.register({ kind: 'exact', path: UI_CONTROL_AUDIT_PATH, handler: (req, res) => { handleAudit(req, res, origin) } }))
       releases.push(registerUiTools(ctx, { channel, audit, refs, approval: config.approval === 'none' ? 'none' : 'asked' }))
       releases.push(ctx.on('tools/pre-execute', createApprovalPolicy(refs, config.approval)))
+      if (config.online) {
+        // TB30: the outside operator's channel, loopback-only and secret-gated (TB03) - the secret is this
+        // run's alone, written once at startup and removed on shutdown, never persisted across restarts.
+        onlineSecret = writeOnlineSecret(ctx.appInstance.home)
+        const secret = onlineSecret
+        releases.push(ctx.webServer.register({
+          kind: 'exact',
+          path: ONLINE_CALL_PATH,
+          handler: (req, res) => { void handleOnlineCallRequest(req, res, secret, (request, signal) => runOnlineCall({ channel, audit, refs }, request, signal), reportError) },
+        }))
+      }
     } catch (cause) {
       for (const release of releases.reverse()) release()
+      if (onlineSecret !== undefined) removeOnlineSecret(ctx.appInstance.home)
       stream.close()
       channel.close()
       throw cause
     }
     return () => {
       for (const release of releases.reverse()) release()
+      if (onlineSecret !== undefined) removeOnlineSecret(ctx.appInstance.home)
       stream.close()
       channel.close()
     }
@@ -69,4 +88,13 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
 
 export { UI_CONTROL_CHANNEL_PATH } from './host/stream.ts'
 export { UI_CONTROL_AUDIT_PATH } from './host/audit-route.ts'
-export { UiControlError } from './contract.ts'
+export { ONLINE_CALL_PATH, type OnlineCallResponse } from './host/online-route.ts'
+export {
+  UI_OPS,
+  UiControlError,
+  parseUiRequest,
+  type UiErrorCode,
+  type UiOp,
+  type UiRequest,
+  type UiResult,
+} from './contract.ts'
