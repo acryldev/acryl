@@ -5,14 +5,33 @@
  * same shape as acryl-organizer. The data lives in `<workspace>/.acryl/gtd.json`. Remove the plugin and the tools
  * go; the data file stays with the project.
  *
- * Surfaces: tui web desktop (tools need no browser). Requires: `tools`.
+ * The board (`gtd_board`) is interactive: its client half (`client.js`) renders a real console - buckets, an
+ * inline-triage list with a context-tag filter, a kanban board, a day/week/month calendar and project progress
+ * cards - reading and writing the same `.acryl/gtd.json` the tools use, through two same-origin loopback routes
+ * this plugin owns (a `tool.call.toolview` card has no built-in way to call another tool; it can only render its
+ * own call, so real interactivity needs its own Host route - see `docs/extending/workspace-tab.md`'s note on that).
+ * `lib/http.js` inlines the loopback/JSON-body checks rather than depending on `acryl-loopback-http`: this
+ * extension is vendored into whatever project grows from the Blueprint, outside the monorepo's own workspace
+ * linking, and (discovered live, in a Blank-grown app) nothing guarantees that package is resolvable there -
+ * `acryl-agent-control`, the one row that does depend on it, is not part of Blank's rows at all.
+ *
+ * Surfaces: tui web desktop (tools need no browser; the board needs `webServer`, web/desktop only).
  */
+import { isAbsolute, join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import * as domain from './lib/domain.js'
-import { storeFor } from './lib/store.js'
+import { error, finishJson, isSameOriginLoopbackRequest, parseJsonPostBody, INVALID_BODY } from './lib/http.js'
+import { fileStore, storeFor } from './lib/store.js'
 
 export const name = 'acryl-gtd'
-export const inject = ['tools']
+export const inject = ['tools', 'webServer']
+
+/** The board route body always names its own workspace; validated once, used by every route below. */
+function requireCwd(value) {
+  if (typeof value !== 'string' || value.trim() === '' || !isAbsolute(value)) throw new Error('cwd must be an absolute path')
+  return value
+}
+const storeForCwd = cwd => fileStore(join(cwd, '.acryl', 'gtd.json'))
 
 const text = (_args, value) => [{ type: 'text', text: value }]
 const output = { schema: { type: 'string' }, render: text }
@@ -65,6 +84,62 @@ export function apply(ctx) {
       (state, args) => { const due = domain.agenda(state, args.day); return `Due ${args.day}:\n${list(due.map(itemLine))}` }),
     useCase({ name: 'gtd_upcoming', description: 'What is due over the next few days (default 7).', parameters: { from: { type: 'string', required: true, description: 'First day, YYYY-MM-DD' }, days: { type: 'number', description: 'How many days (default 7)' } } },
       (state, args) => { const weeks = domain.upcoming(state, args.from, args.days === undefined ? 7 : Number(args.days)); return weeks.length === 0 ? '(nothing due)' : weeks.map(day => `${day.day}:\n${list(day.items.map(itemLine))}`).join('\n') }),
+    useCase({ name: 'gtd_board', description: 'Open the interactive GTD board: buckets, an inline-triage list with a context filter, a kanban board, a day/week/month calendar and project progress. Call this whenever the user wants to see or work their GTD system visually, not just hear about it.', parameters: {} },
+      state => `Opened the board: ${state.items.length} item(s) across ${domain.projects(state).length} project(s).`),
   ]
   for (const tool of tools) ctx.effect(() => ctx.tools.register(tool), `acryl-gtd: ${tool.name}`)
+
+  const origin = `http://127.0.0.1:${String(ctx.webServer.port)}`
+
+  ctx.effect(() => ctx.webServer.register({
+    kind: 'exact',
+    path: '/api/acryl-gtd/state',
+    handler: (req, res) => {
+      if (req.method !== 'GET') return finishJson(res, 405, error('method not allowed'), 'GET')
+      if (!isSameOriginLoopbackRequest(req, origin, false)) return finishJson(res, 403, error('forbidden'))
+      let cwd
+      try { cwd = requireCwd(new URL(req.url ?? '', origin).searchParams.get('cwd')) } catch (cause) { return finishJson(res, 400, error(cause.message)) }
+      finishJson(res, 200, storeForCwd(cwd).load())
+    },
+  }), 'acryl-gtd: state route')
+
+  ctx.effect(() => ctx.webServer.register({
+    kind: 'exact',
+    path: '/api/acryl-gtd/capture',
+    handler: async (req, res) => {
+      if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
+      if (!isSameOriginLoopbackRequest(req, origin, true)) return finishJson(res, 403, error('forbidden'))
+      const body = await parseJsonPostBody(req, res)
+      if (body === INVALID_BODY) return
+      try {
+        const cwd = requireCwd(body?.cwd)
+        const store = storeForCwd(cwd)
+        const next = domain.capture(store.load(), body)
+        store.save(next)
+        finishJson(res, 200, next)
+      } catch (cause) {
+        finishJson(res, cause instanceof domain.GtdError ? 422 : 400, error(cause.message))
+      }
+    },
+  }), 'acryl-gtd: capture route')
+
+  ctx.effect(() => ctx.webServer.register({
+    kind: 'exact',
+    path: '/api/acryl-gtd/triage',
+    handler: async (req, res) => {
+      if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
+      if (!isSameOriginLoopbackRequest(req, origin, true)) return finishJson(res, 403, error('forbidden'))
+      const body = await parseJsonPostBody(req, res)
+      if (body === INVALID_BODY) return
+      try {
+        const cwd = requireCwd(body?.cwd)
+        const store = storeForCwd(cwd)
+        const next = domain.triage(store.load(), { ...body, id: Number(body?.id) })
+        store.save(next)
+        finishJson(res, 200, next)
+      } catch (cause) {
+        finishJson(res, cause instanceof domain.GtdError ? 422 : 400, error(cause.message))
+      }
+    },
+  }), 'acryl-gtd: triage route')
 }
