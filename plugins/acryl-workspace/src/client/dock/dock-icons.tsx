@@ -23,7 +23,3 @@ export function ModeIcon({ mode }: { readonly mode: DockMode }) {
     </svg>
   )
 }
-
-export function ChevronDownIcon() {
-  return <svg {...props}><path d="M4 6.5l4 4 4-4" /></svg>
-}

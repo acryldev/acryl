@@ -14,7 +14,7 @@ import type { WorkspaceGitApi } from '../git/git-api.ts'
 import type { ToastState } from '../notifications/toast-state.ts'
 import { openSettingsSection } from '../settings/open-settings.ts'
 import type { DockController } from '../dock/dock-controller.ts'
-import { toggleDock, type RightPaneHandle } from '../dock/DockButtons.tsx'
+import type { RightPaneHandle } from '../dock/DockButtons.tsx'
 import type { WorkspaceTabRegistry } from '../tabs/registry/tab-registry.ts'
 import type { TabTypesState } from '../tabs/tab-types-state.ts'
 import { WORKSPACE_SURFACE_ACTIONS } from '../terminal/agent-commands.ts'
@@ -58,13 +58,11 @@ export function useWorkspacePalette(deps: WorkspacePaletteDeps): PaletteState {
       openCustomTab: (kind, label) => { latest.current.workspace.addTile('custom', { customType: kind, title: label }) },
       openSettings: section => openSettingsSection(section),
       toggleRightPanel: () => { latest.current.rightPanel?.toggle() },
-      toggleTerminalPanel: () => { toggleDock(latest.current.dock, latest.current.rightPanel) },
       setTerminalMode: (mode) => {
         const { dock, rightPanel } = latest.current
         dock.setMode(mode)
-        // Show the panel where it now is: a panel in the right pane needs the right pane open.
-        if (!dock.getPrefs().open) toggleDock(dock, rightPanel)
-        else if (mode !== 'bottom' && rightPanel !== undefined && !rightPanel.isOpen()) rightPanel.toggle()
+        // The (always-visible) terminal panel needs the right pane open when its mode puts it there.
+        if (mode !== 'bottom' && rightPanel !== undefined && !rightPanel.isOpen()) rightPanel.toggle()
       },
       setShellMode: (mode) => { latest.current.shell.setMode(mode) },
       selectWorktree: (path) => { latest.current.shell.select(path) },

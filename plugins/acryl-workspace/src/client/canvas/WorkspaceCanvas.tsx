@@ -318,7 +318,6 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
         branchLabel={groupKey === GLOBAL_GROUP ? null : (groupBranch ?? 'detached')}
         branchTitle={groupKey}
         runningText={runningText}
-        {...(rightPanel === undefined ? {} : { rightPanel })}
         dock={dock}
         agentStatus={agentStatus}
         storage={safeStorage()}

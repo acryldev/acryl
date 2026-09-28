@@ -19,8 +19,8 @@ describe('dock layout rules', () => {
   it('reads saved preferences field by field, clamping sizes and dropping nonsense', () => {
     expect(parseDockPrefs(null)).toEqual(DEFAULT_DOCK_PREFS)
     expect(parseDockPrefs([1])).toEqual(DEFAULT_DOCK_PREFS)
-    expect(parseDockPrefs({ mode: 'side', open: true, sideView: 'terminals', stackedRatio: 5, bottomHeight: 9999 })).toEqual({ mode: 'side', open: true, sideView: 'terminals', stackedRatio: 0.85, bottomHeight: BOTTOM_MAX })
-    expect(parseDockPrefs({ mode: 'weird', open: 'yes', stackedRatio: 'x', bottomHeight: 1 })).toEqual({ ...DEFAULT_DOCK_PREFS, bottomHeight: BOTTOM_MIN })
+    expect(parseDockPrefs({ mode: 'side', sideView: 'terminals', stackedRatio: 5, bottomHeight: 9999 })).toEqual({ mode: 'side', sideView: 'terminals', stackedRatio: 0.85, bottomHeight: BOTTOM_MAX })
+    expect(parseDockPrefs({ mode: 'weird', stackedRatio: 'x', bottomHeight: 1 })).toEqual({ ...DEFAULT_DOCK_PREFS, bottomHeight: BOTTOM_MIN })
   })
 })
 
@@ -89,19 +89,16 @@ describe('saving dock tabs', () => {
 })
 
 describe('DockController', () => {
-  it('opens the panel, goes straight to the terminals in side mode, and cycles modes', () => {
+  it('cycles modes, remembers the side view across a cycle, and clamps sizes', () => {
     const { controller } = makeDock()
     const listener = vi.fn()
     controller.subscribe(listener)
-    controller.setOpen(true)
-    expect(controller.getPrefs()).toMatchObject({ open: true, mode: 'stacked', sideView: 'files' })
+    expect(controller.getPrefs()).toMatchObject({ mode: 'stacked', sideView: 'files' })
     controller.cycleMode()
     controller.cycleMode()
-    expect(controller.getPrefs()).toMatchObject({ mode: 'side', sideView: 'terminals' })
-    controller.setSideView('files')
-    controller.toggleOpen()
-    controller.toggleOpen()
-    expect(controller.getPrefs()).toMatchObject({ open: true, sideView: 'terminals' })
+    expect(controller.getPrefs()).toMatchObject({ mode: 'side', sideView: 'files' })
+    controller.setSideView('terminals')
+    expect(controller.getPrefs()).toMatchObject({ sideView: 'terminals' })
     controller.setBottomHeight(50)
     controller.setStackedRatio(0.99)
     expect(controller.getPrefs()).toMatchObject({ bottomHeight: BOTTOM_MIN, stackedRatio: 0.85 })
@@ -127,12 +124,11 @@ describe('DockController', () => {
     const storage = memoryStorage()
     const first = makeDock(storage)
     first.controller.setMode('bottom')
-    first.controller.setOpen(true)
     await first.controller.openTab('/w', '/w')
     first.controller.flush()
-    expect(JSON.parse(storage.data.get(DOCK_STORAGE_KEY) ?? '{}').prefs).toMatchObject({ mode: 'bottom', open: true })
+    expect(JSON.parse(storage.data.get(DOCK_STORAGE_KEY) ?? '{}').prefs).toMatchObject({ mode: 'bottom' })
     const second = makeDock(storage)
-    expect(second.controller.getPrefs()).toMatchObject({ mode: 'bottom', open: true })
+    expect(second.controller.getPrefs()).toMatchObject({ mode: 'bottom' })
     expect(second.controller.groups.stateFor('/w').getSnapshot().tabs[0]?.terminalId).toBe('term-1')
   })
 

@@ -1,6 +1,7 @@
 /**
- * The terminal dock's layout preferences: where the terminal panel sits, whether it is open, and how big it is.
- * Pure rules (parsing what was saved, clamping sizes, the cycle of modes) with no page and no storage in them.
+ * The terminal dock's layout preferences: where the terminal panel sits and how big it is. The panel is always
+ * visible (owner decision 2026-09-28: PTYs stay reachable, only their layout changes) - pure rules (parsing what
+ * was saved, clamping sizes, the cycle of modes) with no page and no storage in them.
  *
  * Three modes, as in the Super Engineering screens the owner pointed to (spec 040 T126):
  * - `stacked`: the right pane keeps its full height; the terminal panel sits under Files, Changes, Review, Checks.
@@ -16,8 +17,6 @@ export type SideView = 'files' | 'terminals'
 
 export interface DockPrefs {
   readonly mode: DockMode
-  /** The terminal panel is shown (in `side` mode: the switcher is shown). */
-  readonly open: boolean
   readonly sideView: SideView
   /** `stacked`: the share of the right pane the terminal panel takes. */
   readonly stackedRatio: number
@@ -30,7 +29,7 @@ export const STACKED_MAX = 0.85
 export const BOTTOM_MIN = 120
 export const BOTTOM_MAX = 900
 
-export const DEFAULT_DOCK_PREFS: DockPrefs = { mode: 'stacked', open: false, sideView: 'files', stackedRatio: 0.4, bottomHeight: 280 }
+export const DEFAULT_DOCK_PREFS: DockPrefs = { mode: 'stacked', sideView: 'files', stackedRatio: 0.4, bottomHeight: 280 }
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value))
 
@@ -46,7 +45,6 @@ export function parseDockPrefs(value: unknown): DockPrefs {
   const number = (field: unknown, fallback: number): number => (typeof field === 'number' && Number.isFinite(field) ? field : fallback)
   return {
     mode: isMode(record.mode) ? record.mode : DEFAULT_DOCK_PREFS.mode,
-    open: typeof record.open === 'boolean' ? record.open : DEFAULT_DOCK_PREFS.open,
     sideView: record.sideView === 'terminals' || record.sideView === 'files' ? record.sideView : DEFAULT_DOCK_PREFS.sideView,
     stackedRatio: clampStackedRatio(number(record.stackedRatio, DEFAULT_DOCK_PREFS.stackedRatio)),
     bottomHeight: clampBottomHeight(number(record.bottomHeight, DEFAULT_DOCK_PREFS.bottomHeight)),

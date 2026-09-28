@@ -16,9 +16,7 @@ export interface PaletteActions {
   /** @returns false when the Settings panel could not be opened. */
   openSettings(section: SettingsSectionKey): boolean
   toggleRightPanel(): void
-  /** Shows or hides the terminal panel (opening the right pane when the panel lives there). */
-  toggleTerminalPanel(): void
-  /** Moves the terminal panel: stacked under the right pane, under the main area, or side by side. */
+  /** Moves the always-visible terminal panel: stacked under the right pane, under the main area, or side by side. */
   setTerminalMode(mode: 'stacked' | 'bottom' | 'side'): void
   setShellMode(mode: 'chats' | 'projects'): void
   selectWorktree(path: string): void
@@ -53,7 +51,6 @@ interface FixedCommand {
 const FIXED_COMMANDS: readonly FixedCommand[] = [
   { id: 'command:close-tab', title: 'Close current tab', keywords: ['close', 'tab'], run: a => { a.closeActiveTab() } },
   { id: 'command:right-panel', title: 'Toggle right panel', keywords: ['changes', 'review', 'checks', 'files', 'sidebar'], run: a => { a.toggleRightPanel() } },
-  { id: 'command:terminal-panel', title: 'Toggle terminal panel', keywords: ['terminal', 'dock', 'pty', 'shell'], run: a => { a.toggleTerminalPanel() } },
   { id: 'command:terminal-stacked', title: 'Terminal panel: stacked under the right pane', keywords: ['terminal', 'dock', 'layout'], run: a => { a.setTerminalMode('stacked') } },
   { id: 'command:terminal-bottom', title: 'Terminal panel: at the bottom', keywords: ['terminal', 'dock', 'layout'], run: a => { a.setTerminalMode('bottom') } },
   { id: 'command:terminal-side', title: 'Terminal panel: side by side', keywords: ['terminal', 'dock', 'layout'], run: a => { a.setTerminalMode('side') } },

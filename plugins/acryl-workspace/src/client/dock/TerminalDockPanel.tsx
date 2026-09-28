@@ -8,7 +8,6 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { WorkspaceTile } from '../canvas/state.ts'
 import { PtyPane } from '../terminal/PtyPane.tsx'
 import { estimateTerminalSize } from '../terminal/terminal-size.ts'
-import { ChevronDownIcon } from './dock-icons.tsx'
 import type { DockHost } from './dock-host.ts'
 import type { DockTab } from './dock-tabs.ts'
 
@@ -17,8 +16,6 @@ export interface TerminalDockPanelProps {
   readonly groupKey: string
   /** The directory a new terminal starts in (the selected worktree). */
   readonly cwd: string | undefined
-  /** Closes the panel (the terminals keep running). */
-  onHide(): void
 }
 
 /** The dock's tab as the terminal pane wants it. */
@@ -26,7 +23,7 @@ function tileOf(tab: DockTab): WorkspaceTile {
   return { id: tab.id, kind: 'pty', title: tab.title, commandId: 'shell', ...(tab.terminalId === undefined ? {} : { terminalId: tab.terminalId }), ...(tab.error === undefined ? {} : { error: tab.error }) }
 }
 
-export function TerminalDockPanel({ host, groupKey, cwd, onHide }: TerminalDockPanelProps) {
+export function TerminalDockPanel({ host, groupKey, cwd }: TerminalDockPanelProps) {
   const state = host.controller.groups.stateFor(groupKey)
   const snapshot = useSyncExternalStore(state.subscribe, state.getSnapshot)
   const body = useRef<HTMLDivElement>(null)
@@ -79,7 +76,6 @@ export function TerminalDockPanel({ host, groupKey, cwd, onHide }: TerminalDockP
         ))}
         <button type="button" className="dshDockAdd" aria-label="New terminal" title="New terminal" onClick={start}>+</button>
         <span className="dshDockGrow" />
-        <button type="button" className="dshDockHide" aria-label="Hide the terminal panel" title="Hide the terminal panel (terminals keep running)" onClick={onHide}><ChevronDownIcon /></button>
       </div>
       <div ref={body} className="dshDockBody">
         {active === undefined

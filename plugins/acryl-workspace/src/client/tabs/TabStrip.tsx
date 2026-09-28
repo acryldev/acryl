@@ -14,7 +14,7 @@ import type { TerminalRegistry } from '../terminal/terminal-session.ts'
 import type { AgentSettingsView } from '../../agents/contract.ts'
 import type { AgentStatusState } from '../status/agent-status-state.ts'
 import type { DockController } from '../dock/dock-controller.ts'
-import { DockButtons, type RightPaneHandle } from '../dock/DockButtons.tsx'
+import { DockButtons } from '../dock/DockButtons.tsx'
 import type { WorkspaceTabRegistry } from './registry/tab-registry.ts'
 import type { TabTypesState } from './tab-types-state.ts'
 import { NewTabMenu } from './NewTabMenu.tsx'
@@ -29,8 +29,7 @@ export interface TabStripProps {
   readonly branchLabel: string | null
   readonly branchTitle: string
   readonly runningText: string | null
-  readonly rightPanel?: RightPaneHandle
-  /** The terminal dock, for its two buttons. */
+  /** The terminal dock, for its mode-switch button. */
   readonly dock: DockController
   /** What terminal agents report, for the marker on their tabs. */
   readonly agentStatus: AgentStatusState
@@ -108,7 +107,7 @@ function kindGlyph(kind: WorkspaceTile['kind']): string {
   return '◉'
 }
 
-export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, dock, agentStatus, storage, customAgents, terminals, onClose, onOpenPty, agentSettings, tabTypes, tabRegistry, onSetAgentEnabled, onManageSettings }: TabStripProps) {
+export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, dock, agentStatus, storage, customAgents, terminals, onClose, onOpenPty, agentSettings, tabTypes, tabRegistry, onSetAgentEnabled, onManageSettings }: TabStripProps) {
   const tabsRef = useRef<HTMLDivElement>(null)
   const agentStates = useSyncExternalStore(agentStatus.subscribe, agentStatus.getSnapshot)
   const [edges, setEdges] = useState({ start: false, end: false })
@@ -256,21 +255,7 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
         onSetAgentEnabled={onSetAgentEnabled}
         onManageSettings={onManageSettings}
       />
-      <DockButtons controller={dock} rightPane={rightPanel} />
-      {rightPanel !== undefined && (
-        <button
-          type="button"
-          className="dshWorkspaceRightToggle"
-          aria-label="Toggle right panel"
-          title="Show or hide the right panel (files, changes)"
-          onClick={() => { rightPanel.toggle() }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
-            <rect x="1.7" y="2.7" width="12.6" height="10.6" rx="2" />
-            <path d="M10 2.9v10.2" />
-          </svg>
-        </button>
-      )}
+      <DockButtons controller={dock} />
       {tabMenu !== null && (
         <TabContextMenu
           x={tabMenu.x}

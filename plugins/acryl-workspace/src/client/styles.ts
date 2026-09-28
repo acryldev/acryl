@@ -95,8 +95,8 @@ const WORKSPACE_STYLES = `
 .dshDockTab:hover .dshDockTabClose, .dshDockTab[data-active] .dshDockTabClose, .dshDockTabClose:focus-visible { opacity: 0.8; }
 .dshDockTabClose:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); }
 .dshDockTabRename { width: 110px; margin: 2px 6px; padding: 3px 8px; border: 1px solid #4d6bfe; border-radius: 999px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-fg); font: inherit; outline: none; }
-.dshDockAdd, .dshDockHide { appearance: none; flex: none; display: inline-grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 8px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 16px; }
-.dshDockAdd:hover, .dshDockHide:hover { color: var(--dsw-alias-fg); background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
+.dshDockAdd { appearance: none; flex: none; display: inline-grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 8px; background: transparent; color: var(--dsw-alias-fg-l2); cursor: pointer; font-size: 16px; }
+.dshDockAdd:hover { color: var(--dsw-alias-fg); background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
 .dshDockGrow { flex: 1; }
 .dshDockBody { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
 .dshDockEmpty { padding: 16px; color: var(--dsw-alias-fg-l2); font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; }

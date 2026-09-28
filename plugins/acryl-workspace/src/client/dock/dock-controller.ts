@@ -57,18 +57,8 @@ export class DockController {
     return () => { this.listeners.delete(listener) }
   }
 
-  setOpen(open: boolean): void {
-    if (open === this.prefs.open) return
-    // Opening in side-by-side mode goes straight to the terminals: that is what the button was pressed for.
-    this.update({ open, ...(open && this.prefs.mode === 'side' ? { sideView: 'terminals' as const } : {}) })
-  }
-
-  toggleOpen(): void {
-    this.setOpen(!this.prefs.open)
-  }
-
   setMode(mode: DockMode): void {
-    this.update({ mode, ...(mode === 'side' && this.prefs.open ? { sideView: 'terminals' as const } : {}) })
+    this.update({ mode })
   }
 
   cycleMode(): void {

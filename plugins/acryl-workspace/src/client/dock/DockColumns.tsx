@@ -25,7 +25,7 @@ export function CenterColumn({ host, children }: { readonly host: DockHost; read
   const prefs = usePrefs(host)
   const target = useDockTarget(host)
   const column = useRef<HTMLDivElement>(null)
-  const showing = prefs.open && prefs.mode === 'bottom'
+  const showing = prefs.mode === 'bottom'
   return (
     <div ref={column} className="dshDockCenter">
       <div className="dshDockCenterMain">{children}</div>
@@ -44,7 +44,7 @@ export function CenterColumn({ host, children }: { readonly host: DockHost; read
             onReset={() => { host.controller.setBottomHeight(DEFAULT_DOCK_PREFS.bottomHeight) }}
           />
           <div className="dshDockBottom" style={{ height: prefs.bottomHeight }}>
-            <TerminalDockPanel host={host} groupKey={target.groupKey} cwd={target.cwd} onHide={() => { host.controller.setOpen(false) }} />
+            <TerminalDockPanel host={host} groupKey={target.groupKey} cwd={target.cwd} />
           </div>
         </>
       )}
@@ -56,10 +56,10 @@ export function RightColumn({ host, rightbar }: { readonly host: DockHost; reado
   const prefs = usePrefs(host)
   const target = useDockTarget(host)
   const column = useRef<HTMLDivElement>(null)
-  const stacked = prefs.open && prefs.mode === 'stacked'
-  const side = prefs.open && prefs.mode === 'side'
+  const stacked = prefs.mode === 'stacked'
+  const side = prefs.mode === 'side'
   const terminalsFull = side && prefs.sideView === 'terminals'
-  const panel = <TerminalDockPanel host={host} groupKey={target.groupKey} cwd={target.cwd} onHide={() => { host.controller.setOpen(false) }} />
+  const panel = <TerminalDockPanel host={host} groupKey={target.groupKey} cwd={target.cwd} />
   return (
     <div ref={column} className="dshDockRight">
       <div className="dshDockRightTop" hidden={terminalsFull} style={stacked ? { flex: `${String(1 - prefs.stackedRatio)} 1 0` } : undefined}>{rightbar}</div>
