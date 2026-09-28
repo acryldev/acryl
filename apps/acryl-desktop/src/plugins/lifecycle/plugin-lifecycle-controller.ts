@@ -93,7 +93,9 @@ export class PluginLifecycleController {
       afterDeactivate: packageName => this.pruneStaleDisable(packageName),
       warn: message => { this.ctx.logger?.warn?.(`acryl-desktop: ${message}`) },
     })
-    this.view = new PluginLifecycleView(ctx, this.lifecycle, () => bootstrap.blend)
+    this.view = new PluginLifecycleView(ctx, this.lifecycle, () => bootstrap.blend === undefined
+      ? undefined
+      : { locked: true, origin: bootstrap.blend.origin, lockPath: bootstrap.blend.lockPath, rows: bootstrap.blend.rows })
   }
 
   /**

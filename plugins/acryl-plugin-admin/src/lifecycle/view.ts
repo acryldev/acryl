@@ -24,17 +24,29 @@ import type {
 } from './contract.ts'
 import type { PluginLifecycleRouteController } from './route.ts'
 
-/** The Blend a surface composed, when it has one (Desktop's launcher projects it; Web has none). */
-export interface PluginLifecycleBlendSource {
-  readonly origin: {
-    readonly id: string
-    readonly kind: 'Blueprint' | 'Blend'
-    readonly version: string
-    readonly digest: string
+/**
+ * What a surface composed, when it has one to report (spec 040 T083): Desktop's launcher projects an exact
+ * locked generation; any surface booted from `ACRYL_BLUEPRINT` (Web included) has an unlocked Blueprint
+ * selection instead - a real identity, just not one with a digest or a lock file to name.
+ */
+export type PluginLifecycleBlendSource =
+  | {
+    readonly locked: true
+    readonly origin: {
+      readonly id: string
+      readonly kind: 'Blueprint' | 'Blend'
+      readonly version: string
+      readonly digest: string
+    }
+    readonly lockPath: string
+    readonly rows: readonly unknown[]
   }
-  readonly lockPath: string
-  readonly rows: readonly unknown[]
-}
+  | {
+    readonly locked: false
+    readonly id: string
+    readonly name: string
+    readonly rows: readonly unknown[]
+  }
 
 interface PackageManifest {
   readonly name?: unknown
@@ -102,14 +114,17 @@ export class PluginLifecycleView implements PluginLifecycleRouteController {
   private blendView(): PluginLifecycleBlendView | null {
     const blend = this.blend()
     if (blend === undefined) return null
-    return Object.freeze({
-      id: blend.origin.id,
-      kind: blend.origin.kind,
-      version: blend.origin.version,
-      digest: blend.origin.digest,
-      lockPath: blend.lockPath,
-      rows: blend.rows.length,
-    })
+    return blend.locked
+      ? Object.freeze({
+        locked: true as const,
+        id: blend.origin.id,
+        kind: blend.origin.kind,
+        version: blend.origin.version,
+        digest: blend.origin.digest,
+        lockPath: blend.lockPath,
+        rows: blend.rows.length,
+      })
+      : Object.freeze({ locked: false as const, id: blend.id, name: blend.name, rows: blend.rows.length })
   }
 
   private clientPackage(moduleName: string, graph: ReadonlySet<string>): string | null {

@@ -56,9 +56,12 @@ describe('the ACRYL workspace on the Web surface', () => {
       expect(rows.get('acryl-plugin-admin')?.fiber).toBeDefined()
       const lifecycle = await fetch(`${origin}/api/acryl-plugin-admin/lifecycle`, { headers })
       expect(lifecycle.status).toBe(200)
-      const snapshot = await lifecycle.json() as { entries: { entryId: string; moduleName: string }[]; blend: unknown }
+      const snapshot = await lifecycle.json() as { entries: { entryId: string; moduleName: string }[]; blend: { locked: boolean; id: string } | null }
       expect(snapshot.entries.some(entry => entry.moduleName === 'acryl-workspace')).toBe(true)
-      expect(snapshot.blend).toBeNull()
+      // No `dsh-desktop.blend` on Web, but every surface sets ACRYL_BLUEPRINT_ID at boot (spec 040 T083), so
+      // this is an honest unlocked identity, not null - Web's answer here now agrees with what a person sees
+      // in Desktop's own Lifecycle tab (a locked Blend) in kind, not in never having one to report at all.
+      expect(snapshot.blend).toMatchObject({ locked: false, id: 'acryl.ide' })
       const architecture = await fetch(`${origin}/api/acryl-plugin-admin/architecture`, { headers })
       expect(architecture.status).toBe(200)
       // The served page's client manifest names the workspace bundle, so the browser loads the shell and the workspace.

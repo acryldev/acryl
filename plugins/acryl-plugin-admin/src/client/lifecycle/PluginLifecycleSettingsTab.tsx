@@ -133,10 +133,15 @@ export function PluginLifecycleSettingsTab({ api, t }: PluginLifecycleSettingsTa
       ) : null}
       {state.status === 'ready' ? (
         <div className={css.catalog}>
-          {state.snapshot.blend !== null ? (
+          {state.snapshot.blend !== null && state.snapshot.blend.locked ? (
             <p className={css.status} data-desktop-blend={state.snapshot.blend.id}>
               {t('blend')}: <strong>{state.snapshot.blend.id}</strong> {state.snapshot.blend.version}
               {' - '}{state.snapshot.blend.rows} {t('blendRows')} <code>{state.snapshot.blend.lockPath}</code>
+            </p>
+          ) : null}
+          {state.snapshot.blend !== null && !state.snapshot.blend.locked ? (
+            <p className={css.status} data-acryl-blueprint={state.snapshot.blend.id}>
+              {t('blueprint')}: <strong>{state.snapshot.blend.name}</strong> ({state.snapshot.blend.id})
             </p>
           ) : null}
           <label className={css.search}>

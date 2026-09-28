@@ -154,6 +154,7 @@ describe('PluginLifecycleController', () => {
     try {
       const snapshot = controller.snapshot()
       expect(snapshot.blend).toEqual({
+        locked: true,
         id: 'acryl.crm',
         kind: 'Blueprint',
         version: '0.1.0',

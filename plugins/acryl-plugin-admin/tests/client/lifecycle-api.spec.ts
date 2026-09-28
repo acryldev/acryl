@@ -44,14 +44,18 @@ function receipt(action: 'enable' | 'disable' | 'reload') {
 
 describe('plugin lifecycle client API', () => {
   it('strictly parses snapshots and rejects inconsistent policy', () => {
-    const blend = { id: 'acryl.crm', kind: 'Blueprint', version: '0.1.0', digest: 'sha256:' + 'a'.repeat(64), lockPath: '/d/.acryl/blend.lock.json', rows: 4 }
+    const blend = { locked: true, id: 'acryl.crm', kind: 'Blueprint', version: '0.1.0', digest: 'sha256:' + 'a'.repeat(64), lockPath: '/d/.acryl/blend.lock.json', rows: 4 }
+    const blueprint = { locked: false, id: 'acryl.ide', name: 'ACRYL', rows: 7 }
     expect(parsePluginLifecycleSnapshot({ entries: [ENTRY], blend })).toEqual({ entries: [ENTRY], blend })
+    expect(parsePluginLifecycleSnapshot({ entries: [ENTRY], blend: blueprint })).toEqual({ entries: [ENTRY], blend: blueprint })
     expect(parsePluginLifecycleSnapshot({ entries: [ENTRY], blend: null })).toEqual({ entries: [ENTRY], blend: null })
     expect(() => parsePluginLifecycleSnapshot({ entries: [ENTRY] }))
       .toThrow('invalid plugin lifecycle snapshot')
     expect(() => parsePluginLifecycleSnapshot({ entries: [ENTRY], blend: { ...blend, kind: 'Struct' } }))
       .toThrow('invalid plugin lifecycle blend view')
     expect(() => parsePluginLifecycleSnapshot({ entries: [ENTRY], blend: { ...blend, rows: 1.5 } }))
+      .toThrow('invalid plugin lifecycle blend view')
+    expect(() => parsePluginLifecycleSnapshot({ entries: [ENTRY], blend: { ...blend, locked: undefined } }))
       .toThrow('invalid plugin lifecycle blend view')
     expect(() => parsePluginLifecycleSnapshot({
       entries: [{ ...ENTRY, mutable: true, protectedReason: 'protected' }],

@@ -1,6 +1,7 @@
 import { Context } from '@deepseek-ai/cordis'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import * as adminPlugin from '../src/index.ts'
+import { unlockedBlueprintSource } from '../src/index.ts'
 import { PLUGIN_ARCHITECTURE_PATH } from '../src/architecture/contract.ts'
 import { PLUGIN_LIFECYCLE_PATH, PLUGIN_LIFECYCLE_RELOAD_PATH } from '../src/lifecycle/contract.ts'
 
@@ -66,5 +67,28 @@ describe('acryl-plugin-admin Host plugin (one plugin for every surface)', () => 
     expect(new Set(server.paths).size).toBe(5)
     await fiber.dispose()
     expect(server.paths).toEqual([])
+  })
+})
+
+describe('unlockedBlueprintSource (spec 040 T083: an honest identity for a surface with no locked Blend)', () => {
+  const saved = process.env.ACRYL_BLUEPRINT_ID
+  afterEach(() => {
+    if (saved === undefined) delete process.env.ACRYL_BLUEPRINT_ID
+    else process.env.ACRYL_BLUEPRINT_ID = saved
+  })
+
+  it('reports a built-in Blueprint by its real display name', () => {
+    process.env.ACRYL_BLUEPRINT_ID = 'acryl.ide'
+    expect(unlockedBlueprintSource([{}, {}])).toMatchObject({ locked: false, id: 'acryl.ide', rows: [{}, {}] })
+  })
+
+  it('falls back to the id itself for a custom Blueprint the built-in catalog does not name', () => {
+    process.env.ACRYL_BLUEPRINT_ID = '/a/custom-blueprint.yaml'
+    expect(unlockedBlueprintSource([])).toEqual({ locked: false, id: '/a/custom-blueprint.yaml', name: '/a/custom-blueprint.yaml', rows: [] })
+  })
+
+  it('is undefined with no selection set (a surface with a locked Blend never falls back to this)', () => {
+    delete process.env.ACRYL_BLUEPRINT_ID
+    expect(unlockedBlueprintSource([])).toBeUndefined()
   })
 })

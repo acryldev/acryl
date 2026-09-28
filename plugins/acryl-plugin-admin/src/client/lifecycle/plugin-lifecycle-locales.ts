@@ -47,6 +47,7 @@ export type PluginLifecycleLocaleKey =
   | 'alsoDisables'
   | 'blend'
   | 'blendRows'
+  | 'blueprint'
 
 export const en: Record<PluginLifecycleLocaleKey, string> = {
   tab: 'Lifecycle',
@@ -78,6 +79,7 @@ export const en: Record<PluginLifecycleLocaleKey, string> = {
   alsoDisables: 'Disabling this also disables',
   blend: 'Active BLEND',
   blendRows: 'rows from',
+  blueprint: 'Running from Blueprint',
   cancel: 'Cancel',
   shortcut: 'Session shortcut: /reload [loader-entry-id]',
   architectureTab: 'Architecture',
@@ -127,6 +129,7 @@ export const zh: Record<PluginLifecycleLocaleKey, string> = {
   alsoDisables: '禁用此项也会禁用',
   blend: '活动 BLEND',
   blendRows: '行来自',
+  blueprint: '运行自蓝图',
   cancel: '取消',
   shortcut: '会话快捷命令：/reload [loader-entry-id]',
   architectureTab: '架构',

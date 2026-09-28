@@ -42,10 +42,17 @@ describe('PluginLifecycleView', () => {
     expect(entries[0]).toMatchObject({ enabled: true, mutable: true, hostPhase: 'active' })
   })
 
-  it('shows the composed Blend when the surface has one, and none otherwise', () => {
-    const blend = { origin: { id: 'acryl-demo', kind: 'Blend' as const, version: '1.0.0', digest: 'sha256:abc' }, lockPath: '/x/lock.yml', rows: [{}, {}] }
+  it('shows the composed locked Blend when the surface has one, and none otherwise', () => {
+    const blend = { locked: true as const, origin: { id: 'acryl-demo', kind: 'Blend' as const, version: '1.0.0', digest: 'sha256:abc' }, lockPath: '/x/lock.yml', rows: [{}, {}] }
     expect(new PluginLifecycleView(context([]), lifecycle(), () => blend).snapshot().blend).toEqual({
-      id: 'acryl-demo', kind: 'Blend', version: '1.0.0', digest: 'sha256:abc', lockPath: '/x/lock.yml', rows: 2,
+      locked: true, id: 'acryl-demo', kind: 'Blend', version: '1.0.0', digest: 'sha256:abc', lockPath: '/x/lock.yml', rows: 2,
+    })
+  })
+
+  it('shows the unlocked Blueprint identity when the surface has that instead', () => {
+    const blend = { locked: false as const, id: 'acryl.ide', name: 'ACRYL', rows: [{}, {}, {}] }
+    expect(new PluginLifecycleView(context([]), lifecycle(), () => blend).snapshot().blend).toEqual({
+      locked: false, id: 'acryl.ide', name: 'ACRYL', rows: 3,
     })
   })
 

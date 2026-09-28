@@ -31,17 +31,33 @@ export interface PluginLifecycleEntryView {
   readonly dependents: readonly string[]
 }
 
-/** Identity of the Blend whose rows are composed into this generation. */
-export interface PluginLifecycleBlendView {
-  readonly id: string
-  readonly kind: 'Blueprint' | 'Blend'
-  readonly version: string
-  /** sha256:<hex> over the origin definition bytes, as recorded in the lock. */
-  readonly digest: string
-  /** Exact lock file path the launcher projected this generation from. */
-  readonly lockPath: string
-  readonly rows: number
-}
+/**
+ * Identity of what is composed into this generation. Two real identities exist (spec 040 T083), not one:
+ * Desktop's launcher can pin a `dsh-desktop.blend` setting to an exact locked generation (a digest and a lock
+ * file it was projected from, so it can be verified byte-for-byte); every surface (Web, CLI and Desktop alike)
+ * can also boot from an `ACRYL_BLUEPRINT` selection, which names a Blueprint by id with no lock and no digest -
+ * a real, current identity, just not a locked one. Showing a locked one's fields as empty or fabricated for the
+ * unlocked case would be dishonest, so this is `locked` first and the rest of the shape follows from it.
+ */
+export type PluginLifecycleBlendView =
+  | {
+    readonly locked: true
+    readonly id: string
+    readonly kind: 'Blueprint' | 'Blend'
+    readonly version: string
+    /** sha256:<hex> over the origin definition bytes, as recorded in the lock. */
+    readonly digest: string
+    /** Exact lock file path the launcher projected this generation from. */
+    readonly lockPath: string
+    readonly rows: number
+  }
+  | {
+    readonly locked: false
+    /** The Blueprint id `ACRYL_BLUEPRINT` selected (or its default), e.g. `acryl.ide`. */
+    readonly id: string
+    readonly name: string
+    readonly rows: number
+  }
 
 /** Point-in-time Host lifecycle projection. */
 export interface PluginLifecycleSnapshot {

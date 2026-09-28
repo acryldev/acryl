@@ -131,21 +131,32 @@ export function parsePluginLifecycleSnapshot(value: unknown): PluginLifecycleSna
 }
 
 function parseBlendView(value: unknown): PluginLifecycleBlendView {
-  if (!isRecord(value)
-    || !hasExactKeys(value, ['id', 'kind', 'version', 'digest', 'lockPath', 'rows'])
-    || (value.kind !== 'Blueprint' && value.kind !== 'Blend')
-    || typeof value.rows !== 'number'
-    || !Number.isInteger(value.rows)
-    || value.rows < 0
-    || value.rows > MAX_ENTRIES) {
+  if (!isRecord(value) || typeof value.locked !== 'boolean'
+    || typeof value.rows !== 'number' || !Number.isInteger(value.rows) || value.rows < 0 || value.rows > MAX_ENTRIES) {
+    throw new Error('acryl-plugin-admin: invalid plugin lifecycle blend view')
+  }
+  if (value.locked) {
+    if (!hasExactKeys(value, ['locked', 'id', 'kind', 'version', 'digest', 'lockPath', 'rows'])
+      || (value.kind !== 'Blueprint' && value.kind !== 'Blend')) {
+      throw new Error('acryl-plugin-admin: invalid plugin lifecycle blend view')
+    }
+    return Object.freeze({
+      locked: true,
+      id: parseString(value.id, 'blend id'),
+      kind: value.kind,
+      version: parseString(value.version, 'blend version'),
+      digest: parseString(value.digest, 'blend digest'),
+      lockPath: parseString(value.lockPath, 'blend lock path'),
+      rows: value.rows,
+    })
+  }
+  if (!hasExactKeys(value, ['locked', 'id', 'name', 'rows'])) {
     throw new Error('acryl-plugin-admin: invalid plugin lifecycle blend view')
   }
   return Object.freeze({
-    id: parseString(value.id, 'blend id'),
-    kind: value.kind,
-    version: parseString(value.version, 'blend version'),
-    digest: parseString(value.digest, 'blend digest'),
-    lockPath: parseString(value.lockPath, 'blend lock path'),
+    locked: false,
+    id: parseString(value.id, 'blueprint id'),
+    name: parseString(value.name, 'blueprint name'),
     rows: value.rows,
   })
 }

@@ -11,6 +11,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import type {} from '@deepseek-ai/dsh-tools'
+import { builtInCatalog } from 'acryl-harness-runtime'
 import { inspectCordisContext } from './architecture/inspector.ts'
 import { PLUGIN_ARCHITECTURE_PATH } from './architecture/contract.ts'
 import { handlePluginArchitectureSnapshotRequest } from './architecture/route.ts'
@@ -32,9 +33,24 @@ import { PluginLifecycleView, type PluginLifecycleBlendSource } from './lifecycl
 export const name = 'acryl-plugin-admin'
 export const inject = ['webServer']
 
-/** Optional Desktop-provided launcher state; other surfaces do not have it and the Blend view is then absent. */
+/** Optional Desktop-provided launcher state; a surface without it falls back to {@link unlockedBlueprintSource}. */
 interface BlendBootstrap {
   readonly blend?: PluginLifecycleBlendSource
+}
+
+/**
+ * Every surface (Web, CLI and Desktop alike) sets `ACRYL_BLUEPRINT_ID` at boot from the same shared composition
+ * (`engine-dsh.ts`, spec 040 "Surface sharing") - reading it back here, rather than Desktop's own locked-Blend
+ * bootstrap, is how a surface with no locked Blend (every Web session today) still reports an honest, real
+ * identity instead of `null` (spec 040 T083). A custom, file-defined Blueprint outside the built-in catalog
+ * still reports its real id; only its display `name` falls back to the id, since resolving a custom one's name
+ * needs the full `blueprintFromEnvironment` (an `AppInstance`, not available at this shared layer).
+ */
+export function unlockedBlueprintSource(rows: readonly unknown[]): PluginLifecycleBlendSource | undefined {
+  const id = process.env.ACRYL_BLUEPRINT_ID
+  if (id === undefined || id === '') return undefined
+  const name = builtInCatalog().get(id)?.name ?? id
+  return { locked: false, id, name, rows }
 }
 
 /** The origin the routes accept requests from: the page is served by this same web server. */
@@ -74,7 +90,8 @@ export function apply(ctx: Context): void {
       const view = new PluginLifecycleView(
         child,
         child.acrPluginLifecycle,
-        () => (child.get('desktopPluginLifecycleBootstrap') as BlendBootstrap | undefined)?.blend,
+        () => (child.get('desktopPluginLifecycleBootstrap') as BlendBootstrap | undefined)?.blend
+          ?? unlockedBlueprintSource(child.acrPluginLifecycle.snapshot().entries),
       )
       const routes = [
         [PLUGIN_LIFECYCLE_PATH, handlePluginLifecycleSnapshotRequest],
