@@ -695,7 +695,7 @@ describe('resume honoring the attach-time providerSessionRef', () => {
     return Object.freeze({ ...snapshot(workerId, null), providerSessionRef })
   }
 
-  function capturedMethods(captureFile: string): Array<{ method?: string; sessionId?: string }> {
+  function capturedMethods(captureFile: string): Array<{ method: string | undefined; sessionId: string | undefined }> {
     return readFileSync(captureFile, 'utf8')
       .trim()
       .split('\n')
@@ -863,6 +863,67 @@ describe('failed-start cleanup through the control service', () => {
     await inner.dispose()
     await providerFiber.dispose()
     await controlFiber.dispose()
+  })
+})
+
+describe('idempotent disposal and quiescence', () => {
+  it('double-dispose is a no-op', async () => {
+    const wrapper = createWrapperScript()
+    const transport = devinAcpTransport({ binaryPath: wrapper, cwd: '/tmp' })
+    await transport.execute(snapshot('w-dbl', null), { kind: 'start', payload: null })
+    transport.dispose()
+    expect(() => transport.dispose()).not.toThrow()
+  })
+
+  it('dispose during an in-flight start settles the pending call and kills the child', async () => {
+    const wrapper = createWrapperScript()
+    const transport = devinAcpTransport({
+      binaryPath: wrapper,
+      cwd: '/tmp',
+      requestTimeoutMs: 0,
+      env: { STUB_ACP_HANG: 'initialize' },
+    })
+
+    // The stub never answers initialize; dispose() must still settle the
+    // pending spawn rather than leaving it wedged on a dead process.
+    const pending = transport.execute(snapshot('w-disp-start', null), { kind: 'start', payload: null })
+    await new Promise((resolve) => setTimeout(resolve, 150))
+    transport.dispose()
+
+    await expect(pending).rejects.toBeInstanceOf(TransportError)
+    // Clean quiescence: the map entry is gone and a second dispose is silent.
+    expect(() => transport.dispose()).not.toThrow()
+    await expect(
+      transport.execute(snapshot('w-disp-start', null), { kind: 'start', payload: null }),
+    ).rejects.toThrow('disposed')
+  })
+
+  it('dispose during an in-flight send settles the pending call and kills the child', async () => {
+    const wrapper = createWrapperScript()
+    const transport = devinAcpTransport({
+      binaryPath: wrapper,
+      cwd: '/tmp',
+      requestTimeoutMs: 0,
+      env: { STUB_ACP_HANG: 'session/prompt' },
+    })
+
+    // initialize/session/new answer normally; only the prompt turn hangs.
+    const started = await transport.execute(
+      snapshot('w-disp-send', null),
+      { kind: 'start', payload: null },
+    ) as { runtimeId: string }
+    const pid = parseInt(started.runtimeId, 10)
+    await expectAliveDead(pid, true)
+
+    const pending = transport.execute(
+      snapshot('w-disp-send', started.runtimeId),
+      { kind: 'send', payload: 'never returns' },
+    )
+    await new Promise((resolve) => setTimeout(resolve, 150))
+    transport.dispose()
+    await expect(pending).rejects.toBeInstanceOf(TransportError)
+    await expectAliveDead(pid, false)
+    expect(() => transport.dispose()).not.toThrow()
   })
 })
 
