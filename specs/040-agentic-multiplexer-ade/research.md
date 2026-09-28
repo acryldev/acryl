@@ -111,3 +111,9 @@ Not part of this parity slice and still Desktop-only in behaviour: BLEND selecti
 
 **Method note:** the audit also found that the root `typecheck`, `test` and `check` scripts never ran `acryl-harness-runtime`, `acryl-workspace`, `acryl-plugin-admin`, `acryl-shortcuts` or `acryl-mount-anchors`; they do now.
 
+## T096 attempt, 2026-09-28: blocked by a standing rule, not by tooling
+
+Tried to do the real-browser pixel pass autonomously, since it only needs the Web surface and browser control tools are available: booted a fully isolated throwaway `acryl-web` (own scratch `ACRYL_HOME` under a temp dir, port `3099`, no shared state with anything else running), opened it in a new browser tab. It hit the DSH "Internal Testing Notice" modal on first load, which this session's own standing rule forbids clicking through without explicit permission - so the attempt stopped there, the tab was closed, the throwaway process was killed, and the scratch home was removed (port confirmed free again after). No product code changed.
+
+This means T096 (and any other real-browser pass, including T076) cannot be done unattended even with browser tooling: the very first screen needs a person's explicit go-ahead past that notice. Left open for the owner to run, or to explicitly authorize clicking past it for a scoped, throwaway session.
+
