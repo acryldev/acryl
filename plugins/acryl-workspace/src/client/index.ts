@@ -6,8 +6,10 @@ import '@deepseek-ai/dsh-client-ui-renderer/client'
 import '@deepseek-ai/dsh-client-ui-session/client'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 // Pulls the shell's slot declarations (`desktop.main`, `desktop.sidebar`, `rightbar`, ...) and the `ctx.layout`
-// augmentation into every program that imports this package's types.
-import type {} from './shell/contracts.ts'
+// augmentation into every program that imports this package's types. Plain side-effect import, not
+// `import type {}`, for the same reason as the two imports above: this package has no runtime exports, so an
+// empty `import type {}` is erased under `verbatimModuleSyntax` and the augmentation never reaches consumers.
+import './shell/contracts.ts'
 import { applyAdvancedShell } from './shell/advanced-shell.ts'
 import { resolveShellEnvironment } from './shell/environment.ts'
 import { createAgentBridge } from './sessions/agent-bridge.ts'
