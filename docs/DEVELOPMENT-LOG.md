@@ -1,3 +1,51 @@
+## 2026-09-27 - Devin ACP Loader verification: real-composition lifecycle suite + review-fold fixes
+
+Commits: `5ed910c833ab3567aab4cd459657313a0f6f65d3`, `61d5032c44589ad98f942d3c484e3f27f5c1b81a`, `d40dea4348ba34a9f225ef6bc5a5fe2221098905`, `310032e9579c21d52f843291eda1dc13620e0551`
+
+Story 14 of `devin-acp-integration` implements the design-doc verification
+matrix for the ACP provider end to end, plus three review findings folded in
+from the story-13 pass.
+
+- **Review fixes** — `handleResume` now honors an attach-time
+  `providerSessionRef`: resume on a binding with no live worker spawns a fresh
+  process and runs `session/load` for the carried ref, falling back to
+  `session/new` when the agent no longer knows it. `dispatch` permits `stop`
+  on a binding whose `runtimeId` is still null so failed-start cleanup reaches
+  the transport and kills the spawned child; other commands still require a
+  live runtime. Provider-bound `submitPrompt` calls serialize behind a
+  per-session `sendTail` so overlapping `session/prompt` turns cannot
+  interleave the transport's single updates buffer. `agentProvider` rejects an
+  empty `workerId` at construction, and `AcrylSessionAgentProvider` is
+  exported from `acryl-harness-runtime`.
+- **Real-Loader suite** — `plugins/acryl-agent-devin/tests/devin-loader.spec.ts`
+  composes the `acryl-control` and `acryl-agent-devin` rows through
+  `ctx.loader.create`/`remove`/`update` (module specifiers resolved via
+  `loader.internal.import`, the llm-retry precedent): mount registers `acp`,
+  PENDING until the control row mounts, invalid config fails the fiber before
+  apply, unload removes the provider and kills the spawned stub child (PID
+  liveness asserted — no orphans), remount and config-update restart
+  re-register cleanly, duplicate provider id surfaces as an entry failure,
+  unsupported capability attach is `capability-rejected`, and two workers get
+  distinct runtimeIds.
+- **E2E round-trip** — `devin-acp-service-e2e.spec.ts` drives
+  `AcrAgentControlService` against the stub ACP server through a wrapper
+  binary: attach → start → send (a mid-turn `session/request_permission`
+  answered by the normal-mode policy) → cancel → stop, asserting receipt
+  content and the stub-observed wire method sequence.
+- **Disposal quiescence** — transport spec gains double-dispose and
+  dispose-during-in-flight-start/send cases: pending calls settle, children
+  die, no unhandled rejections.
+- **Gated real smoke** — `devin-acp-smoke.spec.ts` runs the real `devin acp`
+  binary through the full protocol when `DEVIN_ACP_SMOKE=1` (needs
+  `devin auth login` or `WINDSURF_API_KEY`); skipped by default.
+
+Verified: `pnpm --filter acryl-control run test` 113 passed + 1 skipped,
+`pnpm --filter acryl-agent-devin run test` 15 passed (9 new Loader cases),
+session-bridge suite green in acryl-harness-runtime, `pnpm run typecheck`
+clean, `verify-layout` consistent. Pre-existing environment flakes
+(extension-context missing package, system-prompt-shape drift, cold-start
+boot timeouts) unchanged.
+
 ## 2026-09-26 - Devin ACP session bridge: provider-neutral routing through acrAgentControl
 
 Commits: `3fadf5ee3407e413d0f5736a214f382b2748df7c`, `fb2832a5e13319c15c8c38ff0e896e1d088cf2be`

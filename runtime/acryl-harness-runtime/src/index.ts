@@ -11,6 +11,7 @@ export type {
 } from './durable-message.ts'
 export {
   createAcrylSessionBridge,
+  type AcrylSessionAgentProvider,
   type AcrylSessionBridge,
   type AcrylSessionBridgeOptions,
 } from './session-bridge.ts'
