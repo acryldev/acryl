@@ -1,0 +1,36 @@
+# A Blend grown from acryl.blank: Getting Things Done - inbox, triage, next actions, waiting for, someday/maybe,
+# reference and a calendar of due dates (ACRYL spec 036, second use case). Same rows as its Blueprint plus the one
+# plugin the agent built. Lineage names the Blueprint it grew from.
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blend
+
+metadata:
+  id: acryl.gtd
+  name: GTD Planner
+  version: 0.1.0
+  category: productivity
+  description: Getting Things Done - capture, triage, next actions, waiting for, someday/maybe, reference and a calendar, grown from the blank canvas.
+
+spec:
+  runtime: cordis
+  lineage:
+    blueprint: acryl.blank
+    blueprintVersion: 0.1.0
+  rows:
+    - id: brand
+      name: 'acryl-brand'
+      config:
+        name: GTD Planner
+        tagline: Get it out of your head. Triage it. Do it.
+        accent: '#1971c2'
+        accentDark: '#4dabf7'
+    - id: extension-context
+      name: 'acryl-extension-context'
+    - id: acryl-system-prompt
+      name: 'acryl-system-prompt'
+    - id: '@acryl/ui'
+      name: '@acryl/ui'
+    - id: acryl-app-save
+      name: 'acryl-app-save'
+    - id: acryl-gtd
+      name: 'acryl-gtd'

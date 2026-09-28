@@ -1,0 +1,26 @@
+{
+  "name": "acryl-gtd",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Getting Things Done - inbox, triage, next actions, waiting for, someday/maybe, reference and a calendar - grown from the Blank Blueprint",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "lib/**",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  }
+}
