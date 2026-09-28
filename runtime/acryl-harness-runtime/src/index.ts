@@ -385,6 +385,7 @@ export {
   profileDir,
   readLock,
   releaseLock,
+  runLockFileForDshHome,
   selectInstance,
   stablePort,
   withdraw,

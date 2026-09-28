@@ -13,7 +13,10 @@ import {
   inspectProfile,
   isSafeRecipe,
   planRepairs,
+  processIsAlive,
+  readLock,
   resolveAcrylDshHome,
+  runLockFileForDshHome,
   undoRepair,
   type ProfileDiagnosis,
   type RecipeId,
@@ -43,8 +46,20 @@ export type RescueResult =
   | { readonly kind: 'repaired'; readonly diagnosis: ProfileDiagnosis; readonly plan: RepairPlan; readonly result: RepairResult }
   | { readonly kind: 'undone'; readonly backupId: string; readonly files: readonly string[] }
   | { readonly kind: 'declined'; readonly plan: RepairPlan; readonly reason: string }
+  | { readonly kind: 'refused'; readonly plan: RepairPlan; readonly reason: string }
 
 const homeOf = (options: RescueOptions): string => options.home ?? resolveAcrylDshHome()
+
+/**
+ * TB04: refuse to write while the app that owns this engine home is running. Rescue tools work offline, on a
+ * profile the running app is not touching; writing under it while it is live would race the app's own writes
+ * and could corrupt state it holds open. `readLock`/`processIsAlive` are the same primitives the app itself
+ * uses to hold its own run lock (`instance/offline-lock.ts`); this only reads that lock, never takes it.
+ */
+function liveHolder(dshHome: string): { readonly pid: number } | undefined {
+  const holder = readLock(runLockFileForDshHome(dshHome))
+  return holder !== undefined && processIsAlive(holder.pid) ? holder : undefined
+}
 
 export function runDoctor(options: RescueOptions): RescueResult {
   return { kind: 'diagnosis', diagnosis: inspectProfile({ dshHome: homeOf(options), profileName: options.profile }) }
@@ -71,6 +86,10 @@ export async function runRepair(options: RepairOptions, confirm: Confirm): Promi
   if (options.dryRun || plan.steps.length === 0) return { kind: 'plan', diagnosis, plan, text: describePlan(plan) }
   if (!options.yes && !(await confirm(`${describePlan(plan)}\nApply these changes? Each file is backed up first. [y/N] `))) {
     return { kind: 'declined', plan, reason: 'not confirmed; nothing was changed' }
+  }
+  const holder = liveHolder(dshHome)
+  if (holder !== undefined) {
+    return { kind: 'refused', plan, reason: `the app running this profile (pid ${String(holder.pid)}) is live; stop it before repairing, or the repair could race its own writes` }
   }
   const result = await applyRepairPlan(plan)
   return { kind: 'repaired', diagnosis, plan, result }

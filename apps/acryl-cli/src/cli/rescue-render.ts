@@ -9,7 +9,7 @@ export interface RenderedRescue {
 
 export function renderRescue(result: RescueResult, json: boolean): RenderedRescue {
   if (json) {
-    const failed = result.kind === 'diagnosis' || result.kind === 'plan' ? result.diagnosis.findings.some(f => f.severity === 'error') : result.kind === 'declined'
+    const failed = result.kind === 'diagnosis' || result.kind === 'plan' ? result.diagnosis.findings.some(f => f.severity === 'error') : result.kind === 'declined' || result.kind === 'refused'
     return { lines: [JSON.stringify(result, null, 2)], exitCode: failed ? 1 : 0 }
   }
   switch (result.kind) {
@@ -31,6 +31,7 @@ export function renderRescue(result: RescueResult, json: boolean): RenderedRescu
     case 'undone':
       return { lines: [`Restored ${String(result.files.length)} file(s) from backup ${result.backupId}.`], exitCode: 0 }
     case 'declined':
+    case 'refused':
       return { lines: [result.reason], exitCode: 1 }
   }
 }

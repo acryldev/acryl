@@ -173,6 +173,19 @@ export function profileDir(instance: AppInstance, profileName: string): string {
   return join(instance.dshHome, 'profiles', profileName)
 }
 
+/**
+ * The run lock file that owns a given engine home, for a caller that was handed a `dshHome` directly (the CLI
+ * rescue tools, `--home`) rather than a full `AppInstance`. Inverts `family()`'s default nesting
+ * (`dshHome = join(home, ENGINE_DIR_NAME)`): when `dshHome`'s last segment is `.dsh`, its app home is the parent;
+ * otherwise `dshHome` was handed in as the home itself (a pinned instance may point `dshHome` anywhere), so it is
+ * its own app home. Pure path math, no I/O: it does not choose an instance, only locates the lock file for one
+ * a caller already resolved, so it does not compete with `select.ts` for "the one place an app is chosen".
+ */
+export function runLockFileForDshHome(dshHome: string): string {
+  const home = basename(dshHome) === ENGINE_DIR_NAME ? join(dshHome, '..') : dshHome
+  return join(home, RUN_LOCK_FILE)
+}
+
 const USER_DATA_NAME = /^[A-Za-z0-9.][A-Za-z0-9._ -]{0,63}$/u
 
 /** The Electron user-data name (ACRYL_LOCAL_PRODUCT_NAME): a plain folder name, never a path, so it cannot escape the user-data root. */

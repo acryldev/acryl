@@ -121,4 +121,21 @@ describe('acryl repair', () => {
     const { home } = brokenHome()
     await expect(cli().run(['repair', '--home', home, '--undo', 'nope'])).rejects.toThrow('no complete backup')
   })
+
+  it('refuses to write while the app owning this profile is live (TB04), and proceeds once the lock is stale', async () => {
+    const { home, state } = brokenHome()
+    // A live holder: our own pid, so `processIsAlive` sees it running.
+    writeFileSync(join(home, 'instance.json'), JSON.stringify({ pid: process.pid, since: new Date().toISOString() }))
+    const c = cli(async () => true)
+    await c.run(['repair', '--home', home, '--yes', '--recipe', 'disable-failing-row'])
+    expect(c.out.join('\n')).toContain('is live')
+    expect(c.codes).toEqual([1])
+    expect(existsSync(state)).toBe(false)
+
+    // A stale holder (pid nothing is running): the repair proceeds.
+    writeFileSync(join(home, 'instance.json'), JSON.stringify({ pid: 999_999, since: new Date().toISOString() }))
+    const later = cli(async () => true)
+    await later.run(['repair', '--home', home, '--yes', '--recipe', 'disable-failing-row'])
+    expect(existsSync(state)).toBe(true)
+  })
 })

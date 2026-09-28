@@ -14,6 +14,7 @@ export {
   instanceEnvironment,
   pinnedInstance,
   profileDir,
+  runLockFileForDshHome,
   stablePort,
   withProjectScope,
   withUserDataName,
