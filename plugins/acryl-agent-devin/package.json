@@ -8,7 +8,7 @@
     "url": "git+https://github.com/acryldev/acryl.git",
     "directory": "plugins/acryl-agent-devin"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-agent-devin#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-agent-devin",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -29,9 +29,7 @@
   },
   "files": [
     "cordis.patch.yml",
-    "lib/**",
-    "README.md",
-    "LICENSE"
+    "lib/**"
   ],
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
@@ -44,7 +42,9 @@
     "prepack": "pnpm run check"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.2"
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/schemastery": "^3.18.2",
+    "acryl-control": "workspace:*"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.2",

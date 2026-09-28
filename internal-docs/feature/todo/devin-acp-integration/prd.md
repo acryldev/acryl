@@ -211,9 +211,10 @@ Never use: npm, npx, yarn, jest, biome
 4. **Configuration and composition**: The transport is created from a
    `DevinAcpTransportConfig` (binaryPath?, authMode, cwd, env?, model?,
    permissionMode?). The config is read from Desktop settings at
-   composition time and passed to `acpProvider(devinAcpTransport(config))`.
-   No Loader row id changes — the provider plugin name is already
-   `acryl-agent-acp`.
+   composition time and passed to `acpProvider(devinAcpTransport(config))`
+   inside `plugins/acryl-agent-devin` (Loader row id = package name). The
+   inner provider fiber keeps the pre-existing `acryl-agent-acp` name from
+   `createProviderPlugin({ kind: 'acp' })`.
 
 5. **Events and durability**: ACP `session/update` notifications are
    translated to structured results returned from `execute`. There are no

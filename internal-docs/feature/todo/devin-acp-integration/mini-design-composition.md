@@ -59,8 +59,9 @@ config fails the Fiber loudly):
 - `binaryPath: Schema.string()` optional → `which devin` fallback
 - `authMode: Schema.union(['devin-auth','windsurf-key','interactive'])`
   default `'devin-auth'`
-- `cwd: Schema.string()` optional → falls back to the process cwd at
-  composition (per-worker workspace cwd is a follow-up; noted, not built)
+- `cwd: Schema.string()` optional → spawn cwd resolves as
+  `binding.workspace?.cwd ?? config.cwd ?? process.cwd()` (per-worker
+  workspace cwd landed in the story-11 review pass)
 - `model: Schema.string()` optional
 - `permissionMode: Schema.union(['normal','dangerous','bypass'])`
   default `'normal'`
