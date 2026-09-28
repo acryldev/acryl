@@ -295,3 +295,20 @@ short sessions and on cheaper or smaller-context models.
   tool definitions, so growth is a deliberate decision, not an accident.
   - Acceptance: the test fails when either total grows past the agreed ceiling without updating it.
 
+## Phase 8 — Marketing and documentation presentation [cosmetic, requested 2026-09-28]
+
+**Purpose:** the public-facing surfaces undersell the product as it actually stands today; no code changes, copy and
+presentation only.
+
+- [ ] T031 Rewrite the four public-facing surfaces to reflect ACRYL's current, actual best ideas with catchy, simple,
+  marketing-effective explanations that make someone want to try the product on first read:
+  - `README.md` at the root of `github.com/acryldev/acryl`
+  - the `acryldev.github.io` marketing site
+  - the `acrylblends.github.io` marketing site (Blends)
+  - the `cordisplugins.github.io` marketing site (the plugin ecosystem)
+  - Why: owner request — these are cosmetic/copy only, not new functionality, but they are the first thing a
+    prospective user or contributor sees, and currently undersell what the product already does.
+  - Depends on: none. Purely additive copy/presentation work; touches no application code.
+  - Acceptance: each of the four surfaces reviewed and approved by the owner (no automated test — this is editorial,
+    not behavioral).
+
