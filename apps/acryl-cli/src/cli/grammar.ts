@@ -100,7 +100,36 @@ export interface AcrylRemoteInvocation extends AcrylInvocationFlags {
   readonly visibility?: 'private' | 'public'
 }
 
-export type AcrylInvocation = AcrylSurfaceInvocation | AcrylPluginInvocation | AcrylUiInvocation | AcrylDoctorInvocation | AcrylRepairInvocation | AcrylNewInvocation | AcrylSaveInvocation | AcrylRemoteInvocation
+/**
+ * `acryl control`: the online channel's own CLI surface (spec 041 TB31). Named `control`, not `app` (the
+ * task text's own working name), because `app` already names a Blends application throughout this CLI
+ * (`acryl new`, `acryl save`, `acryl remote`); reusing it here for "the running window this drives" would
+ * collide with that, not extend it.
+ */
+export type AcrylControlAction = 'list' | 'snapshot' | 'click' | 'type' | 'select' | 'press' | 'scroll' | 'wait'
+
+export interface AcrylControlInvocation extends AcrylInvocationFlags {
+  readonly kind: 'control'
+  readonly action: AcrylControlAction
+  /** Which running instance to drive, by id or name; required only when more than one is running. */
+  readonly app?: string
+  readonly ref?: string
+  readonly text?: string
+  readonly option?: string
+  readonly key?: string
+  readonly direction?: 'up' | 'down' | 'left' | 'right'
+  readonly amount?: number
+  readonly submit?: boolean
+  readonly noClear?: boolean
+  readonly cursor?: number
+  readonly maxNodes?: number
+  readonly role?: string
+  readonly name?: string
+  readonly gone?: boolean
+  readonly timeoutMs?: number
+}
+
+export type AcrylInvocation = AcrylSurfaceInvocation | AcrylPluginInvocation | AcrylUiInvocation | AcrylDoctorInvocation | AcrylRepairInvocation | AcrylNewInvocation | AcrylSaveInvocation | AcrylRemoteInvocation | AcrylControlInvocation
 
 /** Options of the app persistence commands: `--dir` (default the current folder) and command-specific values. */
 function parseAppOptions(args: readonly string[], valued: ReadonlySet<string>, flags: ReadonlySet<string>): { values: Map<string, string>, set: Set<string>, json: boolean } {
@@ -266,10 +295,54 @@ function parsePluginInvocation(
   return { ...flags, kind: 'plugin', action }
 }
 
+const CONTROL_ACTIONS: ReadonlySet<AcrylControlAction> = new Set(['list', 'snapshot', 'click', 'type', 'select', 'press', 'scroll', 'wait'])
+const CONTROL_VALUED: ReadonlySet<string> = new Set(['--app', '--ref', '--text', '--option', '--key', '--direction', '--amount', '--cursor', '--max-nodes', '--role', '--name', '--timeout-ms'])
+const CONTROL_FLAGS: ReadonlySet<string> = new Set(['--submit', '--no-clear', '--gone'])
+
+function parseControlInvocation(args: readonly string[]): AcrylControlInvocation {
+  const action = args[0]
+  if (action === undefined || !CONTROL_ACTIONS.has(action as AcrylControlAction)) {
+    throw new Error(`usage: acryl control <${[...CONTROL_ACTIONS].join('|')}> [--app <id>] [options] [--json]`)
+  }
+  const { values, set, json } = parseAppOptions(args.slice(1), CONTROL_VALUED, CONTROL_FLAGS)
+  const int = (flag: string, label: string): number | undefined => {
+    const raw = values.get(flag)
+    if (raw === undefined) return undefined
+    const value = Number(raw)
+    if (!Number.isInteger(value) || value < 0) throw new Error(`${flag} must be a non-negative integer (${label})`)
+    return value
+  }
+  const direction = values.get('--direction')
+  if (direction !== undefined && direction !== 'up' && direction !== 'down' && direction !== 'left' && direction !== 'right') {
+    throw new Error('--direction must be up, down, left or right')
+  }
+  return {
+    kind: 'control',
+    action: action as AcrylControlAction,
+    json, version: false, help: false,
+    ...(values.get('--app') === undefined ? {} : { app: values.get('--app') }),
+    ...(values.get('--ref') === undefined ? {} : { ref: values.get('--ref') }),
+    ...(values.get('--text') === undefined ? {} : { text: values.get('--text') }),
+    ...(values.get('--option') === undefined ? {} : { option: values.get('--option') }),
+    ...(values.get('--key') === undefined ? {} : { key: values.get('--key') }),
+    ...(direction === undefined ? {} : { direction }),
+    ...(int('--amount', 'amount') === undefined ? {} : { amount: int('--amount', 'amount') }),
+    ...(set.has('--submit') ? { submit: true } : {}),
+    ...(set.has('--no-clear') ? { noClear: true } : {}),
+    ...(int('--cursor', 'cursor') === undefined ? {} : { cursor: int('--cursor', 'cursor') }),
+    ...(int('--max-nodes', 'maxNodes') === undefined ? {} : { maxNodes: int('--max-nodes', 'maxNodes') }),
+    ...(values.get('--role') === undefined ? {} : { role: values.get('--role') }),
+    ...(values.get('--name') === undefined ? {} : { name: values.get('--name') }),
+    ...(set.has('--gone') ? { gone: true } : {}),
+    ...(int('--timeout-ms', 'timeoutMs') === undefined ? {} : { timeoutMs: int('--timeout-ms', 'timeoutMs') }),
+  }
+}
+
 export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
   if (args[0] === 'new') return parseNewInvocation(args.slice(1))
   if (args[0] === 'save') return parseSaveInvocation(args.slice(1))
   if (args[0] === 'remote') return parseRemoteInvocation(args.slice(1))
+  if (args[0] === 'control') return parseControlInvocation(args.slice(1))
   let profile: string | undefined
   let resumeSessionId: string | undefined
   let uiSurface: string | undefined

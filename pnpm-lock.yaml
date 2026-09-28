@@ -231,9 +231,6 @@ importers:
 
   apps/acryl-cli:
     dependencies:
-      '@webboxes/app-persistence':
-        specifier: workspace:*
-        version: link:../../runtime/app-persistence
       '@deepseek-ai/cordis-plugin-group':
         specifier: 1.0.2
         version: 1.0.2(@deepseek-ai/cordis-plugin-loader@1.0.3)(@deepseek-ai/cordis@4.0.2)
@@ -534,6 +531,12 @@ importers:
       '@earendil-works/pi-tui':
         specifier: 0.84.2
         version: 0.84.2(patch_hash=5dc0250a1f7f94a22edffa555f19c38ab55dd19672e6d7031592e52d82cf7be5)
+      '@webboxes/app-persistence':
+        specifier: workspace:*
+        version: link:../../runtime/app-persistence
+      acryl-agent-control:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-agent-control
       acryl-control:
         specifier: workspace:*
         version: link:../../runtime/acryl-control
@@ -583,9 +586,6 @@ importers:
 
   apps/acryl-desktop:
     dependencies:
-      acryl-app-save:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-app-save
       '@acryl/ui':
         specifier: workspace:*
         version: link:../../plugins/acryl-ui
@@ -1309,6 +1309,12 @@ importers:
       acryl-agent-control:
         specifier: workspace:*
         version: link:../../plugins/acryl-agent-control
+      acryl-app-save:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-app-save
+      acryl-brand:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-brand
       acryl-diagnostics:
         specifier: workspace:*
         version: link:../../runtime/acryl-diagnostics
@@ -1327,9 +1333,6 @@ importers:
       acryl-plugin-admin:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-admin
-      acryl-brand:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-brand
       acryl-shortcuts:
         specifier: workspace:*
         version: link:../../plugins/acryl-shortcuts
@@ -1460,9 +1463,6 @@ importers:
 
   apps/acryl-web:
     dependencies:
-      acryl-app-save:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-app-save
       '@acryl/ui':
         specifier: workspace:*
         version: link:../../plugins/acryl-ui
@@ -1973,6 +1973,12 @@ importers:
       acryl-agent-control:
         specifier: workspace:*
         version: link:../../plugins/acryl-agent-control
+      acryl-app-save:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-app-save
+      acryl-brand:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-brand
       acryl-extension-context:
         specifier: workspace:*
         version: link:../../plugins/acryl-extension-context
@@ -1982,9 +1988,6 @@ importers:
       acryl-plugin-admin:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-admin
-      acryl-brand:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-brand
       acryl-shortcuts:
         specifier: workspace:*
         version: link:../../plugins/acryl-shortcuts
@@ -2106,14 +2109,26 @@ importers:
         specifier: 4.1.8
         version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@8.2.1(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
 
+  plugins/acryl-app-save:
+    dependencies:
+      '@webboxes/app-persistence':
+        specifier: workspace:*
+        version: link:../../runtime/app-persistence
+
+  plugins/acryl-brand:
+    dependencies:
+      '@deepseek-ai/schemastery':
+        specifier: ^3.18.1
+        version: 3.18.2
+
   plugins/acryl-extension-context:
     dependencies:
-      '@webboxes/blends-core':
-        specifier: workspace:*
-        version: link:../../runtime/blends-core
       '@deepseek-ai/dsh-tools':
         specifier: 0.1.5-alpha.1
         version: 0.1.5-alpha.1(239eb910b4462b7c15b6b44661457a15)
+      '@webboxes/blends-core':
+        specifier: workspace:*
+        version: link:../../runtime/blends-core
       yaml:
         specifier: ^2.9.0
         version: 2.9.0
@@ -2233,18 +2248,6 @@ importers:
       vitest:
         specifier: 4.1.8
         version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@8.2.1(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
-
-  plugins/acryl-app-save:
-    dependencies:
-      '@webboxes/app-persistence':
-        specifier: workspace:*
-        version: link:../../runtime/app-persistence
-
-  plugins/acryl-brand:
-    dependencies:
-      '@deepseek-ai/schemastery':
-        specifier: ^3.18.1
-        version: 3.18.2
 
   plugins/acryl-shortcuts:
     devDependencies:
@@ -2838,12 +2841,6 @@ importers:
 
   runtime/acryl-harness-runtime:
     dependencies:
-      acryl-app-save:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-app-save
-      '@webboxes/blends-core':
-        specifier: workspace:*
-        version: link:../blends-core
       '@acryl/ui':
         specifier: workspace:*
         version: link:../../plugins/acryl-ui
@@ -3294,9 +3291,18 @@ importers:
       '@deepseek-ai/schemastery':
         specifier: ^3.18.1
         version: 3.18.2
+      '@webboxes/blends-core':
+        specifier: workspace:*
+        version: link:../blends-core
       acryl-agent-control:
         specifier: workspace:*
         version: link:../../plugins/acryl-agent-control
+      acryl-app-save:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-app-save
+      acryl-brand:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-brand
       acryl-control:
         specifier: workspace:*
         version: link:../acryl-control
@@ -3309,9 +3315,6 @@ importers:
       acryl-plugin-admin:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-admin
-      acryl-brand:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-brand
       acryl-shortcuts:
         specifier: workspace:*
         version: link:../../plugins/acryl-shortcuts
@@ -3377,6 +3380,21 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@8.2.1(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
 
+  runtime/acryl-loopback-http:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@8.2.1(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+
   runtime/app-persistence:
     dependencies:
       yaml:
@@ -3405,21 +3423,6 @@ importers:
       '@types/node':
         specifier: 22.20.1
         version: 22.20.1
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 4.1.11
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@8.2.1(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
-
-  runtime/acryl-loopback-http:
-    devDependencies:
-      '@types/node':
-        specifier: ^22.20.0
-        version: 22.20.1
-      tsdown:
-        specifier: 0.22.2
-        version: 0.22.2(typescript@6.0.3)
       typescript:
         specifier: 6.0.3
         version: 6.0.3

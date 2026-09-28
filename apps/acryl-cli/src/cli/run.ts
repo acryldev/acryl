@@ -10,7 +10,9 @@ import { runDoctor, runRepair, type Confirm } from '../host/rescue-command.ts'
 import { runUiCommand } from '../host/ui-command.ts'
 import { runNewApp } from '../host/new-command.ts'
 import { describeConnect, describeSave, runRemoteConnect, runSave } from '../host/save-command.ts'
+import { runControlCommand } from '../host/control-command.ts'
 import { parseAcrylArgs, type AcrylPluginInvocation, type AcrylUiInvocation } from './grammar.ts'
+import { renderControl } from './control-render.ts'
 import { renderPluginCommand } from './plugin-render.ts'
 import { renderRescue } from './rescue-render.ts'
 import { renderUiCommand } from './ui-render.ts'
@@ -167,6 +169,14 @@ export async function runAcryl(
         '  ui list                          List a UI component registry\'s items',
         '  ui add <id> <dir>                Copy a component\'s source into <dir>/ui/',
         '  ui diff <id> <dir>               Compare an added component against the registry',
+        '  control list                     List running ACRYL apps this CLI can drive (spec 041 online channel)',
+        '  control snapshot [--app <id>]     Read the controls on the app\'s current page (--cursor, --max-nodes)',
+        '  control click --ref <r>           Click a control from the snapshot',
+        '  control type --ref <r> --text <t> Type into a control (--submit, --no-clear)',
+        '  control select --ref <r> --option <o>  Choose an option in a control',
+        '  control press --key <k>          Press a key (--ref to target one control)',
+        '  control scroll --direction <d>   Scroll the page or a control (--ref, --amount)',
+        '  control wait                     Wait for the page to settle (--text, --role, --name, --gone, --timeout-ms)',
         '',
         'Options:',
         '  -h, --help          Show this help',
@@ -234,6 +244,20 @@ export async function runAcryl(
 
   if (invocation.kind === 'plugin') {
     await runPluginInvocation(invocation, dependencies)
+    return
+  }
+
+  if (invocation.kind === 'control') {
+    let rendered: ReturnType<typeof renderControl>
+    try {
+      rendered = renderControl(await runControlCommand(invocation), invocation.json)
+    } catch (cause) {
+      dependencies.write(cause instanceof Error ? cause.message : String(cause))
+      dependencies.exit(1)
+      return
+    }
+    for (const line of rendered.lines) dependencies.write(line)
+    if (rendered.exitCode !== 0) dependencies.exit(rendered.exitCode)
     return
   }
 
