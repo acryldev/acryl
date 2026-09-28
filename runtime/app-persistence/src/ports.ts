@@ -14,9 +14,17 @@ export interface GitPort {
   unstageAll(): void
   hasStagedChanges(): boolean
   commit(message: string): string
+  /** The current commit (`HEAD`), for reporting a save that only pushed - no new commit was made. */
+  headCommit(): string
   remoteUrl(name?: string): string | undefined
   addRemote(url: string, name?: string): void
   push(): void
+  /**
+   * Whether `HEAD` has commits the remote does not (a connected remote that has never been pushed to counts as
+   * unpushed): a save with nothing new to commit still has work to do, and `saveApp` must not report
+   * `nothing-to-save` while leaving it stranded on the remote.
+   */
+  hasUnpushedCommits(): boolean
 }
 
 export interface HostingPort {

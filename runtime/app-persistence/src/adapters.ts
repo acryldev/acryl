@@ -37,11 +37,23 @@ export function gitCli(appDir: string): GitPort {
     unstageAll: () => { run('git', ['reset', '--quiet'], appDir) },
     hasStagedChanges: () => run('git', ['diff', '--cached', '--quiet'], appDir).status !== 0,
     commit: message => { must('git', ['commit', '--quiet', '-m', message], appDir); return must('git', ['rev-parse', 'HEAD'], appDir).trim() },
+    headCommit: () => must('git', ['rev-parse', 'HEAD'], appDir).trim(),
     remoteUrl: (name = 'origin') => { const result = run('git', ['remote', 'get-url', name], appDir); return result.status === 0 ? result.stdout.trim() : undefined },
     addRemote: (url, name = 'origin') => { must('git', ['remote', 'add', name, url], appDir) },
     push: () => {
       const branch = must('git', ['rev-parse', '--abbrev-ref', 'HEAD'], appDir).trim()
       must('git', ['push', '--quiet', '--set-upstream', 'origin', branch], appDir)
+    },
+    hasUnpushedCommits: () => {
+      const local = run('git', ['rev-parse', 'HEAD'], appDir)
+      if (local.status !== 0) return false   // no commit yet
+      const branch = must('git', ['rev-parse', '--abbrev-ref', 'HEAD'], appDir).trim()
+      // `ls-remote` (not `fetch`): no local tracking ref is created or updated, and it answers a repository that
+      // exists but has never been pushed to (returns success with empty output) the same as one already caught up.
+      const remoteRef = run('git', ['ls-remote', 'origin', `refs/heads/${branch}`], appDir)
+      if (remoteRef.status !== 0) return true   // remote unreachable: report unpushed rather than silently drop the save
+      const remoteSha = remoteRef.stdout.trim().split(/\s+/u)[0]
+      return remoteSha !== local.stdout.trim()
     },
   }
 }

@@ -17,7 +17,16 @@ export function saveApp(input: { readonly manifestText: string, readonly message
   }
   if (!git.isRepository()) git.init()
   git.stageAll()
-  if (!git.hasStagedChanges()) return { status: 'nothing-to-save' }
+  if (!git.hasStagedChanges()) {
+    // A connect right after `acryl new` leaves the app's first commit stranded on this machine: nothing changed
+    // since then, but the remote has never seen it. A save must still push it - "nothing to save" would silently
+    // leave the app absent from its own repository.
+    if (remote !== undefined && git.hasUnpushedCommits()) {
+      git.push()
+      return { status: 'saved', commit: git.headCommit(), pushed: true, remote }
+    }
+    return { status: 'nothing-to-save' }
+  }
   const secrets = findSecrets(git.stagedFiles().flatMap(path => { const text = git.stagedText(path); return text === undefined ? [] : [{ path, text }] }))
   if (secrets.length > 0) {
     git.unstageAll()

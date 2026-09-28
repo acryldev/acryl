@@ -74,6 +74,21 @@ describe('saving', () => {
     expect(saveApp({ manifestText: manifest(), message: 'again' }, gitCli(dir), host)).toEqual({ status: 'nothing-to-save' })
   })
 
+  it('pushes an already-committed app that connected a remote after its first commit, even with nothing new to save', () => {
+    // The real sequence: `acryl new` commits, then `acryl remote connect` only adds the remote (see connect.ts) -
+    // the first `acryl save` afterwards has no working-tree changes to stage, but the remote has never seen the
+    // app at all. A prior version reported `nothing-to-save` here and left the new repository empty.
+    const root = temp(); const dir = app(root)
+    git(dir, 'add', '--all', '.'); git(dir, 'commit', '--quiet', '-m', 'first commit, before any remote exists')
+    const host = hosting(root)
+    expect(connectRemote({ manifestText: manifest(), name: 'books' }, gitCli(dir), host)).toMatchObject({ status: 'connected', created: true })
+    const saved = saveApp({ manifestText: manifest(), message: 'unused: nothing is staged' }, gitCli(dir), host)
+    expect(saved).toMatchObject({ status: 'saved', pushed: true })
+    expect(git(join(root, 'books.git'), 'log', '--oneline').stdout).toContain('first commit, before any remote exists')
+    // Now genuinely nothing to do: already pushed, nothing staged.
+    expect(saveApp({ manifestText: manifest(), message: 'x' }, gitCli(dir), host)).toEqual({ status: 'nothing-to-save' })
+  })
+
   it('refuses a secret in the app\'s own files and leaves nothing staged', () => {
     const root = temp(); const dir = app(root)
     writeFileSync(join(dir, 'extensions', 'ledger', 'index.js'), 'const key = "sk-ant-api03-abcdefghijklmnopqrstuvwxyz"\n')
