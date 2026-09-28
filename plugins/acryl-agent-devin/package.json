@@ -48,6 +48,7 @@
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.2",
+    "@deepseek-ai/cordis-plugin-loader": "1.0.3",
     "@deepseek-ai/schemastery": "^3.18.2",
     "@types/node": "^22.20.0",
     "acryl-control": "workspace:*",
