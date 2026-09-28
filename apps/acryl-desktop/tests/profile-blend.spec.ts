@@ -44,11 +44,12 @@ describe('desktop startup settings: dsh-desktop.blend (D23)', () => {
   it('reads the blend key from the settings document with mode and port', () => {
     expect(desktopStartupSettingsFromSettings({
       'dsh-desktop': { mode: 'advanced', port: 1, blend: '/blend/acryl-crm' },
-    })).toEqual({ mode: 'advanced', port: 1, blend: '/blend/acryl-crm' })
+    })).toEqual({ mode: 'advanced', port: 1, blend: '/blend/acryl-crm', devin: expect.any(Object) })
     expect(desktopStartupSettingsFromSettings({})).toEqual({
       mode: 'advanced',
       port: expect.any(Number),
       blend: null,
+      devin: expect.any(Object),
     })
   })
 })
