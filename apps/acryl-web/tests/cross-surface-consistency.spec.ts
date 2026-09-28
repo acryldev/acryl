@@ -11,7 +11,9 @@
  * and Desktop - but `acryl-workspace`'s git and files routes are the identical shared plugin either surface
  * composes (surface-parity.spec.ts already proves that composition is identical), so this is a real test of
  * the thing T076 actually worries about (does the shared profile's git state disagree across processes), not
- * an approximation of it.
+ * an approximation of it. Checks (the worktree's own package scripts, read from disk) are included for the
+ * same reason; Review is deliberately not, since its line comments are browser-local state (`review-store.ts`)
+ * that no server-side request can reach, in either surface.
  */
 import { execFileSync } from 'node:child_process'
 import { mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises'
@@ -55,7 +57,8 @@ describe('T076: two independent surface processes sharing one project agree on i
     execFileSync('git', ['config', 'user.email', 't@t'], { cwd: repo })
     execFileSync('git', ['config', 'user.name', 't'], { cwd: repo })
     await writeFile(join(repo, 'a.txt'), 'hello\n')
-    execFileSync('git', ['add', 'a.txt'], { cwd: repo })
+    await writeFile(join(repo, 'package.json'), JSON.stringify({ name: 'x', scripts: { build: 'echo built', test: 'echo tested' } }))
+    execFileSync('git', ['add', 'a.txt', 'package.json'], { cwd: repo })
     execFileSync('git', ['commit', '-q', '-m', 'first'], { cwd: repo })
 
     // Two real, concurrently running surfaces (T076's "Web and Desktop"), neither aware of the other, sharing
@@ -68,6 +71,14 @@ describe('T076: two independent surface processes sharing one project agree on i
       const statusB1 = await (await fetch(`${b.origin}/api/acryl-workspace/git/status?path=${encodeURIComponent(repo)}`, { headers: b.headers })).json() as { branch: string; changes: unknown[] }
       expect(statusA1).toEqual(statusB1)
       expect(statusA1.changes).toEqual([])
+
+      // Checks (the worktree's own package scripts) agree too - the other half of T076's "Review, Checks and
+      // Files" claim that is genuinely server-side data (Review's line comments are browser-local state, which
+      // a server-only test cannot reach; Checks are read from the repo's own package.json, which this can).
+      const checksA = await (await fetch(`${a.origin}/api/acryl-workspace/git/checks?path=${encodeURIComponent(repo)}`, { headers: a.headers })).json() as { scripts: readonly { name: string }[] }
+      const checksB = await (await fetch(`${b.origin}/api/acryl-workspace/git/checks?path=${encodeURIComponent(repo)}`, { headers: b.headers })).json() as { scripts: readonly { name: string }[] }
+      expect(checksA).toEqual(checksB)
+      expect(checksA.scripts.map(s => s.name).sort()).toEqual(['build', 'test'])
 
       // An edit saved through B's own confined write route ...
       const readB = await (await fetch(`${b.origin}/api/acryl-workspace/files/read?path=${encodeURIComponent(repo)}&file=a.txt`, { headers: b.headers })).json() as { mtimeMs: number }
