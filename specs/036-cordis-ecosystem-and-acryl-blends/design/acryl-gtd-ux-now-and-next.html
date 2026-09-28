@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>acryl-gtd - Now and Next</title>
+<style>
+  /* Design source: ACRYL's own token system (same as
+     specs/036-cordis-ecosystem-and-acryl-blends/design/_reference_example_lavish-axe-ux-ade-now-and-next.html),
+     re-tinted to the GTD Planner Blend's own brand (blend.yaml: accent #1971c2 / accentDark #4dabf7), so this
+     mock faithfully shows the actual running app, not a generic ACRYL. Screenshot-matched against the real
+     GTD Planner Demo (http://127.0.0.1:3741/) captured while writing this page. */
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, td, th, .chip) { overflow-wrap: anywhere; }
+  :root {
+    --background: hsl(222 20% 7%); --foreground: hsl(220 16% 92%);
+    --panel: hsl(222 18% 10%); --panel2: hsl(222 16% 13%); --panel3: hsl(222 14% 16%);
+    --border: hsl(222 12% 20%); --border-strong: hsl(222 12% 28%);
+    --muted: hsl(220 10% 52%); --soft: hsl(220 8% 38%);
+    --brand: hsl(208 90% 48%); --brand-fg: hsl(0 0% 100%); --brand-soft: hsl(208 60% 16%);
+    --brand2: hsl(202 92% 66%);
+    --blue: hsl(208 90% 60%); --ok: hsl(152 58% 52%); --ok-soft: hsl(152 50% 16%);
+    --bad: hsl(0 72% 62%); --bad-soft: hsl(0 60% 16%);
+    --warn: hsl(38 92% 58%); --warn-soft: hsl(38 70% 16%);
+    --added: hsl(152 52% 50%); --added-soft: hsl(152 44% 14%);
+    --removed: hsl(0 64% 58%); --removed-soft: hsl(0 50% 14%);
+    --fresh: hsl(268 92% 74%); --fresh-soft: hsl(268 50% 17%);
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  html { background: var(--background); color: var(--foreground); font: 14px/1.55 var(--sans); }
+  body { margin: 0; padding: 32px 16px 90px; }
+  main { max-width: 1240px; margin: 0 auto; }
+  h1 { font-size: 28px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  h2 { font-size: 18px; margin: 44px 0 6px; }
+  .eyebrow { font: 600 11px/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--brand2); margin-bottom: 10px; }
+  p.lede { color: var(--muted); margin: 0 0 16px; max-width: 80ch; }
+  code { font-family: var(--mono); font-size: 12px; color: var(--brand2); }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+  .chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font: 600 11px/1.7 var(--sans); border: 1px solid; white-space: nowrap; }
+  .built { color: var(--ok); border-color: hsl(152 58% 52% / .4); background: var(--ok-soft); }
+  .plan { color: var(--blue); border-color: hsl(208 90% 60% / .4); background: hsl(208 60% 16%); }
+  .new { color: var(--brand2); border-color: hsl(202 92% 66% / .4); background: var(--brand-soft); }
+  .gap { color: var(--warn); border-color: hsl(38 92% 58% / .4); background: var(--warn-soft); }
+
+  .ade { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--background); box-shadow: 0 24px 70px -30px #000; font-size: 12px; }
+  .top { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px; background: var(--panel); border-bottom: 1px solid var(--border); }
+  .mark { width: 22px; height: 22px; border-radius: 6px; background: var(--brand); color: var(--brand-fg); font: 700 12px/22px var(--sans); text-align: center; }
+  .appname { font-weight: 700; }
+  .sp { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--panel2); color: var(--foreground); }
+
+  .body { display: grid; grid-template-columns: 228px minmax(0, 1fr); height: 560px; position: relative; }
+  .now .body { display: grid; grid-template-columns: 228px minmax(0, 1fr); height: 480px; }
+  .next .body { display: grid; grid-template-columns: 228px minmax(0, 1fr) 300px; height: 560px; }
+  .rail { border-right: 1px solid var(--border); background: var(--panel); overflow: auto; padding: 10px 8px; }
+  .rail h6, .panel h6 { margin: 10px 6px 6px; font: 600 10px var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--soft); }
+  .ws { padding: 6px 8px; border-radius: 6px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .newsession { margin: 4px 6px 10px; padding: 7px 10px; border-radius: 6px; background: var(--panel3); color: var(--foreground); text-align: center; font-weight: 600; }
+
+  .canvas { display: flex; flex-direction: column; min-width: 0; background: var(--background); }
+  .thread { flex: 1; overflow: auto; padding: 14px 18px; }
+  .msg { margin: 0 0 14px; }
+  .msg .who { font-weight: 600; }
+  .msg.you .who { color: var(--foreground); }
+  .msg.agent .who { color: var(--brand2); }
+  .msg p { margin: 4px 0 0; }
+  .toolcall { margin: 6px 0; border: 1px solid var(--border); border-radius: 8px; background: var(--panel2); font-family: var(--mono); font-size: 11.5px; overflow: hidden; }
+  .toolcall .hd { padding: 5px 10px; color: var(--brand2); border-bottom: 1px solid var(--border); display: flex; gap: 8px; }
+  .toolcall .hd b { color: var(--brand2); }
+  .toolcall .out { padding: 6px 10px; color: var(--muted); white-space: pre-wrap; }
+  .composer { border-top: 1px solid var(--border); padding: 10px 14px; display: flex; gap: 8px; }
+  .composer .box { flex: 1; border: 1px dashed var(--border-strong); border-radius: 8px; padding: 10px; color: var(--soft); }
+
+  /* next: GTD workspace */
+  .buckets .b { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; color: var(--foreground); cursor: pointer; }
+  .buckets .b:hover { background: var(--panel3); }
+  .buckets .b.on { background: var(--panel3); box-shadow: inset 2px 0 0 var(--brand); }
+  .buckets .b .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .buckets .b .n { flex: 1; }
+  .buckets .b .c { font: 600 10px var(--mono); color: var(--muted); background: var(--panel3); border-radius: 999px; padding: 0 6px; }
+  .d-inbox { background: var(--warn); } .d-next { background: var(--brand2); } .d-waiting { background: var(--bad); }
+  .d-someday { background: var(--soft); } .d-reference { background: var(--ok); } .d-projects { background: var(--fresh); }
+
+  .listhead { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .listhead h3 { margin: 0; font-size: 15px; }
+  .listhead .cap { margin-left: auto; height: 26px; padding: 0 12px; border-radius: 6px; background: var(--brand); color: var(--brand-fg); font-weight: 600; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+  .items { padding: 6px 10px; overflow: auto; }
+  .item { display: flex; align-items: center; gap: 10px; padding: 9px 8px; border-radius: 8px; }
+  .item:hover { background: var(--panel2); }
+  .item .id { font: 600 10px var(--mono); color: var(--soft); width: 22px; }
+  .item .t { flex: 1; }
+  .item .t small { display: block; color: var(--muted); font-size: 11px; }
+  .item .tag { font: 11px var(--mono); color: var(--brand2); background: var(--brand-soft); border-radius: 999px; padding: 0 8px; margin-right: 4px; }
+  .item .due { font: 11px var(--mono); color: var(--warn); }
+  .item .proj { font: 11px var(--sans); color: var(--muted); background: var(--panel3); border-radius: 999px; padding: 1px 8px; }
+  .triage-row { display: flex; gap: 6px; margin-left: 8px; }
+  .tbtn { height: 22px; padding: 0 8px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--panel3); color: var(--muted); font: 600 10px var(--sans); }
+  .tbtn:hover { color: var(--foreground); border-color: var(--brand2); }
+
+  .rp { border-left: 1px solid var(--border); background: var(--panel); padding: 10px; overflow: auto; }
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 4px; }
+  .cal .d { aspect-ratio: 1; border-radius: 6px; background: var(--panel2); font: 11px var(--mono); color: var(--soft); padding: 3px; position: relative; }
+  .cal .d.has { background: var(--brand-soft); color: var(--foreground); }
+  .cal .d .n { position: absolute; bottom: 2px; right: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--brand); color: var(--brand-fg); font: 700 8px/14px var(--sans); text-align: center; }
+  .proj-card { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin: 6px 0; background: var(--panel2); }
+  .proj-card b { display: block; }
+  .proj-card .bar { height: 4px; border-radius: 999px; background: var(--panel3); margin-top: 6px; overflow: hidden; }
+  .proj-card .bar i { display: block; height: 100%; background: var(--ok); }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .08em; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-top: 12px; }
+  .box { border: 1px solid var(--border); background: var(--panel); border-radius: 12px; padding: 16px 18px; }
+  .box h3 { margin: 0 0 4px; font-size: 15px; }
+  .box .q { color: var(--muted); margin: 0; }
+  .shot { width: 100%; border-radius: 10px; border: 1px solid var(--border); display: block; margin: 10px 0; }
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">ACRYL Blends / spec 036 / acryl-gtd / one page: now and next</div>
+  <h1>GTD Planner: where it is, and where it could go</h1>
+  <div class="legend">
+    <span class="chip built">built</span> exists today, running in the demo below
+    <span class="chip new">proposed</span> a real dedicated UI, not built yet
+    <span class="chip gap">decision</span> needs your call
+  </div>
+  <p class="lede">Part 1 is <code>acryl-gtd</code> exactly as it runs right now: a tools-only Cordis plugin, same shape as <code>acryl-organizer</code> - you talk to it, it calls tools, the answer comes back as chat text. Part 2 is one way a dedicated GTD workspace view could look, if this toy app is worth growing a real UI for. The GTD buckets throughout (Inbox, Next, Waiting For, Someday/Maybe, Reference, Projects, Calendar) are David Allen's own vocabulary; the visual language (rail, panel, chip system) is ACRYL's own token set, re-tinted to this Blend's actual brand (<code>#1971c2</code> / <code>#4dabf7</code>).</p>
+
+  <h2>Part 1: where it is now - a chat, and twelve tools</h2>
+  <p class="lede">Real screenshot of the running app (<code>http://127.0.0.1:3741/</code>) before a workspace is chosen, and a reconstructed transcript of what the same screen looks like once you start talking to it. Nothing here is invented UI - it is ACRYL's ordinary chat, with GTD's tool calls in it.</p>
+  <div class="grid2">
+    <div class="box">
+      <h3>Real: before a session starts</h3>
+      <img class="shot" src="gtd-demo-empty.jpg" alt="GTD Planner Demo, empty state, real screenshot">
+      <p class="q">The brand row (<code>acryl-brand</code>, configured in <code>blend.yaml</code>) sets the mark, name and accent. Everything else is the Blank Blueprint's own chat shell.</p>
+    </div>
+    <div class="box">
+      <h3>What a GTD session actually looks like</h3>
+      <p class="q">A capture, an inbox check, and a triage decision - three of the twelve tools in <code>examples/acryl-gtd/index.js</code>, called exactly as the transcript on the right shows.</p>
+    </div>
+  </div>
+
+  <div class="ade now" aria-label="Current acryl-gtd chat, reconstructed">
+    <div class="top">
+      <span class="mark">G</span><span class="appname">GTD Planner Demo</span>
+      <div class="sp"><span class="pill">project-gtd-todo-app</span></div>
+    </div>
+    <div class="body">
+      <aside class="rail">
+        <div class="newsession">+ New Session</div>
+        <h6>Workspaces</h6>
+        <div class="ws">📁 project-gtd-todo-app</div>
+      </aside>
+      <section class="canvas">
+        <div class="thread">
+          <div class="msg you"><span class="who">You</span><p>Get this out of my head: renew my passport, due Oct 15. Also need to call the dentist, and I want to learn to sail someday. Oh, and file the espresso machine's warranty card.</p></div>
+          <div class="toolcall"><div class="hd"><b>gtd_capture</b> title: "Renew passport", due: "2026-10-15"</div><div class="out">Captured #1 Renew passport (due 2026-10-15)</div></div>
+          <div class="toolcall"><div class="hd"><b>gtd_capture</b> title: "Call the dentist"</div><div class="out">Captured #2 Call the dentist</div></div>
+          <div class="toolcall"><div class="hd"><b>gtd_capture</b> title: "Learn to sail"</div><div class="out">Captured #3 Learn to sail</div></div>
+          <div class="toolcall"><div class="hd"><b>gtd_capture</b> title: "The warranty card", note: "For the espresso machine"</div><div class="out">Captured #4 The warranty card</div></div>
+          <div class="msg agent"><span class="who">Agent</span><p>Got all four into your inbox. Want to triage them now?</p></div>
+          <div class="msg you"><span class="who">You</span><p>Yes - passport is a next action for my Travel project, dentist call is waiting on them to call back, sailing is someday, and the warranty card is reference.</p></div>
+          <div class="toolcall"><div class="hd"><b>gtd_triage</b> id: 1, status: "next", project: "Travel"</div><div class="out">#1 is now next: #1 Renew passport [Travel] (due 2026-10-15)</div></div>
+          <div class="toolcall"><div class="hd"><b>gtd_triage</b> id: 2, status: "waiting"</div><div class="out">#2 is now waiting: #2 Call the dentist</div></div>
+          <div class="toolcall"><div class="hd"><b>gtd_triage</b> id: 3, status: "someday"</div><div class="out">#3 is now someday: #3 Learn to sail</div></div>
+          <div class="toolcall"><div class="hd"><b>gtd_triage</b> id: 4, status: "reference"</div><div class="out">#4 is now reference: #4 The warranty card</div></div>
+          <div class="msg agent"><span class="who">Agent</span><p>Inbox is empty. One next action, one thing you're waiting on, one someday, one reference item filed.</p></div>
+        </div>
+        <div class="composer"><div class="box">What's on my calendar for Oct 15?</div></div>
+      </section>
+    </div>
+  </div>
+
+  <h3 style="margin:22px 0 4px">Every tool, and the bucket it touches</h3>
+  <table>
+    <thead><tr><th>Tool</th><th>GTD step</th><th>Data</th></tr></thead>
+    <tbody>
+      <tr><td><code>gtd_capture</code></td><td>Capture - get it out of your head</td><td>New item, status <code>inbox</code></td></tr>
+      <tr><td><code>gtd_inbox</code></td><td>See what's waiting to be decided</td><td>List, <code>status = inbox</code></td></tr>
+      <tr><td><code>gtd_triage</code></td><td>Clarify + Organize - the one decision</td><td>Move to next/waiting/someday/reference/done/trash, optional project + due + tags</td></tr>
+      <tr><td><code>gtd_complete</code></td><td>Engage, finished</td><td><code>status = done</code></td></tr>
+      <tr><td><code>gtd_next</code> / <code>gtd_waiting</code> / <code>gtd_someday</code> / <code>gtd_reference</code></td><td>Engage - what's actionable right now, per bucket</td><td>List by status</td></tr>
+      <tr><td><code>gtd_projects</code> / <code>gtd_project</code></td><td>Reflect - the outcomes in play</td><td>Grouped by <code>project</code>, open/done counts</td></tr>
+      <tr><td><code>gtd_agenda</code> / <code>gtd_upcoming</code></td><td>Reflect - what's coming due</td><td>Sorted by <code>due</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Part 2: a dedicated workspace, if it's worth building</h2>
+  <p class="lede">The chat above already does everything GTD needs. This is what trades that away for at-a-glance structure: a bucket rail instead of remembering what you triaged where, a list you can scan and act on directly, and a calendar strip. <b>Click a bucket on the left</b> to switch the list.</p>
+
+  <div class="ade next" aria-label="Proposed GTD workspace mock">
+    <div class="top">
+      <span class="mark">G</span><span class="appname">GTD Planner</span>
+      <div class="sp"><span class="pill">project-gtd-todo-app</span><span class="pill">+ Capture</span></div>
+    </div>
+    <div class="body">
+      <aside class="rail buckets" role="tablist" aria-label="GTD buckets">
+        <h6>Capture</h6>
+        <div class="b" data-b="inbox" tabindex="0" role="tab"><span class="dot d-inbox"></span><span class="n">Inbox</span><span class="c">1</span></div>
+        <h6>Do</h6>
+        <div class="b on" data-b="next" tabindex="0" role="tab" aria-selected="true"><span class="dot d-next"></span><span class="n">Next Actions</span><span class="c">4</span></div>
+        <div class="b" data-b="waiting" tabindex="0" role="tab"><span class="dot d-waiting"></span><span class="n">Waiting For</span><span class="c">2</span></div>
+        <div class="b" data-b="someday" tabindex="0" role="tab"><span class="dot d-someday"></span><span class="n">Someday/Maybe</span><span class="c">3</span></div>
+        <h6>Keep</h6>
+        <div class="b" data-b="reference" tabindex="0" role="tab"><span class="dot d-reference"></span><span class="n">Reference</span><span class="c">5</span></div>
+        <h6>Reflect</h6>
+        <div class="b" data-b="projects" tabindex="0" role="tab"><span class="dot d-projects"></span><span class="n">Projects</span><span class="c">3</span></div>
+      </aside>
+
+      <section class="canvas">
+        <div class="listhead"><h3 data-title-for="next">Next Actions</h3><span class="cap">+ Capture</span></div>
+        <div class="items" data-list="inbox" hidden>
+          <div class="item"><span class="id">#5</span><div class="t">Book the anniversary dinner</div><div class="triage-row"><span class="tbtn">Next</span><span class="tbtn">Waiting</span><span class="tbtn">Someday</span><span class="tbtn">Reference</span></div></div>
+        </div>
+        <div class="items" data-list="next">
+          <div class="item"><span class="id">#1</span><div class="t">Renew passport</div><span class="proj">Travel</span><span class="due">due Oct 15</span></div>
+          <div class="item"><span class="id">#6</span><div class="t">Book flights to Lisbon</div><span class="proj">Travel</span></div>
+          <div class="item"><span class="id">#7</span><div class="t">Draft the Q4 budget</div><span class="proj">Work</span><span class="tag">@computer</span></div>
+          <div class="item"><span class="id">#8</span><div class="t">Pick up dry cleaning</div><span class="tag">@errands</span></div>
+        </div>
+        <div class="items" data-list="waiting" hidden>
+          <div class="item"><span class="id">#2</span><div class="t">Call the dentist</div></div>
+          <div class="item"><span class="id">#9</span><div class="t">Landlord to fix the heater<small>Asked Sep 20</small></div></div>
+        </div>
+        <div class="items" data-list="someday" hidden>
+          <div class="item"><span class="id">#3</span><div class="t">Learn to sail</div></div>
+          <div class="item"><span class="id">#10</span><div class="t">Rebuild the garden shed</div></div>
+          <div class="item"><span class="id">#11</span><div class="t">Learn Portuguese</div></div>
+        </div>
+        <div class="items" data-list="reference" hidden>
+          <div class="item"><span class="id">#4</span><div class="t">The warranty card<small>For the espresso machine</small></div></div>
+          <div class="item"><span class="id">#12</span><div class="t">Landlord's contact details</div></div>
+        </div>
+        <div class="items" data-list="projects" hidden>
+          <div class="proj-card"><b>Travel</b><span style="color:var(--muted)">1 open, 0 done</span><div class="bar"><i style="width:0%"></i></div></div>
+          <div class="proj-card"><b>Work</b><span style="color:var(--muted)">3 open, 2 done</span><div class="bar"><i style="width:40%"></i></div></div>
+          <div class="proj-card"><b>Home</b><span style="color:var(--muted)">1 open, 1 done</span><div class="bar"><i style="width:50%"></i></div></div>
+        </div>
+      </section>
+
+      <aside class="rp">
+        <h6>Upcoming</h6>
+        <div class="cal">
+          <div class="d">12</div><div class="d">13</div><div class="d">14</div>
+          <div class="d has">15<span class="n">1</span></div>
+          <div class="d">16</div><div class="d">17</div><div class="d">18</div>
+        </div>
+        <h6 style="margin-top:14px">Oct 15</h6>
+        <div class="item" style="padding:6px 4px"><span class="id">#1</span><div class="t">Renew passport</div></div>
+      </aside>
+    </div>
+  </div>
+
+  <h3 style="margin:22px 0 4px">What each part would need</h3>
+  <table>
+    <thead><tr><th>Area</th><th>Status</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td>Chat + 12 tools</td><td><span class="chip built">built</span></td><td><code>examples/acryl-gtd/</code>, grown from <code>acryl.blank</code>; captured as a Blend, published as a registry Blueprint.</td></tr>
+      <tr><td>Bucket rail + list panel</td><td><span class="chip new">proposed</span></td><td>A client tab type reading the same <code>.acryl/gtd.json</code> the tools write - no new data model, just a view over it (the whole point of ACRYL's tool-first design: the UI is optional, the data isn't tool-shaped).</td></tr>
+      <tr><td>Inline triage buttons</td><td><span class="chip new">proposed</span></td><td>A click calls the same <code>gtd_triage</code> tool the agent calls; no separate "UI logic" to keep in sync.</td></tr>
+      <tr><td>Calendar strip</td><td><span class="chip new">proposed</span></td><td>Renders <code>gtd_upcoming</code>'s output as a week strip instead of text.</td></tr>
+      <tr><td>Projects view</td><td><span class="chip new">proposed</span></td><td>Renders <code>gtd_projects</code> as progress cards instead of a text list.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Decisions</h2>
+  <div class="grid2">
+    <div class="box"><h3>1. Is a dedicated UI worth it at all?</h3><p class="q">The chat already does the whole GTD loop. A UI adds no new capability, only faster scanning and one-click triage. This is the "toy app to explore ACRYL Blends concepts" - the honest answer may be "chat is the product, skip the UI."</p></div>
+    <div class="box"><h3>2. If yes, where does it live?</h3><p class="q">A workspace tab type (like the reference page's <code>acryl-tab-diff</code> pattern) so it opens from <b>+</b> in the advanced shell, or a standalone panel inside <code>acryl-gtd</code> itself that any surface can mount. The tab-type route reuses more of what's already built for spec 040.</p></div>
+    <div class="box"><h3>3. Contexts (<code>@calls</code>, <code>@errands</code>) - filter or ignore?</h3><p class="q">The domain already tracks tags; mindwtr's Contexts view filters by them. Cheap to wire into the Next Actions list as a chip filter, easy to skip for a first UI pass.</p></div>
+    <div class="box"><h3>4. Board view (mindwtr's swimlanes)?</h3><p class="q">Not modeled here. If wanted, it is a fourth rendering of the same data (by project or by bucket, kanban-style) - no new domain concept, same as the list and calendar above.</p></div>
+  </div>
+</main>
+<script>
+  (function () {
+    var buckets = document.querySelectorAll('.buckets .b');
+    var lists = document.querySelectorAll('.items');
+    var title = document.querySelector('[data-title-for]');
+    var titles = { inbox: 'Inbox', next: 'Next Actions', waiting: 'Waiting For', someday: 'Someday/Maybe', reference: 'Reference', projects: 'Projects' };
+    buckets.forEach(function (b) {
+      b.addEventListener('click', function () {
+        buckets.forEach(function (x) { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b ? 'true' : 'false'); });
+        var key = b.getAttribute('data-b');
+        lists.forEach(function (l) { l.hidden = l.getAttribute('data-list') !== key; });
+        if (title) title.textContent = titles[key] || key;
+      });
+      b.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); b.click(); } });
+    });
+  })();
+</script>
+</body>
+</html>
