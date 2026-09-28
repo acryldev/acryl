@@ -4,7 +4,7 @@
  * HTTP server needed, since `kind: 'exact'` registration hands back the plain handler function.
  */
 import assert from 'node:assert/strict'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -13,7 +13,7 @@ import { apply } from '../index.js'
 const PORT = 45123
 const ORIGIN = `http://127.0.0.1:${PORT}`
 
-function fakeCtx() {
+function fakeCtx(home) {
   const routes = new Map()
   const tools = new Map()
   return {
@@ -23,6 +23,10 @@ function fakeCtx() {
       register: route => { routes.set(route.path, route.handler); return () => routes.delete(route.path) },
     },
     tools: { register: tool => { tools.set(tool.name, tool); return () => tools.delete(tool.name) } },
+    // The app's own bulkhead (docs/acryl/APP-INSTANCES-AND-BULKHEADS.md) - never process.cwd(). Caught live: an
+    // earlier version fell back to process.cwd(), which inside a real engine process is the shared monorepo
+    // checkout that launched it, not the per-app folder - every app's board data landed in one shared file.
+    appInstance: { home, dshHome: join(home, '.dsh') },
     routes,
     tools_: tools,
   }
@@ -53,7 +57,7 @@ function fakeRes() {
 async function withCtx(run) {
   const dir = mkdtempSync(join(tmpdir(), 'acryl-gtd-routes-'))
   try {
-    const ctx = fakeCtx()
+    const ctx = fakeCtx(dir)
     apply(ctx)
     await run(ctx, dir)
   } finally {
@@ -156,13 +160,18 @@ test('the board page refuses a request whose socket is not on the loopback inter
   })
 })
 
-test('state with no cwd defaults to the app\'s own directory (process.cwd()), not a blank error', async () => {
-  await withCtx(async ctx => {
+test('state with no cwd defaults to the app\'s own instance home, never process.cwd()', async () => {
+  await withCtx(async (ctx, dir) => {
     const handler = ctx.routes.get('/api/acryl-gtd/state')
     const res = fakeRes()
     await handler(fakeReq({ url: '/api/acryl-gtd/state' }), res)
-    // Whatever process.cwd() resolves to here, the route must not refuse an absent cwd - only an invalid one.
     assert.equal(res.statusCode, 200)
     assert.ok(Array.isArray(res.body.items))
+    // Prove it actually resolved to ctx.appInstance.home (dir), not this test process's own cwd - a capture
+    // with no cwd given must land in dir/.acryl/gtd.json, not wherever `node --test` happens to run from.
+    const capture = ctx.routes.get('/api/acryl-gtd/capture')
+    const captured = fakeRes()
+    await capture(fakeReq({ method: 'POST', url: '/api/acryl-gtd/capture', body: { title: 'lands in the app home' } }), captured)
+    assert.equal(readFileSync(join(dir, '.acryl', 'gtd.json'), 'utf8').includes('lands in the app home'), true)
   })
 })

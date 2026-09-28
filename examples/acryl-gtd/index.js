@@ -29,16 +29,24 @@ import { error, finishJson, isLoopbackAddress, isSameOriginLoopbackRequest, pars
 import { fileStore, storeFor } from './lib/store.js'
 
 export const name = 'acryl-gtd'
-export const inject = ['tools', 'webServer']
+// appInstance: the app's own bulkhead (docs/acryl/APP-INSTANCES-AND-BULKHEADS.md). The board route has no
+// session/exec context to read a cwd from (unlike the tools, which get one from `exec.agent.session.header.cwd`
+// via storeFor), so it needs its own source for "this app's own directory" - and that source must be the app's
+// instance home, never `process.cwd()`. Caught live: `process.cwd()` inside this engine process is the shared
+// monorepo checkout that launched it, not the per-app folder passed as `--dir`, so a first version of this
+// default wrote every app's board data into one shared file at the checkout's own root - exactly the ambient
+// lookup `tests/bulkhead.spec.ts` exists to catch elsewhere in this codebase, reproduced here in an extension
+// outside that test's reach.
+export const inject = ['tools', 'webServer', 'appInstance']
 
 /**
  * The board route body may name its own workspace (`cwd`); when it does not, the data lives with the app itself
- * (the directory the app process runs from) - a todo app's own tasks belong to the app, not to whatever coding
- * workspace happens to be selected in chat. This is also what makes the board a URL you can just open: no query
- * param, no chat message, required.
+ * (its instance home) - a todo app's own tasks belong to the app, not to whatever coding workspace happens to be
+ * selected in chat. This is also what makes the board a URL you can just open: no query param, no chat message,
+ * required.
  */
-function resolveCwd(value) {
-  if (value === undefined || value === null || value === '') return process.cwd()
+function resolveCwd(value, appHome) {
+  if (value === undefined || value === null || value === '') return appHome
   if (typeof value !== 'string' || !isAbsolute(value)) throw new Error('cwd must be an absolute path')
   return value
 }
@@ -130,7 +138,7 @@ export function apply(ctx) {
       if (req.method !== 'GET') return finishJson(res, 405, error('method not allowed'), 'GET')
       if (!isSameOriginLoopbackRequest(req, origin, false)) return finishJson(res, 403, error('forbidden'))
       let cwd
-      try { cwd = resolveCwd(new URL(req.url ?? '', origin).searchParams.get('cwd')) } catch (cause) { return finishJson(res, 400, error(cause.message)) }
+      try { cwd = resolveCwd(new URL(req.url ?? '', origin).searchParams.get('cwd'), ctx.appInstance.home) } catch (cause) { return finishJson(res, 400, error(cause.message)) }
       finishJson(res, 200, storeForCwd(cwd).load())
     },
   }), 'acryl-gtd: state route')
@@ -144,7 +152,7 @@ export function apply(ctx) {
       const body = await parseJsonPostBody(req, res)
       if (body === INVALID_BODY) return
       try {
-        const cwd = resolveCwd(body?.cwd)
+        const cwd = resolveCwd(body?.cwd, ctx.appInstance.home)
         const store = storeForCwd(cwd)
         const next = domain.capture(store.load(), body)
         store.save(next)
@@ -164,7 +172,7 @@ export function apply(ctx) {
       const body = await parseJsonPostBody(req, res)
       if (body === INVALID_BODY) return
       try {
-        const cwd = resolveCwd(body?.cwd)
+        const cwd = resolveCwd(body?.cwd, ctx.appInstance.home)
         const store = storeForCwd(cwd)
         const next = domain.triage(store.load(), { ...body, id: Number(body?.id) })
         store.save(next)
