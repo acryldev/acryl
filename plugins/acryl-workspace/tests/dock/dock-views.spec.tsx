@@ -105,12 +105,29 @@ describe('the three layouts (the panel is always visible; only its position chan
 describe('the mode button', () => {
   it('names the next mode and moves the panel through the modes; it is the only control (owner decision 2026-09-28: no separate show/hide)', () => {
     const { controller } = setup()
-    render(<DockButtons controller={controller} />)
+    render(<DockButtons controller={controller} rightPane={undefined} />)
     expect(screen.getAllByRole('button')).toHaveLength(1)
     fireEvent.click(screen.getByRole('button', { name: 'Switch to bottom terminal' }))
     expect(controller.getPrefs().mode).toBe('bottom')
     fireEvent.click(screen.getByRole('button', { name: 'Switch to side by side terminal' }))
     fireEvent.click(screen.getByRole('button', { name: 'Switch to stacked terminal' }))
     expect(controller.getPrefs().mode).toBe('stacked')
+  })
+
+  it('opens a closed right pane when the new mode needs it (stacked, side), but not for bottom', () => {
+    const { controller } = setup()
+    let open = false
+    const rightPane = { toggle: () => { open = !open }, isOpen: () => open }
+    controller.setMode('bottom')
+    render(<DockButtons controller={controller} rightPane={rightPane} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to side by side terminal' }))
+    expect(controller.getPrefs().mode).toBe('side')
+    expect(open).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to stacked terminal' }))
+    expect(open).toBe(true)
+    open = false
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to bottom terminal' }))
+    expect(controller.getPrefs().mode).toBe('bottom')
+    expect(open).toBe(false)
   })
 })

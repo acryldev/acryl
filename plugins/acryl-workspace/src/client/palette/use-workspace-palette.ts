@@ -14,7 +14,7 @@ import type { WorkspaceGitApi } from '../git/git-api.ts'
 import type { ToastState } from '../notifications/toast-state.ts'
 import { openSettingsSection } from '../settings/open-settings.ts'
 import type { DockController } from '../dock/dock-controller.ts'
-import type { RightPaneHandle } from '../dock/DockButtons.tsx'
+import { ensureDockVisible, type RightPaneHandle } from '../dock/DockButtons.tsx'
 import type { WorkspaceTabRegistry } from '../tabs/registry/tab-registry.ts'
 import type { TabTypesState } from '../tabs/tab-types-state.ts'
 import { WORKSPACE_SURFACE_ACTIONS } from '../terminal/agent-commands.ts'
@@ -61,8 +61,7 @@ export function useWorkspacePalette(deps: WorkspacePaletteDeps): PaletteState {
       setTerminalMode: (mode) => {
         const { dock, rightPanel } = latest.current
         dock.setMode(mode)
-        // The (always-visible) terminal panel needs the right pane open when its mode puts it there.
-        if (mode !== 'bottom' && rightPanel !== undefined && !rightPanel.isOpen()) rightPanel.toggle()
+        ensureDockVisible(dock, rightPanel)
       },
       setShellMode: (mode) => { latest.current.shell.setMode(mode) },
       selectWorktree: (path) => { latest.current.shell.select(path) },

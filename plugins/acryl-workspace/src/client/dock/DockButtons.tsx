@@ -12,11 +12,26 @@ export interface RightPaneHandle {
   isOpen(): boolean
 }
 
-export function DockButtons({ controller }: { readonly controller: DockController }) {
+/**
+ * The terminal panel is always visible, but in `stacked` and `side` modes it lives inside the right pane, so
+ * moving there needs that pane open too - one rule, used by both ways a person changes the mode (this button,
+ * the palette's `Terminal panel: ...` commands), so they cannot drift into disagreeing about it.
+ */
+export function ensureDockVisible(dock: DockController, rightPane: RightPaneHandle | undefined): void {
+  if (dock.getPrefs().mode !== 'bottom' && rightPane !== undefined && !rightPane.isOpen()) rightPane.toggle()
+}
+
+export function DockButtons({ controller, rightPane }: { readonly controller: DockController; readonly rightPane: RightPaneHandle | undefined }) {
   const prefs = useSyncExternalStore(controller.subscribe, controller.getPrefs)
   return (
     <div className="dshDockButtons">
-      <button type="button" className="dshWorkspaceRightToggle" aria-label={switchLabel(prefs.mode)} title={switchLabel(prefs.mode)} onClick={() => { controller.cycleMode() }}>
+      <button
+        type="button"
+        className="dshWorkspaceRightToggle"
+        aria-label={switchLabel(prefs.mode)}
+        title={switchLabel(prefs.mode)}
+        onClick={() => { controller.cycleMode(); ensureDockVisible(controller, rightPane) }}
+      >
         <ModeIcon mode={nextMode(prefs.mode)} />
       </button>
     </div>
