@@ -141,6 +141,21 @@ test('the board page is served at /gtd as HTML, not gated by the mutating-style 
   })
 })
 
+test('the board page refuses a request whose socket is not on the loopback interface', async () => {
+  // /gtd deliberately skips the same-origin check (see above) - it must not fall through to no check at all.
+  // Caught live: an early version served the page to a bare `curl` from a non-loopback remote address with
+  // zero gate. This is the floor, not defense in depth.
+  await withCtx(async ctx => {
+    const handler = ctx.routes.get('/gtd')
+    const req = fakeReq({ url: '/gtd' })
+    req.socket = { remoteAddress: '203.0.113.5' }
+    const res = fakeRes()
+    await handler(req, res)
+    assert.equal(res.statusCode, 403)
+    assert.equal(res.rawBody, undefined)
+  })
+})
+
 test('state with no cwd defaults to the app\'s own directory (process.cwd()), not a blank error', async () => {
   await withCtx(async ctx => {
     const handler = ctx.routes.get('/api/acryl-gtd/state')

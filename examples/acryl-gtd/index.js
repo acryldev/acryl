@@ -25,7 +25,7 @@ import { isAbsolute, join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import * as domain from './lib/domain.js'
 import { boardPageHtml } from './lib/board-page.js'
-import { error, finishJson, isSameOriginLoopbackRequest, parseJsonPostBody, INVALID_BODY } from './lib/http.js'
+import { error, finishJson, isLoopbackAddress, isSameOriginLoopbackRequest, parseJsonPostBody, INVALID_BODY } from './lib/http.js'
 import { fileStore, storeFor } from './lib/store.js'
 
 export const name = 'acryl-gtd'
@@ -105,11 +105,16 @@ export function apply(ctx) {
   // The board page itself: a plain top-level navigation (a pasted or bookmarked URL), not a fetch() call - it
   // carries no Origin header and no same-origin Sec-Fetch-Site, so the mutating-style same-origin check below
   // (right for the API routes, which this page's own script calls with real fetch metadata) would refuse the
-  // page's own load. It relies on the same session-cookie gate every route in this app already sits behind.
+  // page's own load. Checked live: a custom plugin route is NOT covered by the app's own token/cookie gate -
+  // that only wraps the shipped app shell, not routes a plugin registers - so this floor (loopback address only,
+  // the same one acryl-loopback-http states for every "private" route) is load-bearing, not defense in depth.
+  // A bare `curl http://127.0.0.1:<port>/gtd` from off-box is refused; from the same machine it is not - no
+  // weaker than the app's own API routes are for anyone who already has a shell on the box.
   ctx.effect(() => ctx.webServer.register({
     kind: 'exact',
     path: '/gtd',
     handler: (req, res) => {
+      if (!isLoopbackAddress(req.socket.remoteAddress)) { res.statusCode = 403; res.end(); return }
       if (req.method !== 'GET') { res.statusCode = 405; res.setHeader('allow', 'GET'); res.end(); return }
       res.statusCode = 200
       res.setHeader('content-type', 'text/html; charset=utf-8')
