@@ -10,7 +10,14 @@
 import { findButtonByName } from '../dom/find-by-name.ts'
 import { en, zh, type SettingsSectionKey } from './locales.ts'
 
-const MAX_FRAMES = 30
+/**
+ * How long to keep retrying the section click once the Settings dialog is open. A frame count (the earlier
+ * budget) is wrong here: right after the app starts, the section's own Settings plugin can still be PENDING on
+ * `slots`/`locale` while the rest of the workspace (and this button) is already ACTIVE, so the nav row the
+ * caller is waiting for may not exist yet for longer than a handful of frames. Generous and wall-clock so a
+ * throttled or busy tab does not cut the retry short.
+ */
+const SECTION_TIMEOUT_MS = 5_000
 
 /**
  * The button that opens the Settings panel. Other buttons in the page also open dialogs (the Marketplace launcher,
@@ -27,23 +34,32 @@ export function findSettingsTrigger(doc: Document): HTMLButtonElement | null {
   return null
 }
 
-/** @returns true when the Settings button was found and pressed; the section is then selected as soon as it appears. */
+/**
+ * @param onSectionSettled - called once the section step resolves: `true` once its nav button was found and
+ * clicked, `false` if it never appeared within {@link SECTION_TIMEOUT_MS}. The Settings dialog is open either
+ * way (its trigger was found and clicked); a caller that cares whether it actually landed on the right section
+ * (rather than whatever section the shell defaulted to) uses this to tell the two apart instead of assuming
+ * success.
+ * @returns true when the Settings button was found and pressed; the section is then selected as soon as it
+ * appears, tried again on every scheduled frame up to the timeout.
+ */
 export function openSettingsSection(
   section: SettingsSectionKey,
   doc: Document = document,
   schedule: (callback: () => void) => void = callback => { requestAnimationFrame(callback) },
+  onSectionSettled: (found: boolean) => void = () => {},
 ): boolean {
   const labels: readonly string[] = [en[`${section}Nav`], zh[`${section}Nav`]]
   const trigger = findSettingsTrigger(doc)
   if (trigger === null) return false
   trigger.click()
-  let frames = 0
+  const deadline = Date.now() + SECTION_TIMEOUT_MS
   const selectSection = (): void => {
     const dialog = doc.querySelector('[role="dialog"] nav')
     const nav = dialog === null ? null : findButtonByName(dialog, labels)
-    if (nav !== null) { nav.click(); return }
-    frames += 1
-    if (frames < MAX_FRAMES) schedule(selectSection)
+    if (nav !== null) { nav.click(); onSectionSettled(true); return }
+    if (Date.now() < deadline) schedule(selectSection)
+    else onSectionSettled(false)
   }
   schedule(selectSection)
   return true

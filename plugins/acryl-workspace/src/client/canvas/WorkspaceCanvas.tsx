@@ -330,7 +330,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
         tabTypes={tabTypes}
         tabRegistry={tabRegistry}
         onSetAgentEnabled={(id, enabled) => agentsState.change({ agent: { id, enabled } })}
-        onManageSettings={section => openSettingsSection(section)}
+        onManageSettings={(section, onSettled) => openSettingsSection(section, document, undefined, onSettled)}
       />
       <div ref={stageRef} className="dshWorkspaceStage" role="tabpanel" data-split={splitTile !== undefined || undefined}>
         <div className="dshWorkspacePane" data-pane="primary" style={splitTile === undefined ? undefined : { flexBasis: `${splitRatio * 100}%`, flexGrow: 0 }}>

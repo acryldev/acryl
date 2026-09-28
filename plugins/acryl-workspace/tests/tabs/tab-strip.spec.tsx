@@ -35,12 +35,12 @@ function memoryStorage(initial: Record<string, string> = {}): Storage {
   }
 }
 
-function Harness({ workspace, storage, onOpenPty, onClose = () => {}, custom = [], settings = null, onManage = () => true, tabTypes, onSetEnabled = async () => {} }: { workspace: WorkspaceState; storage: Storage; onOpenPty: (id: string, title: string) => void; onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: (section: 'agents' | 'tabs') => boolean; tabTypes?: TabTypesState; onSetEnabled?: (id: string, enabled: boolean) => Promise<void> }) {
+function Harness({ workspace, storage, onOpenPty, onClose = () => {}, custom = [], settings = null, onManage = () => true, tabTypes, onSetEnabled = async () => {} }: { workspace: WorkspaceState; storage: Storage; onOpenPty: (id: string, title: string) => void; onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: (section: 'agents' | 'tabs', onSettled?: (found: boolean) => void) => boolean; tabTypes?: TabTypesState; onSetEnabled?: (id: string, enabled: boolean) => Promise<void> }) {
   const snapshot = useSyncExternalStore(l => workspace.subscribe(l), () => workspace.getSnapshot())
   return <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={storage} customAgents={custom} terminals={terminals} onClose={onClose} onOpenPty={onOpenPty} agentSettings={settings} tabTypes={tabTypes ?? new TabTypesState(storage)} tabRegistry={tabRegistry} dock={dock} agentStatus={agentStatus} onSetAgentEnabled={onSetEnabled} onManageSettings={onManage} />
 }
 
-function setup(storage = memoryStorage(), extra: { onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: (section: 'agents' | 'tabs') => boolean; tabTypes?: TabTypesState; onSetEnabled?: (id: string, enabled: boolean) => Promise<void> } = {}) {
+function setup(storage = memoryStorage(), extra: { onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: (section: 'agents' | 'tabs', onSettled?: (found: boolean) => void) => boolean; tabTypes?: TabTypesState; onSetEnabled?: (id: string, enabled: boolean) => Promise<void> } = {}) {
   const workspace = new WorkspaceState()
   const onOpenPty = vi.fn()
   render(<Harness workspace={workspace} storage={storage} onOpenPty={onOpenPty} {...extra} />)
@@ -107,13 +107,31 @@ describe('TabStrip', () => {
   })
 
   it('opens Settings > Agents from Add more agents, and says where to go when it cannot', () => {
-    const onManage = vi.fn((_section: 'agents' | 'tabs') => false)
+    const onManage = vi.fn((_section: 'agents' | 'tabs', _onSettled?: (found: boolean) => void) => false)
     setup(memoryStorage(), { onManage })
     fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
     fireEvent.click(screen.getByRole('menuitem', { name: 'Add more agents...' }))
-    expect(onManage).toHaveBeenCalledWith('agents')
+    expect(onManage).toHaveBeenCalledWith('agents', expect.any(Function))
     expect(screen.getByRole('status').textContent).toContain('Settings')
     onManage.mockReturnValue(true)
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Add more agents...' }))
+    // The trigger was found this time, but the section has not settled yet: the menu stays open.
+    expect(screen.getByRole('menuitem', { name: 'Add more agents...' })).toBeTruthy()
+  })
+
+  it('stays open and falls back to its own notice when the section opened on the wrong tab (found the trigger, not the section)', () => {
+    const onManage = vi.fn((_section: 'agents' | 'tabs', onSettled?: (found: boolean) => void) => { onSettled?.(false); return true })
+    setup(memoryStorage(), { onManage })
+    fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Add more agents...' }))
+    expect(screen.getByRole('menuitem', { name: 'Add more agents...' })).toBeTruthy()
+    expect(screen.getByRole('status').textContent).toContain('Settings')
+  })
+
+  it('closes once the section settles found, instead of staying open indefinitely', () => {
+    const onManage = vi.fn((_section: 'agents' | 'tabs', onSettled?: (found: boolean) => void) => { onSettled?.(true); return true })
+    setup(memoryStorage(), { onManage })
+    fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
     fireEvent.click(screen.getByRole('menuitem', { name: 'Add more agents...' }))
     expect(screen.queryByRole('menuitem', { name: 'Add more agents...' })).toBeNull()
   })
@@ -174,7 +192,7 @@ describe('TabStrip', () => {
     setup(memoryStorage(), { onManage })
     fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
     fireEvent.click(screen.getByRole('menuitem', { name: 'Add your own tab type...' }))
-    expect(onManage).toHaveBeenCalledWith('tabs')
+    expect(onManage).toHaveBeenCalledWith('tabs', expect.any(Function))
   })
 
   it('opens the last thing you opened when + is clicked, starting with a terminal', () => {

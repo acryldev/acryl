@@ -33,8 +33,12 @@ export interface NewTabMenuProps {
   onOpenAgent(id: string, title: string): void
   /** Turns one agent on or off in the + menu (a Host setting, shared with Settings > Agents). */
   onSetAgentEnabled(id: string, enabled: boolean): Promise<void>
-  /** Opens Settings on a section; false when the Settings panel could not be found. */
-  onManageSettings(section: 'agents' | 'tabs'): boolean
+  /**
+   * Opens Settings on a section; false when the Settings panel could not be found. `onSettled(false)` fires
+   * later if the panel opened but its section never appeared (e.g. still starting up), so a menu that closed
+   * on a `true` return can still tell the person it landed on the wrong tab instead of staying silent.
+   */
+  onManageSettings(section: 'agents' | 'tabs', onSettled?: (found: boolean) => void): boolean
 }
 
 export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, tabRegistry, onCustomTab, setOpen, onSurface, onOpenAgent, onSetAgentEnabled, onManageSettings }: NewTabMenuProps) {
@@ -83,9 +87,11 @@ export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, ta
     }
   })
 
+  // The menu stays open until the section itself is confirmed, not just the Settings trigger: closing right
+  // away on a bare "trigger found" would hide a fallback notice for the one failure this can still have (the
+  // dialog opened, but on whatever section the shell defaulted to, not the one asked for) behind `open &&`.
   const manage = (section: 'agents' | 'tabs', fallback: string): void => {
-    if (onManageSettings(section)) close()
-    else setNotice(fallback)
+    if (!onManageSettings(section, found => { if (found) close(); else setNotice(fallback) })) setNotice(fallback)
   }
 
   return (

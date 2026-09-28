@@ -48,7 +48,7 @@ export interface TabStripProps {
   readonly tabRegistry: WorkspaceTabRegistry
   /** Turns one agent on or off in the + menu. */
   onSetAgentEnabled(id: string, enabled: boolean): Promise<void>
-  onManageSettings(section: 'agents' | 'tabs'): boolean
+  onManageSettings(section: 'agents' | 'tabs', onSettled?: (found: boolean) => void): boolean
 }
 
 interface TabContextMenuProps {

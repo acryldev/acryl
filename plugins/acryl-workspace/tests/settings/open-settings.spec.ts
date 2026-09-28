@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { openSettingsSection } from '../../src/client/settings/open-settings.ts'
+
+afterEach(() => { vi.useRealTimers() })
 
 describe('openSettingsSection', () => {
   it('presses the Settings button, then the Agents entry when it appears', () => {
@@ -54,5 +56,46 @@ describe('openSettingsSection', () => {
   it('finds no Settings trigger when the only dialog buttons are labelled ones', () => {
     document.body.innerHTML = '<div data-acryl-slot="sidebar"><button aria-haspopup="dialog" aria-label="Marketplace">M</button></div>'
     expect(openSettingsSection('agents', document, () => {})).toBe(false)
+  })
+
+  it('settles true once the section is found, even a few retries in (a slow-to-register section, T083-adjacent)', () => {
+    document.body.innerHTML = '<button aria-haspopup="dialog" id="trigger">Settings</button>'
+    document.getElementById('trigger')?.addEventListener('click', () => {
+      document.body.insertAdjacentHTML('beforeend', '<div role="dialog"><nav></nav></div>')
+    })
+    const frames: Array<() => void> = []
+    const settled: boolean[] = []
+    expect(openSettingsSection('agents', document, cb => { frames.push(cb) }, found => { settled.push(found) })).toBe(true)
+    expect(settled).toEqual([])
+    frames.shift()?.() // still no "Agents" button in the nav
+    expect(settled).toEqual([])
+    document.querySelector('nav')?.insertAdjacentHTML('beforeend', '<button id="agents">Agents</button>')
+    const pressed: string[] = []
+    document.getElementById('agents')?.addEventListener('click', () => { pressed.push('agents') })
+    frames.shift()?.()
+    expect(settled).toEqual([true])
+    expect(pressed).toEqual(['agents'])
+  })
+
+  it('settles false, without giving up early, when the section never appears within the timeout', () => {
+    vi.useFakeTimers()
+    document.body.innerHTML = '<button aria-haspopup="dialog" id="trigger">Settings</button>'
+    document.getElementById('trigger')?.addEventListener('click', () => {
+      document.body.insertAdjacentHTML('beforeend', '<div role="dialog"><nav></nav></div>')
+    })
+    const settled: boolean[] = []
+    let scheduled: (() => void) | undefined
+    openSettingsSection('agents', document, cb => { scheduled = cb }, found => { settled.push(found) })
+    // A generous number of retries inside the timeout: none of them give up.
+    for (let i = 0; i < 50; i += 1) {
+      vi.advanceTimersByTime(50)
+      const run = scheduled; scheduled = undefined; run?.()
+    }
+    expect(settled).toEqual([])
+    // Past the timeout, the next retry settles false instead of scheduling another.
+    vi.advanceTimersByTime(10_000)
+    const run = scheduled; scheduled = undefined; run?.()
+    expect(settled).toEqual([false])
+    expect(scheduled).toBeUndefined()
   })
 })
