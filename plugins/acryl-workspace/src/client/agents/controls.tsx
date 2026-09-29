@@ -34,3 +34,12 @@ export function ChevronIcon({ open }: { readonly open: boolean }) {
     </svg>
   )
 }
+
+/** AcrylDSH Chat's own mark, distinct from any agent runtime's icon (spec 040 T130) - a chat bubble. */
+export function ChatIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2.5 4.5A1.5 1.5 0 0 1 4 3h8a1.5 1.5 0 0 1 1.5 1.5v5A1.5 1.5 0 0 1 12 11H6.7L4 13.2V11H4a1.5 1.5 0 0 1-1.5-1.5v-5Z" />
+    </svg>
+  )
+}

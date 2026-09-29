@@ -206,16 +206,13 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceDocList { margin: 0.3em 0; padding-left: 1.4em; }
 .dshWorkspaceDocParagraph { margin: 0.3em 0; }
 .dshWorkspaceSide { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; }
-.dshWorkspaceSideSwitch { display: flex; gap: 6px; margin: 14px 16px 10px; flex: none; }
-.dshWorkspaceSideSwitch button { appearance: none; flex: 1; padding: 6px 12px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: 500 13px/1.3 ui-sans-serif, system-ui, sans-serif; transition: border-color .12s, background-color .12s, color .12s; }
-.dshWorkspaceSideSwitch button:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary) 22%, transparent); color: var(--dsw-alias-label-primary); }
-.dshWorkspaceSideSwitch button[aria-selected="true"] { border-color: color-mix(in srgb, var(--dsw-alias-label-primary) 34%, transparent); background: color-mix(in srgb, var(--dsw-alias-label-primary) 10%, transparent); color: var(--dsw-alias-label-primary); }
-.dshWorkspaceSideSwitch button:focus-visible { outline: 2px solid #4d6bfe; outline-offset: 1px; }
-/* macOS: the window's traffic-light buttons sit in the top-left; keep the switch clear of them. */
-.dshDesktopFrame[data-desktop-platform="darwin"] .dshWorkspaceSideSwitch { margin-top: 26px; }
+/* macOS: the window's traffic-light buttons sit in the top-left; keep the head row clear of them. */
+.dshDesktopFrame[data-desktop-platform="darwin"] .dshWorkspaceSideProjectsHead:first-child { margin-top: 26px; }
 .dshWorkspaceSideChats { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .dshWorkspaceSideChats > * { flex: 1 1 0; min-height: 0; min-width: 0; }
 .dshWorkspaceSideChats[hidden] { display: none; }
+.dshWorkspaceSideBack { appearance: none; padding: 4px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: 500 12px/1.3 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceSideBack:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-label-primary); }
 .dshWorkspaceSideProjects { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 8px 12px; }
 .dshWorkspaceSideProjectsHead { display: flex; align-items: center; justify-content: space-between; padding: 2px 8px 4px; color: var(--dsw-alias-label-secondary); font: 600 11px/1.4 ui-sans-serif, system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 .dshWorkspaceSideAdd { appearance: none; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; font: 500 18px/1 ui-sans-serif, system-ui, sans-serif; }
@@ -224,15 +221,25 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceSideNotice { margin: 4px 8px; padding: 6px 8px; border-left: 2px solid #f87171; color: #fca5a5; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSideEmpty { padding: 12px 6px; color: var(--dsw-alias-label-secondary); font: 12px/1.5 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceRepo { margin: 6px 0 10px; }
-.dshWorkspaceRepoHead { display: flex; align-items: center; justify-content: space-between; }
+.dshWorkspaceRepoHead { display: flex; align-items: center; gap: 4px; }
+.dshWorkspaceRepoHead .dshWorkspaceRepoName { flex: 1; }
+.dshWorkspaceChevron { appearance: none; flex: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; }
+.dshWorkspaceChevron:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-label-primary); }
 .dshWorkspaceNewBranch { display: flex; gap: 6px; margin: 2px 8px 6px; }
 .dshWorkspaceNewBranch input { flex: 1; min-width: 0; box-sizing: border-box; padding: 5px 8px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 6px; background: transparent; color: var(--dsw-alias-label-primary); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceNewBranch button { appearance: none; padding: 4px 10px; border: 0; border-radius: 6px; background: #4d6bfe; color: #fff; cursor: pointer; font: 12px/1.3 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceNewBranch button:disabled { opacity: .5; cursor: default; }
-.dshWorkspaceWorktreeItem { position: relative; display: flex; align-items: center; }
-.dshWorkspaceWorktreeItem > .dshWorkspaceWorktree { flex: 1; min-width: 0; }
+.dshWorkspaceWorktreeItem { display: flex; flex-direction: column; }
+.dshWorkspaceWorktreeRow { position: relative; display: flex; align-items: center; gap: 2px; }
+.dshWorkspaceWorktreeRow > .dshWorkspaceWorktree { flex: 1; min-width: 0; }
 .dshWorkspaceWorktreeNew { appearance: none; position: absolute; right: 4px; width: 22px; height: 22px; border: 0; border-radius: 6px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-primary); opacity: 0; cursor: pointer; font: 500 16px/1 ui-sans-serif, system-ui, sans-serif; }
-.dshWorkspaceWorktreeItem:hover > .dshWorkspaceWorktreeNew, .dshWorkspaceWorktreeNew:focus-visible { opacity: 1; }
+.dshWorkspaceWorktreeRow:hover > .dshWorkspaceWorktreeNew, .dshWorkspaceWorktreeNew:focus-visible { opacity: 1; }
+/* An expanded worktree's running agent/terminal tabs and AcrylDSH Chats (spec 040 T129). */
+.dshWorkspaceSessions { list-style: none; margin: 0; padding: 0 0 0 26px; }
+.dshWorkspaceSessionsEmpty { margin: 2px 0 2px 26px; padding: 4px 8px; color: var(--dsw-alias-label-secondary); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceSessionRow { appearance: none; display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; text-align: left; font: 12px/1.3 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceSessionRow:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
+.dshWorkspaceSessionLabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshWorkspaceWorktreeNew:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); }
 .dshWorkspaceSideFoot { margin-top: 14px; padding: 8px 8px 0; border-top: 1px solid var(--dsw-alias-border-l2); }
 .dshWorkspaceSideFootButton { appearance: none; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: 13px/1.3 ui-sans-serif, system-ui, sans-serif; }

@@ -94,6 +94,7 @@ function fakeProjects(overrides: Partial<ProjectsControl> = {}): ProjectsControl
     addProjectByPath: async (): Promise<ProjectAction> => ({ ok: true }),
     showChat: async (path): Promise<ProjectAction> => { shown.push(path); return { ok: true } },
     newChat: async (path): Promise<ProjectAction> => { shown.push(`new:${path}`); return { ok: true } },
+    openChat: (id): ProjectAction => { shown.push(`open:${id}`); return { ok: true } },
     newWorktree: async (root, branch): Promise<ProjectAction> => { shown.push(`worktree:${root}:${branch}`); return { ok: true } },
     openSettings: (): ProjectAction => ({ ok: true }),
     ...overrides,
@@ -115,12 +116,25 @@ function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: P
 }
 
 describe('ProjectsSidebar', () => {
-  it('shows the upstream sidebar in Chats mode and hides the Projects list', () => {
+  it('renders the tree by default (no mode switch), with the upstream sidebar mounted but hidden behind Search', () => {
     const shell = new WorkspaceShellState(api())
     render(<ProjectsSidebar {...sidebarProps(shell)} />)
-    expect(screen.getByTestId('upstream')).toBeTruthy()
-    expect(screen.getByRole('tab', { name: 'Chats' }).getAttribute('aria-selected')).toBe('true')
-    expect(screen.queryByRole('region', { name: 'proj' })).toBeNull()
+    expect(screen.queryByRole('tab')).toBeNull()
+    expect(screen.getByText('Workspaces')).toBeTruthy()
+    const upstream = screen.getByTestId('upstream')
+    expect(upstream).toBeTruthy()
+    expect(upstream.closest('[hidden]')).toBeTruthy()
+    shell.dispose()
+  })
+
+  it('opens the upstream sidebar behind Search, and Back returns to the tree', () => {
+    const shell = new WorkspaceShellState(api())
+    render(<ProjectsSidebar {...sidebarProps(shell)} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Search chats and settings' }))
+    expect(screen.getByTestId('upstream').closest('[hidden]')).toBeNull()
+    expect(screen.getByText('Workspaces').closest('[hidden]')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Back to the workspace tree' }))
+    expect(screen.getByTestId('upstream').closest('[hidden]')).toBeTruthy()
     shell.dispose()
   })
 
@@ -128,14 +142,13 @@ describe('ProjectsSidebar', () => {
     const shell = new WorkspaceShellState(api())
     render(<ProjectsSidebar {...sidebarProps(shell, true)} />)
     expect(screen.getByTestId('upstream')).toBeTruthy()
-    expect(screen.queryByRole('tablist')).toBeNull()
+    expect(screen.queryByText('Workspaces')).toBeNull()
     shell.dispose()
   })
 
-  it('lists worktrees with status dots and session counts in Projects mode, keeping upstream mounted', async () => {
+  it('lists worktrees with status dots and session counts, keeping upstream mounted', async () => {
     const shell = new WorkspaceShellState(api())
     render(<ProjectsSidebar {...sidebarProps(shell)} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
 
     const repo = await screen.findByRole('region', { name: 'proj' })
     await waitFor(() => { expect(within(repo).getByText('feature/x')).toBeTruthy() })
@@ -149,11 +162,77 @@ describe('ProjectsSidebar', () => {
     shell.dispose()
   })
 
+  it('collapsing a repo hides its worktrees; its own chevron, not the mode, controls that', async () => {
+    const shell = new WorkspaceShellState(api())
+    render(<ProjectsSidebar {...sidebarProps(shell)} />)
+    await screen.findByText('feature/x')
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse proj' }))
+    expect(screen.queryByText('feature/x')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Expand proj' }))
+    expect(await screen.findByText('feature/x')).toBeTruthy()
+    shell.dispose()
+  })
+
+  it('expanding a worktree lists its running agent tabs and its AcrylDSH Chats, never a file/browser/diff tab', async () => {
+    const shell = new WorkspaceShellState(api())
+    const groups = new WorkspaceGroups()
+    act(() => {
+      groups.stateFor('/p/proj-x').addTile('pty', { commandId: 'claude', title: 'Claude' })
+      groups.stateFor('/p/proj-x').addTile('pty', { commandId: 'shell', title: 'Terminal' })
+      groups.stateFor('/p/proj-x').addTile('file', { title: 'a.ts' })
+    })
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects(), groups)} />)
+    await screen.findByText('feature/x')
+    fireEvent.click(screen.getByRole('button', { name: 'Show sessions on feature/x' }))
+    expect(await screen.findByText('Claude')).toBeTruthy()
+    expect(screen.getByText('Terminal')).toBeTruthy()
+    expect(screen.getByText('AcrylDSH Chat')).toBeTruthy() // s2, cwd /p/proj-x, not blank
+    expect(screen.queryByText('a.ts')).toBeNull() // a file tab is never listed
+    shell.dispose()
+  })
+
+  it('clicking a running agent entry selects its worktree and its tab', async () => {
+    const shell = new WorkspaceShellState(api())
+    const groups = new WorkspaceGroups()
+    let tile: { id: string } | undefined
+    act(() => { tile = groups.stateFor('/p/proj-x').addTile('pty', { commandId: 'claude', title: 'Claude' }) })
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects(), groups)} />)
+    await screen.findByText('feature/x')
+    fireEvent.click(screen.getByRole('button', { name: 'Show sessions on feature/x' }))
+    fireEvent.click(await screen.findByText('Claude'))
+    await waitFor(() => { expect(shell.getSnapshot().selectedPath).toBe('/p/proj-x') })
+    expect(groups.stateFor('/p/proj-x').getSnapshot().activeId).toBe(tile?.id)
+    shell.dispose()
+  })
+
+  it('clicking an AcrylDSH Chat entry selects its worktree and opens that session', async () => {
+    const shell = new WorkspaceShellState(api())
+    const projects = fakeProjects()
+    render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
+    await screen.findByText('feature/x')
+    fireEvent.click(screen.getByRole('button', { name: 'Show sessions on feature/x' }))
+    fireEvent.click(await screen.findByText('AcrylDSH Chat'))
+    await waitFor(() => { expect(shell.getSnapshot().selectedPath).toBe('/p/proj-x') })
+    expect(projects.shown).toContain('open:s2')
+    shell.dispose()
+  })
+
+  it('says nothing is running when an expanded worktree has no agent tabs or chats', async () => {
+    const shell = new WorkspaceShellState(api())
+    // The one session here belongs to /p/proj-x, not /p/proj (main) - discovers the same repo via api()'s
+    // cwd-agnostic mock, but leaves main with no chats and no agent tiles.
+    const noSessions = { ids: ['s1'], current: undefined, byId: { s1: { id: 's1', cwd: '/p/proj-x', running: false, blank: true, displayTitle: '', updatedAt: 1 } } }
+    render(<ProjectsSidebar {...sidebarProps(shell)} useSessions={sessionsHook(noSessions)} />)
+    await screen.findByText('main')
+    fireEvent.click(screen.getByRole('button', { name: 'Show sessions on main' }))
+    expect(await screen.findByText('Nothing running here yet.')).toBeTruthy()
+    shell.dispose()
+  })
+
   it('on Web, + opens a path form and adds what was typed', async () => {
     const shell = new WorkspaceShellState(api())
     const addProjectByPath = vi.fn(async (): Promise<ProjectAction> => ({ ok: true }))
     render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ chooserKind: () => 'path', addProjectByPath }))} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Add git project' }))
     fireEvent.change(screen.getByLabelText('Project folder path'), { target: { value: '/p/proj' } })
     fireEvent.click(screen.getByRole('button', { name: 'Add' }))
@@ -166,7 +245,6 @@ describe('ProjectsSidebar', () => {
     const shell = new WorkspaceShellState(api())
     const addProjectByPath = async (): Promise<ProjectAction> => ({ ok: false, reason: 'That folder is not a git repository.' })
     render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ chooserKind: () => 'path', addProjectByPath }))} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Add git project' }))
     fireEvent.change(screen.getByLabelText('Project folder path'), { target: { value: '/nope' } })
     fireEvent.click(screen.getByRole('button', { name: 'Add' }))
@@ -183,7 +261,6 @@ describe('ProjectsSidebar', () => {
       groups.stateFor('/p/proj-x').addTile('pty', { commandId: 'shell', title: 'Terminal' })
     })
     render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects(), groups)} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
     const repo = await screen.findByRole('region', { name: 'proj' })
     await waitFor(() => { expect(within(repo).getByText('feature/x')).toBeTruthy() })
     const icons = repo.querySelectorAll('.dshWorkspaceWorktreeAgents [data-agent]')
@@ -194,7 +271,6 @@ describe('ProjectsSidebar', () => {
   it('selects a worktree on click and follows the current session before that', async () => {
     const shell = new WorkspaceShellState(api())
     render(<ProjectsSidebar {...sidebarProps(shell)} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
     await waitFor(() => { expect(shell.getSnapshot().selectedPath).toBe('/p/proj') })
 
     const other = await screen.findByTitle('/p/proj-x')
@@ -208,7 +284,6 @@ describe('ProjectsSidebar', () => {
     const shell = new WorkspaceShellState(api())
     const projects = fakeProjects()
     render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
     fireEvent.click(await screen.findByTitle('/p/proj-x'))
     await waitFor(() => { expect(projects.shown).toEqual(['/p/proj-x']) })
     shell.dispose()
@@ -218,7 +293,6 @@ describe('ProjectsSidebar', () => {
     const shell = new WorkspaceShellState(api())
     const projects = fakeProjects({ showChat: async () => ({ ok: false, reason: 'Could not open a chat for this branch: host down' }) })
     render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
     fireEvent.click(await screen.findByTitle('/p/proj-x'))
     expect((await screen.findByRole('alert')).textContent).toContain('host down')
     shell.dispose()
@@ -228,7 +302,6 @@ describe('ProjectsSidebar', () => {
     const shell = new WorkspaceShellState(api())
     const addProject = vi.fn(async (): Promise<ProjectAction> => ({ ok: false, reason: 'That folder is not a git repository.' }))
     render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ addProject }))} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
     fireEvent.click(screen.getByRole('button', { name: 'Add git project' }))
     expect((await screen.findByRole('alert')).textContent).toContain('not a git repository')
     expect(addProject).toHaveBeenCalledTimes(1)
@@ -252,7 +325,6 @@ describe('ProjectsSidebar', () => {
     const shell = new WorkspaceShellState(api())
     const projects = fakeProjects()
     render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
     fireEvent.click(await screen.findByRole('button', { name: 'New branch in proj' }))
     const submit = screen.getByRole('button', { name: 'Create' }) as HTMLButtonElement
     expect(submit.disabled).toBe(true)
@@ -267,7 +339,6 @@ describe('ProjectsSidebar', () => {
     const shell = new WorkspaceShellState(api())
     const projects = fakeProjects({ newWorktree: async () => ({ ok: false, reason: 'the branch dup already exists' }) })
     render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
     fireEvent.click(await screen.findByRole('button', { name: 'New branch in proj' }))
     fireEvent.change(screen.getByRole('textbox', { name: 'New branch name' }), { target: { value: 'dup' } })
     fireEvent.click(screen.getByRole('button', { name: 'Create' }))
@@ -282,27 +353,24 @@ describe('ProjectsSidebar', () => {
     const shell = new WorkspaceShellState(api())
     const projects = fakeProjects()
     render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
     fireEvent.click(await screen.findByRole('button', { name: 'New chat on feature/x' }))
     await waitFor(() => { expect(projects.shown).toContain('new:/p/proj-x') })
     shell.dispose()
   })
 
-  it('opens Settings from the Projects view, and says so when it cannot', async () => {
+  it('opens Settings, and says so when it cannot', async () => {
     const shell = new WorkspaceShellState(api())
     const openSettings = vi.fn((): ProjectAction => ({ ok: false, reason: 'Settings is not available in this window.' }))
     render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ openSettings }))} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
     expect(openSettings).toHaveBeenCalledTimes(1)
     expect((await screen.findByRole('alert')).textContent).toContain('not available')
     shell.dispose()
   })
 
-  it('explains an empty Projects list', async () => {
+  it('explains an empty projects list', async () => {
     const shell = new WorkspaceShellState(api({ repo: async () => null }))
     render(<ProjectsSidebar {...sidebarProps(shell)} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Projects' }))
     expect(await screen.findByText(/No git projects yet/)).toBeTruthy()
     shell.dispose()
   })

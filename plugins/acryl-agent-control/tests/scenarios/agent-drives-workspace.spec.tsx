@@ -64,6 +64,7 @@ function fakeProjects(overrides: Partial<ProjectsControl>): ProjectsControl {
     addProjectByPath: async (): Promise<ProjectAction> => ({ ok: true }),
     showChat: async (): Promise<ProjectAction> => ({ ok: true }),
     newChat: async (): Promise<ProjectAction> => ({ ok: true }),
+    openChat: (): ProjectAction => ({ ok: true }),
     newWorktree: async (): Promise<ProjectAction> => ({ ok: true }),
     openSettings: (): ProjectAction => ({ ok: true }),
     ...overrides,
@@ -83,8 +84,6 @@ describe('scenario: "add my repo at /p/proj as a project" (US2, T042)', () => {
     const ai = agent()
 
     let page = await ai.look()
-    await ai.do({ op: 'click', ref: find(page, 'tab', 'Projects') })
-    page = await ai.look()
     await ai.do({ op: 'click', ref: find(page, 'button', 'Add git project') })
     page = await ai.look()
     expect(unnamed(page), 'every control the agent needs has a name').toEqual([])

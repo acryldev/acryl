@@ -35,6 +35,52 @@ export interface RepoRow {
   readonly rows: readonly WorktreeRow[]
 }
 
+/** The slice of a canvas tile the tree needs to list a worktree's running agents/terminals (spec 040 T129). */
+export interface AgentTileLike {
+  readonly id: string
+  readonly kind: string
+  readonly title: string
+  readonly commandId?: string
+}
+
+/** The slice of a chat session the tree needs to list a worktree's AcrylDSH Chats (spec 040 T129/T130). */
+export interface ChatSessionLike {
+  readonly id: string
+  readonly cwd?: string
+  readonly blank: boolean
+  readonly running: boolean
+}
+
+/**
+ * One row under an expanded worktree: a running agent/terminal tab, or an AcrylDSH Chat scoped to it.
+ * Deliberately never a file, browser, diff, board or doc tab - the tree lists live sessions only.
+ */
+export interface WorktreeSessionEntry {
+  readonly kind: 'agent' | 'chat'
+  readonly id: string
+  readonly label: string
+  /** Set for kind 'agent': which runtime, for its icon ('shell' for a plain terminal). */
+  readonly commandId?: string
+  readonly running?: boolean
+}
+
+/**
+ * Everything to list under one expanded worktree: its open agent/terminal tabs (any `pty` canvas tile - a
+ * named agent or a plain shell) and its AcrylDSH Chat sessions (by cwd). Never file/browser/diff/board/doc
+ * tiles - those stay reachable from their own tab strip, not duplicated into this tree (spec 040 T129).
+ */
+export function entriesForWorktree(path: string, repos: readonly RepoState[], tiles: readonly AgentTileLike[], chats: readonly ChatSessionLike[]): WorktreeSessionEntry[] {
+  const agents: WorktreeSessionEntry[] = tiles
+    .filter(tile => tile.kind === 'pty')
+    .map(tile => ({ kind: 'agent', id: tile.id, label: tile.title, commandId: tile.commandId ?? 'shell' }))
+  // owningWorktree (deepest match), not a plain isInside: a linked worktree nested under this one claims
+  // its own chats, and they must not also appear here.
+  const ownChats: WorktreeSessionEntry[] = chats
+    .filter(chat => chat.cwd !== undefined && owningWorktree(repos, chat.cwd) === path)
+    .map(chat => ({ kind: 'chat', id: chat.id, label: chat.blank ? 'New chat' : 'AcrylDSH Chat', running: chat.running }))
+  return [...agents, ...ownChats]
+}
+
 function basename(path: string): string {
   const parts = path.replace(/[\\/]+$/, '').split(/[\\/]/)
   return parts[parts.length - 1] ?? path

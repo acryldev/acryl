@@ -34,6 +34,8 @@ export interface ProjectsControl {
   showChat(worktreePath: string): Promise<ProjectAction>
   /** Start an additional chat in a worktree that may already have some. */
   newChat(worktreePath: string): Promise<ProjectAction>
+  /** Open one specific chat session by id (the workspace tree's expanded session list, spec 040 T129). */
+  openChat(id: string): ProjectAction
   /** Create a branch and worktree in a repository, select it and open a chat there. */
   newWorktree(repoRoot: string, branch: string): Promise<ProjectAction>
   /** Open the app's Settings dialog. */
@@ -145,6 +147,19 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       const shown = await this.showChat(worktree)
       if (!shown.ok) shell.unpin()
       return shown
+    },
+
+    openChat(id) {
+      const sessions = deps.getSessions()
+      if (sessions === undefined) return fail('Chats are not available yet.')
+      const branded = sessions.list.getSnapshot().ids.find(candidate => candidate === id)
+      if (branded === undefined) return fail('That chat is no longer available.')
+      try {
+        sessions.open(branded)
+        return { ok: true }
+      } catch (cause) {
+        return fail(`Could not open that chat: ${message(cause)}`)
+      }
     },
 
     async showChat(worktreePath) {

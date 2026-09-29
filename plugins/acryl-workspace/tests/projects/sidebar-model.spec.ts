@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildProjectRows, owningWorktree } from '../../src/client/projects/sidebar-model.ts'
+import { buildProjectRows, entriesForWorktree, owningWorktree } from '../../src/client/projects/sidebar-model.ts'
 import type { RepoState, ShellSnapshot, WorktreeState } from '../../src/client/worktrees/shell-state.ts'
 
 function worktree(path: string, branch: string | null, patch: Partial<WorktreeState> = {}): WorktreeState {
@@ -74,5 +74,47 @@ describe('buildProjectRows', () => {
     }
     const [row] = buildProjectRows(snapshot({ repos: [repo] }), [])
     expect(row?.rows.map(r => r.dot)).toEqual(['loading', 'error'])
+  })
+})
+
+describe('entriesForWorktree', () => {
+  const tiles = [
+    { id: 't1', kind: 'pty', title: 'Claude', commandId: 'claude' },
+    { id: 't2', kind: 'pty', title: 'Terminal' },
+    { id: 't3', kind: 'file', title: 'a.ts' },
+    { id: 't4', kind: 'browser', title: 'localhost' },
+  ]
+  const chats = [
+    { id: 's1', cwd: '/p/proj/.worktrees/x', blank: false, running: true },
+    { id: 's2', cwd: '/p/proj/.worktrees/x', blank: true, running: false },
+    { id: 's3', cwd: '/p/proj', blank: false, running: false },
+    { id: 's4', blank: false, running: false },
+  ]
+
+  it('lists every pty tile (named agent or plain terminal), never a file or browser tab', () => {
+    const entries = entriesForWorktree('/p/proj/.worktrees/x', [REPO], tiles, [])
+    expect(entries).toEqual([
+      { kind: 'agent', id: 't1', label: 'Claude', commandId: 'claude' },
+      { kind: 'agent', id: 't2', label: 'Terminal', commandId: 'shell' },
+    ])
+  })
+
+  it('lists chat sessions whose cwd is inside the worktree, blank ones say "New chat"', () => {
+    const entries = entriesForWorktree('/p/proj/.worktrees/x', [REPO], [], chats)
+    expect(entries).toEqual([
+      { kind: 'chat', id: 's1', label: 'AcrylDSH Chat', running: true },
+      { kind: 'chat', id: 's2', label: 'New chat', running: false },
+    ])
+  })
+
+  it('does not treat a nested worktree, a sibling, or a chat with no cwd as inside', () => {
+    // s1/s2 belong to the nested worktree /p/proj/.worktrees/x, not its parent /p/proj (owningWorktree,
+    // not a plain path-prefix check, is what keeps a linked worktree's chats from also counting for main).
+    expect(entriesForWorktree('/p/proj', [REPO], [], chats).map(e => e.id)).toEqual(['s3'])
+  })
+
+  it('combines agents first, then chats, for one worktree', () => {
+    const entries = entriesForWorktree('/p/proj/.worktrees/x', [REPO], tiles, chats)
+    expect(entries.map(e => e.kind)).toEqual(['agent', 'agent', 'chat', 'chat'])
   })
 })
