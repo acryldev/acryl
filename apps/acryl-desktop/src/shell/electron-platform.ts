@@ -46,7 +46,11 @@ class WindowsPlatformStrategy implements ElectronPlatformStrategy {
 class MacPlatformStrategy implements ElectronPlatformStrategy {
   readonly platform = 'darwin'
   readonly updateDownloadPlatform = 'darwin'
-  readonly canPickDirectory = false
+  // Electron's dialog.showOpenDialog is the same native call on every platform (workspace-admission.ts
+  // owns it, no OS-specific code path); nothing here is Windows-only. Enabled for macOS too so "Add
+  // workspace" opens the real native chooser directly, instead of routing through the upstream sidebar's
+  // own hidden "Add workspace" trigger the way the no-seam fallback still does for Linux/Web.
+  readonly canPickDirectory = true
   readonly canToggleShellMode = true
 
   private applicationName: string | undefined

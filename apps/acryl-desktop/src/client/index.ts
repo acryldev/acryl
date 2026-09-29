@@ -97,7 +97,9 @@ export function apply(ctx: ClientContext): void {
     }),
     'acryl-desktop: workspace folder drop',
   )
-  if (environment.platform === 'win32') {
+  // dialog.showOpenDialog is the same native Electron call on every platform - the Host's own
+  // canPickDirectory strategy flag (electron-platform.ts) is what actually gates this per OS.
+  if (environment.platform === 'win32' || environment.platform === 'darwin') {
     ctx.effect(
       () => installDesktopDirectoryPickerBridge(),
       'acryl-desktop: native directory picker bridge',

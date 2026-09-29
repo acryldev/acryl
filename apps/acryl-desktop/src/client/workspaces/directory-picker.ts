@@ -62,7 +62,7 @@ export async function requestDesktopDirectoryValidation(
   return value.allowed
 }
 
-/** Publish the Windows-only picker bridge for the browse panel's icon action. */
+/** Publish the native picker bridge (Windows and macOS - gated by `canPickDirectory`, not the OS itself) for the browse panel's icon action. */
 export function installDesktopDirectoryPickerBridge(
   target: DesktopDirectoryPickerWindow = window as DesktopDirectoryPickerWindow,
   request: DirectoryPickerRequest = window.fetch.bind(window),

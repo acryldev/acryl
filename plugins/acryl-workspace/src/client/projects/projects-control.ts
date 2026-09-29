@@ -103,14 +103,15 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       const seams = deps.directory()
       if (seams.pickDirectory === undefined) {
         if (deps.platform === 'web') return fail('Type the path of a git repository folder to add it.')
-        // Desktop without a picker seam (macOS): the app's own Add workspace flow drives the native chooser.
-        // Its trigger lives inside the upstream sidebar, which the caller must reveal (it is hidden by
-        // default behind the tree's Search toggle) *before* calling this - see ProjectsSidebar.tsx's own
-        // `addProject` wrapper. A hidden ancestor at click time is exactly the bug T133-era testing caught:
-        // the click still opens the native dialog (a synthetic click fires regardless of visibility), but
-        // the upstream component's own registration handling for whatever the dialog resolves to never
-        // takes effect while its whole subtree sits at `display: none`. A git folder registered there
-        // appears under Projects by itself once revealed.
+        // Desktop without a picker seam (Linux today - Windows and macOS both publish one, T134): falls
+        // back to the app's own Add workspace flow, which drives the native chooser through a trigger
+        // that lives inside the upstream sidebar. That sidebar is hidden by default behind the tree's
+        // Search toggle, so the caller must reveal it (flushSync, not a plain setState) *before* calling
+        // this - see ProjectsSidebar.tsx's own `addProject` wrapper. A hidden ancestor at click time is
+        // exactly the bug T134 found live: the click still opens the native dialog (a synthetic click
+        // fires regardless of visibility), but the upstream component's own registration handling for
+        // whatever the dialog resolves to never takes effect while its whole subtree sits at
+        // `display: none`. A git folder registered there appears under Projects by itself once revealed.
         if (!clickAddWorkspaceTrigger()) return fail('Could not find the Add workspace control.')
         return { ok: true, note: 'Choose the folder here. If it is a git repository it will appear under Projects.' }
       }
@@ -267,9 +268,10 @@ const ADD_WORKSPACE_LABELS = ['Add workspace', '添加工作区']
 
 /**
  * Open the upstream "Add workspace" flow, which drives the native folder chooser and registers the
- * workspace. The desktop publishes a picker seam on Windows only; on macOS the workspace flow drives
- * the chooser itself. Its trigger lives in the Chats view of the sidebar (kept mounted, hidden while
- * Projects shows), so the caller shows Chats first. Like the Settings trigger, it exposes no service.
+ * workspace. Only reached when the desktop has no picker seam (Linux, today - Windows and macOS both
+ * publish one, T134). Its trigger lives inside the upstream sidebar (kept mounted, hidden by default
+ * behind the tree's Search toggle), so the caller must reveal that first. Like the Settings trigger, it
+ * exposes no service.
  * @returns whether the trigger was found and activated.
  */
 export function clickAddWorkspaceTrigger(root: ParentNode = document): boolean {
