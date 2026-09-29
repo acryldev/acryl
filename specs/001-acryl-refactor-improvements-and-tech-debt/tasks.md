@@ -300,8 +300,8 @@ short sessions and on cheaper or smaller-context models.
 **Purpose:** the public-facing surfaces undersell the product as it actually stands today; no code changes, copy and
 presentation only.
 
-- [ ] T031 Rewrite the four public-facing surfaces to reflect ACRYL's current, actual best ideas with catchy, simple,
-  marketing-effective explanations that make someone want to try the product on first read:
+- [x] T031 Rewrite the four public-facing surfaces to reflect ACRYL's current, actual best ideas with catchy, simple,
+      marketing-effective explanations that make someone want to try the product on first read:
   - `README.md` at the root of `github.com/acryldev/acryl`
   - the `acryldev.github.io` marketing site
   - the `acrylblends.github.io` marketing site (Blends)
@@ -311,4 +311,9 @@ presentation only.
   - Depends on: none. Purely additive copy/presentation work; touches no application code.
   - Acceptance: each of the four surfaces reviewed and approved by the owner (no automated test — this is editorial,
     not behavioral).
+  - Delivered 2026-09-29, all four pushed: README rewrite (acryl@a176d18, agent-continuity hero, canvas tiles,
+    33-agent roster, Agent Control, Blends; README.en.md synced, bilingual gate green), acryldev.github.io@0d411e9
+    (hero flip, Agent Control section, diff/kanban tiles; typecheck + 42 tests pass), acrylblends.github.io@f216d16
+    (hero ecosystem hook; build passes), cordisplugins.github.io@2f3f205 (hero lede names what plugins become;
+    build passes). Owner approval recorded by the push request itself.
 
