@@ -126,7 +126,7 @@ describe('plugin tab types in the + menu and Settings', () => {
       const snapshot = useSyncExternalStore(l => workspace.subscribe(l), () => workspace.getSnapshot())
       return (
         <>
-          <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={undefined} customAgents={[]} terminals={terminals} onClose={() => {}} onOpenPty={() => {}} agentSettings={null} tabTypes={tabTypes} tabRegistry={registry} dock={dock} agentStatus={makeStatus().state} onSetAgentEnabled={async () => {}} onManageSettings={() => true} />
+          <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={undefined} customAgents={[]} terminals={terminals} onClose={() => {}} onOpenPty={() => {}} onOpenChat={() => {}} agentSettings={null} tabTypes={tabTypes} tabRegistry={registry} dock={dock} agentStatus={makeStatus().state} onSetAgentEnabled={async () => {}} onManageSettings={() => true} />
           <TabsPanel tabTypes={tabTypes} tabRegistry={registry} />
         </>
       )

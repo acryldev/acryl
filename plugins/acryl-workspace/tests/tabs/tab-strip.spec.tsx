@@ -35,16 +35,17 @@ function memoryStorage(initial: Record<string, string> = {}): Storage {
   }
 }
 
-function Harness({ workspace, storage, onOpenPty, onClose = () => {}, custom = [], settings = null, onManage = () => true, tabTypes, onSetEnabled = async () => {} }: { workspace: WorkspaceState; storage: Storage; onOpenPty: (id: string, title: string) => void; onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: (section: 'agents' | 'tabs', onSettled?: (found: boolean) => void) => boolean; tabTypes?: TabTypesState; onSetEnabled?: (id: string, enabled: boolean) => Promise<void> }) {
+function Harness({ workspace, storage, onOpenPty, onOpenChat = () => {}, onClose = () => {}, custom = [], settings = null, onManage = () => true, tabTypes, onSetEnabled = async () => {} }: { workspace: WorkspaceState; storage: Storage; onOpenPty: (id: string, title: string) => void; onOpenChat?: () => void; onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: (section: 'agents' | 'tabs', onSettled?: (found: boolean) => void) => boolean; tabTypes?: TabTypesState; onSetEnabled?: (id: string, enabled: boolean) => Promise<void> }) {
   const snapshot = useSyncExternalStore(l => workspace.subscribe(l), () => workspace.getSnapshot())
-  return <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={storage} customAgents={custom} terminals={terminals} onClose={onClose} onOpenPty={onOpenPty} agentSettings={settings} tabTypes={tabTypes ?? new TabTypesState(storage)} tabRegistry={tabRegistry} dock={dock} agentStatus={agentStatus} onSetAgentEnabled={onSetEnabled} onManageSettings={onManage} />
+  return <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={storage} customAgents={custom} terminals={terminals} onClose={onClose} onOpenPty={onOpenPty} onOpenChat={onOpenChat} agentSettings={settings} tabTypes={tabTypes ?? new TabTypesState(storage)} tabRegistry={tabRegistry} dock={dock} agentStatus={agentStatus} onSetAgentEnabled={onSetEnabled} onManageSettings={onManage} />
 }
 
 function setup(storage = memoryStorage(), extra: { onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: (section: 'agents' | 'tabs', onSettled?: (found: boolean) => void) => boolean; tabTypes?: TabTypesState; onSetEnabled?: (id: string, enabled: boolean) => Promise<void> } = {}) {
   const workspace = new WorkspaceState()
   const onOpenPty = vi.fn()
-  render(<Harness workspace={workspace} storage={storage} onOpenPty={onOpenPty} {...extra} />)
-  return { workspace, storage, onOpenPty }
+  const onOpenChat = vi.fn()
+  render(<Harness workspace={workspace} storage={storage} onOpenPty={onOpenPty} onOpenChat={onOpenChat} {...extra} />)
+  return { workspace, storage, onOpenPty, onOpenChat }
 }
 
 describe('TabStrip', () => {
@@ -79,6 +80,25 @@ describe('TabStrip', () => {
     expect(document.querySelectorAll('[role="menu"] [data-agent]').length).toBeGreaterThan(5)
     fireEvent.click(screen.getByRole('menuitem', { name: /Codex/ }))
     expect(onOpenPty).toHaveBeenCalledWith('codex', 'Codex')
+  })
+
+  it('lists AcrylDSH Chat in the + menu, among the agents, and starts one', () => {
+    const { onOpenChat } = setup()
+    fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'AcrylDSH Chat' }))
+    expect(onOpenChat).toHaveBeenCalledTimes(1)
+  })
+
+  it('remembers AcrylDSH Chat as the "+" default and replays it, not a broken agent spawn', () => {
+    const storage = memoryStorage()
+    setup(storage)
+    fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'AcrylDSH Chat' }))
+    cleanup()
+    const { onOpenChat: onOpenChatAgain, onOpenPty } = setup(storage)
+    fireEvent.click(screen.getByRole('button', { name: 'New tab: AcrylDSH Chat' }))
+    expect(onOpenChatAgain).toHaveBeenCalledTimes(1)
+    expect(onOpenPty).not.toHaveBeenCalled()
   })
 
   it('lists only installed and enabled agents once Settings has answered, and tags the default', () => {

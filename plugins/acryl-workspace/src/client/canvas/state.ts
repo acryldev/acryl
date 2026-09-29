@@ -21,6 +21,9 @@ export interface WorkspaceTile {
   readonly title: string
   readonly commandId?: AgentId
   readonly terminalId?: string
+  /** chat tile: the DSH session it shows. Distinct sessions get distinct tiles; undefined only briefly at
+   * bootstrap, before the first session id is known (state.ts claims it for the first real session). */
+  readonly chatSessionId?: string
   readonly path?: string
   readonly content?: string
   readonly url?: string
@@ -65,6 +68,8 @@ export interface WorkspaceStateOptions {
 export interface AddTileOptions {
   readonly commandId?: AgentId
   readonly title?: string
+  /** chat tile: which DSH session this tab shows (spec 040 T130-followup: one tab per open chat). */
+  readonly chatSessionId?: string
   readonly fileWorktree?: string
   readonly fileRel?: string
   readonly diffWorktree?: string
@@ -165,15 +170,35 @@ export class WorkspaceState {
   }
 
   /**
-   * Append one tile and focus it. A second Chat tile is ignored (focuses the existing one instead).
+   * Append one tile and focus it. A Chat tile is keyed by its session (`options.chatSessionId`): a session
+   * already open here is focused, not duplicated, so one worktree can hold several distinct AcrylDSH Chat
+   * tabs - one per open session - instead of at most one chat tile total.
    * @param kind - tile kind from the "+" menu.
    * @param options - PTY command / title overrides.
    */
   addTile(kind: WorkspaceTileKind, options: AddTileOptions = {}): WorkspaceTile | undefined {
-    if (kind === 'chat' && this.snapshot.tiles.some(tile => tile.kind === 'chat')) {
-      const existing = this.snapshot.tiles.find(tile => tile.kind === 'chat')
-      this.replace({ ...this.snapshot, activeId: existing?.id, menuOpen: false })
-      return undefined
+    if (kind === 'chat') {
+      const existing = this.snapshot.tiles.find(tile => tile.kind === 'chat' && tile.chatSessionId === options.chatSessionId)
+      if (existing !== undefined) {
+        this.replace({ ...this.snapshot, activeId: existing.id, menuOpen: false })
+        return undefined
+      }
+      // A still-unbound chat tile (bootstrap, before the first session id is known) claims the first bound
+      // session it sees instead of sitting beside a brand new tile - so app start still shows exactly one
+      // chat tab, not two, the moment a real session id arrives.
+      if (options.chatSessionId !== undefined) {
+        const unbound = this.snapshot.tiles.find(tile => tile.kind === 'chat' && tile.chatSessionId === undefined)
+        if (unbound !== undefined) {
+          const claimed: WorkspaceTile = { ...unbound, chatSessionId: options.chatSessionId }
+          this.replace({
+            ...this.snapshot,
+            tiles: Object.freeze(this.snapshot.tiles.map(candidate => (candidate.id === unbound.id ? claimed : candidate))),
+            activeId: unbound.id,
+            menuOpen: false,
+          })
+          return undefined
+        }
+      }
     }
     const tile = this.createTile(kind, options)
     this.replace({
@@ -415,6 +440,7 @@ export class WorkspaceState {
       kind,
       title: options.title ?? TITLES[kind],
       ...(kind === 'pty' ? { commandId: options.commandId ?? 'shell' } : {}),
+      ...(kind === 'chat' && options.chatSessionId !== undefined ? { chatSessionId: options.chatSessionId } : {}),
       ...(kind === 'file' && options.fileRel !== undefined && options.fileWorktree !== undefined
         ? { fileWorktree: options.fileWorktree, fileRel: options.fileRel }
         : {}),

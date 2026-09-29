@@ -41,6 +41,8 @@ export interface TabStripProps {
   /** The live terminals, for the activity marker on agent tabs. */
   readonly terminals: TerminalRegistry
   onOpenPty(commandId: AgentId, title: string): void
+  /** Starts a brand new AcrylDSH Chat session, its own tab (spec 040 T130-followup). */
+  onOpenChat(): void
   /** What Settings > Agents says, for the "+" menu. */
   readonly agentSettings: AgentSettingsView | null
   /** Which tab types are turned on, shared with Settings > Tabs and the palette. */
@@ -109,7 +111,7 @@ function kindGlyph(kind: WorkspaceTile['kind']): string {
   return '◉'
 }
 
-export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, dock, agentStatus, storage, customAgents, terminals, onClose, onOpenPty, agentSettings, tabTypes, tabRegistry, onSetAgentEnabled, onManageSettings }: TabStripProps) {
+export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, dock, agentStatus, storage, customAgents, terminals, onClose, onOpenPty, onOpenChat, agentSettings, tabTypes, tabRegistry, onSetAgentEnabled, onManageSettings }: TabStripProps) {
   const tabsRef = useRef<HTMLDivElement>(null)
   const agentStates = useSyncExternalStore(agentStatus.subscribe, agentStatus.getSnapshot)
   const [edges, setEdges] = useState({ start: false, end: false })
@@ -250,6 +252,7 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
           else workspace.addTile(action.kind)
         }}
         onOpenAgent={onOpenPty}
+        onOpenChat={onOpenChat}
         settings={agentSettings}
         tabTypes={tabTypes}
         tabRegistry={tabRegistry}

@@ -15,13 +15,47 @@ describe('WorkspaceState', () => {
     expect(snapshot.activeId).toBe(snapshot.tiles[0]?.id)
   })
 
-  it('a second Chat tile is de-duplicated: it focuses the existing one instead', () => {
+  it('a second unbound Chat tile is de-duplicated: it focuses the existing one instead', () => {
     const state = new WorkspaceState({ createId: counter() })
     const first = state.getSnapshot().tiles[0]
     const second = state.addTile('chat')
     expect(second).toBeUndefined()
     expect(state.getSnapshot().tiles).toHaveLength(1)
     expect(state.getSnapshot().activeId).toBe(first?.id)
+  })
+
+  it('the bootstrap chat tile claims the first bound session instead of sitting beside a new tile', () => {
+    const state = new WorkspaceState({ createId: counter() })
+    const bootstrap = state.getSnapshot().tiles[0]
+    const claimed = state.addTile('chat', { chatSessionId: 's1' })
+    expect(claimed).toBeUndefined() // no new tile: the bootstrap one was claimed
+    expect(state.getSnapshot().tiles).toHaveLength(1)
+    expect(state.getSnapshot().tiles[0]?.id).toBe(bootstrap?.id)
+    expect(state.getSnapshot().tiles[0]?.chatSessionId).toBe('s1')
+    expect(state.getSnapshot().activeId).toBe(bootstrap?.id)
+  })
+
+  it('a different session gets its own new chat tile, not the existing one', () => {
+    const state = new WorkspaceState({ createId: counter() })
+    state.addTile('chat', { chatSessionId: 's1' }) // claims the bootstrap tile
+    const second = state.addTile('chat', { chatSessionId: 's2' })
+    expect(second).toBeDefined()
+    expect(second?.chatSessionId).toBe('s2')
+    expect(state.getSnapshot().tiles).toHaveLength(2)
+    expect(state.getSnapshot().tiles.map(t => t.chatSessionId)).toEqual(['s1', 's2'])
+    expect(state.getSnapshot().activeId).toBe(second?.id)
+  })
+
+  it('the same session already open is focused, not duplicated', () => {
+    const state = new WorkspaceState({ createId: counter() })
+    const bound = state.addTile('chat', { chatSessionId: 's1' })
+    const boundId = bound?.id ?? state.getSnapshot().tiles[0]?.id
+    state.addTile('chat', { chatSessionId: 's2' })
+    state.selectTile(boundId!)
+    const again = state.addTile('chat', { chatSessionId: 's1' })
+    expect(again).toBeUndefined()
+    expect(state.getSnapshot().tiles).toHaveLength(2)
+    expect(state.getSnapshot().activeId).toBe(boundId)
   })
 
   it('adding a pty tile focuses it and records its command id', () => {

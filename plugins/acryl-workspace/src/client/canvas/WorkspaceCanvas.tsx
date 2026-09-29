@@ -50,6 +50,7 @@ import { BrowserPane } from '../browser/BrowserPane.tsx'
 import { ScratchFilePane } from '../files/ScratchFilePane.tsx'
 import { createWorkspacePtyApi, type WorkspacePtyApi } from '../terminal/pty-api.ts'
 import { synchronizeWorkspaceWithSessionNavigation } from '../sessions/session-navigation.ts'
+import type { ProjectsControl } from '../projects/projects-control.ts'
 import type { WorkspaceTile } from './state.ts'
 
 export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
@@ -89,6 +90,8 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   readonly dock: DockController
   /** What terminal agents report (working, waiting for you, done). */
   readonly agentStatus: AgentStatusState
+  /** Starts a brand new AcrylDSH Chat session in this worktree, for the "+" menu's own chat entry. */
+  readonly projects: ProjectsControl
 }
 
 /**
@@ -97,7 +100,7 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, agentStatus, agents: agentsState, tabTypes, tabRegistry, paletteConfig, toasts, notices, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, agentStatus, agents: agentsState, tabTypes, tabRegistry, paletteConfig, toasts, notices, useSessions, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel, projects }: WorkspaceCanvasProps) {
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
   // Subscribe to primitives, not the whole shell snapshot: git polling updates that snapshot often,
@@ -113,6 +116,8 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
   const previousCurrent = useRef<string | undefined>(sessions.current)
   const stageRef = useRef<HTMLDivElement>(null)
   const [splitRatio, setSplitRatio] = useState(() => readSplitRatio(safeStorage()))
+  /** Set only when starting a new AcrylDSH Chat from the "+" menu fails (no tab exists yet to attach it to). */
+  const [chatNotice, setChatNotice] = useState<string | null>(null)
   const changeSplitRatio = useCallback((ratio: number): void => {
     const next = clampSplit(ratio)
     setSplitRatio(next)
@@ -226,6 +231,15 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
     }
   }, [api, workspace, groupKey])
 
+  // A new AcrylDSH Chat from the "+" menu: a brand new session, opened in this worktree. Once it becomes
+  // current, synchronizeWorkspaceWithSessionNavigation (above) gives it its own tab - never the existing one.
+  const openChat = useCallback(async () => {
+    if (groupKey === GLOBAL_GROUP) { setChatNotice('Select a worktree first.'); return }
+    setChatNotice(null)
+    const result = await projects.newChat(groupKey)
+    if (!result.ok) setChatNotice(result.reason)
+  }, [projects, groupKey])
+
   const openTarget = useCallback((target: { readonly group: string; readonly tabId: string }): void => {
     if (target.group !== GLOBAL_GROUP) shell.select(target.group)
     groups.stateFor(target.group).selectTile(target.tabId)
@@ -326,12 +340,16 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
         customAgents={customAgents}
         terminals={terminals}
         onOpenPty={(commandId, title) => { void openPty(commandId, title) }}
+        onOpenChat={() => { void openChat() }}
         agentSettings={agentSettings}
         tabTypes={tabTypes}
         tabRegistry={tabRegistry}
         onSetAgentEnabled={(id, enabled) => agentsState.change({ agent: { id, enabled } })}
         onManageSettings={(section, onSettled) => openSettingsSection(section, document, undefined, onSettled)}
       />
+      {chatNotice !== null && (
+        <p className="dshWorkspaceSideNotice" role="alert">{chatNotice}</p>
+      )}
       <div ref={stageRef} className="dshWorkspaceStage" role="tabpanel" data-split={splitTile !== undefined || undefined}>
         <div className="dshWorkspacePane" data-pane="primary" style={splitTile === undefined ? undefined : { flexBasis: `${splitRatio * 100}%`, flexGrow: 0 }}>
           {active === undefined

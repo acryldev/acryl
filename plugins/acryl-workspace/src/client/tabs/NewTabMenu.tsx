@@ -10,6 +10,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { AgentSettingsView } from '../../agents/contract.ts'
 import type { CustomAgent } from '../../agents/definition.ts'
 import { menuAgents, primaryAction } from '../agents/agents-section-model.ts'
+import { ChatIcon } from '../agents/controls.tsx'
 import { labelForCommand, WORKSPACE_SURFACE_ACTIONS, type WorkspaceSurfaceAction } from '../terminal/agent-commands.ts'
 import { AgentIcon } from './AgentIcon.tsx'
 import { readLastTab, writeLastTab, type LastTab } from './last-tab.ts'
@@ -31,6 +32,8 @@ export interface NewTabMenuProps {
   setOpen(open: boolean): void
   onSurface(action: WorkspaceSurfaceAction): void
   onOpenAgent(id: string, title: string): void
+  /** Starts a brand new AcrylDSH Chat session - its own tab, distinct from any already open. */
+  onOpenChat(): void
   /** Turns one agent on or off in the + menu (a Host setting, shared with Settings > Agents). */
   onSetAgentEnabled(id: string, enabled: boolean): Promise<void>
   /**
@@ -41,7 +44,7 @@ export interface NewTabMenuProps {
   onManageSettings(section: 'agents' | 'tabs', onSettled?: (found: boolean) => void): boolean
 }
 
-export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, tabRegistry, onCustomTab, setOpen, onSurface, onOpenAgent, onSetAgentEnabled, onManageSettings }: NewTabMenuProps) {
+export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, tabRegistry, onCustomTab, setOpen, onSurface, onOpenAgent, onOpenChat, onSetAgentEnabled, onManageSettings }: NewTabMenuProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const hidden = useSyncExternalStore(tabTypes.subscribe, tabTypes.getSnapshot)
   const pluginTabs = useSyncExternalStore(tabRegistry.subscribe, tabRegistry.getSnapshot)
@@ -50,13 +53,18 @@ export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, ta
   const [last, setLast] = useState<LastTab>(() => readLastTab(storage))
 
   const remember = (tab: LastTab): void => { setLast(tab); writeLastTab(storage, tab) }
-  const lastLabel = last.kind === 'agent' ? last.label : WORKSPACE_SURFACE_ACTIONS.find(action => action.kind === last.surface)?.label.replace(/^New /, '') ?? 'Terminal'
+  const lastLabel = last.kind === 'agent'
+    ? last.label
+    : last.kind === 'chat'
+      ? 'AcrylDSH Chat'
+      : WORKSPACE_SURFACE_ACTIONS.find(action => action.kind === last.surface)?.label.replace(/^New /, '') ?? 'Terminal'
   const openTerminal = (): void => {
     const action = WORKSPACE_SURFACE_ACTIONS.find(candidate => candidate.kind === 'pty')
     if (action !== undefined) onSurface(action)
   }
   const openLast = (): void => {
     if (last.kind === 'agent') onOpenAgent(last.id, last.label)
+    else if (last.kind === 'chat') onOpenChat()
     else {
       const action = WORKSPACE_SURFACE_ACTIONS.find(candidate => candidate.kind === last.surface)
       if (action !== undefined) onSurface(action)
@@ -122,6 +130,10 @@ export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, ta
             </button>
           ))}
           <div className="dshWorkspaceMenuRule" />
+          <button type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onOpenChat(); remember({ kind: 'chat' }); close() }}>
+            <ChatIcon />
+            <span className="dshWorkspaceMenuGrow">AcrylDSH Chat</span>
+          </button>
           {managing && settings !== null
             ? settings.agents.filter(entry => entry.installed || entry.kind === 'custom').map(entry => (
                 <button

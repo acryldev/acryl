@@ -5,6 +5,7 @@ export const LAST_TAB_KEY = 'acryl-workspace:last-tab'
 export type LastTab =
   | { readonly kind: 'agent'; readonly id: string; readonly label: string }
   | { readonly kind: 'surface'; readonly surface: 'pty' | 'browser' | 'file' | 'diff' | 'kanban' | 'doc' }
+  | { readonly kind: 'chat' }
 
 export const DEFAULT_LAST_TAB: LastTab = { kind: 'surface', surface: 'pty' }
 
@@ -23,6 +24,7 @@ export function readLastTab(storage: Pick<Storage, 'getItem'> | undefined): Last
       const surface = SURFACES.find(candidate => candidate === value.surface)
       if (surface !== undefined) return { kind: 'surface', surface }
     }
+    if (value.kind === 'chat') return { kind: 'chat' }
   } catch {
     // Damaged storage means the default.
   }
