@@ -49,6 +49,8 @@ export interface ChatSessionLike {
   readonly cwd?: string
   readonly blank: boolean
   readonly running: boolean
+  /** SessionSummary's own resolved label (durable title, then project basename, then session id) - never guess a title here. */
+  readonly displayTitle: string
 }
 
 /**
@@ -77,7 +79,7 @@ export function entriesForWorktree(path: string, repos: readonly RepoState[], ti
   // its own chats, and they must not also appear here.
   const ownChats: WorktreeSessionEntry[] = chats
     .filter(chat => chat.cwd !== undefined && owningWorktree(repos, chat.cwd) === path)
-    .map(chat => ({ kind: 'chat', id: chat.id, label: chat.blank ? 'New chat' : 'AcrylDSH Chat', running: chat.running }))
+    .map(chat => ({ kind: 'chat', id: chat.id, label: chat.blank ? 'New chat' : chat.displayTitle, running: chat.running }))
   return [...agents, ...ownChats]
 }
 

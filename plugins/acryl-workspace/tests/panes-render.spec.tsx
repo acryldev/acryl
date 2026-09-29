@@ -186,7 +186,7 @@ describe('ProjectsSidebar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show sessions on feature/x' }))
     expect(await screen.findByText('Claude')).toBeTruthy()
     expect(screen.getByText('Terminal')).toBeTruthy()
-    expect(screen.getByText('AcrylDSH Chat')).toBeTruthy() // s2, cwd /p/proj-x, not blank
+    expect(screen.getByText('two')).toBeTruthy() // s2, cwd /p/proj-x, not blank - its real displayTitle
     expect(screen.queryByText('a.ts')).toBeNull() // a file tab is never listed
     shell.dispose()
   })
@@ -205,13 +205,13 @@ describe('ProjectsSidebar', () => {
     shell.dispose()
   })
 
-  it('clicking an AcrylDSH Chat entry selects its worktree and opens that session', async () => {
+  it('clicking an AcrylDSH Chat entry (by its real title) selects its worktree and opens that session', async () => {
     const shell = new WorkspaceShellState(api())
     const projects = fakeProjects()
     render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
     await screen.findByText('feature/x')
     fireEvent.click(screen.getByRole('button', { name: 'Show sessions on feature/x' }))
-    fireEvent.click(await screen.findByText('AcrylDSH Chat'))
+    fireEvent.click(await screen.findByText('two'))
     await waitFor(() => { expect(shell.getSnapshot().selectedPath).toBe('/p/proj-x') })
     expect(projects.shown).toContain('open:s2')
     shell.dispose()

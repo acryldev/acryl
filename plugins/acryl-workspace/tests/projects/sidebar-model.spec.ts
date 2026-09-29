@@ -85,10 +85,10 @@ describe('entriesForWorktree', () => {
     { id: 't4', kind: 'browser', title: 'localhost' },
   ]
   const chats = [
-    { id: 's1', cwd: '/p/proj/.worktrees/x', blank: false, running: true },
-    { id: 's2', cwd: '/p/proj/.worktrees/x', blank: true, running: false },
-    { id: 's3', cwd: '/p/proj', blank: false, running: false },
-    { id: 's4', blank: false, running: false },
+    { id: 's1', cwd: '/p/proj/.worktrees/x', blank: false, running: true, displayTitle: 'Explore the tools' },
+    { id: 's2', cwd: '/p/proj/.worktrees/x', blank: true, running: false, displayTitle: 'x' },
+    { id: 's3', cwd: '/p/proj', blank: false, running: false, displayTitle: 'Greeting chat' },
+    { id: 's4', blank: false, running: false, displayTitle: 'orphan' },
   ]
 
   it('lists every pty tile (named agent or plain terminal), never a file or browser tab', () => {
@@ -99,10 +99,10 @@ describe('entriesForWorktree', () => {
     ])
   })
 
-  it('lists chat sessions whose cwd is inside the worktree, blank ones say "New chat"', () => {
+  it('lists chat sessions whose cwd is inside the worktree, by their real displayTitle; blank ones say "New chat"', () => {
     const entries = entriesForWorktree('/p/proj/.worktrees/x', [REPO], [], chats)
     expect(entries).toEqual([
-      { kind: 'chat', id: 's1', label: 'AcrylDSH Chat', running: true },
+      { kind: 'chat', id: 's1', label: 'Explore the tools', running: true },
       { kind: 'chat', id: 's2', label: 'New chat', running: false },
     ])
   })

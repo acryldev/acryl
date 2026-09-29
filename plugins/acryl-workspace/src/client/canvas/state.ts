@@ -76,7 +76,7 @@ export interface AddTileOptions {
 }
 
 const TITLES: Record<WorkspaceTileKind, string> = {
-  chat: 'Chat',
+  chat: 'AcrylDSH Chat',
   pty: 'Terminal',
   file: 'untitled',
   browser: 'Browser',

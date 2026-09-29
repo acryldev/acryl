@@ -111,7 +111,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
   const chatRows = useMemo(
     () => sessions.ids.flatMap((id) => {
       const row = sessions.byId[id]
-      return row === undefined ? [] : [{ id, blank: row.blank, running: row.running, ...(row.cwd === undefined ? {} : { cwd: row.cwd }) }]
+      return row === undefined ? [] : [{ id, blank: row.blank, running: row.running, displayTitle: row.displayTitle, ...(row.cwd === undefined ? {} : { cwd: row.cwd }) }]
     }),
     [sessions],
   )
