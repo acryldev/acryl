@@ -14,11 +14,15 @@ ACRYL can migrate to Electrobun. The difficulty is **unevenly distributed**:
 - **Critical blocker**: `node-pty` (native module) requires Zig rewrite
 - **Secondary risk**: Cordis hot-reload on Bun (works, but untested at scale)
 
-**Effort**: 3-6 weeks if node-pty Zig port exists or can be scoped down; 8-12 weeks if node-pty needs full development.
+**Effort**: 6-7 weeks (likely); 2-3 weeks (best case), 12+ weeks (worst case).
 
-**Benefit**: ~10% bundle size reduction, slightly faster startup, Bun's speed advantage (but Cordis plugin load is the bottleneck, not JavaScript parsing).
+**Benefit**: **30-40% bundle size reduction** (~50-70MB smaller):
+- Current: ~170MB (Electron embeds Chromium ~70MB)
+- Electrobun: ~100MB (Bun + app code, reuses OS WebKit—macOS WebKit, Windows WebView2, Linux WebKitGTK)
+- **Impact**: Substantial for download friction, CI/CD storage, offline distribution
+- Plus: Slightly faster startup (Bun + no Chromium unpack)
 
-**Cost**: Pre-1.0 framework, thin community, WebKit fragmentation across platforms.
+**Cost**: Pre-1.0 framework, thin community, WebKit fragmentation across platforms (must test all three).
 
 ---
 
@@ -217,11 +221,11 @@ Instead:
 - ACRYL's bottleneck is **Cordis plugin load** and **React mount**, not JS parsing — so real-world gain is <10%
 - Terminal startup: same (PTY overhead unchanged)
 
-**Bundle size**:
-- Electron embed Chromium (~80MB)
-- Bun is ~100MB (single binary)
-- Electrobun webview: WebKit on macOS, WebView2 on Windows, WebKitGTK on Linux
-- **Net gain**: -20% to +5% depending on platform (WebKit is lighter, but it's bundled instead of system-provided on some platforms)
+**Bundle size** (CORRECTED):
+- Current: ~170MB (Bun ~100MB + Electron's bundled Chromium ~70MB)
+- Electrobun: ~100MB (Bun + app code; reuses OS WebKit—macOS system WebKit, Windows WebView2, Linux WebKitGTK—no bundled Chromium)
+- **Net reduction**: 50-70MB (30-40% smaller)
+- **Impact**: Substantial for download friction, CI/CD artifact storage, Web hosting bandwidth, offline distribution
 
 **Maintenance**:
 - One less runtime to manage (Electron updates, Bun updates)
@@ -283,9 +287,15 @@ Instead:
 ## Recommendation
 
 ### Short term (now - 3 months)
-**Defer Electrobun.** ACRYL works fine on Electron. Specs 040-042 are shipping well. The 10% speed gain and 20% bundle shrink don't justify 6-7 weeks of engineering right now.
+**Consider spike now or defer based on priorities.** ACRYL works fine on Electron today. The 30-40% bundle reduction is **substantial** (50-70MB smaller), which matters for:
+- User download friction (especially mobile hotspots)
+- CI/CD artifact storage
+- Offline distribution
+- Web hosting bandwidth
 
-**Instead**: Invest in Cordis plugin load optimization (profiling, lazy-load, code-splitting). That's where the real bottleneck is.
+**But**: 1-week spike first to validate Cordis + PTY before committing to 6-7 week migration.
+
+**Alternative**: If user growth isn't blocked by bundle size, invest in Cordis plugin load optimization instead (profiling, lazy-load, code-splitting). That's where the real performance bottleneck is.
 
 ### Medium term (3-6 months)
 **Run the spike if**:

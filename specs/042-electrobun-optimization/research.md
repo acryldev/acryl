@@ -208,11 +208,11 @@ See `CORDIS_ON_ELECTROBUN.md` for full technical analysis.
 - ACRYL's bottleneck is Cordis plugin load + React mount, not JS parsing → real gain <10%
 - Terminal startup: unchanged (PTY overhead same)
 
-**Bundle size**:
-- Electron embeds Chromium (~80MB)
-- Bun single binary (~100MB)
-- Electrobun webview: WebKit (macOS), WebView2 (Windows), WebKitGTK (Linux)
-- **Net gain**: -20% to +5% depending on platform (WebKit lighter, but bundled per-platform)
+**Bundle size** (CORRECTED):
+- **Current (Electron)**: ~170MB (Bun ~100MB + Chromium ~70MB)
+- **Electrobun**: ~100MB (Bun + app code, reuses OS WebKit: macOS system WebKit, Windows WebView2, Linux WebKitGTK)
+- **Net reduction**: 50-70MB (30-40% smaller), because WebKit is pre-installed on the OS
+- **This is substantial**: affects download size, CI/CD artifact storage, offline distribution
 
 **Maintenance**:
 - One less runtime (no Electron version tracking)
