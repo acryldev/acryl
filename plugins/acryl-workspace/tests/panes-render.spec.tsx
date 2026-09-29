@@ -127,13 +127,13 @@ describe('ProjectsSidebar', () => {
     shell.dispose()
   })
 
-  it('opens the upstream sidebar behind Search, and Back returns to the tree', () => {
+  it('opens the upstream sidebar (all chats, classic view), and Back returns to the tree', () => {
     const shell = new WorkspaceShellState(api())
     render(<ProjectsSidebar {...sidebarProps(shell)} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Search chats and settings' }))
+    fireEvent.click(screen.getByRole('button', { name: 'All chats (classic view, with search)' }))
     expect(screen.getByTestId('upstream').closest('[hidden]')).toBeNull()
     expect(screen.getByText('Workspaces').closest('[hidden]')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Back to the workspace tree' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Workspaces' }))
     expect(screen.getByTestId('upstream').closest('[hidden]')).toBeTruthy()
     shell.dispose()
   })
@@ -365,6 +365,16 @@ describe('ProjectsSidebar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
     expect(openSettings).toHaveBeenCalledTimes(1)
     expect((await screen.findByRole('alert')).textContent).toContain('not available')
+    shell.dispose()
+  })
+
+  it('reveals the upstream sidebar before calling openSettings, so its dialog (a plain sibling of its trigger, not a portal) is not hidden along with it', () => {
+    const shell = new WorkspaceShellState(api())
+    const openSettings = vi.fn((): ProjectAction => ({ ok: true }))
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ openSettings }))} />)
+    expect(screen.getByTestId('upstream').closest('[hidden]')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    expect(screen.getByTestId('upstream').closest('[hidden]')).toBeNull()
     shell.dispose()
   })
 

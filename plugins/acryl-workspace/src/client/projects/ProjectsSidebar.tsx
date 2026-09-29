@@ -4,6 +4,7 @@
  * sidebar (search, and anything else it owns) stays reachable behind a Search toggle instead of a mode. */
 
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { flushSync } from 'react-dom'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
 import type { CustomAgent } from '../../agents/definition.ts'
@@ -203,13 +204,13 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
           <button
             type="button"
             className="dshWorkspaceSideBack"
-            aria-label="Back to the workspace tree"
-            title="Back to the workspace tree"
+            aria-label="Back to Workspaces"
+            title="Back to Workspaces"
             onClick={() => { setSearchOpen(false) }}
           >
-            ← Back
+            ← Back to Workspaces
           </button>
-          <span>Search</span>
+          <span>All chats</span>
         </div>
         {renderUpstream()}
       </div>
@@ -220,8 +221,8 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
             type="button"
             className="dshWorkspaceSideAdd"
             aria-pressed={searchOpen}
-            aria-label="Search chats and settings"
-            title="Search chats and settings"
+            aria-label="All chats (classic view, with search)"
+            title="All chats (classic view, with search)"
             onClick={() => { setSearchOpen(true) }}
           >
             <SearchIcon />
@@ -285,8 +286,17 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
             type="button"
             className="dshWorkspaceSideFootButton"
             onClick={() => {
+              // The Settings dialog is not a portal - it renders as a plain sibling of its trigger button,
+              // which lives inside the upstream sidebar. That sidebar is hidden (searchOpen: false) unless
+              // Search is open, and a hidden ancestor hides anything that mounts inside it later, dialog
+              // included. Reveal it synchronously (flushSync, not a plain setState) so the trigger's click,
+              // fired right after, opens a dialog that is actually on screen instead of hidden with it.
+              // On a refusal, revert: the tree (not the now-empty upstream panel) is where the notice shows.
+              flushSync(() => { setSearchOpen(true) })
               const result = projects.openSettings()
-              setNotice(result.ok ? null : result.reason)
+              if (result.ok) { setNotice(null); return }
+              setSearchOpen(false)
+              setNotice(result.reason)
             }}
           >
             Settings
