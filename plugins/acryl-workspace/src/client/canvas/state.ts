@@ -189,7 +189,11 @@ export class WorkspaceState {
       if (options.chatSessionId !== undefined) {
         const unbound = this.snapshot.tiles.find(tile => tile.kind === 'chat' && tile.chatSessionId === undefined)
         if (unbound !== undefined) {
-          const claimed: WorkspaceTile = { ...unbound, chatSessionId: options.chatSessionId }
+          const claimed: WorkspaceTile = {
+            ...unbound,
+            chatSessionId: options.chatSessionId,
+            ...(options.title !== undefined ? { title: options.title } : {}),
+          }
           this.replace({
             ...this.snapshot,
             tiles: Object.freeze(this.snapshot.tiles.map(candidate => (candidate.id === unbound.id ? claimed : candidate))),

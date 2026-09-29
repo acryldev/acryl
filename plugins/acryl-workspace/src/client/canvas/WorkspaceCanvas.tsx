@@ -49,7 +49,7 @@ import type { TabTypesState } from '../tabs/tab-types-state.ts'
 import { BrowserPane } from '../browser/BrowserPane.tsx'
 import { ScratchFilePane } from '../files/ScratchFilePane.tsx'
 import { createWorkspacePtyApi, type WorkspacePtyApi } from '../terminal/pty-api.ts'
-import { synchronizeWorkspaceWithSessionNavigation } from '../sessions/session-navigation.ts'
+import { ensureWorktreeChatTabs, synchronizeWorkspaceWithSessionNavigation } from '../sessions/session-navigation.ts'
 import type { ProjectsControl } from '../projects/projects-control.ts'
 import type { WorkspaceTile } from './state.ts'
 
@@ -137,6 +137,12 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
       },
     )
   }, [workspace, sessions])
+
+  // Every chat this worktree already has, as its own tab immediately - not lazily, one click at a time.
+  useLayoutEffect(() => {
+    if (groupKey === GLOBAL_GROUP) return
+    ensureWorktreeChatTabs(workspace, groupKey, shell.getSnapshot().repos, sessions)
+  }, [workspace, groupKey, shell, sessions])
 
   const closeTile = useCallback(async (tile: WorkspaceTile) => {
     const removed = workspace.closeTile(tile.id)
