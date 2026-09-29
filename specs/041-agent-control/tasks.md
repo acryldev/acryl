@@ -54,8 +54,8 @@ Conventions: `[P]` parallel; every task ends with a green `corepack pnpm run che
 - [ ] **TB21** `acryl plugin install <pkg> --target desktop|web --activate` through the existing market install path: approval, install, row enable, rollback on failed activation.
 
 ### Phase B3: online control
-- [ ] **TB30** In-app authenticated local endpoint exposing the Scope A tool contract (one `ctx.effect`, discovery file, secret).
-- [ ] **TB31** CLI online client and `acryl app` commands (`snapshot`, `click`, `type`, `open`), same tool contract, same audit log.
+- [x] **TB30** In-app authenticated local endpoint exposing the Scope A tool contract (one `ctx.effect`, discovery file, secret). **Delivered 2026-09-28**: a loopback-only route (`/api/acryl-agent-control/online/call`) gated behind a new `online` config flag (default false), authenticated by a per-instance secret (`randomBytes(24)`, mode 0o600, written next to the run lock, removed on disposal) checked with `timingSafeEqual`. Calls go through a dedicated `runOnlineCall()` path, never the tool registry's own `.execute()` (which would silently bypass the `tools/pre-execute` approval hook); the audit log records `approval: 'token'` for these, distinct from `'asked'`/`'none'`/`'not-needed'`. Real `http.Server` route tests plus a real-Loader plugin integration test (config-off gives no secret/404; config-on gives a working secret, auth, and clean removal on dispose).
+- [x] **TB31** CLI online client and `acryl app` commands (`snapshot`, `click`, `type`, `open`), same tool contract, same audit log. **Delivered 2026-09-28** as `acryl control` (renamed from the task text's own "app" - that name already means a Blends application throughout this CLI, `acryl new`/`save`/`remote`): `list`, `snapshot`, `click`, `type`, `select`, `press`, `scroll`, `wait`. 15 passing tests, clean typecheck.
 - [ ] **TB32** CLI agent toolset: the operations above as tools, plus orientation tools (`repo.map`, `docs.route`, graft, verified examples) so it knows where to patch.
 - [ ] **TB33** End-to-end: "hide Chats and open branch-123, enable plugins 1, 4, 6" against a real headless instance; state read back and verified.
 
