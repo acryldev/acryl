@@ -180,9 +180,19 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
       setAddingByPath(open => !open)
       return
     }
+    // 'upstream' (macOS, no picker seam): the trigger this clicks lives inside the upstream sidebar, which
+    // is hidden by default (searchOpen: false) unless Search is open - same hidden-ancestor bug already
+    // fixed once for Settings below. Reveal synchronously (flushSync, not a plain setState) before the
+    // click fires, so the native dialog's result is actually registered instead of silently dropped.
+    const revealsUpstream = projects.chooserKind() === 'upstream'
+    if (revealsUpstream) flushSync(() => { setSearchOpen(true) })
     const result = await projects.addProject()
-    if (!result.ok) setNotice(result.reason)
-    else if (result.note !== undefined) setHint(result.note)
+    if (!result.ok) {
+      if (revealsUpstream) setSearchOpen(false)
+      setNotice(result.reason)
+      return
+    }
+    if (result.note !== undefined) setHint(result.note)
   }
 
   const submitPath = async (): Promise<void> => {

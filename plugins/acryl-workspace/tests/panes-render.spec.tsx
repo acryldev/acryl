@@ -312,6 +312,24 @@ describe('ProjectsSidebar', () => {
     shell.dispose()
   })
 
+  it('reveals the upstream sidebar before the "upstream" chooser flow runs, not after it is done (a hidden ancestor swallows a real folder pick)', async () => {
+    const shell = new WorkspaceShellState(api())
+    // Stand-in for the real desktop-without-a-picker-seam flow: `projects.addProject()` itself clicks a
+    // trigger somewhere inside the upstream sidebar - this fake instead just observes whether that
+    // sidebar is actually on screen (not `hidden`) at the moment it is called.
+    let visibleWhenCalled: boolean | undefined
+    const addProject = vi.fn(async (): Promise<ProjectAction> => {
+      visibleWhenCalled = screen.getByTestId('upstream').closest('[hidden]') === null
+      return { ok: true }
+    })
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ chooserKind: () => 'upstream', addProject }))} />)
+    expect(screen.getByTestId('upstream').closest('[hidden]')).toBeTruthy() // hidden to start, as always
+    fireEvent.click(screen.getByRole('button', { name: 'Add git project' }))
+    await waitFor(() => { expect(addProject).toHaveBeenCalledTimes(1) })
+    expect(visibleWhenCalled).toBe(true)
+    shell.dispose()
+  })
+
   it('discovers registered workspace folders as projects even without a chat', async () => {
     const seen: string[] = []
     const shell = new WorkspaceShellState({ ...api(), repo: async (cwd) => { seen.push(cwd); return null } })
