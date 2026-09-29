@@ -5,8 +5,8 @@
 <h1 align="center">ACRYL — the development environment your agents live in</h1>
 
 <p align="center">
-  <strong>One persistent workspace. Any coding agent. Agents come and go — the work stays.</strong><br>
-  ACRYL is a local-first, plugin-native Agentic Development Environment for Desktop, Web, and terminal.
+  <strong>Agents are replaceable. Progress isn't.</strong><br>
+  ACRYL is a local-first Agentic Development Environment — one persistent workspace where Claude Code, Codex, Pi, or any coding agent plugs in as a replaceable worker, and every decision, diff, and session survives the swap.
 </p>
 
 <p align="center">
