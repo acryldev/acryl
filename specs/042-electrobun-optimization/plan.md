@@ -167,17 +167,154 @@ Monitor:
 
 ---
 
-## Post-spike (conditional on "Proceed" decision)
+## Post-spike: Concrete Migration Plan (if approved)
 
-If T010 recommends proceeding, the next milestone is **implementation spec** (042b or continuation):
+If T010 recommends "Proceed," the migration unfolds in 5 phases over 6-8 weeks:
 
-- 6-7 week project plan
-- Weekly milestones
-- Risk mitigations for migration
-- Success metrics (bundle size, startup time, feature parity)
-- Resource allocation (1 engineer, 50% QA, TL oversight)
+### Phase 1: Build Tooling & Config (1 week)
 
-That spec would cover actual porting work; this one is just the spike to validate feasibility.
+**What**: Set up Electrobun build, update Vite config, verify webview rendering.
+
+**Concrete actions**:
+- [ ] Install Electrobun starter template
+- [ ] Port `apps/acryl-desktop/vite.config.ts` to Electrobun's webview builder
+- [ ] Update `apps/acryl-desktop/src/preload.ts` to Electrobun's preload API (if changed)
+- [ ] Verify React renders in Electrobun webview (headless test)
+- [ ] Commit: "build(desktop): migrate build config to Electrobun"
+
+**Blockers**: Vite incompatibilities (unlikely; Bun is Vite-compatible)
+
+---
+
+### Phase 2: Electron API Surface (1 week)
+
+**What**: Replace Electron APIs with Electrobun equivalents (1:1 mapping).
+
+**Concrete API changes** (from research):
+- [ ] `apps/acryl-desktop/src/main.ts`: `app.*` → same (no change)
+- [ ] `apps/acryl-desktop/src/shell/electron-platform.ts`: `BrowserWindow` → `Window` (constructor slightly different)
+- [ ] `apps/acryl-desktop/src/shell/native-menu.ts`: `Menu` → same (no change)
+- [ ] `apps/acryl-desktop/src/electron-runtime.ts`: `Tray` → same (no change)
+- [ ] `apps/acryl-desktop/src/shell/electron-reveal.ts`: `shell.showItemInFolder()` → same (no change)
+- [ ] Type imports: update `import { BrowserWindow } from 'electron'` → `import { Window } from 'electrobun'`
+- [ ] Verify: `preload.ts` still uses `contextBridge` (Electrobun supports it)
+
+**Testing**:
+- [ ] Run `apps/acryl-desktop` headless smoke test
+- [ ] Commit: "refactor(desktop): Electron API → Electrobun equivalents"
+
+**Blockers**: Any missing Electrobun API (identified by T003, rare)
+
+---
+
+### Phase 3: Cordis Hot-Reload (1-2 weeks)
+
+**What**: Validate Cordis connection layer works on Bun. Fix if needed.
+
+**Concrete actions**:
+- [ ] Run T001 spike results: if "pass", proceed to integration
+- [ ] Verify `apps/acryl-desktop/src/profile.ts` connection setup works with Electrobun's IPC
+- [ ] Test: plugin load → enable/disable toggle → reload (real Desktop, not just unit test)
+- [ ] If `import.meta.hot.invalidate()` doesn't work, implement cache-bust suffix: `?t=${Date.now()}`
+- [ ] Stress test: enable/disable a plugin 20 times rapidly, verify no leaks
+- [ ] Commit: "refactor(desktop): Cordis connection layer on Bun"
+
+**Blockers**: Module cache issue in Bun (identified by T001)
+
+---
+
+### Phase 4: node-pty Replacement (1-3 weeks, depends on T002 result)
+
+**What**: Replace node-pty with Bun-compatible solution.
+
+**Option A** (if library exists, ~2 days):
+- [ ] Integrate existing Bun/Electrobun PTY library
+- [ ] Update `plugins/acryl-workspace/package.json`: replace `node-pty` with `@XXX/pty`
+- [ ] Test: open Terminal pane, run `echo "hello"`, verify output
+- [ ] Commit: "refactor(workspace): node-pty → Bun PTY library"
+
+**Option B** (if bridge needed, ~2 weeks):
+- [ ] Design PTY bridge (external process + WebSocket/REST)
+- [ ] Implement: Terminal pane ↔ bridge ↔ external PTY process
+- [ ] Update `plugins/acryl-workspace/src/client/terminal/` to connect via bridge
+- [ ] Test: multiple terminals, resize, kill, verify cleanup
+- [ ] Commit: "refactor(workspace): node-pty → PTY bridge"
+
+**Option C** (if deferring, immediate):
+- [ ] Disable Terminal in Electrobun build
+- [ ] Add TODO: "Terminal support for Electrobun (Phase 2)"
+- [ ] Commit: "feat(desktop): Electrobun MVP without Terminal"
+
+**Blockers**: None if Option A exists; Option B adds time; Option C defers feature
+
+---
+
+### Phase 5: Testing & Validation (1-2 weeks)
+
+**What**: End-to-end testing on real platforms (macOS, Windows, Linux).
+
+**Concrete actions**:
+- [ ] Headless smoke test: Desktop launches, renders workspace
+- [ ] Platform test: macOS (WebKit), Windows (WebView2), Linux (WebKitGTK)
+  - [ ] Windows: verify native menu, tray icons, dialogs work
+  - [ ] macOS: verify system integration (menu bar, dock)
+  - [ ] Linux: verify GTK integration
+- [ ] Feature parity: Chats, Projects, Terminal (if not deferred), Diff, Settings all work
+- [ ] Performance: measure cold startup (should be <3 seconds)
+- [ ] Memory: check heap stability over 30 min session
+- [ ] Accessibility: keyboard navigation, screen reader (if applicable)
+- [ ] Commit: "test(desktop): Electrobun platform validation"
+
+**CI/CD**:
+- [ ] Update build pipeline: build Electrobun binary alongside Electron
+- [ ] Set feature flag: allow users to opt into Electrobun build during beta
+- [ ] Monitoring: capture metrics (startup, memory, crash rate) vs. Electron baseline
+
+**Blockers**: Platform-specific WebKit quirks (CSS, DOM differences)
+
+---
+
+## Weekly Milestones (if approved)
+
+| Week | Phase | Deliverable | Go/No-Go |
+|------|-------|-------------|----------|
+| 1 | Spike (pre-migration) | T001/T002/T003 results + decision | Proceed / Defer |
+| 2 | Phase 1 | Electrobun build working, React renders | Proceed |
+| 3 | Phase 2 | All Electron APIs mapped + smoke test | Proceed |
+| 4-5 | Phase 3 | Cordis hot-reload validated + stress tested | Proceed or patch |
+| 6-7 | Phase 4 | PTY replacement integrated | Proceed or defer Terminal |
+| 8 | Phase 5 | Platform validation, CI/CD, beta release | Ship |
+
+---
+
+## Concrete Success Metrics
+
+**Bundle size**: <120MB (from current ~170MB; 30% reduction)  
+**Cold startup**: <3 seconds (headless measurement, real window)  
+**Hot reload**: enable/disable plugin 20x, no memory leak (heap ±10%)  
+**Feature parity**: all ACRYL features work on Electrobun (or defer Terminal gracefully)  
+**Platform support**: real tests on macOS, Windows, Linux; not just macOS  
+**User experience**: identical to Electron build (or better)
+
+---
+
+## Risk Mitigations During Migration
+
+| Risk | Mitigation |
+|------|-----------|
+| WebKit CSS differences | Early platform testing (Phase 5, start early) + gradual rollout (beta flag) |
+| Cordis module cache issue | T001 validates; if issue found, patch before Phase 3 |
+| PTY complexity | T002 identifies path; choose option before Phase 4 |
+| Performance regression | Measure baseline before launch; revert if <10% improvement |
+| User adoption (bundle new app) | Ship alongside Electron for 1 release; deprecate Electron gradually |
+
+---
+
+## Post-Migration (Ongoing)
+
+**Week 9+**: Monitor metrics, user feedback, known issues (WebKit quirks, startup variance).  
+**Month 2**: If stable, sunset Electron build. If unstable, roll back.  
+**Month 3+**: Upstream Electrobun updates, Bun ecosystem improvements.
 
 ---
 
