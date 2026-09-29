@@ -155,9 +155,7 @@ export function registerUiTools(ctx: Context, deps: ToolDeps): () => void {
   const tools = [
     defineTool({
       name: TOOL_NAMES.snapshot,
-      description: 'LIVE ACTION, not a code edit: call this before touching source whenever asked to do something in the app now (hide/open/click/type/enable). '
-        + 'Drives this running window immediately and reversibly; nothing persists, no file changes. Edit code only when asked to change default behavior '
-        + 'going forward. Lists the window\'s controls (role, name, state) with refs to act on. Secrets are never shown. Long pages: pass nextCursor as cursor.',
+      description: 'LIVE ACTION: for \'do X now\' (hide/click/type/enable) - live, reversible, no files touched. Controls: role, name, state, ref. Secrets hidden. Long: pass nextCursor.',
       parameters: {
         cursor: { type: 'integer' },
         maxNodes: { type: 'integer' },
