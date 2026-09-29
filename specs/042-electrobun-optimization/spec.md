@@ -74,7 +74,7 @@ Migrate ACRYL from Electron to Electrobun (pre-1.0 Electron alternative using Bu
 - [ ] **T002 passes**: node-pty can be replaced (existing library OR feasible bridge identified)
 - [ ] **T003 passes**: Electron API surface is 1:1 mappable (no missing APIs ACRYL actually uses)
 
-**Go decision**: All three pass cleanly. Migration is "doable" (6-7 weeks, acceptable risk).
+**Go decision**: All three pass cleanly. Spike produces effort estimate and risk assessment. Stakeholders decide whether to proceed.
 
 **No-go decision**: Any one fails without a clear workaround. Migration is deferred or rejected.
 
