@@ -98,6 +98,41 @@ support."
 - A device-code fallback for headless Desktop/Web sessions (not a currently
   supported mode for either surface; revisit only if a real need appears).
 
+## Addendum, 2026-09-29 - owner request to confirm provider coverage
+
+Re-checked the vendored `@earendil-works/pi-ai@0.85.1` on disk directly
+(`node_modules/.pnpm/.../dist/`), not assumed, against two owner asks:
+
+- **DeepSeek and Qwen, as alternative models for AcrylDSH Chat, via API key**:
+  both already ship as providers in this same pi-ai catalog
+  (`dist/providers/deepseek.js`, `dist/providers/qwen-token-plan*.js`) -
+  already in scope through the identical shared Models directory this
+  milestone adds a login control to. No separate work; confirmed, not
+  guessed.
+- **Z.ai OAuth**: not available. `dist/providers/zai.js` declares
+  `auth: { apiKey: envApiKeyAuth("Z.AI API key", ["ZAI_API_KEY"]) }` only -
+  no entry under `dist/auth/oauth/` the way Anthropic/OpenAI Codex/Kimi/
+  GitHub Copilot/xAI/Radius have. Z.ai joins OpenRouter in the
+  "api-key only, no OAuth flow exists to wire up" out-of-scope line above,
+  not because it was skipped but because pi-ai itself has not shipped one
+  yet. Revisit when a `dist/auth/oauth/zai.js` appears in a future pi-ai
+  bump - this milestone's own R1 ("provider list parity with the TUI,"
+  sourced from pi-ai's own registration, not a hand-maintained list) means
+  that arrival needs no code change here to pick it up.
+
+**Flag for the owner, not a decision made here**: `anthropic.js` and
+`openai-codex.js`'s OAuth flows authenticate as the vendor's own official
+CLI - `CLIENT_ID` is the real "Claude Code" / "Codex CLI" client id
+(Anthropic's is base64-obfuscated in source, `9d1c250a-e61b-44d9-88ed-
+5944d1962f5e`; OpenAI's is a plain literal, `app_EMoamEEZ73f0CkXaXp7hrann`).
+Reusing them means ACRYL's sign-in presents to Anthropic/OpenAI's OAuth
+servers as their own official client, not as ACRYL - the same branding
+question already open for ACRYL's own OAuth app registration (see the
+`acryl-oauth-app-registration` memory). This milestone inherits that
+choice as-is from `ctx.authorization`/pi-ai (R5, no parallel protocol) -
+registering ACRYL's own client ids with Anthropic/OpenAI, if wanted, is a
+separate, later decision, not blocking this milestone.
+
 ## Acceptance criteria
 
 - A user on Desktop can open Settings → Models (or wherever the provider list
