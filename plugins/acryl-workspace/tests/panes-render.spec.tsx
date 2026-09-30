@@ -97,6 +97,7 @@ function fakeProjects(overrides: Partial<ProjectsControl> = {}): ProjectsControl
     openChat: (id): ProjectAction => { shown.push(`open:${id}`); return { ok: true } },
     newWorktree: async (root, branch): Promise<ProjectAction> => { shown.push(`worktree:${root}:${branch}`); return { ok: true } },
     removeWorkspace: async (root): Promise<ProjectAction> => { shown.push(`remove:${root}`); return { ok: true } },
+    renameChat: async (id, title): Promise<ProjectAction> => { shown.push(`rename:${id}:${title}`); return { ok: true } },
     openSettings: (): ProjectAction => ({ ok: true }),
     ...overrides,
   }
@@ -270,6 +271,56 @@ describe('ProjectsSidebar', () => {
     await waitFor(() => { expect(screen.getByRole('button', { name: 'Claude' }).getAttribute('aria-pressed')).toBe('true') })
     expect(screen.getByRole('button', { name: 'Terminal' }).getAttribute('aria-pressed')).toBe('false')
     void terminal
+    shell.dispose()
+  })
+
+  it('double-click renames an agent row in place, and the tab title follows (same tile title)', async () => {
+    const shell = new WorkspaceShellState(api())
+    const groups = new WorkspaceGroups()
+    act(() => { groups.stateFor('/p/proj-x').addTile('pty', { commandId: 'claude', title: 'Claude' }) })
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects(), groups)} />)
+    await screen.findByText('feature/x')
+    fireEvent.click(screen.getByRole('button', { name: 'Show sessions on feature/x' }))
+    fireEvent.doubleClick(await screen.findByRole('button', { name: 'Claude' }))
+    fireEvent.change(screen.getByLabelText('Rename Claude'), { target: { value: 'api work' } })
+    fireEvent.submit(screen.getByLabelText('Rename Claude').closest('form') as HTMLFormElement)
+    expect(groups.stateFor('/p/proj-x').getSnapshot().tiles.find(t => t.commandId === 'claude')?.title).toBe('api work')
+    expect(await screen.findByText('api work')).toBeTruthy()
+    shell.dispose()
+  })
+
+  it('double-click renames a chat row through the session, and Escape or an unchanged name renames nothing', async () => {
+    const shell = new WorkspaceShellState(api())
+    const projects = fakeProjects()
+    render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
+    await screen.findByText('feature/x')
+    fireEvent.click(screen.getByRole('button', { name: 'Show sessions on feature/x' }))
+    fireEvent.doubleClick(await screen.findByRole('button', { name: 'two' }))
+    fireEvent.change(screen.getByLabelText('Rename two'), { target: { value: 'launch plan' } })
+    fireEvent.keyDown(screen.getByLabelText('Rename two'), { key: 'Escape' })
+    expect(projects.shown.some(entry => entry.startsWith('rename:'))).toBe(false)
+
+    fireEvent.doubleClick(await screen.findByRole('button', { name: 'two' }))
+    fireEvent.blur(screen.getByLabelText('Rename two')) // unchanged
+    expect(projects.shown.some(entry => entry.startsWith('rename:'))).toBe(false)
+
+    fireEvent.doubleClick(await screen.findByRole('button', { name: 'two' }))
+    fireEvent.change(screen.getByLabelText('Rename two'), { target: { value: 'launch plan' } })
+    fireEvent.submit(screen.getByLabelText('Rename two').closest('form') as HTMLFormElement)
+    await waitFor(() => { expect(projects.shown).toContain('rename:s2:launch plan') })
+    shell.dispose()
+  })
+
+  it('shows why a chat could not be renamed', async () => {
+    const shell = new WorkspaceShellState(api())
+    const projects = fakeProjects({ renameChat: async () => ({ ok: false, reason: 'Could not rename that chat: host down' }) })
+    render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
+    await screen.findByText('feature/x')
+    fireEvent.click(screen.getByRole('button', { name: 'Show sessions on feature/x' }))
+    fireEvent.doubleClick(await screen.findByRole('button', { name: 'two' }))
+    fireEvent.change(screen.getByLabelText('Rename two'), { target: { value: 'x2' } })
+    fireEvent.submit(screen.getByLabelText('Rename two').closest('form') as HTMLFormElement)
+    expect((await screen.findByRole('alert')).textContent).toContain('host down')
     shell.dispose()
   })
 

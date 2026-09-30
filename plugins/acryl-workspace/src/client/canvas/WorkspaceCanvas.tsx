@@ -49,7 +49,7 @@ import type { TabTypesState } from '../tabs/tab-types-state.ts'
 import { BrowserPane } from '../browser/BrowserPane.tsx'
 import { ScratchFilePane } from '../files/ScratchFilePane.tsx'
 import { createWorkspacePtyApi, type WorkspacePtyApi } from '../terminal/pty-api.ts'
-import { ensureWorktreeChatTabs, synchronizeWorkspaceWithSessionNavigation } from '../sessions/session-navigation.ts'
+import { ensureWorktreeChatTabs, syncChatTabTitles, synchronizeWorkspaceWithSessionNavigation } from '../sessions/session-navigation.ts'
 import type { ProjectsControl } from '../projects/projects-control.ts'
 import type { WorkspaceTile } from './state.ts'
 
@@ -152,6 +152,17 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
     if (groupKey === GLOBAL_GROUP) return
     ensureWorktreeChatTabs(workspace, groupKey, shellRepos, sessions, shellDismissedChats)
   }, [workspace, groupKey, shellRepos, shellDismissedChats, sessions])
+
+  // An open chat tab follows its session's title in every worktree's tab set, not just the visible one
+  // (owner request: rename in the tree or the strip, reflected in both).
+  const seenChatTitles = useRef(new Map<string, string>())
+  useLayoutEffect(() => {
+    for (const key of groups.keys()) syncChatTabTitles(groups.stateFor(key), sessions, seenChatTitles.current)
+  }, [groups, sessions, snapshot.tiles])
+
+  const renameChat = useCallback((sessionId: string, title: string) => {
+    void projects.renameChat(sessionId, title).then((result) => { if (!result.ok) setChatNotice(result.reason) })
+  }, [projects])
 
   const closeTile = useCallback(async (tile: WorkspaceTile) => {
     // Closing a chat's tab from the tab strip hides it from the tree too (T134-followup): one close
@@ -373,6 +384,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
         terminals={terminals}
         onOpenPty={(commandId, title) => { void openPty(commandId, title) }}
         onOpenChat={() => { void openChat() }}
+        onRenameChat={renameChat}
         agentSettings={agentSettings}
         tabTypes={tabTypes}
         tabRegistry={tabRegistry}

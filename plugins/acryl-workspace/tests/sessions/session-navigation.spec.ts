@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { WorkspaceState } from '../../src/client/canvas/state.ts'
-import { ensureWorktreeChatTabs, synchronizeWorkspaceWithSessionNavigation } from '../../src/client/sessions/session-navigation.ts'
+import { ensureWorktreeChatTabs, syncChatTabTitles, synchronizeWorkspaceWithSessionNavigation } from '../../src/client/sessions/session-navigation.ts'
 import type { RepoState, WorktreeState } from '../../src/client/worktrees/shell-state.ts'
 
 function counter(): () => string {
@@ -128,5 +128,43 @@ describe('ensureWorktreeChatTabs', () => {
     ensureWorktreeChatTabs(workspace, '/p/proj', REPOS, sessions, new Set(['s2']))
     const chatSessionIds = workspace.getSnapshot().tiles.filter(t => t.kind === 'chat').map(t => t.chatSessionId)
     expect(chatSessionIds).not.toContain('s2')
+  })
+})
+
+describe('syncChatTabTitles', () => {
+  const rows = (title: string, blank = false) => ({ byId: { s1: { blank, displayTitle: title } } })
+
+  it('renames an open chat tab when its session title changes, but not on the first sight or when unchanged', () => {
+    const workspace = new WorkspaceState({ createId: counter() })
+    workspace.addTile('chat', { chatSessionId: 's1', title: 'Old' })
+    const seen = new Map<string, string>()
+    syncChatTabTitles(workspace, rows('Old'), seen) // first sight: just remembered
+    expect(workspace.getSnapshot().tiles[0]?.title).toBe('Old')
+    syncChatTabTitles(workspace, rows('New name'), seen)
+    expect(workspace.getSnapshot().tiles[0]?.title).toBe('New name')
+    syncChatTabTitles(workspace, rows('New name'), seen)
+    expect(workspace.getSnapshot().tiles[0]?.title).toBe('New name')
+  })
+
+  it('does not revert a name typed into the tab while the session still reports the old title', () => {
+    const workspace = new WorkspaceState({ createId: counter() })
+    workspace.addTile('chat', { chatSessionId: 's1', title: 'Old' })
+    const seen = new Map<string, string>()
+    syncChatTabTitles(workspace, rows('Old'), seen)
+    workspace.renameTile(workspace.getSnapshot().tiles[0]!.id, 'Typed by user')
+    syncChatTabTitles(workspace, rows('Old'), seen) // Host has not answered yet: same old title
+    expect(workspace.getSnapshot().tiles[0]?.title).toBe('Typed by user')
+    syncChatTabTitles(workspace, rows('Typed by user'), seen)
+    expect(workspace.getSnapshot().tiles[0]?.title).toBe('Typed by user')
+  })
+
+  it('ignores blank sessions and non-chat tabs', () => {
+    const workspace = new WorkspaceState({ createId: counter() })
+    workspace.addTile('chat', { chatSessionId: 's1', title: 'Old' })
+    workspace.addTile('doc', { title: 'README' })
+    const seen = new Map<string, string>()
+    syncChatTabTitles(workspace, rows('Old', true), seen)
+    syncChatTabTitles(workspace, rows('Changed', true), seen)
+    expect(workspace.getSnapshot().tiles.map(t => t.title)).toEqual(['Old', 'README'])
   })
 })

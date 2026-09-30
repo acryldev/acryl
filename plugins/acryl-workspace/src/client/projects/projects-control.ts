@@ -36,6 +36,13 @@ export interface ProjectsControl {
   newChat(worktreePath: string): Promise<ProjectAction>
   /** Open one specific chat session by id (the workspace tree's expanded session list, spec 040 T129). */
   openChat(id: string): ProjectAction
+  /**
+   * Rename one chat session's durable title (owner request: rename from the left tree or the tab strip,
+   * reflected in both). Goes through the per-session face's own `rename` - the top-level sessions
+   * service has none - reached the way `agent-bridge.ts` already does: `scope(id)` then `sessionOf`.
+   * The list row's `displayTitle` and any open chat tab follow from the resulting title projection.
+   */
+  renameChat(id: string, title: string): Promise<ProjectAction>
   /** Create a branch and worktree in a repository, select it and open a chat there. */
   newWorktree(repoRoot: string, branch: string): Promise<ProjectAction>
   /**
@@ -89,7 +96,10 @@ function folderName(path: string): string {
 }
 
 function message(cause: unknown): string {
-  return cause instanceof Error ? cause.message : String(cause)
+  if (cause instanceof Error) return cause.message
+  // A RemoteFailure (a `RemoteResult` error branch) is a plain object with a message, not an Error.
+  if (typeof cause === 'object' && cause !== null && 'message' in cause && typeof cause.message === 'string') return cause.message
+  return String(cause)
 }
 
 export function createProjectsControl(deps: ProjectsControlDeps): ProjectsControl {
@@ -176,6 +186,24 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
         return { ok: true }
       } catch (cause) {
         return fail(`Could not open that chat: ${message(cause)}`)
+      }
+    },
+
+    async renameChat(id, raw) {
+      const sessions = deps.getSessions()
+      if (sessions === undefined) return fail('Chats are not available yet.')
+      const title = raw.trim()
+      if (title === '') return fail('A chat needs a name.')
+      const branded = sessions.list.getSnapshot().ids.find(candidate => candidate === id)
+      if (branded === undefined) return fail('That chat is no longer available.')
+      const scope = sessions.scope(branded)
+      const face = scope === undefined ? undefined : sessions.sessionOf(scope)
+      if (face === undefined) return fail('That chat is not ready to be renamed.')
+      try {
+        const result = await face.rename(title)
+        return result.ok ? { ok: true } : fail(`Could not rename that chat: ${message(result.error)}`)
+      } catch (cause) {
+        return fail(`Could not rename that chat: ${message(cause)}`)
       }
     },
 

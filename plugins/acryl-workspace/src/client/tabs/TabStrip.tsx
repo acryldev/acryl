@@ -43,6 +43,8 @@ export interface TabStripProps {
   onOpenPty(commandId: AgentId, title: string): void
   /** Starts a brand new AcrylDSH Chat session, its own tab (spec 040 T130-followup). */
   onOpenChat(): void
+  /** Renames a chat tab's session itself, so the left tree (which reads the session's own title) follows. */
+  onRenameChat(sessionId: string, title: string): void
   /** What Settings > Agents says, for the "+" menu. */
   readonly agentSettings: AgentSettingsView | null
   /** Which tab types are turned on, shared with Settings > Tabs and the palette. */
@@ -111,7 +113,7 @@ function kindGlyph(kind: WorkspaceTile['kind']): string {
   return '◉'
 }
 
-export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, dock, agentStatus, storage, customAgents, terminals, onClose, onOpenPty, onOpenChat, agentSettings, tabTypes, tabRegistry, onSetAgentEnabled, onManageSettings }: TabStripProps) {
+export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, dock, agentStatus, storage, customAgents, terminals, onClose, onOpenPty, onOpenChat, onRenameChat, agentSettings, tabTypes, tabRegistry, onSetAgentEnabled, onManageSettings }: TabStripProps) {
   const tabsRef = useRef<HTMLDivElement>(null)
   const agentStates = useSyncExternalStore(agentStatus.subscribe, agentStatus.getSnapshot)
   const [edges, setEdges] = useState({ start: false, end: false })
@@ -153,7 +155,18 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
 
   const commitRename = (): void => {
     if (editing === null) return
-    workspace.renameTile(editing.id, editing.value)
+    const tile = snapshot.tiles.find(candidate => candidate.id === editing.id)
+    // A chat tab's title is the session's own title: rename the session too, or the left tree (which reads
+    // the session) keeps the old name and the two surfaces drift apart. A blank name would reset the tab to
+    // its generic default, which a session has no equivalent of - leave a chat's name alone instead.
+    if (tile?.kind === 'chat' && tile.chatSessionId !== undefined) {
+      if (editing.value.trim() !== '') {
+        workspace.renameTile(editing.id, editing.value)
+        onRenameChat(tile.chatSessionId, editing.value)
+      }
+    } else {
+      workspace.renameTile(editing.id, editing.value)
+    }
     setEditing(null)
   }
 

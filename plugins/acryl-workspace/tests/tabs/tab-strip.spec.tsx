@@ -35,17 +35,18 @@ function memoryStorage(initial: Record<string, string> = {}): Storage {
   }
 }
 
-function Harness({ workspace, storage, onOpenPty, onOpenChat = () => {}, onClose = () => {}, custom = [], settings = null, onManage = () => true, tabTypes, onSetEnabled = async () => {} }: { workspace: WorkspaceState; storage: Storage; onOpenPty: (id: string, title: string) => void; onOpenChat?: () => void; onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: (section: 'agents' | 'tabs', onSettled?: (found: boolean) => void) => boolean; tabTypes?: TabTypesState; onSetEnabled?: (id: string, enabled: boolean) => Promise<void> }) {
+function Harness({ workspace, storage, onOpenPty, onOpenChat = () => {}, onRenameChat = () => {}, onClose = () => {}, custom = [], settings = null, onManage = () => true, tabTypes, onSetEnabled = async () => {} }: { workspace: WorkspaceState; storage: Storage; onOpenPty: (id: string, title: string) => void; onOpenChat?: () => void; onRenameChat?: (sessionId: string, title: string) => void; onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: (section: 'agents' | 'tabs', onSettled?: (found: boolean) => void) => boolean; tabTypes?: TabTypesState; onSetEnabled?: (id: string, enabled: boolean) => Promise<void> }) {
   const snapshot = useSyncExternalStore(l => workspace.subscribe(l), () => workspace.getSnapshot())
-  return <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={storage} customAgents={custom} terminals={terminals} onClose={onClose} onOpenPty={onOpenPty} onOpenChat={onOpenChat} agentSettings={settings} tabTypes={tabTypes ?? new TabTypesState(storage)} tabRegistry={tabRegistry} dock={dock} agentStatus={agentStatus} onSetAgentEnabled={onSetEnabled} onManageSettings={onManage} />
+  return <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={storage} customAgents={custom} terminals={terminals} onClose={onClose} onOpenPty={onOpenPty} onOpenChat={onOpenChat} onRenameChat={onRenameChat} agentSettings={settings} tabTypes={tabTypes ?? new TabTypesState(storage)} tabRegistry={tabRegistry} dock={dock} agentStatus={agentStatus} onSetAgentEnabled={onSetEnabled} onManageSettings={onManage} />
 }
 
 function setup(storage = memoryStorage(), extra: { onClose?: (tile: WorkspaceTile) => void; custom?: readonly CustomAgent[]; settings?: AgentSettingsView | null; onManage?: (section: 'agents' | 'tabs', onSettled?: (found: boolean) => void) => boolean; tabTypes?: TabTypesState; onSetEnabled?: (id: string, enabled: boolean) => Promise<void> } = {}) {
   const workspace = new WorkspaceState()
   const onOpenPty = vi.fn()
   const onOpenChat = vi.fn()
-  render(<Harness workspace={workspace} storage={storage} onOpenPty={onOpenPty} onOpenChat={onOpenChat} {...extra} />)
-  return { workspace, storage, onOpenPty, onOpenChat }
+  const onRenameChat = vi.fn()
+  render(<Harness workspace={workspace} storage={storage} onOpenPty={onOpenPty} onOpenChat={onOpenChat} onRenameChat={onRenameChat} {...extra} />)
+  return { workspace, storage, onOpenPty, onOpenChat, onRenameChat }
 }
 
 describe('TabStrip', () => {
@@ -66,6 +67,31 @@ describe('TabStrip', () => {
     fireEvent.change(screen.getByLabelText('Rename api work'), { target: { value: '   ' } })
     fireEvent.blur(screen.getByLabelText('Rename api work'))
     expect(workspace.getSnapshot().tiles.at(-1)?.title).toBe('Claude')
+  })
+
+  it('renaming a chat tab also renames its session, and a blank name leaves it alone', () => {
+    const { workspace, onRenameChat } = setup()
+    act(() => { workspace.addTile('chat', { chatSessionId: 's1', title: 'Explore' }) })
+    fireEvent.doubleClick(screen.getByRole('tab', { name: /Explore/ }))
+    fireEvent.change(screen.getByLabelText('Rename Explore'), { target: { value: 'Plan the launch' } })
+    fireEvent.submit(screen.getByLabelText('Rename Explore').closest('form') as HTMLFormElement)
+    expect(workspace.getSnapshot().tiles.find(t => t.chatSessionId === 's1')?.title).toBe('Plan the launch')
+    expect(onRenameChat).toHaveBeenCalledWith('s1', 'Plan the launch')
+
+    fireEvent.doubleClick(screen.getByRole('tab', { name: /Plan the launch/ }))
+    fireEvent.change(screen.getByLabelText('Rename Plan the launch'), { target: { value: '   ' } })
+    fireEvent.blur(screen.getByLabelText('Rename Plan the launch'))
+    expect(workspace.getSnapshot().tiles.find(t => t.chatSessionId === 's1')?.title).toBe('Plan the launch')
+    expect(onRenameChat).toHaveBeenCalledTimes(1)
+  })
+
+  it('renaming a plain terminal tab never touches a session', () => {
+    const { workspace, onRenameChat } = setup()
+    act(() => { workspace.addTile('pty', { commandId: 'shell', title: 'Terminal' }) })
+    fireEvent.doubleClick(screen.getByRole('tab', { name: /Terminal/ }))
+    fireEvent.change(screen.getByLabelText('Rename Terminal'), { target: { value: 'server' } })
+    fireEvent.submit(screen.getByLabelText('Rename Terminal').closest('form') as HTMLFormElement)
+    expect(onRenameChat).not.toHaveBeenCalled()
   })
 
   it('shows an icon badge on agent tabs', () => {

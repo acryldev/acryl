@@ -67,6 +67,7 @@ function fakeProjects(overrides: Partial<ProjectsControl>): ProjectsControl {
     openChat: (): ProjectAction => ({ ok: true }),
     newWorktree: async (): Promise<ProjectAction> => ({ ok: true }),
     removeWorkspace: async (): Promise<ProjectAction> => ({ ok: true }),
+    renameChat: async (): Promise<ProjectAction> => ({ ok: true }),
     openSettings: (): ProjectAction => ({ ok: true }),
     ...overrides,
   }
@@ -108,7 +109,7 @@ describe('scenario: settings for coding agents, through the + menu and Settings 
       const terminals = new TerminalRegistry({ createSocket: () => ({ send() {}, close() {}, onopen: null, onmessage: null, onclose: null, onerror: null, readyState: 0 }), urlFor: id => `ws://x/${id}` })
       return (
         <>
-          <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={undefined} customAgents={[]} terminals={terminals} onClose={() => {}} onOpenPty={() => {}} onOpenChat={() => {}} agentSettings={null} tabTypes={tabTypes} tabRegistry={registry} dock={dock} agentStatus={makeStatus().state} onSetAgentEnabled={async () => {}} onManageSettings={() => true} />
+          <TabStrip snapshot={snapshot} workspace={workspace} branchLabel="main" branchTitle="/p" runningText={null} storage={undefined} customAgents={[]} terminals={terminals} onClose={() => {}} onOpenPty={() => {}} onOpenChat={() => {}} onRenameChat={() => {}} agentSettings={null} tabTypes={tabTypes} tabRegistry={registry} dock={dock} agentStatus={makeStatus().state} onSetAgentEnabled={async () => {}} onManageSettings={() => true} />
           <TabsPanel tabTypes={tabTypes} tabRegistry={registry} />
         </>
       )

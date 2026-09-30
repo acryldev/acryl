@@ -197,6 +197,15 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
     else shell.dismissChat(entry.id)
   }
 
+  /** Rename in place from the tree (owner request: bidirectional with the tab strip). An agent/terminal
+   * entry is its tab's own title, so renaming the tile is the whole job (the strip and this row both read
+   * it). A chat entry renames the session itself; its open tab then follows the session's new title. */
+  const renameEntry = (path: string, entry: WorktreeSessionEntry, title: string): void => {
+    setNotice(null)
+    if (entry.kind === 'agent') { groups.stateFor(path).renameTile(entry.id, title); return }
+    void projects.renameChat(entry.id, title).then((result) => { if (!result.ok) setNotice(result.reason) })
+  }
+
   /** Remove a whole workspace from the tree (owner request, T135-followup: "I must be able to remove
    * both workspace and sessions"). */
   const removeRepo = (root: string): void => {
@@ -348,6 +357,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
             onSelectAgent={selectAgentEntry}
             onSelectChat={selectChatEntry}
             onCloseEntry={closeEntry}
+            onRenameEntry={renameEntry}
             onRemove={() => { removeRepo(repo.root) }}
             onSelect={pickWorktree}
             onNewChat={newChat}
@@ -402,6 +412,7 @@ interface RepoSectionProps {
   readonly onSelectAgent: (path: string, tileId: string) => void
   readonly onSelectChat: (path: string, id: string) => void
   readonly onCloseEntry: (path: string, entry: WorktreeSessionEntry) => void
+  readonly onRenameEntry: (path: string, entry: WorktreeSessionEntry, title: string) => void
   /** Remove this whole workspace from the tree (T135-followup hover "x"). */
   readonly onRemove: () => void
   readonly onSelect: (path: string) => void
@@ -416,7 +427,7 @@ interface RepoSectionProps {
  * every branch/worktree under it. */
 function RepoSection({
   repo, collapsed, onToggleCollapse, expandedWorktrees, onToggleWorktree, entriesByWorktree, onSelectAgent, onSelectChat,
-  onCloseEntry, onRemove, onSelect, onNewChat, customAgents, creating, onToggleCreate, onCreate,
+  onCloseEntry, onRenameEntry, onRemove, onSelect, onNewChat, customAgents, creating, onToggleCreate, onCreate,
 }: RepoSectionProps) {
   const [branch, setBranch] = useState('')
   const [busy, setBusy] = useState(false)
@@ -514,6 +525,7 @@ function RepoSection({
                   onSelectAgent={onSelectAgent}
                   onSelectChat={onSelectChat}
                   onCloseEntry={onCloseEntry}
+                  onRenameEntry={onRenameEntry}
                 />
               )}
             </li>
@@ -559,7 +571,7 @@ function WorktreeButton({ row, onSelect, customAgents }: { row: WorktreeRow; onS
  * AcrylDSH Chat scoped to it - never a file, browser, diff, board or doc tab.
  */
 function WorktreeSessions({
-  path, entries, customAgents, onSelectAgent, onSelectChat, onCloseEntry,
+  path, entries, customAgents, onSelectAgent, onSelectChat, onCloseEntry, onRenameEntry,
 }: {
   readonly path: string
   readonly entries: readonly WorktreeSessionEntry[]
@@ -569,27 +581,56 @@ function WorktreeSessions({
   /** Hover "x" (owner request, T134-followup): removes an agent/terminal tab or hides a chat, from
    * both this list and the tab strip at once. */
   readonly onCloseEntry: (path: string, entry: WorktreeSessionEntry) => void
+  /** Rename in place (double-click the row): an agent/terminal tab or a chat session, reflected in the tab strip. */
+  readonly onRenameEntry: (path: string, entry: WorktreeSessionEntry, title: string) => void
 }) {
+  const [editing, setEditing] = useState<{ readonly key: string; readonly value: string } | null>(null)
   if (entries.length === 0) {
     return <p className="dshWorkspaceSessionsEmpty">Nothing running here yet.</p>
   }
   return (
     <ul className="dshWorkspaceSessions">
-      {entries.map(entry => (
-        <li key={`${entry.kind}-${entry.id}`} className="dshWorkspaceSessionItem">
+      {entries.map((entry) => {
+        const key = `${entry.kind}-${entry.id}`
+        const renaming = editing?.key === key
+        const commit = (): void => {
+          if (editing === null) return
+          if (editing.value.trim() !== entry.label.trim()) onRenameEntry(path, entry, editing.value)
+          setEditing(null)
+        }
+        const icon = entry.kind === 'agent'
+          ? <AgentIcon commandId={entry.commandId ?? 'shell'} custom={customAgents.find(agent => agent.id === entry.commandId)?.badge} />
+          : <ChatIcon />
+        return (
+        <li key={key} className="dshWorkspaceSessionItem">
+          {renaming ? (
+            <form className="dshWorkspaceSessionRow dshWorkspaceSessionRenameRow" onSubmit={(event) => { event.preventDefault(); commit() }}>
+              {icon}
+              <input
+                className="dshWorkspaceSessionRename"
+                aria-label={`Rename ${entry.label}`}
+                autoFocus
+                value={editing.value}
+                onFocus={(event) => { event.currentTarget.select() }}
+                onChange={(event) => { setEditing({ key, value: event.target.value }) }}
+                onBlur={commit}
+                onKeyDown={(event) => { if (event.key === 'Escape') { event.preventDefault(); setEditing(null) } }}
+              />
+            </form>
+          ) : (
           <button
             type="button"
             className="dshWorkspaceSessionRow"
-            title={entry.label}
+            title={`${entry.label} (double-click to rename)`}
             aria-pressed={entry.active === true}
             onClick={() => { if (entry.kind === 'agent') onSelectAgent(path, entry.id); else onSelectChat(path, entry.id) }}
+            onDoubleClick={() => { setEditing({ key, value: entry.label }) }}
           >
-            {entry.kind === 'agent'
-              ? <AgentIcon commandId={entry.commandId ?? 'shell'} custom={customAgents.find(agent => agent.id === entry.commandId)?.badge} />
-              : <ChatIcon />}
+            {icon}
             <span className="dshWorkspaceSessionLabel">{entry.label}</span>
             {entry.running === true && <span className="dshWorkspaceDot" data-dot="running" role="img" aria-label="Running" />}
           </button>
+          )}
           <button
             type="button"
             className="dshWorkspaceSessionClose"
@@ -600,7 +641,8 @@ function WorktreeSessions({
             ×
           </button>
         </li>
-      ))}
+        )
+      })}
     </ul>
   )
 }

@@ -69,3 +69,28 @@ export function ensureWorktreeChatTabs(
     if (currentTile !== undefined) workspace.selectTile(currentTile.id)
   }
 }
+
+/**
+ * Keep every open chat tab's title following its session's own title (owner request: rename in the left
+ * tree or the tab strip, reflected in both). A tab's title is otherwise a static string set once at
+ * creation. Only a *change* in the session's `displayTitle` since the last time this ran is applied
+ * (`seen` remembers it per session): re-applying an unchanged title would revert a name the user just
+ * typed into a tab before the Host round trip has come back with it.
+ * @param seen - session id -> the displayTitle last applied; owned by the caller so it survives re-runs.
+ */
+export function syncChatTabTitles(
+  workspace: WorkspaceState,
+  sessions: { readonly byId: Readonly<Record<string, Pick<WorktreeChatSessionLike, 'blank' | 'displayTitle'> | undefined>> },
+  seen: Map<string, string>,
+): void {
+  for (const tile of workspace.getSnapshot().tiles) {
+    if (tile.kind !== 'chat' || tile.chatSessionId === undefined) continue
+    const row = sessions.byId[tile.chatSessionId]
+    if (row === undefined || row.blank) continue
+    const previous = seen.get(tile.chatSessionId)
+    seen.set(tile.chatSessionId, row.displayTitle)
+    if (previous !== undefined && previous !== row.displayTitle && tile.title !== row.displayTitle) {
+      workspace.renameTile(tile.id, row.displayTitle)
+    }
+  }
+}

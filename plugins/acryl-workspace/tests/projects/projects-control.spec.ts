@@ -53,6 +53,7 @@ interface World {
   readonly workspaceCreates: { path: string }[]
   readonly renames: { workspaceId: string; title: string }[]
   readonly workspaceDeletes: string[]
+  readonly renamed: { id: string; title: string }[]
 }
 
 function world(options: {
@@ -64,6 +65,7 @@ function world(options: {
   isRepo?: (cwd: string) => boolean
   createWorkspace?: () => Promise<unknown>
   deleteWorkspace?: () => Promise<unknown>
+  renameFace?: 'missing' | 'rejects'
   createSession?: () => Promise<string>
   hasSessions?: boolean
   platform?: 'darwin' | 'web'
@@ -76,10 +78,19 @@ function world(options: {
   const workspaceCreates: { path: string }[] = []
   const renames: { workspaceId: string; title: string }[] = []
   const workspaceDeletes: string[] = []
+  const renamed: { id: string; title: string }[] = []
   const items = (options.workspaces ?? []).map(w => ({ title: w.path.split('/').pop() ?? w.path, ...w, sessionIds: options.boundSessions ?? [] }))
   const sessions = {
     list: { getSnapshot: () => ({ ids: rows.map(r => r.id), byId: Object.fromEntries(rows.map(r => [r.id, r])) }) },
     open: (id: string) => { opened.push(id) },
+    scope: (id: string) => (options.renameFace === 'missing' ? undefined : { id }),
+    sessionOf: (scope: { id: string }) => ({
+      rename: async (title: string) => {
+        if (options.renameFace === 'rejects') return { ok: false as const, error: { message: 'host down' } }
+        renamed.push({ id: scope.id, title })
+        return { ok: true as const, value: { title, seq: 1 } }
+      },
+    }),
     create: async (input: { workspaceId?: string; cwd?: string }) => {
       // The Host rejects a request that names both, so the fake does too.
       if (input.workspaceId !== undefined && input.cwd !== undefined) throw new Error('session.create accepts workspaceId or cwd, not both')
@@ -113,7 +124,7 @@ function world(options: {
     getSessions: () => (options.hasSessions === false ? undefined : sessions),
     directory: () => options.seams ?? { pickDirectory: async () => '/p/proj' },
   })
-  return { control, shell, created, opened, workspaceCreates, renames, workspaceDeletes }
+  return { control, shell, created, opened, workspaceCreates, renames, workspaceDeletes, renamed }
 }
 
 describe('ProjectsControl.showChat', () => {
@@ -406,5 +417,29 @@ describe('the desktop folder chooser', () => {
     document.body.innerHTML = '<div class="dshWorkspaceSideChats"><button aria-label="添加工作区"></button></div>'
     expect(clickAddWorkspaceTrigger()).toBe(true)
     document.body.innerHTML = ''
+  })
+})
+
+describe('ProjectsControl.renameChat', () => {
+  const sessions = [{ id: 's1', cwd: '/p/proj', blank: false, updatedAt: 1 }]
+
+  it('renames the session through its own face, trimming the title', async () => {
+    const w = world({ sessions })
+    expect(await w.control.renameChat('s1', '  Launch plan ')).toEqual({ ok: true })
+    expect(w.renamed).toEqual([{ id: 's1', title: 'Launch plan' }])
+  })
+
+  it('refuses a blank name and an unknown chat, and says when the session is not ready', async () => {
+    const w = world({ sessions })
+    expect(await w.control.renameChat('s1', '   ')).toMatchObject({ ok: false, reason: expect.stringContaining('needs a name') })
+    expect(await w.control.renameChat('nope', 'x')).toMatchObject({ ok: false, reason: expect.stringContaining('no longer available') })
+    const notReady = world({ sessions, renameFace: 'missing' })
+    expect(await notReady.control.renameChat('s1', 'x')).toMatchObject({ ok: false, reason: expect.stringContaining('not ready') })
+    expect(w.renamed).toEqual([])
+  })
+
+  it('reports the Host refusing the rename', async () => {
+    const w = world({ sessions, renameFace: 'rejects' })
+    expect(await w.control.renameChat('s1', 'x')).toMatchObject({ ok: false, reason: expect.stringContaining('host down') })
   })
 })
