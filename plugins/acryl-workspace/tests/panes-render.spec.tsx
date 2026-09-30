@@ -503,6 +503,20 @@ describe('ProjectsSidebar', () => {
     shell.dispose()
   })
 
+  it('opens the typed-path form, with the reason, when the chooser says the machine has none', async () => {
+    const shell = new WorkspaceShellState(api())
+    const projects = fakeProjects({
+      chooserKind: () => 'picker',
+      addProject: async (): Promise<ProjectAction> => ({ ok: false, reason: 'This machine has no folder chooser - type the folder path instead.', needsPath: true }),
+    })
+    render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Add git project' }))
+    expect(await screen.findByLabelText('Project folder path')).toBeTruthy()
+    expect((await screen.findByRole('status')).textContent).toContain('no folder chooser')
+    expect(screen.queryByRole('alert')).toBeNull()
+    shell.dispose()
+  })
+
   it('creates a new branch from the repo header form and closes it on success', async () => {
     const shell = new WorkspaceShellState(api())
     const projects = fakeProjects()

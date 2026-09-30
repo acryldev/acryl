@@ -23,6 +23,7 @@ import { reviewTabPlugin } from './review/review-tab.ts'
 import { WorkspaceGroups } from './canvas/groups.ts'
 import { browserStorage, parseSavedWorkspace, STORAGE_KEY } from './canvas/persistence.ts'
 import { startWorkspacePersistence } from './canvas/persist.ts'
+import { createWebFolderPicker } from './projects/web-folder-picker.ts'
 import { createProjectsControl, desktopDirectorySeams } from './projects/projects-control.ts'
 import { createWorkspaceGitApi } from './git/git-api.ts'
 import { ProjectsSidebar } from './projects/ProjectsSidebar.tsx'
@@ -106,6 +107,7 @@ export function apply(ctx: ClientContext): void {
     getWorkspaces: () => ctx.get('workspaces'),
     getSessions: () => ctx.get('sessions'),
     directory: () => desktopDirectorySeams(),
+    webPickDirectory: createWebFolderPicker(),
   })
   ctx.effect(() => startShellPolling(shell), 'acryl-workspace: git state polling')
   ctx.effect(() => installWorkspaceStyles(), 'acryl-workspace: styles')

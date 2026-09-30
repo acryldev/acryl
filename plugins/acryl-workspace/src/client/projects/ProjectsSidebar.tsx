@@ -248,6 +248,8 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
     const result = await projects.addProject()
     if (!result.ok) {
       if (revealsUpstream) setSearchOpen(false)
+      // No chooser on this machine: offer typing the path, as a hint rather than an error.
+      if (result.needsPath === true) { setAddingByPath(true); setHint(result.reason); return }
       setNotice(result.reason)
       return
     }

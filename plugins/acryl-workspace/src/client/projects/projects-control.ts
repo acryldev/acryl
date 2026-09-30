@@ -11,11 +11,12 @@ import type { WorkspaceGitApi } from '../git/git-api.ts'
 import { clickButtonByName } from '../dom/find-by-name.ts'
 import { pickSession, type SessionRef } from '../sessions/session-pick.ts'
 import { owningWorktree } from './sidebar-model.ts'
+import { FolderChooserUnavailableError } from './web-folder-picker.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 
 export type ProjectAction =
   | { readonly ok: true; /** A hint to show the user, when the action continues elsewhere. */ readonly note?: string }
-  | { readonly ok: false; readonly reason: string }
+  | { readonly ok: false; readonly reason: string; /** The caller should offer typing the folder's path instead (no chooser here). */ readonly needsPath?: true }
 
 export interface ProjectsControl {
   /** Change-detection key for the registered workspace folders (a primitive, safe to subscribe to). */
@@ -76,6 +77,8 @@ export interface ProjectsControlDeps {
   readonly getSessions: () => ISessions | undefined
   /** Looked up when needed, because the desktop installs its folder-picker seam after this plugin loads. */
   readonly directory: () => DirectorySeams
+  /** Web only: opens the OS folder chooser on the machine running the Host (see `web-folder-picker.ts`). */
+  readonly webPickDirectory?: () => Promise<string | null>
 }
 
 export interface DirectorySeams {
@@ -115,6 +118,14 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
 
   const workspaceItems = () => deps.getWorkspaces()?.list.getSnapshot().items ?? []
 
+  /** The chooser to use: the desktop window's own, else (Web) the Host's - until it says it has none. */
+  let webPickerUnavailable = false
+  const nativePicker = (): (() => Promise<string | null>) | undefined => {
+    const seam = deps.directory().pickDirectory
+    if (seam !== undefined) return seam
+    return deps.platform === 'web' && !webPickerUnavailable ? deps.webPickDirectory : undefined
+  }
+
   /**
    * Create a chat bound to a worktree's workspace. In this app a chat runs in exactly its workspace's
    * folder, and the Host rejects a request that names both a workspace and a directory. An unbound chat
@@ -152,14 +163,14 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     subscribeWorkspaces: listener => deps.getWorkspaces()?.list.subscribe(listener) ?? (() => {}),
 
     chooserKind() {
-      if (deps.directory().pickDirectory !== undefined) return 'picker'
+      if (nativePicker() !== undefined) return 'picker'
       return deps.platform === 'web' ? 'path' : 'upstream'
     },
 
     async addProject() {
-      const seams = deps.directory()
-      if (seams.pickDirectory === undefined) {
-        if (deps.platform === 'web') return fail('Type the path of a git repository folder to add it.')
+      const pick = nativePicker()
+      if (pick === undefined) {
+        if (deps.platform === 'web') return { ok: false, reason: 'Type the path of a git repository folder to add it.', needsPath: true }
         // Desktop without a picker seam (Linux today - Windows and macOS both publish one, T134): falls
         // back to the app's own Add workspace flow, which drives the native chooser through a trigger
         // that lives inside the upstream sidebar. That sidebar is hidden by default behind the tree's
@@ -174,8 +185,12 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       }
       let picked: string | null
       try {
-        picked = await seams.pickDirectory()
+        picked = await pick()
       } catch (cause) {
+        if (cause instanceof FolderChooserUnavailableError) {
+          webPickerUnavailable = true // remembered: the next "+" goes straight to typing
+          return { ok: false, reason: 'This machine has no folder chooser - type the folder path instead.', needsPath: true }
+        }
         return fail(message(cause))
       }
       if (picked === null) return { ok: true }

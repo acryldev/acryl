@@ -47,6 +47,9 @@ import { AgentSettings } from './agents/settings.ts'
 import { AgentStatusStore, WORKSPACE_AGENT_STATUS_PATH } from './agents/status/agent-status.ts'
 import { handleAgentStatusRequest } from './agents/status/route.ts'
 import { spawnNodePty } from './pty/node-pty-spawn.ts'
+import { WORKSPACE_PICK_FOLDER_PATH } from './folder-picker/contract.ts'
+import { pickFolderNatively, singleFlight } from './folder-picker/picker.ts'
+import { handleWorkspacePickFolderRequest } from './folder-picker/route.ts'
 import { WorkspacePtyRegistry } from './pty/service.ts'
 import {
   WORKSPACE_PTY_CLOSE_PATH,
@@ -201,6 +204,13 @@ export function apply(ctx: Context): void {
           handler: (req, res) => handler(req, res, rendererOrigin, workspaceGit, reportHostError),
         }))
       }
+      // The OS's own folder chooser, for the "+" on Web (a browser page cannot open one that yields a path).
+      const pickFolder = singleFlight(() => pickFolderNatively(process.platform))
+      releases.push(ctx.webServer.register({
+        kind: 'exact',
+        path: WORKSPACE_PICK_FOLDER_PATH,
+        handler: (req, res) => handleWorkspacePickFolderRequest(req, res, rendererOrigin, pickFolder, reportHostError),
+      }))
     } catch (cause) {
       for (const release of releases.reverse()) release()
       void workspaceGit.dispose()

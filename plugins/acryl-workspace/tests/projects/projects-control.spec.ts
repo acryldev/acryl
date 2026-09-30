@@ -4,6 +4,7 @@ import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { IWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import { describe, expect, it, vi } from 'vitest'
 import type { WorkspaceGitApi } from '../../src/client/git/git-api.ts'
+import { FolderChooserUnavailableError } from '../../src/client/projects/web-folder-picker.ts'
 import { createProjectsControl, desktopDirectorySeams, clickAddWorkspaceTrigger, type DirectorySeams } from '../../src/client/projects/projects-control.ts'
 import { WorkspaceShellState } from '../../src/client/worktrees/shell-state.ts'
 
@@ -66,6 +67,7 @@ function world(options: {
   createWorkspace?: () => Promise<unknown>
   deleteWorkspace?: () => Promise<unknown>
   renameFace?: 'missing' | 'rejects'
+  webPickDirectory?: () => Promise<string | null>
   createSession?: () => Promise<string>
   hasSessions?: boolean
   platform?: 'darwin' | 'web'
@@ -125,6 +127,7 @@ function world(options: {
     getWorkspaces: () => workspaces,
     getSessions: () => (options.hasSessions === false ? undefined : sessions),
     directory: () => options.seams ?? { pickDirectory: async () => '/p/proj' },
+    ...(options.webPickDirectory === undefined ? {} : { webPickDirectory: options.webPickDirectory }),
   })
   return { control, shell, created, opened, workspaceCreates, renames, workspaceDeletes, renamed }
 }
@@ -489,5 +492,43 @@ describe('ProjectsControl.openChat', () => {
     await w.shell.discover('/p/proj')
     expect(await w.control.openChat('e1')).toMatchObject({ ok: false, reason: expect.stringContaining('host down') })
     expect(w.shell.getSnapshot().dismissedChats.has('e1')).toBe(false)
+  })
+})
+
+describe('ProjectsControl on Web, with the Host\'s own folder chooser', () => {
+  const web = { seams: { pickDirectory: undefined }, platform: 'web' as const }
+
+  it('uses the chooser instead of asking for a typed path, and adds what was picked', async () => {
+    const w = world({ ...web, webPickDirectory: async () => '/p/proj' })
+    expect(w.control.chooserKind()).toBe('picker')
+    expect(await w.control.addProject()).toEqual({ ok: true })
+    expect(w.workspaceCreates).toEqual([{ path: '/p/proj' }])
+  })
+
+  it('does nothing when the chooser is cancelled', async () => {
+    const w = world({ ...web, webPickDirectory: async () => null })
+    expect(await w.control.addProject()).toEqual({ ok: true })
+    expect(w.workspaceCreates).toEqual([])
+  })
+
+  it('falls back to a typed path when the machine has no chooser, and remembers it', async () => {
+    let asked = 0
+    const w = world({ ...web, webPickDirectory: async () => { asked += 1; throw new FolderChooserUnavailableError() } })
+    expect(await w.control.addProject()).toMatchObject({ ok: false, needsPath: true })
+    expect(w.control.chooserKind()).toBe('path')
+    expect(await w.control.addProject()).toMatchObject({ ok: false, needsPath: true })
+    expect(asked).toBe(1)
+  })
+
+  it('reports any other chooser failure as an ordinary error, not a request to type', async () => {
+    const w = world({ ...web, webPickDirectory: async () => { throw new Error('could not be opened') } })
+    const result = await w.control.addProject()
+    expect(result).toMatchObject({ ok: false, reason: expect.stringContaining('could not be opened') })
+    expect(result).not.toHaveProperty('needsPath')
+  })
+
+  it('still asks for a typed path when the page has no chooser at all', async () => {
+    const w = world(web)
+    expect(w.control.chooserKind()).toBe('path')
   })
 })
