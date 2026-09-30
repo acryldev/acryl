@@ -96,6 +96,7 @@ function fakeProjects(overrides: Partial<ProjectsControl> = {}): ProjectsControl
     newChat: async (path): Promise<ProjectAction> => { shown.push(`new:${path}`); return { ok: true } },
     openChat: (id): ProjectAction => { shown.push(`open:${id}`); return { ok: true } },
     newWorktree: async (root, branch): Promise<ProjectAction> => { shown.push(`worktree:${root}:${branch}`); return { ok: true } },
+    removeWorkspace: async (root): Promise<ProjectAction> => { shown.push(`remove:${root}`); return { ok: true } },
     openSettings: (): ProjectAction => ({ ok: true }),
     ...overrides,
   }
@@ -229,6 +230,26 @@ describe('ProjectsSidebar', () => {
     shell.dispose()
   })
 
+  it('closing a chat entry with an open tab asks the canvas to close that exact tab too, not just the row (T135-followup: "removed 1, added 1, got 3")', async () => {
+    const shell = new WorkspaceShellState(api())
+    const groups = new WorkspaceGroups()
+    // addTile('chat', ...) claims the group's existing unbound bootstrap tile rather than returning a new
+    // one (see state.ts's own claim semantics) - look the real tile up afterward, not from its return value.
+    act(() => { groups.stateFor('/p/proj-x').addTile('chat', { chatSessionId: 's2', title: 'two' }) })
+    const tile = groups.stateFor('/p/proj-x').getSnapshot().tiles.find(candidate => candidate.chatSessionId === 's2')
+    const requests: unknown[] = []
+    shell.onCloseTileRequest(request => { requests.push(request) })
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects(), groups)} />)
+    await screen.findByText('feature/x')
+    fireEvent.click(screen.getByRole('button', { name: 'Show sessions on feature/x' }))
+    await screen.findByText('two')
+    fireEvent.click(screen.getByRole('button', { name: 'Close two' }))
+    // Routed through requestCloseTile (which itself calls shell.dismissChat once it finds the chat tile),
+    // not a direct dismissChat call here - the open tab must actually close, not just the tree row.
+    expect(requests).toEqual([{ worktree: '/p/proj-x', tileId: tile?.id }])
+    shell.dispose()
+  })
+
   it('closing an agent entry by its hover "x" asks the canvas to close that exact tile (T134-followup)', async () => {
     const shell = new WorkspaceShellState(api())
     const groups = new WorkspaceGroups()
@@ -358,12 +379,33 @@ describe('ProjectsSidebar', () => {
     shell.dispose()
   })
 
-  it('discovers registered workspace folders as projects even without a chat', async () => {
+  it('discovers registered workspace folders as projects even without a chat, and registers a non-git one too (T135)', async () => {
     const seen: string[] = []
     const shell = new WorkspaceShellState({ ...api(), repo: async (cwd) => { seen.push(cwd); return null } })
     const projects = fakeProjects({ workspacePaths: () => ['/registered/project'], workspaceKey: () => '/registered/project' })
     render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
     await waitFor(() => { expect(seen).toContain('/registered/project') })
+    // Explicitly registered, so a non-git answer still becomes its own workspace entry, not silently dropped.
+    expect(await screen.findByRole('region', { name: 'project' })).toBeTruthy()
+    shell.dispose()
+  })
+
+  it('never turns a mere chat session cwd into a permanent workspace when it is not a git repository (T135: "web suddenly shows so many workspaces - didn\'t open them")', async () => {
+    const seen: string[] = []
+    const shell = new WorkspaceShellState({ ...api(), repo: async (cwd) => { seen.push(cwd); return null } })
+    const untouched = { ids: ['s1'], current: undefined, byId: { s1: { id: 's1', cwd: '/tmp/scratch-dir', running: false, blank: false, displayTitle: 'x', updatedAt: 1 } } }
+    render(<ProjectsSidebar {...sidebarProps(shell)} useSessions={sessionsHook(untouched)} />)
+    await waitFor(() => { expect(seen).toContain('/tmp/scratch-dir') })
+    expect(screen.queryByRole('region', { name: 'scratch-dir' })).toBeNull()
+    shell.dispose()
+  })
+
+  it('removes a workspace from the repo header\'s own "x" (T135-followup)', async () => {
+    const shell = new WorkspaceShellState(api())
+    const projects = fakeProjects()
+    render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove proj' }))
+    await waitFor(() => { expect(projects.shown).toContain('remove:/p/proj') })
     shell.dispose()
   })
 

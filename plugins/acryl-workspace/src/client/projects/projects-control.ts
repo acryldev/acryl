@@ -38,6 +38,14 @@ export interface ProjectsControl {
   openChat(id: string): ProjectAction
   /** Create a branch and worktree in a repository, select it and open a chat there. */
   newWorktree(repoRoot: string, branch: string): Promise<ProjectAction>
+  /**
+   * Remove a workspace from the tree entirely (owner request, T135-followup: "i can't remove added
+   * workspace... I must be able to remove both workspace and sessions"). Deletes the real Host
+   * registration when one exists (`IWorkspaces.delete` - "without deleting Sessions or files", so this
+   * is a registration removal, never data loss); either way, also drops it from the shell's own repo
+   * list so it does not linger client-side, and lets a later session still rediscover the same path.
+   */
+  removeWorkspace(root: string): Promise<ProjectAction>
   /** Open the app's Settings dialog. */
   openSettings(): ProjectAction
 }
@@ -131,10 +139,10 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       if (workspaces === undefined) return fail('Workspaces are not available yet.')
       const typed = path.trim()
       if (typed === '') return fail('Type the path of a folder to add.')
-      // A project is a git repository or a plain folder (T134-followup: "should be able to handle both
-      // git / non-git"). shell.discover() itself decides which and registers it either way; undefined
-      // only means the check itself failed (host/network error, or the path does not exist).
-      const worktree = await shell.discover(typed)
+      // A project is a git repository or a plain folder (T135: "should be able to handle both git /
+      // non-git"). registerFolder: true - this is the one explicit "add this folder" action, unlike the
+      // passive per-session discovery that must never promote an untouched directory to a workspace.
+      const worktree = await shell.discover(typed, { registerFolder: true })
       if (worktree === undefined) return fail('Could not add that folder.')
       if (seams.validateDirectory !== undefined) {
         try {
@@ -238,6 +246,20 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       const shown = await this.newChat(created.path)
       if (!shown.ok) shell.unpin()
       return shown
+    },
+
+    async removeWorkspace(root) {
+      const workspaces = deps.getWorkspaces()
+      const existing = workspaceItems().find(item => item.path === root)
+      if (existing !== undefined && workspaces !== undefined) {
+        try {
+          await workspaces.delete(existing.workspaceId)
+        } catch (cause) {
+          return fail(`Could not remove that workspace: ${message(cause)}`)
+        }
+      }
+      shell.forgetRepo(root)
+      return { ok: true }
     },
 
     openSettings() {

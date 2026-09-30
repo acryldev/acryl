@@ -61,9 +61,15 @@ describe('WorkspaceShellState', () => {
     expect(repo?.worktrees.map(w => w.branch)).toEqual(['main', 'feature/x'])
   })
 
-  it('registers a directory that is not a git repository as its own plain-folder workspace (T134-followup)', async () => {
+  it('ignores a directory that is not a git repository, by default (T135: only an explicit add registers a plain folder)', async () => {
     const shell = new WorkspaceShellState(fakeApi())
-    expect(await shell.discover('/plain/dir')).toBe('/plain/dir')
+    expect(await shell.discover('/plain/dir')).toBeUndefined()
+    expect(shell.getSnapshot().repos).toEqual([])
+  })
+
+  it('registers a directory that is not a git repository as its own plain-folder workspace when explicitly added (T135)', async () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    expect(await shell.discover('/plain/dir', { registerFolder: true })).toBe('/plain/dir')
     const [repo] = shell.getSnapshot().repos
     expect(repo).toMatchObject({ root: '/plain/dir', name: 'dir', git: false })
     expect(repo?.worktrees).toEqual([{ path: '/plain/dir', branch: null, main: true, phase: 'ready', changes: [], added: 0, removed: 0, truncated: false }])
@@ -72,7 +78,7 @@ describe('WorkspaceShellState', () => {
   it('never polls git status for a plain-folder workspace', async () => {
     const api = fakeApi()
     const shell = new WorkspaceShellState(api)
-    await shell.discover('/plain/dir')
+    await shell.discover('/plain/dir', { registerFolder: true })
     await shell.refreshStatus('/plain/dir')
     await shell.refreshAll()
     expect(api.calls.some(call => call.startsWith('status /plain/dir'))).toBe(false)
@@ -296,5 +302,36 @@ describe('close-tile channel (T134-followup)', () => {
     shell.dispose()
     shell.requestCloseTile({ worktree: '/p/proj', tileId: 't3' })
     expect(seen).toHaveLength(1)
+  })
+})
+
+describe('forgetRepo (T135-followup)', () => {
+  it('drops a repo from the tree and lets it be rediscovered fresh afterward', async () => {
+    const api = fakeApi()
+    const shell = new WorkspaceShellState(api)
+    await shell.discover('/p/proj')
+    expect(shell.getSnapshot().repos).toHaveLength(1)
+    shell.forgetRepo('/p/proj')
+    expect(shell.getSnapshot().repos).toEqual([])
+    // The probe cache was cleared too - discovering the same path again hits the api, not a stale cache.
+    const callsBefore = api.calls.filter(call => call.startsWith('repo')).length
+    await shell.discover('/p/proj')
+    expect(api.calls.filter(call => call.startsWith('repo')).length).toBe(callsBefore + 1)
+    expect(shell.getSnapshot().repos).toHaveLength(1)
+  })
+
+  it('clears the selection when the selected worktree belonged to the forgotten repo', async () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    await shell.discover('/p/proj')
+    shell.select('/p/proj')
+    shell.forgetRepo('/p/proj')
+    expect(shell.getSnapshot().selectedPath).toBeUndefined()
+  })
+
+  it('is a no-op for a repo that is not known', () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    const before = shell.getSnapshot()
+    shell.forgetRepo('/never/seen')
+    expect(shell.getSnapshot()).toBe(before)
   })
 })

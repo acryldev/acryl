@@ -158,24 +158,56 @@ export class WorkspaceShellState {
     this.replace({ ...this.snapshot, dismissedChats: Object.freeze(next) })
   }
 
+  /** Drop a repository or plain folder from the tree entirely (T135-followup: "I must be able to remove
+   * ... workspace"). Its own probe is cleared too, so a session whose cwd still points there can
+   * rediscover and re-show it later, rather than being stuck against a stale cached result. */
+  forgetRepo(root: string): void {
+    if (!this.snapshot.repos.some(repo => repo.root === root)) return
+    for (const key of [...this.probes.keys()]) {
+      if (key === root || key.startsWith(root.endsWith('/') ? root : `${root}/`)) this.probes.delete(key)
+    }
+    const repos = this.snapshot.repos.filter(repo => repo.root !== root)
+    const selectedGone = this.snapshot.selectedPath !== undefined
+      && !repos.some(repo => repo.worktrees.some(worktree => worktree.path === this.snapshot.selectedPath))
+    this.replace({
+      ...this.snapshot,
+      repos: Object.freeze(repos),
+      selectedPath: selectedGone ? undefined : this.snapshot.selectedPath,
+    })
+  }
+
   setMode(mode: ShellMode): void {
     if (this.snapshot.mode === mode) return
     this.replace({ ...this.snapshot, mode })
   }
 
   /**
-   * Learn about the repository that contains `cwd`, or register `cwd` itself as a plain, non-git folder
-   * workspace when it is not one (owner request, T134-followup). Repeated calls for one directory share
-   * one probe.
-   * @returns the path of the worktree (or plain folder) that owns `cwd` - undefined only when the api
-   * call itself failed (network/host error), not merely because `cwd` is not a git repository.
+   * Learn about the repository that contains `cwd`.
+   * @param options.registerFolder - when true, and `cwd` is not a git repository, register it as its
+   * own plain folder workspace instead of reporting it unknown (owner request, T135: only for an
+   * explicit "add this folder" action - `ProjectsControl.addProjectByPath`. Never passed by the passive
+   * per-session cwd discovery in `ProjectsSidebar`'s own effect: every session's cwd used to run through
+   * this same call, and defaulting this on there turned every ordinary, never-added session directory
+   * (a temp dir, an unrelated project a chat merely ran a command in, even $HOME) into a permanent
+   * "workspace" entry nobody asked for - the actual bug behind "web suddenly shows so many workspaces -
+   * didn't open them"). Bypasses the probe cache: an explicit add is a one-off action, not something to
+   * dedupe against an earlier passive, non-registering discovery of the same path.
+   * @returns the path of the worktree (or plain folder) that owns `cwd` - undefined when `cwd` is not a
+   * git repository and `registerFolder` was not requested, or when the api call itself failed.
    */
-  discover(cwd: string): Promise<string | undefined> {
+  discover(cwd: string, options: { readonly registerFolder?: boolean } = {}): Promise<string | undefined> {
+    if (options.registerFolder === true) {
+      return this.api.repo(cwd).then((view) => {
+        if (this.disposed) return undefined
+        if (view === null) { this.mergeFolder(cwd); return cwd }
+        this.mergeRepo(view)
+        return view.current
+      }, () => undefined)
+    }
     const existing = this.probes.get(cwd)
     if (existing !== undefined) return existing
     const probe = this.api.repo(cwd).then((view) => {
-      if (this.disposed) return undefined
-      if (view === null) { this.mergeFolder(cwd); return cwd }
+      if (view === null || this.disposed) return undefined
       this.mergeRepo(view)
       return view.current
     }, () => undefined)

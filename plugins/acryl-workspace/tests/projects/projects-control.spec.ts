@@ -52,6 +52,7 @@ interface World {
   readonly opened: string[]
   readonly workspaceCreates: { path: string }[]
   readonly renames: { workspaceId: string; title: string }[]
+  readonly workspaceDeletes: string[]
 }
 
 function world(options: {
@@ -62,6 +63,7 @@ function world(options: {
   seams?: DirectorySeams
   isRepo?: (cwd: string) => boolean
   createWorkspace?: () => Promise<unknown>
+  deleteWorkspace?: () => Promise<unknown>
   createSession?: () => Promise<string>
   hasSessions?: boolean
   platform?: 'darwin' | 'web'
@@ -73,6 +75,7 @@ function world(options: {
   const opened: string[] = []
   const workspaceCreates: { path: string }[] = []
   const renames: { workspaceId: string; title: string }[] = []
+  const workspaceDeletes: string[] = []
   const items = (options.workspaces ?? []).map(w => ({ title: w.path.split('/').pop() ?? w.path, ...w, sessionIds: options.boundSessions ?? [] }))
   const sessions = {
     list: { getSnapshot: () => ({ ids: rows.map(r => r.id), byId: Object.fromEntries(rows.map(r => [r.id, r])) }) },
@@ -90,6 +93,10 @@ function world(options: {
       renames.push({ workspaceId, title })
       return {}
     },
+    delete: async (workspaceId: string) => {
+      if (options.deleteWorkspace !== undefined) await options.deleteWorkspace()
+      workspaceDeletes.push(workspaceId)
+    },
     create: async (input: { path: string }) => {
       workspaceCreates.push(input)
       if (options.createWorkspace !== undefined) await options.createWorkspace()
@@ -106,7 +113,7 @@ function world(options: {
     getSessions: () => (options.hasSessions === false ? undefined : sessions),
     directory: () => options.seams ?? { pickDirectory: async () => '/p/proj' },
   })
-  return { control, shell, created, opened, workspaceCreates, renames }
+  return { control, shell, created, opened, workspaceCreates, renames, workspaceDeletes }
 }
 
 describe('ProjectsControl.showChat', () => {
@@ -332,6 +339,36 @@ describe('ProjectsControl.addProject', () => {
     expect(await broken.control.addProject()).toMatchObject({ ok: false, reason: expect.stringContaining('disk full') })
   })
 
+})
+
+describe('ProjectsControl.removeWorkspace (T135-followup)', () => {
+  it('deletes the real registration and forgets the repo from the tree', async () => {
+    const w = world({ workspaces: [{ workspaceId: 'w0', path: '/p/proj' }] })
+    await w.control.addProjectByPath('/p/proj')
+    expect(w.shell.getSnapshot().repos.some(repo => repo.root === '/p/proj')).toBe(true)
+    expect(await w.control.removeWorkspace('/p/proj')).toEqual({ ok: true })
+    expect(w.workspaceDeletes).toEqual(['w0'])
+    expect(w.shell.getSnapshot().repos.some(repo => repo.root === '/p/proj')).toBe(false)
+  })
+
+  it('still forgets the repo even when it was never a registered workspace (purely session-discovered)', async () => {
+    const w = world()
+    await w.shell.discover('/p/proj')
+    expect(w.shell.getSnapshot().repos.some(repo => repo.root === '/p/proj')).toBe(true)
+    expect(await w.control.removeWorkspace('/p/proj')).toEqual({ ok: true })
+    expect(w.workspaceDeletes).toEqual([]) // nothing to delete on the Host - there was no registration
+    expect(w.shell.getSnapshot().repos.some(repo => repo.root === '/p/proj')).toBe(false)
+  })
+
+  it('reports a real deletion failure instead of silently forgetting the repo anyway', async () => {
+    const w = world({ workspaces: [{ workspaceId: 'w0', path: '/p/proj' }], deleteWorkspace: async () => { throw new Error('host down') } })
+    await w.control.addProjectByPath('/p/proj')
+    expect(await w.control.removeWorkspace('/p/proj')).toMatchObject({ ok: false, reason: expect.stringContaining('host down') })
+    expect(w.shell.getSnapshot().repos.some(repo => repo.root === '/p/proj')).toBe(true) // left alone, not force-removed
+  })
+})
+
+describe('ProjectsControl folder chooser, remaining cases', () => {
   it('lists registered workspace folders as project sources', () => {
     const w = world({ workspaces: [{ workspaceId: 'w0', path: '/a' }, { workspaceId: 'w1', path: '/b' }] })
     expect(w.control.workspacePaths()).toEqual(['/a', '/b'])

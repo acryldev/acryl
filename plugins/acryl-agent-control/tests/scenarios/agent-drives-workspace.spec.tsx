@@ -66,6 +66,7 @@ function fakeProjects(overrides: Partial<ProjectsControl>): ProjectsControl {
     newChat: async (): Promise<ProjectAction> => ({ ok: true }),
     openChat: (): ProjectAction => ({ ok: true }),
     newWorktree: async (): Promise<ProjectAction> => ({ ok: true }),
+    removeWorkspace: async (): Promise<ProjectAction> => ({ ok: true }),
     openSettings: (): ProjectAction => ({ ok: true }),
     ...overrides,
   }

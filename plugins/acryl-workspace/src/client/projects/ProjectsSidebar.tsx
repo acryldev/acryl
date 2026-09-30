@@ -73,9 +73,11 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
   /** The upstream sidebar (search and anything else it owns), off by default now that it is not a mode. */
   const [searchOpen, setSearchOpen] = useState(false)
 
-  // Registered workspace folders are projects even before they have a chat.
+  // Registered workspace folders are projects even before they have a chat. registerFolder: true - these
+  // came from an explicit "add this folder" action (T135), unlike the passive per-session discovery
+  // just below, which must never promote an untouched session directory to a permanent workspace entry.
   useEffect(() => {
-    for (const path of projects.workspacePaths()) void shell.discover(path)
+    for (const path of projects.workspacePaths()) void shell.discover(path, { registerFolder: true })
   }, [shell, projects, workspaceKey])
 
   useEffect(() => {
@@ -154,13 +156,25 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
     if (!result.ok) setNotice(result.reason)
   }
 
-  /** Hover "x" (owner request, T134-followup): an agent/terminal entry closes its actual tab (the row
-   * exists only because the tab is open, so it disappears from here the same instant); a chat entry
-   * hides the session from this list and the tab strip together - there is no session-delete capability
-   * in the injected sessions face, so this is a "not shown here" toggle, not a destructive delete. */
+  /** Hover "x" (owner request, T134/T136-followup): an agent/terminal entry closes its actual tab (the
+   * row exists only because the tab is open, so it disappears from here the same instant). A chat entry
+   * must close its open tab too, not merely dismiss the tree row - dismissing alone left the tab strip
+   * showing a tile with no matching row anywhere (owner: "was 2, removed 1, then added 1, i got 3" -
+   * the "removed" one never actually left the strip). `requestCloseTile` already calls `dismissChat`
+   * itself once it finds a chat tile (`WorkspaceCanvas`'s own `closeTile`), so that is the one path taken
+   * when a tile exists; dismissing directly is only the fallback for the rare case where none does yet. */
   const closeEntry = (path: string, entry: WorktreeSessionEntry): void => {
-    if (entry.kind === 'agent') shell.requestCloseTile({ worktree: path, tileId: entry.id })
+    if (entry.kind === 'agent') { shell.requestCloseTile({ worktree: path, tileId: entry.id }); return }
+    const tile = groups.stateFor(path).getSnapshot().tiles.find(candidate => candidate.kind === 'chat' && candidate.chatSessionId === entry.id)
+    if (tile !== undefined) shell.requestCloseTile({ worktree: path, tileId: tile.id })
     else shell.dismissChat(entry.id)
+  }
+
+  /** Remove a whole workspace from the tree (owner request, T135-followup: "I must be able to remove
+   * both workspace and sessions"). */
+  const removeRepo = (root: string): void => {
+    setNotice(null)
+    void projects.removeWorkspace(root).then((result) => { if (!result.ok) setNotice(result.reason) })
   }
 
   const pickWorktree = (path: string): void => {
@@ -294,6 +308,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
             onSelectAgent={selectAgentEntry}
             onSelectChat={selectChatEntry}
             onCloseEntry={closeEntry}
+            onRemove={() => { removeRepo(repo.root) }}
             onSelect={pickWorktree}
             onNewChat={newChat}
             customAgents={customAgents}
@@ -347,6 +362,8 @@ interface RepoSectionProps {
   readonly onSelectAgent: (path: string, tileId: string) => void
   readonly onSelectChat: (path: string, id: string) => void
   readonly onCloseEntry: (path: string, entry: WorktreeSessionEntry) => void
+  /** Remove this whole workspace from the tree (T135-followup hover "x"). */
+  readonly onRemove: () => void
   readonly onSelect: (path: string) => void
   readonly onNewChat: (path: string) => void
   readonly customAgents: readonly CustomAgent[]
@@ -359,7 +376,7 @@ interface RepoSectionProps {
  * every branch/worktree under it. */
 function RepoSection({
   repo, collapsed, onToggleCollapse, expandedWorktrees, onToggleWorktree, entriesByWorktree, onSelectAgent, onSelectChat,
-  onCloseEntry, onSelect, onNewChat, customAgents, creating, onToggleCreate, onCreate,
+  onCloseEntry, onRemove, onSelect, onNewChat, customAgents, creating, onToggleCreate, onCreate,
 }: RepoSectionProps) {
   const [branch, setBranch] = useState('')
   const [busy, setBusy] = useState(false)
@@ -398,6 +415,15 @@ function RepoSection({
             +
           </button>
         )}
+        <button
+          type="button"
+          className="dshWorkspaceRepoRemove"
+          aria-label={`Remove ${repo.name}`}
+          title={`Remove ${repo.name} from Workspaces`}
+          onClick={onRemove}
+        >
+          ×
+        </button>
       </div>
       {creating && (
         <form

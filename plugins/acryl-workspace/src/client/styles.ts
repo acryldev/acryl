@@ -224,6 +224,10 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceRepoHead { display: flex; align-items: center; gap: 4px; }
 .dshWorkspaceRepoHead .dshWorkspaceRepoName { flex: 1; }
 .dshWorkspaceRepoKind { display: flex; align-items: center; flex: none; color: var(--dsw-alias-label-secondary); }
+/* Remove a whole workspace (T135-followup), same reveal-on-hover pattern as a session's own close. */
+.dshWorkspaceRepoRemove { appearance: none; flex: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font-size: 14px; line-height: 1; opacity: 0; }
+.dshWorkspaceRepoHead:hover .dshWorkspaceRepoRemove, .dshWorkspaceRepoRemove:focus-visible { opacity: 1; }
+.dshWorkspaceRepoRemove:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); color: var(--dsw-alias-label-primary); }
 .dshWorkspaceChevron { appearance: none; flex: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; }
 .dshWorkspaceChevron:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-label-primary); }
 .dshWorkspaceNewBranch { display: flex; gap: 6px; margin: 2px 8px 6px; }
