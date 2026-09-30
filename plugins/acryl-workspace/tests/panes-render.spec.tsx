@@ -119,25 +119,18 @@ function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: P
 }
 
 describe('ProjectsSidebar', () => {
-  it('renders the tree by default (no mode switch), with the upstream sidebar mounted but hidden behind Search', () => {
+  it('renders the tree, with no classic view or search toggle to switch to, and the upstream sidebar only as a host that is never display:none', () => {
     const shell = new WorkspaceShellState(api())
     render(<ProjectsSidebar {...sidebarProps(shell)} />)
     expect(screen.queryByRole('tab')).toBeNull()
     expect(screen.getByText('Workspaces')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /classic view/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Back to Workspaces/i })).toBeNull()
+    expect(screen.queryByText('All chats')).toBeNull()
     const upstream = screen.getByTestId('upstream')
-    expect(upstream).toBeTruthy()
-    expect(upstream.closest('[hidden]')).toBeTruthy()
-    shell.dispose()
-  })
-
-  it('opens the upstream sidebar (all chats, classic view), and Back returns to the tree', () => {
-    const shell = new WorkspaceShellState(api())
-    render(<ProjectsSidebar {...sidebarProps(shell)} />)
-    fireEvent.click(screen.getByRole('button', { name: 'All chats (classic view, with search)' }))
-    expect(screen.getByTestId('upstream').closest('[hidden]')).toBeNull()
-    expect(screen.getByText('Workspaces').closest('[hidden]')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Back to Workspaces' }))
-    expect(screen.getByTestId('upstream').closest('[hidden]')).toBeTruthy()
+    // Settings' dialog is a plain sibling of its trigger inside it: a hidden ancestor would hide the dialog too.
+    expect(upstream.closest('[hidden]')).toBeNull()
+    expect(upstream.closest('.dshWorkspaceUpstreamHost')).toBeTruthy()
     shell.dispose()
   })
 
@@ -455,24 +448,6 @@ describe('ProjectsSidebar', () => {
     shell.dispose()
   })
 
-  it('reveals the upstream sidebar before the "upstream" chooser flow runs, not after it is done (a hidden ancestor swallows a real folder pick)', async () => {
-    const shell = new WorkspaceShellState(api())
-    // Stand-in for the real desktop-without-a-picker-seam flow: `projects.addProject()` itself clicks a
-    // trigger somewhere inside the upstream sidebar - this fake instead just observes whether that
-    // sidebar is actually on screen (not `hidden`) at the moment it is called.
-    let visibleWhenCalled: boolean | undefined
-    const addProject = vi.fn(async (): Promise<ProjectAction> => {
-      visibleWhenCalled = screen.getByTestId('upstream').closest('[hidden]') === null
-      return { ok: true }
-    })
-    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ chooserKind: () => 'upstream', addProject }))} />)
-    expect(screen.getByTestId('upstream').closest('[hidden]')).toBeTruthy() // hidden to start, as always
-    fireEvent.click(screen.getByRole('button', { name: 'Add git project' }))
-    await waitFor(() => { expect(addProject).toHaveBeenCalledTimes(1) })
-    expect(visibleWhenCalled).toBe(true)
-    shell.dispose()
-  })
-
   it('discovers registered workspace folders as projects even without a chat, and registers a non-git one too (T135)', async () => {
     const seen: string[] = []
     const shell = new WorkspaceShellState({ ...api(), repo: async (cwd) => { seen.push(cwd); return null } })
@@ -561,16 +536,6 @@ describe('ProjectsSidebar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
     expect(openSettings).toHaveBeenCalledTimes(1)
     expect((await screen.findByRole('alert')).textContent).toContain('not available')
-    shell.dispose()
-  })
-
-  it('reveals the upstream sidebar before calling openSettings, so its dialog (a plain sibling of its trigger, not a portal) is not hidden along with it', () => {
-    const shell = new WorkspaceShellState(api())
-    const openSettings = vi.fn((): ProjectAction => ({ ok: true }))
-    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ openSettings }))} />)
-    expect(screen.getByTestId('upstream').closest('[hidden]')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
-    expect(screen.getByTestId('upstream').closest('[hidden]')).toBeNull()
     shell.dispose()
   })
 

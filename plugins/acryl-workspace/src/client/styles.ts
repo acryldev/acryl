@@ -209,11 +209,10 @@ const WORKSPACE_STYLES = `
 /* macOS: the window's traffic-light buttons sit in the top-left; keep the head row clear of them. */
 .dshDesktopFrame[data-desktop-platform="darwin"] .dshWorkspaceSideProjectsHead:first-child,
 .dshDesktopFrame[data-desktop-platform="darwin"] .dshWorkspaceSideBrandRow:first-child { margin-top: 26px; }
-.dshWorkspaceSideChats { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.dshWorkspaceSideChats > * { flex: 1 1 0; min-height: 0; min-width: 0; }
-.dshWorkspaceSideChats[hidden] { display: none; }
-.dshWorkspaceSideBack { appearance: none; padding: 4px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: 500 12px/1.3 ui-sans-serif, system-ui, sans-serif; }
-.dshWorkspaceSideBack:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-label-primary); }
+/* The upstream sidebar, mounted only to host Settings' trigger and dialog (never shown as a view): zero size,
+   clipped, and deliberately not display:none - the dialog is a plain sibling of its trigger, so hiding
+   the host hides the dialog with it. A fixed-position dialog still draws over the page. */
+.dshWorkspaceUpstreamHost { position: absolute; width: 0; height: 0; overflow: hidden; }
 /* Brand row (T137-followup): the logo + collapse control the tree lost when it became the default view
    instead of the upstream sidebar (which bundled both into its own now-hidden-by-default chrome). */
 .dshWorkspaceSideBrandRow { display: flex; align-items: center; gap: 8px; padding: 8px 8px 4px; }

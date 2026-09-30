@@ -20,7 +20,7 @@ export interface DesktopSidebarSurfaceOwnerProps extends DesktopSidebarOwnerProp
   renderUpstream(): ReactNode
   /** Toggle the sidebar's collapsed rail (T137-followup: the tree's own header needed this once it
    * became the default view - the collapse control and brand mark used to come bundled inside
-   * `renderUpstream()`'s own chrome, which is now hidden by default behind the tree). */
+   * `renderUpstream()`'s own chrome, which is no longer shown at all). */
   onToggleCollapse(): void
 }
 

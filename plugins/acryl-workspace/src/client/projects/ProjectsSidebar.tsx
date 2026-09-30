@@ -1,10 +1,10 @@
 /** Left pane: one workspace-first tree (spec 040 T128-130) - no Chats | Projects mode switch. Each repo and
  * each of its branches/worktrees collapses independently; an expanded worktree lists its running agent/
  * terminal tabs and its AcrylDSH Chat sessions, never a file/browser/diff/board/doc tab. The upstream
- * sidebar (search, and anything else it owns) stays reachable behind a Search toggle instead of a mode. */
+ * sidebar is mounted only as an invisible host for Settings (see `dshWorkspaceUpstreamHost`); there is no
+ * second, classic list to switch to. */
 
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import { flushSync } from 'react-dom'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
 import type { CustomAgent } from '../../agents/definition.ts'
@@ -50,7 +50,7 @@ const DOT_LABEL: Record<WorktreeDot, string> = {
  * branch/worktree, each independently collapsible. An expanded worktree lists its running agent/terminal
  * tabs and its AcrylDSH Chat sessions - never a file, browser, diff, board or doc tab, so the tree cannot
  * be polluted the way a flat "everything open" list would be. The upstream sidebar (its search, and
- * anything else it owns) is kept mounted but hidden by default, reachable behind a Search toggle.
+ * anything else it owns) is mounted only to host Settings' trigger and dialog, never shown as a view.
  */
 export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, useSessions, shell, projects, groups, agents, status }: ProjectsSidebarProps) {
   const subscribe = useCallback((listener: () => void) => shell.subscribe(listener), [shell])
@@ -71,7 +71,6 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
   /** Worktrees expanded to show their running sessions; a worktree not in here starts collapsed. */
   const [expandedWorktrees, setExpandedWorktrees] = useState<ReadonlySet<string>>(() => new Set())
   /** The upstream sidebar (search and anything else it owns), off by default now that it is not a mode. */
-  const [searchOpen, setSearchOpen] = useState(false)
 
   // Registered workspace folders are projects even before they have a chat. registerFolder: true - these
   // came from an explicit "add this folder" action (T135), unlike the passive per-session discovery
@@ -239,15 +238,8 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
       setAddingByPath(open => !open)
       return
     }
-    // 'upstream' (macOS, no picker seam): the trigger this clicks lives inside the upstream sidebar, which
-    // is hidden by default (searchOpen: false) unless Search is open - same hidden-ancestor bug already
-    // fixed once for Settings below. Reveal synchronously (flushSync, not a plain setState) before the
-    // click fires, so the native dialog's result is actually registered instead of silently dropped.
-    const revealsUpstream = projects.chooserKind() === 'upstream'
-    if (revealsUpstream) flushSync(() => { setSearchOpen(true) })
     const result = await projects.addProject()
     if (!result.ok) {
-      if (revealsUpstream) setSearchOpen(false)
       // No chooser on this machine: offer typing the path, as a hint rather than an error.
       if (result.needsPath === true) { setAddingByPath(true); setHint(result.reason); return }
       setNotice(result.reason)
@@ -270,22 +262,11 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
 
   return (
     <div className="dshWorkspaceSide" data-acryl-workspace-side="tree">
-      <div className="dshWorkspaceSideChats" hidden={!searchOpen}>
-        <div className="dshWorkspaceSideProjectsHead">
-          <button
-            type="button"
-            className="dshWorkspaceSideBack"
-            aria-label="Back to Workspaces"
-            title="Back to Workspaces"
-            onClick={() => { setSearchOpen(false) }}
-          >
-            ← Back to Workspaces
-          </button>
-          <span>All chats</span>
-        </div>
-        {renderUpstream()}
-      </div>
-      <div className="dshWorkspaceSideProjects" hidden={searchOpen}>
+      {/* Not a view: the upstream sidebar is mounted only because Settings' trigger, and its dialog, live
+          inside it (and, where the desktop has no folder chooser of its own, the upstream "Add workspace"
+          trigger). Kept out of sight at zero size; never shown, so there is no "classic" list to maintain. */}
+      <div className="dshWorkspaceUpstreamHost">{renderUpstream()}</div>
+      <div className="dshWorkspaceSideProjects">
         <div className="dshWorkspaceSideBrandRow">
           <AcrylMarkIcon size={20} />
           <span className="dshWorkspaceSideBrandName">ACRYL</span>
@@ -301,16 +282,6 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
         </div>
         <div className="dshWorkspaceSideProjectsHead">
           <span>Workspaces</span>
-          <button
-            type="button"
-            className="dshWorkspaceSideAdd"
-            aria-pressed={searchOpen}
-            aria-label="All chats (classic view, with search)"
-            title="All chats (classic view, with search)"
-            onClick={() => { setSearchOpen(true) }}
-          >
-            <SearchIcon />
-          </button>
           <button
             type="button"
             className="dshWorkspaceSideAdd"
@@ -373,17 +344,10 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
             type="button"
             className="dshWorkspaceSideFootButton"
             onClick={() => {
-              // The Settings dialog is not a portal - it renders as a plain sibling of its trigger button,
-              // which lives inside the upstream sidebar. That sidebar is hidden (searchOpen: false) unless
-              // Search is open, and a hidden ancestor hides anything that mounts inside it later, dialog
-              // included. Reveal it synchronously (flushSync, not a plain setState) so the trigger's click,
-              // fired right after, opens a dialog that is actually on screen instead of hidden with it.
-              // On a refusal, revert: the tree (not the now-empty upstream panel) is where the notice shows.
-              flushSync(() => { setSearchOpen(true) })
+              // Settings keeps its open state inside its own component (no service to call), so this
+              // activates its real trigger inside the upstream host above - see `openSettings`.
               const result = projects.openSettings()
-              if (result.ok) { setNotice(null); return }
-              setSearchOpen(false)
-              setNotice(result.reason)
+              setNotice(result.ok ? null : result.reason)
             }}
           >
             Settings
@@ -391,15 +355,6 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
         </div>
       </div>
     </div>
-  )
-}
-
-function SearchIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="7" cy="7" r="4.5" />
-      <path d="M13.5 13.5L10.4 10.4" />
-    </svg>
   )
 }
 

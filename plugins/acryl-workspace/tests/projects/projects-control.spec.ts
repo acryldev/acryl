@@ -308,7 +308,7 @@ describe('ProjectsControl folder chooser', () => {
 describe('ProjectsControl.addProject', () => {
   it('continues through the upstream Add workspace control when there is no window picker', async () => {
     const w = world({ seams: { pickDirectory: undefined } })
-    document.body.innerHTML = '<div class="dshWorkspaceSideChats"><button aria-label="Add workspace"></button></div>'
+    document.body.innerHTML = '<div class="dshWorkspaceUpstreamHost"><button aria-label="Add workspace"></button></div>'
     let clicks = 0
     document.querySelector('button')?.addEventListener('click', () => { clicks += 1 })
     const result = await w.control.addProject()
@@ -419,7 +419,7 @@ describe('the desktop folder chooser', () => {
   it('finds the Add workspace trigger only inside the upstream chats list', () => {
     document.body.innerHTML = '<button aria-label="Add workspace"></button>'
     expect(clickAddWorkspaceTrigger()).toBe(false)
-    document.body.innerHTML = '<div class="dshWorkspaceSideChats"><button aria-label="添加工作区"></button></div>'
+    document.body.innerHTML = '<div class="dshWorkspaceUpstreamHost"><button aria-label="添加工作区"></button></div>'
     expect(clickAddWorkspaceTrigger()).toBe(true)
     document.body.innerHTML = ''
   })

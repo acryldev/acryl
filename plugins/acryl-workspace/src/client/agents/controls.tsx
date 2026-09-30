@@ -69,7 +69,7 @@ export function FolderIcon() {
 
 /**
  * The real ACRYL mark for the tree's own header (T137/T138-followup: "there used to be... ACRYL logo,
- * it's gone" - it was visible by default inside the upstream sidebar's own chrome, hidden behind Search
+ * it's gone" - it was visible by default inside the upstream sidebar's own chrome, which is no longer shown
  * since T128 made the tree the default view, with no replacement in the tree's own header).
  *
  * `dsh-client-ui-brand-acryl`'s client entry is a Cordis-loader-format bundle

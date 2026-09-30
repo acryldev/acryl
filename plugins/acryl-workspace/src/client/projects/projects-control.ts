@@ -173,13 +173,10 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
         if (deps.platform === 'web') return { ok: false, reason: 'Type the path of a git repository folder to add it.', needsPath: true }
         // Desktop without a picker seam (Linux today - Windows and macOS both publish one, T134): falls
         // back to the app's own Add workspace flow, which drives the native chooser through a trigger
-        // that lives inside the upstream sidebar. That sidebar is hidden by default behind the tree's
-        // Search toggle, so the caller must reveal it (flushSync, not a plain setState) *before* calling
-        // this - see ProjectsSidebar.tsx's own `addProject` wrapper. A hidden ancestor at click time is
-        // exactly the bug T134 found live: the click still opens the native dialog (a synthetic click
-        // fires regardless of visibility), but the upstream component's own registration handling for
-        // whatever the dialog resolves to never takes effect while its whole subtree sits at
-        // `display: none`. A git folder registered there appears under Projects by itself once revealed.
+        // that lives inside the upstream sidebar, which ProjectsSidebar keeps mounted at zero size (not
+        // `display: none`: T134 found live that the upstream component's handling of what the dialog
+        // resolves to is lost while its whole subtree is display:none). A git folder registered there
+        // appears under Projects by itself.
         if (!clickAddWorkspaceTrigger()) return fail('Could not find the Add workspace control.')
         return { ok: true, note: 'Choose the folder here. If it is a git repository it will appear under Projects.' }
       }
@@ -368,12 +365,12 @@ const ADD_WORKSPACE_LABELS = ['Add workspace', '添加工作区']
 /**
  * Open the upstream "Add workspace" flow, which drives the native folder chooser and registers the
  * workspace. Only reached when the desktop has no picker seam (Linux, today - Windows and macOS both
- * publish one, T134). Its trigger lives inside the upstream sidebar (kept mounted, hidden by default
- * behind the tree's Search toggle), so the caller must reveal that first. Like the Settings trigger, it
+ * publish one, T134). Its trigger lives inside the upstream sidebar, which ProjectsSidebar keeps mounted
+ * at zero size (`.dshWorkspaceUpstreamHost`). Like the Settings trigger, it
  * exposes no service.
  * @returns whether the trigger was found and activated.
  */
 export function clickAddWorkspaceTrigger(root: ParentNode = document): boolean {
-  const chats = root.querySelector('.dshWorkspaceSideChats')
+  const chats = root.querySelector('.dshWorkspaceUpstreamHost')
   return chats !== null && clickButtonByName(chats, ADD_WORKSPACE_LABELS)
 }
