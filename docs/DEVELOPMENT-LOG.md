@@ -5838,3 +5838,14 @@ Owner retest of T140 with a screenshot: "rename doesnt get saved", "lazy loading
 - **Fix:** one `chatLabel` (durable title, then "New chat" while blank, then display title) shared by the tree row and the tab; blank chats get tabs; the title sync also replaces the generic "AcrylDSH Chat" default on first sight.
 - **Not verified:** that the Host persists a rename for a chat with no messages. The client shows whatever title the Host reports and surfaces a refusal as a notice.
 - **Verified:** `acryl-workspace` 635/635, `acryl-agent-control` 108/108, typecheck and build clean.
+
+## 2026-09-30 (later still) - T142: a chat opened from a workspace row is bound to that workspace
+
+Commit: `f567442`
+
+Owner report with a screenshot: opening a chat from a workspace's row asked "Choose workspace", and that folder was not in the chooser.
+
+- **Cause:** the tree lists any folder a chat has run in; the chooser lists only Host-registered workspaces; an empty chat outside any workspace cannot be sent from. `newChat`/`showChat` already handled this by registering on demand and creating a bound chat - `openChat`, used by the tree rows, did not.
+- **Fix:** one `startBoundChat` helper; `openChat` starts a bound chat for an empty unbound chat inside a known worktree (registering the workspace if needed), carries the name over, and retires the empty chat from the tree.
+- **Deliberately not done:** re-binding an existing session in place - the Host's adopt-by-id semantics are undocumented and I couldn't test them. The replaced empty chat is hidden, not deleted.
+- **Verified:** `acryl-workspace` 640/640, `acryl-agent-control` 108/108, typecheck and build clean; tests confirmed failing without the fix.
