@@ -64,7 +64,7 @@ describe('synchronizeWorkspaceWithSessionNavigation', () => {
 })
 
 describe('ensureWorktreeChatTabs', () => {
-  it('gives every non-blank session owned by this worktree its own tab, with its real title', () => {
+  it('gives every session owned by this worktree its own tab - blank ones too, as "New chat" - with its real title', () => {
     const workspace = new WorkspaceState({ createId: counter() })
     const sessions = {
       ids: ['s1', 's2', 's3'],
@@ -72,7 +72,7 @@ describe('ensureWorktreeChatTabs', () => {
       byId: {
         s1: { cwd: '/p/proj', blank: false, displayTitle: 'Explore the tools' },
         s2: { cwd: '/p/proj', blank: false, displayTitle: 'Greeting chat' },
-        s3: { cwd: '/p/proj', blank: true, displayTitle: 'x' }, // blank: never gets a tab of its own
+        s3: { cwd: '/p/proj', blank: true, displayTitle: 'x' }, // blank: listed in the tree, so it gets a tab too
       },
     }
     ensureWorktreeChatTabs(workspace, '/p/proj', REPOS, sessions)
@@ -82,6 +82,7 @@ describe('ensureWorktreeChatTabs', () => {
     expect(chats.map(t => [t.chatSessionId, t.title])).toEqual([
       ['s1', 'Explore the tools'],
       ['s2', 'Greeting chat'],
+      ['s3', 'New chat'],
     ])
   })
 
@@ -158,13 +159,19 @@ describe('syncChatTabTitles', () => {
     expect(workspace.getSnapshot().tiles[0]?.title).toBe('Typed by user')
   })
 
-  it('ignores blank sessions and non-chat tabs', () => {
+  it('a renamed blank chat goes by its own title, not "New chat"', () => {
     const workspace = new WorkspaceState({ createId: counter() })
-    workspace.addTile('chat', { chatSessionId: 's1', title: 'Old' })
+    const sessions = { ids: ['s1'], current: undefined, byId: { s1: { cwd: '/p/proj', blank: true, displayTitle: 'x', title: '123' } } }
+    ensureWorktreeChatTabs(workspace, '/p/proj', REPOS, sessions)
+    expect(workspace.getSnapshot().tiles.find(t => t.chatSessionId === 's1')?.title).toBe('123')
+  })
+
+  it('replaces the generic default title on first sight, and leaves non-chat tabs alone', () => {
+    const workspace = new WorkspaceState({ createId: counter() })
+    workspace.addTile('chat', { chatSessionId: 's1' }) // what the session sync opens: "AcrylDSH Chat"
     workspace.addTile('doc', { title: 'README' })
     const seen = new Map<string, string>()
     syncChatTabTitles(workspace, rows('Old', true), seen)
-    syncChatTabTitles(workspace, rows('Changed', true), seen)
-    expect(workspace.getSnapshot().tiles.map(t => t.title)).toEqual(['Old', 'README'])
+    expect(workspace.getSnapshot().tiles.map(t => t.title)).toEqual(['New chat', 'README'])
   })
 })

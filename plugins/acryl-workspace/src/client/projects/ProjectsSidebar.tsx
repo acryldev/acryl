@@ -119,7 +119,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
     () => sessions.ids.flatMap((id) => {
       if (snapshot.dismissedChats.has(id)) return [] // T134-followup: hidden from tree, dot count and tab strip alike
       const row = sessions.byId[id]
-      return row === undefined ? [] : [{ id, blank: row.blank, running: row.running, displayTitle: row.displayTitle, ...(row.cwd === undefined ? {} : { cwd: row.cwd }) }]
+      return row === undefined ? [] : [{ id, blank: row.blank, running: row.running, displayTitle: row.displayTitle, ...(row.title === undefined ? {} : { title: row.title }), ...(row.cwd === undefined ? {} : { cwd: row.cwd }) }]
     }),
     [sessions, snapshot.dismissedChats],
   )

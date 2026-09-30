@@ -54,6 +54,18 @@ export interface ChatSessionLike {
   readonly running: boolean
   /** SessionSummary's own resolved label (durable title, then project basename, then session id) - never guess a title here. */
   readonly displayTitle: string
+  /** The session's own durable title, when the Host has projected one (absent until renamed or titled). */
+  readonly title?: string
+}
+
+/**
+ * The one label a chat goes by, in the tree and on its tab alike: its own durable title first (so a
+ * rename shows even on a chat with no messages yet - a blank chat used to say "New chat" no matter what
+ * it was named), else "New chat" while blank, else the resolved display title.
+ */
+export function chatLabel(chat: { readonly blank: boolean; readonly displayTitle: string; readonly title?: string }): string {
+  if (chat.title !== undefined && chat.title.trim() !== '') return chat.title
+  return chat.blank ? 'New chat' : chat.displayTitle
 }
 
 /**
@@ -99,7 +111,7 @@ export function entriesForWorktree(
   // its own chats, and they must not also appear here.
   const ownChats: WorktreeSessionEntry[] = chats
     .filter(chat => chat.cwd !== undefined && owningWorktree(repos, chat.cwd) === path)
-    .map(chat => ({ kind: 'chat', id: chat.id, label: chat.blank ? 'New chat' : chat.displayTitle, running: chat.running, active: chat.id === active?.chatSessionId }))
+    .map(chat => ({ kind: 'chat', id: chat.id, label: chatLabel(chat), running: chat.running, active: chat.id === active?.chatSessionId }))
   return [...agents, ...ownChats]
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildProjectRows, entriesForWorktree, owningWorktree } from '../../src/client/projects/sidebar-model.ts'
+import { buildProjectRows, chatLabel, entriesForWorktree, owningWorktree } from '../../src/client/projects/sidebar-model.ts'
 import type { RepoState, ShellSnapshot, WorktreeState } from '../../src/client/worktrees/shell-state.ts'
 
 function worktree(path: string, branch: string | null, patch: Partial<WorktreeState> = {}): WorktreeState {
@@ -125,5 +125,14 @@ describe('entriesForWorktree', () => {
   it('combines agents first, then chats, for one worktree', () => {
     const entries = entriesForWorktree('/p/proj/.worktrees/x', [REPO], tiles, chats)
     expect(entries.map(e => e.kind)).toEqual(['agent', 'agent', 'chat', 'chat'])
+  })
+})
+
+describe('chatLabel', () => {
+  it('prefers the durable title, even on a blank chat, then New chat while blank, then the display title', () => {
+    expect(chatLabel({ blank: true, displayTitle: 'proj', title: '123' })).toBe('123')
+    expect(chatLabel({ blank: true, displayTitle: 'proj' })).toBe('New chat')
+    expect(chatLabel({ blank: false, displayTitle: 'Explore' })).toBe('Explore')
+    expect(chatLabel({ blank: false, displayTitle: 'Explore', title: '  ' })).toBe('Explore')
   })
 })
