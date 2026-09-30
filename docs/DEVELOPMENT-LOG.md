@@ -5827,3 +5827,14 @@ Owner request: rename list items in the left panel, reflected in the tab strip a
 - **Delivered:** `ProjectsControl.renameChat`; double-click rename in the tree; renaming a chat tab also renames its session; `syncChatTabTitles` keeps open chat tabs (in every worktree) following the session title, applying only changes so a just-typed name is not reverted while the Host round trip is in flight.
 - **Select/highlight:** already in place from T139 plus the row click, verified rather than rebuilt.
 - **Verified:** `acryl-workspace` 633/633, `acryl-agent-control` 108/108, typecheck and build clean. The `WorkspaceCanvas` effect wiring has no automated test - needs a live check.
+
+## 2026-09-30 (later still) - T141: blank chats are chats too
+
+Commit: `971f2b6`
+
+Owner retest of T140 with a screenshot: "rename doesnt get saved", "lazy loading still on".
+
+- **One cause behind both:** blank ("New chat") chats were second-class. The tree forced the label "New chat" on any blank chat, so a rename could not show; and `ensureWorktreeChatTabs` skipped blank chats, so a fresh chat had a row but no tab until clicked - the lazy loading, which outlived three earlier fixes because they addressed other causes.
+- **Fix:** one `chatLabel` (durable title, then "New chat" while blank, then display title) shared by the tree row and the tab; blank chats get tabs; the title sync also replaces the generic "AcrylDSH Chat" default on first sight.
+- **Not verified:** that the Host persists a rename for a chat with no messages. The client shows whatever title the Host reports and surfaces a refusal as a notice.
+- **Verified:** `acryl-workspace` 635/635, `acryl-agent-control` 108/108, typecheck and build clean.
