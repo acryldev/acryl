@@ -5860,3 +5860,15 @@ Owner request: on Web, "+" asked for a typed absolute path; wanted a file-opener
 - **Fix:** the Host (already loopback-only) opens the OS's own chooser on the local machine via a guarded `POST /api/acryl-workspace/pick-folder` - `osascript` on macOS, PowerShell on Windows, `zenity`/`kdialog` on Linux, no shell, one dialog at a time, `501` when there is none. Web uses it; with none available "+" falls back to the typed path, with the reason.
 - **Not exercised:** a real dialog (macOS script syntax-checked with `osacompile`, not run); Windows/Linux via an injected runner only. Restart the Web server to pick up the route.
 - **Verified:** `acryl-workspace` 658/658, `acryl-agent-control` 108/108, typecheck and build clean.
+
+## 2026-09-30 (later still) - T144: the classic list is gone
+
+Commit: `e9ded80`
+
+Owner, repeatedly: remove the old view.
+
+- **Removed:** the upstream "All chats (classic view)" list, the search toggle that opened it, the Back header, `searchOpen`, both `flushSync` reveal hacks, dead styles and tests.
+- **Kept, and why:** the upstream sidebar is still mounted - as `.dshWorkspaceUpstreamHost`, zero size and never a view - because Settings' trigger and dialog, and the Linux "Add workspace" trigger, live inside it and nothing else opens them. Not `display: none`: a hidden subtree loses the dialog and the add-workspace result (T134).
+- **Cost:** the tree's chat search is gone with the classic view.
+- **Not verified live:** that Settings' dialog still draws from the zero-size host (the browser tool was unavailable).
+- **Verified:** `acryl-workspace` 655/655, `acryl-agent-control` 108/108, typecheck and build clean.
