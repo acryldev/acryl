@@ -179,8 +179,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
 
   const selectChatEntry = (path: string, id: string): void => {
     shell.select(path)
-    const result = projects.openChat(id)
-    if (!result.ok) setNotice(result.reason)
+    void projects.openChat(id).then((result) => { if (!result.ok) setNotice(result.reason) })
   }
 
   /** Hover "x" (owner request, T134/T136-followup): an agent/terminal entry closes its actual tab (the

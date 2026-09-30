@@ -6,9 +6,11 @@
 import type { ShellPlatform } from '../shell/environment.ts'
 import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { IWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/client'
+import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
 import { clickButtonByName } from '../dom/find-by-name.ts'
 import { pickSession, type SessionRef } from '../sessions/session-pick.ts'
+import { owningWorktree } from './sidebar-model.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 
 export type ProjectAction =
@@ -34,8 +36,14 @@ export interface ProjectsControl {
   showChat(worktreePath: string): Promise<ProjectAction>
   /** Start an additional chat in a worktree that may already have some. */
   newChat(worktreePath: string): Promise<ProjectAction>
-  /** Open one specific chat session by id (the workspace tree's expanded session list, spec 040 T129). */
-  openChat(id: string): ProjectAction
+  /**
+   * Open one specific chat session by id (the workspace tree's expanded session list, spec 040 T129). An
+   * empty chat that belongs to no Host workspace cannot be sent from ("Choose workspace" - and the folder
+   * it sits under in the tree may not even be a registered workspace to choose), so opening one from a
+   * worktree row starts a chat bound to that worktree instead (registering the workspace when needed),
+   * carrying the old chat's name over and retiring the empty one from the tree.
+   */
+  openChat(id: string): Promise<ProjectAction>
   /**
    * Rename one chat session's durable title (owner request: rename from the left tree or the tab strip,
    * reflected in both). Goes through the per-session face's own `rename` - the top-level sessions
@@ -107,6 +115,37 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
 
   const workspaceItems = () => deps.getWorkspaces()?.list.getSnapshot().items ?? []
 
+  /**
+   * Create a chat bound to a worktree's workspace. In this app a chat runs in exactly its workspace's
+   * folder, and the Host rejects a request that names both a workspace and a directory. An unbound chat
+   * cannot be sent ("Choose workspace"), and choosing the repository would move it to main. So a worktree,
+   * being a different folder, is registered as a workspace the first time it gets a chat, named after its
+   * project and branch.
+   */
+  const startBoundChat = async (worktreePath: string): Promise<{ readonly ok: true; readonly id: SessionId } | { readonly ok: false; readonly reason: string }> => {
+    const sessions = deps.getSessions()
+    const workspaces = deps.getWorkspaces()
+    if (sessions === undefined || workspaces === undefined) return { ok: false, reason: 'Chats are not available yet.' }
+    try {
+      const existing = workspaceItems().find(item => item.path === worktreePath)
+      let workspaceId = existing?.workspaceId
+      if (existing !== undefined && existing.title === folderName(worktreePath)) {
+        // Registered earlier under its bare folder name: give it the project-and-branch name too.
+        const title = worktreeTitle(shell, worktreePath)
+        if (title !== undefined) await workspaces.rename(existing.workspaceId, title).catch(() => undefined)
+      }
+      if (workspaceId === undefined) {
+        const view = await workspaces.create({ path: worktreePath })
+        workspaceId = view.workspaceId
+        const title = worktreeTitle(shell, worktreePath)
+        if (title !== undefined) await workspaces.rename(workspaceId, title).catch(() => undefined)
+      }
+      return { ok: true, id: await sessions.create({ workspaceId }) }
+    } catch (cause) {
+      return { ok: false, reason: `Could not open a chat for this branch: ${message(cause)}` }
+    }
+  }
+
   return {
     workspaceKey: () => workspaceItems().map(item => item.path).join('\n'),
     workspacePaths: () => workspaceItems().map(item => item.path),
@@ -176,11 +215,26 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       return shown
     },
 
-    openChat(id) {
+    async openChat(id) {
       const sessions = deps.getSessions()
       if (sessions === undefined) return fail('Chats are not available yet.')
-      const branded = sessions.list.getSnapshot().ids.find(candidate => candidate === id)
+      const state = sessions.list.getSnapshot()
+      const branded = state.ids.find(candidate => candidate === id)
       if (branded === undefined) return fail('That chat is no longer available.')
+      const row = state.byId[branded]
+      const isBound = workspaceItems().some(item => item.sessionIds.includes(branded))
+      const worktree = row !== undefined && row.blank && !isBound && row.cwd !== undefined
+        ? owningWorktree(shell.getSnapshot().repos, row.cwd)
+        : undefined
+      if (worktree !== undefined) {
+        const started = await startBoundChat(worktree)
+        if (!started.ok) return fail(started.reason)
+        sessions.open(started.id)
+        // Same name, and the empty unbound one leaves the tree (it can never be sent from).
+        if (row?.title !== undefined && row.title.trim() !== '') await this.renameChat(started.id, row.title) // best effort: a failed rename must not fail the open
+        shell.dismissChat(branded)
+        return { ok: true }
+      }
       try {
         sessions.open(branded)
         return { ok: true }
@@ -234,34 +288,10 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     },
 
     async newChat(worktreePath) {
-      const sessions = deps.getSessions()
-      const workspaces = deps.getWorkspaces()
-      if (sessions === undefined || workspaces === undefined) return fail('Chats are not available yet.')
-      try {
-        // In this app a chat runs in exactly its workspace's folder, and the Host rejects a request that
-        // names both a workspace and a directory. An unbound chat cannot be sent ("Choose workspace"), and
-        // choosing the repository would move it to main. So a worktree, being a different folder, is
-        // registered as a workspace the first time it gets a chat, named after its project and branch.
-        const existing = workspaceItems().find(item => item.path === worktreePath)
-        let workspaceId = existing?.workspaceId
-        if (existing !== undefined && existing.title === folderName(worktreePath)) {
-          // Registered earlier under its bare folder name: give it the project-and-branch name too.
-          const title = worktreeTitle(shell, worktreePath)
-          if (title !== undefined) await workspaces.rename(existing.workspaceId, title).catch(() => undefined)
-        }
-        if (workspaceId === undefined) {
-          const view = await workspaces.create({ path: worktreePath })
-          workspaceId = view.workspaceId
-          const title = worktreeTitle(shell, worktreePath)
-          if (title !== undefined) await workspaces.rename(workspaceId, title).catch(() => undefined)
-        }
-        const created = await sessions.create({ workspaceId })
-        sessions.open(created)
-        return { ok: true }
-      } catch (cause) {
-        shell.unpin()
-        return fail(`Could not open a chat for this branch: ${message(cause)}`)
-      }
+      const started = await startBoundChat(worktreePath)
+      if (!started.ok) { shell.unpin(); return fail(started.reason) }
+      deps.getSessions()?.open(started.id)
+      return { ok: true }
     },
 
     async newWorktree(repoRoot, branch) {

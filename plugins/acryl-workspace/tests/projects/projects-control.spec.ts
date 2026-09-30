@@ -57,7 +57,7 @@ interface World {
 }
 
 function world(options: {
-  sessions?: { id: string; cwd?: string; blank: boolean; updatedAt: number }[]
+  sessions?: { id: string; cwd?: string; blank: boolean; updatedAt: number; title?: string }[]
   workspaces?: { workspaceId: string; path: string; title?: string }[]
   /** Session ids that belong to some workspace. */
   boundSessions?: string[]
@@ -95,7 +95,9 @@ function world(options: {
       // The Host rejects a request that names both, so the fake does too.
       if (input.workspaceId !== undefined && input.cwd !== undefined) throw new Error('session.create accepts workspaceId or cwd, not both')
       created.push(input)
-      return options.createSession === undefined ? 'new-session' : options.createSession()
+      const id = options.createSession === undefined ? 'new-session' : await options.createSession()
+      rows.push({ id, blank: true, updatedAt: 0 }) // the Host lists what it just created
+      return id
     },
   } as unknown as ISessions
   const workspaces = {
@@ -441,5 +443,51 @@ describe('ProjectsControl.renameChat', () => {
   it('reports the Host refusing the rename', async () => {
     const w = world({ sessions, renameFace: 'rejects' })
     expect(await w.control.renameChat('s1', 'x')).toMatchObject({ ok: false, reason: expect.stringContaining('host down') })
+  })
+})
+
+describe('ProjectsControl.openChat', () => {
+  const emptyUnbound = [{ id: 'e1', cwd: '/p/proj', blank: true, updatedAt: 1, title: 'hey1' }]
+
+  it('opens a chat that has messages as it is', async () => {
+    const w = world({ sessions: [{ id: 's1', cwd: '/p/proj', blank: false, updatedAt: 1 }] })
+    await w.shell.discover('/p/proj')
+    expect(await w.control.openChat('s1')).toEqual({ ok: true })
+    expect(w.opened).toEqual(['s1'])
+    expect(w.created).toEqual([])
+  })
+
+  it('replaces an empty chat that belongs to no workspace with one bound to its worktree, keeping its name (the "Choose workspace" prompt)', async () => {
+    const w = world({ sessions: emptyUnbound })
+    await w.shell.discover('/p/proj')
+    expect(await w.control.openChat('e1')).toEqual({ ok: true })
+    // The folder was not a registered workspace at all: it is registered on demand, then the chat is bound to it.
+    expect(w.workspaceCreates).toEqual([{ path: '/p/proj' }])
+    expect(w.created).toEqual([{ workspaceId: 'w0' }])
+    expect(w.opened).toEqual(['new-session'])
+    expect(w.renamed).toEqual([{ id: 'new-session', title: 'hey1' }])
+    expect(w.shell.getSnapshot().dismissedChats.has('e1')).toBe(true)
+  })
+
+  it('leaves an empty chat alone when it already belongs to a workspace', async () => {
+    const w = world({ sessions: emptyUnbound, workspaces: [{ workspaceId: 'w0', path: '/p/proj' }], boundSessions: ['e1'] })
+    await w.shell.discover('/p/proj')
+    expect(await w.control.openChat('e1')).toEqual({ ok: true })
+    expect(w.opened).toEqual(['e1'])
+    expect(w.created).toEqual([])
+  })
+
+  it('opens an empty unbound chat as it is when its folder is not a known worktree, and reports a vanished chat', async () => {
+    const w = world({ sessions: [{ id: 'e2', cwd: '/elsewhere', blank: true, updatedAt: 1 }] })
+    expect(await w.control.openChat('e2')).toEqual({ ok: true })
+    expect(w.opened).toEqual(['e2'])
+    expect(await w.control.openChat('gone')).toMatchObject({ ok: false, reason: expect.stringContaining('no longer available') })
+  })
+
+  it('says why it could not start the bound chat and keeps the empty one', async () => {
+    const w = world({ sessions: emptyUnbound, createSession: async () => { throw new Error('host down') } })
+    await w.shell.discover('/p/proj')
+    expect(await w.control.openChat('e1')).toMatchObject({ ok: false, reason: expect.stringContaining('host down') })
+    expect(w.shell.getSnapshot().dismissedChats.has('e1')).toBe(false)
   })
 })
