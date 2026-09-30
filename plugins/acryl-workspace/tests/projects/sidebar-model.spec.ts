@@ -96,17 +96,24 @@ describe('entriesForWorktree', () => {
   it('lists every pty tile (named agent or plain terminal), never a file or browser tab', () => {
     const entries = entriesForWorktree('/p/proj/.worktrees/x', [REPO], tiles, [])
     expect(entries).toEqual([
-      { kind: 'agent', id: 't1', label: 'Claude', commandId: 'claude' },
-      { kind: 'agent', id: 't2', label: 'Terminal', commandId: 'shell' },
+      { kind: 'agent', id: 't1', label: 'Claude', commandId: 'claude', active: false },
+      { kind: 'agent', id: 't2', label: 'Terminal', commandId: 'shell', active: false },
     ])
   })
 
   it('lists chat sessions whose cwd is inside the worktree, by their real displayTitle; blank ones say "New chat"', () => {
     const entries = entriesForWorktree('/p/proj/.worktrees/x', [REPO], [], chats)
     expect(entries).toEqual([
-      { kind: 'chat', id: 's1', label: 'Explore the tools', running: true },
-      { kind: 'chat', id: 's2', label: 'New chat', running: false },
+      { kind: 'chat', id: 's1', label: 'Explore the tools', running: true, active: false },
+      { kind: 'chat', id: 's2', label: 'New chat', running: false, active: false },
     ])
+  })
+
+  it('marks whichever entry matches the worktree\'s active tile (T139-followup)', () => {
+    const agentActive = entriesForWorktree('/p/proj/.worktrees/x', [REPO], tiles, [], { id: 't2' })
+    expect(agentActive.map(e => e.active)).toEqual([false, true])
+    const chatActive = entriesForWorktree('/p/proj/.worktrees/x', [REPO], [], chats, { id: 'tile-x', chatSessionId: 's1' })
+    expect(chatActive.map(e => e.active)).toEqual([true, false])
   })
 
   it('does not treat a nested worktree, a sibling, or a chat with no cwd as inside', () => {

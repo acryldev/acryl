@@ -251,6 +251,28 @@ describe('ProjectsSidebar', () => {
     shell.dispose()
   })
 
+  it('highlights the row matching the tab strip\'s active tile, and follows it when the active tile changes (T139-followup: "not highlighted in the left pane list item")', async () => {
+    const shell = new WorkspaceShellState(api())
+    const groups = new WorkspaceGroups()
+    let claude: { id: string } | undefined
+    let terminal: { id: string } | undefined
+    act(() => {
+      claude = groups.stateFor('/p/proj-x').addTile('pty', { commandId: 'claude', title: 'Claude' })
+      terminal = groups.stateFor('/p/proj-x').addTile('pty', { commandId: 'shell', title: 'Terminal' })
+    })
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects(), groups)} />)
+    await screen.findByText('feature/x')
+    fireEvent.click(screen.getByRole('button', { name: 'Show sessions on feature/x' }))
+    await screen.findByText('Terminal') // added last, so it is the tile addTile leaves active
+    expect(screen.getByRole('button', { name: 'Claude' }).getAttribute('aria-pressed')).toBe('false')
+    expect(screen.getByRole('button', { name: 'Terminal' }).getAttribute('aria-pressed')).toBe('true')
+    act(() => { groups.stateFor('/p/proj-x').selectTile(claude!.id) })
+    await waitFor(() => { expect(screen.getByRole('button', { name: 'Claude' }).getAttribute('aria-pressed')).toBe('true') })
+    expect(screen.getByRole('button', { name: 'Terminal' }).getAttribute('aria-pressed')).toBe('false')
+    void terminal
+    shell.dispose()
+  })
+
   it('closing an agent entry by its hover "x" asks the canvas to close that exact tile (T134-followup)', async () => {
     const shell = new WorkspaceShellState(api())
     const groups = new WorkspaceGroups()

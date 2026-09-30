@@ -217,7 +217,12 @@ const WORKSPACE_STYLES = `
 /* Brand row (T137-followup): the logo + collapse control the tree lost when it became the default view
    instead of the upstream sidebar (which bundled both into its own now-hidden-by-default chrome). */
 .dshWorkspaceSideBrandRow { display: flex; align-items: center; gap: 8px; padding: 8px 8px 4px; }
-.dshWorkspaceSideBrandMark { display: flex; flex: none; align-items: center; color: #4d6bfe; }
+/* The real ACRYL mark (T137/T138-followup), theme-swapped like every other use of the same source PNGs. */
+.dshWorkspaceAcrylMark { display: inline-grid; flex: none; place-items: center; }
+.dshWorkspaceAcrylMark > img { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: contain; }
+.dshWorkspaceAcrylMarkDark { display: none; }
+body[data-ds-dark-theme] .dshWorkspaceAcrylMarkLight { display: none; }
+body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceSideBrandName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dsw-alias-label-primary); font: 600 13px/1.3 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSideCollapse { appearance: none; flex: none; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; }
 .dshWorkspaceSideCollapse:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-label-primary); }
@@ -253,6 +258,8 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceSessionItem { position: relative; display: flex; align-items: center; }
 .dshWorkspaceSessionRow { appearance: none; display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; text-align: left; font: 12px/1.3 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSessionRow:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
+/* The row matching the tab strip's own active tile (T139-followup). */
+.dshWorkspaceSessionRow[aria-pressed="true"] { background: var(--dsw-alias-fill-selected, rgb(77 107 254 / 16%)); color: var(--dsw-alias-label-primary); font-weight: 500; }
 .dshWorkspaceSessionLabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Hover "x" to close/hide a session (T134-followup), same reveal-on-hover pattern as a tab strip tab. */
 .dshWorkspaceSessionClose { position: absolute; right: 4px; appearance: none; flex: none; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border: 0; border-radius: 4px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-secondary); cursor: pointer; font-size: 13px; line-height: 1; opacity: 0; }

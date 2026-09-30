@@ -67,22 +67,39 @@ export interface WorktreeSessionEntry {
   /** Set for kind 'agent': which runtime, for its icon ('shell' for a plain terminal). */
   readonly commandId?: string
   readonly running?: boolean
+  /** Whether this entry is the tab strip's own active tile right now (T139-followup: clicking a tab in
+   * the strip left no matching row highlighted in this list at all). */
+  readonly active?: boolean
+}
+
+/** The worktree's currently active canvas tile, only as much as entry-highlighting needs. */
+export interface ActiveTileLike {
+  readonly id: string
+  readonly chatSessionId?: string
 }
 
 /**
  * Everything to list under one expanded worktree: its open agent/terminal tabs (any `pty` canvas tile - a
  * named agent or a plain shell) and its AcrylDSH Chat sessions (by cwd). Never file/browser/diff/board/doc
  * tiles - those stay reachable from their own tab strip, not duplicated into this tree (spec 040 T129).
+ * @param active - the worktree's active tile (T139-followup), so its row can be highlighted here to match
+ * the tab strip; undefined when nothing is active or the active tile is not a kind this list shows.
  */
-export function entriesForWorktree(path: string, repos: readonly RepoState[], tiles: readonly AgentTileLike[], chats: readonly ChatSessionLike[]): WorktreeSessionEntry[] {
+export function entriesForWorktree(
+  path: string,
+  repos: readonly RepoState[],
+  tiles: readonly AgentTileLike[],
+  chats: readonly ChatSessionLike[],
+  active?: ActiveTileLike,
+): WorktreeSessionEntry[] {
   const agents: WorktreeSessionEntry[] = tiles
     .filter(tile => tile.kind === 'pty')
-    .map(tile => ({ kind: 'agent', id: tile.id, label: tile.title, commandId: tile.commandId ?? 'shell' }))
+    .map(tile => ({ kind: 'agent', id: tile.id, label: tile.title, commandId: tile.commandId ?? 'shell', active: tile.id === active?.id }))
   // owningWorktree (deepest match), not a plain isInside: a linked worktree nested under this one claims
   // its own chats, and they must not also appear here.
   const ownChats: WorktreeSessionEntry[] = chats
     .filter(chat => chat.cwd !== undefined && owningWorktree(repos, chat.cwd) === path)
-    .map(chat => ({ kind: 'chat', id: chat.id, label: chat.blank ? 'New chat' : chat.displayTitle, running: chat.running }))
+    .map(chat => ({ kind: 'chat', id: chat.id, label: chat.blank ? 'New chat' : chat.displayTitle, running: chat.running, active: chat.id === active?.chatSessionId }))
   return [...agents, ...ownChats]
 }
 

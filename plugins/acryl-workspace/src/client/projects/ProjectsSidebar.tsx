@@ -95,10 +95,15 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
     () => JSON.stringify([...agentsByWorktree(new Map(groups.keys().map(key => [key, groups.stateFor(key).getSnapshot().tiles] as const)))]),
   )
   // Every pty tile (named agent or plain terminal), for the expanded-worktree session list - broader than
-  // agentsKey above, which deliberately drops plain terminals since it only feeds the row icons.
+  // agentsKey above, which deliberately drops plain terminals since it only feeds the row icons. Also
+  // each worktree's activeId (T139-followup: clicking a tab in the strip must highlight its row here too),
+  // so this recomputes on every tab-strip focus change, not only when a tile is added or removed.
   const tilesKey = useSyncExternalStore(
     useCallback((listener: () => void) => groups.onChange(listener), [groups]),
-    () => JSON.stringify(groups.keys().map(key => [key, groups.stateFor(key).getSnapshot().tiles.filter(tile => tile.kind === 'pty').map(tile => [tile.id, tile.title, tile.commandId])])),
+    () => JSON.stringify(groups.keys().map((key) => {
+      const state = groups.stateFor(key).getSnapshot()
+      return [key, state.activeId, state.tiles.filter(tile => tile.kind === 'pty').map(tile => [tile.id, tile.title, tile.commandId])]
+    })),
   )
   // Which worktrees have an agent that needs you or is busy, as a stable text key for the same reason.
   const attentionKey = useSyncExternalStore(
@@ -132,26 +137,38 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
   }
 
   const toggleWorktree = (path: string): void => {
+    // Expanding a worktree's session list also selects it (T137/T138-followup: "all of the agent
+    // sessions and terminals should be opened in the Tab Stripe" when a workspace is opened) - the tree's
+    // own list and the tab strip both already reflect the same already-restored WorkspaceGroups state
+    // the instant `groups.stateFor(path)` is called (WorkspaceState.restore() loads every saved tile at
+    // once, not one at a time), so the real gap was never lazy restoration - it was that expanding a
+    // worktree's row list never itself switched the active tab set the way clicking its own name does,
+    // leaving the strip showing whatever worktree was selected before, until a session was clicked one
+    // at a time and each click's own `shell.select` finally brought the whole set into view.
+    // shell.select (an external-store write, not React state) must not run inside the setState updater
+    // below - React can invoke that updater more than once (Strict Mode) or at unexpected times, and
+    // triggering an external notification from inside it produced a real "Cannot update a component
+    // while rendering a different component" warning, an actual correctness bug (T139-followup), not
+    // just React being pedantic - a plain event-handler-time call, before the state update, is correct.
+    const expanding = !expandedWorktrees.has(path)
+    if (expanding) shell.select(path)
     setExpandedWorktrees((current) => {
       const next = new Set(current)
-      const expanding = !next.has(path)
       if (expanding) next.add(path); else next.delete(path)
-      // Expanding a worktree's session list also selects it (T137-followup: "all of the agent sessions
-      // and terminals should be opened in the Tab Stripe" when a workspace is opened) - the tree's own
-      // list and the tab strip both already reflect the same already-restored WorkspaceGroups state the
-      // instant `groups.stateFor(path)` is called (WorkspaceState.restore() loads every saved tile at
-      // once, not one at a time), so the real gap was never lazy restoration - it was that expanding a
-      // worktree's row list never itself switched the active tab set the way clicking its own name does,
-      // leaving the strip showing whatever worktree was selected before, until a session was clicked one
-      // at a time and each click's own `shell.select` finally brought the whole set into view.
-      if (expanding) shell.select(path)
       return next
     })
   }
 
   // Computed only for expanded worktrees; tilesKey is the reactive dependency (see above - broader than agentsKey).
   const entriesByWorktree = useMemo(
-    () => new Map([...expandedWorktrees].map(path => [path, entriesForWorktree(path, snapshot.repos, groups.stateFor(path).getSnapshot().tiles, chatRows)] as const)),
+    () => new Map([...expandedWorktrees].map((path) => {
+      const groupSnapshot = groups.stateFor(path).getSnapshot()
+      const activeTile = groupSnapshot.tiles.find(tile => tile.id === groupSnapshot.activeId)
+      const active = activeTile === undefined
+        ? undefined
+        : { id: activeTile.id, ...(activeTile.chatSessionId === undefined ? {} : { chatSessionId: activeTile.chatSessionId }) }
+      return [path, entriesForWorktree(path, snapshot.repos, groupSnapshot.tiles, chatRows, active)] as const
+    })),
     [snapshot.repos, groups, tilesKey, chatRows, expandedWorktrees],
   )
 
@@ -260,7 +277,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
       </div>
       <div className="dshWorkspaceSideProjects" hidden={searchOpen}>
         <div className="dshWorkspaceSideBrandRow">
-          <span className="dshWorkspaceSideBrandMark" aria-hidden="true"><AcrylMarkIcon /></span>
+          <AcrylMarkIcon size={20} />
           <span className="dshWorkspaceSideBrandName">ACRYL</span>
           <button
             type="button"
@@ -564,6 +581,7 @@ function WorktreeSessions({
             type="button"
             className="dshWorkspaceSessionRow"
             title={entry.label}
+            aria-pressed={entry.active === true}
             onClick={() => { if (entry.kind === 'agent') onSelectAgent(path, entry.id); else onSelectChat(path, entry.id) }}
           >
             {entry.kind === 'agent'
