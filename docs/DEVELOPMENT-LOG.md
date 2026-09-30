@@ -5763,3 +5763,14 @@ Owner retest of the T134 fix above: the folder now registered, but pressing "+" 
 - **The actual fixable cause, checked not assumed:** Desktop's real native folder picker (`workspace-admission.ts`, plain Electron `dialog.showOpenDialog`) is fully platform-agnostic on the Host side - it was gated to Windows only by `MacPlatformStrategy.canPickDirectory = false` with no documented reason, plus a matching `environment.platform === 'win32'` client-side install gate. The one genuinely Windows-specific piece riding along on the same code path (`evaluateWindowsWorkspaceVolume`'s removable NTFS/ReFS-drive check) already no-ops off `win32`, so nothing stops enabling this for macOS too.
 - **Delivered:** `canPickDirectory = true` for macOS; the client bridge install gate now covers `win32 || darwin`. macOS's "+" now opens the real native dialog directly (`chooserKind() === 'picker'`) and never touches the upstream sidebar, `clickAddWorkspaceTrigger`, or `searchOpen` for this flow at all - the old view can no longer render here. The earlier `flushSync`/`searchOpen` fix is kept, not deleted: it is still the correct behavior for the one platform genuinely left on the no-picker-seam fallback, Linux.
 - **Verified:** `acryl-desktop` 799/803 (4 skipped, unrelated) and typecheck clean; `electron-platform.spec.ts`'s macOS case updated to expect `canPickDirectory: true`.
+
+## 2026-09-30 - T134 second retest: the Host-side route had its own separate win32-only gate
+
+Commit: `79da678`
+
+Owner retest of the previous fix: pressing "+" now failed outright with "ACRYL could not open the system folder picker" (console: `POST /_dsh/desktop/pick-directory` 405 Method Not Allowed).
+
+- **Missed on the previous pass:** enabling `canPickDirectory` for macOS and the *client-side* bridge install gate (both in the prior commit) were only half of what gated the native picker to Windows. The Host's own route registration (`apps/acryl-desktop/src/index.ts`, the `ctx.webServer.register(...)` calls for the picker/validator paths) had a second, separate `if (runtime.platform === 'win32')` check that the previous pass didn't touch - so the client now asked for a route the Host had never registered on darwin, producing exactly the 405 reported.
+- **Fixed:** that gate now reads `win32 || darwin`, matching the other two gates already fixed.
+- **Regression test, proven to actually catch this:** two new `plugin.spec.ts` cases - the picker route now exists and works on a `darwin` harness; it's still correctly absent on `linux` (still the upstream-sidebar fallback, correctly untouched). Confirmed the darwin case fails against the pre-fix code via a scoped `git stash` (the exact `undefined` route that produces a 405), confirmed passing after.
+- **Verified:** `acryl-desktop` 801/805 (4 skipped, unrelated), typecheck clean.
