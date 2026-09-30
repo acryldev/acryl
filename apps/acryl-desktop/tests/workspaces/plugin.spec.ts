@@ -326,6 +326,39 @@ describe('desktop Host plugin', () => {
     expect(JSON.parse(body)).toEqual({ path: 'C:\\Work' })
   })
 
+  it('serves the same native picker route on macOS (T134: this route used to be Windows-only, causing a 405 on darwin)', async () => {
+    const harness = createHarness('darwin')
+    harness.pickDirectory.mockResolvedValue('/Users/x/proj')
+    apply(harness.ctx, config)
+    const route = harness.route(DESKTOP_DIRECTORY_PICKER_PATH)
+    expect(route).toEqual(expect.objectContaining({
+      kind: 'exact',
+      path: DESKTOP_DIRECTORY_PICKER_PATH,
+    }))
+    const req = {
+      method: 'POST',
+      headers: { origin: 'http://127.0.0.1:43120' },
+    } as unknown as IncomingMessage
+    let body = ''
+    const res = {
+      statusCode: 200,
+      setHeader: vi.fn(),
+      end: vi.fn((value?: string) => { body = value ?? '' }),
+    } as unknown as ServerResponse
+
+    await route?.handler(req, res)
+
+    expect(harness.pickDirectory).toHaveBeenCalledOnce()
+    expect(res.statusCode).toBe(200)
+    expect(JSON.parse(body)).toEqual({ path: '/Users/x/proj' })
+  })
+
+  it('does not register the native picker route on Linux, which has no native picker seam', () => {
+    const harness = createHarness('linux')
+    apply(harness.ctx, config)
+    expect(harness.route(DESKTOP_DIRECTORY_PICKER_PATH)).toBeUndefined()
+  })
+
   it('validates a Windows workspace through a same-origin desktop route', async () => {
     const harness = createHarness('win32')
     harness.validateDirectory.mockResolvedValue(false)

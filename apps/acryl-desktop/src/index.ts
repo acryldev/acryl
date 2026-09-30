@@ -318,7 +318,10 @@ export function apply(ctx: Context, config: Config): void {
     }),
     'acryl-desktop: renderer boot report route',
   )
-  if (runtime.platform === 'win32') {
+  // dialog.showOpenDialog/showMessageBox are the same native Electron calls on every platform; the real
+  // per-OS gate is runtime.pickDirectory()'s own canPickDirectory check (electron-platform.ts, T134) -
+  // this route just needs to exist wherever that can say yes, which today is win32 and darwin.
+  if (runtime.platform === 'win32' || runtime.platform === 'darwin') {
     ctx.effect(
       () => ctx.webServer.register({
         kind: 'exact',
