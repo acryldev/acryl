@@ -1,11 +1,11 @@
 /**
- * Finding a button in the page by its accessible name, the one primitive `clickAddWorkspaceTrigger` and the
- * Settings trigger lookup both need (spec 041 T040: replace ad hoc DOM-click helpers with one shared, tested
- * rule instead of each reading `aria-label` by hand). Deliberately small: `aria-label`, else the button's own
- * trimmed text — the two cases every control ACRYL's own code has ever needed to find this way. A caller that
- * needs the fuller ARIA accessible-name algorithm (labelled inputs, `aria-labelledby`, roles other than button)
- * has that in `acryl-agent-control`'s driver; this stays a workspace-local primitive so the two packages do not
- * depend on each other for one function.
+ * Finding a button in the page by its accessible name, what the Settings trigger lookup needs (spec 041
+ * T040: replace ad hoc DOM-click helpers with one shared, tested rule instead of each reading `aria-label`
+ * by hand). Deliberately small: `aria-label`, else the button's own trimmed text — the two cases every
+ * control ACRYL's own code has ever needed to find this way. A caller that needs the fuller ARIA
+ * accessible-name algorithm (labelled inputs, `aria-labelledby`, roles other than button) has that in
+ * `acryl-agent-control`'s driver; this stays a workspace-local primitive so the two packages do not depend
+ * on each other for one function.
  */
 
 /** @returns the trimmed `aria-label`, or the element's own trimmed text when it has none. */
@@ -32,18 +32,4 @@ export function findButtonByName(
     if (found !== undefined) return found
   }
   return null
-}
-
-/**
- * @returns true when a button was found and clicked.
- */
-export function clickButtonByName(
-  root: ParentNode,
-  names: readonly string[],
-  filter?: (button: HTMLButtonElement) => boolean,
-): boolean {
-  const button = findButtonByName(root, names, filter)
-  if (button === null) return false
-  button.click()
-  return true
 }

@@ -18,7 +18,7 @@ export interface AdvancedFrameInjected {
 
 /** Full advanced root slot props. */
 export type AdvancedFrameProps = PropsRuntime<'root'>
-  & PropsRenderSlots<'desktop.main' | 'desktop.sidebar' | 'sidebar' | 'conversation' | 'rightbar' | 'shell.overlay'>
+  & PropsRenderSlots<'desktop.main' | 'desktop.sidebar' | 'sidebar.settings' | 'conversation' | 'rightbar' | 'shell.overlay'>
   & AdvancedFrameInjected
 
 /** Desktop-owned transparent frame around the unchanged product surfaces. */
@@ -99,7 +99,7 @@ export function AdvancedFrame({ layout, platform, dock, renderSlot, SessionProvi
           {renderSlot('desktop.sidebar', {
             collapsed,
             width: sidebarOwnerWidth,
-            renderUpstream: () => renderSlot('sidebar', { collapsed, width: sidebarOwnerWidth }),
+            renderSettings: () => renderSlot('sidebar.settings', { wide: !collapsed }),
             onToggleCollapse: () => { layout.toggleSidebar() },
           })}
         </div>

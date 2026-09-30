@@ -13,8 +13,8 @@ function DefaultDesktopMain({ renderConversation }: DesktopMainOwnerProps) {
   return renderConversation()
 }
 
-function DefaultDesktopSidebar({ renderUpstream }: DesktopSidebarSurfaceOwnerProps) {
-  return renderUpstream()
+function DefaultDesktopSidebar({ renderSettings }: DesktopSidebarSurfaceOwnerProps) {
+  return renderSettings()
 }
 
 /**
@@ -70,7 +70,7 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
     children: {
       'desktop.main': { kind: 'single', scope: 'root' },
       'desktop.sidebar': { kind: 'single', scope: 'root' },
-      'sidebar': { kind: 'single', scope: 'root' },
+      'sidebar.settings': { kind: 'single', scope: 'root' },
       'conversation': { kind: 'single', scope: 'session-maybe' },
       'rightbar': { kind: 'single', scope: 'session' },
       'shell.overlay': { kind: 'list', scope: 'root' },

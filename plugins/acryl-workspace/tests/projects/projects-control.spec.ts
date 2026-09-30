@@ -5,7 +5,7 @@ import type { IWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/clie
 import { describe, expect, it, vi } from 'vitest'
 import type { WorkspaceGitApi } from '../../src/client/git/git-api.ts'
 import { FolderChooserUnavailableError } from '../../src/client/projects/web-folder-picker.ts'
-import { createProjectsControl, desktopDirectorySeams, clickAddWorkspaceTrigger, type DirectorySeams } from '../../src/client/projects/projects-control.ts'
+import { createProjectsControl, desktopDirectorySeams, type DirectorySeams } from '../../src/client/projects/projects-control.ts'
 import { WorkspaceShellState } from '../../src/client/worktrees/shell-state.ts'
 
 function gitApi(isRepo: (cwd: string) => boolean = () => true): WorkspaceGitApi {
@@ -287,9 +287,10 @@ describe('ProjectsControl.openSettings', () => {
 })
 
 describe('ProjectsControl folder chooser', () => {
-  it('names how a folder is chosen: the window picker, the upstream flow on desktop, a typed path on Web', () => {
+  it('names how a folder is chosen: the window picker, else the Host\'s (Web, or desktop Linux without a picker seam), else a typed path', () => {
     expect(world().control.chooserKind()).toBe('picker')
-    expect(world({ seams: { pickDirectory: undefined } }).control.chooserKind()).toBe('upstream')
+    expect(world({ seams: { pickDirectory: undefined }, webPickDirectory: async () => null }).control.chooserKind()).toBe('picker')
+    expect(world({ seams: { pickDirectory: undefined } }).control.chooserKind()).toBe('path')
     expect(world({ seams: { pickDirectory: undefined }, platform: 'web' }).control.chooserKind()).toBe('path')
   })
 
@@ -306,16 +307,15 @@ describe('ProjectsControl folder chooser', () => {
 })
 
 describe('ProjectsControl.addProject', () => {
-  it('continues through the upstream Add workspace control when there is no window picker', async () => {
+  it('desktop with no window picker seam (Linux) uses the Host\'s chooser too, exactly like Web (T143/T144-followup)', async () => {
+    const w = world({ seams: { pickDirectory: undefined }, webPickDirectory: async () => '/p/proj/src' })
+    expect(await w.control.addProject()).toEqual({ ok: true })
+    expect(w.workspaceCreates).toEqual([{ path: '/p/proj' }])
+  })
+
+  it('desktop with neither a window picker nor a Host chooser falls back to a typed path, like Web', async () => {
     const w = world({ seams: { pickDirectory: undefined } })
-    document.body.innerHTML = '<div class="dshWorkspaceUpstreamHost"><button aria-label="Add workspace"></button></div>'
-    let clicks = 0
-    document.querySelector('button')?.addEventListener('click', () => { clicks += 1 })
-    const result = await w.control.addProject()
-    expect(clicks).toBe(1)
-    expect(result).toMatchObject({ ok: true, note: expect.stringContaining('folder') })
-    document.body.innerHTML = ''
-    expect(await w.control.addProject()).toMatchObject({ ok: false, reason: expect.stringContaining('Add workspace') })
+    expect(await w.control.addProject()).toMatchObject({ ok: false, reason: expect.stringContaining('Type the path'), needsPath: true })
   })
 
   it('does nothing when the user cancels the chooser', async () => {
@@ -414,14 +414,6 @@ describe('the desktop folder chooser', () => {
     const without = desktopDirectorySeams({})
     expect(without.pickDirectory).toBeUndefined()
     expect(without.validateDirectory).toBeUndefined()
-  })
-
-  it('finds the Add workspace trigger only inside the upstream chats list', () => {
-    document.body.innerHTML = '<button aria-label="Add workspace"></button>'
-    expect(clickAddWorkspaceTrigger()).toBe(false)
-    document.body.innerHTML = '<div class="dshWorkspaceUpstreamHost"><button aria-label="添加工作区"></button></div>'
-    expect(clickAddWorkspaceTrigger()).toBe(true)
-    document.body.innerHTML = ''
   })
 })
 

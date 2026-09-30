@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from 'vitest'
-import { accessibleButtonName, clickButtonByName, findButtonByName } from '../../src/client/dom/find-by-name.ts'
+import { accessibleButtonName, findButtonByName } from '../../src/client/dom/find-by-name.ts'
 
 describe('accessibleButtonName', () => {
   it('prefers aria-label, trimmed, over the button\'s own text', () => {
@@ -15,7 +15,7 @@ describe('accessibleButtonName', () => {
   })
 })
 
-describe('findButtonByName and clickButtonByName', () => {
+describe('findButtonByName', () => {
   it('finds the first document-order match for the first name that has one', () => {
     document.body.innerHTML = '<div id="scope"><button>Other</button><button>Add workspace</button></div><button>Add workspace</button>'
     const scope = document.getElementById('scope') as HTMLElement
@@ -29,17 +29,8 @@ describe('findButtonByName and clickButtonByName', () => {
     expect(found?.textContent).toBe('S')
   })
 
-  it('returns null and clicks nothing when no name matches', () => {
+  it('returns null when no name matches', () => {
     document.body.innerHTML = '<button>Nope</button>'
     expect(findButtonByName(document, ['Add workspace'])).toBeNull()
-    expect(clickButtonByName(document, ['Add workspace'])).toBe(false)
-  })
-
-  it('clicks the match it finds and reports success', () => {
-    document.body.innerHTML = '<button>Add workspace</button>'
-    let clicked = false
-    document.querySelector('button')?.addEventListener('click', () => { clicked = true })
-    expect(clickButtonByName(document, ['Add workspace'])).toBe(true)
-    expect(clicked).toBe(true)
   })
 })

@@ -110,7 +110,7 @@ function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: P
     agents: new AgentsState({ list: async () => [], add: async () => [], remove: async () => [], settings: async () => { throw new Error('no settings') }, change: async () => { throw new Error('no settings') } }),
     collapsed,
     width: 280,
-    renderUpstream: () => <div data-testid="upstream">upstream sidebar</div>,
+    renderSettings: () => <div data-testid="settings">settings trigger</div>,
     onToggleCollapse: () => {},
     useSessions: sessionsHook(SESSIONS),
     shell,
@@ -119,30 +119,31 @@ function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: P
 }
 
 describe('ProjectsSidebar', () => {
-  it('renders the tree, with no classic view or search toggle to switch to, and the upstream sidebar only as a host that is never display:none', () => {
+  it('renders the tree, with no classic view or search toggle to switch to, and nothing from the upstream chat-list sidebar mounted anywhere - not even hidden', () => {
     const shell = new WorkspaceShellState(api())
-    render(<ProjectsSidebar {...sidebarProps(shell)} />)
+    const { container } = render(<ProjectsSidebar {...sidebarProps(shell)} />)
     expect(screen.queryByRole('tab')).toBeNull()
     expect(screen.getByText('Workspaces')).toBeTruthy()
     expect(screen.queryByRole('button', { name: /classic view/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /Back to Workspaces/i })).toBeNull()
     expect(screen.queryByText('All chats')).toBeNull()
-    const upstream = screen.getByTestId('upstream')
-    // Settings' dialog is a plain sibling of its trigger inside it: a hidden ancestor would hide the dialog too.
-    expect(upstream.closest('[hidden]')).toBeNull()
-    expect(upstream.closest('.dshWorkspaceUpstreamHost')).toBeTruthy()
+    expect(container.querySelector('.dshWorkspaceUpstreamHost')).toBeNull()
+    // The real Settings occupant renders directly in this tree's own foot, not inside any hidden host.
+    expect(screen.getByTestId('settings')).toBeTruthy()
     shell.dispose()
   })
 
-  it('renders only the upstream sidebar when collapsed to the rail', () => {
+  it('collapsed to the rail renders this package\'s own collapse toggle and the Settings occupant, nothing from upstream', () => {
     const shell = new WorkspaceShellState(api())
-    render(<ProjectsSidebar {...sidebarProps(shell, true)} />)
-    expect(screen.getByTestId('upstream')).toBeTruthy()
+    const { container } = render(<ProjectsSidebar {...sidebarProps(shell, true)} />)
+    expect(screen.getByTestId('settings')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Expand sidebar' })).toBeTruthy()
+    expect(container.querySelector('.dshWorkspaceUpstreamHost')).toBeNull()
     expect(screen.queryByText('Workspaces')).toBeNull()
     shell.dispose()
   })
 
-  it('lists worktrees with status dots and session counts, keeping upstream mounted', async () => {
+  it('lists worktrees with status dots and session counts', async () => {
     const shell = new WorkspaceShellState(api())
     render(<ProjectsSidebar {...sidebarProps(shell)} />)
 
@@ -154,7 +155,6 @@ describe('ProjectsSidebar', () => {
       expect(within(repo).getByRole('img', { name: 'Agent running' })).toBeTruthy()
       expect(within(repo).getByRole('img', { name: 'Uncommitted changes' })).toBeTruthy()
     })
-    expect(screen.getByTestId('upstream')).toBeTruthy()
     shell.dispose()
   })
 
@@ -529,13 +529,11 @@ describe('ProjectsSidebar', () => {
     shell.dispose()
   })
 
-  it('opens Settings, and says so when it cannot', async () => {
+  it('renders the real Settings occupant directly in the tree foot - not a proxy button', () => {
     const shell = new WorkspaceShellState(api())
-    const openSettings = vi.fn((): ProjectAction => ({ ok: false, reason: 'Settings is not available in this window.' }))
-    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ openSettings }))} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
-    expect(openSettings).toHaveBeenCalledTimes(1)
-    expect((await screen.findByRole('alert')).textContent).toContain('not available')
+    render(<ProjectsSidebar {...sidebarProps(shell)} />)
+    expect(screen.queryByRole('button', { name: 'Settings' })).toBeNull()
+    expect(screen.getByTestId('settings')).toBeTruthy()
     shell.dispose()
   })
 

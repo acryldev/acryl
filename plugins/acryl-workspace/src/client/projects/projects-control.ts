@@ -8,7 +8,6 @@ import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { IWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
-import { clickButtonByName } from '../dom/find-by-name.ts'
 import { pickSession, type SessionRef } from '../sessions/session-pick.ts'
 import { owningWorktree } from './sidebar-model.ts'
 import { FolderChooserUnavailableError } from './web-folder-picker.ts'
@@ -25,8 +24,9 @@ export interface ProjectsControl {
   workspacePaths(): readonly string[]
   subscribeWorkspaces(listener: () => void): () => void
   /**
-   * How a folder is chosen here: the window's own picker, the app's upstream "Add workspace" flow (desktop
-   * without a picker seam), or by typing the folder's path (Web, where the page cannot open a native chooser).
+   * How a folder is chosen here: the window's own native picker (desktop) or the Host's (everywhere
+   * else - Web, and desktop Linux where Electron has no picker seam of its own, T143), or by typing the
+   * folder's path when neither is available.
    */
   chooserKind(): FolderChooserKind
   /** Choose a folder (by the picker or the upstream flow), require a git repository, register it and open a chat in it. */
@@ -66,10 +66,10 @@ export interface ProjectsControl {
   openSettings(): ProjectAction
 }
 
-export type FolderChooserKind = 'picker' | 'upstream' | 'path'
+export type FolderChooserKind = 'picker' | 'path'
 
 export interface ProjectsControlDeps {
-  /** Which surface this page is: only the web has no native chooser of any kind. */
+  /** Which surface this page is. */
   readonly platform: ShellPlatform
   readonly shell: WorkspaceShellState
   readonly gitApi: WorkspaceGitApi
@@ -77,7 +77,9 @@ export interface ProjectsControlDeps {
   readonly getSessions: () => ISessions | undefined
   /** Looked up when needed, because the desktop installs its folder-picker seam after this plugin loads. */
   readonly directory: () => DirectorySeams
-  /** Web only: opens the OS folder chooser on the machine running the Host (see `web-folder-picker.ts`). */
+  /** Opens the OS folder chooser on the machine running the Host (see `web-folder-picker.ts`): the only
+   * chooser on Web, and desktop Linux's fallback once Electron's own seam (`directory().pickDirectory`)
+   * is absent - both are served by the same Host route (T143), so neither platform needs anything else. */
   readonly webPickDirectory?: () => Promise<string | null>
 }
 
@@ -118,12 +120,13 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
 
   const workspaceItems = () => deps.getWorkspaces()?.list.getSnapshot().items ?? []
 
-  /** The chooser to use: the desktop window's own, else (Web) the Host's - until it says it has none. */
+  /** The chooser to use: the window's own native seam (desktop with one), else the Host's (T143) - until
+   * it says it has none. */
   let webPickerUnavailable = false
   const nativePicker = (): (() => Promise<string | null>) | undefined => {
     const seam = deps.directory().pickDirectory
     if (seam !== undefined) return seam
-    return deps.platform === 'web' && !webPickerUnavailable ? deps.webPickDirectory : undefined
+    return webPickerUnavailable ? undefined : deps.webPickDirectory
   }
 
   /**
@@ -163,23 +166,12 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     subscribeWorkspaces: listener => deps.getWorkspaces()?.list.subscribe(listener) ?? (() => {}),
 
     chooserKind() {
-      if (nativePicker() !== undefined) return 'picker'
-      return deps.platform === 'web' ? 'path' : 'upstream'
+      return nativePicker() !== undefined ? 'picker' : 'path'
     },
 
     async addProject() {
       const pick = nativePicker()
-      if (pick === undefined) {
-        if (deps.platform === 'web') return { ok: false, reason: 'Type the path of a git repository folder to add it.', needsPath: true }
-        // Desktop without a picker seam (Linux today - Windows and macOS both publish one, T134): falls
-        // back to the app's own Add workspace flow, which drives the native chooser through a trigger
-        // that lives inside the upstream sidebar, which ProjectsSidebar keeps mounted at zero size (not
-        // `display: none`: T134 found live that the upstream component's handling of what the dialog
-        // resolves to is lost while its whole subtree is display:none). A git folder registered there
-        // appears under Projects by itself.
-        if (!clickAddWorkspaceTrigger()) return fail('Could not find the Add workspace control.')
-        return { ok: true, note: 'Choose the folder here. If it is a git repository it will appear under Projects.' }
-      }
+      if (pick === undefined) return { ok: false, reason: 'Type the path of a git repository folder to add it.', needsPath: true }
       let picked: string | null
       try {
         picked = await pick()
@@ -358,19 +350,4 @@ export function desktopDirectorySeams(view: DesktopDirectoryWindow = window as W
     pickDirectory: seam === undefined ? undefined : () => seam(),
     validateDirectory: validate === undefined ? undefined : path => validate(path),
   }
-}
-
-const ADD_WORKSPACE_LABELS = ['Add workspace', '添加工作区']
-
-/**
- * Open the upstream "Add workspace" flow, which drives the native folder chooser and registers the
- * workspace. Only reached when the desktop has no picker seam (Linux, today - Windows and macOS both
- * publish one, T134). Its trigger lives inside the upstream sidebar, which ProjectsSidebar keeps mounted
- * at zero size (`.dshWorkspaceUpstreamHost`). Like the Settings trigger, it
- * exposes no service.
- * @returns whether the trigger was found and activated.
- */
-export function clickAddWorkspaceTrigger(root: ParentNode = document): boolean {
-  const chats = root.querySelector('.dshWorkspaceUpstreamHost')
-  return chats !== null && clickButtonByName(chats, ADD_WORKSPACE_LABELS)
 }
