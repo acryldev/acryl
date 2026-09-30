@@ -1,55 +1,57 @@
-# 参与贡献
+[中文](CONTRIBUTING.zh.md) | English
 
-感谢你愿意参与 ACRYL。这是一个社区项目，无论你是普通用户、插件作者还是开发者，都有适合你的贡献方式。
+# Contributing
 
-## 普通用户：使用、反馈与传播
+Thank you for wanting to contribute to ACRYL. This is a community project — whether you are a regular user, a plugin author, or a developer, there is a way to contribute that fits you.
 
-- 遇到问题或异常，[提 issue](https://github.com/acryldev/acryl/issues)：说明操作系统（macOS / Windows）、应用版本和复现步骤。
-- 有功能想法或改进建议，也欢迎提 issue 讨论。
-- 参与 [Discord](https://discord.gg/cY9KXMex69)（见 [项目链接](README.md#project-links)），帮助其他用户解决问题。
-- 写使用教程、体验文章，或帮助完善和翻译文档。
-- 在 [项目链接](README.md#project-links) 中收录生态项目。
+## Regular users: use, report, and spread the word
 
-## 插件作者：扩展生态
+- Report problems or odd behavior in an [issue](https://github.com/acryldev/acryl/issues): include your operating system (macOS / Windows), application version, and reproduction steps.
+- Feature ideas and improvement suggestions are welcome as issues too.
+- Join the [Discord](https://discord.gg/cY9KXMex69) listed under [project links](README.en.md#project-links) and help other users.
+- Write tutorials or experience posts, or help improve and translate the documentation.
+- Suggest ecosystem projects for the [project links](README.en.md#project-links) section.
 
-ACRYL 的核心是插件。如果你写插件，请先阅读：
+## Plugin authors: extend the ecosystem
 
-- [插件开发](docs/plugin-development.md)：如何编写普通 DSH 插件和 Desktop 插件。
-- [DSH 插件生态倡议书](docs/plugin-ecosystem.md)：开放、可组合、可持续的生态愿景，以及组合优先、声明清晰、兼容优先三条原则。
-- [DSH Community Fabric Draft](plugins/dsh-community-fabric/README.zh.md)：参与 Manifest、Capability、Host Descriptor 和事件 contract 的公开讨论。
-- [Community Market 设计](plugins/cordis-plugin-market/docs/market-shell.zh.md)：未来市场如何发现插件，以及为什么收录不等于安全审核。
+ACRYL is built around plugins. If you write plugins, start with:
 
-遵循倡议书的插件更容易与其他插件共存，也会在未来上线时更容易在插件市场中被发现和信任。
+- [Plugin development](docs/plugin-development.en.md): how to write ordinary DSH plugins and Desktop plugins.
+- [DSH plugin ecosystem manifesto](docs/plugin-ecosystem.en.md): our vision of an open, composable, sustainable ecosystem, and the three principles — composition first, declare clearly, compatibility first.
+- [DSH Community Fabric Draft](plugins/dsh-community-fabric/README.md): join the public discussion of manifests, capabilities, Host Descriptors, and event contracts.
+- [Community Market design](plugins/cordis-plugin-market/docs/market-shell.md): how the future market will discover plugins and why listing is not a security review.
 
-## 开发者：贡献代码
+Plugins that follow the manifesto coexist better with other plugins and will be easier to discover and trust in the marketplace when it ships.
 
-### 开发环境
+## Developers: contribute code
+
+### Development environment
 
 ```sh
 corepack pnpm run upstream:sync
 corepack pnpm install --frozen-lockfile
-corepack pnpm run check   # 完整 headless gate：构建、类型检查、测试与冒烟
-corepack pnpm run dev     # 有图形环境时启动应用
+corepack pnpm run check   # full headless gate: build, typecheck, tests, and smokes
+corepack pnpm run dev     # launch the application when a graphical session is available
 ```
 
-### 仓库边界（开始前务必了解）
+### Repository boundaries (please read before starting)
 
-- `deepseek-harness/` 是固定版本的上游子模块，**桌面开发不修改其中的任何文件**；上游内容更新走独立的 pin 提交。
-- 桌面代码位于 `apps/acryl-desktop/`；`plugins/dsh-community-fabric/` 是以文档为主的社区标准 Draft，`plugins/cordis-plugin-market/` 是市场包及其设计文档。三者都在外层 PNPM workspace 里。
-- 构建、类型检查、单元测试和冒烟检查必须保持 headless-safe。
+- `deepseek-harness/` is the pinned upstream submodule. **Desktop development never edits files inside it**; upstream updates land through separate pin commits.
+- Desktop code lives in `apps/acryl-desktop/`. `plugins/dsh-community-fabric/` is the documentation-first community-standard draft, and `plugins/cordis-plugin-market/` holds the market package and its design docs. All three are part of the outer PNPM workspace.
+- Builds, typechecks, unit tests, and smoke checks must stay headless-safe.
 
-### 提交与 PR
+### Commits and pull requests
 
-- 提交信息使用 conventional commits 风格（例如 `fix(desktop): ...`、`docs: ...`）。
-- 提交前运行 `corepack pnpm run check` 并保证全绿。
-- 变更生产依赖后，运行 `corepack pnpm --filter acryl-desktop run verify:notices` 刷新第三方许可清单，并提交更新后的 `apps/acryl-desktop/THIRD_PARTY_NOTICES.md`。
-- 文档改动请中英同步，并更新 `README.i18n.yaml` 的双语 hash 记录。
-- PR 描述说明改动内容、动机和验证方式；CI 通过后再合并。
+- Use conventional commit messages (for example `fix(desktop): ...`, `docs: ...`).
+- Run `corepack pnpm run check` and keep it green before committing.
+- After changing production dependencies, run `corepack pnpm --filter acryl-desktop run verify:notices` to refresh the third-party notices and commit the updated `apps/acryl-desktop/THIRD_PARTY_NOTICES.md`.
+- Documentation changes should stay bilingual and update the `README.i18n.yaml` hash record.
+- Describe the change, its motivation, and how it was verified in the PR; merge after CI passes.
 
-## 加入技术团队
+## Join the technical team
 
-如果你希望加入我们的技术团队，欢迎通过 [t4wefan@qq.com](mailto:t4wefan@qq.com) 联系我们。
+If you would like to join our technical team, contact us at [t4wefan@qq.com](mailto:t4wefan@qq.com).
 
-## 行为准则
+## Code of conduct
 
-请保持友善与尊重，就事论事。我们希望这是一个欢迎新人的社区。完整的[参与者公约](CODE_OF_CONDUCT.md)适用于所有项目空间。
+Be kind and respectful, and stick to the topic. We want a community that welcomes newcomers. The [Contributor Covenant](CODE_OF_CONDUCT.md) applies to all project spaces.
