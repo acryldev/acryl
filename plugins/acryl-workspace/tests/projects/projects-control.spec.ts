@@ -270,14 +270,15 @@ describe('ProjectsControl folder chooser', () => {
     expect(world({ seams: { pickDirectory: undefined }, platform: 'web' }).control.chooserKind()).toBe('path')
   })
 
-  it('adds a typed path on Web: it must be a git repository, is registered once, and opens a chat', async () => {
+  it('adds a typed path on Web - a git repository or a plain folder, either registers once and opens a chat', async () => {
     const w = world({ seams: { pickDirectory: undefined }, platform: 'web', isRepo: cwd => cwd === '/p/proj' })
     expect(await w.control.addProject()).toMatchObject({ ok: false, reason: expect.stringContaining('Type the path') })
     expect(await w.control.addProjectByPath('   ')).toMatchObject({ ok: false })
-    expect(await w.control.addProjectByPath('/not/a/repo')).toEqual({ ok: false, reason: 'That folder is not a git repository.' })
-    expect(w.workspaceCreates).toEqual([])
+    // '/not/a/repo' is a real, existing, non-git directory (T134-followup) - it registers too, not refused.
+    expect(await w.control.addProjectByPath('/not/a/repo')).toEqual({ ok: true })
+    expect(w.workspaceCreates).toEqual([{ path: '/not/a/repo' }])
     expect(await w.control.addProjectByPath(' /p/proj ')).toEqual({ ok: true })
-    expect(w.workspaceCreates).toEqual([{ path: '/p/proj' }])
+    expect(w.workspaceCreates).toEqual([{ path: '/not/a/repo' }, { path: '/p/proj' }])
   })
 })
 
@@ -300,10 +301,11 @@ describe('ProjectsControl.addProject', () => {
     expect(w.workspaceCreates).toEqual([])
   })
 
-  it('refuses a folder that is not a git repository and registers nothing', async () => {
+  it('registers a plain, non-git folder too - as its own kind of workspace, not refused (T134-followup)', async () => {
     const w = world({ isRepo: () => false, seams: { pickDirectory: async () => '/tmp/plain' } })
-    expect(await w.control.addProject()).toEqual({ ok: false, reason: 'That folder is not a git repository.' })
-    expect(w.workspaceCreates).toEqual([])
+    expect(await w.control.addProject()).toEqual({ ok: true })
+    expect(w.workspaceCreates).toEqual([{ path: '/tmp/plain' }])
+    expect(w.shell.getSnapshot().repos.find(repo => repo.root === '/tmp/plain')).toMatchObject({ git: false })
   })
 
   it('registers the repository root as a workspace, selects it and opens a chat there', async () => {

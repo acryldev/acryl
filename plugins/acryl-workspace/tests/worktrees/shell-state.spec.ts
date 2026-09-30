@@ -61,10 +61,21 @@ describe('WorkspaceShellState', () => {
     expect(repo?.worktrees.map(w => w.branch)).toEqual(['main', 'feature/x'])
   })
 
-  it('ignores a directory that is not a repository', async () => {
+  it('registers a directory that is not a git repository as its own plain-folder workspace (T134-followup)', async () => {
     const shell = new WorkspaceShellState(fakeApi())
-    expect(await shell.discover('/plain/dir')).toBeUndefined()
-    expect(shell.getSnapshot().repos).toEqual([])
+    expect(await shell.discover('/plain/dir')).toBe('/plain/dir')
+    const [repo] = shell.getSnapshot().repos
+    expect(repo).toMatchObject({ root: '/plain/dir', name: 'dir', git: false })
+    expect(repo?.worktrees).toEqual([{ path: '/plain/dir', branch: null, main: true, phase: 'ready', changes: [], added: 0, removed: 0, truncated: false }])
+  })
+
+  it('never polls git status for a plain-folder workspace', async () => {
+    const api = fakeApi()
+    const shell = new WorkspaceShellState(api)
+    await shell.discover('/plain/dir')
+    await shell.refreshStatus('/plain/dir')
+    await shell.refreshAll()
+    expect(api.calls.some(call => call.startsWith('status /plain/dir'))).toBe(false)
   })
 
   it('deduplicates two directories in the same repository into one repo', async () => {
@@ -248,3 +259,42 @@ describe('open-doc channel', () => {
   })
 })
 
+
+describe('dismissedChats (T134-followup)', () => {
+  it('dismisses a chat idempotently, and restoring an un-dismissed one is a no-op', () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    expect(shell.getSnapshot().dismissedChats.has('s1')).toBe(false)
+    shell.dismissChat('s1')
+    expect(shell.getSnapshot().dismissedChats.has('s1')).toBe(true)
+    const afterFirst = shell.getSnapshot()
+    shell.dismissChat('s1') // idempotent: no new snapshot, no extra notification
+    expect(shell.getSnapshot()).toBe(afterFirst)
+    shell.restoreChat('s2') // was never dismissed: also a no-op
+    expect(shell.getSnapshot()).toBe(afterFirst)
+  })
+
+  it('restores a dismissed chat, leaving other dismissals untouched', () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    shell.dismissChat('s1')
+    shell.dismissChat('s2')
+    shell.restoreChat('s1')
+    expect([...shell.getSnapshot().dismissedChats]).toEqual(['s2'])
+  })
+})
+
+describe('close-tile channel (T134-followup)', () => {
+  it('delivers a close-tile request to listeners until they unsubscribe or the shell is disposed', () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    const seen: unknown[] = []
+    const off = shell.onCloseTileRequest(request => { seen.push(request) })
+    shell.requestCloseTile({ worktree: '/p/proj', tileId: 't1' })
+    expect(seen).toEqual([{ worktree: '/p/proj', tileId: 't1' }])
+    off()
+    shell.requestCloseTile({ worktree: '/p/proj', tileId: 't2' })
+    expect(seen).toHaveLength(1)
+    shell.onCloseTileRequest(r => { seen.push(r) })
+    shell.dispose()
+    shell.requestCloseTile({ worktree: '/p/proj', tileId: 't3' })
+    expect(seen).toHaveLength(1)
+  })
+})

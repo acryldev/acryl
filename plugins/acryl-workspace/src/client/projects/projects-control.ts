@@ -130,10 +130,12 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       const workspaces = deps.getWorkspaces()
       if (workspaces === undefined) return fail('Workspaces are not available yet.')
       const typed = path.trim()
-      if (typed === '') return fail('Type the path of a git repository folder.')
-      // A project is a git repository: check before registering anything.
+      if (typed === '') return fail('Type the path of a folder to add.')
+      // A project is a git repository or a plain folder (T134-followup: "should be able to handle both
+      // git / non-git"). shell.discover() itself decides which and registers it either way; undefined
+      // only means the check itself failed (host/network error, or the path does not exist).
       const worktree = await shell.discover(typed)
-      if (worktree === undefined) return fail('That folder is not a git repository.')
+      if (worktree === undefined) return fail('Could not add that folder.')
       if (seams.validateDirectory !== undefined) {
         try {
           if (!(await seams.validateDirectory(worktree))) return fail('That folder cannot be added as a project.')

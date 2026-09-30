@@ -5,7 +5,7 @@ import type { RepoState, WorktreeState } from '../../src/client/worktrees/shell-
 const wt = (path: string, main = false): WorktreeState => (
   { path, branch: path, main, phase: 'ready', changes: [], added: 0, removed: 0, truncated: false }
 )
-const REPOS: RepoState[] = [{ root: '/p', name: 'p', worktrees: [wt('/p', true), wt('/p/.worktrees/x'), wt('/q')] }]
+const REPOS: RepoState[] = [{ root: '/p', name: 'p', git: true, worktrees: [wt('/p', true), wt('/p/.worktrees/x'), wt('/q')] }]
 
 describe('pickSession', () => {
   it('returns undefined when the worktree has no chat', () => {

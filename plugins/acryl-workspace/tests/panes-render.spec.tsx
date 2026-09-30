@@ -217,6 +217,34 @@ describe('ProjectsSidebar', () => {
     shell.dispose()
   })
 
+  it('closing a chat entry by its hover "x" hides it here and dismisses it on the shell (T134-followup)', async () => {
+    const shell = new WorkspaceShellState(api())
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects())} />)
+    await screen.findByText('feature/x')
+    fireEvent.click(screen.getByRole('button', { name: 'Show sessions on feature/x' }))
+    await screen.findByText('two') // s2's real displayTitle
+    fireEvent.click(screen.getByRole('button', { name: 'Close two' }))
+    expect(shell.getSnapshot().dismissedChats.has('s2')).toBe(true)
+    await waitFor(() => { expect(screen.queryByText('two')).toBeNull() })
+    shell.dispose()
+  })
+
+  it('closing an agent entry by its hover "x" asks the canvas to close that exact tile (T134-followup)', async () => {
+    const shell = new WorkspaceShellState(api())
+    const groups = new WorkspaceGroups()
+    let tile: { id: string } | undefined
+    act(() => { tile = groups.stateFor('/p/proj-x').addTile('pty', { commandId: 'claude', title: 'Claude' }) })
+    const requests: unknown[] = []
+    shell.onCloseTileRequest(request => { requests.push(request) })
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects(), groups)} />)
+    await screen.findByText('feature/x')
+    fireEvent.click(screen.getByRole('button', { name: 'Show sessions on feature/x' }))
+    await screen.findByText('Claude')
+    fireEvent.click(screen.getByRole('button', { name: 'Close Claude' }))
+    expect(requests).toEqual([{ worktree: '/p/proj-x', tileId: tile?.id }])
+    shell.dispose()
+  })
+
   it('says nothing is running when an expanded worktree has no agent tabs or chats', async () => {
     const shell = new WorkspaceShellState(api())
     // The one session here belongs to /p/proj-x, not /p/proj (main) - discovers the same repo via api()'s
@@ -398,8 +426,18 @@ describe('ProjectsSidebar', () => {
 
   it('explains an empty projects list', async () => {
     const shell = new WorkspaceShellState(api({ repo: async () => null }))
-    render(<ProjectsSidebar {...sidebarProps(shell)} />)
-    expect(await screen.findByText(/No git projects yet/)).toBeTruthy()
+    const noSessions = { ids: [], current: undefined, byId: {} }
+    render(<ProjectsSidebar {...sidebarProps(shell)} useSessions={sessionsHook(noSessions)} />)
+    expect(await screen.findByText(/No workspaces yet/)).toBeTruthy()
+    shell.dispose()
+  })
+
+  it('registers a non-git folder as its own kind of workspace instead of refusing it (T134-followup)', async () => {
+    const shell = new WorkspaceShellState(api({ repo: async () => null }))
+    const noSessions = { ids: [], current: undefined, byId: {} }
+    const projects = fakeProjects({ workspacePaths: () => ['/p/plain-folder'], workspaceKey: () => '/p/plain-folder' })
+    render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} useSessions={sessionsHook(noSessions)} />)
+    expect(await screen.findByRole('region', { name: 'plain-folder' })).toBeTruthy()
     shell.dispose()
   })
 })

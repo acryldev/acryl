@@ -9,6 +9,7 @@ function worktree(path: string, branch: string | null, patch: Partial<WorktreeSt
 const REPO: RepoState = {
   root: '/p/proj',
   name: 'proj',
+  git: true,
   worktrees: [
     worktree('/p/proj', 'main', { main: true }),
     worktree('/p/proj/.worktrees/x', 'feature/x', {
@@ -24,6 +25,7 @@ const snapshot = (over: Partial<ShellSnapshot> = {}): ShellSnapshot => ({
   mode: 'projects',
   repos: [REPO],
   selectedPath: undefined,
+  dismissedChats: new Set(),
   ...over,
 })
 

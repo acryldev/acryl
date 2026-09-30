@@ -8,7 +8,7 @@ import { flushSync } from 'react-dom'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
 import type { CustomAgent } from '../../agents/definition.ts'
-import { ChatIcon, ChevronIcon } from '../agents/controls.tsx'
+import { ChatIcon, ChevronIcon, FolderIcon, GitRepoIcon } from '../agents/controls.tsx'
 import type { AgentsState } from '../agents/agents-state.ts'
 import type { WorkspaceGroups } from '../canvas/groups.ts'
 import { agentsByWorktree, MAX_ROW_AGENTS } from '../chrome/worktree-agents.ts'
@@ -110,10 +110,11 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
   const customAgents = useSyncExternalStore(agents.subscribe, agents.getSnapshot)
   const chatRows = useMemo(
     () => sessions.ids.flatMap((id) => {
+      if (snapshot.dismissedChats.has(id)) return [] // T134-followup: hidden from tree, dot count and tab strip alike
       const row = sessions.byId[id]
       return row === undefined ? [] : [{ id, blank: row.blank, running: row.running, displayTitle: row.displayTitle, ...(row.cwd === undefined ? {} : { cwd: row.cwd }) }]
     }),
-    [sessions],
+    [sessions, snapshot.dismissedChats],
   )
   const repos = useMemo(
     () => buildProjectRows(snapshot, chatRows, new Map(JSON.parse(agentsKey) as Array<[string, string[]]>), new Map(JSON.parse(attentionKey) as Array<[string, WorktreeAttention]>)),
@@ -151,6 +152,15 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
     shell.select(path)
     const result = projects.openChat(id)
     if (!result.ok) setNotice(result.reason)
+  }
+
+  /** Hover "x" (owner request, T134-followup): an agent/terminal entry closes its actual tab (the row
+   * exists only because the tab is open, so it disappears from here the same instant); a chat entry
+   * hides the session from this list and the tab strip together - there is no session-delete capability
+   * in the injected sessions face, so this is a "not shown here" toggle, not a destructive delete. */
+  const closeEntry = (path: string, entry: WorktreeSessionEntry): void => {
+    if (entry.kind === 'agent') shell.requestCloseTile({ worktree: path, tileId: entry.id })
+    else shell.dismissChat(entry.id)
   }
 
   const pickWorktree = (path: string): void => {
@@ -241,7 +251,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
             type="button"
             className="dshWorkspaceSideAdd"
             aria-label="Add git project"
-            title="Add a git project: choose a folder that is a git repository"
+            title="Add a workspace: choose any folder - a git repository or a plain folder both work"
             onClick={() => { void addProject() }}
           >
             +
@@ -269,7 +279,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
         )}
         {repos.length === 0 && (
           <div className="dshWorkspaceSideEmpty">
-            No git projects yet. Use + to add a folder that is a git repository, or open a chat in one.
+            No workspaces yet. Use + to add a folder - a git repository or a plain folder both work - or open a chat in one.
           </div>
         )}
         {repos.map(repo => (
@@ -283,6 +293,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
             entriesByWorktree={entriesByWorktree}
             onSelectAgent={selectAgentEntry}
             onSelectChat={selectChatEntry}
+            onCloseEntry={closeEntry}
             onSelect={pickWorktree}
             onNewChat={newChat}
             customAgents={customAgents}
@@ -335,6 +346,7 @@ interface RepoSectionProps {
   readonly entriesByWorktree: ReadonlyMap<string, readonly WorktreeSessionEntry[]>
   readonly onSelectAgent: (path: string, tileId: string) => void
   readonly onSelectChat: (path: string, id: string) => void
+  readonly onCloseEntry: (path: string, entry: WorktreeSessionEntry) => void
   readonly onSelect: (path: string) => void
   readonly onNewChat: (path: string) => void
   readonly customAgents: readonly CustomAgent[]
@@ -343,10 +355,11 @@ interface RepoSectionProps {
   readonly onCreate: (branch: string) => Promise<void>
 }
 
-/** Top level of the tree: a workspace (git repository), its own chevron collapsing every branch/worktree under it. */
+/** Top level of the tree: a workspace (a git repository or a plain folder), its own chevron collapsing
+ * every branch/worktree under it. */
 function RepoSection({
   repo, collapsed, onToggleCollapse, expandedWorktrees, onToggleWorktree, entriesByWorktree, onSelectAgent, onSelectChat,
-  onSelect, onNewChat, customAgents, creating, onToggleCreate, onCreate,
+  onCloseEntry, onSelect, onNewChat, customAgents, creating, onToggleCreate, onCreate,
 }: RepoSectionProps) {
   const [branch, setBranch] = useState('')
   const [busy, setBusy] = useState(false)
@@ -369,17 +382,22 @@ function RepoSection({
         >
           <ChevronIcon open={!collapsed} />
         </button>
+        <span className="dshWorkspaceRepoKind" title={repo.git ? 'Git repository' : 'Plain folder (not a git repository)'}>
+          {repo.git ? <GitRepoIcon /> : <FolderIcon />}
+        </span>
         <h3 className="dshWorkspaceRepoName" title={repo.root}>{repo.name}</h3>
-        <button
-          type="button"
-          className="dshWorkspaceSideAdd"
-          aria-label={`New branch in ${repo.name}`}
-          title="Create a new branch in its own worktree"
-          aria-expanded={creating}
-          onClick={onToggleCreate}
-        >
-          +
-        </button>
+        {repo.git && (
+          <button
+            type="button"
+            className="dshWorkspaceSideAdd"
+            aria-label={`New branch in ${repo.name}`}
+            title="Create a new branch in its own worktree"
+            aria-expanded={creating}
+            onClick={onToggleCreate}
+          >
+            +
+          </button>
+        )}
       </div>
       {creating && (
         <form
@@ -429,6 +447,7 @@ function RepoSection({
                   customAgents={customAgents}
                   onSelectAgent={onSelectAgent}
                   onSelectChat={onSelectChat}
+                  onCloseEntry={onCloseEntry}
                 />
               )}
             </li>
@@ -474,13 +493,16 @@ function WorktreeButton({ row, onSelect, customAgents }: { row: WorktreeRow; onS
  * AcrylDSH Chat scoped to it - never a file, browser, diff, board or doc tab.
  */
 function WorktreeSessions({
-  path, entries, customAgents, onSelectAgent, onSelectChat,
+  path, entries, customAgents, onSelectAgent, onSelectChat, onCloseEntry,
 }: {
   readonly path: string
   readonly entries: readonly WorktreeSessionEntry[]
   readonly customAgents: readonly CustomAgent[]
   readonly onSelectAgent: (path: string, tileId: string) => void
   readonly onSelectChat: (path: string, id: string) => void
+  /** Hover "x" (owner request, T134-followup): removes an agent/terminal tab or hides a chat, from
+   * both this list and the tab strip at once. */
+  readonly onCloseEntry: (path: string, entry: WorktreeSessionEntry) => void
 }) {
   if (entries.length === 0) {
     return <p className="dshWorkspaceSessionsEmpty">Nothing running here yet.</p>
@@ -488,7 +510,7 @@ function WorktreeSessions({
   return (
     <ul className="dshWorkspaceSessions">
       {entries.map(entry => (
-        <li key={`${entry.kind}-${entry.id}`}>
+        <li key={`${entry.kind}-${entry.id}`} className="dshWorkspaceSessionItem">
           <button
             type="button"
             className="dshWorkspaceSessionRow"
@@ -500,6 +522,15 @@ function WorktreeSessions({
               : <ChatIcon />}
             <span className="dshWorkspaceSessionLabel">{entry.label}</span>
             {entry.running === true && <span className="dshWorkspaceDot" data-dot="running" role="img" aria-label="Running" />}
+          </button>
+          <button
+            type="button"
+            className="dshWorkspaceSessionClose"
+            aria-label={`Close ${entry.label}`}
+            title={`Close ${entry.label}`}
+            onClick={(event) => { event.stopPropagation(); onCloseEntry(path, entry) }}
+          >
+            ×
           </button>
         </li>
       ))}

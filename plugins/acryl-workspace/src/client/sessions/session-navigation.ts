@@ -48,6 +48,7 @@ export function ensureWorktreeChatTabs(
   worktreePath: string,
   repos: readonly RepoState[],
   sessions: { readonly ids: readonly string[]; readonly byId: Readonly<Record<string, WorktreeChatSessionLike | undefined>>; readonly current: string | undefined },
+  dismissed: ReadonlySet<string> = new Set(),
 ): void {
   const existing = new Set(
     workspace.getSnapshot().tiles
@@ -56,7 +57,7 @@ export function ensureWorktreeChatTabs(
   )
   let added = false
   for (const id of sessions.ids) {
-    if (existing.has(id)) continue
+    if (existing.has(id) || dismissed.has(id)) continue
     const row = sessions.byId[id]
     if (row === undefined || row.blank || row.cwd === undefined) continue
     if (owningWorktree(repos, row.cwd) !== worktreePath) continue

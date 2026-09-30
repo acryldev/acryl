@@ -223,6 +223,7 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceRepo { margin: 6px 0 10px; }
 .dshWorkspaceRepoHead { display: flex; align-items: center; gap: 4px; }
 .dshWorkspaceRepoHead .dshWorkspaceRepoName { flex: 1; }
+.dshWorkspaceRepoKind { display: flex; align-items: center; flex: none; color: var(--dsw-alias-label-secondary); }
 .dshWorkspaceChevron { appearance: none; flex: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; }
 .dshWorkspaceChevron:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-label-primary); }
 .dshWorkspaceNewBranch { display: flex; gap: 6px; margin: 2px 8px 6px; }
@@ -237,9 +238,14 @@ const WORKSPACE_STYLES = `
 /* An expanded worktree's running agent/terminal tabs and AcrylDSH Chats (spec 040 T129). */
 .dshWorkspaceSessions { list-style: none; margin: 0; padding: 0 0 0 26px; }
 .dshWorkspaceSessionsEmpty { margin: 2px 0 2px 26px; padding: 4px 8px; color: var(--dsw-alias-label-secondary); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceSessionItem { position: relative; display: flex; align-items: center; }
 .dshWorkspaceSessionRow { appearance: none; display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; text-align: left; font: 12px/1.3 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSessionRow:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
 .dshWorkspaceSessionLabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Hover "x" to close/hide a session (T134-followup), same reveal-on-hover pattern as a tab strip tab. */
+.dshWorkspaceSessionClose { position: absolute; right: 4px; appearance: none; flex: none; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border: 0; border-radius: 4px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-secondary); cursor: pointer; font-size: 13px; line-height: 1; opacity: 0; }
+.dshWorkspaceSessionItem:hover .dshWorkspaceSessionClose, .dshWorkspaceSessionClose:focus-visible { opacity: 1; }
+.dshWorkspaceSessionClose:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); color: var(--dsw-alias-label-primary); }
 .dshWorkspaceWorktreeNew:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); }
 .dshWorkspaceSideFoot { margin-top: 14px; padding: 8px 8px 0; border-top: 1px solid var(--dsw-alias-border-l2); }
 .dshWorkspaceSideFootButton { appearance: none; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: 13px/1.3 ui-sans-serif, system-ui, sans-serif; }

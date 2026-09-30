@@ -112,6 +112,11 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
   const api = useMemo(() => ptyApi ?? createWorkspacePtyApi(), [ptyApi])
   const subscribe = useCallback((listener: () => void) => workspace.subscribe(listener), [workspace])
   const snapshot = useSyncExternalStore(subscribe, () => workspace.getSnapshot())
+  // repos and dismissedChats (T134-followup) - a dismissal from the tree (a sibling component) must
+  // retrigger the tab-loading effect below, which otherwise only reacts to its own listed deps. Shares
+  // `subscribeShell` above rather than a second shell subscription.
+  const shellRepos = useSyncExternalStore(subscribeShell, () => shell.getSnapshot().repos)
+  const shellDismissedChats = useSyncExternalStore(subscribeShell, () => shell.getSnapshot().dismissedChats)
   const sessions = useSessions(state => state)
   const previousCurrent = useRef<string | undefined>(sessions.current)
   const stageRef = useRef<HTMLDivElement>(null)
@@ -128,6 +133,9 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
 
   useLayoutEffect(() => {
     const current = sessions.current
+    // Reopening a chat any other way (the classic "All chats" view, search) un-hides it again - a
+    // dismissal (T134-followup) only means "not eagerly shown," not "refuse to open."
+    if (current !== undefined) shell.restoreChat(current)
     previousCurrent.current = synchronizeWorkspaceWithSessionNavigation(
       workspace,
       previousCurrent.current,
@@ -136,21 +144,39 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
         blank: current === undefined ? undefined : sessions.byId[current]?.blank,
       },
     )
-  }, [workspace, sessions])
+  }, [workspace, shell, sessions])
 
   // Every chat this worktree already has, as its own tab immediately - not lazily, one click at a time.
+  // Never a dismissed one (T134-followup: the owner's hover "x" hides it from both the tree and here).
   useLayoutEffect(() => {
     if (groupKey === GLOBAL_GROUP) return
-    ensureWorktreeChatTabs(workspace, groupKey, shell.getSnapshot().repos, sessions)
-  }, [workspace, groupKey, shell, sessions])
+    ensureWorktreeChatTabs(workspace, groupKey, shellRepos, sessions, shellDismissedChats)
+  }, [workspace, groupKey, shellRepos, shellDismissedChats, sessions])
 
   const closeTile = useCallback(async (tile: WorkspaceTile) => {
+    // Closing a chat's tab from the tab strip hides it from the tree too (T134-followup): one close
+    // action, both surfaces, matching the tree's own hover "x" for the same session.
+    if (tile.kind === 'chat' && tile.chatSessionId !== undefined) shell.dismissChat(tile.chatSessionId)
     const removed = workspace.closeTile(tile.id)
     if (removed?.terminalId !== undefined) {
       terminals.release(removed.terminalId)
       await api.close(removed.terminalId).catch(() => {})
     }
-  }, [api, workspace, terminals])
+  }, [api, workspace, terminals, shell])
+
+  // The tree's hover "x" on an agent/terminal entry (T134-followup) - routed through here, not
+  // WorkspaceState.closeTile directly, so a real terminal process still gets released; the tree has no
+  // access to `terminals`/`api` itself. Works for any worktree, not just the one currently shown.
+  useEffect(() => shell.onCloseTileRequest((request) => {
+    const state = groups.stateFor(request.worktree)
+    const tile = state.getSnapshot().tiles.find(candidate => candidate.id === request.tileId)
+    if (tile === undefined) return
+    const removed = state.closeTile(tile.id)
+    if (removed?.terminalId !== undefined) {
+      terminals.release(removed.terminalId)
+      void api.close(removed.terminalId).catch(() => {})
+    }
+  }), [shell, groups, terminals, api])
 
   useEffect(() => shell.onOpenDiff((request) => {
     const state = groups.stateFor(request.worktree)

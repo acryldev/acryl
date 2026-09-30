@@ -12,7 +12,7 @@ function worktree(path: string): WorktreeState {
   return { path, branch: 'main', main: true, phase: 'ready', changes: [], added: 0, removed: 0, truncated: false }
 }
 
-const REPOS: readonly RepoState[] = [{ root: '/p/proj', name: 'proj', worktrees: [worktree('/p/proj')] }]
+const REPOS: readonly RepoState[] = [{ root: '/p/proj', name: 'proj', git: true, worktrees: [worktree('/p/proj')] }]
 
 describe('synchronizeWorkspaceWithSessionNavigation', () => {
   it('claims the bootstrap chat tile for the first session that becomes current', () => {
@@ -113,5 +113,20 @@ describe('ensureWorktreeChatTabs', () => {
     ensureWorktreeChatTabs(workspace, '/p/proj', REPOS, sessions)
     const active = workspace.getSnapshot().tiles.find(t => t.id === workspace.getSnapshot().activeId)
     expect(active?.chatSessionId).toBe('s1')
+  })
+
+  it('never gives a dismissed chat a tab, even though the session itself still exists (T134-followup)', () => {
+    const workspace = new WorkspaceState({ createId: counter() })
+    const sessions = {
+      ids: ['s1', 's2'],
+      current: undefined,
+      byId: {
+        s1: { cwd: '/p/proj', blank: false, displayTitle: 'one' },
+        s2: { cwd: '/p/proj', blank: false, displayTitle: 'two' },
+      },
+    }
+    ensureWorktreeChatTabs(workspace, '/p/proj', REPOS, sessions, new Set(['s2']))
+    const chatSessionIds = workspace.getSnapshot().tiles.filter(t => t.kind === 'chat').map(t => t.chatSessionId)
+    expect(chatSessionIds).not.toContain('s2')
   })
 })

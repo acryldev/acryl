@@ -32,6 +32,9 @@ export interface WorktreeRow {
 export interface RepoRow {
   readonly root: string
   readonly name: string
+  /** false for a plain folder workspace that is not a git repository (T134-followup) - no branches, no
+   * "New branch" affordance, a distinct icon instead of the git one. */
+  readonly git: boolean
   readonly rows: readonly WorktreeRow[]
 }
 
@@ -143,12 +146,15 @@ export function buildProjectRows(
   return snapshot.repos.map(repo => ({
     root: repo.root,
     name: repo.name,
+    git: repo.git,
     rows: repo.worktrees.map((worktree) => {
       const counts = perWorktree.get(worktree.path) ?? { sessions: 0, running: 0, done: 0 }
       const terminalAgents = attention.get(worktree.path) ?? { waiting: 0, working: 0 }
       return {
         path: worktree.path,
-        label: worktree.branch ?? `${basename(worktree.path)} (detached)`,
+        // A plain folder's one synthetic worktree has no branch at all - "(detached)" only makes sense
+        // for a real git worktree with no checked-out branch, never for a non-git folder.
+        label: worktree.branch ?? (repo.git ? `${basename(worktree.path)} (detached)` : basename(worktree.path)),
         main: worktree.main,
         dot: dotFor(worktree, counts.running + terminalAgents.working, counts.done, terminalAgents.waiting),
         changeCount: worktree.changes.length,

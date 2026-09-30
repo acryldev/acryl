@@ -43,3 +43,24 @@ export function ChatIcon() {
     </svg>
   )
 }
+
+/** A workspace's own mark when it is a git repository, distinct from a plain folder's (T134-followup). */
+export function GitRepoIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="5" cy="3.5" r="1.5" />
+      <circle cx="5" cy="12.5" r="1.5" />
+      <circle cx="11" cy="8" r="1.5" />
+      <path d="M5 5v6M5 6.5A4 4 0 0 0 9.5 8" />
+    </svg>
+  )
+}
+
+/** A workspace's own mark when it is a plain folder, not a git repository (T134-followup). */
+export function FolderIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2 4.5A1 1 0 0 1 3 3.5h3l1.3 1.7H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4.5Z" />
+    </svg>
+  )
+}
