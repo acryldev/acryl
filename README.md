@@ -171,6 +171,16 @@ ACRYL welcomes contributors interested in agent interoperability, persistent con
 
 Before contributing, read [`AGENTS.md`](AGENTS.md), the [ACRYL orientation](docs/onboarding/orientation_spec_acryl.md), and the [Cordis specification](docs/cordis/cordis_spec.md). Join the [Discord](https://discord.gg/cY9KXMex69) to discuss the project.
 
+## Contributors
+
+Thanks to everyone building ACRYL — every report, idea, and PR counts:
+
+<a href="https://github.com/acryldev/acryl/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=acryldev/acryl" alt="ACRYL contributors" />
+</a>
+
+Who did what, by name: [CONTRIBUTORS.md](CONTRIBUTORS.md) ([中文](CONTRIBUTORS.zh.md)). Your name belongs here — see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## License
 
 ACRYL is licensed under the [MIT License](LICENSE).

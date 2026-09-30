@@ -14,5 +14,6 @@
 - `acryl gui` 预留给未来从 CLI 跳转到桌面应用的功能；目前请直接启动已安装的桌面应用。
 - Discord：[加入 ACRYL 社区](https://discord.gg/cY9KXMex69)
 - Cordis：[github.com/cordiverse/cordis](https://github.com/cordiverse/cordis)
+- 贡献者名录：[CONTRIBUTORS.md](CONTRIBUTORS.md)（中文：[CONTRIBUTORS.zh.md](CONTRIBUTORS.zh.md)）—— 每一个报告、想法和 PR 都会被记录署名
 
 ACRYL 是 Agent Context Relay：一个以 Cordis 为运行时基础、延续 DeepSeek Harness 架构启发的持久化、多智能体、可插件化 Agentic Development Environment。完整项目说明请阅读默认英文 README。
