@@ -5872,3 +5872,15 @@ Owner, repeatedly: remove the old view.
 - **Cost:** the tree's chat search is gone with the classic view.
 - **Not verified live:** that Settings' dialog still draws from the zero-size host (the browser tool was unavailable).
 - **Verified:** `acryl-workspace` 655/655, `acryl-agent-control` 108/108, typecheck and build clean.
+
+## 2026-10-01 - T144 follow-up: the upstream sidebar mount was never actually removed
+
+Commit: `92b527e`
+
+Owner, furious: the "zero size" host from T144 was hiding the classic sidebar, not removing it - "who do you wanna fool?"
+
+- **Cause:** T144 kept the whole upstream chat-list sidebar bundle mounted (just clipped to zero size) only because Settings' trigger/dialog and Linux's Add-workspace fallback lived nowhere else, with no service to reach them otherwise.
+- **Fix, Settings:** Settings' trigger + dialog is the independently-renderable `sidebar.settings` slot, owned by `ui-settings-general` - not welded to the chat-list bundle as assumed. Render it directly (`renderSlot('sidebar.settings', { wide })`) from this package's own tree foot and collapsed rail; `DesktopSidebarSurfaceOwnerProps` now offers `renderSettings()` instead of `renderUpstream()`.
+- **Fix, Linux Add-workspace:** the fallback drove a hidden upstream button for a native folder chooser T143 already built as a Host route. Desktop's own Host serves that same route; `nativePicker()` was gating it to `platform === 'web'` for no reason. Removed the gate - Linux Desktop now uses the real picker directly, same as Web. `clickAddWorkspaceTrigger` and the DOM-click helper it was the last caller of are deleted.
+- **Result:** no upstream sidebar of any kind is mounted, visible or not - `.dshWorkspaceUpstreamHost` is gone from the DOM entirely, not just hidden.
+- **Verified:** `acryl-workspace` 654/654, `acryl-agent-control` 108/108, typecheck and build clean.
