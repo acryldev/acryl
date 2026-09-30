@@ -3,3 +3,6 @@
 # and re-record their hashes after editing either side.
 README.md: 3b8d5e3d21117565df37de1910d1fafc343db2ca
 README.en.md: 3b8d5e3d21117565df37de1910d1fafc343db2ca
+
+CONTRIBUTORS.md: 2a81265aa0c00a0dfa7458e04946d6d40d9761de
+CONTRIBUTORS.zh.md: 97eb108113a3ef5d96dbfa7a5f1851f59586bf1d
