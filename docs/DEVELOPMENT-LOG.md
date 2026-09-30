@@ -5849,3 +5849,14 @@ Owner report with a screenshot: opening a chat from a workspace's row asked "Cho
 - **Fix:** one `startBoundChat` helper; `openChat` starts a bound chat for an empty unbound chat inside a known worktree (registering the workspace if needed), carries the name over, and retires the empty chat from the tree.
 - **Deliberately not done:** re-binding an existing session in place - the Host's adopt-by-id semantics are undocumented and I couldn't test them. The replaced empty chat is hidden, not deleted.
 - **Verified:** `acryl-workspace` 640/640, `acryl-agent-control` 108/108, typecheck and build clean; tests confirmed failing without the fix.
+
+## 2026-09-30 (later still) - T143: a real folder chooser on Web
+
+Commit: `d8dedda`
+
+Owner request: on Web, "+" asked for a typed absolute path; wanted a file-opener window.
+
+- **Why:** a browser page cannot open a chooser that yields an absolute path, so only Desktop had one.
+- **Fix:** the Host (already loopback-only) opens the OS's own chooser on the local machine via a guarded `POST /api/acryl-workspace/pick-folder` - `osascript` on macOS, PowerShell on Windows, `zenity`/`kdialog` on Linux, no shell, one dialog at a time, `501` when there is none. Web uses it; with none available "+" falls back to the typed path, with the reason.
+- **Not exercised:** a real dialog (macOS script syntax-checked with `osacompile`, not run); Windows/Linux via an injected runner only. Restart the Web server to pick up the route.
+- **Verified:** `acryl-workspace` 658/658, `acryl-agent-control` 108/108, typecheck and build clean.
