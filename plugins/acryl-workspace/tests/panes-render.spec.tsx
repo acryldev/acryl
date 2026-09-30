@@ -110,6 +110,7 @@ function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: P
     collapsed,
     width: 280,
     renderUpstream: () => <div data-testid="upstream">upstream sidebar</div>,
+    onToggleCollapse: () => {},
     useSessions: sessionsHook(SESSIONS),
     shell,
     projects,
@@ -326,6 +327,26 @@ describe('ProjectsSidebar', () => {
     fireEvent.click(other)
     await waitFor(() => { expect(other.getAttribute('aria-pressed')).toBe('true') })
     expect(shell.getSnapshot().selectedPath).toBe('/p/proj-x')
+    shell.dispose()
+  })
+
+  it('expanding a worktree\'s session list also selects it, so the tab strip shows everything immediately (T137-followup: "only appear when I click each of them individually")', async () => {
+    const shell = new WorkspaceShellState(api())
+    render(<ProjectsSidebar {...sidebarProps(shell)} />)
+    await waitFor(() => { expect(shell.getSnapshot().selectedPath).toBe('/p/proj') })
+    fireEvent.click(await screen.findByRole('button', { name: 'Show sessions on feature/x' }))
+    // Expanding feature/x's row list, without ever clicking the worktree's own name/button, still
+    // switches the active worktree - not just revealing rows while leaving /p/proj selected underneath.
+    expect(shell.getSnapshot().selectedPath).toBe('/p/proj-x')
+    shell.dispose()
+  })
+
+  it('calls onToggleCollapse from the tree\'s own header control (T137-followup: "there used to be icon to collapse sidebar... it\'s gone")', async () => {
+    const shell = new WorkspaceShellState(api())
+    const onToggleCollapse = vi.fn()
+    render(<ProjectsSidebar {...sidebarProps(shell)} onToggleCollapse={onToggleCollapse} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Collapse sidebar' }))
+    expect(onToggleCollapse).toHaveBeenCalledOnce()
     shell.dispose()
   })
 

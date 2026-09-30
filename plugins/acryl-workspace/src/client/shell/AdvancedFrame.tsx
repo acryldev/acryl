@@ -100,6 +100,7 @@ export function AdvancedFrame({ layout, platform, dock, renderSlot, SessionProvi
             collapsed,
             width: sidebarOwnerWidth,
             renderUpstream: () => renderSlot('sidebar', { collapsed, width: sidebarOwnerWidth }),
+            onToggleCollapse: () => { layout.toggleSidebar() },
           })}
         </div>
       </aside>

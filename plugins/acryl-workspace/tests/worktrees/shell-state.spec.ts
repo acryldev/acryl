@@ -306,17 +306,23 @@ describe('close-tile channel (T134-followup)', () => {
 })
 
 describe('forgetRepo (T135-followup)', () => {
-  it('drops a repo from the tree and lets it be rediscovered fresh afterward', async () => {
+  it('drops a repo from the tree and keeps refusing it, until an explicit re-add lifts it (T137-followup)', async () => {
     const api = fakeApi()
     const shell = new WorkspaceShellState(api)
     await shell.discover('/p/proj')
     expect(shell.getSnapshot().repos).toHaveLength(1)
     shell.forgetRepo('/p/proj')
     expect(shell.getSnapshot().repos).toEqual([])
+    // An ordinary rediscovery (the passive per-session/registered-workspace effects) must NOT resurrect
+    // it - that silent resurrection was the real bug behind "flickers... on second time only it removes".
+    await shell.discover('/p/proj')
+    await shell.discover('/p/proj', { registerFolder: true })
+    expect(shell.getSnapshot().repos).toEqual([])
     // The probe cache was cleared too - discovering the same path again hits the api, not a stale cache.
     const callsBefore = api.calls.filter(call => call.startsWith('repo')).length
-    await shell.discover('/p/proj')
-    expect(api.calls.filter(call => call.startsWith('repo')).length).toBe(callsBefore + 1)
+    // Only a genuinely explicit re-add (clearForgotten: true, as ProjectsControl.addProjectByPath does) works.
+    await shell.discover('/p/proj', { registerFolder: true, clearForgotten: true })
+    expect(api.calls.filter(call => call.startsWith('repo')).length).toBeGreaterThan(callsBefore)
     expect(shell.getSnapshot().repos).toHaveLength(1)
   })
 

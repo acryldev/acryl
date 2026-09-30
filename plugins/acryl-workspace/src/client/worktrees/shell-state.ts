@@ -116,6 +116,14 @@ export class WorkspaceShellState {
   private readonly docListeners = new Set<(request: OpenDocRequest) => void>()
   private readonly closeTileListeners = new Set<(request: CloseTileRequest) => void>()
   private readonly probes = new Map<string, Promise<string | undefined>>()
+  /** Repos removed by `forgetRepo` (T137-followup real fix: removing a workspace that still has live
+   * sessions or a still-registered Host workspace was re-added within the same tick by the two passive
+   * discovery effects, whose whole job is to keep surfacing every session's/every registered workspace's
+   * repo - the actual cause of the owner's "flickers... on second time only it removes"). Checked by
+   * `discover()` on every path, cleared only by a genuinely explicit re-add (`clearForgotten: true`),
+   * never by the passive effects that merely mirror whatever the session list/Host workspace list
+   * currently says - which can still say the old thing for a moment right after a delete. */
+  private readonly forgottenRepos = new Set<string>()
   private readonly statusInflight = new Map<string, Promise<void>>()
   private pinned = false
   private reveal: (() => void) | undefined
@@ -159,9 +167,15 @@ export class WorkspaceShellState {
   }
 
   /** Drop a repository or plain folder from the tree entirely (T135-followup: "I must be able to remove
-   * ... workspace"). Its own probe is cleared too, so a session whose cwd still points there can
-   * rediscover and re-show it later, rather than being stuck against a stale cached result. */
+   * ... workspace"), and remember it as removed (T137-followup real fix - a one-time prune alone flickered
+   * right back: the passive session-cwd and registered-workspace-path discovery effects exist precisely
+   * to keep surfacing every session's/every registered workspace's repo, so either one silently re-added
+   * this one again within the same tick if a live session still pointed here, or the Host's own workspace
+   * list had not yet caught up to the deletion). `discover()` checks this on every call and refuses to
+   * re-merge a forgotten root; only an explicit re-add (`clearForgotten: true`) lifts it. Its probe cache
+   * entries are cleared too, so a later, genuinely fresh discovery is not stuck against a stale result. */
   forgetRepo(root: string): void {
+    this.forgottenRepos.add(root)
     if (!this.snapshot.repos.some(repo => repo.root === root)) return
     for (const key of [...this.probes.keys()]) {
       if (key === root || key.startsWith(root.endsWith('/') ? root : `${root}/`)) this.probes.delete(key)
@@ -185,21 +199,38 @@ export class WorkspaceShellState {
    * Learn about the repository that contains `cwd`.
    * @param options.registerFolder - when true, and `cwd` is not a git repository, register it as its
    * own plain folder workspace instead of reporting it unknown (owner request, T135: only for an
-   * explicit "add this folder" action - `ProjectsControl.addProjectByPath`. Never passed by the passive
-   * per-session cwd discovery in `ProjectsSidebar`'s own effect: every session's cwd used to run through
-   * this same call, and defaulting this on there turned every ordinary, never-added session directory
-   * (a temp dir, an unrelated project a chat merely ran a command in, even $HOME) into a permanent
+   * explicit "add this folder" action - `ProjectsControl.addProjectByPath`, or the effect that re-syncs
+   * already-registered `IWorkspaces` paths. Never passed by the passive per-session cwd discovery in
+   * `ProjectsSidebar`'s own effect: every session's cwd used to run through this same call, and
+   * defaulting this on there turned every ordinary, never-added session directory into a permanent
    * "workspace" entry nobody asked for - the actual bug behind "web suddenly shows so many workspaces -
    * didn't open them"). Bypasses the probe cache: an explicit add is a one-off action, not something to
    * dedupe against an earlier passive, non-registering discovery of the same path.
+   * @param options.clearForgotten - when true, lifts an earlier `forgetRepo(cwd)` for this exact path.
+   * Passed only by `ProjectsControl.addProjectByPath` (a real, deliberate user re-add). Never by the
+   * registered-workspace-paths sync effect, even though it also passes `registerFolder: true` - that
+   * effect only mirrors whatever the Host's workspace list currently says, which can still list a just-
+   * removed path for a moment right after its own delete call resolves; letting it clear the forgotten
+   * mark would have silently undone the removal (T137-followup: "flickers... on second time only it
+   * removes" was exactly this race).
    * @returns the path of the worktree (or plain folder) that owns `cwd` - undefined when `cwd` is not a
-   * git repository and `registerFolder` was not requested, or when the api call itself failed.
+   * git repository and `registerFolder` was not requested, when the api call itself failed, or when the
+   * owning root was explicitly removed (`forgetRepo`) and not since re-added.
    */
-  discover(cwd: string, options: { readonly registerFolder?: boolean } = {}): Promise<string | undefined> {
+  discover(
+    cwd: string,
+    options: { readonly registerFolder?: boolean; readonly clearForgotten?: boolean } = {},
+  ): Promise<string | undefined> {
+    if (options.clearForgotten === true) this.forgottenRepos.delete(cwd)
     if (options.registerFolder === true) {
       return this.api.repo(cwd).then((view) => {
         if (this.disposed) return undefined
-        if (view === null) { this.mergeFolder(cwd); return cwd }
+        if (view === null) {
+          if (this.forgottenRepos.has(cwd)) return undefined
+          this.mergeFolder(cwd)
+          return cwd
+        }
+        if (this.forgottenRepos.has(view.root)) return undefined
         this.mergeRepo(view)
         return view.current
       }, () => undefined)
@@ -208,6 +239,7 @@ export class WorkspaceShellState {
     if (existing !== undefined) return existing
     const probe = this.api.repo(cwd).then((view) => {
       if (view === null || this.disposed) return undefined
+      if (this.forgottenRepos.has(view.root)) return undefined
       this.mergeRepo(view)
       return view.current
     }, () => undefined)

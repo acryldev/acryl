@@ -64,3 +64,30 @@ export function FolderIcon() {
     </svg>
   )
 }
+
+/**
+ * A small, self-owned ACRYL monogram for the tree's own header (T137-followup: "there used to be...
+ * ACRYL logo, it's gone"). Deliberately not the real pixel brand mark from `dsh-client-ui-brand-acryl` -
+ * that package's client entry is a Cordis-loader-format bundle (`window.__ModuleLoader__.load(...)`),
+ * built to be consumed only through the sidebar's own brand-mark slot, not importable as a plain React
+ * component; reaching around that would mean duplicating its (large, binary) logo data into this package
+ * too. A lightweight mark of our own here, not a copy of that asset.
+ */
+export function AcrylMarkIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M8 2 3 13h2.2L6.4 10h3.2l1.2 3H13L8 2Zm0 3.4L9.4 8.6H6.6L8 5.4Z" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+/** Two-pane "collapse sidebar" mark (T137-followup: the tree's own header needed a real collapse
+ * control, matching what the upstream sidebar chrome used to show when it was the default view). */
+export function CollapseSidebarIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="3" width="12" height="10" rx="1.5" />
+      <path d="M6.5 3v10" />
+    </svg>
+  )
+}

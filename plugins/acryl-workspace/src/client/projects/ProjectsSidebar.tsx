@@ -8,7 +8,7 @@ import { flushSync } from 'react-dom'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
 import type { CustomAgent } from '../../agents/definition.ts'
-import { ChatIcon, ChevronIcon, FolderIcon, GitRepoIcon } from '../agents/controls.tsx'
+import { AcrylMarkIcon, ChatIcon, ChevronIcon, CollapseSidebarIcon, FolderIcon, GitRepoIcon } from '../agents/controls.tsx'
 import type { AgentsState } from '../agents/agents-state.ts'
 import type { WorkspaceGroups } from '../canvas/groups.ts'
 import { agentsByWorktree, MAX_ROW_AGENTS } from '../chrome/worktree-agents.ts'
@@ -52,7 +52,7 @@ const DOT_LABEL: Record<WorktreeDot, string> = {
  * be polluted the way a flat "everything open" list would be. The upstream sidebar (its search, and
  * anything else it owns) is kept mounted but hidden by default, reachable behind a Search toggle.
  */
-export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell, projects, groups, agents, status }: ProjectsSidebarProps) {
+export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, useSessions, shell, projects, groups, agents, status }: ProjectsSidebarProps) {
   const subscribe = useCallback((listener: () => void) => shell.subscribe(listener), [shell])
   const snapshot = useSyncExternalStore(subscribe, () => shell.getSnapshot())
   const sessions = useSessions(state => state)
@@ -134,7 +134,17 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
   const toggleWorktree = (path: string): void => {
     setExpandedWorktrees((current) => {
       const next = new Set(current)
-      if (next.has(path)) next.delete(path); else next.add(path)
+      const expanding = !next.has(path)
+      if (expanding) next.add(path); else next.delete(path)
+      // Expanding a worktree's session list also selects it (T137-followup: "all of the agent sessions
+      // and terminals should be opened in the Tab Stripe" when a workspace is opened) - the tree's own
+      // list and the tab strip both already reflect the same already-restored WorkspaceGroups state the
+      // instant `groups.stateFor(path)` is called (WorkspaceState.restore() loads every saved tile at
+      // once, not one at a time), so the real gap was never lazy restoration - it was that expanding a
+      // worktree's row list never itself switched the active tab set the way clicking its own name does,
+      // leaving the strip showing whatever worktree was selected before, until a session was clicked one
+      // at a time and each click's own `shell.select` finally brought the whole set into view.
+      if (expanding) shell.select(path)
       return next
     })
   }
@@ -249,6 +259,19 @@ export function ProjectsSidebar({ collapsed, renderUpstream, useSessions, shell,
         {renderUpstream()}
       </div>
       <div className="dshWorkspaceSideProjects" hidden={searchOpen}>
+        <div className="dshWorkspaceSideBrandRow">
+          <span className="dshWorkspaceSideBrandMark" aria-hidden="true"><AcrylMarkIcon /></span>
+          <span className="dshWorkspaceSideBrandName">ACRYL</span>
+          <button
+            type="button"
+            className="dshWorkspaceSideCollapse"
+            aria-label="Collapse sidebar"
+            title="Collapse sidebar"
+            onClick={onToggleCollapse}
+          >
+            <CollapseSidebarIcon />
+          </button>
+        </div>
         <div className="dshWorkspaceSideProjectsHead">
           <span>Workspaces</span>
           <button

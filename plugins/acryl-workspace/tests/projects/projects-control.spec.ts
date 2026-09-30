@@ -366,6 +366,19 @@ describe('ProjectsControl.removeWorkspace (T135-followup)', () => {
     expect(await w.control.removeWorkspace('/p/proj')).toMatchObject({ ok: false, reason: expect.stringContaining('host down') })
     expect(w.shell.getSnapshot().repos.some(repo => repo.root === '/p/proj')).toBe(true) // left alone, not force-removed
   })
+
+  it('stays removed even when a live session still points there and the passive discovery effects re-run (the real "flickers back" bug)', async () => {
+    const w = world({ workspaces: [{ workspaceId: 'w0', path: '/p/proj' }] })
+    await w.control.addProjectByPath('/p/proj')
+    expect(await w.control.removeWorkspace('/p/proj')).toEqual({ ok: true })
+    // Simulate exactly what the two passive effects do on the very next render: mirror a session's cwd
+    // (still /p/proj - removing a workspace does not delete its sessions), and re-sync the still-Host-
+    // registered workspace list (the delete call already resolved above, but a real Host round trip can
+    // still be a tick behind - the effect must not care either way).
+    await w.shell.discover('/p/proj')
+    await w.shell.discover('/p/proj', { registerFolder: true })
+    expect(w.shell.getSnapshot().repos.some(repo => repo.root === '/p/proj')).toBe(false)
+  })
 })
 
 describe('ProjectsControl folder chooser, remaining cases', () => {

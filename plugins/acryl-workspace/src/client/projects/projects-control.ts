@@ -142,7 +142,9 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       // A project is a git repository or a plain folder (T135: "should be able to handle both git /
       // non-git"). registerFolder: true - this is the one explicit "add this folder" action, unlike the
       // passive per-session discovery that must never promote an untouched directory to a workspace.
-      const worktree = await shell.discover(typed, { registerFolder: true })
+      // clearForgotten: true - re-adding a folder the user previously removed (T137-followup) must
+      // actually work, not silently no-op against its own earlier removal.
+      const worktree = await shell.discover(typed, { registerFolder: true, clearForgotten: true })
       if (worktree === undefined) return fail('Could not add that folder.')
       if (seams.validateDirectory !== undefined) {
         try {

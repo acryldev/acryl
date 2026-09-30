@@ -18,6 +18,10 @@ export interface DesktopSidebarOwnerProps {
 export interface DesktopSidebarSurfaceOwnerProps extends DesktopSidebarOwnerProps {
   /** Render the upstream sidebar (brand, sessions, settings) inside a contribution that wraps it. */
   renderUpstream(): ReactNode
+  /** Toggle the sidebar's collapsed rail (T137-followup: the tree's own header needed this once it
+   * became the default view - the collapse control and brand mark used to come bundled inside
+   * `renderUpstream()`'s own chrome, which is now hidden by default behind the tree). */
+  onToggleCollapse(): void
 }
 
 /** What the frame tells the right panel: the room it would get if docked, and the window width. */
