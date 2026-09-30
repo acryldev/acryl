@@ -62,9 +62,14 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
     'desktop.main': { kind: 'single'; scope: 'root'; owner: DesktopMainOwnerProps }
     /** Replaceable left-pane surface; by default it only renders the upstream Settings trigger. */
     'desktop.sidebar': { kind: 'single'; scope: 'root'; owner: DesktopSidebarSurfaceOwnerProps }
+    /** `dsh-client-ui-layout`'s own key (mirrored here, type-only: that package's declaration is not
+     * reachable in every program this compiles against, and other of its own files reference this literal
+     * against the full SlotMap union) - this package never renders it (T144-followup: nothing of upstream's
+     * chat-list sidebar bundle is mounted, not even hidden). */
+    'sidebar': { kind: 'single'; scope: 'root'; owner: DesktopSidebarOwnerProps }
     /** Upstream Settings trigger + dialog (`ui-settings-general`'s `sidebar.settings` occupant),
      * rendered directly by this package's own tree - not nested inside upstream's chat-list sidebar,
-     * which this package never mounts (T144-followup). */
+     * which this package never mounts. */
     'sidebar.settings': { kind: 'single'; scope: 'root'; owner: { wide: boolean } }
     /** Unchanged upstream conversation surface. */
     'conversation': { kind: 'single'; scope: 'session-maybe'; owner: Record<never, never> }

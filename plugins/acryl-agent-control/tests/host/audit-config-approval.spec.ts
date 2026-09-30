@@ -2,6 +2,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync 
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
+import type { Context } from '@deepseek-ai/cordis'
 import type { PreToolDecision, ToolExecution } from '@deepseek-ai/dsh-tools'
 import { createApprovalPolicy } from '../../src/host/approval.ts'
 import { AuditLog, auditPath, type AuditEntry } from '../../src/host/audit.ts'
@@ -65,9 +66,11 @@ describe('approval policy', () => {
   refs.remember({ generation: 3, title: '', total: 2, nodes: [{ ref: '3.1', role: 'button', name: 'Delete project', depth: 0, states: [] }, { ref: '3.2', role: 'textbox', name: 'Name', depth: 0, states: [] }] })
   const exec = (name: string, args: unknown): ToolExecution => ({ name, arguments: args } as unknown as ToolExecution)
   const allow = async (): Promise<PreToolDecision> => ({ kind: 'allow' })
+  // No session's approval policy is composed in these: exactly today's default deployment.
+  const noApprovalService = { get: () => undefined } as unknown as Context
 
   it('asks about a click, in words that name the control, every single time', async () => {
-    const policy = createApprovalPolicy(refs, 'every-call')
+    const policy = createApprovalPolicy(noApprovalService, refs, 'every-call')
     for (let i = 0; i < 3; i += 1) {
       expect(await policy(exec(TOOL_NAMES.click, { ref: '3.1' }), allow)).toEqual({ kind: 'ask', reason: 'Click the button "Delete project"' })
     }
@@ -77,18 +80,18 @@ describe('approval policy', () => {
   })
 
   it('does not ask about looking, scrolling or waiting', async () => {
-    const policy = createApprovalPolicy(refs, 'every-call')
+    const policy = createApprovalPolicy(noApprovalService, refs, 'every-call')
     for (const name of [TOOL_NAMES.snapshot, TOOL_NAMES.scroll, TOOL_NAMES.wait]) expect(await policy(exec(name, {}), allow)).toEqual({ kind: 'allow' })
   })
 
   it('leaves other tools alone, and lets another plugin’s denial win', async () => {
-    const policy = createApprovalPolicy(refs, 'every-call')
+    const policy = createApprovalPolicy(noApprovalService, refs, 'every-call')
     expect(await policy(exec('bash', { command: 'ls' }), allow)).toEqual({ kind: 'allow' })
     expect(await policy(exec(TOOL_NAMES.click, { ref: '3.1' }), async () => ({ kind: 'deny', reason: 'plan mode' }))).toEqual({ kind: 'deny', reason: 'plan mode' })
   })
 
   it('asks nothing when approval was explicitly switched off', async () => {
-    expect(await createApprovalPolicy(refs, 'none')(exec(TOOL_NAMES.click, { ref: '3.1' }), allow)).toEqual({ kind: 'allow' })
+    expect(await createApprovalPolicy(noApprovalService, refs, 'none')(exec(TOOL_NAMES.click, { ref: '3.1' }), allow)).toEqual({ kind: 'allow' })
   })
 
   it('shortens long text in the prompt and forgets refs from an older snapshot', () => {
@@ -98,5 +101,37 @@ describe('approval policy', () => {
     expect(refs.describe('3.1')).toBe('the control 3.1')
     expect(refs.describe('4.1')).toBe('the button "Other"')
     expect(refs.describe(42)).toBe('a control')
+  })
+})
+
+describe('approval policy defers to the session\'s own effective approval policy', () => {
+  const refs = new RefDirectory()
+  refs.remember({ generation: 1, title: '', total: 1, nodes: [{ ref: '1.1', role: 'button', name: 'Delete', depth: 0, states: [] }] })
+  const exec = { name: TOOL_NAMES.click, arguments: { ref: '1.1' }, agent: { session: {} } } as unknown as ToolExecution
+  const allow = async (): Promise<PreToolDecision> => ({ kind: 'allow' })
+  const ctxWith = (service: { config: { policy: 'ask' | 'never' }, overrideOf: () => 'ask' | 'never' | undefined }): Context =>
+    ({ get: () => service } as unknown as Context)
+
+  it('denies honestly, without asking, when the session\'s policy is "never" (e.g. a danger-full-access/unattended permission mode) - the harness would otherwise silently deny this exactly as if a person had clicked reject', async () => {
+    const ctx = ctxWith({ config: { policy: 'ask' }, overrideOf: () => 'never' })
+    const result = await createApprovalPolicy(ctx, refs, 'every-call')(exec, allow)
+    expect(result).toMatchObject({ kind: 'deny' })
+    expect((result as { reason: string }).reason).toContain('rejects every approval-requiring action automatically')
+  })
+
+  it('falls back to the deployment\'s own default policy when the session has no override', async () => {
+    const ctx = ctxWith({ config: { policy: 'never' }, overrideOf: () => undefined })
+    expect(await createApprovalPolicy(ctx, refs, 'every-call')(exec, allow)).toMatchObject({ kind: 'deny' })
+  })
+
+  it('still asks normally when the effective policy is "ask"', async () => {
+    const ctx = ctxWith({ config: { policy: 'ask' }, overrideOf: () => undefined })
+    expect(await createApprovalPolicy(ctx, refs, 'every-call')(exec, allow)).toEqual({ kind: 'ask', reason: 'Click the button "Delete"' })
+  })
+
+  it('still asks when the call has no agent to check a session for (the harness\'s own serviceAsk reports that case)', async () => {
+    const ctx = ctxWith({ config: { policy: 'never' }, overrideOf: () => undefined })
+    const noAgent = { name: TOOL_NAMES.click, arguments: { ref: '1.1' } } as unknown as ToolExecution
+    expect(await createApprovalPolicy(ctx, refs, 'every-call')(noAgent, allow)).toEqual({ kind: 'ask', reason: 'Click the button "Delete"' })
   })
 })

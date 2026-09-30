@@ -58,7 +58,7 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
       const handleAudit = createAuditRequestHandler(audit)
       releases.push(ctx.webServer.register({ kind: 'exact', path: UI_CONTROL_AUDIT_PATH, handler: (req, res) => { handleAudit(req, res, origin) } }))
       releases.push(registerUiTools(ctx, { channel, audit, refs, approval: config.approval === 'none' ? 'none' : 'asked' }))
-      releases.push(ctx.on('tools/pre-execute', createApprovalPolicy(refs, config.approval)))
+      releases.push(ctx.on('tools/pre-execute', createApprovalPolicy(ctx, refs, config.approval)))
       if (config.online) {
         // TB30: the outside operator's channel, loopback-only and secret-gated (TB03) - the secret is this
         // run's alone, written once at startup and removed on shutdown, never persisted across restarts.
