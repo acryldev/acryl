@@ -251,6 +251,25 @@ describe('startWorkspacePersistence', () => {
     stop()
     shell.dispose()
   })
+
+  it('writes again when a chat is dismissed or restored (owner report, 2026-10-01: "82 chats... deleting it doesn\'t help" - same bug, same fix)', () => {
+    vi.useFakeTimers()
+    const storage = memoryStorage()
+    const groups = groupsWith()
+    const shell = shellStub()
+    const stop = startWorkspacePersistence({ groups, shell, storage, delayMs: 400 })
+    shell.dismissChat('s1')
+    vi.advanceTimersByTime(500)
+    expect(storage.writes).toBe(1)
+    expect(parseSavedWorkspace(storage.data.get(STORAGE_KEY) ?? null)?.dismissedChats).toEqual(['s1'])
+
+    shell.restoreChat('s1')
+    vi.advanceTimersByTime(500)
+    expect(storage.writes).toBe(2)
+    expect(parseSavedWorkspace(storage.data.get(STORAGE_KEY) ?? null)?.dismissedChats).toEqual([])
+    stop()
+    shell.dispose()
+  })
 })
 
 describe('forgottenRoots round-trip', () => {
@@ -271,5 +290,26 @@ describe('forgottenRoots round-trip', () => {
       forgottenRoots: ['/ok', '', 42, null, 'x'.repeat(5000)],
     }))
     expect(saved?.forgottenRoots).toEqual(['/ok'])
+  })
+})
+
+describe('dismissedChats round-trip (owner report, 2026-10-01: "x" on a chat did not survive a reload)', () => {
+  it('serializes and restores which chat ids were dismissed', () => {
+    const groups = groupsWith()
+    const saved = parseSavedWorkspace(serializeWorkspace('projects', groups, [], ['s1', 's2']))
+    expect(saved?.dismissedChats).toEqual(['s1', 's2'])
+  })
+
+  it('defaults to an empty list when absent (legacy data from before this existed)', () => {
+    const saved = parseSavedWorkspace(JSON.stringify({ version: 1, mode: 'chats', groups: {} }))
+    expect(saved?.dismissedChats).toEqual([])
+  })
+
+  it('drops anything that is not a non-empty string under the length cap, rather than throwing', () => {
+    const saved = parseSavedWorkspace(JSON.stringify({
+      version: 1, mode: 'chats', groups: {},
+      dismissedChats: ['s1', '', 42, null, 'x'.repeat(500)],
+    }))
+    expect(saved?.dismissedChats).toEqual(['s1'])
   })
 })

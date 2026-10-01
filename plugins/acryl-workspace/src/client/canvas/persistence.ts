@@ -28,6 +28,8 @@ const MAX_GROUPS = 50
 const MAX_TILES = 40
 const MAX_FORGOTTEN_ROOTS = 500
 const MAX_ROOT_LENGTH = 4096
+const MAX_DISMISSED_CHATS = 2000
+const MAX_CHAT_ID_LENGTH = 256
 const RESTORABLE_KINDS = ['file', 'browser', 'diff', 'kanban', 'doc', 'pty', 'custom'] as const
 
 export type SavedTileKind = (typeof RESTORABLE_KINDS)[number]
@@ -71,6 +73,9 @@ export interface SavedWorkspace {
   /** Repository roots explicitly removed from the tree (`WorkspaceShellState.forgetRepo`); absent or
    * empty when none have been. */
   readonly forgottenRoots: readonly string[]
+  /** Chat session ids hidden with "x" (`WorkspaceShellState.dismissChat`); absent or empty when none have
+   * been. */
+  readonly dismissedChats: readonly string[]
 }
 
 /** The two methods of the Storage interface this module uses. */
@@ -173,11 +178,14 @@ export function parseSavedWorkspace(raw: string | null): SavedWorkspace | undefi
   const forgottenRoots = Array.isArray(value.forgottenRoots)
     ? value.forgottenRoots.filter((root): root is string => typeof root === 'string' && root.length > 0 && root.length <= MAX_ROOT_LENGTH).slice(0, MAX_FORGOTTEN_ROOTS)
     : []
-  return { version: 1, mode: value.mode, groups, forgottenRoots }
+  const dismissedChats = Array.isArray(value.dismissedChats)
+    ? value.dismissedChats.filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= MAX_CHAT_ID_LENGTH).slice(0, MAX_DISMISSED_CHATS)
+    : []
+  return { version: 1, mode: value.mode, groups, forgottenRoots, dismissedChats }
 }
 
 /** @returns the JSON to store, staying under the size cap by dropping the largest tiles first. */
-export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups, forgottenRoots: readonly string[] = []): string {
+export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups, forgottenRoots: readonly string[] = [], dismissedChats: readonly string[] = []): string {
   const saved: Record<string, SavedGroup> = {}
   for (const key of groups.keys()) {
     const snapshot = groups.stateFor(key).getSnapshot()
@@ -215,7 +223,8 @@ export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups, for
     }
     if (tiles.length > 0 || active !== -1) saved[key] = { tiles: tiles.slice(0, MAX_TILES), active, split }
   }
-  let json = JSON.stringify({ version: 1, mode, groups: saved, forgottenRoots: forgottenRoots.slice(0, MAX_FORGOTTEN_ROOTS) })
+  const extra = { forgottenRoots: forgottenRoots.slice(0, MAX_FORGOTTEN_ROOTS), dismissedChats: dismissedChats.slice(0, MAX_DISMISSED_CHATS) }
+  let json = JSON.stringify({ version: 1, mode, groups: saved, ...extra })
   // Oversized text (a pasted file, a long doc) is the only thing that can blow the cap: shed it.
   if (json.length > MAX_TOTAL) {
     for (const group of Object.values(saved)) {
@@ -227,7 +236,7 @@ export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups, for
         void index
       })
     }
-    json = JSON.stringify({ version: 1, mode, groups: saved, forgottenRoots: forgottenRoots.slice(0, MAX_FORGOTTEN_ROOTS) })
+    json = JSON.stringify({ version: 1, mode, groups: saved, ...extra })
   }
   return json
 }

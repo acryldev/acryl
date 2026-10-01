@@ -135,8 +135,16 @@ export class WorkspaceShellState {
    * persisted removals, T137-followup real fix part 2: a removal otherwise only lasted until the next
    * reload - nothing remembered it past the current page's lifetime).
    */
-  constructor(private readonly api: WorkspaceGitApi, initialForgotten: readonly string[] = []) {
+  /**
+   * @param initialDismissed - chat session ids to seed `dismissedChats` with (a previous run's persisted
+   * dismissals - without this, "x" on a chat only lasted until the next reload, exactly like `forgetRepo`
+   * before it: nothing remembered a dismissal past the current page's lifetime, so a passive rediscovery
+   * effect brought every dismissed chat straight back - owner report, 2026-10-01, "82 chats in MAIN... I
+   * never add them... deleting it doesn't help").
+   */
+  constructor(private readonly api: WorkspaceGitApi, initialForgotten: readonly string[] = [], initialDismissed: readonly string[] = []) {
     for (const root of initialForgotten) this.forgottenRepos.add(root)
+    if (initialDismissed.length > 0) this.snapshot = Object.freeze({ ...this.snapshot, dismissedChats: Object.freeze(new Set(initialDismissed)) })
   }
 
   getSnapshot(): ShellSnapshot {

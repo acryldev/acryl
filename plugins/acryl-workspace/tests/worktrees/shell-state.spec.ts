@@ -286,6 +286,24 @@ describe('dismissedChats (T134-followup)', () => {
     shell.restoreChat('s1')
     expect([...shell.getSnapshot().dismissedChats]).toEqual(['s2'])
   })
+
+  it('seeds dismissedChats at construction, so a dismissal from a previous run survives this one (owner report, 2026-10-01: "x" on a chat did not survive a reload)', () => {
+    const shell = new WorkspaceShellState(fakeApi(), [], ['s1', 's2'])
+    expect([...shell.getSnapshot().dismissedChats].sort()).toEqual(['s1', 's2'])
+  })
+
+  it('a dismissal or restore fires the general subscribe notification (what startWorkspacePersistence listens to)', () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    let calls = 0
+    shell.subscribe(() => { calls += 1 })
+    shell.dismissChat('s1')
+    expect(calls).toBe(1)
+    shell.restoreChat('s1')
+    expect(calls).toBe(2)
+    shell.dismissChat('s1') // nothing to notify: already settled state below is unaffected, but this is a
+    shell.restoreChat('nope') // fresh dismiss, then a no-op restore - only the dismiss should notify
+    expect(calls).toBe(3)
+  })
 })
 
 describe('close-tile channel (T134-followup)', () => {
