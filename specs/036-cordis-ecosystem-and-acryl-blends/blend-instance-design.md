@@ -49,6 +49,55 @@ under `apps/acryl-desktop` or `plugins/acryl-workspace`). A user who only ever o
 "download, install, click New Accounting Blend" has no button behind it yet. This is a bigger, separate piece of work from the persistence fix above;
 tracked as open work under this milestone, not folded into it.
 
+## 0a. How a domain Blend builds its own UI - accepted, 2026-10-01 (owner), `acryl-app-shell` built and tested
+
+Fixing this down for the same reason as section 0: it was explained wrong, built wrong (twice, by two different agents), and corrected in conversation
+before this was written. The next Blueprint - after the IDE, after GTD - should not repeat the mistake.
+
+**The wrong shape, built twice and rejected.** `acryl-gtd` (both the version in the public registry and a second, independent rebuild by another agent)
+implemented its board - buckets, triage, kanban, calendar - as a page the Host serves over HTTP (`GET /` or `GET /gtd`, via `webServer` routes) and a chat
+card that links to it, opening in a new browser tab. This works, in the narrow sense that the page renders. It is still wrong, for two independent
+reasons the owner stated directly: **(1)** "we have routers for custom apps - that's bullshit... why we need routes?" - a Project Blend is meant to become
+one cohesive, standalone product, not a chat with a side feature reached by a link to a server-routed page opening in a separate tab. **(2)** every other
+piece of UI in this entire codebase - the workspace tree, the tab strip, Settings, file tabs - is a React component registered into the app's own Cordis
+UI slots and rendered inline in the same window. A domain plugin's board built as a Host route is the one thing in the whole product that does not follow
+that rule, for no reason tied to what a board actually needs.
+
+**The right shape.** `plugins/acryl-workspace` already proves it, for the IDE: it is a plugin that claims the main UI surface (`desktop.main`, the tree in
+`desktop.sidebar`) and replaces Blank's plain chat with the whole IDE - tree, tabs, terminals, canvases. That is one differentiated product grown from the
+same stem cell (`framework.md`'s Blank -> Blueprint -> Project). A different domain (GTD, accounting, whatever a team needs) wants the exact same
+mechanism with completely different content in the main slot - its own board, its own forms, its own views - never PTYs and a file tree it has no use
+for. **A domain plugin's own main UI is always a `desktop.main`/`desktop.sidebar` slot registration. It is never a Host route.** If a page would need a
+URL to reach a piece of this product's own UI, that is the signal the design is wrong, not a reason to add a route.
+
+**The shared scaffold now exists: `plugins/acryl-app-shell`.** Extracted 2026-10-01 from `acryl-workspace`'s own (already-generic, just not reusable)
+`shell/` - the three-column frame, slot composition, layout service, theme presenter, platform title-bar chrome. One call, from a domain plugin's own
+`apply(ctx)`:
+
+```ts
+import { applyAdvancedShell, resolveShellEnvironment } from 'acryl-app-shell/client'
+
+export function apply(ctx: ClientContext): void {
+  const environment = resolveShellEnvironment(window.location.hash)
+  if (environment.mode !== 'advanced') return // compatibility mode keeps the stock upstream frame
+  applyAdvancedShell(ctx, environment) // no dock, no terminal panel - this domain does not need one
+
+  ctx.slots.inject('desktop.main', () => ctx.slots.register({
+    name: 'desktop.main',
+    priority: 200, // higher than the shell's own fallback (100), so this replaces the plain chat
+  }, MyDomainMainSurface))
+}
+```
+
+This is also the concrete, literal answer to "every team adopts plugins and capabilities for themselves": a non-technical team's Blend simply never
+registers a terminal dock (the `wrapMain`/`wrapRightbar` hooks stay unset) and never pulls in `acryl-workspace`'s PTY/file-tree rows at all - the same
+`acryl-app-shell` scaffold, a completely different main-surface plugin claiming it, zero code shared with the IDE beyond the frame itself. See
+`plugins/acryl-app-shell/README.md` for the extraction rationale and a packaging note (its client bundle is its own Loader row, resolved through the
+shared Module Loader registry at runtime like every other client package here - a consumer's bundler cannot bundle it in directly).
+
+**Not yet done:** `acryl-gtd` itself has not been rebuilt on this scaffold yet (both existing implementations still route-based at the time this section
+was written). Rebuilding it - and the next domain example after it - is the proof this pattern actually holds for something other than the IDE.
+
 ## The principle (from pi.dev, and already true in ACRYL)
 
 The source is the truth; the running composition is derived and rebuildable. A Blend is therefore not a database row or a snapshot of process

@@ -39,9 +39,11 @@ Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository
 - [ ] T016 Replace the pre-framework `dsh-desktop.blend` setting with app folders
 - [ ] T018 `acryl package`: a standalone product from an app folder, a Web server tarball and a branded Electron app (name, app id, icon from `blend.yaml`), bundling only the plugins the app names
 - [ ] T017 Real-app Desktop test of two branded apps side by side (Web is verified; Desktop is verified headless only)
-- [ ] T021 Move `acryl-workspace`'s own renderer-local persistence (`forgetRepo`'s removed-workspace list, tab/view-mode state, currently per-origin
-      browser `localStorage`) onto a file under `appInstance.home`, written through a Host route - so Desktop and Web, which already share one
-      `appInstance.dshHome`, agree on what the user removed (see `blend-instance-design.md` section 0 for the decision and why)
+- [ ] T021 Move `acryl-workspace`'s own renderer-local persistence (`forgetRepo`'s removed-workspace list, `dismissChat`'s dismissed-chat list, tab/
+      view-mode state) off per-origin browser `localStorage` onto a file under `appInstance.home`, written through a Host route - so Desktop and Web,
+      which already share one `appInstance.dshHome`, agree on what the user removed. Partially done 2026-10-01: both lists now round-trip through
+      `localStorage` so a reload no longer loses them (they did not before, at all) - still per-origin, so Desktop/Web parity is the remaining gap
+      (`blend-instance-design.md` section 0)
 - [ ] T022 A GUI entry point to `planNewApp`/`writeNewApp` (today wired only to `apps/acryl-cli`): a "New Blend" action inside the Desktop/Web app itself,
       so a user who only ever opens the installed app can instantiate a Blueprint without a terminal (`blend-instance-design.md` section 0)
 - [x] T023 End-to-end lifecycle test, local-only, run live 2026-10-01: `acryl new accounting-test --blueprint acryl.blank` and `acryl new
@@ -54,3 +56,10 @@ Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository
       nothing touching `~/.acryl` or `~/.acryl-dev`, then was stopped and the port verified free. **Not exercised, because not yet built**: `acryl
       publish` (T020, Project -> registry Blueprint) and `acryl pull` (T014, updating an existing Project from its starter) - what this task tested
       is instantiate/save/re-instantiate, the commands that exist today, not those two
+- [x] T024 Extract `plugins/acryl-app-shell` from `acryl-workspace`'s own `shell/`: the reusable main-surface scaffold (`desktop.main`/`desktop.sidebar`
+      slot claim, three-column frame, layout/theme/chrome) any domain plugin claims for its own UI, the same way `acryl-workspace` claims it for the IDE
+      - built and wired into both apps 2026-10-01 (`blend-instance-design.md` section 0a). Tests: `acryl-app-shell` 22/22, `acryl-workspace` 646/646,
+      `acryl-agent-control` 112/112, both apps typecheck clean, headless boot smoke (`verify:loader`) clean
+- [ ] T025 Rebuild `acryl-gtd` on `acryl-app-shell`: its board (buckets, triage, kanban, calendar) as a real `desktop.main` registration, not a Host
+      route - the concrete proof section 0a's pattern holds for something other than the IDE. Both existing implementations (the public registry one and
+      a second independent rebuild) are route-based and need replacing, not extending
