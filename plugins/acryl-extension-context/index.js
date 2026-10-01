@@ -82,7 +82,7 @@ export function apply(ctx) {
           const profileDir = scoped.get('desktopProfiles')?.current?.dir
           if (!profileDir) return
           const dshHome = scoped.get('dshHomePath')
-          const services = { pnpm: scoped.get('desktopPnpm'), live: scoped.get('livePluginActivation'), profileDir }
+          const services = { pnpm: scoped.get('desktopPnpm'), live: scoped.get('livePluginActivation'), profileDir, acrylFrameworkPackages: ctx.get('acrylFrameworkPackages') }
           // An app (`acryl new`) installs its own committed extensions at start: a fresh clone has them in extensions/ but nothing installed yet.
           const app = appHomeDir()
           const summary = await syncOnStartup(services, { globalDir: globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined), installPending: app !== undefined })
@@ -133,7 +133,7 @@ export function apply(ctx) {
           const removeStale = words.includes('remove-stale')
           const dshHome = ctx.get('dshHomePath')
           const globalDir = globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined)
-          const results = await reloadLocalPlugins({ pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir, record: ledgerRecorder(workspaceDir, 'human') }, undefined, { workspaceDir, globalDir, installDiscovered, removeStale })
+          const results = await reloadLocalPlugins({ pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir, acrylFrameworkPackages: ctx.get('acrylFrameworkPackages'), record: ledgerRecorder(workspaceDir, 'human') }, undefined, { workspaceDir, globalDir, installDiscovered, removeStale })
           if (results.length === 0) return { kind: 'success', text: 'No local extensions installed or found in <workspace>/.acryl-extensions/ or the global extensions directory.' }
           const tag = r => (r.scope ? ` [${r.scope}]` : '')
           const lines = results.map(r =>
@@ -181,7 +181,7 @@ export function apply(ctx) {
           }
           if (verb === 'apply') {
             // Installs code that runs with the user's permissions: human-typed only, the summary shows what each module requests.
-            const result = await applyBlend(outDir, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir, record: ledgerRecorder(workspaceDir, 'human') }, { workspaceDir })
+            const result = await applyBlend(outDir, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir, acrylFrameworkPackages: ctx.get('acrylFrameworkPackages'), record: ledgerRecorder(workspaceDir, 'human') }, { workspaceDir })
             if (result.problems.length === 0) appendLedger(outDir, { actor: 'human', kind: 'applied', results: result.results.map(r => ({ module: r.name, origin: r.origin, status: r.status })) })
             if (result.problems.length > 0) return { kind: 'error', text: `Nothing was installed; the Blend in ${outDir} does not match its lock:\n${result.problems.map(p => `- ${p}`).join('\n')}` }
             const lines = result.results.map(r => `${r.name} [${r.origin}]: ${r.status}${r.permissions ? ` (${r.permissions})` : ''}${r.detail ? ` - ${r.detail}` : ''}`)
@@ -221,7 +221,7 @@ export function apply(ctx) {
       },
       output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
       async execute(args, exec) {
-        const result = await installLocalPlugin({ path: args.path }, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir: ctx.get('desktopProfiles')?.current?.dir, record: ledgerRecorder(exec?.agent?.session?.header?.cwd, 'agent') })
+        const result = await installLocalPlugin({ path: args.path }, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir: ctx.get('desktopProfiles')?.current?.dir, acrylFrameworkPackages: ctx.get('acrylFrameworkPackages'), record: ledgerRecorder(exec?.agent?.session?.header?.cwd, 'agent') })
         // A thrown error is reported to the model as a tool error with the full detail.
         if (!result.ok) throw new Error(JSON.stringify(result, null, 2))
         return JSON.stringify(result)

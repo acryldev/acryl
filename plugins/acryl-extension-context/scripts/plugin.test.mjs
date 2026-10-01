@@ -71,7 +71,7 @@ function makePkg(over = {}, { patch = true } = {}) {
 
 test('lint accepts a correct package', () => {
   const dir = makePkg()
-  try { assert.deepEqual(lintPackageDir(dir), { name: 'my-plugin', hasClient: false, hotShim: false, apiVersion: undefined, permissions: undefined, errors: [] }) } finally { rmSync(dir, { recursive: true, force: true }) }
+  try { assert.deepEqual(lintPackageDir(dir), { name: 'my-plugin', hasClient: false, hotShim: false, apiVersion: undefined, permissions: undefined, requiresAcrylPackages: [], errors: [] }) } finally { rmSync(dir, { recursive: true, force: true }) }
 })
 
 test('lint catches the measured failures: missing bundle, missing patch file, exports without ./package.json', () => {
