@@ -1,17 +1,17 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import { provideDesktopLayout } from '../../src/client/shell/layout-service.ts'
+import { provideDesktopLayout } from '../src/client/layout-service.ts'
 import {
   computeDesktopColumns, DesktopLayoutState, MACOS_SIDEBAR_COLLAPSED, SIDEBAR_COLLAPSED, solveFrame,
-} from '../../src/client/shell/layout-state.ts'
-import { installAdvancedStyles } from '../../src/client/shell/styles.ts'
+} from '../src/client/layout-state.ts'
+import { installAdvancedStyles } from '../src/client/styles.ts'
 import {
   MACOS_DRAG_REGION_HEIGHT,
   MACOS_TITLEBAR_HEIGHT,
   MACOS_TRAFFIC_LIGHT_SAFE_WIDTH,
   WINDOWS_CAPTION_CONTROLS_WIDTH,
   WINDOWS_TITLEBAR_HEIGHT,
-} from '../../src/client/shell/chrome-metrics.ts'
+} from '../src/client/chrome-metrics.ts'
 
 describe('the shared advanced shell layout', () => {
   it('owns native caption geometry without targeting feature headers', () => {

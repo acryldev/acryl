@@ -1,7 +1,6 @@
 import { defineConfig } from 'tsdown'
-import { xtermCssPlugin } from './scripts/xterm-css-plugin.mjs'
 
-const PACKAGE_NAME = 'acryl-workspace'
+const PACKAGE_NAME = 'acryl-app-shell'
 
 export default defineConfig([
   {
@@ -28,26 +27,15 @@ export default defineConfig([
     dts: false,
     clean: false,
     sourcemap: true,
-    // The client is one JS file, so xterm's own stylesheet is inlined as text and injected with ours.
-    plugins: [xtermCssPlugin()],
     external: [
       'react',
       'react/jsx-runtime',
-      'react-dom',
+      'react-dom/client',
       '@deepseek-ai/cordis',
       '@deepseek-ai/dsh-client-runtime/client',
-      '@deepseek-ai/dsh-client-ui-slots',
-      // Its own Loader row (like every `@deepseek-ai/*` client package here): resolved through the shared
-      // Module Loader registry at runtime, not bundled in - bundling a sibling package's own
-      // `window.__ModuleLoader__`-wrapped client.js fails outright (rolldown cannot read named exports out
-      // of that wrapper), discovered live extracting `acryl-app-shell` out of this package's own `shell/`.
-      'acryl-app-shell/client',
     ],
     noExternal: (id: string) => id.startsWith('@deepseek-ai/') ? undefined : true,
     outputOptions: {
-      // The Module Loader evaluates this one file, so the editor's on-demand language packs must be
-      // inlined into it rather than emitted as separate chunk files that nothing would load.
-      inlineDynamicImports: true,
       entryFileNames: 'client.js',
       banner: `window.__ModuleLoader__.load({ id: ${JSON.stringify(PACKAGE_NAME)}, factory: (require) => {`,
       footer: 'return module.exports; } });',

@@ -1,8 +1,12 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
+// Pulls `ctx.slots` and the `root` SlotMap key augmentation into this module (and, as a plain import rather
+// than `import type {}`, into every program that imports this package's types - see `client/index.ts`'s own
+// copy of this note).
+import '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
+import type { ReactNode } from 'react'
 import type { DesktopMainOwnerProps, DesktopSidebarSurfaceOwnerProps } from './contracts.ts'
 import type { ShellEnvironment } from './environment.ts'
-import type { DockHost } from '../dock/dock-host.ts'
 import { AdvancedFrame } from './AdvancedFrame.tsx'
 import { DesktopLayoutState } from './layout-state.ts'
 import { provideDesktopLayout } from './layout-service.ts'
@@ -17,21 +21,34 @@ function DefaultDesktopSidebar({ renderUpstream }: DesktopSidebarSurfaceOwnerPro
   return renderUpstream()
 }
 
+/** Optional wrappers a domain plugin's own call site supplies - see `AdvancedFrameInjected`. Neither key
+ * is ever required: a Blend that needs no extra chrome around its main or details column passes nothing. */
+export interface AdvancedShellHooks {
+  readonly wrapMain?: (content: ReactNode) => ReactNode
+  readonly wrapRightbar?: (content: ReactNode) => ReactNode
+}
+
 /**
- * Provide the advanced layout service and own the desktop root slot.
+ * Claim the three-column desktop/web app frame for this plugin's own UI: register `desktop.main` and
+ * `desktop.sidebar` (falling back to the unchanged upstream chat and sidebar until something replaces
+ * them), mount the layout service, theme presenter and chrome styles, and own the `root` slot that
+ * composes everything into `AdvancedFrame`. Call once, from the plugin that is this Blend's main-surface
+ * owner (the IDE's `plugins/acryl-workspace`, or a domain plugin like a GTD or accounting Blend) - never
+ * from more than one plugin in the same program, since `root` is a single slot.
  * @param ctx - active browser Cordis context.
- * @param environment - validated mode and platform marker.
- * @param dock - the terminal dock the frame places in its columns; without it the frame has no terminal panel.
+ * @param environment - validated mode and platform marker (`resolveShellEnvironment`).
+ * @param hooks - optional column wrappers (a terminal dock, or anything else a caller wants beneath/beside
+ * the main or details column); this package has no opinion on what they wrap.
  */
-export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnvironment, dock?: DockHost): void {
+export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnvironment, hooks: AdvancedShellHooks = {}): void {
   if (environment.mode !== 'advanced') {
-    throw new Error(`acryl-workspace: advanced shell received mode ${JSON.stringify(environment.mode)}`)
+    throw new Error(`acryl-app-shell: advanced shell received mode ${JSON.stringify(environment.mode)}`)
   }
 
   const desktopLayout = new DesktopLayoutState()
   ctx.effect(
     () => provideDesktopLayout(ctx, desktopLayout),
-    'acryl-workspace: shell layout service',
+    'acryl-app-shell: layout service',
   )
 
   ctx.effect(() => {
@@ -43,7 +60,7 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
       delete document.body.dataset.dshDesktopMode
       delete document.body.dataset.dshDesktopPlatform
     }
-  }, 'acryl-workspace: shell advanced shell styles')
+  }, 'acryl-app-shell: advanced shell styles')
 
   ctx.slots.inject('desktop.main', () => ctx.slots.register({
     name: 'desktop.main',
@@ -63,7 +80,7 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
       off()
       presenter.dispose()
     }
-  }, 'acryl-workspace: shell theme presenter')
+  }, 'acryl-app-shell: theme presenter')
 
   ctx.effect(() => ctx.slots.register({
     name: 'root',
@@ -75,6 +92,6 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
       'rightbar': { kind: 'single', scope: 'session' },
       'shell.overlay': { kind: 'list', scope: 'root' },
     },
-    inject: () => ({ layout: desktopLayout, platform: environment.platform, dock }),
-  }, AdvancedFrame), 'acryl-workspace: shell advanced root slot')
+    inject: () => ({ layout: desktopLayout, platform: environment.platform, ...hooks }),
+  }, AdvancedFrame), 'acryl-app-shell: advanced root slot')
 }

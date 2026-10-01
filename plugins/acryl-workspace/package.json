@@ -90,6 +90,7 @@
   },
   "devDependencies": {
     "@acryl/ui": "workspace:*",
+    "acryl-app-shell": "workspace:*",
     "@deepseek-ai/cordis": "4.0.2",
     "@deepseek-ai/dsh-api-session-controller": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-api-workspace-controller": "0.1.5-alpha.1",

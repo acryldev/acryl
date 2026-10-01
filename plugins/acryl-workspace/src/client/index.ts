@@ -9,9 +9,9 @@ import type { Context as ClientContext } from '@deepseek-ai/cordis'
 // augmentation into every program that imports this package's types. Plain side-effect import, not
 // `import type {}`, for the same reason as the two imports above: this package has no runtime exports, so an
 // empty `import type {}` is erased under `verbatimModuleSyntax` and the augmentation never reaches consumers.
-import './shell/contracts.ts'
-import { applyAdvancedShell } from './shell/advanced-shell.ts'
-import { resolveShellEnvironment } from './shell/environment.ts'
+import 'acryl-app-shell/client'
+import { applyAdvancedShell, resolveShellEnvironment } from 'acryl-app-shell/client'
+import { dockShellHooks } from './dock/dock-hooks.tsx'
 import { createAgentBridge } from './sessions/agent-bridge.ts'
 import { createSessionNavigator } from './sessions/session-navigator.ts'
 import { createWorkspaceFilesApi } from './files/files-api.ts'
@@ -78,7 +78,7 @@ export function apply(ctx: ClientContext): void {
   if (saved !== undefined) shell.setMode(saved.mode)
   // The terminals and the dock are shared by the frame (which places the dock) and the canvas (its terminal tabs).
   const terminalStack = advanced ? createTerminalStack(ctx, storage, shell) : undefined
-  if (advanced) applyAdvancedShell(ctx, environment, terminalStack?.host)
+  if (advanced) applyAdvancedShell(ctx, environment, dockShellHooks(terminalStack?.host))
   ctx.effect(() => startWorkspacePersistence({ groups, shell, storage }), 'acryl-workspace: save tabs and view')
   const review = new ReviewStore(parseSavedThreads(storage?.getItem(REVIEW_STORAGE_KEY) ?? null))
   ctx.effect(() => startReviewPersistence(review, storage), 'acryl-workspace: save review comments')

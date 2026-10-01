@@ -1,0 +1,102 @@
+{
+  "name": "acryl-app-shell",
+  "version": "0.1.0",
+  "description": "The generic three-column desktop/web app frame (brand sidebar, main surface, resizable details column, theme, platform title-bar spacing) any ACRYL Blend's domain plugin claims as its own main UI, the same way plugins/acryl-workspace claims it for the IDE. Extracted from acryl-workspace's own shell/ so the next Blueprint after the IDE does not rebuild this wiring again.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/acryl-app-shell"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-app-shell#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "files": [
+    "cordis.patch.yml",
+    "lib/**",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly && tsc -p tsconfig.client.json --emitDeclarationOnly",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "test": "vitest run",
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test",
+    "prepack": "pnpm run check"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/dsh-client-ui-renderer": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-client-ui-slots": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-client-ui-theme": "0.1.5-alpha.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.2",
+    "@deepseek-ai/dsh-client-ui-renderer": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-client-ui-slots": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-client-ui-theme": "0.1.5-alpha.1",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^22.20.0",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "jsdom": "29.1.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3",
+    "vitest": "4.1.8"
+  },
+  "acryl": {
+    "schemaVersion": 1,
+    "artifacts": {
+      "plugins": [
+        "./lib/index.js",
+        "./lib/client.js"
+      ]
+    },
+    "surfaces": [
+      "desktop",
+      "web"
+    ],
+    "runtime": "cordis",
+    "compatibility": {
+      "acryl": ">=0.1.0 <1.0.0",
+      "node": "^22.19.0 || >=24.0.0",
+      "hosts": {
+        "@deepseek-ai/cordis": "^4.0.2"
+      }
+    },
+    "capabilities": [
+      "app-shell"
+    ]
+  }
+}
