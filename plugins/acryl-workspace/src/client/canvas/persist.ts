@@ -25,7 +25,7 @@ export function startWorkspacePersistence(deps: PersistenceDeps): () => void {
   const flush = (): void => {
     timer = undefined
     try {
-      storage.setItem(STORAGE_KEY, serializeWorkspace(shell.getSnapshot().mode, groups))
+      storage.setItem(STORAGE_KEY, serializeWorkspace(shell.getSnapshot().mode, groups, shell.forgottenRoots()))
     } catch {
       // Storage full or blocked.
     }
@@ -42,9 +42,11 @@ export function startWorkspacePersistence(deps: PersistenceDeps): () => void {
     schedule()
   })
   const offGroups = groups.onChange(schedule)
+  const offForgotten = shell.onForgottenChange(schedule)
   return () => {
     offShell()
     offGroups()
+    offForgotten()
     if (timer !== undefined) {
       clearTimeout(timer)
       flush()

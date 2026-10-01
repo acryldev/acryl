@@ -341,3 +341,44 @@ describe('forgetRepo (T135-followup)', () => {
     expect(shell.getSnapshot()).toBe(before)
   })
 })
+
+describe('forgetRepo persistence (T137 follow-up, owner report: "x" removal did not survive a reload)', () => {
+  it('seeds forgottenRoots at construction, so a removal from a previous run keeps refusing a rediscovery on this one', async () => {
+    const shell = new WorkspaceShellState(fakeApi(), ['/p/proj'])
+    await shell.discover('/p/proj')
+    expect(shell.getSnapshot().repos).toEqual([])
+    expect(shell.forgottenRoots()).toEqual(['/p/proj'])
+  })
+
+  it('notifies on forgetRepo, once per genuinely new removal - not for one already forgotten', () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    let calls = 0
+    shell.onForgottenChange(() => { calls += 1 })
+    shell.forgetRepo('/p/proj')
+    expect(calls).toBe(1)
+    expect(shell.forgottenRoots()).toEqual(['/p/proj'])
+    shell.forgetRepo('/p/proj')
+    expect(calls).toBe(1)
+  })
+
+  it('notifies on an explicit re-add (clearForgotten) that actually lifts a mark, not otherwise', async () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    shell.forgetRepo('/p/proj')
+    let calls = 0
+    shell.onForgottenChange(() => { calls += 1 })
+    await shell.discover('/p/proj', { registerFolder: true, clearForgotten: true })
+    expect(calls).toBe(1)
+    expect(shell.forgottenRoots()).toEqual([])
+    await shell.discover('/p/proj', { registerFolder: true, clearForgotten: true })
+    expect(calls).toBe(1)
+  })
+
+  it('stops notifying once unsubscribed', () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    let calls = 0
+    const off = shell.onForgottenChange(() => { calls += 1 })
+    off()
+    shell.forgetRepo('/p/proj')
+    expect(calls).toBe(0)
+  })
+})

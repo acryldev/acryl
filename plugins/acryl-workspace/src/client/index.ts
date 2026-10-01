@@ -70,10 +70,10 @@ export function apply(ctx: ClientContext): void {
   const advanced = environment.mode === 'advanced'
   const gitApi = createWorkspaceGitApi()
   const filesApi = createWorkspaceFilesApi()
-  const shell = new WorkspaceShellState(gitApi)
   // Restore what a previous run saved, then keep saving. Bad or missing data simply means a fresh start.
   const storage = browserStorage()
   const saved = parseSavedWorkspace(storage?.getItem(STORAGE_KEY) ?? null)
+  const shell = new WorkspaceShellState(gitApi, saved?.forgottenRoots)
   const groups = new WorkspaceGroups(undefined, saved?.groups)
   if (saved !== undefined) shell.setMode(saved.mode)
   // The terminals and the dock are shared by the frame (which places the dock) and the canvas (its terminal tabs).

@@ -232,4 +232,44 @@ describe('startWorkspacePersistence', () => {
     stop()
     shell.dispose()
   })
+
+  it('writes again when a repo is forgotten or an earlier removal is explicitly re-added (owner report: "x" removal did not survive a reload - the forgotten set was never persisted at all)', async () => {
+    vi.useFakeTimers()
+    const storage = memoryStorage()
+    const groups = groupsWith()
+    const shell = shellStub()
+    const stop = startWorkspacePersistence({ groups, shell, storage, delayMs: 400 })
+    shell.forgetRepo('/p/proj')
+    vi.advanceTimersByTime(500)
+    expect(storage.writes).toBe(1)
+    expect(parseSavedWorkspace(storage.data.get(STORAGE_KEY) ?? null)?.forgottenRoots).toEqual(['/p/proj'])
+
+    await shell.discover('/p/proj', { registerFolder: true, clearForgotten: true })
+    vi.advanceTimersByTime(500)
+    expect(storage.writes).toBe(2)
+    expect(parseSavedWorkspace(storage.data.get(STORAGE_KEY) ?? null)?.forgottenRoots).toEqual([])
+    stop()
+    shell.dispose()
+  })
+})
+
+describe('forgottenRoots round-trip', () => {
+  it('serializes and restores which repo roots were explicitly removed', () => {
+    const groups = groupsWith()
+    const saved = parseSavedWorkspace(serializeWorkspace('projects', groups, ['/p/proj', '/p/other']))
+    expect(saved?.forgottenRoots).toEqual(['/p/proj', '/p/other'])
+  })
+
+  it('defaults to an empty list when absent (legacy data from before this existed)', () => {
+    const saved = parseSavedWorkspace(JSON.stringify({ version: 1, mode: 'chats', groups: {} }))
+    expect(saved?.forgottenRoots).toEqual([])
+  })
+
+  it('drops anything that is not a non-empty string under the length cap, rather than throwing', () => {
+    const saved = parseSavedWorkspace(JSON.stringify({
+      version: 1, mode: 'chats', groups: {},
+      forgottenRoots: ['/ok', '', 42, null, 'x'.repeat(5000)],
+    }))
+    expect(saved?.forgottenRoots).toEqual(['/ok'])
+  })
 })
