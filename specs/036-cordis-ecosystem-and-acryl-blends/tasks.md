@@ -44,8 +44,13 @@ Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository
       `appInstance.dshHome`, agree on what the user removed (see `blend-instance-design.md` section 0 for the decision and why)
 - [ ] T022 A GUI entry point to `planNewApp`/`writeNewApp` (today wired only to `apps/acryl-cli`): a "New Blend" action inside the Desktop/Web app itself,
       so a user who only ever opens the installed app can instantiate a Blueprint without a terminal (`blend-instance-design.md` section 0)
-- [ ] T023 End-to-end lifecycle test, local-only (no real GitHub push required): `acryl new --from <registry id or folder>` (pull a Blueprint), `acryl
-      remote connect` + `acryl save` (push a Project to its own remote), a second clone/instantiate proving `acryl new --from <that remote>` round-trips
-      what was saved, and that two instances running side by side never share a home, port or Electron user data (T017's "real-app" gap, exercised
-      against the actually-built commands rather than asserted) - `acryl publish` (T020) and `acryl pull` (T014) are not built yet, so "push/pull a
-      Blueprint" after the first save is out of scope for this task until those land
+- [x] T023 End-to-end lifecycle test, local-only, run live 2026-10-01: `acryl new accounting-test --blueprint acryl.blank` and `acryl new
+      musiceditor-test --blueprint acryl.blank` (two Projects created side by side) - `appFolder()` on both plus a pulled third gave three fully
+      distinct `home`/`dshHome`/`webPort`/`userDataName`/`projectScope`, confirmed by direct inspection, not just read from source. `remote connect
+      --url <local bare repo>` + `save -m ...` committed and pushed a real commit, verified present in the bare repo's own log. `new musiceditor-pulled
+      --from file://<that bare repo>` cloned it back and produced a Project whose `blend.yaml` correctly recorded
+      `description: ..., created from app.musiceditor-test` - genuine lineage, not a fresh blank. `accounting-test`'s own `bin/acryl web` was actually
+      booted (not just planned): it served on its predicted port 3605, wrote a real, separate `.dsh/` (credentials, logs, profiles, storages) with
+      nothing touching `~/.acryl` or `~/.acryl-dev`, then was stopped and the port verified free. **Not exercised, because not yet built**: `acryl
+      publish` (T020, Project -> registry Blueprint) and `acryl pull` (T014, updating an existing Project from its starter) - what this task tested
+      is instantiate/save/re-instantiate, the commands that exist today, not those two
