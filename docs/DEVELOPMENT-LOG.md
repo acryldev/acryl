@@ -1,3 +1,46 @@
+## 2026-10-01 (later still) - 036: acryl-app-shell was never actually a Loader row; GTD rebuild found it live
+
+Commits: `2b059b7` (the row fix), `004676c` (the new extension-dependency mechanism).
+
+Rebuilding `acryl-gtd` on `acryl-app-shell` (T025) was the first thing to actually boot a browser against that
+package since its extraction two entries up. The prior entry's own claim ("registered as its own row in both
+apps... so the bundle is actually present in the page") was wrong: neither app ever inserted `acryl-app-shell`
+as a Loader row, only as a package.json dependency and a prebuild step. `acryl-workspace`'s
+`require('acryl-app-shell/client')` would have crashed the first time anyone opened the main view in a real
+browser on either app - the "22/22 tests, headless boot smoke clean" verification never rendered a page, so it
+never caught this. Fixed in `coding-capabilities.ts`'s `workspace` row (the same `materializeProfilePackage`
+pattern every other fixed row already uses).
+
+- **A second, deeper gap, found trying to fix the first one:** nothing lets a project grown via `acryl new`
+  depend on an ACRYL-owned framework package at all. The `BlueprintRowId` enum in `blueprint/compose.ts` only
+  covers the framework's 7 built-in rows; an extension's own `blend.yaml` row name for anything else is silently
+  dropped ("an app plugin: loaded from extensions/, not composed here"). Added `dsh.requiresAcrylPackages` to an
+  extension's `package.json`: read at compose time, each named package is symlinked in from the live framework
+  install and inserted as a static row, the same mechanism the 7 fixed rows use. `acryl-extension-context`'s own
+  dynamic install path (`/reload`, the install tool, `syncOnStartup`) gained the same capability through a new
+  `acrylFrameworkPackages` service, for the case where the requirement is only discovered after boot.
+- **Why a static row, not dynamic activation:** `acryl-control`'s `PluginLifecycleController.activate()` -
+  `acryl-extension-context`'s own path for installing a local plugin live, no restart - failed a real, reproduced
+  activation of `acryl-app-shell` through a fresh profile with `invalid plugin, expect function or object with
+  an "apply" method, received object`, under group `@deepseek-ai/dsh-client-ui-layout`. Measured directly: the
+  same failure persisted identically whether `acryl-app-shell` was activated dynamically (`bundleGroup()`'s own
+  heuristic over the live Loader tree) or inserted as a static `cordis.yml` patch at boot, which rules out
+  `bundleGroup()`'s heuristic as the cause even though its group-selection is itself fragile (confirmed via a
+  temporary diagnostic: it is a `.find()` over 60+ "include:"-prefixed entries, first-match-wins, no apparent
+  guarantee it names the intended group - reverted, not fixed, since it wasn't actually the cause here). The
+  real cause traces into vendored Cordis internals (`deepseek-harness/vendor/cordis/src/registry.ts`'s plugin
+  resolution) this repo does not edit; not isolated further this session.
+- **Still blocked:** `acryl-gtd`'s own `client.js` (the board rewrite itself - List/Board/Calendar/Projects, a
+  real `desktop.main` registration, zero Host routes) is written and API-correct (verified line by line against
+  `acryl-app-shell`'s actual exports, slot priority direction, and `dsh.client.external` vs `.inject`), but
+  cannot render yet: it depends on `acryl-app-shell` actually activating, which still hits the error above in
+  the GTD Blueprint's own minimal (Blank-grown) composition specifically - the identical static-row insertion
+  works clean in both real apps' own headless boot smoke (`verify:loader` exit 0 on `acryl-desktop` after this
+  fix). The difference between "works in the IDE's composition" and "fails in Blank's" is the open question;
+  next session should pick up from reproducing it isolated from the IDE apps' own, much larger composition.
+- **Verified:** `acryl-extension-context` 61/61, `acryl-harness-runtime` 204/204 (2 pre-existing skips), both
+  typecheck clean; `acryl-desktop` typecheck/tests clean and `verify:loader` headless boot smoke exit 0.
+
 ## 2026-09-27 - 036 Merged to main, published, registry live, acryldev/blends archived
 
 Commits: `d4b1b222833257840038fc139b9dc5cf177fc346` (merge of PR acryldev/acryl#55 into main), `99bd765` and `ab2c296` (CI/Nix fixes found by reproducing the PR's CI failures in a clean clone before merging), `ada904ae45d1e1e7526a46ef8f9fa9cedaaf4138` (rename to `@webboxes/*`).

@@ -62,4 +62,12 @@ Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository
       `acryl-agent-control` 112/112, both apps typecheck clean, headless boot smoke (`verify:loader`) clean
 - [ ] T025 Rebuild `acryl-gtd` on `acryl-app-shell`: its board (buckets, triage, kanban, calendar) as a real `desktop.main` registration, not a Host
       route - the concrete proof section 0a's pattern holds for something other than the IDE. Both existing implementations (the public registry one and
-      a second independent rebuild) are route-based and need replacing, not extending
+      a second independent rebuild) are route-based and need replacing, not extending. 2026-10-01: `client.js` itself is written and API-correct (its own
+      repo, `02-application-gtd-planner`, not this one); blocked on T025a
+- [ ] T025a `acryl-app-shell` fails to activate in the GTD Blueprint's own (Blank-grown) composition specifically: `invalid plugin, expect function or
+      object with an "apply" method, received object` under group `@deepseek-ai/dsh-client-ui-layout`, identical whether inserted as a dynamic
+      `livePluginActivation.activate()` row or a static `cordis.yml` patch (ruling out `bundleGroup()`'s own heuristic, confirmed fragile but not the
+      cause here) - the same static-row insertion is clean in both real apps' own headless boot smoke (`acryl-desktop`'s `verify:loader` exit 0). Root
+      cause traces into vendored Cordis plugin resolution (`deepseek-harness/vendor/cordis/src/registry.ts`), not edited this session. Next: reproduce
+      isolated from the IDE apps' own much larger composition - what does Blank's own `web` profile omit or add that changes this. See
+      `docs/DEVELOPMENT-LOG.md`, 2026-10-01, for the full trail (what was tried, what was ruled out, why)
