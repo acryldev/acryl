@@ -1,3 +1,5 @@
+> **Superseded 2026-10-01.** Estimates and probabilities in this file were made without running anything, and some claims were wrong (for example, that Cordis does not use Node internals). The current assessment is [findings-rewrite-vs-reuse.md](./findings-rewrite-vs-reuse.md). Kept for history.
+
 # Cordis Hot-Reload on Electrobun: Technical Deep Dive
 
 **TL;DR**: Bun's module system is compatible enough with Node's that Cordis _should_ work unchanged. But the hot-reload machinery (dynamic `import()`, module cache eviction) has untested edge cases on Bun. **This must be validated in a spike before committing to migration.**

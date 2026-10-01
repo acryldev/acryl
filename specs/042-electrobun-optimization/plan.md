@@ -1,3 +1,5 @@
+> **Update 2026-10-01.** Week estimates and success percentages in this file are not supported by evidence. See [findings-rewrite-vs-reuse.md](./findings-rewrite-vs-reuse.md) for measured results, the Option A (Node host, Electrobun shell) and Option B (Host in Bun) split, and the experiment ladder.
+
 # Plan: Electrobun Optimization Spike
 
 **Status**: Decision-gating research phase. This plan is for the spike (Week 1), not for implementation.
