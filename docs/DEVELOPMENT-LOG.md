@@ -5908,3 +5908,14 @@ Owner's own `pnpm run dev` failed outright after the "actually remove the upstre
 - **What actually fixed the reported bug** (an agent asked to "collapse left panel" found two indistinguishable "Collapse sidebar" buttons): the host was only zero-sized, not hidden from the accessibility tree, so `acryl-agent-control`'s own `ui_snapshot` still listed its real controls. Added `aria-hidden="true"` to the host - the snapshot reader already treats `aria-hidden` as "leave this whole subtree out" - so the duplicate stops appearing to an agent at all. `aria-hidden` does not block `Element.click()`, so the existing Settings/Add-workspace click proxies are unaffected.
 - **Kept, unaffected by the revert:** the Linux Add-workspace folder-picker fix (desktop uses the same Host route Web does) - it was never part of the broken slot-split.
 - **Verified:** `acryl-workspace` 654/654, `acryl-agent-control` 112/112, both apps' typecheck and build clean, and - this time - the actual headless boot smoke this bug broke (`pnpm --filter acryl-desktop run verify:loader`) passes (exit 0).
+
+## 2026-10-01 (later still) - removing a workspace did not survive a reload; sidebar drifted horizontally
+
+Commit: `1c7d1f2`
+
+Two owner reports with screenshots: pressing "x" to remove a workspace, it "always appears back... as if it loads from some persisted config"; and the sidebar "drifts in scrolling left right", text clipped on the left.
+
+- **Removal cause:** the opposite of what it looked like - removal was the one part never persisted. `WorkspaceShellState.forgetRepo` only wrote to an in-memory `Set` that starts empty on every fresh page load; the passive per-session-cwd and per-registered-workspace discovery effects (the same mechanism behind "web shows so many workspaces I never opened") have no memory of an earlier removal and silently re-add it.
+- **Fix:** forgotten roots now round-trip through the same renderer-storage convenience already used for tabs/view-mode (`canvas/persistence.ts`'s `SavedWorkspace`, `localStorage` under `acryl-workspace:v1`). `WorkspaceShellState` takes an optional seed list at construction, exposes `forgottenRoots()`/`onForgottenChange()`; `startWorkspacePersistence` flushes on a change to either; `client/index.ts` loads the saved set before constructing the shell instead of after.
+- **Drift cause:** `.dshWorkspaceSideProjects` set `overflow-y: auto` with no explicit `overflow-x` - CSS computes an unset axis to `auto` too once the other is non-visible, so any row a pixel wider than the column made the whole list horizontally scrollable, and a diagonal trackpad gesture nudged it sideways with nothing to scroll it back. Fix: explicit `overflow-x: hidden` on it and on `.dshWorkspaceSide`.
+- **Verified:** `acryl-workspace` 662/662 (8 new), typecheck and build clean.
