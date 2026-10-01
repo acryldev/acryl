@@ -110,7 +110,7 @@ function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: P
     agents: new AgentsState({ list: async () => [], add: async () => [], remove: async () => [], settings: async () => { throw new Error('no settings') }, change: async () => { throw new Error('no settings') } }),
     collapsed,
     width: 280,
-    renderSettings: () => <div data-testid="settings">settings trigger</div>,
+    renderUpstream: () => <div data-testid="upstream">upstream sidebar</div>,
     onToggleCollapse: () => {},
     useSessions: sessionsHook(SESSIONS),
     shell,
@@ -119,31 +119,37 @@ function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: P
 }
 
 describe('ProjectsSidebar', () => {
-  it('renders the tree, with no classic view or search toggle to switch to, and nothing from the upstream chat-list sidebar mounted anywhere - not even hidden', () => {
+  it('renders the tree, with no classic view or search toggle to switch to, and the upstream sidebar only as a host that is never display:none', () => {
     const shell = new WorkspaceShellState(api())
-    const { container } = render(<ProjectsSidebar {...sidebarProps(shell)} />)
+    render(<ProjectsSidebar {...sidebarProps(shell)} />)
     expect(screen.queryByRole('tab')).toBeNull()
     expect(screen.getByText('Workspaces')).toBeTruthy()
     expect(screen.queryByRole('button', { name: /classic view/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /Back to Workspaces/i })).toBeNull()
     expect(screen.queryByText('All chats')).toBeNull()
-    expect(container.querySelector('.dshWorkspaceUpstreamHost')).toBeNull()
-    // The real Settings occupant renders directly in this tree's own foot, not inside any hidden host.
-    expect(screen.getByTestId('settings')).toBeTruthy()
+    const upstream = screen.getByTestId('upstream')
+    // Settings' dialog is a plain sibling of its trigger inside it: a hidden ancestor would hide the dialog too.
+    expect(upstream.closest('[hidden]')).toBeNull()
+    const host = upstream.closest('.dshWorkspaceUpstreamHost')
+    expect(host).toBeTruthy()
+    // aria-hidden (T144 follow-up, owner screenshot): this host's own real controls (its "Collapse
+    // sidebar", its "Add workspace") must not appear beside the tree's own ones in anything that reads the
+    // accessibility tree - acryl-agent-control's ui_snapshot found two indistinguishable "Collapse sidebar"
+    // buttons without this. A click proxied through `Element.click()` (`openSettings`,
+    // `clickAddWorkspaceTrigger`) still works - aria-hidden does not block programmatic clicks.
+    expect(host?.getAttribute('aria-hidden')).toBe('true')
     shell.dispose()
   })
 
-  it('collapsed to the rail renders this package\'s own collapse toggle and the Settings occupant, nothing from upstream', () => {
+  it('renders only the upstream sidebar when collapsed to the rail', () => {
     const shell = new WorkspaceShellState(api())
-    const { container } = render(<ProjectsSidebar {...sidebarProps(shell, true)} />)
-    expect(screen.getByTestId('settings')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Expand sidebar' })).toBeTruthy()
-    expect(container.querySelector('.dshWorkspaceUpstreamHost')).toBeNull()
+    render(<ProjectsSidebar {...sidebarProps(shell, true)} />)
+    expect(screen.getByTestId('upstream')).toBeTruthy()
     expect(screen.queryByText('Workspaces')).toBeNull()
     shell.dispose()
   })
 
-  it('lists worktrees with status dots and session counts', async () => {
+  it('lists worktrees with status dots and session counts, keeping upstream mounted', async () => {
     const shell = new WorkspaceShellState(api())
     render(<ProjectsSidebar {...sidebarProps(shell)} />)
 
@@ -155,6 +161,7 @@ describe('ProjectsSidebar', () => {
       expect(within(repo).getByRole('img', { name: 'Agent running' })).toBeTruthy()
       expect(within(repo).getByRole('img', { name: 'Uncommitted changes' })).toBeTruthy()
     })
+    expect(screen.getByTestId('upstream')).toBeTruthy()
     shell.dispose()
   })
 
@@ -529,11 +536,13 @@ describe('ProjectsSidebar', () => {
     shell.dispose()
   })
 
-  it('renders the real Settings occupant directly in the tree foot - not a proxy button', () => {
+  it('opens Settings, and says so when it cannot', async () => {
     const shell = new WorkspaceShellState(api())
-    render(<ProjectsSidebar {...sidebarProps(shell)} />)
-    expect(screen.queryByRole('button', { name: 'Settings' })).toBeNull()
-    expect(screen.getByTestId('settings')).toBeTruthy()
+    const openSettings = vi.fn((): ProjectAction => ({ ok: false, reason: 'Settings is not available in this window.' }))
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ openSettings }))} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    expect(openSettings).toHaveBeenCalledTimes(1)
+    expect((await screen.findByRole('alert')).textContent).toContain('not available')
     shell.dispose()
   })
 

@@ -78,7 +78,7 @@ describe('scenario: "add my repo at /p/proj as a project" (US2, T042)', () => {
     const addProjectByPath = vi.fn(async (): Promise<ProjectAction> => ({ ok: true }))
     const shell = new WorkspaceShellState(gitApi)
     const props = {
-      collapsed: false, width: 280, renderSettings: () => <div>settings</div>, onToggleCollapse: () => {}, useSessions: sessionsHook, shell,
+      collapsed: false, width: 280, renderUpstream: () => <div>upstream</div>, onToggleCollapse: () => {}, useSessions: sessionsHook, shell,
       projects: fakeProjects({ addProjectByPath }), groups: new WorkspaceGroups(), status: makeStatus().state,
       agents: new AgentsState({ list: async () => [], add: async () => [], remove: async () => [], settings: async () => { throw new Error('none') }, change: async () => { throw new Error('none') } }),
     } as unknown as ProjectsSidebarProps

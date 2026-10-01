@@ -16,13 +16,11 @@ export interface DesktopSidebarOwnerProps {
 
 /** Left-pane surface interface offered by the desktop advanced frame. */
 export interface DesktopSidebarSurfaceOwnerProps extends DesktopSidebarOwnerProps {
-  /** Render the real upstream Settings trigger and dialog (`sidebar.settings`), decoupled from the rest of
-   * upstream's sidebar bundle (T144-followup: there is no reason to mount that bundle's chat list, brand or
-   * search just to reach the one occupant this package actually needs). */
-  renderSettings(): ReactNode
+  /** Render the upstream sidebar (brand, sessions, settings) inside a contribution that wraps it. */
+  renderUpstream(): ReactNode
   /** Toggle the sidebar's collapsed rail (T137-followup: the tree's own header needed this once it
-   * became the default view - the collapse control and brand mark used to come bundled inside the
-   * upstream sidebar's own chrome, which is no longer shown at all). */
+   * became the default view - the collapse control and brand mark used to come bundled inside
+   * `renderUpstream()`'s own chrome, which is no longer shown at all). */
   onToggleCollapse(): void
 }
 
@@ -60,17 +58,10 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface SlotMap {
     /** Replaceable main surface inside the desktop advanced frame. */
     'desktop.main': { kind: 'single'; scope: 'root'; owner: DesktopMainOwnerProps }
-    /** Replaceable left-pane surface; by default it only renders the upstream Settings trigger. */
+    /** Replaceable left-pane surface; by default it only renders the upstream `sidebar`. */
     'desktop.sidebar': { kind: 'single'; scope: 'root'; owner: DesktopSidebarSurfaceOwnerProps }
-    /** `dsh-client-ui-layout`'s own key (mirrored here, type-only: that package's declaration is not
-     * reachable in every program this compiles against, and other of its own files reference this literal
-     * against the full SlotMap union) - this package never renders it (T144-followup: nothing of upstream's
-     * chat-list sidebar bundle is mounted, not even hidden). */
+    /** Upstream sidebar hosted by the desktop advanced frame. */
     'sidebar': { kind: 'single'; scope: 'root'; owner: DesktopSidebarOwnerProps }
-    /** Upstream Settings trigger + dialog (`ui-settings-general`'s `sidebar.settings` occupant),
-     * rendered directly by this package's own tree - not nested inside upstream's chat-list sidebar,
-     * which this package never mounts. */
-    'sidebar.settings': { kind: 'single'; scope: 'root'; owner: { wide: boolean } }
     /** Unchanged upstream conversation surface. */
     'conversation': { kind: 'single'; scope: 'session-maybe'; owner: Record<never, never> }
     /** The right panel, hosted like upstream DSH's `rightbar`: the right sidebar registers here. */

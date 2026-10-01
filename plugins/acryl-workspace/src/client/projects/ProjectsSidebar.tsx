@@ -1,9 +1,8 @@
 /** Left pane: one workspace-first tree (spec 040 T128-130) - no Chats | Projects mode switch. Each repo and
  * each of its branches/worktrees collapses independently; an expanded worktree lists its running agent/
- * terminal tabs and its AcrylDSH Chat sessions, never a file/browser/diff/board/doc tab. Settings is the
- * real upstream `sidebar.settings` occupant, rendered directly in this tree's own foot (T144-followup);
- * upstream's chat-list sidebar bundle is never mounted, not even hidden - there is nothing left to switch
- * to and nothing left over from it in the DOM. */
+ * terminal tabs and its AcrylDSH Chat sessions, never a file/browser/diff/board/doc tab. The upstream
+ * sidebar is mounted only as an invisible host for Settings (see `dshWorkspaceUpstreamHost`); there is no
+ * second, classic list to switch to. */
 
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
@@ -50,11 +49,10 @@ const DOT_LABEL: Record<WorktreeDot, string> = {
  * The advanced shell's left pane: one workspace-first tree (spec 040 T128-130), nesting workspace ->
  * branch/worktree, each independently collapsible. An expanded worktree lists its running agent/terminal
  * tabs and its AcrylDSH Chat sessions - never a file, browser, diff, board or doc tab, so the tree cannot
- * be polluted the way a flat "everything open" list would be. Settings renders as `renderSettings()`
- * (the real `sidebar.settings` occupant) directly in this tree's own foot; nothing from upstream's
- * chat-list sidebar bundle is mounted anywhere, visible or not.
+ * be polluted the way a flat "everything open" list would be. The upstream sidebar (its search, and
+ * anything else it owns) is mounted only to host Settings' trigger and dialog, never shown as a view.
  */
-export function ProjectsSidebar({ collapsed, renderSettings, onToggleCollapse, useSessions, shell, projects, groups, agents, status }: ProjectsSidebarProps) {
+export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, useSessions, shell, projects, groups, agents, status }: ProjectsSidebarProps) {
   const subscribe = useCallback((listener: () => void) => shell.subscribe(listener), [shell])
   const snapshot = useSyncExternalStore(subscribe, () => shell.getSnapshot())
   const sessions = useSessions(state => state)
@@ -260,25 +258,22 @@ export function ProjectsSidebar({ collapsed, renderSettings, onToggleCollapse, u
     else setNotice(result.reason)
   }
 
-  if (collapsed) {
-    return (
-      <div className="dshWorkspaceSideRail" data-acryl-workspace-side="rail">
-        <button
-          type="button"
-          className="dshWorkspaceSideCollapse"
-          aria-label="Expand sidebar"
-          title="Expand sidebar"
-          onClick={onToggleCollapse}
-        >
-          <CollapseSidebarIcon />
-        </button>
-        <div className="dshWorkspaceSideRailFoot">{renderSettings()}</div>
-      </div>
-    )
-  }
+  if (collapsed) return <>{renderUpstream()}</>
 
   return (
     <div className="dshWorkspaceSide" data-acryl-workspace-side="tree">
+      {/* Not a view: the upstream sidebar is mounted only because Settings' trigger, and its dialog, live
+          inside it - no service opens Settings any other way. (Desktop Linux's own folder-picker fallback
+          used to reach into this host for the upstream "Add workspace" trigger too; it now uses the Host's
+          own native-chooser route instead, T143/T144-followup, so this host is Settings-only.) Kept out of
+          sight at zero size; never shown, so there is no "classic" list to maintain.
+          `aria-hidden` (not just zero size) so this package's own `ui_snapshot` reader - which does not
+          know this host is a deliberate duplicate - leaves its whole subtree out of the tree an agent sees:
+          without it, the agent found this host's real "Collapse sidebar" control sitting beside the tree's
+          own one, as two indistinguishable, equally real buttons (owner report with a screenshot, T144
+          follow-up). Real-click paths (the "Settings" button below, `openSettings`, `clickAddWorkspaceTrigger`)
+          use `Element.click()`, which `aria-hidden` does not block. */}
+      <div className="dshWorkspaceUpstreamHost" aria-hidden="true">{renderUpstream()}</div>
       <div className="dshWorkspaceSideProjects">
         <div className="dshWorkspaceSideBrandRow">
           <AcrylMarkIcon size={20} />
@@ -352,7 +347,20 @@ export function ProjectsSidebar({ collapsed, renderSettings, onToggleCollapse, u
             onCreate={(branch) => createWorktree(repo.root, branch)}
           />
         ))}
-        <div className="dshWorkspaceSideFoot">{renderSettings()}</div>
+        <div className="dshWorkspaceSideFoot">
+          <button
+            type="button"
+            className="dshWorkspaceSideFootButton"
+            onClick={() => {
+              // Settings keeps its open state inside its own component (no service to call), so this
+              // activates its real trigger inside the upstream host above - see `openSettings`.
+              const result = projects.openSettings()
+              setNotice(result.ok ? null : result.reason)
+            }}
+          >
+            Settings
+          </button>
+        </div>
       </div>
     </div>
   )

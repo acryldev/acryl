@@ -209,10 +209,10 @@ const WORKSPACE_STYLES = `
 /* macOS: the window's traffic-light buttons sit in the top-left; keep the head row clear of them. */
 .dshDesktopFrame[data-desktop-platform="darwin"] .dshWorkspaceSideProjectsHead:first-child,
 .dshDesktopFrame[data-desktop-platform="darwin"] .dshWorkspaceSideBrandRow:first-child { margin-top: 26px; }
-/* Collapsed rail (T144-followup): this package's own minimal replacement for reusing the upstream sidebar's
-   collapsed chrome, which is no longer mounted in any form. */
-.dshWorkspaceSideRail { display: flex; flex-direction: column; align-items: center; width: 100%; height: 100%; min-height: 0; padding: 8px 0; }
-.dshWorkspaceSideRailFoot { margin-top: auto; }
+/* The upstream sidebar, mounted only to host Settings' trigger and dialog (never shown as a view): zero size,
+   clipped, and deliberately not display:none - the dialog is a plain sibling of its trigger, so hiding
+   the host hides the dialog with it. A fixed-position dialog still draws over the page. */
+.dshWorkspaceUpstreamHost { position: absolute; width: 0; height: 0; overflow: hidden; }
 /* Brand row (T137-followup): the logo + collapse control the tree lost when it became the default view
    instead of the upstream sidebar (which bundled both into its own now-hidden-by-default chrome). */
 .dshWorkspaceSideBrandRow { display: flex; align-items: center; gap: 8px; padding: 8px 8px 4px; }
@@ -269,6 +269,8 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceSessionClose:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); color: var(--dsw-alias-label-primary); }
 .dshWorkspaceWorktreeNew:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); }
 .dshWorkspaceSideFoot { margin-top: 14px; padding: 8px 8px 0; border-top: 1px solid var(--dsw-alias-border-l2); }
+.dshWorkspaceSideFootButton { appearance: none; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: 13px/1.3 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceSideFootButton:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-label-primary); }
 .dshWorkspaceRepoName { margin: 0; padding: 4px 8px; color: var(--dsw-alias-label-secondary); font: 600 11px/1.4 ui-sans-serif, system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 .dshWorkspaceWorktrees { list-style: none; margin: 0; padding: 0; }
 .dshWorkspaceWorktree { appearance: none; display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; text-align: left; font: 13px/1.3 ui-sans-serif, system-ui, sans-serif; }
