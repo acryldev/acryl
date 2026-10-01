@@ -193,8 +193,10 @@
     "@deepseek-ai/dsh-workflow-worker-thread": "0.1.5-alpha.1",
     "@deepseek-ai/dsh-workspace": "0.1.5-alpha.1",
     "acryl-agent-control": "workspace:*",
+    "acryl-agent-devin": "workspace:*",
     "acryl-app-save": "workspace:*",
     "acryl-brand": "workspace:*",
+    "acryl-control": "workspace:*",
     "acryl-extension-context": "workspace:*",
     "acryl-mount-anchors": "workspace:*",
     "acryl-plugin-admin": "workspace:*",
@@ -207,7 +209,7 @@
     "dsh-client-ui-brand-acryl": "workspace:*"
   },
   "scripts": {
-    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-loopback-http run build && pnpm --filter acryl-diagnostics run build && pnpm --filter @webboxes/blends-core run build && pnpm --filter @webboxes/app-persistence run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter dsh-client-ui-brand-acryl run build && pnpm --filter @acryl/ui run build && pnpm --filter acryl-shortcuts run build && pnpm --filter acryl-mount-anchors run build && pnpm --filter acryl-workspace run build && pnpm --filter acryl-plugin-admin run build && pnpm --filter acryl-support run build && pnpm --filter acryl-agent-control run build && pnpm --filter cordis-plugin-market run build",
+    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-loopback-http run build && pnpm --filter acryl-diagnostics run build && pnpm --filter @webboxes/blends-core run build && pnpm --filter @webboxes/app-persistence run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter acryl-agent-devin run build && pnpm --filter dsh-client-ui-brand-acryl run build && pnpm --filter @acryl/ui run build && pnpm --filter acryl-shortcuts run build && pnpm --filter acryl-mount-anchors run build && pnpm --filter acryl-workspace run build && pnpm --filter acryl-plugin-admin run build && pnpm --filter acryl-support run build && pnpm --filter acryl-agent-control run build && pnpm --filter cordis-plugin-market run build",
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
@@ -217,7 +219,6 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.2",
     "@types/node": "^22.20.0",
-    "acryl-control": "workspace:*",
     "acryl-harness-runtime": "workspace:*",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",

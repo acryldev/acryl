@@ -137,3 +137,26 @@ export interface DesktopProfileRollbackResponse extends DesktopRestartAcceptance
 export interface DesktopSettingsErrorResponse {
   readonly error: string
 }
+
+/** Devin ACP agent provider settings (type-only; UI wiring is a follow-up). */
+export interface DevinAcpSettings {
+  /** Whether the Devin ACP provider is enabled. Default: false. */
+  readonly enabled: boolean
+  /** Path to the devin binary. null → auto-resolve via PATH. */
+  readonly binaryPath: string | null
+  /** Authentication mode. 'devin-auth' uses stored credentials from `devin auth login`. */
+  readonly authMode: 'devin-auth' | 'windsurf-key' | 'interactive'
+  /** Default model override. null → Devin default (Adaptive). */
+  readonly model: string | null
+  /** Permission mode passthrough for the Devin CLI. */
+  readonly permissionMode: 'normal' | 'dangerous' | 'bypass'
+}
+
+/** Default Devin ACP settings (disabled, auto-resolve binary, devin-auth). */
+export const DEFAULT_DEVIN_ACP_SETTINGS: Readonly<DevinAcpSettings> = Object.freeze({
+  enabled: false,
+  binaryPath: null,
+  authMode: 'devin-auth',
+  model: null,
+  permissionMode: 'normal',
+})

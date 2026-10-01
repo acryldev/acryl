@@ -30,10 +30,10 @@ const SURFACES: readonly AcrylSurface[] = ['tui', 'web', 'desktop']
 const expectedComposition: Record<AcrylSurface, PatchShape> = {
   tui: {
     idRows: ['system-prompt'],
-    insertedIds: ['agent-presets', 'session-stats', 'authorization'],
+    insertedIds: ['agent-presets', 'session-stats', 'authorization', 'acryl-control', 'acryl-agent-devin'],
   },
-  web: { idRows: [], insertedIds: ['authorization', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control'] },
-  desktop: { idRows: [], insertedIds: ['authorization', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-agent-control'] },
+  web: { idRows: [], insertedIds: ['authorization', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'acryl-control', 'acryl-agent-devin'] },
+  desktop: { idRows: [], insertedIds: ['authorization', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-agent-control', 'acryl-control', 'acryl-agent-devin'] },
 }
 
 function shapeOf(patches: readonly unknown[]): PatchShape {
@@ -127,11 +127,11 @@ describe('createAcrylCodingCapabilityPatches', () => {
 
   it('unions multiple requested surfaces without duplicating a row', () => {
     const both = shapeOf(createAcrylCodingCapabilityPatches(new Set(['web', 'desktop'])))
-    expect(both.insertedIds).toEqual(['authorization', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control'])
+    expect(both.insertedIds).toEqual(['authorization', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'acryl-control', 'acryl-agent-devin'])
 
     const all = shapeOf(createAcrylCodingCapabilityPatches(new Set(SURFACES)))
     expect(all.idRows).toEqual(['system-prompt'])
-    expect(all.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control'])
+    expect(all.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'acryl-control', 'acryl-agent-devin'])
   })
 
   it('composes nothing for a surface set no capability declares', () => {
@@ -146,19 +146,19 @@ describe('createAcrylCodingCapabilityPatches', () => {
     // the same row id a second time and throw `duplicate loader entry id` at
     // boot - the existingRowIds filter is what this test guards.
     const withoutExisting = shapeOf(createAcrylCodingCapabilityPatches(new Set(['tui'])))
-    expect(withoutExisting.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization'])
+    expect(withoutExisting.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization', 'acryl-control', 'acryl-agent-devin'])
 
     const withExisting = shapeOf(
       createAcrylCodingCapabilityPatches(new Set(['tui']), new Set(['agent-presets'])),
     )
-    expect(withExisting.insertedIds).toEqual(['session-stats', 'authorization'])
+    expect(withExisting.insertedIds).toEqual(['session-stats', 'authorization', 'acryl-control', 'acryl-agent-devin'])
   })
 
   it('drops every insert of a fully-provided capability, not just its first row', () => {
     const allProvided = shapeOf(
       createAcrylCodingCapabilityPatches(
         new Set(['tui']),
-        new Set(['agent-presets', 'session-stats', 'authorization']),
+        new Set(['agent-presets', 'session-stats', 'authorization', 'acryl-control', 'acryl-agent-devin']),
       ),
     )
     expect(allProvided).toEqual({ idRows: ['system-prompt'], insertedIds: [] })
@@ -166,7 +166,7 @@ describe('createAcrylCodingCapabilityPatches', () => {
 
   it('still inserts a row existingRowIds does not name', () => {
     const patches = shapeOf(createAcrylCodingCapabilityPatches(new Set(['tui']), new Set(['some-other-row'])))
-    expect(patches.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization'])
+    expect(patches.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization', 'acryl-control', 'acryl-agent-devin'])
   })
 
   it('returns fresh patches a caller may mutate without affecting the next surface', () => {

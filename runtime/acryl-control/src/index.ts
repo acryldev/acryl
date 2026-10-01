@@ -1,11 +1,17 @@
 export { Context, Service } from '@deepseek-ai/cordis'
 export * from './agent/agent-control.ts'
+// The `acryl-control` Loader row resolves the package entry and the Loader
+// unwraps `default`: `export *` never re-exports it, so name it explicitly.
+export { default } from './agent/agent-control.ts'
 export * from './agent/providers/capabilities.ts'
 export * from './agent/providers/factory.ts'
 export * from './agent/providers/dsh-native.ts'
 export * from './agent/providers/codex.ts'
 export * from './agent/providers/claude.ts'
 export * from './agent/providers/acp.ts'
+export * from './agent/transports/acp-json-rpc.ts'
+export * from './agent/transports/devin-acp-config.ts'
+export * from './agent/transports/devin-acp.ts'
 export * from './architecture/projection.ts'
 export * from './architecture/provider.ts'
 export * from './contracts/operations.ts'

@@ -175,6 +175,7 @@
     "acryl-app-save": "workspace:*",
     "acryl-brand": "workspace:*",
     "acryl-control": "workspace:*",
+    "acryl-agent-devin": "workspace:*",
     "acryl-extension-context": "workspace:*",
     "acryl-mount-anchors": "workspace:*",
     "acryl-plugin-admin": "workspace:*",

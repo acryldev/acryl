@@ -33,6 +33,8 @@ export type AcrylCodingCapabilityId =
   | 'support'
   | 'agent-control-ui'
   | 'advanced-shell'
+  | 'agent-control'
+  | 'devin-acp'
 
 /**
  * The shell a surface renders the coding UI in. `advanced` replaces the stock DSH frame with the ACRYL
@@ -204,6 +206,27 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
       { id: 'ui-layout', disabled: true },
       { id: 'ui-sidebar', disabled: false },
       { id: 'ui-conversation', disabled: false },
+    ],
+  },
+  // Provider-neutral agent-control plane (devin-acp-integration): every
+  // surface composes the service row so ACP-style providers have somewhere
+  // to register. Devin itself is an opt-in provider plugin behind the shared
+  // `acp` provider kind - disabled by default so non-Devin surfaces never
+  // pay for it or probe a `devin` binary at mount.
+  {
+    id: 'agent-control',
+    surfaces: ['tui', 'web', 'desktop'],
+    requiresPackages: ['acryl-control'],
+    loaderPatches: [
+      { insert: [{ id: 'acryl-control', name: 'acryl-control' }] },
+    ],
+  },
+  {
+    id: 'devin-acp',
+    surfaces: ['tui', 'web', 'desktop'],
+    requiresPackages: ['acryl-agent-devin'],
+    loaderPatches: [
+      { insert: [{ id: 'acryl-agent-devin', name: 'acryl-agent-devin', disabled: true }] },
     ],
   },
 ]

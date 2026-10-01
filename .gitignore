@@ -24,6 +24,7 @@ apps/acryl-desktop/lib/
 
 plugins/cordis-plugin-market/lib/
 plugins/dsh-client-ui-brand-acryl/lib/
+plugins/acryl-agent-devin/lib/
 plugins/acryl-ui/lib/
 plugins/acryl-ui/registry-seed/
 plugins/acryl-mount-anchors/lib/

@@ -1,3 +1,210 @@
+## 2026-09-28 - Devin ACP ship-fix pass: nix packaging, manifest deps, spec-sync
+
+Commits: `1fe6bf9a7bd174dad8b652a9b1f6e9832c51abf6` (nix + manifest),
+`18728d83ba5ce34b54c444f3141fe231ac743115` (test expectations), plus
+`b67bec5add47e0d8bf9abc7bfe5fafb34f1c0587` (earlier dev-log rebase repair)
+
+Holistic pre-PR review found and fixed the last cross-surface gaps:
+
+- **flake.nix** — the `acryl` (TUI) and `acryl-desktop` nix derivations now
+  build and `installWorkspacePackage` `plugins/acryl-agent-devin`, and copy
+  `cordis.patch.yml` alongside it (`dsh.bundle.patch` is read at composition
+  time, not bundled into `lib/`). Without this, the packaged artifact's
+  workspace symlink dangled and `materializeProfilePackage` threw during
+  every profile composition.
+- **Manifest** — `acryl-agent-devin`'s runtime imports
+  (`@deepseek-ai/schemastery`, `acryl-control`) moved to `peerDependencies`
+  (peer+dev pattern per `cordis-plugin-market`); `files` no longer lists
+  nonexistent `README.md`/`LICENSE`.
+- **Ledger sync** — PRD/mini-design updated to the shipped row name
+  (`acryl-agent-devin`) and landed per-worker `cwd` semantics; test
+  expectations updated for the new root-script filter entry and the `devin`
+  defaults now present in the desktop startup-settings projection.
+- **DEVELOPMENT-LOG repair** — earlier commit removed leftover
+  `<<<<<<<`/`=======`/`>>>>>>>` conflict markers, a jammed header, and a
+  duplicated v0.1.36 entry left over from the integration-branch rebase.
+
+## 2026-09-27 - Devin ACP Loader verification: real-composition lifecycle suite + review-fold fixes
+
+Commits: `5ed910c833ab3567aab4cd459657313a0f6f65d3`, `61d5032c44589ad98f942d3c484e3f27f5c1b81a`, `d40dea4348ba34a9f225ef6bc5a5fe2221098905`, `310032e9579c21d52f843291eda1dc13620e0551`
+
+Story 14 of `devin-acp-integration` implements the design-doc verification
+matrix for the ACP provider end to end, plus three review findings folded in
+from the story-13 pass.
+
+- **Review fixes** — `handleResume` now honors an attach-time
+  `providerSessionRef`: resume on a binding with no live worker spawns a fresh
+  process and runs `session/load` for the carried ref, falling back to
+  `session/new` when the agent no longer knows it. `dispatch` permits `stop`
+  on a binding whose `runtimeId` is still null so failed-start cleanup reaches
+  the transport and kills the spawned child; other commands still require a
+  live runtime. Provider-bound `submitPrompt` calls serialize behind a
+  per-session `sendTail` so overlapping `session/prompt` turns cannot
+  interleave the transport's single updates buffer. `agentProvider` rejects an
+  empty `workerId` at construction, and `AcrylSessionAgentProvider` is
+  exported from `acryl-harness-runtime`.
+- **Real-Loader suite** — `plugins/acryl-agent-devin/tests/devin-loader.spec.ts`
+  composes the `acryl-control` and `acryl-agent-devin` rows through
+  `ctx.loader.create`/`remove`/`update` (module specifiers resolved via
+  `loader.internal.import`, the llm-retry precedent): mount registers `acp`,
+  PENDING until the control row mounts, invalid config fails the fiber before
+  apply, unload removes the provider and kills the spawned stub child (PID
+  liveness asserted — no orphans), remount and config-update restart
+  re-register cleanly, duplicate provider id surfaces as an entry failure,
+  unsupported capability attach is `capability-rejected`, and two workers get
+  distinct runtimeIds.
+- **E2E round-trip** — `devin-acp-service-e2e.spec.ts` drives
+  `AcrAgentControlService` against the stub ACP server through a wrapper
+  binary: attach → start → send (a mid-turn `session/request_permission`
+  answered by the normal-mode policy) → cancel → stop, asserting receipt
+  content and the stub-observed wire method sequence.
+- **Disposal quiescence** — transport spec gains double-dispose and
+  dispose-during-in-flight-start/send cases: pending calls settle, children
+  die, no unhandled rejections.
+- **Gated real smoke** — `devin-acp-smoke.spec.ts` runs the real `devin acp`
+  binary through the full protocol when `DEVIN_ACP_SMOKE=1` (needs
+  `devin auth login` or `WINDSURF_API_KEY`); skipped by default.
+
+Verified: `pnpm --filter acryl-control run test` 113 passed + 1 skipped,
+`pnpm --filter acryl-agent-devin run test` 15 passed (9 new Loader cases),
+session-bridge suite green in acryl-harness-runtime, `pnpm run typecheck`
+clean, `verify-layout` consistent. Pre-existing environment flakes
+(extension-context missing package, system-prompt-shape drift, cold-start
+boot timeouts) unchanged.
+
+## 2026-09-26 - Devin ACP session bridge: provider-neutral routing through acrAgentControl
+
+Commits: `3fadf5ee3407e413d0f5736a214f382b2748df7c`, `fb2832a5e13319c15c8c38ff0e896e1d088cf2be`
+
+Story 13 of `devin-acp-integration` makes `AcrylSessionBridge` provider-neutral:
+sessions bound to a non-`dsh-native` provider route every lifecycle operation
+through `AcrAgentControlService.attach`/`dispatch` instead of the DSH-native
+`ctx.agents`/`AgentHandle` path.
+
+- **Routing condition** — `AcrylSessionBridgeOptions.agentProvider` selects the
+  binding. A `providerId !== 'dsh-native'` activates the provider path; the
+  service is resolved with `ctx.get('acrAgentControl')` (optional, PENDING-safe)
+  and a selection without a mounted service throws
+  `AcrAgentControlError('service-unavailable')` rather than silently falling
+  back. No selection, or `providerId: 'dsh-native'`, keeps the native path
+  byte-for-byte.
+- **Identity model** — the bridge session id callers receive IS the `workerId`
+  (`acryl-session-<uuid>` by default, overridable via `agentProvider.workerId`).
+  `open` attaches `{workerId, providerId, workspace, capabilities, fidelity}`
+  then dispatches `start` — or `resume` when `open(resumeSessionId)` passes the
+  id through as `providerSessionRef` (the vendor session id is the resume
+  handle; `agent.resume` joins the advertised capabilities). Each snapshot
+  carries `provider: {providerId, workerId, runtimeId, providerSessionRef,
+  status}` so the caller can correlate logical, runtime, and vendor identities.
+- **Lifecycle dispatch** — `submitPrompt` → `{kind:'send'}` (each send is one
+  synthesized assistant-stream attempt), `cancel` → `{kind:'cancel'}` (terminal
+  `end` frame, `finishReason: 'stop'`), `dispose` → `{kind:'stop'}` per live
+  provider session — best-effort, disposal outlives the failure. `subscribe`
+  listeners get notified after provider turns via the same snapshot path.
+- **Honest projection** — `send` results map `stopReason` → `FinishReason` and
+  project `updates[]` (`agent_message_chunk`, `tool_call`, `tool_call_update`,
+  `plan`) into the bridge's own `chunk`/`end` frames and presentation
+  transcript. `events()` returns an empty durable log for provider sessions:
+  ACP structured updates are semantic events, never promoted into a DSH
+  `SessionEvent` transcript they did not come from. `selectModel` throws
+  unsupported for provider sessions — model selection stays DSH-only.
+- **Contract** — `AcrylSessionProviderBinding` +
+  `parseAcrylSessionSnapshot` validation for the optional `provider` field:
+  all five keys required, status constrained to `AgentStatus`.
+- **Failure propagation** — `AcrAgentControlError` passes through unchanged; a
+  failed start/resume best-effort dispatches `stop` so the attach binding is
+  not left looking live, then rethrows the start failure.
+
+Verified: `pnpm --filter acryl-control run test` 104/104 across 9 files
+(incl. 3 contract + 14 agent-control), session-bridge suite 8 provider tests
+green alongside the native-path specs, `pnpm run typecheck` clean,
+`verify-layout` consistent. Pre-existing environment flakes (cold-start
+timeouts, extension-context, system-prompt-shape drift) unchanged on this
+base.
+
+## 2026-09-26 - Devin ACP permission answering: inbound request responses + permissionMode policy
+
+Commits: `0ec13e2a20eb3dcfa6ed682302a33c6b97285e42`, `672d413870e18edf75d7ed7bb6d8f734f4f1af78`
+
+Story 12 of `devin-acp-integration` makes `session/request_permission` answerable end
+to end: the agent's inbound JSON-RPC requests now get real wire responses, and the
+transport answers permission prompts per `permissionMode` without a human.
+
+- **JSON-RPC inbound requests** — `JsonRpcClient` replaced the `request:<method>`
+  emitter (whose `emit` boolean could never carry a handler's return value) with a
+  `Map<method, handler>` — one answerer per method. A settled handler value is
+  written back as `{jsonrpc:'2.0', id, result}` (`undefined` → `null`), a throw or
+  rejection becomes `-32603`, and an unregistered method keeps the `-32601` path.
+  Resolution stays asynchronous so it never blocks the stdout reader; in-flight
+  tasks are tracked and a settlement after `dispose()` writes nothing. Request and
+  response ids widen to `number|string`, echoed back verbatim.
+- **Permission policy** — every spawned worker registers a
+  `session/request_permission` handler that resolves in order:
+  `config.onPermissionRequest` (typed callback seam — the future worker-scoped
+  approval adapter plugs in here; the DSH `ApprovalService` needs a DSH `Agent`
+  plus an open turn an `AgentSnapshot` cannot supply, per mini-design §5), then
+  `permissionMode` (`dangerous`/`bypass` prefer `allow_always` then `allow_once`;
+  `normal` fails closed on `reject`-kind options), then the cancelled outcome when
+  no option matches. The handler never errors and never leaves the agent pending:
+  a thrown, timed-out (`permissionTimeoutMs`, default 60 s), or malformed callback
+  answer collapses to cancelled — still a real `RequestPermissionResponse`.
+- **Wire shapes verified** against the vendored `@agentclientprotocol/sdk@1.4.0`
+  schema types and `deepseek-harness` `subagent-acp` usage: params
+  `{sessionId, toolCall: ToolCallUpdate, options[]}`, response
+  `{outcome: {outcome:'selected', optionId} | {outcome:'cancelled'}}`, option kinds
+  `allow_once`/`allow_always`/`reject_once`/`reject_always`. `devin acp --help`
+  confirms there is no permission flag — policy is enforced client-side.
+- **Stub + tests** — `stub-acp-server.mjs` gains `STUB_ACP_PERMISSION_PROMPT`/
+  `STUB_ACP_PERMISSION_OPTIONS` hooks that emit the request mid-turn and hold the
+  `session/prompt` open until the client answers, echoing the answer back in an
+  update chunk. acp-json-rpc covers result/throw/reject/-32601/string-id/dispose;
+  devin-acp-transport covers all modes, no-match cancellation, callback wins,
+  throw/hang/malformed fallback — all inside an in-flight prompt.
+
+Verified: `pnpm --filter acryl-control run test` 96/96 (21 JSON-RPC + 28 transport),
+`pnpm --filter acryl-agent-devin run test` 6/6 unchanged, `pnpm run typecheck` clean.
+The `acryl-agent-devin` plugin needed no change: `permissionMode` already flows
+through `Config` → `normalizeDevinAcpConfig`; `onPermissionRequest` stays unset —
+the seam is the deliverable, and `approval.respond` remains undeclared.
+
+## 2026-09-25 - Devin ACP provider composition: acryl-agent-devin package, capability rows, desktop settings
+
+Commits: `d3be1435956d78d2dc4fe03a5ca81c5d353d857b`, `c674c8f53095c3c9b678dc8c9bbd2faaca227987`, `6a9ed4a327cd9a6a5a08c34834267c173a480b41`, `6b9a98d27b3ac1a733a092db9d71e4520d10599d`
+
+Story 11 of `devin-acp-integration` makes the Devin provider installable: `devin acp`
+now composes through the capability table into every surface's profile and is flipped
+on from Desktop settings — no parallel lifecycle, DI, or provider framework anywhere.
+
+- **`plugins/acryl-agent-devin`** — installable Cordis provider package (Loader row id
+  equals the package name). `apply` builds `devinAcpTransport` lazily (no `devin` probe at
+  mount), mounts `acpProvider(transport)` as an owned child fiber, and registers
+  `transport.dispose()` on its own fiber. Hard `inject: ['acrAgentControl']` keeps it
+  PENDING until the service exists; disposal removes the provider registration.
+- **Dispatch fix** — `AcrAgentControlService.dispatch` now allows `start`/`resume` on
+  bindings with `runtimeId: null`, folds the provider's returned `runtimeId`/`sessionId`/
+  `status` into a fresh frozen `AgentSnapshot`, clears the runtime on `stop`, and still
+  requires a runtime id in the receipt.
+- **Capability rows** — `coding-capabilities.ts` gains `agent-control` (inserts the
+  enabled `acryl-control` row) and `devin-acp` (inserts `acryl-agent-devin` disabled) on
+  all three surfaces. Both packages are materialized into profile `node_modules` so the
+  Loader resolves them. Caught late: `export *` never re-exports `default`, so the
+  `acryl-control` row resolved to a bare module namespace and the Loader rejected it as
+  an invalid plugin — fixed by naming the `default` export in `acryl-control/src/index.ts`.
+- **Desktop settings** — `dsh-desktop.devin-acp` validates `enabled`, `binaryPath`,
+  `authMode`, `model`, `permissionMode` (defaults `DEFAULT_DEVIN_ACP_SETTINGS`); after
+  settings resolution an id-targeted patch sets `disabled: !devin.enabled` plus the
+  user config. `cwd` stays unset — the plugin defaults to `process.cwd()`. Approval
+  handling is Story 12; no `approval.respond` capability is declared.
+
+Verified: `pnpm run typecheck` (7 packages), `verify-layout`, and the affected suites —
+acryl-control 58, acryl-agent-devin 6, harness-runtime 96, desktop profile 34. Remaining
+harness-runtime failures (extension-context `/reload` staging, `harness:source` prompt
+baseline) reproduce identically on the untouched sibling worktree — environmental, not
+from this change. Note: `pnpm install` cannot complete linking in this sandbox (event
+loop idles after resolution); `node_modules` was reconstructed by cloning the sibling
+worktree's install plus hand-added links, and `pnpm-lock.yaml` importer entries were
+edited by hand to match.
+
 ## 2026-09-27 - 036 Merged to main, published, registry live, acryldev/blends archived
 
 Commits: `d4b1b222833257840038fc139b9dc5cf177fc346` (merge of PR acryldev/acryl#55 into main), `99bd765` and `ab2c296` (CI/Nix fixes found by reproducing the PR's CI failures in a clean clone before merging), `ada904ae45d1e1e7526a46ef8f9fa9cedaaf4138` (rename to `@webboxes/*`).
@@ -934,6 +1141,82 @@ nix build .#acryl-desktop
 nix run .#acryl-desktop -- --help
 nix run .#acryl-desktop -- --version
 ```
+
+## 2026-08-31 - Devin ACP transport for acryl-control
+
+**Commit:** [`8ee8d8ed7ca841cf28a7a49c6ae44a9d7277d906`](https://github.com/levonk/acryl/commit/8ee8d8ed7ca841cf28a7a49c6ae44a9d7277d906)
+
+Wired `devin acp` (JSON-RPC over stdio, Agent Client Protocol v1) as the first
+concrete `AgentTransport` behind the existing `acpProvider` in `acryl-control`.
+This fills the Phase-8 transport seam declared at
+`runtime/acryl-control/src/agent/agent-control.ts:77-80` that previously threw
+`transport-unavailable` for all providers. ACRYL Desktop users can now drive
+their Devin subscription from the Development Canvas using their existing
+`devin auth login` credentials or `WINDSURF_API_KEY`.
+
+### What was added
+
+- `runtime/acryl-control/src/agent/transports/acp-json-rpc.ts` — reusable JSON-RPC 2.0
+  client over child process stdio with request/response correlation,
+  notification dispatch, inbound request handling, and disposal
+- `runtime/acryl-control/src/agent/transports/devin-acp-config.ts` — config type,
+  binary resolution via `which devin` fallback, env building with
+  `WINDSURF_API_KEY` passthrough
+- `runtime/acryl-control/src/agent/transports/devin-acp.ts` — transport factory
+  implementing `AgentTransport.execute` with ACP v1 method mapping:
+  `start` → `initialize` + `session/new`, `send` → `session/prompt`,
+  `cancel` → `session/cancel`, `stop` → SIGTERM → SIGKILL after 2s,
+  `resume` → `session/load` (if supported) or `session/new`
+- `runtime/acryl-control/tests/acp-json-rpc.spec.ts` — 8 unit tests for the JSON-RPC
+  client (call, notify, notification dispatch, concurrent correlation, error
+  rejection, dispose, process exit, malformed input)
+- `runtime/acryl-control/tests/devin-acp-transport.spec.ts` — 8 lifecycle tests with
+  a stub ACP server (start handshake, prompt round-trip, cancel, stop kills
+  process, dispose kills all processes, reactivation spawns new PID, error
+  cases)
+- `runtime/acryl-control/tests/stub-acp-server.mjs` — stub ACP v1 server for tests
+- `apps/acryl-desktop/src/desktop-settings-contract.ts` — `DevinAcpSettings` type
+  (enabled, binaryPath, authMode, model, permissionMode) as a type-only
+  addition; UI wiring is a follow-up
+
+### Key design decisions
+
+- **Transport, not provider**: The `acpProvider` and `'acp'` provider kind
+  already existed. The implementation fills the `AgentTransport` seam rather
+  than creating a new provider framework or provider kind.
+- **ACP v1 protocol**: Implements the Agent Client Protocol v1 flow
+  (initialize → session/new → session/prompt with session/update
+  notifications → session/cancel). Validated against the ACP spec at
+  agentclientprotocol.com.
+- **Lifecycle ownership**: The subprocess, stdio streams, and JSON-RPC
+  correlation map are owned by the transport's closure-scoped state. The
+  `dispose()` method kills all spawned processes (SIGTERM → SIGKILL after 2s),
+  drains stdio, and clears the map. No orphan processes remain after
+  disposal.
+- **Auth modes**: Supports `devin-auth` (default, uses stored credentials
+  from `devin auth login`), `windsurf-key` (passes `WINDSURF_API_KEY` env),
+  and `interactive` (throws with a clear message — follow-up for UI-driven
+  ACP `authenticate` flow).
+- **No new framework**: Uses Cordis services, injection, effects, and Loader
+  composition only. No parallel lifecycle, DI, event, or provider framework.
+  No `deepseek-harness/` edits.
+
+### Verification
+
+- `pnpm run typecheck` passes across all 5 packages
+- `pnpm run build` passes
+- All 38 `acryl-control` tests pass (8 new JSON-RPC + 8 new transport + 22
+  existing)
+- 6 pre-existing `acryl-desktop` test failures confirmed unrelated by
+  running on the base commit
+
+Primary locations:
+
+- Devin ACP transport: `runtime/acryl-control/src/agent/transports/devin-acp.ts`
+- JSON-RPC client: `runtime/acryl-control/src/agent/transports/acp-json-rpc.ts`
+- Transport config: `runtime/acryl-control/src/agent/transports/devin-acp-config.ts`
+- Settings type: `apps/acryl-desktop/src/desktop-settings-contract.ts`
+- PRD and tasks: `internal-docs/feature/todo/devin-acp-integration/`
 
 ---
 
@@ -4904,7 +5187,9 @@ Rebased `feature/nix-flake-support` onto the latest `upstream/main`
   prebuilt asset for this platform).
 - `validate-action-pins.sh` — all actions pinned to commit SHAs.
 - `validate-pre-push.sh` — magic-nix-cache guard, timeout, runner
-  labels, action pins, and branch-not-stale checks all pass.## 2026-09-13 - fix: Desktop's Market install was blocked by pnpm-workspace.yaml, not just a missing flag (spec 034 T006)
+  labels, action pins, and branch-not-stale checks all pass.
+
+## 2026-09-13 - fix: Desktop's Market install was blocked by pnpm-workspace.yaml, not just a missing flag (spec 034 T006)
 
 Commits: `71c7df7`, `e321be1`
 
@@ -4973,50 +5258,6 @@ and live-activate a Market plugin without a process restart. What remains for
 spec 034 to close: T007 (retire `acryl-desktop`'s now-dead private
 plugin-lifecycle duplication), T008 (the cross-surface duplicate-loader-entry
 parity gap), and the real end-to-end GUI retest on Desktop.
-
-## 2026-09-11 - Nix flake: bump prebuilt to v0.1.36, add hash automation, newest runner
-
-**Commits:** [`cfa0c03a55adb34e3db4251cdd35ef50073d78a3`](https://github.com/acryldev/acryl/commit/cfa0c03a55adb34e3db4251cdd35ef50073d78a3) (implementation), [`d2e7ef2d0f6b6f8246be48a621bb59407bc31ddd`](https://github.com/acryldev/acryl/commit/d2e7ef2d0f6b6f8246be48a621bb59407bc31ddd) (docs)
-
-Rebased `feature/nix-flake-support` onto the latest `upstream/main`
-(`0822873`) and applied the remaining nixify skill compliance fixes.
-
-### Changes
-
-- Bumped the prebuilt CLI version from v0.1.19 to v0.1.36 (latest
-  release). Refreshed all three per-platform SRI hashes by prefetching
-  the new release assets.
-- Removed `x86_64-darwin` from `prebuiltAssets` because v0.1.36 does not
-  ship a darwin-x64 CLI tarball. Made `#prebuilt` conditional via
-  `optionalAttrs` so it is only exposed on platforms with a release
-  asset (`x86_64-linux`, `aarch64-linux`, `aarch64-darwin`). On
-  `x86_64-darwin`, `nix run .#prebuilt` correctly errors "package not
-  available" instead of failing with a missing attribute error.
-- Added `.github/workflows/nix-release.yml` — daily hash automation
-  workflow (scheduled lag-check template, required by nixify Step 16
-  for prebuilt tarball flakes). Detects when `flake.nix` lags behind
-  the latest GitHub release, prefetches new SRI hashes, and opens a
-  PR. Uses `GITHUB_TOKEN` (releases are created with `GITHUB_TOKEN`
-  via `softprops/action-gh-release`, so `release: published` would
-  never fire).
-- Updated the `aarch64-darwin` CI runner from `macos-14` to `macos-26`
-  (nixify Step 16: always use the newest runner).
-- Updated all three READMEs to reference v0.1.36 in the Nix tag-pinning
-  example and noted the `#prebuilt` platform scope. Re-recorded the
-  bilingual-docs blob hashes in `README.i18n.yaml`.
-- Re-pointed the two earlier Nix development-log entries at their
-  rebased commit hashes.
-
-### Validation
-
-- `nix flake check --no-build` passes on `x86_64-darwin`.
-- `nix build .#default` succeeds (from-source TUI build).
-- `nix run .#default -- --help` shows the correct help output.
-- `nix build .#prebuilt` correctly errors on `x86_64-darwin` (no
-  prebuilt asset for this platform).
-- `validate-action-pins.sh` — all actions pinned to commit SHAs.
-- `validate-pre-push.sh` — magic-nix-cache guard, timeout, runner
-  labels, action pins, and branch-not-stale checks all pass.
 
 ## 2026-09-14 - fix(desktop): report restartRequired for a live plugin disable/enable
 

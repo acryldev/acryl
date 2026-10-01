@@ -77,6 +77,7 @@ jobs:
           corepack pnpm --filter @webboxes/blends-core run build
           corepack pnpm --filter @webboxes/app-persistence run build
           corepack pnpm --filter acryl-harness-runtime run build
+          corepack pnpm --filter acryl-agent-devin run build
           corepack pnpm --filter dsh-community-market run build
           corepack pnpm --filter cordis-plugin-market run build
           corepack pnpm --filter dsh-client-ui-brand-acryl run build

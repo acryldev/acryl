@@ -183,6 +183,7 @@
               # renamed from acryl-tui upstream).
               pnpm --filter acryl-control run build
               pnpm --filter acryl-harness-runtime run build
+              pnpm --filter acryl-agent-devin run build
               pnpm --filter dsh-community-market run build
               pnpm --filter acryl-cli run build
 
@@ -208,7 +209,10 @@
               # workspace packages that point to source directories).
               ${installWorkspacePackage "runtime/acryl-control" "acryl-control" "$out/lib/acryl/node_modules" []}
               ${installWorkspacePackage "runtime/acryl-harness-runtime" "acryl-harness-runtime" "$out/lib/acryl/node_modules" []}
+              ${installWorkspacePackage "plugins/acryl-agent-devin" "acryl-agent-devin" "$out/lib/acryl/node_modules" []}
               ${installWorkspacePackage "plugins/dsh-community-market" "dsh-community-market" "$out/lib/acryl/node_modules" ["docs"]}
+              # dsh.bundle.patch is read at composition time, not bundled into lib/
+              cp plugins/acryl-agent-devin/cordis.patch.yml $out/lib/acryl/node_modules/acryl-agent-devin/
 
               # Wrap the TUI entry point
               makeWrapper ${pkgs.nodejs_22}/bin/node $out/bin/acryl \
@@ -242,6 +246,7 @@
               # Order matters: each package imports types from its deps.
               pnpm --filter acryl-control run build
               pnpm --filter acryl-harness-runtime run build
+              pnpm --filter acryl-agent-devin run build
               pnpm --filter dsh-community-market run build
 
               # Build the desktop package. Skip the generate-* scripts
@@ -273,8 +278,10 @@
               # Replace workspace packages with built versions
               ${installWorkspacePackage "runtime/acryl-control" "acryl-control" "$out/lib/acryl-desktop/node_modules" []}
               ${installWorkspacePackage "runtime/acryl-harness-runtime" "acryl-harness-runtime" "$out/lib/acryl-desktop/node_modules" []}
+              ${installWorkspacePackage "plugins/acryl-agent-devin" "acryl-agent-devin" "$out/lib/acryl-desktop/node_modules" []}
               ${installWorkspacePackage "plugins/dsh-community-market" "dsh-community-market" "$out/lib/acryl-desktop/node_modules" ["docs"]}
               ${installWorkspacePackage "apps/acryl-desktop" "acryl-desktop" "$out/lib/acryl-desktop/node_modules" []}
+              cp plugins/acryl-agent-devin/cordis.patch.yml $out/lib/acryl-desktop/node_modules/acryl-agent-devin/
 
               # Create a shim for the 'electron' npm package that exports
               # the nixpkgs electron path. The desktop launcher does
