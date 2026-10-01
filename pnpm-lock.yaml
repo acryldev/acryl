@@ -3357,6 +3357,9 @@ importers:
       acryl-app-save:
         specifier: workspace:*
         version: link:../../plugins/acryl-app-save
+      acryl-app-shell:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-app-shell
       acryl-brand:
         specifier: workspace:*
         version: link:../../plugins/acryl-brand

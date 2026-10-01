@@ -158,9 +158,17 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     // it. Its client half only takes over the frame when the shell mode is `advanced`.
     id: 'workspace',
     surfaces: ['desktop', 'web'],
-    requiresPackages: ['acryl-workspace'],
+    // `acryl-workspace`'s client bundle does `require('acryl-app-shell/client')`; the client-modules Host
+    // only resolves a `require()` target into a real browser module when that package is itself a scanned,
+    // active Loader entry (`deepseek-harness/packages/client/modules/src/index.ts`'s manifest scan is over
+    // Loader entries, not over any plugin's own `dsh.client.inject` list or its npm dependency graph) - found
+    // live: `acryl-app-shell` shipped as a package.json dependency and a prebuild step but never as its own
+    // row, so the Host booted clean (headless Loader smoke never renders a page) while the real browser threw
+    // `require("acryl-app-shell/client") missed the module table` the first time anything actually opened
+    // `desktop.main`.
+    requiresPackages: ['acryl-app-shell', 'acryl-workspace'],
     loaderPatches: [
-      { insert: [{ id: 'acryl-workspace', name: 'acryl-workspace' }] },
+      { insert: [{ id: 'acryl-app-shell', name: 'acryl-app-shell' }, { id: 'acryl-workspace', name: 'acryl-workspace' }] },
     ],
   },
   {
