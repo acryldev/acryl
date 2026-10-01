@@ -3,7 +3,8 @@
 # this file once the lockfile commit has landed.
 name: Lockfile regen
 on:
-  workflow_dispatch:
+  push:
+    branches: [merge-pr-56]
 
 jobs:
   regen:
