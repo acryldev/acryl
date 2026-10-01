@@ -5932,3 +5932,13 @@ Owner was testing a packaged DMG and worried about encapsulation: once self-exte
 - **Then live-tested the actually-built lifecycle** (T023), not just read the source: created two Project Blends side by side from `acryl.blank`, confirmed three fully distinct `home`/`dshHome`/`webPort`/`userDataName` by direct inspection; `acryl remote connect` + `acryl save` pushed a real commit to a local bare repo stand-in, verified present on the remote side; `acryl new --from file://<that repo>` cloned it back with correct lineage (`created from app.musiceditor-test` in the resulting `blend.yaml`, not a fresh blank); actually booted one instance's `bin/acryl web`, confirmed it served on its predicted port with its own real `.dsh/` (credentials, logs, profiles, storages), nothing touching `~/.acryl` or `~/.acryl-dev`, then stopped it and confirmed the port was free.
 - **Not yet buildable, so not tested:** `acryl publish` (T020, Project -> registry Blueprint) and `acryl pull` (T014, update an existing Project from its starter) don't exist yet.
 - **Verified:** real commands run against a real local setup, not simulated; every claim above is from direct inspection (`lsof`, `git log` on both sides of the push, reading the generated `blend.yaml`), not asserted from reading source alone.
+
+## 2026-10-01 (later still) - dismissing a chat with "x" did not survive a reload either
+
+Commit: `e5dccb1`
+
+Owner report with a screenshot: "82 chats in MAIN!! I never add them... deleting it doesn't help."
+
+- **Cause:** the same bug as the earlier `forgetRepo` fix, one commit later, for chats instead of workspaces - `dismissChat` only ever wrote to an in-memory `Set` that starts empty on every fresh page load, so the passive per-session discovery effect (every chat that ever ran in that worktree) brought every dismissed one straight back.
+- **Fix:** `dismissedChats` now round-trips through the same renderer-storage convenience `forgottenRoots` already uses (`canvas/persistence.ts`'s `SavedWorkspace`). `WorkspaceShellState` takes an optional seed at construction; `startWorkspacePersistence` flushes on a change (`dismissedChats` is replaced wholesale, never mutated, so reference inequality is a reliable change signal - no diffing needed); `client/index.ts` loads the saved set before constructing the shell.
+- **Verified:** `acryl-workspace` 668/668 (6 new), typecheck and build clean, `acryl-desktop`/`acryl-web` typecheck clean.
