@@ -39,3 +39,13 @@ Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository
 - [ ] T016 Replace the pre-framework `dsh-desktop.blend` setting with app folders
 - [ ] T018 `acryl package`: a standalone product from an app folder, a Web server tarball and a branded Electron app (name, app id, icon from `blend.yaml`), bundling only the plugins the app names
 - [ ] T017 Real-app Desktop test of two branded apps side by side (Web is verified; Desktop is verified headless only)
+- [ ] T021 Move `acryl-workspace`'s own renderer-local persistence (`forgetRepo`'s removed-workspace list, tab/view-mode state, currently per-origin
+      browser `localStorage`) onto a file under `appInstance.home`, written through a Host route - so Desktop and Web, which already share one
+      `appInstance.dshHome`, agree on what the user removed (see `blend-instance-design.md` section 0 for the decision and why)
+- [ ] T022 A GUI entry point to `planNewApp`/`writeNewApp` (today wired only to `apps/acryl-cli`): a "New Blend" action inside the Desktop/Web app itself,
+      so a user who only ever opens the installed app can instantiate a Blueprint without a terminal (`blend-instance-design.md` section 0)
+- [ ] T023 End-to-end lifecycle test, local-only (no real GitHub push required): `acryl new --from <registry id or folder>` (pull a Blueprint), `acryl
+      remote connect` + `acryl save` (push a Project to its own remote), a second clone/instantiate proving `acryl new --from <that remote>` round-trips
+      what was saved, and that two instances running side by side never share a home, port or Electron user data (T017's "real-app" gap, exercised
+      against the actually-built commands rather than asserted) - `acryl publish` (T020) and `acryl pull` (T014) are not built yet, so "push/pull a
+      Blueprint" after the first save is out of scope for this task until those land

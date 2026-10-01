@@ -4,6 +4,51 @@ Status: design, with capture, verify and apply built and tested (see "Built now"
 contract) and the `blends` repo (format, `blends-core`). It answers four questions: how a Blend instance is created and persisted from the current state
 of all plugins and local extensions; how it is packaged and distributed; how it orchestrates at runtime; and how ACRYL Blends becomes a framework.
 
+## 0. Where a running instance keeps its state - accepted, 2026-10-01 (owner)
+
+Fixing this down because it was re-derived from scratch in conversation and should not need re-deriving again. The mechanics are already fully built and
+documented in `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md` (the `AppInstance` family, `select.ts`, the bulkhead rules); this section is the worked example
+and the decision that follows from it, not a restatement of that doc.
+
+**The base install.** Download, install, launch, create nothing yet: `appInstance.home = ~/.acryl` (macOS/Linux), `C:\Users\you\.acryl` (Windows) -
+`defaultInstance()`, the one instance allowed to use the shared home. `/Applications/Acryl.app` (or wherever the binary installed on any OS) is never
+written to; everything mutable - settings, sessions, a plugin asked for in this base app - lives under `~/.acryl`.
+
+**Two Blends side by side.** `acryl new accounting` run from `~/Documents`, then `acryl new musiceditor` run from `~/Projects`:
+
+```text
+~/Documents/accounting/        appInstance.home = ~/Documents/accounting
+  blend.yaml                   appInstance.dshHome = ~/Documents/accounting/.dsh
+  bin/acryl                    port: stable hash of the instance id, not the shared 3080
+  extensions/<name>/           userDataName: "ACRYL accounting-<hash>" - its own Electron window/storage
+  .dsh/                        (gitignored - engine state, not part of the Blend's own git history)
+
+~/Projects/musiceditor/        appInstance.home = ~/Projects/musiceditor   (a completely sealed bulkhead)
+  ...same shape...
+```
+
+`acryl new <dir>` resolves `dir` against the shell's own cwd (`planNewApp`, `runtime/acryl-harness-runtime/src/app/new-app.ts:63`, `resolve(dir)`) - like
+`rails new`/`npm create`, not into a fixed location ACRYL chooses. Asking the agent inside **Accounting** for a Pomodoro timer writes to
+`~/Documents/accounting/extensions/pomodoro/` - committed to that Blend's own git history (`new-app.ts:6,79,187`: "every capability you add is one plugin
+in `extensions/<name>/` of this app, **which is its ACRYL home**"), never near MusicEditor, never near the base `~/.acryl`, never near the installed
+binary. This is a cleaner answer than the raw `$DSH_HOME/local-plugins/<name>` convention (`cordis-plugin-quickstart`, and what DSH's own stock desktop
+app uses for an unpublished plugin, confirmed live 2026-10-01): for an ACRYL Blends app specifically, self-written capability already lands inside the
+Project Blend's own committed source by construction, matching `framework.md`'s "Project Blend -> generated plugins -> Git" directly.
+
+**The decision this settles.** "A new kind of state an app keeps is a new member of the family (or a path under `home`), never a new lookup"
+(`APP-INSTANCES-AND-BULKHEADS.md`) applies to a plugin's OWN renderer state too, not only to runtime-chosen paths. `plugins/acryl-workspace`'s own tree
+UI currently violates this: the removed-workspace list (`forgetRepo`) and tab/view-mode state persist through per-origin browser `localStorage`
+(`canvas/persistence.ts`, key `acryl-workspace:v1`), which is why Desktop and dev Web - both pointed at the same `~/.acryl/.dsh` - can disagree about
+what the user removed (found testing a packaged DMG, 2026-10-01: an "x" removal that stuck on Web reappeared on Desktop and vice versa). The fix is to
+move that state onto a small file under `appInstance.home`, written through a Host route, the same way DSH's own `plugin_manager` records a profile's
+active plugins - not a new persistence mechanism, just this package finally following the rule the rest of the runtime already does. Tracked as new work
+under this milestone (see `tasks.md`).
+
+**Open, not yet built: a GUI entry point.** `planNewApp`/`writeNewApp` are wired only to `apps/acryl-cli` today (confirmed by grep: no caller anywhere
+under `apps/acryl-desktop` or `plugins/acryl-workspace`). A user who only ever opens the downloaded app has no way to instantiate a Blueprint at all -
+"download, install, click New Accounting Blend" has no button behind it yet. This is a bigger, separate piece of work from the persistence fix above;
+tracked as open work under this milestone, not folded into it.
+
 ## The principle (from pi.dev, and already true in ACRYL)
 
 The source is the truth; the running composition is derived and rebuildable. A Blend is therefore not a database row or a snapshot of process
