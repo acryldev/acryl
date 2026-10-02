@@ -317,3 +317,29 @@ presentation only.
     (hero ecosystem hook; build passes), cordisplugins.github.io@2f3f205 (hero lede names what plugins become;
     build passes). Owner approval recorded by the push request itself.
 
+
+## Phase 9 - Upstream Desktop adoption assessment and harness update [requested 2026-10-02]
+
+**Purpose:** decide what to adapt from upstream DeepSeek Harness's own Desktop (research R16) and move ACRYL to the latest harness in an isolated branch, without touching `main`'s running state.
+
+- [ ] T032 Create a separate worktree and branch for the harness update (not `main`), with its own isolated ACRYL home.
+  - Why: the update touches the submodule pin, lockfile and patches; `main` has another session working and a running dev app.
+  - Depends on: none.
+  - Acceptance: a branch and worktree exist; no file under `main`'s checkout or `~/.acryl*` homes is changed by running it.
+- [ ] T033 On that branch, advance the `deepseek-harness` submodule to the latest upstream and record what no longer applies: per-package `patch --dry-run` result, typecheck result, and the list of API changes ACRYL touches.
+  - Why: R15 found about half of ACRYL's version-pinned patches fail across a bump; the pin is now 4,381 commits behind upstream `master`.
+  - Depends on: T032, T025 (patch strategy decision; a dry-run report can be produced before it).
+  - Acceptance: a written report in this spec's `research.md`; no merge to `main`.
+- [ ] T034 Decide the patch strategy (T025) using the T033 report.
+  - Depends on: T033. Acceptance: decision recorded.
+- [ ] T035 Re-port failing patches and bump the runtime family on the branch (completes T026 for the new target version), then run the full gate.
+  - Depends on: T034. Acceptance: `corepack pnpm run check` green on the branch.
+- [ ] T036 Spike the port-less transport against ACRYL's WebSocket routes (research R16 risk 1): can `dsh-app://` with framed pipes carry the workspace terminal stream and the Agent Control channel?
+  - Depends on: T033. Acceptance: pass or a recorded blocker; no production change.
+- [ ] T037 Decide per idea in R16 ("worth adapting") which to take: staged install with rollback, single signed update unit and feed, state lock, no exposed port. Write each as a task or reject it with a reason.
+  - Depends on: T035, T036. Acceptance: decision recorded in `research.md`.
+- [ ] T038 Add the missing platform native packages (`@deepseek-ai/node-addon-system-darwin-arm64`, `-darwin-x64`, and the Linux ones) to `apps/acryl-desktop/package.json` and the lockfile; fix the stale `node-pty` path in `apps/acryl-desktop/scripts/mac-universal.ts`; add a packaged-app check that every `optionalDependencies` platform package of an unpacked native addon is present.
+  - Why: found 2026-10-01; the packaged app could not resume sessions.
+  - Depends on: none (can go to `main` independently). Acceptance: a built DMG resumes a session, and the new check fails when a platform package is dropped.
+
+**Checkpoint (Phase 9):** branch on the latest harness with a recorded patch report; adoption decisions written down.

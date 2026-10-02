@@ -257,3 +257,37 @@ pnpm patches regenerated per bump, (3) maintain a fork; and sequencing — now v
 (engine swap) settles. Until chosen, execution is blocked.
 
 **Consequences for tasks:** T025–T027 record this; T022/M9 sequencing cannot overlap a bump.
+
+## Finding R16 - upstream DeepSeek Harness now ships its own Desktop (`apps/desktop`, `apps/desktop-host`)
+
+**Date:** 2026-10-02. **Source:** the pinned submodule at `0.1.5-alpha.1` (`5dda764`), read directly; upstream `master` is 4,381 commits ahead of that pin and was not read. Nothing here was run. Rationale of record is upstream's Agent Note `deepseek-harness/.agents/notes/implemented/architecture/2026-08-25-electron-desktop-packaging-and-updates.md`.
+
+**What upstream Desktop is** (packages `@deepseek-ai/dsh-desktop` and private `@deepseek-ai/dsh-desktop-host`, about 3,350 lines of source):
+
+- An Electron shell that runs the dsh backend in a **bundled upstream Node.js child process** (not Electron's Node), with a bundled pinned pnpm.
+- **No listening port.** Fetch requests and streamed responses travel over two versioned framed byte pipes; Electron serves validated assets through a `dsh-app://` protocol. ACRYL Desktop instead serves the client over `http://127.0.0.1:<port>`.
+- A reserved profile `$DSH_HOME/profiles/desktop` owned only by Electron; the CLI and Web cannot mutate it. One release number covers the Electron shell and its exact dsh and Desktop Host versions.
+- Installs and updates are **staged, health-checked, then swapped**, with an activation journal for recovery. Update is one `electron-updater` stream with signed `electron-builder` artifacts (macOS dmg and zip, Windows nsis, a Linux target), notarization and Windows EV signing described in the note.
+
+**How it differs from ACRYL Desktop** (`apps/acryl-desktop`):
+
+| Topic | Upstream Desktop | ACRYL Desktop (today) |
+|---|---|---|
+| Host process | Separate Node child, shell is Electron only | Cordis Host runs inside Electron's main process (`main.ts:835`, `createAcrylEngineHost`) |
+| Transport | `dsh-app://` plus framed pipes, no port | Localhost HTTP and WebSocket upgrade routes |
+| Plugin changes | Staged install, health check, replace active project | Live: `dsh plugin add` then `livePluginActivation.activate`, no restart (`docs/acryl/plugin-hot-reload.md`) |
+| Updates | One signed `electron-updater` unit | Poll, download a full installer, hand off to the OS (`apps/acryl-desktop/src/updates/`); endpoints point at `dshdesktop.cn` |
+| State | Reserved `profiles/desktop`, single-instance lock, journal | `AppInstance` homes (`~/.acryl`, `~/.acryl-dev`), per-profile lifecycle files |
+| Release | `electron-updater` feed | `publish` unset, no feed; no `.deb` or `.msi` target |
+
+**Adoption risks specific to ACRYL** (each stated with how it was or was not verified):
+
+1. **WebSocket routes.** ACRYL features depend on same-origin WebSocket upgrades: workspace terminals (`plugins/acryl-workspace/src/pty/stream.ts`) and Agent Control (`plugins/acryl-agent-control/src/host/stream.ts`). A search of `apps/desktop-host/src` and the host protocol in `apps/desktop/src` found no upgrade or WebSocket handling. Not confirmed absent in upstream `master`.
+2. **Live plugin activation.** Upstream's staged-swap model has no equivalent of ACRYL's no-restart activation, which agent self-extension (spec 037) relies on. Not tested.
+3. **Native modules and the loader.** ACRYL runs the Host in Electron's main process, where `--expose-internals` and its prebuilt addon work. Under a separate upstream Node child that flag and addon would have to be supplied by the child. Not tested.
+4. **Patches.** ACRYL carries version-pinned patches against `@deepseek-ai/dsh-*` (see R15). Upstream Desktop packs first-party dsh packages from one source build, so ACRYL patches would not be carried unless reapplied in that pack step.
+5. **Dependency gap already hit:** the packaged ACRYL app lacked `@deepseek-ai/node-addon-system-darwin-arm64`, a platform package the harness needs for session resume (found 2026-10-01 while building a test DMG). It is not listed in `apps/acryl-desktop/package.json`.
+
+**What is worth adapting regardless of Electron** (candidate ideas, no code changed): staged install with health check and rollback, a single signed update unit, a real update feed, state ownership with a single-instance lock, and no exposed port. The port-less transport is the one with the largest ACRYL cost (risk 1).
+
+**Consequences for tasks:** T032 to T038 below. These do not replace T025 to T027; the harness bump must land first or together.
