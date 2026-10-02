@@ -37,7 +37,7 @@ function options(spawn: ProfileMaterializerSpawn): ProfileMaterializerOptions {
     nodeShimPath: '/private/node-bin/node',
     homeDir: '/Users/test/.dsh',
     profileDir: '/Users/test/.dsh/profiles/desktop',
-    electronVersion: '43.4.0',
+    electronVersion: '43.0.0',
     spawn,
   }
 }
@@ -80,7 +80,7 @@ describe('profile materializer', () => {
         DSH_HOME: '/Users/test/.dsh',
         CI: 'true',
         npm_config_runtime: 'electron',
-        npm_config_target: '43.4.0',
+        npm_config_target: '43.0.0',
         npm_config_disturl: 'https://electronjs.org/headers',
       },
     })

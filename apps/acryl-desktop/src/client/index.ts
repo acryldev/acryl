@@ -50,13 +50,12 @@ export type { RendererBootLoader, RendererBootReport } from './boot-health.ts'
 export { parseDesktopClientEnvironment } from './environment.ts'
 export type { DesktopClientEnvironment, DesktopClientMode, DesktopClientPlatform } from './environment.ts'
 
-/** Services required by Desktop settings and advanced presentation. */
+/** Services required by Desktop presentation. `settingsScope` is gone in DSH 0.2 (see the DETACHED note in `apply`). */
 export const inject = [
   'slots',
   'locale',
   'connection',
   'remote',
-  'settingsScope',
   'sessions',
   'theme',
   'workspaces',
