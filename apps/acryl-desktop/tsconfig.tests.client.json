@@ -1,6 +1,12 @@
 {
   "extends": "./tsconfig.client.json",
-  "exclude": [],
+  // The Desktop settings page is detached (see the DETACHED note in src/client/index.ts); its spec still runs under vitest.
+  "exclude": [
+    "src/client/settings/desktop-settings.ts",
+    "src/client/settings/DesktopSettingsSection.tsx",
+    "src/client/settings/DesktopTerminalSettingsAction.tsx",
+    "tests/client/settings/client-desktop-settings.spec.ts"
+  ],
   "compilerOptions": {
     "rootDir": ".",
     "noEmit": true,

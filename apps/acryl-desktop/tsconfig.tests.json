@@ -9,6 +9,8 @@
   "exclude": [
     "src/client/**",
     "src/native-ui/**",
+    // Detached with the Windows pwsh sandbox (see WINDOWS_PWSH_SANDBOX_REATTACHED in src/profile.ts); its pure helpers live in windows-acl-adaptation.ts.
+    "src/windows-pwsh-sandbox.ts",
     "tests/client-acryl-brand.spec.ts",
     "tests/client-boot-health.spec.ts",
     "tests/client/settings/client-desktop-settings.spec.ts",

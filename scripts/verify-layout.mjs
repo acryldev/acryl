@@ -89,12 +89,31 @@ packageExtensions:
   '@deepseek-ai/dsh-client-ui-primitives@${upstream.runtimePackageVersion}':
     dependencies:
       '@types/react': 18.3.31
+      '@types/mdast': ^4.0.4
   '@deepseek-ai/dsh-client-ui-slots@${upstream.runtimePackageVersion}':
     dependencies:
       '@types/react': 18.3.31
   'lucide-react@1.34.0':
     dependencies:
       '@types/react': 18.3.31
+  # ${upstream.runtimePackageVersion} types import this package but the manifest does not declare it (found 2026-10-02, spec 001 R24).
+  '@deepseek-ai/dsh-session@${upstream.runtimePackageVersion}':
+    dependencies:
+      '@deepseek-ai/dsh-typert-protocol': ${upstream.runtimePackageVersion}
+  # The browser bundle imports \`zustand\` and \`immer\`, which upstream lists only as devDependencies; Node-side tests load it.
+  '@deepseek-ai/dsh-client-store@${upstream.runtimePackageVersion}':
+    dependencies:
+      zustand: ~4.4.7
+      immer: ^10.1.1
+  # Its types import \`lexical\` through the draft-editor contract, but upstream lists it only as a devDependency.
+  '@deepseek-ai/dsh-client-ui-conversation@${upstream.runtimePackageVersion}':
+    dependencies:
+      lexical: ^0.49.0
+  # The types of dsh-client-modules import these two packages without declaring them (R24).
+  '@deepseek-ai/dsh-client-modules@${upstream.runtimePackageVersion}':
+    dependencies:
+      '@deepseek-ai/dsh-package-manifest': ${upstream.runtimePackageVersion}
+      '@deepseek-ai/dsh-host-webserver': ${upstream.runtimePackageVersion}
 
 patchedDependencies:
 `
@@ -227,12 +246,14 @@ for (const [owner, manifest] of [
   }
 }
 
-// The shipped agent presets are the one runtime read of the submodule. Make the
-// soft `existsSync` dependency loud: a missing source silently shrinks `/presets`,
-// so fail here when the submodule is initialized but the directory is gone.
-const presetsDir = resolve(upstreamDir, 'packages', 'preset', 'agent-presets', 'presets')
-if (!existsSync(presetsDir)) {
-  fail(`the shipped agent-presets source is missing: ${presetsDir}`)
+// DSH 0.2 ships each agent preset as a patch file of the `dsh-web-app` bundle, and ACRYL's terminal layers those same four files in
+// (`terminalPresetPatches` in acryl-harness-runtime). Make that dependency loud: if upstream drops or renames one, the terminal roster
+// would silently shrink, so fail here when the submodule is initialized but a file is gone.
+for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
+  const presetPatch = resolve(upstreamDir, 'packages', 'bundle', 'web-app', 'presets', `${preset}.patch.yml`)
+  if (!existsSync(presetPatch)) {
+    fail(`the shipped agent preset patch is missing: ${presetPatch}`)
+  }
 }
 
 process.stdout.write(`verify-layout: PNPM workspace and upstream ${upstream.commit.slice(0, 10)} are consistent\n`)

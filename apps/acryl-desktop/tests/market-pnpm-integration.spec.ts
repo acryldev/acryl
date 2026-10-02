@@ -1,11 +1,11 @@
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { Readable } from 'node:stream'
 import { pathToFileURL } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
-import { FileSettingsProvider } from '@deepseek-ai/dsh-settings-file'
+import * as acrylSettings from 'acryl-settings'
 import type { SubprocessHandle, SubprocessRuntime, SubprocessSpawnSpec } from '@deepseek-ai/dsh-subprocess'
 import { describe, expect, it, vi } from 'vitest'
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
@@ -178,6 +178,7 @@ describe('desktop pnpm and community market integration', () => {
         stdin: undefined,
         stdout: Readable.from([]),
         stderr: Readable.from([]),
+        control: undefined,
         collected: {},
         done: (async () => {
           await removeInstalledProfilePlugin(profileDir)
@@ -190,7 +191,9 @@ describe('desktop pnpm and community market integration', () => {
       ctx.provide('desktopProfiles', { current: { name: 'web', dir: profileDir } })
       ctx.provide('desktopPnpmBootstrap', selectedBootstrap)
       ctx.provide('subprocess', { spawn } as unknown as SubprocessRuntime)
-      await ctx.plugin(FileSettingsProvider, { path: settingsPath, watch: false })
+      // ACRYL's own settings service (the Market keeps its sources and receipts there), writing to this test's file.
+      ctx.provide('appInstance', { home: dirname(settingsPath), dshHome: dirname(settingsPath) } as never)
+      await ctx.plugin(acrylSettings, { filename: settingsPath })
       await ctx.plugin({ name: desktopPnpmName, inject: desktopPnpmInject, apply: applyDesktopPnpm })
       await ctx.plugin({ name: market.name, inject: market.inject, apply: market.apply })
 

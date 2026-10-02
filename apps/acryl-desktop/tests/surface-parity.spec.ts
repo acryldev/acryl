@@ -64,7 +64,9 @@ async function composeBoth(): Promise<{
   const desktopHome = mkdtempSync(join(tmpdir(), 'acryl-parity-d-'))
   // Telemetry opt-out given explicitly ('' = not opted out): `undefined` would fall back to the runner's
   // DSH_TELEMETRY_DISABLED (CI sets it), and Desktop's opt-out row would read as a parity difference.
-  const desktop = summarize(composeEntries([prepareDesktopProfile('', desktopHome, 'darwin').patches]))
+  // The engine host switches `hmr` off for every surface when it mounts a composition (`mountDshEngine`); mirror that here so the two
+  // sides compare what is actually mounted, not Desktop's un-overridden upstream expression.
+  const desktop = summarize(composeEntries([[...prepareDesktopProfile('', desktopHome, 'darwin').patches, { id: 'hmr', disabled: true }]]))
   process.env.ACRYL_HOME = mkdtempSync(join(tmpdir(), 'acryl-parity-w-'))
   const host = await createAcrylEngineHost({
     engines: [createWebEngineDefinition(new URL('../../acryl-web/package.json', import.meta.url).href)],

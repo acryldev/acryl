@@ -145,8 +145,6 @@ describe('acryl-settings', () => {
     const ctx = new Context()
     contexts.push(ctx)
     ctx.provide('appInstance', { home })
-    const errors: unknown[] = []
-    ctx.on('internal/error', (error) => { errors.push(error) })
     ctx.plugin({ name, inject, apply }, { filename: '' })
     await new Promise(resolve => setTimeout(resolve, 10))
     expect(ctx.get('acrylSettings')).toBeUndefined()

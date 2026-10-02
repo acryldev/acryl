@@ -51,6 +51,7 @@ packageExtensions:
   '@deepseek-ai/dsh-client-ui-primitives@0.2.0-rc.2':
     dependencies:
       '@types/react': 18.3.31
+      '@types/mdast': ^4.0.4
   '@deepseek-ai/dsh-client-ui-slots@0.2.0-rc.2':
     dependencies:
       '@types/react': 18.3.31
@@ -61,16 +62,16 @@ packageExtensions:
   '@deepseek-ai/dsh-session@0.2.0-rc.2':
     dependencies:
       '@deepseek-ai/dsh-typert-protocol': 0.2.0-rc.2
-  # Same gap: the types of dsh-client-modules import these two packages without declaring them (R24).
   # The browser bundle imports `zustand` and `immer`, which upstream lists only as devDependencies; Node-side tests load it.
   '@deepseek-ai/dsh-client-store@0.2.0-rc.2':
     dependencies:
       zustand: ~4.4.7
       immer: ^10.1.1
-  # Its types import `lexical` through the draft-editor contract but only list it as an optional peer.
+  # Its types import `lexical` through the draft-editor contract, but upstream lists it only as a devDependency.
   '@deepseek-ai/dsh-client-ui-conversation@0.2.0-rc.2':
     dependencies:
       lexical: ^0.49.0
+  # The types of dsh-client-modules import these two packages without declaring them (R24).
   '@deepseek-ai/dsh-client-modules@0.2.0-rc.2':
     dependencies:
       '@deepseek-ai/dsh-package-manifest': 0.2.0-rc.2

@@ -57,6 +57,7 @@ function controlledSubprocess(): ControlledSubprocess {
     stdin: undefined,
     stdout: new PassThrough(),
     stderr: new PassThrough(),
+    control: undefined,
     collected: {},
     done: outcome.promise,
     terminate: vi.fn(),

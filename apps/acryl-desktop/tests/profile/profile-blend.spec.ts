@@ -3,7 +3,7 @@
 // invariants, with fail-loud errors attributed to the Blend.
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { composeEntries } from '@deepseek-ai/dsh-app-boot'
 import { fileURLToPath } from 'node:url'
@@ -17,9 +17,12 @@ import {
 const homes: string[] = []
 const BLEND_FIXTURE_DIR = fileURLToPath(new URL('../fixtures/blend/acryl-demo', import.meta.url))
 
+/** A DSH home laid out like a real app: `<ACRYL home>/.dsh`, with ACRYL's own settings file beside it. */
 function temporaryHome(): string {
-  const home = mkdtempSync(join(tmpdir(), 'dsh-desktop-profile-blend-'))
-  homes.push(home)
+  const root = mkdtempSync(join(tmpdir(), 'dsh-desktop-profile-blend-'))
+  homes.push(root)
+  const home = join(root, '.dsh')
+  mkdirSync(home)
   return home
 }
 
@@ -28,7 +31,7 @@ afterEach(() => {
 })
 
 function writeSettings(home: string, text: string): void {
-  writeFileSync(join(home, 'settings.yaml'), text)
+  writeFileSync(join(dirname(home), 'acryl-settings.yaml'), text)
 }
 
 describe('desktop startup settings: dsh-desktop.blend (D23)', () => {

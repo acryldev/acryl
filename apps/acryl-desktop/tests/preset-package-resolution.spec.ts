@@ -1,7 +1,7 @@
 /**
  * Regression guard for the live-reported bug where "Minimal mode", "PTC
  * mode", and "Creator mode" all failed session creation because
- * `@deepseek-ai/dsh-agent-presets` names plugin packages by bare specifier
+ * the `@deepseek-ai/dsh-web-app` preset patches name plugin packages by bare specifier
  * that the consuming app must declare as its own dependency (isolated pnpm
  * node-linker does not hoist a transitive dependency's own dependencies into
  * the consumer's resolvable graph). `dsh-agent-presets` shipped six such
@@ -29,18 +29,18 @@ import { describe, expect, it } from 'vitest'
 const require = createRequire(import.meta.url)
 const installAnchor = new URL('../package.json', import.meta.url).href
 
+// DSH 0.2 declares each preset as a bundle patch of `dsh-web-app` (`presets/<name>.patch.yml`); `dsh-agent-presets` no longer exists.
 const presetsRoot = join(
-  dirname(require.resolve('@deepseek-ai/dsh-agent-presets/package.json')),
+  dirname(require.resolve('@deepseek-ai/dsh-web-app/package.json')),
   'presets',
 )
 
 /** Every bare `@deepseek-ai/...` plugin specifier named across all shipped presets. */
 function referencedPackageNames(): Set<string> {
   const names = new Set<string>()
-  for (const presetId of readdirSync(presetsRoot, { withFileTypes: true })) {
-    if (!presetId.isDirectory()) continue
-    const configPath = join(presetsRoot, presetId.name, 'agent.cordis.yml')
-    const text = readFileSync(configPath, 'utf8')
+  for (const file of readdirSync(presetsRoot, { withFileTypes: true })) {
+    if (!file.isFile() || !file.name.endsWith('.patch.yml')) continue
+    const text = readFileSync(join(presetsRoot, file.name), 'utf8')
     for (const match of text.matchAll(/name:\s*'(@deepseek-ai\/[a-z0-9-]+)'/g)) {
       names.add(match[1]!)
     }

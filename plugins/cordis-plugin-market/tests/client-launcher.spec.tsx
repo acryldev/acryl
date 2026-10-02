@@ -36,7 +36,9 @@ describe('community market launcher', () => {
       useStore,
       t,
       useSessions: (() => undefined) as MarketLauncherProps['useSessions'],
-      useSessionPendingInteraction: (() => undefined) as MarketLauncherProps['useSessionPendingInteraction'],
+      usePanelInfo: (() => undefined) as unknown as MarketLauncherProps['usePanelInfo'],
+      useSessionStatus: (() => undefined) as unknown as MarketLauncherProps['useSessionStatus'],
+      useSessionRetainInfo: (() => undefined) as unknown as MarketLauncherProps['useSessionRetainInfo'],
       useWorkspaces: (() => undefined) as MarketLauncherProps['useWorkspaces'],
     } satisfies MarketLauncherProps
 
