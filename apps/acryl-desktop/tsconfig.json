@@ -22,5 +22,6 @@
   },
   "include": ["src/**/*.ts"],
   // The client and native UI have their own configs and environments.
-  "exclude": ["src/client/**", "src/native-ui/**"]
+  // windows-pwsh-sandbox.ts is detached until re-ported to DSH 0.2 (see WINDOWS_PWSH_SANDBOX_REATTACHED in src/profile.ts).
+  "exclude": ["src/client/**", "src/native-ui/**", "src/windows-pwsh-sandbox.ts"]
 }

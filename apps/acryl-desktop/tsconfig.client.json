@@ -1,6 +1,7 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": [],
+  // Detached with the settings page, see the DETACHED note in src/client/index.ts.
+  "exclude": ["src/client/settings/desktop-settings.ts", "src/client/settings/DesktopSettingsSection.tsx", "src/client/settings/DesktopTerminalSettingsAction.tsx"],
   "include": [
     "src/client/**/*.ts",
     "src/client/**/*.tsx"

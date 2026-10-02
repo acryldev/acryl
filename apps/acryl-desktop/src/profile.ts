@@ -65,6 +65,12 @@ const BROWSE_PICKER_BACKEND = '@deepseek-ai/dsh-host-directory-picker-browse'
 const BROWSE_PICKER_SURFACE = '@deepseek-ai/dsh-client-ui-directory-picker-browse'
 const PWSH_SANDBOX_ROW_ID = 'pwsh-sandbox'
 const UPSTREAM_PWSH_SANDBOX_PACKAGE = '@deepseek-ai/dsh-pwsh-sandbox'
+/**
+ * DETACHED on the DSH 0.2 branch (spec 001 R25): the Desktop ACL-runner trampoline overrides `runArgv`/`startArgv` of the upstream
+ * `SandboxPwshExecutor`, which 0.2 no longer exposes. Windows keeps the upstream executor until the trampoline is re-ported to the
+ * new spawn seam; then set this to true (and drop the `exclude` of `src/windows-pwsh-sandbox.ts` in tsconfig.json).
+ */
+const WINDOWS_PWSH_SANDBOX_REATTACHED = false
 const DESKTOP_WINDOWS_PWSH_SANDBOX_ROW_ID = 'desktop-windows-pwsh-sandbox'
 const DESKTOP_WINDOWS_PWSH_SANDBOX_PACKAGE = 'acryl-desktop/windows-pwsh-sandbox'
 const AGENT_PRESETS_ROW_ID = 'agent-preset-registry'
@@ -393,7 +399,7 @@ function loadRecoveryFilteredProfile(
       layers.push({
         packageName,
         packageDir,
-        patchPath,
+        patchPaths: [patchPath],
         patches: loadOverlayPatches(BIN_NAME, patchPath),
       })
     } catch (cause) {
@@ -409,6 +415,9 @@ function loadRecoveryFilteredProfile(
       layers,
       patchPath,
       patches: existsSync(patchPath) ? loadOverlayPatches(BIN_NAME, patchPath) : [],
+      // This pipeline throws on an unloadable bundle (except the optional market, reported through `dshMarketFailure`),
+      // so nothing is ever skipped silently.
+      skippedBundles: [],
     },
     ...(dshMarketFailure === undefined ? {} : { dshMarketFailure }),
   }
@@ -868,7 +877,7 @@ export function prepareDesktopProfile(
       },
     )
     const pwshSandbox = rows.get(PWSH_SANDBOX_ROW_ID)
-    if (pwshSandbox?.name === UPSTREAM_PWSH_SANDBOX_PACKAGE
+    if (WINDOWS_PWSH_SANDBOX_REATTACHED && pwshSandbox?.name === UPSTREAM_PWSH_SANDBOX_PACKAGE
       && !rowDisabledOnPlatform(pwshSandbox, platform)) {
       patches.push(
         {
