@@ -75,9 +75,8 @@ function sessionsHook(state: object): UseSessions {
 
 const SESSIONS = {
   ids: ['s1', 's2'],
-  current: 's1',
   byId: {
-    s1: { id: 's1', cwd: '/p/proj', running: true, blank: false, displayTitle: 'one', updatedAt: 1 },
+    s1: { id: 's1', cwd: '/p/proj', running: true, blank: false, displayTitle: 'one', updatedAt: 1, retainedBy: { mainView: 1 } },
     s2: { id: 's2', cwd: '/p/proj-x', running: false, blank: false, displayTitle: 'two', updatedAt: 2 },
   },
 }
@@ -344,7 +343,7 @@ describe('ProjectsSidebar', () => {
     const shell = new WorkspaceShellState(api())
     // The one session here belongs to /p/proj-x, not /p/proj (main) - discovers the same repo via api()'s
     // cwd-agnostic mock, but leaves main with no chats and no agent tiles.
-    const noSessions = { ids: ['s1'], current: undefined, byId: { s1: { id: 's1', cwd: '/p/proj-x', running: false, blank: true, displayTitle: '', updatedAt: 1 } } }
+    const noSessions = { ids: ['s1'], byId: { s1: { id: 's1', cwd: '/p/proj-x', running: false, blank: true, displayTitle: '', updatedAt: 1, retainedBy: {} } } }
     render(<ProjectsSidebar {...sidebarProps(shell)} useSessions={sessionsHook(noSessions)} />)
     await screen.findByText('main')
     fireEvent.click(screen.getByRole('button', { name: 'Show sessions on main' }))
@@ -469,7 +468,7 @@ describe('ProjectsSidebar', () => {
   it('never turns a mere chat session cwd into a permanent workspace when it is not a git repository (T135: "web suddenly shows so many workspaces - didn\'t open them")', async () => {
     const seen: string[] = []
     const shell = new WorkspaceShellState({ ...api(), repo: async (cwd) => { seen.push(cwd); return null } })
-    const untouched = { ids: ['s1'], current: undefined, byId: { s1: { id: 's1', cwd: '/tmp/scratch-dir', running: false, blank: false, displayTitle: 'x', updatedAt: 1 } } }
+    const untouched = { ids: ['s1'], byId: { s1: { id: 's1', cwd: '/tmp/scratch-dir', running: false, blank: false, displayTitle: 'x', updatedAt: 1, retainedBy: {} } } }
     render(<ProjectsSidebar {...sidebarProps(shell)} useSessions={sessionsHook(untouched)} />)
     await waitFor(() => { expect(seen).toContain('/tmp/scratch-dir') })
     expect(screen.queryByRole('region', { name: 'scratch-dir' })).toBeNull()
@@ -548,7 +547,7 @@ describe('ProjectsSidebar', () => {
 
   it('explains an empty projects list', async () => {
     const shell = new WorkspaceShellState(api({ repo: async () => null }))
-    const noSessions = { ids: [], current: undefined, byId: {} }
+    const noSessions = { ids: [], byId: {} }
     render(<ProjectsSidebar {...sidebarProps(shell)} useSessions={sessionsHook(noSessions)} />)
     expect(await screen.findByText(/No workspaces yet/)).toBeTruthy()
     shell.dispose()
@@ -556,7 +555,7 @@ describe('ProjectsSidebar', () => {
 
   it('registers a non-git folder as its own kind of workspace instead of refusing it (T134-followup)', async () => {
     const shell = new WorkspaceShellState(api({ repo: async () => null }))
-    const noSessions = { ids: [], current: undefined, byId: {} }
+    const noSessions = { ids: [], byId: {} }
     const projects = fakeProjects({ workspacePaths: () => ['/p/plain-folder'], workspaceKey: () => '/p/plain-folder' })
     render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} useSessions={sessionsHook(noSessions)} />)
     expect(await screen.findByRole('region', { name: 'plain-folder' })).toBeTruthy()

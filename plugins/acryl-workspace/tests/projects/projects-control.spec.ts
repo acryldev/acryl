@@ -84,7 +84,11 @@ function world(options: {
   const items = (options.workspaces ?? []).map(w => ({ title: w.path.split('/').pop() ?? w.path, ...w, sessionIds: options.boundSessions ?? [] }))
   const sessions = {
     list: { getSnapshot: () => ({ ids: rows.map(r => r.id), byId: Object.fromEntries(rows.map(r => [r.id, r])) }) },
-    open: (id: string) => { opened.push(id) },
+    retain: (id: string, retainOptions: { source: string }) => {
+      expect(retainOptions).toEqual({ source: 'mainView' })
+      opened.push(id)
+      return { release: () => {} }
+    },
     scope: (id: string) => (options.renameFace === 'missing' ? undefined : { id }),
     sessionOf: (scope: { id: string }) => ({
       rename: async (title: string) => {

@@ -19,6 +19,7 @@ import type { AgentStatusState } from '../status/agent-status-state.ts'
 import { buildProjectRows, entriesForWorktree, type RepoRow, type WorktreeDot, type WorktreeRow, type WorktreeSessionEntry } from './sidebar-model.ts'
 import type { DesktopSidebarSurfaceOwnerProps } from 'acryl-app-shell/client'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
+import { currentSessionId } from '../sessions/main-session.ts'
 
 /** The left-pane owner interface the frame offers: the same one the frame's default sidebar receives. */
 export type ProjectsSidebarOwnerProps = DesktopSidebarSurfaceOwnerProps
@@ -84,7 +85,8 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
       const cwd = sessions.byId[id]?.cwd
       if (cwd !== undefined) void shell.discover(cwd)
     }
-    const currentCwd = sessions.current === undefined ? undefined : sessions.byId[sessions.current]?.cwd
+    const current = currentSessionId(sessions)
+    const currentCwd = current === undefined ? undefined : sessions.byId[current]?.cwd
     if (currentCwd !== undefined) void shell.follow(currentCwd)
   }, [shell, sessions])
 

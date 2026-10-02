@@ -1,6 +1,7 @@
 /** Send a message to the agent of the chat session that is currently open. */
 
 import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
+import { currentSessionId } from './main-session.ts'
 
 export type SendResult = { readonly ok: true } | { readonly ok: false; readonly reason: string }
 
@@ -28,7 +29,7 @@ export function createAgentBridge(getSessions: () => ISessions | undefined): Age
     async sendToCurrentSession(text) {
       const sessions = getSessions()
       if (sessions === undefined) return { ok: false, reason: 'chat sessions are not available yet' }
-      const current = sessions.list.getSnapshot().current
+      const current = currentSessionId(sessions.list.getSnapshot())
       if (current === undefined) return { ok: false, reason: 'open a chat first, then send the comment' }
       const scope = sessions.scope(current)
       const face = scope === undefined ? undefined : sessions.sessionOf(scope)

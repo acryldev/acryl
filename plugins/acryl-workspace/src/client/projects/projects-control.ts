@@ -12,6 +12,7 @@ import { pickSession, type SessionRef } from '../sessions/session-pick.ts'
 import { owningWorktree } from './sidebar-model.ts'
 import { FolderChooserUnavailableError } from './web-folder-picker.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
+import { openMainSession } from '../sessions/main-session.ts'
 
 export type ProjectAction =
   | { readonly ok: true; /** A hint to show the user, when the action continues elsewhere. */ readonly note?: string }
@@ -233,14 +234,14 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       if (worktree !== undefined) {
         const started = await startBoundChat(worktree)
         if (!started.ok) return fail(started.reason)
-        sessions.open(started.id)
+        openMainSession(sessions, started.id)
         // Same name, and the empty unbound one leaves the tree (it can never be sent from).
         if (row?.title !== undefined && row.title.trim() !== '') await this.renameChat(started.id, row.title) // best effort: a failed rename must not fail the open
         shell.dismissChat(branded)
         return { ok: true }
       }
       try {
-        sessions.open(branded)
+        openMainSession(sessions, branded)
         return { ok: true }
       } catch (cause) {
         return fail(`Could not open that chat: ${message(cause)}`)
@@ -283,7 +284,7 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       const id = state.ids.find(candidate => candidate === existing)
       if (id === undefined) return fail('That chat is no longer available.')
       try {
-        sessions.open(id)
+        openMainSession(sessions, id)
         return { ok: true }
       } catch (cause) {
         shell.unpin()
@@ -294,7 +295,8 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     async newChat(worktreePath) {
       const started = await startBoundChat(worktreePath)
       if (!started.ok) { shell.unpin(); return fail(started.reason) }
-      deps.getSessions()?.open(started.id)
+      const sessionsService = deps.getSessions()
+      if (sessionsService !== undefined) openMainSession(sessionsService, started.id)
       return { ok: true }
     },
 

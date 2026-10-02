@@ -18,7 +18,11 @@ function fakeSessions(options: FakeOptions = {}): { sessions: ISessions; prompt:
   })
   const face = { prompt }
   const sessions = {
-    list: { getSnapshot: () => ({ current: 'current' in options ? options.current : 's1' }) },
+    list: { getSnapshot: () => {
+      const current = 'current' in options ? options.current : 's1'
+      // DSH 0.2: the current session is the one a view retains as `mainView`.
+      return current === undefined ? { ids: [], byId: {} } : { ids: [current], byId: { [current]: { retainedBy: { mainView: 1 } } } }
+    } },
     scope: () => (options.hasScope === false ? undefined : { scope: true }),
     sessionOf: () => (options.hasFace === false ? undefined : face),
   } as unknown as ISessions

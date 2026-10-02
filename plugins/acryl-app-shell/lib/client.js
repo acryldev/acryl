@@ -558,7 +558,7 @@ html:has([aria-modal="true"]) .dshDesktopSidebarSurface::before { -webkit-app-re
 		//#region src/client/environment.ts
 		/** What a page without Electron's markers renders. */
 		const WEB_SHELL_ENVIRONMENT = Object.freeze({
-			mode: "advanced",
+			mode: "compatibility",
 			platform: "web"
 		});
 		const MODES = /* @__PURE__ */ new Set(["compatibility", "advanced"]);

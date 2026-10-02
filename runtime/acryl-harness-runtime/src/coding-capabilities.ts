@@ -149,11 +149,10 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     // The ACRYL workspace (spec 040): Projects list, per-worktree tabbed canvas, Changes, Review, Checks and
     // Files panels, and the file editor. Composed once for both surfaces that render it; TUI has no slot for
     // it. Its client half only takes over the frame when the shell mode is `advanced`.
-    // DETACHED on the DSH 0.2 branch (spec 001 R24, T036b): the workspace client was written against the 0.1.5 client session
-    // store (`SessionListState.current`, `ISessions.open`), which 0.2 removed. Re-attach by adapting the tab strip to own its
-    // current tab and hold sessions through `retain(...)`, then restore the surfaces below to `['desktop', 'web']`.
+    // Re-attached on the DSH 0.2 branch (spec 001 R25): the tab strip and Projects panel own the main view through
+    // `sessions/main-session.ts` (`retain(..., { source: 'mainView' })`) instead of the removed `ISessions.open`.
     id: 'workspace',
-    surfaces: [],
+    surfaces: ['desktop', 'web'],
     // `acryl-workspace`'s client bundle does `require('acryl-app-shell/client')`; the client-modules Host
     // only resolves a `require()` target into a real browser module when that package is itself a scanned,
     // active Loader entry (`deepseek-harness/packages/client/modules/src/index.ts`'s manifest scan is over
@@ -201,7 +200,10 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
   {
     // Rows toggled so the ACRYL shell owns the frame: the stock layout off, the sidebar and conversation on.
     // The rows exist in the shared `dsh-web-app` bundle both surfaces build on.
-    // DETACHED together with `workspace`: the stock frame stays until the ACRYL shell can take it over again.
+    // DETACHED on the DSH 0.2 branch (spec 001 R25): this patch turns off upstream's `ui-layout`, and `acryl-app-shell` then provides its
+    // own `DesktopLayoutService`. 0.2's `ui-sidebar-right` and friends are written against its `ILayout`, so with the stock layout off
+    // they fail to initialize ("Failed to load plugins"). Re-attach by implementing `ILayout` (or contributing to it) from the app
+    // shell instead of replacing it, then restore the surfaces to `['desktop', 'web']`.
     id: 'advanced-shell',
     surfaces: [],
     shellMode: 'advanced',
