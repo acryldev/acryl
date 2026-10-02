@@ -406,3 +406,22 @@ Branch `harness-latest-2026-10`, worktree `../acryl.worktrees/harness-latest-202
 | Lockfile resolution | `pnpm install --lockfile-only --no-frozen-lockfile --ignore-scripts` ran past the "resolved 1366" point where installs hung before; first run failed only on the unused `pi-ai@0.85.1` patch, fixed above, second run in progress |
 
 **Not yet done:** lockfile write and frozen install, build, typecheck, source changes for removed packages (`profile.ts` settings, `windows-agent-presets.ts`, `coding-capabilities.ts`, `verify-packaged-runtime.ts`, tests), the closure gate (`verify-runtime-closure`) against 0.2's new dependency set, an isolated host boot, and the first re-attachment check.
+
+## Finding R22 - protocol: what ACRYL takes from DeepSeek Harness, and why (owner direction, 2026-10-02)
+
+**Premise.** The DeepSeek team will keep changing their harness a lot (observed: between `0.1.5-alpha.1` and `0.2.0-rc.2` six packages were removed or renamed, the settings design was replaced, and Desktop's transport changed). ACRYL must not be shaped by that churn.
+
+**What ACRYL takes from upstream, and keeps:** the **Cordis plugin system and orchestration** (Loader, fibers, services, effects, composition). That is the durable asset, and it is what ACRYL extracts as a framework: **ACRYL Blends**, whose native units are Cordis plugins (specs `033-acryl-blends-runtime-contract`, `036-cordis-ecosystem-and-acryl-blends`).
+
+**What ACRYL does not make central:** the DSH chat. **AcrylDSH chat is one agent, one of the "builders", inside the Cordis plugin ecosystem**, alongside any other agent a user brings (Claude Code, Codex, OpenCode, Gemini, their own). A user can rely entirely on their own agents and never use the DSH chat. This extends R20: ACRYL owns the surfaces, DSH is the engine and one agent type, and now also the DSH engine is optional, not load-bearing.
+
+**Rules this implies for the DSH 0.2 work (R18 to R21):**
+
+1. **Thin adapter, not deep coupling.** Everything that touches DSH internals (package names, row ids such as `agent-preset-registry`, settings shape) lives behind the engine seam (`createAcrylEngineHost` and an `AcrylEngineDefinition`) so an upstream change is absorbed in one place.
+2. **ACRYL surfaces and plugins depend on Cordis and ACRYL contracts, never on `@deepseek-ai/dsh-*` package names.** Today they do in many places (`profile.ts`, `coding-capabilities.ts`, `windows-agent-presets.ts`, about 760 manifest pins). Each such reference is debt to be moved behind the seam, and no new one should be added.
+3. **Keep local patches of upstream packages to a minimum.** Each patch is a cost on every upstream release (R15, R17: one of six failed this bump). Prefer an ACRYL plugin that replaces or wraps a slot over patching an upstream package.
+4. **Pin and update on our schedule.** The submodule stays as the channel for reading and tracking upstream; ACRYL consumes published packages at a version it chooses, and moves only when there is a reason (a fix it needs), with a dry-run report like R17 before any bump.
+5. **The engine is replaceable.** The same seam must let a non-DSH agent drive the app (spec 028, roadmap M9). Work on DSH 0.2 should not make that harder.
+6. **Time-box DSH-specific adaptation.** The DSH 0.2 branch is worth the effort of getting the engine running behind the seam and re-attaching the surfaces. It is not worth deep rework of features that exist only to match upstream's current internals (for example, rebuilding ACRYL's settings around upstream's profile-owned config beyond what Desktop's startup needs).
+
+**Consequence for tasks.** Add to the T035 and T036b acceptance: report how many ACRYL files reference `@deepseek-ai/dsh-*` names directly before and after, and treat a lower count as progress. New Phase 9 item T039 below.

@@ -349,4 +349,8 @@ presentation only.
   - Why: found 2026-10-01; the packaged app could not resume sessions.
   - Depends on: none (can go to `main` independently). Acceptance: a built DMG resumes a session, and the new check fails when a platform package is dropped.
 
+- [ ] T039 Decouple ACRYL from `@deepseek-ai/dsh-*` package names (R22): list every ACRYL source file and manifest that names a DSH package or row id outside the engine seam, move each behind the seam or a Cordis contract, and add a guard that fails when a new such reference appears outside the seam.
+  - Why: upstream changes a lot (R17 to R19); the durable asset is the Cordis plugin system, and the DSH chat is one agent among others (R22).
+  - Depends on: T036b (so the seam is exercised first). Acceptance: a count of direct references before and after, an allowlist in the guard, and the guard in the CI gate.
+
 **Checkpoint (Phase 9):** branch on the latest harness with a recorded patch report; adoption decisions written down.
