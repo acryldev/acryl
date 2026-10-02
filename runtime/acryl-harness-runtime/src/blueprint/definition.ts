@@ -68,7 +68,7 @@ export function parseBlueprint(input: unknown, catalog: BlueprintCatalog = built
     : { kind: 'custom', identity: brandIdentity(record.brand) } as const
 
   const base: Blueprint = parent ?? {
-    id, name: id, description: '', capabilities: ['authorization'], rows: ['extension-context', 'system-prompt'], brand: { kind: 'acryl' }, shell: 'compatibility',
+    id, name: id, description: '', capabilities: ['authorization', 'acryl-settings'], rows: ['extension-context', 'system-prompt'], brand: { kind: 'acryl' }, shell: 'compatibility',
   }
   return Object.freeze({
     id,

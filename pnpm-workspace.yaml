@@ -62,6 +62,11 @@ packageExtensions:
     dependencies:
       '@deepseek-ai/dsh-typert-protocol': 0.2.0-rc.2
   # Same gap: the types of dsh-client-modules import these two packages without declaring them (R24).
+  # The browser bundle imports `zustand` and `immer`, which upstream lists only as devDependencies; Node-side tests load it.
+  '@deepseek-ai/dsh-client-store@0.2.0-rc.2':
+    dependencies:
+      zustand: ~4.4.7
+      immer: ^10.1.1
   # Its types import `lexical` through the draft-editor contract but only list it as an optional peer.
   '@deepseek-ai/dsh-client-ui-conversation@0.2.0-rc.2':
     dependencies:

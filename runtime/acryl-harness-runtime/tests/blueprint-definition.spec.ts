@@ -34,7 +34,7 @@ describe('parseBlueprint', () => {
 
   it('stands alone with safe defaults when it extends nothing', () => {
     const blueprint = parseBlueprint({ id: 'tiny' })
-    expect(blueprint.capabilities).toEqual(['authorization'])
+    expect(blueprint.capabilities).toEqual(['authorization', 'acryl-settings'])
     expect(blueprint.shell).toBe('compatibility')
   })
 
@@ -49,7 +49,10 @@ describe('parseBlueprint', () => {
   })
 
   it('every row id a file may name composes on at least one surface (the id list cannot drift from the row table)', () => {
+    // DETACHED on the DSH 0.2 branch (spec 001 R25): these two rows compose on no surface until they are re-attached.
+    const detached = new Set<string>(['shortcuts', 'mount-anchors'])
     for (const id of BLUEPRINT_ROW_IDS) {
+      if (detached.has(id)) continue
       const probe = parseBlueprint({ id: 'probe', rows: [id], capabilities: ['authorization'] })
       const composed = (['tui', 'web', 'desktop'] as const).some(surface => composeBlueprintRows(probe, surface).packages.some(name => name !== 'dsh-client-ui-brand-acryl' && name !== 'acryl-brand'))
       expect(composed, id).toBe(true)

@@ -141,7 +141,7 @@ describe('CLI/TUI flavor booting a profile another surface already initialized (
     // Now boot the SAME on-disk profile directory through the CLI/TUI's own
     // generic --profile flavor. Before the fix, ACRYL's own tui-only
     // agent-roster insert collided with the row the web bundle already
-    // composed, throwing `duplicate loader entry id: agent-presets` at boot.
+    // composed, throwing `duplicate loader entry id: agent-preset-registry` at boot.
     const cliHost = await createAcrylEngineHost({
       engines: [createDshEngineDefinition('web')],
       initialEngine: 'dsh',
@@ -150,7 +150,7 @@ describe('CLI/TUI flavor booting a profile another surface already initialized (
       expect(cliHost.currentEngine()).toBe('dsh')
       expect(cliHost.ctx.get('sessions')).toBeDefined()
       const entries = [...cliHost.ctx.loader.entries()]
-      const agentPresetsRows = entries.filter(candidate => candidate.options.id === 'agent-presets')
+      const agentPresetsRows = entries.filter(candidate => candidate.options.id === 'agent-preset-registry')
       expect(agentPresetsRows).toHaveLength(1)
     } finally {
       await cliHost.dispose()

@@ -40,7 +40,7 @@ function createHarness() {
 
   const context = {
     logger: { error: vi.fn() },
-    settings: {
+    acrylSettings: {
       register: vi.fn(() => ({
         get: () => settings,
         update: async (patch: Record<string, unknown>) => { settings = { ...settings, ...patch } },

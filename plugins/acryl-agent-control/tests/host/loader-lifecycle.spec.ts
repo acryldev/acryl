@@ -21,6 +21,7 @@ type ToolHandle = { execute(args: unknown, ctx: { signal: AbortSignal }): Promis
 
 const PENDING = 0 as FiberState.PENDING
 const ACTIVE = 2 as FiberState.ACTIVE
+const DISPOSED = 4 as FiberState.DISPOSED
 
 let server: Server
 let port = 0
@@ -176,7 +177,9 @@ describe('acryl-agent-control through a real Loader', () => {
     await ctx.loader.await()
 
     await expect(call).rejects.toThrow(/unloaded/i)
-    expect(entryOf(ctx, entryId).fiber).toBeUndefined()
+    // Loader 1.0.5 keeps a disabled entry's disposed Fiber rather than clearing it.
+    const fiber = entryOf(ctx, entryId).fiber
+    expect(fiber === undefined || fiber.state === DISPOSED).toBe(true)
     ws.close()
   })
 

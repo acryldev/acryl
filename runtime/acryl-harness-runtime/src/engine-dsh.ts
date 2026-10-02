@@ -36,6 +36,7 @@ import {
   composeEntries,
   createRuntimeResolution,
   initProfile,
+  loadOverlayPatches,
   loadProfile,
   removeLinkProjections,
   mountRootInclude,
@@ -68,6 +69,23 @@ import { provideWebMarketPlugins } from './web-market-plugins.ts'
 const require = createRequire(import.meta.url)
 const dshInstallAnchor = require.resolve('@deepseek-ai/dsh/package.json')
 const profileRoot = '[]\n'
+
+/** The agent presets DSH 0.2 ships, in roster order. */
+const SHIPPED_PRESET_NAMES: readonly string[] = ['standard', 'ptc', 'minimal', 'cordis']
+
+/**
+ * The terminal's agent presets. DSH 0.2 declares each preset as a bundle patch of `dsh-web-app` (`presets/<name>.patch.yml`
+ * inserts a `preset-<name>` row) and has no terminal app bundle, so a terminal profile on `dsh-base` alone has an empty roster.
+ * ACRYL layers the same four files in, skipping any preset row the profile already composes (a Web-shaped profile booted by the CLI).
+ */
+function terminalPresetPatches(existingRowIds: ReadonlySet<string>): PatchOptions[] {
+  const presetsDir = join(dirname(require.resolve('@deepseek-ai/dsh-web-app/package.json')), 'presets')
+  return SHIPPED_PRESET_NAMES.flatMap(name => loadOverlayPatches('acryl', join(presetsDir, `${name}.patch.yml`)).flatMap((patch) => {
+    if (!('insert' in patch) || patch.insert === undefined) return [patch]
+    const insert = patch.insert.filter(row => row.id === undefined || !existingRowIds.has(row.id))
+    return insert.length === 0 ? [] : [{ ...patch, insert }]
+  }))
+}
 
 /** An already-resolved dsh composition: what one surface's own profile pipeline produced. */
 export interface DshEngineComposition {
@@ -365,6 +383,7 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
   const tuiCapabilityPackages = acrylCodingCapabilityPackages(new Set(['tui'] as const), new Set(blueprint.capabilities))
   for (const packageName of [...tuiCapabilityPackages, ...rowsComposition.packages]) materializeProfilePackage(profile.dir, packageName, import.meta.url)
   patches.push(...rowsComposition.patches)
+  patches.push(...terminalPresetPatches(existingRowIds))
   // The profile's own user overrides come from the shared store, not from this
   // surface: `acryl plugin disable` on a TUI writes the same file the Desktop
   // panel and the Web surface read, so the next boot of any of them composes

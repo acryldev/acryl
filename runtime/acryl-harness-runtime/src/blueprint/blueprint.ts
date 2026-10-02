@@ -57,7 +57,8 @@ export const BLANK_BLUEPRINT: Blueprint = freezeBlueprint({
   id: 'acryl.blank',
   name: 'Blank',
   description: 'The smallest working agent that can grow itself: chat, model choice, and the extension pack.',
-  capabilities: ['persona', 'agent-roster', 'session-stats', 'authorization'],
+  // `acryl-settings` is essential: surface plugins (Desktop's shell, notifications) keep their preferences there.
+  capabilities: ['persona', 'agent-roster', 'session-stats', 'authorization', 'acryl-settings'],
   rows: ['extension-context', 'system-prompt', 'ui-library', 'app-save'],
   brand: { kind: 'custom', identity: brandIdentity({ name: 'Blank', tagline: 'Ask for what you need. It builds it.', accent: '#3b6ef5', accentDark: '#7c9dff' }) },
   shell: 'compatibility',

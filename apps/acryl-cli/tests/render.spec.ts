@@ -36,7 +36,7 @@ function callResolver(callId: string, call: { name: string; arguments: string })
 /** A `tool/result` event fixture whose `message.source.callId` correlates back to its `tool/call`. */
 function resultEvent(callId: string, content: unknown[], isError: boolean): SessionEvent {
   return event('tool/result', {
-    message: { source: { kind: 'tool', callId }, content: [{ type: 'tool-result', content, isError }] },
+    message: { source: { kind: 'tool', callId }, content, isError },
   })
 }
 
@@ -73,32 +73,6 @@ describe('formatEvent — user/message', () => {
       { replay: false },
     )
     expect(line).toBeUndefined()
-  })
-
-  it('collapses a plugin-injected notice to a summary line', () => {
-    const line = formatEvent(
-      event('user/message', {
-        source: { kind: 'plugin', plugin: 'skill-loader', form: 'notice', summary: 'loaded 3 skills' },
-        content: [{ type: 'text', text: 'irrelevant, never shown' }],
-      }),
-      { replay: false },
-    )
-    expect(line).toContain('⊕ context ›')
-    expect(line).toContain('skill-loader')
-    expect(line).toContain('loaded 3 skills')
-    expect(line).not.toContain('irrelevant')
-  })
-
-  it('omits the summary for a plugin source with no notice form', () => {
-    const line = formatEvent(
-      event('user/message', {
-        source: { kind: 'plugin', plugin: 'agents-md', form: 'context' },
-        content: [{ type: 'text', text: 'irrelevant' }],
-      }),
-      { replay: false },
-    )
-    expect(line).toContain('agents-md')
-    expect(line).not.toContain('·')
   })
 
   it('falls back to a generic label for an unrecognized source kind', () => {
@@ -301,7 +275,7 @@ describe('formatEvent — tool/result', () => {
     const line = formatEvent(
       event('tool/result', {
         error: { code: 'E_TIMEOUT', name: 'ToolTimeoutError' },
-        message: { content: [{ type: 'tool-result', content: [{ type: 'text', text: 'ignored' }], isError: false }] },
+        message: { content: [{ type: 'text', text: 'ignored' }], isError: false },
       }),
       { replay: false },
     )
@@ -315,7 +289,7 @@ describe('formatEvent — tool/result', () => {
       event('tool/result', {
         message: {
           source: { kind: 'tool', callId: 'call-1' },
-          content: [{ type: 'tool-result', content: [{ type: 'text', text: 'permission denied' }], isError: true }],
+          content: [{ type: 'text', text: 'permission denied' }], isError: true,
         },
       }),
       { replay: false },
@@ -329,7 +303,7 @@ describe('formatEvent — tool/result', () => {
       event('tool/result', {
         message: {
           source: { kind: 'tool', callId: 'call-1' },
-          content: [{ type: 'tool-result', content: [{ type: 'text', text: 'ok' }], isError: false }],
+          content: [{ type: 'text', text: 'ok' }], isError: false,
         },
       }),
       { replay: false },
@@ -343,7 +317,7 @@ describe('formatEvent — tool/result', () => {
       event('tool/result', {
         message: {
           source: { kind: 'tool', callId: 'call-1' },
-          content: [{ type: 'tool-result', content: [], isError: false }],
+          content: [], isError: false,
         },
       }),
       { replay: false },
@@ -359,7 +333,7 @@ describe('formatEvent — tool/result', () => {
         error: { code: 'E_TIMEOUT', name: 'ToolTimeoutError' },
         message: {
           source: { kind: 'tool', callId: 'call-1' },
-          content: [{ type: 'tool-result', content: [], isError: false }],
+          content: [], isError: false,
         },
       }),
       {

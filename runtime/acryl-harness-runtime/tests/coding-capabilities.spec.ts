@@ -30,10 +30,10 @@ const SURFACES: readonly AcrylSurface[] = ['tui', 'web', 'desktop']
 const expectedComposition: Record<AcrylSurface, PatchShape> = {
   tui: {
     idRows: ['system-prompt'],
-    insertedIds: ['agent-presets', 'session-stats', 'authorization'],
+    insertedIds: ['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings'],
   },
-  web: { idRows: [], insertedIds: ['authorization', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control'] },
-  desktop: { idRows: [], insertedIds: ['authorization', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-agent-control'] },
+  web: { idRows: [], insertedIds: ['authorization', 'acryl-settings', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control'] },
+  desktop: { idRows: [], insertedIds: ['authorization', 'acryl-settings', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-agent-control'] },
 }
 
 function shapeOf(patches: readonly unknown[]): PatchShape {
@@ -82,22 +82,14 @@ describe('ACRYL_CODING_CAPABILITIES declarations', () => {
     expect(JSON.stringify(createAcrylCodingCapabilityPatches(new Set(['desktop'])))).not.toContain('system-prompt')
   })
 
-  it('points the agent roster at a preset directory that exists beside the pinned package', () => {
-    // The roster root used to be a source-checkout path
-    // (`deepseek-harness/packages/preset/agent-presets/presets`), which no
-    // packaged CLI ships: the row then composed with `roots: []` and
-    // `includeShippedRoot: false`, i.e. a roster with no presets at all.
+  it('declares the agent roster through the 0.2 preset registry with its default preset', () => {
+    // DETACHED root (spec 001 R25): `dsh-agent-presets` became `dsh-agent-preset-registry`, whose presets come from bundle patches rather
+    // than a `roots` list, so the TUI roster declares only the default until ACRYL's own roots are re-declared.
     const roster = ACRYL_CODING_CAPABILITIES.find(capability => capability.id === 'agent-roster')
     const inserted = roster?.loaderPatches.flatMap(patch => ('insert' in patch ? patch.insert ?? [] : [])) ?? []
-    const agentPresets = inserted.find(row => row.id === 'agent-presets')
-    const roots = (agentPresets?.config as { roots?: { path: string, trust: string }[] } | undefined)?.roots ?? []
-
-    expect(roots).toHaveLength(1)
-    expect(roots[0]?.trust).toBe('system')
-    const root = roots[0]?.path ?? ''
-    expect(root.endsWith('@deepseek-ai/dsh-agent-presets/presets')).toBe(true)
-    expect(existsSync(root)).toBe(true)
-    expect(existsSync(`${root}/standard/agent.cordis.yml`)).toBe(true)
+    const registry = inserted.find(row => row.id === 'agent-preset-registry')
+    expect(registry?.name).toBe('@deepseek-ai/dsh-agent-preset-registry')
+    expect(registry?.config).toEqual({ default: 'standard' })
   })
 })
 
@@ -127,11 +119,11 @@ describe('createAcrylCodingCapabilityPatches', () => {
 
   it('unions multiple requested surfaces without duplicating a row', () => {
     const both = shapeOf(createAcrylCodingCapabilityPatches(new Set(['web', 'desktop'])))
-    expect(both.insertedIds).toEqual(['authorization', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control'])
+    expect(both.insertedIds).toEqual(['authorization', 'acryl-settings', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control'])
 
     const all = shapeOf(createAcrylCodingCapabilityPatches(new Set(SURFACES)))
     expect(all.idRows).toEqual(['system-prompt'])
-    expect(all.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control'])
+    expect(all.insertedIds).toEqual(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control'])
   })
 
   it('composes nothing for a surface set no capability declares', () => {
@@ -146,19 +138,19 @@ describe('createAcrylCodingCapabilityPatches', () => {
     // the same row id a second time and throw `duplicate loader entry id` at
     // boot - the existingRowIds filter is what this test guards.
     const withoutExisting = shapeOf(createAcrylCodingCapabilityPatches(new Set(['tui'])))
-    expect(withoutExisting.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization'])
+    expect(withoutExisting.insertedIds).toEqual(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings'])
 
     const withExisting = shapeOf(
-      createAcrylCodingCapabilityPatches(new Set(['tui']), new Set(['agent-presets'])),
+      createAcrylCodingCapabilityPatches(new Set(['tui']), new Set(['agent-preset-registry'])),
     )
-    expect(withExisting.insertedIds).toEqual(['session-stats', 'authorization'])
+    expect(withExisting.insertedIds).toEqual(['session-stats', 'authorization', 'acryl-settings'])
   })
 
   it('drops every insert of a fully-provided capability, not just its first row', () => {
     const allProvided = shapeOf(
       createAcrylCodingCapabilityPatches(
         new Set(['tui']),
-        new Set(['agent-presets', 'session-stats', 'authorization']),
+        new Set(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings']),
       ),
     )
     expect(allProvided).toEqual({ idRows: ['system-prompt'], insertedIds: [] })
@@ -166,7 +158,7 @@ describe('createAcrylCodingCapabilityPatches', () => {
 
   it('still inserts a row existingRowIds does not name', () => {
     const patches = shapeOf(createAcrylCodingCapabilityPatches(new Set(['tui']), new Set(['some-other-row'])))
-    expect(patches.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization'])
+    expect(patches.insertedIds).toEqual(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings'])
   })
 
   it('returns fresh patches a caller may mutate without affecting the next surface', () => {
@@ -217,9 +209,9 @@ describe('the workspace and the ACRYL shell are shared by Web and Desktop (spec 
   })
 
   it('names the ACRYL packages each surface must make resolvable, the same on Web and Desktop', () => {
-    expect(acrylCodingCapabilityPackages(new Set(['web']))).toEqual(['acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control'])
-    expect(acrylCodingCapabilityPackages(new Set(['desktop']))).toEqual(['acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-agent-control'])
-    expect(acrylCodingCapabilityPackages(new Set(['tui']))).toEqual([])
+    expect(acrylCodingCapabilityPackages(new Set(['web']))).toEqual(['acryl-settings', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control'])
+    expect(acrylCodingCapabilityPackages(new Set(['desktop']))).toEqual(['acryl-settings', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-agent-control'])
+    expect(acrylCodingCapabilityPackages(new Set(['tui']))).toEqual(['acryl-settings'])
   })
 
   it('returns fresh objects each call so one surface cannot edit the next one\'s patches', () => {

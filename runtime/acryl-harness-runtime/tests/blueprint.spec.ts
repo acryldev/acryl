@@ -65,7 +65,8 @@ describe('what each Blueprint composes', () => {
 
   it('full ACRYL keeps today\'s web rows in mount order', () => {
     const { patches, packages } = composeBlueprintRows(IDE_BLUEPRINT, 'web')
-    expect(insertedIds(patches)).toEqual(['ui-acryl', 'community-market', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-shortcuts', 'acryl-mount-anchors'])
+    expect(insertedIds(patches)).toEqual(['ui-acryl', 'community-market', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save'])
+    // `shortcuts` and `mount-anchors` are DETACHED on the DSH 0.2 branch (spec 001 R25), so they compose nowhere for now.
     expect(packages).toContain('dsh-client-ui-brand-acryl')
   })
 
@@ -74,7 +75,7 @@ describe('what each Blueprint composes', () => {
     expect(insertedIds(patches)).toEqual(['brand', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save'])
     const capabilities = new Set(BLANK_BLUEPRINT.capabilities)
     const capabilityIds = insertedIds(createAcrylCodingCapabilityPatches(new Set(['web']), new Set(), capabilities))
-    expect(capabilityIds).toEqual(['authorization'])
+    expect(capabilityIds).toEqual(['authorization', 'acryl-settings'])
     expect(createAcrylShellCapabilityPatches(new Set(['web']), 'advanced', new Set(), capabilities)).toEqual([])
   })
 
@@ -83,7 +84,7 @@ describe('what each Blueprint composes', () => {
     expect(insertedIds(patches)).toEqual(['extension-context', 'acryl-system-prompt', 'acryl-app-save'])
     expect(packages).toContain('acryl-ui-tui')
     const tui = insertedIds(createAcrylCodingCapabilityPatches(new Set(['tui']), new Set(), new Set(BLANK_BLUEPRINT.capabilities)))
-    expect(tui).toEqual(['agent-presets', 'session-stats', 'authorization'])
+    expect(tui).toEqual(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings'])
   })
 
   it('a custom brand carries into the system prompt identity, and a row the profile already has is not composed twice', () => {

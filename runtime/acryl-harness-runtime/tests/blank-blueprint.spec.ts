@@ -83,7 +83,7 @@ describe('blank blueprint on the Web engine', () => {
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
     try {
-      expect(rowIds(host)).toEqual(expect.arrayContaining(['ui-acryl', 'community-market', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-shortcuts', 'acryl-mount-anchors']))
+      expect(rowIds(host)).toEqual(expect.arrayContaining(['ui-acryl', 'community-market', 'acryl-workspace', 'acryl-plugin-admin']))
     } finally {
       await host.dispose()
     }
@@ -97,7 +97,7 @@ describe('blank blueprint on the CLI engine', () => {
     const host = await createAcrylEngineHost({ engines: [createDshEngineDefinition('acryl-blank-test')], initialEngine: 'dsh' })
     try {
       const ids = rowIds(host)
-      expect(ids).toEqual(expect.arrayContaining(['extension-context', 'acryl-system-prompt', 'authorization', 'agent-presets']))
+      expect(ids).toEqual(expect.arrayContaining(['extension-context', 'acryl-system-prompt', 'authorization', 'agent-preset-registry']))
       expect(ids).not.toContain('brand')
       const assembly = await host.ctx.get('systemPrompt')!.assemble()
       expect(JSON.stringify(assembly.sections)).toContain('inside Blank')
