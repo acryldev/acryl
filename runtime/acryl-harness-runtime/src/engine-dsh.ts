@@ -524,11 +524,20 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   const requiredFrameworkPackages = extensionRequiredFrameworkPackages(join(instance.home, 'extensions'))
     .filter(name => !existingRowIds.has(name) && !rowsComposition.packages.includes(name))
   for (const packageName of requiredFrameworkPackages) materializeProfilePackage(profile.dir, packageName, installPackageUrl)
+  // A Blueprint that never enables the IDE's own `workspace` capability (every Blank-grown project) keeps the
+  // stock `ui-layout` row active, because `createAcrylShellCapabilityPatches`'s disabling patch is gated behind
+  // `ACRYL_CODING_CAPABILITIES`' own capability table, which a third-party extension cannot opt into - it is
+  // the IDE's, not a general extension mechanism. An extension that requires `acryl-app-shell` is claiming the
+  // advanced shell exactly the same way that capability does, so it needs the identical row toggle (measured
+  // live: without it, `acryl-app-shell`'s own layout service and the still-active stock one both try to
+  // register the `layout` service and the Loader throws "service \"layout\" has been registered").
+  const claimsAdvancedShell = requiredFrameworkPackages.includes('acryl-app-shell')
   const patches = structuredClone([
     ...profileLayerPatches,
     ...createAcrylCodingCapabilityPatches(webSurfaces, existingRowIds, capabilities),
     ...createAcrylShellCapabilityPatches(webSurfaces, 'advanced', existingRowIds, capabilities),
     ...requiredFrameworkPackages.map(name => ({ insert: [{ id: name, name }] })),
+    ...(claimsAdvancedShell ? [{ id: 'ui-layout', disabled: true }, { id: 'ui-sidebar', disabled: false }, { id: 'ui-conversation', disabled: false }] : []),
     ...profile.patches,
   ])
   // Brand swap: same technique and same row id as acryl-desktop's own

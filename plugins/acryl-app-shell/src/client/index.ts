@@ -5,7 +5,19 @@
  * the IDE (`plugins/acryl-workspace`) and a GTD, accounting or any other Blend's own main-surface plugin
  * all use exactly this, never a Host-served page of their own (see
  * `specs/036-cordis-ecosystem-and-acryl-blends/blend-instance-design.md` section 0 for why).
+ *
+ * This module is a library another plugin's own client code calls into (`applyAdvancedShell`), not a plugin
+ * in its own right - but the browser boot sequence (`deepseek-harness` `client/web`'s `runPluginBoot`)
+ * activates every row with a declared `dsh.client` bundle as its own Cordis plugin, same as the Host side
+ * already does for this package (`src/index.ts`'s own no-op `apply`). `apply`/`name` here are that same
+ * no-op, for the same reason: nothing for the browser to own by merely being present, no slot owned without
+ * a caller invoking `applyAdvancedShell` itself.
  */
+
+/** Stable Cordis plugin name, matching the Host side. */
+export const name = 'acryl-app-shell'
+/** No browser-side resources to acquire by merely registering this bundle. */
+export function apply(): void {}
 
 export { applyAdvancedShell, type AdvancedShellHooks } from './advanced-shell.ts'
 export { AdvancedFrame, type AdvancedFrameInjected, type AdvancedFrameProps } from './AdvancedFrame.tsx'

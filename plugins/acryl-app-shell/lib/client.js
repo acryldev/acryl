@@ -585,6 +585,27 @@ html:has([aria-modal="true"]) .dshDesktopSidebarSurface::before { -webkit-app-re
 			};
 		}
 		//#endregion
+		//#region src/client/index.ts
+		/**
+		* The generic three-column desktop/web app frame: sidebar column, main surface, resizable details column,
+		* platform title-bar spacing, theme presentation. One plugin claims it for its own UI (`applyAdvancedShell`),
+		* via the same `desktop.main`/`desktop.sidebar` slot contract regardless of which domain the caller is -
+		* the IDE (`plugins/acryl-workspace`) and a GTD, accounting or any other Blend's own main-surface plugin
+		* all use exactly this, never a Host-served page of their own (see
+		* `specs/036-cordis-ecosystem-and-acryl-blends/blend-instance-design.md` section 0 for why).
+		*
+		* This module is a library another plugin's own client code calls into (`applyAdvancedShell`), not a plugin
+		* in its own right - but the browser boot sequence (`deepseek-harness` `client/web`'s `runPluginBoot`)
+		* activates every row with a declared `dsh.client` bundle as its own Cordis plugin, same as the Host side
+		* already does for this package (`src/index.ts`'s own no-op `apply`). `apply`/`name` here are that same
+		* no-op, for the same reason: nothing for the browser to own by merely being present, no slot owned without
+		* a caller invoking `applyAdvancedShell` itself.
+		*/
+		/** Stable Cordis plugin name, matching the Host side. */
+		const name = "acryl-app-shell";
+		/** No browser-side resources to acquire by merely registering this bundle. */
+		function apply() {}
+		//#endregion
 		exports.AdvancedFrame = AdvancedFrame;
 		exports.DesktopLayoutState = DesktopLayoutState;
 		exports.DesktopThemePresenter = DesktopThemePresenter;
@@ -596,8 +617,10 @@ html:has([aria-modal="true"]) .dshDesktopSidebarSurface::before { -webkit-app-re
 		exports.WEB_SHELL_ENVIRONMENT = WEB_SHELL_ENVIRONMENT;
 		exports.WINDOWS_CAPTION_CONTROLS_WIDTH = WINDOWS_CAPTION_CONTROLS_WIDTH;
 		exports.WINDOWS_TITLEBAR_HEIGHT = WINDOWS_TITLEBAR_HEIGHT;
+		exports.apply = apply;
 		exports.applyAdvancedShell = applyAdvancedShell;
 		exports.installAdvancedStyles = installAdvancedStyles;
+		exports.name = name;
 		exports.provideDesktopLayout = provideDesktopLayout;
 		exports.resolveShellEnvironment = resolveShellEnvironment;
 		exports.solveFrame = solveFrame;
