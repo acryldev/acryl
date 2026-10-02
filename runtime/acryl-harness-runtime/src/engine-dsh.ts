@@ -118,10 +118,30 @@ export interface DshEngineComposition {
   readonly profileContext?: ProfileContext
 }
 
+/**
+ * ACRYL's own patches out of a composed list laid out as `[bundle layers..., ACRYL additions..., profile's own patches..., later ACRYL
+ * additions...]`. DSH 0.2's live configuration (`config-editor`, `hmr`) rebuilds the Loader from stock sources (bundle layers, the
+ * profile file, the home file) plus `ProfileContext.overlays`; ACRYL's capability rows, blueprint rows, presets and plugin-lifecycle
+ * toggles exist only in memory, so they must be handed over as overlays or the first edit would reload them away and be rolled back.
+ */
+function acrylAdditions(
+  patches: readonly PatchOptions[],
+  layout: { readonly layerPatches: number, readonly userPatches: number, readonly composedBeforeLater: number },
+): PatchOptions[] {
+  const userStart = layout.composedBeforeLater - layout.userPatches
+  return [...patches.slice(layout.layerPatches, userStart), ...patches.slice(layout.composedBeforeLater)]
+}
+
 /** The profile facts a launcher hands to DSH's live configuration (stock `dsh`: `profile-boot`, `runProfile`). */
 export function createProfileContext(
   profile: Profile,
-  options: { readonly installAnchor?: string, readonly home: string, readonly packageManager?: ProfileContext['packageManager'] },
+  options: {
+    readonly installAnchor?: string
+    readonly home: string
+    readonly packageManager?: ProfileContext['packageManager']
+    /** ACRYL's in-memory patches that a configuration reload must keep applying (see {@link acrylAdditions}). */
+    readonly overlays?: readonly PatchOptions[]
+  },
 ): ProfileContext {
   return {
     name: profile.name,
@@ -132,7 +152,7 @@ export function createProfileContext(
     cwd: process.cwd(),
     home: options.home,
     startedBundles: profile.layers.map(layer => layer.packageName),
-    overlays: [],
+    overlays: options.overlays ?? [],
     telemetryDisabledEnv: process.env.DSH_TELEMETRY_DISABLED,
   }
 }
@@ -158,8 +178,10 @@ function escapeHtml(text: string): string {
  * produced `rootConfig`/`patches`/`bareModuleBaseUrl`.
  */
 async function mountDshEngine(ctx: Context, composition: DshEngineComposition): Promise<void> {
-  // ACRYL activates and reloads plugins through Loader entries and `livePluginActivation`, never Cordis module HMR (which needs Node
-  // internals). DSH 0.2 enables the `hmr` row whenever a `profileContext` exists, so every composition switches it off here.
+  // DSH 0.2 enables the `hmr` row whenever a `profileContext` exists. It only watches the profile files for edits made outside the app
+  // (and needs Loader internals plus a launcher readiness signal); in-app edits (`config-editor`, Settings, Models) reconcile the Loader
+  // themselves. ACRYL activates and reloads plugins through Loader entries and `livePluginActivation`, so every composition switches it off.
+  // Left on, it also stalls engine disposal after a swap (its queued reload waits on a tree that is unloading).
   const patches: PatchOptions[] = [...composition.patches, { id: 'hmr', disabled: true }]
   // This assignment feeds mountRootInclude's own nested composition tree
   // (constructed below, from this ctx) - not the host root's own top-level
@@ -189,7 +211,9 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   // Owned by this engine's fiber (not the root), so an engine swap releases the interception with the profile it served.
   if (composition.runtimeResolution !== undefined) await ctx.plugin(PluginPackages, { resolution: composition.runtimeResolution })
   if (composition.profileContext !== undefined && ctx.root.get('profileContext' as never) === undefined) ctx.root.provide('profileContext', composition.profileContext)
-  const entry = await mountRootInclude(ctx, composition.rootConfig, patches, composition.bareModuleBaseUrl)
+  // The include is recorded under the context it is mounted on, and DSH's profile reload (`config-editor`, `hmr`) looks it up on the
+  // root context, so mount it there: a reload then finds "the root Include entry" and an edit can be applied and kept.
+  const entry = await mountRootInclude(ctx.root, composition.rootConfig, patches, composition.bareModuleBaseUrl)
   // mountRootInclude creates its Include row at the Loader's own top level -
   // it has no `parent` parameter and is not scoped to this plugin's own
   // fiber the way ctx.effect() resources are. Without this, an engine swap
@@ -200,7 +224,9 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
     ctx.effect(() => async () => {
       const fiber = entry.fiber
       ctx.loader.remove(entry.options.id)
-      await fiber?.dispose()
+      // On a swap the root stays up and the caller must see the profile gone; when the whole root is disposing, the include goes with it
+      // and waiting on it here would wait on the very disposal that is running this effect.
+      if (ctx.root.fiber.state === 2) await fiber?.dispose()
     })
   }
   // Do not call ctx.loader.await() here: this function is itself running as
@@ -376,6 +402,7 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
     ...createAcrylCodingCapabilityPatches(new Set(['tui']), existingRowIds, new Set(blueprint.capabilities)),
     ...profile.patches,
   ])
+  const composedBeforeLater = patches.length
   // The Blueprint's ACRYL-owned rows (extension pack, prompt shaping) and the terminal UI library (a plain library a
   // terminal plugin imports, so it is only made resolvable). Rows the profile's own bundle already composes are skipped
   // by `composeBlueprintRows` (a Desktop/Web-shaped profile booted through the CLI).
@@ -392,7 +419,7 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
     profileName,
     statePath: resolvePluginLifecycleStatePath(),
   }))
-  return { rootConfig, patches, surface: 'tui', instance, installPackageUrl: import.meta.url, runtimeResolution: await createProfileRuntimeResolution(profile), profileContext: createProfileContext(profile, { home: instance.dshHome }) }
+  return { rootConfig, patches, surface: 'tui', instance, installPackageUrl: import.meta.url, runtimeResolution: await createProfileRuntimeResolution(profile), profileContext: createProfileContext(profile, { home: instance.dshHome, overlays: acrylAdditions(patches, { layerPatches: profileLayerPatches.length, userPatches: profile.patches.length, composedBeforeLater }) }) }
 }
 
 /**
@@ -613,6 +640,7 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
     ...(claimsAdvancedShell ? [{ id: 'ui-layout', disabled: true }, { id: 'ui-sidebar', disabled: false }, { id: 'ui-conversation', disabled: false }] : []),
     ...profile.patches,
   ])
+  const composedBeforeLater = patches.length
   // Brand swap: same technique and same row id as acryl-desktop's own
   // (independent) brand swap in profile.ts - the stock DeepSeek Harness
   // identity (`@deepseek-ai/dsh-client-ui-brand-official`, already composed
@@ -661,7 +689,7 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
     profileName,
     statePath: resolvePluginLifecycleStatePath(),
   }))
-  return { rootConfig, patches, surface: 'web', instance, installPackageUrl, runtimeResolution: await createProfileRuntimeResolution(profile), profileContext: createProfileContext(profile, { home: instance.dshHome }), productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL' }
+  return { rootConfig, patches, surface: 'web', instance, installPackageUrl, runtimeResolution: await createProfileRuntimeResolution(profile), profileContext: createProfileContext(profile, { home: instance.dshHome, overlays: acrylAdditions(patches, { layerPatches: profileLayerPatches.length, userPatches: profile.patches.length, composedBeforeLater }) }), productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL' }
 }
 
 /**
