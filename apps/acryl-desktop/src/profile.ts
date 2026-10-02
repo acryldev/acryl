@@ -12,6 +12,7 @@ import {
   loadOverlayPatches,
   PROFILE_PATCH_FILENAME,
   PROFILE_TEMPLATES,
+  bundlePatchPaths,
   readProfileManifest,
   removeLinkProjections,
   resolveProfileDir,
@@ -389,18 +390,20 @@ function loadRecoveryFilteredProfile(
         || (bundleManifest as { name?: unknown }).name !== DESKTOP_MARKET_IDENTITIES.dshMarket.packageName)) {
         throw new Error(`${BIN_NAME}: selected dshmarket bundle has an invalid package identity`)
       }
-      const declared = bundleManifest !== null && typeof bundleManifest === 'object'
-        ? (bundleManifest as { dsh?: { bundle?: { patch?: unknown } } }).dsh?.bundle?.patch
+      const bundle = bundleManifest !== null && typeof bundleManifest === 'object'
+        ? (bundleManifest as { dsh?: { bundle?: Parameters<typeof bundlePatchPaths>[1] } }).dsh?.bundle
         : undefined
-      if (typeof declared !== 'string' || declared.length === 0) {
+      if (bundle === undefined) {
         throw new Error(`${BIN_NAME}: profile bundle ${JSON.stringify(packageName)} declares no dsh.bundle in its package.json`)
       }
-      const patchPath = join(packageDir, declared)
+      // A bundle declares one patch file or an ordered list (DSH 0.2: dsh-web-app ships its presets as extra files); the
+      // layer keeps every file's patches concatenated in application order, exactly like upstream's own `loadProfile`.
+      const patchPaths = bundlePatchPaths(packageDir, bundle)
       layers.push({
         packageName,
         packageDir,
-        patchPaths: [patchPath],
-        patches: loadOverlayPatches(BIN_NAME, patchPath),
+        patchPaths,
+        patches: patchPaths.flatMap(patchPath => loadOverlayPatches(BIN_NAME, patchPath)),
       })
     } catch (cause) {
       if (!isDshMarket) throw cause
@@ -686,7 +689,6 @@ export function prepareDesktopProfile(
   const bundlePatches: PatchOptions[] = []
   const desktopOverlayPatches: PatchOptions[] = []
   const capabilities = new Set(blueprint.capabilities)
-  const sharedDesktopPatches = createAcrylCodingCapabilityPatches(new Set(['desktop']), new Set(), capabilities)
   let dshMarketPatches: PatchOptions[] | undefined
   let desktopLayerInserted = false
   const providerAwareDisabledBundles = new Set(disabledBundles)
@@ -706,6 +708,12 @@ export function prepareDesktopProfile(
   if (!desktopLayerInserted) {
     throw new Error(`${BIN_NAME}: desktop profile is missing @deepseek-ai/dsh-web-app`)
   }
+  // Rows the bundles already compose (DSH 0.2's dsh-base now carries `authorization`) must not be inserted a second time.
+  const sharedDesktopPatches = createAcrylCodingCapabilityPatches(
+    new Set(['desktop']),
+    new Set(composeEntries([bundlePatches]).flatMap(row => (typeof row.id === 'string' ? [row.id] : []))),
+    capabilities,
+  )
 
   const loadedHomePatches = loadOptionalPatches(BIN_NAME, join(home, PROFILE_PATCH_FILENAME)) ?? []
   const { patches: homePatches, skipped: skippedOptionalEntries } = omitUnresolvedOptionalEntries(

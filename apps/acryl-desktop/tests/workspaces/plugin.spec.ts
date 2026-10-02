@@ -125,7 +125,7 @@ function createHarness(platform: DesktopRuntime['platform'] = 'darwin'): PluginH
       }),
     },
     connection: { authenticatedUrl: vi.fn((url: string) => url) },
-    settings,
+    acrylSettings: settings,
     logger: { warn: vi.fn(), error: vi.fn() },
     get: vi.fn((key: unknown) => String(key) === 'desktopRuntime' ? runtime : () => {}),
     effect: vi.fn((register: () => unknown) => register()),
@@ -137,7 +137,7 @@ function createHarness(platform: DesktopRuntime['platform'] = 'darwin'): PluginH
       if (names.every(name => (ctx as unknown as Record<string, unknown>)[name] !== undefined)) callback(ctx)
     }),
     on: vi.fn((event: string, listener: (namespace: unknown, next: unknown) => void) => {
-      if (event === 'settings/updated') settingsUpdated.add(listener)
+      if (event === 'acrylSettings/updated') settingsUpdated.add(listener)
       return () => { settingsUpdated.delete(listener) }
     }),
   } as unknown as Context
@@ -182,7 +182,7 @@ describe('desktop Host plugin', () => {
     const registerRoute = vi.fn()
     const ctx = {
       webServer: { host: '127.0.0.1', port: 43120, register: registerRoute },
-      settings: {
+      acrylSettings: {
         register: vi.fn(),
         get: vi.fn(() => undefined),
         watch: vi.fn(() => () => {}),
@@ -198,7 +198,7 @@ describe('desktop Host plugin', () => {
 
     expect(stderr).toHaveBeenCalledWith(expect.stringContaining('desktop launcher'))
     expect(registerRoute).not.toHaveBeenCalled()
-    expect(vi.mocked(ctx.settings.register)).not.toHaveBeenCalled()
+    expect(vi.mocked(ctx.acrylSettings.register)).not.toHaveBeenCalled()
     stderr.mockRestore()
   })
 
@@ -242,9 +242,9 @@ describe('desktop Host plugin', () => {
 
     apply(harness.ctx, config)
 
-    expect(inject).toContain('settings')
+    expect(inject).toContain('acrylSettings')
     expect(inject).toContain('loader')
-    const register = vi.mocked(harness.ctx.settings.register)
+    const register = vi.mocked(harness.ctx.acrylSettings.register)
     expect(register.mock.calls[0]?.[2]).toEqual(expect.objectContaining({ applies: 'restart' }))
     expect(register.mock.calls[0]?.[2]).not.toHaveProperty('base')
     expect(loaderAwait).not.toHaveBeenCalled()
@@ -471,7 +471,7 @@ describe('desktop Host plugin', () => {
   it('refuses advanced settings on Linux before persistence', () => {
     const harness = createHarness('linux')
     apply(harness.ctx, config)
-    const register = vi.mocked(harness.ctx.settings.register)
+    const register = vi.mocked(harness.ctx.acrylSettings.register)
     const options = register.mock.calls[0]?.[2]
 
     expect(() => options?.validate?.({ mode: 'advanced' })).toThrow(
