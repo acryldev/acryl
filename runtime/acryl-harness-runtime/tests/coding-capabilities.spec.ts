@@ -217,9 +217,9 @@ describe('the workspace and the ACRYL shell are shared by Web and Desktop (spec 
   })
 
   it('names the ACRYL packages each surface must make resolvable, the same on Web and Desktop', () => {
-    expect(acrylCodingCapabilityPackages(new Set(['web']))).toEqual(['acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control'])
-    expect(acrylCodingCapabilityPackages(new Set(['desktop']))).toEqual(['acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-agent-control'])
-    expect(acrylCodingCapabilityPackages(new Set(['tui']))).toEqual([])
+    expect(acrylCodingCapabilityPackages(new Set(['web']))).toEqual(['acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'acryl-control', 'acryl-agent-devin'])
+    expect(acrylCodingCapabilityPackages(new Set(['desktop']))).toEqual(['acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-agent-control', 'acryl-control', 'acryl-agent-devin'])
+    expect(acrylCodingCapabilityPackages(new Set(['tui']))).toEqual(['acryl-control', 'acryl-agent-devin'])
   })
 
   it('returns fresh objects each call so one surface cannot edit the next one\'s patches', () => {

@@ -198,6 +198,11 @@ export async function bootAcrylHarnessProfile(
   const profile = loadProfile('acryl', options.profile, dshInstallAnchor)
   const rootConfig = join(profile.dir, 'cordis.yml')
   writeFileSync(rootConfig, profileRoot)
+  // Capability rows name ACRYL-owned workspace packages outside @deepseek-ai/dsh's dependency closure (the
+  // agent-control plane composes here too); make them resolvable from this profile before the Loader applies them.
+  for (const packageName of acrylCodingCapabilityPackages(new Set(['tui']))) {
+    materializeProfilePackage(profile.dir, packageName, import.meta.url)
+  }
   const patches = structuredClone([
     ...profile.layers.flatMap(layer => layer.patches),
     ...createAcrylCodingCapabilityPatches(new Set(['tui'])),

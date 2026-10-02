@@ -182,6 +182,8 @@
               # command), then acryl-cli (which depends on all three;
               # renamed from acryl-tui upstream).
               pnpm --filter acryl-control run build
+              pnpm --filter @webboxes/blends-core run build
+              pnpm --filter @webboxes/app-persistence run build
               pnpm --filter acryl-harness-runtime run build
               pnpm --filter acryl-agent-devin run build
               pnpm --filter dsh-community-market run build
@@ -245,6 +247,8 @@
               # Build the full dependency chain for the desktop app.
               # Order matters: each package imports types from its deps.
               pnpm --filter acryl-control run build
+              pnpm --filter @webboxes/blends-core run build
+              pnpm --filter @webboxes/app-persistence run build
               pnpm --filter acryl-harness-runtime run build
               pnpm --filter acryl-agent-devin run build
               pnpm --filter dsh-community-market run build
