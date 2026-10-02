@@ -173,7 +173,6 @@
     "ResizablePanel",
     "ResizablePanelGroup",
     "ScrollArea",
-    "SecretField",
     "SelectPill",
     "Separator",
     "Sheet",
@@ -228,8 +227,7 @@
     "ToolCallCard",
     "useComboboxAnchor",
     "useDirection",
-    "useSidebar",
-    "ValueField"
+    "useSidebar"
   ],
   "groups": [
     {
@@ -279,8 +277,10 @@
         "footerAction",
         "headerAction",
         "roles",
+        "SecretField",
         "settingsSection",
-        "sidebarTab"
+        "sidebarTab",
+        "ValueField"
       ]
     }
   ]

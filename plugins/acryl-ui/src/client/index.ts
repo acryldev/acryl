@@ -6,7 +6,7 @@
  */
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-client-ui-theme'
-import { ValueField, SecretField, type FieldProps } from './registry/fields/fields.tsx'
+import { SettingsValueField as ValueField, SettingsSecretField as SecretField, type SettingsFieldProps as FieldProps } from './registry/fields/fields.tsx'
 import { AppearanceCubes, type CubeOption } from './registry/AppearanceCubes/AppearanceCubes.tsx'
 import type { SettingsRowProps } from './registry/SettingsRow/SettingsRow.tsx'
 import { SelectPill, type SelectOption } from './registry/SelectPill/SelectPill.tsx'
