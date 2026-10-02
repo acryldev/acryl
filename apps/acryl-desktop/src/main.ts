@@ -851,7 +851,7 @@ async function start(): Promise<void> {
         // DSH 0.2 answers every bare-package import of the profile from this table (see `DshEngineComposition`).
         runtimeResolution: await createProfileRuntimeResolution(prepared.profile, desktopInstallAnchor()),
         // Enables upstream's live configuration (config-editor, settings, plugin manager); see `DshEngineComposition.profileContext`.
-        profileContext: createProfileContext(prepared.profile, { installAnchor: desktopInstallAnchor(), home: prepared.homeDir }),
+        profileContext: createProfileContext(prepared.profile, { installAnchor: desktopInstallAnchor(), home: prepared.homeDir, overlays: prepared.acrylPatches }),
       })],
       initialEngine: 'dsh',
       prepare: async (hostCtx) => {

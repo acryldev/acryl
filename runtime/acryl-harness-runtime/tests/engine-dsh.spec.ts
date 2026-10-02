@@ -255,3 +255,48 @@ describe('the composition-based dsh engine entry point (for a surface with its o
       .toThrow('ACRYL dsh engine surface must not be empty')
   })
 })
+
+describe('live configuration and engine reactivation on the web engine (spec 001 R26/R27)', () => {
+  async function mountWeb() {
+    await freshDshHome()
+    const installPackageUrl = new URL('../package.json', import.meta.url).href
+    return await createAcrylEngineHost({
+      engines: [createWebEngineDefinition(installPackageUrl), { id: 'other', plugin: () => {} }],
+      initialEngine: 'dsh',
+      prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+    })
+  }
+
+  it('applies a Settings write from the first attempt and keeps ACRYL\'s own rows through the reload it triggers', async () => {
+    const host = await mountWeb()
+    try {
+      const settings = host.ctx.get('settings')
+      expect(settings).toBeDefined()
+      const rowsBefore = [...host.ctx.loader.entries()].length
+      // The first-run acknowledgement is the first write a user makes; it used to fail once (the reload re-enabled HMR) and succeed only on a retry.
+      await settings?.mutate('ui-settings-general', [{ op: 'set', path: ['welcomeNoticeVersion'], value: '2026-09-28.1' }])
+      expect(settings?.describe().find(row => row.ns === 'ui-settings-general')?.value).toMatchObject({ welcomeNoticeVersion: '2026-09-28.1' })
+      // ACRYL's in-memory rows came back after the reload instead of being dropped, and module HMR stayed off.
+      expect(host.ctx.get('acrylSettings')).toBeDefined()
+      expect([...host.ctx.loader.entries()].length).toBe(rowsBefore)
+      const hmr = [...host.ctx.loader.entries()].find(entry => entry.options.id === 'hmr')
+      expect(hmr?.disabled).toBe(true)
+    } finally {
+      await host.dispose()
+    }
+  }, 60_000)
+
+  it('swaps away and back and then disposes without hanging', async () => {
+    const host = await mountWeb()
+    await host.select('other')
+    expect(host.ctx.get('sessions')).toBeUndefined()
+    await host.select('dsh')
+    expect(host.ctx.get('sessions')).toBeDefined()
+    const outcome = await Promise.race([
+      host.dispose().then(() => 'disposed'),
+      new Promise<string>(resolve => setTimeout(() => { resolve('hung') }, 20_000)),
+    ])
+    expect(outcome).toBe('disposed')
+  }, 60_000)
+})
+

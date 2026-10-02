@@ -132,6 +132,9 @@ function acrylAdditions(
   return [...patches.slice(layout.layerPatches, userStart), ...patches.slice(layout.composedBeforeLater)]
 }
 
+/** Module HMR is never wanted (see `mountDshEngine`); it has to be part of every reload as well as of the first mount. */
+const HMR_OFF: PatchOptions = { id: 'hmr', disabled: true }
+
 /** The profile facts a launcher hands to DSH's live configuration (stock `dsh`: `profile-boot`, `runProfile`). */
 export function createProfileContext(
   profile: Profile,
@@ -152,7 +155,7 @@ export function createProfileContext(
     cwd: process.cwd(),
     home: options.home,
     startedBundles: profile.layers.map(layer => layer.packageName),
-    overlays: options.overlays ?? [],
+    overlays: [...(options.overlays ?? []), HMR_OFF],
     telemetryDisabledEnv: process.env.DSH_TELEMETRY_DISABLED,
   }
 }
@@ -182,7 +185,7 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   // (and needs Loader internals plus a launcher readiness signal); in-app edits (`config-editor`, Settings, Models) reconcile the Loader
   // themselves. ACRYL activates and reloads plugins through Loader entries and `livePluginActivation`, so every composition switches it off.
   // Left on, it also stalls engine disposal after a swap (its queued reload waits on a tree that is unloading).
-  const patches: PatchOptions[] = [...composition.patches, { id: 'hmr', disabled: true }]
+  const patches: PatchOptions[] = [...composition.patches, HMR_OFF]
   // This assignment feeds mountRootInclude's own nested composition tree
   // (constructed below, from this ctx) - not the host root's own top-level
   // tree, whose baseUrl is a one-time snapshot taken when `createAcrylEngineHost`

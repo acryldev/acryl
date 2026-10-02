@@ -235,6 +235,12 @@ export interface PreparedDesktopProfile {
    * Never rejects: a failed repair surfaces as the boot's own resolution error.
    */
   moduleFallback: Promise<void>
+  /**
+   * The patches ACRYL adds on top of the profile's own layers (Desktop shell rows, shared capabilities, Blueprint rows, shell and platform
+   * toggles, plugin-lifecycle state). They exist only in memory, so DSH's live configuration is handed them as `ProfileContext.overlays`
+   * and re-applies them on every reload instead of rolling an edit back.
+   */
+  acrylPatches: readonly PatchOptions[]
 }
 
 /** Optional observations emitted before profile preparation can fail. */
@@ -768,6 +774,7 @@ export function prepareDesktopProfile(
     ...filteredProfile.patches,
     ...filteredHome.patches,
   ]
+  const initialPatchCount = patches.length
   const composedRows = composeEntries([patches])
   assertUniqueEntryIds(composedRows)
   assertEffectiveMarketRows(composedRows, effectiveMarket)
@@ -994,6 +1001,12 @@ export function prepareDesktopProfile(
     rootConfig,
     bareModuleBaseUrl,
     patches: structuredClone(patches),
+    acrylPatches: structuredClone([
+      ...sharedDesktopPatches,
+      ...desktopOverlayPatches,
+      ...providerPatches,
+      ...patches.slice(initialPatchCount),
+    ]),
     skippedOptionalEntries,
     mode,
     port,
