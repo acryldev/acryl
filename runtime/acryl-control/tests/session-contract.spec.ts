@@ -22,6 +22,37 @@ describe('parseAcrylSessionSnapshot', () => {
     })
   })
 
+  it('accepts an optional provider binding and validates it when present', () => {
+    const provider = {
+      providerId: 'acp',
+      workerId: 'worker-1',
+      runtimeId: 'runtime-1',
+      providerSessionRef: 'acp-session-1',
+      status: 'idle',
+    }
+    expect(parseAcrylSessionSnapshot({
+      profile: 'acryl',
+      generationId: 'generation-1',
+      attachment: 'owner',
+      sessionId: 'worker-1',
+      agentStatus: 'idle',
+      transcript: [],
+      tools: [],
+      provider,
+    })).toMatchObject({ provider })
+
+    expect(() => parseAcrylSessionSnapshot({
+      profile: 'acryl',
+      generationId: 'generation-1',
+      attachment: 'owner',
+      sessionId: 'worker-1',
+      agentStatus: 'idle',
+      transcript: [],
+      tools: [],
+      provider: { ...provider, status: 'bogus' },
+    })).toThrow('invalid ACRYL provider status')
+  })
+
   it('rejects malformed external snapshot values', () => {
     expect(() => parseAcrylSessionSnapshot({
       profile: 'acryl',

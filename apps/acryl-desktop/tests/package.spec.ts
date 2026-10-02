@@ -82,10 +82,10 @@ describe('published package surface', () => {
     const filtersOf = (script: unknown): string[] => [...(typeof script === 'string' ? script : '').matchAll(/pnpm --filter (\S+) run/g)].map(match => match[1] ?? '')
     const typecheck = filtersOf(workspaceManifest.scripts?.typecheck)
     const test = filtersOf(workspaceManifest.scripts?.test)
-    for (const owned of ['acryl-control', 'acryl-harness-runtime', 'acryl-loopback-http', 'acryl-diagnostics', 'acryl-cli', 'acryl-web', 'acryl-desktop', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'dsh-client-ui-brand-acryl', 'cordis-plugin-market']) {
+    for (const owned of ['acryl-control', 'acryl-agent-devin', 'acryl-harness-runtime', 'acryl-loopback-http', 'acryl-diagnostics', 'acryl-cli', 'acryl-web', 'acryl-desktop', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'dsh-client-ui-brand-acryl', 'cordis-plugin-market']) {
       expect(typecheck, `typecheck runs ${owned}`).toContain(owned)
     }
-    for (const owned of ['acryl-control', 'acryl-harness-runtime', 'acryl-loopback-http', 'acryl-diagnostics', 'acryl-cli', 'acryl-web', 'acryl-desktop', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'acryl-extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-ui-tui']) {
+    for (const owned of ['acryl-control', 'acryl-agent-devin', 'acryl-harness-runtime', 'acryl-loopback-http', 'acryl-diagnostics', 'acryl-cli', 'acryl-web', 'acryl-desktop', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'acryl-extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-ui-tui']) {
       expect(test, `test runs ${owned}`).toContain(owned)
     }
     expect(new Set(typecheck).size, 'no package is typechecked twice').toBe(typecheck.length)

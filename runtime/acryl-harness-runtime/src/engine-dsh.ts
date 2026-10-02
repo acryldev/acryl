@@ -308,8 +308,12 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
   ])
   // The Blueprint's ACRYL-owned rows (extension pack, prompt shaping) and the terminal UI library (a plain library a
   // terminal plugin imports, so it is only made resolvable). Rows the profile's own bundle already composes are skipped
-  // by `composeBlueprintRows` (a Desktop/Web-shaped profile booted through the CLI).
-  for (const packageName of rowsComposition.packages) materializeProfilePackage(profile.dir, packageName, import.meta.url)
+  // by `composeBlueprintRows` (a Desktop/Web-shaped profile booted through the CLI). Capability packages come first:
+  // `acryl-agent-devin` composes disabled but is materialized up front so enabling it later never requires
+  // re-materializing the profile.
+  for (const packageName of [...acrylCodingCapabilityPackages(new Set(['tui']), new Set(blueprint.capabilities)), ...rowsComposition.packages]) {
+    materializeProfilePackage(profile.dir, packageName, import.meta.url)
+  }
   patches.push(...rowsComposition.patches)
   // The profile's own user overrides come from the shared store, not from this
   // surface: `acryl plugin disable` on a TUI writes the same file the Desktop
