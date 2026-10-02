@@ -1,3 +1,45 @@
+## 2026-10-02 - 036: acryl-app-shell actually boots now; GTD board renders end to end
+
+Commit: `5708568`.
+
+Picked up directly from the prior entry's T025a blocker. Reproduced the exact failure in under a minute with a
+synthetic extension (`/tmp/acryl-isolate-test`, `acryl.blank` plus a two-line test plugin declaring
+`dsh.requiresAcrylPackages: ["acryl-app-shell"]`) - no GTD code involved at all, proving the bug was never
+GTD-specific or Blank-specific, just "any composition that actually activates `acryl-app-shell` outside the
+IDE's own fixed capability table." Reading the browser's own console (not the server log - the error renders
+client-side, `deepseek-harness` client/web's `boot.ts` catches it with `console.error`, never written to stdout)
+showed the real stack: `runPluginBoot`, the browser's OWN Cordis plugin boot, not the Host Loader at all. Two
+real bugs, stacked:
+
+- **Every row with a declared `dsh.client` bundle is activated as its own Cordis plugin in the browser** -
+  `runPluginBoot` iterates every row in `manifest.plugins`, no exceptions, no opt-out. `acryl-app-shell`'s
+  client entry (`src/client/index.ts`) was a pure utility library - `applyAdvancedShell`, `AdvancedFrame`,
+  `resolveShellEnvironment`, meant only to be `require()`'d from inside another plugin's own client code, never
+  activated on its own. It had no top-level `apply`/`name`, so the moment it became a real Loader row (T025a's
+  own fix, to get its bundle served at all) the browser's generic plugin-boot step rejected it: `invalid
+  plugin, expect function or object with an "apply" method, received object`. **This also broke the real IDE
+  apps** - confirmed directly: booted an isolated `acryl.ide` test instance in a real browser before this fix
+  (same error) and after it (clean, full IDE chrome renders). The "headless boot smoke clean" claim in the two
+  entries above this one was never false on its own terms, but it never meant what it sounded like - that smoke
+  never renders an actual page, so it could not have caught this. Fixed by giving the client entry the same
+  trivial no-op `apply`/`name` its Host entry (`src/index.ts`) already had - inert, costs nothing, the real work
+  still only happens when a caller invokes `applyAdvancedShell` itself.
+- **The stock `ui-layout` row only gets disabled for Blueprints that enable the IDE's own `workspace`
+  capability** (`createAcrylShellCapabilityPatches` is gated behind `ACRYL_CODING_CAPABILITIES`, a fixed table
+  that belongs to the IDE, not a mechanism a third-party extension can opt into). A Blank-grown extension
+  requiring `acryl-app-shell` is claiming the advanced shell the exact same way that capability does, so with
+  the first bug fixed, a second one surfaced immediately: both the stock `@deepseek-ai/dsh-client-ui-layout`
+  and `acryl-app-shell`'s own layout service tried to register the same `layout` service, and the Loader threw
+  `service "layout" has been registered`. Fixed in `resolveWebEngineComposition`: requiring `acryl-app-shell`
+  now also pushes the identical `{id: 'ui-layout', disabled: true}` patch the `workspace` capability's own
+  `advanced-shell` row already uses, reusing the proven toggle rather than inventing a new one.
+- **Verified end to end, in a real browser, not just text assertions:** GTD's board renders (List, Board,
+  Calendar, Projects tabs, bucket counts); dispatched a real capture through the DOM input, watched it round
+  trip through the actual `/api/acryl-gtd/capture` route and the item (`#1 Buy milk`) appear in Inbox with its
+  own triage buttons. `acryl-app-shell` 22/22, `acryl-harness-runtime` 204/204 (2 pre-existing skips),
+  `acryl-desktop` headless boot smoke exit 0, both typecheck clean.
+- T025 and T025a both marked done in `tasks.md`.
+
 ## 2026-10-01 (later still) - 036: acryl-app-shell was never actually a Loader row; GTD rebuild found it live
 
 Commits: `2b059b7` (the row fix), `004676c` (the new extension-dependency mechanism).

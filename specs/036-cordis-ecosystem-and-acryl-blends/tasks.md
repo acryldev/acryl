@@ -60,14 +60,19 @@ Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository
       slot claim, three-column frame, layout/theme/chrome) any domain plugin claims for its own UI, the same way `acryl-workspace` claims it for the IDE
       - built and wired into both apps 2026-10-01 (`blend-instance-design.md` section 0a). Tests: `acryl-app-shell` 22/22, `acryl-workspace` 646/646,
       `acryl-agent-control` 112/112, both apps typecheck clean, headless boot smoke (`verify:loader`) clean
-- [ ] T025 Rebuild `acryl-gtd` on `acryl-app-shell`: its board (buckets, triage, kanban, calendar) as a real `desktop.main` registration, not a Host
+- [x] T025 Rebuild `acryl-gtd` on `acryl-app-shell`: its board (buckets, triage, kanban, calendar) as a real `desktop.main` registration, not a Host
       route - the concrete proof section 0a's pattern holds for something other than the IDE. Both existing implementations (the public registry one and
-      a second independent rebuild) are route-based and need replacing, not extending. 2026-10-01: `client.js` itself is written and API-correct (its own
-      repo, `02-application-gtd-planner`, not this one); blocked on T025a
-- [ ] T025a `acryl-app-shell` fails to activate in the GTD Blueprint's own (Blank-grown) composition specifically: `invalid plugin, expect function or
-      object with an "apply" method, received object` under group `@deepseek-ai/dsh-client-ui-layout`, identical whether inserted as a dynamic
-      `livePluginActivation.activate()` row or a static `cordis.yml` patch (ruling out `bundleGroup()`'s own heuristic, confirmed fragile but not the
-      cause here) - the same static-row insertion is clean in both real apps' own headless boot smoke (`acryl-desktop`'s `verify:loader` exit 0). Root
-      cause traces into vendored Cordis plugin resolution (`deepseek-harness/vendor/cordis/src/registry.ts`), not edited this session. Next: reproduce
-      isolated from the IDE apps' own much larger composition - what does Blank's own `web` profile omit or add that changes this. See
-      `docs/DEVELOPMENT-LOG.md`, 2026-10-01, for the full trail (what was tried, what was ruled out, why)
+      a second independent rebuild) are route-based and need replacing, not extending. Done 2026-10-02 (its own repo, `02-application-gtd-planner`):
+      verified live in a real browser - List/Board/Calendar/Projects render, capture round-trips through the real JSON API and updates the UI. Was
+      blocked on T025a, now fixed
+- [x] T025a `acryl-app-shell` failed to activate in any non-IDE composition: two real bugs, both now fixed and verified live. (1) Every row with a
+      declared `dsh.client` bundle is activated as its own Cordis plugin in the browser (`runPluginBoot` iterates every manifest row, no exceptions) -
+      `acryl-app-shell`'s client entry was a pure utility library with no own `apply`/`name` (it was only ever meant to be `require()`'d from another
+      plugin's client code), so the browser's own plugin-boot sequence rejected it the moment it became a real row. This also broke the real IDE apps,
+      confirmed by reproducing against an isolated `acryl.ide` test before the fix and clean after it - the earlier "headless boot smoke clean" never
+      caught it because that smoke never renders a page. Fixed by giving the client entry the same trivial no-op apply/name its Host entry already had.
+      (2) The stock `ui-layout` row only gets disabled for Blueprints that enable the IDE's own `workspace` capability - a Blank-grown extension
+      claiming the advanced shell via `acryl-app-shell` had no way to get that same row disabled, so both the stock layout service and
+      `acryl-app-shell`'s own tried to register `layout` and the Loader threw. Fixed in `resolveWebEngineComposition`: an extension requiring
+      `acryl-app-shell` now also gets the same `ui-layout: disabled` patch the `workspace` capability already uses. See `docs/DEVELOPMENT-LOG.md`,
+      2026-10-02, for the full trail
