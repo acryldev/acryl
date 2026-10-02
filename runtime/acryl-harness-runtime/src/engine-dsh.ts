@@ -157,7 +157,13 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   // fiber the way ctx.effect() resources are. Without this, an engine swap
   // away from `dsh` would leave the whole profile tree mounted forever.
   if (entry !== undefined) {
-    ctx.effect(() => () => { void ctx.loader.remove(entry.options.id) })
+    // Loader 1.0.5's `remove` starts the row's disposal without waiting for it, so wait for the include's fiber here:
+    // a swap away from `dsh` must not return while the profile's services are still registered.
+    ctx.effect(() => async () => {
+      const fiber = entry.fiber
+      ctx.loader.remove(entry.options.id)
+      await fiber?.dispose()
+    })
   }
   // Do not call ctx.loader.await() here: this function is itself running as
   // part of one Loader entry's activation, and awaiting the same loader from

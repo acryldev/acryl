@@ -13,7 +13,6 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import {
   DEFAULT_PROFILE_BUNDLES,
-  healProfilesModuleFallback,
   initProfile,
   loadProfile,
   resolveProfileDir,
@@ -24,6 +23,7 @@ import {
   createDshEngineDefinition,
   createDshEngineDefinitionFromComposition,
   createWebEngineDefinition,
+  createProfileRuntimeResolution,
 } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 
@@ -227,14 +227,19 @@ describe('the composition-based dsh engine entry point (for a surface with its o
     await freshDshHome()
     const profileDirectory = resolveProfileDir('acryl-test')
     initProfile(profileDirectory, DEFAULT_PROFILE_BUNDLES)
-    await healProfilesModuleFallback({ installAnchor: dshInstallAnchor })
     const profile = loadProfile('acryl', 'acryl-test', dshInstallAnchor)
     const rootConfig = join(profile.dir, 'cordis.yml')
     writeFileSync(rootConfig, '[]\n')
     const patches = structuredClone([...profile.layers.flatMap(layer => layer.patches), ...profile.patches])
 
     const host = await createAcrylEngineHost({
-      engines: [createDshEngineDefinitionFromComposition({ rootConfig, patches, surface: 'desktop' })],
+      engines: [createDshEngineDefinitionFromComposition({
+        rootConfig,
+        patches,
+        surface: 'desktop',
+        // DSH 0.2 answers bare-package imports from the profile's package table, which a surface with its own pipeline supplies.
+        runtimeResolution: await createProfileRuntimeResolution(profile),
+      })],
       initialEngine: 'dsh',
     })
     try {
