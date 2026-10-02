@@ -78,7 +78,9 @@ const AGENT_PRESETS_ROW_ID = 'agent-preset-registry'
 const UPSTREAM_AGENT_PRESETS_PACKAGE = '@deepseek-ai/dsh-agent-preset-registry'
 const DESKTOP_WINDOWS_AGENT_PRESETS_ROW_ID = 'desktop-windows-agent-presets'
 const DESKTOP_WINDOWS_AGENT_PRESETS_PACKAGE = 'acryl-desktop/windows-agent-presets'
-const DEFAULT_DESKTOP_SHELL_MODE: DesktopShellMode = 'advanced'
+// DETACHED default on the DSH 0.2 branch (spec 001 R25): the advanced frame is not composed, so Desktop starts on the stock frame.
+// Restore `'advanced'` (here, in `src/index.ts` and in `cordis.patch.yml`) together with the `advanced-shell` capability.
+const DEFAULT_DESKTOP_SHELL_MODE: DesktopShellMode = 'compatibility'
 const DEFAULT_DESKTOP_PORT = DESKTOP_DEFAULT_WEB_PORT
 const DESKTOP_WEB_SERVER_ROW_ID = 'desktop-webserver'
 const DESKTOP_WEB_SERVER_PACKAGE = 'acryl-desktop/webserver'
