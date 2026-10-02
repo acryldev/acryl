@@ -322,7 +322,8 @@ presentation only.
 
 **Purpose:** decide what to adapt from upstream DeepSeek Harness's own Desktop (research R16) and move ACRYL to the latest harness in an isolated branch, without touching `main`'s running state.
 
-- [ ] T032 Create a separate worktree and branch for the harness update (not `main`), with its own isolated ACRYL home.
+- [x] T032 Create a separate worktree and branch for the harness update (not `main`), with its own isolated ACRYL home.
+  - Delivered 2026-10-02: branch `harness-latest-2026-10`, worktree `../acryl.worktrees/harness-latest-2026-10`, created from `main` at `9813939`. No ACRYL process has been run from it, so no home is touched yet.
   - Why: the update touches the submodule pin, lockfile and patches; `main` has another session working and a running dev app.
   - Depends on: none.
   - Acceptance: a branch and worktree exist; no file under `main`'s checkout or `~/.acryl*` homes is changed by running it.
@@ -330,6 +331,7 @@ presentation only.
   - Why: R15 found about half of ACRYL's version-pinned patches fail across a bump; the pin is now 4,381 commits behind upstream `master`.
   - Depends on: T032, T025 (patch strategy decision; a dry-run report can be produced before it).
   - Acceptance: a written report in this spec's `research.md`; no merge to `main`.
+  - Partly delivered 2026-10-02 (report in `research.md` R17): submodule checked out at upstream `dsh-v0.2.0-rc.2` in the worktree (uncommitted), patch dry-run done, npm availability of all 213 pinned packages checked. Typecheck and API-change list not done: six pinned packages no longer exist upstream (R17), which needs a decision first.
 - [ ] T034 Decide the patch strategy (T025) using the T033 report.
   - Depends on: T033. Acceptance: decision recorded.
 - [ ] T035 Re-port failing patches and bump the runtime family on the branch (completes T026 for the new target version), then run the full gate.

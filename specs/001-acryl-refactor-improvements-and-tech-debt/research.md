@@ -291,3 +291,35 @@ pnpm patches regenerated per bump, (3) maintain a fork; and sequencing — now v
 **What is worth adapting regardless of Electron** (candidate ideas, no code changed): staged install with health check and rollback, a single signed update unit, a real update feed, state ownership with a single-instance lock, and no exposed port. The port-less transport is the one with the largest ACRYL cost (risk 1).
 
 **Consequences for tasks:** T032 to T038 below. These do not replace T025 to T027; the harness bump must land first or together.
+
+## Finding R17 - dry run of moving to upstream `dsh-v0.2.0-rc.2` (T033, partial)
+
+**Date:** 2026-10-02. **Where:** branch `harness-latest-2026-10`, worktree `../acryl.worktrees/harness-latest-2026-10`, submodule checked out at `639ed01` (tag `dsh-v0.2.0-rc.2`, 2026-09-29, version `0.2.0-rc.2`, npm dist-tag `latest`). Nothing was installed, built or committed on the branch; no ACRYL process was started.
+
+**Size of the jump:** from `0.1.5-alpha.1` (pin `5dda764`, 2026-09-08), 6,269 files changed in `apps`, `packages` and `vendor`. ACRYL references the old version in 40 non-lockfile files and about 3,560 lockfile lines, and pins 213 distinct `@deepseek-ai/*` packages to it.
+
+**Patches** (`patch --dry-run -p1` against the published `0.2.0-rc.2` tarballs). Five of six apply; this replaces the R15 picture, where `dsh-llm-deepseek`, `dsh-client-ui-trajectory` and `dsh-sandbox-windows-acl` no longer have patches.
+
+| Patch | Result |
+|---|---|
+| `dsh-app-boot`, `dsh-client-ui-settings-models`, `dsh-client-ui-workspace`, `dsh-web-app`, `dsh-win32-process` | apply |
+| `dsh-client-ui-directory-picker-browse` | **fails**: 1 of 11 hunks in `lib/client.js`; the other two files apply |
+| `pi-ai`, `pi-tui`, `app-builder-lib`, `dshmarket`, `node-pty` | unrelated to the harness bump, not tested |
+
+The dry run shows a patch applies textually, not that it still behaves correctly.
+
+**Blocker: six pinned packages have no `0.2.0-rc.2` release and are gone from upstream's package tree.** Of 213 pinned names, 207 exist at the new version.
+
+| Missing package | Where ACRYL uses it | Upstream replacement |
+|---|---|---|
+| `dsh-agent-presets` | `apps/acryl-desktop/src/profile.ts`, `src/windows/windows-agent-presets.ts`, `runtime/acryl-harness-runtime/src/coding-capabilities.ts`, runtime and web manifests, tests | Not confirmed. New tree has `dsh-agent-preset` and `dsh-agent-preset-registry` (separate packages) |
+| `dsh-settings-file` | `apps/acryl-desktop/src/profile.ts`, runtime, cli, market tests | Not confirmed. New tree has `dsh-settings` |
+| `dsh-code-runtime`, `dsh-code-runtime-worker-thread` | runtime, desktop and web manifests | Not found in the new tree |
+| `dsh-workflow-worker-thread` | runtime, cli, desktop and web manifests | Not confirmed. New tree has `dsh-workflow`, `dsh-workflow-ptc`, `dsh-tool-workflow` |
+| `dsh-client-ui-sidebar-textpreview` | desktop and web manifests | Not confirmed. New tree has `dsh-client-ui-sidebar-documentpreview` |
+
+The "replacement" column is inferred from names only. These are Loader row names and package dependencies in ACRYL's profile composition, so each needs its upstream change read before any edit. No upstream rename note was found.
+
+**Not checked:** typecheck against the new APIs, the Host-side API changes ACRYL touches, a boot of the web or desktop host on the new version, and the 4,381-commit history for breaking-change notes.
+
+**Consequence:** T034 (patch strategy) is now a smaller decision (one patch to re-port), but T035 depends on first mapping the six removed packages. Suggested order: read the upstream package READMEs and Agent Notes for the six, write the mapping here, then bump manifests and the lockfile.
