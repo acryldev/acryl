@@ -33,7 +33,8 @@ const ROWS: readonly RowDeclaration[] = [
   // upstream UI plugins inject by package name, so a second provider of the same service fails the client boot. Re-attach as a
   // layer over the upstream service (key rebinding persisted through `acrylSettings`), then restore the surfaces.
   { id: 'shortcuts', surfaces: [], rowId: 'acryl-shortcuts', packageName: 'acryl-shortcuts' },
-  { id: 'mount-anchors', surfaces: ['web', 'desktop'], rowId: 'acryl-mount-anchors', packageName: 'acryl-mount-anchors' },
+  // DETACHED with `shortcuts` (R25): its toggle registers through the ACRYL shortcuts API that 0.2's own service replaced.
+  { id: 'mount-anchors', surfaces: [], rowId: 'acryl-mount-anchors', packageName: 'acryl-mount-anchors' },
 ]
 
 /** The terminal library is a differently named package than the browser one. */
