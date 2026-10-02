@@ -17,6 +17,6 @@ export interface AdvancedFrameInjected {
     wrapRightbar?: (content: ReactNode) => ReactNode;
 }
 /** Full advanced root slot props. */
-export type AdvancedFrameProps = PropsRuntime<'root'> & PropsRenderSlots<'desktop.main' | 'desktop.sidebar' | 'sidebar' | 'conversation' | 'rightbar' | 'shell.overlay'> & AdvancedFrameInjected;
+export type AdvancedFrameProps = PropsRuntime<'root'> & PropsRenderSlots<'desktop.main' | 'desktop.sidebar' | 'sidebar' | 'main' | 'rightbar' | 'shell.overlay' | 'shell.leading'> & AdvancedFrameInjected;
 /** Desktop-owned transparent frame around the unchanged product surfaces. */
-export declare function AdvancedFrame({ layout, platform, wrapMain, wrapRightbar, renderSlot, SessionProvider }: AdvancedFrameProps): import("react").JSX.Element;
+export declare function AdvancedFrame({ layout, platform, wrapMain, wrapRightbar, renderSlot }: AdvancedFrameProps): import("react").JSX.Element;

@@ -200,12 +200,10 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
   {
     // Rows toggled so the ACRYL shell owns the frame: the stock layout off, the sidebar and conversation on.
     // The rows exist in the shared `dsh-web-app` bundle both surfaces build on.
-    // DETACHED on the DSH 0.2 branch (spec 001 R25): this patch turns off upstream's `ui-layout`, and `acryl-app-shell` then provides its
-    // own `DesktopLayoutService`. 0.2's `ui-sidebar-right` and friends are written against its `ILayout`, so with the stock layout off
-    // they fail to initialize ("Failed to load plugins"). Re-attach by implementing `ILayout` (or contributing to it) from the app
-    // shell instead of replacing it, then restore the surfaces to `['desktop', 'web']`.
+    // Re-attached on the DSH 0.2 branch (spec 001 R25): `acryl-app-shell`'s layout state now implements 0.2's whole `ILayout`
+    // (panelInfo, selectPanel, beginNavigation) and renders upstream's keyed `main` panels, so upstream's sidebars work on it.
     id: 'advanced-shell',
-    surfaces: [],
+    surfaces: ['desktop', 'web'],
     shellMode: 'advanced',
     loaderPatches: [
       { id: 'ui-layout', disabled: true },

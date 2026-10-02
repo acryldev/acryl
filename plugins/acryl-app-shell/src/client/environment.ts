@@ -17,10 +17,7 @@ export interface ShellEnvironment {
 }
 
 /** What a page without Electron's markers renders. */
-// DETACHED on the DSH 0.2 branch (spec 001 R25): the advanced frame replaces upstream's `layout` service, which 0.2's own sidebars depend on, so
-// the Host does not compose it (`advanced-shell` capability) and a page without desktop markers stays on the stock frame. Restore
-// `'advanced'` together with that capability once the shell contributes to `ILayout` instead of replacing it.
-export const WEB_SHELL_ENVIRONMENT: ShellEnvironment = Object.freeze({ mode: 'compatibility', platform: 'web' })
+export const WEB_SHELL_ENVIRONMENT: ShellEnvironment = Object.freeze({ mode: 'advanced', platform: 'web' })
 
 const MODES = new Set<ShellMode>(['compatibility', 'advanced'])
 const DESKTOP_PLATFORMS = new Set<ShellPlatform>(['darwin', 'win32', 'linux'])

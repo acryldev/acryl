@@ -13,6 +13,7 @@ import { owningWorktree } from './sidebar-model.ts'
 import { FolderChooserUnavailableError } from './web-folder-picker.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { openMainSession } from '../sessions/main-session.ts'
+import { findSettingsTrigger } from '../settings/open-settings.ts'
 
 export type ProjectAction =
   | { readonly ok: true; /** A hint to show the user, when the action continues elsewhere. */ readonly note?: string }
@@ -331,7 +332,7 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     openSettings() {
       // Settings keeps its open state inside a component, with no service to call. As the Cmd+, shortcut
       // does (see acryl-shortcuts), activate its real trigger: the one dialog button with no aria-label.
-      const trigger = document.querySelector<HTMLButtonElement>('button[aria-haspopup="dialog"][aria-expanded]:not([aria-label])')
+      const trigger = findSettingsTrigger(document)
       if (trigger === null) return fail('Settings is not available in this window.')
       trigger.click()
       return { ok: true }

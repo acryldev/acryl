@@ -7,6 +7,8 @@
  * fullscreen)` and `closeRightbar()`. Diverging from that protocol leaves the right sidebar with no
  * way to open.
  */
+import type { ILayout, MainPanelId, PanelInfo } from '@deepseek-ai/dsh-client-ui-layout/client';
+import type { HostObservable } from '@deepseek-ai/dsh-client-ui-slots';
 export interface DesktopLayoutSnapshot {
     /** Sidebar width preference in px; 0 means collapsed to the rail. */
     sidebar: number;
@@ -69,10 +71,23 @@ export interface FrameSolution {
  * would have if docked (reported to it) and one for the columns actually laid out.
  */
 export declare function solveFrame(viewport: number, panels: DesktopLayoutSnapshot, railWidth: number): FrameSolution;
-export declare class DesktopLayoutState {
+/**
+ * ACRYL's frame state. It is the layout service of the page in advanced mode, so it implements DSH 0.2's whole `ILayout`: besides the
+ * panel transitions it reports which keyed `main` panel (settings, plugin manager, ...) is open (`panelInfo`/`selectPanel`) and hands
+ * out navigation abort signals (`beginNavigation`), which upstream's sidebars and session views call.
+ */
+export declare class DesktopLayoutState implements ILayout {
     private snapshot;
     private readonly listeners;
     private viewport;
+    private panel;
+    private readonly panelListeners;
+    private navigation;
+    /** Which keyed `main` panel is open; `null` means the ACRYL main surface (the canvas, or the conversation). */
+    readonly panelInfo: HostObservable<PanelInfo>;
+    selectPanel(panelId: MainPanelId | null): void;
+    /** Cancels the previous navigation and returns the signal of the new one. */
+    beginNavigation(): AbortSignal;
     getSnapshot(): DesktopLayoutSnapshot;
     subscribe(listener: () => void): () => void;
     /** Report the frame width, which the default and the limits of the right panel depend on. */

@@ -1425,7 +1425,7 @@ importers:
         version: 2.1.1
       electron:
         specifier: 43.0.0
-        version: 43.0.0
+        version: 43.0.0(supports-color@7.2.0)
       electron-builder:
         specifier: 26.15.7
         version: 26.15.7(electron-builder-squirrel-windows@26.15.7)
@@ -2125,6 +2125,9 @@ importers:
       '@deepseek-ai/cordis':
         specifier: 4.0.4
         version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@deepseek-ai/dsh-client-ui-layout':
+        specifier: 0.2.0-rc.2
+        version: 0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)
       '@deepseek-ai/dsh-client-ui-renderer':
         specifier: 0.2.0-rc.2
         version: 0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)
@@ -14619,7 +14622,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@electron/get@5.1.0':
+  '@electron/get@5.1.0(supports-color@7.2.0)':
     dependencies:
       debug: 4.4.3(supports-color@7.2.0)
       env-paths: 3.0.0
@@ -16418,10 +16421,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  electron@43.0.0:
+  electron@43.0.0(supports-color@7.2.0):
     dependencies:
       '@electron-internal/extract-zip': 1.0.5
-      '@electron/get': 5.1.0
+      '@electron/get': 5.1.0(supports-color@7.2.0)
       '@types/node': 24.13.3
     transitivePeerDependencies:
       - supports-color

@@ -38,6 +38,7 @@ export {
 export {
   createDshEngineDefinition,
   createDshEngineDefinitionFromComposition,
+  createProfileContext,
   createProfileRuntimeResolution,
   createWebEngineDefinition,
   extensionRequiredFrameworkPackages,

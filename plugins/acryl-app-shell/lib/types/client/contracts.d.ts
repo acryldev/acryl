@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { ILayout } from '@deepseek-ai/dsh-client-ui-layout/client';
 /** Main-surface interface offered by the desktop advanced frame. */
 export interface DesktopMainOwnerProps {
     /** Render the upstream conversation inside a workspace contribution. */
@@ -28,28 +29,19 @@ export interface DesktopRightbarOwnerProps {
     /** Whether the docked presentation fits; when it does not, the panel closes or goes fullscreen. */
     canShow: boolean;
 }
-/** Public panel transitions consumed by conversation and sidebar plugins. Mirrors upstream `ILayout`. */
-export interface DesktopLayoutService {
-    /** Toggle the sidebar between wide and compact presentation. */
-    toggleSidebar(): void;
-    /** The right panel is open: dock it in its own column (`track`), or let it cover the window. */
-    openRightbar(track: boolean, fullscreen: boolean): void;
-    /** The right panel is closed. */
-    closeRightbar(): void;
+/**
+ * The layout service in advanced mode. It is DSH 0.2's `ILayout` (upstream declares `Context.layout`); the two compatibility names
+ * remain for ACRYL's own callers.
+ */
+export interface DesktopLayoutService extends ILayout {
     /** Compatibility: open the right panel docked. */
     openDetails(): void;
     /** Compatibility: close the right panel. */
     closeDetails(): void;
 }
-declare module '@deepseek-ai/cordis' {
-    interface Context {
-        /** Desktop-owned layout service in advanced mode. */
-        layout: DesktopLayoutService;
-    }
-}
 declare module '@deepseek-ai/dsh-client-ui-slots' {
     interface SlotMap {
-        /** Replaceable main surface inside the desktop advanced frame. */
+        /** Replaceable main surface inside the desktop advanced frame (shown while no keyed upstream `main` panel is open). */
         'desktop.main': {
             kind: 'single';
             scope: 'root';
@@ -60,29 +52,6 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
             kind: 'single';
             scope: 'root';
             owner: DesktopSidebarSurfaceOwnerProps;
-        };
-        /** Upstream sidebar hosted by the desktop advanced frame. */
-        'sidebar': {
-            kind: 'single';
-            scope: 'root';
-            owner: DesktopSidebarOwnerProps;
-        };
-        /** Unchanged upstream conversation surface. */
-        'conversation': {
-            kind: 'single';
-            scope: 'session-maybe';
-            owner: Record<never, never>;
-        };
-        /** The right panel, hosted like upstream DSH's `rightbar`: the right sidebar registers here. */
-        'rightbar': {
-            kind: 'single';
-            scope: 'session';
-            owner: DesktopRightbarOwnerProps;
-        };
-        /** Frame-wide additive overlays. */
-        'shell.overlay': {
-            kind: 'list';
-            scope: 'root';
         };
     }
 }

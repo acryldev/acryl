@@ -29,7 +29,6 @@ import { basename, dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
-import { evaluate, isJsExpr } from '@deepseek-ai/cordis-plugin-loader'
 import {
   DEFAULT_PROFILE_BUNDLES,
   PROFILE_TEMPLATES,
@@ -42,6 +41,7 @@ import {
   mountRootInclude,
   resolveProfileDir,
   type Profile,
+  type ProfileContext,
   type RuntimeResolution,
 } from '@deepseek-ai/dsh-app-boot'
 import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
@@ -92,6 +92,31 @@ export interface DshEngineComposition {
    * ACRYL-owned package has been materialized into the profile.
    */
   readonly runtimeResolution?: RuntimeResolution
+  /**
+   * The profile facts DSH 0.2 reads for live configuration. `config-editor`, `settings` (the Models page, where credentials are
+   * entered) and the plugin manager are only enabled while a `profileContext` exists, exactly as stock `dsh` provides one.
+   * Never named `desktop`: that name would also switch on upstream's product telemetry rows.
+   */
+  readonly profileContext?: ProfileContext
+}
+
+/** The profile facts a launcher hands to DSH's live configuration (stock `dsh`: `profile-boot`, `runProfile`). */
+export function createProfileContext(
+  profile: Profile,
+  options: { readonly installAnchor?: string, readonly home: string, readonly packageManager?: ProfileContext['packageManager'] },
+): ProfileContext {
+  return {
+    name: profile.name,
+    ...(options.packageManager === undefined ? {} : { packageManager: options.packageManager }),
+    dir: profile.dir,
+    patchPath: profile.patchPath,
+    installAnchor: options.installAnchor ?? dshInstallAnchor,
+    cwd: process.cwd(),
+    home: options.home,
+    startedBundles: profile.layers.map(layer => layer.packageName),
+    overlays: [],
+    telemetryDisabledEnv: process.env.DSH_TELEMETRY_DISABLED,
+  }
 }
 
 /**
@@ -115,15 +140,9 @@ function escapeHtml(text: string): string {
  * produced `rootConfig`/`patches`/`bareModuleBaseUrl`.
  */
 async function mountDshEngine(ctx: Context, composition: DshEngineComposition): Promise<void> {
-  const hmr = composeEntries([[...composition.patches]]).find(entry => entry.id === 'hmr')
-  // DSH 0.2 gates the row with `!!js "!ctx.get('profileContext')"`, not a literal `true`: evaluate it against this host's own context
-  // (ACRYL never provides a `profileContext`, so HMR is off and no internals are required).
-  const hmrDisabled = hmr === undefined || (isJsExpr(hmr.disabled) ? Boolean(evaluate({ ctx }, hmr.disabled.__jsExpr)) : hmr.disabled === true)
-  if (!hmrDisabled && !process.execArgv.includes('--expose-internals')) {
-    throw new Error(
-      'ACRYL profile enables Cordis HMR and must be launched with Node --expose-internals',
-    )
-  }
+  // ACRYL activates and reloads plugins through Loader entries and `livePluginActivation`, never Cordis module HMR (which needs Node
+  // internals). DSH 0.2 enables the `hmr` row whenever a `profileContext` exists, so every composition switches it off here.
+  const patches: PatchOptions[] = [...composition.patches, { id: 'hmr', disabled: true }]
   // This assignment feeds mountRootInclude's own nested composition tree
   // (constructed below, from this ctx) - not the host root's own top-level
   // tree, whose baseUrl is a one-time snapshot taken when `createAcrylEngineHost`
@@ -151,7 +170,8 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   }
   // Owned by this engine's fiber (not the root), so an engine swap releases the interception with the profile it served.
   if (composition.runtimeResolution !== undefined) await ctx.plugin(PluginPackages, { resolution: composition.runtimeResolution })
-  const entry = await mountRootInclude(ctx, composition.rootConfig, composition.patches, composition.bareModuleBaseUrl)
+  if (composition.profileContext !== undefined && ctx.root.get('profileContext' as never) === undefined) ctx.root.provide('profileContext', composition.profileContext)
+  const entry = await mountRootInclude(ctx, composition.rootConfig, patches, composition.bareModuleBaseUrl)
   // mountRootInclude creates its Include row at the Loader's own top level -
   // it has no `parent` parameter and is not scoped to this plugin's own
   // fiber the way ctx.effect() resources are. Without this, an engine swap
@@ -353,7 +373,7 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
     profileName,
     statePath: resolvePluginLifecycleStatePath(),
   }))
-  return { rootConfig, patches, surface: 'tui', instance, installPackageUrl: import.meta.url, runtimeResolution: await createProfileRuntimeResolution(profile) }
+  return { rootConfig, patches, surface: 'tui', instance, installPackageUrl: import.meta.url, runtimeResolution: await createProfileRuntimeResolution(profile), profileContext: createProfileContext(profile, { home: instance.dshHome }) }
 }
 
 /**
@@ -622,7 +642,7 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
     profileName,
     statePath: resolvePluginLifecycleStatePath(),
   }))
-  return { rootConfig, patches, surface: 'web', instance, installPackageUrl, runtimeResolution: await createProfileRuntimeResolution(profile), productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL' }
+  return { rootConfig, patches, surface: 'web', instance, installPackageUrl, runtimeResolution: await createProfileRuntimeResolution(profile), profileContext: createProfileContext(profile, { home: instance.dshHome }), productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL' }
 }
 
 /**

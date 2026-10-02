@@ -18,6 +18,7 @@ import { DSH_LAUNCH_ENVIRONMENT_KEY } from '@deepseek-ai/dsh-launch-environment'
 import {
   createAcrylEngineHost,
   createDshEngineDefinitionFromComposition,
+  createProfileContext,
   createProfileRuntimeResolution,
   selectInstance,
   resolvePluginLifecycleStatePath,
@@ -849,6 +850,8 @@ async function start(): Promise<void> {
         installPackageUrl: pathToFileURL(desktopInstallAnchor()).href,
         // DSH 0.2 answers every bare-package import of the profile from this table (see `DshEngineComposition`).
         runtimeResolution: await createProfileRuntimeResolution(prepared.profile, desktopInstallAnchor()),
+        // Enables upstream's live configuration (config-editor, settings, plugin manager); see `DshEngineComposition.profileContext`.
+        profileContext: createProfileContext(prepared.profile, { installAnchor: desktopInstallAnchor(), home: prepared.homeDir }),
       })],
       initialEngine: 'dsh',
       prepare: async (hostCtx) => {

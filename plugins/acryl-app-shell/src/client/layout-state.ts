@@ -8,6 +8,9 @@
  * way to open.
  */
 
+import type { ILayout, MainPanelId, PanelInfo } from '@deepseek-ai/dsh-client-ui-layout/client'
+import type { HostObservable } from '@deepseek-ai/dsh-client-ui-slots'
+
 export interface DesktopLayoutSnapshot {
   /** Sidebar width preference in px; 0 means collapsed to the rail. */
   sidebar: number
@@ -106,7 +109,12 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, Math.round(value)))
 }
 
-export class DesktopLayoutState {
+/**
+ * ACRYL's frame state. It is the layout service of the page in advanced mode, so it implements DSH 0.2's whole `ILayout`: besides the
+ * panel transitions it reports which keyed `main` panel (settings, plugin manager, ...) is open (`panelInfo`/`selectPanel`) and hands
+ * out navigation abort signals (`beginNavigation`), which upstream's sidebars and session views call.
+ */
+export class DesktopLayoutState implements ILayout {
   private snapshot: DesktopLayoutSnapshot = Object.freeze({
     sidebar: SIDEBAR_DEFAULT,
     details: 0,
@@ -118,6 +126,31 @@ export class DesktopLayoutState {
   })
   private readonly listeners = new Set<() => void>()
   private viewport = 0
+  private panel: PanelInfo = Object.freeze({ activePanelId: null })
+  private readonly panelListeners = new Set<() => void>()
+  private navigation: AbortController | undefined
+
+  /** Which keyed `main` panel is open; `null` means the ACRYL main surface (the canvas, or the conversation). */
+  readonly panelInfo: HostObservable<PanelInfo> = {
+    getSnapshot: () => this.panel,
+    subscribe: (listener) => {
+      this.panelListeners.add(listener)
+      return () => { this.panelListeners.delete(listener) }
+    },
+  }
+
+  selectPanel(panelId: MainPanelId | null): void {
+    if (this.panel.activePanelId === panelId) return
+    this.panel = Object.freeze({ activePanelId: panelId })
+    for (const listener of this.panelListeners) listener()
+  }
+
+  /** Cancels the previous navigation and returns the signal of the new one. */
+  beginNavigation(): AbortSignal {
+    this.navigation?.abort()
+    this.navigation = new AbortController()
+    return this.navigation.signal
+  }
 
   getSnapshot(): DesktopLayoutSnapshot {
     return this.snapshot
