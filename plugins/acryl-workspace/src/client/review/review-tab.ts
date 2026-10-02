@@ -25,6 +25,7 @@ export function reviewTabPlugin(shell: WorkspaceShellState, review: ReviewStore)
           priority: 'builtin',
           title: () => 'Review',
           guide: [{
+            id: REVIEW_ID,
             order: 30,
             title: () => 'Review',
             description: () => 'Line comments sent to the agent, with resolve tracking',

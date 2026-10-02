@@ -43,13 +43,13 @@
   "main": "./index.js",
   "dependencies": {
     "@webboxes/blends-core": "workspace:*",
-    "@deepseek-ai/dsh-tools": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
     "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "4.0.2",
-    "@deepseek-ai/dsh-llm": "0.1.5-alpha.1",
-    "@deepseek-ai/schemastery": "^3.18.1",
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
+    "@deepseek-ai/schemastery": "~3.18.4",
     "@earendil-works/pi-tui": "0.84.2",
     "acryl-ui-tui": "workspace:*"
   }

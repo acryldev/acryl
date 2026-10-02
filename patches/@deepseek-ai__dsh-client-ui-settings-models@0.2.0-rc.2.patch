@@ -1,8 +1,8 @@
 diff --git a/lib/client.js b/lib/client.js
-index a87322abe9bd8a4efaa05ad2c846f6c95ee57d50..a342781dec056ecfcd3c5b378b330f203ffe360a 100644
+index c5252c1..8e8ee0e 100644
 --- a/lib/client.js
 +++ b/lib/client.js
-@@ -1572,6 +1572,8 @@ window.__ModuleLoader__.load({
+@@ -1655,6 +1655,8 @@ window.__ModuleLoader__.load({
  			*/
  			const curatedFields = (family) => {
  				const ownsIdentity = family === "pi-ai" && props.declared === true;
@@ -11,9 +11,9 @@ index a87322abe9bd8a4efaa05ad2c846f6c95ee57d50..a342781dec056ecfcd3c5b378b330f20
  				const customModels = schema.getPath(draft, ["models"]);
  				const modelsOverridden = schema.hasPath(draft, ["models"]);
  				const models = modelDrafts(modelsOverridden ? customModels : inheritedModels());
-@@ -1660,7 +1662,7 @@ window.__ModuleLoader__.load({
- 									}
- 								})]
+@@ -1758,7 +1760,7 @@ window.__ModuleLoader__.load({
+ 									}) : null
+ 								]
  							}),
 -							ownsIdentity ? (0, react_jsx_runtime.jsxs)("div", {
 +							canCustomizeApi ? (0, react_jsx_runtime.jsxs)("div", {

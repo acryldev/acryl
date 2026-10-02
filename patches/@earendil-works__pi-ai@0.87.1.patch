@@ -1,5 +1,5 @@
 diff --git a/dist/auth/oauth/oauth-page.js b/dist/auth/oauth/oauth-page.js
-index 101153587266e9ef2e7864f8aab9b5fd485a6aa1..e50193e2987cb9e07722c7a8ed0882f28a2cb36a 100644
+index 1011535..e50193e 100644
 --- a/dist/auth/oauth/oauth-page.js
 +++ b/dist/auth/oauth/oauth-page.js
 @@ -1,4 +1,4 @@

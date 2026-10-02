@@ -33,9 +33,9 @@ import {
   DEFAULT_PROFILE_BUNDLES,
   PROFILE_TEMPLATES,
   composeEntries,
-  healProfilesModuleFallback,
   initProfile,
   loadProfile,
+  removeLinkProjections,
   mountRootInclude,
   resolveProfileDir,
 } from '@deepseek-ai/dsh-app-boot'
@@ -285,7 +285,7 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
   process.env.ACRYL_PROFILE = profileName
   const profileDirectory = resolveProfileDir(profileName)
   initProfile(profileDirectory, DEFAULT_PROFILE_BUNDLES)
-  await healProfilesModuleFallback({ installAnchor: dshInstallAnchor })
+  removeLinkProjections(profileDirectory)
   const profile = loadProfile('acryl', profileName, dshInstallAnchor)
   const rootConfig = join(profile.dir, 'cordis.yml')
   // Refuse to re-link a profile another live ACRYL installation is running from (profile-owner.ts).
@@ -497,8 +497,8 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   // "connection" or "web-startup" row at all (not pending, not failed -
   // absent) before this fix.
   const webTemplate = PROFILE_TEMPLATES.web
-  initProfile(profileDirectory, webTemplate?.bundles ?? DEFAULT_PROFILE_BUNDLES, webTemplate?.patchReload)
-  await healProfilesModuleFallback({ installAnchor: dshInstallAnchor })
+  initProfile(profileDirectory, webTemplate?.bundles ?? DEFAULT_PROFILE_BUNDLES)
+  removeLinkProjections(profileDirectory)
   const profile = loadProfile('web', profileName, dshInstallAnchor)
   const rootConfig = join(profile.dir, 'cordis.yml')
   claimProfile(profile.dir, installationRoot(installPackageUrl))

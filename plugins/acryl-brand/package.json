@@ -49,6 +49,6 @@
     "check": "pnpm run test"
   },
   "dependencies": {
-    "@deepseek-ai/schemastery": "^3.18.1"
+    "@deepseek-ai/schemastery": "~3.18.4"
   }
 }

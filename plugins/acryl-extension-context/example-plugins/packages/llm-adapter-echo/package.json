@@ -20,6 +20,6 @@
     }
   },
   "dependencies": {
-    "@deepseek-ai/dsh-llm": "0.1.5-alpha.1"
+    "@deepseek-ai/dsh-llm": "0.2.0-rc.2"
   }
 }

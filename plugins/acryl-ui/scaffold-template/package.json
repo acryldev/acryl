@@ -28,7 +28,7 @@
     "permissions": ["ui"]
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-client-ui-primitives": "0.1.5-alpha.1",
+    "@deepseek-ai/dsh-client-ui-primitives": "0.2.0-rc.2",
     "@types/node": "^22.20.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",

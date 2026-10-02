@@ -147,9 +147,9 @@ import {
   PROFILE_TEMPLATES,
   boot,
   composeEntries,
-  healProfilesModuleFallback,
   initProfile,
   loadProfile,
+  removeLinkProjections,
   resolveProfileDir,
 } from '@deepseek-ai/dsh-app-boot'
 
@@ -196,7 +196,7 @@ export async function bootAcrylHarnessProfile(
   process.env.DSH_HOME = instance.dshHome
   const profileDirectory = resolveProfileDir(options.profile)
   initProfile(profileDirectory, DEFAULT_PROFILE_BUNDLES)
-  await healProfilesModuleFallback({ installAnchor: dshInstallAnchor })
+  removeLinkProjections(profileDirectory)
   const profile = loadProfile('acryl', options.profile, dshInstallAnchor)
   const rootConfig = join(profile.dir, 'cordis.yml')
   writeFileSync(rootConfig, profileRoot)
@@ -263,8 +263,8 @@ export async function bootAcrylWebProfile(
   // ctx.get('connection') and ctx.get('webStartup') are never defined, and
   // the served index falls back to its own "authentication required" message.
   const webTemplate = PROFILE_TEMPLATES.web
-  initProfile(profileDirectory, webTemplate?.bundles ?? DEFAULT_PROFILE_BUNDLES, webTemplate?.patchReload)
-  await healProfilesModuleFallback({ installAnchor: dshInstallAnchor })
+  initProfile(profileDirectory, webTemplate?.bundles ?? DEFAULT_PROFILE_BUNDLES)
+  removeLinkProjections(profileDirectory)
   const profile = loadProfile('web', profileName, dshInstallAnchor)
   const rootConfig = join(profile.dir, 'cordis.yml')
   writeFileSync(rootConfig, profileRoot)
