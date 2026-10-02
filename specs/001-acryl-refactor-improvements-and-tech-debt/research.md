@@ -469,3 +469,50 @@ Result: `acryl-control`, `blends-core` and `acryl-harness-runtime` build with ze
 **New upstream packages that may overlap ACRYL's own work** (not evaluated): `packages/client/shortcuts` and `ui-shortcuts` (ACRYL has `acryl-shortcuts`), `ui-dockkit`, `ui-sidebar-*`, `config-editor`, `plugin-manager`. Worth reading before re-building anything ACRYL already has.
 
 **Consequence for T035a/T036b/T035b:** the version, rename and patch part of T035a is done on the branch. T035b (settings) and T036b (sessions and tab strip re-attachment) are the two design tasks that remain, and now have concrete file lists.
+
+## Finding R25 - ACRYL boots on `dsh-v0.2.0-rc.2` with parts detached (T035b, T036b first step, 2026-10-02)
+
+Branch `harness-latest-2026-10`, checkpoints `7cec5bd` to `b5d48d5` (the branch is on `origin` up to `7cec5bd`; later checkpoints are local until pushed). Per the owner's instruction ("make sure it boots, detach what breaks, we will re-attach the features we developed"), everything that blocked a boot was either fixed or detached with a `DETACHED` comment naming how to re-attach it. All runs used isolated temporary homes and spare ports; the servers were stopped and the ports confirmed free.
+
+**Evidence**
+
+| Check | Result |
+|---|---|
+| `corepack pnpm -r run build` (all packages except the detached `acryl-workspace`) | passes, 0 TypeScript errors |
+| `acryl-web` in a temp `ACRYL_HOME` on port 38460 | 401 without the token, 303 then 200 with it, client bundle and assets served; in a real browser the page renders the ACRYL brand, Plugin Market, default workspace and the model picker |
+| Desktop composition, headless (real `prepareDesktopProfile` plus engine host, temp home, no Electron) | `sessions`, `agents`, `authorization`, `webServer`, `acrylSettings`, `appInstance` all present; the session log has no import failures; `acryl-desktop/hello-world` loaded |
+| Control: stock `dsh web` 0.2.0-rc.2 | renders, so the earlier client failure came from ACRYL's composition, not upstream |
+| Tests | runtime 24 failing of 206 (was 65), Desktop 25 failing of 803 (was 66). Causes are listed below; none is a boot failure |
+
+**Real defects found by the move (all fixed on the branch)**
+
+1. **Profiles have no link projections any more.** `healProfilesModuleFallback` is gone; stock `dsh` mounts `PluginPackages` with `createRuntimeResolution(...)` in its boot step. Without it a profile loads zero Loader rows (every `@deepseek-ai/*` import fails, the host still "starts"). ACRYL now mounts it in `mountDshEngine` (`DshEngineComposition.runtimeResolution`), in both legacy boots, and Desktop anchors the table at `acryl-desktop` so its ACRYL packages resolve.
+2. **Engine swap was broken by the Cordis family bump.** Loader 1.0.5 applies a changed `config` on `Entry.update` but ignores a changed plugin `name`, and `remove` no longer awaits disposal. `host.select()` now removes the row, waits for the fiber, and creates it again; the nested profile include is disposed with an awaited disposer. `engine-host.spec` and `engine-host-mount-root-include.spec` pass on `main` (cordis 4.0.2, loader 1.0.3) and failed here before the fix. This matters for Continuous Mode: any engine swap test that does not use the real Loader would have missed it.
+3. **HMR guard.** 0.2 gates the `hmr` row with `!!js "!ctx.get('profileContext')"`, not `disabled: true`; the guard in `mountDshEngine` now evaluates the expression (ACRYL never provides `profileContext`, so no `--expose-internals` is required).
+4. **Multi-file bundle patches.** `dsh-web-app` declares `dsh.bundle.patch` as a list (presets); Desktop's own profile loader read a single string. It now uses `bundlePatchPaths`.
+5. **Duplicate `authorization` row.** `dsh-base` composes it; Desktop passed an empty existing-row set to the capability composer. It now derives the set from the bundle layers, as Web and TUI already did.
+6. **Shortcut services collide.** 0.2 ships a `shortcuts` client service that upstream UI plugins inject by package name; a second provider fails the client boot.
+
+**Detached (each carries a `DETACHED` note and a re-attach path)**
+
+| Detached | Why | Re-attach |
+|---|---|---|
+| `acryl-workspace` (Projects list, per-worktree canvas, Changes, Review, Checks, Files) and the advanced shell | client written on the removed session store (`current`, `open`); its shell contracts redeclare `ctx.layout`, which 0.2's layout now owns | Tab strip owns its current tab and holds sessions through `retain(...)`; decide slot or ACRYL-owned row (T036b) |
+| `acryl-shortcuts` and `acryl-mount-anchors` | 0.2's own shortcuts service replaces them | Layer over the upstream service, persist rebinding through `acrylSettings`; upstream should own the generic part |
+| Desktop settings page (`applyDesktopSettings`) | bound the removed client `settingsScope` | Rebuild over the `acryl-settings` route in the 0.2 `settings.section` slot |
+| Windows ACL pwsh trampoline | overrides `runArgv`/`startArgv`, removed from `SandboxPwshExecutor` | Re-port to the new spawn seam (flag `WINDOWS_PWSH_SANDBOX_REATTACHED`) |
+| TUI preset declarations | `dsh-agent-presets` became `dsh-agent-preset-registry`; the TUI roster is empty | Declare ACRYL's roots in the registry config |
+
+**New, kept:** `plugins/acryl-settings` (ACRYL's own preferences in `<ACRYL home>/acryl-settings.yaml`, `ctx.acrylSettings.register(...)` with the same call shape as the removed upstream API; 14 tests). Consumers on it: market, Desktop shell mode and startup, notifications, shortcuts (host side). Also new: `packageExtensions` for two more undeclared type dependencies of `dsh-client-modules` and one (`lexical`) of `dsh-client-ui-conversation`; `cli` follows 0.2's `ToolResultMessage` and drops the removed `plugin` message source; Desktop notifications use `jobs.events.subscribe` (a `settled` event).
+
+**Overlap with upstream 0.2 (evaluated)**
+
+| Upstream | ACRYL | Recommendation |
+|---|---|---|
+| `shortcuts`, `ui-shortcuts` | `acryl-shortcuts` | Let upstream own the service and the editor; ACRYL keeps only what it adds (persisted rebinding, mount-anchor toggle) |
+| `plugin-manager`, `config-editor` | `acryl-plugin-admin`, Market | Let upstream own the manager UI; ACRYL keeps Market and lifecycle policy |
+| `ui-dockkit`, `ui-layout` | `acryl-app-shell`, `acryl-workspace` canvas | Differentiating (canvas, PTYs, agent control) stays ACRYL-owned; the shell frame is a slot-or-row decision per R22 |
+
+**Remaining test failures (runtime 24, Desktop 25), by cause:** assertions about detached features (workspace, shell, shortcuts surfaces and rows) and the renamed roster row; 0.1.5 version pins and patch file names in `package.spec`; obsolete packages (`dsh-settings-file`, `dsh-agent-presets`) in two specs; the system-prompt baseline (the harness changed its prompt sections: review the drift, then refresh with `ACRYL_UPDATE_DRIFT=1`); `plugin-lifecycle-controller` (2) and the Desktop startup-port projection (reads `acryl-settings.yaml` now) need a closer look; `deepseek-streaming-tool-call` needs the network and the owner's key.
+
+**Not done:** Electron GUI launch, the Desktop build as a DMG, `verify-runtime-closure` against 0.2, the platform native packages in the DMG (T038), and a real login and model call.

@@ -336,7 +336,7 @@ presentation only.
   - Depends on: T033. Acceptance: decision recorded.
 - [ ] T035a Rename the four likely-renamed packages (R18: sidebar-textpreview, workflow-worker-thread, code-runtime and code-runtime-worker-thread, agent-presets), re-port the one failing patch, bump the runtime family on the branch (completes T026 for the new target), then run the full gate.
   - Depends on: T034. Acceptance: `corepack pnpm run check` green on the branch.
-- [ ] T035b Decide and implement ACRYL's non-secret settings home now that upstream removed `dsh-settings-file` (R18): adopt profile-owned live configuration, or keep a local file-backed provider. Covers `apps/acryl-desktop/src/profile.ts`, the market settings tests and existing `~/.acryl*/.dsh/settings.yaml` files (migration).
+- [x] T035b (delivered 2026-10-02, R21 and R25: `plugins/acryl-settings`) Decide and implement ACRYL's non-secret settings home now that upstream removed `dsh-settings-file` (R18): adopt profile-owned live configuration, or keep a local file-backed provider. Covers `apps/acryl-desktop/src/profile.ts`, the market settings tests and existing `~/.acryl*/.dsh/settings.yaml` files (migration).
   - Depends on: T033. Decide before T035a bumps manifests. Acceptance: a recorded decision, then a boot on the branch that reads and writes settings with an existing home copy.
 - [x] T036 Stage A (delivered 2026-10-02, evidence in research.md R20): run stock, unmodified DSH `0.2.0-rc.2` (published `@deepseek-ai/dsh`, web and its own Desktop) in an isolated home and port, and record that it boots, shows its own default sidebar, and starts a chat (R19).
   - Why: the owner direction is to take the 0.2 runtime first and re-attach ACRYL's results afterwards.
