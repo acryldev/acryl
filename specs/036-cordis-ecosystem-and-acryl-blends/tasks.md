@@ -39,3 +39,35 @@ Self-containment design: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`. Repository
 - [ ] T016 Replace the pre-framework `dsh-desktop.blend` setting with app folders
 - [ ] T018 `acryl package`: a standalone product from an app folder, a Web server tarball and a branded Electron app (name, app id, icon from `blend.yaml`), bundling only the plugins the app names
 - [ ] T017 Real-app Desktop test of two branded apps side by side (Web is verified; Desktop is verified headless only)
+- [ ] T021 Move `acryl-workspace`'s own renderer-local persistence (`forgetRepo`'s removed-workspace list, `dismissChat`'s dismissed-chat list, tab/
+      view-mode state) off per-origin browser `localStorage` onto a file under `appInstance.home`, written through a Host route - so Desktop and Web,
+      which already share one `appInstance.dshHome`, agree on what the user removed. Partially done 2026-10-01: both lists now round-trip through
+      `localStorage` so a reload no longer loses them (they did not before, at all) - still per-origin, so Desktop/Web parity is the remaining gap
+      (`blend-instance-design.md` section 0)
+- [ ] T022 A GUI entry point to `planNewApp`/`writeNewApp` (today wired only to `apps/acryl-cli`): a "New Blend" action inside the Desktop/Web app itself,
+      so a user who only ever opens the installed app can instantiate a Blueprint without a terminal (`blend-instance-design.md` section 0)
+- [x] T023 End-to-end lifecycle test, local-only, run live 2026-10-01: `acryl new accounting-test --blueprint acryl.blank` and `acryl new
+      musiceditor-test --blueprint acryl.blank` (two Projects created side by side) - `appFolder()` on both plus a pulled third gave three fully
+      distinct `home`/`dshHome`/`webPort`/`userDataName`/`projectScope`, confirmed by direct inspection, not just read from source. `remote connect
+      --url <local bare repo>` + `save -m ...` committed and pushed a real commit, verified present in the bare repo's own log. `new musiceditor-pulled
+      --from file://<that bare repo>` cloned it back and produced a Project whose `blend.yaml` correctly recorded
+      `description: ..., created from app.musiceditor-test` - genuine lineage, not a fresh blank. `accounting-test`'s own `bin/acryl web` was actually
+      booted (not just planned): it served on its predicted port 3605, wrote a real, separate `.dsh/` (credentials, logs, profiles, storages) with
+      nothing touching `~/.acryl` or `~/.acryl-dev`, then was stopped and the port verified free. **Not exercised, because not yet built**: `acryl
+      publish` (T020, Project -> registry Blueprint) and `acryl pull` (T014, updating an existing Project from its starter) - what this task tested
+      is instantiate/save/re-instantiate, the commands that exist today, not those two
+- [x] T024 Extract `plugins/acryl-app-shell` from `acryl-workspace`'s own `shell/`: the reusable main-surface scaffold (`desktop.main`/`desktop.sidebar`
+      slot claim, three-column frame, layout/theme/chrome) any domain plugin claims for its own UI, the same way `acryl-workspace` claims it for the IDE
+      - built and wired into both apps 2026-10-01 (`blend-instance-design.md` section 0a). Tests: `acryl-app-shell` 22/22, `acryl-workspace` 646/646,
+      `acryl-agent-control` 112/112, both apps typecheck clean, headless boot smoke (`verify:loader`) clean
+- [ ] T025 Rebuild `acryl-gtd` on `acryl-app-shell`: its board (buckets, triage, kanban, calendar) as a real `desktop.main` registration, not a Host
+      route - the concrete proof section 0a's pattern holds for something other than the IDE. Both existing implementations (the public registry one and
+      a second independent rebuild) are route-based and need replacing, not extending. 2026-10-01: `client.js` itself is written and API-correct (its own
+      repo, `02-application-gtd-planner`, not this one); blocked on T025a
+- [ ] T025a `acryl-app-shell` fails to activate in the GTD Blueprint's own (Blank-grown) composition specifically: `invalid plugin, expect function or
+      object with an "apply" method, received object` under group `@deepseek-ai/dsh-client-ui-layout`, identical whether inserted as a dynamic
+      `livePluginActivation.activate()` row or a static `cordis.yml` patch (ruling out `bundleGroup()`'s own heuristic, confirmed fragile but not the
+      cause here) - the same static-row insertion is clean in both real apps' own headless boot smoke (`acryl-desktop`'s `verify:loader` exit 0). Root
+      cause traces into vendored Cordis plugin resolution (`deepseek-harness/vendor/cordis/src/registry.ts`), not edited this session. Next: reproduce
+      isolated from the IDE apps' own much larger composition - what does Blank's own `web` profile omit or add that changes this. See
+      `docs/DEVELOPMENT-LOG.md`, 2026-10-01, for the full trail (what was tried, what was ruled out, why)

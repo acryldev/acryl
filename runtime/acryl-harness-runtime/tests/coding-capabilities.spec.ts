@@ -32,8 +32,8 @@ const expectedComposition: Record<AcrylSurface, PatchShape> = {
     idRows: ['system-prompt'],
     insertedIds: ['agent-presets', 'session-stats', 'authorization', 'acryl-control', 'acryl-agent-devin'],
   },
-  web: { idRows: [], insertedIds: ['authorization', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'acryl-control', 'acryl-agent-devin'] },
-  desktop: { idRows: [], insertedIds: ['authorization', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-agent-control', 'acryl-control', 'acryl-agent-devin'] },
+  web: { idRows: [], insertedIds: ['authorization', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'acryl-control', 'acryl-agent-devin'] },
+  desktop: { idRows: [], insertedIds: ['authorization', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-agent-control', 'acryl-control', 'acryl-agent-devin'] },
 }
 
 function shapeOf(patches: readonly unknown[]): PatchShape {
@@ -127,11 +127,11 @@ describe('createAcrylCodingCapabilityPatches', () => {
 
   it('unions multiple requested surfaces without duplicating a row', () => {
     const both = shapeOf(createAcrylCodingCapabilityPatches(new Set(['web', 'desktop'])))
-    expect(both.insertedIds).toEqual(['authorization', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'acryl-control', 'acryl-agent-devin'])
+    expect(both.insertedIds).toEqual(['authorization', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'acryl-control', 'acryl-agent-devin'])
 
     const all = shapeOf(createAcrylCodingCapabilityPatches(new Set(SURFACES)))
     expect(all.idRows).toEqual(['system-prompt'])
-    expect(all.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'acryl-control', 'acryl-agent-devin'])
+    expect(all.insertedIds).toEqual(['agent-presets', 'session-stats', 'authorization', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'acryl-control', 'acryl-agent-devin'])
   })
 
   it('composes nothing for a surface set no capability declares', () => {
@@ -185,7 +185,7 @@ describe('the workspace and the ACRYL shell are shared by Web and Desktop (spec 
   it('declares the workspace for exactly the surfaces that render it, never TUI', () => {
     const workspace = ACRYL_CODING_CAPABILITIES.find(capability => capability.id === 'workspace')
     expect(workspace?.surfaces).toEqual(['desktop', 'web'])
-    expect(workspace?.requiresPackages).toEqual(['acryl-workspace'])
+    expect(workspace?.requiresPackages).toEqual(['acryl-app-shell', 'acryl-workspace'])
     expect(createAcrylCodingCapabilityPatches(new Set(['tui'])).flatMap(p => 'insert' in p ? p.insert ?? [] : []).map(r => r.id)).not.toContain('acryl-workspace')
   })
 
@@ -217,8 +217,8 @@ describe('the workspace and the ACRYL shell are shared by Web and Desktop (spec 
   })
 
   it('names the ACRYL packages each surface must make resolvable, the same on Web and Desktop', () => {
-    expect(acrylCodingCapabilityPackages(new Set(['web']))).toEqual(['acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control'])
-    expect(acrylCodingCapabilityPackages(new Set(['desktop']))).toEqual(['acryl-workspace', 'acryl-plugin-admin', 'acryl-agent-control'])
+    expect(acrylCodingCapabilityPackages(new Set(['web']))).toEqual(['acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control'])
+    expect(acrylCodingCapabilityPackages(new Set(['desktop']))).toEqual(['acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-agent-control'])
     expect(acrylCodingCapabilityPackages(new Set(['tui']))).toEqual([])
   })
 

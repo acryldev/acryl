@@ -25,7 +25,7 @@ export function startWorkspacePersistence(deps: PersistenceDeps): () => void {
   const flush = (): void => {
     timer = undefined
     try {
-      storage.setItem(STORAGE_KEY, serializeWorkspace(shell.getSnapshot().mode, groups))
+      storage.setItem(STORAGE_KEY, serializeWorkspace(shell.getSnapshot().mode, groups, shell.forgottenRoots(), [...shell.getSnapshot().dismissedChats]))
     } catch {
       // Storage full or blocked.
     }
@@ -35,16 +35,25 @@ export function startWorkspacePersistence(deps: PersistenceDeps): () => void {
     timer = setTimeout(flush, delay)
   }
   let mode = shell.getSnapshot().mode
+  // `dismissedChats` is replaced wholesale (never mutated) on every change, so reference inequality alone
+  // reliably means "really changed" - no need to diff contents (owner report, 2026-10-01: "x" on a chat
+  // only lasted until the next reload, same bug `forgetRepo` had before it, same fix).
+  let dismissedChats = shell.getSnapshot().dismissedChats
   const offShell = shell.subscribe(() => {
-    const next = shell.getSnapshot().mode
-    if (next === mode) return
-    mode = next
+    const snapshot = shell.getSnapshot()
+    const modeChanged = snapshot.mode !== mode
+    const dismissedChanged = snapshot.dismissedChats !== dismissedChats
+    if (!modeChanged && !dismissedChanged) return
+    mode = snapshot.mode
+    dismissedChats = snapshot.dismissedChats
     schedule()
   })
   const offGroups = groups.onChange(schedule)
+  const offForgotten = shell.onForgottenChange(schedule)
   return () => {
     offShell()
     offGroups()
+    offForgotten()
     if (timer !== undefined) {
       clearTimeout(timer)
       flush()

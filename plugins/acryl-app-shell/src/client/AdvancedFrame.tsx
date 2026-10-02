@@ -1,9 +1,7 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import type { PropsRenderSlots, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from './contracts.ts'
 import type { ShellPlatform } from './environment.ts'
-import { CenterColumn, RightColumn } from '../dock/DockColumns.tsx'
-import type { DockHost } from '../dock/dock-host.ts'
 import { DesktopLayoutState, MACOS_SIDEBAR_COLLAPSED, SIDEBAR_COLLAPSED, solveFrame } from './layout-state.ts'
 
 /** Private values assembled by the advanced-shell registration. */
@@ -12,8 +10,13 @@ export interface AdvancedFrameInjected {
   layout: DesktopLayoutState
   /** Host platform controlling native title-bar spacing. */
   platform: ShellPlatform
-  /** The terminal dock, placed in the centre or right column by its mode; absent means no terminal panel. */
-  dock: DockHost | undefined
+  /** Wraps the main column's rendered content (e.g. a terminal dock the IDE adds beneath it); the plain
+   * content unchanged when absent. A domain plugin that needs no extra chrome around its main surface
+   * never passes this - this package has no concept of what a "dock" is, only that a caller may want to
+   * wrap the column. */
+  wrapMain?: (content: ReactNode) => ReactNode
+  /** Wraps the right/details column's rendered content, the same way as `wrapMain`. */
+  wrapRightbar?: (content: ReactNode) => ReactNode
 }
 
 /** Full advanced root slot props. */
@@ -22,7 +25,7 @@ export type AdvancedFrameProps = PropsRuntime<'root'>
   & AdvancedFrameInjected
 
 /** Desktop-owned transparent frame around the unchanged product surfaces. */
-export function AdvancedFrame({ layout, platform, dock, renderSlot, SessionProvider }: AdvancedFrameProps) {
+export function AdvancedFrame({ layout, platform, wrapMain, wrapRightbar, renderSlot, SessionProvider }: AdvancedFrameProps) {
   const subscribeLayout = useCallback((listener: () => void) => layout.subscribe(listener), [layout])
   const readLayout = useCallback(() => layout.getSnapshot(), [layout])
   const panels = useSyncExternalStore(subscribeLayout, readLayout)
@@ -109,7 +112,7 @@ export function AdvancedFrame({ layout, platform, dock, renderSlot, SessionProvi
           const main = renderSlot('desktop.main', {
             renderConversation: () => <div data-acryl-slot="conversation">{renderSlot('conversation', {})}</div>,
           })
-          return dock === undefined ? main : <CenterColumn host={dock}>{main}</CenterColumn>
+          return wrapMain === undefined ? main : wrapMain(main)
         })()}
       </main>
       <aside className="dshDesktopDetailsSurface" data-acryl-slot="rightbar">
@@ -124,7 +127,7 @@ export function AdvancedFrame({ layout, platform, dock, renderSlot, SessionProvi
               {renderSlot('rightbar', rightbar)}
             </SessionProvider>
           )
-          return dock === undefined ? panel : <RightColumn host={dock} rightbar={panel} />
+          return wrapRightbar === undefined ? panel : wrapRightbar(panel)
         })()}
       </aside>
       <div className="dshDesktopOverlay" data-shell-overlay>

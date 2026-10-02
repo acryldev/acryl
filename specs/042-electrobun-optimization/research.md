@@ -1,3 +1,5 @@
+> **Superseded 2026-10-01.** Estimates and probabilities in this file were made without running anything, and some claims were wrong (for example, that Cordis does not use Node internals). The current assessment is [findings-rewrite-vs-reuse.md](./findings-rewrite-vs-reuse.md). Kept for history.
+
 # Research: Electrobun Optimization
 
 **Date**: 2026-09-29  

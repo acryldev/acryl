@@ -173,6 +173,7 @@
     "@deepseek-ai/schemastery": "^3.18.1",
     "acryl-agent-control": "workspace:*",
     "acryl-app-save": "workspace:*",
+    "acryl-app-shell": "workspace:*",
     "acryl-brand": "workspace:*",
     "acryl-control": "workspace:*",
     "acryl-agent-devin": "workspace:*",

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import * as chrome from '../../src/client/shell/chrome-metrics.ts'
-import { resolveShellEnvironment, WEB_SHELL_ENVIRONMENT } from '../../src/client/shell/environment.ts'
+import * as chrome from '../src/client/chrome-metrics.ts'
+import { resolveShellEnvironment, WEB_SHELL_ENVIRONMENT } from '../src/client/environment.ts'
 
 describe('shell environment (one contract for Web and Desktop)', () => {
   it('runs the ACRYL shell on a page without Electron markers, which is what Web is', () => {
@@ -29,7 +29,7 @@ describe('shell environment (one contract for Web and Desktop)', () => {
 
 describe('native window chrome metrics', () => {
   it('match the numbers Electron main uses (apps/acryl-desktop/src/shell/window-chrome.ts), so the frame and the window cannot drift', () => {
-    const desktop = readFileSync(new URL('../../../../apps/acryl-desktop/src/shell/window-chrome.ts', import.meta.url), 'utf8')
+    const desktop = readFileSync(new URL('../../../apps/acryl-desktop/src/shell/window-chrome.ts', import.meta.url), 'utf8')
     const read = (name: string): number => {
       const match = new RegExp(`export const ${name} = (\\d+)`).exec(desktop)
       if (match?.[1] === undefined) throw new Error(`${name} is missing from Desktop's window-chrome.ts`)

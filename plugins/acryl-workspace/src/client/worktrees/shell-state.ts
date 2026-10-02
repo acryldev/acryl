@@ -124,15 +124,46 @@ export class WorkspaceShellState {
    * never by the passive effects that merely mirror whatever the session list/Host workspace list
    * currently says - which can still say the old thing for a moment right after a delete. */
   private readonly forgottenRepos = new Set<string>()
+  private readonly forgottenListeners = new Set<() => void>()
   private readonly statusInflight = new Map<string, Promise<void>>()
   private pinned = false
   private reveal: (() => void) | undefined
   private disposed = false
 
-  constructor(private readonly api: WorkspaceGitApi) {}
+  /**
+   * @param initialForgotten - roots to seed `forgottenRepos` with at construction (a previous run's
+   * persisted removals, T137-followup real fix part 2: a removal otherwise only lasted until the next
+   * reload - nothing remembered it past the current page's lifetime).
+   */
+  /**
+   * @param initialDismissed - chat session ids to seed `dismissedChats` with (a previous run's persisted
+   * dismissals - without this, "x" on a chat only lasted until the next reload, exactly like `forgetRepo`
+   * before it: nothing remembered a dismissal past the current page's lifetime, so a passive rediscovery
+   * effect brought every dismissed chat straight back - owner report, 2026-10-01, "82 chats in MAIN... I
+   * never add them... deleting it doesn't help").
+   */
+  constructor(private readonly api: WorkspaceGitApi, initialForgotten: readonly string[] = [], initialDismissed: readonly string[] = []) {
+    for (const root of initialForgotten) this.forgottenRepos.add(root)
+    if (initialDismissed.length > 0) this.snapshot = Object.freeze({ ...this.snapshot, dismissedChats: Object.freeze(new Set(initialDismissed)) })
+  }
 
   getSnapshot(): ShellSnapshot {
     return this.snapshot
+  }
+
+  /** Repository roots currently removed (`forgetRepo`), for persistence. */
+  forgottenRoots(): readonly string[] {
+    return [...this.forgottenRepos]
+  }
+
+  /** Notified whenever the forgotten-roots set changes (a removal, or an explicit re-add lifting one). */
+  onForgottenChange(listener: () => void): () => void {
+    this.forgottenListeners.add(listener)
+    return () => { this.forgottenListeners.delete(listener) }
+  }
+
+  private notifyForgottenChange(): void {
+    for (const listener of this.forgottenListeners) listener()
   }
 
   subscribe(listener: () => void): () => void {
@@ -175,7 +206,10 @@ export class WorkspaceShellState {
    * re-merge a forgotten root; only an explicit re-add (`clearForgotten: true`) lifts it. Its probe cache
    * entries are cleared too, so a later, genuinely fresh discovery is not stuck against a stale result. */
   forgetRepo(root: string): void {
-    this.forgottenRepos.add(root)
+    if (!this.forgottenRepos.has(root)) {
+      this.forgottenRepos.add(root)
+      this.notifyForgottenChange()
+    }
     if (!this.snapshot.repos.some(repo => repo.root === root)) return
     for (const key of [...this.probes.keys()]) {
       if (key === root || key.startsWith(root.endsWith('/') ? root : `${root}/`)) this.probes.delete(key)
@@ -221,7 +255,7 @@ export class WorkspaceShellState {
     cwd: string,
     options: { readonly registerFolder?: boolean; readonly clearForgotten?: boolean } = {},
   ): Promise<string | undefined> {
-    if (options.clearForgotten === true) this.forgottenRepos.delete(cwd)
+    if (options.clearForgotten === true && this.forgottenRepos.delete(cwd)) this.notifyForgottenChange()
     if (options.registerFolder === true) {
       return this.api.repo(cwd).then((view) => {
         if (this.disposed) return undefined

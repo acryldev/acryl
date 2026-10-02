@@ -62,6 +62,7 @@ packages:
   - plugins/acryl-shortcuts
   - plugins/acryl-brand
   - plugins/acryl-app-save
+  - plugins/acryl-app-shell
   - plugins/acryl-workspace
   - plugins/acryl-plugin-admin
   - plugins/acryl-support

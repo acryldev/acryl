@@ -4,6 +4,100 @@ Status: design, with capture, verify and apply built and tested (see "Built now"
 contract) and the `blends` repo (format, `blends-core`). It answers four questions: how a Blend instance is created and persisted from the current state
 of all plugins and local extensions; how it is packaged and distributed; how it orchestrates at runtime; and how ACRYL Blends becomes a framework.
 
+## 0. Where a running instance keeps its state - accepted, 2026-10-01 (owner)
+
+Fixing this down because it was re-derived from scratch in conversation and should not need re-deriving again. The mechanics are already fully built and
+documented in `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md` (the `AppInstance` family, `select.ts`, the bulkhead rules); this section is the worked example
+and the decision that follows from it, not a restatement of that doc.
+
+**The base install.** Download, install, launch, create nothing yet: `appInstance.home = ~/.acryl` (macOS/Linux), `C:\Users\you\.acryl` (Windows) -
+`defaultInstance()`, the one instance allowed to use the shared home. `/Applications/Acryl.app` (or wherever the binary installed on any OS) is never
+written to; everything mutable - settings, sessions, a plugin asked for in this base app - lives under `~/.acryl`.
+
+**Two Blends side by side.** `acryl new accounting` run from `~/Documents`, then `acryl new musiceditor` run from `~/Projects`:
+
+```text
+~/Documents/accounting/        appInstance.home = ~/Documents/accounting
+  blend.yaml                   appInstance.dshHome = ~/Documents/accounting/.dsh
+  bin/acryl                    port: stable hash of the instance id, not the shared 3080
+  extensions/<name>/           userDataName: "ACRYL accounting-<hash>" - its own Electron window/storage
+  .dsh/                        (gitignored - engine state, not part of the Blend's own git history)
+
+~/Projects/musiceditor/        appInstance.home = ~/Projects/musiceditor   (a completely sealed bulkhead)
+  ...same shape...
+```
+
+`acryl new <dir>` resolves `dir` against the shell's own cwd (`planNewApp`, `runtime/acryl-harness-runtime/src/app/new-app.ts:63`, `resolve(dir)`) - like
+`rails new`/`npm create`, not into a fixed location ACRYL chooses. Asking the agent inside **Accounting** for a Pomodoro timer writes to
+`~/Documents/accounting/extensions/pomodoro/` - committed to that Blend's own git history (`new-app.ts:6,79,187`: "every capability you add is one plugin
+in `extensions/<name>/` of this app, **which is its ACRYL home**"), never near MusicEditor, never near the base `~/.acryl`, never near the installed
+binary. This is a cleaner answer than the raw `$DSH_HOME/local-plugins/<name>` convention (`cordis-plugin-quickstart`, and what DSH's own stock desktop
+app uses for an unpublished plugin, confirmed live 2026-10-01): for an ACRYL Blends app specifically, self-written capability already lands inside the
+Project Blend's own committed source by construction, matching `framework.md`'s "Project Blend -> generated plugins -> Git" directly.
+
+**The decision this settles.** "A new kind of state an app keeps is a new member of the family (or a path under `home`), never a new lookup"
+(`APP-INSTANCES-AND-BULKHEADS.md`) applies to a plugin's OWN renderer state too, not only to runtime-chosen paths. `plugins/acryl-workspace`'s own tree
+UI currently violates this: the removed-workspace list (`forgetRepo`) and tab/view-mode state persist through per-origin browser `localStorage`
+(`canvas/persistence.ts`, key `acryl-workspace:v1`), which is why Desktop and dev Web - both pointed at the same `~/.acryl/.dsh` - can disagree about
+what the user removed (found testing a packaged DMG, 2026-10-01: an "x" removal that stuck on Web reappeared on Desktop and vice versa). The fix is to
+move that state onto a small file under `appInstance.home`, written through a Host route, the same way DSH's own `plugin_manager` records a profile's
+active plugins - not a new persistence mechanism, just this package finally following the rule the rest of the runtime already does. Tracked as new work
+under this milestone (see `tasks.md`).
+
+**Open, not yet built: a GUI entry point.** `planNewApp`/`writeNewApp` are wired only to `apps/acryl-cli` today (confirmed by grep: no caller anywhere
+under `apps/acryl-desktop` or `plugins/acryl-workspace`). A user who only ever opens the downloaded app has no way to instantiate a Blueprint at all -
+"download, install, click New Accounting Blend" has no button behind it yet. This is a bigger, separate piece of work from the persistence fix above;
+tracked as open work under this milestone, not folded into it.
+
+## 0a. How a domain Blend builds its own UI - accepted, 2026-10-01 (owner), `acryl-app-shell` built and tested
+
+Fixing this down for the same reason as section 0: it was explained wrong, built wrong (twice, by two different agents), and corrected in conversation
+before this was written. The next Blueprint - after the IDE, after GTD - should not repeat the mistake.
+
+**The wrong shape, built twice and rejected.** `acryl-gtd` (both the version in the public registry and a second, independent rebuild by another agent)
+implemented its board - buckets, triage, kanban, calendar - as a page the Host serves over HTTP (`GET /` or `GET /gtd`, via `webServer` routes) and a chat
+card that links to it, opening in a new browser tab. This works, in the narrow sense that the page renders. It is still wrong, for two independent
+reasons the owner stated directly: **(1)** "we have routers for custom apps - that's bullshit... why we need routes?" - a Project Blend is meant to become
+one cohesive, standalone product, not a chat with a side feature reached by a link to a server-routed page opening in a separate tab. **(2)** every other
+piece of UI in this entire codebase - the workspace tree, the tab strip, Settings, file tabs - is a React component registered into the app's own Cordis
+UI slots and rendered inline in the same window. A domain plugin's board built as a Host route is the one thing in the whole product that does not follow
+that rule, for no reason tied to what a board actually needs.
+
+**The right shape.** `plugins/acryl-workspace` already proves it, for the IDE: it is a plugin that claims the main UI surface (`desktop.main`, the tree in
+`desktop.sidebar`) and replaces Blank's plain chat with the whole IDE - tree, tabs, terminals, canvases. That is one differentiated product grown from the
+same stem cell (`framework.md`'s Blank -> Blueprint -> Project). A different domain (GTD, accounting, whatever a team needs) wants the exact same
+mechanism with completely different content in the main slot - its own board, its own forms, its own views - never PTYs and a file tree it has no use
+for. **A domain plugin's own main UI is always a `desktop.main`/`desktop.sidebar` slot registration. It is never a Host route.** If a page would need a
+URL to reach a piece of this product's own UI, that is the signal the design is wrong, not a reason to add a route.
+
+**The shared scaffold now exists: `plugins/acryl-app-shell`.** Extracted 2026-10-01 from `acryl-workspace`'s own (already-generic, just not reusable)
+`shell/` - the three-column frame, slot composition, layout service, theme presenter, platform title-bar chrome. One call, from a domain plugin's own
+`apply(ctx)`:
+
+```ts
+import { applyAdvancedShell, resolveShellEnvironment } from 'acryl-app-shell/client'
+
+export function apply(ctx: ClientContext): void {
+  const environment = resolveShellEnvironment(window.location.hash)
+  if (environment.mode !== 'advanced') return // compatibility mode keeps the stock upstream frame
+  applyAdvancedShell(ctx, environment) // no dock, no terminal panel - this domain does not need one
+
+  ctx.slots.inject('desktop.main', () => ctx.slots.register({
+    name: 'desktop.main',
+    priority: 200, // higher than the shell's own fallback (100), so this replaces the plain chat
+  }, MyDomainMainSurface))
+}
+```
+
+This is also the concrete, literal answer to "every team adopts plugins and capabilities for themselves": a non-technical team's Blend simply never
+registers a terminal dock (the `wrapMain`/`wrapRightbar` hooks stay unset) and never pulls in `acryl-workspace`'s PTY/file-tree rows at all - the same
+`acryl-app-shell` scaffold, a completely different main-surface plugin claiming it, zero code shared with the IDE beyond the frame itself. See
+`plugins/acryl-app-shell/README.md` for the extraction rationale and a packaging note (its client bundle is its own Loader row, resolved through the
+shared Module Loader registry at runtime like every other client package here - a consumer's bundler cannot bundle it in directly).
+
+**Not yet done:** `acryl-gtd` itself has not been rebuilt on this scaffold yet (both existing implementations still route-based at the time this section
+was written). Rebuilding it - and the next domain example after it - is the proof this pattern actually holds for something other than the IDE.
+
 ## The principle (from pi.dev, and already true in ACRYL)
 
 The source is the truth; the running composition is derived and rebuildable. A Blend is therefore not a database row or a snapshot of process

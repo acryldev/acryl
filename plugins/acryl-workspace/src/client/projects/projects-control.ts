@@ -3,7 +3,7 @@
  * Every dependency is injected so the flows are testable without a browser or a Host.
  */
 
-import type { ShellPlatform } from '../shell/environment.ts'
+import type { ShellPlatform } from 'acryl-app-shell/client'
 import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { IWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'

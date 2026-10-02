@@ -286,6 +286,24 @@ describe('dismissedChats (T134-followup)', () => {
     shell.restoreChat('s1')
     expect([...shell.getSnapshot().dismissedChats]).toEqual(['s2'])
   })
+
+  it('seeds dismissedChats at construction, so a dismissal from a previous run survives this one (owner report, 2026-10-01: "x" on a chat did not survive a reload)', () => {
+    const shell = new WorkspaceShellState(fakeApi(), [], ['s1', 's2'])
+    expect([...shell.getSnapshot().dismissedChats].sort()).toEqual(['s1', 's2'])
+  })
+
+  it('a dismissal or restore fires the general subscribe notification (what startWorkspacePersistence listens to)', () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    let calls = 0
+    shell.subscribe(() => { calls += 1 })
+    shell.dismissChat('s1')
+    expect(calls).toBe(1)
+    shell.restoreChat('s1')
+    expect(calls).toBe(2)
+    shell.dismissChat('s1') // nothing to notify: already settled state below is unaffected, but this is a
+    shell.restoreChat('nope') // fresh dismiss, then a no-op restore - only the dismiss should notify
+    expect(calls).toBe(3)
+  })
 })
 
 describe('close-tile channel (T134-followup)', () => {
@@ -339,5 +357,46 @@ describe('forgetRepo (T135-followup)', () => {
     const before = shell.getSnapshot()
     shell.forgetRepo('/never/seen')
     expect(shell.getSnapshot()).toBe(before)
+  })
+})
+
+describe('forgetRepo persistence (T137 follow-up, owner report: "x" removal did not survive a reload)', () => {
+  it('seeds forgottenRoots at construction, so a removal from a previous run keeps refusing a rediscovery on this one', async () => {
+    const shell = new WorkspaceShellState(fakeApi(), ['/p/proj'])
+    await shell.discover('/p/proj')
+    expect(shell.getSnapshot().repos).toEqual([])
+    expect(shell.forgottenRoots()).toEqual(['/p/proj'])
+  })
+
+  it('notifies on forgetRepo, once per genuinely new removal - not for one already forgotten', () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    let calls = 0
+    shell.onForgottenChange(() => { calls += 1 })
+    shell.forgetRepo('/p/proj')
+    expect(calls).toBe(1)
+    expect(shell.forgottenRoots()).toEqual(['/p/proj'])
+    shell.forgetRepo('/p/proj')
+    expect(calls).toBe(1)
+  })
+
+  it('notifies on an explicit re-add (clearForgotten) that actually lifts a mark, not otherwise', async () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    shell.forgetRepo('/p/proj')
+    let calls = 0
+    shell.onForgottenChange(() => { calls += 1 })
+    await shell.discover('/p/proj', { registerFolder: true, clearForgotten: true })
+    expect(calls).toBe(1)
+    expect(shell.forgottenRoots()).toEqual([])
+    await shell.discover('/p/proj', { registerFolder: true, clearForgotten: true })
+    expect(calls).toBe(1)
+  })
+
+  it('stops notifying once unsubscribed', () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    let calls = 0
+    const off = shell.onForgottenChange(() => { calls += 1 })
+    off()
+    shell.forgetRepo('/p/proj')
+    expect(calls).toBe(0)
   })
 })

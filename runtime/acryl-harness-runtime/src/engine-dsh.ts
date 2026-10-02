@@ -23,7 +23,7 @@
  */
 
 import { applyWebFavicon } from './web-favicon.ts'
-import { lstatSync, mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { createRequire, findPackageJSON } from 'node:module'
 import { basename, dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -76,6 +76,10 @@ export interface DshEngineComposition {
   readonly productName?: string
   /** The app this composition belongs to; provided to plugins as the `appInstance` service. Chosen by the surface's composition root. */
   readonly instance?: AppInstance
+  /** File URL of the surface's own `package.json` (where ACRYL-owned workspace packages resolve from); provided to plugins
+   * as the `acrylFrameworkPackages` service. Omitted where materializing an ACRYL framework package into a local
+   * extension's profile does not apply (for example, a composition root with its own separate profile pipeline). */
+  readonly installPackageUrl?: string
 }
 
 function escapeHtml(text: string): string {
@@ -118,6 +122,9 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   if (ctx.root.get('dshHomePath') === undefined) ctx.root.provide('dshHomePath', dshHomePath)
   // The app's resource family (instance/): plugins read where their app keeps things from here, never from the environment or the OS home.
   if (ctx.root.get('appInstance' as never) === undefined) ctx.root.provide('appInstance', composition.instance ?? selectInstance())
+  if (composition.installPackageUrl !== undefined && ctx.root.get('acrylFrameworkPackages' as never) === undefined) {
+    ctx.root.provide('acrylFrameworkPackages', createAcrylFrameworkPackages(composition.installPackageUrl))
+  }
   const entry = await mountRootInclude(ctx, composition.rootConfig, composition.patches, composition.bareModuleBaseUrl)
   // mountRootInclude creates its Include row at the Loader's own top level -
   // it has no `parent` parameter and is not scoped to this plugin's own
@@ -316,7 +323,7 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
     profileName,
     statePath: resolvePluginLifecycleStatePath(),
   }))
-  return { rootConfig, patches, surface: 'tui', instance }
+  return { rootConfig, patches, surface: 'tui', instance, installPackageUrl: import.meta.url }
 }
 
 /**
@@ -418,6 +425,57 @@ export function materializeProfilePackage(profileDir: string, packageName: strin
   symlinkSync(sourceDir, linkPath, 'dir')
 }
 
+/**
+ * Resolves an ACRYL-owned workspace package by name into its live on-disk install and symlinks it into a
+ * profile, the same way the Blueprint's own fixed rows do ({@link materializeProfilePackage}) - these
+ * packages are not published, so a local extension's `package.json` cannot name one as an ordinary npm
+ * dependency. Consumed by `acryl-extension-context`'s local-plugin install path (`dsh.requiresAcrylPackages`
+ * in an extension's `package.json`), which also activates the materialized package as a live Loader entry
+ * through the existing `livePluginActivation` service - this object only makes the package resolvable.
+ */
+export interface AcrylFrameworkPackages {
+  /** Symlink `name` into `profileDir`'s `node_modules`, replacing a stale link; throws if `name` does not resolve from this installation. */
+  materialize(profileDir: string, name: string): void
+}
+
+function createAcrylFrameworkPackages(installPackageUrl: string): AcrylFrameworkPackages {
+  return { materialize: (profileDir, name) => { materializeProfilePackage(profileDir, name, installPackageUrl) } }
+}
+
+declare module '@deepseek-ai/cordis' {
+  interface Context {
+    /** Resolves an ACRYL-owned workspace package by name for a local extension to depend on (see {@link AcrylFrameworkPackages}). */
+    acrylFrameworkPackages: AcrylFrameworkPackages
+  }
+}
+
+/**
+ * ACRYL-owned framework packages the app's own committed extensions (`<app home>/extensions/*`) declare
+ * through `dsh.requiresAcrylPackages` in their `package.json`. Read at compose time, not through
+ * `acryl-extension-context`'s dynamic agent-runtime install path: `livePluginActivation.activate()`'s group
+ * resolution (`PluginLifecycleController`'s `bundleGroup()`, a fixed-point-free heuristic over the live Loader
+ * tree) failed a real, reproduced activation of `acryl-app-shell` through that path ("invalid plugin... received
+ * object") for reasons that trace into vendored Cordis internals this repo does not edit. A static row, inserted
+ * the same way the Blueprint's own fixed rows are (`composeBlueprintRows`/`materializeProfilePackage`), sidesteps
+ * dynamic activation entirely and is what every one of those fixed rows already relies on successfully.
+ * Never throws: a missing or malformed `package.json` is skipped, not fatal to boot.
+ */
+function extensionRequiredFrameworkPackages(extensionsDir: string): readonly string[] {
+  if (!existsSync(extensionsDir)) return []
+  const names = new Set<string>()
+  for (const entry of readdirSync(extensionsDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue
+    const manifestPath = join(extensionsDir, entry.name, 'package.json')
+    if (!existsSync(manifestPath)) continue
+    try {
+      const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { dsh?: { requiresAcrylPackages?: unknown } }
+      const required = manifest.dsh?.requiresAcrylPackages
+      if (Array.isArray(required)) for (const name of required) if (typeof name === 'string') names.add(name)
+    } catch { /* a malformed extension package.json is the extension's own problem, reported when it installs, not here */ }
+  }
+  return [...names]
+}
+
 /** Resolve the pinned Harness `web` profile into a mountable composition (the Web flavor). */
 async function resolveWebEngineComposition(installPackageUrl: string): Promise<DshEngineComposition> {
   const profileName = 'web'
@@ -464,10 +522,17 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   for (const packageName of [...acrylCodingCapabilityPackages(webSurfaces, capabilities), ...rowsComposition.packages]) {
     materializeProfilePackage(profile.dir, packageName, installPackageUrl)
   }
+  // The app's own committed extensions may each need an ACRYL-owned framework package (see
+  // `extensionRequiredFrameworkPackages`'s own doc comment for why this is a static row, not the dynamic
+  // agent-runtime install path `acryl-extension-context` otherwise uses).
+  const requiredFrameworkPackages = extensionRequiredFrameworkPackages(join(instance.home, 'extensions'))
+    .filter(name => !existingRowIds.has(name) && !rowsComposition.packages.includes(name))
+  for (const packageName of requiredFrameworkPackages) materializeProfilePackage(profile.dir, packageName, installPackageUrl)
   const patches = structuredClone([
     ...profileLayerPatches,
     ...createAcrylCodingCapabilityPatches(webSurfaces, existingRowIds, capabilities),
     ...createAcrylShellCapabilityPatches(webSurfaces, 'advanced', existingRowIds, capabilities),
+    ...requiredFrameworkPackages.map(name => ({ insert: [{ id: name, name }] })),
     ...profile.patches,
   ])
   // Brand swap: same technique and same row id as acryl-desktop's own
@@ -518,7 +583,7 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
     profileName,
     statePath: resolvePluginLifecycleStatePath(),
   }))
-  return { rootConfig, patches, surface: 'web', instance, productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL' }
+  return { rootConfig, patches, surface: 'web', instance, installPackageUrl, productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL' }
 }
 
 /**

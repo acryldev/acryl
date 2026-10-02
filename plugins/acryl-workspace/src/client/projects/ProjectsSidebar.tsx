@@ -17,7 +17,7 @@ import type { ProjectsControl } from './projects-control.ts'
 import { attentionByWorktree, type WorktreeAttention } from '../status/attention-model.ts'
 import type { AgentStatusState } from '../status/agent-status-state.ts'
 import { buildProjectRows, entriesForWorktree, type RepoRow, type WorktreeDot, type WorktreeRow, type WorktreeSessionEntry } from './sidebar-model.ts'
-import type { DesktopSidebarSurfaceOwnerProps } from '../shell/contracts.ts'
+import type { DesktopSidebarSurfaceOwnerProps } from 'acryl-app-shell/client'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 
 /** The left-pane owner interface the frame offers: the same one the frame's default sidebar receives. */

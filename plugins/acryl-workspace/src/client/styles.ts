@@ -205,7 +205,7 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceDocHeading { margin: 0.6em 0 0.3em; font-weight: 700; }
 .dshWorkspaceDocList { margin: 0.3em 0; padding-left: 1.4em; }
 .dshWorkspaceDocParagraph { margin: 0.3em 0; }
-.dshWorkspaceSide { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; }
+.dshWorkspaceSide { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; overflow-x: hidden; }
 /* macOS: the window's traffic-light buttons sit in the top-left; keep the head row clear of them. */
 .dshDesktopFrame[data-desktop-platform="darwin"] .dshWorkspaceSideProjectsHead:first-child,
 .dshDesktopFrame[data-desktop-platform="darwin"] .dshWorkspaceSideBrandRow:first-child { margin-top: 26px; }
@@ -225,7 +225,13 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceSideBrandName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dsw-alias-label-primary); font: 600 13px/1.3 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSideCollapse { appearance: none; flex: none; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; }
 .dshWorkspaceSideCollapse:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-label-primary); }
-.dshWorkspaceSideProjects { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 8px 12px; }
+/* overflow-x: hidden is deliberate, not a default: setting only overflow-y computes overflow-x to auto too
+   (CSS overflow is a one-axis-implies-the-other-scrolls rule), so any row even a pixel wider than the
+   column - an untruncated path, an icon's own layout width - silently made the whole list horizontally
+   scrollable. A diagonal trackpad scroll gesture nudged it sideways and nothing ever scrolled it back,
+   leaving every row's text clipped on the left (owner report with a screenshot: "sidebar drifts in
+   scrolling left right"). Rows already truncate long text with ellipsis; nothing needs horizontal scroll. */
+.dshWorkspaceSideProjects { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 4px 8px 12px; }
 .dshWorkspaceSideProjectsHead { display: flex; align-items: center; justify-content: space-between; padding: 2px 8px 4px; color: var(--dsw-alias-label-secondary); font: 600 11px/1.4 ui-sans-serif, system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 .dshWorkspaceSideAdd { appearance: none; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; font: 500 18px/1 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSideAdd:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }

@@ -1,3 +1,46 @@
+## 2026-10-01 (later still) - 036: acryl-app-shell was never actually a Loader row; GTD rebuild found it live
+
+Commits: `2b059b7` (the row fix), `004676c` (the new extension-dependency mechanism).
+
+Rebuilding `acryl-gtd` on `acryl-app-shell` (T025) was the first thing to actually boot a browser against that
+package since its extraction two entries up. The prior entry's own claim ("registered as its own row in both
+apps... so the bundle is actually present in the page") was wrong: neither app ever inserted `acryl-app-shell`
+as a Loader row, only as a package.json dependency and a prebuild step. `acryl-workspace`'s
+`require('acryl-app-shell/client')` would have crashed the first time anyone opened the main view in a real
+browser on either app - the "22/22 tests, headless boot smoke clean" verification never rendered a page, so it
+never caught this. Fixed in `coding-capabilities.ts`'s `workspace` row (the same `materializeProfilePackage`
+pattern every other fixed row already uses).
+
+- **A second, deeper gap, found trying to fix the first one:** nothing lets a project grown via `acryl new`
+  depend on an ACRYL-owned framework package at all. The `BlueprintRowId` enum in `blueprint/compose.ts` only
+  covers the framework's 7 built-in rows; an extension's own `blend.yaml` row name for anything else is silently
+  dropped ("an app plugin: loaded from extensions/, not composed here"). Added `dsh.requiresAcrylPackages` to an
+  extension's `package.json`: read at compose time, each named package is symlinked in from the live framework
+  install and inserted as a static row, the same mechanism the 7 fixed rows use. `acryl-extension-context`'s own
+  dynamic install path (`/reload`, the install tool, `syncOnStartup`) gained the same capability through a new
+  `acrylFrameworkPackages` service, for the case where the requirement is only discovered after boot.
+- **Why a static row, not dynamic activation:** `acryl-control`'s `PluginLifecycleController.activate()` -
+  `acryl-extension-context`'s own path for installing a local plugin live, no restart - failed a real, reproduced
+  activation of `acryl-app-shell` through a fresh profile with `invalid plugin, expect function or object with
+  an "apply" method, received object`, under group `@deepseek-ai/dsh-client-ui-layout`. Measured directly: the
+  same failure persisted identically whether `acryl-app-shell` was activated dynamically (`bundleGroup()`'s own
+  heuristic over the live Loader tree) or inserted as a static `cordis.yml` patch at boot, which rules out
+  `bundleGroup()`'s heuristic as the cause even though its group-selection is itself fragile (confirmed via a
+  temporary diagnostic: it is a `.find()` over 60+ "include:"-prefixed entries, first-match-wins, no apparent
+  guarantee it names the intended group - reverted, not fixed, since it wasn't actually the cause here). The
+  real cause traces into vendored Cordis internals (`deepseek-harness/vendor/cordis/src/registry.ts`'s plugin
+  resolution) this repo does not edit; not isolated further this session.
+- **Still blocked:** `acryl-gtd`'s own `client.js` (the board rewrite itself - List/Board/Calendar/Projects, a
+  real `desktop.main` registration, zero Host routes) is written and API-correct (verified line by line against
+  `acryl-app-shell`'s actual exports, slot priority direction, and `dsh.client.external` vs `.inject`), but
+  cannot render yet: it depends on `acryl-app-shell` actually activating, which still hits the error above in
+  the GTD Blueprint's own minimal (Blank-grown) composition specifically - the identical static-row insertion
+  works clean in both real apps' own headless boot smoke (`verify:loader` exit 0 on `acryl-desktop` after this
+  fix). The difference between "works in the IDE's composition" and "fails in Blank's" is the open question;
+  next session should pick up from reproducing it isolated from the IDE apps' own, much larger composition.
+- **Verified:** `acryl-extension-context` 61/61, `acryl-harness-runtime` 204/204 (2 pre-existing skips), both
+  typecheck clean; `acryl-desktop` typecheck/tests clean and `verify:loader` headless boot smoke exit 0.
+
 ## 2026-09-28 - Devin ACP ship-fix pass: nix packaging, manifest deps, spec-sync
 
 Commits: `1fe6bf9a7bd174dad8b652a9b1f6e9832c51abf6` (nix + manifest),
@@ -6149,3 +6192,49 @@ Owner's own `pnpm run dev` failed outright after the "actually remove the upstre
 - **What actually fixed the reported bug** (an agent asked to "collapse left panel" found two indistinguishable "Collapse sidebar" buttons): the host was only zero-sized, not hidden from the accessibility tree, so `acryl-agent-control`'s own `ui_snapshot` still listed its real controls. Added `aria-hidden="true"` to the host - the snapshot reader already treats `aria-hidden` as "leave this whole subtree out" - so the duplicate stops appearing to an agent at all. `aria-hidden` does not block `Element.click()`, so the existing Settings/Add-workspace click proxies are unaffected.
 - **Kept, unaffected by the revert:** the Linux Add-workspace folder-picker fix (desktop uses the same Host route Web does) - it was never part of the broken slot-split.
 - **Verified:** `acryl-workspace` 654/654, `acryl-agent-control` 112/112, both apps' typecheck and build clean, and - this time - the actual headless boot smoke this bug broke (`pnpm --filter acryl-desktop run verify:loader`) passes (exit 0).
+
+## 2026-10-01 (later still) - removing a workspace did not survive a reload; sidebar drifted horizontally
+
+Commit: `1c7d1f2`
+
+Two owner reports with screenshots: pressing "x" to remove a workspace, it "always appears back... as if it loads from some persisted config"; and the sidebar "drifts in scrolling left right", text clipped on the left.
+
+- **Removal cause:** the opposite of what it looked like - removal was the one part never persisted. `WorkspaceShellState.forgetRepo` only wrote to an in-memory `Set` that starts empty on every fresh page load; the passive per-session-cwd and per-registered-workspace discovery effects (the same mechanism behind "web shows so many workspaces I never opened") have no memory of an earlier removal and silently re-add it.
+- **Fix:** forgotten roots now round-trip through the same renderer-storage convenience already used for tabs/view-mode (`canvas/persistence.ts`'s `SavedWorkspace`, `localStorage` under `acryl-workspace:v1`). `WorkspaceShellState` takes an optional seed list at construction, exposes `forgottenRoots()`/`onForgottenChange()`; `startWorkspacePersistence` flushes on a change to either; `client/index.ts` loads the saved set before constructing the shell instead of after.
+- **Drift cause:** `.dshWorkspaceSideProjects` set `overflow-y: auto` with no explicit `overflow-x` - CSS computes an unset axis to `auto` too once the other is non-visible, so any row a pixel wider than the column made the whole list horizontally scrollable, and a diagonal trackpad gesture nudged it sideways with nothing to scroll it back. Fix: explicit `overflow-x: hidden` on it and on `.dshWorkspaceSide`.
+- **Verified:** `acryl-workspace` 662/662 (8 new), typecheck and build clean.
+
+## 2026-10-01 (later still) - 036: fixated where a running instance keeps its state, then live-tested the Blend lifecycle
+
+Commits: `4396b9e` (docs), tasks T021-T023.
+
+Owner was testing a packaged DMG and worried about encapsulation: once self-extension writes code for itself, where does that live once the app is no longer a dev server with hot reload - and where do multiple instantiated Blends (Accounting, a Music Editor) live relative to each other and to the installed app itself.
+
+- **Answer, grounded in code already built (spec 036, `AppInstance`):** the base install uses the shared `~/.acryl`; `acryl new <dir>` makes the target folder itself the instance's `home` (`appFolderInstance`, `runtime/acryl-harness-runtime/src/instance/app-instance.ts`) - its own `.dsh` engine home, its own hashed port, its own Electron user-data name. Self-written capability lands in `<app>/extensions/<name>/`, inside the Project's own committed git history - never near `/Applications/Acryl.app`, never near another Blend's folder. Recorded as section 0 of `specs/036-cordis-ecosystem-and-acryl-blends/blend-instance-design.md` with a worked two-Blends-side-by-side example, so this doesn't need re-deriving from scratch again.
+- **One real gap found along the way:** `acryl-workspace`'s own renderer state (the removed-workspace list, tab/view-mode) persists through per-origin browser `localStorage`, not through `appInstance.home` - the one piece of ACRYL's own code that doesn't yet follow the rule the rest of the runtime enforces. Tracked as T021.
+- **Also found:** no GUI entry point to `planNewApp`/`writeNewApp` exists yet (CLI-only) - a user who only opens the installed app has no way to instantiate a Blueprint. Tracked as T022.
+- **Then live-tested the actually-built lifecycle** (T023), not just read the source: created two Project Blends side by side from `acryl.blank`, confirmed three fully distinct `home`/`dshHome`/`webPort`/`userDataName` by direct inspection; `acryl remote connect` + `acryl save` pushed a real commit to a local bare repo stand-in, verified present on the remote side; `acryl new --from file://<that repo>` cloned it back with correct lineage (`created from app.musiceditor-test` in the resulting `blend.yaml`, not a fresh blank); actually booted one instance's `bin/acryl web`, confirmed it served on its predicted port with its own real `.dsh/` (credentials, logs, profiles, storages), nothing touching `~/.acryl` or `~/.acryl-dev`, then stopped it and confirmed the port was free.
+- **Not yet buildable, so not tested:** `acryl publish` (T020, Project -> registry Blueprint) and `acryl pull` (T014, update an existing Project from its starter) don't exist yet.
+- **Verified:** real commands run against a real local setup, not simulated; every claim above is from direct inspection (`lsof`, `git log` on both sides of the push, reading the generated `blend.yaml`), not asserted from reading source alone.
+
+## 2026-10-01 (later still) - dismissing a chat with "x" did not survive a reload either
+
+Commit: `e5dccb1`
+
+Owner report with a screenshot: "82 chats in MAIN!! I never add them... deleting it doesn't help."
+
+- **Cause:** the same bug as the earlier `forgetRepo` fix, one commit later, for chats instead of workspaces - `dismissChat` only ever wrote to an in-memory `Set` that starts empty on every fresh page load, so the passive per-session discovery effect (every chat that ever ran in that worktree) brought every dismissed one straight back.
+- **Fix:** `dismissedChats` now round-trips through the same renderer-storage convenience `forgottenRoots` already uses (`canvas/persistence.ts`'s `SavedWorkspace`). `WorkspaceShellState` takes an optional seed at construction; `startWorkspacePersistence` flushes on a change (`dismissedChats` is replaced wholesale, never mutated, so reference inequality is a reliable change signal - no diffing needed); `client/index.ts` loads the saved set before constructing the shell.
+- **Verified:** `acryl-workspace` 668/668 (6 new), typecheck and build clean, `acryl-desktop`/`acryl-web` typecheck clean.
+
+## 2026-10-01 (later still) - 036: extracted acryl-app-shell, fixated how a domain Blend builds its own UI
+
+Commit: `c238a93` (extraction), docs commit follows.
+
+Owner, after watching two independent GTD rebuilds (the public registry one and a second agent's) both land on the same wrong shape: a Host route serving the board, reached by a chat-card link that opens a new tab. "We have routers for custom apps - that's bullshit... why we need routes?" Restated the core model directly: a Project Blend is one standalone product; `acryl-workspace` already proves the right shape for the IDE (a plugin claiming `desktop.main`/`desktop.sidebar`); a different domain wants the same mechanism with different content, never PTYs and a file tree it has no use for; "every team adopts plugins and capabilities for themselves."
+
+- **Extracted `plugins/acryl-app-shell`** from `acryl-workspace`'s own `shell/` (nine files, already generic - its only IDE-specific dependency was the terminal dock, imported directly into `AdvancedFrame.tsx`). Replaced that with two optional generic hooks (`wrapMain`, `wrapRightbar`) a caller supplies; `acryl-app-shell` has no concept of a dock, only that a caller may want to wrap a column. `acryl-workspace` now builds its own dock wrapping (`dock/dock-hooks.tsx`) and passes it in, the same way any other domain plugin would.
+- **Packaging problem found live:** `acryl-app-shell`'s client bundle is its own Loader-row `window.__ModuleLoader__` wrapper, like every client package here - bundling it directly into `acryl-workspace`'s own build fails outright (rolldown: "Missing export", cannot read named exports out of that wrapper). Fixed by marking `'acryl-app-shell/client'` external in `acryl-workspace`'s tsdown config, resolved through the shared Module Loader registry at runtime - the same mechanism every `@deepseek-ai/*` client package already uses, now proven for a workspace-internal one. Registered as its own row in both `acryl-desktop` and `acryl-web` (package.json dependency + prebuild chain) so the bundle is actually present in the page.
+- **Fixated into `specs/036-cordis-ecosystem-and-acryl-blends/blend-instance-design.md` section 0a:** the rule ("a domain plugin's own main UI is always a slot registration, never a Host route"), the worked example, and the one-call usage shown with real code, so the next Blueprint doesn't rediscover this the same way twice already did.
+- **Not done yet:** `acryl-gtd` itself is not rebuilt on the new scaffold (T025) - both existing implementations are still route-based.
+- **Verified:** `acryl-app-shell` 22/22 (its tests ported from the old `shell/` tests), `acryl-workspace` 646/646, `acryl-agent-control` 112/112 unaffected, both apps typecheck clean, the headless boot smoke this session already caught one real break on today (`pnpm --filter acryl-desktop run verify:loader`) passes clean.

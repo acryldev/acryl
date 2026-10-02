@@ -1,9 +1,15 @@
 /**
- * What survives a restart or a page reload: the Chats | Projects choice and, per worktree, the tabs
- * whose content lives in the renderer (files, diffs, browser pages, docs, boards), and the terminal and
- * agent tabs by the id of the Host terminal behind them. The Host keeps a terminal running across a
- * page reload, so the tab reattaches to the exact screen; when the Host itself restarted the terminal is
- * gone, the tab finds that out on reconnecting and closes itself. The chat is the session's own record.
+ * What survives a restart or a page reload: the Chats | Projects choice, per worktree the tabs whose
+ * content lives in the renderer (files, diffs, browser pages, docs, boards) and the terminal and agent
+ * tabs by the id of the Host terminal behind them, and which repository roots the owner explicitly
+ * removed from the tree (`forgetRepo`) - without this, a removal only lasted until the next reload: the
+ * passive per-session and per-registered-workspace discovery effects re-add every repo a chat ever ran
+ * in or the Host still lists, on every fresh page load, with nothing remembering it was removed (owner
+ * report: pressing "x" to remove a workspace, it "always appears back... as if it loads from some
+ * persisted config" - the opposite was true: the removal was the part that was never persisted). The
+ * Host keeps a terminal running across a page reload, so the tab reattaches to the exact screen; when
+ * the Host itself restarted the terminal is gone, the tab finds that out on reconnecting and closes
+ * itself. The chat is the session's own record.
  *
  * Stored in the renderer's storage as a convenience, so every read is defensive: anything that does
  * not validate is dropped, never thrown, and never able to break startup.
@@ -20,6 +26,10 @@ const MAX_TEXT = 200_000
 const MAX_TOTAL = 1_000_000
 const MAX_GROUPS = 50
 const MAX_TILES = 40
+const MAX_FORGOTTEN_ROOTS = 500
+const MAX_ROOT_LENGTH = 4096
+const MAX_DISMISSED_CHATS = 2000
+const MAX_CHAT_ID_LENGTH = 256
 const RESTORABLE_KINDS = ['file', 'browser', 'diff', 'kanban', 'doc', 'pty', 'custom'] as const
 
 export type SavedTileKind = (typeof RESTORABLE_KINDS)[number]
@@ -60,6 +70,12 @@ export interface SavedWorkspace {
   readonly version: 1
   readonly mode: ShellMode
   readonly groups: Readonly<Record<string, SavedGroup>>
+  /** Repository roots explicitly removed from the tree (`WorkspaceShellState.forgetRepo`); absent or
+   * empty when none have been. */
+  readonly forgottenRoots: readonly string[]
+  /** Chat session ids hidden with "x" (`WorkspaceShellState.dismissChat`); absent or empty when none have
+   * been. */
+  readonly dismissedChats: readonly string[]
 }
 
 /** The two methods of the Storage interface this module uses. */
@@ -159,11 +175,17 @@ export function parseSavedWorkspace(raw: string | null): SavedWorkspace | undefi
     const split = index(group.split)
     groups[key] = { tiles, active, split: split === active ? -1 : split }
   }
-  return { version: 1, mode: value.mode, groups }
+  const forgottenRoots = Array.isArray(value.forgottenRoots)
+    ? value.forgottenRoots.filter((root): root is string => typeof root === 'string' && root.length > 0 && root.length <= MAX_ROOT_LENGTH).slice(0, MAX_FORGOTTEN_ROOTS)
+    : []
+  const dismissedChats = Array.isArray(value.dismissedChats)
+    ? value.dismissedChats.filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= MAX_CHAT_ID_LENGTH).slice(0, MAX_DISMISSED_CHATS)
+    : []
+  return { version: 1, mode: value.mode, groups, forgottenRoots, dismissedChats }
 }
 
 /** @returns the JSON to store, staying under the size cap by dropping the largest tiles first. */
-export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups): string {
+export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups, forgottenRoots: readonly string[] = [], dismissedChats: readonly string[] = []): string {
   const saved: Record<string, SavedGroup> = {}
   for (const key of groups.keys()) {
     const snapshot = groups.stateFor(key).getSnapshot()
@@ -201,7 +223,8 @@ export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups): st
     }
     if (tiles.length > 0 || active !== -1) saved[key] = { tiles: tiles.slice(0, MAX_TILES), active, split }
   }
-  let json = JSON.stringify({ version: 1, mode, groups: saved })
+  const extra = { forgottenRoots: forgottenRoots.slice(0, MAX_FORGOTTEN_ROOTS), dismissedChats: dismissedChats.slice(0, MAX_DISMISSED_CHATS) }
+  let json = JSON.stringify({ version: 1, mode, groups: saved, ...extra })
   // Oversized text (a pasted file, a long doc) is the only thing that can blow the cap: shed it.
   if (json.length > MAX_TOTAL) {
     for (const group of Object.values(saved)) {
@@ -213,7 +236,7 @@ export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups): st
         void index
       })
     }
-    json = JSON.stringify({ version: 1, mode, groups: saved })
+    json = JSON.stringify({ version: 1, mode, groups: saved, ...extra })
   }
   return json
 }

@@ -35,9 +35,13 @@ export function lintPackageDir(dir, fs = { existsSync, readFileSync }) {
     if (typeof clientExport !== 'string') errors.push('a package with "dsh.client" must export its browser bundle as "./client" in "exports" (for example "./client": "./client.js")')
     else if (!fs.existsSync(join(dir, clientExport))) errors.push(`the client bundle ${clientExport} does not exist`)
   }
+  const requiresAcrylPackages = pkg.dsh?.requiresAcrylPackages
+  if (requiresAcrylPackages !== undefined && (!Array.isArray(requiresAcrylPackages) || !requiresAcrylPackages.every(name => typeof name === 'string'))) {
+    errors.push('"dsh.requiresAcrylPackages" must be a list of package name strings')
+  }
   errors.push(...checkManifest(pkg))
   const { apiVersion, permissions } = readManifest(pkg)
-  return { name: pkg.name, hasClient: pkg.dsh?.client !== undefined, hotShim: usesHotShim(dir, pkg, fs), apiVersion, permissions, errors }
+  return { name: pkg.name, hasClient: pkg.dsh?.client !== undefined, hotShim: usesHotShim(dir, pkg, fs), apiVersion, permissions, requiresAcrylPackages: Array.isArray(requiresAcrylPackages) ? requiresAcrylPackages : [], errors }
 }
 
 /** True when the plugin's host entry re-imports its implementation with a cache-busting query (the hot shim). */
@@ -108,6 +112,36 @@ export function ensureProfileBundle(profileDir, name, fs = { existsSync, readFil
   fs.writeFileSync(tmp, `${JSON.stringify(pkg, null, 2)}\n`)
   fs.renameSync(tmp, path)
   return true
+}
+
+/**
+ * Make the ACRYL-owned workspace packages a local extension named in `dsh.requiresAcrylPackages` resolvable
+ * and live, in the same profile its own install lands in: symlink each in (`acrylFrameworkPackages`, not
+ * published so `pnpm add` cannot fetch it), register it in `dsh.profile.bundles` (the same thing `dsh plugin
+ * add` does for an ordinary local install - `livePluginActivation.activate()` refuses any package name absent
+ * from that list, "cannot be activated by this host", even when it is already present in `node_modules`), and
+ * activate it as a Loader entry (the existing `livePluginActivation` service, the same one that activates the
+ * extension itself - already-active packages are left alone).
+ * @param {{ acrylFrameworkPackages?: { materialize(profileDir: string, name: string): void }, live: any, profileDir?: string }} services
+ * @param {readonly string[]} names
+ * @param {object} [fs]
+ */
+export async function materializeRequiredAcrylPackages(services, names, fs) {
+  const errors = []
+  if (!services.acrylFrameworkPackages) {
+    return { errors: [`this runtime cannot resolve ACRYL framework packages (needed: ${names.join(', ')})`] }
+  }
+  if (!services.profileDir) return { errors: ['the active profile directory is not available to resolve ACRYL framework packages'] }
+  for (const name of names) {
+    try {
+      services.acrylFrameworkPackages.materialize(services.profileDir, name)
+      ensureProfileBundle(services.profileDir, name, fs)
+      if (services.live.statusOf(name) === undefined) await services.live.activate(name)
+    } catch (cause) {
+      errors.push(`could not make "${name}" live: ${cause instanceof Error ? cause.message : String(cause)}`)
+    }
+  }
+  return { errors }
 }
 
 /**
@@ -188,6 +222,23 @@ export async function installLocalPlugin(input, services, fs) {
     const removed = await runPlugin(services.pnpm, ['remove', lint.name], installDir)
     return { ok: false, stage: 'activate', errors: [message], rolledBack: removed.ok, next: 'The install was undone. Fix the error above, then call the tool again.' }
   }
+
+  // The required packages activate AFTER the plugin itself, not before: `livePluginActivation`'s dynamic
+  // activation locates its target Loader group by searching the live tree for an already-settled "include:"
+  // entry (`PluginLifecycleController`'s `bundleGroup()`), and that search is unreliable on the very first
+  // dynamic activation of a fresh profile - measured live, activating a framework package before anything else
+  // had ever been dynamically activated matched the wrong group ("dsh-client-ui-layout") and failed with
+  // "invalid plugin, expect function or object with an apply method, received object". Activating the plugin
+  // itself first settles the tree into the shape every later dynamic activation (including this one) expects.
+  if (lint.requiresAcrylPackages.length > 0) {
+    const required = await materializeRequiredAcrylPackages(services, lint.requiresAcrylPackages, fs)
+    if (required.errors.length > 0) {
+      await services.live.deactivate(lint.name).catch(() => {})
+      const removed = await runPlugin(services.pnpm, ['remove', lint.name], installDir)
+      return { ok: false, stage: 'requires', errors: required.errors, rolledBack: removed.ok, next: 'The install was undone. Fix the error above, then call the tool again.' }
+    }
+  }
+
   const result = { ok: true, package: lint.name, status: services.live.statusOf(lint.name) ?? 'unknown', action: updating ? 'updated' : 'installed' }
   if (staging.ok) {
     result.hostReload = 'automatic'
