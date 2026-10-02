@@ -523,3 +523,25 @@ Branch `harness-latest-2026-10`, checkpoints `7cec5bd` to `b5d48d5` (the branch 
 2. **The Desktop client still injected the removed `settingsScope`**, so the renderer waited forever and the Host reported "did not report boot health within 30000ms".
 
 **Isolation lesson (my error, recorded so it is not repeated).** Launching `scripts/launch-dev.mjs` with only `ACRYL_HOME` (and then `ACRYL_LOCAL_PRODUCT_NAME`) still wrote logs, lifecycle events, diagnostics and Singleton lock files into the real `~/Library/Application Support/ACRYL`, shared with the installed app; nothing was deleted, and my first isolation check was wrong. Isolation that works: run the Electron binary directly with `--user-data-dir=<temp>`, and verify with `find ... -newer <marker>` that the real directory is untouched. Follow-up: make the dev launcher derive Electron's user data from the selected `AppInstance` (the only place allowed to read the environment).
+
+## Finding R26 - the ACRYL shell is back on DSH 0.2 and the suites are green (2026-10-02)
+
+Branch `harness-latest-2026-10` (pushed). Builds on R25; everything below was verified in isolated homes and Chromium user data.
+
+**Re-attached**
+- **Workspace** (`acryl-workspace`): the tab strip and Projects panel hold the main view through `sessions/main-session.ts` (`retain(target, { source: 'mainView' })`, current session read from `retainedBy`), replacing the removed `ISessions.open` and `list.current`. 646 of 646 tests.
+- **Advanced shell** (`acryl-app-shell`): its layout state now implements 0.2's whole `ILayout` (`panelInfo`, `selectPanel`, `beginNavigation` plus the panel transitions), provides `panelInfo` as the page's root hook, renders upstream's keyed `main` panels while one is open, and uses upstream's slot names (`main`, root-scoped `rightbar`, `shell.leading`) instead of redeclaring them. Web and Desktop both run the full ACRYL frame (Tab Stripe, Projects/Workspaces pane, Settings, right-panel toggle).
+- **Settings and Models**: DSH 0.2 enables `config-editor`, `settings` and the plugin manager only while a `profileContext` exists. ACRYL now provides one from every composition (`createProfileContext`; never named `desktop`, which would also switch on upstream's product telemetry) and switches `hmr` off itself. Without this the Models page, where credentials are entered, reported "settings service is absent".
+
+**Real defects found while clearing the tests (all fixed)**
+1. Loader 1.0.5 does not await a disabled entry's disposal, keeps the disposed Fiber, and logs a throwing `apply` as a FAILED Fiber instead of rejecting `create()`/`update()`. `acryl-control`'s lifecycle service now settles explicitly and surfaces the plugin's own activation error, so enable/disable receipts are honest and a failed live install rolls back.
+2. The Settings button gained `aria-label="Settings"` in 0.2; ACRYL's DOM lookup skipped labelled buttons, so "Settings is not available in this window".
+3. Blueprints did not list `acryl-settings`, but Desktop's own plugin depends on it, so a Blank app on Desktop would never activate. It is now an essential capability.
+4. The terminal profile had an empty agent roster: 0.2 ships presets as `dsh-web-app` patch files (`presets/<name>.patch.yml`) and has no terminal bundle. The TUI composition layers the same four files in.
+5. Desktop declares the 21 packages the 0.2 web bundle loads dynamically (needed by the packaged runtime), and Electron is pinned to 43.0.0 (`node-addon-require-builtin` 0.1.7 rejects 43.4.0).
+
+**Tests**: every package passes. Documented skips and todos: the `acryl-ui` `fields.tsx` provenance check (upstream moved and renamed it; re-extract as its own task), one `it.todo` for the DeepSeek tool-call delta guard (0.2 uses a Messages transport, so the old chat-completions mock cannot reach that code). Root `typecheck` and `verify-layout` pass. `verify-layout`'s expected `packageExtensions` block and its preset check were updated with the repo.
+
+**Still detached**: `acryl-shortcuts` and `acryl-mount-anchors` (upstream shortcuts own the service), the Desktop settings page (needs a rebuild over `acryl-settings`), the Windows ACL pwsh trampoline (type-correct helpers split into `windows-acl-adaptation.ts`; the executor subclass needs a re-port and a Windows machine), and `acryl-workspace`'s own palette command for settings.
+
+**Isolation rule learned**: Electron's user data is not isolated by `ACRYL_HOME`. Run Electron directly with `--user-data-dir=<temp>` and verify with `find ... -newer <marker>` that the real directory is untouched.
