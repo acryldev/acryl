@@ -323,3 +323,21 @@ The "replacement" column is inferred from names only. These are Loader row names
 **Not checked:** typecheck against the new APIs, the Host-side API changes ACRYL touches, a boot of the web or desktop host on the new version, and the 4,381-commit history for breaking-change notes.
 
 **Consequence:** T034 (patch strategy) is now a smaller decision (one patch to re-port), but T035 depends on first mapping the six removed packages. Suggested order: read the upstream package READMEs and Agent Notes for the six, write the mapping here, then bump manifests and the lockfile.
+
+## Finding R18 - mapping the six removed packages (T033 continued)
+
+**Date:** 2026-10-02. **Method:** `git diff -M40%` from the old pin (`5dda764`) to upstream `master` (`639ed01`, `dsh-v0.2.0-rc.2`) restricted to `packages/`, matching deleted files in each old directory to renamed files elsewhere; `npm view` for each candidate at `0.2.0-rc.2`; upstream commit messages and Agent Notes. Rename detection is by file similarity, so each row is evidence for a successor, not proof that the config schema and Loader row behavior are unchanged. No ACRYL file was edited.
+
+| Removed package (old path) | Successor evidence | Confidence |
+|---|---|---|
+| `dsh-client-ui-sidebar-textpreview` (`packages/client/ui-sidebar-textpreview`) | `packages/client/ui-sidebar-documentpreview`: `src/client/definition.ts` R85, tests R100. Published `@deepseek-ai/dsh-client-ui-sidebar-documentpreview@0.2.0-rc.2` | Likely a rename |
+| `dsh-workflow-worker-thread` (`packages/workflow/workflow-worker-thread`) | `packages/workflow/workflow-ptc`: `src/meta.ts` R94, realm and meta tests R100. Published `dsh-workflow-ptc@0.2.0-rc.2` | Likely, but the name suggests a different execution model (PTC), so behavior may differ |
+| `dsh-code-runtime`, `dsh-code-runtime-worker-thread` (`packages/code-runtime/*`) | `packages/ptc-runtime/ptc-runtime` and `ptc-runtime-node` (`src/output-json.ts` R94, bootstrap test R92). Published `dsh-ptc-runtime` and `dsh-ptc-runtime-node` at `0.2.0-rc.2` | Likely a rename |
+| `dsh-agent-presets` (`packages/preset/agent-presets`) | `packages/preset/agent-preset-registry` (tests R100) plus the existing `agent-preset`. Commits `d1e22a7e24` "declare Agent compositions in profile YAML" and `b13bbc027c` (2026-09-21) | Split into registry and profile-declared compositions; ACRYL's use needs reading |
+| `dsh-settings-file` (`packages/settings/settings-file`) | **No successor.** Commit `601d6761e4` (2026-09-21) "project volatile Config through profile-backed forms" removed it; upstream's configuration note states the `settings.yaml` tier is "superseded by profile-owned live configuration" (`2026-09-19-profile-owned-live-configuration.md`). The new `dsh-settings` edits plugin `Config` fields declared `.volatile()` and persists through the profile, a different design | **Architectural change, not a rename** |
+
+**Why `dsh-settings-file` matters most.** `apps/acryl-desktop/src/profile.ts` imports `FileSettingsProvider` and `resolveSpec` from it, requires the profile's settings row to be exactly that package (lines 86 and 788 to 795), and reads startup settings and shell mode from its `Config` (lines 173 and 198). Tests in `apps/acryl-desktop/tests/market-pnpm-integration.spec.ts`, `plugins/cordis-plugin-market/tests/market-install.spec.ts` and `market-settings-persistence.spec.ts` assume it. ACRYL homes also carry `settings.yaml` files (for example `~/.acryl/.dsh/settings.yaml`). Moving to the new harness means redesigning where ACRYL's non-secret settings live, not renaming an import.
+
+**Other checks, not done:** the read of `2026-09-19-profile-owned-live-configuration.md` and the new `dsh-settings` README beyond the summary; the row config schemas of the renamed packages; the effect on ACRYL's Loader row ids in `coding-capabilities.ts`.
+
+**Consequence for T035:** split it. T035a covers the four likely renames (package names, manifests, lockfile, row ids, tests). T035b is a design task for settings: adopt profile-owned live configuration, or keep a local file-backed provider. T035b should be decided before any manifest bump on the branch.

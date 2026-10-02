@@ -334,8 +334,10 @@ presentation only.
   - Partly delivered 2026-10-02 (report in `research.md` R17): submodule checked out at upstream `dsh-v0.2.0-rc.2` in the worktree (uncommitted), patch dry-run done, npm availability of all 213 pinned packages checked. Typecheck and API-change list not done: six pinned packages no longer exist upstream (R17), which needs a decision first.
 - [ ] T034 Decide the patch strategy (T025) using the T033 report.
   - Depends on: T033. Acceptance: decision recorded.
-- [ ] T035 Re-port failing patches and bump the runtime family on the branch (completes T026 for the new target version), then run the full gate.
+- [ ] T035a Rename the four likely-renamed packages (R18: sidebar-textpreview, workflow-worker-thread, code-runtime and code-runtime-worker-thread, agent-presets), re-port the one failing patch, bump the runtime family on the branch (completes T026 for the new target), then run the full gate.
   - Depends on: T034. Acceptance: `corepack pnpm run check` green on the branch.
+- [ ] T035b Decide and implement ACRYL's non-secret settings home now that upstream removed `dsh-settings-file` (R18): adopt profile-owned live configuration, or keep a local file-backed provider. Covers `apps/acryl-desktop/src/profile.ts`, the market settings tests and existing `~/.acryl*/.dsh/settings.yaml` files (migration).
+  - Depends on: T033. Decide before T035a bumps manifests. Acceptance: a recorded decision, then a boot on the branch that reads and writes settings with an existing home copy.
 - [ ] T036 Spike the port-less transport against ACRYL's WebSocket routes (research R16 risk 1): can `dsh-app://` with framed pipes carry the workspace terminal stream and the Agent Control channel?
   - Depends on: T033. Acceptance: pass or a recorded blocker; no production change.
 - [ ] T037 Decide per idea in R16 ("worth adapting") which to take: staged install with rollback, single signed update unit and feed, state lock, no exposed port. Write each as a task or reject it with a reason.
