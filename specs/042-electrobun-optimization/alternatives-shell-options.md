@@ -1,3 +1,5 @@
+> **Update 2026-10-02.** Not parked. The owner direction (spec 001, R20) is that ACRYL owns its own Web and Desktop surfaces with DSH as the engine, so the shell choice stays open and this comparison remains the working analysis.
+
 # 042 Alternatives: which native-webview shell fits ACRYL
 
 **Date**: 2026-10-01. **Method**: measured sizes of the packaged app on this machine, a count of the Electron features the Desktop shell uses, live repository data from GitHub for each candidate, and each project's own documentation. Where something was not verified it says so. Star counts and size claims in the candidate list that was pasted into the conversation were not used; the data below is from the repositories.

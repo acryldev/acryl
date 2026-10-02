@@ -338,11 +338,11 @@ presentation only.
   - Depends on: T034. Acceptance: `corepack pnpm run check` green on the branch.
 - [ ] T035b Decide and implement ACRYL's non-secret settings home now that upstream removed `dsh-settings-file` (R18): adopt profile-owned live configuration, or keep a local file-backed provider. Covers `apps/acryl-desktop/src/profile.ts`, the market settings tests and existing `~/.acryl*/.dsh/settings.yaml` files (migration).
   - Depends on: T033. Decide before T035a bumps manifests. Acceptance: a recorded decision, then a boot on the branch that reads and writes settings with an existing home copy.
-- [ ] T036 Stage A: run stock, unmodified DSH `0.2.0-rc.2` (published `@deepseek-ai/dsh`, web and its own Desktop) in an isolated home and port, and record that it boots, shows its own default sidebar, and starts a chat (R19).
+- [x] T036 Stage A (delivered 2026-10-02, evidence in research.md R20): run stock, unmodified DSH `0.2.0-rc.2` (published `@deepseek-ai/dsh`, web and its own Desktop) in an isolated home and port, and record that it boots, shows its own default sidebar, and starts a chat (R19).
   - Why: the owner direction is to take the 0.2 runtime first and re-attach ACRYL's results afterwards.
   - Depends on: none. Acceptance: boot evidence recorded in `research.md`; process stopped and port confirmed free.
-- [ ] T036b Stage B, first step: re-attach one ACRYL plugin (the workspace shell with the Tab Stripe) and one WebSocket route (the terminal stream) to the 0.2 runtime in an isolated home, and list what breaks.
-  - Depends on: T036, T035b. Acceptance: pass, or a recorded list of blockers (origin checks, row names, slots); `main` unchanged.
+- [ ] T036b Stage B, first step: on the branch, add a DSH `0.2.0-rc.2` engine definition behind the existing `createAcrylEngineHost` seam, then re-attach one ACRYL surface piece (the workspace shell with the Tab Stripe) and one WebSocket route (the terminal stream) to it in an isolated home, and list what breaks (R20).
+  - Depends on: T035b (settings home), R18 package mappings. Acceptance: pass, or a recorded list of blockers (row names, slots, origin checks); `main` unchanged.
 - [ ] T037 Decide per idea in R16 ("worth adapting") which to take: staged install with rollback, single signed update unit and feed, state lock, no exposed port. Write each as a task or reject it with a reason.
   - Depends on: T035, T036. Acceptance: decision recorded in `research.md`.
 - [ ] T038 Add the missing platform native packages (`@deepseek-ai/node-addon-system-darwin-arm64`, `-darwin-x64`, and the Linux ones) to `apps/acryl-desktop/package.json` and the lockfile; fix the stale `node-pty` path in `apps/acryl-desktop/scripts/mac-universal.ts`; add a packaged-app check that every `optionalDependencies` platform package of an unpacked native addon is present.

@@ -365,3 +365,25 @@ The "replacement" column is inferred from names only. These are Loader row names
 3. **Branding and release channel:** upstream's update endpoints, signing identity and product name are its own.
 
 **Consequence for tasks:** T036 becomes Stage A (stock DSH 0.2 runs by itself in an isolated home) and T036b the first Stage B step (one ACRYL plugin and one WebSocket route on top). Spec 042's shell comparison is parked: it is not needed unless ACRYL later owns a shell again. Its findings on the Node host, `node-pty` and hot reload remain valid.
+
+## Finding R20 - final direction: ACRYL owns its surfaces, DSH 0.2 is the engine and one agent type (2026-10-02)
+
+**This supersedes the direction paragraphs of R19** (R19's facts about upstream Desktop at `rc.2` stand). R19 read the owner as wanting to adapt around upstream's Desktop; the owner clarified twice, and the direction is:
+
+1. **ACRYL builds and owns its own Web and Desktop surfaces**, with an Orca-like IDE experience: the Tab Stripe, the workspace and chats left panel, the Development Canvas, PTYs and terminals, agents, workspaces.
+2. **DSH is the runtime, deeply integrated, not the app.** "AcrylDSH chat" is the default agent type in the tabs, the one that drives the app; any other agent (Claude Code, Codex, OpenCode and so on) and any PTY or terminal sit beside it as other tab types.
+3. **Nothing ACRYL built is deleted.** It is kept and re-attached to DSH 0.2, and will break at first.
+4. **Upstream's Desktop and its default left panel are references**, not the base. Ideas worth borrowing from upstream Desktop (staged install with health check and rollback, one signed update unit, state ownership) are tracked separately in T037.
+
+**This matches the existing architecture.** `docs/acryl/MENTAL-MODEL-factory-car-driver.md` already says ACRYL is the factory and never swapped, the harness engine is the swappable car (roadmap M9, `specs/028-harness-engine-swap`), and the model is the driver. The seam exists: surfaces call `createAcrylEngineHost({ engines, initialEngine, prepare })` and an engine is an `AcrylEngineDefinition` (`createDshEngineDefinition`, `createDshEngineDefinitionFromComposition`, `createWebEngineDefinition` in `runtime/acryl-harness-runtime`). Moving to DSH 0.2 is therefore an engine upgrade behind that seam, not a surface rewrite.
+
+**Effect on spec 042 (shell).** The shell decision is open again and relevant: ACRYL owns a shell, so Electron versus a native-webview shell still matters. The findings in `specs/042-electrobun-optimization` (Option A, Node host as a sidecar; measured Bun gaps; Tauri as the best-documented candidate) remain valid. It is no longer parked.
+
+**Stage A result: stock DSH 0.2 boots by itself (T036).** Measured 2026-10-02 with the published `@deepseek-ai/dsh@0.2.0-rc.2` installed with npm into a scratch folder (506 MB of `node_modules`), `DSH_HOME` pointing at an empty scratch directory, `dsh --profile web --no-open --port 38460`:
+
+- Boots and prints a tokenized URL. `GET /` without the token is 401; with the token it sets a cookie and serves the index (200, about 34.8 KB, 11 script tags).
+- The client boot graph names the default UI plugins: `dsh-client-ui-sidebar` (the default left panel), `-sidebar-files`, `-sidebar-terminal`, `-sidebar-right`, `-sidebar-documentpreview`, `-chat`, `-conversation`, `-session`.
+- The process was stopped and the port confirmed free. No ACRYL home or main-checkout file was involved.
+- Not tested: starting a chat (needs a model key), the rendered page in a browser, npm install scripts (npm skipped the native builds; `node-pty` ships prebuilt binaries).
+
+**Consequence for tasks:** T036 evidence is recorded above. T036b becomes: add a DSH 0.2 engine definition behind the existing engine seam on the branch and re-attach one ACRYL surface piece (the workspace shell with the Tab Stripe) and one WebSocket route (the terminal stream) to it in an isolated home, listing what breaks. T035b (settings home) and the six package mappings (R18) are prerequisites for the engine definition.
