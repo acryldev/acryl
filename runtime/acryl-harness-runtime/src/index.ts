@@ -146,14 +146,17 @@ import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import {
   DEFAULT_PROFILE_BUNDLES,
   PROFILE_TEMPLATES,
+  PluginPackages,
   boot,
   composeEntries,
   initProfile,
   loadProfile,
   removeLinkProjections,
   resolveProfileDir,
+  type RuntimeResolution,
 } from '@deepseek-ai/dsh-app-boot'
 
+import { createProfileRuntimeResolution } from './engine-dsh.ts'
 import { selectInstance, type AppInstance } from './instance/index.ts'
 import {
   acrylCodingCapabilityPackages,
@@ -173,10 +176,18 @@ export interface BootAcrylHarnessProfileOptions {
   readonly prepare?: (ctx: Context) => Promise<void> | void
 }
 
-/** Provide the chosen app instance before any profile entry mounts, then run the caller's own host setup. */
-function withAppInstance(instance: AppInstance, prepare?: (ctx: Context) => Promise<void> | void): (ctx: Context) => Promise<void> {
+/**
+ * Provide the chosen app instance and the profile's package table (DSH 0.2 answers every bare-package import from it, as stock
+ * `dsh` mounts it in its own boot step) before any profile entry mounts, then run the caller's own host setup.
+ */
+function withAppInstance(
+  instance: AppInstance,
+  resolution: RuntimeResolution,
+  prepare?: (ctx: Context) => Promise<void> | void,
+): (ctx: Context) => Promise<void> {
   return async ctx => {
     ctx.provide('appInstance', instance)
+    await ctx.plugin(PluginPackages, { resolution })
     await prepare?.(ctx)
   }
 }
@@ -212,7 +223,7 @@ export async function bootAcrylHarnessProfile(
       'ACRYL profile enables Cordis HMR and must be launched with Node --expose-internals',
     )
   }
-  const ctx = await boot('acryl', rootConfig, patches, withAppInstance(instance, options.prepare))
+  const ctx = await boot('acryl', rootConfig, patches, withAppInstance(instance, await createProfileRuntimeResolution(profile), options.prepare))
   if ((ctx as { tools?: unknown }).tools) installAcrylWorkspaceStatusTool(ctx)
   installSessionLogExporter(ctx, { surface: 'tui' })
   let disposed = false
@@ -282,7 +293,7 @@ export async function bootAcrylWebProfile(
     ...profile.patches,
   ])
   const cmdlineArgs = options.cmdlineArgs ?? []
-  const ctx = await boot('web', rootConfig, patches, withAppInstance(instance, hostCtx => {
+  const ctx = await boot('web', rootConfig, patches, withAppInstance(instance, await createProfileRuntimeResolution(profile), hostCtx => {
     provideCmdline(hostCtx, { args: [...cmdlineArgs], exit: code => { process.exitCode = code } })
     return options.prepare?.(hostCtx)
   }))

@@ -29,6 +29,7 @@ import { basename, dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
+import { evaluate, isJsExpr } from '@deepseek-ai/cordis-plugin-loader'
 import {
   DEFAULT_PROFILE_BUNDLES,
   PROFILE_TEMPLATES,
@@ -115,7 +116,10 @@ function escapeHtml(text: string): string {
  */
 async function mountDshEngine(ctx: Context, composition: DshEngineComposition): Promise<void> {
   const hmr = composeEntries([[...composition.patches]]).find(entry => entry.id === 'hmr')
-  if (hmr?.disabled !== true && !process.execArgv.includes('--expose-internals')) {
+  // DSH 0.2 gates the row with `!!js "!ctx.get('profileContext')"`, not a literal `true`: evaluate it against this host's own context
+  // (ACRYL never provides a `profileContext`, so HMR is off and no internals are required).
+  const hmrDisabled = hmr === undefined || (isJsExpr(hmr.disabled) ? Boolean(evaluate({ ctx }, hmr.disabled.__jsExpr)) : hmr.disabled === true)
+  if (!hmrDisabled && !process.execArgv.includes('--expose-internals')) {
     throw new Error(
       'ACRYL profile enables Cordis HMR and must be launched with Node --expose-internals',
     )
@@ -331,7 +335,9 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
   // The Blueprint's ACRYL-owned rows (extension pack, prompt shaping) and the terminal UI library (a plain library a
   // terminal plugin imports, so it is only made resolvable). Rows the profile's own bundle already composes are skipped
   // by `composeBlueprintRows` (a Desktop/Web-shaped profile booted through the CLI).
-  for (const packageName of rowsComposition.packages) materializeProfilePackage(profile.dir, packageName, import.meta.url)
+  // The ACRYL packages the terminal's coding capabilities name (`acryl-settings`), resolvable from this profile like the Web surface's.
+  const tuiCapabilityPackages = acrylCodingCapabilityPackages(new Set(['tui'] as const), new Set(blueprint.capabilities))
+  for (const packageName of [...tuiCapabilityPackages, ...rowsComposition.packages]) materializeProfilePackage(profile.dir, packageName, import.meta.url)
   patches.push(...rowsComposition.patches)
   // The profile's own user overrides come from the shared store, not from this
   // surface: `acryl plugin disable` on a TUI writes the same file the Desktop
