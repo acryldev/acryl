@@ -39,6 +39,9 @@ export {
   createDshEngineDefinition,
   createDshEngineDefinitionFromComposition,
   createWebEngineDefinition,
+  extensionRequiredFrameworkPackages,
+  materializeProfilePackage,
+  type AcrylFrameworkPackages,
   type DshEngineComposition,
 } from './engine-dsh.ts'
 export {

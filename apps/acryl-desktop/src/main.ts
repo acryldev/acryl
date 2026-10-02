@@ -4,7 +4,7 @@ import { app, crashReporter, dialog } from 'electron'
 import { randomUUID } from 'node:crypto'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import {
   installFailLoud,
   loadLayeredEnv,
@@ -665,6 +665,8 @@ async function start(): Promise<void> {
         },
         pluginLifecycleStatePath,
       },
+      undefined,
+      instance.home,
     )
     if (profileCheckpoint === undefined) {
       try {
@@ -838,6 +840,11 @@ async function start(): Promise<void> {
         patches: prepared.patches,
         bareModuleBaseUrl: prepared.bareModuleBaseUrl,
         surface: 'desktop',
+        instance,
+        // Provides the `acrylFrameworkPackages` service (`mountDshEngine`) - without it, an extension's own
+        // `dsh.requiresAcrylPackages` goes unresolved the moment acryl-extension-context tries to install it
+        // live (measured: "this runtime cannot resolve ACRYL framework packages", acryl-gtd never activating).
+        installPackageUrl: pathToFileURL(desktopInstallAnchor()).href,
       })],
       initialEngine: 'dsh',
       prepare: async (hostCtx) => {

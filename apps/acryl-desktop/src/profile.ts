@@ -22,7 +22,7 @@ import {
   type ProfileManifest,
 } from '@deepseek-ai/dsh-app-boot'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
-import { blueprintFromEnvironment, composeBlueprintRows, createAcrylCodingCapabilityPatches, createAcrylShellCapabilityPatches, pluginLifecyclePatches, type Blueprint } from 'acryl-harness-runtime'
+import { blueprintFromEnvironment, composeBlueprintRows, createAcrylCodingCapabilityPatches, createAcrylShellCapabilityPatches, extensionRequiredFrameworkPackages, materializeProfilePackage, pluginLifecyclePatches, type Blueprint } from 'acryl-harness-runtime'
 import FileSettingsProvider, {
   resolveSpec as resolveSettingsFileSpec,
   type Config as SettingsFileConfig,
@@ -658,6 +658,10 @@ export function prepareDesktopProfile(
   recoveryStatePath?: string,
   hooks: DesktopProfilePreparationHooks = {},
   blueprint: Blueprint = blueprintFromEnvironment(),
+  /** The app instance's own top-level folder (contains `extensions/`) - distinct from `home` (the DSH home
+   * inside it). Used to resolve an extension's own `dsh.requiresAcrylPackages` the same way Web's
+   * `resolveWebEngineComposition` already does; omitted only by tests that do not exercise that path. */
+  instanceHome?: string,
 ): PreparedDesktopProfile {
   const profileDir = profileName === DESKTOP_PROFILE_NAME
     ? ensureDesktopProfile(home)
@@ -818,6 +822,20 @@ export function prepareDesktopProfile(
   // mount anchors, in mount order. The packages resolve from this package's own dependency closure like the market package above.
   // Desktop's Market keeps its own provider switch, so the Blueprint never composes it here.
   patches.push(...composeBlueprintRows(blueprint, 'desktop').patches)
+  // The app's own committed extensions may each need an ACRYL-owned framework package (same mechanism and
+  // same reasoning as Web's `resolveWebEngineComposition` - a project grown via `acryl new` has no other way
+  // to depend on an unpublished ACRYL-owned package; see that function's own doc comments for the full
+  // design). A third-party extension claiming the advanced shell this way has no "compatibility vs advanced"
+  // toggle of its own - unlike the IDE, there is no fallback content for it to show in compatibility mode -
+  // so this disables the stock `ui-layout` row unconditionally, not only when `mode === 'advanced'`.
+  const requiredFrameworkPackages = instanceHome === undefined
+    ? []
+    : extensionRequiredFrameworkPackages(join(instanceHome, 'extensions')).filter(name => rows.get(name) === undefined)
+  for (const packageName of requiredFrameworkPackages) materializeProfilePackage(profileDir, packageName, pathToFileURL(INSTALL_ANCHOR).href)
+  patches.push(...requiredFrameworkPackages.map(name => ({ insert: [{ id: name, name }] })))
+  if (requiredFrameworkPackages.includes('acryl-app-shell') && mode !== 'advanced') {
+    patches.push({ id: 'ui-layout', disabled: true }, { id: 'ui-sidebar', disabled: false }, { id: 'ui-conversation', disabled: false })
+  }
   // ACRYL Workspace (spec 040): composed once for both Web and Desktop through the shared capability
   // declaration (`workspace` in `acryl-harness-runtime`'s coding-capabilities, part of
   // `sharedDesktopPatches`), not by a Desktop-only row here. Its client half takes over the frame only

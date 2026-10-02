@@ -456,7 +456,7 @@ declare module '@deepseek-ai/cordis' {
  * dynamic activation entirely and is what every one of those fixed rows already relies on successfully.
  * Never throws: a missing or malformed `package.json` is skipped, not fatal to boot.
  */
-function extensionRequiredFrameworkPackages(extensionsDir: string): readonly string[] {
+export function extensionRequiredFrameworkPackages(extensionsDir: string): readonly string[] {
   if (!existsSync(extensionsDir)) return []
   const names = new Set<string>()
   for (const entry of readdirSync(extensionsDir, { withFileTypes: true })) {
