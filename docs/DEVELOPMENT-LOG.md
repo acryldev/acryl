@@ -1,3 +1,20 @@
+## 2026-10-02 (later) - 036: the Web fix never reached Desktop - fixed and verified separately
+
+Commit: `76bb8a5`.
+
+Owner ran `run-desktop.sh` right after the Web fix below and got the stock chat UI, no error at all. The prior
+entry's fix only ever touched `resolveWebEngineComposition` - Desktop boots through a completely separate
+pipeline (`apps/acryl-desktop/src/profile.ts`) that was never looked at. Found the real cause by reading the
+app's own persisted log file (`~/Library/Application Support/<isolated-userData>/logs/dsh-*.log` - Desktop's
+boot errors never reach stdout the way Web's do): `"this runtime cannot resolve ACRYL framework packages
+(needed: acryl-app-shell)"`. Two gaps: `profile.ts` never scanned an extension's own `dsh.requiresAcrylPackages`
+at all (fixed by porting the same scan+materialize, now exported from `acryl-harness-runtime`), and even with
+that, `main.ts`'s own `createDshEngineDefinitionFromComposition({...})` call never included `installPackageUrl`
+in the composition object, so the `acrylFrameworkPackages` Cordis service was never provided on Desktop
+regardless. Verified by booting a real isolated Electron window (not headless) and reading its own log:
+confirmed the failure before the fix, `"installed the app's extensions acryl-gtd"` after it, Electron process
+staying alive, no new errors. `acryl-desktop` 801/801 (4 pre-existing skips), headless boot smoke exit 0.
+
 ## 2026-10-02 - 036: acryl-app-shell actually boots now; GTD board renders end to end
 
 Commit: `5708568`.
