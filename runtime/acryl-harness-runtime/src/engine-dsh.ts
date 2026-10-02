@@ -93,9 +93,13 @@ export interface DshEngineComposition {
   readonly runtimeResolution?: RuntimeResolution
 }
 
-/** The runtime resolution for a loaded profile, as stock `dsh` computes it (`profile-boot`: `composeProfile`). */
-export function createProfileRuntimeResolution(profile: Profile): Promise<RuntimeResolution> {
-  return createRuntimeResolution({ installAnchor: dshInstallAnchor, profile })
+/**
+ * The runtime resolution for a loaded profile, as stock `dsh` computes it (`profile-boot`: `composeProfile`).
+ * @param installAnchor - the `package.json` whose dependency closure the profile may import from. Defaults to the `dsh`
+ * package; a surface that ships ACRYL-owned packages (Desktop) passes its own, so those resolve like any dependency.
+ */
+export function createProfileRuntimeResolution(profile: Profile, installAnchor: string = dshInstallAnchor): Promise<RuntimeResolution> {
+  return createRuntimeResolution({ installAnchor, profile })
 }
 
 function escapeHtml(text: string): string {
