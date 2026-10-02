@@ -338,8 +338,9 @@ presentation only.
   - Depends on: T034. Acceptance: `corepack pnpm run check` green on the branch.
 - [ ] T035b Decide and implement ACRYL's non-secret settings home now that upstream removed `dsh-settings-file` (R18): adopt profile-owned live configuration, or keep a local file-backed provider. Covers `apps/acryl-desktop/src/profile.ts`, the market settings tests and existing `~/.acryl*/.dsh/settings.yaml` files (migration).
   - Depends on: T033. Decide before T035a bumps manifests. Acceptance: a recorded decision, then a boot on the branch that reads and writes settings with an existing home copy.
-- [ ] T036 Spike the port-less transport against ACRYL's WebSocket routes (research R16 risk 1): can `dsh-app://` with framed pipes carry the workspace terminal stream and the Agent Control channel?
-  - Depends on: T033. Acceptance: pass or a recorded blocker; no production change.
+- [ ] T036 Run upstream's own `dsh-v0.2.0-rc.2` Desktop in an isolated home with one ACRYL plugin (the workspace shell) and one ACRYL WebSocket route (the terminal stream) composed into its `desktop` profile (R19).
+  - Why: the owner direction is to adapt around upstream's Desktop; this is the smallest test that it can host ACRYL's plugins and routes.
+  - Depends on: T033. Acceptance: pass, or a recorded blocker (origin check, plugin composition, live activation); no change to `main`.
 - [ ] T037 Decide per idea in R16 ("worth adapting") which to take: staged install with rollback, single signed update unit and feed, state lock, no exposed port. Write each as a task or reject it with a reason.
   - Depends on: T035, T036. Acceptance: decision recorded in `research.md`.
 - [ ] T038 Add the missing platform native packages (`@deepseek-ai/node-addon-system-darwin-arm64`, `-darwin-x64`, and the Linux ones) to `apps/acryl-desktop/package.json` and the lockfile; fix the stale `node-pty` path in `apps/acryl-desktop/scripts/mac-universal.ts`; add a packaged-app check that every `optionalDependencies` platform package of an unpacked native addon is present.

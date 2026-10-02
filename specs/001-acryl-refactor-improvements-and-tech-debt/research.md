@@ -341,3 +341,22 @@ The "replacement" column is inferred from names only. These are Loader row names
 **Other checks, not done:** the read of `2026-09-19-profile-owned-live-configuration.md` and the new `dsh-settings` README beyond the summary; the row config schemas of the renamed packages; the effect on ACRYL's Loader row ids in `coding-capabilities.ts`.
 
 **Consequence for T035:** split it. T035a covers the four likely renames (package names, manifests, lockfile, row ids, tests). T035b is a design task for settings: adopt profile-owned live configuration, or keep a local file-backed provider. T035b should be decided before any manifest bump on the branch.
+
+## Finding R19 - correction to R16, and the owner's direction (2026-10-02)
+
+**Correction.** R16 described upstream Desktop from the old pin (`0.1.5-alpha.1`): no listening port, framed byte pipes, WebSocket support not found. Reading `dsh-v0.2.0-rc.2` (`deepseek-harness/apps/desktop` and `apps/desktop-host`) shows a different design:
+
+- The UI is loaded from `dsh-app://app/`, but the shared profile runner (started as an Electron RunAsNode child) serves the Web application on **`127.0.0.1:19387`** (`desktop-host/src/index.ts` passes `--no-open --port 19387`; the README says the port is separate from Web's `3080` and a `webserver port` patch can override it).
+- Electron handles WebSocket requests to `ws://127.0.0.1/*` from the main window: `desktop/src/main.ts:710` adds the host cookie and rejects any request whose `Origin` is not `dsh-app://app`.
+- So R16 risk 1 (WebSocket routes) is **reduced**: a mechanism exists. It is not yet shown to work for ACRYL's routes. ACRYL's Agent Control channel and terminal stream check the page `Origin` strictly (`specs/041-agent-control/research.md`, T001), so under upstream Desktop the origin would be `dsh-app://app` rather than an `http://127.0.0.1` origin; whether those checks accept it is untested.
+- R16's other facts (bundled Node child, bundled pnpm, staged install, one release number) were read from the pin and are not re-verified at rc.2, except that the README at rc.2 still states a RunAsNode child and bundled pnpm.
+
+**Owner direction.** The submodule was pinned at `0.1.5-alpha.1` when upstream had no Desktop. ACRYL's Desktop is a fork of a third-party Electron wrapper around the harness core. Upstream now ships its own Electron Desktop, so the direction is to **adapt around the latest DeepSeek Harness and its Desktop, and drop ACRYL's own Desktop wrapper and the other code that duplicates upstream.**
+
+**What this settles and what it leaves open.** It settles the shell question for spec 042: ACRYL should not migrate its own Electron shell to Electrobun or Tauri if it stops owning a shell. It leaves open:
+
+1. **Scope of "drop".** Candidates to drop: `apps/acryl-desktop`'s Electron main process, window and tray modules, updater, packaging and release scripts. Candidates to keep as plugins on upstream's profile: the workspace shell, Agent Control, the Development Canvas, Blends, the market, the CLI and TUI. Nothing is deleted by this finding.
+2. **Whether upstream Desktop can host ACRYL's plugins.** Needed: composing ACRYL's rows into upstream's `desktop` profile, live activation of agent-written plugins (upstream installs plugins through a staged, health-checked install), the WebSocket origin checks above, and ACRYL's `settings.yaml` home (R18).
+3. **Branding and release channel.** Upstream's update endpoints, signing identity and product name are its own.
+
+**Consequence for tasks:** T036 changes from "spike the port-less transport" to "run one ACRYL plugin (the workspace shell) and one WebSocket route (terminal) on upstream's rc.2 Desktop in an isolated home". Spec 042's shell comparison is superseded for the shell decision; its findings on the Node host, `node-pty` and hot reload stay valid for any future non-Electron shell.
