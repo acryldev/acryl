@@ -59,6 +59,7 @@ packages:
   - plugins/acryl-ui-tui
   - plugins/acryl-mount-anchors
   - plugins/acryl-shortcuts
+  - plugins/acryl-settings
   - plugins/acryl-brand
   - plugins/acryl-app-save
   - plugins/acryl-app-shell

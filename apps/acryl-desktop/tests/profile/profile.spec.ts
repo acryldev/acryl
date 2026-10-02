@@ -644,7 +644,7 @@ describe('desktop profile composition', {
     const path = join(home, 'desktop-settings.json')
     writeFileSync(path, JSON.stringify({ 'dsh-desktop': { mode: 'advanced' } }))
 
-    expect(readDesktopShellMode({ path })).toBe('advanced')
+    expect(readDesktopShellMode(path)).toBe('advanced')
     expect(desktopStartupSettingsFromSettings({ 'dsh-desktop': { mode: 'advanced', port: 43_189 } })).toEqual({
       mode: 'advanced',
       port: 43_189,
@@ -673,7 +673,7 @@ describe('desktop profile composition', {
     const home = temporaryHome()
     const path = join(home, 'invalid.yaml')
     writeFileSync(path, 'dsh-desktop: [\n')
-    expect(() => readDesktopShellMode({ path })).toThrow('invalid settings document')
+    expect(() => readDesktopShellMode(path)).toThrow('invalid settings document')
   })
 
   it('treats an empty machine-wide patch file as no desktop patches', () => {

@@ -21,6 +21,7 @@ packages:
   - plugins/acryl-ui-tui
   - plugins/acryl-mount-anchors
   - plugins/acryl-shortcuts
+  - plugins/acryl-settings
   - plugins/acryl-brand
   - plugins/acryl-app-save
   - plugins/acryl-app-shell
@@ -60,6 +61,11 @@ packageExtensions:
   '@deepseek-ai/dsh-session@0.2.0-rc.2':
     dependencies:
       '@deepseek-ai/dsh-typert-protocol': 0.2.0-rc.2
+  # Same gap: the types of dsh-client-modules import these two packages without declaring them (R24).
+  '@deepseek-ai/dsh-client-modules@0.2.0-rc.2':
+    dependencies:
+      '@deepseek-ai/dsh-package-manifest': 0.2.0-rc.2
+      '@deepseek-ai/dsh-host-webserver': 0.2.0-rc.2
 
 patchedDependencies:
   '@deepseek-ai/dsh-app-boot@0.2.0-rc.2': patches/@deepseek-ai__dsh-app-boot@0.2.0-rc.2.patch

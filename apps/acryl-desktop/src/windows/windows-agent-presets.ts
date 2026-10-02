@@ -1,8 +1,8 @@
 /** Windows guard for upstream agent presets that require unsupported PTY inspection. */
 
 import type { Context } from '@deepseek-ai/cordis'
-import AgentPresets, { type AgentPreset } from '@deepseek-ai/dsh-agent-presets'
-// `dsh-agent-presets` throws these through the converged Remote failure
+import AgentPresetRegistry, { type AgentPreset } from '@deepseek-ai/dsh-agent-preset-registry'
+// `dsh-agent-preset-registry` throws these through the converged Remote failure
 // vocabulary (single `RemoteError` with a domain-prefixed code map) rather
 // than dedicated error classes — see `RemoteErrorDetailsMap`'s
 // `agent-preset/not-found` and `agent-preset/invalid` entries.
@@ -14,7 +14,7 @@ export const WINDOWS_UNSUPPORTED_PRESET = 'minimal'
 /** Upstream preset that selects the supported PowerShell toolchain on win32. */
 export const WINDOWS_SAFE_PRESET = 'standard'
 
-/** Mirror `AgentPresets.resolve`'s own `agent-preset/not-found` failure for the hidden preset. */
+/** Mirror `AgentPresetRegistry.resolve`'s own `agent-preset/not-found` failure for the hidden preset. */
 function unknownPreset(id: string, available: readonly string[]): RemoteError<'agent-preset/not-found'> {
   return new RemoteError(
     'agent-preset/not-found',
@@ -23,14 +23,8 @@ function unknownPreset(id: string, available: readonly string[]): RemoteError<'a
   )
 }
 
-/** Mirror `authoring.ts`'s private `presetExists` failure for the hidden preset's id. */
-function presetExists(id: string): RemoteError<'agent-preset/invalid'> {
-  const reason = `preset "${id}" already exists — a copy never overwrites; delete the existing preset first or choose another id`
-  return new RemoteError('agent-preset/invalid', `agent-presets: ${reason}`, { agentPreset: id, reason })
-}
-
 /** Agent-preset roster that keeps Windows sessions on a supported shell composition. */
-export class WindowsAgentPresets extends AgentPresets {
+export class WindowsAgentPresets extends AgentPresetRegistry {
   override get defaultId(): string {
     const id = super.defaultId
     return id === WINDOWS_UNSUPPORTED_PRESET ? WINDOWS_SAFE_PRESET : id
@@ -54,10 +48,6 @@ export class WindowsAgentPresets extends AgentPresets {
     return await super.recompose(agentCtx, id)
   }
 
-  override async copy(from: string, id: string, name?: string): Promise<void> {
-    if (id === WINDOWS_UNSUPPORTED_PRESET) throw presetExists(id)
-    await super.copy(from, id, name)
-  }
 }
 
 export default WindowsAgentPresets

@@ -1,5 +1,6 @@
 /** ACRYL executable: minimal Electron bootstrap around the Host Cordis root. */
 
+import type {} from 'acryl-settings'
 import { app, crashReporter, dialog } from 'electron'
 import { randomUUID } from 'node:crypto'
 import { mkdirSync } from 'node:fs'
@@ -1038,8 +1039,8 @@ async function start(): Promise<void> {
     })
     const ctx = engineHost.ctx
     generation.bindHost(ctx)
-    fileExporter?.setThreshold((ctx.settings.get(DESKTOP_SETTINGS_NAMESPACE) as DesktopSettings | undefined)?.logLevel ?? 'info')
-    ctx.on('settings/updated', (namespace, next) => {
+    fileExporter?.setThreshold((ctx.acrylSettings.get(DESKTOP_SETTINGS_NAMESPACE) as DesktopSettings | undefined)?.logLevel ?? 'info')
+    ctx.on('acrylSettings/updated', (namespace, next) => {
       if (namespace !== DESKTOP_SETTINGS_NAMESPACE) return
       fileExporter?.setThreshold((next as DesktopSettings).logLevel)
     })

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import type {} from '@deepseek-ai/dsh-cmdline'
+import type {} from 'acryl-settings'
 import type {} from '@deepseek-ai/cordis-plugin-loader'
 import type {} from '@deepseek-ai/dsh-commands'
 // `ctx.connection`'s Context augmentation; see the authenticatedUrl() call
@@ -79,11 +80,9 @@ export const name = 'desktop-shell'
 
 /** Services required before the shell can register its renderer generation. */
 /** Services required by the desktop shell; `desktopRuntime` is probed, not required. */
-export const inject = ['webServer', 'webRuntime', 'appExit', 'settings', 'loader']
+export const inject = ['webServer', 'webRuntime', 'appExit', 'acrylSettings', 'loader']
 
-// `SettingsNamespace` is a compile-time-validated string literal type, not a
-// branded runtime value — `ctx.settings.register`/`.get`/etc. accept these
-// literals directly (see `@deepseek-ai/dsh-settings`'s `SettingsNamespaceInput`).
+// Namespaces of ACRYL's own settings service (`ctx.acrylSettings`, package `acryl-settings`).
 /** Standard settings namespace shared by tray and configuration surfaces. */
 export const DESKTOP_SETTINGS_NAMESPACE = 'dsh-desktop'
 
@@ -195,7 +194,7 @@ export function apply(ctx: Context, config: Config): void {
     templatePath: fileURLToPath(new URL('../build/tray-iconTemplate.png', import.meta.url)),
     bluePath: fileURLToPath(new URL('../build/tray-icon-blue.png', import.meta.url)),
   }
-  const settings = ctx.settings.register(
+  const settings = ctx.acrylSettings.register(
     DESKTOP_SETTINGS_NAMESPACE,
     DesktopSettingsSchema,
     {
@@ -377,12 +376,12 @@ export function apply(ctx: Context, config: Config): void {
     }
   }, 'acryl-desktop: restart after startup setting change')
   if (config.mode === 'advanced') {
-    ctx.on('settings/updated', (namespace, next) => {
+    ctx.on('acrylSettings/updated', (namespace, next) => {
       if (namespace !== UI_THEME_SETTINGS_NAMESPACE) return
       runtime.setThemeSource((next as ThemeSettings).preference)
     })
   }
-  ctx.on('settings/updated', (namespace, next) => {
+  ctx.on('acrylSettings/updated', (namespace, next) => {
     if (namespace !== UI_LOCALE_SETTINGS_NAMESPACE) return
     runtime.setLocalePreference(toDesktopLocale((next as LocaleSettings).preference))
   })
@@ -411,14 +410,13 @@ export function apply(ctx: Context, config: Config): void {
         iconPath,
         trayIcons,
         readLocalePreference: () => {
-          return toDesktopLocale((ctx.settings.get(UI_LOCALE_SETTINGS_NAMESPACE) as LocaleSettings | undefined)?.preference)
+          return toDesktopLocale((ctx.acrylSettings.get(UI_LOCALE_SETTINGS_NAMESPACE) as LocaleSettings | undefined)?.preference)
         },
         readThemeSource: () => {
-          const theme = ctx.settings.get(UI_THEME_SETTINGS_NAMESPACE) as ThemeSettings | undefined
-          if (theme === undefined) {
-            throw new Error('acryl-desktop: advanced shell requires the ui-theme settings namespace')
-          }
-          return theme.preference
+          // DETACHED (spec 001 R24): DSH 0.2 keeps the UI theme as profile configuration, not as a settings namespace this
+          // service can read, so until ACRYL owns a theme preference the native window follows the system.
+          const theme = ctx.acrylSettings.get(UI_THEME_SETTINGS_NAMESPACE) as ThemeSettings | undefined
+          return theme?.preference ?? 'system'
         },
         requestQuit: appExit,
         requestModeChange: async mode => settings.update({ mode }),

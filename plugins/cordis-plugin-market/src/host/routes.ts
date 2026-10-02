@@ -3,7 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { BlockList, isIP } from 'node:net'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import type { SettingsScope } from '@deepseek-ai/dsh-settings'
+import type { SettingsScope } from 'acryl-settings'
 import type { CatalogSourceManifest } from '../contracts/index.js'
 import { parseCatalogSnapshot, parseCatalogSource, validateLocalSourceRecords } from '../contracts/validate.js'
 import type { CatalogHttpClient } from '../contracts/types.js'
@@ -40,8 +40,7 @@ import { MarketInstallError, type MarketInstallService } from '../install/servic
 import { manualInstallHints } from '../install/manual.js'
 
 // `SettingsNamespace` is a compile-time-validated string literal type, not a
-// branded runtime value — `ctx.settings.register`/`.get`/etc. accept this
-// literal directly (see `@deepseek-ai/dsh-settings`'s `SettingsNamespaceInput`).
+// branded runtime value; `ctx.acrylSettings.register` accepts this literal directly.
 export const MARKET_SETTINGS_NAMESPACE = 'cordis-plugin-market'
 const SOURCE_SCHEMA = z.object({
   sourceRecordId: z.string().required(),
@@ -1431,7 +1430,7 @@ export function registerMarketRoutes(
 }
 
 export function registerMarketSettings(ctx: Context): SettingsScope<MarketSettingsDocument> {
-  return ctx.settings.register(MARKET_SETTINGS_NAMESPACE, SETTINGS_SCHEMA, { applies: 'live' })
+  return ctx.acrylSettings.register(MARKET_SETTINGS_NAMESPACE, SETTINGS_SCHEMA, { applies: 'live' })
 }
 
 export const marketRoutes = {

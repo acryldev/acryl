@@ -198,6 +198,7 @@
     "acryl-extension-context": "workspace:*",
     "acryl-mount-anchors": "workspace:*",
     "acryl-plugin-admin": "workspace:*",
+    "acryl-settings": "workspace:*",
     "acryl-shortcuts": "workspace:*",
     "acryl-support": "workspace:*",
     "acryl-system-prompt": "workspace:*",
@@ -207,7 +208,7 @@
     "dsh-client-ui-brand-acryl": "workspace:*"
   },
   "scripts": {
-    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-loopback-http run build && pnpm --filter acryl-diagnostics run build && pnpm --filter @webboxes/blends-core run build && pnpm --filter @webboxes/app-persistence run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter dsh-client-ui-brand-acryl run build && pnpm --filter @acryl/ui run build && pnpm --filter acryl-shortcuts run build && pnpm --filter acryl-mount-anchors run build && pnpm --filter acryl-app-shell run build && pnpm --filter acryl-workspace run build && pnpm --filter acryl-plugin-admin run build && pnpm --filter acryl-support run build && pnpm --filter acryl-agent-control run build && pnpm --filter cordis-plugin-market run build",
+    "prebuild": "pnpm --filter acryl-control run build && pnpm --filter acryl-loopback-http run build && pnpm --filter acryl-diagnostics run build && pnpm --filter @webboxes/blends-core run build && pnpm --filter @webboxes/app-persistence run build && pnpm --filter acryl-harness-runtime run build && pnpm --filter dsh-client-ui-brand-acryl run build && pnpm --filter @acryl/ui run build && pnpm --filter acryl-settings run build && pnpm --filter acryl-shortcuts run build && pnpm --filter acryl-mount-anchors run build && pnpm --filter acryl-app-shell run build && pnpm --filter acryl-plugin-admin run build && pnpm --filter acryl-support run build && pnpm --filter acryl-agent-control run build && pnpm --filter cordis-plugin-market run build",
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",

@@ -32,12 +32,16 @@ import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import {
   DEFAULT_PROFILE_BUNDLES,
   PROFILE_TEMPLATES,
+  PluginPackages,
   composeEntries,
+  createRuntimeResolution,
   initProfile,
   loadProfile,
   removeLinkProjections,
   mountRootInclude,
   resolveProfileDir,
+  type Profile,
+  type RuntimeResolution,
 } from '@deepseek-ai/dsh-app-boot'
 import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
 import type {} from '@deepseek-ai/dsh-host-webserver'
@@ -80,6 +84,18 @@ export interface DshEngineComposition {
    * as the `acrylFrameworkPackages` service. Omitted where materializing an ACRYL framework package into a local
    * extension's profile does not apply (for example, a composition root with its own separate profile pipeline). */
   readonly installPackageUrl?: string
+  /**
+   * The package table `@deepseek-ai/dsh-app-boot` computes for this profile (DSH 0.2). Since 0.2 a profile no longer carries link
+   * projections of the installation's packages; the `PluginPackages` service answers every bare-package import from this table, so
+   * the engine mounts it before the profile include. Compute it with {@link createProfileRuntimeResolution} after every
+   * ACRYL-owned package has been materialized into the profile.
+   */
+  readonly runtimeResolution?: RuntimeResolution
+}
+
+/** The runtime resolution for a loaded profile, as stock `dsh` computes it (`profile-boot`: `composeProfile`). */
+export function createProfileRuntimeResolution(profile: Profile): Promise<RuntimeResolution> {
+  return createRuntimeResolution({ installAnchor: dshInstallAnchor, profile })
 }
 
 function escapeHtml(text: string): string {
@@ -125,6 +141,8 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   if (composition.installPackageUrl !== undefined && ctx.root.get('acrylFrameworkPackages' as never) === undefined) {
     ctx.root.provide('acrylFrameworkPackages', createAcrylFrameworkPackages(composition.installPackageUrl))
   }
+  // Owned by this engine's fiber (not the root), so an engine swap releases the interception with the profile it served.
+  if (composition.runtimeResolution !== undefined) await ctx.plugin(PluginPackages, { resolution: composition.runtimeResolution })
   const entry = await mountRootInclude(ctx, composition.rootConfig, composition.patches, composition.bareModuleBaseUrl)
   // mountRootInclude creates its Include row at the Loader's own top level -
   // it has no `parent` parameter and is not scoped to this plugin's own
@@ -319,7 +337,7 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
     profileName,
     statePath: resolvePluginLifecycleStatePath(),
   }))
-  return { rootConfig, patches, surface: 'tui', instance, installPackageUrl: import.meta.url }
+  return { rootConfig, patches, surface: 'tui', instance, installPackageUrl: import.meta.url, runtimeResolution: await createProfileRuntimeResolution(profile) }
 }
 
 /**
@@ -588,7 +606,7 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
     profileName,
     statePath: resolvePluginLifecycleStatePath(),
   }))
-  return { rootConfig, patches, surface: 'web', instance, installPackageUrl, productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL' }
+  return { rootConfig, patches, surface: 'web', instance, installPackageUrl, runtimeResolution: await createProfileRuntimeResolution(profile), productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL' }
 }
 
 /**

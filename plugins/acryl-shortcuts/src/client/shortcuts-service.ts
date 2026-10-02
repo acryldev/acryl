@@ -1,6 +1,3 @@
-// Type-only: the settings scope this registry is handed; the value import stays in `client/index.ts`
-// (cross-plugin collaboration goes through the service, never a value import - client bundle purity gate).
-import type { SettingsScope } from '@deepseek-ai/dsh-client-ui-settings/client'
 import { matchesCombo } from './combo.ts'
 // The single source of truth for the namespace string: the Host half registers its schema under
 // this exact name (`../shortcuts-settings.ts`), so the client scope must bind the same constant
@@ -8,6 +5,43 @@ import { matchesCombo } from './combo.ts'
 // the dedicated no-deps file, not `../shortcuts-settings.ts` itself, so the client bundle never
 // pulls in schemastery (a Host-only concern) just to read a string.
 export { SHORTCUTS_SETTINGS_NAMESPACE } from '../shortcuts-namespace.ts'
+
+/**
+ * Where the registry keeps combo overrides. The browser half used to bind this to the DeepSeek Harness client
+ * settings scope (`ctx.settingsScope`), which DSH 0.2 removed; the registry now only needs this small contract.
+ */
+export interface ShortcutsScope {
+  getSnapshot(): { readonly value?: Readonly<Record<string, string>> | undefined }
+  set(id: string, combo: string): Promise<void>
+  unset(id: string): Promise<void>
+  subscribe(listener: () => void): () => void
+}
+
+/**
+ * An in-memory scope. DETACHED persistence (spec 001 R24): overrides last for the page's lifetime only until an ACRYL
+ * route over the Host's `acrylSettings` namespace exists to read and write them.
+ */
+export function createMemoryShortcutsScope(): ShortcutsScope {
+  let value: Record<string, string> = {}
+  const listeners = new Set<() => void>()
+  const publish = (next: Record<string, string>): void => {
+    value = next
+    for (const listener of [...listeners]) listener()
+  }
+  return {
+    getSnapshot: () => ({ value }),
+    set: (id, combo) => { publish({ ...value, [id]: combo }); return Promise.resolve() },
+    unset: (id) => {
+      const { [id]: _removed, ...kept } = value
+      publish(kept)
+      return Promise.resolve()
+    },
+    subscribe: (listener) => {
+      listeners.add(listener)
+      return () => { listeners.delete(listener) }
+    },
+  }
+}
 
 /** One registered action: a stable id, a human label, and the combo it uses until reassigned. */
 export interface ShortcutAction {
@@ -20,8 +54,7 @@ export interface ShortcutAction {
  * Shared registry of user-assignable keyboard shortcuts. A plugin registers its action once
  * (a stable id, a label, a default combo) and reads back the LIVE combo - the user's override if
  * one exists, the default otherwise - through {@link getCombo} or {@link subscribe}. Assignments
- * persist through the real settings transport (`ctx.settingsScope`), the same seam every other
- * ACRYL/DSH preference uses, not a bespoke file format.
+ * are kept in the scope handed to the registry (see {@link ShortcutsScope}).
  */
 export class ShortcutsRegistry {
   private readonly actions = new Map<string, ShortcutAction>()
@@ -29,7 +62,7 @@ export class ShortcutsRegistry {
   /**
    * @param scope - the bound settings scope this registry reads overrides from and writes to.
    */
-  constructor(private readonly scope: SettingsScope<Record<string, string>>) {}
+  constructor(private readonly scope: ShortcutsScope) {}
 
   /** Register (or re-register, idempotently) one action. Call from the owning plugin's `apply`. */
   register(action: ShortcutAction): void {
@@ -47,7 +80,7 @@ export class ShortcutsRegistry {
     return saved ?? this.actions.get(id)?.defaultCombo ?? ''
   }
 
-  /** Save a new combo for `id`. Persists through the real settings transport. */
+  /** Save a new combo for `id`. */
   setCombo(id: string, combo: string): Promise<void> {
     return this.scope.set(id, combo)
   }

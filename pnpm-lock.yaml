@@ -206,7 +206,7 @@ settings:
 overrides:
   koffi: 3.1.5
 
-packageExtensionsChecksum: sha256-O4iSzI2hSRVAjc56e71wxYVlpiCfauCJKvl/GwQeTac=
+packageExtensionsChecksum: sha256-NaGnSFWI8rgWJUsPsRe9bdKrWleLsX+775o/ETxwmqo=
 
 patchedDependencies:
   '@deepseek-ai/dsh-app-boot@0.2.0-rc.2': 2d616e8f0068af2ac578ba5a48db232e6b56056d51d4f71f72726d69d98163b8
@@ -542,6 +542,9 @@ importers:
       acryl-harness-runtime:
         specifier: workspace:*
         version: link:../../runtime/acryl-harness-runtime
+      acryl-settings:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-settings
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
@@ -1329,6 +1332,9 @@ importers:
       acryl-plugin-admin:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-admin
+      acryl-settings:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-settings
       acryl-shortcuts:
         specifier: workspace:*
         version: link:../../plugins/acryl-shortcuts
@@ -1984,6 +1990,9 @@ importers:
       acryl-plugin-admin:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-admin
+      acryl-settings:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-settings
       acryl-shortcuts:
         specifier: workspace:*
         version: link:../../plugins/acryl-shortcuts
@@ -2293,6 +2302,31 @@ importers:
         specifier: 4.1.8
         version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@8.2.1(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
 
+  plugins/acryl-settings:
+    dependencies:
+      '@deepseek-ai/schemastery':
+        specifier: ~3.18.4
+        version: 3.18.4
+      yaml:
+        specifier: ^2.9.0
+        version: 2.9.0
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.8
+        version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@8.2.1(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+
   plugins/acryl-shortcuts:
     devDependencies:
       '@deepseek-ai/cordis':
@@ -2319,6 +2353,9 @@ importers:
       '@types/react-dom':
         specifier: ^18
         version: 18.3.7(@types/react@18.3.31)
+      acryl-settings:
+        specifier: workspace:*
+        version: link:../acryl-settings
       react:
         specifier: 18.3.1
         version: 18.3.1
@@ -2756,6 +2793,9 @@ importers:
       '@types/semver':
         specifier: ^7.7.1
         version: 7.8.0
+      acryl-settings:
+        specifier: workspace:*
+        version: link:../acryl-settings
       jsdom:
         specifier: 29.1.1
         version: 29.1.1(@noble/hashes@2.3.0)
@@ -3359,6 +3399,9 @@ importers:
       acryl-plugin-admin:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-admin
+      acryl-settings:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-settings
       acryl-shortcuts:
         specifier: workspace:*
         version: link:../../plugins/acryl-shortcuts
@@ -11882,6 +11925,10 @@ snapshots:
   '@deepseek-ai/dsh-client-modules@0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)':
     dependencies:
       '@deepseek-ai/cordis': 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@deepseek-ai/dsh-host-webserver': 0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)
+      '@deepseek-ai/dsh-package-manifest': 0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)
+    transitivePeerDependencies:
+      - supports-color
 
   '@deepseek-ai/dsh-client-product-analytics@0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)':
     dependencies:
