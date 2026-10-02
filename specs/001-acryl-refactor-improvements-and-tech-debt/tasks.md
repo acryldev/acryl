@@ -353,4 +353,7 @@ presentation only.
   - Why: upstream changes a lot (R17 to R19); the durable asset is the Cordis plugin system, and the DSH chat is one agent among others (R22).
   - Depends on: T036b (so the seam is exercised first). Acceptance: a count of direct references before and after, an allowlist in the guard, and the guard in the CI gate.
 
+- [ ] T040 Fix the lockfile tooling (R23): pnpm 11.11.0 never finishes resolving `electron-builder`; either move the pinned `packageManager` (and the CI and docs that name 11.11.0) to a version that resolves it, or report the hang to pnpm, and document the relock workaround until then.
+  - Depends on: none. Acceptance: `pnpm install --lockfile-only --no-frozen-lockfile` finishes and writes the lockfile with the pinned version on a clean checkout.
+
 **Checkpoint (Phase 9):** branch on the latest harness with a recorded patch report; adoption decisions written down.
