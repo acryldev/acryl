@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type { SettingsScope } from '@deepseek-ai/dsh-client-ui-settings/client'
 import { DesktopSettingsSection } from '../../../src/client/settings/DesktopSettingsSection.tsx'
 import { DesktopTerminalSettingsAction } from '../../../src/client/settings/DesktopTerminalSettingsAction.tsx'
 import {
@@ -103,28 +102,13 @@ describe('Desktop settings API', () => {
 })
 
 describe('Desktop settings Slot registration', () => {
-  it('registers the official Desktop section, terminal action, and both settings scopes', () => {
-    const scope = {
-      getSnapshot: () => ({
-        status: 'loading' as const,
-        value: undefined,
-        base: undefined,
-        user: undefined,
-        revision: undefined,
-        writable: false,
-        mode: 'host' as const,
-      }),
-      subscribe: () => () => {},
-      set: vi.fn(async () => {}),
-      unset: vi.fn(async () => {}),
-      mutate: vi.fn(async () => {}),
-    } satisfies SettingsScope<unknown>
-    const bind = vi.fn(() => scope)
+  it('registers the official Desktop section, terminal action, and both preference scopes', () => {
+    // The preference scopes read the Host route on creation; this test is about registration, so the request just fails quietly.
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline') }))
     const register = vi.fn(() => () => {})
     const inject = vi.fn((_name: string, mount: () => unknown) => mount())
     const localeRegister = vi.fn(() => () => {})
     const ctx = {
-      settingsScope: { bind },
       locale: {
         bind: (namespace: string) => (key: string) => `${namespace}:${key}`,
         register: localeRegister,
@@ -135,8 +119,6 @@ describe('Desktop settings Slot registration', () => {
 
     applyDesktopSettings(ctx, { mode: 'compatibility', platform: 'darwin' })
 
-    expect(bind).toHaveBeenNthCalledWith(1, { namespace: DESKTOP_SHELL_SETTINGS_NAMESPACE })
-    expect(bind).toHaveBeenNthCalledWith(2, { namespace: DESKTOP_NOTIFICATIONS_SETTINGS_NAMESPACE })
     expect(inject).toHaveBeenCalledWith('settings.section', expect.any(Function))
     expect(inject).toHaveBeenCalledWith('settings.action', expect.any(Function))
     const [options, component] = register.mock.calls[0] as unknown as [
@@ -150,7 +132,14 @@ describe('Desktop settings Slot registration', () => {
       locale: DESKTOP_SETTINGS_LOCALE_NAMESPACE,
     })
     expect(options.label()).toBe(`${DESKTOP_SETTINGS_LOCALE_NAMESPACE}:nav`)
-    expect(options.inject()).toMatchObject({ platform: 'darwin', initialMode: 'compatibility' })
+    const injected = options.inject()
+    expect(injected).toMatchObject({ platform: 'darwin', initialMode: 'compatibility' })
+    // One scope per namespace the page edits, both starting out loading until the Host answers.
+    expect(DESKTOP_SHELL_SETTINGS_NAMESPACE).toBe('dsh-desktop')
+    expect(DESKTOP_NOTIFICATIONS_SETTINGS_NAMESPACE).toBe('dsh-desktop-notifications')
+    for (const key of ['desktopSettings', 'notificationSettings']) {
+      expect((injected[key] as { getSnapshot: () => { status: string } }).getSnapshot().status).toBe('loading')
+    }
     expect(component).toBe(DesktopSettingsSection)
 
     const [actionOptions, actionComponent] = register.mock.calls[1] as unknown as [
@@ -165,5 +154,6 @@ describe('Desktop settings Slot registration', () => {
     })
     expect(actionOptions.inject()).toHaveProperty('api')
     expect(actionComponent).toBe(DesktopTerminalSettingsAction)
+    vi.unstubAllGlobals()
   })
 })

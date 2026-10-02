@@ -171,6 +171,16 @@ export class AcrylSettings extends Service {
     return this.entries.get(namespace)?.resolved
   }
 
+  /**
+   * Merge `patch` into a registered namespace's stored section, validated against its schema like a scope's own `update`. For callers
+   * (a settings route) that address a namespace by name and never held its scope; an unregistered namespace is refused.
+   */
+  update(namespace: string, patch: Readonly<Record<string, unknown>>): Promise<void> {
+    const entry = this.entries.get(namespace)
+    if (entry === undefined) return Promise.reject(new Error(`acryl-settings: namespace "${namespace}" is not registered`))
+    return this.commit(entry, current => mergeLayers(current, cloneJsonShaped(patch)))
+  }
+
   /** Every registered namespace, for configuration UIs. */
   describe(): SettingsDescriptor[] {
     return [...this.entries.values()].map((entry) => {

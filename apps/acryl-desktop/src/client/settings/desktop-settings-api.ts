@@ -6,6 +6,7 @@ const PROFILE_SELECT_PATH = '/api/desktop/profiles/select'
 const PROFILE_DELETE_PATH = '/api/desktop/profiles/delete'
 const MARKET_SELECT_PATH = '/api/desktop/market/select'
 const TERMINAL_OPEN_PATH = '/api/desktop/terminal/open'
+const PREFERENCES_PATH = '/api/desktop/preferences'
 const MAX_PROFILES = 256
 const MAX_PROFILE_NAME_LENGTH = 255
 
@@ -49,6 +50,10 @@ export interface DesktopSettingsApi {
   deleteProfile(name: string): Promise<DesktopSettingsView>
   selectMarket(provider: DesktopMarketProvider): Promise<DesktopRestartAcceptance>
   openTerminal(): Promise<void>
+  /** The resolved preference sections by namespace (`null` for a namespace the Host did not register). */
+  readPreferences(): Promise<Readonly<Record<string, unknown>>>
+  /** Merge one flat patch into a preference namespace; answers the namespaces' new values. */
+  setPreference(namespace: string, patch: Readonly<Record<string, string | number | boolean>>): Promise<Readonly<Record<string, unknown>>>
 }
 
 type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
@@ -151,6 +156,12 @@ function post(fetcher: FetchLike, path: string, body: object): Promise<Response>
   })
 }
 
+/** Validate the preferences response: a map of namespace to a section object or `null`. */
+function parsePreferences(value: unknown): Readonly<Record<string, unknown>> {
+  if (!isObject(value)) throw new Error('acryl-desktop: invalid Desktop preferences response')
+  return Object.freeze({ ...value })
+}
+
 /** Construct the default same-origin API, with a fetch seam for focused tests. */
 export function createDesktopSettingsApi(fetcher: FetchLike = globalThis.fetch.bind(globalThis)): DesktopSettingsApi {
   return Object.freeze({
@@ -179,6 +190,19 @@ export function createDesktopSettingsApi(fetcher: FetchLike = globalThis.fetch.b
     async openTerminal() {
       parseDesktopActionAcceptance(await readResponse(await post(fetcher, TERMINAL_OPEN_PATH, {})))
     },
+    async readPreferences() {
+      const response = await fetcher(PREFERENCES_PATH, {
+        method: 'GET',
+        credentials: 'same-origin',
+        redirect: 'error',
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json' },
+      })
+      return parsePreferences(await readResponse(response))
+    },
+    async setPreference(namespace: string, patch: Readonly<Record<string, string | number | boolean>>) {
+      return parsePreferences(await readResponse(await post(fetcher, PREFERENCES_PATH, { namespace, patch })))
+    },
   })
 }
 
@@ -189,4 +213,5 @@ export const desktopSettingsPaths = Object.freeze({
   profileDelete: PROFILE_DELETE_PATH,
   marketSelect: MARKET_SELECT_PATH,
   terminalOpen: TERMINAL_OPEN_PATH,
+  preferences: PREFERENCES_PATH,
 })

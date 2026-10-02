@@ -1,8 +1,7 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/cordis-plugin-loader'
 // The advanced shell's slot declarations and `ctx.layout` now live in the shared workspace package.
-// DETACHED (spec 001 R25): `acryl-workspace/client` types are not imported while the workspace plugin is detached; its
-// advanced-shell contracts redeclare `ctx.layout`, which DSH 0.2's own layout service now owns.
+import type {} from 'acryl-workspace/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 // Type-only service and SlotMap convergence for the Desktop settings section.
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
@@ -20,6 +19,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import { startRendererBootReporter } from './boot-health.ts'
+import { applyDesktopSettings } from './settings/desktop-settings.ts'
 import { installDesktopDirectoryPickerBridge, requestDesktopDirectoryValidation } from './workspaces/directory-picker.ts'
 import { parseDesktopClientEnvironment } from './environment.ts'
 import { installWorkspaceFolderDrop } from './workspaces/workspace-folder-drop.ts'
@@ -39,7 +39,21 @@ export type {
   DesktopSettingsApi,
   DesktopSettingsView,
 } from './settings/desktop-settings-api.ts'
-// DETACHED (see the note in `apply`): the settings section, terminal action and their prop types are not exported until re-attached.
+export { applyDesktopSettings } from './settings/desktop-settings.ts'
+export { DesktopSettingsSection } from './settings/DesktopSettingsSection.tsx'
+export { DesktopTerminalSettingsAction } from './settings/DesktopTerminalSettingsAction.tsx'
+export { createPreferenceScopes } from './settings/desktop-preferences.ts'
+export type { PreferenceScope, PreferenceSnapshot, PreferenceStatus } from './settings/desktop-preferences.ts'
+export type {
+  DesktopTerminalSettingsActionInjected,
+  DesktopTerminalSettingsActionProps,
+} from './settings/DesktopTerminalSettingsAction.tsx'
+export type {
+  DesktopNotificationSettings,
+  DesktopSettingsSectionInjected,
+  DesktopSettingsSectionProps,
+  DesktopShellSettings,
+} from './settings/DesktopSettingsSection.tsx'
 export {
   RENDERER_BOOT_REPORT_PATH,
   rendererBootReport,
@@ -50,7 +64,7 @@ export type { RendererBootLoader, RendererBootReport } from './boot-health.ts'
 export { parseDesktopClientEnvironment } from './environment.ts'
 export type { DesktopClientEnvironment, DesktopClientMode, DesktopClientPlatform } from './environment.ts'
 
-/** Services required by Desktop presentation. `settingsScope` is gone in DSH 0.2 (see the DETACHED note in `apply`). */
+/** Services required by Desktop presentation. */
 export const inject = [
   'slots',
   'locale',
@@ -69,9 +83,7 @@ export function apply(ctx: ClientContext): void {
   // ACRYL identity is composed at the Loader level (`dsh-client-ui-brand-acryl`,
   // a standalone swappable counterpart to `@deepseek-ai/dsh-client-ui-brand-official`
   // - see profile.ts), not applied inline from this plugin.
-  // DETACHED on the DSH 0.2 branch (spec 001 R25): the Desktop settings page bound the removed client `settingsScope`
-  // (`ctx.settingsScope.bind`). Re-attach it over the ACRYL preferences route (`acryl-settings`, host side already
-  // migrated) in the 0.2 `settings.section` slot, then restore the call and the export of `applyDesktopSettings`.
+  applyDesktopSettings(ctx, environment)
   ctx.effect(
     () => startRendererBootReporter(ctx.loader),
     'acryl-desktop: renderer boot health report',

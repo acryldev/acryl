@@ -54,6 +54,7 @@ import {
   handleDesktopSettingsRequest,
   handleDesktopTerminalOpenRequest,
 } from './settings/desktop-settings-route.ts'
+import { DESKTOP_PREFERENCES_PATH, handleDesktopPreferencesRequest } from './settings/desktop-preferences-route.ts'
 import type {} from './settings/desktop-settings-controller.ts'
 import { LivePluginActivationService, PluginLifecycleController } from './plugins/lifecycle/plugin-lifecycle-controller.ts'
 import { installPluginWatchers, parsePluginWatchSpec } from './plugins/desktop-plugin-watch.ts'
@@ -304,6 +305,14 @@ export function apply(ctx: Context, config: Config): void {
       )
     }
   }
+  ctx.effect(
+    () => ctx.webServer.register({
+      kind: 'exact',
+      path: DESKTOP_PREFERENCES_PATH,
+      handler: (req, res) => handleDesktopPreferencesRequest(req, res, rendererOrigin, ctx.acrylSettings, reportHostError),
+    }),
+    'acryl-desktop: private preferences route',
+  )
   ctx.effect(
     () => ctx.webServer.register({
       kind: 'exact',

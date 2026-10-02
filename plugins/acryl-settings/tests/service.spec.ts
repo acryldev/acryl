@@ -150,6 +150,16 @@ describe('acryl-settings', () => {
     expect(ctx.get('acrylSettings')).toBeUndefined()
   })
 
+  it('updates a registered namespace by name, validated, and refuses an unregistered one', async () => {
+    const { settings } = await mount(makeHome())
+    const scope = settings.register('demo', Schema)
+    await settings.update('demo', { port: 5 })
+    expect(scope.get().port).toBe(5)
+    await expect(settings.update('demo', { port: 'x' })).rejects.toThrow()
+    expect(scope.get().port).toBe(5)
+    await expect(settings.update('nobody', { port: 1 })).rejects.toThrow(/not registered/)
+  })
+
   it('validates namespaces and refuses duplicates', async () => {
     const { settings } = await mount(makeHome())
     expect(() => settings.register('Bad_Name', Schema)).toThrow(/must match/)
