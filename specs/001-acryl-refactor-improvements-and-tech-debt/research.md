@@ -545,3 +545,26 @@ Branch `harness-latest-2026-10` (pushed). Builds on R25; everything below was ve
 **Still detached**: `acryl-shortcuts` and `acryl-mount-anchors` (upstream shortcuts own the service), the Desktop settings page (needs a rebuild over `acryl-settings`), the Windows ACL pwsh trampoline (type-correct helpers split into `windows-acl-adaptation.ts`; the executor subclass needs a re-port and a Windows machine), and `acryl-workspace`'s own palette command for settings.
 
 **Isolation rule learned**: Electron's user data is not isolated by `ACRYL_HOME`. Run Electron directly with `--user-data-dir=<temp>` and verify with `find ... -newer <marker>` that the real directory is untouched.
+
+## Finding R27 - live verification pass, row 3 done, adopt-vs-keep for config-editor and plugin manager (2026-10-03)
+
+Branch `harness-latest-2026-10` (pushed to `bf31717`). Everything ran in isolated homes (`ACRYL_HOME` temp) and, for Electron, `--user-data-dir`; servers stopped, ports confirmed free.
+
+**Lineage, so the shell decision stays legible.** `apps/acryl-desktop` descends from the owner's August fork of `anywhere-labs/dsh-desktop`, made when DeepSeek Harness was web-only. DSH 0.2 now ships its own `apps/desktop` and `desktop-host` in the submodule. The R20 decision stands: ACRYL owns its Desktop surface and takes only what is useful from upstream's; upstream's Desktop was run only as the stage A control (R20).
+
+**Row 3 (Desktop settings page over `acryl-settings`): done and tested.** `acryl-settings` gained `update(namespace, patch)` (schema-validated, 15 tests); Desktop has a loopback `/api/desktop/preferences` route (allow-listed namespaces, flat scalar patches, same-origin only, 8 tests) and client `PreferenceScope`s (4 tests) feeding the existing section in 0.2's `settings.section` slot. The route answers on the running Electron host (401 without the app's launch credential, as intended). A click-through of the page itself in Electron was not done. `acryl-workspace`'s palette command for settings uses the same lookup that now matches the "Settings" label (covered by its tests, not clicked live).
+
+**T042 record: adopt upstream's `config-editor`, `settings` (Models page) and plugin manager.** They run inside ACRYL's frame once the composition provides a `profileContext`: the Models page and Settings > General (with "Open configuration file") work, the first-run acknowledgement persists and onboarding advances to the API-key step, and ACRYL's own rows survive a configuration reload. Two things made that true, both in `mountDshEngine`: the profile include must be mounted on the root context (DSH's reload looks up "the root Include entry" there), and ACRYL's in-memory patches (capabilities, blueprint rows, terminal presets, plugin-lifecycle toggles) are handed over as `ProfileContext.overlays` so a reload re-applies them instead of rolling the edit back. `hmr` stays off: with it on, engine disposal after a swap-and-back hangs (its queued reload waits on a tree that is unloading), and in-app edits do not need it. Not exercised: the plugin manager UI beyond rendering, and a real API-key save (no key was entered).
+
+**Per-row live results (web, isolated home)**
+
+| Row | Result |
+|---|---|
+| Frame: Tab Stripe, Workspaces pane, Settings, right-panel dock | PASS |
+| Canvas mounts a chat tile with upstream's conversation composer | PASS (a model-backed turn was not run) |
+| PTY opens in a terminal tab, accepts input, streams output (`echo ACRYL-PTY-$((6*7))` returned `ACRYL-PTY-42`) | PASS |
+| Right panel offers Code, Workspace files, Changes, Review, Checks, New terminal | PASS (tab contents not exercised) |
+| Spec 041 acceptance commands against the 0.2 engine | NOT RUN: they drive a live agent and need a model key. Package tests pass (112, real Loader) |
+| Blend snapshot/apply round trip | NOT RUN live; `blends-core` 89 and Desktop blend composition specs pass |
+| Canvas mounting a live, model-backed session tile; Desktop in Electron with the workspace | NOT RUN beyond the earlier healthy startup |
+| `acryl-shortcuts` / mount-anchors | HELD for the owner's decision. A port of mount-anchors onto upstream's `ctx.shortcuts.register` works (toggle shortcut enters crosshair mode, Escape leaves) but is uncommitted in the worktree |
