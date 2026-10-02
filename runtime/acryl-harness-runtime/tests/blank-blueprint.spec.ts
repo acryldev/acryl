@@ -83,7 +83,7 @@ describe('blank blueprint on the Web engine', () => {
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
     try {
-      expect(rowIds(host)).toEqual(expect.arrayContaining(['ui-acryl', 'community-market', 'acryl-workspace', 'acryl-plugin-admin']))
+      expect(rowIds(host)).toEqual(expect.arrayContaining(['ui-acryl', 'community-market', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-shortcuts', 'acryl-mount-anchors']))
     } finally {
       await host.dispose()
     }

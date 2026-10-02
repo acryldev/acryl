@@ -1,8 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-// Type-only: cross-plugin collaboration goes through `ctx.shortcuts` (cordis DI) at runtime, never
-// a value import - a sibling plugin's built client bundle is a factory-wrapped module with no
-// statically analyzable named exports for this package's own bundler to inline.
-import type { ShortcutsRegistry } from 'acryl-shortcuts/client'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import type { InspectorToggle } from './inspector-toggle.ts'
 
 /**
  * Where an element's own styling was authored: the plugin package that shipped the CSS Module,
@@ -121,10 +118,8 @@ interface HoverState {
 }
 
 export interface MountAnchorInspectorProps {
-  /** Live shortcuts registry (`ctx.shortcuts`, via DI - never imported as a value). */
-  readonly shortcuts: ShortcutsRegistry
-  /** This inspector's own registered action id, to read its (possibly reassigned) combo. */
-  readonly actionId: string
+  /** On/off state, flipped by the registered toggle shortcut (and by Escape or a click inside the overlay). */
+  readonly toggle: InspectorToggle
 }
 
 /**
@@ -136,27 +131,23 @@ export interface MountAnchorInspectorProps {
  * resolves the full anchor (slot + precise target + owning source file) and copies it to the
  * clipboard as JSON. Escape, or clicking, exits point mode.
  */
-export function MountAnchorInspector({ shortcuts, actionId }: MountAnchorInspectorProps) {
-  const [active, setActive] = useState(false)
+export function MountAnchorInspector({ toggle }: MountAnchorInspectorProps) {
+  const active = useSyncExternalStore(toggle.subscribe, toggle.get)
+  const setActive = useCallback((next: boolean) => { toggle.set(next) }, [toggle])
   const [hover, setHover] = useState<HoverState | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const activeRef = useRef(active)
   activeRef.current = active
 
   useEffect(() => {
-    // `shortcuts.matches` reads the live combo on every call, so a reassignment from the Shortcuts
-    // settings page takes effect immediately with no re-subscription needed here.
+    // The toggle combo itself is a DSH shortcut command (see `index.ts`), so users rebind it in Settings > Keyboard shortcuts;
+    // only leaving the mode with Escape is handled here.
     const onKeyDown = (event: KeyboardEvent): void => {
-      if (shortcuts.matches(actionId, event)) {
-        event.preventDefault()
-        setActive(current => !current)
-      } else if (event.key === 'Escape' && activeRef.current) {
-        setActive(false)
-      }
+      if (event.key === 'Escape' && toggle.get()) setActive(false)
     }
     window.addEventListener('keydown', onKeyDown)
     return () => { window.removeEventListener('keydown', onKeyDown) }
-  }, [shortcuts, actionId])
+  }, [toggle, setActive])
 
   useEffect(() => {
     if (!active) { setHover(null); return }

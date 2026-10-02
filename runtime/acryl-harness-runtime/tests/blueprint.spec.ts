@@ -65,8 +65,7 @@ describe('what each Blueprint composes', () => {
 
   it('full ACRYL keeps today\'s web rows in mount order', () => {
     const { patches, packages } = composeBlueprintRows(IDE_BLUEPRINT, 'web')
-    expect(insertedIds(patches)).toEqual(['ui-acryl', 'community-market', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save'])
-    // `shortcuts` and `mount-anchors` are DETACHED on the DSH 0.2 branch (spec 001 R25), so they compose nowhere for now.
+    expect(insertedIds(patches)).toEqual(['ui-acryl', 'community-market', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-shortcuts', 'acryl-mount-anchors'])
     expect(packages).toContain('dsh-client-ui-brand-acryl')
   })
 

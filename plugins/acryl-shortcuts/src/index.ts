@@ -1,25 +1,12 @@
 /**
- * Host side of the shortcuts registry: registers the `acryl-shortcuts` namespace in ACRYL's own settings service
- * (`ctx.acrylSettings`). Matching a live keydown is pure client-side DOM handling with no PTY, no routes, no other
- * server state - that work lives entirely in `./client`.
- *
- * DETACHED CLIENT (spec 001 R24): the client half bound its section through the DeepSeek Harness client settings
- * scope (`ctx.settingsScope`), which 0.2 removed. Persisting combos from the browser needs an ACRYL route over
- * `acrylSettings`; until that exists the client keeps its defaults.
+ * Host side of `acryl-shortcuts`: nothing to do. ACRYL's keyboard commands live in the client half (`./client`) and are registered on
+ * DSH's own shortcut service, which also persists rebinding, so this package no longer keeps a settings namespace of its own.
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from 'acryl-settings'
-import { SHORTCUTS_SETTINGS_NAMESPACE, ShortcutsSettingsSchema } from './shortcuts-settings.ts'
-
-export { SHORTCUTS_SETTINGS_NAMESPACE, ShortcutsSettingsSchema } from './shortcuts-settings.ts'
 
 /** Stable Cordis plugin name. */
 export const name = 'acryl-shortcuts'
 
-/** Register the durable shortcuts section when the optional settings service is composed. */
-export function apply(ctx: Context): void {
-  ctx.inject(['acrylSettings'], (settingsCtx) => {
-    settingsCtx.acrylSettings.register(SHORTCUTS_SETTINGS_NAMESPACE, ShortcutsSettingsSchema)
-  })
-}
+/** The Host half mounts nothing; the row exists so the client bundle is composed. */
+export function apply(_ctx: Context): void {}

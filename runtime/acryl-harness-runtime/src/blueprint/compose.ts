@@ -29,12 +29,10 @@ const ROWS: readonly RowDeclaration[] = [
   { id: 'ui-library', surfaces: ['tui', 'web', 'desktop'], rowId: '@acryl/ui', packageName: '@acryl/ui', libraryOnly: ['tui'] },
   // Saving an app to its own repository (/app save, /app connect): a command, so it works on every surface.
   { id: 'app-save', surfaces: ['tui', 'web', 'desktop'], rowId: 'acryl-app-save', packageName: 'acryl-app-save' },
-  // DETACHED on the DSH 0.2 branch (spec 001 R25): 0.2 ships its own `shortcuts` client service (dsh-client-shortcuts) that other
-  // upstream UI plugins inject by package name, so a second provider of the same service fails the client boot. Re-attach as a
-  // layer over the upstream service (key rebinding persisted through `acrylSettings`), then restore the surfaces.
-  { id: 'shortcuts', surfaces: [], rowId: 'acryl-shortcuts', packageName: 'acryl-shortcuts' },
-  // DETACHED with `shortcuts` (R25): its toggle registers through the ACRYL shortcuts API that 0.2's own service replaced.
-  { id: 'mount-anchors', surfaces: [], rowId: 'acryl-mount-anchors', packageName: 'acryl-mount-anchors' },
+  // ACRYL's keyboard commands on DSH 0.2's own shortcut service (`ctx.shortcuts.register`): upstream owns the registry, persisted rebinding and the
+  // editor, so this package no longer provides a service of its own (a second provider fails the client boot).
+  { id: 'shortcuts', surfaces: ['web', 'desktop'], rowId: 'acryl-shortcuts', packageName: 'acryl-shortcuts' },
+  { id: 'mount-anchors', surfaces: ['web', 'desktop'], rowId: 'acryl-mount-anchors', packageName: 'acryl-mount-anchors' },
 ]
 
 /** The terminal library is a differently named package than the browser one. */

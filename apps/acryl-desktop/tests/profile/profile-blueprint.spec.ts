@@ -24,7 +24,7 @@ function rowsFor(blueprint: typeof IDE_BLUEPRINT) {
 describe('desktop profile under a Blueprint', () => {
   it('the full product keeps every ACRYL row', () => {
     const rows = rowsFor(IDE_BLUEPRINT)
-    for (const id of ['acryl-workspace', 'acryl-plugin-admin', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'ui-acryl']) {  // `acryl-shortcuts` and `acryl-mount-anchors` are DETACHED on the DSH 0.2 branch (spec 001 R25)
+    for (const id of ['acryl-workspace', 'acryl-plugin-admin', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-shortcuts', 'acryl-mount-anchors', 'ui-acryl']) {
       expect(rows.has(id), id).toBe(true)
     }
     expect(rows.get('ui-brand-official')?.disabled).toBe(true)
