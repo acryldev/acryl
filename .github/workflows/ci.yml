@@ -79,6 +79,9 @@ jobs:
           corepack pnpm --filter acryl-harness-runtime run build
           corepack pnpm --filter acryl-agent-devin run build
           corepack pnpm --filter acryl-loopback-http run build
+          corepack pnpm --filter @acryl/ui run build
+          corepack pnpm --filter acryl-app-shell run build
+          corepack pnpm --filter acryl-workspace run build
           corepack pnpm --filter acryl-agent-control run build
           corepack pnpm --filter dsh-community-market run build
           corepack pnpm --filter cordis-plugin-market run build
