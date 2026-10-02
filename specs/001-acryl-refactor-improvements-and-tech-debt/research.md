@@ -387,3 +387,22 @@ The "replacement" column is inferred from names only. These are Loader row names
 - Not tested: starting a chat (needs a model key), the rendered page in a browser, npm install scripts (npm skipped the native builds; `node-pty` ships prebuilt binaries).
 
 **Consequence for tasks:** T036 evidence is recorded above. T036b becomes: add a DSH 0.2 engine definition behind the existing engine seam on the branch and re-attach one ACRYL surface piece (the workspace shell with the Tab Stripe) and one WebSocket route (the terminal stream) to it in an isolated home, listing what breaks. T035b (settings home) and the six package mappings (R18) are prerequisites for the engine definition.
+
+## Finding R21 - execution log: moving the branch to `dsh-v0.2.0-rc.2` (2026-10-02, in progress)
+
+Branch `harness-latest-2026-10`, worktree `../acryl.worktrees/harness-latest-2026-10`. Notes are written here on `main`; the code changes stay on the branch, uncommitted until the install and typecheck results are in. Only isolated homes are used; upstream imports `$DSH_HOME/settings.yaml` once into the active profile and renames it to `settings.yaml.imported` (upstream note `2026-09-19-profile-owned-live-configuration.md`), so running 0.2 against a real ACRYL home would rename the user's file.
+
+**T035b decision (settings home): adopt upstream's profile-owned live configuration.** Reasons: upstream removed the file-backed provider and will not maintain it; keeping a second store is the alternative upstream rejected (two durable documents to reconcile); upstream already imports an existing `settings.yaml` once, which gives a migration path. Cost: ACRYL Desktop's startup settings (shell mode, port, blend) currently read from `settings.yaml` through `dsh-settings-file`'s `resolveSpec` in `apps/acryl-desktop/src/profile.ts` (lines 173 to 210 and 780 to 812); those must read from profile entry config instead. Persisted form values become profile-specific (no cross-profile preferences).
+
+**Done on the branch so far**
+
+| Step | Result |
+|---|---|
+| Submodule | Checked out at `639ed01` (`dsh-v0.2.0-rc.2`); `upstream.json` set to that commit, `sourceVersion` and `runtimePackageVersion` `0.2.0-rc.2` |
+| Manifests | 20 `package.json` files: every `@deepseek-ai/*` pin `0.1.5-alpha.1` to `0.2.0-rc.2` (about 760 lines), plain text edits so formatting is unchanged. Renames from R18 applied: `sidebar-textpreview` to `sidebar-documentpreview`, `workflow-worker-thread` to `workflow-ptc`, `code-runtime` to `ptc-runtime`, `code-runtime-worker-thread` to `ptc-runtime-node`, `agent-presets` to `agent-preset-registry`. `dsh-settings-file` removed from 5 manifests (apps cli, desktop, web, market, runtime) |
+| `pnpm-workspace.yaml` | Version and name updates in `patchedDependencies`, overrides and the 230-line `minimumReleaseAgeExclude` list; `dsh-settings-file` entry removed |
+| Patches | Six harness patches renamed to `0.2.0-rc.2`. `dsh-client-ui-directory-picker-browse` re-ported: ACRYL's block of `.ZuhsRW_nativePickerButton` styles inserted at the same anchor in upstream's new CSS string, and the `textContent` line updated; regenerated as a `git diff` patch with the same 14 hunks and 3 files; verified to apply to the pristine published tarball and to still contain `pickNativeDirectory`, `validateDirectory` and `nativePickerButton`. A first re-port attempt was blocked by a safety check on a relative `rm` glob; it was redone in fresh temp directories without removals |
+| `pi-ai` patch | The harness now requires `@earendil-works/pi-ai ^0.87.1` (ACRYL's OAuth-page patch targeted `0.85.1`). The patch applies to `0.87.0` and `0.87.1`; renamed to `@earendil-works__pi-ai@0.87.1.patch` |
+| Lockfile resolution | `pnpm install --lockfile-only --no-frozen-lockfile --ignore-scripts` ran past the "resolved 1366" point where installs hung before; first run failed only on the unused `pi-ai@0.85.1` patch, fixed above, second run in progress |
+
+**Not yet done:** lockfile write and frozen install, build, typecheck, source changes for removed packages (`profile.ts` settings, `windows-agent-presets.ts`, `coding-capabilities.ts`, `verify-packaged-runtime.ts`, tests), the closure gate (`verify-runtime-closure`) against 0.2's new dependency set, an isolated host boot, and the first re-attachment check.
