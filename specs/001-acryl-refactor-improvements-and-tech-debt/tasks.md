@@ -322,6 +322,12 @@ presentation only.
 
 **Purpose:** decide what to adapt from upstream DeepSeek Harness's own Desktop (research R16) and move ACRYL to the latest harness in an isolated branch, without touching `main`'s running state.
 
+**Standing invariants for every Phase 9/10 task (owner direction, R20/R22, 2026-10-02):**
+- **One shared runtime, three surfaces.** There is exactly one DSH-based agent runtime (`runtime/acryl-harness-runtime`), reused by all three surfaces (CLI/TUI, Desktop, Web) through the `createAcrylEngineHost` seam. Re-attachment must not fork engine, composition, or profile logic per surface; surface code stays a thin presenter over the shared runtime (the T022 composition drain is the same rule for Desktop).
+- **No new direct `@deepseek-ai/dsh-*` reference outside the engine seam** (`runtime/acryl-harness-runtime`). Every re-attach task reports the direct-reference count before/after; a rise needs a recorded reason in `research.md` (T039 turns this into a CI guard).
+- **Prefer an ACRYL plugin/row over patching an upstream package** (R22 rule 3); prefer adopting an upstream package over rebuilding a capability ACRYL already has, after a recorded decision (T042).
+- **DSH chat is one agent, not the app.** Nothing re-attached may make the DSH engine load-bearing for the other agents or surfaces (T043 proves it).
+
 - [x] T032 Create a separate worktree and branch for the harness update (not `main`), with its own isolated ACRYL home.
   - Delivered 2026-10-02: branch `harness-latest-2026-10`, worktree `../acryl.worktrees/harness-latest-2026-10`, created from `main` at `9813939`. No ACRYL process has been run from it, so no home is touched yet.
   - Why: the update touches the submodule pin, lockfile and patches; `main` has another session working and a running dev app.
@@ -356,4 +362,28 @@ presentation only.
 - [ ] T040 Fix the lockfile tooling (R23): pnpm 11.11.0 never finishes resolving `electron-builder`; either move the pinned `packageManager` (and the CI and docs that name 11.11.0) to a version that resolves it, or report the hang to pnpm, and document the relock workaround until then.
   - Depends on: none. Acceptance: `pnpm install --lockfile-only --no-frozen-lockfile` finishes and writes the lockfile with the pinned version on a clean checkout.
 
+- [ ] T041 Re-attachment ledger (owner direction 2026-10-02: detach first, boot 0.2 minimal, re-attach one feature at a time): one row per ACRYL feature - Tab Stripe, multi-chat "Chats of AcrylDSH" + workspace left panel, Development Canvas, PTYs/terminals, agents, workspaces, Agent Control (specs 040/041), Blends, the market, CLI/TUI parity - each with an explicit **attach decision** (ACRYL-owned row | adopt upstream package, per T042 | DSH slot), a depends-on, and an acceptance (its pre-0.2 test green on the branch). Re-attach one feature per commit, gate green per commit, shared-runtime and no-new-dsh-reference invariants above apply to every row.
+  - Why: without the per-feature decision recorded up front, re-attach silently re-couples to DSH internals (R22 rule 2).
+  - Depends on: T036b (first re-attach proves the path), T042 (overlap decisions feed the decision column). Acceptance: the ledger exists in this file or a linked table, every feature has a recorded decision, and each re-attached feature's acceptance test passes on the branch.
+
+- [ ] T042 Upstream overlap decisions (R24 tail): read upstream 0.2's new `shortcuts`/`ui-shortcuts`, `ui-dockkit`, `ui-sidebar-*`, `config-editor`, `plugin-manager` packages and record adopt-vs-keep per package against ACRYL's own (`acryl-shortcuts`, the workspace shell, the market) **before** re-building anything ACRYL already has.
+  - Why: porting `acryl-shortcuts` while upstream ships an equivalent would be unrecorded duplication; the reverse (dropping an ACRYL differentiator by accident) is equally possible.
+  - Depends on: none (reading only). Acceptance: a decision per package in `research.md`, each naming what ACRYL keeps as its own and why.
+
 **Checkpoint (Phase 9):** branch on the latest harness with a recorded patch report; adoption decisions written down.
+
+---
+
+## Phase 10 - Cordis-first target architecture (M2/M3) [owner direction 2026-10-02]
+
+**Purpose:** land where R20/R22 point: ACRYL is a Cordis-based framework owning its surfaces; the DSH chat is one agent/driver among others; agents can extend ACRYL itself. Phase 9 gets the 0.2 engine running; this phase proves the engine is a guest, not the foundation.
+
+- [ ] T043 DSH-is-optional proof (M2): boot the app on the branch with the DSH engine definition absent or disabled and a non-DSH agent (Claude Code, Codex, or Pi, via the 040/041 agent-control surface) driving a session; then re-attach the DSH chat as a tab type beside the other agents, not as load-bearing infrastructure.
+  - Why: R22 - "AcrylDSH chat is one agent, one of the builders"; a user can rely entirely on their own agents and never open the DSH chat. If the app cannot boot or other agents cannot work without the DSH engine, the seam is not real yet.
+  - Depends on: T041 (surfaces re-attached), spec 028 M-slices as needed. Acceptance: a recorded boot in `research.md`: engine off, other agent works, surfaces alive; then engine on as one tab type.
+
+- [ ] T044 Agent self-hosting parity (M3): on the 0.2 engine, an agent can install, author, and hot-reload an ACRYL plugin through the same surface that existed on 0.1.5alpha (`acryl-extension-context` + `livePluginActivation` + the plugin-lifecycle store + Agent Control), on all three surfaces sharing the one runtime.
+  - Why: owner direction - every agent (not just the built-in chat) should eventually write and hot-reload its own ACRYL plugins and self-update ACRYL's own plugins; this parity was achieved on 0.1.5alpha and must survive the engine swap.
+  - Depends on: T041 (Agent Control and Blends re-attached). Acceptance: a parity matrix in `research.md` (Claude Code, Codex, Pi x CLI, Desktop, Web) showing plugin install/author/hot-reload working through the agent surface on the 0.2 engine.
+
+**Checkpoint (Phase 10):** the DSH engine demonstrably optional, the DSH chat one tab type, agents extending ACRYL on the 0.2 runtime at 0.1.5alpha parity.
