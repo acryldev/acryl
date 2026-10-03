@@ -20,7 +20,6 @@ import {
   type Profile,
   type ProfileManifest,
 } from '@deepseek-ai/dsh-app-boot'
-import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 import { blueprintFromEnvironment, composeBlueprintRows, createAcrylCodingCapabilityPatches, createAcrylShellCapabilityPatches, extensionRequiredFrameworkPackages, materializeProfilePackage, pluginLifecyclePatches, type Blueprint } from 'acryl-harness-runtime'
 import { parseDocument } from 'yaml'
 import { unpackedAsarPath } from './runtime/packaged-runtime-path.ts'
@@ -306,7 +305,7 @@ function ensureProfileAllowsNativeBuilds(dir: string): void {
  * @param home - Harness home containing the profiles directory.
  * @returns the absolute profile directory.
  */
-export function ensureDesktopProfile(home: string = resolveDshHome()): string {
+export function ensureDesktopProfile(home: string): string {
   const dir = resolveProfileDir(DESKTOP_PROFILE_NAME, home)
   if (!existsSync(join(dir, 'package.json'))) initProfile(dir, REQUIRED_BUNDLES)
   ensureProfileAllowsNativeBuilds(dir)
@@ -643,7 +642,7 @@ function assertEffectiveMarketRows(
  */
 export function prepareDesktopProfile(
   telemetryDisabled: string | undefined = process.env.DSH_TELEMETRY_DISABLED,
-  home: string = resolveDshHome(),
+  home: string,
   platform: NodeJS.Platform = process.platform,
   profileName: string = DESKTOP_PROFILE_NAME,
   pluginStatePath?: string,

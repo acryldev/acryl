@@ -208,7 +208,9 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   // re-mount of `dsh` would otherwise throw "service already registered".
   if (ctx.root.get('dshHomePath') === undefined) ctx.root.provide('dshHomePath', dshHomePath)
   // The app's resource family (instance/): plugins read where their app keeps things from here, never from the environment or the OS home.
-  if (ctx.root.get('appInstance' as never) === undefined) ctx.root.provide('appInstance', composition.instance ?? selectInstance())
+  const provided = ctx.root.get('appInstance' as never) as AppInstance | undefined
+  const instance = provided ?? composition.instance ?? selectInstance()
+  if (provided === undefined) ctx.root.provide('appInstance', instance)
   if (composition.installPackageUrl !== undefined && ctx.root.get('acrylFrameworkPackages' as never) === undefined) {
     ctx.root.provide('acrylFrameworkPackages', createAcrylFrameworkPackages(composition.installPackageUrl))
   }
@@ -264,7 +266,7 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   // ties its own disposal to the ctx that registers it (see
   // installSessionLogExporter's own doc comment) - this plugin's own ctx is
   // correct here, unlike the two cases above.
-  installSessionLogExporter(ctx, { surface: composition.surface })
+  installSessionLogExporter(ctx, { surface: composition.surface, dshHome: instance.dshHome })
   // Web only: the shell HTML dsh-web-app serves is a pinned
   // @deepseek-ai/dsh-web-frontend build artifact with a hardcoded
   // "DeepSeek Harness" <title> - not part of the pluggable Cordis Client

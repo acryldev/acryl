@@ -226,7 +226,7 @@ export async function bootAcrylHarnessProfile(
   }
   const ctx = await boot('acryl', rootConfig, patches, withAppInstance(instance, await createProfileRuntimeResolution(profile), options.prepare))
   if ((ctx as { tools?: unknown }).tools) installAcrylWorkspaceStatusTool(ctx)
-  installSessionLogExporter(ctx, { surface: 'tui' })
+  installSessionLogExporter(ctx, { surface: 'tui', dshHome: instance.dshHome })
   let disposed = false
   return Object.freeze({
     ctx,
@@ -299,7 +299,7 @@ export async function bootAcrylWebProfile(
     return options.prepare?.(hostCtx)
   }))
   if ((ctx as { tools?: unknown }).tools) installAcrylWorkspaceStatusTool(ctx)
-  installSessionLogExporter(ctx, { surface: 'web' })
+  installSessionLogExporter(ctx, { surface: 'web', dshHome: instance.dshHome })
   const startup = ctx.get('webStartup') as { host?: string; port?: number } | undefined
   const host = startup?.host ?? '127.0.0.1'
   const port = startup?.port ?? instance.webPort.start
