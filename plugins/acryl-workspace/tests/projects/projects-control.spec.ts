@@ -71,6 +71,7 @@ function world(options: {
   createSession?: () => Promise<string>
   hasSessions?: boolean
   platform?: 'darwin' | 'web'
+  chat?: boolean
 } = {}): World {
   const api = gitApi(options.isRepo)
   const shell = new WorkspaceShellState(api)
@@ -130,6 +131,7 @@ function world(options: {
     gitApi: api,
     getWorkspaces: () => workspaces,
     getSessions: () => (options.hasSessions === false ? undefined : sessions),
+    ...(options.chat === undefined ? {} : { chatAvailable: () => options.chat === true }),
     directory: () => options.seams ?? { pickDirectory: async () => '/p/proj' },
     ...(options.webPickDirectory === undefined ? {} : { webPickDirectory: options.webPickDirectory }),
   })
@@ -526,5 +528,31 @@ describe('ProjectsControl on Web, with the Host\'s own folder chooser', () => {
   it('still asks for a typed path when the page has no chooser at all', async () => {
     const w = world(web)
     expect(w.control.chooserKind()).toBe('path')
+  })
+})
+
+describe('ProjectsControl with the DSH chat off', () => {
+  it('reports it, and adding a project selects it without trying to open a chat', async () => {
+    const w = world({ chat: false, hasSessions: false })
+    expect(w.control.chatAvailable).toBe(false)
+    expect(await w.control.addProjectByPath('/p/proj')).toEqual({ ok: true })
+    expect(w.workspaceCreates).toEqual([{ path: '/p/proj' }])
+    expect(w.shell.getSnapshot().selectedPath).toBe('/p/proj')
+    expect(w.created).toEqual([])
+    expect(w.opened).toEqual([])
+  })
+
+  it('never starts or opens a chat, and says why when a chat is asked for by id', async () => {
+    const w = world({ chat: false, sessions: [{ id: 's1', cwd: '/p/proj', blank: false, updatedAt: 3 }] })
+    expect(await w.control.newChat('/p/proj')).toEqual({ ok: true })
+    expect(await w.control.showChat('/p/proj')).toEqual({ ok: true })
+    expect(await w.control.openChat('s1')).toMatchObject({ ok: false })
+    expect(await w.control.renameChat('s1', 'x')).toMatchObject({ ok: false })
+    expect(w.created).toEqual([])
+    expect(w.opened).toEqual([])
+  })
+
+  it('is on by default', () => {
+    expect(world().control.chatAvailable).toBe(true)
   })
 })

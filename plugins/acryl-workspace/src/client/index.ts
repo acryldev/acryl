@@ -20,6 +20,7 @@ import { changesTabPlugin } from './changes/changes-tab.ts'
 import { checksTabPlugin } from './checks/checks-tab.ts'
 import { parseSavedThreads, REVIEW_STORAGE_KEY, ReviewStore, startReviewPersistence } from './review/review-store.ts'
 import { reviewTabPlugin } from './review/review-tab.ts'
+import { WorkspaceState } from './canvas/state.ts'
 import { WorkspaceGroups } from './canvas/groups.ts'
 import { browserStorage, parseSavedWorkspace, STORAGE_KEY } from './canvas/persistence.ts'
 import { startWorkspacePersistence } from './canvas/persist.ts'
@@ -27,6 +28,7 @@ import { createWebFolderPicker } from './projects/web-folder-picker.ts'
 import { createProjectsControl, desktopDirectorySeams } from './projects/projects-control.ts'
 import { createWorkspaceGitApi } from './git/git-api.ts'
 import { ProjectsSidebar } from './projects/ProjectsSidebar.tsx'
+import { DEFAULT_WORKSPACE_CAPABILITIES, loadWorkspaceCapabilities } from './capabilities/capabilities-api.ts'
 import { createWorkspaceAgentsApi } from './agents/agents-api.ts'
 import { agentsSettingsPlugin } from './agents/agents-settings-plugin.ts'
 import { PaletteConfigState } from './palette/palette-config.ts'
@@ -74,7 +76,11 @@ export function apply(ctx: ClientContext): void {
   const storage = browserStorage()
   const saved = parseSavedWorkspace(storage?.getItem(STORAGE_KEY) ?? null)
   const shell = new WorkspaceShellState(gitApi, saved?.forgottenRoots, saved?.dismissedChats)
-  const groups = new WorkspaceGroups(undefined, saved?.groups)
+  // What the Host composition offers (the DSH chat may be off). Everything that depends on it is registered once it is known; until then the
+  // page shows the stock frame for the instant it takes, and an unreachable Host means "everything", as before.
+  let capabilities = DEFAULT_WORKSPACE_CAPABILITIES
+  const capabilitiesLoaded = loadWorkspaceCapabilities().then((loaded) => { capabilities = loaded })
+  const groups = new WorkspaceGroups(() => new WorkspaceState({ chat: capabilities.chat }), saved?.groups)
   if (saved !== undefined) shell.setMode(saved.mode)
   // The terminals and the dock are shared by the frame (which places the dock) and the canvas (its terminal tabs).
   const terminalStack = advanced ? createTerminalStack(ctx, storage, shell) : undefined
@@ -107,6 +113,7 @@ export function apply(ctx: ClientContext): void {
     getWorkspaces: () => ctx.get('workspaces'),
     getSessions: () => ctx.get('sessions'),
     directory: () => desktopDirectorySeams(),
+    chatAvailable: () => capabilities.chat,
     webPickDirectory: createWebFolderPicker(),
   })
   ctx.effect(() => startShellPolling(shell), 'acryl-workspace: git state polling')
@@ -137,31 +144,41 @@ export function apply(ctx: ClientContext): void {
       const toasts = new ToastState()
       const notices = createBrowserNoticePort()
       let removeSlot: (() => void) | undefined
-      try {
-        removeSlot = ctx.slots.register({
-          name: 'desktop.main',
-          priority: WORKSPACE_MAIN_PRIORITY,
-          inject: () => ({ ptyApi: ptyClient, terminals, dock, agentStatus, agents, tabTypes, tabRegistry, paletteConfig, toasts, notices, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel, projects }),
-        }, WorkspaceCanvas)
-      } catch (cause) {
-        // A registration conflict must not take the left pane and the Changes tab down with it.
-        ctx.logger.warn(`acryl-workspace: could not register the canvas: ${cause instanceof Error ? cause.message : String(cause)}`)
-      }
+      let cancelled = false
+      // Registered once the Host has said what it offers, so the first canvas already knows whether there is a chat.
+      void capabilitiesLoaded.then(() => {
+        if (cancelled) return
+        try {
+          removeSlot = ctx.slots.register({
+            name: 'desktop.main',
+            priority: WORKSPACE_MAIN_PRIORITY,
+            inject: () => ({ ptyApi: ptyClient, terminals, dock, agentStatus, agents, tabTypes, tabRegistry, paletteConfig, toasts, notices, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel, projects }),
+          }, WorkspaceCanvas)
+        } catch (cause) {
+          // A registration conflict must not take the left pane and the Changes tab down with it.
+          ctx.logger.warn(`acryl-workspace: could not register the canvas: ${cause instanceof Error ? cause.message : String(cause)}`)
+        }
+      })
 
-      return () => { removeSlot?.() }
+      return () => { cancelled = true; removeSlot?.() }
     })
 
     ctx.slots.inject('desktop.sidebar', () => {
-      try {
-        return ctx.slots.register({
-          name: 'desktop.sidebar',
-          priority: 0,
-          inject: () => ({ shell, projects, groups, agents, status: agentStatus }),
-        }, ProjectsSidebar)
-      } catch (cause) {
-        ctx.logger.warn(`acryl-workspace: could not register the left pane: ${cause instanceof Error ? cause.message : String(cause)}`)
-        return () => {}
-      }
+      let removeSlot: (() => void) | undefined
+      let cancelled = false
+      void capabilitiesLoaded.then(() => {
+        if (cancelled) return
+        try {
+          removeSlot = ctx.slots.register({
+            name: 'desktop.sidebar',
+            priority: 0,
+            inject: () => ({ shell, projects, groups, agents, status: agentStatus }),
+          }, ProjectsSidebar)
+        } catch (cause) {
+          ctx.logger.warn(`acryl-workspace: could not register the left pane: ${cause instanceof Error ? cause.message : String(cause)}`)
+        }
+      })
+      return () => { cancelled = true; removeSlot?.() }
     })
   }
 }

@@ -39,6 +39,8 @@ import {
   handleWorkspaceGitUnstageRequest,
   handleWorkspaceGitWorktreeRequest,
 } from './git/route.ts'
+import { WORKSPACE_CAPABILITIES_PATH } from './capabilities/contract.ts'
+import { handleWorkspaceCapabilitiesRequest } from './capabilities/route.ts'
 import { AgentCatalog } from './agents/catalog.ts'
 import { WORKSPACE_AGENT_SETTINGS_PATH, WORKSPACE_AGENTS_PATH, WORKSPACE_AGENTS_REMOVE_PATH } from './agents/contract.ts'
 import { agentSettingsFile, agentsFile, createFileCatalogStore } from './agents/file-store.ts'
@@ -163,6 +165,13 @@ export function apply(ctx: Context): void {
           handler: (req, res) => handler(req, res, rendererOrigin, catalog, reportHostError),
         }))
       }
+      // The chat is the DSH `agents` service; reading it per request, not injecting it, is what lets this plugin stay up when the chat is off.
+      const services: { get(name: string): unknown } = ctx
+      releases.push(ctx.webServer.register({
+        kind: 'exact',
+        path: WORKSPACE_CAPABILITIES_PATH,
+        handler: (req, res) => { handleWorkspaceCapabilitiesRequest(req, res, rendererOrigin, () => ({ chat: services.get('agents') !== undefined })) },
+      }))
       releases.push(ctx.webServer.register({
         kind: 'exact',
         path: WORKSPACE_AGENT_SETTINGS_PATH,

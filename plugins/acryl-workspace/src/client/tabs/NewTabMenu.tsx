@@ -34,6 +34,8 @@ export interface NewTabMenuProps {
   onOpenAgent(id: string, title: string): void
   /** Starts a brand new AcrylDSH Chat session - its own tab, distinct from any already open. */
   onOpenChat(): void
+  /** The DSH chat is available. Off, the menu has no chat entry and never offers one as the last-used tab. Defaults to on. */
+  chatAvailable?: boolean
   /** Turns one agent on or off in the + menu (a Host setting, shared with Settings > Agents). */
   onSetAgentEnabled(id: string, enabled: boolean): Promise<void>
   /**
@@ -44,13 +46,15 @@ export interface NewTabMenuProps {
   onManageSettings(section: 'agents' | 'tabs', onSettled?: (found: boolean) => void): boolean
 }
 
-export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, tabRegistry, onCustomTab, setOpen, onSurface, onOpenAgent, onOpenChat, onSetAgentEnabled, onManageSettings }: NewTabMenuProps) {
+export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, tabRegistry, onCustomTab, setOpen, onSurface, onOpenAgent, onOpenChat, chatAvailable = true, onSetAgentEnabled, onManageSettings }: NewTabMenuProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const hidden = useSyncExternalStore(tabTypes.subscribe, tabTypes.getSnapshot)
   const pluginTabs = useSyncExternalStore(tabRegistry.subscribe, tabRegistry.getSnapshot)
   const [notice, setNotice] = useState<string | null>(null)
   const [managing, setManaging] = useState(false)
-  const [last, setLast] = useState<LastTab>(() => readLastTab(storage))
+  const [remembered, setLast] = useState<LastTab>(() => readLastTab(storage))
+  // A chat remembered from an earlier run is not offered when there is no chat: fall back to a terminal.
+  const last: LastTab = !chatAvailable && remembered.kind === 'chat' ? { kind: 'surface', surface: 'pty' } : remembered
 
   const remember = (tab: LastTab): void => { setLast(tab); writeLastTab(storage, tab) }
   const lastLabel = last.kind === 'agent'
@@ -129,11 +133,15 @@ export function NewTabMenu({ open, customAgents, settings, storage, tabTypes, ta
               {type.label}
             </button>
           ))}
-          <div className="dshWorkspaceMenuRule" />
-          <button type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onOpenChat(); remember({ kind: 'chat' }); close() }}>
-            <ChatIcon />
-            <span className="dshWorkspaceMenuGrow">AcrylDSH Chat</span>
-          </button>
+          {chatAvailable && (
+            <>
+              <div className="dshWorkspaceMenuRule" />
+              <button type="button" role="menuitem" className="dshWorkspaceMenuItem" onClick={() => { onOpenChat(); remember({ kind: 'chat' }); close() }}>
+                <ChatIcon />
+                <span className="dshWorkspaceMenuGrow">AcrylDSH Chat</span>
+              </button>
+            </>
+          )}
           {managing && settings !== null
             ? settings.agents.filter(entry => entry.installed || entry.kind === 'custom').map(entry => (
                 <button

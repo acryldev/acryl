@@ -63,6 +63,11 @@ export interface WorkspaceSnapshot {
 
 export interface WorkspaceStateOptions {
   readonly createId?: () => string
+  /**
+   * Whether the DSH chat is available. Off, the workspace starts on a terminal instead of an AcrylDSH Chat and tabs saved as chats are not
+   * restored (there is nothing to open them with). Defaults to on, what the product always was.
+   */
+  readonly chat?: boolean
 }
 
 export interface AddTileOptions {
@@ -101,13 +106,15 @@ export class WorkspaceState {
   private snapshot: WorkspaceSnapshot
   private readonly listeners = new Set<() => void>()
   private readonly createId: () => string
+  private readonly chat: boolean
 
   constructor(options: WorkspaceStateOptions = {}) {
     this.createId = options.createId ?? (() => crypto.randomUUID())
-    const chat = this.createTile('chat')
+    this.chat = options.chat ?? true
+    const first = this.createTile(this.chat ? 'chat' : 'pty')
     this.snapshot = Object.freeze({
-      tiles: Object.freeze([chat]),
-      activeId: chat.id,
+      tiles: Object.freeze([first]),
+      activeId: first.id,
       splitId: undefined,
       menuOpen: false,
     })
@@ -177,6 +184,8 @@ export class WorkspaceState {
    * @param options - PTY command / title overrides.
    */
   addTile(kind: WorkspaceTileKind, options: AddTileOptions = {}): WorkspaceTile | undefined {
+    // Whatever asks (session navigation, the tree, a menu), a workspace without the chat never holds a chat tab.
+    if (kind === 'chat' && !this.chat) return undefined
     if (kind === 'chat') {
       const existing = this.snapshot.tiles.find(tile => tile.kind === 'chat' && tile.chatSessionId === options.chatSessionId)
       if (existing !== undefined) {
@@ -222,11 +231,15 @@ export class WorkspaceState {
    * @param active - index into `saved` of the tab to focus, or -1 to keep the chat focused.
    */
   restore(saved: readonly Omit<WorkspaceTile, 'id'>[], active: number, split = -1): void {
-    if (saved.length === 0) return
-    const restored = saved.map(tile => Object.freeze({ ...tile, id: this.createId() }) as WorkspaceTile)
+    const kept = this.chat ? saved : saved.filter(tile => tile.kind !== 'chat')
+    if (kept.length === 0) return
+    // `active` and `split` index the saved list; map them onto what was kept.
+    const keptActive = this.chat ? active : kept.indexOf(saved[active] as never)
+    const keptSplit = this.chat ? split : kept.indexOf(saved[split] as never)
+    const restored = kept.map(tile => Object.freeze({ ...tile, id: this.createId() }) as WorkspaceTile)
     const tiles = [...this.snapshot.tiles, ...restored]
-    const activeId = restored[active]?.id ?? this.snapshot.activeId
-    const splitId = restored[split]?.id
+    const activeId = restored[keptActive]?.id ?? this.snapshot.activeId
+    const splitId = restored[keptSplit]?.id
     this.replace({
       ...this.snapshot,
       tiles: Object.freeze(tiles),

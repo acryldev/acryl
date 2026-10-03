@@ -20,6 +20,8 @@ export type ProjectAction =
   | { readonly ok: false; readonly reason: string; /** The caller should offer typing the folder's path instead (no chooser here). */ readonly needsPath?: true }
 
 export interface ProjectsControl {
+  /** Whether chats can be opened here at all (the DSH chat is running). Menus and buttons for chats are hidden when false. */
+  readonly chatAvailable: boolean
   /** Change-detection key for the registered workspace folders (a primitive, safe to subscribe to). */
   workspaceKey(): string
   /** Registered workspace folders, so a project appears even before it has a chat. */
@@ -83,6 +85,8 @@ export interface ProjectsControlDeps {
    * chooser on Web, and desktop Linux's fallback once Electron's own seam (`directory().pickDirectory`)
    * is absent - both are served by the same Host route (T143), so neither platform needs anything else. */
   readonly webPickDirectory?: () => Promise<string | null>
+  /** Whether the DSH chat is available; off, adding or selecting a project does not try to open a chat, and chat actions say so. */
+  readonly chatAvailable?: () => boolean
 }
 
 export interface DirectorySeams {
@@ -162,7 +166,11 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     }
   }
 
+  const chatOn = (): boolean => deps.chatAvailable?.() ?? true
+  const chatOff = fail('The DeepSeek Harness chat is switched off.')
+
   return {
+    get chatAvailable() { return chatOn() },
     workspaceKey: () => workspaceItems().map(item => item.path).join('\n'),
     workspacePaths: () => workspaceItems().map(item => item.path),
     subscribeWorkspaces: listener => deps.getWorkspaces()?.list.subscribe(listener) ?? (() => {}),
@@ -222,6 +230,7 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     },
 
     async openChat(id) {
+      if (!chatOn()) return chatOff
       const sessions = deps.getSessions()
       if (sessions === undefined) return fail('Chats are not available yet.')
       const state = sessions.list.getSnapshot()
@@ -250,6 +259,7 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     },
 
     async renameChat(id, raw) {
+      if (!chatOn()) return chatOff
       const sessions = deps.getSessions()
       if (sessions === undefined) return fail('Chats are not available yet.')
       const title = raw.trim()
@@ -268,6 +278,8 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     },
 
     async showChat(worktreePath) {
+      // With the chat off, picking a project just selects it: there is no chat to show and that is not a failure.
+      if (!chatOn()) return { ok: true }
       const sessions = deps.getSessions()
       if (sessions === undefined) return fail('Chats are not available yet.')
       const state = sessions.list.getSnapshot()
@@ -294,6 +306,7 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     },
 
     async newChat(worktreePath) {
+      if (!chatOn()) return { ok: true }
       const started = await startBoundChat(worktreePath)
       if (!started.ok) { shell.unpin(); return fail(started.reason) }
       const sessionsService = deps.getSessions()

@@ -270,4 +270,38 @@ describe('WorkspaceState split pane', () => {
     same.restore([{ kind: 'doc', title: 'Doc' }], 0, 0)
     expect(same.getSnapshot().splitId).toBeUndefined()
   })
+
+  describe('with the DSH chat off', () => {
+    it('starts on a terminal, not a chat', () => {
+      const state = new WorkspaceState({ createId: counter(), chat: false })
+      const snapshot = state.getSnapshot()
+      expect(snapshot.tiles.map(tile => tile.kind)).toEqual(['pty'])
+      expect(snapshot.activeId).toBe(snapshot.tiles[0]?.id)
+    })
+
+    it('refuses a chat tab from any caller, such as session navigation with no current session', () => {
+      const state = new WorkspaceState({ createId: counter(), chat: false })
+      expect(state.addTile('chat')).toBeUndefined()
+      expect(state.addTile('chat', { chatSessionId: 's1' })).toBeUndefined()
+      expect(state.getSnapshot().tiles.map(tile => tile.kind)).toEqual(['pty'])
+    })
+
+    it('does not restore tabs saved as chats, and keeps the active tab pointing at the same tab', () => {
+      const state = new WorkspaceState({ createId: counter(), chat: false })
+      state.restore([
+        { kind: 'chat', title: 'AcrylDSH Chat', chatSessionId: 's1' },
+        { kind: 'pty', title: 'Terminal', commandId: 'shell' },
+        { kind: 'file', title: 'a.ts', fileWorktree: '/w', fileRel: 'a.ts' },
+      ], 2)
+      const tiles = state.getSnapshot().tiles
+      expect(tiles.map(tile => tile.kind)).toEqual(['pty', 'pty', 'file'])
+      expect(state.getSnapshot().activeId).toBe(tiles[2]?.id)
+    })
+
+    it('restores chats as before when the chat is on', () => {
+      const state = new WorkspaceState({ createId: counter() })
+      state.restore([{ kind: 'chat', title: 'AcrylDSH Chat', chatSessionId: 's1' }], 0)
+      expect(state.getSnapshot().tiles.map(tile => tile.kind)).toEqual(['chat', 'chat'])
+    })
+  })
 })

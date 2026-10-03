@@ -379,6 +379,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
         {...(rightPanel === undefined ? {} : { rightPanel })}
         dock={dock}
         agentStatus={agentStatus}
+        chatAvailable={projects.chatAvailable}
         storage={safeStorage()}
         onClose={(tile) => { void closeTile(tile) }}
         customAgents={customAgents}

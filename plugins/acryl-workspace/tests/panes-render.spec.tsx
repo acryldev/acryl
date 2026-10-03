@@ -85,6 +85,7 @@ function fakeProjects(overrides: Partial<ProjectsControl> = {}): ProjectsControl
   const shown: string[] = []
   return {
     shown,
+    chatAvailable: true,
     workspaceKey: () => '',
     workspacePaths: () => [],
     subscribeWorkspaces: () => () => {},
@@ -550,6 +551,14 @@ describe('ProjectsSidebar', () => {
     const noSessions = { ids: [], byId: {} }
     render(<ProjectsSidebar {...sidebarProps(shell)} useSessions={sessionsHook(noSessions)} />)
     expect(await screen.findByText(/No workspaces yet/)).toBeTruthy()
+    shell.dispose()
+  })
+
+  it('does not invite opening a chat when the chat is off, and has no new-chat button on a project', async () => {
+    const shell = new WorkspaceShellState(api({ repo: async () => null }))
+    const noSessions = { ids: [], byId: {} }
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ chatAvailable: false }))} useSessions={sessionsHook(noSessions)} />)
+    expect((await screen.findByText(/No workspaces yet/)).textContent).not.toMatch(/chat/)
     shell.dispose()
   })
 
