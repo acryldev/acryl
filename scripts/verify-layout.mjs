@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
-import { existsSync, lstatSync, readFileSync, readlinkSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from 'node:fs'
+import { relative, resolve } from 'node:path'
 
 const root = resolve(import.meta.dirname, '..')
 const readJson = path => JSON.parse(readFileSync(resolve(root, path), 'utf8'))
@@ -256,4 +256,40 @@ for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
   }
 }
 
-process.stdout.write(`verify-layout: PNPM workspace and upstream ${upstream.commit.slice(0, 10)} are consistent\n`)
+// The DSH import ratchet (spec 001 T046). ACRYL's own code reaches DeepSeek Harness only through the engine seam; every other direct
+// `from '@deepseek-ai/dsh...'` line in non-test source is coupling that has to shrink. The seam is named here, as files, so "outside the seam" has one
+// definition: the engine files, the Desktop Electron entry, and the `@acryl/ui` contract facade (a plugin whose sole capability is the DSH chat would
+// also belong, and none is declared: if one seems to qualify, record it as a finding instead of adding it). Both ceilings only move down: when a
+// change lowers a count, this gate says so and the ceiling is lowered in the same commit.
+const DSH_IMPORT_CEILING = { total: 180, outsideSeam: 168 }
+const SEAM_FILES = [
+  /^runtime\/acryl-harness-runtime\/src\/engine-[a-z-]+\.ts$/,
+  /^apps\/acryl-desktop\/src\/(main|electron-runtime|preload)\.ts$/,
+  /^apps\/acryl-desktop\/src\/shell\/electron-[a-z-]+\.ts$/,
+  /^plugins\/acryl-ui\/src\/client\/(contract-adapters\.tsx|registry\/.*)$/,
+]
+const sourceFiles = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+  const path = resolve(dir, entry.name)
+  if (entry.isDirectory()) return entry.name === 'node_modules' || entry.name === 'lib' ? [] : sourceFiles(path)
+  return /\.(ts|tsx|mts)$/.test(entry.name) && !entry.name.endsWith('.d.ts') ? [path] : []
+})
+const dshImports = { total: 0, outsideSeam: 0 }
+for (const group of ['runtime', 'apps', 'plugins']) {
+  for (const entry of readdirSync(resolve(root, group), { withFileTypes: true })) {
+    const src = resolve(root, group, entry.name, 'src')
+    if (!entry.isDirectory() || !existsSync(src)) continue
+    for (const file of sourceFiles(src)) {
+      const count = (readFileSync(file, 'utf8').match(/from '@deepseek-ai\/dsh[^']*'/g) ?? []).length
+      if (count === 0) continue
+      dshImports.total += count
+      if (!SEAM_FILES.some(pattern => pattern.test(relative(root, file)))) dshImports.outsideSeam += count
+    }
+  }
+}
+for (const [key, ceiling] of Object.entries(DSH_IMPORT_CEILING)) {
+  const now = dshImports[key]
+  if (now > ceiling) fail(`direct DSH import lines (${key}) are ${now}, above the ceiling ${ceiling}; reach DSH through the engine seam instead`)
+  if (now < ceiling) fail(`direct DSH import lines (${key}) are ${now}, below the ceiling ${ceiling}: lower DSH_IMPORT_CEILING.${key} to ${now} in scripts/verify-layout.mjs`)
+}
+
+process.stdout.write(`verify-layout: PNPM workspace and upstream ${upstream.commit.slice(0, 10)} are consistent; DSH import lines ${dshImports.total} (${dshImports.outsideSeam} outside the seam)\n`)
