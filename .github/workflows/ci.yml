@@ -46,13 +46,17 @@ jobs:
         id: pnpm-store
         run: echo "dir=$(corepack pnpm store path)" >> "$GITHUB_OUTPUT"
 
+      # No restore-keys fallback on purpose: a prefix match restores a store
+      # snapshot from another lockfile era, and layering
+      # `pnpm install --frozen-lockfile` on top of that foreign state is
+      # suspected in broken profile installs downstream (a hoisted dep
+      # directory without its package.json). A key miss starts cold
+      # instead: slower, hermetic.
       - name: Restore PNPM store
         uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-store.outputs.dir }}
           key: pnpm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml', '.npmrc') }}
-          restore-keys: |
-            pnpm-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Install dependencies
         run: corepack pnpm install --frozen-lockfile
