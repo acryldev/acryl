@@ -608,3 +608,34 @@ Branch `harness-latest-2026-10` (pushed to `5b29bda`). Everything ran in isolate
 
 **Housekeeping from the review of R28.** The `(MIT OR CC0-1.0)` rule is needed today by `type-fest@4.41.0` (reached through `got` and `@deepseek-ai/dsh-otel`); the profile smoke is the packaged-boot smoke and now says so. Two old stashes (`main-dirty` 2026-09 with a `registerOpenSettingsShortcut` edit to the old shortcuts registry, which `8521fcc` deleted; `rebase-dirty` 2026-09-23 with README, `devbox.json`, `.github/workflows/nix.yml` and `.gitignore` edits) are older than this branch and were left in place for the owner to drop or restore.
 
+## Finding R30 - T047 done, T044 headless cells done, key cells listed (2026-10-03)
+
+Branch `harness-latest-2026-10` (pushed to `4a39f80`). Every run used isolated homes and spare ports; servers stopped and ports confirmed free.
+
+**T047 (chat tab hidden when the chat is off).** Signal path: `acryl-workspace`'s host plugin answers `GET /api/acryl-workspace/capabilities` with `{ chat }`, read from the live composition on each request (`ctx.get('agents') !== undefined`), so it is the Loader's truth rather than a second flag copied from the Blueprint; the client loads it once before registering the canvas and the left pane (an unreachable or older Host means "everything", as before). `WorkspaceState` refuses chat tiles when the chat is off and starts on a terminal; the "+" menu, the remembered default tab, the per-project new-chat button, the empty-pane copy and `ProjectsControl` (adding a project no longer fails trying to open a chat) all follow. Live, `acryl.agents`: one Terminal tab, the "+" menu offers terminals, files, board, doc and the user's own agents (Claude, Codex, Grok, Copilot, OpenCode, Pi, Gemini and more) and no AcrylDSH Chat; with `acryl.ide` the chat tab is back. A first attempt still showed a chat tab because session navigation adds one whenever there is no current session; the rule now lives in `WorkspaceState.addTile`, so no caller can create one. `acryl-workspace` gate: 660 tests.
+
+**T044, the cells that need no model, are done.** An agent's tool calls were run through the real tool registry (`tools.execute`, policy hooks included) with a plugin the test authored on disk:
+
+| Cell | Web engine | Desktop-composed profile |
+|---|---|---|
+| `acryl_verify_plugin` on a package the agent wrote | PASS | PASS |
+| `acryl_install_plugin` installs it live; the tool it adds is callable | PASS | PASS |
+| edit the source, install again: updated live, new behaviour | PASS | PASS |
+| `acryl_remove_plugin` unmounts it live; the tool is gone | PASS | PASS |
+| `acryl_list_plugins` shows and then drops it | PASS | not asserted |
+| a plugin that throws in `apply` is refused with its own error and the install is undone | PASS | not run |
+| `/reload` discovery, host hot reload, blend capture and apply round trip | PASS (existing suites) | not run |
+
+Web: `runtime/acryl-harness-runtime/tests/agent-self-hosting.spec.ts`. Desktop: the profile smoke (`verify:profile`) now runs the same sequence. Making that possible exposed that the smoke still booted through the 0.1.5 `boot()` path: without the 0.2 `runtimeResolution` a copied plugin dependency could not find `@deepseek-ai/cordis`, and the lifecycle bootstrap lacked the `profileDir` that `main.ts` passes. It now boots through `createAcrylEngineHost` with `createDshEngineDefinitionFromComposition`, exactly as `main.ts` does, so the smoke is a faithful Desktop composition.
+
+**Cells that wait for your model key (or a logged-in agent), precisely:**
+1. A model authors a plugin end to end (docs lookup, write, verify, install) on Web, live in the GUI.
+2. The same on Desktop, live in the Electron window.
+3. A model edits that plugin and updates it live (the hot-reload cell, model-driven).
+4. `runtime/acryl-harness-runtime/tests/e2e-real-model.spec.ts` (skipped without a key): the agent builds, changes, extends and removes extensions for real.
+5. Blend snapshot and apply round trip with real keys, and the real key-save check.
+6. Rows 6 and 7 live acceptance (spec 041 acceptance commands against the 0.2 engine).
+Not key-dependent but blocked by design: the matrix rows for Claude Code, Codex and Pi, because those agents cannot call the extension tools at all (T051).
+
+**Findings.** (a) A failed update is rolled back by removing the plugin, as on 0.1.5, so the working version is lost (T050). (b) The extension tools are DSH tools, so bring-your-own agents cannot use them (T051). (c) Direct `@deepseek-ai/dsh*` import lines in non-test source: still 180, nothing added by T047 or T044.
+
