@@ -3,21 +3,27 @@
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { boot } from '@deepseek-ai/dsh-app-boot'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import {
   createLaunchEnvironmentSnapshot,
   DSH_LAUNCH_ENVIRONMENT_KEY,
 } from '@deepseek-ai/dsh-launch-environment'
-import { applyIsolatedDevHomeDefault, selectInstance } from 'acryl-harness-runtime'
+import {
+  applyIsolatedDevHomeDefault,
+  createAcrylEngineHost,
+  createDshEngineDefinitionFromComposition,
+  createProfileContext,
+  createProfileRuntimeResolution,
+  selectInstance,
+} from 'acryl-harness-runtime'
 import { DESKTOP_SETTINGS_NAMESPACE } from '../lib/index.js'
 
 // See the matching comment in verify-loader-boot.mjs.
 applyIsolatedDevHomeDefault()
 import { installDesktopPnpmRuntime } from '../lib/desktop-runtime-environment.js'
 import { installProfilePackageResolver } from '../lib/module-resolution.js'
-import { prepareDesktopProfile } from '../lib/profile.js'
+import { desktopInstallAnchor, prepareDesktopProfile } from '../lib/profile.js'
 import { DesktopProfileService } from '../lib/profile-service.js'
 
 const BIN_NAME = 'acryl-desktop-profile-smoke'
@@ -25,6 +31,7 @@ const HOST_SERVICE_PLUGIN_NAME = 'dsh-desktop-host-services-smoke-plugin'
 const HOST_SERVICE_PROBE_KEY = 'desktopHostServiceProbe'
 const home = mkdtempSync(join(tmpdir(), 'dsh-desktop-profile-'))
 let ctx
+let engineHost
 let releasePackageResolver
 let pnpmRuntime
 let mountedSpec
@@ -124,21 +131,29 @@ try {
   }
   // The profile's module links must exist before the boot resolves anything from a fresh home (prepareDesktopProfile returns the repair as a promise).
   await prepared.moduleFallback
-  ctx = await boot(
-    BIN_NAME,
-    prepared.rootConfig,
-    patches,
-    async (host) => {
-      // This is the packaged-boot smoke: packaged Electron has no Node internal ESM loader (the product reaches module internals
-      // through a native addon instead), so the host under test gets the same configuration. Same line as verify-loader-boot.mjs.
-      host.loader.internal = undefined
+  // The same composition main.ts mounts: through the engine host, with the 0.2 runtime resolution and live configuration. The app instance is this
+  // smoke's throwaway engine home (the engine mount provides `appInstance` from it, as the real Desktop does).
+  const instance = selectInstance({ env: { DSH_HOME: home } })
+  engineHost = await createAcrylEngineHost({
+    engines: [createDshEngineDefinitionFromComposition({
+      rootConfig: prepared.rootConfig,
+      patches,
+      bareModuleBaseUrl: prepared.bareModuleBaseUrl,
+      surface: 'desktop',
+      instance,
+      installPackageUrl: pathToFileURL(desktopInstallAnchor()).href,
+      runtimeResolution: await createProfileRuntimeResolution(prepared.profile, desktopInstallAnchor()),
+      profileContext: createProfileContext(prepared.profile, { installAnchor: desktopInstallAnchor(), home: prepared.homeDir, overlays: prepared.acrylPatches }),
+    })],
+    initialEngine: 'dsh',
+    prepare: async (host) => {
       host.provide(DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([]))
       host.provide('desktopRuntime', runtime)
-      // This smoke is its own composition root: the app instance is its throwaway engine home (runtime instance/), as the real Desktop's engine mount provides it.
-      host.provide('appInstance', selectInstance({ env: { DSH_HOME: home } }))
       host.provide('desktopPluginLifecycleBootstrap', {
         profileName: 'desktop',
         statePath: join(home, 'plugin-lifecycle', 'state.json'),
+        // As main.ts provides it: the lifecycle reads the user-installed bundle list from here.
+        profileDir: prepared.profile.dir,
       })
       host.provide('desktopPnpmBootstrap', {
         activeProfileName: 'desktop',
@@ -175,8 +190,8 @@ try {
         exit: () => {},
       })
     },
-    prepared.bareModuleBaseUrl,
-  )
+  })
+  ctx = engineHost.ctx
   await runtime.mountScheduled()
 
   if (ctx.get('desktopPnpm') === undefined) {
@@ -300,8 +315,41 @@ try {
   ]) {
     if (ids.has(id)) throw new Error(`assembled advanced Web graph unexpectedly includes ${id}`)
   }
+  // T044 (the part that needs no model): an agent extends the Desktop-composed app through the tools it is given. The calls go through the real tool
+  // registry, the path an agent's call takes: install a plugin it wrote live (this profile's own pnpm), call what it added, update it, remove it.
+  const tools = ctx.get('tools')
+  if (tools === undefined) throw new Error('assembled desktop profile has no tool registry')
+  const authored = mkdtempSync(join(tmpdir(), 'dsh-desktop-authored-'))
+  try {
+    const example = fileURLToPath(new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url))
+    cpSync(example, authored, { recursive: true })
+    const write = (version) => {
+      const manifest = JSON.parse(readFileSync(join(example, 'package.json'), 'utf8'))
+      writeFileSync(join(authored, 'package.json'), JSON.stringify({ ...manifest, name: 'acryl-authored-probe' }, null, 2))
+      writeFileSync(join(authored, 'cordis.patch.yml'), readFileSync(join(example, 'cordis.patch.yml'), 'utf8').replaceAll('acryl-example-tool', 'acryl-authored-probe').replaceAll('example-tool', 'authored-probe'))
+      writeFileSync(join(authored, 'index.js'), readFileSync(join(example, 'index.js'), 'utf8')
+        .replace("'acryl-example-tool'", "'acryl-authored-probe'")
+        .replace("name: 'example_echo'", "name: 'authored_probe'")
+        .replace('return args.message.toUpperCase()', `return 'probe ${version}: ' + args.message.toUpperCase()`))
+    }
+    let callId = 0
+    const run = async (name, args) => JSON.stringify(await tools.execute({ callId: `c${String(++callId)}`, name, arguments: args, signal: new AbortController().signal }))
+    const expectOk = (label, output) => { if (/"isError":\s*true/u.test(output)) throw new Error(`desktop self-hosting: ${label} failed: ${output.slice(0, 600)}`) }
+    const expectText = (label, output, text) => { if (!output.includes(text)) throw new Error(`desktop self-hosting: ${label} did not contain ${JSON.stringify(text)}: ${output.slice(0, 400)}`) }
+    write('v1')
+    expectOk('verify', await run('acryl_verify_plugin', { path: authored }))
+    expectOk('install', await run('acryl_install_plugin', { path: authored }))
+    expectText('the installed tool', await run('authored_probe', { message: 'hi' }), 'probe v1: HI')
+    write('v2')
+    expectOk('update', await run('acryl_install_plugin', { path: authored }))
+    expectText('the updated tool', await run('authored_probe', { message: 'hi' }), 'probe v2: HI')
+    expectOk('remove', await run('acryl_remove_plugin', { package: 'acryl-authored-probe' }))
+    expectText('the removed tool', await run('authored_probe', { message: 'hi' }), 'unknown tool')
+  } finally {
+    rmSync(authored, { recursive: true, force: true })
+  }
 } finally {
-  await ctx?.fiber.dispose()
+  await engineHost?.dispose()
   releasePackageResolver?.()
   pnpmRuntime?.dispose()
   rmSync(home, { recursive: true, force: true })
