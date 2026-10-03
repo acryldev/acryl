@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs'
 import { chmod, lstat, mkdir } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { resolveProfileDir } from '@deepseek-ai/dsh-app-boot'
-import { withFileLock, writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
+import { withFileLock, writeFileAtomic } from './engine-files.ts'
 import { resolveAcrylDshHome } from './acryl-home.ts'
 
 const STATE_VERSION = 1

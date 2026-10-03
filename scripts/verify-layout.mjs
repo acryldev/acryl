@@ -261,10 +261,10 @@ for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
 // definition: the engine files, the Desktop Electron entry, and the `@acryl/ui` contract facade (a plugin whose sole capability is the DSH chat would
 // also belong, and none is declared: if one seems to qualify, record it as a finding instead of adding it). Both ceilings only move down: when a
 // change lowers a count, this gate says so and the ceiling is lowered in the same commit.
-const DSH_IMPORT_CEILING = { total: 180, outsideSeam: 168 }
+const DSH_IMPORT_CEILING = { total: 174, outsideSeam: 160 }
 const SEAM_FILES = [
   /^runtime\/acryl-harness-runtime\/src\/engine-[a-z-]+\.ts$/,
-  /^apps\/acryl-desktop\/src\/(main|electron-runtime|preload)\.ts$/,
+  /^apps\/acryl-desktop\/src\/(main|electron-runtime|preload|engine-[a-z-]+)\.ts$/,
   /^apps\/acryl-desktop\/src\/shell\/electron-[a-z-]+\.ts$/,
   /^plugins\/acryl-ui\/src\/client\/(contract-adapters\.tsx|registry\/.*)$/,
 ]

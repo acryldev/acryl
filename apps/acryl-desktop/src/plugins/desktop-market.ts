@@ -11,7 +11,7 @@ import {
   readFileSync,
 } from 'node:fs'
 import { isAbsolute, basename, dirname, join } from 'node:path'
-import { withFileLock, writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
+import { withFileLock, writeFileAtomic } from '../engine-files.ts'
 
 const BIN_NAME = 'acryl-desktop'
 const STATE_VERSION = 1

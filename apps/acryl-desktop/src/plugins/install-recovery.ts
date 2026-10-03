@@ -12,7 +12,7 @@ import {
   unlink,
 } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path'
-import { withFileLock, writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
+import { withFileLock, writeFileAtomic } from '../engine-files.ts'
 import { assertDesktopProfileName } from '../profile/profile-manager.ts'
 
 const BIN_NAME = 'acryl-desktop'
