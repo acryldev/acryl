@@ -188,3 +188,6 @@ export { ProjectsSidebar } from './projects/ProjectsSidebar.tsx'
 export { WorkspaceShellState } from './worktrees/shell-state.ts'
 export { WorkspacePtyClient } from './sessions/session-client.ts'
 export { WorkspaceState, normalizeBrowserUrl } from './canvas/state.ts'
+// The tab-type contract other plugins build against (and the `workspaceTabs` Context augmentation that comes with it).
+export { provideWorkspaceTabs } from './tabs/registry/provide.ts'
+export type { WorkspaceTabProps, WorkspaceTabType } from './tabs/registry/tab-registry.ts'
