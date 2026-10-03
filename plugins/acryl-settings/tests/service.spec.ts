@@ -182,4 +182,23 @@ describe('acryl-settings', () => {
     await settings.register<Section>('desktop', Schema).update({ port: 11 })
     expect(readFileSync(filename, 'utf8')).toContain('port: 11')
   })
+
+  it('releases a namespace when its registrant unloads, so a reactivated registrant can register it again', async () => {
+    const { ctx, settings } = await mount(makeHome())
+    const registrant = () => ctx.plugin({
+      name: 'registrant',
+      inject: ['acrylSettings'],
+      apply: (child: Context) => { child.acrylSettings.register<Section>('desktop', Schema) },
+    })
+    const first = registrant()
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(settings.get('desktop')).toBeDefined()
+
+    await first.dispose()
+    expect(settings.get('desktop')).toBeUndefined()
+
+    registrant()
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(settings.get('desktop')).toBeDefined()
+  })
 })
