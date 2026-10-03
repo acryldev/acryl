@@ -6,20 +6,22 @@
  * @module acryl-cli/host/control-command
  */
 
-import { UiControlError, type UiRequest, type UiResult } from 'acryl-agent-control'
+import { UiControlError, type UiRequest, type UiResult, type WorkerRequest, type WorkerResponse } from 'acryl-agent-control'
 import type { RunningApp } from 'acryl-harness-runtime'
-import { callOnlineChannel, discoverInstances, pickInstance, OnlineChannelError } from './online-client.ts'
+import { callOnlineChannel, callWorkers, discoverInstances, pickInstance, OnlineChannelError } from './online-client.ts'
 import type { AcrylControlInvocation } from '../cli/grammar.ts'
 
 export type ControlCommandResult =
   | { readonly kind: 'list'; readonly instances: readonly RunningApp[] }
   | { readonly kind: 'result'; readonly app: string; readonly result: UiResult }
   | { readonly kind: 'refused'; readonly app: string; readonly code: string; readonly message: string }
+  | { readonly kind: 'worker'; readonly app: string; readonly response: WorkerResponse }
 
 /** Builds the {@link UiRequest} an `acryl control` invocation names; throws a plain, CLI-worded Error on a bad combination. */
 export function buildRequest(invocation: AcrylControlInvocation): UiRequest {
   switch (invocation.action) {
     case 'list': throw new Error('list has no request; call runControlCommand directly')
+    case 'worker': throw new Error('a worker operation has its own request; use buildWorkerRequest')
     case 'snapshot':
       return { op: 'snapshot', ...(invocation.cursor === undefined ? {} : { cursor: invocation.cursor }), ...(invocation.maxNodes === undefined ? {} : { maxNodes: invocation.maxNodes }) }
     case 'click':
@@ -51,9 +53,32 @@ export function buildRequest(invocation: AcrylControlInvocation): UiRequest {
   }
 }
 
-export async function runControlCommand(invocation: AcrylControlInvocation, deps: { discover: typeof discoverInstances; call: typeof callOnlineChannel } = { discover: discoverInstances, call: callOnlineChannel }): Promise<ControlCommandResult> {
+/** Builds the {@link WorkerRequest} an `acryl control worker <op>` invocation names; throws a plain, CLI-worded Error on a bad combination. */
+export function buildWorkerRequest(invocation: AcrylControlInvocation): WorkerRequest {
+  const need = (value: string | undefined, flag: string): string => {
+    if (value === undefined) throw new Error(`acryl control worker ${String(invocation.workerOp)} needs ${flag}`)
+    return value
+  }
+  switch (invocation.workerOp) {
+    case 'list': return { op: 'list' }
+    case 'attach': {
+      if (invocation.provider !== undefined && invocation.provider !== 'claude') throw new Error('--provider must be claude (the only worker provider so far)')
+      return { op: 'attach', provider: 'claude', cwd: need(invocation.cwd, '--cwd'), ...(invocation.worker === undefined ? {} : { workerId: invocation.worker }), ...(invocation.resume === undefined ? {} : { resume: invocation.resume }) }
+    }
+    case 'send': return { op: 'send', workerId: need(invocation.worker, '--worker'), text: need(invocation.text, '--text') }
+    case 'cancel': return { op: 'cancel', workerId: need(invocation.worker, '--worker') }
+    case 'stop': return { op: 'stop', workerId: need(invocation.worker, '--worker') }
+    case undefined: throw new Error('acryl control worker needs an operation')
+  }
+}
+
+export async function runControlCommand(invocation: AcrylControlInvocation, deps: { discover: typeof discoverInstances; call: typeof callOnlineChannel; callWorkers?: typeof callWorkers } = { discover: discoverInstances, call: callOnlineChannel, callWorkers }): Promise<ControlCommandResult> {
   if (invocation.action === 'list') return { kind: 'list', instances: deps.discover() }
   const instance = pickInstance(invocation.app, deps.discover())
+  if (invocation.action === 'worker') {
+    const response = await (deps.callWorkers ?? callWorkers)(instance, buildWorkerRequest(invocation))
+    return { kind: 'worker', app: instance.id, response }
+  }
   const request = buildRequest(invocation)
   try {
     const result = await deps.call(instance, request)

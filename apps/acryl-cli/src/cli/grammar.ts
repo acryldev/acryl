@@ -106,11 +106,20 @@ export interface AcrylRemoteInvocation extends AcrylInvocationFlags {
  * (`acryl new`, `acryl save`, `acryl remote`); reusing it here for "the running window this drives" would
  * collide with that, not extend it.
  */
-export type AcrylControlAction = 'list' | 'snapshot' | 'click' | 'type' | 'select' | 'press' | 'scroll' | 'wait'
+export type AcrylControlAction = 'list' | 'snapshot' | 'click' | 'type' | 'select' | 'press' | 'scroll' | 'wait' | 'worker'
+
+/** `acryl control worker <op>`: bring-your-own agents (Claude Code) running under the app, driven through its Host. */
+export type AcrylWorkerOp = 'list' | 'attach' | 'send' | 'cancel' | 'stop'
 
 export interface AcrylControlInvocation extends AcrylInvocationFlags {
   readonly kind: 'control'
   readonly action: AcrylControlAction
+  /** For `worker`: which operation. */
+  readonly workerOp?: AcrylWorkerOp
+  readonly cwd?: string
+  readonly worker?: string
+  readonly provider?: string
+  readonly resume?: string
   /** Which running instance to drive, by id or name; required only when more than one is running. */
   readonly app?: string
   readonly ref?: string
@@ -295,8 +304,9 @@ function parsePluginInvocation(
   return { ...flags, kind: 'plugin', action }
 }
 
-const CONTROL_ACTIONS: ReadonlySet<AcrylControlAction> = new Set(['list', 'snapshot', 'click', 'type', 'select', 'press', 'scroll', 'wait'])
-const CONTROL_VALUED: ReadonlySet<string> = new Set(['--app', '--ref', '--text', '--option', '--key', '--direction', '--amount', '--cursor', '--max-nodes', '--role', '--name', '--timeout-ms'])
+const CONTROL_ACTIONS: ReadonlySet<AcrylControlAction> = new Set(['list', 'snapshot', 'click', 'type', 'select', 'press', 'scroll', 'wait', 'worker'])
+const WORKER_OPS: ReadonlySet<AcrylWorkerOp> = new Set(['list', 'attach', 'send', 'cancel', 'stop'])
+const CONTROL_VALUED: ReadonlySet<string> = new Set(['--app', '--ref', '--text', '--option', '--key', '--direction', '--amount', '--cursor', '--max-nodes', '--role', '--name', '--timeout-ms', '--cwd', '--worker', '--provider', '--resume'])
 const CONTROL_FLAGS: ReadonlySet<string> = new Set(['--submit', '--no-clear', '--gone'])
 
 function parseControlInvocation(args: readonly string[]): AcrylControlInvocation {
@@ -304,7 +314,12 @@ function parseControlInvocation(args: readonly string[]): AcrylControlInvocation
   if (action === undefined || !CONTROL_ACTIONS.has(action as AcrylControlAction)) {
     throw new Error(`usage: acryl control <${[...CONTROL_ACTIONS].join('|')}> [--app <id>] [options] [--json]`)
   }
-  const { values, set, json } = parseAppOptions(args.slice(1), CONTROL_VALUED, CONTROL_FLAGS)
+  let workerOp: AcrylWorkerOp | undefined
+  if (action === 'worker') {
+    workerOp = args[1] as AcrylWorkerOp | undefined
+    if (workerOp === undefined || !WORKER_OPS.has(workerOp)) throw new Error(`usage: acryl control worker <${[...WORKER_OPS].join('|')}> [--app <id>] [--worker <id>] [--cwd <folder>] [--text <t>] [--json]`)
+  }
+  const { values, set, json } = parseAppOptions(args.slice(action === 'worker' ? 2 : 1), CONTROL_VALUED, CONTROL_FLAGS)
   const int = (flag: string, label: string): number | undefined => {
     const raw = values.get(flag)
     if (raw === undefined) return undefined
@@ -320,6 +335,11 @@ function parseControlInvocation(args: readonly string[]): AcrylControlInvocation
     kind: 'control',
     action: action as AcrylControlAction,
     json, version: false, help: false,
+    ...(workerOp === undefined ? {} : { workerOp }),
+    ...(values.get('--cwd') === undefined ? {} : { cwd: values.get('--cwd') }),
+    ...(values.get('--worker') === undefined ? {} : { worker: values.get('--worker') }),
+    ...(values.get('--provider') === undefined ? {} : { provider: values.get('--provider') }),
+    ...(values.get('--resume') === undefined ? {} : { resume: values.get('--resume') }),
     ...(values.get('--app') === undefined ? {} : { app: values.get('--app') }),
     ...(values.get('--ref') === undefined ? {} : { ref: values.get('--ref') }),
     ...(values.get('--text') === undefined ? {} : { text: values.get('--text') }),

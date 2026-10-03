@@ -8,6 +8,9 @@
 import {
   ONLINE_CALL_PATH,
   UiControlError,
+  WORKERS_PATH,
+  type WorkerRequest,
+  type WorkerResponse,
   type OnlineCallResponse,
   type UiErrorCode,
   type UiRequest,
@@ -76,4 +79,31 @@ export async function callOnlineChannel(instance: RunningApp, request: UiRequest
   const body = await response.json() as OnlineCallResponse
   if (body.ok) return body.result
   throw new UiControlError(toUiErrorCode(body.code), body.message)
+}
+
+/**
+ * Call one agent-worker operation against a running instance (same secret and loopback rules as {@link callOnlineChannel}).
+ * A refusal by the app is returned as the response, not thrown: it is the answer. A `send` can take as long as the agent works.
+ * @throws OnlineChannelError when the instance has no online channel or cannot be reached.
+ */
+export async function callWorkers(instance: RunningApp, request: WorkerRequest, fetchImpl: typeof fetch = fetch): Promise<WorkerResponse> {
+  if (instance.port === undefined) throw new OnlineChannelError(`${instance.id} has no port recorded; it may be a CLI/TUI session with no page to control`)
+  const secret = readOnlineSecret(instance.home)
+  if (secret === undefined) {
+    throw new OnlineChannelError(`${instance.id} has no online channel - set acryl-agent-control's "online" option to true in its profile and restart it`)
+  }
+  let response: Response
+  try {
+    response = await fetchImpl(`http://127.0.0.1:${String(instance.port)}${WORKERS_PATH}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${secret}` },
+      body: JSON.stringify(request),
+    })
+  } catch (cause) {
+    throw new OnlineChannelError(`could not reach ${instance.id} at port ${String(instance.port)}: ${cause instanceof Error ? cause.message : String(cause)}`)
+  }
+  if (response.status === 403) throw new OnlineChannelError(`${instance.id} refused this request (its secret rotated? try again)`)
+  if (response.status === 404) throw new OnlineChannelError(`${instance.id} has no agent workers (switched off, or an older app)`)
+  if (response.status !== 200 && response.status !== 400) throw new OnlineChannelError(`${instance.id} answered with an unexpected status ${String(response.status)}`)
+  return await response.json() as WorkerResponse
 }
