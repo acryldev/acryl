@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { isAbsolute, join, resolve, sep } from 'node:path'
 import { hashPackage, pruneOldStages, pruneOldVersions, stagePackage, stagedSource } from './stage.js'
@@ -172,6 +172,43 @@ export async function addLocalPackage(services, dir, name, profileDir, fs) {
 }
 
 /**
+ * The staged copy that is installed now (the profile's `dependencies` entry for `name` is `file:<stage dir>`), when it is one of ours: only a copy
+ * under `stageRoot` is ever reinstalled, never an arbitrary path. `undefined` when the running version was not staged by us (a plugin with its own
+ * hot shim installs from its own folder, which is exactly what an update has just changed).
+ */
+export function previousStagedDir(profileDir, name, stageRoot, fs = { existsSync, readFileSync }) {
+  if (!profileDir) return undefined
+  try {
+    const spec = JSON.parse(fs.readFileSync(join(profileDir, 'package.json'), 'utf8')).dependencies?.[name]
+    if (typeof spec !== 'string' || !spec.startsWith('file:')) return undefined
+    const dir = spec.slice('file:'.length)
+    return dir.startsWith(stageRoot + sep) && fs.existsSync(join(dir, 'package.json')) ? dir : undefined
+  } catch { return undefined }
+}
+
+/**
+ * Bring the version that was running before a failed update back: reinstall its staged copy and activate it. Best effort and honest: the answer
+ * says whether it worked, and a failure here never hides the error that caused the update to fail.
+ */
+async function restorePrevious(services, previousDir, name, fs) {
+  if (previousDir === undefined) return false
+  try {
+    const added = await addLocalPackage(services, previousDir, name, services.profileDir, fs)
+    if (!added.ok) return false
+    await services.live.activate(name)
+    return true
+  } catch { return false }
+}
+
+/** The staged copy of a failed attempt is of no use to anyone (best effort). */
+function discardStage(staging) {
+  if (staging.ok) { try { rmSync(staging.dir, { recursive: true, force: true }) } catch { /* nothing depends on it */ } }
+}
+
+const RESTORED = 'The version that was running is running again. Fix the error above, then call the tool again.'
+const NOT_RESTORED = 'The install was undone. Fix the error above, then call the tool again.'
+
+/**
  * Local, in-place delivery (spec 037 FR-016): lint, `dsh plugin add file:<dir>`, an
  * EXPLICIT live activation, and a compensating `remove` on any failure, because CLI
  * and Web have no install recovery log (measured: a plugin whose apply() threw stayed
@@ -198,6 +235,9 @@ export async function installLocalPlugin(input, services, fs) {
   // code is only picked up if the plugin uses the hot shim (see docs/delivery/local-live.md): Node
   // caches module resolution, so a plain re-import returns the old module (measured).
   const updating = services.live.statusOf(lint.name) !== undefined
+  const stageRoot = join(services.profileDir ?? tmpdir(), '.acryl-staged')
+  // Remembered before anything is taken down: a failed update must leave the version that was working still working.
+  const previousDir = updating ? previousStagedDir(services.profileDir, lint.name, stageRoot) : undefined
   if (updating) {
     try { await services.live.deactivate(lint.name) } catch (cause) {
       return { ok: false, stage: 'update', errors: [`could not deactivate the running version: ${cause instanceof Error ? cause.message : cause}`] }
@@ -205,7 +245,6 @@ export async function installLocalPlugin(input, services, fs) {
   }
   // Automatic host hot reload: install a staged copy whose entry re-imports the newest versioned code on every activation (lib/stage.js).
   // A plugin that already carries its own hot shim, or whose entry cannot be wrapped, installs as written (and is warned about below).
-  const stageRoot = join(services.profileDir ?? tmpdir(), '.acryl-staged')
   let installDir = dir
   let staging = { ok: false, reason: 'the plugin uses its own hot shim' }
   if (!lint.hotShim) {
@@ -213,14 +252,20 @@ export async function installLocalPlugin(input, services, fs) {
     if (staging.ok) installDir = staging.dir
   }
   const added = await addLocalPackage(services, installDir, lint.name, services.profileDir, fs)
-  if (!added.ok) return { ok: false, stage: 'install', errors: [`dsh plugin add failed (exit ${added.exitCode})`], detail: added.output }
+  if (!added.ok) {
+    const restored = await restorePrevious(services, previousDir, lint.name, fs)
+    discardStage(staging)
+    return { ok: false, stage: 'install', errors: [`dsh plugin add failed (exit ${added.exitCode})`], detail: added.output, ...(updating ? { restoredPrevious: restored } : {}) }
+  }
 
   try {
     await services.live.activate(lint.name)
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : String(cause)
     const removed = await runPlugin(services.pnpm, ['remove', lint.name], installDir)
-    return { ok: false, stage: 'activate', errors: [message], rolledBack: removed.ok, next: 'The install was undone. Fix the error above, then call the tool again.' }
+    const restored = await restorePrevious(services, previousDir, lint.name, fs)
+    discardStage(staging)
+    return { ok: false, stage: 'activate', errors: [message], rolledBack: removed.ok, ...(updating ? { restoredPrevious: restored } : {}), next: restored ? RESTORED : NOT_RESTORED }
   }
 
   // The required packages activate AFTER the plugin itself, not before: `livePluginActivation`'s dynamic
@@ -235,7 +280,9 @@ export async function installLocalPlugin(input, services, fs) {
     if (required.errors.length > 0) {
       await services.live.deactivate(lint.name).catch(() => {})
       const removed = await runPlugin(services.pnpm, ['remove', lint.name], installDir)
-      return { ok: false, stage: 'requires', errors: required.errors, rolledBack: removed.ok, next: 'The install was undone. Fix the error above, then call the tool again.' }
+      const restored = await restorePrevious(services, previousDir, lint.name, fs)
+      discardStage(staging)
+      return { ok: false, stage: 'requires', errors: required.errors, rolledBack: removed.ok, ...(updating ? { restoredPrevious: restored } : {}), next: restored ? RESTORED : NOT_RESTORED }
     }
   }
 

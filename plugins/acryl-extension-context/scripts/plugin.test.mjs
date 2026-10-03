@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -136,6 +136,68 @@ test('install: an activation failure runs the compensating remove and reports ro
     assert.match(r.errors[0], /deliberate failure/)
     assert.deepEqual(s.calls.at(-1), ['run', 'remove', 'my-plugin'])
   } finally { rmSync(dir, { recursive: true, force: true }) }
+})
+
+/** A running profile: `my-plugin` installed from a staged copy (what a successful install leaves), and a source folder the agent has since changed. */
+function runningProfile({ staged = true } = {}) {
+  const profile = mkdtempSync(join(tmpdir(), 'profile-'))
+  const stageRoot = join(profile, '.acryl-staged')
+  const previous = staged ? join(stageRoot, 'my-plugin@000000000000001') : join(profile, 'elsewhere')
+  mkdirSync(previous, { recursive: true })
+  writeFileSync(join(previous, 'package.json'), JSON.stringify({ name: 'my-plugin', version: '0.1.0' }))
+  writeFileSync(join(profile, 'package.json'), JSON.stringify({ name: 'dsh-profile-x', dependencies: { 'my-plugin': `file:${previous}` }, dsh: { profile: { bundles: ['my-plugin'] } } }))
+  const dir = makePkg()
+  writeFileSync(join(dir, 'index.js'), 'export const name = "my-plugin"\nexport function apply() {}\n')
+  return { profile, stageRoot, previous, dir }
+}
+
+/** Fakes where only the previous staged copy activates, so any other install "fails to activate". */
+function updateFakes(previous) {
+  const s = fakes({ preinstalled: true })
+  let lastAdd
+  const run = s.pnpm.runPlugin
+  s.pnpm.runPlugin = (args, ...rest) => { if (args[0] === 'add') lastAdd = args[1]; return run(args, ...rest) }
+  const activate = s.live.activate
+  s.live.activate = async name => { if (lastAdd !== `file:${previous}`) { s.calls.push(['activate', name]); throw new Error('Plugin my-plugin failed to activate: deliberate failure') } return activate(name) }
+  return s
+}
+
+test('install: a failed UPDATE brings the version that was running back, and drops the failed copy', async () => {
+  const { profile, stageRoot, previous, dir } = runningProfile(); const s = { ...updateFakes(previous), profileDir: profile }
+  try {
+    const r = await installLocalPlugin({ path: dir }, s)
+    assert.equal(r.ok, false); assert.equal(r.stage, 'activate'); assert.equal(r.rolledBack, true); assert.equal(r.restoredPrevious, true)
+    assert.match(r.next, /running again/)
+    assert.deepEqual(s.calls.slice(-3), [['run', 'remove', 'my-plugin'], ['run', 'add', `file:${previous}`], ['activate', 'my-plugin']])
+    assert.equal(s.live.statusOf('my-plugin'), 'active')
+    assert.deepEqual(readdirSync(stageRoot), ['my-plugin@000000000000001'])
+  } finally { rmSync(dir, { recursive: true, force: true }); rmSync(profile, { recursive: true, force: true }) }
+})
+
+test('install: an update whose add fails re-activates the previous version too', async () => {
+  const { profile, previous, dir } = runningProfile(); const s = { ...fakes({ preinstalled: true, addExit: 1 }), profileDir: profile }
+  const addCalls = []
+  const run = s.pnpm.runPlugin
+  s.pnpm.runPlugin = (args, ...rest) => { if (args[0] === 'add') addCalls.push(args[1]); return run(args, ...rest) }
+  try {
+    const r = await installLocalPlugin({ path: dir }, s)
+    assert.equal(r.ok, false); assert.equal(r.stage, 'install')
+    // Every add fails in this fake, including the restore: the answer must say the previous version could not be brought back.
+    assert.equal(r.restoredPrevious, false)
+    assert.equal(addCalls.at(-1), `file:${previous}`)
+  } finally { rmSync(dir, { recursive: true, force: true }); rmSync(profile, { recursive: true, force: true }) }
+})
+
+test('install: nothing is restored from a folder this tool did not stage, and a first install never claims a restore', async () => {
+  const outside = runningProfile({ staged: false }); const s = { ...fakes({ preinstalled: true, activateError: 'deliberate failure' }), profileDir: outside.profile }
+  const first = makePkg(); const fresh = { ...fakes({ activateError: 'deliberate failure' }), profileDir: mkdtempSync(join(tmpdir(), 'profile-')) }
+  try {
+    const r = await installLocalPlugin({ path: outside.dir }, s)
+    assert.equal(r.ok, false); assert.equal(r.restoredPrevious, false); assert.match(r.next, /undone/)
+    assert.ok(!s.calls.some(c => c[0] === 'run' && c[1] === 'add' && c[2] === `file:${outside.previous}`))
+    const created = await installLocalPlugin({ path: first }, fresh)
+    assert.equal(created.ok, false); assert.equal('restoredPrevious' in created, false)
+  } finally { for (const d of [outside.dir, outside.profile, first, fresh.profileDir]) rmSync(d, { recursive: true, force: true }) }
 })
 
 test('install: missing services are reported, not thrown', async () => {
