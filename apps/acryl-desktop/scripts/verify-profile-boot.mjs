@@ -129,7 +129,8 @@ try {
     prepared.rootConfig,
     patches,
     async (host) => {
-      // Packaged Electron does not expose Node's internal ESM loader.
+      // This is the packaged-boot smoke: packaged Electron has no Node internal ESM loader (the product reaches module internals
+      // through a native addon instead), so the host under test gets the same configuration. Same line as verify-loader-boot.mjs.
       host.loader.internal = undefined
       host.provide(DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([]))
       host.provide('desktopRuntime', runtime)
