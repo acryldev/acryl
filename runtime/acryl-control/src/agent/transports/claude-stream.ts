@@ -17,8 +17,9 @@ export interface ClaudeStreamTransportOptions {
   /**
    * Extra arguments for every process, after the protocol flags. Defaults to read-only work: Claude Code asks for approval before it edits or
    * runs anything, and a headless process cannot answer, so such calls are refused. Pass `--permission-mode` or `--allowedTools` to widen it.
+   * A function is asked at each attach, for arguments that only exist once the host is up (an MCP config naming this host's own address).
    */
-  readonly args?: readonly string[]
+  readonly args?: readonly string[] | (() => readonly string[] | Promise<readonly string[]>)
   readonly env?: NodeJS.ProcessEnv
   /** Spawn seam for tests. */
   readonly spawn?: (command: string, args: readonly string[], options: SpawnOptionsWithoutStdio) => ChildProcessWithoutNullStreams
@@ -68,7 +69,7 @@ export class ClaudeStreamTransport implements AgentTransport {
   async open(request: AttachAgentRequest): Promise<AgentTransportRuntime> {
     const args = [
       ...PROTOCOL_ARGS,
-      ...(this.options.args ?? []),
+      ...(typeof this.options.args === 'function' ? await this.options.args() : this.options.args ?? []),
       ...(request.providerSessionRef === undefined ? [] : ['--resume', request.providerSessionRef]),
     ]
     const spawnProcess = this.options.spawn ?? nodeSpawn
