@@ -324,6 +324,7 @@ presentation only.
 
 **Standing invariants for every Phase 9/10 task (owner direction, R20/R22, 2026-10-02):**
 - **One shared runtime, three surfaces.** There is exactly one DSH-based agent runtime (`runtime/acryl-harness-runtime`), reused by all three surfaces (CLI/TUI, Desktop, Web) through the `createAcrylEngineHost` seam. Re-attachment must not fork engine, composition, or profile logic per surface; surface code stays a thin presenter over the shared runtime (the T022 composition drain is the same rule for Desktop).
+- **Three-surface parity is recorded, not assumed.** Every Phase 9/10 task states its answer for each of the three surfaces - web, desktop, CLI TUI - in its R-note: full parity, a surface-native equivalent (e.g. a pi-tui worker view instead of a canvas tab), or an explicit N/A with the reason (e.g. graphical-only). "It should work there" is not an answer; each claimed surface gets one real check.
 - **No new direct `@deepseek-ai/dsh-*` reference outside the engine seam** (`runtime/acryl-harness-runtime`). Every re-attach task reports the direct-reference count before/after; a rise needs a recorded reason in `research.md` (T039 turns this into a CI guard).
 - **Prefer an ACRYL plugin/row over patching an upstream package** (R22 rule 3); prefer adopting an upstream package over rebuilding a capability ACRYL already has, after a recorded decision (T042).
 - **DSH chat is one agent, not the app.** Nothing re-attached may make the DSH engine load-bearing for the other agents or surfaces (T043 proves it).
