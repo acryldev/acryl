@@ -692,3 +692,18 @@ What ACRYL's own plugins actually consume from DSH is small. Host plugins inject
 3. **Who owns projects.** Proposal: ACRYL (S2), DSH `workspaces` follows.
 4. **Order.** S1 first (smallest, mechanical, about 30 lines down, unblocks `acryl-agent-control` mounting without a chat), then S2, then S3.
 
+## Finding R32 - T048 decision: hand-rolled stream-json transport versus `@anthropic-ai/claude-agent-sdk` (2026-10-03)
+
+**Honest record.** I wrote the transport (R31) without first evaluating the official SDK; the owner asked for the comparison. It was done afterwards from the registry metadata, the packed tarball (license, file sizes, `sdk.d.ts`) and `claude --help`; the SDK was **not run**.
+
+**What the SDK is.** `@anthropic-ai/claude-agent-sdk` 0.3.288 (versioned in step with the CLI, 2.1.288). `query()` spawns the Claude Code CLI and speaks the same stream-json protocol; it adds typed messages, `interrupt()`, `resume`, hooks, `canUseTool` (approval callbacks), in-process MCP servers (`tool()`, `createSdkMcpServer()`) and session management.
+
+**Measured costs.**
+- **License:** `LICENSE.md` is "All rights reserved. Use is subject to the Legal Agreements" (Anthropic's legal and compliance page), not an open-source license. ACRYL is MIT and ships installers; bundling the SDK needs a legal read that nobody has done.
+- **Weight:** 5.4 MB unpacked JS (`sdk.mjs` 1.2 MB, `bridge.mjs` 1.3 MB); eight optional platform packages that each embed a native Claude binary (the darwin-arm64 one is 229 MB unpacked; `pathToClaudeCodeExecutable` avoids using it but not installing it); peers `zod` ^4, `@anthropic-ai/sdk` >= 0.93, `@modelcontextprotocol/sdk` ^1.29. The packaged Desktop app is already 471 MB.
+- **Coupling:** it puts a vendor SDK and its release cadence inside `acryl-control`, the stable core. R20 and R22 say the opposite (DSH churn is why), and Codex and ACP have no equivalent SDK for the same shape, so the transport seam would not generalise.
+
+**What the hand-rolled transport costs and lacks.** About 220 lines, no dependencies, no license question, and the same shape (spawn, NDJSON or JSON-RPC lines, interrupt, close stdin) that `codex exec --json` and an ACP stdio agent need. It lacks permission prompts: a headless process cannot answer Claude Code's approval requests, so with the default arguments a Claude worker is effectively read-only. The protocol for answering them exists (`--permission-prompts`, `can_use_tool` control requests after an `initialize` handshake) and the SDK implements it.
+
+**Decision: the hand-rolled transport stays, as the core's shape for all three vendors.** Reasons: license, weight, coupling, and one shape for Claude, Codex and ACP. **Revisit trigger:** if implementing `can_use_tool` approvals takes more than about 150 lines or proves unstable across CLI versions, adopt the SDK as an optional, separately installed transport plugin (never a dependency of `acryl-control`), after the license is read. Also noted for T051: the best vehicle for giving a Claude worker ACRYL's extension tools is an MCP server passed with `--mcp-config` (plus `--strict-mcp-config` when wanted), which needs neither the SDK nor changes to the transport.
+
