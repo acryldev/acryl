@@ -46,6 +46,7 @@ import {
   type RuntimeResolution,
 } from '@deepseek-ai/dsh-app-boot'
 import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
+import { provideAcrylWeb } from './engine-web.ts'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 
 import { provideCliMarketInstall } from './cli-market-install.ts'
@@ -283,6 +284,8 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   // dsh-web-frontend package, which the project's own repo rules forbid.
   // The same tap swaps the favicon for the ACRYL logo, inlined as a data URL
   // (web-favicon.ts), so no route or static asset is needed.
+  // The web port ACRYL's own plugins depend on (instead of DSH's `webServer`): Web and Desktop have a page, the terminal has none.
+  if (composition.surface !== 'tui') ctx.inject(['webServer'], webCtx => { provideAcrylWeb(webCtx) })
   if (composition.surface === 'web') {
     ctx.inject(['webServer'], webServerCtx => {
       const title = composition.productName ?? 'ACRYL'

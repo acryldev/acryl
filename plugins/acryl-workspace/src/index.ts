@@ -2,7 +2,7 @@
 
 import { randomBytes } from 'node:crypto'
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-host-webserver'
+import type {} from 'acryl-control'
 import {
   WORKSPACE_FILES_ENTRY_PATH,
   WORKSPACE_FILES_READ_PATH,
@@ -87,7 +87,7 @@ declare module '@deepseek-ai/cordis' {
 }
 
 /** Loopback Web server required to publish canvas routes; the app instance says where this app keeps its data. */
-export const inject = ['webServer', 'appInstance']
+export const inject = ['acrylWeb', 'appInstance']
 
 /**
  * Activate Development Canvas as a neighboring, required Host plugin.
@@ -95,10 +95,10 @@ export const inject = ['webServer', 'appInstance']
  * @param ctx - Host context for this generation.
  */
 export function apply(ctx: Context): void {
-  if (ctx.webServer.host !== '127.0.0.1') {
+  if (ctx.acrylWeb.host !== '127.0.0.1') {
     throw new Error('acryl-workspace: requires a loopback Web server')
   }
-  const rendererOrigin = `http://127.0.0.1:${String(ctx.webServer.port)}`
+  const rendererOrigin = `http://127.0.0.1:${String(ctx.acrylWeb.port)}`
   const reportHostError = (operation: string, cause: unknown): void => {
     ctx.logger.error(
       `acryl-workspace: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`,
@@ -142,7 +142,7 @@ export function apply(ctx: Context): void {
         [WORKSPACE_PTY_CLOSE_PATH, handleWorkspacePtyCloseRequest],
       ] as const
       for (const [path, handler] of ptyRoutes) {
-        releases.push(ctx.webServer.register({
+        releases.push(ctx.acrylWeb.register({
           kind: 'exact',
           path,
           handler: (req, res) => handler(req, res, rendererOrigin, workspacePty, reportHostError),
@@ -150,7 +150,7 @@ export function apply(ctx: Context): void {
       }
       const ptyStream = createWorkspacePtyStream(workspacePty, rendererOrigin, reportHostError)
       releases.push(() => { ptyStream.close() })
-      releases.push(ctx.webServer.registerUpgrade({
+      releases.push(ctx.acrylWeb.registerUpgrade({
         path: WORKSPACE_PTY_STREAM_PATH,
         handler: (req, socket, head) => { ptyStream.handleUpgrade(req, socket, head) },
       }))
@@ -159,7 +159,7 @@ export function apply(ctx: Context): void {
         [WORKSPACE_AGENTS_REMOVE_PATH, handleWorkspaceAgentsRemoveRequest],
       ] as const
       for (const [path, handler] of agentRoutes) {
-        releases.push(ctx.webServer.register({
+        releases.push(ctx.acrylWeb.register({
           kind: 'exact',
           path,
           handler: (req, res) => handler(req, res, rendererOrigin, catalog, reportHostError),
@@ -167,17 +167,17 @@ export function apply(ctx: Context): void {
       }
       // The chat is the DSH `agents` service; reading it per request, not injecting it, is what lets this plugin stay up when the chat is off.
       const services: { get(name: string): unknown } = ctx
-      releases.push(ctx.webServer.register({
+      releases.push(ctx.acrylWeb.register({
         kind: 'exact',
         path: WORKSPACE_CAPABILITIES_PATH,
         handler: (req, res) => { handleWorkspaceCapabilitiesRequest(req, res, rendererOrigin, () => ({ chat: services.get('agents') !== undefined })) },
       }))
-      releases.push(ctx.webServer.register({
+      releases.push(ctx.acrylWeb.register({
         kind: 'exact',
         path: WORKSPACE_AGENT_SETTINGS_PATH,
         handler: (req, res) => handleWorkspaceAgentSettingsRequest(req, res, rendererOrigin, agentSettings, reportHostError),
       }))
-      releases.push(ctx.webServer.register({
+      releases.push(ctx.acrylWeb.register({
         kind: 'exact',
         path: WORKSPACE_AGENT_STATUS_PATH,
         handler: (req, res) => handleAgentStatusRequest(req, res, rendererOrigin, statusToken, agentStatus, reportHostError),
@@ -200,14 +200,14 @@ export function apply(ctx: Context): void {
         [WORKSPACE_FILES_ENTRY_PATH, handleWorkspaceFilesEntryRequest],
       ] as const
       for (const [path, handler] of filesRoutes) {
-        releases.push(ctx.webServer.register({
+        releases.push(ctx.acrylWeb.register({
           kind: 'exact',
           path,
           handler: (req, res) => handler(req, res, rendererOrigin, workspaceFiles, reportHostError),
         }))
       }
       for (const [path, handler] of gitRoutes) {
-        releases.push(ctx.webServer.register({
+        releases.push(ctx.acrylWeb.register({
           kind: 'exact',
           path,
           handler: (req, res) => handler(req, res, rendererOrigin, workspaceGit, reportHostError),
@@ -215,7 +215,7 @@ export function apply(ctx: Context): void {
       }
       // The OS's own folder chooser, for the "+" on Web (a browser page cannot open one that yields a path).
       const pickFolder = singleFlight(() => pickFolderNatively(process.platform))
-      releases.push(ctx.webServer.register({
+      releases.push(ctx.acrylWeb.register({
         kind: 'exact',
         path: WORKSPACE_PICK_FOLDER_PATH,
         handler: (req, res) => handleWorkspacePickFolderRequest(req, res, rendererOrigin, pickFolder, reportHostError),

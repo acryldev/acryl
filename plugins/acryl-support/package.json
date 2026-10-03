@@ -56,6 +56,7 @@
   },
   "dependencies": {
     "@deepseek-ai/dsh-home-paths": "0.2.0-rc.2",
+    "acryl-control": "workspace:*",
     "acryl-diagnostics": "workspace:*",
     "acryl-loopback-http": "workspace:*"
   },
@@ -63,7 +64,6 @@
     "@deepseek-ai/cordis": "^4.0.2",
     "@deepseek-ai/dsh-client-ui-settings": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2",
-    "@deepseek-ai/dsh-host-webserver": "0.2.0-rc.2",
     "react": "18.3.1"
   },
   "devDependencies": {
@@ -74,7 +74,6 @@
     "@deepseek-ai/dsh-client-ui-renderer": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-ui-settings": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2",
-    "@deepseek-ai/dsh-host-webserver": "0.2.0-rc.2",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^22.20.0",

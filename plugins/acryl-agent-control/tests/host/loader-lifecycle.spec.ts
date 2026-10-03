@@ -122,7 +122,7 @@ describe('acryl-agent-control through a real Loader', () => {
     expect(entryOf(ctx, entryId).fiber?.state).toBe(PENDING)
 
     const web = fakeWebServer()
-    ctx.provide('webServer' as never, web as never)
+    ctx.provide('acrylWeb' as never, web as never)
     ctx.provide('tools' as never, fakeTools() as never)
     await ctx.loader.await()
 
@@ -135,7 +135,7 @@ describe('acryl-agent-control through a real Loader', () => {
     const { ctx, entryId } = await mount()
     const web = fakeWebServer()
     const firstTools = fakeTools()
-    ctx.provide('webServer' as never, web as never)
+    ctx.provide('acrylWeb' as never, web as never)
     // `provide()` returns the disposer that retracts exactly this registration - the way to replace a
     // Cordis service safely (a second `provide()` for the same live name is rejected).
     let disposeTools = ctx.provide('tools' as never, firstTools as never)
@@ -160,7 +160,7 @@ describe('acryl-agent-control through a real Loader', () => {
     const { ctx, entryId } = await mount()
     const web = fakeWebServer()
     const tools = fakeTools()
-    ctx.provide('webServer' as never, web as never)
+    ctx.provide('acrylWeb' as never, web as never)
     ctx.provide('tools' as never, tools as never)
     await ctx.loader.await()
 
@@ -187,7 +187,7 @@ describe('acryl-agent-control through a real Loader', () => {
     const { ctx, entryId } = await mount()
     const web = fakeWebServer()
     const tools = fakeTools()
-    ctx.provide('webServer' as never, web as never)
+    ctx.provide('acrylWeb' as never, web as never)
     ctx.provide('tools' as never, tools as never)
     await ctx.loader.await()
 

@@ -33,7 +33,7 @@ describe('acryl-plugin-admin Host plugin (one plugin for every surface)', () => 
     await settle()
     expect(fiber.state).toBe(PENDING)
 
-    root.provide('webServer', server)
+    root.provide('acrylWeb', server)
     await settle()
     expect(fiber.state).toBe(ACTIVE)
     expect(server.paths).toEqual([PLUGIN_ARCHITECTURE_PATH])
@@ -50,7 +50,7 @@ describe('acryl-plugin-admin Host plugin (one plugin for every surface)', () => 
   it('takes its lifecycle routes down when the lifecycle service goes away, keeps the architecture route, and restores them when it returns', async () => {
     const server = webServer()
     const root = new Context()
-    root.provide('webServer', server)
+    root.provide('acrylWeb', server)
     const dispose = root.provide('acrPluginLifecycle', lifecycleService)
     const fiber = root.plugin(adminPlugin)
     await settle()

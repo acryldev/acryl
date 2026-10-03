@@ -9,7 +9,7 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-host-webserver'
+import type {} from 'acryl-control'
 import type {} from '@deepseek-ai/dsh-tools'
 import { builtInCatalog } from 'acryl-harness-runtime'
 import { inspectCordisContext } from './architecture/inspector.ts'
@@ -31,7 +31,7 @@ import { registerPluginTools } from './tools/plugin-tools.ts'
 import { PluginLifecycleView, type PluginLifecycleBlendSource } from './lifecycle/view.ts'
 
 export const name = 'acryl-plugin-admin'
-export const inject = ['webServer']
+export const inject = ['acrylWeb']
 
 /** Optional Desktop-provided launcher state; a surface without it falls back to {@link unlockedBlueprintSource}. */
 interface BlendBootstrap {
@@ -55,7 +55,7 @@ export function unlockedBlueprintSource(rows: readonly unknown[]): PluginLifecyc
 
 /** The origin the routes accept requests from: the page is served by this same web server. */
 function rendererOrigin(ctx: Context): string {
-  return `http://127.0.0.1:${String(ctx.webServer.port)}`
+  return `http://127.0.0.1:${String(ctx.acrylWeb.port)}`
 }
 
 function reporter(ctx: Context): (operation: string, cause: unknown) => void {
@@ -69,7 +69,7 @@ export function apply(ctx: Context): void {
   const reportHostError = reporter(ctx)
 
   ctx.effect(
-    () => ctx.webServer.register({
+    () => ctx.acrylWeb.register({
       kind: 'exact',
       path: PLUGIN_ARCHITECTURE_PATH,
       handler: (req, res) => handlePluginArchitectureSnapshotRequest(
@@ -85,7 +85,7 @@ export function apply(ctx: Context): void {
 
   ctx.plugin({
     name: 'acryl-plugin-admin-lifecycle',
-    inject: ['webServer', 'acrPluginLifecycle'],
+    inject: ['acrylWeb', 'acrPluginLifecycle'],
     apply(child: Context): void {
       const view = new PluginLifecycleView(
         child,
@@ -101,7 +101,7 @@ export function apply(ctx: Context): void {
       ] as const
       for (const [path, handler] of routes) {
         child.effect(
-          () => child.webServer.register({
+          () => child.acrylWeb.register({
             kind: 'exact',
             path,
             handler: (req, res) => handler(req, res, origin, view, reportHostError),

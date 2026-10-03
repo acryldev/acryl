@@ -7,7 +7,7 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-host-webserver'
+import type {} from 'acryl-control'
 import type {} from '@deepseek-ai/dsh-tools'
 import { createApprovalPolicy } from './host/approval.ts'
 import { AuditLog, auditPath } from './host/audit.ts'
@@ -42,11 +42,11 @@ declare module '@deepseek-ai/cordis' {
   }
 }
 
-export const inject = ['webServer', 'tools', 'appInstance']
+export const inject = ['acrylWeb', 'tools', 'appInstance']
 
 export function apply(ctx: Context, rawConfig?: unknown): void {
   const config = parseConfig(rawConfig)
-  const origin = `http://127.0.0.1:${String(ctx.webServer.port)}`
+  const origin = `http://127.0.0.1:${String(ctx.acrylWeb.port)}`
   const reportError = (operation: string, cause: unknown): void => {
     ctx.logger?.error?.(`acryl-agent-control: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
   }
@@ -70,14 +70,14 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
     const releases: Array<() => void> = []
     let onlineSecret: string | undefined
     try {
-      releases.push(ctx.webServer.registerUpgrade({
+      releases.push(ctx.acrylWeb.registerUpgrade({
         path: UI_CONTROL_CHANNEL_PATH,
         handler: (req, socket, head) => { stream.handleUpgrade(req, socket, head) },
       }))
       const handleAudit = createAuditRequestHandler(audit)
-      releases.push(ctx.webServer.register({ kind: 'exact', path: UI_CONTROL_AUDIT_PATH, handler: (req, res) => { handleAudit(req, res, origin) } }))
+      releases.push(ctx.acrylWeb.register({ kind: 'exact', path: UI_CONTROL_AUDIT_PATH, handler: (req, res) => { handleAudit(req, res, origin) } }))
       if (workers !== undefined) {
-        releases.push(ctx.webServer.register({
+        releases.push(ctx.acrylWeb.register({
           kind: 'exact',
           path: WORKERS_PATH,
           handler: (req, res) => { void handleWorkersRequest(req, res, origin, onlineSecret, workers, reportError) },
@@ -91,12 +91,12 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
         onlineSecret = writeOnlineSecret(ctx.appInstance.home)
         const secret = onlineSecret
         if (gateway !== undefined) {
-          releases.push(ctx.webServer.register({ kind: 'exact', path: TOOLS_PATH, handler: (req, res) => { void handleToolsRequest(req, res, secret, gateway, reportError) } }))
-          releases.push(ctx.webServer.register({ kind: 'exact', path: MCP_PATH, handler: (req, res) => { void handleMcpRequest(req, res, secret, gateway, reportError) } }))
+          releases.push(ctx.acrylWeb.register({ kind: 'exact', path: TOOLS_PATH, handler: (req, res) => { void handleToolsRequest(req, res, secret, gateway, reportError) } }))
+          releases.push(ctx.acrylWeb.register({ kind: 'exact', path: MCP_PATH, handler: (req, res) => { void handleMcpRequest(req, res, secret, gateway, reportError) } }))
           workerMcpConfig = writeWorkerMcpConfig(ctx.appInstance.home, `${origin}${MCP_PATH}`, secret)
           releases.push(() => { workerMcpConfig = undefined; removeWorkerMcpConfig(ctx.appInstance.home) })
         }
-        releases.push(ctx.webServer.register({
+        releases.push(ctx.acrylWeb.register({
           kind: 'exact',
           path: ONLINE_CALL_PATH,
           handler: (req, res) => { void handleOnlineCallRequest(req, res, secret, (request, signal) => runOnlineCall({ channel, audit, refs }, request, signal), reportError) },

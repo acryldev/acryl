@@ -73,10 +73,10 @@ async function mount(config: unknown): Promise<{ fiber: { dispose(): Promise<voi
   roots.push(home)
   const ctx = new Context()
   ctx.provide('appInstance' as never, { home, dshHome: join(home, '.dsh') } as never)
-  ctx.provide('webServer' as never, fakeWebServer() as never)
+  ctx.provide('acrylWeb' as never, fakeWebServer() as never)
   ctx.provide('tools' as never, { get: () => undefined, register: () => () => {} } as never)
   const module = await import(BUILT_ENTRY) as { apply(ctx: Context, config?: unknown): void }
-  const fiber = ctx.plugin({ name: 'acryl-agent-control', inject: ['webServer', 'tools', 'appInstance'], apply: module.apply }, config)
+  const fiber = ctx.plugin({ name: 'acryl-agent-control', inject: ['acrylWeb', 'tools', 'appInstance'], apply: module.apply }, config)
   await new Promise(resolve => { setTimeout(resolve, 50) })
   return { fiber: fiber as unknown as { dispose(): Promise<void> }, home }
 }
