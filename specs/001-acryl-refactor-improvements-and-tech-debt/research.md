@@ -568,3 +568,24 @@ Branch `harness-latest-2026-10` (pushed to `bf31717`). Everything ran in isolate
 | Blend snapshot/apply round trip | NOT RUN live; `blends-core` 89 and Desktop blend composition specs pass |
 | Canvas mounting a live, model-backed session tile; Desktop in Electron with the workspace | NOT RUN beyond the earlier healthy startup |
 | `acryl-shortcuts` / mount-anchors | HELD for the owner's decision. A port of mount-anchors onto upstream's `ctx.shortcuts.register` works (toggle shortcut enters crosshair mode, Escape leaves) but is uncommitted in the worktree |
+
+## Finding R28 - the gate is green, T045 closed, settings disposal confirmed sound (2026-10-03)
+
+Branch `harness-latest-2026-10` (pushed to `caf2556`). `corepack pnpm run check` now exits 0 on the branch, so results from here on are trustworthy (FR-009).
+
+**What was failing, and why (three separate causes, none new on this branch except the first being masked):**
+
+1. `acryl-web` npm-entrypoint check: `acryl-web` depends on about 15 workspace packages that are not on the npm registry (`acryl-control`, `acryl-harness-runtime`, `acryl-agent-control`, `acryl-settings`, `@acryl/ui`, and more). A standalone install of its packed tarball could never resolve them; this failed on `main` too. Publishing them is an owner decision and was not taken. `scripts/verify-npm-web-entrypoint.mjs` now packs the whole workspace closure and pins each package to its own tarball through `pnpm.overrides`, so the check proves the packed entry point installs and boots (`acryl-web --json` prints a ready URL) without any registry publish.
+2. `acryl-desktop` runtime closure: eleven 0.2 first-party packages (`dsh-otel`, `dsh-deepseek-account`, `dsh-deepseek-account-platform`, `dsh-llm-deepseek-account`, `dsh-llm-deepseek-api-key`, `dsh-compaction-image-offload`, `dsh-client-store`, `dsh-mcp-resources`, and the three `dsh-experimental-*` agent-team and speech-to-text packages) were reachable only as transitive peers. Declared at `0.2.0-rc.2` in `apps/acryl-desktop`. The profile smoke had shown four of them as "failed to import" entries; all activate now.
+3. Verifiers written for 0.1.5: `verify-licenses` rejected the SPDX expression `(MIT OR CC0-1.0)` (an OR is usable under any one alternative; now accepted), and `verify-profile-boot` lacked `host.loader.internal = undefined` (packaged Electron has no internal loader; the loader smoke already had it) and asserted a `/` redirect where 0.2 answers `./` (now checks where it lands).
+
+**Relock note.** The pinned pnpm 11.11.0 still hangs resolving; the 11.8.0 relock workaround from R23 produced a clean 24-line lockfile diff, and a frozen install under 11.11.0 links it. A corrupt pnpm metadata cache entry also surfaced; a throwaway `--cache-dir` avoids it.
+
+**T045 closed.** (a) `acryl-ui` fields re-extracted from 0.2's settings-form (`072693e`). (b) The DeepSeek tool-call guard is now a real test on the Messages transport (`bfd78f5`): a `tool_use` block keeps its id and name across `input_json_delta` events, the arguments join, and the finish reason is tool-calls. All remaining skips in the repo are platform or prerequisite conditions (`skipIf` win32, built bundle present, model key present).
+
+**Settings disposal (service.ts register effect): sound as written.** The reported scoping defect did not reproduce. Cordis binds `this.ctx` to the calling consumer, so the namespace disposer belongs to the registrant. A reactivation test (register, unload the registrant, re-register) passes against the unchanged service and now guards it (`caf2556`).
+
+**Shortcuts and mount-anchors (row 1) are done:** both run on upstream's `ctx.shortcuts` (`8521fcc`), the palette default moved to Cmd/Ctrl+Shift+P because Cmd+K belongs upstream.
+
+**Still open for parity:** rows 6 and 7 live acceptance, the blend round trip and a real key-save need a model key (owner input); the "open workspace" error needs its exact text and click path (not reproduced: web chooser and Desktop add-project both work in isolated homes); T043 and T044 are next; the Windows ACL sandbox needs a Windows machine. The packed-closure check also now exercises every workspace package's `pack`, which is the first thing to look at if a package gains a build-only dependency.
+
