@@ -181,6 +181,8 @@ export async function runAcryl(
         '  control worker attach --cwd <dir> [--worker <id>] [--resume <session>]  Start a Claude Code worker in a folder',
         '  control worker send --worker <id> --text <t>  Send it a message and print the answer',
         '  control worker cancel|stop --worker <id>  Interrupt its turn, or end it',
+        '  control tool list                List the ACRYL extension tools any agent may use (verify, install, list, remove a plugin)',
+        '  control tool call --tool <name> [--args <json>]  Run one of them and print its answer',
         '',
         'Options:',
         '  -h, --help          Show this help',

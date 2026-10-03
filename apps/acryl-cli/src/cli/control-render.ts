@@ -8,9 +8,10 @@ export interface RenderedControl {
 }
 
 export function renderControl(result: ControlCommandResult, json: boolean): RenderedControl {
-  const failed = result.kind === 'refused' || (result.kind === 'worker' && !result.response.ok)
+  const failed = result.kind === 'refused' || ((result.kind === 'worker' || result.kind === 'tool') && !result.response.ok) || (result.kind === 'tool' && 'isError' in result.response && result.response.isError)
   if (json) return { lines: [JSON.stringify(result, null, 2)], exitCode: failed ? 1 : 0 }
   if (result.kind === 'worker') return renderWorker(result.app, result.response)
+  if (result.kind === 'tool') return renderTool(result.app, result.response)
   if (result.kind === 'list') {
     if (result.instances.length === 0) return { lines: ['no ACRYL app is running'], exitCode: 0 }
     return {
@@ -40,4 +41,10 @@ function renderWorker(app: string, response: Extract<ControlCommandResult, { kin
   }
   if (typeof value === 'object' && value !== null && 'workerId' in value) return { lines: [`${app}: attached ${(value as { workerId: string }).workerId}`], exitCode: 0 }
   return { lines: [`${app}: done`], exitCode: 0 }
+}
+
+function renderTool(app: string, response: Extract<ControlCommandResult, { kind: 'tool' }>['response']): RenderedControl {
+  if (!response.ok) return { lines: [`${app} refused: ${response.code} - ${response.message}`], exitCode: 1 }
+  if ('tools' in response) return { lines: response.tools.length === 0 ? [`${app}: no tools offered`] : response.tools.map(tool => `${tool.name}  ${tool.description.split('\n')[0]?.slice(0, 100) ?? ''}`), exitCode: 0 }
+  return { lines: [response.text], exitCode: response.isError ? 1 : 0 }
 }

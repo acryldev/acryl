@@ -8,7 +8,10 @@
 import {
   ONLINE_CALL_PATH,
   UiControlError,
+  TOOLS_PATH,
   WORKERS_PATH,
+  type GatewayCallResponse,
+  type GatewayListResponse,
   type WorkerRequest,
   type WorkerResponse,
   type OnlineCallResponse,
@@ -106,4 +109,35 @@ export async function callWorkers(instance: RunningApp, request: WorkerRequest, 
   if (response.status === 404) throw new OnlineChannelError(`${instance.id} has no agent workers (switched off, or an older app)`)
   if (response.status !== 200 && response.status !== 400) throw new OnlineChannelError(`${instance.id} answered with an unexpected status ${String(response.status)}`)
   return await response.json() as WorkerResponse
+}
+
+/**
+ * List the extension tools of a running instance, or call one (`call` set). Same secret and loopback rules as {@link callOnlineChannel}; a refusal by the
+ * app is returned as the response, not thrown.
+ * @throws OnlineChannelError when the instance has no online channel or cannot be reached.
+ */
+export async function callToolGateway(
+  instance: RunningApp,
+  call?: { readonly name: string; readonly arguments: Record<string, unknown> },
+  fetchImpl: typeof fetch = fetch,
+): Promise<GatewayListResponse | GatewayCallResponse> {
+  if (instance.port === undefined) throw new OnlineChannelError(`${instance.id} has no port recorded; it may be a CLI/TUI session with no page to control`)
+  const secret = readOnlineSecret(instance.home)
+  if (secret === undefined) {
+    throw new OnlineChannelError(`${instance.id} has no online channel - set acryl-agent-control's "online" option to true in its profile and restart it`)
+  }
+  let response: Response
+  try {
+    response = await fetchImpl(`http://127.0.0.1:${String(instance.port)}${TOOLS_PATH}`, {
+      method: call === undefined ? 'GET' : 'POST',
+      headers: { authorization: `Bearer ${secret}`, ...(call === undefined ? {} : { 'content-type': 'application/json' }) },
+      ...(call === undefined ? {} : { body: JSON.stringify(call) }),
+    })
+  } catch (cause) {
+    throw new OnlineChannelError(`could not reach ${instance.id} at port ${String(instance.port)}: ${cause instanceof Error ? cause.message : String(cause)}`)
+  }
+  if (response.status === 403) throw new OnlineChannelError(`${instance.id} refused this request (its secret rotated? try again)`)
+  if (response.status === 404) throw new OnlineChannelError(`${instance.id} offers no tool gateway (switched off, or an older app)`)
+  if (response.status !== 200 && response.status !== 400) throw new OnlineChannelError(`${instance.id} answered with an unexpected status ${String(response.status)}`)
+  return await response.json() as GatewayListResponse | GatewayCallResponse
 }

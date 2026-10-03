@@ -6,9 +6,9 @@
  * @module acryl-cli/host/control-command
  */
 
-import { UiControlError, type UiRequest, type UiResult, type WorkerRequest, type WorkerResponse } from 'acryl-agent-control'
+import { UiControlError, type UiRequest, type UiResult, type WorkerRequest, type WorkerResponse, type GatewayCallResponse, type GatewayListResponse } from 'acryl-agent-control'
 import type { RunningApp } from 'acryl-harness-runtime'
-import { callOnlineChannel, callWorkers, discoverInstances, pickInstance, OnlineChannelError } from './online-client.ts'
+import { callOnlineChannel, callToolGateway, callWorkers, discoverInstances, pickInstance, OnlineChannelError } from './online-client.ts'
 import type { AcrylControlInvocation } from '../cli/grammar.ts'
 
 export type ControlCommandResult =
@@ -16,12 +16,14 @@ export type ControlCommandResult =
   | { readonly kind: 'result'; readonly app: string; readonly result: UiResult }
   | { readonly kind: 'refused'; readonly app: string; readonly code: string; readonly message: string }
   | { readonly kind: 'worker'; readonly app: string; readonly response: WorkerResponse }
+  | { readonly kind: 'tool'; readonly app: string; readonly response: GatewayListResponse | GatewayCallResponse }
 
 /** Builds the {@link UiRequest} an `acryl control` invocation names; throws a plain, CLI-worded Error on a bad combination. */
 export function buildRequest(invocation: AcrylControlInvocation): UiRequest {
   switch (invocation.action) {
     case 'list': throw new Error('list has no request; call runControlCommand directly')
     case 'worker': throw new Error('a worker operation has its own request; use buildWorkerRequest')
+    case 'tool': throw new Error('a tool operation has its own request; use buildToolCall')
     case 'snapshot':
       return { op: 'snapshot', ...(invocation.cursor === undefined ? {} : { cursor: invocation.cursor }), ...(invocation.maxNodes === undefined ? {} : { maxNodes: invocation.maxNodes }) }
     case 'click':
@@ -72,12 +74,29 @@ export function buildWorkerRequest(invocation: AcrylControlInvocation): WorkerRe
   }
 }
 
-export async function runControlCommand(invocation: AcrylControlInvocation, deps: { discover: typeof discoverInstances; call: typeof callOnlineChannel; callWorkers?: typeof callWorkers } = { discover: discoverInstances, call: callOnlineChannel, callWorkers }): Promise<ControlCommandResult> {
+/** The call an `acryl control tool call` invocation names (`undefined` for `list`); throws a plain, CLI-worded Error on a bad combination. */
+export function buildToolCall(invocation: AcrylControlInvocation): { readonly name: string; readonly arguments: Record<string, unknown> } | undefined {
+  if (invocation.toolOp === 'list') return undefined
+  if (invocation.toolOp !== 'call') throw new Error('acryl control tool needs an operation')
+  if (invocation.tool === undefined) throw new Error('acryl control tool call needs --tool')
+  let parsed: unknown = {}
+  if (invocation.args !== undefined) {
+    try { parsed = JSON.parse(invocation.args) } catch { throw new Error('--args must be a JSON object') }
+  }
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) throw new Error('--args must be a JSON object')
+  return { name: invocation.tool, arguments: parsed as Record<string, unknown> }
+}
+
+export async function runControlCommand(invocation: AcrylControlInvocation, deps: { discover: typeof discoverInstances; call: typeof callOnlineChannel; callWorkers?: typeof callWorkers; callToolGateway?: typeof callToolGateway } = { discover: discoverInstances, call: callOnlineChannel, callWorkers, callToolGateway }): Promise<ControlCommandResult> {
   if (invocation.action === 'list') return { kind: 'list', instances: deps.discover() }
   const instance = pickInstance(invocation.app, deps.discover())
   if (invocation.action === 'worker') {
     const response = await (deps.callWorkers ?? callWorkers)(instance, buildWorkerRequest(invocation))
     return { kind: 'worker', app: instance.id, response }
+  }
+  if (invocation.action === 'tool') {
+    const response = await (deps.callToolGateway ?? callToolGateway)(instance, buildToolCall(invocation))
+    return { kind: 'tool', app: instance.id, response }
   }
   const request = buildRequest(invocation)
   try {

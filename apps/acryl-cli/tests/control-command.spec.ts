@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { RunningApp } from 'acryl-harness-runtime'
 import { UiControlError, type UiResult } from 'acryl-agent-control'
-import { buildRequest, buildWorkerRequest, runControlCommand } from '../src/host/control-command.ts'
+import { buildRequest, buildToolCall, buildWorkerRequest, runControlCommand } from '../src/host/control-command.ts'
 import { parseAcrylArgs } from '../src/cli/grammar.ts'
 import { renderControl } from '../src/cli/control-render.ts'
 import type { AcrylControlInvocation } from '../src/cli/grammar.ts'
@@ -103,5 +103,38 @@ describe('acryl control worker', () => {
     const refused = { kind: 'worker' as const, app: 'acryl', response: { ok: false as const, code: 'unknown-worker', message: 'Unknown agent worker w9.' } }
     expect(renderControl(refused, false)).toEqual({ lines: ['acryl refused: unknown-worker - Unknown agent worker w9.'], exitCode: 1 })
     expect(renderControl(refused, true).exitCode).toBe(1)
+  })
+})
+
+describe('acryl control tool', () => {
+  const tool = (patch: Partial<AcrylControlInvocation>): AcrylControlInvocation => invocation({ action: 'tool', ...patch })
+
+  it('parses list and call, with JSON arguments kept as text until built', () => {
+    expect(parseAcrylArgs(['control', 'tool', 'list'])).toMatchObject({ action: 'tool', toolOp: 'list' })
+    expect(parseAcrylArgs(['control', 'tool', 'call', '--tool', 'acryl_install_plugin', '--args', '{"path":"/p"}', '--app', 'acryl'])).toMatchObject({ toolOp: 'call', tool: 'acryl_install_plugin', args: '{"path":"/p"}', app: 'acryl' })
+    expect(() => parseAcrylArgs(['control', 'tool'])).toThrow('usage: acryl control tool')
+    expect(() => parseAcrylArgs(['control', 'tool', 'run'])).toThrow('usage: acryl control tool')
+  })
+
+  it('builds the call, refusing a missing tool or arguments that are not a JSON object', () => {
+    expect(buildToolCall(tool({ toolOp: 'list' }))).toBeUndefined()
+    expect(buildToolCall(tool({ toolOp: 'call', tool: 'acryl_list_plugins' }))).toEqual({ name: 'acryl_list_plugins', arguments: {} })
+    expect(buildToolCall(tool({ toolOp: 'call', tool: 'acryl_install_plugin', args: '{"path":"/p"}' }))).toEqual({ name: 'acryl_install_plugin', arguments: { path: '/p' } })
+    expect(() => buildToolCall(tool({ toolOp: 'call' }))).toThrow('--tool')
+    expect(() => buildToolCall(tool({ toolOp: 'call', tool: 'x', args: '{nope' }))).toThrow('JSON object')
+    expect(() => buildToolCall(tool({ toolOp: 'call', tool: 'x', args: '[1]' }))).toThrow('JSON object')
+  })
+
+  it('goes through the one gateway route and renders a list, an answer, a tool error and a refusal', async () => {
+    const callToolGateway = vi.fn(async (_instance: RunningApp, call?: { name: string }) => call === undefined
+      ? { ok: true as const, tools: [{ name: 'acryl_list_plugins', description: 'List plugins\nmore', inputSchema: {} }] }
+      : { ok: true as const, isError: call.name === 'acryl_install_plugin', text: `${call.name} answered` })
+    const run = (patch: Partial<AcrylControlInvocation>) => runControlCommand(tool(patch), { discover: () => [runningApp()], call: vi.fn(), callToolGateway })
+    expect(renderControl(await run({ toolOp: 'list' }), false)).toEqual({ lines: ['acryl_list_plugins  List plugins'], exitCode: 0 })
+    expect(renderControl(await run({ toolOp: 'call', tool: 'acryl_list_plugins' }), false)).toEqual({ lines: ['acryl_list_plugins answered'], exitCode: 0 })
+    expect(renderControl(await run({ toolOp: 'call', tool: 'acryl_install_plugin' }), false)).toEqual({ lines: ['acryl_install_plugin answered'], exitCode: 1 })
+    expect(callToolGateway).toHaveBeenCalledWith(runningApp(), { name: 'acryl_list_plugins', arguments: {} })
+    const refused = { kind: 'tool' as const, app: 'acryl', response: { ok: false as const, code: 'not-exposed' as const, message: 'bash is not offered through the gateway' } }
+    expect(renderControl(refused, false)).toEqual({ lines: ['acryl refused: not-exposed - bash is not offered through the gateway'], exitCode: 1 })
   })
 })

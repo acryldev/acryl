@@ -106,16 +106,23 @@ export interface AcrylRemoteInvocation extends AcrylInvocationFlags {
  * (`acryl new`, `acryl save`, `acryl remote`); reusing it here for "the running window this drives" would
  * collide with that, not extend it.
  */
-export type AcrylControlAction = 'list' | 'snapshot' | 'click' | 'type' | 'select' | 'press' | 'scroll' | 'wait' | 'worker'
+export type AcrylControlAction = 'list' | 'snapshot' | 'click' | 'type' | 'select' | 'press' | 'scroll' | 'wait' | 'worker' | 'tool'
 
 /** `acryl control worker <op>`: bring-your-own agents (Claude Code) running under the app, driven through its Host. */
 export type AcrylWorkerOp = 'list' | 'attach' | 'send' | 'cancel' | 'stop'
+
+/** `acryl control tool <op>`: the ACRYL extension tools, for any agent that can run a command. */
+export type AcrylToolOp = 'list' | 'call'
 
 export interface AcrylControlInvocation extends AcrylInvocationFlags {
   readonly kind: 'control'
   readonly action: AcrylControlAction
   /** For `worker`: which operation. */
   readonly workerOp?: AcrylWorkerOp
+  /** For `tool`: which operation, which tool, and its JSON arguments. */
+  readonly toolOp?: AcrylToolOp
+  readonly tool?: string
+  readonly args?: string
   readonly cwd?: string
   readonly worker?: string
   readonly provider?: string
@@ -304,9 +311,10 @@ function parsePluginInvocation(
   return { ...flags, kind: 'plugin', action }
 }
 
-const CONTROL_ACTIONS: ReadonlySet<AcrylControlAction> = new Set(['list', 'snapshot', 'click', 'type', 'select', 'press', 'scroll', 'wait', 'worker'])
+const CONTROL_ACTIONS: ReadonlySet<AcrylControlAction> = new Set(['list', 'snapshot', 'click', 'type', 'select', 'press', 'scroll', 'wait', 'worker', 'tool'])
+const TOOL_OPS: ReadonlySet<AcrylToolOp> = new Set(['list', 'call'])
 const WORKER_OPS: ReadonlySet<AcrylWorkerOp> = new Set(['list', 'attach', 'send', 'cancel', 'stop'])
-const CONTROL_VALUED: ReadonlySet<string> = new Set(['--app', '--ref', '--text', '--option', '--key', '--direction', '--amount', '--cursor', '--max-nodes', '--role', '--name', '--timeout-ms', '--cwd', '--worker', '--provider', '--resume'])
+const CONTROL_VALUED: ReadonlySet<string> = new Set(['--app', '--ref', '--text', '--option', '--key', '--direction', '--amount', '--cursor', '--max-nodes', '--role', '--name', '--timeout-ms', '--cwd', '--worker', '--provider', '--resume', '--tool', '--args'])
 const CONTROL_FLAGS: ReadonlySet<string> = new Set(['--submit', '--no-clear', '--gone'])
 
 function parseControlInvocation(args: readonly string[]): AcrylControlInvocation {
@@ -319,7 +327,12 @@ function parseControlInvocation(args: readonly string[]): AcrylControlInvocation
     workerOp = args[1] as AcrylWorkerOp | undefined
     if (workerOp === undefined || !WORKER_OPS.has(workerOp)) throw new Error(`usage: acryl control worker <${[...WORKER_OPS].join('|')}> [--app <id>] [--worker <id>] [--cwd <folder>] [--text <t>] [--json]`)
   }
-  const { values, set, json } = parseAppOptions(args.slice(action === 'worker' ? 2 : 1), CONTROL_VALUED, CONTROL_FLAGS)
+  let toolOp: AcrylToolOp | undefined
+  if (action === 'tool') {
+    toolOp = args[1] as AcrylToolOp | undefined
+    if (toolOp === undefined || !TOOL_OPS.has(toolOp)) throw new Error(`usage: acryl control tool <${[...TOOL_OPS].join('|')}> [--app <id>] [--tool <name>] [--args '<json>'] [--json]`)
+  }
+  const { values, set, json } = parseAppOptions(args.slice(action === 'worker' || action === 'tool' ? 2 : 1), CONTROL_VALUED, CONTROL_FLAGS)
   const int = (flag: string, label: string): number | undefined => {
     const raw = values.get(flag)
     if (raw === undefined) return undefined
@@ -336,6 +349,9 @@ function parseControlInvocation(args: readonly string[]): AcrylControlInvocation
     action: action as AcrylControlAction,
     json, version: false, help: false,
     ...(workerOp === undefined ? {} : { workerOp }),
+    ...(toolOp === undefined ? {} : { toolOp }),
+    ...(values.get('--tool') === undefined ? {} : { tool: values.get('--tool') }),
+    ...(values.get('--args') === undefined ? {} : { args: values.get('--args') }),
     ...(values.get('--cwd') === undefined ? {} : { cwd: values.get('--cwd') }),
     ...(values.get('--worker') === undefined ? {} : { worker: values.get('--worker') }),
     ...(values.get('--provider') === undefined ? {} : { provider: values.get('--provider') }),
