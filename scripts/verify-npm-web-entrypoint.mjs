@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Verify the packed acryl-web package from an external npm installation. */
 import { execFileSync, spawnSync } from 'node:child_process'
-import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -30,7 +30,23 @@ try {
   const archive = readdirSync(staging).find(name => name.endsWith('.tgz'))
   if (!archive) throw new Error('verify-npm-web-entrypoint: pnpm pack produced no archive')
 
-  writeFileSync(join(staging, 'package.json'), '{"private":true}\n')
+  // acryl-web depends on workspace packages that are not on the npm registry (the runtime, the control plane, the plugins). A
+  // standalone install can only resolve them if each is packed too and pinned through overrides to its own tarball.
+  const closure = workspaceClosure()
+  const overrides = {}
+  for (const { name, dir } of closure) {
+    const before = new Set(readdirSync(staging))
+    execFileSync(corepackCommand(process.platform), ['pnpm', 'pack', '--pack-destination', staging], {
+      cwd: dir,
+      stdio: 'inherit',
+      ...corepackSpawnOptions(process.platform),
+    })
+    const packed = readdirSync(staging).find(file => file.endsWith('.tgz') && !before.has(file))
+    if (!packed) throw new Error(`verify-npm-web-entrypoint: pnpm pack produced no archive for ${name}`)
+    overrides[name] = `file:./${packed}`
+  }
+
+  writeFileSync(join(staging, 'package.json'), `${JSON.stringify({ private: true, pnpm: { overrides } }, null, 2)}\n`)
   execFileSync(corepackCommand(process.platform), ['pnpm', '--dir', staging, 'add', '--ignore-scripts', `./${archive}`], {
     cwd: staging,
     stdio: 'inherit',
@@ -55,4 +71,32 @@ try {
   console.log(`verify-npm-web-entrypoint: OK (${output.url})`)
 } finally {
   rmSync(staging, { recursive: true, force: true })
+}
+
+/** Every workspace package reachable from acryl-web through `workspace:` dependencies, excluding acryl-web itself, with its directory. */
+function workspaceClosure() {
+  const byName = new Map()
+  for (const group of ['apps', 'runtime', 'plugins', 'examples', 'distribution']) {
+    const base = join(root, group)
+    if (!existsSync(base)) continue
+    for (const entry of readdirSync(base, { withFileTypes: true })) {
+      const manifest = join(base, entry.name, 'package.json')
+      if (!entry.isDirectory() || !existsSync(manifest)) continue
+      byName.set(JSON.parse(readFileSync(manifest, 'utf8')).name, join(base, entry.name))
+    }
+  }
+  const seen = new Map()
+  const visit = (dir) => {
+    const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
+    const deps = { ...manifest.dependencies, ...manifest.optionalDependencies }
+    for (const [name, range] of Object.entries(deps)) {
+      if (!String(range).startsWith('workspace:') || seen.has(name)) continue
+      const target = byName.get(name)
+      if (target === undefined) throw new Error(`verify-npm-web-entrypoint: workspace dependency ${name} has no package directory`)
+      seen.set(name, target)
+      visit(target)
+    }
+  }
+  visit(packageDir)
+  return [...seen].map(([name, dir]) => ({ name, dir }))
 }

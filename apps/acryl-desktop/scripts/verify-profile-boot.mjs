@@ -129,6 +129,8 @@ try {
     prepared.rootConfig,
     patches,
     async (host) => {
+      // Packaged Electron does not expose Node's internal ESM loader.
+      host.loader.internal = undefined
       host.provide(DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([]))
       host.provide('desktopRuntime', runtime)
       // This smoke is its own composition root: the app instance is its throwaway engine home (runtime instance/), as the real Desktop's engine mount provides it.
@@ -262,9 +264,12 @@ try {
   // has no cookie jar, so the exchange has to be replayed explicitly here.
   const launch = await fetch(rendererUrl, { redirect: 'manual' })
   const setCookie = launch.headers.getSetCookie?.()[0] ?? launch.headers.get('set-cookie')
-  if (launch.status !== 303 || launch.headers.get('location') !== '/' || setCookie === undefined) {
+  // DSH 0.2 answers with a relative `./`; what matters is that it lands on the clean origin root.
+  const location = launch.headers.get('location')
+  const landsOnRoot = location !== null && new URL(location, rendererUrl).href === new URL('/', rendererUrl).href
+  if (launch.status !== 303 || !landsOnRoot || setCookie === undefined) {
     throw new Error(
-      `assembled Web root did not exchange the launch token: HTTP ${String(launch.status)}`,
+      `assembled Web root did not exchange the launch token: HTTP ${String(launch.status)} location=${String(location)}`,
     )
   }
   const response = await fetch(new URL('/', rendererUrl), {
