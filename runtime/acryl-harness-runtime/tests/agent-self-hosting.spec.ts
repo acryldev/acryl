@@ -75,16 +75,17 @@ describe('an agent extends ACRYL through its tools (no model)', () => {
       expect(await run('acryl_install_plugin', { path: dir })).not.toMatch(/"isError":\s*true/)
       expect(await run('authored_probe', { message: 'hi' })).toContain('probe v2: HI')
 
-      // A plugin that fails to activate is refused with the exact error and the install is undone (as on 0.1.5: an update that
-      // fails is rolled back by removal, it does not bring the previous working version back - T050 tracks that).
+      // An update that fails to activate is refused with the exact error, and the version that was running is brought back (T050): the agent
+      // does not lose a working plugin because its next edit was wrong.
       writeFileSync(join(dir, 'index.js'), 'export const name = "acryl-authored-probe"\nexport function apply() { throw new Error("authored on purpose") }\n')
       const refused = await run('acryl_install_plugin', { path: dir })
       expect(refused).toContain('authored on purpose')
-      expect(refused).toContain('rolledBack')
-      expect(await run('authored_probe', { message: 'hi' })).toContain('unknown tool')
-      expect(await run('acryl_list_plugins', {})).not.toContain('acryl-authored-probe')
+      expect(refused).toContain('restoredPrevious')
+      expect(refused).toMatch(/restoredPrevious\\?":\s*true/u)
+      expect(await run('authored_probe', { message: 'hi' })).toContain('probe v2: HI')
+      expect(await run('acryl_list_plugins', {})).toContain('acryl-authored-probe')
 
-      // The agent fixes it and installs again: back to working, then removed live.
+      // The agent fixes it and installs again, then removes it live.
       editPlugin(dir, 'v3')
       expect(await run('acryl_install_plugin', { path: dir })).not.toMatch(/"isError":\s*true/)
       expect(await run('authored_probe', { message: 'hi' })).toContain('probe v3: HI')
