@@ -1,5 +1,6 @@
 export { Context, Service } from '@deepseek-ai/cordis'
 export * from './agent/agent-control.ts'
+export * from './agent/transports/claude-stream.ts'
 export * from './agent/providers/capabilities.ts'
 export * from './agent/providers/factory.ts'
 export * from './agent/providers/dsh-native.ts'
