@@ -42,6 +42,22 @@ function mouse(element: Element, type: string): void {
   element.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true }))
 }
 
+/** xterm.js reads neither the value of its input textarea nor a bare synthetic key: text arrives as a paste, and key handling reads the legacy `keyCode`. */
+function isTerminalInput(element: Element): boolean {
+  return element.classList.contains('xterm-helper-textarea')
+}
+
+function pasteInto(element: Element, text: string): void {
+  const clipboardData = new DataTransfer()
+  clipboardData.setData('text/plain', text)
+  element.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true, cancelable: true }))
+}
+
+const LEGACY_KEY_CODES: Readonly<Record<string, number>> = {
+  Backspace: 8, Tab: 9, Enter: 13, Escape: 27, ' ': 32, PageUp: 33, PageDown: 34, End: 35, Home: 36,
+  ArrowLeft: 37, ArrowUp: 38, ArrowRight: 39, ArrowDown: 40, Delete: 46,
+}
+
 function setNativeValue(element: HTMLInputElement | HTMLTextAreaElement, value: string): void {
   const proto = element instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype
   const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set
@@ -69,7 +85,10 @@ export function typeText(env: ActionEnvironment, request: Request<'type'>): UiAc
   }
   const clear = request.clear ?? true
   ;(element as HTMLElement).focus?.()
-  if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+  if (isTerminalInput(element)) {
+    // A terminal has no text to clear: what is typed goes to the process that is running in it.
+    pasteInto(element, request.text)
+  } else if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
     setNativeValue(element, clear ? request.text : element.value + request.text)
     element.dispatchEvent(new Event('input', { bubbles: true }))
     element.dispatchEvent(new Event('change', { bubbles: true }))
@@ -110,7 +129,8 @@ export function pressKey(env: ActionEnvironment, request: Request<'press'>): UiA
     name = roleOf(element) === null ? '' : nameOf(element, role)
   }
   const key = request.key === 'Space' ? ' ' : request.key
-  const init = { key, bubbles: true, cancelable: true }
+  const keyCode = LEGACY_KEY_CODES[key]
+  const init = { key, bubbles: true, cancelable: true, ...(keyCode === undefined ? {} : { keyCode, which: keyCode }) }
   ;(element as HTMLElement).focus?.()
   const proceed = element.dispatchEvent(new KeyboardEvent('keydown', init))
   if (proceed) {

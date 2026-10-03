@@ -263,6 +263,33 @@ describe('actions', () => {
   })
 })
 
+describe('a terminal input', () => {
+  // jsdom has neither DataTransfer nor ClipboardEvent; a real browser has both, and xterm.js reads exactly these.
+  function stubClipboard(): void {
+    class FakeDataTransfer { private readonly data = new Map<string, string>(); setData(type: string, value: string): void { this.data.set(type, value) } getData(type: string): string { return this.data.get(type) ?? '' } }
+    class FakeClipboardEvent extends Event { readonly clipboardData: FakeDataTransfer; constructor(type: string, init: { clipboardData: FakeDataTransfer, bubbles?: boolean, cancelable?: boolean }) { super(type, init); this.clipboardData = init.clipboardData } }
+    vi.stubGlobal('DataTransfer', FakeDataTransfer)
+    vi.stubGlobal('ClipboardEvent', FakeClipboardEvent)
+  }
+  afterEach(() => { vi.unstubAllGlobals() })
+
+  it('receives typed text as a paste and Enter with its legacy key code, which is what xterm.js listens for', async () => {
+    stubClipboard()
+    document.body.innerHTML = '<textarea class="xterm-helper-textarea" aria-label="Terminal input"></textarea>'
+    const input = document.querySelector('textarea')!
+    const pasted: string[] = []
+    const keys: Array<{ key: string, keyCode: number }> = []
+    input.addEventListener('paste', event => { pasted.push((event as unknown as { clipboardData: { getData(type: string): string } }).clipboardData.getData('text/plain')) })
+    input.addEventListener('keydown', event => { keys.push({ key: (event as KeyboardEvent).key, keyCode: (event as KeyboardEvent).keyCode }) })
+    const driver = makeDriver()
+    const ref = refOf(await snap(driver), 'textbox', 'Terminal input')
+    await driver.handle({ op: 'type', ref, text: 'echo hi', submit: true })
+    expect(pasted).toEqual(['echo hi'])
+    expect(keys).toEqual([{ key: 'Enter', keyCode: 13 }])
+    expect(input.value).toBe('')
+  })
+})
+
 describe('protected controls', () => {
   it('are listed as protected and never operated', async () => {
     document.body.innerHTML = `
