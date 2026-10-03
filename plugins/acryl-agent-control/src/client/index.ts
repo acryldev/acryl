@@ -19,6 +19,8 @@ import { AgentDrivingIndicator } from './Indicator.tsx'
 import { en, zh, type AgentControlLocaleKey } from './locales.ts'
 import { installIndicatorStyles } from './styles.ts'
 import { UserInputClock } from './user-input.ts'
+import { createWorkersApi } from './worker-tab/workers-api.ts'
+import { workerTabComponent } from './worker-tab/WorkerTab.tsx'
 
 export const AGENT_CONTROL_LOCALE_NAMESPACE = 'acryl.agentControl'
 
@@ -69,6 +71,18 @@ export function apply(ctx: ClientContext): void {
       driver.dispose()
     }
   }, 'acryl-agent-control: page channel and driver')
+
+  // A tab type for a Claude Code worker the Host runs. Optional: with no workspace there is nowhere to put the tab, and this plugin goes on without it.
+  const workersApi = createWorkersApi()
+  ctx.inject(['workspaceTabs'], (child) => {
+    child.effect(() => child.workspaceTabs.register({
+      kind: 'acryl.claude-worker',
+      label: 'Claude worker',
+      description: 'A Claude Code agent the app runs for you in a folder, beside your terminals and chats.',
+      glyph: 'C',
+      component: workerTabComponent(workersApi),
+    }), 'acryl-agent-control: Claude worker tab type')
+  })
 
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay',

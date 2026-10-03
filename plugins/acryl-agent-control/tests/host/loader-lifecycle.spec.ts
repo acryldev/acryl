@@ -127,8 +127,8 @@ describe('acryl-agent-control through a real Loader', () => {
     await ctx.loader.await()
 
     expect(entryOf(ctx, entryId).fiber?.state).toBe(ACTIVE)
-    // Its own two routes (the audit route and the channel upgrade), and its seven ui_* tools.
-    expect(web.counts()).toMatchObject({ registerCalls: 1, upgradeCalls: 1 })
+    // Its own routes (the audit route, the workers route and the channel upgrade), and its seven ui_* tools.
+    expect(web.counts()).toMatchObject({ registerCalls: 2, upgradeCalls: 1 })
   })
 
   it('restarts cleanly when the tools provider is replaced, with no doubled registrations left behind', async () => {
@@ -152,8 +152,8 @@ describe('acryl-agent-control through a real Loader', () => {
     expect(firstTools.counts()).toMatchObject({ registerCalls: 7, releaseCalls: 7, liveNames: [] })
     expect(secondTools.counts().liveNames).toEqual(['ui_click', 'ui_press', 'ui_scroll', 'ui_select', 'ui_snapshot', 'ui_type', 'ui_wait'])
     expect(entryOf(ctx, entryId).fiber?.state).toBe(ACTIVE)
-    // The Host route and the upgrade route were each released once and registered again once - not accumulated.
-    expect(web.counts()).toMatchObject({ registerCalls: 2, upgradeCalls: 2, releaseCalls: 2 })
+    // The Host routes and the upgrade route were each released once and registered again once - not accumulated.
+    expect(web.counts()).toMatchObject({ registerCalls: 4, upgradeCalls: 2, releaseCalls: 3 })
   })
 
   it('settles a call that is still pending when the row is disabled, instead of leaving it hanging', async () => {
@@ -206,9 +206,9 @@ describe('acryl-agent-control through a real Loader', () => {
     expect(toolCounts.registerCalls).toBe(11 * 7)
     expect(toolCounts.releaseCalls).toBe(10 * 7)
     const webCounts = web.counts()
-    expect(webCounts.registerCalls).toBe(11)
+    expect(webCounts.registerCalls).toBe(11 * 2)
     expect(webCounts.upgradeCalls).toBe(11)
-    // Two disposers per mount (the Host route and the upgrade route), ten unmounts.
-    expect(webCounts.releaseCalls).toBe(20)
+    // Three disposers per mount (the audit route, the workers route and the upgrade route), ten unmounts.
+    expect(webCounts.releaseCalls).toBe(30)
   })
 })

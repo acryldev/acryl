@@ -17,6 +17,23 @@ const CSS = `
 .dshAgentControlTable th, .dshAgentControlTable td { padding: 4px 8px; border-bottom: 1px solid var(--dsw-alias-border-l2); text-align: left; vertical-align: top; }
 .dshAgentControlTable tr[data-outcome="refused"] td:last-child { color: #f59e0b; }
 .dshAgentControlTable tr[data-outcome="failed"] td:last-child { color: #f87171; }
+.acrylWorker { display: flex; flex: 1; flex-direction: column; gap: 12px; min-height: 0; width: 100%; max-width: 860px; margin: 0 auto; padding: 20px 24px; box-sizing: border-box; color: var(--dsw-alias-label-primary); font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; }
+.acrylWorkerIntro { margin: 0; color: var(--dsw-alias-label-secondary); }
+.acrylWorker input, .acrylWorker textarea { box-sizing: border-box; width: 100%; padding: 8px 10px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; background: transparent; color: var(--dsw-alias-label-primary); font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; outline: none; resize: vertical; }
+.acrylWorker input:focus-visible, .acrylWorker textarea:focus-visible { border-color: #4d6bfe; }
+.acrylWorker ::placeholder { color: var(--dsw-alias-label-secondary); opacity: 0.7; }
+.acrylWorkerActions { display: flex; gap: 8px; }
+.acrylWorker button { appearance: none; padding: 6px 14px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; background: transparent; color: inherit; cursor: pointer; font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.acrylWorker button[data-primary] { border-color: #4d6bfe; }
+.acrylWorker button:hover:not(:disabled) { background: var(--dsw-alias-fill-hover, rgb(127 127 127 / 15%)); }
+.acrylWorker button:focus-visible { outline: 2px solid #4d6bfe; outline-offset: 1px; }
+.acrylWorker button:disabled { opacity: 0.4; cursor: default; }
+.acrylWorkerLog { display: flex; flex: 1; flex-direction: column; gap: 14px; min-height: 0; overflow-y: auto; }
+.acrylWorkerMessage { white-space: pre-wrap; overflow-wrap: anywhere; }
+.acrylWorkerMessage strong { margin-right: 6px; color: var(--dsw-alias-label-secondary); font-weight: 600; }
+.acrylWorkerMessage[data-role="note"] { color: var(--dsw-alias-label-secondary); font-style: italic; }
+.acrylWorkerStatus { margin: 0; color: var(--dsw-alias-label-secondary); }
+.acrylWorkerProblem { margin: 0; color: #f87171; }
 @keyframes acrylDrivingPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) { .acrylDrivingDot { animation: none; } }
 `

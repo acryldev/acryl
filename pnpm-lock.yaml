@@ -2136,6 +2136,9 @@ importers:
 
   plugins/acryl-agent-control:
     dependencies:
+      acryl-control:
+        specifier: workspace:*
+        version: link:../../runtime/acryl-control
       acryl-loopback-http:
         specifier: workspace:*
         version: link:../../runtime/acryl-loopback-http

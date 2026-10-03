@@ -13,7 +13,7 @@ import { UiControlError, parseUiRequest, type UiResult } from '../contract.ts'
 
 export const ONLINE_CALL_PATH = '/api/acryl-agent-control/online/call'
 
-function tokenMatches(header: string | undefined, secret: string): boolean {
+export function tokenMatches(header: string | undefined, secret: string): boolean {
   const presented = header?.startsWith('Bearer ') === true ? header.slice('Bearer '.length) : ''
   const a = Buffer.from(presented)
   const b = Buffer.from(secret)

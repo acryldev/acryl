@@ -58,6 +58,7 @@ const sessionsHook = ((selector: (value: object) => unknown) => selector({ ids: 
 
 function fakeProjects(overrides: Partial<ProjectsControl>): ProjectsControl {
   return {
+    chatAvailable: true,
     workspaceKey: () => '', workspacePaths: () => [], subscribeWorkspaces: () => () => {},
     chooserKind: () => 'path',
     addProject: async (): Promise<ProjectAction> => ({ ok: true }),

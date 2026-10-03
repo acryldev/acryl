@@ -49,10 +49,10 @@ describe('AuditLog', () => {
 
 describe('parseConfig', () => {
   it('asks about every call unless told otherwise, and the online channel is off unless asked for', () => {
-    expect(parseConfig(undefined)).toEqual({ approval: 'every-call', online: false })
-    expect(parseConfig({})).toEqual({ approval: 'every-call', online: false })
-    expect(parseConfig({ approval: 'none', auditLog: '/tmp/x.jsonl' })).toEqual({ approval: 'none', online: false, auditLog: '/tmp/x.jsonl' })
-    expect(parseConfig({ online: true })).toEqual({ approval: 'every-call', online: true })
+    expect(parseConfig(undefined)).toEqual({ approval: 'every-call', online: false, workers: { enabled: true, claude: {} } })
+    expect(parseConfig({})).toEqual({ approval: 'every-call', online: false, workers: { enabled: true, claude: {} } })
+    expect(parseConfig({ approval: 'none', auditLog: '/tmp/x.jsonl' })).toEqual({ approval: 'none', online: false, workers: { enabled: true, claude: {} }, auditLog: '/tmp/x.jsonl' })
+    expect(parseConfig({ online: true })).toEqual({ approval: 'every-call', online: true, workers: { enabled: true, claude: {} } })
   })
   it('refuses anything it does not understand rather than loosening', () => {
     for (const bad of ['yes', [], { approval: 'sometimes' }, { approval: true }, { extra: 1 }, { auditLog: '' }, { auditLog: 3 }, { online: 'yes' }]) {
