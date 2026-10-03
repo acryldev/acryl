@@ -360,6 +360,7 @@ presentation only.
   - Depends on: T036b (so the seam is exercised first). Acceptance: a count of direct references before and after, an allowlist in the guard, and the guard in the CI gate.
 
 - [ ] T040 Fix the lockfile tooling (R23): pnpm 11.11.0 never finishes resolving `electron-builder`; either move the pinned `packageManager` (and the CI and docs that name 11.11.0) to a version that resolves it, or report the hang to pnpm, and document the relock workaround until then.
+  - Repro (2026-10-03): `corepack pnpm install --no-frozen-lockfile` in the repo root stalls after `Progress: resolved 1367, reused 1258, downloaded 0, added 0` for 10+ minutes (killed at 580 s), exit 124, no error. Same tree relocks in about 10 s with `node ~/.cache/node/corepack/v1/pnpm/11.8.0/bin/pnpm.cjs install --lockfile-only --no-frozen-lockfile --ignore-scripts --config.manage-package-manager-versions=false`; the resulting lockfile has an unchanged header and a frozen install under 11.11.0 reads it (`b34dc54`). Also seen: a corrupt metadata cache entry (`ERR_PNPM_CACHE_MISSING_AFTER_304`) that `--cache-dir <scratch>` avoids. Risk until fixed: a developer running a plain install may hang; CI uses frozen installs and is unaffected.
   - Depends on: none. Acceptance: `pnpm install --lockfile-only --no-frozen-lockfile` finishes and writes the lockfile with the pinned version on a clean checkout.
 
 - [ ] T041 Re-attachment ledger (owner direction 2026-10-02: detach first, boot 0.2 minimal, re-attach one feature at a time): one row per ACRYL feature, each with an explicit **attach decision** (ACRYL-owned row | adopt upstream package, per T042 | DSH slot), a depends-on, and an acceptance (its pre-0.2 test green on the branch). Re-attach one row per commit, gate green per commit; the shared-runtime and no-new-dsh-reference invariants above apply to every row.
@@ -399,7 +400,7 @@ presentation only.
 
 **Purpose:** land where R20/R22 point: ACRYL is a Cordis-based framework owning its surfaces; the DSH chat is one agent/driver among others; agents can extend ACRYL itself. Phase 9 gets the 0.2 engine running; this phase proves the engine is a guest, not the foundation.
 
-- [ ] T043 DSH-is-optional proof (M2): boot the app on the branch with the DSH engine definition absent or disabled and a non-DSH agent (Claude Code, Codex, or Pi, via the 040/041 agent-control surface) driving a session; then re-attach the DSH chat as a tab type beside the other agents, not as load-bearing infrastructure.
+- [x] T043 (chat scope done, platform seam open: see R29, T046-T049) DSH-is-optional proof (M2): boot the app on the branch with the DSH engine definition absent or disabled and a non-DSH agent (Claude Code, Codex, or Pi, via the 040/041 agent-control surface) driving a session; then re-attach the DSH chat as a tab type beside the other agents, not as load-bearing infrastructure.
   - Why: R22 - "AcrylDSH chat is one agent, one of the builders"; a user can rely entirely on their own agents and never open the DSH chat. If the app cannot boot or other agents cannot work without the DSH engine, the seam is not real yet.
   - Depends on: T041 (surfaces re-attached), spec 028 M-slices as needed. Acceptance: a recorded boot in `research.md`: engine off, other agent works, surfaces alive; then engine on as one tab type.
 
@@ -408,3 +409,8 @@ presentation only.
   - Depends on: T041 (Agent Control and Blends re-attached). Acceptance: a parity matrix in `research.md` (Claude Code, Codex, Pi x CLI, Desktop, Web) showing plugin install/author/hot-reload working through the agent surface on the 0.2 engine.
 
 **Checkpoint (Phase 10):** the DSH engine demonstrably optional, the DSH chat one tab type, agents extending ACRYL on the 0.2 runtime at 0.1.5alpha parity.
+
+- [ ] T046 Platform seam (R29): the web server, session store, typert gateway and client frame still come from the DSH profile, so a boot with no DSH engine at all has no frame. Decide the ACRYL-owned host for the frame (the Blends framework host) and move it behind `createAcrylEngineHost`; the progress metric is the count of direct `@deepseek-ai/dsh*` import lines in non-test source (180 on 2026-10-03; T043 added none).
+- [ ] T047 With the chat off, hide the "AcrylDSH Chat" tab and its composer (R29 finding 1): the client keeps offering a composer whose backend is parked. Needs a capability signal the client can read, not a DOM workaround.
+- [ ] T048 Non-DSH agent transports (R29 finding 2): the `claude`, `codex` and `acp` providers in `acryl-control` register with no transport (`transport-unavailable`), so the only bring-your-own-agent path today is a terminal tab. Wire at least one real structured transport (Claude Code stream-json or ACP) and drive a session through agent-control.
+- [ ] T049 Agent Control against xterm (R29 finding 3): `ui_type` into the terminal's input does not reach the PTY, and `ui_press` with single characters returns HTTP 400, so an outside agent can open a terminal tab but not type into it. Fix in spec 041's driver; independent of the chat switch.

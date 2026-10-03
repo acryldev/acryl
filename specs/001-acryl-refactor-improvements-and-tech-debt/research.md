@@ -589,3 +589,22 @@ Branch `harness-latest-2026-10` (pushed to `caf2556`). `corepack pnpm run check`
 
 **Still open for parity:** rows 6 and 7 live acceptance, the blend round trip and a real key-save need a model key (owner input); the "open workspace" error needs its exact text and click path (not reproduced: web chooser and Desktop add-project both work in isolated homes); T043 and T044 are next; the Windows ACL sandbox needs a Windows machine. The packed-closure check also now exercises every workspace package's `pack`, which is the first thing to look at if a package gains a build-only dependency.
 
+## Finding R29 - T043: the DSH chat is optional, the DSH platform is not yet (2026-10-03)
+
+Branch `harness-latest-2026-10` (pushed to `5b29bda`). Everything ran in isolated homes on spare ports; the server was stopped and the port confirmed free.
+
+**What was proven.** `ACRYL_BLUEPRINT=acryl.agents` (new built-in, the IDE with `dshChat: false`) disables three DSH rows (`agent`, `llm`, `llm-pi-ai`). On the real Loader with the real DSH 0.2.0-rc.2 profile: the web server, session store (`session`, `session-persistence-jsonl`), `terminal-controller`, `workspace-controller`, `acryl-workspace`, `acryl-agent-control` and `tools` stay ACTIVE; 17 consumers of the chat (among them `session-controller`, the model providers, `goal`, `agent-loop`) go PENDING; nothing FAILED. Switching the three rows back on, on the same live host, returns every one of them to ACTIVE with no restart (`runtime/acryl-harness-runtime/tests/engine-optional.spec.ts`, 1 test, plus 2 Blueprint tests; the runtime gate is green at 209 tests).
+
+**Live, Web, chat off.** The page rendered the Tab Stripe, Workspaces pane and Settings. An outside operator (this agent, over the `online` channel with the per-instance secret, not a DSH model) read the page with `snapshot` (25 controls) and `click`ed "New tab: Terminal", which opened a real PTY tab. In that PTY, typed with browser keys, `claude --version` printed `2.1.288 (Claude Code)` and `command -v` found `codex` (`/opt/homebrew/bin/codex`) and `pi`: the user's own agents run in the frame with the DSH chat off.
+
+**What broke, and what is still coupled (the point of T043).**
+
+1. The "AcrylDSH Chat" tab and its composer still render with the chat off; the composer cannot send (T047).
+2. There is no structured non-DSH agent path. `acryl-control`'s `claude`, `codex` and `acp` providers have no transport wired (`transport-unavailable`); only a terminal tab works (T048). So "a non-DSH agent driven through the 040/041 surface" is proven for the surface and the terminal, not for a structured agent session.
+3. Agent Control cannot type into the terminal: `ui_type` reached the helper textbox ("typed 45 characters") but nothing arrived in the PTY, and `ui_press` of single characters returned HTTP 400 (T049). A session with the DSH chat on would behave the same; it is a driver defect, not a seam defect.
+4. The "engine" removed here is the chat, not the platform. The web server, session store, gateway, client frame and the `tools` and `webServer` services that `acryl-agent-control` injects are all DSH rows. With no DSH engine definition at all there is no frame, so the seam is real for the chat and not yet for the platform (T046). Deliberately not papered over: no stub engine was added to make a "no engine" boot pass.
+
+**Invariants.** One shared runtime: the change is in `acryl-harness-runtime/blueprint` and applies to Web and Desktop alike (the terminal client is the chat itself, so `tui` ignores it, asserted in a test). Direct `@deepseek-ai/dsh*` import lines in non-test source under `runtime`, `apps` and `plugins`: 180 before, 180 after (the change names three row ids and adds no import). The count did not go down; T046 is where it should.
+
+**Housekeeping from the review of R28.** The `(MIT OR CC0-1.0)` rule is needed today by `type-fest@4.41.0` (reached through `got` and `@deepseek-ai/dsh-otel`); the profile smoke is the packaged-boot smoke and now says so. Two old stashes (`main-dirty` 2026-09 with a `registerOpenSettingsShortcut` edit to the old shortcuts registry, which `8521fcc` deleted; `rebase-dirty` 2026-09-23 with README, `devbox.json`, `.github/workflows/nix.yml` and `.gitignore` edits) are older than this branch and were left in place for the owner to drop or restore.
+
