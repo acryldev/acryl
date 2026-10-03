@@ -707,3 +707,45 @@ What ACRYL's own plugins actually consume from DSH is small. Host plugins inject
 
 **Decision: the hand-rolled transport stays, as the core's shape for all three vendors.** Reasons: license, weight, coupling, and one shape for Claude, Codex and ACP. **Revisit trigger:** if implementing `can_use_tool` approvals takes more than about 150 lines or proves unstable across CLI versions, adopt the SDK as an optional, separately installed transport plugin (never a dependency of `acryl-control`), after the license is read. Also noted for T051: the best vehicle for giving a Claude worker ACRYL's extension tools is an MCP server passed with `--mcp-config` (plus `--strict-mcp-config` when wanted), which needs neither the SDK nor changes to the transport.
 
+## Finding R33 - T052 workers, T051 tool gateway, the first real-model results, and the TUI answer (2026-10-03)
+
+Branch `harness-latest-2026-10` (pushed to `d484f20`). All runs used isolated homes and spare ports; servers stopped, ports confirmed free. The model key was read by the existing opt-in test from `~/.secure-storage/...` into the process environment only (`ACRYL_E2E_KEY_FILE`); it was never printed, logged or committed. Claude Code ran under the owner's own login, one short turn at a time.
+
+### Ledger update for the R30 key cells
+
+**Cell 4 closes.** `runtime/acryl-harness-runtime/tests/e2e-real-model.spec.ts` passed with the real model on the 0.2 web engine, three prompts (build, change, remove), 34 tool calls, and real tool-return verification from the event log: the agent looked up the docs (`acryl_extension_lookup`, `skill`), wrote the plugin with `write`, passed `acryl_verify_plugin`, `acryl_install_plugin`, called its new tool (`hello_ping` returned `pong`), edited it, `acryl_install_plugin` again (update), `hello_ping` returned `pong2`, `acryl_remove_plugin`, `acryl_list_plugins`, and the next `hello_ping` returned `unknown tool "hello_ping"`. That also covers the headless halves of cells 1 and 3 (a model authors, and a model edits and updates live) on the web engine. Still open: the same in the GUI on Web, and on Desktop (cells 1 to 3 as GUI cells), the blend round trip with real keys, the real key-save check, and rows 6 and 7.
+
+### T052: workers, mounted and driven
+
+`acryl-agent-control` (already on Web and Desktop, already owning the instance secret and route style) now mounts `acrAgentControl` and the `claude` provider with the stream-json transport as children of its Fiber, adds `POST /api/acryl-agent-control/workers` (attach, send, cancel, stop, list; authorized by the page's same origin, or by the instance secret when the online channel is on), `acryl control worker list|attach|send|cancel|stop` (a thin client of that route), and a "Claude worker" tab type registered through `workspaceTabs` (optional: no workspace, no tab). Proof: 6 + 4 integration tests and 7 client tests, and live with the real Claude Code: attach, send `pong` over the endpoint (3.5 s), 403 without the secret, then the same from the page (the tab in the "+" menu, a folder, a message, the answer, reload keeps the transcript, a restarted host is reported as "no longer running" with a fresh-start form). Process ownership: ending the plugin ends every `claude` process (asserted by pid). Lesson recorded: the first version of the tab was functional but unstyled; styles now use the theme tokens and the owner's note is accepted (UI starts from tokens).
+
+### T051: the tool gateway
+
+`acryl-agent-control` serves the allowlisted extension tools (default: `acryl_extension_lookup`, `acryl_verify_plugin`, `acryl_install_plugin`, `acryl_list_plugins`, `acryl_remove_plugin`, `acryl_prepare_publish`, `acryl_plugin_list`, `acryl_plugin_set_enabled`; never the shell or files) in two faces over **one gateway object**: plain JSON (`GET`/`POST /api/acryl-agent-control/online/tools`) and MCP over streamable HTTP (`POST /api/acryl-agent-control/mcp`, hand-written JSON-RPC: `initialize`, `ping`, `tools/list`, `tools/call`, notifications answered 202, no SSE offered). `acryl control tool list|call` is a thin client of the JSON route. Both faces require the instance secret and loopback, so they exist only when the online channel is on. No `dsh-*` MCP helper is used; the import-line count is still **180**.
+
+**Constraint 1, one execution path.** `ToolsGateway.call` is the only place a tool is run; the JSON route and the MCP route both call it; the CLI calls the JSON route.
+
+**Constraint 2, the secret does not bypass tool policy. How it was verified.** The gateway runs the tool through the registry's own `execute`, so every `tools/pre-execute` hook runs. `runtime/acryl-harness-runtime/tests/tool-gateway.spec.ts` boots the real web engine and registers a policy that denies `acryl_remove_plugin`: a gateway call over REST and over MCP both come back `isError` carrying the policy's reason, the policy saw both calls, the tool body never ran, and `acryl_list_plugins` through the same path still works. The allowlist is checked before the registry, so a name outside it (for example `bash`) is refused as `not-exposed` and never reaches any hook. Note what is *not* claimed: approval prompts that belong to a DSH session (`exec.agent`) do not exist for an outside caller; the gateway call has no agent, so only policies that decide without one apply.
+
+**Live, a non-DSH agent through the gateway.** The Claude Code that the app runs as a worker is handed the gateway automatically: a `0600` MCP config file naming this host and carrying the secret (a file, so the secret never shows in a process listing), plus the docs folder as `--add-dir`. Three live runs, each exposing something the unit tests had not:
+1. It connected and listed tools but every call failed with `unknown field "_meta"`: Claude sends the extra `_meta` MCP allows on `params` and my strict parser refused it. Fixed (MCP reads only `name` and `arguments`; regression test).
+2. It listed plugins correctly (zero), then, asked to author one, passed `acryl_verify_plugin` but could not install it because it guessed the patch format: the docs `acryl_extension_lookup` points to were outside its folder and unreadable in headless mode. Fixed by learning the docs folder from the lookup's own answer and passing it as `--add-dir`.
+3. With that, Claude Code looked up the docs, read the tool-plugin guide and the `tool-basic` example, wrote a three-file plugin (with `acceptEdits` enabled for the test host; file edits are off by default), verified it, installed it live and listed it, in 31 seconds; I confirmed the plugin in the registry over the REST route independently.
+
+### T044 matrix, as far as it can be filled
+
+| Agent | Web engine | Desktop-composed profile |
+|---|---|---|
+| DSH chat, real model | PASS (cell 4: author, update, remove) | tool sequence PASS (no model); GUI not run |
+| Claude Code (as an app worker, through the gateway) | PASS live (authored and installed a plugin) | not run (same code path; the profile smoke runs the tool sequence only) |
+| Codex | not run: needs the owner's Codex login. The MCP endpoint is the standard streamable-HTTP shape Codex's `mcp add --url` accepts; unverified | not run |
+| Pi | not run. Pi has no MCP; the route for it (and any shell agent) is `acryl control tool`, unit-tested, not run with Pi | not run |
+
+### The TUI answer (surface parity, verified, not assumed)
+
+Measured by booting the terminal engine and listing its rows: **the TUI profile has no `webServer`, no `acrAgentControl`, and does not mount `acryl-agent-control`** (`coding-capabilities.ts` says so: "A TUI has no page, so it is not declared here"). So today a TUI user cannot attach a worker, watch its turns or send it input, and a shell agent cannot reach a tool gateway from a TUI-only app: **the assumption that the route already exists in the TUI profile is false**, because the route needs an HTTP listener the terminal engine does not have. Two explicit ledger rows instead of a silent gap: **T053** (TUI worker surface: mount the service and provider in the TUI profile and render workers in pi-tui from the same `acrAgentControl` contract, no second worker logic; it needs no HTTP) and **T054** (a page-less loopback listener for the gateway, built as the node:http provider of the T046 S1 `acrylWeb` port reusing `acryl-loopback-http`'s token auth, so no second HTTP stack). Note also the TUI has no PTY tabs; its agent runs shell commands through the chat's `bash` tool.
+
+### Other findings
+- A failed update still loses the working version (T050, unchanged, still open).
+- The hand-rolled MCP server is about 90 lines; if Codex or another client needs SSE, resumable sessions or auth discovery, that is the point to revisit R32's SDK question for the MCP side too.
+
