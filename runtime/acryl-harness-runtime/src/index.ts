@@ -325,7 +325,9 @@ export {
 export { pinnedPnpmEnv, resolvePinnedPnpm, type PinnedPnpm } from './pinned-pnpm.ts'
 export { reconcileProfileLayout, type LayoutChange } from './profile-layout.ts'
 export {
+  AGENTS_BLUEPRINT,
   BLANK_BLUEPRINT,
+  DSH_CHAT_ROW_IDS,
   IDE_BLUEPRINT,
   BLUEPRINT_ROW_IDS,
   InvalidBlueprintError,

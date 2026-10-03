@@ -35,6 +35,13 @@ const ROWS: readonly RowDeclaration[] = [
   { id: 'mount-anchors', surfaces: ['web', 'desktop'], rowId: 'acryl-mount-anchors', packageName: 'acryl-mount-anchors' },
 ]
 
+/**
+ * The DSH rows that make it a chat: the agent, the model registry and the pi-ai provider. Disabling them leaves the web server, the session
+ * store, the client and every ACRYL row running; Cordis parks the consumers that need them as PENDING (measured on 0.2.0-rc.2: 17 rows, among them
+ * the chat session controller and the model providers) and reactivates them when the rows come back.
+ */
+export const DSH_CHAT_ROW_IDS: readonly string[] = ['agent', 'llm', 'llm-pi-ai']
+
 /** The terminal library is a differently named package than the browser one. */
 const TUI_LIBRARY_PACKAGE = 'acryl-ui-tui'
 
@@ -83,6 +90,11 @@ export function composeBlueprintRows(
         { insert: [{ id: 'brand', name: 'acryl-brand', config: { ...blueprint.brand.identity } }] },
       )
     }
+  }
+
+  // After the brand and before ACRYL's own rows: a disabled stock row must not be re-enabled by anything composed later.
+  if (!blueprint.dshChat && (surface === 'web' || surface === 'desktop')) {
+    for (const id of DSH_CHAT_ROW_IDS) patches.push({ id, disabled: true })
   }
 
   for (const row of ROWS) {
