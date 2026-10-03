@@ -749,3 +749,31 @@ Measured by booting the terminal engine and listing its rows: **the TUI profile 
 - A failed update still loses the working version (T050, unchanged, still open).
 - The hand-rolled MCP server is about 90 lines; if Codex or another client needs SSE, resumable sessions or auth discovery, that is the point to revisit R32's SDK question for the MCP side too.
 
+## Finding R34 - T050 done; T046 S1 started: the ratchet, the file primitives, the web port (2026-10-03)
+
+Branch `harness-latest-2026-10` (pushed to `4f72b5e`).
+
+### T050: a failed update keeps the working version
+
+Done (see the T050 row): the install tool now remembers the staged copy that is installed before it takes the old version down, and on any later failure reinstalls it, reactivates it and discards the failed copy. It restores only from a copy under its own stage folder, never an arbitrary path (so a plugin that installs from its own folder, which is what the update just changed, is reported as not restored, honestly). Where it reaches: the same code serves the DSH chat's tools, the gateway and the workers. Not exercised on a real Desktop GUI.
+
+### T046 S1: what landed, with the numbers
+
+The ratchet is in `scripts/verify-layout.mjs` from the first commit: it counts `from '@deepseek-ai/dsh...'` lines in non-test source under `runtime`, `apps`, `plugins`, with the seam named as files (`engine-*.ts` in the runtime and in Desktop, the Desktop Electron entry, the `@acryl/ui` contract facade), and fails above a ceiling and also below it (so a ceiling is lowered in the commit that lowers the count).
+
+| Step | Total | Outside the seam |
+|---|---|---|
+| Before (R31 measurement) | 180 | 168 |
+| File primitives (`dsh-atomic-write`, 8 uses) behind `engine-files.ts` in the runtime and in Desktop | 174 | 160 |
+| `acrylWeb` port: four private plugins stop importing `dsh-host-webserver` | 171 | 156 |
+
+The web port: `acryl-control` declares `AcrylWeb` (`host`, `port`, `register`, `registerUpgrade`, plain `node:http` types); one adapter in the engine seam (`engine-web.ts`) provides it over DSH's `webServer` for Web and Desktop (the terminal has no page); `acryl-agent-control`, `acryl-plugin-admin`, `acryl-support` and `acryl-workspace` inject `acrylWeb`. Proof: every package gate, and the real-engine tests (the gateway, the workers, self-hosting) now run through the adapter; Web, Desktop (including the packed install and the profile smoke) and the runtime gates are green.
+
+**Two lessons.** (1) The first attempt at the file facade imported the runtime from Desktop, and the Desktop gate caught that the light `dsh` command-line entries share those modules and must not load the whole shared runtime (flat install smoke: `acryl-harness-runtime` not found). Each package therefore has its own one-line seam file. (2) The design said `acrylFiles` would be a service; a plain function facade is simpler and right for stateless utilities, so no service was added (deviation from R31, recorded).
+
+### Findings for the owner
+
+1. **`cordis-plugin-market` (17 lines) is excluded on purpose.** It is a public npm package meant to run on stock DSH ("ordinary DSH/Cordis, profile and Desktop service contracts"); depending on the unpublished `acryl-control` would stop it being installable from npm. `dsh-client-ui-brand-acryl` (5 lines) is public for the same reason. Their DSH imports are by design, not coupling to shrink, but under your seam definition they count as "outside". Decision needed: add "published DSH-ecosystem plugins" to the seam definition, or accept that the outside-the-seam floor is about 22 lines. I did not widen the seam.
+2. **Home paths belong to the bulkhead task** (T056), not the port work.
+3. **Remaining S1 is T055 (tools port, 7 lines) and T056 (home paths, 2 lines).** After those, S1's host-side lines are done; what remains is mostly the client frame (S3, about 75 lines), Desktop's Electron-side imports and the chat.
+
