@@ -6,6 +6,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { PreToolDecision, ToolExecution } from '@deepseek-ai/dsh-tools'
 import { createApprovalPolicy } from '../../src/host/approval.ts'
 import { AuditLog, auditPath, type AuditEntry } from '../../src/host/audit.ts'
+import { DEFAULT_EXPOSED_TOOLS } from '../../src/tools-contract.ts'
 import { parseConfig } from '../../src/host/config.ts'
 import { describeCall, RefDirectory, TOOL_NAMES } from '../../src/host/tools.ts'
 
@@ -49,10 +50,10 @@ describe('AuditLog', () => {
 
 describe('parseConfig', () => {
   it('asks about every call unless told otherwise, and the online channel is off unless asked for', () => {
-    expect(parseConfig(undefined)).toEqual({ approval: 'every-call', online: false, workers: { enabled: true, claude: {} } })
-    expect(parseConfig({})).toEqual({ approval: 'every-call', online: false, workers: { enabled: true, claude: {} } })
-    expect(parseConfig({ approval: 'none', auditLog: '/tmp/x.jsonl' })).toEqual({ approval: 'none', online: false, workers: { enabled: true, claude: {} }, auditLog: '/tmp/x.jsonl' })
-    expect(parseConfig({ online: true })).toEqual({ approval: 'every-call', online: true, workers: { enabled: true, claude: {} } })
+    expect(parseConfig(undefined)).toEqual({ approval: 'every-call', online: false, workers: { enabled: true, claude: {} }, tools: { enabled: true, expose: DEFAULT_EXPOSED_TOOLS } })
+    expect(parseConfig({})).toEqual({ approval: 'every-call', online: false, workers: { enabled: true, claude: {} }, tools: { enabled: true, expose: DEFAULT_EXPOSED_TOOLS } })
+    expect(parseConfig({ approval: 'none', auditLog: '/tmp/x.jsonl' })).toEqual({ approval: 'none', online: false, workers: { enabled: true, claude: {} }, tools: { enabled: true, expose: DEFAULT_EXPOSED_TOOLS }, auditLog: '/tmp/x.jsonl' })
+    expect(parseConfig({ online: true })).toEqual({ approval: 'every-call', online: true, workers: { enabled: true, claude: {} }, tools: { enabled: true, expose: DEFAULT_EXPOSED_TOOLS } })
   })
   it('refuses anything it does not understand rather than loosening', () => {
     for (const bad of ['yes', [], { approval: 'sometimes' }, { approval: true }, { extra: 1 }, { auditLog: '' }, { auditLog: 3 }, { online: 'yes' }]) {

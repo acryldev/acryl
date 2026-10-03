@@ -1,5 +1,7 @@
 /** The plugin's Loader-row configuration, validated before anything activates. */
 
+import { DEFAULT_EXPOSED_TOOLS } from '../tools-contract.ts'
+
 export interface UiControlConfig {
   /**
    * `every-call` (the default): each click, type, select and key press is approved by the user, one call at a
@@ -16,20 +18,25 @@ export interface UiControlConfig {
   readonly online: boolean
   /** Agent workers: bring-your-own agents driven through this Host. On by default (nothing runs until one is attached). */
   readonly workers: { readonly enabled: boolean; readonly claude: { readonly command?: string; readonly args?: readonly string[] } }
+  /**
+   * The tool gateway: the extension tools offered to agents that are not the DSH chat, over the online channel's secret (so it exists only
+   * when `online` is on). `expose` is the allowlist of tool names.
+   */
+  readonly tools: { readonly enabled: boolean; readonly expose: readonly string[] }
 }
 
 /** @throws Error naming the bad field. An unknown value never falls back to something looser. */
 export function parseConfig(raw: unknown): UiControlConfig {
-  if (raw === undefined || raw === null) return { approval: 'every-call', online: false, workers: { enabled: true, claude: {} } }
+  if (raw === undefined || raw === null) return { approval: 'every-call', online: false, workers: { enabled: true, claude: {} }, tools: { enabled: true, expose: DEFAULT_EXPOSED_TOOLS } }
   if (typeof raw !== 'object' || Array.isArray(raw)) throw new Error('acryl-agent-control: config must be an object')
   const config = raw as Record<string, unknown>
-  const unknown = Object.keys(config).find(key => key !== 'approval' && key !== 'auditLog' && key !== 'online' && key !== 'workers')
+  const unknown = Object.keys(config).find(key => key !== 'approval' && key !== 'auditLog' && key !== 'online' && key !== 'workers' && key !== 'tools')
   if (unknown !== undefined) throw new Error(`acryl-agent-control: unknown config field "${unknown}"`)
   const approval = config.approval ?? 'every-call'
   if (approval !== 'every-call' && approval !== 'none') throw new Error('acryl-agent-control: approval must be "every-call" or "none"')
   if (config.auditLog !== undefined && (typeof config.auditLog !== 'string' || config.auditLog === '')) throw new Error('acryl-agent-control: auditLog must be a path')
   if (config.online !== undefined && typeof config.online !== 'boolean') throw new Error('acryl-agent-control: online must be true or false')
-  return { approval, online: config.online === true, workers: parseWorkers(config.workers), ...(config.auditLog === undefined ? {} : { auditLog: config.auditLog as string }) }
+  return { approval, online: config.online === true, workers: parseWorkers(config.workers), tools: parseTools(config.tools), ...(config.auditLog === undefined ? {} : { auditLog: config.auditLog as string }) }
 }
 
 function parseWorkers(raw: unknown): UiControlConfig['workers'] {
@@ -47,4 +54,16 @@ function parseWorkers(raw: unknown): UiControlConfig['workers'] {
   if (options.command !== undefined && (typeof options.command !== 'string' || options.command === '')) throw new Error('acryl-agent-control: workers.claude.command must be a program name or path')
   if (options.args !== undefined && (!Array.isArray(options.args) || options.args.some(item => typeof item !== 'string'))) throw new Error('acryl-agent-control: workers.claude.args must be a list of strings')
   return { enabled: true, claude: { ...(options.command === undefined ? {} : { command: options.command as string }), ...(options.args === undefined ? {} : { args: options.args as string[] }) } }
+}
+
+function parseTools(raw: unknown): UiControlConfig['tools'] {
+  if (raw === undefined || raw === true) return { enabled: true, expose: DEFAULT_EXPOSED_TOOLS }
+  if (raw === false) return { enabled: false, expose: [] }
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw new Error('acryl-agent-control: tools must be true, false or an object')
+  const tools = raw as Record<string, unknown>
+  const unknown = Object.keys(tools).find(key => key !== 'expose')
+  if (unknown !== undefined) throw new Error(`acryl-agent-control: unknown tools field "${unknown}"`)
+  const expose = tools.expose ?? DEFAULT_EXPOSED_TOOLS
+  if (!Array.isArray(expose) || expose.some(name => typeof name !== 'string' || !/^[a-z][a-z0-9_]{0,63}$/u.test(name))) throw new Error('acryl-agent-control: tools.expose must be a list of tool names')
+  return { enabled: true, expose: [...new Set(expose as string[])] }
 }

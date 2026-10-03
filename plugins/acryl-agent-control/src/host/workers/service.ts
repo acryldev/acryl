@@ -40,10 +40,13 @@ function folderError(cwd: string): string | undefined {
 }
 
 /** Mount the service and the Claude provider on `ctx`; the returned runner reads the service when called, never captures it. */
-export function mountWorkers(ctx: Context, config: WorkersConfig): Workers {
+/**
+ * @param extraArgs - arguments only known once the Host is up (the gateway's MCP config), asked at each attach and placed after the configured ones.
+ */
+export function mountWorkers(ctx: Context, config: WorkersConfig, extraArgs: () => readonly string[] | Promise<readonly string[]> = () => []): Workers {
   const transport = createClaudeStreamTransport({
     ...(config.claude.command === undefined ? {} : { command: config.claude.command }),
-    ...(config.claude.args === undefined ? {} : { args: config.claude.args }),
+    args: async () => [...(config.claude.args ?? []), ...(await extraArgs())],
   })
   ctx.plugin(AcrAgentControlService)
   ctx.plugin(claudeProvider(transport))
