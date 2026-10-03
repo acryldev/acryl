@@ -639,3 +639,56 @@ Not key-dependent but blocked by design: the matrix rows for Claude Code, Codex 
 
 **Findings.** (a) A failed update is rolled back by removing the plugin, as on 0.1.5, so the working version is lost (T050). (b) The extension tools are DSH tools, so bring-your-own agents cannot use them (T051). (c) Direct `@deepseek-ai/dsh*` import lines in non-test source: still 180, nothing added by T047 or T044.
 
+## Finding R31 - T048 done (Claude Code transport); T046 platform seam: Cordis mini-design for review (2026-10-03)
+
+Branch `harness-latest-2026-10` (pushed to `83c11e1`).
+
+### T048: one real structured transport, done
+
+`ClaudeStreamTransport` (`runtime/acryl-control/src/agent/transports/claude-stream.ts`) speaks Claude Code's own `stream-json` protocol: one long-lived `claude -p --input-format stream-json --output-format stream-json --verbose` process per worker. `AgentTransport` gained an optional `open` (bring up the runtime and name it) and `dispose`; the provider factory's `attach` calls `open`, so a bound worker now has a `runtimeId` and is dispatchable (before, every Claude, Codex and ACP attach left `runtimeId: null` and `dispatch` refused it), and the transport's processes end with the plugin that owns them. Commands: `send` returns the final text, `isError`, session id, stop reason and every assistant text block; `cancel` and an aborted signal send the protocol's interrupt control request; `stop` closes stdin and escalates to a kill after a grace period; `start` names what is running; resume is by attaching with the session id (`--resume`). A second `send` while one is being answered is refused (`worker-busy`); a crash mid-turn fails the turn, not the host; a missing executable is `transport-unavailable`. Protocol facts measured on Claude Code 2.1.288: it stays silent until the first user message (the session id arrives with the first turn), and hook and rate-limit events are interleaved. Proof: six scenarios against a fake that speaks the observed protocol (47 tests in the package gate), plus the real binary through the real `acrAgentControl` service with `ACRYL_LIVE_CLAUDE=1`: a `pong` turn and a real interrupt of a 2000-line answer followed by a successful next turn in the same process. Not done, by scope: `acrAgentControl` is not mounted in any engine yet and nothing in the UI or CLI drives it (T052); Codex and ACP transports are the same shape and are not written.
+
+### T046: the platform seam. Measured starting point
+
+Direct `@deepseek-ai/dsh*` import lines in non-test source under `runtime`, `apps`, `plugins`: **180** (121 type-only, 59 value).
+
+| Where | Lines | What |
+|---|---|---|
+| `apps/acryl-desktop` | 46 | Electron host around the DSH profile (app-boot, cmdline, atomic-write, launch-environment) and the Desktop client |
+| `apps/acryl-cli` | 27 | the terminal client (the DSH chat TUI) |
+| `plugins/acryl-workspace` | 24 | the frame: client slots and the chat's `sessions`, `workspaces`, `sidebarRight` |
+| `runtime/acryl-harness-runtime` | 20 | the engine seam itself (expected) |
+| `plugins/cordis-plugin-market` | 17 | host route and client section |
+| the rest | 46 | `acryl-plugin-admin` 9, `acryl-ui` 9, `acryl-agent-control` 8, `acryl-app-shell` 6, `acryl-support` 5, brand 5, others 4 |
+
+By module, the weight is the client frame: `dsh-client-ui-slots` 17, `-primitives` 11, `-settings/client` 8, `-locale/client` 7, `-renderer/client` 7 and about ten more `dsh-client-*` (about 75 lines); host side: `app-boot` 12, `host-webserver` 10 (type augmentations), `atomic-write` 8, `tools` 7, `cmdline` 4, `home-paths` 3; chat: `session` 9, `llm` 6, `agent` 4, `goal` 3.
+
+What ACRYL's own plugins actually consume from DSH is small. Host plugins inject `webServer` (HTTP and WebSocket routes), `tools` (Agent Control and workspace status, both chat-facing), and their own `appInstance` and `acrylSettings`; Desktop adds `webRuntime`, `appExit`, `loader`. Client plugins inject `slots`, `locale`, `theme`, `shortcuts`, and use `sessions`, `workspaces` and `sidebarRight` for the chat. One coupling is not about imports: `ProjectsControl` registers a project by calling DSH's `workspaces.create`, so ACRYL's project list is stored in the DSH workspace service (T047 showed this still works with the chat off only because that service stays up).
+
+### Mini-design (repo protocol, six points)
+
+**1. Capability and plugin boundary.** One capability, the *ACRYL platform*: "serve a loopback, token-authenticated page and its WebSocket routes, deliver the client plugin graph to the browser, and hold the project registry". It needs its own lifecycle and replacement because a DSH-backed provider and an ACRYL-owned provider must be swappable under the same consumers (that is the proof T046 owes). It is decomposed into four independently shippable seams, in this order, each of which moves the count:
+- **S1 host ports** (`acryl-control`, no DSH imports): `acrylWeb` (`host`, `port`, `register`, `registerUpgrade`, `authenticatedUrl`), `acrylTools` (optional: register a model-callable tool when a chat exists), `acrylFiles` (atomic write and home paths, owned code instead of `dsh-atomic-write` and `dsh-home-paths`).
+- **S2 projects owned by ACRYL**: the project registry becomes an `acryl-settings` namespace served by a Host route; DSH `workspaces` becomes a one-way projection for the chat, not the source of truth.
+- **S3 client frame facade**: client plugins stop importing `dsh-client-*` directly and use `@acryl/ui` contracts (the generated `contracts/reexports.json` already exists for the primitives); the substrate behind the facade is swappable.
+- **S4 own host** (the real "no DSH platform" boot): an ACRYL `acrylWeb` provider on `node:http` plus a client-graph server and an ACRYL client bootstrap (slots, locale, theme, shortcuts as ACRYL client services). Largest; designed here only to the level needed to keep S1 to S3 honest.
+
+**2. Provides and consumes.**
+- S1 provides services `acrylWeb`, `acrylTools`, `acrylFiles` (provider: a DSH adapter plugin inside the engine seam today; `acryl-web-host` after S4). Consumers `acryl-workspace`, `acryl-agent-control`, `acryl-plugin-admin`, `acryl-support`, `cordis-plugin-market`, the Desktop webserver row: hard `inject: ['acrylWeb', ...]`; `acrylTools` is intentionally optional, read with `ctx.get`, so a plugin that only adds tools to the chat is PENDING-free when there is no chat (today `acryl-agent-control` hard-injects `tools` and so cannot mount without one).
+- Events: none new. Durable facts: the project registry (S2) in `<ACRYL home>/acryl-settings.yaml` under `projects`; nothing replay-critical.
+- Rule kept: no plugin imports a provider; ports live in `acryl-control`, adapters live behind `createAcrylEngineHost`.
+
+**3. Effects and disposal.** Every route, upgrade handler, listener, socket and timer is acquired in one `ctx.effect()` in the provider and released by its disposer, in order: stop accepting, close upgraded sockets, release routes, close the server. A consumer's registrations are tied to the consumer's Fiber (not the provider's): unloading a consumer removes only its routes. Replacing the provider unloads consumers (Cordis rebinding), the old listener closes, the new one binds, consumers re-register. Quiescence: no timer or socket survives `dispose()`; the port is free afterward (asserted).
+
+**4. Configuration and composition.** Validated schema per provider (`port`, `host` loopback only, token policy). Row ids equal package names (`acryl-web-host`; the DSH adapter is named for its capability, `acryl-platform-dsh`, a deliberate swap-slot id like the brand pair, named as such here). Scopes: one platform per Context. Provider replacement is a blueprint property (`platform: dsh | acryl`), the same mechanism as `dshChat`.
+
+**5. Events and durability.** Waterfall hooks are not involved. The only durable state is the project registry (S2): written through `acryl-settings` (atomic, schema-validated), read on mount, one writer.
+
+**6. Verification (real Loader, not stubs).** For each seam: activation with a missing provider is PENDING and activates when the provider arrives; provider replacement (DSH-backed then node-backed, same consumers, no stale routes, no duplicate registrations); disposal and repeated mount/reload leave no open handle (port free, sockets closed, counted); Web and Desktop parity test unchanged; the engine-optional test (R29) stays green; the import-line count is part of the gate (`scripts/verify-layout.mjs` asserts a ceiling that only moves down).
+
+### Decisions I need from you before any code
+
+1. **What counts as "the seam" for the 180 metric.** Proposal: the seam is `runtime/acryl-harness-runtime/src/engine-*.ts`, the Desktop Electron entry, `@acryl/ui`'s contract adapters, and the chat-only plugins; everything else must reach zero. Today that leaves roughly 95 lines outside the seam.
+2. **S3: facade or own client runtime.** Facade (S3) is cheap and keeps the DSH client substrate; S4's own client bootstrap is the real independence and is a spec of its own. Proposal: do S1, S2, S3 now, write the S4 spec after.
+3. **Who owns projects.** Proposal: ACRYL (S2), DSH `workspaces` follows.
+4. **Order.** S1 first (smallest, mechanical, about 30 lines down, unblocks `acryl-agent-control` mounting without a chat), then S2, then S3.
+
