@@ -12,12 +12,16 @@ import { pickSession, type SessionRef } from '../sessions/session-pick.ts'
 import { owningWorktree } from './sidebar-model.ts'
 import { FolderChooserUnavailableError } from './web-folder-picker.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
+import { openMainSession } from '../sessions/main-session.ts'
+import { findSettingsTrigger } from '../settings/open-settings.ts'
 
 export type ProjectAction =
   | { readonly ok: true; /** A hint to show the user, when the action continues elsewhere. */ readonly note?: string }
   | { readonly ok: false; readonly reason: string; /** The caller should offer typing the folder's path instead (no chooser here). */ readonly needsPath?: true }
 
 export interface ProjectsControl {
+  /** Whether chats can be opened here at all (the DSH chat is running). Menus and buttons for chats are hidden when false. */
+  readonly chatAvailable: boolean
   /** Change-detection key for the registered workspace folders (a primitive, safe to subscribe to). */
   workspaceKey(): string
   /** Registered workspace folders, so a project appears even before it has a chat. */
@@ -81,6 +85,8 @@ export interface ProjectsControlDeps {
    * chooser on Web, and desktop Linux's fallback once Electron's own seam (`directory().pickDirectory`)
    * is absent - both are served by the same Host route (T143), so neither platform needs anything else. */
   readonly webPickDirectory?: () => Promise<string | null>
+  /** Whether the DSH chat is available; off, adding or selecting a project does not try to open a chat, and chat actions say so. */
+  readonly chatAvailable?: () => boolean
 }
 
 export interface DirectorySeams {
@@ -160,7 +166,11 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     }
   }
 
+  const chatOn = (): boolean => deps.chatAvailable?.() ?? true
+  const chatOff = fail('The DeepSeek Harness chat is switched off.')
+
   return {
+    get chatAvailable() { return chatOn() },
     workspaceKey: () => workspaceItems().map(item => item.path).join('\n'),
     workspacePaths: () => workspaceItems().map(item => item.path),
     subscribeWorkspaces: listener => deps.getWorkspaces()?.list.subscribe(listener) ?? (() => {}),
@@ -220,6 +230,7 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     },
 
     async openChat(id) {
+      if (!chatOn()) return chatOff
       const sessions = deps.getSessions()
       if (sessions === undefined) return fail('Chats are not available yet.')
       const state = sessions.list.getSnapshot()
@@ -233,14 +244,14 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       if (worktree !== undefined) {
         const started = await startBoundChat(worktree)
         if (!started.ok) return fail(started.reason)
-        sessions.open(started.id)
+        openMainSession(sessions, started.id)
         // Same name, and the empty unbound one leaves the tree (it can never be sent from).
         if (row?.title !== undefined && row.title.trim() !== '') await this.renameChat(started.id, row.title) // best effort: a failed rename must not fail the open
         shell.dismissChat(branded)
         return { ok: true }
       }
       try {
-        sessions.open(branded)
+        openMainSession(sessions, branded)
         return { ok: true }
       } catch (cause) {
         return fail(`Could not open that chat: ${message(cause)}`)
@@ -248,6 +259,7 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     },
 
     async renameChat(id, raw) {
+      if (!chatOn()) return chatOff
       const sessions = deps.getSessions()
       if (sessions === undefined) return fail('Chats are not available yet.')
       const title = raw.trim()
@@ -266,6 +278,8 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     },
 
     async showChat(worktreePath) {
+      // With the chat off, picking a project just selects it: there is no chat to show and that is not a failure.
+      if (!chatOn()) return { ok: true }
       const sessions = deps.getSessions()
       if (sessions === undefined) return fail('Chats are not available yet.')
       const state = sessions.list.getSnapshot()
@@ -283,7 +297,7 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       const id = state.ids.find(candidate => candidate === existing)
       if (id === undefined) return fail('That chat is no longer available.')
       try {
-        sessions.open(id)
+        openMainSession(sessions, id)
         return { ok: true }
       } catch (cause) {
         shell.unpin()
@@ -292,9 +306,11 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     },
 
     async newChat(worktreePath) {
+      if (!chatOn()) return { ok: true }
       const started = await startBoundChat(worktreePath)
       if (!started.ok) { shell.unpin(); return fail(started.reason) }
-      deps.getSessions()?.open(started.id)
+      const sessionsService = deps.getSessions()
+      if (sessionsService !== undefined) openMainSession(sessionsService, started.id)
       return { ok: true }
     },
 
@@ -329,7 +345,7 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     openSettings() {
       // Settings keeps its open state inside a component, with no service to call. As the Cmd+, shortcut
       // does (see acryl-shortcuts), activate its real trigger: the one dialog button with no aria-label.
-      const trigger = document.querySelector<HTMLButtonElement>('button[aria-haspopup="dialog"][aria-expanded]:not([aria-label])')
+      const trigger = findSettingsTrigger(document)
       if (trigger === null) return fail('Settings is not available in this window.')
       trigger.click()
       return { ok: true }

@@ -1,6 +1,6 @@
 import {
   Button,
-  IconCordisPluginOutline14,
+  IconCordisPluginOutlineRegular,
   Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale, PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
@@ -21,7 +21,7 @@ export function MarketLauncher({ wide, useStore, actions, t }: MarketLauncherPro
         aria-label={t('tab')}
         aria-haspopup="dialog"
         aria-expanded={open}
-        icon={<IconCordisPluginOutline14 size={wide ? 16 : 18} />}
+        icon={<IconCordisPluginOutlineRegular size={wide ? 16 : 18} />}
         onClick={() => actions.open()}
       >
         {wide ? t('tab') : null}

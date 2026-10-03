@@ -74,9 +74,22 @@ export interface AgentScope {
   readonly providerId?: string
 }
 
-/** Transport seam a provider delegates to; vendor SDKs plug in here (Phase 8). */
+/** The live runtime a transport opened for one worker: what makes a bound worker dispatchable. */
+export interface AgentTransportRuntime {
+  readonly runtimeId: AgentRuntimeId
+  readonly providerSessionRef?: ProviderSessionRef
+}
+
+/** Transport seam a provider delegates to; vendor SDKs, protocols and CLIs plug in here. */
 export interface AgentTransport {
+  /**
+   * Bring up the vendor runtime for one worker (a process, a connection) and name it. Without `open` a provider binds no runtime, and
+   * every dispatch is refused until something else does.
+   */
+  open?(request: AttachAgentRequest, signal?: AbortSignal): Promise<AgentTransportRuntime>
   execute(binding: AgentSnapshot, command: AgentCommand, signal?: AbortSignal): Promise<unknown>
+  /** Release every runtime this transport opened (the provider's owner is unloading). */
+  dispose?(): Promise<void>
 }
 
 /** One registered adapter. Registration is a reversible effect. */
@@ -103,6 +116,7 @@ export type AcrAgentControlErrorCode =
   | 'session-collision'
   | 'cancelled'
   | 'transport-unavailable'
+  | 'worker-busy'
 
 export class AcrAgentControlError extends Error {
   constructor(readonly code: AcrAgentControlErrorCode, message: string) {

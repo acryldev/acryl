@@ -6,6 +6,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { DesktopSettingsSection, type DesktopNotificationSettings, type DesktopShellSettings } from './DesktopSettingsSection.tsx'
 import { DesktopTerminalSettingsAction } from './DesktopTerminalSettingsAction.tsx'
 import { createDesktopSettingsApi } from './desktop-settings-api.ts'
+import { createPreferenceScopes } from './desktop-preferences.ts'
 import { en, zh, type DesktopSettingsLocaleKey } from './desktop-settings-locales.ts'
 import { installDesktopSettingsStyles } from './desktop-settings-styles.ts'
 import type { DesktopClientEnvironment } from '../environment.ts'
@@ -26,13 +27,11 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 
 /** Register the Desktop page in the settings.section list slot. */
 export function applyDesktopSettings(ctx: ClientContext, environment: DesktopClientEnvironment): void {
-  const desktopSettings = ctx.settingsScope.bind<DesktopShellSettings>({
-    namespace: DESKTOP_SHELL_SETTINGS_NAMESPACE,
-  })
-  const notificationSettings = ctx.settingsScope.bind<DesktopNotificationSettings>({
-    namespace: DESKTOP_NOTIFICATIONS_SETTINGS_NAMESPACE,
-  })
   const api = createDesktopSettingsApi()
+  // ACRYL's own preferences, read and written through the Host (`acryl-settings`); DSH 0.2 has no client settings scope.
+  const scopeFor = createPreferenceScopes(api)
+  const desktopSettings = scopeFor<DesktopShellSettings>(DESKTOP_SHELL_SETTINGS_NAMESPACE)
+  const notificationSettings = scopeFor<DesktopNotificationSettings>(DESKTOP_NOTIFICATIONS_SETTINGS_NAMESPACE)
   const t = ctx.locale.bind(DESKTOP_SETTINGS_LOCALE_NAMESPACE)
 
   ctx.effect(

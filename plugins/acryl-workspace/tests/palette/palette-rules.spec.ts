@@ -283,3 +283,18 @@ describe('shortcut', () => {
     expect(isPaletteShortcut(key({ key: 'j', code: 'KeyJ' }))).toBe(false)
   })
 })
+
+describe('palette toggle event', () => {
+  it('toggles on the event acryl-shortcuts dispatches and stops after disposal', async () => {
+    const { startPaletteEventListener, PALETTE_TOGGLE_EVENT } = await import('../../src/client/palette/palette-shortcut.ts')
+    const target = new EventTarget()
+    const toggle = vi.fn()
+    const stop = startPaletteEventListener(target, toggle)
+    target.dispatchEvent(new Event(PALETTE_TOGGLE_EVENT))
+    expect(toggle).toHaveBeenCalledTimes(1)
+    stop()
+    target.dispatchEvent(new Event(PALETTE_TOGGLE_EVENT))
+    expect(toggle).toHaveBeenCalledTimes(1)
+    expect(PALETTE_TOGGLE_EVENT).toBe('acryl:toggle-command-palette')
+  })
+})

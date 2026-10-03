@@ -34,7 +34,7 @@
     "prepublishOnly": "pnpm run check"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "4.0.2",
+    "@deepseek-ai/cordis": "4.0.4",
     "@types/node": "^22.20.0",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
@@ -47,6 +47,6 @@
     "adm-zip": "0.6.0"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "4.0.2"
+    "@deepseek-ai/cordis": "4.0.4"
   }
 }

@@ -17,13 +17,12 @@
 import { appendFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
-import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 
 export interface InstallSessionLogExporterOptions {
   /** Which ACRYL surface this process is (`tui`, `web`, `desktop`) — becomes part of the log filename. */
   readonly surface: string
-  /** Harness home override; defaults to `$DSH_HOME`/`~/.dsh` exactly like credentials/settings resolve it. */
-  readonly dshHome?: string
+  /** The app instance's harness home (`instance.dshHome`): where `logs/` lives. Always explicit, never resolved from the environment here. */
+  readonly dshHome: string
 }
 
 const LOGGER_LEVEL_WARN = 2
@@ -38,7 +37,7 @@ const LOGGER_LEVEL_DEBUG = 3
  * @param options - which surface/home this log file belongs to.
  */
 export function installSessionLogExporter(ctx: Context, options: InstallSessionLogExporterOptions): void {
-  const dshHome = resolveDshHome(options.dshHome)
+  const { dshHome } = options
   const logDir = join(dshHome, 'logs')
   try {
     mkdirSync(logDir, { recursive: true, mode: 0o700 })

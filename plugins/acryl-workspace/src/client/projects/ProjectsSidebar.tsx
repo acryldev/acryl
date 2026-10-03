@@ -19,6 +19,7 @@ import type { AgentStatusState } from '../status/agent-status-state.ts'
 import { buildProjectRows, entriesForWorktree, type RepoRow, type WorktreeDot, type WorktreeRow, type WorktreeSessionEntry } from './sidebar-model.ts'
 import type { DesktopSidebarSurfaceOwnerProps } from 'acryl-app-shell/client'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
+import { currentSessionId } from '../sessions/main-session.ts'
 
 /** The left-pane owner interface the frame offers: the same one the frame's default sidebar receives. */
 export type ProjectsSidebarOwnerProps = DesktopSidebarSurfaceOwnerProps
@@ -84,7 +85,8 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
       const cwd = sessions.byId[id]?.cwd
       if (cwd !== undefined) void shell.discover(cwd)
     }
-    const currentCwd = sessions.current === undefined ? undefined : sessions.byId[sessions.current]?.cwd
+    const current = currentSessionId(sessions)
+    const currentCwd = current === undefined ? undefined : sessions.byId[current]?.cwd
     if (currentCwd !== undefined) void shell.follow(currentCwd)
   }, [shell, sessions])
 
@@ -322,7 +324,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
         )}
         {repos.length === 0 && (
           <div className="dshWorkspaceSideEmpty">
-            No workspaces yet. Use + to add a folder - a git repository or a plain folder both work - or open a chat in one.
+            No workspaces yet. Use + to add a folder - a git repository or a plain folder both work{projects.chatAvailable ? ' - or open a chat in one' : ''}.
           </div>
         )}
         {repos.map(repo => (
@@ -340,7 +342,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
             onRenameEntry={renameEntry}
             onRemove={() => { removeRepo(repo.root) }}
             onSelect={pickWorktree}
-            onNewChat={newChat}
+            onNewChat={projects.chatAvailable ? newChat : undefined}
             customAgents={customAgents}
             creating={creatingIn === repo.root}
             onToggleCreate={() => { setNotice(null); setCreatingIn(creatingIn === repo.root ? null : repo.root) }}
@@ -380,7 +382,8 @@ interface RepoSectionProps {
   /** Remove this whole workspace from the tree (T135-followup hover "x"). */
   readonly onRemove: () => void
   readonly onSelect: (path: string) => void
-  readonly onNewChat: (path: string) => void
+  /** Undefined when the DSH chat is off: there is no chat to start, so no button for it. */
+  readonly onNewChat: ((path: string) => void) | undefined
   readonly customAgents: readonly CustomAgent[]
   readonly creating: boolean
   readonly onToggleCreate: () => void
@@ -471,15 +474,17 @@ function RepoSection({
                   <ChevronIcon open={expandedWorktrees.has(row.path)} />
                 </button>
                 <WorktreeButton row={row} onSelect={onSelect} customAgents={customAgents} />
-                <button
-                  type="button"
-                  className="dshWorkspaceWorktreeNew"
-                  aria-label={`New chat on ${row.label}`}
-                  title={`New chat on ${row.label}`}
-                  onClick={() => { onNewChat(row.path) }}
-                >
-                  +
-                </button>
+                {onNewChat !== undefined && (
+                  <button
+                    type="button"
+                    className="dshWorkspaceWorktreeNew"
+                    aria-label={`New chat on ${row.label}`}
+                    title={`New chat on ${row.label}`}
+                    onClick={() => { onNewChat(row.path) }}
+                  >
+                    +
+                  </button>
+                )}
               </div>
               {expandedWorktrees.has(row.path) && (
                 <WorktreeSessions

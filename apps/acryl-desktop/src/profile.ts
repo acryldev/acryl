@@ -1,6 +1,5 @@
 /** Compatibility profile composition over the official Web bundle and user plugins. */
 
-import { createRequire } from 'node:module'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -8,25 +7,20 @@ import { evaluate, isJsExpr, type EntryOptions } from '@deepseek-ai/cordis-plugi
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import {
   composeEntries,
-  DEFAULT_PROFILE_PATCH_RELOAD,
-  healProfilesModuleFallback,
   initProfile,
   loadOptionalPatches,
   loadOverlayPatches,
   PROFILE_PATCH_FILENAME,
   PROFILE_TEMPLATES,
+  bundlePatchPaths,
   readProfileManifest,
+  removeLinkProjections,
   resolveProfileDir,
   writeProfileManifest,
   type Profile,
   type ProfileManifest,
 } from '@deepseek-ai/dsh-app-boot'
-import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 import { blueprintFromEnvironment, composeBlueprintRows, createAcrylCodingCapabilityPatches, createAcrylShellCapabilityPatches, extensionRequiredFrameworkPackages, materializeProfilePackage, pluginLifecyclePatches, type Blueprint } from 'acryl-harness-runtime'
-import FileSettingsProvider, {
-  resolveSpec as resolveSettingsFileSpec,
-  type Config as SettingsFileConfig,
-} from '@deepseek-ai/dsh-settings-file'
 import { parseDocument } from 'yaml'
 import { unpackedAsarPath } from './runtime/packaged-runtime-path.ts'
 import { findOverlayPackage, resolveOverlayPackage } from './plugins/package-overlay.ts'
@@ -71,10 +65,16 @@ const BROWSE_PICKER_BACKEND = '@deepseek-ai/dsh-host-directory-picker-browse'
 const BROWSE_PICKER_SURFACE = '@deepseek-ai/dsh-client-ui-directory-picker-browse'
 const PWSH_SANDBOX_ROW_ID = 'pwsh-sandbox'
 const UPSTREAM_PWSH_SANDBOX_PACKAGE = '@deepseek-ai/dsh-pwsh-sandbox'
+/**
+ * DETACHED on the DSH 0.2 branch (spec 001 R25): the Desktop ACL-runner trampoline overrides `runArgv`/`startArgv` of the upstream
+ * `SandboxPwshExecutor`, which 0.2 no longer exposes. Windows keeps the upstream executor until the trampoline is re-ported to the
+ * new spawn seam; then set this to true (and drop the `exclude` of `src/windows-pwsh-sandbox.ts` in tsconfig.json).
+ */
+const WINDOWS_PWSH_SANDBOX_REATTACHED = false
 const DESKTOP_WINDOWS_PWSH_SANDBOX_ROW_ID = 'desktop-windows-pwsh-sandbox'
 const DESKTOP_WINDOWS_PWSH_SANDBOX_PACKAGE = 'acryl-desktop/windows-pwsh-sandbox'
-const AGENT_PRESETS_ROW_ID = 'agent-presets'
-const UPSTREAM_AGENT_PRESETS_PACKAGE = '@deepseek-ai/dsh-agent-presets'
+const AGENT_PRESETS_ROW_ID = 'agent-preset-registry'
+const UPSTREAM_AGENT_PRESETS_PACKAGE = '@deepseek-ai/dsh-agent-preset-registry'
 const DESKTOP_WINDOWS_AGENT_PRESETS_ROW_ID = 'desktop-windows-agent-presets'
 const DESKTOP_WINDOWS_AGENT_PRESETS_PACKAGE = 'acryl-desktop/windows-agent-presets'
 const DEFAULT_DESKTOP_SHELL_MODE: DesktopShellMode = 'advanced'
@@ -83,7 +83,8 @@ const DESKTOP_WEB_SERVER_ROW_ID = 'desktop-webserver'
 const DESKTOP_WEB_SERVER_PACKAGE = 'acryl-desktop/webserver'
 const CONNECTION_ROW_ID = 'connection'
 const UPSTREAM_CONNECTION_PACKAGE = '@deepseek-ai/dsh-client-connection'
-const SETTINGS_FILE_PACKAGE = '@deepseek-ai/dsh-settings-file'
+/** File name of ACRYL's own preferences inside the ACRYL home (written by the `acryl-settings` plugin). */
+const ACRYL_SETTINGS_FILENAME = 'acryl-settings.yaml'
 const DESKTOP_SETTINGS_NAMESPACE = 'dsh-desktop'
 const UI_LAYOUT_PACKAGE = '@deepseek-ai/dsh-client-ui-layout'
 const UI_SIDEBAR_PACKAGE = '@deepseek-ai/dsh-client-ui-sidebar'
@@ -166,37 +167,30 @@ export function desktopShellModeFromSettings(document: unknown): DesktopShellMod
 }
 
 /**
- * Read startup settings from the same file resolved by the settings provider.
- * @param config - validated settings-file row config.
+ * Read startup settings from ACRYL's own preferences file.
+ * @param filename - absolute path of `acryl-settings.yaml`; a missing file means every default.
  * @returns the values projected into the startup Loader graph.
  */
-export function readDesktopStartupSettings(config: SettingsFileConfig): DesktopStartupSettings {
-  const spec = resolveSettingsFileSpec(config)
+export function readDesktopStartupSettings(filename: string): DesktopStartupSettings {
   let text: string
   try {
-    text = readFileSync(spec.filename, 'utf8')
+    text = readFileSync(filename, 'utf8')
   } catch (cause) {
     if ((cause as NodeJS.ErrnoException).code === 'ENOENT') {
       return { mode: DEFAULT_DESKTOP_SHELL_MODE, port: DEFAULT_DESKTOP_PORT, blend: null }
     }
     throw cause
   }
-  let document: unknown
-  if (spec.format === 'yaml') {
-    const parsed = parseDocument(text, { prettyErrors: true })
-    if (parsed.errors.length > 0) {
-      throw new Error(`${BIN_NAME}: invalid settings document at ${spec.filename}: ${parsed.errors.map(error => error.message).join('; ')}`)
-    }
-    document = parsed.toJS() ?? {}
-  } else {
-    document = text.trim().length === 0 ? {} : JSON.parse(text)
+  const parsed = parseDocument(text, { prettyErrors: true })
+  if (parsed.errors.length > 0) {
+    throw new Error(`${BIN_NAME}: invalid settings document at ${filename}: ${parsed.errors.map(error => error.message).join('; ')}`)
   }
-  return desktopStartupSettingsFromSettings(document)
+  return desktopStartupSettingsFromSettings(parsed.toJS() ?? {})
 }
 
-/** Read only the shell mode from the settings provider's resolved file. */
-export function readDesktopShellMode(config: SettingsFileConfig): DesktopShellMode {
-  return readDesktopStartupSettings(config).mode
+/** Read only the shell mode from ACRYL's preferences file. */
+export function readDesktopShellMode(filename: string): DesktopShellMode {
+  return readDesktopStartupSettings(filename).mode
 }
 
 /** Resolve the public Web template once and reject an incompatible DSH release. */
@@ -240,6 +234,12 @@ export interface PreparedDesktopProfile {
    * Never rejects: a failed repair surfaces as the boot's own resolution error.
    */
   moduleFallback: Promise<void>
+  /**
+   * The patches ACRYL adds on top of the profile's own layers (Desktop shell rows, shared capabilities, Blueprint rows, shell and platform
+   * toggles, plugin-lifecycle state). They exist only in memory, so DSH's live configuration is handed them as `ProfileContext.overlays`
+   * and re-applies them on every reload instead of rolling an edit back.
+   */
+  acrylPatches: readonly PatchOptions[]
 }
 
 /** Optional observations emitted before profile preparation can fail. */
@@ -305,7 +305,7 @@ function ensureProfileAllowsNativeBuilds(dir: string): void {
  * @param home - Harness home containing the profiles directory.
  * @returns the absolute profile directory.
  */
-export function ensureDesktopProfile(home: string = resolveDshHome()): string {
+export function ensureDesktopProfile(home: string): string {
   const dir = resolveProfileDir(DESKTOP_PROFILE_NAME, home)
   if (!existsSync(join(dir, 'package.json'))) initProfile(dir, REQUIRED_BUNDLES)
   ensureProfileAllowsNativeBuilds(dir)
@@ -358,14 +358,10 @@ function loadRecoveryFilteredProfile(
     if (template === undefined) {
       throw new Error(`${BIN_NAME}: profile ${JSON.stringify(profileName)} does not exist`)
     }
-    initProfile(profileDir, template.bundles, template.patchReload)
+    initProfile(profileDir, template.bundles)
   }
   ensureProfileAllowsNativeBuilds(profileDir)
   const manifest = readProfileManifest(BIN_NAME, profileDir)
-  // Mirror dsh-app-boot's own `loadProfile`: an absent manifest value defaults
-  // to live reload, matching the shipped template's own launcher behavior.
-  const patchReload = (manifest.dsh?.profile as { patchReload?: unknown } | undefined)?.patchReload
-    === 'startup' ? 'startup' : DEFAULT_PROFILE_PATCH_RELOAD
   const rawBundles = (manifest.dsh?.profile as { bundles?: unknown } | undefined)?.bundles
   if (rawBundles !== undefined
     && (!Array.isArray(rawBundles) || rawBundles.some(value => typeof value !== 'string'))) {
@@ -399,18 +395,20 @@ function loadRecoveryFilteredProfile(
         || (bundleManifest as { name?: unknown }).name !== DESKTOP_MARKET_IDENTITIES.dshMarket.packageName)) {
         throw new Error(`${BIN_NAME}: selected dshmarket bundle has an invalid package identity`)
       }
-      const declared = bundleManifest !== null && typeof bundleManifest === 'object'
-        ? (bundleManifest as { dsh?: { bundle?: { patch?: unknown } } }).dsh?.bundle?.patch
+      const bundle = bundleManifest !== null && typeof bundleManifest === 'object'
+        ? (bundleManifest as { dsh?: { bundle?: Parameters<typeof bundlePatchPaths>[1] } }).dsh?.bundle
         : undefined
-      if (typeof declared !== 'string' || declared.length === 0) {
+      if (bundle === undefined) {
         throw new Error(`${BIN_NAME}: profile bundle ${JSON.stringify(packageName)} declares no dsh.bundle in its package.json`)
       }
-      const patchPath = join(packageDir, declared)
+      // A bundle declares one patch file or an ordered list (DSH 0.2: dsh-web-app ships its presets as extra files); the
+      // layer keeps every file's patches concatenated in application order, exactly like upstream's own `loadProfile`.
+      const patchPaths = bundlePatchPaths(packageDir, bundle)
       layers.push({
         packageName,
         packageDir,
-        patchPath,
-        patches: loadOverlayPatches(BIN_NAME, patchPath),
+        patchPaths,
+        patches: patchPaths.flatMap(patchPath => loadOverlayPatches(BIN_NAME, patchPath)),
       })
     } catch (cause) {
       if (!isDshMarket) throw cause
@@ -425,18 +423,12 @@ function loadRecoveryFilteredProfile(
       layers,
       patchPath,
       patches: existsSync(patchPath) ? loadOverlayPatches(BIN_NAME, patchPath) : [],
-      patchReload,
+      // This pipeline throws on an unloadable bundle (except the optional market, reported through `dshMarketFailure`),
+      // so nothing is ever skipped silently.
+      skippedBundles: [],
     },
     ...(dshMarketFailure === undefined ? {} : { dshMarketFailure }),
   }
-}
-
-/** Resolve the agent presets shipped by the matching dsh CLI dependency. */
-export function shippedPresetRoot(moduleUrl: string = import.meta.url): string {
-  const require = createRequire(moduleUrl)
-  return unpackedAsarPath(
-    join(dirname(require.resolve('@deepseek-ai/dsh/package.json')), 'config', 'agent-presets'),
-  )
 }
 
 /** Read a row's object config without trusting arbitrary YAML values. */
@@ -650,7 +642,7 @@ function assertEffectiveMarketRows(
  */
 export function prepareDesktopProfile(
   telemetryDisabled: string | undefined = process.env.DSH_TELEMETRY_DISABLED,
-  home: string = resolveDshHome(),
+  home: string,
   platform: NodeJS.Platform = process.platform,
   profileName: string = DESKTOP_PROFILE_NAME,
   pluginStatePath?: string,
@@ -666,10 +658,9 @@ export function prepareDesktopProfile(
   const profileDir = profileName === DESKTOP_PROFILE_NAME
     ? ensureDesktopProfile(home)
     : resolveProfileDir(profileName, home)
-  // Repair of the profile's module-fallback symlink farm. `prepareDesktopProfile` itself stays synchronous, so the repair is returned as a promise
-  // (`moduleFallback`) that every boot awaits: firing and forgetting it raced a fresh home's first boot, which then could not resolve its packages.
-  // Swallowed so a torn-down or unwritable profiles directory surfaces as the boot's own error rather than an unhandled rejection.
-  const moduleFallback = healProfilesModuleFallback({ installAnchor: INSTALL_ANCHOR, home }).then(() => undefined, () => undefined)
+  // DSH 0.2 removed the link backend; leftovers of 0.1.5-era launches are cleaned up synchronously (spec 001 R24).
+  removeLinkProjections(profileDir)
+  const moduleFallback = Promise.resolve()
   // `plugin-management` is the community market's user-facing scope. Startup
   // recovery has its own state file so switching to another provider cannot
   // reapply a stale community-market disable, while a recovery disable always
@@ -703,7 +694,6 @@ export function prepareDesktopProfile(
   const bundlePatches: PatchOptions[] = []
   const desktopOverlayPatches: PatchOptions[] = []
   const capabilities = new Set(blueprint.capabilities)
-  const sharedDesktopPatches = createAcrylCodingCapabilityPatches(new Set(['desktop']), new Set(), capabilities)
   let dshMarketPatches: PatchOptions[] | undefined
   let desktopLayerInserted = false
   const providerAwareDisabledBundles = new Set(disabledBundles)
@@ -723,6 +713,12 @@ export function prepareDesktopProfile(
   if (!desktopLayerInserted) {
     throw new Error(`${BIN_NAME}: desktop profile is missing @deepseek-ai/dsh-web-app`)
   }
+  // Rows the bundles already compose (DSH 0.2's dsh-base now carries `authorization`) must not be inserted a second time.
+  const sharedDesktopPatches = createAcrylCodingCapabilityPatches(
+    new Set(['desktop']),
+    new Set(composeEntries([bundlePatches]).flatMap(row => (typeof row.id === 'string' ? [row.id] : []))),
+    capabilities,
+  )
 
   const loadedHomePatches = loadOptionalPatches(BIN_NAME, join(home, PROFILE_PATCH_FILENAME)) ?? []
   const { patches: homePatches, skipped: skippedOptionalEntries } = omitUnresolvedOptionalEntries(
@@ -777,6 +773,7 @@ export function prepareDesktopProfile(
     ...filteredProfile.patches,
     ...filteredHome.patches,
   ]
+  const initialPatchCount = patches.length
   const composedRows = composeEntries([patches])
   assertUniqueEntryIds(composedRows)
   assertEffectiveMarketRows(composedRows, effectiveMarket)
@@ -784,21 +781,11 @@ export function prepareDesktopProfile(
   for (const row of composedRows) {
     if (typeof row.id === 'string') rows.set(row.id, row)
   }
-  const settings = rows.get('settings')
-  if (settings?.name !== SETTINGS_FILE_PACKAGE) {
-    throw new Error(`${BIN_NAME}: desktop profile must use ${SETTINGS_FILE_PACKAGE} in the settings row`)
-  }
-  const settingsConfig = FileSettingsProvider.Config({
-    dshHome: home,
-    ...rowConfig(settings),
-  } as SettingsFileConfig)
-  const settingsDocument = resolveSettingsFileSpec(settingsConfig).filename
+  // Startup settings (shell mode, port, Blend) come from ACRYL's own preferences file, not from the harness settings
+  // document: DSH 0.2 removed its file-backed settings provider (spec 001 R18, R24).
+  const settingsDocument = join(instanceHome ?? dirname(home), ACRYL_SETTINGS_FILENAME)
   hooks.onSettingsDocumentResolved?.(settingsDocument)
-  const { mode, port, blend: blendPath } = readDesktopStartupSettings(settingsConfig)
-  patches.push({
-    id: 'settings',
-    config: settingsConfig,
-  })
+  const { mode, port, blend: blendPath } = readDesktopStartupSettings(settingsDocument)
   // BLEND composition (D24): the selected owned Blend's lock becomes one
   // insert patch, pushed after the settings row and before the desktop
   // invariant pushes. Precedence: base composition < BLEND rows < desktop
@@ -853,32 +840,28 @@ export function prepareDesktopProfile(
     // The rows toggled to hand the frame to the ACRYL shell are shared data, the same for Web.
     patches.push(...createAcrylShellCapabilityPatches(new Set(['desktop']), 'advanced', new Set(), capabilities))
   }
+  // DSH 0.2 declares agent presets in profile YAML and the registry row only selects among them (spec 001 R24), so the
+  // old shipped `roots` configuration is gone. The only Desktop rule left is the Windows guard that swaps in the registry
+  // subclass hiding the preset that needs unsupported PTY inspection.
   const presets = rows.get(AGENT_PRESETS_ROW_ID)
-  if (presets !== undefined) {
-    const config = {
-      ...rowConfig(presets),
-      roots: [{ path: shippedPresetRoot(), trust: 'system' }],
-    }
-    if (platform === 'win32'
-      && presets.name === UPSTREAM_AGENT_PRESETS_PACKAGE
-      && !rowDisabledOnPlatform(presets, platform)) {
-      patches.push(
-        {
-          id: AGENT_PRESETS_ROW_ID,
-          name: UPSTREAM_AGENT_PRESETS_PACKAGE,
-          disabled: true,
-        },
-        {
-          insert: [{
-            id: DESKTOP_WINDOWS_AGENT_PRESETS_ROW_ID,
-            name: DESKTOP_WINDOWS_AGENT_PRESETS_PACKAGE,
-            config,
-          }],
-        },
-      )
-    } else {
-      patches.push({ id: AGENT_PRESETS_ROW_ID, config })
-    }
+  if (presets !== undefined
+    && platform === 'win32'
+    && presets.name === UPSTREAM_AGENT_PRESETS_PACKAGE
+    && !rowDisabledOnPlatform(presets, platform)) {
+    patches.push(
+      {
+        id: AGENT_PRESETS_ROW_ID,
+        name: UPSTREAM_AGENT_PRESETS_PACKAGE,
+        disabled: true,
+      },
+      {
+        insert: [{
+          id: DESKTOP_WINDOWS_AGENT_PRESETS_ROW_ID,
+          name: DESKTOP_WINDOWS_AGENT_PRESETS_PACKAGE,
+          config: rowConfig(presets),
+        }],
+      },
+    )
   }
   const webserver = rows.get('webserver')
   if (webserver === undefined) {
@@ -908,7 +891,7 @@ export function prepareDesktopProfile(
       },
     )
     const pwshSandbox = rows.get(PWSH_SANDBOX_ROW_ID)
-    if (pwshSandbox?.name === UPSTREAM_PWSH_SANDBOX_PACKAGE
+    if (WINDOWS_PWSH_SANDBOX_REATTACHED && pwshSandbox?.name === UPSTREAM_PWSH_SANDBOX_PACKAGE
       && !rowDisabledOnPlatform(pwshSandbox, platform)) {
       patches.push(
         {
@@ -1017,6 +1000,12 @@ export function prepareDesktopProfile(
     rootConfig,
     bareModuleBaseUrl,
     patches: structuredClone(patches),
+    acrylPatches: structuredClone([
+      ...sharedDesktopPatches,
+      ...desktopOverlayPatches,
+      ...providerPatches,
+      ...patches.slice(initialPatchCount),
+    ]),
     skippedOptionalEntries,
     mode,
     port,

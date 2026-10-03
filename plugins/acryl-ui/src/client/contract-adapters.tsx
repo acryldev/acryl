@@ -4,7 +4,7 @@
  */
 import { useId } from 'react'
 import { AppearanceCubes, type CubeOption } from './registry/AppearanceCubes/AppearanceCubes.tsx'
-import { ValueField } from './registry/fields/fields.tsx'
+import { SettingsValueField as ValueField } from './registry/fields/fields.tsx'
 import { SelectPill, type SelectOption } from './registry/SelectPill/SelectPill.tsx'
 import { SettingsRow as SettingsRowLayout } from './registry/SettingsRow/SettingsRow.tsx'
 import type { ReactNode } from 'react'

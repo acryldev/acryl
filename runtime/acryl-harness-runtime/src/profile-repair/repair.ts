@@ -8,7 +8,7 @@
 
 import { rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
+import { writeFileAtomic } from '../engine-files.ts'
 import {
   entryPatchId,
   readDisabledPluginLifecycleEntries,

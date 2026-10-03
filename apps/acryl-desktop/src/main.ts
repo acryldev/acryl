@@ -1,5 +1,6 @@
 /** ACRYL executable: minimal Electron bootstrap around the Host Cordis root. */
 
+import type {} from 'acryl-settings'
 import { app, crashReporter, dialog } from 'electron'
 import { randomUUID } from 'node:crypto'
 import { mkdirSync } from 'node:fs'
@@ -17,6 +18,8 @@ import { DSH_LAUNCH_ENVIRONMENT_KEY } from '@deepseek-ai/dsh-launch-environment'
 import {
   createAcrylEngineHost,
   createDshEngineDefinitionFromComposition,
+  createProfileContext,
+  createProfileRuntimeResolution,
   selectInstance,
   resolvePluginLifecycleStatePath,
 } from 'acryl-harness-runtime'
@@ -845,6 +848,10 @@ async function start(): Promise<void> {
         // `dsh.requiresAcrylPackages` goes unresolved the moment acryl-extension-context tries to install it
         // live (measured: "this runtime cannot resolve ACRYL framework packages", acryl-gtd never activating).
         installPackageUrl: pathToFileURL(desktopInstallAnchor()).href,
+        // DSH 0.2 answers every bare-package import of the profile from this table (see `DshEngineComposition`).
+        runtimeResolution: await createProfileRuntimeResolution(prepared.profile, desktopInstallAnchor()),
+        // Enables upstream's live configuration (config-editor, settings, plugin manager); see `DshEngineComposition.profileContext`.
+        profileContext: createProfileContext(prepared.profile, { installAnchor: desktopInstallAnchor(), home: prepared.homeDir, overlays: prepared.acrylPatches }),
       })],
       initialEngine: 'dsh',
       prepare: async (hostCtx) => {
@@ -1038,8 +1045,8 @@ async function start(): Promise<void> {
     })
     const ctx = engineHost.ctx
     generation.bindHost(ctx)
-    fileExporter?.setThreshold((ctx.settings.get(DESKTOP_SETTINGS_NAMESPACE) as DesktopSettings | undefined)?.logLevel ?? 'info')
-    ctx.on('settings/updated', (namespace, next) => {
+    fileExporter?.setThreshold((ctx.acrylSettings.get(DESKTOP_SETTINGS_NAMESPACE) as DesktopSettings | undefined)?.logLevel ?? 'info')
+    ctx.on('acrylSettings/updated', (namespace, next) => {
       if (namespace !== DESKTOP_SETTINGS_NAMESPACE) return
       fileExporter?.setThreshold((next as DesktopSettings).logLevel)
     })

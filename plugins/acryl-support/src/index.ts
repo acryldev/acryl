@@ -10,7 +10,7 @@
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-host-webserver'
+import type {} from 'acryl-control'
 import { buildDiagnosticsArchive, FileExporter, LogFileSink } from 'acryl-diagnostics'
 import { SUPPORT_DIAGNOSTICS_PATH } from './contract.ts'
 import { createDiagnosticsRequestHandler } from './route.ts'
@@ -31,12 +31,12 @@ declare module '@deepseek-ai/cordis' {
   }
 }
 
-export const inject = ['webServer', 'appInstance']
+export const inject = ['acrylWeb', 'appInstance']
 
 const pluginVersion = (createRequire(import.meta.url)('../package.json') as { version: string }).version
 
 export function apply(ctx: Context): void {
-  const origin = `http://127.0.0.1:${String(ctx.webServer.port)}`
+  const origin = `http://127.0.0.1:${String(ctx.acrylWeb.port)}`
   const report = (operation: string, cause: unknown): void => {
     ctx.logger.error(`acryl-support: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
   }
@@ -60,7 +60,7 @@ export function apply(ctx: Context): void {
       surface: 'web',
       appVersion: `acryl-support ${pluginVersion}`,
     }))
-    const release = ctx.webServer.register({
+    const release = ctx.acrylWeb.register({
       kind: 'exact',
       path: SUPPORT_DIAGNOSTICS_PATH,
       handler: (req, res) => handle(req, res, origin, report),

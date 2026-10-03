@@ -5,7 +5,7 @@ import {
   desktopWindowsPwshConfig,
   desktopWindowsPwshPath,
   type WindowsAclAdaptation,
-} from '../../src/windows-pwsh-sandbox.ts'
+} from '../../src/windows-acl-adaptation.ts'
 
 const RUN_AS_NODE = 'ELECTRON_RUN_AS_NODE'
 
@@ -16,6 +16,7 @@ function shellSpec(env?: Record<string, string>): ShellExecSpec {
     timeoutMs: 60_000,
     stdoutMaxBytes: 64_000,
     sandboxPolicy: undefined,
+    onExpiry: 'kill',
     ...(env === undefined ? {} : { env }),
   }
 }

@@ -1,5 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
-import type { JobId, JobSnapshot } from '@deepseek-ai/dsh-jobs'
+import type { JobId, JobView } from '@deepseek-ai/dsh-jobs'
 import type { Session, SessionEvent, SessionId } from '@deepseek-ai/dsh-session'
 import { describe, expect, it, vi } from 'vitest'
 import {
@@ -12,7 +12,10 @@ import {
 } from '../../src/shell/notifications.ts'
 import type { DesktopRuntime } from '../../src/shell/runtime.ts'
 
-type OptionalService = 'jobs' | 'sessions' | 'settings'
+/** The fields of a job these tests vary; the harness delivers it as a `settled` job event. */
+type JobSnapshot = Record<string, unknown> & { readonly status: JobView['status'] }
+
+type OptionalService = 'jobs' | 'sessions' | 'acrylSettings'
 
 interface NotificationHarness {
   readonly notifyAttention: ReturnType<typeof vi.fn>
@@ -28,7 +31,7 @@ interface NotificationHarness {
   dispose(): void
 }
 
-function createHarness(available: readonly OptionalService[] = ['jobs', 'sessions', 'settings']): NotificationHarness {
+function createHarness(available: readonly OptionalService[] = ['jobs', 'sessions', 'acrylSettings']): NotificationHarness {
   const notifyAttention = vi.fn()
   const stopJobs = vi.fn()
   const stopSessions = vi.fn()
@@ -62,14 +65,16 @@ function createHarness(available: readonly OptionalService[] = ['jobs', 'session
 
   const ctx = {
     desktopRuntime: runtime,
-    settings: { register: registerSettings },
+    acrylSettings: { register: registerSettings },
     jobs: {
-      onJobDone: (listener: typeof jobListener) => {
-        jobListener = listener
-        return () => {
-          jobListener = undefined
-          stopJobs()
-        }
+      events: {
+        subscribe: (_filter: unknown, listener: (event: { type: string; job: JobSnapshot }) => void) => {
+          jobListener = snapshot => listener({ type: 'settled', job: snapshot })
+          return () => {
+            jobListener = undefined
+            stopJobs()
+          }
+        },
       },
     },
     on: (event: string, listener: typeof sessionListener | typeof sessionDisposedListener) => {
@@ -129,7 +134,7 @@ function createHarness(available: readonly OptionalService[] = ['jobs', 'session
     dispose() {
       teardown('sessions')
       teardown('jobs')
-      teardown('settings')
+      teardown('acrylSettings')
     },
   }
 }
@@ -166,7 +171,7 @@ function userMessage(source: 'user' | 'plugin', seq: number): SessionEvent<'user
 
 describe('desktop notifications Host plugin', () => {
   it('registers live notification settings with the global switch enabled by default', () => {
-    const harness = createHarness(['settings'])
+    const harness = createHarness(['acrylSettings'])
 
     expect(name).toBe('desktop-notifications')
     expect(inject).toEqual(['desktopRuntime'])
@@ -186,7 +191,7 @@ describe('desktop notifications Host plugin', () => {
   })
 
   it('notifies for completed and failed jobs without exposing job details', async () => {
-    const harness = createHarness(['jobs', 'settings'])
+    const harness = createHarness(['jobs', 'acrylSettings'])
     const snapshot = {
       id: 'bash-1' as JobId,
       kind: 'bash',

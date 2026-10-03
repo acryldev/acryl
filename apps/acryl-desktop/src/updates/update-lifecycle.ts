@@ -1,7 +1,7 @@
 /** Generation-scoped ownership for update polling, prompts, downloads, and disposal. */
 
 import { open } from 'node:fs/promises'
-import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
+import { writeFileAtomic } from '../engine-files.ts'
 import type {
   DesktopLocale,
   DesktopTrayItem,

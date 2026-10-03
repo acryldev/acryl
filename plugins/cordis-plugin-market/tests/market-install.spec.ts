@@ -1,11 +1,10 @@
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { EventEmitter } from 'node:events'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { Readable } from 'node:stream'
 import { Context } from '@deepseek-ai/cordis'
-import type { SettingsScope } from '@deepseek-ai/dsh-settings'
-import { FileSettingsProvider } from '@deepseek-ai/dsh-settings-file'
+import { apply as applyAcrylSettings, inject as acrylSettingsInject, name as acrylSettingsName, type SettingsScope } from 'acryl-settings'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { stringify as stringifyYaml } from 'yaml'
 import { DSH_1024STORE_ADAPTER_ID, DSH_1024STORE_PROVIDER_ID } from '../src/adapters/dsh-1024store.js'
@@ -493,7 +492,12 @@ describe('market install service', () => {
     const profileDir = await createProfile()
     const settingsPath = join(profileDir, 'settings.yaml')
     const firstContext = new Context()
-    await firstContext.plugin(FileSettingsProvider, { path: settingsPath, watch: false })
+    firstContext.provide('appInstance', { home: dirname(settingsPath) })
+    firstContext.plugin(
+      { name: acrylSettingsName, inject: acrylSettingsInject, apply: applyAcrylSettings },
+      { filename: settingsPath },
+    )
+    await new Promise(resolve => setTimeout(resolve, 0))
     const firstService = new MarketInstallService(
       registerMarketSettings(firstContext),
       () => ({ name: 'web', dir: profileDir }),
@@ -511,7 +515,12 @@ describe('market install service', () => {
     await firstContext.fiber.dispose()
 
     const secondContext = new Context()
-    await secondContext.plugin(FileSettingsProvider, { path: settingsPath, watch: false })
+    secondContext.provide('appInstance', { home: dirname(settingsPath) })
+    secondContext.plugin(
+      { name: acrylSettingsName, inject: acrylSettingsInject, apply: applyAcrylSettings },
+      { filename: settingsPath },
+    )
+    await new Promise(resolve => setTimeout(resolve, 0))
     const secondService = new MarketInstallService(
       registerMarketSettings(secondContext),
       () => ({ name: 'web', dir: profileDir }),

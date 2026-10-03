@@ -31,7 +31,7 @@
       "patch": "./cordis.patch.yml"
     },
     "client": {
-      "inject": ["acryl-shortcuts"],
+      "inject": ["@deepseek-ai/dsh-client-shortcuts"],
       "platform": "web"
     }
   },
@@ -56,8 +56,8 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "4.0.2",
-    "acryl-shortcuts": "workspace:*",
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/dsh-client-shortcuts": "0.2.0-rc.2",
     "@types/node": "^22.20.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",

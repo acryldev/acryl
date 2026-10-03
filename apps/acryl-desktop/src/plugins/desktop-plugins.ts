@@ -17,7 +17,7 @@ import {
   resolveProfileDir,
   type Profile,
 } from '@deepseek-ai/dsh-app-boot'
-import { withFileLock, writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
+import { withFileLock, writeFileAtomic } from '../engine-files.ts'
 import { assertDesktopProfileName } from '../profile/profile-manager.ts'
 
 const BIN_NAME = 'acryl-desktop'

@@ -172,7 +172,7 @@ const electron = vi.hoisted(() => {
         if (name === 'downloads') return '/tmp/Downloads'
         return '/tmp/dsh-desktop-user-data'
       }),
-      getVersion: vi.fn(() => '43.4.0'),
+      getVersion: vi.fn(() => '43.0.0'),
       isPackaged: false,
       isHidden: vi.fn(() => false),
       show: vi.fn(),
@@ -1114,7 +1114,7 @@ describe('Electron desktop runtime', () => {
     vi.spyOn(process, 'platform', 'get').mockReturnValue('darwin')
     Object.defineProperty(process.versions, 'electron', {
       configurable: true,
-      value: '43.4.0',
+      value: '43.0.0',
     })
     try {
       const { ElectronDesktopRuntime } = await import('../../src/electron-runtime.ts')
@@ -1131,7 +1131,7 @@ describe('Electron desktop runtime', () => {
       expect(terminal.open).toHaveBeenCalledWith(expect.objectContaining({
         platform: 'darwin',
         appExecutable: process.execPath,
-        electronVersion: '43.4.0',
+        electronVersion: '43.0.0',
         profileName: 'desktop',
         productVersion: APP_VERSION,
         profileDir: expect.stringMatching(/profiles[\\/]+desktop$/u),
@@ -1242,7 +1242,7 @@ describe('Electron desktop runtime', () => {
     const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
     Object.defineProperty(process.versions, 'electron', {
       configurable: true,
-      value: '43.4.0',
+      value: '43.0.0',
     })
     try {
       const { ElectronDesktopRuntime } = await import('../../src/electron-runtime.ts')
@@ -1347,7 +1347,7 @@ describe('Electron desktop runtime', () => {
     vi.spyOn(process, 'platform', 'get').mockReturnValue('win32')
     Object.defineProperty(process.versions, 'electron', {
       configurable: true,
-      value: '43.4.0',
+      value: '43.0.0',
     })
     try {
       const { ElectronDesktopRuntime } = await import('../../src/electron-runtime.ts')

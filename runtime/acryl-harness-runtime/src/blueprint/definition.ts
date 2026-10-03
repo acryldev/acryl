@@ -20,7 +20,7 @@ import { brandIdentity } from './brand-identity.ts'
 import { BLUEPRINT_ROW_IDS, builtInCatalog, type Blueprint, type BlueprintCatalog, type BlueprintRowId } from './blueprint.ts'
 
 const ID = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/u
-const KEYS = new Set(['id', 'name', 'description', 'extends', 'capabilities', 'rows', 'brand', 'shell'])
+const KEYS = new Set(['id', 'name', 'description', 'extends', 'capabilities', 'rows', 'brand', 'shell', 'dshChat'])
 const SHELLS: readonly AcrylShellMode[] = ['compatibility', 'advanced']
 
 export class InvalidBlueprintError extends Error {
@@ -63,12 +63,13 @@ export function parseBlueprint(input: unknown, catalog: BlueprintCatalog = built
   const rows = oneOf(record, 'rows', BLUEPRINT_ROW_IDS as readonly BlueprintRowId[])
   const shell = text(record, 'shell', 20)
   if (shell !== undefined && !SHELLS.includes(shell as AcrylShellMode)) throw new InvalidBlueprintError(`"shell" must be one of ${SHELLS.join(', ')}`)
+  if (record.dshChat !== undefined && typeof record.dshChat !== 'boolean') throw new InvalidBlueprintError('"dshChat" must be true or false')
   const brand = record.brand === undefined
     ? undefined
     : { kind: 'custom', identity: brandIdentity(record.brand) } as const
 
   const base: Blueprint = parent ?? {
-    id, name: id, description: '', capabilities: ['authorization'], rows: ['extension-context', 'system-prompt'], brand: { kind: 'acryl' }, shell: 'compatibility',
+    id, name: id, description: '', capabilities: ['authorization', 'acryl-settings'], rows: ['extension-context', 'system-prompt'], brand: { kind: 'acryl' }, shell: 'compatibility', dshChat: true,
   }
   return Object.freeze({
     id,
@@ -78,5 +79,6 @@ export function parseBlueprint(input: unknown, catalog: BlueprintCatalog = built
     rows: rows ?? base.rows,
     brand: brand ?? base.brand,
     shell: (shell as AcrylShellMode | undefined) ?? base.shell,
+    dshChat: record.dshChat === undefined ? base.dshChat : record.dshChat,
   })
 }

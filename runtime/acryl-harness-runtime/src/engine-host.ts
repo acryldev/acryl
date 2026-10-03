@@ -104,7 +104,13 @@ export async function createAcrylEngineHost(input: {
       const next = engines.get(id)
       if (next === undefined) throw new Error(`unknown ACRYL engine: ${id}`)
       if (next.id === active) return
-      await ctx.loader.resolve(ENGINE_ENTRY_ID).update(entryFor(next))
+      // Loader 1.0.5 (Cordis family of DSH 0.2) re-imports a row only when it is created: `Entry.update` on a running row applies a
+      // changed `config` but ignores a changed plugin `name`. So a swap removes the row (waiting for its fiber to finish
+      // disposing, so the old engine's effects stop before the new one's start) and creates it again under the same stable id.
+      const previous = ctx.loader.resolve(ENGINE_ENTRY_ID).fiber
+      ctx.loader.remove(ENGINE_ENTRY_ID)
+      await previous?.dispose()
+      await ctx.loader.create(entryFor(next))
       await ctx.loader.await()
       active = next.id
     },

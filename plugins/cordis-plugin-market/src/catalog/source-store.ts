@@ -1,4 +1,4 @@
-import type { SettingsScope } from '@deepseek-ai/dsh-settings'
+import type { SettingsScope } from 'acryl-settings'
 import type { MarketInstallReceipt } from '../api-types.js'
 import type { CatalogSnapshot } from '../contracts/generated/catalog-snapshot.js'
 import { validateLocalSourceRecords } from '../contracts/validate.js'

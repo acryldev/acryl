@@ -21,18 +21,25 @@ const SECTION_TIMEOUT_MS = 5_000
 
 /**
  * The button that opens the Settings panel. Other buttons in the page also open dialogs (the Marketplace launcher,
- * usage panels), so this looks only in the left pane and skips anything that carries an `aria-label` or belongs to
- * the Marketplace: the Settings trigger is the one dialog button there with no label of its own.
+ * usage panels), so this looks only in the left pane: first the dialog button labelled "Settings" (DSH 0.2), then, for an
+ * older host, the one dialog button there with no label of its own that is not the Marketplace.
  */
 export function findSettingsTrigger(doc: Document): HTMLButtonElement | null {
   const inPane = doc.querySelectorAll<HTMLButtonElement>('[data-acryl-slot="sidebar"] button[aria-haspopup="dialog"]')
   const candidates = inPane.length > 0 ? inPane : doc.querySelectorAll<HTMLButtonElement>('button[aria-haspopup="dialog"]')
+  // DSH 0.2 labels its trigger "Settings" (0.1.5 left it unlabelled), so match that label first, in either shipped language.
+  for (const button of candidates) {
+    if (SETTINGS_TRIGGER_LABELS.includes(button.getAttribute('aria-label') ?? '')) return button
+  }
   for (const button of candidates) {
     if (button.hasAttribute('aria-label') || button.className.includes('Market')) continue
     return button
   }
   return null
 }
+
+/** The accessible names DSH gives its Settings trigger. */
+const SETTINGS_TRIGGER_LABELS: readonly string[] = ['Settings', '设置']
 
 /**
  * @param onSectionSettled - called once the section step resolves: `true` once its nav button was found and

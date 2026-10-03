@@ -1,7 +1,8 @@
 /** Privacy-safe desktop attention for completed user turns and background jobs. */
 
+import type {} from 'acryl-settings'
 import type { Context } from '@deepseek-ai/cordis'
-import type { JobSnapshot } from '@deepseek-ai/dsh-jobs'
+import type { JobView } from '@deepseek-ai/dsh-jobs'
 import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
 import z from '@deepseek-ai/schemastery'
 import type { DesktopLocale, DesktopNotification } from './runtime.ts'
@@ -9,9 +10,7 @@ import type { DesktopLocale, DesktopNotification } from './runtime.ts'
 export const name = 'desktop-notifications'
 export const inject = ['desktopRuntime']
 
-// `SettingsNamespace` is a compile-time-validated string literal type, not a
-// branded runtime value — `ctx.settings.register`/`.get`/etc. accept this
-// literal directly (see `@deepseek-ai/dsh-settings`'s `SettingsNamespaceInput`).
+// Namespace of ACRYL's own settings service (`ctx.acrylSettings`, package `acryl-settings`).
 export const DESKTOP_NOTIFICATIONS_SETTINGS_NAMESPACE = 'dsh-desktop-notifications'
 
 export interface DesktopNotificationSettings {
@@ -57,12 +56,12 @@ interface OpenTurn {
 function notifyJob(
   runtime: Context['desktopRuntime'],
   settings: DesktopNotificationSettings,
-  snapshot: JobSnapshot,
+  job: JobView,
 ): void {
   if (!settings.enabled) return
-  if (snapshot.status === 'completed' && settings.notifyOnJobCompletion) {
+  if (job.status === 'completed' && settings.notifyOnJobCompletion) {
     runtime.notifyAttention(NOTIFICATION_COPY[runtime.locale]['job-completed'])
-  } else if (snapshot.status === 'failed' && settings.notifyOnJobFailure) {
+  } else if (job.status === 'failed' && settings.notifyOnJobFailure) {
     runtime.notifyAttention(NOTIFICATION_COPY[runtime.locale]['job-failed'])
   }
 }
@@ -106,9 +105,9 @@ function trackTurn(
 export function apply(ctx: Context): void {
   let settings = DEFAULT_SETTINGS
 
-  ctx.inject(['settings'], (settingsCtx) => {
+  ctx.inject(['acrylSettings'], (settingsCtx) => {
     settingsCtx.effect(() => {
-      const scope = settingsCtx.settings.register(
+      const scope = settingsCtx.acrylSettings.register(
         DESKTOP_NOTIFICATIONS_SETTINGS_NAMESPACE,
         DesktopNotificationSettingsSchema,
         { applies: 'live' },
@@ -124,7 +123,11 @@ export function apply(ctx: Context): void {
 
   ctx.inject(['jobs'], (jobsCtx) => {
     jobsCtx.effect(
-      () => jobsCtx.jobs.onJobDone(snapshot => { notifyJob(jobsCtx.desktopRuntime, settings, snapshot) }),
+      // A job is done when it settles. `awaited` settlements were already delivered to the model that waited for them,
+      // but the person at the desk still wants the attention, so every settlement notifies.
+      () => jobsCtx.jobs.events.subscribe({ owners: 'all' }, (event) => {
+        if (event.type === 'settled') notifyJob(jobsCtx.desktopRuntime, settings, event.job)
+      }),
       'acryl-desktop: background job attention',
     )
   })

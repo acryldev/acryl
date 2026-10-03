@@ -24,6 +24,13 @@ function file(name: string, body: string): string {
 }
 
 describe('parseBlueprint', () => {
+  it('reads dshChat, inherits it from the parent, and refuses a non-boolean', () => {
+    expect(parseBlueprint({ id: 'acme.own-agents', extends: 'acryl.ide', dshChat: false }).dshChat).toBe(false)
+    expect(parseBlueprint({ id: 'acme.child', extends: 'acryl.agents' }).dshChat).toBe(false)
+    expect(parseBlueprint({ id: 'acme.plain' }).dshChat).toBe(true)
+    expect(() => parseBlueprint({ id: 'acme.bad', dshChat: 'no' })).toThrow(InvalidBlueprintError)
+  })
+
   it('extends a known blueprint, overriding only what it names', () => {
     const blueprint = parseBlueprint({ id: 'acme.notes', name: 'Acme Notes', extends: 'acryl.blank', brand: { name: 'Acme Notes', accent: '#0a7d4b' }, rows: ['extension-context', 'system-prompt', 'ui-library', 'community-market'] })
     expect(blueprint.id).toBe('acme.notes')
@@ -34,7 +41,7 @@ describe('parseBlueprint', () => {
 
   it('stands alone with safe defaults when it extends nothing', () => {
     const blueprint = parseBlueprint({ id: 'tiny' })
-    expect(blueprint.capabilities).toEqual(['authorization'])
+    expect(blueprint.capabilities).toEqual(['authorization', 'acryl-settings'])
     expect(blueprint.shell).toBe('compatibility')
   })
 

@@ -13,7 +13,7 @@
   },
   {
     "name": "context:file-reference",
-    "hash": "89ba1c89893a"
+    "hash": "63738afd0d9f"
   },
   {
     "name": "tool:bash",
@@ -21,19 +21,19 @@
   },
   {
     "name": "tool:read",
-    "hash": "360f3b4090b4"
+    "hash": "4a23d2ec84aa"
   },
   {
     "name": "tool:write",
-    "hash": "b362c190e7b4"
+    "hash": "06221af32d81"
   },
   {
     "name": "tool:edit",
-    "hash": "a5cc9d7f5568"
+    "hash": "89df623d3529"
   },
   {
     "name": "tool:glob",
-    "hash": "fea278627cd2"
+    "hash": "2a21a1ccfe63"
   },
   {
     "name": "tool:grep",
@@ -45,39 +45,39 @@
   },
   {
     "name": "tool:web_search",
-    "hash": "b1134f16a10a"
+    "hash": "4142c297778f"
   },
   {
     "name": "tool:web_fetch",
-    "hash": "7460d60c1307"
+    "hash": "4fe4c0ce663c"
   },
   {
     "name": "tool:goal",
-    "hash": "9b4617faaa51"
+    "hash": "ebf10b6ae984"
   },
   {
     "name": "tool:workflow",
     "hash": "4e6240cecbf5"
   },
   {
-    "name": "tool:ralph",
-    "hash": "b9e63bed0a54"
-  },
-  {
     "name": "tool:subagent",
-    "hash": "33e80771e437"
+    "hash": "7f02d244c70b"
   },
   {
     "name": "tool:subagent_fork",
-    "hash": "8eb8950bc179"
+    "hash": "762559ae5281"
+  },
+  {
+    "name": "mcp-resource-servers",
+    "hash": "e3b0c44298fc"
   },
   {
     "name": "ui:deliverable-file-references",
-    "hash": "bc2dc17a6521"
+    "hash": "e8a2eb8da7f6"
   },
   {
     "name": "harness:source",
-    "hash": "9f92a855c786"
+    "hash": "07fcbc7414c1"
   },
   {
     "name": "app:web-surface",

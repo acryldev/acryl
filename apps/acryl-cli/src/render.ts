@@ -298,13 +298,13 @@ function resolveToolResult(event: Extract<SessionEvent, { type: 'tool/result' }>
   if (event.data.error !== undefined) {
     return { kind: 'error', line: `${red('✖')} ${event.data.error.code}: ${event.data.error.name}` }
   }
-  const [block] = event.data.message.content
-  const failed = block.isError === true
+  const message = event.data.message
+  const failed = message.isError === true
   const icon = failed ? red('✖') : cyan('✓')
   const callId = event.data.message.source.callId
-  const result: ToolResult = { content: block.content, isError: failed, ...event.data.meta !== undefined ? { meta: event.data.meta } : {} }
+  const result: ToolResult = { content: [...message.content], isError: failed, ...event.data.meta !== undefined ? { meta: event.data.meta } : {} }
   const presented = presentResultSafely(callId, result, options)
-  return { kind: 'ok', icon, content: block.content, presented, callTitle: resolveCallTitle(callId, options) }
+  return { kind: 'ok', icon, content: message.content, presented, callTitle: resolveCallTitle(callId, options) }
 }
 
 /** A presented completed call's lines: an outcome-colored header plus card-specific body. `callTitle` is the paired call's presented title — a result view's own `title` field defers to it (the "pending-state title") when omitted, so it comes before the flat fallback name. */
@@ -407,10 +407,6 @@ export function formatEvent(event: SessionEvent, options: RenderOptions): string
       if (source.kind === 'user') {
         const text = textOf(event.data.content)
         return text === '' ? undefined : `${dim('you ›')} ${text}`
-      }
-      if (source.kind === 'plugin') {
-        const summary = source.form === 'notice' ? source.summary : undefined
-        return `${dim('⊕ context ›')} ${source.plugin}${summary === undefined ? '' : ` · ${summary}`}`
       }
       // An admitted goal continuation round: collapsed to a label like the
       // web portal's context rows, but naming the round so automatic

@@ -24,7 +24,6 @@ import { installDesktopDirectoryPickerBridge, requestDesktopDirectoryValidation 
 import { parseDesktopClientEnvironment } from './environment.ts'
 import { installWorkspaceFolderDrop } from './workspaces/workspace-folder-drop.ts'
 
-export { applyDesktopSettings } from './settings/desktop-settings.ts'
 export {
   createDesktopSettingsApi,
   desktopSettingsPaths,
@@ -40,8 +39,11 @@ export type {
   DesktopSettingsApi,
   DesktopSettingsView,
 } from './settings/desktop-settings-api.ts'
+export { applyDesktopSettings } from './settings/desktop-settings.ts'
 export { DesktopSettingsSection } from './settings/DesktopSettingsSection.tsx'
 export { DesktopTerminalSettingsAction } from './settings/DesktopTerminalSettingsAction.tsx'
+export { createPreferenceScopes } from './settings/desktop-preferences.ts'
+export type { PreferenceScope, PreferenceSnapshot, PreferenceStatus } from './settings/desktop-preferences.ts'
 export type {
   DesktopTerminalSettingsActionInjected,
   DesktopTerminalSettingsActionProps,
@@ -62,13 +64,12 @@ export type { RendererBootLoader, RendererBootReport } from './boot-health.ts'
 export { parseDesktopClientEnvironment } from './environment.ts'
 export type { DesktopClientEnvironment, DesktopClientMode, DesktopClientPlatform } from './environment.ts'
 
-/** Services required by Desktop settings and advanced presentation. */
+/** Services required by Desktop presentation. */
 export const inject = [
   'slots',
   'locale',
   'connection',
   'remote',
-  'settingsScope',
   'sessions',
   'theme',
   'workspaces',

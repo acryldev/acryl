@@ -50,10 +50,6 @@ function prettyJson(raw: string): string {
 function userLabel(data: SessionEvent<'user/message'>['data']): string {
   const { source } = data
   if (source.kind === 'user') return truncate(textOf(data.content), LABEL_LIMIT)
-  if (source.kind === 'plugin') {
-    const summary = source.form === 'notice' ? source.summary : undefined
-    return `${source.plugin}${summary === undefined ? '' : ` · ${summary}`}`
-  }
   // An admitted goal continuation round — the round number is the salient
   // fact (the injected `<goal_round>` prompt stays folded, like `formatEvent`).
   if (source.kind === 'goal') return `goal · round ${source.round}`
@@ -192,11 +188,11 @@ export function buildTrajectoryRows(
         break
       }
       case 'tool/result': {
-        const [block] = event.data.message.content
-        const failed = event.data.error !== undefined || block.isError === true
+        const message = event.data.message
+        const failed = event.data.error !== undefined || message.isError === true
         const resultText = event.data.error !== undefined
           ? `${event.data.error.code}: ${event.data.error.name}`
-          : textOf(block.content)
+          : textOf(message.content)
         const callId = event.data.message.source.callId
         const pending = pendingCalls.get(callId)
         if (pending !== undefined) {

@@ -97,7 +97,7 @@ describe('blank blueprint on the CLI engine', () => {
     const host = await createAcrylEngineHost({ engines: [createDshEngineDefinition('acryl-blank-test')], initialEngine: 'dsh' })
     try {
       const ids = rowIds(host)
-      expect(ids).toEqual(expect.arrayContaining(['extension-context', 'acryl-system-prompt', 'authorization', 'agent-presets']))
+      expect(ids).toEqual(expect.arrayContaining(['extension-context', 'acryl-system-prompt', 'authorization', 'agent-preset-registry']))
       expect(ids).not.toContain('brand')
       const assembly = await host.ctx.get('systemPrompt')!.assemble()
       expect(JSON.stringify(assembly.sections)).toContain('inside Blank')

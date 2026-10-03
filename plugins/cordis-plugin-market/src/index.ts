@@ -15,7 +15,7 @@ import {
 } from './install/service.js'
 
 export const name = 'community-market'
-export const inject = ['webServer', 'settings']
+export const inject = ['webServer', 'acrylSettings']
 
 interface DesktopProfilesCapability {
   readonly current: MarketDesktopProfile

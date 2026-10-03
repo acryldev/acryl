@@ -1,5 +1,6 @@
 export { brandIdentity, identityLine, InvalidBrandIdentityError, type BrandIdentity } from './brand-identity.ts'
 export {
+  AGENTS_BLUEPRINT,
   BLANK_BLUEPRINT,
   IDE_BLUEPRINT,
   UnknownBlueprintError,
@@ -12,7 +13,7 @@ export {
   type BlueprintCatalog,
   type BlueprintRowId,
 } from './blueprint.ts'
-export { blueprintRowForPackage, composeBlueprintRows, packageForBlueprintRow, type BlueprintComposition } from './compose.ts'
+export { blueprintRowForPackage, composeBlueprintRows, DSH_CHAT_ROW_IDS, packageForBlueprintRow, type BlueprintComposition } from './compose.ts'
 export { blueprintFromEnvironment } from './selection.ts'
 export { InvalidBlueprintError, parseBlueprint } from './definition.ts'
 export { readBlueprintFile, readStarters } from './selection.ts'

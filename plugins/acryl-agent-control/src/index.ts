@@ -7,7 +7,7 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-host-webserver'
+import type {} from 'acryl-control'
 import type {} from '@deepseek-ai/dsh-tools'
 import { createApprovalPolicy } from './host/approval.ts'
 import { AuditLog, auditPath } from './host/audit.ts'
@@ -18,6 +18,13 @@ import { ONLINE_CALL_PATH, handleOnlineCallRequest } from './host/online-route.t
 import { removeOnlineSecret, writeOnlineSecret } from './host/online-secret.ts'
 import { createUiControlStream, UI_CONTROL_CHANNEL_PATH } from './host/stream.ts'
 import { RefDirectory, registerUiTools, runOnlineCall } from './host/tools.ts'
+import { MCP_PATH, TOOLS_PATH } from './tools-contract.ts'
+import { createToolsGateway } from './host/tools-gateway/gateway.ts'
+import { handleMcpRequest, handleToolsRequest } from './host/tools-gateway/routes.ts'
+import { docsRootFromLookup, removeWorkerMcpConfig, workerMcpArgs, writeWorkerMcpConfig } from './host/tools-gateway/worker-config.ts'
+import { WORKERS_PATH } from './workers-contract.ts'
+import { handleWorkersRequest } from './host/workers/route.ts'
+import { mountWorkers } from './host/workers/service.ts'
 
 export const name = 'acryl-agent-control'
 /**
@@ -35,14 +42,26 @@ declare module '@deepseek-ai/cordis' {
   }
 }
 
-export const inject = ['webServer', 'tools', 'appInstance']
+export const inject = ['acrylWeb', 'tools', 'appInstance']
 
 export function apply(ctx: Context, rawConfig?: unknown): void {
   const config = parseConfig(rawConfig)
-  const origin = `http://127.0.0.1:${String(ctx.webServer.port)}`
+  const origin = `http://127.0.0.1:${String(ctx.acrylWeb.port)}`
   const reportError = (operation: string, cause: unknown): void => {
     ctx.logger?.error?.(`acryl-agent-control: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
   }
+  // Bring-your-own agents (Claude Code): mounted as children of this Fiber, so they end with it.
+  // The MCP config a Claude worker starts with exists only while the gateway is up (it names this Host and carries its secret).
+  let workerMcpConfig: string | undefined
+  const gateway = config.tools.enabled ? createToolsGateway(ctx, config.tools.expose) : undefined
+  const workerArgs = async (): Promise<readonly string[]> => {
+    if (workerMcpConfig === undefined) return []
+    // Read access to the extension docs the lookup tool points at, so the worker can follow them.
+    const lookup = await gateway?.call('acryl_extension_lookup', { topic: 'tool' }, new AbortController().signal).catch(() => undefined)
+    const docs = lookup?.ok === true ? docsRootFromLookup(lookup.text) : undefined
+    return [...workerMcpArgs(workerMcpConfig), ...(docs === undefined ? [] : ['--add-dir', docs])]
+  }
+  const workers = config.workers.enabled ? mountWorkers(ctx, config.workers, workerArgs) : undefined
   ctx.effect(() => {
     const channel = new UiChannel()
     const stream = createUiControlStream(channel, origin)
@@ -51,12 +70,19 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
     const releases: Array<() => void> = []
     let onlineSecret: string | undefined
     try {
-      releases.push(ctx.webServer.registerUpgrade({
+      releases.push(ctx.acrylWeb.registerUpgrade({
         path: UI_CONTROL_CHANNEL_PATH,
         handler: (req, socket, head) => { stream.handleUpgrade(req, socket, head) },
       }))
       const handleAudit = createAuditRequestHandler(audit)
-      releases.push(ctx.webServer.register({ kind: 'exact', path: UI_CONTROL_AUDIT_PATH, handler: (req, res) => { handleAudit(req, res, origin) } }))
+      releases.push(ctx.acrylWeb.register({ kind: 'exact', path: UI_CONTROL_AUDIT_PATH, handler: (req, res) => { handleAudit(req, res, origin) } }))
+      if (workers !== undefined) {
+        releases.push(ctx.acrylWeb.register({
+          kind: 'exact',
+          path: WORKERS_PATH,
+          handler: (req, res) => { void handleWorkersRequest(req, res, origin, onlineSecret, workers, reportError) },
+        }))
+      }
       releases.push(registerUiTools(ctx, { channel, audit, refs, approval: config.approval === 'none' ? 'none' : 'asked' }))
       releases.push(ctx.on('tools/pre-execute', createApprovalPolicy(ctx, refs, config.approval)))
       if (config.online) {
@@ -64,7 +90,13 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
         // run's alone, written once at startup and removed on shutdown, never persisted across restarts.
         onlineSecret = writeOnlineSecret(ctx.appInstance.home)
         const secret = onlineSecret
-        releases.push(ctx.webServer.register({
+        if (gateway !== undefined) {
+          releases.push(ctx.acrylWeb.register({ kind: 'exact', path: TOOLS_PATH, handler: (req, res) => { void handleToolsRequest(req, res, secret, gateway, reportError) } }))
+          releases.push(ctx.acrylWeb.register({ kind: 'exact', path: MCP_PATH, handler: (req, res) => { void handleMcpRequest(req, res, secret, gateway, reportError) } }))
+          workerMcpConfig = writeWorkerMcpConfig(ctx.appInstance.home, `${origin}${MCP_PATH}`, secret)
+          releases.push(() => { workerMcpConfig = undefined; removeWorkerMcpConfig(ctx.appInstance.home) })
+        }
+        releases.push(ctx.acrylWeb.register({
           kind: 'exact',
           path: ONLINE_CALL_PATH,
           handler: (req, res) => { void handleOnlineCallRequest(req, res, secret, (request, signal) => runOnlineCall({ channel, audit, refs }, request, signal), reportError) },
@@ -87,6 +119,8 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
 }
 
 export { UI_CONTROL_CHANNEL_PATH } from './host/stream.ts'
+export { DEFAULT_EXPOSED_TOOLS, MCP_PATH, TOOLS_PATH, GatewayRequestError, parseGatewayCall, type GatewayCallResponse, type GatewayListResponse, type GatewayTool } from './tools-contract.ts'
+export { WORKERS_PATH, WORKER_PROVIDERS, WorkerRequestError, parseWorkerRequest, type WorkerProvider, type WorkerRequest, type WorkerResponse } from './workers-contract.ts'
 export { UI_CONTROL_AUDIT_PATH } from './host/audit-route.ts'
 export { ONLINE_CALL_PATH, type OnlineCallResponse } from './host/online-route.ts'
 export {

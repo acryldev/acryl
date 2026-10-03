@@ -59,6 +59,11 @@ window.__ModuleLoader__.load({
 		function clamp(value, min, max) {
 			return Math.min(max, Math.max(min, Math.round(value)));
 		}
+		/**
+		* ACRYL's frame state. It is the layout service of the page in advanced mode, so it implements DSH 0.2's whole `ILayout`: besides the
+		* panel transitions it reports which keyed `main` panel (settings, plugin manager, ...) is open (`panelInfo`/`selectPanel`) and hands
+		* out navigation abort signals (`beginNavigation`), which upstream's sidebars and session views call.
+		*/
 		var DesktopLayoutState = class {
 			snapshot = Object.freeze({
 				sidebar: 280,
@@ -71,6 +76,30 @@ window.__ModuleLoader__.load({
 			});
 			listeners = /* @__PURE__ */ new Set();
 			viewport = 0;
+			panel = Object.freeze({ activePanelId: null });
+			panelListeners = /* @__PURE__ */ new Set();
+			navigation;
+			/** Which keyed `main` panel is open; `null` means the ACRYL main surface (the canvas, or the conversation). */
+			panelInfo = {
+				getSnapshot: () => this.panel,
+				subscribe: (listener) => {
+					this.panelListeners.add(listener);
+					return () => {
+						this.panelListeners.delete(listener);
+					};
+				}
+			};
+			selectPanel(panelId) {
+				if (this.panel.activePanelId === panelId) return;
+				this.panel = Object.freeze({ activePanelId: panelId });
+				for (const listener of this.panelListeners) listener();
+			}
+			/** Cancels the previous navigation and returns the signal of the new one. */
+			beginNavigation() {
+				this.navigation?.abort();
+				this.navigation = new AbortController();
+				return this.navigation.signal;
+			}
 			getSnapshot() {
 				return this.snapshot;
 			}
@@ -161,8 +190,9 @@ window.__ModuleLoader__.load({
 		//#endregion
 		//#region src/client/AdvancedFrame.tsx
 		/** Desktop-owned transparent frame around the unchanged product surfaces. */
-		function AdvancedFrame({ layout, platform, wrapMain, wrapRightbar, renderSlot, SessionProvider }) {
+		function AdvancedFrame({ layout, platform, wrapMain, wrapRightbar, renderSlot }) {
 			const panels = (0, react.useSyncExternalStore)((0, react.useCallback)((listener) => layout.subscribe(listener), [layout]), (0, react.useCallback)(() => layout.getSnapshot(), [layout]));
+			const activePanelId = (0, react.useSyncExternalStore)(layout.panelInfo.subscribe, () => layout.panelInfo.getSnapshot().activePanelId);
 			const frameRef = (0, react.useRef)(null);
 			const [viewport, setViewport] = (0, react.useState)(() => window.innerWidth);
 			(0, react.useEffect)(() => {
@@ -225,6 +255,11 @@ window.__ModuleLoader__.load({
 				"data-dragging": dragging || void 0,
 				style: { gridTemplateColumns: `${columns.sidebar}px minmax(0, 1fr) ${columns.details}px` },
 				children: [
+					platform === "darwin" && collapsed && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+						className: "dshDesktopLeading",
+						"data-acryl-slot": "shell.leading",
+						children: renderSlot("shell.leading", {})
+					}),
 					platform === "darwin" && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
 						className: "dshDesktopMacCaptionRow",
 						"aria-hidden": "true"
@@ -255,9 +290,9 @@ window.__ModuleLoader__.load({
 						className: "dshDesktopConversationSurface",
 						"data-acryl-slot": "desktop.main",
 						children: (() => {
-							const main = renderSlot("desktop.main", { renderConversation: () => /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+							const main = activePanelId !== null ? renderSlot("main", {}, { entryKey: activePanelId }) : renderSlot("desktop.main", { renderConversation: () => /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
 								"data-acryl-slot": "conversation",
-								children: renderSlot("conversation", {})
+								children: renderSlot("main", {}, { entryKey: "conversation" })
 							}) });
 							return wrapMain === void 0 ? main : wrapMain(main);
 						})()
@@ -266,7 +301,7 @@ window.__ModuleLoader__.load({
 						className: "dshDesktopDetailsSurface",
 						"data-acryl-slot": "rightbar",
 						children: (() => {
-							const panel = /* @__PURE__ */ (0, react_jsx_runtime.jsx)(SessionProvider, { children: renderSlot("rightbar", rightbar) });
+							const panel = renderSlot("rightbar", rightbar);
 							return wrapRightbar === void 0 ? panel : wrapRightbar(panel);
 						})()
 					}),
@@ -490,6 +525,7 @@ html:has([aria-modal="true"]) .dshDesktopSidebarSurface::before { -webkit-app-re
 			if (environment.mode !== "advanced") throw new Error(`acryl-app-shell: advanced shell received mode ${JSON.stringify(environment.mode)}`);
 			const desktopLayout = new DesktopLayoutState();
 			ctx.effect(() => provideDesktopLayout(ctx, desktopLayout), "acryl-app-shell: layout service");
+			ctx.effect(() => ctx.slots.provideRoot({ hooks: { panelInfo: desktopLayout.panelInfo } }), "acryl-app-shell: panel info");
 			ctx.effect(() => {
 				document.body.dataset.dshDesktopMode = "advanced";
 				document.body.dataset.dshDesktopPlatform = environment.platform;
@@ -534,16 +570,20 @@ html:has([aria-modal="true"]) .dshDesktopSidebarSurface::before { -webkit-app-re
 						kind: "single",
 						scope: "root"
 					},
-					"conversation": {
-						kind: "single",
-						scope: "session-maybe"
+					"main": {
+						kind: "keyed",
+						scope: "root"
 					},
 					"rightbar": {
 						kind: "single",
-						scope: "session"
+						scope: "root"
 					},
 					"shell.overlay": {
 						kind: "list",
+						scope: "root"
+					},
+					"shell.leading": {
+						kind: "single",
 						scope: "root"
 					}
 				},

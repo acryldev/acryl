@@ -22,6 +22,7 @@ export function checksTabPlugin(shell: WorkspaceShellState, gitApi: WorkspaceGit
           priority: 'builtin',
           title: () => 'Checks',
           guide: [{
+            id: CHECKS_ID,
             order: 40,
             title: () => 'Checks',
             description: () => 'Run the project scripts (test, lint, build) in a terminal tab',

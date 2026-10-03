@@ -3,7 +3,7 @@
 import { randomUUID } from 'node:crypto'
 import { chmod, lstat, mkdir, open, readFile, rename, unlink } from 'node:fs/promises'
 import { basename, dirname, extname, isAbsolute, join, resolve } from 'node:path'
-import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
+import { writeFileAtomic } from '../engine-files.ts'
 import { compareSemVerVersions, parseSemVer } from './update-checker.ts'
 
 /** Desktop platforms with a fixed installer download endpoint. */

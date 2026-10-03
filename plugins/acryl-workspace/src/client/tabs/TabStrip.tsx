@@ -43,6 +43,8 @@ export interface TabStripProps {
   onOpenPty(commandId: AgentId, title: string): void
   /** Starts a brand new AcrylDSH Chat session, its own tab (spec 040 T130-followup). */
   onOpenChat(): void
+  /** The DSH chat is available (see NewTabMenu). Defaults to on. */
+  chatAvailable?: boolean
   /** Renames a chat tab's session itself, so the left tree (which reads the session's own title) follows. */
   onRenameChat(sessionId: string, title: string): void
   /** What Settings > Agents says, for the "+" menu. */
@@ -113,7 +115,7 @@ function kindGlyph(kind: WorkspaceTile['kind']): string {
   return '◉'
 }
 
-export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, dock, agentStatus, storage, customAgents, terminals, onClose, onOpenPty, onOpenChat, onRenameChat, agentSettings, tabTypes, tabRegistry, onSetAgentEnabled, onManageSettings }: TabStripProps) {
+export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, dock, agentStatus, storage, customAgents, terminals, onClose, onOpenPty, onOpenChat, chatAvailable, onRenameChat, agentSettings, tabTypes, tabRegistry, onSetAgentEnabled, onManageSettings }: TabStripProps) {
   const tabsRef = useRef<HTMLDivElement>(null)
   const agentStates = useSyncExternalStore(agentStatus.subscribe, agentStatus.getSnapshot)
   const [edges, setEdges] = useState({ start: false, end: false })
@@ -266,6 +268,7 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
         }}
         onOpenAgent={onOpenPty}
         onOpenChat={onOpenChat}
+        {...(chatAvailable === undefined ? {} : { chatAvailable })}
         settings={agentSettings}
         tabTypes={tabTypes}
         tabRegistry={tabRegistry}

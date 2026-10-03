@@ -5,7 +5,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   ACRYL_CODING_CAPABILITIES,
+  AGENTS_BLUEPRINT,
   BLANK_BLUEPRINT,
+  DSH_CHAT_ROW_IDS,
   IDE_BLUEPRINT,
   InvalidBrandIdentityError,
   UnknownBlueprintError,
@@ -74,7 +76,7 @@ describe('what each Blueprint composes', () => {
     expect(insertedIds(patches)).toEqual(['brand', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save'])
     const capabilities = new Set(BLANK_BLUEPRINT.capabilities)
     const capabilityIds = insertedIds(createAcrylCodingCapabilityPatches(new Set(['web']), new Set(), capabilities))
-    expect(capabilityIds).toEqual(['authorization'])
+    expect(capabilityIds).toEqual(['authorization', 'acryl-settings'])
     expect(createAcrylShellCapabilityPatches(new Set(['web']), 'advanced', new Set(), capabilities)).toEqual([])
   })
 
@@ -83,7 +85,7 @@ describe('what each Blueprint composes', () => {
     expect(insertedIds(patches)).toEqual(['extension-context', 'acryl-system-prompt', 'acryl-app-save'])
     expect(packages).toContain('acryl-ui-tui')
     const tui = insertedIds(createAcrylCodingCapabilityPatches(new Set(['tui']), new Set(), new Set(BLANK_BLUEPRINT.capabilities)))
-    expect(tui).toEqual(['agent-presets', 'session-stats', 'authorization'])
+    expect(tui).toEqual(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings'])
   })
 
   it('a custom brand carries into the system prompt identity, and a row the profile already has is not composed twice', () => {
@@ -98,5 +100,18 @@ describe('what each Blueprint composes', () => {
     const second = composeBlueprintRows(BLANK_BLUEPRINT, 'web').patches
     expect(first).not.toBe(second)
     expect(first).toEqual(second)
+  })
+
+  it('acryl.agents is the IDE with the DSH chat off: same rows, the chat rows disabled on web and desktop, untouched on the terminal', () => {
+    expect(AGENTS_BLUEPRINT.rows).toEqual(IDE_BLUEPRINT.rows)
+    expect(AGENTS_BLUEPRINT.grewFrom).toBe(IDE_BLUEPRINT.id)
+    expect(IDE_BLUEPRINT.dshChat).toBe(true)
+    for (const surface of ['web', 'desktop'] as const) {
+      const disabled = composeBlueprintRows(AGENTS_BLUEPRINT, surface).patches.filter(patch => patch.disabled === true).map(patch => patch.id)
+      expect(disabled).toEqual(expect.arrayContaining([...DSH_CHAT_ROW_IDS]))
+      expect(composeBlueprintRows(IDE_BLUEPRINT, surface).patches.filter(patch => patch.disabled === true).map(patch => patch.id)).not.toContain('agent')
+    }
+    // The terminal client is the DSH chat itself: switching it off there would leave nothing to run.
+    expect(composeBlueprintRows(AGENTS_BLUEPRINT, 'tui').patches.filter(patch => patch.disabled === true)).toEqual([])
   })
 })

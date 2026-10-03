@@ -38,6 +38,8 @@ export {
 export {
   createDshEngineDefinition,
   createDshEngineDefinitionFromComposition,
+  createProfileContext,
+  createProfileRuntimeResolution,
   createWebEngineDefinition,
   extensionRequiredFrameworkPackages,
   materializeProfilePackage,
@@ -145,14 +147,17 @@ import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import {
   DEFAULT_PROFILE_BUNDLES,
   PROFILE_TEMPLATES,
+  PluginPackages,
   boot,
   composeEntries,
-  healProfilesModuleFallback,
   initProfile,
   loadProfile,
+  removeLinkProjections,
   resolveProfileDir,
+  type RuntimeResolution,
 } from '@deepseek-ai/dsh-app-boot'
 
+import { createProfileRuntimeResolution } from './engine-dsh.ts'
 import { selectInstance, type AppInstance } from './instance/index.ts'
 import {
   acrylCodingCapabilityPackages,
@@ -172,10 +177,18 @@ export interface BootAcrylHarnessProfileOptions {
   readonly prepare?: (ctx: Context) => Promise<void> | void
 }
 
-/** Provide the chosen app instance before any profile entry mounts, then run the caller's own host setup. */
-function withAppInstance(instance: AppInstance, prepare?: (ctx: Context) => Promise<void> | void): (ctx: Context) => Promise<void> {
+/**
+ * Provide the chosen app instance and the profile's package table (DSH 0.2 answers every bare-package import from it, as stock
+ * `dsh` mounts it in its own boot step) before any profile entry mounts, then run the caller's own host setup.
+ */
+function withAppInstance(
+  instance: AppInstance,
+  resolution: RuntimeResolution,
+  prepare?: (ctx: Context) => Promise<void> | void,
+): (ctx: Context) => Promise<void> {
   return async ctx => {
     ctx.provide('appInstance', instance)
+    await ctx.plugin(PluginPackages, { resolution })
     await prepare?.(ctx)
   }
 }
@@ -196,7 +209,7 @@ export async function bootAcrylHarnessProfile(
   process.env.DSH_HOME = instance.dshHome
   const profileDirectory = resolveProfileDir(options.profile)
   initProfile(profileDirectory, DEFAULT_PROFILE_BUNDLES)
-  await healProfilesModuleFallback({ installAnchor: dshInstallAnchor })
+  removeLinkProjections(profileDirectory)
   const profile = loadProfile('acryl', options.profile, dshInstallAnchor)
   const rootConfig = join(profile.dir, 'cordis.yml')
   writeFileSync(rootConfig, profileRoot)
@@ -211,9 +224,9 @@ export async function bootAcrylHarnessProfile(
       'ACRYL profile enables Cordis HMR and must be launched with Node --expose-internals',
     )
   }
-  const ctx = await boot('acryl', rootConfig, patches, withAppInstance(instance, options.prepare))
+  const ctx = await boot('acryl', rootConfig, patches, withAppInstance(instance, await createProfileRuntimeResolution(profile), options.prepare))
   if ((ctx as { tools?: unknown }).tools) installAcrylWorkspaceStatusTool(ctx)
-  installSessionLogExporter(ctx, { surface: 'tui' })
+  installSessionLogExporter(ctx, { surface: 'tui', dshHome: instance.dshHome })
   let disposed = false
   return Object.freeze({
     ctx,
@@ -263,8 +276,8 @@ export async function bootAcrylWebProfile(
   // ctx.get('connection') and ctx.get('webStartup') are never defined, and
   // the served index falls back to its own "authentication required" message.
   const webTemplate = PROFILE_TEMPLATES.web
-  initProfile(profileDirectory, webTemplate?.bundles ?? DEFAULT_PROFILE_BUNDLES, webTemplate?.patchReload)
-  await healProfilesModuleFallback({ installAnchor: dshInstallAnchor })
+  initProfile(profileDirectory, webTemplate?.bundles ?? DEFAULT_PROFILE_BUNDLES)
+  removeLinkProjections(profileDirectory)
   const profile = loadProfile('web', profileName, dshInstallAnchor)
   const rootConfig = join(profile.dir, 'cordis.yml')
   writeFileSync(rootConfig, profileRoot)
@@ -281,12 +294,12 @@ export async function bootAcrylWebProfile(
     ...profile.patches,
   ])
   const cmdlineArgs = options.cmdlineArgs ?? []
-  const ctx = await boot('web', rootConfig, patches, withAppInstance(instance, hostCtx => {
+  const ctx = await boot('web', rootConfig, patches, withAppInstance(instance, await createProfileRuntimeResolution(profile), hostCtx => {
     provideCmdline(hostCtx, { args: [...cmdlineArgs], exit: code => { process.exitCode = code } })
     return options.prepare?.(hostCtx)
   }))
   if ((ctx as { tools?: unknown }).tools) installAcrylWorkspaceStatusTool(ctx)
-  installSessionLogExporter(ctx, { surface: 'web' })
+  installSessionLogExporter(ctx, { surface: 'web', dshHome: instance.dshHome })
   const startup = ctx.get('webStartup') as { host?: string; port?: number } | undefined
   const host = startup?.host ?? '127.0.0.1'
   const port = startup?.port ?? instance.webPort.start
@@ -312,7 +325,9 @@ export {
 export { pinnedPnpmEnv, resolvePinnedPnpm, type PinnedPnpm } from './pinned-pnpm.ts'
 export { reconcileProfileLayout, type LayoutChange } from './profile-layout.ts'
 export {
+  AGENTS_BLUEPRINT,
   BLANK_BLUEPRINT,
+  DSH_CHAT_ROW_IDS,
   IDE_BLUEPRINT,
   BLUEPRINT_ROW_IDS,
   InvalidBlueprintError,

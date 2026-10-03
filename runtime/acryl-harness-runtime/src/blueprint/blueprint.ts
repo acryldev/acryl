@@ -41,6 +41,12 @@ export interface Blueprint {
   readonly rows: readonly BlueprintRowId[]
   readonly brand: BlueprintBrand
   readonly shell: AcrylShellMode
+  /**
+   * Whether the DeepSeek Harness chat (its agent loop and model providers) is part of this composition. Off, the app keeps its frame
+   * (tab stripe, workspaces, canvas, terminals, Agent Control) and other agents work in it; the DSH chat is one agent, not the foundation.
+   * Applies to the Web and Desktop surfaces: the terminal UI is the DSH chat.
+   */
+  readonly dshChat: boolean
   /** The Blueprint this one was grown from, when it is a Blend of another (the IDE grew from the blank canvas). */
   readonly grewFrom?: string
 }
@@ -57,10 +63,12 @@ export const BLANK_BLUEPRINT: Blueprint = freezeBlueprint({
   id: 'acryl.blank',
   name: 'Blank',
   description: 'The smallest working agent that can grow itself: chat, model choice, and the extension pack.',
-  capabilities: ['persona', 'agent-roster', 'session-stats', 'authorization'],
+  // `acryl-settings` is essential: surface plugins (Desktop's shell, notifications) keep their preferences there.
+  capabilities: ['persona', 'agent-roster', 'session-stats', 'authorization', 'acryl-settings'],
   rows: ['extension-context', 'system-prompt', 'ui-library', 'app-save'],
   brand: { kind: 'custom', identity: brandIdentity({ name: 'Blank', tagline: 'Ask for what you need. It builds it.', accent: '#3b6ef5', accentDark: '#7c9dff' }) },
   shell: 'compatibility',
+  dshChat: true,
 })
 
 /**
@@ -77,7 +85,21 @@ export const IDE_BLUEPRINT: Blueprint = freezeBlueprint({
   rows: [...BLANK_BLUEPRINT.rows, 'community-market', 'shortcuts', 'mount-anchors'],
   brand: { kind: 'acryl' },
   shell: 'advanced',
+  dshChat: true,
   grewFrom: BLANK_BLUEPRINT.id,
+})
+
+/**
+ * The IDE for people who bring their own agents: the same frame and rows, with the DeepSeek Harness chat switched off. Claude Code, Codex or any
+ * agent in a terminal tab (or driving the page through Agent Control) works in it; turning the chat back on is one row edit, not a rebuild.
+ */
+export const AGENTS_BLUEPRINT: Blueprint = freezeBlueprint({
+  ...IDE_BLUEPRINT,
+  id: 'acryl.agents',
+  name: 'ACRYL (bring your own agents)',
+  description: 'The agentic coding IDE with the DeepSeek Harness chat off: the frame, workspaces, canvas, terminals and Agent Control, for other agents.',
+  dshChat: false,
+  grewFrom: IDE_BLUEPRINT.id,
 })
 
 /** Read-only port: where Blueprints come from. Built-ins today; a hub, a Blend lock or a private registry later. */
@@ -87,7 +109,7 @@ export interface BlueprintCatalog {
 }
 
 export function builtInCatalog(): BlueprintCatalog {
-  const all = [BLANK_BLUEPRINT, IDE_BLUEPRINT]
+  const all = [BLANK_BLUEPRINT, IDE_BLUEPRINT, AGENTS_BLUEPRINT]
   return { get: id => all.find(blueprint => blueprint.id === id), list: () => all }
 }
 

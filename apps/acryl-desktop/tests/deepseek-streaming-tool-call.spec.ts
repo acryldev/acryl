@@ -1,24 +1,38 @@
-import type { AnonymousUserId } from '@deepseek-ai/dsh-anonymous-user-id'
-import { MessageId, type StreamChunk } from '@deepseek-ai/dsh-llm'
-import {
-  DeepSeekAdapter,
-  resolveAdapterOptions,
-  type DeepSeekAdapterOptions,
-} from '@deepseek-ai/dsh-llm-deepseek'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { DeepSeekAdapter } from '@deepseek-ai/dsh-llm-deepseek'
 
-/** No plugin-contributed wire fields; matches the fixture's `DeepSeekAdapter` construction elsewhere in dsh-llm-deepseek's own tests. */
-const noExtensions: DeepSeekAdapterOptions['prepareExtensions'] = () =>
-  Promise.resolve({ fields: {}, accept: () => Promise.resolve() })
+// `dsh-llm-deepseek` 0.2 talks to DeepSeek over a Messages transport (spec 001 R25). The 0.1.5 guard covered chat-completions
+// continuation deltas with empty id/name; this one pins the same invariant on the Messages stream: a tool_use block keeps its id and
+// name across input_json_delta events, and the arguments are the joined partial JSON.
+function sse(events: readonly Record<string, unknown>[]): Response {
+  const body = events.map((event) => `event: ${String(event.type)}\ndata: ${JSON.stringify(event)}\n\n`).join('')
+  return new Response(body, { status: 200, headers: { 'content-type': 'text/event-stream' } })
+}
 
-function sseResponse(payloads: readonly unknown[]): Response {
-  const body = payloads
-    .map(payload => `data: ${typeof payload === 'string' ? payload : JSON.stringify(payload)}\n\n`)
-    .join('')
-  return new Response(body, {
-    status: 200,
-    headers: { 'content-type': 'text/event-stream' },
-  })
+function adapter(): DeepSeekAdapter {
+  const connection = {
+    baseURL: 'https://api.deepseek.test/anthropic',
+    defaults: {},
+    maxTokens: 1024,
+    defaultContextWindow: 128_000,
+    models: [],
+    streamIdleTimeoutMs: 5_000,
+    maxRequestFilesBytes: 0,
+    maxInlineRequestImageBytes: 0,
+    maxImagesPerRequest: 0,
+    imageOffloadByteQuantum: 1,
+    inlineImageOffloadByteQuantum: 1,
+    imageOffloadCountQuantum: 1,
+    filesApiTimeoutMs: 1_000,
+    filePolicy: {},
+    retryPolicy: {},
+  }
+  return new DeepSeekAdapter({
+    options: () => connection,
+    resolveAuth: async () => ({ headers: { 'x-api-key': 'test-key' } }),
+    resolveUserId: () => 'test-user',
+    prepareExtensions: async () => ({ fields: {}, accept: async () => {} }),
+  } as never)
 }
 
 describe('DeepSeek streaming tool calls', () => {
@@ -26,81 +40,34 @@ describe('DeepSeek streaming tool calls', () => {
     vi.unstubAllGlobals()
   })
 
-  it('keeps the first non-empty id and name when continuation deltas contain empty strings', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => sseResponse([
-      {
-        choices: [{
-          delta: {
-            tool_calls: [{
-              index: 0,
-              id: 'call_web_search',
-              type: 'function',
-              function: { name: 'web_search', arguments: '{"query":' },
-            }],
-          },
-        }],
-      },
-      {
-        choices: [{
-          delta: {
-            tool_calls: [{
-              index: 0,
-              id: '',
-              function: { name: '', arguments: '"AI news today"}' },
-            }],
-          },
-        }],
-      },
-      {
-        choices: [{ delta: {}, finish_reason: 'tool_calls' }],
-        usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
-      },
-      '[DONE]',
-    ])))
+  it('keeps the tool_use id and name across input_json_delta events and joins the arguments (Messages transport)', async () => {
+    vi.stubGlobal('fetch', async () =>
+      sse([
+        { type: 'message_start', message: { usage: { input_tokens: 3, output_tokens: 0 } } },
+        { type: 'content_block_start', index: 0, content_block: { type: 'tool_use', id: 'call_1', name: 'read_file', input: {} } },
+        { type: 'content_block_delta', index: 0, delta: { type: 'input_json_delta', partial_json: '{"path":' } },
+        { type: 'content_block_delta', index: 0, delta: { type: 'input_json_delta', partial_json: '"a.ts"}' } },
+        { type: 'content_block_stop', index: 0 },
+        { type: 'message_delta', delta: { stop_reason: 'tool_use' }, usage: { output_tokens: 5 } },
+        { type: 'message_stop' },
+      ]),
+    )
 
-    const connection = resolveAdapterOptions({
-      baseURL: 'https://example.test/v1',
-      thinking: 'disabled',
-    })
-    const adapter = new DeepSeekAdapter({
-      options: () => connection,
-      resolveApiKey: async () => 'test-key',
-      resolveUserId: () => 'test-user' as AnonymousUserId,
-      prepareExtensions: noExtensions,
-    })
-    const chunks: StreamChunk[] = []
+    const events: Record<string, unknown>[] = []
+    for await (const event of adapter().stream({
+      provider: 'deepseek',
+      model: 'deepseek-v4',
+      messages: [{ role: 'user', content: [{ type: 'text', text: 'read a.ts' }] }],
+    } as never) as AsyncIterable<Record<string, unknown>>) {
+      events.push(event)
+    }
 
-    for await (const chunk of adapter.stream({
-      provider: 'deepseek-official',
-      model: 'deepseek-v4-pro',
-      messages: [{
-        id: MessageId('message-user'),
-        role: 'user',
-        content: [{ type: 'text', text: 'Search today AI news' }],
-        source: { kind: 'user' },
-      }],
-      tools: [{
-        name: 'web_search',
-        description: 'Search the web',
-        parameters: {
-          type: 'object',
-          properties: { query: { type: 'string' } },
-          required: ['query'],
-        },
-      }],
-    })) chunks.push(chunk)
-
-    expect(chunks.find(chunk => chunk.type === 'block-end')).toMatchObject({
-      block: {
-        type: 'tool-call',
-        id: 'call_web_search',
-        name: 'web_search',
-        arguments: '{"query":"AI news today"}',
-      },
+    const deltas = events.filter((event) => event.type === 'tool-call-delta')
+    expect(deltas.length).toBeGreaterThan(1)
+    for (const delta of deltas) expect(delta.id).toBe('call_1')
+    expect(events.find((event) => event.type === 'block-end')).toMatchObject({
+      block: { type: 'tool-call', id: 'call_1', name: 'read_file', arguments: '{"path":"a.ts"}' },
     })
-    expect(chunks.at(-1)).toMatchObject({
-      type: 'finish',
-      reason: { kind: 'tool-calls' },
-    })
+    expect(events.at(-1)).toMatchObject({ type: 'finish', reason: { kind: 'tool-calls' } })
   })
 })

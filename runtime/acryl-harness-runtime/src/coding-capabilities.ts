@@ -17,8 +17,6 @@
  * @module acryl-harness-runtime/coding-capabilities
  */
 
-import { createRequire } from 'node:module'
-import { dirname, join } from 'node:path'
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 
 export type AcrylSurface = 'tui' | 'web' | 'desktop'
@@ -28,6 +26,7 @@ export type AcrylCodingCapabilityId =
   | 'agent-roster'
   | 'session-stats'
   | 'authorization'
+  | 'acryl-settings'
   | 'workspace'
   | 'plugin-admin'
   | 'support'
@@ -63,32 +62,15 @@ export interface AcrylCodingCapability {
   readonly shellMode?: AcrylShellMode
 }
 
-const require = createRequire(import.meta.url)
-
 /**
- * The shipped agent presets, resolved from the pinned
- * `@deepseek-ai/dsh-agent-presets` package this runtime declares.
- *
- * Derived, never a repository path: the npm package ships `presets/`
- * (`files` in its manifest), so the same directory resolves in a development
- * checkout and in a packaged CLI/Desktop build. It previously pointed at
- * `deepseek-harness/packages/preset/agent-presets/presets`, which exists only
- * in a full source checkout - a shipped build then composed an `agent-presets`
- * row with `roots: []` and `includeShippedRoot: false`, i.e. a roster with no
- * presets at all.
+ * Agent presets for the TUI surface. DSH 0.2 removed the `dsh-agent-presets` package and its shipped `presets/` directory:
+ * preset compositions are now declared in profile YAML and the `agent-preset-registry` row only selects among them
+ * (spec 001 R18, R24). The `dsh-web-app` bundle declares its presets natively, so Web and Desktop need nothing here.
+ * The TUI composes the registry with the default selection only, which leaves its roster empty until ACRYL declares
+ * presets for it. DETACHED: re-attach by shipping preset patch files for the TUI.
  */
-function shippedPresetsDir(): string {
-  const manifest = require.resolve('@deepseek-ai/dsh-agent-presets/package.json')
-  return join(dirname(manifest), 'presets')
-}
-
 const agentPresetConfig: Record<string, unknown> = {
   default: 'standard',
-  // An explicit system root rather than `includeShippedRoot: true`: the roster
-  // order is then the one written here, not a package-internal default.
-  roots: [{ path: shippedPresetsDir(), trust: 'system' }],
-  includeShippedRoot: false,
-  includeUserRoot: true,
 }
 
 /*
@@ -133,7 +115,7 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     loaderPatches: [
       {
         insert: [
-          { id: 'agent-presets', name: '@deepseek-ai/dsh-agent-presets', config: agentPresetConfig },
+          { id: 'agent-preset-registry', name: '@deepseek-ai/dsh-agent-preset-registry', config: agentPresetConfig },
         ],
       },
     ],
@@ -153,9 +135,22 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     ],
   },
   {
+    // ACRYL's own surface preferences (shortcuts, desktop shell mode, notifications, market): one small settings
+    // service backed by a YAML file in the ACRYL home, so these do not depend on the harness settings design
+    // (spec 001 R22, R24). Every surface composes it; consumers use `ctx.acrylSettings`.
+    id: 'acryl-settings',
+    surfaces: ['tui', 'web', 'desktop'],
+    requiresPackages: ['acryl-settings'],
+    loaderPatches: [
+      { insert: [{ id: 'acryl-settings', name: 'acryl-settings' }] },
+    ],
+  },
+  {
     // The ACRYL workspace (spec 040): Projects list, per-worktree tabbed canvas, Changes, Review, Checks and
     // Files panels, and the file editor. Composed once for both surfaces that render it; TUI has no slot for
     // it. Its client half only takes over the frame when the shell mode is `advanced`.
+    // Re-attached on the DSH 0.2 branch (spec 001 R25): the tab strip and Projects panel own the main view through
+    // `sessions/main-session.ts` (`retain(..., { source: 'mainView' })`) instead of the removed `ISessions.open`.
     id: 'workspace',
     surfaces: ['desktop', 'web'],
     // `acryl-workspace`'s client bundle does `require('acryl-app-shell/client')`; the client-modules Host
@@ -205,6 +200,8 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
   {
     // Rows toggled so the ACRYL shell owns the frame: the stock layout off, the sidebar and conversation on.
     // The rows exist in the shared `dsh-web-app` bundle both surfaces build on.
+    // Re-attached on the DSH 0.2 branch (spec 001 R25): `acryl-app-shell`'s layout state now implements 0.2's whole `ILayout`
+    // (panelInfo, selectPanel, beginNavigation) and renders upstream's keyed `main` panels, so upstream's sidebars work on it.
     id: 'advanced-shell',
     surfaces: ['desktop', 'web'],
     shellMode: 'advanced',

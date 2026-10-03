@@ -61,6 +61,12 @@ export class PluginLifecycleError extends Error {
   }
 }
 
+/** The error a FAILED entry's Fiber recorded, when it recorded one (Cordis keeps it on the Fiber's private `_error`). */
+function fiberFailure(entry: Entry): Error | undefined {
+  const failure: unknown = entry.fiber === undefined ? undefined : Reflect.get(entry.fiber, '_error')
+  return failure instanceof Error ? failure : undefined
+}
+
 function phaseOf(entry: Entry): PluginLifecycleFiberPhase {
   return entry.fiber === undefined ? null : FIBER_PHASE[entry.fiber.state as FiberState]
 }
@@ -121,6 +127,21 @@ export class AcrPluginLifecycleController {
   }
 
   /**
+   * Apply one entry's enablement and wait until it has settled. Loader 1.0.5 (DSH 0.2) starts disposing a disabled entry's Fiber
+   * without waiting, and logs - rather than throws - an activation failure; a receipt must not be returned for a Fiber that is still
+   * unloading, and a failed activation must reach the caller so the transaction rolls back.
+   */
+  private async applyEnabled(target: Entry, enabled: boolean): Promise<void> {
+    const previous = target.fiber
+    await target.update({ disabled: !enabled })
+    if (!enabled) await previous?.dispose()
+    await this.ctx.loader.await?.()
+    if (enabled && (target.fiber === undefined || phaseOf(target) === 'failed')) {
+      throw new Error(`Plugin ${target.id} did not activate`)
+    }
+  }
+
+  /**
    * Persist and apply one managed entry's enablement transactionally. Disabling
    * an entry that mutable plugins depend on disables those dependents in the
    * same transaction (dependents first, so a consumer unmounts before its
@@ -148,14 +169,14 @@ export class AcrPluginLifecycleController {
         for (const target of targets) {
           await this.host.setEnabled(target.id, enabled)
           persisted.push(target)
-          await target.update({ disabled: !enabled })
+          await this.applyEnabled(target, enabled)
         }
       } catch (cause) {
         const rollbackErrors: string[] = []
         for (const target of persisted.reverse()) {
           try {
             await this.host.setEnabled(target.id, !enabled)
-            await target.update({ disabled: enabled })
+            await this.applyEnabled(target, !enabled)
           } catch (rollbackCause) {
             rollbackErrors.push(describe(rollbackCause))
           }
@@ -236,6 +257,12 @@ export class AcrPluginLifecycleController {
         await group.create(rowOptions)
         group.data.push(rowOptions)
         await this.ctx.loader.await?.()
+        // Loader 1.0.5 (DSH 0.2) logs a throwing `apply` as a FAILED Fiber instead of rejecting `create()`: surface it here so the
+        // caller rolls the install back with the plugin's own error.
+        const created = [...this.ctx.loader.entries()].find(candidate => candidate.options.id === row.id)
+        if (created !== undefined && (created.fiber === undefined || phaseOf(created) === 'failed')) {
+          throw fiberFailure(created) ?? new Error(`plugin ${row.id} did not activate`)
+        }
       } catch (cause) {
         try { await group.remove(row.id) } catch { /* best effort */ }
         throw new PluginLifecycleError(

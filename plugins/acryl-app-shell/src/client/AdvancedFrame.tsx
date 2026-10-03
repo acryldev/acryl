@@ -21,14 +21,16 @@ export interface AdvancedFrameInjected {
 
 /** Full advanced root slot props. */
 export type AdvancedFrameProps = PropsRuntime<'root'>
-  & PropsRenderSlots<'desktop.main' | 'desktop.sidebar' | 'sidebar' | 'conversation' | 'rightbar' | 'shell.overlay'>
+  & PropsRenderSlots<'desktop.main' | 'desktop.sidebar' | 'sidebar' | 'main' | 'rightbar' | 'shell.overlay' | 'shell.leading'>
   & AdvancedFrameInjected
 
 /** Desktop-owned transparent frame around the unchanged product surfaces. */
-export function AdvancedFrame({ layout, platform, wrapMain, wrapRightbar, renderSlot, SessionProvider }: AdvancedFrameProps) {
+export function AdvancedFrame({ layout, platform, wrapMain, wrapRightbar, renderSlot }: AdvancedFrameProps) {
   const subscribeLayout = useCallback((listener: () => void) => layout.subscribe(listener), [layout])
   const readLayout = useCallback(() => layout.getSnapshot(), [layout])
   const panels = useSyncExternalStore(subscribeLayout, readLayout)
+  // DSH 0.2 keyed `main` panels (settings, plugin manager, ...): while one is open it replaces the ACRYL main surface.
+  const activePanelId = useSyncExternalStore(layout.panelInfo.subscribe, () => layout.panelInfo.getSnapshot().activePanelId)
   const frameRef = useRef<HTMLDivElement>(null)
   const [viewport, setViewport] = useState(() => window.innerWidth)
 
@@ -95,6 +97,7 @@ export function AdvancedFrame({ layout, platform, wrapMain, wrapRightbar, render
       data-dragging={dragging || undefined}
       style={{ gridTemplateColumns: `${columns.sidebar}px minmax(0, 1fr) ${columns.details}px` }}
     >
+      {platform === 'darwin' && collapsed && <div className="dshDesktopLeading" data-acryl-slot="shell.leading">{renderSlot('shell.leading', {})}</div>}
       {platform === 'darwin' && <div className="dshDesktopMacCaptionRow" aria-hidden="true" />}
       {platform === 'win32' && <div className="dshDesktopWindowsCaptionRow" aria-hidden="true" />}
       <aside className="dshDesktopSidebarSurface">
@@ -109,9 +112,12 @@ export function AdvancedFrame({ layout, platform, wrapMain, wrapRightbar, render
       </aside>
       <main className="dshDesktopConversationSurface" data-acryl-slot="desktop.main">
         {(() => {
-          const main = renderSlot('desktop.main', {
-            renderConversation: () => <div data-acryl-slot="conversation">{renderSlot('conversation', {})}</div>,
-          })
+          const main = activePanelId !== null
+            ? renderSlot('main', {}, { entryKey: activePanelId })
+            : renderSlot('desktop.main', {
+              // 0.2 serves the conversation as the keyed `main` panel `conversation`.
+              renderConversation: () => <div data-acryl-slot="conversation">{renderSlot('main', {}, { entryKey: 'conversation' })}</div>,
+            })
           return wrapMain === undefined ? main : wrapMain(main)
         })()}
       </main>
@@ -122,11 +128,7 @@ export function AdvancedFrame({ layout, platform, wrapMain, wrapRightbar, render
             while no session is current instead of rendering it into a
             scope with no binding, which throws SlotAssemblyError). */}
         {(() => {
-          const panel = (
-            <SessionProvider>
-              {renderSlot('rightbar', rightbar)}
-            </SessionProvider>
-          )
+          const panel = renderSlot('rightbar', rightbar)
           return wrapRightbar === undefined ? panel : wrapRightbar(panel)
         })()}
       </aside>

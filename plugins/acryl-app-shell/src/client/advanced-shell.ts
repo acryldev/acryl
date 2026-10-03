@@ -50,6 +50,8 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
     () => provideDesktopLayout(ctx, desktopLayout),
     'acryl-app-shell: layout service',
   )
+  // Upstream's sidebars and session views read the open keyed panel through the standard `usePanelInfo` hook, which the root supplies.
+  ctx.effect(() => ctx.slots.provideRoot({ hooks: { panelInfo: desktopLayout.panelInfo } }), 'acryl-app-shell: panel info')
 
   ctx.effect(() => {
     document.body.dataset.dshDesktopMode = 'advanced'
@@ -88,9 +90,10 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
       'desktop.main': { kind: 'single', scope: 'root' },
       'desktop.sidebar': { kind: 'single', scope: 'root' },
       'sidebar': { kind: 'single', scope: 'root' },
-      'conversation': { kind: 'single', scope: 'session-maybe' },
-      'rightbar': { kind: 'single', scope: 'session' },
+      'main': { kind: 'keyed', scope: 'root' },
+      'rightbar': { kind: 'single', scope: 'root' },
       'shell.overlay': { kind: 'list', scope: 'root' },
+      'shell.leading': { kind: 'single', scope: 'root' },
     },
     inject: () => ({ layout: desktopLayout, platform: environment.platform, ...hooks }),
   }, AdvancedFrame), 'acryl-app-shell: advanced root slot')

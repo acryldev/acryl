@@ -13,7 +13,6 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import {
   DEFAULT_PROFILE_BUNDLES,
-  healProfilesModuleFallback,
   initProfile,
   loadProfile,
   resolveProfileDir,
@@ -24,6 +23,7 @@ import {
   createDshEngineDefinition,
   createDshEngineDefinitionFromComposition,
   createWebEngineDefinition,
+  createProfileRuntimeResolution,
 } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 
@@ -141,7 +141,7 @@ describe('CLI/TUI flavor booting a profile another surface already initialized (
     // Now boot the SAME on-disk profile directory through the CLI/TUI's own
     // generic --profile flavor. Before the fix, ACRYL's own tui-only
     // agent-roster insert collided with the row the web bundle already
-    // composed, throwing `duplicate loader entry id: agent-presets` at boot.
+    // composed, throwing `duplicate loader entry id: agent-preset-registry` at boot.
     const cliHost = await createAcrylEngineHost({
       engines: [createDshEngineDefinition('web')],
       initialEngine: 'dsh',
@@ -150,7 +150,7 @@ describe('CLI/TUI flavor booting a profile another surface already initialized (
       expect(cliHost.currentEngine()).toBe('dsh')
       expect(cliHost.ctx.get('sessions')).toBeDefined()
       const entries = [...cliHost.ctx.loader.entries()]
-      const agentPresetsRows = entries.filter(candidate => candidate.options.id === 'agent-presets')
+      const agentPresetsRows = entries.filter(candidate => candidate.options.id === 'agent-preset-registry')
       expect(agentPresetsRows).toHaveLength(1)
     } finally {
       await cliHost.dispose()
@@ -227,14 +227,19 @@ describe('the composition-based dsh engine entry point (for a surface with its o
     await freshDshHome()
     const profileDirectory = resolveProfileDir('acryl-test')
     initProfile(profileDirectory, DEFAULT_PROFILE_BUNDLES)
-    await healProfilesModuleFallback({ installAnchor: dshInstallAnchor })
     const profile = loadProfile('acryl', 'acryl-test', dshInstallAnchor)
     const rootConfig = join(profile.dir, 'cordis.yml')
     writeFileSync(rootConfig, '[]\n')
     const patches = structuredClone([...profile.layers.flatMap(layer => layer.patches), ...profile.patches])
 
     const host = await createAcrylEngineHost({
-      engines: [createDshEngineDefinitionFromComposition({ rootConfig, patches, surface: 'desktop' })],
+      engines: [createDshEngineDefinitionFromComposition({
+        rootConfig,
+        patches,
+        surface: 'desktop',
+        // DSH 0.2 answers bare-package imports from the profile's package table, which a surface with its own pipeline supplies.
+        runtimeResolution: await createProfileRuntimeResolution(profile),
+      })],
       initialEngine: 'dsh',
     })
     try {
@@ -250,3 +255,48 @@ describe('the composition-based dsh engine entry point (for a surface with its o
       .toThrow('ACRYL dsh engine surface must not be empty')
   })
 })
+
+describe('live configuration and engine reactivation on the web engine (spec 001 R26/R27)', () => {
+  async function mountWeb() {
+    await freshDshHome()
+    const installPackageUrl = new URL('../package.json', import.meta.url).href
+    return await createAcrylEngineHost({
+      engines: [createWebEngineDefinition(installPackageUrl), { id: 'other', plugin: () => {} }],
+      initialEngine: 'dsh',
+      prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+    })
+  }
+
+  it('applies a Settings write from the first attempt and keeps ACRYL\'s own rows through the reload it triggers', async () => {
+    const host = await mountWeb()
+    try {
+      const settings = host.ctx.get('settings')
+      expect(settings).toBeDefined()
+      const rowsBefore = [...host.ctx.loader.entries()].length
+      // The first-run acknowledgement is the first write a user makes; it used to fail once (the reload re-enabled HMR) and succeed only on a retry.
+      await settings?.mutate('ui-settings-general', [{ op: 'set', path: ['welcomeNoticeVersion'], value: '2026-09-28.1' }])
+      expect(settings?.describe().find(row => row.ns === 'ui-settings-general')?.value).toMatchObject({ welcomeNoticeVersion: '2026-09-28.1' })
+      // ACRYL's in-memory rows came back after the reload instead of being dropped, and module HMR stayed off.
+      expect(host.ctx.get('acrylSettings')).toBeDefined()
+      expect([...host.ctx.loader.entries()].length).toBe(rowsBefore)
+      const hmr = [...host.ctx.loader.entries()].find(entry => entry.options.id === 'hmr')
+      expect(hmr?.disabled).toBe(true)
+    } finally {
+      await host.dispose()
+    }
+  }, 60_000)
+
+  it('swaps away and back and then disposes without hanging', async () => {
+    const host = await mountWeb()
+    await host.select('other')
+    expect(host.ctx.get('sessions')).toBeUndefined()
+    await host.select('dsh')
+    expect(host.ctx.get('sessions')).toBeDefined()
+    const outcome = await Promise.race([
+      host.dispose().then(() => 'disposed'),
+      new Promise<string>(resolve => setTimeout(() => { resolve('hung') }, 20_000)),
+    ])
+    expect(outcome).toBe('disposed')
+  }, 60_000)
+})
+

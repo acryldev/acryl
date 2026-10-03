@@ -5,7 +5,7 @@ source: deepseek-harness 5dda764ed3
 components:
   - name: fields
     origin: extracted (verbatim)
-    from: packages/client/ui-settings-plugins/src/client/fields.tsx, fields.module.css
+    from: packages/client/ui-primitives/src/settings-form/fields.tsx, fields.module.css
     test: byte comparison against the DSH files (tests/library.spec.tsx)
   - name: AppearanceCubes
     origin: extracted

@@ -27,6 +27,7 @@ export function filesTabPlugin(shell: WorkspaceShellState, filesApi: WorkspaceFi
           priority: 'builtin',
           title: () => 'Code',
           guide: [{
+            id: FILES_ID,
             order: 10,
             title: () => 'Code',
             description: () => 'Browse the worktree and open a file in the editor',

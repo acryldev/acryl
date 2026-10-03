@@ -15,7 +15,7 @@ vi.mock('@deepseek-ai/dsh-client-ui-primitives', () => ({
     variant?: string
     [key: string]: unknown
   }) => <button {...props}>{icon}{children}</button>,
-  IconCordisPluginOutline14: () => null,
+  IconCordisPluginOutlineRegular: () => null,
   Tooltip: ({ children }: { children: unknown }) => children,
 }))
 
@@ -36,7 +36,9 @@ describe('community market launcher', () => {
       useStore,
       t,
       useSessions: (() => undefined) as MarketLauncherProps['useSessions'],
-      useSessionPendingInteraction: (() => undefined) as MarketLauncherProps['useSessionPendingInteraction'],
+      usePanelInfo: (() => undefined) as unknown as MarketLauncherProps['usePanelInfo'],
+      useSessionStatus: (() => undefined) as unknown as MarketLauncherProps['useSessionStatus'],
+      useSessionRetainInfo: (() => undefined) as unknown as MarketLauncherProps['useSessionRetainInfo'],
       useWorkspaces: (() => undefined) as MarketLauncherProps['useWorkspaces'],
     } satisfies MarketLauncherProps
 

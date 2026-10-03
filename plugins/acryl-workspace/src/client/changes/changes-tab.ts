@@ -30,6 +30,7 @@ export function changesTabPlugin(shell: WorkspaceShellState, gitApi: WorkspaceGi
           priority: 'builtin',
           title: () => 'Changes',
           guide: [{
+            id: CHANGES_ID,
             order: 20,
             title: () => 'Changes',
             description: () => 'Changed files in the selected worktree',

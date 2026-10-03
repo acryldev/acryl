@@ -69,6 +69,13 @@ function resolvePackageManifest(name, fromManifestPath) {
   return undefined
 }
 
+/** An SPDX `A OR B` expression may be used under any one alternative, so one allowed alternative is enough. Needed today by type-fest 4.41.0 `(MIT OR CC0-1.0)`, reached through got and @deepseek-ai/dsh-otel. */
+function isRedistributable(license) {
+  if (ALLOWED_LICENSES.has(license) || NOTICE_LICENSES.has(license)) return true
+  const alternatives = license.replace(/^\(|\)$/g, '').split(' OR ')
+  return alternatives.length > 1 && alternatives.some(alternative => ALLOWED_LICENSES.has(alternative) || NOTICE_LICENSES.has(alternative))
+}
+
 /** Normalize the license field of one package manifest. */
 function licenseExpression(manifest) {
   const value = manifest.license
@@ -105,7 +112,7 @@ for (let index = 0; index < queue.length; index += 1) {
       if (!hasLicenseFile) {
         failures.push(`${current.name}: license refers to ${JSON.stringify(license)} but no LICENSE file is shipped`)
       }
-    } else if (license !== undefined && !ALLOWED_LICENSES.has(license) && !NOTICE_LICENSES.has(license)) {
+    } else if (license !== undefined && !isRedistributable(license)) {
       failures.push(`${current.name}: license ${JSON.stringify(license)} is not on the redistribution allowlist`)
     }
     manifests.push({ name: current.name, version: manifest.version, license: license ?? 'SEE LICENSE FILE' })

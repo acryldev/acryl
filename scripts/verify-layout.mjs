@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
-import { existsSync, lstatSync, readFileSync, readlinkSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from 'node:fs'
+import { relative, resolve } from 'node:path'
 
 const root = resolve(import.meta.dirname, '..')
 const readJson = path => JSON.parse(readFileSync(resolve(root, path), 'utf8'))
@@ -59,6 +59,7 @@ packages:
   - plugins/acryl-ui-tui
   - plugins/acryl-mount-anchors
   - plugins/acryl-shortcuts
+  - plugins/acryl-settings
   - plugins/acryl-brand
   - plugins/acryl-app-save
   - plugins/acryl-app-shell
@@ -88,12 +89,31 @@ packageExtensions:
   '@deepseek-ai/dsh-client-ui-primitives@${upstream.runtimePackageVersion}':
     dependencies:
       '@types/react': 18.3.31
+      '@types/mdast': ^4.0.4
   '@deepseek-ai/dsh-client-ui-slots@${upstream.runtimePackageVersion}':
     dependencies:
       '@types/react': 18.3.31
   'lucide-react@1.34.0':
     dependencies:
       '@types/react': 18.3.31
+  # ${upstream.runtimePackageVersion} types import this package but the manifest does not declare it (found 2026-10-02, spec 001 R24).
+  '@deepseek-ai/dsh-session@${upstream.runtimePackageVersion}':
+    dependencies:
+      '@deepseek-ai/dsh-typert-protocol': ${upstream.runtimePackageVersion}
+  # The browser bundle imports \`zustand\` and \`immer\`, which upstream lists only as devDependencies; Node-side tests load it.
+  '@deepseek-ai/dsh-client-store@${upstream.runtimePackageVersion}':
+    dependencies:
+      zustand: ~4.4.7
+      immer: ^10.1.1
+  # Its types import \`lexical\` through the draft-editor contract, but upstream lists it only as a devDependency.
+  '@deepseek-ai/dsh-client-ui-conversation@${upstream.runtimePackageVersion}':
+    dependencies:
+      lexical: ^0.49.0
+  # The types of dsh-client-modules import these two packages without declaring them (R24).
+  '@deepseek-ai/dsh-client-modules@${upstream.runtimePackageVersion}':
+    dependencies:
+      '@deepseek-ai/dsh-package-manifest': ${upstream.runtimePackageVersion}
+      '@deepseek-ai/dsh-host-webserver': ${upstream.runtimePackageVersion}
 
 patchedDependencies:
 `
@@ -226,12 +246,50 @@ for (const [owner, manifest] of [
   }
 }
 
-// The shipped agent presets are the one runtime read of the submodule. Make the
-// soft `existsSync` dependency loud: a missing source silently shrinks `/presets`,
-// so fail here when the submodule is initialized but the directory is gone.
-const presetsDir = resolve(upstreamDir, 'packages', 'preset', 'agent-presets', 'presets')
-if (!existsSync(presetsDir)) {
-  fail(`the shipped agent-presets source is missing: ${presetsDir}`)
+// DSH 0.2 ships each agent preset as a patch file of the `dsh-web-app` bundle, and ACRYL's terminal layers those same four files in
+// (`terminalPresetPatches` in acryl-harness-runtime). Make that dependency loud: if upstream drops or renames one, the terminal roster
+// would silently shrink, so fail here when the submodule is initialized but a file is gone.
+for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
+  const presetPatch = resolve(upstreamDir, 'packages', 'bundle', 'web-app', 'presets', `${preset}.patch.yml`)
+  if (!existsSync(presetPatch)) {
+    fail(`the shipped agent preset patch is missing: ${presetPatch}`)
+  }
 }
 
-process.stdout.write(`verify-layout: PNPM workspace and upstream ${upstream.commit.slice(0, 10)} are consistent\n`)
+// The DSH import ratchet (spec 001 T046). ACRYL's own code reaches DeepSeek Harness only through the engine seam; every other direct
+// `from '@deepseek-ai/dsh...'` line in non-test source is coupling that has to shrink. The seam is named here, as files, so "outside the seam" has one
+// definition: the engine files, the Desktop Electron entry, and the `@acryl/ui` contract facade (a plugin whose sole capability is the DSH chat would
+// also belong, and none is declared: if one seems to qualify, record it as a finding instead of adding it). Both ceilings only move down: when a
+// change lowers a count, this gate says so and the ceiling is lowered in the same commit.
+const DSH_IMPORT_CEILING = { total: 169, outsideSeam: 154 }
+const SEAM_FILES = [
+  /^runtime\/acryl-harness-runtime\/src\/engine-[a-z-]+\.ts$/,
+  /^apps\/acryl-desktop\/src\/(main|electron-runtime|preload|engine-[a-z-]+)\.ts$/,
+  /^apps\/acryl-desktop\/src\/shell\/electron-[a-z-]+\.ts$/,
+  /^plugins\/acryl-ui\/src\/client\/(contract-adapters\.tsx|registry\/.*)$/,
+]
+const sourceFiles = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+  const path = resolve(dir, entry.name)
+  if (entry.isDirectory()) return entry.name === 'node_modules' || entry.name === 'lib' ? [] : sourceFiles(path)
+  return /\.(ts|tsx|mts)$/.test(entry.name) && !entry.name.endsWith('.d.ts') ? [path] : []
+})
+const dshImports = { total: 0, outsideSeam: 0 }
+for (const group of ['runtime', 'apps', 'plugins']) {
+  for (const entry of readdirSync(resolve(root, group), { withFileTypes: true })) {
+    const src = resolve(root, group, entry.name, 'src')
+    if (!entry.isDirectory() || !existsSync(src)) continue
+    for (const file of sourceFiles(src)) {
+      const count = (readFileSync(file, 'utf8').match(/from '@deepseek-ai\/dsh[^']*'/g) ?? []).length
+      if (count === 0) continue
+      dshImports.total += count
+      if (!SEAM_FILES.some(pattern => pattern.test(relative(root, file)))) dshImports.outsideSeam += count
+    }
+  }
+}
+for (const [key, ceiling] of Object.entries(DSH_IMPORT_CEILING)) {
+  const now = dshImports[key]
+  if (now > ceiling) fail(`direct DSH import lines (${key}) are ${now}, above the ceiling ${ceiling}; reach DSH through the engine seam instead`)
+  if (now < ceiling) fail(`direct DSH import lines (${key}) are ${now}, below the ceiling ${ceiling}: lower DSH_IMPORT_CEILING.${key} to ${now} in scripts/verify-layout.mjs`)
+}
+
+process.stdout.write(`verify-layout: PNPM workspace and upstream ${upstream.commit.slice(0, 10)} are consistent; DSH import lines ${dshImports.total} (${dshImports.outsideSeam} outside the seam)\n`)

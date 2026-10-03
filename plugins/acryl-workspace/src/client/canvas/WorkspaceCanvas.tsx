@@ -52,6 +52,7 @@ import { createWorkspacePtyApi, type WorkspacePtyApi } from '../terminal/pty-api
 import { ensureWorktreeChatTabs, syncChatTabTitles, synchronizeWorkspaceWithSessionNavigation } from '../sessions/session-navigation.ts'
 import type { ProjectsControl } from '../projects/projects-control.ts'
 import type { WorkspaceTile } from './state.ts'
+import { currentSessionId } from '../sessions/main-session.ts'
 
 export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   readonly renderConversation: () => ReactNode
@@ -118,7 +119,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
   const shellRepos = useSyncExternalStore(subscribeShell, () => shell.getSnapshot().repos)
   const shellDismissedChats = useSyncExternalStore(subscribeShell, () => shell.getSnapshot().dismissedChats)
   const sessions = useSessions(state => state)
-  const previousCurrent = useRef<string | undefined>(sessions.current)
+  const previousCurrent = useRef<string | undefined>(currentSessionId(sessions))
   const stageRef = useRef<HTMLDivElement>(null)
   const [splitRatio, setSplitRatio] = useState(() => readSplitRatio(safeStorage()))
   /** Set only when starting a new AcrylDSH Chat from the "+" menu fails (no tab exists yet to attach it to). */
@@ -132,7 +133,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
   const splitTile = snapshot.tiles.find(tile => tile.id === snapshot.splitId)
 
   useLayoutEffect(() => {
-    const current = sessions.current
+    const current = currentSessionId(sessions)
     // Reopening a chat any other way (the classic "All chats" view, search) un-hides it again - a
     // dismissal (T134-followup) only means "not eagerly shown," not "refuse to open."
     if (current !== undefined) shell.restoreChat(current)
@@ -150,7 +151,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
   // Never a dismissed one (T134-followup: the owner's hover "x" hides it from both the tree and here).
   useLayoutEffect(() => {
     if (groupKey === GLOBAL_GROUP) return
-    ensureWorktreeChatTabs(workspace, groupKey, shellRepos, sessions, shellDismissedChats)
+    ensureWorktreeChatTabs(workspace, groupKey, shellRepos, { ids: sessions.ids, byId: sessions.byId, current: currentSessionId(sessions) }, shellDismissedChats)
   }, [workspace, groupKey, shellRepos, shellDismissedChats, sessions])
 
   // An open chat tab follows its session's title in every worktree's tab set, not just the visible one
@@ -378,6 +379,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
         {...(rightPanel === undefined ? {} : { rightPanel })}
         dock={dock}
         agentStatus={agentStatus}
+        chatAvailable={projects.chatAvailable}
         storage={safeStorage()}
         onClose={(tile) => { void closeTile(tile) }}
         customAgents={customAgents}

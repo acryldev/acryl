@@ -3,12 +3,12 @@
 import {
   useCallback, useEffect, useId, useState, useSyncExternalStore, type FormEvent, type ReactNode,
 } from 'react'
-import type { SettingsScope } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {
   DesktopMarketProvider, DesktopProfileView, DesktopSettingsApi, DesktopSettingsView,
 } from './desktop-settings-api.ts'
 import type { DesktopSettingsLocaleKey } from './desktop-settings-locales.ts'
+import type { PreferenceScope } from './desktop-preferences.ts'
 import type { DesktopClientPlatform } from '../environment.ts'
 
 /** Browser view of the Host `dsh-desktop` settings namespace. */
@@ -32,8 +32,8 @@ export interface DesktopSettingsSectionInjected {
   readonly api: DesktopSettingsApi
   readonly platform: DesktopClientPlatform
   readonly initialMode: DesktopShellSettings['mode']
-  readonly desktopSettings: SettingsScope<DesktopShellSettings>
-  readonly notificationSettings: SettingsScope<DesktopNotificationSettings>
+  readonly desktopSettings: PreferenceScope<DesktopShellSettings>
+  readonly notificationSettings: PreferenceScope<DesktopNotificationSettings>
 }
 
 /** Renderer-composed props for the official settings section entry. */
@@ -46,7 +46,7 @@ type Translate = DesktopSettingsSectionProps['t']
 type BusyOperation = 'load' | 'create-profile' | 'select-profile' | 'delete-profile' | 'select-market' | 'mode' | 'notification'
 type RestartState = 'none' | 'restarting' | 'required'
 
-function useScope<T>(scope: SettingsScope<T>) {
+function useScope<T>(scope: PreferenceScope<T>) {
   const subscribe = useCallback((listener: () => void) => scope.subscribe(listener), [scope])
   const snapshot = useCallback(() => scope.getSnapshot(), [scope])
   return useSyncExternalStore(subscribe, snapshot)

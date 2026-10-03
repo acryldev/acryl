@@ -22,7 +22,7 @@ import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { createFileSearch } from './file-search.ts'
 import type { PaletteConfigState } from './palette-config.ts'
 import { buildPaletteItems, type PaletteActions, type PaletteView } from './palette-commands.ts'
-import { startPaletteShortcut } from './palette-shortcut.ts'
+import { startPaletteEventListener } from './palette-shortcut.ts'
 import { PaletteState } from './palette-state.ts'
 
 export interface WorkspacePaletteDeps {
@@ -100,7 +100,8 @@ export function useWorkspacePalette(deps: WorkspacePaletteDeps): PaletteState {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  useEffect(() => startPaletteShortcut(window, () => { palette.toggle() }), [palette])
+  // The key is a rebindable DSH shortcut command (`acryl-shortcuts`); this reacts to its event.
+  useEffect(() => startPaletteEventListener(window, () => { palette.toggle() }), [palette])
   useEffect(() => deps.config.subscribe(() => { palette.refresh() }), [palette, deps.config])
   // What exists changed under an open palette (a tab opened, an agent turned off): list it again.
   useEffect(() => { palette.refresh() }, [palette, deps.snapshot, deps.agentSettings, deps.customAgents])
