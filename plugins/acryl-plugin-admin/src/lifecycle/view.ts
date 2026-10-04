@@ -15,7 +15,7 @@ import type {} from '@deepseek-ai/dsh-client-modules'
 import type {
   AcrPluginLifecycle,
   PluginLifecycleReceipt as SharedReceipt,
-} from 'acryl-harness-runtime'
+} from 'acryl-control'
 import type {
   PluginLifecycleBlendView,
   PluginLifecycleEntryView,

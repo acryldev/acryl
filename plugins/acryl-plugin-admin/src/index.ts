@@ -10,7 +10,6 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from 'acryl-control'
-import { builtInCatalog } from 'acryl-harness-runtime'
 import { inspectCordisContext } from './architecture/inspector.ts'
 import { PLUGIN_ARCHITECTURE_PATH } from './architecture/contract.ts'
 import { handlePluginArchitectureSnapshotRequest } from './architecture/route.ts'
@@ -41,14 +40,14 @@ interface BlendBootstrap {
  * Every surface (Web, CLI and Desktop alike) sets `ACRYL_BLUEPRINT_ID` at boot from the same shared composition
  * (`engine-dsh.ts`, spec 040 "Surface sharing") - reading it back here, rather than Desktop's own locked-Blend
  * bootstrap, is how a surface with no locked Blend (every Web session today) still reports an honest, real
- * identity instead of `null` (spec 040 T083). A custom, file-defined Blueprint outside the built-in catalog
- * still reports its real id; only its display `name` falls back to the id, since resolving a custom one's name
- * needs the full `blueprintFromEnvironment` (an `AppInstance`, not available at this shared layer).
+ * identity instead of `null` (spec 040 T083). The engine publishes the Blueprint's display name beside its id
+ * (`ACRYL_BLUEPRINT_NAME`), so this plugin never imports the runtime that mounts it; a surface that sets only the id
+ * reports the id as the name.
  */
 export function unlockedBlueprintSource(rows: readonly unknown[]): PluginLifecycleBlendSource | undefined {
   const id = process.env.ACRYL_BLUEPRINT_ID
   if (id === undefined || id === '') return undefined
-  const name = builtInCatalog().get(id)?.name ?? id
+  const name = process.env.ACRYL_BLUEPRINT_NAME ?? id
   return { locked: false, id, name, rows }
 }
 

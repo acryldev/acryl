@@ -58,7 +58,6 @@
   },
   "dependencies": {
     "acryl-control": "workspace:*",
-    "acryl-harness-runtime": "workspace:*",
     "acryl-loopback-http": "workspace:*"
   },
   "peerDependencies": {

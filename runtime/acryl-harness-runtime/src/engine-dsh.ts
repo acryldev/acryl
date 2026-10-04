@@ -407,6 +407,7 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
   const existingRowIds = new Set(composeEntries([profileLayerPatches]).map(entry => entry.id))
   const blueprint = blueprintFromEnvironment(instanceBlueprintEnvironment(instance))
   process.env.ACRYL_BLUEPRINT_ID = blueprint.id
+  process.env.ACRYL_BLUEPRINT_NAME = blueprint.name
   const rowsComposition = composeBlueprintRows(blueprint, 'tui', existingRowIds)
   const patches = structuredClone([
     ...profileLayerPatches,
@@ -623,6 +624,7 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   // shared capability declarations, and the ACRYL packages they name are made resolvable from this profile.
   const blueprint = blueprintFromEnvironment(instanceBlueprintEnvironment(instance))
   process.env.ACRYL_BLUEPRINT_ID = blueprint.id
+  process.env.ACRYL_BLUEPRINT_NAME = blueprint.name
   const webSurfaces = new Set(['web'] as const)
   const capabilities = new Set(blueprint.capabilities)
   const rowsComposition = composeBlueprintRows(blueprint, 'web', existingRowIds)

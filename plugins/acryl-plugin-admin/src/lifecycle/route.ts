@@ -6,7 +6,7 @@ import type {
   PluginLifecycleReceipt,
   PluginLifecycleSnapshot,
 } from './contract.ts'
-import { PluginLifecycleError } from 'acryl-harness-runtime'
+import { PluginLifecycleError } from 'acryl-control'
 import {
   INVALID_BODY,
   error,

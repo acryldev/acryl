@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { Readable } from 'node:stream'
 import { describe, expect, it, vi } from 'vitest'
 import type { PluginLifecycleReceipt, PluginLifecycleSnapshot } from '../../src/lifecycle/contract.ts'
-import { PluginLifecycleError } from 'acryl-harness-runtime'
+import { PluginLifecycleError } from 'acryl-control'
 import {
   handlePluginLifecycleDisableRequest,
   handlePluginLifecycleEnableRequest,

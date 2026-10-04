@@ -71,19 +71,26 @@ describe('acryl-plugin-admin Host plugin (one plugin for every surface)', () => 
 })
 
 describe('unlockedBlueprintSource (spec 040 T083: an honest identity for a surface with no locked Blend)', () => {
-  const saved = process.env.ACRYL_BLUEPRINT_ID
+  const saved = { id: process.env.ACRYL_BLUEPRINT_ID, name: process.env.ACRYL_BLUEPRINT_NAME }
   afterEach(() => {
-    if (saved === undefined) delete process.env.ACRYL_BLUEPRINT_ID
-    else process.env.ACRYL_BLUEPRINT_ID = saved
+    for (const [key, value] of [['ACRYL_BLUEPRINT_ID', saved.id], ['ACRYL_BLUEPRINT_NAME', saved.name]] as const) {
+      if (value === undefined) delete process.env[key]
+      else process.env[key] = value
+    }
   })
 
-  it('reports a built-in Blueprint by its real display name', () => {
+  it('reports a Blueprint by the display name the engine published, built-in or custom', () => {
     process.env.ACRYL_BLUEPRINT_ID = 'acryl.ide'
-    expect(unlockedBlueprintSource([{}, {}])).toMatchObject({ locked: false, id: 'acryl.ide', rows: [{}, {}] })
+    process.env.ACRYL_BLUEPRINT_NAME = 'ACRYL'
+    expect(unlockedBlueprintSource([{}, {}])).toEqual({ locked: false, id: 'acryl.ide', name: 'ACRYL', rows: [{}, {}] })
+    process.env.ACRYL_BLUEPRINT_ID = '/a/custom-blueprint.yaml'
+    process.env.ACRYL_BLUEPRINT_NAME = 'Acme Notes'
+    expect(unlockedBlueprintSource([])).toEqual({ locked: false, id: '/a/custom-blueprint.yaml', name: 'Acme Notes', rows: [] })
   })
 
-  it('falls back to the id itself for a custom Blueprint the built-in catalog does not name', () => {
+  it('falls back to the id itself when only the id is set', () => {
     process.env.ACRYL_BLUEPRINT_ID = '/a/custom-blueprint.yaml'
+    delete process.env.ACRYL_BLUEPRINT_NAME
     expect(unlockedBlueprintSource([])).toEqual({ locked: false, id: '/a/custom-blueprint.yaml', name: '/a/custom-blueprint.yaml', rows: [] })
   })
 
