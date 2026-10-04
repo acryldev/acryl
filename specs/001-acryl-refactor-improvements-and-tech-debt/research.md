@@ -777,3 +777,35 @@ The web port: `acryl-control` declares `AcrylWeb` (`host`, `port`, `register`, `
 2. **Home paths belong to the bulkhead task** (T056), not the port work.
 3. **Remaining S1 is T055 (tools port, 7 lines) and T056 (home paths, 2 lines).** After those, S1's host-side lines are done; what remains is mostly the client frame (S3, about 75 lines), Desktop's Electron-side imports and the chat.
 
+## Finding R35 - main post-merge, the clean-checkout gate, T055, T046 S2 (2026-10-04)
+
+Branch `harness-latest-2026-10` (pushed to `8d6d649`).
+
+### What `bb139da` is, and the state of main
+
+`bb139da` is a merge commit made by the owner (Oct 3, 14:45) of `origin/harness-latest-2026-10` into `main`; its second parent is my `7ebafbe`. So the branch up to that point is fully in `main`, and `main` carries the owner's CI commit `5bed19a` on top; my later commits (T055, the build fixes, S2) are ahead of `main`. The owner's uncommitted edits (`ci.yml`, a root `package.json` change adding `acryl-settings` to `build`) are in the main checkout and were left alone; the verification ran in separate worktrees (a detached `origin/main`, with the branch merged locally, throwaway, never pushed).
+
+### The gate on main, as pushed, from a clean checkout: RED
+
+`corepack pnpm run check` on `origin/main` failed from a clean checkout, and so did root `build`; the earlier "green" runs on the branch had been using old build outputs in the worktree. Four causes (T057 has the detail): the root `build` script misses `acryl-settings` and `acryl-agent-control`; `acryl-control` and the runtime formed a dependency cycle that made them build concurrently (a real race: one wiped `lib/types` while the other's `tsc` read it); `acryl-plugin-admin` and the runtime formed a second cycle; the runtime's real-engine tests need the plugin libraries that `check` built later.
+
+### The gate on main with the branch merged, from a clean checkout: GREEN
+
+Fixes (all on the branch): `7810bdf` removes both cycles at the root (the core no longer depends on the runtime it never imported; plugin-admin takes lifecycle types from `acryl-control` and the blueprint display name from the engine, published as `ACRYL_BLUEPRINT_NAME` next to `ACRYL_BLUEPRINT_ID`, which also gives custom blueprints a real name); `bc98eae` makes the runtime's `check` build its workspace dependencies first in dependency order; `0476581` fixes a load-sensitive flake (the session-bridge specs boot a real runtime each, under a 5 s default). Result: a fresh worktree of `origin/main` with the branch merged, nothing pre-built, `corepack pnpm run check` exits 0 (including the packed install of `acryl-web` and the Desktop smokes). The root `build` was tested separately: from a fully wiped tree, the topological recipe in T057 builds all 77 packages. **Main is not the working branch until the owner has merged these and root `build` is fixed**; the branch keeps being the working branch until then.
+
+### T055: the tools port
+
+Done (see T055 row): 169 -> 165 total, 154 -> 149 outside the seam.
+
+### The known, justified remainder
+
+Per the owner: the DSH import lines in the two public plugins are accepted as the justified remainder and the seam is not widened. They are exactly **22 lines**: `cordis-plugin-market` 17 (`src/index.ts`: `dsh-host-webserver`, `dsh-settings`; `src/client/index.ts`: `dsh-client-locale`, `-ui-conversation`, `-ui-layout`, `-ui-renderer`, `-ui-session`, `-ui-settings`, `-ui-sidebar`, `-ui-workspace`; `client/market-view-store.ts`: `dsh-client-store`; `MarketLauncher.tsx`, `MarketOverlay.tsx`, `MarketSettingsTab.tsx`: `-ui-primitives` and `-ui-slots` each) and `dsh-client-ui-brand-acryl` 5 (`Brand.tsx` and `client/index.ts`: `-ui-conversation`, `-ui-sidebar`, `-ui-renderer`).
+
+### T046 S2: ACRYL owns the project list
+
+The list is one `acryl-settings` section (`workspace`: `projects`, `adopted`) in the ACRYL home, kept by a `ProjectRegistry` in the workspace Host plugin and served at `/api/acryl-workspace/projects` (same-origin; add, remove, adopt). Adding validates an absolute existing folder and dedupes; removing an unlisted folder is not an error; `adopt` takes over folders that were chat workspaces before ACRYL owned the list, **once**, skipping folders that no longer exist. On the page, `ProjectsControl` reads and changes the list through a small registry state (the chat's workspaces are no longer consulted for it); adoption waits until both the registry and the chat's workspace list are ready (adopting from a list that was still loading would mark it done and lose the user's projects). The DSH chat's workspace is now created when a chat starts in a folder (one way: ACRYL to chat), and removed best-effort when the project is removed; adding a project no longer needs the chat at all. Proof: 7 host tests against the real `acryl-settings` service (persistence across a new service on the same home), 12 client and control tests, a real-engine test across a restart and across a chat-off and chat-on composition, and live in the browser: a project added through the route is listed with its git branch, and is still listed after a restart on the same home with the chat off. Not exercised live: the one-time adoption from real legacy workspaces (covered by tests only, including the still-loading case), and the Desktop window.
+
+### Small items closed
+- T056's commit hash fixed (`7ebafbe`). T053 and T054 are one pass: both need the page-less loopback listener and the TUI profile to mount `acrAgentControl`; plan them together after S3.
+- Ledger cell 4 (R30/R33) stays closed; no GUI cell was re-run this round.
+
