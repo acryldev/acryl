@@ -815,6 +815,23 @@ Findings from the pass:
 - A Desktop `dev` run and a gate run in the same worktree race: the runtime gate rebuilds `@acryl/ui` and its clean step removes `lib/` while the other build reads it (the owner saw `Cannot find module '@acryl/ui/frame'`). Do not run two builds in one tree.
 - The seam is not widened. The 22-line remainder (R35) is unchanged.
 
+### R37 - Live acceptance on all three surfaces, and two isolation defects it found
+
+Run on the branch at `83cbbef` with the real model (key read from the secure store into the process environment, never typed, never logged), each surface in its own throwaway home.
+
+| Surface | What ran live | Result |
+|---|---|---|
+| Web | DSH chat, real model: authored `acryl-hello-tool` from the docs, verified, installed live, listed (active); then changed it, updated the live install, called it (`hello again from acryl`, confirmed in the staged package). Agent Control: `ui_snapshot` returned refs, `ui_click` on Settings held at a per-call approval; **Reject** performed nothing and the agent reported it; **Allow once** opened Settings; Settings > Agent Control lists snapshot, click `button "Settings"`, snapshot, all `ok`. | PASS (rows 6 and 7 partly, below) |
+| TUI | Booted in a pty (build `83cbbef`), real model turn answered. | PASS (boot and one turn; no worker surface, T053) |
+| Desktop | Electron launched with its own home and user-data folder: healthy renderer, startup run completed. | PASS (boot only; the agent flows were not driven in the Desktop window) |
+
+Still not live: the blend snapshot/apply round trip and market install (row 7), Agent Control on Desktop and in the TUI, Codex (needs the owner's login), Pi through `acryl control tool`, a real key-save through the settings UI (an API key is the owner's to type), the Windows sandbox, T053/T054 (TUI worker surface and gateway), S4.
+
+Two defects found and fixed (both touched real state; nothing was deleted):
+- **The packed-web smoke used the real home** (`3def3e1`). `verify-npm-web-entrypoint` ran `acryl-web --json` with the caller's environment, so a gate run took over the stopped `~/.acryl` web profile and re-linked its packages into its own temp install. The installed app's profile was left with dangling links (it re-links on the next normal launch of the app; no live app was serving from it). The smoke now pins its own home; verified that no file under `~/.acryl` or `~/.dsh` changes.
+- **`userDataName` was documented but not applied** (`6cbd2b4`). A Desktop launch with `ACRYL_LOCAL_PRODUCT_NAME` still wrote logs, lifecycle events, crash evidence and locks into the installed app's `~/Library/Application Support/ACRYL` (second occurrence; the first was 2026-10-02). I removed the one crash-evidence marker my killed process left there; the append-only logs and events remain. The Electron bootstrap now derives the folder from the instance when its name differs from the product name; verified live that the real folder stays untouched.
+- The model's default workspace is `~/Documents/deepseek-harness/default-workspace`, outside the instance home, so a Web chat with no project writes there; the two folders my test agent created there were removed. Not yet a defect with an owner: recorded for the S4 own-host design.
+
 ### Small items closed
 - T056's commit hash fixed (`7ebafbe`). T053 and T054 are one pass: both need the page-less loopback listener and the TUI profile to mount `acrAgentControl`; plan them together after S3.
 - Ledger cell 4 (R30/R33) stays closed; no GUI cell was re-run this round.
