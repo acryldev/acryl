@@ -53,9 +53,13 @@ try {
     ...corepackSpawnOptions(process.platform),
   })
   const executable = join(staging, 'node_modules', '.bin', windows ? 'acryl-web.cmd' : 'acryl-web')
+  // The packed app boots a profile and re-links its packages into it, so it must never see the machine's real ACRYL home: pinned to a folder of
+  // its own inside the staging directory (which is removed below), whatever the caller's environment holds.
+  const home = join(staging, 'acryl-home')
   const result = spawnSync(executable, ['--json'], {
     cwd: staging,
     encoding: 'utf8',
+    env: { ...process.env, ACRYL_HOME: home, DSH_HOME: join(home, '.dsh') },
     timeout: 90_000,
     ...corepackSpawnOptions(process.platform),
   })
