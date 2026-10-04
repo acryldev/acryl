@@ -25,6 +25,8 @@ import { WorkspaceGroups } from './canvas/groups.ts'
 import { browserStorage, parseSavedWorkspace, STORAGE_KEY } from './canvas/persistence.ts'
 import { startWorkspacePersistence } from './canvas/persist.ts'
 import { createWebFolderPicker } from './projects/web-folder-picker.ts'
+import { createProjectRegistryApi } from './projects/registry-api.ts'
+import { adoptLegacyProjects, ProjectRegistryState } from './projects/registry-state.ts'
 import { createProjectsControl, desktopDirectorySeams } from './projects/projects-control.ts'
 import { createWorkspaceGitApi } from './git/git-api.ts'
 import { ProjectsSidebar } from './projects/ProjectsSidebar.tsx'
@@ -106,7 +108,12 @@ export function apply(ctx: ClientContext): void {
       }
     },
   }
+  const projectRegistry = new ProjectRegistryState(createProjectRegistryApi())
+  ctx.effect(() => { void projectRegistry.load(); return () => {} }, 'acryl-workspace: read the project list')
+  // Projects that were chat workspaces before ACRYL owned the list are taken over once, when the chat's workspace list is known.
+  ctx.inject(['workspaces'], child => { child.effect(() => adoptLegacyProjects(projectRegistry, child.workspaces.list), 'acryl-workspace: take over earlier projects') })
   const projects = createProjectsControl({
+    registry: projectRegistry,
     platform: environment.platform,
     shell,
     gitApi,

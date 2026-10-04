@@ -2599,6 +2599,9 @@ importers:
       '@codemirror/view':
         specifier: 6.43.13
         version: 6.43.13
+      '@deepseek-ai/schemastery':
+        specifier: ~3.18.4
+        version: 3.18.4
       '@xterm/addon-fit':
         specifier: 0.10.0
         version: 0.10.0(@xterm/xterm@5.5.0)
@@ -2620,6 +2623,9 @@ importers:
       acryl-loopback-http:
         specifier: workspace:*
         version: link:../../runtime/acryl-loopback-http
+      acryl-settings:
+        specifier: workspace:*
+        version: link:../acryl-settings
       codemirror:
         specifier: 6.0.2
         version: 6.0.2
