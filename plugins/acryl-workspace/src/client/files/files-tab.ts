@@ -1,7 +1,7 @@
 /** The `files` right-sidebar tab type: a dependency-gated child plugin like the Changes, Review and Checks tabs. */
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
+import type {} from '@acryl/ui/frame'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { FilesBody } from './FilesBody.tsx'
 import type { WorkspaceGitApi } from '../git/git-api.ts'

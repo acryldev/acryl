@@ -634,8 +634,8 @@
         "web"
       ]
     },
-    "ReferenceIcon": {
-      "summary": "The glyph for one inline reference domain (file, web, terminal, and so on).",
+    "ReferenceIconMedium": {
+      "summary": "The glyph for one inline reference domain (file, web, terminal, and so on), medium weight.",
       "props": {
         "kind": {
           "type": "ReferenceIconKind",
@@ -650,8 +650,24 @@
       ],
       "reexport": true
     },
-    "LinkIcon": {
-      "summary": "The glyph for a file-type or web link, chosen from a path's extension.",
+    "ReferenceIconRegular": {
+      "summary": "The glyph for one inline reference domain (file, web, terminal, and so on), regular weight.",
+      "props": {
+        "kind": {
+          "type": "ReferenceIconKind",
+          "required": true
+        },
+        "size": {
+          "type": "number"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "LinkIconMedium": {
+      "summary": "The glyph for a file-type or web link, chosen from a path extension, medium weight.",
       "props": {
         "kind": {
           "type": "LinkIconKind",
@@ -663,9 +679,26 @@
       ],
       "reexport": true
     },
-    "DocumentFileIcon": {
-      "summary": "A generic document/file glyph.",
+    "LinkIconRegular": {
+      "summary": "The glyph for a file-type or web link, chosen from a path extension, regular weight.",
       "props": {
+        "kind": {
+          "type": "LinkIconKind",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "FileTypeIcon": {
+      "summary": "The glyph for a file, chosen from its classified file type.",
+      "props": {
+        "kind": {
+          "type": "FileTypeKind",
+          "required": true
+        },
         "className": {
           "type": "string"
         }
@@ -1741,7 +1774,9 @@
       "Toast",
       "Modal",
       "Tooltip",
-      "classifyLinkPath"
+      "classifyLinkPath",
+      "classifyFileType",
+      "fileExtension"
     ]
   },
   "roles": {

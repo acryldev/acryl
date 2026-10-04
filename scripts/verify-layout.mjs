@@ -258,15 +258,15 @@ for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
 
 // The DSH import ratchet (spec 001 T046). ACRYL's own code reaches DeepSeek Harness only through the engine seam; every other direct
 // `from '@deepseek-ai/dsh...'` line in non-test source is coupling that has to shrink. The seam is named here, as files, so "outside the seam" has one
-// definition: the engine files, the Desktop Electron entry, and the `@acryl/ui` contract facade (a plugin whose sole capability is the DSH chat would
-// also belong, and none is declared: if one seems to qualify, record it as a finding instead of adding it). Both ceilings only move down: when a
+// definition: the engine files, the Desktop Electron entry, and the `@acryl/ui` facades (contract adapters and `frame.ts`); a plugin whose sole capability is the DSH chat would
+// also belong, and none is declared: if one seems to qualify, record it as a finding instead of adding it. Both ceilings only move down: when a
 // change lowers a count, this gate says so and the ceiling is lowered in the same commit.
-const DSH_IMPORT_CEILING = { total: 165, outsideSeam: 149 }
+const DSH_IMPORT_CEILING = { total: 134, outsideSeam: 106 }
 const SEAM_FILES = [
   /^runtime\/acryl-harness-runtime\/src\/engine-[a-z-]+\.ts$/,
   /^apps\/acryl-desktop\/src\/(main|electron-runtime|preload|engine-[a-z-]+)\.ts$/,
   /^apps\/acryl-desktop\/src\/shell\/electron-[a-z-]+\.ts$/,
-  /^plugins\/acryl-ui\/src\/client\/(contract-adapters\.tsx|registry\/.*)$/,
+  /^plugins\/acryl-ui\/src\/(frame\.ts|client\/(contract-adapters\.tsx|registry\/.*))$/,
 ]
 const sourceFiles = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
   const path = resolve(dir, entry.name)

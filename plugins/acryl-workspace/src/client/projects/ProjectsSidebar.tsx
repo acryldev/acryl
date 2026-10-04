@@ -5,8 +5,7 @@
  * second, classic list to switch to. */
 
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
-import type { UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
+import type { PropsRuntime, UseSessions } from '@acryl/ui/frame'
 import type { CustomAgent } from '../../agents/definition.ts'
 import { AcrylMarkIcon, ChatIcon, ChevronIcon, CollapseSidebarIcon, FolderIcon, GitRepoIcon } from '../agents/controls.tsx'
 import type { AgentsState } from '../agents/agents-state.ts'

@@ -3,7 +3,7 @@ import type { Context as ClientContext } from '@deepseek-ai/cordis'
 // than `import type {}`, into every program that imports this package's types - see `client/index.ts`'s own
 // copy of this note).
 import '@deepseek-ai/dsh-client-ui-renderer/client'
-import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
+import type {} from '@acryl/ui/frame'
 import type { ReactNode } from 'react'
 import type { DesktopMainOwnerProps, DesktopSidebarSurfaceOwnerProps } from './contracts.ts'
 import type { ShellEnvironment } from './environment.ts'

@@ -1,6 +1,6 @@
 /** Open a chat session by id, resolved lazily so the port survives the sessions service coming and going. */
 
-import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
+import type { ISessions } from '@acryl/ui/frame'
 import { openMainSession } from './main-session.ts'
 
 export interface SessionNavigator {

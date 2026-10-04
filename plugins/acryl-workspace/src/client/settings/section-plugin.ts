@@ -6,9 +6,7 @@
  */
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
-import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
-import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type {} from '@acryl/ui/frame'
 import { en, zh, type SettingsLocaleKey, type SettingsSectionKey } from './locales.ts'
 import { installSettingsStyles } from './styles.ts'
 

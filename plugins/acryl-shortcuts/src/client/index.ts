@@ -1,5 +1,5 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type { ShortcutBinding, ShortcutCommandId } from '@deepseek-ai/dsh-client-shortcuts/client'
+import type { ShortcutBinding, ShortcutCommandId } from '@acryl/ui/frame'
 
 export const name = 'acryl-shortcuts-client'
 export const inject = ['shortcuts']

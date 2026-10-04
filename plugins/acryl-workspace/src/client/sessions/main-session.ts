@@ -6,7 +6,7 @@
  * Projects panel are such a view owner, so they hold the reference here and read the current session back from `retainedBy`.
  */
 
-import type { ISessions, SessionListState, SessionReference } from '@deepseek-ai/dsh-api-session-controller/client'
+import type { ISessions, SessionListState, SessionReference } from '@acryl/ui/frame'
 
 type SessionId = Parameters<ISessions['retain']>[0]
 

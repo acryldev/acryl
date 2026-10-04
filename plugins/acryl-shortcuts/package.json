@@ -59,7 +59,6 @@
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
-    "@deepseek-ai/dsh-client-shortcuts": "0.2.0-rc.2",
     "@types/node": "^22.20.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
@@ -91,5 +90,8 @@
     "capabilities": [
       "shortcuts-commands"
     ]
+  },
+  "dependencies": {
+    "@acryl/ui": "workspace:*"
   }
 }

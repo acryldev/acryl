@@ -1,7 +1,7 @@
 /** Settings > Support: export a diagnostics archive. */
 
 import { useState } from 'react'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import type { InjectFace, PropsLocale, PropsRuntime } from '@acryl/ui/frame'
 import type { SupportApi } from './support-api.ts'
 import { saveDownload } from './support-api.ts'
 

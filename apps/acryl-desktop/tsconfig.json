@@ -10,6 +10,9 @@
     "outDir": "lib/types",
     "declaration": true,
     "emitDeclarationOnly": true,
+    // The ACRYL plugin declarations reach the DSH client packages through `@acryl/ui/frame`; DSH's sidebar-right declarations import
+    // `dsh-client-ui-dockkit`, which the upstream release does not ship. Every ACRYL client config already skips library checks for it.
+    "skipLibCheck": true,
     "strict": true,
     "exactOptionalPropertyTypes": true,
     "noFallthroughCasesInSwitch": true,

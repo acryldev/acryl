@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useState, useSyncExternalStore } from 'react'
-import type { UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
+import type { UseSessions } from '@acryl/ui/frame'
 import type { KanbanBoard, KanbanColumnId, WorkspaceState, WorkspaceTile } from '../canvas/state.ts'
 import type { SessionNavigator } from '../sessions/session-navigator.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'

@@ -74,13 +74,13 @@ export {
   Button, Tag, Pill, Toast, Modal, Tooltip,
   StateDot, DisclosureRow, Menu, Switch, Input, HoverCard, RiskConfirmation, ConnectionIndicator,
   JsonTree, TerminalBlock, ReadBlock, DiffBlock, SearchBlock, WebBlock, CodeBlock, JsonBlock, MarkdownText,
-  ReferenceIcon, LinkIcon, classifyLinkPath, DocumentFileIcon,
+  ReferenceIconMedium, ReferenceIconRegular, LinkIconMedium, LinkIconRegular, classifyLinkPath, FileTypeIcon, classifyFileType, fileExtension,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 export type {
   StateDotState, DisclosureRowProps, MenuEntry, RiskConfirmationProps, ConnectionIndicatorState,
   JsonTreeProps, JsonTreeLabels, TerminalBlockProps, TerminalBlockLabels, ReadBlockProps, ReadBlockLabels,
   DiffBlockProps, DiffBlockLabels, SearchBlockLabels, WebBlockProps, CodeBlockProps, MarkdownLabels,
-  ReferenceIconKind, ReferenceIconProps, LinkIconKind, LinkIconProps,
+  ReferenceIconKind, ReferenceIconProps, LinkIconKind, LinkIconProps, FileTypeIconProps, FileTypeKind,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 
 export const version = '0.3.0'

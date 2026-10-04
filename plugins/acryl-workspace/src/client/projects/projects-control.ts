@@ -4,8 +4,7 @@
  */
 
 import type { ShellPlatform } from 'acryl-app-shell/client'
-import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
-import type { IWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/client'
+import type { ISessions, IWorkspaces } from '@acryl/ui/frame'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
 import { pickSession, type SessionRef } from '../sessions/session-pick.ts'

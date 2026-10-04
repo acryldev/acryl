@@ -1,7 +1,7 @@
 /** Right pane tab: the selected worktree's changed files. Clicking one opens its diff in the canvas. */
 
 import { useCallback, useState, useSyncExternalStore } from 'react'
-import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import type { PropsRuntime } from '@acryl/ui/frame'
 import type { GitChange, GitChangeCode } from '../../git/contract.ts'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
