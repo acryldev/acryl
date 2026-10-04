@@ -1,7 +1,7 @@
 /** Per-call approval for the tools that change the page, through the harness's own policy pipeline. */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type { PreToolDecision, ToolExecution } from '@deepseek-ai/dsh-tools'
+import type { AcrylToolCall, AcrylToolDecision } from 'acryl-control'
 import { describeCall, MUTATING_TOOL_NAMES, type RefDirectory } from './tools.ts'
 
 /**
@@ -26,7 +26,7 @@ interface SessionApprovalPolicy {
  * here stops that agent from concluding a person rejected a click nobody was ever asked to make.
  */
 export function createApprovalPolicy(ctx: Context, refs: RefDirectory, approval: 'every-call' | 'none') {
-  return async (exec: ToolExecution, next: () => Promise<PreToolDecision>): Promise<PreToolDecision> => {
+  return async (exec: AcrylToolCall, next: () => Promise<AcrylToolDecision>): Promise<AcrylToolDecision> => {
     const decision = await next()
     if (approval === 'none' || !MUTATING_TOOL_NAMES.has(exec.name) || decision.kind === 'deny') return decision
     const reason = describeCall(exec.name, exec.arguments, refs)

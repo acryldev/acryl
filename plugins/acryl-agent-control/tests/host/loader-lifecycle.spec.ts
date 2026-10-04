@@ -71,6 +71,7 @@ function fakeTools() {
   return {
     counts: () => ({ registerCalls, releaseCalls, liveNames: [...registered.keys()].sort() }),
     get: (name: string) => registered.get(name),
+    policy: () => () => {},
     register: (tool: { name: string }) => {
       registerCalls += 1
       registered.set(tool.name, tool)
@@ -123,7 +124,7 @@ describe('acryl-agent-control through a real Loader', () => {
 
     const web = fakeWebServer()
     ctx.provide('acrylWeb' as never, web as never)
-    ctx.provide('tools' as never, fakeTools() as never)
+    ctx.provide('acrylTools' as never, fakeTools() as never)
     await ctx.loader.await()
 
     expect(entryOf(ctx, entryId).fiber?.state).toBe(ACTIVE)
@@ -138,14 +139,14 @@ describe('acryl-agent-control through a real Loader', () => {
     ctx.provide('acrylWeb' as never, web as never)
     // `provide()` returns the disposer that retracts exactly this registration - the way to replace a
     // Cordis service safely (a second `provide()` for the same live name is rejected).
-    let disposeTools = ctx.provide('tools' as never, firstTools as never)
+    let disposeTools = ctx.provide('acrylTools' as never, firstTools as never)
     await ctx.loader.await()
     expect(firstTools.counts().liveNames).toEqual(['ui_click', 'ui_press', 'ui_scroll', 'ui_select', 'ui_snapshot', 'ui_type', 'ui_wait'])
     expect(entryOf(ctx, entryId).fiber?.state).toBe(ACTIVE)
 
     const secondTools = fakeTools()
     disposeTools()
-    disposeTools = ctx.provide('tools' as never, secondTools as never)
+    disposeTools = ctx.provide('acrylTools' as never, secondTools as never)
     await ctx.loader.await()
 
     // The old provider's registrations were released, not left dangling; the new one has exactly one set, not two.
@@ -161,7 +162,7 @@ describe('acryl-agent-control through a real Loader', () => {
     const web = fakeWebServer()
     const tools = fakeTools()
     ctx.provide('acrylWeb' as never, web as never)
-    ctx.provide('tools' as never, tools as never)
+    ctx.provide('acrylTools' as never, tools as never)
     await ctx.loader.await()
 
     const ws = await open()
@@ -188,7 +189,7 @@ describe('acryl-agent-control through a real Loader', () => {
     const web = fakeWebServer()
     const tools = fakeTools()
     ctx.provide('acrylWeb' as never, web as never)
-    ctx.provide('tools' as never, tools as never)
+    ctx.provide('acrylTools' as never, tools as never)
     await ctx.loader.await()
 
     for (let i = 0; i < 10; i += 1) {

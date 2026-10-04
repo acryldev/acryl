@@ -1,5 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
-import type { PreToolDecision, ToolExecution } from '@deepseek-ai/dsh-tools'
+import type { AcrylToolCall as ToolExecution, AcrylToolDecision as PreToolDecision } from 'acryl-control'
 import { describe, expect, it, vi } from 'vitest'
 import type { PluginLifecycleEntryView, PluginLifecycleReceipt, PluginLifecycleSnapshot } from '../src/lifecycle/contract.ts'
 import { describePluginChange, PLUGIN_LIST_TOOL, PLUGIN_SET_ENABLED_TOOL, registerPluginTools } from '../src/tools/plugin-tools.ts'
@@ -21,8 +21,10 @@ function setup() {
   const tools = new Map<string, { execute: (args: never, exec: unknown) => Promise<unknown>; output: { render: (a: unknown, v: never) => Array<{ text: string }> } }>()
   let policy: ((exec: ToolExecution, next: () => Promise<PreToolDecision>) => Promise<PreToolDecision>) | undefined
   const ctx = {
-    tools: { register: (tool: { name: string }) => { tools.set(tool.name, tool as never); return () => { tools.delete(tool.name) } } },
-    on: (_event: string, handler: typeof policy) => { policy = handler; return () => { policy = undefined } },
+    acrylTools: {
+      register: (tool: { name: string }) => { tools.set(tool.name, tool as never); return () => { tools.delete(tool.name) } },
+      policy: (handler: typeof policy) => { policy = handler; return () => { policy = undefined } },
+    },
   } as unknown as Context
   const setEnabled = vi.fn(async (entryId: string, enabled: boolean): Promise<PluginLifecycleReceipt> => ({ accepted: true, action: enabled ? 'enable' : 'disable', entryIds: [entryId], rendererReloadRequired: true, snapshot: SNAPSHOT }))
   const dispose = registerPluginTools(ctx, { snapshot: () => SNAPSHOT, setEnabled })

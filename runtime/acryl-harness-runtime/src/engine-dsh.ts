@@ -46,6 +46,7 @@ import {
   type RuntimeResolution,
 } from '@deepseek-ai/dsh-app-boot'
 import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
+import { provideAcrylTools } from './engine-tools.ts'
 import { provideAcrylWeb } from './engine-web.ts'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 
@@ -288,6 +289,8 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   // (web-favicon.ts), so no route or static asset is needed.
   // The web port ACRYL's own plugins depend on (instead of DSH's `webServer`): Web and Desktop have a page, the terminal has none.
   if (composition.surface !== 'tui') ctx.inject(['webServer'], webCtx => { provideAcrylWeb(webCtx) })
+  // The tools port every surface can offer (the terminal's chat has the same registry).
+  ctx.inject(['tools'], toolsCtx => { provideAcrylTools(toolsCtx) })
   if (composition.surface === 'web') {
     ctx.inject(['webServer'], webServerCtx => {
       const title = composition.productName ?? 'ACRYL'

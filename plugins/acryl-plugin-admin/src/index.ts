@@ -10,7 +10,6 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from 'acryl-control'
-import type {} from '@deepseek-ai/dsh-tools'
 import { builtInCatalog } from 'acryl-harness-runtime'
 import { inspectCordisContext } from './architecture/inspector.ts'
 import { PLUGIN_ARCHITECTURE_PATH } from './architecture/contract.ts'
@@ -116,7 +115,7 @@ export function apply(ctx: Context): void {
   // separate child so a surface without the tool registry still gets the routes above.
   ctx.plugin({
     name: 'acryl-plugin-admin-agent-tools',
-    inject: ['tools', 'acrPluginLifecycle'],
+    inject: ['acrylTools', 'acrPluginLifecycle'],
     apply(child: Context): void {
       const view = new PluginLifecycleView(child, child.acrPluginLifecycle, () => undefined)
       child.effect(() => registerPluginTools(child, view), 'acryl-plugin-admin: plugin lifecycle agent tools')
