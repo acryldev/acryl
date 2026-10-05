@@ -137,6 +137,14 @@ function acrylAdditions(
 /** Module HMR is never wanted (see `mountDshEngine`); it has to be part of every reload as well as of the first mount. */
 const HMR_OFF: PatchOptions = { id: 'hmr', disabled: true }
 
+/**
+ * The patches an app instance contributes to every composition: an instance that must not use the OS user's Documents folder points the chat's first
+ * workspace at its own `documents` folder. A patch for a row the surface does not compose (the terminal has no workspace controller) is ignored.
+ */
+export function instancePatches(instance: AppInstance | undefined): readonly PatchOptions[] {
+  return instance?.documentsDirectory === undefined ? [] : [{ id: 'workspace-controller', config: { documentsDirectory: instance.documentsDirectory } }]
+}
+
 /** The profile facts a launcher hands to DSH's live configuration (stock `dsh`: `profile-boot`, `runProfile`). */
 export function createProfileContext(
   profile: Profile,
@@ -146,6 +154,8 @@ export function createProfileContext(
     readonly packageManager?: ProfileContext['packageManager']
     /** ACRYL's in-memory patches that a configuration reload must keep applying (see {@link acrylAdditions}). */
     readonly overlays?: readonly PatchOptions[]
+    /** The app instance, whose own patches (see {@link instancePatches}) a reload must keep applying as well. */
+    readonly instance?: AppInstance
   },
 ): ProfileContext {
   return {
@@ -157,7 +167,7 @@ export function createProfileContext(
     cwd: process.cwd(),
     home: options.home,
     startedBundles: profile.layers.map(layer => layer.packageName),
-    overlays: [...(options.overlays ?? []), HMR_OFF],
+    overlays: [...(options.overlays ?? []), HMR_OFF, ...instancePatches(options.instance)],
     telemetryDisabledEnv: process.env.DSH_TELEMETRY_DISABLED,
   }
 }
@@ -187,7 +197,7 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   // (and needs Loader internals plus a launcher readiness signal); in-app edits (`config-editor`, Settings, Models) reconcile the Loader
   // themselves. ACRYL activates and reloads plugins through Loader entries and `livePluginActivation`, so every composition switches it off.
   // Left on, it also stalls engine disposal after a swap (its queued reload waits on a tree that is unloading).
-  const patches: PatchOptions[] = [...composition.patches, HMR_OFF]
+  const patches: PatchOptions[] = [...composition.patches, HMR_OFF, ...instancePatches(composition.instance ?? selectInstance())]
   // This assignment feeds mountRootInclude's own nested composition tree
   // (constructed below, from this ctx) - not the host root's own top-level
   // tree, whose baseUrl is a one-time snapshot taken when `createAcrylEngineHost`
@@ -431,7 +441,7 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
     profileName,
     statePath: resolvePluginLifecycleStatePath(),
   }))
-  return { rootConfig, patches, surface: 'tui', instance, installPackageUrl: import.meta.url, runtimeResolution: await createProfileRuntimeResolution(profile), profileContext: createProfileContext(profile, { home: instance.dshHome, overlays: acrylAdditions(patches, { layerPatches: profileLayerPatches.length, userPatches: profile.patches.length, composedBeforeLater }) }) }
+  return { rootConfig, patches, surface: 'tui', instance, installPackageUrl: import.meta.url, runtimeResolution: await createProfileRuntimeResolution(profile), profileContext: createProfileContext(profile, { home: instance.dshHome, instance, overlays: acrylAdditions(patches, { layerPatches: profileLayerPatches.length, userPatches: profile.patches.length, composedBeforeLater }) }) }
 }
 
 /**
@@ -702,7 +712,7 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
     profileName,
     statePath: resolvePluginLifecycleStatePath(),
   }))
-  return { rootConfig, patches, surface: 'web', instance, installPackageUrl, runtimeResolution: await createProfileRuntimeResolution(profile), profileContext: createProfileContext(profile, { home: instance.dshHome, overlays: acrylAdditions(patches, { layerPatches: profileLayerPatches.length, userPatches: profile.patches.length, composedBeforeLater }) }), productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL' }
+  return { rootConfig, patches, surface: 'web', instance, installPackageUrl, runtimeResolution: await createProfileRuntimeResolution(profile), profileContext: createProfileContext(profile, { home: instance.dshHome, instance, overlays: acrylAdditions(patches, { layerPatches: profileLayerPatches.length, userPatches: profile.patches.length, composedBeforeLater }) }), productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL' }
 }
 
 /**

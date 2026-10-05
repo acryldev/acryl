@@ -35,6 +35,12 @@ export interface AppInstance {
   readonly userDataName: string
   /** Namespace for folders this app writes inside a project it opens; undefined keeps the classic shared locations. */
   readonly projectScope?: string
+  /**
+   * Where the chat creates its first workspace, when this app must not use the OS user's Documents folder. DSH asks the operating system for that folder
+   * (not `$HOME`), so an isolated app would otherwise write its first project into the real one. Only the default instance, which is the user's installed
+   * app, uses the OS Documents folder; every other instance keeps it inside its own home.
+   */
+  readonly documentsDirectory?: string
   /** The app definition (`blend.yaml`) when this is an app folder. */
   readonly definitionFile?: string
   /** The pessimistic offline lock that makes one live process per instance. */
@@ -101,6 +107,7 @@ function family(input: {
     webPort: Object.freeze({ ...input.webPort }),
     userDataName: input.userDataName,
     ...(input.projectScope === undefined ? {} : { projectScope: input.projectScope }),
+    ...(input.kind === 'default' ? {} : { documentsDirectory: join(input.home, 'documents') }),
     ...(input.definitionFile === undefined ? {} : { definitionFile: input.definitionFile }),
     runLockFile: join(input.home, RUN_LOCK_FILE),
   })

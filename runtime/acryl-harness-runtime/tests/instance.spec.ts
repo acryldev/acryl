@@ -63,6 +63,24 @@ describe('the families', () => {
   })
 })
 
+describe('the default workspace folder', () => {
+  it('only the default instance (the installed app) uses the OS Documents folder; every other instance keeps it inside its own home', () => {
+    const root = temp()
+    expect(selectInstance({ env: {}, osHome: root }).documentsDirectory).toBeUndefined()
+    const pinned = selectInstance({ env: { ACRYL_HOME: join(root, 'x') }, osHome: root })
+    expect(pinned.documentsDirectory).toBe(join(root, 'x', 'documents'))
+    expect(selectInstance({ env: {}, osHome: root, development: true }).documentsDirectory).toBe(join(root, '.acryl-dev', 'documents'))
+    const folder = app(root, 'ledger')
+    expect(selectInstance({ env: { ACRYL_HOME: folder }, osHome: root }).documentsDirectory).toBe(join(folder, 'documents'))
+  })
+
+  it('survives the refinements a child process hands back (port, scope, user-data name)', () => {
+    const root = temp()
+    const refined = selectInstance({ env: { ACRYL_HOME: join(root, 'x'), ACRYL_WEB_PORT: '4100', ACRYL_INSTANCE: 'scope-a', ACRYL_LOCAL_PRODUCT_NAME: 'Name' }, osHome: root })
+    expect(refined.documentsDirectory).toBe(join(root, 'x', 'documents'))
+  })
+})
+
 describe('selectInstance precedence', () => {
   it('ACRYL_HOME with a definition is an app, without one a pinned home, and it outranks an ambient DSH_HOME', () => {
     const root = temp()

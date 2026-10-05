@@ -55,6 +55,10 @@ shape it reads (`{ home, dshHome }`) as a separated interface instead of importi
 The launcher scripts import the same TypeScript module (Node strips types natively), so every isolation rule exists once. An app that carries its own runtime
 (`acryl new --runtime`) carries a copy of the module with its launcher.
 
+## The chat's first workspace is part of the family
+
+DSH creates the chat's first workspace in the operating system's Documents folder, which it asks the OS for (on macOS through `osascript`), so moving `HOME` does not move it: an isolated app wrote its first project into the real `~/Documents/deepseek-harness`. The instance now carries `documentsDirectory`: undefined for the default instance (the user's installed app keeps the OS folder), `<home>/documents` for every other instance, handed to the `workspace-controller` row as a patch on every mount and every configuration reload (`instancePatches`). A new place the engine or a plugin asks the OS for (a folder, a cache, a socket) is a new member of the family, never a lookup.
+
 ## Gates, smokes and live runs fail closed
 
 A run that is not a user launching their own app (a gate, a packed-app smoke, a live run with a real model) must never reach a real ACRYL or DSH home. Three layers, one idea, so a forgotten override ends in an error and not in a write to the installed app:
