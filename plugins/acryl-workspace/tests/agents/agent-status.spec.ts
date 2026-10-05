@@ -117,6 +117,8 @@ describe('starting a reporting agent', () => {
     expect(spawned[0]?.args[0]).toBe('--settings')
     expect(JSON.parse(spawned[0]?.args[1] ?? '{}').hooks.Stop).toBeDefined()
     expect(spawned[0]?.env).toMatchObject({ [STATUS_ENV.terminal]: 'pty_test', [STATUS_ENV.url]: 'http://127.0.0.1:1/api/status', [STATUS_ENV.token]: 'tok' })
+    // Pinned like claude above: resolving the default command would look `codex` up in PATH, which only passes on a machine that has it installed.
+    await settings.apply({ agent: { id: 'codex', command: '/bin/echo' } })
     make({ url: 'http://x', token: 'tok' }).start('codex')
     expect(spawned[1]?.env[STATUS_ENV.token]).toBeUndefined()
     make().start('claude')
