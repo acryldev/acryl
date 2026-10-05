@@ -610,7 +610,8 @@ describe('published package surface', () => {
     expect(manifest.scripts?.build).toContain('node scripts/generate-mac-app-icon.mjs')
     expect(manifest.scripts).not.toHaveProperty('build:canvas')
     expect(manifest.scripts?.dev)
-      .toBe('pnpm run build && pnpm run verify:loader && node scripts/launch-dev.mjs')
+      // The build runs under the checkout's build lock (scripts/lib/build-lock.mjs), so a launch and a gate in one tree never rewrite lib/ at the same time.
+      .toBe('node ../../scripts/with-build-lock.mjs pnpm run build && pnpm run verify:loader && node scripts/launch-dev.mjs')
     expect(manifest.scripts?.check).not.toContain('pnpm run build:canvas')
     expect(manifest.scripts?.['package:dir'])
       .toBe('pnpm run build && node scripts/package-dir.mjs')
