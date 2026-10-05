@@ -385,7 +385,7 @@ presentation only.
   - Rows 1, 4, 5 are independent of the 2a-2d chain and can go in parallel. Rows 6-7 close the surface; T044 then proves parity across agents.
   - Not re-attached without a recorded owner decision: nothing. Every detached piece lands in a row above or gets an explicit "dropped, reason" line in research.md.
 
-- [ ] T042 Upstream overlap decisions (R24 tail): read upstream 0.2's new `shortcuts`/`ui-shortcuts`, `ui-dockkit`, `ui-sidebar-*`, `config-editor`, `plugin-manager` packages and record adopt-vs-keep per package against ACRYL's own (`acryl-shortcuts`, the workspace shell, the market) **before** re-building anything ACRYL already has.
+- [ ] T042 (plugin manager reachable in the ACRYL frame since `db2c496`, R39; the other packages still need a per-package check by opening the page, not by reading the decision) Upstream overlap decisions (R24 tail): read upstream 0.2's new `shortcuts`/`ui-shortcuts`, `ui-dockkit`, `ui-sidebar-*`, `config-editor`, `plugin-manager` packages and record adopt-vs-keep per package against ACRYL's own (`acryl-shortcuts`, the workspace shell, the market) **before** re-building anything ACRYL already has.
   - Why: porting `acryl-shortcuts` while upstream ships an equivalent would be unrecorded duplication; the reverse (dropping an ACRYL differentiator by accident) is equally possible.
   - Depends on: none (reading only). Acceptance: a decision per package in `research.md`, each naming what ACRYL keeps as its own and why.
 
