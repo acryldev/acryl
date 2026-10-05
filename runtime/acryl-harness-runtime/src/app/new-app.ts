@@ -69,7 +69,8 @@ export function planNewApp(dir: string, options: NewAppOptions): PlannedApp {
   const title = options.title?.trim() || name
   const brand = brandIdentity({ ...(blueprint.brand.kind === 'custom' ? blueprint.brand.identity : {}), ...options.brand, name: title })
   const derived = options.from === undefined ? undefined : fromExistingApp(options.from, `app.${name}`, title, options.brand)
-  const manifestText = derived?.manifestText
+  // A derived manifest keeps the source's comments; its header names the app it describes, so it takes the new app's name.
+  const manifestText = derived?.manifestText.replace(/^# .*?: what this app is/u, `# ${title}: what this app is`)
     ?? `# ${title}: what this app is (name, brand, what it grew from). Edit it and restart. Format: blends.acryl.dev/v1alpha1.\n${stringify(appManifest({ id: `app.${name}`, name: title, blueprint, brand }), { lineWidth: 0 })}`
   const files: Record<string, string> = {
     [APP_MANIFEST_FILE]: manifestText,
