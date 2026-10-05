@@ -852,6 +852,18 @@ Fixed in `db2c496`: the left pane reads `sidebar.panellist` through a narrow por
 
 Found on the way and fixed (`25d0a71`): DSH creates the chat's first workspace in the OS Documents folder, which it asks the OS for, so `HOME` isolation did not cover it and a live run wrote an agent-built plugin into the real `~/Documents/deepseek-harness`; `live-run` detected it, I removed the one folder my test agent wrote, and the app instance now carries `documentsDirectory` (the default instance keeps the OS folder, every other keeps it inside its home). Also fixed: a PTY test with a fixed 300 ms wait that failed under load (`d10d54c`).
 
+### R40 - Follow-up to R39: experimental plugins, the Desktop entry, and the build collision (2026-10-05)
+
+**Experimental plugins are activable, and three of four show their effect.** On Web in the ACRYL frame (isolated app home, restarted once): all four toggles on the Plugins page persisted. After the restart: *Automation tasks* appeared in the left pane by itself (the generic list, nothing named in ACRYL) and its page works (list, filters, New); *Auto Authorization Review* added an "Auto review" (EXP) mode to the permission menu; *Voice input* added a microphone to the composer. *Agent Teams* switched on with no start-up error, but its features live inside sessions (team tools, roster, task board), so nothing is visible in a fresh chat and it was not exercised. The defaults stay off, as in R39 (the owner's call; the toggles are there to opt in). A toggle takes effect after a restart because `hmr` is off in every ACRYL composition; the page does not say so, which is a small UX gap, not fixed here.
+
+**Desktop window.** An isolated Desktop (own home and user data, `scripts/live-run.mjs desktop`) shows the Plugins entry above Settings in the ACRYL sidebar, captured by window id so nothing else on the screen was read. The page itself was not opened in the Desktop window (same component as Web, which was).
+
+**Not done.** Add plugin from a registry (install of a published package) is still untried.
+
+**The build collision (third occurrence), fixed structurally in `28b9759`.** Every package's build wipes `lib/` and rewrites it in place, so an owner's launch and my gate in the same tree collided again (`Cannot find module 'acryl-workspace/client'` in `acryl-agent-control`, which builds right after it). `scripts/lib/build-lock.mjs` is a pid-owning mkdir lock; `pnpm web`, `pnpm acryl` and Desktop `dev` take it around their build, and `scripts/with-build-lock.mjs` runs any gate under it. It does not protect an app that is already running from `lib/`: a full rebuild in a checkout where a Desktop `dev` is running still pulls the output out from under it, so a full gate runs in a clean worktree or on CI.
+
+**A miss of mine.** The Plugins entry (`db2c496`) made the `panels` prop of the workspace sidebar required, and a scenario test in `acryl-agent-control` that renders it was not in the packages I ran; CI caught it (a stub returning a new array on every read looped `useSyncExternalStore`). Fixed in `a6042a9`, and the stable-snapshot contract is now in the interface doc. Rule for a change to a shared component: grep every renderer of it across packages before pushing, not only the package that owns it.
+
 ### Small items closed
 - T056's commit hash fixed (`7ebafbe`). T053 and T054 are one pass: both need the page-less loopback listener and the TUI profile to mount `acrAgentControl`; plan them together after S3.
 - Ledger cell 4 (R30/R33) stays closed; no GUI cell was re-run this round.
