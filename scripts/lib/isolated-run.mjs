@@ -13,8 +13,9 @@
  * @module scripts/lib/isolated-run
  */
 import { lstatSync, mkdirSync, mkdtempSync, readdirSync, realpathSync, rmSync } from 'node:fs'
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { osHomeDirectory } from './instance-module.mjs'
 
 export const REQUIRE_ISOLATED_HOME_ENV = 'ACRYL_REQUIRE_ISOLATED_HOME'
 
@@ -61,7 +62,7 @@ export function isolatedEnvironment({ label, base = process.env, port, extra = {
 }
 
 /** Newest modification time and file count under each real path, ignoring bulky regenerable folders. Cheap enough to take before and after a run. */
-export function snapshotRealHomes(osHome = homedir()) {
+export function snapshotRealHomes(osHome = osHomeDirectory()) {
   const snapshot = {}
   for (const relative of REAL_PATHS) {
     const path = join(osHome, relative)

@@ -69,8 +69,7 @@ export function planNewApp(dir: string, options: NewAppOptions): PlannedApp {
   const title = options.title?.trim() || name
   const brand = brandIdentity({ ...(blueprint.brand.kind === 'custom' ? blueprint.brand.identity : {}), ...options.brand, name: title })
   const derived = options.from === undefined ? undefined : fromExistingApp(options.from, `app.${name}`, title, options.brand)
-  // A derived manifest keeps the source's comments; its header names the app it describes, so it takes the new app's name.
-  const manifestText = derived?.manifestText.replace(/^# .*?: what this app is/u, `# ${title}: what this app is`)
+  const manifestText = derived?.manifestText
     ?? `# ${title}: what this app is (name, brand, what it grew from). Edit it and restart. Format: blends.acryl.dev/v1alpha1.\n${stringify(appManifest({ id: `app.${name}`, name: title, blueprint, brand }), { lineWidth: 0 })}`
   const files: Record<string, string> = {
     [APP_MANIFEST_FILE]: manifestText,
@@ -138,7 +137,8 @@ function fromExistingApp(source: { readonly manifestText: string, readonly lockT
       }
     }
   }
-  const manifestText = String(document)
+  // The source's comments are kept; the header names the app it describes, so it takes the new app's name. Before the lock digests the text.
+  const manifestText = String(document).replace(/^# .*?: what this app is/u, `# ${title}: what this app is`)
   const sourceLicense = typeof parsed.metadata?.license === 'string' ? parsed.metadata.license : undefined
   // The source's code (its extensions) keeps its own license: its notice travels with the copy.
   const notice = sourceLicense === undefined || sourceLicense === 'Proprietary' ? undefined

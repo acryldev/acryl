@@ -14,9 +14,9 @@
 import { spawn, spawnSync } from 'node:child_process'
 import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createConnection } from 'node:net'
-import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { osHomeDirectory } from './lib/instance-module.mjs'
 import { assertRealHomesUntouched, isolatedEnvironment, snapshotRealHomes } from './lib/isolated-run.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -25,7 +25,7 @@ const option = (name, fallback) => { const at = rest.indexOf(`--${name}`); retur
 const keep = rest.includes('--keep')
 if (!['web', 'desktop', 'tui'].includes(surface)) { console.error('usage: live-run.mjs web|desktop|tui [--port N] [--key-file F] [--keep]'); process.exit(2) }
 
-const realHome = homedir()
+const realHome = osHomeDirectory()
 const keyFile = (option('key-file', join(realHome, '.secure-storage/llmproviders/deepseek/deepseek.json'))).replace(/^~/u, realHome)
 const key = JSON.parse(readFileSync(keyFile, 'utf8')).deepseek_api_key
 if (typeof key !== 'string' || key === '') throw new Error(`live-run: no deepseek_api_key in ${keyFile}`)
