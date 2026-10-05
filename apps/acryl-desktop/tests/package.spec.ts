@@ -707,10 +707,9 @@ describe('published package surface', () => {
     expect(ciWorkflow).toContain('push:')
     expect(ciWorkflow).toContain('runs-on: ubuntu-latest')
     expect(ciWorkflow).toContain('corepack pnpm install --frozen-lockfile')
-    expect(ciWorkflow).toContain('corepack pnpm run check:layout')
-    expect(ciWorkflow).toContain('corepack pnpm run typecheck')
-    expect(ciWorkflow).toContain('corepack pnpm run test')
-    expect(ciWorkflow).toContain('corepack pnpm run build')
+    // The gate is the project's own `check` (layout and architecture guardrails, then every package's typecheck, tests and build in dependency order),
+    // not a copy of its steps that drifts from it.
+    expect(ciWorkflow).toContain('corepack pnpm run check\n')
   })
 
   it('keeps the supplied ACRYL theme logos and generated native tray assets', () => {
