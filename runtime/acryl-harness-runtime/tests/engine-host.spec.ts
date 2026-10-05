@@ -1,5 +1,6 @@
 import { Context, Service } from '@deepseek-ai/cordis'
 import { afterEach, describe, expect, it } from 'vitest'
+import { IsolationRequiredError } from '../src/instance/index.ts'
 import {
   createAcrylEngineHost,
   type AcrylEngineDefinition,
@@ -31,6 +32,22 @@ function engine(id: string, events: string[]): AcrylEngineDefinition {
     },
   }
 }
+
+describe('createAcrylEngineHost isolation', () => {
+  it('refuses to start when an isolated home is required and none is pinned, before any engine mounts', async () => {
+    const saved = { ...process.env }
+    for (const key of ['ACRYL_HOME', 'DSH_HOME']) delete process.env[key]
+    process.env.ACRYL_REQUIRE_ISOLATED_HOME = '1'
+    const events: string[] = []
+    try {
+      await expect(createAcrylEngineHost({ engines: [engine('one', events)], initialEngine: 'one' })).rejects.toBeInstanceOf(IsolationRequiredError)
+      expect(events).toEqual([])
+    } finally {
+      for (const key of Object.keys(process.env)) if (!(key in saved)) delete process.env[key]
+      Object.assign(process.env, saved)
+    }
+  })
+})
 
 describe('createAcrylEngineHost', () => {
   const hosts: Awaited<ReturnType<typeof createAcrylEngineHost>>[] = []

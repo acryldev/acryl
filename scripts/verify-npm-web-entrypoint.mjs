@@ -6,10 +6,12 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { corepackCommand, corepackSpawnOptions } from './cli-archive-platform.mjs'
+import { isolatedEnvironment } from './lib/isolated-run.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const packageDir = join(root, 'apps', 'acryl-web')
 const staging = mkdtempSync(join(tmpdir(), 'acryl-web-npm-'))
+let isolated
 
 try {
   const windows = process.platform === 'win32'
@@ -53,13 +55,13 @@ try {
     ...corepackSpawnOptions(process.platform),
   })
   const executable = join(staging, 'node_modules', '.bin', windows ? 'acryl-web.cmd' : 'acryl-web')
-  // The packed app boots a profile and re-links its packages into it, so it must never see the machine's real ACRYL home: pinned to a folder of
-  // its own inside the staging directory (which is removed below), whatever the caller's environment holds.
-  const home = join(staging, 'acryl-home')
+  // The packed app boots a profile and re-links its packages into it, so it runs in an isolated home (never the machine's real ACRYL home), on a port
+  // that scans for a free one instead of taking 3080 from a running app. The throwaway root is removed with the staging directory.
+  isolated = isolatedEnvironment({ label: 'web-smoke', port: 3290 })
   const result = spawnSync(executable, ['--json'], {
     cwd: staging,
     encoding: 'utf8',
-    env: { ...process.env, ACRYL_HOME: home, DSH_HOME: join(home, '.dsh') },
+    env: isolated.env,
     timeout: 90_000,
     ...corepackSpawnOptions(process.platform),
   })
@@ -69,11 +71,13 @@ try {
   const jsonLine = result.stdout.split('\n').find(line => line.startsWith('{'))
   if (!jsonLine) throw new Error(`verify-npm-web-entrypoint: missing readiness output: ${result.stdout}`)
   const output = JSON.parse(jsonLine)
-  if (typeof output.url !== 'string' || !output.url.startsWith('http://')) {
+  // A URL without the launch token means the profile did not mount (the page would answer "authentication required"): a half-booted app must not pass.
+  if (typeof output.url !== 'string' || !output.url.startsWith('http://') || !output.url.includes('?token=')) {
     throw new Error(`verify-npm-web-entrypoint: invalid readiness output: ${result.stdout}`)
   }
   console.log(`verify-npm-web-entrypoint: OK (${output.url})`)
 } finally {
+  isolated?.dispose()
   rmSync(staging, { recursive: true, force: true })
 }
 

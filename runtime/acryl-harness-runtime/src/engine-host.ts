@@ -2,6 +2,7 @@ import { dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
 import { Group, Loader } from '@deepseek-ai/cordis-plugin-loader'
+import { selectInstance } from './instance/index.ts'
 
 const ENGINE_ENTRY_ID = 'acryl-engine'
 
@@ -56,6 +57,10 @@ export async function createAcrylEngineHost(input: {
   }
   const initial = engines.get(input.initialEngine)
   if (initial === undefined) throw new Error(`unknown ACRYL engine: ${input.initialEngine}`)
+  // Choose the app instance before anything mounts. Engines resolve their home inside plugin fibers, where a refusal (an invalid port, or the
+  // isolation a gate or live run requires: `IsolationRequiredError`) would only fail that plugin and leave an app that boots without its profile and
+  // exits 0. Here it stops the host, for every surface.
+  selectInstance()
 
   const ctx = new Context()
   // `EntryTree`'s constructor snapshots `ctx.baseUrl` once, as an own

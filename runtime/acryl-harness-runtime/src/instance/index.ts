@@ -32,4 +32,4 @@ export {
   writeOnlineSecret,
 } from './online-secret.ts'
 export { announce, listRunning, registryDir, withdraw, type RunningApp } from './registry.ts'
-export { appFolder, isGitWorktree, managedApp, osHomeDirectory, selectInstance, type SelectInstanceOptions } from './select.ts'
+export { IsolationRequiredError, REQUIRE_ISOLATED_HOME_ENV, appFolder, isGitWorktree, managedApp, osHomeDirectory, selectInstance, type SelectInstanceOptions } from './select.ts'
