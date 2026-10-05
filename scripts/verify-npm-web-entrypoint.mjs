@@ -48,8 +48,14 @@ try {
     overrides[name] = `file:./${packed}`
   }
 
-  writeFileSync(join(staging, 'package.json'), `${JSON.stringify({ private: true, pnpm: { overrides } }, null, 2)}\n`)
-  execFileSync(corepackCommand(process.platform), ['pnpm', '--dir', staging, 'add', '--ignore-scripts', `./${archive}`], {
+  // The overrides live in pnpm-workspace.yaml: pnpm 11 (the version this repository pins and CI uses) no longer reads `pnpm.overrides` from package.json, so
+  // the install silently ignored them and went to the public registry for packages that only exist as workspace tarballs.
+  // The staging folder uses the repository's pinned pnpm (corepack reads `packageManager` here): where overrides live and how they apply differ between pnpm
+  // versions, so a check that runs whichever pnpm the machine happens to have proves nothing about the version CI and the owner use.
+  const packageManager = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).packageManager
+  writeFileSync(join(staging, 'package.json'), `${JSON.stringify({ private: true, ...(typeof packageManager === 'string' ? { packageManager } : {}) }, null, 2)}\n`)
+  writeFileSync(join(staging, 'pnpm-workspace.yaml'), `packages:\n  - .\noverrides:\n${Object.entries(overrides).map(([name, spec]) => `  ${JSON.stringify(name)}: ${JSON.stringify(spec)}`).join('\n')}\n`)
+  execFileSync(corepackCommand(process.platform), ['pnpm', '--dir', staging, 'add', '--workspace-root', '--ignore-scripts', `./${archive}`], {
     cwd: staging,
     stdio: 'inherit',
     ...corepackSpawnOptions(process.platform),
