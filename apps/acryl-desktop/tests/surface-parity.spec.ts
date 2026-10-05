@@ -36,11 +36,15 @@ const WEB_ONLY_ROWS: Readonly<Record<string, string>> = {
   'acryl-support': 'Web has no native logger or tray; Desktop already writes logs in its main process and exports diagnostics from the tray',
 }
 
-/** Rows whose package differs per surface by design. */
-const PER_SURFACE_ANONYMOUS_PACKAGES = new Set([
-  '@deepseek-ai/dsh-host-directory-picker-native',
-  '@deepseek-ai/dsh-client-ui-directory-picker-native',
-])
+/**
+ * Rows whose package differs per surface by design: the native directory pickers. Desktop is composed here as `darwin`, while Web composes the picker for
+ * the platform the test runs on, so a Linux runner sees other pickers than macOS does; matching the package family keeps the gate OS-independent.
+ */
+const PER_SURFACE_ANONYMOUS_PACKAGE_PREFIXES = [
+  '@deepseek-ai/dsh-host-directory-picker',
+  '@deepseek-ai/dsh-client-ui-directory-picker',
+] as const
+const isPerSurfacePackage = (name: string): boolean => PER_SURFACE_ANONYMOUS_PACKAGE_PREFIXES.some(prefix => name.startsWith(prefix))
 
 function summarize(rows: readonly { id?: unknown; name?: unknown; disabled?: unknown }[]): Map<string, { name: string; disabled: boolean }> {
   const map = new Map<string, { name: string; disabled: boolean }>()
@@ -119,9 +123,9 @@ describe('Web and Desktop compose the same ACRYL features', () => {
     const desktopOnly = [...desktop.keys()].filter(id => !web.has(id))
     const webOnly = [...web.keys()].filter(id => !desktop.has(id))
     const unexplainedDesktop = desktopOnly.filter(id => !(id in DESKTOP_NATIVE_ROWS))
-    const unexplainedWeb = webOnly.filter(id => !(id in WEB_ONLY_ROWS) && !PER_SURFACE_ANONYMOUS_PACKAGES.has(web.get(id)?.name ?? ''))
-    expect(unexplainedDesktop, 'rows only Desktop composes: compose them for both surfaces or list them with a reason').toEqual([])
-    expect(unexplainedWeb, 'rows only Web composes: compose them for both surfaces or list them with a reason').toEqual([])
+    const unexplainedWeb = webOnly.filter(id => !(id in WEB_ONLY_ROWS) && !isPerSurfacePackage(web.get(id)?.name ?? ''))
+    expect(unexplainedDesktop.map(id => `${id} (${desktop.get(id)?.name ?? '?'})`), 'rows only Desktop composes: compose them for both surfaces or list them with a reason').toEqual([])
+    expect(unexplainedWeb.map(id => `${id} (${web.get(id)?.name ?? '?'})`), 'rows only Web composes: compose them for both surfaces or list them with a reason').toEqual([])
     // A listed native row that no longer exists is a stale allowlist entry.
     for (const id of Object.keys(DESKTOP_NATIVE_ROWS)) expect(desktop.has(id), `stale allowlist entry ${id}`).toBe(true)
     for (const id of Object.keys(WEB_ONLY_ROWS)) expect(web.has(id), `stale allowlist entry ${id}`).toBe(true)
