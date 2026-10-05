@@ -13,6 +13,7 @@ import type { WorkspaceGroups } from '../canvas/groups.ts'
 import { agentsByWorktree, MAX_ROW_AGENTS } from '../chrome/worktree-agents.ts'
 import { AgentIcon } from '../tabs/AgentIcon.tsx'
 import type { ProjectsControl } from './projects-control.ts'
+import type { UpstreamPanels } from './upstream-panels.ts'
 import { attentionByWorktree, type WorktreeAttention } from '../status/attention-model.ts'
 import type { AgentStatusState } from '../status/agent-status-state.ts'
 import { buildProjectRows, entriesForWorktree, type RepoRow, type WorktreeDot, type WorktreeRow, type WorktreeSessionEntry } from './sidebar-model.ts'
@@ -33,6 +34,8 @@ export type ProjectsSidebarProps = Omit<PropsRuntime<'root'>, 'useSessions'> & P
   readonly agents: AgentsState
   /** What each terminal agent reports it is doing, for the "needs you" dot. */
   readonly status: AgentStatusState
+  /** The pages DSH's own plugins contribute to its sidebar (Plugins, Automation tasks, ...), which this pane lists above Settings. */
+  readonly panels: UpstreamPanels
 }
 
 const DOT_LABEL: Record<WorktreeDot, string> = {
@@ -52,11 +55,13 @@ const DOT_LABEL: Record<WorktreeDot, string> = {
  * be polluted the way a flat "everything open" list would be. The upstream sidebar (its search, and
  * anything else it owns) is mounted only to host Settings' trigger and dialog, never shown as a view.
  */
-export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, useSessions, shell, projects, groups, agents, status }: ProjectsSidebarProps) {
+export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, useSessions, shell, projects, groups, agents, status, panels }: ProjectsSidebarProps) {
   const subscribe = useCallback((listener: () => void) => shell.subscribe(listener), [shell])
   const snapshot = useSyncExternalStore(subscribe, () => shell.getSnapshot())
   const sessions = useSessions(state => state)
   const workspaceKey = useSyncExternalStore(projects.subscribeWorkspaces, () => projects.workspaceKey())
+  const upstreamPanels = useSyncExternalStore(panels.subscribe, panels.list)
+  const activePanel = useSyncExternalStore(panels.subscribe, panels.active)
   const [notice, setNotice] = useState<string | null>(null)
   /** A neutral hint (not an error), for actions that continue in another part of the UI. */
   const [hint, setHint] = useState<string | null>(null)
@@ -349,6 +354,17 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
           />
         ))}
         <div className="dshWorkspaceSideFoot">
+          {upstreamPanels.map(panel => (
+            <button
+              key={panel.id}
+              type="button"
+              className="dshWorkspaceSideFootButton"
+              aria-current={activePanel === panel.id ? 'page' : undefined}
+              onClick={() => { panels.select(panel.id) }}
+            >
+              {panel.label}
+            </button>
+          ))}
           <button
             type="button"
             className="dshWorkspaceSideFootButton"

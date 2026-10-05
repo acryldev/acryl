@@ -274,9 +274,10 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceSessionItem:hover .dshWorkspaceSessionClose, .dshWorkspaceSessionClose:focus-visible { opacity: 1; }
 .dshWorkspaceSessionClose:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); color: var(--dsw-alias-label-primary); }
 .dshWorkspaceWorktreeNew:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); }
-.dshWorkspaceSideFoot { margin-top: 14px; padding: 8px 8px 0; border-top: 1px solid var(--dsw-alias-border-l2); }
-.dshWorkspaceSideFootButton { appearance: none; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: 13px/1.3 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceSideFoot { display: flex; flex-direction: column; gap: 2px; margin-top: 14px; padding: 8px 8px 0; border-top: 1px solid var(--dsw-alias-border-l2); }
+.dshWorkspaceSideFootButton { appearance: none; text-align: left; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: 13px/1.3 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSideFootButton:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-label-primary); }
+.dshWorkspaceSideFootButton[aria-current="page"] { background: color-mix(in srgb, #4d6bfe 18%, transparent); color: var(--dsw-alias-label-primary); }
 .dshWorkspaceRepoName { margin: 0; padding: 4px 8px; color: var(--dsw-alias-label-secondary); font: 600 11px/1.4 ui-sans-serif, system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 .dshWorkspaceWorktrees { list-style: none; margin: 0; padding: 0; }
 .dshWorkspaceWorktree { appearance: none; display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; text-align: left; font: 13px/1.3 ui-sans-serif, system-ui, sans-serif; }

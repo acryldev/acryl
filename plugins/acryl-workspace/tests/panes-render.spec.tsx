@@ -8,6 +8,7 @@ import type { WorkspaceGitApi } from '../src/client/git/git-api.ts'
 import { GitDiffPane, changeSignature, type GitDiffPaneProps } from '../src/client/diff/GitDiffPane.tsx'
 import { ProjectsSidebar, type ProjectsSidebarProps } from '../src/client/projects/ProjectsSidebar.tsx'
 import type { ProjectAction, ProjectsControl } from '../src/client/projects/projects-control.ts'
+import type { UpstreamPanels } from '../src/client/projects/upstream-panels.ts'
 import { makeStatus } from './dock/dock-fixtures.ts'
 import { AgentsState } from '../src/client/agents/agents-state.ts'
 import { WorkspaceGroups } from '../src/client/canvas/groups.ts'
@@ -103,8 +104,15 @@ function fakeProjects(overrides: Partial<ProjectsControl> = {}): ProjectsControl
   }
 }
 
-function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: ProjectsControl = fakeProjects(), groups: WorkspaceGroups = new WorkspaceGroups()): ProjectsSidebarProps {
+/** The pages DSH's plugins contribute to its sidebar, as a fixed list with a recorded selection. */
+function fakePanels(list: ReadonlyArray<{ id: string, label: string }> = [], open: string | null = null): UpstreamPanels & { selected: string[] } {
+  const selected: string[] = []
+  return { selected, list: () => list as never, subscribe: () => () => {}, active: () => open as never, select: id => { selected.push(id) } }
+}
+
+function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: ProjectsControl = fakeProjects(), groups: WorkspaceGroups = new WorkspaceGroups(), panels: UpstreamPanels = fakePanels()): ProjectsSidebarProps {
   return {
+    panels,
     groups,
     status: makeStatus().state,
     agents: new AgentsState({ list: async () => [], add: async () => [], remove: async () => [], settings: async () => { throw new Error('no settings') }, change: async () => { throw new Error('no settings') } }),
@@ -119,6 +127,26 @@ function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: P
 }
 
 describe('ProjectsSidebar', () => {
+  it('lists the pages DSH\'s plugins contribute (Plugins, Automation tasks) above Settings, marks the open one, and opens one on click', () => {
+    const shell = new WorkspaceShellState(api())
+    const panels = fakePanels([{ id: 'plugins', label: 'Plugins' }, { id: 'automation', label: 'Automation tasks' }], 'plugins')
+    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects(), new WorkspaceGroups(), panels)} />)
+    const plugins = screen.getByRole('button', { name: 'Plugins' })
+    expect(plugins.getAttribute('aria-current')).toBe('page')
+    expect(screen.getByRole('button', { name: 'Automation tasks' }).getAttribute('aria-current')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Automation tasks' }))
+    expect(panels.selected).toEqual(['automation'])
+    const labels = screen.getAllByRole('button').map(button => button.textContent).filter(text => ['Plugins', 'Automation tasks', 'Settings'].includes(text ?? ''))
+    expect(labels).toEqual(['Plugins', 'Automation tasks', 'Settings'])
+  })
+
+  it('shows no panel entries when the profile contributes none, and Settings stays', () => {
+    const shell = new WorkspaceShellState(api())
+    render(<ProjectsSidebar {...sidebarProps(shell)} />)
+    expect(screen.queryByRole('button', { name: 'Plugins' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeTruthy()
+  })
+
   it('renders the tree, with no classic view or search toggle to switch to, and the upstream sidebar only as a host that is never display:none', () => {
     const shell = new WorkspaceShellState(api())
     render(<ProjectsSidebar {...sidebarProps(shell)} />)

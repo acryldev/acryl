@@ -30,6 +30,7 @@ import { adoptLegacyProjects, ProjectRegistryState } from './projects/registry-s
 import { createProjectsControl, desktopDirectorySeams } from './projects/projects-control.ts'
 import { createWorkspaceGitApi } from './git/git-api.ts'
 import { ProjectsSidebar } from './projects/ProjectsSidebar.tsx'
+import { createUpstreamPanels, type PanelSlotRegistry } from './projects/upstream-panels.ts'
 import { DEFAULT_WORKSPACE_CAPABILITIES, loadWorkspaceCapabilities } from './capabilities/capabilities-api.ts'
 import { createWorkspaceAgentsApi } from './agents/agents-api.ts'
 import { agentsSettingsPlugin } from './agents/agents-settings-plugin.ts'
@@ -123,6 +124,10 @@ export function apply(ctx: ClientContext): void {
     chatAvailable: () => capabilities.chat,
     webPickDirectory: createWebFolderPicker(),
   })
+  // DSH's own pages (Plugins, Automation tasks, ...) listed in the left pane: looked up when read, so a profile without them just shows none.
+  // The `sidebar.panellist` slot name is declared by DSH's sidebar package, which ACRYL does not import (the frame facade stays as it is), so the registry crosses
+  // into the narrow `PanelSlotRegistry` port here, at the one place that knows; the port, its tests and the live check hold the contract.
+  const upstreamPanels = createUpstreamPanels({ slots: () => ctx.slots as unknown as PanelSlotRegistry, layout: () => ctx.get('layout') })
   ctx.effect(() => startShellPolling(shell), 'acryl-workspace: git state polling')
   ctx.effect(() => installWorkspaceStyles(), 'acryl-workspace: styles')
   ctx.plugin(changesTabPlugin(shell, gitApi))
@@ -179,7 +184,7 @@ export function apply(ctx: ClientContext): void {
           removeSlot = ctx.slots.register({
             name: 'desktop.sidebar',
             priority: 0,
-            inject: () => ({ shell, projects, groups, agents, status: agentStatus }),
+            inject: () => ({ shell, projects, groups, agents, status: agentStatus, panels: upstreamPanels }),
           }, ProjectsSidebar)
         } catch (cause) {
           ctx.logger.warn(`acryl-workspace: could not register the left pane: ${cause instanceof Error ? cause.message : String(cause)}`)
