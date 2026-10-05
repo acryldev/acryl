@@ -21,7 +21,7 @@ Where an ACRYL app keeps anything (home, engine home, port, Electron user data, 
 - Fast headless loop: `corepack pnpm run typecheck`, `corepack pnpm run test`, or both via `corepack pnpm run verify`.
 - Typecheck, test, then isolated GUI: `corepack pnpm run lifecycle`.
 - Build the desktop package with `corepack pnpm run build`.
-- Run the complete headless gate with `corepack pnpm run check`.
+- Run the complete headless gate with `corepack pnpm run check`. Every package's build wipes and rewrites its `lib/` in place, so two builds in one checkout collide (a package that depends on the one being rebuilt cannot find its output for a few seconds): run a gate or any long build as `node scripts/with-build-lock.mjs corepack pnpm run check`; the launchers (`pnpm web`, `pnpm acryl`, Desktop `dev`) take the same lock around their build and wait for each other.
 - Run upstream operations through the root scripts, such as `corepack pnpm run upstream:build`.
 
 - `deepseek-harness/` is a pinned upstream Git submodule. Never edit files inside it from a desktop feature branch.

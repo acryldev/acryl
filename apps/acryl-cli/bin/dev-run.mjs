@@ -18,6 +18,7 @@ import { spawnSync } from 'node:child_process'
 import { existsSync, readdirSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { withBuildLock } from '../../../scripts/lib/build-lock.mjs'
 import { checkoutIsolation } from '../../../scripts/lib/checkout-isolation.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -52,17 +53,21 @@ function isStale() {
   return watchedSourceDirs.some(dir => newestSourceMtime(dir) > binMtime)
 }
 
-if (isStale()) {
-  process.stderr.write('Building acryl-cli (lib is missing or stale)…\n')
-  const build = spawnSync('corepack', ['pnpm', '--filter', 'acryl-cli', 'run', 'build'], {
-    cwd: root,
-    stdio: 'inherit',
-  })
-  if (build.status !== 0) {
-    process.stderr.write('acryl: build failed; run `corepack pnpm --filter acryl-cli run build` for details\n')
-    process.exit(build.status ?? 1)
+// The build rewrites every package's `lib/` in place: one at a time per checkout (scripts/lib/build-lock.mjs), and re-checked once the lock is held,
+// because the build that held it may just have made this one unnecessary.
+await withBuildLock(root, 'acryl launcher', () => {
+  if (isStale()) {
+    process.stderr.write('Building acryl-cli (lib is missing or stale)…\n')
+    const build = spawnSync('corepack', ['pnpm', '--filter', 'acryl-cli', 'run', 'build'], {
+      cwd: root,
+      stdio: 'inherit',
+    })
+    if (build.status !== 0) {
+      process.stderr.write('acryl: build failed; run `corepack pnpm --filter acryl-cli run build` for details\n')
+      process.exit(build.status ?? 1)
+    }
   }
-}
+})
 
 // A worktree checkout never touches the main checkout's home (see checkout-isolation.mjs).
 Object.assign(process.env, checkoutIsolation(root))

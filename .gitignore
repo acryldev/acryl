@@ -70,3 +70,4 @@ plugins/acryl-ui/.scratch-validate-registry-tests/
 
 # Devbox generated artifacts (machine-local paths and scripts)
 .devbox/
+.build-lock/
