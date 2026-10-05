@@ -1,0 +1,97 @@
+name: Windows
+
+# Native Windows proofs that cannot run on Linux: the ACL write-restriction sandbox (spec 001, T061) and the Windows-specific Desktop specs.
+# Manual, and on changes that can affect them. The repository is public, so these runners cost nothing.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, ci-windows]
+    paths:
+      - 'apps/acryl-desktop/**'
+      - 'runtime/**'
+      - 'deepseek-harness'
+      - '.github/workflows/windows.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/acryl-desktop/**'
+      - 'runtime/**'
+      - 'deepseek-harness'
+      - '.github/workflows/windows.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DSH_TELEMETRY_DISABLED: '1'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  acl-sandbox:
+    name: ACL sandbox (upstream package, native Windows)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      # The sandbox is an upstream package with its own workspace; its tests that need Windows (the ACL grant and the end-to-end probe: a confined child
+      # writes into the granted folders, is DENIED everywhere else, and may still read outside) are skipped on every other platform.
+      - name: Install the upstream workspace
+        working-directory: deepseek-harness
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: PowerShell 7 is available
+        run: pwsh -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'
+
+      - name: Run the sandbox tests natively
+        working-directory: deepseek-harness
+        run: corepack pnpm --filter @deepseek-ai/dsh-sandbox-windows-acl exec vitest run --reporter=verbose
+
+  desktop-windows-specs:
+    name: Desktop Windows specs (native)
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Enable Corepack and prepare pnpm version
+        run: |
+          corepack enable
+          corepack prepare pnpm@$(grep '"packageManager"' package.json | grep -o '[0-9.]*' | head -1) --activate
+
+      - name: Install dependencies
+        run: corepack pnpm install --frozen-lockfile
+
+      # Desktop's tests import its workspace dependencies' built output, so build those first (topological: the dependencies of acryl-desktop, not itself).
+      - name: Build the Desktop dependencies
+        run: corepack pnpm --filter "acryl-desktop^..." run build
+
+      - name: Windows specs
+        working-directory: apps/acryl-desktop
+        run: corepack pnpm exec vitest run tests/windows tests/package-win.spec.ts tests/verify-win-installer.spec.ts tests/verify-win-portable.spec.ts --reporter=verbose
