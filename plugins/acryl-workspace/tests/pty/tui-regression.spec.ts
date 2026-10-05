@@ -39,8 +39,14 @@ describe.skipIf(process.platform === 'win32')('a full-screen program on a real P
     registry.write(view.id, `printf '\\033[?1049h\\033[2J\\033[1;1HTITLE BAR\\033[6;4Hbody line\\033[15;1Hstatus'; sleep 30\r`)
     await until(() => registry.read(view.id).output.includes('status'))
     registry.resize(view.id, 80, 20)
-    await new Promise(resolve => setTimeout(resolve, 300))
-    const late = await attach(view.id, 80, 20)
+    // The restored screen settles after the resize reaches the program; how long that takes depends on the machine's load, so wait for the screen itself.
+    let late = await attach(view.id, 80, 20)
+    const settled = (terminal: Terminal): boolean => terminal.buffer.active.type === 'alternate' && text(terminal)[14] === 'status'
+    for (const end = Date.now() + 8000; !settled(late) && Date.now() < end;) {
+      late.dispose()
+      await new Promise(resolve => setTimeout(resolve, 50))
+      late = await attach(view.id, 80, 20)
+    }
     expect(late.buffer.active.type).toBe('alternate')
     const rows = text(late)
     expect(rows[0]).toBe('TITLE BAR')
