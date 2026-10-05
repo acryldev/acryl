@@ -21,7 +21,7 @@ jobs:
   verify:
     name: Typecheck, test, and build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
         with:
@@ -61,35 +61,8 @@ jobs:
       - name: Install dependencies
         run: corepack pnpm install --frozen-lockfile
 
-      - name: Validate repository layout
-        run: corepack pnpm run check:layout
-
-      - name: Check technical-debt architecture guardrails
-        run: corepack pnpm run debt:check
-
-      # The workspace packages export their types from a built lib/. On a fresh
-      # checkout those are absent, so consumers (acryl-cli -> acryl-harness-
-      # runtime -> acryl-control, cordis-plugin-market, and acryl-cli -> dsh-
-      # community-market) cannot typecheck until the providers are built. The
-      # web serve test also loads dsh-client-ui-brand-acryl as a profile plugin,
-      # so its lib/ must exist before the test step. The runtime reads the Blend
-      # format (@webboxes/blends-core) and app persistence (@webboxes/app-persistence),
-      # so those are built before it.
-      - name: Build workspace type providers
-        run: |
-          corepack pnpm --filter acryl-control run build
-          corepack pnpm --filter @webboxes/blends-core run build
-          corepack pnpm --filter @webboxes/app-persistence run build
-          corepack pnpm --filter acryl-harness-runtime run build
-          corepack pnpm --filter dsh-community-market run build
-          corepack pnpm --filter cordis-plugin-market run build
-          corepack pnpm --filter dsh-client-ui-brand-acryl run build
-
-      - name: Typecheck
-        run: corepack pnpm run typecheck
-
-      - name: Test
-        run: corepack pnpm run test
-
-      - name: Build
-        run: corepack pnpm run build
+      # The one command that is the project's gate: layout and architecture guardrails, then every package's own check (typecheck, tests and build in
+      # dependency order). It passes from a clean checkout, which is the point: CI must not keep its own hand-listed copy of a build order that drifts
+      # (the stale list here failed every push once `acryl-settings` was added).
+      - name: Check
+        run: corepack pnpm run check
