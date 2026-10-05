@@ -180,7 +180,10 @@ function runFlatProfileDshEntry() {
       'flat profile dsh plugin help',
       ['--expose-internals'],
       join(desktopPackage, 'lib', 'desktop-cli.js'),
-      ['plugin', '--help'],
+      // An explicit ordinary profile: `plugin --help` under the reserved `desktop` profile reaches upstream's "managed exclusively by the Electron
+      // application" refusal on some platforms (the Linux CI runner) because the help flag is forwarded as a pnpm argument there. What this smoke proves is that the
+      // flat layout loads the plugin command at all; the default-profile injection is covered by the desktop-cli unit tests.
+      ['plugin', '--profile', 'web', '--help'],
       undefined,
       { DSH_DESKTOP_DEFAULT_PROFILE: 'desktop' },
     )
