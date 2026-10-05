@@ -39,9 +39,31 @@ export function lintPackageDir(dir, fs = { existsSync, readFileSync }) {
   if (requiresAcrylPackages !== undefined && (!Array.isArray(requiresAcrylPackages) || !requiresAcrylPackages.every(name => typeof name === 'string'))) {
     errors.push('"dsh.requiresAcrylPackages" must be a list of package name strings')
   }
+  errors.push(...hostOwnedDependencyErrors(pkg))
   errors.push(...checkManifest(pkg))
   const { apiVersion, permissions } = readManifest(pkg)
   return { name: pkg.name, hasClient: pkg.dsh?.client !== undefined, hotShim: usesHotShim(dir, pkg, fs), apiVersion, permissions, requiresAcrylPackages: Array.isArray(requiresAcrylPackages) ? requiresAcrylPackages : [], errors }
+}
+
+/** Packages the app itself provides to every plugin: the framework and the terminal toolkit. */
+const HOST_OWNED_PACKAGES = /^@(deepseek-ai|earendil-works)\//u
+
+/**
+ * A plugin must not install the app's own packages. Listed under `dependencies`, the install puts a second physical copy of the framework into the
+ * profile, and from the next restart the plugin's imports resolve to that copy while the app runs on its own: unique symbols and classes no longer match
+ * (measured: `Cannot read properties of undefined (reading 'prepare')` on every tool call after a restart). `peerDependencies` state the same range
+ * and install nothing.
+ * @returns {string[]}
+ */
+function hostOwnedDependencyErrors(pkg) {
+  const errors = []
+  for (const field of ['dependencies', 'optionalDependencies']) {
+    const owned = Object.keys(pkg[field] ?? {}).filter(name => HOST_OWNED_PACKAGES.test(name))
+    if (owned.length > 0) {
+      errors.push(`"${field}" lists ${owned.map(name => `"${name}"`).join(', ')}, which the app itself provides: declare ${owned.length === 1 ? 'it' : 'them'} under "peerDependencies" instead, with the same version range. Installed as a dependency, the package brings a second copy of the framework into the profile and the app's tools stop working after the next restart.`)
+    }
+  }
+  return errors
 }
 
 /** True when the plugin's host entry re-imports its implementation with a cache-busting query (the hot shim). */

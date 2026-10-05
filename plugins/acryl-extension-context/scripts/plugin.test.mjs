@@ -86,6 +86,29 @@ test('lint catches the measured failures: missing bundle, missing patch file, ex
   } finally { for (const d of [noBundle, noPatchFile, badExports]) rmSync(d, { recursive: true, force: true }) }
 })
 
+test('lint refuses a host package under dependencies (a second framework copy breaks every tool call after a restart) and accepts peerDependencies and third-party dependencies', () => {
+  const asDependency = makePkg({ dependencies: { '@deepseek-ai/dsh-tools': '0.2.0-rc.2', '@earendil-works/pi-tui': '1.0.0' } })
+  const asOptional = makePkg({ optionalDependencies: { '@deepseek-ai/cordis': '4.0.4' } })
+  const asPeer = makePkg({ peerDependencies: { '@deepseek-ai/dsh-tools': '0.2.0-rc.2' }, dependencies: { 'left-pad': '1.3.0' } })
+  try {
+    const errors = lintPackageDir(asDependency).errors.join('\n')
+    assert.match(errors, /"dependencies" lists "@deepseek-ai\/dsh-tools", "@earendil-works\/pi-tui"/)
+    assert.match(errors, /peerDependencies/)
+    assert.match(lintPackageDir(asOptional).errors.join('\n'), /"optionalDependencies" lists "@deepseek-ai\/cordis"/)
+    assert.deepEqual(lintPackageDir(asPeer).errors, [])
+  } finally { for (const d of [asDependency, asOptional, asPeer]) rmSync(d, { recursive: true, force: true }) }
+})
+
+test('every shipped example plugin passes the package lint (examples are what authors and models copy)', () => {
+  const base = new URL('../example-plugins/packages/', import.meta.url)
+  for (const name of readdirSync(base)) {
+    const dir = new URL(`${name}/`, base).pathname
+    if (!existsSync(join(dir, 'package.json'))) continue
+    const hostOwned = lintPackageDir(dir).errors.filter(error => error.includes('which the app itself provides'))
+    assert.deepEqual(hostOwned, [], `example ${name}`)
+  }
+})
+
 const handle = (exitCode, text = '') => ({ done: Promise.resolve({ exitCode, signal: null }), stdout: (async function* () { yield text })(), stderr: (async function* () {})() })
 
 function fakes({ addExit = 0, activateError = null, removeExit = 0, preinstalled = false } = {}) {

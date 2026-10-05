@@ -10,9 +10,6 @@
     ".": "./index.js",
     "./package.json": "./package.json"
   },
-  "dependencies": {
-    "@deepseek-ai/dsh-tools": "0.2.0-rc.2"
-  },
   "files": [
     "index.js",
     "cordis.patch.yml"
@@ -21,5 +18,8 @@
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": "0.2.0-rc.2"
   }
 }
