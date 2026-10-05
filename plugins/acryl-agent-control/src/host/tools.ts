@@ -5,7 +5,7 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import { defineAcrylTool } from 'acryl-control'
 import { MUTATING_OPS, parseUiRequest, UiControlError, type AuditEntry, type UiActionResult, type UiOp, type UiRequest, type UiResult, type UiSnapshot } from '../contract.ts'
 import { renderSnapshot } from '../snapshot-text.ts'
 import type { AuditLog } from './audit.ts'
@@ -150,10 +150,10 @@ async function perform(deps: ToolDeps, toolName: string, args: unknown, signal: 
   }
 }
 
-/** Register every Agent Control tool on `ctx.tools`. @returns disposer. */
+/** Register every Agent Control tool on `ctx.acrylTools`. @returns disposer. */
 export function registerUiTools(ctx: Context, deps: ToolDeps): () => void {
   const tools = [
-    defineTool({
+    defineAcrylTool({
       name: TOOL_NAMES.snapshot,
       description: 'LIVE ACTION: for \'do X now\' (hide/click/type/enable) - live, reversible, no files touched. Controls: role, name, state, ref. Secrets hidden. Long: pass nextCursor.',
       parameters: {
@@ -185,14 +185,14 @@ export function registerUiTools(ctx: Context, deps: ToolDeps): () => void {
       },
       execute: async (args, exec) => plain((await perform(deps, TOOL_NAMES.snapshot, args, exec.signal)) as UiSnapshot),
     }),
-    defineTool({
+    defineAcrylTool({
       name: TOOL_NAMES.click,
       description: 'Click a control by ref. The user approves each call.',
       parameters: { ref: REF_PARAM },
       output: { ...ACTION_OUTPUT, render: renderAction },
       execute: async (args, exec) => (await perform(deps, TOOL_NAMES.click, args, exec.signal)) as UiActionResult,
     }),
-    defineTool({
+    defineAcrylTool({
       name: TOOL_NAMES.type,
       description: 'Type into a text field by ref (replaces its text unless clear is false). Never password, token or payment fields. The user approves each call.',
       parameters: {
@@ -204,21 +204,21 @@ export function registerUiTools(ctx: Context, deps: ToolDeps): () => void {
       output: { ...ACTION_OUTPUT, render: renderAction },
       execute: async (args, exec) => (await perform(deps, TOOL_NAMES.type, args, exec.signal)) as UiActionResult,
     }),
-    defineTool({
+    defineAcrylTool({
       name: TOOL_NAMES.select,
       description: 'Choose an option (text or value) in a select by ref. The user approves each call.',
       parameters: { ref: REF_PARAM, option: { type: 'string', required: true } },
       output: { ...ACTION_OUTPUT, render: renderAction },
       execute: async (args, exec) => (await perform(deps, TOOL_NAMES.select, args, exec.signal)) as UiActionResult,
     }),
-    defineTool({
+    defineAcrylTool({
       name: TOOL_NAMES.press,
       description: 'Press a key (a character, Enter, Escape, Tab, Backspace, Delete, Space, Arrow*, Home, End, PageUp/Down) on a ref or the focused control. The user approves each call.',
       parameters: { key: { type: 'string', required: true }, ref: { type: 'string' } },
       output: { ...ACTION_OUTPUT, render: renderAction },
       execute: async (args, exec) => (await perform(deps, TOOL_NAMES.press, args, exec.signal)) as UiActionResult,
     }),
-    defineTool({
+    defineAcrylTool({
       name: TOOL_NAMES.scroll,
       description: 'Scroll the page, or a ref.',
       parameters: {
@@ -229,7 +229,7 @@ export function registerUiTools(ctx: Context, deps: ToolDeps): () => void {
       output: { ...ACTION_OUTPUT, render: renderAction },
       execute: async (args, exec) => (await perform(deps, TOOL_NAMES.scroll, args, exec.signal)) as UiActionResult,
     }),
-    defineTool({
+    defineAcrylTool({
       name: TOOL_NAMES.wait,
       description: 'Wait up to 10s for text, or a role and name, to appear (or, with gone, disappear).',
       parameters: {
@@ -243,6 +243,6 @@ export function registerUiTools(ctx: Context, deps: ToolDeps): () => void {
       execute: async (args, exec) => (await perform(deps, TOOL_NAMES.wait, args, exec.signal)) as UiActionResult,
     }),
   ]
-  const disposers = tools.map(tool => ctx.tools.register(tool))
+  const disposers = tools.map(tool => ctx.acrylTools.register(tool))
   return () => { for (const dispose of disposers.reverse()) dispose() }
 }

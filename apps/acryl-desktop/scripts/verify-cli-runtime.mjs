@@ -7,6 +7,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import electronPath from 'electron'
 import { installDesktopPnpmRuntime } from '../lib/desktop-runtime-environment.js'
+import { isolatedEnvironment } from '../../../scripts/lib/isolated-run.mjs'
 
 const packageRoot = new URL('../', import.meta.url)
 const desktopCli = fileURLToPath(new URL('lib/desktop-cli.js', packageRoot))
@@ -58,15 +59,20 @@ function verifyResult(label, result, expectedOutput) {
 }
 
 function runElectronEntry(label, nodeArgs, entry, args, expectedOutput, extraEnvironment = {}) {
-  const env = cleanEnvironment()
-  Object.assign(env, extraEnvironment)
-  env.ELECTRON_RUN_AS_NODE = '1'
-  const result = spawnSync(electronPath, [...nodeArgs, entry, ...args], {
-    encoding: 'utf8',
-    env,
-    shell: false,
-  })
-  verifyResult(label, result, expectedOutput)
+  // The entries run here never need the machine's real ACRYL or DSH home: each gets an isolated one (the pnpm steps below keep the real HOME for the offline store).
+  const isolated = isolatedEnvironment({ label: 'cli-runtime', base: cleanEnvironment(), extra: extraEnvironment })
+  try {
+    const env = isolated.env
+    env.ELECTRON_RUN_AS_NODE = '1'
+    const result = spawnSync(electronPath, [...nodeArgs, entry, ...args], {
+      encoding: 'utf8',
+      env,
+      shell: false,
+    })
+    verifyResult(label, result, expectedOutput)
+  } finally {
+    isolated.dispose()
+  }
 }
 
 function environmentValue(env, name) {

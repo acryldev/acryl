@@ -8,7 +8,6 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from 'acryl-control'
-import type {} from '@deepseek-ai/dsh-tools'
 import { createApprovalPolicy } from './host/approval.ts'
 import { AuditLog, auditPath } from './host/audit.ts'
 import { createAuditRequestHandler, UI_CONTROL_AUDIT_PATH } from './host/audit-route.ts'
@@ -42,7 +41,7 @@ declare module '@deepseek-ai/cordis' {
   }
 }
 
-export const inject = ['acrylWeb', 'tools', 'appInstance']
+export const inject = ['acrylWeb', 'acrylTools', 'appInstance']
 
 export function apply(ctx: Context, rawConfig?: unknown): void {
   const config = parseConfig(rawConfig)
@@ -84,7 +83,7 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
         }))
       }
       releases.push(registerUiTools(ctx, { channel, audit, refs, approval: config.approval === 'none' ? 'none' : 'asked' }))
-      releases.push(ctx.on('tools/pre-execute', createApprovalPolicy(ctx, refs, config.approval)))
+      releases.push(ctx.acrylTools.policy(createApprovalPolicy(ctx, refs, config.approval)))
       if (config.online) {
         // TB30: the outside operator's channel, loopback-only and secret-gated (TB03) - the secret is this
         // run's alone, written once at startup and removed on shutdown, never persisted across restarts.

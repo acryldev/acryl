@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { ILayout } from '@deepseek-ai/dsh-client-ui-layout/client'
+import type { ILayout } from '@acryl/ui/frame'
 
 /** Main-surface interface offered by the desktop advanced frame. */
 export interface DesktopMainOwnerProps {

@@ -12,6 +12,7 @@
     "outDir": "lib",
     "declaration": true,
     "esModuleInterop": true,
+    "skipLibCheck": true,
     "strict": true,
     "exactOptionalPropertyTypes": true,
     "noFallthroughCasesInSwitch": true,
@@ -25,7 +26,8 @@
     ]
   },
   "include": [
-    "src/index.ts"
+    "src/index.ts",
+    "src/frame.ts"
   ],
   "exclude": [
     "src/client/**"

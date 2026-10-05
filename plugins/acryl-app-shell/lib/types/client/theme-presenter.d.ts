@@ -1,4 +1,4 @@
-import type { ThemeSnapshot } from '@deepseek-ai/dsh-client-ui-theme/client';
+import type { ThemeSnapshot } from '@acryl/ui/frame';
 /** Projects the resolved theme service snapshot onto the desktop document. */
 export declare class DesktopThemePresenter {
     private appliedTokens;

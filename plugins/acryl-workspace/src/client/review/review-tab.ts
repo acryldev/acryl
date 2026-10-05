@@ -1,7 +1,7 @@
 /** The `review` right-sidebar tab type, registered like the Changes tab (dependency-gated child plugin). */
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
+import type {} from '@acryl/ui/frame'
 import { ReviewBody } from './ReviewBody.tsx'
 import type { ReviewStore } from './review-store.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'

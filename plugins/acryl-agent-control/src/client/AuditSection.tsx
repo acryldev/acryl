@@ -1,7 +1,7 @@
 /** Settings > Agent Control: what the agent did in this window. */
 
 import { useEffect, useState } from 'react'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import type { InjectFace, PropsLocale, PropsRuntime } from '@acryl/ui/frame'
 import type { AuditEntry } from '../contract.ts'
 import type { AuditApi } from './audit-api.ts'
 

@@ -55,6 +55,16 @@ shape it reads (`{ home, dshHome }`) as a separated interface instead of importi
 The launcher scripts import the same TypeScript module (Node strips types natively), so every isolation rule exists once. An app that carries its own runtime
 (`acryl new --runtime`) carries a copy of the module with its launcher.
 
+## Gates, smokes and live runs fail closed
+
+A run that is not a user launching their own app (a gate, a packed-app smoke, a live run with a real model) must never reach a real ACRYL or DSH home. Three layers, one idea, so a forgotten override ends in an error and not in a write to the installed app:
+
+- **The selector refuses.** With `ACRYL_REQUIRE_ISOLATED_HOME` set, `selectInstance` throws `IsolationRequiredError` for any instance the caller did not pin, and for a pinned home inside `~/.acryl`, `~/.acryl-dev`, `~/.acryl-worktrees`, `~/.acryl-instances` or `~/.dsh`. `createAcrylEngineHost` selects its instance before anything mounts, so the refusal stops the host on every surface (inside a plugin it would only have failed that plugin and the app would have exited 0).
+- **Scripts build their environment with `scripts/lib/isolated-run.mjs`.** `isolatedEnvironment` gives a throwaway root with its own `HOME` (so the engine's default workspace under `~/Documents`, macOS Application Support and any stray `~/.dsh` land there too), ACRYL and engine homes, Electron user data, and the requirement above. `scripts/verify-layout.mjs` fails any `verify-*` script that can boot an app without using it or pinning a home.
+- **Live runs go through `scripts/live-run.mjs web|desktop|tui`.** It injects the model key into the process environment only, snapshots the real homes first, and on exit stops its processes, checks its port is free and fails if a real home changed (an app of yours running meanwhile can also write there: the message names the newest file).
+
+Never test the guard, or anything that boots an app, with a command that can fall back to the real home: move `HOME` as well.
+
 ## Rules for contributors
 
 - Never call `homedir()` or read ACRYL_HOME, DSH_HOME, ACRYL_WEB_PORT, ACRYL_INSTANCE or ACRYL_LOCAL_PRODUCT_NAME outside `instance/select.ts`. Take an

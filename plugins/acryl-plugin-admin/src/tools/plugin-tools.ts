@@ -7,7 +7,7 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import { defineTool, type PreToolDecision, type ToolExecution } from '@deepseek-ai/dsh-tools'
+import { defineAcrylTool, type AcrylToolCall, type AcrylToolDecision } from 'acryl-control'
 import type { PluginLifecycleReceipt, PluginLifecycleSnapshot } from '../lifecycle/contract.ts'
 
 export const PLUGIN_LIST_TOOL = 'acryl_plugin_list'
@@ -36,7 +36,7 @@ export function describePluginChange(args: unknown, snapshot: PluginLifecycleSna
 
 /** Register both tools and the per-call approval for the one that changes something. @returns disposer. */
 export function registerPluginTools(ctx: Context, lifecycle: PluginLifecycleTools): () => void {
-  const list = defineTool({
+  const list = defineAcrylTool({
     name: PLUGIN_LIST_TOOL,
     description: 'List the ACRYL plugins with their entry id, whether each is on, its state, and whether you may change it.',
     parameters: {},
@@ -66,7 +66,7 @@ export function registerPluginTools(ctx: Context, lifecycle: PluginLifecycleTool
     })),
   })
 
-  const setEnabled = defineTool({
+  const setEnabled = defineAcrylTool({
     name: PLUGIN_SET_ENABLED_TOOL,
     description: 'Switch a plugin on or off by entry id (from acryl_plugin_list). The user approves each change. Core plugins and Agent Control cannot be changed.',
     parameters: { entryId: { type: 'string', required: true }, enabled: { type: 'boolean', required: true } },
@@ -75,7 +75,7 @@ export function registerPluginTools(ctx: Context, lifecycle: PluginLifecycleTool
         type: 'object', additionalProperties: false,
         properties: { entryIds: { type: 'array', required: true, items: { type: 'string' } }, enabled: { type: 'boolean', required: true }, reloadRequired: { type: 'boolean', required: true } },
       },
-      render: (_args: unknown, value) => [{ type: 'text', text: `${value.enabled ? 'Switched on' : 'Switched off'}: ${value.entryIds.join(', ')}.${value.reloadRequired ? ' Reload the window to see it.' : ''}` }],
+      render: (_args, value: { readonly entryIds: readonly string[]; readonly enabled: boolean; readonly reloadRequired: boolean }) => [{ type: 'text', text: `${value.enabled ? 'Switched on' : 'Switched off'}: ${value.entryIds.join(', ')}.${value.reloadRequired ? ' Reload the window to see it.' : ''}` }],
     },
     execute: async (args) => {
       const entry = lifecycle.snapshot().entries.find(candidate => candidate.entryId === args.entryId)
@@ -87,8 +87,8 @@ export function registerPluginTools(ctx: Context, lifecycle: PluginLifecycleTool
     },
   })
 
-  const disposers = [ctx.tools.register(list), ctx.tools.register(setEnabled)]
-  const removePolicy = ctx.on('tools/pre-execute', async (exec: ToolExecution, next: () => Promise<PreToolDecision>): Promise<PreToolDecision> => {
+  const disposers = [ctx.acrylTools.register(list), ctx.acrylTools.register(setEnabled)]
+  const removePolicy = ctx.acrylTools.policy(async (exec: AcrylToolCall, next: () => Promise<AcrylToolDecision>): Promise<AcrylToolDecision> => {
     const decision = await next()
     if (exec.name !== PLUGIN_SET_ENABLED_TOOL || decision.kind === 'deny') return decision
     return { kind: 'ask', reason: describePluginChange(exec.arguments, lifecycle.snapshot()) }

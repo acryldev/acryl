@@ -3,17 +3,6 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { GatewayCallResponse, GatewayTool } from '../../tools-contract.ts'
 
-interface ToolDefinitionLike {
-  readonly name: string
-  readonly description: string
-  readonly parameters: Readonly<Record<string, unknown>>
-}
-
-interface ToolRegistryLike {
-  get(name: string): ToolDefinitionLike | undefined
-  execute(input: { callId: string; name: string; arguments: unknown; signal: AbortSignal }): Promise<{ isError?: boolean; content?: ReadonlyArray<{ type: string; text?: string }> }>
-}
-
 export interface ToolsGateway {
   list(): readonly GatewayTool[]
   call(name: string, args: Record<string, unknown>, signal: AbortSignal): Promise<GatewayCallResponse>
@@ -24,7 +13,7 @@ export interface ToolsGateway {
  * name outside the list is refused before it reaches the registry, so the gateway can never run the shell or touch files.
  */
 export function createToolsGateway(ctx: Context, expose: readonly string[]): ToolsGateway {
-  const registry = (): ToolRegistryLike => ctx.tools as unknown as ToolRegistryLike
+  const registry = () => ctx.acrylTools
   const allowed = new Set(expose)
   let counter = 0
   return {

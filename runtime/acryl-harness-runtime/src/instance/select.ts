@@ -20,8 +20,11 @@ import { homedir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 import {
   APP_DEFINITION_FILE,
+  DEFAULT_HOME_DIR_NAME,
+  DEVELOPMENT_HOME_DIR_NAME,
   ENGINE_DIR_NAME,
   MANAGED_HOMES_DIR_NAME,
+  WORKTREE_HOMES_DIR_NAME,
   appFolderInstance,
   appName,
   defaultInstance,
@@ -41,6 +44,34 @@ export interface SelectInstanceOptions {
   readonly checkout?: string
   /** The main checkout's isolated development app (`pnpm run dev`) rather than the default. */
   readonly development?: boolean
+}
+
+/**
+ * Set by a gate, a smoke or a live-run launcher: this process tree must run in an explicitly isolated home. With it set, `selectInstance` refuses (fails
+ * closed) to choose a home that is not pinned by the caller or that lies inside a real ACRYL or DSH home of the OS user, so a forgotten override ends in an
+ * error naming the fix, never in a write to the installed app's data.
+ */
+export const REQUIRE_ISOLATED_HOME_ENV = 'ACRYL_REQUIRE_ISOLATED_HOME'
+
+export class IsolationRequiredError extends Error {
+  constructor(detail: string) {
+    super(`${REQUIRE_ISOLATED_HOME_ENV} is set, so this run needs an explicitly isolated home: ${detail}. Pin ACRYL_HOME (and DSH_HOME) to a throwaway folder outside the OS user's real ACRYL and DSH homes.`)
+    this.name = 'IsolationRequiredError'
+  }
+}
+
+const REAL_HOME_FOLDERS = [DEFAULT_HOME_DIR_NAME, DEVELOPMENT_HOME_DIR_NAME, WORKTREE_HOMES_DIR_NAME, MANAGED_HOMES_DIR_NAME, ENGINE_DIR_NAME]
+
+const inside = (path: string, folder: string): boolean => path === folder || path.startsWith(`${folder}/`) || path.startsWith(`${folder}\\`)
+
+function assertIsolated(instance: AppInstance, osHome: string): void {
+  if (instance.kind !== 'pinned' && instance.kind !== 'app') throw new IsolationRequiredError(`the ${instance.kind} instance would use ${instance.home}`)
+  const realHomes = REAL_HOME_FOLDERS.map(folder => real(join(osHome, folder)))
+  for (const [label, path] of [['home', instance.home], ['engine home', instance.dshHome]] as const) {
+    const resolved = real(path)
+    const hit = realHomes.find(folder => inside(resolved, folder))
+    if (hit !== undefined) throw new IsolationRequiredError(`the ${label} ${resolved} lies inside the real ${hit}`)
+  }
 }
 
 const set = (value: string | undefined): value is string => value !== undefined && value.trim() !== ''
@@ -93,5 +124,6 @@ export function selectInstance(options: SelectInstanceOptions = {}): AppInstance
   if (set(env.ACRYL_WEB_PORT)) chosen = withWebPort(chosen, Number(env.ACRYL_WEB_PORT.trim()))
   if (set(env.ACRYL_INSTANCE) && chosen.kind === 'pinned') chosen = withProjectScope(chosen, env.ACRYL_INSTANCE.trim())
   if (set(env.ACRYL_LOCAL_PRODUCT_NAME)) chosen = withUserDataName(chosen, env.ACRYL_LOCAL_PRODUCT_NAME.trim())
+  if (set(env[REQUIRE_ISOLATED_HOME_ENV])) assertIsolated(chosen, osHome)
   return chosen
 }

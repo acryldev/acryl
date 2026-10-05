@@ -1,7 +1,7 @@
 /** The `changes` right-sidebar tab type, registered through upstream's public two-stage path. */
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
+import type {} from '@acryl/ui/frame'
 import { ChangesBody } from './ChangesBody.tsx'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'

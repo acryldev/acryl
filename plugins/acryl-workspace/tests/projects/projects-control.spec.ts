@@ -5,6 +5,8 @@ import type { IWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/clie
 import { describe, expect, it, vi } from 'vitest'
 import type { WorkspaceGitApi } from '../../src/client/git/git-api.ts'
 import { FolderChooserUnavailableError } from '../../src/client/projects/web-folder-picker.ts'
+import { ProjectRegistryState } from '../../src/client/projects/registry-state.ts'
+import type { ProjectRegistryApi } from '../../src/client/projects/registry-api.ts'
 import { createProjectsControl, desktopDirectorySeams, type DirectorySeams } from '../../src/client/projects/projects-control.ts'
 import { WorkspaceShellState } from '../../src/client/worktrees/shell-state.ts'
 
@@ -48,6 +50,9 @@ function gitApi(isRepo: (cwd: string) => boolean = () => true): WorkspaceGitApi 
 
 interface World {
   readonly control: ReturnType<typeof createProjectsControl>
+  /** The project list as the Host holds it (ACRYL's own); chat workspaces are separate. */
+  readonly projects: string[]
+  readonly registry: ProjectRegistryState
   readonly shell: WorkspaceShellState
   readonly created: unknown[]
   readonly opened: string[]
@@ -72,6 +77,10 @@ function world(options: {
   hasSessions?: boolean
   platform?: 'darwin' | 'web'
   chat?: boolean
+  /** Folders already in the project list. */
+  projects?: string[]
+  /** The Host refuses to change the list. */
+  registryRefuses?: boolean
 } = {}): World {
   const api = gitApi(options.isRepo)
   const shell = new WorkspaceShellState(api)
@@ -125,7 +134,19 @@ function world(options: {
       return view
     },
   } as unknown as IWorkspaces
+  const projects: string[] = [...(options.projects ?? [])]
+  const registryApi: ProjectRegistryApi = {
+    load: async () => ({ paths: [...projects], adopted: true }),
+    send: async (request) => {
+      if (options.registryRefuses === true) throw new Error('the project list could not be saved')
+      if (request.op === 'add' && !projects.includes(request.path)) projects.push(request.path)
+      if (request.op === 'remove') { const index = projects.indexOf(request.path); if (index >= 0) projects.splice(index, 1) }
+      return { paths: [...projects], adopted: true }
+    },
+  }
+  const registry = new ProjectRegistryState(registryApi, { paths: [...projects], adopted: true })
   const control = createProjectsControl({
+    registry,
     platform: options.platform ?? 'darwin',
     shell,
     gitApi: api,
@@ -135,7 +156,7 @@ function world(options: {
     directory: () => options.seams ?? { pickDirectory: async () => '/p/proj' },
     ...(options.webPickDirectory === undefined ? {} : { webPickDirectory: options.webPickDirectory }),
   })
-  return { control, shell, created, opened, workspaceCreates, renames, workspaceDeletes, renamed }
+  return { control, projects, registry, shell, created, opened, workspaceCreates, renames, workspaceDeletes, renamed }
 }
 
 describe('ProjectsControl.showChat', () => {
@@ -382,11 +403,20 @@ describe('ProjectsControl.removeWorkspace (T135-followup)', () => {
     expect(w.shell.getSnapshot().repos.some(repo => repo.root === '/p/proj')).toBe(false)
   })
 
-  it('reports a real deletion failure instead of silently forgetting the repo anyway', async () => {
-    const w = world({ workspaces: [{ workspaceId: 'w0', path: '/p/proj' }], deleteWorkspace: async () => { throw new Error('host down') } })
-    await w.control.addProjectByPath('/p/proj')
-    expect(await w.control.removeWorkspace('/p/proj')).toMatchObject({ ok: false, reason: expect.stringContaining('host down') })
+  it('reports a refusal by the Host to change the project list instead of silently forgetting the repo anyway', async () => {
+    const w = world({ projects: ['/p/proj'], registryRefuses: true })
+    await w.shell.discover('/p/proj', { registerFolder: true })
+    expect(await w.control.removeWorkspace('/p/proj')).toMatchObject({ ok: false, reason: expect.stringContaining('could not be saved') })
+    expect(w.projects).toEqual(['/p/proj'])
     expect(w.shell.getSnapshot().repos.some(repo => repo.root === '/p/proj')).toBe(true) // left alone, not force-removed
+  })
+
+  it('removes the project even when the chat\'s own registration of the folder cannot be deleted (it only follows the project)', async () => {
+    const w = world({ projects: ['/p/proj'], workspaces: [{ workspaceId: 'w0', path: '/p/proj' }], deleteWorkspace: async () => { throw new Error('host down') } })
+    await w.shell.discover('/p/proj', { registerFolder: true })
+    expect(await w.control.removeWorkspace('/p/proj')).toEqual({ ok: true })
+    expect(w.projects).toEqual([])
+    expect(w.shell.getSnapshot().repos.some(repo => repo.root === '/p/proj')).toBe(false)
   })
 
   it('stays removed even when a live session still points there and the passive discovery effects re-run (the real "flickers back" bug)', async () => {
@@ -404,10 +434,25 @@ describe('ProjectsControl.removeWorkspace (T135-followup)', () => {
 })
 
 describe('ProjectsControl folder chooser, remaining cases', () => {
-  it('lists registered workspace folders as project sources', () => {
-    const w = world({ workspaces: [{ workspaceId: 'w0', path: '/a' }, { workspaceId: 'w1', path: '/b' }] })
+  it('lists ACRYL\'s own project folders, not the chat\'s workspaces, as project sources', () => {
+    const w = world({ projects: ['/a', '/b'], workspaces: [{ workspaceId: 'w9', path: '/only-in-the-chat' }] })
     expect(w.control.workspacePaths()).toEqual(['/a', '/b'])
     expect(w.control.workspaceKey()).toBe('/a\n/b')
+  })
+
+  it('adding a project saves it in the list and registers no chat workspace until a chat starts there', async () => {
+    const w = world({ projects: [] })
+    expect(await w.control.addProjectByPath('/p/proj')).toEqual({ ok: true })
+    expect(w.projects).toEqual(['/p/proj'])
+    expect(w.control.workspacePaths()).toEqual(['/p/proj'])
+    expect(w.workspaceCreates).toHaveLength(1) // the chat that adding opens is what registers the workspace, one way
+  })
+
+  it('does not select or list a project the Host refused to save', async () => {
+    const w = world({ registryRefuses: true })
+    expect(await w.control.addProjectByPath('/p/proj')).toMatchObject({ ok: false, reason: expect.stringContaining('could not be saved') })
+    expect(w.projects).toEqual([])
+    expect(w.control.workspacePaths()).toEqual([])
   })
 })
 
@@ -536,7 +581,8 @@ describe('ProjectsControl with the DSH chat off', () => {
     const w = world({ chat: false, hasSessions: false })
     expect(w.control.chatAvailable).toBe(false)
     expect(await w.control.addProjectByPath('/p/proj')).toEqual({ ok: true })
-    expect(w.workspaceCreates).toEqual([{ path: '/p/proj' }])
+    expect(w.projects).toEqual(['/p/proj'])
+    expect(w.workspaceCreates).toEqual([])   // no chat, so nothing is registered for it
     expect(w.shell.getSnapshot().selectedPath).toBe('/p/proj')
     expect(w.created).toEqual([])
     expect(w.opened).toEqual([])

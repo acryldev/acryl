@@ -3,7 +3,7 @@
  * Markup and SelectPill.module.css are the original's; the preset store and the risk confirmation stay in the feature. See manifest.yml.
  */
 import { useState } from 'react'
-import { IconChevronDownOutline14, Menu } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChevronDownOutlineRegular, Menu } from '@deepseek-ai/dsh-client-ui-primitives'
 import css from './SelectPill.module.css'
 
 export interface SelectOption {
@@ -52,7 +52,7 @@ export function SelectPill({ options, value, onChange, placeholder = '', disable
           onClick={() => { setOpen(current => !current) }}
         >
           {selected?.label ?? placeholder}
-          <IconChevronDownOutline14 className={css.chevron} />
+          <IconChevronDownOutlineRegular className={css.chevron} />
         </button>
       )}
     />

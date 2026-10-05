@@ -1,4 +1,4 @@
-import type { ThemeSnapshot } from '@deepseek-ai/dsh-client-ui-theme/client'
+import type { ThemeSnapshot } from '@acryl/ui/frame'
 
 const DARK_ATTRIBUTE = 'data-ds-dark-theme'
 

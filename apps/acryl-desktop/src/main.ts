@@ -1191,7 +1191,11 @@ async function start(): Promise<void> {
 }
 
 function applyIsolatedUserData(): void {
-  const override = resolveDesktopUserDataOverride()
+  const override = resolveDesktopUserDataOverride(process.env, {
+    appData: app.getPath('appData'),
+    userDataName: selectInstance().userDataName,
+    productName: PRODUCT_NAME,
+  })
   if (override === undefined) return
   mkdirSync(override, { recursive: true, mode: 0o700 })
   app.setPath('userData', override)

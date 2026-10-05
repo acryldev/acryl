@@ -137,7 +137,8 @@ function fromExistingApp(source: { readonly manifestText: string, readonly lockT
       }
     }
   }
-  const manifestText = String(document)
+  // The source's comments are kept; the header names the app it describes, so it takes the new app's name. Before the lock digests the text.
+  const manifestText = String(document).replace(/^# .*?: what this app is/u, `# ${title}: what this app is`)
   const sourceLicense = typeof parsed.metadata?.license === 'string' ? parsed.metadata.license : undefined
   // The source's code (its extensions) keeps its own license: its notice travels with the copy.
   const notice = sourceLicense === undefined || sourceLicense === 'Proprietary' ? undefined

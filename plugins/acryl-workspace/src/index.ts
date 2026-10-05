@@ -40,6 +40,9 @@ import {
   handleWorkspaceGitWorktreeRequest,
 } from './git/route.ts'
 import { WORKSPACE_CAPABILITIES_PATH } from './capabilities/contract.ts'
+import { WORKSPACE_PROJECTS_PATH } from './projects/contract.ts'
+import { PROJECTS_NAMESPACE, ProjectRegistry, ProjectsSchema } from './projects/registry.ts'
+import { handleProjectsRequest } from './projects/route.ts'
 import { handleWorkspaceCapabilitiesRequest } from './capabilities/route.ts'
 import { AgentCatalog } from './agents/catalog.ts'
 import { WORKSPACE_AGENT_SETTINGS_PATH, WORKSPACE_AGENTS_PATH, WORKSPACE_AGENTS_REMOVE_PATH } from './agents/contract.ts'
@@ -87,7 +90,7 @@ declare module '@deepseek-ai/cordis' {
 }
 
 /** Loopback Web server required to publish canvas routes; the app instance says where this app keeps its data. */
-export const inject = ['acrylWeb', 'appInstance']
+export const inject = ['acrylWeb', 'appInstance', 'acrylSettings']
 
 /**
  * Activate Development Canvas as a neighboring, required Host plugin.
@@ -171,6 +174,13 @@ export function apply(ctx: Context): void {
         kind: 'exact',
         path: WORKSPACE_CAPABILITIES_PATH,
         handler: (req, res) => { handleWorkspaceCapabilitiesRequest(req, res, rendererOrigin, () => ({ chat: services.get('agents') !== undefined })) },
+      }))
+      // The project list is ACRYL's own: one section of the ACRYL home's settings, released with this plugin so a reloaded plugin registers it again.
+      const projects = new ProjectRegistry(ctx.acrylSettings.register(PROJECTS_NAMESPACE, ProjectsSchema))
+      releases.push(ctx.acrylWeb.register({
+        kind: 'exact',
+        path: WORKSPACE_PROJECTS_PATH,
+        handler: (req, res) => { void handleProjectsRequest(req, res, rendererOrigin, projects, reportHostError) },
       }))
       releases.push(ctx.acrylWeb.register({
         kind: 'exact',

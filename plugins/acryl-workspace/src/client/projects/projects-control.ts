@@ -4,11 +4,11 @@
  */
 
 import type { ShellPlatform } from 'acryl-app-shell/client'
-import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
-import type { IWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/client'
+import type { ISessions, IWorkspaces } from '@acryl/ui/frame'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
 import { pickSession, type SessionRef } from '../sessions/session-pick.ts'
+import type { ProjectRegistryState } from './registry-state.ts'
 import { owningWorktree } from './sidebar-model.ts'
 import { FolderChooserUnavailableError } from './web-folder-picker.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
@@ -79,6 +79,8 @@ export interface ProjectsControlDeps {
   readonly gitApi: WorkspaceGitApi
   readonly getWorkspaces: () => IWorkspaces | undefined
   readonly getSessions: () => ISessions | undefined
+  /** ACRYL's own project list (the Host keeps it). The chat's workspaces only follow it, registered when a chat starts. */
+  readonly registry: ProjectRegistryState
   /** Looked up when needed, because the desktop installs its folder-picker seam after this plugin loads. */
   readonly directory: () => DirectorySeams
   /** Opens the OS folder chooser on the machine running the Host (see `web-folder-picker.ts`): the only
@@ -171,9 +173,10 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
 
   return {
     get chatAvailable() { return chatOn() },
-    workspaceKey: () => workspaceItems().map(item => item.path).join('\n'),
-    workspacePaths: () => workspaceItems().map(item => item.path),
-    subscribeWorkspaces: listener => deps.getWorkspaces()?.list.subscribe(listener) ?? (() => {}),
+    // The project list is ACRYL's own (the Host keeps it); the chat's workspaces are not consulted for it.
+    workspaceKey: () => deps.registry.key(),
+    workspacePaths: () => deps.registry.paths(),
+    subscribeWorkspaces: listener => deps.registry.subscribe(listener),
 
     chooserKind() {
       return nativePicker() !== undefined ? 'picker' : 'path'
@@ -198,8 +201,6 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
 
     async addProjectByPath(path) {
       const seams = deps.directory()
-      const workspaces = deps.getWorkspaces()
-      if (workspaces === undefined) return fail('Workspaces are not available yet.')
       const typed = path.trim()
       if (typed === '') return fail('Type the path of a folder to add.')
       // A project is a git repository or a plain folder (T135: "should be able to handle both git /
@@ -216,13 +217,9 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
           return fail(message(cause))
         }
       }
-      if (!workspaceItems().some(item => item.path === worktree)) {
-        try {
-          await workspaces.create({ path: worktree })
-        } catch (cause) {
-          return fail(`Could not add the project: ${message(cause)}`)
-        }
-      }
+      // The project is ACRYL's: the Host saves it. A chat workspace for it is created when a chat starts there, not here.
+      const added = await deps.registry.add(worktree)
+      if (!added.ok) return fail(`Could not add the project: ${added.reason}`)
       shell.select(worktree)
       const shown = await this.showChat(worktree)
       if (!shown.ok) shell.unpin()
@@ -329,15 +326,12 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
     },
 
     async removeWorkspace(root) {
+      const removed = await deps.registry.remove(root)
+      if (!removed.ok) return fail(`Could not remove that project: ${removed.reason}`)
+      // The chat's registration of the folder follows the project out (one way); a failure there leaves the project removed.
       const workspaces = deps.getWorkspaces()
       const existing = workspaceItems().find(item => item.path === root)
-      if (existing !== undefined && workspaces !== undefined) {
-        try {
-          await workspaces.delete(existing.workspaceId)
-        } catch (cause) {
-          return fail(`Could not remove that workspace: ${message(cause)}`)
-        }
-      }
+      if (existing !== undefined && workspaces !== undefined) await workspaces.delete(existing.workspaceId).catch(() => undefined)
       shell.forgetRepo(root)
       return { ok: true }
     },

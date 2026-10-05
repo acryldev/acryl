@@ -1,7 +1,7 @@
 /** Right pane tab: the line comments sent to the agent for the selected worktree, with resolve tracking. */
 
 import { useCallback, useSyncExternalStore } from 'react'
-import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import type { PropsRuntime } from '@acryl/ui/frame'
 import { splitPath } from '../changes/ChangesBody.tsx'
 import type { ReviewStore, ReviewThread } from './review-store.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'

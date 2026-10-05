@@ -17,7 +17,7 @@ interface Registered { name: string; description: string; execute: (args: unknow
 function setup(respond: (request: UiRequest) => UiResult | UiControlError) {
   const registered = new Map<string, Registered>()
   let removed = 0
-  const ctx = { tools: { register: (tool: Registered) => { registered.set(tool.name, tool); return () => { registered.delete(tool.name); removed += 1 } } } } as unknown as Context
+  const ctx = { acrylTools: { register: (tool: Registered) => { registered.set(tool.name, tool); return () => { registered.delete(tool.name); removed += 1 } } } } as unknown as Context
   const channel = new UiChannel()
   const calls: UiRequest[] = []
   const page = channel.attach({
@@ -89,7 +89,7 @@ describe('Agent Control tools', () => {
 
   it('reports a missing window as a failure, not a refusal', async () => {
     const registered = new Map<string, Registered>()
-    const ctx = { tools: { register: (tool: Registered) => { registered.set(tool.name, tool); return () => {} } } } as unknown as Context
+    const ctx = { acrylTools: { register: (tool: Registered) => { registered.set(tool.name, tool); return () => {} } } } as unknown as Context
     const audit = new AuditLog(join(dir, 'nowindow.jsonl'))
     registerUiTools(ctx, { channel: new UiChannel(), audit, refs: new RefDirectory(), approval: 'none' })
     await expect(registered.get(TOOL_NAMES.snapshot)!.execute({}, { signal: new AbortController().signal })).rejects.toThrow('no-window')
@@ -98,7 +98,7 @@ describe('Agent Control tools', () => {
 
   it('records that approval was off when it is', async () => {
     const registered = new Map<string, Registered>()
-    const ctx = { tools: { register: (tool: Registered) => { registered.set(tool.name, tool); return () => {} } } } as unknown as Context
+    const ctx = { acrylTools: { register: (tool: Registered) => { registered.set(tool.name, tool); return () => {} } } } as unknown as Context
     const channel = new UiChannel()
     const page = channel.attach({ send: (data) => { page.onMessage({ t: 'result', id: (JSON.parse(data) as { id: number }).id, value: { ok: true } }) }, close() {} })
     page.onMessage({ t: 'hello', windowId: 'w', focused: true })

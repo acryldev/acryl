@@ -19,7 +19,7 @@
       "patch": "./cordis.patch.yml"
     }
   },
-  "dependencies": {
+  "peerDependencies": {
     "@deepseek-ai/cordis": "4.0.4"
   }
 }

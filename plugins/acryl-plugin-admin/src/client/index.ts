@@ -6,8 +6,7 @@
  */
 
 // Pulls in `ctx.slots` (declared by the renderer package) and the settings slot map.
-import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
-import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
+import type {} from '@acryl/ui/frame'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { applyPluginLifecycleSettings } from './lifecycle/plugin-lifecycle-settings.ts'
 

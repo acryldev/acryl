@@ -8,8 +8,7 @@
  * way to open.
  */
 
-import type { ILayout, MainPanelId, PanelInfo } from '@deepseek-ai/dsh-client-ui-layout/client'
-import type { HostObservable } from '@deepseek-ai/dsh-client-ui-slots'
+import type { HostObservable, ILayout, MainPanelId, PanelInfo } from '@acryl/ui/frame'
 
 export interface DesktopLayoutSnapshot {
   /** Sidebar width preference in px; 0 means collapsed to the rail. */

@@ -1,8 +1,7 @@
 /** Lifecycle and Architecture tabs contribution for the Plugins Settings section. */
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-client-locale/client'
-import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
+import type {} from '@acryl/ui/frame'
 import { PluginArchitectureSettingsTab } from '../architecture/PluginArchitectureSettingsTab.tsx'
 import { PluginLifecycleSettingsTab } from './PluginLifecycleSettingsTab.tsx'
 import { createPluginArchitectureApi } from '../architecture/plugin-architecture-api.ts'

@@ -74,6 +74,16 @@ describe('acryl new', () => {
   })
 })
 
+describe('acryl new --from', () => {
+  it('a derived app takes its own identity, and the source\'s name does not stay in the manifest header', () => {
+    const source = planNewApp('/apps/app-a', { title: 'Round Trip A', launcher })
+    const derived = planNewApp('/apps/app-b', { title: 'Round Trip B', from: { manifestText: source.files['blend.yaml']! }, launcher })
+    expect(derived.files['blend.yaml']!.split('\n', 1)[0]).toMatch(/^# Round Trip B: what this app is/u)
+    expect(derived.files['blend.yaml']).not.toContain('Round Trip A')
+    expect(parse(derived.files['blend.yaml']!)).toMatchObject({ metadata: { id: 'app.app-b', name: 'Round Trip B' } })
+  })
+})
+
 describe('reading a Blends manifest', () => {
   const blend = (rows: unknown[]) => ({ apiVersion: 'blends.acryl.dev/v1alpha1', kind: 'Blend', metadata: { id: 'app.x', name: 'X', version: '0.1.0' }, spec: { runtime: 'cordis', lineage: { blueprint: 'acryl.blank', blueprintVersion: '0.1.0' }, rows } })
 

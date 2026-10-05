@@ -46,6 +46,7 @@ const executed: Array<{ name: string; arguments: unknown }> = []
 const fakeTools = {
   get: (name: string) => definitions.get(name),
   register: () => () => {},
+  policy: () => () => {},
   async execute(input: { name: string; arguments: unknown }) {
     executed.push({ name: input.name, arguments: input.arguments })
     if (input.name === 'acryl_install_plugin') return { isError: true, content: [{ type: 'text', text: 'Error: nope' }] }
@@ -64,9 +65,9 @@ async function mount(config: unknown): Promise<{ fiber: { dispose(): Promise<voi
   const ctx = new Context()
   ctx.provide('appInstance' as never, { home, dshHome: join(home, '.dsh') } as never)
   ctx.provide('acrylWeb' as never, fakeWebServer() as never)
-  ctx.provide('tools' as never, fakeTools as never)
+  ctx.provide('acrylTools' as never, fakeTools as never)
   const module = await import(BUILT_ENTRY) as { apply(ctx: Context, config?: unknown): void }
-  const fiber = ctx.plugin({ name: 'acryl-agent-control', inject: ['acrylWeb', 'tools', 'appInstance'], apply: module.apply }, config)
+  const fiber = ctx.plugin({ name: 'acryl-agent-control', inject: ['acrylWeb', 'acrylTools', 'appInstance'], apply: module.apply }, config)
   await new Promise(resolve => { setTimeout(resolve, 50) })
   const secretPath = join(home, 'agent-control-secret')
   return { fiber: fiber as unknown as { dispose(): Promise<void> }, home, secret: existsSync(secretPath) ? readFileSync(secretPath, 'utf8').trim() : undefined }

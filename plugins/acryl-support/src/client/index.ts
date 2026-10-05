@@ -4,9 +4,7 @@
  * same-origin route.
  */
 
-import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
-import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
-import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type {} from '@acryl/ui/frame'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { en, zh, type SupportLocaleKey } from './locales.ts'
 import { SupportSection } from './SupportSection.tsx'

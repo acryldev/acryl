@@ -8,6 +8,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   AppInstanceError,
+  IsolationRequiredError,
   LockHeldError,
   acquireLock,
   announce,
@@ -86,6 +87,41 @@ describe('selectInstance precedence', () => {
   it('ACRYL_WEB_PORT sets a start port and fails loudly when invalid', () => {
     expect(selectInstance({ env: { ACRYL_WEB_PORT: '4000' }, osHome: '/h' }).webPort).toEqual({ start: 4000, scan: true })
     for (const bad of ['80', 'abc', '70000']) expect(() => selectInstance({ env: { ACRYL_WEB_PORT: bad }, osHome: '/h' }), bad).toThrow(AppInstanceError)
+  })
+})
+
+describe('the isolation requirement (ACRYL_REQUIRE_ISOLATED_HOME)', () => {
+  const require = { ACRYL_REQUIRE_ISOLATED_HOME: '1' }
+
+  it('refuses every instance that was not pinned by the caller: the default, the development app, a worktree, a managed app', () => {
+    const root = temp()
+    const worktree = join(root, 'wt'); mkdirSync(worktree); writeFileSync(join(worktree, '.git'), 'gitdir: x\n')
+    expect(() => selectInstance({ env: { ...require }, osHome: root })).toThrow(IsolationRequiredError)
+    expect(() => selectInstance({ env: { ...require }, osHome: root, development: true })).toThrow(IsolationRequiredError)
+    expect(() => selectInstance({ env: { ...require }, osHome: root, checkout: worktree })).toThrow(IsolationRequiredError)
+    expect(() => selectInstance({ env: { ...require, ACRYL_HOME: join(root, '.acryl-instances', 'ledger') }, osHome: root })).toThrow(IsolationRequiredError)
+  })
+
+  it('refuses a pinned home that lies inside a real ACRYL or DSH home, including one set through DSH_HOME alone', () => {
+    const root = temp()
+    for (const inner of ['.acryl', '.acryl/.dsh', '.acryl-dev', '.acryl-worktrees/x', '.dsh/profiles']) {
+      expect(() => selectInstance({ env: { ...require, ACRYL_HOME: join(root, inner) }, osHome: root }), inner).toThrow(IsolationRequiredError)
+    }
+    expect(() => selectInstance({ env: { ...require, DSH_HOME: join(root, '.dsh') }, osHome: root })).toThrow(/real/u)
+  })
+
+  it('admits an explicitly pinned throwaway home and an app folder outside the real homes', () => {
+    const root = temp()
+    const elsewhere = temp()
+    expect(selectInstance({ env: { ...require, ACRYL_HOME: join(elsewhere, 'home') }, osHome: root })).toMatchObject({ kind: 'pinned' })
+    expect(selectInstance({ env: { ...require, DSH_HOME: join(elsewhere, 'engine') }, osHome: root })).toMatchObject({ kind: 'pinned' })
+    expect(selectInstance({ env: { ...require, ACRYL_HOME: app(elsewhere, 'ledger') }, osHome: root })).toMatchObject({ kind: 'app' })
+  })
+
+  it('changes nothing when the variable is unset or blank, so ordinary launches keep their homes', () => {
+    const root = temp()
+    expect(selectInstance({ env: {}, osHome: root }).kind).toBe('default')
+    expect(selectInstance({ env: { ACRYL_REQUIRE_ISOLATED_HOME: '  ' }, osHome: root }).kind).toBe('default')
   })
 })
 

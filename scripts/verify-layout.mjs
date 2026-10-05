@@ -258,15 +258,15 @@ for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
 
 // The DSH import ratchet (spec 001 T046). ACRYL's own code reaches DeepSeek Harness only through the engine seam; every other direct
 // `from '@deepseek-ai/dsh...'` line in non-test source is coupling that has to shrink. The seam is named here, as files, so "outside the seam" has one
-// definition: the engine files, the Desktop Electron entry, and the `@acryl/ui` contract facade (a plugin whose sole capability is the DSH chat would
-// also belong, and none is declared: if one seems to qualify, record it as a finding instead of adding it). Both ceilings only move down: when a
+// definition: the engine files, the Desktop Electron entry, and the `@acryl/ui` facades (contract adapters and `frame.ts`); a plugin whose sole capability is the DSH chat would
+// also belong, and none is declared: if one seems to qualify, record it as a finding instead of adding it. Both ceilings only move down: when a
 // change lowers a count, this gate says so and the ceiling is lowered in the same commit.
-const DSH_IMPORT_CEILING = { total: 169, outsideSeam: 154 }
+const DSH_IMPORT_CEILING = { total: 134, outsideSeam: 106 }
 const SEAM_FILES = [
   /^runtime\/acryl-harness-runtime\/src\/engine-[a-z-]+\.ts$/,
   /^apps\/acryl-desktop\/src\/(main|electron-runtime|preload|engine-[a-z-]+)\.ts$/,
   /^apps\/acryl-desktop\/src\/shell\/electron-[a-z-]+\.ts$/,
-  /^plugins\/acryl-ui\/src\/client\/(contract-adapters\.tsx|registry\/.*)$/,
+  /^plugins\/acryl-ui\/src\/(frame\.ts|client\/(contract-adapters\.tsx|registry\/.*))$/,
 ]
 const sourceFiles = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
   const path = resolve(dir, entry.name)
@@ -290,6 +290,21 @@ for (const [key, ceiling] of Object.entries(DSH_IMPORT_CEILING)) {
   const now = dshImports[key]
   if (now > ceiling) fail(`direct DSH import lines (${key}) are ${now}, above the ceiling ${ceiling}; reach DSH through the engine seam instead`)
   if (now < ceiling) fail(`direct DSH import lines (${key}) are ${now}, below the ceiling ${ceiling}: lower DSH_IMPORT_CEILING.${key} to ${now} in scripts/verify-layout.mjs`)
+}
+
+// Isolation fails closed (spec 001, T058). A `verify-*` script that spawns a process able to boot an app (a packed or built bin, Electron, a launcher) must
+// either build its environment with `scripts/lib/isolated-run.mjs` or visibly pin a throwaway HOME / ACRYL_HOME / DSH_HOME: the packed-web smoke once booted
+// against the machine's real ~/.acryl because nothing made it say where its home was. A new script that does neither fails here, in the gate that runs everywhere.
+const BOOTS_AN_APP = /\b(spawn|spawnSync|execFile|execFileSync|fork)\b[\s\S]*(acryl-web|acryl-cli|lib\/bin\.js|launch-dev|electron|ELECTRON_RUN_AS_NODE|\.bin)/u
+const PINS_A_HOME = /isolated-run|\bHOME:|\bACRYL_HOME\b|\bDSH_HOME\b|\bDSH_DESKTOP_USER_DATA\b/u
+const scriptDirectories = ['scripts', ...['apps', 'runtime', 'plugins', 'distribution', 'examples'].flatMap(group => (existsSync(resolve(root, group)) ? readdirSync(resolve(root, group)).map(name => `${group}/${name}/scripts`) : []))]
+for (const directory of scriptDirectories) {
+  if (!existsSync(resolve(root, directory))) continue
+  for (const name of readdirSync(resolve(root, directory))) {
+    if (!/^verify-.*\.(mjs|ts)$/u.test(name) || name === 'verify-layout.mjs') continue
+    const text = readFileSync(resolve(root, directory, name), 'utf8')
+    if (BOOTS_AN_APP.test(text) && !PINS_A_HOME.test(text)) fail(`${directory}/${name} can boot an app but pins no home: build its environment with scripts/lib/isolated-run.mjs (isolatedEnvironment) so it can never reach a real ACRYL or DSH home`)
+  }
 }
 
 process.stdout.write(`verify-layout: PNPM workspace and upstream ${upstream.commit.slice(0, 10)} are consistent; DSH import lines ${dshImports.total} (${dshImports.outsideSeam} outside the seam)\n`)

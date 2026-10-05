@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import type { PropsRenderSlots, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots';
+import type { PropsRenderSlots, PropsRuntime } from '@acryl/ui/frame';
 import type { ShellPlatform } from './environment.ts';
 import { DesktopLayoutState } from './layout-state.ts';
 /** Private values assembled by the advanced-shell registration. */

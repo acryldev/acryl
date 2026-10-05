@@ -1,7 +1,7 @@
 /** Right pane tab: the selected worktree's files as a lazy tree. Clicking a file opens it in the editor. */
 
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import type { PropsRuntime } from '@acryl/ui/frame'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import type { GitSearchMode, GitSearchView } from '../../git/contract.ts'
 import type { WorkspaceGitApi } from '../git/git-api.ts'

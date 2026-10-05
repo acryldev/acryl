@@ -19,7 +19,7 @@
       "patch": "./cordis.patch.yml"
     }
   },
-  "dependencies": {
+  "peerDependencies": {
     "@earendil-works/pi-tui": "0.84.2"
   }
 }

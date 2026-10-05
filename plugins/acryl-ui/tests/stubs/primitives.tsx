@@ -11,7 +11,7 @@ export const Modal = ({ open, title, children, footer }: { open: boolean, title:
 export const Menu = ({ open, anchor, items, selectedId }: { open: boolean, anchor: ReactNode, items: readonly { id: string, label: string }[], selectedId?: string }) => (
   <>{anchor}{open && <ul role="menu">{items.map(i => <li key={i.id} role="menuitem" aria-checked={i.id === selectedId}>{i.label}</li>)}</ul>}</>
 )
-export const IconChevronDownOutline14 = ({ className }: { className?: string }) => <svg className={className} data-icon="chevron" />
+export const IconChevronDownOutlineRegular = ({ className }: { className?: string }) => <svg className={className} data-icon="chevron" />
 export const StateDot = ({ state }: { state: string }) => <span data-statedot={state} />
 export const DisclosureRow = ({ icon, title, open, expandable, onToggle, collapsedContent, children }: { icon: ReactNode, title: string, open: boolean, expandable: boolean, onToggle: () => void, collapsedContent?: ReactNode, children?: ReactNode }) => (
   <div role="group" data-open={open} data-expandable={expandable}><button onClick={onToggle}>{icon}{title}</button>{collapsedContent}{open && children}</div>

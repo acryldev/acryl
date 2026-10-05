@@ -27,7 +27,8 @@ afterEach(async () => {
   await Promise.all(temporaryHomes.splice(0).map(home => rm(home, { force: true, recursive: true })))
 })
 
-describe('createAcrylSessionBridge', () => {
+// Every test here boots a real runtime (one boots two); under load the 5 s default is a coin flip, as the other real-engine specs already know.
+describe('createAcrylSessionBridge', { timeout: 60_000 }, () => {
   it('creates one native durable session and projects its initial state', async () => {
     const runtime = await bootRuntime('acryl-test')
     const bridge = createAcrylSessionBridge(runtime.ctx, {

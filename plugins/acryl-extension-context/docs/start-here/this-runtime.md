@@ -44,7 +44,7 @@ export function apply(ctx, config) {}    // required
 
 ## The package contract
 
-A plugin ships as an npm package. Three things are required for it to install and
+A plugin ships as an npm package. Four things are required for it to install and
 go live:
 
 1. `package.json` has `"dsh": { "bundle": { "patch": "./cordis.patch.yml" } }` and
@@ -56,6 +56,10 @@ go live:
    activation resolves `<package>/package.json`; a bare `"exports": "./index.js"`
    installs and mounts on the next boot but fails to go live with
    `Package subpath './package.json' is not defined by "exports"`.
+4. Packages the app itself provides (everything under `@deepseek-ai/`, and `@earendil-works/pi-tui`) go in
+   **`peerDependencies`**, never `dependencies`. A dependency installs a second copy of the framework into the
+   profile; the plugin works until the next restart and then every tool call fails with
+   `Cannot read properties of undefined (reading 'prepare')`. Verify and install refuse it and name the fix.
 
 ## Two ways to deliver a plugin
 

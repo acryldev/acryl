@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Context } from '@deepseek-ai/cordis'
-import type { AcrPluginLifecycle } from 'acryl-harness-runtime'
+import type { AcrPluginLifecycle } from 'acryl-control'
 import { PluginLifecycleView } from '../../src/lifecycle/view.ts'
 
 const SHARED_SNAPSHOT = {
