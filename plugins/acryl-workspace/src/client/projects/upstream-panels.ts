@@ -16,6 +16,7 @@ export interface UpstreamPanel {
 
 /** What the left pane needs: the list, when it changes, which panel is open, and how to open one. */
 export interface UpstreamPanels {
+  /** The pages, in order. Read through `useSyncExternalStore`, so it must return the SAME array until the list changes (a new array per call re-renders forever). */
   list(): readonly UpstreamPanel[]
   subscribe(listener: () => void): () => void
   /** The open panel, or null while the conversation (or the ACRYL workspace) is showing. */
