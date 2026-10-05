@@ -61,9 +61,10 @@ jobs:
       - name: PowerShell 7 is available
         run: pwsh -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'
 
+      # Upstream's vitest config lives at its workspace root and globs tests relative to it, so run from there with a path filter.
       - name: Run the sandbox tests natively
         working-directory: deepseek-harness
-        run: corepack pnpm --filter @deepseek-ai/dsh-sandbox-windows-acl exec vitest run --reporter=verbose
+        run: corepack pnpm exec vitest run packages/sandbox/sandbox-windows-acl --reporter=verbose
 
   desktop-windows-specs:
     name: Desktop Windows specs (native)
