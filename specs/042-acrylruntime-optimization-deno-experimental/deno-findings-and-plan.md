@@ -79,14 +79,59 @@ Every run used a throwaway `HOME` and `ACRYL_HOME`, and a spare `ACRYL_WEB_PORT`
 | Serving mode, plain `deno run -A` | Exits at once: `TypeError: Import "@deepseek-ai/dsh-tools" not a dependency`. Deno's npm resolver does not resolve the plugin packages that ACRYL materializes into profile folders with pnpm (the same class as 042 E4 item 5 on Bun) |
 | Serving mode, `deno run -A --node-modules-dir=manual` | The process stays up and prints `ACRYL web: http://127.0.0.1:3080` (the fallback again). It listens on no port; the spare port refuses connections. The throwaway home holds a created `profiles/web` (`cordis.yml`, `cordis.patch.yml`, `package.json`, `pnpm-workspace.yaml`) but no installed plugin packages. No error was printed |
 
-Conclusion: the host boots its Cordis root on Deno, but the profile's plugin packages are neither installed nor
-resolved, so nothing that the profile provides (web server included) starts, and the failure is silent.
+**2026-10-07 follow-up, root cause found (probe `d1b-diagnose-fibers.mjs`).** The earlier conclusion ("neither
+installed nor resolved... the failure is silent") was imprecise on both points; corrected below.
+
+- **Package resolution is not the blocker.** `materializeProfilePackage()` (`engine-dsh.ts:511`) already symlinks
+  ACRYL-owned packages into the profile's `node_modules` from the `dsh` install anchor (`apps/acryl-web`'s own,
+  already pnpm-installed `node_modules`), and this works unmodified under `deno run -A --node-modules-dir=manual`
+  (confirmed directly: a scratch two-package symlink chain, including a nested undeclared-dependency case, resolved
+  correctly with no `package.json` "dependencies" entry needed - Deno's manual node_modules mode walks directories
+  the same way Node does). Symlinking the two pinned Harness bundle packages the `web` profile needs
+  (`@deepseek-ai/dsh-base`, `@deepseek-ai/dsh-web-app`) into the profile the same way, sourced from `apps/acryl-web`'s
+  own installed copies, also resolves without error. Neither package install nor resolution is what's failing.
+- **The failure is not silent - it is a Cordis fiber in FAILED state that `serveWeb()`'s own wrapper never
+  inspects.** `serveWeb()` only reads `ctx.get('webServer')`/`ctx.get('webStartup')` after boot; it never checks
+  fiber state, and a child fiber's failure does not reject the host's own boot promise (Cordis stores it on the
+  fiber and moves on - the project's own "PENDING is valid state" rule generalizes to "a failed fiber doesn't crash
+  its parent" too). Walking `ctx.registry` directly (every `Plugin.Runtime`'s `fibers`, each with a public `.state`
+  and a TS-private-but-JS-readable `._error`) surfaces it immediately: the `mountDshEngine` plugin fiber is
+  `FAILED` with this error, from inside the pinned Harness's own `@deepseek-ai/dsh-app-boot` package:
+
+  ```
+  Error: node-addon-require-builtin unsupported: Unsupported/no-context (required V8 current-context symbols were not found)
+      at Object.requireBuiltin (node-addon-native-custom-loader/lib/index.js:572:28)
+      at Object.requireBuiltin (node-addon-require-builtin/lib/index.js:13:16)
+      at internalModules (@deepseek-ai/dsh-app-boot/lib/index.js:1576:26)
+      at installRuntimeInterception (@deepseek-ai/dsh-app-boot/lib/index.js:1642:80)
+      at new PluginPackages (@deepseek-ai/dsh-app-boot/lib/index.js:3215:24)
+  ```
+
+  `dsh-app-boot`'s `PluginPackages` class - the component that resolves a profile's bare-specifier plugin imports at
+  run time - uses `node-addon-require-builtin` (via `node-addon-native-custom-loader`) to reach the same class of
+  Node-internal machinery as the already-known `--expose-internals` gap (F4's first row), but as a **native addon**
+  that calls into specific V8 internal context symbols, not a CLI flag. Deno's V8 build does not expose them, so
+  the addon throws at construction, `PluginPackages` never exists, `mountDshEngine`'s fiber fails, and every row
+  beneath it (`webServer`, `webStartup`, `connection`, the served client) never even registers as a child fiber -
+  not PENDING, not FAILED, simply never created. This is the real reason nothing listens and nothing is logged.
+
+**D1 exit criterion: not met.** This is a harder blocker than "run an install step": it is a hard dependency on
+Node-specific V8 internals inside the pinned `deepseek-harness` submodule's own `@deepseek-ai/dsh-app-boot`
+package, which this repository must not edit. Per F4, the fallback-to-plain-`import()`
+path (`vendor/loader/src/config/tree.ts:154-160`) exists for when the internal loader is *absent*, but
+`PluginPackages` here doesn't check for absence - it tries the native addon unconditionally and only an absent/failing
+*flag* (`--expose-internals`) is handled as "absent" elsewhere; a present-but-throwing native addon is a different,
+unhandled failure mode. Closing D1 needs one of: an upstream Harness change (making `PluginPackages` try the addon
+and fall back to plain `import()` on failure, the same pattern already used elsewhere), a replacement
+`dsh-app-boot` provided by ACRYL through profile composition (if `PluginPackages` is swappable that way - not yet
+checked), or confirmation from Deno that V8 current-context symbols will never be exposed (in which case this
+blocks Option B entirely, independent of every later ladder step).
 
 ### F4. Known gaps carried over from the Bun work (not yet retested on Deno)
 
 | Gap | Where | Deno status |
 |---|---|---|
-| Cordis Loader and HMR use Node's private ESM loader (`--expose-internals` or `node-addon-require-builtin`) | `deepseek-harness/vendor/loader/src/internal.ts`, `vendor/hmr/src/index.ts`; ACRYL checks the flag in `runtime/acryl-harness-runtime/src/index.ts:222` | Deno has no `--expose-internals`. The loader falls back to plain `import()` when the internal loader is absent (`vendor/loader/src/config/tree.ts:154-160`), so config-driven enable and disable may work; **HMR will not**. Unverified |
+| Cordis Loader and HMR use Node's private ESM loader (`--expose-internals` or `node-addon-require-builtin`) | `deepseek-harness/vendor/loader/src/internal.ts`, `vendor/hmr/src/index.ts`; ACRYL checks the flag in `runtime/acryl-harness-runtime/src/index.ts:222` | **Confirmed failing, not just unverified (F3 2026-10-07 follow-up).** `@deepseek-ai/dsh-app-boot`'s `PluginPackages` uses `node-addon-require-builtin` unconditionally (no absent-internals fallback) and throws under Deno's V8 (`Unsupported/no-context`), failing the whole engine fiber. This is D1's actual blocker, not a resolution or install gap |
 | Terminal: `node-pty` (native addon) | `plugins/acryl-workspace/src/pty/node-pty-spawn.ts`; harness `packages/subprocess/subprocess-local/src/terminal.ts` | Deno supports Node-API addons in principle. Unverified for `node-pty` |
 | Session query store: `node:sqlite` | harness `packages/session-query/session-query-sqlite` | Unverified on Deno |
 | WebSocket upgrade with `ws` over `node:http` | `plugins/acryl-workspace/src/pty/stream.ts`, `plugins/acryl-agent-control/src/host/stream.ts` | Unverified on Deno |
@@ -159,7 +204,7 @@ going further. All runs follow the probe safety rules at the end.
 
 | Step | Question | How | Exit criterion |
 |---|---|---|---|
-| **D1** | Can Deno install and resolve a profile's plugin packages? | Find where the profile install runs (pinned pnpm) and why it does not run or does not report under Deno; then make the Loader's imports resolve from the profile folder (`--node-modules-dir=manual` with an installed profile, or an import map generated from the profile). Probe: `probes/d1-deno-host.mjs` | The serving host listens on the spare port and answers `GET /` like Node does (404 without a token; measured under Node at `0d075c8`, 042 E2 recorded 401 on 2026-10-01) |
+| **D1** | Can Deno install and resolve a profile's plugin packages? | Find where the profile install runs (pinned pnpm) and why it does not run or does not report under Deno; then make the Loader's imports resolve from the profile folder (`--node-modules-dir=manual` with an installed profile, or an import map generated from the profile). Probes: `probes/d1-deno-host.mjs` (serving-mode run), `probes/d1b-diagnose-fibers.mjs` (fiber-state dump - use this one when `d1-deno-host.mjs` prints "no answer" with nothing else, since a failed child fiber does not reject `serveWeb()`'s own promise) | **Not met (2026-10-07).** Package resolution itself works once the pinned Harness bundle packages are symlinked into the profile the same way ACRYL-owned packages already are; the actual blocker is `@deepseek-ai/dsh-app-boot`'s `PluginPackages` throwing on a native-addon-only path to Node's internal loader (F3/F4). The serving host does not listen and D1 does not pass until that's resolved (upstream Harness change, a swappable replacement, or confirmation Deno will never expose the needed V8 symbols) |
 | **D2** | Does the Cordis Loader work without Node internals? | With D1 passing, enable and disable a profile row at run time; reload one plugin with a fresh `import()` | Enable, disable and reload all take effect; no `--expose-internals`; HMR replacement designed (F6 already verifies the reload mechanism itself, including inside the packaged binary; shared with AIMBRACE 012 Phase 2). Remaining open item: decide and bundle the agent-plugin dependency allowlist (F6) |
 | **D3** | Do the native and Node-API pieces work? | Run 042's `probes/runtime-compat.mjs` and `probes/e5-ws-worker.mjs` under Deno: `node-pty` events, `node:sqlite`, module re-import, `ws` upgrade, `worker_threads` with `node:vm`; then `koffi`, `sharp` | Each item passes, or has a named replacement (for example `Deno.Command` with a PTY, `jsr:@db/sqlite`, `Deno.upgradeWebSocket`) |
 | **D4** | Does the ACRYL client work in WebKit? | Open the D1 host URL in Safari (same engine as WKWebView); check terminal (xterm, `@xterm/addon-webgl`), editor, layout | Usable without layout or rendering defects, or a list of fixes |
