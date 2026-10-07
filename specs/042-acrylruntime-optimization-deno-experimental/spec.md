@@ -1,12 +1,14 @@
+> **Update 2026-10-07: renamed and redirected to Deno (experimental).** This milestone was `042-electrobun-optimization`. The current direction, measured findings and the D1 to D7 experiment ladder are in [deno-findings-and-plan.md](./deno-findings-and-plan.md). The Electrobun and Bun material below remains as measured history.
+>
 > **Update 2026-10-01.** Week estimates and success percentages in this file are not supported by evidence. See [findings-rewrite-vs-reuse.md](./findings-rewrite-vs-reuse.md) for measured results, the Option A (Node host, Electrobun shell) and Option B (Host in Bun) split, and the experiment ladder.
 
-# Feature Specification: Electrobun Optimization
+# Feature Specification: ACRYL runtime optimization (Deno, experimental)
 
 **Tracking**: TBD (will be filed on GitHub when prioritized)
 
-**Feature Directory**: `specs/042-electrobun-optimization`  
+**Feature Directory**: `specs/042-acrylruntime-optimization-deno-experimental` (was `specs/042-electrobun-optimization`)  
 **Created**: 2026-09-29  
-**Status**: `needs-triage` — this is a **research-to-decision** milestone, not an implementation commitment. The spike determines whether migration is realistic.
+**Status**: `needs-triage` - this is a **research-to-decision** milestone, not an implementation commitment. The spike determines whether migration is realistic.
 
 **Authority**: `.specify/memory/constitution.md` (architecture decisions), root `CLAUDE.md` (framework independence), `specs/041-agent-control` (self-extension architecture that must survive).
 
@@ -53,14 +55,14 @@ Migrate ACRYL from Electron to Electrobun (pre-1.0 Electron alternative using Bu
 
 **Current state**: ACRYL ships as an Electron app. It works well.
 
-**Issue #1 — Bundle size**: Electron embeds Chromium (~80MB). Users must download a large binary for Desktop. This affects:
+**Issue #1 - Bundle size**: Electron embeds Chromium (~80MB). Users must download a large binary for Desktop. This affects:
 - Adoption friction (large download)
 - CI/CD artifact storage
 - Offline distribution
 
-**Issue #2 — Startup time**: Cold startup is 3-5 seconds. Warm start is <1 second. Users on slow networks/cold machines experience delay.
+**Issue #2 - Startup time**: Cold startup is 3-5 seconds. Warm start is <1 second. Users on slow networks/cold machines experience delay.
 
-**Issue #3 — Dependency surface**: Electron updates tracked separately from Bun/Node. Extra moving part.
+**Issue #3 - Dependency surface**: Electron updates tracked separately from Bun/Node. Extra moving part.
 
 **Electrobun promise**: Same UX, smaller binary, faster startup, one less runtime to manage.
 
@@ -192,9 +194,9 @@ Agent Control, marketplace plugins, custom plugins all still load and hot-reload
 - Post-spike: if we go, it gates specs 043+ that depend on Electron being the primary runtime
 
 **Blocked by**:
-- Spec 040 (workspace unification) — not blocked, independent
-- Spec 041 (Agent Control) — not blocked, already shipped
-- Outstanding Cordis documentation — would help, not blocking spike
+- Spec 040 (workspace unification) - not blocked, independent
+- Spec 041 (Agent Control) - not blocked, already shipped
+- Outstanding Cordis documentation - would help, not blocking spike
 
 **Related**:
 - Specs 037, 040, 041 all depend on Cordis hot-reload surviving this

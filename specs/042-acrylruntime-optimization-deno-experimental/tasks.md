@@ -1,3 +1,5 @@
+> **Update 2026-10-07.** The milestone is now Deno (experimental). Current plan: [deno-findings-and-plan.md](./deno-findings-and-plan.md), tasks D1 to D7 below. The Electrobun plan below is history.
+>
 > **Update 2026-10-01.** Week estimates and success percentages in this file are not supported by evidence. See [findings-rewrite-vs-reuse.md](./findings-rewrite-vs-reuse.md) for measured results, the Option A (Node host, Electrobun shell) and Option B (Host in Bun) split, and the experiment ladder.
 
 # Tasks: Electrobun Optimization Spike
@@ -6,6 +8,22 @@
 
 **Conventions**: Each spike task produces a specific research artifact. No implementation code. After all spikes, a go/no-go decision is made.
 
+
+## Deno experiment ladder (current, 2026-10-07)
+
+Details, exit criteria and probe safety rules: [deno-findings-and-plan.md](./deno-findings-and-plan.md).
+
+- [x] D0 Measured baseline: `ACRYL.app` 500 MB (Electron 228 MB, dependencies 263 MB); `deno desktop` hello app 65 MB;
+  the host on Deno boots Cordis but installs and resolves no profile plugin, so no web server starts (silently).
+- [ ] D1 Profile packages install and resolve under Deno; the serving host answers 401 on the spare port
+  (`probes/d1-deno-host.mjs`).
+- [ ] D2 Cordis Loader enable, disable and reload without Node internals.
+- [ ] D3 `node-pty`, `node:sqlite`, `ws` upgrade, `worker_threads` with `node:vm`, `koffi`, `sharp` under Deno, or named
+  replacements.
+- [ ] D4 ACRYL client in WebKit (Safari) is usable.
+- [ ] D5 `deno desktop` window hosts ACRYL and stops cleanly.
+- [ ] D6 Measured bundle size with the dependency cut; target 100 to 200 MB.
+- [ ] D7 Shell parity: menus, tray, dialogs, windows, updater, signing, notarization.
 ---
 
 ## Phase 0: Spike (Week 1 - decision gating)
@@ -137,7 +155,7 @@ If all three pass, migration is "doable." If any fails without a clear workaroun
 4. Recommend decision with rationale
 
 **Output**:
-- `042-decision.md` — decision document with:
+- `042-decision.md` - decision document with:
   - Spike results summary
   - Effort re-estimate (if applicable)
   - Risk assessment
@@ -166,7 +184,7 @@ If all three pass, migration is "doable." If any fails without a clear workaroun
 **Goal**: Create detailed spec for migration implementation (spans 6-7 weeks).
 
 **Output**:
-- `plan.md` — Cordis mini-design (if needed), phases, dependencies
+- `plan.md` - Cordis mini-design (if needed), phases, dependencies
 - New implementation spec (042b or similar) with:
   - Phase breakdown (UI → APIs → Cordis → PTY → test/release)
   - Weekly milestones
@@ -229,7 +247,7 @@ If all three pass, migration is "doable." If any fails without a clear workaroun
 
 **Cost**: 1 engineer, 1 week, ~$3-5K
 
-**Payoff**: Either clear path to 6-7 week migration or clear blocker—avoids sinking 12 weeks into a dead end.
+**Payoff**: Either clear path to 6-7 week migration or clear blocker - avoids sinking 12 weeks into a dead end.
 
 ---
 

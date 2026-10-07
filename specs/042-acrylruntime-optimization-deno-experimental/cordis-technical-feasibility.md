@@ -149,10 +149,10 @@ export class MyPlugin {
 ### Probability: 70-80% that Cordis works on Bun unchanged
 
 **Why I'm confident:**
-1. **Bun designed for Node compatibility** — dynamic imports and `import.meta.hot` are intentional features
-2. **HMR is a core Bun feature** — used by dev servers, must be reliable for Bun's own use cases
-3. **Cordis doesn't do anything exotic** — just imports, registers services, and cleans up; no Node internals
-4. **Simple plugin unload** — Cordis already handles the hard part (effect disposal); module cache is the only external dependency
+1. **Bun designed for Node compatibility** - dynamic imports and `import.meta.hot` are intentional features
+2. **HMR is a core Bun feature** - used by dev servers, must be reliable for Bun's own use cases
+3. **Cordis doesn't do anything exotic** - just imports, registers services, and cleans up; no Node internals
+4. **Simple plugin unload** - Cordis already handles the hard part (effect disposal); module cache is the only external dependency
 
 ### Probability: 10-15% that Cordis needs minor patches
 
@@ -225,7 +225,7 @@ for (let i = 0; i < 100; i++) {
 From Electrobun docs and Bun changelog:
 
 **Not relevant to Cordis**:
-- `powerMonitor` API (doesn't exist) — ACRYL doesn't use it
+- `powerMonitor` API (doesn't exist) - ACRYL doesn't use it
 - CSS-in-JS runtime performance (different, but not blocking)
 - Some npm package compatibility (each package is independent; assess per-package)
 

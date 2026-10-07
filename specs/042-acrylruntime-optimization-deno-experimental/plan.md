@@ -1,3 +1,5 @@
+> **Update 2026-10-07.** The milestone is now Deno (experimental). Current plan: [deno-findings-and-plan.md](./deno-findings-and-plan.md). The Electrobun plan below is history.
+>
 > **Update 2026-10-01.** Week estimates and success percentages in this file are not supported by evidence. See [findings-rewrite-vs-reuse.md](./findings-rewrite-vs-reuse.md) for measured results, the Option A (Node host, Electrobun shell) and Option B (Host in Bun) split, and the experiment ladder.
 
 # Plan: Electrobun Optimization Spike

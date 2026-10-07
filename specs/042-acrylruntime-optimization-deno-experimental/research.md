@@ -112,9 +112,9 @@ Current architecture:
 **Critical question**: Does Cordis's hot-reload rely on Node internals Bun doesn't replicate?
 
 Cordis uses:
-- Dynamic `import()` — ✓ Bun supports
-- Module cache eviction for HMR — ⚠️ Bun supports, but semantics untested at scale
-- Service lifecycle with re-injection — ⚠️ Should work, but rapid reload cycles unknown
+- Dynamic `import()` - ✓ Bun supports
+- Module cache eviction for HMR - ⚠️ Bun supports, but semantics untested at scale
+- Service lifecycle with re-injection - ⚠️ Should work, but rapid reload cycles unknown
 
 **Risk**: Medium. Cordis is complex and dynamic. Cache eviction failure surfaces only under stress.
 

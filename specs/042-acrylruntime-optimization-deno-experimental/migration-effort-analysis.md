@@ -20,7 +20,7 @@ ACRYL can migrate to Electrobun. The difficulty is **unevenly distributed**:
 
 **Benefit**: **30-40% bundle size reduction** (~50-70MB smaller):
 - Current: ~170MB (Electron embeds Chromium ~70MB)
-- Electrobun: ~100MB (Bun + app code, reuses OS WebKit—macOS WebKit, Windows WebView2, Linux WebKitGTK)
+- Electrobun: ~100MB (Bun + app code, reuses OS WebKit - macOS WebKit, Windows WebView2, Linux WebKitGTK)
 - **Impact**: Substantial for download friction, CI/CD storage, offline distribution
 - Plus: Slightly faster startup (Bun + no Chromium unpack)
 
@@ -75,7 +75,7 @@ Instead:
 
 ## Migration Effort Breakdown
 
-### 1. React UI (Trivial — ~2 days)
+### 1. React UI (Trivial - ~2 days)
 
 **Current setup**: Vite-based client build in `apps/acryl-desktop/src/` renders to webview
 
@@ -93,7 +93,7 @@ Instead:
 
 ---
 
-### 2. Electron API Surface (Easy-ish — ~4-5 days)
+### 2. Electron API Surface (Easy-ish - ~4-5 days)
 
 **Mapping existing Electron → Electrobun APIs**:
 
@@ -121,7 +121,7 @@ Instead:
 
 ---
 
-### 3. Cordis Connection Layer (Medium — ~5-7 days)
+### 3. Cordis Connection Layer (Medium - ~5-7 days)
 
 **Current**: Cordis Host ↔ Client connection runs over Electron's webview messaging
 
@@ -146,7 +146,7 @@ Instead:
 
 ---
 
-### 4. node-pty → Zig Rewrite (Hard — 2-4 weeks)
+### 4. node-pty → Zig Rewrite (Hard - 2-4 weeks)
 
 **Current**: `plugins/acryl-workspace/package.json` depends on `node-pty@1.2.0-beta.15`
 
@@ -220,12 +220,12 @@ Instead:
 
 **Performance**:
 - Bun startup: ~30% faster than Node (claims)
-- ACRYL's bottleneck is **Cordis plugin load** and **React mount**, not JS parsing — so real-world gain is <10%
+- ACRYL's bottleneck is **Cordis plugin load** and **React mount**, not JS parsing - so real-world gain is <10%
 - Terminal startup: same (PTY overhead unchanged)
 
 **Bundle size** (CORRECTED):
 - Current: ~170MB (Bun ~100MB + Electron's bundled Chromium ~70MB)
-- Electrobun: ~100MB (Bun + app code; reuses OS WebKit—macOS system WebKit, Windows WebView2, Linux WebKitGTK—no bundled Chromium)
+- Electrobun: ~100MB (Bun + app code; reuses OS WebKit - macOS system WebKit, Windows WebView2, Linux WebKitGTK - no bundled Chromium)
 - **Net reduction**: 50-70MB (30-40% smaller)
 - **Impact**: Substantial for download friction, CI/CD artifact storage, Web hosting bandwidth, offline distribution
 
@@ -282,7 +282,7 @@ Instead:
    - If PTY missing and no bridge exists: paused pending design decision
 
 **Cost**: 1 engineer, 1 week, ~$3-5K  
-**Payoff**: Either clear path or clear blocker — avoids sinking 12 weeks into a dead end
+**Payoff**: Either clear path or clear blocker - avoids sinking 12 weeks into a dead end
 
 ---
 
@@ -322,8 +322,8 @@ If you pursue this:
 
 1. **Cordis hot-reload on Bun**: Test repeatedly under realistic load
 2. **PTY path**: Decide early (existing library, bridge, or own port)
-3. **Platform testing**: macOS, Windows, Linux WebKitGTK — test each
-4. **Auto-update**: ACRYL has `updates/` code — check if Electrobun has a story here
+3. **Platform testing**: macOS, Windows, Linux WebKitGTK - test each
+4. **Auto-update**: ACRYL has `updates/` code - check if Electrobun has a story here
 5. **Community**: Monitor Electrobun GitHub for breaking changes; budget monthly sync
 
 ---

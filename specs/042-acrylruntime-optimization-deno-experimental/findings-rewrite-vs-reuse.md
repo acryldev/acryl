@@ -1,3 +1,5 @@
+> **2026-10-07.** Deno findings and the current ladder: [deno-findings-and-plan.md](./deno-findings-and-plan.md).
+
 # 042 Findings: what must be rewritten, what survives, what is unknown
 
 **Date**: 2026-10-01. **Method**: reading the code in this repository and the pinned `deepseek-harness/`, reading the official Electrobun 2.x documentation, and running small probes on Node 24.19.0 and Bun 1.3.14 (scripts in `probes/`, reproducible with `node` and `bun`).
@@ -111,7 +113,7 @@ So Bun can re-evaluate a module, but through a different specifier form than Nod
 
 ## Next steps
 
-1. **E1, manual (about 2 minutes):** `bun specs/042-electrobun-optimization/probes/e2-bun-parent-node-host.ts` proves the host serves, but to look at it in Safari start the host yourself with a temporary home (`ACRYL_HOME=$(mktemp -d) ACRYL_WEB_PORT=38457 node --expose-internals apps/acryl-web/lib/bin.js`), open the printed URL in Safari and check the terminal (xterm), editor and layout. Stop the host with Ctrl+C.
+1. **E1, manual (about 2 minutes):** `bun specs/042-acrylruntime-optimization-deno-experimental/probes/e2-bun-parent-node-host.ts` proves the host serves, but to look at it in Safari start the host yourself with a temporary home (`ACRYL_HOME=$(mktemp -d) ACRYL_WEB_PORT=38457 node --expose-internals apps/acryl-web/lib/bin.js`), open the printed URL in Safari and check the terminal (xterm), editor and layout. Stop the host with Ctrl+C.
 2. **E3:** complete a hello-world window that loads the E2 URL, after deciding whether to keep Hutch installed.
 3. **If Option B stays on the table:** test Cottontail with the same probes (`runtime-compat.mjs`, `e5-ws-worker.mjs`), since it is the default runtime and was not measured.
 4. Stop at the first failing step and record it here.
