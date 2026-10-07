@@ -105,6 +105,44 @@ ACRYL-owned replacement plugin (provider replacement through profile composition
   `--allow-net=127.0.0.1` and nothing else.
 - Re-loading a plugin with a fresh `import()` is the planned replacement for HMR there (AIMBRACE spec 012, Phase 2).
 
+### F6. Plugin hot reload inside a packaged `deno desktop` app (measured)
+
+Question: once ACRYL ships as a `deno desktop` binary, can an agent still write its own Cordis plugin at run time and
+hot-reload it, the way `cordis-plugin-hmr` does today?
+
+Tested under `deno run`, `deno compile`, and the actual `deno desktop` binary (`laufey_webview`), with a throwaway
+scratch project (deleted after, no leftover processes):
+
+| What was tried | Result |
+|---|---|
+| Write a plugin `.ts` file at run time, `import(file?v=1)`, mount with `root.plugin(mod)`, dispose with `fiber.dispose()`, rewrite the file, `import(file?v=2)`, remount | Works in all three: `deno run`, `deno compile`, and the packaged `laufey_webview` binary. Output confirmed both versions ran and both disposed cleanly: `{"ok":true,"results":["hello from version 1","hello from version 2"],"disposed":[1,2]}` |
+| What a run-time-written plugin can `import`, tested under `deno compile` with an empty `DENO_DIR`/`HOME` (simulates a user machine, no cache to fall back on) | Embedded `@deepseek-ai/cordis` (bare specifier): works. Embedded `npm:@deepseek-ai/cordis@4.0.4`: works. A sibling file written next to the plugin: works. An npm package **not** in the build (`npm:is-odd@3.0.1`): fails, `Could not find constraint 'is-odd@3.0.1' in the list of packages`. A JSR package **not** in the build (`jsr:@std/assert@1.0.19`): fails, `Module not found` |
+
+Conclusion:
+
+- **Reload itself works**, including in the packaged desktop binary: fresh `import()` plus Cordis's own
+  `dispose()`/remount cycle replaces what `cordis-plugin-hmr` does today, with no file-watching and no Node
+  internals. This is the same mechanism as AIMBRACE spec 012 Phase 2, so D2 there and D2 here share one answer.
+- **The limit is dependencies, not reload.** A `deno compile` / `deno desktop` binary is a closed module graph: a
+  plugin an agent writes at run time can import Cordis, any npm or JSR package the build already embedded, and its
+  own sibling files, but **not** a new npm or JSR package absent from the build. There is no `npm install` inside a
+  compiled binary.
+- `cordis-plugin-hmr` (chokidar file-watching, `--expose-internals`) does not apply here and is not needed: the
+  reload path is explicit (the plugin host calls `import()` again), not a filesystem watcher.
+- Old module versions stay resident in memory after a reload (V8 does not unload a module namespace); not measured,
+  expected fine for a single editing session, cleared by an app restart. Unverified as a long-running-session
+  concern.
+- Not yet run: the import-limit probe (new npm/JSR package test) against the actual `deno desktop` binary, only
+  against `deno compile`. Expected to be identical since both are the same compiled-binary module resolver, but
+  unverified.
+- Implication for D2 and the eventual Cordis builder (AIMBRACE spec 012 Phase 2, and any ACRYL Development-Canvas
+  agent authoring loop): the dependency set an agent-written plugin may use has to be decided and bundled at build
+  time, not discovered at run time. Options, none chosen yet: ship a curated dependency allowlist via
+  `--include npm:<pkg>` per profile (same mechanism F1 already needs for the Loader's own profile plugins); restrict
+  agent-authored plugins to the embedded set plus plain TypeScript; or ship an unpacked `node_modules` next to the
+  binary that `--node-modules-dir=manual` can resolve from, at the cost of the size goal in F1. Also scope
+  `--allow-write` to the plugin directory only, not the whole app.
+
 ## Options
 
 - **Option A, Deno desktop as shell only.** The host stays on Node as a child process; the webview loads its local URL
@@ -122,7 +160,7 @@ going further. All runs follow the probe safety rules at the end.
 | Step | Question | How | Exit criterion |
 |---|---|---|---|
 | **D1** | Can Deno install and resolve a profile's plugin packages? | Find where the profile install runs (pinned pnpm) and why it does not run or does not report under Deno; then make the Loader's imports resolve from the profile folder (`--node-modules-dir=manual` with an installed profile, or an import map generated from the profile). Probe: `probes/d1-deno-host.mjs` | The serving host listens on the spare port and answers `GET /` like Node does (404 without a token; measured under Node at `0d075c8`, 042 E2 recorded 401 on 2026-10-01) |
-| **D2** | Does the Cordis Loader work without Node internals? | With D1 passing, enable and disable a profile row at run time; reload one plugin with a fresh `import()` | Enable, disable and reload all take effect; no `--expose-internals`; HMR replacement designed (shared with AIMBRACE 012 Phase 2) |
+| **D2** | Does the Cordis Loader work without Node internals? | With D1 passing, enable and disable a profile row at run time; reload one plugin with a fresh `import()` | Enable, disable and reload all take effect; no `--expose-internals`; HMR replacement designed (F6 already verifies the reload mechanism itself, including inside the packaged binary; shared with AIMBRACE 012 Phase 2). Remaining open item: decide and bundle the agent-plugin dependency allowlist (F6) |
 | **D3** | Do the native and Node-API pieces work? | Run 042's `probes/runtime-compat.mjs` and `probes/e5-ws-worker.mjs` under Deno: `node-pty` events, `node:sqlite`, module re-import, `ws` upgrade, `worker_threads` with `node:vm`; then `koffi`, `sharp` | Each item passes, or has a named replacement (for example `Deno.Command` with a PTY, `jsr:@db/sqlite`, `Deno.upgradeWebSocket`) |
 | **D4** | Does the ACRYL client work in WebKit? | Open the D1 host URL in Safari (same engine as WKWebView); check terminal (xterm, `@xterm/addon-webgl`), editor, layout | Usable without layout or rendering defects, or a list of fixes |
 | **D5** | Does a `deno desktop` window host ACRYL? | A Deno desktop entry that starts the host (Option A: Node child; Option B: in process) and opens a window on its URL | The window shows the authenticated client; Ctrl+Q stops host and window cleanly; port freed |
