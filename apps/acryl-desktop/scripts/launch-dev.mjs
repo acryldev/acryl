@@ -2,6 +2,7 @@
 /** Launch the development build from a macOS bundle branded as ACRYL. */
 
 import { execFile, spawn } from 'node:child_process'
+import { statSync } from 'node:fs'
 import { mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
@@ -30,6 +31,25 @@ export function setPlistString(source, key, value) {
   const pattern = new RegExp(`(<key>${key}</key>\\s*<string>)[^<]*(</string>)`, 'u')
   if (!pattern.test(source)) throw new Error(`launch-dev: Electron Info.plist has no ${key} string`)
   return source.replace(pattern, `$1${value}$2`)
+}
+
+/**
+ * Electron's SUID sandbox helper must be root-owned with mode 4755, and Ubuntu 24.04+ also blocks the user-namespace
+ * fallback; a fresh `pnpm install` has neither, so the dev launch aborts with a FATAL setuid_sandbox_host error.
+ * Development only: when neither sandbox path can work, say so and start without the Chromium sandbox rather than abort.
+ * Release builds never go through this script. Returns the extra Electron arguments.
+ */
+export function linuxDevSandboxArgs(executable, { platform = process.platform, stat = statSync, argv = [] } = {}) {
+  if (platform !== 'linux' || argv.includes('--no-sandbox')) return []
+  try {
+    const helper = stat(join(dirname(executable), 'chrome-sandbox'))
+    if (helper.uid === 0 && (helper.mode & 0o4000) !== 0) return []
+  }
+  catch {
+    return []
+  }
+  process.stderr.write('launch-dev: Electron SUID sandbox is not configured (chrome-sandbox is not root-owned 4755); starting this development run with --no-sandbox.\n')
+  return ['--no-sandbox']
 }
 
 /** Derive the containing .app bundle from Electron's macOS executable path. */
@@ -160,7 +180,7 @@ export async function launchDevelopmentElectron(argv = [], {
       : { executable: imported.default, cleanup: async () => {} }
     let code
     try {
-      code = await spawnChild(prepared.executable, [mainPath, ...argv])
+      code = await spawnChild(prepared.executable, [...linuxDevSandboxArgs(prepared.executable, { argv }), mainPath, ...argv])
     }
     finally {
       await prepared.cleanup()
