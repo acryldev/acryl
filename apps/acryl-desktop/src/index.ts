@@ -75,6 +75,7 @@ function toDesktopLocale(preference: string | undefined): DesktopLocale | undefi
   return LOCALE_IDS.includes(preference as (typeof LOCALE_IDS)[number]) ? (preference as DesktopLocale) : undefined
 }
 import { DESKTOP_DEFAULT_WEB_PORT } from './runtime/desktop-port.ts'
+import { defaultDesktopShellMode } from './shell/default-mode.ts'
 
 /** Stable Cordis plugin name. */
 export const name = 'desktop-shell'
@@ -102,7 +103,7 @@ export interface DesktopSettings {
 
 /** Schema registered with the standard settings service. */
 export const DesktopSettingsSchema: z<DesktopSettings> = z.object({
-  mode: z.union(['compatibility', 'advanced'] as const).default('advanced'),
+  mode: z.union(['compatibility', 'advanced'] as const).default(defaultDesktopShellMode(process.platform)),
   port: z.number().step(1).min(0).max(65_535).default(DESKTOP_DEFAULT_WEB_PORT),
   logLevel: z.union(['debug', 'info', 'warn', 'error'] as const).default('info'),
 })
@@ -125,7 +126,7 @@ export interface Config {
 
 /** Validated native window configuration. */
 export const Config: z<Config> = z.object({
-  mode: z.union(['compatibility', 'advanced'] as const).default('advanced'),
+  mode: z.union(['compatibility', 'advanced'] as const).default(defaultDesktopShellMode(process.platform)),
   port: z.number().step(1).min(0).max(65_535).default(DESKTOP_DEFAULT_WEB_PORT),
   width: z.number().step(1).min(800).default(1280),
   height: z.number().step(1).min(600).default(840),

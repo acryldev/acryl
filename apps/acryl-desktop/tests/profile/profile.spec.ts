@@ -608,7 +608,8 @@ describe('desktop profile composition', {
       port: 43_120,
       blend: null,
     })
-    expect(desktopShellModeFromSettings({ unrelated: { enabled: true } })).toBe('advanced')
+    expect(desktopShellModeFromSettings({ unrelated: { enabled: true } }, 'darwin')).toBe('advanced')
+    expect(desktopShellModeFromSettings({ unrelated: { enabled: true } }, 'linux')).toBe('compatibility')
   })
 
   it('rejects invalid settings roots, sections, modes, and YAML', () => {
