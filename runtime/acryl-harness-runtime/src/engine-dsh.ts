@@ -226,7 +226,24 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
     ctx.root.provide('acrylFrameworkPackages', createAcrylFrameworkPackages(composition.installPackageUrl))
   }
   // Owned by this engine's fiber (not the root), so an engine swap releases the interception with the profile it served.
-  if (composition.runtimeResolution !== undefined) await ctx.plugin(PluginPackages, { resolution: composition.runtimeResolution })
+  if (composition.runtimeResolution !== undefined) {
+    try {
+      await ctx.plugin(PluginPackages, { resolution: composition.runtimeResolution })
+    } catch (error) {
+      // PluginPackages reaches into Node's private module-loader internals (node-addon-require-builtin),
+      // which Deno's V8 build does not expose ("Unsupported/no-context"; specs/042 F3/F4 - 2026-10-07).
+      // Losing this loses only its live interception (install-time `replace()` without a restart); plain
+      // node_modules resolution still works once every package the profile needs is actually on disk, so
+      // fall back to the same symlink mechanism materializeProfilePackage already uses for ACRYL-owned
+      // packages, applied here to the complete table PluginPackages would otherwise have routed to.
+      console.error(
+        '[acryl-harness-runtime] profile package resolution (PluginPackages) unavailable in this runtime; ' +
+        'falling back to node_modules symlinks (live package replace without a restart is unavailable):',
+        error instanceof Error ? error.message : error,
+      )
+      materializeRuntimeResolutionEntries(dirname(composition.rootConfig), composition.runtimeResolution)
+    }
+  }
   if (composition.profileContext !== undefined && ctx.root.get('profileContext' as never) === undefined) ctx.root.provide('profileContext', composition.profileContext)
   // The include is recorded under the context it is mounted on, and DSH's profile reload (`config-editor`, `hmr`) looks it up on the
   // root context, so mount it there: a reload then finds "the root Include entry" and an edit can be applied and kept.
@@ -508,12 +525,13 @@ function installationRoot(moduleUrl: string): string {
   return manifest === undefined ? fileURLToPath(moduleUrl) : dirname(manifest)
 }
 
-export function materializeProfilePackage(profileDir: string, packageName: string, installPackageUrl: string): void {
-  const manifestPath = findPackageJSON(packageName, installPackageUrl)
-  if (manifestPath === undefined) {
-    throw new Error(`ACRYL web profile: cannot resolve package ${JSON.stringify(packageName)} from the acryl-web installation`)
-  }
-  const sourceDir = dirname(manifestPath)
+/**
+ * Symlink `sourceDir` into `profileDir`'s `node_modules/<packageName>`, replacing a stale link and
+ * leaving an already-correct one untouched. Shared by {@link materializeProfilePackage} (resolves
+ * `sourceDir` from an installation anchor) and {@link materializeRuntimeResolutionEntries} (the
+ * `PluginPackages` fallback, which already has `sourceDir` from the computed runtime resolution).
+ */
+function linkPackageInto(profileDir: string, packageName: string, sourceDir: string): void {
   const linkPath = join(profileDir, 'node_modules', packageName)
   mkdirSync(dirname(linkPath), { recursive: true })
   // `lstatSync` (not `existsSync`/`realpathSync`, both of which follow the
@@ -541,6 +559,28 @@ export function materializeProfilePackage(profileDir: string, packageName: strin
     rmSync(linkPath, { force: true, recursive: true })
   }
   symlinkSync(sourceDir, linkPath, 'dir')
+}
+
+export function materializeProfilePackage(profileDir: string, packageName: string, installPackageUrl: string): void {
+  const manifestPath = findPackageJSON(packageName, installPackageUrl)
+  if (manifestPath === undefined) {
+    throw new Error(`ACRYL web profile: cannot resolve package ${JSON.stringify(packageName)} from the acryl-web installation`)
+  }
+  linkPackageInto(profileDir, packageName, dirname(manifestPath))
+}
+
+/**
+ * Fallback for a runtime where `PluginPackages`'s own interception failed to install (Deno: its
+ * `node-addon-require-builtin` dependency reaches for V8 internals Deno's build does not expose -
+ * `Unsupported/no-context`; see specs/042 F3/F4, 2026-10-07). `resolution.entries` is the exact
+ * package table `PluginPackages` would otherwise have routed bare-specifier resolution through;
+ * materializing every entry as a real `node_modules` symlink lets the Loader's own plain
+ * `import()`-based resolution (its fallback when Node's private loader is unavailable) find them
+ * the ordinary way instead. This does not restore `PluginPackages.replace()` (installing or
+ * updating a profile package without a process restart) - only initial resolution.
+ */
+function materializeRuntimeResolutionEntries(profileDir: string, resolution: RuntimeResolution): void {
+  for (const entry of resolution.entries) linkPackageInto(profileDir, entry.name, entry.packageDir)
 }
 
 /**

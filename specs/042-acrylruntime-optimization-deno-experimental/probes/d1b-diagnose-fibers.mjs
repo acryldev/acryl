@@ -5,9 +5,10 @@
 // (TS-private, not JS-private, so readable here) without rejecting the host's own boot promise -
 // which is exactly why d1-deno-host.mjs's `.catch()` never fires.
 //
-// Run from the repository root, with a throwaway ACRYL_HOME (never the real one):
+// Run from the repository root, with a throwaway ACRYL_HOME and a spare ACRYL_WEB_PORT (never the
+// real ones, never 3080 - this boots a real WebServer fiber, same as d1-deno-host.mjs):
 //   T=$(mktemp -d); mkdir -p $T/home $T/acryl
-//   HOME=$T/home ACRYL_HOME=$T/acryl \
+//   HOME=$T/home ACRYL_HOME=$T/acryl ACRYL_WEB_PORT=<spare> \
 //     deno run -A --node-modules-dir=manual specs/042-acrylruntime-optimization-deno-experimental/probes/d1b-diagnose-fibers.mjs
 import { dirname, resolve, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -22,8 +23,9 @@ process.on('uncaughtException', (err) => {
 })
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
-if (!process.env.ACRYL_HOME) {
-  console.error('set ACRYL_HOME to a throwaway folder (never the real one)')
+const port = Number(process.env.ACRYL_WEB_PORT)
+if (!process.env.ACRYL_HOME || !Number.isInteger(port) || port === 3080) {
+  console.error('set ACRYL_HOME to a throwaway folder and ACRYL_WEB_PORT to a spare port (not 3080)')
   process.exit(2)
 }
 

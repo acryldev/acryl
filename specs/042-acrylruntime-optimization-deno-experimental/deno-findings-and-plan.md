@@ -121,11 +121,60 @@ package, which this repository must not edit. Per F4, the fallback-to-plain-`imp
 path (`vendor/loader/src/config/tree.ts:154-160`) exists for when the internal loader is *absent*, but
 `PluginPackages` here doesn't check for absence - it tries the native addon unconditionally and only an absent/failing
 *flag* (`--expose-internals`) is handled as "absent" elsewhere; a present-but-throwing native addon is a different,
-unhandled failure mode. Closing D1 needs one of: an upstream Harness change (making `PluginPackages` try the addon
-and fall back to plain `import()` on failure, the same pattern already used elsewhere), a replacement
-`dsh-app-boot` provided by ACRYL through profile composition (if `PluginPackages` is swappable that way - not yet
-checked), or confirmation from Deno that V8 current-context symbols will never be exposed (in which case this
-blocks Option B entirely, independent of every later ladder step).
+unhandled failure mode.
+
+**2026-10-07, D1 closed - a Tier 1 fix, entirely in ACRYL's own code.** `PluginPackages`'s constructor
+(`dsh-app-boot`'s own code) already no-ops cleanly when its config carries no `resolution`
+(`if (config.resolution === void 0) return`), and `mountDshEngine` (`engine-dsh.ts:229`, ACRYL's own
+package, not the submodule) already had the matching `if (composition.runtimeResolution !== undefined)`
+guard - both already built for exactly this kind of graceful skip, just never exercised. The fix:
+wrap the `ctx.plugin(PluginPackages, ...)` call in a try/catch; on failure (confirmed only ever the
+native-addon throw above - the existing Node test suite, 22 tests across 4 spec files, passes
+unmodified, so this never engages under Node), materialize every entry in
+`composition.runtimeResolution.entries` (the exact package table `PluginPackages` would otherwise have
+routed to - `{name, packageDir}` pairs, already computed regardless) as a real `node_modules` symlink in
+the profile, via the same idempotent symlink helper `materializeProfilePackage` already uses for
+ACRYL-owned packages (refactored out as `linkPackageInto`, shared by both). Plain Loader `import()`
+resolution then finds every package the profile needs, the same way it already finds ACRYL's own.
+
+Verified end to end (3 clean runs, fresh throwaway profile each time, spare port, real listening socket
+confirmed and freed afterward): `GET /` without a token now returns **404**, matching the Node baseline
+exactly (this doc's own earlier D1 criterion). The real `apps/acryl-web` build had to be rebuilt too -
+its `tsdown.config.ts` sets `noExternal: ['acryl-harness-runtime']`, so it bundles the package rather
+than importing it live; a probe or diagnostic that imports `acryl-harness-runtime` directly (like
+`d1b-diagnose-fibers.mjs`) will show a fix before `apps/acryl-web`'s own build does.
+
+**What this does not restore:** `PluginPackages.replace()` - installing or updating a profile package
+live, without a process restart (Market install, plugin hot-swap). That capability needed the native
+interception; the fallback only covers initial resolution. See "Tier 2" below for what closing that gap
+would actually require.
+
+**Tier 2 scope (not started): replacing `PluginPackages`'s live interception itself.** Read through
+`dsh-app-boot`'s compiled source to scope this concretely rather than guess:
+- **Stays as-is, no Deno problem:** the data layer - `collectInstallationScopePackages`,
+  `createRuntimeResolution`, `compileResolution` (profile dependency-closure traversal and the package
+  table itself) is plain JS, no native internals, already proven to work (it's what both this fix and
+  the original failing path both consume).
+- **The actual Node-internals-dependent part:** `internalModules()` + `installRuntimeInterception`
+  (~250 lines) monkeypatch Node's private ESM loader (`loader.resolveSync`) and CommonJS resolver
+  (`cjs._resolveFilename`) so that *any* bare specifier, anywhere in the process, routes through the
+  table live - including a `replace()` that swaps the table for a newly-installed generation without
+  touching physical `node_modules` - plus `registerWorkerResolution` (~10 lines) propagating the same
+  table into Harness worker threads via `node:worker_threads`' `setEnvironmentData`.
+- **Candidate replacement, not yet investigated:** Node's own *public*, documented loader-hooks API
+  (`node:module`'s `register()`), as opposed to the private internals this addon reaches for instead.
+  If Deno supports that public hook API for this purpose, the same `ResolutionRouter`/table logic could
+  likely be re-wired through it - a moderate, scoped job, not a redesign. If Deno does not support it
+  either, the realistic fallback is coarser: make a live install/update actually rewrite the
+  `node_modules` symlinks on disk (same mechanism as this fix, just triggered by `replace()` instead of
+  only at boot) rather than swap resolution in-process - workable, but a behavior change (no longer a
+  pure in-memory swap) that needs its own design pass, and worker-thread consistency would need a
+  separate answer (e.g. re-deriving the symlink target from the shared `node_modules` directory itself,
+  since workers already see the same filesystem).
+- **Verdict:** closing Tier 2 fully is a scoped investigation plus implementation, not a one-line patch
+  and not an open-ended rewrite either - realistically a design spike (confirm or rule out the public
+  hook API under Deno) followed by an implementation sized to whichever path that spike finds. Not
+  started; D1's exit criterion does not require it.
 
 ### F4. Known gaps carried over from the Bun work (not yet retested on Deno)
 
@@ -204,7 +253,7 @@ going further. All runs follow the probe safety rules at the end.
 
 | Step | Question | How | Exit criterion |
 |---|---|---|---|
-| **D1** | Can Deno install and resolve a profile's plugin packages? | Find where the profile install runs (pinned pnpm) and why it does not run or does not report under Deno; then make the Loader's imports resolve from the profile folder (`--node-modules-dir=manual` with an installed profile, or an import map generated from the profile). Probes: `probes/d1-deno-host.mjs` (serving-mode run), `probes/d1b-diagnose-fibers.mjs` (fiber-state dump - use this one when `d1-deno-host.mjs` prints "no answer" with nothing else, since a failed child fiber does not reject `serveWeb()`'s own promise) | **Not met (2026-10-07).** Package resolution itself works once the pinned Harness bundle packages are symlinked into the profile the same way ACRYL-owned packages already are; the actual blocker is `@deepseek-ai/dsh-app-boot`'s `PluginPackages` throwing on a native-addon-only path to Node's internal loader (F3/F4). The serving host does not listen and D1 does not pass until that's resolved (upstream Harness change, a swappable replacement, or confirmation Deno will never expose the needed V8 symbols) |
+| **D1** | Can Deno install and resolve a profile's plugin packages? | Find where the profile install runs (pinned pnpm) and why it does not run or does not report under Deno; then make the Loader's imports resolve from the profile folder (`--node-modules-dir=manual` with an installed profile, or an import map generated from the profile). Probes: `probes/d1-deno-host.mjs` (serving-mode run), `probes/d1b-diagnose-fibers.mjs` (fiber-state dump - use this one when `d1-deno-host.mjs` prints "no answer" with nothing else, since a failed child fiber does not reject `serveWeb()`'s own promise) | **Met (2026-10-07).** `GET /` returns 404 without a token, matching the Node baseline, confirmed over 3 clean runs. Fixed in ACRYL's own `engine-dsh.ts` (not the submodule): catch `PluginPackages`'s native-addon failure and materialize its package table as `node_modules` symlinks instead (F3's "Tier 1" fix). Existing Node test suite (22 tests, 4 spec files) passes unmodified. Live package replace without a restart is not restored - see F3 "Tier 2 scope" |
 | **D2** | Does the Cordis Loader work without Node internals? | With D1 passing, enable and disable a profile row at run time; reload one plugin with a fresh `import()` | Enable, disable and reload all take effect; no `--expose-internals`; HMR replacement designed (F6 already verifies the reload mechanism itself, including inside the packaged binary; shared with AIMBRACE 012 Phase 2). Remaining open item: decide and bundle the agent-plugin dependency allowlist (F6) |
 | **D3** | Do the native and Node-API pieces work? | Run 042's `probes/runtime-compat.mjs` and `probes/e5-ws-worker.mjs` under Deno: `node-pty` events, `node:sqlite`, module re-import, `ws` upgrade, `worker_threads` with `node:vm`; then `koffi`, `sharp` | Each item passes, or has a named replacement (for example `Deno.Command` with a PTY, `jsr:@db/sqlite`, `Deno.upgradeWebSocket`) |
 | **D4** | Does the ACRYL client work in WebKit? | Open the D1 host URL in Safari (same engine as WKWebView); check terminal (xterm, `@xterm/addon-webgl`), editor, layout | Usable without layout or rendering defects, or a list of fixes |
