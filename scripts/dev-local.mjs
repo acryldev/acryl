@@ -89,7 +89,9 @@ export async function runDevLocal(argv = process.argv.slice(2), environment = pr
   process.stdout.write(`dev:local desktop mode=${mode}\n`)
   const env = { ...environment, ...instanceEnvironment(instance), DSH_DESKTOP_USER_DATA: userData }
   if (!skipBuild) {
-    const marketCode = await runPnpm(['--filter', 'cordis-plugin-market', 'run', 'build'], env)
+    // The market and what it is built from, in dependency order (it needs `acryl-settings` built first); a bare `--filter cordis-plugin-market` failed
+    // on a fresh checkout with "Cannot find module 'acryl-settings'", because nothing before it had built that package.
+    const marketCode = await runPnpm(['--filter', 'cordis-plugin-market...', '--workspace-concurrency=1', 'run', 'build'], env)
     if (marketCode !== 0) return marketCode
     return runPnpm(['--filter', 'acryl-desktop', 'run', 'dev'], env)
   }
