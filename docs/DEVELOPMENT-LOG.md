@@ -1,3 +1,26 @@
+## 2026-10-07 (later) - a fresh clone now builds and runs on Linux (Web, CLI, Desktop)
+
+Commits: `244d77ab2169e19847142dbf9cfb6181b43e7666`, `a4202c94f3ca6699901f4f02041bd84a5762eb59`,
+`36ee06a79653155adfe26f2a57c1c9dee5b15342`.
+
+Found by building and launching a clean checkout on Ubuntu (kernel 6.8). Three separate causes:
+
+- The root `build` script hand-listed packages and skipped `acryl-settings`, `acryl-agent-control` and
+  `acryl-loopback-http`, so the market, CLI and Agent Control failed with TS2307 on their missing `lib/` types. It is now
+  `pnpm -r --if-present --workspace-concurrency=1 run build` (pnpm's dependency order); `check` runs `acryl-settings`
+  before the market.
+- Electron's SUID sandbox helper is not root-owned 4755 after an install and Ubuntu 24.04+ blocks the userns fallback, so
+  `pnpm run dev` aborted with a FATAL `setuid_sandbox_host` error. `launch-dev.mjs` now says so and passes `--no-sandbox`
+  for that development run only.
+- The Desktop shell mode defaulted to `advanced`, which exists on macOS and Windows only, so a Linux launch rejected its
+  own default and showed "the Cordis shell plugin did not register a window". The default now follows the platform
+  (`compatibility` on Linux) and is threaded through the settings readers the way `prepareDesktopProfile` carries it.
+
+Verified: full topological build, Desktop tests (817 passed), Web serves a tokenized URL on a fresh home, CLI prints its
+version, Desktop completes startup in compatibility mode. Not fixed: the loader smoke still reports `acryl-workspace`,
+`acryl-plugin-admin` and `acryl-agent-control` pending on `acrylWeb`/`acrylTools`, the Desktop log shows a
+`product-telemetry` `serviceVersion` config error and a `reload command is already registered` error.
+
 ## 2026-10-07 - 042: renamed to Deno (experimental); measured where ACRYL stands on Deno
 
 Commit: `ae7d81c222655905525c035aa274990deb01646f`.
