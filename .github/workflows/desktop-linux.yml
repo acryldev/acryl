@@ -1,11 +1,30 @@
 name: Desktop on Linux
 
-# Boots the real Electron Desktop on Linux under a virtual display, exactly as a developer's `corepack pnpm run desktop` does, and prints what the app logged.
-# Diagnostic and manual: it exists because the Desktop failed to open a window on Ubuntu while every headless gate was green.
+# Boots the real Electron Desktop on Linux under a virtual display, exactly as a developer's `corepack pnpm run desktop` does, and fails unless the renderer
+# reports healthy. It exists because the Desktop failed to open a window on Ubuntu (advanced shell mode, a missing SUID sandbox, a fresh checkout's build order)
+# while every headless gate was green.
 on:
   workflow_dispatch:
   push:
-    branches: [ci-desktop-linux]
+    branches: [main, ci-desktop-linux]
+    paths:
+      - 'apps/acryl-desktop/**'
+      - 'runtime/**'
+      - 'plugins/**'
+      - 'scripts/dev-local.mjs'
+      - '.github/workflows/desktop-linux.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/acryl-desktop/**'
+      - 'runtime/**'
+      - 'plugins/**'
+      - 'scripts/dev-local.mjs'
+      - '.github/workflows/desktop-linux.yml'
+
+concurrency:
+  group: desktop-linux-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -42,10 +61,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xvfb libnss3 libgbm1 libasound2t64 libgtk-3-0t64 libxss1 libxtst6 libatk-bridge2.0-0t64 libdrm2 libxkbcommon0
 
-      - name: Run the Desktop for 100 seconds (what the developer runs)
+      - name: Run the Desktop for 75 seconds (what the developer runs)
         run: |
           set +e
-          timeout 100 xvfb-run -a --server-args="-screen 0 1280x800x24" corepack pnpm run desktop > desktop.log 2>&1
+          timeout 75 xvfb-run -a --server-args="-screen 0 1280x800x24" corepack pnpm run desktop > desktop.log 2>&1
           echo "exit $?" >> desktop.log
           exit 0
 
@@ -60,3 +79,11 @@ jobs:
             echo "== $d"
             find "$d" -maxdepth 3 \( -name '*.log' -o -name 'startup.jsonl' \) -print -exec tail -n 40 {} \; 2>/dev/null | cut -c1-300
           done
+
+      # The app writes its own startup record; a window that never opened (or a recovery window) leaves no healthy renderer in it.
+      - name: The renderer must have reported healthy
+        run: |
+          log=$(find "$HOME/.config/ACRYL Development" -name startup.jsonl | head -1)
+          test -n "$log" || { echo "no startup record: the Desktop never started"; exit 1; }
+          grep -q '"eventName":"renderer.boot.completed".*"rendererStatus":"healthy"' "$log" || { echo "the renderer did not report healthy"; exit 1; }
+          echo "renderer healthy"
