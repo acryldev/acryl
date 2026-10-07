@@ -15,7 +15,10 @@ Details, exit criteria and probe safety rules: [deno-findings-and-plan.md](./den
 
 - [x] D0 Measured baseline: `ACRYL.app` 500 MB (Electron 228 MB, dependencies 263 MB); `deno desktop` hello app 65 MB;
   the host on Deno boots Cordis but installs and resolves no profile plugin, so no web server starts (silently).
-- [ ] D1 Profile packages install and resolve under Deno; the serving host answers 401 on the spare port
+- [x] D0b Worktree set up: submodule, root and Harness installs, Harness build, recursive ACRYL build. Node baseline
+  with `probes/d1-deno-host.mjs`: listens on the spare port, `GET /` 404. The root `build` script fails on a fresh
+  checkout (`acryl-settings` not built first); `pnpm -r run build` works.
+- [ ] D1 Profile packages install and resolve under Deno; the serving host answers like Node (404) on the spare port
   (`probes/d1-deno-host.mjs`).
 - [ ] D2 Cordis Loader enable, disable and reload without Node internals.
 - [ ] D3 `node-pty`, `node:sqlite`, `ws` upgrade, `worker_threads` with `node:vm`, `koffi`, `sharp` under Deno, or named

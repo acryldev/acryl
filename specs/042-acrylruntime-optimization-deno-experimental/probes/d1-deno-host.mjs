@@ -43,5 +43,6 @@ for (let attempt = 0; attempt < 60; attempt++) {
     await new Promise((done) => setTimeout(done, 1000))
   }
 }
-console.log(`GET http://127.0.0.1:${port}/ -> ${status} (expected 401 without a token)`)
-process.exit(status === '401' ? 0 : 1)
+// Baseline under Node at 0d075c8 (node --expose-internals): 404. Pass means the host listens and answers like Node.
+console.log(`GET http://127.0.0.1:${port}/ -> ${status} (Node baseline: 404)`)
+process.exit(status === '404' ? 0 : 1)
