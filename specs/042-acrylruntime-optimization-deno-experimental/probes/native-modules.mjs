@@ -20,7 +20,7 @@ const req = createRequire(import.meta.url)
 // N1: koffi calls into libc (strlen) through its FFI
 await run('N1 koffi call libc strlen', async () => {
   const koffi = req(find('koffi@', 'koffi'))
-  const lib = koffi.load(process.platform === 'darwin' ? '/usr/lib/libSystem.B.dylib' : 'libc.so.6')
+  const lib = koffi.load(process.platform === 'darwin' ? '/usr/lib/libSystem.B.dylib' : process.platform === 'win32' ? 'msvcrt.dll' : 'libc.so.6')
   const strlen = lib.func('size_t strlen(const char *s)')
   const n = Number(strlen('hello'))
   return n === 5 ? 'OK' : `FAIL (got ${n})`

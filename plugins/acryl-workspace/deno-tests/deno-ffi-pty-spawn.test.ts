@@ -2,6 +2,7 @@
 import { spawnDenoFfiPty } from '../src/pty/deno-ffi-pty-spawn.ts'
 import type { WorkspacePtyProcess } from '../src/pty/service.ts'
 
+const posixTest = (name: string, fn: () => void | Promise<void>) => Deno.test({ name, ignore: Deno.build.os === 'windows', fn }) // the Windows adapter has its own file
 const OPTS = { cwd: '', env: { PATH: '/usr/bin:/bin', HOME: '/tmp' }, name: 'xterm-256color', cols: 80, rows: 24 } as const
 const run = (command: string, args: string[], opts: Partial<typeof OPTS> & { env?: Record<string, string> } = {}) => {
   let output = ''
@@ -26,25 +27,25 @@ const children = async () => {
   return new TextDecoder().decode((await new Deno.Command('pgrep', { args: ['-P', String(Deno.pid)], stdout: 'piped', stderr: 'null' }).output()).stdout).trim()
 }
 
-Deno.test('output and exit code', async () => {
+posixTest('output and exit code', async () => {
   const t = run('/bin/sh', ['-c', 'echo hello; exit 3'])
   assertEq((await within(t.exited, 4000, 'exit')).exitCode, 3)
   assertEq(t.output(), 'hello\r\n')
 })
 
-Deno.test('a multibyte character split across two reads arrives whole', async () => {
+posixTest('a multibyte character split across two reads arrives whole', async () => {
   const t = run('/bin/sh', ['-c', "printf '\\342\\202'; sleep 0.3; printf '\\254'; printf ' \\360\\237'; sleep 0.3; printf '\\230\\200'"])
   await within(t.exited, 5000, 'exit')
   assertEq(t.output(), '€ \u{1F600}') // euro sign, grinning face; a broken decoder would emit U+FFFD
 })
 
-Deno.test('cwd, env and TERM reach the child', async () => {
+posixTest('cwd, env and TERM reach the child', async () => {
   const t = run('/bin/sh', ['-c', 'pwd; echo $TERM $PROBE'], { cwd: '/usr', env: { PATH: '/usr/bin:/bin', PROBE: 'yes' } })
   await within(t.exited, 4000, 'exit')
   assertEq(t.output(), '/usr\r\nxterm-256color yes\r\n')
 })
 
-Deno.test('interactive input, resize and Ctrl-C', async () => {
+posixTest('interactive input, resize and Ctrl-C', async () => {
   const echo = run('/bin/cat', [])
   await sleep(200); echo.proc.write('ping\n'); await sleep(300)
   assertIncludes(echo.output(), 'ping')
@@ -61,7 +62,7 @@ Deno.test('interactive input, resize and Ctrl-C', async () => {
   assertEq((await within(sleeper.exited, 4000, 'sigint')).signal, 2)
 })
 
-Deno.test('a 20 MB flood arrives complete (backpressure, bounded read per tick)', async () => {
+posixTest('a 20 MB flood arrives complete (backpressure, bounded read per tick)', async () => {
   const t = run('/bin/sh', ['-c', 'head -c 20000000 /dev/zero | tr "\\0" x'])
   let bytes = 0
   t.proc.onData((d) => { bytes += d.length })
@@ -69,7 +70,7 @@ Deno.test('a 20 MB flood arrives complete (backpressure, bounded read per tick)'
   assertEq(bytes, 20_000_000)
 })
 
-Deno.test('writing a lot to a child that is not reading never blocks the event loop', async () => {
+posixTest('writing a lot to a child that is not reading never blocks the event loop', async () => {
   const t = run('/bin/sh', ['-c', 'sleep 2; wc -c'])
   let ticks = 0
   const timer = setInterval(() => ticks++, 10)
@@ -80,7 +81,7 @@ Deno.test('writing a lot to a child that is not reading never blocks the event l
   t.proc.write('\x04'); t.proc.kill('SIGKILL'); await within(t.exited, 4000, 'cleanup')
 })
 
-Deno.test('100 sequential spawns leak no descriptors and leave no zombies', async () => {
+posixTest('100 sequential spawns leak no descriptors and leave no zombies', async () => {
   const before = openFds()
   for (let i = 0; i < 100; i++) {
     const t = run('/bin/sh', ['-c', `echo n${i}`])
@@ -92,7 +93,7 @@ Deno.test('100 sequential spawns leak no descriptors and leave no zombies', asyn
   assertEq(await children(), '')
 })
 
-Deno.test('a command that does not exist fails loudly', () => {
+posixTest('a command that does not exist fails loudly', () => {
   let message = ''
   try { run('/nonexistent/definitely-not-here', []) } catch (e) { message = String((e as Error).message) }
   assertIncludes(message, 'could not start')
