@@ -64,12 +64,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xvfb
           sudo apt-get install -y ./apps/acryl-desktop/dist/linux-x64/*.deb
-          dpkg -L acryl-desktop 2>/dev/null | grep -E "/(acryl-desktop|ACRYL|acryl)$" | head
+          dpkg -L acryl-desktop | head -40
 
       - name: Start the installed app for 60 seconds
         run: |
           set +e
-          exe=$(dpkg -L acryl-desktop | grep -E "/(acryl-desktop|ACRYL|acryl)$" | head -1)
+          exe=$(dpkg -L acryl-desktop | while read -r p; do [ -f "$p" ] && [ -x "$p" ] && case "$(basename "$p")" in acryl-desktop|ACRYL|acryl) echo "$p"; break;; esac; done)
           echo "starting $exe"
           timeout 60 xvfb-run -a --server-args="-screen 0 1280x800x24" "$exe" --no-sandbox > app.log 2>&1
           echo "exit $?" >> app.log
