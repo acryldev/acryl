@@ -17,6 +17,9 @@
   },
   "scripts": {
     "build": "pnpm -r --if-present --workspace-concurrency=1 run build",
+    "build:mac": "pnpm run dist:mac-smoke",
+    "build:windows": "pnpm run dist:win",
+    "build:linux": "pnpm run dist:linux",
     "typecheck": "pnpm --filter acryl-control run typecheck && pnpm --filter @webboxes/blends-core run typecheck && pnpm --filter @webboxes/app-persistence run typecheck && pnpm --filter acryl-loopback-http run typecheck && pnpm --filter acryl-diagnostics run typecheck && pnpm --filter acryl-harness-runtime run typecheck && pnpm --filter acryl-cli run typecheck && pnpm --filter acryl-web run typecheck && pnpm --filter dsh-client-ui-brand-acryl run typecheck && pnpm --filter acryl-desktop run typecheck && pnpm --filter cordis-plugin-market run typecheck && pnpm --filter acryl-workspace run typecheck && pnpm --filter acryl-plugin-admin run typecheck && pnpm --filter acryl-support run typecheck && pnpm --filter acryl-settings run typecheck && pnpm --filter acryl-agent-control run typecheck",
     "test": "pnpm --filter acryl-control run test && pnpm --filter @webboxes/blends-core run test && pnpm --filter @webboxes/app-persistence run test && pnpm --filter acryl-loopback-http run test && pnpm --filter acryl-diagnostics run test && pnpm --filter acryl-harness-runtime run test && pnpm --filter acryl-cli run test && pnpm --filter acryl-web run test && pnpm --filter dsh-client-ui-brand-acryl run test && pnpm --filter acryl-desktop run test && pnpm --filter cordis-plugin-market run test && pnpm --filter acryl-workspace run test && pnpm --filter acryl-plugin-admin run test && pnpm --filter acryl-support run test && pnpm --filter acryl-settings run test && pnpm --filter acryl-agent-control run test && pnpm --filter acryl-extension-context run test && pnpm --filter acryl-brand run test && pnpm --filter acryl-app-save run test && pnpm --filter acryl-system-prompt run test && pnpm --filter @acryl/ui run test && pnpm --filter acryl-ui-tui run test",
     "verify": "pnpm run typecheck && pnpm run test && node --test scripts/dev-local.test.mjs scripts/blank.test.mjs scripts/instances.test.mjs scripts/checkout-isolation.test.mjs scripts/build-lock.test.mjs",
@@ -42,6 +45,7 @@
     "package:dir": "pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run package:dir",
     "dist:mac": "pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:mac",
     "dist:mac-smoke": "pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:mac-smoke",
+    "dist:linux": "pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:linux",
     "dist:win": "pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:win",
     "dist:win-portable": "pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:win-portable",
     "upstream:sync": "git submodule update --init --recursive",

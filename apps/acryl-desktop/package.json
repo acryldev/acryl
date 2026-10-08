@@ -137,6 +137,7 @@
     "package:dir": "pnpm run build && node scripts/package-dir.mjs",
     "dist:mac": "node scripts/release-mac.ts",
     "dist:mac-smoke": "node scripts/package-mac.ts",
+    "dist:linux": "node scripts/package-linux.ts",
     "dist:win": "node scripts/package-win.ts",
     "dist:win-portable": "node scripts/package-win-portable.ts",
     "prepack": "pnpm run check"

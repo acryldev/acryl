@@ -618,6 +618,7 @@ describe('published package surface', () => {
     expect(packageDir).toContain("CSC_IDENTITY_AUTO_DISCOVERY: 'false'")
     expect(manifest.scripts?.['dist:mac']).toBe('node scripts/release-mac.ts')
     expect(manifest.scripts?.['dist:mac-smoke']).toBe('node scripts/package-mac.ts')
+    expect(manifest.scripts?.['dist:linux']).toBe('node scripts/package-linux.ts')
     expect(manifest.scripts?.['dist:win']).toBe('node scripts/package-win.ts')
     expect(manifest.scripts?.['dist:win-portable']).toBe('node scripts/package-win-portable.ts')
     expect(manifest.scripts?.['check:win-package']).toContain('pnpm --filter cordis-plugin-market run build')
@@ -642,6 +643,13 @@ describe('published package surface', () => {
       .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:mac')
     expect(workspaceManifest.scripts?.['dist:mac-smoke'])
       .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:mac-smoke')
+    expect(workspaceManifest.scripts?.['dist:linux'])
+      .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:linux')
+    expect(workspaceManifest.scripts).toMatchObject({
+      'build:mac': 'pnpm run dist:mac-smoke',
+      'build:windows': 'pnpm run dist:win',
+      'build:linux': 'pnpm run dist:linux',
+    })
     expect(workspaceManifest.scripts?.['dist:win'])
       .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:win')
     expect(workspaceManifest.scripts?.['dist:win-portable'])
