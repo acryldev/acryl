@@ -457,6 +457,35 @@ double-linked list`; buffers are now 1 KB everywhere); and a `dup2`'d slave does
 **One side effect to remember.** The terminal's shell reads the user's real zsh config and history regardless of `HOME`; my first terminal runs appended two
 test commands to the real `~/.zsh_history` (removed by exact match afterwards). Any terminal test must set `HISTFILE=/dev/null` and `ZDOTDIR`.
 
+### F11. Linux x64, on real hardware (2026-10-08, z370n, Ubuntu 24.04.5, kernel 6.8, glibc 2.39, x86_64)
+
+Run in a scratch directory on the owner's Ubuntu host (a production box: low priority, throwaway homes, spare ports, nothing installed system-wide, the ACRYL checkout
+there left untouched, scratch removed afterwards, real shell histories verified clean).
+
+| Check on Linux x64 | Result |
+|---|---|
+| Terminal adapter, the 8 Deno tests | **8/8** (native x64; earlier 8/8 on Linux arm64 and emulated x64) |
+| Native modules from the packaged payload: koffi (libc call), sharp (resize + PNG), sherpa (binding), @xterm/headless | **4/4**, identical to macOS |
+| sherpa-onnx real inference (Silero VAD on synthesized speech) | **identical to macOS and Node**: one segment at 0.07 s for 4.44 s |
+| ACRYL host boot on Deno from the payload, 3 runs, spare port | **listens and answers on all 3; port freed** (first request answered 401 here, 404 on a macOS run; the answer flips with startup timing in both, so the probe's "404 baseline" is too strict, not a Deno difference) |
+| A real Harness agent turn against a mock model | **PASS**: session created, prompt accepted, 2 streaming requests with 41 tools carrying the prompt, reply recorded in the Harness session store |
+| `deno desktop` cross-built on macOS for `x86_64-unknown-linux-gnu` (2.8 s, 78 MB bundle) and run under Xvfb on the Ubuntu host | **runs**: WebKitGTK window, host up, client loaded **41 resources, 0 failed**, same feature battery as WebKit on macOS |
+| Terminal in that window | **works**: a bash opened in the tab, a typed `echo DENO-PTY-OK; uname -a` ran and printed `Linux z370n 6.8.0-142-generic ... x86_64`, shown by xterm in the captured frame |
+
+Three things this run taught, all real:
+- **A stale build, again.** The first Linux GUI run showed `Unhandled pty write error ... EBADF` from `node-pty`'s own write path: the payload's compiled
+  `acryl-workspace` still held the macOS-only selector, because `lib/` was built before the adapter was generalized and not rebuilt. The tell was in the trace
+  (`node-pty/lib/unixTerminal.js`, not the adapter). Third time in this experiment that a bundled or built copy lagged the source (`acryl-web` bundles the
+  runtime; `acryl-workspace` ships `lib/`): **any payload step must rebuild every package it copies from.**
+- **Linux natives are not in a macOS install.** The pnpm install on this Mac holds only macOS native packages, so a Linux payload needs the sibling packages
+  fetched from npm at the same versions (`@koromix/koffi-linux-x64`, `@img/sharp-linux-x64`, `@img/sharp-libvips-linux-x64`, `@vscode/ripgrep-linux-x64`,
+  `node-addon-require-builtin-linux-x64-gnu`, `@deepseek-ai/node-addon-system-linux-x64`, `sherpa-onnx-linux-x64`); `node-pty` carries its Linux prebuilds inside.
+  A release pipeline would build the payload on each target (or fetch these) rather than cross-assemble.
+- **Headless without root works**: `apt-get download xvfb` and `dpkg -x` in scratch, because Xorg's support libraries and `libwebkit2gtk-4.1` were already installed.
+
+Still not Linux-verified: a distributable (AppImage/deb) from `deno desktop`, running on the real desktop session (Wayland), the editor and drag-and-drop, long sessions,
+and musl/Alpine. This closes the Linux half of the "Windows and Linux" risk; Windows remains the open one.
+
 ## Conclusion of the experiment (2026-10-08)
 
 **Technically sound, and the premise holds, with margins that need honest labels.**
@@ -471,7 +500,7 @@ What is established (each measured on this machine):
 What is not established, in the order that can still change the answer:
 1. **The shell port (D7)**: 12 Electron modules (menus, tray, dialogs, windows, recovery and profile windows, workspace admission) plus packaging and updates.
    The window API has menus, tray, dock, context menus and window control; it has **no native dialog** (the directory picker needs FFI or a helper). Unmeasured cost.
-2. **Windows**: ConPTY terminal, WebView2 behaviour, signing. Nothing run. This is the largest unknown left, and it decides whether "one app on three OSes" survives.
+2. **Windows**: ConPTY terminal, WebView2 behaviour, signing. Nothing run. This is the largest unknown left, and it decides whether "one app on three OSes" survives. (Linux is now verified on real hardware, F11.)
 3. **Real notarization and auto-update** of a `deno desktop` app. `deno desktop` is labelled experimental by Deno.
 4. **Maintenance**: ACRYL now owns a fallback in `engine-dsh.ts` and a native-FFI terminal per platform, and depends on each Harness update not adding another
    Node-private API (a canary: `probes/d1-deno-host.mjs` and the Deno tests, runnable in CI). Live package replace without a restart (Tier 2) is not built;

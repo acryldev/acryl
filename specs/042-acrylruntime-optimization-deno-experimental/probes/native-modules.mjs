@@ -8,8 +8,9 @@ import { readdirSync } from 'node:fs'
 const rt = typeof Deno !== 'undefined' ? `deno ${Deno.version.deno}` : `node ${process.versions.node}`
 const out = (name, result) => console.log(`${rt.padEnd(14)} | ${name.padEnd(44)} | ${result}`)
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
+const payload = process.env.PAYLOAD // a flat node_modules (d6-payload.mjs output): test the packaged copies instead of the repo's pnpm store
 const pnpm = resolve(repo, 'node_modules/.pnpm')
-const find = (prefix, sub) => resolve(pnpm, readdirSync(pnpm).find(d => d.startsWith(prefix)), 'node_modules', sub)
+const find = (prefix, sub) => payload ? resolve(payload, 'node_modules', sub) : resolve(pnpm, readdirSync(pnpm).find(d => d.startsWith(prefix)), 'node_modules', sub)
 const timed = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(`timeout ${ms}ms`)), ms))])
 const run = async (name, fn) => {
   try { out(name, await timed(fn(), 8000)) } catch (e) { out(name, `FAIL (${String(e.message).split('\n')[0]})`) }
@@ -41,8 +42,8 @@ await run('N3 sherpa-onnx-node load native binding', async () => {
 
 // N4: @xterm/headless parses terminal output into a buffer (used for terminal snapshots)
 await run('N4 @xterm/headless write+read buffer', async () => {
-  const dir = readdirSync(pnpm).filter(d => d.startsWith('@xterm+headless@')).sort().pop()
-  const { Terminal } = req(resolve(pnpm, dir, 'node_modules/@xterm/headless'))
+  const headless = payload ? resolve(payload, 'node_modules/@xterm/headless') : resolve(pnpm, readdirSync(pnpm).filter(d => d.startsWith('@xterm+headless@')).sort().pop(), 'node_modules/@xterm/headless')
+  const { Terminal } = req(headless)
   const term = new Terminal({ cols: 40, rows: 5, allowProposedApi: true })
   await new Promise(r => term.write('hello \x1b[31mred\x1b[0m world', r))
   const line = term.buffer.active.getLine(0)?.translateToString(true)

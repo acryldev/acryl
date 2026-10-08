@@ -16,7 +16,8 @@ if (!process.env.ACRYL_HOME || !Number.isInteger(port) || port === 3080) {
   console.error('set ACRYL_HOME to a throwaway folder and ACRYL_WEB_PORT to a spare port (not 3080)')
   process.exit(2)
 }
-const { serveWeb } = await import(pathToFileURL(resolve(repo, 'apps/acryl-web/lib/index.js')).href)
+const entry = process.env.PAYLOAD ? resolve(process.env.PAYLOAD, 'lib/index.js') : resolve(repo, 'apps/acryl-web/lib/index.js') // PAYLOAD: boot a packaged payload (d6-payload.mjs) instead of the repo build
+const { serveWeb } = await import(pathToFileURL(entry).href)
 
 const dump = (error, depth = 0, seen = new Set()) => {
   if (!error || seen.has(error) || depth > 8) return

@@ -48,12 +48,13 @@ process.env.DEEPSEEK_BASE_URL = `http://127.0.0.1:${mockPort}/anthropic`
 process.env.DEEPSEEK_API_KEY = 'test-key-not-real'
 console.error(`mock model on 127.0.0.1:${mockPort}`)
 
-const anchor = createRequire(pathToFileURL(join(repo, 'apps/acryl-web/package.json')))
+const anchorPackage = process.env.PAYLOAD ? join(process.env.PAYLOAD, 'package.json') : join(repo, 'apps/acryl-web/package.json') // PAYLOAD: a d6-payload.mjs output with acryl-harness-runtime copied into its node_modules
+const anchor = createRequire(pathToFileURL(anchorPackage))
 const { createAcrylEngineHost, createWebEngineDefinition } = await import(pathToFileURL(anchor.resolve('acryl-harness-runtime')).href)
 const { provideCmdline } = await import(pathToFileURL(anchor.resolve('@deepseek-ai/dsh-cmdline')).href)
 
 const host = await createAcrylEngineHost({
-  engines: [createWebEngineDefinition(pathToFileURL(join(repo, 'apps/acryl-web/package.json')).href)],
+  engines: [createWebEngineDefinition(pathToFileURL(anchorPackage).href)],
   initialEngine: 'dsh',
   prepare: (c) => provideCmdline(c, { args: [], exit: () => {} }),
 })

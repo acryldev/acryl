@@ -20,7 +20,7 @@ const walk = (dir) => {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, e.name); const rel = relative(root, p)
     if (e.isSymbolicLink()) continue
-    if (shouldRemoveNativePath(rel, process.platform, process.arch)) { removed.native += e.isDirectory() ? sizeOf(p) : lstatSync(p).size; rmSync(p, { recursive: true, force: true }); continue }
+    if (shouldRemoveNativePath(rel, process.env.D6_PLATFORM ?? process.platform, process.env.D6_ARCH ?? process.arch)) { removed.native += e.isDirectory() ? sizeOf(p) : lstatSync(p).size; rmSync(p, { recursive: true, force: true }); continue }
     if (e.isDirectory()) { walk(p); continue }
     if (/\.d\.(ts|mts|cts)$/u.test(e.name)) { removed.types += lstatSync(p).size; rmSync(p) }
     else if (/\.md$/iu.test(e.name) && !keepMd(rel)) { removed.md += lstatSync(p).size; rmSync(p) }

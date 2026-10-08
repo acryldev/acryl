@@ -60,7 +60,8 @@ while (queue.length) {
 console.log(`closure: ${seen.size} package directories, ${placed.size} distinct names; not resolvable (non-optional): ${missing.length}`)
 if (missing.length) console.log('  ' + missing.slice(0, 8).join('\n  '))
 console.log('closure copied            ', mb(sizeOf(out)))
-pruneTargetNative(out, process.platform, process.arch)
+const targetPlatform = process.env.D6_PLATFORM ?? process.platform, targetArch = process.env.D6_ARCH ?? process.arch // cross-assemble a payload for another OS: D6_PLATFORM=linux D6_ARCH=x64
+pruneTargetNative(out, targetPlatform, targetArch)
 console.log('after prune native        ', mb(sizeOf(out)))
 pruneReleasePayload(out)
 console.log('FINAL (after prune payload)', mb(sizeOf(out)))
