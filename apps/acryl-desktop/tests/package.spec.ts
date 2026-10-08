@@ -626,7 +626,7 @@ describe('published package surface', () => {
     expect(manifest.scripts?.['dist:linux']).toBe('node scripts/package-linux.ts')
     expect(manifest.scripts?.['dist:win']).toBe('node scripts/package-win.ts')
     expect(manifest.scripts?.['dist:win-portable']).toBe('node scripts/package-win-portable.ts')
-    expect(manifest.scripts?.['check:win-package']).toContain('pnpm --filter cordis-plugin-market run build')
+    expect(manifest.scripts?.['check:win-package']).toContain('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build')
     expect(manifest.scripts?.['check:win-package']).toContain('pnpm run build')
     expect(manifest.scripts?.['check:win-package']).toContain('pnpm run typecheck')
     expect(manifest.scripts?.['check:win-package']).toContain('tests/package-win.spec.ts')
@@ -635,7 +635,7 @@ describe('published package surface', () => {
     expect(manifest.scripts?.['check:win-package']).toContain('tests/updates/update-download.spec.ts')
     expect(manifest.scripts?.['check:win-package']).toContain('tests/workspaces/windows-volume-diagnostics.spec.ts')
     expect(manifest.scripts?.['check:win-package']).toContain('pnpm run verify:closure')
-    expect(manifest.scripts?.['check:mac-package']).toContain('pnpm --filter cordis-plugin-market run build')
+    expect(manifest.scripts?.['check:mac-package']).toContain('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build')
     expect(manifest.scripts?.['check:mac-package']).toContain('pnpm run build')
     expect(manifest.scripts?.['check:mac-package']).toContain('pnpm run typecheck')
     expect(manifest.scripts?.['check:mac-package']).toContain('tests/package-mac.spec.ts')
@@ -645,11 +645,11 @@ describe('published package surface', () => {
     expect(manifest.scripts?.['verify:cli']).toBe('node scripts/verify-cli-runtime.mjs')
     expect(manifest.scripts?.check).toContain('pnpm run verify:cli')
     expect(workspaceManifest.scripts?.['dist:mac'])
-      .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:mac')
+      .toBe('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:mac')
     expect(workspaceManifest.scripts?.['dist:mac-smoke'])
-      .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:mac-smoke')
+      .toBe('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:mac-smoke')
     expect(workspaceManifest.scripts?.['dist:linux'])
-      .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:linux')
+      .toBe('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:linux')
     expect(workspaceManifest.scripts).toMatchObject({
       'build:mac': 'pnpm run dist:mac-host',
       'build:mac:universal': 'pnpm run dist:mac-smoke',
@@ -657,9 +657,9 @@ describe('published package surface', () => {
       'build:linux': 'pnpm run dist:linux',
     })
     expect(workspaceManifest.scripts?.['dist:win'])
-      .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:win')
+      .toBe('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:win')
     expect(workspaceManifest.scripts?.['dist:win-portable'])
-      .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:win-portable')
+      .toBe('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:win-portable')
     expect(manifest.build?.afterPack).toBe('./scripts/verify-packaged-runtime.ts')
     for (const perArchPayload of ['@deepseek-ai/libreoffice-kit-darwin-*', '@deepseek-ai/node-addon-system-darwin-*', 'sherpa-onnx-darwin-*']) {
       expect(manifest.build?.mac?.x64ArchFiles).toContain(perArchPayload)
