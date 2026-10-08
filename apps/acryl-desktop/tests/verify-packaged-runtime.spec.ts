@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import AdmZip from 'adm-zip'
 import {
   afterPack,
+  universalTemporaryApp,
   REQUIRED_PACKAGED_RUNTIME_ENTRIES,
   REQUIRED_MACOS_UNIVERSAL_ENTRIES,
   REQUIRED_UNPACKED_PACKAGE_SPECIFIERS,
@@ -133,6 +134,18 @@ describe('packaged desktop runtime verification', () => {
     )
 
     expect(calls).toEqual(['static', resolvePackagedUnpackedRoot(runtimeContext)])
+  })
+
+  it('packages each half of a universal macOS build as universal, so both CPUs keep their native payload for the merge', async () => {
+    const verify = vi.fn<typeof verifyPackagedRuntime>()
+    for (const [halfDirectory, arch] of [['mac-universal-x64-temp', 1], ['mac-universal-arm64-temp', 3]] as const) {
+      const half = context(join('/build', halfDirectory), 'darwin', arch)
+      expect(universalTemporaryApp(half).arch).toBe(4)
+      await afterPack(half, verify, async () => {})
+    }
+    expect(verify.mock.calls.map(([verified]) => verified.arch)).toEqual([4, 4])
+    expect(universalTemporaryApp(context('/build/mac-arm64', 'darwin', 3)).arch).toBe(3)
+    expect(universalTemporaryApp(context(join('/build', 'mac-universal-x64-temp'), 'win32', 1)).arch).toBe(1)
   })
 
   it('tracks the ConPTY-only native surface shipped by node-pty 1.2', () => {
@@ -296,13 +309,12 @@ describe('packaged desktop runtime verification', () => {
     )).toThrow(`missing required physical entries: ${missing}`)
   })
 
-  it('requires the physical Cordis preset and its bundled skills', () => {
+  it('requires the physical Cordis preset skills', () => {
     const runtimeContext = context('/build', 'win32')
     const unpackedRoot = resolvePackagedUnpackedRoot(runtimeContext)
     const requiredPresetEntries = [
-      'node_modules/@deepseek-ai/dsh-agent-presets/presets/cordis/agent.cordis.yml',
-      'node_modules/@deepseek-ai/dsh-agent-presets/presets/cordis/skills/cordis-plugin-development/SKILL.md',
-      'node_modules/@deepseek-ai/dsh-agent-presets/presets/cordis/skills/editing-cordis-compositions/SKILL.md',
+      'node_modules/@deepseek-ai/dsh-agent-preset/skills/cordis-plugin-development/SKILL.md',
+      'node_modules/@deepseek-ai/dsh-agent-preset/skills/editing-cordis-compositions/SKILL.md',
     ]
 
     for (const missing of requiredPresetEntries) {

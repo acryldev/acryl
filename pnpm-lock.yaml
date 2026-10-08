@@ -1335,6 +1335,18 @@ importers:
       '@deepseek-ai/dsh-workspace-changes':
         specifier: 0.2.0-rc.2
         version: 0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/dsh-agent@0.2.0-rc.2(fee0e653b72a3883e0f0da2d9a46bb50))(@deepseek-ai/dsh-session@0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/dsh-scope@0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/dsh-invariants@0.2.0-rc.2(@deepseek-ai/cordis@4.0.4))))(@deepseek-ai/dsh-subprocess@0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/dsh-http-proxy@0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)))(@deepseek-ai/dsh-tools@0.2.0-rc.2(52b5a8ab481be2b3d891c22a71641755))
+      '@deepseek-ai/libreoffice-kit-darwin-arm64':
+        specifier: 0.1.5
+        version: 0.1.5
+      '@deepseek-ai/libreoffice-kit-darwin-x64':
+        specifier: 0.1.5
+        version: 0.1.5
+      '@deepseek-ai/node-addon-system-darwin-arm64':
+        specifier: 0.1.2
+        version: 0.1.2
+      '@deepseek-ai/node-addon-system-darwin-x64':
+        specifier: 0.1.2
+        version: 0.1.2
       '@deepseek-ai/schemastery':
         specifier: ~3.18.4
         version: 3.18.4
@@ -1467,6 +1479,9 @@ importers:
       node-addon-require-builtin-darwin-x64:
         specifier: 0.1.7
         version: 0.1.7
+      node-pty:
+        specifier: 1.2.0-beta.15
+        version: 1.2.0-beta.15(patch_hash=76ba48ec629e2a6ebc193ec734b522f890287419a74efee65d80ee1652de1e0d)
       open:
         specifier: ^11.0.1
         version: 11.0.1
@@ -1479,6 +1494,12 @@ importers:
       semver:
         specifier: ^7.8.5
         version: 7.8.5
+      sherpa-onnx-darwin-arm64:
+        specifier: 1.13.8
+        version: 1.13.8
+      sherpa-onnx-darwin-x64:
+        specifier: 1.13.8
+        version: 1.13.8
       yaml:
         specifier: ^2.9.0
         version: 2.9.0
@@ -14603,11 +14624,9 @@ snapshots:
       - ws
       - zod
 
-  '@deepseek-ai/libreoffice-kit-darwin-arm64@0.1.5':
-    optional: true
+  '@deepseek-ai/libreoffice-kit-darwin-arm64@0.1.5': {}
 
-  '@deepseek-ai/libreoffice-kit-darwin-x64@0.1.5':
-    optional: true
+  '@deepseek-ai/libreoffice-kit-darwin-x64@0.1.5': {}
 
   '@deepseek-ai/libreoffice-kit-wasm@0.1.5':
     optional: true
@@ -14631,11 +14650,9 @@ snapshots:
       '@deepseek-ai/libreoffice-kit-win32-arm64': 0.1.5
       '@deepseek-ai/libreoffice-kit-win32-x64': 0.1.5
 
-  '@deepseek-ai/node-addon-system-darwin-arm64@0.1.2':
-    optional: true
+  '@deepseek-ai/node-addon-system-darwin-arm64@0.1.2': {}
 
-  '@deepseek-ai/node-addon-system-darwin-x64@0.1.2':
-    optional: true
+  '@deepseek-ai/node-addon-system-darwin-x64@0.1.2': {}
 
   '@deepseek-ai/node-addon-system-linux-arm64@0.1.2':
     optional: true
@@ -18213,11 +18230,9 @@ snapshots:
 
   shebang-regex@3.0.0: {}
 
-  sherpa-onnx-darwin-arm64@1.13.8:
-    optional: true
+  sherpa-onnx-darwin-arm64@1.13.8: {}
 
-  sherpa-onnx-darwin-x64@1.13.8:
-    optional: true
+  sherpa-onnx-darwin-x64@1.13.8: {}
 
   sherpa-onnx-linux-arm64@1.13.8:
     optional: true

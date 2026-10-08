@@ -655,6 +655,9 @@ describe('published package surface', () => {
     expect(workspaceManifest.scripts?.['dist:win-portable'])
       .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:win-portable')
     expect(manifest.build?.afterPack).toBe('./scripts/verify-packaged-runtime.ts')
+    for (const perArchPayload of ['@deepseek-ai/libreoffice-kit-darwin-*', '@deepseek-ai/node-addon-system-darwin-*', 'sherpa-onnx-darwin-*']) {
+      expect(manifest.build?.mac?.x64ArchFiles).toContain(perArchPayload)
+    }
     expect(manifest.build?.mac).toEqual(expect.objectContaining({
       extendInfo: {
         CFBundleAllowMixedLocalizations: true,

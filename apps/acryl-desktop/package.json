@@ -393,6 +393,10 @@
     "@deepseek-ai/dsh-workflow-ptc": "0.2.0-rc.2",
     "@deepseek-ai/dsh-workspace": "0.2.0-rc.2",
     "@deepseek-ai/dsh-workspace-changes": "0.2.0-rc.2",
+    "@deepseek-ai/libreoffice-kit-darwin-arm64": "0.1.5",
+    "@deepseek-ai/libreoffice-kit-darwin-x64": "0.1.5",
+    "@deepseek-ai/node-addon-system-darwin-arm64": "0.1.2",
+    "@deepseek-ai/node-addon-system-darwin-x64": "0.1.2",
     "@deepseek-ai/schemastery": "~3.18.4",
     "@img/sharp-darwin-arm64": "0.35.3",
     "@img/sharp-darwin-x64": "0.35.3",
@@ -437,10 +441,13 @@
     "node-addon-require-builtin": "^0.1.6",
     "node-addon-require-builtin-darwin-arm64": "0.1.7",
     "node-addon-require-builtin-darwin-x64": "0.1.7",
+    "node-pty": "1.2.0-beta.15",
     "open": "^11.0.1",
     "pnpm": "11.11.0",
     "react": "18.3.1",
     "semver": "^7.8.5",
+    "sherpa-onnx-darwin-arm64": "1.13.8",
+    "sherpa-onnx-darwin-x64": "1.13.8",
     "yaml": "^2.9.0"
   },
   "peerDependencies": {
@@ -533,7 +540,7 @@
       "signIgnore": [
         "\\.(?:pak|dat|wasm)$"
       ],
-      "x64ArchFiles": "**/node_modules/{node-pty/prebuilds/darwin-*/**,node-addon-require-builtin-darwin-*/**,@vscode/ripgrep-darwin-*/**,@img/sharp-darwin-*/**,@img/sharp-libvips-darwin-*/**,@koromix/koffi-darwin-*/**}"
+      "x64ArchFiles": "**/node_modules/{node-pty/prebuilds/darwin-*/**,node-addon-require-builtin-darwin-*/**,@vscode/ripgrep-darwin-*/**,@img/sharp-darwin-*/**,@img/sharp-libvips-darwin-*/**,@koromix/koffi-darwin-*/**,@deepseek-ai/libreoffice-kit-darwin-*/**,@deepseek-ai/node-addon-system-darwin-*/**,sherpa-onnx-darwin-*/**}"
     },
     "win": {
       "target": [

@@ -3,7 +3,7 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
-import { dirname, isAbsolute, join, relative, sep } from 'node:path'
+import { basename, dirname, isAbsolute, join, relative, sep } from 'node:path'
 import { Worker } from 'node:worker_threads'
 import { listPackage } from '@electron/asar'
 import AdmZip from 'adm-zip'
@@ -89,11 +89,9 @@ export const REQUIRED_UNPACKED_RUNTIME_ENTRIES = [
   'lib/windows-agent-presets.js',
   'lib/windows-pwsh-sandbox.js',
   'node_modules/@deepseek-ai/dsh/package.json',
-  // The preset payload lives in the agent-presets package; it moved out of the
-  // dsh package itself when the DSH pin advanced past 0.1.1-rc.2.
-  'node_modules/@deepseek-ai/dsh-agent-presets/presets/cordis/agent.cordis.yml',
-  'node_modules/@deepseek-ai/dsh-agent-presets/presets/cordis/skills/cordis-plugin-development/SKILL.md',
-  'node_modules/@deepseek-ai/dsh-agent-presets/presets/cordis/skills/editing-cordis-compositions/SKILL.md',
+  // The Cordis preset's skills ship in the dsh-agent-preset package (DSH 0.2 renamed it from dsh-agent-presets and moved the agent definition into code).
+  'node_modules/@deepseek-ai/dsh-agent-preset/skills/cordis-plugin-development/SKILL.md',
+  'node_modules/@deepseek-ai/dsh-agent-preset/skills/editing-cordis-compositions/SKILL.md',
   'node_modules/@deepseek-ai/dsh/lib/bin.js',
   'node_modules/@deepseek-ai/dsh-app-boot/lib/index.js',
   'node_modules/@deepseek-ai/dsh-web-frontend/dist/index.html',
@@ -666,16 +664,29 @@ export function verifyPackagedRuntime(
 }
 
 /**
+ * A universal macOS build packs an x64 and an arm64 application first (`mac-universal-<arch>-temp`) and merges them. The merge needs the two to hold the same
+ * files, with each CPU's native package present in both and covered by `x64ArchFiles`, so these two are packaged as the universal target they are part of.
+ * Pruning each to its own CPU would make the merge fail on every package that ships one native build per CPU.
+ */
+export function universalTemporaryApp(context: PackagedRuntimeContext): PackagedRuntimeContext {
+  const isTemporaryHalf = context.electronPlatformName === 'darwin'
+    && (context.arch === 1 || context.arch === 3)
+    && /^mac-universal-(?:x64|arm64)-temp$/u.test(basename(context.appOutDir))
+  return isTemporaryHalf ? { ...context, arch: 4 } : context
+}
+
+/**
  * Run the static packaged-runtime check as Electron Builder's afterPack hook.
  * @param context - Electron Builder's afterPack context.
  * @returns A promise that rejects before signing when the runtime is incomplete.
  */
 export async function afterPack(
-  context: PackagedRuntimeContext,
+  packerContext: PackagedRuntimeContext,
   verify: typeof verifyPackagedRuntime = verifyPackagedRuntime,
   smoke: PackagedDiagnosticWorkerSmoke = smokePackagedDiagnosticWorker,
   prune: typeof prunePackagedNative = prunePackagedNative,
 ): Promise<void> {
+  const context = universalTemporaryApp(packerContext)
   const unpackedRoot = resolvePackagedUnpackedRoot(context)
   // Unit tests supply a synthetic package path; a real Electron Builder hook
   // always has the unpacked tree at this point, before signing starts.
