@@ -20,7 +20,7 @@ import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { corepackCommand, corepackSpawnOptions } from './cli-archive-platform.mjs'
+import { corepackCommand, corepackSpawnOptions, deployArguments, deployEnvironment } from './cli-archive-platform.mjs'
 import { flattenNodeModules } from './flatten-node-modules.mjs'
 import { pruneTargetNative } from './prune-target-native.mjs'
 import { pruneReleasePayload } from './prune-release-payload.mjs'
@@ -92,9 +92,9 @@ async function main() {
   // 1. Production dependency closure (isolated, hoisted) for the CLI.
   // Override platform/arch env vars to ensure correct prebuilds are fetched for the target.
   const platformEnv = spec.nodePlatform === 'win' ? 'win32' : spec.nodePlatform
-  run(corepackCommand(process.platform), ['pnpm', '--filter', 'acryl-cli', 'deploy', archiveDir, '--prod', '--legacy'], {
+  run(corepackCommand(process.platform), deployArguments('acryl-cli', archiveDir), {
     ...corepackSpawnOptions(process.platform),
-    env: { ...process.env, CI: 'true', npm_config_platform: platformEnv, npm_config_arch: spec.nodeArch },
+    env: deployEnvironment(process.env, { npm_config_platform: platformEnv, npm_config_arch: spec.nodeArch }),
   })
   mkdirSync(join(archiveDir, 'bin'), { recursive: true })
 

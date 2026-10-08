@@ -29,6 +29,8 @@ export function webNativeAllowlist(spec) {
   const patterns = [
     `node_modules/**/*${platform}-${arch}*`,
     `node_modules/**/*${platform}-${arch}*/**`,
+    // An unscoped per-platform package sits directly under node_modules (sherpa-onnx-darwin-arm64); `**` above needs a folder in between.
+    `node_modules/*${platform}-${arch}*/**`,
   ]
   if (spec.windows) {
     // node-pty nests its Windows ConPTY runtime under build/Release and a

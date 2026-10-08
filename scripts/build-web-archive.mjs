@@ -6,7 +6,7 @@ import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, readdirSy
 import { tmpdir } from 'node:os'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { corepackCommand, corepackSpawnOptions } from './cli-archive-platform.mjs'
+import { corepackCommand, corepackSpawnOptions, deployArguments, deployEnvironment } from './cli-archive-platform.mjs'
 import { flattenNodeModules } from './flatten-node-modules.mjs'
 import { verifyArtifactManifest, inspectDirectory } from './inspect-artifact.mjs'
 import { pruneReleasePayload } from './prune-release-payload.mjs'
@@ -37,8 +37,8 @@ async function main() {
   const archiveName = `acryl-web-${target}.tar.gz`
   rmSync(staging, { recursive: true, force: true })
   try {
-    run(corepackCommand(process.platform), ['pnpm', '--filter', 'acryl-web', 'deploy', archiveDir, '--prod', '--legacy'], {
-      ...corepackSpawnOptions(process.platform), env: { ...process.env, CI: 'true' },
+    run(corepackCommand(process.platform), deployArguments('acryl-web', archiveDir), {
+      ...corepackSpawnOptions(process.platform), env: deployEnvironment(process.env),
     })
     mkdirSync(join(archiveDir, 'runtime', 'bin'), { recursive: true })
     const nodeArchive = join(tmpdir(), `${nodeDist.basename}.${nodeDist.extension}`)
@@ -57,7 +57,13 @@ async function main() {
     verifyArtifactManifest({
       product: 'web', platform: spec.windows ? 'win32' : spec.nodePlatform, arch: spec.nodeArch,
       requiredPaths: [`runtime/bin/${spec.windows ? 'acryl-web.cmd' : 'acryl-web'}`, `runtime/bin/${spec.windows ? 'node.exe' : 'node'}`, 'lib/bin.js'], 
-      forbiddenPathPatterns: ['**/acryl-desktop/**', '**/electron/**', '**/*.map', '**/tests/**'],
+      // Electron runtime code stays out of the Web archive. Type declarations that merely live under an `electron` folder (DSH 0.2's
+      // sidebar-browser package ships four) are not runtime code, so only code and native files in such a folder are forbidden.
+      forbiddenPathPatterns: [
+        '**/acryl-desktop/**', '**/node_modules/electron/**',
+        '**/electron/**/*.js', '**/electron/**/*.mjs', '**/electron/**/*.cjs', '**/electron/**/*.node',
+        '**/*.map', '**/tests/**',
+      ],
       allowedNativePackagePatterns: webNativeAllowlist(spec),
       maximumBytes: 1_000_000_000,
     }, inspectDirectory(archiveDir, directoryEntries))
