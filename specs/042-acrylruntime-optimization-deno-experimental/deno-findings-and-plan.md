@@ -362,6 +362,53 @@ one needs FFI or an OS helper. The desktop runtime also **chooses the port** and
 for a `Deno.serve` it never gets before navigating (it still works; the delay is avoidable), and grants nothing by
 default: the app needs `-A` or an explicit permission list at build time (a feature to use, not a defect).
 
+### F9. The soft spots closed or measured (2026-10-08)
+
+**Real terminal adapter (closes the "probe is not the adapter" gap, macOS).** `plugins/acryl-workspace/src/pty/deno-ffi-pty-spawn.ts`
+implements ACRYL's own `WorkspacePtySpawn` seam (injected, so it is a drop-in for the 13-line `node-pty-spawn.ts`); `select-spawn.ts`
+picks it only on a verified host (Deno on macOS), Node keeps `node-pty` untouched. Strict TypeScript, no `any`. Deno tests
+(`deno test -A --no-check plugins/acryl-workspace/deno-tests/`, **8/8**): output and exit code; **a multibyte character split
+across two reads arrives whole** (streaming UTF-8 decode; euro sign and an emoji); cwd, env and `TERM`; interactive input, resize,
+Ctrl-C (SIGINT) and `kill`; **a 20 MB flood arrives complete**; **2 MB written to a child that is not reading never stalls the
+event loop** (writes are queued and gated on `POLLOUT`); 100 sequential spawns with no leaked descriptors and no zombies; an
+unknown command fails loudly. The tests found a real defect in the first version: with a fixed 10 ms tick the flood ran at
+**0.23 MB/s** (a macOS pty read returns 1 KB and the producer refills asynchronously, so a zero-timeout poll saw "empty" and slept a
+whole tick); adaptive scheduling (poll again at once while data flows, idle at 10 ms) gives **13 MB/s**. The Node suite for the
+package is unchanged: 685/685. **Not done:** Linux (different flag and ioctl values; arm64 variadic ABI differs from Apple's) and
+Windows (ConPTY through `kernel32`) are not written because they cannot be tested on this machine and no container runtime was
+running; on those hosts the selector keeps `node-pty`. The remaining Linux work is a table of constants plus a CI job; Windows is a
+separate adapter of the same shape.
+
+**A real Harness agent turn runs on Deno** (`probes/harness-session.mjs`). The ACRYL engine host boots on Deno, a mock Anthropic-style
+Messages endpoint stands in for the model (`DEEPSEEK_BASE_URL`, a fake key: no credential, no network, no cost), and
+`ctx.sessionController.create()` then `.prompt()` run through the same service the browser client uses. Result: the session was created,
+the prompt was accepted, the Harness LLM adapter issued real streaming requests (2, with **41 tools** offered) carrying the prompt, and
+the streamed reply was recorded in the Harness's own session store. Not covered: a tool-call round trip, multi-turn history, a real model.
+**The stock Harness CLI on Deno fails at boot** (`dsh headless "..."`: `host preparation failed: node-addon-require-builtin unsupported`),
+the same `PluginPackages` throw as F3 with no fallback; ACRYL's own `engine-dsh.ts` fallback is what makes the host boot, so the fallback is
+load-bearing, and an upstream change (skip or fall back when the internals are unavailable) would help every Deno user of the Harness.
+
+**sherpa-onnx runs inference** (`probes/sherpa-vad.mjs`). The SenseVoice plugin's own pinned Silero VAD model (1.8 MB, sha256 verified
+against its `assets.json`) on real synthesized speech (macOS `say`): identical on Node and Deno, one speech segment at 0.07 s for 4.44 s,
+including from the packaged payload's copy of the addon. The full SenseVoice recognizer (hundreds of MB of model) was not downloaded;
+the part that matters for a runtime port, onnxruntime executing inside the addon, is exercised.
+
+**D2 met** (`probes/loader-lifecycle.mjs`, the real `@deepseek-ai/cordis-plugin-loader`, 6/6 on both Node 24.19.0 and Deno 2.9.7):
+create starts a plugin; `disabled: true` stops it; `disabled: false` starts it again; a config change restarts it with the new config;
+removing the entry and creating it again from the edited file (a `?v=2` URL) runs the new code with the old one disposed; remove
+stops it. No `--expose-internals`. Two semantics worth knowing, identical on both runtimes: `update` keeps `disabled: true` unless
+`disabled: false` is passed, and editing the file does nothing by itself (file watching is `cordis-plugin-hmr`, which needs Node
+internals; the explicit reload is the replacement, as F6 found).
+
+**Tier 2 (live package replace) is a bounded port, not a rewrite** (`node:module` hooks probe, scratch). Node's *public*
+`module.registerHooks` exists on Deno 2.9.7 and behaves like Node: a `resolve` hook redirects a bare specifier for ESM `import()`,
+the redirect table can be swapped in place (generation 1 to 2, seen by the next import), and the same hook serves `require()`.
+So `PluginPackages`' interception layer (about 260 lines that monkeypatch Node's private ESM/CJS resolvers) can be rebuilt on public
+API reusing the unchanged routing table (`RuntimeResolution.entries`). Not built. Two things stay open: the router's exact routing
+rules (installation versus profile scope, peers, `#imports`) live in `dsh-app-boot`'s bundle and would be re-derived; and
+**Harness worker threads** install the same interception from `setEnvironmentData`, so on Deno they would throw in the worker (the
+code-runtime and PTC workflow workers). `worker_threads` + `vm` themselves work (F7), so this is the same fallback question, untested.
+
 ## Options
 
 - **Option A, Deno desktop as shell only.** The host stays on Node as a child process; the webview loads its local URL
@@ -379,23 +426,27 @@ going further. All runs follow the probe safety rules at the end.
 | Step | Question | How | Exit criterion |
 |---|---|---|---|
 | **D1** | Can Deno install and resolve a profile's plugin packages? | Find where the profile install runs (pinned pnpm) and why it does not run or does not report under Deno; then make the Loader's imports resolve from the profile folder (`--node-modules-dir=manual` with an installed profile, or an import map generated from the profile). Probes: `probes/d1-deno-host.mjs` (serving-mode run), `probes/d1b-diagnose-fibers.mjs` (fiber-state dump - use this one when `d1-deno-host.mjs` prints "no answer" with nothing else, since a failed child fiber does not reject `serveWeb()`'s own promise) | **Met (2026-10-07).** `GET /` returns 404 without a token, matching the Node baseline, confirmed over 3 clean runs. Fixed in ACRYL's own `engine-dsh.ts` (not the submodule): catch `PluginPackages`'s native-addon failure and materialize its package table as `node_modules` symlinks instead (F3's "Tier 1" fix). Existing Node test suite (22 tests, 4 spec files) passes unmodified. Live package replace without a restart is not restored - see F3 "Tier 2 scope" |
-| **D2** | Does the Cordis Loader work without Node internals? | With D1 passing, enable and disable a profile row at run time; reload one plugin with a fresh `import()` | Enable, disable and reload all take effect; no `--expose-internals`; HMR replacement designed (F6 already verifies the reload mechanism itself, including inside the packaged binary; shared with AIMBRACE 012 Phase 2). Remaining open item: decide and bundle the agent-plugin dependency allowlist (F6) |
+| **D2** | Does the Cordis Loader work without Node internals? | With D1 passing, enable and disable a profile row at run time; reload one plugin with a fresh `import()` | **Met (2026-10-08, F9).** The real Loader's create, disable, re-enable, config change, reload-after-edit and remove are identical on Deno and Node (6/6), no `--expose-internals`; the reload mechanism also works inside the packaged binary (F6). Open: the agent-plugin dependency allowlist (F6) |
 | **D3** | Do the native and Node-API pieces work? | Run 042's `probes/runtime-compat.mjs` and `probes/e5-ws-worker.mjs` under Deno: `node-pty` events, `node:sqlite`, module re-import, `ws` upgrade, `worker_threads` with `node:vm`; then `koffi`, `sharp` (`probes/native-modules.mjs`) | **Met with one replacement (2026-10-08).** Everything matches Node except `node-pty`, which fails silently; the named replacement is libc FFI (`probes/deno-ffi-pty.ts`), all checks pass on macOS. Linux and Windows pty are not done (F7) |
 | **D4** | Does the ACRYL client work in WebKit? | Open the D1 host URL in Safari (same engine as WKWebView); check terminal (xterm, `@xterm/addon-webgl`), editor, layout | **Met at first look (2026-10-08, F8).** The client renders in the `deno desktop` WKWebView window (494 nodes, real UI text, xterm styles present). Terminal output, editor and layout were not exercised or inspected visually |
 | **D5** | Does a `deno desktop` window host ACRYL? | A Deno desktop entry that starts the host (Option A: Node child; Option B: in process) and opens a window on its URL | **Met in process (Option B), 2026-10-08 (F8).** Host and window run in one `deno desktop` process; host stopped and port freed on exit. Not done: menus, tray, quit handling, the 15 s navigate delay |
 | **D6** | What is the real size? | Build the D5 app with the profile's plugin set included explicitly; then remove dependencies a desktop build does not need (unused provider SDKs, telemetry exporters, bundled pnpm, `sharp` if unused) | **Measured (2026-10-08, F8): 193.0 MB installed, 107.6 MB DMG lean; 403.1 MB / 191.6 MB with every feature.** Passes the 200 MB gate only without LibreOffice preview, voice and libvips |
 | **D7** | Shell parity | Map the 12 Electron modules (menu, tray, dialogs, windows, recovery window, profile window, workspace admission) and the updater, signing and notarization to `deno desktop` | Every Desktop feature has a Deno equivalent or a recorded gap |
 
-Decision after D3 (2026-10-08): both gaps found so far were closable without editing `deepseek-harness/`
-(D1: an ACRYL-side fallback; D3: a libc-FFI pty in place of `node-pty`), so **continue with Option B**. This is a
-feasibility result, not a go decision. Still open, in order of how much they can change the answer:
-1. **D7**, the Electron-to-`deno desktop` port (12 modules plus packaging, signing, notarization): the largest
-   remaining cost, and `deno desktop` is itself experimental.
-2. **Linux and Windows pty** (the spike is macOS only), and the real adapter behind ACRYL's pty interface.
-3. **Live package replace without a restart** (the D1 "Tier 2" gap), which the agent-plugin story wants.
-4. **D2** (Loader enable/disable without Node internals), **D4** (WebKit rendering), **D5** (a `deno desktop`
-   window hosting ACRYL), then **D6** (the real size), which is what the whole effort is for.
-Fallback if D7 or D5 fails: Option A (Deno shell, Node host), about 440 MB, a saving of roughly 60 MB.
+Decision after D3 and D6-early (2026-10-08): both gaps found were closable without editing `deepseek-harness/` (D1: an ACRYL-side
+fallback; D3: a libc-FFI pty in place of `node-pty`), the Harness runs a real agent turn on Deno, the Loader behaves like Node,
+and the web client renders in a `deno desktop` window. **Continue with Option B is justified technically.** Whether to continue
+at all rests on one decision outside engineering: the size premise (F8) holds only if LibreOffice document preview, voice and
+`sharp`'s native image library become on-demand downloads (lean build 193.0 MB installed against the 200 MB line; 403.1 MB with
+everything). Still open, in order of how much they can change the answer:
+1. **Owner decision on the optional packs** (above) and what each feature does when its pack is absent (untested).
+2. **D7**, the Electron-to-`deno desktop` port (12 modules plus packaging, signing, notarization). The window API covers menus, tray,
+   dock, window control and devtools; **no native dialog API** (the directory picker needs FFI or a helper); signing and
+   notarization of a `deno desktop` app are untested. `deno desktop` is itself experimental.
+3. **Linux and Windows terminal**, and a CI job that runs the Deno tests on Linux.
+4. **Live package replace without a restart** (Tier 2, F9): bounded, public API exists, worker-thread behaviour untested.
+5. A tool-call round trip and a real-model session on Deno; Windows and Linux builds of the whole app.
+Fallback if D7 or the size decision fails: Option A (Deno shell, Node host), about 440 MB, a saving of roughly 60 MB.
 
 ## D6-early gate (set 2026-10-08, before any measurement)
 
