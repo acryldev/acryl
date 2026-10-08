@@ -1,3 +1,22 @@
+## 2026-10-08 - `corepack pnpm build:mac`, `build:windows`, `build:linux`; the universal macOS DMG builds on DSH 0.2 again
+
+Commits: `e282ed8` (the three scripts and `dist:linux`, see below), `514d0191cd127213905a26c9b921b46c06062a0c` (the DSH 0.2 packaging fixes).
+
+- Root scripts: `build:mac` (unsigned universal DMG, `apps/acryl-desktop/dist/mac-smoke/acryl-desktop-mac-universal.dmg`),
+  `build:windows` (NSIS installer) and `build:linux` (a Debian `.deb` in `dist/linux-<arch>/`, new `scripts/package-linux.ts`).
+  Each needs its own OS. `dist:mac` stays the signed and notarized release and needs a Developer ID certificate.
+- `build:mac` had never been run against DSH 0.2 and failed four times in a row, each time one layer deeper:
+  `node-pty` was only reachable through `acryl-workspace`, so the universal preflight did not find its prebuilds (now a direct
+  dependency of `acryl-desktop`); the packaged-runtime verifier still looked for the 0.1 `dsh-agent-presets` package (0.2 ships
+  `dsh-agent-preset/skills/...`); and the `afterPack` hook pruned each half of the universal build (`mac-universal-<arch>-temp`) to its
+  own CPU, so the merge saw different files in the two halves. The halves are now treated as universal (`universalTemporaryApp`), and
+  the three per-CPU packages new in 0.2 (`@deepseek-ai/libreoffice-kit-darwin-*`, `@deepseek-ai/node-addon-system-darwin-*`,
+  `sherpa-onnx-darwin-*`) are declared for both CPUs and listed in `x64ArchFiles`, the same way sharp, koffi and ripgrep already were.
+- Measured: the universal DMG is 431 MB; the unpacked app is about 755 MB per CPU. `libreoffice-kit` alone is 157 MB per CPU
+  (pulled in by `dsh-office-to-pdf` and `dsh-skill-office`), the largest single item for the spec 042 size goal.
+- An unlocked second `build:mac` run next to a running one wipes `lib/` under it (the typecheck then finds no `.d.ts`); run builds
+  through `scripts/with-build-lock.mjs`.
+
 ## 2026-10-07 (later) - a fresh clone now builds and runs on Linux (Web, CLI, Desktop)
 
 Commits: `244d77ab2169e19847142dbf9cfb6181b43e7666`, `a4202c94f3ca6699901f4f02041bd84a5762eb59`,
