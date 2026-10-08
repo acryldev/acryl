@@ -48,9 +48,7 @@ jobs:
       - run: corepack pnpm install --frozen-lockfile
       - name: Build and verify CLI surface
         run: |
-          corepack pnpm --filter acryl-control run build
-          corepack pnpm --filter acryl-harness-runtime run build
-          corepack pnpm --filter acryl-cli run build
+          corepack pnpm --filter "acryl-cli..." --workspace-concurrency=1 run build
           corepack pnpm --filter acryl-cli run typecheck
           corepack pnpm --filter acryl-cli run test
           node --test scripts/cli-archive-platform.test.mjs scripts/inspect-artifact.test.mjs
@@ -115,9 +113,7 @@ jobs:
       - run: corepack pnpm install --frozen-lockfile
       - name: Build and verify Web surface
         run: |
-          corepack pnpm --filter acryl-control run build
-          corepack pnpm --filter acryl-harness-runtime run build
-          corepack pnpm --filter acryl-web run build
+          corepack pnpm --filter "acryl-web..." --workspace-concurrency=1 run build
           corepack pnpm --filter acryl-web run typecheck
           corepack pnpm --filter acryl-web run test
           node --test scripts/web-archive-contract.test.mjs
@@ -191,9 +187,7 @@ jobs:
       - run: corepack pnpm install --frozen-lockfile
       - name: Build standalone Web npm package
         run: |
-          corepack pnpm --filter acryl-control run build
-          corepack pnpm --filter acryl-harness-runtime run build
-          corepack pnpm --filter acryl-web run build
+          corepack pnpm --filter "acryl-web..." --workspace-concurrency=1 run build
           corepack pnpm --filter acryl-web run typecheck
           corepack pnpm --filter acryl-web run test
       - uses: actions/download-artifact@v7
