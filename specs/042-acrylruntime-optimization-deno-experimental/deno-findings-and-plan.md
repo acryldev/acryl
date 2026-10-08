@@ -183,9 +183,9 @@ would actually require.
 | Cordis Loader and HMR use Node's private ESM loader (`--expose-internals` or `node-addon-require-builtin`) | `deepseek-harness/vendor/loader/src/internal.ts`, `vendor/hmr/src/index.ts`; ACRYL checks the flag in `runtime/acryl-harness-runtime/src/index.ts:222` | **Confirmed failing, not just unverified (F3 2026-10-07 follow-up).** `@deepseek-ai/dsh-app-boot`'s `PluginPackages` uses `node-addon-require-builtin` unconditionally (no absent-internals fallback) and throws under Deno's V8 (`Unsupported/no-context`), failing the whole engine fiber. This is D1's actual blocker, not a resolution or install gap |
 | Terminal: `node-pty` (native addon) | `plugins/acryl-workspace/src/pty/node-pty-spawn.ts`; harness `packages/subprocess/subprocess-local/src/terminal.ts` | **Confirmed failing (F7, 2026-10-08).** The addon loads and `spawn()` returns a live pid with no error, but `onData`/`onExit` never fire - the native PTY I/O pump itself is not integrated with Deno's event loop. Not a resolution/throw problem like D1; no equivalent fallback found yet |
 | Session query store: `node:sqlite` | harness `packages/session-query/session-query-sqlite` | **Confirmed working (F7, 2026-10-08).** `import('node:sqlite')` succeeds |
-| WebSocket upgrade with `ws` over `node:http` | `plugins/acryl-workspace/src/pty/stream.ts`, `plugins/acryl-agent-control/src/host/stream.ts` | Unverified on Deno |
+| WebSocket upgrade with `ws` over `node:http` | `plugins/acryl-workspace/src/pty/stream.ts`, `plugins/acryl-agent-control/src/host/stream.ts` | **Confirmed working (F7, 2026-10-08)**, upgrade roundtrip matches Node |
 | `node:module` `findPackageJSON`, `registerHooks`, `stripTypeScriptTypes`; `node:util` `getSystemErrorMessage` | ACRYL `package-overlay.ts`, `engine-dsh.ts`; harness `dsh-subprocess-local`, `dsh-code-runtime-worker-thread` | Unverified on Deno |
-| Other native modules | `koffi` (8 packages declare it), `sharp` (6), `sherpa-onnx-node` (1), `@xterm/headless` (3) | Unverified on Deno |
+| Other native modules | `koffi` (8 packages declare it), `sharp` (6), `sherpa-onnx-node` (1), `@xterm/headless` (3) | **Confirmed working (F7, 2026-10-08)**: one real operation each (libc call, resize+PNG encode, native binding load, buffer parse), identical to Node. `sherpa-onnx-node` only loaded its binding; no model was run |
 | Shell rewrite | 12 modules import `electron` (listed in findings-rewrite-vs-reuse.md); packaging, signing, notarization and updates (`electron-builder`, `src/updates/`) | Must be rewritten for any non-Electron shell |
 
 Several of these sit in the pinned `deepseek-harness/` submodule, which this repository must not edit. They need an
@@ -268,10 +268,51 @@ This directly affects: ACRYL's own embedded terminal (`plugins/acryl-workspace`)
 marketplace survey the same day, several real published plugins (`dsh-TUI`, `dsh-tianshu-tui`,
 `DSH-better-sidebar`) that are terminal-shaped and almost certainly depend on this same package.
 
-**Not yet run:** `koffi`, `sharp`, `sherpa-onnx-node`, `@xterm/headless`, the `ws`-over-`node:http` upgrade,
-and `probes/e5-ws-worker.mjs` (worker threads with `node:vm`). P1's failure mode (native addon loads,
-no error, but the actual I/O/event delivery is silently absent) is now a known pattern to specifically
-check for in each of these, not just "does it throw."
+**The rest of D3 (all measured, Node 24.19.0 vs Deno 2.9.7, same machine):**
+
+| Probe (`probes/native-modules.mjs`, `probes/e5-ws-worker.mjs`) | Node | Deno |
+|---|---|---|
+| N1 `koffi` calls libc `strlen` through its FFI | OK | OK |
+| N2 `sharp` creates, resizes and PNG-encodes an image | OK | OK |
+| N3 `sherpa-onnx-node` loads its native binding (24 exports; no model run) | OK | OK |
+| N4 `@xterm/headless` parses ANSI output into a buffer | OK | OK |
+| E5a `ws` `noServer` upgrade over `node:http`, echo roundtrip | OK | OK |
+| E5b `worker_threads` + `node:vm.runInContext` | OK | OK |
+
+So **`node-pty` is the only D3 failure**. Everything else, including the Node-API addons, matches Node.
+
+**Why `node-pty` fails, and the fix that works (the pty spike).** Split on the raw addon
+(`prebuilds/darwin-arm64/pty.node`): both halves are dead on Deno. Reading the master fd through
+`tty.ReadStream` delivers nothing, and the addon's native exit callback never fires (Node: both fire).
+The master fd is non-blocking, so plain `fs`/`Deno.open` reads return `EAGAIN` rather than waiting;
+`net.Socket({fd})` is unimplemented for this on Deno. Instead of patching the addon, `probes/deno-ffi-pty.ts`
+(about 130 lines, no `node-pty`) builds a pty from libc through `Deno.dlopen`: `openpty`, `posix_spawnp`
+(new session, slave dup2'd to 0/1/2), `poll()` plus `read()` for output, `waitpid(WNOHANG)` for the exit,
+`ioctl(TIOCSWINSZ)` for resize. Measured:
+
+| Check | Result |
+|---|---|
+| F1 output + exit code (`exit 3`) | OK, `{code: 3}` |
+| F2 child sees a real tty (`[ -t 0 ]`), `TERM` set | OK |
+| F3 interactive: write to the pty, child echoes (`cat`) | OK |
+| F3b `kill()` ends the child | OK, signal 15 |
+| F4 resize reaches the child (`stty size` -> `40 120`) | OK |
+| F5 50 sequential spawns | 50/50, no leaked children |
+| Ctrl-C (`\x03`) interrupts a running child | OK, `signal: 2` (SIGINT) |
+
+Two traps found on the way, both Apple arm64 specific, both now handled in the probe and worth knowing
+before porting: (1) the `posix_spawn` family takes a pointer *to* the `file_actions`/`attr` handle, not the
+handle (passing the value segfaulted, exit 139); (2) `fcntl` and `ioctl` are variadic C functions and on
+Apple arm64 variadic arguments go on the stack, so a plain FFI call passes garbage (this showed up as an
+infinite hang, not an error). `poll()` is not variadic, so reads use it; `ioctl` gets six dummy register
+arguments so the real one lands on the stack.
+
+**What the spike does not cover.** macOS only: Linux needs different flag/ioctl values and its arm64 variadic
+ABI is the ordinary one (the stack trick would break there); Windows needs ConPTY through `kernel32`, a
+different design. It is a probe, not the adapter: ACRYL's `node-pty-spawn.ts` interface, backpressure, and
+UTF-8 chunk boundaries (a multibyte character split across two reads) are not done. The submodule's own
+`subprocess-local` terminal also imports `node-pty`; loading it is harmless (the addon loads), only calling it
+hangs, and Harness chat mode does not use a pty, but this was not tested through a real Harness session.
 
 ## Options
 
@@ -291,14 +332,22 @@ going further. All runs follow the probe safety rules at the end.
 |---|---|---|---|
 | **D1** | Can Deno install and resolve a profile's plugin packages? | Find where the profile install runs (pinned pnpm) and why it does not run or does not report under Deno; then make the Loader's imports resolve from the profile folder (`--node-modules-dir=manual` with an installed profile, or an import map generated from the profile). Probes: `probes/d1-deno-host.mjs` (serving-mode run), `probes/d1b-diagnose-fibers.mjs` (fiber-state dump - use this one when `d1-deno-host.mjs` prints "no answer" with nothing else, since a failed child fiber does not reject `serveWeb()`'s own promise) | **Met (2026-10-07).** `GET /` returns 404 without a token, matching the Node baseline, confirmed over 3 clean runs. Fixed in ACRYL's own `engine-dsh.ts` (not the submodule): catch `PluginPackages`'s native-addon failure and materialize its package table as `node_modules` symlinks instead (F3's "Tier 1" fix). Existing Node test suite (22 tests, 4 spec files) passes unmodified. Live package replace without a restart is not restored - see F3 "Tier 2 scope" |
 | **D2** | Does the Cordis Loader work without Node internals? | With D1 passing, enable and disable a profile row at run time; reload one plugin with a fresh `import()` | Enable, disable and reload all take effect; no `--expose-internals`; HMR replacement designed (F6 already verifies the reload mechanism itself, including inside the packaged binary; shared with AIMBRACE 012 Phase 2). Remaining open item: decide and bundle the agent-plugin dependency allowlist (F6) |
-| **D3** | Do the native and Node-API pieces work? | Run 042's `probes/runtime-compat.mjs` and `probes/e5-ws-worker.mjs` under Deno: `node-pty` events, `node:sqlite`, module re-import, `ws` upgrade, `worker_threads` with `node:vm`; then `koffi`, `sharp` | Each item passes, or has a named replacement (for example `Deno.Command` with a PTY, `jsr:@db/sqlite`, `Deno.upgradeWebSocket`) |
+| **D3** | Do the native and Node-API pieces work? | Run 042's `probes/runtime-compat.mjs` and `probes/e5-ws-worker.mjs` under Deno: `node-pty` events, `node:sqlite`, module re-import, `ws` upgrade, `worker_threads` with `node:vm`; then `koffi`, `sharp` (`probes/native-modules.mjs`) | **Met with one replacement (2026-10-08).** Everything matches Node except `node-pty`, which fails silently; the named replacement is libc FFI (`probes/deno-ffi-pty.ts`), all checks pass on macOS. Linux and Windows pty are not done (F7) |
 | **D4** | Does the ACRYL client work in WebKit? | Open the D1 host URL in Safari (same engine as WKWebView); check terminal (xterm, `@xterm/addon-webgl`), editor, layout | Usable without layout or rendering defects, or a list of fixes |
 | **D5** | Does a `deno desktop` window host ACRYL? | A Deno desktop entry that starts the host (Option A: Node child; Option B: in process) and opens a window on its URL | The window shows the authenticated client; Ctrl+Q stops host and window cleanly; port freed |
 | **D6** | What is the real size? | Build the D5 app with the profile's plugin set included explicitly; then remove dependencies a desktop build does not need (unused provider SDKs, telemetry exporters, bundled pnpm, `sharp` if unused) | Measured `.app` size; target 100 to 200 MB |
 | **D7** | Shell parity | Map the 12 Electron modules (menu, tray, dialogs, windows, recovery window, profile window, workspace admission) and the updater, signing and notarization to `deno desktop` | Every Desktop feature has a Deno equivalent or a recorded gap |
 
-Decision after D3: if the gaps are closable without editing `deepseek-harness/`, continue with Option B; otherwise
-continue D4 to D7 with Option A, accept the size, and revisit when Harness or Deno change.
+Decision after D3 (2026-10-08): both gaps found so far were closable without editing `deepseek-harness/`
+(D1: an ACRYL-side fallback; D3: a libc-FFI pty in place of `node-pty`), so **continue with Option B**. This is a
+feasibility result, not a go decision. Still open, in order of how much they can change the answer:
+1. **D7**, the Electron-to-`deno desktop` port (12 modules plus packaging, signing, notarization): the largest
+   remaining cost, and `deno desktop` is itself experimental.
+2. **Linux and Windows pty** (the spike is macOS only), and the real adapter behind ACRYL's pty interface.
+3. **Live package replace without a restart** (the D1 "Tier 2" gap), which the agent-plugin story wants.
+4. **D2** (Loader enable/disable without Node internals), **D4** (WebKit rendering), **D5** (a `deno desktop`
+   window hosting ACRYL), then **D6** (the real size), which is what the whole effort is for.
+Fallback if D7 or D5 fails: Option A (Deno shell, Node host), about 440 MB, a saving of roughly 60 MB.
 
 ## Probe safety rules
 
