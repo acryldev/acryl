@@ -53,6 +53,9 @@ function fakeWebServer() {
   }
 }
 
+// The stand-in below is a POSIX shell wrapper, and Node cannot spawn a Windows `.cmd` without a shell, so the two tests that run it are POSIX-only.
+const posixOnly = process.platform === 'win32' ? it.skip : it
+
 /** A `claude` stand-in: a shell wrapper, because the transport puts its protocol flags before any configured arguments. */
 function fakeClaudeCommand(): string {
   const dir = mkdtempSync(join(tmpdir(), 'acryl-fake-claude-'))
@@ -97,7 +100,7 @@ function call(body: unknown, token?: string): Promise<{ status: number; json: Re
 }
 
 describe('agent workers on the real plugin', () => {
-  it('attaches a Claude worker, sends, and stops it, authorized by the instance secret', async () => {
+  posixOnly('attaches a Claude worker, sends, and stops it, authorized by the instance secret', async () => {
     const { fiber, home } = await mount({ online: true, workers: { claude: { command: fakeClaudeCommand() } } })
     const secret = readFileSync(join(home, 'agent-control-secret'), 'utf8').trim()
     expect((await call({ op: 'list' }, secret)).json).toEqual({ ok: true, result: [] })
@@ -134,7 +137,7 @@ describe('agent workers on the real plugin', () => {
     await off.fiber.dispose()
   })
 
-  it('ends the worker process when the plugin unloads', async () => {
+  posixOnly('ends the worker process when the plugin unloads', async () => {
     const { fiber, home } = await mount({ online: true, workers: { claude: { command: fakeClaudeCommand() } } })
     const secret = readFileSync(join(home, 'agent-control-secret'), 'utf8').trim()
     const attached = await call({ op: 'attach', provider: 'claude', cwd: tmpdir(), workerId: 'w9' }, secret)

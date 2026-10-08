@@ -167,7 +167,8 @@ describe('the gateway and the workers it serves', () => {
   it('writes a private MCP config for Claude workers only while it is up, and removes it on unload', async () => {
     const { fiber, home, secret } = await mount({ online: true })
     const path = join(home, 'agent-workers', 'claude-mcp.json')
-    expect(statSync(path).mode & 0o777).toBe(0o600)
+    // File modes are a POSIX notion; on Windows the file is private through the user profile's ACL.
+    if (process.platform !== 'win32') expect(statSync(path).mode & 0o777).toBe(0o600)
     const config = JSON.parse(readFileSync(path, 'utf8')) as { mcpServers: { acryl: { type: string; url: string; headers: { Authorization: string } } } }
     expect(config.mcpServers.acryl).toEqual({ type: 'http', url: `http://127.0.0.1:${String(port)}${MCP_PATH}`, headers: { Authorization: `Bearer ${String(secret)}` } })
     await fiber.dispose()

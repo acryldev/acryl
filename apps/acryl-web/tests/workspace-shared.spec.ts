@@ -104,66 +104,70 @@ describe('the ACRYL workspace on the Web surface', () => {
         headers: { ...headers, 'content-type': 'application/json' },
         body: JSON.stringify({ id: terminal.id }),
       })
-      // A custom agent is added by the user, saved in the ACRYL home, and started by id only.
-      const added = await fetch(`${origin}/api/acryl-workspace/agents`, {
-        method: 'POST',
-        headers: { ...headers, 'content-type': 'application/json' },
-        body: JSON.stringify({ agent: { id: 'echo-agent', label: 'Echo', command: '/bin/echo', args: ['custom-agent-ran'], badge: { letter: 'E', color: '#10a37f' } } }),
-      })
-      expect(added.status).toBe(200)
-      expect(JSON.parse(await readFile(join(home, 'workspace', 'agents.json'), 'utf8'))).toHaveLength(1)
-      const custom = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'echo-agent', cwd: repo }) })
-      expect(custom.status).toBe(200)
-      const customId = (await custom.json() as { id: string }).id
-      let customOutput = ''
-      for (let attempt = 0; attempt < 40 && !customOutput.includes('custom-agent-ran'); attempt += 1) {
-        await new Promise(resolve => { setTimeout(resolve, 100) })
-        customOutput = ((await (await fetch(`${origin}/api/acryl-workspace/pty?id=${customId}`, { headers })).json()) as { output: string }).output
+      // Launching agents is covered here with POSIX fixtures (/bin/echo, a #!/bin/sh stub, `sh -c` hooks). Windows launches them through
+      // PowerShell and has its own specs in apps/acryl-desktop/tests/windows, so this segment runs on POSIX hosts only.
+      if (process.platform !== 'win32') {
+        // A custom agent is added by the user, saved in the ACRYL home, and started by id only.
+        const added = await fetch(`${origin}/api/acryl-workspace/agents`, {
+          method: 'POST',
+          headers: { ...headers, 'content-type': 'application/json' },
+          body: JSON.stringify({ agent: { id: 'echo-agent', label: 'Echo', command: '/bin/echo', args: ['custom-agent-ran'], badge: { letter: 'E', color: '#10a37f' } } }),
+        })
+        expect(added.status).toBe(200)
+        expect(JSON.parse(await readFile(join(home, 'workspace', 'agents.json'), 'utf8'))).toHaveLength(1)
+        const custom = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'echo-agent', cwd: repo }) })
+        expect(custom.status).toBe(200)
+        const customId = (await custom.json() as { id: string }).id
+        let customOutput = ''
+        for (let attempt = 0; attempt < 40 && !customOutput.includes('custom-agent-ran'); attempt += 1) {
+          await new Promise(resolve => { setTimeout(resolve, 100) })
+          customOutput = ((await (await fetch(`${origin}/api/acryl-workspace/pty?id=${customId}`, { headers })).json()) as { output: string }).output
+        }
+        expect(customOutput).toContain('custom-agent-ran')
+        // Agent settings: the user's permission mode and a command override decide what a known agent launches.
+        const settingsUrl = `${origin}/api/acryl-workspace/agents/settings`
+        const post = (body: unknown) => fetch(settingsUrl, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify(body) })
+        const before = await (await fetch(settingsUrl, { headers })).json() as { permissions: string; agents: Array<{ id: string; installed: boolean; kind: string }> }
+        expect(before.permissions).toBe('manual')
+        expect(before.agents.find(agent => agent.id === 'echo-agent')).toMatchObject({ kind: 'custom', installed: true })
+        expect((await post({ permissions: 'yolo' })).status).toBe(200)
+        expect((await post({ agent: { id: 'aider', command: '/bin/echo', args: ['settings-applied'] } })).status).toBe(200)
+        expect((await post({ agent: { id: 'aider', command: 'rm -rf /' } })).status).toBe(400)
+        expect(JSON.parse(await readFile(join(home, 'workspace', 'agent-settings.json'), 'utf8')).permissions).toBe('yolo')
+        const configured = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'aider', cwd: repo }) })
+        expect(configured.status).toBe(200)
+        const configuredId = (await configured.json() as { id: string }).id
+        let configuredOutput = ''
+        for (let attempt = 0; attempt < 40 && !configuredOutput.includes('settings-applied'); attempt += 1) {
+          await new Promise(resolve => { setTimeout(resolve, 100) })
+          configuredOutput = ((await (await fetch(`${origin}/api/acryl-workspace/pty?id=${configuredId}`, { headers })).json()) as { output: string }).output
+        }
+        expect(configuredOutput).toContain('--yes-always settings-applied')
+        // Attention: a Claude launch carries hooks and this terminal's credentials; running a hook command as a real shell
+        // makes the Host report the state, and the page's status list shows it.
+        const fakeClaude = join(home, 'fake-claude.sh')
+        await writeFile(fakeClaude, '#!/bin/sh\necho "TOKEN=$ACRYL_STATUS_TOKEN"\necho "URL=$ACRYL_STATUS_URL"\necho "TERM_ID=$ACRYL_TERMINAL_ID"\necho "SETTINGS=$2"\nsleep 30\n', { mode: 0o755 })
+        expect((await post({ agent: { id: 'claude', command: fakeClaude } })).status).toBe(200)
+        const claude = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'claude', cwd: repo }) })
+        expect(claude.status).toBe(200)
+        const claudeId = (await claude.json() as { id: string }).id
+        let claudeOutput = ''
+        for (let attempt = 0; attempt < 50 && !claudeOutput.includes('SETTINGS='); attempt += 1) {
+          await new Promise(resolve => { setTimeout(resolve, 100) })
+          claudeOutput = ((await (await fetch(`${origin}/api/acryl-workspace/pty?id=${claudeId}`, { headers })).json()) as { output: string }).output
+        }
+        const field = (name: string): string => new RegExp(`${name}=(.*?)\\r?\\n`).exec(claudeOutput)?.[1] ?? ''
+        const hooks = JSON.parse(field('SETTINGS')) as { hooks: { Notification: Array<{ hooks: Array<{ command: string }> }> } }
+        const hookCommand = hooks.hooks.Notification[0]?.hooks[0]?.command ?? ''
+        expect(field('TERM_ID')).toBe(claudeId)
+        await execFileAsync('sh', ['-c', hookCommand], { env: { PATH: process.env.PATH, ACRYL_STATUS_TOKEN: field('TOKEN'), ACRYL_STATUS_URL: field('URL'), ACRYL_TERMINAL_ID: field('TERM_ID') } })
+        const statusList = await (await fetch(`${origin}/api/acryl-workspace/agent-status`, { headers })).json() as { statuses: Array<{ terminalId: string; state: string }> }
+        expect(statusList.statuses).toContainEqual(expect.objectContaining({ terminalId: claudeId, state: 'waiting' }))
+        const forged = await fetch(field('URL'), { method: 'POST', headers: { authorization: 'Bearer wrong', 'content-type': 'application/json' }, body: JSON.stringify({ terminal: claudeId, state: 'done' }) })
+        expect(forged.status).toBe(403)
+        const smuggled = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'sh -c id' }) })
+        expect(smuggled.status).toBe(500)
       }
-      expect(customOutput).toContain('custom-agent-ran')
-      // Agent settings: the user's permission mode and a command override decide what a known agent launches.
-      const settingsUrl = `${origin}/api/acryl-workspace/agents/settings`
-      const post = (body: unknown) => fetch(settingsUrl, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify(body) })
-      const before = await (await fetch(settingsUrl, { headers })).json() as { permissions: string; agents: Array<{ id: string; installed: boolean; kind: string }> }
-      expect(before.permissions).toBe('manual')
-      expect(before.agents.find(agent => agent.id === 'echo-agent')).toMatchObject({ kind: 'custom', installed: true })
-      expect((await post({ permissions: 'yolo' })).status).toBe(200)
-      expect((await post({ agent: { id: 'aider', command: '/bin/echo', args: ['settings-applied'] } })).status).toBe(200)
-      expect((await post({ agent: { id: 'aider', command: 'rm -rf /' } })).status).toBe(400)
-      expect(JSON.parse(await readFile(join(home, 'workspace', 'agent-settings.json'), 'utf8')).permissions).toBe('yolo')
-      const configured = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'aider', cwd: repo }) })
-      expect(configured.status).toBe(200)
-      const configuredId = (await configured.json() as { id: string }).id
-      let configuredOutput = ''
-      for (let attempt = 0; attempt < 40 && !configuredOutput.includes('settings-applied'); attempt += 1) {
-        await new Promise(resolve => { setTimeout(resolve, 100) })
-        configuredOutput = ((await (await fetch(`${origin}/api/acryl-workspace/pty?id=${configuredId}`, { headers })).json()) as { output: string }).output
-      }
-      expect(configuredOutput).toContain('--yes-always settings-applied')
-      // Attention: a Claude launch carries hooks and this terminal's credentials; running a hook command as a real shell
-      // makes the Host report the state, and the page's status list shows it.
-      const fakeClaude = join(home, 'fake-claude.sh')
-      await writeFile(fakeClaude, '#!/bin/sh\necho "TOKEN=$ACRYL_STATUS_TOKEN"\necho "URL=$ACRYL_STATUS_URL"\necho "TERM_ID=$ACRYL_TERMINAL_ID"\necho "SETTINGS=$2"\nsleep 30\n', { mode: 0o755 })
-      expect((await post({ agent: { id: 'claude', command: fakeClaude } })).status).toBe(200)
-      const claude = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'claude', cwd: repo }) })
-      expect(claude.status).toBe(200)
-      const claudeId = (await claude.json() as { id: string }).id
-      let claudeOutput = ''
-      for (let attempt = 0; attempt < 50 && !claudeOutput.includes('SETTINGS='); attempt += 1) {
-        await new Promise(resolve => { setTimeout(resolve, 100) })
-        claudeOutput = ((await (await fetch(`${origin}/api/acryl-workspace/pty?id=${claudeId}`, { headers })).json()) as { output: string }).output
-      }
-      const field = (name: string): string => new RegExp(`${name}=(.*?)\\r?\\n`).exec(claudeOutput)?.[1] ?? ''
-      const hooks = JSON.parse(field('SETTINGS')) as { hooks: { Notification: Array<{ hooks: Array<{ command: string }> }> } }
-      const hookCommand = hooks.hooks.Notification[0]?.hooks[0]?.command ?? ''
-      expect(field('TERM_ID')).toBe(claudeId)
-      await execFileAsync('sh', ['-c', hookCommand], { env: { PATH: process.env.PATH, ACRYL_STATUS_TOKEN: field('TOKEN'), ACRYL_STATUS_URL: field('URL'), ACRYL_TERMINAL_ID: field('TERM_ID') } })
-      const statusList = await (await fetch(`${origin}/api/acryl-workspace/agent-status`, { headers })).json() as { statuses: Array<{ terminalId: string; state: string }> }
-      expect(statusList.statuses).toContainEqual(expect.objectContaining({ terminalId: claudeId, state: 'waiting' }))
-      const forged = await fetch(field('URL'), { method: 'POST', headers: { authorization: 'Bearer wrong', 'content-type': 'application/json' }, body: JSON.stringify({ terminal: claudeId, state: 'done' }) })
-      expect(forged.status).toBe(403)
-      const smuggled = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'sh -c id' }) })
-      expect(smuggled.status).toBe(500)
       // Web keeps log files and serves a diagnostics archive (Settings > Support downloads it).
       expect(rows.get('acryl-support')?.fiber).toBeDefined()
       const support = await fetch(`${origin}/api/acryl-support/diagnostics`, { headers: { ...headers, referer: `${origin}/` } })
