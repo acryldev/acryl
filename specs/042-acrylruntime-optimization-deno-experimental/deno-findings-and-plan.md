@@ -343,7 +343,7 @@ document-preview 13.9 MB, `sherpa-onnx` 32.5 MB, `sharp` libvips 17.3 MB) leaves
 declarations (43 MB, nothing loads them) and non-ACRYL markdown (4 MB) leaves 123.8 MB. Every variant was
 boot-tested (listening, `GET /` answered).
 
-**Gate verdict (the 200 MB line set before measuring): passes only as the lean build, by 7 MB (3.5%).** With every
+**Superseded by F10 below (this table compared against the wrong feature set; the shipped Electron app never contained LibreOffice or sherpa, and the lean build wrongly dropped libvips).** Original text: **Gate verdict (the 200 MB line set before measuring): passes only as the lean build, by 7 MB (3.5%).** With every
 feature in, the Deno app is 403 MB installed (about 100 MB below Electron) and downloads at the same size as
 Electron's DMG. So the experiment's premise holds *if and only if* LibreOffice document preview, voice and
 `sharp`'s native image library become **on-demand downloads**, a product decision, not an engineering one. That
@@ -409,6 +409,82 @@ rules (installation versus profile scope, peers, `#imports`) live in `dsh-app-bo
 **Harness worker threads** install the same interception from `setEnvironmentData`, so on Deno they would throw in the worker (the
 code-runtime and PTC workflow workers). `worker_threads` + `vm` themselves work (F7), so this is the same fallback question, untested.
 
+### F10. The like-for-like comparison, the checks asked for, and a correction (2026-10-08)
+
+**Correction to F8.** F8 measured the *web* surface's dependency closure, which includes LibreOffice document preview (146.1 + 13.9 MB), `sherpa-onnx`
+voice (32.5 MB) and sharp's libvips. The Electron app that ships today contains **none of LibreOffice or sherpa** (checked inside the 0.1.7 release),
+so "the owner must decide whether those become downloads" was a false question, and my "lean" build was wrongly missing libvips, which Desktop does ship
+(and ships for four platforms: about 73 MB, three of them foreign). Redone like for like: the same production closure minus only LibreOffice kit, document
+preview and sherpa, libvips kept; the Electron release pruned with the same script (`probes/d6-prune.mjs`: other-platform natives, type declarations,
+non-ACRYL markdown); one staging method (`ditto`) and the same compressors for all.
+
+| One machine, macOS arm64, ad-hoc signed | Installed | DMG (UDZO zlib-9) | tar + xz -6 |
+|---|---|---|---|
+| **Deno app** (`deno desktop` shell + payload) | **210.3 MB** | **110.5 MB** | **46.1 MB** |
+| Electron release, pruned the same way | 447.1 MB | 216.7 MB | 103.2 MB |
+| Electron release as shipped | 529.7 MB | 268.2 MB | 128.0 MB |
+
+Caveats on the table: `hdiutil` gave 200 MB or 268 MB for identical Electron bytes depending on how the folder was staged, so only the `ditto`-staged rows
+are comparable to each other; electron-builder's own DMG of the same release is 190.6 MB (a better compressor), so compare ratios, not those absolute
+download numbers. Of the Electron app, 273.1 MB is the Electron Framework (Chromium); the Deno runtime is 64.9 MB. **The saving attributable to Deno
+is about 237 MB installed (-53%) and about 106 MB of DMG (-49%) against an equally pruned Electron**; 82 MB of the gap to the shipped app is pruning that
+Electron can also do. Against the 200 MB line set in advance: **210.3 MB misses "roughly 200" by 5%**, closable (provider SDKs about 30 MB, minification
+untested). `deno desktop --compress` (self-extracting xz) was not tried; the xz figure suggests a distributable near 46 MB.
+
+**WebKit, looked at properly.** The window was captured alone (`CGWindowList` id plus `screencapture -l`, never the desktop) and viewed. The ACRYL UI renders
+cleanly: sidebar, tabs, composer, model picker, the first-run dialogs. A page-side feature battery: WebGL2, OKLCH, `:has()`, container queries, backdrop
+filter, nesting, subgrid, ResizeObserver, IntersectionObserver, drag-and-drop, WebSocket, Web Workers, IndexedDB, clipboard API all present; **37
+resources loaded, 0 failed**. Missing: `SharedArrayBuffer`/cross-origin isolation, `requestIdleCallback`, `showDirectoryPicker`/File System Access
+(Chromium-only; the directory picker has to be native, as it already is in Electron's route), none of which the load needed. **The terminal works end to end
+in that window**: a real `zsh` with the user's own prompt, colors and cursor, rendered by xterm (2 canvases per terminal), a typed command executed and its
+output shown, the tab marked "running", over WebSocket through the FFI pty. Not exercised: editor, drag-and-drop of a folder, long sessions.
+
+**Signing.** There is no Developer ID here, so notarization itself was not attempted. Hardened runtime, the part that decides it: with no entitlements the
+runtime library does not load (library validation); with `allow-jit`, `allow-unsigned-executable-memory` and `disable-library-validation` (the set Electron
+apps use) **the app runs**. The lean payload contains **8 Mach-O files** (two `node-pty` helpers, a ripgrep, koffi, sharp and its libvips, two addon
+packages) that each need signing: a short loop. Not tested: a real Developer ID signature, Apple's notarization service, stapling, auto-update.
+
+**Host speed and memory** (same `apps/acryl-web`, isolated, 3 runs each): time to listening **1.5-2.2 s on Node, 1.5-1.7 s on Deno**; idle RSS after 8 s
+**340 MB on Node, 276 MB on Deno (-19%)**. No regression.
+
+**Linux terminal (closes F7's Linux gap).** The adapter now has a per-platform table. Run in the official `denoland/deno:2.9.7` image through OrbStack, the 8
+Deno tests pass on **Linux arm64 (native) and Linux x64 (emulated)**, as on macOS. The Linux run found and fixed two real defects: `posix_spawn_file_actions_t`
+and `posix_spawnattr_t` are structs of about 80 and 336 bytes on glibc (8-byte handles on macOS), so 8-byte buffers corrupted the heap (`corrupted
+double-linked list`; buffers are now 1 KB everywhere); and a `dup2`'d slave does not become a controlling terminal on Linux, so Ctrl-C was never delivered
+(`setsid -c` now makes it one and `exec`s, preserving pid and exit code, with an up-front executable check so a missing command still fails loudly). Windows
+(ConPTY via `kernel32`) and musl/Alpine are not written; macOS x64 is unverified. The whole *app* on Linux was not built (the payload is a macOS payload).
+
+**One side effect to remember.** The terminal's shell reads the user's real zsh config and history regardless of `HOME`; my first terminal runs appended two
+test commands to the real `~/.zsh_history` (removed by exact match afterwards). Any terminal test must set `HISTFILE=/dev/null` and `ZDOTDIR`.
+
+## Conclusion of the experiment (2026-10-08)
+
+**Technically sound, and the premise holds, with margins that need honest labels.**
+
+What is established (each measured on this machine):
+- The ACRYL host, the Harness (a real agent turn), the Loader, plugin reload, sqlite, sherpa inference, koffi, sharp, ws and workers all behave like Node on Deno.
+- Two real incompatibilities were found and fixed in ACRYL's own code with no edit to the Harness submodule: the `PluginPackages` boot interception (a fallback) and
+  `node-pty` (a libc-FFI terminal, now on macOS arm64 and Linux arm64/x64, with tests).
+- A `deno desktop` window hosts the real client, including a working terminal, and passes hardened runtime with three standard entitlements.
+- Size against an equally pruned Electron: -53% installed, -49% download. Memory of the host: -19%. Startup: equal.
+
+What is not established, in the order that can still change the answer:
+1. **The shell port (D7)**: 12 Electron modules (menus, tray, dialogs, windows, recovery and profile windows, workspace admission) plus packaging and updates.
+   The window API has menus, tray, dock, context menus and window control; it has **no native dialog** (the directory picker needs FFI or a helper). Unmeasured cost.
+2. **Windows**: ConPTY terminal, WebView2 behaviour, signing. Nothing run. This is the largest unknown left, and it decides whether "one app on three OSes" survives.
+3. **Real notarization and auto-update** of a `deno desktop` app. `deno desktop` is labelled experimental by Deno.
+4. **Maintenance**: ACRYL now owns a fallback in `engine-dsh.ts` and a native-FFI terminal per platform, and depends on each Harness update not adding another
+   Node-private API (a canary: `probes/d1-deno-host.mjs` and the Deno tests, runnable in CI). Live package replace without a restart (Tier 2) is not built;
+   public `module.registerHooks` works on Deno so it is a bounded port; Harness worker threads would hit the same interception and are untested.
+5. Smaller: a tool-call round trip and a real model on Deno; the editor and folder drag-and-drop in WebKit; the 5% size gap.
+
+**Recommendation: continue, as a bounded Phase 2 with stop conditions, not as a commitment to ship.** Do first, cheapest and most decisive: (a) a Windows
+spike (a `deno desktop` window loading the client in WebView2, plus a ConPTY terminal), because nothing so far touches it; (b) the smallest vertical of D7: app
+menu, quit handling, a native folder picker, and removing the 15 s navigate delay; (c) a real Developer ID signature and a notarization submission by someone who
+holds the certificate. **Stop the migration if**: WebView2 or the Windows terminal cannot reach parity; notarization rejects the bundle for a reason that is not
+fixable; or the D7 port's measured cost per module exceeds what -237 MB of installed size and a 2x smaller download are worth. Keep Option A (Deno shell, Node
+host, about 440 MB) only as a fallback; with the measured numbers it saves too little to justify itself alone.
+
 ## Options
 
 - **Option A, Deno desktop as shell only.** The host stays on Node as a child process; the webview loads its local URL
@@ -428,25 +504,12 @@ going further. All runs follow the probe safety rules at the end.
 | **D1** | Can Deno install and resolve a profile's plugin packages? | Find where the profile install runs (pinned pnpm) and why it does not run or does not report under Deno; then make the Loader's imports resolve from the profile folder (`--node-modules-dir=manual` with an installed profile, or an import map generated from the profile). Probes: `probes/d1-deno-host.mjs` (serving-mode run), `probes/d1b-diagnose-fibers.mjs` (fiber-state dump - use this one when `d1-deno-host.mjs` prints "no answer" with nothing else, since a failed child fiber does not reject `serveWeb()`'s own promise) | **Met (2026-10-07).** `GET /` returns 404 without a token, matching the Node baseline, confirmed over 3 clean runs. Fixed in ACRYL's own `engine-dsh.ts` (not the submodule): catch `PluginPackages`'s native-addon failure and materialize its package table as `node_modules` symlinks instead (F3's "Tier 1" fix). Existing Node test suite (22 tests, 4 spec files) passes unmodified. Live package replace without a restart is not restored - see F3 "Tier 2 scope" |
 | **D2** | Does the Cordis Loader work without Node internals? | With D1 passing, enable and disable a profile row at run time; reload one plugin with a fresh `import()` | **Met (2026-10-08, F9).** The real Loader's create, disable, re-enable, config change, reload-after-edit and remove are identical on Deno and Node (6/6), no `--expose-internals`; the reload mechanism also works inside the packaged binary (F6). Open: the agent-plugin dependency allowlist (F6) |
 | **D3** | Do the native and Node-API pieces work? | Run 042's `probes/runtime-compat.mjs` and `probes/e5-ws-worker.mjs` under Deno: `node-pty` events, `node:sqlite`, module re-import, `ws` upgrade, `worker_threads` with `node:vm`; then `koffi`, `sharp` (`probes/native-modules.mjs`) | **Met with one replacement (2026-10-08).** Everything matches Node except `node-pty`, which fails silently; the named replacement is libc FFI (`probes/deno-ffi-pty.ts`), all checks pass on macOS. Linux and Windows pty are not done (F7) |
-| **D4** | Does the ACRYL client work in WebKit? | Open the D1 host URL in Safari (same engine as WKWebView); check terminal (xterm, `@xterm/addon-webgl`), editor, layout | **Met at first look (2026-10-08, F8).** The client renders in the `deno desktop` WKWebView window (494 nodes, real UI text, xterm styles present). Terminal output, editor and layout were not exercised or inspected visually |
+| **D4** | Does the ACRYL client work in WebKit? | Open the D1 host URL in Safari (same engine as WKWebView); check terminal (xterm, `@xterm/addon-webgl`), editor, layout | **Met (2026-10-08, F10).** Captured window viewed: UI renders cleanly; WebGL2 and the modern CSS used are present; 37 resources, 0 failed; the xterm terminal works end to end. Editor and folder drag-and-drop not exercised |
 | **D5** | Does a `deno desktop` window host ACRYL? | A Deno desktop entry that starts the host (Option A: Node child; Option B: in process) and opens a window on its URL | **Met in process (Option B), 2026-10-08 (F8).** Host and window run in one `deno desktop` process; host stopped and port freed on exit. Not done: menus, tray, quit handling, the 15 s navigate delay |
-| **D6** | What is the real size? | Build the D5 app with the profile's plugin set included explicitly; then remove dependencies a desktop build does not need (unused provider SDKs, telemetry exporters, bundled pnpm, `sharp` if unused) | **Measured (2026-10-08, F8): 193.0 MB installed, 107.6 MB DMG lean; 403.1 MB / 191.6 MB with every feature.** Passes the 200 MB gate only without LibreOffice preview, voice and libvips |
+| **D6** | What is the real size? | Build the D5 app with the profile's plugin set included explicitly; then remove dependencies a desktop build does not need | **Measured like for like (2026-10-08, F10): 210.3 MB installed, 110.5 MB DMG, against 447.1 / 216.7 for an equally pruned Electron (-53% / -49%).** Misses "roughly 200 MB" by 5%, closable. (F8's first numbers were for the wrong feature set; see F10) |
 | **D7** | Shell parity | Map the 12 Electron modules (menu, tray, dialogs, windows, recovery window, profile window, workspace admission) and the updater, signing and notarization to `deno desktop` | Every Desktop feature has a Deno equivalent or a recorded gap |
 
-Decision after D3 and D6-early (2026-10-08): both gaps found were closable without editing `deepseek-harness/` (D1: an ACRYL-side
-fallback; D3: a libc-FFI pty in place of `node-pty`), the Harness runs a real agent turn on Deno, the Loader behaves like Node,
-and the web client renders in a `deno desktop` window. **Continue with Option B is justified technically.** Whether to continue
-at all rests on one decision outside engineering: the size premise (F8) holds only if LibreOffice document preview, voice and
-`sharp`'s native image library become on-demand downloads (lean build 193.0 MB installed against the 200 MB line; 403.1 MB with
-everything). Still open, in order of how much they can change the answer:
-1. **Owner decision on the optional packs** (above) and what each feature does when its pack is absent (untested).
-2. **D7**, the Electron-to-`deno desktop` port (12 modules plus packaging, signing, notarization). The window API covers menus, tray,
-   dock, window control and devtools; **no native dialog API** (the directory picker needs FFI or a helper); signing and
-   notarization of a `deno desktop` app are untested. `deno desktop` is itself experimental.
-3. **Linux and Windows terminal**, and a CI job that runs the Deno tests on Linux.
-4. **Live package replace without a restart** (Tier 2, F9): bounded, public API exists, worker-thread behaviour untested.
-5. A tool-call round trip and a real-model session on Deno; Windows and Linux builds of the whole app.
-Fallback if D7 or the size decision fails: Option A (Deno shell, Node host), about 440 MB, a saving of roughly 60 MB.
+Decision after D3 and D6-early (2026-10-08): superseded by the "Conclusion of the experiment" below F10, which uses the corrected measurements.
 
 ## D6-early gate (set 2026-10-08, before any measurement)
 

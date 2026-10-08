@@ -13,7 +13,18 @@ const run = (command: string, args: string[], opts: Partial<typeof OPTS> & { env
 const within = <T>(p: Promise<T>, ms: number, what: string) => Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error(`timeout: ${what}`)), ms))])
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 const openFds = () => [...Deno.readDirSync('/dev/fd')].length
-const children = async () => new TextDecoder().decode((await new Deno.Command('pgrep', { args: ['-P', String(Deno.pid)], stdout: 'piped', stderr: 'null' }).output()).stdout).trim()
+// Direct children of this process (zombies included): /proc on Linux, pgrep on macOS.
+const children = async () => {
+  if (Deno.build.os === 'linux') {
+    const found: string[] = []
+    for (const e of Deno.readDirSync('/proc')) {
+      if (!/^\d+$/.test(e.name)) continue
+      try { const stat = Deno.readTextFileSync(`/proc/${e.name}/stat`); if (Number(stat.slice(stat.lastIndexOf(')') + 2).split(' ')[1]) === Deno.pid) found.push(e.name) } catch { /* gone */ }
+    }
+    return found.join(' ')
+  }
+  return new TextDecoder().decode((await new Deno.Command('pgrep', { args: ['-P', String(Deno.pid)], stdout: 'piped', stderr: 'null' }).output()).stdout).trim()
+}
 
 Deno.test('output and exit code', async () => {
   const t = run('/bin/sh', ['-c', 'echo hello; exit 3'])

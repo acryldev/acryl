@@ -5,10 +5,12 @@
  * driven by Deno's event loop; specs/042 F7). This adapter does the same job with `openpty`, `posix_spawnp`
  * (new session, the slave on fds 0-2), `poll` + `read` for output and `waitpid(WNOHANG)` for the exit.
  *
- * Verified on macOS only. Linux (other flag and ioctl values, libutil) and Windows (ConPTY) are not written: an
- * untested port would only be a claim, so those platforms throw and the caller keeps `node-pty`.
+ * Platform table: macOS arm64 and Linux (glibc, arm64 and x64) have been run against the Deno tests in `deno-tests/`; macOS x64,
+ * musl and Windows (ConPTY) are not written or not verified, so those hosts throw and the caller keeps `node-pty`.
  */
 
+import { accessSync, constants } from 'node:fs'
+import { delimiter, isAbsolute, join } from 'node:path'
 import type { WorkspacePtyProcess, WorkspacePtySpawn } from './service.ts'
 
 type Pointer = object | null
@@ -35,8 +37,8 @@ interface Libc {
   write(fd: number, buffer: Uint8Array, count: bigint): number | bigint
   close(fd: number): number
   poll(fds: Uint8Array, count: number, timeoutMs: number): number
-  /** ioctl is variadic; Apple arm64 passes variadic arguments on the stack, so six dummy register arguments push the real one there. */
-  ioctl(fd: number, request: bigint, d1: number, d2: number, d3: number, d4: number, d5: number, d6: number, argument: Uint8Array): number
+  /** Variadic. On Apple arm64 the argument goes on the stack (see `PLATFORMS.darwin.ioctl`), elsewhere it is an ordinary third argument. */
+  ioctl(...args: readonly (number | bigint | Uint8Array)[]): number
   kill(pid: number, signal: number): number
 }
 
@@ -57,18 +59,38 @@ const SYMBOLS = {
   write: { parameters: ['i32', 'buffer', 'usize'], result: 'isize' },
   close: { parameters: ['i32'], result: 'i32' },
   poll: { parameters: ['buffer', 'u32', 'i32'], result: 'i32' },
-  ioctl: { parameters: ['i32', 'u64', 'i32', 'i32', 'i32', 'i32', 'i32', 'i32', 'buffer'], result: 'i32' },
   kill: { parameters: ['i32', 'i32'], result: 'i32' },
 } as const
 
-// macOS values (specs/042 F7).
-const POSIX_SPAWN_SETSID = 0x0400
-const TIOCSWINSZ = 0x80087467n
+interface PlatformTable {
+  readonly library: readonly string[]
+  readonly spawnSetsid: number
+  /** Prefix that makes the child a session leader WITH the pty as its controlling terminal (Ctrl-C needs one). Empty where the OS grants it for a dup2'd slave (macOS). */
+  readonly controllingTerminalWrapper: readonly string[]
+  readonly tiocswinsz: bigint
+  /** FFI declaration of ioctl, and how its arguments are laid out. */
+  readonly ioctl: { readonly parameters: readonly string[]; readonly args: (fd: number, request: bigint, argument: Uint8Array) => readonly (number | bigint | Uint8Array)[] }
+}
+const PLATFORMS: Readonly<Record<string, PlatformTable>> = {
+  // Apple arm64 passes variadic arguments on the stack, so six dummy register arguments push the real one there (specs/042 F7).
+  darwin: {
+    library: ['/usr/lib/libSystem.B.dylib'], spawnSetsid: 0x0400, controllingTerminalWrapper: [], tiocswinsz: 0x80087467n,
+    ioctl: { parameters: ['i32', 'u64', 'i32', 'i32', 'i32', 'i32', 'i32', 'i32', 'buffer'], args: (fd, request, argument) => [fd, request, 0, 0, 0, 0, 0, 0, argument] },
+  },
+  // glibc: openpty is in libc since 2.34 (libutil before); variadic arguments are ordinary on both arm64 and x64.
+  linux: {
+    // glibc gives a session leader a controlling terminal only when it opens a tty, not for a dup2'd fd, so util-linux `setsid -c` (TIOCSCTTY on stdin, then exec) does it
+    // and the spawn flag is not used (setsid(1) must call setsid() itself).
+    library: ['libc.so.6', 'libutil.so.1'], spawnSetsid: 0, controllingTerminalWrapper: ['setsid', '-c'], tiocswinsz: 0x5414n,
+    ioctl: { parameters: ['i32', 'u64', 'buffer'], args: (fd, request, argument) => [fd, request, argument] },
+  },
+}
 const POLLIN = 0x0001
 const POLLOUT = 0x0004
 const POLLHUP = 0x0010
 const WNOHANG = 1
 const SIGNALS: Readonly<Record<string, number>> = { SIGHUP: 1, SIGINT: 2, SIGQUIT: 3, SIGKILL: 9, SIGTERM: 15 }
+const SPAWN_STRUCT_BYTES = 1024
 const TICK_MS = 10
 /** While data is flowing, wait this long for the next pty chunk instead of ending the tick. */
 const FLOW_WAIT_MS = 1
@@ -78,19 +100,28 @@ const WRITE_CHUNK_BYTES = 4096
 
 const denoGlobal = (): DenoFfi | undefined => (globalThis as { Deno?: DenoFfi }).Deno
 
-/** True where this adapter has been verified: a Deno host on macOS. */
-export function denoFfiPtySupported(platform: NodeJS.Platform = process.platform): boolean {
-  return denoGlobal() !== undefined && platform === 'darwin'
+/** True where this adapter has been verified: a Deno host on macOS arm64 or glibc Linux (arm64, x64). */
+export function denoFfiPtySupported(platform: NodeJS.Platform = process.platform, arch: string = process.arch): boolean {
+  if (denoGlobal() === undefined) return false
+  return (platform === 'darwin' && arch === 'arm64') || (platform === 'linux' && (arch === 'arm64' || arch === 'x64'))
 }
 
-let libc: { readonly symbols: Libc; readonly deno: DenoFfi } | undefined
-function loadLibc(): { readonly symbols: Libc; readonly deno: DenoFfi } {
+let libc: { readonly symbols: Libc; readonly deno: DenoFfi; readonly table: PlatformTable } | undefined
+function loadLibc(): { readonly symbols: Libc; readonly deno: DenoFfi; readonly table: PlatformTable } {
   if (libc !== undefined) return libc
   const deno = denoGlobal()
-  if (deno === undefined || process.platform !== 'darwin') {
-    throw new Error(`the Deno FFI terminal is only verified on macOS under Deno (this is ${process.platform}${deno === undefined ? ', not Deno' : ''}); use node-pty`)
+  const table = PLATFORMS[process.platform]
+  if (deno === undefined || table === undefined || !denoFfiPtySupported()) {
+    throw new Error(`the Deno FFI terminal is verified on macOS arm64 and Linux (this is ${process.platform}-${process.arch}${deno === undefined ? ', not Deno' : ''}); use node-pty`)
   }
-  libc = { symbols: deno.dlopen('/usr/lib/libSystem.B.dylib', SYMBOLS).symbols, deno }
+  const symbolDefs = { ...SYMBOLS, ioctl: { parameters: table.ioctl.parameters, result: 'i32' } }
+  let loaded: { readonly symbols: Libc; close(): void } | undefined
+  let failure: unknown
+  for (const name of table.library) {
+    try { loaded = deno.dlopen(name, symbolDefs); break } catch (error) { failure = error }
+  }
+  if (loaded === undefined) throw new Error(`could not load libc for the terminal (${table.library.join(', ')}): ${String(failure)}`)
+  libc = { symbols: loaded.symbols, deno, table }
   return libc
 }
 
@@ -105,10 +136,19 @@ function cStringTable(deno: DenoFfi, values: readonly string[]): { table: BigUin
   return { table, keepAlive }
 }
 
+/** The wrapper starts fine and only then fails to exec a missing command, so check up front to keep the same loud failure as macOS (posix_spawnp reports ENOENT itself). */
+function assertExecutable(command: string, env: NodeJS.ProcessEnv): void {
+  const candidates = command.includes('/') ? [isAbsolute(command) ? command : join(process.cwd(), command)] : (env['PATH'] ?? process.env['PATH'] ?? '').split(delimiter).filter(Boolean).map(dir => join(dir, command))
+  for (const candidate of candidates) {
+    try { accessSync(candidate, constants.X_OK); return } catch { /* try the next */ }
+  }
+  throw new Error(`could not start ${command}: not found or not executable`)
+}
+
 const asBytes = (view: BigUint64Array | Int32Array | Uint16Array): Uint8Array => new Uint8Array(view.buffer)
 
 export const spawnDenoFfiPty: WorkspacePtySpawn = (command, args, options): WorkspacePtyProcess => {
-  const { symbols: c, deno } = loadLibc()
+  const { symbols: c, deno, table } = loadLibc()
 
   const fds = new Int32Array(2)
   const winsize = new Uint16Array([options.rows, options.cols, 0, 0])
@@ -116,23 +156,24 @@ export const spawnDenoFfiPty: WorkspacePtySpawn = (command, args, options): Work
   const master = fds[0] as number
   const slave = fds[1] as number
 
-  const actionsCell = new BigUint64Array(1)
-  const attrCell = new BigUint64Array(1)
-  const actions = asBytes(actionsCell)
-  const attr = asBytes(attrCell)
+  // posix_spawn_file_actions_t / posix_spawnattr_t are 8-byte handles on macOS but structs on glibc (about 80 and 336 bytes): size for the largest.
+  const actions = new Uint8Array(SPAWN_STRUCT_BYTES)
+  const attr = new Uint8Array(SPAWN_STRUCT_BYTES)
   c.posix_spawn_file_actions_init(actions)
   c.posix_spawnattr_init(attr)
   for (const fd of [0, 1, 2]) c.posix_spawn_file_actions_adddup2(actions, slave, fd)
   c.posix_spawn_file_actions_addclose(actions, slave)
   c.posix_spawn_file_actions_addclose(actions, master)
   if (options.cwd !== '') c.posix_spawn_file_actions_addchdir_np(actions, cString(options.cwd))
-  c.posix_spawnattr_setflags(attr, POSIX_SPAWN_SETSID)
+  c.posix_spawnattr_setflags(attr, table.spawnSetsid)
 
   const env = Object.entries({ ...options.env, TERM: options.name }).flatMap(([key, value]) => (value === undefined ? [] : [`${key}=${value}`]))
-  const argvTable = cStringTable(deno, [command, ...args])
+  if (table.controllingTerminalWrapper.length > 0) assertExecutable(command, options.env)
+  const launch = [...table.controllingTerminalWrapper, command, ...args]
+  const argvTable = cStringTable(deno, launch)
   const envTable = cStringTable(deno, env)
   const pidCell = new Int32Array(1)
-  const status = c.posix_spawnp(asBytes(pidCell), cString(command), actions, attr, asBytes(argvTable.table), asBytes(envTable.table))
+  const status = c.posix_spawnp(asBytes(pidCell), cString(launch[0] as string), actions, attr, asBytes(argvTable.table), asBytes(envTable.table))
   void argvTable.keepAlive
   void envTable.keepAlive
   c.posix_spawn_file_actions_destroy(actions)
@@ -220,7 +261,7 @@ export const spawnDenoFfiPty: WorkspacePtySpawn = (command, args, options): Work
     write: data => { if (!closed && data !== '') { pending.push(encoder.encode(data)); flushWrites() } },
     resize: (cols, rows) => {
       if (closed) return
-      c.ioctl(master, TIOCSWINSZ, 0, 0, 0, 0, 0, 0, asBytes(new Uint16Array([rows, cols, 0, 0])))
+      c.ioctl(...table.ioctl.args(master, table.tiocswinsz, asBytes(new Uint16Array([rows, cols, 0, 0]))))
     },
     kill: signal => { if (!closed) c.kill(pid, SIGNALS[signal ?? 'SIGHUP'] ?? SIGNALS['SIGHUP'] as number) },
   }

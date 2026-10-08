@@ -23,13 +23,18 @@ const win = new Deno.BrowserWindow()
 win.navigate(url)
 log('window created')
 
-// Evidence of what actually rendered: ask the page itself (no screenshot of the user's desktop).
+// Evidence of what actually rendered: ask the page itself. ACRYL_SPIKE_INSPECT=1 runs ACRYL_SPIKE_JS (a file of page scripts separated by a line
+// of "//----") after the page settles and logs each result; ACRYL_SPIKE_HOLD_SECONDS keeps the window open afterwards (for a window-only capture).
 if (Deno.env.get('ACRYL_SPIKE_INSPECT') === '1') {
   await new Promise((r) => setTimeout(r, 12000))
-  try {
-    const probe = `JSON.stringify({ title: document.title, readyState: document.readyState, nodes: document.querySelectorAll('*').length, textChars: (document.body?.innerText ?? '').length, text: (document.body?.innerText ?? '').replace(/\\s+/g, ' ').slice(0, 160), scripts: document.scripts.length, userAgent: navigator.userAgent.slice(0, 90), size: innerWidth + 'x' + innerHeight, hasXtermCss: !!document.querySelector('.xterm') })`
-    const result = await (win as any).executeJs(probe)
-    log('PAGE', typeof result === 'string' ? result : JSON.stringify(result))
-  } catch (e) { log('executeJs failed', e) }
+  const scripts = Deno.env.get('ACRYL_SPIKE_JS') ? Deno.readTextFileSync(Deno.env.get('ACRYL_SPIKE_JS')!).split(/^\/\/----$/m) : ['document.title']
+  for (const [i, js] of scripts.entries()) {
+    try {
+      const result = await (win as unknown as { executeJs(js: string): Promise<unknown> }).executeJs(js)
+      log(`PAGE[${i}]`, typeof result === 'string' ? result : JSON.stringify(result))
+    } catch (e) { log(`executeJs[${i}] failed`, e) }
+    await new Promise((r) => setTimeout(r, 1500))
+  }
+  await new Promise((r) => setTimeout(r, Number(Deno.env.get('ACRYL_SPIKE_HOLD_SECONDS') ?? '0') * 1000))
   Deno.exit(0)
 }
