@@ -17,7 +17,8 @@
   },
   "scripts": {
     "build": "pnpm -r --if-present --workspace-concurrency=1 run build",
-    "build:mac": "pnpm run dist:mac-smoke",
+    "build:mac": "pnpm run dist:mac-host",
+    "build:mac:universal": "pnpm run dist:mac-smoke",
     "build:windows": "pnpm run dist:win",
     "build:linux": "pnpm run dist:linux",
     "typecheck": "pnpm --filter acryl-control run typecheck && pnpm --filter @webboxes/blends-core run typecheck && pnpm --filter @webboxes/app-persistence run typecheck && pnpm --filter acryl-loopback-http run typecheck && pnpm --filter acryl-diagnostics run typecheck && pnpm --filter acryl-harness-runtime run typecheck && pnpm --filter acryl-cli run typecheck && pnpm --filter acryl-web run typecheck && pnpm --filter dsh-client-ui-brand-acryl run typecheck && pnpm --filter acryl-desktop run typecheck && pnpm --filter cordis-plugin-market run typecheck && pnpm --filter acryl-workspace run typecheck && pnpm --filter acryl-plugin-admin run typecheck && pnpm --filter acryl-support run typecheck && pnpm --filter acryl-settings run typecheck && pnpm --filter acryl-agent-control run typecheck",
@@ -45,6 +46,7 @@
     "package:dir": "pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run package:dir",
     "dist:mac": "pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:mac",
     "dist:mac-smoke": "pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:mac-smoke",
+    "dist:mac-host": "pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:mac-host",
     "dist:linux": "pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:linux",
     "dist:win": "pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:win",
     "dist:win-portable": "pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:win-portable",

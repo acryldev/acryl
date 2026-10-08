@@ -575,6 +575,7 @@ describe('published package surface', () => {
       'package.json',
       '!node_modules/node-pty/build/**',
       '!lib/**/*.map',
+      '!node_modules/**/*.map',
     ])
     expect(manifest.build?.mac?.icon).toBe('build/app-icon-mac.png')
     expect(manifest.build?.mac?.artifactName).toBe('acryl-desktop-mac-${arch}.${ext}')
@@ -618,6 +619,8 @@ describe('published package surface', () => {
     expect(packageDir).toContain("CSC_IDENTITY_AUTO_DISCOVERY: 'false'")
     expect(manifest.scripts?.['dist:mac']).toBe('node scripts/release-mac.ts')
     expect(manifest.scripts?.['dist:mac-smoke']).toBe('node scripts/package-mac.ts')
+    expect(manifest.scripts?.['dist:mac-host']).toBe('node scripts/package-mac.ts --host')
+    expect(manifest.build?.files).toContain('!node_modules/**/*.map')
     expect(manifest.scripts?.['dist:linux']).toBe('node scripts/package-linux.ts')
     expect(manifest.scripts?.['dist:win']).toBe('node scripts/package-win.ts')
     expect(manifest.scripts?.['dist:win-portable']).toBe('node scripts/package-win-portable.ts')
@@ -646,7 +649,8 @@ describe('published package surface', () => {
     expect(workspaceManifest.scripts?.['dist:linux'])
       .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:linux')
     expect(workspaceManifest.scripts).toMatchObject({
-      'build:mac': 'pnpm run dist:mac-smoke',
+      'build:mac': 'pnpm run dist:mac-host',
+      'build:mac:universal': 'pnpm run dist:mac-smoke',
       'build:windows': 'pnpm run dist:win',
       'build:linux': 'pnpm run dist:linux',
     })

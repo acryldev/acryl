@@ -137,6 +137,7 @@
     "package:dir": "pnpm run build && node scripts/package-dir.mjs",
     "dist:mac": "node scripts/release-mac.ts",
     "dist:mac-smoke": "node scripts/package-mac.ts",
+    "dist:mac-host": "node scripts/package-mac.ts --host",
     "dist:linux": "node scripts/package-linux.ts",
     "dist:win": "node scripts/package-win.ts",
     "dist:win-portable": "node scripts/package-win-portable.ts",
@@ -513,7 +514,8 @@
       "lib/**",
       "package.json",
       "!node_modules/node-pty/build/**",
-      "!lib/**/*.map"
+      "!lib/**/*.map",
+      "!node_modules/**/*.map"
     ],
     "mac": {
       "target": [

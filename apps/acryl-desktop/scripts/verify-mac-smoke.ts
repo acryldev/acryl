@@ -11,6 +11,8 @@ import { MACOS_UNIVERSAL_NATIVE_ENTRIES } from './mac-universal.ts'
 export interface MacSmokeVerificationOptions {
   /** Directory containing exactly one smoke DMG. */
   readonly distDir: string
+  /** CPUs the application must contain: both for a universal DMG (default), one for a host-only DMG. */
+  readonly arch?: 'universal' | 'arm64' | 'x64'
   /** Installed application name inside the mounted image. */
   readonly productName: string
   /** Return regular DMG files in the distribution directory. */
@@ -52,6 +54,7 @@ function defaultOptions(): MacSmokeVerificationOptions {
     distDir: process.argv[2] === undefined
       ? join(packageRoot, 'dist', 'mac-smoke')
       : resolve(process.argv[2]),
+    arch: process.argv[3] === 'arm64' || process.argv[3] === 'x64' ? process.argv[3] : 'universal',
     productName: 'ACRYL',
     listDmgs,
     makeMountPoint: () => mkdtempSync(join(tmpdir(), 'dsh-desktop-dmg-smoke-')),
@@ -114,8 +117,8 @@ export function verifyMacSmoke(
     ) {
       throw new Error(`packaged application has an invalid main executable: ${executablePath}`)
     }
-    options.run('lipo', [executablePath, '-verify_arch', 'x86_64'])
-    options.run('lipo', [executablePath, '-verify_arch', 'arm64'])
+    const expected = options.arch === 'arm64' ? ['arm64'] : options.arch === 'x64' ? ['x86_64'] : ['x86_64', 'arm64']
+    for (const cpu of expected) options.run('lipo', [executablePath, '-verify_arch', cpu])
 
     const appAsarPath = join(appPath, 'Contents', 'Resources', 'app.asar')
     if (!options.exists(appAsarPath)) {
@@ -127,7 +130,7 @@ export function verifyMacSmoke(
     }
 
     const unpackedRoot = `${appAsarPath}.unpacked`
-    for (const entry of MACOS_UNIVERSAL_NATIVE_ENTRIES) {
+    for (const entry of MACOS_UNIVERSAL_NATIVE_ENTRIES.filter(candidate => expected.includes(candidate.arch))) {
       const nativePath = join(unpackedRoot, entry.path)
       if (!options.exists(nativePath)) {
         throw new Error(`universal application is missing ${nativePath}`)
