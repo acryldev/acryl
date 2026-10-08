@@ -181,8 +181,8 @@ would actually require.
 | Gap | Where | Deno status |
 |---|---|---|
 | Cordis Loader and HMR use Node's private ESM loader (`--expose-internals` or `node-addon-require-builtin`) | `deepseek-harness/vendor/loader/src/internal.ts`, `vendor/hmr/src/index.ts`; ACRYL checks the flag in `runtime/acryl-harness-runtime/src/index.ts:222` | **Confirmed failing, not just unverified (F3 2026-10-07 follow-up).** `@deepseek-ai/dsh-app-boot`'s `PluginPackages` uses `node-addon-require-builtin` unconditionally (no absent-internals fallback) and throws under Deno's V8 (`Unsupported/no-context`), failing the whole engine fiber. This is D1's actual blocker, not a resolution or install gap |
-| Terminal: `node-pty` (native addon) | `plugins/acryl-workspace/src/pty/node-pty-spawn.ts`; harness `packages/subprocess/subprocess-local/src/terminal.ts` | Deno supports Node-API addons in principle. Unverified for `node-pty` |
-| Session query store: `node:sqlite` | harness `packages/session-query/session-query-sqlite` | Unverified on Deno |
+| Terminal: `node-pty` (native addon) | `plugins/acryl-workspace/src/pty/node-pty-spawn.ts`; harness `packages/subprocess/subprocess-local/src/terminal.ts` | **Confirmed failing (F7, 2026-10-08).** The addon loads and `spawn()` returns a live pid with no error, but `onData`/`onExit` never fire - the native PTY I/O pump itself is not integrated with Deno's event loop. Not a resolution/throw problem like D1; no equivalent fallback found yet |
+| Session query store: `node:sqlite` | harness `packages/session-query/session-query-sqlite` | **Confirmed working (F7, 2026-10-08).** `import('node:sqlite')` succeeds |
 | WebSocket upgrade with `ws` over `node:http` | `plugins/acryl-workspace/src/pty/stream.ts`, `plugins/acryl-agent-control/src/host/stream.ts` | Unverified on Deno |
 | `node:module` `findPackageJSON`, `registerHooks`, `stripTypeScriptTypes`; `node:util` `getSystemErrorMessage` | ACRYL `package-overlay.ts`, `engine-dsh.ts`; harness `dsh-subprocess-local`, `dsh-code-runtime-worker-thread` | Unverified on Deno |
 | Other native modules | `koffi` (8 packages declare it), `sharp` (6), `sherpa-onnx-node` (1), `@xterm/headless` (3) | Unverified on Deno |
@@ -236,6 +236,42 @@ Conclusion:
   agent-authored plugins to the embedded set plus plain TypeScript; or ship an unpacked `node_modules` next to the
   binary that `--node-modules-dir=manual` can resolve from, at the cost of the size goal in F1. Also scope
   `--allow-write` to the plugin directory only, not the whole app.
+
+### F7. D3 (native/Node-API pieces): first pass, `probes/runtime-compat.mjs` (2026-10-08)
+
+Ran unmodified except a mislabeling fix (the probe's own runtime-detection checked `process.versions.node`
+before `typeof Deno`, and Deno's own Node-compat shim also sets that field, so every Deno run printed
+"node" - fixed to check `Deno` first). Side-by-side against real Node on the same machine:
+
+| Probe | Node 24.19.0 | Deno 2.9.7 |
+|---|---|---|
+| P1 `node-pty` data+exit events | OK | **FAIL** - no data, no exit event |
+| P2 `node:sqlite` available | OK | OK |
+| P3 re-import: file URL `?v=i` | 50/50 | 50/50 |
+| P3 re-import: bare path `?v=i` | 50/50 | 50/50 |
+| P3 re-import: `require.cache` eviction | 1/50 (expected - not the mechanism ACRYL uses) | 1/50 |
+| P4 Cordis apply/dispose x500 | OK | OK |
+
+**P1 (`node-pty`) is the serious result, and it is a different *kind* of failure than D1's.** It is not a
+throw to catch: `require('node-pty')` succeeds, `pty.spawn(...)` returns without error and a real, live
+pid (`process.kill(pid, 0)` does not throw), but `onData`/`onExit` never fire - not within 4 seconds for a
+command (`echo hello-from-pty; sleep 1`) that completes in about 1 second under Node. The native addon's
+own low-level PTY I/O polling is not integrated with Deno's event loop; the child process plausibly ran
+and even plausibly produced output, but nothing pumps it to the JS side, and nothing reaps its exit.
+Confirmed with a dedicated diagnostic (`d3-pty-diagnose.mjs`, scratch, not committed - the three
+observations above are the reproducible result). Unlike D1, there is no equivalent "catch and fall back to
+plain JS" option available here: PTY allocation has no portable pure-JS substitute, and the native addon
+not throwing means feature-detection can't even catch this one at the usual place - a plugin or terminal
+service that calls this would hang, not fail loudly.
+
+This directly affects: ACRYL's own embedded terminal (`plugins/acryl-workspace`), and, per the 3rd-party
+marketplace survey the same day, several real published plugins (`dsh-TUI`, `dsh-tianshu-tui`,
+`DSH-better-sidebar`) that are terminal-shaped and almost certainly depend on this same package.
+
+**Not yet run:** `koffi`, `sharp`, `sherpa-onnx-node`, `@xterm/headless`, the `ws`-over-`node:http` upgrade,
+and `probes/e5-ws-worker.mjs` (worker threads with `node:vm`). P1's failure mode (native addon loads,
+no error, but the actual I/O/event delivery is silently absent) is now a known pattern to specifically
+check for in each of these, not just "does it throw."
 
 ## Options
 

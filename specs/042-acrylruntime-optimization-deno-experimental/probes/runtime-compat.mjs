@@ -8,7 +8,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const repo = resolve(here, '../../..')
-const rt = typeof Bun !== 'undefined' ? `bun ${Bun.version}` : `node ${process.versions.node}`
+// globalThis.Deno must be checked before process.versions.node: Deno's own Node-compat shim also
+// sets process.versions.node, so checking that first mislabels every Deno run as "node".
+const rt = typeof Deno !== 'undefined' ? `deno ${Deno.version.deno}` : typeof Bun !== 'undefined' ? `bun ${Bun.version}` : `node ${process.versions.node}`
 const out = (name, result) => console.log(`${rt.padEnd(14)} | ${name.padEnd(46)} | ${result}`)
 
 // P1: node-pty must deliver data and exit events (ACRYL terminal adapter: plugins/acryl-workspace/src/pty/node-pty-spawn.ts)
