@@ -51,7 +51,7 @@ import { handleWorkspaceAgentSettingsRequest, handleWorkspaceAgentsRemoveRequest
 import { AgentSettings } from './agents/settings.ts'
 import { AgentStatusStore, WORKSPACE_AGENT_STATUS_PATH } from './agents/status/agent-status.ts'
 import { handleAgentStatusRequest } from './agents/status/route.ts'
-import { spawnNodePty } from './pty/node-pty-spawn.ts'
+import { selectPtySpawn } from './pty/select-spawn.ts'
 import { WORKSPACE_PICK_FOLDER_PATH } from './folder-picker/contract.ts'
 import { pickFolderNatively, singleFlight } from './folder-picker/picker.ts'
 import { handleWorkspacePickFolderRequest } from './folder-picker/route.ts'
@@ -114,7 +114,7 @@ export function apply(ctx: Context): void {
     // Agents that support hooks report working, waiting and done here; the secret is known only to their terminals.
     const statusToken = randomBytes(24).toString('hex')
     const workspacePty = new WorkspacePtyRegistry({
-      spawn: spawnNodePty,
+      spawn: selectPtySpawn(),
       agents: { resolve: id => settings?.resolve(id) },
       agentStatus: { url: `${rendererOrigin}${WORKSPACE_AGENT_STATUS_PATH}`, token: statusToken },
     })
