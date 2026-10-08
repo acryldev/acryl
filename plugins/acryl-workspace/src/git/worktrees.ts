@@ -1,7 +1,7 @@
 /** Repositories and their worktrees: listing them, confirming a path is one, and creating one. */
 
 import { mkdir, realpath, stat } from 'node:fs/promises'
-import { basename, dirname, join } from 'node:path'
+import { basename, dirname, join, normalize } from 'node:path'
 import type { GitRepoView, GitWorktreeCreatedView } from './contract.ts'
 import { WorkspaceGitError } from './errors.ts'
 import { assertBranchName } from './guards.ts'
@@ -32,7 +32,8 @@ export class WorkspaceWorktrees {
     const dir = await this.git.resolveDirectory(cwd)
     let current: string
     try {
-      current = (await this.git.run(['rev-parse', '--show-toplevel'], dir)).stdout.trim()
+      // Git reports `C:/repo` on Windows; the rest of the app speaks `C:\repo`.
+      current = normalize((await this.git.run(['rev-parse', '--show-toplevel'], dir)).stdout.trim())
     } catch (cause) {
       if (cause instanceof WorkspaceGitError && cause.kind === 'not-repo') return null
       throw cause

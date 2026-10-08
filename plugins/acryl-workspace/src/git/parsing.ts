@@ -1,8 +1,9 @@
 /** Parsers for the machine-readable output of `git worktree`, `git diff --numstat` and `git status`. */
 
+import { normalize } from 'node:path'
 import type { GitChange, GitChangeCode, GitWorktree } from './contract.ts'
 
-/** Parse `git worktree list --porcelain`. Git always lists the main worktree first. */
+/** Parse `git worktree list --porcelain`. Git always lists the main worktree first. Git writes `C:/repo` on Windows; paths are returned in the host's own form (`C:\repo`). */
 export function parseWorktrees(text: string): GitWorktree[] {
   const worktrees: GitWorktree[] = []
   for (const block of text.split(/\n\n+/)) {
@@ -14,7 +15,7 @@ export function parseWorktrees(text: string): GitWorktree[] {
       else if (line.startsWith('HEAD ')) head = line.slice('HEAD '.length)
       else if (line.startsWith('branch ')) branch = line.slice('branch '.length).replace(/^refs\/heads\//, '')
     }
-    if (path !== undefined) worktrees.push({ path, head, branch, main: worktrees.length === 0 })
+    if (path !== undefined) worktrees.push({ path: normalize(path), head, branch, main: worktrees.length === 0 })
   }
   return worktrees
 }
