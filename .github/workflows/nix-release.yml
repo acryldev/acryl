@@ -9,9 +9,8 @@ name: Update Nix flake
 # start new workflow runs. A daily lag-check is fully decoupled from how
 # releases are created and needs no PAT.
 
+# Manual only (it used to run daily and open a pull request each time it found the flake behind).
 on:
-  schedule:
-    - cron: "17 6 * * *"
   workflow_dispatch:
 
 permissions:
