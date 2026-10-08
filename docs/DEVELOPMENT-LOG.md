@@ -1,6 +1,6 @@
 ## 2026-10-08 - `corepack pnpm build:mac`, `build:windows`, `build:linux`; the universal macOS DMG builds on DSH 0.2 again
 
-Commits: `e282ed8` (the three scripts and `dist:linux`, see below), `514d0191cd127213905a26c9b921b46c06062a0c` (the DSH 0.2 packaging fixes).
+Commits: `e282ed8ade3b9dc8dd7e501beebc9c2f7e98ce3d` (the three scripts and `dist:linux`, see below), `514d0191cd127213905a26c9b921b46c06062a0c` (the DSH 0.2 packaging fixes).
 
 - Root scripts: `build:mac` (unsigned universal DMG, `apps/acryl-desktop/dist/mac-smoke/acryl-desktop-mac-universal.dmg`),
   `build:windows` (NSIS installer) and `build:linux` (a Debian `.deb` in `dist/linux-<arch>/`, new `scripts/package-linux.ts`).
