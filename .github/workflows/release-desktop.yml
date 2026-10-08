@@ -46,12 +46,12 @@ jobs:
           corepack enable
           corepack prepare pnpm@$(grep '"packageManager"' package.json | grep -o '[0-9.]*' | head -1) --activate
       - run: corepack pnpm install --frozen-lockfile
-      # The commit being released has already passed the full gate on main (ci.yml); the unit tests are not repeated here because some Windows specs do not
-      # run on a hosted runner. A release builds what it ships and checks that what it ships is complete.
       - name: Build and verify desktop surface
         run: |
           corepack pnpm --filter "acryl-desktop..." --workspace-concurrency=1 run build
           corepack pnpm run check:layout
+          corepack pnpm run typecheck
+          corepack pnpm run test
           corepack pnpm --filter acryl-desktop run verify:closure
       - name: Package ${{ matrix.name }}
         shell: bash
