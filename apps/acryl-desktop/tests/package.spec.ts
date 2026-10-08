@@ -576,6 +576,8 @@ describe('published package surface', () => {
       '!node_modules/node-pty/build/**',
       '!lib/**/*.map',
       '!node_modules/**/*.map',
+      '!node_modules/**/src/**/*.ts',
+      '!node_modules/**/src/**/*.tsx',
     ])
     expect(manifest.build?.mac?.icon).toBe('build/app-icon-mac.png')
     expect(manifest.build?.mac?.artifactName).toBe('acryl-desktop-mac-${arch}.${ext}')

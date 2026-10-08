@@ -1,3 +1,18 @@
+## 2026-10-08 (later) - the macOS app is half the size: one CPU per build, no duplicate image engine
+
+Measured with `corepack pnpm build:mac` on Apple Silicon: DMG 431 -> 224 MB, installed app 1.2 GB -> 645 MB.
+
+- `build:mac` now packages only this Mac's CPU (`dist/mac-<arch>`); `build:mac:universal` keeps the two-CPU DMG for a release. The universal build held
+  two copies of Electron, LibreOffice, sherpa-onnx and sharp.
+- Dependency sourcemaps and `src/**/*.ts(x)` of installed packages are no longer shipped (they cannot run: Node does not execute TypeScript inside
+  node_modules).
+- `sharp` was 0.35.4 but our direct pins were `@img/sharp-*` 0.35.3 and libvips 1.3.2, so sharp carried a private second libvips (18 MB). The pins now match
+  what sharp declares (0.35.4, libvips 1.3.3). `THIRD_PARTY_NOTICES.md` was regenerated with its script (`verify:notices`); it had not been refreshed since before the
+  DSH 0.2 move.
+- Where the rest comes from: Electron 231 MB, LibreOffice kit 153 MB (DSH 0.2's office preview and office skills, mounted by its web app and `dsh`; kept on purpose),
+  sherpa-onnx 34 MB (kept on purpose). A packaged app was started in an isolated home and reported a healthy renderer.
+- New manual/push workflow `linux-deb.yml`: builds the `.deb` with `build:linux` on Ubuntu, installs it with apt, starts it under xvfb and requires a healthy renderer.
+
 ## 2026-10-08 - `corepack pnpm build:mac`, `build:windows`, `build:linux`; the universal macOS DMG builds on DSH 0.2 again
 
 Commits: `e282ed8ade3b9dc8dd7e501beebc9c2f7e98ce3d` (the three scripts and `dist:linux`, see below), `514d0191cd127213905a26c9b921b46c06062a0c` (the DSH 0.2 packaging fixes).
