@@ -349,6 +349,21 @@ feasibility result, not a go decision. Still open, in order of how much they can
    window hosting ACRYL), then **D6** (the real size), which is what the whole effort is for.
 Fallback if D7 or D5 fails: Option A (Deno shell, Node host), about 440 MB, a saving of roughly 60 MB.
 
+## D6-early gate (set 2026-10-08, before any measurement)
+
+Size is the premise of the whole experiment, so it is measured before the D7 port is paid for.
+
+- **Pass line: the minimal Deno-hosted app projects at or under roughly 200 MB all-in** (the `deno desktop` runtime,
+  every `node_modules` payload it needs at run time, and the app code), measured on disk as the final `.app`.
+  Over that, **park the experiment regardless of how clean D7 looks.**
+- "All-in" means what a user downloads and installs, not what a static analysis says is reachable: Node-API addons
+  need a real on-disk `node_modules` next to a compiled binary (Deno's own error says so), so the closure is measured
+  on disk, not assumed.
+- Bundled into the same step: a real `sherpa-onnx-node` model run (the last native that has only been *loaded*), so
+  a pass on size cannot be followed by a failure on voice.
+- Still-soft items the same review listed, tracked below as they close: the real pty adapter (backpressure, split
+  multibyte reads), Linux and Windows pty, and a run through a real Harness session.
+
 ## Probe safety rules
 
 - Always set `HOME` and `ACRYL_HOME` (and `DSH_HOME` when used) to a fresh `mktemp -d` folder, and `ACRYL_WEB_PORT` to a
