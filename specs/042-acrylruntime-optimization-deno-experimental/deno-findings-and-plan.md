@@ -486,6 +486,28 @@ Three things this run taught, all real:
 Still not Linux-verified: a distributable (AppImage/deb) from `deno desktop`, running on the real desktop session (Wayland), the editor and drag-and-drop, long sessions,
 and musl/Alpine. This closes the Linux half of the "Windows and Linux" risk; Windows remains the open one.
 
+### F12. The AcrylDeno packages (2026-10-08)
+
+`specs/042-.../deno-app/` builds installable test packages named **AcrylDeno** so a Deno build cannot be confused with the Electron ACRYL: `make-payload.sh` (the
+run-time payload for a target; rebuild the workspace first), `build-mac.sh` (AcrylDeno.app plus `AcrylDeno-<version>-arm64.dmg`, ad-hoc signed, not notarized),
+`build-linux.sh` (`AcrylDeno_<version>_amd64.deb`, cross-built; needs `dpkg-deb`, which macOS lacks: run it where dpkg exists, such as z370n), `test-mac.sh`
+(mount the DMG, copy the app out, launch it, check it, quit it). Version 0.1.44 (the desktop package's). Sizes: DMG 114.9 MB, `.deb` 48.8 MB (xz), app 246 MB installed.
+Isolation: its own data folder `~/.acryldeno` (a launcher default, so it never reads or writes `~/.acryl`, `~/.dsh` or a running ACRYL), bundle id
+`com.deno.desktop.acryldeno.app`, a loopback port chosen by the runtime (never 3080), a log at `~/.acryldeno/logs/acryldeno.log`, window title "AcrylDeno".
+
+Checked: the DMG installed from a mounted image launches, shows the ACRYL client, opens a terminal that runs a typed command, and quits leaving nothing running
+and port 3080 untouched; the `.deb` installs on a clean Ubuntu 24.04 container (219 packages pulled, no unresolved library, removed completely), and its unpacked
+contents ran under Xvfb on the Ubuntu host through a symlink (as `/usr/bin/acryldeno` will be), host up, terminal opened and typed into. Not checked: the Linux GUI on a
+real desktop session, an installed (not unpacked) `.deb` run, Gatekeeper behaviour of a downloaded copy (the DMG here was never quarantined), notarization.
+
+Two facts about `deno desktop` found while building it:
+- **The window shows whatever binds the runtime's `DENO_SERVE_ADDRESS`, and a `node:http` server counts.** ACRYL's own web server binds that address (that is why its port
+  was random and `ACRYL_WEB_PORT` was ignored). A `Deno.serve` of our own (a loading page) took the address first and starved the real host, silently. So the launcher serves
+  nothing itself and shows its loading and error pages as `data:` URLs.
+- **The host announces its URL twice and only the second has a token.** `serveWeb` prints `ACRYL web: <url>` through `process.stdout` before the server is up (a placeholder port,
+  no token: it once pointed the window at the real ACRYL on 3080 and got an "authentication required" page), and `dsh web: <url>?token=...` through `console`. The launcher
+  takes the first URL that carries a token, from either path.
+
 ## Conclusion of the experiment (2026-10-08)
 
 **Technically sound, and the premise holds, with margins that need honest labels.**
