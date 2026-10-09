@@ -48,7 +48,7 @@ The amount of rewrite depends almost entirely on this choice.
 | E2 | `probes/e2-bun-parent-node-host.ts`: a Bun parent starts the unchanged Node host with a temporary home and spare port | **PASS.** Host up in 6 to 9 seconds. `GET /` is 401 without a token, 303 with the token plus a cookie, then 200 with the cookie (29,500 bytes, 7 script tags). Clean shutdown, port freed. A webview keeps cookies, so the handshake works for Option A |
 | E3 | Electrobun hello-world window | **Partly done.** `npm electrobun` bootstrap installs Hutch 0.27.1 and Cottontail 0.7.1 (about 131 MB in `~/.hutch`). `electrobun init` is interactive and was not completed, so no window was opened. Side effects: it appended two lines to `~/.zshrc` (`# Hutch` and a `PATH` export) |
 | E4 | `probes/e4-*`: boot the real `acryl-web` host directly under Bun (Option B) | **FAIL**, in several places in one attempt, see below |
-| E5 | `probes/e5-ws-worker.mjs`: `ws` upgrade and `worker_threads` plus `node:vm` | `ws` upgrade over `node:http` **FAILS** on Bun (times out; Node works). `worker_threads` plus `vm.runInContext` works on both |
+| E5 | `probes/e5-ws-worker.mjs`: `ws` upgrade and `worker_threads` plus `node:vm` | `ws` upgrade over `node:http` **FAILS** on Bun (times out; Node works) - **corrected 2026-10-09: the probe loaded `ws` by file path; the bare `import 'ws'` the host uses works on Bun, see `bun-findings-and-plan.md` B3**. `worker_threads` plus `vm.runInContext` works on both |
 
 ### E4: what stops the real host booting under Bun 1.3.14
 
@@ -77,7 +77,7 @@ Because of 1 and 2 the probe used a scratch shim, which the repository does not 
 | Terminal: `node-pty` | P1: under Bun `spawn` returns a pid but no `data` or `exit` event ever arrives (Node: both arrive). Bun's own `Bun.spawn({ terminal })` delivered output and an exit code in a separate check. ACRYL site: `plugins/acryl-workspace/src/pty/node-pty-spawn.ts` (one adapter). Harness site: `deepseek-harness/packages/subprocess/subprocess-local/src/terminal.ts` (pinned submodule) |
 | Session query storage | P2: `node:sqlite` does not exist in Bun. `deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts` imports it. `bun:sqlite` has a different API (Cottontail lists `bun:sqlite` support in its capability modules, untested here) |
 | Plugin code reload (HMR) | `vendor/hmr` needs Node's private loader and throws without it. Needs a Bun-specific replacement. P3 shows what Bun supports (next section) |
-| WebSocket upgrade routes | E5a: `ws` `handleUpgrade` over `node:http` times out on Bun. Used by `plugins/acryl-workspace/src/pty/stream.ts` and `plugins/acryl-agent-control/src/host/stream.ts` |
+| WebSocket upgrade routes | E5a: `ws` `handleUpgrade` over `node:http` times out on Bun when `ws` is loaded by path (corrected 2026-10-09: the bare import works, B3). Used by `plugins/acryl-workspace/src/pty/stream.ts` and `plugins/acryl-agent-control/src/host/stream.ts` |
 | Node API gaps in the host boot | E4 items 1 to 5 above |
 
 ## Survives unchanged
