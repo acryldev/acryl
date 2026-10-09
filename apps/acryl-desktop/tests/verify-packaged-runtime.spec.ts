@@ -416,6 +416,30 @@ describe('packaged desktop runtime verification', () => {
     warn.mockRestore()
   })
 
+  it('does not report the react peers of a package with a browser bundle, or a terminal-only peer, but still reports other missing peers', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const unpackedRoot = syntheticUnpackedRoot(['acryl-shell', 'acryl-ui-tui', 'plain-host'])
+    writePackageManifest(unpackedRoot, 'node_modules/acryl-shell', {
+      name: 'acryl-shell',
+      dsh: { client: { platform: 'web' } },
+      peerDependencies: { react: '18.3.1', 'react-dom': '18.3.1' },
+    })
+    writePackageManifest(unpackedRoot, 'node_modules/acryl-ui-tui', {
+      name: 'acryl-ui-tui',
+      peerDependencies: { '@earendil-works/pi-tui': '*' },
+    })
+    // The same peers on a package with no browser bundle are real Node imports and stay reported.
+    writePackageManifest(unpackedRoot, 'node_modules/plain-host', {
+      name: 'plain-host',
+      peerDependencies: { 'react-dom': '18.3.1' },
+    })
+
+    const report = verifyPackagedDependencyClosure(unpackedRoot)
+
+    expect(report.unshipablePeerEdges).toEqual(['plain-host -> react-dom'])
+    warn.mockRestore()
+  })
+
   it('ignores optional dependencies and optional peers the packager omits', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const unpackedRoot = syntheticUnpackedRoot(['@deepseek-ai/dsh-tool-pwsh'])

@@ -388,6 +388,24 @@ export interface PackagedClosureReport {
 }
 
 /** Declared dependency tables read from one packaged manifest. */
+/** Peer packages the page, not Node, provides to a package's browser bundle. */
+const PAGE_PROVIDED_PEERS: ReadonlySet<string> = new Set(['react', 'react-dom'])
+
+/**
+ * Peers a packaged package declares that the Desktop never resolves through Node, each with the reason. Anything not named here that the application
+ * manifest does not ship is still reported.
+ */
+const PEERS_UNUSED_BY_THE_DESKTOP: Readonly<Record<string, ReadonlyMap<string, string>>> = {
+  // A terminal UI library (pi-tui components); the Desktop renders no terminal UI, and nothing it loads imports this package.
+  'acryl-ui-tui': new Map([['@earendil-works/pi-tui', 'terminal-only']]),
+}
+
+/** Whether a manifest is a package with a browser bundle (`dsh.client`), whose react peers the served page provides. */
+function hasBrowserBundle(manifest: unknown): boolean {
+  const dsh = readRecord(manifest).dsh
+  return typeof dsh === 'object' && dsh !== null && 'client' in dsh && (dsh as Record<string, unknown>).client !== undefined
+}
+
 interface DeclaredDependencyTables {
   readonly name: string
   readonly dependencies: readonly string[]
@@ -566,9 +584,13 @@ export function verifyPackagedDependencyClosure(
       ...tables.requiredPeers.map(specifier => ({ specifier, kind: 'peer' as const })),
       ...tables.optionalEdges.map(specifier => ({ specifier, kind: 'optional' as const })),
     ]
+    const browserBundle = hasBrowserBundle(manifest)
     for (const edge of edges) {
       // Electron itself is the application binary, never a packaged module.
       if (edge.specifier === 'electron') continue
+      // The page provides react to a package's browser bundle; a package's Node entry does not import it through this peer.
+      if (edge.kind === 'peer' && browserBundle && PAGE_PROVIDED_PEERS.has(edge.specifier)) continue
+      if (edge.kind === 'peer' && PEERS_UNUSED_BY_THE_DESKTOP[tables.name]?.has(edge.specifier) === true) continue
       if (
         targetPlatform !== undefined
         && targetArch !== undefined
