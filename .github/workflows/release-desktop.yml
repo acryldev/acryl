@@ -45,6 +45,8 @@ jobs:
           corepack prepare pnpm@$(grep '"packageManager"' package.json | grep -o '[0-9.]*' | head -1) --activate
       - run: corepack pnpm install --frozen-lockfile
       - name: Build and verify desktop surface
+        # bash on every OS: the Windows default (PowerShell) does not stop a multi-line script at a failing command, so a failed test or check there did not fail the job.
+        shell: bash
         run: |
           corepack pnpm --filter "acryl-desktop..." --workspace-concurrency=1 run build
           corepack pnpm run check:layout

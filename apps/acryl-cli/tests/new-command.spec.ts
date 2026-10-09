@@ -19,7 +19,7 @@ describe('acryl new', () => {
   })
 
   it('finds the framework launcher from a checkout, and refuses without one', () => {
-    expect(findLauncher()).toMatch(/scripts\/blank\.mjs$/)
+    expect(findLauncher()).toMatch(/scripts[\\/]blank\.mjs$/)
     expect(() => runNewApp({ dir: '/tmp/x' }, null)).toThrow(/framework checkout/)
   })
 
@@ -33,7 +33,8 @@ describe('acryl new', () => {
 })
 
 describe('an app that carries its own runtime', () => {
-  it('starts through its own launcher copy, with the app folder as its home and blend.yaml as its definition', async () => {
+  // The generated launcher (bin/acryl) is a POSIX shell script; a Windows launcher is not written yet, so this runs where the script can run.
+  it.skipIf(process.platform === 'win32')('starts through its own launcher copy, with the app folder as its home and blend.yaml as its definition', async () => {
     const { spawnSync } = await import('node:child_process')
     const { mkdirSync, readFileSync, realpathSync, writeFileSync } = await import('node:fs')
     const root = mkdtempSync(join(tmpdir(), 'acryl-new-carried-')); dirs.push(root)
