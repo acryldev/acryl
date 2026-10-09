@@ -508,6 +508,34 @@ Two facts about `deno desktop` found while building it:
   no token: it once pointed the window at the real ACRYL on 3080 and got an "authentication required" page), and `dsh web: <url>?token=...` through `console`. The launcher
   takes the first URL that carries a token, from either path.
 
+### F13. Windows 10 x64, on real hardware (2026-10-09, mbpi9win, Windows 10 Pro 19045, WebView2 154, Deno 2.9.7)
+
+Result: **the AcrylDeno desktop app runs on Windows 10 as an ordinary (non-elevated) user**: the host comes up, the client renders in WebView2 (55 resources, 23 fonts,
+no failed resource), a terminal opens in the window, and a command typed into it runs (it wrote a file). Getting there took four fixes, each found by running the real app:
+
+1. **Terminal: `node-pty` fails loudly on Deno-Windows** (`EINVAL: open '\\.\pipe\conpty-...-in'`). Replaced by a ConPTY adapter over kernel32 FFI
+   (`plugins/acryl-workspace/src/pty/deno-conpty-spawn.ts`; `select-spawn.ts` chooses FFI on macOS/Linux, ConPTY on Windows x64 Deno, node-pty otherwise). 11/11 Windows
+   tests (echo, input, resize, exit codes, Ctrl-C, kill, unicode, many spawns, handle-leak bound). Four lessons that made it work: a child inherits the parent's
+   redirected std handles unless `STARTF_USESTDHANDLES` is set with NULL handles; `CreatePseudoConsole` turns Ctrl-C off in the caller and children inherit that, so call
+   `SetConsoleCtrlHandler(NULL, FALSE)` after it and before `CreateProcessW`; writes must be non-blocking (`PIPE_NOWAIT`) or a full pipe stalls the host; the inbox ConPTY
+   leaks one kernel handle per pseudoconsole (measured, even with no child), while node-pty's bundled `conpty.dll` leaks none but did not deliver Ctrl-C. Default is the inbox
+   ConPTY (leak bounded and tested: at most 90 handles over 60 spawns); `ACRYL_CONPTY=bundled` opts in to the bundled one.
+2. **Native Node-API addons cannot be loaded inside a `deno desktop` process on Windows.** Loading koffi, sharp or `node-addon-require-builtin` ends the whole process with
+   `0xC06D007F` (delay-load "procedure not found" raised from KERNELBASE; not catchable). The same `.node` files load under plain `deno run`. Likely cause (not confirmed with
+   Deno): the addons look up Node-API functions in the small exe, and in `deno desktop` the runtime is in the separate `acryldeno.dll`. Mitigation: the launcher refuses `.node`
+   loads on Windows with an ordinary exception (hooks on `Module._extensions['.node']` and `process.dlopen`, logged), so the one plugin that wanted the addon fails and the rest
+   of the app runs (336 of 336 fibers active). Cost: on Windows desktop, `sharp` (image processing) and `koffi` (FFI used by the plugins that call it) are unavailable;
+   the ConPTY adapter uses Deno's own FFI, which is not affected. `engine-dsh.ts` now skips PluginPackages (a native addon) under Deno and links packages itself,
+   and the payload ships a fail-fast stub of `node-addon-require-builtin`. Worth reporting upstream to Deno.
+3. **Directory symlinks need a privilege a normal user lacks** (`os error 1314`): the host links packages into the profile, and an elevated test shell hid it. The
+   link is now an NTFS junction on Windows (no privilege). This was the cause of "starts and hangs forever on the loading page" on the first Windows run.
+4. **The launcher** now logs to `<home>/logs/acryldeno.log`, reads `USERPROFILE` as well as `HOME`, and handles `SIGBREAK`.
+
+Cross-build works from macOS: `deno desktop -A --target x86_64-pc-windows-msvc` gives `acryldeno.exe` plus `acryldeno.dll` (77 MB).
+
+Not checked on Windows: a Windows installer (NSIS/MSI), code signing and SmartScreen behaviour, arm64, features that need `sharp` or `koffi` (their plugins now fail on
+Windows desktop), window behaviours beyond create/title/size/navigate/hide/exit, an installed (not scratch-folder) run.
+
 ## Conclusion of the experiment (2026-10-08)
 
 **Technically sound, and the premise holds, with margins that need honest labels.**
@@ -522,7 +550,7 @@ What is established (each measured on this machine):
 What is not established, in the order that can still change the answer:
 1. **The shell port (D7)**: 12 Electron modules (menus, tray, dialogs, windows, recovery and profile windows, workspace admission) plus packaging and updates.
    The window API has menus, tray, dock, context menus and window control; it has **no native dialog** (the directory picker needs FFI or a helper). Unmeasured cost.
-2. **Windows**: ConPTY terminal, WebView2 behaviour, signing. Nothing run. This is the largest unknown left, and it decides whether "one app on three OSes" survives. (Linux is now verified on real hardware, F11.)
+2. **Windows**: now run on real hardware (F13): host, WebView2 client and a ConPTY terminal work for a normal user. Open: native Node-API addons (`sharp`, `koffi`) crash a `deno desktop` process on Windows, so their features are off there; no installer, signing or SmartScreen result yet. (Linux: F11.)
 3. **Real notarization and auto-update** of a `deno desktop` app. `deno desktop` is labelled experimental by Deno.
 4. **Maintenance**: ACRYL now owns a fallback in `engine-dsh.ts` and a native-FFI terminal per platform, and depends on each Harness update not adding another
    Node-private API (a canary: `probes/d1-deno-host.mjs` and the Deno tests, runnable in CI). Live package replace without a restart (Tier 2) is not built;

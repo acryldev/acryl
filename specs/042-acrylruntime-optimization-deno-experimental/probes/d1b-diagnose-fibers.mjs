@@ -29,7 +29,7 @@ if (!process.env.ACRYL_HOME || !Number.isInteger(port) || port === 3080) {
   process.exit(2)
 }
 
-const anchorPkgUrl = pathToFileURL(resolve(repo, 'apps/acryl-web/package.json'))
+const anchorPkgUrl = pathToFileURL(process.env.PAYLOAD ? resolve(process.env.PAYLOAD, 'package.json') : resolve(repo, 'apps/acryl-web/package.json')) // PAYLOAD: a d6-payload.mjs output with acryl-harness-runtime copied into its node_modules
 const anchorRequire = createRequire(anchorPkgUrl)
 
 // Same symlink shape engine-dsh.ts's materializeProfilePackage() already uses for ACRYL-owned
@@ -81,6 +81,7 @@ console.error('--- fiber states (0=PENDING 1=LOADING 2=ACTIVE 3=FAILED 4=DISPOSE
 for (const [, runtime] of ctx.registry.entries()) {
   for (const fiber of runtime.fibers) {
     const injectKeys = Object.keys(fiber.inject ?? {})
+    if (process.env.ONLY_PROBLEMS === '1' && fiber.state === 2) continue
     console.error(`${(runtime.name ?? '(anonymous)').padEnd(40)} state=${fiber.state} inject=[${injectKeys.join(',')}]`)
     if (fiber.state === 3 && fiber._error) {
       console.error('  ERROR:', fiber._error?.stack ?? fiber._error)

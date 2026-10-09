@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const rt = typeof Deno !== 'undefined' ? `deno ${Deno.version.deno}` : `node ${process.versions.node}`
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
-const req = createRequire(join(repo, 'runtime/acryl-harness-runtime/package.json'))
+const req = createRequire(process.env.PAYLOAD ? join(process.env.PAYLOAD, 'package.json') : join(repo, 'runtime/acryl-harness-runtime/package.json')) // PAYLOAD: a d6-payload.mjs output
 const { Context } = await import(pathToFileURL(req.resolve('@deepseek-ai/cordis')).href)
 const { Loader } = await import(pathToFileURL(req.resolve('@deepseek-ai/cordis-plugin-loader')).href)
 const out = (n, r) => console.log(`${rt.padEnd(12)} | ${n.padEnd(46)} | ${r}`)

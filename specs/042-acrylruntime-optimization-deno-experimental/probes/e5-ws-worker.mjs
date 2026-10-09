@@ -8,8 +8,10 @@ import { readdirSync } from 'node:fs'
 const rt = typeof Deno !== 'undefined' ? `deno ${Deno.version.deno}` : typeof Bun !== 'undefined' ? `bun ${Bun.version}` : `node ${process.versions.node}`
 const out = (n, r) => console.log(`${rt.padEnd(14)} | ${n.padEnd(40)} | ${r}`)
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
-const wsDir = readdirSync(resolve(repo, 'node_modules/.pnpm')).find(d => d.startsWith('ws@'))
-const { WebSocketServer, WebSocket } = createRequire(import.meta.url)(resolve(repo, 'node_modules/.pnpm', wsDir, 'node_modules/ws'))
+const wsPath = process.env.PAYLOAD // PAYLOAD: a d6-payload.mjs output, else the repo's pnpm store
+  ? resolve(process.env.PAYLOAD, 'node_modules/ws')
+  : (() => { const dir = readdirSync(resolve(repo, 'node_modules/.pnpm')).find(d => d.startsWith('ws@')); return resolve(repo, 'node_modules/.pnpm', dir, 'node_modules/ws') })()
+const { WebSocketServer, WebSocket } = createRequire(import.meta.url)(wsPath)
 const port = Number(process.env.PROBE_PORT ?? 38459)
 try {
   const http = createServer()
