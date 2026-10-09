@@ -226,7 +226,11 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
     ctx.root.provide('acrylFrameworkPackages', createAcrylFrameworkPackages(composition.installPackageUrl))
   }
   // Owned by this engine's fiber (not the root), so an engine swap releases the interception with the profile it served.
-  if (composition.runtimeResolution !== undefined) {
+  if (composition.runtimeResolution !== undefined && runsUnderDeno()) {
+    // Under Deno the interception below can never load (its native addon needs V8 internals Deno does not expose), and on Windows inside a `deno desktop`
+    // process even attempting to load a native Node-API addon ends the process with an uncatchable 0xC06D007F (specs/042 F13), so it is not attempted.
+    materializeRuntimeResolutionEntries(dirname(composition.rootConfig), composition.runtimeResolution)
+  } else if (composition.runtimeResolution !== undefined) {
     try {
       await ctx.plugin(PluginPackages, { resolution: composition.runtimeResolution })
     } catch (error) {
@@ -558,7 +562,9 @@ function linkPackageInto(profileDir: string, packageName: string, sourceDir: str
     if (existingTarget === realpathSync.native(sourceDir)) return
     rmSync(linkPath, { force: true, recursive: true })
   }
-  symlinkSync(sourceDir, linkPath, 'dir')
+  // A directory symlink needs SeCreateSymbolicLinkPrivilege on Windows (an elevated process or Developer Mode), so an ordinary user gets EPERM (os error 1314) and the
+  // profile never links its packages. A junction needs no privilege and resolves the same for Node's and Deno's module loaders; its target must be absolute (it is).
+  symlinkSync(sourceDir, linkPath, process.platform === 'win32' ? 'junction' : 'dir')
 }
 
 export function materializeProfilePackage(profileDir: string, packageName: string, installPackageUrl: string): void {
@@ -579,6 +585,11 @@ export function materializeProfilePackage(profileDir: string, packageName: strin
  * the ordinary way instead. This does not restore `PluginPackages.replace()` (installing or
  * updating a profile package without a process restart) - only initial resolution.
  */
+/** True on a Deno host (including a `deno desktop` app), whose Node-compat layer also answers to `process.versions.node`. */
+function runsUnderDeno(): boolean {
+  return typeof (globalThis as { Deno?: unknown }).Deno !== 'undefined'
+}
+
 function materializeRuntimeResolutionEntries(profileDir: string, resolution: RuntimeResolution): void {
   for (const entry of resolution.entries) linkPackageInto(profileDir, entry.name, entry.packageDir)
 }
