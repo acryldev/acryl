@@ -40,12 +40,14 @@ const trayItems = []
 
 try {
   writeFileSync(join(home, 'settings.yaml'), [
-    'dsh-desktop:',
-    '  mode: advanced',
     'agent-presets:',
     '  default: minimal',
     '',
   ].join('\n'))
+  // The desktop shell mode is an ACRYL surface preference, kept in acryl-settings.yaml in the ACRYL home (which is this folder under the legacy DSH_HOME
+  // selection below), not in the harness settings.yaml. Without it the mode is the platform default, which is `compatibility` on Linux, so this smoke only
+  // passed on macOS and Windows by accident.
+  writeFileSync(join(home, 'acryl-settings.yaml'), 'dsh-desktop:\n  mode: advanced\n')
   // Ensure pnpm's package linking mode matches the root workspace config, so
   // when initProfile installs required bundles into the temp home's profile,
   // packages are deep-copied rather than symlinked. Symlinks in a temp
