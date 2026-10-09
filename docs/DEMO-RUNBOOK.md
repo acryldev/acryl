@@ -37,8 +37,8 @@ You install ACRYL from a download, with no dev server and no source checkout. Yo
    ![The plugin live in the header](demo/03-pomodoro-live.png)
 
 4. Click the button to open the timer panel (start, pause, reset, skip, focus length, auto-start).
-5. Change it live (checked at the tool level, not yet with the model: rehearse it): for example "Make the default focus 30 minutes and show the session count on the button". The agent edits `client.js` and calls `acryl_install_plugin` again. That is an update with no restart.
-6. Remove it: "Remove the Pomodoro plugin". The agent calls `acryl_remove_plugin`.
+5. Change it live (verified with the model on 2026-10-09, v0.2.4 source): "Change the focus time to 30 minutes and update the plugin so the new time is live right now." About 70 seconds later the header button read "30:00" with no restart.
+6. Remove it (verified with the model): "Remove the Pomodoro timer plugin completely." The agent uninstalls and unmounts it live (the countdown button disappears from the header), then asks whether to also delete its source folder `.acryl-extensions/<name>/`. Answer "Delete the source folder too" for a clean finish, or keep it so the plugin can be reinstalled. Do not leave that question unanswered on stage: the run waits for the answer.
 
 ## If something goes wrong
 
