@@ -546,6 +546,39 @@
       ],
       "x64ArchFiles": "**/node_modules/{node-pty/prebuilds/darwin-*/**,node-addon-require-builtin-darwin-*/**,@vscode/ripgrep-darwin-*/**,@img/sharp-darwin-*/**,@img/sharp-libvips-darwin-*/**,@koromix/koffi-darwin-*/**,@deepseek-ai/libreoffice-kit-darwin-*/**,@deepseek-ai/node-addon-system-darwin-*/**,sherpa-onnx-darwin-*/**}"
     },
+    "dmg": {
+      "background": "build/dmg/background.tiff",
+      "iconSize": 96,
+      "window": {
+        "width": 660,
+        "height": 500
+      },
+      "contents": [
+        {
+          "x": 165,
+          "y": 140,
+          "type": "file"
+        },
+        {
+          "x": 495,
+          "y": 140,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 165,
+          "y": 390,
+          "type": "file",
+          "path": "build/dmg/Open ACRYL.command"
+        },
+        {
+          "x": 495,
+          "y": 390,
+          "type": "file",
+          "path": "build/dmg/README.txt"
+        }
+      ]
+    },
     "win": {
       "target": [
         {
