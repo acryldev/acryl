@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { verifyWindowsInstaller } from '../scripts/verify-win-installer.ts'
+import { WINDOWS_INSTALLER_NAME, verifyWindowsInstaller } from '../scripts/verify-win-installer.ts'
 
 const temporaryRoots: string[] = []
 
@@ -14,7 +14,7 @@ function portableExecutable(): Buffer {
   return executable
 }
 
-function fixture(version = '2.0.0'): {
+function fixture(): {
   readonly root: string
   readonly installer: string
   readonly application: string
@@ -24,7 +24,7 @@ function fixture(version = '2.0.0'): {
   const dist = join(root, 'dist')
   const unpacked = join(dist, 'win-unpacked')
   mkdirSync(unpacked, { recursive: true })
-  const installer = join(dist, `ACRYL-${version}-x64-Setup.exe`)
+  const installer = join(dist, WINDOWS_INSTALLER_NAME)
   const application = join(unpacked, 'ACRYL.exe')
   writeFileSync(installer, portableExecutable())
   writeFileSync(application, portableExecutable())
@@ -36,7 +36,7 @@ afterEach(() => {
 })
 
 describe('Windows installer artifact verification', () => {
-  it('accepts the exact versioned NSIS installer and unpacked application', () => {
+  it('accepts the release-named NSIS installer and the unpacked application', () => {
     const value = fixture()
 
     expect(verifyWindowsInstaller({ desktopRoot: value.root, version: '2.0.0' })).toEqual({
@@ -45,11 +45,13 @@ describe('Windows installer artifact verification', () => {
     })
   })
 
-  it('rejects a stale installer from a different version', () => {
-    const value = fixture('1.9.0')
+  it('rejects a build that produced no installer under the release name (the old versioned name is not accepted)', () => {
+    const value = fixture()
+    rmSync(value.installer)
+    writeFileSync(join(value.root, 'dist', 'ACRYL-2.0.0-x64-Setup.exe'), portableExecutable())
 
     expect(() => verifyWindowsInstaller({ desktopRoot: value.root, version: '2.0.0' }))
-      .toThrow('ACRYL-2.0.0-x64-Setup.exe')
+      .toThrow(WINDOWS_INSTALLER_NAME)
   })
 
   it('rejects an artifact without a Windows PE header', () => {

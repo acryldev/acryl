@@ -80,6 +80,12 @@ function defaultOptions(): WindowsInstallerVerificationOptions {
 }
 
 /**
+ * The installer's file name. It is the constant, version-less name the release publishes (`build.win.artifactName` in package.json), so the name no longer proves which
+ * build produced it; `package-win.ts` removes the previous artifact before it builds, and this verifies what is there.
+ */
+export const WINDOWS_INSTALLER_NAME = 'acryl-desktop-win-x64.exe'
+
+/**
  * Verify the exact NSIS installer and unpacked application executable.
  * @param options - Artifact root and expected product version.
  * @returns The verified artifact paths.
@@ -88,10 +94,7 @@ export function verifyWindowsInstaller(
   options: WindowsInstallerVerificationOptions = defaultOptions(),
 ): WindowsInstallerArtifacts {
   const distDir = join(options.desktopRoot, 'dist')
-  const installerPath = join(
-    distDir,
-    `ACRYL-${options.version}-x64-Setup.exe`,
-  )
+  const installerPath = join(distDir, WINDOWS_INSTALLER_NAME)
   const applicationPath = join(distDir, 'win-unpacked', 'ACRYL.exe')
 
   assertPortableExecutable(installerPath, 'Windows NSIS installer')
