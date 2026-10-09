@@ -545,6 +545,33 @@ fresh files are scanned by the antivirus); the second launch was fast. Not signe
 Not checked on Windows: a Windows installer (NSIS/MSI), code signing and SmartScreen behaviour, arm64, features that need `sharp` or `koffi` (their plugins now fail on
 Windows desktop), window behaviours beyond create/title/size/navigate/hide/exit, an installed (not scratch-folder) run.
 
+### F14. Live plugin install and update on a Deno host (2026-10-09)
+
+Question (asked after the stock DeepSeek Harness desktop was seen to write and mount a plugin on request from an installed `.app`, with no dev server): does a Deno-hosted ACRYL keep
+that? The flow is the agent's own: `installLocalPlugin` (the code behind `acryl_install_plugin`: `dsh plugin add` through the pinned pnpm, then `livePluginActivation`), then an
+edit of BOTH a plugin's entry file and the file it imports, then the same call again. `probes/live-install.mjs` runs it on Node (baseline) and on Deno, and
+`ACRYLDENO_DEBUG_SCRIPT=<script>` runs it inside the packaged app's own process. **Result: it works on Deno, macOS arm64, Linux x64 and Windows x64, each inside the packaged binary,
+once three things are fixed** (before them the Deno run failed at stage `install`, then at stage `activate`):
+
+1. **pnpm cannot run on Deno.** `pnpm 11.11.0` dies at startup inside a bundled dependency (`upath2`: `Cannot read properties of undefined (reading 'constructor')`), and in a `deno desktop`
+   app `process.execPath` is the GUI executable, which cannot run a script at all. The Harness starts its children as "node" through `process.execPath` (pnpm for plugin installs, MCP servers,
+   the subprocess runner, office skills). The payload therefore ships a real Node (24.18.1, the stock app's version, official archive checked against nodejs.org's SHASUMS256) as
+   `runtime/node[.exe]`, and the launcher assigns `process.execPath` to it (Deno's `execPath` is an accessor with a setter; `defineProperty` throws). **Cost: +115 MB installed on macOS arm64,
+   +118 Linux x64, +88 Windows x64; the payload also lacked the pinned `pnpm` package (+19 MB), which a repo run had hidden.**
+2. **The Cordis Loader cannot import a plugin installed after boot.** Without Node's private loader internals the Loader imports a bare plugin name with a plain `import(name)` that resolves
+   from the Loader package's own place in the installation; a package that exists only in the profile's `node_modules` fails, and the Loader only logs it ("plugin ... did not activate",
+   with no error anywhere). `PluginPackages` does this on Node by intercepting the loader. On Deno: `runtime/acryl-harness-runtime/src/deno-profile-resolution.ts`, a `module.registerHooks`
+   resolve hook that leaves resolution alone unless it produced nothing usable, then resolves the name from the profile (never cached; owned by the engine fiber's `ctx.effect`). Two Deno
+   differences found on the way: `nextResolve` does not throw for a missing package (it returns a `file:` URL that is not on disk), and it ignores a replaced `parentURL`, so the hook returns the
+   profile's answer itself. The existing Electron resolver (`installProfilePackageResolver`) could not be reused for that reason. 3 Deno tests.
+3. **The packaged app's launcher** logs the bundled Node and has the debug-script hook above.
+
+What this does to the size case: **with the bundled Node the Deno host has no size advantage left over a Node host.** Measured now (0.2.1): app 381 MB installed, DMG 154 MB (was 246 MB / 115 MB
+without Node and pnpm), against 447 MB / 217 MB for an equally pruned Electron (F10): about -15% installed and -29% download, not -53%. And a Node host behind the same Deno window
+(the dependency cut's "Option A", `findings-dependency-cut.md`) would carry the same bundled Node, so it would be the same size while needing none of F3, F4, F13 or the resolver above. The
+Deno window itself is still the real saving over Electron (about 65 MB against 228 MB). Packs: these packages leave out the LibreOffice kit and the voice runtime (F10), which main now keeps on
+purpose (`a415012`); any comparison with main's Electron figures must drop them from both.
+
 ## Conclusion of the experiment (2026-10-08)
 
 **Technically sound, and the premise holds, with margins that need honest labels.**
