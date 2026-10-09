@@ -1,8 +1,7 @@
 name: Release CLI
 
-# Fast path: the minimal host-Node CLI + the on-demand Web runtime. This is the
-# always-green release that makes `npm i -g acryl` quick. Desktop is released
-# separately via release-desktop.yml so a CLI change never rebuilds Electron.
+# The one release: CLI + Web archives, the five Desktop installers (built by release-desktop.yml, called below) and the npm packages, all under the same
+# `v<version>` tag. Nothing irreversible happens (npm, the GitHub release) unless every surface built.
 on:
   push:
     tags: ['v*']
@@ -142,6 +141,12 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  desktop:
+    name: desktop
+    uses: ./.github/workflows/release-desktop.yml
+    permissions:
+      contents: read
+
   manifest:
     name: verify complete cli+web release
     needs: [cli, web]
@@ -150,7 +155,10 @@ jobs:
       - uses: actions/checkout@v5
         with: { persist-credentials: false }
       - uses: actions/download-artifact@v7
-        with: { path: artifacts }
+        with:
+          path: artifacts
+          # The CLI and Web receipts only: the Desktop installers are built in the same run, with receipts of their own, and must not change the count below.
+          pattern: 'acryl-{cli,web}-*'
       - name: Generate and validate authoritative release manifest
         shell: bash
         env:
@@ -171,7 +179,7 @@ jobs:
 
   npm-publish:
     name: publish npm target packages then selector
-    needs: [manifest]
+    needs: [manifest, desktop]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
@@ -221,7 +229,7 @@ jobs:
 
   release:
     name: promote complete GitHub release
-    needs: [manifest, npm-publish]
+    needs: [manifest, npm-publish, desktop]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:

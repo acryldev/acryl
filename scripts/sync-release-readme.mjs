@@ -36,16 +36,15 @@ export const DESKTOP_ASSET_NAMES = Object.freeze([
 ])
 
 /**
- * Point every release link in a README at the release `tag`. The CLI and Web archives are assets of the `v<version>` release; the Desktop installers are assets of
- * its own `desktop-v<version>` release, so their links use that tag, and older spellings of the installer names (versioned, or `dsh-plugin-desktop_...`) are migrated
- * to the constant ones.
+ * Point every release link in a README at the release `tag`. The CLI and Web archives and the Desktop installers are all assets of the one `v<version>` release
+ * (up to 0.2.1 the installers sat in a separate `desktop-v<version>` release; those links are migrated), and older spellings of the installer names (versioned, or
+ * `dsh-plugin-desktop_...`) become the constant ones.
  * @param {string} text README text.
  * @param {string} tag Release tag such as `v0.2.1`.
  */
 export function rewriteReleaseLinks(text, tag) {
   const assetBase = `${repository}/releases/download/${tag}`
-  const desktopAssetBase = `${repository}/releases/download/desktop-${tag}`
-  let next = text
+  const next = text
     .replaceAll(new RegExp(`${repository.replaceAll('/', '\\/')}\\/releases\\/tag\\/(?:desktop-)?v${VERSION}`, 'g'), `${repository}/releases/tag/${tag}`)
     .replaceAll(new RegExp(`${repository.replaceAll('/', '\\/')}\\/releases\\/download\\/(?:desktop-)?v${VERSION}`, 'g'), assetBase)
     // Installer names: older versioned and misnamed spellings become the constant names the Desktop release publishes.
@@ -55,8 +54,6 @@ export function rewriteReleaseLinks(text, tag) {
     .replaceAll(/(?:dsh-plugin-desktop|acryl-desktop)_\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?_amd64\.deb/g, 'acryl-desktop-linux-amd64.deb')
     .replaceAll(/(?:dsh-plugin-desktop|acryl-desktop)_\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?_arm64\.deb/g, 'acryl-desktop-linux-arm64.deb')
     .replaceAll('acryl-desktop-linux-x64.deb', 'acryl-desktop-linux-amd64.deb')
-  // The Desktop installers live in the Desktop release.
-  for (const name of DESKTOP_ASSET_NAMES) next = next.replaceAll(`${assetBase}/${name}`, `${desktopAssetBase}/${name}`)
   return next
 }
 

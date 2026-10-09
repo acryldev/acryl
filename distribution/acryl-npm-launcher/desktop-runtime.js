@@ -51,10 +51,18 @@ function defaultDownload(url) {
 
 /** Download the matching desktop installer into the managed cache and return its path. */
 export async function acquireDesktopInstaller({ version, download = defaultDownload, open }) {
-  const tag = `desktop-v${version}`
-  const response = await fetch(`${API}/${tag}`, { headers: { Accept: 'application/vnd.github+json' } })
-  if (!response.ok) fail(`desktop release ${tag} not found (${response.status})`)
-  const release = await response.json()
+  // The installers are assets of the release itself (`v<version>`, with the CLI and Web archives). Releases up to 0.2.1 kept them in a separate `desktop-v<version>` one.
+  const tags = [`v${version}`, `desktop-v${version}`]
+  let release
+  let lastStatus = 0
+  for (const tag of tags) {
+    const response = await fetch(`${API}/${tag}`, { headers: { Accept: 'application/vnd.github+json' } })
+    lastStatus = response.status
+    if (!response.ok) continue
+    const candidate = await response.json()
+    if (Array.isArray(candidate?.assets) && candidate.assets.some(asset => typeof asset?.name === 'string' && /\.(dmg|deb|exe)$/u.test(asset.name))) { release = candidate; break }
+  }
+  if (release === undefined) fail(`desktop release ${tags.join(' or ')} not found (${lastStatus})`)
   const installer = selectDesktopInstaller(release)
   const root = managedDesktopRoot()
   const dir = join(root, version)

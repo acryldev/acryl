@@ -1,15 +1,13 @@
 name: Release Desktop
 
-# Optional, heavy Electron surface. Triggered by its own desktop-v* tag or
-# workflow_dispatch so a CLI change never rebuilds Electron. The `acryl desktop`
-# selector fetches installers from this release.
+# The Electron surface of ONE release. `release-cli.yml` calls this workflow for a `v*` tag, so the installers are built in the same run as the CLI and Web archives and
+# land in the same `v<version>` GitHub release (nothing is published unless every surface built). `workflow_dispatch` is a dry run of the five installers on their own.
 on:
-  push:
-    tags: ['desktop-v*']
+  workflow_call:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release-desktop-${{ github.ref }}
@@ -67,6 +65,7 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${RELEASE_TAG#desktop-v}"
+          VERSION="${VERSION#v}"
           ARTIFACT="$(find apps/acryl-desktop/dist/${{ matrix.name }} -type f -name '${{ matrix.artifact }}' | head -n 1)"
           test -n "$ARTIFACT"
           node scripts/release-manifest.mjs receipt desktop '${{ matrix.name }}' "$VERSION" "$(basename "$ARTIFACT")" "$ARTIFACT" "apps/acryl-desktop/dist/${{ matrix.name }}/release-receipt.json"
@@ -79,30 +78,3 @@ jobs:
             apps/acryl-desktop/dist/${{ matrix.name }}/release-receipt.json
           if-no-files-found: error
           retention-days: 14
-
-  release:
-    name: publish desktop release
-    needs: desktop
-    if: startsWith(github.ref, 'refs/tags/desktop-v')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-        with: { persist-credentials: false }
-      - uses: actions/download-artifact@v7
-        with: { path: artifacts }
-      - name: Drop per-target sidecar files that collide as release assets
-        # Every per-target artifact directory carries its own release-receipt.json (and checksums.txt) with the SAME filename. Uploaded in parallel under one
-        # name, one of them hits a 404 on "update asset metadata" and aborts the step, leaving the release a draft even though the real installers landed
-        # (desktop-v0.2.1, like v0.1.44 for the CLI). The uniquely named installers are the release; the colliding sidecars are removed first.
-        run: |
-          find artifacts -name 'release-receipt.json' -delete
-          find artifacts -name 'checksums.txt' -delete
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: ACRYL Desktop ${{ github.ref_name }}
-          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
-          # The full release (v<version>: CLI, Web and the npm packages) is the repository's Latest; a Desktop-only release must not take that badge.
-          make_latest: false
-          files: artifacts/**/*

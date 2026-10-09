@@ -698,8 +698,14 @@ describe('published package surface', () => {
     expect(ciWorkflow).not.toContain('windows-latest')
     expect(ciWorkflow).not.toContain('macos-latest')
     expect(releaseCliWorkflow).toContain("tags: ['v*']")
-    expect(releaseDesktopWorkflow).toContain("tags: ['desktop-v*']")
+    // One release, one tag: the Desktop workflow is called by the release workflow (it has no tag trigger of its own), so the installers land in the same
+    // `v<version>` release as the CLI and Web archives, and nothing irreversible (npm, the GitHub release) happens unless the Desktop build succeeded too.
+    expect(releaseDesktopWorkflow).not.toContain("tags: ['desktop-v*']")
+    expect(releaseDesktopWorkflow).toContain('workflow_call:')
     expect(releaseDesktopWorkflow).toContain('workflow_dispatch:')
+    expect(releaseCliWorkflow).toContain('uses: ./.github/workflows/release-desktop.yml')
+    expect(releaseCliWorkflow).toMatch(/npm-publish:[\s\S]*?needs: \[manifest, desktop\]/u)
+    expect(releaseCliWorkflow).toContain('needs: [manifest, npm-publish, desktop]')
 
     // Five per-architecture desktop matrix jobs (not one universal build).
     expect(releaseDesktopWorkflow).toContain('os: macos-latest')
@@ -728,7 +734,6 @@ describe('published package surface', () => {
       expect(releaseCliWorkflow).toContain(`target: ${target}`)
     }
     expect(releaseCliWorkflow).toContain('needs: [cli, web]')
-    expect(releaseCliWorkflow).toContain('needs: [manifest, npm-publish]')
 
     // The npm acryl-web package depends on 13 workspace packages that are not on npm, so publishing it is an explicit opt-in.
     expect(releaseCliWorkflow).toMatch(/- name: Publish standalone Web package\n\s+if: vars\.ACRYL_PUBLISH_WEB_NPM == 'true'/u)
