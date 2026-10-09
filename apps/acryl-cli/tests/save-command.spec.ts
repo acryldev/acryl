@@ -1,6 +1,6 @@
 /** `acryl save` / `acryl remote connect` through the real CLI entry, against a real git repository and a local bare remote. */
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -31,8 +31,9 @@ describe('acryl save', () => {
     const root = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-save-'))); dirs.push(root)
     const app = runNewApp({ dir: join(root, 'books'), title: 'Books' }).root
     for (const [key, value] of [['user.name', 't'], ['user.email', 't@t']]) spawnSync('git', ['config', key!, value!], { cwd: app })
-    expect(spawnSync('grep', ['-q', 'visibility: private', join(app, 'blend.yaml')]).status).toBe(0)
-    expect(spawnSync('grep', ['-q', 'license: Proprietary', join(app, 'blend.yaml')]).status).toBe(0)
+    const manifest = readFileSync(join(app, 'blend.yaml'), 'utf8')
+    expect(manifest).toContain('visibility: private')
+    expect(manifest).toContain('license: Proprietary')
 
     let run = await cli(['save', '--dir', app, '-m', 'first version'])
     expect(run.code, run.lines.join('\n')).toBe(0)
