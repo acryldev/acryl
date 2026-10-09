@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { join, sep } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { test } from 'node:test'
-import { lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, syncOnStartup, ensureProfileBundle, pinPublicHoistPattern, describeInstalledExtensions } from '../lib/install.js'
+import { previousStagedDir, lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, syncOnStartup, ensureProfileBundle, pinPublicHoistPattern, describeInstalledExtensions } from '../lib/install.js'
 import { discoverExtensions, globalExtensionsDir, installState } from '../lib/reconcile.js'
 import { captureBlend, verifyBlend, writeBlend, readBundleRows } from '../lib/blend-capture.js'
 import { applyBlend } from '../lib/blend-apply.js'
@@ -102,7 +102,7 @@ test('lint refuses a host package under dependencies (a second framework copy br
 test('every shipped example plugin passes the package lint (examples are what authors and models copy)', () => {
   const base = new URL('../example-plugins/packages/', import.meta.url)
   for (const name of readdirSync(base)) {
-    const dir = new URL(`${name}/`, base).pathname
+    const dir = fileURLToPath(new URL(`${name}/`, base))
     if (!existsSync(join(dir, 'package.json'))) continue
     const hostOwned = lintPackageDir(dir).errors.filter(error => error.includes('which the app itself provides'))
     assert.deepEqual(hostOwned, [], `example ${name}`)
@@ -802,4 +802,22 @@ test('lookup routes a topic to docs and examples with absolute paths, and report
   const nothing = lookupExtensionDocs('zzzz qqqq', manifest, root)
   assert.equal(nothing.docs[0].id, 'start.this-runtime'); assert.ok(nothing.note)
   assert.equal(lookupExtensionDocs('the a', manifest, root).ok, false)
+})
+
+test('previousStagedDir finds the running staged copy whatever slashes pnpm wrote, and never a path outside the stage root', () => {
+  const profile = mkdtempSync(join(tmpdir(), 'acryl-prev-'))
+  const stageRoot = join(profile, '.acryl-staged')
+  const staged = join(stageRoot, 'probe@1')
+  mkdirSync(staged, { recursive: true }); writeFileSync(join(staged, 'package.json'), '{}')
+  const outside = join(profile, 'elsewhere'); mkdirSync(outside, { recursive: true }); writeFileSync(join(outside, 'package.json'), '{}')
+  const spec = value => writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: { probe: value } }))
+  try {
+    spec(`file:${staged}`); assert.equal(previousStagedDir(profile, 'probe', stageRoot), staged)
+    // pnpm writes forward slashes on Windows; the lookup compares resolved paths, so the spelling cannot hide the copy.
+    spec(`file:${staged.split(sep).join('/')}`); assert.equal(previousStagedDir(profile, 'probe', stageRoot), staged)
+    spec(`file:${outside}`); assert.equal(previousStagedDir(profile, 'probe', stageRoot), undefined)
+    spec(`file:${join(stageRoot, '..', 'elsewhere')}`); assert.equal(previousStagedDir(profile, 'probe', stageRoot), undefined)
+    spec(`file:${stageRoot}`); assert.equal(previousStagedDir(profile, 'probe', stageRoot), undefined)
+    spec('^1.0.0'); assert.equal(previousStagedDir(profile, 'probe', stageRoot), undefined)
+  } finally { rmSync(profile, { recursive: true, force: true }) }
 })

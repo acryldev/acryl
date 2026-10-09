@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { isAbsolute, join, resolve, sep } from 'node:path'
+import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { hashPackage, pruneOldStages, pruneOldVersions, stagePackage, stagedSource } from './stage.js'
 import { canonical, discoverExtensions, installState } from './reconcile.js'
 import { checkManifest, readManifest } from './manifest.js'
@@ -203,8 +203,11 @@ export function previousStagedDir(profileDir, name, stageRoot, fs = { existsSync
   try {
     const spec = JSON.parse(fs.readFileSync(join(profileDir, 'package.json'), 'utf8')).dependencies?.[name]
     if (typeof spec !== 'string' || !spec.startsWith('file:')) return undefined
-    const dir = spec.slice('file:'.length)
-    return dir.startsWith(stageRoot + sep) && fs.existsSync(join(dir, 'package.json')) ? dir : undefined
+    // pnpm records the path with forward slashes on Windows (`file:C:/Users/.../.acryl-staged/x`), so compare resolved paths, not the spelling: a plain
+    // `startsWith(stageRoot + sep)` never matched there, the running version was not found, and a failed update could not bring it back.
+    const dir = resolve(spec.slice('file:'.length))
+    const inside = relative(resolve(stageRoot), dir)
+    return inside !== '' && !inside.startsWith('..') && !isAbsolute(inside) && fs.existsSync(join(dir, 'package.json')) ? dir : undefined
   } catch { return undefined }
 }
 
