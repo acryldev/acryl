@@ -1,10 +1,11 @@
 #!/bin/bash
-# build-linux.sh <payloadDir> <outDir> <version>  ->  <outDir>/AcrylDeno_<version>_amd64.deb   (x86_64, Debian/Ubuntu with webkit2gtk-4.1 and gtk3)
+# build-linux.sh <payloadDir> <outDir> [version]  ->  <outDir>/AcrylDeno_<version>_amd64.deb   (x86_64, Debian/Ubuntu with webkit2gtk-4.1 and gtk3)
 # The app is cross-built from any host (`deno desktop --target x86_64-unknown-linux-gnu`), laid out under /opt/AcrylDeno with a /usr/bin/acryldeno link,
 # a menu entry and an icon, and packed with dpkg-deb inside a Debian container (macOS has no dpkg-deb). Needs a running Docker.
 set -euo pipefail
-PAYLOAD=$1; OUT=$2; VERSION=$3
+PAYLOAD=$1; OUT=$2
 HERE=$(cd "$(dirname "$0")" && pwd); REPO=$(cd "$HERE/../../.." && pwd)
+VERSION=${3:-$(node -p "require('$HERE/../../../apps/acryl-desktop/package.json').version")}   # default: the ACRYL desktop package version (the pinned Harness version is a different number)
 mkdir -p "$OUT"; W=$(mktemp -d); trap 'rm -rf "$W"' EXIT
 (cd "$HERE" && deno desktop -A --no-check --target x86_64-unknown-linux-gnu -o "$W/bundle/acryldeno" main.ts 2>&1 | grep -iE "error" || true)
 B=$W/bundle/acryldeno; [ -d "$B" ] || { echo "deno desktop produced no bundle at $B"; ls "$W/bundle" 2>&1; exit 1; }

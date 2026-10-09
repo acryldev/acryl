@@ -1,8 +1,9 @@
 #!/bin/bash
-# build-mac.sh <payloadDir> <outDir> <version>  ->  <outDir>/AcrylDeno.app and <outDir>/AcrylDeno-<version>-arm64.dmg (ad-hoc signed; for local testing, not notarized)
+# build-mac.sh <payloadDir> <outDir> [version]  ->  <outDir>/AcrylDeno.app and <outDir>/AcrylDeno-<version>-arm64.dmg (ad-hoc signed; for local testing, not notarized)
 set -euo pipefail
-PAYLOAD=$1; OUT=$2; VERSION=$3
+PAYLOAD=$1; OUT=$2
 HERE=$(cd "$(dirname "$0")" && pwd); REPO=$(cd "$HERE/../../.." && pwd)
+VERSION=${3:-$(node -p "require('$HERE/../../../apps/acryl-desktop/package.json').version")}   # default: the ACRYL desktop package version (the pinned Harness version is a different number)
 mkdir -p "$OUT"; APP="$OUT/AcrylDeno.app"; rm -rf "$APP" "$OUT/AcrylDeno.app.app"
 W=$(mktemp -d); trap 'rm -rf "$W"' EXIT
 # icon: the repo's own 1024 px mac icon -> .icns
