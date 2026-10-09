@@ -1,7 +1,7 @@
 #!/bin/bash
 # build-linux.sh <payloadDir> <outDir> [version]  ->  <outDir>/AcrylDeno_<version>_amd64.deb   (x86_64, Debian/Ubuntu with webkit2gtk-4.1 and gtk3)
 # The app is cross-built from any host (`deno desktop --target x86_64-unknown-linux-gnu`), laid out under /opt/AcrylDeno with a /usr/bin/acryldeno link,
-# a menu entry and an icon, and packed with dpkg-deb inside a Debian container (macOS has no dpkg-deb). Needs a running Docker.
+# a menu entry and an icon, and packed with dpkg-deb (macOS has none): locally if present, else on a Debian/Ubuntu host over ssh (ACRYLDENO_PACK_SSH=user@host ACRYLDENO_PACK_KEY=<identity file>), else in a Debian container.
 set -euo pipefail
 PAYLOAD=$1; OUT=$2
 HERE=$(cd "$(dirname "$0")" && pwd); REPO=$(cd "$HERE/../../.." && pwd)
@@ -45,5 +45,21 @@ Description: AcrylDeno - ACRYL running on Deno (experimental)
 CTRL
 chmod 755 "$R/DEBIAN"
 DEB="AcrylDeno_${VERSION}_amd64.deb"; rm -f "$OUT/$DEB"
-docker run --rm -v "$W:/w" -v "$OUT:/out" debian:stable-slim sh -c "dpkg-deb --root-owner-group -Zxz -z5 --build /w/root /out/$DEB && dpkg-deb -I /out/$DEB | head -14 && dpkg-deb -c /out/$DEB | awk '{print \$1, \$2, \$3, \$6}' | grep -E 'opt/AcrylDeno/(acryldeno|[a-z0-9_.]*\\.so)\$|usr/bin|\\.desktop' "
+if command -v dpkg-deb >/dev/null; then
+  dpkg-deb --root-owner-group -Zxz -z5 --build "$R" "$OUT/$DEB" >/dev/null
+elif [ -n "${ACRYLDENO_PACK_SSH:-}" ]; then
+  # ACRYLDENO_PACK_SSH="<user@host>" and ACRYLDENO_PACK_KEY=<identity file>: pack on a Debian/Ubuntu machine, in a scratch folder that is removed afterwards
+  SSH=(ssh -o BatchMode=yes -o IdentitiesOnly=yes -i "$ACRYLDENO_PACK_KEY" "$ACRYLDENO_PACK_SSH"); RD=scratch-acryldeno-pack-$$
+  COPYFILE_DISABLE=1 tar --no-xattrs -C "$W" -czf "$W/root.tgz" root
+  scp -q -o BatchMode=yes -o IdentitiesOnly=yes -i "$ACRYLDENO_PACK_KEY" "$W/root.tgz" "$ACRYLDENO_PACK_SSH:$RD.tgz"
+  "${SSH[@]}" "bash -s" <<REMOTE
+set -e; mkdir $RD && tar -C $RD -xzf $RD.tgz && nice dpkg-deb --root-owner-group -Zxz -z5 --build $RD/root $RD/$DEB >/dev/null && echo packed
+REMOTE
+  scp -q -o BatchMode=yes -o IdentitiesOnly=yes -i "$ACRYLDENO_PACK_KEY" "$ACRYLDENO_PACK_SSH:$RD/$DEB" "$OUT/$DEB"
+  "${SSH[@]}" "bash -s" <<REMOTE
+rm -rf $RD $RD.tgz
+REMOTE
+else
+  docker run --rm -v "$W:/w" -v "$OUT:/out" debian:stable-slim sh -c "dpkg-deb --root-owner-group -Zxz -z5 --build /w/root /out/$DEB"
+fi
 echo "deb: $OUT/$DEB ($(du -h "$OUT/$DEB" | cut -f1))"

@@ -500,6 +500,10 @@ and port 3080 untouched; the `.deb` installs on a clean Ubuntu 24.04 container (
 contents ran under Xvfb on the Ubuntu host through a symlink (as `/usr/bin/acryldeno` will be), host up, terminal opened and typed into. Not checked: the Linux GUI on a
 real desktop session, an installed (not unpacked) `.deb` run, Gatekeeper behaviour of a downloaded copy (the DMG here was never quarantined), notarization.
 
+**Rebuilt 2026-10-09** with the Windows-driven launcher and payload changes (Harness 0.2.0-rc.2, the pin of origin/main): DMG 115 MB, `.deb` 49 MB (packed on z370n over ssh:
+`ACRYLDENO_PACK_SSH`/`ACRYLDENO_PACK_KEY`, no Docker), Windows zip 97 MB. All three take the ACRYL desktop package version (0.1.44) unless one is given. Re-tested: the DMG
+from a mounted image (throwaway HOME) loads the client and runs a typed command in the terminal; the `.deb` contents under a scratch Xvfb on z370n do the same; Windows: F13.
+
 Two facts about `deno desktop` found while building it:
 - **The window shows whatever binds the runtime's `DENO_SERVE_ADDRESS`, and a `node:http` server counts.** ACRYL's own web server binds that address (that is why its port
   was random and `ACRYL_WEB_PORT` was ignored). A `Deno.serve` of our own (a loading page) took the address first and starved the real host, silently. So the launcher serves
