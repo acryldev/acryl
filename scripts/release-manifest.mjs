@@ -9,7 +9,9 @@ export { CLI_TARGETS }
 export const RELEASE_MANIFEST_SCHEMA_VERSION = 1
 export const CAPABILITY_BASELINE = 'acryl-capability-baseline-v1'
 export const DESKTOP_TARGETS = Object.freeze(['macos-arm64', 'macos-x64', 'linux-arm64', 'linux-x64', 'windows-x64'])
-export const CLEAN_INSTALL_BUDGET = Object.freeze({ maximumBytes: 350_000_000, maximumMilliseconds: 120_000 })
+// 600 MB, up from 350 MB (v0.1.x): the DeepSeek Harness 0.2 packages bring the LibreOffice kit (office previews and the office skills, about 150 MB per platform)
+// and the sherpa-onnx voice runtime, both kept on purpose. Clean installs measured 487-516 MB across the four targets on 2026-10-09 (Windows takes about 86 s).
+export const CLEAN_INSTALL_BUDGET = Object.freeze({ maximumBytes: 600_000_000, maximumMilliseconds: 120_000 })
 
 const SURFACE_TARGETS = Object.freeze({
   cli: Object.keys(CLI_TARGETS),
