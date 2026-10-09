@@ -197,6 +197,18 @@ describe('published package surface', () => {
     expect(installedBoot).toContain(marker)
   })
 
+  it('patches the Windows Job runner to start as Node when it runs inside Electron', () => {
+    // DSH's Windows subprocess runner starts itself as `[process.execPath, runner.js]`. The stock DeepSeek Harness desktop runs its engine in a separate Node
+    // process, so that is Node. ACRYL runs the engine inside Electron, where `process.execPath` is ACRYL.exe: without ELECTRON_RUN_AS_NODE the runner
+    // starts a second ACRYL and exits 1 ("Windows Job runner exited with exit code 1"), and every package install an agent starts fails on Windows.
+    const patchPath = './patches/@deepseek-ai__dsh-subprocess-local@0.2.0-rc.2.patch'
+    expectPatchedDependency('@deepseek-ai/dsh-subprocess-local@0.2.0-rc.2', patchPath)
+    const marker = 'process.versions.electron === void 0 ? {} : { ELECTRON_RUN_AS_NODE: "1" }'
+    expect(readFileSync(new URL(patchPath, workspaceRoot), 'utf8')).toContain(marker)
+    const installed = createRequire(new URL('package.json', packageRoot)).resolve('@deepseek-ai/dsh-subprocess-local/runner')
+    expect(readFileSync(join(dirname(installed), 'runner-launch-B2zsQ1Dz.js'), 'utf8')).toContain(marker)
+  })
+
   it('patches the browse panel with the Windows native-picker icon bridge', () => {
     const patchPath = './patches/@deepseek-ai__dsh-client-ui-directory-picker-browse@0.2.0-rc.2.patch'
     expectPatchedDependency('@deepseek-ai/dsh-client-ui-directory-picker-browse@0.2.0-rc.2', patchPath)

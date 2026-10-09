@@ -82,6 +82,7 @@ patchedDependencies:
   '@deepseek-ai/dsh-client-ui-directory-picker-browse@0.2.0-rc.2': patches/@deepseek-ai__dsh-client-ui-directory-picker-browse@0.2.0-rc.2.patch
   '@deepseek-ai/dsh-client-ui-settings-models@0.2.0-rc.2': patches/@deepseek-ai__dsh-client-ui-settings-models@0.2.0-rc.2.patch
   '@deepseek-ai/dsh-client-ui-workspace@0.2.0-rc.2': patches/@deepseek-ai__dsh-client-ui-workspace@0.2.0-rc.2.patch
+  '@deepseek-ai/dsh-subprocess-local@0.2.0-rc.2': patches/@deepseek-ai__dsh-subprocess-local@0.2.0-rc.2.patch
   '@deepseek-ai/dsh-web-app@0.2.0-rc.2': patches/@deepseek-ai__dsh-web-app@0.2.0-rc.2.patch
   '@earendil-works/pi-ai@0.87.1': patches/@earendil-works__pi-ai@0.87.1.patch
   '@earendil-works/pi-tui@0.84.2': patches/@earendil-works__pi-tui@0.84.2.patch

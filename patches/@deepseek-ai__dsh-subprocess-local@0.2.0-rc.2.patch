@@ -1,0 +1,12 @@
+diff --git a/lib/runner-launch-B2zsQ1Dz.js b/lib/runner-launch-B2zsQ1Dz.js
+index 538e414..ef041a5 100644
+--- a/lib/runner-launch-B2zsQ1Dz.js
++++ b/lib/runner-launch-B2zsQ1Dz.js
+@@ -1351,6 +1351,7 @@ function runnerEnvironment(selection, invocation) {
+ 		...env,
+ 		[SUBPROCESS_RUNNER_ENV]: selection,
+ 		SYSTEMD_LOG_TARGET: "null",
++		...process.versions.electron === void 0 ? {} : { ELECTRON_RUN_AS_NODE: "1" },
+ 		...entry?.endsWith(".ts") === true ? { TSX_TSCONFIG_PATH: SOURCE_TSCONFIG_PATH } : {}
+ 	};
+ }
