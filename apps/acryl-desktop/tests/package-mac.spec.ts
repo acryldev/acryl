@@ -38,6 +38,8 @@ function options(calls: CommandCall[], logs: string[] = []): MacSmokePackageOpti
     prepareRuntime: () => undefined,
     builderCli: '/repo/node_modules/electron-builder/cli.js',
     verifier: '/repo/acryl-desktop/scripts/verify-mac-smoke.ts',
+    sealer: '/repo/acryl-desktop/scripts/seal-mac-app.mjs',
+    findApp: () => '/repo/acryl-desktop/dist/mac-smoke/mac-universal/ACRYL.app',
     nodeExecutable: '/usr/local/bin/node',
     run: (command, args, cwd, env) => {
       calls.push({ command, args: [...args], cwd, env: { ...env } })
@@ -53,20 +55,39 @@ describe('macOS DMG smoke packaging', () => {
 
     packageMacSmoke(options(calls, logs))
 
-    expect(calls).toHaveLength(3)
+    expect(calls).toHaveLength(5)
     expect(calls[0]).toEqual({
       command: 'corepack',
       args: ['pnpm', '--filter', 'acryl-desktop', 'run', 'check:mac-package'],
       cwd: '/repo',
       env: { PATH: '/usr/bin:/bin', SAFE_VALUE: 'kept' },
     })
-    expect(calls[1]).toEqual({
+    expect(calls[1]?.args).toEqual([
+      '/repo/node_modules/electron-builder/cli.js',
+      '--mac',
+      'dir',
+      '--universal',
+      '--publish',
+      'never',
+      '--config.mac.notarize=false',
+      '--config.npmRebuild=false',
+      '--config.directories.output=/repo/acryl-desktop/dist/mac-smoke',
+    ])
+    expect(calls[2]).toEqual({
+      command: '/usr/local/bin/node',
+      args: ['/repo/acryl-desktop/scripts/seal-mac-app.mjs', '/repo/acryl-desktop/dist/mac-smoke/mac-universal/ACRYL.app'],
+      cwd: '/repo/acryl-desktop',
+      env: { PATH: '/usr/bin:/bin', SAFE_VALUE: 'kept' },
+    })
+    expect(calls[3]).toEqual({
       command: '/usr/local/bin/node',
       args: [
         '/repo/node_modules/electron-builder/cli.js',
         '--mac',
         'dmg',
         '--universal',
+        '--prepackaged',
+        '/repo/acryl-desktop/dist/mac-smoke/mac-universal/ACRYL.app',
         '--publish',
         'never',
         '--config.mac.notarize=false',
@@ -80,7 +101,7 @@ describe('macOS DMG smoke packaging', () => {
         CSC_IDENTITY_AUTO_DISCOVERY: 'false',
       },
     })
-    expect(calls[2]).toEqual({
+    expect(calls[4]).toEqual({
       command: '/usr/local/bin/node',
       args: [
         '/repo/acryl-desktop/scripts/verify-mac-smoke.ts',
@@ -107,18 +128,20 @@ describe('macOS DMG smoke packaging', () => {
     })
 
     expect(prepared).toBe(false)
-    expect(calls[1]?.args).toEqual([
+    expect(calls[3]?.args).toEqual([
       '/repo/node_modules/electron-builder/cli.js',
       '--mac',
       'dmg',
       '--arm64',
+      '--prepackaged',
+      '/repo/acryl-desktop/dist/mac-smoke/mac-universal/ACRYL.app',
       '--publish',
       'never',
       '--config.mac.notarize=false',
       '--config.npmRebuild=false',
       '--config.directories.output=/repo/acryl-desktop/dist/mac-arm64',
     ])
-    expect(calls[2]?.args).toEqual([
+    expect(calls[4]?.args).toEqual([
       '/repo/acryl-desktop/scripts/verify-mac-smoke.ts',
       '/repo/acryl-desktop/dist/mac-arm64',
       'arm64',
@@ -138,11 +161,11 @@ describe('macOS DMG smoke packaging', () => {
 
     packageMacSmoke(value)
 
-    expect(calls).toHaveLength(2)
+    expect(calls).toHaveLength(4)
     expect(calls[0]?.args).toEqual([
       '/repo/node_modules/electron-builder/cli.js',
       '--mac',
-      'dmg',
+      'dir',
       '--universal',
       '--publish',
       'never',

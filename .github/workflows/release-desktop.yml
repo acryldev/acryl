@@ -57,7 +57,44 @@ jobs:
         run: |
           set -euo pipefail
           cd apps/acryl-desktop
-          node node_modules/electron-builder/cli.js --${{ matrix.target }} ${{ matrix.mode }} --${{ matrix.arch }} --publish never --config.mac.notarize=false --config.npmRebuild=false --config.directories.output=dist/${{ matrix.name }}
+          BUILDER="node node_modules/electron-builder/cli.js"
+          COMMON="--publish never --config.mac.notarize=false --config.npmRebuild=false --config.directories.output=dist/${{ matrix.name }}"
+          if [ "${{ matrix.target }}" = mac ]; then
+            # Without a Developer ID electron-builder leaves a bundle `codesign --verify --strict` rejects (macOS calls a downloaded copy damaged): build the app,
+            # seal it ad hoc, then build the DMG from that sealed app.
+            $BUILDER --mac dir --${{ matrix.arch }} $COMMON
+            APP="$(find dist/${{ matrix.name }} -maxdepth 2 -name ACRYL.app -type d | head -n 1)"
+            test -n "$APP"
+            node scripts/seal-mac-app.mjs "$APP"
+            $BUILDER --mac dmg --${{ matrix.arch }} --prepackaged "$APP" $COMMON
+          else
+            $BUILDER --${{ matrix.target }} ${{ matrix.mode }} --${{ matrix.arch }} $COMMON
+          fi
+      # The promise of the product, proven on what is shipped: an agent writes a plugin and the packaged app takes it live (install, run, update, remove, no restart).
+      # One native leg per OS; the other legs of an OS are the same code.
+      - name: An agent-written plugin installs, runs, updates and is removed live in the built app
+        if: matrix.name == 'macos-arm64' || matrix.name == 'windows-x64' || matrix.name == 'linux-x64'
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="apps/acryl-desktop/dist/${{ matrix.name }}"
+          case "${{ matrix.name }}" in
+            macos-arm64)
+              EXE="$(find "$OUT" -path '*ACRYL.app/Contents/MacOS/ACRYL' -type f | head -n 1)"
+              test -n "$EXE"
+              node apps/acryl-desktop/scripts/verify-packaged-self-extension.mjs "$EXE"
+              ;;
+            windows-x64)
+              node apps/acryl-desktop/scripts/verify-packaged-self-extension.mjs "$OUT/win-unpacked/ACRYL.exe"
+              ;;
+            linux-x64)
+              sudo apt-get update -qq
+              sudo apt-get install -y -qq xvfb
+              EXE="$(find "$OUT/linux-unpacked" -maxdepth 1 -type f -perm -u+x \( -name acryl-desktop -o -name ACRYL \) | head -n 1)"
+              test -n "$EXE"
+              xvfb-run -a --server-args="-screen 0 1280x800x24" node apps/acryl-desktop/scripts/verify-packaged-self-extension.mjs "$EXE" --arg --no-sandbox
+              ;;
+          esac
       - name: Create Desktop release receipt
         shell: bash
         env:

@@ -1,9 +1,9 @@
 /** Build an unsigned macOS DMG smoke artifact on a native macOS host. */
 
 import { spawnSync } from 'node:child_process'
-import { rmSync } from 'node:fs'
+import { readdirSync, rmSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { dirname, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { withoutMacReleaseSecrets } from './release-preflight.ts'
 import { prepareInstalledMacUniversalRuntime } from './mac-universal.ts'
@@ -34,6 +34,10 @@ export interface MacSmokePackageOptions {
   readonly builderCli: string
   /** Absolute packaged-DMG verification script. */
   readonly verifier: string
+  /** Absolute script that seals the unsigned app bundle ad hoc, between building the app and building the DMG. */
+  readonly sealer: string
+  /** The built `.app` the first builder run left in the output directory. */
+  readonly findApp: () => string
   /** Node executable used to run package-local scripts. */
   readonly nodeExecutable: string
   /** Execute one packaging command. */
@@ -60,6 +64,19 @@ function run(
   }
 }
 
+/** The `.app` electron-builder left under `<output>/mac*` (`mac-arm64`, `mac`, `mac-universal`). */
+function findBuiltApp(outputDir: string): string {
+  for (const entry of readdirSync(outputDir, { withFileTypes: true })) {
+    if (entry.isDirectory() && entry.name.startsWith('mac')) {
+      const candidate = join(outputDir, entry.name, 'ACRYL.app')
+      try {
+        if (readdirSync(candidate).length > 0) return candidate
+      } catch { /* not this folder */ }
+    }
+  }
+  throw new Error(`electron-builder left no ACRYL.app under ${outputDir}`)
+}
+
 function defaultOptions(): MacSmokePackageOptions {
   const desktopRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
   const workspaceRoot = resolve(desktopRoot, '..')
@@ -79,6 +96,8 @@ function defaultOptions(): MacSmokePackageOptions {
     prepareRuntime: () => prepareInstalledMacUniversalRuntime(desktopRoot),
     builderCli: require.resolve('electron-builder/cli.js'),
     verifier: fileURLToPath(new URL('./verify-mac-smoke.ts', import.meta.url)),
+    sealer: fileURLToPath(new URL('./seal-mac-app.mjs', import.meta.url)),
+    findApp: () => findBuiltApp(outputDir),
     nodeExecutable: process.execPath,
     run,
     log: message => console.log(message),
@@ -125,25 +144,25 @@ export function packageMacSmoke(options: MacSmokePackageOptions = defaultOptions
   const hostOnly = options.target === 'host'
   options.resetOutput()
   if (!hostOnly) options.prepareRuntime()
-  options.run(
-    options.nodeExecutable,
-    [
-      options.builderCli,
-      '--mac',
-      'dmg',
-      hostOnly ? `--${options.arch}` : '--universal',
-      '--publish',
-      'never',
-      '--config.mac.notarize=false',
-      '--config.npmRebuild=false',
-      `--config.directories.output=${options.outputDir}`,
-    ],
-    options.desktopRoot,
-    {
-      ...cleanEnvironment,
-      CSC_IDENTITY_AUTO_DISCOVERY: 'false',
-    },
-  )
+  // Two builder runs with a seal between them: electron-builder skips signing without a Developer ID, which leaves a bundle `codesign --verify --strict` rejects (macOS
+  // calls a downloaded copy damaged); the app directory is sealed ad hoc, then the DMG is built from that prepackaged, sealed app.
+  const builderArguments = (target: 'dir' | 'dmg', prepackaged?: string): string[] => [
+    options.builderCli,
+    '--mac',
+    target,
+    hostOnly ? `--${options.arch}` : '--universal',
+    ...(prepackaged === undefined ? [] : ['--prepackaged', prepackaged]),
+    '--publish',
+    'never',
+    '--config.mac.notarize=false',
+    '--config.npmRebuild=false',
+    `--config.directories.output=${options.outputDir}`,
+  ]
+  const builderEnvironment = { ...cleanEnvironment, CSC_IDENTITY_AUTO_DISCOVERY: 'false' }
+  options.run(options.nodeExecutable, builderArguments('dir'), options.desktopRoot, builderEnvironment)
+  const app = options.findApp()
+  options.run(options.nodeExecutable, [options.sealer, app], options.desktopRoot, cleanEnvironment)
+  options.run(options.nodeExecutable, builderArguments('dmg', app), options.desktopRoot, builderEnvironment)
   options.run(
     options.nodeExecutable,
     hostOnly ? [options.verifier, options.outputDir, options.arch] : [options.verifier, options.outputDir],
