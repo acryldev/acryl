@@ -68,17 +68,19 @@ describe('file catalog store', () => {
     expect(await store.read()).toBeNull()
     await store.write('[]')
     expect(readFileSync(path, 'utf8')).toBe('[]')
-    expect(statSync(path).mode & 0o077).toBe(0)
+    // File modes are a POSIX notion; on Windows the file is private through the user profile's ACL.
+    if (process.platform !== 'win32') expect(statSync(path).mode & 0o077).toBe(0)
     expect(await store.read()).toBe('[]')
   })
 
   it('surfaces a read failure that is not "missing"', async () => {
     writeFileSync(join(dir, 'x'), '')
-    await expect(createFileCatalogStore(join(dir, 'x', 'sub', 'a.json')).read()).rejects.toBeDefined()
+    // A file where a folder should be reads as ENOTDIR on POSIX; Windows reports it as a missing path, which the store treats as "nothing saved yet".
+    if (process.platform !== 'win32') await expect(createFileCatalogStore(join(dir, 'x', 'sub', 'a.json')).read()).rejects.toBeDefined()
     await expect(createFileCatalogStore(dir).read()).rejects.toBeDefined()
   })
 
   it('keeps the file in the ACRYL home, never anywhere a repository controls', () => {
-    expect(agentsFile('/data/acryl')).toBe('/data/acryl/workspace/agents.json')
+    expect(agentsFile('/data/acryl')).toBe(join('/data/acryl', 'workspace', 'agents.json'))
   })
 })

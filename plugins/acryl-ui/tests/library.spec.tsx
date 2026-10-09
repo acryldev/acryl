@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
@@ -857,7 +857,7 @@ describe('styling rules from the DSH styling document (section 39): no hex color
   it('registry stylesheets use only --dsw-alias-* tokens', () => {
     for (const file of cssFiles(join(root, 'src/client/registry'))) {
       const css = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//gu, '')
-      const name = file.split('/').at(-1) as string
+      const name = basename(file)
       expect(css, `${name}: hex color`).not.toMatch(/#[0-9a-fA-F]{3,8}\b/u)
       expect(css, `${name}: theme selector`).not.toMatch(/\.(dark|light)\b|data-ds-dark-theme|prefers-color-scheme/u)
       const statics = [...css.matchAll(/--dsw-static-[a-z0-9-]+/gu)].map(m => m[0]).filter(token => !(ALLOWED_STATIC.get(name) ?? []).includes(token))

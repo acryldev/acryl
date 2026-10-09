@@ -1,12 +1,13 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { CHANGES_KIND } from '../../src/client/changes/changes-tab.ts'
 import { CHECKS_KIND } from '../../src/client/checks/checks-tab.ts'
 import { FILES_KIND } from '../../src/client/files/files-tab.ts'
 import { REVIEW_KIND } from '../../src/client/review/review-tab.ts'
 
-const UPSTREAM = new URL('../../../../deepseek-harness/packages/client/', import.meta.url).pathname
+const UPSTREAM = fileURLToPath(new URL('../../../../deepseek-harness/packages/client/', import.meta.url))
 
 /** Every `kind` string in an upstream client plugin that touches the right-sidebar tab registry (over-inclusive on purpose). */
 function upstreamKinds(): Set<string> {
@@ -34,6 +35,7 @@ function upstreamKinds(): Set<string> {
 }
 
 describe('right-panel tab kinds', () => {
+  // Reading every upstream client source file takes longer than vitest's 5 s default on a slow disk (Windows).
   it('never reuse a kind an upstream DSH plugin registers (the registry throws and the whole client fails to load)', () => {
     const upstream = upstreamKinds()
     // Sanity: the scan really sees upstream registrations, including the one that once collided.
@@ -41,5 +43,5 @@ describe('right-panel tab kinds', () => {
     const ours = [CHANGES_KIND, REVIEW_KIND, CHECKS_KIND, FILES_KIND]
     expect(new Set(ours).size).toBe(ours.length)
     for (const kind of ours) expect(upstream.has(kind), kind).toBe(false)
-  })
+  }, 60_000)
 })

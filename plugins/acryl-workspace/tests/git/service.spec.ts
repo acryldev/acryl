@@ -308,7 +308,8 @@ function isRunning(pid: number): boolean {
 }
 
 describe('disposal', () => {
-  it('aborts an in-flight git process and leaves none running', async () => {
+  // The stand-in git is a #!/bin/sh script and liveness is read with `ps`, so this runs on POSIX hosts only.
+  it.skipIf(process.platform === 'win32')('aborts an in-flight git process and leaves none running', async () => {
     const pidFile = join(root, 'pid')
     const script = join(root, 'slow-git.sh')
     writeFileSync(script, `#!/bin/sh\necho $$ > ${pidFile}\nexec sleep 30\n`)
