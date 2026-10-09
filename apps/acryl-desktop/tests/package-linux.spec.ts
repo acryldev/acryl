@@ -1,3 +1,4 @@
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { linuxOutputDirectory, packageLinuxDeb, type LinuxPackageOptions } from '../scripts/package-linux.ts'
 
@@ -34,12 +35,12 @@ describe('Linux .deb packaging', () => {
     expect(calls.map(call => [call.command, ...call.args].join(' '))).toEqual([
       'corepack pnpm --filter acryl-desktop run build',
       'corepack pnpm --filter acryl-desktop run verify:closure',
-      '/usr/bin/node /repo/node_modules/electron-builder/cli.js --linux deb --x64 --publish never --config.npmRebuild=false --config.directories.output=dist/linux-x64',
+      `/usr/bin/node /repo/node_modules/electron-builder/cli.js --linux deb --x64 --publish never --config.npmRebuild=false --config.directories.output=${join('dist', 'linux-x64')}`,
     ])
     expect(calls[0]?.cwd).toBe('/repo')
     expect(calls[2]?.cwd).toBe('/repo/apps/acryl-desktop')
     expect(calls[2]?.env).toMatchObject({ SAFE_VALUE: 'kept', CSC_IDENTITY_AUTO_DISCOVERY: 'false' })
-    expect(written).toBe('/repo/apps/acryl-desktop/dist/linux-x64/acryl-desktop-linux-x64.deb')
+    expect(written).toBe(join('/repo/apps/acryl-desktop', 'dist', 'linux-x64', 'acryl-desktop-linux-x64.deb'))
     expect(logs.at(-1)).toContain(written)
   })
 

@@ -1,6 +1,7 @@
 /** BLEND lock consumption for desktop profile composition (spec 003, D22-D27). */
 
 import { readFileSync, statSync } from 'node:fs'
+import { join } from 'node:path'
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 
 /**
@@ -80,12 +81,8 @@ export function resolveBlendLockPath(blendPath: string): string {
   } catch (cause) {
     throw new Error(`${BIN_NAME}: BLEND path '${blendPath}' does not exist (${cause instanceof Error ? cause.message : String(cause)})`)
   }
-  if (stats.isDirectory()) return joinLockPath(blendPath, BLEND_LOCK_RELATIVE_PATH)
+  if (stats.isDirectory()) return join(blendPath, BLEND_LOCK_RELATIVE_PATH)
   return blendPath
-}
-
-function joinLockPath(directory: string, relative: string): string {
-  return directory.endsWith('/') ? `${directory}${relative}` : `${directory}/${relative}`
 }
 
 /**

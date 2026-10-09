@@ -64,7 +64,7 @@ describe('ProfileCreateWindow', () => {
     expect(electron.windows[0]?.show).toHaveBeenCalledOnce()
     expect(electron.windows[0]?.focus).toHaveBeenCalledOnce()
     expect(electron.windows[0]?.loadFile).toHaveBeenCalledWith(
-      expect.stringContaining('/native-ui/profile-create.html'),
+      expect.stringMatching(/[\\/]native-ui[\\/]profile-create\.html/u),
       { query: { locale: 'en' } },
     )
     expect(electron.windows[0]?.options).toEqual(expect.objectContaining({
