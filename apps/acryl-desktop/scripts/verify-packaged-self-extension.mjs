@@ -28,6 +28,8 @@ if (executable === undefined || !existsSync(executable)) {
 }
 
 const BOOT_TIMEOUT_MS = 180_000
+/** One tool call. An install runs the app's own package manager, which can take a while on a cold machine, but never this long without something being wrong. */
+const CALL_TIMEOUT_MS = 150_000
 const example = fileURLToPath(new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url))
 const sleep = ms => new Promise(done => setTimeout(done, ms))
 
@@ -96,6 +98,7 @@ try {
   const origin = `http://127.0.0.1:${port}`
   const call = async (name, toolArguments) => {
     const response = await fetch(`${origin}/api/acryl-agent-control/online/tools`, {
+      signal: AbortSignal.timeout(CALL_TIMEOUT_MS),
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${secret}` },
       body: JSON.stringify({ name, arguments: toolArguments }),
@@ -145,8 +148,20 @@ try {
 
 try { assertRealHomesUntouched(before, 'packaged self-extension') } catch (error) { failure ??= error }
 if (failure !== undefined) {
-  console.error(`verify-packaged-self-extension: FAILED after ${steps.length} step(s) (${steps.join(' > ')}): ${failure instanceof Error ? failure.message : String(failure)}`)
+  const describeError = error => (error instanceof Error ? `${error.name}: ${error.message}${error.cause === undefined ? '' : ` (cause: ${String(error.cause)})`}` : String(error))
+  console.error(`verify-packaged-self-extension: FAILED after ${steps.length} step(s) (${steps.join(' > ')}): ${describeError(failure)}`)
   console.error(`--- app output (tail) ---\n${output.slice(-2000)}`)
+  // The app's own log files say what the install did; print the tail of each.
+  const logs = []
+  const collect = directory => {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const path = join(directory, entry.name)
+      if (entry.isDirectory()) collect(path)
+      else if (/\.(log|jsonl)$/u.test(entry.name)) logs.push(path)
+    }
+  }
+  try { collect(iso.root) } catch { /* the folder can already be partly gone */ }
+  for (const path of logs.slice(0, 6)) console.error(`--- ${path.replace(iso.root, '<throwaway>')} (tail) ---\n${readFileSync(path, 'utf8').slice(-1500)}`)
   iso.dispose()
   process.exit(1)
 }
