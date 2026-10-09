@@ -8,14 +8,14 @@ import { discoverExtensions } from '../lib/reconcile.js'
 import { appExtensionsDir, blendDir, currentInstance, isProjectExtensionPath, projectExtensionsDir, projectExtensionsLabel, useAppInstance } from '../lib/scopes.js'
 
 test('the main app keeps the classic shared project locations', () => {
-  assert.equal(projectExtensionsDir('/w', undefined), '/w/.acryl-extensions')
-  assert.equal(blendDir('/w', undefined), '/w/.acryl/blend')
+  assert.equal(projectExtensionsDir('/w', undefined), join('/w', '.acryl-extensions'))
+  assert.equal(blendDir('/w', undefined), join('/w', '.acryl', 'blend'))
   assert.equal(projectExtensionsLabel(undefined), '<workspace>/.acryl-extensions/<name>/')
 })
 
 test('a named instance keeps everything it authors under its own namespace', () => {
-  assert.equal(projectExtensionsDir('/w', 'orbit'), '/w/.acryl/instances/orbit/extensions')
-  assert.equal(blendDir('/w', 'orbit'), '/w/.acryl/instances/orbit/blend')
+  assert.equal(projectExtensionsDir('/w', 'orbit'), join('/w', '.acryl', 'instances', 'orbit', 'extensions'))
+  assert.equal(blendDir('/w', 'orbit'), join('/w', '.acryl', 'instances', 'orbit', 'blend'))
   assert.match(projectExtensionsLabel('orbit'), /instances\/orbit\/extensions/)
 })
 
@@ -54,9 +54,10 @@ test('two instances opening one project see only their own extensions and their 
 })
 
 test('inside an app (its home has blend.yaml) plugins go to the app\'s extensions folder', async () => {
-  let undo = useAppInstance({ home: '/apps/stage', definitionFile: '/apps/stage/blend.yaml' }, path => path === '/apps/stage/blend.yaml')
-  assert.equal(appExtensionsDir(), '/apps/stage/extensions'); undo()
-  undo = useAppInstance({ home: '/apps/stage', definitionFile: '/apps/stage/blend.yaml' }, () => false)
+  const definitionFile = join('/apps/stage', 'blend.yaml')
+  let undo = useAppInstance({ home: '/apps/stage', definitionFile }, path => path === definitionFile)
+  assert.equal(appExtensionsDir(), join('/apps/stage', 'extensions')); undo()
+  undo = useAppInstance({ home: '/apps/stage', definitionFile }, () => false)
   assert.equal(appExtensionsDir(), undefined); undo()
   assert.equal(appExtensionsDir(), undefined)
 })

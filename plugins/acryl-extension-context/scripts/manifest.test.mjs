@@ -93,7 +93,7 @@ test('build writes indexes, then --check passes, then a manifest edit makes them
     put('docs/docs.json', JSON.stringify(manifest({ navigation: [{ title: 'Start here', items: [doc({ title: 'Renamed' })] }] })))
     const stale = buildPack(root, { check: true })
     assert.equal(stale.ok, false)
-    assert.match(stale.problems.join('\n'), /docs\/README\.md is stale/)
+    assert.match(stale.problems.join('\n'), /docs[\\/]README\.md is stale/)
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
 

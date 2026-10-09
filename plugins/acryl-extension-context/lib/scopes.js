@@ -60,7 +60,8 @@ export function appHomeDir() {
 
 /** Does this real path sit in some project extensions folder (classic or instance-namespaced)? */
 export function isProjectExtensionPath(path) {
-  return path.includes('/.acryl-extensions/') || /\/\.acryl\/instances\/[^/]+\/extensions\//u.test(path)
+  const slashed = path.replaceAll('\\', '/')
+  return slashed.includes('/.acryl-extensions/') || /\/\.acryl\/instances\/[^/]+\/extensions\//u.test(slashed)
 }
 
 /** How the router names the project location the agent writes to. */

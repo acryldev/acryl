@@ -240,7 +240,7 @@ test('skills: frontmatter parses, and the real pack lists its skills with real d
   assert.deepEqual(list.map(c => c.name).sort(), ['acryl-add-provider-or-capability', 'acryl-add-ui', 'acryl-build-extension', 'acryl-change-plugin', 'acryl-desktop-shell', 'acryl-diagnose-plugin', 'acryl-fix-plugin', 'acryl-improve-ui', 'acryl-remove-extension', 'acryl-restyle-ui', 'acryl-share-extension', 'acryl-tui-ui'])
   assert.ok(list.every(c => c.rank === 600 && c.source === 'bundled'))
   const skill = await provider.get(list.find(c => c.name === 'acryl-build-extension'))
-  assert.ok(skill.content.includes(join(root, 'docs/start-here/this-runtime.md')))
+  assert.ok(skill.content.includes(`${root}/docs/start-here/this-runtime.md`))
   assert.doesNotMatch(skill.content, /\{\{pack\}\}/)
 })
 
@@ -505,9 +505,9 @@ test('discovery: project and global scopes, one level deep, real-path dedupe, pr
     const found = discoverExtensions({ workspaceDir: workspace, globalDir })
     assert.deepEqual(found.map(f => [f.name, f.scope, f.shadowed]), [['acryl-notes', 'project', false], ['acryl-notes', 'global', true], ['acryl-shared', 'global', false]])
     assert.equal(found[2].dir, realpathSync(join(globalDir, 'shared')))
-    assert.equal(globalExtensionsDir('/home/u/.acryl/.dsh'), '/home/u/.acryl/extensions')
-    assert.equal(globalExtensionsDir('/home/u/.acryl-dev/.dsh'), '/home/u/.acryl-dev/extensions')
-    assert.equal(globalExtensionsDir('/custom/dsh-home'), '/custom/dsh-home/extensions')
+    assert.equal(globalExtensionsDir(join('/home/u/.acryl', '.dsh')), join('/home/u/.acryl', 'extensions'))
+    assert.equal(globalExtensionsDir(join('/home/u/.acryl-dev', '.dsh')), join('/home/u/.acryl-dev', 'extensions'))
+    assert.equal(globalExtensionsDir('/custom/dsh-home'), join('/custom/dsh-home', 'extensions'))
     assert.equal(globalExtensionsDir(undefined), undefined)
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
