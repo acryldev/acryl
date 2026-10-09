@@ -533,6 +533,11 @@ no failed resource), a terminal opens in the window, and a command typed into it
 
 Cross-build works from macOS: `deno desktop -A --target x86_64-pc-windows-msvc` gives `acryldeno.exe` plus `acryldeno.dll` (77 MB).
 
+**The Windows package** (`deno-app/build-windows.sh <payload> <out> <version>`, payload from `make-payload.sh win32 x64`): `AcrylDeno-<version>-win-x64.zip`, 97 MB zipped, 285 MB
+unzipped (exe 0.3 MB + dll 77 MB + payload 219 MB). Unzipped on the Windows machine and run as a normal user through an interactive scheduled task: host up, client in WebView2,
+terminal typed into, proof file written. The first launch after unzipping was slow (the host was ready but the scripted terminal step had not started within 60 s; thousands of
+fresh files are scanned by the antivirus); the second launch was fast. Not signed: SmartScreen will warn.
+
 Not checked on Windows: a Windows installer (NSIS/MSI), code signing and SmartScreen behaviour, arm64, features that need `sharp` or `koffi` (their plugins now fail on
 Windows desktop), window behaviours beyond create/title/size/navigate/hide/exit, an installed (not scratch-folder) run.
 
