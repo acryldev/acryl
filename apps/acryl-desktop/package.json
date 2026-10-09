@@ -570,6 +570,20 @@
           "y": 105,
           "type": "file",
           "path": "build/dmg/README.txt"
+        },
+        {
+          "x": 1400,
+          "y": 1400,
+          "type": "file",
+          "path": "build/dmg/background.tiff",
+          "name": ".background.tiff"
+        },
+        {
+          "x": 1400,
+          "y": 1500,
+          "type": "file",
+          "path": "build/app-icon-mac.icns",
+          "name": ".VolumeIcon.icns"
         }
       ]
     },
