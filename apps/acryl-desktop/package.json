@@ -538,7 +538,7 @@
         "en",
         "zh_CN"
       ],
-      "icon": "build/app-icon-mac.png",
+      "icon": "build/app-icon-mac.icns",
       "mergeASARs": false,
       "notarize": true,
       "signIgnore": [
@@ -548,32 +548,26 @@
     },
     "dmg": {
       "background": "build/dmg/background.tiff",
-      "iconSize": 96,
+      "iconSize": 88,
       "window": {
         "width": 660,
-        "height": 500
+        "height": 430
       },
       "contents": [
         {
-          "x": 165,
-          "y": 140,
+          "x": 130,
+          "y": 105,
           "type": "file"
         },
         {
-          "x": 495,
-          "y": 140,
+          "x": 350,
+          "y": 105,
           "type": "link",
           "path": "/Applications"
         },
         {
-          "x": 165,
-          "y": 390,
-          "type": "file",
-          "path": "build/dmg/Open ACRYL.command"
-        },
-        {
-          "x": 495,
-          "y": 390,
+          "x": 560,
+          "y": 105,
           "type": "file",
           "path": "build/dmg/README.txt"
         }
@@ -589,7 +583,7 @@
         }
       ],
       "artifactName": "acryl-desktop-win-${arch}-v${version}.${ext}",
-      "icon": "build/app-icon.png"
+      "icon": "build/app-icon.ico"
     },
     "nsis": {
       "license": "THIRD_PARTY_NOTICES.md",
