@@ -69,6 +69,34 @@ What does not work, and matters:
 - **Compiling the host onto Bun makes it 61 MB larger and 28 MB hungrier than running the same payload on Node**, because the Node sidecar has to be there anyway. The Bun executable earns its place only where Node is not otherwise shipped, i.e. a build that needs no `dsh plugin add`, no pnpm and no MCP servers.
 - Everything the product is for works inside the compiled executable (run with `ACRYLBUN_DEBUG_SCRIPT=<probe>`, the repo's freshly built packages rather than the payload's copy, because the payload does not hold `acryl-harness-runtime` as a package): `probes/live-install.mjs` **ALL PASS** (install, change, re-install, both files fresh) and `probes/terminal-e2e.mjs` **ALL PASS** (shell over the real WebSocket route, resize, exit code, stop in 279 ms). The compiled host also starts a terminal session through its own `POST` route, answers a tokened request, stops on SIGTERM and frees its port.
 
+## B5. Linux x64 (z370n, Ubuntu, 2026-10-10)
+
+Everything built on the Mac and copied into a scratch folder (Bun 1.3.14 linux-x64 from the official release, SHA-256 checked; the payload from `make-payload.sh linux x64`; the executable cross-compiled with that Bun as `--compile-executable-path`), removed afterwards. Nothing was installed on the machine.
+
+- `bun test` of the terminal adapter: **8 of 8 pass** (the same suite as macOS, 20 MB flood and 100 spawns included).
+- The compiled host, its own payload, a Node client from outside (`probes/terminal-client.mjs`): start a shell, WebSocket attach, typed command, resize, exit code: **ALL PASS**; the host stops on SIGTERM and frees its port.
+- `probes/live-install.mjs` inside the compiled executable: **ALL PASS** (the `acryl-harness-runtime` package was overlaid on the payload for this probe only; the measured payload does not hold it).
+- Start and memory, 4 first-run samples each, alternating: Bun compiled **1.51 to 1.62 s, 272 MB**; the same payload on its Node sidecar 1.45 to 1.61 s, 314 to 316 MB. Memory is 43 MB *lower* on Bun here (it was 28 MB higher on macOS); start time is the same.
+- Size: executable 104.5 MB (90 MB on disk; Bun's Linux binary is larger than the macOS one) + payload 324 MB.
+
+## B6. Windows 10 x64 (mbpi9win, 2026-10-10)
+
+Same recipe (`bun-windows-x64`, checksum verified, payload `win32 x64`, cross-compiled), in `C:\Users\alexa\scratch042\bun`.
+
+- **Bun's `terminal` option works on Windows (ConPTY) in 1.3.14, although its documentation lists Linux and macOS only.** No FFI port was needed; `bun-terminal-spawn.ts` allows win32 x64.
+- Two Windows-only fixes found by the tests: `proc.kill('SIGHUP')` throws `ENOSYS` (Windows has no signals, so it calls `kill()` bare), and **a Ctrl-C written to the terminal did nothing** until the adapter calls `SetConsoleCtrlHandler(NULL, FALSE)` once before the first child (through `bun:ffi`). A process started over ssh carries the inherited "ignore Ctrl-C" flag and passes it to every child; node-pty and the Deno adapter do the same restore. The same flag is probably set for any Windows service-started host.
+- `bun test` of the Windows suite (`cmd.exe`: output and exit code, cwd/env, input then kill, resize through `mode con`, Ctrl-C on `ping -t`, 20 MB flood, 50 spawns, missing command): **8 of 8 pass**.
+- The compiled host plus `terminal-client.mjs` with `cmd.exe` commands: **ALL PASS**; live install inside the compiled executable: **ALL PASS**.
+- Before the adapter was enabled, the host **died** on the first terminal attach: `node-pty` on Bun/Windows raised `ERR_SOCKET_CLOSED` as an uncaught error, which ends the process. (A terminal that fails should not be able to take the host down; this is the same on Node for any uncaught error and is not Bun specific, but it is how the failure showed.)
+- Size: executable 98.5 MB + payload 326.7 MB (88 MB of it Node). Start time and memory not measured on Windows.
+- Housekeeping: one folder under `scratch042\bun` could not be deleted afterwards ("being used by another process"; no process of mine was found), so it remains for the user to remove.
+
+## Where the Bun experiment stands (2026-10-10)
+
+Working on Bun 1.3.14, on macOS arm64, Linux x64 and Windows 10 x64, in a compiled executable: the real host, the web server with WebSocket upgrades, the terminal, and installing an agent-written plugin into a running host. What it takes: a Node sidecar (Bun cannot run `dsh`/pnpm), ACRYL's own `node:module` compat layer, a virtual-module seam for profile packages, a 90-line terminal adapter, and one compile flag.
+
+What it does not give: no size win (the sidecar is still there, so the Bun executable is +61 MB over the same payload on Node on macOS), no start-time win (the host's 1.4 s is plugin loading), and memory is -43 MB on Linux and +28 MB on macOS. What it would give is the **single-file CLI and Web launcher** story Pi uses, if the sidecar can be avoided for a build that never installs plugins.
+
 ## Not done yet (the remaining Bun gates, in order)
 
 1. **Session storage**: `node:sqlite` in the Harness's session-query package (Harness-owned; needs the sidecar or a provider replacement).
