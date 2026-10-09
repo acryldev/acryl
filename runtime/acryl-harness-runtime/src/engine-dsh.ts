@@ -23,6 +23,7 @@
  */
 
 import { applyWebFavicon } from './web-favicon.ts'
+import { installDenoProfileResolver } from './deno-profile-resolution.ts'
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { createRequire, findPackageJSON } from 'node:module'
 import { basename, dirname, join } from 'node:path'
@@ -230,6 +231,10 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
     // Under Deno the interception below can never load (its native addon needs V8 internals Deno does not expose), and on Windows inside a `deno desktop`
     // process even attempting to load a native Node-API addon ends the process with an uncatchable 0xC06D007F (specs/042 F13), so it is not attempted.
     materializeRuntimeResolutionEntries(dirname(composition.rootConfig), composition.runtimeResolution)
+    // A plugin installed while the app runs lives only in the profile's own node_modules, and without Node's private loader internals the Cordis Loader cannot
+    // import it by name (specs/042 F14): a resolve hook on public `module.registerHooks` answers for the profile, owned by this engine's fiber.
+    const release = installDenoProfileResolver(dirname(composition.rootConfig))
+    ctx.effect(() => release, 'profile package resolution (Deno)')
   } else if (composition.runtimeResolution !== undefined) {
     try {
       await ctx.plugin(PluginPackages, { resolution: composition.runtimeResolution })
