@@ -36,7 +36,7 @@ const sleep = ms => new Promise(done => setTimeout(done, ms))
 const iso = isolatedEnvironment({ label: 'selfext' })
 const before = snapshotRealHomes(osHomeDirectory())
 // An online tool gateway for this run only, with approvals off and the authored tool allowed through it: a profile patch layer in the throwaway engine home.
-const profileDir = join(iso.env.DSH_HOME, 'profiles', 'desktop')
+const profileDir = join(iso.home, '.dsh', 'profiles', 'desktop')
 mkdirSync(profileDir, { recursive: true })
 writeFileSync(join(profileDir, 'cordis.patch.yml'), [
   '- id: acryl-agent-control',
@@ -83,7 +83,7 @@ function findPort(directory) {
 let failure
 const steps = []
 try {
-  const secretFiles = [join(iso.home, 'agent-control-secret'), join(iso.env.DSH_HOME, 'agent-control-secret')]
+  const secretFiles = [join(iso.home, 'agent-control-secret'), join(iso.home, '.dsh', 'agent-control-secret')]
   let secret
   const deadline = Date.now() + BOOT_TIMEOUT_MS
   while (secret === undefined && Date.now() < deadline && !exited) {
