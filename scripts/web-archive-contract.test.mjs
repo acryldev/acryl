@@ -35,6 +35,20 @@ test('allows an unscoped per-platform native package of the target and rejects t
   assert.throws(() => verifyArtifactManifest(manifest, inventory(['node_modules/sherpa-onnx-linux-x64/sherpa-onnx.node'])), /foreign native paths/)
 })
 
+test('allows the Windows sherpa-onnx package, which is named win-x64, and no other architecture', () => {
+  const manifest = {
+    product: 'web', platform: 'win32', arch: 'x64',
+    requiredPaths: ['runtime/bin/acryl-web.cmd', 'runtime/bin/node.exe', 'lib/bin.js'],
+    forbiddenPathPatterns: ['**/*.map', '**/tests/**'],
+    allowedNativePackagePatterns: webNativeAllowlist(webTarget('windows-x64')),
+    maximumBytes: 1_000_000_000,
+  }
+  const inventory = extra => ({ paths: ['runtime/bin/acryl-web.cmd', 'runtime/bin/node.exe', 'lib/bin.js', ...extra], bytes: 10 })
+  verifyArtifactManifest(manifest, inventory(['node_modules/sherpa-onnx-win-x64/sherpa-onnx.node', 'node_modules/sherpa-onnx-win-x64/onnxruntime.dll']))
+  assert.throws(() => verifyArtifactManifest(manifest, inventory(['node_modules/sherpa-onnx-win-ia32/sherpa-onnx.node'])), /foreign native paths/)
+  assert.throws(() => verifyArtifactManifest(manifest, inventory(['node_modules/sherpa-onnx-darwin-arm64/sherpa-onnx.node'])), /foreign native paths/)
+})
+
 test('defines portable Web targets and emits a release-contract receipt', () => {
   assert.deepEqual(webTarget('linux-x64'), { nodePlatform: 'linux', nodeArch: 'x64', windows: false })
   assert.throws(() => webTarget('freebsd-x64'), /unsupported Web target/)

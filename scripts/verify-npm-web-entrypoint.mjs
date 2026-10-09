@@ -24,7 +24,11 @@ try {
   // cannot resolve - reproduced directly: `pnpm add ./tgz` in a plain temp
   // dir failed with "Cannot resolve package from workspace because
   // workspace packages were not loaded into the resolver" until this fix.
-  execFileSync(corepackCommand(process.platform), ['pnpm', 'pack', '--pack-destination', staging], {
+  //
+  // `--config.ignore-scripts=true` on every pack below (pnpm 11's `pack` has no `--ignore-scripts` flag): each package's `prepack` is `pnpm run check` (build, typecheck and the whole test suite), which the
+  // release job has already run once for the closure. Packing must take the built output as it stands; re-running every suite per package made this
+  // step a second, slower, platform-specific test run (on Windows it failed on test-suite portability, not on packaging).
+  execFileSync(corepackCommand(process.platform), ['pnpm', 'pack', '--config.ignore-scripts=true', '--pack-destination', staging], {
     cwd: packageDir,
     stdio: 'inherit',
     ...corepackSpawnOptions(process.platform),
@@ -38,7 +42,7 @@ try {
   const overrides = {}
   for (const { name, dir } of closure) {
     const before = new Set(readdirSync(staging))
-    execFileSync(corepackCommand(process.platform), ['pnpm', 'pack', '--pack-destination', staging], {
+    execFileSync(corepackCommand(process.platform), ['pnpm', 'pack', '--config.ignore-scripts=true', '--pack-destination', staging], {
       cwd: dir,
       stdio: 'inherit',
       ...corepackSpawnOptions(process.platform),

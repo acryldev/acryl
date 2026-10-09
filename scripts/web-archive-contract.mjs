@@ -33,6 +33,8 @@ export function webNativeAllowlist(spec) {
     `node_modules/*${platform}-${arch}*/**`,
   ]
   if (spec.windows) {
+    // sherpa-onnx names its Windows package `win-x64`, not `win32-x64`.
+    patterns.push(`node_modules/sherpa-onnx-win-${arch}/**`)
     // node-pty nests its Windows ConPTY runtime under build/Release and a
     // win10-<arch> vendor tree; these are the target's own native binaries.
     patterns.push(
