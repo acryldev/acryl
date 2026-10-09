@@ -148,8 +148,8 @@ jobs:
       contents: read
 
   manifest:
-    name: verify complete cli+web release
-    needs: [cli, web]
+    name: verify complete release
+    needs: [cli, web, desktop]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -157,8 +157,8 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           path: artifacts
-          # The CLI and Web receipts only: the Desktop installers are built in the same run, with receipts of their own, and must not change the count below.
-          pattern: 'acryl-{cli,web}-*'
+          # Every surface's artifacts: 4 CLI + 4 Web + 5 Desktop receipts, each beside the file it describes.
+          pattern: 'acryl-{cli,web,desktop}-*'
       - name: Generate and validate authoritative release manifest
         shell: bash
         env:
@@ -170,7 +170,7 @@ jobs:
             node scripts/release-manifest.mjs verify-versions "${RELEASE_TAG#v}" package.json runtime/acryl-control/package.json runtime/acryl-harness-runtime/package.json apps/acryl-cli/package.json apps/acryl-web/package.json apps/acryl-desktop/package.json distribution/acryl-npm-launcher/package.json
           fi
           mapfile -t RECEIPTS < <(find artifacts -name release-receipt.json -type f | sort)
-          test "${#RECEIPTS[@]}" -eq 8
+          test "${#RECEIPTS[@]}" -eq 13
           node scripts/release-manifest.mjs generate "${RELEASE_TAG#v}" "$ACRYL_CAPABILITY_BASELINE" artifacts/acryl-release-manifest.json "${RECEIPTS[@]}"
           node scripts/release-manifest.mjs validate artifacts/acryl-release-manifest.json
       - uses: actions/upload-artifact@v7

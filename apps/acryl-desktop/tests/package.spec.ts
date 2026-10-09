@@ -733,7 +733,8 @@ describe('published package surface', () => {
     ]) {
       expect(releaseCliWorkflow).toContain(`target: ${target}`)
     }
-    expect(releaseCliWorkflow).toContain('needs: [cli, web]')
+    expect(releaseCliWorkflow).toContain('needs: [cli, web, desktop]')
+    expect(releaseCliWorkflow).toContain('test "${#RECEIPTS[@]}" -eq 13')
 
     // The npm acryl-web package depends on 13 workspace packages that are not on npm, so publishing it is an explicit opt-in.
     expect(releaseCliWorkflow).toMatch(/- name: Publish standalone Web package\n\s+if: vars\.ACRYL_PUBLISH_WEB_NPM == 'true'/u)
