@@ -6195,3 +6195,14 @@ Owner, after watching two independent GTD rebuilds (the public registry one and 
 - **Fixated into `specs/036-cordis-ecosystem-and-acryl-blends/blend-instance-design.md` section 0a:** the rule ("a domain plugin's own main UI is always a slot registration, never a Host route"), the worked example, and the one-call usage shown with real code, so the next Blueprint doesn't rediscover this the same way twice already did.
 - **Not done yet:** `acryl-gtd` itself is not rebuilt on the new scaffold (T025) - both existing implementations are still route-based.
 - **Verified:** `acryl-app-shell` 22/22 (its tests ported from the old `shell/` tests), `acryl-workspace` 646/646, `acryl-agent-control` 112/112 unaffected, both apps typecheck clean, the headless boot smoke this session already caught one real break on today (`pnpm --filter acryl-desktop run verify:loader`) passes clean.
+
+## 2026-10-09 - the "update available" popup read another project's release feed
+
+Commit: `1c8610e80ef65eb50e2a97ecac29d647a9aefaaf`
+
+Owner saw "ACRYL 2.0.17 is available" while ACRYL is 0.2.x. Cause: the update checker and installer download in `apps/acryl-desktop/src/updates/` still pointed at `dshdesktop.cn`, an endpoint inherited with the original product import whose versions follow Anywhere Labs' releases, not ours and not DeepSeek's (the upstream Harness desktop app has no such URL).
+
+- **Version check** now reads `https://api.github.com/repos/acryldev/acryl/releases/latest` (published, non-draft, non-prerelease) and compares its `tag_name` with the installed version. Any failure stays silent, as before.
+- **Installer download** now fetches the release asset `acryl-desktop-<mac|win>-<arch>-v<version>.<dmg|exe>` from the matching `v<version>` release; the CPU architecture (arm64 or x64, Windows x64 only) is part of the request. The existing confirmation, save-location, size and DMG/PE validation steps are unchanged.
+- **Tests:** updater and runtime specs updated, new asset-URL cases added; `acryl-desktop` typecheck clean.
+- **Not covered:** Linux (no in-app download, unchanged); no signature or checksum verification of the installer beyond the existing format checks. Not yet tried against a real newer release.
