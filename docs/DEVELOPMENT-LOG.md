@@ -1,3 +1,24 @@
+## 2026-10-09 (later) - the packaged apps take an agent-written plugin live on macOS, Windows and Linux; the Windows and Linux installers did not until now
+
+Owner's requirement: the stock DeepSeek Harness desktop (installed from a DMG, no dev server) lets its agent write a Cordis plugin and have it live in the window; the ACRYL `.app`, `.deb` and Windows installer must do the same, install and update, with hot reload.
+
+**How the stock app does it** (read from its installed bundle and from the DSH source, tags `dsh-v0.2.0-rc.2` and `dsh-v0.2.1-alpha.1`): the profile is a small pnpm project (`~/.dsh/profiles/desktop`: `package.json` with `dsh.profile.bundles` and a `file:` dependency, plus `cordis.patch.yml`). The agent writes a plain-ESM package (host half, client half, `dsh.bundle.patch`), its `plugin_manager install_bundle` runs the app's bundled pnpm in the profile, then reconciles the patch rows into the running Loader tree under the HMR service (`patchReload: live`). Updating an already installed bundle returns `restart-required` there.
+
+**What ACRYL does instead**: its own host-neutral lifecycle (`acryl_install_plugin`, `acryl_verify_plugin`, `acryl_list_plugins`, `acryl_remove_plugin`, in `acryl-control` and `acryl-harness-runtime/src/plugin-lifecycle.ts`) mounts and replaces rows in the live Loader itself; it updates a plugin live too. It uses the same patch-layer files, but the running app does NOT watch `cordis.patch.yml` (measured: an edit while the packaged app ran was ignored), so a hand edit still needs a restart. `0.2.1-alpha.1` adds package-manifest reload to HMR and the plugin manager and changes nothing in the runner; it would not have fixed anything below.
+
+**New proof, no model needed**: `apps/acryl-desktop/scripts/verify-packaged-self-extension.mjs` boots a PACKAGED app in a throwaway home with the tool gateway on, then verifies, installs, calls, rewrites, updates, calls again, removes and checks the tool is gone (`163411627e0aa8a5845f010be982af2497a0c3c6`). It runs in `linux-deb.yml` against the installed `.deb` (`31ec44149544bc481dc13ca55f95c5be948f3add`).
+
+**Found by it**: on Windows (native Windows 10, built on the machine) every agent-started install failed with "Windows Job runner exited with exit code 1", and on Linux it hung. Cause: DSH starts its private subprocess runner as `[process.execPath, runner.js]`. The stock app runs its engine in a separate Node process, so that is Node; ACRYL runs the engine inside Electron, so it is ACRYL itself and, without `ELECTRON_RUN_AS_NODE`, a second app instance. macOS uses a different path and was unaffected. Fixed with a one-line patch to `@deepseek-ai/dsh-subprocess-local@0.2.0-rc.2` (`patches/`, lockfile gains only the patch hash, pinned by a test), `d3d7f24f8f451bc736ef3bdc29f9e09ad9b4e095`. **The 0.2.1 Windows installer and Linux `.deb` contain this bug** (the agent cannot install a plugin there); the macOS DMG does not.
+
+Also found and fixed on the way:
+- `build:windows` verified the installer under its old versioned name and failed a successful build (artifacts are now `acryl-desktop-win-x64.exe`; the previous one is deleted first since the name no longer proves the version) (`3cdb12d0a41b821102136a8af2b6fb2b00ef333b`).
+- The packaged app died at launch on Windows when the user profile is redirected, because the user-data override asked Electron for `appData` even when an explicit path made it unnecessary (`847054222db861f9cf0a5320a325ab75f81861fc`).
+- The verifier's own failure message was empty; it now times out a stuck call and prints the error, cause and the app's log tails (`13a9f89`, `afb51fd`), and no longer reads a placement variable (the bulkhead guard refuses that) (`f59586a1bd20322cc2c1db6373e4c12beb3342b9`).
+
+README download links now point at the real binaries: Desktop installers live in the `desktop-v<version>` release, Linux packages are `amd64` and `arm64`; `scripts/sync-release-readme.mjs` does it and is tested (`a1193021bee2d5e46ca3561a3cd6c75a2fcfd7e4`). The acryl.dev home page has per-platform download buttons that resolve the newest `desktop-v*` release from the GitHub API at view time, with the visitor's OS first and a code-signing note (site repo `86768934be20a3daec3f50a0c63aeee5b6a9ef24`).
+
+Not done: a Desktop-only release carrying the runner patch (0.2.2); the Windows `acryl-harness-runtime` test debt (17 files on the Windows 10 machine); the packaged-runtime warning that `react-dom` and `@earendil-works/pi-tui` peer edges are not shipped, printed by the Windows build and not yet judged.
+
 ## 2026-10-09 - release 0.2.1: CLI, Web, npm and the five Desktop installers, the first release in three weeks
 
 Tags `v0.2.1` (CLI, Web, npm, GitHub release marked Latest) and `desktop-v0.2.1` (mac arm64 and x64 DMG, Windows exe, Linux amd64 and arm64 deb). `npm install acryl@0.2.1`
