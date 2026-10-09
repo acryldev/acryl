@@ -18,6 +18,7 @@
  */
 
 import { randomUUID } from 'node:crypto'
+import { exposeProfilePackage } from './bun-profile-resolution.ts'
 import { type Context, Service } from '@deepseek-ai/cordis'
 import type { AcrPluginLifecycleController } from 'acryl-control'
 import {
@@ -180,6 +181,7 @@ export class WebLiveActivationService extends Service {
   }
 
   async activate(packageName: string): Promise<void> {
+    exposeProfilePackage(packageName) // a Bun host can import a just-installed package by name only after this (no-op elsewhere)
     await this.controller.activate(packageName)
   }
 

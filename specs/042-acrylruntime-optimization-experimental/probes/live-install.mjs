@@ -7,7 +7,7 @@
 // Run from the repository root with throwaway homes (never the real ones; the install also writes a pnpm shim under ACRYL_HOME):
 //   T=$(mktemp -d); mkdir -p $T/home $T/acryl $T/dsh $T/ws
 //   HOME=$T/home ACRYL_HOME=$T/acryl DSH_HOME=$T/dsh WORKSPACE=$T/ws deno run -A --node-modules-dir=manual specs/042-.../probes/live-install.mjs
-//   (node specs/042-.../probes/live-install.mjs works too: that is the baseline)
+//   (node specs/042-.../probes/live-install.mjs works too: that is the baseline; `ACRYL_NODE_SIDECAR=$(which node) bun run specs/042-.../probes/live-install.mjs` is the Bun run)
 import { createRequire } from 'node:module'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
@@ -17,10 +17,10 @@ const repo = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
 for (const name of ['HOME', 'ACRYL_HOME', 'DSH_HOME', 'WORKSPACE']) {
   if (!process.env[name]) { console.error(`set ${name} to a throwaway folder`); process.exit(2) }
 }
-// Under Deno, `process.execPath` is the Deno binary (in a `deno desktop` app: the GUI executable), but the Harness spawns it as "node" (pnpm, `dsh plugin add`,
+// Under Deno or Bun, `process.execPath` is that runtime's binary (in a `deno desktop` app: the GUI executable), but the Harness spawns it as "node" (pnpm, `dsh plugin add`,
 // MCP servers, the subprocess runner). A Node sidecar given here replaces it, the way the AcrylDeno launcher does.
 if (process.env.ACRYL_NODE_SIDECAR) process.execPath = process.env.ACRYL_NODE_SIDECAR // Deno's execPath is an accessor with a setter (not configurable, so defineProperty fails)
-const runtime = typeof Deno === 'undefined' ? `node ${process.version}` : `deno ${Deno.version.deno}`
+const runtime = typeof Bun !== 'undefined' ? `bun ${Bun.version}` : typeof Deno === 'undefined' ? `node ${process.version}` : `deno ${Deno.version.deno}`
 const anchor = process.env.PAYLOAD ? resolve(process.env.PAYLOAD, 'package.json') : resolve(repo, 'apps/acryl-web/package.json')
 const require = createRequire(pathToFileURL(anchor))
 const load = async specifier => import(pathToFileURL(require.resolve(specifier)).href)

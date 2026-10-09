@@ -13,7 +13,7 @@
  * ASAR paths) to this function - its own behavior is unaffected.
  */
 
-import Module, { registerHooks } from 'node:module'
+import Module from 'node:module'
 import { fileURLToPath } from 'node:url'
 import {
   findOverlayPackage,
@@ -107,7 +107,7 @@ export function installProfilePackageResolver(
 
   // Track the module graph rooted at every overlay-selected Loader package.
   const overlayModuleUrls = new Set<string>()
-  const hooks = registerHooks({
+  const hooks = Module.registerHooks({
     resolve(specifier, context, nextResolve) {
       const fromLoader = context.parentURL === loaderEntryUrl
       const packageName = fromLoader ? packageNameFromSpecifier(specifier) : undefined

@@ -23,9 +23,11 @@
  */
 
 import { applyWebFavicon } from './web-favicon.ts'
+import { installBunProfileResolver } from './bun-profile-resolution.ts'
 import { installDenoProfileResolver } from './deno-profile-resolution.ts'
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
-import { createRequire, findPackageJSON } from 'node:module'
+import { createRequire } from 'node:module'
+import { findPackageJSON } from './node-module-compat.ts'
 import { basename, dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
@@ -227,14 +229,14 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
     ctx.root.provide('acrylFrameworkPackages', createAcrylFrameworkPackages(composition.installPackageUrl))
   }
   // Owned by this engine's fiber (not the root), so an engine swap releases the interception with the profile it served.
-  if (composition.runtimeResolution !== undefined && runsUnderDeno()) {
-    // Under Deno the interception below can never load (its native addon needs V8 internals Deno does not expose), and on Windows inside a `deno desktop`
+  if (composition.runtimeResolution !== undefined && (runsUnderDeno() || runsUnderBun())) {
+    // Under Deno or Bun the interception below can never load (its native addon needs V8 internals neither exposes), and on Windows inside a `deno desktop`
     // process even attempting to load a native Node-API addon ends the process with an uncatchable 0xC06D007F (specs/042 F13), so it is not attempted.
     materializeRuntimeResolutionEntries(dirname(composition.rootConfig), composition.runtimeResolution)
     // A plugin installed while the app runs lives only in the profile's own node_modules, and without Node's private loader internals the Cordis Loader cannot
-    // import it by name (specs/042 F14): a resolve hook on public `module.registerHooks` answers for the profile, owned by this engine's fiber.
-    const release = installDenoProfileResolver(dirname(composition.rootConfig))
-    ctx.effect(() => release, 'profile package resolution (Deno)')
+    // import it by name (specs/042 F14): a resolve hook answers for the profile, owned by this engine's fiber (public `module.registerHooks` on Deno, a `Bun.plugin` on Bun).
+    const release = runsUnderBun() ? installBunProfileResolver(dirname(composition.rootConfig)) : installDenoProfileResolver(dirname(composition.rootConfig))
+    ctx.effect(() => release, 'profile package resolution (non-Node runtime)')
   } else if (composition.runtimeResolution !== undefined) {
     try {
       await ctx.plugin(PluginPackages, { resolution: composition.runtimeResolution })
@@ -593,6 +595,11 @@ export function materializeProfilePackage(profileDir: string, packageName: strin
 /** True on a Deno host (including a `deno desktop` app), whose Node-compat layer also answers to `process.versions.node`. */
 function runsUnderDeno(): boolean {
   return typeof (globalThis as { Deno?: unknown }).Deno !== 'undefined'
+}
+
+/** True on a Bun host (it also answers to `process.versions.node`, as Deno does). */
+function runsUnderBun(): boolean {
+  return typeof (globalThis as { Bun?: unknown }).Bun !== 'undefined'
 }
 
 function materializeRuntimeResolutionEntries(profileDir: string, resolution: RuntimeResolution): void {

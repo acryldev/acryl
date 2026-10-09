@@ -12,7 +12,8 @@
  * answer is returned directly rather than asked of `nextResolve`.
  */
 import { existsSync } from 'node:fs'
-import { createRequire, registerHooks } from 'node:module'
+import { createRequire } from 'node:module'
+import * as nodeModule from 'node:module'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 /** A request the profile could answer: a package name or a package subpath, not a path, a URL or a Node builtin. */
@@ -27,7 +28,7 @@ function isBareSpecifier(specifier: string): boolean {
  */
 export function installDenoProfileResolver(profileDir: string): () => void {
   const fromProfile = createRequire(pathToFileURL(`${profileDir.replace(/[\\/]+$/, '')}/package.json`))
-  const hooks = registerHooks({
+  const hooks = nodeModule.registerHooks({
     resolve(specifier, context, nextResolve) {
       let resolved: ReturnType<typeof nextResolve> | undefined
       try {

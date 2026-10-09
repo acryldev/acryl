@@ -9,7 +9,7 @@
  * identical to what Desktop already shipped.
  */
 
-import { findPackageJSON } from 'node:module'
+import { findPackageJSON } from './node-module-compat.ts'
 import { readFileSync, statSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { compare, valid } from 'semver'
