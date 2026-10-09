@@ -1,3 +1,13 @@
+## 2026-10-09 (latest) - release 0.2.2: one tag, one release, every surface; the Windows and Linux installers now take agent-written plugins
+
+Owner, looking at the v0.2.1 release page (CLI and Web only, the installers in a separate `desktop-v0.2.1` release): "i want all cli web desktop in 1 release, same tag version for all surfaces".
+
+- **One pipeline.** `release-desktop.yml` is now a reusable workflow (`workflow_call`, plus `workflow_dispatch` for a dry run); `release-cli.yml` calls it, so a `v<version>` tag builds the CLI and Web archives and the five Desktop installers in one run. `npm-publish` and the GitHub release both `needs` the Desktop job: nothing irreversible happens unless all three surfaces built. There is no `desktop-v*` tag any more. The manifest job downloads only `acryl-{cli,web}-*` artifacts so the Desktop receipts do not change its count of 8 (the manifest still covers CLI and Web only; adding Desktop to it is a follow-up). Pinned in `apps/acryl-desktop/tests/package.spec.ts`.
+- **Followers.** The npm launcher looks for the installer in `v<version>` and falls back to `desktop-v<version>` for 0.2.1 and older; the README sync points the installers at the same tag; the acryl.dev download buttons take the highest-version release that really carries installers, from either layout.
+- **Shipped:** `v0.2.2` (release marked Latest: 4 CLI archives, 4 Web archives and receipts, 5 Desktop installers with their update blockmaps, the manifest) and npm `acryl` and `acryl-cli-<target>` 0.2.2. The 0.2.2 installers contain the Electron runner patch (see the previous entry), so the agent installs plugins live on Windows and Linux; the released Windows installer was downloaded from GitHub on the Windows 10 machine and passed `verify-packaged-self-extension.mjs`.
+- **A mistake worth keeping:** the first 0.2.2 attempt tagged `v0.2.2` and a separate `desktop-v0.2.2` before this pipeline existed. Both runs were cancelled before verification finished, nothing had reached npm or GitHub, and the tags were deleted and re-created. A release tag can only be moved while nothing has been published from it.
+- v0.2.1 stays as it was (its Windows and Linux installers cannot install agent plugins; superseded by 0.2.2).
+
 ## 2026-10-09 (later) - the packaged apps take an agent-written plugin live on macOS, Windows and Linux; the Windows and Linux installers did not until now
 
 Owner's requirement: the stock DeepSeek Harness desktop (installed from a DMG, no dev server) lets its agent write a Cordis plugin and have it live in the window; the ACRYL `.app`, `.deb` and Windows installer must do the same, install and update, with hot reload.

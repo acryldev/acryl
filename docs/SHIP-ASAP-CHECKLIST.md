@@ -26,7 +26,7 @@ Goal: Identify the minimum set of tasks to release ACRYL as a stable product.
 
 - [ ] Tag strategy
   - Commit SHAs pinned in `docs/DEVELOPMENT-LOG.md` (already done)
-  - Create `git tag` for release (e.g., `v0.2.0`, `desktop-v0.2.0`)
+  - Create `git tag` for release (one tag for every surface, e.g. `v0.2.2`; it carries the CLI, Web and Desktop assets)
   - Push tags to origin
 
 - [ ] Package versioning
