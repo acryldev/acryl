@@ -321,7 +321,7 @@ export async function installLocalPlugin(input, services, fs) {
   if (lint.permissions !== undefined) result.permissions = lint.permissions
   // Evolution Ledger (blend-ledger.js): when the workspace tracks a Blend, this install or update becomes one line of history.
   services.record?.({ kind: result.action ?? 'installed', module: lint.name, origin: 'local', version: JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version, digest: `sha256:${hashPackage(dir, 64)}` })
-  if (lint.hasClient) result.next = 'This package has a browser (client) part. Ask the user to reload the page (Web) or window (Desktop) to see the new UI; the host part is already live.'
+  if (lint.hasClient) result.next = 'This package has a browser (client) part. It mounts live in open windows: the new UI appears within a second or two (a conversation header slot exists only inside an open conversation). Do not ask the user to reload. Only if they say it is missing, suggest reloading once (Web: the page; Desktop: the window, Cmd/Ctrl+R); page-level changes outside the app UI (title, favicon, pre-boot background) need that reload. The host part is already live.'
   return result
 }
 
@@ -337,7 +337,7 @@ export async function removeLocalPlugin(input, services) {
   const removed = await runPlugin(services.pnpm, ['remove', name], services.cwd ?? process.cwd())
   if (!removed.ok) return { ok: false, stage: 'remove', errors: [`dsh plugin remove failed (exit ${removed.exitCode})`], detail: removed.output }
   services.record?.({ kind: 'removed', module: name })
-  return { ok: true, package: name, removed: true, next: 'If the plugin had a browser (client) part, ask the user to reload the page or window.' }
+  return { ok: true, package: name, removed: true, next: 'If the plugin had a browser (client) part it unmounts live from open windows; do not ask the user to reload.' }
 }
 
 /**

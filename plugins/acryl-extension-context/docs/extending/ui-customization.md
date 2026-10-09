@@ -34,7 +34,7 @@ that way, so say so and offer the live alternative.
 2. Never edit files inside `node_modules`, the harness, or the packaged app: they are overwritten and not yours.
 3. Keep the change in ONE plugin under `<workspace>/.acryl-extensions/<name>/` so it can be updated or removed as a unit.
 4. Check contrast: text on the new background must stay readable in both modes.
-5. After installing, ask the user to reload and look; you cannot see the screen. State what you changed and what you could
+5. After installing, the UI mounts live (no reload needed, except page-level changes outside the app UI); ask the user to look; you cannot see the screen. State what you changed and what you could
    not verify.
 6. Known limit: some visible text ("Internal Testing Notice", some settings copy) is upstream locale text in
    single-occupant dictionaries. A plugin cannot replace it; do not promise to.

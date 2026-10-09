@@ -50,6 +50,6 @@ exports.apply = function apply(ctx) {
 
 ## Verify
 
-Install with `acryl_install_plugin`, ask the user to reload, and have them check both light and dark. Add
+Install with `acryl_install_plugin` (it mounts live; one reload only if the user reports it missing), and have them check both light and dark. Add
 `console.info('[<name>] ...')` at load and apply: the browser console shows whether the layer registered (the example does).
 Reference: `reference/subsystems/client-modules.md`, `reference/subsystems/slots.md`; the service source is the `ui-theme` package.

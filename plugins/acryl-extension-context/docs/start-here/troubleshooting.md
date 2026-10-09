@@ -9,7 +9,7 @@ Read this when a plugin you installed does not behave. Diagnose from evidence, n
 | Row `FAILED` | `apply` threw, or `Config` failed validation, or the module failed to import | read the error text in the install result; fix the real cause. Config errors name the field |
 | Install refused: check stage | package lint failed (bundle patch, `exports` missing `./package.json`, missing client export) | the error names the fix; `docs/extending/packaging.md` |
 | Install says installed but nothing happens | the plugin registers into a service the surface lacks (`tuiCommands` on Web), or its row is disabled | check the surface in `docs/start-here/this-runtime.md`; check the row exists |
-| UI change not visible | the browser still has the old page | reload the page (Web) or window (Desktop); look in the browser console for `[your-plugin]` logs and errors |
+| UI change not visible | the slot only exists in an open conversation, the plugin failed to mount, or (page-level changes such as title or favicon) the page needs one reload | open a conversation first; then reload once (Web: page; Desktop: window, Cmd/Ctrl+R); look in the browser console for `[your-plugin]` logs and errors |
 | Host code change not applied on update | the result has a `warning` (the plugin could not be staged: entry not an ES module) or you changed `inject`/`Config`, which need an app restart | normal updates reload automatically (`"hostReload": "automatic"`); make the entry an ES module (`"type": "module"`), or ask the user to restart |
 | `ERR_PACKAGE_PATH_NOT_EXPORTED` | `exports` lacks `"./package.json"` | add it |
 | Named exports (`name`, `inject`, `Config`) ignored | the entry also has a default export: the loader keeps only the default | export named only |

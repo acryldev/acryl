@@ -6,6 +6,5 @@ description: Use when something you built misbehaves and the cause is unclear: P
 
 Read {{pack}}/docs/start-here/troubleshooting.md, then {{pack}}/docs/reference/cordis-api/fiber.md if the state
 machine matters. Order: (1) call acryl_list_plugins and read the install result you got, (2) run acryl_verify_plugin on
-the source folder, (3) for UI add console.info('[<name>] ...') lines, ask the user to reload and read what the browser
-console shows, (4) change ONE thing, update with acryl_install_plugin, re-read the status. Never guess a state you have
+the source folder, (3) for UI add console.info('[<name>] ...') lines, ask the user to open the browser console and read what it shows, (4) change ONE thing, update with acryl_install_plugin, re-read the status. Never guess a state you have
 not read from a tool result. If the same cause survives two fixes, stop and tell the user what you observed.

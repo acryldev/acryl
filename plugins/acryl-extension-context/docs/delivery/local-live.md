@@ -9,7 +9,7 @@ Goal: the user asks for a feature, you write a plugin, it appears without a rest
    (bundle patch, `exports` including `./package.json`, a client bundle if `dsh.client` is set), runs
    `dsh plugin add file:<dir>`, live-activates it, and **removes it again if activation fails**.
 3. Read the result. `ok: true` with status `active` means the host part is live. If the result has a
-   `next` note (a UI plugin), tell the user to reload the page (Web) or window (Desktop).
+   `next` note (a UI plugin), do not ask for a reload: the UI mounts live in open windows within a second or two (measured on the packaged Desktop and on Web). Only if the user says it is missing, suggest one reload (Web: page; Desktop: window, Cmd/Ctrl+R).
 4. On an error the result names the stage (`check`, `install`, `activate`) and the real message. Fix that
    cause and call the tool again; the tool already undid a failed install.
 

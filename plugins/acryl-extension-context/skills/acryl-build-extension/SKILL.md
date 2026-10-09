@@ -16,6 +16,6 @@ description: Use when the user asks you to add a feature, tool, panel, command o
 5. Write the package (package.json, cordis.patch.yml, index.js, and client.js for UI). Declare honestly in package.json: `"acryl": { "apiVersion": 1, "permissions": [...] }` (fs.read, fs.write, net, shell, secrets, ui); the human sees the permissions before a new extension is installed. Write it under `<workspace>/.acryl-extensions/<name>/` (this project) or `<ACRYL home>/extensions/<name>/` (all projects and surfaces on this home).
 6. Call the acryl_install_plugin tool with the ABSOLUTE path of that directory. Read its result. Fix the named cause and call it
    again if it fails; it undoes failed installs.
-7. Tell the user what you built, whether it is live, and (for UI) that they should reload the page or window.
+7. Tell the user what you built, whether it is live, and (for UI) that it is already visible in their open conversation, with no reload needed.
    Do not claim it works before the tool result says so. You cannot publish to the marketplace; say what
    remains if the user wants that.
