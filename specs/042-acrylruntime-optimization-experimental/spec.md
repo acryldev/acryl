@@ -6,7 +6,7 @@
 
 **Tracking**: TBD (will be filed on GitHub when prioritized)
 
-**Feature Directory**: `specs/042-acrylruntime-optimization-deno-experimental` (was `specs/042-electrobun-optimization`)  
+**Feature Directory**: `specs/042-acrylruntime-optimization-experimental` (was `specs/042-electrobun-optimization`)  
 **Created**: 2026-09-29  
 **Status**: `needs-triage` - this is a **research-to-decision** milestone, not an implementation commitment. The spike determines whether migration is realistic.
 

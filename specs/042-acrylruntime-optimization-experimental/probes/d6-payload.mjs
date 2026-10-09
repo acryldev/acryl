@@ -3,7 +3,7 @@
 // global pnpm store, which this sandbox cannot write), so the same production closure is walked from the existing install instead:
 // acryl-web's dependencies + optionalDependencies + peerDependencies (pnpm installs peers), recursively, each package copied once to node_modules/<name> (first version wins,
 // exactly flattenNodeModules' rule), then the project's own pruneTargetNative + pruneReleasePayload.
-// Run from the repository root: node specs/042-acrylruntime-optimization-deno-experimental/probes/d6-payload.mjs [outDir]
+// Run from the repository root: node specs/042-acrylruntime-optimization-experimental/probes/d6-payload.mjs [outDir]
 // Writes only under outDir (default: a fresh temp dir, printed); nothing in the repo or any ACRYL home changes.
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync } from 'node:fs'
 import { findPackageJSON } from 'node:module'

@@ -68,8 +68,8 @@ risk sits (F3, F4).
 
 ```bash
 corepack pnpm --filter acryl-desktop list --prod --depth Infinity --json > deps.json
-node specs/042-acrylruntime-optimization-deno-experimental/probes/dep-inventory.mjs deps.json
-node specs/042-acrylruntime-optimization-deno-experimental/probes/packaged-inventory.mjs <app>/Contents/Resources/app.asar.unpacked/node_modules --json packaged.json
+node specs/042-acrylruntime-optimization-experimental/probes/dep-inventory.mjs deps.json
+node specs/042-acrylruntime-optimization-experimental/probes/packaged-inventory.mjs <app>/Contents/Resources/app.asar.unpacked/node_modules --json packaged.json
 # traced, isolated session (HOME, ACRYL_HOME and the port are throwaway; see the probe safety rules in deno-findings-and-plan.md)
 DEP_TRACE_OUT=loaded.json node --import specs/042-.../probes/dep-trace.mjs apps/acryl-web/lib/bin.js --no-open --port <spare>
 ```

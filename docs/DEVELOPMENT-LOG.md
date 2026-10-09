@@ -97,14 +97,14 @@ version, Desktop completes startup in compatibility mode. Not fixed: the loader 
 
 Commit: `ae7d81c222655905525c035aa274990deb01646f`.
 
-Spec 042 is now `042-acrylruntime-optimization-deno-experimental`. The goal is a 100 to 200 MB Desktop without the
+Spec 042 is now `042-acrylruntime-optimization-experimental`. The goal is a 100 to 200 MB Desktop without the
 bundled Chromium. Measured on Deno 2.9.7: the installed `ACRYL.app` is 500 MB (Electron 228 MB, dependencies 263 MB);
 a minimal `deno desktop` app is 65 MB. ACRYL's web host, run under Deno with throwaway homes and a spare port, boots
 its Cordis root but never installs or resolves the profile's plugin packages (`Import "@deepseek-ai/dsh-tools" not a
 dependency` without `--node-modules-dir=manual`, a silent no-op with it), so no web server starts. 042's `e4-driver`
 reported `BOOTED` on 3080 under Deno; that is `serveWeb`'s fallback URL, not a running server. The size goal needs the
 host on Deno plus a dependency cut; keeping the host on Node saves only about 60 MB. The D1-D7 ladder, exit criteria
-and probe safety rules are in `specs/042-acrylruntime-optimization-deno-experimental/deno-findings-and-plan.md`.
+and probe safety rules are in `specs/042-acrylruntime-optimization-experimental/deno-findings-and-plan.md`.
 
 ## 2026-10-02 (later) - 036: the Web fix never reached Desktop - fixed and verified separately
 

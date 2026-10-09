@@ -9,7 +9,7 @@
 // real ones, never 3080 - this boots a real WebServer fiber, same as d1-deno-host.mjs):
 //   T=$(mktemp -d); mkdir -p $T/home $T/acryl
 //   HOME=$T/home ACRYL_HOME=$T/acryl ACRYL_WEB_PORT=<spare> \
-//     deno run -A --node-modules-dir=manual specs/042-acrylruntime-optimization-deno-experimental/probes/d1b-diagnose-fibers.mjs
+//     deno run -A --node-modules-dir=manual specs/042-acrylruntime-optimization-experimental/probes/d1b-diagnose-fibers.mjs
 import { dirname, resolve, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { mkdirSync, lstatSync, realpathSync, rmSync, symlinkSync } from 'node:fs'

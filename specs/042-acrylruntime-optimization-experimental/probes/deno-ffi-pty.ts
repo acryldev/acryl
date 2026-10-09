@@ -1,6 +1,6 @@
 // D3 spike: a pseudo-terminal on Deno with no node-pty, through libc FFI (macOS arm64/x64 symbols; Linux differs in libutil + flag values).
 // openpty -> posix_spawn (new session, slave dup'd to 0/1/2) -> poll the non-blocking master for data -> waitpid(WNOHANG) for the exit.
-// Run: deno run -A specs/042-acrylruntime-optimization-deno-experimental/probes/deno-ffi-pty.ts
+// Run: deno run -A specs/042-acrylruntime-optimization-experimental/probes/deno-ffi-pty.ts
 // Starts no servers and touches no ACRYL home; every child it starts is waited for or killed before exit.
 
 const lib = Deno.dlopen('/usr/lib/libSystem.B.dylib', {

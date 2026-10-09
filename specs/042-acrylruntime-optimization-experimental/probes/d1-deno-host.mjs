@@ -3,7 +3,7 @@
 // Run from the repository root, with throwaway homes and a spare port (never the real ones, never 3080):
 //   T=$(mktemp -d); mkdir -p $T/home $T/acryl
 //   HOME=$T/home ACRYL_HOME=$T/acryl ACRYL_WEB_PORT=<spare> \
-//     deno run -A --node-modules-dir=manual specs/042-acrylruntime-optimization-deno-experimental/probes/d1-deno-host.mjs
+//     deno run -A --node-modules-dir=manual specs/042-acrylruntime-optimization-experimental/probes/d1-deno-host.mjs
 //
 // It boots, waits up to 60 s for the profile's web server, requests the spare port, prints the result and exits
 // (the process exit stops the host). A printed URL alone is not evidence: 3080 is serveWeb's fallback when no web server started.
