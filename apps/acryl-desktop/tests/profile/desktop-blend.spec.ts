@@ -109,7 +109,7 @@ describe('readDesktopBlend', () => {
     // A directory without its .acryl lock names the resolved lock file.
     const emptyBlend = join(dir, 'empty-blend')
     mkdirSync(emptyBlend, { recursive: true })
-    expect(() => readDesktopBlend(emptyBlend)).toThrow('empty-blend/.acryl/blend.lock.json')
+    expect(() => readDesktopBlend(emptyBlend)).toThrow(join('empty-blend', '.acryl/blend.lock.json'))
   })
 })
 
