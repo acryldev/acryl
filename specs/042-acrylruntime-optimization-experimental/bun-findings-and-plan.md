@@ -48,10 +48,31 @@ What does not work, and matters:
 
 `probes/terminal-e2e.mjs` boots the real web engine host on a free port and uses nothing but its own routes: `POST /api/acryl-workspace/pty` starts a shell, the WebSocket route `/api/acryl-workspace/pty/stream` attaches through the Harness web server's upgrade routing, a typed `echo` comes back, a resize shows in `stty size`, `exit 4` is reported as exit code 4, and the host stops (WebSocket closed, 281 ms on Bun). **ALL PASS on Bun 1.3.14, Node 24.19.0 and Deno 2.9.7** (Bun and Deno with the Node sidecar). The host runs the built `lib/` of the plugin: the first Bun run failed with no output because `lib/` still held the old `node-pty` selector, until the plugin was rebuilt.
 
+## B4. `bun build --compile` of the web host (the Pi route), macOS arm64 (2026-10-09)
+
+`bun-app/main.ts` is a 50-line launcher (own home `~/.acrylbun`, `process.execPath` pointed at the payload's Node, `serveWeb` with `--no-open --port 0`, so never 3080); `bun-app/build.sh` makes the payload with the existing `deno-app/make-payload.sh` (it is not Deno specific) and compiles with `bun build --compile --compile-autoload-package-json`. Compiling takes 0.3 s.
+
+**Two traps, both hit:**
+
+1. **A compiled executable does not resolve bare package names from `node_modules` on the real disk** unless it is built with `--compile-autoload-package-json` (measured with a probe: absolute-path imports work, `import 'pkg'` from a file in the payload fails with `Cannot find module`; cwd and `NODE_PATH` do not help). ACRYL needs it: the Cordis Loader imports every plugin by name from the payload and the profile.
+2. **`apps/acryl-web/lib` bundles the runtime** (`noExternal: ['acryl-control', 'acryl-harness-runtime']`), so a payload made after a runtime change but before `acryl-web` was rebuilt carries the old code (here: the named `registerHooks` import that Bun cannot link). Rebuild the runtime and `acryl-web` before making a payload.
+
+**Results** (one machine: MacBook, macOS arm64, Bun 1.3.14, Node 24.18.1 sidecar, throwaway homes, first start of each fresh home, 6 runs each, alternating):
+
+| | Bun compiled host | the same payload on its Node sidecar |
+|---|---|---|
+| Time to a served URL | 1.34 to 1.86 s (median about 1.4 s) | 1.29 to 3.77 s (median about 1.4 s; the 3.77 s is the first, cold-cache run) |
+| Memory of the host process, 3 s after start | 357 to 360 MB | 329 to 331 MB (one run 248 MB) |
+| Size on disk | executable 61 MB + payload 322 MB = **383 MB** | payload 322 MB (it already holds the 115 MB Node) |
+
+- **The runtime's own startup advantage (Pi's 185 ms vs 79 ms) is invisible here**: the host spends its 1.4 s loading Cordis plugins, not starting a runtime.
+- **Compiling the host onto Bun makes it 61 MB larger and 28 MB hungrier than running the same payload on Node**, because the Node sidecar has to be there anyway. The Bun executable earns its place only where Node is not otherwise shipped, i.e. a build that needs no `dsh plugin add`, no pnpm and no MCP servers.
+- Everything the product is for works inside the compiled executable (run with `ACRYLBUN_DEBUG_SCRIPT=<probe>`, the repo's freshly built packages rather than the payload's copy, because the payload does not hold `acryl-harness-runtime` as a package): `probes/live-install.mjs` **ALL PASS** (install, change, re-install, both files fresh) and `probes/terminal-e2e.mjs` **ALL PASS** (shell over the real WebSocket route, resize, exit code, stop in 279 ms). The compiled host also starts a terminal session through its own `POST` route, answers a tokened request, stops on SIGTERM and frees its port.
+
 ## Not done yet (the remaining Bun gates, in order)
 
 1. **Session storage**: `node:sqlite` in the Harness's session-query package (Harness-owned; needs the sidecar or a provider replacement).
-2. **Packaging**: `bun build --compile` for the web host (the Pi route) and the size and cold-start numbers against Node SEA, Deno and the pruned Electron; then a window (Electrobun or another).
+2. **A window**: Electrobun or another shell (the compiled host above has none), then the size against Deno and the pruned Electron on the same machine.
 3. **Host stop with a live WebSocket** on Bun, and the agent stream (`plugins/acryl-agent-control`) over the same path.
 4. **Windows and Linux** (z370n, mbpi9win) for everything above.
 
