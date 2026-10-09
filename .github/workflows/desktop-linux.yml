@@ -61,10 +61,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xvfb libnss3 libgbm1 libasound2t64 libgtk-3-0t64 libxss1 libxtst6 libatk-bridge2.0-0t64 libdrm2 libxkbcommon0
 
-      - name: Run the Desktop for 75 seconds (what the developer runs)
+      # `pnpm run desktop` builds first and then starts Electron, so the budget has to cover the build (about a minute on a busy runner) plus the boot; a 75
+      # second budget killed the build before Electron started and read as "the Desktop never started".
+      - name: Run the Desktop for up to 4 minutes (what the developer runs)
         run: |
           set +e
-          timeout 75 xvfb-run -a --server-args="-screen 0 1280x800x24" corepack pnpm run desktop > desktop.log 2>&1
+          timeout 240 xvfb-run -a --server-args="-screen 0 1280x800x24" corepack pnpm run desktop > desktop.log 2>&1
           echo "exit $?" >> desktop.log
           exit 0
 
