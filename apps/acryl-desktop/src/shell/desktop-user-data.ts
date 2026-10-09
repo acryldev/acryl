@@ -7,8 +7,11 @@ export const DSH_DESKTOP_USER_DATA_ENV = 'DSH_DESKTOP_USER_DATA'
 
 /** What the selected app instance says about where its Electron user data lives (see `AppInstance.userDataName`). */
 export interface InstanceUserData {
-  /** The platform's application-data folder (`app.getPath('appData')`). */
-  readonly appData: string
+  /**
+   * The platform's application-data folder (`app.getPath('appData')`). A function because it is asked only when it is needed: Electron throws for it on
+   * Windows when the user profile is redirected (an isolated run moves USERPROFILE), and an explicit `DSH_DESKTOP_USER_DATA` makes it unnecessary.
+   */
+  readonly appData: () => string
   /** The instance's user-data folder name. */
   readonly userDataName: string
   /** The name Electron would otherwise derive the folder from. */
@@ -31,5 +34,5 @@ export function resolveDesktopUserDataOverride(
   const raw = env[DSH_DESKTOP_USER_DATA_ENV]
   if (raw !== undefined && raw.trim().length > 0) return resolve(raw)
   if (instance === undefined || instance.userDataName === instance.productName) return undefined
-  return join(instance.appData, instance.userDataName)
+  return join(instance.appData(), instance.userDataName)
 }
