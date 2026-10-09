@@ -282,7 +282,7 @@ for (const group of ['runtime', 'apps', 'plugins']) {
       const count = (readFileSync(file, 'utf8').match(/from '@deepseek-ai\/dsh[^']*'/g) ?? []).length
       if (count === 0) continue
       dshImports.total += count
-      if (!SEAM_FILES.some(pattern => pattern.test(relative(root, file)))) dshImports.outsideSeam += count
+      if (!SEAM_FILES.some(pattern => pattern.test(relative(root, file).replaceAll('\\', '/')))) dshImports.outsideSeam += count
     }
   }
 }
