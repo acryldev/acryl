@@ -1,6 +1,7 @@
 # Self-extension: where an agent-written plugin lives, and how it persists
 
-Status: verified on the packaged macOS app (2026-10-09, release v0.2.4, throwaway home) and on a real Windows 10 install (a recorded agent session).
+Status: verified on the packaged macOS app (2026-10-09, release v0.2.4, throwaway home) and on a real Windows 10 install (a recorded agent session). Survival of a full
+quit and relaunch was confirmed by the owner on a Mac mini (Apple silicon, macOS) and on Windows 10 with v0.2.4: the agent-written plugin was still there after restart.
 Code: `plugins/acryl-extension-context/lib/install.js` (install, update, remove), `lib/stage.js` (staging), `lib/reconcile.js` (locations).
 Where homes come from: [APP-INSTANCES-AND-BULKHEADS.md](APP-INSTANCES-AND-BULKHEADS.md).
 
@@ -76,6 +77,5 @@ appear on the empty "new session" screen. (Page-level changes outside the app UI
 
 ## Not verified yet
 
-- Surviving a full quit and relaunch of the packaged app (the install state is on disk, the relaunch itself was not measured).
 - Linux packaged paths (derived from the same code, not observed on a Linux install).
 - The Electron user-data locations above are the Electron defaults and were not re-checked for this app on Windows and Linux.
