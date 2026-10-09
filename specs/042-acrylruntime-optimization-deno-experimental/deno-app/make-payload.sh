@@ -31,4 +31,34 @@ fi
 rm -rf "$OUT/node_modules/node-addon-require-builtin" "$OUT"/node_modules/node-addon-require-builtin-*
 mkdir -p "$OUT/node_modules/node-addon-require-builtin"
 cp "$HERE"/stubs/node-addon-require-builtin/package.json "$HERE"/stubs/node-addon-require-builtin/index.js "$OUT/node_modules/node-addon-require-builtin/"
+# The pinned pnpm that `dsh plugin add` runs (pinned-pnpm.ts resolves the package by name; without it the install falls back to a bare `pnpm` on the user's PATH, which an end user does not have).
+PNPM_MANIFEST=$(cd "$REPO/runtime/acryl-harness-runtime" && node -p "require.resolve('pnpm')")
+rm -rf "$OUT/node_modules/pnpm"; mkdir -p "$OUT/node_modules/pnpm"; cp -R "$(dirname "$PNPM_MANIFEST")/." "$OUT/node_modules/pnpm/"
+echo "pnpm $(node -p "require('$OUT/node_modules/pnpm/package.json').version") added"
+
+# A real Node beside the app, as runtime/node[.exe]: the Harness starts child processes as "node" (the package manager behind `dsh plugin add`, MCP servers, the subprocess runner), and
+# neither a Deno host nor a `deno desktop` GUI executable can be that (specs/042 F14). The version the stock DeepSeek Harness desktop bundles; the official archive, checked against
+# nodejs.org's own SHASUMS256.txt. main.ts sets process.execPath to it. About +115 MB installed (macOS arm64), +118 (Linux x64), +88 (Windows x64).
+NODE_VERSION=24.18.1
+case "$PLATFORM-$ARCH" in
+  darwin-arm64) NODE_FILE=node-v$NODE_VERSION-darwin-arm64.tar.gz; NODE_MEMBER=node-v$NODE_VERSION-darwin-arm64/bin/node; NODE_DEST=node ;;
+  linux-x64)    NODE_FILE=node-v$NODE_VERSION-linux-x64.tar.xz;    NODE_MEMBER=node-v$NODE_VERSION-linux-x64/bin/node;    NODE_DEST=node ;;
+  win32-x64)    NODE_FILE=node-v$NODE_VERSION-win-x64.zip;         NODE_MEMBER=node-v$NODE_VERSION-win-x64/node.exe;      NODE_DEST=node.exe ;;
+  *) NODE_FILE="" ;;
+esac
+if [ -n "$NODE_FILE" ]; then
+  NW=$(mktemp -d)
+  curl -fsSL -o "$NW/SHASUMS256.txt" "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt"
+  curl -fsSL -o "$NW/$NODE_FILE" "https://nodejs.org/dist/v$NODE_VERSION/$NODE_FILE"
+  (cd "$NW" && grep " $NODE_FILE\$" SHASUMS256.txt | shasum -a 256 -c - >/dev/null) || { echo "Node archive checksum mismatch"; rm -rf "$NW"; exit 1; }
+  case "$NODE_FILE" in
+    *.tar.gz) tar -xzf "$NW/$NODE_FILE" -C "$NW" "$NODE_MEMBER" ;;
+    *.tar.xz) tar -xJf "$NW/$NODE_FILE" -C "$NW" "$NODE_MEMBER" ;;
+    *.zip)    unzip -qo "$NW/$NODE_FILE" "$NODE_MEMBER" -d "$NW" ;;
+  esac
+  mkdir -p "$OUT/runtime"; cp "$NW/$NODE_MEMBER" "$OUT/runtime/$NODE_DEST"; chmod 755 "$OUT/runtime/$NODE_DEST"; rm -rf "$NW"
+  echo "Node $NODE_VERSION sidecar added ($PLATFORM-$ARCH)"
+else
+  echo "no Node sidecar for $PLATFORM-$ARCH: plugin install will not work there"
+fi
 du -sk "$OUT" | awk '{printf "payload %.1f MB\n", $1/1024}'

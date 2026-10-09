@@ -1,7 +1,7 @@
 // AcrylDeno: the ACRYL web host running in-process on Deno, shown in a `deno desktop` window. Experimental build of spec 042.
 // The payload (lib/ + node_modules) is on the real disk beside the app, not embedded: ACRYL symlinks installed packages into its profile.
 import { dirname, join } from 'node:path'
-import { appendFileSync, mkdirSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
 
@@ -24,6 +24,17 @@ const log = (...parts: unknown[]) => {
 }
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 log(`starting; home=${acrylHome} payload=${payload} os=${Deno.build.os}-${Deno.build.arch} deno=${Deno.version.deno}`)
+
+// The Harness starts child processes as "node" through `process.execPath` (the package manager behind `dsh plugin add`, MCP servers, the subprocess runner, office
+// skills). Here that is this GUI executable, which cannot run a script, and Deno itself cannot run pnpm (it fails at startup inside a bundled dependency). The payload
+// ships a real Node beside the app (runtime/node, made by make-payload.sh) and `process.execPath` points at it for the whole process (specs/042 F14).
+const nodeSidecar = join(payload, 'runtime', Deno.build.os === 'windows' ? 'node.exe' : 'node')
+if (existsSync(nodeSidecar)) {
+  process.execPath = nodeSidecar
+  log('child processes run on the bundled Node:', nodeSidecar)
+} else {
+  log('no bundled Node at', nodeSidecar, '- installing plugins and anything else that starts "node" will not work')
+}
 
 // Native Node-API addons (`.node` files): log each one just before it loads (Deno loads them through Module._extensions['.node'] and process.dlopen), and on Windows
 // REFUSE them with an ordinary error. Inside a `deno desktop` process on Windows, loading any such addon ends the whole process with an uncatchable 0xC06D007F
@@ -134,6 +145,14 @@ async function dumpFibers(): Promise<void> {
 }
 
 try {
+  // Diagnostics, off unless ACRYLDENO_DEBUG_SCRIPT=<path to a .mjs>: run that script inside THIS process (the real desktop runtime, the bundled Node as
+  // process.execPath) instead of the app; the script ends the process itself. How the live-install probe is run against the packaged app.
+  const debugScript = Deno.env.get('ACRYLDENO_DEBUG_SCRIPT')
+  if (debugScript !== undefined && debugScript !== '') {
+    log('debug script:', debugScript)
+    await import(pathToFileURL(debugScript).href)
+    await shutdown('debug script finished')
+  }
   if (Deno.env.get('ACRYLDENO_DEBUG_FIBERS') === '1') {
     await dumpFibers()
     await shutdown('debug fibers finished')
