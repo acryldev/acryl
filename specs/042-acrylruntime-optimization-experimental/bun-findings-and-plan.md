@@ -44,6 +44,10 @@ What does not work, and matters:
 - `ws.WebSocket` `unexpected-response` is not implemented in Bun's `ws`, so a client cannot read the refusal status either.
 - A server with upgraded sockets does not finish `server.close()` until they are destroyed (the Harness web server destroys the sockets it tracked, as the test does). Not yet checked against the real host stop.
 
+### B3b. The same through the real host (2026-10-09)
+
+`probes/terminal-e2e.mjs` boots the real web engine host on a free port and uses nothing but its own routes: `POST /api/acryl-workspace/pty` starts a shell, the WebSocket route `/api/acryl-workspace/pty/stream` attaches through the Harness web server's upgrade routing, a typed `echo` comes back, a resize shows in `stty size`, `exit 4` is reported as exit code 4, and the host stops (WebSocket closed, 281 ms on Bun). **ALL PASS on Bun 1.3.14, Node 24.19.0 and Deno 2.9.7** (Bun and Deno with the Node sidecar). The host runs the built `lib/` of the plugin: the first Bun run failed with no output because `lib/` still held the old `node-pty` selector, until the plugin was rebuilt.
+
 ## Not done yet (the remaining Bun gates, in order)
 
 1. **Session storage**: `node:sqlite` in the Harness's session-query package (Harness-owned; needs the sidecar or a provider replacement).
