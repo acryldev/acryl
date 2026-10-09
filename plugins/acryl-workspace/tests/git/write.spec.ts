@@ -12,7 +12,7 @@ function git(cwd: string, ...args: string[]): string {
   return execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...args], { cwd, encoding: 'utf8', env: { ...process.env, ...IDENT } })
 }
 
-const root = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-gitw-')))
+const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'acryl-gitw-')))
 const repo = join(root, 'proj')
 const noIdentity = join(root, 'anon')
 const svc = new WorkspaceGit()

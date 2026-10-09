@@ -9,7 +9,7 @@ import { handleWorkspaceFilesReadRequest, handleWorkspaceFilesTreeRequest, handl
 import { confine, WorkspaceFiles, WorkspaceFilesError } from '../../src/files/service.ts'
 import { WorkspaceGit, WorkspaceGitError } from '../../src/git/service.ts'
 
-const root = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-files-')))
+const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'acryl-files-')))
 const repo = join(root, 'proj')
 const outside = join(root, 'outside')
 const gitCli = (cwd: string, ...args: string[]): void => {

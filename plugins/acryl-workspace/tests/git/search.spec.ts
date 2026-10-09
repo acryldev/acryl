@@ -8,7 +8,7 @@ import { handleWorkspaceGitSearchRequest } from '../../src/git/route.ts'
 import { WorkspaceGit } from '../../src/git/service.ts'
 import { MAX_SEARCH_RESULTS } from '../../src/git/contract.ts'
 
-const root = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-search-')))
+const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'acryl-search-')))
 const repo = join(root, 'proj')
 const svc = new WorkspaceGit()
 

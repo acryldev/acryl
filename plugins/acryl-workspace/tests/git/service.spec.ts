@@ -28,7 +28,7 @@ function git(cwd: string, ...args: string[]): string {
 }
 
 // Paths are fixed at module load so `it.each` tables can name them; the repositories are created in beforeAll.
-const root = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-git-')))
+const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'acryl-git-')))
 const main = join(root, 'proj')
 const linked = join(root, 'proj-feature')
 const instances: WorkspaceGit[] = []

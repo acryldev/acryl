@@ -8,10 +8,10 @@ import { parseFileEntryChange } from '../../src/files/contract.ts'
 import { handleWorkspaceFilesEntryRequest } from '../../src/files/route.ts'
 import { WorkspaceFiles, WorkspaceFilesError } from '../../src/files/service.ts'
 
-const root = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-entry-')))
+const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'acryl-entry-')))
 const repo = join(root, 'proj')
 const outside = join(root, 'outside')
-const files = new WorkspaceFiles({ resolveWorktree: async path => realpathSync(path) })
+const files = new WorkspaceFiles({ resolveWorktree: async path => realpathSync.native(path) })
 
 beforeEach(() => {
   rmSync(repo, { recursive: true, force: true })
