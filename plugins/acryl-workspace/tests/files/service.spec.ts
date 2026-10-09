@@ -120,7 +120,8 @@ describe('WorkspaceFiles.write', () => {
     const before = await files.read(repo, 'src/w.ts')
     const saved = await files.write(repo, 'src/w.ts', 'new text\n', before.mtimeMs)
     expect(readFileSync(path, 'utf8')).toBe('new text\n')
-    expect(statSync(path).mode & 0o777).toBe(0o755)
+    // File modes are a POSIX notion; Windows has no executable bit to keep.
+    if (process.platform !== 'win32') expect(statSync(path).mode & 0o777).toBe(0o755)
     expect(saved.mtimeMs).toBe(statSync(path).mtimeMs)
     expect(readdirSync(join(repo, 'src')).filter(name => name.includes('.acryl-'))).toEqual([])
   })

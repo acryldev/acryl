@@ -1,0 +1,96 @@
+name: Linux .deb
+
+# Builds the Debian package with `corepack pnpm build:linux` on Ubuntu, installs it with apt and starts the installed app under a virtual display. Fails
+# unless the renderer reports healthy. The .deb is attached to the run, so it can be downloaded and tried on another Ubuntu machine.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, ci-linux-deb]
+    paths:
+      - 'apps/acryl-desktop/scripts/package-linux.ts'
+      - 'apps/acryl-desktop/package.json'
+      - '.github/workflows/linux-deb.yml'
+
+concurrency:
+  group: linux-deb-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DSH_TELEMETRY_DISABLED: '1'
+
+jobs:
+  deb:
+    name: Build, install and start the .deb (x64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Enable Corepack and prepare pnpm version
+        run: |
+          corepack enable
+          corepack prepare pnpm@$(grep '"packageManager"' package.json | grep -o '[0-9.]*' | head -1) --activate
+
+      - name: Install dependencies
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Build the .deb
+        run: node scripts/with-build-lock.mjs corepack pnpm build:linux
+
+      - name: Package size
+        run: |
+          ls -lh apps/acryl-desktop/dist/linux-x64/*.deb
+          dpkg-deb -I apps/acryl-desktop/dist/linux-x64/*.deb | grep -E "Package|Version|Installed-Size|Architecture"
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: acryl-desktop-linux-x64-deb
+          path: apps/acryl-desktop/dist/linux-x64/*.deb
+          retention-days: 7
+
+      - name: Install the package and the libraries Electron needs
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          sudo apt-get install -y ./apps/acryl-desktop/dist/linux-x64/*.deb
+          dpkg -L acryl-desktop | head -40
+
+      - name: Start the installed app for 60 seconds
+        run: |
+          set +e
+          exe=$(dpkg -L acryl-desktop | while read -r p; do [ -f "$p" ] && [ -x "$p" ] && case "$(basename "$p")" in acryl-desktop|ACRYL|acryl) echo "$p"; break;; esac; done)
+          echo "starting $exe"
+          timeout 60 xvfb-run -a --server-args="-screen 0 1280x800x24" "$exe" --no-sandbox > app.log 2>&1
+          echo "exit $?" >> app.log
+          exit 0
+
+      - name: What the app printed
+        if: always()
+        run: tail -40 app.log | cut -c1-300
+
+      - name: The renderer must have reported healthy
+        run: |
+          log=$(find "$HOME/.config" -name startup.jsonl | head -1)
+          test -n "$log" || { echo "no startup record: the installed app never started"; exit 1; }
+          tail -n 20 "$log" | cut -c1-300
+          grep -q '"eventName":"renderer.boot.completed".*"rendererStatus":"healthy"' "$log" || { echo "the renderer did not report healthy"; exit 1; }
+          echo "renderer healthy"
+
+      # What the stock DeepSeek Harness desktop does and ACRYL promises: an agent writes a Cordis plugin and the installed app takes it live, with no dev server. This boots the
+      # INSTALLED package in a throwaway home and drives the agent's own tools through the tool gateway: verify, install, call the new tool, rewrite and update it, call it again
+      # (the new behaviour must answer with no restart), remove it. No model is needed.
+      - name: An agent-written plugin installs, runs, updates and is removed live in the installed app
+        run: |
+          exe=$(dpkg -L acryl-desktop | while read -r p; do [ -f "$p" ] && [ -x "$p" ] && case "$(basename "$p")" in acryl-desktop|ACRYL|acryl) echo "$p"; break;; esac; done)
+          xvfb-run -a --server-args="-screen 0 1280x800x24" node apps/acryl-desktop/scripts/verify-packaged-self-extension.mjs "$exe" --arg --no-sandbox

@@ -105,7 +105,8 @@ describe('starting a custom agent', () => {
     expect(spawned).toEqual([{ file: '/bin/echo', args: ['a b', '$(id)'] }])
     expect(() => registry.start('not-in-catalog')).toThrow('unknown workspace PTY command')
     expect(() => registry.start('sh -c "x"')).toThrow('unknown workspace PTY command')
-    expect(registry.canRun('/bin/echo')).toBe(true)
+    // This registry is built for darwin, so only a POSIX absolute path counts as absolute here.
+    if (process.platform !== 'win32') expect(registry.canRun('/bin/echo')).toBe(true)
     expect(registry.canRun('/nonexistent/tool')).toBe(false)
     expect(registry.canRun('definitely-not-installed-xyz')).toBe(false)
   })

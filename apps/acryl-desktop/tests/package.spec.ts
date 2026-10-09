@@ -575,6 +575,9 @@ describe('published package surface', () => {
       'package.json',
       '!node_modules/node-pty/build/**',
       '!lib/**/*.map',
+      '!node_modules/**/*.map',
+      '!node_modules/**/src/**/*.ts',
+      '!node_modules/**/src/**/*.tsx',
     ])
     expect(manifest.build?.mac?.icon).toBe('build/app-icon-mac.png')
     expect(manifest.build?.mac?.artifactName).toBe('acryl-desktop-mac-${arch}.${ext}')
@@ -618,9 +621,12 @@ describe('published package surface', () => {
     expect(packageDir).toContain("CSC_IDENTITY_AUTO_DISCOVERY: 'false'")
     expect(manifest.scripts?.['dist:mac']).toBe('node scripts/release-mac.ts')
     expect(manifest.scripts?.['dist:mac-smoke']).toBe('node scripts/package-mac.ts')
+    expect(manifest.scripts?.['dist:mac-host']).toBe('node scripts/package-mac.ts --host')
+    expect(manifest.build?.files).toContain('!node_modules/**/*.map')
+    expect(manifest.scripts?.['dist:linux']).toBe('node scripts/package-linux.ts')
     expect(manifest.scripts?.['dist:win']).toBe('node scripts/package-win.ts')
     expect(manifest.scripts?.['dist:win-portable']).toBe('node scripts/package-win-portable.ts')
-    expect(manifest.scripts?.['check:win-package']).toContain('pnpm --filter cordis-plugin-market run build')
+    expect(manifest.scripts?.['check:win-package']).toContain('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build')
     expect(manifest.scripts?.['check:win-package']).toContain('pnpm run build')
     expect(manifest.scripts?.['check:win-package']).toContain('pnpm run typecheck')
     expect(manifest.scripts?.['check:win-package']).toContain('tests/package-win.spec.ts')
@@ -629,7 +635,7 @@ describe('published package surface', () => {
     expect(manifest.scripts?.['check:win-package']).toContain('tests/updates/update-download.spec.ts')
     expect(manifest.scripts?.['check:win-package']).toContain('tests/workspaces/windows-volume-diagnostics.spec.ts')
     expect(manifest.scripts?.['check:win-package']).toContain('pnpm run verify:closure')
-    expect(manifest.scripts?.['check:mac-package']).toContain('pnpm --filter cordis-plugin-market run build')
+    expect(manifest.scripts?.['check:mac-package']).toContain('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build')
     expect(manifest.scripts?.['check:mac-package']).toContain('pnpm run build')
     expect(manifest.scripts?.['check:mac-package']).toContain('pnpm run typecheck')
     expect(manifest.scripts?.['check:mac-package']).toContain('tests/package-mac.spec.ts')
@@ -639,14 +645,25 @@ describe('published package surface', () => {
     expect(manifest.scripts?.['verify:cli']).toBe('node scripts/verify-cli-runtime.mjs')
     expect(manifest.scripts?.check).toContain('pnpm run verify:cli')
     expect(workspaceManifest.scripts?.['dist:mac'])
-      .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:mac')
+      .toBe('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:mac')
     expect(workspaceManifest.scripts?.['dist:mac-smoke'])
-      .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:mac-smoke')
+      .toBe('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:mac-smoke')
+    expect(workspaceManifest.scripts?.['dist:linux'])
+      .toBe('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:linux')
+    expect(workspaceManifest.scripts).toMatchObject({
+      'build:mac': 'pnpm run dist:mac-host',
+      'build:mac:universal': 'pnpm run dist:mac-smoke',
+      'build:windows': 'pnpm run dist:win',
+      'build:linux': 'pnpm run dist:linux',
+    })
     expect(workspaceManifest.scripts?.['dist:win'])
-      .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:win')
+      .toBe('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:win')
     expect(workspaceManifest.scripts?.['dist:win-portable'])
-      .toBe('pnpm --filter cordis-plugin-market run build && pnpm --filter acryl-desktop run dist:win-portable')
+      .toBe('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:win-portable')
     expect(manifest.build?.afterPack).toBe('./scripts/verify-packaged-runtime.ts')
+    for (const perArchPayload of ['@deepseek-ai/libreoffice-kit-darwin-*', '@deepseek-ai/node-addon-system-darwin-*', 'sherpa-onnx-darwin-*']) {
+      expect(manifest.build?.mac?.x64ArchFiles).toContain(perArchPayload)
+    }
     expect(manifest.build?.mac).toEqual(expect.objectContaining({
       extendInfo: {
         CFBundleAllowMixedLocalizations: true,
@@ -700,6 +717,9 @@ describe('published package surface', () => {
     }
     expect(releaseCliWorkflow).toContain('needs: [cli, web]')
     expect(releaseCliWorkflow).toContain('needs: [manifest, npm-publish]')
+
+    // The npm acryl-web package depends on 13 workspace packages that are not on npm, so publishing it is an explicit opt-in.
+    expect(releaseCliWorkflow).toMatch(/- name: Publish standalone Web package\n\s+if: vars\.ACRYL_PUBLISH_WEB_NPM == 'true'/u)
   })
 
   it('runs one fast, conventional CI gate on main and pull requests', () => {

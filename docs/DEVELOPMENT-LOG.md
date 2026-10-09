@@ -1,3 +1,98 @@
+## 2026-10-09 - release 0.2.1: CLI, Web, npm and the five Desktop installers, the first release in three weeks
+
+Tags `v0.2.1` (CLI, Web, npm, GitHub release marked Latest) and `desktop-v0.2.1` (mac arm64 and x64 DMG, Windows exe, Linux amd64 and arm64 deb). `npm install acryl@0.2.1`
+was checked from the real registry in an isolated home and prints `0.2.1`. The stale `v0.2.0` tag (14 September) was left alone; `v0.2.1` was re-pointed once, before
+anything was published from it.
+
+What stood between the DSH 0.2 work and a release, in the order it was found:
+
+- **`pnpm deploy --legacy` installs nothing under pnpm 11.11.0** (the repository pin). It resolves the whole graph, exits 0, and leaves the target without `node_modules`,
+  so every CLI and Web archive was missing all its dependencies. 11.8.0 and 11.28.5 install correctly. Only the archive deploy step now runs under 11.8.0
+  (`DEPLOY_PNPM` in `scripts/cli-archive-platform.mjs`); moving the repository pin stays T040 because that pin is also the pnpm the Desktop app and the plugin manager ship.
+  `bd5282243aa2cce14b2e250c566c823cdef4446e`. Two more contract fixes were found by actually building the Web archives: an unscoped per-platform native package (`sherpa-onnx-darwin-arm64`)
+  was rejected as foreign, and the rule "no `electron` folder" matched four harmless type declarations in a DSH 0.2 package (it now forbids Electron code and native files, not declarations).
+- **Windows**: the Windows release job reached tests that assume POSIX (file modes, `/bin/echo`, a `#!/bin/sh` stand-in for Claude, path separators, `new URL(...).pathname`). Reproduced on a real Windows 10
+  machine (mbpi9win, see the reference memory) and fixed in the tests, plus one real bug: the workspace git service reported Git's `C:/repo` paths next to the app's own `C:\repo`
+  (`4fc180988bcee401054a5b717caf39106be929c0`, tests `4eef028afd4d22b94a88ea52d83b236ea81bd991`, `e96e1220e9307076b0cbffa6d37af8e3c5829086`). The Windows `sherpa-onnx` package is named `win-x64`
+  (`e7470e63850178a3459e4f304465bac2ce7123ce`).
+- **`verify-npm-web-entrypoint` re-ran every package's full check.** `prepack` is `pnpm run check`, so packing the closure rebuilt and retested each package on each platform. It now packs with
+  `--config.ignore-scripts=true` (pnpm 11 has no `--ignore-scripts` flag for `pack`); the release job already ran those checks once (`e7470e63850178a3459e4f304465bac2ce7123ce`).
+- **Versions** bumped to 0.2.1 in the seven package.json files (`2ef1c8fb98133ac06e880927cfb16e1a58fb33b1`).
+- **`acryl-web` is not published to npm** unless the repository variable `ACRYL_PUBLISH_WEB_NPM` is `true`: it depends on 13 workspace packages that are not on npm, so `npm i acryl-web` could not resolve them. The `acryl`
+  selector does not use that package (it downloads the Web archive from the release). npm still has `acryl-web@0.1.44`. (`c89a604748cf5a25d77ce02d69fa149ce56d837e`)
+- **Clean-install budget 350 MB -> 600 MB.** The release gate failed on the real tag with 511 MB; the four CLI targets install at 487-516 MB (Windows takes 86 s of its 120 s budget). The LibreOffice kit
+  and the voice runtime from DSH 0.2 are kept on purpose (`a415012bfb193876dcecd110272205a269f11c13`).
+- **Desktop release stayed a draft**: five identically named `release-receipt.json` uploaded in parallel and one 404ed, the same race v0.1.44 had on the CLI side. The installers had all uploaded; the draft was published
+  by hand and the workflow now drops the colliding sidecars first and keeps Desktop-only releases off the Latest badge (`e4f21e7606d5c84894e9f640cb3fbce9c2340951`).
+- **CI that had been red for the whole DSH 0.2 migration**: the Desktop profile smoke stored the advanced mode where nothing reads it any more, so it only passed on macOS and Windows (advanced is their default); it now
+  writes `acryl-settings.yaml` (`e508405ebeea6fb81eee286ef39e51c18fb2dbd2`). The Linux boot check's 75 s budget included the build it runs first and killed it before Electron started (`000033513dd676f94388f43366837325b5b20dfc`).
+- The earlier pipeline work of the same release effort: Nix workflows manual-only (`94a3d824ba22f371e46532f3cf2fdbf9aa1a6068`), the CLI and Web jobs build with their dependencies (`6bce5e6d2d10df5267823431368e5c98c418afd9`), the repository's pnpm in the
+  Desktop release (`dddc67488f9c80b1501f360019765d8fbd01ab70`, `46a0964b3b251c340cb3c72dd08154bf372a2c6d`).
+
+Not done, on purpose:
+
+- `acryl-harness-runtime` has 17 failing test files on the Windows 10 machine (`new URL().pathname` giving `C:/C:/...`, POSIX path literals, 5 s timeouts). GitHub's `windows-latest` runner passes them, so they are partly the
+  scratch copy's layout and partly real Windows debt; they are no longer in the release path. To do.
+- The npm registry made the four 120-150 MB target tarballs visible 20-35 minutes after the publish step finished, with the selector (published last) visible first, so `npm i -g acryl` could not resolve its runtime
+  during that window. The publish order is right; the gap is the registry's. A release could wait for the target tarballs before publishing the selector.
+
+## 2026-10-08 (later) - the macOS app is half the size: one CPU per build, no duplicate image engine
+
+Measured with `corepack pnpm build:mac` on Apple Silicon: DMG 431 -> 224 MB, installed app 1.2 GB -> 645 MB.
+
+- `build:mac` now packages only this Mac's CPU (`dist/mac-<arch>`); `build:mac:universal` keeps the two-CPU DMG for a release. The universal build held
+  two copies of Electron, LibreOffice, sherpa-onnx and sharp.
+- Dependency sourcemaps and `src/**/*.ts(x)` of installed packages are no longer shipped (they cannot run: Node does not execute TypeScript inside
+  node_modules).
+- `sharp` was 0.35.4 but our direct pins were `@img/sharp-*` 0.35.3 and libvips 1.3.2, so sharp carried a private second libvips (18 MB). The pins now match
+  what sharp declares (0.35.4, libvips 1.3.3). `THIRD_PARTY_NOTICES.md` was regenerated with its script (`verify:notices`); it had not been refreshed since before the
+  DSH 0.2 move.
+- Where the rest comes from: Electron 231 MB, LibreOffice kit 153 MB (DSH 0.2's office preview and office skills, mounted by its web app and `dsh`; kept on purpose),
+  sherpa-onnx 34 MB (kept on purpose). A packaged app was started in an isolated home and reported a healthy renderer.
+- New manual/push workflow `linux-deb.yml`: builds the `.deb` with `build:linux` on Ubuntu, installs it with apt, starts it under xvfb and requires a healthy renderer.
+
+## 2026-10-08 - `corepack pnpm build:mac`, `build:windows`, `build:linux`; the universal macOS DMG builds on DSH 0.2 again
+
+Commits: `e282ed8ade3b9dc8dd7e501beebc9c2f7e98ce3d` (the three scripts and `dist:linux`, see below), `514d0191cd127213905a26c9b921b46c06062a0c` (the DSH 0.2 packaging fixes).
+
+- Root scripts: `build:mac` (unsigned universal DMG, `apps/acryl-desktop/dist/mac-smoke/acryl-desktop-mac-universal.dmg`),
+  `build:windows` (NSIS installer) and `build:linux` (a Debian `.deb` in `dist/linux-<arch>/`, new `scripts/package-linux.ts`).
+  Each needs its own OS. `dist:mac` stays the signed and notarized release and needs a Developer ID certificate.
+- `build:mac` had never been run against DSH 0.2 and failed four times in a row, each time one layer deeper:
+  `node-pty` was only reachable through `acryl-workspace`, so the universal preflight did not find its prebuilds (now a direct
+  dependency of `acryl-desktop`); the packaged-runtime verifier still looked for the 0.1 `dsh-agent-presets` package (0.2 ships
+  `dsh-agent-preset/skills/...`); and the `afterPack` hook pruned each half of the universal build (`mac-universal-<arch>-temp`) to its
+  own CPU, so the merge saw different files in the two halves. The halves are now treated as universal (`universalTemporaryApp`), and
+  the three per-CPU packages new in 0.2 (`@deepseek-ai/libreoffice-kit-darwin-*`, `@deepseek-ai/node-addon-system-darwin-*`,
+  `sherpa-onnx-darwin-*`) are declared for both CPUs and listed in `x64ArchFiles`, the same way sharp, koffi and ripgrep already were.
+- Measured: the universal DMG is 431 MB; the unpacked app is about 755 MB per CPU. `libreoffice-kit` alone is 157 MB per CPU
+  (pulled in by `dsh-office-to-pdf` and `dsh-skill-office`), the largest single item for the spec 042 size goal.
+- An unlocked second `build:mac` run next to a running one wipes `lib/` under it (the typecheck then finds no `.d.ts`); run builds
+  through `scripts/with-build-lock.mjs`.
+
+## 2026-10-07 (later) - a fresh clone now builds and runs on Linux (Web, CLI, Desktop)
+
+Commits: `244d77ab2169e19847142dbf9cfb6181b43e7666`, `a4202c94f3ca6699901f4f02041bd84a5762eb59`,
+`36ee06a79653155adfe26f2a57c1c9dee5b15342`.
+
+Found by building and launching a clean checkout on Ubuntu (kernel 6.8). Three separate causes:
+
+- The root `build` script hand-listed packages and skipped `acryl-settings`, `acryl-agent-control` and
+  `acryl-loopback-http`, so the market, CLI and Agent Control failed with TS2307 on their missing `lib/` types. It is now
+  `pnpm -r --if-present --workspace-concurrency=1 run build` (pnpm's dependency order); `check` runs `acryl-settings`
+  before the market.
+- Electron's SUID sandbox helper is not root-owned 4755 after an install and Ubuntu 24.04+ blocks the userns fallback, so
+  `pnpm run dev` aborted with a FATAL `setuid_sandbox_host` error. `launch-dev.mjs` now says so and passes `--no-sandbox`
+  for that development run only.
+- The Desktop shell mode defaulted to `advanced`, which exists on macOS and Windows only, so a Linux launch rejected its
+  own default and showed "the Cordis shell plugin did not register a window". The default now follows the platform
+  (`compatibility` on Linux) and is threaded through the settings readers the way `prepareDesktopProfile` carries it.
+
+Verified: full topological build, Desktop tests (817 passed), Web serves a tokenized URL on a fresh home, CLI prints its
+version, Desktop completes startup in compatibility mode. Not fixed: the loader smoke still reports `acryl-workspace`,
+`acryl-plugin-admin` and `acryl-agent-control` pending on `acrylWeb`/`acrylTools`, the Desktop log shows a
+`product-telemetry` `serviceVersion` config error and a `reload command is already registered` error.
+
 ## 2026-10-07 - 042: renamed to Deno (experimental); measured where ACRYL stands on Deno
 
 Commit: `ae7d81c222655905525c035aa274990deb01646f`.

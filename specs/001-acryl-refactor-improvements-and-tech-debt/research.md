@@ -864,6 +864,14 @@ Found on the way and fixed (`25d0a71`): DSH creates the chat's first workspace i
 
 **A miss of mine.** The Plugins entry (`db2c496`) made the `panels` prop of the workspace sidebar required, and a scenario test in `acryl-agent-control` that renders it was not in the packages I ran; CI caught it (a stub returning a new array on every read looped `useSyncExternalStore`). Fixed in `a6042a9`, and the stable-snapshot contract is now in the interface doc. Rule for a change to a shared component: grep every renderer of it across packages before pushing, not only the package that owns it.
 
+### R41 - Desktop on Linux (2026-10-07): three failures on a fresh Ubuntu checkout, all fixed, and now guarded
+
+The owner ran `corepack pnpm run desktop` on Ubuntu (z370n) and got the Recovery window: "the Cordis shell plugin did not register a window". The causes, found with the other agent and by a GitHub Ubuntu run under xvfb:
+1. **Fresh-checkout build order**: `dev-local` built `cordis-plugin-market` before `acryl-settings`, so a clean clone failed on a missing package (`244d77a` for the root build, `ec59559` for `dev-local`).
+2. **The Chromium SUID sandbox**: Electron aborts when its helper is not root-owned (Ubuntu); the dev launch now starts with `--no-sandbox` and says so (`a4202c9`).
+3. **The window itself**: the advanced shell exists on macOS and Windows only, but the dev launcher seeds `advanced`; Linux now defaults to the compatibility shell (`36ee06a`). The shell plugin could not register a window in a mode the platform does not support.
+A headless gate cannot see any of these (the loader smoke prints the same three "pending" entries on every OS). `.github/workflows/desktop-linux.yml` (`532a449`) boots the real Desktop under xvfb for 75 seconds on pushes and PRs that touch Desktop, the runtime, plugins or `dev-local`, and fails unless the app's own startup record says `renderer.boot.completed` with `rendererStatus: healthy`. It passed on the fixed tree: `--no-sandbox` chosen, renderer healthy. This is the Linux half of T060/T062; a Windows Desktop window boot is still not covered.
+
 ### Small items closed
 - T056's commit hash fixed (`7ebafbe`). T053 and T054 are one pass: both need the page-less loopback listener and the TUI profile to mount `acrAgentControl`; plan them together after S3.
 - Ledger cell 4 (R30/R33) stays closed; no GUI cell was re-run this round.

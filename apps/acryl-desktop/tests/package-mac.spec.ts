@@ -94,6 +94,37 @@ describe('macOS DMG smoke packaging', () => {
     ])
   })
 
+  it('packages only the CPU of this machine for a host build, without the universal runtime preparation', () => {
+    const calls: CommandCall[] = []
+    let prepared = false
+
+    packageMacSmoke({
+      ...options(calls),
+      target: 'host',
+      arch: 'arm64',
+      outputDir: '/repo/acryl-desktop/dist/mac-arm64',
+      prepareRuntime: () => { prepared = true },
+    })
+
+    expect(prepared).toBe(false)
+    expect(calls[1]?.args).toEqual([
+      '/repo/node_modules/electron-builder/cli.js',
+      '--mac',
+      'dmg',
+      '--arm64',
+      '--publish',
+      'never',
+      '--config.mac.notarize=false',
+      '--config.npmRebuild=false',
+      '--config.directories.output=/repo/acryl-desktop/dist/mac-arm64',
+    ])
+    expect(calls[2]?.args).toEqual([
+      '/repo/acryl-desktop/scripts/verify-mac-smoke.ts',
+      '/repo/acryl-desktop/dist/mac-arm64',
+      'arm64',
+    ])
+  })
+
   it('reuses a completed CI package gate when explicitly requested', () => {
     const calls: CommandCall[] = []
     const logs: string[] = []

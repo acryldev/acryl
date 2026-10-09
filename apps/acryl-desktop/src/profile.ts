@@ -1,5 +1,6 @@
 /** Compatibility profile composition over the official Web bundle and user plugins. */
 
+import { defaultDesktopShellMode } from './shell/default-mode.ts'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -77,7 +78,6 @@ const AGENT_PRESETS_ROW_ID = 'agent-preset-registry'
 const UPSTREAM_AGENT_PRESETS_PACKAGE = '@deepseek-ai/dsh-agent-preset-registry'
 const DESKTOP_WINDOWS_AGENT_PRESETS_ROW_ID = 'desktop-windows-agent-presets'
 const DESKTOP_WINDOWS_AGENT_PRESETS_PACKAGE = 'acryl-desktop/windows-agent-presets'
-const DEFAULT_DESKTOP_SHELL_MODE: DesktopShellMode = 'advanced'
 const DEFAULT_DESKTOP_PORT = DESKTOP_DEFAULT_WEB_PORT
 const DESKTOP_WEB_SERVER_ROW_ID = 'desktop-webserver'
 const DESKTOP_WEB_SERVER_PACKAGE = 'acryl-desktop/webserver'
@@ -109,8 +109,8 @@ const MARKET_PACKAGE_NAMES: ReadonlySet<string> = new Set([
  * @param value - untrusted settings value.
  * @returns a supported desktop shell mode.
  */
-export function parseDesktopShellMode(value: unknown): DesktopShellMode {
-  if (value === undefined) return DEFAULT_DESKTOP_SHELL_MODE
+export function parseDesktopShellMode(value: unknown, platform: NodeJS.Platform = process.platform): DesktopShellMode {
+  if (value === undefined) return defaultDesktopShellMode(platform)
   if (value === 'compatibility' || value === 'advanced') return value
   throw new Error(`${BIN_NAME}: ${DESKTOP_SETTINGS_NAMESPACE}.mode must be "compatibility" or "advanced"`)
 }
@@ -142,28 +142,28 @@ export function parseDesktopBlend(value: unknown): string | null {
  * @param document - untrusted settings document root.
  * @returns validated mode, port, and BLEND selection for the next generation.
  */
-export function desktopStartupSettingsFromSettings(document: unknown): DesktopStartupSettings {
+export function desktopStartupSettingsFromSettings(document: unknown, platform: NodeJS.Platform = process.platform): DesktopStartupSettings {
   if (typeof document !== 'object' || document === null || Array.isArray(document)) {
     throw new Error(`${BIN_NAME}: settings document must be a map of namespace sections`)
   }
   const section = (document as Record<string, unknown>)[DESKTOP_SETTINGS_NAMESPACE]
   if (section === undefined) {
-    return { mode: DEFAULT_DESKTOP_SHELL_MODE, port: DEFAULT_DESKTOP_PORT, blend: null }
+    return { mode: defaultDesktopShellMode(platform), port: DEFAULT_DESKTOP_PORT, blend: null }
   }
   if (typeof section !== 'object' || section === null || Array.isArray(section)) {
     throw new Error(`${BIN_NAME}: ${DESKTOP_SETTINGS_NAMESPACE} settings must be a map`)
   }
   const values = section as Record<string, unknown>
   return {
-    mode: parseDesktopShellMode(values.mode),
+    mode: parseDesktopShellMode(values.mode, platform),
     port: parseDesktopPort(values.port),
     blend: parseDesktopBlend(values.blend),
   }
 }
 
 /** Read only the shell mode from one parsed settings document. */
-export function desktopShellModeFromSettings(document: unknown): DesktopShellMode {
-  return desktopStartupSettingsFromSettings(document).mode
+export function desktopShellModeFromSettings(document: unknown, platform: NodeJS.Platform = process.platform): DesktopShellMode {
+  return desktopStartupSettingsFromSettings(document, platform).mode
 }
 
 /**
@@ -171,13 +171,13 @@ export function desktopShellModeFromSettings(document: unknown): DesktopShellMod
  * @param filename - absolute path of `acryl-settings.yaml`; a missing file means every default.
  * @returns the values projected into the startup Loader graph.
  */
-export function readDesktopStartupSettings(filename: string): DesktopStartupSettings {
+export function readDesktopStartupSettings(filename: string, platform: NodeJS.Platform = process.platform): DesktopStartupSettings {
   let text: string
   try {
     text = readFileSync(filename, 'utf8')
   } catch (cause) {
     if ((cause as NodeJS.ErrnoException).code === 'ENOENT') {
-      return { mode: DEFAULT_DESKTOP_SHELL_MODE, port: DEFAULT_DESKTOP_PORT, blend: null }
+      return { mode: defaultDesktopShellMode(platform), port: DEFAULT_DESKTOP_PORT, blend: null }
     }
     throw cause
   }
@@ -185,12 +185,12 @@ export function readDesktopStartupSettings(filename: string): DesktopStartupSett
   if (parsed.errors.length > 0) {
     throw new Error(`${BIN_NAME}: invalid settings document at ${filename}: ${parsed.errors.map(error => error.message).join('; ')}`)
   }
-  return desktopStartupSettingsFromSettings(parsed.toJS() ?? {})
+  return desktopStartupSettingsFromSettings(parsed.toJS() ?? {}, platform)
 }
 
 /** Read only the shell mode from ACRYL's preferences file. */
-export function readDesktopShellMode(filename: string): DesktopShellMode {
-  return readDesktopStartupSettings(filename).mode
+export function readDesktopShellMode(filename: string, platform: NodeJS.Platform = process.platform): DesktopShellMode {
+  return readDesktopStartupSettings(filename, platform).mode
 }
 
 /** Resolve the public Web template once and reject an incompatible DSH release. */
@@ -785,7 +785,7 @@ export function prepareDesktopProfile(
   // document: DSH 0.2 removed its file-backed settings provider (spec 001 R18, R24).
   const settingsDocument = join(instanceHome ?? dirname(home), ACRYL_SETTINGS_FILENAME)
   hooks.onSettingsDocumentResolved?.(settingsDocument)
-  const { mode, port, blend: blendPath } = readDesktopStartupSettings(settingsDocument)
+  const { mode, port, blend: blendPath } = readDesktopStartupSettings(settingsDocument, platform)
   // BLEND composition (D24): the selected owned Blend's lock becomes one
   // insert patch, pushed after the settings row and before the desktop
   // invariant pushes. Precedence: base composition < BLEND rows < desktop

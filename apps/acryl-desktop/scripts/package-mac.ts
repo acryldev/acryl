@@ -10,6 +10,8 @@ import { prepareInstalledMacUniversalRuntime } from './mac-universal.ts'
 
 /** Injectable native macOS packaging boundary used by focused tests. */
 export interface MacSmokePackageOptions {
+  /** `universal` (default) ships both CPUs in one DMG; `host` ships only the CPU of this machine, about half the installed size. */
+  readonly target?: 'universal' | 'host'
   /** Environment inherited by the packaging command. */
   readonly env: NodeJS.ProcessEnv
   /** Platform executing the package build. */
@@ -62,8 +64,10 @@ function defaultOptions(): MacSmokePackageOptions {
   const desktopRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
   const workspaceRoot = resolve(desktopRoot, '..')
   const require = createRequire(import.meta.url)
-  const outputDir = resolve(desktopRoot, 'dist', 'mac-smoke')
+  const hostOnly = process.argv.includes('--host')
+  const outputDir = resolve(desktopRoot, 'dist', hostOnly ? `mac-${process.arch}` : 'mac-smoke')
   return {
+    target: hostOnly ? 'host' : 'universal',
     env: process.env,
     platform: process.platform,
     arch: process.arch,
@@ -118,15 +122,16 @@ export function packageMacSmoke(options: MacSmokePackageOptions = defaultOptions
   } else {
     options.log('Skipping the macOS package preflight; the package gate already passed.')
   }
+  const hostOnly = options.target === 'host'
   options.resetOutput()
-  options.prepareRuntime()
+  if (!hostOnly) options.prepareRuntime()
   options.run(
     options.nodeExecutable,
     [
       options.builderCli,
       '--mac',
       'dmg',
-      '--universal',
+      hostOnly ? `--${options.arch}` : '--universal',
       '--publish',
       'never',
       '--config.mac.notarize=false',
@@ -141,7 +146,7 @@ export function packageMacSmoke(options: MacSmokePackageOptions = defaultOptions
   )
   options.run(
     options.nodeExecutable,
-    [options.verifier, options.outputDir],
+    hostOnly ? [options.verifier, options.outputDir, options.arch] : [options.verifier, options.outputDir],
     options.desktopRoot,
     cleanEnvironment,
   )

@@ -21,6 +21,7 @@ Where an ACRYL app keeps anything (home, engine home, port, Electron user data, 
 - Fast headless loop: `corepack pnpm run typecheck`, `corepack pnpm run test`, or both via `corepack pnpm run verify`.
 - Typecheck, test, then isolated GUI: `corepack pnpm run lifecycle`.
 - Build the desktop package with `corepack pnpm run build`.
+- Build an installable Desktop for the host you are on: `corepack pnpm build:mac` (unsigned DMG for this Mac's CPU only, `apps/acryl-desktop/dist/mac-<arch>`, about 0.7 GB installed; `build:mac:universal` builds both CPUs into `dist/mac-smoke`, about 1.2 GB installed), `corepack pnpm build:windows` (NSIS installer), `corepack pnpm build:linux` (Debian `.deb`, `apps/acryl-desktop/dist/linux-<arch>`). Each needs its native OS; the signed and notarized macOS release is `dist:mac` and needs a Developer ID certificate in the Keychain.
 - Run the complete headless gate with `corepack pnpm run check`. Every package's build wipes and rewrites its `lib/` in place, so two builds in one checkout collide (a package that depends on the one being rebuilt cannot find its output for a few seconds): run a gate or any long build as `node scripts/with-build-lock.mjs corepack pnpm run check`; the launchers (`pnpm web`, `pnpm acryl`, Desktop `dev`) take the same lock around their build and wait for each other.
 - Run upstream operations through the root scripts, such as `corepack pnpm run upstream:build`.
 

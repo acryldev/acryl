@@ -128,6 +128,18 @@ describe('macOS DMG smoke artifact verification', () => {
     expect(harness.removeMountPoint).toHaveBeenCalledWith(value.root)
   })
 
+  it('for a host-only DMG verifies only that CPU, in the executable and in the native files', () => {
+    const value = fixture()
+    const harness = options({ makeMountPoint: () => value.root, arch: 'arm64' }, value.modeOverrides)
+
+    verifyMacSmoke(harness.value)
+
+    const lipoCalls = harness.calls.filter(call => call.command === 'lipo')
+    expect(lipoCalls[0]).toEqual({ command: 'lipo', args: [value.executable, '-verify_arch', 'arm64'] })
+    expect(lipoCalls.every(call => call.args[2] === 'arm64')).toBe(true)
+    expect(lipoCalls).toHaveLength(1 + MACOS_UNIVERSAL_NATIVE_ENTRIES.filter(entry => entry.arch === 'arm64').length)
+  })
+
   it('rejects the mount when no DMG is present', () => {
     const harness = options({ listDmgs: () => [] })
 

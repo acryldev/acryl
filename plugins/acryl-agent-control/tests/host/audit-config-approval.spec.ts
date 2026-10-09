@@ -21,7 +21,8 @@ describe('AuditLog', () => {
     const log = new AuditLog(path)
     for (let i = 0; i < 5; i += 1) log.record(entry(`tool-${String(i)}`))
     expect(readFileSync(path, 'utf8').trim().split('\n')).toHaveLength(5)
-    expect(statSync(path).mode & 0o077).toBe(0)
+    // File modes are a POSIX notion; on Windows the log is private through the user profile's ACL.
+    if (process.platform !== 'win32') expect(statSync(path).mode & 0o077).toBe(0)
     expect(log.recent(2).map(e => e.tool)).toEqual(['tool-3', 'tool-4'])
   })
 
@@ -44,7 +45,7 @@ describe('AuditLog', () => {
   })
 
   it('lives in the ACRYL home', () => {
-    expect(auditPath('/data/acryl')).toBe('/data/acryl/audit/ui-control.jsonl')
+    expect(auditPath('/data/acryl')).toBe(join('/data/acryl', 'audit', 'ui-control.jsonl'))
   })
 })
 

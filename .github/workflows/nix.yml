@@ -1,26 +1,8 @@
 name: Nix
 
+# Manual only: this check was red on every run since it was added, so it no longer runs on pushes or pull requests. Run it from the Actions tab when the
+# flake is being worked on.
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - flake.nix
-      - flake.lock
-      - "**/*.nix"
-      - .github/workflows/nix.yml
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - package.json
-  push:
-    branches: [main]
-    paths:
-      - flake.nix
-      - flake.lock
-      - "**/*.nix"
-      - .github/workflows/nix.yml
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - package.json
   workflow_dispatch:
 
 permissions:

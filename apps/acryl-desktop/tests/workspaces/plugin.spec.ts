@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { defaultDesktopShellMode } from '../../src/shell/default-mode.ts'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type { LocaleId } from '@deepseek-ai/dsh-client-locale'
@@ -167,9 +168,9 @@ function createHarness(platform: DesktopRuntime['platform'] = 'darwin'): PluginH
 
 describe('desktop Host plugin', () => {
   it('defaults to advanced mode and validates both schemas', () => {
-    expect(Config({} as DesktopConfig)).toEqual({ ...config, mode: 'advanced' })
+    expect(Config({} as DesktopConfig)).toEqual({ ...config, mode: defaultDesktopShellMode(process.platform) })
     expect(Config({ mode: 'advanced' } as DesktopConfig)).toEqual({ ...config, mode: 'advanced' })
-    expect(DesktopSettingsSchema({} as DesktopSettings)).toEqual({ mode: 'advanced', port: 43_120, logLevel: 'info' })
+    expect(DesktopSettingsSchema({} as DesktopSettings)).toEqual({ mode: defaultDesktopShellMode(process.platform), port: 43_120, logLevel: 'info' })
     expect(() => DesktopSettingsSchema({ port: -1 } as DesktopSettings)).toThrow()
     expect(() => DesktopSettingsSchema({ port: 1.5 } as DesktopSettings)).toThrow()
     expect(() => DesktopSettingsSchema({ port: 65_536 } as DesktopSettings)).toThrow()

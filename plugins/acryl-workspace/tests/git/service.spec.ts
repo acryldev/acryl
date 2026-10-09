@@ -2,7 +2,7 @@ import { execFileSync, spawnSync } from 'node:child_process'
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer, request, type Server } from 'node:http'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, normalize } from 'node:path'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import {
   WorkspaceGit,
@@ -62,8 +62,14 @@ describe('parsers', () => {
   it('parses worktree porcelain and marks the first as main', () => {
     const text = 'worktree /a\nHEAD 111\nbranch refs/heads/main\n\nworktree /b\nHEAD 222\ndetached\n'
     expect(parseWorktrees(text)).toEqual([
-      { path: '/a', head: '111', branch: 'main', main: true },
-      { path: '/b', head: '222', branch: null, main: false },
+      { path: normalize('/a'), head: '111', branch: 'main', main: true },
+      { path: normalize('/b'), head: '222', branch: null, main: false },
+    ])
+  })
+
+  it.runIf(process.platform === 'win32')('returns the worktree paths Git writes with forward slashes in the Windows form', () => {
+    expect(parseWorktrees('worktree C:/repo/main\nHEAD 111\nbranch refs/heads/main\n')).toEqual([
+      { path: 'C:\\repo\\main', head: '111', branch: 'main', main: true },
     ])
   })
 
@@ -302,7 +308,8 @@ function isRunning(pid: number): boolean {
 }
 
 describe('disposal', () => {
-  it('aborts an in-flight git process and leaves none running', async () => {
+  // The stand-in git is a #!/bin/sh script and liveness is read with `ps`, so this runs on POSIX hosts only.
+  it.skipIf(process.platform === 'win32')('aborts an in-flight git process and leaves none running', async () => {
     const pidFile = join(root, 'pid')
     const script = join(root, 'slow-git.sh')
     writeFileSync(script, `#!/bin/sh\necho $$ > ${pidFile}\nexec sleep 30\n`)

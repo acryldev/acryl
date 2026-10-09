@@ -40,15 +40,15 @@ jobs:
         with: { submodules: recursive }
       - uses: actions/setup-node@v5
         with: { node-version: 24, package-manager-cache: false }
-      - uses: pnpm/action-setup@v4
-        with: { version: 11.8.0, run_install: false }
-      - run: corepack enable
+      - name: Enable Corepack and the pnpm version the repository pins
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@$(grep '"packageManager"' package.json | grep -o '[0-9.]*' | head -1) --activate
       - run: corepack pnpm install --frozen-lockfile
       - name: Build and verify CLI surface
         run: |
-          corepack pnpm --filter acryl-control run build
-          corepack pnpm --filter acryl-harness-runtime run build
-          corepack pnpm --filter acryl-cli run build
+          corepack pnpm --filter "acryl-cli..." --workspace-concurrency=1 run build
           corepack pnpm --filter acryl-cli run typecheck
           corepack pnpm --filter acryl-cli run test
           node --test scripts/cli-archive-platform.test.mjs scripts/inspect-artifact.test.mjs
@@ -105,15 +105,15 @@ jobs:
         with: { submodules: recursive }
       - uses: actions/setup-node@v5
         with: { node-version: 24, package-manager-cache: false }
-      - uses: pnpm/action-setup@v4
-        with: { version: 11.8.0, run_install: false }
-      - run: corepack enable
+      - name: Enable Corepack and the pnpm version the repository pins
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@$(grep '"packageManager"' package.json | grep -o '[0-9.]*' | head -1) --activate
       - run: corepack pnpm install --frozen-lockfile
       - name: Build and verify Web surface
         run: |
-          corepack pnpm --filter acryl-control run build
-          corepack pnpm --filter acryl-harness-runtime run build
-          corepack pnpm --filter acryl-web run build
+          corepack pnpm --filter "acryl-web..." --workspace-concurrency=1 run build
           corepack pnpm --filter acryl-web run typecheck
           corepack pnpm --filter acryl-web run test
           node --test scripts/web-archive-contract.test.mjs
@@ -179,15 +179,15 @@ jobs:
         with: { submodules: recursive }
       - uses: actions/setup-node@v5
         with: { node-version: 24, package-manager-cache: false, registry-url: 'https://registry.npmjs.org' }
-      - uses: pnpm/action-setup@v4
-        with: { version: 11.8.0, run_install: false }
-      - run: corepack enable
+      - name: Enable Corepack and the pnpm version the repository pins
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@$(grep '"packageManager"' package.json | grep -o '[0-9.]*' | head -1) --activate
       - run: corepack pnpm install --frozen-lockfile
       - name: Build standalone Web npm package
         run: |
-          corepack pnpm --filter acryl-control run build
-          corepack pnpm --filter acryl-harness-runtime run build
-          corepack pnpm --filter acryl-web run build
+          corepack pnpm --filter "acryl-web..." --workspace-concurrency=1 run build
           corepack pnpm --filter acryl-web run typecheck
           corepack pnpm --filter acryl-web run test
       - uses: actions/download-artifact@v7
@@ -210,7 +210,11 @@ jobs:
           # resolution.
           for PACKAGE in ./npm-packages/acryl-cli-*.tgz; do npm publish "$PACKAGE" --access public; done
           npm publish "./$(find npm-packages -maxdepth 1 -name 'acryl-*.tgz' ! -name 'acryl-cli-*.tgz')" --access public
+      # Off unless the repository variable ACRYL_PUBLISH_WEB_NPM is 'true'. The published acryl-web depends on 13 workspace packages (acryl-workspace,
+      # acryl-settings, acryl-agent-control, @acryl/ui ...) that are not on npm, so `npm i acryl-web` cannot resolve them. The `acryl` selector does not use this
+      # package (it downloads the Web archive from this release), so nothing depends on it. Turn it on once those packages are published.
       - name: Publish standalone Web package
+        if: vars.ACRYL_PUBLISH_WEB_NPM == 'true'
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: node scripts/publish-npm-web.mjs

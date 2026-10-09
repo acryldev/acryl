@@ -1192,7 +1192,7 @@ async function start(): Promise<void> {
 
 function applyIsolatedUserData(): void {
   const override = resolveDesktopUserDataOverride(process.env, {
-    appData: app.getPath('appData'),
+    appData: () => app.getPath('appData'),
     userDataName: selectInstance().userDataName,
     productName: PRODUCT_NAME,
   })
