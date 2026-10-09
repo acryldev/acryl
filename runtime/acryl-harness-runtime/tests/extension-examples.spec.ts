@@ -63,7 +63,11 @@ describe('extension pack examples on the real web engine', () => {
       for (const [dir, expected] of cases) {
         const mod = await load(dir)
         const fiber = host.ctx.plugin(mod as never) as { state: number }
-        await settle()
+        // Wait for the expected state rather than a fixed moment: loading a plugin's module is a real import, which is slower on some file systems (Windows).
+        for (const deadline = Date.now() + 10_000; Date.now() < deadline;) {
+          await settle()
+          if (stateOf(fiber) === expected) break
+        }
         expect(`${dir}:${stateOf(fiber)}`).toBe(`${dir}:${expected}`)
       }
     } finally { await host.dispose() }
