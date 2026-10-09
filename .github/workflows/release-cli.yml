@@ -210,7 +210,11 @@ jobs:
           # resolution.
           for PACKAGE in ./npm-packages/acryl-cli-*.tgz; do npm publish "$PACKAGE" --access public; done
           npm publish "./$(find npm-packages -maxdepth 1 -name 'acryl-*.tgz' ! -name 'acryl-cli-*.tgz')" --access public
+      # Off unless the repository variable ACRYL_PUBLISH_WEB_NPM is 'true'. The published acryl-web depends on 13 workspace packages (acryl-workspace,
+      # acryl-settings, acryl-agent-control, @acryl/ui ...) that are not on npm, so `npm i acryl-web` cannot resolve them. The `acryl` selector does not use this
+      # package (it downloads the Web archive from this release), so nothing depends on it. Turn it on once those packages are published.
       - name: Publish standalone Web package
+        if: vars.ACRYL_PUBLISH_WEB_NPM == 'true'
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: node scripts/publish-npm-web.mjs
