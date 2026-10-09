@@ -2,6 +2,8 @@
 import { expect, test } from 'bun:test'
 import { spawnBunTerminal } from '../src/pty/bun-terminal-spawn.ts'
 
+const posixTest = process.platform === 'win32' ? test.skip : test // the Windows counterpart is bun-terminal-spawn.windows.test.ts
+
 const OPTS = { cwd: '', env: { PATH: '/usr/bin:/bin', HOME: '/tmp' }, name: 'xterm-256color', cols: 80, rows: 24 } as const
 const run = (command: string, args: string[], opts: Partial<typeof OPTS> & { env?: Record<string, string> } = {}) => {
   let output = ''
@@ -13,25 +15,25 @@ const run = (command: string, args: string[], opts: Partial<typeof OPTS> & { env
 const within = <T>(p: Promise<T>, ms: number, what: string) => Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error(`timeout: ${what}`)), ms))])
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 
-test('output and exit code', async () => {
+posixTest('output and exit code', async () => {
   const t = run('/bin/sh', ['-c', 'echo hello; exit 3'])
   expect((await within(t.exited, 4000, 'exit')).exitCode).toBe(3)
   expect(t.output()).toBe('hello\r\n')
 })
 
-test('a multibyte character split across two reads arrives whole', async () => {
+posixTest('a multibyte character split across two reads arrives whole', async () => {
   const t = run('/bin/sh', ['-c', "printf '\\342\\202'; sleep 0.3; printf '\\254'; printf ' \\360\\237'; sleep 0.3; printf '\\230\\200'"])
   await within(t.exited, 5000, 'exit')
   expect(t.output()).toBe('€ \u{1F600}')
 })
 
-test('cwd, env and TERM reach the child', async () => {
+posixTest('cwd, env and TERM reach the child', async () => {
   const t = run('/bin/sh', ['-c', 'pwd; echo $TERM $PROBE'], { cwd: '/usr', env: { PATH: '/usr/bin:/bin', PROBE: 'yes' } })
   await within(t.exited, 4000, 'exit')
   expect(t.output()).toBe('/usr\r\nxterm-256color yes\r\n')
 })
 
-test('interactive input, resize, kill and Ctrl-C', async () => {
+posixTest('interactive input, resize, kill and Ctrl-C', async () => {
   const echo = run('/bin/cat', [])
   await sleep(200); echo.proc.write('ping\n'); await sleep(300)
   expect(echo.output()).toContain('ping')
@@ -48,7 +50,7 @@ test('interactive input, resize, kill and Ctrl-C', async () => {
   expect((await within(sleeper.exited, 4000, 'sigint')).signal).toBe(2)
 })
 
-test('a 20 MB flood arrives complete', async () => {
+posixTest('a 20 MB flood arrives complete', async () => {
   const t = run('/bin/sh', ['-c', 'head -c 20000000 /dev/zero | tr "\\0" x'])
   let bytes = 0
   t.proc.onData(d => { bytes += d.length })
@@ -56,7 +58,7 @@ test('a 20 MB flood arrives complete', async () => {
   expect(bytes).toBe(20_000_000)
 })
 
-test('writing a lot to a child that is not reading never blocks the event loop', async () => {
+posixTest('writing a lot to a child that is not reading never blocks the event loop', async () => {
   const t = run('/bin/sh', ['-c', 'sleep 2; wc -c'])
   let ticks = 0
   const timer = setInterval(() => ticks++, 10)
@@ -67,7 +69,7 @@ test('writing a lot to a child that is not reading never blocks the event loop',
   t.proc.write('\x04'); t.proc.kill('SIGKILL'); await within(t.exited, 4000, 'cleanup')
 })
 
-test('100 sequential spawns leak no descriptors', async () => {
+posixTest('100 sequential spawns leak no descriptors', async () => {
   const count = () => require('node:fs').readdirSync('/dev/fd').length as number
   const before = count()
   for (let i = 0; i < 100; i++) {
@@ -79,7 +81,7 @@ test('100 sequential spawns leak no descriptors', async () => {
   expect(count()).toBe(before)
 })
 
-test('a command that does not exist fails loudly or exits non-zero', async () => {
+posixTest('a command that does not exist fails loudly or exits non-zero', async () => {
   let failed = false
   try {
     const t = run('/nonexistent/definitely-not-here', [])

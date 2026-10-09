@@ -2,9 +2,10 @@
  * The terminal adapter for a Bun host: `Bun.spawn({ terminal })`.
  *
  * `node-pty` loads under Bun and returns a pid but delivers no output and no exit (specs/042, Bun experiment, 2026-10-01 P1). Bun's own pseudo-terminal spawn delivers output,
- * takes input and resizes, and reports the exit, so this adapter only maps it onto `WorkspacePtyProcess`. POSIX only: Bun documents `terminal` for Linux and macOS.
+ * takes input and resizes, and reports the exit, so this adapter only maps it onto `WorkspacePtyProcess`. Bun documents `terminal` for Linux and macOS only, but 1.3.14 also runs it on Windows (ConPTY; measured on Windows 10 22H2 x64, specs/042 B6).
  */
 
+import { createRequire } from 'node:module'
 import { constants } from 'node:os'
 import type { WorkspacePtyProcess, WorkspacePtySpawn } from './service.ts'
 
@@ -33,15 +34,31 @@ function bunRuntime(): BunRuntime | undefined {
   return (globalThis as { Bun?: BunRuntime }).Bun
 }
 
-/** Whether this host is Bun on a platform whose `Bun.spawn` supports a terminal (macOS and Linux). */
+/** Whether this host is Bun on a platform whose `Bun.spawn` supports a terminal (macOS and Linux; Windows x64 measured). */
 export function bunTerminalSupported(): boolean {
   const bun = bunRuntime()
-  return bun !== undefined && typeof bun.spawn === 'function' && (process.platform === 'darwin' || process.platform === 'linux')
+  return bun !== undefined && typeof bun.spawn === 'function' && (process.platform === 'darwin' || process.platform === 'linux' || (process.platform === 'win32' && process.arch === 'x64'))
+}
+
+let consoleCtrlCRestored = false
+/**
+ * Windows: a process started from a service or a remote shell can carry the "ignore Ctrl-C" console flag, and every child inherits it, so a Ctrl-C written to the terminal would
+ * do nothing (measured on Windows 10 over ssh: `ping -t` kept running; cleared, it stops). `SetConsoleCtrlHandler(NULL, FALSE)` restores normal handling; node-pty and the Deno
+ * adapter do the same before they create a child.
+ */
+function restoreCtrlC(): void {
+  if (consoleCtrlCRestored || process.platform !== 'win32') return
+  consoleCtrlCRestored = true
+  try {
+    const ffi = createRequire(import.meta.url)('bun:ffi') as { dlopen(path: string, symbols: Record<string, { args: string[]; returns: string }>): { symbols: { SetConsoleCtrlHandler(handler: null, add: number): number } } }
+    ffi.dlopen('kernel32.dll', { SetConsoleCtrlHandler: { args: ['ptr', 'i32'], returns: 'i32' } }).symbols.SetConsoleCtrlHandler(null, 0)
+  } catch { /* a terminal without Ctrl-C is better than none */ }
 }
 
 export const spawnBunTerminal: WorkspacePtySpawn = (command, args, options): WorkspacePtyProcess => {
   const bun = bunRuntime()
-  if (bun === undefined || !bunTerminalSupported()) throw new Error(`the Bun terminal is for Bun on macOS and Linux (this is ${process.platform}${bun === undefined ? ', not Bun' : ''}); use node-pty`)
+  if (bun === undefined || !bunTerminalSupported()) throw new Error(`the Bun terminal is for Bun on macOS, Linux and Windows x64 (this is ${process.platform}${bun === undefined ? ', not Bun' : ''}); use node-pty`)
+  restoreCtrlC()
 
   const dataListeners = new Set<(data: string) => void>()
   const exitListeners = new Set<(event: { exitCode: number; signal?: number }) => void>()
@@ -85,6 +102,7 @@ export const spawnBunTerminal: WorkspacePtySpawn = (command, args, options): Wor
     onExit: listener => subscribe(exitListeners, listener),
     write: data => { terminal.write(data) },
     resize: (cols, rows) => { terminal.resize(cols, rows) },
-    kill: signal => { proc.kill(signal ?? 'SIGHUP') },
+    // Windows has no signals: kill() ends the process whatever the name (SIGHUP, the default here, is not implemented there).
+    kill: signal => { if (process.platform === 'win32') proc.kill(); else proc.kill(signal ?? 'SIGHUP') },
   }
 }
