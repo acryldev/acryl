@@ -86,3 +86,11 @@ jobs:
           tail -n 20 "$log" | cut -c1-300
           grep -q '"eventName":"renderer.boot.completed".*"rendererStatus":"healthy"' "$log" || { echo "the renderer did not report healthy"; exit 1; }
           echo "renderer healthy"
+
+      # What the stock DeepSeek Harness desktop does and ACRYL promises: an agent writes a Cordis plugin and the installed app takes it live, with no dev server. This boots the
+      # INSTALLED package in a throwaway home and drives the agent's own tools through the tool gateway: verify, install, call the new tool, rewrite and update it, call it again
+      # (the new behaviour must answer with no restart), remove it. No model is needed.
+      - name: An agent-written plugin installs, runs, updates and is removed live in the installed app
+        run: |
+          exe=$(dpkg -L acryl-desktop | while read -r p; do [ -f "$p" ] && [ -x "$p" ] && case "$(basename "$p")" in acryl-desktop|ACRYL|acryl) echo "$p"; break;; esac; done)
+          xvfb-run -a --server-args="-screen 0 1280x800x24" node apps/acryl-desktop/scripts/verify-packaged-self-extension.mjs "$exe" --arg --no-sandbox
