@@ -1,3 +1,41 @@
+## 2026-10-09 - release 0.2.1: CLI, Web, npm and the five Desktop installers, the first release in three weeks
+
+Tags `v0.2.1` (CLI, Web, npm, GitHub release marked Latest) and `desktop-v0.2.1` (mac arm64 and x64 DMG, Windows exe, Linux amd64 and arm64 deb). `npm install acryl@0.2.1`
+was checked from the real registry in an isolated home and prints `0.2.1`. The stale `v0.2.0` tag (14 September) was left alone; `v0.2.1` was re-pointed once, before
+anything was published from it.
+
+What stood between the DSH 0.2 work and a release, in the order it was found:
+
+- **`pnpm deploy --legacy` installs nothing under pnpm 11.11.0** (the repository pin). It resolves the whole graph, exits 0, and leaves the target without `node_modules`,
+  so every CLI and Web archive was missing all its dependencies. 11.8.0 and 11.28.5 install correctly. Only the archive deploy step now runs under 11.8.0
+  (`DEPLOY_PNPM` in `scripts/cli-archive-platform.mjs`); moving the repository pin stays T040 because that pin is also the pnpm the Desktop app and the plugin manager ship.
+  `bd5282243aa2cce14b2e250c566c823cdef4446e`. Two more contract fixes were found by actually building the Web archives: an unscoped per-platform native package (`sherpa-onnx-darwin-arm64`)
+  was rejected as foreign, and the rule "no `electron` folder" matched four harmless type declarations in a DSH 0.2 package (it now forbids Electron code and native files, not declarations).
+- **Windows**: the Windows release job reached tests that assume POSIX (file modes, `/bin/echo`, a `#!/bin/sh` stand-in for Claude, path separators, `new URL(...).pathname`). Reproduced on a real Windows 10
+  machine (mbpi9win, see the reference memory) and fixed in the tests, plus one real bug: the workspace git service reported Git's `C:/repo` paths next to the app's own `C:\repo`
+  (`4fc180988bcee401054a5b717caf39106be929c0`, tests `4eef028afd4d22b94a88ea52d83b236ea81bd991`, `e96e1220e9307076b0cbffa6d37af8e3c5829086`). The Windows `sherpa-onnx` package is named `win-x64`
+  (`e7470e63850178a3459e4f304465bac2ce7123ce`).
+- **`verify-npm-web-entrypoint` re-ran every package's full check.** `prepack` is `pnpm run check`, so packing the closure rebuilt and retested each package on each platform. It now packs with
+  `--config.ignore-scripts=true` (pnpm 11 has no `--ignore-scripts` flag for `pack`); the release job already ran those checks once (`e7470e63850178a3459e4f304465bac2ce7123ce`).
+- **Versions** bumped to 0.2.1 in the seven package.json files (`2ef1c8fb98133ac06e880927cfb16e1a58fb33b1`).
+- **`acryl-web` is not published to npm** unless the repository variable `ACRYL_PUBLISH_WEB_NPM` is `true`: it depends on 13 workspace packages that are not on npm, so `npm i acryl-web` could not resolve them. The `acryl`
+  selector does not use that package (it downloads the Web archive from the release). npm still has `acryl-web@0.1.44`. (`c89a604748cf5a25d77ce02d69fa149ce56d837e`)
+- **Clean-install budget 350 MB -> 600 MB.** The release gate failed on the real tag with 511 MB; the four CLI targets install at 487-516 MB (Windows takes 86 s of its 120 s budget). The LibreOffice kit
+  and the voice runtime from DSH 0.2 are kept on purpose (`a415012bfb193876dcecd110272205a269f11c13`).
+- **Desktop release stayed a draft**: five identically named `release-receipt.json` uploaded in parallel and one 404ed, the same race v0.1.44 had on the CLI side. The installers had all uploaded; the draft was published
+  by hand and the workflow now drops the colliding sidecars first and keeps Desktop-only releases off the Latest badge (`e4f21e7606d5c84894e9f640cb3fbce9c2340951`).
+- **CI that had been red for the whole DSH 0.2 migration**: the Desktop profile smoke stored the advanced mode where nothing reads it any more, so it only passed on macOS and Windows (advanced is their default); it now
+  writes `acryl-settings.yaml` (`e508405ebeea6fb81eee286ef39e51c18fb2dbd2`). The Linux boot check's 75 s budget included the build it runs first and killed it before Electron started (`000033513dd676f94388f43366837325b5b20dfc`).
+- The earlier pipeline work of the same release effort: Nix workflows manual-only (`94a3d824ba22f371e46532f3cf2fdbf9aa1a6068`), the CLI and Web jobs build with their dependencies (`6bce5e6d2d10df5267823431368e5c98c418afd9`), the repository's pnpm in the
+  Desktop release (`dddc67488f9c80b1501f360019765d8fbd01ab70`, `46a0964b3b251c340cb3c72dd08154bf372a2c6d`).
+
+Not done, on purpose:
+
+- `acryl-harness-runtime` has 17 failing test files on the Windows 10 machine (`new URL().pathname` giving `C:/C:/...`, POSIX path literals, 5 s timeouts). GitHub's `windows-latest` runner passes them, so they are partly the
+  scratch copy's layout and partly real Windows debt; they are no longer in the release path. To do.
+- The npm registry made the four 120-150 MB target tarballs visible 20-35 minutes after the publish step finished, with the selector (published last) visible first, so `npm i -g acryl` could not resolve its runtime
+  during that window. The publish order is right; the gap is the registry's. A release could wait for the target tarballs before publishing the selector.
+
 ## 2026-10-08 (later) - the macOS app is half the size: one CPU per build, no duplicate image engine
 
 Measured with `corepack pnpm build:mac` on Apple Silicon: DMG 431 -> 224 MB, installed app 1.2 GB -> 645 MB.
