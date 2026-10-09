@@ -21,11 +21,7 @@ You install ACRYL from a download, with no dev server and no source checkout. Yo
 
 ## First launch, in order
 
-1. A "Preview Notice" dialog from DeepSeek Harness appears. Click **Continue**. (The text is upstream's and names DeepSeek Harness, not ACRYL: expect to explain it in one sentence, or ask for it to be changed.)
-
-   ![Preview notice](demo/01-preview-notice.png)
-
-2. "Add an API key to get started": paste the DeepSeek key and click **Save and continue**. The model shown is DeepSeek-V41-Flash with High reasoning, which is what the timings below used.
+1. "Add an API key to get started": paste the DeepSeek key and click **Save and continue**. The model shown is DeepSeek-V41-Flash with High reasoning, which is what the timings below used.
 
    ![API key dialog](demo/02-api-key-dialog.png)
 
@@ -61,7 +57,6 @@ You install ACRYL from a download, with no dev server and no source checkout. Yo
 - Linux uses the standard (compatibility) shell; the advanced workspace shell is macOS and Windows.
 - The terminal installer has no Intel Mac build; Intel Macs use the Desktop DMG.
 - `acryl new` writes a POSIX launcher; there is no Windows launcher for a generated app yet.
-- The "Preview Notice" text comes from upstream DeepSeek Harness.
 
 ## How this was verified
 
