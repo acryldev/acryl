@@ -1393,7 +1393,7 @@ describe('Electron desktop runtime', () => {
     const { ElectronDesktopRuntime } = await import('../../src/electron-runtime.ts')
     const runtime = new ElectronDesktopRuntime(async () => {})
 
-    await expect(runtime.updates.request('https://www.dshdesktop.cn/api/desktop/version', { method: 'GET' }))
+    await expect(runtime.updates.request('https://api.github.com/repos/acryldev/acryl/releases/latest', { method: 'GET' }))
       .resolves.toBe(response)
     expect(runtime.updates).toMatchObject({
       isPackaged: false,
@@ -1439,6 +1439,7 @@ describe('Electron desktop runtime', () => {
     }))
     expect(updater.download).toHaveBeenCalledWith({
       platform: 'darwin',
+      arch: process.arch === 'arm64' ? 'arm64' : 'x64',
       version: '2.1.0',
       destinationPath: '/tmp/Downloads/ACRYL-2.1.0-mac.dmg',
       request: expect.any(Function),

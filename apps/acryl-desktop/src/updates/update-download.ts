@@ -4,15 +4,36 @@ import { randomUUID } from 'node:crypto'
 import { chmod, lstat, mkdir, open, readFile, rename, unlink } from 'node:fs/promises'
 import { basename, dirname, extname, isAbsolute, join, resolve } from 'node:path'
 import { writeFileAtomic } from '../engine-files.ts'
-import { compareSemVerVersions, parseSemVer } from './update-checker.ts'
+import { ACRYL_RELEASE_REPOSITORY, compareSemVerVersions, parseSemVer } from './update-checker.ts'
 
 /** Desktop platforms with a fixed installer download endpoint. */
 export type DesktopDownloadPlatform = 'darwin' | 'win32'
 
-/** Fixed download endpoints that record one user-confirmed installer download. */
-export const DESKTOP_DOWNLOAD_URLS: Readonly<Record<DesktopDownloadPlatform, string>> = {
-  darwin: 'https://www.dshdesktop.cn/api/downloads/mac',
-  win32: 'https://www.dshdesktop.cn/api/downloads/windows',
+/** CPU architectures ACRYL publishes desktop installers for. */
+export type DesktopDownloadArch = 'arm64' | 'x64'
+
+/**
+ * Release asset URL of the installer for one platform, CPU and stable version.
+ * Assets follow `acryl-desktop-<mac|win>-<arch>-v<version>.<dmg|exe>` on the GitHub release `v<version>`.
+ * @throws {UpdateDownloadError} For an unsupported platform/CPU pair or a non-stable version.
+ */
+export function desktopDownloadUrl(
+  platform: DesktopDownloadPlatform,
+  arch: DesktopDownloadArch,
+  version: string,
+): string {
+  validatedPlatform(platform)
+  validatedVersion(version)
+  if (arch !== 'arm64' && arch !== 'x64') {
+    throw new UpdateDownloadError('invalid-options', `Unsupported update download CPU: ${String(arch)}`)
+  }
+  if (platform === 'win32' && arch !== 'x64') {
+    throw new UpdateDownloadError('invalid-options', 'ACRYL publishes Windows installers for x64 only.')
+  }
+  const asset = platform === 'darwin'
+    ? `acryl-desktop-mac-${arch}-v${version}.dmg`
+    : `acryl-desktop-win-x64-v${version}.exe`
+  return `https://github.com/${ACRYL_RELEASE_REPOSITORY}/releases/download/v${version}/${asset}`
 }
 
 /** Maximum accepted installer size, in bytes. */
@@ -33,8 +54,10 @@ export type UpdateArtifactRequest = (url: string, init: RequestInit) => Promise<
 
 /** Inputs for one user-confirmed installer download. */
 export interface DownloadDesktopUpdateOptions {
-  /** Host platform selecting the fixed endpoint and installer validation. */
+  /** Host platform selecting the release asset and installer validation. */
   readonly platform: DesktopDownloadPlatform
+  /** Host CPU architecture selecting the release asset. */
+  readonly arch: DesktopDownloadArch
   /** Stable release version used to validate the selected installer. */
   readonly version: string
   /** Absolute installer path selected by the user. */
@@ -110,7 +133,7 @@ export async function downloadDesktopUpdate(options: DownloadDesktopUpdateOption
 
   let response: Response
   try {
-    response = await options.request(DESKTOP_DOWNLOAD_URLS[platform], {
+    response = await options.request(desktopDownloadUrl(platform, options.arch, options.version), {
       method: 'GET',
       cache: 'no-store',
       redirect: 'follow',

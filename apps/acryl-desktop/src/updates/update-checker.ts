@@ -1,10 +1,13 @@
-/** Headless version checks against the public ACRYL release service. */
+/** Headless version checks against ACRYL's own GitHub releases. */
 
-/** Public endpoint returning the latest stable ACRYL version. */
-export const DESKTOP_VERSION_ENDPOINT = 'https://www.dshdesktop.cn/api/desktop/version'
+/** GitHub repository that publishes ACRYL releases. */
+export const ACRYL_RELEASE_REPOSITORY = 'acryldev/acryl'
 
-/** Maximum response body bytes accepted from the version service. */
-export const MAX_VERSION_RESPONSE_BYTES = 4 * 1024
+/** Public endpoint returning the latest published, non-draft, non-prerelease ACRYL release. */
+export const DESKTOP_VERSION_ENDPOINT = `https://api.github.com/repos/${ACRYL_RELEASE_REPOSITORY}/releases/latest`
+
+/** Maximum response body bytes accepted from the release service (a release lists every asset). */
+export const MAX_VERSION_RESPONSE_BYTES = 512 * 1024
 
 /** Strictly parsed SemVer components. Numeric components remain strings to avoid overflow. */
 export interface ParsedSemVer {
@@ -97,7 +100,7 @@ export async function checkForStableUpdate(
 
   const init: RequestInit = {
     method: 'GET',
-    headers: { Accept: 'application/json' },
+    headers: { Accept: 'application/vnd.github+json' },
     cache: 'no-store',
     redirect: 'error',
     ...(options.signal === undefined ? {} : { signal: options.signal }),
@@ -169,8 +172,10 @@ function parseVersionResponse(body: string): ParsedSemVer | null {
   } catch {
     return null
   }
-  if (!isRecord(value) || typeof value.version !== 'string') return null
-  return parseCanonicalStableVersion(value.version)
+  if (!isRecord(value) || typeof value.tag_name !== 'string') return null
+  if (value.draft === true || value.prerelease === true) return null
+  const tag = parseSemVer(value.tag_name)
+  return tag === null ? null : parseCanonicalStableVersion(tag.version)
 }
 
 function parseCanonicalStableVersion(input: string): ParsedSemVer | null {

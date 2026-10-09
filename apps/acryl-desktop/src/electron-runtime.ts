@@ -566,6 +566,7 @@ export class ElectronDesktopRuntime implements DesktopRuntime {
     signal.throwIfAborted()
     const artifactPath = await downloadDesktopUpdate({
       platform,
+      arch: platform === 'darwin' && process.arch === 'arm64' ? 'arm64' : 'x64',
       version,
       destinationPath,
       request: (url, init) => net.fetch(url, init),

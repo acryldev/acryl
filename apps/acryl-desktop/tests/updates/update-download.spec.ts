@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
-  DESKTOP_DOWNLOAD_URLS,
+  desktopDownloadUrl,
   MAX_UPDATE_DOWNLOAD_BYTES,
   UpdateDownloadError,
   desktopUpdateFilename,
@@ -77,7 +77,7 @@ afterEach(async () => {
 })
 
 describe('desktop update installer download', () => {
-  it('streams a macOS DMG from only the fixed endpoint and atomically completes it', async () => {
+  it('streams a macOS DMG from only the GitHub release asset and atomically completes it', async () => {
     const directory = await temporaryDirectory()
     const artifact = dmgArtifact()
     const calls: Array<{ url: string; init: RequestInit }> = []
@@ -88,6 +88,7 @@ describe('desktop update installer download', () => {
 
     const result = await downloadDesktopUpdate({
       platform: 'darwin',
+      arch: 'arm64',
       version: '2.1.0',
       destinationPath: destinationPath(directory, 'darwin', '2.1.0'),
       request,
@@ -96,7 +97,7 @@ describe('desktop update installer download', () => {
     expect(result).toBe(join(directory, 'ACRYL-2.1.0-mac.dmg'))
     expect(await readFile(result)).toEqual(Buffer.from(artifact))
     expect(calls).toHaveLength(1)
-    expect(calls[0]?.url).toBe(DESKTOP_DOWNLOAD_URLS.darwin)
+    expect(calls[0]?.url).toBe('https://github.com/acryldev/acryl/releases/download/v2.1.0/acryl-desktop-mac-arm64-v2.1.0.dmg')
     expect(calls[0]?.init).toMatchObject({ method: 'GET', cache: 'no-store', redirect: 'follow' })
     await expectNoPartialFiles(directory)
   })
@@ -106,10 +107,11 @@ describe('desktop update installer download', () => {
     const artifact = windowsArtifact()
     const result = await downloadDesktopUpdate({
       platform: 'win32',
+      arch: 'x64',
       version: '2.2.0',
       destinationPath: destinationPath(directory, 'win32', '2.2.0'),
       request: async (url) => {
-        expect(url).toBe(DESKTOP_DOWNLOAD_URLS.win32)
+        expect(url).toBe('https://github.com/acryldev/acryl/releases/download/v2.2.0/acryl-desktop-win-x64-v2.2.0.exe')
         return chunkedResponse([artifact])
       },
     })
@@ -123,6 +125,7 @@ describe('desktop update installer download', () => {
     const directory = await temporaryDirectory()
     const result = await downloadDesktopUpdate({
       platform: 'darwin',
+      arch: 'arm64',
       version: '2.8.0+build',
       destinationPath: destinationPath(directory, 'darwin', '2.8.0+build'),
       request: async () => chunkedResponse([dmgArtifact()]),
@@ -142,6 +145,7 @@ describe('desktop update installer download', () => {
     const directory = await temporaryDirectory()
     await expectFailure(downloadDesktopUpdate({
       platform,
+      arch: 'x64',
       version: '2.3.0',
       destinationPath: destinationPath(directory, platform, '2.3.0'),
       request: async () => chunkedResponse([artifact]),
@@ -158,6 +162,7 @@ describe('desktop update installer download', () => {
 
     await expectFailure(downloadDesktopUpdate({
       platform: 'win32',
+      arch: 'x64',
       version: '2.3.1',
       destinationPath: path,
       request: async () => chunkedResponse([Buffer.alloc(128)]),
@@ -167,6 +172,7 @@ describe('desktop update installer download', () => {
     const replacement = windowsArtifact()
     await downloadDesktopUpdate({
       platform: 'win32',
+      arch: 'x64',
       version: '2.3.1',
       destinationPath: path,
       request: async () => chunkedResponse([replacement]),
@@ -183,6 +189,7 @@ describe('desktop update installer download', () => {
     const directory = await temporaryDirectory()
     await expectFailure(downloadDesktopUpdate({
       platform: 'darwin',
+      arch: 'arm64',
       version: '2.4.0',
       destinationPath: destinationPath(directory, 'darwin', '2.4.0'),
       request,
@@ -194,6 +201,7 @@ describe('desktop update installer download', () => {
     const directory = await temporaryDirectory()
     await expectFailure(downloadDesktopUpdate({
       platform: 'darwin',
+      arch: 'arm64',
       version: '2.5.0',
       destinationPath: destinationPath(directory, 'darwin', '2.5.0'),
       request: async () => chunkedResponse(
@@ -220,6 +228,7 @@ describe('desktop update installer download', () => {
 
     await expectFailure(downloadDesktopUpdate({
       platform: 'darwin',
+      arch: 'arm64',
       version: '2.6.0',
       destinationPath: destinationPath(directory, 'darwin', '2.6.0'),
       request,
@@ -233,12 +242,14 @@ describe('desktop update installer download', () => {
     const directory = await temporaryDirectory()
     await expectFailure(downloadDesktopUpdate({
       platform: 'darwin',
+      arch: 'arm64',
       version: '2.7.0',
       destinationPath: destinationPath(directory, 'darwin', '2.7.0'),
       request: async () => { throw new DOMException('cancelled', 'AbortError') },
     }), 'aborted')
     await expectFailure(downloadDesktopUpdate({
       platform: 'darwin',
+      arch: 'arm64',
       version: '2.7.1',
       destinationPath: destinationPath(directory, 'darwin', '2.7.1'),
       request: async () => { throw new Error('offline') },
@@ -256,6 +267,7 @@ describe('desktop update installer download', () => {
     let requested = false
     await expectFailure(downloadDesktopUpdate({
       platform: platform as DesktopDownloadPlatform,
+      arch: 'x64',
       version,
       destinationPath: join(directory, 'installer.dmg'),
       request: async () => {
@@ -275,6 +287,7 @@ describe('desktop update installer download', () => {
 
     await expectFailure(downloadDesktopUpdate({
       platform: 'darwin',
+      arch: 'arm64',
       version: '2.9.0',
       destinationPath: 'relative.dmg',
       request,
@@ -295,6 +308,7 @@ describe('desktop update installer download', () => {
 
     await expectFailure(downloadDesktopUpdate({
       platform: 'darwin',
+      arch: 'arm64',
       version: '2.9.0',
       destinationPath: join(linked, 'installer.dmg'),
       request,
@@ -352,5 +366,22 @@ describe('desktop update artifact cleanup', () => {
     await expect(pendingDesktopUpdateArtifact(userDataPath, '2.1.0', 'darwin')).resolves.toBeUndefined()
     if (remove) await expect(access(artifact.path)).rejects.toMatchObject({ code: 'ENOENT' })
     else await expect(access(artifact.path)).resolves.toBeUndefined()
+  })
+})
+
+describe('desktop update asset URL', () => {
+  it('names the release asset per platform, CPU and version', () => {
+    expect(desktopDownloadUrl('darwin', 'x64', '0.2.5'))
+      .toBe('https://github.com/acryldev/acryl/releases/download/v0.2.5/acryl-desktop-mac-x64-v0.2.5.dmg')
+    expect(desktopDownloadUrl('darwin', 'arm64', '0.2.5'))
+      .toBe('https://github.com/acryldev/acryl/releases/download/v0.2.5/acryl-desktop-mac-arm64-v0.2.5.dmg')
+    expect(desktopDownloadUrl('win32', 'x64', '0.2.5'))
+      .toBe('https://github.com/acryldev/acryl/releases/download/v0.2.5/acryl-desktop-win-x64-v0.2.5.exe')
+  })
+
+  it('rejects Windows arm64, an unknown CPU and a non-stable version', () => {
+    expect(() => desktopDownloadUrl('win32', 'arm64', '0.2.5')).toThrow(UpdateDownloadError)
+    expect(() => desktopDownloadUrl('darwin', 'ia32' as never, '0.2.5')).toThrow(UpdateDownloadError)
+    expect(() => desktopDownloadUrl('darwin', 'arm64', '0.2.5-rc.1')).toThrow(UpdateDownloadError)
   })
 })

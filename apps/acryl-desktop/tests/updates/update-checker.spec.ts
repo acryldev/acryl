@@ -8,8 +8,9 @@ import {
   type UpdateRequest,
 } from '../../src/updates/update-checker.ts'
 
-function versionResponse(version: unknown, init: ResponseInit = {}): Response {
-  return Response.json({ version }, init)
+/** A GitHub "latest release" response, reduced to the fields the checker reads. */
+function versionResponse(version: string, init: ResponseInit = {}): Response {
+  return Response.json({ tag_name: `v${version}`, draft: false, prerelease: false }, init)
 }
 
 describe('strict SemVer parsing', () => {
@@ -72,7 +73,7 @@ describe('public Desktop version check', () => {
 
     expect(calls).toHaveLength(1)
     expect(calls[0]?.url).toBe(DESKTOP_VERSION_ENDPOINT)
-    expect(calls[0]?.url).not.toContain('/api/downloads/')
+    expect(calls[0]?.url).toBe('https://api.github.com/repos/acryldev/acryl/releases/latest')
     expect(calls[0]?.init).toMatchObject({
       method: 'GET',
       cache: 'no-store',
@@ -80,7 +81,7 @@ describe('public Desktop version check', () => {
       signal: controller.signal,
     })
     const headers = new Headers(calls[0]?.init.headers)
-    expect(headers.get('accept')).toBe('application/json')
+    expect(headers.get('accept')).toBe('application/vnd.github+json')
     expect(headers.has('if-none-match')).toBe(false)
     expect(headers.has('x-github-api-version')).toBe(false)
   })
@@ -108,12 +109,15 @@ describe('public Desktop version check', () => {
   })
 
   it.each([
-    ['leading v', { version: 'v2.1.0' }],
-    ['prerelease', { version: '2.1.0-rc.1' }],
-    ['invalid SemVer', { version: '2.01.0' }],
-    ['missing version', {}],
-    ['non-string version', { version: 2 }],
-    ['array response', ['2.1.0']],
+    ['a prerelease tag', { tag_name: 'v2.1.0-rc.1' }],
+    ['a prerelease flag', { tag_name: 'v2.1.0', prerelease: true }],
+    ['a draft flag', { tag_name: 'v2.1.0', draft: true }],
+    ['an invalid SemVer tag', { tag_name: 'v2.01.0' }],
+    ['a non-version tag', { tag_name: 'nightly' }],
+    ['no tag', {}],
+    ['a non-string tag', { tag_name: 2 }],
+    ['an old-service version field only', { version: '2.1.0' }],
+    ['an array response', ['v2.1.0']],
   ])('silently ignores a service response with %s', async (_case, value) => {
     await expect(checkForStableUpdate({
       currentVersion: '2.0.0',
