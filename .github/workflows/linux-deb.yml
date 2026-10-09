@@ -8,6 +8,7 @@ on:
     branches: [main, ci-linux-deb]
     paths:
       - 'apps/acryl-desktop/scripts/package-linux.ts'
+      - 'apps/acryl-desktop/scripts/verify-packaged-self-extension.mjs'
       - 'apps/acryl-desktop/package.json'
       - '.github/workflows/linux-deb.yml'
 
