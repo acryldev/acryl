@@ -58,7 +58,10 @@ export function isolatedEnvironment({ label, base = process.env, port, extra = {
     ...(port === undefined ? {} : { ACRYL_WEB_PORT: String(port) }),
     ...extra,
   })
-  return { env, root, home: acrylHome, dispose: () => { rmSync(root, { recursive: true, force: true }) } }
+  return { env, root, home: acrylHome, dispose: () => {
+    // Windows keeps files of a just-killed app locked for a moment, so removal retries; a folder that still cannot go is only temp data, so it is reported, not fatal.
+    try { rmSync(root, { recursive: true, force: true, maxRetries: 20, retryDelay: 500 }) } catch (error) { process.stderr.write(`isolated-run: could not remove ${root}: ${error instanceof Error ? error.message : String(error)}\n`) }
+  } }
 }
 
 /** Newest modification time and file count under each real path, ignoring bulky regenerable folders. Cheap enough to take before and after a run. */
