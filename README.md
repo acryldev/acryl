@@ -96,7 +96,9 @@ acryl web
 
 Starts a local web runtime, prints its URL, and serves until you stop it. It is not a hosted cloud service.
 
-### Nix (Flake)
+### Nix (Flake, community-contributed)
+
+This route is maintained by a contributor and is not part of the release checks, so it can lag behind a release (its dependency hash is refreshed by hand when the lockfile changes). Prefer the installers above; if the Flake fails to build, please open an issue.
 
 ```bash
 nix run github:acryldev/acryl              # TUI, built from source
