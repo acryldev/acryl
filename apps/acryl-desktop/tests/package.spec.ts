@@ -245,6 +245,16 @@ describe('published package surface', () => {
     expect(installedClient).toContain('data-dsh-workspace-drop-target')
   })
 
+  it('does not register the upstream DeepSeek preview notice (ACRYL is not a DeepSeek product)', () => {
+    const patch = readFileSync(new URL('./patches/@deepseek-ai__dsh-client-ui-settings-models@0.2.0-rc.2.patch', workspaceRoot), 'utf8')
+    const installedClient = readFileSync(new URL(
+      'node_modules/@deepseek-ai/dsh-client-ui-settings-models/lib/client.js',
+      packageRoot,
+    ), 'utf8')
+    for (const text of [patch, installedClient]) expect(text).toContain('if (false) ctx.slots.inject("settings.onboarding"')
+    expect(installedClient).not.toContain('if (!("dshDesktop" in globalThis)) ctx.slots.inject("settings.onboarding"')
+  })
+
   it('keeps API selection available after overriding a provider base URL', () => {
     const patchPath = './patches/@deepseek-ai__dsh-client-ui-settings-models@0.2.0-rc.2.patch'
     expectPatchedDependency('@deepseek-ai/dsh-client-ui-settings-models@0.2.0-rc.2', patchPath)
@@ -591,11 +601,11 @@ describe('published package surface', () => {
       '!node_modules/**/src/**/*.ts',
       '!node_modules/**/src/**/*.tsx',
     ])
-    expect(manifest.build?.mac?.icon).toBe('build/app-icon-mac.png')
+    expect(manifest.build?.mac?.icon).toBe('build/app-icon-mac.icns')
     expect(manifest.build?.mac?.artifactName).toBe('acryl-desktop-mac-${arch}-v${version}.${ext}')
     expect(manifest.build?.mac?.mergeASARs).toBe(false)
     expect(manifest.build?.mac?.signIgnore).toEqual(['\\.(?:pak|dat|wasm)$'])
-    expect(manifest.build?.win?.icon).toBe('build/app-icon.png')
+    expect(manifest.build?.win?.icon).toBe('build/app-icon.ico')
     expect(manifest.build?.win?.target).toEqual([{
       target: 'nsis',
       arch: ['x64'],

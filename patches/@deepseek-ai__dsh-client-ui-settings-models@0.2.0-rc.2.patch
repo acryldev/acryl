@@ -20,3 +20,13 @@ index c5252c1..8e8ee0e 100644
  								className: ModelsSection_module_css_default["field"],
  								children: [(0, react_jsx_runtime.jsx)("span", {
  									className: ModelsSection_module_css_default["fieldLabel"],
+@@ -4073,7 +4075,8 @@
+ 					}
+ 				}
+ 			}, ModelsSection));
+-			if (!("dshDesktop" in globalThis)) ctx.slots.inject("settings.onboarding", () => ctx.slots.register({
++			// ACRYL is not a DeepSeek product: it shows no DeepSeek preview notice.
++			if (false) ctx.slots.inject("settings.onboarding", () => ctx.slots.register({
+ 				name: "settings.onboarding",
+ 				id: "welcome-notice",
+ 				order: -100,
