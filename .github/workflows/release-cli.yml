@@ -148,6 +148,8 @@ jobs:
   desktop:
     name: desktop
     uses: ./.github/workflows/release-desktop.yml
+    # The macOS signing and notarization secrets (all optional: without them the build is sealed ad hoc, not signed).
+    secrets: inherit
     permissions:
       contents: read
 

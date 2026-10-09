@@ -53,24 +53,62 @@ jobs:
           corepack pnpm run typecheck
           corepack pnpm run test
           corepack pnpm --filter acryl-desktop run verify:closure
+      # macOS: with a Developer ID certificate and notarization credentials in the repository secrets the app is signed, notarized and stapled, and opens with no
+      # warning. Without them it is only sealed ad hoc (valid, but macOS asks the person to confirm the first launch). Secrets used (all optional):
+      #   MACOS_CERT_P12_BASE64 + MACOS_CERT_PASSWORD   the "Developer ID Application" certificate exported as .p12, base64 encoded
+      #   APPLE_ID + APPLE_APP_SPECIFIC_PASSWORD + APPLE_TEAM_ID        notarization with an Apple ID, or
+      #   APPLE_API_KEY_P8_BASE64 + APPLE_API_KEY_ID + APPLE_API_ISSUER  notarization with an App Store Connect API key
       - name: Package ${{ matrix.name }}
         shell: bash
-        env: { CSC_IDENTITY_AUTO_DISCOVERY: 'false' }
+        env:
+          MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
         run: |
           set -euo pipefail
           cd apps/acryl-desktop
           BUILDER="node node_modules/electron-builder/cli.js"
-          COMMON="--publish never --config.mac.notarize=false --config.npmRebuild=false --config.directories.output=dist/${{ matrix.name }}"
-          if [ "${{ matrix.target }}" = mac ]; then
-            # Without a Developer ID electron-builder leaves a bundle `codesign --verify --strict` rejects (macOS calls a downloaded copy damaged): build the app,
-            # seal it ad hoc, then build the DMG from that sealed app.
-            $BUILDER --mac dir --${{ matrix.arch }} $COMMON
+          COMMON="--publish never --config.npmRebuild=false --config.directories.output=dist/${{ matrix.name }}"
+          SIGNED=no
+          if [ "${{ matrix.target }}" = mac ] && [ -n "$MACOS_CERT_P12_BASE64" ] && [ -n "$MACOS_CERT_PASSWORD" ]; then
+            if [ -n "$APPLE_ID" ] && [ -n "$APPLE_APP_SPECIFIC_PASSWORD" ] && [ -n "$APPLE_TEAM_ID" ]; then SIGNED=yes
+            elif [ -n "$APPLE_API_KEY_P8_BASE64" ] && [ -n "$APPLE_API_KEY_ID" ] && [ -n "$APPLE_API_ISSUER" ]; then
+              umask 077
+              echo "$APPLE_API_KEY_P8_BASE64" | base64 --decode > "$RUNNER_TEMP/apple-api-key.p8"
+              export APPLE_API_KEY="$RUNNER_TEMP/apple-api-key.p8"
+              SIGNED=yes
+            fi
+          fi
+          if [ "$SIGNED" = yes ]; then
+            echo "Signing and notarizing with the Developer ID certificate"
+            CSC_LINK="$MACOS_CERT_P12_BASE64" CSC_KEY_PASSWORD="$MACOS_CERT_PASSWORD" CSC_IDENTITY_AUTO_DISCOVERY=true \
+              $BUILDER --mac dmg --${{ matrix.arch }} --config.mac.notarize=true $COMMON
             APP="$(find dist/${{ matrix.name }} -maxdepth 2 -name ACRYL.app -type d | head -n 1)"
             test -n "$APP"
-            node scripts/seal-mac-app.mjs "$APP"
-            $BUILDER --mac dmg --${{ matrix.arch }} --prepackaged "$APP" $COMMON
+            codesign --verify --deep --strict --verbose=2 "$APP"
+            spctl --assess --type execute --verbose=2 "$APP"
+            xcrun stapler validate "$APP"
           else
-            $BUILDER --${{ matrix.target }} ${{ matrix.mode }} --${{ matrix.arch }} $COMMON
+            # Never hand signing material to a leg that is not signing with it (the Windows and Linux legs, or a macOS leg without the full set).
+            unset MACOS_CERT_P12_BASE64 MACOS_CERT_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID APPLE_API_KEY_P8_BASE64 APPLE_API_KEY_ID APPLE_API_ISSUER
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
+            COMMON="$COMMON --config.mac.notarize=false"
+            if [ "${{ matrix.target }}" = mac ]; then
+              # Without a Developer ID electron-builder leaves a bundle `codesign --verify --strict` rejects (macOS calls a downloaded copy damaged): build the app,
+              # seal it ad hoc, then build the DMG from that sealed app.
+              $BUILDER --mac dir --${{ matrix.arch }} $COMMON
+              APP="$(find dist/${{ matrix.name }} -maxdepth 2 -name ACRYL.app -type d | head -n 1)"
+              test -n "$APP"
+              node scripts/seal-mac-app.mjs "$APP"
+              $BUILDER --mac dmg --${{ matrix.arch }} --prepackaged "$APP" $COMMON
+            else
+              $BUILDER --${{ matrix.target }} ${{ matrix.mode }} --${{ matrix.arch }} $COMMON
+            fi
           fi
       # The promise of the product, proven on what is shipped: an agent writes a plugin and the packaged app takes it live (install, run, update, remove, no restart).
       # One native leg per OS; the other legs of an OS are the same code.
