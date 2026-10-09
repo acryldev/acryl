@@ -7,13 +7,13 @@
  * ACRYL's root silently kept using the real `~/.dsh`.
  */
 import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { resolveAcrylDshHome, resolveAcrylHome } from '../src/acryl-home.ts'
 
 describe('resolveAcrylHome', () => {
   it('uses ACRYL_HOME when set', () => {
-    expect(resolveAcrylHome({ ACRYL_HOME: '/tmp/acryl-root' })).toBe('/tmp/acryl-root')
+    expect(resolveAcrylHome({ ACRYL_HOME: '/tmp/acryl-root' })).toBe(resolve('/tmp/acryl-root'))
   })
 
   it('defaults to ~/.acryl, ignoring a blank value', () => {
@@ -25,11 +25,11 @@ describe('resolveAcrylHome', () => {
 describe('resolveAcrylDshHome precedence', () => {
   it('nests under ACRYL_HOME even when DSH_HOME is exported', () => {
     expect(resolveAcrylDshHome({ ACRYL_HOME: '/tmp/acryl-root', DSH_HOME: '/tmp/ambient' }))
-      .toBe('/tmp/acryl-root/.dsh')
+      .toBe(join(resolve('/tmp/acryl-root'), '.dsh'))
   })
 
   it('honors DSH_HOME when ACRYL_HOME is unset', () => {
-    expect(resolveAcrylDshHome({ DSH_HOME: '/tmp/explicit-dsh' })).toBe('/tmp/explicit-dsh')
+    expect(resolveAcrylDshHome({ DSH_HOME: '/tmp/explicit-dsh' })).toBe(resolve('/tmp/explicit-dsh'))
   })
 
   it('defaults to ~/.acryl/.dsh when neither is set', () => {

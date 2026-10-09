@@ -14,8 +14,11 @@ import { createDshEngineDefinition, createWebEngineDefinition } from '../src/eng
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 import { ceilingsFor, measurePromptBudget, overBudget, type BudgetCeilings } from '../src/prompt-budget.ts'
 import { captureSystemPrompt } from '../src/system-prompt-capture.ts'
+import { fileURLToPath } from 'node:url'
 
-const driftDir = new URL('../../../plugins/acryl-system-prompt/drift/', import.meta.url).pathname
+const driftDir = fileURLToPath(new URL('../../../plugins/acryl-system-prompt/drift/', import.meta.url))
+// Windows has its own shell tool (`pwsh`, not `bash`), so what the harness contributes differs there by design; its baselines are recorded separately (`*.win32.json`).
+const platformSuffix = process.platform === 'win32' ? '.win32' : ''
 const temporaryHomes: string[] = []
 const initialDshHome = process.env.DSH_HOME
 afterEach(async () => {
@@ -58,7 +61,7 @@ describe.each(['web', 'cli'] as const)('acryl-system-prompt on the %s engine', k
 
   it('matches the committed baseline of what upstream contributes', async () => {
     const { upstream } = await capture(kind)
-    const baselinePath = join(driftDir, `${kind}.json`)
+    const baselinePath = join(driftDir, `${kind}${platformSuffix}.json`)
     if (process.env.ACRYL_UPDATE_DRIFT === '1' || !existsSync(baselinePath)) {
       writeFileSync(baselinePath, `${JSON.stringify(upstream, null, 2)}\n`)
       return
@@ -79,7 +82,7 @@ describe.each(['web', 'cli'] as const)('acryl-system-prompt on the %s engine', k
   it('stays within the committed size ceilings for the system prompt and the tool definitions', async () => {
     const { captured } = await capture(kind)
     const budget = measurePromptBudget(captured)
-    const path = join(driftDir, 'budget.json')
+    const path = join(driftDir, `budget${platformSuffix}.json`)
     const all = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) as Record<string, BudgetCeilings> : {}
     if (process.env.ACRYL_UPDATE_DRIFT === '1' || all[kind] === undefined) {
       writeFileSync(path, `${JSON.stringify({ ...all, [kind]: ceilingsFor(budget) }, null, 2)}\n`)

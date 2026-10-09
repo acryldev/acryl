@@ -1,0 +1,90 @@
+[
+  {
+    "name": "harness:identity",
+    "hash": "1dd6363fa551"
+  },
+  {
+    "name": "deployment:persona-prefix",
+    "hash": "e0eb4484e486"
+  },
+  {
+    "name": "plan:policy",
+    "hash": "e3b0c44298fc"
+  },
+  {
+    "name": "context:file-reference",
+    "hash": "63738afd0d9f"
+  },
+  {
+    "name": "tool:pwsh",
+    "hash": "c01abf413b19"
+  },
+  {
+    "name": "tool:read",
+    "hash": "4a23d2ec84aa"
+  },
+  {
+    "name": "tool:write",
+    "hash": "06221af32d81"
+  },
+  {
+    "name": "tool:edit",
+    "hash": "89df623d3529"
+  },
+  {
+    "name": "tool:glob",
+    "hash": "2a21a1ccfe63"
+  },
+  {
+    "name": "tool:grep",
+    "hash": "5cf488ba882d"
+  },
+  {
+    "name": "tool:jobs",
+    "hash": "ba71da85048b"
+  },
+  {
+    "name": "tool:web_search",
+    "hash": "4142c297778f"
+  },
+  {
+    "name": "tool:web_fetch",
+    "hash": "4fe4c0ce663c"
+  },
+  {
+    "name": "tool:goal",
+    "hash": "ebf10b6ae984"
+  },
+  {
+    "name": "tool:workflow",
+    "hash": "4e6240cecbf5"
+  },
+  {
+    "name": "tool:subagent",
+    "hash": "7f02d244c70b"
+  },
+  {
+    "name": "tool:subagent_fork",
+    "hash": "762559ae5281"
+  },
+  {
+    "name": "mcp-resource-servers",
+    "hash": "e3b0c44298fc"
+  },
+  {
+    "name": "ui:deliverable-file-references",
+    "hash": "e8a2eb8da7f6"
+  },
+  {
+    "name": "harness:source",
+    "hash": "87454d47e42c"
+  },
+  {
+    "name": "app:web-surface",
+    "hash": "103429ae00b5"
+  },
+  {
+    "name": "deployment:persona-suffix",
+    "hash": "3484a8eb5011"
+  }
+]

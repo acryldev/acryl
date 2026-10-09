@@ -8,14 +8,15 @@
 import { readdirSync, readFileSync, realpathSync, statSync, writeFileSync, mkdirSync } from 'node:fs'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join, relative } from 'node:path'
+import { join, relative, sep } from 'node:path'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 import type { AppInstance } from '../src/instance/index.ts'
+import { fileURLToPath } from 'node:url'
 
-const repo = realpathSync(new URL('../../..', import.meta.url).pathname)
+const repo = realpathSync(fileURLToPath(new URL('../../..', import.meta.url)))
 
 /** Source roots of everything ACRYL ships or launches with. */
 const ROOTS = ['runtime', 'apps', 'plugins', 'scripts']
@@ -50,7 +51,7 @@ describe('bulkhead architecture', () => {
     const offences: string[] = []
     for (const root of ROOTS) {
       for (const file of sources(join(repo, root))) {
-        const path = relative(repo, file)
+        const path = relative(repo, file).split(sep).join('/')
         if (path in ALLOWED) continue
         const text = readFileSync(file, 'utf8').split('\n')
         text.forEach((line, index) => {
@@ -123,7 +124,7 @@ describe('bulkhead behavior', () => {
         for (const file of filesUnder(root)) if (file.startsWith(one.instance.home)) expect(file.startsWith(one.instance.home)).toBe(true)
       }
       // Every file the two apps wrote is inside one of the two app folders: nothing outside, nothing crossing.
-      const written = filesUnder(root).map(file => relative(root, file).split('/')[0])
+      const written = filesUnder(root).map(file => relative(root, file).split(sep)[0])
       expect(new Set(written)).toEqual(new Set(['music-editor', 'social-machine']))
       const brand = (app: typeof music) => (app.host.ctx.get('acrylBrand' as never) as unknown as { identity: { name: string } }).identity.name
       expect([brand(music), brand(social)]).toEqual(['Music Editor', 'Social Machine'])

@@ -12,8 +12,9 @@ import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
+import { fileURLToPath } from 'node:url'
 
-const example = new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url).pathname
+const example = fileURLToPath(new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url))
 const initialDshHome = process.env.DSH_HOME
 const folders: string[] = []
 

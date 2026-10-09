@@ -13,8 +13,9 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 import { createAcrylSessionBridge } from '../src/session-bridge.ts'
+import { fileURLToPath } from 'node:url'
 
-const organizer = new URL('../../../examples/acryl-organizer/', import.meta.url).pathname
+const organizer = fileURLToPath(new URL('../../../examples/acryl-organizer/', import.meta.url))
 const temporary: string[] = []
 const saved = { home: process.env.DSH_HOME, blueprint: process.env.ACRYL_BLUEPRINT }
 

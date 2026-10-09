@@ -13,9 +13,10 @@ import { createDshEngineDefinition, createWebEngineDefinition } from '../src/eng
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 import { measurePromptBudget, renderBudgetDoc, type PromptBudget } from '../src/prompt-budget.ts'
 import { captureSystemPrompt, renderSystemPromptDoc } from '../src/system-prompt-capture.ts'
+import { fileURLToPath } from 'node:url'
 
 const outDir = process.env.ACRYL_DUMP_SYSTEM_PROMPT
-const repoRoot = resolve(new URL('../../..', import.meta.url).pathname)
+const repoRoot = resolve(fileURLToPath(new URL('../../..', import.meta.url)))
 
 async function surface(kind: 'web' | 'cli'): Promise<{ doc: string; budget: PromptBudget }> {
   process.env.DEEPSEEK_API_KEY = 'dummy-key-for-prompt-capture'

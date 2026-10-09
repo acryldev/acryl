@@ -66,7 +66,8 @@ describe('acryl new', () => {
   it('writes a runnable app whose definition the runtime selects from the environment', () => {
     const dir = join(temp(), 'video-cut')
     expect(writeNewApp(planNewApp(dir, { title: 'Video Cut', launcher }), { git: false }).git).toBe('skipped')
-    expect(statSync(join(dir, 'bin', 'acryl')).mode & 0o100).toBeTruthy()
+    // The launcher is a POSIX shell script; Windows has no executable bit to check.
+    if (process.platform !== 'win32') expect(statSync(join(dir, 'bin', 'acryl')).mode & 0o100).toBeTruthy()
     expect(existsSync(join(dir, 'extensions'))).toBe(true)
     const blueprint = blueprintFromEnvironment({ ACRYL_BLUEPRINT: join(dir, 'blend.yaml') })
     expect(blueprint.id).toBe('app.video-cut')

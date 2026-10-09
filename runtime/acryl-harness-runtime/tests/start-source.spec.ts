@@ -2,7 +2,7 @@
 import { spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { buildRegistryIndex } from '@webboxes/blends-core'
 import { StartSourceError, classifyStartSource, resolveStartSource } from '../src/app/start-source.ts'
@@ -24,7 +24,7 @@ function repository(root: string, files: Record<string, string>): string {
 
 describe('classifyStartSource', () => {
   it('tells folders, git URLs and starter ids apart', () => {
-    expect(classifyStartSource('/x', path => path === '/x')).toEqual({ kind: 'folder', path: '/x' })
+    expect(classifyStartSource('/x', path => path === '/x' || path === resolve('/x'))).toEqual({ kind: 'folder', path: resolve('/x') })
     expect(classifyStartSource('git@github.com:agency/accounting.git', () => false)).toEqual({ kind: 'git', url: 'git@github.com:agency/accounting.git' })
     expect(classifyStartSource('https://github.com/acrylblends/acrylblends.github.io.git#registry/blends/x', () => false)).toMatchObject({ kind: 'git', subdir: 'registry/blends/x' })
     expect(classifyStartSource('acme.accounting', () => false)).toEqual({ kind: 'registry', id: 'acme.accounting' })

@@ -4,7 +4,7 @@
  */
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   AppInstanceError,
@@ -86,12 +86,12 @@ describe('selectInstance precedence', () => {
     const root = temp()
     const folder = app(root, 'ledger')
     expect(selectInstance({ env: { ACRYL_HOME: folder, DSH_HOME: '/ambient' }, osHome: root })).toMatchObject({ kind: 'app', dshHome: join(folder, '.dsh') })
-    expect(selectInstance({ env: { ACRYL_HOME: '/tmp/pinned', DSH_HOME: '/ambient' }, osHome: root })).toMatchObject({ kind: 'pinned', home: '/tmp/pinned', dshHome: '/tmp/pinned/.dsh' })
+    expect(selectInstance({ env: { ACRYL_HOME: '/tmp/pinned', DSH_HOME: '/ambient' }, osHome: root })).toMatchObject({ kind: 'pinned', home: resolve('/tmp/pinned'), dshHome: join(resolve('/tmp/pinned'), '.dsh') })
   })
 
   it('a legacy DSH_HOME moves the ACRYL home with it instead of leaving state in the shared ~/.acryl', () => {
-    expect(selectInstance({ env: { DSH_HOME: '/x/.dsh' }, osHome: '/h' })).toMatchObject({ home: '/x', dshHome: '/x/.dsh' })
-    expect(selectInstance({ env: { DSH_HOME: '/tmp/d' }, osHome: '/h' })).toMatchObject({ home: '/tmp/d', dshHome: '/tmp/d' })
+    expect(selectInstance({ env: { DSH_HOME: '/x/.dsh' }, osHome: '/h' })).toMatchObject({ home: resolve('/x'), dshHome: resolve('/x/.dsh') })
+    expect(selectInstance({ env: { DSH_HOME: '/tmp/d' }, osHome: '/h' })).toMatchObject({ home: resolve('/tmp/d'), dshHome: resolve('/tmp/d') })
   })
 
   it('a git worktree checkout gets its own home, port and Electron app; the main checkout does not', () => {

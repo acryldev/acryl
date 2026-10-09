@@ -12,7 +12,7 @@ afterEach(async () => {
   // Assigning undefined would store the string "undefined" and the next boot would create a ./undefined profile directory.
   if (initialDshHome === undefined) delete process.env.DSH_HOME
   else process.env.DSH_HOME = initialDshHome
-  await Promise.all(temporaryHomes.splice(0).map(home => rm(home, { force: true, recursive: true })))
+  await Promise.all(temporaryHomes.splice(0).map(home => rm(home, { force: true, recursive: true, maxRetries: 10, retryDelay: 200 })))
 })
 
 describe('bootAcrylHarnessProfile', () => {

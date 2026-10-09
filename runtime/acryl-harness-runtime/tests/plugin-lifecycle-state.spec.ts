@@ -1,6 +1,6 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   pluginLifecyclePatches,
@@ -27,21 +27,21 @@ describe('plugin lifecycle state', () => {
     // CLI, Web, and Desktop process booting the same engine home must read and
     // write the same file.
     expect(resolvePluginLifecycleStatePath('/home/u/.acryl/.dsh'))
-      .toBe('/home/u/.acryl/.dsh/plugin-lifecycle/state.json')
+      .toBe(join('/home/u/.acryl/.dsh', 'plugin-lifecycle', 'state.json'))
 
     const previous = { ACRYL_HOME: process.env.ACRYL_HOME, DSH_HOME: process.env.DSH_HOME }
     try {
       delete process.env.DSH_HOME
       process.env.ACRYL_HOME = '/tmp/acryl-home'
       expect(resolvePluginLifecycleStatePath())
-        .toBe('/tmp/acryl-home/.dsh/plugin-lifecycle/state.json')
+        .toBe(join(resolve('/tmp/acryl-home'), '.dsh', 'plugin-lifecycle', 'state.json'))
 
       // An isolated or dev run sets only DSH_HOME. Resolving it from the ACRYL
       // root instead would write overrides into the operator's real install.
       delete process.env.ACRYL_HOME
       process.env.DSH_HOME = '/tmp/acryl-dev/.dsh'
       expect(resolvePluginLifecycleStatePath())
-        .toBe('/tmp/acryl-dev/.dsh/plugin-lifecycle/state.json')
+        .toBe(join(resolve('/tmp/acryl-dev/.dsh'), 'plugin-lifecycle', 'state.json'))
     } finally {
       if (previous.ACRYL_HOME === undefined) delete process.env.ACRYL_HOME
       else process.env.ACRYL_HOME = previous.ACRYL_HOME

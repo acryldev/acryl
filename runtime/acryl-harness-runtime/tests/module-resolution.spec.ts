@@ -7,6 +7,8 @@
  * Desktop's own test now only checks that its wrapper passes the right
  * anchors through; this suite is the real, deep coverage of the hook itself.
  */
+import { resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const harness = vi.hoisted(() => {
@@ -181,24 +183,26 @@ describe('installProfilePackageResolver', () => {
   })
 
   it('uses the same overlay for CommonJS package manifests resolved from the Profile anchor', () => {
-    const profileBaseUrl = 'file:///tmp/dsh-profile/package.json'
+    // A file URL needs a drive letter on Windows, so the profile manifest path is built for the host.
+    const profileManifest = resolve('/tmp/dsh-profile/package.json')
+    const profileBaseUrl = pathToFileURL(profileManifest).href
     harness.sources.set('@deepseek-ai/dsh-client-modules', 'install')
     const dispose = installProfilePackageResolver(profileBaseUrl, anchors())
     const resolveFilename = harness.cjsModule._resolveFilename
 
     expect(resolveFilename(
       '@deepseek-ai/dsh-client-modules/package.json',
-      { filename: '/tmp/dsh-profile/package.json' },
+      { filename: profileManifest },
       false,
     )).toBe('/install/@deepseek-ai/dsh-client-modules/package.json')
     expect(resolveFilename(
       '@deepseek-ai/dsh-client-modules/package.json',
-      { filename: '/tmp/another-profile/package.json' },
+      { filename: resolve('/tmp/another-profile/package.json') },
       false,
     )).toBe('ordinary:@deepseek-ai/dsh-client-modules/package.json')
     expect(resolveFilename(
       '@deepseek-ai/dsh-client-modules/client.js',
-      { filename: '/tmp/dsh-profile/package.json' },
+      { filename: profileManifest },
       false,
     )).toBe('ordinary:@deepseek-ai/dsh-client-modules/client.js')
 

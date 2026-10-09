@@ -6,7 +6,7 @@
 import { join } from 'node:path'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createWebEngineDefinition } from '../src/engine-dsh.ts'
@@ -35,7 +35,7 @@ async function bootHost() {
   })
 }
 
-const load = async (dir: string) => import(pathToFileURL(join(new URL(dir, examples).pathname, 'index.js')).href) as Promise<Record<string, unknown>>
+const load = async (dir: string) => import(pathToFileURL(join(fileURLToPath(new URL(dir, examples)), 'index.js')).href) as Promise<Record<string, unknown>>
 // ASCII-only fixtures: strip SGR colour codes and count characters.
 const visibleWidth = (line: string): number => line.replace(/\u001b\[[0-9;]*m/gu, '').length
 const STATES = ['PENDING', 'LOADING', 'ACTIVE', 'FAILED', 'UNLOADING', 'DISPOSED']

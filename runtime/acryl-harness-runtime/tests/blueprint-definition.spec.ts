@@ -11,6 +11,7 @@ import {
   composeBlueprintRows,
   parseBlueprint,
 } from '../src/index.ts'
+import { fileURLToPath } from 'node:url'
 
 const dirs: string[] = []
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { force: true, recursive: true }) })
@@ -66,7 +67,7 @@ describe('parseBlueprint', () => {
 
 describe('a blueprint file selected from the environment', () => {
   it('the documented private-brand sample is valid', () => {
-    const sample = new URL('../../../specs/036-cordis-ecosystem-and-acryl-blends/samples/private-brand.blueprint.yaml', import.meta.url).pathname
+    const sample = fileURLToPath(new URL('../../../specs/036-cordis-ecosystem-and-acryl-blends/samples/private-brand.blueprint.yaml', import.meta.url))
     const blueprint = blueprintFromEnvironment({ ACRYL_BLUEPRINT: sample })
     expect(blueprint.id).toBe('acme.notes')
     expect(blueprint.rows).not.toContain('acryl-workspace' as never)
