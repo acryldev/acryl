@@ -1,9 +1,9 @@
-import { mkdirSync, mkdtempSync, rmSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import AdmZip from 'adm-zip'
 import { afterEach, describe, expect, it } from 'vitest'
-import { WINDOWS_PORTABLE_NAME, verifyWindowsPortable } from '../scripts/verify-win-portable.ts'
+import { verifyWindowsPortable, windowsPortableName } from '../scripts/verify-win-portable.ts'
 
 const temporaryRoots: string[] = []
 
@@ -20,7 +20,7 @@ function fixture(): { readonly root: string; readonly portable: string } {
   temporaryRoots.push(root)
   const dist = join(root, 'dist')
   mkdirSync(dist, { recursive: true })
-  const portable = join(dist, WINDOWS_PORTABLE_NAME)
+  const portable = join(dist, windowsPortableName('2.0.0'))
   const archive = new AdmZip()
   archive.addFile('ACRYL.exe', portableExecutable())
   archive.addFile('resources/app.asar', Buffer.from('asar'))
@@ -39,12 +39,13 @@ describe('Windows portable artifact verification', () => {
     expect(verifyWindowsPortable({ desktopRoot: value.root, version: '2.0.0' })).toBe(value.portable)
   })
 
-  it('rejects a build that produced no portable archive under the release name', () => {
+  it('rejects a stale portable archive from another version', () => {
     const value = fixture()
     rmSync(value.portable)
+    writeFileSync(join(dirname(value.portable), 'acryl-desktop-win-x64-v1.9.0.zip'), 'stale')
 
     expect(() => verifyWindowsPortable({ desktopRoot: value.root, version: '2.0.0' }))
-      .toThrow(WINDOWS_PORTABLE_NAME)
+      .toThrow(windowsPortableName('2.0.0'))
   })
 
   it('rejects an application entry without a Windows PE header', () => {

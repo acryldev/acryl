@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { WINDOWS_INSTALLER_NAME, verifyWindowsInstaller } from '../scripts/verify-win-installer.ts'
+import { verifyWindowsInstaller, windowsInstallerName } from '../scripts/verify-win-installer.ts'
 
 const temporaryRoots: string[] = []
 
@@ -24,7 +24,7 @@ function fixture(): {
   const dist = join(root, 'dist')
   const unpacked = join(dist, 'win-unpacked')
   mkdirSync(unpacked, { recursive: true })
-  const installer = join(dist, WINDOWS_INSTALLER_NAME)
+  const installer = join(dist, windowsInstallerName('2.0.0'))
   const application = join(unpacked, 'ACRYL.exe')
   writeFileSync(installer, portableExecutable())
   writeFileSync(application, portableExecutable())
@@ -45,13 +45,13 @@ describe('Windows installer artifact verification', () => {
     })
   })
 
-  it('rejects a build that produced no installer under the release name (the old versioned name is not accepted)', () => {
+  it('rejects a stale installer from another version and the old version-less or differently named files', () => {
     const value = fixture()
     rmSync(value.installer)
-    writeFileSync(join(value.root, 'dist', 'ACRYL-2.0.0-x64-Setup.exe'), portableExecutable())
+    for (const stale of ['acryl-desktop-win-x64-v1.9.0.exe', 'acryl-desktop-win-x64.exe', 'ACRYL-2.0.0-x64-Setup.exe']) writeFileSync(join(value.root, 'dist', stale), portableExecutable())
 
     expect(() => verifyWindowsInstaller({ desktopRoot: value.root, version: '2.0.0' }))
-      .toThrow(WINDOWS_INSTALLER_NAME)
+      .toThrow(windowsInstallerName('2.0.0'))
   })
 
   it('rejects an artifact without a Windows PE header', () => {

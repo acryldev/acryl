@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { DESKTOP_ASSET_NAMES, rewriteReleaseLinks } from './sync-release-readme.mjs'
+import { desktopAssetNames, rewriteReleaseLinks } from './sync-release-readme.mjs'
 
 const repo = 'https://github.com/acryldev/acryl'
 const stale = [
@@ -13,9 +13,9 @@ const stale = [
 
 test('points the Desktop installers at the one release, with the right constant names (and moves old desktop-v links into it)', () => {
   const text = rewriteReleaseLinks(stale, 'v0.2.2')
-  assert.match(text, new RegExp(`${repo}/releases/download/v0\\.2\\.2/acryl-desktop-mac-arm64\\.dmg`))
-  assert.match(text, new RegExp(`${repo}/releases/download/v0\\.2\\.2/acryl-desktop-linux-amd64\\.deb`))
-  assert.match(text, new RegExp(`${repo}/releases/download/v0\\.2\\.2/acryl-desktop-linux-arm64\\.deb`))
+  assert.match(text, new RegExp(`${repo}/releases/download/v0\\.2\\.2/acryl-desktop-mac-arm64-v0\\.2\\.2\\.dmg`))
+  assert.match(text, new RegExp(`${repo}/releases/download/v0\\.2\\.2/acryl-desktop-linux-amd64-v0\\.2\\.2\\.deb`))
+  assert.match(text, new RegExp(`${repo}/releases/download/v0\\.2\\.2/acryl-desktop-linux-arm64-v0\\.2\\.2\\.deb`))
   assert.doesNotMatch(text, /dsh-plugin-desktop|linux-x64\.deb|v0\.2\.0|desktop-v0\.2/)
 })
 
@@ -29,8 +29,13 @@ test('is stable when run twice and for the next release', () => {
   assert.equal(rewriteReleaseLinks(once, 'v0.3.0'), rewriteReleaseLinks(stale, 'v0.3.0'))
 })
 
-test('names exactly the five installers the Desktop release publishes', () => {
-  assert.deepEqual([...DESKTOP_ASSET_NAMES].sort(), [
-    'acryl-desktop-linux-amd64.deb', 'acryl-desktop-linux-arm64.deb', 'acryl-desktop-mac-arm64.dmg', 'acryl-desktop-mac-x64.dmg', 'acryl-desktop-win-x64.exe',
+test('names exactly the five installers the Desktop release publishes, with the version in each name', () => {
+  assert.deepEqual([...desktopAssetNames('v0.2.2')].sort(), [
+    'acryl-desktop-linux-amd64-v0.2.2.deb', 'acryl-desktop-linux-arm64-v0.2.2.deb', 'acryl-desktop-mac-arm64-v0.2.2.dmg', 'acryl-desktop-mac-x64-v0.2.2.dmg', 'acryl-desktop-win-x64-v0.2.2.exe',
   ])
+})
+
+test('moves an older release\'s versioned names to the new release', () => {
+  const old = `${repo}/releases/download/v0.2.2/acryl-desktop-win-x64-v0.2.2.exe`
+  assert.equal(rewriteReleaseLinks(old, 'v0.2.3'), `${repo}/releases/download/v0.2.3/acryl-desktop-win-x64-v0.2.3.exe`)
 })

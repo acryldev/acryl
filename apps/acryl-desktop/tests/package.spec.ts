@@ -592,7 +592,7 @@ describe('published package surface', () => {
       '!node_modules/**/src/**/*.tsx',
     ])
     expect(manifest.build?.mac?.icon).toBe('build/app-icon-mac.png')
-    expect(manifest.build?.mac?.artifactName).toBe('acryl-desktop-mac-${arch}.${ext}')
+    expect(manifest.build?.mac?.artifactName).toBe('acryl-desktop-mac-${arch}-v${version}.${ext}')
     expect(manifest.build?.mac?.mergeASARs).toBe(false)
     expect(manifest.build?.mac?.signIgnore).toEqual(['\\.(?:pak|dat|wasm)$'])
     expect(manifest.build?.win?.icon).toBe('build/app-icon.png')
@@ -600,7 +600,7 @@ describe('published package surface', () => {
       target: 'nsis',
       arch: ['x64'],
     }])
-    expect(manifest.build?.win?.artifactName).toBe('acryl-desktop-win-${arch}.${ext}')
+    expect(manifest.build?.win?.artifactName).toBe('acryl-desktop-win-${arch}-v${version}.${ext}')
     expect(manifest.build?.nsis).toEqual({
       license: 'THIRD_PARTY_NOTICES.md',
       oneClick: false,
@@ -612,10 +612,10 @@ describe('published package surface', () => {
       differentialPackage: true,
       shortcutName: 'ACRYL',
       useZip: false,
-      artifactName: 'acryl-desktop-win-${arch}.${ext}',
+      artifactName: 'acryl-desktop-win-${arch}-v${version}.${ext}',
     })
     expect(manifest.build?.linux?.icon).toBe('build/app-icon.png')
-    expect(manifest.build?.linux?.artifactName).toBe('acryl-desktop-linux-${arch}.${ext}')
+    expect(manifest.build?.linux?.artifactName).toBe('acryl-desktop-linux-${arch}-v${version}.${ext}')
   })
 
   it('separates unsigned smoke packaging from the signed macOS release', () => {

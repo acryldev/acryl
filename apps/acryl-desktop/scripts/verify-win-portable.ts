@@ -28,14 +28,16 @@ function defaultOptions(): WindowsPortableVerificationOptions {
   return { desktopRoot, version: readVersion(desktopRoot) }
 }
 
-/** The portable archive's file name: the constant, version-less name `build.win.artifactName` gives every Windows artifact. */
-export const WINDOWS_PORTABLE_NAME = 'acryl-desktop-win-x64.zip'
+/** The portable archive's file name, `acryl-desktop-win-x64-v<version>.zip`: `build.win.artifactName` gives every Windows artifact the version suffix. */
+export function windowsPortableName(version: string): string {
+  return `acryl-desktop-win-x64-v${version}.zip`
+}
 
 /** Verify the portable archive and its application entry. */
 export function verifyWindowsPortable(
   options: WindowsPortableVerificationOptions = defaultOptions(),
 ): string {
-  const portablePath = join(options.desktopRoot, 'dist', WINDOWS_PORTABLE_NAME)
+  const portablePath = join(options.desktopRoot, 'dist', windowsPortableName(options.version))
   const stat = statSync(portablePath)
   if (!stat.isFile() || stat.size === 0) {
     throw new Error(`Windows portable archive is not a non-empty regular file: ${portablePath}`)

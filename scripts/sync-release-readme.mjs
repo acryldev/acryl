@@ -23,22 +23,23 @@ function gitBlobHash(path, cwd) {
 
 const VERSION = String.raw`\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?`
 
+/** The installer platforms the Desktop build publishes, with Linux named for the Debian architectures (`amd64`, `arm64`), not for Node's (`x64`). */
+const DESKTOP_PLATFORMS = Object.freeze(['mac-arm64', 'mac-x64', 'win-x64', 'linux-amd64', 'linux-arm64'])
+const DESKTOP_EXTENSION = Object.freeze({ mac: 'dmg', win: 'exe', linux: 'deb' })
+
 /**
- * The names the Desktop release publishes (`.github/workflows/release-desktop.yml`, `electron-builder` `artifactName`): constant, version-less, and Linux
- * named for the Debian architectures (`amd64`, `arm64`), not for Node's (`x64`).
+ * The installer file names a release publishes (`build.*.artifactName` in apps/acryl-desktop/package.json): `acryl-desktop-<platform>-v<version>.<ext>`, so a
+ * downloaded file says which release it came from.
+ * @param {string} tag Release tag such as `v0.2.2`.
  */
-export const DESKTOP_ASSET_NAMES = Object.freeze([
-  'acryl-desktop-mac-arm64.dmg',
-  'acryl-desktop-mac-x64.dmg',
-  'acryl-desktop-win-x64.exe',
-  'acryl-desktop-linux-amd64.deb',
-  'acryl-desktop-linux-arm64.deb',
-])
+export function desktopAssetNames(tag) {
+  return DESKTOP_PLATFORMS.map(platform => `acryl-desktop-${platform}-${tag}.${DESKTOP_EXTENSION[platform.split('-')[0]]}`)
+}
 
 /**
  * Point every release link in a README at the release `tag`. The CLI and Web archives and the Desktop installers are all assets of the one `v<version>` release
  * (up to 0.2.1 the installers sat in a separate `desktop-v<version>` release; those links are migrated), and older spellings of the installer names (versioned, or
- * `dsh-plugin-desktop_...`) become the constant ones.
+ * `dsh-plugin-desktop_...`) become the versioned ones, `acryl-desktop-<platform>-v<version>.<ext>`.
  * @param {string} text README text.
  * @param {string} tag Release tag such as `v0.2.1`.
  */
@@ -54,7 +55,11 @@ export function rewriteReleaseLinks(text, tag) {
     .replaceAll(/(?:dsh-plugin-desktop|acryl-desktop)_\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?_amd64\.deb/g, 'acryl-desktop-linux-amd64.deb')
     .replaceAll(/(?:dsh-plugin-desktop|acryl-desktop)_\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?_arm64\.deb/g, 'acryl-desktop-linux-arm64.deb')
     .replaceAll('acryl-desktop-linux-x64.deb', 'acryl-desktop-linux-amd64.deb')
-  return next
+  // Every installer name, whatever spelling it had (constant or with an older version), becomes this release's.
+  return next.replaceAll(
+    new RegExp(`acryl-desktop-(${DESKTOP_PLATFORMS.join('|')})(?:-v${VERSION})?\\.(dmg|exe|deb)`, 'g'),
+    (_all, platform, extension) => `acryl-desktop-${platform}-${tag}.${extension}`,
+  )
 }
 
 export async function syncReleaseReadme(root, tag) {

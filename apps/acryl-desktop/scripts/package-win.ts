@@ -1,7 +1,7 @@
 /** Build an unsigned Windows x64 artifact on a native Windows host. */
 
 import { spawnSync } from 'node:child_process'
-import { rmSync } from 'node:fs'
+import { readdirSync, rmSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -144,9 +144,12 @@ export function packageWindowsArtifact(
   } else {
     options.log('Skipping the Windows package preflight; the package gate already passed.')
   }
-  // The artifact names carry no version, so a build that fails midway must not leave the previous one to be verified as this one.
-  for (const stale of ['acryl-desktop-win-x64.exe', 'acryl-desktop-win-x64.exe.blockmap', 'acryl-desktop-win-x64.zip']) {
-    rmSync(join(options.desktopRoot, 'dist', stale), { force: true })
+  // Previous Windows artifacts (any version, and the older version-less names) must not survive into a build that fails midway.
+  const dist = join(options.desktopRoot, 'dist')
+  let previous: string[] = []
+  try { previous = readdirSync(dist) } catch { /* no output folder yet */ }
+  for (const name of previous) {
+    if (/^acryl-desktop-win-x64(?:-v[^/\\]+)?\.(?:exe|exe\.blockmap|zip)$/u.test(name)) rmSync(join(dist, name), { force: true })
   }
   options.run(
     options.nodeExecutable,

@@ -523,7 +523,7 @@
       "target": [
         "dir"
       ],
-      "artifactName": "acryl-desktop-mac-${arch}.${ext}",
+      "artifactName": "acryl-desktop-mac-${arch}-v${version}.${ext}",
       "category": "public.app-category.developer-tools",
       "extendInfo": {
         "CFBundleAllowMixedLocalizations": true,
@@ -555,7 +555,7 @@
           ]
         }
       ],
-      "artifactName": "acryl-desktop-win-${arch}.${ext}",
+      "artifactName": "acryl-desktop-win-${arch}-v${version}.${ext}",
       "icon": "build/app-icon.png"
     },
     "nsis": {
@@ -569,13 +569,13 @@
       "differentialPackage": true,
       "shortcutName": "ACRYL",
       "useZip": false,
-      "artifactName": "acryl-desktop-win-${arch}.${ext}"
+      "artifactName": "acryl-desktop-win-${arch}-v${version}.${ext}"
     },
     "linux": {
       "target": [
         "dir"
       ],
-      "artifactName": "acryl-desktop-linux-${arch}.${ext}",
+      "artifactName": "acryl-desktop-linux-${arch}-v${version}.${ext}",
       "icon": "build/app-icon.png",
       "maintainer": "ACRYL <dev@acryl.dev>"
     }
