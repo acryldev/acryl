@@ -105,3 +105,23 @@ What it does not give: no size win (the sidecar is still there, so the Bun execu
 4. **Windows and Linux** (z370n, mbpi9win) for everything above.
 
 Stop condition: if the Node sidecar is still counted in the final size, Bun's case rests on `--compile` for CLI and Web (Pi's use) and not on replacing the Electron desktop. Gates 1 and 2 of the first list (terminal, `ws`) turned out to need no more than an adapter and no change at all, so they no longer stop the experiment.
+
+## B7 - Electron window onto the Bun host (probe 1, 2026-10-10)
+
+Decision (owner): stay on Electron, try Bun as the host runtime only; Electrobun stays an option, not a commitment (it is a point of no return, and stock DeepSeek's Desktop keeps the host inside the Electron main process, so a Bun child host is a permanent divergence from upstream).
+
+`probes/electron-window/` is a throwaway Electron 43.0.0 shell (macOS arm64) that only loads the URL of the compiled Bun host (`bun-app`) and screenshots it; the Desktop code is untouched. Measured with throwaway homes:
+- The window loads in under 1 s and renders the real ACRYL UI (Chromium 150, no webview differences, nothing to port).
+- Memory: Electron tree 617 MB for both hosts; the host 464 MB on Bun vs 353 MB on Node 24 (same payload).
+- Size: the Electron app already ships Node (`ELECTRON_RUN_AS_NODE`), so a Bun host adds its whole executable (about 61 MB on macOS) with nothing removed.
+
+**Finding: on Bun the host boots but 18 Harness rows never activate, so no agent session can be created.** The first session fails with `agent-preset/invalid: tool-bash ... waiting for shell`; the Node host does not. `probes/d1b-diagnose-fibers.mjs` (state 0 = PENDING) shows rows waiting for the `subprocess`, `sandbox`, `sandboxPolicy` and `shell` services whose providers are not in the tree at all, with no FAILED row: a plugin whose import throws a link-time error is skipped silently.
+
+`probes/bun-import-census.mjs <deepseek-harness/packages>` imports every Harness package's built entry under Bun (311 of 316 import; Node imports all):
+- `subprocess/subprocess-local` (provides `subprocess`: shell, fs-search, terminal, workspace-changes and more depend on it): `node:util` has no `getSystemErrorMessage` in Bun 1.3.14. It is used only to word a Linux `execve` error.
+- `ptc-runtime/ptc-runtime-node`: `node:module` has no `stripTypeScriptTypes`.
+- `skill/skill-office`: no `node:sea`.
+- `storage/storage-sqlite`: no `node:sqlite` (already known; Node sidecar or a provider).
+- `test-support/client-runtime`: test support only.
+
+A fix that does not edit the Harness submodule works: a Bun `onLoad` plugin that rewrites the one missing named import in the built file (tested on `subprocess-local`: it then imports). It has to answer every load with an object (returning `undefined` is an error in a runtime plugin). Earlier B-gates (terminal, live install) did not see this because they never created an agent session; the census is the check that would have.
