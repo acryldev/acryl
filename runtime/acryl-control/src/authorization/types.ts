@@ -17,6 +17,8 @@ export interface AuthorizationBeginRequest {
   readonly key: string
   readonly method: string | undefined
   readonly interaction: AuthorizationInteraction
+  /** Withdraws the attempt (a Cancel button on a surface that is not the one holding the flow). */
+  readonly signal?: AbortSignal
 }
 
 export interface AuthorizationOutcome {
