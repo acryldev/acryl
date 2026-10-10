@@ -29,6 +29,7 @@ export type AcrylCodingCapabilityId =
   | 'acryl-settings'
   | 'workspace'
   | 'plugin-admin'
+  | 'sign-in'
   | 'support'
   | 'agent-control-ui'
   | 'advanced-shell'
@@ -174,6 +175,16 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     requiresPackages: ['acryl-plugin-admin'],
     loaderPatches: [
       { insert: [{ id: 'acryl-plugin-admin', name: 'acryl-plugin-admin' }] },
+    ],
+  },
+  {
+    // Sign in to a model provider with an account (OAuth: Claude, ChatGPT/Codex and the rest of the catalog's flows) from
+    // Settings > Models, over the harness's authorization flows; API keys stay on the Models page's own editor.
+    id: 'sign-in',
+    surfaces: ['web', 'desktop'],
+    requiresPackages: ['acryl-sign-in'],
+    loaderPatches: [
+      { insert: [{ id: 'acryl-sign-in', name: 'acryl-sign-in' }] },
     ],
   },
   {

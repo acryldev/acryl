@@ -181,6 +181,7 @@
     "acryl-plugin-admin": "workspace:*",
     "acryl-settings": "workspace:*",
     "acryl-shortcuts": "workspace:*",
+    "acryl-sign-in": "workspace:*",
     "acryl-support": "workspace:*",
     "acryl-system-prompt": "workspace:*",
     "acryl-ui-tui": "workspace:*",

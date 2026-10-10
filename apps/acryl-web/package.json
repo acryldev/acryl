@@ -199,6 +199,7 @@
     "acryl-mount-anchors": "workspace:*",
     "acryl-plugin-admin": "workspace:*",
     "acryl-settings": "workspace:*",
+    "acryl-sign-in": "workspace:*",
     "acryl-shortcuts": "workspace:*",
     "acryl-support": "workspace:*",
     "acryl-system-prompt": "workspace:*",

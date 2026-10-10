@@ -1447,6 +1447,9 @@ importers:
       acryl-shortcuts:
         specifier: workspace:*
         version: link:../../plugins/acryl-shortcuts
+      acryl-sign-in:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-sign-in
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
@@ -2111,6 +2114,9 @@ importers:
       acryl-settings:
         specifier: workspace:*
         version: link:../../plugins/acryl-settings
+      acryl-sign-in:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-sign-in
       acryl-shortcuts:
         specifier: workspace:*
         version: link:../../plugins/acryl-shortcuts
@@ -2456,6 +2462,31 @@ importers:
       typescript:
         specifier: 6.0.3
         version: 6.0.3
+
+  plugins/acryl-sign-in:
+    dependencies:
+      acryl-control:
+        specifier: workspace:*
+        version: link:../../runtime/acryl-control
+      acryl-loopback-http:
+        specifier: workspace:*
+        version: link:../../runtime/acryl-loopback-http
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.8
+        version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@8.2.1(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
 
   plugins/acryl-support:
     dependencies:
@@ -3505,6 +3536,9 @@ importers:
       acryl-shortcuts:
         specifier: workspace:*
         version: link:../../plugins/acryl-shortcuts
+      acryl-sign-in:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-sign-in
       acryl-support:
         specifier: workspace:*
         version: link:../../plugins/acryl-support

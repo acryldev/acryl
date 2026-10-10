@@ -431,6 +431,7 @@
     "acryl-plugin-admin": "workspace:*",
     "acryl-settings": "workspace:*",
     "acryl-shortcuts": "workspace:*",
+    "acryl-sign-in": "workspace:*",
     "acryl-system-prompt": "workspace:*",
     "acryl-workspace": "workspace:*",
     "adm-zip": "^0.6.0",
