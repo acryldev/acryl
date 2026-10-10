@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
-import { acquireBuildLock, withBuildLock } from './lib/build-lock.mjs'
+import { HELD_ENV, acquireBuildLock, withBuildLock } from './lib/build-lock.mjs'
 
 const withBuildLockScript = fileURLToPath(new URL('./with-build-lock.mjs', import.meta.url))
 const temp = () => mkdtempSync(join(tmpdir(), 'acryl-build-lock-'))
@@ -54,5 +54,23 @@ test('with-build-lock runs the command, passes its exit code through, and leaves
       child.on('exit', status => { resolve(status) })
     })
     assert.equal(result, expected)
+  }
+})
+
+test('a command started under the lock runs inside it instead of waiting for its own parent', async () => {
+  const root = temp()
+  const held = process.env[HELD_ENV]
+  try {
+    const release = await acquireBuildLock(root, 'gate', quiet)
+    process.env[HELD_ENV] = root
+    const nested = await Promise.race([acquireBuildLock(root, 'nested', quiet), new Promise(resolve => setTimeout(() => resolve('waited'), 1500))])
+    assert.equal(typeof nested, 'function', 'the nested build must not wait for the lock its parent holds')
+    nested()
+    assert.equal(existsSync(join(root, '.build-lock')), true, 'the nested release must leave the parent\'s lock in place')
+    release()
+  } finally {
+    if (held === undefined) delete process.env[HELD_ENV]
+    else process.env[HELD_ENV] = held
+    rmSync(root, { recursive: true, force: true })
   }
 })

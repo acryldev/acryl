@@ -8,12 +8,17 @@
  *
  * The lock is a directory (`mkdir` is atomic) holding the owner's pid; a lock whose owner is gone is taken over.
  *
+ * A command run under `with-build-lock.mjs` inherits {@link HELD_ENV}, so a build it starts (a gate's test that runs
+ * `with-build-lock.mjs`, a launcher started from a gate) runs inside the held lock instead of waiting for its own parent forever.
+ *
  * @module scripts/lib/build-lock
  */
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 
 const LOCK_DIR = '.build-lock'
+/** Set for the command `with-build-lock.mjs` runs: the checkout whose lock its parent holds. */
+export const HELD_ENV = 'ACRYL_BUILD_LOCK_HELD'
 const POLL_MS = 1000
 const REPORT_MS = 15_000
 const WAIT_LIMIT_MS = 45 * 60_000
@@ -27,6 +32,8 @@ function holder(dir) {
 
 /** Wait for the lock, then hold it until the returned function is called. */
 export async function acquireBuildLock(root, label, { log = message => process.stderr.write(`${message}\n`) } = {}) {
+  // A parent process already holds this checkout's lock for us.
+  if (process.env[HELD_ENV] === resolve(root)) return () => {}
   const dir = join(root, LOCK_DIR)
   const started = Date.now()
   let reported = 0

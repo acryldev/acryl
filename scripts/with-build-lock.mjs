@@ -10,14 +10,14 @@
 import { spawn } from 'node:child_process'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { acquireBuildLock } from './lib/build-lock.mjs'
+import { HELD_ENV, acquireBuildLock } from './lib/build-lock.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const command = process.argv.slice(2)
 if (command.length === 0) { process.stderr.write('usage: with-build-lock.mjs <command> [args...]\n'); process.exit(2) }
 
 const release = await acquireBuildLock(root, command.join(' ').slice(0, 80))
-const child = spawn(command[0], command.slice(1), { cwd: process.cwd(), stdio: 'inherit' })
+const child = spawn(command[0], command.slice(1), { cwd: process.cwd(), stdio: 'inherit', env: { ...process.env, [HELD_ENV]: root } })
 const forward = signal => { child.kill(signal) }
 process.on('SIGINT', () => { forward('SIGINT') })
 process.on('SIGTERM', () => { forward('SIGTERM') })
