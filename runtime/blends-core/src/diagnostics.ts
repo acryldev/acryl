@@ -18,6 +18,11 @@ export type DiagnosticCode =
   | 'parent-cycle'
   | 'override-unknown-id'
   | 'insert-id-collision'
+  | 'upgrade-not-a-blend'
+  | 'upgrade-blueprint-mismatch'
+  | 'upgrade-version-mismatch'
+  | 'upgrade-conflicts'
+  | 'upgrade-stale-plan'
 
 export interface Diagnostic {
   code: DiagnosticCode
