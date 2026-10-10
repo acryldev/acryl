@@ -24,6 +24,7 @@
 
 import { applyWebFavicon } from './web-favicon.ts'
 import { installBunProfileResolver } from './bun-profile-resolution.ts'
+import { installBunNodeGapShims } from './bun-node-gap-shims.ts'
 import { installDenoProfileResolver } from './deno-profile-resolution.ts'
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -235,6 +236,7 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
     materializeRuntimeResolutionEntries(dirname(composition.rootConfig), composition.runtimeResolution)
     // A plugin installed while the app runs lives only in the profile's own node_modules, and without Node's private loader internals the Cordis Loader cannot
     // import it by name (specs/042 F14): a resolve hook answers for the profile, owned by this engine's fiber (public `module.registerHooks` on Deno, a `Bun.plugin` on Bun).
+    if (runsUnderBun()) installBunNodeGapShims() // before the Loader imports the Harness packages that name Node APIs Bun lacks (specs/042 B7)
     const release = runsUnderBun() ? installBunProfileResolver(dirname(composition.rootConfig)) : installDenoProfileResolver(dirname(composition.rootConfig))
     ctx.effect(() => release, 'profile package resolution (non-Node runtime)')
   } else if (composition.runtimeResolution !== undefined) {

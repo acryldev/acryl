@@ -125,3 +125,14 @@ Decision (owner): stay on Electron, try Bun as the host runtime only; Electrobun
 - `test-support/client-runtime`: test support only.
 
 A fix that does not edit the Harness submodule works: a Bun `onLoad` plugin that rewrites the one missing named import in the built file (tested on `subprocess-local`: it then imports). It has to answer every load with an object (returning `undefined` is an error in a runtime plugin). Earlier B-gates (terminal, live install) did not see this because they never created an agent session; the census is the check that would have.
+
+### B7 resolution: node-gap shims (2026-10-10)
+
+`runtime/acryl-harness-runtime/src/bun-node-gap-shims.ts` installs a Bun runtime plugin (from `engine-dsh.ts`, next to the profile resolver) that answers the load of the built `subprocess-local`, `ptc-runtime-node` and `skill-office` files with the same source minus the one missing import, defined next to it: `getSystemErrorMessage` (a plain message), `stripTypeScriptTypes` (Bun's `Transpiler`; it reprints the code, the `async function __dsh_program__() {` wrapper and the closing brace survive so the host's slicing works, but line numbers inside a stripped program differ from Node's), `isSea` (false). `node:sqlite` is not shimmed (sidecar). Unit tests: `tests/bun-node-gap-shims.spec.ts` (Node vitest, the patch is a pure function).
+
+Verified on macOS arm64:
+- Fibers on Bun: 339 ACTIVE, none PENDING except `desktopActions` (a Desktop-only service); Node has 340 (the one more is `PluginPackages`, which Bun skips on purpose).
+- `probes/harness-session.mjs` (now runtime neutral, mock model, refuses port 3080 and a real home): a real agent turn on Bun and on Node, both PASS: 41 tools offered, the mock model asks for `bash`, the command runs in the Harness shell, its output reaches the model, the reply is recorded in the session log.
+- The compiled host (`bun-app`, rebuilt) in the Electron window probe: the "waiting for shell" session-restoration error is gone.
+
+Not yet checked: Linux and Windows for these shims (the paths differ: `execve` is the Linux path `getSystemErrorMessage` words), and the PTC runtime end to end (only the strip is checked).
