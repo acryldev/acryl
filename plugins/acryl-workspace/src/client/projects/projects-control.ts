@@ -12,7 +12,7 @@ import type { ProjectRegistryState } from './registry-state.ts'
 import { owningWorktree } from './sidebar-model.ts'
 import { FolderChooserUnavailableError } from './web-folder-picker.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
-import { openMainSession } from '../sessions/main-session.ts'
+import { openMainSession, type MainViewNavigation } from '../sessions/main-session.ts'
 import { findSettingsTrigger } from '../settings/open-settings.ts'
 
 export type ProjectAction =
@@ -79,6 +79,8 @@ export interface ProjectsControlDeps {
   readonly gitApi: WorkspaceGitApi
   readonly getWorkspaces: () => IWorkspaces | undefined
   readonly getSessions: () => ISessions | undefined
+  /** DSH's session navigation (`uiWorkspace`); opening a chat goes through it when it is composed (see `main-session.ts`). */
+  readonly getNavigation?: () => MainViewNavigation | undefined
   /** ACRYL's own project list (the Host keeps it). The chat's workspaces only follow it, registered when a chat starts. */
   readonly registry: ProjectRegistryState
   /** Looked up when needed, because the desktop installs its folder-picker seam after this plugin loads. */
@@ -241,14 +243,14 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       if (worktree !== undefined) {
         const started = await startBoundChat(worktree)
         if (!started.ok) return fail(started.reason)
-        openMainSession(sessions, started.id)
+        openMainSession(sessions, started.id, deps.getNavigation?.())
         // Same name, and the empty unbound one leaves the tree (it can never be sent from).
         if (row?.title !== undefined && row.title.trim() !== '') await this.renameChat(started.id, row.title) // best effort: a failed rename must not fail the open
         shell.dismissChat(branded)
         return { ok: true }
       }
       try {
-        openMainSession(sessions, branded)
+        openMainSession(sessions, branded, deps.getNavigation?.())
         return { ok: true }
       } catch (cause) {
         return fail(`Could not open that chat: ${message(cause)}`)
@@ -294,7 +296,7 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       const id = state.ids.find(candidate => candidate === existing)
       if (id === undefined) return fail('That chat is no longer available.')
       try {
-        openMainSession(sessions, id)
+        openMainSession(sessions, id, deps.getNavigation?.())
         return { ok: true }
       } catch (cause) {
         shell.unpin()
@@ -307,7 +309,7 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       const started = await startBoundChat(worktreePath)
       if (!started.ok) { shell.unpin(); return fail(started.reason) }
       const sessionsService = deps.getSessions()
-      if (sessionsService !== undefined) openMainSession(sessionsService, started.id)
+      if (sessionsService !== undefined) openMainSession(sessionsService, started.id, deps.getNavigation?.())
       return { ok: true }
     },
 

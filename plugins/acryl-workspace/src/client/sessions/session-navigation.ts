@@ -41,6 +41,19 @@ export function synchronizeWorkspaceWithSessionNavigation(
 }
 
 /**
+ * The session to open because the user selected a chat tab: the tab's own session when it is not the one on screen. Every chat tab
+ * shows the one main conversation, so selecting a tab without opening its session left the previous chat's conversation under the
+ * new tab's name. A tab not bound to a session (none yet) opens nothing.
+ */
+export function sessionForSelectedChatTab(
+  tile: { readonly kind: string; readonly chatSessionId?: string } | undefined,
+  current: string | undefined,
+): string | undefined {
+  if (tile?.kind !== 'chat' || tile.chatSessionId === undefined) return undefined
+  return tile.chatSessionId === current ? undefined : tile.chatSessionId
+}
+
+/**
  * Eagerly gives every non-blank chat session owned by this worktree its own tab, instead of only the one
  * that happens to be current - so a worktree with 6 sidebar chats shows 6 tabs immediately, not one at a
  * time as each is clicked (owner feedback: "they are not loaded into the tab strip immediately"). Each new

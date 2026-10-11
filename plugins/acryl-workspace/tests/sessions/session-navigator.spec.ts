@@ -16,4 +16,25 @@ describe('session navigator', () => {
     expect(navigator.open('s2')).toBe(true)
     expect(release).toHaveBeenCalledTimes(1)
   })
+
+  it('opens through DSH\'s own navigation when it is composed, so DSH releases the session it held and nothing keeps the old chat on screen', () => {
+    const release = vi.fn()
+    const retain = vi.fn(() => ({ release }))
+    const service = { retain } as unknown as ISessions
+    const openSession = vi.fn()
+    let navigation: { openSession: (id: never) => void } | undefined
+    const navigator = createSessionNavigator(() => service, () => navigation)
+    // Before the navigation exists, ACRYL holds the main view itself.
+    expect(navigator.open('s1')).toBe(true)
+    expect(retain).toHaveBeenCalledTimes(1)
+    navigation = { openSession }
+    expect(navigator.open('s2')).toBe(true)
+    expect(openSession).toHaveBeenCalledWith('s2')
+    expect(retain).toHaveBeenCalledTimes(1)
+    // The hold ACRYL took before is released, so it cannot pin s1.
+    expect(release).toHaveBeenCalledTimes(1)
+    expect(navigator.open('s3')).toBe(true)
+    expect(openSession).toHaveBeenLastCalledWith('s3')
+    expect(release).toHaveBeenCalledTimes(1)
+  })
 })

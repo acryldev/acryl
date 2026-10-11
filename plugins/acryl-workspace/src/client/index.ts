@@ -14,6 +14,7 @@ import { applyAdvancedShell, resolveShellEnvironment } from 'acryl-app-shell/cli
 import { dockShellHooks } from './dock/dock-hooks.tsx'
 import { createAgentBridge } from './sessions/agent-bridge.ts'
 import { createSessionNavigator } from './sessions/session-navigator.ts'
+import type { MainViewNavigation } from './sessions/main-session.ts'
 import { createWorkspaceFilesApi } from './files/files-api.ts'
 import { filesTabPlugin } from './files/files-tab.ts'
 import { changesTabPlugin } from './changes/changes-tab.ts'
@@ -92,7 +93,10 @@ export function apply(ctx: ClientContext): void {
   const review = new ReviewStore(parseSavedThreads(storage?.getItem(REVIEW_STORAGE_KEY) ?? null))
   ctx.effect(() => startReviewPersistence(review, storage), 'acryl-workspace: save review comments')
   const agent = createAgentBridge(() => ctx.get('sessions'))
-  const sessionNavigator = createSessionNavigator(() => ctx.get('sessions'))
+  // DSH's session navigation (`dsh-client-ui-workspace`), looked up when a chat is opened: ACRYL does not import that package (the
+  // frame facade stays as it is), so the service is read by name through the narrow port `main-session.ts` declares.
+  const getNavigation = (): MainViewNavigation | undefined => (ctx.get as (name: string) => MainViewNavigation | undefined)('uiWorkspace')
+  const sessionNavigator = createSessionNavigator(() => ctx.get('sessions'), getNavigation)
   const rightPanel = {
     toggle(): void {
       try {
@@ -120,6 +124,7 @@ export function apply(ctx: ClientContext): void {
     gitApi,
     getWorkspaces: () => ctx.get('workspaces'),
     getSessions: () => ctx.get('sessions'),
+    getNavigation,
     directory: () => desktopDirectorySeams(),
     chatAvailable: () => capabilities.chat,
     webPickDirectory: createWebFolderPicker(),

@@ -1,19 +1,19 @@
 /** Open a chat session by id, resolved lazily so the port survives the sessions service coming and going. */
 
 import type { ISessions } from '@acryl/ui/frame'
-import { openMainSession } from './main-session.ts'
+import { openMainSession, type MainViewNavigation } from './main-session.ts'
 
 export interface SessionNavigator {
   /** @returns false when the sessions service is not available yet. */
   open(sessionId: string): boolean
 }
 
-export function createSessionNavigator(getSessions: () => ISessions | undefined): SessionNavigator {
+export function createSessionNavigator(getSessions: () => ISessions | undefined, getNavigation: () => MainViewNavigation | undefined = () => undefined): SessionNavigator {
   return {
     open(sessionId) {
       const sessions = getSessions()
       if (sessions === undefined) return false
-      openMainSession(sessions, sessionId)
+      openMainSession(sessions, sessionId, getNavigation())
       return true
     },
   }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { WorkspaceState } from '../../src/client/canvas/state.ts'
-import { ensureWorktreeChatTabs, syncChatTabTitles, synchronizeWorkspaceWithSessionNavigation } from '../../src/client/sessions/session-navigation.ts'
+import { ensureWorktreeChatTabs, sessionForSelectedChatTab, syncChatTabTitles, synchronizeWorkspaceWithSessionNavigation } from '../../src/client/sessions/session-navigation.ts'
 import type { RepoState, WorktreeState } from '../../src/client/worktrees/shell-state.ts'
 
 function counter(): () => string {
@@ -173,5 +173,18 @@ describe('syncChatTabTitles', () => {
     const seen = new Map<string, string>()
     syncChatTabTitles(workspace, rows('Old', true), seen)
     expect(workspace.getSnapshot().tiles.map(t => t.title)).toEqual(['New chat', 'README'])
+  })
+})
+
+describe('sessionForSelectedChatTab', () => {
+  it('opens the selected chat tab\'s own session when another one is on screen', () => {
+    expect(sessionForSelectedChatTab({ kind: 'chat', chatSessionId: 's2' }, 's1')).toBe('s2')
+  })
+
+  it('opens nothing for the session already on screen, a chat tab with no session yet, or another kind of tab', () => {
+    expect(sessionForSelectedChatTab({ kind: 'chat', chatSessionId: 's1' }, 's1')).toBeUndefined()
+    expect(sessionForSelectedChatTab({ kind: 'chat' }, 's1')).toBeUndefined()
+    expect(sessionForSelectedChatTab({ kind: 'pty' }, 's1')).toBeUndefined()
+    expect(sessionForSelectedChatTab(undefined, 's1')).toBeUndefined()
   })
 })

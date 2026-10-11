@@ -48,7 +48,7 @@ import type { TabTypesState } from '../tabs/tab-types-state.ts'
 import { BrowserPane } from '../browser/BrowserPane.tsx'
 import { ScratchFilePane } from '../files/ScratchFilePane.tsx'
 import { createWorkspacePtyApi, type WorkspacePtyApi } from '../terminal/pty-api.ts'
-import { ensureWorktreeChatTabs, syncChatTabTitles, synchronizeWorkspaceWithSessionNavigation } from '../sessions/session-navigation.ts'
+import { ensureWorktreeChatTabs, sessionForSelectedChatTab, syncChatTabTitles, synchronizeWorkspaceWithSessionNavigation } from '../sessions/session-navigation.ts'
 import type { ProjectsControl } from '../projects/projects-control.ts'
 import type { WorkspaceTile } from './state.ts'
 import { currentSessionId } from '../sessions/main-session.ts'
@@ -145,6 +145,15 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
       },
     )
   }, [workspace, shell, sessions])
+
+  // Selecting a chat tab opens its session (the tab strip, the tree and the palette all select tabs). Keyed on the selected tab only:
+  // when navigation elsewhere changes the session, the sync above selects that session's tab, which then already matches.
+  const latestSessions = useRef(sessions)
+  latestSessions.current = sessions
+  useEffect(() => {
+    const target = sessionForSelectedChatTab(active, currentSessionId(latestSessions.current))
+    if (target !== undefined) sessionNavigator.open(target)
+  }, [active?.id, active?.chatSessionId, sessionNavigator])
 
   // Every chat this worktree already has, as its own tab immediately - not lazily, one click at a time.
   // Never a dismissed one (T134-followup: the owner's hover "x" hides it from both the tree and here).
