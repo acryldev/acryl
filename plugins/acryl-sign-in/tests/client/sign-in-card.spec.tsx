@@ -14,7 +14,8 @@ const PROVIDERS = {
   signedIn: false,
   providers: [
     { key: 'llm-pi-ai/anthropic', label: 'Anthropic', methods: [{ id: 'oauth', label: 'Anthropic (Claude Pro/Max)' }, { id: 'api-key', label: 'Anthropic API key' }], configured: false },
-    { key: 'llm-pi-ai/openai-codex', label: 'OpenAI Codex', methods: [{ id: 'oauth', label: 'ChatGPT Plus/Pro' }], configured: true },
+    { key: 'llm-pi-ai/openai', label: 'OpenAI', methods: [{ id: 'oauth', label: 'Sign in with ChatGPT' }, { id: 'api-key', label: 'OpenAI API key' }], configured: true },
+    { key: 'llm-pi-ai/openai-codex', label: 'OpenAI Codex (legacy)', methods: [{ id: 'oauth', label: 'OpenAI (ChatGPT Plus/Pro)' }], configured: false },
     { key: 'llm-pi-ai/github-copilot', label: 'GitHub Copilot', methods: [{ id: 'oauth', label: 'GitHub Copilot' }], configured: false },
     { key: 'llm-pi-ai/mistral', label: 'Mistral', methods: [{ id: 'api-key', label: 'Mistral API key' }], configured: false },
     { key: 'deepseek-account-platform/default', label: 'DeepSeek', methods: [{ id: 'oauth', label: 'DeepSeek account' }], configured: false },
@@ -47,6 +48,7 @@ describe('SignInCard', () => {
     expect(screen.getByText('Signed in')).toBeTruthy()
     const options = [...screen.getByRole('combobox').querySelectorAll('option')].map(option => option.textContent)
     expect(options).toContain('GitHub Copilot')
+    expect(options).toContain('OpenAI Codex (legacy)')
     expect(options.join(' ')).not.toContain('Mistral')
   })
 

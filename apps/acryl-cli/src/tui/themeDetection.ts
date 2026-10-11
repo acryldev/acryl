@@ -9,9 +9,20 @@ import { getPaletteMode, isPaletteForced, setPaletteMode, type PaletteMode } fro
 
 /** The slice of pi-tui's `TUI` this needs, so it can be tested without a terminal. */
 export interface ColorSchemeSource {
-  queryTerminalColorScheme(options: { timeoutMs: number }): Promise<PaletteMode | undefined>
+  /** pi-tui 1.x: the colors the terminal reports (OSC 10/11/4); a terminal that does not answer leaves them out. */
+  queryTerminalColors(options: { timeoutMs: number }): Promise<{ readonly background?: { readonly r: number; readonly g: number; readonly b: number } }>
   onTerminalColorSchemeChange(listener: (scheme: PaletteMode) => void): () => void
   setTerminalColorSchemeNotifications(enabled: boolean): void
+}
+
+/**
+ * Light or dark from a reported background (0-255 channels), by relative luminance (ITU-R BT.709 weights); `undefined`
+ * when the terminal reported none.
+ */
+export function schemeOfBackground(background: { readonly r: number; readonly g: number; readonly b: number } | undefined): PaletteMode | undefined {
+  if (background === undefined) return undefined
+  const luminance = (0.2126 * background.r + 0.7152 * background.g + 0.0722 * background.b) / 255
+  return luminance >= 0.5 ? 'light' : 'dark'
 }
 
 /**
@@ -29,7 +40,7 @@ export function followTerminalColorScheme(tui: ColorSchemeSource, onChange: () =
   }
   const unsubscribe = tui.onTerminalColorSchemeChange(apply)
   tui.setTerminalColorSchemeNotifications(true)
-  void tui.queryTerminalColorScheme({ timeoutMs }).then(apply, () => {})   // a terminal that never answers resolves to undefined after the timeout
+  void tui.queryTerminalColors({ timeoutMs }).then(colors => { apply(schemeOfBackground(colors.background)) }, () => {})   // a terminal that never answers reports no background
   return () => {
     disposed = true
     unsubscribe()

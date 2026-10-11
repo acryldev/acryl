@@ -32,9 +32,9 @@ export interface DefaultModelAdoptionPorts {
  * whose preferred ids a catalog update removed) starts on that first entry instead.
  */
 export const STARTING_MODELS: Readonly<Record<string, readonly string[]>> = {
-  anthropic: ['claude-sonnet-5', 'claude-sonnet-4-6'],
-  'openai-codex': ['gpt-5.5'],
+  anthropic: ['claude-sonnet-5-5', 'claude-sonnet-5', 'claude-sonnet-4-6'],
   openai: ['gpt-5.5', 'gpt-5.4'],
+  'openai-codex': ['gpt-5.5'],
   deepseek: ['deepseek-v4-pro', 'deepseek-flash'],
 }
 

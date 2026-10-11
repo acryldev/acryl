@@ -44,6 +44,8 @@ allowBuilds:
 
 overrides:
   koffi: 3.1.5
+  # DSH 0.2.0-rc.2 pins pi-ai ^0.87.1, whose catalog stops at Claude Haiku 4.5, Sonnet 5 and Opus 5; 1.1.0 adds the 5.5 models (owner, 2026-10-11).
+  '@earendil-works/pi-ai': 1.1.0
 
 # Published DSH client packages declare React types in generated public APIs but
 # omit the type package from their manifests. Their web surface is React 18;
@@ -77,16 +79,21 @@ packageExtensions:
     dependencies:
       '@deepseek-ai/dsh-package-manifest': 0.2.0-rc.2
       '@deepseek-ai/dsh-host-webserver': 0.2.0-rc.2
+  # pi-ai 1.x's "Sign in with ChatGPT" needs a stable installation id; the patched adapter passes this harness home's anonymous id.
+  '@deepseek-ai/dsh-llm-pi-ai@0.2.0-rc.2':
+    dependencies:
+      '@deepseek-ai/dsh-anonymous-user-id': 0.2.0-rc.2
 
 patchedDependencies:
   '@deepseek-ai/dsh-app-boot@0.2.0-rc.2': patches/@deepseek-ai__dsh-app-boot@0.2.0-rc.2.patch
   '@deepseek-ai/dsh-client-ui-directory-picker-browse@0.2.0-rc.2': patches/@deepseek-ai__dsh-client-ui-directory-picker-browse@0.2.0-rc.2.patch
   '@deepseek-ai/dsh-client-ui-settings-models@0.2.0-rc.2': patches/@deepseek-ai__dsh-client-ui-settings-models@0.2.0-rc.2.patch
   '@deepseek-ai/dsh-client-ui-workspace@0.2.0-rc.2': patches/@deepseek-ai__dsh-client-ui-workspace@0.2.0-rc.2.patch
+  '@deepseek-ai/dsh-llm-pi-ai@0.2.0-rc.2': patches/@deepseek-ai__dsh-llm-pi-ai@0.2.0-rc.2.patch
   '@deepseek-ai/dsh-subprocess-local@0.2.0-rc.2': patches/@deepseek-ai__dsh-subprocess-local@0.2.0-rc.2.patch
   '@deepseek-ai/dsh-web-app@0.2.0-rc.2': patches/@deepseek-ai__dsh-web-app@0.2.0-rc.2.patch
-  '@earendil-works/pi-ai@0.87.1': patches/@earendil-works__pi-ai@0.87.1.patch
-  '@earendil-works/pi-tui@0.84.2': patches/@earendil-works__pi-tui@0.84.2.patch
+  '@earendil-works/pi-ai@1.1.0': patches/@earendil-works__pi-ai@1.1.0.patch
+  '@earendil-works/pi-tui@1.1.0': patches/@earendil-works__pi-tui@1.1.0.patch
   app-builder-lib@26.15.7: patches/app-builder-lib@26.15.7.patch
   dshmarket@1.17.1: patches/dshmarket@1.17.1.patch
   node-pty@1.2.0-beta.15: patches/node-pty@1.2.0-beta.15.patch

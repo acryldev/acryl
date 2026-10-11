@@ -24,10 +24,13 @@ export type SignInCardProps =
   & PropsLocale<'acryl.sign-in'>
   & InjectFace<SignInCardInjected>
 
-/** Flow providers named first, with the names people know them by; the rest go under "Other providers". */
+/**
+ * Flow providers named first, with the names people know them by; the rest go under "Other providers". ChatGPT is the
+ * `openai` route since pi-ai 1.x ("Sign in with ChatGPT"); `openai-codex` is its legacy route and stays in the list.
+ */
 const FEATURED = [
   { key: 'llm-pi-ai/anthropic', name: 'claude', via: 'claudeVia' },
-  { key: 'llm-pi-ai/openai-codex', name: 'chatgpt', via: 'chatgptVia' },
+  { key: 'llm-pi-ai/openai', name: 'chatgpt', via: 'chatgptVia' },
   { key: 'deepseek-account-platform/default', name: 'deepseek', via: 'deepseekVia' },
 ] as const
 

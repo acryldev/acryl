@@ -82,6 +82,8 @@ allowBuilds:
 
 overrides:
   koffi: 3.1.5
+  # DSH 0.2.0-rc.2 pins pi-ai ^0.87.1, whose catalog stops at Claude Haiku 4.5, Sonnet 5 and Opus 5; 1.1.0 adds the 5.5 models (owner, 2026-10-11).
+  '@earendil-works/pi-ai': 1.1.0
 
 # Published DSH client packages declare React types in generated public APIs but
 # omit the type package from their manifests. Their web surface is React 18;
@@ -115,6 +117,10 @@ packageExtensions:
     dependencies:
       '@deepseek-ai/dsh-package-manifest': ${upstream.runtimePackageVersion}
       '@deepseek-ai/dsh-host-webserver': ${upstream.runtimePackageVersion}
+  # pi-ai 1.x's "Sign in with ChatGPT" needs a stable installation id; the patched adapter passes this harness home's anonymous id.
+  '@deepseek-ai/dsh-llm-pi-ai@${upstream.runtimePackageVersion}':
+    dependencies:
+      '@deepseek-ai/dsh-anonymous-user-id': ${upstream.runtimePackageVersion}
 
 patchedDependencies:
 `

@@ -1,0 +1,25 @@
+diff --git a/dist/tui-alt-screen.d.ts b/dist/tui-alt-screen.d.ts
+index 0c48881..117b7bf 100644
+--- a/dist/tui-alt-screen.d.ts
++++ b/dist/tui-alt-screen.d.ts
+@@ -22,7 +22,7 @@ export interface TuiAltScreenOptions {
+     scrollToEndIndicator?: () => string;
+     /** Open an OSC 8 hyperlink activated with a primary-button click. */
+     openUrl?: (url: string) => void;
+-    /** Handle an unmodified secondary-button press for clipboard paste. Currently enabled on Windows only. */
++    /** Handle an unmodified secondary-button press for clipboard paste. */
+     onRightClickPaste?: () => void;
+     /** Automatically copy selected text to the clipboard on mouse release (default: true). */
+     copyOnSelect?: boolean;
+diff --git a/dist/tui-alt-screen.js b/dist/tui-alt-screen.js
+index afc1e6e..dc431df 100644
+--- a/dist/tui-alt-screen.js
++++ b/dist/tui-alt-screen.js
+@@ -823,7 +823,6 @@ export class TuiAltScreen extends TuiBase {
+     }
+     handleRightClickPaste(event) {
+         if (!this.onRightClickPaste ||
+-            process.platform !== "win32" ||
+             process.env.TERM_PROGRAM?.toLowerCase() === "vscode" ||
+             event.release ||
+             event.button !== 2) {

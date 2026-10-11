@@ -1,0 +1,22 @@
+diff --git a/lib/index.js b/lib/index.js
+index 0c74b3a..40d5fb2 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -6,6 +6,7 @@ import { brandString } from "@deepseek-ai/dsh-brand";
+ import { requestImageDimensions } from "@deepseek-ai/dsh-attachment";
+ import z from "@deepseek-ai/schemastery";
+ import { credentialKey, credentialKeyId, credentialKeyScope, credentialRef, isCredentialKeySegment, isCredentialRefName } from "@deepseek-ai/dsh-credentials";
++import { getOrCreateAnonymousUserId } from "@deepseek-ai/dsh-anonymous-user-id";
+ import { builtinModels, builtinProviders, getBuiltinModels, getBuiltinProviders } from "@earendil-works/pi-ai/providers/all";
+ import { anthropicMessagesApi } from "@earendil-works/pi-ai/api/anthropic-messages.lazy";
+ import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
+@@ -2480,6 +2481,9 @@ function registerPiAiFlows(ctx, auth) {
+ 						relay(event, session);
+ 					},
+ 					prompt: (prompt) => session.prompt(restate(prompt))
++				}, {
++					getDeviceId: () => getOrCreateAnonymousUserId(),
++					agentName: "ACRYL"
+ 				});
+ 			}
+ 		});

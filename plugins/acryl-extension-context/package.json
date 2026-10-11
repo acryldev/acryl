@@ -50,7 +50,7 @@
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
     "@deepseek-ai/schemastery": "~3.18.4",
-    "@earendil-works/pi-tui": "0.84.2",
+    "@earendil-works/pi-tui": "1.1.0",
     "acryl-ui-tui": "workspace:*"
   }
 }
