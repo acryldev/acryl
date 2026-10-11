@@ -1,4 +1,13 @@
-## 2026-10-11 (latest) - pi-ai and pi-tui 1.1.0: Claude 5.5 models, ChatGPT sign-in on the OpenAI route
+## 2026-10-11 (latest) - chat tabs, the sidebar and the conversation show the same chat
+
+Owner: "when i click on chats in left sidebar it's not synced with tabs and vice versa ... when i open new AcrylDSHChat it just copies the same chat over and over again"; the screenshot showed the tab and tree row "Model identity, tools, and skills" selected over the conversation of "codexTest".
+
+- **Cause:** every chat tab renders the one DSH conversation, which shows DSH's current session for as long as anything holds it as the main view. DSH's own navigation (`uiWorkspace`, `dsh-client-ui-workspace`) holds the session it opened (for example the first chat) and releases it only for a switch it makes itself; ACRYL switched with a second, parallel hold (`openMainSession` retained the new session and released only its own), so DSH's hold kept the old session on screen. Selecting a tab never opened its session at all.
+- **Fix** (`9afe9955a303d7850c85e287d850159d7ce8c6dc`): `openMainSession` asks DSH's navigation to open the session when it is composed (the one owner of the selection; ACRYL keeps its own hold only where it is not), and selecting a chat tab opens that tab's session (`sessionForSelectedChatTab`, keyed on the selected tab so the tree-to-tab sync cannot fight it).
+- **Measured** on Web (isolated home, worktree `main`): a new AcrylDSH Chat from "+" is an empty chat of its own; with three chats (FOUR, empty, THREE) every tab click and every tree click showed the matching conversation, tab and highlighted row. Tests for both rules.
+- **Also:** the gate failed once on `engine-dsh.spec.ts` (a profile boot at vitest's 5 s default, 1.3 s alone, over 5 s under the parallel gate); every profile boot there now has the 30 s its siblings had (`97278cb49bb7eefe6ccca31a9b80d3a66aba23c9`). The live run's home check flagged `~/.acryl-dev`: those writes were the owner's own dev app (session files at 15:58-16:01, while the test chats ran 16:02-16:07); the check cannot tell a concurrently running app from the run.
+
+## 2026-10-11 (later) - pi-ai and pi-tui 1.1.0: Claude 5.5 models, ChatGPT sign-in on the OpenAI route
 
 Owner, after signing in to Claude: the list showed Haiku 4.5 twice and no Haiku 5.5. Both entries are Haiku 4.5 (short and dated id). The catalog is pi-ai's, and DSH 0.2.0-rc.2 pins pi-ai ^0.87.1, whose Anthropic list stops at Haiku 4.5, Sonnet 5 and Opus 5; pi-ai 1.1.0 has Haiku 5.5, Sonnet 5.5 and Opus 5.5. Owner: "pi.dev had major release > 1.0 ... we can update" (`8c1326dc6dd7f6ee206de40f55a0ea57c9830d62`).
 
