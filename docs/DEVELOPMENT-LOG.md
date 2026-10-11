@@ -1,4 +1,15 @@
-## 2026-10-11 (latest) - chat tabs, the sidebar and the conversation show the same chat
+## 2026-10-12 (latest) - a frozen Desktop leaves evidence: page health record, log flood control
+
+Owner: after signing in to Meta and choosing its model, "suddenly whole acryl app is frozen"; the log held React error #185 (maximum update depth) from `slot entry crashed in 'main.conversation'` and the same `[client-store] subscriber failed` line over and over. Owner: "we need profiler or internal metrics to track such situations".
+
+- **What the log shows:** the loop began in the same second the profile was rewritten (00:30:26): the chat recorded `model/selection meta / muse-spark-1.3` 16 ms before, i.e. picking the model in the composer (which also saves it as the default), not sending a prompt. **Not reproduced:** the fresh build on a copy of the owner's dev home (credentials removed) did not loop for a sign-in that changes the default (with Settings open, for a provider new to the profile), for picking Muse Spark 1.3 in the very chat the owner used, or with a credentialed Meta route. DSH's conversation (`main.conversation`) is where it crashed; the trigger is still open.
+- **Log flood control** (`66a7829b667da38e2a1aa4d3e7dcd87e54d1d1b1`): Desktop mirrored every renderer console error into its log; a loop that repeats one error on every store update made the logging part of the freeze. Identical lines within five seconds are now written once plus "repeated N times" (`repeat-suppressor.ts`, tested). Measured: 500 identical errors became a handful of lines.
+- **Page health record** (`0c05e7e6e31b6616b27274b1b41e2c88eb808463`): the frame's client bundle (both surfaces) records main-thread stalls (late heartbeat while visible), long tasks over 250 ms, and runaway error loops (one error more than 20 times a second, with its first stack and the slot a crash named), each written once as `[acryl-health] {...}` (Desktop logs it) and kept in `window.__acrylHealth`. Measured in the Desktop copy: a 297 ms long task at boot, a 3001 ms block, and a 300-error burst recorded as one runaway incident.
+- **Chat tabs carry their session id** (`0f8140d4b9f1265108e5476f6287798ba7afeb14`): `data-chat-session-id`, for tests, agent control and diagnostics.
+- **Gate:** the full gate failed three times on engine-boot timeouts while the machine's load average was 57-130 (Jump Desktop, WindowServer, Chrome, Spotlight; none of these runs); the runtime suite passed alone before and after, and the touched packages (Desktop 837, app-shell 28, workspace 688) and the full typecheck passed.
+- **Also found:** the copy of the owner's profile holds his stored sign-ins; a first test prompt there probably went through his Meta account before the copy was made credential-free (now the default in the launcher script). Six old sessions in `~/.acryl-dev` with vanished `acryl-prompt-ws-*` folders (a 28 September system-prompt capture) cause harmless 400s.
+
+## 2026-10-11 - chat tabs, the sidebar and the conversation show the same chat
 
 Owner: "when i click on chats in left sidebar it's not synced with tabs and vice versa ... when i open new AcrylDSHChat it just copies the same chat over and over again"; the screenshot showed the tab and tree row "Model identity, tools, and skills" selected over the conversation of "codexTest".
 
