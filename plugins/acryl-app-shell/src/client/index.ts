@@ -9,17 +9,44 @@
  * This module is a library another plugin's own client code calls into (`applyAdvancedShell`), not a plugin
  * in its own right - but the browser boot sequence (`deepseek-harness` `client/web`'s `runPluginBoot`)
  * activates every row with a declared `dsh.client` bundle as its own Cordis plugin, same as the Host side
- * already does for this package (`src/index.ts`'s own no-op `apply`). `apply`/`name` here are that same
- * no-op, for the same reason: nothing for the browser to own by merely being present, no slot owned without
- * a caller invoking `applyAdvancedShell` itself.
+ * already does for this package. That activation owns no slot (no slot is owned without a caller invoking
+ * `applyAdvancedShell` itself); it starts the page's health record (`ui-health.ts`: stalls, long tasks and
+ * runaway error loops), which every surface hosting the frame should keep.
  */
+
+import type { Context } from '@deepseek-ai/cordis'
+import { browserLongTasks, startUiHealth, type UiHealthRecord } from './ui-health.ts'
 
 /** Stable Cordis plugin name, matching the Host side. */
 export const name = 'acryl-app-shell'
-/** No browser-side resources to acquire by merely registering this bundle. */
-export function apply(): void {}
+
+declare global {
+  interface Window {
+    /** The page's health record (`ui-health.ts`), readable from DevTools and by diagnostics. */
+    __acrylHealth?: UiHealthRecord
+  }
+}
+
+/** Start the health record for the page's lifetime. */
+export function apply(ctx: Context): void {
+  ctx.effect(() => {
+    const health = startUiHealth({
+      now: () => performance.now(),
+      setInterval: (callback, ms) => { const timer = window.setInterval(callback, ms); return () => { window.clearInterval(timer) } },
+      console: window.console,
+      isVisible: () => document.visibilityState === 'visible',
+      observeLongTasks: onTask => browserLongTasks(onTask) ?? (() => {}),
+    })
+    window.__acrylHealth = health.record
+    return () => {
+      health.stop()
+      if (window.__acrylHealth === health.record) delete window.__acrylHealth
+    }
+  }, 'acryl-app-shell: page health record')
+}
 
 export { applyAdvancedShell, type AdvancedShellHooks } from './advanced-shell.ts'
+export { startUiHealth, type UiHealthIncident, type UiHealthOptions, type UiHealthPorts, type UiHealthRecord } from './ui-health.ts'
 export { AdvancedFrame, type AdvancedFrameInjected, type AdvancedFrameProps } from './AdvancedFrame.tsx'
 export {
   type DesktopLayoutService,

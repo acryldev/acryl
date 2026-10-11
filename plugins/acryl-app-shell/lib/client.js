@@ -7,6 +7,126 @@ window.__ModuleLoader__.load({
 		require("@deepseek-ai/dsh-client-ui-renderer/client");
 		let react = require("react");
 		let react_jsx_runtime = require("react/jsx-runtime");
+		//#region src/client/ui-health.ts
+		const DEFAULTS = {
+			heartbeatMs: 500,
+			stallMs: 2e3,
+			longTaskMs: 250,
+			runawayCount: 20,
+			runawayQuietMs: 5e3,
+			maxIncidents: 50
+		};
+		/** The key a console error is counted under: its first argument as text (an Error as `name: message`), bounded. */
+		function messageOf(args) {
+			const first = args[0];
+			return (first instanceof Error ? `${first.name}: ${first.message}` : String(first)).slice(0, 300);
+		}
+		function stackOf(args) {
+			return args.find((arg) => arg instanceof Error)?.stack?.split("\n").slice(0, 12).join("\n");
+		}
+		/** @returns the record and a disposer that restores the console and stops the detectors. */
+		function startUiHealth(ports, options = {}) {
+			const settings = {
+				...DEFAULTS,
+				...options
+			};
+			const incidents = [];
+			const add = (incident) => {
+				incidents.push(incident);
+				if (incidents.length > settings.maxIncidents) incidents.shift();
+				report(incident);
+			};
+			const originalWarn = ports.console.warn.bind(ports.console);
+			const report = (incident) => {
+				originalWarn(`[acryl-health] ${JSON.stringify(incident)}`);
+			};
+			let lastBeat = ports.now();
+			const stopHeartbeat = ports.setInterval(() => {
+				const at = ports.now();
+				const late = at - lastBeat - settings.heartbeatMs;
+				lastBeat = at;
+				if (late > settings.stallMs && (ports.isVisible?.() ?? true)) add({
+					kind: "stall",
+					at,
+					ms: Math.round(late)
+				});
+			}, settings.heartbeatMs);
+			const stopLongTasks = ports.observeLongTasks?.((durationMs) => {
+				if (durationMs > settings.longTaskMs) add({
+					kind: "long-task",
+					at: ports.now(),
+					ms: Math.round(durationMs)
+				});
+			});
+			let windowStart = ports.now();
+			let counts = /* @__PURE__ */ new Map();
+			const open = /* @__PURE__ */ new Map();
+			const lastSeen = /* @__PURE__ */ new Map();
+			let lastSlot;
+			const originalError = ports.console.error;
+			const observedError = (...args) => {
+				originalError.apply(ports.console, args);
+				const at = ports.now();
+				if (at - windowStart >= 1e3) {
+					windowStart = at;
+					counts = /* @__PURE__ */ new Map();
+					for (const [key, seenAt] of lastSeen) if (at - seenAt >= settings.runawayQuietMs) {
+						open.delete(key);
+						lastSeen.delete(key);
+					}
+				}
+				const message = messageOf(args);
+				const slot = /slot entry crashed in '([^']+)'/u.exec(message)?.[1];
+				if (slot !== void 0) lastSlot = slot;
+				const ongoing = open.get(message);
+				if (ongoing !== void 0) {
+					ongoing.count += 1;
+					lastSeen.set(message, at);
+					return;
+				}
+				const seen = counts.get(message) ?? { count: 0 };
+				seen.count += 1;
+				const stack = seen.stack ?? stackOf(args);
+				if (stack !== void 0) seen.stack = stack;
+				counts.set(message, seen);
+				if (seen.count <= settings.runawayCount) return;
+				const incident = {
+					kind: "runaway",
+					at,
+					message,
+					count: seen.count,
+					...seen.stack === void 0 ? {} : { stack: seen.stack },
+					...lastSlot === void 0 ? {} : { slot: lastSlot }
+				};
+				open.set(message, incident);
+				lastSeen.set(message, at);
+				add(incident);
+			};
+			ports.console.error = observedError;
+			return {
+				record: { incidents },
+				stop: () => {
+					stopHeartbeat();
+					stopLongTasks?.();
+					if (ports.console.error === observedError) ports.console.error = originalError;
+				}
+			};
+		}
+		/** The browser's long tasks, where supported. */
+		function browserLongTasks(onTask) {
+			if (typeof PerformanceObserver === "undefined" || !PerformanceObserver.supportedEntryTypes?.includes("longtask")) return void 0;
+			const observer = new PerformanceObserver((list) => {
+				for (const entry of list.getEntries()) onTask(entry.duration);
+			});
+			observer.observe({
+				type: "longtask",
+				buffered: false
+			});
+			return () => {
+				observer.disconnect();
+			};
+		}
+		//#endregion
 		//#region src/client/layout-state.ts
 		const SIDEBAR_COLLAPSED = 56;
 		const MACOS_SIDEBAR_COLLAPSED = 90;
@@ -626,25 +746,30 @@ html:has([aria-modal="true"]) .dshDesktopSidebarSurface::before { -webkit-app-re
 		}
 		//#endregion
 		//#region src/client/index.ts
-		/**
-		* The generic three-column desktop/web app frame: sidebar column, main surface, resizable details column,
-		* platform title-bar spacing, theme presentation. One plugin claims it for its own UI (`applyAdvancedShell`),
-		* via the same `desktop.main`/`desktop.sidebar` slot contract regardless of which domain the caller is -
-		* the IDE (`plugins/acryl-workspace`) and a GTD, accounting or any other Blend's own main-surface plugin
-		* all use exactly this, never a Host-served page of their own (see
-		* `specs/036-cordis-ecosystem-and-acryl-blends/blend-instance-design.md` section 0 for why).
-		*
-		* This module is a library another plugin's own client code calls into (`applyAdvancedShell`), not a plugin
-		* in its own right - but the browser boot sequence (`deepseek-harness` `client/web`'s `runPluginBoot`)
-		* activates every row with a declared `dsh.client` bundle as its own Cordis plugin, same as the Host side
-		* already does for this package (`src/index.ts`'s own no-op `apply`). `apply`/`name` here are that same
-		* no-op, for the same reason: nothing for the browser to own by merely being present, no slot owned without
-		* a caller invoking `applyAdvancedShell` itself.
-		*/
 		/** Stable Cordis plugin name, matching the Host side. */
 		const name = "acryl-app-shell";
-		/** No browser-side resources to acquire by merely registering this bundle. */
-		function apply() {}
+		/** Start the health record for the page's lifetime. */
+		function apply(ctx) {
+			ctx.effect(() => {
+				const health = startUiHealth({
+					now: () => performance.now(),
+					setInterval: (callback, ms) => {
+						const timer = window.setInterval(callback, ms);
+						return () => {
+							window.clearInterval(timer);
+						};
+					},
+					console: window.console,
+					isVisible: () => document.visibilityState === "visible",
+					observeLongTasks: (onTask) => browserLongTasks(onTask) ?? (() => {})
+				});
+				window.__acrylHealth = health.record;
+				return () => {
+					health.stop();
+					if (window.__acrylHealth === health.record) delete window.__acrylHealth;
+				};
+			}, "acryl-app-shell: page health record");
+		}
 		//#endregion
 		exports.AdvancedFrame = AdvancedFrame;
 		exports.DesktopLayoutState = DesktopLayoutState;
@@ -664,6 +789,7 @@ html:has([aria-modal="true"]) .dshDesktopSidebarSurface::before { -webkit-app-re
 		exports.provideDesktopLayout = provideDesktopLayout;
 		exports.resolveShellEnvironment = resolveShellEnvironment;
 		exports.solveFrame = solveFrame;
+		exports.startUiHealth = startUiHealth;
 		return module.exports;
 	}
 });
