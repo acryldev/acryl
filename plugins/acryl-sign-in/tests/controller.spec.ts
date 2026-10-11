@@ -14,6 +14,7 @@ function build(configured: Record<string, boolean> = {}, extra: Partial<SignInPo
       list: () => [
         { key: 'llm-pi-ai/anthropic', label: 'Anthropic', methods: [{ id: 'oauth', label: 'Sign in with Claude' }, { id: 'api-key', label: 'API key' }] },
         { key: 'llm-pi-ai/openai-codex', label: 'ChatGPT (Codex)', methods: [{ id: 'oauth', label: 'Sign in with ChatGPT' }] },
+        { key: 'deepseek-account-platform/default', label: 'DeepSeek', methods: [{ id: 'browser', label: 'DeepSeek' }] },
       ],
       begin: request => {
         requests.push(request)
@@ -47,6 +48,12 @@ describe('SignInController', () => {
     const view = controller.begin('llm-pi-ai/anthropic', 'api-key')
     expect(view).toMatchObject({ key: 'llm-pi-ai/anthropic', method: 'api-key', phase: 'running' })
     expect(requests[0]).toMatchObject({ key: 'llm-pi-ai/anthropic', method: 'api-key' })
+  })
+
+  it('neither lists nor starts DeepSeek\'s account flow, which only DeepSeek\'s own account page can start', async () => {
+    const { controller } = build()
+    expect((await controller.providers()).providers.map(provider => provider.key)).not.toContain('deepseek-account-platform/default')
+    expect(() => controller.begin('deepseek-account-platform/default', 'browser')).toThrow(SignInRequestError)
   })
 
   it('refuses an unknown provider and a method the provider does not offer', () => {

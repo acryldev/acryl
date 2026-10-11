@@ -50,9 +50,20 @@ export interface CredentialProjectionServices {
   readonly credentials: CredentialProjectionCredentialsPort
 }
 
+/**
+ * The `apiKeyEnv` reference a provider route falls back to when its settings
+ * profile names none, e.g. `my-proxy` -> `MY_PROXY_API_KEY`. One rule for every
+ * surface (the terminal's `/model` and the Desktop sign-in read the same name).
+ */
+export function deriveApiKeyRef(route: string): string {
+  const upper = route.toUpperCase().replace(/[^A-Z0-9]+/g, '_')
+  const identifier = /^[A-Z_]/.test(upper) ? upper : `P_${upper}`
+  return `${identifier}_API_KEY`
+}
+
 export interface CredentialProjectionOptions {
-  /** Derive the settings-fallback `apiKeyEnv` reference for a route with no stored profile. */
-  readonly deriveApiKeyRef: (route: string) => string
+  /** Derive the settings-fallback `apiKeyEnv` reference for a route with no stored profile. Defaults to {@link deriveApiKeyRef}. */
+  readonly deriveApiKeyRef?: (route: string) => string
   /**
    * The scope a `/login` sign-in's own credential record lives under
    * (`dsh-llm-pi-ai`'s `credentialKey(scope, providerId)`), separate from the
@@ -80,6 +91,31 @@ interface StoredProviderProfileLike {
   readonly models?: readonly CredentialModelEntry[]
 }
 
+export interface RouteUsabilityServices {
+  readonly llm: Pick<CredentialProjectionLlmPort, 'listConfigurableProviders' | 'listProviders'>
+  readonly settings: CredentialProjectionSettingsPort
+  readonly credentials: {
+    describe(ref: string): Promise<{ readonly configured: boolean }>
+    describeRecord(key: string): Promise<{ readonly configured: boolean }>
+  }
+}
+
+/**
+ * Whether one route can answer a request now: live in `ctx.llm` and holding a credential (the settings profile's
+ * `apiKeyEnv` secret, or a sign-in's own record). The same credential rule as {@link computeCredentialProjection}, for
+ * one route and without reading any secret or model list.
+ */
+export async function isRouteUsable(services: RouteUsabilityServices, provider: string, options: CredentialProjectionOptions = {}): Promise<boolean> {
+  if (!services.llm.listProviders().some(entry => entry.id === provider)) return false
+  const entry = services.llm.listConfigurableProviders().find(candidate => candidate.provider === provider)
+  if (entry === undefined) return true
+  const descriptor = services.settings.describe({ redactSecrets: true }).find(candidate => candidate.ns === entry.settingsNs)
+  const value = (descriptor === undefined ? undefined : getAtPath(descriptor.value, entry.settingsPath)) as StoredProviderProfileLike | undefined
+  const apiKeyRef = value?.apiKeyEnv ?? (options.deriveApiKeyRef ?? deriveApiKeyRef)(provider)
+  if ((await services.credentials.describe(apiKeyRef)).configured) return true
+  return (await services.credentials.describeRecord(`${options.loginRecordScope ?? 'llm-pi-ai'}/${provider}`)).configured
+}
+
 /** Compute every provider route's joined credential/settings/live-registration row. */
 export async function computeCredentialProjection(
   services: CredentialProjectionServices,
@@ -96,7 +132,7 @@ export async function computeCredentialProjection(
     const descriptor = byNs.get(entry.settingsNs)
     const value = (descriptor === undefined ? undefined : getAtPath(descriptor.value, entry.settingsPath)) as StoredProviderProfileLike | undefined
     const userValue = descriptor === undefined ? undefined : getAtPath(descriptor.user, entry.settingsPath)
-    const apiKeyRef = value?.apiKeyEnv ?? options.deriveApiKeyRef(entry.provider)
+    const apiKeyRef = value?.apiKeyEnv ?? (options.deriveApiKeyRef ?? deriveApiKeyRef)(entry.provider)
     const info = await services.credentials.describe(apiKeyRef)
     // A `/login` sign-in never sets `apiKeyEnv` — it writes the login scope's
     // own record instead — so `info.configured` alone reads "no key" for a

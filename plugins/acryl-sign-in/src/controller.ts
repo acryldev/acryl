@@ -10,6 +10,7 @@ import {
   SignInAttempts,
   type AuthorizationBeginRequest,
   type AuthorizationOutcome,
+  type DefaultModelAdoptionPort,
   type RouteActivationPort,
   type SignInAttemptView,
 } from 'acryl-control'
@@ -23,6 +24,12 @@ export class SignInRequestError extends Error {
   }
 }
 
+/**
+ * Flows registered on `ctx.authorization` that cannot run through `begin` here: DeepSeek's account flow runs only once
+ * DeepSeek's own account service has opened an attempt (its Welcome page starts it), so offering it would always fail.
+ */
+const STARTED_ELSEWHERE = new Set(['deepseek-account-platform/default'])
+
 export interface SignInPorts {
   readonly authorization: {
     list(): readonly { readonly key: string; readonly label: string; readonly methods: readonly { readonly id: string; readonly label: string }[] }[]
@@ -30,6 +37,7 @@ export interface SignInPorts {
   }
   readonly credentials: { describeRecord(key: string): Promise<{ readonly configured: boolean }> }
   readonly routeActivation?: RouteActivationPort
+  readonly defaultModel?: DefaultModelAdoptionPort
   readonly newId: () => string
 }
 
@@ -40,6 +48,7 @@ export class SignInController {
     const authorization = new AuthorizationService({
       authorization: ports.authorization,
       ...ports.routeActivation === undefined ? {} : { routeActivation: ports.routeActivation },
+      ...ports.defaultModel === undefined ? {} : { defaultModel: ports.defaultModel },
       onCredentialChanged: () => {},
     })
     this.attempts = new SignInAttempts({ begin: request => authorization.begin(request), newId: ports.newId })
@@ -47,11 +56,15 @@ export class SignInController {
 
   async providers(): Promise<SignInProvidersResponse> {
     const providers: SignInProviderView[] = []
-    for (const entry of this.ports.authorization.list()) {
+    for (const entry of this.flows()) {
       const stored = await this.ports.credentials.describeRecord(entry.key)
       providers.push({ key: entry.key, label: entry.label, methods: entry.methods.map(({ id, label }) => ({ id, label })), configured: stored.configured })
     }
     return { providers, signedIn: providers.some(provider => provider.configured) }
+  }
+
+  private flows() {
+    return this.ports.authorization.list().filter(entry => !STARTED_ELSEWHERE.has(entry.key))
   }
 
   attempt(): SignInAttemptView | null {
@@ -59,7 +72,7 @@ export class SignInController {
   }
 
   begin(key: string, method: string | undefined): SignInAttemptView {
-    const flow = this.ports.authorization.list().find(entry => entry.key === key)
+    const flow = this.flows().find(entry => entry.key === key)
     if (flow === undefined) throw new SignInRequestError('That provider cannot be signed into.')
     if (method !== undefined && !flow.methods.some(candidate => candidate.id === method)) throw new SignInRequestError('That way of signing in is not offered for this provider.')
     return this.attempts.begin(key, method)

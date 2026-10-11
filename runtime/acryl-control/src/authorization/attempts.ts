@@ -66,6 +66,30 @@ interface Live {
   pending: { readonly prompt: SignInPrompt; readonly resolve: (value: string) => void; readonly reject: (cause: Error) => void } | undefined
 }
 
+/**
+ * A flow's failure as a person reads it. Provider token endpoints answer with a JSON body that the flows quote whole
+ * ("... token exchange failed (401): { "error": { "message": "Could not validate your token. ..." } }"); keep the flow's
+ * own lead-in and the provider's sentence, drop the JSON around it.
+ */
+export function readableFailure(cause: unknown): string {
+  const message = cause instanceof Error ? cause.message.trim() : ''
+  if (message === '') return 'Sign-in failed.'
+  const start = message.indexOf('{')
+  if (start === -1) return message
+  let body: unknown
+  try {
+    body = JSON.parse(message.slice(start))
+  } catch {
+    return message
+  }
+  const record = (value: unknown): Record<string, unknown> | undefined => typeof value === 'object' && value !== null ? value as Record<string, unknown> : undefined
+  const nested = record(record(body)?.error)
+  const said = [nested?.message, record(body)?.error_description, record(body)?.message, record(body)?.error].find(value => typeof value === 'string' && value.trim() !== '')
+  if (typeof said !== 'string') return message
+  const lead = message.slice(0, start).trim().replace(/:$/u, '')
+  return lead === '' ? said.trim() : `${lead}: ${said.trim()}`
+}
+
 export class SignInAttempts {
   private live: Live | undefined
 
@@ -174,9 +198,8 @@ export class SignInAttempts {
       this.update(live, { phase: outcome.status === 'authorized' ? 'authorized' : 'cancelled' })
     } catch (cause) {
       if (live.view.phase !== 'running') return
-      const message = cause instanceof Error && cause.message !== '' ? cause.message : 'Sign-in failed.'
       this.show(live, undefined)
-      this.update(live, { phase: 'failed', error: message })
+      this.update(live, { phase: 'failed', error: readableFailure(cause) })
     }
   }
 }

@@ -43,4 +43,14 @@ export interface RouteActivationPort {
   ensureRouteActivated(providerId: string, method: string | undefined): Promise<void>
 }
 
+/**
+ * Point new sessions at a just-signed-in provider when the current default
+ * cannot answer, so a first sign-in with anything but the composition's default
+ * provider does not leave the first message failing. A no-op when the current
+ * default works.
+ */
+export interface DefaultModelAdoptionPort {
+  adoptIfDefaultUnusable(providerId: string): Promise<void>
+}
+
 export type CredentialChangedListener = (key: string) => void

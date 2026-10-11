@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SignInAttemptError, SignInAttempts } from '../src/authorization/attempts.ts'
+import { SignInAttemptError, SignInAttempts, readableFailure } from '../src/authorization/attempts.ts'
 import type { AuthorizationBeginRequest, AuthorizationOutcome } from '../src/authorization/types.ts'
 
 /** A flow the test drives by hand: `begin` stays open until the test settles it. */
@@ -128,5 +128,23 @@ describe('SignInAttempts', () => {
     own.abort()
     expect(attempts.current()!.prompt).toBeUndefined()
     expect(attempts.current()!.phase).toBe('running')
+  })
+})
+
+describe('readableFailure', () => {
+  it('keeps the flow\'s lead-in and the provider\'s sentence from a quoted JSON error body', () => {
+    const cause = new Error('OpenAI Codex token exchange failed (401): { "error": { "message": "Could not validate your token. Please try signing in again.", "type": "invalid_request_error", "param": null, "code": "token_expired" } }')
+    expect(readableFailure(cause)).toBe('OpenAI Codex token exchange failed (401): Could not validate your token. Please try signing in again.')
+  })
+
+  it('reads an OAuth error_description', () => {
+    expect(readableFailure(new Error('Token exchange failed: {"error":"invalid_grant","error_description":"Invalid code."}'))).toBe('Token exchange failed: Invalid code.')
+  })
+
+  it('leaves a plain message, an unparsable body and an empty failure readable', () => {
+    expect(readableFailure(new Error('Network unreachable'))).toBe('Network unreachable')
+    expect(readableFailure(new Error('Bad answer: {not json'))).toBe('Bad answer: {not json')
+    expect(readableFailure(new Error(''))).toBe('Sign-in failed.')
+    expect(readableFailure('string')).toBe('Sign-in failed.')
   })
 })

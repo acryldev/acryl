@@ -1,3 +1,5 @@
+import type { IncomingMessage, ServerResponse } from 'node:http'
+import { Readable } from 'node:stream'
 import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it } from 'vitest'
 import * as signIn from '../src/index.ts'
@@ -10,11 +12,34 @@ const settle = (): Promise<void> => new Promise(resolve => { setTimeout(resolve,
 
 function webServer() {
   const paths: string[] = []
+  const handlers = new Map<string, (req: IncomingMessage, res: ServerResponse) => void>()
   return {
     port: 4321,
     paths,
-    register(route: { path: string }) { paths.push(route.path); return () => { paths.splice(paths.indexOf(route.path), 1) } },
+    handlers,
+    register(route: { path: string; handler: (req: IncomingMessage, res: ServerResponse) => void }) {
+      paths.push(route.path)
+      handlers.set(route.path, route.handler)
+      return () => { paths.splice(paths.indexOf(route.path), 1) }
+    },
   }
+}
+
+function post(value: unknown): IncomingMessage {
+  const body = JSON.stringify(value)
+  const req = Readable.from([body]) as IncomingMessage
+  req.method = 'POST'
+  req.headers = {
+    host: '127.0.0.1:4321', origin: 'http://127.0.0.1:4321', 'sec-fetch-site': 'same-origin',
+    'content-type': 'application/json', 'content-length': String(Buffer.byteLength(body)),
+  }
+  Object.defineProperty(req, 'socket', { configurable: true, value: { remoteAddress: '127.0.0.1' } })
+  return req
+}
+
+function response(): ServerResponse & { body: string } {
+  const res = { body: '', statusCode: 200, setHeader() {}, end(body?: string) { res.body = body ?? '' } }
+  return res as unknown as ServerResponse & typeof res
 }
 
 const authorization = { list: () => [], begin: async () => ({ status: 'cancelled' }) }
@@ -57,6 +82,38 @@ describe('acryl-sign-in Host plugin', () => {
     await settle()
     expect(server.paths).toEqual(ALL)
     expect(new Set(server.paths).size).toBe(ALL.length)
+    await fiber.dispose()
+  })
+
+  it('makes the signed-in provider the default for new sessions when the current default has no credential', async () => {
+    const server = webServer()
+    const root = new Context()
+    const saved: unknown[] = []
+    let finish: (() => void) | undefined
+    const finished = new Promise<void>(resolve => { finish = resolve })
+    root.provide('acrylWeb', server)
+    root.provide('credentials', { describe: async () => ({ configured: false }), describeRecord: async (key: string) => ({ configured: key === 'llm-pi-ai/anthropic' }) })
+    root.provide('authorization', {
+      list: () => [{ key: 'llm-pi-ai/anthropic', label: 'Anthropic', methods: [{ id: 'api-key', label: 'API key' }] }],
+      begin: async () => ({ status: 'authorized' }),
+    })
+    root.provide('settings', { describe: () => [], update: async () => {} })
+    root.provide('llm', {
+      listConfigurableProviders: () => [],
+      // DeepSeek, the current default, is not live (no key), so it cannot answer.
+      listProviders: () => [{ id: 'anthropic' }],
+      listModels: async () => [{ id: 'claude-fable-5' }, { id: 'claude-sonnet-5' }],
+    })
+    root.provide('agentDefaultModel', {
+      currentSelection: () => ({ provider: 'deepseek', model: 'deepseek-v4-pro' }),
+      saveSelection: async (next: unknown) => { saved.push(next); finish?.() },
+    })
+    const fiber = root.plugin(signIn)
+    await settle()
+    const res = response()
+    server.handlers.get(SIGN_IN_BEGIN_PATH)?.(post({ key: 'llm-pi-ai/anthropic', method: 'api-key' }), res)
+    await finished
+    expect(saved).toEqual([{ provider: 'anthropic', model: 'claude-sonnet-5' }])
     await fiber.dispose()
   })
 })

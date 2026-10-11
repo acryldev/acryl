@@ -6,7 +6,12 @@ the rest of the installed provider catalog, by account (OAuth) or by API key, be
 - The providers are the harness's own authorization flows (`ctx.authorization`, registered by `dsh-llm-pi-ai`); nothing here
   knows a protocol. The terminal's `/login` drives the same flows.
 - `acryl-control`'s `SignInAttempts` holds the one running conversation (what the flow said, the question it waits on, how it
-  ended); `createRouteActivation` makes the provider usable once it succeeds. `src/controller.ts` is those two over plain ports.
+  ended); `createRouteActivation` makes the provider usable once it succeeds, and `createDefaultModelAdoption` makes it the
+  default for new sessions when the current default cannot answer (its provider has no credential or is not live; a default
+  that works is never replaced). The starting model per provider is `STARTING_MODELS` in `acryl-control`, else the route's first
+  model. `src/controller.ts` is those over plain ports.
+- DeepSeek's own account flow is registered on `ctx.authorization` too, but only DeepSeek's account page can start it, so it is
+  neither listed nor startable here.
 - Routes (same-origin, loopback, bounded JSON; no response carries a secret, and a typed answer is handed to the flow and dropped):
 
   | Route | Method | Meaning |

@@ -14,6 +14,7 @@ import type {
   AuthorizationOutcome,
   AuthorizationPort,
   CredentialChangedListener,
+  DefaultModelAdoptionPort,
   RouteActivationPort,
 } from './types.ts'
 
@@ -21,6 +22,8 @@ export interface AuthorizationServiceDeps {
   readonly authorization: AuthorizationPort
   /** Optional: absent profiles degrade to "not available" (matches the surface's own optional-service pattern). */
   readonly routeActivation?: RouteActivationPort
+  /** Optional: runs after the route is active, so the route's models can be listed. */
+  readonly defaultModel?: DefaultModelAdoptionPort
   readonly onCredentialChanged: CredentialChangedListener
 }
 
@@ -35,6 +38,7 @@ export class AuthorizationService {
       if (this.deps.routeActivation !== undefined) {
         await this.deps.routeActivation.ensureRouteActivated(providerId, request.method)
       }
+      await this.deps.defaultModel?.adoptIfDefaultUnusable(providerId)
       this.deps.onCredentialChanged(request.key)
     }
     return outcome

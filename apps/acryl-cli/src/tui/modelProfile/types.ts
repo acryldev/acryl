@@ -8,17 +8,10 @@
 import type { AuthMethod } from 'acryl-control'
 
 /**
- * The `apiKeyEnv` reference a provider route falls back to when its settings
- * profile names none, e.g. `my-proxy` -> `MY_PROXY_API_KEY`. Shared between
- * the overlay (recomputing it for a just-typed custom route before save) and
- * the host wiring (deriving it for every already-configured row), so the
- * naming rule lives in exactly one place.
+ * The `apiKeyEnv` fallback naming rule, owned by `acryl-control` so the overlay, the host wiring and the Desktop sign-in
+ * all read the same name.
  */
-export function deriveApiKeyRef(route: string): string {
-  const upper = route.toUpperCase().replace(/[^A-Z0-9]+/g, '_')
-  const identifier = /^[A-Z_]/.test(upper) ? upper : `P_${upper}`
-  return `${identifier}_API_KEY`
-}
+export { deriveApiKeyRef } from 'acryl-control'
 
 /**
  * A short, identifying (never full) preview of a stored secret — first 4 and
