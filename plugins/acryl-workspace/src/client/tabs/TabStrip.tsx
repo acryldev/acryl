@@ -191,6 +191,7 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
               data-split={tile.id === snapshot.splitId || undefined}
               data-tile-kind={tile.kind}
               data-tab-id={tile.id}
+              data-chat-session-id={tile.chatSessionId}
               onContextMenu={(event) => { event.preventDefault(); setTabMenu({ id: tile.id, x: event.clientX, y: event.clientY }) }}
             >
               {renaming ? (
