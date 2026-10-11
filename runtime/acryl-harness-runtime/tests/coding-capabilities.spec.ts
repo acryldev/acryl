@@ -190,7 +190,7 @@ describe('the workspace and the ACRYL shell are shared by Web and Desktop (spec 
     expect(rows('web')).toEqual(rows('desktop'))
     expect(shapeOf(createAcrylCodingCapabilityPatches(new Set(['web']))).insertedIds).toContain('acryl-support')
     expect(shapeOf(createAcrylCodingCapabilityPatches(new Set(['desktop']))).insertedIds).not.toContain('acryl-support')
-    expect(shapeOf(createAcrylCodingCapabilityPatches(new Set(['web']))).insertedIds).not.toContain('acryl-sign-in')
+    expect(shapeOf(createAcrylCodingCapabilityPatches(new Set(['web']))).insertedIds).toContain('acryl-sign-in')
     const shell = (surface: AcrylSurface): unknown => createAcrylShellCapabilityPatches(new Set([surface]), 'advanced')
     expect(shell('web')).toEqual(shell('desktop'))
     expect(shell('web')).toEqual([
@@ -210,7 +210,7 @@ describe('the workspace and the ACRYL shell are shared by Web and Desktop (spec 
   })
 
   it('names the ACRYL packages each surface must make resolvable, the same on Web and Desktop', () => {
-    expect(acrylCodingCapabilityPackages(new Set(['web']))).toEqual(['acryl-settings', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control'])
+    expect(acrylCodingCapabilityPackages(new Set(['web']))).toEqual(['acryl-settings', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-sign-in', 'acryl-support', 'acryl-agent-control'])
     expect(acrylCodingCapabilityPackages(new Set(['desktop']))).toEqual(['acryl-settings', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-sign-in', 'acryl-agent-control'])
     expect(acrylCodingCapabilityPackages(new Set(['tui']))).toEqual(['acryl-settings'])
   })

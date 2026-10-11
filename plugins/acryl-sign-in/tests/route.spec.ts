@@ -11,8 +11,8 @@ const ATTEMPT = { id: 'a1', key: 'llm-pi-ai/anthropic', method: 'oauth', phase: 
 function controller(overrides: Partial<Record<keyof SignInController, unknown>> = {}): SignInController {
   return {
     providers: vi.fn(async () => ({ providers: [], signedIn: false })),
-    attempt: vi.fn(() => null),
-    begin: vi.fn(() => ATTEMPT),
+    attempt: vi.fn(async () => null),
+    begin: vi.fn(async () => ATTEMPT),
     answer: vi.fn(() => ATTEMPT),
     cancel: vi.fn(() => ({ ...ATTEMPT, phase: 'cancelled' })),
     ...overrides,
@@ -47,7 +47,7 @@ describe('sign-in routes', () => {
     expect(providers.statusCode).toBe(200)
     expect(json(providers)).toEqual({ providers: [], signedIn: false })
     const attempt = response()
-    handleAttemptRequest(request('GET'), attempt, ORIGIN, controller())
+    await handleAttemptRequest(request('GET'), attempt, ORIGIN, controller())
     expect(json(attempt)).toEqual({ attempt: null })
   })
 
@@ -69,7 +69,12 @@ describe('sign-in routes', () => {
     await handleBeginRequest(request('POST', { key: 'llm-pi-ai/anthropic', method: 'oauth' }), res, ORIGIN, c)
     expect(res.statusCode).toBe(200)
     expect(json(res)).toEqual({ attempt: ATTEMPT })
-    expect(c.begin).toHaveBeenCalledWith('llm-pi-ai/anthropic', 'oauth')
+    expect(c.begin).toHaveBeenCalledWith('llm-pi-ai/anthropic', 'oauth', {})
+    await handleBeginRequest(request('POST', { key: 'deepseek-account-platform/default', locale: 'zh-CN' }), response(), ORIGIN, c)
+    expect(c.begin).toHaveBeenLastCalledWith('deepseek-account-platform/default', undefined, { locale: 'zh-CN' })
+    const odd = response()
+    await handleBeginRequest(request('POST', { key: 'k', locale: 'en US; drop' }), odd, ORIGIN, c)
+    expect(odd.statusCode).toBe(400)
   })
 
   it('rejects malformed bodies without calling the controller', async () => {

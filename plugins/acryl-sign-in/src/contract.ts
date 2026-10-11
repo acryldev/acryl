@@ -1,4 +1,4 @@
-/** The wire contract of the sign-in routes; the Welcome window of the Desktop shell is its client. */
+/** The wire contract of the sign-in routes; the account sign-in card on Settings > Models is its client. */
 import type { SignInAttemptView } from 'acryl-control'
 
 export const SIGN_IN_PROVIDERS_PATH = '/api/acryl-sign-in/providers'
@@ -36,6 +36,8 @@ export interface SignInAttemptResponse {
 export interface SignInBeginRequest {
   readonly key: string
   readonly method?: string
+  /** The UI's language (BCP 47), for a provider page that is localized (DeepSeek's). */
+  readonly locale?: string
 }
 
 export interface SignInAnswerRequest {

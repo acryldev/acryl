@@ -5,6 +5,7 @@
  * sessions cannot answer (its provider has no credential), the signed-in provider becomes the default.
  */
 import { randomUUID } from 'node:crypto'
+import { createRequire } from 'node:module'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Context } from '@deepseek-ai/cordis'
 import {
@@ -12,12 +13,15 @@ import {
   type CredentialProjectionConfigurableProvider, type DefaultModelAdoptionPort, type DefaultModelAdoptionPorts, type RouteActivationSettingsPort, type RouteUsabilityServices,
 } from 'acryl-control'
 import { SignInController, type SignInPorts } from './controller.ts'
+import type { DeepSeekAccountPort } from './deepseek-account.ts'
 import {
   SIGN_IN_ANSWER_PATH, SIGN_IN_ATTEMPT_PATH, SIGN_IN_BEGIN_PATH, SIGN_IN_CANCEL_PATH, SIGN_IN_PROVIDERS_PATH,
 } from './contract.ts'
 import { handleAnswerRequest, handleAttemptRequest, handleBeginRequest, handleCancelRequest, handleProvidersRequest } from './route.ts'
 
 export const name = 'acryl-sign-in'
+/** This package's version (`lib/index.js` sits one folder below `package.json`), sent to DeepSeek as the requesting client's version. */
+const VERSION = (createRequire(import.meta.url)('../package.json') as { version: string }).version
 export const inject = ['acrylWeb', 'authorization', 'credentials']
 
 /**
@@ -68,6 +72,13 @@ export function apply(ctx: Context): void {
     credentials,
     ...activation === undefined ? {} : { routeActivation: activation },
     defaultModel: defaultModelAdoption(ctx, credentials),
+    deepseekAccount: () => {
+      const port = service<DeepSeekAccountPort>(ctx, 'deepseekAccount')
+      // The browser returns to the Host's `/oauth/callback` on the origin these routes are served on.
+      return port === undefined ? undefined : {
+        port, callbackOrigin: origin, loginSource: process.versions.electron === undefined ? 'web' : 'desktop', version: VERSION,
+      }
+    },
     newId: randomUUID,
   })
   const report = (operation: string, cause: unknown): void => {
@@ -75,7 +86,7 @@ export function apply(ctx: Context): void {
   }
   const routes: readonly (readonly [string, (req: IncomingMessage, res: ServerResponse) => unknown])[] = [
     [SIGN_IN_PROVIDERS_PATH, (req, res) => handleProvidersRequest(req, res, origin, controller, report)],
-    [SIGN_IN_ATTEMPT_PATH, (req, res) => { handleAttemptRequest(req, res, origin, controller) }],
+    [SIGN_IN_ATTEMPT_PATH, (req, res) => handleAttemptRequest(req, res, origin, controller, report)],
     [SIGN_IN_BEGIN_PATH, (req, res) => handleBeginRequest(req, res, origin, controller, report)],
     [SIGN_IN_ANSWER_PATH, (req, res) => handleAnswerRequest(req, res, origin, controller, report)],
     [SIGN_IN_CANCEL_PATH, (req, res) => handleCancelRequest(req, res, origin, controller, report)],

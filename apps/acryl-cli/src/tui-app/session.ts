@@ -15,6 +15,8 @@ import type { Context } from '@deepseek-ai/cordis'
 import { createAcrylSessionBridge, type AcrylSessionBridge } from 'acryl-harness-runtime'
 import {
   computeCredentialProjection,
+  createDefaultModelAdoption,
+  isRouteUsable,
   AuthorizationService,
   type AuthorizationInteraction,
   type AuthorizationPort,
@@ -22,6 +24,8 @@ import {
   type CredentialProjectionRow,
   type CredentialProjectionServices,
   type CredentialProjectionSettingsPort,
+  type DefaultModelAdoptionPort,
+  type DefaultModelAdoptionPorts,
   type RouteActivationPort,
 } from 'acryl-control'
 import { startDirectHost, type DirectHost } from '../host/direct.js'
@@ -59,6 +63,7 @@ interface CredentialRecordLike {
 }
 interface CredentialsServicePort {
   describe(ref: string): Promise<{ readonly configured: boolean }>
+  describeRecord(key: string): Promise<{ readonly configured: boolean }>
   readRecord?(key: string): Promise<CredentialRecordLike | undefined>
   set(ref: string, value: string): Promise<void>
   unset(ref: string): Promise<void>
@@ -379,6 +384,22 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     },
   }
 
+  // After a sign-in, new sessions start on the signed-in provider when the current default cannot answer (its provider
+  // has no credential or is not live); a default that works is kept. The same rule the Desktop and Web sign-in use.
+  const defaultModelPort: DefaultModelAdoptionPort = {
+    async adoptIfDefaultUnusable(providerId) {
+      const defaultModel = host.ctx.get('agentDefaultModel') as DefaultModelAdoptionPorts['defaultModel'] | undefined
+      const services = credentialProjectionServices()
+      if (defaultModel === undefined || services === undefined) return
+      const llmSvc = services.llm
+      await createDefaultModelAdoption({
+        defaultModel,
+        isUsable: route => isRouteUsable({ llm: llmSvc, settings: services.settings, credentials: services.credentials as CredentialsServicePort }, route),
+        listModels: route => llmSvc.listModels(route),
+      }).adoptIfDefaultUnusable(providerId)
+    },
+  }
+
   // Fetch the registered authorization flows (providers that ship a login via
   // dsh-llm-pi-ai), derive each one's configured/authMethod from the same
   // shared `CredentialProjection` `/model` reads (not an independent record
@@ -628,6 +649,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
         const authorizationService = new AuthorizationService({
           authorization: authSvc,
           routeActivation: routeActivationPort,
+          defaultModel: defaultModelPort,
           onCredentialChanged: () => syncCredentialViews(),
         })
         try {

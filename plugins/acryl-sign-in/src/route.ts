@@ -24,12 +24,15 @@ function onlyKeys(value: Record<string, unknown>, allowed: readonly string[]): b
 
 function parseBegin(value: unknown): SignInBeginRequest | undefined {
   const body = record(value)
-  if (body === undefined || !onlyKeys(body, ['key', 'method'])) return undefined
+  if (body === undefined || !onlyKeys(body, ['key', 'method', 'locale'])) return undefined
   const key = text(body.key, MAX_FIELD_LENGTH)
   if (key === undefined) return undefined
-  if (body.method === undefined) return { key }
-  const method = text(body.method, MAX_FIELD_LENGTH)
-  return method === undefined ? undefined : { key, method }
+  const method = body.method === undefined ? undefined : text(body.method, MAX_FIELD_LENGTH)
+  if (body.method !== undefined && method === undefined) return undefined
+  // A BCP 47 tag, for the language of DeepSeek's sign-in page.
+  const locale = body.locale === undefined ? undefined : typeof body.locale === 'string' && /^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8}){0,4}$/u.test(body.locale) ? body.locale : null
+  if (locale === null) return undefined
+  return { key, ...method === undefined ? {} : { method }, ...locale === undefined ? {} : { locale } }
 }
 
 function parseAnswer(value: unknown): SignInAnswerRequest | undefined {
@@ -65,10 +68,15 @@ export async function handleProvidersRequest(req: IncomingMessage, res: ServerRe
   }
 }
 
-export function handleAttemptRequest(req: IncomingMessage, res: ServerResponse, origin: string, controller: SignInController): void {
+export async function handleAttemptRequest(req: IncomingMessage, res: ServerResponse, origin: string, controller: SignInController, report: Reporter = () => {}): Promise<void> {
   if (req.method !== 'GET') return finishJson(res, 405, error('method not allowed'), 'GET')
   if (!isSameOriginLoopbackRequest(req, origin, false)) return finishJson(res, 403, error('forbidden'))
-  finishJson(res, 200, { attempt: controller.attempt() })
+  try {
+    finishJson(res, 200, { attempt: await controller.attempt() })
+  } catch (cause) {
+    report('read the sign-in', cause)
+    finishJson(res, 500, error('sign-in unavailable'))
+  }
 }
 
 /** A POST route: same-origin JSON in, the attempt out. `run` throws a refusal for a request the harness cannot honour. */
@@ -85,7 +93,7 @@ function postRoute<T>(
     const request = parse(value)
     if (request === undefined) return finishJson(res, 400, error(`invalid ${operation} request`))
     try {
-      finishJson(res, 200, { attempt: run(controller, request) })
+      finishJson(res, 200, { attempt: await run(controller, request) })
     } catch (cause) {
       const reason = refusal(cause)
       if (reason !== undefined) return finishJson(res, 409, error(reason))
@@ -95,6 +103,6 @@ function postRoute<T>(
   }
 }
 
-export const handleBeginRequest = postRoute(parseBegin, (controller, request) => controller.begin(request.key, request.method), 'begin sign-in')
+export const handleBeginRequest = postRoute(parseBegin, (controller, request) => controller.begin(request.key, request.method, request.locale === undefined ? {} : { locale: request.locale }), 'begin sign-in')
 export const handleAnswerRequest = postRoute(parseAnswer, (controller, request) => controller.answer(request.attemptId, request.promptId, request.value), 'answer sign-in')
 export const handleCancelRequest = postRoute(parseCancel, (controller, request) => controller.cancel(request.attemptId), 'cancel sign-in')

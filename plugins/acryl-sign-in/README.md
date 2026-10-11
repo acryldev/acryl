@@ -1,25 +1,33 @@
 # acryl-sign-in
 
-The Host routes behind a sign-in screen. Desktop's Welcome window uses them to offer Claude (Anthropic), ChatGPT (OpenAI Codex) and
-the rest of the installed provider catalog, by account (OAuth) or by API key, before the workspace opens.
+Sign in to a model provider with an account, from **Settings > Models** on Web and Desktop. A card at the foot of the page
+offers Claude (Anthropic, Claude Pro or Max), ChatGPT (OpenAI Codex), DeepSeek (DeepSeek account) and, in a list, every other
+provider whose harness flow offers an account sign-in (GitHub Copilot, ...). API keys stay on the page's own provider editor
+("Add model provider").
 
-- The providers are the harness's own authorization flows (`ctx.authorization`, registered by `dsh-llm-pi-ai`); nothing here
-  knows a protocol. The terminal's `/login` drives the same flows.
-- `acryl-control`'s `SignInAttempts` holds the one running conversation (what the flow said, the question it waits on, how it
-  ended); `createRouteActivation` makes the provider usable once it succeeds, and `createDefaultModelAdoption` makes it the
-  default for new sessions when the current default cannot answer (its provider has no credential or is not live; a default
-  that works is never replaced). The starting model per provider is `STARTING_MODELS` in `acryl-control`, else the route's first
-  model. `src/controller.ts` is those over plain ports.
-- DeepSeek's own account flow is registered on `ctx.authorization` too, but only DeepSeek's account page can start it, so it is
-  neither listed nor startable here.
+- **Client** (`src/client/`): the card, registered in the Models page's `settings.models.footer` seat. It opens the provider's
+  sign-in page (the system browser on Desktop, a new tab on Web; a pop-up opened without a click is blocked by browsers, so
+  "Open sign-in page" stays on the card), shows the question a flow asks (paste a code or a redirect URL, choose browser or
+  device login), and reads a failure in the provider's words.
+- **Host** (`src/index.ts`, `src/controller.ts`): the providers are the harness's own authorization flows (`ctx.authorization`,
+  registered by `dsh-llm-pi-ai`); nothing here knows a protocol. The terminal's `/login` drives the same flows.
+  `acryl-control`'s `SignInAttempts` holds the one running conversation; `createRouteActivation` makes the provider usable
+  once it succeeds, and `createDefaultModelAdoption` makes it the default for new sessions when the current default cannot
+  answer (its provider has no credential or is not live; a default that works is never replaced). The starting model per
+  provider is `STARTING_MODELS` in `acryl-control`, else the route's first model.
+- **DeepSeek account** (`src/deepseek-account.ts`): DeepSeek's own account dialog registers only inside DeepSeek's Desktop
+  window, so the Host drives the harness's `deepseekAccount` service directly and shows its attempt like a flow. The browser
+  returns to the Host's own `/oauth/callback` on the origin these routes are served on; a successful sign-in makes the
+  `deepseek-account` model route the default when the current default cannot answer. DeepSeek's account flow on
+  `ctx.authorization` is never started as a flow.
 - Routes (same-origin, loopback, bounded JSON; no response carries a secret, and a typed answer is handed to the flow and dropped):
 
   | Route | Method | Meaning |
   | --- | --- | --- |
   | `/api/acryl-sign-in/providers` | GET | providers, their methods, whether each is signed in, and whether any is |
   | `/api/acryl-sign-in/attempt` | GET | the current conversation, or `null` |
-  | `/api/acryl-sign-in/begin` | POST `{ key, method? }` | start a sign-in (a running one is withdrawn) |
+  | `/api/acryl-sign-in/begin` | POST `{ key, method?, locale? }` | start a sign-in (a running one is withdrawn); `locale` sets the language of DeepSeek's page |
   | `/api/acryl-sign-in/answer` | POST `{ attemptId, promptId, value }` | answer the question the flow asks |
   | `/api/acryl-sign-in/cancel` | POST `{ attemptId }` | withdraw the conversation |
 
-Composed for Desktop through the `sign-in` capability in `acryl-harness-runtime`'s `coding-capabilities.ts`.
+Composed for Web and Desktop through the `sign-in` capability in `acryl-harness-runtime`'s `coding-capabilities.ts`.

@@ -12,6 +12,7 @@
 export type {} from '@deepseek-ai/dsh-client-locale/client'
 export type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 export type {} from '@deepseek-ai/dsh-client-ui-settings/client'
+export type {} from '@deepseek-ai/dsh-client-ui-settings-models/client'
 export type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
 export type {} from '@deepseek-ai/dsh-client-ui-theme/client'
 
