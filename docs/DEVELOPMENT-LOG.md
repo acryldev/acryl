@@ -1,4 +1,14 @@
-## 2026-10-11 (latest) - Settings > Models: sign in with an account (Claude, ChatGPT, DeepSeek) on Web and Desktop
+## 2026-10-11 (latest) - pi-ai and pi-tui 1.1.0: Claude 5.5 models, ChatGPT sign-in on the OpenAI route
+
+Owner, after signing in to Claude: the list showed Haiku 4.5 twice and no Haiku 5.5. Both entries are Haiku 4.5 (short and dated id). The catalog is pi-ai's, and DSH 0.2.0-rc.2 pins pi-ai ^0.87.1, whose Anthropic list stops at Haiku 4.5, Sonnet 5 and Opus 5; pi-ai 1.1.0 has Haiku 5.5, Sonnet 5.5 and Opus 5.5. Owner: "pi.dev had major release > 1.0 ... we can update" (`8c1326dc6dd7f6ee206de40f55a0ea57c9830d62`).
+
+- **Override:** `pnpm-workspace.yaml` overrides `@earendil-works/pi-ai` to 1.1.0; pi-tui moves to 1.1.0 in the CLI, the extension context and the TUI kit. Every name DSH's adapter imports from pi-ai still exists in 1.1.0. Both ACRYL patches re-ported (the ACRYL mark on the sign-in success page, which moved to `dist/utils/oauth-page.js`; right-click paste on every platform in pi-tui).
+- **ChatGPT moved:** in pi-ai 1.x "Sign in with ChatGPT" belongs to the `openai` route (which also takes an API key and lists GPT-5.5 to GPT-6.1); `openai-codex` is labelled legacy. The Models card's ChatGPT row now uses `openai`; the legacy route stays under Other providers.
+- **New requirement, patched:** pi-ai 1.x's ChatGPT sign-in needs a stable installation id (`getDeviceId`) that DSH's 0.87-era adapter does not pass ("Sign in with ChatGPT requires a device ID"). `patches/@deepseek-ai__dsh-llm-pi-ai@0.2.0-rc.2.patch` passes the engine home's existing anonymous id (`getOrCreateAnonymousUserId`, a random UUID in `<engine home>/.anonymous-user-id`, already used by telemetry) and the agent name "ACRYL"; a `packageExtensions` entry declares that dependency.
+- **pi-tui API change:** `queryTerminalColorScheme` is gone; the terminal's light/dark detection now reads the OSC 11 background from `queryTerminalColors` and decides by luminance (tested).
+- **Measured:** a real streaming request through pi-ai 1.1.0's OpenAI-compatible module (DeepSeek route) answered "pong"; on Web (isolated home) the composer's model list shows Claude Haiku 5.5, Sonnet 5.5 and Opus 5.5, a message to Sonnet 5.5 with a fake key reached Anthropic and came back "API key is invalid" (the request path works); ChatGPT opens `auth.openai.com` and Cancel frees port 1455; the terminal UI starts, answers a real message and lists the account providers in `/login`. Real-account sign-in after the upgrade is for the owner to confirm.
+
+## 2026-10-11 - Settings > Models: sign in with an account (Claude, ChatGPT, DeepSeek) on Web and Desktop
 
 Owner: "in settings in Models ==> way to add api key or login with oauth openAI codex / anthropic claude / deepseek oauth (it allows from recently both via api key and via oauth)", and to work on `main` now. The terminal `acryl` already had OAuth through `/login` (pi-tui); DSH 0.2.0-rc has no CLI surface of its own.
 
