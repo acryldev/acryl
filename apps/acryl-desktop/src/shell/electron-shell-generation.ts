@@ -15,6 +15,10 @@ import type { ElectronPlatformStrategy } from './electron-platform.ts'
 import type { DesktopNotification, DesktopShellSpec } from './runtime.ts'
 import { prepareTrayIcon } from './tray-icons.ts'
 import { desktopWindowOptions } from './window-options.ts'
+import { createRepeatSuppressor } from './repeat-suppressor.ts'
+
+/** How long identical renderer console lines are folded into one "repeated N times" line. */
+const RENDERER_REPEAT_WINDOW_MS = 5_000
 
 const MIN_ZOOM_LEVEL = -4
 const MAX_ZOOM_LEVEL = 4
@@ -144,11 +148,11 @@ export class ElectronShellGeneration {
     // invisible outside DevTools. Mirror warnings and errors to the same
     // stderr/log sink as every other desktop diagnostic so `pnpm run dev`
     // surfaces them without a manual DevTools open.
+    // A render loop repeats one error on every store update; identical lines are folded so the log cannot join the freeze.
+    const rendererLog = createRepeatSuppressor({ windowMs: RENDERER_REPEAT_WINDOW_MS, write: line => { this.options.logError(line) } })
     const rendererConsoleMessage = (event: Electron.Event<Electron.WebContentsConsoleMessageEventParams>): void => {
       if (event.level !== 'warning' && event.level !== 'error') return
-      this.options.logError(
-        `acryl-desktop: renderer console.${event.level} (${event.sourceId}:${String(event.lineNumber)}): ${event.message}`,
-      )
+      rendererLog.log(`acryl-desktop: renderer console.${event.level} (${event.sourceId}:${String(event.lineNumber)}): ${event.message}`)
     }
 
     app.on('activate', activate)
@@ -190,6 +194,7 @@ export class ElectronShellGeneration {
       window.webContents.off('render-process-gone', rendererGone)
       window.webContents.off('did-fail-load', loadFailed)
       window.webContents.off('console-message', rendererConsoleMessage)
+      rendererLog.flush()
       tray?.off('click', show)
     }
 
