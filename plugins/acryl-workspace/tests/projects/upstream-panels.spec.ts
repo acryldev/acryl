@@ -64,6 +64,15 @@ describe('the upstream panels the left pane lists', () => {
     expect(panels.active()).toBe('plugins')
   })
 
+  it('close returns to the tabs from an open page, and does nothing when none is open', () => {
+    const place = layout('plugins' as MainPanelId)
+    const panels = createUpstreamPanels({ slots: () => registry([]), layout: () => place })
+    panels.close()
+    expect(panels.active()).toBeNull()
+    panels.close()
+    expect(place.selected).toEqual([null])
+  })
+
   it('closes the open panel when its own entry is selected again, and switches when another is selected', () => {
     const slots = registry([{ options: { id: 'plugins', label: 'Plugins' } }, { options: { id: 'automation', label: 'Automation tasks' } }])
     const place = layout()

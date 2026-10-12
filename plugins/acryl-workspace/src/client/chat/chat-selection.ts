@@ -34,6 +34,8 @@ export interface ChatSelectionDeps {
   readonly getSessions: () => ISessions | undefined
   /** DSH's navigation (`uiWorkspace`); absent in a composition without it, in which case ACRYL holds the main view itself. */
   readonly getNavigation: () => MainViewNavigation | undefined
+  /** Shows the workspace's tabs again when a page (Plugins, Automation tasks) covers them; a user's pick always returns to the tabs. */
+  readonly showTabs?: () => void
   /** Defers reconciling until the session list has settled. Default: a microtask. */
   readonly schedule?: (run: () => void) => void
 }
@@ -55,12 +57,14 @@ export class ChatSelection implements SessionNavigator {
   open(sessionId: string): boolean {
     const sessions = this.deps.getSessions()
     if (sessions === undefined) return false
+    this.deps.showTabs?.()
     openMainSession(sessions, sessionId, this.deps.getNavigation())
     return true
   }
 
   /** The user selected a tab in a worktree's tab set: select it, and show its chat when it is a chat tab bound to one. */
   selectTab(worktree: string, tileId: string): void {
+    this.deps.showTabs?.()
     const state = this.deps.groups.stateFor(worktree)
     state.selectTile(tileId)
     const tile = state.getSnapshot().tiles.find(candidate => candidate.id === tileId)
@@ -76,6 +80,7 @@ export class ChatSelection implements SessionNavigator {
     // The tab the user had selected there, read before selecting the worktree adds its eager chat tabs.
     const before = this.deps.groups.stateFor(path).getSnapshot()
     const active = before.tiles.find(tile => tile.id === before.activeId)
+    this.deps.showTabs?.()
     this.deps.shell.select(path)
     if (active?.kind === 'chat' && active.chatSessionId !== undefined) {
       const target = sessionForSelectedChatTab(active, this.current())

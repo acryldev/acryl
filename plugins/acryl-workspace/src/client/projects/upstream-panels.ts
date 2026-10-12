@@ -23,6 +23,8 @@ export interface UpstreamPanels {
   active(): MainPanelId | null
   /** Open a panel; selecting the one that is already open closes it and returns to the conversation. */
   select(id: MainPanelId): void
+  /** Close whichever panel is open and show the workspace's tabs again. */
+  close(): void
 }
 
 /** The slice of the registry this reads; `ctx.slots` provides it. */
@@ -67,6 +69,10 @@ export function createUpstreamPanels(source: { slots(): PanelSlotRegistry | unde
     select(id) {
       const layout = source.layout()
       layout?.selectPanel(layout.panelInfo.getSnapshot().activePanelId === id ? null : id)
+    },
+    close() {
+      const layout = source.layout()
+      if (layout !== undefined && layout.panelInfo.getSnapshot().activePanelId !== null) layout.selectPanel(null)
     },
   }
 }

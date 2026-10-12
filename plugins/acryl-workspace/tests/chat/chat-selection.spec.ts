@@ -89,7 +89,7 @@ const budgeted = (run: () => void): void => {
 }
 const settle = async (): Promise<void> => { for (let i = 0; i < 10; i++) await Promise.resolve(); reconciles = 0 }
 
-async function world() {
+async function world(showTabs: () => void = () => {}) {
   const dsh = new FakeDsh([
     { id: 'm1', cwd: MAIN, blank: false, displayTitle: 'this is a test please' },
     { id: 'm2', cwd: MAIN, blank: false, displayTitle: 'metaTest' },
@@ -98,7 +98,7 @@ async function world() {
   ])
   const shell = new WorkspaceShellState(gitApi())
   const groups = new WorkspaceGroups()
-  const chats = new ChatSelection({ groups, shell, getSessions: () => dsh.sessions, getNavigation: () => dsh.navigation as unknown as MainViewNavigation, schedule: budgeted })
+  const chats = new ChatSelection({ groups, shell, getSessions: () => dsh.sessions, getNavigation: () => dsh.navigation as unknown as MainViewNavigation, schedule: budgeted, showTabs })
   dsh.navigation.openSession('m1')
   const stop = chats.watch(dsh.sessions)
   await shell.discover(MAIN)
@@ -182,6 +182,17 @@ describe('ChatSelection', () => {
     w.chats.selectTab(MAIN, w.tabOf(MAIN, 'm2'))
     await settle()
     expect(w.dsh.opened.length).toBe(before + 1)
+    w.stop()
+  })
+
+  it('returns to the tabs on every pick (a tab, a worktree, a chat), even one that shows no new chat - an open page (Plugins) covered them', async () => {
+    let shown = 0
+    const w = await world(() => { shown += 1 })
+    w.chats.showWorktree(MAIN, () => {})
+    w.chats.showWorktree(MAIN, () => {})
+    w.chats.selectTab(MAIN, w.tabOf(MAIN, 'm1'))
+    w.chats.open('m2')
+    expect(shown).toBe(4)
     w.stop()
   })
 

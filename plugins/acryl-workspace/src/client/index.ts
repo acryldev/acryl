@@ -98,7 +98,7 @@ export function apply(ctx: ClientContext): void {
   // frame facade stays as it is), so the service is read by name through the narrow port `main-session.ts` declares.
   const getNavigation = (): MainViewNavigation | undefined => (ctx.get as (name: string) => MainViewNavigation | undefined)('uiWorkspace')
   // The one owner of which chat is shown and which tab and worktree show it; follows DSH's sessions service as it comes and goes.
-  const chats = new ChatSelection({ groups, shell, getSessions: () => ctx.get('sessions'), getNavigation })
+  const chats = new ChatSelection({ groups, shell, getSessions: () => ctx.get('sessions'), getNavigation, showTabs: () => { upstreamPanels.close() } })
   ctx.inject(['sessions'], child => { child.effect(() => chats.watch(child.sessions), 'acryl-workspace: tabs follow the shown chat') })
   const rightPanel = {
     toggle(): void {

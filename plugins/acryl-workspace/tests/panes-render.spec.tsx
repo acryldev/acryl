@@ -110,7 +110,7 @@ function fakeProjects(overrides: Partial<ProjectsControl> = {}): ProjectsControl
 /** The pages DSH's plugins contribute to its sidebar, as a fixed list with a recorded selection. */
 function fakePanels(list: ReadonlyArray<{ id: string, label: string }> = [], open: string | null = null): UpstreamPanels & { selected: string[] } {
   const selected: string[] = []
-  return { selected, list: () => list as never, subscribe: () => () => {}, active: () => open as never, select: id => { selected.push(id) } }
+  return { selected, list: () => list as never, subscribe: () => () => {}, active: () => open as never, select: id => { selected.push(id) }, close: () => { selected.push("close") } }
 }
 
 /** The plugin entry's ChatSelection over a fixed session list (it discovers each chat's folder and follows the shown chat). */
