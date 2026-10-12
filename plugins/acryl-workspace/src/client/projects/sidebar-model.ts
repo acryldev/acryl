@@ -124,6 +124,26 @@ function isInside(cwd: string, root: string): boolean {
 }
 
 /**
+ * The tree's repositories a workspace shows (spec 043): for each of its project folders, the repository that owns it - the one with the
+ * deepest root or worktree containing it, so a plain folder that merely contains the project (a parent like ~/projects) is not pulled in.
+ * Default shows every repository the tree knows, as before workspaces existed.
+ */
+export function reposInWorkspace(repos: readonly RepoRow[], projects: readonly string[], isDefault: boolean): readonly RepoRow[] {
+  if (isDefault) return repos
+  const owners = new Set<RepoRow>()
+  for (const project of projects) {
+    let best: { repo: RepoRow, depth: number } | undefined
+    for (const repo of repos) {
+      for (const place of [repo.root, ...repo.rows.map(row => row.path)]) {
+        if (isInside(project, place) && (best === undefined || place.length > best.depth)) best = { repo, depth: place.length }
+      }
+    }
+    if (best !== undefined) owners.add(best.repo)
+  }
+  return repos.filter(repo => owners.has(repo))
+}
+
+/**
  * The worktree that owns a session directory: the deepest worktree path containing it, so a
  * linked worktree nested under the main checkout still claims its own sessions.
  */

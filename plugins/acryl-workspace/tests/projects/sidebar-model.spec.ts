@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildProjectRows, chatLabel, entriesForWorktree, owningWorktree } from '../../src/client/projects/sidebar-model.ts'
+import { buildProjectRows, chatLabel, entriesForWorktree, owningWorktree, reposInWorkspace } from '../../src/client/projects/sidebar-model.ts'
 import type { RepoState, ShellSnapshot, WorktreeState } from '../../src/client/worktrees/shell-state.ts'
 
 function worktree(path: string, branch: string | null, patch: Partial<WorktreeState> = {}): WorktreeState {
@@ -134,5 +134,23 @@ describe('chatLabel', () => {
     expect(chatLabel({ blank: true, displayTitle: 'proj' })).toBe('New chat')
     expect(chatLabel({ blank: false, displayTitle: 'Explore' })).toBe('Explore')
     expect(chatLabel({ blank: false, displayTitle: 'Explore', title: '  ' })).toBe('Explore')
+  })
+})
+
+describe('reposInWorkspace (spec 043)', () => {
+  const row = (path: string) => ({ path }) as never
+  const repos = [
+    { root: '/p/acryl', name: 'acryl', git: true, rows: [row('/p/acryl'), row('/p/acryl.worktrees/fix')] },
+    { root: '/p/other', name: 'other', git: true, rows: [row('/p/other')] },
+    { root: '/p/notes', name: 'notes', git: false, rows: [row('/p/notes')] },
+    { root: '/p', name: 'p', git: false, rows: [row('/p')] },
+  ] as never
+  it('shows every repository in Default', () => {
+    expect(reposInWorkspace(repos, [], true)).toBe(repos)
+  })
+  it('shows a workspace only the repositories owning its projects (the deepest containing one, never a parent folder that is also a project)', () => {
+    expect(reposInWorkspace(repos, ['/p/acryl.worktrees/fix'], false).map(repo => repo.name)).toEqual(['acryl'])
+    expect(reposInWorkspace(repos, ['/p/other/src', '/p/notes'], false).map(repo => repo.name)).toEqual(['other', 'notes'])
+    expect(reposInWorkspace(repos, [], false)).toEqual([])
   })
 })

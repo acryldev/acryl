@@ -9,12 +9,11 @@ import { statSync } from 'node:fs'
 import { isAbsolute, resolve } from 'node:path'
 import type { SettingsScope } from 'acryl-settings'
 import z from '@deepseek-ai/schemastery'
-import type { ProjectRegistryView, WorkspaceKind, WorkspaceSummary } from './contract.ts'
+import { DEFAULT_WORKSPACE_ID, type ProjectRegistryView, type WorkspaceKind, type WorkspaceSummary } from './contract.ts'
 
 export const PROJECTS_NAMESPACE = 'workspace'
 
-/** The workspace every app has: it cannot be deleted, and the folders added before workspaces existed are its projects. */
-export const DEFAULT_WORKSPACE_ID = 'default'
+export { DEFAULT_WORKSPACE_ID }
 
 export interface RemoteTarget {
   host: string

@@ -438,15 +438,15 @@ describe('ProjectsControl.removeWorkspace (T135-followup)', () => {
 describe('ProjectsControl folder chooser, remaining cases', () => {
   it('lists ACRYL\'s own project folders, not the chat\'s workspaces, as project sources', () => {
     const w = world({ projects: ['/a', '/b'], workspaces: [{ workspaceId: 'w9', path: '/only-in-the-chat' }] })
-    expect(w.control.workspacePaths()).toEqual(['/a', '/b'])
-    expect(w.control.workspaceKey()).toBe('default\n/a\n/b')
+    expect(w.control.projectPaths()).toEqual(['/a', '/b'])
+    expect(w.control.projectsKey()).toBe('default\n/a\n/b')
   })
 
   it('adding a project saves it in the list and registers no chat workspace until a chat starts there', async () => {
     const w = world({ projects: [] })
     expect(await w.control.addProjectByPath('/p/proj')).toEqual({ ok: true })
     expect(w.projects).toEqual(['/p/proj'])
-    expect(w.control.workspacePaths()).toEqual(['/p/proj'])
+    expect(w.control.projectPaths()).toEqual(['/p/proj'])
     expect(w.workspaceCreates).toHaveLength(1) // the chat that adding opens is what registers the workspace, one way
   })
 
@@ -454,7 +454,7 @@ describe('ProjectsControl folder chooser, remaining cases', () => {
     const w = world({ registryRefuses: true })
     expect(await w.control.addProjectByPath('/p/proj')).toMatchObject({ ok: false, reason: expect.stringContaining('could not be saved') })
     expect(w.projects).toEqual([])
-    expect(w.control.workspacePaths()).toEqual([])
+    expect(w.control.projectPaths()).toEqual([])
   })
 })
 

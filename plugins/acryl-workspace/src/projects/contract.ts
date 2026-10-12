@@ -11,6 +11,9 @@ export type WorkspaceKind = 'individual' | 'shared' | 'remote'
 
 export const WORKSPACE_KINDS: readonly WorkspaceKind[] = ['individual', 'shared', 'remote']
 
+/** The workspace every app has: it cannot be deleted, and the folders added before workspaces existed are its projects. */
+export const DEFAULT_WORKSPACE_ID = 'default'
+
 /** One workspace as the page sees it. */
 export interface WorkspaceSummary {
   readonly id: string

@@ -4,6 +4,7 @@
  */
 
 import type { ShellPlatform } from 'acryl-app-shell/client'
+import type { WorkspaceKind, WorkspaceSummary } from '../../projects/contract.ts'
 import type { ISessions, IWorkspaces } from '@acryl/ui/frame'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
@@ -22,11 +23,20 @@ export type ProjectAction =
 export interface ProjectsControl {
   /** Whether chats can be opened here at all (the DSH chat is running). Menus and buttons for chats are hidden when false. */
   readonly chatAvailable: boolean
-  /** Change-detection key for the registered workspace folders (a primitive, safe to subscribe to). */
-  workspaceKey(): string
-  /** Registered workspace folders, so a project appears even before it has a chat. */
-  workspacePaths(): readonly string[]
-  subscribeWorkspaces(listener: () => void): () => void
+  /** Change-detection key for the shown workspace and its projects (a primitive, safe to subscribe to). */
+  projectsKey(): string
+  /** The shown workspace's project folders, so a project appears even before it has a chat. */
+  projectPaths(): readonly string[]
+  /** Notified when the workspaces, the shown one or its projects change. */
+  subscribeProjects(listener: () => void): () => void
+  /** Every workspace, Default first (spec 043); the same array until it changes. */
+  workspaces(): readonly WorkspaceSummary[]
+  /** The id of the workspace the sidebar shows. */
+  currentWorkspace(): string
+  /** Create a workspace and show it. */
+  createWorkspace(input: { readonly name: string, readonly kind: WorkspaceKind, readonly remote?: { readonly host: string, readonly user?: string, readonly path?: string } }): Promise<ProjectAction>
+  /** Show another workspace. */
+  switchWorkspace(id: string): Promise<ProjectAction>
   /**
    * How a folder is chosen here: the window's own native picker (desktop) or the Host's (everywhere
    * else - Web, and desktop Linux where Electron has no picker seam of its own), or by typing the
@@ -174,9 +184,19 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
   return {
     get chatAvailable() { return chatOn() },
     // The project list is ACRYL's own (the Host keeps it); the chat's workspaces are not consulted for it.
-    workspaceKey: () => deps.registry.key(),
-    workspacePaths: () => deps.registry.paths(),
-    subscribeWorkspaces: listener => deps.registry.subscribe(listener),
+    projectsKey: () => deps.registry.key(),
+    projectPaths: () => deps.registry.paths(),
+    subscribeProjects: listener => deps.registry.subscribe(listener),
+    workspaces: () => deps.registry.workspaces(),
+    currentWorkspace: () => deps.registry.current(),
+    async createWorkspace(input) {
+      const changed = await deps.registry.createWorkspace(input)
+      return changed.ok ? { ok: true } : fail(changed.reason)
+    },
+    async switchWorkspace(id) {
+      const changed = await deps.registry.switchWorkspace(id)
+      return changed.ok ? { ok: true } : fail(changed.reason)
+    },
 
     chooserKind() {
       return nativePicker() !== undefined ? 'picker' : 'path'

@@ -113,6 +113,24 @@ await check('a worktree pick returns from the Plugins page to the tabs', async (
   return 'back to the tabs'
 })
 
+// Creates a workspace: only in an isolated copy (--launch), never in a window someone is using.
+if (run !== undefined) {
+  await check('a new workspace is created from the dialog, shown, and switched back from (spec 043)', async () => {
+    expectTrue(await page.evaluate(`(() => { const b = document.querySelector('[aria-label="New workspace"]'); b?.click(); return b !== null })()`), 'no New workspace button')
+    await sleep(800)
+    expectTrue(await page.evaluate(`(() => { const d = document.querySelector('[role=dialog][aria-label="New Workspace"]'); if (!d) return false; [...d.querySelectorAll('[role=radio]')].find(r => /Shared Context/.test(r.textContent))?.click(); const input = d.querySelector('[aria-label="Workspace name"]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, 'Feature check'); input.dispatchEvent(new Event('input', { bubbles: true })); return true })()`), 'no New Workspace dialog')
+    await sleep(300)
+    await page.evaluate(`[...document.querySelectorAll('[role=dialog] button')].find(b => b.textContent.trim() === 'Create')?.click()`)
+    await sleep(2000)
+    expectTrue(await page.evaluate(`document.querySelector('[aria-label="Workspace Feature check"]')?.getAttribute('aria-pressed') === 'true'`), 'the new workspace is not the shown one')
+    expectTrue(await page.evaluate(`!!document.querySelector('.dshWorkspaceSideEmpty')`), 'the new workspace does not show an empty project list')
+    await page.evaluate(`document.querySelector('[aria-label="Workspace Default"]')?.click()`)
+    await sleep(2000)
+    expectTrue(await page.evaluate(`document.querySelector('[aria-label="Workspace Default"]')?.getAttribute('aria-pressed') === 'true'`), 'Default did not come back')
+    return 'created, shown empty, back to Default'
+  })
+}
+
 await check('no errors and no freezes', async () => {
   const errors = await page.evaluate('window.__checkErrors')
   const incidents = await page.evaluate(`(window.__acrylHealth?.incidents ?? []).filter(incident => incident.kind !== 'long-task')`)

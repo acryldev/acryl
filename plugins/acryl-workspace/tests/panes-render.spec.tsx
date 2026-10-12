@@ -85,14 +85,20 @@ const SESSIONS = {
   },
 }
 
+const DEFAULT_ONLY = [{ id: 'default', name: 'Default', kind: 'individual' as const, projects: [] }]
+
 function fakeProjects(overrides: Partial<ProjectsControl> = {}): ProjectsControl & { shown: string[] } {
   const shown: string[] = []
   return {
     shown,
     chatAvailable: true,
-    workspaceKey: () => '',
-    workspacePaths: () => [],
-    subscribeWorkspaces: () => () => {},
+    projectsKey: () => '',
+    projectPaths: () => [],
+    subscribeProjects: () => () => {},
+    workspaces: () => DEFAULT_ONLY,
+    currentWorkspace: () => 'default',
+    createWorkspace: async (input): Promise<ProjectAction> => { shown.push(`create:${input.kind}:${input.name}`); return { ok: true } },
+    switchWorkspace: async (id): Promise<ProjectAction> => { shown.push(`switch:${id}`); return { ok: true } },
     chooserKind: () => 'picker',
     addProject: async (): Promise<ProjectAction> => ({ ok: true }),
     addProjectByPath: async (): Promise<ProjectAction> => ({ ok: true }),
@@ -168,7 +174,7 @@ describe('ProjectsSidebar', () => {
     const shell = new WorkspaceShellState(api())
     render(<ProjectsSidebar {...sidebarProps(shell)} />)
     expect(screen.queryByRole('tab')).toBeNull()
-    expect(screen.getByText('Workspaces')).toBeTruthy()
+    expect(screen.getByText('Projects')).toBeTruthy()
     expect(screen.queryByRole('button', { name: /classic view/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /Back to Workspaces/i })).toBeNull()
     expect(screen.queryByText('All chats')).toBeNull()
@@ -186,11 +192,48 @@ describe('ProjectsSidebar', () => {
     shell.dispose()
   })
 
+  it('has a workspace strip: Default first, the shown one pressed, a switch on click, and New workspace opens the dialog that creates one (spec 043)', async () => {
+    const shell = new WorkspaceShellState(api())
+    // The same array on every read, as the registry gives it: a new one per read would re-render forever.
+    const list = [{ id: 'default', name: 'Default', kind: 'individual' as const, projects: [] }, { id: 'ws-1', name: 'Payments', kind: 'shared' as const, projects: [] }]
+    const projects = fakeProjects({
+      workspaces: () => list,
+      currentWorkspace: () => 'default',
+    })
+    render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
+    expect(screen.getByRole('button', { name: 'Workspace Default' }).getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(screen.getByRole('button', { name: 'Workspace Payments' }))
+    await waitFor(() => { expect(projects.shown).toContain('switch:ws-1') })
+    fireEvent.click(screen.getByRole('button', { name: 'New workspace' }))
+    const dialog = screen.getByRole('dialog', { name: 'New Workspace' })
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Shared Context/ }))
+    fireEvent.change(within(dialog).getByLabelText('Workspace name'), { target: { value: 'Billing' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Create' }))
+    await waitFor(() => { expect(projects.shown).toContain('create:shared:Billing') })
+    await waitFor(() => { expect(screen.queryByRole('dialog', { name: 'New Workspace' })).toBeNull() })
+    shell.dispose()
+  })
+
+  it('asks a Remote Machine workspace for its SSH host before it can be created', () => {
+    const shell = new WorkspaceShellState(api())
+    render(<ProjectsSidebar {...sidebarProps(shell)} />)
+    fireEvent.click(screen.getByRole('button', { name: 'New workspace' }))
+    const dialog = screen.getByRole('dialog', { name: 'New Workspace' })
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Remote Machine/ }))
+    fireEvent.change(within(dialog).getByLabelText('Workspace name'), { target: { value: 'Box' } })
+    expect((within(dialog).getByRole('button', { name: 'Create' }) as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.change(within(dialog).getByLabelText('SSH host'), { target: { value: 'z370n' } })
+    expect((within(dialog).getByRole('button', { name: 'Create' }) as HTMLButtonElement).disabled).toBe(false)
+    fireEvent.keyDown(dialog, { key: 'Escape' })
+    expect(screen.queryByRole('dialog', { name: 'New Workspace' })).toBeNull()
+    shell.dispose()
+  })
+
   it('renders only the upstream sidebar when collapsed to the rail', () => {
     const shell = new WorkspaceShellState(api())
     render(<ProjectsSidebar {...sidebarProps(shell, true)} />)
     expect(screen.getByTestId('upstream')).toBeTruthy()
-    expect(screen.queryByText('Workspaces')).toBeNull()
+    expect(screen.queryByText('Projects')).toBeNull()
     shell.dispose()
   })
 
@@ -401,7 +444,7 @@ describe('ProjectsSidebar', () => {
     const shell = new WorkspaceShellState(api())
     const addProjectByPath = vi.fn(async (): Promise<ProjectAction> => ({ ok: true }))
     render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ chooserKind: () => 'path', addProjectByPath }))} />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Add git project' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Add project' }))
     fireEvent.change(screen.getByLabelText('Project folder path'), { target: { value: '/p/proj' } })
     fireEvent.click(screen.getByRole('button', { name: 'Add' }))
     await waitFor(() => { expect(addProjectByPath).toHaveBeenCalledWith('/p/proj') })
@@ -413,7 +456,7 @@ describe('ProjectsSidebar', () => {
     const shell = new WorkspaceShellState(api())
     const addProjectByPath = async (): Promise<ProjectAction> => ({ ok: false, reason: 'That folder is not a git repository.' })
     render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ chooserKind: () => 'path', addProjectByPath }))} />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Add git project' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Add project' }))
     fireEvent.change(screen.getByLabelText('Project folder path'), { target: { value: '/nope' } })
     fireEvent.click(screen.getByRole('button', { name: 'Add' }))
     expect((await screen.findByRole('alert')).textContent).toContain('not a git repository')
@@ -490,7 +533,7 @@ describe('ProjectsSidebar', () => {
     const shell = new WorkspaceShellState(api())
     const addProject = vi.fn(async (): Promise<ProjectAction> => ({ ok: false, reason: 'That folder is not a git repository.' }))
     render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ addProject }))} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Add git project' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Add project' }))
     expect((await screen.findByRole('alert')).textContent).toContain('not a git repository')
     expect(addProject).toHaveBeenCalledTimes(1)
     // The repo heading and the main worktree button share the path as their title; pick the button.
@@ -503,7 +546,7 @@ describe('ProjectsSidebar', () => {
   it('discovers registered workspace folders as projects even without a chat, and registers a non-git one too (T135)', async () => {
     const seen: string[] = []
     const shell = new WorkspaceShellState({ ...api(), repo: async (cwd) => { seen.push(cwd); return null } })
-    const projects = fakeProjects({ workspacePaths: () => ['/registered/project'], workspaceKey: () => '/registered/project' })
+    const projects = fakeProjects({ projectPaths: () => ['/registered/project'], projectsKey: () => '/registered/project' })
     render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
     await waitFor(() => { expect(seen).toContain('/registered/project') })
     // Explicitly registered, so a non-git answer still becomes its own workspace entry, not silently dropped.
@@ -537,7 +580,7 @@ describe('ProjectsSidebar', () => {
       addProject: async (): Promise<ProjectAction> => ({ ok: false, reason: 'This machine has no folder chooser - type the folder path instead.', needsPath: true }),
     })
     render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Add git project' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Add project' }))
     expect(await screen.findByLabelText('Project folder path')).toBeTruthy()
     expect((await screen.findByRole('status')).textContent).toContain('no folder chooser')
     expect(screen.queryByRole('alert')).toBeNull()
@@ -595,7 +638,7 @@ describe('ProjectsSidebar', () => {
     const shell = new WorkspaceShellState(api({ repo: async () => null }))
     const noSessions = { ids: [], byId: {} }
     render(<ProjectsSidebar {...sidebarWith(noSessions, sidebarProps(shell))} />)
-    expect(await screen.findByText(/No workspaces yet/)).toBeTruthy()
+    expect(await screen.findByText(/No projects yet/)).toBeTruthy()
     shell.dispose()
   })
 
@@ -603,14 +646,14 @@ describe('ProjectsSidebar', () => {
     const shell = new WorkspaceShellState(api({ repo: async () => null }))
     const noSessions = { ids: [], byId: {} }
     render(<ProjectsSidebar {...sidebarWith(noSessions, sidebarProps(shell, false, fakeProjects({ chatAvailable: false })))} />)
-    expect((await screen.findByText(/No workspaces yet/)).textContent).not.toMatch(/chat/)
+    expect((await screen.findByText(/No projects yet/)).textContent).not.toMatch(/chat/)
     shell.dispose()
   })
 
   it('registers a non-git folder as its own kind of workspace instead of refusing it (T134-followup)', async () => {
     const shell = new WorkspaceShellState(api({ repo: async () => null }))
     const noSessions = { ids: [], byId: {} }
-    const projects = fakeProjects({ workspacePaths: () => ['/p/plain-folder'], workspaceKey: () => '/p/plain-folder' })
+    const projects = fakeProjects({ projectPaths: () => ['/p/plain-folder'], projectsKey: () => '/p/plain-folder' })
     render(<ProjectsSidebar {...sidebarWith(noSessions, sidebarProps(shell, false, projects))} />)
     expect(await screen.findByRole('region', { name: 'plain-folder' })).toBeTruthy()
     shell.dispose()

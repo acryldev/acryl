@@ -273,6 +273,30 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceSessionClose:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); color: var(--dsw-alias-label-primary); }
 .dshWorkspaceWorktreeNew:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); }
 .dshWorkspaceSideFoot { display: flex; flex-direction: column; gap: 2px; margin-top: 14px; padding: 8px 8px 0; border-top: 1px solid var(--dsw-alias-border-l2); }
+.dshWorkspaceStrip { display: flex; flex: none; align-items: center; gap: 4px; padding: 6px 10px; border-top: 1px solid var(--dsw-alias-border-l2); background: var(--dsw-alias-bg-base, transparent); }
+.dshWorkspaceStripSpacer { flex: 1; }
+.dshWorkspaceStripButton { appearance: none; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: 600 13px/1 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceStripButton:hover { background: var(--dsw-alias-fill-hover, rgb(127 127 127 / 12%)); color: var(--dsw-alias-label-primary); }
+.dshWorkspaceStripWorkspace[aria-pressed="true"] { background: var(--dsw-alias-fill-hover, rgb(127 127 127 / 16%)); color: var(--dsw-alias-label-primary); box-shadow: inset 0 0 0 1px var(--dsw-alias-border-l1); }
+.dshWorkspaceDialogBackdrop { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: rgb(0 0 0 / 35%); }
+.dshWorkspaceDialog { display: flex; flex-direction: column; gap: 14px; width: min(760px, calc(100vw - 48px)); padding: 24px 28px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 14px; background: var(--dsw-alias-bg-base, #fff); color: var(--dsw-alias-label-primary); box-shadow: 0 24px 64px rgb(0 0 0 / 28%); font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceDialogTitle { margin: 0; font-size: 18px; font-weight: 600; }
+.dshWorkspaceDialogText { margin: -6px 0 0; color: var(--dsw-alias-label-secondary); }
+.dshWorkspaceDialogKinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.dshWorkspaceDialogKind { appearance: none; display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; background: transparent; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+.dshWorkspaceDialogKind:hover { border-color: #4d6bfe; }
+.dshWorkspaceDialogKind[aria-checked="true"] { border-color: #4d6bfe; background: color-mix(in srgb, #4d6bfe 10%, transparent); }
+.dshWorkspaceDialogKindTitle { font-size: 15px; font-weight: 600; }
+.dshWorkspaceDialogKindText { color: var(--dsw-alias-label-primary); }
+.dshWorkspaceDialogKindBest { color: var(--dsw-alias-label-secondary); font-size: 12px; }
+.dshWorkspaceDialogField { display: flex; flex-direction: column; gap: 4px; color: var(--dsw-alias-label-secondary); font-size: 12px; }
+.dshWorkspaceDialogField input { padding: 7px 10px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; background: transparent; color: var(--dsw-alias-label-primary); font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceDialogRemote { display: grid; grid-template-columns: 2fr 1fr 2fr; gap: 10px; }
+.dshWorkspaceDialogActions { display: flex; justify-content: flex-end; gap: 8px; }
+.dshWorkspaceDialogCancel, .dshWorkspaceDialogCreate { appearance: none; padding: 7px 16px; border-radius: 8px; cursor: pointer; font: 500 13px/1.3 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceDialogCancel { border: 1px solid var(--dsw-alias-border-l1); background: transparent; color: var(--dsw-alias-label-primary); }
+.dshWorkspaceDialogCreate { border: 0; background: #4d6bfe; color: #fff; }
+.dshWorkspaceDialogCreate:disabled { opacity: 0.5; cursor: default; }
 .dshWorkspaceSideFootButton { appearance: none; text-align: left; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: 13px/1.3 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSideFootButton:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-label-primary); }
 .dshWorkspaceSideFootButton[aria-current="page"] { background: color-mix(in srgb, #4d6bfe 18%, transparent); color: var(--dsw-alias-label-primary); }

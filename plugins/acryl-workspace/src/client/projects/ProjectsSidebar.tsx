@@ -14,11 +14,14 @@ import type { ProjectsControl } from './projects-control.ts'
 import type { UpstreamPanels } from './upstream-panels.ts'
 import { attentionByWorktree, type WorktreeAttention } from '../status/attention-model.ts'
 import type { AgentStatusState } from '../status/agent-status-state.ts'
-import { buildProjectRows, entriesForWorktree, type WorktreeSessionEntry } from './sidebar-model.ts'
+import { buildProjectRows, entriesForWorktree, reposInWorkspace, type WorktreeSessionEntry } from './sidebar-model.ts'
 import type { DesktopSidebarSurfaceOwnerProps } from 'acryl-app-shell/client'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import type { ChatSelection } from '../chat/chat-selection.ts'
 import { RepoSection } from './RepoSection.tsx'
+import { WorkspaceStrip } from './WorkspaceStrip.tsx'
+import { NewWorkspaceDialog, type NewWorkspaceInput } from './NewWorkspaceDialog.tsx'
+import { DEFAULT_WORKSPACE_ID } from '../../projects/contract.ts'
 
 /** The left-pane owner interface the frame offers: the same one the frame's default sidebar receives. */
 export type ProjectsSidebarOwnerProps = DesktopSidebarSurfaceOwnerProps
@@ -50,7 +53,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
   const subscribe = useCallback((listener: () => void) => shell.subscribe(listener), [shell])
   const snapshot = useSyncExternalStore(subscribe, () => shell.getSnapshot())
   const sessions = useSessions(state => state)
-  const workspaceKey = useSyncExternalStore(projects.subscribeWorkspaces, () => projects.workspaceKey())
+  const projectsKey = useSyncExternalStore(projects.subscribeProjects, () => projects.projectsKey())
   const upstreamPanels = useSyncExternalStore(panels.subscribe, panels.list)
   const activePanel = useSyncExternalStore(panels.subscribe, panels.active)
   const [notice, setNotice] = useState<string | null>(null)
@@ -71,8 +74,8 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
   // Registered project folders are projects even before they have a chat. registerFolder: true - each came from an explicit "add this
   // folder", unlike the passive discovery of chats' folders (ChatSelection), which never makes a folder a project.
   useEffect(() => {
-    for (const path of projects.workspacePaths()) void shell.discover(path, { registerFolder: true })
-  }, [shell, projects, workspaceKey])
+    for (const path of projects.projectPaths()) void shell.discover(path, { registerFolder: true })
+  }, [shell, projects, projectsKey])
 
   // The agents open per worktree, kept as a stable text key so unrelated tab changes do not re-render the list.
   const agentsKey = useSyncExternalStore(
@@ -107,9 +110,17 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
     }),
     [sessions, snapshot.dismissedChats],
   )
-  const repos = useMemo(
+  const workspaces = useSyncExternalStore(projects.subscribeProjects, () => projects.workspaces())
+  const currentWorkspace = useSyncExternalStore(projects.subscribeProjects, () => projects.currentWorkspace())
+  const [creatingWorkspace, setCreatingWorkspace] = useState(false)
+  const allRepos = useMemo(
     () => buildProjectRows(snapshot, chatRows, new Map(JSON.parse(agentsKey) as Array<[string, string[]]>), new Map(JSON.parse(attentionKey) as Array<[string, WorktreeAttention]>)),
     [snapshot, chatRows, agentsKey, attentionKey],
+  )
+  // The sidebar is the shown workspace: its projects only (Default: everything the tree knows).
+  const repos = useMemo(
+    () => reposInWorkspace(allRepos, projects.projectPaths(), currentWorkspace === DEFAULT_WORKSPACE_ID),
+    [allRepos, projects, projectsKey, currentWorkspace],
   )
 
   const toggleRepo = (root: string): void => {
@@ -220,6 +231,22 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
     if (result.note !== undefined) setHint(result.note)
   }
 
+  /** Show another workspace, and the first of its projects with its chat. */
+  const switchWorkspace = async (id: string): Promise<void> => {
+    setNotice(null)
+    const result = await projects.switchWorkspace(id)
+    if (!result.ok) { setNotice(result.reason); return }
+    const first = projects.projectPaths()[0]
+    if (first !== undefined) showWorktree(first)
+  }
+
+  const createWorkspace = async (input: NewWorkspaceInput): Promise<string | null> => {
+    const result = await projects.createWorkspace(input)
+    if (!result.ok) return result.reason
+    setCreatingWorkspace(false)
+    return null
+  }
+
   const submitPath = async (): Promise<void> => {
     if (addingBusy) return
     setAddingBusy(true)
@@ -255,12 +282,12 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
           </button>
         </div>
         <div className="dshWorkspaceSideProjectsHead">
-          <span>Workspaces</span>
+          <span>Projects</span>
           <button
             type="button"
             className="dshWorkspaceSideAdd"
-            aria-label="Add git project"
-            title="Add a workspace: choose any folder - a git repository or a plain folder both work"
+            aria-label="Add project"
+            title="Add a project to this workspace: any folder - a git repository or a plain folder both work"
             onClick={() => { void addProject() }}
           >
             +
@@ -288,7 +315,9 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
         )}
         {repos.length === 0 && (
           <div className="dshWorkspaceSideEmpty">
-            No workspaces yet. Use + to add a folder - a git repository or a plain folder both work{projects.chatAvailable ? ' - or open a chat in one' : ''}.
+            {currentWorkspace === DEFAULT_WORKSPACE_ID
+              ? `No projects yet. Use + to add a folder - a git repository or a plain folder both work${projects.chatAvailable ? ' - or open a chat in one' : ''}.`
+              : 'No projects in this workspace yet. Use + to add a folder - a git repository or a plain folder both work.'}
           </div>
         )}
         {repos.map(repo => (
@@ -339,6 +368,14 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
           </button>
         </div>
       </div>
+      <WorkspaceStrip
+        workspaces={workspaces}
+        current={currentWorkspace}
+        onAddProject={() => { void addProject() }}
+        onSwitch={(id) => { void switchWorkspace(id) }}
+        onNew={() => { setCreatingWorkspace(true) }}
+      />
+      {creatingWorkspace && <NewWorkspaceDialog onCreate={createWorkspace} onCancel={() => { setCreatingWorkspace(false) }} />}
     </div>
   )
 }
