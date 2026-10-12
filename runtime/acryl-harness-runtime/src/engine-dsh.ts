@@ -82,12 +82,18 @@ const SHIPPED_PRESET_NAMES: readonly string[] = ['standard', 'ptc', 'minimal', '
  */
 function terminalPresetPatches(existingRowIds: ReadonlySet<string>): PatchOptions[] {
   const presetsDir = join(dirname(require.resolve('@deepseek-ai/dsh-web-app/package.json')), 'presets')
-  return SHIPPED_PRESET_NAMES.flatMap(name => loadOverlayPatches('acryl', join(presetsDir, `${name}.patch.yml`)).flatMap((patch) => {
+  const presets = SHIPPED_PRESET_NAMES.flatMap(name => loadOverlayPatches('acryl', join(presetsDir, `${name}.patch.yml`)).flatMap((patch) => {
     if (!('insert' in patch) || patch.insert === undefined) return [patch]
     const insert = patch.insert.filter(row => row.id === undefined || !existingRowIds.has(row.id))
     return insert.length === 0 ? [] : [{ ...patch, insert }]
   }))
+  // The presets' delegation tools run with `modelSelectionSettings: true`, which requires the settings row `dsh-web-app` itself composes
+  // next to them; without it every preset's subagent tool failed to load in the terminal.
+  return existingRowIds.has(SUBAGENT_MODEL_SETTINGS_ROW.id) ? presets : [{ insert: [SUBAGENT_MODEL_SETTINGS_ROW] }, ...presets]
 }
+
+/** `dsh-web-app`'s Host row that the presets' `modelSelectionSettings` delegation tools require. */
+const SUBAGENT_MODEL_SETTINGS_ROW = { id: 'subagent-model-selection-settings', name: '@deepseek-ai/dsh-tool-subagent/model-selection-settings' } as const
 
 /** An already-resolved dsh composition: what one surface's own profile pipeline produced. */
 export interface DshEngineComposition {

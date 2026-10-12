@@ -175,6 +175,11 @@ export function createAcrylSessionBridge(
       }
     }
   }, { global: true })
+  // The agent's idle/running transition is not a durable event: a turn's last event is written while the agent is still running, and the
+  // return to idle follows with nothing logged, so a subscriber refreshed only on events kept showing "running" after every turn.
+  const offAgentStatus = ctx.on('agent/status', ({ agent }) => {
+    if (handles.has(agent.session.id)) notify(agent.session.id)
+  }, { global: true })
 
   const snapshot = async (sessionId: string): Promise<AcrylSessionSnapshot> => {
     const agent = agentFor(sessionId)
@@ -314,6 +319,7 @@ export function createAcrylSessionBridge(
       disposed = true
       offSessionEvent()
       offAssistantStream()
+      offAgentStatus()
       subscribers.clear()
       eventListeners.clear()
       assistantStreamListeners.clear()

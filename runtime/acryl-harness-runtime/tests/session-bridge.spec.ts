@@ -81,6 +81,36 @@ describe('createAcrylSessionBridge', { timeout: 60_000 }, () => {
     }
   })
 
+  it('notifies a subscription when the agent goes idle after a turn, which logs no event of its own', async () => {
+    const runtime = await bootRuntime('acryl-test')
+    const bridge = createAcrylSessionBridge(runtime.ctx, {
+      profile: 'acryl-test',
+      generationId: 'generation-test',
+      attachment: 'owner',
+      cwd: process.cwd(),
+    })
+    try {
+      const sessionId = await bridge.open()
+      const statuses: string[] = []
+      await bridge.subscribe(sessionId, (snapshot) => { statuses.push(snapshot.agentStatus) })
+      // The test profile has no model to finish a turn, so the turn is cancelled: it still ends, and the agent still goes idle.
+      const stop = runtime.ctx.on('session/event', (session, event) => {
+        if (session.id === sessionId && event.type === 'user/message') bridge.cancel(sessionId)
+      })
+      await bridge.submitPrompt({ sessionId, text: 'A turn' })
+      stop()
+      const agent = runtime.ctx.agents.get(SessionId(sessionId))
+      if (agent === undefined) throw new Error('test agent was not registered')
+      await agent.whenIdle()
+      await new Promise(resolve => setTimeout(resolve, 0))
+      expect(statuses).toContain('running')
+      expect(statuses.at(-1)).toBe('idle')
+    } finally {
+      await bridge.dispose()
+      await runtime.dispose()
+    }
+  })
+
   it('notifies a subscription then stops after disposal', async () => {
     const runtime = await bootRuntime('acryl-test')
     const bridge = createAcrylSessionBridge(runtime.ctx, {

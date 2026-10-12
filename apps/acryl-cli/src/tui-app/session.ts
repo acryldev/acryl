@@ -241,11 +241,9 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
   const exitPromise = new Promise<'exit' | 'clear'>(resolve => { signal = resolve })
   const id = await bridge.open(resumeId)
 
-  storeSetStatus(store, await bridge.snapshot(id))
-  void bridge.subscribeEvents(id, event => {
-    store.appendEvent(event)
-    void bridge.snapshot(id).then(next => storeSetStatus(store, next))
-  })
+  // Status follows the bridge's snapshots, which also change when the agent goes idle after a turn (no event is logged for that).
+  void bridge.subscribe(id, next => { storeSetStatus(store, next) })
+  void bridge.subscribeEvents(id, event => { store.appendEvent(event) })
   // Process-local live-typing presentation, separate from the durable event
   // log above (see acryl-harness-runtime's `subscribeAssistantStream` doc
   // comment): folds `agent/assistant-stream` frames into `store.streaming`
