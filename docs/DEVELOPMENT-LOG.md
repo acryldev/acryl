@@ -1,4 +1,19 @@
-## 2026-10-12 (latest) - the frozen window found: chat tabs and DSH's current chat drove each other
+## 2026-10-12 (latest) - spec 001 Phase 12 done: one owner of the shown chat, no state sync by effects, clean tests
+
+Owner: "i want you do do all of them ... cleanup and techdebt in 001 ... Make our acryl project stable and nice blazing fast again", and to follow the engineering books strictly. Phase 12 (R42) is done except T075 (planned); details per task in `specs/001-acryl-refactor-improvements-and-tech-debt/tasks.md`.
+
+- **One owner of the shown chat** (`0bb39f2605ef405c20176af8eefbc0409c4eb438`, T064-T068, T070): `ChatSelection` owns the relation between DSH's shown chat, the per-worktree tab sets and the selected worktree. DSH's main view is the source of truth; user intents (select a tab, pick or expand a worktree, open a chat) are the only operations that ask DSH to show a chat, and reconciling a change of DSH's session list only places tabs and follows the worktree, once the list has settled. The canvas and the tree lost their chat effects. Found and fixed on the way: the stray "AcrylDSH Chat" tabs (the shown chat's tab placed before its worktree was discovered), expanding a worktree stealing the selected tab, and a chat closed from the tree coming back as a tab. A harness drives it against a fake of DSH's navigation (both freezing sequences, 300 random actions, a reaction budget); with the old reaction put back it fails in 5 ms. Live on a copy of the owner's home: no errors, no health incidents, conversation and selected tab always matched.
+- **Split by responsibility** (`2788b47246abd35faca30a640898955c15756304`, T069): the tree's rows to `RepoSection.tsx`; the shell's request routing to the tested `shell-requests.ts`; the canvas from 10 effects to 2 subscriptions.
+- **Comments state the rule** (`ad0e6e390ff636371f3f25c74b39a2dc85c849d5`, T071): 60 history narrations in the workspace client rewritten as contracts.
+- **No committed build output** (`db9e0b9ac3c6378d40c6bbd6b0faa7750bb4c4d3`, T072), guarded by `verify-layout`; CI built the clean checkout green.
+- **Reproducing what a user saw** (`5db81dd08b09211848372c3f86bfd9a4f316251a`, T073): `live-run desktop --copy-home ~/.acryl-dev --no-key --inspect 9222` and `scripts/inspect-page.mjs`. Its own checks found two isolation defects, both fixed: an isolated Desktop took the dev app's port 43120, and stopping a run left its Electron app running.
+- **Clean tests** (`952dfb7e3f2eb431067c1225079f3aeb9957b589`, T063): the temp directory held 10,552 folders the suites had left (and the system-prompt capture also left a chat per run in the home it ran against, the six stale chats in the owner's dev home); the producers fixed, `verify-layout` now fails a test that creates a temporary directory without removing it.
+- **Runtime test budget** (`4bfec01bb1b68351191c620387a384f573f21992`, `24972022a10e5c528235b6784f8250ecaca3b484`): one 30 s budget for the runtime suite instead of per-spec patches, and at most 4 workers, since each boots whole engines.
+- **Owner's dev home** (T074, on request, backed up first): the two plugins disabled at every boot removed; the six stale chats moved out.
+- **Measured, not changed** (T075): DSH 0.2 brings LibreOffice (148 MB per architecture) and speech to text (33-36 MB); LibreOffice starts only on the first conversion, so it costs size, not speed, and did not cause the freezes. Planned as on-demand downloads.
+- **Gate:** passes at load 75-84. The machine's load average was 60-110 all afternoon (Chrome, Jump Desktop, a code indexer, FSEvents); with one worker per core the runtime suite's engine boots timed out in the gate, bounded to 4 workers it runs in 43 s at load 103.
+
+## 2026-10-12 - the frozen window found: chat tabs and DSH's current chat drove each other
 
 Owner: pressing "+" next to the ACRYL project "froze the app again"; then "We didn't run into these problems before. It seems that this whole thing is now less stable." They were right: both freezes came after the chat sync of 2026-10-11 (`9afe9955`).
 
