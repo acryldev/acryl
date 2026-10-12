@@ -187,10 +187,6 @@ describe('sessionForSelectedChatTab', () => {
     expect(sessionForSelectedChatTab({ kind: 'pty' }, 's1')).toBeUndefined()
     expect(sessionForSelectedChatTab(undefined, 's1')).toBeUndefined()
   })
-
-  it('opens nothing for a tab whose session belongs to another worktree', () => {
-    expect(sessionForSelectedChatTab({ kind: 'chat', chatSessionId: 's2' }, 's1', id => id !== 's2')).toBeUndefined()
-  })
 })
 
 describe('chatGroupFor', () => {

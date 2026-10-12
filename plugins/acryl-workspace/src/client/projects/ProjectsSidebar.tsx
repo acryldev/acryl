@@ -19,7 +19,7 @@ import type { AgentStatusState } from '../status/agent-status-state.ts'
 import { buildProjectRows, entriesForWorktree, type RepoRow, type WorktreeDot, type WorktreeRow, type WorktreeSessionEntry } from './sidebar-model.ts'
 import type { DesktopSidebarSurfaceOwnerProps } from 'acryl-app-shell/client'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
-import { currentSessionId } from '../sessions/main-session.ts'
+import type { ChatSelection } from '../chat/chat-selection.ts'
 
 /** The left-pane owner interface the frame offers: the same one the frame's default sidebar receives. */
 export type ProjectsSidebarOwnerProps = DesktopSidebarSurfaceOwnerProps
@@ -28,6 +28,8 @@ export type ProjectsSidebarProps = Omit<PropsRuntime<'root'>, 'useSessions'> & P
   readonly useSessions: UseSessions
   readonly shell: WorkspaceShellState
   readonly projects: ProjectsControl
+  /** Which chat is shown: picking or expanding a worktree shows its chat through it. */
+  readonly chats: ChatSelection
   /** The tab groups, to show which agents are open in each worktree. */
   readonly groups: WorkspaceGroups
   /** The user's custom agents, for their badges. */
@@ -55,7 +57,7 @@ const DOT_LABEL: Record<WorktreeDot, string> = {
  * be polluted the way a flat "everything open" list would be. The upstream sidebar (its search, and
  * anything else it owns) is mounted only to host Settings' trigger and dialog, never shown as a view.
  */
-export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, useSessions, shell, projects, groups, agents, status, panels }: ProjectsSidebarProps) {
+export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, useSessions, shell, projects, chats, groups, agents, status, panels }: ProjectsSidebarProps) {
   const subscribe = useCallback((listener: () => void) => shell.subscribe(listener), [shell])
   const snapshot = useSyncExternalStore(subscribe, () => shell.getSnapshot())
   const sessions = useSessions(state => state)
@@ -83,16 +85,6 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
   useEffect(() => {
     for (const path of projects.workspacePaths()) void shell.discover(path, { registerFolder: true })
   }, [shell, projects, workspaceKey])
-
-  useEffect(() => {
-    for (const id of sessions.ids) {
-      const cwd = sessions.byId[id]?.cwd
-      if (cwd !== undefined) void shell.discover(cwd)
-    }
-    const current = currentSessionId(sessions)
-    const currentCwd = current === undefined ? undefined : sessions.byId[current]?.cwd
-    if (currentCwd !== undefined) void shell.follow(currentCwd)
-  }, [shell, sessions])
 
   // The agents open per worktree, kept as a stable text key so unrelated tab changes do not re-render the list.
   const agentsKey = useSyncExternalStore(
@@ -141,6 +133,11 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
     })
   }
 
+  /** Select a worktree and show its chat: the chat tab it has selected, else its latest chat, else a new one there. */
+  const showWorktree = (path: string): void => {
+    chats.showWorktree(path, () => { void projects.showChat(path).then((result) => { if (!result.ok) setNotice(result.reason) }) })
+  }
+
   const toggleWorktree = (path: string): void => {
     // Expanding a worktree's session list also selects it (T137/T138-followup: "all of the agent
     // sessions and terminals should be opened in the Tab Stripe" when a workspace is opened) - the tree's
@@ -156,7 +153,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
     // while rendering a different component" warning, an actual correctness bug (T139-followup), not
     // just React being pedantic - a plain event-handler-time call, before the state update, is correct.
     const expanding = !expandedWorktrees.has(path)
-    if (expanding) shell.select(path)
+    if (expanding) showWorktree(path)
     setExpandedWorktrees((current) => {
       const next = new Set(current)
       if (expanding) next.add(path); else next.delete(path)
@@ -187,18 +184,13 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
     void projects.openChat(id).then((result) => { if (!result.ok) setNotice(result.reason) })
   }
 
-  /** Hover "x" (owner request, T134/T136-followup): an agent/terminal entry closes its actual tab (the
-   * row exists only because the tab is open, so it disappears from here the same instant). A chat entry
-   * must close its open tab too, not merely dismiss the tree row - dismissing alone left the tab strip
-   * showing a tile with no matching row anywhere (owner: "was 2, removed 1, then added 1, i got 3" -
-   * the "removed" one never actually left the strip). `requestCloseTile` already calls `dismissChat`
-   * itself once it finds a chat tile (`WorkspaceCanvas`'s own `closeTile`), so that is the one path taken
-   * when a tile exists; dismissing directly is only the fallback for the rare case where none does yet. */
+  /** The hover "x": an agent or terminal entry closes its tab; a chat entry is hidden from the tree and the tab strip (it would come back as
+   * an eager tab otherwise), and its open tab closes. */
   const closeEntry = (path: string, entry: WorktreeSessionEntry): void => {
     if (entry.kind === 'agent') { shell.requestCloseTile({ worktree: path, tileId: entry.id }); return }
     const tile = groups.stateFor(path).getSnapshot().tiles.find(candidate => candidate.kind === 'chat' && candidate.chatSessionId === entry.id)
+    shell.dismissChat(entry.id)
     if (tile !== undefined) shell.requestCloseTile({ worktree: path, tileId: tile.id })
-    else shell.dismissChat(entry.id)
   }
 
   /** Rename in place from the tree (owner request: bidirectional with the tab strip). An agent/terminal
@@ -219,9 +211,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
 
   const pickWorktree = (path: string): void => {
     setNotice(null)
-    shell.select(path)
-    // Each branch has its own chat: show the one for this worktree, or start one there.
-    void projects.showChat(path).then((result) => { if (!result.ok) setNotice(result.reason) })
+    showWorktree(path)
   }
 
   const newChat = (path: string): void => {

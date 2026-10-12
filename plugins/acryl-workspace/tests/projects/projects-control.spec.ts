@@ -152,6 +152,8 @@ function world(options: {
     gitApi: api,
     getWorkspaces: () => workspaces,
     getSessions: () => (options.hasSessions === false ? undefined : sessions),
+    // Opening goes through the main view, as ChatSelection does without DSH's navigation.
+    navigator: { open: (id) => { if (options.hasSessions === false) return false; sessions.retain(id as never, { source: 'mainView' }); return true } },
     ...(options.chat === undefined ? {} : { chatAvailable: () => options.chat === true }),
     directory: () => options.seams ?? { pickDirectory: async () => '/p/proj' },
     ...(options.webPickDirectory === undefined ? {} : { webPickDirectory: options.webPickDirectory }),

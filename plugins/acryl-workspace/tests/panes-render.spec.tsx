@@ -9,6 +9,8 @@ import { GitDiffPane, changeSignature, type GitDiffPaneProps } from '../src/clie
 import { ProjectsSidebar, type ProjectsSidebarProps } from '../src/client/projects/ProjectsSidebar.tsx'
 import type { ProjectAction, ProjectsControl } from '../src/client/projects/projects-control.ts'
 import type { UpstreamPanels } from '../src/client/projects/upstream-panels.ts'
+import { ChatSelection } from '../src/client/chat/chat-selection.ts'
+import type { ISessions } from '@acryl/ui/frame'
 import { makeStatus } from './dock/dock-fixtures.ts'
 import { AgentsState } from '../src/client/agents/agents-state.ts'
 import { WorkspaceGroups } from '../src/client/canvas/groups.ts'
@@ -16,7 +18,8 @@ import { WorkspaceShellState } from '../src/client/worktrees/shell-state.ts'
 import type { WorkspaceTile } from '../src/client/canvas/state.ts'
 import type { GitDiffView, GitStatusView } from '../src/git/contract.ts'
 
-afterEach(cleanup)
+const stopWatching: Array<() => void> = []
+afterEach(() => { cleanup(); for (const stop of stopWatching.splice(0)) stop() })
 
 const STATUS: GitStatusView = {
   path: '/p/proj',
@@ -110,6 +113,19 @@ function fakePanels(list: ReadonlyArray<{ id: string, label: string }> = [], ope
   return { selected, list: () => list as never, subscribe: () => () => {}, active: () => open as never, select: id => { selected.push(id) } }
 }
 
+/** The plugin entry's ChatSelection over a fixed session list (it discovers each chat's folder and follows the shown chat). */
+function watchingChats(shell: WorkspaceShellState, groups: WorkspaceGroups, state: object): ChatSelection {
+  const sessions = { list: { getSnapshot: () => state, subscribe: () => () => {} }, retain: () => ({ release: () => {} }) } as unknown as ISessions
+  const chats = new ChatSelection({ groups, shell, getSessions: () => sessions, getNavigation: () => undefined, schedule: run => { run() } })
+  stopWatching.push(chats.watch(sessions))
+  return chats
+}
+
+/** The sidebar over another session list than SESSIONS. */
+function sidebarWith(state: object, props: ProjectsSidebarProps): ProjectsSidebarProps {
+  return { ...props, useSessions: sessionsHook(state), chats: watchingChats(props.shell, props.groups, state) }
+}
+
 function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: ProjectsControl = fakeProjects(), groups: WorkspaceGroups = new WorkspaceGroups(), panels: UpstreamPanels = fakePanels()): ProjectsSidebarProps {
   return {
     panels,
@@ -123,6 +139,7 @@ function sidebarProps(shell: WorkspaceShellState, collapsed = false, projects: P
     useSessions: sessionsHook(SESSIONS),
     shell,
     projects,
+    chats: watchingChats(shell, groups, SESSIONS),
   } as ProjectsSidebarProps
 }
 
@@ -373,7 +390,7 @@ describe('ProjectsSidebar', () => {
     // The one session here belongs to /p/proj-x, not /p/proj (main) - discovers the same repo via api()'s
     // cwd-agnostic mock, but leaves main with no chats and no agent tiles.
     const noSessions = { ids: ['s1'], byId: { s1: { id: 's1', cwd: '/p/proj-x', running: false, blank: true, displayTitle: '', updatedAt: 1, retainedBy: {} } } }
-    render(<ProjectsSidebar {...sidebarProps(shell)} useSessions={sessionsHook(noSessions)} />)
+    render(<ProjectsSidebar {...sidebarWith(noSessions, sidebarProps(shell))} />)
     await screen.findByText('main')
     fireEvent.click(screen.getByRole('button', { name: 'Show sessions on main' }))
     expect(await screen.findByText('Nothing running here yet.')).toBeTruthy()
@@ -498,7 +515,7 @@ describe('ProjectsSidebar', () => {
     const seen: string[] = []
     const shell = new WorkspaceShellState({ ...api(), repo: async (cwd) => { seen.push(cwd); return null } })
     const untouched = { ids: ['s1'], byId: { s1: { id: 's1', cwd: '/tmp/scratch-dir', running: false, blank: false, displayTitle: 'x', updatedAt: 1, retainedBy: {} } } }
-    render(<ProjectsSidebar {...sidebarProps(shell)} useSessions={sessionsHook(untouched)} />)
+    render(<ProjectsSidebar {...sidebarWith(untouched, sidebarProps(shell))} />)
     await waitFor(() => { expect(seen).toContain('/tmp/scratch-dir') })
     expect(screen.queryByRole('region', { name: 'scratch-dir' })).toBeNull()
     shell.dispose()
@@ -577,7 +594,7 @@ describe('ProjectsSidebar', () => {
   it('explains an empty projects list', async () => {
     const shell = new WorkspaceShellState(api({ repo: async () => null }))
     const noSessions = { ids: [], byId: {} }
-    render(<ProjectsSidebar {...sidebarProps(shell)} useSessions={sessionsHook(noSessions)} />)
+    render(<ProjectsSidebar {...sidebarWith(noSessions, sidebarProps(shell))} />)
     expect(await screen.findByText(/No workspaces yet/)).toBeTruthy()
     shell.dispose()
   })
@@ -585,7 +602,7 @@ describe('ProjectsSidebar', () => {
   it('does not invite opening a chat when the chat is off, and has no new-chat button on a project', async () => {
     const shell = new WorkspaceShellState(api({ repo: async () => null }))
     const noSessions = { ids: [], byId: {} }
-    render(<ProjectsSidebar {...sidebarProps(shell, false, fakeProjects({ chatAvailable: false }))} useSessions={sessionsHook(noSessions)} />)
+    render(<ProjectsSidebar {...sidebarWith(noSessions, sidebarProps(shell, false, fakeProjects({ chatAvailable: false })))} />)
     expect((await screen.findByText(/No workspaces yet/)).textContent).not.toMatch(/chat/)
     shell.dispose()
   })
@@ -594,7 +611,7 @@ describe('ProjectsSidebar', () => {
     const shell = new WorkspaceShellState(api({ repo: async () => null }))
     const noSessions = { ids: [], byId: {} }
     const projects = fakeProjects({ workspacePaths: () => ['/p/plain-folder'], workspaceKey: () => '/p/plain-folder' })
-    render(<ProjectsSidebar {...sidebarProps(shell, false, projects)} useSessions={sessionsHook(noSessions)} />)
+    render(<ProjectsSidebar {...sidebarWith(noSessions, sidebarProps(shell, false, projects))} />)
     expect(await screen.findByRole('region', { name: 'plain-folder' })).toBeTruthy()
     shell.dispose()
   })

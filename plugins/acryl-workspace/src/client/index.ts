@@ -13,7 +13,7 @@ import 'acryl-app-shell/client'
 import { applyAdvancedShell, resolveShellEnvironment } from 'acryl-app-shell/client'
 import { dockShellHooks } from './dock/dock-hooks.tsx'
 import { createAgentBridge } from './sessions/agent-bridge.ts'
-import { createSessionNavigator } from './sessions/session-navigator.ts'
+import { ChatSelection } from './chat/chat-selection.ts'
 import type { MainViewNavigation } from './sessions/main-session.ts'
 import { createWorkspaceFilesApi } from './files/files-api.ts'
 import { filesTabPlugin } from './files/files-tab.ts'
@@ -96,7 +96,9 @@ export function apply(ctx: ClientContext): void {
   // DSH's session navigation (`dsh-client-ui-workspace`), looked up when a chat is opened: ACRYL does not import that package (the
   // frame facade stays as it is), so the service is read by name through the narrow port `main-session.ts` declares.
   const getNavigation = (): MainViewNavigation | undefined => (ctx.get as (name: string) => MainViewNavigation | undefined)('uiWorkspace')
-  const sessionNavigator = createSessionNavigator(() => ctx.get('sessions'), getNavigation)
+  // The one owner of which chat is shown and which tab and worktree show it; follows DSH's sessions service as it comes and goes.
+  const chats = new ChatSelection({ groups, shell, getSessions: () => ctx.get('sessions'), getNavigation })
+  ctx.inject(['sessions'], child => { child.effect(() => chats.watch(child.sessions), 'acryl-workspace: tabs follow the shown chat') })
   const rightPanel = {
     toggle(): void {
       try {
@@ -124,7 +126,7 @@ export function apply(ctx: ClientContext): void {
     gitApi,
     getWorkspaces: () => ctx.get('workspaces'),
     getSessions: () => ctx.get('sessions'),
-    getNavigation,
+    navigator: chats,
     directory: () => desktopDirectorySeams(),
     chatAvailable: () => capabilities.chat,
     webPickDirectory: createWebFolderPicker(),
@@ -169,7 +171,7 @@ export function apply(ctx: ClientContext): void {
           removeSlot = ctx.slots.register({
             name: 'desktop.main',
             priority: WORKSPACE_MAIN_PRIORITY,
-            inject: () => ({ ptyApi: ptyClient, terminals, dock, agentStatus, agents, tabTypes, tabRegistry, paletteConfig, toasts, notices, shell, groups, gitApi, filesApi, agent, sessionNavigator, review, rightPanel, projects }),
+            inject: () => ({ ptyApi: ptyClient, terminals, dock, agentStatus, agents, tabTypes, tabRegistry, paletteConfig, toasts, notices, shell, groups, gitApi, filesApi, agent, chats, review, rightPanel, projects }),
           }, WorkspaceCanvas)
         } catch (cause) {
           // A registration conflict must not take the left pane and the Changes tab down with it.
@@ -189,7 +191,7 @@ export function apply(ctx: ClientContext): void {
           removeSlot = ctx.slots.register({
             name: 'desktop.sidebar',
             priority: 0,
-            inject: () => ({ shell, projects, groups, agents, status: agentStatus, panels: upstreamPanels }),
+            inject: () => ({ shell, projects, chats, groups, agents, status: agentStatus, panels: upstreamPanels }),
           }, ProjectsSidebar)
         } catch (cause) {
           ctx.logger.warn(`acryl-workspace: could not register the left pane: ${cause instanceof Error ? cause.message : String(cause)}`)

@@ -51,27 +51,24 @@ export function chatGroupFor(repos: readonly RepoState[], cwd: string | undefine
 }
 
 /**
- * The session to open because a chat tab became the selected one: the tab's own session when it is not the one on screen. Every
+ * The session to open because the user selected a chat tab: the tab's own session when it is not the one on screen. Every
  * chat tab shows the one main conversation, so selecting a tab without opening its session left the previous chat's conversation
- * under the new tab's name. A tab not bound to a session (none yet) opens nothing, and neither does a tab whose session belongs to
- * another worktree (`belongsHere` false): opening it would move the tree to that worktree (see `chatGroupFor`).
+ * under the new tab's name. A tab not bound to a session (none yet) opens nothing.
  */
 export function sessionForSelectedChatTab(
   tile: { readonly kind: string; readonly chatSessionId?: string } | undefined,
   current: string | undefined,
-  belongsHere: (sessionId: string) => boolean = () => true,
 ): string | undefined {
   if (tile?.kind !== 'chat' || tile.chatSessionId === undefined) return undefined
-  if (tile.chatSessionId === current || !belongsHere(tile.chatSessionId)) return undefined
-  return tile.chatSessionId
+  return tile.chatSessionId === current ? undefined : tile.chatSessionId
 }
 
 /**
  * Eagerly gives every non-blank chat session owned by this worktree its own tab, instead of only the one
  * that happens to be current - so a worktree with 6 sidebar chats shows 6 tabs immediately, not one at a
- * time as each is clicked (owner feedback: "they are not loaded into the tab strip immediately"). Each new
- * tab's title is the session's real `displayTitle`, not the generic default. Restores whichever tab was
- * already active afterward, since `addTile` focuses each one as it creates it.
+ * time as each is clicked. Each new tab's title is the session's real `displayTitle`, not the generic default.
+ * Adding tabs never moves the selection: afterwards the shown chat's tab is selected when this worktree has
+ * it, else the tab that was selected before (`addTile` focuses each tab it creates).
  */
 export function ensureWorktreeChatTabs(
   workspace: WorkspaceState,
@@ -85,6 +82,7 @@ export function ensureWorktreeChatTabs(
       .filter(tile => tile.kind === 'chat' && tile.chatSessionId !== undefined)
       .map(tile => tile.chatSessionId),
   )
+  const activeBefore = workspace.getSnapshot().activeId
   let added = false
   for (const id of sessions.ids) {
     if (existing.has(id) || dismissed.has(id)) continue
@@ -96,10 +94,10 @@ export function ensureWorktreeChatTabs(
     workspace.addTile('chat', { chatSessionId: id, title: chatLabel(row) })
     added = true
   }
-  if (added && sessions.current !== undefined) {
-    const currentTile = workspace.getSnapshot().tiles.find(tile => tile.kind === 'chat' && tile.chatSessionId === sessions.current)
-    if (currentTile !== undefined) workspace.selectTile(currentTile.id)
-  }
+  if (!added) return
+  const currentTile = sessions.current === undefined ? undefined : workspace.getSnapshot().tiles.find(tile => tile.kind === 'chat' && tile.chatSessionId === sessions.current)
+  const restore = currentTile?.id ?? activeBefore
+  if (restore !== undefined) workspace.selectTile(restore)
 }
 
 /**
