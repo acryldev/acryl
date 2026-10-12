@@ -1,106 +1,117 @@
-# Feature Specification: Workspaces (an isolated place to do one piece of work, inside a project)
+# Feature Specification: Workspaces (a switchable set of projects that share context)
 
 **Feature Directory**: `specs/043-workspaces`
-**Created**: 2026-10-12
-**Status**: needs-triage. Spec only; nothing is built. The decisions marked **Q** below are the owner's and come before `plan.md`.
-**Authority**: `.specify/memory/constitution.md`, root `CLAUDE.md` (Cordis development protocol; "Architecture and clean-code discipline": one term, one meaning), `specs/040-agentic-multiplexer-ade` (the tree, tab sets per worktree, the canvas), `specs/041-agent-control` (the `workspace.*` tool vocabulary), `specs/001-acryl-refactor-improvements-and-tech-debt` R42 (one owner per piece of state).
-**Input**: owner, 2026-10-12: "now i want to have new spec add to acryl the concept of workspaces", after pressing "+" next to the ACRYL project to add something to it (today that "+" creates a branch in its own git worktree).
+**Created**: 2026-10-12 (rewritten the same day from the owner's description and screenshots)
+**Status**: needs-triage. Spec only; nothing is built. The questions at the end come before `plan.md`.
+**Authority**: `.specify/memory/constitution.md`, root `CLAUDE.md` (Cordis development protocol; "Architecture and clean-code discipline": one term, one meaning; app state only through `AppInstance`), `specs/040-agentic-multiplexer-ade` (the tree, tab sets per worktree), `specs/041-agent-control` (the `workspace.*` tool vocabulary), `specs/001-acryl-refactor-improvements-and-tech-debt` R42 (one owner per piece of state; `ChatSelection`).
+**Input**: owner, 2026-10-12, with screenshots of a reference IDE (Superset's sidebar):
 
-## Why
+> "what we call now 'Workspace' in our side bar we should rename to 'Projects' cuz in fact we add there always a folder which can be git or non-git folder ... we automatically create the work tree, the branch ... these are all folders and branches inside of the same folder."
+> "below the side bar we have this strip of icons where our settings are ... icon of folder '+' to add project to current workspace. And the entire sidebar is the workspace, meaning that we can create new one and then the entire sidebar with all of the added projects is re-rendered to other workspace."
+> "the idea of workspace is that workspace shares basically the context of all projects added ... a mechanism to easily share the context between all of the projects and all of the agents within the same workspace. This way I can always ask Claude or Pi or any coding agent to look up or to already have in context things that we need without re-explaining or pointing to it through the UI."
+> "But first thing is that we really need to have this switching of the workspaces. We start with Default, and Default is always containing what we have."
 
-Doing several things at once in one repository is ACRYL's core use: a feature in one place, a fix in another, an agent running a long task in a third, each without disturbing the others. Today that works only by assembling parts by hand: a git worktree (the "+" next to a project), chats whose folder happens to be inside it, terminal and agent tabs in that worktree's tab set, and the owner's own naming. Nothing names that bundle, so nothing can create it in one step, show its state, hand it to an agent, review it, or finish it.
+## The terms (one meaning each)
 
-Other agent workbenches make this bundle the main unit. Superconductor and Superset (both already create worktrees on this machine; the tree shows `sc-frozen-fluxon-0f52` and `.superset/worktrees/...`) and Conductor call it a **workspace**: an isolated copy of a repository on its own branch, with its own agents, terminals and chats, from creation to merge.
-
-## The word "workspace" today means three different things (the first problem to fix)
-
-| Where | What it calls a workspace | Owner |
+| Term | Meaning | Today |
 | --- | --- | --- |
-| ACRYL's left pane, header "WORKSPACES" | a **project**: a git repository or plain folder the user added (`ProjectRegistryState`, saved by the Host in `acryl-settings.yaml` `workspace.projects`) | `acryl-workspace` |
-| DSH (`IWorkspaces`, `uiWorkspace`, `dsh-api-workspace-controller`) | a **folder that chats run in**: a registered path with its session ids; DSH creates one when a chat starts in a folder | DSH |
-| The `acryl-workspace` package and its canvas | the **tab area** (tab sets per worktree, `WorkspaceGroups`, `WorkspaceCanvas`) | `acryl-workspace` |
+| **Project** | A folder the user added: a git repository or a plain folder, shown with its own icon (git or folder). Inside a git project: its branches and worktrees, each with its chats, agents and terminals (unchanged from spec 040). | Listed under the sidebar header "WORKSPACES"; this milestone renames the header to **PROJECTS**. |
+| **Workspace** | A named, switchable set of projects: the whole sidebar. Switching workspace re-renders the sidebar with that workspace's projects, and their tabs. Projects in one workspace share context with every agent working in any of them. | Does not exist: there is one implicit set, the project list. |
+| **Default workspace** | The workspace that always exists and holds every project the user has today. | The current project list. |
 
-One term with three meanings breaks the ubiquitous language (DDD) and already leaks: a project is registered as a DSH workspace when a chat starts there; the "+" labelled "Add workspace" adds a project. This spec gives **workspace** one meaning (below) and renames the other two in ACRYL's own code and UI: **project** for what the user adds, **chat folder** (internal only) for DSH's registration, **tab area** or **canvas** for the tabs.
+"Workspace" is no longer used for a project (the sidebar header, the "Add workspace" button) nor, in ACRYL's own code and UI, for DSH's per-folder chat registration (internal name: chat folder) or the tab area (canvas). DSH's own term stays inside the DSH seam.
 
-## The concept
-
-A **workspace** is one isolated place to do one piece of work inside a **project**.
-
-- **Belongs to** exactly one project.
-- **Has** a working directory (for a git project: its own worktree on its own branch; for the project's main checkout: the existing folder), a name, a status, and a creation time.
-- **Contains** its chats, its agent and terminal tabs, its open files, diffs and review comments, and its layout (the tab set it has today, `WorkspaceGroups` keyed by worktree path).
-- **Lifecycle**: `creating` -> `active` -> (`archived` | `merged`) -> `deleted`. Archived keeps the branch and history but stops its agents and hides it; merged means its branch reached the project's base branch; deleted removes the worktree folder (never without confirmation when it has uncommitted changes or unpushed commits).
-- **Status shown in the tree**, from facts ACRYL already has: agents running / needing you / done (the attention model), uncommitted changes (+/- counts), commits ahead or behind the base branch, open checks.
-- **Identity**: a stable id, not its path (a worktree can move); the path is a property.
+## What the user sees
 
 ```
-Project  (repository or folder the user added; was "WORKSPACES" in the tree)
- +- Workspace "main"                 the project's own checkout
- +- Workspace "fix-login"            worktree ../acryl.worktrees/fix-login, branch fix-login
- |   +- chats, agents, terminals, files, diffs, review comments, layout
- +- Workspace "agent: upgrade deps"  created for an agent task, archived after merge
+PROJECTS                                   +      <- header renamed; "+" adds a project to the current workspace
+  [git] acryl                              +      <- a project (git icon); its "+" creates a branch/worktree, as today
+     main   frk3, ACRYL_mainFork1, ...            <- worktrees with their chats and agents (unchanged)
+     electron-deepseek-shell
+  [folder] _projects                              <- a plain-folder project (folder icon)
+  [git] cordis_plugins_project
+...
+[settings] [folder+]          ( ● )  ( ≋ )  ( + )  <- bottom strip
+                              Default  other  New workspace
 ```
+
+- **Bottom strip** (below the tree, where Settings is): Settings; **Add project** (folder with "+") to add a project to the current workspace; then one icon per workspace (Default first, as a dot), each with its name as a tooltip, the current one highlighted; then **New workspace** ("+").
+- **Switching**: clicking a workspace icon re-renders the sidebar with that workspace's projects and restores its tabs, selected tab and shown chat. Agents and terminals in the other workspaces keep running; their attention signals (needs you, done) still show on that workspace's icon.
+- **New workspace** opens a dialog: "Choose how this workspace should be organized", three kinds, then a name:
+  1. **Individual Projects**: "Work in separate repositories with independent worktrees." Best for single-repository changes, maintenance and unrelated tasks; for example one project with many branches to concentrate on. Projects are listed together but no context is shared between them.
+  2. **Shared Context**: "Share context across several projects in one workspace." Best for cross-repository coordination and shared interface changes. Every agent in the workspace can see and is told about all its projects (below).
+  3. **Remote Machine**: "Create an empty workspace for an SSH host." Saves the target (host, user, path) now; connecting and running there comes later. **Concept only in this milestone**: the dialog offers it and the workspace record keeps its target, nothing connects.
+- A project can be in more than one workspace (the same folder in "Default" and in "Shared: payments"); removing it from one workspace never removes it from another or deletes anything on disk.
+
+## Shared context (the reason workspaces exist)
+
+**Need.** In a Shared Context workspace, any coding agent the user works with (the DSH chat, Claude Code, Codex, Pi, or any agent in a terminal tab) already knows the workspace's projects and what matters across them, and can look things up in any of them, without the user re-explaining or pointing through the UI.
+
+**What is shared** (draft, to settle in `plan.md`):
+- The workspace's projects: names, paths, kinds (git or folder), current branches and worktrees.
+- A workspace brief the user (and agents) can edit: what the workspace is for, conventions, decisions, links; plain markdown, versioned.
+- Each project's own agent instructions (`CLAUDE.md`, `AGENTS.md`, `README`), referenced rather than copied.
+- Optionally: recent work across the workspace (open chats' titles and summaries, recent commits), bounded so it never floods a model's context.
+
+**How agents get it** (candidates, not decisions; the mechanism must work for agents ACRYL does not control):
+- **A workspace context file** generated by ACRYL in a workspace folder under the app instance's home (for example `<home>/workspaces/<id>/WORKSPACE.md`), listing projects and the brief, and pointing to each project's own instructions. Every agent can be pointed at one file.
+- **Agent launch wiring**: when ACRYL starts an agent in a terminal tab of this workspace, it passes the context in that agent's own way: Claude Code's `--add-dir` for each project plus the context file, Codex's and Pi's equivalents, the DSH chat's system prompt (a contribution, like spec 037's extension context).
+- **A tool or MCP server** (`workspace_context`, `workspace_search`) any agent can call to read the brief and search across all the workspace's projects, served by the Host through the existing loopback tool gateway, with the normal tool policy.
+- Agents can append to the brief (decisions, findings), so shared context grows from the work itself; every write is attributed and reversible.
+
+In an Individual Projects workspace none of this crosses projects: each agent sees its own project only, as today.
 
 ## User stories
 
-### US1 - Create a workspace in one step (P1)
-From the project's "+" (and the command palette, and an agent's `workspace.create`): give a name or a task; ACRYL creates the branch and worktree from the project's base branch, opens the workspace, and starts its first chat (or an agent chosen in the "+" menu) there.
-**Acceptance**: one action creates branch, worktree, tab set and first chat; the tree shows it selected; a second workspace in the same project is independent (its own terminals, chats, changes); the name is unique per project and becomes the branch name by a documented rule.
+### US1 - Switch workspaces (P1, first)
+Default exists and holds every current project. The user creates a second workspace, adds projects to it, and switches between the two from the bottom strip.
+**Acceptance**: switching swaps the sidebar's projects and the tabs; the shown chat follows the target workspace's selected tab (through `ChatSelection`); nothing running in the other workspace stops; the choice and each workspace's contents survive a restart; Default cannot be deleted.
 
-### US2 - See every workspace's state at a glance (P1)
-The tree lists each project's workspaces with status (running, needs you, done, changes, ahead/behind, checks).
-**Acceptance**: status comes from the existing models (attention, git status, checks), with no extra polling per workspace beyond today's.
+### US2 - Rename the project list (P1)
+The header reads PROJECTS; the add button reads "Add project"; git and plain-folder projects keep their distinct icons.
+**Acceptance**: no ACRYL-owned UI text or ACRYL-owned code name uses "workspace" for a project.
 
-### US3 - Switch between workspaces without losing anything (P1)
-Selecting a workspace restores its tabs, its selected tab and its chat exactly as left; agents in other workspaces keep running.
-**Acceptance**: covered by `ChatSelection` and the tab sets (spec 001 T064-T070); a workspace switch never opens a chat that belongs to another workspace.
+### US3 - Create a workspace from the dialog (P1)
+The "+" in the strip opens the New Workspace dialog with the three kinds; the user picks one, names it (a default name offered), and lands in the new, empty workspace with "Add project" ready.
+**Acceptance**: Remote Machine stores its target and shows that connection is not available yet; the kind can be changed later between Individual and Shared.
 
-### US4 - Finish a workspace (P2)
-Archive, merge (open a pull request, or merge locally into the base branch when the project allows it), or delete.
-**Acceptance**: delete refuses (and says why) when there are uncommitted changes or unpushed commits unless confirmed; archive stops the workspace's agents and terminals; a merged or archived workspace can be shown again.
+### US4 - Shared context for every agent (P2)
+In a Shared Context workspace, an agent started in any of its projects can answer "which projects are in this workspace and where is X implemented across them" without being told, and can read files in the other projects.
+**Acceptance**: verified with the DSH chat and with Claude Code in a terminal tab (real-case test, spec 001 T060 style); the context stays within a stated size budget.
 
-### US5 - Hand a workspace to an agent (P2)
-"Do X in a new workspace": an agent (inside the app, or outside through Agent Control or the CLI) creates a workspace, works there, and reports when it is ready for review.
-**Acceptance**: `workspace.create`, `workspace.list`, `workspace.status`, `workspace.archive` exist as typed Agent Control tools (spec 041's vocabulary), with the same policy as the UI.
+### US5 - Agents manage workspaces (P2)
+Agent Control tools `workspace.list`, `workspace.switch`, `workspace.create`, `workspace.add_project`, `workspace.context` (read the shared context), through the normal tool policy.
 
-### US6 - Workspaces outside ACRYL appear too (P3)
-Worktrees made by git, Superconductor or Superset show as workspaces of their project (as worktrees already do today), marked as external; ACRYL never deletes an external worktree without confirmation.
+### US6 - Remote machine (P3, concept)
+The Remote Machine kind exists in the model and the dialog; connecting, running agents there and syncing are a later milestone.
 
 ## Functional requirements (draft)
 
-- **FR-001** One domain type `Workspace` (id, projectId, name, path, branch, status, lifecycle state, createdAt, origin `acryl` | `external`), owned by one module, framework-free (`acryl-control` or a workspace domain module in `acryl-workspace`, decided in `plan.md`). UI and tools read it; neither redefines it.
-- **FR-002** A durable workspace record per project under the app instance's home (through `AppInstance`, never `homedir()`), so names, ids and lifecycle survive restarts and worktree moves; the git worktree list stays the source of truth for which folders exist.
-- **FR-003** Create, rename, archive, unarchive, delete, and merge-or-PR as operations of that module, each validated (name rules, base branch exists, folder free) and reversible where git allows.
-- **FR-004** The tree shows Project -> Workspace; the canvas's tab sets are keyed by workspace id instead of worktree path, migrating the saved tab sets.
-- **FR-005** Chats belong to the workspace whose folder contains theirs (today's `chatGroupFor` rule); a chat started from a workspace starts in its folder.
-- **FR-006** The same capability on Web and Desktop (declared in `coding-capabilities.ts`); the TUI gets list, switch and create.
-- **FR-007** Agent Control tools for every operation, through the normal tool policy.
-- **FR-008** Renames in ACRYL's own code and UI per "The word workspace today means three different things": the left pane's header becomes "PROJECTS", the "+" beside a project creates a workspace, and DSH's term is confined to the DSH seam.
+- **FR-001** One domain type `Workspace` (id, name, kind `individual` | `shared` | `remote`, ordered project references, remote target when `remote`, brief location, createdAt) and the project reference type, owned by one framework-free module; the UI, the Host routes and the tools read it, none redefines it.
+- **FR-002** Persisted per app instance through `AppInstance` (never `homedir()`), next to today's project list (`acryl-settings.yaml` `workspace.projects`), with a migration that turns that list into the Default workspace on first start, losing nothing.
+- **FR-003** The current workspace is one piece of state with one owner; the tree, the tab sets (`WorkspaceGroups`, keyed per worktree today, gaining the workspace as the outer key) and `ChatSelection` read it.
+- **FR-004** Web and Desktop share one implementation (`coding-capabilities.ts`); the TUI gets list and switch.
+- **FR-005** The shared-context mechanism is one module with a size budget, whatever delivery it uses, and is replaceable (a Cordis service), so a better mechanism can be swapped in without touching the sidebar.
+- **FR-006** Removing a project from a workspace or deleting a workspace never deletes files, branches or chats.
 
 ## Questions for the owner (block `plan.md`)
 
-- **Q1 - Name.** "Workspace" for the isolated piece of work (Conductor, Superset, Superconductor use it this way) and "project" for the repository? Or keep "workspace" for the repository and call the isolated piece something else ("task", "space", "branch")? Recommendation: workspace for the piece of work, project for the repository.
-- **Q2 - Plain folders.** A project that is not a git repository has no branches. Does it have exactly one workspace (the folder itself), or can workspaces there be copies of the folder? Recommendation: exactly one, until there is a need.
-- **Q3 - Where worktrees go.** Today's "+" creates them next to the repository (`../acryl.worktrees/<branch>`). Keep that, or put them under the app's home (`~/.acryl/workspaces/<project>/<name>`) like Superconductor? Recommendation: next to the repository (visible, and other tools find them), configurable per project.
-- **Q4 - What "+" next to a project does.** Create a workspace straight away (name it later, a generated name like `sc-frozen-fluxon`), or ask for a name first (today's "feature/my-change" field)? Recommendation: create immediately with a generated name the user can rename; the first chat message can rename it.
-- **Q5 - Setup per workspace.** Should a new workspace run a project's setup (install dependencies, copy `.env` files) automatically, as Conductor's setup scripts do? Recommendation: yes, an optional per-project setup command, shown as a terminal tab, never silent.
-- **Q6 - Merge.** Local merge into the base branch, pull request only (GitHub), or both? Recommendation: both, pull request first when the project has a GitHub remote.
-- **Q7 - Archive vs delete defaults** when a workspace's branch is merged: archive automatically, or ask? Recommendation: ask once, with "always archive merged workspaces" as a project setting.
+- **Q1 - Same project in several workspaces**: allowed (recommended), or one workspace per project?
+- **Q2 - Tabs per workspace**: when the same worktree is in two workspaces, does it keep one tab set (follows the folder) or one per workspace? Recommendation: one per workspace, so each workspace restores exactly as left.
+- **Q3 - Shared context delivery first**: which comes first, the generated context file plus agent launch wiring (works for Claude Code, Codex, Pi today), or the `workspace_context` tool/MCP server? Recommendation: the file and launch wiring first, the tool second.
+- **Q4 - The brief**: a file the user edits in the app (a Doc tab), with agents allowed to append? Where should it live: in the app home (private) or in a repository (shared with a team)?
+- **Q5 - Individual Projects vs Default**: is Default an Individual Projects workspace (no shared context), as today?
+- **Q6 - Workspace icons**: name initials, a chosen emoji or color, or the reference IDE's generic icons with the name as a tooltip?
 
 ## Non-goals (this milestone)
 
-- Remote or cloud workspaces (a workspace on another machine or container); the model keeps a `location` seam for it but builds only local.
-- Changing DSH's own workspace concept or its packages (the pinned upstream is not edited).
-- Multi-user sharing of a workspace.
+- Connecting to a remote machine (the kind and its stored target only).
+- Changing DSH's own workspace concept or packages (the pinned upstream is not edited).
+- Multi-user or team sharing of a workspace.
+- Changing how branches and worktrees work inside a project (spec 040 stays as is).
 
 ## Success criteria
 
-- One action creates a working workspace (branch, worktree, tab set, first chat) in under 5 s on a warm repository.
-- The tree, the tab strip, the chat and Agent Control all name the same thing with the same word; a code search for "workspace" in ACRYL's own sources outside the DSH seam finds only the new meaning.
-- Five workspaces in one project with agents running in three of them: switching is instant, and nothing in one is visible or touched in another (the R42 harness extended to workspaces).
-
-## Relation to existing work
-
-- Builds on spec 040's tree and tab sets and spec 001's `ChatSelection` (one owner of the shown chat), which already keys by worktree; this milestone turns "worktree path" into a workspace identity.
-- Extends spec 041's `workspace.*` tool namespace from "the tab area" to real workspace operations.
-- Spec 036 (Blends) uses "app instance" for a whole running ACRYL; a workspace is inside one app instance, never across instances.
+- Switching between two workspaces with ten projects each takes under 200 ms to show the other sidebar, and never interrupts a running agent.
+- After the rename, "workspace" in ACRYL's own UI and code means only the switchable set of projects.
+- In a Shared Context workspace, a coding agent answers a cross-project question correctly on its first turn, with no project named by the user.
