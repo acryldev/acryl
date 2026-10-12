@@ -136,6 +136,23 @@ describe('serialize and restore', () => {
     expect(restored.stateFor('/p/other').getSnapshot().tiles.map(t => t.kind)).toEqual(['chat'])
   })
 
+  it('round-trips each workspace\'s tab sets, and keeps a workspace\'s sets that were not opened in this run (spec 043 T006)', () => {
+    const groups = groupsWith()
+    groups.stateFor('/p/main').addTile('kanban')
+    groups.setWorkspace('ws-2')
+    groups.stateFor('/p/main').addTile('doc')
+    const first = parseSavedWorkspace(serializeWorkspace('projects', groups))
+
+    // The next run opens only Default: ws-2's tab set is saved again as it was.
+    const next = new WorkspaceGroups(() => new WorkspaceState({ createId: ids() }), first?.groups)
+    next.stateFor('/p/main').addTile('diff')
+    const second = parseSavedWorkspace(serializeWorkspace('projects', next))
+    const restored = new WorkspaceGroups(() => new WorkspaceState({ createId: ids() }), second?.groups)
+    expect(restored.stateFor('/p/main').getSnapshot().tiles.map(t => t.kind)).toEqual(['chat', 'kanban', 'diff'])
+    restored.setWorkspace('ws-2')
+    expect(restored.stateFor('/p/main').getSnapshot().tiles.map(t => t.kind)).toEqual(['chat', 'doc'])
+  })
+
   it('round-trips the split pane, and treats a missing or clashing split as none', () => {
     const groups = groupsWith()
     const state = groups.stateFor('/p')

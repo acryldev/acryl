@@ -75,8 +75,8 @@ export function useWorkspacePalette(deps: WorkspacePaletteDeps): PaletteState {
       openFile: (worktree, file) => { latest.current.shell.openFile({ worktree, file }) },
     }
     const notify = (message: string): void => {
-      const { toasts, groupKey, snapshot } = latest.current
-      toasts.push(message, { group: groupKey, tabId: snapshot.activeId ?? '' })
+      const { toasts, groups, groupKey, snapshot } = latest.current
+      toasts.push(message, { workspace: groups.workspace(), worktree: groupKey, tabId: snapshot.activeId ?? '' })
     }
     const view = (): PaletteView => {
       const now = latest.current

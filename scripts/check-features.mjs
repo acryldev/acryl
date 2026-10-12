@@ -9,7 +9,9 @@
  *
  * Exit code 0 when every check passes, 1 otherwise. Each check prints PASS or FAIL with what it saw.
  */
-import { spawn } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
+import { mkdtempSync, realpathSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { connectInspector } from './lib/inspector.mjs'
@@ -20,6 +22,8 @@ const option = (name, fallback) => { const at = args.indexOf(`--${name}`); retur
 const port = Number(option('port', '9222'))
 const primary = process.platform === 'darwin' ? 'meta' : 'ctrl'
 const sleep = ms => new Promise(done => { setTimeout(done, ms) })
+/** A throwaway git repository the launched app gets as its project (a fresh home has none; its first chat runs in a plain folder). */
+let project
 
 let run
 if (args.includes('--launch')) {
@@ -45,7 +49,38 @@ const check = async (name, body) => {
   }
 }
 const expectTrue = (value, message) => { if (value !== true) throw new Error(message) }
+/** Poll a page expression until it is truthy (a loaded machine answers late, so a fixed wait flakes); @returns its last value. */
+const until = async (expression, timeoutMs = 8000) => {
+  let value
+  for (let waited = 0; waited <= timeoutMs; waited += 250) {
+    value = await page.evaluate(expression)
+    if (value) return value
+    await sleep(250)
+  }
+  return value
+}
 const clickButton = text => page.evaluate(`(() => { const b = [...document.querySelectorAll('button')].find(e => e.offsetParent !== null && e.textContent.trim() === ${JSON.stringify(text)}); if (!b) return false; b.click(); return true })()`)
+
+/** A run without a model key opens DSH's "Add an API key" dialog at some moment after load; it is modal and takes the shortcuts, so close it as a person would. */
+const closeKeyDialog = () => until(`(() => { const b = [...document.querySelectorAll('button')].find(e => e.offsetParent !== null && e.textContent.trim() === 'Configure later'); b?.click(); return b !== undefined })()`, 10_000)
+
+if (run !== undefined) {
+  await closeKeyDialog()
+  project = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-check-project-')))
+  for (const command of [['init', '-q', '-b', 'main'], ['-c', 'user.name=check', '-c', 'user.email=check@localhost', 'commit', '-q', '--allow-empty', '-m', 'start']]) {
+    const result = spawnSync('git', command, { cwd: project, encoding: 'utf8' })
+    if (result.status !== 0) throw new Error(`check-features: git ${command.join(' ')} failed: ${result.stderr}`)
+  }
+  // Registered through the app's own route, then the page reloads to read it; selecting its worktree opens a chat there.
+  const added = await page.evaluate(`fetch('/api/acryl-workspace/projects', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'add', path: ${JSON.stringify(project)} }) }).then(r => r.ok)`)
+  if (added !== true) throw new Error('check-features: the app did not take the test project')
+  await page.evaluate('setTimeout(() => { location.reload() }, 0)')
+  await sleep(3000)
+  const row = await until(`(() => { const b = document.querySelector('button.dshWorkspaceWorktree'); b?.click(); return b !== null })()`, 30_000)
+  if (row !== true) throw new Error('check-features: the test project has no worktree in the tree')
+  await until(`!!document.querySelector('button.dshWorkspaceWorktree[aria-pressed=true]')`, 15_000)
+  await closeKeyDialog()
+}
 
 await page.evaluate(`(() => { window.__checkErrors = []; const original = console.error; console.error = (...a) => { window.__checkErrors.push(a.map(x => x instanceof Error ? x.message : String(x)).join(' ').slice(0, 300)); return original.apply(console, a) }; return true })()`)
 
@@ -67,8 +102,7 @@ await check('Settings lists ACRYL\'s sections', async () => {
 await check('the command palette opens (Cmd/Ctrl+Shift+P)', async () => {
   await sleep(500)
   await page.press('p', [primary, 'shift'])
-  await sleep(800)
-  expectTrue(await page.evaluate(`!!document.querySelector('.dshPaletteList')`), 'no palette after the shortcut')
+  expectTrue(await until(`!!document.querySelector('.dshPaletteList')`), 'no palette after the shortcut')
   await page.press('Escape')
   return 'opened'
 })
@@ -76,8 +110,7 @@ await check('the command palette opens (Cmd/Ctrl+Shift+P)', async () => {
 await check('the element inspector toggles from the chat composer (Cmd/Ctrl+Shift+.)', async () => {
   expectTrue(await page.evaluate(`(() => { const editor = [...document.querySelectorAll('[contenteditable=true]')].find(e => e.offsetParent); editor?.focus(); return editor !== undefined })()`), 'no composer to focus')
   await page.press('.', [primary, 'shift'])
-  await sleep(500)
-  const on = await page.evaluate(`!!document.querySelector('[data-acryl-mount-anchor-veil]')`)
+  const on = await until(`!!document.querySelector('[data-acryl-mount-anchor-veil]')`)
   await page.press('Escape')
   expectTrue(on, 'the inspector did not turn on')
   return 'on, then off with Escape'
@@ -115,7 +148,10 @@ await check('a worktree pick returns from the Plugins page to the tabs', async (
 
 // Creates a workspace: only in an isolated copy (--launch), never in a window someone is using.
 if (run !== undefined) {
-  await check('a new workspace is created from the dialog, shown, and switched back from (spec 043)', async () => {
+  await check('a new workspace is created from the dialog, shown with its own tabs, and switched back from (spec 043)', async () => {
+    // The tabs other than chats, by kind: each workspace has its own set (T006).
+    const otherTabs = `[...document.querySelectorAll('.dshWorkspaceTab')].map(e => e.dataset.tileKind).filter(kind => kind !== 'chat').join(',')`
+    const defaultTabs = await page.evaluate(otherTabs)
     expectTrue(await page.evaluate(`(() => { const b = document.querySelector('[aria-label="New workspace"]'); b?.click(); return b !== null })()`), 'no New workspace button')
     await sleep(800)
     expectTrue(await page.evaluate(`(() => { const d = document.querySelector('[role=dialog][aria-label="New Workspace"]'); if (!d) return false; [...d.querySelectorAll('[role=radio]')].find(r => /Shared Context/.test(r.textContent))?.click(); const input = d.querySelector('[aria-label="Workspace name"]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, 'Feature check'); input.dispatchEvent(new Event('input', { bubbles: true })); return true })()`), 'no New Workspace dialog')
@@ -124,10 +160,14 @@ if (run !== undefined) {
     await sleep(2000)
     expectTrue(await page.evaluate(`document.querySelector('[aria-label="Workspace Feature check"]')?.getAttribute('aria-pressed') === 'true'`), 'the new workspace is not the shown one')
     expectTrue(await page.evaluate(`!!document.querySelector('.dshWorkspaceSideEmpty')`), 'the new workspace does not show an empty project list')
+    const newTabs = await page.evaluate(otherTabs)
+    expectTrue(newTabs === '', `the new workspace shows another workspace's tabs: ${newTabs}`)
     await page.evaluate(`document.querySelector('[aria-label="Workspace Default"]')?.click()`)
     await sleep(2000)
     expectTrue(await page.evaluate(`document.querySelector('[aria-label="Workspace Default"]')?.getAttribute('aria-pressed') === 'true'`), 'Default did not come back')
-    return 'created, shown empty, back to Default'
+    const backTabs = await page.evaluate(otherTabs)
+    expectTrue(backTabs === defaultTabs, `Default's tabs changed: ${defaultTabs} before, ${backTabs} after`)
+    return `created, shown empty with no tabs of its own, back to Default with its tabs (${defaultTabs})`
   })
 }
 
@@ -146,4 +186,5 @@ if (run !== undefined) {
   run.kill('SIGTERM')
   await new Promise(done => { run.on('exit', done) })
 }
+if (project !== undefined) rmSync(project, { recursive: true, force: true })
 process.exit(failed === 0 ? 0 : 1)

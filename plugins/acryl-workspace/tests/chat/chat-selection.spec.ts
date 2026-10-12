@@ -124,6 +124,21 @@ async function world(showTabs: () => void = () => {}) {
 }
 
 describe('ChatSelection', () => {
+  it('places the shown chat in the new workspace\'s tab set when the workspace changes, and opens nothing (spec 043 T006)', async () => {
+    const w = await world()
+    expect(w.selectedChatTab()).toBe('m1')
+    const before = w.dsh.opened.length
+    w.groups.setWorkspace('ws-2')
+    await settle()
+    expect(w.selectedChatTab()).toBe('m1')
+    expect(w.misplaced()).toEqual([])
+    expect(w.dsh.opened.length).toBe(before)
+    // Default's tab set is as it was.
+    w.groups.setWorkspace('default')
+    await settle()
+    expect(w.selectedChatTab()).toBe('m1')
+  })
+
   it('replays the first freezing sequence (open a chat of another worktree from the tree, then select the first worktree): one open per action, nothing reacts', async () => {
     const w = await world()
     w.chats.showWorktree(HI, () => { w.chats.open('h2') })

@@ -51,6 +51,18 @@ function fakeApi(overrides: Partial<WorkspaceGitApi> = {}): WorkspaceGitApi & { 
 }
 
 describe('WorkspaceShellState', () => {
+  it('clears the selection and keeps it clear while the chat changes, until the user picks a worktree (spec 043: an empty workspace)', async () => {
+    const shell = new WorkspaceShellState(fakeApi())
+    await shell.follow('/p/proj')
+    expect(shell.getSnapshot().selectedPath).toBe('/p/proj')
+    shell.clearSelection()
+    expect(shell.getSnapshot().selectedPath).toBeUndefined()
+    await shell.follow('/p/proj-x')
+    expect(shell.getSnapshot().selectedPath).toBeUndefined()
+    shell.select('/p/proj')
+    expect(shell.getSnapshot().selectedPath).toBe('/p/proj')
+  })
+
   it('discovers a repository once per directory and lists its worktrees', async () => {
     const api = fakeApi()
     const shell = new WorkspaceShellState(api)

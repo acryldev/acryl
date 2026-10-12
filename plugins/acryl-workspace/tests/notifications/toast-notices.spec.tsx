@@ -7,7 +7,7 @@ import { describeFinish, MAX_TOASTS, TOAST_LIFETIME_MS, ToastState } from '../..
 
 afterEach(() => { cleanup(); vi.useRealTimers() })
 
-const target = { group: '/p', tabId: 't1' }
+const target = { workspace: 'default', worktree: '/p', tabId: 't1' }
 
 describe('describeFinish', () => {
   it('says whether the agent finished or stopped with an error', () => {

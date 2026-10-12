@@ -2,7 +2,7 @@
  * Which chat is on screen, and which tab and worktree show it: the one owner of that relation.
  *
  * Two stores describe the shown chat: DSH's main view (the session its navigation holds, `uiWorkspace`) and ACRYL's tab sets (one per
- * worktree, `WorkspaceGroups`). DSH's main view is the source of truth; the tab sets and the selected worktree follow it. The direction
+ * worktree in each workspace, `WorkspaceGroups`). DSH's main view is the source of truth; the tab sets and the selected worktree follow it. The direction
  * is fixed by who may write what:
  *
  * - **User intents** (`open`, `selectTab`, `showWorktree`) are the only operations that ask DSH to show a chat.
@@ -116,8 +116,17 @@ export class ChatSelection implements SessionNavigator {
       this.relocateShown(list)
       this.ensureSelectedWorktreeTabs(list)
     })
+    // Another workspace shown: its tab sets are other ones, so the shown chat's tab is placed again (spec 043, one tab set per workspace).
+    let workspace = this.deps.groups.workspace()
+    const stopGroups = this.deps.groups.onChange(() => {
+      if (this.deps.groups.workspace() === workspace) return
+      workspace = this.deps.groups.workspace()
+      this.shown = undefined
+      this.placedIn = undefined
+      settle()
+    })
     this.reconcile(sessions.list.getSnapshot())
-    return () => { stopSessions(); stopShell() }
+    return () => { stopSessions(); stopShell(); stopGroups() }
   }
 
   private reconcile(list: SessionListState): void {
@@ -137,7 +146,7 @@ export class ChatSelection implements SessionNavigator {
       this.relocateShown(list)
     }
     this.ensureSelectedWorktreeTabs(list)
-    for (const key of groups.keys()) syncChatTabTitles(groups.stateFor(key), list, this.seenTitles)
+    for (const [, state] of groups.entries()) syncChatTabTitles(state, list, this.seenTitles)
   }
 
   /**

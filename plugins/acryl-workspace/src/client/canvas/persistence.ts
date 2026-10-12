@@ -24,7 +24,8 @@ export const STORAGE_KEY = 'acryl-workspace:v1'
 
 const MAX_TEXT = 200_000
 const MAX_TOTAL = 1_000_000
-const MAX_GROUPS = 50
+/** Tab sets across every workspace (spec 043): each workspace keeps its own per worktree. */
+const MAX_GROUPS = 200
 const MAX_TILES = 40
 const MAX_FORGOTTEN_ROOTS = 500
 const MAX_ROOT_LENGTH = 4096
@@ -187,8 +188,8 @@ export function parseSavedWorkspace(raw: string | null): SavedWorkspace | undefi
 /** @returns the JSON to store, staying under the size cap by dropping the largest tiles first. */
 export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups, forgottenRoots: readonly string[] = [], dismissedChats: readonly string[] = []): string {
   const saved: Record<string, SavedGroup> = {}
-  for (const key of groups.keys()) {
-    const snapshot = groups.stateFor(key).getSnapshot()
+  for (const [key, state] of groups.entries()) {
+    const snapshot = state.getSnapshot()
     const tiles: SavedTile[] = []
     let active = -1
     let split = -1
@@ -223,6 +224,8 @@ export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups, for
     }
     if (tiles.length > 0 || active !== -1) saved[key] = { tiles: tiles.slice(0, MAX_TILES), active, split }
   }
+  // A tab set not opened in this run (another workspace, a worktree not visited) is kept as it was saved, after the ones in use (a load keeps the first MAX_GROUPS).
+  for (const [key, group] of Object.entries(groups.unopened())) saved[key] ??= group
   const extra = { forgottenRoots: forgottenRoots.slice(0, MAX_FORGOTTEN_ROOTS), dismissedChats: dismissedChats.slice(0, MAX_DISMISSED_CHATS) }
   let json = JSON.stringify({ version: 1, mode, groups: saved, ...extra })
   // Oversized text (a pasted file, a long doc) is the only thing that can blow the cap: shed it.

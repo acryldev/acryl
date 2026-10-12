@@ -1,10 +1,16 @@
 /** Short-lived notices ("Claude finished") with a way back to the tab they are about. */
 
+export interface ToastTarget {
+  readonly workspace: string
+  readonly worktree: string
+  readonly tabId: string
+}
+
 export interface Toast {
   readonly id: number
   readonly text: string
-  /** Where to go when the notice is opened: a worktree's tab group and one of its tabs. */
-  readonly target: { readonly group: string; readonly tabId: string }
+  /** Where to go when the notice is opened: a workspace, one of its worktrees' tab sets, and one of its tabs. */
+  readonly target: ToastTarget
 }
 
 /** How long a notice stays before it goes away by itself. */

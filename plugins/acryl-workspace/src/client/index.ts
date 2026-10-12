@@ -118,6 +118,12 @@ export function apply(ctx: ClientContext): void {
   }
   const projectRegistry = new ProjectRegistryState(createProjectRegistryApi())
   ctx.effect(() => { void projectRegistry.load(); return () => {} }, 'acryl-workspace: read the project list')
+  // Each workspace has its own tab sets (spec 043): the canvas shows the shown workspace's.
+  ctx.effect(() => {
+    const follow = (): void => { groups.setWorkspace(projectRegistry.current()) }
+    follow()
+    return projectRegistry.subscribe(follow)
+  }, 'acryl-workspace: tab sets follow the shown workspace')
   // Projects that were chat workspaces before ACRYL owned the list are taken over once, when the chat's workspace list is known.
   ctx.inject(['workspaces'], child => { child.effect(() => adoptLegacyProjects(projectRegistry, child.workspaces.list), 'acryl-workspace: take over earlier projects') })
   const projects = createProjectsControl({

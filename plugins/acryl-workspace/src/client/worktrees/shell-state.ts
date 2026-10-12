@@ -282,6 +282,16 @@ export class WorkspaceShellState {
     this.reveal?.()
   }
 
+  /**
+   * Select no worktree, and keep it so while the chat changes: a workspace without projects shows none (spec 043), even though the
+   * chat on screen runs in a folder of another workspace.
+   */
+  clearSelection(): void {
+    this.pinned = true
+    if (this.snapshot.selectedPath === undefined) return
+    this.replace({ ...this.snapshot, selectedPath: undefined })
+  }
+
   /** Register (or clear) how to bring the Changes tab into view. Owned by the Changes tab plugin. */
   setReveal(reveal: (() => void) | undefined): void {
     this.reveal = reveal

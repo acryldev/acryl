@@ -24,7 +24,7 @@ import { PtyPane } from '../terminal/PtyPane.tsx'
 import type { TerminalRegistry } from '../terminal/terminal-session.ts'
 import { shouldRaiseSystemNotice, type SystemNoticePort } from '../notifications/system-notice.ts'
 import { Toasts } from '../notifications/Toasts.tsx'
-import { describeFinish, type ToastState } from '../notifications/toast-state.ts'
+import { describeFinish, type ToastState, type ToastTarget } from '../notifications/toast-state.ts'
 import { StatusLine } from '../chrome/StatusLine.tsx'
 import { buildStatusLine } from '../chrome/status-line.ts'
 import type { AgentsState } from '../agents/agents-state.ts'
@@ -32,7 +32,7 @@ import { TabStrip } from '../tabs/TabStrip.tsx'
 import { SplitDivider } from './SplitDivider.tsx'
 import { routeShellRequests } from './shell-requests.ts'
 import { clampSplit, readSplitRatio, writeSplitRatio } from './split-ratio.ts'
-import { GLOBAL_GROUP, type WorkspaceGroups } from './groups.ts'
+import { GLOBAL_GROUP, groupLocation, type WorkspaceGroups } from './groups.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { DocFilePane } from '../docs/DocFilePane.tsx'
 import { DocPane } from '../docs/DocPane.tsx'
@@ -107,7 +107,10 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
   const subscribeShell = useCallback((listener: () => void) => shell.subscribe(listener), [shell])
   const groupKey = useSyncExternalStore(subscribeShell, () => shell.getSnapshot().selectedPath ?? GLOBAL_GROUP)
   const groupBranch = useSyncExternalStore(subscribeShell, () => shell.selectedWorktree()?.branch ?? null)
-  const workspace = groups.stateFor(groupKey)
+  // Each workspace keeps its own tab set per worktree (spec 043): switching workspace swaps the set like switching worktree does.
+  const subscribeGroups = useCallback((listener: () => void) => groups.onChange(listener), [groups])
+  const shownWorkspace = useSyncExternalStore(subscribeGroups, () => groups.workspace())
+  const workspace = useMemo(() => groups.stateFor(groupKey), [groups, groupKey, shownWorkspace])
   const api = useMemo(() => ptyApi ?? createWorkspacePtyApi(), [ptyApi])
   const subscribe = useCallback((listener: () => void) => workspace.subscribe(listener), [workspace])
   const snapshot = useSyncExternalStore(subscribe, () => workspace.getSnapshot())
@@ -197,18 +200,23 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
     if (!result.ok) setChatNotice(result.reason)
   }, [projects, groupKey])
 
-  const openTarget = useCallback((target: { readonly group: string; readonly tabId: string }): void => {
-    if (target.group !== GLOBAL_GROUP) shell.select(target.group)
-    chats.selectTab(target.group, target.tabId)
-  }, [shell, chats])
+  const openTarget = useCallback((target: ToastTarget): void => {
+    const show = (): void => {
+      if (target.worktree !== GLOBAL_GROUP) shell.select(target.worktree)
+      chats.selectTab(target.worktree, target.tabId)
+    }
+    // A tab in another workspace: show that workspace first.
+    if (target.workspace === groups.workspace()) { show(); return }
+    void projects.switchWorkspace(target.workspace).then((result) => { if (result.ok) show() })
+  }, [shell, chats, groups, projects])
   const [noticePermission, setNoticePermission] = useState(() => notices.permission())
 
   // Every open agent tab keeps its stream (also in a worktree that is not shown), and an agent that
   // ends raises a notice that leads back to its tab.
   useEffect(() => {
     const ensureAll = (): void => {
-      for (const key of groups.keys()) {
-        for (const tile of groups.stateFor(key).getSnapshot().tiles) {
+      for (const [, state] of groups.entries()) {
+        for (const tile of state.getSnapshot().tiles) {
           if (tile.kind === 'pty' && tile.terminalId !== undefined) terminals.ensure(tile.terminalId)
         }
       }
@@ -216,12 +224,12 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
     ensureAll()
     const stopGroups = groups.onChange(ensureAll)
     const stopExit = terminals.onExit((terminalId, exitCode) => {
-      for (const key of groups.keys()) {
-        const tile = groups.stateFor(key).getSnapshot().tiles.find(candidate => candidate.terminalId === terminalId)
+      for (const [key, state] of groups.entries()) {
+        const tile = state.getSnapshot().tiles.find(candidate => candidate.terminalId === terminalId)
         if (tile === undefined) continue
         if (tile.commandId !== undefined && tile.commandId !== 'shell') {
           const text = describeFinish(tile.title, exitCode)
-          const target = { group: key, tabId: tile.id }
+          const target = { ...groupLocation(key), tabId: tile.id }
           toasts.push(text, target)
           if (shouldRaiseSystemNotice(notices)) notices.show('ACRYL', text, () => { openTarget(target) })
         }
@@ -230,8 +238,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
     })
     // A terminal the Host no longer has (the Host restarted since this tab was saved) closes its tab.
     const stopLost = terminals.onLost((terminalId) => {
-      for (const key of groups.keys()) {
-        const state = groups.stateFor(key)
+      for (const [, state] of groups.entries()) {
         const tile = state.getSnapshot().tiles.find(candidate => candidate.terminalId === terminalId)
         if (tile === undefined) continue
         state.closeTile(tile.id)
@@ -241,17 +248,17 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
     })
     // A shell that sets its title (the directory, the running command) names its tab, unless the user renamed it.
     const stopTitle = terminals.onTitle((terminalId, title) => {
-      for (const key of groups.keys()) {
-        if (groups.stateFor(key).applyTerminalTitle(terminalId, title)) return
+      for (const [, state] of groups.entries()) {
+        if (state.applyTerminalTitle(terminalId, title)) return
       }
     })
     // An agent that starts needing you (a permission, a question) raises a notice that leads to its tab.
     const stopNeeds = agentStatus.onNeedsYou((terminalId) => {
-      for (const key of groups.keys()) {
-        const tile = groups.stateFor(key).getSnapshot().tiles.find(candidate => candidate.terminalId === terminalId)
+      for (const [key, state] of groups.entries()) {
+        const tile = state.getSnapshot().tiles.find(candidate => candidate.terminalId === terminalId)
         if (tile === undefined) continue
         const text = `${tile.title} needs you`
-        const target = { group: key, tabId: tile.id }
+        const target = { ...groupLocation(key), tabId: tile.id }
         toasts.push(text, target)
         if (shouldRaiseSystemNotice(notices)) notices.show('ACRYL', text, () => { openTarget(target) })
         return
