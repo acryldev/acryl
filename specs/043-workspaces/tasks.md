@@ -21,6 +21,6 @@ See `plan.md` for the decisions and the mini-design.
 
 ## Phase 4 - Shared context
 
-- [ ] T009 The workspace context file (`<home>/workspaces/<id>/WORKSPACE.md`): projects, brief, pointers to each project's own instructions; regenerated on change.
-- [ ] T010 Agent launch wiring: a terminal agent started in a Shared Context workspace gets the context (Claude Code `--add-dir` per project plus the file; Codex and Pi equivalents; the DSH chat through a system-prompt contribution).
-- [ ] T011 The `workspace_context` tool through the loopback gateway; the brief editable in a Doc tab.
+- [x] T009 (done in `fe3a806ac19a6a064139fea52cc2ddd4d9b6e284`) The workspace context file (`<home>/workspaces/<id>/WORKSPACE.md`): projects, brief, pointers to each project's own instructions; regenerated on change.
+- [x] T010 (done in `fe3a806ac19a6a064139fea52cc2ddd4d9b6e284`; Codex gets the projects but not the text: no instruction flag was confirmed in codex-cli 0.162) Agent launch wiring: a terminal agent started in a Shared Context workspace gets the context (Claude Code `--add-dir` per project plus the file; Codex and Pi equivalents; the DSH chat through a system-prompt contribution).
+- [x] T011 (done in `fe3a806ac19a6a064139fea52cc2ddd4d9b6e284`, as `acryl_workspace_context`; the brief is a Workspace brief tab saved through `/api/acryl-workspace/brief`) The `workspace_context` tool through the loopback gateway; the brief editable in a Doc tab.

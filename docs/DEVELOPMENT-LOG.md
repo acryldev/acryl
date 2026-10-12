@@ -1,4 +1,11 @@
-## 2026-10-12 (latest) - account sign-in in the terminal like other coding agents; the agent drives workspaces
+## 2026-10-13 (latest) - shared context: every agent in a Shared Context workspace knows its projects
+
+Owner: "continue ... spec 043: Agent Control workspace tools (T007), then shared context (T009-T011)".
+
+- **Shared context** (`fe3a806ac19a6a064139fea52cc2ddd4d9b6e284`, spec 043 T009-T011; mini-design in the plan): a Shared Context workspace has a brief (`<home>/workspaces/<id>/BRIEF.md`, edited in a Workspace brief tab from the "+" menu) and a generated `WORKSPACE.md` (its projects, each project's own `CLAUDE.md`/`AGENTS.md`/`README.md` by path, the brief), rewritten when the workspace changes. The DSH chat is told through a `systemPrompt.context` contribution keyed by its session's folder (a linked worktree outside the project folder counts), within a 3200-character budget. Terminal agents get it at launch: Claude Code `--add-dir` for the other projects and `--append-system-prompt`; Pi `--append-system-prompt`; Codex `--add-dir` (no instruction flag confirmed); every agent `ACRYL_WORKSPACE_CONTEXT`. `acryl_workspace_context` reads it for any agent and is on the gateway's default allowlist. An Individual Projects workspace contributes nothing. Provided as the `acrylSharedContext` service so another mechanism can replace it.
+- **Checked live** (isolated Desktop, real model): with two throwaway projects in a Shared Context workspace and a brief, a chat in one project asked "without using any tools: which projects belong to the workspace you are working in, and what is the release order?" answered "Workspace \"Payments\" contains payments-api and payments-web; release API first, then web." (the release order exists only in the brief). A Claude tab started there ran with `--add-dir <payments-web>`, the context, and `ACRYL_WORKSPACE_CONTEXT`. The tool budget grew by 200 characters for the read tool.
+
+## 2026-10-12 - account sign-in in the terminal like other coding agents; the agent drives workspaces
 
 Owner: in the terminal, signing in to Anthropic or OpenAI showed "the weird input form for API key" instead of the usual browser sign-in; "continue ... spec 043: Agent Control workspace tools (T007), then shared context (T009-T011)".
 
