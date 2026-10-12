@@ -231,22 +231,17 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
     if (result.note !== undefined) setHint(result.note)
   }
 
-  /** Show another workspace, and the first of its projects with its chat; a workspace without projects shows no worktree. */
+  /** Show another workspace; its tabs and worktree follow (`followShownWorkspace`). */
   const switchWorkspace = async (id: string): Promise<void> => {
     setNotice(null)
     const result = await projects.switchWorkspace(id)
-    if (!result.ok) { setNotice(result.reason); return }
-    const first = projects.projectPaths()[0]
-    if (first !== undefined) showWorktree(first)
-    else shell.clearSelection()
+    if (!result.ok) setNotice(result.reason)
   }
 
   const createWorkspace = async (input: NewWorkspaceInput): Promise<string | null> => {
     const result = await projects.createWorkspace(input)
     if (!result.ok) return result.reason
     setCreatingWorkspace(false)
-    // A new workspace is shown, and has no projects yet.
-    shell.clearSelection()
     return null
   }
 

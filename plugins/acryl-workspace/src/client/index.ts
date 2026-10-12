@@ -26,7 +26,8 @@ import { WorkspaceGroups } from './canvas/groups.ts'
 import { browserStorage, parseSavedWorkspace, STORAGE_KEY } from './canvas/persistence.ts'
 import { startWorkspacePersistence } from './canvas/persist.ts'
 import { createWebFolderPicker } from './projects/web-folder-picker.ts'
-import { createProjectRegistryApi } from './projects/registry-api.ts'
+import { createProjectRegistryApi, followProjectRegistry } from './projects/registry-api.ts'
+import { followShownWorkspace } from './projects/shown-workspace.ts'
 import { adoptLegacyProjects, ProjectRegistryState } from './projects/registry-state.ts'
 import { createProjectsControl, desktopDirectorySeams } from './projects/projects-control.ts'
 import { createWorkspaceGitApi } from './git/git-api.ts'
@@ -118,12 +119,8 @@ export function apply(ctx: ClientContext): void {
   }
   const projectRegistry = new ProjectRegistryState(createProjectRegistryApi())
   ctx.effect(() => { void projectRegistry.load(); return () => {} }, 'acryl-workspace: read the project list')
-  // Each workspace has its own tab sets (spec 043): the canvas shows the shown workspace's.
-  ctx.effect(() => {
-    const follow = (): void => { groups.setWorkspace(projectRegistry.current()) }
-    follow()
-    return projectRegistry.subscribe(follow)
-  }, 'acryl-workspace: tab sets follow the shown workspace')
+  // Changes made elsewhere (an agent's workspace tool, another window) arrive through the Host's event stream.
+  ctx.effect(() => followProjectRegistry(view => { projectRegistry.receive(view) }), 'acryl-workspace: follow the project list')
   // Projects that were chat workspaces before ACRYL owned the list are taken over once, when the chat's workspace list is known.
   ctx.inject(['workspaces'], child => { child.effect(() => adoptLegacyProjects(projectRegistry, child.workspaces.list), 'acryl-workspace: take over earlier projects') })
   const projects = createProjectsControl({
@@ -138,6 +135,13 @@ export function apply(ctx: ClientContext): void {
     chatAvailable: () => capabilities.chat,
     webPickDirectory: createWebFolderPicker(),
   })
+  // Whoever changes the shown workspace (the strip, a new workspace, an agent's tool, another window), its tab sets and its worktree follow.
+  ctx.effect(() => followShownWorkspace({
+    registry: projectRegistry,
+    groups,
+    shell,
+    showWorktree: (path) => { chats.showWorktree(path, () => { void projects.showChat(path) }) },
+  }), 'acryl-workspace: the shown workspace')
   // DSH's own pages (Plugins, Automation tasks, ...) listed in the left pane: looked up when read, so a profile without them just shows none.
   // The `sidebar.panellist` slot name is declared by DSH's sidebar package, which ACRYL does not import (the frame facade stays as it is), so the registry crosses
   // into the narrow `PanelSlotRegistry` port here, at the one place that knows; the port, its tests and the live check hold the contract.

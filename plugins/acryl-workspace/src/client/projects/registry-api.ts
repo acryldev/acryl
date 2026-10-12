@@ -1,6 +1,7 @@
 /** Same-origin browser client for the project registry (the Host owns the list; see `projects/contract.ts`). */
 
 import {
+  WORKSPACE_PROJECTS_EVENTS_PATH,
   WORKSPACE_PROJECTS_PATH,
   parseProjectRegistryView,
   type ProjectRegistryView,
@@ -35,4 +36,28 @@ export function createProjectRegistryApi(fetchImpl: FetchLike = (input, init) =>
       body: JSON.stringify(request),
     })),
   }
+}
+
+/** What the page needs of `EventSource` (injectable for tests). */
+export interface EventSourceLike {
+  addEventListener(type: 'message', listener: (event: MessageEvent<string>) => void): void
+  close(): void
+}
+
+/**
+ * Follow the Host's registry as it changes: every view it pushes goes to `receive`; a message that does not validate is ignored. The
+ * browser reconnects a dropped stream by itself.
+ * @returns disposer, for one owning effect.
+ */
+export function followProjectRegistry(
+  receive: (view: ProjectRegistryView) => void,
+  open: (url: string) => EventSourceLike = url => new EventSource(url),
+): () => void {
+  const source = open(WORKSPACE_PROJECTS_EVENTS_PATH)
+  source.addEventListener('message', (event) => {
+    let view: ProjectRegistryView
+    try { view = parseProjectRegistryView(JSON.parse(event.data)) } catch { return }
+    receive(view)
+  })
+  return () => { source.close() }
 }

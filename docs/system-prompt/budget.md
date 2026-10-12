@@ -7,7 +7,7 @@ Characters are exact; tokens are an estimate for comparing changes. Ceilings liv
 
 ## web and desktop (standard preset)
 
-Total: system prompt 10221 chars (about 3006 tokens), tool definitions 31881 chars (about 9377 tokens), 42 tools.
+Total: system prompt 9102 chars (about 2677 tokens), tool definitions 26725 chars (about 7860 tokens), 45 tools.
 
 ### System prompt by section
 
@@ -15,22 +15,21 @@ Total: system prompt 10221 chars (about 3006 tokens), tool definitions 31881 cha
 | --- | ---: | ---: |
 | `identity` | 276 | 81 |
 | `persona` | 83 | 24 |
-| `context_file-reference` | 394 | 116 |
+| `context_file-reference` | 458 | 135 |
 | `tool_bash` | 117 | 34 |
-| `tool_read` | 181 | 53 |
-| `tool_write` | 247 | 73 |
-| `tool_edit` | 413 | 121 |
-| `tool_glob` | 415 | 122 |
+| `tool_read` | 151 | 44 |
+| `tool_write` | 167 | 49 |
+| `tool_edit` | 157 | 46 |
+| `tool_glob` | 96 | 28 |
 | `tool_grep` | 154 | 45 |
 | `tool_jobs` | 407 | 120 |
-| `tool_web_search` | 464 | 136 |
-| `tool_web_fetch` | 317 | 93 |
-| `tool_goal` | 759 | 223 |
+| `tool_web_search` | 252 | 74 |
+| `tool_web_fetch` | 185 | 54 |
+| `tool_goal` | 553 | 163 |
 | `tool_workflow` | 358 | 105 |
-| `tool_ralph` | 461 | 136 |
-| `tool_subagent` | 391 | 115 |
-| `tool_subagent_fork` | 406 | 119 |
-| `ui_deliverable-file-references` | 366 | 108 |
+| `tool_subagent` | 146 | 43 |
+| `tool_subagent_fork` | 161 | 47 |
+| `ui_deliverable-file-references` | 1371 | 403 |
 | `acryl_extension_docs` | 2404 | 707 |
 | `harness_source` | 486 | 143 |
 | `app_web-surface` | 1029 | 303 |
@@ -40,38 +39,37 @@ Total: system prompt 10221 chars (about 3006 tokens), tool definitions 31881 cha
 
 | Tool | Chars | Est. tokens |
 | --- | ---: | ---: |
-| `workflow` | 3986 | 1172 |
-| `bash` | 3242 | 954 |
-| `subagent_fork` | 1489 | 438 |
-| `subagent` | 1456 | 428 |
-| `list_agents` | 1349 | 397 |
-| `todo_write` | 1344 | 395 |
-| `ask_user_question` | 1334 | 392 |
-| `update_goal` | 1141 | 336 |
-| `edit` | 1072 | 315 |
-| `glob` | 922 | 271 |
-| `job_output` | 832 | 245 |
-| `ralph` | 826 | 243 |
-| `write` | 775 | 228 |
-| `grep` | 765 | 225 |
-| `read_image` | 760 | 224 |
-| `send_message` | 753 | 221 |
-| `interrupt_agent` | 710 | 209 |
-| `create_goal` | 697 | 205 |
+| `workflow` | 3389 | 997 |
+| `bash` | 2223 | 654 |
+| `ask_user_question` | 1249 | 367 |
+| `subagent_fork` | 1081 | 318 |
+| `edit` | 1076 | 316 |
+| `update_goal` | 984 | 289 |
+| `subagent` | 974 | 286 |
+| `todo_write` | 856 | 252 |
+| `write` | 799 | 235 |
+| `present` | 777 | 229 |
+| `glob` | 750 | 221 |
+| `grep` | 702 | 206 |
+| `list_agents` | 661 | 194 |
+| `job_output` | 615 | 181 |
+| `create_goal` | 577 | 170 |
 | `acryl_install_plugin` | 550 | 162 |
-| `exit_plan_mode` | 549 | 161 |
-| `job_kill` | 457 | 134 |
+| `send_message` | 527 | 155 |
+| `exit_plan_mode` | 472 | 139 |
 | `acryl_verify_plugin` | 443 | 130 |
+| `interrupt_agent` | 440 | 129 |
 | `read` | 438 | 129 |
 | `ui_type` | 437 | 129 |
 | `acryl_extension_lookup` | 430 | 126 |
 | `acryl_prepare_publish` | 408 | 120 |
-| `web_search` | 397 | 117 |
-| `skill` | 376 | 111 |
+| `read_image` | 389 | 114 |
+| `acryl_workspace_create` | 379 | 111 |
+| `job_kill` | 370 | 109 |
 | `acryl_list_plugins` | 345 | 101 |
 | `acryl_plugin_set_enabled` | 332 | 98 |
-| `acryl_workspace_status` | 320 | 94 |
-| `get_goal` | 319 | 94 |
+| `skill` | 332 | 98 |
+| `web_search` | 323 | 95 |
 | `ui_press` | 314 | 92 |
 | `acryl_remove_plugin` | 313 | 92 |
 | `ui_snapshot` | 306 | 90 |
@@ -80,12 +78,16 @@ Total: system prompt 10221 chars (about 3006 tokens), tool definitions 31881 cha
 | `ui_scroll` | 275 | 81 |
 | `web_fetch` | 242 | 71 |
 | `ui_click` | 226 | 66 |
+| `acryl_workspace_add_project` | 211 | 62 |
 | `acryl_plugin_list` | 197 | 58 |
+| `acryl_workspace_list` | 195 | 57 |
+| `acryl_workspace_switch` | 194 | 57 |
+| `get_goal` | 170 | 50 |
 | `job_list` | 168 | 49 |
 
 ## cli (terminal engine)
 
-Total: system prompt 7392 chars (about 2174 tokens), tool definitions 27513 chars (about 8092 tokens), 32 tools.
+Total: system prompt 5449 chars (about 1603 tokens), tool definitions 20980 chars (about 6171 tokens), 30 tools.
 
 ### System prompt by section
 
@@ -93,53 +95,50 @@ Total: system prompt 7392 chars (about 2174 tokens), tool definitions 27513 char
 | --- | ---: | ---: |
 | `identity` | 276 | 81 |
 | `tool_bash` | 117 | 34 |
-| `tool_read` | 181 | 53 |
-| `tool_write` | 247 | 73 |
-| `tool_edit` | 413 | 121 |
-| `tool_glob` | 415 | 122 |
+| `tool_read` | 151 | 44 |
+| `tool_write` | 167 | 49 |
+| `tool_edit` | 157 | 46 |
+| `tool_glob` | 96 | 28 |
 | `tool_grep` | 154 | 45 |
 | `tool_jobs` | 407 | 120 |
-| `tool_web_search` | 464 | 136 |
-| `tool_web_fetch` | 317 | 93 |
-| `tool_goal` | 759 | 223 |
+| `tool_web_search` | 252 | 74 |
+| `tool_web_fetch` | 185 | 54 |
+| `tool_goal` | 553 | 163 |
 | `tool_workflow` | 358 | 105 |
-| `tool_ralph` | 461 | 136 |
-| `tool_subagent` | 391 | 115 |
+| `tool_subagent` | 146 | 43 |
 | `acryl_extension_docs` | 2404 | 707 |
 
 ### Tool definitions, largest first
 
 | Tool | Chars | Est. tokens |
 | --- | ---: | ---: |
-| `workflow` | 3986 | 1172 |
-| `bash` | 3242 | 954 |
-| `subagent` | 1456 | 428 |
-| `list_agents` | 1349 | 397 |
-| `todo_write` | 1344 | 395 |
-| `update_goal` | 1141 | 336 |
-| `subagent_fork` | 1128 | 332 |
-| `edit` | 1072 | 315 |
-| `glob` | 922 | 271 |
-| `job_output` | 832 | 245 |
-| `ralph` | 826 | 243 |
-| `write` | 775 | 228 |
-| `grep` | 765 | 225 |
-| `read_image` | 760 | 224 |
-| `send_message` | 753 | 221 |
-| `interrupt_agent` | 710 | 209 |
-| `create_goal` | 697 | 205 |
+| `workflow` | 3389 | 997 |
+| `bash` | 2223 | 654 |
+| `edit` | 1076 | 316 |
+| `subagent_fork` | 1014 | 298 |
+| `update_goal` | 984 | 289 |
+| `subagent` | 974 | 286 |
+| `todo_write` | 856 | 252 |
+| `write` | 799 | 235 |
+| `glob` | 750 | 221 |
+| `grep` | 702 | 206 |
+| `list_agents` | 661 | 194 |
+| `job_output` | 615 | 181 |
+| `create_goal` | 577 | 170 |
 | `acryl_install_plugin` | 550 | 162 |
-| `exit_plan_mode` | 549 | 161 |
-| `job_kill` | 457 | 134 |
+| `send_message` | 527 | 155 |
+| `exit_plan_mode` | 472 | 139 |
 | `acryl_verify_plugin` | 443 | 130 |
+| `interrupt_agent` | 440 | 129 |
 | `read` | 438 | 129 |
 | `acryl_extension_lookup` | 430 | 126 |
 | `acryl_prepare_publish` | 408 | 120 |
-| `web_search` | 397 | 117 |
-| `skill` | 376 | 111 |
+| `read_image` | 389 | 114 |
+| `job_kill` | 370 | 109 |
 | `acryl_list_plugins` | 345 | 101 |
-| `acryl_workspace_status` | 320 | 94 |
-| `get_goal` | 319 | 94 |
+| `skill` | 332 | 98 |
+| `web_search` | 323 | 95 |
 | `acryl_remove_plugin` | 313 | 92 |
 | `web_fetch` | 242 | 71 |
+| `get_goal` | 170 | 50 |
 | `job_list` | 168 | 49 |

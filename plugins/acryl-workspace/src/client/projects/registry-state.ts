@@ -44,6 +44,11 @@ export class ProjectRegistryState {
     return this.apply(() => this.api.load())
   }
 
+  /** A view the Host pushed (its event stream): a change made elsewhere, by an agent's tool or another window. */
+  receive(view: ProjectRegistryView): void {
+    void this.apply(() => Promise.resolve(view))
+  }
+
   add(path: string): Promise<ProjectChange> {
     return this.apply(() => this.api.send({ op: 'add', path }))
   }

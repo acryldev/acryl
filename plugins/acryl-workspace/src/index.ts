@@ -40,7 +40,9 @@ import {
   handleWorkspaceGitWorktreeRequest,
 } from './git/route.ts'
 import { WORKSPACE_CAPABILITIES_PATH } from './capabilities/contract.ts'
-import { WORKSPACE_PROJECTS_PATH } from './projects/contract.ts'
+import { WORKSPACE_PROJECTS_EVENTS_PATH, WORKSPACE_PROJECTS_PATH } from './projects/contract.ts'
+import { createProjectEvents } from './projects/events.ts'
+import { registerWorkspaceTools } from './projects/tools.ts'
 import { PROJECTS_NAMESPACE, ProjectRegistry, ProjectsSchema } from './projects/registry.ts'
 import { handleProjectsRequest } from './projects/route.ts'
 import { handleWorkspaceCapabilitiesRequest } from './capabilities/route.ts'
@@ -182,6 +184,18 @@ export function apply(ctx: Context): void {
         path: WORKSPACE_PROJECTS_PATH,
         handler: (req, res) => { void handleProjectsRequest(req, res, rendererOrigin, projects, reportHostError) },
       }))
+      const projectEvents = createProjectEvents(projects, rendererOrigin)
+      releases.push(() => { projectEvents.close() })
+      releases.push(ctx.acrylWeb.register({
+        kind: 'exact',
+        path: WORKSPACE_PROJECTS_EVENTS_PATH,
+        handler: (req, res) => { projectEvents.handle(req, res) },
+      }))
+      // The agent's workspace tools (spec 043 T007), on the same registry; present while ACRYL's tool port is.
+      const toolsFiber = ctx.inject(['acrylTools'], (child) => {
+        child.effect(() => registerWorkspaceTools(child, projects), 'acryl-workspace: workspace agent tools')
+      })
+      releases.push(() => { void toolsFiber.dispose() })
       releases.push(ctx.acrylWeb.register({
         kind: 'exact',
         path: WORKSPACE_AGENT_SETTINGS_PATH,
@@ -241,3 +255,6 @@ export function apply(ctx: Context): void {
     }
   }, 'acryl-workspace: routes, PTY table and git service')
 }
+
+/** The agent's workspace tools, exported so the runtime can check their schemas against DSH's own compiler. */
+export { registerWorkspaceTools } from './projects/tools.ts'

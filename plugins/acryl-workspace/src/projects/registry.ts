@@ -86,7 +86,15 @@ export function normalizeProjectFolder(path: string): string {
 }
 
 export class ProjectRegistry {
+  private readonly listeners = new Set<(view: ProjectRegistryView) => void>()
+
   constructor(private readonly scope: SettingsScope<ProjectsSection>) {}
+
+  /** Observe every saved change, whoever made it (a page, an agent's tool). @returns disposer. */
+  onChange(listener: (view: ProjectRegistryView) => void): () => void {
+    this.listeners.add(listener)
+    return () => { this.listeners.delete(listener) }
+  }
 
   view(): ProjectRegistryView {
     const section = this.scope.get()
@@ -206,7 +214,9 @@ export class ProjectRegistry {
   /** One write: the workspaces become the only list (the pre-workspace one is emptied, its folders now in Default). */
   private async save(workspaces: readonly WorkspaceRecord[], current: string, adopted?: boolean): Promise<ProjectRegistryView> {
     await this.scope.update({ workspaces: [...workspaces], current, projects: [], ...(adopted === undefined ? {} : { adopted }) })
-    return this.view()
+    const view = this.view()
+    for (const listener of [...this.listeners]) listener(view)
+    return view
   }
 }
 

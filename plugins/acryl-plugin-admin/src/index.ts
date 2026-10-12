@@ -131,3 +131,6 @@ export type {
   PluginLifecycleReceipt,
   PluginLifecycleSnapshot,
 } from './lifecycle/contract.ts'
+
+/** The agent's plugin tools, exported so the runtime can check their schemas against DSH's own compiler. */
+export { registerPluginTools } from './tools/plugin-tools.ts'

@@ -5,6 +5,8 @@
  */
 
 export const WORKSPACE_PROJECTS_PATH = '/api/acryl-workspace/projects'
+/** A server-sent event stream of the registry's view: one message now, then one per change (an agent's tool call, another window). */
+export const WORKSPACE_PROJECTS_EVENTS_PATH = '/api/acryl-workspace/projects/events'
 
 /** How a workspace is organized (spec 043): separate projects, projects that share context with every agent, or a remote machine. */
 export type WorkspaceKind = 'individual' | 'shared' | 'remote'
