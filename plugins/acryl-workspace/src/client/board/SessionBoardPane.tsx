@@ -43,7 +43,7 @@ export function SessionBoardPane({ tile, workspace, shell, useSessions, navigato
   const rows: BoardSession[] = list.ids.flatMap((id) => {
     const row = list.byId[id]
     if (row === undefined) return []
-    return [{ id, running: row.running, blank: row.blank, updatedAt: row.updatedAt, ...(row.cwd === undefined ? {} : { cwd: row.cwd }), ...(row.origin === undefined ? {} : { origin: row.origin }) }]
+    return [{ id, running: row.running, blank: row.blank, updatedAt: row.updatedAt, displayTitle: row.displayTitle, ...(row.title === undefined ? {} : { title: row.title }), ...(row.cwd === undefined ? {} : { cwd: row.cwd }), ...(row.origin === undefined ? {} : { origin: row.origin }) }]
   })
   const columns = buildSessionBoard(rows, repos)
   const now = Date.now()
@@ -64,8 +64,8 @@ export function SessionBoardPane({ tile, workspace, shell, useSessions, navigato
                 data-running={column.id === 'running' || undefined}
                 onClick={() => { navigator.open(card.sessionId) }}
               >
-                <span className="dshWorkspaceKanbanBranch">{card.branch ?? 'no worktree'}</span>
-                <span className="dshWorkspaceKanbanMeta">{card.sessionId.slice(0, 8)} - {ago(card.updatedAt, now)}</span>
+                <span className="dshWorkspaceKanbanBranch">{card.title}</span>
+                <span className="dshWorkspaceKanbanMeta">{card.branch ?? 'no worktree'} - {ago(card.updatedAt, now)}</span>
               </button>
             ))}
           </div>

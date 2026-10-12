@@ -1,8 +1,8 @@
 /**
- * One Settings section as a dependency-gated child plugin: it waits (PENDING, not failed) for the settings shell
- * and the locale service, and registers the shared dictionary, the shared styles and its own section inside
- * owned effects, so they unwind together. Each section (agents, tabs, palette) supplies only its registration,
- * because the slot's component typing is concrete per section.
+ * The Settings sections this package adds (Agents, Tabs, Command palette): one shared plugin owns their dictionary and styles, and each
+ * section is a dependency-gated child plugin that only registers itself. The dictionary has one owner because DSH 0.2's locale service
+ * refuses a second registration of a namespace ("already has locale"): when every section registered it, only the first section loaded
+ * and the other two vanished from Settings.
  */
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
@@ -15,6 +15,18 @@ export const SETTINGS_LOCALE_NAMESPACE = 'acryl.workspace.settings'
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
     'acryl.workspace.settings': SettingsLocaleKey
+  }
+}
+
+/** The sections' shared dictionary and styles, registered once for all of them. */
+export function settingsSharedPlugin() {
+  return {
+    name: 'acryl-workspace-settings-shared',
+    inject: ['locale'],
+    apply(ctx: ClientContext): void {
+      ctx.effect(() => ctx.locale.register(SETTINGS_LOCALE_NAMESPACE, { zh, en }), 'acryl-workspace settings: dictionaries')
+      ctx.effect(() => installSettingsStyles(), 'acryl-workspace settings: styles')
+    },
   }
 }
 
@@ -39,8 +51,6 @@ export function settingsSectionPlugin(name: string, id: SettingsSectionKey, orde
     inject: ['slots', 'locale'],
     apply(ctx: ClientContext): void {
       const t = ctx.locale.bind(SETTINGS_LOCALE_NAMESPACE)
-      ctx.effect(() => ctx.locale.register(SETTINGS_LOCALE_NAMESPACE, { zh, en }), `${name}: dictionaries`)
-      ctx.effect(() => installSettingsStyles(), `${name}: styles`)
       const base: SectionBase = { name: 'settings.section', id, order, label: () => t(`${id}Nav`), locale: SETTINGS_LOCALE_NAMESPACE }
       ctx.slots.inject('settings.section', () => register(ctx, base))
     },

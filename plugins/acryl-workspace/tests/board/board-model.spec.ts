@@ -12,7 +12,7 @@ const repos = [{
   ],
 }] as unknown as RepoState[]
 
-const row = (over: Partial<BoardSession> & { id: string }): BoardSession => ({ running: false, blank: false, updatedAt: 1, ...over })
+const row = (over: Partial<BoardSession> & { id: string }): BoardSession => ({ running: false, blank: false, updatedAt: 1, displayTitle: `chat ${over.id}`, ...over }) as BoardSession
 
 describe('buildSessionBoard', () => {
   it('puts blank chats in Ready, running ones in Running, finished ones in Done, newest first', () => {
@@ -27,6 +27,15 @@ describe('buildSessionBoard', () => {
     expect(board[0]?.cards.map(c => c.sessionId)).toEqual(['a'])
     expect(board[1]?.cards.map(c => c.sessionId)).toEqual(['e', 'b'])
     expect(board[2]?.cards.map(c => c.sessionId)).toEqual(['d', 'c'])
+  })
+
+  it('names each card as the tree does: its own title, else its derived title, and "New chat" for a blank one', () => {
+    const board = buildSessionBoard([
+      row({ id: 'a', blank: true }),
+      row({ id: 'b', title: 'Renamed' }),
+      row({ id: 'c', displayTitle: 'First message' }),
+    ], repos)
+    expect(board.flatMap(column => column.cards.map(card => card.title))).toEqual(['New chat', 'Renamed', 'First message'])
   })
 
   it('names each chat\'s branch from its working directory, deepest worktree first, and admits an unknown folder', () => {

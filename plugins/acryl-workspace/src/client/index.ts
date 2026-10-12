@@ -35,6 +35,7 @@ import { createUpstreamPanels, type PanelSlotRegistry } from './projects/upstrea
 import { DEFAULT_WORKSPACE_CAPABILITIES, loadWorkspaceCapabilities } from './capabilities/capabilities-api.ts'
 import { createWorkspaceAgentsApi } from './agents/agents-api.ts'
 import { agentsSettingsPlugin } from './agents/agents-settings-plugin.ts'
+import { settingsSharedPlugin } from './settings/section-plugin.ts'
 import { PaletteConfigState } from './palette/palette-config.ts'
 import { paletteSettingsPlugin } from './palette/palette-settings-plugin.ts'
 import { createAgentStatusApi } from './status/agent-status-api.ts'
@@ -156,6 +157,7 @@ export function apply(ctx: ClientContext): void {
     const tabRegistry = new WorkspaceTabRegistry()
     ctx.effect(() => provideWorkspaceTabs(ctx, tabRegistry), 'acryl-workspace: workspaceTabs service')
     const paletteConfig = new PaletteConfigState(storage)
+    ctx.plugin(settingsSharedPlugin())
     ctx.plugin(agentsSettingsPlugin(agents))
     ctx.plugin(tabsSettingsPlugin(tabTypes, tabRegistry))
     ctx.plugin(paletteSettingsPlugin(paletteConfig))

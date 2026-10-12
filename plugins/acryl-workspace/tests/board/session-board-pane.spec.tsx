@@ -20,7 +20,7 @@ function sessionsHook(state: unknown): UseSessions {
 }
 
 describe('SessionBoardPane', () => {
-  it('lists chats by phase with their branch, opens one on click, and keeps local notes', async () => {
+  it('lists chats by phase with their title, branch and age, opens one on click, and keeps local notes', async () => {
     const shell = new WorkspaceShellState(gitApi)
     await shell.discover('/p/proj')
     const workspace = new WorkspaceState()
@@ -28,23 +28,27 @@ describe('SessionBoardPane', () => {
     if (tile === undefined) throw new Error('no tile')
     const open = vi.fn(() => true)
     const state = {
-      ids: ['aaaaaaaa1', 'bbbbbbbb2', 'cccccccc3'],
+      // DSH 0.2's session ids all start with "session-": a card that showed an id prefix showed only that.
+      ids: ['session-aaaa', 'session-bbbb', 'session-cccc'],
       byId: {
-        aaaaaaaa1: { running: true, blank: false, updatedAt: Date.now(), cwd: '/p/proj/src' },
-        bbbbbbbb2: { running: false, blank: false, updatedAt: Date.now() - 3 * 3600_000, cwd: '/p/proj' },
-        cccccccc3: { running: false, blank: true, updatedAt: Date.now() },
+        'session-aaaa': { running: true, blank: false, updatedAt: Date.now(), cwd: '/p/proj/src', displayTitle: 'Fix the login flow' },
+        'session-bbbb': { running: false, blank: false, updatedAt: Date.now() - 3 * 3600_000, cwd: '/p/proj', displayTitle: 'Old chat', title: 'Renamed chat' },
+        'session-cccc': { running: false, blank: true, updatedAt: Date.now(), displayTitle: '' },
       },
     }
     render(<SessionBoardPane tile={tile} workspace={workspace} shell={shell} useSessions={sessionsHook(state)} navigator={{ open }} />)
 
     const running = document.querySelector('[data-column="running"]') as HTMLElement
-    expect(within(running).getByText('main')).toBeTruthy()
-    expect(within(running).getByText(/aaaaaaaa/)).toBeTruthy()
-    expect(within(document.querySelector('[data-column="done"]') as HTMLElement).getByText(/3h ago/)).toBeTruthy()
-    expect(within(document.querySelector('[data-column="ready"]') as HTMLElement).getByText(/cccccccc/)).toBeTruthy()
+    expect(within(running).getByText('Fix the login flow')).toBeTruthy()
+    expect(within(running).getByText(/^main - /)).toBeTruthy()
+    const done = document.querySelector('[data-column="done"]') as HTMLElement
+    expect(within(done).getByText('Renamed chat')).toBeTruthy()
+    expect(within(done).getByText(/3h ago/)).toBeTruthy()
+    expect(within(document.querySelector('[data-column="ready"]') as HTMLElement).getByText('New chat')).toBeTruthy()
+    expect(document.body.textContent).not.toContain('session-')
 
     fireEvent.click(within(running).getByRole('button'))
-    expect(open).toHaveBeenCalledWith('aaaaaaaa1')
+    expect(open).toHaveBeenCalledWith('session-aaaa')
 
     const input = screen.getByLabelText('Add a note')
     fireEvent.change(input, { target: { value: 'remember the migration' } })

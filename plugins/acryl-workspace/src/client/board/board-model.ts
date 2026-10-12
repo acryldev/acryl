@@ -1,7 +1,7 @@
 /** Pure model of the live session board: chats grouped by what their agent is doing right now. */
 
 import type { RepoState } from '../worktrees/shell-state.ts'
-import { owningWorktree } from '../projects/sidebar-model.ts'
+import { chatLabel, owningWorktree } from '../projects/sidebar-model.ts'
 
 /** The slice of a session row the board needs (a `SessionSummary` fits). */
 export interface BoardSession {
@@ -11,12 +11,16 @@ export interface BoardSession {
   readonly blank: boolean
   readonly updatedAt: number
   readonly origin?: string
+  readonly displayTitle: string
+  readonly title?: string
 }
 
 export type BoardColumnId = 'ready' | 'running' | 'done'
 
 export interface BoardCard {
   readonly sessionId: string
+  /** The chat's name, as the tree and its tab show it. */
+  readonly title: string
   /** The branch (or worktree folder) the chat works in, or null when its folder is in no known worktree. */
   readonly branch: string | null
   readonly cwd: string | undefined
@@ -59,6 +63,7 @@ export function buildSessionBoard(sessions: readonly BoardSession[], repos: read
     if (session.origin === 'subagent') continue
     const card: BoardCard = {
       sessionId: session.id,
+      title: chatLabel(session),
       branch: branchOf(repos, session.cwd),
       cwd: session.cwd,
       updatedAt: session.updatedAt,
