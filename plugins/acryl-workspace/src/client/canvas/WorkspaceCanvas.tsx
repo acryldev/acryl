@@ -30,6 +30,7 @@ import { buildStatusLine } from '../chrome/status-line.ts'
 import type { AgentsState } from '../agents/agents-state.ts'
 import { TabStrip } from '../tabs/TabStrip.tsx'
 import { SplitDivider } from './SplitDivider.tsx'
+import { routeShellRequests } from './shell-requests.ts'
 import { clampSplit, readSplitRatio, writeSplitRatio } from './split-ratio.ts'
 import { GLOBAL_GROUP, type WorkspaceGroups } from './groups.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
@@ -128,7 +129,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
   }, [projects])
 
   const closeTile = useCallback(async (tile: WorkspaceTile) => {
-    // Closing a chat's tab from the tab strip hides it from the tree too (T134-followup): one close
+    // Closing a chat's tab from the tab strip hides it from the tree too: one close
     // action, both surfaces, matching the tree's own hover "x" for the same session.
     if (tile.kind === 'chat' && tile.chatSessionId !== undefined) shell.dismissChat(tile.chatSessionId)
     const removed = workspace.closeTile(tile.id)
@@ -138,58 +139,8 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
     }
   }, [api, workspace, terminals, shell])
 
-  // The tree's hover "x" on an agent/terminal entry (T134-followup) - routed through here, not
-  // WorkspaceState.closeTile directly, so a real terminal process still gets released; the tree has no
-  // access to `terminals`/`api` itself. Works for any worktree, not just the one currently shown.
-  useEffect(() => shell.onCloseTileRequest((request) => {
-    const state = groups.stateFor(request.worktree)
-    const tile = state.getSnapshot().tiles.find(candidate => candidate.id === request.tileId)
-    if (tile === undefined) return
-    const removed = state.closeTile(tile.id)
-    if (removed?.terminalId !== undefined) {
-      terminals.release(removed.terminalId)
-      void api.close(removed.terminalId).catch(() => {})
-    }
-  }), [shell, groups, terminals, api])
-
-  useEffect(() => shell.onOpenDiff((request) => {
-    const state = groups.stateFor(request.worktree)
-    const current = state.getSnapshot()
-    // From the chat, open the diff beside it so the conversation stays visible.
-    const fromChat = current.tiles.find(tile => tile.id === current.activeId)?.kind === 'chat'
-    state.openDiff(request.worktree, request.file, { beside: fromChat })
-  }), [shell, groups])
-
-  useEffect(() => shell.onOpenFile((request) => {
-    const state = groups.stateFor(request.worktree)
-    const current = state.getSnapshot()
-    // From the chat, open the file beside it so the conversation stays visible.
-    const fromChat = current.tiles.find(tile => tile.id === current.activeId)?.kind === 'chat'
-    state.openFile(request.worktree, request.file, { beside: fromChat })
-  }), [shell, groups])
-
-  useEffect(() => shell.onOpenDoc((request) => {
-    const state = groups.stateFor(request.worktree)
-    const current = state.getSnapshot()
-    const fromChat = current.tiles.find(tile => tile.id === current.activeId)?.kind === 'chat'
-    state.openDoc(request.worktree, request.file, { beside: fromChat })
-  }), [shell, groups])
-
-  // A check run from the Checks tab: a terminal tab in that worktree that types the command for you.
-  useEffect(() => shell.onRunCheck((request) => {
-    const state = groups.stateFor(request.worktree)
-    const tile = state.addTile('pty', { commandId: 'shell', title: request.title })
-    if (tile === undefined) return
-    void (async () => {
-      try {
-        const view = await api.start('shell', request.worktree)
-        state.updateTile(tile.id, { terminalId: view.id })
-        await api.write(view.id, `${request.commandLine}\r`)
-      } catch (cause) {
-        state.updateTile(tile.id, { error: cause instanceof Error ? cause.message : 'spawn failed' })
-      }
-    })()
-  }), [shell, groups, api])
+  // What the tree and the Changes, Files and Checks tabs ask of the tab sets (close a tab, open a diff, a file or a document, run a check).
+  useEffect(() => routeShellRequests({ shell, groups, terminals, api }), [shell, groups, terminals, api])
 
   /** The pane for one tile, used for both the primary pane and the split pane. */
   const renderTile = (tile: WorkspaceTile): ReactNode => {
