@@ -1,4 +1,12 @@
-## 2026-10-12 (latest) - the sidebar stops growing, the terminal signs in to DeepSeek, one tab set per workspace, CI green again
+## 2026-10-12 (latest) - account sign-in in the terminal like other coding agents; the agent drives workspaces
+
+Owner: in the terminal, signing in to Anthropic or OpenAI showed "the weird input form for API key" instead of the usual browser sign-in; "continue ... spec 043: Agent Control workspace tools (T007), then shared context (T009-T011)".
+
+- **Terminal account sign-in** (`f9c42cdb78eeb23a1fc96d38e68ecd0dcaa24e97`): choosing a provider already signed in with an account opened the API-key provider editor, which for a built-in provider showed (and would have saved) the protocol `openai-completions`, an empty address and no models. Now it signs in again in the browser; `/model` shows such a provider as an account (sign in again, sign out); a built-in provider keeps its own protocol. Also: the sign-in page's URL is shown whole (a multi-line notice rendered only its first line), and Escape cancels the sign-in (it answered the prompt with nothing, and the flow went on). The browser flow itself was already the standard one (Anthropic and OpenAI open their page with a local callback); checked live in an isolated terminal for both.
+- **Workspace tools** (`500ba49bfb7733bc1b218adbf87cba6b7ca98d3e`, spec 043 T007): `acryl_workspace_list`, `_switch`, `_create`, `_add_project` on the registry the sidebar uses; creating and adding are asked about. Every page follows a change it did not make through the registry's event stream, and one place moves the tabs and the selected worktree for any workspace change (a click, a new workspace, a tool call). Checked with a real model in an isolated Desktop: the agent created a shared workspace after approval and the sidebar showed it at once. The first live try found the tools missing: DSH 0.2's tool compiler rejected an output schema that the plugin's own fake port accepted, so a runtime test now compiles ACRYL's tool schemas with DSH's compiler. The tool budget grew by 1000 characters for the four tools (`docs/system-prompt/budget.md` regenerated).
+- **A mistake of mine, repaired:** a failed `git stash push` was followed by a `git stash pop` that applied an older autostash; only its stale `package.json` hunk reached the tree, which I restored from HEAD. Every stash is still stored as it was.
+
+## 2026-10-12 - the sidebar stops growing, the terminal signs in to DeepSeek, one tab set per workspace, CI green again
 
 Owner: the sidebar "loads a ton of crap ... only grows", 95 tabs, workspaces "I never loaded like OCA"; "can we make acryl-cli catch with oauth same as we do in acryl desktop and acryl web?"; check that Web runs the same way as Desktop.
 
