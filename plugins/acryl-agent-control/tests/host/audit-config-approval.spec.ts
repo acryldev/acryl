@@ -111,10 +111,21 @@ describe('approval policy defers to the session\'s own effective approval policy
   refs.remember({ generation: 1, title: '', total: 1, nodes: [{ ref: '1.1', role: 'button', name: 'Delete', depth: 0, states: [] }] })
   const exec = { name: TOOL_NAMES.click, arguments: { ref: '1.1' }, agent: { session: {} } } as unknown as ToolExecution
   const allow = async (): Promise<PreToolDecision> => ({ kind: 'allow' })
-  const ctxWith = (service: { config: { policy: 'ask' | 'never' }, overrideOf: () => 'ask' | 'never' | undefined }): Context =>
-    ({ get: () => service } as unknown as Context)
+  const ctxWith = (service: { config: { policy: 'ask' | 'never' }, overrideOf: () => 'ask' | 'never' | undefined }, sandboxMode = 'workspace-write'): Context =>
+    ({ get: (name: string) => (name === 'sandboxPolicy' ? { resolve: () => ({ mode: sandboxMode }) } : service) } as unknown as Context)
 
-  it('denies honestly, without asking, when the session\'s policy is "never" (e.g. a danger-full-access/unattended permission mode) - the harness would otherwise silently deny this exactly as if a person had clicked reject', async () => {
+  it('does not ask in full access ("Full access" in the composer, danger-full-access): the user granted every action in advance, even with a "never" approval policy', async () => {
+    const ctx = ctxWith({ config: { policy: 'never' }, overrideOf: () => 'never' }, 'danger-full-access')
+    expect(await createApprovalPolicy(ctx, refs, 'every-call')(exec, allow)).toEqual({ kind: 'allow' })
+  })
+
+  it('in full access, another plugin\'s denial still wins', async () => {
+    const ctx = ctxWith({ config: { policy: 'ask' }, overrideOf: () => undefined }, 'danger-full-access')
+    const denied = async (): Promise<PreToolDecision> => ({ kind: 'deny', reason: 'protected region' })
+    expect(await createApprovalPolicy(ctx, refs, 'every-call')(exec, denied)).toEqual({ kind: 'deny', reason: 'protected region' })
+  })
+
+  it('denies honestly, without asking, when the session\'s policy is "never" outside full access (an unattended run) - the harness would otherwise silently deny this exactly as if a person had clicked reject', async () => {
     const ctx = ctxWith({ config: { policy: 'ask' }, overrideOf: () => 'never' })
     const result = await createApprovalPolicy(ctx, refs, 'every-call')(exec, allow)
     expect(result).toMatchObject({ kind: 'deny' })
