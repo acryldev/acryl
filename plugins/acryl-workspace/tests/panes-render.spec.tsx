@@ -554,12 +554,13 @@ describe('ProjectsSidebar', () => {
     shell.dispose()
   })
 
-  it('never turns a mere chat session cwd into a permanent workspace when it is not a git repository (T135: "web suddenly shows so many workspaces - didn\'t open them")', async () => {
+  it('neither looks at nor lists a folder a chat merely ran in: only projects and the shown chat\'s folder are learned', async () => {
     const seen: string[] = []
     const shell = new WorkspaceShellState({ ...api(), repo: async (cwd) => { seen.push(cwd); return null } })
     const untouched = { ids: ['s1'], byId: { s1: { id: 's1', cwd: '/tmp/scratch-dir', running: false, blank: false, displayTitle: 'x', updatedAt: 1, retainedBy: {} } } }
     render(<ProjectsSidebar {...sidebarWith(untouched, sidebarProps(shell))} />)
-    await waitFor(() => { expect(seen).toContain('/tmp/scratch-dir') })
+    await new Promise(resolve => setTimeout(resolve, 50))
+    expect(seen).not.toContain('/tmp/scratch-dir')
     expect(screen.queryByRole('region', { name: 'scratch-dir' })).toBeNull()
     shell.dispose()
   })

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { WorkspaceState } from '../../src/client/canvas/state.ts'
-import { chatGroupFor, ensureWorktreeChatTabs, sessionForSelectedChatTab, syncChatTabTitles, synchronizeWorkspaceWithSessionNavigation } from '../../src/client/sessions/session-navigation.ts'
+import { RECENT_CHAT_TABS, chatGroupFor, ensureWorktreeChatTabs, sessionForSelectedChatTab, syncChatTabTitles, synchronizeWorkspaceWithSessionNavigation } from '../../src/client/sessions/session-navigation.ts'
 import type { RepoState, WorktreeState } from '../../src/client/worktrees/shell-state.ts'
 
 function counter(): () => string {
@@ -64,7 +64,7 @@ describe('synchronizeWorkspaceWithSessionNavigation', () => {
 })
 
 describe('ensureWorktreeChatTabs', () => {
-  it('gives every session owned by this worktree its own tab - blank ones too, as "New chat" - with its real title', () => {
+  it('gives the worktree\'s chats their own tabs with their real titles, but not an empty, unnamed one (it would only ask to choose a folder)', () => {
     const workspace = new WorkspaceState({ createId: counter() })
     const sessions = {
       ids: ['s1', 's2', 's3'],
@@ -72,7 +72,7 @@ describe('ensureWorktreeChatTabs', () => {
       byId: {
         s1: { cwd: '/p/proj', blank: false, displayTitle: 'Explore the tools' },
         s2: { cwd: '/p/proj', blank: false, displayTitle: 'Greeting chat' },
-        s3: { cwd: '/p/proj', blank: true, displayTitle: 'x' }, // blank: listed in the tree, so it gets a tab too
+        s3: { cwd: '/p/proj', blank: true, displayTitle: 'x' }, // empty and unnamed: listed in the tree, no tab of its own
       },
     }
     ensureWorktreeChatTabs(workspace, '/p/proj', REPOS, sessions)
@@ -82,7 +82,6 @@ describe('ensureWorktreeChatTabs', () => {
     expect(chats.map(t => [t.chatSessionId, t.title])).toEqual([
       ['s1', 'Explore the tools'],
       ['s2', 'Greeting chat'],
-      ['s3', 'New chat'],
     ])
   })
 
@@ -200,5 +199,18 @@ describe('chatGroupFor', () => {
   it('keeps a chat outside every worktree, or with no folder, in the worktree on screen', () => {
     expect(chatGroupFor(TWO, '/elsewhere', '/p/proj-hi')).toBe('/p/proj-hi')
     expect(chatGroupFor(TWO, undefined, '/p/proj')).toBe('/p/proj')
+  })
+})
+
+describe('ensureWorktreeChatTabs keeps the strip bounded', () => {
+  it('gives only the most recent chats a tab, however many the worktree has', () => {
+    const workspace = new WorkspaceState()
+    const ids = Array.from({ length: 20 }, (_, index) => `s${String(index)}`)
+    const byId = Object.fromEntries(ids.map((id, index) => [id, { cwd: '/p/proj', blank: false, displayTitle: id, updatedAt: index }]))
+    ensureWorktreeChatTabs(workspace, '/p/proj', REPOS, { ids, byId, current: undefined })
+    const tabs = workspace.getSnapshot().tiles.filter(tile => tile.kind === 'chat').map(tile => tile.chatSessionId)
+    expect(tabs).toHaveLength(RECENT_CHAT_TABS)
+    expect(tabs).toEqual(expect.arrayContaining(['s19', 's12']))
+    expect(tabs).not.toContain('s11')
   })
 })

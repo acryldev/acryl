@@ -16,7 +16,11 @@ export interface WorktreeChatSessionLike {
   readonly blank: boolean
   readonly displayTitle: string
   readonly title?: string
+  readonly updatedAt?: number
 }
+
+/** How many of a worktree's chats get a tab without being asked: the most recent ones. The tree lists every chat. */
+export const RECENT_CHAT_TABS = 8
 
 /**
  * Keep DSH session navigation visible inside the Workspace tab area: the session that becomes current gets
@@ -64,9 +68,9 @@ export function sessionForSelectedChatTab(
 }
 
 /**
- * Eagerly gives every non-blank chat session owned by this worktree its own tab, instead of only the one
- * that happens to be current - so a worktree with 6 sidebar chats shows 6 tabs immediately, not one at a
- * time as each is clicked. Each new tab's title is the session's real `displayTitle`, not the generic default.
+ * Gives the worktree's most recent chats (`RECENT_CHAT_TABS`, by last update) their own tabs at once, instead of only the one that happens
+ * to be current; older chats open from the tree. Every chat of a busy worktree as a tab grew without bound (95 tabs) and never shrank.
+ * Each new tab's title is the session's real `displayTitle`, not the generic default.
  * Adding tabs never moves the selection: afterwards the shown chat's tab is selected when this worktree has
  * it, else the tab that was selected before (`addTile` focuses each tab it creates).
  */
@@ -83,13 +87,20 @@ export function ensureWorktreeChatTabs(
       .map(tile => tile.chatSessionId),
   )
   const activeBefore = workspace.getSnapshot().activeId
+  // An empty chat gets no tab of its own unless the user named it (the tree lists it as "New chat"; one never bound to a folder only asks
+  // to choose one); the shown chat - a chat just started - always has its tab through the session sync.
+  const recent = sessions.ids
+    .flatMap((id) => {
+      const row = sessions.byId[id]
+      if (row === undefined || row.cwd === undefined || dismissed.has(id)) return []
+      if (row.blank && (row.title === undefined || row.title.trim() === '')) return []
+      return owningWorktree(repos, row.cwd) === worktreePath ? [{ id, row }] : []
+    })
+    .sort((a, b) => (b.row.updatedAt ?? 0) - (a.row.updatedAt ?? 0))
+    .slice(0, RECENT_CHAT_TABS)
   let added = false
-  for (const id of sessions.ids) {
-    if (existing.has(id) || dismissed.has(id)) continue
-    const row = sessions.byId[id]
-    // Blank chats too: the tree lists them ("New chat"), and every listed chat is a tab.
-    if (row === undefined || row.cwd === undefined) continue
-    if (owningWorktree(repos, row.cwd) !== worktreePath) continue
+  for (const { id, row } of recent) {
+    if (existing.has(id)) continue
     workspace.addTile('chat', { chatSessionId: id, title: chatLabel(row) })
     added = true
   }

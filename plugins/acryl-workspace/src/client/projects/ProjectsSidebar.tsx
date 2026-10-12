@@ -117,10 +117,10 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
     () => buildProjectRows(snapshot, chatRows, new Map(JSON.parse(agentsKey) as Array<[string, string[]]>), new Map(JSON.parse(attentionKey) as Array<[string, WorktreeAttention]>)),
     [snapshot, chatRows, agentsKey, attentionKey],
   )
-  // The sidebar is the shown workspace: its projects only (Default: everything the tree knows).
+  // The sidebar is the shown workspace: its projects, and the worktree on screen.
   const repos = useMemo(
-    () => reposInWorkspace(allRepos, projects.projectPaths(), currentWorkspace === DEFAULT_WORKSPACE_ID),
-    [allRepos, projects, projectsKey, currentWorkspace],
+    () => reposInWorkspace(allRepos, projects.projectPaths(), snapshot.selectedPath),
+    [allRepos, projects, projectsKey, snapshot.selectedPath],
   )
 
   const toggleRepo = (root: string): void => {

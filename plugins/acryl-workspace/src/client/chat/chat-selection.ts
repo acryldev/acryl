@@ -45,7 +45,6 @@ export class ChatSelection implements SessionNavigator {
   private shown: string | undefined
   private placedIn: string | undefined
   private scheduled = false
-  private readonly discoveredFolders = new Set<string>()
   private readonly seenTitles = new Map<string, string>()
   private readonly schedule: (run: () => void) => void
 
@@ -123,13 +122,8 @@ export class ChatSelection implements SessionNavigator {
 
   private reconcile(list: SessionListState): void {
     const { shell, groups } = this.deps
-    // Every chat's folder appears in the tree (passively: never registered as a project).
-    for (const id of list.ids) {
-      const cwd = list.byId[id]?.cwd
-      if (cwd === undefined || this.discoveredFolders.has(cwd)) continue
-      this.discoveredFolders.add(cwd)
-      void shell.discover(cwd)
-    }
+    // Only the shown chat's folder is learned (through `follow`, below): learning every folder any chat ever ran in filled the tree with
+    // folders the user never added and polled git in each of them.
     const current = currentSessionId(list)
     const row = current === undefined ? undefined : list.byId[current]
     if (current !== undefined) shell.restoreChat(current)

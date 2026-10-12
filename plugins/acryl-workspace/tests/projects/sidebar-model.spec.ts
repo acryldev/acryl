@@ -143,14 +143,15 @@ describe('reposInWorkspace (spec 043)', () => {
     { root: '/p/acryl', name: 'acryl', git: true, rows: [row('/p/acryl'), row('/p/acryl.worktrees/fix')] },
     { root: '/p/other', name: 'other', git: true, rows: [row('/p/other')] },
     { root: '/p/notes', name: 'notes', git: false, rows: [row('/p/notes')] },
+    { root: '/p/oca', name: 'oca', git: true, rows: [row('/p/oca')] },
     { root: '/p', name: 'p', git: false, rows: [row('/p')] },
   ] as never
-  it('shows every repository in Default', () => {
-    expect(reposInWorkspace(repos, [], true)).toBe(repos)
+  it('shows only the repositories owning the workspace\'s projects (the deepest containing one, never a parent folder), not every folder a chat ran in', () => {
+    expect(reposInWorkspace(repos, ['/p/acryl.worktrees/fix']).map(repo => repo.name)).toEqual(['acryl'])
+    expect(reposInWorkspace(repos, ['/p/other/src', '/p/notes']).map(repo => repo.name)).toEqual(['other', 'notes'])
+    expect(reposInWorkspace(repos, [])).toEqual([])
   })
-  it('shows a workspace only the repositories owning its projects (the deepest containing one, never a parent folder that is also a project)', () => {
-    expect(reposInWorkspace(repos, ['/p/acryl.worktrees/fix'], false).map(repo => repo.name)).toEqual(['acryl'])
-    expect(reposInWorkspace(repos, ['/p/other/src', '/p/notes'], false).map(repo => repo.name)).toEqual(['other', 'notes'])
-    expect(reposInWorkspace(repos, [], false)).toEqual([])
+  it('also shows the repository of the worktree on screen', () => {
+    expect(reposInWorkspace(repos, ['/p/notes'], '/p/oca').map(repo => repo.name)).toEqual(['notes', 'oca'])
   })
 })
