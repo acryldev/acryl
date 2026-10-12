@@ -5,6 +5,7 @@ import type {} from '@acryl/ui/frame'
 import { ChangesBody } from './ChangesBody.tsx'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
+import { ChangesGlyph } from '../chrome/panel-icons.tsx'
 
 /** The tab kind this plugin owns. */
 export const CHANGES_KIND = 'changes'
@@ -31,6 +32,7 @@ export function changesTabPlugin(shell: WorkspaceShellState, gitApi: WorkspaceGi
           title: () => 'Changes',
           guide: [{
             id: CHANGES_ID,
+            icon: ChangesGlyph,
             order: 20,
             title: () => 'Changes',
             description: () => 'Changed files in the selected worktree',

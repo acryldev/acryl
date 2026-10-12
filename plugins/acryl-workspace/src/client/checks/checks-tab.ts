@@ -5,6 +5,7 @@ import type {} from '@acryl/ui/frame'
 import { ChecksBody } from './ChecksBody.tsx'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
+import { ChecksGlyph } from '../chrome/panel-icons.tsx'
 
 export const CHECKS_KIND = 'checks'
 export const CHECKS_ID = 'acryl-workspace/checks'
@@ -23,6 +24,7 @@ export function checksTabPlugin(shell: WorkspaceShellState, gitApi: WorkspaceGit
           title: () => 'Checks',
           guide: [{
             id: CHECKS_ID,
+            icon: ChecksGlyph,
             order: 40,
             title: () => 'Checks',
             description: () => 'Run the project scripts (test, lint, build) in a terminal tab',

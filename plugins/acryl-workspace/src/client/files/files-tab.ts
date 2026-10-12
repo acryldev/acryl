@@ -6,6 +6,7 @@ import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { FilesBody } from './FilesBody.tsx'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
 import type { WorkspaceFilesApi } from './files-api.ts'
+import { CodeGlyph } from '../chrome/panel-icons.tsx'
 
 /**
  * Not `files`: DSH's own `sidebar-files` plugin already registers that right-panel tab kind, and the tab
@@ -28,6 +29,7 @@ export function filesTabPlugin(shell: WorkspaceShellState, filesApi: WorkspaceFi
           title: () => 'Code',
           guide: [{
             id: FILES_ID,
+            icon: CodeGlyph,
             order: 10,
             title: () => 'Code',
             description: () => 'Browse the worktree and open a file in the editor',

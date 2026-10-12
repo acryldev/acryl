@@ -5,6 +5,7 @@ import type {} from '@acryl/ui/frame'
 import { ReviewBody } from './ReviewBody.tsx'
 import type { ReviewStore } from './review-store.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
+import { ReviewGlyph } from '../chrome/panel-icons.tsx'
 
 export const REVIEW_KIND = 'review'
 export const REVIEW_ID = 'acryl-workspace/review'
@@ -26,6 +27,7 @@ export function reviewTabPlugin(shell: WorkspaceShellState, review: ReviewStore)
           title: () => 'Review',
           guide: [{
             id: REVIEW_ID,
+            icon: ReviewGlyph,
             order: 30,
             title: () => 'Review',
             description: () => 'Line comments sent to the agent, with resolve tracking',

@@ -83,7 +83,7 @@ export function ChangesBody({ shell, gitApi }: ChangesBodyProps) {
       <header className="dshWorkspaceChangesHead">
         <div className="dshWorkspaceChangesTitle">
           <strong>{branchTitle(worktree.branch, worktree.path)}</strong>
-          <span className="dshWorkspaceChangesPath" title={worktree.path}>{worktree.path}</span>
+          <span className="dshWorkspaceChangesPath" title={worktree.path}>{leftToRight(worktree.path)}</span>
           <span className="dshWorkspaceChangesMeta">
             {worktree.changes.length} changed{staged > 0 ? `, ${String(staged)} staged` : ''}
           </span>
@@ -181,7 +181,7 @@ function ChangeRow({ change, onOpen }: { change: GitChange; onOpen: () => void }
       </span>
       <span className="dshWorkspaceChangePath">
         <span className="dshWorkspaceChangeName">{name}</span>
-        {dir !== '' && <span className="dshWorkspaceChangeDir">{dir}</span>}
+        {dir !== '' && <span className="dshWorkspaceChangeDir">{leftToRight(dir)}</span>}
       </span>
       {change.staged && <span className="dshWorkspaceChangeStaged" title="Staged">S</span>}
       {(change.added ?? 0) + (change.removed ?? 0) > 0 && (
@@ -191,4 +191,12 @@ function ChangeRow({ change, onOpen }: { change: GitChange; onOpen: () => void }
       )}
     </button>
   )
+}
+
+/**
+ * A path shown in a right-to-left box (the CSS trick that puts the ellipsis at the start, so the end of a long path stays visible). Without
+ * left-to-right marks the box reorders the path's leading and trailing slashes ("/Users/a/" showed as "Users/a/" with the slash moved).
+ */
+function leftToRight(path: string): string {
+  return `\u200E${path}\u200E`
 }
