@@ -1,4 +1,13 @@
-## 2026-10-12 (latest) - what the DSH 0.2 move lost, found by using every feature
+## 2026-10-12 (latest) - the same check on Web and the terminal, and the cosmetic leftovers
+
+Owner: "go" (continue spec 001 T077 and T078).
+
+- **Web** passed every check Desktop did: the Settings sections (Support on Web by design, the UI library page only where its example plugin is installed), the command palette, the element inspector from the composer; no errors.
+- **Terminal** (`6d575670566a656644e84d95bcb25231c39bb6cb`): the status line said "running" forever after each turn, because 0.2 returns the agent to idle after the turn's last event with nothing logged; the session bridge now notifies on `agent/status` and the TUI follows its snapshots. The terminal profile also failed to load its presets' subagent tools (they need a settings row `dsh-web-app` composes next to them); the row is now composed. Checked on a copy of the owner's home with the DeepSeek test key: a turn ends idle, no errors at boot.
+- **Cosmetic** (`d061c6bc02f50deda6db44793d4719c3ad0d2b86`): the right panel's Code, Changes, Review and Checks entries have their own icons; the Changes tab's path keeps its slashes in place. The Settings navigation's gear on ACRYL's sections is DSH's (a fixed icon list), an upstream proposal.
+- **Gate:** the local full gate could not give a signal this evening: DaisyDisk was scanning the disk, Spotlight indexing and FSEvents at 100% CPU, and real-engine boots took minutes (the same test failed with and without this change). Targeted tests passed (workspace 701; the new bridge test; typecheck of runtime and CLI), and CI ran the full gate green on Linux, Windows and the Linux Desktop boot.
+
+## 2026-10-12 - what the DSH 0.2 move lost, found by using every feature
 
 Owner: Agent Control "used to work was the way to tell our agent to modify any parts of the UI", the element inspector "doesn't work anymore and it used to work", "see what we still lost from previous version". The code had lost nothing (same tools, routes, slots, commands as the last 0.1.5 commit); five features broke because DSH 0.2 changed a meaning under an unchanged name. Found by a live check on a copy of the owner's home, each fixed and tested (spec 001 R43):
 
