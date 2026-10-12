@@ -71,6 +71,12 @@ describe('startUiHealth', () => {
     expect(h.errors).toHaveLength(61)
   })
 
+  it('catches a slow loop: an error repeated a few times a second, as a frozen page manages', () => {
+    const h = harness()
+    for (let i = 0; i < 30; i++) { h.advance(330); h.fakeConsole.error('[client-store] subscriber failed: Error: Minified React error #185') }
+    expect(h.health.record.incidents.filter(incident => incident.kind === 'runaway')).toHaveLength(1)
+  })
+
   it('keeps one incident through gaps in a burst, and reports the same error again after five quiet seconds', () => {
     const h = harness()
     const burst = (): void => { for (let i = 0; i < 25; i++) { h.advance(2); h.fakeConsole.error('loop') } }

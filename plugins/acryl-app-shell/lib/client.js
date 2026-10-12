@@ -13,6 +13,7 @@ window.__ModuleLoader__.load({
 			stallMs: 2e3,
 			longTaskMs: 250,
 			runawayCount: 20,
+			runawayWindowMs: 1e4,
 			runawayQuietMs: 5e3,
 			maxIncidents: 50
 		};
@@ -67,13 +68,13 @@ window.__ModuleLoader__.load({
 			const observedError = (...args) => {
 				originalError.apply(ports.console, args);
 				const at = ports.now();
-				if (at - windowStart >= 1e3) {
+				if (at - windowStart >= settings.runawayWindowMs) {
 					windowStart = at;
 					counts = /* @__PURE__ */ new Map();
-					for (const [key, seenAt] of lastSeen) if (at - seenAt >= settings.runawayQuietMs) {
-						open.delete(key);
-						lastSeen.delete(key);
-					}
+				}
+				for (const [key, seenAt] of lastSeen) if (at - seenAt >= settings.runawayQuietMs) {
+					open.delete(key);
+					lastSeen.delete(key);
 				}
 				const message = messageOf(args);
 				const slot = /slot entry crashed in '([^']+)'/u.exec(message)?.[1];

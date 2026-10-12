@@ -5,8 +5,9 @@
  * - **stall**: a heartbeat timer that fires late by more than `stallMs` means the main thread was blocked that long. Time while
  *   the page is hidden does not count: browsers throttle a hidden page's timers to once a second or less.
  * - **long task**: the browser's own `longtask` entries over `longTaskMs` (where `PerformanceObserver` supports them).
- * - **runaway**: the same console error more than `runawayCount` times within one second, the shape of a render loop (React's
- *   "Maximum update depth exceeded" once per store notification). The first occurrence's stack and the slot a crash named
+ * - **runaway**: the same console error more than `runawayCount` times within `runawayWindowMs` (10 s), the shape of a render loop
+ *   (React's "Maximum update depth exceeded" once per store notification). A loop whose every turn costs a full failed render
+ *   repeats only a few times a second while the page is frozen, so a one-second window missed it. The first occurrence's stack and the slot a crash named
  *   (`slot entry crashed in '<slot>'`) are kept, since a production build names no component.
  *
  * Each incident is kept in a bounded list (`window.__acrylHealth`) and written once as a `[acryl-health]` console warning, which
@@ -33,6 +34,8 @@ export interface UiHealthOptions {
     readonly stallMs?: number;
     readonly longTaskMs?: number;
     readonly runawayCount?: number;
+    /** The window the repeats of one error are counted in. */
+    readonly runawayWindowMs?: number;
     /** How long a runaway must be quiet before the same error opens a new incident. */
     readonly runawayQuietMs?: number;
     readonly maxIncidents?: number;
