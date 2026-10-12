@@ -1,4 +1,13 @@
-## 2026-10-12 (latest) - the same check on Web and the terminal, and the cosmetic leftovers
+## 2026-10-12 (latest) - Workspaces, first slice: switch between named sets of projects; the feature check is one command
+
+Owner: "ok continue, i approve all" (accepting spec 043's recommendations for its six questions), and: is `acryl-cli` on DSH 0.2 too?
+
+- **Answer:** the CLI and the runtime in this repository resolve DSH 0.2.0-rc.2 (`upstream.json` pin `639ed01`), pi-tui and pi-ai 1.1.0; so does the published `acryl@0.2.4`. The `acryl` on the owner's PATH is an older global install, `acryl@0.1.44` (21 September, DSH 0.1.5).
+- **Feature check** (`4dd8e9e5`): `corepack pnpm run check:features` starts an isolated Desktop, uses the features the 0.2 move broke (Settings sections, palette and inspector shortcuts from the composer, every tab type, the Board, the way back from a page, no errors or freezes), and stops it; 9 of 9 pass.
+- **Workspaces** (`2d3dcd64`, `845b95ef`; spec 043 T001-T005, T008): the project registry owns named sets of projects (Default holds what the owner had; Individual Projects, Shared Context, Remote Machine with its saved SSH target). The tree's header reads PROJECTS; a strip below it adds a project to the shown workspace, switches workspaces and opens the New Workspace dialog. The tree shows the shown workspace's projects (the owning repository of each, never a parent folder); the choice persists. Verified on a copy of the owner's home.
+- **Next in spec 043:** one tab set per workspace (T006), Agent Control tools (T007), then shared context for every agent (T009-T011).
+
+## 2026-10-12 - the same check on Web and the terminal, and the cosmetic leftovers
 
 Owner: "go" (continue spec 001 T077 and T078).
 
