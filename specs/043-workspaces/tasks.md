@@ -15,7 +15,7 @@ See `plan.md` for the decisions and the mini-design.
 
 ## Phase 3 - Completeness
 
-- [ ] T006 One tab set per workspace (Q2): `WorkspaceGroups` keyed by workspace and worktree, with the saved tab sets migrated into Default.
+- [x] T006 (done in `14b6209b27d347302d372b355763224b51b74d4a`) One tab set per workspace (Q2): `WorkspaceGroups` keyed by workspace and worktree, with the saved tab sets migrated into Default. Also: a set not opened in a run is saved again, a notice opens its tab in its own workspace, an empty workspace shows no worktree; the feature check verifies it on a real Desktop.
 - [ ] T007 Agent Control tools `workspace.list`, `workspace.switch`, `workspace.create`, `workspace.add_project`.
 - [x] T008 (done in `845b95ef04299de533513ccd6f338ace3191453b`) `scripts/check-features.mjs`: create a workspace, switch, the tree changes, switch back (Desktop, isolated runs only; Web checked by hand).
 
