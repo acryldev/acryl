@@ -1,4 +1,14 @@
-## 2026-10-12 (latest) - a frozen Desktop leaves evidence: page health record, log flood control
+## 2026-10-12 (latest) - the frozen window found: chat tabs and DSH's current chat drove each other
+
+Owner: pressing "+" next to the ACRYL project "froze the app again"; then "We didn't run into these problems before. It seems that this whole thing is now less stable." They were right: both freezes came after the chat sync of 2026-10-11 (`9afe9955`).
+
+- **Reproduced** in an isolated copy of the owner's dev home (credentials removed): with one worktree selected, open a chat of another worktree from the tree, then select the first worktree again. The renderer blocked (the inspector could no longer evaluate anything) and logged React #185 in `main.conversation`, then `[client-store] subscriber failed` about three times a second, the owner's log line for line. The owner's log also named the chat involved (a blank "New chat" of the `hi` worktree, whose reference was released mid-switch).
+- **Cause:** two stores own "which chat is shown": ACRYL's selected tab per worktree and DSH's main view. The 2026-10-11 change synchronized them with reactions in both directions: an effect opened the selected tab's chat whenever the selected tab changed, the session sync selected (or created) the current chat's tab in the worktree on screen, and the tree followed the current chat to the worktree that owns it. A chat tab could so land in another worktree's tab set; selecting that worktree opened a chat owned elsewhere, the tree moved there, that worktree's selected tab opened a chat owned by the first, and so on without end.
+- **Fix** (`92c50d9a3e6d3a643eee9613973e9c3a58f7b60c`): opening a tab's chat is part of the user's action (the tab strip, the palette, a notice), not an effect of the selected tab changing; and the session sync puts a chat's tab in the tab set of the worktree that owns its folder (`chatGroupFor`), never simply the one on screen. Verified on the copy: the exact freezing steps, then three rounds of switching worktrees, opening chats of other worktrees from the tree and clicking tabs: no error, and the conversation on screen matched the selected tab every time. Full gate passed.
+- **The health record missed it** (`70e8d8d4c06c8915731df3035ce5dfa20bfb2857`): a loop whose every turn is a full failed render repeats only a few times a second, below "20 times in one second"; repeats now count over ten seconds (a test replays the owner's rate).
+- **What this says about the code:** a reaction-based sync between two sources of truth, added under time pressure, was the defect class; the audit of the workspace client against the engineering books is spec 001 R42 and Phase 12.
+
+## 2026-10-12 - a frozen Desktop leaves evidence: page health record, log flood control
 
 Owner: after signing in to Meta and choosing its model, "suddenly whole acryl app is frozen"; the log held React error #185 (maximum update depth) from `slot entry crashed in 'main.conversation'` and the same `[client-store] subscriber failed` line over and over. Owner: "we need profiler or internal metrics to track such situations".
 
