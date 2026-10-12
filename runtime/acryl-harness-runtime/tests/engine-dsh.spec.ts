@@ -39,11 +39,6 @@ afterEach(async () => {
   await Promise.all(temporaryHomes.splice(0).map(home => rm(home, { force: true, recursive: true })))
 })
 
-/**
- * A test that boots a real pinned profile takes about 0.5-5 s on its own and longer while the gate runs every suite in parallel;
- * vitest's default 5 s made the first boot here fail under that load. Every profile boot in this file gets the same budget.
- */
-const PROFILE_BOOT_TIMEOUT_MS = 30_000
 
 async function freshDshHome(): Promise<string> {
   const home = await mkdtemp(join(tmpdir(), 'acryl-engine-dsh-'))
@@ -81,7 +76,7 @@ describe('the extracted dsh engine, mounted under createAcrylEngineHost', () => 
     } finally {
       await host.dispose()
     }
-  }, PROFILE_BOOT_TIMEOUT_MS)
+  })
 
   it('tears down the whole profile tree when the engine host disposes', async () => {
     await freshDshHome()
@@ -94,7 +89,7 @@ describe('the extracted dsh engine, mounted under createAcrylEngineHost', () => 
     // Disposal removed the whole Loader tree - the fork Cordis handed the
     // dsh engine plugin no longer resolves any of the profile's services.
     expect(host.ctx.get('sessions')).toBeUndefined()
-  }, PROFILE_BOOT_TIMEOUT_MS)
+  })
 
   it('rejects an empty profile name before any Loader activation', () => {
     expect(() => createDshEngineDefinition('')).toThrow('ACRYL dsh engine profile must not be empty')
@@ -123,7 +118,7 @@ describe('the extracted dsh engine, mounted under createAcrylEngineHost', () => 
     } finally {
       await host.dispose()
     }
-  }, PROFILE_BOOT_TIMEOUT_MS)
+  })
 })
 
 describe('CLI/TUI flavor booting a profile another surface already initialized (spec 034 T008)', () => {
@@ -161,7 +156,7 @@ describe('CLI/TUI flavor booting a profile another surface already initialized (
     } finally {
       await cliHost.dispose()
     }
-  }, PROFILE_BOOT_TIMEOUT_MS)
+  })
 })
 
 describe('the web engine entry point, mounted under createAcrylEngineHost', () => {
@@ -225,7 +220,7 @@ describe('the web engine entry point, mounted under createAcrylEngineHost', () =
     } finally {
       await host.dispose()
     }
-  }, PROFILE_BOOT_TIMEOUT_MS)
+  })
 })
 
 describe('the composition-based dsh engine entry point (for a surface with its own profile pipeline)', () => {
@@ -254,7 +249,7 @@ describe('the composition-based dsh engine entry point (for a surface with its o
     } finally {
       await host.dispose()
     }
-  }, PROFILE_BOOT_TIMEOUT_MS)
+  })
 
   it('rejects an empty surface name before any Loader activation', () => {
     expect(() => createDshEngineDefinitionFromComposition({ rootConfig: '/x/cordis.yml', patches: [], surface: '' }))
