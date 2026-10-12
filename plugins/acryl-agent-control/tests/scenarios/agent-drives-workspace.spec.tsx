@@ -56,10 +56,16 @@ const gitApi = {
 
 const sessionsHook = ((selector: (value: object) => unknown) => selector({ ids: [], current: undefined, byId: {} })) as unknown as ProjectsSidebarProps['useSessions']
 
+/** One array for every read, as the real registry keeps it until it changes. */
+const WORKSPACES = [{ id: 'default', name: 'Default', kind: 'individual' as const, projects: [] }]
+
 function fakeProjects(overrides: Partial<ProjectsControl>): ProjectsControl {
   return {
     chatAvailable: true,
-    workspaceKey: () => '', workspacePaths: () => [], subscribeWorkspaces: () => () => {},
+    projectsKey: () => '', projectPaths: () => [], subscribeProjects: () => () => {},
+    workspaces: () => WORKSPACES, currentWorkspace: () => 'default',
+    createWorkspace: async (): Promise<ProjectAction> => ({ ok: true }),
+    switchWorkspace: async (): Promise<ProjectAction> => ({ ok: true }),
     chooserKind: () => 'path',
     addProject: async (): Promise<ProjectAction> => ({ ok: true }),
     addProjectByPath: async (): Promise<ProjectAction> => ({ ok: true }),
@@ -92,7 +98,7 @@ describe('scenario: "add my repo at /p/proj as a project" (US2, T042)', () => {
     const ai = agent()
 
     let page = await ai.look()
-    await ai.do({ op: 'click', ref: find(page, 'button', 'Add git project') })
+    await ai.do({ op: 'click', ref: find(page, 'button', 'Add project') })
     page = await ai.look()
     expect(unnamed(page), 'every control the agent needs has a name').toEqual([])
     await ai.do({ op: 'type', ref: find(page, 'textbox', 'Project folder path'), text: '/p/proj' })

@@ -57,7 +57,10 @@ describe('the project registry on the real engine', () => {
 
     const first = await boot(home, 'acryl.agents')   // the chat is off: the list never needed it
     try {
-      expect((await projects(first.origin)).json).toEqual({ ok: true, view: { paths: [], adopted: false } })
+      expect((await projects(first.origin)).json).toEqual({
+        ok: true,
+        view: { paths: [], adopted: false, workspaces: [{ id: 'default', name: 'Default', kind: 'individual', projects: [] }], current: 'default' },
+      })
       expect((await projects(first.origin, { op: 'add', path: projectA })).json.view.paths).toEqual([projectA])
       expect((await projects(first.origin, { op: 'add', path: projectB })).json.view.paths).toEqual([projectA, projectB])
       expect((await projects(first.origin, { op: 'add', path: '/definitely/not/here' })).json).toMatchObject({ ok: false, code: 'not-a-folder' })
@@ -70,7 +73,7 @@ describe('the project registry on the real engine', () => {
     try {
       expect((await projects(second.origin)).json.view.paths).toEqual([projectA, projectB])
       expect((await projects(second.origin, { op: 'remove', path: projectA })).json.view.paths).toEqual([projectB])
-      expect((await projects(second.origin, { op: 'adopt', paths: [projectA] })).json.view).toEqual({ paths: [projectB, projectA], adopted: true })
+      expect((await projects(second.origin, { op: 'adopt', paths: [projectA] })).json.view).toMatchObject({ paths: [projectB, projectA], adopted: true, current: 'default' })
       expect((await projects(second.origin, { op: 'adopt', paths: [] })).json.view.adopted).toBe(true)
     } finally { await second.host.dispose() }
   }, 180_000)
