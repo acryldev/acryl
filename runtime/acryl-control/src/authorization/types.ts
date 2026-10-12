@@ -54,3 +54,35 @@ export interface DefaultModelAdoptionPort {
 }
 
 export type CredentialChangedListener = (key: string) => void
+
+/** The service name of {@link AccountSignInPort}. */
+export const ACCOUNT_SIGN_IN_SERVICE = 'acrylAccountSignIn'
+
+/**
+ * The key DeepSeek's account flow registers on `ctx.authorization` (`dsh-deepseek-account-platform`). It runs only once
+ * DeepSeek's account service has opened an attempt, so a surface never starts it through `begin`.
+ */
+export const DEEPSEEK_ACCOUNT_FLOW_KEY = 'deepseek-account-platform/default'
+
+export type AccountSignInOutcome =
+  | { readonly status: 'authorized' }
+  | { readonly status: 'cancelled' }
+  | { readonly status: 'failed', readonly error: string }
+
+/**
+ * `acrylAccountSignIn`: DeepSeek account sign-in on a surface without a web server of its own (the terminal), provided by
+ * `acryl-sign-in/account-callback`. DeepSeek's account flow is registered on `ctx.authorization` as `key`, but it can only
+ * be started here; a surface lists it under that key and signs in through this port instead of `begin`.
+ */
+export interface AccountSignInPort {
+  /** The authorization flow key the sign-in writes ({@link DEEPSEEK_ACCOUNT_FLOW_KEY}). */
+  readonly key: string
+  /** The model route a successful sign-in makes usable (`deepseek-account`). */
+  readonly route: string
+  /** Start a sign-in and settle when it ends; `notify` receives the page to open in a browser. Aborting cancels it. */
+  signIn(request: {
+    readonly locale?: string
+    readonly signal?: AbortSignal
+    notify(url: string): void
+  }): Promise<AccountSignInOutcome>
+}

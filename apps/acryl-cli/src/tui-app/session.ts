@@ -14,10 +14,13 @@ import { execFile } from 'node:child_process'
 import type { Context } from '@deepseek-ai/cordis'
 import { createAcrylSessionBridge, type AcrylSessionBridge } from 'acryl-harness-runtime'
 import {
+  ACCOUNT_SIGN_IN_SERVICE,
+  DEEPSEEK_ACCOUNT_FLOW_KEY,
   computeCredentialProjection,
   createDefaultModelAdoption,
   isRouteUsable,
   AuthorizationService,
+  type AccountSignInPort,
   type AuthorizationInteraction,
   type AuthorizationPort,
   type CredentialProjectionLlmPort,
@@ -398,6 +401,33 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     },
   }
 
+  // DeepSeek's account: its browser step returns to `acryl-sign-in/account-callback`'s loopback server, and success makes
+  // the account's route the default when the current default cannot answer, as a flow sign-in does.
+  async function signInWithAccount(accountSignIn: AccountSignInPort, label: string): Promise<void> {
+    store.updateLogin({ signingIn: accountSignIn.key })
+    try {
+      const outcome = await accountSignIn.signIn({
+        notify(url) {
+          void openBrowser(url)
+          store.setNotice(`Continue in your browser\n${url}`)
+        },
+      })
+      if (outcome.status === 'authorized') {
+        await defaultModelPort.adoptIfDefaultUnusable(accountSignIn.route)
+        syncCredentialViews()
+        store.setNotice(`Signed in to ${label} — ready to use from /model.`)
+      } else if (outcome.status === 'cancelled') {
+        store.updateLogin({ error: 'Sign-in cancelled.' })
+      } else {
+        store.updateLogin({ error: `Sign-in failed: ${outcome.error}` })
+      }
+    } catch (error) {
+      store.updateLogin({ error: `Sign-in failed: ${error instanceof Error ? error.message : String(error)}` })
+    } finally {
+      store.updateLogin({ signingIn: undefined })
+    }
+  }
+
   // Fetch the registered authorization flows (providers that ship a login via
   // dsh-llm-pi-ai), derive each one's configured/authMethod from the same
   // shared `CredentialProjection` `/model` reads (not an independent record
@@ -413,10 +443,20 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
       const entries = authSvc.list()
       const rows = await credentialRows()
       const byKey = new Map((rows ?? []).map(row => [loginRecordKey(row.route), row] as const))
-      const list = entries.map(entry => {
+      const accountSignIn = host.ctx.get(ACCOUNT_SIGN_IN_SERVICE) as AccountSignInPort | undefined
+      const credentialsSvc = host.ctx.get('credentials') as CredentialsServicePort | undefined
+      const list = await Promise.all(entries.flatMap((entry) => {
+        // DeepSeek's account flow can only be started through `acrylAccountSignIn`; without it, it is not offered.
+        if (entry.key === DEEPSEEK_ACCOUNT_FLOW_KEY) {
+          if (accountSignIn === undefined) return []
+          return [(async () => {
+            const configured = (await credentialsSvc?.describeRecord(entry.key))?.configured ?? false
+            return { ...entry, methods: [{ id: 'oauth', label: 'DeepSeek account' }], configured, authMethod: configured ? 'oauth' as const : undefined }
+          })()]
+        }
         const row = byKey.get(entry.key)
-        return { ...entry, configured: row?.hasCredential ?? false, authMethod: row?.authMethod }
-      })
+        return [Promise.resolve({ ...entry, configured: row?.hasCredential ?? false, authMethod: row?.authMethod })]
+      }))
       store.updateLogin({ flows: list, busy: false, error: undefined })
     } catch (error) {
       store.updateLogin({ busy: false, error: error instanceof Error ? error.message : String(error) })
@@ -607,6 +647,11 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
         const overlay = store.getSnapshot().overlay
         const flow = overlay.kind === 'login' ? overlay.login.flows?.find(entry => entry.key === key) : undefined
         if (flow === undefined) return
+        const accountSignIn = host.ctx.get(ACCOUNT_SIGN_IN_SERVICE) as AccountSignInPort | undefined
+        if (accountSignIn !== undefined && key === accountSignIn.key) {
+          await signInWithAccount(accountSignIn, flow.label)
+          return
+        }
         const selectedMethod = method ?? flow.methods[0]?.id
         // The authorization flow deliberately asks for a replacement key in an
         // empty secret field. Preserve that behavior, but carry a masked hint

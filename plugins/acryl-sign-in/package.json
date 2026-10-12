@@ -1,7 +1,7 @@
 {
   "name": "acryl-sign-in",
   "version": "0.1.0",
-  "description": "ACRYL sign-in, one Cordis plugin for Web and Desktop: sign in to a model provider with an account (Claude, ChatGPT/OpenAI Codex and the rest of the catalog's flows; DeepSeek through DeepSeek's own account dialog) from Settings > Models, over the harness authorization flows",
+  "description": "ACRYL sign-in: sign in to a model provider with an account (Claude, ChatGPT/OpenAI Codex and the rest of the catalog's flows; DeepSeek through DeepSeek's own account dialog) from Settings > Models on Web and Desktop, over the harness authorization flows; the terminal's DeepSeek account sign-in through its own loopback callback",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -19,6 +19,10 @@
     ".": {
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
+    },
+    "./account-callback": {
+      "types": "./lib/types/account-callback.d.ts",
+      "default": "./lib/account-callback.js"
     },
     "./client": {
       "types": "./lib/types/client/index.d.ts",
@@ -84,10 +88,12 @@
     "artifacts": {
       "plugins": [
         "./lib/index.js",
+        "./lib/account-callback.js",
         "./lib/client.js"
       ]
     },
     "surfaces": [
+      "tui",
       "web",
       "desktop"
     ],
@@ -100,7 +106,8 @@
       }
     },
     "capabilities": [
-      "sign-in"
+      "sign-in",
+      "account-callback"
     ]
   }
 }

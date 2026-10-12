@@ -922,3 +922,16 @@ A headless gate cannot see any of these (the loader smoke prints the same three 
 **Cosmetic, recorded as T077:** ACRYL's entries in the right panel's Start page (Code, Changes, Review) and in Settings' navigation show generic icons instead of their own; the Changes tab's worktree path loses its leading "/".
 
 **Lesson.** A dependency upgrade that keeps names but changes meanings (an approval policy, a locale registry, an id format, focus regions) passes typecheck and unit tests whose fakes encode the old meaning. After an upgrade, the gate is a live use of every feature, with fakes rebuilt from the new dependency's real behavior (the board test now uses 0.2-shaped ids; the settings test a locale fake that refuses duplicates as 0.2 does).
+
+### R44 - DeepSeek account sign-in in the terminal (2026-10-12)
+
+**Gap.** Web and Desktop offer "DeepSeek account" on the sign-in card; the terminal's `/login` did not. DeepSeek's account service (`dsh-deepseek-account-platform`) returns the browser to `<origin>/oauth/callback`, registered on DSH's `webServer`, and the terminal has no web server. Adding DSH's server row would also wake `dsh-api-gateway` (the base bundle's `typert-gateway` row), which serves the API with no credential check: not acceptable for a terminal. The account flow is also registered on `ctx.authorization` with method `browser`, so `/login`'s account filter hid it, and starting it as a flow fails (it runs only once the account service opened an attempt).
+
+**Mini-design.**
+
+1. *Boundary.* `acryl-sign-in` already owns driving DeepSeek's account for the other surfaces; a second entry, `acryl-sign-in/account-callback`, owns the terminal's case. One row, terminal only (capability `account-callback`).
+2. *Provides and consumes.* Injects `deepseekAccount`. Provides `webServer` (only `register` of exact routes, `host`, `port`) inside the Loader realm `isolate: { webServer: 'acryl-account-callback' }`, which the `deepseek-account` row is patched into; no other row can resolve it, so the gateway stays dormant. Provides `acrylAccountSignIn` (not isolated): `signIn({ client, signal, notify })` starts the attempt, follows `deepseekAccount.watch` to a final phase, cancels on abort. The terminal reads it with `ctx.get` and offers DeepSeek only when it exists.
+3. *Effects and disposal.* The loopback server (127.0.0.1, ephemeral port) listens on the first sign-in, not at boot, and is closed by the row's effect disposer; open sockets are destroyed. A running sign-in is cancelled on dispose.
+4. *Composition.* Rows: `acryl-sign-in-account-callback` (the shared-realm label is named for the capability, not a package: the documented exception, since the realm is shared by two rows) and a patch of `deepseek-account` adding the same `isolate`. Declared in `coding-capabilities.ts` for `tui`.
+5. *Durability.* Nothing new: the credential is written by DeepSeek's service; the attempt is in memory.
+6. *Verification.* A real Loader test: the account row resolves the isolated server and a sibling row does not; the callback route answers over real HTTP; disposal closes the port. Live: `/login` lists DeepSeek, choosing it opens DeepSeek's page (not completed with a real account).

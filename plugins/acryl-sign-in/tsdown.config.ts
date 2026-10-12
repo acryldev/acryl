@@ -5,7 +5,7 @@ const PACKAGE_NAME = 'acryl-sign-in'
 export default defineConfig([
   {
     name: PACKAGE_NAME,
-    entry: { index: 'src/index.ts' },
+    entry: { index: 'src/index.ts', 'account-callback': 'src/account-callback.ts' },
     outDir: 'lib',
     format: 'esm',
     platform: 'node',

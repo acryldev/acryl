@@ -5,10 +5,10 @@
  * here and show its attempt in the same form as the harness authorization flows (`SignInAttemptView`). The browser
  * returns to the Host's own `/oauth/callback`, served on the origin the routes are served on.
  */
-import type { SignInAttemptView } from 'acryl-control'
+import { DEEPSEEK_ACCOUNT_FLOW_KEY, type SignInAttemptView } from 'acryl-control'
 
 /** The flow key DeepSeek's account registers on `ctx.authorization`; also the id the routes use for it. */
-export const DEEPSEEK_ACCOUNT_KEY = 'deepseek-account-platform/default'
+export const DEEPSEEK_ACCOUNT_KEY = DEEPSEEK_ACCOUNT_FLOW_KEY
 /** The model route a DeepSeek account sign-in makes usable (`dsh-llm-deepseek-account`). */
 export const DEEPSEEK_ACCOUNT_ROUTE = 'deepseek-account'
 

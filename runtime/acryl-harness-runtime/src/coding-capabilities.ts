@@ -30,6 +30,7 @@ export type AcrylCodingCapabilityId =
   | 'workspace'
   | 'plugin-admin'
   | 'sign-in'
+  | 'account-callback'
   | 'support'
   | 'agent-control-ui'
   | 'advanced-shell'
@@ -185,6 +186,19 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     requiresPackages: ['acryl-sign-in'],
     loaderPatches: [
       { insert: [{ id: 'acryl-sign-in', name: 'acryl-sign-in' }] },
+    ],
+  },
+  {
+    // DeepSeek account sign-in from the terminal's /login. The terminal has no web server for DeepSeek's browser callback,
+    // and DSH's would also wake the API gateway; this row serves the callback on its own loopback port, as `webServer` in
+    // a realm only the `deepseek-account` row shares. The row id names the shared realm's capability, not only a package
+    // (the documented exception: two rows share the realm `acryl-account-callback`).
+    id: 'account-callback',
+    surfaces: ['tui'],
+    requiresPackages: ['acryl-sign-in'],
+    loaderPatches: [
+      { insert: [{ id: 'acryl-sign-in-account-callback', name: 'acryl-sign-in/account-callback', isolate: { webServer: 'acryl-account-callback' } }] },
+      { id: 'deepseek-account', name: '@deepseek-ai/dsh-deepseek-account-platform', isolate: { webServer: 'acryl-account-callback' } },
     ],
   },
   {
