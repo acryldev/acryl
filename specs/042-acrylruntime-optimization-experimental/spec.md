@@ -1,12 +1,14 @@
+> **Update 2026-10-12: the experiment is Bun, and the folder name no longer names a runtime.** The owner dropped the Deno direction (it was judged the wrong way before the decision, Bun the better one); the Bun experiment runs on branch `042-acrylruntime-optimization-bun-experimental`. The Deno material below is measured history.
+>
 > **Update 2026-10-07: renamed and redirected to Deno (experimental).** This milestone was `042-electrobun-optimization`. The current direction, measured findings and the D1 to D7 experiment ladder are in [deno-findings-and-plan.md](./deno-findings-and-plan.md). The Electrobun and Bun material below remains as measured history.
 >
 > **Update 2026-10-01.** Week estimates and success percentages in this file are not supported by evidence. See [findings-rewrite-vs-reuse.md](./findings-rewrite-vs-reuse.md) for measured results, the Option A (Node host, Electrobun shell) and Option B (Host in Bun) split, and the experiment ladder.
 
-# Feature Specification: ACRYL runtime optimization (Deno, experimental)
+# Feature Specification: ACRYL runtime optimization (Bun, experimental)
 
 **Tracking**: TBD (will be filed on GitHub when prioritized)
 
-**Feature Directory**: `specs/042-acrylruntime-optimization-deno-experimental` (was `specs/042-electrobun-optimization`)  
+**Feature Directory**: `specs/042-acrylruntime-optimization-experimental` (was `specs/042-electrobun-optimization`)  
 **Created**: 2026-09-29  
 **Status**: `needs-triage` - this is a **research-to-decision** milestone, not an implementation commitment. The spike determines whether migration is realistic.
 
