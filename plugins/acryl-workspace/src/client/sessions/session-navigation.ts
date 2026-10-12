@@ -41,16 +41,29 @@ export function synchronizeWorkspaceWithSessionNavigation(
 }
 
 /**
- * The session to open because the user selected a chat tab: the tab's own session when it is not the one on screen. Every chat tab
- * shows the one main conversation, so selecting a tab without opening its session left the previous chat's conversation under the
- * new tab's name. A tab not bound to a session (none yet) opens nothing.
+ * The worktree whose tab set holds a session's chat tab: the worktree that owns the session's folder, else the one on screen (a
+ * session outside every known worktree). A chat tab only ever lives in its owner's tab set. A tab in another worktree's set made
+ * two reactions chase each other: selecting the tab opened its session, the tree followed that session to its owning worktree,
+ * whose selected tab opened a session owned by the first worktree, and so on without end (a frozen window, 2026-10-12).
+ */
+export function chatGroupFor(repos: readonly RepoState[], cwd: string | undefined, shown: string): string {
+  return (cwd === undefined ? undefined : owningWorktree(repos, cwd)) ?? shown
+}
+
+/**
+ * The session to open because a chat tab became the selected one: the tab's own session when it is not the one on screen. Every
+ * chat tab shows the one main conversation, so selecting a tab without opening its session left the previous chat's conversation
+ * under the new tab's name. A tab not bound to a session (none yet) opens nothing, and neither does a tab whose session belongs to
+ * another worktree (`belongsHere` false): opening it would move the tree to that worktree (see `chatGroupFor`).
  */
 export function sessionForSelectedChatTab(
   tile: { readonly kind: string; readonly chatSessionId?: string } | undefined,
   current: string | undefined,
+  belongsHere: (sessionId: string) => boolean = () => true,
 ): string | undefined {
   if (tile?.kind !== 'chat' || tile.chatSessionId === undefined) return undefined
-  return tile.chatSessionId === current ? undefined : tile.chatSessionId
+  if (tile.chatSessionId === current || !belongsHere(tile.chatSessionId)) return undefined
+  return tile.chatSessionId
 }
 
 /**

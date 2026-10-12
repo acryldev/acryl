@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { WorkspaceState } from '../../src/client/canvas/state.ts'
-import { ensureWorktreeChatTabs, sessionForSelectedChatTab, syncChatTabTitles, synchronizeWorkspaceWithSessionNavigation } from '../../src/client/sessions/session-navigation.ts'
+import { chatGroupFor, ensureWorktreeChatTabs, sessionForSelectedChatTab, syncChatTabTitles, synchronizeWorkspaceWithSessionNavigation } from '../../src/client/sessions/session-navigation.ts'
 import type { RepoState, WorktreeState } from '../../src/client/worktrees/shell-state.ts'
 
 function counter(): () => string {
@@ -186,5 +186,23 @@ describe('sessionForSelectedChatTab', () => {
     expect(sessionForSelectedChatTab({ kind: 'chat' }, 's1')).toBeUndefined()
     expect(sessionForSelectedChatTab({ kind: 'pty' }, 's1')).toBeUndefined()
     expect(sessionForSelectedChatTab(undefined, 's1')).toBeUndefined()
+  })
+
+  it('opens nothing for a tab whose session belongs to another worktree', () => {
+    expect(sessionForSelectedChatTab({ kind: 'chat', chatSessionId: 's2' }, 's1', id => id !== 's2')).toBeUndefined()
+  })
+})
+
+describe('chatGroupFor', () => {
+  const TWO: readonly RepoState[] = [{ root: '/p/proj', name: 'proj', git: true, worktrees: [worktree('/p/proj'), worktree('/p/proj-hi')] }]
+
+  it('puts a chat in the worktree that owns its folder, whichever worktree is on screen', () => {
+    expect(chatGroupFor(TWO, '/p/proj-hi', '/p/proj')).toBe('/p/proj-hi')
+    expect(chatGroupFor(TWO, '/p/proj/src', '/p/proj-hi')).toBe('/p/proj')
+  })
+
+  it('keeps a chat outside every worktree, or with no folder, in the worktree on screen', () => {
+    expect(chatGroupFor(TWO, '/elsewhere', '/p/proj-hi')).toBe('/p/proj-hi')
+    expect(chatGroupFor(TWO, undefined, '/p/proj')).toBe('/p/proj')
   })
 })

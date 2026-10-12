@@ -36,6 +36,8 @@ export interface TabStripProps {
   /** What terminal agents report, for the marker on their tabs. */
   readonly agentStatus: AgentStatusState
   readonly storage: Storage | undefined
+  /** The user selected this tab (a chat tab also opens its session). */
+  onSelect(tile: WorkspaceTile): void
   onClose(tile: WorkspaceTile): void
   readonly customAgents: readonly CustomAgent[]
   /** The live terminals, for the activity marker on agent tabs. */
@@ -115,7 +117,7 @@ function kindGlyph(kind: WorkspaceTile['kind']): string {
   return '◉'
 }
 
-export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, dock, agentStatus, storage, customAgents, terminals, onClose, onOpenPty, onOpenChat, chatAvailable, onRenameChat, agentSettings, tabTypes, tabRegistry, onSetAgentEnabled, onManageSettings }: TabStripProps) {
+export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runningText, rightPanel, dock, agentStatus, storage, customAgents, terminals, onSelect, onClose, onOpenPty, onOpenChat, chatAvailable, onRenameChat, agentSettings, tabTypes, tabRegistry, onSetAgentEnabled, onManageSettings }: TabStripProps) {
   const tabsRef = useRef<HTMLDivElement>(null)
   const agentStates = useSyncExternalStore(agentStatus.subscribe, agentStatus.getSnapshot)
   const [edges, setEdges] = useState({ start: false, end: false })
@@ -214,7 +216,7 @@ export function TabStrip({ snapshot, workspace, branchLabel, branchTitle, runnin
                   aria-selected={selected}
                   className="dshWorkspaceTabButton"
                   title={`${tile.title} (double-click to rename)`}
-                  onClick={() => { workspace.selectTile(tile.id) }}
+                  onClick={() => { onSelect(tile) }}
                   onDoubleClick={() => { setEditing({ id: tile.id, value: tile.title }) }}
                   onKeyDown={(event) => { if (event.key === 'F2') { event.preventDefault(); setEditing({ id: tile.id, value: tile.title }) } }}
                 >

@@ -41,6 +41,8 @@ export interface WorkspacePaletteDeps {
   readonly config: PaletteConfigState
   readonly rightPanel: RightPaneHandle | undefined
   openPty(commandId: string, title: string): void
+  /** Select a tab as the user would (a chat tab also opens its session). */
+  selectTab(tileId: string): void
   closeTile(tileId: string): void
 }
 
@@ -65,7 +67,7 @@ export function useWorkspacePalette(deps: WorkspacePaletteDeps): PaletteState {
       },
       setShellMode: (mode) => { latest.current.shell.setMode(mode) },
       selectWorktree: (path) => { latest.current.shell.select(path) },
-      focusTab: (tabId) => { latest.current.workspace.selectTile(tabId) },
+      focusTab: (tabId) => { latest.current.selectTab(tabId) },
       closeActiveTab: () => {
         const { snapshot } = latest.current
         if (snapshot.activeId !== undefined) latest.current.closeTile(snapshot.activeId)

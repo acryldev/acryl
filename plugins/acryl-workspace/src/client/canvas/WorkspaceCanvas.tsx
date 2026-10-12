@@ -48,9 +48,9 @@ import type { TabTypesState } from '../tabs/tab-types-state.ts'
 import { BrowserPane } from '../browser/BrowserPane.tsx'
 import { ScratchFilePane } from '../files/ScratchFilePane.tsx'
 import { createWorkspacePtyApi, type WorkspacePtyApi } from '../terminal/pty-api.ts'
-import { ensureWorktreeChatTabs, sessionForSelectedChatTab, syncChatTabTitles, synchronizeWorkspaceWithSessionNavigation } from '../sessions/session-navigation.ts'
+import { chatGroupFor, ensureWorktreeChatTabs, sessionForSelectedChatTab, syncChatTabTitles, synchronizeWorkspaceWithSessionNavigation } from '../sessions/session-navigation.ts'
 import type { ProjectsControl } from '../projects/projects-control.ts'
-import type { WorkspaceTile } from './state.ts'
+import type { WorkspaceState, WorkspaceTile } from './state.ts'
 import { currentSessionId } from '../sessions/main-session.ts'
 
 export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
@@ -136,24 +136,30 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
     // Reopening a chat any other way (the classic "All chats" view, search) un-hides it again - a
     // dismissal (T134-followup) only means "not eagerly shown," not "refuse to open."
     if (current !== undefined) shell.restoreChat(current)
+    // The tab goes to the worktree that owns the chat, never simply the one on screen (see chatGroupFor); the tree then follows the
+    // chat to that worktree.
+    const owner = current === undefined ? groupKey : chatGroupFor(shellRepos, sessions.byId[current]?.cwd, groupKey)
     previousCurrent.current = synchronizeWorkspaceWithSessionNavigation(
-      workspace,
+      groups.stateFor(owner),
       previousCurrent.current,
       {
         current,
         blank: current === undefined ? undefined : sessions.byId[current]?.blank,
       },
     )
-  }, [workspace, shell, sessions])
+  }, [groups, groupKey, shellRepos, shell, sessions])
 
-  // Selecting a chat tab opens its session (the tab strip, the tree and the palette all select tabs). Keyed on the selected tab only:
-  // when navigation elsewhere changes the session, the sync above selects that session's tab, which then already matches.
+  // The user selecting a chat tab (the strip, the palette, a notice) opens its session, as part of that one action. Never as an
+  // effect of the selected tab changing: the session sync above also selects tabs, and an effect reacting to it made the two
+  // stores (this tab set and DSH's main view) drive each other without end - a frozen window (2026-10-12).
   const latestSessions = useRef(sessions)
   latestSessions.current = sessions
-  useEffect(() => {
-    const target = sessionForSelectedChatTab(active, currentSessionId(latestSessions.current))
+  const selectTab = useCallback((state: WorkspaceState, tileId: string): void => {
+    state.selectTile(tileId)
+    const tile = state.getSnapshot().tiles.find(candidate => candidate.id === tileId)
+    const target = sessionForSelectedChatTab(tile, currentSessionId(latestSessions.current))
     if (target !== undefined) sessionNavigator.open(target)
-  }, [active?.id, active?.chatSessionId, sessionNavigator])
+  }, [sessionNavigator])
 
   // Every chat this worktree already has, as its own tab immediately - not lazily, one click at a time.
   // Never a dismissed one (T134-followup: the owner's hover "x" hides it from both the tree and here).
@@ -294,8 +300,8 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
 
   const openTarget = useCallback((target: { readonly group: string; readonly tabId: string }): void => {
     if (target.group !== GLOBAL_GROUP) shell.select(target.group)
-    groups.stateFor(target.group).selectTile(target.tabId)
-  }, [shell, groups])
+    selectTab(groups.stateFor(target.group), target.tabId)
+  }, [shell, groups, selectTab])
   const [noticePermission, setNoticePermission] = useState(() => notices.permission())
 
   // Every open agent tab keeps its stream (also in a worktree that is not shown), and an agent that
@@ -372,6 +378,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
   const palette = useWorkspacePalette({
     workspace, groups, groupKey, snapshot, shell, gitApi, toasts, agentSettings, customAgents, tabTypes, tabRegistry, dock, config: paletteConfig, rightPanel,
     openPty: (commandId, title) => { void openPty(commandId, title) },
+    selectTab: (tileId) => { selectTab(workspace, tileId) },
     closeTile: (tileId) => { const tile = snapshot.tiles.find(candidate => candidate.id === tileId); if (tile !== undefined) void closeTile(tile) },
   })
   const runningText = runningLabel(countRunning(sessions.ids.flatMap((id) => { const row = sessions.byId[id]; return row === undefined ? [] : [row] })))
@@ -389,6 +396,7 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
         agentStatus={agentStatus}
         chatAvailable={projects.chatAvailable}
         storage={safeStorage()}
+        onSelect={(tile) => { selectTab(workspace, tile.id) }}
         onClose={(tile) => { void closeTile(tile) }}
         customAgents={customAgents}
         terminals={terminals}
