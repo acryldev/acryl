@@ -35,7 +35,9 @@ export function apply(ctx: ClientContext): void {
       'web:windows': DEFAULT_BINDING,
       'web:linux': DEFAULT_BINDING,
     },
-    regions: ['page'],
+    // From anywhere in the window, a focused chat composer or terminal included: pointing at an element is how the user explains to the
+    // agent what to change, usually while typing that explanation.
+    regions: ['page', 'editable', 'terminal'],
     modals: [],
     resolve: () => ({ status: 'handled', run: () => { toggle.toggle() } }),
   }), 'acryl-mount-anchors: toggle shortcut')

@@ -7,6 +7,7 @@
  *   node scripts/inspect-page.mjs [--port 9222] eval '<expression>'  any expression, awaited, printed as JSON
  *   node scripts/inspect-page.mjs [--port 9222] click <x> <y>        a real mouse click at CSS pixels (a user gesture, unlike element.click())
  *   node scripts/inspect-page.mjs [--port 9222] shot <file.png>      a screenshot
+ *   node scripts/inspect-page.mjs [--port 9222] press <key> [meta,shift,alt,ctrl]   a real key press, for example `press . meta,shift`
  *
  * Every command gives up after 15 s: a page that does not answer is itself the finding (a blocked renderer), and is reported as such.
  */
@@ -49,12 +50,20 @@ else if (command === 'eval') console.log(JSON.stringify(await evaluate(rest[0]),
 else if (command === 'click') {
   for (const type of ['mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, x: Number(rest[0]), y: Number(rest[1]), button: 'left', clickCount: 1 })
   console.log(`clicked ${rest[0]},${rest[1]}`)
+} else if (command === 'press') {
+  const [key, modifierList = ''] = rest
+  const bits = { alt: 1, ctrl: 2, meta: 4, shift: 8 }
+  const modifiers = modifierList.split(',').filter(Boolean).reduce((sum, name) => sum + (bits[name] ?? 0), 0)
+  const code = key.length === 1 ? (/[a-z]/iu.test(key) ? `Key${key.toUpperCase()}` : key === '.' ? 'Period' : key === ',' ? 'Comma' : key === '/' ? 'Slash' : '') : key
+  const keyCode = key.length === 1 ? (key === '.' ? 190 : key === ',' ? 188 : key === '/' ? 191 : key.toUpperCase().charCodeAt(0)) : 0
+  for (const type of ['rawKeyDown', 'keyUp']) await send('Input.dispatchKeyEvent', { type, key, code, modifiers, windowsVirtualKeyCode: keyCode })
+  console.log(`pressed ${modifierList === '' ? '' : `${modifierList}+`}${key}`)
 } else if (command === 'shot') {
   const shot = await send('Page.captureScreenshot', { format: 'png' })
   writeFileSync(rest[0], Buffer.from(shot.result.data, 'base64'))
   console.log(`saved ${rest[0]}`)
 } else {
-  console.error('usage: inspect-page.mjs [--port N] health | tabs | eval <expression> | click <x> <y> | shot <file.png>')
+  console.error('usage: inspect-page.mjs [--port N] health | tabs | eval <expression> | click <x> <y> | press <key> [modifiers] | shot <file.png>')
   process.exitCode = 2
 }
 clearTimeout(timer)

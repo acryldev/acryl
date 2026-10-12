@@ -186,7 +186,7 @@ export function MountAnchorInspector({ toggle }: MountAnchorInspectorProps) {
       const json = JSON.stringify(anchor, null, 2)
       void navigator.clipboard?.writeText(json).catch(() => {})
       const label = anchor.target.ariaLabel ?? anchor.target.title ?? anchor.target.textPreview ?? `<${anchor.target.tag}>`
-      setToast(`${label} — ${anchor.slot}${component !== null ? ` · ${component.file}` : ' · no source resolved'} — copied`)
+      setToast(`${label} - ${anchor.slot}${component !== null ? ` · ${component.file}` : ' · no source resolved'} - copied`)
       setActive(false)
       setTimeout(() => { setToast(null) }, 5000)
     }
