@@ -314,4 +314,18 @@ for (const directory of scriptDirectories) {
   }
 }
 
+// Build output is never committed (spec 001, T072). A package whose `build` writes `lib/` (every one with a build script) has no tracked file there:
+// a committed bundle goes stale the moment its source changes without a rebuild in the same commit. Packages without a build script keep
+// hand-written sources in `lib/` (acryl-extension-context, acryl-brand, acryl-system-prompt) and are not affected.
+const trackedLib = run('git', ['ls-files', '--', ':(glob)*/*/lib/**']).split('\n').filter(Boolean)
+for (const group of ['runtime', 'apps', 'plugins', 'distribution', 'examples']) {
+  if (!existsSync(resolve(root, group))) continue
+  for (const name of readdirSync(resolve(root, group))) {
+    const manifest = resolve(root, group, name, 'package.json')
+    if (!existsSync(manifest) || JSON.parse(readFileSync(manifest, 'utf8')).scripts?.build === undefined) continue
+    const committed = trackedLib.filter(path => path.startsWith(`${group}/${name}/lib/`))
+    if (committed.length > 0) fail(`${group}/${name} builds its lib/ but ${committed.length} file(s) there are tracked in git (${committed[0]}): add ${group}/${name}/lib/ to .gitignore and git rm --cached them`)
+  }
+}
+
 process.stdout.write(`verify-layout: PNPM workspace and upstream ${upstream.commit.slice(0, 10)} are consistent; DSH import lines ${dshImports.total} (${dshImports.outsideSeam} outside the seam)\n`)
