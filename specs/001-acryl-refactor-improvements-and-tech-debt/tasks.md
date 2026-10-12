@@ -460,4 +460,7 @@ The owner, after two frozen windows: "If there is something identified as smelly
 
 - [ ] T076 Regression tests for the keyboard commands and the element inspector (found 2026-10-12): the inspector's shortcut worked only while the page itself had focus, not in the chat composer where the user explains a change to the agent (fixed in `917dfc0f016fb3eb912003eed426c3e71320498f`: regions `page`, `editable`, `terminal`, like the palette). `acryl-mount-anchors` has no tests at all; add a client test setup and pin each ACRYL shortcut's regions and binding, and a parity check that every keyboard command ACRYL had before the DSH 0.2 move still exists (`acryl-shortcuts`' Shortcuts page and Cmd+, were replaced by DSH's own editor and `settings.open`).
 
+- [ ] T077 Cosmetic leftovers of the 0.2 move (R43): ACRYL's entries in the right panel's Start page (Code, Changes, Review) and in Settings' navigation show generic icons, not their own; the Changes tab's worktree path loses its leading "/".
+- [ ] T078 Finish the R43 check where it stopped: the Web and TUI surfaces, Market install, `acryl save` and Blends, a Claude worker tab, and Cmd+, on a real keyboard; then make the check a script (`live-run` plus `inspect-page`) run after every DSH upgrade.
+
 **Checkpoint (Phase 12):** T064 green; one owner of the shown chat; no React effect writes a store in the workspace client; both freezing sequences pass in the harness and live.

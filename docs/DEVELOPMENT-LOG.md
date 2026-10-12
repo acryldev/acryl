@@ -1,4 +1,15 @@
-## 2026-10-12 (latest) - spec 001 Phase 12 done: one owner of the shown chat, no state sync by effects, clean tests
+## 2026-10-12 (latest) - what the DSH 0.2 move lost, found by using every feature
+
+Owner: Agent Control "used to work was the way to tell our agent to modify any parts of the UI", the element inspector "doesn't work anymore and it used to work", "see what we still lost from previous version". The code had lost nothing (same tools, routes, slots, commands as the last 0.1.5 commit); five features broke because DSH 0.2 changed a meaning under an unchanged name. Found by a live check on a copy of the owner's home, each fixed and tested (spec 001 R43):
+
+- **Agent Control** (`6a7cb884bf325a70e3503bdad38297b445fcfbc8`): in Full access every click was refused; 0.2's 'never' approval means "reject". Full access now acts without a prompt.
+- **Element inspector** (`917dfc0f016fb3eb912003eed426c3e71320498f`): Cmd+Shift+. did nothing from the chat composer (0.2 shortcut focus regions).
+- **Settings > Tabs and Command palette** (`dc7393f3c9c5ee05baec960242b1c5d4fd1205de`): missing (0.2 refuses a second registration of a locale namespace).
+- **Board** (`dc7393f3c9c5ee05baec960242b1c5d4fd1205de`): every card read "session-" (0.2 session ids); cards now show the chat's name.
+- **Back from Plugins** (`2182e544654d60529046fe225b2bf386f225968b`): picking the worktree already shown left the Plugins page open.
+- **Also:** the Workspaces spec (`specs/043-workspaces`) rewritten from the owner's description; T077 (cosmetic) and T078 (the rest of the check, and a script for every upgrade) added.
+
+## 2026-10-12 - spec 001 Phase 12 done: one owner of the shown chat, no state sync by effects, clean tests
 
 Owner: "i want you do do all of them ... cleanup and techdebt in 001 ... Make our acryl project stable and nice blazing fast again", and to follow the engineering books strictly. Phase 12 (R42) is done except T075 (planned); details per task in `specs/001-acryl-refactor-improvements-and-tech-debt/tasks.md`.
 

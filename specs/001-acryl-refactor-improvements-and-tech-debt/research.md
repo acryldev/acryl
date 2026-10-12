@@ -897,3 +897,28 @@ A headless gate cannot see any of these (the loader smoke prints the same three 
 **Smaller, same audit.** The owner's profile still lists two plugins disabled at every boot as incompatible with DSH 0.2 (`acryl-development-canvas` 0.1.3, `acryl-dsh-editor-plugin` 0.2.6; the latter's row id is the opaque `dsh-editor`); the boot log repeats `patch: entry "desktop-development-canvas" not found` on every profile write.
 
 **Process lesson.** The 2026-10-11 change was tested as a unit and on Web; the owner's Desktop with eleven chats in one worktree and blank chats in another was not, and the change added a second writer to a store without naming the existing ones. Before a change adds a writer to shared state, list every writer (`graft callers`), and test the change with more than one worktree.
+
+### R43 - What the move to DSH 0.2 lost: a feature-by-feature check against the last 0.1.5 version (2026-10-12)
+
+**Why.** The owner: Agent Control "used to work", the element inspector "used to work", "see what we still lost from previous version". The move to DSH 0.2 (`95ff2890`, 2026-10-02) compiled and its tests passed, yet features stopped working.
+
+**Static comparison** (the last 0.1.5 commit `98139397` against `main`): the same packages, capability rows, slot registrations, agent tool names, Host routes (11 added, none lost) and command registrations; every DSH slot ACRYL fills still exists in 0.2. So nothing was dropped from the code; what broke is behavior, where 0.2 changed a meaning under an unchanged name. That is why every finding below needed a live check.
+
+**Live check** (`scripts/live-run.mjs desktop --copy-home ~/.acryl-dev --inspect 9222`, credentials removed, `scripts/inspect-page.mjs`), each feature used as a person would:
+
+| Feature | Result | Cause | Fix |
+| --- | --- | --- | --- |
+| Agent Control clicks and typing | refused, every call | the session's Full access mode read only as its 'never' approval policy, which 0.2 defines as "reject every request" | `6a7cb884`: full access (`danger-full-access`) acts without a prompt, as DSH's own plugin manager treats that mode |
+| Element inspector (Cmd+Shift+.) | did nothing from the chat composer | 0.2's shortcut service has focus regions; the inspector was registered for `page` only | `917dfc0f`: `page`, `editable`, `terminal` |
+| Settings > Tabs, Command palette | missing | 0.2's locale service refuses a second registration of a namespace; each section registered the shared one | `dc7393f3`: one owner registers the dictionary and styles |
+| Board cards | every card read "session-" | 0.2's session ids are `session-<uuid>`; the card showed the id's first 8 characters | `dc7393f3`: a card shows the chat's name, branch and age |
+| Back to the tabs from Plugins | clicking the shown worktree left the page open | only a pick that opened a new chat closed the page | `2182e544`: every pick returns to the tabs |
+| Chat tabs, sidebar and conversation | froze the window | (R42) | `92c50d9a`, `0bb39f26` |
+
+**Working** (checked live): every tab type in the "+" menu (Terminal, Browser, File, Diff, Board, Doc, an agent in a terminal), split view, tab rename, the terminal dock modes, the command palette (Cmd+Shift+P), the right panel and its Changes tab, Settings > Agents, Tabs, Command palette, UI library, Agent Control (audit log), Desktop and Models (with the sign-in card), the Plugins page, Agent Control's snapshot and click through a real model turn, the inspector's pick and copy, the self-extension (owner).
+
+**Not checked here:** Cmd+, (DSH 0.2 registers `settings.open` itself; a synthetic key press cannot reach macOS Desktop's menu accelerators, so it needs the owner's keyboard); the Web and TUI surfaces; Market install; `acryl save` and Blends; a Claude worker tab.
+
+**Cosmetic, recorded as T077:** ACRYL's entries in the right panel's Start page (Code, Changes, Review) and in Settings' navigation show generic icons instead of their own; the Changes tab's worktree path loses its leading "/".
+
+**Lesson.** A dependency upgrade that keeps names but changes meanings (an approval policy, a locale registry, an id format, focus regions) passes typecheck and unit tests whose fakes encode the old meaning. After an upgrade, the gate is a live use of every feature, with fakes rebuilt from the new dependency's real behavior (the board test now uses 0.2-shaped ids; the settings test a locale fake that refuses duplicates as 0.2 does).
