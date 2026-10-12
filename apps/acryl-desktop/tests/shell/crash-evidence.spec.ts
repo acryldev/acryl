@@ -1,8 +1,17 @@
-import { existsSync, linkSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, linkSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { beginDesktopRun, startDesktopCrashReporting } from '../../src/shell/crash-evidence.ts'
+
+const temporaryDirectories: string[] = []
+afterEach(() => { for (const dir of temporaryDirectories.splice(0)) rmSync(dir, { recursive: true, force: true }) })
+/** A fresh temporary directory, removed after the test. */
+function temporaryDirectory(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix))
+  temporaryDirectories.push(dir)
+  return dir
+}
 
 describe('desktop crash evidence', () => {
   it('starts Electron crash reporting without uploading dumps', () => {
@@ -27,7 +36,7 @@ describe('desktop crash evidence', () => {
   })
 
   it('reports the previous run when it did not shut down cleanly', () => {
-    const statePath = join(mkdtempSync(join(tmpdir(), 'dsh-run-')), 'active-run.json')
+    const statePath = join(temporaryDirectory('dsh-run-'), 'active-run.json')
     beginDesktopRun(statePath, {
       startedAt: '2026-08-18T00:00:00.000Z',
       pid: 41,
@@ -48,7 +57,7 @@ describe('desktop crash evidence', () => {
   })
 
   it('does not report a run that marked its shutdown clean', () => {
-    const statePath = join(mkdtempSync(join(tmpdir(), 'dsh-run-')), 'active-run.json')
+    const statePath = join(temporaryDirectory('dsh-run-'), 'active-run.json')
     const run = beginDesktopRun(statePath, {
       startedAt: '2026-08-18T00:00:00.000Z',
       pid: 41,
@@ -69,7 +78,7 @@ describe('desktop crash evidence', () => {
   })
 
   it('reports an unreadable previous marker without blocking the next run', () => {
-    const statePath = join(mkdtempSync(join(tmpdir(), 'dsh-run-')), 'active-run.json')
+    const statePath = join(temporaryDirectory('dsh-run-'), 'active-run.json')
     writeFileSync(statePath, '{partial', 'utf8')
 
     const run = beginDesktopRun(statePath, {
@@ -83,7 +92,7 @@ describe('desktop crash evidence', () => {
   })
 
   it('only clears the marker owned by the current run', () => {
-    const statePath = join(mkdtempSync(join(tmpdir(), 'dsh-run-')), 'active-run.json')
+    const statePath = join(temporaryDirectory('dsh-run-'), 'active-run.json')
     const first = beginDesktopRun(statePath, {
       startedAt: '2026-08-18T00:00:00.000Z',
       pid: 41,
@@ -103,7 +112,7 @@ describe('desktop crash evidence', () => {
   })
 
   it('does not read or overwrite a linked marker', () => {
-    const directory = mkdtempSync(join(tmpdir(), 'dsh-run-'))
+    const directory = temporaryDirectory('dsh-run-')
     const target = join(directory, 'outside.json')
     const statePath = join(directory, 'active-run.json')
     writeFileSync(target, '{"outside":true}\n', 'utf8')

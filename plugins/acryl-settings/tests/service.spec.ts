@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
@@ -33,6 +33,7 @@ type Section = { mode: 'compatibility' | 'advanced', port: number, nested: { fla
 
 afterEach(async () => {
   while (contexts.length > 0) await contexts.pop()?.fiber.dispose()
+  for (const home of homes.splice(0)) rmSync(home, { recursive: true, force: true })
 })
 
 describe('acryl-settings', () => {

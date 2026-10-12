@@ -1,7 +1,7 @@
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it } from 'vitest'
 import { WorkspacePtyRegistry, type WorkspacePtyProcess, type WorkspacePtySpawn } from '../../src/pty/service.ts'
 
 function fakeProcess(): WorkspacePtyProcess {
@@ -36,6 +36,7 @@ function registry(defaultCwd: string): { registry: WorkspacePtyRegistry; cwds: s
 describe('WorkspacePtyRegistry cwd', () => {
   const home = mkdtempSync(join(tmpdir(), 'acryl-pty-'))
   const worktree = mkdtempSync(join(tmpdir(), 'acryl-pty-wt-'))
+  afterAll(() => { for (const dir of [home, worktree]) rmSync(dir, { recursive: true, force: true }) })
 
   it('starts in the registry default directory when none is given', () => {
     const { registry: r, cwds } = registry(home)

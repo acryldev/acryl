@@ -7,11 +7,12 @@ import {
   symlinkSync,
   utimesSync,
   writeFileSync,
+  rmSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Worker } from 'node:worker_threads'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import AdmZip from 'adm-zip'
 import {
   exportDesktopDiagnostics,
@@ -24,6 +25,15 @@ import {
   DESKTOP_LIFECYCLE_SUMMARY_ENTRY,
   desktopLifecycleEvidencePath,
 } from '../../src/startup/lifecycle-events.ts'
+
+const temporaryDirectories: string[] = []
+afterEach(() => { for (const dir of temporaryDirectories.splice(0)) rmSync(dir, { recursive: true, force: true }) })
+/** A fresh temporary directory, removed after the test. */
+function temporaryDirectory(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix))
+  temporaryDirectories.push(dir)
+  return dir
+}
 
 const APP_VERSION = '2.0.1-test'
 
@@ -83,7 +93,7 @@ describe('exportDiagnosticsZip', () => {
   })
 
   it('produces a zip containing the log files and system info', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'dsh-dx-'))
+    const dir = temporaryDirectory('dsh-dx-')
     writeFileSync(join(dir, 'dsh-2026-08-16.log'), 'hello\n')
     const out = await exportDiagnosticsZip(dir, dir, { appVersion: APP_VERSION })
     expect(existsSync(out)).toBe(true)
@@ -99,7 +109,7 @@ describe('exportDiagnosticsZip', () => {
   })
 
   it('exports recovery evidence even when the application never created a log directory', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-dx-recovery-'))
+    const root = temporaryDirectory('dsh-dx-recovery-')
     const crashEvidence = join(root, 'crash-evidence')
     mkdirSync(crashEvidence)
     writeFileSync(join(crashEvidence, 'active-run.json'), '{"version":"2.0.1"}\n')
@@ -113,7 +123,7 @@ describe('exportDiagnosticsZip', () => {
   })
 
   it('includes lifecycle JSONL and a correlated summary in the diagnostic archive', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-dx-lifecycle-'))
+    const root = temporaryDirectory('dsh-dx-lifecycle-')
     const logs = join(root, 'logs')
     mkdirSync(logs)
     writeFileSync(join(logs, 'dsh-2026-08-16.log'), 'after startup\n')
@@ -140,7 +150,7 @@ describe('exportDiagnosticsZip', () => {
   })
 
   it('shares one byte cap across lifecycle evidence, lifecycle summary, and logs', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-dx-lifecycle-limit-'))
+    const root = temporaryDirectory('dsh-dx-lifecycle-limit-')
     const logs = join(root, 'logs')
     const lifecycleDir = join(root, 'lifecycle-events')
     mkdirSync(logs)
@@ -165,7 +175,7 @@ describe('exportDiagnosticsZip', () => {
   })
 
   it('skips a linked lifecycle evidence file without failing the diagnostic export', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-dx-lifecycle-file-link-'))
+    const root = temporaryDirectory('dsh-dx-lifecycle-file-link-')
     const logs = join(root, 'logs')
     const target = join(root, 'target.jsonl')
     const lifecycleDir = join(root, 'lifecycle-events')
@@ -188,7 +198,7 @@ describe('exportDiagnosticsZip', () => {
   })
 
   it('skips lifecycle evidence reached through a linked parent directory', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-dx-lifecycle-parent-link-'))
+    const root = temporaryDirectory('dsh-dx-lifecycle-parent-link-')
     const logs = join(root, 'logs')
     const target = join(root, 'target')
     const lifecycleDir = join(root, 'lifecycle-events')
@@ -211,7 +221,7 @@ describe('exportDiagnosticsZip', () => {
   })
 
   it('allows evidence when user data is reached through a linked ancestor', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-dx-user-data-link-'))
+    const root = temporaryDirectory('dsh-dx-user-data-link-')
     const target = join(root, 'target')
     const linkedAncestor = join(root, 'linked')
     const userData = join(linkedAncestor, 'user-data')
@@ -232,7 +242,7 @@ describe('exportDiagnosticsZip', () => {
   })
 
   it('includes local Crashpad minidumps but excludes unrelated crash files', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-dx-dump-'))
+    const root = temporaryDirectory('dsh-dx-dump-')
     const logs = join(root, 'logs')
     const crashes = join(root, 'Crashpad')
     const reports = join(crashes, 'reports')
@@ -255,7 +265,7 @@ describe('exportDiagnosticsZip', () => {
   })
 
   it('applies one archive byte limit across crash dumps and logs', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-dx-dump-limit-'))
+    const root = temporaryDirectory('dsh-dx-dump-limit-')
     const logs = join(root, 'logs')
     const crashes = join(root, 'Crashpad')
     mkdirSync(logs)
@@ -277,7 +287,7 @@ describe('exportDiagnosticsZip', () => {
   })
 
   it('rejects a linked crash dump directory', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-dx-dump-link-'))
+    const root = temporaryDirectory('dsh-dx-dump-link-')
     const logs = join(root, 'logs')
     const target = join(root, 'target')
     const crashes = join(root, 'Crashpad')
@@ -295,7 +305,7 @@ describe('exportDiagnosticsZip', () => {
   })
 
   it('archives only owned regular log files', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'dsh-dx-'))
+    const dir = temporaryDirectory('dsh-dx-')
     writeFileSync(join(dir, 'dsh-2026-08-16.error.log'), 'owned\n')
     writeFileSync(join(dir, 'notes.txt'), 'foreign\n')
     mkdirSync(join(dir, 'dsh-2020-01-01.log'))
@@ -307,7 +317,7 @@ describe('exportDiagnosticsZip', () => {
   })
 
   it('rejects a linked diagnostics output directory', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-dx-link-'))
+    const root = temporaryDirectory('dsh-dx-link-')
     const logs = join(root, 'logs')
     const target = join(root, 'target')
     mkdirSync(logs)
@@ -320,7 +330,7 @@ describe('exportDiagnosticsZip', () => {
   })
 
   it('rejects a linked log directory', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-dx-logs-link-'))
+    const root = temporaryDirectory('dsh-dx-logs-link-')
     const target = join(root, 'target')
     const logs = join(root, 'logs')
     mkdirSync(target)
@@ -332,7 +342,7 @@ describe('exportDiagnosticsZip', () => {
   })
 
   it('retains only the three newest diagnostics archives', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-dx-retain-'))
+    const root = temporaryDirectory('dsh-dx-retain-')
     const logs = join(root, 'logs')
     const diagnostics = join(root, 'diagnostics')
     mkdirSync(logs)
@@ -353,7 +363,7 @@ describe('exportDiagnosticsZip', () => {
   })
 
   it('includes only the newest logs that fit within the archive byte limit', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-dx-limit-'))
+    const root = temporaryDirectory('dsh-dx-limit-')
     const logs = join(root, 'logs')
     mkdirSync(logs)
     const oldest = join(logs, 'dsh-2026-08-14.log')

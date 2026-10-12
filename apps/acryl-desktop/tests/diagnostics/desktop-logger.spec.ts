@@ -1,14 +1,23 @@
 import { EventEmitter } from 'node:events'
-import { mkdtempSync, readFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   ElectronStderrLogger,
   installDesktopChildProcessLogging,
   installDesktopUncaughtExceptionLogging,
 } from '../../src/diagnostics/desktop-logger.ts'
 import { LogFileSink } from 'acryl-diagnostics'
+
+const temporaryDirectories: string[] = []
+afterEach(() => { for (const dir of temporaryDirectories.splice(0)) rmSync(dir, { recursive: true, force: true }) })
+/** A fresh temporary directory, removed after the test. */
+function temporaryDirectory(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix))
+  temporaryDirectories.push(dir)
+  return dir
+}
 
 function todaySuffix(): string {
   const now = new Date()
@@ -19,7 +28,7 @@ function todaySuffix(): string {
 }
 
 function sink(): { s: LogFileSink; dir: string } {
-  const dir = mkdtempSync(join(tmpdir(), 'dsh-log-'))
+  const dir = temporaryDirectory('dsh-log-')
   return { s: new LogFileSink(dir, { maxFileBytes: 1e6, maxDirectoryBytes: 1e7 }), dir }
 }
 

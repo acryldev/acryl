@@ -7,10 +7,11 @@ import {
   symlinkSync,
   unlinkSync,
   writeFileSync,
+  rmSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DesktopLogger } from '../../src/diagnostics/desktop-logger.ts'
 import type { DesktopStartupFailureStage } from '../../src/startup-recovery-window.ts'
 import {
@@ -24,6 +25,15 @@ import {
   type DesktopLifecycleEvent,
   type DesktopLifecycleSummary,
 } from '../../src/startup/lifecycle-events.ts'
+
+const temporaryDirectories: string[] = []
+afterEach(() => { for (const dir of temporaryDirectories.splice(0)) rmSync(dir, { recursive: true, force: true }) })
+/** A fresh temporary directory, removed after the test. */
+function temporaryDirectory(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix))
+  temporaryDirectories.push(dir)
+  return dir
+}
 
 interface CapturedLogger extends DesktopLogger {
   readonly error: ReturnType<typeof vi.fn<(message: string) => void>>
@@ -41,7 +51,7 @@ function createLogger(): CapturedLogger {
 }
 
 function tempUserData(prefix: string): string {
-  return mkdtempSync(join(tmpdir(), prefix))
+  return temporaryDirectory(prefix)
 }
 
 function readEvents(userDataDir: string): DesktopLifecycleEvent[] {

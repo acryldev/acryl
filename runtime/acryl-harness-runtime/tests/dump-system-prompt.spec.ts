@@ -4,7 +4,7 @@
  *
  *   ACRYL_DUMP_SYSTEM_PROMPT=docs/system-prompt/current corepack pnpm --filter acryl-harness-runtime exec vitest run tests/dump-system-prompt.spec.ts
  */
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
@@ -19,6 +19,7 @@ const outDir = process.env.ACRYL_DUMP_SYSTEM_PROMPT
 const repoRoot = resolve(fileURLToPath(new URL('../../..', import.meta.url)))
 
 async function surface(kind: 'web' | 'cli'): Promise<{ doc: string; budget: PromptBudget }> {
+  const previous = { key: process.env.DEEPSEEK_API_KEY, home: process.env.DSH_HOME }
   process.env.DEEPSEEK_API_KEY = 'dummy-key-for-prompt-capture'
   const home = mkdtempSync(join(tmpdir(), 'acryl-prompt-'))
   process.env.DSH_HOME = home
@@ -39,7 +40,14 @@ async function surface(kind: 'web' | 'cli'): Promise<{ doc: string; budget: Prom
       doc: renderSystemPromptDoc(kind === 'web' ? 'web' : 'cli', kind === 'web' ? 'standard preset' : 'terminal engine', captured),
       budget: measurePromptBudget(captured),
     }
-  } finally { await host.dispose() }
+  } finally {
+    await host.dispose()
+    rmSync(home, { recursive: true, force: true })
+    for (const [name, value] of [['DEEPSEEK_API_KEY', previous.key], ['DSH_HOME', previous.home]] as const) {
+      if (value === undefined) delete process.env[name]
+      else process.env[name] = value
+    }
+  }
 }
 
 it.skipIf(outDir === undefined)('dumps the current system prompt for web and cli', async () => {

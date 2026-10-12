@@ -1,9 +1,9 @@
 // BLEND lock consumption (spec 003, D22-D27): strict lock guards, path
 // resolution, the insert patch projection, and collision rejection.
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { fileURLToPath } from 'node:url'
 
 import {
@@ -14,6 +14,15 @@ import {
   readDesktopBlend,
   resolveBlendLockPath,
 } from '../../src/profile/desktop-blend.ts'
+
+const temporaryDirectories: string[] = []
+afterEach(() => { for (const dir of temporaryDirectories.splice(0)) rmSync(dir, { recursive: true, force: true }) })
+/** A fresh temporary directory, removed after the test. */
+function temporaryDirectory(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix))
+  temporaryDirectories.push(dir)
+  return dir
+}
 
 const FIXTURE_LOCK_DIR = fileURLToPath(new URL('../fixtures/blend/acryl-demo', import.meta.url))
 
@@ -35,7 +44,7 @@ function validLock(): Record<string, unknown> {
 }
 
 function root(): string {
-  return mkdtempSync(join(tmpdir(), 'dsh-desktop-blend-'))
+  return temporaryDirectory('dsh-desktop-blend-')
 }
 
 describe('parseBlendLock', () => {

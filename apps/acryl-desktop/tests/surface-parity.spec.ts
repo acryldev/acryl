@@ -6,7 +6,7 @@
  * surface, each named below with its reason. A row that appears on one surface and not the other, and is not in
  * one of the lists, fails this test: either compose it for both, or add it here with the reason it cannot be shared.
  */
-import { mkdtempSync } from 'node:fs'
+import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { composeEntries } from '@deepseek-ai/dsh-app-boot'
@@ -71,7 +71,9 @@ async function composeBoth(): Promise<{
   // The engine host switches `hmr` off for every surface when it mounts a composition (`mountDshEngine`); mirror that so the two sides
   // compare what is actually mounted.
   const desktop = summarize(composeEntries([[...prepareDesktopProfile('', desktopHome, 'darwin').patches, { id: 'hmr', disabled: true }]]))
-  process.env.ACRYL_HOME = mkdtempSync(join(tmpdir(), 'acryl-parity-w-'))
+  const webHome = mkdtempSync(join(tmpdir(), 'acryl-parity-w-'))
+  const previousHome = process.env.ACRYL_HOME
+  process.env.ACRYL_HOME = webHome
   const host = await createAcrylEngineHost({
     engines: [createWebEngineDefinition(new URL('../../acryl-web/package.json', import.meta.url).href)],
     initialEngine: 'dsh',
@@ -86,6 +88,9 @@ async function composeBoth(): Promise<{
     return { desktop, web, webAgentControlToolNames }
   } finally {
     await host.dispose()
+    if (previousHome === undefined) delete process.env.ACRYL_HOME
+    else process.env.ACRYL_HOME = previousHome
+    for (const home of [desktopHome, webHome]) rmSync(home, { recursive: true, force: true })
   }
 }
 

@@ -328,4 +328,17 @@ for (const group of ['runtime', 'apps', 'plugins', 'distribution', 'examples']) 
   }
 }
 
+// Tests clean up their temporary directories (spec 001, T063): the suites had left over 4,000 `acryl-*` and `dsh-*` folders in the temp
+// directory. A test file that creates one (`mkdtemp`) must also remove it in a teardown (`afterEach`, `afterAll` or `finally` with `rm`/`rmSync`),
+// or say why it keeps them with a `keeps-temporary-directories:` comment (an opt-in run whose files are its evidence).
+const testFiles = run('git', ['ls-files', '--', ':(glob)*/*/tests/**', ':(glob)*/*/test/**']).split('\n')
+  .filter(path => /\.(spec\.tsx?|test\.mjs)$/u.test(path) && existsSync(resolve(root, path)))
+for (const path of testFiles) {
+  const text = readFileSync(resolve(root, path), 'utf8')
+  if (!text.includes('mkdtemp') || text.includes('keeps-temporary-directories:')) continue
+  if (!(/\b(afterEach|afterAll|finally)\b/u.test(text) && /\brm(Sync)?\(/u.test(text))) {
+    fail(`${path} creates temporary directories (mkdtemp) but never removes them: remove each in afterEach/afterAll/finally, or mark the file with a keeps-temporary-directories: comment saying why`)
+  }
+}
+
 process.stdout.write(`verify-layout: PNPM workspace and upstream ${upstream.commit.slice(0, 10)} are consistent; DSH import lines ${dshImports.total} (${dshImports.outsideSeam} outside the seam)\n`)

@@ -1,7 +1,7 @@
-import { existsSync, mkdtempSync } from 'node:fs'
+import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import AdmZip from 'adm-zip'
 import {
   defaultDesktopUserDataDirectory,
@@ -9,6 +9,15 @@ import {
   parseDesktopCli,
   runDesktopCli,
 } from '../src/bin.ts'
+
+const temporaryDirectories: string[] = []
+afterEach(() => { for (const dir of temporaryDirectories.splice(0)) rmSync(dir, { recursive: true, force: true }) })
+/** A fresh temporary directory, removed after the test. */
+function temporaryDirectory(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix))
+  temporaryDirectories.push(dir)
+  return dir
+}
 
 vi.mock('electron', () => ({ default: undefined }))
 
@@ -45,7 +54,7 @@ describe('desktop npm launcher', () => {
   })
 
   it('exports diagnostics without launching Electron', async () => {
-    const userDataDir = mkdtempSync(join(tmpdir(), 'dsh-cli-diagnostics-'))
+    const userDataDir = temporaryDirectory('dsh-cli-diagnostics-')
     const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
     try {
       await expect(runDesktopCli(['--export-diagnostics'], { userDataDir })).resolves.toBe(0)

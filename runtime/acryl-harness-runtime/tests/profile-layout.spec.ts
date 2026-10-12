@@ -1,12 +1,16 @@
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { parse } from 'yaml'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { reconcileProfileLayout } from '../src/profile-layout.ts'
+
+const dirs: string[] = []
+afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }) })
 
 function profile(recorded: Record<string, unknown> | undefined, workspace: string | undefined): string {
   const dir = mkdtempSync(join(tmpdir(), 'acryl-layout-'))
+  dirs.push(dir)
   if (recorded !== undefined) {
     mkdirSync(join(dir, 'node_modules'))
     // pnpm >= 10 writes JSON, older pnpm writes YAML; both are YAML documents.

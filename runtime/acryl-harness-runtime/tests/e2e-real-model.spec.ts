@@ -10,6 +10,7 @@
  * one session on the `standard` preset (the composition the Web UI gives a session), sends each prompt in turn and appends every session event to the
  * log file. The key is read from the file into the process environment and never logged.
  */
+// keeps-temporary-directories: an opt-in real-model run; its homes, workspaces and logs are the evidence to read afterwards.
 import { existsSync, mkdtempSync, readFileSync, readdirSync, appendFileSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'

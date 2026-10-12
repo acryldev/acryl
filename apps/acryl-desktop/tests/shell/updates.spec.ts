@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, stat, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
@@ -49,6 +49,7 @@ async function createHarness(options: {
   readonly state?: string
 } = {}): Promise<Harness> {
   const root = await mkdtemp(join(tmpdir(), 'dsh-updates-'))
+  roots.push(root)
   const statePath = join(root, 'private', 'state.json')
   if (options.state !== undefined) {
     await mkdir(join(root, 'private'), { recursive: true })
@@ -106,7 +107,9 @@ async function createHarness(options: {
   }
 }
 
-afterEach(() => {
+const roots: string[] = []
+afterEach(async () => {
+  await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true })))
   vi.useRealTimers()
 })
 

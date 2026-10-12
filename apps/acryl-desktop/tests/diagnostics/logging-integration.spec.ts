@@ -1,10 +1,19 @@
 import { Context } from '@deepseek-ai/cordis'
-import { mkdtempSync, readFileSync, readdirSync } from 'node:fs'
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { FileExporter, LogFileSink } from 'acryl-diagnostics'
 import { ElectronStderrLogger } from '../../src/diagnostics/desktop-logger.ts'
+
+const temporaryDirectories: string[] = []
+afterEach(() => { for (const dir of temporaryDirectories.splice(0)) rmSync(dir, { recursive: true, force: true }) })
+/** A fresh temporary directory, removed after the test. */
+function temporaryDirectory(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix))
+  temporaryDirectories.push(dir)
+  return dir
+}
 
 function todaySuffix(): string {
   const now = new Date()
@@ -16,7 +25,7 @@ function todaySuffix(): string {
 
 describe('logging end-to-end', () => {
   it('routes real ctx.logger output to per-day log files', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'dsh-log-e2e-'))
+    const dir = temporaryDirectory('dsh-log-e2e-')
     const sink = new LogFileSink(dir, { maxFileBytes: 10 * 1024 * 1024, maxDirectoryBytes: 200 * 1024 * 1024 })
     const ctx = new Context()
     const dispose = ctx.logger.exporter(new FileExporter(sink))
@@ -39,7 +48,7 @@ describe('logging end-to-end', () => {
   })
 
   it('logs an uncaught-exception cause through ElectronStderrLogger', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'dsh-log-e2e-'))
+    const dir = temporaryDirectory('dsh-log-e2e-')
     const sink = new LogFileSink(dir, { maxFileBytes: 10 * 1024 * 1024, maxDirectoryBytes: 200 * 1024 * 1024 })
     const logger = new ElectronStderrLogger(sink)
     logger.errorCause(new Error('crash in main'))

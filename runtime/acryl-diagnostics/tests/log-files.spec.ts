@@ -7,11 +7,21 @@ import {
   symlinkSync,
   utimesSync,
   writeFileSync,
+  rmSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { LogFileSink, logFileName } from '../src/log-files.ts'
+
+const temporaryDirectories: string[] = []
+afterEach(() => { for (const dir of temporaryDirectories.splice(0)) rmSync(dir, { recursive: true, force: true }) })
+/** A fresh temporary directory, removed after the test. */
+function temporaryDirectory(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix))
+  temporaryDirectories.push(dir)
+  return dir
+}
 
 function todaySuffix(): string {
   const now = new Date()
@@ -22,7 +32,7 @@ function todaySuffix(): string {
 }
 
 function sink(maxFileBytes = 10 * 1024 * 1024, maxDirectoryBytes = 200 * 1024 * 1024): { s: LogFileSink; dir: string } {
-  const dir = mkdtempSync(join(tmpdir(), 'dsh-log-'))
+  const dir = temporaryDirectory('dsh-log-')
   return { s: new LogFileSink(dir, { maxFileBytes, maxDirectoryBytes }), dir }
 }
 
@@ -36,7 +46,7 @@ describe('logFileName', () => {
 
 describe('LogFileSink', () => {
   it('rejects a linked log directory', () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-log-link-'))
+    const root = temporaryDirectory('dsh-log-link-')
     const target = join(root, 'target')
     const linked = join(root, 'logs')
     mkdirSync(target)

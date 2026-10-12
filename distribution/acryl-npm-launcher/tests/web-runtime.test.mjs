@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { mkdtempSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import test from 'node:test'
+import test, { afterEach } from 'node:test'
 import {
   acquireWebRuntime,
   confirmWebAcquisition,
@@ -20,7 +20,9 @@ const artifact = {
 }
 const manifest = { schemaVersion: 1, version, capabilityBaseline: 'acryl-capability-baseline-v1', artifacts: [artifact] }
 
-function store() { return mkdtempSync(join(tmpdir(), 'acryl-web-runtime-test-')) }
+const stores = []
+afterEach(() => { for (const dir of stores.splice(0)) rmSync(dir, { recursive: true, force: true }) })
+function store() { const dir = mkdtempSync(join(tmpdir(), 'acryl-web-runtime-test-')); stores.push(dir); return dir }
 
 async function extractor(archive, runtimeRoot) {
     assert.deepEqual(readFileSync(archive), contents)

@@ -16,6 +16,7 @@
  * The caller pins the home (`scripts/live-run.mjs` shows the isolated environment to use); the key is read from the file into the process environment and
  * never logged.
  */
+// keeps-temporary-directories: an opt-in real-model run; its homes, workspaces and logs are the evidence to read afterwards.
 import { appendFileSync, mkdtempSync, readFileSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'

@@ -4,7 +4,7 @@
  * fails after the loop has already logged the assembled system message and the request header, which is all this reads. No model is
  * called successfully.
  */
-import { mkdtempSync, realpathSync } from 'node:fs'
+import { mkdtempSync, realpathSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
@@ -65,6 +65,7 @@ export async function captureSystemPrompt(ctx: Context, options: CaptureSystemPr
     await Promise.race([done, new Promise(resolve => setTimeout(resolve, 60_000))])
   } finally {
     await bridge.dispose()
+    rmSync(workspace, { recursive: true, force: true })
   }
   const replacements: Array<[string, string]> = [[workspace, '<workspace>'], ...(options.scrub ?? [])]
   const scrub = (text: string): string => replacements.reduce((acc, [from, to]) => (from === '' ? acc : acc.replaceAll(from, to)), text)
