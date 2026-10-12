@@ -6,7 +6,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { registerPluginTools } from 'acryl-plugin-admin'
-import { registerWorkspaceTools } from 'acryl-workspace'
+import { registerContextTool, registerWorkspaceTools } from 'acryl-workspace'
 import { describe, expect, it } from 'vitest'
 
 function portThroughDshCompiler(): { ctx: Context, names: string[] } {
@@ -25,6 +25,12 @@ describe('ACRYL agent tools compile with DSH', () => {
     const { ctx, names } = portThroughDshCompiler()
     registerWorkspaceTools(ctx, {} as never)
     expect(names).toEqual(['acryl_workspace_list', 'acryl_workspace_switch', 'acryl_workspace_create', 'acryl_workspace_add_project'])
+  })
+
+  it('the workspace context tool', () => {
+    const { ctx, names } = portThroughDshCompiler()
+    registerContextTool(ctx, {} as never)
+    expect(names).toEqual(['acryl_workspace_context'])
   })
 
   it('the plugin tools', () => {

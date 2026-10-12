@@ -17,6 +17,8 @@ export const DEFAULT_EXPOSED_TOOLS: readonly string[] = [
   'acryl_prepare_publish',
   'acryl_plugin_list',
   'acryl_plugin_set_enabled',
+  // Read-only: a shared-context workspace's projects and brief (acryl-workspace, spec 043 T011).
+  'acryl_workspace_context',
 ]
 
 export interface GatewayTool {

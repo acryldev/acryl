@@ -43,6 +43,10 @@ import { WORKSPACE_CAPABILITIES_PATH } from './capabilities/contract.ts'
 import { WORKSPACE_PROJECTS_EVENTS_PATH, WORKSPACE_PROJECTS_PATH } from './projects/contract.ts'
 import { createProjectEvents } from './projects/events.ts'
 import { registerWorkspaceTools } from './projects/tools.ts'
+import { registerChatContext, type SystemPromptContextPort } from './shared-context/chat.ts'
+import { WORKSPACE_BRIEF_PATH, handleBriefRequest } from './shared-context/route.ts'
+import { registerContextTool } from './shared-context/tool.ts'
+import { SHARED_CONTEXT_SERVICE, SharedContext } from './shared-context/service.ts'
 import { PROJECTS_NAMESPACE, ProjectRegistry, ProjectsSchema } from './projects/registry.ts'
 import { handleProjectsRequest } from './projects/route.ts'
 import { handleWorkspaceCapabilitiesRequest } from './capabilities/route.ts'
@@ -115,9 +119,12 @@ export function apply(ctx: Context): void {
     let settings: AgentSettings | undefined
     // Agents that support hooks report working, waiting and done here; the secret is known only to their terminals.
     const statusToken = randomBytes(24).toString('hex')
+    // An agent started in a Shared Context workspace gets its context; the service is set further down, once the registry exists.
+    let sharedContext: SharedContext | undefined
     const workspacePty = new WorkspacePtyRegistry({
       spawn: spawnNodePty,
       agents: { resolve: id => settings?.resolve(id) },
+      launchContext: { launchFor: (id, cwd) => sharedContext?.launchFor(id, cwd) },
       agentStatus: { url: `${rendererOrigin}${WORKSPACE_AGENT_STATUS_PATH}`, token: statusToken },
     })
     const agentStatus = new AgentStatusStore(id => workspacePty.has(id))
@@ -184,6 +191,28 @@ export function apply(ctx: Context): void {
         path: WORKSPACE_PROJECTS_PATH,
         handler: (req, res) => { void handleProjectsRequest(req, res, rendererOrigin, projects, reportHostError) },
       }))
+      // Shared context (spec 043 T009): the generated WORKSPACE.md of every Shared Context workspace stays current, and other plugins can read it.
+      sharedContext = new SharedContext({ registry: projects, home: ctx.appInstance.home })
+      releases.push(sharedContext.start(cause => { reportHostError('write the shared workspace context', cause) }))
+      const withdrawSharedContext = ctx.reflect.provide(SHARED_CONTEXT_SERVICE, sharedContext)
+      releases.push(() => { void withdrawSharedContext() })
+      // The DSH chat in a Shared Context workspace is told about it (T010); present while the harness's system prompt service is.
+      const contextFor = (folder: string): { readonly prompt: string } | undefined => sharedContext?.contextFor(folder)
+      const chatContextFiber = ctx.inject(['systemPrompt'], (child) => {
+        const systemPrompt = (child as unknown as { readonly systemPrompt: SystemPromptContextPort }).systemPrompt
+        child.effect(() => registerChatContext(systemPrompt, contextFor), 'acryl-workspace: shared workspace context for the chat')
+      })
+      releases.push(() => { void chatContextFiber.dispose() })
+      // The brief, edited in the app (T011), and the context for any agent through the tool registry and the gateway.
+      releases.push(ctx.acrylWeb.register({
+        kind: 'exact',
+        path: WORKSPACE_BRIEF_PATH,
+        handler: (req, res) => { if (sharedContext !== undefined) void handleBriefRequest(req, res, rendererOrigin, sharedContext) },
+      }))
+      const contextToolFiber = ctx.inject(['acrylTools'], (child) => {
+        child.effect(() => registerContextTool(child, { view: () => projects.view(), promptFor: id => sharedContext?.promptFor(id) }), 'acryl-workspace: workspace context tool')
+      })
+      releases.push(() => { void contextToolFiber.dispose() })
       const projectEvents = createProjectEvents(projects, rendererOrigin)
       releases.push(() => { projectEvents.close() })
       releases.push(ctx.acrylWeb.register({
@@ -258,3 +287,4 @@ export function apply(ctx: Context): void {
 
 /** The agent's workspace tools, exported so the runtime can check their schemas against DSH's own compiler. */
 export { registerWorkspaceTools } from './projects/tools.ts'
+export { registerContextTool } from './shared-context/tool.ts'

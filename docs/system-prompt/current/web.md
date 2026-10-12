@@ -87,7 +87,7 @@ The DeepSeek Harness implementation checkout is at <acryl-repo>/node_modules/.pn
 </harness_source>
 
 <app_web-surface>
-You are interacting with the user through the DeepSeek Harness Web GUI at http://127.0.0.1:54094. When the user refers to "this page", "this GUI", or "this app" without naming another target, they mean this GUI. The browser provides no implicit DOM, route, or screenshot context. The client-plugin HMR receiver is active, but client-plugin changes reload without a refresh only while `pnpm run dev:web` is also running from this same checkout to rebuild their bundles; verify that watcher before promising automatic updates. Every other change — the apps/web shell and plain packages — requires rebuilding the affected Web artifacts and verifying this existing URL after a page refresh. Starting another server does not update this GUI. The apps/web Vite entry builds the shell but is not a standalone application because only dsh web injects window.__DSH_BOOT__. Do not start a replacement server unless the user asks; if one is needed, use a managed background job and verify its exact URL.
+You are interacting with the user through the DeepSeek Harness Web GUI at http://127.0.0.1:56256. When the user refers to "this page", "this GUI", or "this app" without naming another target, they mean this GUI. The browser provides no implicit DOM, route, or screenshot context. The client-plugin HMR receiver is active, but client-plugin changes reload without a refresh only while `pnpm run dev:web` is also running from this same checkout to rebuild their bundles; verify that watcher before promising automatic updates. Every other change — the apps/web shell and plain packages — requires rebuilding the affected Web artifacts and verifying this existing URL after a page refresh. Starting another server does not update this GUI. The apps/web Vite entry builds the shell but is not a standalone application because only dsh web injects window.__DSH_BOOT__. Do not start a replacement server unless the user asks; if one is needed, use a managed background job and verify its exact URL.
 </app_web-surface>
 
 <cwd>
@@ -95,7 +95,7 @@ Your working directory is <workspace>.
 </cwd>
 ```
 
-## Tools (45)
+## Tools (46)
 
 | Tool | Description (first line) |
 | --- | --- |
@@ -108,6 +108,7 @@ Your working directory is <workspace>.
 | `acryl_remove_plugin` | Remove a local plugin from the active ACRYL profile and unmount it live. Pass the package name (see the list tool). |
 | `acryl_verify_plugin` | Check a plugin package you wrote WITHOUT installing it: install lint plus importing the host entry and checking its Cordis shape. Findings include the exact err |
 | `acryl_workspace_add_project` | Add a folder (absolute path) as a project of the shown workspace. |
+| `acryl_workspace_context` | Read a shared-context workspace's projects and brief (default: the shown workspace). |
 | `acryl_workspace_create` | Create a workspace and show it. kind: individual (default), shared (projects share context) or remote (SSH: host, optional user and path). |
 | `acryl_workspace_list` | List the workspaces (sets of project folders in the sidebar), their projects, and the shown one (*). |
 | `acryl_workspace_switch` | Show another workspace by id (from acryl_workspace_list). |

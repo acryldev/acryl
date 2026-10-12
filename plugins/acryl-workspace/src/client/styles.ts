@@ -200,6 +200,13 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceKanbanAdd { padding: 8px 10px; }
 .dshWorkspaceKanbanAdd input { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px dashed var(--dsw-alias-border-l2); border-radius: 6px; background: transparent; color: var(--dsw-alias-label-primary); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceDoc { flex-direction: row !important; gap: 0; }
+.dshWorkspaceBrief { display: flex; flex: 1; flex-direction: column; min-height: 0; min-width: 0; }
+.dshWorkspaceBriefBar { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--dsw-alias-border-l2); }
+.dshWorkspaceBriefNote { flex: 1; min-width: 0; color: var(--dsw-alias-label-secondary); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceBriefError { color: #fca5a5; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceBriefSave { appearance: none; padding: 5px 14px; border: 0; border-radius: 6px; background: #4d6bfe; color: #fff; cursor: pointer; font: 500 12px/1.3 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceBriefSave:disabled { opacity: .5; cursor: default; }
+.dshWorkspaceBriefEditor { flex: 1; min-height: 0; padding: 12px 14px; border: 0; background: transparent; color: var(--dsw-alias-label-primary); resize: none; outline: none; font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dshWorkspaceDocEditor { flex: 1; min-width: 0; padding: 12px 14px; border: 0; border-right: 1px solid var(--dsw-alias-border-l2); background: transparent; color: var(--dsw-alias-label-primary); resize: none; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dshWorkspaceDocPreview { flex: 1; min-width: 0; overflow: auto; padding: 14px 18px; color: var(--dsw-alias-label-primary); font: 13px/1.6 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceDocHeading { margin: 0.6em 0 0.3em; font-weight: 700; }

@@ -28,6 +28,8 @@ import { startWorkspacePersistence } from './canvas/persist.ts'
 import { createWebFolderPicker } from './projects/web-folder-picker.ts'
 import { createProjectRegistryApi, followProjectRegistry } from './projects/registry-api.ts'
 import { followShownWorkspace } from './projects/shown-workspace.ts'
+import { createBriefApi } from './shared-context/brief-api.ts'
+import { briefTabType } from './shared-context/BriefTab.tsx'
 import { adoptLegacyProjects, ProjectRegistryState } from './projects/registry-state.ts'
 import { createProjectsControl, desktopDirectorySeams } from './projects/projects-control.ts'
 import { createWorkspaceGitApi } from './git/git-api.ts'
@@ -166,6 +168,8 @@ export function apply(ctx: ClientContext): void {
     // Plugins add tab types through this service; it lives as long as this plugin, and so do the types they registered.
     const tabRegistry = new WorkspaceTabRegistry()
     ctx.effect(() => provideWorkspaceTabs(ctx, tabRegistry), 'acryl-workspace: workspaceTabs service')
+    // The workspace brief (spec 043 T011): a tab type of the workspace's own, through the same registry plugins use.
+    ctx.effect(() => tabRegistry.register(briefTabType({ api: createBriefApi(), current: () => projectRegistry.current(), workspaces: () => projectRegistry.workspaces() })), 'acryl-workspace: workspace brief tab')
     const paletteConfig = new PaletteConfigState(storage)
     ctx.plugin(settingsSharedPlugin())
     ctx.plugin(agentsSettingsPlugin(agents))

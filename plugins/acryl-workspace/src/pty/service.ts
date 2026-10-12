@@ -124,8 +124,15 @@ export interface AgentResolver {
   resolve(id: string): WorkspacePtySpawnPlan | undefined
 }
 
+/** What an agent started in a folder is given beyond its own launch: the shared workspace context (spec 043), or nothing. */
+export interface LaunchContextProvider {
+  launchFor(agentId: string, cwd: string): { readonly args: readonly string[], readonly env: Readonly<Record<string, string>> } | undefined
+}
+
 export interface WorkspacePtyRegistryOptions {
   readonly agents?: AgentResolver
+  /** Looked up at each agent start, so the context is the workspace's as it is then. */
+  readonly launchContext?: LaunchContextProvider
   /** Where agents report their state, and the secret they present. Without it no reporting is added. */
   readonly agentStatus?: { readonly url: string; readonly token: string }
   /** Starts a real process behind a terminal. Injected: the policy here never loads a native module. */
@@ -208,6 +215,7 @@ export class WorkspacePtyRegistry {
   private readonly spawnDirs: string[]
   private readonly agents: AgentResolver | undefined
   private readonly agentStatus: { readonly url: string; readonly token: string } | undefined
+  private readonly launchContext: LaunchContextProvider | undefined
 
   constructor(options: WorkspacePtyRegistryOptions) {
     this.spawnImpl = options.spawn
@@ -218,6 +226,7 @@ export class WorkspacePtyRegistry {
     this.spawnDirs = workspacePtySpawnDirs(this.env, this.platform)
     this.agents = options.agents
     this.agentStatus = options.agentStatus
+    this.launchContext = options.launchContext
   }
 
   /**
@@ -252,13 +261,15 @@ export class WorkspacePtyRegistry {
       }
       // An agent that reports through hooks gets the reporting launch settings and the terminal's own credentials.
       const reporting = plan.statusHooks !== undefined && this.agentStatus !== undefined
-      const args = reporting && plan.statusHooks !== undefined ? [...statusHookArgs(plan.statusHooks), ...plan.args] : plan.args
+      // In a Shared Context workspace an agent also gets the workspace's context, in its own way; the shell gets nothing.
+      const shared = commandId === 'shell' ? undefined : this.launchContext?.launchFor(commandId, cwd ?? this.cwd)
+      const args = [...(reporting && plan.statusHooks !== undefined ? statusHookArgs(plan.statusHooks) : []), ...(shared?.args ?? []), ...plan.args]
       const reportingEnv = reporting && this.agentStatus !== undefined
         ? { [STATUS_ENV.terminal]: id, [STATUS_ENV.url]: this.agentStatus.url, [STATUS_ENV.token]: this.agentStatus.token }
         : {}
       process = this.spawnImpl(resolved ?? plan.command, args, {
         cwd: cwd ?? this.cwd,
-        env: { ...terminalEnvironment(this.env), ...plan.env, ...reportingEnv },
+        env: { ...terminalEnvironment(this.env), ...plan.env, ...shared?.env, ...reportingEnv },
         name: 'xterm-256color',
         cols,
         rows,
