@@ -32,7 +32,7 @@ export interface WorktreeRow {
 export interface RepoRow {
   readonly root: string
   readonly name: string
-  /** false for a plain folder workspace that is not a git repository (T134-followup) - no branches, no
+  /** false for a plain folder workspace that is not a git repository - no branches, no
    * "New branch" affordance, a distinct icon instead of the git one. */
   readonly git: boolean
   readonly rows: readonly WorktreeRow[]
@@ -79,8 +79,7 @@ export interface WorktreeSessionEntry {
   /** Set for kind 'agent': which runtime, for its icon ('shell' for a plain terminal). */
   readonly commandId?: string
   readonly running?: boolean
-  /** Whether this entry is the tab strip's own active tile right now (T139-followup: clicking a tab in
-   * the strip left no matching row highlighted in this list at all). */
+  /** Whether this entry is the tab strip's selected tile right now, so the selected tab's row is highlighted. */
   readonly active?: boolean
 }
 
@@ -94,7 +93,7 @@ export interface ActiveTileLike {
  * Everything to list under one expanded worktree: its open agent/terminal tabs (any `pty` canvas tile - a
  * named agent or a plain shell) and its AcrylDSH Chat sessions (by cwd). Never file/browser/diff/board/doc
  * tiles - those stay reachable from their own tab strip, not duplicated into this tree (spec 040 T129).
- * @param active - the worktree's active tile (T139-followup), so its row can be highlighted here to match
+ * @param active - the worktree's active tile, so its row can be highlighted here to match
  * the tab strip; undefined when nothing is active or the active tile is not a kind this list shows.
  */
 export function entriesForWorktree(

@@ -46,7 +46,7 @@ export function ChatIcon() {
   )
 }
 
-/** A workspace's own mark when it is a git repository, distinct from a plain folder's (T134-followup). */
+/** A workspace's own mark when it is a git repository, distinct from a plain folder's. */
 export function GitRepoIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -58,7 +58,7 @@ export function GitRepoIcon() {
   )
 }
 
-/** A workspace's own mark when it is a plain folder, not a git repository (T134-followup). */
+/** A workspace's own mark when it is a plain folder, not a git repository. */
 export function FolderIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -68,9 +68,7 @@ export function FolderIcon() {
 }
 
 /**
- * The real ACRYL mark for the tree's own header (T137/T138-followup: "there used to be... ACRYL logo,
- * it's gone" - it was visible by default inside the upstream sidebar's own chrome, which is no longer shown
- * since T128 made the tree the default view, with no replacement in the tree's own header).
+ * The real ACRYL mark for the tree's own header (the upstream sidebar's chrome, which showed it, is hidden).
  *
  * `dsh-client-ui-brand-acryl`'s client entry is a Cordis-loader-format bundle
  * (`window.__ModuleLoader__.load(...)`), built to be consumed only through the sidebar's own brand-mark
@@ -90,8 +88,7 @@ export function AcrylMarkIcon({ size = 18 }: { readonly size?: number }) {
   )
 }
 
-/** Two-pane "collapse sidebar" mark (T137-followup: the tree's own header needed a real collapse
- * control, matching what the upstream sidebar chrome used to show when it was the default view). */
+/** Two-pane "collapse sidebar" mark for the tree's own header. */
 export function CollapseSidebarIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

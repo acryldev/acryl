@@ -27,9 +27,8 @@ export interface WorktreeState {
 export interface RepoState {
   readonly root: string
   readonly name: string
-  /** false for a plain folder registered as a workspace that is not a git repository (owner request,
-   * T134-followup: "should be able to handle both git / non-git [folders]"). It has exactly one synthetic
-   * worktree (itself), no branches, and never polls git status - it always reports zero changes. */
+  /** false for a plain folder registered as a workspace that is not a git repository. It has exactly one synthetic worktree (itself), no
+   * branches, and never polls git status - it always reports zero changes. */
   readonly git: boolean
   readonly worktrees: readonly WorktreeState[]
 }
@@ -39,10 +38,8 @@ export interface ShellSnapshot {
   readonly repos: readonly RepoState[]
   /** Worktree whose tab group and changes are shown. */
   readonly selectedPath: string | undefined
-  /** Chat session ids the user closed from the tree or the tab strip (owner request, T134-followup: a
-   * hover "x" that removes a chat from both at once). This hides the session from this view only - there
-   * is no session-delete capability in the injected `ISessions` face, so the underlying session is not
-   * destroyed and a session id here is never persisted across a reload. */
+  /** Chat session ids the user closed from the tree or the tab strip; closing in one place hides the chat in both. This hides the session
+   * from this view only: the injected `ISessions` face cannot delete a session, so the session itself is kept. */
   readonly dismissedChats: ReadonlySet<string>
 }
 
@@ -70,9 +67,8 @@ export interface OpenDiffRequest {
   readonly file: string
 }
 
-/** A request to close one canvas tile (T134-followup: the tree's hover "x" on an agent/terminal entry).
- * Routed through `WorkspaceCanvas`'s own `closeTile`, not `WorkspaceState.closeTile` directly, so a
- * terminal tile's real process still gets released - the tree has no access to that side effect itself. */
+/** A request to close one canvas tile (the tree's hover "x" on an agent or terminal entry). Handled by `routeShellRequests`, not
+ * `WorkspaceState.closeTile` directly, so a terminal tile's process is released too - the tree has no access to that itself. */
 export interface CloseTileRequest {
   readonly worktree: string
   readonly tileId: string
@@ -116,13 +112,9 @@ export class WorkspaceShellState {
   private readonly docListeners = new Set<(request: OpenDocRequest) => void>()
   private readonly closeTileListeners = new Set<(request: CloseTileRequest) => void>()
   private readonly probes = new Map<string, Promise<string | undefined>>()
-  /** Repos removed by `forgetRepo` (T137-followup real fix: removing a workspace that still has live
-   * sessions or a still-registered Host workspace was re-added within the same tick by the two passive
-   * discovery effects, whose whole job is to keep surfacing every session's/every registered workspace's
-   * repo - the actual cause of the owner's "flickers... on second time only it removes"). Checked by
-   * `discover()` on every path, cleared only by a genuinely explicit re-add (`clearForgotten: true`),
-   * never by the passive effects that merely mirror whatever the session list/Host workspace list
-   * currently says - which can still say the old thing for a moment right after a delete. */
+  /** Repos removed by `forgetRepo`. Passive discovery (every chat's folder, every registered workspace) would otherwise add a removed
+   * repo straight back while a chat or the Host's list still points at it. Checked by `discover()` on every path; cleared only by an
+   * explicit re-add (`clearForgotten: true`), never by passive discovery, whose sources can lag a delete. */
   private readonly forgottenRepos = new Set<string>()
   private readonly forgottenListeners = new Set<() => void>()
   private readonly statusInflight = new Map<string, Promise<void>>()
@@ -131,16 +123,8 @@ export class WorkspaceShellState {
   private disposed = false
 
   /**
-   * @param initialForgotten - roots to seed `forgottenRepos` with at construction (a previous run's
-   * persisted removals, T137-followup real fix part 2: a removal otherwise only lasted until the next
-   * reload - nothing remembered it past the current page's lifetime).
-   */
-  /**
-   * @param initialDismissed - chat session ids to seed `dismissedChats` with (a previous run's persisted
-   * dismissals - without this, "x" on a chat only lasted until the next reload, exactly like `forgetRepo`
-   * before it: nothing remembered a dismissal past the current page's lifetime, so a passive rediscovery
-   * effect brought every dismissed chat straight back - owner report, 2026-10-01, "82 chats in MAIN... I
-   * never add them... deleting it doesn't help").
+   * @param initialForgotten - a previous run's removed roots (`forgetRepo`), so a removal survives a reload.
+   * @param initialDismissed - a previous run's dismissed chats (`dismissChat`), so a dismissal survives a reload.
    */
   constructor(private readonly api: WorkspaceGitApi, initialForgotten: readonly string[] = [], initialDismissed: readonly string[] = []) {
     for (const root of initialForgotten) this.forgottenRepos.add(root)
@@ -182,7 +166,7 @@ export class WorkspaceShellState {
     return undefined
   }
 
-  /** Hide a chat from the tree and the tab strip (owner request, T134-followup). Idempotent. */
+  /** Hide a chat from the tree and the tab strip. Idempotent. */
   dismissChat(id: string): void {
     if (this.snapshot.dismissedChats.has(id)) return
     this.replace({ ...this.snapshot, dismissedChats: Object.freeze(new Set([...this.snapshot.dismissedChats, id])) })
@@ -197,14 +181,9 @@ export class WorkspaceShellState {
     this.replace({ ...this.snapshot, dismissedChats: Object.freeze(next) })
   }
 
-  /** Drop a repository or plain folder from the tree entirely (T135-followup: "I must be able to remove
-   * ... workspace"), and remember it as removed (T137-followup real fix - a one-time prune alone flickered
-   * right back: the passive session-cwd and registered-workspace-path discovery effects exist precisely
-   * to keep surfacing every session's/every registered workspace's repo, so either one silently re-added
-   * this one again within the same tick if a live session still pointed here, or the Host's own workspace
-   * list had not yet caught up to the deletion). `discover()` checks this on every call and refuses to
-   * re-merge a forgotten root; only an explicit re-add (`clearForgotten: true`) lifts it. Its probe cache
-   * entries are cleared too, so a later, genuinely fresh discovery is not stuck against a stale result. */
+  /** Drop a repository or plain folder from the tree entirely, and remember it as removed: `discover()` refuses to merge a forgotten root
+   * again (passive discovery would re-add it while a chat or the Host's list still points there); only an explicit re-add
+   * (`clearForgotten: true`) lifts it. Its probe cache entries are cleared too, so a later fresh discovery does not reuse a stale result. */
   forgetRepo(root: string): void {
     if (!this.forgottenRepos.has(root)) {
       this.forgottenRepos.add(root)
@@ -231,22 +210,13 @@ export class WorkspaceShellState {
 
   /**
    * Learn about the repository that contains `cwd`.
-   * @param options.registerFolder - when true, and `cwd` is not a git repository, register it as its
-   * own plain folder workspace instead of reporting it unknown (owner request, T135: only for an
-   * explicit "add this folder" action - `ProjectsControl.addProjectByPath`, or the effect that re-syncs
-   * already-registered `IWorkspaces` paths. Never passed by the passive per-session cwd discovery in
-   * `ProjectsSidebar`'s own effect: every session's cwd used to run through this same call, and
-   * defaulting this on there turned every ordinary, never-added session directory into a permanent
-   * "workspace" entry nobody asked for - the actual bug behind "web suddenly shows so many workspaces -
-   * didn't open them"). Bypasses the probe cache: an explicit add is a one-off action, not something to
-   * dedupe against an earlier passive, non-registering discovery of the same path.
-   * @param options.clearForgotten - when true, lifts an earlier `forgetRepo(cwd)` for this exact path.
-   * Passed only by `ProjectsControl.addProjectByPath` (a real, deliberate user re-add). Never by the
-   * registered-workspace-paths sync effect, even though it also passes `registerFolder: true` - that
-   * effect only mirrors whatever the Host's workspace list currently says, which can still list a just-
-   * removed path for a moment right after its own delete call resolves; letting it clear the forgotten
-   * mark would have silently undone the removal (T137-followup: "flickers... on second time only it
-   * removes" was exactly this race).
+   * @param options.registerFolder - when true, and `cwd` is not a git repository, register it as its own plain folder workspace instead
+   * of reporting it unknown. Only for an explicit "add this folder" (`ProjectsControl.addProjectByPath`, and re-syncing already
+   * registered project paths); never for passive discovery of a chat's folder, which would turn every folder a chat ran in into a
+   * project. Bypasses the probe cache: an explicit add is not deduplicated against an earlier passive discovery of the same path.
+   * @param options.clearForgotten - when true, lifts an earlier `forgetRepo(cwd)` for this exact path. Only for a deliberate re-add by the
+   * user (`ProjectsControl.addProjectByPath`); never for re-syncing registered paths, whose source can still list a path for a moment
+   * after it was removed.
    * @returns the path of the worktree (or plain folder) that owns `cwd` - undefined when `cwd` is not a
    * git repository and `registerFolder` was not requested, when the api call itself failed, or when the
    * owning root was explicitly removed (`forgetRepo`) and not since re-added.
@@ -362,7 +332,7 @@ export class WorkspaceShellState {
     return request
   }
 
-  /** Ask the canvas to close a tile (T134-followup: the tree's hover "x" on an agent/terminal entry). */
+  /** Ask the canvas to close a tile (the tree's hover "x" on an agent or terminal entry). */
   requestCloseTile(request: CloseTileRequest): void {
     for (const listener of this.closeTileListeners) listener(request)
   }

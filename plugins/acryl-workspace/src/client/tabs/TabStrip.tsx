@@ -43,7 +43,7 @@ export interface TabStripProps {
   /** The live terminals, for the activity marker on agent tabs. */
   readonly terminals: TerminalRegistry
   onOpenPty(commandId: AgentId, title: string): void
-  /** Starts a brand new AcrylDSH Chat session, its own tab (spec 040 T130-followup). */
+  /** Starts a brand new AcrylDSH Chat session, in its own tab. */
   onOpenChat(): void
   /** The DSH chat is available (see NewTabMenu). Defaults to on. */
   chatAvailable?: boolean

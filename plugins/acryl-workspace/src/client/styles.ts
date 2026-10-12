@@ -213,10 +213,9 @@ const WORKSPACE_STYLES = `
    clipped, and deliberately not display:none - the dialog is a plain sibling of its trigger, so hiding
    the host hides the dialog with it. A fixed-position dialog still draws over the page. */
 .dshWorkspaceUpstreamHost { position: absolute; width: 0; height: 0; overflow: hidden; }
-/* Brand row (T137-followup): the logo + collapse control the tree lost when it became the default view
-   instead of the upstream sidebar (which bundled both into its own now-hidden-by-default chrome). */
+/* Brand row: the logo and the collapse control, in the tree's own header (the upstream sidebar that had them is hidden). */
 .dshWorkspaceSideBrandRow { display: flex; align-items: center; gap: 8px; padding: 8px 8px 4px; }
-/* The real ACRYL mark (T137/T138-followup), theme-swapped like every other use of the same source PNGs. */
+/* The real ACRYL mark, theme-swapped like every other use of the same source PNGs. */
 .dshWorkspaceAcrylMark { display: inline-grid; flex: none; place-items: center; }
 .dshWorkspaceAcrylMark > img { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: contain; }
 .dshWorkspaceAcrylMarkDark { display: none; }
@@ -229,8 +228,7 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
    (CSS overflow is a one-axis-implies-the-other-scrolls rule), so any row even a pixel wider than the
    column - an untruncated path, an icon's own layout width - silently made the whole list horizontally
    scrollable. A diagonal trackpad scroll gesture nudged it sideways and nothing ever scrolled it back,
-   leaving every row's text clipped on the left (owner report with a screenshot: "sidebar drifts in
-   scrolling left right"). Rows already truncate long text with ellipsis; nothing needs horizontal scroll. */
+   leaving every row's text clipped on the left. Rows already truncate long text with ellipsis; nothing needs horizontal scroll. */
 .dshWorkspaceSideProjects { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 4px 8px 12px; }
 .dshWorkspaceSideProjectsHead { display: flex; align-items: center; justify-content: space-between; padding: 2px 8px 4px; color: var(--dsw-alias-label-secondary); font: 600 11px/1.4 ui-sans-serif, system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 .dshWorkspaceSideAdd { appearance: none; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; font: 500 18px/1 ui-sans-serif, system-ui, sans-serif; }
@@ -242,7 +240,7 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceRepoHead { display: flex; align-items: center; gap: 4px; }
 .dshWorkspaceRepoHead .dshWorkspaceRepoName { flex: 1; }
 .dshWorkspaceRepoKind { display: flex; align-items: center; flex: none; color: var(--dsw-alias-label-secondary); }
-/* Remove a whole workspace (T135-followup), same reveal-on-hover pattern as a session's own close. */
+/* Remove a whole workspace, same reveal-on-hover pattern as a session's own close. */
 .dshWorkspaceRepoRemove { appearance: none; flex: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font-size: 14px; line-height: 1; opacity: 0; }
 .dshWorkspaceRepoHead:hover .dshWorkspaceRepoRemove, .dshWorkspaceRepoRemove:focus-visible { opacity: 1; }
 .dshWorkspaceRepoRemove:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); color: var(--dsw-alias-label-primary); }
@@ -266,10 +264,10 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 /* In-place rename of a session row (double-click), same idea as the tab strip's own tab rename. */
 .dshWorkspaceSessionRenameRow { cursor: text; }
 .dshWorkspaceSessionRename { flex: 1; min-width: 0; padding: 1px 4px; border: 1px solid #4d6bfe; border-radius: 4px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-primary); font: inherit; outline: none; }
-/* The row matching the tab strip's own active tile (T139-followup). */
+/* The row matching the tab strip's selected tile. */
 .dshWorkspaceSessionRow[aria-pressed="true"] { background: var(--dsw-alias-fill-selected, rgb(77 107 254 / 16%)); color: var(--dsw-alias-label-primary); font-weight: 500; }
 .dshWorkspaceSessionLabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* Hover "x" to close/hide a session (T134-followup), same reveal-on-hover pattern as a tab strip tab. */
+/* Hover "x" to close/hide a session, same reveal-on-hover pattern as a tab strip tab. */
 .dshWorkspaceSessionClose { position: absolute; right: 4px; appearance: none; flex: none; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border: 0; border-radius: 4px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-secondary); cursor: pointer; font-size: 13px; line-height: 1; opacity: 0; }
 .dshWorkspaceSessionItem:hover .dshWorkspaceSessionClose, .dshWorkspaceSessionClose:focus-visible { opacity: 1; }
 .dshWorkspaceSessionClose:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 12%)); color: var(--dsw-alias-label-primary); }

@@ -36,8 +36,7 @@ export function startWorkspacePersistence(deps: PersistenceDeps): () => void {
   }
   let mode = shell.getSnapshot().mode
   // `dismissedChats` is replaced wholesale (never mutated) on every change, so reference inequality alone
-  // reliably means "really changed" - no need to diff contents (owner report, 2026-10-01: "x" on a chat
-  // only lasted until the next reload, same bug `forgetRepo` had before it, same fix).
+  // reliably means "really changed" - no need to diff contents. Saved so a dismissal survives a reload, like a removed repository.
   let dismissedChats = shell.getSnapshot().dismissedChats
   const offShell = shell.subscribe(() => {
     const snapshot = shell.getSnapshot()

@@ -68,9 +68,8 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
   const [expandedWorktrees, setExpandedWorktrees] = useState<ReadonlySet<string>>(() => new Set())
   /** The upstream sidebar (search and anything else it owns), off by default now that it is not a mode. */
 
-  // Registered workspace folders are projects even before they have a chat. registerFolder: true - these
-  // came from an explicit "add this folder" action (T135), unlike the passive per-session discovery
-  // just below, which must never promote an untouched session directory to a permanent workspace entry.
+  // Registered project folders are projects even before they have a chat. registerFolder: true - each came from an explicit "add this
+  // folder", unlike the passive discovery of chats' folders (ChatSelection), which never makes a folder a project.
   useEffect(() => {
     for (const path of projects.workspacePaths()) void shell.discover(path, { registerFolder: true })
   }, [shell, projects, workspaceKey])
@@ -82,8 +81,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
   )
   // Every pty tile (named agent or plain terminal), for the expanded-worktree session list - broader than
   // agentsKey above, which deliberately drops plain terminals since it only feeds the row icons. Also
-  // each worktree's activeId (T139-followup: clicking a tab in the strip must highlight its row here too),
-  // so this recomputes on every tab-strip focus change, not only when a tile is added or removed.
+  // each worktree's activeId, so the row of the tab selected in the strip is highlighted here too.
   const tilesKey = useSyncExternalStore(
     useCallback((listener: () => void) => groups.onChange(listener), [groups]),
     () => JSON.stringify(groups.keys().map((key) => {
@@ -103,7 +101,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
   const customAgents = useSyncExternalStore(agents.subscribe, agents.getSnapshot)
   const chatRows = useMemo(
     () => sessions.ids.flatMap((id) => {
-      if (snapshot.dismissedChats.has(id)) return [] // T134-followup: hidden from tree, dot count and tab strip alike
+      if (snapshot.dismissedChats.has(id)) return [] // hidden from the tree, the dot count and the tab strip alike
       const row = sessions.byId[id]
       return row === undefined ? [] : [{ id, blank: row.blank, running: row.running, displayTitle: row.displayTitle, ...(row.title === undefined ? {} : { title: row.title }), ...(row.cwd === undefined ? {} : { cwd: row.cwd }) }]
     }),
@@ -128,19 +126,9 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
   }
 
   const toggleWorktree = (path: string): void => {
-    // Expanding a worktree's session list also selects it (T137/T138-followup: "all of the agent
-    // sessions and terminals should be opened in the Tab Stripe" when a workspace is opened) - the tree's
-    // own list and the tab strip both already reflect the same already-restored WorkspaceGroups state
-    // the instant `groups.stateFor(path)` is called (WorkspaceState.restore() loads every saved tile at
-    // once, not one at a time), so the real gap was never lazy restoration - it was that expanding a
-    // worktree's row list never itself switched the active tab set the way clicking its own name does,
-    // leaving the strip showing whatever worktree was selected before, until a session was clicked one
-    // at a time and each click's own `shell.select` finally brought the whole set into view.
-    // shell.select (an external-store write, not React state) must not run inside the setState updater
-    // below - React can invoke that updater more than once (Strict Mode) or at unexpected times, and
-    // triggering an external notification from inside it produced a real "Cannot update a component
-    // while rendering a different component" warning, an actual correctness bug (T139-followup), not
-    // just React being pedantic - a plain event-handler-time call, before the state update, is correct.
+    // Expanding a worktree shows it, as picking its name does: its tab set and its chat.
+    // Selecting writes an external store, so it runs here in the handler, never inside the setState updater below (React may call an
+    // updater more than once, and a store notification from inside one is an update during another component's render).
     const expanding = !expandedWorktrees.has(path)
     if (expanding) showWorktree(path)
     setExpandedWorktrees((current) => {
@@ -182,7 +170,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
     if (tile !== undefined) shell.requestCloseTile({ worktree: path, tileId: tile.id })
   }
 
-  /** Rename in place from the tree (owner request: bidirectional with the tab strip). An agent/terminal
+  /** Rename in place from the tree; the tab strip follows. An agent/terminal
    * entry is its tab's own title, so renaming the tile is the whole job (the strip and this row both read
    * it). A chat entry renames the session itself; its open tab then follows the session's new title. */
   const renameEntry = (path: string, entry: WorktreeSessionEntry, title: string): void => {
@@ -191,8 +179,7 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
     void projects.renameChat(entry.id, title).then((result) => { if (!result.ok) setNotice(result.reason) })
   }
 
-  /** Remove a whole workspace from the tree (owner request, T135-followup: "I must be able to remove
-   * both workspace and sessions"). */
+  /** Remove a whole workspace from the tree. */
   const removeRepo = (root: string): void => {
     setNotice(null)
     void projects.removeWorkspace(root).then((result) => { if (!result.ok) setNotice(result.reason) })
@@ -248,16 +235,10 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
   return (
     <div className="dshWorkspaceSide" data-acryl-workspace-side="tree">
       {/* Not a view: the upstream sidebar is mounted only because Settings' trigger, and its dialog, live
-          inside it - no service opens Settings any other way. (Desktop Linux's own folder-picker fallback
-          used to reach into this host for the upstream "Add workspace" trigger too; it now uses the Host's
-          own native-chooser route instead, T143/T144-followup, so this host is Settings-only.) Kept out of
-          sight at zero size; never shown, so there is no "classic" list to maintain.
-          `aria-hidden` (not just zero size) so this package's own `ui_snapshot` reader - which does not
-          know this host is a deliberate duplicate - leaves its whole subtree out of the tree an agent sees:
-          without it, the agent found this host's real "Collapse sidebar" control sitting beside the tree's
-          own one, as two indistinguishable, equally real buttons (owner report with a screenshot, T144
-          follow-up). Real-click paths (the "Settings" button below, `openSettings`, `clickAddWorkspaceTrigger`)
-          use `Element.click()`, which `aria-hidden` does not block. */}
+          inside it - no service opens Settings any other way. Kept out of sight at zero size; never shown, so there is no "classic" list
+          to maintain. `aria-hidden` (not just zero size) so the `ui_snapshot` reader leaves its subtree out of what an agent sees: its own
+          "Collapse sidebar" control would otherwise appear beside the tree's, two indistinguishable buttons. Real-click paths (the
+          "Settings" button below, `openSettings`) use `Element.click()`, which `aria-hidden` does not block. */}
       <div className="dshWorkspaceUpstreamHost" aria-hidden="true">{renderUpstream()}</div>
       <div className="dshWorkspaceSideProjects">
         <div className="dshWorkspaceSideBrandRow">

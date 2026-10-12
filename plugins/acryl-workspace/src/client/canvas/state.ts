@@ -73,7 +73,7 @@ export interface WorkspaceStateOptions {
 export interface AddTileOptions {
   readonly commandId?: AgentId
   readonly title?: string
-  /** chat tile: which DSH session this tab shows (spec 040 T130-followup: one tab per open chat). */
+  /** chat tile: which DSH session this tab shows (one tab per open chat). */
   readonly chatSessionId?: string
   readonly fileWorktree?: string
   readonly fileRel?: string

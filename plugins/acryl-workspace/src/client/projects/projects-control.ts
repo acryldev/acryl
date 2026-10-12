@@ -29,7 +29,7 @@ export interface ProjectsControl {
   subscribeWorkspaces(listener: () => void): () => void
   /**
    * How a folder is chosen here: the window's own native picker (desktop) or the Host's (everywhere
-   * else - Web, and desktop Linux where Electron has no picker seam of its own, T143), or by typing the
+   * else - Web, and desktop Linux where Electron has no picker seam of its own), or by typing the
    * folder's path when neither is available.
    */
   chooserKind(): FolderChooserKind
@@ -50,8 +50,7 @@ export interface ProjectsControl {
    */
   openChat(id: string): Promise<ProjectAction>
   /**
-   * Rename one chat session's durable title (owner request: rename from the left tree or the tab strip,
-   * reflected in both). Goes through the per-session face's own `rename` - the top-level sessions
+   * Rename one chat session's durable title (from the left tree or the tab strip; both show it). Goes through the per-session face's own `rename` - the top-level sessions
    * service has none - reached the way `agent-bridge.ts` already does: `scope(id)` then `sessionOf`.
    * The list row's `displayTitle` and any open chat tab follow from the resulting title projection.
    */
@@ -59,8 +58,7 @@ export interface ProjectsControl {
   /** Create a branch and worktree in a repository, select it and open a chat there. */
   newWorktree(repoRoot: string, branch: string): Promise<ProjectAction>
   /**
-   * Remove a workspace from the tree entirely (owner request, T135-followup: "i can't remove added
-   * workspace... I must be able to remove both workspace and sessions"). Deletes the real Host
+   * Remove a workspace from the tree entirely. Deletes the real Host
    * registration when one exists (`IWorkspaces.delete` - "without deleting Sessions or files", so this
    * is a registration removal, never data loss); either way, also drops it from the shell's own repo
    * list so it does not linger client-side, and lets a later session still rediscover the same path.
@@ -87,7 +85,7 @@ export interface ProjectsControlDeps {
   readonly directory: () => DirectorySeams
   /** Opens the OS folder chooser on the machine running the Host (see `web-folder-picker.ts`): the only
    * chooser on Web, and desktop Linux's fallback once Electron's own seam (`directory().pickDirectory`)
-   * is absent - both are served by the same Host route (T143), so neither platform needs anything else. */
+   * is absent - both are served by the same Host route, so neither platform needs anything else. */
   readonly webPickDirectory?: () => Promise<string | null>
   /** Whether the DSH chat is available; off, adding or selecting a project does not try to open a chat, and chat actions say so. */
   readonly chatAvailable?: () => boolean
@@ -130,7 +128,7 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
 
   const workspaceItems = () => deps.getWorkspaces()?.list.getSnapshot().items ?? []
 
-  /** The chooser to use: the window's own native seam (desktop with one), else the Host's (T143) - until
+  /** The chooser to use: the window's own native seam (desktop with one), else the Host's - until
    * it says it has none. */
   let webPickerUnavailable = false
   const nativePicker = (): (() => Promise<string | null>) | undefined => {
@@ -205,11 +203,9 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
       const seams = deps.directory()
       const typed = path.trim()
       if (typed === '') return fail('Type the path of a folder to add.')
-      // A project is a git repository or a plain folder (T135: "should be able to handle both git /
-      // non-git"). registerFolder: true - this is the one explicit "add this folder" action, unlike the
-      // passive per-session discovery that must never promote an untouched directory to a workspace.
-      // clearForgotten: true - re-adding a folder the user previously removed (T137-followup) must
-      // actually work, not silently no-op against its own earlier removal.
+      // A project is a git repository or a plain folder. registerFolder: true - this is the one explicit "add this folder" action, unlike
+      // the passive discovery of chats' folders, which never makes a folder a project. clearForgotten: true - re-adding a folder the user
+      // removed earlier adds it again.
       const worktree = await shell.discover(typed, { registerFolder: true, clearForgotten: true })
       if (worktree === undefined) return fail('Could not add that folder.')
       if (seams.validateDirectory !== undefined) {

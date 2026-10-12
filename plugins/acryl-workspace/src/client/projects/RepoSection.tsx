@@ -29,7 +29,7 @@ interface RepoSectionProps {
   readonly onSelectChat: (path: string, id: string) => void
   readonly onCloseEntry: (path: string, entry: WorktreeSessionEntry) => void
   readonly onRenameEntry: (path: string, entry: WorktreeSessionEntry, title: string) => void
-  /** Remove this whole workspace from the tree (T135-followup hover "x"). */
+  /** Remove this whole workspace from the tree (its hover "x"). */
   readonly onRemove: () => void
   readonly onSelect: (path: string) => void
   /** Undefined when the DSH chat is off: there is no chat to start, so no button for it. */
@@ -197,8 +197,7 @@ function WorktreeSessions({
   readonly customAgents: readonly CustomAgent[]
   readonly onSelectAgent: (path: string, tileId: string) => void
   readonly onSelectChat: (path: string, id: string) => void
-  /** Hover "x" (owner request, T134-followup): removes an agent/terminal tab or hides a chat, from
-   * both this list and the tab strip at once. */
+  /** Hover "x": removes an agent/terminal tab or hides a chat, from both this list and the tab strip at once. */
   readonly onCloseEntry: (path: string, entry: WorktreeSessionEntry) => void
   /** Rename in place (double-click the row): an agent/terminal tab or a chat session, reflected in the tab strip. */
   readonly onRenameEntry: (path: string, entry: WorktreeSessionEntry, title: string) => void
