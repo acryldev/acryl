@@ -3,7 +3,7 @@ import { createProjectRegistryApi, type ProjectRegistryApi } from '../../src/cli
 import { adoptLegacyProjects, ProjectRegistryState, type LegacyWorkspaceSource } from '../../src/client/projects/registry-state.ts'
 import type { ProjectRegistryView, ProjectRequest } from '../../src/projects/contract.ts'
 
-function memoryApi(initial: ProjectRegistryView = { paths: [], adopted: false }): ProjectRegistryApi & { sent: ProjectRequest[] } {
+function memoryApi(initial: ProjectRegistryView = { paths: [], adopted: false, workspaces: [], current: 'default' }): ProjectRegistryApi & { sent: ProjectRequest[] } {
   let view = initial
   const sent: ProjectRequest[] = []
   return {
@@ -13,7 +13,7 @@ function memoryApi(initial: ProjectRegistryView = { paths: [], adopted: false })
       sent.push(request)
       if (request.op === 'add' && !view.paths.includes(request.path)) view = { ...view, paths: [...view.paths, request.path] }
       if (request.op === 'remove') view = { ...view, paths: view.paths.filter(path => path !== request.path) }
-      if (request.op === 'adopt' && !view.adopted) view = { paths: [...new Set([...view.paths, ...request.paths])], adopted: true }
+      if (request.op === 'adopt' && !view.adopted) view = { paths: [...new Set([...view.paths, ...request.paths])], adopted: true, workspaces: [], current: 'default' }
       return view
     },
   }
@@ -23,7 +23,7 @@ describe('the project registry API client', () => {
   const answer = (status: number, body: unknown) => async () => new Response(JSON.stringify(body), { status })
 
   it('reads a view, and turns the Host\'s refusal into an error carrying its words', async () => {
-    const view = { paths: ['/a'], adopted: true }
+    const view = { paths: ['/a'], adopted: true, workspaces: [], current: 'default' }
     expect(await createProjectRegistryApi(answer(200, { ok: true, view })).load()).toEqual(view)
     await expect(createProjectRegistryApi(answer(400, { ok: false, code: 'not-a-folder', message: '/x does not exist' })).send({ op: 'add', path: '/x' })).rejects.toThrow('/x does not exist')
     await expect(createProjectRegistryApi(answer(500, { error: 'boom' })).load()).rejects.toThrow('HTTP 500')
@@ -32,7 +32,7 @@ describe('the project registry API client', () => {
 
   it('sends a request as same-origin JSON', async () => {
     const calls: Array<{ url: string, init?: RequestInit }> = []
-    const api = createProjectRegistryApi(async (url, init) => { calls.push({ url, ...(init === undefined ? {} : { init }) }); return new Response(JSON.stringify({ ok: true, view: { paths: [], adopted: false } })) })
+    const api = createProjectRegistryApi(async (url, init) => { calls.push({ url, ...(init === undefined ? {} : { init }) }); return new Response(JSON.stringify({ ok: true, view: { paths: [], adopted: false, workspaces: [], current: 'default' } })) })
     await api.send({ op: 'remove', path: '/p' })
     expect(calls[0]?.url).toBe('/api/acryl-workspace/projects')
     expect(calls[0]?.init).toMatchObject({ method: 'POST', credentials: 'same-origin' })
@@ -51,7 +51,7 @@ describe('the project registry state', () => {
     await state.add('/a')
     await state.add('/b')
     expect(state.paths()).toEqual(['/a', '/b'])
-    expect(state.key()).toBe('/a\n/b')
+    expect(state.key()).toBe('default\n/a\n/b')
     await state.remove('/a')
     expect(state.paths()).toEqual(['/b'])
     expect(listener.mock.calls.length).toBe(4)   // the first load and each change; an unchanged answer is silent
@@ -61,7 +61,7 @@ describe('the project registry state', () => {
 
   it('keeps what it knew and says why when the Host refuses', async () => {
     const api = memoryApi()
-    const state = new ProjectRegistryState({ ...api, send: async () => { throw new Error('could not be saved') } }, { paths: ['/a'], adopted: false })
+    const state = new ProjectRegistryState({ ...api, send: async () => { throw new Error('could not be saved') } }, { paths: ['/a'], adopted: false, workspaces: [], current: 'default' })
     expect(state.loaded).toBe(true)
     expect(await state.add('/b')).toEqual({ ok: false, reason: 'could not be saved' })
     expect(state.paths()).toEqual(['/a'])
@@ -97,7 +97,7 @@ describe('taking over the projects that were chat workspaces', () => {
   })
 
   it('waits for the registry too, and does nothing when the projects were already taken over', async () => {
-    const api = memoryApi({ paths: ['/mine'], adopted: true })
+    const api = memoryApi({ paths: ['/mine'], adopted: true, workspaces: [], current: 'default' })
     const state = new ProjectRegistryState(api)
     const stop = adoptLegacyProjects(state, source('ready', ['/old']))
     await settle()

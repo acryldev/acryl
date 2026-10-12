@@ -2,8 +2,8 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { error, finishJson, isSameOriginLoopbackRequest, readJsonBody } from 'acryl-loopback-http'
-import { ProjectRequestError, parseProjectRequest, type ProjectResponse } from './contract.ts'
-import { ProjectFolderError, type ProjectRegistry } from './registry.ts'
+import { ProjectRequestError, parseProjectRequest, type ProjectRequest, type ProjectRegistryView, type ProjectResponse } from './contract.ts'
+import { ProjectFolderError, WorkspaceError, type ProjectRegistry } from './registry.ts'
 
 /** GET the list; POST `{ op, ... }` to add, remove or adopt. A refusal is a 400 whose message says what to fix. */
 export async function handleProjectsRequest(
@@ -27,14 +27,25 @@ export async function handleProjectsRequest(
   }
   try {
     const request = parseProjectRequest(body)
-    const view = request.op === 'add' ? await registry.add(request.path)
-      : request.op === 'remove' ? await registry.remove(request.path)
-        : await registry.adopt(request.paths)
+    const view = await apply(registry, request)
     return finishJson(res, 200, { ok: true, view } satisfies ProjectResponse)
   } catch (cause) {
     if (cause instanceof ProjectRequestError) return finishJson(res, 400, { ok: false, code: 'invalid', message: cause.message } satisfies ProjectResponse)
     if (cause instanceof ProjectFolderError) return finishJson(res, 400, { ok: false, code: 'not-a-folder', message: cause.message } satisfies ProjectResponse)
+    if (cause instanceof WorkspaceError) return finishJson(res, 400, { ok: false, code: 'workspace', message: cause.message } satisfies ProjectResponse)
     reportError('change the project list', cause)
     return finishJson(res, 500, error('the project list could not be saved'))
+  }
+}
+
+function apply(registry: ProjectRegistry, request: ProjectRequest): Promise<ProjectRegistryView> {
+  switch (request.op) {
+    case 'add': return registry.add(request.path)
+    case 'remove': return registry.remove(request.path)
+    case 'adopt': return registry.adopt(request.paths)
+    case 'create-workspace': return registry.createWorkspace(request)
+    case 'switch-workspace': return registry.switchWorkspace(request.id)
+    case 'rename-workspace': return registry.renameWorkspace(request.id, request.name)
+    case 'delete-workspace': return registry.deleteWorkspace(request.id)
   }
 }

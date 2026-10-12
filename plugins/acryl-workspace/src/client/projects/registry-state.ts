@@ -1,9 +1,9 @@
-/** What the page knows of the project registry: the Host's list, the moment it arrived, and who is listening. */
+/** What the page knows of the project registry: the Host's workspaces and the shown one's projects, the moment it arrived, and who is listening. */
 
-import type { ProjectRegistryView } from '../../projects/contract.ts'
+import type { ProjectRegistryView, WorkspaceKind, WorkspaceSummary } from '../../projects/contract.ts'
 import type { ProjectRegistryApi } from './registry-api.ts'
 
-const EMPTY: ProjectRegistryView = Object.freeze({ paths: [], adopted: false })
+const EMPTY: ProjectRegistryView = Object.freeze({ paths: [], adopted: false, workspaces: [], current: 'default' })
 
 export type ProjectChange = { readonly ok: true } | { readonly ok: false; readonly reason: string }
 
@@ -22,10 +22,17 @@ export class ProjectRegistryState {
 
   get adopted(): boolean { return this.view.adopted }
 
+  /** The shown workspace's projects. */
   paths(): readonly string[] { return this.view.paths }
 
-  /** A primitive that changes exactly when the list does, safe to subscribe to. */
-  key(): string { return this.view.paths.join('\n') }
+  /** Every workspace, Default first. The same array until the Host's answer changes it. */
+  workspaces(): readonly WorkspaceSummary[] { return this.view.workspaces }
+
+  /** The id of the workspace the sidebar shows. */
+  current(): string { return this.view.current }
+
+  /** A primitive that changes exactly when the shown workspace or its projects do, safe to subscribe to. */
+  key(): string { return `${this.view.current}\n${this.view.paths.join('\n')}` }
 
   subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener)
@@ -49,10 +56,27 @@ export class ProjectRegistryState {
     return this.apply(() => this.api.send({ op: 'adopt', paths }))
   }
 
+  /** Create a workspace; the Host shows it at once. */
+  createWorkspace(input: { readonly name: string, readonly kind: WorkspaceKind, readonly remote?: { readonly host: string, readonly user?: string, readonly path?: string } }): Promise<ProjectChange> {
+    return this.apply(() => this.api.send({ op: 'create-workspace', ...input }))
+  }
+
+  switchWorkspace(id: string): Promise<ProjectChange> {
+    return this.apply(() => this.api.send({ op: 'switch-workspace', id }))
+  }
+
+  renameWorkspace(id: string, name: string): Promise<ProjectChange> {
+    return this.apply(() => this.api.send({ op: 'rename-workspace', id, name }))
+  }
+
+  deleteWorkspace(id: string): Promise<ProjectChange> {
+    return this.apply(() => this.api.send({ op: 'delete-workspace', id }))
+  }
+
   private async apply(run: () => Promise<ProjectRegistryView>): Promise<ProjectChange> {
     try {
       const next = await run()
-      const changed = next.adopted !== this.view.adopted || next.paths.length !== this.view.paths.length || next.paths.some((path, index) => path !== this.view.paths[index])
+      const changed = JSON.stringify(next) !== JSON.stringify(this.view)
       this.view = next
       const first = !this.loadedOnce
       this.loadedOnce = true

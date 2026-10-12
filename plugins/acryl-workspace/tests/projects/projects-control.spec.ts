@@ -136,15 +136,15 @@ function world(options: {
   } as unknown as IWorkspaces
   const projects: string[] = [...(options.projects ?? [])]
   const registryApi: ProjectRegistryApi = {
-    load: async () => ({ paths: [...projects], adopted: true }),
+    load: async () => ({ paths: [...projects], adopted: true, workspaces: [], current: 'default' }),
     send: async (request) => {
       if (options.registryRefuses === true) throw new Error('the project list could not be saved')
       if (request.op === 'add' && !projects.includes(request.path)) projects.push(request.path)
       if (request.op === 'remove') { const index = projects.indexOf(request.path); if (index >= 0) projects.splice(index, 1) }
-      return { paths: [...projects], adopted: true }
+      return { paths: [...projects], adopted: true, workspaces: [], current: 'default' }
     },
   }
-  const registry = new ProjectRegistryState(registryApi, { paths: [...projects], adopted: true })
+  const registry = new ProjectRegistryState(registryApi, { paths: [...projects], adopted: true, workspaces: [], current: 'default' })
   const control = createProjectsControl({
     registry,
     platform: options.platform ?? 'darwin',
@@ -439,7 +439,7 @@ describe('ProjectsControl folder chooser, remaining cases', () => {
   it('lists ACRYL\'s own project folders, not the chat\'s workspaces, as project sources', () => {
     const w = world({ projects: ['/a', '/b'], workspaces: [{ workspaceId: 'w9', path: '/only-in-the-chat' }] })
     expect(w.control.workspacePaths()).toEqual(['/a', '/b'])
-    expect(w.control.workspaceKey()).toBe('/a\n/b')
+    expect(w.control.workspaceKey()).toBe('default\n/a\n/b')
   })
 
   it('adding a project saves it in the list and registers no chat workspace until a chat starts there', async () => {
