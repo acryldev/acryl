@@ -37,6 +37,8 @@ function stubActions(): TuiActions {
     addCustomProvider: vi.fn(),
     editProvider: vi.fn(),
     openProviderEditor: vi.fn(),
+    signInAgain: vi.fn(),
+    cancelAuthorization: vi.fn(),
     saveProvider: vi.fn(),
     deleteProvider: vi.fn(),
     clearApiKey: vi.fn(),

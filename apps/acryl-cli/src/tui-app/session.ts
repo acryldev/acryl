@@ -546,6 +546,8 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
   // Resolves the single in-flight authorization prompt, if any. Set by the
   // flow's `prompt()` interaction and settled by `answerAuthorizationPrompt`.
   let pendingPromptResolve: ((value: string) => void) | undefined
+  /** Withdraws the running sign-in (Escape on its prompt). */
+  let signInAttempt: AbortController | undefined
 
   const actions: TuiActions = {
     send(text) {
@@ -695,19 +697,32 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
           defaultModel: defaultModelPort,
           onCredentialChanged: () => syncCredentialViews(),
         })
+        signInAttempt?.abort()
+        const attempt = new AbortController()
+        signInAttempt = attempt
         try {
-          const outcome = await authorizationService.begin({ key, method, interaction: interaction as AuthorizationInteraction })
+          const outcome = await authorizationService.begin({ key, method, interaction: interaction as AuthorizationInteraction, signal: attempt.signal })
           if (outcome.status === 'authorized') {
             store.setNotice(`Signed in to ${flow.label} — credentials saved, ready to use from /model.`)
           } else {
             store.updateLogin({ error: 'Sign-in cancelled.' })
           }
         } catch (error) {
-          store.updateLogin({ error: `Sign-in failed: ${error instanceof Error ? error.message : String(error)}` })
+          store.updateLogin({ error: attempt.signal.aborted ? 'Sign-in cancelled.' : `Sign-in failed: ${error instanceof Error ? error.message : String(error)}` })
         } finally {
+          if (signInAttempt === attempt) signInAttempt = undefined
           store.updateLogin({ signingIn: undefined })
         }
       })()
+    },
+    cancelAuthorization() {
+      const attempt = signInAttempt
+      signInAttempt = undefined
+      pendingPromptResolve = undefined
+      store.updateLogin({ prompt: undefined })
+      // The page it asked to open is no longer valid.
+      store.setNotice(undefined)
+      attempt?.abort()
     },
     answerAuthorizationPrompt(value) {
       const resolve = pendingPromptResolve
@@ -789,6 +804,13 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     // used to just re-run sign-in, with no way to see its masked key or manage
     // its models without separately learning /model's own navigation. Opens
     // /model and jumps straight to that provider's edit form instead.
+    signInAgain(route) {
+      void (async () => {
+        store.openLogin()
+        await loadLoginFlows()
+        actions.beginAuthorization(loginRecordKey(route), 'oauth')
+      })()
+    },
     openProviderEditor(route) {
       void (async () => {
         store.openModelProfile()

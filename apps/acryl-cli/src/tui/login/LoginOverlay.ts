@@ -78,6 +78,9 @@ export class LoginOverlay implements Component {
     private readonly actions: TuiActions,
   ) {}
 
+  /** The terminal width at the last render. */
+  private width = 80
+
   invalidate(): void {}
 
   /**
@@ -91,7 +94,15 @@ export class LoginOverlay implements Component {
    */
   private noticeLines(): string[] {
     const notice = this.store.getSnapshot().notice
-    return notice === undefined ? [] : [muted(notice)]
+    // A notice can span lines (a message, then the page to open): each is its own row, and a row wider than the terminal is wrapped,
+    // not cut, so the whole sign-in URL is on screen when the browser could not be opened.
+    if (notice === undefined) return []
+    const width = Math.max(20, this.width)
+    return notice.split('\n').flatMap((line) => {
+      const rows: string[] = []
+      for (let at = 0; at < line.length; at += width) rows.push(muted(line.slice(at, at + width)))
+      return rows.length === 0 ? [''] : rows
+    })
   }
 
   /**
@@ -167,7 +178,7 @@ export class LoginOverlay implements Component {
     if (flows.length > maxVisible) lines.push(muted(`(${view.cursor + 1}/${flows.length})`))
     if (login.flows !== undefined && flows.length === 0) lines.push(muted('No matching providers.'))
     const back = view.chooserSkipped ? 'esc close' : 'esc back'
-    lines.push(muted(`type to search · ↑↓ select · enter sign in (or edit key/models if already configured) · ctrl+p add custom provider · ${back}`))
+    lines.push(muted(`type to search · ↑↓ select · enter sign in · ctrl+p custom provider · ${back}`))
     return lines
   }
 
@@ -194,7 +205,8 @@ export class LoginOverlay implements Component {
     return lines
   }
 
-  render(_width: number): string[] {
+  render(width: number): string[] {
+    this.width = width
     const overlay = this.store.getSnapshot().overlay
     if (overlay.kind !== 'login') return []
     const { login } = overlay
@@ -218,7 +230,7 @@ export class LoginOverlay implements Component {
 
   private handlePromptInput(data: string, prompt: LoginPromptState): void {
     if (matchesKey(data, Key.escape) || matchesKey(data, Key.ctrl('c'))) {
-      this.actions.answerAuthorizationPrompt('')
+      this.actions.cancelAuthorization()
       return
     }
     if (prompt.kind === 'select') {
@@ -271,7 +283,7 @@ export class LoginOverlay implements Component {
     // navigation to reach the exact route they just selected here.
     if (matchesKey(data, Key.ctrl('e'))) {
       const flow = flows[view.cursor]
-      if (flow !== undefined && flow.configured && flow.key.startsWith('llm-pi-ai/')) {
+      if (flow !== undefined && flow.configured && flow.authMethod === 'api-key' && flow.key.startsWith('llm-pi-ai/')) {
         this.actions.openProviderEditor(flow.key.slice('llm-pi-ai/'.length))
       }
       return
@@ -279,12 +291,9 @@ export class LoginOverlay implements Component {
     if (matchesKey(data, Key.enter)) {
       const flow = flows[view.cursor]
       if (flow === undefined) return
-      // A configured route has nothing left to "sign in" to — re-running
-      // authorization blindly (no indication anything was already there) is
-      // almost never what selecting it means. Show what's actually stored
-      // instead, the same screen ctrl+e opens; only an unconfigured route
-      // still starts a fresh sign-in.
-      if (flow.configured && flow.key.startsWith('llm-pi-ai/')) {
+      // A route configured with an API key opens its key and models (the same screen ctrl+e opens). An account sign-in has nothing to
+      // edit: choosing it signs in again in the browser (another account, an expired sign-in), as in other coding agents.
+      if (flow.configured && flow.authMethod === 'api-key' && view.authType !== 'oauth' && flow.key.startsWith('llm-pi-ai/')) {
         this.actions.openProviderEditor(flow.key.slice('llm-pi-ai/'.length))
       } else {
         this.actions.beginAuthorization(flow.key, view.authType)

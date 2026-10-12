@@ -49,6 +49,10 @@ export interface TuiActions {
   closeLogin(): void
   /** Run the authorization flow for the selected provider (pi-ai OAuth). `method` defaults to the flow's first (its preferred) method when omitted. */
   beginAuthorization(key: string, method?: AuthMethod): void
+  /** Sign in to an account-signed-in provider again (another account, or an expired sign-in): opens `/login` on that provider's browser sign-in. */
+  signInAgain(route: string): void
+  /** Withdraw the running sign-in (Escape on its prompt); it ends as cancelled. */
+  cancelAuthorization(): void
   /** Answer the in-flight authorization prompt (typed text/secret, or a chosen option id). */
   answerAuthorizationPrompt(value: string): void
   /** Close the `/model` overlay, discarding any in-progress edit. */

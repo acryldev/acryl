@@ -40,6 +40,11 @@ type TextField = 'route' | 'displayName' | 'baseURL' | 'apiKey'
  */
 const PROTOCOLS = ['openai-completions', 'openai-responses', 'anthropic-messages'] as const
 
+/** An existing route whose credential is an account sign-in (OAuth) rather than an API key. */
+function isAccountRoute(draft: ProviderDraft): boolean {
+  return !draft.isNew && draft.authMethod === 'oauth'
+}
+
 /** One live (route, model) pair the fuzzy picker can offer. */
 interface ModelPickerItem {
   readonly route: string
@@ -101,7 +106,7 @@ export class ModelProfileOverlay implements Component {
    */
   private noticeLines(): string[] {
     const notice = this.store.getSnapshot().notice
-    return notice === undefined ? [] : [muted(notice)]
+    return notice === undefined ? [] : notice.split('\n').map(line => muted(line))
   }
 
   private textFields(draft: ProviderDraft): TextField[] {
@@ -122,7 +127,8 @@ export class ModelProfileOverlay implements Component {
       this.formKeySeen = mp.formKey
       this.route = emptyMiniTextField(draft.route)
       this.displayName = emptyMiniTextField(draft.displayName)
-      this.api = PROTOCOLS.includes(draft.api as (typeof PROTOCOLS)[number]) ? draft.api : PROTOCOLS[0]
+      // A catalog route with no stored protocol keeps the catalog's ('' is not written on save); only a new custom one needs a choice.
+      this.api = PROTOCOLS.includes(draft.api as (typeof PROTOCOLS)[number]) ? draft.api : draft.isNew ? PROTOCOLS[0] : ''
       this.baseURL = emptyMiniTextField(draft.baseURL)
       this.apiKeyDraft = emptyMiniTextField('')
       this.models = [...draft.models]
@@ -161,6 +167,7 @@ export class ModelProfileOverlay implements Component {
     const draft = this.syncFormState(mp)
     if (draft !== undefined) {
       if (this.showModels) return this.renderModelListEditor(mp)
+      if (isAccountRoute(draft)) return this.renderAccount(draft)
       return this.renderForm(draft, mp)
     }
     return this.mode === 'picker' ? this.renderModelPicker(mp) : this.renderList(mp)
@@ -330,6 +337,24 @@ export class ModelProfileOverlay implements Component {
     }
   }
 
+  /**
+   * A provider signed in with an account (OAuth): its address, protocol and models come from the provider, so there is nothing to
+   * edit; what a person can do is sign in again (another account, an expired sign-in) or sign out.
+   */
+  private renderAccount(draft: ProviderDraft): string[] {
+    const lines: string[] = [bold(secondary(draft.displayName || draft.route))]
+    lines.push(...this.noticeLines())
+    lines.push('Signed in with your account. Its models come from the provider.')
+    lines.push(muted('enter sign in again · ctrl+d sign out · esc back'))
+    return lines
+  }
+
+  private handleAccountInput(data: string, draft: ProviderDraft): void {
+    if (matchesKey(data, Key.escape)) { this.actions.backToProviderList(); return }
+    if (matchesKey(data, Key.ctrl('d'))) { this.actions.clearApiKey(draft); return }
+    if (matchesKey(data, Key.enter)) this.actions.signInAgain(draft.route)
+  }
+
   private renderForm(draft: ProviderDraft, mp: ModelProfileOverlayState): string[] {
     const textFields = this.textFields(draft)
     const protocolRow = textFields.length
@@ -361,7 +386,7 @@ export class ModelProfileOverlay implements Component {
       lines.push(`${prefix}${renderMiniTextField(fieldState[field], isFocused, mask)}`)
     })
     const protocolFocused = this.focused === protocolRow
-    const protocolText = `${protocolFocused ? '› ' : '  '}API protocol: ‹ ${this.api} ›`
+    const protocolText = `${protocolFocused ? '› ' : '  '}API protocol: ‹ ${this.api === '' ? 'the provider\'s default' : this.api} ›`
     lines.push(protocolFocused ? invert(protocolText) : protocolText)
     const modelsText = `${this.focused === modelsRow ? '› ' : '  '}Models (${this.models.length}) — enter to edit`
     lines.push(this.focused === modelsRow ? invert(modelsText) : modelsText)
@@ -522,6 +547,7 @@ export class ModelProfileOverlay implements Component {
     const draft = this.syncFormState(mp)
     if (draft !== undefined) {
       if (this.showModels) this.handleModelListEditorInput(data, draft)
+      else if (isAccountRoute(draft)) this.handleAccountInput(data, draft)
       else this.handleFormInput(data, draft)
       return
     }
