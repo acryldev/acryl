@@ -243,21 +243,15 @@ describe('WorkspaceState split pane', () => {
     }
   })
 
-  it('opens a diff beside the current tab when asked, and reuses one that already exists', () => {
-    const w = make()
-    const diff = w.openDiff('/p', 'a.ts', { beside: true })!
-    expect(w.getSnapshot()).toMatchObject({ activeId: 'id1', splitId: diff.id })
-    w.closeSplit()
-    const again = w.openDiff('/p', 'a.ts', { beside: true })!
-    expect(again.id).toBe(diff.id)
-    expect(w.getSnapshot()).toMatchObject({ activeId: 'id1', splitId: diff.id })
-    expect(w.getSnapshot().tiles.filter(t => t.kind === 'diff')).toHaveLength(1)
-  })
-
-  it('still focuses the diff itself when not asked to open it beside', () => {
+  it('opens a diff as the current tab, and reuses one that already exists', () => {
     const w = make()
     const diff = w.openDiff('/p', 'a.ts')!
     expect(w.getSnapshot()).toMatchObject({ activeId: diff.id, splitId: undefined })
+    w.selectTile('id1')
+    const again = w.openDiff('/p', 'a.ts')!
+    expect(again.id).toBe(diff.id)
+    expect(w.getSnapshot()).toMatchObject({ activeId: diff.id, splitId: undefined })
+    expect(w.getSnapshot().tiles.filter(t => t.kind === 'diff')).toHaveLength(1)
   })
 
   it('restores a saved split', () => {

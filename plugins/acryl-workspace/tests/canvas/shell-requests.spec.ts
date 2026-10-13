@@ -25,12 +25,17 @@ describe('routeShellRequests', () => {
     w.stop()
   })
 
-  it('opens a diff beside the chat when the chat is the selected tab, and in place otherwise', () => {
+  it('opens a file, a markdown preview or a diff as the current tab, never splitting the canvas on its own', () => {
     const w = world()
     const state = w.groups.stateFor('/a')
     state.addTile('chat', { chatSessionId: 's1' })
+    w.shell.openFile({ worktree: '/a', file: 'x.ts' })
+    expect(state.getSnapshot().splitId).toBeUndefined()
+    expect(state.getSnapshot().tiles.find(tile => tile.id === state.getSnapshot().activeId)).toMatchObject({ kind: 'file', fileRel: 'x.ts' })
+    w.shell.openDoc({ worktree: '/a', file: 'README.md' })
     w.shell.openDiff({ worktree: '/a', file: 'x.ts' })
-    expect(state.getSnapshot().splitId).toBeDefined()
+    expect(state.getSnapshot().splitId).toBeUndefined()
+    expect(state.getSnapshot().tiles.find(tile => tile.id === state.getSnapshot().activeId)).toMatchObject({ kind: 'diff', diffFile: 'x.ts' })
     w.stop()
   })
 

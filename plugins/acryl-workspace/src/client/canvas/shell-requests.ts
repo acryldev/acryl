@@ -4,7 +4,6 @@
  */
 
 import type { WorkspaceGroups } from './groups.ts'
-import type { WorkspaceState } from './state.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import type { TerminalRegistry } from '../terminal/terminal-session.ts'
 import type { WorkspacePtyApi } from '../terminal/pty-api.ts'
@@ -14,12 +13,6 @@ export interface ShellRequestDeps {
   readonly groups: WorkspaceGroups
   readonly terminals: Pick<TerminalRegistry, 'release'>
   readonly api: Pick<WorkspacePtyApi, 'start' | 'write' | 'close'>
-}
-
-/** Opened from the chat, a diff, file or document goes beside it so the conversation stays visible. */
-function besideChat(state: WorkspaceState): boolean {
-  const current = state.getSnapshot()
-  return current.tiles.find(tile => tile.id === current.activeId)?.kind === 'chat'
 }
 
 /** Handle the shell's requests until the returned disposer runs. */
@@ -37,15 +30,15 @@ export function routeShellRequests({ shell, groups, terminals, api }: ShellReque
     }),
     shell.onOpenDiff((request) => {
       const state = groups.stateFor(request.worktree)
-      state.openDiff(request.worktree, request.file, { beside: besideChat(state) })
+      state.openDiff(request.worktree, request.file)
     }),
     shell.onOpenFile((request) => {
       const state = groups.stateFor(request.worktree)
-      state.openFile(request.worktree, request.file, { beside: besideChat(state) })
+      state.openFile(request.worktree, request.file)
     }),
     shell.onOpenDoc((request) => {
       const state = groups.stateFor(request.worktree)
-      state.openDoc(request.worktree, request.file, { beside: besideChat(state) })
+      state.openDoc(request.worktree, request.file)
     }),
     // A check: a terminal tab in that worktree that types the command for you.
     shell.onRunCheck((request) => {

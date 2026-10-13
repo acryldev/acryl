@@ -250,34 +250,16 @@ export class WorkspaceState {
   }
 
   /**
-   * Show one changed file's git diff: focus the tile already showing it, or open a new one.
+   * Edit one file of a worktree: focus the tab already editing it, or open a new one. It opens as the current tab; a split is the user's choice
+   * (the tab's split button or its menu).
    * @param worktree - absolute worktree path.
    * @param file - path relative to that worktree.
    */
-  /**
-   * Edit one file of a worktree: focus the tab already editing it, or open a new one.
-   * @param worktree - absolute worktree path.
-   * @param file - path relative to that worktree.
-   */
-  openFile(worktree: string, file: string, options: { readonly beside?: boolean } = {}): WorkspaceTile | undefined {
-    const previous = this.snapshot.activeId
+  openFile(worktree: string, file: string): WorkspaceTile | undefined {
     const existing = this.snapshot.tiles.find(
       tile => tile.kind === 'file' && tile.fileWorktree === worktree && tile.fileRel === file,
     )
-    const beside = options.beside === true && previous !== undefined
-    if (existing !== undefined) {
-      if (beside && previous !== existing.id) {
-        this.replace({ ...this.snapshot, splitId: existing.id, activeId: previous, menuOpen: false })
-      } else {
-        this.selectTile(existing.id)
-      }
-      return existing
-    }
-    const tile = this.addTile('file', { title: basename(file), fileWorktree: worktree, fileRel: file })
-    if (tile !== undefined && beside) {
-      this.replace({ ...this.snapshot, splitId: tile.id, activeId: previous, menuOpen: false })
-    }
-    return tile
+    return this.focusOrAdd(existing, () => this.addTile('file', { title: basename(file), fileWorktree: worktree, fileRel: file }))
   }
 
   /**
@@ -285,47 +267,29 @@ export class WorkspaceState {
    * @param worktree - absolute worktree path.
    * @param file - path relative to that worktree.
    */
-  openDoc(worktree: string, file: string, options: { readonly beside?: boolean } = {}): WorkspaceTile | undefined {
-    const previous = this.snapshot.activeId
+  openDoc(worktree: string, file: string): WorkspaceTile | undefined {
     const existing = this.snapshot.tiles.find(
       tile => tile.kind === 'doc' && tile.docWorktree === worktree && tile.docRel === file,
     )
-    const beside = options.beside === true && previous !== undefined
-    if (existing !== undefined) {
-      if (beside && previous !== existing.id) {
-        this.replace({ ...this.snapshot, splitId: existing.id, activeId: previous, menuOpen: false })
-      } else {
-        this.selectTile(existing.id)
-      }
-      return existing
-    }
-    const tile = this.addTile('doc', { title: basename(file), docWorktree: worktree, docRel: file })
-    if (tile !== undefined && beside) {
-      this.replace({ ...this.snapshot, splitId: tile.id, activeId: previous, menuOpen: false })
-    }
-    return tile
+    return this.focusOrAdd(existing, () => this.addTile('doc', { title: basename(file), docWorktree: worktree, docRel: file }))
   }
 
-  openDiff(worktree: string, file: string, options: { readonly beside?: boolean } = {}): WorkspaceTile | undefined {
-    const previous = this.snapshot.activeId
+  /**
+   * Show one changed file's git diff: focus the tab already showing it, or open a new one.
+   * @param worktree - absolute worktree path.
+   * @param file - path relative to that worktree.
+   */
+  openDiff(worktree: string, file: string): WorkspaceTile | undefined {
     const existing = this.snapshot.tiles.find(
       tile => tile.kind === 'diff' && tile.diffWorktree === worktree && tile.diffFile === file,
     )
-    // Beside: keep what the user is looking at (usually the chat) and put the diff next to it.
-    const beside = options.beside === true && previous !== undefined
-    if (existing !== undefined) {
-      if (beside && previous !== existing.id) {
-        this.replace({ ...this.snapshot, splitId: existing.id, activeId: previous, menuOpen: false })
-      } else {
-        this.selectTile(existing.id)
-      }
-      return existing
-    }
-    const tile = this.addTile('diff', { title: basename(file), diffWorktree: worktree, diffFile: file })
-    if (tile !== undefined && beside) {
-      this.replace({ ...this.snapshot, splitId: tile.id, activeId: previous, menuOpen: false })
-    }
-    return tile
+    return this.focusOrAdd(existing, () => this.addTile('diff', { title: basename(file), diffWorktree: worktree, diffFile: file }))
+  }
+
+  private focusOrAdd(existing: WorkspaceTile | undefined, add: () => WorkspaceTile | undefined): WorkspaceTile | undefined {
+    if (existing === undefined) return add()
+    this.selectTile(existing.id)
+    return existing
   }
 
   /**

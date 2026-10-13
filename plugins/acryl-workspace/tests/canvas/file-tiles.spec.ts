@@ -21,12 +21,25 @@ describe('editor tabs in WorkspaceState', () => {
     expect(state.openFile('/p', 'src/b.ts')?.id).not.toBe(first?.id)
   })
 
-  it('opens beside the chat when asked, keeping the chat focused', () => {
+  it('opens as the current tab from the chat, without splitting the canvas', () => {
+    const state = new WorkspaceState({ createId: counter() })
+    const tile = state.openFile('/p', 'a.ts')
+    expect(state.getSnapshot().activeId).toBe(tile?.id)
+    expect(state.getSnapshot().splitId).toBeUndefined()
+  })
+
+  it('leaves a split the user made as it is, and brings a file shown there to the front', () => {
     const state = new WorkspaceState({ createId: counter() })
     const chatId = state.getSnapshot().activeId
-    const tile = state.openFile('/p', 'a.ts', { beside: true })
-    expect(state.getSnapshot().activeId).toBe(chatId)
-    expect(state.getSnapshot().splitId).toBe(tile?.id)
+    const file = state.openFile('/p', 'a.ts')
+    if (file === undefined || chatId === undefined) throw new Error('no tiles')
+    state.selectTile(chatId)
+    state.openInSplit(file.id)
+    expect(state.getSnapshot()).toMatchObject({ activeId: chatId, splitId: file.id })
+    state.openFile('/p', 'b.ts')
+    expect(state.getSnapshot().splitId).toBe(file.id)
+    expect(state.openFile('/p', 'a.ts')?.id).toBe(file.id)
+    expect(state.getSnapshot().activeId).toBe(file.id)
   })
 
   it('keeps an unsaved draft with the disk version it is based on, and forgets it on request', () => {
@@ -85,15 +98,14 @@ describe('editor tabs in persistence', () => {
 })
 
 describe('file-backed doc tiles', () => {
-  it('opens a markdown file once, beside the chat when asked, and remembers it across a restart', () => {
+  it('opens a markdown file once, as the current tab, and remembers it across a restart', () => {
     const groups = new WorkspaceGroups()
     const state = groups.stateFor('/p')
-    const chatId = state.getSnapshot().activeId
-    const tile = state.openDoc('/p', 'specs/plan.md', { beside: true })
+    const tile = state.openDoc('/p', 'specs/plan.md')
     expect(tile).toMatchObject({ kind: 'doc', title: 'plan.md', docWorktree: '/p', docRel: 'specs/plan.md' })
     expect(tile?.docText).toBeUndefined()
-    expect(state.getSnapshot().activeId).toBe(chatId)
-    expect(state.getSnapshot().splitId).toBe(tile?.id)
+    expect(state.getSnapshot().activeId).toBe(tile?.id)
+    expect(state.getSnapshot().splitId).toBeUndefined()
     expect(state.openDoc('/p', 'specs/plan.md')?.id).toBe(tile?.id)
     expect(state.getSnapshot().tiles.filter(t => t.kind === 'doc')).toHaveLength(1)
 
