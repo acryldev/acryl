@@ -30,6 +30,8 @@ export interface TerminalSessionOptions {
   readonly onLost?: (terminalId: string) => void
   /** Called when the program sets the terminal's title (`ESC ] 0 ; title BEL`). */
   readonly onTitle?: (terminalId: string, title: string) => void
+  /** Called when the terminal takes the keyboard (the user clicked or typed into it, or it was shown). */
+  readonly onFocus?: (terminalId: string) => void
   readonly createSocket?: StreamSocketFactory
   readonly urlFor?: (id: string, cursor: number) => string
 }
@@ -86,6 +88,7 @@ export class TerminalSession {
     }, options.createSocket, options.urlFor)
     this.terminal.onData((data) => { this.stream.input(data) })
     this.terminal.onTitleChange((title) => { options.onTitle?.(id, title) })
+    this.element.addEventListener('focusin', () => { options.onFocus?.(id) })
     // A web address in the output can be opened with a click (never anything but http and https).
     this.terminal.registerLinkProvider({
       provideLinks: (row, callback) => {
@@ -145,6 +148,24 @@ export class TerminalSession {
 
   focus(): void {
     this.terminal.focus()
+  }
+
+  /** The process is still there to type into. */
+  isLive(): boolean {
+    return this.snapshot.status !== 'exited' && this.snapshot.status !== 'lost' && !this.disposed
+  }
+
+  /**
+   * The program has turned on bracketed paste, so pasted text arrives as one paste and its line breaks do not press Enter (agent CLIs,
+   * modern shells). Without it, every line break of a paste would run what came before it.
+   */
+  takesMultilinePaste(): boolean {
+    return this.terminal.modes.bracketedPasteMode
+  }
+
+  /** Type `text` into the program as a paste, as if the user pasted it; nothing is submitted unless the text itself ends a line. */
+  paste(text: string): void {
+    this.terminal.paste(text)
   }
 
   /** Be told when the user asks to search this terminal (the search shortcut). @returns disposer. */
@@ -222,8 +243,19 @@ export class TerminalRegistry {
   private readonly lostListeners = new Set<(terminalId: string) => void>()
   private readonly exitListeners = new Set<(terminalId: string, exitCode: number | null) => void>()
   private readonly titleListeners = new Set<(terminalId: string, title: string) => void>()
+  /** Terminal ids, the one the user worked in last at the end. */
+  private readonly recent: string[] = []
 
   constructor(private readonly options: TerminalSessionOptions = {}) {}
+
+  /** The terminal the user worked in last that is still running, or none (no terminal has had the keyboard yet). */
+  lastActive(): TerminalSession | undefined {
+    for (let index = this.recent.length - 1; index >= 0; index -= 1) {
+      const session = this.sessions.get(this.recent[index] ?? '')
+      if (session?.isLive() === true) return session
+    }
+    return undefined
+  }
 
   /** Be told when the Host no longer knows a terminal. @returns disposer. */
   onLost(listener: (terminalId: string) => void): () => void {
@@ -260,6 +292,12 @@ export class TerminalRegistry {
           this.options.onExit?.(terminalId, exitCode)
           for (const listener of [...this.exitListeners]) listener(terminalId, exitCode)
         },
+        onFocus: (terminalId) => {
+          this.options.onFocus?.(terminalId)
+          const at = this.recent.indexOf(terminalId)
+          if (at >= 0) this.recent.splice(at, 1)
+          this.recent.push(terminalId)
+        },
       })
       this.sessions.set(id, session)
     }
@@ -270,10 +308,13 @@ export class TerminalRegistry {
   release(id: string): void {
     this.sessions.get(id)?.dispose()
     this.sessions.delete(id)
+    const at = this.recent.indexOf(id)
+    if (at >= 0) this.recent.splice(at, 1)
   }
 
   disposeAll(): void {
     for (const session of this.sessions.values()) session.dispose()
     this.sessions.clear()
+    this.recent.length = 0
   }
 }

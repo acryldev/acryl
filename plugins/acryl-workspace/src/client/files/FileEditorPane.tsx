@@ -5,11 +5,15 @@ import type { WorkspaceState, WorkspaceTile } from '../canvas/state.ts'
 import { CodeEditor } from './CodeEditor.tsx'
 import { FileBreadcrumbs } from './FileBreadcrumbs.tsx'
 import { FileConflictError, type WorkspaceFilesApi } from './files-api.ts'
+import type { LineComment } from './line-comment.ts'
+import type { CommentResult } from './line-comments.ts'
 
 export interface FileEditorPaneProps {
   readonly tile: WorkspaceTile
   readonly workspace: WorkspaceState
   readonly filesApi: WorkspaceFilesApi
+  /** Where a line comment goes (the agent terminal the user worked in last); without it the editor offers no comments. */
+  readonly sendComment?: (comment: LineComment) => Promise<CommentResult>
 }
 
 type Loaded =
@@ -22,7 +26,7 @@ type Loaded =
 /** How long typing pauses before the draft is copied to the tab state (kept across tab switches). */
 const DRAFT_DELAY_MS = 400
 
-export function FileEditorPane({ tile, workspace, filesApi }: FileEditorPaneProps) {
+export function FileEditorPane({ tile, workspace, filesApi, sendComment }: FileEditorPaneProps) {
   const worktree = tile.fileWorktree
   const file = tile.fileRel
   const [loaded, setLoaded] = useState<Loaded>({ phase: 'loading' })
@@ -133,7 +137,14 @@ export function FileEditorPane({ tile, workspace, filesApi }: FileEditorPaneProp
       {loaded.phase === 'error' && <p className="dshWorkspaceChangesError" role="alert">{loaded.message}</p>}
       {loaded.phase === 'binary' && <p className="dshWorkspaceChangesEmpty">This is a binary file ({loaded.size} bytes) and is not shown.</p>}
       {loaded.phase === 'ready' && (
-        <CodeEditor key={`${worktree}\n${file}\n${String(revision)}`} value={loaded.draft} filename={file} onChange={changed} onSave={() => { void save() }} />
+        <CodeEditor
+          key={`${worktree}\n${file}\n${String(revision)}`}
+          value={loaded.draft}
+          filename={file}
+          onChange={changed}
+          onSave={() => { void save() }}
+          {...(sendComment === undefined ? {} : { onComment: async request => sendComment({ worktree, file, fromLine: request.fromLine, toLine: request.toLine, lines: request.lines, text: request.text }) })}
+        />
       )}
     </div>
   )

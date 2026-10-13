@@ -12,6 +12,7 @@ import { LanguageDescription } from '@codemirror/language'
 import { languages } from '@codemirror/language-data'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { basicSetup } from 'codemirror'
+import { lineComments, type CommentSend } from './line-comments.ts'
 
 export interface CodeEditorProps {
   /** The initial text. */
@@ -21,6 +22,8 @@ export interface CodeEditorProps {
   readonly onChange: (text: string) => void
   readonly onSave: () => void
   readonly readOnly?: boolean
+  /** Turns on line comments (the "+" beside a line); where a comment goes is this function's. */
+  readonly onComment?: CommentSend
 }
 
 const fill = EditorView.theme({
@@ -28,13 +31,16 @@ const fill = EditorView.theme({
   '.cm-scroller': { overflow: 'auto', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' },
 })
 
-export function CodeEditor({ value, filename, onChange, onSave, readOnly = false }: CodeEditorProps) {
+export function CodeEditor({ value, filename, onChange, onSave, readOnly = false, onComment }: CodeEditorProps) {
   const host = useRef<HTMLDivElement>(null)
   // The latest callbacks, so the editor is created once and never rebuilt when a parent re-renders.
   const changeRef = useRef(onChange)
   const saveRef = useRef(onSave)
+  const commentRef = useRef(onComment)
   changeRef.current = onChange
   saveRef.current = onSave
+  commentRef.current = onComment
+  const commenting = onComment !== undefined
 
   useEffect(() => {
     const parent = host.current
@@ -54,6 +60,7 @@ export function CodeEditor({ value, filename, onChange, onSave, readOnly = false
           EditorView.updateListener.of((update) => {
             if (update.docChanged) changeRef.current(update.state.doc.toString())
           }),
+          commenting ? lineComments(request => commentRef.current?.(request) ?? Promise.resolve({ ok: false, message: 'Comments are off here.' })) : [],
         ],
       }),
     })
@@ -71,7 +78,7 @@ export function CodeEditor({ value, filename, onChange, onSave, readOnly = false
     }
     // The editor is deliberately created once per mount: `value` is only the initial text.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filename, readOnly])
+  }, [filename, readOnly, commenting])
 
   return <div ref={host} className="dshWorkspaceCodeEditor" />
 }

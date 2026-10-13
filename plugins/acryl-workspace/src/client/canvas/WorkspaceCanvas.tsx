@@ -15,6 +15,7 @@ import type { WorkspaceGitApi } from '../git/git-api.ts'
 import { SessionBoardPane } from '../board/SessionBoardPane.tsx'
 import type { ChatSelection } from '../chat/chat-selection.ts'
 import { FileEditorPane } from '../files/FileEditorPane.tsx'
+import type { LineComment } from '../files/line-comment.ts'
 import type { WorkspaceFilesApi } from '../files/files-api.ts'
 import { GitDiffPane } from '../diff/GitDiffPane.tsx'
 import type { ReviewStore } from '../review/review-store.ts'
@@ -22,6 +23,7 @@ import { countRunning, runningLabel } from '../sessions/running-agents.ts'
 import { estimateTerminalSize } from '../terminal/terminal-size.ts'
 import { PtyPane } from '../terminal/PtyPane.tsx'
 import type { TerminalRegistry } from '../terminal/terminal-session.ts'
+import { sendCommentToTerminal } from '../terminal/comment-target.ts'
 import { shouldRaiseSystemNotice, type SystemNoticePort } from '../notifications/system-notice.ts'
 import { Toasts } from '../notifications/Toasts.tsx'
 import { describeFinish, type ToastState, type ToastTarget } from '../notifications/toast-state.ts'
@@ -145,12 +147,28 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
   // What the tree and the Changes, Files and Checks tabs ask of the tab sets (close a tab, open a diff, a file or a document, run a check).
   useEffect(() => routeShellRequests({ shell, groups, terminals, api }), [shell, groups, terminals, api])
 
+  // A line comment goes to the terminal the user worked in last, named as its tab is (a canvas tab or the terminal panel's).
+  const sendComment = useCallback(async (comment: LineComment) => sendCommentToTerminal({
+    lastActive: () => terminals.lastActive(),
+    nameOf: (terminalId) => {
+      for (const [, state] of groups.entries()) {
+        const tab = state.getSnapshot().tiles.find(candidate => candidate.terminalId === terminalId)
+        if (tab !== undefined) return tab.title
+      }
+      for (const key of dock.groups.keys()) {
+        const tab = dock.groups.stateFor(key).getSnapshot().tabs.find(candidate => candidate.terminalId === terminalId)
+        if (tab !== undefined) return tab.title
+      }
+      return undefined
+    },
+  }, comment), [terminals, groups, dock])
+
   /** The pane for one tile, used for both the primary pane and the split pane. */
   const renderTile = (tile: WorkspaceTile): ReactNode => {
     if (tile.kind === 'chat') return <div className="dshWorkspaceChat">{renderConversation()}</div>
     if (tile.kind === 'pty') return <PtyPane tile={tile} terminals={terminals} />
     if (tile.kind === 'doc' && tile.docRel !== undefined) return <DocFilePane tile={tile} shell={shell} filesApi={filesApi} />
-    if (tile.kind === 'file' && tile.fileRel !== undefined) return <FileEditorPane tile={tile} workspace={workspace} filesApi={filesApi} />
+    if (tile.kind === 'file' && tile.fileRel !== undefined) return <FileEditorPane tile={tile} workspace={workspace} filesApi={filesApi} sendComment={sendComment} />
     if (tile.kind === 'file') return <ScratchFilePane tile={tile} workspace={workspace} />
     if (tile.kind === 'browser') return <BrowserPane tile={tile} workspace={workspace} />
     if (tile.kind === 'kanban') return <SessionBoardPane tile={tile} workspace={workspace} shell={shell} useSessions={useSessions} navigator={chats} />

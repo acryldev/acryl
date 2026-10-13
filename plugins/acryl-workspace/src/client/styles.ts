@@ -392,12 +392,13 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceEditor { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
 .dshWorkspaceEditorBar { position: relative; display: flex; align-items: center; gap: 10px; min-height: 34px; padding: 0 10px; border-bottom: 1px solid var(--dsw-alias-border-l1); font: 12px/1.3 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-label-primary); }
 .dshWorkspaceCrumbs { flex: 1; min-width: 0; }
+.dshWorkspaceCrumbsMeasure { position: absolute; top: 0; left: 0; display: flex; visibility: hidden; pointer-events: none; white-space: nowrap; }
 .dshWorkspaceCrumbsPath { display: flex; align-items: center; min-width: 0; overflow: hidden; white-space: nowrap; }
 /* Parts keep their width, so a path that does not fit overflows and its leading folders fold into "..."; only the file's own name, once alone, shortens. */
 .dshWorkspaceCrumbsPart { display: inline-flex; align-items: center; flex: none; }
 .dshWorkspaceCrumbsPath[data-tight] .dshWorkspaceCrumbsPart:last-child { flex: 0 1 auto; min-width: 0; }
 .dshWorkspaceCrumbsSeparator { padding: 0 2px; color: var(--dsw-alias-label-secondary); }
-.dshWorkspaceCrumb { appearance: none; min-width: 0; overflow: hidden; text-overflow: ellipsis; padding: 2px 5px; border: 0; border-radius: 5px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: inherit; }
+.dshWorkspaceCrumb { appearance: none; display: inline-block; min-width: 0; overflow: hidden; text-overflow: ellipsis; padding: 2px 5px; border: 0; border-radius: 5px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: inherit; }
 .dshWorkspaceCrumb[data-file] { color: var(--dsw-alias-label-primary); font-weight: 500; }
 .dshWorkspaceCrumb:hover, .dshWorkspaceCrumb[aria-expanded="true"] { background: var(--dsw-alias-fill-hover, rgb(127 127 127 / 14%)); color: var(--dsw-alias-label-primary); }
 .dshWorkspaceCrumbsList { position: absolute; top: calc(100% + 4px); left: 6px; z-index: 30; display: flex; flex-direction: column; box-sizing: border-box; width: min(340px, calc(100% - 12px)); max-height: min(420px, 60vh); overflow: hidden auto; padding: 0 4px 4px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; background: var(--dsw-alias-bg-base); box-shadow: 0 16px 40px rgb(0 0 0 / 28%); outline: none; }
@@ -409,6 +410,28 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceCrumbsItem[aria-selected="true"] { color: #8fa5ff; }
 .dshWorkspaceCrumbsItem[data-kind="dir"] .dshWorkspaceCrumbsIcon, .dshWorkspaceCrumbsItem[data-kind="up"] .dshWorkspaceCrumbsIcon { color: #e0b155; }
 .dshWorkspaceCrumbsIcon { flex: none; color: var(--dsw-alias-label-secondary); }
+.cm-acrylCommentGutter .cm-gutterElement { display: flex; align-items: center; justify-content: center; width: 18px; padding: 0 2px; }
+.cm-acrylCommentPlus { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 4px; background: #4d6bfe; color: #fff; cursor: pointer; font: 600 13px/1 ui-sans-serif, system-ui, sans-serif; }
+.cm-acrylCommentPlus:hover { background: #6d86ff; }
+.cm-acrylCommentLine { background: rgb(77 107 254 / 14%); }
+.cm-acrylCommentForm, .cm-acrylCommentNote { position: sticky; left: var(--acryl-comment-left, 0); box-sizing: border-box; width: var(--acryl-comment-width, auto); max-width: 720px; margin: 6px 12px 8px; padding: 8px; border: 1px solid var(--dsw-alias-border-l1, #3a3f4b); border-radius: 8px; background: #1e2128; color: #d7dae0; font: 12.5px/1.45 ui-sans-serif, system-ui, sans-serif; white-space: normal; }
+.cm-acrylCommentInput { box-sizing: border-box; display: block; width: 100%; min-height: 56px; padding: 6px 8px; border: 1px solid #3a3f4b; border-radius: 6px; background: #16181d; color: inherit; font: inherit; resize: vertical; }
+.cm-acrylCommentInput:focus { outline: none; border-color: #4d6bfe; }
+.cm-acrylCommentFoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.cm-acrylCommentHint { margin-right: auto; color: #8b919c; font-size: 11.5px; white-space: nowrap; }
+.cm-acrylCommentButton { appearance: none; padding: 4px 12px; border: 1px solid #3a3f4b; border-radius: 6px; background: transparent; color: inherit; cursor: pointer; font: inherit; }
+.cm-acrylCommentButton:hover:not(:disabled) { border-color: #4d6bfe; }
+.cm-acrylCommentButton[data-primary] { border-color: #4d6bfe; background: #4d6bfe; color: #fff; }
+.cm-acrylCommentButton:disabled { opacity: 0.5; cursor: default; }
+.cm-acrylCommentProblem { color: #f87171; font-size: 12px; }
+.cm-acrylCommentProblem:not(:empty) { margin-top: 6px; }
+.cm-acrylCommentNote { display: flex; align-items: flex-start; gap: 8px; border-left: 3px solid #4d6bfe; }
+.cm-acrylCommentNote > svg { flex: none; margin-top: 2px; color: #8fa5ff; }
+.cm-acrylCommentBody { flex: 1; min-width: 0; }
+.cm-acrylCommentText { white-space: pre-wrap; overflow-wrap: anywhere; }
+.cm-acrylCommentWhere { color: #8b919c; font-size: 11.5px; }
+.cm-acrylCommentDismiss { appearance: none; flex: none; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: #8b919c; cursor: pointer; font: 14px/1 ui-sans-serif, system-ui, sans-serif; }
+.cm-acrylCommentDismiss:hover { background: rgb(255 255 255 / 8%); color: #d7dae0; }
 .dshWorkspaceEditorStatus { color: var(--dsw-alias-label-secondary); }
 .dshWorkspaceEditorStatus[data-kind="error"], .dshWorkspaceEditorStatus[data-kind="conflict"] { color: #f87171; }
 .dshWorkspaceEditorStatus[data-kind="saved"] { color: #4ade80; }
