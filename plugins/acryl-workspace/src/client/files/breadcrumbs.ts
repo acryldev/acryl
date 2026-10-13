@@ -26,3 +26,17 @@ export function parentDir(dir: string): string | undefined {
   const at = dir.lastIndexOf('/')
   return at < 0 ? '' : dir.slice(0, at)
 }
+
+/**
+ * How many leading parts fold into "..." so the rest fits: none when everything fits, never the file itself.
+ * @param widths - each part's width, a part after the first including its separator.
+ * @param ellipsis - the width of the "..." part.
+ */
+export function foldCount(widths: readonly number[], ellipsis: number, available: number): number {
+  const last = widths.length - 1
+  for (let folded = 0; folded < last; folded += 1) {
+    const shown = widths.slice(folded).reduce((sum, width) => sum + width, 0)
+    if ((folded === 0 ? 0 : ellipsis) + shown <= available) return folded
+  }
+  return Math.max(0, last)
+}

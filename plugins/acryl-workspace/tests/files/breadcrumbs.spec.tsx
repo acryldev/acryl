@@ -97,3 +97,16 @@ describe('walking the project from the breadcrumbs', () => {
     expect(screen.queryByRole('listbox')).toBeNull()
   })
 })
+
+describe('folding a long path', () => {
+  it('folds as few outer folders as it takes, never the file', async () => {
+    const { foldCount } = await import('../../src/client/files/breadcrumbs.ts')
+    // acryl, › apps, › desktop, › main.tsx; "..." is 20 wide.
+    const widths = [50, 50, 60, 80]
+    expect(foldCount(widths, 20, 240)).toBe(0)
+    expect(foldCount(widths, 20, 239)).toBe(1)
+    expect(foldCount(widths, 20, 160)).toBe(2)
+    expect(foldCount(widths, 20, 50)).toBe(3)
+    expect(foldCount([80], 20, 10)).toBe(0)
+  })
+})

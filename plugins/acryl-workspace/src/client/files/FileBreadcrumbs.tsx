@@ -6,7 +6,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
 import type { FileEntry } from '../../files/contract.ts'
 import { joinPath } from './tree-model.ts'
-import { crumbsFor, parentDir } from './breadcrumbs.ts'
+import { crumbsFor, foldCount, parentDir } from './breadcrumbs.ts'
 import type { WorkspaceFilesApi } from './files-api.ts'
 
 export interface FileBreadcrumbsProps {
@@ -40,25 +40,27 @@ export function FileBreadcrumbs({ worktree, file, filesApi, onOpenFile, suffix =
   const root = useRef<HTMLDivElement>(null)
   const list = useRef<HTMLDivElement>(null)
   const path = useRef<HTMLElement>(null)
-  // How many leading parts fold into "...": as many as it takes for the rest to fit, never the file itself.
+  const measure = useRef<HTMLDivElement>(null)
+  // How many leading parts fold into "...", from the parts' measured widths (an invisible copy of the whole path) and the room there is,
+  // again whenever either changes size (the pane, or the text once its font has loaded).
   const [folded, setFolded] = useState(0)
+  const parts = crumbs.map(crumb => crumb.label).join('/') + suffix
   useLayoutEffect(() => {
     const nav = path.current
-    if (nav !== null && nav.scrollWidth > nav.clientWidth && folded < crumbs.length - 1) setFolded(folded + 1)
-  })
-  useEffect(() => { setFolded(0) }, [worktree, file])
-  useEffect(() => {
-    const nav = path.current
-    if (nav === null || typeof ResizeObserver === 'undefined') return
-    let width = nav.clientWidth
-    const observer = new ResizeObserver(() => {
-      if (nav.clientWidth === width) return
-      width = nav.clientWidth
-      setFolded(0)
-    })
+    const copy = measure.current
+    if (nav === null || copy === null) return
+    const fit = (): void => {
+      const widths = [...copy.children].map(child => child.getBoundingClientRect().width)
+      const ellipsis = widths.pop() ?? 0
+      setFolded(foldCount(widths, ellipsis, nav.clientWidth))
+    }
+    fit()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(fit)
     observer.observe(nav)
+    observer.observe(copy)
     return () => { observer.disconnect() }
-  }, [])
+  }, [parts])
 
   useEffect(() => {
     if (open === null) return
@@ -155,6 +157,15 @@ export function FileBreadcrumbs({ worktree, file, filesApi, onOpenFile, suffix =
           </span>
         ))}
       </nav>
+      <div ref={measure} className="dshWorkspaceCrumbsMeasure" aria-hidden="true">
+        {crumbs.map((crumb, index) => (
+          <span key={`${String(index)}:${crumb.label}`} className="dshWorkspaceCrumbsPart">
+            {index > 0 && <span className="dshWorkspaceCrumbsSeparator">›</span>}
+            <span className="dshWorkspaceCrumb" data-file={crumb.file ? '' : undefined}>{crumb.label}{crumb.file ? suffix : ''}</span>
+          </span>
+        ))}
+        <span className="dshWorkspaceCrumbsPart"><span className="dshWorkspaceCrumb">...</span></span>
+      </div>
       {open !== null && (
         <div ref={list} className="dshWorkspaceCrumbsList" role="listbox" aria-label={open.dir === '' ? crumbs[0]?.label : open.dir} tabIndex={-1}>
           <div className="dshWorkspaceCrumbsListHead">{open.dir === '' ? crumbs[0]?.label : open.dir}</div>
