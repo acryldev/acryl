@@ -375,7 +375,9 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceFileMore { appearance: none; flex: none; display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; visibility: hidden; }
 .dshWorkspaceFileRow:hover .dshWorkspaceFileMore, .dshWorkspaceFileRow[data-active] .dshWorkspaceFileMore { visibility: visible; }
 .dshWorkspaceFileMore:hover { background: var(--dsw-alias-fill-hover, rgb(127 127 127 / 16%)); color: var(--dsw-alias-label-primary); }
-.dshWorkspaceFileMenu { width: 200px; z-index: 40; }
+.dshWorkspaceFileMenu { width: 200px; z-index: 40; padding: 4px; }
+.dshWorkspaceFileMenu .dshWorkspaceMenuItem { padding: 5px 10px; font-size: 12.5px; }
+.dshWorkspaceFileMenu .dshWorkspaceMenuRule { margin: 4px; }
 .dshWorkspaceFilesFilter { margin: 4px 8px 6px; padding: 5px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: var(--dsw-alias-label-primary); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceFilesFilter:focus { outline: 2px solid #4d6bfe; outline-offset: -1px; }
 .dshWorkspaceFilesEdit { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin: 0 8px 6px; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-label-primary); }
