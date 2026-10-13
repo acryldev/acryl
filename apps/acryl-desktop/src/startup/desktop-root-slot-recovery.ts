@@ -26,11 +26,11 @@ import type { IndexInjection } from '@deepseek-ai/dsh-host-webserver'
 const RETRY_GUARD_KEY = '__acryl_root_slot_retry_at__'
 
 /**
- * A reload is made only when the last one is older than this, so a failure
- * that returns right after a reload (a persistent boot failure, not a
- * transient one) stops at the normal crash face instead of looping, while a
- * window that loses its root hours later (a rebuild under a running app) is
- * reloaded again.
+ * A page that never showed its root (a boot failure) reloads only when the
+ * last reload is older than this, so a failure that returns on every boot
+ * stops at the normal crash face instead of looping. A page that had shown
+ * its root and then lost it (a hot reload) always reloads: the reloaded page
+ * starts over and must show its root again before that applies to it.
  */
 export const ROOT_SLOT_RETRY_INTERVAL_MS = 60_000
 
@@ -38,16 +38,29 @@ export const ROOT_SLOT_RETRY_INTERVAL_MS = 60_000
  * Inline classic script: listens for the uncaught `SlotAssemblyError` this
  * specific message identifies (both as a synchronous window 'error' event,
  * for the throw during a render, and as an 'unhandledrejection', in case a
- * future renderer version defers the throw), and reloads the page unless it
- * already did within `ROOT_SLOT_RETRY_INTERVAL_MS`.
+ * future renderer version defers the throw), and reloads the page: always
+ * when the page had shown its root, otherwise unless it already did within
+ * `ROOT_SLOT_RETRY_INTERVAL_MS`.
  */
 export const DESKTOP_ROOT_SLOT_RETRY_SCRIPT = `(() => {
   const guardKey = ${JSON.stringify(RETRY_GUARD_KEY)};
   const marker = "renderSlot('root') before any 'root' registration (boot order)";
   const isBootOrderRace = (value) => typeof value === 'string' && value.includes(marker);
   const interval = ${String(ROOT_SLOT_RETRY_INTERVAL_MS)};
+  let rootShown = false;
+  const watcher = new MutationObserver(() => {
+    if (document.querySelector('[data-slot="root"]') === null) return;
+    rootShown = true;
+    watcher.disconnect();
+  });
+  watcher.observe(document.documentElement, { childList: true, subtree: true });
   const retryOnce = () => {
     const now = Date.now();
+    if (rootShown) {
+      try { sessionStorage.setItem(guardKey, String(now)); } catch { /* best-effort; the reload does not depend on it */ }
+      location.reload();
+      return true;
+    }
     let last = NaN;
     try { last = Number(sessionStorage.getItem(guardKey)); } catch { /* private/blocked storage: treat as not yet retried */ }
     if (Number.isFinite(last) && last > 0 && now - last < interval) return false;

@@ -16,6 +16,8 @@ const BOOT_ORDER_MESSAGE = "renderSlot('root') before any 'root' registration (b
  */
 function evaluateOnce(store: Map<string, string>, reload: ReturnType<typeof vi.fn>, now = 1_000_000) {
   const listeners: Record<string, ((event: unknown) => void)[]> = {}
+  let rootInDocument = false
+  let onMutation: (() => void) | undefined
   const sandbox = {
     window: {
       addEventListener: (type: string, handler: (event: unknown) => void) => {
@@ -28,10 +30,21 @@ function evaluateOnce(store: Map<string, string>, reload: ReturnType<typeof vi.f
     },
     location: { reload },
     Date: { now: () => now },
+    document: {
+      documentElement: {},
+      querySelector: (selector: string) => (selector === '[data-slot="root"]' && rootInDocument ? {} : null),
+    },
+    MutationObserver: class {
+      constructor(callback: () => void) { onMutation = callback }
+      observe(): void {}
+      disconnect(): void { onMutation = undefined }
+    },
   }
   vm.createContext(sandbox)
   vm.runInContext(DESKTOP_ROOT_SLOT_RETRY_SCRIPT, sandbox)
-  return listeners
+  /** The page shows its root, as the shell's first render does. */
+  const showRoot = (): void => { rootInDocument = true; onMutation?.() }
+  return Object.assign(listeners, { showRoot })
 }
 
 describe('Desktop root-slot boot-order retry injection', () => {
@@ -72,7 +85,19 @@ describe('Desktop root-slot boot-order retry injection', () => {
     expect(reload).toHaveBeenCalledTimes(1)
   })
 
-  it('reloads again when the window loses its root long after the last reload (a plugin rebuilt under a running app)', () => {
+  it('always reloads a page that had shown its root and lost it (a hot reload), even right after an earlier reload', () => {
+    const store = new Map<string, string>()
+    const reload = vi.fn()
+    const first = evaluateOnce(store, reload, 1_000_000)
+    first.showRoot()
+    first.error?.[0]?.({ error: new Error(BOOT_ORDER_MESSAGE) })
+    const second = evaluateOnce(store, reload, 1_000_000 + 2_000)
+    second.showRoot()
+    second.error?.[0]?.({ error: new Error(BOOT_ORDER_MESSAGE) })
+    expect(reload).toHaveBeenCalledTimes(2)
+  })
+
+  it('reloads a page that never showed its root again once the last reload is old enough', () => {
     const store = new Map<string, string>()
     const reload = vi.fn()
     evaluateOnce(store, reload, 1_000_000).error?.[0]?.({ error: new Error(BOOT_ORDER_MESSAGE) })
