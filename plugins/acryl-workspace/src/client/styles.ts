@@ -390,8 +390,25 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceDocTable th, .dshWorkspaceDocTable td { padding: 5px 10px; border: 1px solid var(--dsw-alias-border-l1); text-align: left; vertical-align: top; }
 .dshWorkspaceDocTable th { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 6%)); }
 .dshWorkspaceEditor { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
-.dshWorkspaceEditorBar { display: flex; align-items: center; gap: 10px; min-height: 34px; padding: 0 10px; border-bottom: 1px solid var(--dsw-alias-border-l1); font: 12px/1.3 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-label-primary); }
-.dshWorkspaceEditorPath { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dshWorkspaceEditorBar { position: relative; display: flex; align-items: center; gap: 10px; min-height: 34px; padding: 0 10px; border-bottom: 1px solid var(--dsw-alias-border-l1); font: 12px/1.3 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-label-primary); }
+.dshWorkspaceCrumbs { flex: 1; min-width: 0; }
+.dshWorkspaceCrumbsPath { display: flex; align-items: center; min-width: 0; overflow: hidden; white-space: nowrap; }
+/* Parts keep their width, so a path that does not fit overflows and its leading folders fold into "..."; only the file's own name, once alone, shortens. */
+.dshWorkspaceCrumbsPart { display: inline-flex; align-items: center; flex: none; }
+.dshWorkspaceCrumbsPath[data-tight] .dshWorkspaceCrumbsPart:last-child { flex: 0 1 auto; min-width: 0; }
+.dshWorkspaceCrumbsSeparator { padding: 0 2px; color: var(--dsw-alias-label-secondary); }
+.dshWorkspaceCrumb { appearance: none; min-width: 0; overflow: hidden; text-overflow: ellipsis; padding: 2px 5px; border: 0; border-radius: 5px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: inherit; }
+.dshWorkspaceCrumb[data-file] { color: var(--dsw-alias-label-primary); font-weight: 500; }
+.dshWorkspaceCrumb:hover, .dshWorkspaceCrumb[aria-expanded="true"] { background: var(--dsw-alias-fill-hover, rgb(127 127 127 / 14%)); color: var(--dsw-alias-label-primary); }
+.dshWorkspaceCrumbsList { position: absolute; top: calc(100% + 4px); left: 6px; z-index: 30; display: flex; flex-direction: column; box-sizing: border-box; width: min(340px, calc(100% - 12px)); max-height: min(420px, 60vh); overflow: hidden auto; padding: 0 4px 4px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; background: var(--dsw-alias-bg-base); box-shadow: 0 16px 40px rgb(0 0 0 / 28%); outline: none; }
+.dshWorkspaceCrumbsListHead { position: sticky; top: 0; z-index: 1; flex: none; margin: 0 -4px; padding: 8px 12px 6px; background: var(--dsw-alias-bg-base); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dsw-alias-label-secondary); font-size: 11px; }
+.dshWorkspaceCrumbsNote { padding: 6px 8px; color: var(--dsw-alias-label-secondary); }
+.dshWorkspaceCrumbsItem { appearance: none; display: flex; align-items: center; gap: 7px; flex: none; padding: 5px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; font: 12px/1.3 ui-sans-serif, system-ui, sans-serif; text-align: left; white-space: nowrap; min-width: 0; }
+.dshWorkspaceCrumbsName { overflow: hidden; text-overflow: ellipsis; }
+.dshWorkspaceCrumbsItem[data-active] { background: var(--dsw-alias-fill-hover, rgb(127 127 127 / 14%)); }
+.dshWorkspaceCrumbsItem[aria-selected="true"] { color: #8fa5ff; }
+.dshWorkspaceCrumbsItem[data-kind="dir"] .dshWorkspaceCrumbsIcon, .dshWorkspaceCrumbsItem[data-kind="up"] .dshWorkspaceCrumbsIcon { color: #e0b155; }
+.dshWorkspaceCrumbsIcon { flex: none; color: var(--dsw-alias-label-secondary); }
 .dshWorkspaceEditorStatus { color: var(--dsw-alias-label-secondary); }
 .dshWorkspaceEditorStatus[data-kind="error"], .dshWorkspaceEditorStatus[data-kind="conflict"] { color: #f87171; }
 .dshWorkspaceEditorStatus[data-kind="saved"] { color: #4ade80; }

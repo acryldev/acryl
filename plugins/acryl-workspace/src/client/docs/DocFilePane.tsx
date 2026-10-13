@@ -6,6 +6,7 @@ import type { WorkspaceFilesApi } from '../files/files-api.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { DocView } from './DocView.tsx'
 import { parseDoc } from './doc-format.ts'
+import { FileBreadcrumbs } from '../files/FileBreadcrumbs.tsx'
 
 export interface DocFilePaneProps {
   readonly tile: WorkspaceTile
@@ -53,7 +54,7 @@ export function DocFilePane({ tile, shell, filesApi, pollMs = 2000 }: DocFilePan
   return (
     <div className="dshWorkspaceDocFile">
       <div className="dshWorkspaceEditorBar">
-        <span className="dshWorkspaceEditorPath" title={`${worktree}/${file}`}>{file}</span>
+        <FileBreadcrumbs worktree={worktree} file={file} filesApi={filesApi} onOpenFile={(next) => { shell.openFile({ worktree, file: next }) }} />
         <span className="dshWorkspaceEditorStatus">read-only preview</span>
         <button type="button" className="dshWorkspaceEditorButton" onClick={() => { shell.openFile({ worktree, file }) }}>Edit</button>
       </div>

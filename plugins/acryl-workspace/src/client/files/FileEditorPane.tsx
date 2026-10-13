@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { WorkspaceState, WorkspaceTile } from '../canvas/state.ts'
 import { CodeEditor } from './CodeEditor.tsx'
+import { FileBreadcrumbs } from './FileBreadcrumbs.tsx'
 import { FileConflictError, type WorkspaceFilesApi } from './files-api.ts'
 
 export interface FileEditorPaneProps {
@@ -108,7 +109,7 @@ export function FileEditorPane({ tile, workspace, filesApi }: FileEditorPaneProp
   return (
     <div className="dshWorkspaceEditor">
       <div className="dshWorkspaceEditorBar">
-        <span className="dshWorkspaceEditorPath" title={`${worktree}/${file}`}>{file}{dirty ? ' ●' : ''}</span>
+        <FileBreadcrumbs worktree={worktree} file={file} filesApi={filesApi} suffix={dirty ? ' ●' : ''} onOpenFile={(next) => { workspace.openFile(worktree, next) }} />
         {status !== null && <span className="dshWorkspaceEditorStatus" data-kind={status.kind}>{status.message}</span>}
         <button type="button" className="dshWorkspaceEditorButton" disabled={loaded.phase !== 'ready' || saving} onClick={() => { void save() }} title="Save (Cmd or Ctrl+S)">
           {saving ? 'Saving...' : 'Save'}
