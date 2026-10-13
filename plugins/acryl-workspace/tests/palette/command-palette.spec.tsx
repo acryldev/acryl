@@ -6,7 +6,6 @@ import { CommandPalette } from '../../src/client/palette/CommandPalette.tsx'
 import { PaletteConfigState } from '../../src/client/palette/palette-config.ts'
 import { PalettePanel } from '../../src/client/palette/PalettePanel.tsx'
 import { DEFAULT_PALETTE_CONFIG, type PaletteItem } from '../../src/client/palette/palette-items.ts'
-import { startPaletteShortcut } from '../../src/client/palette/palette-shortcut.ts'
 import { PaletteState } from '../../src/client/palette/palette-state.ts'
 import { WorkspaceTabRegistry } from '../../src/client/tabs/registry/tab-registry.ts'
 import { TabTypesState } from '../../src/client/tabs/tab-types-state.ts'
@@ -77,22 +76,6 @@ describe('CommandPalette', () => {
     expect(screen.getByText('Nothing matches.')).toBeTruthy()
     fireEvent.click(screen.getByRole('tab', { name: 'In files' }))
     expect(palette.getSnapshot().scope).toBe('content')
-  })
-})
-
-describe('global shortcut', () => {
-  it('toggles on Cmd+Shift+K, consumes the event, and stops when disposed', () => {
-    const toggle = vi.fn()
-    const stop = startPaletteShortcut(window, toggle)
-    const press = (over: KeyboardEventInit) => { const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...over }); window.dispatchEvent(event); return event }
-    const hit = press({ key: 'K', code: 'KeyK', metaKey: true, shiftKey: true })
-    expect(toggle).toHaveBeenCalledTimes(1)
-    expect(hit.defaultPrevented).toBe(true)
-    press({ key: 'k', code: 'KeyK', metaKey: true })
-    expect(toggle).toHaveBeenCalledTimes(1)
-    stop()
-    press({ key: 'K', code: 'KeyK', ctrlKey: true, shiftKey: true })
-    expect(toggle).toHaveBeenCalledTimes(1)
   })
 })
 

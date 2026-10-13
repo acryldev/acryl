@@ -8,8 +8,11 @@ import { createInspectorToggle } from './inspector-toggle.ts'
 export const name = 'acryl-mount-anchors-client'
 export const inject = ['shortcuts']
 
-/** Stable id of the toggle command in DSH's shortcut catalog (Settings > Keyboard shortcuts lists and rebinds it). */
+/** Stable id of the toggle command in DSH's shortcut catalog (Settings > Shortcuts lists and rebinds it). */
 const TOGGLE_COMMAND_ID = 'acryl-mount-anchors.toggle' as ShortcutCommandId
+
+/** Window event that starts or stops picking, for a starter that is not a key (the command palette). Keep the string in step with `acryl-workspace`. */
+export const PICK_ELEMENT_EVENT = 'acryl:toggle-element-picker'
 
 /** Cmd/Ctrl+Shift+. - the combination the inspector has always used. */
 const DEFAULT_BINDING: ShortcutBinding = { code: 'Period', modifiers: ['primary', 'shift'] }
@@ -25,8 +28,8 @@ export function apply(ctx: ClientContext): void {
   const toggle = createInspectorToggle()
   ctx.effect(() => ctx.shortcuts.register({
     id: TOGGLE_COMMAND_ID,
-    label: () => 'Toggle mount-anchor inspector',
-    aliases: ['mount anchors', 'inspector', 'point at element'],
+    label: () => 'Pick an element for the agent',
+    aliases: ['inspector', 'point at element', 'pinpoint', 'locate element', 'mount anchors'],
     defaults: {
       'desktop:macos': DEFAULT_BINDING,
       'desktop:windows': DEFAULT_BINDING,
@@ -41,6 +44,11 @@ export function apply(ctx: ClientContext): void {
     modals: [],
     resolve: () => ({ status: 'handled', run: () => { toggle.toggle() } }),
   }), 'acryl-mount-anchors: toggle shortcut')
+  ctx.effect(() => {
+    const onToggle = (): void => { toggle.toggle() }
+    window.addEventListener(PICK_ELEMENT_EVENT, onToggle)
+    return () => { window.removeEventListener(PICK_ELEMENT_EVENT, onToggle) }
+  }, 'acryl-mount-anchors: toggle event')
   ctx.effect(() => {
     const container = document.createElement('div')
     container.id = 'acryl-mount-anchors-root'

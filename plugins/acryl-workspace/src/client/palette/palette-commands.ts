@@ -23,6 +23,8 @@ export interface PaletteActions {
   focusTab(tabId: string): void
   closeActiveTab(): void
   openFile(worktree: string, file: string, line?: number): void
+  /** Starts picking an element on the page, to copy where it is for an agent (`acryl-mount-anchors`). */
+  pickElement(): void
 }
 
 export interface PaletteView {
@@ -37,8 +39,8 @@ export interface PaletteView {
 }
 
 const isMac = (): boolean => typeof navigator !== 'undefined' && /mac/i.test(navigator.platform)
-/** The palette's own shortcut, drawn for the platform. */
-export const PALETTE_SHORTCUT_LABEL = (): string => (isMac() ? '⌘⇧K' : 'Ctrl+Shift+K')
+/** The palette's default shortcut (registered by `acryl-shortcuts`), drawn for the platform. */
+export const PALETTE_SHORTCUT_LABEL = (): string => (isMac() ? '⌘⇧P' : 'Ctrl+Shift+P')
 
 interface FixedCommand {
   readonly id: string
@@ -55,6 +57,7 @@ const FIXED_COMMANDS: readonly FixedCommand[] = [
   { id: 'command:terminal-bottom', title: 'Terminal panel: at the bottom', keywords: ['terminal', 'dock', 'layout'], run: a => { a.setTerminalMode('bottom') } },
   { id: 'command:terminal-side', title: 'Terminal panel: side by side', keywords: ['terminal', 'dock', 'layout'], run: a => { a.setTerminalMode('side') } },
   { id: 'command:mode-chats', title: 'Show chats in the left pane', keywords: ['sidebar', 'sessions'], run: a => { a.setShellMode('chats') } },
+  { id: 'command:pick-element', title: 'Pick an element for the agent (copies where it is)', keywords: ['inspector', 'pinpoint', 'locate', 'element', 'ui'], run: a => { a.pickElement() } },
   { id: 'command:mode-projects', title: 'Show projects in the left pane', keywords: ['sidebar', 'worktrees', 'repositories'], run: a => { a.setShellMode('projects') } },
 ]
 

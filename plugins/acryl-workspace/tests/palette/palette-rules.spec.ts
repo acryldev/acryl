@@ -5,7 +5,6 @@ import { buildPaletteItems, CONFIGURABLE_ENTRIES, type PaletteActions } from '..
 import { DEFAULT_PALETTE_CONFIG, rankItems, sectionsOf, type PaletteItem } from '../../src/client/palette/palette-items.ts'
 import { FILE_DEBOUNCE_MS, PaletteState, type FileSearch } from '../../src/client/palette/palette-state.ts'
 import { createFileSearch } from '../../src/client/palette/file-search.ts'
-import { isPaletteShortcut } from '../../src/client/palette/palette-shortcut.ts'
 import { WORKSPACE_SURFACE_ACTIONS } from '../../src/client/terminal/agent-commands.ts'
 
 const item = (id: string, title: string, over: Partial<PaletteItem> = {}): PaletteItem => ({ id, group: 'command', title, run: () => {}, ...over })
@@ -108,6 +107,7 @@ describe('built-in items', () => {
     focusTab: vi.fn<PaletteActions['focusTab']>(),
     closeActiveTab: vi.fn<PaletteActions['closeActiveTab']>(),
     openFile: vi.fn<PaletteActions['openFile']>(),
+    pickElement: vi.fn<PaletteActions['pickElement']>(),
   })
   const view = { customTabs: [{ kind: 'acme.board', label: 'Whiteboard', description: 'Draw' }], surfaces: WORKSPACE_SURFACE_ACTIONS.filter(s => s.kind !== 'diff'), agents: [{ id: 'claude', label: 'Claude' }], worktrees: [{ path: '/p', label: 'proj: main' }], tabs: [{ id: 't1', title: 'Claude', kind: 'pty' }] }
 
@@ -126,6 +126,7 @@ describe('built-in items', () => {
     byId.get('command:close-tab')?.run()
     byId.get('command:mode-projects')?.run()
     byId.get('setting:tabs')?.run()
+    byId.get('command:pick-element')?.run()
     expect(a.openSurface).toHaveBeenCalledWith('browser')
     expect(a.openAgent).toHaveBeenCalledWith('claude', 'Claude')
     expect(a.openCustomTab).toHaveBeenCalledWith('acme.board', 'Whiteboard')
@@ -136,6 +137,7 @@ describe('built-in items', () => {
     expect(a.closeActiveTab).toHaveBeenCalled()
     expect(a.setShellMode).toHaveBeenCalledWith('projects')
     expect(a.openSettings).toHaveBeenCalledWith('tabs')
+    expect(a.pickElement).toHaveBeenCalled()
     expect(byId.has('command:surface:diff')).toBe(false)
     expect(new Set(items.map(i => i.id)).size).toBe(items.length)
   })
@@ -268,19 +270,6 @@ describe('file search source', () => {
     const [byContent] = await search('x', 'content', new AbortController().signal)
     expect(byContent).toMatchObject({ title: 'state.ts:12', subtitle: 'src - const x = 1' })
     expect(await createFileSearch({ search: async () => { throw new Error('no') } }, () => undefined, open)('a', 'name', new AbortController().signal)).toEqual([])
-  })
-})
-
-describe('shortcut', () => {
-  const key = (over: Partial<Parameters<typeof isPaletteShortcut>[0]>) => ({ key: 'k', code: 'KeyK', metaKey: true, ctrlKey: false, shiftKey: true, altKey: false, isComposing: false, ...over })
-  it('is Cmd or Ctrl plus Shift plus K, and nothing else', () => {
-    expect(isPaletteShortcut(key({}))).toBe(true)
-    expect(isPaletteShortcut(key({ metaKey: false, ctrlKey: true, key: 'K' }))).toBe(true)
-    expect(isPaletteShortcut(key({ shiftKey: false }))).toBe(false)
-    expect(isPaletteShortcut(key({ metaKey: false }))).toBe(false)
-    expect(isPaletteShortcut(key({ altKey: true }))).toBe(false)
-    expect(isPaletteShortcut(key({ isComposing: true }))).toBe(false)
-    expect(isPaletteShortcut(key({ key: 'j', code: 'KeyJ' }))).toBe(false)
   })
 })
 

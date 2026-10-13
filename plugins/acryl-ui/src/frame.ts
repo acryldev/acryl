@@ -20,6 +20,6 @@ export type { HostObservable, InjectFace, PropsLocale, PropsRenderSlots, PropsRu
 export type { ILayout, MainPanelId, PanelInfo } from '@deepseek-ai/dsh-client-ui-layout/client'
 export type { ThemeSnapshot } from '@deepseek-ai/dsh-client-ui-theme/client'
 export type { UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
-export type { ShortcutBinding, ShortcutCommandId } from '@deepseek-ai/dsh-client-shortcuts/client'
+export type { ShortcutBinding, ShortcutCatalogEntry, ShortcutCommandId, ShortcutFixedCatalogEntry, Shortcuts } from '@deepseek-ai/dsh-client-shortcuts/client'
 export type { ISessions, SessionListState, SessionReference } from '@deepseek-ai/dsh-api-session-controller/client'
 export type { IWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/client'

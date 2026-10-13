@@ -1,7 +1,7 @@
 {
   "name": "acryl-shortcuts",
   "version": "0.1.0",
-  "description": "ACRYL's keyboard commands on DSH's own shortcut service (rebindable in Edit shortcuts); today the command-palette toggle.",
+  "description": "ACRYL keyboard commands on DSH's own shortcut service, and Settings > Shortcuts, which lists and rebinds every shortcut.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -32,7 +32,10 @@
     },
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-shortcuts"
+        "@deepseek-ai/dsh-client-shortcuts",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-slots"
       ],
       "platform": "web"
     }
@@ -48,24 +51,28 @@
   },
   "scripts": {
     "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly && tsc -p tsconfig.client.json --emitDeclarationOnly",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit",
-    "check": "pnpm run build && pnpm run typecheck",
-    "prepack": "pnpm run check"
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test",
+    "prepack": "pnpm run check",
+    "test": "vitest run"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2",
     "@types/node": "^22.20.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "tsdown": "0.22.2",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "vitest": "4.1.8"
   },
   "acryl": {
     "schemaVersion": 1,

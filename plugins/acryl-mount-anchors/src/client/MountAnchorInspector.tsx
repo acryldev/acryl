@@ -27,6 +27,8 @@ export interface MountAnchorTarget {
 export interface MountAnchor {
   readonly slot: string
   readonly target: MountAnchorTarget
+  /** A CSS selector for the element, from the nearest ancestor with an id (or the page body) down. */
+  readonly selector: string
   readonly component: MountAnchorComponent | null
   readonly url: string
   readonly timestamp: string
@@ -57,9 +59,35 @@ function nearestSlot(element: Element): string | null {
   return null
 }
 
+/** An id or class a selector can name as it is; anything else is quoted in an attribute selector. */
+const PLAIN_NAME = /^[A-Za-z_][\w-]*$/u
+const quoted = (value: string): string => `"${value.replace(/["\\]/gu, match => `\\${match}`)}"`
+
+/**
+ * A CSS selector that finds `element` again: from the nearest ancestor with an id, or from `body`, each step the tag, its first class and its
+ * position among same-tag siblings when there are several. Bounded to 8 steps so it stays readable when pasted into a chat.
+ */
+export function selectorFor(element: Element): string {
+  const steps: string[] = []
+  let node: Element | null = element
+  while (node !== null && node.tagName !== 'BODY' && node.tagName !== 'HTML' && steps.length < 8) {
+    if (node.id !== '') { steps.unshift(PLAIN_NAME.test(node.id) ? `#${node.id}` : `[id=${quoted(node.id)}]`); break }
+    const tag = node.tagName.toLowerCase()
+    const first = [...node.classList][0]
+    const parent: Element | null = node.parentElement
+    const same = parent === null ? [] : [...parent.children].filter(child => child.tagName === node?.tagName)
+    const position = same.length > 1 ? `:nth-of-type(${String(same.indexOf(node) + 1)})` : ''
+    const kind = first === undefined ? '' : PLAIN_NAME.test(first) ? `.${first}` : `[class~=${quoted(first)}]`
+    steps.unshift(`${tag}${kind}${position}`)
+    node = parent
+  }
+  return steps.join(' > ')
+}
+
 /** A short, human-scannable description of exactly which element this is. */
 function describeTarget(element: Element): MountAnchorTarget {
-  const text = element.textContent?.trim() ?? ''
+  // The text a person sees: `textContent` would also include the CSS of any `<style>` inside the element.
+  const text = (element instanceof HTMLElement ? element.innerText : element.textContent ?? '').trim().replace(/\s+/gu, ' ')
   return {
     tag: element.tagName.toLowerCase(),
     id: element.id === '' ? null : element.id,
@@ -113,7 +141,8 @@ function resolveComponent(element: Element): MountAnchorComponent | null {
 
 interface HoverState {
   readonly rect: DOMRect
-  readonly slot: string
+  /** The Cordis slot the element is in, when it is inside one. */
+  readonly slot: string | null
   readonly tag: string
 }
 
@@ -125,11 +154,11 @@ export interface MountAnchorInspectorProps {
 /**
  * Visual mount-anchor inspector (spec 040-agentic-multiplexer-ade's own prerequisite, spec
  * 039-visual-mount-anchors Scope A). Its toggle combo defaults to Cmd+Shift+. but is a real,
- * user-reassignable shortcut (Settings > Shortcuts, spec 039's own follow-up) - read live from
- * `shortcuts` rather than hardcoded, so a reassignment takes effect without a reload. Point mode
- * hovers outline the precise element under the cursor (not its whole containing panel), a click
- * resolves the full anchor (slot + precise target + owning source file) and copies it to the
- * clipboard as JSON. Escape, or clicking, exits point mode.
+ * user-reassignable shortcut (Settings > Shortcuts), run by DSH's shortcut service, so a reassignment
+ * takes effect without a reload; the command palette starts it too. Point mode hovers outline the
+ * precise element under the cursor (not its whole containing panel), a click resolves the full
+ * anchor (slot + precise target + selector + owning source file) and copies it to the clipboard as
+ * JSON, to paste into a chat with an agent. Escape, or clicking, exits point mode.
  */
 export function MountAnchorInspector({ toggle }: MountAnchorInspectorProps) {
   const active = useSyncExternalStore(toggle.subscribe, toggle.get)
@@ -140,7 +169,7 @@ export function MountAnchorInspector({ toggle }: MountAnchorInspectorProps) {
   activeRef.current = active
 
   useEffect(() => {
-    // The toggle combo itself is a DSH shortcut command (see `index.ts`), so users rebind it in Settings > Keyboard shortcuts;
+    // The toggle combo itself is a DSH shortcut command (see `index.ts`), so users rebind it in Settings > Shortcuts;
     // only leaving the mode with Escape is handled here.
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.key === 'Escape' && toggle.get()) setActive(false)
@@ -162,12 +191,13 @@ export function MountAnchorInspector({ toggle }: MountAnchorInspectorProps) {
     const onMove = (event: MouseEvent): void => {
       const element = preciseElementAt(event.clientX, event.clientY)
       if (element === null) { setHover(null); return }
-      const slot = nearestSlot(element)
-      if (slot === null) { setHover(null); return }
-      // Outline the precise hovered element itself, not the whole slot container it sits in -
-      // the slot name is still shown as a label, but the box should hug the actual widget.
-      setHover({ rect: element.getBoundingClientRect(), slot, tag: element.tagName.toLowerCase() })
+      // Outline the precise hovered element itself, not the whole slot container it sits in; every element can be picked, inside a slot
+      // or not (Settings, menus and dialogs are not inside one).
+      setHover({ rect: element.getBoundingClientRect(), slot: nearestSlot(element), tag: element.tagName.toLowerCase() })
     }
+
+    // The page must not act on the press that picks an element: menus and buttons that open on pointer down would otherwise fire.
+    const swallow = (event: Event): void => { event.preventDefault(); event.stopPropagation() }
 
     const onClick = (event: MouseEvent): void => {
       event.preventDefault()
@@ -179,22 +209,28 @@ export function MountAnchorInspector({ toggle }: MountAnchorInspectorProps) {
       const anchor: MountAnchor = {
         slot: slot ?? 'unresolved',
         target: describeTarget(element),
+        selector: selectorFor(element),
         component,
         url: window.location.href,
         timestamp: new Date().toISOString(),
       }
       const json = JSON.stringify(anchor, null, 2)
-      void navigator.clipboard?.writeText(json).catch(() => {})
       const label = anchor.target.ariaLabel ?? anchor.target.title ?? anchor.target.textPreview ?? `<${anchor.target.tag}>`
-      setToast(`${label} - ${anchor.slot}${component !== null ? ` · ${component.file}` : ' · no source resolved'} - copied`)
+      const where = `${label} - ${anchor.slot}${component !== null ? ` · ${component.file}` : ' · no source resolved'}`
+      const show = (text: string): void => { setToast(text); setTimeout(() => { setToast(null) }, 5000) }
+      const copying = navigator.clipboard?.writeText(json) ?? Promise.reject(new Error('no clipboard'))
+      copying.then(() => { show(`${where} - copied, paste it into the chat`) }, () => { show(`${where} - could not copy to the clipboard`) })
       setActive(false)
-      setTimeout(() => { setToast(null) }, 5000)
     }
 
     document.addEventListener('mousemove', onMove, true)
+    document.addEventListener('pointerdown', swallow, true)
+    document.addEventListener('mousedown', swallow, true)
     document.addEventListener('click', onClick, true)
     return () => {
       document.removeEventListener('mousemove', onMove, true)
+      document.removeEventListener('pointerdown', swallow, true)
+      document.removeEventListener('mousedown', swallow, true)
       document.removeEventListener('click', onClick, true)
       document.body.style.cursor = previousCursor
     }
@@ -240,7 +276,7 @@ export function MountAnchorInspector({ toggle }: MountAnchorInspectorProps) {
               whiteSpace: 'nowrap',
             }}
           >
-            {`<${hover.tag}> · ${hover.slot}`}
+            {hover.slot === null ? `<${hover.tag}>` : `<${hover.tag}> · ${hover.slot}`}
           </span>
         </div>
       )}

@@ -18,7 +18,7 @@ export function PalettePanel({ config }: PaletteSectionInjected) {
   return (
     <section className="dshAgentsSection" aria-label="Command palette">
       <h3 className="dshAgentsHeading">Command palette</h3>
-      <p className="dshAgentsText">Press <kbd>{PALETTE_SHORTCUT_LABEL()}</kbd> to search commands, agents, tabs, worktrees, settings and files. Choose what it lists here.</p>
+      <p className="dshAgentsText">Press <kbd>{PALETTE_SHORTCUT_LABEL()}</kbd> to search commands, agents, tabs, worktrees, settings and files. Choose what it lists here; change the keys in Settings &gt; Shortcuts.</p>
       <div className="dshAgentsBlock">
         <h4 className="dshAgentsSubheading">Groups</h4>
         <ul className="dshAgentsList">

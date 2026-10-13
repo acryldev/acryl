@@ -22,7 +22,7 @@ import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { createFileSearch } from './file-search.ts'
 import type { PaletteConfigState } from './palette-config.ts'
 import { buildPaletteItems, type PaletteActions, type PaletteView } from './palette-commands.ts'
-import { startPaletteEventListener } from './palette-shortcut.ts'
+import { PICK_ELEMENT_EVENT, startPaletteEventListener } from './palette-shortcut.ts'
 import { PaletteState } from './palette-state.ts'
 
 export interface WorkspacePaletteDeps {
@@ -73,6 +73,7 @@ export function useWorkspacePalette(deps: WorkspacePaletteDeps): PaletteState {
         if (snapshot.activeId !== undefined) latest.current.closeTile(snapshot.activeId)
       },
       openFile: (worktree, file) => { latest.current.shell.openFile({ worktree, file }) },
+      pickElement: () => { window.dispatchEvent(new CustomEvent(PICK_ELEMENT_EVENT)) },
     }
     const notify = (message: string): void => {
       const { toasts, groups, groupKey, snapshot } = latest.current

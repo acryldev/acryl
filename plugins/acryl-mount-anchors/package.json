@@ -48,9 +48,10 @@
   },
   "scripts": {
     "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly && tsc -p tsconfig.client.json --emitDeclarationOnly",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit",
-    "check": "pnpm run build && pnpm run typecheck",
-    "prepack": "pnpm run check"
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test",
+    "prepack": "pnpm run check",
+    "test": "vitest run"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
@@ -62,10 +63,12 @@
     "@types/node": "^22.20.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "jsdom": "29.1.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "tsdown": "0.22.2",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "vitest": "4.1.8"
   },
   "acryl": {
     "schemaVersion": 1,
