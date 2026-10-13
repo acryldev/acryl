@@ -10,7 +10,7 @@
  * Exit code 0 when every check passes, 1 otherwise. Each check prints PASS or FAIL with what it saw.
  */
 import { spawn, spawnSync } from 'node:child_process'
-import { mkdtempSync, realpathSync, rmSync } from 'node:fs'
+import { mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -67,7 +67,9 @@ const closeKeyDialog = () => until(`(() => { const b = [...document.querySelecto
 if (run !== undefined) {
   await closeKeyDialog()
   project = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-check-project-')))
-  for (const command of [['init', '-q', '-b', 'main'], ['-c', 'user.name=check', '-c', 'user.email=check@localhost', 'commit', '-q', '--allow-empty', '-m', 'start']]) {
+  // One real file, for the editor checks (breadcrumbs, line comments).
+  writeFileSync(join(project, 'README.md'), '# Check project\n\nA line to comment on.\n')
+  for (const command of [['init', '-q', '-b', 'main'], ['add', 'README.md'], ['-c', 'user.name=check', '-c', 'user.email=check@localhost', 'commit', '-q', '-m', 'start']]) {
     const result = spawnSync('git', command, { cwd: project, encoding: 'utf8' })
     if (result.status !== 0) throw new Error(`check-features: git ${command.join(' ')} failed: ${result.stderr}`)
   }
@@ -94,9 +96,20 @@ await check('Settings lists ACRYL\'s sections', async () => {
   await sleep(1500)
   const sections = await page.evaluate(`[...document.querySelectorAll('[role=dialog] [role=tab], [role=dialog] nav button')].filter(e => e.offsetParent).map(e => e.textContent.trim())`)
   await page.press('Escape')
-  const missing = ['Models', 'Agents', 'Tabs', 'Command palette', 'Agent Control'].filter(name => !sections.includes(name))
+  const missing = ['Models', 'Agents', 'Tabs', 'Command palette', 'Shortcuts', 'Agent Control'].filter(name => !sections.includes(name))
   if (missing.length > 0) throw new Error(`missing: ${missing.join(', ')} (found: ${sections.join(', ')})`)
   return sections.join(', ')
+})
+
+await check('Settings > Shortcuts lists ACRYL\'s commands with their keys', async () => {
+  await page.evaluate(`(() => { const b = [...document.querySelectorAll('button')].find(e => e.offsetParent && e.className.includes('dshWorkspaceSideFootButton') && e.textContent.trim() === 'Settings'); b?.click(); return true })()`)
+  await sleep(1200)
+  await page.evaluate(`[...document.querySelectorAll('[role=dialog] nav button')].find(e => e.textContent.trim() === 'Shortcuts')?.click()`)
+  const rows = await until(`(() => { const rows = [...document.querySelectorAll('.acrylShortcutsRow')].map(r => r.querySelector('.acrylShortcutsName')?.textContent + ' ' + [...r.querySelectorAll('kbd')].map(k => k.textContent).join('')); return rows.length > 0 ? rows : false })()`)
+  await page.press('Escape')
+  const acryl = Array.isArray(rows) ? rows.filter(row => /Pick an element|command palette/u.test(row)) : []
+  if (acryl.length !== 2) throw new Error(`ACRYL's commands not listed: ${JSON.stringify(rows).slice(0, 200)}`)
+  return acryl.join('; ')
 })
 
 await check('the command palette opens (Cmd/Ctrl+Shift+P)', async () => {
@@ -145,6 +158,27 @@ await check('a worktree pick returns from the Plugins page to the tabs', async (
   expectTrue(await page.evaluate(`!!document.querySelector('.dshWorkspaceTab')`), 'the tabs did not come back')
   return 'back to the tabs'
 })
+
+// The test project's README: only in an isolated copy (--launch), which made it.
+if (run !== undefined) {
+  await check('a file has clickable breadcrumbs and a "+" to comment on a line', async () => {
+    await page.press('p', [primary, 'shift'])
+    expectTrue(await until(`!!document.querySelector('input[role=combobox]')`), 'no palette')
+    await page.evaluate(`(() => { const i = document.querySelector('input[role=combobox]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(i, 'README.md'); i.dispatchEvent(new Event('input', { bubbles: true })); return true })()`)
+    expectTrue(await until(`[...document.querySelectorAll('.dshPaletteList [role=option]')].some(o => o.textContent.includes('README.md'))`, 15_000), 'the palette did not find README.md')
+    await page.press('Enter')
+    const crumbs = await until(`(() => { const c = [...document.querySelectorAll('.dshWorkspaceCrumbsPath .dshWorkspaceCrumb')].map(b => b.textContent); return c.includes('README.md') ? c : false })()`, 15_000)
+    expectTrue(Array.isArray(crumbs), 'no breadcrumbs above the file')
+    await page.evaluate(`document.querySelector('.dshWorkspaceCrumbsPath .dshWorkspaceCrumb').click()`)
+    const listed = await until(`(() => { const o = [...document.querySelectorAll('.dshWorkspaceCrumbsItem')].map(e => e.textContent); return o.length > 0 ? o : false })()`)
+    await page.press('Escape')
+    expectTrue(Array.isArray(listed) && listed.includes('README.md'), `the project's folder lists ${JSON.stringify(listed)}`)
+    const plus = await page.evaluate(`(() => { const line = [...document.querySelectorAll('.cm-line')][2]; if (!line) return false; const r = line.getBoundingClientRect(); line.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: r.x + 10, clientY: r.y + r.height / 2 })); return true })()`)
+    expectTrue(plus === true, 'no editor lines')
+    expectTrue(await until(`[...document.querySelectorAll('.cm-acrylCommentPlus')].some(p => getComputedStyle(p.parentElement).visibility !== 'hidden')`), 'no "+" beside the pointed line')
+    return `${crumbs.join(' > ')}; the folder lists ${listed.length} entries; "+" shown`
+  })
+}
 
 // Creates a workspace: only in an isolated copy (--launch), never in a window someone is using.
 if (run !== undefined) {
