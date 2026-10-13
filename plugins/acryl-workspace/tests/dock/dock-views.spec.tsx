@@ -117,10 +117,10 @@ describe('the mode button', () => {
   it('opens a closed right pane when the new mode needs it (stacked, side), but not for bottom', () => {
     const { controller } = setup()
     let open = false
-    const rightPane = { toggle: () => { open = !open }, isOpen: () => open }
+    const rightPane = { toggle: () => { open = !open }, isOpen: () => open, subscribe: () => () => {} }
     controller.setMode('bottom')
     render(<DockButtons controller={controller} rightPane={rightPane} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Switch to side by side terminal' }))
+    fireEvent.click(screen.getByRole('button', { name: /^Switch to side by side terminal/ }))
     expect(controller.getPrefs().mode).toBe('side')
     expect(open).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: 'Switch to stacked terminal' }))
@@ -129,5 +129,23 @@ describe('the mode button', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Switch to bottom terminal' }))
     expect(controller.getPrefs().mode).toBe('bottom')
     expect(open).toBe(false)
+  })
+
+  it('offers to show the right panel while it is closed, and only then', () => {
+    const { controller } = setup()
+    let open = false
+    const listeners = new Set<() => void>()
+    const rightPane = {
+      toggle: () => { open = !open; for (const listener of listeners) listener() },
+      isOpen: () => open,
+      subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } },
+    }
+    controller.setMode('bottom')
+    render(<DockButtons controller={controller} rightPane={rightPane} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Show right panel' }))
+    expect(open).toBe(true)
+    expect(screen.queryByRole('button', { name: 'Show right panel' })).toBeNull()
+    act(() => { rightPane.toggle() })
+    expect(screen.getByRole('button', { name: 'Show right panel' })).toBeDefined()
   })
 })

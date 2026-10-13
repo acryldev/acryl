@@ -92,7 +92,7 @@ export function apply(ctx: ClientContext): void {
   if (saved !== undefined) shell.setMode(saved.mode)
   // The terminals and the dock are shared by the frame (which places the dock) and the canvas (its terminal tabs).
   const terminalStack = advanced ? createTerminalStack(ctx, storage, shell) : undefined
-  if (advanced) applyAdvancedShell(ctx, environment, dockShellHooks(terminalStack?.host))
+  const frame = advanced ? applyAdvancedShell(ctx, environment, dockShellHooks(terminalStack?.host)) : undefined
   ctx.effect(() => startWorkspacePersistence({ groups, shell, storage }), 'acryl-workspace: save tabs and view')
   const review = new ReviewStore(parseSavedThreads(storage?.getItem(REVIEW_STORAGE_KEY) ?? null))
   ctx.effect(() => startReviewPersistence(review, storage), 'acryl-workspace: save review comments')
@@ -112,11 +112,15 @@ export function apply(ctx: ClientContext): void {
       }
     },
     isOpen(): boolean {
+      if (frame !== undefined) return frame.rightPanel.isShown()
       try {
         return ctx.get('sidebarRight')?.isExpanded() === true
       } catch {
         return false
       }
+    },
+    subscribe(listener: () => void): () => void {
+      return frame?.rightPanel.subscribe(listener) ?? (() => {})
     },
   }
   const projectRegistry = new ProjectRegistryState(createProjectRegistryApi())

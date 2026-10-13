@@ -28,6 +28,15 @@ export interface AdvancedShellHooks {
   readonly wrapRightbar?: (content: ReactNode) => ReactNode
 }
 
+/** What the frame tells its caller after claiming it. */
+export interface AdvancedShell {
+  /** Whether the right column is shown, followed live: the right sidebar reports it to the frame as it opens and closes. */
+  readonly rightPanel: {
+    isShown(): boolean
+    subscribe(listener: () => void): () => void
+  }
+}
+
 /**
  * Claim the three-column desktop/web app frame for this plugin's own UI: register `desktop.main` and
  * `desktop.sidebar` (falling back to the unchanged upstream chat and sidebar until something replaces
@@ -39,8 +48,9 @@ export interface AdvancedShellHooks {
  * @param environment - validated mode and platform marker (`resolveShellEnvironment`).
  * @param hooks - optional column wrappers (a terminal dock, or anything else a caller wants beneath/beside
  * the main or details column); this package has no opinion on what they wrap.
+ * @returns the frame's right column state, for a control that opens and closes it.
  */
-export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnvironment, hooks: AdvancedShellHooks = {}): void {
+export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnvironment, hooks: AdvancedShellHooks = {}): AdvancedShell {
   if (environment.mode !== 'advanced') {
     throw new Error(`acryl-app-shell: advanced shell received mode ${JSON.stringify(environment.mode)}`)
   }
@@ -97,4 +107,11 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
     },
     inject: () => ({ layout: desktopLayout, platform: environment.platform, ...hooks }),
   }, AdvancedFrame), 'acryl-app-shell: advanced root slot')
+
+  return {
+    rightPanel: {
+      isShown: () => desktopLayout.getSnapshot().detailsShown,
+      subscribe: listener => desktopLayout.subscribe(listener),
+    },
+  }
 }

@@ -23,3 +23,13 @@ export function ModeIcon({ mode }: { readonly mode: DockMode }) {
     </svg>
   )
 }
+
+/** The right panel: a frame with its right column filled, unlike the mode button's line-only layouts. */
+export function RightPanelIcon() {
+  return (
+    <svg {...props}>
+      <rect x="2" y="2.5" width="12" height="11" rx="2" />
+      <path d="M10 3.2h2a1.3 1.3 0 0 1 1.3 1.3v7a1.3 1.3 0 0 1-1.3 1.3h-2z" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}

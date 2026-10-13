@@ -45,7 +45,7 @@ export function apply(ctx: Context): void {
   }, 'acryl-app-shell: page health record')
 }
 
-export { applyAdvancedShell, type AdvancedShellHooks } from './advanced-shell.ts'
+export { applyAdvancedShell, type AdvancedShell, type AdvancedShellHooks } from './advanced-shell.ts'
 export { startUiHealth, type UiHealthIncident, type UiHealthOptions, type UiHealthPorts, type UiHealthRecord } from './ui-health.ts'
 export { AdvancedFrame, type AdvancedFrameInjected, type AdvancedFrameProps } from './AdvancedFrame.tsx'
 export {

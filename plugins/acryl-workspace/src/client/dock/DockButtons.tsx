@@ -1,7 +1,7 @@
-/** The one button in the tab strip that switches where the (always-visible) terminal panel sits. */
+/** The tab strip's layout buttons: where the (always-visible) terminal panel sits, and the right panel's own open/closed state. */
 
 import { useSyncExternalStore } from 'react'
-import { ModeIcon } from './dock-icons.tsx'
+import { ModeIcon, RightPanelIcon } from './dock-icons.tsx'
 import type { DockController } from './dock-controller.ts'
 import { nextMode, switchLabel } from './dock-model.ts'
 
@@ -10,7 +10,11 @@ import { nextMode, switchLabel } from './dock-model.ts'
 export interface RightPaneHandle {
   toggle(): void
   isOpen(): boolean
+  subscribe(listener: () => void): () => void
 }
+
+const NEVER_CHANGES = (): (() => void) => () => {}
+const CLOSED = (): boolean => false
 
 /**
  * The terminal panel is always visible, but in `stacked` and `side` modes it lives inside the right pane, so
@@ -23,6 +27,9 @@ export function ensureDockVisible(dock: DockController, rightPane: RightPaneHand
 
 export function DockButtons({ controller, rightPane }: { readonly controller: DockController; readonly rightPane: RightPaneHandle | undefined }) {
   const prefs = useSyncExternalStore(controller.subscribe, controller.getPrefs)
+  // While the right panel is closed, nothing else on screen opens it (its own collapse button goes with it, and the terminal may sit at the
+  // bottom), so this shows then and only then; its glyph is filled so it does not read as the mode button's 'side' layout.
+  const open = useSyncExternalStore(rightPane?.subscribe ?? NEVER_CHANGES, rightPane?.isOpen ?? CLOSED)
   return (
     <div className="dshDockButtons">
       <button
@@ -34,6 +41,17 @@ export function DockButtons({ controller, rightPane }: { readonly controller: Do
       >
         <ModeIcon mode={nextMode(prefs.mode)} />
       </button>
+      {rightPane !== undefined && !open && (
+        <button
+          type="button"
+          className="dshWorkspaceRightToggle"
+          aria-label="Show right panel"
+          title="Show right panel (Files, Changes, Review)"
+          onClick={() => { rightPane.toggle() }}
+        >
+          <RightPanelIcon />
+        </button>
+      )}
     </div>
   )
 }
