@@ -213,9 +213,13 @@ export async function bootAcrylHarnessProfile(
   const profile = loadProfile('acryl', options.profile, dshInstallAnchor)
   const rootConfig = join(profile.dir, 'cordis.yml')
   writeFileSync(rootConfig, profileRoot)
+  // The terminal capabilities' ACRYL packages, resolvable from this profile as the CLI and Web boots make them; without it their rows
+  // fail to import (`acryl-settings`, the account sign-in callback).
+  const tuiSurfaces = new Set(['tui'] as const)
+  for (const packageName of acrylCodingCapabilityPackages(tuiSurfaces)) materializeProfilePackage(profile.dir, packageName, import.meta.url)
   const patches = structuredClone([
     ...profile.layers.flatMap(layer => layer.patches),
-    ...createAcrylCodingCapabilityPatches(new Set(['tui'])),
+    ...createAcrylCodingCapabilityPatches(tuiSurfaces),
     ...profile.patches,
   ])
   const hmr = composeEntries([patches]).find(entry => entry.id === 'hmr')
