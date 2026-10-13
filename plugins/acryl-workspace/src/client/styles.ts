@@ -72,7 +72,9 @@ const WORKSPACE_STYLES = `
 .dshDockCenter { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
 .dshDockCenterMain { display: flex; flex-direction: column; flex: 1 1 0; min-width: 0; min-height: 0; }
 .dshDockBottom { display: flex; flex: none; min-height: 0; overflow: hidden; background: var(--dsw-alias-bg-base); }
-.dshDockRight { display: flex; flex-direction: column; width: 100%; height: 100%; min-width: 0; min-height: 0; }
+.dshDockRight { display: flex; flex-direction: column; width: 100%; height: 100%; min-width: 0; min-height: 0; container: acryl-dock-right / inline-size; }
+/* The right pane collapsed to nothing: the terminals in it must not take focus, or the browser scrolls the whole frame sideways to show the focused terminal. */
+@container acryl-dock-right (max-width: 1px) { .dshDockRightBottom, .dshDockSwitcher { visibility: hidden; } }
 .dshDockRightTop { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; position: relative; }
 .dshDockRightTop[hidden] { display: none; }
 .dshDockRightTop > * { flex: 1 1 auto; min-height: 0; }
