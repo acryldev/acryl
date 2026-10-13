@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   DESKTOP_ROOT_SLOT_RETRY_SCRIPT,
   desktopRootSlotRecoveryInjections,
+  ROOT_SLOT_RETRY_INTERVAL_MS,
 } from '../../src/startup/desktop-root-slot-recovery.ts'
 
 const BOOT_ORDER_MESSAGE = "renderSlot('root') before any 'root' registration (boot order)"
@@ -11,9 +12,9 @@ const BOOT_ORDER_MESSAGE = "renderSlot('root') before any 'root' registration (b
  * Evaluate the retry script in a fresh sandbox sharing `store`/`reload` with
  * any earlier evaluation, mirroring a real page reload: a new script
  * instance, the same `sessionStorage` (survives a same-tab reload) and a
- * spy standing in for `location.reload`.
+ * spy standing in for `location.reload`, at the clock time `now`.
  */
-function evaluateOnce(store: Map<string, string>, reload: ReturnType<typeof vi.fn>) {
+function evaluateOnce(store: Map<string, string>, reload: ReturnType<typeof vi.fn>, now = 1_000_000) {
   const listeners: Record<string, ((event: unknown) => void)[]> = {}
   const sandbox = {
     window: {
@@ -26,6 +27,7 @@ function evaluateOnce(store: Map<string, string>, reload: ReturnType<typeof vi.f
       setItem: (key: string, value: string) => { store.set(key, value) },
     },
     location: { reload },
+    Date: { now: () => now },
   }
   vm.createContext(sandbox)
   vm.runInContext(DESKTOP_ROOT_SLOT_RETRY_SCRIPT, sandbox)
@@ -58,19 +60,25 @@ describe('Desktop root-slot boot-order retry injection', () => {
     expect(reload).not.toHaveBeenCalled()
   })
 
-  it('does not reload a second time across a real reload if the race recurs, so a persistent failure still fails loud', () => {
+  it('does not reload again when the failure returns right after its reload, so a persistent failure still fails loud', () => {
     const store = new Map<string, string>()
     const reload = vi.fn()
-    // First page load: the race fires, the script reloads once.
-    const first = evaluateOnce(store, reload)
+    const first = evaluateOnce(store, reload, 1_000_000)
     first.error?.[0]?.({ error: new Error(BOOT_ORDER_MESSAGE) })
     expect(reload).toHaveBeenCalledTimes(1)
     // The reloaded page re-evaluates the script fresh, sharing sessionStorage.
-    // If the race recurs (a genuinely persistent failure, not a transient
-    // one), the guard must block a second reload.
-    const second = evaluateOnce(store, reload)
+    const second = evaluateOnce(store, reload, 1_000_000 + 2_000)
     second.error?.[0]?.({ error: new Error(BOOT_ORDER_MESSAGE) })
     expect(reload).toHaveBeenCalledTimes(1)
+  })
+
+  it('reloads again when the window loses its root long after the last reload (a plugin rebuilt under a running app)', () => {
+    const store = new Map<string, string>()
+    const reload = vi.fn()
+    evaluateOnce(store, reload, 1_000_000).error?.[0]?.({ error: new Error(BOOT_ORDER_MESSAGE) })
+    evaluateOnce(store, reload, 1_000_000 + ROOT_SLOT_RETRY_INTERVAL_MS).error?.[0]?.({ error: new Error(BOOT_ORDER_MESSAGE) })
+    evaluateOnce(store, reload, 1_000_000 + 8 * 3_600_000).error?.[0]?.({ error: new Error(BOOT_ORDER_MESSAGE) })
+    expect(reload).toHaveBeenCalledTimes(3)
   })
 
   it('injects exactly one head-placed script row', () => {
