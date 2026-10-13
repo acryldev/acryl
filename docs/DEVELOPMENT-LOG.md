@@ -1,4 +1,16 @@
-## 2026-10-13 (latest) - shared context: every agent in a Shared Context workspace knows its projects
+## 2026-10-13 (latest) - Settings > Shortcuts back, the element picker findable, breadcrumbs and line comments in the editor
+
+Owner: "we used to have shortcuts item in settings ... also we lost the pinpointing feature ... implement the bread crumbs should be clickable ... implement the code annotation so with \"+\" i can add comment to selected line ... passed to currently running node Pty tab" (with T3 Code's file comments as the reference).
+
+- **What was lost, found live first** (isolated Desktop from a copy of the dev home): the inspector still worked (Cmd+Shift+.), but nothing showed it existed, and the old Settings > Shortcuts page had been retired in the DSH 0.2 move for DSH's "Edit shortcuts" button deep in General.
+- **Settings > Shortcuts and the picker** (`a346552863e7d2a70c2a3ec806084fc265235d90`): `acryl-shortcuts` adds the section on DSH's own shortcut service (the store DSH's dialog edits, so both agree): searchable, ACRYL's commands first, record (Esc cancels without closing Settings), clear, reset, restore all. The inspector is "Pick an element for the agent", also in the command palette; it outlines any element, keeps the picking press from reaching the page, copies a CSS selector and the visible text, and says when the clipboard refused. The palette's shortcut was shown as Shift+K but is Shift+P; the unused direct Shift+K listener is gone.
+- **The window shifting sideways** (`dc41269790ffd683dabbd72758438f11a14896ba`): found during the check. With the right pane collapsed, its terminal panel stayed focusable at zero width; a terminal taking focus scrolled the whole frame 576 px left (left half off screen, a white band on the right). A container query hides the panel while its column has no width.
+- **Breadcrumbs** (`bbefc160b67bd7b9c3819ad7e193ea862c84e661`, `c3ee6626f6a9f79ee2c07f149fedbf6242567c80`): every part of a file's path opens its folder's list; folders open in place, ".." goes up, arrows and Enter work, a file opens in its tab; outer folders fold into "..." from measured widths when the pane is narrow. The Markdown preview has the same path.
+- **Line comments** (`165bb9280a6c494b60e5f0615c7bf0c0281a0a1a`): a "+" beside the line under the pointer opens a form under the line (or the selected lines); Comment pastes the file (relative and absolute), line numbers, their text and the comment into the terminal the user worked in last, without Enter, so several comments go in one message; a terminal without bracketed paste gets one line so a shell never runs it. Checked live: the paste reached zsh as one pending paste, the note stayed under the line.
+- **Runtime boot** (`b8a09171e3a5088ec62e46736b304b0e0d3cbe9a`): the harness profile boot now makes its terminal capabilities' packages resolvable, as the CLI and Web boots do (`acryl-settings` and the account callback failed to import in every runtime test that boots it).
+- **Feature check** (`9425ed53b32cdf900e785a4df2c9037ad2b2088e`): `check:features` also covers the Shortcuts section, the breadcrumbs and the "+"; 11 of 11 pass.
+
+## 2026-10-13 - shared context: every agent in a Shared Context workspace knows its projects
 
 Owner: "continue ... spec 043: Agent Control workspace tools (T007), then shared context (T009-T011)".
 
