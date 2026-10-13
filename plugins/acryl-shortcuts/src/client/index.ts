@@ -1,5 +1,8 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type { ShortcutBinding, ShortcutCommandId } from '@acryl/ui/frame'
+import type { ShortcutBinding, ShortcutCommandId, Shortcuts } from '@acryl/ui/frame'
+
+/** One command as `ctx.shortcuts.register` takes it. */
+type ShortcutRegistration = Parameters<Shortcuts['register']>[0]
 import { ShortcutsSection } from './ShortcutsSection.tsx'
 import { installShortcutsStyles } from './styles.ts'
 
@@ -59,25 +62,34 @@ export function apply(ctx: ClientContext): void {
   })
 }
 
+/**
+ * The palette's shortcut as registered: the same keys on every surface and platform, working from anywhere in the window (a focused
+ * terminal or text field too).
+ * @param run - what pressing it does.
+ */
+export function paletteShortcut(run: () => void): ShortcutRegistration {
+  return {
+    id: PALETTE_COMMAND_ID,
+    label: () => 'Toggle command palette',
+    aliases: ['palette', 'commands', 'quick open'],
+    defaults: {
+      'desktop:macos': PALETTE_BINDING,
+      'desktop:windows': PALETTE_BINDING,
+      'desktop:linux': PALETTE_BINDING,
+      'web:macos': PALETTE_BINDING,
+      'web:windows': PALETTE_BINDING,
+      'web:linux': PALETTE_BINDING,
+    },
+    regions: ['page', 'editable', 'terminal'],
+    modals: [],
+    resolve: () => ({ status: 'handled', run }),
+  }
+}
+
 /** A refused registration (a reserved or conflicting default) costs this one command, never the plugin or the page boot. */
 function registerPalette(ctx: ClientContext): () => void {
   try {
-    return ctx.shortcuts.register({
-      id: PALETTE_COMMAND_ID,
-      label: () => 'Toggle command palette',
-      aliases: ['palette', 'commands', 'quick open'],
-      defaults: {
-        'desktop:macos': PALETTE_BINDING,
-        'desktop:windows': PALETTE_BINDING,
-        'desktop:linux': PALETTE_BINDING,
-        'web:macos': PALETTE_BINDING,
-        'web:windows': PALETTE_BINDING,
-      },
-      // Also from a focused terminal or text field: the palette is reachable from anywhere in the window.
-      regions: ['page', 'editable', 'terminal'],
-      modals: [],
-      resolve: () => ({ status: 'handled', run: () => { window.dispatchEvent(new CustomEvent(PALETTE_TOGGLE_EVENT)) } }),
-    })
+    return ctx.shortcuts.register(paletteShortcut(() => { window.dispatchEvent(new CustomEvent(PALETTE_TOGGLE_EVENT)) }))
   } catch (cause) {
     ctx.logger.warn(`acryl-shortcuts: could not register the command palette shortcut: ${cause instanceof Error ? cause.message : String(cause)}`)
     return () => {}

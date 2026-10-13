@@ -1,5 +1,5 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type { ShortcutBinding, ShortcutCommandId } from '@acryl/ui/frame'
+import type { ShortcutBinding, ShortcutCommandId, Shortcuts } from '@acryl/ui/frame'
 import { createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MountAnchorInspector } from './MountAnchorInspector.tsx'
@@ -18,15 +18,12 @@ export const PICK_ELEMENT_EVENT = 'acryl:toggle-element-picker'
 const DEFAULT_BINDING: ShortcutBinding = { code: 'Period', modifiers: ['primary', 'shift'] }
 
 /**
- * Mount the inspector directly - not through the `shell.overlay` slot. That slot only exists
- * where the advanced frame declares it, so a slot-based version would silently do nothing on a
- * stock frame. Mounting an independent React root directly onto `document.body` needs no slot to
- * exist at all, so the exact same plugin works on both surfaces. `react-dom/client`'s `createRoot` is a genuine
- * platform seed word (`deepseek-harness/packages/client/web/src/seed.ts`), not a workaround.
+ * The picker's shortcut as registered: the same keys on every surface and platform, working from anywhere in the window - a focused chat
+ * composer or terminal included, since pointing at an element is how the user explains to the agent what to change, usually while typing.
+ * @param run - what pressing it does.
  */
-export function apply(ctx: ClientContext): void {
-  const toggle = createInspectorToggle()
-  ctx.effect(() => ctx.shortcuts.register({
+export function pickElementShortcut(run: () => void): Parameters<Shortcuts['register']>[0] {
+  return {
     id: TOGGLE_COMMAND_ID,
     label: () => 'Pick an element for the agent',
     aliases: ['inspector', 'point at element', 'pinpoint', 'locate element', 'mount anchors'],
@@ -38,12 +35,22 @@ export function apply(ctx: ClientContext): void {
       'web:windows': DEFAULT_BINDING,
       'web:linux': DEFAULT_BINDING,
     },
-    // From anywhere in the window, a focused chat composer or terminal included: pointing at an element is how the user explains to the
-    // agent what to change, usually while typing that explanation.
     regions: ['page', 'editable', 'terminal'],
     modals: [],
-    resolve: () => ({ status: 'handled', run: () => { toggle.toggle() } }),
-  }), 'acryl-mount-anchors: toggle shortcut')
+    resolve: () => ({ status: 'handled', run }),
+  }
+}
+
+/**
+ * Mount the inspector directly - not through the `shell.overlay` slot. That slot only exists
+ * where the advanced frame declares it, so a slot-based version would silently do nothing on a
+ * stock frame. Mounting an independent React root directly onto `document.body` needs no slot to
+ * exist at all, so the exact same plugin works on both surfaces. `react-dom/client`'s `createRoot` is a genuine
+ * platform seed word (`deepseek-harness/packages/client/web/src/seed.ts`), not a workaround.
+ */
+export function apply(ctx: ClientContext): void {
+  const toggle = createInspectorToggle()
+  ctx.effect(() => ctx.shortcuts.register(pickElementShortcut(() => { toggle.toggle() })), 'acryl-mount-anchors: toggle shortcut')
   ctx.effect(() => {
     const onToggle = (): void => { toggle.toggle() }
     window.addEventListener(PICK_ELEMENT_EVENT, onToggle)

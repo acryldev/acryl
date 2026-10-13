@@ -107,9 +107,19 @@ await check('Settings > Shortcuts lists ACRYL\'s commands with their keys', asyn
   await page.evaluate(`[...document.querySelectorAll('[role=dialog] nav button')].find(e => e.textContent.trim() === 'Shortcuts')?.click()`)
   const rows = await until(`(() => { const rows = [...document.querySelectorAll('.acrylShortcutsRow')].map(r => r.querySelector('.acrylShortcutsName')?.textContent + ' ' + [...r.querySelectorAll('kbd')].map(k => k.textContent).join('')); return rows.length > 0 ? rows : false })()`)
   await page.press('Escape')
-  const acryl = Array.isArray(rows) ? rows.filter(row => /Pick an element|command palette/u.test(row)) : []
-  if (acryl.length !== 2) throw new Error(`ACRYL's commands not listed: ${JSON.stringify(rows).slice(0, 200)}`)
+  // Every keyboard command ACRYL had before the DSH 0.2 move (spec 001 T076): the palette and the picker are ACRYL's, Open Settings is DSH's.
+  const acryl = Array.isArray(rows) ? rows.filter(row => /Pick an element|command palette|settings/iu.test(row)) : []
+  if (acryl.length !== 3) throw new Error(`a command from before the DSH 0.2 move is missing: ${JSON.stringify(acryl)} of ${JSON.stringify(rows).slice(0, 300)}`)
   return acryl.join('; ')
+})
+
+await check('Settings opens with Cmd/Ctrl+,', async () => {
+  await sleep(500)
+  await page.press(',', [primary])
+  const open = await until(`!!document.querySelector('[role=dialog] nav')`)
+  await page.press('Escape')
+  expectTrue(open, 'no Settings after the shortcut')
+  return 'opened'
 })
 
 await check('the command palette opens (Cmd/Ctrl+Shift+P)', async () => {
