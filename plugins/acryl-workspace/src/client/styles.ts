@@ -352,6 +352,30 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceCheckCommand { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dsw-alias-label-secondary); font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dshWorkspaceCheckRun { appearance: none; flex: none; padding: 3px 12px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary) 30%, transparent); border-radius: 999px; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; font: 600 11px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceCheckRun:hover { border-color: #4d6bfe; color: #4d6bfe; }
+.dshWorkspaceFiles { display: flex; flex-direction: column; height: 100%; min-height: 0; color: var(--dsw-alias-label-primary); font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceFilesTools { display: flex; align-items: center; gap: 2px; margin-left: auto; }
+.dshWorkspaceFilesTool { appearance: none; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; }
+.dshWorkspaceFilesTool:hover:not(:disabled) { background: var(--dsw-alias-fill-hover, rgb(127 127 127 / 12%)); color: var(--dsw-alias-label-primary); }
+.dshWorkspaceFilesTool:disabled { opacity: .35; cursor: default; }
+.dshWorkspaceFileTreeScroll { position: relative; flex: 1; min-height: 0; overflow: auto; padding-bottom: 12px; }
+.dshWorkspaceFileTree { position: relative; min-width: 100%; outline: none; }
+.dshWorkspaceFileRow { position: absolute; left: 0; right: 0; height: 24px; display: flex; align-items: center; gap: 4px; padding-right: 6px; box-sizing: border-box; color: var(--dsw-alias-label-primary); cursor: pointer; font: 12.5px/24px ui-sans-serif, system-ui, sans-serif; white-space: nowrap; user-select: none; }
+.dshWorkspaceFileRow:hover { background: var(--dsw-alias-fill-hover, rgb(127 127 127 / 10%)); }
+.dshWorkspaceFileTree:focus-visible .dshWorkspaceFileRow[data-active] { box-shadow: inset 0 0 0 1px #4d6bfe; }
+.dshWorkspaceFileRow[data-active] { background: color-mix(in srgb, #4d6bfe 12%, transparent); }
+.dshWorkspaceFileRow[data-ignored] .dshWorkspaceFileName, .dshWorkspaceFileRow[data-ignored] .dshWorkspaceFileIcon { opacity: .5; }
+.dshWorkspaceFileGuide { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px solid color-mix(in srgb, var(--dsw-alias-label-secondary) 22%, transparent); }
+.dshWorkspaceFileTwisty { flex: none; display: grid; place-items: center; width: 14px; color: var(--dsw-alias-label-secondary); }
+.dshWorkspaceFileChevron { transition: transform .12s ease; }
+.dshWorkspaceFileChevron[data-open] { transform: rotate(90deg); }
+.dshWorkspaceFileIcon { flex: none; display: grid; place-items: center; width: 16px; color: var(--dsw-alias-label-secondary); }
+.dshWorkspaceFileName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.dshWorkspaceFileHint { flex: none; color: var(--dsw-alias-label-secondary); font-size: 10.5px; }
+.dshWorkspaceFileHint[data-error] { color: #f87171; }
+.dshWorkspaceFileMore { appearance: none; flex: none; display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; visibility: hidden; }
+.dshWorkspaceFileRow:hover .dshWorkspaceFileMore, .dshWorkspaceFileRow[data-active] .dshWorkspaceFileMore { visibility: visible; }
+.dshWorkspaceFileMore:hover { background: var(--dsw-alias-fill-hover, rgb(127 127 127 / 16%)); color: var(--dsw-alias-label-primary); }
+.dshWorkspaceFileMenu { width: 200px; z-index: 40; }
 .dshWorkspaceFilesFilter { margin: 4px 8px 6px; padding: 5px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: var(--dsw-alias-label-primary); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceFilesFilter:focus { outline: 2px solid #4d6bfe; outline-offset: -1px; }
 .dshWorkspaceFilesEdit { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin: 0 8px 6px; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-label-primary); }
@@ -369,17 +393,6 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceSearchHit:hover { background: var(--dsw-alias-bg-hover, rgba(127,127,127,.12)); }
 .dshWorkspaceSearchFile { font-weight: 600; overflow-wrap: anywhere; }
 .dshWorkspaceSearchText { opacity: .7; font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
-.dshWorkspaceFileTree { list-style: none; margin: 0; padding: 0 0 12px; }
-.dshWorkspaceFileRow { appearance: none; display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px 8px; border: 0; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; text-align: left; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
-.dshWorkspaceFileRow:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
-.dshWorkspaceFileGlyph { width: 10px; flex: none; color: var(--dsw-alias-label-secondary); }
-.dshWorkspaceFileName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dshWorkspaceFileHint { color: var(--dsw-alias-label-secondary); font-size: 10.5px; }
-.dshWorkspaceFileHint[data-error] { color: #f87171; }
-.dshWorkspaceFileItem { position: relative; display: flex; align-items: center; }
-.dshWorkspaceFileItem > .dshWorkspaceFileRow { flex: 1; min-width: 0; }
-.dshWorkspaceFilePreview { appearance: none; flex: none; margin-right: 8px; padding: 1px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: 10.5px/1.5 ui-sans-serif, system-ui, sans-serif; }
-.dshWorkspaceFilePreview:hover { border-color: #4d6bfe; color: #4d6bfe; }
 .dshWorkspaceDocFile { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
 .dshWorkspaceDocFileBody { flex: 1; min-height: 0; overflow: auto; padding: 16px 24px; }
 .dshWorkspaceDocCode { padding: 1px 5px; border-radius: 4px; background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); font: 0.92em ui-monospace, SFMono-Regular, Menlo, monospace; }

@@ -57,6 +57,8 @@ export interface OpenFileRequest {
   readonly worktree: string
   /** Path relative to the worktree. */
   readonly file: string
+  /** The user asked for it beside the tab in front (a split); otherwise it opens as the current tab. */
+  readonly beside?: boolean
 }
 
 /** A request to preview one markdown file of a worktree in a Doc tab. */
@@ -65,6 +67,8 @@ export type OpenDocRequest = OpenFileRequest
 export interface OpenDiffRequest {
   readonly worktree: string
   readonly file: string
+  /** The user asked for it beside the tab in front (a split); otherwise it opens as the current tab. */
+  readonly beside?: boolean
 }
 
 /** A request to close one canvas tile (the tree's hover "x" on an agent or terminal entry). Handled by `routeShellRequests`, not

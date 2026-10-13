@@ -36,6 +36,8 @@ const BINARY_SNIFF_BYTES = 8192
 export interface WorkspaceFilesOptions {
   /** Validates that a path is the root of a git worktree and returns its real path. */
   readonly resolveWorktree: (path: string) => Promise<string>
+  /** Which of the given root-relative paths git ignores (a directory ends in `/`); without it nothing is marked. */
+  readonly ignored?: (root: string, paths: readonly string[]) => Promise<ReadonlySet<string>>
 }
 
 export class WorkspaceFiles {
@@ -62,7 +64,15 @@ export class WorkspaceFiles {
       }
     }
     entries.sort((a, b) => (a.kind === b.kind ? a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }) : a.kind === 'dir' ? -1 : 1))
-    return { path: root, dir, entries: entries.slice(0, MAX_ENTRIES), truncated: entries.length > MAX_ENTRIES }
+    const shown = entries.slice(0, MAX_ENTRIES)
+    const pathOf = (entry: FileEntry): string => `${dir === '' ? '' : `${dir}/`}${entry.name}${entry.kind === 'dir' ? '/' : ''}`
+    const ignored = this.options.ignored === undefined ? new Set<string>() : await this.options.ignored(root, shown.map(pathOf))
+    return {
+      path: root,
+      dir,
+      entries: ignored.size === 0 ? shown : shown.map(entry => (ignored.has(pathOf(entry)) ? { ...entry, ignored: true } : entry)),
+      truncated: entries.length > MAX_ENTRIES,
+    }
   }
 
   async read(worktree: string, file: string): Promise<FileContentView> {

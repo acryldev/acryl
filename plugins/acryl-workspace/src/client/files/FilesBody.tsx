@@ -1,4 +1,7 @@
-/** Right pane tab: the selected worktree's files as a lazy tree. Clicking a file opens it in the editor. */
+/**
+ * Right pane tab: the selected worktree's files as a lazy tree (`FileTree`), with one search field over the whole repository (file names,
+ * or text in files). Clicking a file opens it in the editor as a tab.
+ */
 
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import type { PropsRuntime } from '@acryl/ui/frame'
@@ -7,7 +10,9 @@ import type { GitSearchMode, GitSearchView } from '../../git/contract.ts'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
 import type { WorkspaceFilesApi } from './files-api.ts'
 import { changeFor, fileToOpenAfter, type PendingEdit } from './file-edit.ts'
-import { visibleRows, type DirState } from './tree-model.ts'
+import { visibleRows, type DirState, type TreeRow } from './tree-model.ts'
+import { FileTree, type FileTreeActions } from './FileTree.tsx'
+import { CollapseAllIcon, NewFileIcon, NewFolderIcon, ReloadIcon } from './file-icons.tsx'
 
 export type FilesBodyProps = PropsRuntime<'sidebar.right.pane.tab'> & {
   readonly shell: WorkspaceShellState
@@ -32,7 +37,6 @@ export function FilesBody({ shell, filesApi, gitApi }: FilesBodyProps) {
   const path = worktree?.path
   const [dirs, setDirs] = useState<ReadonlyMap<string, DirState>>(new Map())
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set())
-  const [filter, setFilter] = useState('')
   const [reload, setReload] = useState(0)
   const [query, setQuery] = useState('')
   const [mode, setMode] = useState<GitSearchMode>('name')
@@ -54,7 +58,6 @@ export function FilesBody({ shell, filesApi, gitApi }: FilesBodyProps) {
     let current = true
     setDirs(new Map())
     setOpen(new Set())
-    setFilter('')
     setQuery('')
     setPending(null)
     setEditError(null)
@@ -107,8 +110,17 @@ export function FilesBody({ shell, filesApi, gitApi }: FilesBodyProps) {
     )
   }
 
-  const rows = useMemo(() => visibleRows(dirs, open, filter), [dirs, open, filter])
+  const rows = useMemo(() => visibleRows(dirs, open), [dirs, open])
   const rootState = dirs.get(ROOT)
+  const edit = (next: PendingEdit): void => { setEditError(null); setPending(next) }
+  const actions: FileTreeActions = {
+    toggle,
+    open: (file, options) => { if (path !== undefined) shell.openFile({ worktree: path, file, ...(options?.beside === true ? { beside: true } : {}) }) },
+    preview: (file) => { if (path !== undefined) shell.openDoc({ worktree: path, file }) },
+    createIn: (dir, entry) => { edit({ type: 'create', entry, value: dir === '' ? '' : `${dir}/` }) },
+    rename: (row: TreeRow) => { edit({ type: 'rename', file: row.path, value: row.path }) },
+    remove: (row: TreeRow) => { edit({ type: 'delete', file: row.path, isDir: row.kind === 'dir' }) },
+  }
 
   if (worktree === undefined || path === undefined) {
     return (
@@ -125,18 +137,28 @@ export function FilesBody({ shell, filesApi, gitApi }: FilesBodyProps) {
           <strong>{worktree.branch ?? 'detached'}</strong>
           <span className="dshWorkspaceChangesMeta">files</span>
         </div>
-        <button type="button" className="dshWorkspaceChangesRefresh" aria-label="New file" title="New file" onClick={() => { setEditError(null); setPending({ type: 'create', entry: 'file', value: '' }) }}>+</button>
-        <button type="button" className="dshWorkspaceChangesRefresh" aria-label="New folder" title="New folder" onClick={() => { setEditError(null); setPending({ type: 'create', entry: 'dir', value: '' }) }}>▣</button>
-        <button type="button" className="dshWorkspaceChangesRefresh" aria-label="Reload files" title="Reload" onClick={() => { setReload(n => n + 1) }}>↻</button>
+        <div className="dshWorkspaceFilesTools">
+          <button type="button" className="dshWorkspaceFilesTool" aria-label="New file" title="New file" onClick={() => { edit({ type: 'create', entry: 'file', value: '' }) }}><NewFileIcon /></button>
+          <button type="button" className="dshWorkspaceFilesTool" aria-label="New folder" title="New folder" onClick={() => { edit({ type: 'create', entry: 'dir', value: '' }) }}><NewFolderIcon /></button>
+          <button type="button" className="dshWorkspaceFilesTool" aria-label="Collapse all folders" title="Collapse all folders" disabled={open.size === 0} onClick={() => { setOpen(new Set()) }}><CollapseAllIcon /></button>
+          <button type="button" className="dshWorkspaceFilesTool" aria-label="Reload files" title="Reload" onClick={() => { setReload(n => n + 1) }}><ReloadIcon /></button>
+        </div>
       </header>
-      <input
-        className="dshWorkspaceFilesFilter"
-        type="search"
-        aria-label="Filter files"
-        placeholder="Filter opened folders by name"
-        value={filter}
-        onChange={(event) => { setFilter(event.target.value) }}
-      />
+      <div className="dshWorkspaceFilesSearch">
+        <input
+          className="dshWorkspaceFilesFilter"
+          type="search"
+          aria-label="Search the repository"
+          placeholder={mode === 'name' ? 'Search files' : 'Search text in files'}
+          value={query}
+          onChange={(event) => { setQuery(event.target.value) }}
+        />
+        <div className="dshWorkspaceFilesSearchMode" role="group" aria-label="Search in">
+          {(['name', 'content'] as const).map(m => (
+            <button key={m} type="button" aria-pressed={mode === m} title={m === 'name' ? 'Search file names' : 'Search text in files'} onClick={() => { setMode(m) }}>{m === 'name' ? 'Names' : 'Content'}</button>
+          ))}
+        </div>
+      </div>
       {pending !== null && (
         <form className="dshWorkspaceFilesEdit" onSubmit={(event) => { event.preventDefault(); submit() }}>
           {pending.type === 'delete' ? (
@@ -155,21 +177,6 @@ export function FilesBody({ shell, filesApi, gitApi }: FilesBodyProps) {
         </form>
       )}
       {editError !== null && <p className="dshWorkspaceChangesError" role="alert">{editError}</p>}
-      <div className="dshWorkspaceFilesSearch">
-        <input
-          className="dshWorkspaceFilesFilter"
-          type="search"
-          aria-label="Search the repository"
-          placeholder={mode === 'name' ? 'Find a file by name' : 'Find text in files'}
-          value={query}
-          onChange={(event) => { setQuery(event.target.value) }}
-        />
-        <div className="dshWorkspaceFilesSearchMode" role="group" aria-label="Search in">
-          {(['name', 'content'] as const).map(m => (
-            <button key={m} type="button" aria-pressed={mode === m} onClick={() => { setMode(m) }}>{m === 'name' ? 'Names' : 'Content'}</button>
-          ))}
-        </div>
-      </div>
       {search.phase !== 'idle' ? (
         <div className="dshWorkspaceFilesResults">
           {search.phase === 'loading' && <p className="dshWorkspaceChangesEmpty">Searching...</p>}
@@ -191,50 +198,13 @@ export function FilesBody({ shell, filesApi, gitApi }: FilesBodyProps) {
         </div>
       ) : (
         <>
-      {rootState?.phase === 'loading' && <p className="dshWorkspaceChangesEmpty">Loading...</p>}
-      {rootState?.phase === 'error' && <p className="dshWorkspaceChangesError" role="alert">{rootState.message}</p>}
-      {rootState?.phase === 'ready' && rows.length === 0 && (
-        <p className="dshWorkspaceChangesEmpty">{filter.trim() === '' ? 'This folder is empty.' : 'No opened file matches.'}</p>
-      )}
-      <ul className="dshWorkspaceFileTree" role="tree">
-        {rows.map(row => (
-          <li key={row.path} role="none" className="dshWorkspaceFileItem">
-            <button
-              type="button"
-              role="treeitem"
-              aria-expanded={row.kind === 'dir' ? row.open : undefined}
-              className="dshWorkspaceFileRow"
-              style={{ paddingLeft: 8 + row.depth * 14 }}
-              title={row.path}
-              onClick={() => {
-                if (row.kind === 'dir') toggle(row.path)
-                else shell.openFile({ worktree: path, file: row.path })
-              }}
-            >
-              <span className="dshWorkspaceFileGlyph" aria-hidden="true">{row.kind === 'dir' ? (row.open ? '▾' : '▸') : '·'}</span>
-              <span className="dshWorkspaceFileName">{row.name}</span>
-              {row.status === 'loading' && <span className="dshWorkspaceFileHint">loading</span>}
-              {row.status === 'error' && <span className="dshWorkspaceFileHint" data-error>failed</span>}
-            </button>
-            <button type="button" className="dshWorkspaceFilePreview" aria-label={`Rename ${row.path}`} title="Rename or move" onClick={() => { setEditError(null); setPending({ type: 'rename', file: row.path, value: row.path }) }}>Rename</button>
-            <button type="button" className="dshWorkspaceFilePreview" aria-label={`Delete ${row.path}`} title="Delete" onClick={() => { setEditError(null); setPending({ type: 'delete', file: row.path, isDir: row.kind === 'dir' }) }}>Delete</button>
-            {row.kind === 'file' && /\.(md|markdown|mdx)$/i.test(row.name) && (
-              <button
-                type="button"
-                className="dshWorkspaceFilePreview"
-                aria-label={`Preview ${row.path}`}
-                title="Preview as a document"
-                onClick={() => { shell.openDoc({ worktree: path, file: row.path }) }}
-              >
-                Preview
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
-      {rootState?.phase === 'ready' && rootState.truncated && (
-        <p className="dshWorkspaceChangesEmpty">Showing the first {rootState.entries.length} entries of the root.</p>
-      )}
+          {rootState?.phase === 'loading' && <p className="dshWorkspaceChangesEmpty">Loading...</p>}
+          {rootState?.phase === 'error' && <p className="dshWorkspaceChangesError" role="alert">{rootState.message}</p>}
+          {rootState?.phase === 'ready' && rows.length === 0 && <p className="dshWorkspaceChangesEmpty">This folder is empty.</p>}
+          {rows.length > 0 && <FileTree rows={rows} worktree={path} actions={actions} />}
+          {rootState?.phase === 'ready' && rootState.truncated && (
+            <p className="dshWorkspaceChangesEmpty">Showing the first {rootState.entries.length} entries of the root.</p>
+          )}
         </>
       )}
     </div>

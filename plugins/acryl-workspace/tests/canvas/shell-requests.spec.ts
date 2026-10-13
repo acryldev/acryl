@@ -39,6 +39,17 @@ describe('routeShellRequests', () => {
     w.stop()
   })
 
+  it('opens a file beside the tab in front when the user asks for that', () => {
+    const w = world()
+    const state = w.groups.stateFor('/a')
+    state.addTile('chat', { chatSessionId: 's1' })
+    const chatId = state.getSnapshot().activeId
+    w.shell.openFile({ worktree: '/a', file: 'x.ts', beside: true })
+    const file = state.getSnapshot().tiles.find(tile => tile.kind === 'file')
+    expect(state.getSnapshot()).toMatchObject({ activeId: chatId, splitId: file?.id })
+    w.stop()
+  })
+
   it('runs a check as a terminal tab that types the command', async () => {
     const w = world()
     w.shell.runCheck({ worktree: '/a', title: 'pnpm run check', commandLine: 'pnpm run check' })

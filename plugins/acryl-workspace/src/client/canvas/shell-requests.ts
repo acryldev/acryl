@@ -4,9 +4,19 @@
  */
 
 import type { WorkspaceGroups } from './groups.ts'
+import type { WorkspaceState, WorkspaceTile } from './state.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import type { TerminalRegistry } from '../terminal/terminal-session.ts'
 import type { WorkspacePtyApi } from '../terminal/pty-api.ts'
+
+/** Open a tab and, when the user asked for it beside, show it in the second pane next to the tab that was in front. */
+function openTile(state: WorkspaceState, beside: boolean | undefined, open: () => WorkspaceTile | undefined): void {
+  const previous = state.getSnapshot().activeId
+  const tile = open()
+  if (beside !== true || tile === undefined || previous === undefined || previous === tile.id) return
+  state.selectTile(previous)
+  state.openInSplit(tile.id)
+}
 
 export interface ShellRequestDeps {
   readonly shell: WorkspaceShellState
@@ -30,15 +40,15 @@ export function routeShellRequests({ shell, groups, terminals, api }: ShellReque
     }),
     shell.onOpenDiff((request) => {
       const state = groups.stateFor(request.worktree)
-      state.openDiff(request.worktree, request.file)
+      openTile(state, request.beside, () => state.openDiff(request.worktree, request.file))
     }),
     shell.onOpenFile((request) => {
       const state = groups.stateFor(request.worktree)
-      state.openFile(request.worktree, request.file)
+      openTile(state, request.beside, () => state.openFile(request.worktree, request.file))
     }),
     shell.onOpenDoc((request) => {
       const state = groups.stateFor(request.worktree)
-      state.openDoc(request.worktree, request.file)
+      openTile(state, request.beside, () => state.openDoc(request.worktree, request.file))
     }),
     // A check: a terminal tab in that worktree that types the command for you.
     shell.onRunCheck((request) => {

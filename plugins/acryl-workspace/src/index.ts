@@ -144,6 +144,7 @@ export function apply(ctx: Context): void {
           throw cause
         }
       },
+      ignored: (root, paths) => workspaceGit.ignored(root, paths),
     })
     const releases: Array<() => void> = []
     try {

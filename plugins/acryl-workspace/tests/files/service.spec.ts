@@ -26,6 +26,7 @@ const files = new WorkspaceFiles({
       throw cause
     }
   },
+  ignored: (root, paths) => gitService.ignored(root, paths),
 })
 
 beforeAll(() => {
@@ -40,6 +41,9 @@ beforeAll(() => {
   symlinkSync(outside, join(repo, 'escape-dir'))
   symlinkSync(join(outside, 'secret.txt'), join(repo, 'escape-file'))
   symlinkSync(join(repo, 'README.md'), join(repo, 'inside-link'))
+  writeFileSync(join(repo, '.gitignore'), 'bin.dat\nbuild/\n')
+  mkdirSync(join(repo, 'build'))
+  writeFileSync(join(repo, 'build', 'out.js'), 'x\n')
   gitCli(root, 'init', '-q', 'proj')
   gitCli(repo, 'add', 'README.md', 'src')
   gitCli(repo, 'commit', '-q', '-m', 'init')
@@ -78,11 +82,17 @@ describe('WorkspaceFiles.tree', () => {
   it('lists directories first then files, alphabetically, hides .git and leaves out symlinks that escape', async () => {
     const view = await files.tree(repo, '')
     expect(view.entries.map(e => `${e.kind}:${e.name}`)).toEqual([
-      'dir:src', 'file:bin.dat', 'file:inside-link', 'file:README.md',
+      'dir:build', 'dir:src', 'file:.gitignore', 'file:bin.dat', 'file:inside-link', 'file:README.md',
     ])
     expect(view.truncated).toBe(false)
     const src = await files.tree(repo, 'src')
     expect(src.entries.map(e => e.name)).toEqual(['deep', 'a.ts', 'B.ts'])
+  })
+
+  it('marks what git ignores, a directory by a directory-only pattern too, and nothing else', async () => {
+    const view = await files.tree(repo, '')
+    expect(view.entries.filter(e => e.ignored === true).map(e => e.name)).toEqual(['build', 'bin.dat'])
+    expect(view.entries.find(e => e.name === 'src')).toEqual({ name: 'src', kind: 'dir' })
   })
 
   it('refuses a path outside the worktree and a directory that is not a git worktree root', async () => {

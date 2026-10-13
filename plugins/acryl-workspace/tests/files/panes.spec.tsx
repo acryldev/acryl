@@ -55,17 +55,22 @@ describe('FilesBody', () => {
     await waitFor(() => { expect(opened).toEqual([{ worktree: '/p', file: 'src/new.ts' }]) })
     expect(change).toHaveBeenLastCalledWith('/p', { op: 'create', kind: 'file', file: 'src/new.ts' })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Rename README.md' }))
+    const menuAction = (row: string, action: string): void => {
+      fireEvent.contextMenu(screen.getByRole('treeitem', { name: row }))
+      fireEvent.click(screen.getByRole('menuitem', { name: action }))
+    }
+    menuAction('README.md', 'Rename or move')
     fireEvent.change(screen.getByLabelText('New path'), { target: { value: 'docs/README.md' } })
     fireEvent.click(screen.getByRole('button', { name: 'Rename' }))
     await waitFor(() => { expect(change).toHaveBeenLastCalledWith('/p', { op: 'rename', file: 'README.md', to: 'docs/README.md' }) })
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Delete README.md' }))
+    await screen.findByRole('treeitem', { name: 'README.md' })
+    menuAction('README.md', 'Delete')
     expect(change).toHaveBeenCalledTimes(2)
     expect(screen.getByText(/cannot be undone/)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(change).toHaveBeenCalledTimes(2)
-    fireEvent.click(screen.getByRole('button', { name: 'Delete README.md' }))
+    menuAction('README.md', 'Delete')
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
     await waitFor(() => { expect(change).toHaveBeenLastCalledWith('/p', { op: 'delete', file: 'README.md' }) })
   })
@@ -141,15 +146,57 @@ describe('FilesBody', () => {
     expect(opened).toEqual([{ worktree: '/p', file: 'src/a.ts' }])
   })
 
-  it('filters opened files by name and shows a readable error when the root cannot be read', async () => {
+  it('opens a file beside the tab in front, previews markdown, and starts a new file in the folder, all from the row menu', async () => {
     const shell = await selectedShell()
-    const props = { shell, filesApi: makeFilesApi(), gitApi } as unknown as FilesBodyProps
-    render(<FilesBody {...props} />)
+    const opened: unknown[] = []
+    const previewed: unknown[] = []
+    shell.onOpenFile(request => { opened.push(request) })
+    shell.onOpenDoc(request => { previewed.push(request) })
+    render(<FilesBody {...({ shell, filesApi: makeFilesApi(), gitApi } as unknown as FilesBodyProps)} />)
     await screen.findByText('README.md')
-    fireEvent.change(screen.getByLabelText('Filter files'), { target: { value: 'read' } })
-    expect(screen.getByText('README.md')).toBeTruthy()
-    expect(screen.queryByText('src')).toBeNull()
-    cleanup()
+    fireEvent.contextMenu(screen.getByRole('treeitem', { name: 'README.md' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Open to the side' }))
+    expect(opened).toEqual([{ worktree: '/p', file: 'README.md', beside: true }])
+    fireEvent.click(screen.getByRole('button', { name: 'Actions for README.md' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Preview' }))
+    expect(previewed).toEqual([{ worktree: '/p', file: 'README.md' }])
+    fireEvent.contextMenu(screen.getByRole('treeitem', { name: 'src' }))
+    expect(screen.queryByRole('menuitem', { name: 'Preview' })).toBeNull()
+    fireEvent.click(screen.getByRole('menuitem', { name: 'New file here' }))
+    expect((screen.getByLabelText('New file path') as HTMLInputElement).value).toBe('src/')
+  })
+
+  it('walks the tree with the keyboard: arrows move, Right opens a folder and steps in, Enter opens a file', async () => {
+    const shell = await selectedShell()
+    const opened: unknown[] = []
+    shell.onOpenFile(request => { opened.push(request) })
+    render(<FilesBody {...({ shell, filesApi: makeFilesApi(), gitApi } as unknown as FilesBodyProps)} />)
+    await screen.findByText('README.md')
+    const tree = screen.getByRole('tree', { name: 'Files' })
+    fireEvent.focus(tree)
+    expect(screen.getByRole('treeitem', { name: 'src' }).getAttribute('aria-selected')).toBe('true')
+    fireEvent.keyDown(tree, { key: 'ArrowRight' })
+    await screen.findByText('a.ts')
+    fireEvent.keyDown(tree, { key: 'ArrowRight' })
+    expect(screen.getByRole('treeitem', { name: 'a.ts' }).getAttribute('aria-selected')).toBe('true')
+    fireEvent.keyDown(tree, { key: 'Enter' })
+    expect(opened).toEqual([{ worktree: '/p', file: 'src/a.ts' }])
+    fireEvent.keyDown(tree, { key: 'ArrowLeft' })
+    expect(screen.getByRole('treeitem', { name: 'src' }).getAttribute('aria-selected')).toBe('true')
+    fireEvent.keyDown(tree, { key: 'ArrowLeft' })
+    await waitFor(() => { expect(screen.queryByText('a.ts')).toBeNull() })
+  })
+
+  it('dims what git ignores', async () => {
+    const shell = await selectedShell()
+    const filesApi = makeFilesApi({ tree: async (_w, dir) => ({ path: '/p', dir, truncated: false, entries: [{ name: 'node_modules', kind: 'dir', ignored: true }, { name: 'src', kind: 'dir' }] }) })
+    render(<FilesBody {...({ shell, filesApi, gitApi } as unknown as FilesBodyProps)} />)
+    expect((await screen.findByRole('treeitem', { name: 'node_modules' })).hasAttribute('data-ignored')).toBe(true)
+    expect(screen.getByRole('treeitem', { name: 'src' }).hasAttribute('data-ignored')).toBe(false)
+  })
+
+  it('shows a readable error when the root cannot be read', async () => {
+    const shell = await selectedShell()
     const failing = { shell, gitApi, filesApi: makeFilesApi({ tree: () => Promise.reject(new Error('cannot read')) }) } as unknown as FilesBodyProps
     render(<FilesBody {...failing} />)
     expect((await screen.findByRole('alert')).textContent).toContain('cannot read')

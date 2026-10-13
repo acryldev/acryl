@@ -14,6 +14,8 @@ export interface FileEntry {
   /** Base name, without any directory part. */
   readonly name: string
   readonly kind: FileEntryKind
+  /** Git ignores it (build output, dependencies, local settings); the tree shows it dimmed. */
+  readonly ignored?: boolean
 }
 
 /** One directory of a worktree. */
@@ -52,6 +54,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isEntry(value: unknown): value is FileEntry {
   return isRecord(value) && typeof value.name === 'string' && (value.kind === 'file' || value.kind === 'dir')
+    && (value.ignored === undefined || typeof value.ignored === 'boolean')
 }
 
 /** @param value - unknown JSON from the tree route. */

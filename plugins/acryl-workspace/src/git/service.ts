@@ -24,6 +24,7 @@ import type {
 import { WorkspaceChanges } from './changes.ts'
 import { readWorktreeChecks } from './checks.ts'
 import { WorkspaceCommits } from './commits.ts'
+import { ignoredPaths } from './ignored.ts'
 import { GitRunner, type GitRunnerOptions } from './runner.ts'
 import { WorkspaceSearch } from './search.ts'
 import { WorkspaceWorktrees } from './worktrees.ts'
@@ -79,6 +80,9 @@ export class WorkspaceGit {
 
   /** Find files by name, or lines by content, literally and case-insensitively. */
   search(path: string, query: string, mode: GitSearchMode): Promise<GitSearchView> { return this.searcher.search(path, query, mode) }
+
+  /** Which of the given worktree-relative paths git ignores (a directory ends in `/`); none when git cannot say. */
+  ignored(root: string, paths: readonly string[]): Promise<ReadonlySet<string>> { return ignoredPaths(this.runner, root, paths) }
 
   /** The scripts a worktree can run as checks, and its package manager. */
   async checks(path: string): Promise<GitChecksView> {
