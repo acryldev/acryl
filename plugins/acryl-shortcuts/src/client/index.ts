@@ -63,8 +63,10 @@ export function apply(ctx: ClientContext): void {
 }
 
 /**
- * The palette's shortcut as registered: the same keys on every surface and platform, working from anywhere in the window (a focused
- * terminal or text field too).
+ * The palette's shortcut as registered: the same keys everywhere a page may take them, working from anywhere in the window (a focused
+ * terminal or text field too). Web on Linux has no default: a browser there lets a page take only Ctrl+/, Ctrl+Shift+, and Ctrl+Shift+.
+ * (DSH's `isWebBindingAllowed`), and DSH refuses a whole registration with one refused default, which took the palette's shortcut away
+ * everywhere.
  * @param run - what pressing it does.
  */
 export function paletteShortcut(run: () => void): ShortcutRegistration {
@@ -78,7 +80,6 @@ export function paletteShortcut(run: () => void): ShortcutRegistration {
       'desktop:linux': PALETTE_BINDING,
       'web:macos': PALETTE_BINDING,
       'web:windows': PALETTE_BINDING,
-      'web:linux': PALETTE_BINDING,
     },
     regions: ['page', 'editable', 'terminal'],
     modals: [],

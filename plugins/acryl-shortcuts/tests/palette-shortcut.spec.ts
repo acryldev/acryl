@@ -2,10 +2,11 @@ import { describe, expect, it, vi } from 'vitest'
 import { paletteShortcut } from '../src/client/index.ts'
 
 describe('the command palette shortcut', () => {
-  it('is Cmd/Ctrl+Shift+P on every surface and platform, from a page, a text field or a terminal', () => {
+  it('is Cmd/Ctrl+Shift+P wherever a page may take it, from a page, a text field or a terminal', () => {
     const spec = paletteShortcut(() => {})
     expect(spec.id).toBe('acryl.command-palette.toggle')
-    expect(Object.keys(spec.defaults).sort()).toEqual(['desktop:linux', 'desktop:macos', 'desktop:windows', 'web:linux', 'web:macos', 'web:windows'])
+    // Not on Web for Linux: DSH refuses it there, and one refused default takes the whole registration down.
+    expect(Object.keys(spec.defaults).sort()).toEqual(['desktop:linux', 'desktop:macos', 'desktop:windows', 'web:macos', 'web:windows'])
     for (const binding of Object.values(spec.defaults)) expect(binding).toEqual({ code: 'KeyP', modifiers: ['primary', 'shift'] })
     expect([...spec.regions].sort()).toEqual(['editable', 'page', 'terminal'])
     expect(spec.modals).toEqual([])
