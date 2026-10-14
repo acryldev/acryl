@@ -32,7 +32,7 @@ Superseded by these: the "Cordis Plugins registry by pull request" target below 
 
 ### Verified: the first push (2026-10-13)
 
-`acryl-quick-notes` 0.2.0 was pushed from the `musichen` login to `inboxxobni/acryl-quick-notes` (public, topics `acryl-package`, `cordis-plugin`, `dsh-plugin`, release `v0.2.0` with `acryl-quick-notes-0.2.0.tgz`, sha512 `3TB0b3tv...g2Byw==`). Within a minute GitHub search `topic:<each label> org:inboxxobni` returned it, and the downloaded release asset had the same sha512 as the local pack. Done by hand with `git`, `gh repo create --public`, `gh repo edit --add-topic`, `gh release create`; step 2 below turns exactly these commands into `acryl ext push`.
+`acryl-quick-notes` 0.2.0 was pushed from the `musichen` login to `inboxxobni/acryl-quick-notes` (public, topics `acryl-package`, `cordis-plugin`, `dsh-plugin`, release `v0.2.0` with `acryl-quick-notes-0.2.0.tgz`, sha512 `3TB0b3tv...g2Byw==`). Within a minute GitHub search `topic:<each label> org:inboxxobni` returned it, and the downloaded release asset had the same sha512 as the local pack. Whose credentials and on whose authority: `inboxxobni` is a GitHub organization, not a second account; `musichen` is one of its two members and an admin (`gh api user/memberships/orgs/inboxxobni`: role admin, active), so the push used the owner's own `gh` login writing to the owner's own organization, on the owner's instruction in chat on 2026-10-13 ("push as test from user 'musichen' to github.com/inboxxobni"). Done by hand with `git`, `gh repo create --public`, `gh repo edit --add-topic`, `gh release create`; step 2 below turns exactly these commands into `acryl ext push`.
 
 ## Terms
 
@@ -87,7 +87,7 @@ A Cordis service `acrylExtensions` (Host side, owned by `acryl-extension-context
 ## Guards
 
 - **Visibility**: `acryl.visibility` is `private` by default, and Share creates a private repository. A private extension is refused for npm (unless the scope is private) and for a public repository; only "List publicly" changes it.
-- **Secrets**: every push runs the secret check (`@webboxes/app-persistence`'s `acryl-secret-check`) over what is about to leave the machine, and refuses on a hit.
+- **Secrets**: every push runs the secret check (`@webboxes/app-persistence`'s `acryl-secret-check`) by itself over exactly what is about to leave the machine, and refuses on a hit. It is part of `push`, not a step the user or agent remembers: no Share button and no `acryl ext push` ships without it (spec 001 T084).
 - **Credentials**: git, `gh` and npm use the user's own logins; ACRYL never reads, stores or prints a token.
 - **Confirmation**: every push to a remote and every switch to public needs the user's confirmation in the app; the agent can only propose.
 - **License**: a public target requires a `license` field.
@@ -97,5 +97,5 @@ A Cordis service `acrylExtensions` (Host side, owned by `acryl-extension-context
 
 1. Local store: `save` and `pull` from the store, `acryl ext list`, the Plugins page list. Test with `acryl-quick-notes`.
 2. GitHub target: `push` (repository, tag, topics, release tarball, exactly the verified commands above) and `pull` by `owner/repo`, with the secret check and the visibility guard.
-3. Catalog: `acryldev.github.io`'s `sync-acryl-catalog.mjs` also searches GitHub topic `acryl-package` (today it reads only the npm keyword) and records each repository's latest release tarball and sha512; cordisplugins.github.io builds its index the same way from `cordis-plugin`; the Market's install accepts a GitHub release tarball.
+3. Catalog (critical path for listing a GitHub-only extension: until it is done, "List publicly" lists it on dshfind and deepseek1024 but not on acryl.dev; tracked as https://github.com/acryldev/acryldev.github.io/issues/1, assigned to musichen): `acryldev.github.io`'s `sync-acryl-catalog.mjs` also searches GitHub topic `acryl-package` (today it reads only the npm keyword) and records each repository's latest release tarball and sha512; cordisplugins.github.io builds its index the same way from `cordis-plugin`; the Market's install accepts a GitHub release tarball.
 4. npm target: publish through the user's npm login; pull through spec 030's managed install.
