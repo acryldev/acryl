@@ -59,14 +59,20 @@ describe('buildProjectRows', () => {
 
   it('prefers running over done over dirty, and ignores blank or directory-less sessions', () => {
     const rows = buildProjectRows(snapshot(), [
-      { cwd: '/p/proj/.worktrees/x', running: true, blank: false },
-      { cwd: '/p/proj/.worktrees/x', running: false, completed: true, blank: false },
-      { cwd: '/p/proj', running: false, completed: true, blank: false },
-      { cwd: '/p/proj', running: true, blank: true },
+      { id: 'c1', cwd: '/p/proj/.worktrees/x', running: true, blank: false },
+      { id: 'c2', cwd: '/p/proj/.worktrees/x', running: false, completed: true, blank: false },
+      { id: 'c3', cwd: '/p/proj', running: false, completed: true, blank: false },
+      { id: 'c4', cwd: '/p/proj', running: true, blank: true },
       { running: true, blank: false },
-    ])[0]?.rows
+    ], new Map(), new Map(), new Map([['/p/proj', new Set(['c3'])], ['/p/proj/.worktrees/x', new Set(['c2'])]]))[0]?.rows
     expect(rows?.[0]).toMatchObject({ dot: 'done', sessions: 1 })
     expect(rows?.[1]).toMatchObject({ dot: 'running', sessions: 2 })
+  })
+
+  it('counts only open chats: running, or with a tab in that worktree, not every chat that ever ran there', () => {
+    const history = Array.from({ length: 90 }, (_, index) => ({ id: `old-${String(index)}`, cwd: '/p/proj', running: false, blank: false }))
+    const rows = buildProjectRows(snapshot(), [...history, { id: 'live', cwd: '/p/proj', running: true, blank: false }], new Map(), new Map(), new Map([['/p/proj', new Set(['old-3'])]]))[0]?.rows
+    expect(rows?.[0]?.sessions).toBe(2)
   })
 
   it('reports loading before the first status arrives and error when status failed', () => {
@@ -105,7 +111,22 @@ describe('entriesForWorktree', () => {
     const entries = entriesForWorktree('/p/proj/.worktrees/x', [REPO], [], chats)
     expect(entries).toEqual([
       { kind: 'chat', id: 's1', label: 'Explore the tools', running: true, active: false },
-      { kind: 'chat', id: 's2', label: 'New chat', running: false, active: false },
+      { kind: 'chat', id: 's2', label: 'New chat', running: false, active: false, earlier: true },
+    ])
+  })
+
+  it('lists open chats (a tab here, running, or selected) first and marks the rest earlier', () => {
+    const history = [
+      { id: 'h1', cwd: '/p/proj', blank: false, running: false, displayTitle: 'acryl' },
+      { id: 'h2', cwd: '/p/proj', blank: false, running: false, displayTitle: 'acryl' },
+      { id: 'tabbed', cwd: '/p/proj', blank: false, running: false, displayTitle: 'Has a tab' },
+      { id: 'busy', cwd: '/p/proj', blank: false, running: true, displayTitle: 'Running' },
+      { id: 'shown', cwd: '/p/proj', blank: false, running: false, displayTitle: 'Selected' },
+    ]
+    const chatTiles = [{ id: 'tile-1', kind: 'chat', title: 'Has a tab', chatSessionId: 'tabbed' }]
+    const entries = entriesForWorktree('/p/proj', [REPO], chatTiles, history, { id: 'tile-2', chatSessionId: 'shown' })
+    expect(entries.map(entry => [entry.id, entry.earlier === true])).toEqual([
+      ['tabbed', false], ['busy', false], ['shown', false], ['h1', true], ['h2', true],
     ])
   })
 

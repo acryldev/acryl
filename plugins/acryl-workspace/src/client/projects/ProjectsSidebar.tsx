@@ -89,8 +89,13 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
     useCallback((listener: () => void) => groups.onChange(listener), [groups]),
     () => JSON.stringify(groups.keys().map((key) => {
       const state = groups.stateFor(key).getSnapshot()
-      return [key, state.activeId, state.tiles.filter(tile => tile.kind === 'pty').map(tile => [tile.id, tile.title, tile.commandId])]
+      return [key, state.activeId, state.tiles.filter(tile => tile.kind === 'pty' || tile.kind === 'chat').map(tile => [tile.id, tile.title, tile.commandId, tile.chatSessionId])]
     })),
+  )
+  // The chats with a tab per worktree: a row counts these (and running ones), the chats its list shows up front.
+  const openChatsKey = useSyncExternalStore(
+    useCallback((listener: () => void) => groups.onChange(listener), [groups]),
+    () => JSON.stringify(groups.keys().map(key => [key, groups.stateFor(key).getSnapshot().tiles.flatMap(tile => tile.kind === 'chat' && tile.chatSessionId !== undefined ? [tile.chatSessionId] : [])])),
   )
   // Which worktrees have an agent that needs you or is busy, as a stable text key for the same reason.
   const attentionKey = useSyncExternalStore(
@@ -114,8 +119,14 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
   const currentWorkspace = useSyncExternalStore(projects.subscribeProjects, () => projects.currentWorkspace())
   const [creatingWorkspace, setCreatingWorkspace] = useState(false)
   const allRepos = useMemo(
-    () => buildProjectRows(snapshot, chatRows, new Map(JSON.parse(agentsKey) as Array<[string, string[]]>), new Map(JSON.parse(attentionKey) as Array<[string, WorktreeAttention]>)),
-    [snapshot, chatRows, agentsKey, attentionKey],
+    () => buildProjectRows(
+      snapshot,
+      chatRows,
+      new Map(JSON.parse(agentsKey) as Array<[string, string[]]>),
+      new Map(JSON.parse(attentionKey) as Array<[string, WorktreeAttention]>),
+      new Map((JSON.parse(openChatsKey) as Array<[string, string[]]>).map(([key, ids]) => [key, new Set(ids)] as const)),
+    ),
+    [snapshot, chatRows, agentsKey, attentionKey, openChatsKey],
   )
   // The sidebar is the shown workspace: its projects, and the worktree on screen.
   const repos = useMemo(

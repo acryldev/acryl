@@ -172,7 +172,7 @@ function WorktreeButton({ row, onSelect, customAgents }: { row: WorktreeRow; onS
           {row.agents.length > MAX_ROW_AGENTS && <span className="dshWorkspaceWorktreeMore">+{row.agents.length - MAX_ROW_AGENTS}</span>}
         </span>
       )}
-      {row.sessions > 0 && <span className="dshWorkspaceWorktreeSessions" title="Chat sessions here">{row.sessions}</span>}
+      {row.sessions > 0 && <span className="dshWorkspaceWorktreeSessions" title="Open chats here">{row.sessions}</span>}
       {(row.added > 0 || row.removed > 0) && (
         <span className="dshWorkspaceWorktreeStat">
           <span data-kind="add">+{row.added}</span> <span data-kind="remove">-{row.removed}</span>
@@ -203,12 +203,16 @@ function WorktreeSessions({
   readonly onRenameEntry: (path: string, entry: WorktreeSessionEntry, title: string) => void
 }) {
   const [editing, setEditing] = useState<{ readonly key: string; readonly value: string } | null>(null)
+  const [showEarlier, setShowEarlier] = useState(false)
   if (entries.length === 0) {
     return <p className="dshWorkspaceSessionsEmpty">Nothing running here yet.</p>
   }
+  const earlier = entries.filter(entry => entry.earlier === true).length
+  const visible = showEarlier ? entries : entries.filter(entry => entry.earlier !== true)
   return (
     <ul className="dshWorkspaceSessions">
-      {entries.map((entry) => {
+      {visible.length === 0 && <li className="dshWorkspaceSessionsEmpty">Nothing open here.</li>}
+      {visible.map((entry) => {
         const key = `${entry.kind}-${entry.id}`
         const renaming = editing?.key === key
         const commit = (): void => {
@@ -261,6 +265,13 @@ function WorktreeSessions({
         </li>
         )
       })}
+      {earlier > 0 && (
+        <li className="dshWorkspaceSessionItem">
+          <button type="button" className="dshWorkspaceSessionRow dshWorkspaceSessionsMore" aria-expanded={showEarlier} onClick={() => { setShowEarlier(!showEarlier) }}>
+            {showEarlier ? 'Hide earlier chats' : `${String(earlier)} earlier ${earlier === 1 ? 'chat' : 'chats'}`}
+          </button>
+        </li>
+      )}
     </ul>
   )
 }

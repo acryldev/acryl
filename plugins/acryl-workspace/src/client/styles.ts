@@ -270,6 +270,7 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceSessionItem { position: relative; display: flex; align-items: center; }
 .dshWorkspaceSessionRow { appearance: none; display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; text-align: left; font: 12px/1.3 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSessionRow:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
+.dshWorkspaceSessionsMore { padding-left: 32px; color: var(--dsw-alias-label-secondary); }
 /* In-place rename of a session row (double-click), same idea as the tab strip's own tab rename. */
 .dshWorkspaceSessionRenameRow { cursor: text; }
 .dshWorkspaceSessionRename { flex: 1; min-width: 0; padding: 1px 4px; border: 1px solid #4d6bfe; border-radius: 4px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-primary); font: inherit; outline: none; }

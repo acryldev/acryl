@@ -5,6 +5,7 @@ import type { RepoState, ShellSnapshot, WorktreeState } from '../worktrees/shell
 
 /** The slice of a session row the model needs. */
 export interface SessionLike {
+  readonly id?: string
   readonly cwd?: string
   readonly running: boolean
   readonly completed?: boolean
@@ -22,7 +23,7 @@ export interface WorktreeRow {
   readonly changeCount: number
   readonly added: number
   readonly removed: number
-  /** Chat sessions whose working directory is inside this worktree. */
+  /** Open chats here: running, or with a tab in this worktree (the ones its list shows; earlier chats are not counted). */
   readonly sessions: number
   readonly selected: boolean
   /** Agents (not plain terminals) open in this worktree's tabs, for the icons on the row. */
@@ -44,6 +45,8 @@ export interface AgentTileLike {
   readonly kind: string
   readonly title: string
   readonly commandId?: string
+  /** Set on a chat tile: the session it shows. */
+  readonly chatSessionId?: string
 }
 
 /** The slice of a chat session the tree needs to list a worktree's AcrylDSH Chats (spec 040 T129/T130). */
@@ -81,6 +84,8 @@ export interface WorktreeSessionEntry {
   readonly running?: boolean
   /** Whether this entry is the tab strip's selected tile right now, so the selected tab's row is highlighted. */
   readonly active?: boolean
+  /** A chat that is neither open in a tab nor running: history, listed only under "earlier chats". */
+  readonly earlier?: boolean
 }
 
 /** The worktree's currently active canvas tile, only as much as entry-highlighting needs. */
@@ -108,10 +113,17 @@ export function entriesForWorktree(
     .map(tile => ({ kind: 'agent', id: tile.id, label: tile.title, commandId: tile.commandId ?? 'shell', active: tile.id === active?.id }))
   // owningWorktree (deepest match), not a plain isInside: a linked worktree nested under this one claims
   // its own chats, and they must not also appear here.
+  // Every chat that ever ran in the folder is listed, but only the open ones (a tab here, running, or selected) up front: a CLI or TUI start
+  // leaves a session behind, so a busy folder collects dozens, and listing them all read as dozens of open chats nobody closed.
+  const openTabs = new Set(tiles.flatMap(tile => tile.kind === 'chat' && tile.chatSessionId !== undefined ? [tile.chatSessionId] : []))
   const ownChats: WorktreeSessionEntry[] = chats
     .filter(chat => chat.cwd !== undefined && owningWorktree(repos, chat.cwd) === path)
-    .map(chat => ({ kind: 'chat', id: chat.id, label: chatLabel(chat), running: chat.running, active: chat.id === active?.chatSessionId }))
-  return [...agents, ...ownChats]
+    .map((chat) => {
+      const selected = chat.id === active?.chatSessionId
+      const open = openTabs.has(chat.id) || chat.running || selected
+      return { kind: 'chat' as const, id: chat.id, label: chatLabel(chat), running: chat.running, active: selected, ...(open ? {} : { earlier: true }) }
+    })
+  return [...agents, ...ownChats.filter(entry => entry.earlier !== true), ...ownChats.filter(entry => entry.earlier === true)]
 }
 
 function basename(path: string): string {
@@ -172,6 +184,7 @@ function dotFor(worktree: WorktreeState, running: number, done: number, waiting:
 /**
  * @param snapshot - shell state.
  * @param sessions - chat sessions; blank ones are ignored.
+ * @param openChats - per worktree, the chat sessions with a tab there; with `running`, what the row's chat count counts.
  * @returns one entry per repository, worktrees in git order.
  */
 export function buildProjectRows(
@@ -179,6 +192,7 @@ export function buildProjectRows(
   sessions: readonly SessionLike[],
   agentsByPath: ReadonlyMap<string, readonly string[]> = new Map(),
   attention: ReadonlyMap<string, WorktreeAttention> = new Map(),
+  openChats: ReadonlyMap<string, ReadonlySet<string>> = new Map(),
 ): RepoRow[] {
   const perWorktree = new Map<string, { sessions: number; running: number; done: number }>()
   for (const session of sessions) {
@@ -186,7 +200,7 @@ export function buildProjectRows(
     const owner = owningWorktree(snapshot.repos, session.cwd)
     if (owner === undefined) continue
     const entry = perWorktree.get(owner) ?? { sessions: 0, running: 0, done: 0 }
-    entry.sessions += 1
+    if (session.running || (session.id !== undefined && openChats.get(owner)?.has(session.id) === true)) entry.sessions += 1
     if (session.running) entry.running += 1
     if (session.completed === true) entry.done += 1
     perWorktree.set(owner, entry)
