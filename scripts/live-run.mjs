@@ -88,8 +88,11 @@ if (surface === 'web') {
   spawnSync('tmux', ['new-session', '-d', '-s', session, '-x', '140', '-y', '40', '-c', project, 'env', ...envArgs, process.execPath, join(root, 'apps/acryl-cli/lib/bin.js')], { stdio: 'inherit' })
 }
 
+// The app's last output lines, printed if it exits by itself: otherwise a start that fails says nothing at all.
+const recent = []
 const announce = chunk => {
   for (const line of String(chunk).split('\n')) {
+    if (line.trim() !== '') { recent.push(line); if (recent.length > 40) recent.shift() }
     const url = /(https?:\/\/127\.0\.0\.1:\d+\/\?token=[\w-]+)/u.exec(line)?.[1]
     if (url !== undefined) console.log(`live-run: ${surface} url ${url}`)
   }
@@ -124,5 +127,9 @@ async function stop(code) {
 }
 process.on('SIGINT', () => { void stop(0) })
 process.on('SIGTERM', () => { void stop(0) })
-child?.on('exit', () => { void stop(0) })
+child?.on('exit', (code, signal) => {
+  if (stopping) return
+  console.error(`live-run: the ${surface} app exited by itself (${signal ?? `code ${String(code)}`}); its last output:\n${recent.map(line => `  ${line}`).join('\n')}`)
+  void stop(1)
+})
 setInterval(() => {}, 1 << 30)
