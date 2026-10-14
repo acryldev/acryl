@@ -157,7 +157,7 @@ export function apply(ctx: ClientContext): void {
   ctx.plugin(changesTabPlugin(shell, gitApi))
   ctx.plugin(reviewTabPlugin(shell, review))
   ctx.plugin(checksTabPlugin(shell, gitApi))
-  ctx.plugin(filesTabPlugin(shell, filesApi, gitApi))
+  ctx.plugin(filesTabPlugin(shell, filesApi, gitApi, advanced))
 
   if (advanced && terminalStack !== undefined) {
     const { ptyClient, terminals, dock } = terminalStack
