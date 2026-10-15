@@ -177,6 +177,20 @@ What differs in an installed app, and what the build must handle:
 
 So every scenario in "Verification" has a column for where it ran, and a build step is not done until its scenarios pass on **installed builds**: the macOS DMG (this Mac), the Windows EXE (mbpi9win) and the Linux DEB (z370n), each on a throwaway home, as well as in development.
 
+## Built to be extracted into ACRYL Blends (owner, 2026-10-15)
+
+The owner: "once we solve this, we will take it and extract the core into the agentic framework (acrylblends.github.io), so we allow building not only the agentic IDE ACRYL app but actually any kind of app with the same tooling, with blueprints and boilerplate (Blends)."
+
+So the machinery is built in three layers from the start, and the lower two never depend on the ACRYL IDE:
+
+1. **Format and logic, host-independent**, the way `runtime/blends-core` (`@webboxes/blends-core`) already is: the service contract reader, the source-argument parser, packing and sha512, the store's index, the adapter interface types, the refusal rules. No Cordis, DSH or surface imports; usable by the engine, a registry's CI (acryl.dev and cordisplugins.github.io syncs) and other runtimes. Today's `plugins/acryl-extension-context/lib/contract.js` moves here.
+2. **The Cordis service and its adapters**: the extension service and the target adapters as Cordis plugins. They depend on Cordis and on service names only: the home comes from the app instance service, and installing goes through an **installer** service. In a DSH-based app (ACRYL, a Blend grown from it) DSH's `pluginManager` is the installer (D1); a Blend without DSH provides its own installer with the same shape. That is the service contract applied to the machinery itself, and it puts the installer and the extension service into the Blend base kit (spec 036, `persistence-and-registries.md`, "Extensions in a Blend").
+3. **Faces**: the CLI verbs, the chat command, the agent tools and the Plugins page. Their logic is the service's; what a Blend gets is the same verbs under its own app's CLI and UI. ACRYL-IDE-only parts (Development Canvas, workspace tree, Desktop shell) stay out of layers 1 and 2.
+
+Names follow the layers: the packages and the service get framework names, not IDE names, before anything is published, so extraction is a move and not a rename. Packages are proposed under the scope the framework already uses (`@webboxes/...`, like `blends-core` and `app-persistence`) and settled at build step 2.
+
+The tests follow too: layer 1 has its own unit tests with no app; layer 2 is also proven in a bare Blend made with `acryl new` (no ACRYL IDE plugins), not only in ACRYL, as scenario S13.
+
 ## Verification: the real-case matrix (owner, 2026-10-15)
 
 The owner: "it's one of the most important parts of our functionality, to be able to extend the core; this machinery has to work very well; we have to do extensive testing", naming the real case `https://github.com/inboxxobni/acryl-quick-notes` and each operation: pushing to it, pulling from it, updating the version (improving, committing to the remote source), sharing it, publishing to acryl.dev/packages and to cordisplugins.github.io.
@@ -203,6 +217,7 @@ Each runs on a throwaway home (`scripts/live-run.mjs` in development; a separate
 | S9 | **The same operation from every face** (CLI, chat command, agent tool, Plugins page) | identical result and identical list rows |
 | S11 | **Stock DSH runs ours**: quick-notes' release tarball URL into the stock DSH Desktop app's "Add plugin", on a throwaway DSH home | ACTIVE, the panel works, survives a restart; the catalog shows it as Both |
 | S12 | **ACRYL runs theirs**: three popular `dsh-plugin` repositories from dshfind, pulled into ACRYL | each ACTIVE, or the reason named (a missing service, or a DSH sidebar item with no place in ACRYL's frame), recorded as a compatibility gap to fix on our side |
+| S13 | **A Blend that is not the IDE**: an app made with `acryl new` from the blank Blueprint saves, shares and pulls quick-notes with the same verbs | the same results as in ACRYL; nothing from the IDE plugins loaded |
 | S10 | **Refusals**, each with a clear message and nothing left half-installed: a tarball whose sha512 does not match; an app missing a required service (the missing service named, with which extension provides it); a secret in the source; a private extension sent to a public target; no `license` on a public target; a raw git spec; an install script without approval; the network cut mid-pull; a version that already exists on the target; an agent push or remote pull without the user's confirmation | each refused as described |
 
 ### How the tests are built
