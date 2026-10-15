@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
+import { checkContractShape, syncServiceContract } from './contract.js'
 import { lintPackageDir } from './install.js'
 
 const ARTIFACT_KINDS = ['plugins', 'extensions', 'adapters', 'skills', 'workflows', 'blueprints', 'stemcells']
@@ -25,6 +26,7 @@ export function checkCatalogMetadata(dir, fs = { existsSync, readFileSync }) {
       if (!ARTIFACT_KINDS.includes(kind)) errors.push(`unknown artifact kind "${kind}"`)
       else if (!Array.isArray(paths) || paths.some(p => typeof p !== 'string' || p.includes('..') || isAbsolute(p))) errors.push(`"acryl.artifacts.${kind}" must be relative paths without ".."`)
     }
+    errors.push(...checkContractShape(manifest))
   }
   return { name: pkg.name, version: pkg.version, errors }
 }
@@ -39,8 +41,9 @@ function npmPackDryRun(dir) {
 }
 
 /**
- * Prepare a local plugin for the marketplace WITHOUT publishing: install checks, catalog metadata and an
- * `npm pack --dry-run` (needs no credentials, uploads nothing). Publishing is a human step.
+ * Prepare a local plugin for the marketplace WITHOUT publishing: install checks, catalog metadata, the service contract written into
+ * package.json from the code (`acryl.requires` / `acryl.provides`, see contract.js) and an `npm pack --dry-run` (needs no credentials, uploads
+ * nothing). Publishing is a human step.
  */
 export async function preparePublish(input, deps = {}) {
   const dir = input.path
@@ -49,10 +52,13 @@ export async function preparePublish(input, deps = {}) {
   const catalog = checkCatalogMetadata(dir)
   const errors = [...(lint.errors ?? []), ...catalog.errors]
   if (errors.length > 0) return { ok: false, errors, readyForHumanPublish: false }
+  const contract = await (deps.syncContract ?? syncServiceContract)(dir)
+  if (!contract.ok) return { ok: false, errors: contract.errors, readyForHumanPublish: false }
   const pack = await (deps.pack ?? npmPackDryRun)(dir)
   if (!pack.ok) return { ok: false, errors: [`npm pack --dry-run failed: ${pack.output}`], readyForHumanPublish: false }
   return {
     ok: true, package: catalog.name, version: catalog.version, files: pack.files, readyForHumanPublish: true,
+    contract: contract.contract, contractWritten: contract.written,
     next: `Tell the user the package is ready. Publishing is theirs to do (you cannot and must not publish): from ${dir} run \`npm publish --access public\` with their own npm login, then the marketplace lists it after its next catalog refresh.`,
   }
 }

@@ -34,8 +34,9 @@ Facts measured while building the example (each one cost a failed run):
   crashes React (error #31: an object is not a valid child) and the whole slot disappears.
 - Always send an object payload (`call(endpoint, payload ?? {})`). `undefined` is dropped by JSON and the host answers `invalid client-request message`.
 - Both `connection` and `webServer` must be in the HOST plugin's `inject` (the connection registers the channel through `webServer`).
-- Get the data directory with `ctx.get('dshHomePath')('plugin-data', <plugin name>)`, not a hard-coded `~/.acryl`. Web and Desktop dev runs use different
-  homes (`~/.acryl`, `~/.acryl-dev`), so two surfaces share the file only when they run against the same home.
+- Get the data directory with `ctx.get('dshHomePath')('plugin-data', <plugin name>)` and declare `dshHomePath` in `inject`; never fall back to
+  `homedir()` or a hard-coded `~/.acryl` (a test or second app instance would write into the user's real home). Web and Desktop dev runs use
+  different homes (`~/.acryl`, `~/.acryl-dev`), so two surfaces share the file only when they run against the same home.
 - Write atomically (temp file, then rename), validate every input (the page can send anything), and cap sizes.
 
 ## Workspace file (`state.workspace-file`)

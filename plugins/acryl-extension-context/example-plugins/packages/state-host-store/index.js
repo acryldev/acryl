@@ -9,12 +9,12 @@
 // Expect:   ACTIVE on web/desktop; the client lists, adds and removes notes; the file `<DSH_HOME>/plugin-data/acryl-example-state-host/notes.json` holds them.
 // Docs:     extending.state-and-persistence
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
-import { homedir } from 'node:os'
 import { join } from 'node:path'
 
 export const name = 'acryl-example-state-host'
-// `connection.rpc.handle` registers its channel through `webServer`, so both must be declared.
-export const inject = ['connection', 'webServer']
+// `connection.rpc.handle` registers its channel through `webServer`, so both must be declared. `dshHomePath` is declared too: the data
+// directory comes only from the app's home, so in an app without it the plugin waits (PENDING) instead of guessing a folder.
+export const inject = ['connection', 'webServer', 'dshHomePath']
 
 const CHANNEL = '/acryl-example-state-host'
 const MAX_NOTES = 500
@@ -22,8 +22,7 @@ const MAX_TEXT = 4000
 
 /** The plugin's private data directory: `<DSH home>/plugin-data/<name>`. `dshHomePath` is the harness helper for the DSH home. */
 function dataDir(ctx) {
-  const home = ctx.get('dshHomePath')
-  return typeof home === 'function' ? home('plugin-data', name) : join(homedir(), '.acryl', '.dsh', 'plugin-data', name)
+  return ctx.get('dshHomePath')('plugin-data', name)
 }
 
 export function apply(ctx) {

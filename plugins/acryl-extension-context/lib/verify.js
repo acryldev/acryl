@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { hostEntryOf } from './contract.js'
 import { lintPackageDir } from './install.js'
 
 let importCounter = 0
@@ -25,7 +26,7 @@ export async function verifyPackage(input, fs = { existsSync, readFileSync }) {
   if (lint.name === undefined) return report(dir, findings)
 
   const pkg = JSON.parse(fs.readFileSync(join(dir, 'package.json'), 'utf8'))
-  const entryRel = typeof pkg.exports?.['.'] === 'string' ? pkg.exports['.'] : typeof pkg.main === 'string' ? pkg.main : './index.js'
+  const entryRel = hostEntryOf(pkg)
   const entry = join(dir, entryRel)
   if (!fs.existsSync(entry)) {
     findings.push({ severity: 'error', code: 'import-failed', message: `the host entry ${entryRel} does not exist`, docs: DOCS.packaging })
@@ -55,7 +56,7 @@ export async function verifyPackage(input, fs = { existsSync, readFileSync }) {
     findings.push({ severity: 'error', code: 'invalid-plugin-shape', message: 'the entry must export an "apply(ctx)" function (named export), or a default function', docs: DOCS.shape })
   }
   if (plugin?.inject !== undefined && !(Array.isArray(plugin.inject) || (typeof plugin.inject === 'object' && plugin.inject !== null))) {
-    findings.push({ severity: 'error', code: 'invalid-plugin-shape', message: '"inject" must be an array of service names (or { required, optional })', docs: DOCS.shape })
+    findings.push({ severity: 'error', code: 'invalid-plugin-shape', message: '"inject" must be an array of service names (or a map of service name to its config); every service listed is required, an optional one is read with ctx.get()', docs: DOCS.shape })
   }
   if (plugin?.name !== undefined && typeof plugin.name !== 'string') {
     findings.push({ severity: 'error', code: 'invalid-plugin-shape', message: '"name" must be a string', docs: DOCS.shape })

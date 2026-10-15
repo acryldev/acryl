@@ -7,6 +7,7 @@
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
+import { providedServices } from '../../lib/contract.js'
 
 const SKIP = new Set(['node_modules', 'lib', 'dist', '.git', 'tests', 'test', 'test-support'])
 
@@ -114,14 +115,6 @@ const ROLE_RULES = [
   ['schedule-job-workflow', /schedule\.|jobs\.|workflow|webhook/u],
   ['protocol-bridge', /\bmcp\b|\bacp\b|\blsp\b|JSON-RPC/iu],
 ]
-
-function providedServices(text) {
-  const out = new Set()
-  for (const m of text.matchAll(/super\(\s*ctx\s*,\s*'([A-Za-z0-9.\-_]+)'/gu)) out.add(m[1])
-  for (const m of text.matchAll(/ctx\.provide\(\s*'([A-Za-z0-9.\-_]+)'/gu)) out.add(m[1])
-  for (const m of text.matchAll(/reflect\.provide\(\s*'([A-Za-z0-9.\-_]+)'/gu)) out.add(m[1])
-  return [...out]
-}
 
 function injectedServices(text) {
   const m = /export const inject\s*=\s*(\[[^\]]*\]|\{[\s\S]*?\})/u.exec(text)

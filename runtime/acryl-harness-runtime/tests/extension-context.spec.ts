@@ -434,6 +434,31 @@ describe('/reload on the web engine', () => {
     }
   }, 180_000)
 
+  it('a plugin that injects dshHomePath goes ACTIVE, and its data folder is under the app home (the state example, no homedir() fallback)', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-extension-home-'))
+    temporaryHomes.push(home)
+    process.env.DSH_HOME = home
+    const host = await createAcrylEngineHost({
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      initialEngine: 'dsh',
+      prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+    })
+    try {
+      const services = {
+        pnpm: host.ctx.get('desktopPnpm' as never),
+        live: host.ctx.get('livePluginActivation' as never),
+        profileDir: (host.ctx.get('desktopProfiles' as never) as { current: { dir: string } }).current.dir,
+      }
+      const example = fileURLToPath(new URL('../../../plugins/acryl-extension-context/example-plugins/packages/state-host-store/', import.meta.url))
+      const result = await installLocalPlugin({ path: example }, services)
+      expect(result).toMatchObject({ ok: true, status: 'active' })
+      const dshHomePath = host.ctx.get('dshHomePath' as never) as unknown as (...parts: string[]) => string
+      expect(dshHomePath('plugin-data', 'acryl-example-state-host').startsWith(home)).toBe(true)
+    } finally {
+      await host.dispose()
+    }
+  }, 180_000)
+
   it('a staged plugin whose apply throws surfaces its own error and is rolled back', async () => {
     const home = await mkdtemp(join(tmpdir(), 'acryl-extension-throw-'))
     temporaryHomes.push(home)

@@ -354,7 +354,7 @@ test('example state.workspace-file: notes persist as .acryl/notes.md in the sess
 
 test('example state.host-store: the RPC channel persists notes atomically under the DSH home and returns the result envelope', async () => {
   const { apply, inject } = await import('../example-plugins/packages/state-host-store/index.js')
-  assert.deepEqual(inject, ['connection', 'webServer'])
+  assert.deepEqual(inject, ['connection', 'webServer', 'dshHomePath'])
   const home = mkdtempSync(join(tmpdir(), 'dshhome-')); let handler
   try {
     apply({ get: name => (name === 'dshHomePath' ? (...segments) => join(home, ...segments) : undefined), connection: { rpc: { handle: (_channel, fn) => { handler = fn } } } })
@@ -385,9 +385,10 @@ test('plugin registers /reload when a commands service exists and reports an una
   assert.equal((await reload.handler()).kind, 'error')
 })
 
-test('publish prep: catalog metadata is enforced, the dry run runs, nothing is published', async () => {
+test('publish prep: catalog metadata is enforced, the service contract is written, the dry run runs, nothing is published', async () => {
   const { preparePublish } = await import('../lib/publish.js')
   const dir = makePkg()
+  writeFileSync(join(dir, 'index.js'), "export const inject = ['tools']\nexport function apply() {}\n")
   try {
     const bad = await preparePublish({ path: dir }, { pack: async () => ({ ok: true, files: 3 }) })
     assert.equal(bad.ok, false); assert.match(bad.errors.join('\n'), /acryl-package/); assert.match(bad.errors.join('\n'), /GitHub/)
@@ -395,6 +396,8 @@ test('publish prep: catalog metadata is enforced, the dry run runs, nothing is p
     writeFileSync(join(dir, 'package.json'), JSON.stringify({ ...pkg, version: '1.0.0', license: 'MIT', keywords: ['acryl-package'], repository: { type: 'git', url: 'git+https://github.com/x/y.git' } }))
     const ok = await preparePublish({ path: dir }, { pack: async () => ({ ok: true, files: 3 }) })
     assert.equal(ok.ok, true); assert.equal(ok.readyForHumanPublish, true); assert.match(ok.next, /cannot and must not publish|must not publish/)
+    assert.deepEqual(ok.contract, { requires: { host: ['tools'] }, provides: { host: [] } }); assert.equal(ok.contractWritten, true)
+    assert.deepEqual(JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).acryl, { schemaVersion: 1, artifacts: { plugins: ['./index.js'] }, requires: { host: ['tools'] }, provides: { host: [] } })
     const failed = await preparePublish({ path: dir }, { pack: async () => ({ ok: false, output: 'boom' }) })
     assert.match(failed.errors[0], /boom/)
     assert.equal((await preparePublish({ path: 'rel/dir' })).ok, false)
