@@ -1,6 +1,6 @@
 # Spec 044 - Make, save, share, pull, list: one model for plugins
 
-Status: decided 2026-10-15 (D1 to D8 accepted by the owner, D7 as option B; targets an open list; one term, plugin; versions and fixes). Every build step ends with its scenarios from "Verification" passing. It re-iterates the "Operations" and "Build order" sections of `spec.md` in this folder, on the owner's request ("lets re-iterate on that, it's important to get right": how Cordis plugins are created on the fly, published by different methods, pulled from different sources, and listed and controlled through the `acryl` CLI or predefined commands). The decisions 1-6 in `spec.md` (labels, GitHub owner as namespace, GitHub release enough, one repository per plugin, service contract) are unchanged.
+Status: decided 2026-10-15 (D1 to D9 accepted by the owner, D7 as option B, D9 as dotted names; targets an open list; one term, plugin; versions and fixes). Every build step ends with its scenarios from "Verification" passing. It re-iterates the "Operations" and "Build order" sections of `spec.md` in this folder, on the owner's request ("lets re-iterate on that, it's important to get right": how Cordis plugins are created on the fly, published by different methods, pulled from different sources, and listed and controlled through the `acryl` CLI or predefined commands). The decisions 1-6 in `spec.md` (labels, GitHub owner as namespace, GitHub release enough, one repository per plugin, service contract) are unchanged.
 
 ## Why re-iterate
 
@@ -75,6 +75,13 @@ Recommended: **A + D as the base, B as the address users type, C allowed.** Ever
 - The separator is a dot, not a hyphen: names already contain hyphens (`sessions-filter`), so `sidebar-sessions-filter` could not be read back into a path; with segments limited to `a-z0-9-`, every dot is a level. Dots are valid in npm names (`socket.io`), GitHub repository names and Loader row ids.
 - Every face shows the path form; catalogs and the Plugins page group by it; search matches either form.
 - A user may also write a prefix by hand; it is just a name, with no tree.
+
+**Decided (owner, 2026-10-15)**: dots, "like calling methods inside a nested class, a programming abstraction many developers understand", for example `accountingAppAurora.sidebar.dateFilter`, `.sidebar.calendar`, `.sidebar.clockTimer`. Settled with it:
+
+- **One form, everywhere.** The dotted name is what users type, see and publish; there is no separate slash form to map. The path field (`acryl.path`) is derived from the name, not written by hand.
+- **Lowercase, hyphens inside a segment.** npm refuses capital letters in new names and DSH's installer accepts only lowercase (`PACKAGE_NAME`), so the example is written `accounting-app-aurora.sidebar.date-filter`, `accounting-app-aurora.sidebar.calendar`, `accounting-app-aurora.sidebar.clock-timer`. A segment is `[a-z0-9-]`; the dot is only ever a level.
+- **With its owner**: `@owner/accounting-app-aurora.sidebar.date-filter` on npm, `owner/accounting-app-aurora.sidebar.date-filter` on GitHub. The first segment naming the app keeps an app's plugins together in every catalog.
+- **The shared top levels** (option D) are still computed from where a plugin plugs in, so catalogs can also show "all sidebar plugins" across apps and authors.
 
 
 ## Versions and fixes (owner, 2026-10-15)
@@ -303,7 +310,7 @@ Answered 2026-10-15: D1 to D8 all yes; D7 is option B, after the explanation bel
   - *Either way* stock DSH is unchanged, and S11 (stock DSH installing ours by release URL) holds.
   - Decided: B. Proving the wrapping `pluginManager` is part of build step 2.
 - **D8. Stock DSH compatibility is a default, not a promise**: verify and the catalog report Both / ACRYL / DSH stock from the contract; the docs and examples prefer DSH services; ACRYL-only is allowed and labelled. **Accepted.**
-- **D9. Names and nesting**: options A to D in "Names and nesting", refined after the owner's follow-up to an automatic dotted prefix (`@owner/sidebar/sessions/filter` is published as `@owner/sidebar.sessions.filter`). **Open, awaiting confirmation.**
+- **D9. Names and nesting**: options A to D in "Names and nesting", decided as dotted names, one form everywhere, lowercase with hyphens inside a segment (`@owner/accounting-app-aurora.sidebar.date-filter`). **Accepted.**
 
 ## Build order (replaces `spec.md`'s steps 1-4)
 
