@@ -163,6 +163,20 @@ Most of it follows from the model above:
 
 What can break it, and is tested (S11, S12): ACRYL's frame replaces DSH's sidebar, so a stock plugin that adds a DSH sidebar item may have no visible place in ACRYL; and the peer range on `@deepseek-ai/dsh` must cover the version stock DSH ships, not only ACRYL's pin.
 
+### In the shipped app, not only in development (owner, 2026-10-15)
+
+The owner: "when we solve this self-extensibility it has to work also in the shipped app (DMG, EXE or DEB on Linux), so that it's not only on the development server but also in normal ones."
+
+What differs in an installed app, and what the build must handle:
+
+- **No repository, no workspace tools.** Everything the operations need ships inside the app: the bundled pnpm (already required by the install, `SELF-EXTENSION-PERSISTENCE.md`, "Limits"), the read-only docs and examples (`resources/app.asar.unpacked/node_modules/acryl-extension-context/`), and the packing and checksum code. Nothing may import from the source tree or a dev dependency.
+- **The user's machine may lack `git`, `gh` or `npm`.** Save, pull from the store, from a file and from a release URL need none of them. Share and npm publish need them; when one is missing or not signed in, the operation says which one and how to get it (`gh auth login`), and never falls back to asking for a token. Whether ACRYL should ship its own git or use GitHub's API through the user's sign-in is a later decision, measured on real installs.
+- **Engine processes run inside Electron.** Any child process the operations start with `process.execPath` needs `ELECTRON_RUN_AS_NODE` (the Windows/Linux installer bug fixed on `main`, `dsh-engine-inside-electron`).
+- **Paths and homes.** The store, staged versions and plugin data live under the app instance's home (`~/.acryl`, `C:\Users\<user>\.acryl`, `/home/<user>/.acryl`), chosen by the `AppInstance` family, never the install folder, so an app update or reinstall keeps every saved and pulled extension (as the installed snapshot already does).
+- **Network as users have it**: proxies, offline, slow links; a pull that fails part-way leaves nothing half-installed.
+
+So every scenario in "Verification" has a column for where it ran, and a build step is not done until its scenarios pass on **installed builds**: the macOS DMG (this Mac), the Windows EXE (mbpi9win) and the Linux DEB (z370n), each on a throwaway home, as well as in development.
+
 ## Verification: the real-case matrix (owner, 2026-10-15)
 
 The owner: "it's one of the most important parts of our functionality, to be able to extend the core; this machinery has to work very well; we have to do extensive testing", naming the real case `https://github.com/inboxxobni/acryl-quick-notes` and each operation: pushing to it, pulling from it, updating the version (improving, committing to the remote source), sharing it, publishing to acryl.dev/packages and to cordisplugins.github.io.
@@ -174,7 +188,7 @@ The owner: "it's one of the most important parts of our functionality, to be abl
 
 ### The scenarios
 
-Each runs on a throwaway home (`scripts/live-run.mjs`), never a real one. "Restart" means a full quit and relaunch, because a plugin that works only until restart is the failure this machinery exists to prevent.
+Each runs on a throwaway home (`scripts/live-run.mjs` in development; a separate home on the installed builds), never a real one, in development and on the installed DMG, EXE and DEB. "Restart" means a full quit and relaunch, because a plugin that works only until restart is the failure this machinery exists to prevent.
 
 | # | Scenario | Passes when |
 | --- | --- | --- |
@@ -195,6 +209,7 @@ Each runs on a throwaway home (`scripts/live-run.mjs`), never a real one. "Resta
 
 - **Unit** (in the gate): the service with fake git, `gh`, fetch and `pluginManager`, for every rule and refusal in S10.
 - **Integration** (in the gate, no network): a real engine in a throwaway home; the "remote" is a local bare git repository and a local HTTP server serving a GitHub-shaped release; covers S2, S3, S6, S9 and S10.
+- **Installed builds** (before each step is called done): the step's scenarios on the DMG here, the EXE on mbpi9win and the DEB on z370n, from the release artifacts, each result recorded with the build version.
 - **Live** (on demand, not in the gate, the owner's `gh` login, on the owner's instruction for each run): S4 to S8 against `inboxxobni`, including the three systems for S7. Each run is recorded in this folder with versions, hashes and timings, like "Verified: the first push" in `spec.md`.
 
 ## Decisions for the owner
