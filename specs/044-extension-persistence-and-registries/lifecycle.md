@@ -1,6 +1,6 @@
 # Spec 044 - Make, save, share, pull, list: one model for extensions
 
-Status: proposed 2026-10-15, waiting for the owner's decisions D1-D8. Every build step ends with its scenarios from "Verification" passing. It re-iterates the "Operations" and "Build order" sections of `spec.md` in this folder, on the owner's request ("lets re-iterate on that, it's important to get right": how Cordis plugins are created on the fly, published by different methods, pulled from different sources, and listed and controlled through the `acryl` CLI or predefined commands). The decisions 1-6 in `spec.md` (labels, GitHub owner as namespace, GitHub release enough, one repository per extension, service contract) are unchanged.
+Status: decided 2026-10-15 (D1-D6 and D8 accepted by the owner; D7 open, explained in "Decisions"; targets made an open list, "Where an extension can live"). Every build step ends with its scenarios from "Verification" passing. It re-iterates the "Operations" and "Build order" sections of `spec.md` in this folder, on the owner's request ("lets re-iterate on that, it's important to get right": how Cordis plugins are created on the fly, published by different methods, pulled from different sources, and listed and controlled through the `acryl` CLI or predefined commands). The decisions 1-6 in `spec.md` (labels, GitHub owner as namespace, GitHub release enough, one repository per extension, service contract) are unchanged.
 
 ## Why re-iterate
 
@@ -84,6 +84,27 @@ Refused: a raw git clone (`git+https://...`, `github:owner/repo` with no release
 The pipeline is the same for every form: resolve, fetch the tarball into the store, check sha512, **check the contract** against the services the running app provides (a missing one is named, with the catalog's extensions that provide it, and nothing is installed), then `pluginManager.installBundle(<tarball path>)`, which brings DSH's own compatibility check and blocks install scripts unless the user approves them. The result is ACTIVE, or the reason it is not.
 
 Pulled packages are kept in the store, so the same version installs offline into any app instance on the machine.
+
+### Where an extension can live: an open list (owner, 2026-10-15)
+
+The owner: "our users have to be able to choose how they persist: to a public registry, to their own git repo, to the DSH plugins market, to a private plugin registry, to a public git repo, etc. Just as many sources as possible, and keep the list and categories open; we might update it as we progress to add more."
+
+So a target is not a fixed list in the service: it is an **adapter**, and each adapter is itself a Cordis plugin that registers with `acrylExtensions` (`acrylExtensions.targets.register({ kind, category, push?, pull?, resolve?, search? })`, disposed with its plugin). Adding a new place is installing a plugin, with the same machinery this spec builds; nothing in the service names a host. The faces list whatever adapters are registered, by category.
+
+Every adapter moves the same unit (the tarball and its sha512) and every push still passes the service's own steps first (verify, contract, secret check, visibility, license, confirmation). An adapter may do only some operations: a catalog only lists, a file only pulls.
+
+| Category | Targets (first ones; the list grows) | Push | Pull | Visibility |
+| --- | --- | --- | --- | --- |
+| **This machine** | the local store; a `.tgz` file | yes | yes | private |
+| **Git host, own repository** | GitHub (first), GitLab, Gitea/Forgejo, Bitbucket, a self-hosted server | repository, tag, release with the tarball | the release tarball (decision 3: never a raw clone) | private or public, the user's choice |
+| **Package registry** | npmjs.com; a private npm registry (GitHub Packages, Verdaccio, a company registry; DSH's `pluginManager` already takes a registry URL per install and configured fallbacks) | `npm publish` with the user's login | the registry tarball | public, private scope, or private registry |
+| **Public catalog (index only)** | acryl.dev/packages, cordisplugins.github.io, the DSH plugin market sites (dshfind.com, deepseek1024.com) | nothing of the code: the labels on a public repository or package (`acryl-package`, `cordis-plugin`, `dsh-plugin`) | resolves to a git host or registry entry above | public |
+| **Private catalog** | a team's own index (an ACRYL Market "standard HTTP" source, `cordis-plugin-market/src/adapters/standard-http.ts`) | a row the team's index generates from its private repositories | as above, with the user's own credentials | the team's |
+| **Inside an app** | the app's own repository (`acryl save`, spec 036) | the source folder, committed with the app | with the app | the app's |
+
+Open, to add when someone needs them: object storage (S3, R2), an OCI registry, a plain HTTPS URL, a USB folder, a Blend registry entry. Each is one adapter.
+
+Credentials stay with the user's own tools (`git`, `gh`, `npm`, the OS keychain); an adapter never stores a token, as the guards in `spec.md` already say.
 
 ### 4. List: what it answers
 
@@ -178,20 +199,28 @@ Each runs on a throwaway home (`scripts/live-run.mjs`), never a real one. "Resta
 
 ## Decisions for the owner
 
-- **D1. Build on DSH's `pluginManager`** for installing, listing installed plugins, enabling and removing; ACRYL's service adds save, share, pull (fetch, verify, contract) and edit-a-copy, and calls `pluginManager` to install. Recommended: yes. It replaces the `acrylExtensions` list/pull design in `spec.md`.
-- **D2. One noun: `acryl plugin`**, extended with the verbs above; no `acryl ext`. "Extension" stays only as the folder name `.acryl-extensions/`. Recommended: yes.
-- **D3. One chat command `/plugin <verb>`**, with `/reload` kept as the short form for source extensions. Recommended: yes.
-- **D4. The agent pulls from a remote only through a confirmation card.** `spec.md` let `acryl_extension_pull` run directly; pulled code runs with the user's permissions, as a discovered folder does, and `/reload new` already asks the user for that. Store pulls (already on the machine, already checked) stay direct. Recommended: yes.
-- **D5. Pulled packages are read-only; changing one is "Edit a copy".** Recommended: yes; it is what `acryl_list_plugins`' local/registry split already implies.
-- **D6. One enable/disable store and one install path.** Measure first: whether ACRYL's `plugin-lifecycle/state.json` can be replaced by DSH's profile patch (`setPluginEnabled`), and whether the Market's pnpm wrappers and the source-extension install can sit on `installBundle`. Recommended: investigate as the first build step, decide from the result.
-- **D7. Raw git specs in DSH's own "Add plugin" box.** ACRYL's faces refuse them (decision 3), but DSH's Plugins page accepts them. Options: leave DSH's page as it is (a DSH feature, its own build approval), or route "Add plugin" through `acrylExtensions.pull` in ACRYL's frame. Recommended: route it, so one rule holds on every face.
-- **D8. Stock DSH compatibility is a default, not a promise**: verify and the catalog report Both / ACRYL / DSH stock from the contract; the docs and examples prefer DSH services; ACRYL-only is allowed and labelled. Recommended: yes.
+Answered 2026-10-15: D1 yes, D2 yes, D3 yes, D4 yes, D5 yes, D6 yes, D8 yes. D7 asked for a fuller explanation before deciding.
 
-## Build order (replaces `spec.md`'s steps 1-4 once decided)
+- **D1. Build on DSH's `pluginManager`** for installing, listing installed plugins, enabling and removing; ACRYL's service adds save, share, pull (fetch, verify, contract) and edit-a-copy, and calls `pluginManager` to install. **Accepted.** It replaces the `acrylExtensions` list/pull design in `spec.md`.
+- **D2. One noun: `acryl plugin`**, extended with the verbs above; no `acryl ext`. "Extension" stays only as the folder name `.acryl-extensions/`. **Accepted.**
+- **D3. One chat command `/plugin <verb>`**, with `/reload` kept as the short form for source extensions. **Accepted.**
+- **D4. The agent pulls from a remote only through a confirmation card.** Store pulls stay direct. **Accepted**; supersedes `spec.md`'s direct `acryl_extension_pull`.
+- **D5. Pulled packages are read-only; changing one is "Edit a copy".** **Accepted.**
+- **D6. One enable/disable store and one install path**, measured first. **Accepted**; build step 1.
+- **D7. What DSH's own "Add plugin" box does inside ACRYL.** **Open.**
+  - *Today*: DSH's Plugins page (shown in ACRYL's frame since `db2c496`) has an "Add plugin" box. Whatever is typed there goes to `pluginManager.installBundle`, which runs `pnpm add <what was typed>` in the profile. pnpm accepts a registry name, a folder, a tarball, and a git address (`github:owner/repo`, a repository URL); for a git address it clones the repository's current default branch and installs that. Install scripts wait for the user's approval (DSH's `allowBuilds`).
+  - *The difference from ACRYL's pull*: a git address installs whatever the branch holds at that moment, not a released version; there is no checksum to compare; the repository often lacks the built files a plugin needs (they are produced at release time), so it fails or needs a build; and it skips ACRYL's steps (the store copy for offline reuse, the sha512, the service-contract check that names a missing service instead of leaving the plugin in PENDING).
+  - *Option A, leave it*: two doors with two rules. ACRYL's pull refuses a raw git address; DSH's box, in the same window, accepts it.
+  - *Option B, route it*: in ACRYL the same box sends what is typed to `acrylExtensions.pull`. A registry name, tarball or folder behaves as now plus ACRYL's checks; a git address is resolved to that repository's latest release tarball; a repository with no release is refused with "this repository has no release; ask its author to publish one, or pull a folder". Mechanism to prove first, without editing the submodule: ACRYL provides a `pluginManager` that wraps DSH's and forwards everything except the spec resolution (Cordis provider replacement through profile composition).
+  - *Either way* stock DSH is unchanged, and S11 (stock DSH installing ours by release URL) holds.
+  - Recommended: B.
+- **D8. Stock DSH compatibility is a default, not a promise**: verify and the catalog report Both / ACRYL / DSH stock from the contract; the docs and examples prefer DSH services; ACRYL-only is allowed and labelled. **Accepted.**
+
+## Build order (replaces `spec.md`'s steps 1-4)
 
 0. Service contract: done (`66cf7d43`).
 1. D6 investigation: the two enable/disable stores and the three install paths, measured in a throwaway home; decision recorded here.
-2. `acrylExtensions` with `save`, `saved()` and `pull` from the store and a tarball file; `installed()` joining `pluginManager` with source extensions; `acryl plugin list --saved`, `acryl plugin save`, `acryl plugin pull`; the contract in `acryl_verify_plugin`. Real case: save quick-notes, pull it into a second app instance offline.
+2. `acrylExtensions` with the adapter registry (targets as plugins) and `save`, `saved()` and `pull` from the store and a tarball file; `installed()` joining `pluginManager` with source extensions; `acryl plugin list --saved`, `acryl plugin save`, `acryl plugin pull`; the contract in `acryl_verify_plugin`. Real case: save quick-notes, pull it into a second app instance offline.
 3. Share and List publicly through `@webboxes/app-persistence` (secret check, visibility guard, release tarball, topics), and pull from `github:` with sha512. Real case: quick-notes 0.2.2 shared by the command instead of by hand.
 4. The faces: `/plugin` chat command, the agent tools with confirmation cards, the Plugins page Save / Share / List publicly menu and "Add from...". Update the skill `acryl-share-extension` to the methods above (problem 4).
 5. Catalogs: acryldev/acryldev.github.io issue 1 (GitHub topic `acryl-package`, release tarball, sha512, contract); a sync for cordisplugins.github.io (topic `cordis-plugin`, contract into its `provides`/`consumes`) in place of the hand-written list; `--available` search. Then S8.
