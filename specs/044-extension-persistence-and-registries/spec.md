@@ -121,6 +121,8 @@ The project source and the local store are always available and need no entry.
 
 ## Operations (one service, three faces)
 
+Re-iterated 2026-10-15 in [`lifecycle.md`](lifecycle.md): the pinned Harness's `pluginManager` already installs, lists, enables and removes, so ACRYL's service narrows to save, share, pull and edit-a-copy, under one noun (`acryl plugin`), with a real-case test matrix. This section and "Build order" stand until the owner decides D1-D7 there.
+
 A Cordis service `acrylExtensions` (Host side, owned by `acryl-extension-context` or a new `acryl-extension-store` plugin) with `list`, `save` (to the local store), `push(target)` (git: create the repository if missing, commit, tag, set the topics, attach the release tarball; npm: publish), `pull(identity, target)`. There is no separate publish step: making the repository public with the labels is the listing. Its faces, three words for the user:
 
 - **Save** (the local store), **Share** (push to the user's GitHub, private by default), **List publicly** (switch to public; the labels are already there).
