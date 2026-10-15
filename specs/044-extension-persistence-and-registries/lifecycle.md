@@ -47,6 +47,27 @@ The owner: "let's always call it the same way as the DSH community calls it, 'pl
   - docs and UI text; the generated docs are regenerated, not hand-edited.
   Spec folder names (`specs/044-extension-persistence-and-registries/`) and past log entries are history and keep their names.
 
+## Names and nesting (owner, 2026-10-15; D9 open)
+
+The owner: "suggest options for scope naming: how we have it now, what we can have. `@namespace/<plugin-name>`, also maybe nested ones like `@namespace/sidebar/sessions-filter`, `@namespace/sidebar/sessions-chooser`, so that users can publish into really nested, organized catalogs, to reduce chaos."
+
+**Now**: no rule. ACRYL's own plugins are unscoped (`acryl-workspace`, `acryl-settings`, `cordis-plugin-market`, `dsh-client-ui-brand-acryl`), two libraries are scoped (`@webboxes/app-persistence`, `@webboxes/blends-core`), one is `@acryl/ui`; quick-notes is unscoped `acryl-quick-notes` in the GitHub owner `inboxxobni`; DSH's are `@deepseek-ai/dsh-*`; community DSH plugins are mostly unscoped `dsh-plugin-*`. Decision 2 says the namespace is the GitHub owner.
+
+**What the places allow**: npm allows exactly one level, `@scope/name`, and a name may contain dots but no slash; DSH's installer checks the same (`PACKAGE_NAME` in `plugin-manager/src/install-spec.ts`). GitHub allows exactly `owner/repo`, dots allowed. GitLab allows nested groups, but only GitLab. So a slash-nested name cannot be the package name itself anywhere portable.
+
+Two different hierarchies are mixed in the example and should stay apart:
+- **Who owns it** (`@namespace`): the author's, chosen by the author.
+- **Where it plugs in** (`sidebar/sessions`): shared by everyone. If each author invents their own tree the catalogs get more chaos, not less.
+
+Options:
+
+- **A. Flat name, hierarchy as metadata.** Identity `@owner/sessions-filter`; the plugin declares `acryl.path: "sidebar/sessions"`; catalogs and the Plugins page show trees from it. Works on npm, GitHub and every catalog; the tree is free to change without renaming anything.
+- **B. Nested address mapped to a legal name.** Users see and type `@owner/sidebar/sessions-filter`; it maps one to one onto the npm name `@owner/sidebar.sessions-filter` and the GitHub repository `owner/sidebar.sessions-filter` (segments limited to `a-z0-9-`, so the dot is unambiguous). Real nesting in the author's own namespace, still portable; moving a plugin in the tree is a rename (a new package, with the old one pointing to it).
+- **C. Collections as repositories.** `owner/sidebar` is one repository holding `sessions-filter/` and `sessions-chooser/` (decision 4's `path`), each released separately (tag `sessions-filter@1.0.0`). Natural for an author with many related plugins; npm names stay flat.
+- **D. A shared taxonomy, computed.** The catalog's top levels are where a plugin plugs in, read from its code like the service contract (the UI slots it fills, the services it provides: Sidebar, Header, Tools, Providers, Brand/Theme...), extending cordisplugins.github.io's existing categories; the author adds only the leaf levels. The same tree for every author, nobody has to agree on it by hand.
+
+Recommended: **A + D as the base, B as the address users type, C allowed.** Every plugin is `@owner/name` (scoped by default from the first Share, owner = GitHub owner or npm scope); the catalog tree is computed (D) plus the author's own sub-path (A); a user who wants nesting in their own namespace writes `@owner/sidebar/sessions-filter` and ACRYL maps it (B). `@acryl` (or the framework's scope) holds the official plugins, which moves today's unscoped `acryl-*` plugins under it in the step 1b rename.
+
 ## Versions and fixes (owner, 2026-10-15)
 
 The owner: "there must be the possibility of versions and fixes; also we have to display the plugin version."
@@ -273,6 +294,7 @@ Answered 2026-10-15: D1 to D8 all yes; D7 is option B, after the explanation bel
   - *Either way* stock DSH is unchanged, and S11 (stock DSH installing ours by release URL) holds.
   - Decided: B. Proving the wrapping `pluginManager` is part of build step 2.
 - **D8. Stock DSH compatibility is a default, not a promise**: verify and the catalog report Both / ACRYL / DSH stock from the contract; the docs and examples prefer DSH services; ACRYL-only is allowed and labelled. **Accepted.**
+- **D9. Names and nesting**: options A to D in "Names and nesting". **Open.**
 
 ## Build order (replaces `spec.md`'s steps 1-4)
 
