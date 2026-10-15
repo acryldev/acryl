@@ -17,22 +17,24 @@ vi.mock('acryl-harness-runtime', async importOriginal => ({
   installProfilePackageResolver: harness.installProfilePackageResolver,
 }))
 
+// Outside a packaged app the real mapping is the identity, so tag its output to see which anchors go through it.
+vi.mock('../../src/runtime/packaged-runtime-path.ts', async importOriginal => ({
+  ...await importOriginal<object>(),
+  unpackedAsarPath: (filename: string) => `${filename}.unpacked`,
+}))
+
 const { installProfilePackageResolver } = await import('../../src/module-resolution.ts')
-const { unpackedAsarPath } = await import('../../src/runtime/packaged-runtime-path.ts')
 
 describe('acryl-desktop\'s installProfilePackageResolver wrapper', () => {
-  it('supplies its own bin name and unpacked-ASAR anchors to the shared resolver', () => {
+  it('supplies its bin name, the unpacked package anchor, and the logical entry anchor', () => {
     const profileBaseUrl = 'file:///C:/Users/test/profile/package.json'
     installProfilePackageResolver(profileBaseUrl)
 
     expect(harness.installProfilePackageResolver).toHaveBeenCalledWith(profileBaseUrl, {
       binName: 'acryl-desktop',
-      installPackageUrl: pathToFileURL(
-        unpackedAsarPath(fileURLToPath(new URL('../../package.json', import.meta.url))),
-      ).href,
-      installEntryUrl: pathToFileURL(
-        unpackedAsarPath(fileURLToPath(new URL('../../lib/index.js', import.meta.url))),
-      ).href,
+      installPackageUrl: pathToFileURL(`${fileURLToPath(new URL('../../package.json', import.meta.url))}.unpacked`).href,
+      // Loader imports must resolve to the same URLs as the main process's own imports, or shared packages load twice.
+      installEntryUrl: new URL('../../lib/index.js', import.meta.url).href,
       loaderEntryUrl: import.meta.resolve('@deepseek-ai/cordis-plugin-loader'),
     })
   })
