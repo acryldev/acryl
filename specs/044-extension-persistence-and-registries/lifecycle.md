@@ -68,6 +68,15 @@ Options:
 
 Recommended: **A + D as the base, B as the address users type, C allowed.** Every plugin is `@owner/name` (scoped by default from the first Share, owner = GitHub owner or npm scope); the catalog tree is computed (D) plus the author's own sub-path (A); a user who wants nesting in their own namespace writes `@owner/sidebar/sessions-filter` and ACRYL maps it (B). `@acryl` (or the framework's scope) holds the official plugins, which moves today's unscoped `acryl-*` plugins under it in the step 1b rename.
 
+**Follow-up (owner, 2026-10-15)**: "if the npm rule is one level, do we have to stick to it? Maybe users can come up with a prefix, or we can offer an automatic prefix or suffix for nesting purposes." Yes for the real name: npm, pnpm, DSH's installer and GitHub all enforce one level, and a name they refuse cannot be installed by stock DSH (D8). The nesting goes into the name as an automatic prefix, which is option B made concrete:
+
+- The user types or picks a path: `@owner/sidebar/sessions/filter`.
+- ACRYL writes the real name with the path as a prefix: `@owner/sidebar.sessions.filter` on npm, `owner/sidebar.sessions.filter` on GitHub, and keeps the path as a field (`acryl.path`).
+- The separator is a dot, not a hyphen: names already contain hyphens (`sessions-filter`), so `sidebar-sessions-filter` could not be read back into a path; with segments limited to `a-z0-9-`, every dot is a level. Dots are valid in npm names (`socket.io`), GitHub repository names and Loader row ids.
+- Every face shows the path form; catalogs and the Plugins page group by it; search matches either form.
+- A user may also write a prefix by hand; it is just a name, with no tree.
+
+
 ## Versions and fixes (owner, 2026-10-15)
 
 The owner: "there must be the possibility of versions and fixes; also we have to display the plugin version."
@@ -294,7 +303,7 @@ Answered 2026-10-15: D1 to D8 all yes; D7 is option B, after the explanation bel
   - *Either way* stock DSH is unchanged, and S11 (stock DSH installing ours by release URL) holds.
   - Decided: B. Proving the wrapping `pluginManager` is part of build step 2.
 - **D8. Stock DSH compatibility is a default, not a promise**: verify and the catalog report Both / ACRYL / DSH stock from the contract; the docs and examples prefer DSH services; ACRYL-only is allowed and labelled. **Accepted.**
-- **D9. Names and nesting**: options A to D in "Names and nesting". **Open.**
+- **D9. Names and nesting**: options A to D in "Names and nesting", refined after the owner's follow-up to an automatic dotted prefix (`@owner/sidebar/sessions/filter` is published as `@owner/sidebar.sessions.filter`). **Open, awaiting confirmation.**
 
 ## Build order (replaces `spec.md`'s steps 1-4)
 
