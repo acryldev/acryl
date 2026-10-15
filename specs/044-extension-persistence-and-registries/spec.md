@@ -1,6 +1,6 @@
 # Spec 044 - Extension persistence and registries
 
-Status: decided (2026-10-13, see "Decisions"). Ticket: spec 001 T083. First real case: `.acryl-extensions/acryl-quick-notes` (an agent-written plugin, untracked in this repository), pushed as a test to https://github.com/inboxxobni/acryl-quick-notes.
+Status: decided (2026-10-13, see "Decisions"; the service contract added 2026-10-15). Ticket: spec 001 T083. First real case: `.acryl-extensions/acryl-quick-notes` (an agent-written plugin, untracked in this repository), pushed as a test to https://github.com/inboxxobni/acryl-quick-notes.
 
 ## Where this was defined before, and the gap
 
@@ -28,11 +28,53 @@ Effortless for the author: a listing is a label on the package, never a submissi
 4. **One repository per extension**, in the user's own account or organization, created by ACRYL on the first push. A `path` field in the git target allows a folder of a shared repository for those who want one.
 5. **`.acryl-extensions/` here stays untracked.** ACRYL's own repository is the product, not a user's project; quick-notes lives in its own repository. In a user's project ACRYL never adds `.acryl-extensions/` to `.gitignore`; committing it is the user's choice.
 
+6. **A listing says what the extension needs and adds: its service contract** (owner, 2026-10-15). See "The service contract" below. The labels stay as they are: `cordis-plugin` is true of every extension, and whether a given app can run one is answered by the contract, not by a label.
+
 Superseded by these: the "Cordis Plugins registry by pull request" target below is now discovery by topic and keyword (the index at cordisplugins.github.io is generated from GitHub and npm search, like acryl.dev's), and the open questions are answered.
 
 ### Verified: the first push (2026-10-13)
 
 `acryl-quick-notes` 0.2.0 was pushed from the `musichen` login to `inboxxobni/acryl-quick-notes` (public, topics `acryl-package`, `cordis-plugin`, `dsh-plugin`, release `v0.2.0` with `acryl-quick-notes-0.2.0.tgz`, sha512 `3TB0b3tv...g2Byw==`). Within a minute GitHub search `topic:<each label> org:inboxxobni` returned it, and the downloaded release asset had the same sha512 as the local pack. Whose credentials and on whose authority: `inboxxobni` is a GitHub organization, not a second account; `musichen` is one of its two members and an admin (`gh api user/memberships/orgs/inboxxobni`: role admin, active), so the push used the owner's own `gh` login writing to the owner's own organization, on the owner's instruction in chat on 2026-10-13 ("push as test from user 'musichen' to github.com/inboxxobni"). Done by hand with `git`, `gh repo create --public`, `gh repo edit --add-topic`, `gh release create`; step 2 below turns exactly these commands into `acryl ext push`.
+
+`0.2.1` (2026-10-15, same login, organization and authority, on the owner's instruction "do them" for the four points above): the contract written by `preparePublish`, `dshHomePath` declared with no `homedir()` fallback, a "Needs" section in the README. The secret check (`acryl-secret-check`) found nothing in the 6 files, which are exactly the tarball's; release `v0.2.1` with `acryl-quick-notes-0.2.1.tgz`, sha512 `TwmOjCfp...oQDbA==`, the same after download.
+
+## The service contract (decided 2026-10-15)
+
+### Why
+
+"Is it a Cordis plugin?" is the wrong question. Cordis itself provides only the context, dependency injection, events and lifecycle; every capability is a service that some plugin provides and other plugins consume by name. In DSH, `connection` (`packages/client/connection`, `super(ctx, 'connection')`), `webServer` (`packages/host/webserver`) and `slots` (`packages/client/ui-renderer`) are plugins too: everything is a plugin. The one value set outside a plugin is `dshHomePath`, which `packages/boot/app-boot` provides at boot with `ctx.provide`.
+
+So `acryl-quick-notes` runs in any app whose plugins provide `connection`, `dshHomePath` and `webServer` on the host and `connection` and `slots` in the browser. Today those are DSH-based apps (ACRYL, stock DSH); a bare Cordis app loads none of those plugins, and the extension would wait in PENDING. The dependency is on services, not on DSH.
+
+This is what the registry is for. ACRYL is one instance of the ACRYL Blends framework: an app is a container whose builder agent assembles it from Cordis plugins, toward any application, agentic from day one (spec 036). A builder choosing an extension needs to know "this app has every service it needs", or "it is missing `slots`; that comes with `ui-renderer`". A label cannot answer that; a contract can.
+
+### What it is
+
+Two fields in the extension's own `package.json`, per side (host, client):
+
+```json
+"acryl": {
+  "requires": { "host": ["connection", "dshHomePath", "webServer"], "client": ["connection", "slots"] },
+  "provides": { "host": [], "client": [] }
+}
+```
+
+- `requires`: the plugin's `inject`. In the pinned Cordis every `inject` entry is required (an array, or a name-to-config map; `Inject.resolve`); an optional dependency is a `ctx.get()` and is not part of the contract.
+- `provides`: every service the extension registers: `super(ctx, '<name>')` in a Service class, `ctx.provide('<name>')`.
+- A side the package does not have is absent (a host-only extension has no `client` key).
+- `dsh.requiresAcrylPackages` (existing) stays the package-level dependency list; the contract is the service-level one a builder resolves against.
+
+### Generated, never hand-written
+
+`plugins/acryl-extension-context/lib/contract.js` reads it from the code: the host entry is imported and its `inject` read the way the Loader reads it (including a Service class's static or decorated `inject`); the client bundle, which only runs in the browser's module loader, is read as source, and only its literal list form (`exports.inject = ['slots', ...]`, the form every example uses) is accepted; any other form is an error, so a contract is never silently empty. `provides` is scanned from the source.
+
+`preparePublish` (the agent's publish-prep tool) writes the contract into `package.json` and returns it; a package with no `acryl` block gets the documented minimal one (`schemaVersion: 1`, `artifacts.plugins` = the host entry). The catalog check validates its shape. `push` (build step 2) runs the same function, so a pushed extension always carries a contract that matches its code. Shipped in `66cf7d43` (with 7 unit tests and a real-engine test).
+
+### No guessing a home
+
+A contract only means something if the code honours it. quick-notes, and the `state-host-store` example it was generated from, read their data folder from `dshHomePath` but fell back to `homedir()/.acryl/.dsh/...` when it was missing, which in a test or second app instance writes into the user's real `~/.acryl`. Both now declare `dshHomePath` in `inject` and have no fallback: in an app without it they wait. The authoring doc (`extending/state-and-persistence.md`) says so. Proven in a real Web engine: the example goes ACTIVE and its data folder is under that engine's home.
+
+For Blends: the home a plugin writes to should come from a base-kit service, not from the boot code. In ACRYL that is the `appInstance` family (`runtime/acryl-harness-runtime/src/instance/`); `dshHomePath` is DSH's equivalent. Which services every Blend provides (the base kit) is recorded in spec 036 (`persistence-and-registries.md`, "Extensions in a Blend").
 
 ## Terms
 
@@ -59,12 +101,14 @@ In its own `package.json`, under `acryl.targets` (reviewed with the code, travel
 ```json
 {
   "name": "acryl-quick-notes",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "MIT",
   "keywords": ["acryl-package", "cordis-plugin", "dsh-plugin"],
   "repository": { "type": "git", "url": "git+https://github.com/inboxxobni/acryl-quick-notes.git" },
   "acryl": {
     "visibility": "public",
+    "requires": { "host": ["connection", "dshHomePath", "webServer"], "client": ["connection", "slots"] },
+    "provides": { "host": [], "client": [] },
     "targets": [
       { "kind": "git", "url": "https://github.com/inboxxobni/acryl-quick-notes.git" },
       { "kind": "npm", "registry": "https://registry.npmjs.org" }
@@ -91,11 +135,13 @@ A Cordis service `acrylExtensions` (Host side, owned by `acryl-extension-context
 - **Credentials**: git, `gh` and npm use the user's own logins; ACRYL never reads, stores or prints a token.
 - **Confirmation**: every push to a remote and every switch to public needs the user's confirmation in the app; the agent can only propose.
 - **License**: a public target requires a `license` field.
+- **Contract on pull**: before installing, the pull checks the extension's `requires` against the services the running app provides, and names the missing ones (and, from the catalog, which extensions provide them) instead of installing something that would sit in PENDING.
 - **Integrity on pull**: npm pulls go through spec 030's managed install; GitHub pulls take the release tarball for the tag and check its sha512 against the catalog's (or, pulled by URL with no catalog, record it on first install); the store keeps a sha512 per tarball.
 
 ## Build order
 
-1. Local store: `save` and `pull` from the store, `acryl ext list`, the Plugins page list. Test with `acryl-quick-notes`.
-2. GitHub target: `push` (repository, tag, topics, release tarball, exactly the verified commands above) and `pull` by `owner/repo`, with the secret check and the visibility guard.
-3. Catalog (critical path for listing a GitHub-only extension: until it is done, "List publicly" lists it on dshfind and deepseek1024 but not on acryl.dev; tracked as https://github.com/acryldev/acryldev.github.io/issues/1, assigned to musichen): `acryldev.github.io`'s `sync-acryl-catalog.mjs` also searches GitHub topic `acryl-package` (today it reads only the npm keyword) and records each repository's latest release tarball and sha512; cordisplugins.github.io builds its index the same way from `cordis-plugin`; the Market's install accepts a GitHub release tarball.
+0. Service contract (done, `66cf7d43`): generated into `package.json` by publish prep, checked as catalog metadata.
+1. Local store: `save` and `pull` from the store, `acryl ext list`, the Plugins page list (with each extension's contract: what it needs, and whether this app has it). Test with `acryl-quick-notes`.
+2. GitHub target: `push` (contract, repository, tag, topics, release tarball, exactly the verified commands above) and `pull` by `owner/repo`, with the secret check and the visibility guard.
+3. Catalog (critical path for listing a GitHub-only extension: until it is done, "List publicly" lists it on dshfind and deepseek1024 but not on acryl.dev; tracked as https://github.com/acryldev/acryldev.github.io/issues/1, assigned to musichen): `acryldev.github.io`'s `sync-acryl-catalog.mjs` also searches GitHub topic `acryl-package` (today it reads only the npm keyword) and records each repository's latest release tarball, its sha512 and its contract; cordisplugins.github.io builds its index the same way from `cordis-plugin`; the Market's install accepts a GitHub release tarball.
 4. npm target: publish through the user's npm login; pull through spec 030's managed install.

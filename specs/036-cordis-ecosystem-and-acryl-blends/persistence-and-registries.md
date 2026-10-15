@@ -39,6 +39,21 @@ layout on a private host. The registries a user reads from are their own setting
 - **No stored credentials.** Git and `gh` use the user's own credential helpers; ACRYL never reads or writes tokens.
 - **Moderation.** The public registry accepts starters by reviewed pull request; the index is built by CI only from entries that validate with `@webboxes/blends-core`.
 
+## Extensions in a Blend: the service contract and the base kit (2026-10-15)
+
+A Blend's builder agent assembles the app from Cordis plugins, so it must know, for each extension, which services it needs and which it adds. Every
+extension carries that as its service contract (`acryl.requires` / `acryl.provides` in its `package.json`, per side, generated from its code; spec 044, "The
+service contract"). With it the builder can answer "this Blend runs that extension" or "it is missing `slots`; that comes with `ui-renderer`", and a registry
+entry can list what a starter needs without loading it.
+
+The other half is the **base kit**: the services every Blend provides, so an extension written against them runs in any Blend. To be decided with the
+`acryl.blank` definition; the measured starting point is what real extensions need today (`acryl-quick-notes`: host `connection`, `dshHomePath`,
+`webServer`; client `connection`, `slots`). Two rules already follow:
+
+- Everything in the kit is a plugin's service, including the app's home: in ACRYL the `appInstance` family, not a value the boot code sets (DSH sets
+  `dshHomePath` at boot, the one service in that list that is not a plugin's).
+- An extension never guesses a missing service (no `homedir()` fallback): it declares it and waits, so the contract is honest.
+
 ## Registry layout
 
 ```text
