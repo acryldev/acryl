@@ -1,4 +1,4 @@
-# ACRYL extension docs
+# ACRYL plugin docs
 
 <!-- Generated from docs.json by scripts/build-manifest.mjs. Do not edit here. -->
 
@@ -14,7 +14,7 @@ plugin. Verified working examples: `../example-plugins/README.md`.
 | [Blueprints, Blends and the blank canvas](start-here/blueprints.md) | When the instance may be the blank canvas, when the user wants the product branded as their own, or when capturing what was grown as a Blend. | tui web desktop | all |
 | [Verify before you say it works](start-here/verify-before-done.md) | Before claiming a plugin works, stating a live fiber state, or delivering a package. | tui web desktop | all |
 | [Troubleshooting](start-here/troubleshooting.md) | A plugin is PENDING, FAILED, invisible or running stale code: symptom table and where to look. | tui web desktop | all |
-| [Trust and safety: extensions run with the user's permissions](start-here/trust-and-safety.md) | Before writing or installing any extension: what it can do, the rules for the agent, and what ACRYL does and does not protect. | tui web desktop | all |
+| [Trust and safety: plugins run with the user's permissions](start-here/trust-and-safety.md) | Before writing or installing any plugin: what it can do, the rules for the agent, and what ACRYL does and does not protect. | tui web desktop | all |
 
 ## Extending ACRYL (by plugin type)
 
@@ -24,7 +24,7 @@ plugin. Verified working examples: `../example-plugins/README.md`.
 | [Ready-made UI components: build with the app's own library](extending/ui-components.md) | Before building ANY UI: the themed component library you can require today (Button, Modal, Input, Switch, Tag, ...) and the terminal equivalents. | tui web desktop | all |
 | [ACRYL UI library: build screens from ready components](extending/ui-library.md) | Any Web or Desktop UI that has forms, settings, lists, dialogs or tabs: use @acryl/ui instead of hand-styling; semantic color roles for your own colors. | web desktop tui | all |
 | [Cordis building blocks and where each is documented](extending/cordis-core.md) | You are unsure which Cordis or harness mechanism to use: the model in ten lines and a table from what you are building to its doc and reference. | tui web desktop | all |
-| [Client slots: add UI to the Web and Desktop app (panel, button, tab, dashboard)](extending/client-slot.md) | The extension needs any UI in the app: a top-bar button, a panel, a sidebar tab, a board, a dashboard; also keyboard shortcuts and a custom card for a tool call. | web desktop | all |
+| [Client slots: add UI to the Web and Desktop app (panel, button, tab, dashboard)](extending/client-slot.md) | The plugin needs any UI in the app: a top-bar button, a panel, a sidebar tab, a board, a dashboard; also keyboard shortcuts and a custom card for a tool call. | web desktop | all |
 | [Workspace tab types: add a new kind of tab (whiteboard, board, viewer)](extending/workspace-tab.md) | The user wants a new kind of tab in the workspace (a whiteboard, a board of their own, a viewer): a plugin registers a tab type that appears in the + menu, the command palette and Settings > Tabs. | web desktop | all |
 | [Tool plugins: give the agent a new capability](extending/tool-plugin.md) | The feature is something the agent should be able to DO (call an API, read a source, run an action). | tui web desktop | all |
 | [Services: provide a capability, consume it, optional dependencies](extending/service.md) | Plugins must share a capability, or a plugin is PENDING on a missing service. | tui web desktop | all |

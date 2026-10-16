@@ -50,10 +50,10 @@ changes one, naming it. After reviewing, refresh with `ACRYL_UPDATE_DRIFT=1` (sa
 5. **Runtime context.** A separate "Current runtime context" message (file policy, cwd, and so on) is sent as a user message by
    [`runtime-context.ts`](../../deepseek-harness/packages/core/agent-loop/src/runtime-context.ts), not as part of the system prompt.
 6. **Skills.** The skill list (name and description only; bodies load on demand through the `skill` tool) is contributed by the skills service;
-   the extension pack's skills come from
+   the plugin context pack's skills come from
    [`plugins/acryl-plugin-context/lib/skills.js`](../../plugins/acryl-plugin-context/lib/skills.js).
-7. **ACRYL extension router (self-extension).** The section that tells the agent it can extend ACRYL, where the docs and examples are, and which
-   tools install, verify, list, remove and prepare-publish an extension. Text:
+7. **ACRYL plugin router (self-extension).** The section that tells the agent it can extend ACRYL, where the docs and examples are, and which
+   tools install, verify, list, remove and prepare-publish a plugin. Text:
    [`plugins/acryl-plugin-context/lib/router.js`](../../plugins/acryl-plugin-context/lib/router.js); the topic map is generated from
    [`docs/docs.json`](../../plugins/acryl-plugin-context/docs/docs.json); registered by
    [`plugins/acryl-plugin-context/index.js`](../../plugins/acryl-plugin-context/index.js) (`order 9500`, name `acryl:plugin-router`).

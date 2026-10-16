@@ -73,9 +73,9 @@
         },
         {
           "id": "start.trust-and-safety",
-          "title": "Trust and safety: extensions run with the user's permissions",
+          "title": "Trust and safety: plugins run with the user's permissions",
           "path": "start-here/trust-and-safety.md",
-          "when": "Before writing or installing any extension: what it can do, the rules for the agent, and what ACRYL does and does not protect.",
+          "when": "Before writing or installing any plugin: what it can do, the rules for the agent, and what ACRYL does and does not protect.",
           "surfaces": [
             "tui",
             "web",
@@ -175,7 +175,7 @@
           "id": "extending.client-slot",
           "title": "Client slots: add UI to the Web and Desktop app (panel, button, tab, dashboard)",
           "path": "extending/client-slot.md",
-          "when": "The extension needs any UI in the app: a top-bar button, a panel, a sidebar tab, a board, a dashboard; also keyboard shortcuts and a custom card for a tool call.",
+          "when": "The plugin needs any UI in the app: a top-bar button, a panel, a sidebar tab, a board, a dashboard; also keyboard shortcuts and a custom card for a tool call.",
           "surfaces": [
             "web",
             "desktop"

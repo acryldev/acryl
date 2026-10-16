@@ -8,7 +8,7 @@ const cell = text => String(text).replaceAll('|', '\\|').replaceAll('\n', ' ')
 
 export function renderDocsIndex(manifest) {
   const lines = [
-    '# ACRYL extension docs',
+    '# ACRYL plugin docs',
     '',
     '<!-- Generated from docs.json by scripts/build-manifest.mjs. Do not edit here. -->',
     '',
@@ -27,7 +27,7 @@ export function renderDocsIndex(manifest) {
 
 export function renderExamplesIndex(manifest) {
   const lines = [
-    '# ACRYL extension examples',
+    '# ACRYL plugin examples',
     '',
     '<!-- Generated from docs/docs.json by scripts/build-manifest.mjs. Do not edit here. -->',
     '',

@@ -1,4 +1,4 @@
-# ACRYL extension examples
+# ACRYL plugin examples
 
 <!-- Generated from docs/docs.json by scripts/build-manifest.mjs. Do not edit here. -->
 

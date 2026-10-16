@@ -1,5 +1,5 @@
 # The blank-canvas Blueprint: the stem cell of the framework (ACRYL spec 036, blank-canvas-blend.md).
-# An agent to talk to, a model chooser, an input, and the extension pack so the agent can grow the rest.
+# An agent to talk to, a model chooser, an input, and the plugin context pack so the agent can grow the rest.
 # No workspace, no Market, no admin panel: each of those is added later as an ordinary Cordis plugin.
 # Rebrand it by changing the brand parameters; nothing else needs editing to ship it under your own name.
 apiVersion: blends.acryl.dev/v1alpha1

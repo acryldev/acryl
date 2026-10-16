@@ -452,5 +452,5 @@ export function describeInstalledExtensions(profileDir, live, fs) {
   const check = fs?.existsSync ?? existsSync
   const lines = plugins.map(plugin => `- ${plugin.name} (${live?.statusOf?.(plugin.name) ?? 'not mounted'}) source: ${plugin.installedFrom}${check(join(plugin.installedFrom, 'package.json')) ? '' : ' [SOURCE MISSING: /reload remove-stale removes it]'}`)
   const registry = managed.length > 0 ? `\nMarketplace plugins (managed, not editable here): ${managed.map(plugin => `${plugin.name}@${plugin.version ?? plugin.spec}`).join(', ')}` : ''
-  return `Installed local ACRYL extensions (edit the source, then call acryl_install_plugin to update; /reload re-installs all):\n${lines.join('\n')}${registry}`
+  return `Installed local ACRYL plugins (edit the source, then call acryl_install_plugin to update; /reload re-installs all):\n${lines.join('\n')}${registry}`
 }

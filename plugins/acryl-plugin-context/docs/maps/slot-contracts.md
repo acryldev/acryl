@@ -4,7 +4,7 @@
 
 Use this with `maps/mount-points.md` when you fill a slot that needs more than `{ name, id, order }`. For each slot: the register options, the exact props
 your component receives, the keys already taken, and a worked example. The harness notes below were written for packages defined from a running page
-(`cordis_define`), where nothing can be imported; an installed extension with `dsh.client` CAN `require` the shared components (`extending/ui-components.md`).
+(`cordis_define`), where nothing can be imported; an installed plugin with `dsh.client` CAN `require` the shared components (`extending/ui-components.md`).
 The `priority` rule and the "declare `inject: ['slots']`" rule apply to both.
 
 ## Harness notes

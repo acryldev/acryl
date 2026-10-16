@@ -32,7 +32,7 @@ that way, so say so and offer the live alternative.
 
 1. Prefer a token override over CSS: it survives upstream changes and respects light and dark mode. Provide BOTH modes.
 2. Never edit files inside `node_modules`, the harness, or the packaged app: they are overwritten and not yours.
-3. Keep the change in ONE plugin under `<workspace>/.acryl-extensions/<name>/` so it can be updated or removed as a unit.
+3. Keep the change in ONE plugin under `<workspace>/.acryl-plugins/<name>/` so it can be updated or removed as a unit.
 4. Check contrast: text on the new background must stay readable in both modes.
 5. After installing, the UI mounts live (no reload needed, except page-level changes outside the app UI); ask the user to look; you cannot see the screen. State what you changed and what you could
    not verify.

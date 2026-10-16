@@ -2,7 +2,7 @@
 
 An ACRYL instance is a **composition of Cordis rows**. A **Blueprint** is a named starting composition; a **Blend** is what one grew into (a Blueprint plus the plugins
 added to it, with its lineage). You may be running the full product (`acryl.ide`) or the **blank canvas** (`acryl.blank`): an agent, a model chooser, an input and this
-extension pack, and nothing else. On the blank canvas, everything the user wants beyond chat is something you build as a plugin.
+plugin context pack, and nothing else. On the blank canvas, everything the user wants beyond chat is something you build as a plugin.
 
 ## Which one am I in?
 
@@ -16,7 +16,7 @@ extension pack, and nothing else. On the blank canvas, everything the user wants
    your source of truth for how this runtime works. Read the routed doc for the plugin type, copy the nearest example, and build.
 1. Build the capability as one plugin with one bounded purpose (a to-do tool, a calendar, a client panel). Prefer tools the model can call over UI the user did not ask for.
 2. Install it live with `acryl_install_plugin` (absolute path). It is a reversible row: `acryl_remove_plugin` undoes it.
-3. Inside an app created with `acryl new` (its folder has `blend.yaml`), the app folder IS the Blend: build plugins into the app's `extensions/`, and every
+3. Inside an app created with `acryl new` (its folder has `blend.yaml`), the app folder IS the Blend: build plugins into the app's `plugins/`, and every
    one of them installs itself when the app starts (a fresh clone of the app's repository included). `/blend snapshot` records into the app folder: it
    keeps the user's `blend.yaml` and only appends rows of installed plugins it does not name, and writes `blend.lock.json`. The user commits the folder.
 4. Outside an app, when the user is happy, `/blend snapshot` captures the whole instance as a Blend in `<workspace>/.acryl/blend/` (a manifest, a lock with digests, and the vendored source of

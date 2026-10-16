@@ -92,7 +92,7 @@ describe('grow an organizer from the Blank Blueprint', () => {
 
       const snapshot = await s.run('/blend snapshot')
       expect(snapshot?.kind, String(snapshot?.text)).toBe('success')
-      expect(snapshot?.text).toContain('1 local extension(s) vendored')
+      expect(snapshot?.text).toContain('1 local plugin(s) vendored')
     } finally { await s.bridge.dispose(); await host.dispose() }
 
     // App B: a different home, a different workspace, only the captured directory (and the data file, which is project data).

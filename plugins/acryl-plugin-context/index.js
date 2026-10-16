@@ -35,12 +35,12 @@ export function apply(ctx) {
   const root = resolvePackRoot()
   const manifest = JSON.parse(readFileSync(join(root, 'docs', 'docs.json'), 'utf8'))
 
-  // Evaluation switch (evals/README.md): ACRYL_EXTENSION_DOCS=off removes the router, the skills and the installed-extensions note, leaving only the tools,
+  // Evaluation switch (evals/README.md): ACRYL_PLUGIN_DOCS=off removes the router, the skills and the installed-plugins note, leaving only the tools,
   // so the same task can be run with and without the docs to measure what they add. Never set it in normal use.
-  const docsOff = process.env.ACRYL_EXTENSION_DOCS === 'off'
+  const docsOff = process.env.ACRYL_PLUGIN_DOCS === 'off'
 
   // Where this app keeps what its builder writes, from the runtime's app instance (optional: a stock harness host has none and keeps the classic folders).
-  ctx.effect(() => useAppInstance(ctx.get('appInstance')), 'extension-context: app instance scopes')
+  ctx.effect(() => useAppInstance(ctx.get('appInstance')), 'plugin-context: app instance scopes')
 
   // Static for the process lifetime: part of the cacheable prompt prefix.
   const text = buildRouterText(root, manifest)
@@ -65,10 +65,10 @@ export function apply(ctx) {
   ctx.inject(['systemPrompt'], scoped => {
     if (docsOff) return
     ctx.effect(() => scoped.systemPrompt.context({
-      name: 'acryl:installed-extensions',
+      name: 'acryl:installed-plugins',
       order: 9500,
       text: () => describeInstalledExtensions(ctx.get('desktopProfiles')?.current?.dir, ctx.get('livePluginActivation')),
-    }), 'extension-context: installed extensions context')
+    }), 'plugin-context: installed plugins context')
   })
 
   // Startup pass (pi.dev re-discovers extensions on every start): re-sync changed GLOBAL extensions, report everything else. Deferred one tick so it
@@ -97,19 +97,19 @@ export function apply(ctx) {
             lockNote = 'the app lock no longer matches blend.yaml (type /blend snapshot to refresh it); marketplace plugins were not installed from it'
           }
           const parts = [
-            summary.installed.length > 0 ? `installed the app's extensions ${summary.installed.join(', ')}` : '',
+            summary.installed.length > 0 ? `installed the app's plugins ${summary.installed.join(', ')}` : '',
             lockNote,
             summary.updated.length > 0 ? `re-synced ${summary.updated.join(', ')}` : '',
             summary.changed.length > 0 ? `source changed since install (type /reload to apply): ${summary.changed.join(', ')}` : '',
             summary.stale.length > 0 ? `source folder missing (/reload remove-stale): ${summary.stale.join(', ')}` : '',
-            summary.pending.length > 0 ? `new global extensions not installed (/reload new): ${summary.pending.join(', ')}` : '',
+            summary.pending.length > 0 ? `new global plugins not installed (/reload new): ${summary.pending.join(', ')}` : '',
             ...summary.failed.map(f => `FAILED ${f.name}: ${f.error}`),
           ].filter(Boolean)
-          if (parts.length > 0) ctx.logger.info(`[extension-context] startup: ${parts.join('; ')}`)
-        } catch (cause) { ctx.logger.warn(`[extension-context] startup sync failed: ${cause instanceof Error ? cause.message : String(cause)}`) }
+          if (parts.length > 0) ctx.logger.info(`[plugin-context] startup: ${parts.join('; ')}`)
+        } catch (cause) { ctx.logger.warn(`[plugin-context] startup sync failed: ${cause instanceof Error ? cause.message : String(cause)}`) }
       }, 0)
       return () => { disposed = true; clearTimeout(timer) }
-    }, 'extension-context: startup sync')
+    }, 'plugin-context: startup sync')
   })
 
   // `/reload`: re-install every local plugin from its source directory, and install new folders under <workspace>/.acryl-plugins/.
@@ -117,7 +117,7 @@ export function apply(ctx) {
     ctx.effect(function* () {
       yield scoped.commands.register({
         name: 'reload',
-        description: 'Reload local extensions from their source folders',
+        description: 'Reload local plugins from their source folders',
         // Without `input` the client treats the command as argument-less and sends `/reload new` to the model as chat.
         input: { hint: '[new|remove-stale]' },
         async handler(invocation) {
@@ -139,7 +139,7 @@ export function apply(ctx) {
           const lines = results.map(r =>
             r.stale && r.removed ? `${r.name}: STALE, source folder missing - removed`
             : r.stale && r.ok ? `${r.name}: STALE - source folder ${r.dir} no longer exists, so it cannot be updated. Type /reload remove-stale to remove it`
-            : r.shadowed ? `${r.dir}: SHADOWED by the project extension "${r.name}" - not loaded`
+            : r.shadowed ? `${r.dir}: SHADOWED by the project plugin "${r.name}" - not loaded`
             : r.pending ? `${r.dir}${tag(r)}: NEW, not installed - ${describePermissions(r.permissions)}. It would run with your permissions: review it, then type /reload new`
             : r.ok ? `${r.name}${tag(r)}: ${r.action}${r.discovered ? ' (new)' : ''}`
             : `${r.name}: FAILED - ${(r.errors ?? []).join('; ')}`)
@@ -150,7 +150,7 @@ export function apply(ctx) {
           return failed ? { kind: 'error', text } : { kind: 'success', text }
         },
       })
-    }, 'extension-context reload command')
+    }, 'plugin-context reload command')
   })
 
   // `/blend snapshot` writes the running composition (marketplace plugins AND local extensions) to <workspace>/.acryl/blend/ as a Blend; `/blend verify`
@@ -159,7 +159,7 @@ export function apply(ctx) {
     ctx.effect(function* () {
       yield scoped.commands.register({
         name: 'blend',
-        description: 'Capture the installed plugins and local extensions as a Blend, verify it, or apply a captured one',
+        description: 'Capture the installed plugins (pulled and local) as a Blend, verify it, or apply a captured one',
         input: { hint: '[snapshot|verify|apply|ledger]' },
         async handler(invocation) {
           const profileDir = ctx.get('desktopProfiles')?.current?.dir
@@ -206,10 +206,10 @@ export function apply(ctx) {
           const local = capture.lock.modules.filter(m => m.origin === 'local').length
           const registry = capture.lock.modules.filter(m => m.origin === 'registry').length
           const notes = capture.notes.length > 0 ? `\nNot captured:\n${capture.notes.map(n => `- ${n}`).join('\n')}` : ''
-          return { kind: 'success', text: `Captured ${capture.manifest.kind} ${capture.manifest.metadata.id}@${capture.manifest.metadata.version}: ${registry} marketplace plugin(s), ${local} local extension(s) vendored.\nWritten to ${outDir}: ${files.join(', ')}${notes}` }
+          return { kind: 'success', text: `Captured ${capture.manifest.kind} ${capture.manifest.metadata.id}@${capture.manifest.metadata.version}: ${registry} marketplace plugin(s), ${local} local plugin(s) vendored.\nWritten to ${outDir}: ${files.join(', ')}${notes}` }
         },
       })
-    }, 'extension-context blend command')
+    }, 'plugin-context blend command')
   })
 
   ctx.inject(['tools'], scoped => {

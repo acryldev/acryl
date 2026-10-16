@@ -34,12 +34,12 @@ export function createSkillProvider(root, fs = { existsSync, readdirSync, readFi
     name: parsed.name,
     description: parsed.description,
     invocation: { modelInvocable: true, userInvocable: true },
-    provider: 'acryl-extension-skills',
+    provider: 'acryl-plugin-skills',
     source: 'bundled',
     rank: BUNDLED_RANK,
   })
   return {
-    name: 'acryl-extension-skills',
+    name: 'acryl-plugin-skills',
     list: () => Promise.resolve(read().map(candidateOf)),
     get: candidate => {
       const found = read().find(item => item.parsed.name === candidate.name)

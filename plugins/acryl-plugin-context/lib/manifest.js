@@ -38,7 +38,7 @@ export function checkManifest(pkg) {
   if (block === null || typeof block !== 'object') return ['"acryl" must be an object']
   if (block.apiVersion !== undefined) {
     if (!Number.isInteger(block.apiVersion) || block.apiVersion < 1) errors.push('"acryl.apiVersion" must be a positive integer')
-    else if (block.apiVersion > EXTENSION_API_VERSION) errors.push(`this extension needs ACRYL extension API version ${block.apiVersion}, this runtime provides ${EXTENSION_API_VERSION}: update ACRYL or lower "acryl.apiVersion" if the code does not need the newer API`)
+    else if (block.apiVersion > EXTENSION_API_VERSION) errors.push(`this plugin needs ACRYL plugin API version ${block.apiVersion}, this runtime provides ${EXTENSION_API_VERSION}: update ACRYL or lower "acryl.apiVersion" if the code does not need the newer API`)
   }
   if (block.permissions !== undefined) {
     if (!Array.isArray(block.permissions)) errors.push('"acryl.permissions" must be an array')

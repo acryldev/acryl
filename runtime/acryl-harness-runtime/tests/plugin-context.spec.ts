@@ -155,17 +155,17 @@ describe('/reload on the web engine', () => {
         execute(agent: unknown, line: string, attachments: unknown[], signal: AbortSignal): Promise<{ result: { kind: string; text?: string } } | undefined>
       }
       const before = await (host.ctx.get('systemPrompt' as never) as unknown as { assemble(): Promise<{ contexts: Array<{ name: string; text: string }> }> }).assemble()
-      expect(before.contexts.find(c => c.name === 'acryl:installed-extensions')?.text ?? '').toBe('')
+      expect(before.contexts.find(c => c.name === 'acryl:installed-plugins')?.text ?? '').toBe('')
       // Plain /reload only LISTS a new folder (it would run with the user's permissions); nothing is installed.
       const listed = await commands.execute(agent, '/reload', [], new AbortController().signal)
       expect(listed?.result.text).toContain('NEW, not installed')
       const stillEmpty = await (host.ctx.get('systemPrompt' as never) as unknown as { assemble(): Promise<{ contexts: Array<{ name: string; text: string }> }> }).assemble()
-      expect(stillEmpty.contexts.find(c => c.name === 'acryl:installed-extensions')?.text ?? '').toBe('')
+      expect(stillEmpty.contexts.find(c => c.name === 'acryl:installed-plugins')?.text ?? '').toBe('')
       const execution = await commands.execute(agent, '/reload new', [], new AbortController().signal)
       expect(execution?.result.kind).toBe('success')
       expect(execution?.result.text).toContain('(new)')
       const after = await (host.ctx.get('systemPrompt' as never) as unknown as { assemble(): Promise<{ contexts: Array<{ name: string; text: string }> }> }).assemble()
-      const listing = after.contexts.find(c => c.name === 'acryl:installed-extensions')?.text ?? ''
+      const listing = after.contexts.find(c => c.name === 'acryl:installed-plugins')?.text ?? ''
       expect(listing).toContain('acryl-example-tool')
       expect(listing).toContain('dropped-tool')
     } finally {
@@ -283,7 +283,7 @@ describe('/reload on the web engine', () => {
       expect((await run('/reload new'))?.text).toContain('installed (new)')
       const snapshot = await run('/blend snapshot')
       expect(snapshot?.kind).toBe('success')
-      expect(snapshot?.text).toContain('1 local extension(s) vendored')
+      expect(snapshot?.text).toContain('1 local plugin(s) vendored')
       const out = join(workspace, '.acryl', 'blend')
       const lock = JSON.parse(readFileSync(join(out, 'blend.lock.json'), 'utf8'))
       expect(lock.formatVersion).toBe(2)

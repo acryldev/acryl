@@ -54,8 +54,8 @@ export function buildPack(packRoot, { check }) {
 if (import.meta.main) {
   const result = buildPack(root, { check: process.argv.includes('--check') })
   if (!result.ok) {
-    for (const problem of result.problems) console.error(`extension-context: ${problem}`)
+    for (const problem of result.problems) console.error(`plugin-context: ${problem}`)
     process.exit(1)
   }
-  console.log('extension-context: manifest valid, indexes current')
+  console.log('plugin-context: manifest valid, indexes current')
 }

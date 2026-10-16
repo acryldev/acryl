@@ -15,7 +15,7 @@ to start the plugin again lives in the user's home, never inside the installed a
 
 | What | Where | Written by | Survives |
 | --- | --- | --- | --- |
-| Source (the truth the agent edits) | project: `<workspace>/.acryl-extensions/<name>/` (or `<workspace>/.acryl/instances/<scope>/extensions/<name>/` for a named app instance); global: `<ACRYL home>/extensions/<name>/` | the agent's file tools | everything; project sources can be committed to git |
+| Source (the truth the agent edits) | project: `<workspace>/.acryl-plugins/<name>/` (or `<workspace>/.acryl/instances/<scope>/plugins/<name>/` for a named app instance); global: `<ACRYL home>/plugins/<name>/` (moved once from `.acryl-extensions/` and `extensions/`, spec 044 step 1b) | the agent's file tools | everything; project sources can be committed to git |
 | Installed snapshot | `<profile>/.acryl-staged/<name>@<id>/` holding `acryl-source.json` (path of the source), the generated entry, and one `acryl-v-<hash>/` copy per version | `acryl_install_plugin` (`lib/stage.js`) | app updates, restarts |
 | Profile registration | `<profile>/package.json` (`dependencies["<name>"] = "file:<absolute path of the staged folder>"`), `pnpm-lock.yaml`, `node_modules/<name>/` (a copy pnpm makes) | the bundled pnpm (`pnpm add file:...`) | app updates, restarts |
 | Plugin data | `<engine home>/plugin-data/<name>/` (a plugin that keeps host files; the agent chooses this) | the plugin's own host half | everything, including clearing the browser |

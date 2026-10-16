@@ -60,13 +60,13 @@ function freezeBlueprint(blueprint: Blueprint): Blueprint {
 }
 
 /**
- * The stem cell: an agent to talk to, a model chooser (authorization), an input, and the extension pack so the agent can
+ * The stem cell: an agent to talk to, a model chooser (authorization), an input, and the plugin context pack so the agent can
  * grow the rest. No workspace, no Market, no admin panel. The brand is configurable so it can be renamed without code.
  */
 export const BLANK_BLUEPRINT: Blueprint = freezeBlueprint({
   id: 'acryl.blank',
   name: 'Blank',
-  description: 'The smallest working agent that can grow itself: chat, model choice, and the extension pack.',
+  description: 'The smallest working agent that can grow itself: chat, model choice, and the plugin context pack.',
   // `acryl-settings` is essential: surface plugins (Desktop's shell, notifications) keep their preferences there.
   capabilities: ['persona', 'agent-roster', 'session-stats', 'authorization', 'acryl-settings'],
   rows: ['plugin-context', 'system-prompt', 'ui-library', 'app-save', 'plugin-hub'],

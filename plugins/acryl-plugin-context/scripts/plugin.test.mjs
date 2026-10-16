@@ -562,7 +562,7 @@ test('reload: source is authoritative - unchanged installs are skipped, changed 
 test('manifest: apiVersion and permissions are validated, and shown before a NEW extension is installed', () => {
   assert.deepEqual(checkManifest({}), [])
   assert.deepEqual(checkManifest({ acryl: { apiVersion: 1, permissions: ['shell', 'net'] } }), [])
-  assert.match(checkManifest({ acryl: { apiVersion: EXTENSION_API_VERSION + 1 } })[0], /needs ACRYL extension API version/)
+  assert.match(checkManifest({ acryl: { apiVersion: EXTENSION_API_VERSION + 1 } })[0], /needs ACRYL plugin API version/)
   assert.match(checkManifest({ acryl: { apiVersion: 'one' } })[0], /positive integer/)
   assert.match(checkManifest({ acryl: { permissions: ['shel'] } })[0], /unknown permission "shel"/)
   assert.match(checkManifest({ acryl: { permissions: 'shell' } })[0], /must be an array/)
