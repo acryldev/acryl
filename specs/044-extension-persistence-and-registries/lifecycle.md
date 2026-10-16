@@ -310,7 +310,7 @@ Answered 2026-10-15: D1 to D8 all yes; D7 is option B, after the explanation bel
   - *Either way* stock DSH is unchanged, and S11 (stock DSH installing ours by release URL) holds.
   - Decided: B. Proving the wrapping `pluginManager` is part of build step 2.
 - **D8. Stock DSH compatibility is a default, not a promise**: verify and the catalog report Both / ACRYL / DSH stock from the contract; the docs and examples prefer DSH services; ACRYL-only is allowed and labelled. **Accepted.**
-- **D9. Names and nesting**: options A to D in "Names and nesting", decided as dotted names, one form everywhere, lowercase with hyphens inside a segment (`@owner/accounting-app-aurora.sidebar.date-filter`). **Accepted.**
+- **D9. Names and nesting**: options A to D in "Names and nesting", decided as dotted names, one form everywhere, lowercase with hyphens inside a segment (`@owner/accounting-app-aurora.sidebar.date-filter`). **Accepted.** Option C (several plugins in one repository, each released on its own) confirmed by the owner 2026-10-16 as an author's choice next to the default of one repository per plugin. Option D (the computed shared view) waits for the owner's answer.
 
 ## Build order (replaces `spec.md`'s steps 1-4)
 
