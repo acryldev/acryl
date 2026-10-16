@@ -73,6 +73,9 @@ corepack pnpm install --frozen-lockfile
 # 7. Build workspace type providers
 echo "🔨 Building type providers..."
 corepack pnpm --filter acryl-control run build
+corepack pnpm --filter @webboxes/blends-core run build
+corepack pnpm --filter @webboxes/app-persistence run build
+corepack pnpm --filter @webboxes/plugin-hub run build
 corepack pnpm --filter acryl-harness-runtime run build
 
 # 8. Build CLI archive
