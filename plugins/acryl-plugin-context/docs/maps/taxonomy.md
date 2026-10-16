@@ -110,7 +110,7 @@ that type are the real, shipped implementations to study (their source is in the
 | dsh-tool-web | host | tui web desktop | Model-facing web tools (web_search, web_fetch) over the DeepSeek Harness web capability seam (ctx.web) |  | tools, web, systemPrompt |
 | dsh-tool-workflow | host | tui web desktop | Model-facing workflow tool: run a JavaScript orchestration script over ctx.workflowEngine |  | tools, workflowEngine, systemPrompt |
 | dsh-tools | host | tui web desktop | Tool registry and execution pipeline for the DeepSeek Harness | tools | invariants |
-| acryl-plugin-context | host | tui web desktop | Extension Context Pack: routed docs, verified examples and authoring skills that let the ACRYL agent write its own plugins (spec 037) | extensionContext | systemPrompt |
+| acryl-plugin-context | host | tui web desktop | Extension Context Pack: routed docs, verified examples and authoring skills that let the ACRYL agent write its own plugins (spec 037) | pluginContext | systemPrompt |
 
 ## storage-or-persistence (13)
 

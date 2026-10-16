@@ -56,7 +56,7 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
   const workerArgs = async (): Promise<readonly string[]> => {
     if (workerMcpConfig === undefined) return []
     // Read access to the extension docs the lookup tool points at, so the worker can follow them.
-    const lookup = await gateway?.call('acryl_extension_lookup', { topic: 'tool' }, new AbortController().signal).catch(() => undefined)
+    const lookup = await gateway?.call('acryl_plugin_lookup', { topic: 'tool' }, new AbortController().signal).catch(() => undefined)
     const docs = lookup?.ok === true ? docsRootFromLookup(lookup.text) : undefined
     return [...workerMcpArgs(workerMcpConfig), ...(docs === undefined ? [] : ['--add-dir', docs])]
   }

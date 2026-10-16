@@ -4,7 +4,7 @@
  * agent to its own docs, and gives it the one tool it needs to close the loop:
  * install a plugin it wrote and make it live.
  *
- * Provides: `extensionContext`, the prompt section `acryl:extension-router`, bundled
+ * Provides: `pluginContext`, the prompt section `acryl:plugin-router`, bundled
  * authoring skills (when a `skills` service exists) and the tool `acryl_install_plugin`
  * (when a `tools` service exists).
  * Requires: `systemPrompt`. `tools`, `desktopPnpm` and `livePluginActivation` are
@@ -46,7 +46,7 @@ export function apply(ctx) {
   const text = buildRouterText(root, manifest)
   if (!docsOff) ctx.effect(() => ctx.systemPrompt.section({ name: ROUTER_SECTION_NAME, order: ROUTER_SECTION_ORDER, text }))
 
-  ctx.provide('extensionContext', {
+  ctx.provide('pluginContext', {
     root,
     manifest: () => manifest,
     resolveDoc(id) {

@@ -10,7 +10,7 @@ export const IDENTITY_SECTION = 'harness:identity'
 const TAG_ALIASES = {
   'deployment:persona-prefix': 'persona',
   'deployment:persona-suffix': 'cwd',
-  'acryl:extension-router': 'acryl_extension_docs',
+  'acryl:plugin-router': 'acryl_plugin_docs',
 }
 
 /** `tool:read` becomes `tool_read`; anything outside `[a-z0-9_-]` becomes `_`, and a tag never starts with a digit or separator. */

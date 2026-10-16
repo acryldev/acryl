@@ -31,7 +31,7 @@ export function workerMcpArgs(configPath: string): readonly string[] {
 
 /**
  * The folder holding the extension docs and examples, read off the gateway's own lookup answer (its paths are absolute, under `<package>/docs/`). A
- * worker works in its own folder and could not otherwise read what `acryl_extension_lookup` points it to. `undefined` when the lookup says nothing usable.
+ * worker works in its own folder and could not otherwise read what `acryl_plugin_lookup` points it to. `undefined` when the lookup says nothing usable.
  */
 export function docsRootFromLookup(text: string): string | undefined {
   try {

@@ -1,5 +1,5 @@
 ---
-name: acryl-remove-extension
+name: acryl-remove-plugin
 description: Use when the user asks to remove, delete, disable or undo an extension or UI element you or they installed.
 ---
 # Remove an extension

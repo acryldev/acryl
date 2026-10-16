@@ -78,9 +78,9 @@ Use subagent_fork in the background by default. Start independent delegations to
 When you successfully create or modify files, mention the primary outputs in your final response. To make those and any other changed-file references clickable in Web, format them as Markdown inline code using the exact file-tool path, or a basename when unique among the files changed in that turn.
 </ui_deliverable-file-references>
 
-<acryl_extension_docs>
+<acryl_plugin_docs>
 ACRYL extension documentation (read only when the user asks to build, change, fix, improve, extend or remove something in ACRYL itself: an extension, plugin, tool, panel, button, view, theme, skill, command or LLM adapter):
-- Docs index: <acryl-repo>/plugins/acryl-plugin-context/docs/README.md; or call acryl_extension_lookup(topic) for the docs and examples that match a topic
+- Docs index: <acryl-repo>/plugins/acryl-plugin-context/docs/README.md; or call acryl_plugin_lookup(topic) for the docs and examples that match a topic
 - Examples: <acryl-repo>/plugins/acryl-plugin-context/example-plugins/README.md (working, verified plugins for every plugin type and surface)
 - When reading ACRYL docs, resolve the relative paths below under <acryl-repo>/plugins/acryl-plugin-context/docs/, not the current working directory
 - Start with <acryl-repo>/plugins/acryl-plugin-context/docs/start-here/this-runtime.md. Where something mounts on the CLI, Web or Desktop, and every plugin type: maps/mount-points.md, maps/slot-contracts.md (props and examples per slot), maps/events.md, maps/taxonomy.md
@@ -89,7 +89,7 @@ ACRYL extension documentation (read only when the user asks to build, change, fi
 - When working on ACRYL extension topics, read the docs and the nearest example, and follow .md cross-references before implementing
 - Always read ACRYL .md files completely and follow links to related docs
 - Write extensions in <workspace>/.acryl-extensions/<name>/ and deliver with acryl_install_plugin (ABSOLUTE path; calling it again updates). Check first with acryl_verify_plugin; also acryl_list_plugins, acryl_remove_plugin, acryl_prepare_publish (a dry run: publishing is the user's decision). Never claim a plugin works without the tool result; UI needs a page reload (the user can type /reload, which also installs new folders under .acryl-extensions/)
-</acryl_extension_docs>
+</acryl_plugin_docs>
 
 <harness_source>
 The DeepSeek Harness implementation checkout is at <acryl-repo>/node_modules/.pnpm/@deepseek-ai+dsh-web-app@0.1.5-alpha.1_patch_hash=68a389c2a80ec059477dd6b3bdd43a971953d_dd6fecb854ee0c9ed55a527501ff76c9/. The checkout location and current working directory are separate values and may differ; never infer the working directory from this path. Use pwd to determine the current working directory. Use this checkout only to inspect or extend DSH itself.
@@ -108,7 +108,7 @@ Your working directory is <workspace>.
 
 | Tool | Description (first line) |
 | --- | --- |
-| `acryl_extension_lookup` | Find the ACRYL extension docs and verified examples for a topic (for example "sidebar tab", "accent color", "a tool", "hook the prompt"). Returns absolute paths |
+| `acryl_plugin_lookup` | Find the ACRYL extension docs and verified examples for a topic (for example "sidebar tab", "accent color", "a tool", "hook the prompt"). Returns absolute paths |
 | `acryl_install_plugin` | Install a plugin package you wrote into the active ACRYL profile and activate it live (no restart), or UPDATE it if it is already installed. Checks the package  |
 | `acryl_list_plugins` | List the local plugins installed in the active ACRYL profile and the directory each was installed from, so you can find and edit them. |
 | `acryl_prepare_publish` | Check that a local plugin package is ready for the marketplace (install checks, catalog metadata, npm pack dry run). It NEVER publishes: publishing is done by t |

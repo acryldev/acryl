@@ -9,7 +9,7 @@ export const MCP_PATH = '/api/acryl-agent-control/mcp'
 
 /** The tools exposed unless the profile says otherwise: extending ACRYL, never the shell or the file system. */
 export const DEFAULT_EXPOSED_TOOLS: readonly string[] = [
-  'acryl_extension_lookup',
+  'acryl_plugin_lookup',
   'acryl_verify_plugin',
   'acryl_install_plugin',
   'acryl_list_plugins',

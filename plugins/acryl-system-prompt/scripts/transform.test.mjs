@@ -7,7 +7,7 @@ const sections = [
   { name: 'deployment:persona-prefix', text: 'You are a coding agent powered by {{model}}.' },
   { name: 'plan:policy', text: '' },
   { name: 'tool:read', text: 'Use the read tool - not cat.' },
-  { name: 'acryl:extension-router', text: '<acryl_extension_docs>\nroute\n</acryl_extension_docs>' },
+  { name: 'acryl:plugin-router', text: '<acryl_plugin_docs>\nroute\n</acryl_plugin_docs>' },
   { name: 'deployment:persona-suffix', text: 'Your working directory is {{cwd}}.' },
 ]
 
@@ -20,15 +20,15 @@ test('the ACRYL identity replaces the harness identity, first and untagged', () 
 
 test('every other section is tagged pi-style, empties are dropped, upstream text passes through unchanged', () => {
   const out = shapeSections(sections)
-  assert.deepEqual(out.map(s => s.name), ['harness:identity', 'deployment:persona-prefix', 'tool:read', 'acryl:extension-router', 'deployment:persona-suffix'])
+  assert.deepEqual(out.map(s => s.name), ['harness:identity', 'deployment:persona-prefix', 'tool:read', 'acryl:plugin-router', 'deployment:persona-suffix'])
   assert.equal(out[1].text, '<persona>\nYou are a coding agent powered by {{model}}.\n</persona>')
   assert.equal(out[2].text, '<tool_read>\nUse the read tool - not cat.\n</tool_read>')
   assert.equal(out[4].text, '<cwd>\nYour working directory is {{cwd}}.\n</cwd>')
 })
 
 test('an already tagged section is not wrapped twice', () => {
-  const router = shapeSections(sections).find(s => s.name === 'acryl:extension-router')
-  assert.equal((router.text.match(/<acryl_extension_docs>/gu) ?? []).length, 1)
+  const router = shapeSections(sections).find(s => s.name === 'acryl:plugin-router')
+  assert.equal((router.text.match(/<acryl_plugin_docs>/gu) ?? []).length, 1)
 })
 
 test('options turn tagging and dropping off and set the identity', () => {

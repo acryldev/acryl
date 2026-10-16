@@ -57,7 +57,7 @@ describe('the tool gateway on the real engine', () => {
     try {
       const listed = await (await fetch(`${origin}/api/acryl-agent-control/online/tools`, { headers: { authorization: `Bearer ${secret}` } })).json() as { tools: Array<{ name: string, inputSchema: any }> }
       const names = listed.tools.map(tool => tool.name)
-      expect(names).toEqual(expect.arrayContaining(['acryl_extension_lookup', 'acryl_verify_plugin', 'acryl_install_plugin', 'acryl_list_plugins', 'acryl_remove_plugin']))
+      expect(names).toEqual(expect.arrayContaining(['acryl_plugin_lookup', 'acryl_verify_plugin', 'acryl_install_plugin', 'acryl_list_plugins', 'acryl_remove_plugin']))
       expect(names).not.toContain('bash')
       expect(listed.tools.find(tool => tool.name === 'acryl_install_plugin')?.inputSchema).toMatchObject({ type: 'object', required: ['path'] })
 

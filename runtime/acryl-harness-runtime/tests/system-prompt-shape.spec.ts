@@ -54,7 +54,7 @@ describe.each(['web', 'cli'] as const)('acryl-system-prompt on the %s engine', k
     expect(captured.system).not.toContain('powered by DeepSeek Harness')
     expect(captured.system).toContain('<tool_read>')
     expect(captured.system).toContain('</tool_read>')
-    expect(captured.system.match(/<acryl_extension_docs>/gu)).toHaveLength(1)
+    expect(captured.system.match(/<acryl_plugin_docs>/gu)).toHaveLength(1)
     expect(captured.system).not.toMatch(/<plan_policy>\s*<\/plan_policy>/u)
     expect(upstream.length).toBeGreaterThan(5)
   }, 90_000)

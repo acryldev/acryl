@@ -50,12 +50,12 @@ describe('extension context on the web engine', () => {
       // The UI library (spec 038-ui-component-library) is a Loader row on the web engine, so every client bundle can require('@acryl/ui').
       expect(rows.some(entry => entry.options.id === '@acryl/ui')).toBe(true)
 
-      const context = host.ctx.get('extensionContext' as never) as { root: string } | undefined
+      const context = host.ctx.get('pluginContext' as never) as { root: string } | undefined
       expect(context).toBeDefined()
       expect(existsSync(join(context!.root, 'docs', 'docs.json'))).toBe(true)
 
       const assembly = await host.ctx.get('systemPrompt')!.assemble()
-      const router = assembly.sections.find(section => section.name === 'acryl:extension-router')
+      const router = assembly.sections.find(section => section.name === 'acryl:plugin-router')
       expect(router).toBeDefined()
       const text = String((router as { text?: unknown }).text)
       expect(text).toContain(context!.root)   // one absolute pack root; the doc paths after it are relative
@@ -64,7 +64,7 @@ describe('extension context on the web engine', () => {
       expect(existsSync(join(context!.root, 'docs', 'start-here', 'this-runtime.md'))).toBe(true)
 
       const toolNames = assembly.tools.map(tool => tool.name)
-      expect(toolNames).toEqual(expect.arrayContaining(['acryl_install_plugin', 'acryl_list_plugins', 'acryl_remove_plugin', 'acryl_prepare_publish', 'acryl_verify_plugin', 'acryl_extension_lookup']))
+      expect(toolNames).toEqual(expect.arrayContaining(['acryl_install_plugin', 'acryl_list_plugins', 'acryl_remove_plugin', 'acryl_prepare_publish', 'acryl_verify_plugin', 'acryl_plugin_lookup']))
     } finally {
       await host.dispose()
     }
@@ -82,7 +82,7 @@ describe('extension context on the web engine', () => {
       const rows = [...host.ctx.loader.entries()]
       expect(rows.some(entry => entry.options.id === 'acryl-plugin-context')).toBe(true)
       const assembly = await host.ctx.get('systemPrompt')!.assemble()
-      expect(assembly.sections.some(section => section.name === 'acryl:extension-router')).toBe(true)
+      expect(assembly.sections.some(section => section.name === 'acryl:plugin-router')).toBe(true)
       expect(assembly.tools.map(tool => tool.name)).toEqual(expect.arrayContaining(['acryl_install_plugin']))
     } finally {
       await host.dispose()

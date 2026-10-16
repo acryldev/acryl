@@ -25,7 +25,7 @@ call succeeds, a dummy key is used; temp paths are scrubbed). Desktop uses the s
 
 [`plugins/acryl-system-prompt`](../../plugins/acryl-system-prompt/index.js) applies pi.dev's prompt shape to the harness's sections: on the harness's
 `system-prompt/assemble` waterfall it puts the ACRYL identity line first (replacing "You are an AI agent powered by DeepSeek Harness."), wraps every other
-section in a tag (`<persona>`, `<tool_read>`, `<acryl_extension_docs>`, `<cwd>`), and drops empty sections. Every other section keeps its upstream text
+section in a tag (`<persona>`, `<tool_read>`, `<acryl_plugin_docs>`, `<cwd>`), and drops empty sections. Every other section keeps its upstream text
 unchanged, so harness updates still reach the model. Pure logic (identity, tag names, drift snapshot):
 [`lib/transform.js`](../../plugins/acryl-system-prompt/lib/transform.js); the listener is 6 lines in `index.js`. Config on its row: `identity`, `tagSections`,
 `dropEmpty`. **Drift check:** [`plugins/acryl-system-prompt/drift/`](../../plugins/acryl-system-prompt/drift) records a hash of every section upstream contributes,
@@ -56,7 +56,7 @@ changes one, naming it. After reviewing, refresh with `ACRYL_UPDATE_DRIFT=1` (sa
    tools install, verify, list, remove and prepare-publish an extension. Text:
    [`plugins/acryl-plugin-context/lib/router.js`](../../plugins/acryl-plugin-context/lib/router.js); the topic map is generated from
    [`docs/docs.json`](../../plugins/acryl-plugin-context/docs/docs.json); registered by
-   [`plugins/acryl-plugin-context/index.js`](../../plugins/acryl-plugin-context/index.js) (`order 9500`, name `acryl:extension-router`).
+   [`plugins/acryl-plugin-context/index.js`](../../plugins/acryl-plugin-context/index.js) (`order 9500`, name `acryl:plugin-router`).
 
 ## How to change it
 
@@ -99,7 +99,7 @@ Question: can ACRYL own the whole prompt, Pi-style, without diverging from upstr
 - From that one hook it could: replace the identity (`harness:identity`) with an ACRYL line, wrap every section in a Pi-style tag, reorder, and drop
   or rewrite named sections. Everything it did not touch flowed through unchanged, so upstream updates to tool guidance still reach the model.
 - Section names are stable and readable (`harness:identity`, `deployment:persona-prefix`, `plan:policy`, `context:file-reference`, `tool:<name>`,
-  `ui:deliverable-file-references`, `harness:source`, `app:web-surface`, `deployment:persona-suffix`, and ours `acryl:extension-router`). The CLI has
+  `ui:deliverable-file-references`, `harness:source`, `app:web-surface`, `deployment:persona-suffix`, and ours `acryl:plugin-router`). The CLI has
   fewer (no web sections); some render empty (`plan:policy`, an empty persona prefix), which a builder can drop.
 - Limits: a section registered as `complete` is restored after the waterfall, so listeners cannot override a complete persona (the `minimal`
   preset); registering a second section with an existing name throws (so override in the listener, not by registering); tool descriptions are

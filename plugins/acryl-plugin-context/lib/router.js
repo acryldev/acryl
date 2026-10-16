@@ -3,16 +3,16 @@ import { appExtensionsDir, projectExtensionsLabel } from './scopes.js'
 
 /** The router must stay small: it is in every prompt (spec 037 NFR-002). */
 export const ROUTER_TOKEN_BUDGET = 650
-export const ROUTER_SECTION_NAME = 'acryl:extension-router'
+export const ROUTER_SECTION_NAME = 'acryl:plugin-router'
 /** The XML-style tag wrapping the router text, in pi.dev's per-section tag style. */
-export const ROUTER_TAG = 'acryl_extension_docs'
+export const ROUTER_TAG = 'acryl_plugin_docs'
 /** After the tool sections, before the local-path suffix (harness SECTION_ORDERS: 5000..10000). */
 export const ROUTER_SECTION_ORDER = 9500
 export const INSTALL_TOOL_NAME = 'acryl_install_plugin'
 export const LIST_TOOL_NAME = 'acryl_list_plugins'
 export const REMOVE_TOOL_NAME = 'acryl_remove_plugin'
 export const VERIFY_TOOL_NAME = 'acryl_verify_plugin'
-export const LOOKUP_TOOL_NAME = 'acryl_extension_lookup'
+export const LOOKUP_TOOL_NAME = 'acryl_plugin_lookup'
 export const PUBLISH_TOOL_NAME = 'acryl_prepare_publish'
 
 export const estimateTokens = text => Math.ceil(text.length / 4)

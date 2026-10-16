@@ -1,5 +1,5 @@
 ---
-name: acryl-build-extension
+name: acryl-build-plugin
 description: Use when the user asks you to add a feature, tool, panel, command or integration to ACRYL itself (build a plugin or extension). The end-to-end workflow, from reading the docs to a live plugin.
 ---
 # Build an ACRYL extension
