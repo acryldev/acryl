@@ -9,13 +9,12 @@ plugin, private unless they list it publicly), npm (optional). Catalogs (acryl.d
 by its labels; nobody submits anything.
 
 1. Make sure it works first: installed with acryl_install_plugin and verified with acryl_verify_plugin.
-2. For anything public it needs a "license" in package.json. A fix needs a new version: suggest `/plugin version patch <name>`.
-3. These commands are the user's, typed in the chat, because they send their work or install code that runs with their permissions. Tell the
-   user the exact command and what it will do; never run them yourself and never ask for or handle a token (git and gh use the user's own login):
-   - `/plugin save <name>`: keep this version in the plugin store.
-   - `/plugin share <name>`: release it to their own GitHub repository (private). `/plugin share <name> public` lists it publicly.
-     Optional `<owner>/<repo>` names the repository. Share writes the service contract, the labels and the repository into package.json,
-     runs the secret check over exactly the files it sends, and refuses a version that is already released.
-   - `/plugin pull <source>`: `github:<owner>/<repo>[@version]`, `npm:<name>`, `store:<name>`, a .tgz file or https URL.
-   - `/plugin list`, `/plugin saved`: what is installed, what is kept.
-4. The same verbs exist on the command line: `acryl plugin save | share | pull | saved | version`.
+2. For anything public it needs a "license" in package.json. A fix needs a new version first (acryl_plugins action version, bump patch).
+3. Your tool is acryl_plugins. Its actions saved, save and version run directly (they stay on this machine); share, and pull from anywhere
+   but store:, ask the user in the app first, because they send the user's work or
+   install code that runs with their permissions; if the user does not allow it, do not retry: tell them the command they can type instead.
+   Never ask for or handle a token (git and gh use the user's own login). Share writes the service contract, the labels and the repository
+   into package.json, runs the secret check over exactly the files it sends, and refuses a version that is already released.
+4. The user's own commands, the same operations: in the chat `/plugin save | share <name> [public] [owner/repo] | pull <source> | version
+   patch <name> | list | saved`; on the command line `acryl plugin save | share | pull | saved | version`. A source is
+   `github:<owner>/<repo>[@version]`, `npm:<name>`, `store:<name>`, a .tgz file or https URL.

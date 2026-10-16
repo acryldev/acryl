@@ -20,6 +20,7 @@
  * `commands` (the chat command).
  */
 import { join } from 'node:path'
+import { defineTool } from '@deepseek-ai/dsh-tools'
 import { createPluginHub, findSourceFolder, gitCli, githubCli, githubReleasesOverHttps, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf } from '@webboxes/plugin-hub'
 
 export const name = 'acryl-plugin-hub'
@@ -100,6 +101,65 @@ export async function runPluginCommand(rawInput, hub, where) {
   return { kind: 'error', text: USAGE }
 }
 
+/**
+ * The agent's tool, one for every operation so it costs one definition in the prompt (spec 044 D4). Saving, versioning and pulling from the store stay on this machine and run directly. Sharing sends the user's
+ * work, and a pull from anywhere else installs code that runs with the user's permissions, so both ask the user through DSH's approval service
+ * first; only an explicit "allow once" proceeds, and with nobody to ask (a headless run, the "never" policy) they are refused.
+ */
+export function pluginTools(hub, { approval, where }) {
+  const ask = async (exec, reason) => {
+    const service = approval()
+    if (service === undefined || exec?.agent === undefined) return 'unavailable'
+    return service.request({ agent: exec.agent, toolName: 'acryl_plugins', ...(exec.callId === undefined ? {} : { callId: exec.callId }), reason, ...(exec.signal === undefined ? {} : { signal: exec.signal }) })
+  }
+  const folderOf = (exec, target) => {
+    const folder = findSourceFolder(String(target ?? ''), sourceRoots(where(exec)))
+    if (folder === undefined) throw new Error(`no plugin folder ${JSON.stringify(target)} in the project's .acryl-extensions/ or the app's extensions/; pass the ABSOLUTE folder`)
+    return folder
+  }
+  const refusedBy = outcome => `the user did not allow it (${outcome}); tell them they can type the /plugin command themselves`
+  return [defineTool({
+    name: 'acryl_plugins',
+    description: 'Save, version, share or pull plugins. share and non-store pulls ask the user first; if refused, give them the /plugin command.',
+    parameters: {
+      action: { type: 'string', required: true, enum: ['saved', 'save', 'version', 'pull', 'share'] },
+      plugin: { type: 'string', description: 'Folder or name (save, version, share).' },
+      bump: { type: 'string', enum: ['patch', 'minor', 'major'] },
+      source: { type: 'string', description: 'store:, github:o/r[@v], npm:, .tgz (pull).' },
+      public: { type: 'boolean' },
+      to: { type: 'string', description: 'owner[/repo] (share).' },
+    },
+    output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+    async execute(args, exec) {
+      switch (args.action) {
+        case 'saved': return JSON.stringify(hub.saved().map(entry => ({ name: entry.name, version: entry.version, integrity: entry.integrity, from: entry.from })))
+        case 'save': return JSON.stringify(hub.save(folderOf(exec, args.plugin)))
+        case 'version':
+          if (!['patch', 'minor', 'major'].includes(args.bump)) throw new Error('version needs bump: patch, minor or major')
+          return JSON.stringify(hub.bump(folderOf(exec, args.plugin), args.bump))
+        case 'pull': {
+          const source = String(args.source ?? '')
+          if (!source.startsWith('store:')) {
+            const outcome = await ask(exec, `Install the plugin ${source}: its code runs with your permissions.`)
+            if (outcome !== 'allowed-once') throw new Error(refusedBy(outcome))
+          }
+          return JSON.stringify(await hub.pull(source))
+        }
+        case 'share': {
+          const folder = folderOf(exec, args.plugin)
+          const outcome = await ask(exec, `Share the plugin in ${folder} to ${args.to ?? 'its GitHub repository'} (${args.public === true ? 'public: anyone can find and install it' : 'private'}).`)
+          if (outcome !== 'allowed-once') throw new Error(refusedBy(outcome))
+          const [owner, repo] = String(args.to ?? '').split('/')
+          const result = await hub.share(folder, { ...(owner ? { owner } : {}), ...(repo ? { repo } : {}), ...(args.public === true ? { visibility: 'public' } : {}) })
+          if (result.status === 'refused') throw new Error(JSON.stringify(result))
+          return JSON.stringify(result)
+        }
+        default: throw new Error(`unknown action ${JSON.stringify(args.action)}`)
+      }
+    },
+  })]
+}
+
 export function apply(ctx) {
   const hub = createPluginHub({
     store: new PluginStore(storeRoot(ctx.appInstance)),
@@ -123,5 +183,9 @@ export function apply(ctx) {
         return runPluginCommand(invocation?.rawInput, hub, { workspaceDir: invocation?.agent?.session?.header?.cwd, home: ctx.appInstance.home })
       },
     }), 'acryl-plugin-hub: /plugin command')
+  })
+
+  ctx.inject(['tools'], scoped => {
+    for (const tool of pluginTools(hub, { approval: () => ctx.get('approval'), where: exec => ({ workspaceDir: exec?.agent?.session?.header?.cwd, home: ctx.appInstance.home }) })) scoped.tools.register(tool)
   })
 }

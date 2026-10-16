@@ -33,6 +33,7 @@
     "check": "pnpm run test"
   },
   "dependencies": {
+    "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
     "@webboxes/plugin-hub": "workspace:*"
   }
 }

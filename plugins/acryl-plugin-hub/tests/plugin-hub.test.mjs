@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test, { afterEach } from 'node:test'
 import { createPluginHub, findSourceFolder, missingHostServices, packFolder, PluginStore } from '@webboxes/plugin-hub'
-import { apply, runPluginCommand, sourceRoots, storeRoot } from '../index.js'
+import { apply, pluginTools, runPluginCommand, sourceRoots, storeRoot } from '../index.js'
 
 const made = []
 function temp() {
@@ -46,14 +46,15 @@ function hubWith({ services = ['connection', 'dshHomePath', 'webServer'], instal
   return { hub, store, installs }
 }
 
-test('the plugin provides pluginHub from the app instance home and registers /plugin only while commands exist', () => {
+test('the plugin provides pluginHub from the app instance home, registers /plugin while commands exist and its tools while tools exist', () => {
   const home = temp()
-  const provided = {}; const registered = []
+  const provided = {}; const registered = []; const tools = []
   const ctx = {
     appInstance: { home },
     get: () => undefined,
     provide: (key, value) => { provided[key] = value },
     inject: (deps, run) => {
+      if (deps[0] === 'tools') { run({ tools: { register: tool => tools.push(tool.name) } }); return }
       assert.deepEqual(deps, ['commands'])
       const effects = []
       run({ effect: fn => effects.push(fn), commands: { register: command => { registered.push(command.name); return () => registered.splice(registered.indexOf(command.name), 1) } } })
@@ -64,6 +65,7 @@ test('the plugin provides pluginHub from the app instance home and registers /pl
     },
   }
   apply(ctx)
+  assert.deepEqual(tools, ['acryl_plugins'])
   assert.equal(provided.pluginHub.store.root, storeRoot({ home }))
   assert.equal(storeRoot({ home }), join(home, 'plugins', 'store'))
 })
@@ -158,4 +160,34 @@ test('/plugin refuses what it cannot do, with the usage or the reason', async ()
   assert.match((await runPluginCommand('version huge x', hub, {})).text, /^Usage/u)
   assert.match((await runPluginCommand('save nothing-here', hub, { workspaceDir: temp() })).text, /No plugin folder named "nothing-here"/u)
   assert.match((await runPluginCommand('pull git+https://github.com/o/r.git', hub, {})).text, /released version/u)
+})
+
+test('the agent\'s tools: store pulls run directly; a remote pull and a share run only after the user allows them in the app', async () => {
+  const workspace = temp()
+  pluginFolder(join(workspace, '.acryl-extensions'), 'quick-notes', notes('0.2.1'))
+  const calls = []
+  const hub = {
+    saved: () => [],
+    async pull(source) { calls.push(`pull ${source}`); return { status: 'installed', name: 'n', version: '0.2.1' } },
+    async share(folder, options) { calls.push(`share ${folder} ${JSON.stringify(options)}`); return { status: 'shared', name: 'n', version: '0.2.1' } },
+  }
+  let answer = 'rejected'
+  const asked = []
+  const approval = { async request(req) { asked.push(`${req.toolName}: ${req.reason}`); return answer } }
+  const [tool] = pluginTools(hub, { approval: () => approval, where: () => ({ workspaceDir: workspace }) })
+  const exec = { agent: { session: {} }, callId: 'c1' }
+
+  await tool.execute({ action: 'pull', source: 'store:n@0.2.1' }, exec)
+  assert.deepEqual(asked, [])
+  await assert.rejects(tool.execute({ action: 'pull', source: 'github:o/r' }, exec), /did not allow it \(rejected\)/u)
+  await assert.rejects(tool.execute({ action: 'share', plugin: 'quick-notes', public: true }, exec), /did not allow it \(rejected\)/u)
+  assert.match(asked[1], /^acryl_plugins: Share the plugin in .* \(public: anyone can find and install it\)\.$/u)
+  answer = 'allowed-once'
+  await tool.execute({ action: 'share', plugin: 'quick-notes', to: 'o/r' }, exec)
+  await tool.execute({ action: 'pull', source: 'github:o/r' }, exec)
+  assert.deepEqual(calls, ['pull store:n@0.2.1', `share ${join(workspace, '.acryl-extensions', 'quick-notes')} {"owner":"o","repo":"r"}`, 'pull github:o/r'])
+  await assert.rejects(tool.execute({ action: 'version', plugin: 'quick-notes', bump: 'huge' }, exec), /"bump" must be one of/u)
+
+  const [unattended] = pluginTools(hub, { approval: () => undefined, where: () => ({ workspaceDir: workspace }) })
+  await assert.rejects(unattended.execute({ action: 'share', plugin: 'quick-notes' }, exec), /did not allow it \(unavailable\)/u)
 })

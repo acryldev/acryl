@@ -1,6 +1,6 @@
 # Current system prompt: cli
 
-<!-- Generated on 2026-10-12 by the system-prompt capture (see ../README.md). Do not edit; regenerate. -->
+<!-- Generated on 2026-10-16 by the system-prompt capture (see ../README.md). Do not edit; regenerate. -->
 
 What the model receives on the first turn of a new session on the cli surface (terminal engine), after path scrubbing.
 Temporary paths are shown as `<workspace>`, `<dsh-home>` and `<acryl-repo>`. The tool list follows the system prompt.
@@ -67,13 +67,14 @@ ACRYL extension docs: <acryl-repo>/plugins/acryl-extension-context. Read only wh
 </acryl_extension_docs>
 ```
 
-## Tools (30)
+## Tools (31)
 
 | Tool | Description (first line) |
 | --- | --- |
 | `acryl_extension_lookup` | Find the ACRYL extension docs and verified examples for a topic (for example "sidebar tab", "accent color", "a tool", "hook the prompt"). Returns absolute paths |
 | `acryl_install_plugin` | Install a plugin package you wrote into the active ACRYL profile and activate it live (no restart), or UPDATE it if it is already installed. Checks the package  |
 | `acryl_list_plugins` | List every plugin installed in the active ACRYL profile with its origin: "local" (built here; has a source folder you can edit, and a scope) or "registry" (inst |
+| `acryl_plugins` | Save, version, share or pull plugins. share and non-store pulls ask the user first; if refused, give them the /plugin command. |
 | `acryl_prepare_publish` | Check that a local plugin package is ready for the marketplace (install checks, catalog metadata, npm pack dry run). It NEVER publishes: publishing is done by t |
 | `acryl_remove_plugin` | Remove a local plugin from the active ACRYL profile and unmount it live. Pass the package name (see the list tool). |
 | `acryl_verify_plugin` | Check a plugin package you wrote WITHOUT installing it: install lint plus importing the host entry and checking its Cordis shape. Findings include the exact err |
