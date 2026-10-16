@@ -15,6 +15,11 @@ const HINT: Record<string, string> = {
   gh: 'install GitHub CLI (https://cli.github.com) and sign in with: gh auth login',
   git: 'install git (https://git-scm.com)',
 }
+/** What to do when the tool is there but its login is not: only the sign-in step. */
+const SIGN_IN: Record<string, string> = {
+  gh: 'sign in with: gh auth login',
+  git: 'sign in to the git host (for GitHub: gh auth login, then gh auth setup-git)',
+}
 
 function run(command: string, args: readonly string[], cwd?: string): { readonly status: number; readonly stdout: string; readonly stderr: string } {
   const result = spawnSync(command, [...args], { cwd, encoding: 'utf8', env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GH_PROMPT_DISABLED: '1' }, maxBuffer: 64 * 1024 * 1024 })
@@ -26,7 +31,7 @@ function must(command: string, args: readonly string[], cwd?: string): string {
   const result = run(command, args, cwd)
   if (result.status !== 0) {
     const last = result.stderr.trim().split('\n').at(-1) ?? `exit ${String(result.status)}`
-    throw new ToolError(`${command} ${args.slice(0, 2).join(' ')} failed: ${last}${/auth|login|credential/iu.test(result.stderr) ? ` (${HINT[command] ?? ''})` : ''}`)
+    throw new ToolError(`${command} ${args.slice(0, 2).join(' ')} failed: ${last}${/auth|login|credential|HTTP 401/iu.test(result.stderr) ? ` (${SIGN_IN[command] ?? ''})` : ''}`)
   }
   return result.stdout
 }

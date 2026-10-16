@@ -164,3 +164,22 @@ describe('the host inject, read from the source', () => {
     expect(await readServiceContract(dir)).toEqual({ errors: [], contract: { requires: { host: ['tools'] }, provides: { host: [] }, slots: { offers: [], fills: [] } } })
   })
 })
+
+describe('the git host through the user\'s own tools', () => {
+  it('names what to do when gh is missing, and only the sign-in when gh is there but not signed in', async () => {
+    const { githubCli } = await import('../src/index.js')
+    const dir = join(root, 'fake-bin')
+    mkdirSync(dir, { recursive: true })
+    const saved = process.env['PATH']
+    try {
+      process.env['PATH'] = dir
+      expect(() => githubCli().login()).toThrow(/gh is not available here: install GitHub CLI .* gh auth login/u)
+      if (process.platform !== 'win32') {
+        writeFileSync(join(dir, 'gh'), '#!/bin/sh\necho "gh: Requires authentication (HTTP 401)" >&2\nexit 1\n', { mode: 0o755 })
+        expect(() => githubCli().login()).toThrow(/Requires authentication \(HTTP 401\) \(sign in with: gh auth login\)$/u)
+      }
+    } finally {
+      process.env['PATH'] = saved
+    }
+  })
+})
