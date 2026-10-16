@@ -31,6 +31,8 @@ describe('acryl new', () => {
     expect(manifest.spec.rows[0]).toMatchObject({ id: 'brand', name: 'acryl-brand', config: { name: 'Stage Sound', accent: '#e8590c' } })
     expect(app.files['bin/acryl']).toContain(JSON.stringify(launcher))
     expect(app.files['AGENTS.md']).toContain('extensions/<name>/')
+    // Runtime data is never committed with the app: the engine home, the run lock, and the plugin store (spec 044).
+    expect(app.files['.gitignore']!.split('\n')).toEqual(expect.arrayContaining(['.dsh/', 'instance.json', 'plugins/store/']))
   })
 
   it('the manifest it writes boots back into the same Blueprint with the brand', () => {

@@ -79,7 +79,8 @@ export function planNewApp(dir: string, options: NewAppOptions): PlannedApp {
     [`${APP_EXTENSIONS_DIR}/README.md`]: `# extensions\n\nThis app's own plugins, one folder each. The agent inside the app builds them here when you ask for something\n("add a to-do list"), and every folder here loads when the app starts. Delete a folder to remove that plugin.\n`,
     'AGENTS.md': agentsMd(title),
     'bin/acryl': `#!/usr/bin/env bash\n# Start ${title}:  bin/acryl web | desktop | cli   (flags: --port 3105)\nset -euo pipefail\napp="$(cd "$(dirname "$0")/.." && pwd)"\nexec node ${JSON.stringify(options.launcher)} "\${1:-web}" --dir "$app" "\${@:2}"\n`,
-    '.gitignore': '# what the runtime keeps for this app\n.dsh/\ninstance.json\n',
+    // The plugin store (`plugins/store/`) is runtime data like `.dsh/`: pulled plugins are reproduced from the Blend's lock, the app's own plugins live in `extensions/`.
+    '.gitignore': '# what the runtime keeps for this app\n.dsh/\ninstance.json\nplugins/store/\n',
     '.github/workflows/app.yml': appWorkflow(title),
     'README.md': `# ${title}
 

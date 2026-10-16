@@ -146,7 +146,7 @@ export function renderPluginHubCommand(result: PluginHubCommandResult, json: boo
       const lines = pulled.status === 'installed' ? [`Installed ${id} into profile ${result.profile}, kept in the plugin store.`]
         : pulled.status === 'restart-required' ? [`Installed ${id}; restart the app to load this version.`]
           : pulled.status === 'stored' ? [`Kept ${id} in the plugin store${pulled.reason === undefined ? '' : `, not installed: ${pulled.reason}`}.`]
-            : pulled.status === 'missing-services' ? [`Not installed: ${id} needs ${(pulled.missing ?? []).join(', ')}, which this app does not provide. It is kept in the plugin store.`]
+            : pulled.status === 'missing-services' ? [`Not installed: ${id} needs ${(pulled.missing ?? []).join(', ')}, which profile ${result.profile} does not provide. It is kept in the plugin store, so you can install it offline where those services exist, for example in the app's Web or Desktop chat: /plugin pull store:${pulled.name}@${pulled.version}`]
               : [`Not installed: ${id} (${pulled.outcome?.error?.code ?? pulled.status}).`, ...(pulled.outcome?.packageResult?.output.split('\n').slice(-5) ?? [])]
       return { lines, exitCode: failed ? 1 : 0 }
     }

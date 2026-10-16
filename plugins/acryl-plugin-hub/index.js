@@ -44,7 +44,7 @@ function describePull(result) {
     case 'installed': return { kind: 'success', text: `Installed ${id} (${result.integrity.slice(0, 19)}...), kept in the plugin store.${result.contractChecked ? '' : ' It declares no service contract, so a missing service would only show as PENDING.'}` }
     case 'restart-required': return { kind: 'success', text: `Installed ${id}; restart the app to load this version.` }
     case 'stored': return { kind: 'success', text: `Kept ${id} in the plugin store${result.reason === undefined ? '' : `, not installed: ${result.reason}`}.` }
-    case 'missing-services': return { kind: 'error', text: `Not installed: ${id} needs ${result.missing.join(', ')}, which this app does not provide. It is kept in the plugin store.` }
+    case 'missing-services': return { kind: 'error', text: `Not installed: ${id} needs ${result.missing.join(', ')}, which this app does not provide. It is kept in the plugin store (store:${result.name}@${result.version}), so it can be installed offline in an app that has those services.` }
     default: return { kind: 'error', text: `Not installed: ${id} (${result.outcome?.error?.code ?? result.status}). ${result.outcome?.packageResult?.output?.split('\n').slice(-3).join(' ') ?? ''}`.trim() }
   }
 }

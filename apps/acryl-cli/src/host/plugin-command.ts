@@ -107,7 +107,10 @@ export async function runPluginCommand(options: PluginCommandOptions): Promise<P
     // also the base the composed rows themselves resolve through - not from
     // this surface's installation directory.
     const profileRequire = createRequire(join(profileDir, 'package.json'))
-    const lifecycle = mountAcrylPluginLifecycle(host.ctx, {
+    // The CLI engine already provides the lifecycle on its root (`provideCliMarketPlugins`, the same options as below); a second
+    // provider is refused by Cordis ("service acrPluginLifecycle has been registered"), which broke `acryl plugin list` itself.
+    const provided = host.ctx.get('acrPluginLifecycle' as never) as unknown as ReturnType<typeof mountAcrylPluginLifecycle> | undefined
+    const lifecycle = provided ?? mountAcrylPluginLifecycle(host.ctx, {
       profileName: options.profile,
       profileDir,
       statePath,
