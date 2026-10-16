@@ -71,7 +71,7 @@ describe('acryl new', () => {
     expect(existsSync(join(dir, 'extensions'))).toBe(true)
     const blueprint = blueprintFromEnvironment({ ACRYL_BLUEPRINT: join(dir, 'blend.yaml') })
     expect(blueprint.id).toBe('app.video-cut')
-    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub'])
+    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
   })
 })
 

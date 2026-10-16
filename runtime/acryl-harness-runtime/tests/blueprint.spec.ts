@@ -8,7 +8,9 @@ import {
   AGENTS_BLUEPRINT,
   BLANK_BLUEPRINT,
   DSH_CHAT_ROW_IDS,
+  DSH_PLUGIN_MANAGER_ROW_ID,
   IDE_BLUEPRINT,
+  PLUGIN_MANAGER_ROW_ID,
   InvalidBrandIdentityError,
   UnknownBlueprintError,
   blueprintFromEnvironment,
@@ -67,13 +69,13 @@ describe('what each Blueprint composes', () => {
 
   it('full ACRYL keeps today\'s web rows in mount order', () => {
     const { patches, packages } = composeBlueprintRows(IDE_BLUEPRINT, 'web')
-    expect(insertedIds(patches)).toEqual(['ui-acryl', 'community-market', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-shortcuts', 'acryl-mount-anchors'])
+    expect(insertedIds(patches)).toEqual(['ui-acryl', 'community-market', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-shortcuts', 'acryl-mount-anchors', 'acryl-plugin-hub/manager'])
     expect(packages).toContain('dsh-client-ui-brand-acryl')
   })
 
   it('blank web: brand, extension pack, prompt shaping and UI library only', () => {
     const { patches } = composeBlueprintRows(BLANK_BLUEPRINT, 'web')
-    expect(insertedIds(patches)).toEqual(['brand', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub'])
+    expect(insertedIds(patches)).toEqual(['brand', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
     const capabilities = new Set(BLANK_BLUEPRINT.capabilities)
     const capabilityIds = insertedIds(createAcrylCodingCapabilityPatches(new Set(['web']), new Set(), capabilities))
     expect(capabilityIds).toEqual(['authorization', 'acryl-settings'])
@@ -82,7 +84,7 @@ describe('what each Blueprint composes', () => {
 
   it('blank keeps the agent essentials on the terminal and adds no browser rows', () => {
     const { patches, packages } = composeBlueprintRows(BLANK_BLUEPRINT, 'tui')
-    expect(insertedIds(patches)).toEqual(['extension-context', 'acryl-system-prompt', 'acryl-app-save', 'acryl-plugin-hub'])
+    expect(insertedIds(patches)).toEqual(['extension-context', 'acryl-system-prompt', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
     expect(packages).toContain('acryl-ui-tui')
     const tui = insertedIds(createAcrylCodingCapabilityPatches(new Set(['tui']), new Set(), new Set(BLANK_BLUEPRINT.capabilities)))
     expect(tui).toEqual(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings'])
@@ -112,6 +114,17 @@ describe('what each Blueprint composes', () => {
       expect(composeBlueprintRows(IDE_BLUEPRINT, surface).patches.filter(patch => patch.disabled === true).map(patch => patch.id)).not.toContain('agent')
     }
     // The terminal client is the DSH chat itself: switching it off there would leave nothing to run.
-    expect(composeBlueprintRows(AGENTS_BLUEPRINT, 'tui').patches.filter(patch => patch.disabled === true)).toEqual([])
+    expect(composeBlueprintRows(AGENTS_BLUEPRINT, 'tui').patches.filter(patch => patch.disabled === true && DSH_CHAT_ROW_IDS.includes(patch.id ?? ''))).toEqual([])
+  })
+
+  it('with the plugin hub, DSH\'s plugin manager row is swapped for the hub\'s on every surface, never doubled', () => {
+    for (const surface of ['tui', 'web', 'desktop'] as const) {
+      const { patches } = composeBlueprintRows(BLANK_BLUEPRINT, surface)
+      expect(patches.filter(patch => patch.disabled === true).map(patch => patch.id)).toContain(DSH_PLUGIN_MANAGER_ROW_ID)
+      expect(insertedIds(patches).filter(id => id === PLUGIN_MANAGER_ROW_ID)).toHaveLength(1)
+      // A profile whose own bundle already composes the hub's manager keeps DSH's row alone: no second swap.
+      expect(insertedIds(composeBlueprintRows(BLANK_BLUEPRINT, surface, new Set([PLUGIN_MANAGER_ROW_ID])).patches)).not.toContain(PLUGIN_MANAGER_ROW_ID)
+    }
+    expect(insertedIds(composeBlueprintRows({ ...BLANK_BLUEPRINT, rows: BLANK_BLUEPRINT.rows.filter(row => row !== 'plugin-hub') }, 'web').patches)).not.toContain(PLUGIN_MANAGER_ROW_ID)
   })
 })

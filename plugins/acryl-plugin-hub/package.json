@@ -12,10 +12,13 @@
   "main": "./index.js",
   "exports": {
     ".": "./index.js",
+    "./manager": "./manager.js",
     "./package.json": "./package.json"
   },
   "files": [
     "index.js",
+    "manager.js",
+    "release-spec.js",
     "cordis.patch.yml",
     "README.md",
     "LICENSE"
@@ -33,6 +36,7 @@
     "check": "pnpm run test"
   },
   "dependencies": {
+    "@deepseek-ai/dsh-plugin-manager": "0.2.0-rc.2",
     "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
     "@webboxes/plugin-hub": "workspace:*"
   }

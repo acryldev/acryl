@@ -2248,6 +2248,9 @@ importers:
 
   plugins/acryl-plugin-hub:
     dependencies:
+      '@deepseek-ai/dsh-plugin-manager':
+        specifier: 0.2.0-rc.2
+        version: 0.2.0-rc.2(50291c4f826fefe8d7defdc39089fd52)
       '@deepseek-ai/dsh-tools':
         specifier: 0.2.0-rc.2
         version: 0.2.0-rc.2(52b5a8ab481be2b3d891c22a71641755)

@@ -44,6 +44,10 @@ const ROWS: readonly RowDeclaration[] = [
  */
 export const DSH_CHAT_ROW_IDS: readonly string[] = ['agent', 'llm', 'llm-pi-ai']
 
+/** DSH's base-bundle row providing `pluginManager`, and the hub's row that takes its place (its id is its module, by the row-naming rule). */
+export const DSH_PLUGIN_MANAGER_ROW_ID = 'plugin-manager'
+export const PLUGIN_MANAGER_ROW_ID = 'acryl-plugin-hub/manager'
+
 /** The terminal library is a differently named package than the browser one. */
 const TUI_LIBRARY_PACKAGE = 'acryl-ui-tui'
 
@@ -111,6 +115,11 @@ export function composeBlueprintRows(
       ? { config: { identity: identityLine(blueprint.brand.identity) } }
       : {}
     patches.push({ insert: [{ id: row.rowId, name: row.packageName, ...identityConfig }] })
+  }
+  // With the plugin hub, DSH's own plugin manager is replaced by the hub's subclass of it, so DSH's "Add plugin" box installs a git address as
+  // that repository's released, checked version (spec 044 D7). Swapped, never doubled: Cordis refuses a second `pluginManager` provider.
+  if (blueprint.rows.includes('plugin-hub') && !existingRowIds.has(PLUGIN_MANAGER_ROW_ID)) {
+    patches.push({ id: DSH_PLUGIN_MANAGER_ROW_ID, disabled: true }, { insert: [{ id: PLUGIN_MANAGER_ROW_ID, name: PLUGIN_MANAGER_ROW_ID }] })
   }
   return { packages, patches: structuredClone(patches) }
 }
