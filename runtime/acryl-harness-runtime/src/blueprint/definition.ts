@@ -7,7 +7,7 @@
  * name: Acme Notes
  * extends: acryl.blank          # optional: start from a known Blueprint, then override
  * brand: { name: Acme Notes, accent: '#0a7d4b' }
- * rows: [extension-context, system-prompt, ui-library, community-market]
+ * rows: [plugin-context, system-prompt, ui-library, community-market]
  * ```
  *
  * Unknown keys, unknown capabilities and unknown rows are rejected, so a typo is an error at start-up, not a silently missing feature.
@@ -17,7 +17,7 @@
 
 import { ACRYL_CODING_CAPABILITIES, type AcrylCodingCapabilityId, type AcrylShellMode } from '../coding-capabilities.ts'
 import { brandIdentity } from './brand-identity.ts'
-import { BLUEPRINT_ROW_IDS, builtInCatalog, type Blueprint, type BlueprintCatalog, type BlueprintRowId } from './blueprint.ts'
+import { BLUEPRINT_ROW_IDS, builtInCatalog, RENAMED_BLUEPRINT_ROW_IDS, type Blueprint, type BlueprintCatalog, type BlueprintRowId } from './blueprint.ts'
 
 const ID = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/u
 const KEYS = new Set(['id', 'name', 'description', 'extends', 'capabilities', 'rows', 'brand', 'shell', 'dshChat'])
@@ -60,7 +60,8 @@ export function parseBlueprint(input: unknown, catalog: BlueprintCatalog = built
   if (parentId !== undefined && parent === undefined) throw new InvalidBlueprintError(`"extends" names ${JSON.stringify(parentId)}, which is not a known blueprint`)
 
   const capabilities = oneOf(record, 'capabilities', ACRYL_CODING_CAPABILITIES.map(capability => capability.id) as readonly AcrylCodingCapabilityId[])
-  const rows = oneOf(record, 'rows', BLUEPRINT_ROW_IDS as readonly BlueprintRowId[])
+  // A renamed row is read as its current name, so a Blueprint written before the rename still loads.
+  const rows = oneOf({ rows: Array.isArray(record.rows) ? record.rows.map(row => RENAMED_BLUEPRINT_ROW_IDS[String(row)] ?? row) : record.rows }, 'rows', BLUEPRINT_ROW_IDS as readonly BlueprintRowId[])
   const shell = text(record, 'shell', 20)
   if (shell !== undefined && !SHELLS.includes(shell as AcrylShellMode)) throw new InvalidBlueprintError(`"shell" must be one of ${SHELLS.join(', ')}`)
   if (record.dshChat !== undefined && typeof record.dshChat !== 'boolean') throw new InvalidBlueprintError('"dshChat" must be true or false')
@@ -69,7 +70,7 @@ export function parseBlueprint(input: unknown, catalog: BlueprintCatalog = built
     : { kind: 'custom', identity: brandIdentity(record.brand) } as const
 
   const base: Blueprint = parent ?? {
-    id, name: id, description: '', capabilities: ['authorization', 'acryl-settings'], rows: ['extension-context', 'system-prompt'], brand: { kind: 'acryl' }, shell: 'compatibility', dshChat: true,
+    id, name: id, description: '', capabilities: ['authorization', 'acryl-settings'], rows: ['plugin-context', 'system-prompt'], brand: { kind: 'acryl' }, shell: 'compatibility', dshChat: true,
   }
   return Object.freeze({
     id,

@@ -183,4 +183,15 @@ describe('plugin lifecycle state', () => {
     expect(text).toMatch(/- insert:/u)
     expect(await clearProfilePatchDisable(dir, 'probe')).toBe(false)
   })
+
+  it('reads a disable kept under a renamed row\'s old id as the new row (spec 044 step 1b)', async () => {
+    const path = statePath()
+    mkdirSync(dirname(path), { recursive: true })
+    writeFileSync(path, JSON.stringify({ version: 1, profiles: [{ profileName: 'web', disabledEntries: ['include:extension-context', 'include:other'] }] }))
+    const persistence = { profileName: 'web', statePath: path }
+    expect([...readDisabledPluginLifecycleEntries(persistence)]).toEqual(['include:acryl-plugin-context', 'include:other'])
+    expect(pluginLifecyclePatches(persistence)).toEqual([{ id: 'acryl-plugin-context', disabled: true }, { id: 'other', disabled: true }])
+    await setPluginLifecycleEntryEnabled(persistence, 'include:other', true)
+    expect(JSON.parse(readFileSync(path, 'utf8')).profiles[0].disabledEntries).toEqual(['include:acryl-plugin-context'])
+  })
 })

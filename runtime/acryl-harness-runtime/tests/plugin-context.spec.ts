@@ -13,11 +13,11 @@ import { createDshEngineDefinition, createWebEngineDefinition } from '../src/eng
 import { SessionId } from '@deepseek-ai/dsh-session'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 // @ts-expect-error plain JS package
-import { installLocalPlugin, listLocalPlugins } from '../../../plugins/acryl-extension-context/lib/install.js'
+import { installLocalPlugin, listLocalPlugins } from '../../../plugins/acryl-plugin-context/lib/install.js'
 // @ts-expect-error plain JS package
-import { stagedInfo } from '../../../plugins/acryl-extension-context/lib/reconcile.js'
+import { stagedInfo } from '../../../plugins/acryl-plugin-context/lib/reconcile.js'
 // @ts-expect-error plain JS package
-import { hashPackage } from '../../../plugins/acryl-extension-context/lib/stage.js'
+import { hashPackage } from '../../../plugins/acryl-plugin-context/lib/stage.js'
 import { createAcrylSessionBridge } from '../src/session-bridge.ts'
 import { fileURLToPath } from 'node:url'
 
@@ -33,7 +33,7 @@ afterEach(async () => {
 
 describe('extension context on the web engine', () => {
   it('mounts, routes the prompt to docs that exist, and registers the install tool', async () => {
-    const home = await mkdtemp(join(tmpdir(), 'acryl-extension-context-'))
+    const home = await mkdtemp(join(tmpdir(), 'acryl-plugin-context-'))
     temporaryHomes.push(home)
     process.env.DSH_HOME = home
     const installPackageUrl = new URL('../package.json', import.meta.url).href
@@ -46,7 +46,7 @@ describe('extension context on the web engine', () => {
     })
     try {
       const rows = [...host.ctx.loader.entries()]
-      expect(rows.some(entry => entry.options.id === 'extension-context')).toBe(true)
+      expect(rows.some(entry => entry.options.id === 'acryl-plugin-context')).toBe(true)
       // The UI library (spec 038-ui-component-library) is a Loader row on the web engine, so every client bundle can require('@acryl/ui').
       expect(rows.some(entry => entry.options.id === '@acryl/ui')).toBe(true)
 
@@ -71,7 +71,7 @@ describe('extension context on the web engine', () => {
   }, 60_000)
 
   it('mounts on the CLI (tui) engine too', async () => {
-    const home = await mkdtemp(join(tmpdir(), 'acryl-extension-context-tui-'))
+    const home = await mkdtemp(join(tmpdir(), 'acryl-plugin-context-tui-'))
     temporaryHomes.push(home)
     process.env.DSH_HOME = home
     const host = await createAcrylEngineHost({
@@ -80,7 +80,7 @@ describe('extension context on the web engine', () => {
     })
     try {
       const rows = [...host.ctx.loader.entries()]
-      expect(rows.some(entry => entry.options.id === 'extension-context')).toBe(true)
+      expect(rows.some(entry => entry.options.id === 'acryl-plugin-context')).toBe(true)
       const assembly = await host.ctx.get('systemPrompt')!.assemble()
       expect(assembly.sections.some(section => section.name === 'acryl:extension-router')).toBe(true)
       expect(assembly.tools.map(tool => tool.name)).toEqual(expect.arrayContaining(['acryl_install_plugin']))
@@ -138,7 +138,7 @@ describe('/reload on the web engine', () => {
     process.env.DSH_HOME = home
     const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-ws-'))
     temporaryHomes.push(workspace)
-    const source = fileURLToPath(new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url))
+    const source = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
     const target = join(workspace, '.acryl-extensions', 'dropped-tool')
     mkdirSync(join(workspace, '.acryl-extensions'), { recursive: true })
     cpSync(source, target, { recursive: true })
@@ -180,7 +180,7 @@ describe('/reload on the web engine', () => {
     process.env.DSH_HOME = home   // not named .dsh, so the global directory is <home>/extensions
     const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-global-ws-'))
     temporaryHomes.push(workspace)
-    const source = fileURLToPath(new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url))
+    const source = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
     cpSync(source, join(home, 'extensions', 'global-tool'), { recursive: true })
     const host = await createAcrylEngineHost({
       engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
@@ -216,7 +216,7 @@ describe('/reload on the web engine', () => {
     process.env.DSH_HOME = home   // not named .dsh, so the global directory is <home>/extensions
     const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-startup-ws-'))
     temporaryHomes.push(workspace)
-    const source = fileURLToPath(new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url))
+    const source = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
     const target = join(home, 'extensions', 'startup-tool')
     cpSync(source, target, { recursive: true })
     const manifestPath = join(target, 'package.json')
@@ -265,7 +265,7 @@ describe('/reload on the web engine', () => {
     process.env.DSH_HOME = home
     const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-blend-ws-'))
     temporaryHomes.push(workspace)
-    const source = fileURLToPath(new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url))
+    const source = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
     cpSync(source, join(workspace, '.acryl-extensions', 'blend-tool'), { recursive: true })
     const host = await createAcrylEngineHost({
       engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
@@ -334,7 +334,7 @@ describe('/reload on the web engine', () => {
       }
       return { bridge, run: async (line: string) => (await commands.execute(agent, line, [], new AbortController().signal))?.result }
     }
-    const source = fileURLToPath(new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url))
+    const source = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
 
     // App A: build a local extension, install it, capture the Blend.
     const homeA = await mkdtemp(join(tmpdir(), 'acryl-blend-a-')); temporaryHomes.push(homeA)
@@ -449,7 +449,7 @@ describe('/reload on the web engine', () => {
         live: host.ctx.get('livePluginActivation' as never),
         profileDir: (host.ctx.get('desktopProfiles' as never) as { current: { dir: string } }).current.dir,
       }
-      const example = fileURLToPath(new URL('../../../plugins/acryl-extension-context/example-plugins/packages/state-host-store/', import.meta.url))
+      const example = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/state-host-store/', import.meta.url))
       const result = await installLocalPlugin({ path: example }, services)
       expect(result).toMatchObject({ ok: true, status: 'active' })
       const dshHomePath = host.ctx.get('dshHomePath' as never) as unknown as (...parts: string[]) => string

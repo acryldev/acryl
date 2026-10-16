@@ -69,13 +69,13 @@ describe('what each Blueprint composes', () => {
 
   it('full ACRYL keeps today\'s web rows in mount order', () => {
     const { patches, packages } = composeBlueprintRows(IDE_BLUEPRINT, 'web')
-    expect(insertedIds(patches)).toEqual(['ui-acryl', 'community-market', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-shortcuts', 'acryl-mount-anchors', 'acryl-plugin-hub/manager'])
+    expect(insertedIds(patches)).toEqual(['ui-acryl', 'community-market', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-shortcuts', 'acryl-mount-anchors', 'acryl-plugin-hub/manager'])
     expect(packages).toContain('dsh-client-ui-brand-acryl')
   })
 
   it('blank web: brand, extension pack, prompt shaping and UI library only', () => {
     const { patches } = composeBlueprintRows(BLANK_BLUEPRINT, 'web')
-    expect(insertedIds(patches)).toEqual(['brand', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
+    expect(insertedIds(patches)).toEqual(['brand', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
     const capabilities = new Set(BLANK_BLUEPRINT.capabilities)
     const capabilityIds = insertedIds(createAcrylCodingCapabilityPatches(new Set(['web']), new Set(), capabilities))
     expect(capabilityIds).toEqual(['authorization', 'acryl-settings'])
@@ -84,15 +84,15 @@ describe('what each Blueprint composes', () => {
 
   it('blank keeps the agent essentials on the terminal and adds no browser rows', () => {
     const { patches, packages } = composeBlueprintRows(BLANK_BLUEPRINT, 'tui')
-    expect(insertedIds(patches)).toEqual(['extension-context', 'acryl-system-prompt', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
+    expect(insertedIds(patches)).toEqual(['acryl-plugin-context', 'acryl-system-prompt', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
     expect(packages).toContain('acryl-ui-tui')
     const tui = insertedIds(createAcrylCodingCapabilityPatches(new Set(['tui']), new Set(), new Set(BLANK_BLUEPRINT.capabilities)))
     expect(tui).toEqual(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings'])
   })
 
   it('a custom brand carries into the system prompt identity, and a row the profile already has is not composed twice', () => {
-    const { patches } = composeBlueprintRows(BLANK_BLUEPRINT, 'web', new Set(['extension-context']))
-    expect(insertedIds(patches)).not.toContain('extension-context')
+    const { patches } = composeBlueprintRows(BLANK_BLUEPRINT, 'web', new Set(['acryl-plugin-context']))
+    expect(insertedIds(patches)).not.toContain('acryl-plugin-context')
     const prompt = patches.flatMap(patch => patch.insert ?? []).find(row => row.id === 'acryl-system-prompt')
     expect(String((prompt?.config as { identity?: string }).identity)).toContain('inside Blank')
   })

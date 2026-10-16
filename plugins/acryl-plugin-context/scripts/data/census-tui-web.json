@@ -376,7 +376,7 @@
       },
       {
         "id": "extension-context",
-        "name": "acryl-extension-context"
+        "name": "acryl-plugin-context"
       }
     ]
   },
@@ -1029,7 +1029,7 @@
       },
       {
         "id": "extension-context",
-        "name": "acryl-extension-context"
+        "name": "acryl-plugin-context"
       },
       {
         "id": "211f4ec3",

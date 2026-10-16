@@ -196,7 +196,7 @@
     "acryl-plugin-hub": "workspace:*",
     "acryl-app-shell": "workspace:*",
     "acryl-brand": "workspace:*",
-    "acryl-extension-context": "workspace:*",
+    "acryl-plugin-context": "workspace:*",
     "acryl-mount-anchors": "workspace:*",
     "acryl-plugin-admin": "workspace:*",
     "acryl-settings": "workspace:*",

@@ -323,7 +323,7 @@ try {
   if (tools === undefined) throw new Error('assembled desktop profile has no tool registry')
   const authored = mkdtempSync(join(tmpdir(), 'dsh-desktop-authored-'))
   try {
-    const example = fileURLToPath(new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url))
+    const example = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
     cpSync(example, authored, { recursive: true })
     const write = (version) => {
       const manifest = JSON.parse(readFileSync(join(example, 'package.json'), 'utf8'))

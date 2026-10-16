@@ -24,7 +24,7 @@ interface RowDeclaration {
 /** Declaration order is mount order. The Market is Web-only here: Desktop owns its own provider switch. */
 const ROWS: readonly RowDeclaration[] = [
   { id: 'community-market', surfaces: ['web'], rowId: 'community-market', packageName: 'cordis-plugin-market' },
-  { id: 'extension-context', surfaces: ['tui', 'web', 'desktop'], rowId: 'extension-context', packageName: 'acryl-extension-context' },
+  { id: 'plugin-context', surfaces: ['tui', 'web', 'desktop'], rowId: 'acryl-plugin-context', packageName: 'acryl-plugin-context' },
   { id: 'system-prompt', surfaces: ['tui', 'web', 'desktop'], rowId: 'acryl-system-prompt', packageName: 'acryl-system-prompt' },
   { id: 'ui-library', surfaces: ['tui', 'web', 'desktop'], rowId: '@acryl/ui', packageName: '@acryl/ui', libraryOnly: ['tui'] },
   // Saving an app to its own repository (/app save, /app connect): a command, so it works on every surface.
@@ -51,9 +51,13 @@ export const PLUGIN_MANAGER_ROW_ID = 'acryl-plugin-hub/manager'
 /** The terminal library is a differently named package than the browser one. */
 const TUI_LIBRARY_PACKAGE = 'acryl-ui-tui'
 
+/** Packages a Blend once named, read as their current names (spec 044 step 1b); never written. */
+const RENAMED_PACKAGES: Readonly<Record<string, string>> = Object.freeze({ 'acryl-extension-context': 'acryl-plugin-context' })
+
 /** Which Blueprint row a package is, if it is one of ACRYL's own rows (used to read a Blends manifest's rows back into a Blueprint). */
 export function blueprintRowForPackage(packageName: string): BlueprintRowId | undefined {
-  return ROWS.find(row => row.packageName === packageName)?.id
+  const current = RENAMED_PACKAGES[packageName] ?? packageName
+  return ROWS.find(row => row.packageName === current)?.id
 }
 
 /** The package that fills a Blueprint row (used to write a Blueprint as a Blends manifest). */

@@ -85,7 +85,7 @@ describe('published package surface', () => {
     for (const owned of ['acryl-control', 'acryl-harness-runtime', 'acryl-loopback-http', 'acryl-diagnostics', 'acryl-cli', 'acryl-web', 'acryl-desktop', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'dsh-client-ui-brand-acryl', 'cordis-plugin-market']) {
       expect(typecheck, `typecheck runs ${owned}`).toContain(owned)
     }
-    for (const owned of ['acryl-control', 'acryl-harness-runtime', 'acryl-loopback-http', 'acryl-diagnostics', 'acryl-cli', 'acryl-web', 'acryl-desktop', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'acryl-extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-ui-tui']) {
+    for (const owned of ['acryl-control', 'acryl-harness-runtime', 'acryl-loopback-http', 'acryl-diagnostics', 'acryl-cli', 'acryl-web', 'acryl-desktop', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-ui-tui']) {
       expect(test, `test runs ${owned}`).toContain(owned)
     }
     expect(new Set(typecheck).size, 'no package is typechecked twice').toBe(typecheck.length)

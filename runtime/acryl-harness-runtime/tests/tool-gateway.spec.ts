@@ -94,7 +94,7 @@ describe('the tool gateway on the real engine', () => {
   it('installs and removes a plugin an outside agent wrote, over MCP, through the same pipeline', async () => {
     const { host, origin, secret } = await boot()
     const { cpSync, writeFileSync } = await import('node:fs')
-    const example = fileURLToPath(new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url))
+    const example = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
     const dir = mkdtempSync(join(tmpdir(), 'acryl-gateway-plugin-'))
     folders.push(dir)
     cpSync(example, dir, { recursive: true })

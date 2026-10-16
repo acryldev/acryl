@@ -542,12 +542,12 @@ importers:
       acryl-control:
         specifier: workspace:*
         version: link:../../runtime/acryl-control
-      acryl-extension-context:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-extension-context
       acryl-harness-runtime:
         specifier: workspace:*
         version: link:../../runtime/acryl-harness-runtime
+      acryl-plugin-context:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-plugin-context
       acryl-settings:
         specifier: workspace:*
         version: link:../../plugins/acryl-settings
@@ -1422,6 +1422,9 @@ importers:
       acryl-app-save:
         specifier: workspace:*
         version: link:../../plugins/acryl-app-save
+      acryl-plugin-context:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-plugin-context
       acryl-plugin-hub:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-hub
@@ -1434,9 +1437,6 @@ importers:
       acryl-diagnostics:
         specifier: workspace:*
         version: link:../../runtime/acryl-diagnostics
-      acryl-extension-context:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-extension-context
       acryl-harness-runtime:
         specifier: workspace:*
         version: link:../../runtime/acryl-harness-runtime
@@ -2104,6 +2104,9 @@ importers:
       acryl-app-save:
         specifier: workspace:*
         version: link:../../plugins/acryl-app-save
+      acryl-plugin-context:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-plugin-context
       acryl-plugin-hub:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-hub
@@ -2113,9 +2116,6 @@ importers:
       acryl-brand:
         specifier: workspace:*
         version: link:../../plugins/acryl-brand
-      acryl-extension-context:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-extension-context
       acryl-mount-anchors:
         specifier: workspace:*
         version: link:../../plugins/acryl-mount-anchors
@@ -2313,7 +2313,7 @@ importers:
         specifier: ~3.18.4
         version: 3.18.4
 
-  plugins/acryl-extension-context:
+  plugins/acryl-plugin-context:
     dependencies:
       '@deepseek-ai/dsh-tools':
         specifier: 0.2.0-rc.2
@@ -3583,6 +3583,9 @@ importers:
       acryl-app-save:
         specifier: workspace:*
         version: link:../../plugins/acryl-app-save
+      acryl-plugin-context:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-plugin-context
       acryl-plugin-hub:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-hub
@@ -3595,9 +3598,6 @@ importers:
       acryl-control:
         specifier: workspace:*
         version: link:../acryl-control
-      acryl-extension-context:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-extension-context
       acryl-mount-anchors:
         specifier: workspace:*
         version: link:../../plugins/acryl-mount-anchors

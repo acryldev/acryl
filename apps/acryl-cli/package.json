@@ -141,7 +141,7 @@
     "@earendil-works/pi-tui": "1.1.0",
     "acryl-agent-control": "workspace:*",
     "acryl-control": "workspace:*",
-    "acryl-extension-context": "workspace:*",
+    "acryl-plugin-context": "workspace:*",
     "acryl-harness-runtime": "workspace:*",
     "acryl-settings": "workspace:*",
     "acryl-system-prompt": "workspace:*",

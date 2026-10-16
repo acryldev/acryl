@@ -28,7 +28,7 @@ import { resolvePackRoot } from './lib/pack-root.js'
 import { createSkillProvider } from './lib/skills.js'
 import { buildRouterText, INSTALL_TOOL_NAME, LIST_TOOL_NAME, REMOVE_TOOL_NAME, PUBLISH_TOOL_NAME, VERIFY_TOOL_NAME, LOOKUP_TOOL_NAME, ROUTER_SECTION_NAME, ROUTER_SECTION_ORDER } from './lib/router.js'
 
-export const name = 'acryl-extension-context'
+export const name = 'acryl-plugin-context'
 export const inject = ['systemPrompt']
 
 export function apply(ctx) {

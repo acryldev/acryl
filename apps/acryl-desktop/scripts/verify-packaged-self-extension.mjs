@@ -30,7 +30,7 @@ if (executable === undefined || !existsSync(executable)) {
 const BOOT_TIMEOUT_MS = 180_000
 /** One tool call. An install runs the app's own package manager, which can take a while on a cold machine, but never this long without something being wrong. */
 const CALL_TIMEOUT_MS = 150_000
-const example = fileURLToPath(new URL('../../../plugins/acryl-extension-context/example-plugins/packages/tool-basic/', import.meta.url))
+const example = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
 const sleep = ms => new Promise(done => setTimeout(done, ms))
 
 const iso = isolatedEnvironment({ label: 'selfext' })

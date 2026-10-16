@@ -1,5 +1,5 @@
 {
-  "name": "acryl-extension-context",
+  "name": "acryl-plugin-context",
   "version": "0.1.0",
   "description": "Extension Context Pack: routed docs, verified examples and authoring skills that let the ACRYL agent write its own plugins (spec 037)",
   "license": "MIT",
@@ -10,9 +10,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-extension-context"
+    "directory": "plugins/acryl-plugin-context"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-extension-context#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-plugin-context#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },

@@ -845,7 +845,7 @@ async function start(): Promise<void> {
         surface: 'desktop',
         instance,
         // Provides the `acrylFrameworkPackages` service (`mountDshEngine`) - without it, an extension's own
-        // `dsh.requiresAcrylPackages` goes unresolved the moment acryl-extension-context tries to install it
+        // `dsh.requiresAcrylPackages` goes unresolved the moment acryl-plugin-context tries to install it
         // live (measured: "this runtime cannot resolve ACRYL framework packages", acryl-gtd never activating).
         installPackageUrl: pathToFileURL(desktopInstallAnchor()).href,
         // DSH 0.2 answers every bare-package import of the profile from this table (see `DshEngineComposition`).

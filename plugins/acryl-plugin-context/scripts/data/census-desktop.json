@@ -1,6 +1,6 @@
 {
  "label": "desktop",
- "source": "apps/acryl-desktop/scripts/verify-loader-boot.mjs (DEBUG_VERIFY_LOADER_BOOT=1); acryl-extension-context added by hand after T012",
+ "source": "apps/acryl-desktop/scripts/verify-loader-boot.mjs (DEBUG_VERIFY_LOADER_BOOT=1); acryl-plugin-context added by hand after T012",
  "rowCount": 169,
  "entries": [
   {
@@ -676,7 +676,7 @@
    "state": "2"
   },
   {
-   "id": "acryl-extension-context",
+   "id": "acryl-plugin-context",
    "state": "2"
   }
  ]

@@ -54,7 +54,7 @@ packages:
   - plugins/dsh-client-ui-brand-acryl
   - plugins/dsh-community-fabric
   - plugins/cordis-plugin-market
-  - plugins/acryl-extension-context
+  - plugins/acryl-plugin-context
   - plugins/acryl-system-prompt
   - plugins/acryl-ui
   - plugins/acryl-ui-tui
@@ -318,7 +318,7 @@ for (const directory of scriptDirectories) {
 
 // Build output is never committed (spec 001, T072). A package whose `build` writes `lib/` (every one with a build script) has no tracked file there:
 // a committed bundle goes stale the moment its source changes without a rebuild in the same commit. Packages without a build script keep
-// hand-written sources in `lib/` (acryl-extension-context, acryl-brand, acryl-system-prompt) and are not affected.
+// hand-written sources in `lib/` (acryl-plugin-context, acryl-brand, acryl-system-prompt) and are not affected.
 const trackedLib = run('git', ['ls-files', '--', ':(glob)*/*/lib/**']).split('\n').filter(Boolean)
 for (const group of ['runtime', 'apps', 'plugins', 'distribution', 'examples']) {
   if (!existsSync(resolve(root, group))) continue

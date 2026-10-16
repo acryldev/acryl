@@ -2,7 +2,7 @@
 
 Status: verified on the packaged macOS app (2026-10-09, release v0.2.4, throwaway home) and on a real Windows 10 install (a recorded agent session). Survival of a full
 quit and relaunch was confirmed by the owner on a Mac mini (Apple silicon, macOS) and on Windows 10 with v0.2.4: the agent-written plugin was still there after restart.
-Code: `plugins/acryl-extension-context/lib/install.js` (install, update, remove), `lib/stage.js` (staging), `lib/reconcile.js` (locations).
+Code: `plugins/acryl-plugin-context/lib/install.js` (install, update, remove), `lib/stage.js` (staging), `lib/reconcile.js` (locations).
 Where homes come from: [APP-INSTANCES-AND-BULKHEADS.md](APP-INSTANCES-AND-BULKHEADS.md).
 
 ## The idea in one paragraph
@@ -38,7 +38,7 @@ only the home directory differs.
 Separate from this, Electron keeps its own window state, caches and logs under its user-data folder (named `ACRYL`; the OS default location: macOS
 `~/Library/Application Support/ACRYL`, Windows `%APPDATA%\ACRYL`, Linux `~/.config/ACRYL`). Plugins are not stored there.
 The installed application (`ACRYL.app`, `C:\Program Files\ACRYL`, `/opt/ACRYL`) holds only the app itself and the read-only plugin documentation the agent reads
-(`resources/app.asar.unpacked/node_modules/acryl-extension-context/docs`).
+(`resources/app.asar.unpacked/node_modules/acryl-plugin-context/docs`).
 
 Other app kinds change the home: a development run uses `~/.acryl-dev`, a git worktree `~/.acryl-worktrees/<folder>`, an app made with `acryl new` its own
 folder. The source and the profile move together with that home.

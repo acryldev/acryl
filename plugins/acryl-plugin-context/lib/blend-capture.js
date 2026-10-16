@@ -121,7 +121,7 @@ export function captureBlend(options, fs = { existsSync, readFileSync }) {
   modules.sort((a, b) => (a.name < b.name ? -1 : 1))
   const lock = {
     formatVersion: 2,
-    generator: { name: 'acryl-extension-context', version: '0.1.0' },
+    generator: { name: 'acryl-plugin-context', version: '0.1.0' },
     origin: { id: manifest.metadata.id, kind: manifest.kind, version: manifest.metadata.version, digest: sha256(manifestText) },
     rows,
     modules,

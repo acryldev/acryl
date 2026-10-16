@@ -51,24 +51,24 @@ changes one, naming it. After reviewing, refresh with `ACRYL_UPDATE_DRIFT=1` (sa
    [`runtime-context.ts`](../../deepseek-harness/packages/core/agent-loop/src/runtime-context.ts), not as part of the system prompt.
 6. **Skills.** The skill list (name and description only; bodies load on demand through the `skill` tool) is contributed by the skills service;
    the extension pack's skills come from
-   [`plugins/acryl-extension-context/lib/skills.js`](../../plugins/acryl-extension-context/lib/skills.js).
+   [`plugins/acryl-plugin-context/lib/skills.js`](../../plugins/acryl-plugin-context/lib/skills.js).
 7. **ACRYL extension router (self-extension).** The section that tells the agent it can extend ACRYL, where the docs and examples are, and which
    tools install, verify, list, remove and prepare-publish an extension. Text:
-   [`plugins/acryl-extension-context/lib/router.js`](../../plugins/acryl-extension-context/lib/router.js); the topic map is generated from
-   [`docs/docs.json`](../../plugins/acryl-extension-context/docs/docs.json); registered by
-   [`plugins/acryl-extension-context/index.js`](../../plugins/acryl-extension-context/index.js) (`order 9500`, name `acryl:extension-router`).
+   [`plugins/acryl-plugin-context/lib/router.js`](../../plugins/acryl-plugin-context/lib/router.js); the topic map is generated from
+   [`docs/docs.json`](../../plugins/acryl-plugin-context/docs/docs.json); registered by
+   [`plugins/acryl-plugin-context/index.js`](../../plugins/acryl-plugin-context/index.js) (`order 9500`, name `acryl:extension-router`).
 
 ## How to change it
 
 | I want to change | Edit | Notes |
 | --- | --- | --- |
-| The self-extension instructions (router) | [`router.js`](../../plugins/acryl-extension-context/lib/router.js) | Must stay under the token budget (1500, enforced by `scripts/plugin.test.mjs`). Static text is cached across turns: keep it stable; put dynamic facts in `PromptContext`. |
-| Which docs the router lists | [`docs.json`](../../plugins/acryl-extension-context/docs/docs.json), then `node scripts/build-manifest.mjs` in the pack | The topic list is generated from the manifest; `reference.*` docs are intentionally omitted from it. |
-| A skill's wording | `plugins/acryl-extension-context/skills/<name>/SKILL.md` | Name and description are what sits in context; the body loads on demand. |
+| The self-extension instructions (router) | [`router.js`](../../plugins/acryl-plugin-context/lib/router.js) | Must stay under the token budget (1500, enforced by `scripts/plugin.test.mjs`). Static text is cached across turns: keep it stable; put dynamic facts in `PromptContext`. |
+| Which docs the router lists | [`docs.json`](../../plugins/acryl-plugin-context/docs/docs.json), then `node scripts/build-manifest.mjs` in the pack | The topic list is generated from the manifest; `reference.*` docs are intentionally omitted from it. |
+| A skill's wording | `plugins/acryl-plugin-context/skills/<name>/SKILL.md` | Name and description are what sits in context; the body loads on demand. |
 | The identity line (ACRYL) or the tagging | [`acryl-system-prompt`](../../plugins/acryl-system-prompt/index.js) config or `lib/transform.js` | Pass-through: only the identity is replaced; other sections keep upstream text. |
 | The persona or working-directory line | the persona row in the preset [`agent.cordis.yml`](../../deepseek-harness/packages/preset/agent-presets/presets/standard/agent.cordis.yml) | It is in the read-only harness submodule: change it through a user preset or a Loader patch, never by editing `deepseek-harness/` (constitution III). A user preset lives in `<dshHome>/.agent-presets/<id>/`. |
 | Per-project or per-user standing instructions | `AGENTS.md` or `CLAUDE.md` in the workspace, or `<dshHome>/AGENTS.md` | Loaded by agent-instructions; no code change; good for "you can extend ACRYL yourself, offer it when a feature is missing". |
-| A new prompt section from a plugin | `ctx.systemPrompt.section({ name, order, text })` | See [`extending/prompt-contribution.md`](../../plugins/acryl-extension-context/docs/extending/prompt-contribution.md). Use an order that places it where you want; the router uses `9500` (last). |
+| A new prompt section from a plugin | `ctx.systemPrompt.section({ name, order, text })` | See [`extending/prompt-contribution.md`](../../plugins/acryl-plugin-context/docs/extending/prompt-contribution.md). Use an order that places it where you want; the router uses `9500` (last). |
 | Tool guidance or tool descriptions | the tool's package (`dsh-tool-*`) | Upstream for harness tools; for a tool you write, its `description` and its section. |
 
 Attribution: the identity line is ACRYL's; "built on DeepSeek Harness" belongs in the README and About text (the license is MIT; the brand guidelines only ask that the

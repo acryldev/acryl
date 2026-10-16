@@ -35,8 +35,8 @@ spec:
         tagline: '{{parameters.brandTagline}}'
         accent: '{{parameters.brandAccent}}'
         accentDark: '{{parameters.brandAccentDark}}'
-    - id: extension-context
-      name: 'acryl-extension-context'
+    - id: acryl-plugin-context
+      name: 'acryl-plugin-context'
     - id: acryl-system-prompt
       name: 'acryl-system-prompt'
     - id: '@acryl/ui'

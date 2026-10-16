@@ -553,7 +553,7 @@ export function materializeProfilePackage(profileDir: string, packageName: strin
  * Resolves an ACRYL-owned workspace package by name into its live on-disk install and symlinks it into a
  * profile, the same way the Blueprint's own fixed rows do ({@link materializeProfilePackage}) - these
  * packages are not published, so a local extension's `package.json` cannot name one as an ordinary npm
- * dependency. Consumed by `acryl-extension-context`'s local-plugin install path (`dsh.requiresAcrylPackages`
+ * dependency. Consumed by `acryl-plugin-context`'s local-plugin install path (`dsh.requiresAcrylPackages`
  * in an extension's `package.json`), which also activates the materialized package as a live Loader entry
  * through the existing `livePluginActivation` service - this object only makes the package resolvable.
  */
@@ -576,7 +576,7 @@ declare module '@deepseek-ai/cordis' {
 /**
  * ACRYL-owned framework packages the app's own committed extensions (`<app home>/extensions/*`) declare
  * through `dsh.requiresAcrylPackages` in their `package.json`. Read at compose time, not through
- * `acryl-extension-context`'s dynamic agent-runtime install path: `livePluginActivation.activate()`'s group
+ * `acryl-plugin-context`'s dynamic agent-runtime install path: `livePluginActivation.activate()`'s group
  * resolution (`PluginLifecycleController`'s `bundleGroup()`, a fixed-point-free heuristic over the live Loader
  * tree) failed a real, reproduced activation of `acryl-app-shell` through that path ("invalid plugin... received
  * object") for reasons that trace into vendored Cordis internals this repo does not edit. A static row, inserted
@@ -649,7 +649,7 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   }
   // The app's own committed extensions may each need an ACRYL-owned framework package (see
   // `extensionRequiredFrameworkPackages`'s own doc comment for why this is a static row, not the dynamic
-  // agent-runtime install path `acryl-extension-context` otherwise uses).
+  // agent-runtime install path `acryl-plugin-context` otherwise uses).
   const requiredFrameworkPackages = extensionRequiredFrameworkPackages(join(instance.home, 'extensions'))
     .filter(name => !existingRowIds.has(name) && !rowsComposition.packages.includes(name))
   for (const packageName of requiredFrameworkPackages) materializeProfilePackage(profile.dir, packageName, installPackageUrl)

@@ -48,7 +48,7 @@ describe('blank blueprint on the Web engine', () => {
     try {
       const ids = rowIds(host)
       // The stem cell.
-      expect(ids).toEqual(expect.arrayContaining(['brand', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'authorization']))
+      expect(ids).toEqual(expect.arrayContaining(['brand', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'authorization']))
       // Nothing of the full product.
       for (const absent of ['acryl-workspace', 'acryl-plugin-admin', 'community-market', 'acryl-shortcuts', 'acryl-mount-anchors', 'ui-acryl']) {
         expect(ids, absent).not.toContain(absent)
@@ -97,7 +97,7 @@ describe('blank blueprint on the CLI engine', () => {
     const host = await createAcrylEngineHost({ engines: [createDshEngineDefinition('acryl-blank-test')], initialEngine: 'dsh' })
     try {
       const ids = rowIds(host)
-      expect(ids).toEqual(expect.arrayContaining(['extension-context', 'acryl-system-prompt', 'authorization', 'agent-preset-registry']))
+      expect(ids).toEqual(expect.arrayContaining(['acryl-plugin-context', 'acryl-system-prompt', 'authorization', 'agent-preset-registry']))
       expect(ids).not.toContain('brand')
       const assembly = await host.ctx.get('systemPrompt')!.assemble()
       expect(JSON.stringify(assembly.sections)).toContain('inside Blank')

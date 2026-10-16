@@ -455,7 +455,7 @@ the package names, versions, and licenses for transparency.
 | acryl-brand | 0.1.0 | MIT |
 | acryl-control | 0.1.44 | MIT |
 | acryl-diagnostics | 0.1.0 | MIT |
-| acryl-extension-context | 0.1.0 | MIT |
+| acryl-plugin-context | 0.1.0 | MIT |
 | acryl-harness-runtime | 0.1.44 | MIT |
 | acryl-loopback-http | 0.1.0 | MIT |
 | acryl-mount-anchors | 0.1.0 | MIT |

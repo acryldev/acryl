@@ -7,7 +7,7 @@ Characters are exact; tokens are an estimate for comparing changes. Ceilings liv
 
 ## web and desktop (standard preset)
 
-Total: system prompt 9102 chars (about 2677 tokens), tool definitions 27592 chars (about 8115 tokens), 47 tools.
+Total: system prompt 9099 chars (about 2676 tokens), tool definitions 27592 chars (about 8115 tokens), 47 tools.
 
 ### System prompt by section
 
@@ -30,7 +30,7 @@ Total: system prompt 9102 chars (about 2677 tokens), tool definitions 27592 char
 | `tool_subagent` | 146 | 43 |
 | `tool_subagent_fork` | 161 | 47 |
 | `ui_deliverable-file-references` | 1371 | 403 |
-| `acryl_extension_docs` | 2404 | 707 |
+| `acryl_extension_docs` | 2401 | 706 |
 | `harness_source` | 486 | 143 |
 | `app_web-surface` | 1029 | 303 |
 | `cwd` | 51 | 15 |
@@ -89,7 +89,7 @@ Total: system prompt 9102 chars (about 2677 tokens), tool definitions 27592 char
 
 ## cli (terminal engine)
 
-Total: system prompt 5449 chars (about 1603 tokens), tool definitions 21636 chars (about 6364 tokens), 31 tools.
+Total: system prompt 5446 chars (about 1602 tokens), tool definitions 21636 chars (about 6364 tokens), 31 tools.
 
 ### System prompt by section
 
@@ -108,7 +108,7 @@ Total: system prompt 5449 chars (about 1603 tokens), tool definitions 21636 char
 | `tool_goal` | 553 | 163 |
 | `tool_workflow` | 358 | 105 |
 | `tool_subagent` | 146 | 43 |
-| `acryl_extension_docs` | 2404 | 707 |
+| `acryl_extension_docs` | 2401 | 706 |
 
 ### Tool definitions, largest first
 

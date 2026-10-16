@@ -93,6 +93,15 @@ export function isPluginLifecycleEntryId(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= 200 && ENTRY_ID_PATTERN.test(value)
 }
 
+/**
+ * Loader rows that were renamed, old entry id to new (spec 044 step 1b): a disable kept under the old id applies to the row by its new
+ * id, and is written back under the new id on the next change.
+ */
+const RENAMED_ENTRY_IDS: Readonly<Record<string, string>> = Object.freeze({
+  'include:extension-context': 'include:acryl-plugin-context',
+  'extension-context': 'acryl-plugin-context',
+})
+
 /** Base-template bundles: never user-mutable. Every other profile bundle is. */
 export const BASE_TEMPLATE_BUNDLE_NAMES: ReadonlySet<string> = new Set([
   '@deepseek-ai/dsh-base',
@@ -165,7 +174,7 @@ function parseState(value: unknown, validateProfileName: ProfileNameValidator): 
     // id, and the Loader treats an unknown-id patch as a warning, not a fault.
     profiles.push({
       profileName: profile.profileName,
-      disabledEntries: [...new Set((profile.disabledEntries as unknown[]).filter(isPluginLifecycleEntryId))]
+      disabledEntries: [...new Set((profile.disabledEntries as unknown[]).filter(isPluginLifecycleEntryId).map(entryId => RENAMED_ENTRY_IDS[entryId] ?? entryId))]
         .sort(stableCompare),
     })
   }

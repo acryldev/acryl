@@ -425,7 +425,7 @@
     "acryl-app-shell": "workspace:*",
     "acryl-brand": "workspace:*",
     "acryl-diagnostics": "workspace:*",
-    "acryl-extension-context": "workspace:*",
+    "acryl-plugin-context": "workspace:*",
     "acryl-harness-runtime": "workspace:*",
     "acryl-loopback-http": "workspace:*",
     "acryl-mount-anchors": "workspace:*",

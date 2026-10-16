@@ -73,7 +73,7 @@ describe('acryl new', () => {
     expect(existsSync(join(dir, 'extensions'))).toBe(true)
     const blueprint = blueprintFromEnvironment({ ACRYL_BLUEPRINT: join(dir, 'blend.yaml') })
     expect(blueprint.id).toBe('app.video-cut')
-    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', 'extension-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
+    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
   })
 })
 
@@ -99,6 +99,11 @@ describe('reading a Blends manifest', () => {
     expect(blueprint.rows).toContain('community-market')
     expect(blueprint.rows).not.toContain('ui-library')
     expect(blueprint.rows).not.toContain('organizer' as never)
+  })
+
+  it('an app written before the context plugin was renamed still names it (spec 044 step 1b)', () => {
+    expect(blueprintFromManifest(blend([{ id: 'extension-context', name: 'acryl-extension-context', disabled: true }])).rows).not.toContain('plugin-context')
+    expect(blueprintFromManifest(blend([{ id: 'extension-context', name: 'acryl-extension-context' }])).rows).toContain('plugin-context')
   })
 
   it('a Blueprint manifest names a known Blueprint; the IDE can be selected that way', () => {

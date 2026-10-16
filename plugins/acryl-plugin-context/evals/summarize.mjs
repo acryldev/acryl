@@ -17,8 +17,8 @@ export function summarize(text) {
     if (o.ev === 'tool/call') {
       current.toolCalls += 1
       const brief = o.brief ?? ''
-      if (/acryl-extension-context\/docs\//u.test(brief) || /acryl-extension-context\\\/docs\\\//u.test(brief)) current.docReads += 1
-      if (/acryl-extension-context\/example-plugins\//u.test(brief)) current.exampleReads += 1
+      if (/acryl-plugin-context\/docs\//u.test(brief) || /acryl-plugin-context\\\/docs\\\//u.test(brief)) current.docReads += 1
+      if (/acryl-plugin-context\/example-plugins\//u.test(brief)) current.exampleReads += 1
     }
     if (o.ev === 'tool/result') {
       const brief = o.brief ?? ''

@@ -23,8 +23,8 @@ spec:
         tagline: Plan your day by talking to it.
         accent: '#e8590c'
         accentDark: '#ff922b'
-    - id: extension-context
-      name: 'acryl-extension-context'
+    - id: acryl-plugin-context
+      name: 'acryl-plugin-context'
     - id: acryl-system-prompt
       name: 'acryl-system-prompt'
     - id: '@acryl/ui'

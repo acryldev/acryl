@@ -211,7 +211,7 @@ describe('gateway configuration and requests', () => {
 describe('docs access for workers', () => {
   it('finds the extension package folder from a lookup answer, and says nothing when the answer has no usable path', async () => {
     const { docsRootFromLookup } = await import('../../src/host/tools-gateway/worker-config.ts')
-    expect(docsRootFromLookup(JSON.stringify({ ok: true, docs: [{ path: '/a/b/plugins/acryl-extension-context/docs/extending/tool-plugin.md' }] }))).toBe('/a/b/plugins/acryl-extension-context')
+    expect(docsRootFromLookup(JSON.stringify({ ok: true, docs: [{ path: '/a/b/plugins/acryl-plugin-context/docs/extending/tool-plugin.md' }] }))).toBe('/a/b/plugins/acryl-plugin-context')
     expect(docsRootFromLookup(JSON.stringify({ ok: true, docs: [] }))).toBeUndefined()
     expect(docsRootFromLookup(JSON.stringify({ docs: [{ path: 'relative.md' }] }))).toBeUndefined()
     expect(docsRootFromLookup('not json')).toBeUndefined()
