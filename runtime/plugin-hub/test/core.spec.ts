@@ -133,10 +133,15 @@ describe('packing a source folder', () => {
     expect(() => packFolder(folder({ 'index.js': '' }))).toThrow(/package.json is missing/)
   })
 
-  it('keeps the executable bit of a packed file', () => {
-    const dir = folder({ 'package.json': manifest(), 'bin/run': '#!/bin/sh\n' })
-    chmodSync(join(dir, 'bin/run'), 0o755)
-    expect(readTarball(packFolder(dir).tarball).find(file => file.path === 'bin/run')?.executable).toBe(true)
+  it('marks a file executable from its content and bin, never from the file mode, so every system packs the same bytes', () => {
+    const dir = folder({ 'package.json': manifest({ bin: { demo: './cli/demo.js' } }), 'bin/run': '#!/bin/sh\n', 'cli/demo.js': 'console.log(1)\n', 'plain.js': 'export {}\n', 'mode-only.js': 'export {}\n' })
+    chmodSync(join(dir, 'mode-only.js'), 0o755)
+    const packed = readTarball(packFolder(dir).tarball)
+    const executable = Object.fromEntries(packed.map(file => [file.path, file.executable]))
+    expect(executable).toMatchObject({ 'bin/run': true, 'cli/demo.js': true, 'plain.js': false, 'mode-only.js': false })
+    chmodSync(join(dir, 'mode-only.js'), 0o644)
+    chmodSync(join(dir, 'bin/run'), 0o644)
+    expect(packFolder(dir).integrity).toBe(integrityOf(writeTarball(packed)))
   })
 
   const npmAvailable = (() => { try { execFileSync('npm', ['--version'], { stdio: 'ignore' }); return true } catch { return false } })()
@@ -147,14 +152,16 @@ describe('packing a source folder', () => {
     const npmFiles = (JSON.parse(json) as { files: { path: string }[] }[])[0]!.files.map(file => file.path).sort()
     expect(packFolder(quickNotes).files).toEqual(npmFiles)
   })
-  const pnpmAvailable = (() => { try { execFileSync('corepack', ['pnpm', '--version'], { stdio: 'ignore' }); return true } catch { return false } })()
+  // On Windows `corepack` is a .cmd file, which Node runs only through a shell.
+  const shell = process.platform === 'win32'
+  const pnpmAvailable = (() => { try { execFileSync('corepack', ['pnpm', '--version'], { stdio: 'ignore', shell }); return true } catch { return false } })()
   it.skipIf(!pnpmAvailable)('a packed tarball installs with pnpm, which records the same sha512 (the path DSH\'s installer takes)', () => {
     const dir = folder({ 'package.json': `${JSON.stringify({ name: '@proof/hub.sidebar.demo', version: '1.0.0', main: 'index.js' })}\n`, 'index.js': "module.exports = 'packed by plugin-hub'\n" })
     const packed = packFolder(dir)
     const app = folder({ 'package.json': '{"name":"app","version":"0.0.0","private":true}\n' })
     const tarball = join(app, packed.fileName)
     writeFileSync(tarball, packed.tarball)
-    execFileSync('corepack', ['pnpm', 'add', `file:${tarball}`, '--offline', '--ignore-scripts'], { cwd: app, stdio: 'ignore' })
+    execFileSync('corepack', ['pnpm', 'add', `file:${tarball}`, '--offline', '--ignore-scripts'], { cwd: app, stdio: 'ignore', shell })
     expect(execFileSync(process.execPath, ['-e', "process.stdout.write(require('@proof/hub.sidebar.demo'))"], { cwd: app, encoding: 'utf8' })).toBe('packed by plugin-hub')
     expect(readFileSync(join(app, 'pnpm-lock.yaml'), 'utf8')).toContain(packed.integrity)
   }, 120_000)

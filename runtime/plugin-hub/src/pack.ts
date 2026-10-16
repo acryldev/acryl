@@ -2,7 +2,7 @@
 // here as with `npm pack`: the package.json `files` list when there is one, otherwise everything not ignored; package.json, README and
 // LICENSE always; never node_modules, .git or the other files npm never packs. The file list is returned too: it is exactly what a share
 // checks for secrets and sends, so nothing leaves the machine that was not checked.
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
 import { parsePluginName, type PluginName } from './name.js'
 import { integrityOf, writeTarball, type TarballFile } from './tarball.js'
@@ -73,6 +73,21 @@ export function packageFiles(dir: string, manifest: Readonly<Record<string, unkn
   return all.filter(path => path !== '.npmignore' && path !== '.gitignore').sort()
 }
 
+/** The files package.json's `bin` names, as package paths. */
+function binTargets(manifest: Readonly<Record<string, unknown>>): ReadonlySet<string> {
+  const bin = manifest['bin']
+  const targets = typeof bin === 'string' ? [bin] : typeof bin === 'object' && bin !== null ? Object.values(bin as Record<string, unknown>) : []
+  return new Set(targets.filter((target): target is string => typeof target === 'string').map(target => target.replace(/^\.\//u, '')))
+}
+
+/**
+ * Whether a file starts with `#!`. Executable files are decided from the content and `bin`, never from the file mode: Windows has no
+ * executable bit, so the mode would make the same files pack to different bytes on different systems.
+ */
+function startsWithShebang(content: Uint8Array): boolean {
+  return content[0] === 0x23 && content[1] === 0x21
+}
+
 export class PackError extends Error {
   constructor(readonly dir: string, readonly reason: string) {
     super(`cannot pack ${dir}: ${reason}`)
@@ -91,9 +106,10 @@ export function packFolder(dir: string): PackedPlugin {
   const version = manifest['version']
   if (typeof version !== 'string' || parseVersion(version) === undefined) throw new PackError(dir, 'package.json has no semantic "version" such as 0.1.0')
   const files = packageFiles(dir, manifest)
+  const bins = binTargets(manifest)
   const entries: TarballFile[] = files.map(path => {
-    const full = join(dir, ...path.split('/'))
-    return { path, content: readFileSync(full), executable: (statSync(full).mode & 0o111) !== 0 }
+    const content = readFileSync(join(dir, ...path.split('/')))
+    return { path, content, executable: bins.has(path) || startsWithShebang(content) }
   })
   const tarball = writeTarball(entries)
   const fileName = `${name.full.replace(/^@/u, '').replace('/', '-')}-${version}.tgz`
