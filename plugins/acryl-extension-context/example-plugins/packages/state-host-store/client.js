@@ -1,8 +1,8 @@
 // Example: state.host-store  (browser half)
 // Type:     client-slot
 // Surfaces: web desktop
-// Teaches:  read and write host-side state from the page with `ctx.connection.rpc.call(channel, endpoint, payload)`, the counterpart of
-//           `connection.rpc.handle` in index.js. The component keeps only a view of the data; the host file is the source of truth.
+// Teaches:  read and write host-side state from the page with `ctx.connection.rpc.call('/api', '<plugin>/<endpoint>', payload)`, answered
+//           by the routes index.js registers under `/api`. The component keeps only a view of the data; the host file is the source of truth.
 // Expect:   a "Shared notes" button beside Settings; the notes it shows are identical in Web and Desktop.
 // Docs:     extending.state-and-persistence
 window.__ModuleLoader__.load({ id: 'acryl-example-state-host', factory: (require) => {
@@ -12,7 +12,7 @@ const React = require('react')
 const { Button, Modal, Input } = require('@deepseek-ai/dsh-client-ui-primitives')
 const h = React.createElement
 const ID = 'acryl-example-state-host'
-const CHANNEL = '/acryl-example-state-host'
+const PREFIX = 'acryl-example-state-host'
 
 function makeSharedNotes(connection) {
   // `rpc.call` resolves to an envelope: `{ ok: true, value }` or `{ ok: false, error: { code, message, details } }` (transport, auth or a
@@ -20,7 +20,7 @@ function makeSharedNotes(connection) {
   const call = async (endpoint, payload) => {
     // Always send an object: the request envelope requires a `payload` key, and `undefined` is dropped by JSON, which the host rejects
     // as "invalid client-request message".
-    const result = await connection.rpc.call(CHANNEL, endpoint, payload ?? {})
+    const result = await connection.rpc.call('/api', `${PREFIX}/${endpoint}`, payload ?? {})
     if (result && result.ok === false) throw new Error(result.error && result.error.message ? result.error.message : 'RPC call failed')
     return result && result.ok === true ? result.value : result
   }

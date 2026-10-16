@@ -2,21 +2,26 @@
 // Type:     host-route
 // Surfaces: web desktop
 // Teaches:  PERSIST STATE ON THE HOST so it survives a browser reset and is shared by every window, browser and surface that uses the same
-//           ACRYL home. The client calls an authenticated RPC channel (`connection.rpc.handle` here, `connection.rpc.call` in client.js);
-//           the host keeps the data in a JSON file under the DSH home (`plugin-data/<plugin name>/`), written atomically.
-//           Prefer this over a bare `webServer.register` route: the channel is behind the browser-auth and Host/Origin fence.
+//           ACRYL home. The client calls `connection.rpc.call('/api', '<plugin>/<endpoint>', payload)` (client.js); the host answers on
+//           exact routes under `/api` (`connection.fetch.register` here), in the RPC envelope, so the call is behind connection's
+//           browser-auth and Host/Origin fence and works in stock DSH too. The data is a JSON file under the DSH home, written atomically.
+//           Not `connection.rpc.handle`: stock DSH's connection row does not declare `webServer`, so a third-party channel fails there with
+//           `cannot get property "webServer" without inject` (ACRYL patches that row; spec 044 S11). Not a bare `webServer.register`
+//           route either: it would skip the auth fence.
 //           Compare: localStorage is per browser origin (Web and Desktop never share it).
-// Expect:   ACTIVE on web/desktop; the client lists, adds and removes notes; the file `<DSH_HOME>/plugin-data/acryl-example-state-host/notes.json` holds them.
+// Expect:   ACTIVE on web/desktop in ACRYL and in stock DSH; the client lists, adds and removes notes; the file
+//           `<DSH_HOME>/plugin-data/acryl-example-state-host/notes.json` holds them.
 // Docs:     extending.state-and-persistence
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 export const name = 'acryl-example-state-host'
-// `connection.rpc.handle` registers its channel through `webServer`, so both must be declared. `dshHomePath` is declared too: the data
-// directory comes only from the app's home, so in an app without it the plugin waits (PENDING) instead of guessing a folder.
-export const inject = ['connection', 'webServer', 'dshHomePath']
+// `connection` serves the routes (under its own `/api` route, so no `webServer` here). `dshHomePath` is declared too: the data directory
+// comes only from the app's home, so in an app without it the plugin waits (PENDING) instead of guessing a folder.
+export const inject = ['connection', 'dshHomePath']
 
-const CHANNEL = '/acryl-example-state-host'
+/** Endpoints live at `/api/<PREFIX>/<endpoint>`; the client calls them as `connection.rpc.call('/api', '<PREFIX>/<endpoint>', payload)`. */
+const PREFIX = 'acryl-example-state-host'
 const MAX_NOTES = 500
 const MAX_TEXT = 4000
 
@@ -65,9 +70,21 @@ export function apply(ctx) {
     },
   }
 
-  ctx.connection.rpc.handle(CHANNEL, async (endpoint, payload) => {
-    const handler = handlers[endpoint]
-    if (!handler) return fail(`unknown endpoint ${JSON.stringify(endpoint)}`)
-    try { return handler(payload) } catch (cause) { return fail(String(cause?.message ?? cause)) }
-  })
+  // One exact route per endpoint. The request is the RPC envelope `rpc.call` sends ({ type: 'client-request', rpcId, method, payload });
+  // the answer echoes its rpcId ({ type: 'server-response', rpcId, result }). Each registration is owned by this plugin and removed with it.
+  for (const [endpoint, handler] of Object.entries(handlers)) {
+    ctx.connection.fetch.register({
+      path: `/api/${PREFIX}/${endpoint}`,
+      methods: ['POST'],
+      requestBody: 'buffered',
+      async fetch(request) {
+        let message
+        try { message = await request.json() } catch { return new Response('body is not JSON', { status: 400 }) }
+        if (message?.type !== 'client-request' || typeof message.rpcId !== 'string') return new Response('not an RPC request', { status: 400 })
+        let result
+        try { result = handler(message.payload) } catch (cause) { result = fail(String(cause?.message ?? cause)) }
+        return Response.json({ type: 'server-response', rpcId: message.rpcId, result })
+      },
+    })
+  }
 }

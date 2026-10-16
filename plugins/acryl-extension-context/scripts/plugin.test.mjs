@@ -352,19 +352,28 @@ test('example state.workspace-file: notes persist as .acryl/notes.md in the sess
   } finally { rmSync(workspace, { recursive: true, force: true }) }
 })
 
-test('example state.host-store: the RPC channel persists notes atomically under the DSH home and returns the result envelope', async () => {
+test('example state.host-store: RPC routes on /api persist notes atomically under the DSH home and answer the RPC envelope', async () => {
   const { apply, inject } = await import('../example-plugins/packages/state-host-store/index.js')
-  assert.deepEqual(inject, ['connection', 'webServer', 'dshHomePath'])
-  const home = mkdtempSync(join(tmpdir(), 'dshhome-')); let handler
+  // No webServer: the routes are connection's (stock DSH's connection row lacks webServer for a third-party rpc.handle, spec 044 S11).
+  assert.deepEqual(inject, ['connection', 'dshHomePath'])
+  const home = mkdtempSync(join(tmpdir(), 'dshhome-')); const routes = new Map()
   try {
-    apply({ get: name => (name === 'dshHomePath' ? (...segments) => join(home, ...segments) : undefined), connection: { rpc: { handle: (_channel, fn) => { handler = fn } } } })
-    assert.deepEqual((await handler('list', {})).value.notes, [])
-    const added = await handler('add', { text: '  hello  ' })
+    apply({ get: name => (name === 'dshHomePath' ? (...segments) => join(home, ...segments) : undefined), connection: { fetch: { register: route => { routes.set(route.path, route); return () => {} } } } })
+    assert.deepEqual([...routes.keys()].sort(), ['/api/acryl-example-state-host/add', '/api/acryl-example-state-host/list', '/api/acryl-example-state-host/remove'])
+    for (const route of routes.values()) assert.deepEqual([route.methods, route.requestBody], [['POST'], 'buffered'])
+    const call = async (endpoint, payload, rpcId = `r-${endpoint}`) => {
+      const response = await routes.get(`/api/acryl-example-state-host/${endpoint}`).fetch(new Request('http://127.0.0.1/', { method: 'POST', body: JSON.stringify({ type: 'client-request', rpcId, method: `acryl-example-state-host/${endpoint}`, payload }) }))
+      const body = await response.json()
+      assert.equal(body.type, 'server-response'); assert.equal(body.rpcId, rpcId)
+      return body.result
+    }
+    assert.deepEqual((await call('list', {})).value.notes, [])
+    const added = await call('add', { text: '  hello  ' })
     assert.equal(added.ok, true); assert.equal(added.value.notes[0].text, 'hello')
     assert.equal(JSON.parse(readFileSync(join(home, 'plugin-data', 'acryl-example-state-host', 'notes.json'), 'utf8')).length, 1)
-    assert.equal((await handler('add', { text: '' })).ok, false)
-    assert.equal((await handler('nope', {})).error.code, 'bad-request')
-    assert.deepEqual((await handler('remove', { id: added.value.notes[0].id })).value.notes, [])
+    assert.equal((await call('add', { text: '' })).ok, false)
+    assert.deepEqual((await call('remove', { id: added.value.notes[0].id })).value.notes, [])
+    assert.equal((await routes.get('/api/acryl-example-state-host/list').fetch(new Request('http://127.0.0.1/', { method: 'POST', body: '{"not":"rpc"}' }))).status, 400)
   } finally { rmSync(home, { recursive: true, force: true }) }
 })
 

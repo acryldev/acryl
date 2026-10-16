@@ -23,7 +23,7 @@ const withClient = (host, client) => ({
 test('the contract of a host and client example is what each side injects', async () => {
   const read = await readServiceContract(example('state-host-store'))
   assert.deepEqual(read.errors, [])
-  assert.deepEqual(read.contract, { requires: { host: ['connection', 'dshHomePath', 'webServer'], client: ['connection', 'slots'] }, provides: { host: [], client: [] }, slots: { offers: [], fills: ['sidebar.footer.action'] } })
+  assert.deepEqual(read.contract, { requires: { host: ['connection', 'dshHomePath'], client: ['connection', 'slots'] }, provides: { host: [], client: [] }, slots: { offers: [], fills: ['sidebar.footer.action'] } })
 })
 
 test('a host-only example has no client side', async () => {

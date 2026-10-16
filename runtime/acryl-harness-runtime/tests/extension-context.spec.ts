@@ -454,6 +454,23 @@ describe('/reload on the web engine', () => {
       expect(result).toMatchObject({ ok: true, status: 'active' })
       const dshHomePath = host.ctx.get('dshHomePath' as never) as unknown as (...parts: string[]) => string
       expect(dshHomePath('plugin-data', 'acryl-example-state-host').startsWith(home)).toBe(true)
+      // A real RPC round trip through connection's shared /api handler, as the page's `rpc.call('/api', ...)` sends it: the routes work
+      // without `webServer`, which is what makes the example run in stock DSH too (spec 044 S11).
+      const connection = host.ctx.get('connection' as never) as unknown as { createSharedFetchHandler(channel: '/api'): { fetch(request: Request): Promise<Response> } }
+      const api = connection.createSharedFetchHandler('/api')
+      const call = async (endpoint: string, payload: unknown) => {
+        const response = await api.fetch(new Request(`http://127.0.0.1/api/acryl-example-state-host/${endpoint}`, {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ type: 'client-request', rpcId: `r-${endpoint}`, method: `acryl-example-state-host/${endpoint}`, payload }),
+        }))
+        return { status: response.status, body: await response.json() as { type: string; rpcId: string; result: { ok: boolean; value?: { notes: { text: string }[] } } } }
+      }
+      const added = await call('add', { text: 'kept on the host' })
+      expect(added.status).toBe(200)
+      expect(added.body).toMatchObject({ type: 'server-response', rpcId: 'r-add', result: { ok: true } })
+      expect((await call('list', {})).body.result.value?.notes.map(note => note.text)).toEqual(['kept on the host'])
+      expect(readFileSync(dshHomePath('plugin-data', 'acryl-example-state-host', 'notes.json'), 'utf8')).toContain('kept on the host')
+      expect((await call('add', { text: '' })).body.result).toMatchObject({ ok: false, error: { message: 'text is required' } })
     } finally {
       await host.dispose()
     }

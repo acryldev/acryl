@@ -20,20 +20,27 @@ which surfaces they work on. If the user did not say, choose from the table and 
 - A few named options the user edits (a toggle, a limit, a default): a settings section, not a data file.
 - Never keep secrets in `localStorage` or in a workspace file (it can be committed). Use a settings field marked `.role('secret')`.
 
-## Host file behind an RPC channel (`state.host-store`)
+## Host file behind RPC routes on `/api` (`state.host-store`)
 
-Host half: `inject = ['connection', 'webServer']`, then `ctx.connection.rpc.handle(channel, async (endpoint, payload) => result)`. Client half:
-`inject = ['slots', 'connection']`, then `ctx.connection.rpc.call(channel, endpoint, payload)`. The channel sits behind the browser
-authentication and Host/Origin checks, unlike a bare `webServer.register` route (see `host-route.md`).
+Host half: `inject = ['connection', 'dshHomePath']`, then one `ctx.connection.fetch.register({ path: '/api/<plugin>/<endpoint>', methods: ['POST'],
+requestBody: 'buffered', fetch })` per endpoint, answering the RPC envelope. Client half: `inject = ['slots', 'connection']`, then
+`ctx.connection.rpc.call('/api', '<plugin>/<endpoint>', payload)`. The routes sit behind connection's browser authentication and Host/Origin
+checks, unlike a bare `webServer.register` route (see `host-route.md`), and they work in stock DSH as well as in ACRYL.
+
+Do not use `ctx.connection.rpc.handle(channel, ...)` for a plugin meant for both apps: stock DSH's `connection` row does not declare `webServer`,
+so a third-party channel fails there with `cannot get property "webServer" without inject` (measured on DSH 0.2.0-rc.2, spec 044 S11). ACRYL
+patches that row, so the same plugin would work in ACRYL only.
 
 Facts measured while building the example (each one cost a failed run):
 
-- A handler MUST return the result envelope: `{ ok: true, value }` or `{ ok: false, error: { code, message, details } }`. Any other shape (for example
+- The request a route receives is `{ type: 'client-request', rpcId, method, payload }`; answer `Response.json({ type: 'server-response', rpcId, result })`
+  with the same `rpcId`, or the client throws `rpcId mismatch`.
+- `result` MUST be the result envelope: `{ ok: true, value }` or `{ ok: false, error: { code, message, details } }`. Any other shape (for example
   `{ notes }` or `{ error: 'x' }`) is rejected as `connection: invalid server-response result`.
 - `rpc.call` resolves to that same envelope. Unwrap it once in the client (`ok === false` -> throw `error.message`); rendering `result.error` directly
   crashes React (error #31: an object is not a valid child) and the whole slot disappears.
 - Always send an object payload (`call(endpoint, payload ?? {})`). `undefined` is dropped by JSON and the host answers `invalid client-request message`.
-- Both `connection` and `webServer` must be in the HOST plugin's `inject` (the connection registers the channel through `webServer`).
+- A route path is exact and lives under `/api`; two plugins cannot register the same path, so prefix it with the plugin name.
 - Get the data directory with `ctx.get('dshHomePath')('plugin-data', <plugin name>)` and declare `dshHomePath` in `inject`; never fall back to
   `homedir()` or a hard-coded `~/.acryl` (a test or second app instance would write into the user's real home). Web and Desktop dev runs use
   different homes (`~/.acryl`, `~/.acryl-dev`), so two surfaces share the file only when they run against the same home.
