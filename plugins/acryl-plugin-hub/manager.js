@@ -11,7 +11,7 @@
  * DSH's: its `@Remote` markers are written onto the prototype of the instance being constructed, so the page reaches these overrides.
  */
 import { PluginManager } from '@deepseek-ai/dsh-plugin-manager'
-import { createPluginHub, githubReleasesOverHttps, PluginStore, storeRootOf } from '@webboxes/plugin-hub'
+import { createPluginHub, firstReleasePort, githubReleasesOverHttps, githubReleasesViaGh, PluginStore, storeRootOf } from '@webboxes/plugin-hub'
 import { releaseSpec } from './release-spec.js'
 
 /**
@@ -21,7 +21,7 @@ import { releaseSpec } from './release-spec.js'
 function hubOf(ctx) {
   return createPluginHub({
     store: new PluginStore(storeRootOf(ctx.appInstance.home)),
-    releases: githubReleasesOverHttps(),
+    releases: firstReleasePort(githubReleasesOverHttps(), githubReleasesViaGh()),
     has: service => ctx.get(service) !== undefined,
     installer: () => undefined,
   })

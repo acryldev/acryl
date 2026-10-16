@@ -97,7 +97,7 @@ async function fetchSource(source: PluginSource, ports: PullPorts, label: string
       const release = await releases.release(source.owner, source.repo, source.version === undefined ? undefined : `v${source.version}`)
       if (release === undefined) {
         throw new PullError(label, source.version === undefined
-          ? `${source.owner}/${source.repo} has no release; ask its author to publish one, or pull a folder`
+          ? `${source.owner}/${source.repo} has no release that this app can see; ask its author to publish one (if it is private, sign in with gh as someone who can read it), or pull a folder`
           : `${source.owner}/${source.repo} has no release v${source.version}`)
       }
       const tarballs = release.assets.filter(asset => /\.tgz$/u.test(asset.name))

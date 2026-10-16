@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSy
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { gitCli, integrityOf, PluginStore, pullPlugin, parsePluginSource, sharePlugin, slotsInSource, type RepositoryHostPort, type Visibility } from '../src/index.js'
+import { gitCli, hostInjectFromSource, integrityOf, PluginStore, pullPlugin, parsePluginSource, readServiceContract, sharePlugin, slotsInSource, type RepositoryHostPort, type Visibility } from '../src/index.js'
 
 let root: string
 const savedEnv: Record<string, string | undefined> = {}
@@ -143,5 +143,24 @@ describe('slots', () => {
       ctx.slots.register({ name: slotName }, C)
     `
     expect(slotsInSource(source)).toEqual({ offers: ['notes.panel.actions'], fills: ['sidebar.right.pane.tab', 'conversation.session.header.actions'] })
+  })
+})
+
+describe('the host inject, read from the source', () => {
+  it('reads the literal forms the Loader sees, without importing packages the app provides', () => {
+    expect(hostInjectFromSource("import { defineTool } from '@deepseek-ai/dsh-tools'\nexport const inject = ['tools', \"slots\"]\n")).toEqual({ names: ['tools', 'slots'] })
+    expect(hostInjectFromSource("export const inject = { tools: null, 'slots': { order: 1, nested: { a: [1, 2] } }, webServer: {} }")).toEqual({ names: ['tools', 'slots', 'webServer'] })
+    expect(hostInjectFromSource('export default class Store extends Service {\n  static inject = [\'connection\']\n}')).toEqual({ names: ['connection'] })
+    expect(hostInjectFromSource('export function apply() {}')).toBeUndefined()
+    expect(hostInjectFromSource('export const inject = DEPS')).toMatchObject({ error: expect.stringMatching(/not a literal list or object/u) })
+    expect(hostInjectFromSource("export const inject = ['tools', name]")).toMatchObject({ error: expect.stringMatching(/non-literal entry "name"/u) })
+  })
+
+  it('a plugin that imports a host package the app provides still gets its contract (it is not imported)', async () => {
+    const dir = join(root, 'tool-plugin')
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'tool-plugin', version: '0.1.0', type: 'module', main: './index.js' }))
+    writeFileSync(join(dir, 'index.js'), "import { defineTool } from '@deepseek-ai/dsh-tools-not-resolvable-here'\nexport const inject = ['tools']\nexport function apply(ctx) { ctx.tools.register(defineTool({})) }\n")
+    expect(await readServiceContract(dir)).toEqual({ errors: [], contract: { requires: { host: ['tools'] }, provides: { host: [] }, slots: { offers: [], fills: [] } } })
   })
 })

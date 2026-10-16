@@ -67,3 +67,18 @@ describe('update', () => {
     expect(await hub.update('acryl-quick-notes')).toMatchObject({ status: 'not-updatable', reason: expect.stringMatching(/has no newer releases/u) })
   })
 })
+
+describe('releases from the first port that sees the repository', () => {
+  it('falls back to the second port for a repository the first cannot see, and downloads through the port that answered', async () => {
+    const { firstReleasePort } = await import('../src/index.js')
+    const calls: string[] = []
+    const anonymous: ReleasePort = { release: async () => { calls.push('https'); return undefined }, download: async () => { throw new Error('not this port') } }
+    const signedIn: ReleasePort = { release: async () => { calls.push('gh'); return { tag: 'v1.0.0', assets: [{ name: 'p.tgz', url: 'api://asset/1' }] } }, download: async url => { calls.push(`gh download ${url}`); return new Uint8Array([1]) } }
+    const port = firstReleasePort(anonymous, signedIn)
+    expect((await port.release('o', 'private-repo'))?.tag).toBe('v1.0.0')
+    expect(await port.download('api://asset/1')).toEqual(new Uint8Array([1]))
+    expect(calls).toEqual(['https', 'gh', 'gh download api://asset/1'])
+    const nowhere = firstReleasePort(anonymous, { ...anonymous })
+    expect(await nowhere.release('o', 'missing')).toBeUndefined()
+  })
+})

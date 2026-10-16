@@ -21,7 +21,7 @@
  */
 import { join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { createPluginHub, findSourceFolder, gitCli, githubCli, githubReleasesOverHttps, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf } from '@webboxes/plugin-hub'
+import { createPluginHub, findSourceFolder, firstReleasePort, gitCli, githubCli, githubReleasesOverHttps, githubReleasesViaGh, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf } from '@webboxes/plugin-hub'
 
 export const name = 'acryl-plugin-hub'
 export const inject = ['appInstance']
@@ -182,7 +182,8 @@ export function pluginTools(hub, { approval, where }) {
 export function apply(ctx) {
   const hub = createPluginHub({
     store: new PluginStore(storeRoot(ctx.appInstance)),
-    releases: githubReleasesOverHttps(),
+    // Public repositories anonymously; a private one through the user's own gh login.
+    releases: firstReleasePort(githubReleasesOverHttps(), githubReleasesViaGh()),
     registry: npmRegistryOverHttps(),
     download: httpsDownload(),
     share: { host: githubCli(), git: gitCli() },

@@ -1,6 +1,7 @@
 // The share ports over the user's own `gh` and `git` (spec 044 guards: credentials stay with the user's tools; nothing waits on a prompt).
 // In the shipped app these come from the user's machine: a missing tool or a missing login is reported with what to do, never worked around.
 import { spawnSync } from 'node:child_process'
+import type { ReleasePort } from './pull.js'
 import type { PublishGitPort, RepositoryHostPort, Visibility } from './share.js'
 
 export class ToolError extends Error {
@@ -73,6 +74,59 @@ export function gitCli(): PublishGitPort {
       const branch = run('git', ['symbolic-ref', '--short', 'HEAD'], dir).stdout.trim() || fallbackBranch
       must('git', ['push', '--quiet', 'origin', `HEAD:refs/heads/${branch}`], dir)
       must('git', ['push', '--quiet', 'origin', `refs/tags/${tag}`], dir)
+    },
+  }
+}
+
+/**
+ * GitHub releases through the user's own `gh` login: what a pull of a private repository needs (an anonymous request cannot see it). Assets
+ * are fetched by their API address with `Accept: application/octet-stream`, which works for private and public repositories alike.
+ */
+export function githubReleasesViaGh(): ReleasePort {
+  return {
+    async release(owner, repo, tag) {
+      const path = tag === undefined ? 'releases/latest' : `releases/tags/${encodeURIComponent(tag)}`
+      const result = run('gh', ['api', `repos/${owner}/${repo}/${path}`])
+      if (result.status !== 0) {
+        if (/HTTP 404|Not Found/iu.test(result.stderr)) return undefined
+        throw new ToolError(`gh api repos/${owner}/${repo}/${path} failed: ${result.stderr.trim().split('\n').at(-1) ?? ''}`)
+      }
+      const body = JSON.parse(result.stdout) as { tag_name?: unknown; assets?: { name?: unknown; url?: unknown }[] }
+      if (typeof body.tag_name !== 'string' || !Array.isArray(body.assets)) throw new ToolError(`gh returned an unexpected release for ${owner}/${repo}`)
+      return { tag: body.tag_name, assets: body.assets.flatMap(asset => (typeof asset.name === 'string' && typeof asset.url === 'string' ? [{ name: asset.name, url: asset.url }] : [])) }
+    },
+    async download(url) {
+      const result = spawnSync('gh', ['api', '-H', 'Accept: application/octet-stream', url], { env: { ...process.env, GH_PROMPT_DISABLED: '1' }, maxBuffer: 64 * 1024 * 1024 })
+      if (result.error !== undefined) throw new ToolError(`gh is not available here: ${HINT['gh'] ?? ''}`)
+      if (result.status !== 0) throw new ToolError(`gh could not download ${url}: ${String(result.stderr).trim().split('\n').at(-1) ?? ''}`)
+      return new Uint8Array(result.stdout)
+    },
+  }
+}
+
+/**
+ * Releases from the first port that sees the repository: anonymous HTTPS for a public one, then the user's `gh` for a private one. Downloads
+ * go to the port that answered for the release, since only it can fetch its asset addresses.
+ */
+export function firstReleasePort(...ports: readonly ReleasePort[]): ReleasePort {
+  const answered = new Map<string, ReleasePort>()
+  return {
+    async release(owner, repo, tag) {
+      let lastError: unknown
+      for (const port of ports) {
+        try {
+          const found = await port.release(owner, repo, tag)
+          if (found !== undefined) {
+            for (const asset of found.assets) answered.set(asset.url, port)
+            return found
+          }
+        } catch (cause) { lastError = cause }
+      }
+      if (lastError !== undefined) throw lastError
+      return undefined
+    },
+    async download(url) {
+      return (answered.get(url) ?? ports[0]!).download(url)
     },
   }
 }

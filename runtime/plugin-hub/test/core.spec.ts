@@ -223,7 +223,7 @@ describe('pulling', () => {
   it('refuses, leaving the store as it was: no release, several tarballs, a tag that disagrees with the package, a wrong checksum', async () => {
     const store = new PluginStore(temp())
     const pull = (source: string, port: ReleasePort, expectIntegrity?: string) => pullPlugin(parsePluginSource(source), { store, releases: port }, expectIntegrity === undefined ? {} : { expectIntegrity })
-    await expect(pull('github:o/r', releases({}))).rejects.toThrow(/has no release; ask its author/)
+    await expect(pull('github:o/r', releases({}))).rejects.toThrow(/has no release that this app can see; ask its author/)
     await expect(pull('github:o/r@1.0.0', releases({ 'v1.0.0': [{ name: 'a.tgz', bytes: release('1.0.0') }, { name: 'b.tgz', bytes: release('1.0.0') }] }))).rejects.toThrow(/2 \.tgz files/)
     await expect(pull('github:o/r@1.0.0', releases({ 'v1.0.0': [{ name: 'a.tgz', bytes: release('0.9.0') }] }))).rejects.toThrow(/release is v1.0.0 but the tarball inside is 0.9.0/)
     await expect(pull('github:o/r@1.0.0', releases({ 'v1.0.0': [{ name: 'a.tgz', bytes: release('1.0.0') }] }), 'sha512-AAAA')).rejects.toThrow(/nothing was installed/)

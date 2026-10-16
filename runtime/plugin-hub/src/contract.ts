@@ -82,6 +82,71 @@ export function clientInjectFromSource(text: string): { readonly names: readonly
   return { names }
 }
 
+/** The text of the balanced `[...]` or `{...}` starting at `open`, or undefined when it does not close. */
+function balanced(text: string, open: number): string | undefined {
+  const pairs: Record<string, string> = { '[': ']', '{': '}', '(': ')' }
+  const stack: string[] = []
+  let quote: string | undefined
+  for (let index = open; index < text.length; index += 1) {
+    const char = text[index]!
+    if (quote !== undefined) {
+      if (char === '\\') index += 1
+      else if (char === quote) quote = undefined
+      continue
+    }
+    if (char === '"' || char === "'" || char === '`') quote = char
+    else if (pairs[char] !== undefined) stack.push(pairs[char])
+    else if (char === stack.at(-1)) {
+      stack.pop()
+      if (stack.length === 0) return text.slice(open, index + 1)
+    }
+  }
+  return undefined
+}
+
+/**
+ * A host entry's `inject`, read from its source when it is written literally (`export const inject = ['tools']`, `export const inject =
+ * { tools: null }`, `static inject = [...]` in a Service class). Reading the source, not importing it, matters: a plugin imports packages
+ * the app provides (`@deepseek-ai/dsh-tools`), which do not resolve from its source folder. Undefined when there is no literal `inject`.
+ */
+export function hostInjectFromSource(text: string): { readonly names: readonly string[] } | { readonly error: string } | undefined {
+  const at = /(?:\bexport\s+const\s+inject|\bstatic\s+inject|\b(?:module\.)?exports\.inject)\s*=\s*/u.exec(text)
+  if (at === null) return undefined
+  const start = at.index + at[0].length
+  const literal = balanced(text, start)
+  if (literal === undefined || (literal[0] !== '[' && literal[0] !== '{')) return { error: 'the host entry\'s "inject" is not a literal list or object; write it as export const inject = [\'tools\', ...] so its contract can be read' }
+  const body = literal.slice(1, -1)
+  if (literal[0] === '[') {
+    const names: string[] = []
+    for (const item of body.split(',').map(entry => entry.trim()).filter(entry => entry !== '')) {
+      const name = /^(['"])([^'"]+)\1$/u.exec(item)?.[2]
+      if (name === undefined) return { error: `the host entry's "inject" has a non-literal entry ${JSON.stringify(item)}; list the service names as strings` }
+      names.push(name)
+    }
+    return { names }
+  }
+  // An object: its top-level keys are the names (the values are per-service config).
+  const names: string[] = []
+  let depth = 0
+  let token = ''
+  let quote: string | undefined
+  for (const char of body) {
+    if (quote !== undefined) { if (char === quote) quote = undefined; if (depth === 0) token += char; continue }
+    if (char === '"' || char === "'") { quote = char; if (depth === 0) token += char; continue }
+    if ('[{('.includes(char)) depth += 1
+    else if (']})'.includes(char)) depth -= 1
+    else if (char === ':' && depth === 0) {
+      const key = /^\s*(?:(['"])([^'"]+)\1|([A-Za-z_$][\w$.-]*))\s*$/u.exec(token.split(',').at(-1) ?? '')
+      if (key === null) return { error: 'the host entry\'s "inject" object has a computed key; write its keys literally' }
+      names.push(key[2] ?? key[3] ?? '')
+      token = ''
+      continue
+    } else if (char === ',' && depth === 0) { token = ''; continue }
+    if (depth === 0) token += char
+  }
+  return { names }
+}
+
 function sourceFiles(dir: string, skip: ReadonlySet<string>): string[] {
   const out: string[] = []
   const walk = (current: string): void => {
@@ -117,12 +182,19 @@ export async function readServiceContract(dir: string): Promise<{ readonly error
 
   if (!existsSync(hostEntry)) errors.push(`the host entry ${hostRel} does not exist`)
   else {
-    try {
-      const mod = await import(`${pathToFileURL(hostEntry).href}?contract=${++importCounter}-${Date.now()}`) as Record<string, unknown>
-      const plugin = ('default' in mod ? mod['default'] : mod) as { inject?: unknown } | undefined
-      requires.host = sorted(injectNames(plugin?.inject))
-    } catch (cause) {
-      errors.push(`importing ${hostRel} failed, so its "inject" cannot be read: ${cause instanceof Error ? cause.message : String(cause)}`)
+    const literal = hostInjectFromSource(readFileSync(hostEntry, 'utf8'))
+    if (literal !== undefined && 'names' in literal) requires.host = sorted(literal.names)
+    else {
+      // No literal (a computed or decorated `inject`): read it the way the Loader does, by importing the entry.
+      try {
+        const mod = await import(`${pathToFileURL(hostEntry).href}?contract=${++importCounter}-${Date.now()}`) as Record<string, unknown>
+        const plugin = ('default' in mod ? mod['default'] : mod) as { inject?: unknown } | undefined
+        requires.host = sorted(injectNames(plugin?.inject))
+      } catch (cause) {
+        errors.push(literal !== undefined && 'error' in literal
+          ? literal.error
+          : `importing ${hostRel} failed, so its "inject" cannot be read: ${cause instanceof Error ? cause.message : String(cause)}`)
+      }
     }
     const skip = new Set(clientEntry === undefined ? [] : [clientEntry])
     provides.host = sorted(sourceFiles(dir, skip).flatMap(file => providedServices(readFileSync(file, 'utf8'))))

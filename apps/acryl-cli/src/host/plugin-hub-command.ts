@@ -12,7 +12,7 @@
 
 import { isAbsolute, join, resolve } from 'node:path'
 import {
-  createPluginHub, findSourceFolder, githubReleasesOverHttps, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf,
+  createPluginHub, findSourceFolder, firstReleasePort, githubReleasesOverHttps, githubReleasesViaGh, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf,
   type InstallerPort, type PluginHub, type PullResult, type SaveResult, type ShareResult, type StoredVersion, type UpdateResult, type VersionBump, gitCli, githubCli,
 } from '@webboxes/plugin-hub'
 import { processIsAlive, readLock, resolveAcrylDshHome, runLockFileForDshHome, selectInstance } from 'acryl-harness-runtime'
@@ -44,7 +44,7 @@ export type PluginHubCommandResult =
 function storeHub(home: string, extra: { readonly has?: (service: string) => boolean; readonly installer?: () => InstallerPort | undefined } = {}): PluginHub {
   return createPluginHub({
     store: new PluginStore(storeRootOf(home)),
-    releases: githubReleasesOverHttps(),
+    releases: firstReleasePort(githubReleasesOverHttps(), githubReleasesViaGh()),
     registry: npmRegistryOverHttps(),
     download: httpsDownload(),
     has: extra.has ?? (() => true),
