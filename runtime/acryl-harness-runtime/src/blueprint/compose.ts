@@ -29,6 +29,8 @@ const ROWS: readonly RowDeclaration[] = [
   { id: 'ui-library', surfaces: ['tui', 'web', 'desktop'], rowId: '@acryl/ui', packageName: '@acryl/ui', libraryOnly: ['tui'] },
   // Saving an app to its own repository (/app save, /app connect): a command, so it works on every surface.
   { id: 'app-save', surfaces: ['tui', 'web', 'desktop'], rowId: 'acryl-app-save', packageName: 'acryl-app-save' },
+  // Saving, sharing and pulling plugins (spec 044): the pluginHub service and /plugin, part of every Blend's base kit.
+  { id: 'plugin-hub', surfaces: ['tui', 'web', 'desktop'], rowId: 'acryl-plugin-hub', packageName: 'acryl-plugin-hub' },
   // ACRYL's keyboard commands on DSH 0.2's own shortcut service (`ctx.shortcuts.register`): upstream owns the registry, persisted rebinding and the
   // editor, so this package no longer provides a service of its own (a second provider fails the client boot).
   { id: 'shortcuts', surfaces: ['web', 'desktop'], rowId: 'acryl-shortcuts', packageName: 'acryl-shortcuts' },

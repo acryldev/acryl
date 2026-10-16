@@ -26,6 +26,7 @@ packages:
   - plugins/acryl-sign-in
   - plugins/acryl-brand
   - plugins/acryl-app-save
+  - plugins/acryl-plugin-hub
   - plugins/acryl-app-shell
   - plugins/acryl-workspace
   - plugins/acryl-plugin-admin

@@ -6,7 +6,7 @@ export type AcrylHostCommand = 'tui' | 'gui' | 'web'
  * and are recognized so the command surface matches `plan.md`, then refused
  * with a pointer rather than reported as an unknown action.
  */
-export type AcrylPluginAction = 'list' | 'enable' | 'disable' | 'doctor' | 'add' | 'remove'
+export type AcrylPluginAction = 'list' | 'enable' | 'disable' | 'doctor' | 'add' | 'remove' | 'saved' | 'save' | 'version' | 'pull'
 
 interface AcrylInvocationFlags {
   readonly json: boolean
@@ -25,8 +25,10 @@ export interface AcrylSurfaceInvocation extends AcrylInvocationFlags {
 export interface AcrylPluginInvocation extends AcrylInvocationFlags {
   readonly kind: 'plugin'
   readonly action: AcrylPluginAction
-  /** Loader entry id, row id, or package name the action targets. */
+  /** Loader entry id, row id, or package name the action targets; for `save`/`version` the plugin folder or name, for `pull` the source. */
   readonly entryId?: string
+  /** `version` only: which part of the version a change moves. */
+  readonly bump?: 'patch' | 'minor' | 'major'
 }
 
 /** What `acryl ui` can do (spec 038-ui-component-library, T038): copy or inspect a registry item. */
@@ -266,13 +268,19 @@ const PLUGIN_ACTIONS = new Set<AcrylPluginAction>([
   'doctor',
   'add',
   'remove',
+  'saved',
+  'save',
+  'version',
+  'pull',
 ])
 
 /** Actions that name exactly one plugin. */
-const PLUGIN_TARGET_ACTIONS = new Set<AcrylPluginAction>(['enable', 'disable', 'add', 'remove'])
+const PLUGIN_TARGET_ACTIONS = new Set<AcrylPluginAction>(['enable', 'disable', 'add', 'remove', 'save', 'pull'])
 
 /** What a target action's argument is called, for error messages a user reads. */
 function targetNoun(action: AcrylPluginAction): string {
+  if (action === 'save') return 'plugin folder or name'
+  if (action === 'pull') return 'source (store:<name>, github:<owner>/<repo>[@version], npm:<name>, or a .tgz)'
   return action === 'add' || action === 'remove' ? 'package name' : 'plugin id'
 }
 
@@ -301,6 +309,14 @@ function parsePluginInvocation(
   const action = rawAction === undefined ? 'list' : pluginAction(rawAction)
   if (action === undefined) {
     throw new Error(`unknown plugin action: ${rawAction}`)
+  }
+  if (action === 'version') {
+    // `acryl plugin version patch <plugin>`: the part to move, then the plugin, like `npm version patch`.
+    const [target, ...more] = extra
+    if (entryId !== 'patch' && entryId !== 'minor' && entryId !== 'major') throw new Error('usage: acryl plugin version <patch|minor|major> <plugin folder or name>')
+    if (target === undefined) throw new Error('plugin version requires a plugin folder or name')
+    if (more.length > 0) throw new Error(`unexpected argument for plugin version: ${more[0]}`)
+    return { ...flags, kind: 'plugin', action, bump: entryId, entryId: target }
   }
   if (extra.length > 0) throw new Error(`unexpected argument for plugin ${action}: ${extra[0]}`)
   if (PLUGIN_TARGET_ACTIONS.has(action)) {

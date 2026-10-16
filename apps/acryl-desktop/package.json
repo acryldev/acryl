@@ -421,6 +421,7 @@
     "@vscode/ripgrep-win32-x64": "1.18.0",
     "acryl-agent-control": "workspace:*",
     "acryl-app-save": "workspace:*",
+    "acryl-plugin-hub": "workspace:*",
     "acryl-app-shell": "workspace:*",
     "acryl-brand": "workspace:*",
     "acryl-diagnostics": "workspace:*",

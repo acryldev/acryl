@@ -4,6 +4,7 @@ import {
   type PluginCommandOptions,
   type PluginCommandResult,
 } from '../host/plugin-command.ts'
+import { renderPluginHubCommand, runPluginHubCommand, type PluginHubCommandOptions, type PluginHubCommandResult } from '../host/plugin-hub-command.ts'
 import { runAcrylTui } from '../tui-app/session.ts'
 import { ACRYL_VERSION } from '../version.ts'
 import { runDoctor, runRepair, type Confirm } from '../host/rescue-command.ts'
@@ -29,6 +30,8 @@ export interface AcrylCliDependencies {
   readonly startDirectHost: (options: { profile: string }) => Promise<RunningDirectHost>
   readonly runTui: (options: { profile: string; resumeSessionId?: string }) => Promise<{ resumeHint: string }>
   readonly runPluginCommand: (options: PluginCommandOptions) => Promise<PluginCommandResult>
+  /** `acryl plugin saved | save | version | pull`: the plugin hub (spec 044). */
+  readonly runPluginHubCommand: (options: PluginHubCommandOptions) => Promise<PluginHubCommandResult>
   readonly exit: (code: number) => void
   readonly write: (line: string) => void
   /** Asks a yes or no question on the terminal; used by `acryl repair` before it changes anything. */
@@ -68,6 +71,7 @@ const defaults: AcrylCliDependencies = {
   startDirectHost,
   runTui: runAcrylTui,
   runPluginCommand,
+  runPluginHubCommand,
   exit: code => { process.exitCode = code },
   write: line => { process.stdout.write(`${line}\n`) },
   confirm: terminalConfirm,
@@ -94,6 +98,25 @@ async function runPluginInvocation(
   invocation: AcrylPluginInvocation,
   dependencies: AcrylCliDependencies,
 ): Promise<void> {
+  if (invocation.action === 'saved' || invocation.action === 'save' || invocation.action === 'version' || invocation.action === 'pull') {
+    let result: PluginHubCommandResult
+    try {
+      result = await dependencies.runPluginHubCommand({
+        profile: invocation.profile ?? 'acryl',
+        action: invocation.action,
+        ...(invocation.entryId === undefined ? {} : { target: invocation.entryId }),
+        ...(invocation.bump === undefined ? {} : { bump: invocation.bump }),
+      })
+    } catch (cause) {
+      dependencies.write(cause instanceof Error ? cause.message : String(cause))
+      dependencies.exit(1)
+      return
+    }
+    const rendered = renderPluginHubCommand(result, invocation.json)
+    for (const line of rendered.lines) dependencies.write(line)
+    if (rendered.exitCode !== 0) dependencies.exit(rendered.exitCode)
+    return
+  }
   if (invocation.action === 'add' || invocation.action === 'remove') {
     throw new Error(
       `plugin ${invocation.action} lands with install/reconcile (spec 034, T006); `
@@ -164,6 +187,10 @@ export async function runAcryl(
         '  plugin enable <id>               Enable a plugin for this profile',
         '  plugin disable <id>              Disable a plugin for this profile',
         '  plugin doctor                    Check a profile\'s plugin layer',
+        '  plugin saved                     List every plugin version kept in this app\'s plugin store',
+        '  plugin save <plugin>             Pack a plugin you edit (folder or name) and keep that version',
+        '  plugin version <patch|minor|major> <plugin>  Give a change its new version',
+        '  plugin pull <source>             Fetch, check and install a plugin: store:<name>, github:<owner>/<repo>[@version], npm:<name>, a .tgz',
         '  doctor                           Diagnose a profile from its files and logs (works when the app cannot start)',
         '  repair                           Plan and apply the safe repairs doctor finds (--dry-run, --recipe <id>, --yes, --undo <id>)',
         '  ui list                          List a UI component registry\'s items',

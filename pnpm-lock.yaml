@@ -533,6 +533,9 @@ importers:
       '@webboxes/app-persistence':
         specifier: workspace:*
         version: link:../../runtime/app-persistence
+      '@webboxes/plugin-hub':
+        specifier: workspace:*
+        version: link:../../runtime/plugin-hub
       acryl-agent-control:
         specifier: workspace:*
         version: link:../../plugins/acryl-agent-control
@@ -1419,6 +1422,9 @@ importers:
       acryl-app-save:
         specifier: workspace:*
         version: link:../../plugins/acryl-app-save
+      acryl-plugin-hub:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-plugin-hub
       acryl-app-shell:
         specifier: workspace:*
         version: link:../../plugins/acryl-app-shell
@@ -2098,6 +2104,9 @@ importers:
       acryl-app-save:
         specifier: workspace:*
         version: link:../../plugins/acryl-app-save
+      acryl-plugin-hub:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-plugin-hub
       acryl-app-shell:
         specifier: workspace:*
         version: link:../../plugins/acryl-app-shell
@@ -2236,6 +2245,12 @@ importers:
       '@webboxes/app-persistence':
         specifier: workspace:*
         version: link:../../runtime/app-persistence
+
+  plugins/acryl-plugin-hub:
+    dependencies:
+      '@webboxes/plugin-hub':
+        specifier: workspace:*
+        version: link:../../runtime/plugin-hub
 
   plugins/acryl-app-shell:
     dependencies:
@@ -3559,6 +3574,9 @@ importers:
       acryl-app-save:
         specifier: workspace:*
         version: link:../../plugins/acryl-app-save
+      acryl-plugin-hub:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-plugin-hub
       acryl-app-shell:
         specifier: workspace:*
         version: link:../../plugins/acryl-app-shell

@@ -71,6 +71,17 @@ describe('parseAcrylArgs', () => {
     })
   })
 
+  it('parses the plugin hub verbs: saved, save, pull, and version with the part to move', () => {
+    expect(parseAcrylArgs(['plugin', 'saved'])).toEqual({ kind: 'plugin', action: 'saved', json: false, version: false, help: false })
+    expect(parseAcrylArgs(['plugin', 'save', 'quick-notes'])).toEqual({ kind: 'plugin', action: 'save', entryId: 'quick-notes', json: false, version: false, help: false })
+    expect(parseAcrylArgs(['plugin', 'pull', 'github:inboxxobni/acryl-quick-notes@0.2.1', '--json'])).toEqual({ kind: 'plugin', action: 'pull', entryId: 'github:inboxxobni/acryl-quick-notes@0.2.1', json: true, version: false, help: false })
+    expect(parseAcrylArgs(['plugin', 'version', 'minor', './notes'])).toEqual({ kind: 'plugin', action: 'version', bump: 'minor', entryId: './notes', json: false, version: false, help: false })
+    expect(() => parseAcrylArgs(['plugin', 'version', 'huge', 'x'])).toThrow('usage: acryl plugin version <patch|minor|major>')
+    expect(() => parseAcrylArgs(['plugin', 'version', 'patch'])).toThrow('requires a plugin folder or name')
+    expect(() => parseAcrylArgs(['plugin', 'pull'])).toThrow('requires a source')
+    expect(() => parseAcrylArgs(['plugin', 'saved', 'x'])).toThrow('takes no argument')
+  })
+
   it('rejects plugin arguments that do not match the action', () => {
     expect(() => parseAcrylArgs(['plugin', 'enable'])).toThrow('requires a plugin id')
     expect(() => parseAcrylArgs(['plugin', 'add'])).toThrow('requires a package name')

@@ -31,5 +31,7 @@ spec:
       name: '@acryl/ui'
     - id: acryl-app-save
       name: 'acryl-app-save'
+    - id: acryl-plugin-hub
+      name: 'acryl-plugin-hub'
     - id: acryl-organizer
       name: 'acryl-organizer'

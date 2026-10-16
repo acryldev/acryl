@@ -75,6 +75,10 @@ function dependencies(overrides: Partial<AcrylCliDependencies> = {}): AcrylCliDe
       events.push(`plugin:${options.action}:${options.entryId ?? ''}:${options.profile}`)
       return snapshot(options.profile)
     },
+    runPluginHubCommand: async options => {
+      events.push(`hub:${options.action}:${options.bump ?? ''}:${options.target ?? ''}:${options.profile}`)
+      return { kind: 'version', name: '@o/notes.sidebar.quick-notes', from: '0.2.1', to: '0.2.2', folder: '/w/.acryl-extensions/quick-notes' }
+    },
     exit: code => { events.push(`exit:${code}`) },
     write: line => { events.push(`write:${line}`) },
     confirm: async () => false,
@@ -146,6 +150,21 @@ describe('runAcryl', () => {
       'write:on  include:ui-acryl  @acryl/dsh-client-ui-brand-acryl',
       'write:override file: /home/.acryl/plugin-lifecycle/state.json',
     ])
+  })
+
+  it('sends the plugin hub verbs to the hub, with the part to bump and the plugin', async () => {
+    const deps = dependencies()
+    await runAcryl(['plugin', 'version', 'patch', 'quick-notes'], deps)
+    expect(deps.events).toEqual([
+      'hub:version:patch:quick-notes:acryl',
+      'write:@o/notes.sidebar.quick-notes: 0.2.1 -> 0.2.2 (/w/.acryl-extensions/quick-notes).',
+    ])
+  })
+
+  it('prints a hub refusal and exits 1', async () => {
+    const deps = dependencies({ runPluginHubCommand: async () => { throw new Error('the app running this profile (pid 7) is live') } })
+    await runAcryl(['plugin', 'pull', 'github:o/r'], deps)
+    expect(deps.events).toEqual(['write:the app running this profile (pid 7) is live', 'exit:1'])
   })
 
   it('defaults `acryl plugin` to the list action', async () => {

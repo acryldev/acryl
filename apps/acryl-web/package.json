@@ -193,6 +193,7 @@
     "@deepseek-ai/dsh-workspace": "0.2.0-rc.2",
     "acryl-agent-control": "workspace:*",
     "acryl-app-save": "workspace:*",
+    "acryl-plugin-hub": "workspace:*",
     "acryl-app-shell": "workspace:*",
     "acryl-brand": "workspace:*",
     "acryl-extension-context": "workspace:*",
