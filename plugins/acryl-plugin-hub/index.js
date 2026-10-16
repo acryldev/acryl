@@ -20,7 +20,7 @@
  * `commands` (the chat command).
  */
 import { join } from 'node:path'
-import { createPluginHub, findSourceFolder, githubReleasesOverHttps, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf } from '@webboxes/plugin-hub'
+import { createPluginHub, findSourceFolder, gitCli, githubCli, githubReleasesOverHttps, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf } from '@webboxes/plugin-hub'
 
 export const name = 'acryl-plugin-hub'
 export const inject = ['appInstance']
@@ -35,7 +35,7 @@ export function sourceRoots({ workspaceDir, home }) {
   return [workspaceDir === undefined ? undefined : join(workspaceDir, '.acryl-extensions'), home === undefined ? undefined : join(home, 'extensions')]
 }
 
-const USAGE = 'Usage: /plugin list | saved | save <name or folder> | pull <source> | version patch|minor|major <name or folder>. A source is store:<name>[@version], github:<owner>/<repo>[@version], npm:<name>[@version], a .tgz file or https URL.'
+const USAGE = 'Usage: /plugin list | saved | save <name or folder> | share <name or folder> [public] [owner/repo] | pull <source> | version patch|minor|major <name or folder>. A source is store:<name>[@version], github:<owner>/<repo>[@version], npm:<name>[@version], a .tgz file or https URL.'
 
 function describePull(result) {
   const id = `${result.name} ${result.version}`
@@ -77,6 +77,19 @@ export async function runPluginCommand(rawInput, hub, where) {
       const saved = hub.save(folder)
       return { kind: 'success', text: saved.added ? `Saved ${saved.name} ${saved.version} (${saved.files.length} files) to the plugin store.` : `${saved.name} ${saved.version} is already saved with exactly these files.` }
     }
+    if (verb === 'share') {
+      // `/plugin share <name> [public] [owner[/repo]]`: typed by the user, so it is the user's confirmation (spec 044 guards).
+      const isPublic = rest.includes('public')
+      const words = rest.filter(word => word !== 'public')
+      const target = words[0]
+      if (target === undefined || words.length > 2) return { kind: 'error', text: USAGE }
+      const folder = findSourceFolder(target, sourceRoots(where))
+      if (folder === undefined) return { kind: 'error', text: `No plugin folder named ${JSON.stringify(target)} in this project's .acryl-extensions/ or the app's extensions/; give its absolute folder.` }
+      const [owner, repo] = (words[1] ?? '').split('/')
+      const result = await hub.share(folder, { ...(owner ? { owner } : {}), ...(repo ? { repo } : {}), ...(isPublic ? { visibility: 'public' } : {}) })
+      if (result.status === 'refused') return { kind: 'error', text: `Not shared: ${result.reason}${(result.secrets ?? []).map(found => `\n- ${found.path}${found.line > 0 ? `:${found.line}` : ''} (${found.kind})`).join('')}` }
+      return { kind: 'success', text: `Shared ${result.name} ${result.version} to ${result.visibility} ${result.url}${result.created ? ' (new repository)' : ''}: release ${result.tag}, ${result.files.length} files.${result.visibility === 'public' ? ' Catalogs list it by its labels on their next refresh.' : ' Only its collaborators can pull it; type /plugin share ' + target + ' public to list it.'}` }
+    }
     if (verb === 'pull') {
       if (rest.length !== 1) return { kind: 'error', text: USAGE }
       return describePull(await hub.pull(rest[0]))
@@ -93,6 +106,7 @@ export function apply(ctx) {
     releases: githubReleasesOverHttps(),
     registry: npmRegistryOverHttps(),
     download: httpsDownload(),
+    share: { host: githubCli(), git: gitCli() },
     has: service => ctx.get(service) !== undefined,
     installer: () => ctx.get('pluginManager'),
   })
@@ -103,8 +117,8 @@ export function apply(ctx) {
   ctx.inject(['commands'], scoped => {
     scoped.effect(() => scoped.commands.register({
       name: 'plugin',
-      description: 'List, save, pull or version plugins (store:, github:owner/repo, npm:, a .tgz)',
-      input: { hint: 'list | saved | save <name> | pull <source> | version patch <name>' },
+      description: 'List, save, share, pull or version plugins (store:, github:owner/repo, npm:, a .tgz)',
+      input: { hint: 'list | saved | save <name> | share <name> [public] | pull <source> | version patch <name>' },
       async handler(invocation) {
         return runPluginCommand(invocation?.rawInput, hub, { workspaceDir: invocation?.agent?.session?.header?.cwd, home: ctx.appInstance.home })
       },

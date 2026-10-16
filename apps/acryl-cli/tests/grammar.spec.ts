@@ -82,6 +82,14 @@ describe('parseAcrylArgs', () => {
     expect(() => parseAcrylArgs(['plugin', 'saved', 'x'])).toThrow('takes no argument')
   })
 
+  it('parses plugin share with its own flags', () => {
+    expect(parseAcrylArgs(['plugin', 'share', 'quick-notes'])).toEqual({ kind: 'plugin', action: 'share', entryId: 'quick-notes', json: false, version: false, help: false })
+    expect(parseAcrylArgs(['plugin', 'share', 'quick-notes', '--to', 'inboxxobni/acryl-quick-notes', '--public', '--json'])).toEqual({ kind: 'plugin', action: 'share', entryId: 'quick-notes', to: 'inboxxobni/acryl-quick-notes', public: true, json: true, version: false, help: false })
+    expect(() => parseAcrylArgs(['plugin', 'share'])).toThrow('usage: acryl plugin share')
+    expect(() => parseAcrylArgs(['plugin', 'share', 'a', '--to', 'a/b/c'])).toThrow('--to takes <owner> or <owner>/<repo>')
+    expect(() => parseAcrylArgs(['plugin', 'share', 'a', '--force'])).toThrow('unknown option for plugin share: --force')
+  })
+
   it('rejects plugin arguments that do not match the action', () => {
     expect(() => parseAcrylArgs(['plugin', 'enable'])).toThrow('requires a plugin id')
     expect(() => parseAcrylArgs(['plugin', 'add'])).toThrow('requires a package name')

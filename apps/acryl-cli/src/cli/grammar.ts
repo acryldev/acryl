@@ -6,7 +6,7 @@ export type AcrylHostCommand = 'tui' | 'gui' | 'web'
  * and are recognized so the command surface matches `plan.md`, then refused
  * with a pointer rather than reported as an unknown action.
  */
-export type AcrylPluginAction = 'list' | 'enable' | 'disable' | 'doctor' | 'add' | 'remove' | 'saved' | 'save' | 'version' | 'pull'
+export type AcrylPluginAction = 'list' | 'enable' | 'disable' | 'doctor' | 'add' | 'remove' | 'saved' | 'save' | 'version' | 'pull' | 'share'
 
 interface AcrylInvocationFlags {
   readonly json: boolean
@@ -29,6 +29,10 @@ export interface AcrylPluginInvocation extends AcrylInvocationFlags {
   readonly entryId?: string
   /** `version` only: which part of the version a change moves. */
   readonly bump?: 'patch' | 'minor' | 'major'
+  /** `share` only: list it publicly (default: the plugin's own visibility, else private). */
+  readonly public?: boolean
+  /** `share` only: the repository, as `<owner>/<repo>` or `<owner>`. */
+  readonly to?: string
 }
 
 /** What `acryl ui` can do (spec 038-ui-component-library, T038): copy or inspect a registry item. */
@@ -296,6 +300,36 @@ function pluginAction(value: string): AcrylPluginAction | undefined {
     : undefined
 }
 
+/** `acryl plugin share <plugin> [--to <owner>[/<repo>]] [--public] [--profile <p>] [--json]`: its own flags, so it is parsed on its own. */
+function parsePluginShareInvocation(args: readonly string[]): AcrylPluginInvocation {
+  const usage = 'usage: acryl plugin share <plugin folder or name> [--to <owner>[/<repo>]] [--public] [--json]'
+  let to: string | undefined
+  let profile: string | undefined
+  let isPublic = false
+  let json = false
+  const positional: string[] = []
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index] ?? ''
+    if (argument === '--public') { isPublic = true; continue }
+    if (argument === '--json') { json = true; continue }
+    if (argument === '--to' || argument === '--profile') {
+      const value = args[index + 1]
+      if (value === undefined || value.startsWith('--') || value.trim() === '') throw new Error(`${argument} requires a value`)
+      if (argument === '--to') { if (to !== undefined) throw new Error('--to may be provided only once'); to = value } else { if (profile !== undefined) throw new Error('--profile may be provided only once'); profile = value }
+      index += 1
+      continue
+    }
+    if (argument.startsWith('-')) throw new Error(`unknown option for plugin share: ${argument}`)
+    positional.push(argument)
+  }
+  if (positional.length !== 1) throw new Error(usage)
+  if (to !== undefined && !/^[A-Za-z0-9][A-Za-z0-9-]*(?:\/[A-Za-z0-9._-]+)?$/u.test(to)) throw new Error(`--to takes <owner> or <owner>/<repo>, not ${JSON.stringify(to)}`)
+  return {
+    kind: 'plugin', action: 'share', entryId: positional[0] ?? '', json, version: false, help: false,
+    ...(profile === undefined ? {} : { profile }), ...(isPublic ? { public: true } : {}), ...(to === undefined ? {} : { to }),
+  }
+}
+
 /** `acryl plugin …` behind `acryl tui`: the command word plus its own arguments. */
 function parsePluginInvocation(
   rest: readonly string[],
@@ -395,6 +429,7 @@ export function parseAcrylArgs(args: readonly string[]): AcrylInvocation {
   if (args[0] === 'save') return parseSaveInvocation(args.slice(1))
   if (args[0] === 'remote') return parseRemoteInvocation(args.slice(1))
   if (args[0] === 'control') return parseControlInvocation(args.slice(1))
+  if (args[0] === 'plugin' && args[1] === 'share') return parsePluginShareInvocation(args.slice(2))
   let profile: string | undefined
   let resumeSessionId: string | undefined
   let uiSurface: string | undefined

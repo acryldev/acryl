@@ -98,7 +98,7 @@ async function runPluginInvocation(
   invocation: AcrylPluginInvocation,
   dependencies: AcrylCliDependencies,
 ): Promise<void> {
-  if (invocation.action === 'saved' || invocation.action === 'save' || invocation.action === 'version' || invocation.action === 'pull') {
+  if (invocation.action === 'saved' || invocation.action === 'save' || invocation.action === 'version' || invocation.action === 'pull' || invocation.action === 'share') {
     let result: PluginHubCommandResult
     try {
       result = await dependencies.runPluginHubCommand({
@@ -106,6 +106,8 @@ async function runPluginInvocation(
         action: invocation.action,
         ...(invocation.entryId === undefined ? {} : { target: invocation.entryId }),
         ...(invocation.bump === undefined ? {} : { bump: invocation.bump }),
+        ...(invocation.public === true ? { public: true } : {}),
+        ...(invocation.to === undefined ? {} : { to: invocation.to }),
       })
     } catch (cause) {
       dependencies.write(cause instanceof Error ? cause.message : String(cause))
@@ -190,6 +192,7 @@ export async function runAcryl(
         '  plugin saved                     List every plugin version kept in this app\'s plugin store',
         '  plugin save <plugin>             Pack a plugin you edit (folder or name) and keep that version',
         '  plugin version <patch|minor|major> <plugin>  Give a change its new version',
+        '  plugin share <plugin> [--to <owner>[/<repo>]] [--public]  Release it to its own GitHub repository (private unless --public)',
         '  plugin pull <source>             Fetch, check and install a plugin: store:<name>, github:<owner>/<repo>[@version], npm:<name>, a .tgz',
         '  doctor                           Diagnose a profile from its files and logs (works when the app cannot start)',
         '  repair                           Plan and apply the safe repairs doctor finds (--dry-run, --recipe <id>, --yes, --undo <id>)',

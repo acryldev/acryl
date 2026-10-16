@@ -135,6 +135,23 @@ test('/plugin save, version and saved: a source folder found by name, a fix as a
   assert.doesNotMatch(list, /shipped-bundle/u)
 })
 
+test('/plugin share passes the folder, owner, repository and public to the hub, and reports a refusal with the secrets found', async () => {
+  const workspace = temp()
+  pluginFolder(join(workspace, '.acryl-extensions'), 'quick-notes', notes('0.2.1'))
+  const calls = []
+  const hub = { async share(folder, options) { calls.push({ folder, options }); return calls.length === 1
+    ? { status: 'shared', name: 'n', version: '0.2.1', visibility: 'public', url: 'https://github.com/o/r', created: true, tag: 'v0.2.1', files: ['a', 'b'] }
+    : { status: 'refused', reason: 'the secret check found 1 possible secret(s)', secrets: [{ path: 'config.js', line: 1, kind: 'Anthropic API key' }] } } }
+  const shared = await runPluginCommand('share quick-notes public o/r', hub, { workspaceDir: workspace })
+  assert.equal(shared.kind, 'success')
+  assert.match(shared.text, /^Shared n 0\.2\.1 to public https:\/\/github\.com\/o\/r \(new repository\): release v0\.2\.1, 2 files\. Catalogs list it/u)
+  assert.deepEqual(calls[0], { folder: join(workspace, '.acryl-extensions', 'quick-notes'), options: { owner: 'o', repo: 'r', visibility: 'public' } })
+  const refused = await runPluginCommand('share quick-notes', hub, { workspaceDir: workspace })
+  assert.equal(refused.kind, 'error')
+  assert.match(refused.text, /Not shared: the secret check.*\n- config\.js:1 \(Anthropic API key\)/su)
+  assert.deepEqual(calls[1].options, {})
+})
+
 test('/plugin refuses what it cannot do, with the usage or the reason', async () => {
   const { hub } = hubWith()
   assert.match((await runPluginCommand('', hub, {})).text, /^Usage: \/plugin/u)

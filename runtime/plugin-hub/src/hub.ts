@@ -6,6 +6,7 @@ import { isAbsolute, join } from 'node:path'
 import { pullPlugin, type RegistryPort, type ReleasePort } from './pull.js'
 import { parsePluginSource } from './source.js'
 import { savePlugin } from './save.js'
+import { sharePlugin, type PublishGitPort, type RepositoryHostPort, type ShareOptions, type ShareResult } from './share.js'
 import type { PluginStore, StoredVersion } from './store.js'
 import { bumpVersion, type VersionBump } from './version.js'
 
@@ -31,6 +32,8 @@ export interface HubPorts {
   readonly has: (service: string) => boolean
   /** The installer, read when needed (it may load after the hub); undefined when the app has none. */
   readonly installer: () => InstallerPort | undefined
+  /** The git host and git for sharing (the user's own `gh` and `git`); without them sharing is unavailable and says so. */
+  readonly share?: { readonly host: RepositoryHostPort; readonly git: PublishGitPort }
 }
 
 export type PullStatus = 'installed' | 'restart-required' | 'stored' | 'missing-services' | 'install-failed' | 'overridden' | 'cancelled'
@@ -104,6 +107,7 @@ export interface PluginHub {
   bump(folder: string, bump: VersionBump): { readonly name: string; readonly from: string; readonly to: string }
   pull(source: string, options?: { readonly install?: boolean; readonly expectIntegrity?: string }): Promise<PullResult>
   installed(): Promise<InstalledPlugin[] | undefined>
+  share(folder: string, options?: ShareOptions): Promise<ShareResult>
 }
 
 export function createPluginHub(ports: HubPorts): PluginHub {
@@ -144,6 +148,11 @@ export function createPluginHub(ports: HubPorts): PluginHub {
       const outcome = await installer.installBundle(pulled.stored.path)
       const status: PullStatus = outcome.error !== undefined || outcome.application === 'failed' ? 'install-failed' : outcome.application === 'applied' ? 'installed' : outcome.application
       return { ...base, status, contractChecked: contract.checked, outcome }
+    },
+
+    async share(folder, options = {}) {
+      if (ports.share === undefined) return { status: 'refused', reason: 'sharing is not available in this app (no git host connection)' }
+      return sharePlugin(folder, options, { host: ports.share.host, git: ports.share.git, store })
     },
 
     async installed() {

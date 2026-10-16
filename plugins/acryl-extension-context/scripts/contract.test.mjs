@@ -23,12 +23,12 @@ const withClient = (host, client) => ({
 test('the contract of a host and client example is what each side injects', async () => {
   const read = await readServiceContract(example('state-host-store'))
   assert.deepEqual(read.errors, [])
-  assert.deepEqual(read.contract, { requires: { host: ['connection', 'dshHomePath', 'webServer'], client: ['connection', 'slots'] }, provides: { host: [], client: [] } })
+  assert.deepEqual(read.contract, { requires: { host: ['connection', 'dshHomePath', 'webServer'], client: ['connection', 'slots'] }, provides: { host: [], client: [] }, slots: { offers: [], fills: ['sidebar.footer.action'] } })
 })
 
 test('a host-only example has no client side', async () => {
   const read = await readServiceContract(example('tool-basic'))
-  assert.deepEqual(read.contract, { requires: { host: ['tools'] }, provides: { host: [] } })
+  assert.deepEqual(read.contract, { requires: { host: ['tools'] }, provides: { host: [] }, slots: { offers: [], fills: [] } })
 })
 
 test('a map-form inject and a Service class are read as Cordis reads them', async () => {
@@ -39,7 +39,7 @@ test('a map-form inject and a Service class are read as Cordis reads them', asyn
   })
   try {
     const read = await readServiceContract(dir)
-    assert.deepEqual(read.contract, { requires: { host: ['slots', 'tools'] }, provides: { host: ['notesIndex', 'notesStore'] } })
+    assert.deepEqual(read.contract, { requires: { host: ['slots', 'tools'] }, provides: { host: ['notesIndex', 'notesStore'] }, slots: { offers: [], fills: [] } })
   } finally { rmSync(dir, { recursive: true, force: true }) }
 })
 
@@ -65,7 +65,7 @@ test('sync writes the contract into package.json once, keeping the rest of the m
     const first = await syncServiceContract(dir)
     assert.equal(first.written, true)
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
-    assert.deepEqual(pkg.acryl, { schemaVersion: 1, permissions: ['ui'], requires: { host: ['connection'], client: ['slots'] }, provides: { host: [], client: [] } })
+    assert.deepEqual(pkg.acryl, { schemaVersion: 1, permissions: ['ui'], requires: { host: ['connection'], client: ['slots'] }, provides: { host: [], client: [] }, slots: { offers: [], fills: [] } })
     assert.equal((await syncServiceContract(dir)).written, false)
     writeFileSync(join(dir, 'client.js'), "exports.inject = ['slots', 'connection']\n")
     assert.equal((await syncServiceContract(dir)).written, true)

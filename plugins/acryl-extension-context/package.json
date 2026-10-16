@@ -43,6 +43,7 @@
   "main": "./index.js",
   "dependencies": {
     "@webboxes/blends-core": "workspace:*",
+    "@webboxes/plugin-hub": "workspace:*",
     "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
     "yaml": "^2.9.0"
   },
