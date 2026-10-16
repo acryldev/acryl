@@ -72,27 +72,35 @@ plugin. Verified working examples: `../example-plugins/README.md`.
 | [Harness subsystems: Agent Teams](reference/subsystems/agent-team.md) | English \| [中文](agent-team.zh.md) | tui web desktop | partial |
 | [Harness subsystems: User Approval](reference/subsystems/approval.md) | English \| [中文](approval.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Durable Attachments](reference/subsystems/attachment.md) | English \| [中文](attachment.zh.md) | tui web desktop | partial |
+| [Harness subsystems: Profile management](reference/subsystems/boot.md) | English \| [中文](boot.zh.md) | tui web desktop | partial |
+| [Harness subsystems: Browser use](reference/subsystems/browser-use.md) | English \| [中文](browser-use.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Client Modules](reference/subsystems/client-modules.md) | English \| [中文](client-modules.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Client Resources](reference/subsystems/client-resources.md) | English \| [中文](client-resources.zh.md) | tui web desktop | partial |
-| [Harness subsystems: Code Runtime](reference/subsystems/code-runtime.md) | English \| [中文](code-runtime.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Human Commands](reference/subsystems/commands.md) | English \| [中文](commands.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Compaction](reference/subsystems/compaction.md) | English \| [中文](compaction.zh.md) | tui web desktop | partial |
+| [Harness subsystems: Computer use](reference/subsystems/computer-use.md) | English \| [中文](computer-use.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Conversation assembly](reference/subsystems/conversation.md) | English \| [中文](conversation.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Core](reference/subsystems/core.md) | English \| [中文](core.zh.md) | tui web desktop | partial |
 | [Harness subsystems: User Credentials](reference/subsystems/credentials.md) | English \| [中文](credentials.zh.md) | tui web desktop | partial |
+| [Harness subsystems: Deliverables](reference/subsystems/deliverables.md) | English \| [中文](deliverables.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Extensions](reference/subsystems/extensions.md) | English \| [中文](extensions.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Message Feedback](reference/subsystems/feedback.md) | English \| [中文](feedback.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Filesystem](reference/subsystems/filesystem.md) | English \| [中文](filesystem.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Same-session goals](reference/subsystems/goal.md) | English \| [中文](goal.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Runtime Invariants](reference/subsystems/invariants.md) | English \| [中文](invariants.zh.md) | tui web desktop | partial |
-| [Harness subsystems: Background Task Runtime](reference/subsystems/jobs.md) | English \| [中文](jobs.zh.md) | tui web desktop | partial |
+| [Harness subsystems: Background Job Runtime](reference/subsystems/jobs.md) | English \| [中文](jobs.zh.md) | tui web desktop | partial |
 | [Harness subsystems: LLM Streaming](reference/subsystems/llm-streaming.md) | English \| [中文](llm-streaming.zh.md) | tui web desktop | partial |
 | [Harness subsystems: LSP navigation](reference/subsystems/lsp.md) | English \| [中文](lsp.zh.md) | tui web desktop | partial |
+| [Harness subsystems: MCP](reference/subsystems/mcp.md) | English \| [中文](mcp.zh.md) | tui web desktop | partial |
+| [Harness subsystems: Office to PDF](reference/subsystems/office-to-pdf.md) | English \| [中文](office-to-pdf.zh.md) | tui web desktop | partial |
+| [Harness subsystems: OTel reporting](reference/subsystems/otel.md) | English \| [中文](otel.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Permission Presets](reference/subsystems/permission-presets.md) | English \| [中文](permission-presets.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Session Persistence](reference/subsystems/persistence.md) | English \| [中文](persistence.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Plan Mode](reference/subsystems/plan.md) | English \| [中文](plan.zh.md) | tui web desktop | partial |
+| [Harness subsystems: Product telemetry](reference/subsystems/product-telemetry.md) | English \| [中文](product-telemetry.zh.md) | tui web desktop | partial |
+| [Harness subsystems: PTC runtime](reference/subsystems/ptc-runtime.md) | English \| [中文](ptc-runtime.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Process Sandbox](reference/subsystems/sandbox.md) | English \| [中文](sandbox.zh.md) | tui web desktop | partial |
-| [Harness subsystems: Session-local Schedule](reference/subsystems/schedule.md) | English \| [中文](schedule.zh.md) | tui web desktop | partial |
+| [Harness subsystems: Host-wide Schedule](reference/subsystems/schedule.md) | English \| [中文](schedule.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Scoped Registration](reference/subsystems/scope.md) | English \| [中文](scope.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Session Projections](reference/subsystems/session-projection.md) | English \| [中文](session-projection.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Session Query](reference/subsystems/session-query.md) | English \| [中文](session-query.zh.md) | tui web desktop | partial |
@@ -100,12 +108,13 @@ plugin. Verified working examples: `../example-plugins/README.md`.
 | [Harness subsystems: SessionTelemetryBackend](reference/subsystems/session-telemetry.md) | English \| [中文](session-telemetry.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Session Titles](reference/subsystems/session-title.md) | English \| [中文](session-title.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Sessions](reference/subsystems/session.md) | English \| [中文](session.zh.md) | tui web desktop | partial |
-| [Harness subsystems: User Settings](reference/subsystems/settings.md) | English \| [中文](settings.zh.md) | tui web desktop | partial |
-| [Harness subsystems: Bash Executor](reference/subsystems/shell.md) | English \| [中文](shell.zh.md) | tui web desktop | partial |
+| [Harness subsystems: Plugin Configuration Forms](reference/subsystems/settings.md) | English \| [中文](settings.zh.md) | tui web desktop | partial |
+| [Harness subsystems: Shell Executor](reference/subsystems/shell.md) | English \| [中文](shell.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Right Sidebar](reference/subsystems/sidebar-right.md) | English \| [中文](sidebar-right.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Skills](reference/subsystems/skills.md) | English \| [中文](skills.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Web Client Slots](reference/subsystems/slots.md) | English \| [中文](slots.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Spill Storage](reference/subsystems/spill.md) | English \| [中文](spill.zh.md) | tui web desktop | partial |
+| [Harness subsystems: SSH](reference/subsystems/ssh.md) | English \| [中文](ssh.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Storage](reference/subsystems/storage.md) | English \| [中文](storage.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Subagent](reference/subsystems/subagent.md) | English \| [中文](subagent.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Subprocess](reference/subsystems/subprocess.md) | English \| [中文](subprocess.zh.md) | tui web desktop | partial |
@@ -116,6 +125,7 @@ plugin. Verified working examples: `../example-plugins/README.md`.
 | [Harness subsystems: Tools](reference/subsystems/tools.md) | English \| [中文](tools.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Typert remote calls](reference/subsystems/typert.md) | English \| [中文](typert.zh.md) | tui web desktop | partial |
 | [Harness subsystems: User Interaction](reference/subsystems/user-questions.md) | English \| [中文](user-questions.zh.md) | tui web desktop | partial |
+| [Harness subsystems: Voice input](reference/subsystems/voice-input.md) | English \| [中文](voice-input.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Web Client architecture](reference/subsystems/web-client.md) | English \| [中文](web-client.zh.md) | tui web desktop | partial |
 | [Harness subsystems: HTTP Server](reference/subsystems/web-server.md) | English \| [中文](web-server.zh.md) | tui web desktop | partial |
 | [Harness subsystems: Web Access](reference/subsystems/web.md) | English \| [中文](web.zh.md) | tui web desktop | partial |
@@ -130,7 +140,7 @@ plugin. Verified working examples: `../example-plugins/README.md`.
 | [Cordis API: Service](reference/cordis-api/service.md) | Run `pnpm run gen-cordis-catalog` to regenerate. --> | tui web desktop | partial |
 | [Harness cookbook: Cookbook: adding a workspace package](reference/cookbook/adding-a-package.md) | English \| [中文](adding-a-package.zh.md) | tui web desktop | partial |
 | [Harness cookbook: Cookbook: adding a Remote API](reference/cookbook/adding-a-remote-api.md) | English \| [中文](adding-a-remote-api.zh.md) | tui web desktop | partial |
-| [Harness cookbook: Cookbook: adding a settings card](reference/cookbook/adding-a-settings-card.md) | English \| [中文](adding-a-settings-card.zh.md) | tui web desktop | partial |
+| [Harness cookbook: Cookbook: live configuration forms](reference/cookbook/adding-a-settings-card.md) | English \| [中文](adding-a-settings-card.zh.md) | tui web desktop | partial |
 | [Harness cookbook: Tool authoring reference](reference/cookbook/adding-a-tool.md) | English \| [中文](adding-a-tool.zh.md) | tui web desktop | partial |
 | [Harness cookbook: Cookbook: adding an LLM adapter](reference/cookbook/adding-an-llm-adapter.md) | English \| [中文](adding-an-llm-adapter.zh.md) | tui web desktop | partial |
 | [Harness cookbook: Cookbook: extension plugin shapes](reference/cookbook/extension-cookbook.md) | English \| [中文](extension-cookbook.zh.md) | tui web desktop | partial |

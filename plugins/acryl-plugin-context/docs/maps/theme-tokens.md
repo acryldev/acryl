@@ -8,11 +8,13 @@ in a client plugin (both modes are mandatory), or ship a whole theme with `ctx.t
 `--dsw-font-family` (UI font), `--dsh-content-font-size` (conversation text size, via `ctx.theme.setFontSize(px)`), corner and shadow
 tokens (`--dsw-shadow-*`, `--dsw-elevation-*`).
 
-79 alias tokens:
+101 alias tokens:
 
 | Token | Light | Dark |
 | --- | --- | --- |
 | `--dsw-alias-bg-base` | var(--dsw-static-neutral-bluish-00) | var(--dsw-static-neutral-bluish-950) |
+| `--dsw-alias-bg-document-preview` | var(--dsw-static-neutral-bluish-100) | var(--dsw-static-neutral-bluish-950) |
+| `--dsw-alias-bg-document-selection` | color-mix(in srgb, var(--dsw-static-blue-500) 40%, transparent) | color-mix(in srgb, var(--dsw-static-blue-500) 40%, transparent) |
 | `--dsw-alias-bg-layer-1` | var(--dsw-static-neutral-bluish-00) | var(--dsw-static-neutral-bluish-875) |
 | `--dsw-alias-bg-layer-2` | var(--dsw-static-neutral-bluish-00) | var(--dsw-static-neutral-bluish-850) |
 | `--dsw-alias-bg-layer-3` | var(--dsw-static-neutral-bluish-00) | var(--dsw-static-neutral-bluish-800) |
@@ -51,19 +53,31 @@ tokens (`--dsw-shadow-*`, `--dsw-elevation-*`).
 | `--dsw-alias-button-tool-bar-fill` | rgba(84, 85, 87, 0.5) | rgba(84, 85, 87, 0.5) |
 | `--dsw-alias-button-tool-bar-fill-invisible` | rgba(31, 31, 31, 0.36) | rgba(31, 31, 31, 0.36) |
 | `--dsw-alias-button-tool-bar-hover` | rgba(84, 85, 87, 0.6) | rgba(84, 85, 87, 0.6) |
+| `--dsw-alias-code-diff-added` | var(--dsw-static-green-500-a08) | var(--dsw-static-green-500-a12) |
+| `--dsw-alias-code-diff-deleted` | var(--dsw-static-red-600-a08) | var(--dsw-static-red-400-a12) |
+| `--dsw-alias-file-diff-added-bg` | rgb(230, 244, 231) | rgb(31, 49, 36) |
+| `--dsw-alias-file-diff-added-gutter` | rgb(237, 247, 237) | rgb(19, 32, 22) |
+| `--dsw-alias-file-diff-added-marker` | rgb(1, 162, 65) | rgb(65, 201, 119) |
+| `--dsw-alias-file-diff-deleted-bg` | rgb(252, 230, 226) | rgb(60, 31, 27) |
+| `--dsw-alias-file-diff-deleted-gutter` | rgb(253, 236, 233) | rgb(40, 19, 14) |
+| `--dsw-alias-file-diff-deleted-marker` | rgb(186, 39, 35) | rgb(250, 66, 62) |
 | `--dsw-alias-interactive-bg-active` | rgba(38, 49, 72, 0.1) | rgba(255, 255, 255, 0.14) |
 | `--dsw-alias-interactive-bg-hover` | rgba(38, 49, 72, 0.06) | rgba(255, 255, 255, 0.08) |
 | `--dsw-alias-interactive-bg-hover-accent` | rgba(38, 49, 72, 0.14) | rgba(255, 255, 255, 0.24) |
 | `--dsw-alias-interactive-bg-hover-danger` | rgba(236, 19, 19, 0.05) | rgba(242, 90, 90, 0.15) |
 | `--dsw-alias-interactive-bg-hover-solid` | var(--dsw-static-neutral-bluish-75) | var(--dsw-static-neutral-bluish-800) |
 | `--dsw-alias-label-caption` | var(--dsw-static-neutral-bluish-400) | var(--dsw-static-neutral-bluish-600) |
+| `--dsw-alias-label-deep-diving` | color-mix(in srgb, var(--dsw-static-deepseek-500) 70%, var(--dsw-static-blue-950)) | color-mix(in srgb, var(--dsw-static-deepseek-450) 55%, var(--dsw-static-neutral-bluish-400)) |
+| `--dsw-alias-label-deep-diving-shimmer` | color-mix(in srgb, var(--dsw-static-deepseek-500) 30%, var(--dsw-static-blue-950)) | color-mix(in srgb, var(--dsw-static-blue-300) 65%, var(--dsw-static-deepseek-400)) |
 | `--dsw-alias-label-dimmed` | var(--dsw-static-neutral-bluish-200) | var(--dsw-static-neutral-bluish-750) |
+| `--dsw-alias-label-document-preview` | var(--dsw-static-neutral-bluish-700) | var(--dsw-static-neutral-bluish-300) |
 | `--dsw-alias-label-primary` | var(--dsw-static-neutral-bluish-1000) | var(--dsw-static-neutral-bluish-50) |
 | `--dsw-alias-label-primary-bluish` | var(--dsw-static-blue-900) | var(--dsw-static-neutral-bluish-50) |
 | `--dsw-alias-label-primary-dimmed` | var(--dsw-static-neutral-bluish-950) | var(--dsw-static-neutral-bluish-100) |
 | `--dsw-alias-label-primary-foreground` | var(--dsw-static-neutral-bluish-00) | var(--dsw-static-neutral-bluish-1000) |
 | `--dsw-alias-label-primary-inverted` | var(--dsw-static-neutral-bluish-00) | var(--dsw-static-neutral-bluish-800) |
 | `--dsw-alias-label-secondary` | var(--dsw-static-neutral-bluish-700) | var(--dsw-static-neutral-bluish-300) |
+| `--dsw-alias-label-shimmer` | color-mix(in srgb, var(--dsw-static-neutral-1000) 30%, transparent) | color-mix(in srgb, var(--dsw-static-neutral-00) 45%, transparent) |
 | `--dsw-alias-label-tertiary` | var(--dsw-static-neutral-bluish-600) | var(--dsw-static-neutral-bluish-400) |
 | `--dsw-alias-link` | var(--dsw-static-deepseek-500) | var(--dsw-static-deepseek-400) |
 | `--dsw-alias-markdown-citation` | var(--dsw-static-neutral-bluish-100) | var(--dsw-static-neutral-bluish-800) |
@@ -74,6 +88,8 @@ tokens (`--dsw-shadow-*`, `--dsw-elevation-*`).
 | `--dsw-alias-markdown-inline-code` | var(--dsw-static-neutral-50) | var(--dsw-static-neutral-800) |
 | `--dsw-alias-markdown-placeholder` | var(--dsw-static-neutral-bluish-60) | var(--dsw-static-neutral-bluish-850) |
 | `--dsw-alias-markdown-tag` | var(--dsw-static-neutral-bluish-75) | var(--dsw-static-neutral-bluish-850) |
+| `--dsw-alias-menu-group-header-fill` | rgba(248, 249, 250, 0.94) | rgba(48, 49, 54, 0.94) |
+| `--dsw-alias-menu-icon` | var(--dsw-static-neutral-bluish-800) | var(--dsw-alias-label-primary-dimmed) |
 | `--dsw-alias-scrollbar-bg-l1` | var(--dsw-static-neutral-200) | var(--dsw-static-neutral-700) |
 | `--dsw-alias-scrollbar-bg-l2` | var(--dsw-static-neutral-200) | var(--dsw-static-neutral-600) |
 | `--dsw-alias-scrollbar-hover-l1` | var(--dsw-static-neutral-300) | var(--dsw-static-neutral-600) |
@@ -82,6 +98,7 @@ tokens (`--dsw-shadow-*`, `--dsw-elevation-*`).
 | `--dsw-alias-state-business-tertiary` | var(--dsw-static-deepseek-100) | var(--dsw-static-deepseek-800) |
 | `--dsw-alias-state-error-primary` | var(--dsw-static-red-600) | var(--dsw-static-red-400) |
 | `--dsw-alias-state-error-secondary` | var(--dsw-static-red-400) | var(--dsw-static-red-400) |
+| `--dsw-alias-state-idle-primary` | var(--dsw-static-neutral-300) | var(--dsw-static-neutral-600) |
 | `--dsw-alias-state-success-primary` | var(--dsw-static-green-500) | var(--dsw-static-green-500) |
 | `--dsw-alias-state-success-secondary` | var(--dsw-static-green-400) | var(--dsw-static-green-400) |
 | `--dsw-alias-state-success-tertiary` | var(--dsw-static-green-100) | var(--dsw-static-green-900) |
@@ -89,5 +106,10 @@ tokens (`--dsw-shadow-*`, `--dsw-elevation-*`).
 | `--dsw-alias-state-warn-primary` | var(--dsw-static-amber-500) | var(--dsw-static-amber-500) |
 | `--dsw-alias-state-warn-secondary` | var(--dsw-static-amber-400) | var(--dsw-static-amber-400) |
 | `--dsw-alias-state-warn-tertiary` | var(--dsw-static-amber-100) | var(--dsw-static-amber-900) |
+| `--dsw-alias-switch-thumb` | var(--dsw-static-neutral-bluish-00) | var(--dsw-static-neutral-bluish-400) |
 | `--dsw-alias-toast-bg` | var(--dsw-static-neutral-bluish-800) | var(--dsw-static-neutral-bluish-750) |
+| `--dsw-alias-toast-label` | var(--dsw-static-neutral-bluish-00) | var(--dsw-static-neutral-bluish-00) |
 | `--dsw-alias-tooltip-bg` | var(--dsw-static-neutral-bluish-850) | var(--dsw-static-neutral-bluish-750) |
+| `--dsw-alias-tooltip-key-bg` | color-mix(in srgb, var(--dsw-alias-tooltip-bg), white 18%) | color-mix(in srgb, var(--dsw-alias-tooltip-bg), white 18%) |
+| `--dsw-alias-turn-trigger-bg` | var(--dsw-alias-markdown-code-block) | var(--dsw-alias-interactive-bg-hover) |
+| `--dsw-alias-turn-trigger-bg-hover` | var(--dsw-alias-interactive-bg-hover) | var(--dsw-alias-interactive-bg-active) |

@@ -720,7 +720,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/README.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -737,7 +737,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/agent-team.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -754,7 +754,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/approval.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -771,7 +771,41 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/attachment.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
+          }
+        },
+        {
+          "id": "reference.subsystems.boot",
+          "title": "Harness subsystems: Profile management",
+          "path": "reference/subsystems/boot.md",
+          "when": "English | [中文](boot.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/boot.md",
+            "sourceCommit": "639ed01539"
+          }
+        },
+        {
+          "id": "reference.subsystems.browser-use",
+          "title": "Harness subsystems: Browser use",
+          "path": "reference/subsystems/browser-use.md",
+          "when": "English | [中文](browser-use.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/browser-use.md",
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -788,7 +822,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/client-modules.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -805,24 +839,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/client-resources.md",
-            "sourceCommit": "5dda764ed3"
-          }
-        },
-        {
-          "id": "reference.subsystems.code-runtime",
-          "title": "Harness subsystems: Code Runtime",
-          "path": "reference/subsystems/code-runtime.md",
-          "when": "English | [中文](code-runtime.zh.md)",
-          "surfaces": [
-            "tui",
-            "web",
-            "desktop"
-          ],
-          "applies": "partial",
-          "source": {
-            "sourceRepo": "deepseek-harness",
-            "sourcePath": "docs/subsystems/code-runtime.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -839,7 +856,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/commands.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -856,7 +873,24 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/compaction.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
+          }
+        },
+        {
+          "id": "reference.subsystems.computer-use",
+          "title": "Harness subsystems: Computer use",
+          "path": "reference/subsystems/computer-use.md",
+          "when": "English | [中文](computer-use.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/computer-use.md",
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -873,7 +907,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/conversation.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -890,7 +924,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/core.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -907,7 +941,24 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/credentials.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
+          }
+        },
+        {
+          "id": "reference.subsystems.deliverables",
+          "title": "Harness subsystems: Deliverables",
+          "path": "reference/subsystems/deliverables.md",
+          "when": "English | [中文](deliverables.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/deliverables.md",
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -924,7 +975,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/extensions.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -941,7 +992,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/feedback.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -958,7 +1009,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/filesystem.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -975,7 +1026,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/goal.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -992,12 +1043,12 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/invariants.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
           "id": "reference.subsystems.jobs",
-          "title": "Harness subsystems: Background Task Runtime",
+          "title": "Harness subsystems: Background Job Runtime",
           "path": "reference/subsystems/jobs.md",
           "when": "English | [中文](jobs.zh.md)",
           "surfaces": [
@@ -1009,7 +1060,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/jobs.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1026,7 +1077,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/llm-streaming.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1043,7 +1094,58 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/lsp.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
+          }
+        },
+        {
+          "id": "reference.subsystems.mcp",
+          "title": "Harness subsystems: MCP",
+          "path": "reference/subsystems/mcp.md",
+          "when": "English | [中文](mcp.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/mcp.md",
+            "sourceCommit": "639ed01539"
+          }
+        },
+        {
+          "id": "reference.subsystems.office-to-pdf",
+          "title": "Harness subsystems: Office to PDF",
+          "path": "reference/subsystems/office-to-pdf.md",
+          "when": "English | [中文](office-to-pdf.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/office-to-pdf.md",
+            "sourceCommit": "639ed01539"
+          }
+        },
+        {
+          "id": "reference.subsystems.otel",
+          "title": "Harness subsystems: OTel reporting",
+          "path": "reference/subsystems/otel.md",
+          "when": "English | [中文](otel.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/otel.md",
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1060,7 +1162,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/permission-presets.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1077,7 +1179,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/persistence.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1094,7 +1196,41 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/plan.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
+          }
+        },
+        {
+          "id": "reference.subsystems.product-telemetry",
+          "title": "Harness subsystems: Product telemetry",
+          "path": "reference/subsystems/product-telemetry.md",
+          "when": "English | [中文](product-telemetry.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/product-telemetry.md",
+            "sourceCommit": "639ed01539"
+          }
+        },
+        {
+          "id": "reference.subsystems.ptc-runtime",
+          "title": "Harness subsystems: PTC runtime",
+          "path": "reference/subsystems/ptc-runtime.md",
+          "when": "English | [中文](ptc-runtime.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/ptc-runtime.md",
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1111,12 +1247,12 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/sandbox.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
           "id": "reference.subsystems.schedule",
-          "title": "Harness subsystems: Session-local Schedule",
+          "title": "Harness subsystems: Host-wide Schedule",
           "path": "reference/subsystems/schedule.md",
           "when": "English | [中文](schedule.zh.md)",
           "surfaces": [
@@ -1128,7 +1264,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/schedule.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1145,7 +1281,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/scope.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1162,7 +1298,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/session-projection.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1179,7 +1315,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/session-query.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1196,7 +1332,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/session-reference.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1213,7 +1349,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/session-telemetry.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1230,7 +1366,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/session-title.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1247,12 +1383,12 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/session.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
           "id": "reference.subsystems.settings",
-          "title": "Harness subsystems: User Settings",
+          "title": "Harness subsystems: Plugin Configuration Forms",
           "path": "reference/subsystems/settings.md",
           "when": "English | [中文](settings.zh.md)",
           "surfaces": [
@@ -1264,12 +1400,12 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/settings.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
           "id": "reference.subsystems.shell",
-          "title": "Harness subsystems: Bash Executor",
+          "title": "Harness subsystems: Shell Executor",
           "path": "reference/subsystems/shell.md",
           "when": "English | [中文](shell.zh.md)",
           "surfaces": [
@@ -1281,7 +1417,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/shell.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1298,7 +1434,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/sidebar-right.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1315,7 +1451,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/skills.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1332,7 +1468,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/slots.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1349,7 +1485,24 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/spill.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
+          }
+        },
+        {
+          "id": "reference.subsystems.ssh",
+          "title": "Harness subsystems: SSH",
+          "path": "reference/subsystems/ssh.md",
+          "when": "English | [中文](ssh.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/ssh.md",
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1366,7 +1519,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/storage.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1383,7 +1536,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/subagent.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1400,7 +1553,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/subprocess.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1417,7 +1570,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/system-prompt.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1434,7 +1587,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/terminal.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1451,7 +1604,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/todo.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1468,7 +1621,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/token-meter.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1485,7 +1638,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/tools.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1502,7 +1655,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/typert.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1519,7 +1672,24 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/user-questions.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
+          }
+        },
+        {
+          "id": "reference.subsystems.voice-input",
+          "title": "Harness subsystems: Voice input",
+          "path": "reference/subsystems/voice-input.md",
+          "when": "English | [中文](voice-input.zh.md)",
+          "surfaces": [
+            "tui",
+            "web",
+            "desktop"
+          ],
+          "applies": "partial",
+          "source": {
+            "sourceRepo": "deepseek-harness",
+            "sourcePath": "docs/subsystems/voice-input.md",
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1536,7 +1706,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/web-client.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1553,7 +1723,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/web-server.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1570,7 +1740,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/web.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1587,7 +1757,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/webhook.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1604,7 +1774,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/workflow.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1621,7 +1791,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/subsystems/workspace.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1638,7 +1808,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/cordis-api/context.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1655,7 +1825,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/cordis-api/events.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1672,7 +1842,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/cordis-api/fiber.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1689,7 +1859,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/cordis-api/inherited.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1706,7 +1876,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/cordis-api/registry.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1723,7 +1893,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/cordis-api/service.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1740,7 +1910,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/cookbook/adding-a-package.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1757,12 +1927,12 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/cookbook/adding-a-remote-api.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
           "id": "reference.cookbook.adding-a-settings-card",
-          "title": "Harness cookbook: Cookbook: adding a settings card",
+          "title": "Harness cookbook: Cookbook: live configuration forms",
           "path": "reference/cookbook/adding-a-settings-card.md",
           "when": "English | [中文](adding-a-settings-card.zh.md)",
           "surfaces": [
@@ -1774,7 +1944,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/cookbook/adding-a-settings-card.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1791,7 +1961,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/cookbook/adding-a-tool.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1808,7 +1978,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/cookbook/adding-an-llm-adapter.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1825,7 +1995,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/cookbook/extension-cookbook.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1842,7 +2012,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/cordis-primer.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1859,7 +2029,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/capability-seams.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1876,7 +2046,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/glossary.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1893,7 +2063,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/defensive-patterns.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1910,7 +2080,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/event-producer-consumer.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1927,7 +2097,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/tool-execution-pipeline.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1944,7 +2114,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/agent-lifecycle.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1961,7 +2131,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/architecture.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1978,7 +2148,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/config-catalog.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {
@@ -1995,7 +2165,7 @@
           "source": {
             "sourceRepo": "deepseek-harness",
             "sourcePath": "docs/tool-catalog.md",
-            "sourceCommit": "5dda764ed3"
+            "sourceCommit": "639ed01539"
           }
         },
         {

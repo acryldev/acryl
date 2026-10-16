@@ -61,7 +61,7 @@ Styling: inline `style` objects, or inject one `<style>` element in `apply` and 
 | `conversation.session.header.actions` | top bar of a conversation, next to the title | list (use `order`) |
 | `conversation.session.header.utilities` | top bar, right-aligned utilities | list |
 | `sidebar.right.pane.tab` | a tab in the right sidebar (two stages: register the tab TYPE in `ctx.sidebarRightTabs`, then the BODY in this keyed slot; see `client-slot-sidebar-tab`) | keyed (`key` = the type id) |
-| `settings.plugin.item` | a card on the Settings > Plugin configuration page, paired with a Host settings namespace (see `reference/cookbook/adding-a-settings-card.md`; no verified example) | keyed (`key` = the namespace) |
+| `plugins.item` | a card in the Plugins page's Official group, for a plugin with a Host settings namespace; register it through `ctx.configForms.whileServed` so it exists exactly while the Host serves the namespace (see `reference/cookbook/adding-a-settings-card.md`; no verified example) | list (`id`, `label`, `order`) |
 
 For a first version use the header action plus a floating panel opened by the button
 (the example): it needs no other props. Register with `{ name, id, order }`.

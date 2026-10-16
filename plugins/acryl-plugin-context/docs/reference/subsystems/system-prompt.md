@@ -1,4 +1,4 @@
-<!-- Synced from deepseek-harness:docs/subsystems/system-prompt.md @ 5dda764ed3. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
+<!-- Synced from deepseek-harness:docs/subsystems/system-prompt.md @ 639ed01539. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
 
 # System Prompt Assembly
 
@@ -58,9 +58,11 @@ interface PromptSection {
   /**
    * Static text or a provider evaluated at each assembly with that assembly's
    * {@link AssembleContext}. The text may reference `{{variable}}`s - they are
-   * interpolated later, by {@link renderPrompt}.
+   * interpolated later, by {@link renderPrompt}, unless `interpolate` is false.
    */
   readonly text: string | ((context: AssembleContext) => string)
+  /** Whether to interpolate prompt variables. Defaults to true; false preserves literal text. */
+  readonly interpolate?: boolean
   /**
    * Treat this contribution as the complete system prompt. Assembly still
    * runs the cooperative waterfall so tools, contexts, and variables can be

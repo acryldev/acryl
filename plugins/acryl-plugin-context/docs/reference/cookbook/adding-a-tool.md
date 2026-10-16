@@ -1,4 +1,4 @@
-<!-- Synced from deepseek-harness:docs/cookbook/adding-a-tool.md @ 5dda764ed3. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
+<!-- Synced from deepseek-harness:docs/cookbook/adding-a-tool.md @ 639ed01539. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
 
 # Tool authoring reference
 
@@ -54,7 +54,7 @@ Registration is effect-based: disposing the plugin fiber unregisters the tool. S
 
 Gate `run_in_background` with producer config, then register through `ctx.jobs.start({ kind, label, owner: exec.agent, run })`. The registry rejects a pre-aborted invocation before the producer body; the runtime validates ownership and task-controller availability before `run()` starts work, then supplies the id, session fence, generic control tools, notices, and owner cleanup. A successful background branch returns a typed canonical handle such as `{ kind: 'background', jobId }`; its Native renderer may keep human prose such as `started background job bash-1`, but PTC mode must never parse that prose to recover the id.
 
-The producer supplies synchronous `cancel`, non-rejecting `done` that settles after resource cleanup, and optional consuming `readOutput` with bounded-output formatting. A pre-aborted call is a failure because no task exists whose id could satisfy the successful output schema. Once `ctx.jobs.start()` publishes the id, use a task-owned cancellation signal rather than `exec.signal`: later outer-call cancellation stops waiting for the call but does not kill published work; `job_kill`, owner disposal, and service teardown own that lifetime. Foreground work remains coupled to `exec.signal`. See the [background job runtime Agent Note](../../.agents/notes/implemented/architecture/2026-06-20-generic-long-running-tool-runtime.md) and `dsh-tool-bash` for a stream producer.
+The spec supplies synchronous `cancel`, a non-rejecting `done` that settles after resource cleanup, and either pull `output` sources the registry pumps into the job's output ring or pushes through the `JobHandle` its starter receives; `dsh-tool-jobs` renders the model's consuming read from that ring. A pre-aborted call is a failure because no task exists whose id could satisfy the successful output schema. Once `ctx.jobs.start()` publishes the id, use a task-owned cancellation signal rather than `exec.signal`: later outer-call cancellation stops waiting for the call but does not kill published work; `job_kill`, owner disposal, and service teardown own that lifetime. Foreground work remains coupled to `exec.signal`. See the [background job runtime Agent Note](../../.agents/notes/implemented/architecture/2026-06-20-generic-long-running-tool-runtime.md) and `dsh-tool-bash` for a stream producer.
 
 ## Execution policy and observation
 
@@ -94,7 +94,7 @@ The neutral vocabulary lives in `dsh-tools`; tools never import a UI or transpor
 
 ## Web Client presentation
 
-The built-in Web Client does not consume `presentCall` or `presentResult`. Session `page` and `follow` transport raw `tool/call` and `tool/result` events, including persisted `result.meta`. A Client plugin registers its wire tool name in the `tool.call.toolview` keyed slot and derives component props from the `ToolCallBlock` arguments, content, error, metadata, existing Code Dispatch `parentCallId`, and Session path facts. It validates these wire values locally and returns the generic row for malformed or unsupported input.
+The built-in Web Client does not consume `presentCall` or `presentResult`. Session `page` and `follow` transport raw `tool/call` and `tool/result` events, including persisted `result.meta`. A Client plugin registers its wire tool name in the `tool.call.toolview` keyed slot and derives component props from the `ToolCallBlock` arguments, content, error, metadata, existing PTC dispatch `parentCallId`, and Session path facts. It validates these wire values locally and returns the generic row for malformed or unsupported input.
 
 Use `output.presentationMeta(args, value)` when an existing Web card needs bounded structured result facts that model-facing content cannot preserve losslessly. Do not store React props or a selected card in metadata, import a Host tool implementation into a browser bundle, or create another Client presenter registry. Defining Host presentation methods alone does not add a specialized Web card. The [Client-derived presentation Agent Note](../../.agents/notes/implemented/architecture/2026-08-23-client-derived-tool-presentation.md) defines ownership, fallback, and equivalence requirements.
 

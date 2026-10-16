@@ -9,16 +9,17 @@ gets the same reach from the harness event bus. Listen with `ctx.on(name, listen
 still call `next()` and return its result; the returned value is authoritative). Working example: `example-plugins/packages/prompt-assemble-hook/` (shapes
 the system prompt on `system-prompt/assemble`, the same hook `acryl-system-prompt` uses). Read `extending/event-hook.md` first.
 
-79 events:
+93 events:
 
 | Event | Mode | What | Declared by |
 | --- | --- | --- | --- |
 | `acryl/agent-runtime-status` |  |  | acryl-control |
 | `acryl/operation-settled` |  |  | acryl-control |
+| `acrylSettings/updated` | emit | Committed change to one registered namespace's resolved value, emitted after the file was written and never when | acryl-settings |
 | `agent-loop/config-start-failed` | emit | A declarative agent entry failed before it could publish a live agent. | dsh-agent-loop |
-| `agent-preset/selected` | emit | One session committed a different agent preset to its durable log. | dsh-agent-presets |
+| `agent-preset/selected` | emit | One session committed a different agent preset to its durable log. | dsh-agent-preset-registry |
 | `agent/assistant-stream` | emit | Process-local assistant-stream publication. Chunk frames are transient; | dsh-agent |
-| `agent/created` | emit | A fully configured agent and live session were published. Setup is | dsh-agent |
+| `agent/created` | serial | An entered agent is ready for per-agent initialization after factory setup. | dsh-agent |
 | `agent/disposed` | emit | An agent left the registry; AgentLoop emits this after driver quiescence | dsh-agent |
 | `agent/error` | emit | A step or turn errored. The machine reports a failure here even when | dsh-agent |
 | `agent/inbox/claimed` | emit | One message left the inbox inside its open turn. If the proposed step | dsh-agent |
@@ -27,18 +28,20 @@ the system prompt on `system-prompt/assemble`, the same hook `acryl-system-promp
 | `agent/pre-step` | waterfall | Reject a proposed step or replace the messages that enter it. Calling | dsh-agent |
 | `agent/request` | waterfall | Replace the frozen call configuration. `await next()` yields the config | dsh-agent |
 | `agent/request-error` | waterfall | Handle one failed model-request attempt before the loop retries or closes | dsh-agent |
-| `agent/session-start` | emit | The session lifecycle began, once before the first turn. Use | dsh-agent |
 | `agent/status` | emit | Agent status changed (`idle` ⇄ `running`). A waking delivery enters | dsh-agent |
 | `agent/turn-stopping` | serial | The turn is about to close: the model owes no response (no live tool | dsh-agent |
 | `api-session/activity` | emit | One user-authored durable message advanced Session list activity. | dsh-api-session-controller |
-| `api-session/added` | emit | A Session became visible to Session list consumers. | dsh-api-session-controller |
+| `api-session/added` | emit | A Session became visible or its Agent was created or disposed. | dsh-api-session-controller |
 | `api-session/error` | emit | One Agent failed outside a durable turn position. | dsh-api-session-controller |
 | `api-session/removed` | emit | A Session left the live Host registry. | dsh-api-session-controller |
 | `api-session/status` | emit | One Agent changed running state. | dsh-api-session-controller |
+| `app-boot/config-reload` | emit | Profile patches were reconciled into the running Loader tree: every entry update settled and no new | dsh-app-boot |
 | `approval/request` | waterfall | Ask composed answerers for one decision. Return an outcome to claim the | dsh-user-approval |
 | `authorization/settled` | emit | One authorization attempt has finished and released its key. Fires for | dsh-authorization |
 | `command/executed` | emit | This browser client completed one admitted Host command execution. | dsh-client-ui-commands |
 | `commands/change` | emit | A command was registered or unregistered. This is an unfiltered registry | dsh-commands |
+| `compaction/summary-error` | waterfall | Recover a failed summary request by synchronously recording a durable | dsh-compaction |
+| `connection/request` | waterfall | Admit or wrap an authenticated shared API request, including body transfer. | dsh-client-connection |
 | `connection/reset` | emit | A connection generation was established. Wire-derived caches must | dsh-client-connection |
 | `cordis/dynamic-package` | emit | One exact Plugin/Package activation is now live in the Host. | dsh-cordis-host-runner |
 | `cordis/dynamic-retract` | emit | One exact activation was withdrawn. | dsh-cordis-host-runner |
@@ -48,6 +51,9 @@ the system prompt on `system-prompt/assemble`, the same hook `acryl-system-promp
 | `cordis/request-run-resolved` | emit | A pending Client activation request left the answerable state. | dsh-cordis-host-runner |
 | `credentials/record-updated` | emit | Committed change to a stored credential record: a `modifyRecord` that | dsh-credentials |
 | `credentials/reference-updated` | emit | Committed change to a provider-managed credential source: a `set`, an | dsh-credentials |
+| `deepseek-account/model-sign-in-required` | emit | An account model request requires the user to sign in. | dsh-deepseek-account |
+| `deepseek-account/session-expired` | emit | Server rejection removed the current account credential; this notification is not replayed. | dsh-deepseek-account |
+| `deepseek-account/signed-out` | emit | Local grant removal has completed. | dsh-deepseek-account |
 | `domain/changed` | emit | A domain record or the global singleton changed, emitted once per write | dsh-storage-domain |
 | `feedback/committed` | parallel | Observe a durable cold feedback mutation without publishing a live Session. | dsh-message-feedback |
 | `fs/edit-intent` | waterfall | Single-slot decision for the next {@link FileSystem.editText}. Calling | dsh-fs |
@@ -55,22 +61,28 @@ the system prompt on `system-prompt/assemble`, the same hook `acryl-system-promp
 | `fs/write-intent` | waterfall | Single-slot decision for the next {@link FileSystem.writeText}. Calling | dsh-fs |
 | `goal/activation-changed` | emit | Process-local goal activation changed for one session. | dsh-goal |
 | `goal/changed` | emit | Goal mutation accepted by one live agent. The matching `goal/change` | dsh-goal |
+| `hmr/change` | emit | A watched file has no module or configuration handler. | dsh-hmr |
+| `hmr/reload` | emit | Module replacements have finished loading. | dsh-hmr |
 | `llm/adapters-updated` | emit | The provider topology changed: an adapter registered or unregistered | dsh-llm |
 | `llm/stream` | waterfall | Waterfall around every streaming model call (retry, replay, routing). | dsh-llm |
 | `locale/change` | emit | The active locale switched. Dictionary registrations do NOT emit this | dsh-client-locale |
+| `permission-presets/catalog-changed` | emit | The selectable process catalog changed. Payload-free by design: | dsh-permission-presets |
+| `plugin-manager/changed` | emit | The profile's plugins, bundles, or composition changed: a manager | dsh-plugin-manager |
+| `plugin-manager/install-log` | emit | One chunk of a pnpm run's output, streamed as the run produces it. | dsh-plugin-manager |
+| `plugin-manager/install-state` | emit | An installation moved between its Host phases. `installing` is announced once per registry the | dsh-plugin-manager |
+| `schedule/changed` | emit | Durable task set changed; clients refetch global task and Session-active catalogs. | dsh-schedule |
 | `session-telemetry/record` | waterfall | Transform one outbound record before it reaches the backend. This | dsh-session-telemetry |
 | `session/created` | emit | Creation announcement during session publication. A synchronous throw vetoes and rolls | dsh-session |
 | `session/disposed` | emit | Emitted once when an announced session leaves the store, including | dsh-session |
 | `session/event` | emit | Post-commit, fire-and-forget append feed. The listener snapshot resolves | dsh-session |
 | `session/flush` | parallel | Awaited parallel durability checkpoint: every listener runs and the | dsh-session |
-| `settings/document-updated` | emit | One registered namespace's RAW user section changed, whether or not the | dsh-settings |
-| `settings/updated` | emit | Committed change to one registered namespace's resolved value. Emitted | dsh-settings |
+| `settings/document-updated` | emit | One profile entry's form values, availability, or page policy changed. | dsh-settings |
 | `skills/change` | emit | A skill provider, runtime contribution, or provider-backed catalog may | dsh-skill |
 | `slash/input-begin-command` | bail | Claim a command token for the scoped input machine. | dsh-client-ui-conversation |
 | `slash/input-consume-token` | bail | Consume a trigger token without inserting replacement content. | dsh-client-ui-conversation |
 | `slash/input-insert-reference` | bail | Insert a structured reference into the scoped input machine. | dsh-client-ui-conversation |
 | `slash/input-insert-text` | bail | Insert plain text into the scoped input machine. | dsh-client-ui-conversation |
-| `slots/changed` | emit | A slot declaration or registration set changed. | dsh-client-ui-renderer |
+| `slots/changed` | emit | An ordinary Slot declaration or entry registration set changed. Factory | dsh-client-ui-renderer |
 | `subagent/end` | emit | A published child settled. Scope-filtered dispatch uses the same delegating | dsh-subagent |
 | `subagent/provider-added` | emit | A provider became resolvable in the registry. | dsh-subagent |
 | `subagent/provider-removed` | emit | A provider left the registry. Accepted runs remain holder-owned. | dsh-subagent |
@@ -81,7 +93,7 @@ the system prompt on `system-prompt/assemble`, the same hook `acryl-system-promp
 | `tools/change` | emit | A tool was registered or unregistered, or a scoped restriction changed | dsh-tools |
 | `tools/execute` | waterfall | Around-dispatch waterfall for timeout, retry, or metrics. `next()` returns | dsh-tools |
 | `tools/post-execute` | waterfall | Accept, replace, enrich, or block a normalized dispatch result. `next()` | dsh-tools |
-| `tools/pre-execute` | waterfall | Allow, deny, or ask before dispatch. `next()` delegates to allow; missing | dsh-tools |
+| `tools/pre-execute` | waterfall | Allow, deny, cancel, or ask before dispatch. `next()` delegates to allow; | dsh-tools |
 | `tools/ptc-dispatch-log` | waterfall | Allow a listener to replace content in the DURABLE LOG COPY of one | dsh-tools |
 | `tools/result` | emit | Observe the frozen, lossless-JSON final outcome. Listener failures are contained. | dsh-tools |
 | `user-questions/request` | waterfall | Ask composed answerers for structured user input. Return an answer to | dsh-user-questions |
@@ -92,3 +104,5 @@ the system prompt on `system-prompt/assemble`, the same hook `acryl-system-promp
 | `workflow/log` | emit | The script emitted a narration line (a `log(message)` call). | dsh-workflow |
 | `workflow/phase` | emit | The script entered a phase (a `phase(title)` call) — progress grouping | dsh-workflow |
 | `workflow/start` | emit | A workflow run started — the script's meta block validated, the body | dsh-workflow |
+| `workspace/session-activity` | waterfall | Ask the composed providers what still runs for a session before it is | dsh-workspace |
+| `workspace/session-stop` | parallel | Stop a session's running work because the caller archived it with | dsh-workspace |

@@ -1,4 +1,4 @@
-<!-- Synced from deepseek-harness:docs/cookbook/adding-an-llm-adapter.md @ 5dda764ed3. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
+<!-- Synced from deepseek-harness:docs/cookbook/adding-an-llm-adapter.md @ 639ed01539. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
 
 # Cookbook: adding an LLM adapter
 

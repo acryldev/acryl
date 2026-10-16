@@ -1,4 +1,4 @@
-<!-- Synced from deepseek-harness:docs/cookbook/adding-a-remote-api.md @ 5dda764ed3. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
+<!-- Synced from deepseek-harness:docs/cookbook/adding-a-remote-api.md @ 639ed01539. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
 
 # Cookbook: adding a Remote API
 
@@ -99,8 +99,8 @@ export async function rename(noteId: string, title: string): Promise<void> {
     "./typert": { "types": "./lib/typert.host.d.ts", "default": "./lib/typert.host.js" },
     "./remote": { "types": "./lib/typert.remote-client.d.ts", "default": "./lib/typert.remote-client.js" }
   },
-  "peerDependencies": { "@deepseek-ai/dsh-typert-protocol": "workspace:^" },
-  "devDependencies": { "@deepseek-ai/dsh-typert-protocol": "workspace:^" }
+  "peerDependencies": { "@deepseek-ai/dsh-typert-protocol": "workspace:*" },
+  "devDependencies": { "@deepseek-ai/dsh-typert-protocol": "workspace:*" }
 }
 ```
 

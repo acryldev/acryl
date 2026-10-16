@@ -15,75 +15,74 @@ that type are the real, shipped implementations to study (their source is in the
 
 | Type | Count | Can be authored as a local plugin? | Doc | Example | Notes |
 | --- | --- | --- | --- | --- | --- |
-| client-slot | 46 | yes (Web, Desktop) | extending/client-slot.md | client-slot-header-action, client-slot-sidebar-tab | 58 slots, see mount-points; slots with owner props need the declaring package doc |
+| client-slot | 45 | yes (Web, Desktop) | extending/client-slot.md | client-slot-header-action, client-slot-sidebar-tab | 58 slots, see mount-points; slots with owner props need the declaring package doc |
 | tool | 20 | yes | extending/tool-plugin.md | tool-basic |  |
-| storage-or-persistence | 13 | not for an agent to author | reference/subsystems/persistence.md | (none) | durable session format; a bug corrupts history |
-| event-hook | 12 | yes | extending/event-hook.md | event-hook-basic | a waterfall observer MUST call next() |
-| host-route | 12 | yes (Web, Desktop) | extending/host-route.md | host-route-basic | the CLI has no web server |
+| storage-or-persistence | 14 | not for an agent to author | reference/subsystems/persistence.md | (none) | durable session format; a bug corrupts history |
+| host-route | 13 | yes (Web, Desktop) | extending/host-route.md | host-route-basic | the CLI has no web server |
+| event-hook | 11 | yes | extending/event-hook.md | event-hook-basic | a waterfall observer MUST call next() |
 | sandbox-or-terminal-backend | 9 | not for an agent to author | reference/subsystems/sandbox.md | (none) | a security boundary: only with explicit user direction and review |
 | desktop-main | 9 | yes (Node in the Electron main process) | extending/desktop-main.md | desktop-main-profile-info | Electron APIs themselves are not verified for local plugins |
-| service-provider | 6 | yes | extending/service.md | service-provider-greeter, capability-swap-* |  |
+| other | 6 | case by case | extending/cordis-core.md | (none) | session projections and local attachment stores |
+| service-provider | 5 | yes | extending/service.md | service-provider-greeter, capability-swap-* |  |
+| unknown | 5 | see notes |  |  |  |
 | chat-command | 5 | yes | extending/chat-command.md | chat-command-basic | host command run without the model |
 | prompt-contribution | 5 | yes | extending/prompt-contribution.md | prompt-contribution-basic |  |
 | core-infrastructure | 4 | no | reference/cordis-api/ | (none) | Loader, include, timer, HMR: never author |
 | llm-adapter | 4 | yes | extending/llm-adapter.md | llm-adapter-echo | real providers need a key: never in the package |
-| other | 4 | case by case | extending/cordis-core.md | (none) | session projections and local attachment stores |
-| agent-preset | 4 | yes (directory, not a package) | extending/agent-preset.md | agent-preset-reviewer | structural only, a preset grants its plugins capabilities |
 | client-service | 4 | yes (browser half) | extending/client-slot.md | (client bundle can ctx.provide) | not separately verified |
-| settings-section | 3 | yes | extending/config-schema.md | settings-section-basic | a browser card is optional (settings.plugin.item) |
 | skill-provider | 3 | yes | extending/skill-provider.md | skill-provider-basic |  |
-| schedule-job-workflow | 2 | yes as a consumer | reference/subsystems/schedule.md | (none) | see also jobs.md, workflow.md, webhook.md |
+| agent-preset | 2 | yes (directory, not a package) | extending/agent-preset.md | agent-preset-reviewer | structural only, a preset grants its plugins capabilities |
 | subagent-provider | 2 | possible, advanced | reference/subsystems/subagent.md | (none) | large contract (continuations, capabilities); ask the user first |
 | protocol-bridge | 2 | possible, advanced | reference/subsystems/extensions.md | (none) | MCP, ACP, LSP integrations are mostly configuration-driven |
+| schedule-job-workflow | 1 | yes as a consumer | reference/subsystems/schedule.md | (none) | see also jobs.md, workflow.md, webhook.md |
 
-## client-slot (46)
+## client-slot (45)
 
 | Package | Kind | Surfaces (tui web desktop) | What it is | Provides | Needs |
 | --- | --- | --- | --- | --- | --- |
 | dsh-client-file-upload | client | - web desktop | Agent-scoped browser file upload, streaming intake, and staged receipt service | fileUpload, fileUploads | remote |
 | dsh-client-resources | client | - web desktop | Unified client resource model: protocol-registered providers turn URL addresses into live values, consumed through the useResource global standard hook | resources | slots |
-| dsh-client-ui-agent-preset | client | - web desktop | Agent-preset surfaces: the default for later sessions, this session's seat, and the composition editor |  | slots, locale, remote, remote.agentPresets, remote.settings |
+| dsh-client-ui-agent-preset | client | - web desktop | Agent-preset surfaces: the default for later sessions, this session's seat, and the composition editor |  | slots, sessions, locale, remote, remote.agentPresets, remote.settings, configForms |
 | dsh-client-ui-approval | client | - web desktop | Approval composer takeover over the scoped Remote Event waterfall |  | sessions, remote, uiSession, slots, locale |
 | dsh-client-ui-attachment | client | - web desktop | Dynamic attachment presentation plugin for conversation input, message-image, and trajectory image slots |  | slots |
 | dsh-client-ui-brand-official | client | - web desktop | Official DeepSeek Harness brand occupants for the Web client's sidebar slots |  | slots |
-| dsh-client-ui-chat | client | - web desktop | Chat Conversation target, node definitions, renderers, and details surface |  | slots, sessions, uiSession, uiConversation, locale, settingsScope, remote, remote.session |
+| dsh-client-ui-chat | client | - web desktop | Chat Conversation target, node definitions, renderers, and details surface |  | slots, sessions, uiWorkspace, uiSession, uiConversation, locale, configForms, remote |
 | dsh-client-ui-commands | client | - web desktop | Client command surface: global directory cache, '/' source, three command UI kinds, popupSelect registry | commandUi | inputTriggers, sessions, remote, remote.commands, locale |
-| dsh-client-ui-conversation | client | - web desktop | Target-neutral Conversation assembly, shell, composer, queue, and view navigation | uiConversation, conversation | slots, sessions, fileUpload, uiSession, uiWorkspace, locale, settingsScope |
-| dsh-client-ui-cordis | client | - web desktop | Cordis dynamic-plugin definition card: the keyed cordis_define tool row with its run/stop switch |  | slots, locale, inputTriggers, remote, remote.dynamicCordisRunner, dynamicCordisRunner |
-| dsh-client-ui-deliverables | client | - web desktop | Produced-files turn tail and clickable final-response file references for Web | chatFileMentions | slots, locale, uiConversation, remote, remote.session |
-| dsh-client-ui-directory-picker-native | client | - web desktop | Native directory-picker surface: the renderless workspace directory-flow occupant driving the host's OS chooser |  | slots, uiWorkspace |
+| dsh-client-ui-conversation | client | - web desktop | Target-neutral Conversation assembly, shell, composer, queue, and view navigation | uiConversation, conversation | slots, sessions, fileUpload, uiSession, uiWorkspace, locale, configForms |
+| dsh-client-ui-cordis | client | - web desktop | Cordis dynamic-plugin definition card: the keyed cordis_define tool row with its run/stop switch |  | slots, locale, remote, remote.dynamicCordisRunner, dynamicCordisRunner |
+| dsh-client-ui-deliverables | client | - web desktop | Changed-files card with per-file comparison tabs, delivery cards, and clickable final-response file references for Web | chatFileMentions | slots, locale, uiConversation, remote, remote.session, sidebarRightTabs, sidebarRight, configForms |
+| dsh-client-ui-directory-picker-native | client | - web desktop | Native directory-picker surface: the renderless workspace directory-flow occupant driving the local Desktop or Host OS chooser |  | slots, uiWorkspace |
 | dsh-client-ui-goal | client | - web desktop | Session goal surface: GoalBar docked above the composer, read from the goal session projection |  | slots, sessions, remote, remote.goals, locale, uiConversation |
 | dsh-client-ui-input-trigger | client | - web desktop | Input trigger pipeline: '/' and '@' detection, candidate menu, pick routing to registered sources | inputTriggers | sessions, locale |
-| dsh-client-ui-jobs | client | - web desktop | Session-header background-job list: live registry state mirrored from session/jobs frames |  | sessions, slots, locale |
-| dsh-client-ui-layout | client | - web desktop | Shell plugin: three-column AppFrame with drag handles, ctx.layout viewing-state service (navigation + panels) | layout | slots, theme, locale |
-| dsh-client-ui-message-feedback | client | - web desktop | Per-message feedback controls contributed to the assistant-message action strip, backed by the messageFeedback Host Remote |  | slots, remote, remote.messageFeedback, locale |
+| dsh-client-ui-jobs | client | - web desktop | Session-header background-job list with on-demand streaming record panels |  | jobs, slots, locale |
+| dsh-client-ui-layout | client | - web desktop | Shell plugin: three-column AppFrame with drag handles, ctx.layout viewing-state service (navigation + panels) | layout | slots, theme, locale, shortcuts |
+| dsh-client-ui-message-feedback | client | - web desktop | The Web feedback surface: per-message Like/Dislike in the assistant-message action strip and the feedback dialog behind both ratings and /feedback, backed by th | feedbackUi | slots, remote, remote.messageFeedback, remote.sessionFeedback, locale |
 | dsh-client-ui-model-selection | client | - web desktop | Model selection over the shared model catalog, Session projection, and session.selectModel | modelDirectories | commandUi, locale, sessions, slots, remote, remote.session |
-| dsh-client-ui-open-in-app | client | - web desktop | Web Session-header "Open In..." split button opening the session workspace directory in a locally installed application |  | sessions, slots, locale |
-| dsh-client-ui-permission-presets | client | - web desktop | Permission surfaces: a new-session default in General settings and a current-session /permission popup over the permissions projection |  | commandUi, sessions, slots, locale, remote, remote.settings, settingsScope, settingsSchema |
-| dsh-client-ui-plan | client | - web desktop | Plan-mode composer control: the conversation.input.plan seat over the plan projection and the /plan command channel |  | slots, remote, remote.commands, locale |
-| dsh-client-ui-reference | client | - web desktop | Unified Web @file and @session reference source |  | inputTriggers, locale, sessions, remote, remote.fileReferences, remote.sessionReferenceResolver |
+| dsh-client-ui-open-in-app | client | - web desktop | Web "Open In..." controls: the Session-header split button opening the workspace directory in an installed application, and the document preview's default-appli |  | sessions, slots, locale, remote, remote.session, shortcuts, layout |
+| dsh-client-ui-permission-presets | client | - web desktop | Permission surfaces: a new-session default in General settings and a current-session /permission popup over the permissions projection |  | commandUi, connection, sessions, slots, locale, remote, remote.permissionPresets, remote.settings |
+| dsh-client-ui-plan | client | - web desktop | Plan mode controls, persistent transcript plan cards, and sidebar Markdown previews |  | slots, remote, remote.commands, remote.session, sessions, locale, uiConversation, resources |
+| dsh-client-ui-reference | client | - web desktop | Unified Web @file and @session reference source |  | inputTriggers, locale, sessions, remote, remote.fileReferences, remote.sessionReferenceResolver, sidebarRight |
 | dsh-client-ui-renderer | client | - web desktop | Browser UI renderer: React slot bindings, ctx.uiRenderer, and the assembled application root | slots, uiRenderer | invariants |
-| dsh-client-ui-schedule | client | - web desktop | Read-only active Schedule catalog in the Web Session header |  | slots, locale |
-| dsh-client-ui-session | client | - web desktop | Session Controller adapter for React and session-scoped slots | uiSession | sessions, slots |
-| dsh-client-ui-settings | client | - web desktop | Settings domain base plugin: the settings-namespace scope service and the canonical settings slot-type contract | settingsSchema, settingsScope | remote, remote.settings |
-| dsh-client-ui-settings-general | client | - web desktop | Settings ownerless-copy and product onboarding plugin: the General section, shell trigger/header chrome content, settings dictionaries, and the versioned welcom |  | slots, locale, connection, remote, remote.settings, settingsScope |
-| dsh-client-ui-settings-models | client | - web desktop | Models settings and shared product-onboarding dialogs over existing settings and credential joins |  | slots, locale, remote, remote.credentials, remote.llm, remote.settings, settingsScope, settingsSchema |
-| dsh-client-ui-settings-plugin-inventory | client | - web desktop | Read-only Cordis Loader inventory tab in Web Plugins settings |  | slots, locale, remote, remote.pluginInventory |
-| dsh-client-ui-settings-plugins | client | - web desktop | Plugins settings section with feature-owned tabs and configurable host-plane plugin cards |  | slots, locale, remote, remote.credentials, remote.session, settingsScope |
-| dsh-client-ui-sidebar | client | - web desktop | Sidebar plugin: session multi-level tree, search, grouping, state dots |  | slots, layout, uiWorkspace, locale |
-| dsh-client-ui-sidebar-files | client | - web desktop | Workspace file tree tab type for the right Sidebar: lazy directory listing over the workspaceFiles Remote namespace, opening files into the Sidebar |  | slots, locale, sidebarRightTabs, remote, remote.workspaceFiles |
-| dsh-client-ui-sidebar-right | client | - web desktop | Right Sidebar: the docking surface's session-bound state, its panel and header expand control, and the navigation service over it | sidebarRightTabs, sidebarRight | slots, layout, locale, resources |
-| dsh-client-ui-sidebar-textpreview | client | - web desktop | Text preview tab type for the right Sidebar: the fallback viewer for file: addresses, drawn from the file resource with line navigation, wrap, and reload |  | slots, locale, sidebarRightTabs, remote, remote.workspaceFiles |
-| dsh-client-ui-skill | client | - web desktop | Web skill references and the dedicated skill tool row |  | inputTriggers, sessions, slots, locale, remote, remote.skills |
-| dsh-client-ui-subagent | client | - web desktop | Subagent conversation catalog, continuation routing UI, and '@' reference source |  | sessions, slots, locale |
-| dsh-client-ui-theme | client | - web desktop | Theme plugin: Host bootstrap for the pre-plugin palette; DOM-free ThemeRuntime for light/dark/system state; --dsw-* token styles and Appearance settings row | theme | slots, locale, remote, settingsScope |
+| dsh-client-ui-schedule | client | - web desktop | Host task management page and Session reminder catalog |  | slots, locale, remote, remote.schedule, conversation, uiConversation, uiWorkspace, sessions |
+| dsh-client-ui-session | client | - web desktop | Session Controller adapter for React and session-scoped slots | uiSession | sessions, slots, remote |
+| dsh-client-ui-settings | client | - web desktop | Settings domain base plugin: shared configuration forms and the canonical settings slot-type contract | configForms, settingsSchema | remote, remote.settings |
+| dsh-client-ui-settings-general | client | - web desktop | Settings ownerless-copy and product onboarding plugin: the General section, shell trigger/header chrome content, settings dictionaries, and the versioned welcom |  | slots, locale, connection, remote, remote.settings, configForms, shortcuts |
+| dsh-client-ui-settings-models | client | - web desktop | Models settings and shared product-onboarding dialogs over existing settings and credential joins |  | slots, locale, remote, remote.credentials, remote.llm, remote.settings, remote.session, configForms |
+| dsh-client-ui-settings-plugin-inventory | client | - web desktop | Read-only Cordis Loader inventory tab in Web Plugins settings |  | slots, locale, remote, remote.pluginInventory, modules |
+| dsh-client-ui-settings-plugins | client | - web desktop | Built-in plugins settings section for the dsh web client: the Settings navigation entry and the tab chrome feature-owned tabs register into |  | slots, locale |
+| dsh-client-ui-sidebar | client | - web desktop | Sidebar plugin: session multi-level tree, search, grouping, state dots |  | slots, layout, uiWorkspace, locale, shortcuts |
+| dsh-client-ui-sidebar-files | client | - web desktop | Workspace file tree tab type for the right Sidebar: lazy directory listing over the workspaceFiles Remote namespace, opening files into the Sidebar |  | slots, locale, sidebarRightTabs, sidebarRight, remote, remote.workspaceFiles |
+| dsh-client-ui-sidebar-right | client | - web desktop | Right Sidebar: the docking surface's session-bound state, its panel and header expand control, and the navigation service over it | sidebarRightTabs, sidebarRight | slots, layout, locale, resources, sessions, uiSession, shortcuts |
+| dsh-client-ui-skill | client | - web desktop | Web skill references and the dedicated skill tool row |  | inputTriggers, sessions, slots, locale, remote, remote.skills, sidebarRight |
+| dsh-client-ui-subagent | client | - web desktop | Subagent conversation catalog, continuation routing UI, and '@' reference source |  | sessions, uiWorkspace, slots, locale, sidebarRight |
+| dsh-client-ui-theme | client | - web desktop | Theme plugin: Host bootstrap for the pre-plugin palette; DOM-free ThemeRuntime for light/dark/system state; --dsw-* token styles and Appearance settings row | theme | slots, locale, remote, configForms |
 | dsh-client-ui-tool | client | - web desktop | Client Tool call-tree renderer and keyed per-tool presentation slot |  | slots, remote |
 | dsh-client-ui-trajectory | client | - web desktop | Trajectory event ledger with an interactive timing overview: pure-consumer plugin registering into the conversation ViewMap (no service) |  | slots, sessions, uiSession, uiConversation, locale |
-| dsh-client-ui-user-questions | client | - web desktop | Web ask_user_question composer takeover and plan-review presentation UI |  | sessions, remote, uiSession, slots, locale |
-| dsh-client-ui-workflow-run | client | - web desktop | Durable workflow-run Conversation Node and nested member disclosure for dsh web |  | uiConversation, slots, sessions, locale |
-| dsh-client-ui-workspace | client | - web desktop | Workspace picker plugin: one WorkspacePicker registered into the sidebar and empty-state workspace slots | uiWorkspace | slots, sessions, workspaces, locale, remote, remote.directoryPicker |
+| dsh-client-ui-user-questions | client | - web desktop | Web ask_user_question composer takeover and plan-review presentation UI | userQuestionPanels | sessions, remote, remote.userQuestions, uiSession, slots, locale, uiConversation |
+| dsh-client-ui-workflow-run | client | - web desktop | Durable workflow-run Conversation Node and nested member disclosure for dsh web |  | uiConversation, uiWorkspace, slots, sessions, locale |
+| dsh-client-ui-workspace | client | - web desktop | Workspace picker plugin: one WorkspacePicker registered into the sidebar and empty-state workspace slots | uiWorkspace | slots, sessions, workspaces, locale, remote, remote.directoryPicker, layout, shortcuts |
 | dsh-cordis-client-runner | client | - web desktop | Browser half of dynamic dual-half plugin packages: event subscription, closure evaluation, guard facade, and loader entries | timer, dynamicCordisRunner, cordisInspect | loader, modules, slots, remote, remote.dynamicCordisRunner |
-| acryl-desktop | client | - - desktop | ACRYL desktop: a local-first agent workspace composed with Cordis plugins | desktopActions, desktopPlugins, livePluginActivation, desktopPnpm, desktopProfiles, layout | slots, locale, connection, remote, settingsScope, sessions, theme, workspaces |
+| acryl-desktop | client | - - desktop | ACRYL desktop: a local-first agent workspace composed with Cordis plugins | desktopPlugins, livePluginActivation, desktopPnpm, desktopProfiles, desktopActions | slots, locale, connection, remote, sessions, theme, workspaces, uiWorkspace |
 | cordis-plugin-market | client | - web desktop | Community plugin discovery and managed package operations for Cordis-based products (ACRYL and stock DeepSeek Harness alike) |  | slots, locale |
 | dsh-client-ui-brand-acryl | client | - web desktop | ACRYL brand occupants for the DSH Web client's sidebar and conversation-hero slots - the swappable counterpart to @deepseek-ai/dsh-client-ui-brand-official |  | slots |
 
@@ -112,11 +111,12 @@ that type are the real, shipped implementations to study (their source is in the
 | dsh-tools | host | tui web desktop | Tool registry and execution pipeline for the DeepSeek Harness | tools | invariants |
 | acryl-plugin-context | host | tui web desktop | Extension Context Pack: routed docs, verified examples and authoring skills that let the ACRYL agent write its own plugins (spec 037) | pluginContext | systemPrompt |
 
-## storage-or-persistence (13)
+## storage-or-persistence (14)
 
 | Package | Kind | Surfaces (tui web desktop) | What it is | Provides | Needs |
 | --- | --- | --- | --- | --- | --- |
 | dsh-agent | host | tui web desktop | Agent interface, registry, initiator scope, and event vocabulary for the DeepSeek Harness | agents | invariants |
+| dsh-agent-loop | host | tui web desktop | The concrete agent loop plugin for the DeepSeek Harness | agentLoop | invariants |
 | dsh-compaction-basic | host | tui web desktop | Token-meter-driven compaction policy and LLM summarization backend for the DeepSeek Harness |  |  |
 | dsh-session-checkpoint-policy | host | tui web desktop | Semantic session durability checkpoints before model requests and tool side effects |  | llm, sessionPersistence, sessions, tools |
 | dsh-session-log-deepseek | host | tui web desktop | Incremental lossless session-log request extension for the official DeepSeek LLM API |  | deepseekLlmApiExtensions, sessions |
@@ -124,30 +124,13 @@ that type are the real, shipped implementations to study (their source is in the
 | dsh-session-projection-cache | host | tui web desktop | Persisted projection cache (ctx.sessionProjectionCache): durable per-session checkpoint records on the session_projcache storage domain (per-record layout), thr | sessionProjectionCache |  |
 | dsh-session-query-sqlite | host | tui web desktop | Concrete ctx.sessionQuery backend with SQLite FTS5 search |  |  |
 | dsh-spill-local | host | tui web desktop | Local-filesystem implementation of the DeepSeek Harness spill storage seam (private session-scoped files) |  |  |
-| dsh-spill-policy | host | tui web desktop | Tool-result spill policy for the DeepSeek Harness — replaces oversized plain-text tool results with a retained preview plus a spill-file path (no service API) |  | tools |
+| dsh-spill-policy | host | tui web desktop | Token-budgeted tool-result retention with recoverable text and image paths |  | tools |
 | dsh-storage | host | tui web desktop | Storage hub (ctx.storage): named backend registry plus mounted data-form facilities for the DeepSeek Harness | storage |  |
 | dsh-storage-domain | host | tui web desktop | Domain data form (ctx.storage.domain): schema-validated, event-emitting KV domains over storage backends for the DeepSeek Harness |  | storage |
 | dsh-storage-json | host | tui web desktop | JSON file KV storage backend for the DeepSeek Harness storage hub |  | storage |
 | dsh-workspace | host | - web desktop | Workspace entity registry (ctx.workspaceRegistry): durable workspace records with validated session attachment over the domain data form for the DeepSeek Harnes | workspaceRegistry | invariants |
 
-## event-hook (12)
-
-| Package | Kind | Surfaces (tui web desktop) | What it is | Provides | Needs |
-| --- | --- | --- | --- | --- | --- |
-| dsh-agent-instructions | host | tui web desktop | Workspace context loader for AGENTS.md/CLAUDE.md instruction files |  | sessionProjections |
-| dsh-authorization | host | tui web desktop | Authorization seam (ctx.authorization): plugin-owned flows that obtain a credential through a conversation with the human | authorization | invariants |
-| dsh-code-runtime-worker-thread | host | - web desktop | Worker-thread implementation of the DeepSeek Harness code-execution seam |  |  |
-| dsh-credentials-local | host | tui web desktop | File-backed credentials provider ($DSH_HOME/.env under the live process environment) for the DeepSeek Harness |  |  |
-| dsh-fs-observation-policy | host | tui web desktop | File-context policy plugin for the DeepSeek Harness — observed-state, read-before-edit, and version-guarded write/edit added over the ctx.fs provider seam throu |  |  |
-| dsh-goal-round-driver | host | tui web desktop | Race-fenced same-session goal-round driver |  | agents, goals, sessions |
-| dsh-host-directory-picker-native | host | - web desktop | Native-OS-chooser backend of the directory-picker seam for the DeepSeek Harness web GUI host |  |  |
-| dsh-session-projection | host | tui web desktop | Session-projection seam: the merge-extensible projection type table, the provider contract, and the ctx.sessionProjections registry serving whole current values | sessionProjections |  |
-| dsh-session-telemetry-otel | host | tui web desktop | OpenTelemetry backend for the DeepSeek Harness telemetry seam: hands captured session records to the OTel JS SDK's log pipeline |  |  |
-| dsh-session-title | host | tui web desktop | Log-backed session title service and provider registry for the DeepSeek Harness | sessionTitle | invariants |
-| dsh-token-meter | host | tui web desktop | Replay-aware token measurement service (ctx.tokenMeter) for the DeepSeek Harness | tokenMeter |  |
-| dsh-typert-loader | host | tui web desktop | Loader integration for generated Typert package contributions |  | typert, loader |
-
-## host-route (12)
+## host-route (13)
 
 | Package | Kind | Surfaces (tui web desktop) | What it is | Provides | Needs |
 | --- | --- | --- | --- | --- | --- |
@@ -156,13 +139,30 @@ that type are the real, shipped implementations to study (their source is in the
 | dsh-api-session-controller | client | - web desktop | Session Remote commands, cold reads, and live control transport | sessionFileReferences, sessionController, sessionSkillCatalog, sessions | connection, fileUpload, typert, remote, remote.commands, remote.session, remote.subagents |
 | dsh-api-settings-controller | host | - web desktop | Remote owner for the configuration surfaces over the settings-domain seams | credentialsController, settingsController |  |
 | dsh-api-workspace-controller | client | - web desktop | Workspace Remote commands and reconnect-safe state transport | workspaces, directoryPickerController, workspaceController | remote, remote.workspace |
-| dsh-api-workspace-files | client | - web desktop | Workspace file service and Client resource provider: bounded reads, directory listing, and live metadata over the workspaceFiles Remote namespace | workspaceFiles | resources, remote, remote.workspaceFiles, sessions |
+| dsh-api-workspace-files | client | - web desktop | Workspace file service and Client resource provider: bounded reads, directory listing, and live metadata over the workspaceFiles Remote namespace | workspaceFiles | resources, remote, remote.workspaceFiles |
 | dsh-goal | host | tui web desktop | Event-sourced same-session goal state and lifecycle service for the DeepSeek Harness | goals | invariants |
 | dsh-host-directory-picker-auto | host | - web desktop | Adaptive chooser of the directory-picker seam: resolves the host situation at boot and mounts the native or browse backend for the DeepSeek Harness web GUI host |  | webServer, loader |
 | dsh-host-open-in-app | host | - web desktop | Host half of open-in-app: resolved application catalog, icons, and the launch endpoint as three webServer routes |  | webServer, connection, subprocess |
 | dsh-host-webserver | host | - web desktop | Web route-registration plugin: HTTP and upgrade routes, index transform taps, and static dist fallback; knows no harness concepts | webServer |  |
 | dsh-message-feedback | host | - web desktop | Canonical Session-log ratings and notes for finalized assistant messages | messageFeedback |  |
 | dsh-session-reference | host | - web desktop | Cross-session snapshot references and durable untrusted model context (ctx.sessionReferenceResolver) | sessionReferenceResolver |  |
+| dsh-user-questions | host | tui web desktop | Abstract user-questions seam (ctx.userQuestions) for asking the human during agent runs | userQuestions |  |
+
+## event-hook (11)
+
+| Package | Kind | Surfaces (tui web desktop) | What it is | Provides | Needs |
+| --- | --- | --- | --- | --- | --- |
+| dsh-agent-instructions | host | tui web desktop | Workspace context loader for AGENTS.md/CLAUDE.md instruction files |  | sessionProjections |
+| dsh-authorization | host | tui web desktop | Authorization seam (ctx.authorization): plugin-owned flows that obtain a credential through a conversation with the human | authorization | invariants |
+| dsh-credentials-local | host | tui web desktop | File-backed credentials provider ($DSH_HOME/.env under the live process environment) for the DeepSeek Harness |  |  |
+| dsh-fs-observation-policy | host | tui web desktop | File-context policy plugin for the DeepSeek Harness — observed-state, read-before-edit, and version-guarded write/edit added over the ctx.fs provider seam throu |  |  |
+| dsh-goal-round-driver | host | tui web desktop | Race-fenced same-session goal-round driver |  | agents, goals, sessions |
+| dsh-host-directory-picker-native | host | - web desktop | Native-OS-chooser backend of the directory-picker seam for the DeepSeek Harness web GUI host |  |  |
+| dsh-session-projection | host | tui web desktop | Session-projection seam: the merge-extensible projection type table, the provider contract, and the ctx.sessionProjections registry serving whole current values | sessionProjections |  |
+| dsh-session-telemetry-otel | host | tui web desktop | Feedback-authorized Session logs over byte-bounded OpenTelemetry HTTP requests |  |  |
+| dsh-session-title | host | tui web desktop | Log-backed session title service and provider registry for the DeepSeek Harness | sessionTitle | invariants |
+| dsh-token-meter | host | tui web desktop | Replay-aware token measurement service (ctx.tokenMeter) for the DeepSeek Harness | tokenMeter |  |
+| dsh-typert-loader | host | tui web desktop | Loader integration for generated Typert package contributions |  | typert, loader |
 
 ## sandbox-or-terminal-backend (9)
 
@@ -192,7 +192,18 @@ that type are the real, shipped implementations to study (their source is in the
 | acryl-desktop/webserver | host | - - desktop | Desktop-owned web server host for the renderer. |  |  |
 | dsh-desktop-loader-smoke-plugin | host | - - desktop | Loader smoke-test plugin used by the Desktop boot verification. |  |  |
 
-## service-provider (6)
+## other (6)
+
+| Package | Kind | Surfaces (tui web desktop) | What it is | Provides | Needs |
+| --- | --- | --- | --- | --- | --- |
+| dsh-agent-default-model | host | tui web desktop | Default model selection shared by Agent entry points |  |  |
+| dsh-attachment-local | host | tui web desktop | Private content-addressed DSH_HOME attachment storage |  |  |
+| dsh-session-stats | host | tui web desktop | Whole-log conversation counts and wall times projection (sessionStats) for the DeepSeek Harness |  | sessionProjections |
+| dsh-session-title-first-prompt-llm | host | tui web desktop | First-message LLM provider plugin for DeepSeek Harness session titles |  | sessionTitle, llm, sessions |
+| dsh-session-turn-outline | host | - web desktop | Whole-log turn outline projection (turnOutline) for the DeepSeek Harness |  | sessionProjections |
+| dsh-web-search-deepseek | host | tui web desktop | DeepSeek-backed search provider (native web_search via the Anthropic-compatible API) for the DeepSeek Harness web capability seam (ctx.web) |  | web |
+
+## service-provider (5)
 
 | Package | Kind | Surfaces (tui web desktop) | What it is | Provides | Needs |
 | --- | --- | --- | --- | --- | --- |
@@ -200,15 +211,24 @@ that type are the real, shipped implementations to study (their source is in the
 | dsh-deepseek-llm-api-extensions | host | tui web desktop | Additive request-field registry for the official DeepSeek LLM API adapter | deepseekLlmApiExtensions |  |
 | dsh-shell-env | host | tui web desktop | Tool-independent managed DSH_* shell environment registry | shellEnv |  |
 | dsh-typert-registry | client | tui web desktop | Runtime registry for generated package reflection and Zod schemas | typert |  |
-| dsh-user-questions | host | tui web desktop | Abstract user-questions seam (ctx.userQuestions) for asking the human during agent runs | userQuestions |  |
 | dsh-web | host | tui web desktop | Abstract web access capability seam (ctx.web) for the DeepSeek Harness — search/fetch provider registry, registration-order-independent selection, request/resul | web |  |
+
+## unknown (5)
+
+| Package | Kind | Surfaces (tui web desktop) | What it is | Provides | Needs |
+| --- | --- | --- | --- | --- | --- |
+| dsh-agent-presets | unknown | tui web desktop | (package not found in this checkout) |  |  |
+| dsh-client-ui-sidebar-textpreview | unknown | - web desktop | (package not found in this checkout) |  |  |
+| dsh-code-runtime-worker-thread | unknown | - web desktop | (package not found in this checkout) |  |  |
+| dsh-settings-file | unknown | tui web desktop | (package not found in this checkout) |  |  |
+| dsh-workflow-worker-thread | unknown | tui web desktop | (package not found in this checkout) |  |  |
 
 ## chat-command (5)
 
 | Package | Kind | Surfaces (tui web desktop) | What it is | Provides | Needs |
 | --- | --- | --- | --- | --- | --- |
 | dsh-command-compact | host | tui web desktop | Human-facing slash command for explicit session compaction |  | commands, compaction |
-| dsh-command-feedback | host | tui web desktop | Log-only session feedback producer and human-facing slash command |  | commands |
+| dsh-command-feedback | host | tui web desktop | Log-only session feedback: the record event, the sessionFeedback Host Remote, and the human-facing slash command | sessionFeedback | commands |
 | dsh-command-goal | host | tui web desktop | Human-facing slash command for persisted same-session goals |  | commands, goals |
 | dsh-commands | host | tui web desktop | Plugin-owned human command registry for DeepSeek Harness UIs | commands | invariants |
 | dsh-permission-presets | host | tui web desktop | User-facing permission presets (ctx.permissionPresets) for the DeepSeek Harness: one product-level Permissions select bundling the sandbox-mode and approval-pol | permissionPresets | invariants |
@@ -237,44 +257,18 @@ that type are the real, shipped implementations to study (their source is in the
 | Package | Kind | Surfaces (tui web desktop) | What it is | Provides | Needs |
 | --- | --- | --- | --- | --- | --- |
 | dsh-llm | host | tui web desktop | Provider-neutral LLM service interface for the DeepSeek Harness | llm | invariants |
-| dsh-llm-deepseek | host | tui web desktop | DeepSeek chat-completions adapter for the DeepSeek Harness LLM seam |  | llm |
+| dsh-llm-deepseek | host | tui web desktop | DeepSeek Messages adapter |  |  |
 | dsh-llm-pi-ai | host | tui web desktop | pi-ai-backed DeepSeek adapter for the DeepSeek Harness LLM seam (design-verification twin of dsh-llm-deepseek) |  | llm |
 | dsh-llm-retry | host | tui web desktop | Provider-routed LLM request retry policy for the DeepSeek Harness |  | agents, sessionProjections |
-
-## other (4)
-
-| Package | Kind | Surfaces (tui web desktop) | What it is | Provides | Needs |
-| --- | --- | --- | --- | --- | --- |
-| dsh-attachment-local | host | tui web desktop | Private content-addressed DSH_HOME attachment storage |  |  |
-| dsh-session-stats | host | tui web desktop | Whole-log conversation counts and wall times projection (sessionStats) for the DeepSeek Harness |  | sessionProjections |
-| dsh-session-title-first-prompt-llm | host | tui web desktop | First-message LLM provider plugin for DeepSeek Harness session titles |  | sessionTitle, llm, sessions |
-| dsh-session-turn-outline | host | - web desktop | Whole-log turn outline projection (turnOutline) for the DeepSeek Harness |  | sessionProjections |
-
-## agent-preset (4)
-
-| Package | Kind | Surfaces (tui web desktop) | What it is | Provides | Needs |
-| --- | --- | --- | --- | --- | --- |
-| dsh-agent-presets | host | tui web desktop | Per-session agent composition from preset cordis.yml files for the DeepSeek Harness | agentPresets | invariants |
-| dsh-host-plugin-inventory | host | - web desktop | Read-only Remote projection of current Cordis Loader plugin state | pluginInventory |  |
-| dsh-plugin-package-inventory-deepseek | host | tui web desktop | Active Loader-backed plugin package inventory for official DeepSeek LLM API requests |  | agents, deepseekLlmApiExtensions, loader |
-| dsh-settings-file | host | tui web desktop | File-backed settings provider (settings.yaml) for the DeepSeek Harness |  |  |
 
 ## client-service (4)
 
 | Package | Kind | Surfaces (tui web desktop) | What it is | Provides | Needs |
 | --- | --- | --- | --- | --- | --- |
-| dsh-client-connection | client | - web desktop | Authenticated RPC transport, generation lifecycle, and browser fixture | connection | credentials |
-| dsh-client-hmr | client | - web desktop | Dev-only hot-reload driver for script-loaded client entries: SSE rebuilt frames → invalidate/prefetch → fiber swap through the vendored Loader entry |  | loader, modules |
-| dsh-client-locale | client | - web desktop | Locale plugin: Host-backed preference, extensible language catalog, browser fallback, and typed built-in dictionaries | locale | slots, remote, settingsScope |
-| dsh-client-modules | client | - web desktop | Client module system, dual-face: node half composes the __DSH_BOOT__ entry graph (incremental dsh.client scan, bundle route, index tap, webPlugins service); bro | clientModules, modules | invariants |
-
-## settings-section (3)
-
-| Package | Kind | Surfaces (tui web desktop) | What it is | Provides | Needs |
-| --- | --- | --- | --- | --- | --- |
-| dsh-agent-default-model | host | tui web desktop | Default model selection shared by Agent entry points | agentDefaultModel |  |
-| dsh-agent-loop | host | tui web desktop | The concrete agent loop plugin for the DeepSeek Harness | agentLoop | invariants |
-| dsh-web-search-deepseek | host | tui web desktop | DeepSeek-backed search provider (native web_search via the Anthropic-compatible API) for the DeepSeek Harness web capability seam (ctx.web) |  | web |
+| dsh-client-connection | client | - web desktop | Authenticated RPC transport and generation lifecycle | connection | credentials |
+| dsh-client-hmr | client | - web desktop | Web client graph synchronization and rebuilt-bundle reload transport |  | modules |
+| dsh-client-locale | client | - web desktop | Locale plugin: Host-backed preference, extensible language catalog, browser fallback, and typed built-in dictionaries | locale | slots, remote, configForms |
+| dsh-client-modules | client | - web desktop | Client module system, dual-face: node half composes the __DSH_BOOT__ entry graph (incremental dsh.client scan, bundle route, index tap, webPlugins service); bro | clientModules, modules | loader |
 
 ## skill-provider (3)
 
@@ -284,12 +278,12 @@ that type are the real, shipped implementations to study (their source is in the
 | dsh-skill-badge | host | tui web desktop | Bundled dsh badge skill provider for DeepSeek Harness |  | skills |
 | dsh-skill-filesystem | host | tui web desktop | Local filesystem skill provider for the DeepSeek Harness |  | skills |
 
-## schedule-job-workflow (2)
+## agent-preset (2)
 
 | Package | Kind | Surfaces (tui web desktop) | What it is | Provides | Needs |
 | --- | --- | --- | --- | --- | --- |
-| dsh-jobs-local | host | tui web desktop | Process-local implementation of the DeepSeek Harness background job registry seam |  |  |
-| dsh-workflow-worker-thread | host | tui web desktop | worker-thread workflow engine: executes model-written orchestration scripts off the host event loop, bridging agent() calls back to ctx.subagents |  |  |
+| dsh-host-plugin-inventory | host | - web desktop | Read-only Remote projection of current Cordis Loader plugin state | pluginInventory |  |
+| dsh-plugin-package-inventory-deepseek | host | tui web desktop | Active Loader-backed plugin package inventory for official DeepSeek LLM API requests |  | agents, deepseekLlmApiExtensions, loader |
 
 ## subagent-provider (2)
 
@@ -304,3 +298,9 @@ that type are the real, shipped implementations to study (their source is in the
 | --- | --- | --- | --- | --- | --- |
 | dsh-repeat-tool-reminder | host | tui web desktop | Repeat-tool-call guard plugin: advisory reminders when an agent loops on identical tool calls |  |  |
 | dsh-web-fetch-http | host | tui web desktop | Anonymous public HTTP(S) fetch provider for the DeepSeek Harness web capability seam (ctx.web) |  | web |
+
+## schedule-job-workflow (1)
+
+| Package | Kind | Surfaces (tui web desktop) | What it is | Provides | Needs |
+| --- | --- | --- | --- | --- | --- |
+| dsh-jobs-local | host | tui web desktop | Process-local implementation of the DeepSeek Harness background job registry seam |  |  |

@@ -1,4 +1,4 @@
-<!-- Synced from deepseek-harness:docs/subsystems/spill.md @ 5dda764ed3. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
+<!-- Synced from deepseek-harness:docs/subsystems/spill.md @ 639ed01539. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
 
 # Spill Storage
 
@@ -10,7 +10,7 @@ Source: [`packages/spill/spill/src/types.ts`](../../packages/spill/spill/src/typ
 
 ## The save request
 
-`saveText` is the sole service operation: persist `content` verbatim, return an opaque locator, a backend-supplied retrieval hint, and the exact byte count. The request carries the save-time storage namespace (`owner`), descriptive producer provenance (`source`, never access control), and a `suggestedName` the backend may use as a naming hint, not a path. Tool provenance identifies the actual tool call; session-reference provenance identifies the captured source session, while its owner is the target session receiving the context.
+`saveText` is the sole service operation: persist `content` verbatim, return an opaque locator, a backend-supplied retrieval hint, and the exact byte count. The request carries the save-time storage namespace (`owner`), descriptive producer details (`source`, never access control), and a `suggestedName` the backend may use as a naming hint, not a path. A tool source identifies the actual tool call; a session-reference source identifies the captured source session, while its owner is the target session receiving the context.
 
 ```ts type-equiv
 /** One request to persist text to a spill artifact. */
@@ -46,7 +46,7 @@ A retention-period cleanup may expire old locators with other old session artifa
 /**
  * Producer of a spilled artifact. Tool results carry their model-issued call id;
  * session references identify the captured source session instead. Descriptive
- * provenance only, never access control.
+ * source description only, never access control.
  */
 type SpillSource = {
   kind: 'tool'
@@ -91,7 +91,7 @@ type SpillLocator = Branded<'SpillLocator'>
 
 `SpillStore` (`ctx.spillStore`, defined in [`packages/spill/spill/src/index.ts`](../../packages/spill/spill/src/index.ts)) is a one-method abstract service: `saveText(input) → Promise<SpillRef>`. It persists the FULL `content` and REJECTS on a real storage failure (permissions, ENOSPC, backend unavailable). The seam owns storage only: no retention policy, no tool-result replacement, no retrieval/search API.
 
-The local backend ([dsh-spill-local](../../packages/spill/spill-local)) writes under `<root>/session-<hash>/<random>-<safeName>` - a configured or lazily-created private (0700) root, a `sha256(sessionId)` session subdir, and an exclusive owner-only (`open(path, 'wx', 0o600)`) write so a planted symlink cannot redirect it. Its `locator` is the local path and its `retrievalHint` tells the model to use `read` or `grep` on that path. The policy consumer ([dsh-spill-policy](../../packages/spill/spill-policy)) replaces an over-`maxInlineBytes` plain-text final result with a retention-library head/tail preview plus the spill reference, best-effort: a save failure keeps the original inline result rather than turning a successful call into an `isError`.
+The local backend ([dsh-spill-local](../../packages/spill/spill-local)) writes under `<root>/session-<hash>/<random>-<safeName>` - a configured or lazily-created private (0700) root, a `sha256(sessionId)` session subdir, and an exclusive owner-only (`open(path, 'wx', 0o600)`) write so a planted symlink cannot redirect it. Its `locator` is the local path and its `retrievalHint` tells the model to use `read` or `grep` on that path. The policy consumer ([dsh-spill-policy](../../packages/spill/spill-policy)) replaces an over-`maxInlineTokens` text/image result with ordered head/tail content and a spill address, best-effort: a save failure keeps the original inline result rather than turning a successful call into an `isError`.
 
 <!-- BEGIN GENERATED cordis-surface (gen-cordis-catalog.ts) - do not edit between markers -->
 

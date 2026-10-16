@@ -7,7 +7,7 @@
 //           `setSource` hands you a function returning the CURRENT value (read it on use, never cache it); `onChange`
 //           fires after a user edit; `validate` refuses an invalid write before it is stored. A field with
 //           `.role('secret')` never appears in responses. On Web and Desktop the browser settings page can render a card
-//           for the namespace (see extending.client-slot: `settings.plugin.item`); without a card the values are still
+//           for the namespace on the Plugins page (see extending.client-slot: `plugins.item`); without a card the values are still
 //           editable in the user settings document.
 // Expect:   row ACTIVE; the namespace "acryl-example-settings" is served by the settings service when it exists.
 // Docs:     extending.config-schema

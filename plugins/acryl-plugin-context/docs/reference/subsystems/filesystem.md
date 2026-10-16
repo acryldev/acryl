@@ -1,4 +1,4 @@
-<!-- Synced from deepseek-harness:docs/subsystems/filesystem.md @ 5dda764ed3. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
+<!-- Synced from deepseek-harness:docs/subsystems/filesystem.md @ 639ed01539. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
 
 # Filesystem
 
@@ -294,6 +294,16 @@ Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnp
 Abstract filesystem provider. Targets must preserve identity across aliases; reads expose regular UTF-8 text or typed errors, listings are stable and content-free, and mutations are atomic. Optional guards add stale protection without changing the unguarded provider contract.
 
 ```ts cordis-catalog
+/**
+ * Observe one file or a directory's direct entries in this provider's execution world.
+ * @param target - resolved file or directory, including an absent path to observe for creation.
+ * @param changed - invalidation callback; errors can be reported during or after initialization.
+ * @param signal - cancels watcher initialization; the caller closes an initialized watcher.
+ * @returns a promise resolving once observation is active, with an asynchronous close function.
+ * @throws when the provider does not support watching or cannot initialize the watcher.
+ */
+watch(target: FsTarget, changed: (error?: Error) => void, signal: AbortSignal): Promise<() => Promise<void>>
+
 /**
  * Resolve a model/plugin-supplied path into a stable {@link FsTarget}. May perform I/O (a
  * remote/sandboxed backend may need a round-trip to map a path to a stable identity), hence

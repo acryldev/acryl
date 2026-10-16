@@ -7,7 +7,7 @@ Characters are exact; tokens are an estimate for comparing changes. Ceilings liv
 
 ## web and desktop (standard preset)
 
-Total: system prompt 9090 chars (about 2674 tokens), tool definitions 27589 chars (about 8114 tokens), 47 tools.
+Total: system prompt 9081 chars (about 2671 tokens), tool definitions 27586 chars (about 8114 tokens), 47 tools.
 
 ### System prompt by section
 
@@ -30,7 +30,7 @@ Total: system prompt 9090 chars (about 2674 tokens), tool definitions 27589 char
 | `tool_subagent` | 146 | 43 |
 | `tool_subagent_fork` | 161 | 47 |
 | `ui_deliverable-file-references` | 1371 | 403 |
-| `acryl_plugin_docs` | 2392 | 704 |
+| `acryl_plugin_docs` | 2383 | 701 |
 | `harness_source` | 486 | 143 |
 | `app_web-surface` | 1029 | 303 |
 | `cwd` | 51 | 15 |
@@ -62,7 +62,7 @@ Total: system prompt 9090 chars (about 2674 tokens), tool definitions 27589 char
 | `interrupt_agent` | 440 | 129 |
 | `read` | 438 | 129 |
 | `ui_type` | 437 | 129 |
-| `acryl_plugin_lookup` | 427 | 126 |
+| `acryl_plugin_lookup` | 424 | 125 |
 | `acryl_prepare_publish` | 408 | 120 |
 | `read_image` | 389 | 114 |
 | `acryl_workspace_create` | 379 | 111 |
@@ -89,7 +89,7 @@ Total: system prompt 9090 chars (about 2674 tokens), tool definitions 27589 char
 
 ## cli (terminal engine)
 
-Total: system prompt 5437 chars (about 1599 tokens), tool definitions 21633 chars (about 6363 tokens), 31 tools.
+Total: system prompt 5428 chars (about 1596 tokens), tool definitions 21630 chars (about 6362 tokens), 31 tools.
 
 ### System prompt by section
 
@@ -108,7 +108,7 @@ Total: system prompt 5437 chars (about 1599 tokens), tool definitions 21633 char
 | `tool_goal` | 553 | 163 |
 | `tool_workflow` | 358 | 105 |
 | `tool_subagent` | 146 | 43 |
-| `acryl_plugin_docs` | 2392 | 704 |
+| `acryl_plugin_docs` | 2383 | 701 |
 
 ### Tool definitions, largest first
 
@@ -134,7 +134,7 @@ Total: system prompt 5437 chars (about 1599 tokens), tool definitions 21633 char
 | `acryl_verify_plugin` | 443 | 130 |
 | `interrupt_agent` | 440 | 129 |
 | `read` | 438 | 129 |
-| `acryl_plugin_lookup` | 427 | 126 |
+| `acryl_plugin_lookup` | 424 | 125 |
 | `acryl_prepare_publish` | 408 | 120 |
 | `read_image` | 389 | 114 |
 | `job_kill` | 370 | 109 |

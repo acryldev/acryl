@@ -16,45 +16,7 @@ The `priority` rule and the "declare `inject: ['slots']`" rule apply to both.
 - Every component receives the framework hook seats listed under `framework props` for its scope; a selector hook is called with a selector, e.g. `useSessions(state => state.current)`.
 - This catalog is the COMPILE-TIME contract of the shipped web bundle, not a snapshot of one page: a key is registrable only where the owner that declares it is mounted. A failed registration surfaces in the browser-half load report - read it back with `cordis_inspect what:"temporary"`.
 
-## The 57 slots
-
-### `conversation`
-
-Kind `single`, scope `session-maybe`. The whole center column, across both the no-session hero and a live conversation.
-
-The whole center column, across both the no-session hero and a live
-conversation. OCCUPIED by ui-conversation's ConversationRoot, which
-declares the session body, composer, and input seats inside it -
-registering here replaces the entire conversation surface (and removes
-every seat it declares) rather than adding to it.
-
-Current-session-optional: the occupant owns both states without
-changing its React identity, so it keeps its own state across a session
-switch. It receives no owner props; session facts arrive through the
-framework hooks of the `session-maybe` scope.
-
-Props your component receives:
-
-```ts
-/** Conversation owner share: business state and actions belong to the registrant. */
-export interface ConvOwnerProps {}
-```
-
-Already occupied by: client-ui-conversation ConversationRoot. Replace risk: `shadows-shipped-ui`.
-
-Example:
-
-```js
-return {
-  inject: ['slots'],
-  apply(ctx) {
-    ctx.slots.inject('conversation', () => ctx.slots.register(
-      { name: 'conversation' },
-      () => React.createElement('div', null, 'hello'),
-    ))
-  },
-}
-```
+## The 90 slots
 
 ### `conversation.approval.detail`
 
@@ -180,9 +142,13 @@ Props your component receives:
 ```ts
 /** Stable owner currency delivered to a keyed Chat renderer. */
 export interface ChatNodeOwnerProps {
+  /** Renderer-owned Node portion selected by the grouping Definition. */
+  groupPart?: string
   cwd?: string | undefined
+  /** Open the current source file of a skill referenced by a sent message. */
+  openSkill: (name: string) => void
   openFile: (path: string, options?: OpenFileOptions) => void
-  inspectCall: (callId: ToolCallId) => void
+  inspectCall: ((callId: ToolCallId) => void) | undefined
   forkAt: (seq: number) => void
   /**
    * Session-authorized image loader, down-threaded from the Chat view so a
@@ -198,9 +164,9 @@ export interface ChatNodeOwnerProps {
 }
 ```
 
-Keys: fixed by the owner's key table { [Kind in ChatNodeKind]: { node: ChatNode<Kind> } }, already taken: assistant-step, command, command-input, compaction, context, manual-compaction, model-retry, steering, system-prompt, tool-call, turn-error, turn-max-tokens, turn-process, turn-tail, unknown, user, workflow-run
+Keys: fixed by the owner's key table { [Kind in ChatNodeKind]: { node: ChatNode<Kind> } }, already taken: assistant-step, command, command-input, compaction, context, manual-compaction, model-retry, question-reply, steering, system-prompt, tool-call, turn-error, turn-max-tokens, turn-process, turn-tail, turn-trigger, unknown, user, workflow-run
 
-Already occupied by: client-ui-chat UserMessageNodeView key 'user'; client-ui-chat UserMessageNodeView key 'steering'; client-ui-chat ContextMessageNodeView key 'context'; client-ui-chat SystemPromptNodeView key 'system-prompt'; client-ui-chat AssistantNodeView key 'assistant-step'; client-ui-chat CommandNodeView key 'command'; client-ui-chat ManualCompactionNodeView key 'manual-compaction'; client-ui-chat CompactionNodeView key 'compaction'; client-ui-chat RetryNodeView key 'model-retry'; client-ui-chat TurnErrorNodeView key 'turn-error'; client-ui-chat TurnMaxTokensNodeView key 'turn-max-tokens'; client-ui-chat TurnProcessNodeView key 'turn-process'; client-ui-chat TurnTailNodeView key 'turn-tail'; client-ui-chat UnknownNodeView key 'unknown'; client-ui-goal GoalCommandInputView key 'command-input'; client-ui-tool ToolCallTree key 'tool-call'; client-ui-workflow-run WorkflowRunPanel key 'workflow-run'. Replace risk: `shadows-shipped-ui`.
+Already occupied by: client-ui-chat UserMessageNodeView key 'user'; client-ui-chat UserMessageNodeView key 'steering'; client-ui-chat ContextMessageNodeView key 'context'; client-ui-chat TurnTriggerNodeView key 'turn-trigger'; client-ui-chat SystemPromptNodeView key 'system-prompt'; client-ui-chat AssistantNodeView key 'assistant-step'; client-ui-chat CommandNodeView key 'command'; client-ui-chat ManualCompactionNodeView key 'manual-compaction'; client-ui-chat CompactionNodeView key 'compaction'; client-ui-chat RetryNodeView key 'model-retry'; client-ui-chat TurnErrorNodeView key 'turn-error'; client-ui-chat TurnMaxTokensNodeView key 'turn-max-tokens'; client-ui-chat TurnProcessNodeView key 'turn-process'; client-ui-chat TurnTailNodeView key 'turn-tail'; client-ui-chat UnknownNodeView key 'unknown'; client-ui-goal GoalCommandInputView key 'command-input'; client-ui-tool ToolCallTree key 'tool-call'; client-ui-user-questions QuestionReplyView key 'question-reply'; client-ui-workflow-run WorkflowRunPanel key 'workflow-run'. Replace risk: `shadows-shipped-ui`.
 
 Example:
 
@@ -218,15 +184,17 @@ return {
 
 ### `conversation.chat.turnTail`
 
-Kind `chain`, scope `session`. Selector-routed extension before a completed Turn's action row.
+Kind `list`, scope `session`. Ordered feature contributions before a completed Turn's action row.
 
-Selector-routed extension before a completed Turn's action row. The
-component receives the Turn, closing sequence, and file opener. The first
-selector that accepts the owner renders; an all-declined chain is empty.
+Ordered feature contributions before a completed Turn's action row. Each
+entry receives the Turn, closing sequence, and file opener. A fresh `id`
+adds an entry; entries without content return null.
 
 Register options:
 
-- `select` (required, `(owner) => unknown \| null`): Pure routing selector. Entries are tried in ascending order; the first non-null result wins and arrives as the component's `matched` prop. All-null falls through to the owner's fallback.
+- `id` (required, `string`): Your cell key. Use an id of your own: a fresh id is added beside the shipped entries, while reusing a shipped id puts you in THAT cell and replaces it. Owners that filter by id address you by it.
+- `order` (optional, `number`): Position among the entries, ascending (default 0).
+- `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
 
 Props your component receives:
 
@@ -239,7 +207,7 @@ export interface TurnTailOwnerProps {
 }
 ```
 
-Already occupied by: client-ui-deliverables ProducedFiles. Replace risk: `none`.
+Already occupied by: client-ui-deliverables DeliverablesTail id '@deepseek-ai/dsh-client-ui-deliverables'; client-ui-plan PlanCards; client-ui-schedule ScheduleTurnCard id 'schedule-created'. Replace risk: `none`.
 
 Example:
 
@@ -248,7 +216,7 @@ return {
   inject: ['slots'],
   apply(ctx) {
     ctx.slots.inject('conversation.chat.turnTail', () => ctx.slots.register(
-      { name: 'conversation.chat.turnTail', select: owner => null },
+      { name: 'conversation.chat.turnTail', id: 'my-entry', order: 100, label: 'My entry' },
       () => React.createElement('div', null, 'hello'),
     ))
   },
@@ -360,9 +328,57 @@ return {
 }
 ```
 
+### `conversation.header`
+
+Kind `single`, scope `session-maybe`. Resident navigation container, including when no Session is selected.
+
+Already occupied by: client-ui-conversation ConversationHeader. Replace risk: `shadows-shipped-ui`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('conversation.header', () => ctx.slots.register(
+      { name: 'conversation.header' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `conversation.header.leading`
+
+Kind `single`, scope `root`. Global navigation before the Session title, available without a Session.
+
+Props your component receives:
+
+```ts
+/** The leading seat exposes global navigation independently of a Session. */
+export interface ConversationHeaderLeadingOwnerProps {
+  /** Marker field: the occupant receives no owner-specific values. */
+  children?: never
+}
+```
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('conversation.header.leading', () => ctx.slots.register(
+      { name: 'conversation.header.leading' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
 ### `conversation.hero.agentPreset`
 
-Kind `single`, scope `root`. Agent-preset control staged for a New Session.
+Kind `single`, scope `session-maybe`. Agent-preset control staged for a New Session.
 
 Props your component receives:
 
@@ -496,6 +512,36 @@ return {
 }
 ```
 
+### `conversation.input.activity`
+
+Kind `single`, scope `session`. Compact action after the model selector; it can expand across the toolbar while retaining the editor and submit action.
+
+Props your component receives:
+
+```ts
+/** A toolbar activity hides ordinary accessory controls while expanded; its occupant must release expansion on unmount. */
+export interface InputActivityOwnerProps extends InputControlOwnerProps {
+  /** @param active - whether the occupant needs the toolbar width before the submit action. */
+  onActiveChange: (active: boolean) => void
+}
+```
+
+Already occupied by: experimental-client-ui-voice-input VoiceInput. Replace risk: `shadows-shipped-ui`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('conversation.input.activity', () => ctx.slots.register(
+      { name: 'conversation.input.activity' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
 ### `conversation.input.attachments`
 
 Kind `single`, scope `session-maybe`. Optional draft-attachment rail and drop target.
@@ -509,8 +555,12 @@ export interface ComposerAttachmentsOwnerProps {
   attachments: readonly ComposerAttachment[]
   /** Whether a document-level file drop may add attachments now. */
   canAcceptDrop: boolean
-  /** Add one dropped batch through the composer's validation path. */
-  onAddFiles: (files: readonly File[]) => void
+  /**
+   * Add one dropped batch through the composer's validation path.
+   * @param files - dropped, pasted, or picked browser files in source order.
+   * @param directories - members of `files` the drop source identified as directories.
+   */
+  onAddFiles: (files: readonly File[], directories?: ReadonlySet<File>) => void
   /** Remove one draft attachment through the Conversation service. */
   onRemoveAttachment: (id: DraftAttachmentId) => void
   /** Current per-draft upload states for file-kind attachments. */
@@ -602,10 +652,14 @@ return {
 
 Kind `single`, scope `session`. Model selector inside the composer tool row.
 
+Model selector inside the composer tool row. When expanded controls cannot
+share a line, the row sets --dsh-composer-model-text-display to none and
+--dsh-composer-model-icon-display to block for an occupant's compact display.
+
 Props your component receives:
 
 ```ts
-/** Owner share of the named plan and model controls. */
+/** Owner share of the named plan, permission, and model controls. */
 export interface InputControlOwnerProps {
   /** Whether the composer currently refuses interaction. */
   locked: boolean
@@ -638,7 +692,7 @@ Register options:
 - `order` (optional, `number`): Position among the entries, ascending (default 0).
 - `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
 
-Already occupied by: client-ui-commands PopupSelectView id 'command-popup'; client-ui-input-trigger MenuView id 'slash-menu'. Replace risk: `none`.
+Already occupied by: client-ui-commands PopupSelectView id 'command-popup'; client-ui-input-trigger MenuView id 'slash-menu'; client-ui-message-feedback FeedbackDialog id 'feedback-dialog'. Replace risk: `none`.
 
 Example:
 
@@ -654,6 +708,36 @@ return {
 }
 ```
 
+### `conversation.input.permission`
+
+Kind `single`, scope `session`. Current-session permission control inside the composer tool row.
+
+Props your component receives:
+
+```ts
+/** Owner share of the named plan, permission, and model controls. */
+export interface InputControlOwnerProps {
+  /** Whether the composer currently refuses interaction. */
+  locked: boolean
+}
+```
+
+Already occupied by: client-ui-permission-presets PermissionSelect. Replace risk: `shadows-shipped-ui`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('conversation.input.permission', () => ctx.slots.register(
+      { name: 'conversation.input.permission' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
 ### `conversation.input.plan`
 
 Kind `single`, scope `session`. Plan control inside the composer tool row.
@@ -661,7 +745,7 @@ Kind `single`, scope `session`. Plan control inside the composer tool row.
 Props your component receives:
 
 ```ts
-/** Owner share of the named plan and model controls. */
+/** Owner share of the named plan, permission, and model controls. */
 export interface InputControlOwnerProps {
   /** Whether the composer currently refuses interaction. */
   locked: boolean
@@ -729,6 +813,8 @@ export interface MessageImagesOwnerProps {
   align: 'start' | 'end'
   /** Force every image into the compact message-attachment tile size. */
   compact?: boolean
+  /** Fixed, uncropped thumbnail for an attachment list row. */
+  thumbnail?: boolean
 }
 ```
 
@@ -742,6 +828,58 @@ return {
   apply(ctx) {
     ctx.slots.inject('conversation.message.images', () => ctx.slots.register(
       { name: 'conversation.message.images' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `conversation.plan-review.actions`
+
+Kind `list`, scope `session`. Actions for the exact plan under review; approval remains with the question composer.
+
+Register options:
+
+- `id` (required, `string`): Your cell key. Use an id of your own: a fresh id is added beside the shipped entries, while reusing a shipped id puts you in THAT cell and replaces it. Owners that filter by id address you by it.
+- `order` (optional, `number`): Position among the entries, ascending (default 0).
+- `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
+
+Props your component receives:
+
+```ts
+/**
+ * A request narrowed to the `plan-review` presentation intent: everything the
+ * decision card renders and answers with, so the panel never re-reads the
+ * request fields. `approve` and `decline` are the asker's own options - an
+ * answer must carry one of those labels verbatim - and `plan` is the markdown
+ * body under review.
+ */
+export interface PlanReview {
+  /** The reviewed question's id, echoed in the answer. */
+  id: string
+  /** The question text, kept as the card's accessible name. */
+  question: string
+  /** The plan markdown under review. */
+  plan: string
+  /** Logged tool invocation used to reopen this plan. */
+  callId?: ToolCallId
+  /** The option that approves the plan. */
+  approve: QuestionOption
+  /** The option that declines it; absent when the asker offered no other option. */
+  decline?: QuestionOption
+}
+```
+
+Already occupied by: client-ui-plan PlanReviewOpen. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('conversation.plan-review.actions', () => ctx.slots.register(
+      { name: 'conversation.plan-review.actions', id: 'my-entry', order: 100, label: 'My entry' },
       () => React.createElement('div', null, 'hello'),
     ))
   },
@@ -808,7 +946,7 @@ export interface ConversationHeaderActionOwnerProps {
 }
 ```
 
-Already occupied by: client-ui-agent-preset AgentPresetLabel id 'agent-preset'; client-ui-jobs JobListAction id 'job-list'; client-ui-schedule ScheduleCatalogAction id 'schedule-catalog'; experimental-client-ui-agent-team TeamAction id 'agent-team'. Replace risk: `none`.
+Already occupied by: client-ui-agent-preset AgentPresetLabel id 'agent-preset'; client-ui-jobs JobListAction id 'job-list'; client-ui-subagent SubagentCatalogAction id 'subagent-catalog'; experimental-client-ui-agent-team TeamAction id 'agent-team'. Replace risk: `none`.
 
 Example:
 
@@ -826,13 +964,12 @@ return {
 
 ### `conversation.session.header.corner`
 
-Kind `single`, scope `session`. The header's far-right corner, past the utilities' edge and into the header's own padding, for one control that must keep its place whether or not it currently shows anything.
+Kind `single`, scope `session`. The header's far-right corner, past the utilities' edge and into the header's own padding, for one control.
 
 The header's far-right corner, past the utilities' edge and into the
-header's own padding, for one control that must keep its place whether or
-not it currently shows anything. The corner reserves its width while an
-occupant is registered, so the utilities beside it never move; an
-occupant with nothing to show renders a same-size placeholder.
+header's own padding, for one control. The corner is laid out only while
+its occupant renders something; an occupant with nothing to show renders
+nothing, and the utilities take the header's edge.
 
 Props your component receives:
 
@@ -914,7 +1051,7 @@ export interface ConversationHeaderActionOwnerProps {
 }
 ```
 
-Already occupied by: client-ui-open-in-app OpenInAppAction id 'open-in-app'; session-log-export SessionLogDownloadHeaderAction id 'session-log-download'. Replace risk: `none`.
+Already occupied by: client-ui-open-in-app SessionOpenInAppAction id 'open-in-app'; client-ui-schedule ScheduleCatalogAction id 'schedule-catalog'; session-log-export SessionLogDownloadHeaderAction id 'session-log-download'. Replace risk: `none`.
 
 Example:
 
@@ -952,6 +1089,8 @@ export interface MessageImagesOwnerProps {
   align: 'start' | 'end'
   /** Force every image into the compact message-attachment tile size. */
   compact?: boolean
+  /** Fixed, uncropped thumbnail for an attachment list row. */
+  thumbnail?: boolean
 }
 ```
 
@@ -986,6 +1125,8 @@ Props your component receives:
 ```ts
 /** Conversation View entries obtain their data from registered standard hooks. */
 export interface ConvViewOwnerProps {
+  /** Open a tool call's inspector when an inspection target is available. */
+  inspectCall: ((callId: string) => void) | undefined
   /** Focus request addressed to the selected View. */
   viewRequest: import('./views.ts').ConversationViewRequest | null
   /** Select a View and address one opaque focus identity to it. */
@@ -1011,9 +1152,410 @@ return {
 }
 ```
 
+### `deliverables.file.actions`
+
+Kind `list`, scope `session`. Open one file through its authorized Session event coordinates.
+
+Register options:
+
+- `id` (required, `string`): Your cell key. Use an id of your own: a fresh id is added beside the shipped entries, while reusing a shipped id puts you in THAT cell and replaces it. Owners that filter by id address you by it.
+- `order` (optional, `number`): Position among the entries, ascending (default 0).
+- `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
+
+Props your component receives:
+
+```ts
+/** Native file action selected by an explicit user gesture. */
+export type PresentedAction = 'open' | 'reveal'
+
+/** Failure feedback for the shared native opening control. */
+export type PresentedOpenFailure = 'openError' | 'revealError' | null
+```
+
+Already occupied by: client-ui-open-in-app FileRouteAction id 'open-in-app'. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('deliverables.file.actions', () => ctx.slots.register(
+      { name: 'deliverables.file.actions', id: 'my-entry', order: 100, label: 'My entry' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `deliverables.review.file.actions`
+
+Kind `list`, scope `session`. The same file actions owned by a changed-file review tab.
+
+Register options:
+
+- `id` (required, `string`): Your cell key. Use an id of your own: a fresh id is added beside the shipped entries, while reusing a shipped id puts you in THAT cell and replaces it. Owners that filter by id address you by it.
+- `order` (optional, `number`): Position among the entries, ascending (default 0).
+- `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
+
+Props your component receives:
+
+```ts
+/** Slot contract table. Owners extend via declaration merging; entries are {@link SlotEntryDef}. */
+export interface SlotMap {}
+```
+
+Already occupied by: client-ui-open-in-app FileRouteAction id 'open-in-app'. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('deliverables.review.file.actions', () => ctx.slots.register(
+      { name: 'deliverables.review.file.actions', id: 'my-entry', order: 100, label: 'My entry' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `main`
+
+Kind `keyed`, scope `root`. Central panel selected by sidebar entry id.
+
+Central panel selected by sidebar entry id. The reserved `conversation`
+key hosts the Conversation; other keys receive no Session binding.
+
+Register options:
+
+- `key` (required, `string`): Your cell key: the entry renders where the owner dispatches this exact key. Registering an already-occupied key replaces that occupant.
+
+Keys: open: any string the owner dispatches (no compile-time key set), already taken: conversation
+
+Already occupied by: client-ui-conversation ConversationPanel key 'conversation'; client-ui-plugin-manager PluginManagerPage; client-ui-schedule TaskManagerPage. Replace risk: `shadows-shipped-ui`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('main', () => ctx.slots.register(
+      { name: 'main', key: '<one key the owner dispatches>' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `main.conversation`
+
+Kind `single`, scope `session-maybe`. Conversation shell beneath its root-scoped main-panel entry.
+
+Already occupied by: client-ui-conversation ConversationRoot. Replace risk: `shadows-shipped-ui`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('main.conversation', () => ctx.slots.register(
+      { name: 'main.conversation' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `plugins.bundle.activation`
+
+Kind `keyed`, scope `root`. Optional guidance after the user enables a bundle from the list, keyed by npm package name.
+
+Register options:
+
+- `key` (required, `string`): Your cell key: the entry renders where the owner dispatches this exact key. Registering an already-occupied key replaces that occupant.
+
+Props your component receives:
+
+```ts
+/** One user-requested bundle activation and navigation to its configuration page. */
+export interface PluginActivationOwnerProps {
+  readonly packageName: string
+  /** Dismiss guidance for this activation. */
+  readonly onDismiss: () => void
+  /** Dismiss guidance and open this bundle's detail page. */
+  readonly onOpenDetails: () => void
+}
+```
+
+Keys: open: any string the owner dispatches (no compile-time key set), already taken: @deepseek-ai/dsh-experimental-voice-input-bundle
+
+Already occupied by: experimental-client-ui-voice-input VoiceSetupPrompt key '@deepseek-ai/dsh-experimental-voice-input-bundle'. Replace risk: `shadows-shipped-ui`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('plugins.bundle.activation', () => ctx.slots.register(
+      { name: 'plugins.bundle.activation', key: '<one key the owner dispatches>' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `plugins.bundle.config`
+
+Kind `keyed`, scope `root`. A bundle's own configuration, keyed by the bundle's package name and rendered on the bundle's page between its description and its rows (`view: 'page'` only).
+
+A bundle's own configuration, keyed by the bundle's package name and
+rendered on the bundle's page between its description and its rows
+(`view: 'page'` only).
+
+Register options:
+
+- `key` (required, `string`): Your cell key: the entry renders where the owner dispatches this exact key. Registering an already-occupied key replaces that occupant.
+
+Props your component receives:
+
+```ts
+/** The view the page asks a configuration entry for. */
+export interface PluginConfigViewProps {
+  /** `summary` renders the one-liner alone, as text or inline nodes; `page` renders the form with its save control. */
+  readonly view: 'summary' | 'page'
+  /** Host-owned configuration values and write actions for this page's entry. */
+  readonly form?: ConfigPageForm | undefined
+}
+```
+
+Keys: open: any string the owner dispatches (no compile-time key set), already taken: @deepseek-ai/dsh-experimental-voice-input-bundle
+
+Already occupied by: experimental-client-ui-voice-input VoicePreparation key '@deepseek-ai/dsh-experimental-voice-input-bundle'. Replace risk: `shadows-shipped-ui`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('plugins.bundle.config', () => ctx.slots.register(
+      { name: 'plugins.bundle.config', key: '<one key the owner dispatches>' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `plugins.detail.actions`
+
+Kind `list`, scope `root`. Controls at the head of a detail page, before the page's own switch and uninstall, rendered with the page's subject.
+
+Controls at the head of a detail page, before the page's own switch and
+uninstall, rendered with the page's subject. An entry renders null for a
+subject it has no control for.
+
+Register options:
+
+- `id` (required, `string`): Your cell key. Use an id of your own: a fresh id is added beside the shipped entries, while reusing a shipped id puts you in THAT cell and replaces it. Owners that filter by id address you by it.
+- `order` (optional, `number`): Position among the entries, ascending (default 0).
+- `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
+
+Props your component receives:
+
+```ts
+/** The owner props every detail contribution is rendered with. */
+export interface PluginDetailProps {
+  /** The subject of the open page; an entry renders null for a subject it has nothing for. */
+  readonly subject: PluginsSubject
+}
+```
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('plugins.detail.actions', () => ctx.slots.register(
+      { name: 'plugins.detail.actions', id: 'my-entry', order: 100, label: 'My entry' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `plugins.detail.badge`
+
+Kind `list`, scope `root`. Tags beside a detail page's title, after the version, beta, and problem tags the page draws itself, rendered with the page's subject.
+
+Tags beside a detail page's title, after the version, beta, and problem
+tags the page draws itself, rendered with the page's subject.
+
+Register options:
+
+- `id` (required, `string`): Your cell key. Use an id of your own: a fresh id is added beside the shipped entries, while reusing a shipped id puts you in THAT cell and replaces it. Owners that filter by id address you by it.
+- `order` (optional, `number`): Position among the entries, ascending (default 0).
+- `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
+
+Props your component receives:
+
+```ts
+/** The owner props every detail contribution is rendered with. */
+export interface PluginDetailProps {
+  /** The subject of the open page; an entry renders null for a subject it has nothing for. */
+  readonly subject: PluginsSubject
+}
+```
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('plugins.detail.badge', () => ctx.slots.register(
+      { name: 'plugins.detail.badge', id: 'my-entry', order: 100, label: 'My entry' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `plugins.detail.section`
+
+Kind `list`, scope `root`. Sections under a detail page's own content: after the rows on a bundle's page, after the configuration on a row's or an official plugin's page.
+
+Sections under a detail page's own content: after the rows on a bundle's
+page, after the configuration on a row's or an official plugin's page.
+An entry draws its own section chrome and renders null for a subject it
+has nothing for.
+
+Register options:
+
+- `id` (required, `string`): Your cell key. Use an id of your own: a fresh id is added beside the shipped entries, while reusing a shipped id puts you in THAT cell and replaces it. Owners that filter by id address you by it.
+- `order` (optional, `number`): Position among the entries, ascending (default 0).
+- `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
+
+Props your component receives:
+
+```ts
+/** The owner props every detail contribution is rendered with. */
+export interface PluginDetailProps {
+  /** The subject of the open page; an entry renders null for a subject it has nothing for. */
+  readonly subject: PluginsSubject
+}
+```
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('plugins.detail.section', () => ctx.slots.register(
+      { name: 'plugins.detail.section', id: 'my-entry', order: 100, label: 'My entry' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `plugins.item`
+
+Kind `list`, scope `root`. One official plugin the Plugins page lists in its Official group after the official bundles: `label` is the card's title and `order` its place.
+
+One official plugin the Plugins page lists in its Official group after
+the official bundles: `label` is the card's title and `order` its place.
+The page renders the entry as the card's one-liner (`view: 'summary'`)
+and, once the card is opened, as the body of the plugin's own page
+(`view: 'page'`). OCCUPIED by the official settings pages, one companion
+package per host-plane namespace; a bundle's configuration belongs in
+`plugins.bundle.config` or `plugins.row.config` instead.
+
+Register options:
+
+- `id` (required, `string`): Your cell key. Use an id of your own: a fresh id is added beside the shipped entries, while reusing a shipped id puts you in THAT cell and replaces it. Owners that filter by id address you by it.
+- `order` (optional, `number`): Position among the entries, ascending (default 0).
+- `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
+
+Props your component receives:
+
+```ts
+/** The view the page asks a configuration entry for. */
+export interface PluginConfigViewProps {
+  /** `summary` renders the one-liner alone, as text or inline nodes; `page` renders the form with its save control. */
+  readonly view: 'summary' | 'page'
+  /** Host-owned configuration values and write actions for this page's entry. */
+  readonly form?: ConfigPageForm | undefined
+}
+```
+
+Already occupied by: client-ui-settings-agent-loop AgentLoopCard id 'agent-loop'; client-ui-settings-shell ShellCard id 'shell'; client-ui-settings-subagent SubagentCard id 'subagent'; client-ui-settings-web-search WebSearchCard id 'web-search'. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('plugins.item', () => ctx.slots.register(
+      { name: 'plugins.item', id: 'my-entry', order: 100, label: 'My entry' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `plugins.row.config`
+
+Kind `keyed`, scope `root`. The configuration of one row a bundle declares, keyed by `<package name>#<row id>` with the row id as the bundle's patch declares it: the row on the bundle's page gains a configure control that opens the entry's page, headed by the plugin's display title and description.
+
+The configuration of one row a bundle declares, keyed by
+`<package name>#<row id>` with the row id as the bundle's patch declares
+it: the row on the bundle's page gains a configure control that opens
+the entry's page, headed by the plugin's display title and description.
+An absent description falls back to the entry's `view: 'summary'`.
+
+Register options:
+
+- `key` (required, `string`): Your cell key: the entry renders where the owner dispatches this exact key. Registering an already-occupied key replaces that occupant.
+
+Props your component receives:
+
+```ts
+/** The view the page asks a configuration entry for. */
+export interface PluginConfigViewProps {
+  /** `summary` renders the one-liner alone, as text or inline nodes; `page` renders the form with its save control. */
+  readonly view: 'summary' | 'page'
+  /** Host-owned configuration values and write actions for this page's entry. */
+  readonly form?: ConfigPageForm | undefined
+}
+```
+
+Keys: open: any string the owner dispatches (no compile-time key set), none are taken yet
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('plugins.row.config', () => ctx.slots.register(
+      { name: 'plugins.row.config', key: '<one key the owner dispatches>' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
 ### `rightbar`
 
-Kind `single`, scope `session`. The right column: a track the centre makes room for, or nothing.
+Kind `single`, scope `root`. The right column: a track the centre makes room for, or nothing.
 
 The right column: a track the centre makes room for, or nothing. OCCUPIED
 by the right Sidebar, which uses the resolved column width in normal
@@ -1024,8 +1566,8 @@ Whether the panel is shown, and whether it takes a track, is the
 occupant's own recorded business - it reports the composition of its
 expanded and presentation state through `ctx.layout`, and the frame sizes
 the track and places the resize handle from that. The expand control is
-not this column's: it is a button in the conversation header. With no
-current session nothing is mounted here.
+not this column's: it is a button in the conversation header. The root
+occupant decides when to render its Session-bound content.
 
 Props your component receives:
 
@@ -1044,7 +1586,7 @@ export interface RightbarOwnerProps {
 }
 ```
 
-Already occupied by: client-ui-sidebar-right RightbarSeat. Replace risk: `shadows-shipped-ui`.
+Already occupied by: client-ui-sidebar-right RightbarRoot. Replace risk: `shadows-shipped-ui`.
 
 Example:
 
@@ -1054,6 +1596,46 @@ return {
   apply(ctx) {
     ctx.slots.inject('rightbar', () => ctx.slots.register(
       { name: 'rightbar' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `rightbar.session`
+
+Kind `single`, scope `session`. Session content selected by the root-scoped right Sidebar controller.
+
+Props your component receives:
+
+```ts
+/** Right column owner share: resolved normal geometry and opening eligibility. */
+export interface RightbarOwnerProps {
+  /** Resolved normal panel width in px, not the saved preference; zero if it cannot fit. */
+  width: number
+  /** Current frame width in px. */
+  viewportWidth: number
+  /**
+   * Whether a normal right panel can retain 300px beside a 400px center.
+   * Before a narrow opening, includes the space from collapsing the left sidebar.
+   */
+  canShow: boolean
+}
+
+/** Identity of one open tab; distinct copies of one content share `contentId`, never `TabId`. */
+export type TabId = Branded<'TabId'>
+```
+
+Already occupied by: client-ui-sidebar-right RightbarSeat. Replace risk: `shadows-shipped-ui`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('rightbar.session', () => ctx.slots.register(
+      { name: 'rightbar.session' },
       () => React.createElement('div', null, 'hello'),
     ))
   },
@@ -1189,7 +1771,7 @@ no props at all - copy, current value, and the write path are all yours,
 through your own inject face and `host.call`. Declared at runtime by
 ui-settings-general's General entry; the type lives here with every other
 settings slot type, because this package is the settings domain's base
-layer and every registrant already depends on it for `ctx.settingsScope`.
+layer and every registrant already depends on it for `ctx.configForms`.
 
 Register options:
 
@@ -1207,7 +1789,7 @@ export interface SettingsGeneralItemOwnerProps {
 }
 ```
 
-Already occupied by: client-locale LanguageRow id 'language'; client-ui-chat TranscriptViewRow id 'transcript-view'; client-ui-conversation EnterBehaviorRow id 'composer-enter'; client-ui-permission-presets PermissionRow id 'permission'; client-ui-theme AppearanceRow id 'appearance'; client-ui-theme FontSizeRow id 'font-size'. Replace risk: `none`.
+Already occupied by: client-locale LanguageRow id 'language'; client-ui-chat LinkOpeningRow id 'link-opening'; client-ui-chat PerformanceUsageRow id 'performance-usage'; client-ui-chat TranscriptViewRow id 'transcript-view'; client-ui-conversation EnterBehaviorRow id 'composer-enter'; client-ui-permission-presets PermissionRow id 'permission'; client-ui-settings-general DeveloperToolsRow id 'developer-tools'; client-ui-settings-general CurrentVersionRow id 'current-version'; client-ui-settings-session-log UploadRow; client-ui-shortcuts ShortcutsRow id 'shortcuts'; client-ui-theme AppearanceRow id 'appearance'; client-ui-theme FontSizeRow id 'font-size'. Replace risk: `none`.
 
 Example:
 
@@ -1251,6 +1833,44 @@ return {
   apply(ctx) {
     ctx.slots.inject('settings.header', () => ctx.slots.register(
       { name: 'settings.header' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `settings.launcher`
+
+Kind `single`, scope `root`. Optional sidebar account launcher; opens the shell-owned settings panel.
+
+Props your component receives:
+
+```ts
+/** Sidebar launcher geometry and settings navigation. */
+export interface SettingsLauncherOwnerProps {
+  /** Whether the sidebar shows labels. */
+  wide: boolean
+  /** Whether the settings dialog covers the sidebar; a launcher may treat a false-to-true edge as one Settings entry. */
+  settingsOpen: boolean
+  /** Effective Settings key labels and accessible combination; omitted when unbound. */
+  settingsShortcut?: { readonly keys: readonly string[]; readonly aria?: string | undefined }
+  /** Open the settings panel. */
+  openSettings: () => void
+  /** @param id - registered onboarding editor to open explicitly. */
+  openOnboarding: (id: string) => void
+}
+```
+
+Already occupied by: client-ui-settings-account AccountMenu. Replace risk: `shadows-shipped-ui`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('settings.launcher', () => ctx.slots.register(
+      { name: 'settings.launcher' },
       () => React.createElement('div', null, 'hello'),
     ))
   },
@@ -1339,6 +1959,26 @@ return {
 }
 ```
 
+### `settings.models.sign-in`
+
+Kind `single`, scope `root`. Optional account login choice before the credential editor.
+
+Already occupied by: client-ui-settings-account AccountOnboarding. Replace risk: `shadows-shipped-ui`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('settings.models.sign-in', () => ctx.slots.register(
+      { name: 'settings.models.sign-in' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
 ### `settings.onboarding`
 
 Kind `list`, scope `root`. Root-scoped onboarding steps contributed by settings features.
@@ -1365,6 +2005,8 @@ Props your component receives:
 export interface SettingsOnboardingOwnerProps {
   /** Stable id of the step currently selected by the coordinator. */
   stepId: string
+  /** User explicitly reopened this step outside first-run onboarding. */
+  explicit?: boolean
   /** Complete or skip this step and transfer ownership to the next entry. */
   complete: () => void
   /** Open the settings panel directly on one registered section. */
@@ -1382,42 +2024,6 @@ return {
   apply(ctx) {
     ctx.slots.inject('settings.onboarding', () => ctx.slots.register(
       { name: 'settings.onboarding', id: 'my-entry', order: 100, label: 'My entry' },
-      () => React.createElement('div', null, 'hello'),
-    ))
-  },
-}
-```
-
-### `settings.plugin.item`
-
-Kind `keyed`, scope `root`. One plugin's card inside the plugin configuration section (see module JSDoc).
-
-Register options:
-
-- `key` (required, `string`): Your cell key: the entry renders where the owner dispatches this exact key. Registering an already-occupied key replaces that occupant.
-
-Props your component receives:
-
-```ts
-/** Owner share of a plugin card (the section supplies nothing). */
-export interface SettingsPluginItemOwnerProps {
-  /** Marker field: card owner props are intentionally empty. */
-  children?: never
-}
-```
-
-Keys: open: any string the owner dispatches (no compile-time key set), none are taken yet
-
-Already occupied by: client-ui-settings-plugins BashCard; client-ui-settings-plugins AgentLoopCard; client-ui-settings-plugins SubagentModelSelectionCard; client-ui-settings-plugins WebSearchCard. Replace risk: `none`.
-
-Example:
-
-```js
-return {
-  inject: ['slots'],
-  apply(ctx) {
-    ctx.slots.inject('settings.plugin.item', () => ctx.slots.register(
-      { name: 'settings.plugin.item', key: '<one key the owner dispatches>' },
       () => React.createElement('div', null, 'hello'),
     ))
   },
@@ -1451,7 +2057,7 @@ export interface SettingsPluginsTabOwnerProps {
 }
 ```
 
-Already occupied by: client-ui-settings-plugin-inventory PluginInventorySettingsTab id 'all'; client-ui-settings-plugins ConfigurablePluginsTab id 'configurable'. Replace risk: `none`.
+Already occupied by: client-ui-settings-plugin-inventory PluginInventorySettingsTab id 'all'. Replace risk: `none`.
 
 Example:
 
@@ -1503,7 +2109,7 @@ export interface SettingsSectionOwnerProps {
 }
 ```
 
-Already occupied by: client-ui-agent-preset AgentPresetSection id 'agent-presets'; client-ui-settings-general GeneralSection id 'general'; client-ui-settings-models ModelsSection id 'models'; client-ui-settings-plugins PluginsSettingsSection id 'plugins'. Replace risk: `none`.
+Already occupied by: client-ui-agent-preset AgentPresetSection id 'agent-presets'; client-ui-settings-account AccountSection id 'account'; client-ui-settings-general GeneralSection id 'general'; client-ui-settings-models ModelsSection id 'models'; client-ui-settings-plugins PluginsSettingsSection id 'plugins'. Replace risk: `none`.
 
 Example:
 
@@ -1556,6 +2162,38 @@ return {
 }
 ```
 
+### `shell.leading`
+
+Kind `single`, scope `root`. Window-chrome seat at the frame's top-left, over every main panel.
+
+Window-chrome seat at the frame's top-left, over every main panel.
+Mounted only while the sidebar column is fully hidden (macOS desktop
+collapse; other platforms keep the rail), so the occupant can assume the
+frame edge is the window edge and the macOS traffic lights sit before it.
+OCCUPIED by ui-sidebar's reopen/New Session controls.
+
+While the seat is mounted the frame publishes
+`--dsh-frame-leading-clearance` (the inline inset the seat's band
+occupies, measured from the frame's left edge); a main panel whose
+content reaches the top-left corner pads by it so nothing lands under
+the lights or the controls.
+
+Already occupied by: client-ui-sidebar HeaderLeadingControls. Replace risk: `shadows-shipped-ui`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('shell.leading', () => ctx.slots.register(
+      { name: 'shell.leading' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
 ### `shell.overlay`
 
 Kind `list`, scope `root`. Frame-wide floating layer, above every column and outside their scroll containers.
@@ -1575,6 +2213,8 @@ Register options:
 - `order` (optional, `number`): Position among the entries, ascending (default 0).
 - `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
 
+Already occupied by: client-ui-chat QuotaNoticeHost id 'chat.quota-notice'; client-ui-plugin-manager PluginRefreshToast id 'plugin-manager.refresh-toast'; client-ui-schedule ScheduleDeleteToast id 'schedule.delete-toast'; client-ui-settings-account DesktopOnboardingEntry id 'desktop-onboarding'; client-ui-settings-account AccountPlatformHost id 'account.platform-page'; client-ui-settings-session-log UploadToast id 'session-log-upload-toast'; client-ui-shortcuts ShortcutReference id 'shortcuts'; client-ui-workspace SessionRenameDialog id 'workspace.session-rename'; client-ui-workspace SessionArchiveConfirmDialog id 'workspace.session-archive'; client-ui-workspace RowActionToast id 'workspace.row-toast'. Replace risk: `none`.
+
 Example:
 
 ```js
@@ -1583,6 +2223,57 @@ return {
   apply(ctx) {
     ctx.slots.inject('shell.overlay', () => ctx.slots.register(
       { name: 'shell.overlay', id: 'my-entry', order: 100, label: 'My entry' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `shell.quota-notice`
+
+Kind `chain`, scope `root`. Frame-wide quota notice chain.
+
+Frame-wide quota notice chain. The Chat-owned host in `shell.overlay`
+offers the one live notice; the first entry whose selector claims its
+code takes over the surface, and the all-decline case renders the host's
+generic warning Toast. The host lives outside the Chat panel, so a notice
+survives switching or closing the panel that reported it.
+
+Register options:
+
+- `select` (required, `(owner) => unknown \| null`): Pure routing selector. Entries are tried in ascending order; the first non-null result wins and arrives as the component's `matched` prop. All-null falls through to the owner's fallback.
+
+Props your component receives:
+
+```ts
+/** Owner currency of one quota notice offered to the frame-wide chain. */
+export interface QuotaNoticeOwnerProps {
+  /** Stable failure code retained in the Session log. */
+  code: QuotaNoticeCode
+  /** Provider-neutral notice copy in the active locale. */
+  message: string
+  /** Take the notice down. */
+  dismiss: () => void
+  /**
+   * Prevent later quota failures from replacing this notice. Dismissal clears
+   * all holds; releasing the last hold resumes future notices without replay.
+   * Callers must release on unmount.
+   * @returns idempotent release that cannot clear another hold.
+   */
+  keepOpen: () => () => void
+}
+```
+
+Already occupied by: client-ui-settings-account AccountQuotaNotice. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('shell.quota-notice', () => ctx.slots.register(
+      { name: 'shell.quota-notice', select: owner => null },
       () => React.createElement('div', null, 'hello'),
     ))
   },
@@ -1697,6 +2388,26 @@ return {
 }
 ```
 
+### `sidebar.chat.conversation`
+
+Kind `single`, scope `session`. Session-scoped Conversation occurrence hosted by one Sidebar chat tab.
+
+Already occupied by: client-ui-subagent ConversationSlotPanel. Replace risk: `shadows-shipped-ui`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('sidebar.chat.conversation', () => ctx.slots.register(
+      { name: 'sidebar.chat.conversation' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
 ### `sidebar.footer.action`
 
 Kind `list`, scope `root`. Optional actions beside Settings at the sidebar foot.
@@ -1736,6 +2447,47 @@ return {
 }
 ```
 
+### `sidebar.panellist`
+
+Kind `list`, scope `root`. Global panel icons.
+
+Global panel icons. Each list id addresses the matching main panel;
+the sidebar owns the button and resolves its label from list metadata.
+
+Register options:
+
+- `id` (required, `string`): Your cell key. Use an id of your own: a fresh id is added beside the shipped entries, while reusing a shipped id puts you in THAT cell and replaces it. Owners that filter by id address you by it.
+- `order` (optional, `number`): Position among the entries, ascending (default 0).
+- `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
+
+Props your component receives:
+
+```ts
+/** Icon presentation supplied by the global panel row. */
+export interface SidebarPanelIconOwnerProps {
+  /** Requested square edge in pixels. */
+  size: number
+  /** Whether this panel is selected in the main column. */
+  active: boolean
+}
+```
+
+Already occupied by: client-ui-plugin-manager PluginsPanelIcon; client-ui-schedule TaskManagerIcon. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('sidebar.panellist', () => ctx.slots.register(
+      { name: 'sidebar.panellist', id: 'my-entry', order: 100, label: 'My entry' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
 ### `sidebar.right.pane.tab`
 
 Kind `keyed`, scope `session`. One tab's body, dispatched with the `id` of the type in force for `tab.kind`.
@@ -1752,7 +2504,7 @@ Register options:
 
 Keys: open: any string the owner dispatches (no compile-time key set), none are taken yet
 
-Already occupied by: client-ui-sidebar-files FilesBody; client-ui-sidebar-right GuideBody; client-ui-sidebar-textpreview TextPreview. Replace risk: `none`.
+Already occupied by: client-ui-deliverables ReviewTab; client-ui-plan PlanPreview; client-ui-schedule ScheduleTaskTab; client-ui-sidebar-browser BrowserBody; client-ui-sidebar-documentpreview TextPreview; client-ui-sidebar-files FilesBody; client-ui-sidebar-right GuideBody; client-ui-sidebar-terminal LazyTerminalBody; client-ui-subagent SidebarChatTab. Replace risk: `none`.
 
 Example:
 
@@ -1785,6 +2537,8 @@ Register options:
 
 Keys: open: any string the owner dispatches (no compile-time key set), none are taken yet
 
+Already occupied by: client-ui-plan PlanTitle; client-ui-schedule ScheduleTaskTabTitle; client-ui-sidebar-browser BrowserTitle; client-ui-sidebar-documentpreview TextTitle; client-ui-sidebar-files FilesTitle; client-ui-sidebar-right GuideTitle; client-ui-sidebar-terminal TerminalTitle. Replace risk: `none`.
+
 Example:
 
 ```js
@@ -1793,6 +2547,231 @@ return {
   apply(ctx) {
     ctx.slots.inject('sidebar.right.pane.tab.title', () => ctx.slots.register(
       { name: 'sidebar.right.pane.tab.title', key: '<one key the owner dispatches>' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `sidebar.right.tab.document`
+
+Kind `keyed`, scope `session`. Document body selected by a registered implementation id.
+
+Register options:
+
+- `key` (required, `string`): Your cell key: the entry renders where the owner dispatches this exact key. Registering an already-occupied key replaces that occupant.
+
+Props your component receives:
+
+```ts
+/** Content and viewing inputs shared by document bodies and nested PDF presentation. */
+export interface DocumentBodyOwner {
+  /** Observe a file read by this renderer. @param address - complete file resource address. */
+  readonly addResource: (address: string) => void
+  /** Replace this renderer's dependencies. @param addresses - complete file resource addresses. */
+  readonly setResources: (addresses: readonly string[]) => void
+  /** Original file address, also readable through the standard useResource hook. */
+  readonly resourceAddress: string
+  /** Ordinary file content or a renderer-owned loading request; text accumulates until eof. */
+  readonly content: DocumentContent
+  /** The document toolbar's current wrapping preference. */
+  readonly wrap: boolean
+  /** Report a renderer-owned scrollport; passing `null` restores the shared body as the owner. */
+  readonly scrollportRef: RefCallback<HTMLElement>
+}
+```
+
+Keys: open: any string the owner dispatches (no compile-time key set), none are taken yet
+
+Already occupied by: client-ui-sidebar-documentpreview CodeBody; client-ui-sidebar-documentpreview LazyExcelBody; client-ui-sidebar-documentpreview HtmlBody; client-ui-sidebar-documentpreview ImageBody; client-ui-sidebar-documentpreview MarkdownBody; client-ui-sidebar-documentpreview OfficeBody; client-ui-sidebar-documentpreview LazyPdfBody; client-ui-sidebar-documentpreview TextBody. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('sidebar.right.tab.document', () => ctx.slots.register(
+      { name: 'sidebar.right.tab.document', key: '<one key the owner dispatches>' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `sidebar.right.tab.document.action`
+
+Kind `keyed`, scope `session`. Renderer-specific controls before the document toolbar's reload button.
+
+Register options:
+
+- `key` (required, `string`): Your cell key: the entry renders where the owner dispatches this exact key. Registering an already-occupied key replaces that occupant.
+
+Props your component receives:
+
+```ts
+/**
+ * Ordinary file contents, or a request for the selected renderer to load its content.
+ * Byte arrays are transient UI input, never persisted layout or Session data.
+ */
+export type DocumentContent =
+  | { readonly kind: 'text'; readonly text: string; readonly pages: readonly DocumentTextPage[]; readonly eof: boolean }
+  | { readonly kind: 'bytes'; readonly data: Uint8Array<ArrayBuffer> }
+  | {
+    readonly kind: 'renderer'
+    /** Changes on reload or implementation replacement; retained contents belong to one revision. */
+    readonly revision: number
+    /** Report the displayed source version; stale revisions cannot update the owner. @param version - loaded source version. */
+    readonly loaded: (version: string) => void
+    /** End a failed load; a later file change can start another revision. */
+    readonly failed: () => void
+    /** Cancel the current load and start a new revision. */
+    readonly reload: () => void
+  }
+```
+
+Keys: open: any string the owner dispatches (no compile-time key set), none are taken yet
+
+Already occupied by: client-ui-sidebar-documentpreview OfficeFontAction. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('sidebar.right.tab.document.action', () => ctx.slots.register(
+      { name: 'sidebar.right.tab.document.action', key: '<one key the owner dispatches>' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `sidebar.right.tab.document.actions`
+
+Kind `list`, scope `session`. Header toolbar contributions acting on the previewed file, rendered after the preview's own controls once the file's Host path is known.
+
+Header toolbar contributions acting on the previewed file, rendered
+after the preview's own controls once the file's Host path is known.
+
+Register options:
+
+- `id` (required, `string`): Your cell key. Use an id of your own: a fresh id is added beside the shipped entries, while reusing a shipped id puts you in THAT cell and replaces it. Owners that filter by id address you by it.
+- `order` (optional, `number`): Position among the entries, ascending (default 0).
+- `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
+
+Already occupied by: client-ui-open-in-app OpenPathAction id 'open-in-app'. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('sidebar.right.tab.document.actions', () => ctx.slots.register(
+      { name: 'sidebar.right.tab.document.actions', id: 'my-entry', order: 100, label: 'My entry' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `sidebar.right.tab.document.office.pdf`
+
+Kind `keyed`, scope `session`. PDF presentation supplied with Office-owned converted bytes.
+
+Register options:
+
+- `key` (required, `string`): Your cell key: the entry renders where the owner dispatches this exact key. Registering an already-occupied key replaces that occupant.
+
+Props your component receives:
+
+```ts
+/** Content and viewing inputs shared by document bodies and nested PDF presentation. */
+export interface DocumentBodyOwner {
+  /** Observe a file read by this renderer. @param address - complete file resource address. */
+  readonly addResource: (address: string) => void
+  /** Replace this renderer's dependencies. @param addresses - complete file resource addresses. */
+  readonly setResources: (addresses: readonly string[]) => void
+  /** Original file address, also readable through the standard useResource hook. */
+  readonly resourceAddress: string
+  /** Ordinary file content or a renderer-owned loading request; text accumulates until eof. */
+  readonly content: DocumentContent
+  /** The document toolbar's current wrapping preference. */
+  readonly wrap: boolean
+  /** Report a renderer-owned scrollport; passing `null` restores the shared body as the owner. */
+  readonly scrollportRef: RefCallback<HTMLElement>
+}
+```
+
+Keys: open: any string the owner dispatches (no compile-time key set), none are taken yet
+
+Already occupied by: client-ui-sidebar-documentpreview LazyPdfBody. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('sidebar.right.tab.document.office.pdf', () => ctx.slots.register(
+      { name: 'sidebar.right.tab.document.office.pdf', key: '<one key the owner dispatches>' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `sidebar.right.tab.document.unpreviewable`
+
+Kind `list`, scope `session`. Empty-state contributions for a file this preview cannot render, offered where Retry would stand once the file's Host path is known.
+
+Empty-state contributions for a file this preview cannot render,
+offered where Retry would stand once the file's Host path is known.
+
+Register options:
+
+- `id` (required, `string`): Your cell key. Use an id of your own: a fresh id is added beside the shipped entries, while reusing a shipped id puts you in THAT cell and replaces it. Owners that filter by id address you by it.
+- `order` (optional, `number`): Position among the entries, ascending (default 0).
+- `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
+
+Already occupied by: client-ui-open-in-app OpenPathEmptyAction id 'open-in-app'. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('sidebar.right.tab.document.unpreviewable', () => ctx.slots.register(
+      { name: 'sidebar.right.tab.document.unpreviewable', id: 'my-entry', order: 100, label: 'My entry' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `sidebar.right.tab.files.actions`
+
+Kind `list`, scope `session`. Workspace directory actions after the file tree's reload control.
+
+Register options:
+
+- `id` (required, `string`): Your cell key. Use an id of your own: a fresh id is added beside the shipped entries, while reusing a shipped id puts you in THAT cell and replaces it. Owners that filter by id address you by it.
+- `order` (optional, `number`): Position among the entries, ascending (default 0).
+- `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
+
+Already occupied by: client-ui-open-in-app OpenInAppAction id 'open-in-app'. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('sidebar.right.tab.files.actions', () => ctx.slots.register(
+      { name: 'sidebar.right.tab.files.actions', id: 'my-entry', order: 100, label: 'My entry' },
       () => React.createElement('div', null, 'hello'),
     ))
   },
@@ -1819,6 +2798,44 @@ return {
   apply(ctx) {
     ctx.slots.inject('sidebar.right.tab.guide', () => ctx.slots.register(
       { name: 'sidebar.right.tab.guide', select: owner => null },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `sidebar.right.tab.guide.entry`
+
+Kind `keyed`, scope `session`. One provider's guide card, with the standard card as the owner's fallback.
+
+Register options:
+
+- `key` (required, `string`): Your cell key: the entry renders where the owner dispatches this exact key. Registering an already-occupied key replaces that occupant.
+
+Props your component receives:
+
+```ts
+/** Resolved guide copy and entry identity supplied to a provider's card renderer. */
+export interface SidebarRightGuideEntryOwnerProps {
+  readonly entryId: string
+  readonly kind: string
+  readonly title: string
+  readonly description?: string
+}
+```
+
+Keys: open: any string the owner dispatches (no compile-time key set), none are taken yet
+
+Already occupied by: client-ui-sidebar-terminal TerminalGuide. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('sidebar.right.tab.guide.entry', () => ctx.slots.register(
+      { name: 'sidebar.right.tab.guide.entry', key: '<one key the owner dispatches>' },
       () => React.createElement('div', null, 'hello'),
     ))
   },
@@ -1871,6 +2888,97 @@ return {
 }
 ```
 
+### `sidebar.session.row.hover`
+
+Kind `list`, scope `root`. Section of the Session row's hover card between its relative time and its trailing status line.
+
+Section of the Session row's hover card between its relative time and
+its trailing status line. Mounted only while that card is open.
+
+Register options:
+
+- `id` (required, `string`): Your cell key. Use an id of your own: a fresh id is added beside the shipped entries, while reusing a shipped id puts you in THAT cell and replaces it. Owners that filter by id address you by it.
+- `order` (optional, `number`): Position among the entries, ascending (default 0).
+- `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
+
+Props your component receives:
+
+```ts
+/**
+ * Owner share of the two Session-row schedule seats. Both receive only the
+ * row's Session identity: the occupant reads that Session's own scheduled
+ * tasks, and reading them activates nothing.
+ */
+export interface SessionRowScheduleOwnerProps {
+  /** Session this row shows; the occupant addresses its own data by this id. */
+  readonly sessionId: SessionId
+}
+```
+
+Already occupied by: client-ui-schedule SessionScheduleHover id 'schedule-tasks'. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('sidebar.session.row.hover', () => ctx.slots.register(
+      { name: 'sidebar.session.row.hover', id: 'my-entry', order: 100, label: 'My entry' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `sidebar.session.row.leading`
+
+Kind `list`, scope `root`. Leading decoration of one Session row, in the 16px cell before the title that the row's own state dot otherwise occupies.
+
+Leading decoration of one Session row, in the 16px cell before the title
+that the row's own state dot otherwise occupies. A higher-priority state
+(a pending interaction, a new message, live activity) replaces the seat
+with that dot for the same row, so an occupant here never renders beside
+a status dot and is mounted only by a row whose primary state is idle.
+An archived row keeps that cell blank - neither its status dot nor this
+seat renders there, and its live status appears on the hover card only.
+
+Register options:
+
+- `id` (required, `string`): Your cell key. Use an id of your own: a fresh id is added beside the shipped entries, while reusing a shipped id puts you in THAT cell and replaces it. Owners that filter by id address you by it.
+- `order` (optional, `number`): Position among the entries, ascending (default 0).
+- `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
+
+Props your component receives:
+
+```ts
+/**
+ * Owner share of the two Session-row schedule seats. Both receive only the
+ * row's Session identity: the occupant reads that Session's own scheduled
+ * tasks, and reading them activates nothing.
+ */
+export interface SessionRowScheduleOwnerProps {
+  /** Session this row shows; the occupant addresses its own data by this id. */
+  readonly sessionId: SessionId
+}
+```
+
+Already occupied by: client-ui-schedule SessionScheduleMark id 'schedule-mark'. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('sidebar.session.row.leading', () => ctx.slots.register(
+      { name: 'sidebar.session.row.leading', id: 'my-entry', order: 100, label: 'My entry' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
 ### `sidebar.settings`
 
 Kind `single`, scope `root`. The settings seat at the sidebar foot.
@@ -1902,6 +3010,26 @@ return {
   apply(ctx) {
     ctx.slots.inject('sidebar.settings', () => ctx.slots.register(
       { name: 'sidebar.settings' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
+### `sidebar.toggle.badge`
+
+Kind `single`, scope `root`. Non-interactive notification inside the collapsed sidebar expand button.
+
+Already occupied by: client-ui-settings-general DesktopUpdateBadge. Replace risk: `shadows-shipped-ui`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('sidebar.toggle.badge', () => ctx.slots.register(
+      { name: 'sidebar.toggle.badge' },
       () => React.createElement('div', null, 'hello'),
     ))
   },
@@ -1990,6 +3118,109 @@ return {
 }
 ```
 
+### `sidebar.workspaces.session.menu.item`
+
+Kind `list`, scope `root`. The rows of one Session's "..." menu, in ascending `order`.
+
+The rows of one Session's "..." menu, in ascending `order`. ui-workspace
+registers the shipped rows here - `pin` (100), `rename` (200), `fork`
+(300), `archive` (400) - so a plugin row is placed by its own `order`
+among them. Use a package-namespaced `id`; reusing a shipped id at
+another `priority` shadows that row. Each entry renders one
+`role="menuitem"` `<button>` (the shipped rows use ui-primitives'
+`MenuItemButton`, which adds the host styling and `separatorBefore`),
+decides its own visibility from its own state, and dismisses the menu
+through the injected `useMenuOpenState` hook after acting; the list's
+keyboard walk and focus return read the DOM, so any such button joins
+them. Labels come from the contributing package's locale namespace.
+
+Register options:
+
+- `id` (required, `string`): Your cell key. Use an id of your own: a fresh id is added beside the shipped entries, while reusing a shipped id puts you in THAT cell and replaces it. Owners that filter by id address you by it.
+- `order` (optional, `number`): Position among the entries, ascending (default 0).
+- `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
+
+Props your component receives:
+
+```ts
+/** Owner share of one Session row action occurrence: the row the action belongs to. */
+export interface SessionRowOwnerProps {
+  /** Session the row shows. */
+  sessionId: SessionId
+  /** Row display title: persisted title, or empty when the Session has none. */
+  displayTitle: string
+}
+```
+
+Already occupied by: client-ui-workspace PinSessionMenuItem id 'pin'; client-ui-workspace RenameSessionMenuItem id 'rename'; client-ui-workspace ForkSessionMenuItem id 'fork'; client-ui-workspace ArchiveSessionMenuItem id 'archive'. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    const copyLabel = 'Copy Session ID' // Localize in the contributing package.
+    ctx.slots.inject('sidebar.workspaces.session.menu.item', () => ctx.slots.register(
+      { name: 'sidebar.workspaces.session.menu.item', id: 'copy-session-id', order: 500 },
+      ({ sessionId, useMenuOpenState }) => {
+        const [, setMenuOpen] = useMenuOpenState()
+        return React.createElement(
+          'button',
+          { type: 'button', role: 'menuitem', onClick: () => { setMenuOpen(false); void navigator.clipboard.writeText(sessionId) } },
+          copyLabel,
+        )
+      },
+    ))
+  },
+}
+```
+
+### `sidebar.workspaces.session.row.action`
+
+Kind `list`, scope `root`. The hover buttons at the end of one Session row, in ascending `order`, after the "..." menu trigger.
+
+The hover buttons at the end of one Session row, in ascending `order`,
+after the "..." menu trigger. ui-workspace registers `archive` (100) and
+`pin` (200) here. An entry renders one icon button (or nothing, when its
+action does not apply to the row) and owns the action it performs. Clicks
+inside the strip stay in the strip, so the button needs no propagation
+handling to keep the row from opening.
+
+Register options:
+
+- `id` (required, `string`): Your cell key. Use an id of your own: a fresh id is added beside the shipped entries, while reusing a shipped id puts you in THAT cell and replaces it. Owners that filter by id address you by it.
+- `order` (optional, `number`): Position among the entries, ascending (default 0).
+- `label` (optional, `string \| (() => string)`): Display text where the owner projects one (nav rows, tabs). A thunk is re-read on every projection, so localized text follows the active locale without re-registering.
+
+Props your component receives:
+
+```ts
+/** Owner share of one Session row action occurrence: the row the action belongs to. */
+export interface SessionRowOwnerProps {
+  /** Session the row shows. */
+  sessionId: SessionId
+  /** Row display title: persisted title, or empty when the Session has none. */
+  displayTitle: string
+}
+```
+
+Already occupied by: client-ui-workspace ArchiveSessionRowButton id 'archive'; client-ui-workspace PinSessionRowButton id 'pin'. Replace risk: `none`.
+
+Example:
+
+```js
+return {
+  inject: ['slots'],
+  apply(ctx) {
+    ctx.slots.inject('sidebar.workspaces.session.row.action', () => ctx.slots.register(
+      { name: 'sidebar.workspaces.session.row.action', id: 'my-entry', order: 100, label: 'My entry' },
+      () => React.createElement('div', null, 'hello'),
+    ))
+  },
+}
+```
+
 ### `tool.call.images`
 
 Kind `single`, scope `session`. Durable images of a settled image-bearing Tool call, rendered through the attachment presentation plugin.
@@ -2038,20 +3269,16 @@ return {
 
 ### `tool.call.toolview`
 
-Kind `keyed`, scope `session`. Keyed atomic Tool call view, dispatched by the wire Tool name.
+Kind `keyed`, scope `session`. Keyed Tool call view dispatched by wire Tool name.
 
-Keyed atomic Tool call view, dispatched by the wire Tool name. Register
-with `key: '<tool name>'` to own how one tool's calls render inside a
-turn - the key domain is open (any wire tool name, including a tool your
-own package registered), so there is no compile-time key set to pick
-from and a typo simply never renders.
+Keyed Tool call view dispatched by wire Tool name. Any name is allowed,
+including tools registered by your package. Register with
+`key: '<tool name>'`; a typo never renders.
 
-A key the shipped composition already covers is replaced, not shared;
-an unclaimed key falls back to the generic tool row, so registering is
-additive for your own tool and a takeover for a shipped one. The owner
-passes the call's identity, its frozen running-or-settled node, and the
-expansion state (see ToolCallOwnerProps), so the view stays a pure
-function of what the turn already knows.
+Registering an occupied key replaces its view; unclaimed keys use the
+generic row. The owner supplies the call identity and frozen running
+or settled node through explicit phase props. Preparing blocks have no dispatched
+arguments; useToolCallArgumentsPartial optionally subscribes to their raw prefix.
 
 Register options:
 
@@ -2061,38 +3288,38 @@ Props your component receives:
 
 ```ts
 /** Standard owner currency supplied to every atomic Tool view. */
-export interface ToolCallOwnerProps {
-  /** Tool call identity, stable across running and settled forms. */
+export interface ToolCallCommonProps {
+  /** Stable Hook; each invocation owns its open state and subscribes to enclosing-Turn resets. */
+  useDisclosure: UseDisclosure
+  /** Call identity, stable across all stages. */
   callId: string
   /** Wire Tool name and keyed dispatch value. */
   toolName: string
-  /** Frozen running call or settled result node. */
-  block: ToolCallBlock
   /** Session workspace root for relative summaries. */
   cwd?: string | undefined
   /** Host account home; POSIX home-rooted summaries display as `~`. */
   home?: string | undefined
-  /**
-   * Open a Tool argument path. A view that knows which line the call was about
-   * passes it, and the opened surface lands there.
-   */
+  /** Open an argument path at its optional requested line. */
   openFile: (path: string, options?: OpenFileOptions) => void
-  /**
-   * Session-authorized image loader for the `tool.call.images` slot, supplied
-   * by the chat node that owns this call. A composed chat node always
-   * supplies it (`ChatNodeOwnerProps.loadImage` is required), so the tool
-   * layer never imports an attachment implementation nor handles URL
-   * authorization.
-   */
+  /** Chat-supplied, session-authorized loader for durable images; Tool views do not manage attachment URLs. */
   loadImage: MessageImageLoader
   /** Inspect this call in the trajectory view when available. */
   inspect?: (() => void) | undefined
 }
+
+/** Common owner callbacks and the data admitted at the current tool stage. */
+export type ToolCallOwnerProps = ToolCallCommonProps & ToolCallPhaseProps
+
+/** Stage-specific tool data; only start/result expose the dispatched call material. */
+export type ToolCallPhaseProps =
+  | { readonly phase: 'preparing'; readonly block: PreparingToolCall }
+  | { readonly phase: 'start'; readonly block: StartedToolCall }
+  | { readonly phase: 'result'; readonly block: ToolResultNode }
 ```
 
-Keys: open: any string the owner dispatches (no compile-time key set), already taken: ask_user_question, bash, cordis_define, cordis_run, cordis_stop, cordis_undefine, edit, glob, grep, read, read_image, skill, todo_write, web_fetch, web_search, write
+Keys: open: any string the owner dispatches (no compile-time key set), already taken: ask_user_question, bash, cordis_define, cordis_inspect_list, cordis_inspect_query, cordis_inspect_self, cordis_run, cordis_stop, cordis_undefine, create_goal, edit, get_goal, glob, grep, interrupt_agent, job_kill, job_list, job_output, list_agents, list_subagent_models, lsp, present, ralph, read, read_image, schedule_create, schedule_delete, schedule_list, schedule_update, send_message, session_event_read, session_event_search, session_event_trace, session_search, session_trace, skill, spawn_teammate, subagent, team_task_create, team_task_get, team_task_list, team_task_update, terminal_close, terminal_list, terminal_open, terminal_read, terminal_signal, todo_write, update_goal, wait_agent, web_fetch, web_search, workflow, write
 
-Already occupied by: client-ui-skill SkillRow key 'skill'; client-ui-tool AskQuestionRow key 'ask_user_question'; client-ui-tool BashRow key 'bash'; client-ui-tool FileMutationRow key 'edit'; client-ui-tool FileMutationRow key 'write'; client-ui-tool ReadImageRow key 'read_image'; client-ui-tool ReadRow key 'read'; client-ui-tool SearchRow key 'grep'; client-ui-tool SearchRow key 'glob'; client-ui-tool TodoRow key 'todo_write'; client-ui-tool WebRow key 'web_search'; client-ui-tool WebRow key 'web_fetch'; client-ui-cordis CordisDefineRow key 'cordis_define'; client-ui-cordis CordisRunRow key 'cordis_run'; client-ui-cordis CordisActionRow key 'cordis_stop'; client-ui-cordis CordisActionRow key 'cordis_undefine'. Replace risk: `shadows-shipped-ui`.
+Already occupied by: client-ui-deliverables PresentRow key 'present'; client-ui-skill SkillRow key 'skill'; client-ui-tool AskQuestionRow key 'ask_user_question'; client-ui-tool BashRow key 'bash'; client-ui-tool DetailsRow key 'create_goal'; client-ui-tool DetailsRow key 'get_goal'; client-ui-tool DetailsRow key 'update_goal'; client-ui-tool DetailsRow key 'schedule_create'; client-ui-tool DetailsRow key 'schedule_list'; client-ui-tool DetailsRow key 'schedule_delete'; client-ui-tool DetailsRow key 'schedule_update'; client-ui-tool DetailsRow key 'cordis_inspect_list'; client-ui-tool DetailsRow key 'cordis_inspect_query'; client-ui-tool DetailsRow key 'cordis_inspect_self'; client-ui-tool DetailsRow key 'workflow'; client-ui-tool DetailsRow key 'ralph'; client-ui-tool DetailsRow key 'session_event_read'; client-ui-tool DetailsRow key 'session_event_search'; client-ui-tool DetailsRow key 'session_event_trace'; client-ui-tool DetailsRow key 'session_search'; client-ui-tool DetailsRow key 'session_trace'; client-ui-tool DetailsRow key 'list_subagent_models'; client-ui-tool DetailsRow key 'subagent'; client-ui-tool DetailsRow key 'list_agents'; client-ui-tool DetailsRow key 'send_message'; client-ui-tool DetailsRow key 'interrupt_agent'; client-ui-tool DetailsRow key 'job_list'; client-ui-tool DetailsRow key 'job_output'; client-ui-tool DetailsRow key 'job_kill'; client-ui-tool DetailsRow key 'terminal_open'; client-ui-tool DetailsRow key 'terminal_read'; client-ui-tool DetailsRow key 'terminal_list'; client-ui-tool DetailsRow key 'terminal_signal'; client-ui-tool DetailsRow key 'terminal_close'; client-ui-tool DetailsRow key 'lsp'; client-ui-tool DetailsRow key 'spawn_teammate'; client-ui-tool DetailsRow key 'team_task_create'; client-ui-tool DetailsRow key 'team_task_get'; client-ui-tool DetailsRow key 'team_task_update'; client-ui-tool DetailsRow key 'team_task_list'; client-ui-tool DetailsRow key 'wait_agent'; client-ui-tool FileMutationRow key 'edit'; client-ui-tool FileMutationRow key 'write'; client-ui-tool ReadImageRow key 'read_image'; client-ui-tool ReadRow key 'read'; client-ui-tool SearchRow key 'grep'; client-ui-tool SearchRow key 'glob'; client-ui-tool TodoRow key 'todo_write'; client-ui-tool WebRow key 'web_search'; client-ui-tool WebRow key 'web_fetch'; client-ui-cordis CordisDefineRow key 'cordis_define'; client-ui-cordis CordisRunRow key 'cordis_run'; client-ui-cordis CordisActionRow key 'cordis_stop'; client-ui-cordis CordisActionRow key 'cordis_undefine'. Replace risk: `shadows-shipped-ui`.
 
 Example:
 

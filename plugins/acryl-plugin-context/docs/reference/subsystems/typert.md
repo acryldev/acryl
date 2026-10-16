@@ -1,4 +1,4 @@
-<!-- Synced from deepseek-harness:docs/subsystems/typert.md @ 5dda764ed3. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
+<!-- Synced from deepseek-harness:docs/subsystems/typert.md @ 639ed01539. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
 
 # Typert remote calls
 
@@ -40,7 +40,7 @@ interface TypertLookupDefinition {
 
 ## Invocation descriptors
 
-An `InvocationDescriptor` is local reflection, not a wire message. Host and consumer builds generate corresponding descriptors; the request sends only the endpoint and named `args`. Strict codecs carry generated schemas, while SRC codecs enforce JSON-safe values without structural type recovery. Cancellation is an out-of-band carrier signal injected after business parameters and never enters `args`.
+An `InvocationDescriptor` is local reflection, not a wire message. Host and consumer builds generate corresponding descriptors; the request sends only the endpoint and named `args`. Strict codecs carry generated schema factories, while SRC codecs enforce JSON-safe inputs without structural type recovery. Unary result codecs can supply `encode()` for byte-containing subtrees and `decode()` for recursive native-byte validation; Client declarations narrow every `Uint8Array` to `ArrayBuffer` backing. Pure JSON results need neither byte detection nor Client decoding. Cancellation is an out-of-band carrier signal injected after business parameters and never enters `args`.
 
 ```ts type-equiv
 /** Codec attached to one invocation parameter or result. */
@@ -48,7 +48,21 @@ type TypertCodec =
   | {
     readonly mode: 'strict'
     readonly typeSymbol: string
-    readonly schema: TypertSchema
+    /** Materialize and return the process-realm schema on first boundary use. */
+    readonly create: () => TypertSchema
+    /**
+     * Decode a unary result whose fields require type-specific handling.
+     * @param value - result reconstructed by the RPC carrier.
+     * @returns the validated result, retaining native byte views.
+     */
+    readonly decode?: (value: unknown) => unknown
+    /**
+     * Project typed binary fields into RPC result attachments.
+     * @param value - native unary result.
+     * @param writeBytes - records a byte view at its result-relative path and returns its JSON placeholder.
+     * @returns JSON metadata with untouched JSON subtrees retained.
+     */
+    readonly encode?: (value: unknown, writeBytes: (bytes: Uint8Array, path: readonly (string | number)[]) => null) => unknown
   }
   | {
     readonly mode: 'src-json'
@@ -86,7 +100,7 @@ interface InvocationDescriptor {
   readonly method: string
   /** Service member invoked when the exported method name is an alias. */
   readonly implementation?: string
-  /** Absent for unary calls; stream calls validate and deliver every yielded item. */
+  /** Absent for unary calls; stream calls deliver every yielded item as the Host produced it. */
   readonly mode?: 'stream'
   /** Receiver selection mode. */
   readonly invocation:
@@ -106,6 +120,16 @@ interface InvocationDescriptor {
   }
   /** Ordered business parameters. */
   readonly parameters: readonly InvocationParameterDescriptor[]
+  /**
+   * Client-to-Host items of the same logical stream, generated from the `In`
+   * type argument of the method's `RemoteStream<Out, In>` return type; absent
+   * when `In` is `never`. The method reads the items through
+   * `RemoteInvocation.uplink()`, so nothing enters the parameter list.
+   */
+  readonly uplink?: {
+    /** Codec validating every uplink item before `uplink()` delivers it. */
+    readonly codec: TypertCodec
+  }
   /** Transport cancellation injected after business parameters instead of entering wire args. */
   readonly cancellation?: {
     /** Reserved final Host method parameter. */
@@ -115,6 +139,106 @@ interface InvocationDescriptor {
   readonly result: TypertCodec
   /** Source declaration used only for diagnostics. */
   readonly sourceLocation?: InvocationSourceLocation
+}
+```
+
+The Host alias `RemoteStream<Out, In>` names both directions of one stream, and the receiving method reads its call context as `this.ctx.invocation`:
+
+```ts type-equiv
+/**
+ * One Remote stream as a Host method returns it: the items it yields to the
+ * Client, iterated as a plain `AsyncIterable<Out>`. `In` is the type of the
+ * items the Client may send back on the same logical stream, read through
+ * `RemoteInvocation.uplink()`; it is carried only as a type-level marker. The
+ * default `never` declares a method that reads none, and its descriptor
+ * carries no uplink codec. A generated Client stream method returns the same
+ * stream as a `RemoteStreamHandle<Out, In>`.
+ * @template Out - item type the Host method yields.
+ * @template In - item type the Client may send; `never` when the method reads none.
+ */
+type RemoteStream<Out, In = never> = AsyncIterable<Out> & { readonly [STREAM_UPLINK]?: In }
+```
+
+```ts type-equiv
+/**
+ * One open Remote stream as the Client holds it: the downlink items as an
+ * `AsyncIterable`, plus the uplink and cancellation of the same logical
+ * stream. A generated Client stream method returns it, and calling that
+ * method opens the stream: a holder that neither iterates nor disposes the
+ * handle keeps the Host stream alive. A handle stands for one generation:
+ * when the carrier is lost, iteration fails with the carrier error and the
+ * handle is finished.
+ * @template Out - item type the Host method yields.
+ * @template In - item type the Client may send; `never` when the method reads none.
+ */
+interface RemoteStreamHandle<Out, In> extends AsyncIterable<Out> {
+  /**
+   * Send one uplink item. Items sent before the stream has opened are queued
+   * and sent once the `open` frame is on the wire. A top-level `undefined`
+   * travels as an `item` frame without `value`.
+   * @param item - item the Host validates against the method's uplink codec.
+   * @throws {Error} when the item is not a lossless JSON value, when `end()`
+   * was called, or once the stream has terminated.
+   */
+  send(item: In): void
+  /** Half-close the uplink: the Host's `uplink()` iteration ends. Idempotent; ignored after termination. */
+  end(): void
+  /**
+   * Cancel the logical stream: send `cancel` unless a terminal frame has
+   * arrived, and end the downlink iterator quietly. Breaking out of
+   * `for await` early does the same.
+   */
+  dispose(): void
+}
+```
+
+```ts type-equiv
+/**
+ * One Peer's session on this Host. Connection owns it: `ctx` is the Cordis
+ * scope that owns connection-lifetime registrations and is disposed with the
+ * Peer. Who the Peer is and what it may do are not recorded here.
+ */
+interface PeerScope {
+  readonly id: PeerId
+  readonly ctx: Context
+  /**
+   * Tear down every registration made through `ctx`.
+   * @returns settles once the scope has quiesced; racing calls share one completion.
+   */
+  dispose(): Promise<void>
+}
+```
+
+```ts type-equiv
+/**
+ * The context of one Remote call, reachable inside the receiving method as
+ * `this.ctx.invocation`. The Gateway derives the receiver from a Context that
+ * carries it, so no parameter is injected and nothing crosses the wire.
+ */
+interface RemoteInvocation {
+  readonly request: {
+    readonly namespace: string
+    readonly method: string
+    readonly args: Readonly<Record<string, unknown>>
+  }
+  /** Cordis service key of the receiving Service. */
+  readonly service: string
+  /** Peer the call speaks for; an in-process carrier speaks for the operator. */
+  readonly peer: PeerScope
+  /** Carrier cancellation: Client cancel, socket close, or an uplink failure. */
+  readonly signal: AbortSignal
+  /**
+   * The Client's uplink items for this call. Available once; a second call
+   * throws. With an uplink codec on the descriptor every item is decoded to
+   * `In`; without one items arrive as `unknown` after a JSON-safety check.
+   * Iteration ends when the Client ends its uplink; when the method finishes
+   * its downlink the Gateway calls the iterator's `return()` and unread items
+   * are dropped. `In` is the caller's assertion: the runtime decodes by the
+   * descriptor and does not cross-check it.
+   * @template In - item type the caller reads; the descriptor codec decides what arrives.
+   * @returns the single-consumer uplink iterable.
+   */
+  uplink<In = unknown>(): AsyncIterable<In>
 }
 ```
 
@@ -152,6 +276,13 @@ interface InvokeRemoteRequest {
   readonly method: string
   /** Named wire values; fields must exactly match the descriptor. */
   readonly args: Readonly<Record<string, unknown>>
+  /**
+   * Client uplink items of this logical stream, delivered to the method through
+   * `invocation.uplink()`; absent means an immediately ended iterable.
+   */
+  readonly uplink?: AsyncIterable<unknown>
+  /** Peer the call speaks for; absent means an in-process carrier, answered as the operator. */
+  readonly peer?: PeerScope
   /** Carrier or direct-caller cancellation injected only into cancellation-aware methods. */
   readonly signal?: AbortSignal
 }
@@ -173,10 +304,12 @@ type TypertGatewayErrorCode =
   | 'gateway/lookup-not-found'
   | 'gateway/lookup-unavailable'
   | 'gateway/method-unavailable'
+  | 'gateway/protocol'
   | 'gateway/provider-mismatch'
   | 'gateway/result-invalid'
   | 'gateway/service-unavailable'
   | 'gateway/signature-invalid'
+  | 'gateway/uplink-overflow'
 ```
 
 ```ts type-equiv
@@ -184,6 +317,11 @@ type TypertGatewayErrorCode =
 interface TypertGateway {
   /** Carrier adapter shared by WebSocket and in-process transports. */
   readonly wireStream: TypertGatewayWireStream
+  /**
+   * Check for an active Client event stream.
+   * @returns whether a stream is open and has not been cancelled.
+   */
+  hasLiveClient(): boolean
   /**
    * Register the application-selected forwarded-event source.
    * @param source - stream factory installed by the Remote assembly.
@@ -203,7 +341,7 @@ interface TypertGateway {
   invoke(request: InvokeRemoteRequest): Promise<unknown>
   /**
    * Open one live stream Remote method without assuming a physical carrier.
-   * @param request - decoded endpoint and named wire arguments.
+   * @param request - decoded endpoint, named wire arguments, and the Client uplink when the carrier has one.
    * @returns a cancellation-aware iterable over the business results.
    */
   stream(request: InvokeRemoteRequest): Promise<AsyncIterable<unknown>>
@@ -263,14 +401,14 @@ register(contribution: TypertContribution): TypertDisposer
 /**
  * Look up one schema by `<package>#<name>`.
  * @param key - global schema key.
- * @returns the live schema record, or `undefined` when absent.
+ * @returns a record containing the cached schema, or `undefined` when absent.
  */
 get(key: string): TypertSchemaRecord | undefined
 
 /**
  * Resolve one required schema.
  * @param key - global schema key.
- * @returns the live schema record.
+ * @returns a record containing the cached schema.
  * @throws when the key is malformed, the package face is absent, or the schema is not contributed.
  */
 resolve(key: string): TypertSchemaRecord
@@ -278,7 +416,7 @@ resolve(key: string): TypertSchemaRecord
 /**
  * Enumerate live schemas in registration order.
  * @param filter - optional package and face restriction.
- * @returns matching schema records.
+ * @returns matching records containing the cached schemas.
  */
 list(filter: TypertSchemaFilter = {}): TypertSchemaRecord[]
 
@@ -318,6 +456,12 @@ Resolve strict generated definitions or conservative SRC markers against current
 
 ```ts cordis-catalog
 /**
+ * Check for an active Client event stream.
+ * @returns whether a stream is open and has not been cancelled.
+ */
+hasLiveClient(): boolean
+
+/**
  * Register the sole application-selected forwarded-event source.
  * @param source - stream factory installed by the Remote assembly.
  * @param host - stable Host facts included in each Client generation's opening frame.
@@ -335,7 +479,7 @@ async invoke(request: InvokeRemoteRequest): Promise<unknown>
 
 /**
  * Open one live stream Remote method without assuming a physical carrier.
- * @param request - decoded endpoint and named wire arguments.
+ * @param request - decoded endpoint, named wire arguments, and the Client uplink when the carrier has one.
  * @returns a cancellation-aware iterable over the business results.
  */
 async stream(request: InvokeRemoteRequest): Promise<AsyncIterable<unknown>>
