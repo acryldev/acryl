@@ -7,7 +7,7 @@ Characters are exact; tokens are an estimate for comparing changes. Ceilings liv
 
 ## web and desktop (standard preset)
 
-Total: system prompt 9102 chars (about 2677 tokens), tool definitions 27562 chars (about 8106 tokens), 47 tools.
+Total: system prompt 9102 chars (about 2677 tokens), tool definitions 27592 chars (about 8115 tokens), 47 tools.
 
 ### System prompt by section
 
@@ -52,7 +52,7 @@ Total: system prompt 9102 chars (about 2677 tokens), tool definitions 27562 char
 | `glob` | 750 | 221 |
 | `grep` | 702 | 206 |
 | `list_agents` | 661 | 194 |
-| `acryl_plugins` | 626 | 184 |
+| `acryl_plugins` | 656 | 193 |
 | `job_output` | 615 | 181 |
 | `create_goal` | 577 | 170 |
 | `acryl_install_plugin` | 550 | 162 |
@@ -89,7 +89,7 @@ Total: system prompt 9102 chars (about 2677 tokens), tool definitions 27562 char
 
 ## cli (terminal engine)
 
-Total: system prompt 5449 chars (about 1603 tokens), tool definitions 21606 chars (about 6355 tokens), 31 tools.
+Total: system prompt 5449 chars (about 1603 tokens), tool definitions 21636 chars (about 6364 tokens), 31 tools.
 
 ### System prompt by section
 
@@ -125,7 +125,7 @@ Total: system prompt 5449 chars (about 1603 tokens), tool definitions 21606 char
 | `glob` | 750 | 221 |
 | `grep` | 702 | 206 |
 | `list_agents` | 661 | 194 |
-| `acryl_plugins` | 626 | 184 |
+| `acryl_plugins` | 656 | 193 |
 | `job_output` | 615 | 181 |
 | `create_goal` | 577 | 170 |
 | `acryl_install_plugin` | 550 | 162 |

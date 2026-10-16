@@ -6,6 +6,7 @@ import { isAbsolute, join } from 'node:path'
 import { pullPlugin, type RegistryPort, type ReleasePort } from './pull.js'
 import { formatPluginSource, parsePluginSource, type PluginSource } from './source.js'
 import { savePlugin } from './save.js'
+import { publishToNpm, type NpmPublishOptions, type NpmPublishPort, type NpmPublishResult } from './npm-publish.js'
 import { sharePlugin, type PublishGitPort, type RepositoryHostPort, type ShareOptions, type ShareResult } from './share.js'
 import type { PluginStore, StoredVersion } from './store.js'
 import { bumpVersion, compareVersions, parseVersion, type VersionBump } from './version.js'
@@ -34,6 +35,8 @@ export interface HubPorts {
   readonly installer: () => InstallerPort | undefined
   /** The git host and git for sharing (the user's own `gh` and `git`); without them sharing is unavailable and says so. */
   readonly share?: { readonly host: RepositoryHostPort; readonly git: PublishGitPort }
+  /** npm for publishing (the user's own `npm`); without it publishing to npm is unavailable and says so. */
+  readonly npm?: NpmPublishPort
 }
 
 export type PullStatus = 'installed' | 'restart-required' | 'stored' | 'missing-services' | 'install-failed' | 'overridden' | 'cancelled'
@@ -126,6 +129,8 @@ export interface PluginHub {
   share(folder: string, options?: ShareOptions): Promise<ShareResult>
   /** Pull and install the newest release of an installed plugin from where it was pulled before (the store records that). */
   update(name: string): Promise<UpdateResult>
+  /** Publish a plugin to an npm registry (the public one unless `registry` names another). */
+  publishNpm(folder: string, options?: NpmPublishOptions): Promise<NpmPublishResult>
 }
 
 export function createPluginHub(ports: HubPorts): PluginHub {
@@ -171,6 +176,11 @@ export function createPluginHub(ports: HubPorts): PluginHub {
     async share(folder, options = {}) {
       if (ports.share === undefined) return { status: 'refused', reason: 'sharing is not available in this app (no git host connection)' }
       return sharePlugin(folder, options, { host: ports.share.host, git: ports.share.git, store })
+    },
+
+    async publishNpm(folder, options = {}) {
+      if (ports.npm === undefined) return { status: 'refused', reason: 'publishing to npm is not available in this app' }
+      return publishToNpm(folder, options, { npm: ports.npm, store })
     },
 
     async update(name) {

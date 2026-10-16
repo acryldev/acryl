@@ -108,6 +108,8 @@ async function runPluginInvocation(
         ...(invocation.bump === undefined ? {} : { bump: invocation.bump }),
         ...(invocation.public === true ? { public: true } : {}),
         ...(invocation.to === undefined ? {} : { to: invocation.to }),
+        ...(invocation.npm === true ? { npm: true } : {}),
+        ...(invocation.registry === undefined ? {} : { registry: invocation.registry }),
       })
     } catch (cause) {
       dependencies.write(cause instanceof Error ? cause.message : String(cause))
@@ -192,6 +194,7 @@ export async function runAcryl(
         '  plugin saved                     List every plugin version kept in this app\'s plugin store',
         '  plugin save <plugin>             Pack a plugin you edit (folder or name) and keep that version',
         '  plugin version <patch|minor|major> <plugin>  Give a change its new version',
+        '  plugin share <plugin> --npm [--registry <url>]  Publish it to npm (or a private registry) with your npm login',
         '  plugin update <name>             Install the newest release of a pulled plugin from where it came from',
         '  plugin share <plugin> [--to <owner>[/<repo>]] [--public]  Release it to its own GitHub repository (private unless --public)',
         '  plugin pull <source>             Fetch, check and install a plugin: store:<name>, github:<owner>/<repo>[@version], npm:<name>, a .tgz',

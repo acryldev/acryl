@@ -13,7 +13,7 @@
 import { isAbsolute, join, resolve } from 'node:path'
 import {
   createPluginHub, findSourceFolder, firstReleasePort, githubReleasesOverHttps, githubReleasesViaGh, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf,
-  type InstallerPort, type PluginHub, type PullResult, type SaveResult, type ShareResult, type StoredVersion, type UpdateResult, type VersionBump, gitCli, githubCli,
+  type InstallerPort, type PluginHub, type PullResult, type NpmPublishResult, type SaveResult, type ShareResult, type StoredVersion, type UpdateResult, type VersionBump, firstRegistryPort, gitCli, githubCli, npmCli, npmRegistryViaCli,
 } from '@webboxes/plugin-hub'
 import { processIsAlive, readLock, resolveAcrylDshHome, runLockFileForDshHome, selectInstance } from 'acryl-harness-runtime'
 import { startDirectHost } from './direct.ts'
@@ -29,6 +29,9 @@ export interface PluginHubCommandOptions {
   /** `share`: list it publicly, and the repository as `<owner>` or `<owner>/<repo>`. */
   readonly public?: boolean
   readonly to?: string
+  /** `share`: publish to an npm registry instead (default the public one). */
+  readonly npm?: boolean
+  readonly registry?: string
   /** The folder relative paths and the project's `.acryl-extensions/` are read from. */
   readonly cwd?: string
 }
@@ -39,13 +42,15 @@ export type PluginHubCommandResult =
   | { readonly kind: 'version'; readonly name: string; readonly from: string; readonly to: string; readonly folder: string }
   | { readonly kind: 'pull'; readonly profile: string; readonly result: PullResult }
   | { readonly kind: 'share'; readonly result: ShareResult }
+  | { readonly kind: 'npm'; readonly result: NpmPublishResult }
   | { readonly kind: 'update'; readonly profile: string; readonly result: UpdateResult }
 
 function storeHub(home: string, extra: { readonly has?: (service: string) => boolean; readonly installer?: () => InstallerPort | undefined } = {}): PluginHub {
   return createPluginHub({
     store: new PluginStore(storeRootOf(home)),
     releases: firstReleasePort(githubReleasesOverHttps(), githubReleasesViaGh()),
-    registry: npmRegistryOverHttps(),
+    registry: firstRegistryPort(npmRegistryOverHttps(), npmRegistryViaCli()),
+    npm: npmCli(),
     download: httpsDownload(),
     has: extra.has ?? (() => true),
     installer: extra.installer ?? (() => undefined),
@@ -76,6 +81,10 @@ export async function runPluginHubCommand(options: PluginHubCommandOptions): Pro
     if (options.bump === undefined) throw new Error('plugin version needs patch, minor or major')
     const folder = folderOf(options.target, cwd, instance.home)
     return { kind: 'version', folder, ...storeHub(instance.home).bump(folder, options.bump) }
+  }
+  if (options.action === 'share' && options.npm === true) {
+    const folder = folderOf(options.target, cwd, instance.home)
+    return { kind: 'npm', result: await storeHub(instance.home).publishNpm(folder, { ...(options.registry === undefined ? {} : { registry: options.registry }), ...(options.public === true ? { visibility: 'public' as const } : {}) }) }
   }
   if (options.action === 'share') {
     const folder = folderOf(options.target, cwd, instance.home)
@@ -109,7 +118,7 @@ export async function runPluginHubCommand(options: PluginHubCommandOptions): Pro
 
 /** Lines for a person, or one JSON line; a refused or failed pull exits 1. */
 export function renderPluginHubCommand(result: PluginHubCommandResult, json: boolean): { readonly lines: readonly string[]; readonly exitCode: number } {
-  const failed = (result.kind === 'share' && result.result.status === 'refused') || (result.kind === 'update' && (result.result.status === 'not-updatable' || result.result.status === 'failed')) || result.kind === 'pull' && (result.result.status === 'missing-services' || result.result.status === 'install-failed' || result.result.status === 'cancelled')
+  const failed = ((result.kind === 'share' || result.kind === 'npm') && result.result.status === 'refused') || (result.kind === 'update' && (result.result.status === 'not-updatable' || result.result.status === 'failed')) || result.kind === 'pull' && (result.result.status === 'missing-services' || result.result.status === 'install-failed' || result.result.status === 'cancelled')
   if (json) return { lines: [JSON.stringify(result)], exitCode: failed ? 1 : 0 }
   switch (result.kind) {
     case 'saved':
@@ -126,6 +135,17 @@ export function renderPluginHubCommand(result: PluginHubCommandResult, json: boo
           `Shared ${shared.name} ${shared.version} to ${shared.visibility} ${shared.url}${shared.created ? ' (new repository)' : ''}: release ${shared.tag}, ${String(shared.files.length)} files, ${shared.integrity.slice(0, 19)}...`,
           ...(shared.updatedManifest.length === 0 ? [] : [`Updated its package.json: ${shared.updatedManifest.join('; ')}.`]),
           shared.visibility === 'public' ? 'Listed publicly: catalogs find it by its labels on their next refresh.' : 'Private: only the repository\'s collaborators can pull it. List it publicly with --public.',
+        ],
+        exitCode: 0,
+      }
+    }
+    case 'npm': {
+      const published = result.result
+      if (published.status === 'refused') return { lines: [`Not published: ${published.reason}`, ...(published.secrets ?? []).map(found => `  ${found.path}${found.line > 0 ? `:${String(found.line)}` : ''}  ${found.kind}`)], exitCode: 1 }
+      return {
+        lines: [
+          `Published ${published.name} ${published.version} to ${published.registry} (${published.access}), ${String(published.files.length)} files, ${published.integrity.slice(0, 19)}...`,
+          ...(published.updatedManifest.length === 0 ? [] : [`Updated its package.json: ${published.updatedManifest.join('; ')}.`]),
         ],
         exitCode: 0,
       }

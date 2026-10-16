@@ -16,7 +16,7 @@ import { dirname, join } from 'node:path'
 import { findSecrets, type SecretFinding } from '@webboxes/app-persistence'
 import { syncServiceContract } from './contract.js'
 import { parsePluginName } from './name.js'
-import { packFolder, type PackedPlugin } from './pack.js'
+import { bundleProblem, packFolder, type PackedPlugin } from './pack.js'
 import type { PluginStore } from './store.js'
 import { readTarball } from './tarball.js'
 
@@ -110,7 +110,7 @@ function prepareManifest(folder: string, owner: string, repo: string, visibility
   return changed
 }
 
-function secretsIn(packed: PackedPlugin): SecretFinding[] {
+export function secretsIn(packed: PackedPlugin): SecretFinding[] {
   return findSecrets(readTarball(packed.tarball).map(file => ({ path: file.path, text: Buffer.from(file.content).toString('utf8') })))
 }
 
@@ -141,6 +141,8 @@ export async function sharePlugin(folder: string, options: ShareOptions, ports: 
   const updatedManifest = [...(contract.written ? ['service contract and slots'] : []), ...prepareManifest(folder, owner, repo, visibility)]
 
   const packed = packFolder(folder)
+  const notBundle = bundleProblem(packed)
+  if (notBundle !== undefined) return refuse(notBundle)
   const secrets = secretsIn(packed)
   if (secrets.length > 0) return refuse(`the secret check found ${String(secrets.length)} possible secret(s) in the files that would be shared; nothing was sent`, secrets)
 

@@ -116,6 +116,21 @@ export function packFolder(dir: string): PackedPlugin {
   return { name, version, manifest, files, tarball, integrity: integrityOf(tarball), fileName }
 }
 
+/**
+ * Why DeepSeek Harness's installer would refuse this package as "not a bundle", or undefined when it would not: package.json names its
+ * Loader patch in `dsh.bundle.patch`, and that file is among the packed ones. Checked before anything is sent, so no target ever holds a
+ * plugin that no app can install.
+ */
+export function bundleProblem(packed: Pick<PackedPlugin, 'manifest' | 'files'>): string | undefined {
+  const dsh = packed.manifest['dsh'] as { bundle?: { patch?: unknown } } | undefined
+  const patch = dsh?.bundle?.patch
+  const example = '"dsh": { "bundle": { "patch": "./cordis.patch.yml" } }'
+  if (typeof patch !== 'string') return `package.json does not name its Loader patch, so no app can install it; add ${example} and a cordis.patch.yml that inserts its row`
+  const path = patch.replace(/^\.\//u, '')
+  if (!packed.files.includes(path)) return `its Loader patch ${path} is not among the files that would be sent; create it, or add it to package.json "files"`
+  return undefined
+}
+
 /** The package.json inside a tarball, which every pull reads to know what it got before installing it. */
 export function manifestOfTarball(files: readonly TarballFile[]): Record<string, unknown> {
   const file = files.find(entry => entry.path === 'package.json')

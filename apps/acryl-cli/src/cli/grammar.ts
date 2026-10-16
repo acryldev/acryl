@@ -33,6 +33,9 @@ export interface AcrylPluginInvocation extends AcrylInvocationFlags {
   readonly public?: boolean
   /** `share` only: the repository, as `<owner>/<repo>` or `<owner>`. */
   readonly to?: string
+  /** `share` only: publish to an npm registry instead of GitHub, and which one (default the public registry). */
+  readonly npm?: boolean
+  readonly registry?: string
 }
 
 /** What `acryl ui` can do (spec 038-ui-component-library, T038): copy or inspect a registry item. */
@@ -304,8 +307,10 @@ function pluginAction(value: string): AcrylPluginAction | undefined {
 
 /** `acryl plugin share <plugin> [--to <owner>[/<repo>]] [--public] [--profile <p>] [--json]`: its own flags, so it is parsed on its own. */
 function parsePluginShareInvocation(args: readonly string[]): AcrylPluginInvocation {
-  const usage = 'usage: acryl plugin share <plugin folder or name> [--to <owner>[/<repo>]] [--public] [--json]'
+  const usage = 'usage: acryl plugin share <plugin folder or name> [--to <owner>[/<repo>]] [--public] [--npm [--registry <url>]] [--json]'
   let to: string | undefined
+  let registry: string | undefined
+  let npm = false
   let profile: string | undefined
   let isPublic = false
   let json = false
@@ -313,6 +318,14 @@ function parsePluginShareInvocation(args: readonly string[]): AcrylPluginInvocat
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index] ?? ''
     if (argument === '--public') { isPublic = true; continue }
+    if (argument === '--npm') { npm = true; continue }
+    if (argument === '--registry') {
+      const value = args[index + 1]
+      if (value === undefined || !/^https?:\/\/\S+$/u.test(value)) throw new Error('--registry requires an http(s) registry URL')
+      registry = value
+      index += 1
+      continue
+    }
     if (argument === '--json') { json = true; continue }
     if (argument === '--to' || argument === '--profile') {
       const value = args[index + 1]
@@ -325,10 +338,13 @@ function parsePluginShareInvocation(args: readonly string[]): AcrylPluginInvocat
     positional.push(argument)
   }
   if (positional.length !== 1) throw new Error(usage)
+  if (registry !== undefined && !npm) throw new Error('--registry goes with --npm')
+  if (npm && to !== undefined) throw new Error('--to names a GitHub repository; with --npm use --registry')
   if (to !== undefined && !/^[A-Za-z0-9][A-Za-z0-9-]*(?:\/[A-Za-z0-9._-]+)?$/u.test(to)) throw new Error(`--to takes <owner> or <owner>/<repo>, not ${JSON.stringify(to)}`)
   return {
     kind: 'plugin', action: 'share', entryId: positional[0] ?? '', json, version: false, help: false,
     ...(profile === undefined ? {} : { profile }), ...(isPublic ? { public: true } : {}), ...(to === undefined ? {} : { to }),
+    ...(npm ? { npm: true } : {}), ...(registry === undefined ? {} : { registry }),
   }
 }
 

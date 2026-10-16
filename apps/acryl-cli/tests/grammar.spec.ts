@@ -92,6 +92,14 @@ describe('parseAcrylArgs', () => {
     expect(() => parseAcrylArgs(['plugin', 'share', 'a', '--force'])).toThrow('unknown option for plugin share: --force')
   })
 
+  it('parses plugin share to npm and keeps --registry and --to apart', () => {
+    expect(parseAcrylArgs(['plugin', 'share', 'quick-notes', '--npm', '--public'])).toEqual({ kind: 'plugin', action: 'share', entryId: 'quick-notes', npm: true, public: true, json: false, version: false, help: false })
+    expect(parseAcrylArgs(['plugin', 'share', 'quick-notes', '--npm', '--registry', 'http://localhost:4873/'])).toEqual({ kind: 'plugin', action: 'share', entryId: 'quick-notes', npm: true, registry: 'http://localhost:4873/', json: false, version: false, help: false })
+    expect(() => parseAcrylArgs(['plugin', 'share', 'a', '--registry', 'http://localhost:4873/'])).toThrow('--registry goes with --npm')
+    expect(() => parseAcrylArgs(['plugin', 'share', 'a', '--npm', '--registry', 'localhost'])).toThrow('--registry requires an http(s) registry URL')
+    expect(() => parseAcrylArgs(['plugin', 'share', 'a', '--npm', '--to', 'o/r'])).toThrow('with --npm use --registry')
+  })
+
   it('rejects plugin arguments that do not match the action', () => {
     expect(() => parseAcrylArgs(['plugin', 'enable'])).toThrow('requires a plugin id')
     expect(() => parseAcrylArgs(['plugin', 'add'])).toThrow('requires a package name')

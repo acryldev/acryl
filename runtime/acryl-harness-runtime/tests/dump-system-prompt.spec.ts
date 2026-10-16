@@ -37,7 +37,8 @@ async function surface(kind: 'web' | 'cli'): Promise<{ doc: string; budget: Prom
       scrub: [[home, '<dsh-home>'], [repoRoot, '<acryl-repo>']],
     })
     return {
-      doc: renderSystemPromptDoc(kind === 'web' ? 'web' : 'cli', kind === 'web' ? 'standard preset' : 'terminal engine', captured),
+      // The Web engine listens on a free port, different on every run; the copy names it <port> so it changes only when the prompt does.
+      doc: renderSystemPromptDoc(kind === 'web' ? 'web' : 'cli', kind === 'web' ? 'standard preset' : 'terminal engine', captured).replace(/(http:\/\/127\.0\.0\.1:)\d+/gu, '$1<port>'),
       budget: measurePromptBudget(captured),
     }
   } finally {

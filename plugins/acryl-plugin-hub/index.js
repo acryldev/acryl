@@ -21,7 +21,7 @@
  */
 import { join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { createPluginHub, findSourceFolder, firstReleasePort, gitCli, githubCli, githubReleasesOverHttps, githubReleasesViaGh, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf } from '@webboxes/plugin-hub'
+import { createPluginHub, findSourceFolder, firstRegistryPort, firstReleasePort, gitCli, githubCli, githubReleasesOverHttps, githubReleasesViaGh, npmCli, npmRegistryViaCli, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf } from '@webboxes/plugin-hub'
 
 export const name = 'acryl-plugin-hub'
 export const inject = ['appInstance']
@@ -36,7 +36,7 @@ export function sourceRoots({ workspaceDir, home }) {
   return [workspaceDir === undefined ? undefined : join(workspaceDir, '.acryl-extensions'), home === undefined ? undefined : join(home, 'extensions')]
 }
 
-const USAGE = 'Usage: /plugin list | saved | save <name or folder> | share <name or folder> [public] [owner/repo] | pull <source> | update <name> | version patch|minor|major <name or folder>. A source is store:<name>[@version], github:<owner>/<repo>[@version], npm:<name>[@version], a .tgz file or https URL.'
+const USAGE = 'Usage: /plugin list | saved | save <name or folder> | share <name or folder> [public] [owner/repo] | share <name> npm [public] [registry URL] | pull <source> | update <name> | version patch|minor|major <name or folder>. A source is store:<name>[@version], github:<owner>/<repo>[@version], npm:<name>[@version], a .tgz file or https URL.'
 
 function describePull(result) {
   const id = `${result.name} ${result.version}`
@@ -87,6 +87,18 @@ export async function runPluginCommand(rawInput, hub, where) {
       }
       const saved = hub.save(folder)
       return { kind: 'success', text: saved.added ? `Saved ${saved.name} ${saved.version} (${saved.files.length} files) to the plugin store.` : `${saved.name} ${saved.version} is already saved with exactly these files.` }
+    }
+    if (verb === 'share' && rest.includes('npm')) {
+      // `/plugin share <name> npm [public] [registry URL]`: publish to an npm registry instead of GitHub.
+      const isPublic = rest.includes('public')
+      const words = rest.filter(word => word !== 'public' && word !== 'npm')
+      const target = words[0]
+      if (target === undefined || words.length > 2 || (words[1] !== undefined && !/^https?:\/\/\S+$/u.test(words[1]))) return { kind: 'error', text: USAGE }
+      const folder = findSourceFolder(target, sourceRoots(where))
+      if (folder === undefined) return { kind: 'error', text: `No plugin folder named ${JSON.stringify(target)} in this project's .acryl-extensions/ or the app's extensions/; give its absolute folder.` }
+      const result = await hub.publishNpm(folder, { ...(words[1] ? { registry: words[1] } : {}), ...(isPublic ? { visibility: 'public' } : {}) })
+      if (result.status === 'refused') return { kind: 'error', text: `Not published: ${result.reason}${(result.secrets ?? []).map(found => `\n- ${found.path}${found.line > 0 ? `:${found.line}` : ''} (${found.kind})`).join('')}` }
+      return { kind: 'success', text: `Published ${result.name} ${result.version} to ${result.registry} (${result.access}), ${result.files.length} files.` }
     }
     if (verb === 'share') {
       // `/plugin share <name> [public] [owner[/repo]]`: typed by the user, so it is the user's confirmation (spec 044 guards).
@@ -141,7 +153,7 @@ export function pluginTools(hub, { approval, where }) {
       bump: { type: 'string', enum: ['patch', 'minor', 'major'] },
       source: { type: 'string', description: 'store:, github:o/r[@v], npm:, .tgz (pull).' },
       public: { type: 'boolean' },
-      to: { type: 'string', description: 'owner[/repo] (share).' },
+      to: { type: 'string', description: 'owner[/repo] or npm[:URL] (share).' },
     },
     output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
     async execute(args, exec) {
@@ -166,8 +178,15 @@ export function pluginTools(hub, { approval, where }) {
         }
         case 'share': {
           const folder = folderOf(exec, args.plugin)
-          const outcome = await ask(exec, `Share the plugin in ${folder} to ${args.to ?? 'its GitHub repository'} (${args.public === true ? 'public: anyone can find and install it' : 'private'}).`)
+          // `to` names where the plugin goes: a GitHub owner[/repo] (default its own repository), or `npm` / `npm:<registry URL>`.
+          const npm = /^npm(?::(.+))?$/u.exec(String(args.to ?? ''))
+          const outcome = await ask(exec, `Share the plugin in ${folder} to ${npm !== null ? `npm${npm[1] === undefined ? '' : ` (${npm[1]})`}` : args.to ?? 'its GitHub repository'} (${args.public === true ? 'public: anyone can find and install it' : 'private'}).`)
           if (outcome !== 'allowed-once') throw new Error(refusedBy(outcome))
+          if (npm !== null) {
+            const published = await hub.publishNpm(folder, { ...(npm[1] === undefined ? {} : { registry: npm[1] }), ...(args.public === true ? { visibility: 'public' } : {}) })
+            if (published.status === 'refused') throw new Error(JSON.stringify(published))
+            return JSON.stringify(published)
+          }
           const [owner, repo] = String(args.to ?? '').split('/')
           const result = await hub.share(folder, { ...(owner ? { owner } : {}), ...(repo ? { repo } : {}), ...(args.public === true ? { visibility: 'public' } : {}) })
           if (result.status === 'refused') throw new Error(JSON.stringify(result))
@@ -184,7 +203,9 @@ export function apply(ctx) {
     store: new PluginStore(storeRoot(ctx.appInstance)),
     // Public repositories anonymously; a private one through the user's own gh login.
     releases: firstReleasePort(githubReleasesOverHttps(), githubReleasesViaGh()),
-    registry: npmRegistryOverHttps(),
+    // The public registry anonymously; a private registry or scope through the user's own npm configuration.
+    registry: firstRegistryPort(npmRegistryOverHttps(), npmRegistryViaCli()),
+    npm: npmCli(),
     download: httpsDownload(),
     share: { host: githubCli(), git: gitCli() },
     has: service => ctx.get(service) !== undefined,
