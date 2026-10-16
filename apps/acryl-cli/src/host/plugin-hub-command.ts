@@ -13,12 +13,12 @@
 import { isAbsolute, join, resolve } from 'node:path'
 import {
   createPluginHub, findSourceFolder, githubReleasesOverHttps, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf,
-  type InstallerPort, type PluginHub, type PullResult, type SaveResult, type ShareResult, type StoredVersion, type VersionBump, gitCli, githubCli,
+  type InstallerPort, type PluginHub, type PullResult, type SaveResult, type ShareResult, type StoredVersion, type UpdateResult, type VersionBump, gitCli, githubCli,
 } from '@webboxes/plugin-hub'
 import { processIsAlive, readLock, resolveAcrylDshHome, runLockFileForDshHome, selectInstance } from 'acryl-harness-runtime'
 import { startDirectHost } from './direct.ts'
 
-export type PluginHubAction = 'saved' | 'save' | 'version' | 'pull' | 'share'
+export type PluginHubAction = 'saved' | 'save' | 'version' | 'pull' | 'update' | 'share'
 
 export interface PluginHubCommandOptions {
   readonly profile: string
@@ -39,6 +39,7 @@ export type PluginHubCommandResult =
   | { readonly kind: 'version'; readonly name: string; readonly from: string; readonly to: string; readonly folder: string }
   | { readonly kind: 'pull'; readonly profile: string; readonly result: PullResult }
   | { readonly kind: 'share'; readonly result: ShareResult }
+  | { readonly kind: 'update'; readonly profile: string; readonly result: UpdateResult }
 
 function storeHub(home: string, extra: { readonly has?: (service: string) => boolean; readonly installer?: () => InstallerPort | undefined } = {}): PluginHub {
   return createPluginHub({
@@ -86,10 +87,11 @@ export async function runPluginHubCommand(options: PluginHubCommandOptions): Pro
       }),
     }
   }
+  if (options.target === undefined && options.action === 'update') throw new Error('plugin update needs the plugin name')
   if (options.target === undefined) throw new Error('plugin pull needs a source: store:<name>, github:<owner>/<repo>[@version], npm:<name>, or a .tgz')
   const holder = readLock(runLockFileForDshHome(resolveAcrylDshHome()))
   if (holder !== undefined && processIsAlive(holder.pid)) {
-    throw new Error(`the app running this profile (pid ${String(holder.pid)}) is live; pull from inside it (/plugin pull ${options.target}), or stop it first`)
+    throw new Error(`the app running this profile (pid ${String(holder.pid)}) is live; ${options.action} from inside it (/plugin ${options.action} ${options.target}), or stop it first`)
   }
   const target = options.target.startsWith('.') ? resolve(cwd, options.target) : options.target
   const host = await startDirectHost({ profile: options.profile })
@@ -98,6 +100,7 @@ export async function runPluginHubCommand(options: PluginHubCommandOptions): Pro
       has: service => host.ctx.get(service as never) !== undefined,
       installer: () => host.ctx.get('pluginManager' as never) as InstallerPort | undefined,
     })
+    if (options.action === 'update') return { kind: 'update', profile: options.profile, result: await hub.update(target) }
     return { kind: 'pull', profile: options.profile, result: await hub.pull(target) }
   } finally {
     await host.dispose()
@@ -106,7 +109,7 @@ export async function runPluginHubCommand(options: PluginHubCommandOptions): Pro
 
 /** Lines for a person, or one JSON line; a refused or failed pull exits 1. */
 export function renderPluginHubCommand(result: PluginHubCommandResult, json: boolean): { readonly lines: readonly string[]; readonly exitCode: number } {
-  const failed = (result.kind === 'share' && result.result.status === 'refused') || result.kind === 'pull' && (result.result.status === 'missing-services' || result.result.status === 'install-failed' || result.result.status === 'cancelled')
+  const failed = (result.kind === 'share' && result.result.status === 'refused') || (result.kind === 'update' && (result.result.status === 'not-updatable' || result.result.status === 'failed')) || result.kind === 'pull' && (result.result.status === 'missing-services' || result.result.status === 'install-failed' || result.result.status === 'cancelled')
   if (json) return { lines: [JSON.stringify(result)], exitCode: failed ? 1 : 0 }
   switch (result.kind) {
     case 'saved':
@@ -125,6 +128,16 @@ export function renderPluginHubCommand(result: PluginHubCommandResult, json: boo
           shared.visibility === 'public' ? 'Listed publicly: catalogs find it by its labels on their next refresh.' : 'Private: only the repository\'s collaborators can pull it. List it publicly with --public.',
         ],
         exitCode: 0,
+      }
+    }
+    case 'update': {
+      const updated = result.result
+      switch (updated.status) {
+        case 'updated': return { lines: [`Updated ${updated.name} ${updated.from ?? '?'} -> ${updated.to} in profile ${result.profile}, from ${updated.source}.`], exitCode: 0 }
+        case 'restart-required': return { lines: [`Installed ${updated.name} ${updated.to} (was ${updated.from ?? '?'}); restart the app to load it.`], exitCode: 0 }
+        case 'up-to-date': return { lines: [`${updated.name} ${updated.version} is the newest release of ${updated.source}.`], exitCode: 0 }
+        case 'not-updatable': return { lines: [`Not updated: ${updated.reason}.`], exitCode: 1 }
+        case 'failed': return renderPluginHubCommand({ kind: 'pull', profile: result.profile, result: updated.pull }, false)
       }
     }
     case 'pull': {

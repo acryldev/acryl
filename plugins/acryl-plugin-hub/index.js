@@ -36,7 +36,7 @@ export function sourceRoots({ workspaceDir, home }) {
   return [workspaceDir === undefined ? undefined : join(workspaceDir, '.acryl-extensions'), home === undefined ? undefined : join(home, 'extensions')]
 }
 
-const USAGE = 'Usage: /plugin list | saved | save <name or folder> | share <name or folder> [public] [owner/repo] | pull <source> | version patch|minor|major <name or folder>. A source is store:<name>[@version], github:<owner>/<repo>[@version], npm:<name>[@version], a .tgz file or https URL.'
+const USAGE = 'Usage: /plugin list | saved | save <name or folder> | share <name or folder> [public] [owner/repo] | pull <source> | update <name> | version patch|minor|major <name or folder>. A source is store:<name>[@version], github:<owner>/<repo>[@version], npm:<name>[@version], a .tgz file or https URL.'
 
 function describePull(result) {
   const id = `${result.name} ${result.version}`
@@ -46,6 +46,16 @@ function describePull(result) {
     case 'stored': return { kind: 'success', text: `Kept ${id} in the plugin store${result.reason === undefined ? '' : `, not installed: ${result.reason}`}.` }
     case 'missing-services': return { kind: 'error', text: `Not installed: ${id} needs ${result.missing.join(', ')}, which this app does not provide. It is kept in the plugin store.` }
     default: return { kind: 'error', text: `Not installed: ${id} (${result.outcome?.error?.code ?? result.status}). ${result.outcome?.packageResult?.output?.split('\n').slice(-3).join(' ') ?? ''}`.trim() }
+  }
+}
+
+function describeUpdate(result) {
+  switch (result.status) {
+    case 'updated': return { kind: 'success', text: `Updated ${result.name} ${result.from} -> ${result.to} from ${result.source}.` }
+    case 'restart-required': return { kind: 'success', text: `Installed ${result.name} ${result.to} (was ${result.from}); restart the app to load it.` }
+    case 'up-to-date': return { kind: 'success', text: `${result.name} ${result.version} is the newest release of ${result.source}.` }
+    case 'not-updatable': return { kind: 'error', text: `Not updated: ${result.reason}.` }
+    default: return describePull(result.pull)
   }
 }
 
@@ -91,6 +101,10 @@ export async function runPluginCommand(rawInput, hub, where) {
       if (result.status === 'refused') return { kind: 'error', text: `Not shared: ${result.reason}${(result.secrets ?? []).map(found => `\n- ${found.path}${found.line > 0 ? `:${found.line}` : ''} (${found.kind})`).join('')}` }
       return { kind: 'success', text: `Shared ${result.name} ${result.version} to ${result.visibility} ${result.url}${result.created ? ' (new repository)' : ''}: release ${result.tag}, ${result.files.length} files.${result.visibility === 'public' ? ' Catalogs list it by its labels on their next refresh.' : ' Only its collaborators can pull it; type /plugin share ' + target + ' public to list it.'}` }
     }
+    if (verb === 'update') {
+      if (rest.length !== 1) return { kind: 'error', text: USAGE }
+      return describeUpdate(await hub.update(rest[0]))
+    }
     if (verb === 'pull') {
       if (rest.length !== 1) return { kind: 'error', text: USAGE }
       return describePull(await hub.pull(rest[0]))
@@ -122,8 +136,8 @@ export function pluginTools(hub, { approval, where }) {
     name: 'acryl_plugins',
     description: 'Save, version, share or pull plugins. share and non-store pulls ask the user first; if refused, give them the /plugin command.',
     parameters: {
-      action: { type: 'string', required: true, enum: ['saved', 'save', 'version', 'pull', 'share'] },
-      plugin: { type: 'string', description: 'Folder or name (save, version, share).' },
+      action: { type: 'string', required: true, enum: ['saved', 'save', 'version', 'pull', 'update', 'share'] },
+      plugin: { type: 'string', description: 'Folder or name (save, version, share, update).' },
       bump: { type: 'string', enum: ['patch', 'minor', 'major'] },
       source: { type: 'string', description: 'store:, github:o/r[@v], npm:, .tgz (pull).' },
       public: { type: 'boolean' },
@@ -144,6 +158,11 @@ export function pluginTools(hub, { approval, where }) {
             if (outcome !== 'allowed-once') throw new Error(refusedBy(outcome))
           }
           return JSON.stringify(await hub.pull(source))
+        }
+        case 'update': {
+          const outcome = await ask(exec, `Update the plugin ${args.plugin} to its newest release: the new code runs with your permissions.`)
+          if (outcome !== 'allowed-once') throw new Error(refusedBy(outcome))
+          return JSON.stringify(await hub.update(String(args.plugin ?? '')))
         }
         case 'share': {
           const folder = folderOf(exec, args.plugin)
@@ -178,7 +197,7 @@ export function apply(ctx) {
     scoped.effect(() => scoped.commands.register({
       name: 'plugin',
       description: 'List, save, share, pull or version plugins (store:, github:owner/repo, npm:, a .tgz)',
-      input: { hint: 'list | saved | save <name> | share <name> [public] | pull <source> | version patch <name>' },
+      input: { hint: 'list | saved | save <name> | share <name> [public] | pull <source> | update <name> | version patch <name>' },
       async handler(invocation) {
         return runPluginCommand(invocation?.rawInput, hub, { workspaceDir: invocation?.agent?.session?.header?.cwd, home: ctx.appInstance.home })
       },

@@ -79,6 +79,8 @@ describe('parseAcrylArgs', () => {
     expect(() => parseAcrylArgs(['plugin', 'version', 'huge', 'x'])).toThrow('usage: acryl plugin version <patch|minor|major>')
     expect(() => parseAcrylArgs(['plugin', 'version', 'patch'])).toThrow('requires a plugin folder or name')
     expect(() => parseAcrylArgs(['plugin', 'pull'])).toThrow('requires a source')
+    expect(parseAcrylArgs(['plugin', 'update', 'acryl-quick-notes'])).toEqual({ kind: 'plugin', action: 'update', entryId: 'acryl-quick-notes', json: false, version: false, help: false })
+    expect(() => parseAcrylArgs(['plugin', 'update'])).toThrow('requires a plugin name')
     expect(() => parseAcrylArgs(['plugin', 'saved', 'x'])).toThrow('takes no argument')
   })
 

@@ -4,11 +4,11 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { pullPlugin, type RegistryPort, type ReleasePort } from './pull.js'
-import { parsePluginSource } from './source.js'
+import { formatPluginSource, parsePluginSource, type PluginSource } from './source.js'
 import { savePlugin } from './save.js'
 import { sharePlugin, type PublishGitPort, type RepositoryHostPort, type ShareOptions, type ShareResult } from './share.js'
 import type { PluginStore, StoredVersion } from './store.js'
-import { bumpVersion, type VersionBump } from './version.js'
+import { bumpVersion, compareVersions, parseVersion, type VersionBump } from './version.js'
 
 /** The outcome an installer reports, in the shape DSH's `pluginManager` returns (`ChangeResult`), reduced to what the hub reads. */
 export interface InstallOutcome {
@@ -65,6 +65,22 @@ export interface SaveResult {
   readonly added: boolean
 }
 
+export type UpdateResult =
+  | { readonly status: 'updated' | 'restart-required'; readonly name: string; readonly from?: string; readonly to: string; readonly source: string; readonly pull: PullResult }
+  | { readonly status: 'up-to-date'; readonly name: string; readonly version: string; readonly source: string }
+  | { readonly status: 'not-updatable'; readonly name: string; readonly reason: string }
+  | { readonly status: 'failed'; readonly name: string; readonly source: string; readonly pull: PullResult }
+
+/** The same source without a version, so it names the newest release; undefined for a file, URL or folder, which have no newer release. */
+function followLatest(source: PluginSource): PluginSource | undefined {
+  switch (source.kind) {
+    case 'github': return { kind: 'github', owner: source.owner, repo: source.repo }
+    case 'npm': return { kind: 'npm', name: source.name }
+    case 'name': return { kind: 'name', name: source.name }
+    case 'store': case 'tarball-file': case 'tarball-url': case 'folder': return undefined
+  }
+}
+
 export interface InstalledPlugin {
   readonly name: string
   readonly version?: string
@@ -108,11 +124,13 @@ export interface PluginHub {
   pull(source: string, options?: { readonly install?: boolean; readonly expectIntegrity?: string }): Promise<PullResult>
   installed(): Promise<InstalledPlugin[] | undefined>
   share(folder: string, options?: ShareOptions): Promise<ShareResult>
+  /** Pull and install the newest release of an installed plugin from where it was pulled before (the store records that). */
+  update(name: string): Promise<UpdateResult>
 }
 
 export function createPluginHub(ports: HubPorts): PluginHub {
   const { store } = ports
-  return {
+  const hub: PluginHub = {
     store,
     saved: () => store.list(),
 
@@ -155,6 +173,27 @@ export function createPluginHub(ports: HubPorts): PluginHub {
       return sharePlugin(folder, options, { host: ports.share.host, git: ports.share.git, store })
     },
 
+    async update(name) {
+      const installedVersion = (await hub.installed())?.find(plugin => plugin.name === name)?.version
+      const records = store.list().filter(entry => entry.name === name)
+      const record = records.find(entry => entry.version === installedVersion) ?? records[0]
+      if (record === undefined) return { status: 'not-updatable', name, reason: `${name} was not pulled through the plugin hub, so where its newer versions are is not known; pull it once from its source (github:, npm:)` }
+      let latest: PluginSource | undefined
+      try { latest = followLatest(parsePluginSource(record.from)) } catch { latest = undefined }
+      if (latest === undefined) return { status: 'not-updatable', name, reason: `${name} came from ${record.from}, which has no newer releases; pull a newer file or release explicitly` }
+      const source = formatPluginSource(latest)
+      const current = parseVersion(installedVersion ?? record.version)
+      const fetched = await hub.pull(source, { install: false })
+      const newest = parseVersion(fetched.version)
+      if (current !== undefined && newest !== undefined && compareVersions(newest, current) <= 0) return { status: 'up-to-date', name, version: current.text, source }
+      if (fetched.status === 'missing-services') return { status: 'failed', name, source, pull: fetched }
+      const pulled = await hub.pull(`store:${name}@${fetched.version}`)
+      const from = installedVersion ?? record.version
+      if (pulled.status === 'installed') return { status: 'updated', name, from, to: pulled.version, source, pull: pulled }
+      if (pulled.status === 'restart-required') return { status: 'restart-required', name, from, to: pulled.version, source, pull: pulled }
+      return { status: 'failed', name, source, pull: pulled }
+    },
+
     async installed() {
       const installer = ports.installer()
       if (installer === undefined) return undefined
@@ -163,4 +202,5 @@ export function createPluginHub(ports: HubPorts): PluginHub {
       }))
     },
   }
+  return hub
 }

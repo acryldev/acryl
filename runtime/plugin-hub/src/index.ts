@@ -10,7 +10,7 @@ export { PluginStore, StoreConflictError, storeRootOf, type StoredVersion, type 
 export { savePlugin, type SavedPlugin } from './save.js'
 export { pullPlugin, PullError, type PulledPlugin, type PullOptions, type PullPorts, type RegistryPort, type ReleaseInfo, type ReleasePort } from './pull.js'
 export { githubReleasesOverHttps, httpsDownload, npmRegistryOverHttps, type Fetch } from './http.js'
-export { createPluginHub, findSourceFolder, missingHostServices, type HubPorts, type InstalledPlugin, type InstallerPort, type InstallOutcome, type PluginHub, type PullResult, type PullStatus, type SaveResult } from './hub.js'
+export { createPluginHub, findSourceFolder, missingHostServices, type HubPorts, type InstalledPlugin, type InstallerPort, type InstallOutcome, type PluginHub, type PullResult, type PullStatus, type SaveResult, type UpdateResult } from './hub.js'
 export { checkContractShape, clientInjectFromSource, hostEntryOf, providedServices, readServiceContract, slotsInSource, syncServiceContract, type ServiceContract, type Side, type SideLists } from './contract.js'
 export { PLUGIN_LABELS, sharePlugin, type PublishGitPort, type RepositoryHostPort, type ShareOptions, type ShareResult, type Visibility } from './share.js'
 export { gitCli, githubCli, ToolError } from './github-cli.js'

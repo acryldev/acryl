@@ -191,3 +191,21 @@ test('the agent\'s tools: store pulls run directly; a remote pull and a share ru
   const [unattended] = pluginTools(hub, { approval: () => undefined, where: () => ({ workspaceDir: workspace }) })
   await assert.rejects(unattended.execute({ action: 'share', plugin: 'quick-notes' }, exec), /did not allow it \(unavailable\)/u)
 })
+
+test('/plugin update reports each outcome, and the agent\'s update asks the user first', async () => {
+  const outcomes = [
+    { status: 'updated', name: 'n', from: '0.2.1', to: '0.3.0', source: 'github:o/r' },
+    { status: 'up-to-date', name: 'n', version: '0.3.0', source: 'github:o/r' },
+    { status: 'not-updatable', name: 'n', reason: 'n came from /x.tgz, which has no newer releases' },
+  ]
+  const hub = { async update(name) { assert.equal(name, 'n'); return outcomes.shift() } }
+  assert.match((await runPluginCommand('update n', hub, {})).text, /^Updated n 0\.2\.1 -> 0\.3\.0 from github:o\/r\.$/u)
+  assert.match((await runPluginCommand('update n', hub, {})).text, /^n 0\.3\.0 is the newest release of github:o\/r\.$/u)
+  const refused = await runPluginCommand('update n', hub, {})
+  assert.equal(refused.kind, 'error')
+  assert.match(refused.text, /no newer releases/u)
+  let asked = 0
+  const [tool] = pluginTools({ async update() { return { status: 'up-to-date' } } }, { approval: () => ({ async request() { asked += 1; return 'rejected' } }), where: () => ({}) })
+  await assert.rejects(tool.execute({ action: 'update', plugin: 'n' }, { agent: { session: {} } }), /did not allow it/u)
+  assert.equal(asked, 1)
+})

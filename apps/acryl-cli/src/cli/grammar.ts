@@ -6,7 +6,7 @@ export type AcrylHostCommand = 'tui' | 'gui' | 'web'
  * and are recognized so the command surface matches `plan.md`, then refused
  * with a pointer rather than reported as an unknown action.
  */
-export type AcrylPluginAction = 'list' | 'enable' | 'disable' | 'doctor' | 'add' | 'remove' | 'saved' | 'save' | 'version' | 'pull' | 'share'
+export type AcrylPluginAction = 'list' | 'enable' | 'disable' | 'doctor' | 'add' | 'remove' | 'saved' | 'save' | 'version' | 'pull' | 'update' | 'share'
 
 interface AcrylInvocationFlags {
   readonly json: boolean
@@ -276,14 +276,16 @@ const PLUGIN_ACTIONS = new Set<AcrylPluginAction>([
   'save',
   'version',
   'pull',
+  'update',
 ])
 
 /** Actions that name exactly one plugin. */
-const PLUGIN_TARGET_ACTIONS = new Set<AcrylPluginAction>(['enable', 'disable', 'add', 'remove', 'save', 'pull'])
+const PLUGIN_TARGET_ACTIONS = new Set<AcrylPluginAction>(['enable', 'disable', 'add', 'remove', 'save', 'pull', 'update'])
 
 /** What a target action's argument is called, for error messages a user reads. */
 function targetNoun(action: AcrylPluginAction): string {
   if (action === 'save') return 'plugin folder or name'
+  if (action === 'update') return 'plugin name'
   if (action === 'pull') return 'source (store:<name>, github:<owner>/<repo>[@version], npm:<name>, or a .tgz)'
   return action === 'add' || action === 'remove' ? 'package name' : 'plugin id'
 }
