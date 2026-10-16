@@ -45,6 +45,7 @@ packages:
   - runtime/acryl-harness-runtime
   - runtime/blends-core
   - runtime/app-persistence
+  - runtime/plugin-hub
   - runtime/acryl-loopback-http
   - distribution/acryl-npm-launcher
   - apps/acryl-cli

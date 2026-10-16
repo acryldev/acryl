@@ -1,0 +1,12 @@
+// @webboxes/plugin-hub: saving, sharing and pulling Cordis plugins, host-independent (spec 044 lifecycle.md, "Built to be extracted into
+// ACRYL Blends", layer 1). The Cordis service that offers these to an app, and its faces, live in the app; this package has no Cordis, DSH or
+// surface dependency, so the engine, a catalog's CI and other runtimes can use it.
+export { InvalidPluginNameError, parsePluginName, pluginNameOf, storeDirectoryOf, type PluginName } from './name.js'
+export { bumpVersion, compareVersions, newestVersion, parseVersion, type Version, type VersionBump } from './version.js'
+export { formatPluginSource, InvalidPluginSourceError, parsePluginSource, type PluginSource } from './source.js'
+export { integrityOf, readTarball, writeTarball, type TarballFile } from './tarball.js'
+export { manifestOfTarball, packageFiles, packFolder, PackError, type PackedPlugin } from './pack.js'
+export { PluginStore, StoreConflictError, type StoredVersion, type StoreRecord } from './store.js'
+export { savePlugin, type SavedPlugin } from './save.js'
+export { pullPlugin, PullError, type PulledPlugin, type PullOptions, type PullPorts, type RegistryPort, type ReleaseInfo, type ReleasePort } from './pull.js'
+export { githubReleasesOverHttps, httpsDownload, npmRegistryOverHttps, type Fetch } from './http.js'
