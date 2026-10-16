@@ -41,10 +41,10 @@ test('snapshot inside an app records into the app folder and keeps the definitio
   try {
     mkdirSync(profile, { recursive: true }); mkdirSync(stage, { recursive: true })
     writeFileSync(join(app + '.yaml'), '')   // unrelated neighbour file, must stay untouched
-    plugin(join(app, 'extensions', 'setlist'), 'setlist')
+    plugin(join(app, 'plugins', 'setlist'), 'setlist')
     plugin(join(root, 'elsewhere', 'tuner'), 'tuner')
     writeFileSync(join(app, 'blend.yaml'), DEFINITION)
-    const staged = { setlist: stagePackage(join(app, 'extensions', 'setlist'), stage).dir, tuner: stagePackage(join(root, 'elsewhere', 'tuner'), stage).dir }
+    const staged = { setlist: stagePackage(join(app, 'plugins', 'setlist'), stage).dir, tuner: stagePackage(join(root, 'elsewhere', 'tuner'), stage).dir }
     const deps = Object.fromEntries(Object.entries(staged).map(([name, dir]) => [name, `file:${dir}`]))
     // What an install leaves in the profile: the package linked into node_modules (capture reads each package's rows from there).
     mkdirSync(join(profile, 'node_modules'), { recursive: true })
@@ -58,14 +58,14 @@ test('snapshot inside an app records into the app folder and keeps the definitio
       const capture = captureApp({ profileDir: profile, appHome: app })
       assert.deepEqual(capture.addedRows, ['setlist', 'tuner'])
       const files = writeAppBlend(capture, app)
-      assert.deepEqual(files, ['blend.yaml', 'blend.lock.json', 'extensions/tuner/'])
+      assert.deepEqual(files, ['blend.yaml', 'blend.lock.json', 'plugins/tuner/'])
       const yaml = readFileSync(join(app, 'blend.yaml'), 'utf8')
       assert.match(yaml, /# Stage Sound: what this app is\./u)
       assert.match(yaml, /# the product name lives here/u)
       assert.match(yaml, /id: setlist/u)
       const lock = JSON.parse(readFileSync(join(app, 'blend.lock.json'), 'utf8'))
       assert.equal(lock.origin.id, 'app.stage-sound')
-      assert.deepEqual(lock.modules.map(m => [m.name, m.source]), [['setlist', 'extensions/setlist'], ['tuner', 'extensions/tuner']])
+      assert.deepEqual(lock.modules.map(m => [m.name, m.source]), [['setlist', 'plugins/setlist'], ['tuner', 'plugins/tuner']])
       assert.deepEqual(verifyBlend(app), { ok: true, problems: [], checked: 3 })
       // A second capture with nothing new changes nothing in the definition.
       const again = captureApp({ profileDir: profile, appHome: app })

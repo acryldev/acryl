@@ -28,7 +28,7 @@ describe('acryl new', () => {
     const lines: string[] = []
     await runAcryl(['new', join(root, 'ledger'), '--name', 'Ledger'], { write: line => lines.push(line), exit: () => {} })
     expect(lines.join('\n')).toContain('Created Ledger')
-    for (const file of ['blend.yaml', 'bin/acryl', 'AGENTS.md', 'extensions/README.md']) expect(existsSync(join(root, 'ledger', file)), file).toBe(true)
+    for (const file of ['blend.yaml', 'bin/acryl', 'AGENTS.md', 'plugins/README.md']) expect(existsSync(join(root, 'ledger', file)), file).toBe(true)
   })
 })
 
@@ -71,8 +71,8 @@ describe('acryl new --from', () => {
     const root = mkdtempSync(join(tmpdir(), 'acryl-new-from-')); dirs.push(root)
     const source = join(root, 'ledger')
     runNewApp({ dir: source, title: 'Ledger', accent: '#0a7d4b', skipGit: true })
-    mkdirSync(join(source, 'extensions', 'invoices'), { recursive: true })
-    writeFileSync(join(source, 'extensions', 'invoices', 'package.json'), '{"name":"invoices","version":"0.1.0"}')
+    mkdirSync(join(source, 'plugins', 'invoices'), { recursive: true })
+    writeFileSync(join(source, 'plugins', 'invoices', 'package.json'), '{"name":"invoices","version":"0.1.0"}')
     const sourceText = readFileSync(join(source, 'blend.yaml'), 'utf8')
     writeFileSync(join(source, 'blend.lock.json'), JSON.stringify({ formatVersion: 2, origin: { id: 'app.ledger', kind: 'Blend', version: '0.1.0', digest: manifestDigest(sourceText) }, rows: [], modules: [] }))
 
@@ -84,7 +84,7 @@ describe('acryl new --from', () => {
     expect(blueprint.id).toBe('app.ledger-eu')
     expect(blueprint.brand).toEqual({ kind: 'custom', identity: expect.objectContaining({ name: 'Ledger EU', accent: '#0a7d4b' }) })
     expect(text).toContain('# Ledger')   // the source's comments travel with it
-    expect(readFileSync(join(created.root, 'extensions', 'invoices', 'package.json'), 'utf8')).toContain('invoices')
+    expect(readFileSync(join(created.root, 'plugins', 'invoices', 'package.json'), 'utf8')).toContain('invoices')
     const lock = JSON.parse(readFileSync(join(created.root, 'blend.lock.json'), 'utf8')) as { origin: { id: string, digest: string } }
     expect(lock.origin).toMatchObject({ id: 'app.ledger-eu', digest: manifestDigest(text) })
   })

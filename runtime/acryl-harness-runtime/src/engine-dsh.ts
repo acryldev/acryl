@@ -46,6 +46,7 @@ import {
   type RuntimeResolution,
 } from '@deepseek-ai/dsh-app-boot'
 import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
+import { homePluginsDir } from '@webboxes/plugin-hub'
 import { provideAcrylTools } from './engine-tools.ts'
 import { provideAcrylWeb } from './engine-web.ts'
 import type {} from '@deepseek-ai/dsh-host-webserver'
@@ -574,7 +575,7 @@ declare module '@deepseek-ai/cordis' {
 }
 
 /**
- * ACRYL-owned framework packages the app's own committed extensions (`<app home>/extensions/*`) declare
+ * ACRYL-owned framework packages the app's own committed plugins (`<app home>/plugins/*`, `homePluginsDir`) declare
  * through `dsh.requiresAcrylPackages` in their `package.json`. Read at compose time, not through
  * `acryl-plugin-context`'s dynamic agent-runtime install path: `livePluginActivation.activate()`'s group
  * resolution (`PluginLifecycleController`'s `bundleGroup()`, a fixed-point-free heuristic over the live Loader
@@ -584,18 +585,19 @@ declare module '@deepseek-ai/cordis' {
  * dynamic activation entirely and is what every one of those fixed rows already relies on successfully.
  * Never throws: a missing or malformed `package.json` is skipped, not fatal to boot.
  */
-export function extensionRequiredFrameworkPackages(extensionsDir: string): readonly string[] {
-  if (!existsSync(extensionsDir)) return []
+export function pluginRequiredFrameworkPackages(appHome: string): readonly string[] {
+  const pluginsDir = homePluginsDir(appHome)
+  if (!existsSync(pluginsDir)) return []
   const names = new Set<string>()
-  for (const entry of readdirSync(extensionsDir, { withFileTypes: true })) {
+  for (const entry of readdirSync(pluginsDir, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue
-    const manifestPath = join(extensionsDir, entry.name, 'package.json')
+    const manifestPath = join(pluginsDir, entry.name, 'package.json')
     if (!existsSync(manifestPath)) continue
     try {
       const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { dsh?: { requiresAcrylPackages?: unknown } }
       const required = manifest.dsh?.requiresAcrylPackages
       if (Array.isArray(required)) for (const name of required) if (typeof name === 'string') names.add(name)
-    } catch { /* a malformed extension package.json is the extension's own problem, reported when it installs, not here */ }
+    } catch { /* a malformed plugin package.json is the plugin's own problem, reported when it installs, not here */ }
   }
   return [...names]
 }
@@ -647,10 +649,10 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   for (const packageName of [...acrylCodingCapabilityPackages(webSurfaces, capabilities), ...rowsComposition.packages]) {
     materializeProfilePackage(profile.dir, packageName, installPackageUrl)
   }
-  // The app's own committed extensions may each need an ACRYL-owned framework package (see
-  // `extensionRequiredFrameworkPackages`'s own doc comment for why this is a static row, not the dynamic
+  // The app's own committed plugins may each need an ACRYL-owned framework package (see
+  // `pluginRequiredFrameworkPackages`'s own doc comment for why this is a static row, not the dynamic
   // agent-runtime install path `acryl-plugin-context` otherwise uses).
-  const requiredFrameworkPackages = extensionRequiredFrameworkPackages(join(instance.home, 'extensions'))
+  const requiredFrameworkPackages = pluginRequiredFrameworkPackages(instance.home)
     .filter(name => !existingRowIds.has(name) && !rowsComposition.packages.includes(name))
   for (const packageName of requiredFrameworkPackages) materializeProfilePackage(profile.dir, packageName, installPackageUrl)
   // A Blueprint that never enables the IDE's own `workspace` capability (every Blank-grown project) keeps the

@@ -13,7 +13,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { globalExtensionsDir } from './lib/reconcile.js'
+import { globalPluginsDir } from './lib/reconcile.js'
 import { listInstalledPlugins } from './lib/provenance.js'
 import { captureApp, captureBlend, verifyBlend, writeAppBlend, writeBlend } from './lib/blend-capture.js'
 import { applyBlend } from './lib/blend-apply.js'
@@ -83,9 +83,9 @@ export function apply(ctx) {
           if (!profileDir) return
           const dshHome = scoped.get('dshHomePath')
           const services = { pnpm: scoped.get('desktopPnpm'), live: scoped.get('livePluginActivation'), profileDir, acrylFrameworkPackages: ctx.get('acrylFrameworkPackages') }
-          // An app (`acryl new`) installs its own committed extensions at start: a fresh clone has them in extensions/ but nothing installed yet.
+          // An app (`acryl new`) installs its own committed plugins at start: a fresh clone has them in plugins/ but nothing installed yet.
           const app = appHomeDir()
-          const summary = await syncOnStartup(services, { globalDir: globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined), installPending: app !== undefined })
+          const summary = await syncOnStartup(services, { globalDir: globalPluginsDir(typeof dshHome === 'function' ? dshHome() : undefined), installPending: app !== undefined })
           // ...and the marketplace plugins its lock names, when the lock still matches the app's definition (a stale lock is reported, never guessed).
           let lockNote = ''
           if (app !== undefined && verifyBlend(app).ok) {
@@ -112,7 +112,7 @@ export function apply(ctx) {
     }, 'extension-context: startup sync')
   })
 
-  // `/reload`: re-install every local plugin from its source directory, and install new folders under <workspace>/.acryl-extensions/.
+  // `/reload`: re-install every local plugin from its source directory, and install new folders under <workspace>/.acryl-plugins/.
   ctx.inject(['commands'], scoped => {
     ctx.effect(function* () {
       yield scoped.commands.register({
@@ -123,18 +123,18 @@ export function apply(ctx) {
         async handler(invocation) {
           const profileDir = ctx.get('desktopProfiles')?.current?.dir
           if (!profileDir) return { kind: 'error', text: 'The active profile is not available in this runtime.' }
-          // The session's workspace, so extension folders dropped under <workspace>/.acryl-extensions/ are discovered too.
+          // The session's workspace, so plugin folders dropped under <workspace>/.acryl-plugins/ are discovered too.
           const workspaceDir = invocation?.agent?.session?.header?.cwd
-          // `/reload new` also installs extension folders found under .acryl-extensions/ that are not installed yet: they run with the
+          // `/reload new` also installs plugin folders found under .acryl-plugins/ that are not installed yet: they run with the
           // user's permissions, so the human opts in explicitly.
           const words = String(invocation?.rawInput ?? '').trim().split(/\s+/u).filter(Boolean)
           const installDiscovered = words.includes('new')
           // `/reload remove-stale` removes installs whose source folder is gone; without it they are only reported.
           const removeStale = words.includes('remove-stale')
           const dshHome = ctx.get('dshHomePath')
-          const globalDir = globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined)
+          const globalDir = globalPluginsDir(typeof dshHome === 'function' ? dshHome() : undefined)
           const results = await reloadLocalPlugins({ pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir, acrylFrameworkPackages: ctx.get('acrylFrameworkPackages'), record: ledgerRecorder(workspaceDir, 'human') }, undefined, { workspaceDir, globalDir, installDiscovered, removeStale })
-          if (results.length === 0) return { kind: 'success', text: 'No local extensions installed or found in <workspace>/.acryl-extensions/ or the global extensions directory.' }
+          if (results.length === 0) return { kind: 'success', text: 'No local plugins installed or found in <workspace>/.acryl-plugins/ or the global plugins folder.' }
           const tag = r => (r.scope ? ` [${r.scope}]` : '')
           const lines = results.map(r =>
             r.stale && r.removed ? `${r.name}: STALE, source folder missing - removed`
@@ -193,14 +193,14 @@ export function apply(ctx) {
           const app = appHomeDir()
           if (app !== undefined) {
             // An app IS its Blend: record into the app folder, keeping the user's blend.yaml and adding only rows it does not name yet.
-            const capture = captureApp({ profileDir, appHome: app, globalDir: globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined) })
+            const capture = captureApp({ profileDir, appHome: app, globalDir: globalPluginsDir(typeof dshHome === 'function' ? dshHome() : undefined) })
             const files = writeAppBlend(capture, app)
             appendLedger(app, { actor: 'human', kind: 'captured', blend: `${capture.manifest.metadata?.id}@${capture.manifest.metadata?.version}`, modules: capture.lock.modules.length, digest: capture.lock.origin.digest })
             const added = capture.addedRows.length > 0 ? ` Added to blend.yaml: ${capture.addedRows.join(', ')}.` : ''
             const notes = capture.notes.length > 0 ? `\nNot captured:\n${capture.notes.map(n => `- ${n}`).join('\n')}` : ''
             return { kind: 'success', text: `Recorded the app in ${app}: ${capture.lock.modules.length} module(s) locked.${added} Written: ${files.join(', ')}. Commit the app folder to keep this state.${notes}` }
           }
-          const capture = captureBlend({ profileDir, workspaceDir, globalDir: globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined) })
+          const capture = captureBlend({ profileDir, workspaceDir, globalDir: globalPluginsDir(typeof dshHome === 'function' ? dshHome() : undefined) })
           const files = writeBlend(capture, outDir)
           appendLedger(outDir, { actor: 'human', kind: 'captured', blend: `${capture.manifest.metadata.id}@${capture.manifest.metadata.version}`, modules: capture.lock.modules.length, digest: capture.lock.origin.digest })
           const local = capture.lock.modules.filter(m => m.origin === 'local').length
@@ -237,7 +237,7 @@ export function apply(ctx) {
         const profile = ctx.get('desktopProfiles')
         if (!profile?.current?.dir) throw new Error('the active profile is not available in this runtime')
         const dshHome = ctx.get('dshHomePath')
-        const globalDir = globalExtensionsDir(typeof dshHome === 'function' ? dshHome() : undefined)
+        const globalDir = globalPluginsDir(typeof dshHome === 'function' ? dshHome() : undefined)
         // `installedFrom` is kept for local plugins: it is the name the skills and docs already use for the editable source directory.
         return JSON.stringify(listInstalledPlugins(profile.current.dir, { globalDir }).map(plugin => (plugin.origin === 'local' ? { ...plugin, installedFrom: plugin.source } : plugin)))
       },
@@ -245,7 +245,7 @@ export function apply(ctx) {
 
     scoped.tools.register(defineTool({
       name: LOOKUP_TOOL_NAME,
-      description: 'Find the ACRYL extension docs and verified examples for a topic (for example "sidebar tab", "accent color", "a tool", "hook the prompt"). Returns absolute paths to read; it only routes, the docs are the authority.',
+      description: 'Find the ACRYL plugin docs and verified examples for a topic (for example "sidebar tab", "accent color", "a tool", "hook the prompt"). Returns absolute paths to read; it only routes, the docs are the authority.',
       parameters: {
         topic: { type: 'string', required: true, description: 'What you want to build or change, in a few words.' },
       },

@@ -4,19 +4,19 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import { trackedBlendDir } from '../lib/blend-ledger.js'
-import { discoverExtensions } from '../lib/reconcile.js'
-import { appExtensionsDir, blendDir, currentInstance, isProjectExtensionPath, projectExtensionsDir, projectExtensionsLabel, useAppInstance } from '../lib/scopes.js'
+import { discoverPlugins } from '../lib/reconcile.js'
+import { appPluginsDir, blendDir, currentInstance, isProjectPluginPath, projectPluginsDir, projectPluginsLabel, useAppInstance } from '../lib/scopes.js'
 
 test('the main app keeps the classic shared project locations', () => {
-  assert.equal(projectExtensionsDir('/w', undefined), join('/w', '.acryl-extensions'))
+  assert.equal(projectPluginsDir('/w', undefined), join('/w', '.acryl-plugins'))
   assert.equal(blendDir('/w', undefined), join('/w', '.acryl', 'blend'))
-  assert.equal(projectExtensionsLabel(undefined), '<workspace>/.acryl-extensions/<name>/')
+  assert.equal(projectPluginsLabel(undefined), '<workspace>/.acryl-plugins/<name>/')
 })
 
 test('a named instance keeps everything it authors under its own namespace', () => {
-  assert.equal(projectExtensionsDir('/w', 'orbit'), join('/w', '.acryl', 'instances', 'orbit', 'extensions'))
+  assert.equal(projectPluginsDir('/w', 'orbit'), join('/w', '.acryl', 'instances', 'orbit', 'plugins'))
   assert.equal(blendDir('/w', 'orbit'), join('/w', '.acryl', 'instances', 'orbit', 'blend'))
-  assert.match(projectExtensionsLabel('orbit'), /instances\/orbit\/extensions/)
+  assert.match(projectPluginsLabel('orbit'), /instances\/orbit\/plugins/)
 })
 
 test('the scope comes from the app instance, an invalid one is ignored, and the disposer restores the previous one', () => {
@@ -28,22 +28,25 @@ test('the scope comes from the app instance, an invalid one is ignored, and the 
 })
 
 test('provenance recognises both project locations', () => {
-  assert.ok(isProjectExtensionPath('/w/.acryl-extensions/x/index.js'))
-  assert.ok(isProjectExtensionPath('/w/.acryl/instances/orbit/extensions/x/index.js'))
-  assert.ok(!isProjectExtensionPath('/elsewhere/x/index.js'))
+  assert.ok(isProjectPluginPath('/w/.acryl-plugins/x/index.js'))
+  assert.ok(isProjectPluginPath('/w/.acryl/instances/orbit/plugins/x/index.js'))
+  // Under the names they had before the rename, too
+  assert.ok(isProjectPluginPath('/w/.acryl-extensions/x/index.js'))
+  assert.ok(isProjectPluginPath('/w/.acryl/instances/orbit/extensions/x/index.js'))
+  assert.ok(!isProjectPluginPath('/elsewhere/x/index.js'))
 })
 
 test('two instances opening one project see only their own extensions and their own Blend', () => {
   const ws = mkdtempSync(join(tmpdir(), 'scopes-'))
   const make = (dir, name) => { mkdirSync(join(dir, name), { recursive: true }); writeFileSync(join(dir, name, 'package.json'), JSON.stringify({ name, version: '1.0.0' })) }
   try {
-    make(projectExtensionsDir(ws, 'orbit'), 'orbit-organizer')
-    make(projectExtensionsDir(ws, 'acme'), 'acme-notes')
-    make(projectExtensionsDir(ws, undefined), 'shared-project-plugin')
-    // discoverExtensions reads the instance from the environment; drive it per instance
+    make(projectPluginsDir(ws, 'orbit'), 'orbit-organizer')
+    make(projectPluginsDir(ws, 'acme'), 'acme-notes')
+    make(projectPluginsDir(ws, undefined), 'shared-project-plugin')
+    // discoverPlugins reads the instance from the environment; drive it per instance
     for (const [instance, expected] of [['orbit', ['orbit-organizer']], ['acme', ['acme-notes']], [undefined, ['shared-project-plugin']]]) {
       const undo = useAppInstance(instance === undefined ? undefined : { home: '/a', projectScope: instance })
-      try { assert.deepEqual(discoverExtensions({ workspaceDir: ws, globalDir: undefined }).map(e => e.name), expected, String(instance)) } finally { undo() }
+      try { assert.deepEqual(discoverPlugins({ workspaceDir: ws, globalDir: undefined }).map(e => e.name), expected, String(instance)) } finally { undo() }
     }
     // A Blend captured by one instance is invisible to the other.
     mkdirSync(blendDir(ws, 'orbit'), { recursive: true }); writeFileSync(join(blendDir(ws, 'orbit'), 'blend.yaml'), 'x')
@@ -56,8 +59,8 @@ test('two instances opening one project see only their own extensions and their 
 test('inside an app (its home has blend.yaml) plugins go to the app\'s extensions folder', async () => {
   const definitionFile = join('/apps/stage', 'blend.yaml')
   let undo = useAppInstance({ home: '/apps/stage', definitionFile }, path => path === definitionFile)
-  assert.equal(appExtensionsDir(), join('/apps/stage', 'extensions')); undo()
+  assert.equal(appPluginsDir(), join('/apps/stage', 'plugins')); undo()
   undo = useAppInstance({ home: '/apps/stage', definitionFile }, () => false)
-  assert.equal(appExtensionsDir(), undefined); undo()
-  assert.equal(appExtensionsDir(), undefined)
+  assert.equal(appPluginsDir(), undefined); undo()
+  assert.equal(appPluginsDir(), undefined)
 })

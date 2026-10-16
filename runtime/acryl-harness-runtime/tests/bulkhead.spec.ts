@@ -108,7 +108,7 @@ describe('bulkhead behavior', () => {
     const root = realpathSync(await mkdtemp(join(tmpdir(), 'acryl-bulkhead-')))
     temporary.push(root)
     const app = (name: string, title: string): string => {
-      const dir = join(root, name); mkdirSync(join(dir, 'extensions'), { recursive: true })
+      const dir = join(root, name); mkdirSync(join(dir, 'plugins'), { recursive: true })
       writeFileSync(join(dir, 'blend.yaml'), `apiVersion: blends.acryl.dev/v1alpha1\nkind: Blend\nmetadata:\n  id: app.${name}\n  name: ${title}\n  version: 0.1.0\nspec:\n  runtime: cordis\n  lineage:\n    blueprint: acryl.blank\n    blueprintVersion: 0.1.0\n  rows:\n    - id: brand\n      name: acryl-brand\n      config:\n        name: ${title}\n`)
       return dir
     }

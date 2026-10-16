@@ -17,8 +17,8 @@ import { listInstalledPlugins } from './provenance.js'
  *   blend.lock.json    the machine state, `formatVersion: 2`: the v1 fields (generator, origin digest of blend.yaml, rows) plus `modules`, one entry per
  *                      installed package: registry -> version + integrity digest (reproduce from name and version); local -> version + sha256 of the
  *                      source tree + the vendored copy (reproduce from the copy, verify by digest). Deterministic: no timestamps, sorted keys.
- *   extensions/<name>/ the source of every local extension, copied so the Blend is self-contained (a global extension outside the project is
- *                      vendored here; the project's own `.acryl-extensions/` folders are copied verbatim).
+ *   plugins/<name>/    the source of every local plugin, copied so the Blend is self-contained (a global plugin outside the project is
+ *                      vendored here; the project's own `.acryl-plugins/` folders are copied verbatim).
  *
  * What is deliberately NOT captured: the ACRYL runtime's own plugins (pack, system prompt, brand, market: engine-owned, versioned with ACRYL), the
  * data plugins keep (see state-and-persistence.md), and secrets.
@@ -93,7 +93,7 @@ export function captureBlend(options, fs = { existsSync, readFileSync }) {
     } else if (plugin.origin === 'local') {
       let version = '0.0.0'
       try { version = JSON.parse(fs.readFileSync(join(plugin.source, 'package.json'), 'utf8')).version ?? version } catch { notes.push(`${name}: its source folder is gone (${plugin.source}), it cannot be vendored`); continue }
-      const dir = `extensions/${name.replace(/^@/u, '').replace(/\//gu, '__')}`
+      const dir = `plugins/${name.replace(/^@/u, '').replace(/\//gu, '__')}`
       modules.push({ name, origin: 'local', version, digest: `sha256:${hashPackage(plugin.source, 64)}`, source: dir })
       vendored.push({ name, from: plugin.source, to: dir })
     } else {
@@ -176,8 +176,8 @@ export function verifyBlend(outDir, fs = { existsSync, readFileSync }) {
  * Capture inside an app (`acryl new`): the app folder is the Blend, so nothing is written elsewhere and nothing the user wrote is regenerated.
  *
  *   blend.yaml       the user's own definition is kept, comments and all; a row is appended only for an installed plugin it does not name yet
- *   blend.lock.json  regenerated from that definition: digest, rows, and every module; an extension already in the app's `extensions/` is recorded in
- *                    place (source `extensions/<folder>`), one installed from anywhere else is vendored into `extensions/`
+ *   blend.lock.json  regenerated from that definition: digest, rows, and every module; a plugin already in the app's `plugins/` is recorded in
+ *                    place (source `plugins/<folder>`), one installed from anywhere else is vendored into `plugins/`
  *
  * @param {{ profileDir: string, appHome: string, globalDir?: string }} options
  */

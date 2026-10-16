@@ -41,7 +41,7 @@ export {
   createProfileContext,
   createProfileRuntimeResolution,
   createWebEngineDefinition,
-  extensionRequiredFrameworkPackages,
+  pluginRequiredFrameworkPackages,
   materializeProfilePackage,
   type AcrylFrameworkPackages,
   type DshEngineComposition,
@@ -386,7 +386,7 @@ export type {
   RepairStep,
 } from './profile-repair/index.ts'
 export { WEB_PORT_ATTEMPTS, findFreeWebPort, loopbackPortIsFree, webPortPatch } from './web-port.ts'
-export { APP_EXTENSIONS_DIR, APP_MANIFEST_FILE, NewAppError, planNewApp, writeNewApp, type LauncherFile, type NewAppOptions, type PlannedApp } from './app/new-app.ts'
+export { APP_MANIFEST_FILE, APP_PLUGINS_DIR, NewAppError, planNewApp, writeNewApp, type LauncherFile, type NewAppOptions, type PlannedApp } from './app/new-app.ts'
 export { PROFILE_OWNER_FILE, ProfileInUseError, claimProfile, type ProfileOwner } from './profile-owner.ts'
 export {
   APP_DEFINITION_FILE,

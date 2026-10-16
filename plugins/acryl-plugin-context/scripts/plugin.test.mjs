@@ -5,7 +5,7 @@ import { join, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { test } from 'node:test'
 import { previousStagedDir, lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, syncOnStartup, ensureProfileBundle, pinPublicHoistPattern, describeInstalledExtensions } from '../lib/install.js'
-import { discoverExtensions, globalExtensionsDir, installState } from '../lib/reconcile.js'
+import { discoverPlugins, globalPluginsDir, installState } from '../lib/reconcile.js'
 import { captureBlend, verifyBlend, writeBlend, readBundleRows } from '../lib/blend-capture.js'
 import { applyBlend } from '../lib/blend-apply.js'
 import { appendLedger, ledgerRecorder, readLedger, trackedBlendDir, verifyLedger } from '../lib/blend-ledger.js'
@@ -485,15 +485,29 @@ test('hoist pattern drift: the recorded pattern is pinned once and the add is re
   } finally { rmSync(dir, { recursive: true, force: true }); rmSync(profile, { recursive: true, force: true }) }
 })
 
-test('workspace discovery finds extension folders, and /reload installs the new ones', async () => {
+test('a project\'s .acryl-extensions/ from before the rename is moved to .acryl-plugins/ on discovery, and an install recorded there still finds its source', () => {
+  const workspace = realpathSync(mkdtempSync(join(tmpdir(), 'ws-'))); const stage = mkdtempSync(join(tmpdir(), 'stage-'))
+  try {
+    const old = join(workspace, '.acryl-extensions', 'my-plugin')
+    const pkg = makePkg(); mkdirSync(old, { recursive: true })
+    for (const f of readdirSync(pkg)) writeFileSync(join(old, f), readFileSync(join(pkg, f)))
+    writeFileSync(join(old, 'index.js'), 'export function apply() {}\n')
+    const staged = stagePackage(old, stage).dir
+    assert.deepEqual(discoverPlugins({ workspaceDir: workspace }).map(found => found.dir), [join(workspace, '.acryl-plugins', 'my-plugin')])
+    assert.equal(existsSync(join(workspace, '.acryl-extensions')), false)
+    assert.equal(stagedSource(staged), join(workspace, '.acryl-plugins', 'my-plugin'))
+  } finally { rmSync(workspace, { recursive: true, force: true }); rmSync(stage, { recursive: true, force: true }) }
+})
+
+test('workspace discovery finds plugin folders, and /reload installs the new ones', async () => {
   const workspace = mkdtempSync(join(tmpdir(), 'ws-')); const profile = mkdtempSync(join(tmpdir(), 'profile-'))
   try {
-    const dir = join(workspace, '.acryl-extensions', 'my-plugin'); mkdirSync(dir, { recursive: true })
+    const dir = join(workspace, '.acryl-plugins', 'my-plugin'); mkdirSync(dir, { recursive: true })
     const pkg = makePkg(); // a valid package elsewhere; copy its files into the workspace folder
     for (const f of ['package.json', 'cordis.patch.yml']) writeFileSync(join(dir, f), readFileSync(join(pkg, f)))
-    mkdirSync(join(workspace, '.acryl-extensions', 'not-a-package'), { recursive: true })
-    assert.deepEqual(discoverExtensions({ workspaceDir: workspace }).map(found => found.dir), [realpathSync(dir)])
-    assert.deepEqual(discoverExtensions({ workspaceDir: 'relative/path' }), [])
+    mkdirSync(join(workspace, '.acryl-plugins', 'not-a-package'), { recursive: true })
+    assert.deepEqual(discoverPlugins({ workspaceDir: workspace }).map(found => found.dir), [realpathSync(dir)])
+    assert.deepEqual(discoverPlugins({ workspaceDir: 'relative/path' }), [])
     writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: {} }))
     const s = { ...fakes(), profileDir: profile }
     const listed = await reloadLocalPlugins(s, undefined, { workspaceDir: workspace })
@@ -505,22 +519,22 @@ test('workspace discovery finds extension folders, and /reload installs the new 
 })
 
 test('discovery: project and global scopes, one level deep, real-path dedupe, project wins a name clash', () => {
-  const root = mkdtempSync(join(tmpdir(), 'scopes-')); const workspace = join(root, 'ws'); const globalDir = join(root, 'home', 'extensions')
+  const root = mkdtempSync(join(tmpdir(), 'scopes-')); const workspace = join(root, 'ws'); const globalDir = join(root, 'home', 'plugins')
   const make = (dir, name) => { mkdirSync(dir, { recursive: true }); writeFileSync(join(dir, 'package.json'), JSON.stringify({ name })) }
   try {
-    make(join(workspace, '.acryl-extensions', 'notes'), 'acryl-notes')
-    make(join(workspace, '.acryl-extensions', 'notes', 'helper'), 'not-an-extension')   // below an extension: never a second extension
+    make(join(workspace, '.acryl-plugins', 'notes'), 'acryl-notes')
+    make(join(workspace, '.acryl-plugins', 'notes', 'helper'), 'not-an-extension')   // below an extension: never a second extension
     make(join(globalDir, 'notes-global'), 'acryl-notes')                                // same package name as the project one: shadowed
     make(join(globalDir, 'shared'), 'acryl-shared')
     symlinkSync(join(globalDir, 'shared'), join(globalDir, 'shared-link'))              // another spelling of the same folder: loaded once
     mkdirSync(join(globalDir, '.hidden')); mkdirSync(join(globalDir, 'no-manifest'))
-    const found = discoverExtensions({ workspaceDir: workspace, globalDir })
+    const found = discoverPlugins({ workspaceDir: workspace, globalDir })
     assert.deepEqual(found.map(f => [f.name, f.scope, f.shadowed]), [['acryl-notes', 'project', false], ['acryl-notes', 'global', true], ['acryl-shared', 'global', false]])
     assert.equal(found[2].dir, realpathSync(join(globalDir, 'shared')))
-    assert.equal(globalExtensionsDir(join('/home/u/.acryl', '.dsh')), join('/home/u/.acryl', 'extensions'))
-    assert.equal(globalExtensionsDir(join('/home/u/.acryl-dev', '.dsh')), join('/home/u/.acryl-dev', 'extensions'))
-    assert.equal(globalExtensionsDir('/custom/dsh-home'), join('/custom/dsh-home', 'extensions'))
-    assert.equal(globalExtensionsDir(undefined), undefined)
+    assert.equal(globalPluginsDir(join('/home/u/.acryl', '.dsh')), join('/home/u/.acryl', 'plugins'))
+    assert.equal(globalPluginsDir(join('/home/u/.acryl-dev', '.dsh')), join('/home/u/.acryl-dev', 'plugins'))
+    assert.equal(globalPluginsDir('/custom/dsh-home'), join('/custom/dsh-home', 'plugins'))
+    assert.equal(globalPluginsDir(undefined), undefined)
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
 
@@ -556,10 +570,10 @@ test('manifest: apiVersion and permissions are validated, and shown before a NEW
   assert.equal(describePermissions([]), 'requests no special permissions')
   assert.equal(describePermissions(['shell', 'net']), 'requests: shell, net')
   const dir = makePkg({ acryl: { schemaVersion: 1, artifacts: { plugins: ['./index.js'] }, apiVersion: 1, permissions: ['fs.write'] } })
-  const root = mkdtempSync(join(tmpdir(), 'perm-')); const ws = join(root, 'ws'); mkdirSync(join(ws, '.acryl-extensions', 'p'), { recursive: true })
+  const root = mkdtempSync(join(tmpdir(), 'perm-')); const ws = join(root, 'ws'); mkdirSync(join(ws, '.acryl-plugins', 'p'), { recursive: true })
   try {
-    writeFileSync(join(ws, '.acryl-extensions', 'p', 'package.json'), readFileSync(join(dir, 'package.json')))
-    assert.deepEqual(discoverExtensions({ workspaceDir: ws })[0].permissions, ['fs.write'])
+    writeFileSync(join(ws, '.acryl-plugins', 'p', 'package.json'), readFileSync(join(dir, 'package.json')))
+    assert.deepEqual(discoverPlugins({ workspaceDir: ws })[0].permissions, ['fs.write'])
     assert.deepEqual(lintPackageDir(dir).permissions, ['fs.write'])
     const bad = makePkg({ acryl: { permissions: ['everything'] } })
     assert.match(lintPackageDir(bad).errors.join(' '), /unknown permission "everything"/); rmSync(bad, { recursive: true, force: true })
@@ -567,7 +581,7 @@ test('manifest: apiVersion and permissions are validated, and shown before a NEW
 })
 
 test('startup sync: a changed GLOBAL source is re-installed; a changed project source, a missing source and a new folder are only reported', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'startup-')); const globalDir = join(root, 'extensions'); const profile = join(root, 'profile'); const stageRoot = join(root, 'stage')
+  const root = mkdtempSync(join(tmpdir(), 'startup-')); const globalDir = join(root, 'plugins'); const profile = join(root, 'profile'); const stageRoot = join(root, 'stage')
   mkdirSync(profile, { recursive: true }); mkdirSync(stageRoot, { recursive: true })
   const make = (dir, name) => {
     mkdirSync(dir, { recursive: true })
@@ -575,7 +589,7 @@ test('startup sync: a changed GLOBAL source is re-installed; a changed project s
     writeFileSync(join(dir, 'cordis.patch.yml'), `- insert:\n    - id: ${name}\n      name: ${name}\n`)
     writeFileSync(join(dir, 'index.js'), `export const name = ${JSON.stringify(name)}\nexport function apply() {}\n`)
   }
-  const globalSrc = join(globalDir, 'g'); const projectSrc = join(root, 'ws', '.acryl-extensions', 'p'); const goneSrc = join(root, 'gone')
+  const globalSrc = join(globalDir, 'g'); const projectSrc = join(root, 'ws', '.acryl-plugins', 'p'); const goneSrc = join(root, 'gone')
   make(globalSrc, 'ext-global'); make(projectSrc, 'ext-project'); make(goneSrc, 'ext-gone'); make(join(globalDir, 'fresh'), 'ext-fresh')
   const deps = {}
   for (const [name, src] of [['ext-global', globalSrc], ['ext-project', projectSrc], ['ext-gone', goneSrc]]) deps[name] = `file:${stagePackage(src, stageRoot).dir}`
@@ -600,7 +614,7 @@ test('startup sync: a changed GLOBAL source is re-installed; a changed project s
 test('provenance: local, registry, git and linked installs are told apart from what the profile already records', () => {
   assert.deepEqual(['file:/x', '0.2.6', '^1.2.0', 'npm:foo@1', 'latest', 'git+https://github.com/a/b.git', 'github:a/b', 'workspace:*', 'link:../x', {}].map(originOf),
     ['local', 'registry', 'registry', 'registry', 'registry', 'git', 'git', 'linked', 'linked', 'unknown'])
-  const root = mkdtempSync(join(tmpdir(), 'prov-')); const profile = join(root, 'profile'); const globalDir = join(root, 'home', 'extensions'); const stage = join(root, 'stage')
+  const root = mkdtempSync(join(tmpdir(), 'prov-')); const profile = join(root, 'profile'); const globalDir = join(root, 'home', 'plugins'); const stage = join(root, 'stage')
   mkdirSync(profile, { recursive: true }); mkdirSync(join(globalDir, 'g'), { recursive: true }); mkdirSync(stage, { recursive: true })
   try {
     writeFileSync(join(globalDir, 'g', 'package.json'), JSON.stringify({ name: 'ext-g', version: '0.1.0', type: 'module', main: './index.js' }))
@@ -624,7 +638,7 @@ test('provenance: local, registry, git and linked installs are told apart from w
 })
 
 test('blend capture: marketplace and local plugins become rows and a lock; local sources are vendored; verify catches an edit', () => {
-  const root = mkdtempSync(join(tmpdir(), 'blend-')); const profile = join(root, 'profile'); const globalDir = join(root, 'home', 'extensions'); const stage = join(root, 'stage'); const ws = join(root, 'my-app')
+  const root = mkdtempSync(join(tmpdir(), 'blend-')); const profile = join(root, 'profile'); const globalDir = join(root, 'home', 'plugins'); const stage = join(root, 'stage'); const ws = join(root, 'my-app')
   const nm = join(profile, 'node_modules')
   mkdirSync(join(nm, 'market-plugin'), { recursive: true }); mkdirSync(join(globalDir, 'g'), { recursive: true }); mkdirSync(stage, { recursive: true }); mkdirSync(ws, { recursive: true })
   try {
@@ -650,9 +664,9 @@ test('blend capture: marketplace and local plugins become rows and a lock; local
     assert.equal(captureBlend({ profileDir: profile, workspaceDir: ws, globalDir }).lockText, capture.lockText, 'the lock is deterministic')
     const out = join(ws, '.acryl', 'blend')
     writeBlend(capture, out)
-    assert.equal(existsSync(join(out, 'extensions', 'ext-g', 'index.js')), true)
+    assert.equal(existsSync(join(out, 'plugins', 'ext-g', 'index.js')), true)
     assert.deepEqual(verifyBlend(out), { ok: true, problems: [], checked: 2 })
-    writeFileSync(join(out, 'extensions', 'ext-g', 'index.js'), 'export const name = "tampered"\n')
+    writeFileSync(join(out, 'plugins', 'ext-g', 'index.js'), 'export const name = "tampered"\n')
     assert.match(verifyBlend(out).problems[0], /differs from the locked digest/)
     writeFileSync(join(out, 'blend.yaml'), `${readFileSync(join(out, 'blend.yaml'), 'utf8')}# edited\n`)
     assert.ok(verifyBlend(out).problems.some(p => /blend\.yaml changed/u.test(p)))
@@ -662,16 +676,16 @@ test('blend capture: marketplace and local plugins become rows and a lock; local
 
 test('blend apply: verifies first, installs local modules from the vendored source, checks registry integrity, never overwrites', async () => {
   const root = mkdtempSync(join(tmpdir(), 'apply-')); const ws = join(root, 'ws'); const blendDir = join(ws, '.acryl', 'blend'); const profile = join(root, 'profile')
-  mkdirSync(join(blendDir, 'extensions', 'ext-a'), { recursive: true }); mkdirSync(profile, { recursive: true }); mkdirSync(join(ws, '.acryl-extensions'), { recursive: true })
+  mkdirSync(join(blendDir, 'plugins', 'ext-a'), { recursive: true }); mkdirSync(profile, { recursive: true }); mkdirSync(join(ws, '.acryl-plugins'), { recursive: true })
   try {
-    const src = join(blendDir, 'extensions', 'ext-a')
+    const src = join(blendDir, 'plugins', 'ext-a')
     writeFileSync(join(src, 'package.json'), JSON.stringify({ name: 'ext-a', version: '0.1.0', type: 'module', main: './index.js', exports: { '.': './index.js', './package.json': './package.json' }, dsh: { bundle: { patch: './cordis.patch.yml' } }, acryl: { apiVersion: 1, permissions: ['shell'] } }))
     writeFileSync(join(src, 'cordis.patch.yml'), '- insert:\n    - id: ext-a\n      name: ext-a\n'); writeFileSync(join(src, 'index.js'), 'export const name = "ext-a"\nexport function apply() {}\n')
     const digest = `sha256:${hashPackage(src, 64)}`
     const manifestText = 'apiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\n'
     const { createHash } = await import('node:crypto')
     const lock = { formatVersion: 2, origin: { id: 'local.x', kind: 'Blueprint', version: '0.1.0', digest: createHash('sha256').update(manifestText).digest('hex') }, rows: [],
-      modules: [{ name: 'ext-a', origin: 'local', version: '0.1.0', digest, source: 'extensions/ext-a' }, { name: 'market-b', origin: 'registry', version: '2.0.0', digest: 'sha512-good==' }, { name: 'git-c', origin: 'git', spec: 'github:a/c' }] }
+      modules: [{ name: 'ext-a', origin: 'local', version: '0.1.0', digest, source: 'plugins/ext-a' }, { name: 'market-b', origin: 'registry', version: '2.0.0', digest: 'sha512-good==' }, { name: 'git-c', origin: 'git', spec: 'github:a/c' }] }
     writeFileSync(join(blendDir, 'blend.yaml'), manifestText); writeFileSync(join(blendDir, 'blend.lock.json'), JSON.stringify(lock))
     writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: {} }))
     const writeLock = integrity => writeFileSync(join(profile, 'pnpm-lock.yaml'), ["lockfileVersion: '9.0'", '', 'importers:', '', '  .:', '    dependencies:', '      market-b:', '        specifier: 2.0.0', '        version: 2.0.0', '', 'packages:', '', '  market-b@2.0.0:', `    resolution: {integrity: ${integrity}}`, ''].join('\n'))
@@ -687,7 +701,7 @@ test('blend apply: verifies first, installs local modules from the vendored sour
     const applied = await applyBlend(blendDir, s, { workspaceDir: ws })
     const by = Object.fromEntries(applied.results.map(r => [r.name, r]))
     assert.equal(by['ext-a'].status, 'installed'); assert.equal(by['ext-a'].permissions, 'requests: shell')
-    assert.equal(existsSync(join(ws, '.acryl-extensions', 'ext-a', 'index.js')), true, 'the vendored source was placed in the project extension scope')
+    assert.equal(existsSync(join(ws, '.acryl-plugins', 'ext-a', 'index.js')), true, 'the vendored source was placed in the project extension scope')
     assert.equal(by['market-b'].status, 'installed'); assert.equal(by['git-c'].status, 'skipped'); assert.equal(applied.ok, true)
     assert.ok(s.calls.some(c => c.join(' ') === 'run add market-b@2.0.0'))
 
@@ -699,9 +713,9 @@ test('blend apply: verifies first, installs local modules from the vendored sour
     assert.ok(t.calls.some(c => c.join(' ') === 'run remove market-b'), 'the mismatching install was removed')
 
     // a same-named folder with different content is never overwritten
-    writeFileSync(join(ws, '.acryl-extensions', 'ext-a', 'index.js'), '// my own edit\n')
+    writeFileSync(join(ws, '.acryl-plugins', 'ext-a', 'index.js'), '// my own edit\n')
     const conflict = await applyBlend(blendDir, { ...fakes(), profileDir: profile }, { workspaceDir: ws })
-    assert.equal(conflict.results.find(r => r.name === 'ext-a').status, 'conflict'); assert.equal(readFileSync(join(ws, '.acryl-extensions', 'ext-a', 'index.js'), 'utf8'), '// my own edit\n')
+    assert.equal(conflict.results.find(r => r.name === 'ext-a').status, 'conflict'); assert.equal(readFileSync(join(ws, '.acryl-plugins', 'ext-a', 'index.js'), 'utf8'), '// my own edit\n')
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
 

@@ -85,7 +85,7 @@ export function blueprintFromManifest(input: unknown, catalog: BlueprintCatalog 
       continue
     }
     const known = blueprintRowForPackage(row.name)
-    if (known === undefined) continue   // an app plugin: loaded from the app's extensions/, not composed here
+    if (known === undefined) continue   // an app plugin: loaded from the app's plugins/, not composed here
     if (row.disabled === true) rows.delete(known)
     else rows.add(known)
   }

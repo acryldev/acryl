@@ -21,7 +21,7 @@ afterEach(() => {
 
 function project(): string {
   const workspace = join(root, 'project')
-  const folder = join(workspace, '.acryl-extensions', 'quick-notes')
+  const folder = join(workspace, '.acryl-plugins', 'quick-notes')
   mkdirSync(folder, { recursive: true })
   writeFileSync(join(folder, 'package.json'), `${JSON.stringify({ name: '@inboxxobni/notes.sidebar.quick-notes', version: '0.2.1', type: 'module' }, null, 2)}\n`)
   writeFileSync(join(folder, 'index.js'), 'export function apply() {}\n')
@@ -34,13 +34,13 @@ describe('acryl plugin saved | save | version', () => {
     const first = await runPluginHubCommand({ profile: 'acryl', action: 'save', target: 'quick-notes', cwd })
     expect(first.kind).toBe('save')
     if (first.kind !== 'save') return
-    expect(first.store).toBe(join(root, 'home', 'plugins', 'store'))
+    expect(first.store).toBe(join(root, 'home', 'plugins', '.store'))
     expect(existsSync(first.result.path)).toBe(true)
     expect(renderPluginHubCommand(first, false).lines[0]).toBe(`Saved @inboxxobni/notes.sidebar.quick-notes 0.2.1 (2 files) to ${first.store}.`)
 
-    const bumped = await runPluginHubCommand({ profile: 'acryl', action: 'version', bump: 'patch', target: './.acryl-extensions/quick-notes', cwd })
+    const bumped = await runPluginHubCommand({ profile: 'acryl', action: 'version', bump: 'patch', target: './.acryl-plugins/quick-notes', cwd })
     expect(renderPluginHubCommand(bumped, false).lines[0]).toMatch(/^@inboxxobni\/notes\.sidebar\.quick-notes: 0\.2\.1 -> 0\.2\.2 /u)
-    expect(JSON.parse(readFileSync(join(cwd, '.acryl-extensions', 'quick-notes', 'package.json'), 'utf8')).version).toBe('0.2.2')
+    expect(JSON.parse(readFileSync(join(cwd, '.acryl-plugins', 'quick-notes', 'package.json'), 'utf8')).version).toBe('0.2.2')
 
     await runPluginHubCommand({ profile: 'acryl', action: 'save', target: '@inboxxobni/notes.sidebar.quick-notes', cwd })
     const listed = await runPluginHubCommand({ profile: 'acryl', action: 'saved', cwd })

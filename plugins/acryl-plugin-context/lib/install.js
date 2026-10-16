@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSyn
 import { tmpdir } from 'node:os'
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { hashPackage, pruneOldStages, pruneOldVersions, stagePackage, stagedSource } from './stage.js'
-import { canonical, discoverExtensions, installState } from './reconcile.js'
+import { canonical, discoverPlugins, installState } from './reconcile.js'
 import { checkManifest, readManifest } from './manifest.js'
 import { listInstalledPlugins } from './provenance.js'
 
@@ -342,7 +342,7 @@ export async function removeLocalPlugin(input, services) {
 
 /**
  * `/reload`: bring the installs in line with their source folders (source is authoritative): update the ones whose source changed, skip the ones
- * that did not, report the ones whose source is gone, and install any NEW extension folder found under `<workspace>/.acryl-extensions/` or the global
+ * that did not, report the ones whose source is gone, and install any NEW plugin folder found under `<workspace>/.acryl-plugins/` or the global
  * extensions directory, so edits and drops made by hand (or by another tool) go live without asking the agent
  * (pi.dev: write the file, then `/reload`). Each plugin goes through the same checked install path, so a broken edit is reported
  * and rolled back, never half-applied.
@@ -352,7 +352,7 @@ export async function removeLocalPlugin(input, services) {
  */
 export async function reloadLocalPlugins(services, fs, options = {}) {
   const plugins = listLocalPlugins(services.profileDir, fs)
-  const discovered = discoverExtensions({ workspaceDir: options.workspaceDir, globalDir: options.globalDir })
+  const discovered = discoverPlugins({ workspaceDir: options.workspaceDir, globalDir: options.globalDir })
   const scopeOf = new Map(discovered.map(found => [found.dir, found.scope]))
   const results = []
   const done = new Set()
@@ -391,7 +391,7 @@ export async function reloadLocalPlugins(services, fs, options = {}) {
  * The startup pass: bring already-installed extensions up to date with their source, without asking, ONLY where that cannot run code the user
  * did not put there. pi.dev auto-loads what it finds, guarded by project trust; ACRYL's equivalent guard is:
  *
- *  - GLOBAL scope (`<ACRYL home>/extensions/`): a directory only the user (or their agent) writes to, never arrives through `git clone` or `git pull`.
+ *  - GLOBAL scope (`<ACRYL home>/plugins/`): a directory only the user (or their agent) writes to, never arrives through `git clone` or `git pull`.
  *    A changed source there is re-installed at startup.
  *  - PROJECT scope and anything else: a `git pull` can change code that then runs with the user's permissions at the next start. A changed source
  *    is only REPORTED (`/reload` applies it). New folders are never installed here in either scope: that is `/reload new`.
@@ -422,9 +422,9 @@ export async function syncOnStartup(services, options = {}, fs) {
       else summary.failed.push({ name: plugin.name, error: (result.errors ?? []).join('; ') || 'install failed' })
     } catch (cause) { summary.failed.push({ name: plugin.name, error: String(cause?.message ?? cause) }) }
   }
-  for (const found of discoverExtensions({ globalDir: options.globalDir })) {
+  for (const found of discoverPlugins({ globalDir: options.globalDir })) {
     if (installed.has(found.dir) || found.shadowed) continue
-    // An app's own extensions (its committed `extensions/`, e.g. in a fresh clone) are the app's code: they install at start. Elsewhere a new
+    // An app's own plugins (its committed `plugins/`, e.g. in a fresh clone) are the app's code: they install at start. Elsewhere a new
     // global folder is only reported, because installing runs code the user has not asked for yet.
     if (options.installPending !== true) { summary.pending.push(found.name); continue }
     try {

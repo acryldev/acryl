@@ -10,9 +10,9 @@
  * @module acryl-cli/host/plugin-hub-command
  */
 
-import { isAbsolute, join, resolve } from 'node:path'
+import { isAbsolute, resolve } from 'node:path'
 import {
-  createPluginHub, findSourceFolder, firstReleasePort, githubReleasesOverHttps, githubReleasesViaGh, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf,
+  createPluginHub, findSourceFolder, homePluginsDir, projectPluginsDir, firstReleasePort, githubReleasesOverHttps, githubReleasesViaGh, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf,
   type InstallerPort, type PluginHub, type PullResult, type NpmPublishResult, type SaveResult, type ShareResult, type StoredVersion, type UpdateResult, type VersionBump, firstRegistryPort, gitCli, githubCli, npmCli, npmRegistryViaCli,
 } from '@webboxes/plugin-hub'
 import { processIsAlive, readLock, resolveAcrylDshHome, runLockFileForDshHome, selectInstance } from 'acryl-harness-runtime'
@@ -32,7 +32,7 @@ export interface PluginHubCommandOptions {
   /** `share`: publish to an npm registry instead (default the public one). */
   readonly npm?: boolean
   readonly registry?: string
-  /** The folder relative paths and the project's `.acryl-extensions/` are read from. */
+  /** The folder relative paths and the project's `.acryl-plugins/` are read from. */
   readonly cwd?: string
 }
 
@@ -59,10 +59,11 @@ function storeHub(home: string, extra: { readonly has?: (service: string) => boo
 }
 
 function folderOf(target: string | undefined, cwd: string, home: string): string {
-  if (target === undefined || target === '') throw new Error('name the plugin: its folder, or its name under .acryl-extensions/')
+  if (target === undefined || target === '') throw new Error('name the plugin: its folder, or its name under .acryl-plugins/')
   const asPath = isAbsolute(target) || target.startsWith('.') ? resolve(cwd, target) : undefined
-  const folder = findSourceFolder(asPath ?? target, [join(cwd, '.acryl-extensions'), join(home, 'extensions')])
-  if (folder === undefined) throw new Error(`no plugin folder ${JSON.stringify(target)} (looked in ${asPath ?? `${join(cwd, '.acryl-extensions')} and ${join(home, 'extensions')}`})`)
+  const roots = [projectPluginsDir(cwd), homePluginsDir(home)]
+  const folder = findSourceFolder(asPath ?? target, roots)
+  if (folder === undefined) throw new Error(`no plugin folder ${JSON.stringify(target)} (looked in ${asPath ?? roots.join(' and ')})`)
   return folder
 }
 

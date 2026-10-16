@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@webboxes/blends-core": "workspace:*",
+    "@webboxes/plugin-hub": "workspace:*",
     "@acryl/ui": "workspace:*",
     "@deepseek-ai/cordis-plugin-group": "1.0.4",
     "@deepseek-ai/cordis-plugin-hmr": "1.0.19",
@@ -198,7 +199,6 @@
     "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "@webboxes/plugin-hub": "workspace:*",
     "@deepseek-ai/cordis": "4.0.4",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.20.0",

@@ -35,9 +35,9 @@ describe('classifyStartSource', () => {
 
 describe('resolveStartSource', () => {
   it('clones a git repository (private ones use the user\'s own git login) and cleans up after', () => {
-    const url = repository(temp(), { 'blend.yaml': starter('agency.accounting'), 'extensions/ledger/package.json': '{}' })
+    const url = repository(temp(), { 'blend.yaml': starter('agency.accounting'), 'plugins/ledger/package.json': '{}' })
     const resolved = resolveStartSource(url)
-    expect(existsSync(join(resolved.folder, 'extensions', 'ledger', 'package.json'))).toBe(true)
+    expect(existsSync(join(resolved.folder, 'plugins', 'ledger', 'package.json'))).toBe(true)
     resolved.dispose()
     expect(existsSync(resolved.folder)).toBe(false)
   })

@@ -21,7 +21,7 @@ import {
   type Profile,
   type ProfileManifest,
 } from '@deepseek-ai/dsh-app-boot'
-import { blueprintFromEnvironment, composeBlueprintRows, createAcrylCodingCapabilityPatches, createAcrylShellCapabilityPatches, extensionRequiredFrameworkPackages, materializeProfilePackage, pluginLifecyclePatches, type Blueprint } from 'acryl-harness-runtime'
+import { blueprintFromEnvironment, composeBlueprintRows, createAcrylCodingCapabilityPatches, createAcrylShellCapabilityPatches, pluginRequiredFrameworkPackages, materializeProfilePackage, pluginLifecyclePatches, type Blueprint } from 'acryl-harness-runtime'
 import { parseDocument } from 'yaml'
 import { unpackedAsarPath } from './runtime/packaged-runtime-path.ts'
 import { findOverlayPackage, resolveOverlayPackage } from './plugins/package-overlay.ts'
@@ -809,7 +809,7 @@ export function prepareDesktopProfile(
   // mount anchors, in mount order. The packages resolve from this package's own dependency closure like the market package above.
   // Desktop's Market keeps its own provider switch, so the Blueprint never composes it here.
   patches.push(...composeBlueprintRows(blueprint, 'desktop').patches)
-  // The app's own committed extensions may each need an ACRYL-owned framework package (same mechanism and
+  // The app's own committed plugins may each need an ACRYL-owned framework package (same mechanism and
   // same reasoning as Web's `resolveWebEngineComposition` - a project grown via `acryl new` has no other way
   // to depend on an unpublished ACRYL-owned package; see that function's own doc comments for the full
   // design). A third-party extension claiming the advanced shell this way has no "compatibility vs advanced"
@@ -817,7 +817,7 @@ export function prepareDesktopProfile(
   // so this disables the stock `ui-layout` row unconditionally, not only when `mode === 'advanced'`.
   const requiredFrameworkPackages = instanceHome === undefined
     ? []
-    : extensionRequiredFrameworkPackages(join(instanceHome, 'extensions')).filter(name => rows.get(name) === undefined)
+    : pluginRequiredFrameworkPackages(instanceHome).filter(name => rows.get(name) === undefined)
   for (const packageName of requiredFrameworkPackages) materializeProfilePackage(profileDir, packageName, pathToFileURL(INSTALL_ANCHOR).href)
   patches.push(...requiredFrameworkPackages.map(name => ({ insert: [{ id: name, name }] })))
   if (requiredFrameworkPackages.includes('acryl-app-shell') && mode !== 'advanced') {

@@ -3,7 +3,7 @@
  * the builder inside it (the agent) and every tool know where everything is without being told.
  *
  *   <app>/blend.yaml    what the app is: a Blends manifest (name, brand, the Blueprint it grew from)      commit
- *   <app>/extensions/   the app's own plugins; the agent inside builds them here; they load at every start  commit
+ *   <app>/plugins/      the app's own plugins; the agent inside builds them here; they load at every start  commit (not plugins/.store/)
  *   <app>/AGENTS.md     the conventions, read by the agent inside at the start of every session            commit
  *   <app>/bin/acryl     start it: bin/acryl web | desktop | cli
  *   <app>/.dsh/         what the runtime keeps (sessions, settings, profile)                                ignored
@@ -19,13 +19,14 @@ import { spawnSync } from 'node:child_process'
 import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { manifestDigest } from '@webboxes/blends-core'
+import { HOME_PLUGINS_FOLDER, STORE_FOLDER } from '@webboxes/plugin-hub'
 import { isMap, isSeq, parseDocument, stringify } from 'yaml'
 import { brandIdentity, type BrandIdentity } from '../blueprint/brand-identity.ts'
 import { builtInCatalog, type Blueprint } from '../blueprint/blueprint.ts'
 import { appManifest } from '../blueprint/manifest.ts'
 
 export const APP_MANIFEST_FILE = 'blend.yaml'
-export const APP_EXTENSIONS_DIR = 'extensions'
+export const APP_PLUGINS_DIR = HOME_PLUGINS_FOLDER
 
 const APP_NAME = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u
 
@@ -46,7 +47,7 @@ export interface NewAppOptions {
   readonly launcher: string
   /**
    * Create the app from an existing app or captured Blend (its `blend.yaml`, and its `blend.lock.json` when it has one) instead of a Blueprint: the new
-   * app keeps what the source grew (rows, brand, lineage) under its own name and id. Its `extensions/` are copied by `writeNewApp`.
+   * app keeps what the source grew (rows, brand, lineage) under its own name and id. Its `plugins/` are copied by `writeNewApp`.
    */
   readonly from?: { readonly manifestText: string, readonly lockText?: string }
 }
@@ -76,11 +77,11 @@ export function planNewApp(dir: string, options: NewAppOptions): PlannedApp {
     ...(derived?.lockText === undefined ? {} : { 'blend.lock.json': derived.lockText }),
     ...(derived?.starter === undefined ? {} : { [`blueprints/${derived.starter.id}.yaml`]: derived.starter.text }),
     ...(derived?.notice === undefined ? {} : { 'THIRD-PARTY.md': derived.notice }),
-    [`${APP_EXTENSIONS_DIR}/README.md`]: `# extensions\n\nThis app's own plugins, one folder each. The agent inside the app builds them here when you ask for something\n("add a to-do list"), and every folder here loads when the app starts. Delete a folder to remove that plugin.\n`,
+    [`${APP_PLUGINS_DIR}/README.md`]: `# plugins\n\nThis app's own plugins, one folder each. The agent inside the app builds them here when you ask for something\n("add a to-do list"), and every folder here loads when the app starts. Delete a folder to remove that plugin.\n`,
     'AGENTS.md': agentsMd(title),
     'bin/acryl': `#!/usr/bin/env bash\n# Start ${title}:  bin/acryl web | desktop | cli   (flags: --port 3105)\nset -euo pipefail\napp="$(cd "$(dirname "$0")/.." && pwd)"\nexec node ${JSON.stringify(options.launcher)} "\${1:-web}" --dir "$app" "\${@:2}"\n`,
-    // The plugin store (`plugins/store/`) is runtime data like `.dsh/`: pulled plugins are reproduced from the Blend's lock, the app's own plugins live in `extensions/`.
-    '.gitignore': '# what the runtime keeps for this app\n.dsh/\ninstance.json\nplugins/store/\n',
+    // The plugin store (`plugins/.store/`) is runtime data like `.dsh/`: pulled plugins are reproduced from the Blend's lock; the app's own plugins beside it are committed.
+    '.gitignore': `# what the runtime keeps for this app\n.dsh/\ninstance.json\n${APP_PLUGINS_DIR}/${STORE_FOLDER}/\n`,
     '.github/workflows/app.yml': appWorkflow(title),
     'README.md': `# ${title}
 
@@ -88,7 +89,7 @@ export function planNewApp(dir: string, options: NewAppOptions): PlannedApp {
 bin/acryl web       # or desktop, cli
 \`\`\`
 
-Tell the assistant inside what to build; it adds plugins to \`extensions/\` while the app runs. \`blend.yaml\` is the app's definition (name, brand,
+Tell the assistant inside what to build; it adds plugins to \`plugins/\` while the app runs. \`blend.yaml\` is the app's definition (name, brand,
 what it grew from). Runtime data stays in \`.dsh/\` and is not committed. The app has its own port and its own window, so it runs beside any other.
 
 ## License
@@ -107,7 +108,7 @@ licensed; if you distribute a copy of the framework (for example a carried \`run
  *   from a starter (kind: Blueprint, spec.extends)  ->  a Blend whose lineage names the starter; the starter is kept in blueprints/<id>.yaml
  *   from a project (kind: Blend, spec.lineage)       ->  a Blend with the same lineage; the source's blueprints/ travel with it
  *
- * Comments are kept, and the lock is re-pinned to the new definition with the format's digest (local module digests stay valid: extensions/ is copied as is).
+ * Comments are kept, and the lock is re-pinned to the new definition with the format's digest (local module digests stay valid: plugins/ is copied as is).
  */
 function fromExistingApp(source: { readonly manifestText: string, readonly lockText?: string }, id: string, title: string, brand: Partial<Omit<BrandIdentity, 'name'>> | undefined): { manifestText: string, lockText?: string, starter?: { id: string, text: string }, notice?: string } {
   const document = parseDocument(source.manifestText)
@@ -141,9 +142,9 @@ function fromExistingApp(source: { readonly manifestText: string, readonly lockT
   // The source's comments are kept; the header names the app it describes, so it takes the new app's name. Before the lock digests the text.
   const manifestText = String(document).replace(/^# .*?: what this app is/u, `# ${title}: what this app is`)
   const sourceLicense = typeof parsed.metadata?.license === 'string' ? parsed.metadata.license : undefined
-  // The source's code (its extensions) keeps its own license: its notice travels with the copy.
+  // The source's code (its plugins) keeps its own license: its notice travels with the copy.
   const notice = sourceLicense === undefined || sourceLicense === 'Proprietary' ? undefined
-    : `# Third-party code\n\nThis project was created from ${sourceId ?? 'another app'}${typeof parsed.metadata?.name === 'string' ? ` (${parsed.metadata.name})` : ''}, licensed ${sourceLicense}. Code copied from it into\nextensions/ remains under that license; keep this notice, and the source's license text where it requires one, with any copy you distribute.\n`
+    : `# Third-party code\n\nThis project was created from ${sourceId ?? 'another app'}${typeof parsed.metadata?.name === 'string' ? ` (${parsed.metadata.name})` : ''}, licensed ${sourceLicense}. Code copied from it into\nplugins/ remains under that license; keep this notice, and the source's license text where it requires one, with any copy you distribute.\n`
   const extra = { ...(starter === undefined ? {} : { starter }), ...(notice === undefined ? {} : { notice }) }
   if (source.lockText === undefined) return { manifestText, ...extra }
   const lock = JSON.parse(source.lockText) as { origin?: Record<string, unknown> }
@@ -186,12 +187,12 @@ function agentsMd(title: string): string {
 You are the builder inside ${title}. The user asks for what they want; you build it here, as plugins, while the app runs. The project and its git repository
 belong to the user: commit with clear messages when a change works and the user agrees, never push unless asked.
 
-- **Where things go.** Every capability you add is one plugin in \`extensions/<name>/\` of this app (the app's own folder, which is its ACRYL home). Install it with
+- **Where things go.** Every capability you add is one plugin in \`plugins/<name>/\` of this app (the app's own folder, which is its ACRYL home). Install it with
   \`acryl_install_plugin\` using its absolute path; it goes live without a restart and loads at every start. Never put the app's plugins anywhere else.
 - **What the app is.** \`blend.yaml\` is the app's definition (name, brand, the Blueprint it grew from). Change the brand there when the user asks to rename or restyle the app.
 - **Data.** A plugin keeps its data in the app folder (\`data/<plugin>.json\`) or in the project the user opens, never inside its own code folder.
 - **Capture.** \`/blend snapshot\` records what the app has become so it can be re-created; publishing is the user's decision.
-- **How.** Your ACRYL extension docs (in your system prompt) have a routed doc and a verified example for every kind of plugin; read the nearest one before writing.
+- **How.** Your ACRYL plugin docs (in your system prompt) have a routed doc and a verified example for every kind of plugin; read the nearest one before writing.
 `
 }
 
@@ -199,7 +200,7 @@ belong to the user: commit with clear messages when a change works and the user 
 /** A file of the launcher an app carries: copied from the framework, or written with the given content. */
 export type LauncherFile = { readonly from: string } | { readonly content: string }
 
-export function writeNewApp(planned: PlannedApp, options: { readonly runtimeDir?: string, readonly launcherFiles?: Readonly<Record<string, LauncherFile>>, readonly git?: boolean, readonly extensionsFrom?: string, readonly blueprintsFrom?: string } = {}): { readonly git: 'initialized' | 'skipped' | 'unavailable' } {
+export function writeNewApp(planned: PlannedApp, options: { readonly runtimeDir?: string, readonly launcherFiles?: Readonly<Record<string, LauncherFile>>, readonly git?: boolean, readonly pluginsFrom?: string, readonly blueprintsFrom?: string } = {}): { readonly git: 'initialized' | 'skipped' | 'unavailable' } {
   if (existsSync(planned.root) && readdirSync(planned.root).length > 0) throw new NewAppError(`${planned.root} is not empty; acryl new only creates a new app`)
   if (options.runtimeDir !== undefined && !existsSync(join(options.runtimeDir, 'lib', 'bin.js'))) throw new NewAppError(`${options.runtimeDir} is not an ACRYL Web runtime (no lib/bin.js)`)
   for (const [relative, content] of Object.entries(planned.files)) {
@@ -213,8 +214,9 @@ export function writeNewApp(planned: PlannedApp, options: { readonly runtimeDir?
   if (options.blueprintsFrom !== undefined && existsSync(options.blueprintsFrom)) {
     cpSync(options.blueprintsFrom, join(planned.root, 'blueprints'), { recursive: true, force: false, errorOnExist: false })
   }
-  if (options.extensionsFrom !== undefined && existsSync(options.extensionsFrom)) {
-    cpSync(options.extensionsFrom, join(planned.root, APP_EXTENSIONS_DIR), { recursive: true, filter: source => !['node_modules', '.git'].includes(basename(source)) })
+  if (options.pluginsFrom !== undefined && existsSync(options.pluginsFrom)) {
+    // The source app's own plugins, not its store: pulled plugins are runtime data, reproduced from the lock.
+    cpSync(options.pluginsFrom, join(planned.root, APP_PLUGINS_DIR), { recursive: true, filter: source => !['node_modules', '.git', STORE_FOLDER].includes(basename(source)) })
   }
   if (options.runtimeDir !== undefined) {
     // The app carries its own runtime: it then starts with nothing of the framework but Node. Symlinks stay relative to the copy.

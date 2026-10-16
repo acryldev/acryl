@@ -77,7 +77,7 @@ function dependencies(overrides: Partial<AcrylCliDependencies> = {}): AcrylCliDe
     },
     runPluginHubCommand: async options => {
       events.push(`hub:${options.action}:${options.bump ?? ''}:${options.target ?? ''}:${options.profile}`)
-      return { kind: 'version', name: '@o/notes.sidebar.quick-notes', from: '0.2.1', to: '0.2.2', folder: '/w/.acryl-extensions/quick-notes' }
+      return { kind: 'version', name: '@o/notes.sidebar.quick-notes', from: '0.2.1', to: '0.2.2', folder: '/w/.acryl-plugins/quick-notes' }
     },
     exit: code => { events.push(`exit:${code}`) },
     write: line => { events.push(`write:${line}`) },
@@ -157,7 +157,7 @@ describe('runAcryl', () => {
     await runAcryl(['plugin', 'version', 'patch', 'quick-notes'], deps)
     expect(deps.events).toEqual([
       'hub:version:patch:quick-notes:acryl',
-      'write:@o/notes.sidebar.quick-notes: 0.2.1 -> 0.2.2 (/w/.acryl-extensions/quick-notes).',
+      'write:@o/notes.sidebar.quick-notes: 0.2.1 -> 0.2.2 (/w/.acryl-plugins/quick-notes).',
     ])
   })
 

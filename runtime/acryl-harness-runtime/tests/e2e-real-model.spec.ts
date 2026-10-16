@@ -62,7 +62,7 @@ it.skipIf(prompts === undefined)('the agent builds, changes, extends and removes
       await bridge.submitPrompt({ sessionId, text: prompt })
       await Promise.race([ended, new Promise(resolve => setTimeout(resolve, 420_000))])
     }
-    const extensions = join(workspace, '.acryl-extensions')
+    const extensions = join(workspace, '.acryl-plugins')
     log({ done: true, extensions: existsSync(extensions) ? readdirSync(extensions) : [] })
   } finally {
     await bridge.dispose()

@@ -67,7 +67,7 @@ test('the plugin provides pluginHub from the app instance home, registers /plugi
   apply(ctx)
   assert.deepEqual(tools, ['acryl_plugins'])
   assert.equal(provided.pluginHub.store.root, storeRoot({ home }))
-  assert.equal(storeRoot({ home }), join(home, 'plugins', 'store'))
+  assert.equal(storeRoot({ home }), join(home, 'plugins', '.store'))
 })
 
 test('the service contract is checked against what this app provides; a plugin without one is not refused', () => {
@@ -119,7 +119,7 @@ test('pull: a failed install reports the installer\'s own reason', async () => {
 
 test('/plugin save, version and saved: a source folder found by name, a fix as a new version, every version listed', async () => {
   const workspace = temp()
-  const folder = pluginFolder(join(workspace, '.acryl-extensions'), 'quick-notes', notes('0.2.1'))
+  const folder = pluginFolder(join(workspace, '.acryl-plugins'), 'quick-notes', notes('0.2.1'))
   const { hub } = hubWith()
   assert.equal(findSourceFolder('@inboxxobni/notes.sidebar.quick-notes', sourceRoots({ workspaceDir: workspace })), folder)
   assert.equal(findSourceFolder('quick-notes', sourceRoots({ workspaceDir: workspace })), folder)
@@ -139,7 +139,7 @@ test('/plugin save, version and saved: a source folder found by name, a fix as a
 
 test('/plugin share passes the folder, owner, repository and public to the hub, and reports a refusal with the secrets found', async () => {
   const workspace = temp()
-  pluginFolder(join(workspace, '.acryl-extensions'), 'quick-notes', notes('0.2.1'))
+  pluginFolder(join(workspace, '.acryl-plugins'), 'quick-notes', notes('0.2.1'))
   const calls = []
   const hub = { async share(folder, options) { calls.push({ folder, options }); return calls.length === 1
     ? { status: 'shared', name: 'n', version: '0.2.1', visibility: 'public', url: 'https://github.com/o/r', created: true, tag: 'v0.2.1', files: ['a', 'b'] }
@@ -147,7 +147,7 @@ test('/plugin share passes the folder, owner, repository and public to the hub, 
   const shared = await runPluginCommand('share quick-notes public o/r', hub, { workspaceDir: workspace })
   assert.equal(shared.kind, 'success')
   assert.match(shared.text, /^Shared n 0\.2\.1 to public https:\/\/github\.com\/o\/r \(new repository\): release v0\.2\.1, 2 files\. Catalogs list it/u)
-  assert.deepEqual(calls[0], { folder: join(workspace, '.acryl-extensions', 'quick-notes'), options: { owner: 'o', repo: 'r', visibility: 'public' } })
+  assert.deepEqual(calls[0], { folder: join(workspace, '.acryl-plugins', 'quick-notes'), options: { owner: 'o', repo: 'r', visibility: 'public' } })
   const refused = await runPluginCommand('share quick-notes', hub, { workspaceDir: workspace })
   assert.equal(refused.kind, 'error')
   assert.match(refused.text, /Not shared: the secret check.*\n- config\.js:1 \(Anthropic API key\)/su)
@@ -156,14 +156,14 @@ test('/plugin share passes the folder, owner, repository and public to the hub, 
 
 test('/plugin share <name> npm publishes to the registry given, and reports a refusal', async () => {
   const workspace = temp()
-  pluginFolder(join(workspace, '.acryl-extensions'), 'quick-notes', notes('0.2.1'))
+  pluginFolder(join(workspace, '.acryl-plugins'), 'quick-notes', notes('0.2.1'))
   const calls = []
   const hub = { async publishNpm(folder, options) { calls.push({ folder, options }); return calls.length === 1
     ? { status: 'published', name: 'n', version: '0.2.1', registry: 'http://localhost:4873/', access: 'restricted', integrity: 'sha512-x', files: ['a', 'b'], updatedManifest: [] }
     : { status: 'refused', reason: 'n@0.2.1 is already on http://localhost:4873/' } } }
   const published = await runPluginCommand('share quick-notes npm http://localhost:4873/', hub, { workspaceDir: workspace })
   assert.deepEqual(published, { kind: 'success', text: 'Published n 0.2.1 to http://localhost:4873/ (restricted), 2 files.' })
-  assert.deepEqual(calls[0], { folder: join(workspace, '.acryl-extensions', 'quick-notes'), options: { registry: 'http://localhost:4873/' } })
+  assert.deepEqual(calls[0], { folder: join(workspace, '.acryl-plugins', 'quick-notes'), options: { registry: 'http://localhost:4873/' } })
   assert.deepEqual(await runPluginCommand('share quick-notes npm public', hub, { workspaceDir: workspace }), { kind: 'error', text: 'Not published: n@0.2.1 is already on http://localhost:4873/' })
   assert.deepEqual(calls[1].options, { visibility: 'public' })
   assert.match((await runPluginCommand('share quick-notes npm localhost', hub, { workspaceDir: workspace })).text, /^Usage/u)
@@ -179,7 +179,7 @@ test('/plugin refuses what it cannot do, with the usage or the reason', async ()
 
 test('the agent\'s tools: store pulls run directly; a remote pull and a share run only after the user allows them in the app', async () => {
   const workspace = temp()
-  pluginFolder(join(workspace, '.acryl-extensions'), 'quick-notes', notes('0.2.1'))
+  pluginFolder(join(workspace, '.acryl-plugins'), 'quick-notes', notes('0.2.1'))
   const calls = []
   const hub = {
     saved: () => [],
@@ -204,7 +204,7 @@ test('the agent\'s tools: store pulls run directly; a remote pull and a share ru
   await tool.execute({ action: 'share', plugin: 'quick-notes', to: 'npm:http://localhost:4873/' }, exec)
   assert.match(asked.at(-1), /^acryl_plugins: Share the plugin in .* to npm \(http:\/\/localhost:4873\/\) \(private\)\.$/u)
   await tool.execute({ action: 'share', plugin: 'quick-notes', to: 'npm', public: true }, exec)
-  const folder = join(workspace, '.acryl-extensions', 'quick-notes')
+  const folder = join(workspace, '.acryl-plugins', 'quick-notes')
   assert.deepEqual(calls, ['pull store:n@0.2.1', `share ${folder} {"owner":"o","repo":"r"}`, 'pull github:o/r', `npm ${folder} {"registry":"http://localhost:4873/"}`, `npm ${folder} {"visibility":"public"}`])
   await assert.rejects(tool.execute({ action: 'version', plugin: 'quick-notes', bump: 'huge' }, exec), /"bump" must be one of/u)
 

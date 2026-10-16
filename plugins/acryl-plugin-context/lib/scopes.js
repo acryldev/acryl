@@ -1,7 +1,7 @@
 /**
  * Where an ACRYL instance keeps what it authors inside a project (spec 036, "Many instances").
  *
- * An unscoped ACRYL (the default or development app) keeps the classic shared locations: `<workspace>/.acryl-extensions/` and `<workspace>/.acryl/blend/`, which
+ * An unscoped ACRYL (the default or development app) keeps the classic shared locations: `<workspace>/.acryl-plugins/` and `<workspace>/.acryl/blend/`, which
  * belong to the project and can be committed. An app with a project scope must never leak into, or load from, another app that opens the same folder, so
  * everything it authors lives under `<workspace>/.acryl/instances/<scope>/`. The instance-wide (global) scope is already private: it lives in the app's own home.
  *
@@ -10,6 +10,7 @@
  */
 import { existsSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
+import { HOME_PLUGINS_FOLDER, homePluginsDir, moveFolder, PROJECT_PLUGINS_FOLDER, projectPluginsDir as sharedProjectPluginsDir } from '@webboxes/plugin-hub'
 
 const SCOPE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u
 const SCOPE_MAX = 64
@@ -39,9 +40,12 @@ function instanceRoot(workspaceDir, instance) {
   return join(workspaceDir, '.acryl', 'instances', instance)
 }
 
-/** Project-scope extensions folder. */
-export function projectExtensionsDir(workspaceDir, instance = currentInstance()) {
-  return instance === undefined ? join(workspaceDir, '.acryl-extensions') : join(instanceRoot(workspaceDir, instance), 'extensions')
+/** A project's source plugins folder, moved once from its name before the rename (`@webboxes/plugin-hub` folders). */
+export function projectPluginsDir(workspaceDir, instance = currentInstance()) {
+  if (instance === undefined) return sharedProjectPluginsDir(workspaceDir)
+  const dir = join(instanceRoot(workspaceDir, instance), HOME_PLUGINS_FOLDER)
+  moveFolder(join(instanceRoot(workspaceDir, instance), 'extensions'), dir)
+  return dir
 }
 
 /**
@@ -58,21 +62,21 @@ export function appHomeDir() {
   return active.appHome
 }
 
-/** Does this real path sit in some project extensions folder (classic or instance-namespaced)? */
-export function isProjectExtensionPath(path) {
+/** Does this real path sit in some project plugins folder (classic or instance-namespaced, under its current or its old name)? */
+export function isProjectPluginPath(path) {
   const slashed = path.replaceAll('\\', '/')
-  return slashed.includes('/.acryl-extensions/') || /\/\.acryl\/instances\/[^/]+\/extensions\//u.test(slashed)
+  return slashed.includes(`/${PROJECT_PLUGINS_FOLDER}/`) || slashed.includes('/.acryl-extensions/') || /\/\.acryl\/instances\/[^/]+\/(?:plugins|extensions)\//u.test(slashed)
 }
 
 /** How the router names the project location the agent writes to. */
-export function projectExtensionsLabel(instance = currentInstance()) {
-  return instance === undefined ? '<workspace>/.acryl-extensions/<name>/' : `<workspace>/.acryl/instances/${instance}/extensions/<name>/`
+export function projectPluginsLabel(instance = currentInstance()) {
+  return instance === undefined ? `<workspace>/${PROJECT_PLUGINS_FOLDER}/<name>/` : `<workspace>/.acryl/instances/${instance}/${HOME_PLUGINS_FOLDER}/<name>/`
 }
 
 /**
- * An app created by `acryl new` is its own ACRYL home (it has `blend.yaml`). Its plugins belong in `<app>/extensions/`, the home's extension scope, so they
+ * An app created by `acryl new` is its own ACRYL home (it has `blend.yaml`). Its plugins belong in `<app>/plugins/`, the home's plugin scope, so they
  * load at every start and are committed with the app. Returns that folder, or undefined outside an app.
  */
-export function appExtensionsDir() {
-  return active.appHome === undefined ? undefined : join(active.appHome, 'extensions')
+export function appPluginsDir() {
+  return active.appHome === undefined ? undefined : homePluginsDir(active.appHome)
 }

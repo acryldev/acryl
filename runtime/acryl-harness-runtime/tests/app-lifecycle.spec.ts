@@ -1,5 +1,5 @@
 /**
- * The app lifecycle on real engines (spec 036): an app IS its Blend. Create an app with a plugin in its extensions/, start it (the plugin installs itself),
+ * The app lifecycle on real engines (spec 036): an app IS its Blend. Create an app with a plugin in its plugins/, start it (the plugin installs itself),
  * record it with /blend snapshot (into the app folder), create a second app from it (like a fresh clone of the app's git repository), and start that one:
  * its plugins install themselves too, from the app's own files, with the lock verified.
  */
@@ -35,7 +35,7 @@ async function start(app: string) {
     prepare: ctx => { provideCmdline(ctx, { args: ['--no-open'], exit: () => {} }) },
   })
   const tools = async () => (await host.ctx.get('systemPrompt')!.assemble()).tools.map(tool => tool.name)
-  // The startup pass runs one tick after boot and installs the app's own extensions; wait for it.
+  // The startup pass runs one tick after boot and installs the app's own plugins; wait for it.
   const deadline = Date.now() + 90_000
   while (!(await tools()).includes('todo_add') && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 250))
   const bridge = createAcrylSessionBridge(host.ctx, { profile: 'web', generationId: `app-${String(Date.now())}`, attachment: 'owner', cwd: app })
@@ -56,10 +56,10 @@ describe('an app is its Blend', () => {
     temporary.push(root)
     const launcher = '/framework/scripts/blank.mjs'
 
-    // App A: created by `acryl new`, with a plugin committed in its extensions/ (what the builder inside would have written).
+    // App A: created by `acryl new`, with a plugin committed in its plugins/ (what the builder inside would have written).
     const a = join(root, 'planner')
     writeNewApp(planNewApp(a, { title: 'Planner', launcher }), { git: false })
-    cpSync(organizer, join(a, 'extensions', 'acryl-organizer'), { recursive: true, filter: source => !source.includes('/tests') })
+    cpSync(organizer, join(a, 'plugins', 'acryl-organizer'), { recursive: true, filter: source => !source.includes('/tests') })
     let app = await start(a)
     try {
       expect(await app.tools()).toContain('todo_add')   // installed by the startup pass, nobody typed /reload
@@ -68,7 +68,7 @@ describe('an app is its Blend', () => {
       expect(snapshot?.text).toContain(`Recorded the app in ${a}`)
       expect(readFileSync(join(a, 'blend.yaml'), 'utf8')).toMatch(/name: acryl-organizer/u)
       expect(readFileSync(join(a, 'blend.yaml'), 'utf8')).toMatch(/^# Planner: what this app is/u)   // the user's definition is kept
-      expect(JSON.parse(readFileSync(join(a, 'blend.lock.json'), 'utf8')).modules).toEqual([expect.objectContaining({ name: 'acryl-organizer', origin: 'local', source: 'extensions/acryl-organizer' })])
+      expect(JSON.parse(readFileSync(join(a, 'blend.lock.json'), 'utf8')).modules).toEqual([expect.objectContaining({ name: 'acryl-organizer', origin: 'local', source: 'plugins/acryl-organizer' })])
       expect((await app.run('/blend verify'))?.text).toContain('matches its lock')
       expect(existsSync(join(a, '.acryl'))).toBe(false)   // nothing written into a hidden side folder: the app folder is the Blend
       // Saved from its own chat into its own repository: the app's files, never its runtime data.
@@ -81,10 +81,10 @@ describe('an app is its Blend', () => {
       expect(tracked.some(file => file.startsWith('.dsh/'))).toBe(false)
     } finally { await app.stop() }
 
-    // App B: created from A (what a fresh clone of A's repository amounts to: definition, lock and extensions, nothing installed).
+    // App B: created from A (what a fresh clone of A's repository amounts to: definition, lock and plugins, nothing installed).
     const b = join(root, 'planner-eu')
     const source = { manifestText: readFileSync(join(a, 'blend.yaml'), 'utf8'), lockText: readFileSync(join(a, 'blend.lock.json'), 'utf8') }
-    writeNewApp(planNewApp(b, { title: 'Planner EU', launcher, from: source }), { git: false, extensionsFrom: join(a, 'extensions') })
+    writeNewApp(planNewApp(b, { title: 'Planner EU', launcher, from: source }), { git: false, pluginsFrom: join(a, 'plugins') })
     app = await start(b)
     try {
       expect(await app.tools()).toContain('meeting_book')

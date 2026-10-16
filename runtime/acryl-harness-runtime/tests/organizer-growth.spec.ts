@@ -66,7 +66,7 @@ describe('grow an organizer from the Blank Blueprint', () => {
     // App A: blank, then the organizer, live.
     const homeA = await scratch('home-a'); const wsA = await scratch('ws-a')
     process.env.DSH_HOME = homeA
-    cpSync(organizer, join(wsA, '.acryl-extensions', 'acryl-organizer'), { recursive: true, filter: source => !source.includes('/tests') })
+    cpSync(organizer, join(wsA, '.acryl-plugins', 'acryl-organizer'), { recursive: true, filter: source => !source.includes('/tests') })
     let host: Host = await boot()
     let s = await session(host, 'organizer-a', wsA)
     try {
@@ -106,7 +106,7 @@ describe('grow an organizer from the Blank Blueprint', () => {
       expect((await host.ctx.get('systemPrompt')!.assemble()).tools.map(tool => tool.name)).not.toContain('meeting_book')
       const applied = await s.run('/blend apply')
       expect(applied?.kind, String(applied?.text)).toBe('success')
-      expect(existsSync(join(wsB, '.acryl-extensions', 'acryl-organizer', 'index.js'))).toBe(true)
+      expect(existsSync(join(wsB, '.acryl-plugins', 'acryl-organizer', 'index.js'))).toBe(true)
       expect((await host.ctx.get('systemPrompt')!.assemble()).tools.map(tool => tool.name)).toContain('meeting_book')
       // Restored, and it remembers what the project already held.
       expect((await s.tool('calendar_agenda', { day: '2026-10-01' })).text).toContain('Design sync')

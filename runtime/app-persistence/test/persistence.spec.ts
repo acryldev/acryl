@@ -29,10 +29,10 @@ function hosting(root: string, visibility: Record<string, 'public' | 'private'> 
 }
 
 function app(root: string, text = manifest()): string {
-  const dir = join(root, 'books'); mkdirSync(join(dir, 'extensions', 'ledger'), { recursive: true })
+  const dir = join(root, 'books'); mkdirSync(join(dir, 'plugins', 'ledger'), { recursive: true })
   writeFileSync(join(dir, 'blend.yaml'), text)
   writeFileSync(join(dir, '.gitignore'), '.dsh/\n')
-  writeFileSync(join(dir, 'extensions', 'ledger', 'index.js'), 'export function apply() {}\n')
+  writeFileSync(join(dir, 'plugins', 'ledger', 'index.js'), 'export function apply() {}\n')
   mkdirSync(join(dir, '.dsh')); writeFileSync(join(dir, '.dsh', 'settings.yaml'), 'apiKey: "sk-ant-api03-thisIsARealLookingKeyValue1234567890"\n')
   git(dir, 'init', '--quiet'); git(dir, 'config', 'user.name', 't'); git(dir, 'config', 'user.email', 't@t')
   return dir
@@ -69,16 +69,16 @@ describe('saving', () => {
     const saved = saveApp({ manifestText: manifest(), message: 'first version' }, gitCli(dir), host)
     expect(saved).toMatchObject({ status: 'saved', pushed: true })
     const files = git(dir, 'ls-files').stdout.split('\n').filter(Boolean)
-    expect(files).toEqual(['.gitignore', 'blend.yaml', 'extensions/ledger/index.js'])   // .dsh (with its key) stays out
+    expect(files).toEqual(['.gitignore', 'blend.yaml', 'plugins/ledger/index.js'])   // .dsh (with its key) stays out
     expect(git(join(root, 'books.git'), 'log', '--oneline').stdout).toContain('first version')
     expect(saveApp({ manifestText: manifest(), message: 'again' }, gitCli(dir), host)).toEqual({ status: 'nothing-to-save' })
   })
 
   it('refuses a secret in the app\'s own files and leaves nothing staged', () => {
     const root = temp(); const dir = app(root)
-    writeFileSync(join(dir, 'extensions', 'ledger', 'index.js'), 'const key = "sk-ant-api03-abcdefghijklmnopqrstuvwxyz"\n')
+    writeFileSync(join(dir, 'plugins', 'ledger', 'index.js'), 'const key = "sk-ant-api03-abcdefghijklmnopqrstuvwxyz"\n')
     const result = saveApp({ manifestText: manifest(), message: 'x' }, gitCli(dir), hosting(root))
-    expect(result).toMatchObject({ status: 'refused', secrets: [expect.objectContaining({ path: 'extensions/ledger/index.js', line: 1 })] })
+    expect(result).toMatchObject({ status: 'refused', secrets: [expect.objectContaining({ path: 'plugins/ledger/index.js', line: 1 })] })
     expect(git(dir, 'diff', '--cached', '--name-only').stdout).toBe('')
     expect(git(dir, 'log').status).not.toBe(0)   // no commit was made
   })

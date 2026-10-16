@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
+import { currentSourcePath } from '@webboxes/plugin-hub'
 
 /**
  * Automatic host-code hot reload (pi.dev clears its module cache on reload; Node cannot). Node caches an ES module by URL and caches the
@@ -116,7 +117,8 @@ export function stagedSource(installedDir, fs = { existsSync, readFileSync }) {
     const file = join(installedDir, SOURCE_FILE)
     if (!fs.existsSync(file)) return undefined
     const { source } = JSON.parse(fs.readFileSync(file, 'utf8'))
-    return typeof source === 'string' ? source : undefined
+    // A source recorded before the folders were renamed is found where it was moved.
+    return typeof source === 'string' ? currentSourcePath(source) : undefined
   } catch { return undefined }
 }
 

@@ -34,14 +34,6 @@ interface StoreIndex {
   readonly plugins: Record<string, Record<string, StoreRecord>>
 }
 
-/**
- * Where an app instance keeps its plugin store, under that instance's home: per instance, never machine-wide, so a development or test run never
- * writes into the user's real home. The home itself comes from the app (ACRYL's AppInstance family).
- */
-export function storeRootOf(instanceHome: string): string {
-  return join(instanceHome, 'plugins', 'store')
-}
-
 export class StoreConflictError extends Error {
   constructor(readonly pluginName: string, readonly version: string) {
     super(`${pluginName}@${version} is already in the store with different content; a version is kept once, so give the change a new version`)

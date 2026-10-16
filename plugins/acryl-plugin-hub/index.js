@@ -21,7 +21,7 @@
  */
 import { join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { createPluginHub, findSourceFolder, firstRegistryPort, firstReleasePort, gitCli, githubCli, githubReleasesOverHttps, githubReleasesViaGh, npmCli, npmRegistryViaCli, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf } from '@webboxes/plugin-hub'
+import { createPluginHub, findSourceFolder, firstRegistryPort, homePluginsDir, projectPluginsDir, firstReleasePort, gitCli, githubCli, githubReleasesOverHttps, githubReleasesViaGh, npmCli, npmRegistryViaCli, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf } from '@webboxes/plugin-hub'
 
 export const name = 'acryl-plugin-hub'
 export const inject = ['appInstance']
@@ -31,9 +31,9 @@ export function storeRoot(instance) {
   return storeRootOf(instance.home)
 }
 
-/** Where plugins you edit live: the session's project folder, then the app instance's global one (SELF-EXTENSION-PERSISTENCE.md). */
+/** Where plugins you edit live: the session's project folder, then the app instance's own (`@webboxes/plugin-hub` folders, moved there once from the old names). */
 export function sourceRoots({ workspaceDir, home }) {
-  return [workspaceDir === undefined ? undefined : join(workspaceDir, '.acryl-extensions'), home === undefined ? undefined : join(home, 'extensions')]
+  return [workspaceDir === undefined ? undefined : projectPluginsDir(workspaceDir), home === undefined ? undefined : homePluginsDir(home)]
 }
 
 const USAGE = 'Usage: /plugin list | saved | save <name or folder> | share <name or folder> [public] [owner/repo] | share <name> npm [public] [registry URL] | pull <source> | update <name> | version patch|minor|major <name or folder>. A source is store:<name>[@version], github:<owner>/<repo>[@version], npm:<name>[@version], a .tgz file or https URL.'
@@ -80,7 +80,7 @@ export async function runPluginCommand(rawInput, hub, where) {
       const target = rest.join(' ')
       if (target === '') return { kind: 'error', text: USAGE }
       const folder = findSourceFolder(target, sourceRoots(where))
-      if (folder === undefined) return { kind: 'error', text: `No plugin folder named ${JSON.stringify(target)} in this project's .acryl-extensions/ or the app's extensions/; give its absolute folder.` }
+      if (folder === undefined) return { kind: 'error', text: `No plugin folder named ${JSON.stringify(target)} in this project's .acryl-plugins/ or the app's plugins/; give its absolute folder.` }
       if (verb === 'version') {
         const bumped = hub.bump(folder, bump)
         return { kind: 'success', text: `${bumped.name}: ${bumped.from} -> ${bumped.to}. Install it again to run it, and save or share it to keep the new version.` }
@@ -95,7 +95,7 @@ export async function runPluginCommand(rawInput, hub, where) {
       const target = words[0]
       if (target === undefined || words.length > 2 || (words[1] !== undefined && !/^https?:\/\/\S+$/u.test(words[1]))) return { kind: 'error', text: USAGE }
       const folder = findSourceFolder(target, sourceRoots(where))
-      if (folder === undefined) return { kind: 'error', text: `No plugin folder named ${JSON.stringify(target)} in this project's .acryl-extensions/ or the app's extensions/; give its absolute folder.` }
+      if (folder === undefined) return { kind: 'error', text: `No plugin folder named ${JSON.stringify(target)} in this project's .acryl-plugins/ or the app's plugins/; give its absolute folder.` }
       const result = await hub.publishNpm(folder, { ...(words[1] ? { registry: words[1] } : {}), ...(isPublic ? { visibility: 'public' } : {}) })
       if (result.status === 'refused') return { kind: 'error', text: `Not published: ${result.reason}${(result.secrets ?? []).map(found => `\n- ${found.path}${found.line > 0 ? `:${found.line}` : ''} (${found.kind})`).join('')}` }
       return { kind: 'success', text: `Published ${result.name} ${result.version} to ${result.registry} (${result.access}), ${result.files.length} files.` }
@@ -107,7 +107,7 @@ export async function runPluginCommand(rawInput, hub, where) {
       const target = words[0]
       if (target === undefined || words.length > 2) return { kind: 'error', text: USAGE }
       const folder = findSourceFolder(target, sourceRoots(where))
-      if (folder === undefined) return { kind: 'error', text: `No plugin folder named ${JSON.stringify(target)} in this project's .acryl-extensions/ or the app's extensions/; give its absolute folder.` }
+      if (folder === undefined) return { kind: 'error', text: `No plugin folder named ${JSON.stringify(target)} in this project's .acryl-plugins/ or the app's plugins/; give its absolute folder.` }
       const [owner, repo] = (words[1] ?? '').split('/')
       const result = await hub.share(folder, { ...(owner ? { owner } : {}), ...(repo ? { repo } : {}), ...(isPublic ? { visibility: 'public' } : {}) })
       if (result.status === 'refused') return { kind: 'error', text: `Not shared: ${result.reason}${(result.secrets ?? []).map(found => `\n- ${found.path}${found.line > 0 ? `:${found.line}` : ''} (${found.kind})`).join('')}` }
@@ -140,7 +140,7 @@ export function pluginTools(hub, { approval, where }) {
   }
   const folderOf = (exec, target) => {
     const folder = findSourceFolder(String(target ?? ''), sourceRoots(where(exec)))
-    if (folder === undefined) throw new Error(`no plugin folder ${JSON.stringify(target)} in the project's .acryl-extensions/ or the app's extensions/; pass the ABSOLUTE folder`)
+    if (folder === undefined) throw new Error(`no plugin folder ${JSON.stringify(target)} in the project's .acryl-plugins/ or the app's plugins/; pass the ABSOLUTE folder`)
     return folder
   }
   const refusedBy = outcome => `the user did not allow it (${outcome}); tell them they can type the /plugin command themselves`

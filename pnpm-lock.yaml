@@ -3577,6 +3577,9 @@ importers:
       '@webboxes/blends-core':
         specifier: workspace:*
         version: link:../blends-core
+      '@webboxes/plugin-hub':
+        specifier: workspace:*
+        version: link:../plugin-hub
       acryl-agent-control:
         specifier: workspace:*
         version: link:../../plugins/acryl-agent-control
@@ -3653,9 +3656,6 @@ importers:
         specifier: ^2.9.0
         version: 2.9.0
     devDependencies:
-      '@webboxes/plugin-hub':
-        specifier: workspace:*
-        version: link:../plugin-hub
       '@deepseek-ai/cordis':
         specifier: 4.0.4
         version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)

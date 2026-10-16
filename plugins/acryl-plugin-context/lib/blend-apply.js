@@ -1,19 +1,20 @@
 import { cpSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
+import { currentSourcePath } from '@webboxes/plugin-hub'
 import { installLocalPlugin, listLocalPlugins, removeLocalPlugin } from './install.js'
 import { canonical, installState } from './reconcile.js'
 import { verifyBlend } from './blend-capture.js'
 import { readLockfile } from './provenance.js'
 import { hashPackage } from './stage.js'
 import { describePermissions, readManifest } from './manifest.js'
-import { appHomeDir, projectExtensionsDir } from './scopes.js'
+import { appHomeDir, projectPluginsDir } from './scopes.js'
 
 /**
  * Re-create a captured Blend (see blend-capture.js) in the active profile: the inverse of `/blend snapshot`. Human-typed, like `/reload new`, because it installs code
  * that runs with the user's permissions; the summary lists what each module requests.
  *
  *  1. verify the Blend against its own lock (nothing is installed from a Blend that no longer matches it);
- *  2. local modules: place the vendored source in the project extension scope (`<workspace>/.acryl-extensions/<name>/`, never overwriting a folder that differs) and install it through
+ *  2. local modules: place the vendored source in the project plugin scope (`<workspace>/.acryl-plugins/<name>/`, never overwriting a folder that differs) and install it through
  *     the same pipeline as everything else, so `/reload`, the startup pass and provenance apply to it unchanged;
  *  3. registry modules: `dsh plugin add name@version`, then compare the lockfile integrity with the locked digest and undo the install on a mismatch;
  *  4. modules already installed at the locked state are left alone (idempotent).
@@ -33,9 +34,10 @@ export async function applyBlend(blendDir, services, options, fs = { existsSync,
 
   for (const module of lock.modules ?? []) {
     if (module.origin === 'local') {
-      const vendored = join(blendDir, module.source)
+      // A lock written before the folders were renamed names `extensions/<name>`: found where it was moved.
+      const vendored = currentSourcePath(join(blendDir, module.source))
       // In an app the Blend folder is the app: its modules are already in their place and install from there.
-      const folder = appHomeDir() !== undefined ? vendored : join(projectExtensionsDir(options.workspaceDir), basename(module.source))
+      const folder = appHomeDir() !== undefined ? vendored : join(projectPluginsDir(options.workspaceDir), basename(module.source))
       // A folder of the same name that differs from the locked source is somebody's work: report, never overwrite.
       if (fs.existsSync(join(folder, 'package.json')) && `sha256:${hashPackage(folder, 64)}` !== module.digest) {
         results.push({ name: module.name, origin: 'local', status: 'conflict', detail: `${folder} already exists and differs from the locked source; move it or re-capture` })

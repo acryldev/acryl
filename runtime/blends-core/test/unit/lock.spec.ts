@@ -120,10 +120,10 @@ describe('generateLock v2 (spec-004, FR-M4-1, FR-M4-2)', () => {
     const { definition } = resolveDefinition(doc)
     const a = generateLock(definition!, origin, undefined, [
       { name: 'zeta', origin: 'git', spec: 'git+https://example.test/zeta' },
-      { name: 'alpha', origin: 'local', version: '0.1.0', digest: 'sha256:1', source: '.acryl-extensions/alpha' },
+      { name: 'alpha', origin: 'local', version: '0.1.0', digest: 'sha256:1', source: '.acryl-plugins/alpha' },
     ])
     const b = generateLock(definition!, origin, undefined, [
-      { name: 'alpha', origin: 'local', version: '0.1.0', digest: 'sha256:1', source: '.acryl-extensions/alpha' },
+      { name: 'alpha', origin: 'local', version: '0.1.0', digest: 'sha256:1', source: '.acryl-plugins/alpha' },
       { name: 'zeta', origin: 'git', spec: 'git+https://example.test/zeta' },
     ])
     expect(a.json).toBe(b.json)

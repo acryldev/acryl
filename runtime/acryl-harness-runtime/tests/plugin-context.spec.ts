@@ -110,7 +110,7 @@ describe('/reload on the web engine', () => {
       }
       expect(commands.list(agent).map(command => command.name)).toContain('reload')
       const execution = await commands.execute(agent, '/reload', [], new AbortController().signal)
-      expect(execution?.result).toMatchObject({ kind: 'success', text: 'No local extensions installed or found in <workspace>/.acryl-extensions/ or the global extensions directory.' })
+      expect(execution?.result).toMatchObject({ kind: 'success', text: 'No local plugins installed or found in <workspace>/.acryl-plugins/ or the global plugins folder.' })
     } finally {
       await bridge.dispose()
       await host.dispose()
@@ -139,8 +139,8 @@ describe('/reload on the web engine', () => {
     const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-ws-'))
     temporaryHomes.push(workspace)
     const source = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
-    const target = join(workspace, '.acryl-extensions', 'dropped-tool')
-    mkdirSync(join(workspace, '.acryl-extensions'), { recursive: true })
+    const target = join(workspace, '.acryl-plugins', 'dropped-tool')
+    mkdirSync(join(workspace, '.acryl-plugins'), { recursive: true })
     cpSync(source, target, { recursive: true })
     const host = await createAcrylEngineHost({
       engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
@@ -181,7 +181,7 @@ describe('/reload on the web engine', () => {
     const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-global-ws-'))
     temporaryHomes.push(workspace)
     const source = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
-    cpSync(source, join(home, 'extensions', 'global-tool'), { recursive: true })
+    cpSync(source, join(home, 'plugins', 'global-tool'), { recursive: true })
     const host = await createAcrylEngineHost({
       engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
       initialEngine: 'dsh',
@@ -202,7 +202,7 @@ describe('/reload on the web engine', () => {
       expect(again).toContain('acryl-example-tool [global]: unchanged')
       expect(again).not.toContain('Reload the page')
       // A project folder is listed with its own scope tag.
-      cpSync(source, join(workspace, '.acryl-extensions', 'project-tool'), { recursive: true })
+      cpSync(source, join(workspace, '.acryl-plugins', 'project-tool'), { recursive: true })
       expect(await run('/reload')).toContain('[project]: NEW, not installed')
     } finally {
       await bridge.dispose()
@@ -217,7 +217,7 @@ describe('/reload on the web engine', () => {
     const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-startup-ws-'))
     temporaryHomes.push(workspace)
     const source = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
-    const target = join(home, 'extensions', 'startup-tool')
+    const target = join(home, 'plugins', 'startup-tool')
     cpSync(source, target, { recursive: true })
     const manifestPath = join(target, 'package.json')
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
@@ -266,7 +266,7 @@ describe('/reload on the web engine', () => {
     const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-blend-ws-'))
     temporaryHomes.push(workspace)
     const source = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
-    cpSync(source, join(workspace, '.acryl-extensions', 'blend-tool'), { recursive: true })
+    cpSync(source, join(workspace, '.acryl-plugins', 'blend-tool'), { recursive: true })
     const host = await createAcrylEngineHost({
       engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
       initialEngine: 'dsh',
@@ -287,16 +287,16 @@ describe('/reload on the web engine', () => {
       const out = join(workspace, '.acryl', 'blend')
       const lock = JSON.parse(readFileSync(join(out, 'blend.lock.json'), 'utf8'))
       expect(lock.formatVersion).toBe(2)
-      expect(lock.modules).toEqual([expect.objectContaining({ name: 'acryl-example-tool', origin: 'local', source: 'extensions/acryl-example-tool' })])
-      expect(existsSync(join(out, 'extensions', 'acryl-example-tool', 'index.js'))).toBe(true)
+      expect(lock.modules).toEqual([expect.objectContaining({ name: 'acryl-example-tool', origin: 'local', source: 'plugins/acryl-example-tool' })])
+      expect(existsSync(join(out, 'plugins', 'acryl-example-tool', 'index.js'))).toBe(true)
       expect(readFileSync(join(out, 'blend.yaml'), 'utf8')).toContain('name: acryl-example-tool')
       expect((await run('/blend verify'))?.text).toContain('ledger: 1 entries, chain intact')   // the capture itself is the first ledger entry
       // From now on this workspace tracks a Blend: a plugin installed later is one line of history.
-      cpSync(source, join(workspace, '.acryl-extensions', 'second-tool'), { recursive: true })
-      const secondManifest = JSON.parse(readFileSync(join(workspace, '.acryl-extensions', 'second-tool', 'package.json'), 'utf8'))
-      writeFileSync(join(workspace, '.acryl-extensions', 'second-tool', 'package.json'), JSON.stringify({ ...secondManifest, name: 'acryl-second-tool' }))
-      writeFileSync(join(workspace, '.acryl-extensions', 'second-tool', 'cordis.patch.yml'), '- insert:\n    - id: second-tool\n      name: acryl-second-tool\n')
-      writeFileSync(join(workspace, '.acryl-extensions', 'second-tool', 'index.js'), "export const name = 'acryl-second-tool'\nexport function apply() {}\n")   // registers nothing, so it cannot clash with the first tool
+      cpSync(source, join(workspace, '.acryl-plugins', 'second-tool'), { recursive: true })
+      const secondManifest = JSON.parse(readFileSync(join(workspace, '.acryl-plugins', 'second-tool', 'package.json'), 'utf8'))
+      writeFileSync(join(workspace, '.acryl-plugins', 'second-tool', 'package.json'), JSON.stringify({ ...secondManifest, name: 'acryl-second-tool' }))
+      writeFileSync(join(workspace, '.acryl-plugins', 'second-tool', 'cordis.patch.yml'), '- insert:\n    - id: second-tool\n      name: acryl-second-tool\n')
+      writeFileSync(join(workspace, '.acryl-plugins', 'second-tool', 'index.js'), "export const name = 'acryl-second-tool'\nexport function apply() {}\n")   // registers nothing, so it cannot clash with the first tool
       const reloadNew = (await run('/reload new'))?.text
       expect(reloadNew, String(reloadNew)).toContain('installed (new)')
       const ledger = (await run('/blend ledger'))?.text ?? ''
@@ -308,7 +308,7 @@ describe('/reload on the web engine', () => {
       writeFileSync(ledgerFile, `${[lines[0].replace('captured', 'applied'), lines[1]].join('\n')}\n`)
       expect((await run('/blend verify'))?.text).toContain('line 2 does not follow line 1')
       writeFileSync(ledgerFile, `${lines.join('\n')}\n`)
-      writeFileSync(join(out, 'extensions', 'acryl-example-tool', 'index.js'), '// tampered\n')
+      writeFileSync(join(out, 'plugins', 'acryl-example-tool', 'index.js'), '// tampered\n')
       const broken = await run('/blend verify')
       expect(broken?.kind).toBe('error')
       expect(broken?.text).toContain('differs from the locked digest')
@@ -340,7 +340,7 @@ describe('/reload on the web engine', () => {
     const homeA = await mkdtemp(join(tmpdir(), 'acryl-blend-a-')); temporaryHomes.push(homeA)
     const wsA = await mkdtemp(join(tmpdir(), 'acryl-blend-a-ws-')); temporaryHomes.push(wsA)
     process.env.DSH_HOME = homeA
-    cpSync(source, join(wsA, '.acryl-extensions', 'round-trip'), { recursive: true })
+    cpSync(source, join(wsA, '.acryl-plugins', 'round-trip'), { recursive: true })
     let host = await boot()
     let session = await runner(host, 'blend-a', wsA)
     try {
@@ -360,7 +360,7 @@ describe('/reload on the web engine', () => {
       const applied = await session.run('/blend apply')
       expect(applied?.kind).toBe('success')
       expect(applied?.text).toContain('acryl-example-tool [local]: installed')
-      expect(existsSync(join(wsB, '.acryl-extensions', 'acryl-example-tool', 'index.js'))).toBe(true)
+      expect(existsSync(join(wsB, '.acryl-plugins', 'acryl-example-tool', 'index.js'))).toBe(true)
       const again = await session.run('/blend apply')
       expect(again?.text).toContain('acryl-example-tool [local]: unchanged')   // idempotent
       expect((await session.run('/reload'))?.text).toContain('acryl-example-tool [project]: unchanged')
@@ -373,7 +373,7 @@ describe('/reload on the web engine', () => {
     process.env.DSH_HOME = home
     const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-hot-ws-'))
     temporaryHomes.push(workspace)
-    const dir = join(workspace, '.acryl-extensions', 'probe')
+    const dir = join(workspace, '.acryl-plugins', 'probe')
     mkdirSync(dir, { recursive: true })
     const write = (entryText: string, helperText: string, extra = '') => {
       writeFileSync(join(dir, 'package.json'), JSON.stringify({
@@ -482,7 +482,7 @@ describe('/reload on the web engine', () => {
     process.env.DSH_HOME = home
     const workspace = await mkdtemp(join(tmpdir(), 'acryl-extension-throw-ws-'))
     temporaryHomes.push(workspace)
-    const dir = join(workspace, '.acryl-extensions', 'thrower')
+    const dir = join(workspace, '.acryl-plugins', 'thrower')
     mkdirSync(dir, { recursive: true })
     writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'acryl-thrower', version: '0.1.0', type: 'module', main: './index.js', exports: { '.': './index.js', './package.json': './package.json' }, dsh: { bundle: { patch: './cordis.patch.yml' } } }))
     writeFileSync(join(dir, 'cordis.patch.yml'), '- insert:\n    - id: thrower\n      name: acryl-thrower\n')

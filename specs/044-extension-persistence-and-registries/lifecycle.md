@@ -46,6 +46,11 @@ The owner: "let's always call it the same way as the DSH community calls it, 'pl
   - the agent tools (`acryl_plugin_lookup`, `acryl_plugin_docs` from `acryl_extension_*`) and skills (`acryl-build-plugin`, `acryl-share-plugin`, `acryl-remove-plugin`);
   - docs and UI text; the generated docs are regenerated, not hand-edited.
   Spec folder names (`specs/044-extension-persistence-and-registries/`) and past log entries are history and keep their names.
+- **How 1b is built (2026-10-16)**, in four commits, each gated, each read back by installed apps:
+  - **The context plugin**: package and folder `acryl-plugin-context`, its Loader row id the same (the old row id `extension-context` also broke the row-naming rule), the Blueprint row `plugin-context`. A Blend or Blueprint someone wrote keeps working: `acryl-extension-context` and `extension-context` are read as the new names (an alias, kept, never written); a disable kept for `include:extension-context` in `state.json` applies to the new row and moves to its id on the next switch.
+  - **The agent's tool, prompt section, service and skills**: the tool `acryl_plugin_lookup`, the prompt section `acryl:plugin-router` tagged `<acryl_plugin_docs>`, the service `pluginContext`; the skills `acryl-build-plugin`, `acryl-share-plugin`, `acryl-remove-plugin`. The generated prompt copies are regenerated.
+  - **The folders**: a project's source plugins in `.acryl-plugins/`; an app's own source plugins in `<app home>/plugins/` (it was `extensions/`), and its plugin store in `<app home>/plugins/.store/` (it was `plugins/store/`; a dot name is never a plugin name, so the store and a plugin named `store` cannot collide). Each old folder is moved to its new place the first time it is needed (`@webboxes/plugin-hub` `folders.ts`, the one place these names are written): renamed whole when the new one does not exist, otherwise entry by entry, and an entry whose name is already taken stays in the old folder and is reported. An install that recorded its source under an old name, and a Blend lock naming `extensions/<name>`, find it where it was moved. Nothing is deleted except an old folder left empty.
+  - **Words**: docs, UI text, results and messages say "plugin".
 
 ## Names and nesting (owner, 2026-10-15; D9 open)
 

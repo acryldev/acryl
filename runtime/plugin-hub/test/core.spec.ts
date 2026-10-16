@@ -145,7 +145,8 @@ describe('packing a source folder', () => {
   })
 
   const npmAvailable = (() => { try { execFileSync('npm', ['--version'], { stdio: 'ignore' }); return true } catch { return false } })()
-  const quickNotes = fileURLToPath(new URL('../../../.acryl-extensions/acryl-quick-notes/', import.meta.url))
+  // The repository's own quick-notes source, when the checkout has one (untracked); looked for under both folder names, never moved by a test.
+  const quickNotes = ['.acryl-plugins', '.acryl-extensions'].map(folder => fileURLToPath(new URL(`../../../${folder}/acryl-quick-notes/`, import.meta.url))).find(dir => existsSync(join(dir, 'package.json'))) ?? ''
   it.skipIf(!npmAvailable || !existsSync(join(quickNotes, 'package.json')))('packs the same files as npm pack (quick-notes)', () => {
     const out = temp()
     const json = execFileSync('npm', ['pack', '--json', '--dry-run', '--ignore-scripts', quickNotes], { cwd: out, encoding: 'utf8' })
