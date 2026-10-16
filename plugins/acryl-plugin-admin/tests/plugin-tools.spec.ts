@@ -5,7 +5,7 @@ import type { PluginLifecycleEntryView, PluginLifecycleReceipt, PluginLifecycleS
 import { describePluginChange, PLUGIN_LIST_TOOL, PLUGIN_SET_ENABLED_TOOL, registerPluginTools } from '../src/tools/plugin-tools.ts'
 
 const entry = (over: Partial<PluginLifecycleEntryView>): PluginLifecycleEntryView => ({
-  entryId: 'include:x', moduleName: 'x', enabled: true, hostPhase: 'active', clientPackage: null, clientInBootGraph: false, mutable: true, protectedReason: null, dependents: [], ...over,
+  entryId: 'include:x', moduleName: 'x', enabled: true, hostPhase: 'active', clientPackage: null, clientInBootGraph: false, version: null, mutable: true, protectedReason: null, dependents: [], ...over,
 })
 const SNAPSHOT: PluginLifecycleSnapshot = {
   blend: null,

@@ -10,6 +10,7 @@ export type PluginLifecycleLocaleKey =
   | 'empty'
   | 'host'
   | 'client'
+  | 'version'
   | 'configuration'
   | 'enabled'
   | 'disabled'
@@ -59,6 +60,7 @@ export const en: Record<PluginLifecycleLocaleKey, string> = {
   empty: 'No plugins match this search.',
   host: 'Host',
   client: 'Client',
+  version: 'Version',
   configuration: 'Configuration',
   enabled: 'Enabled',
   disabled: 'Disabled',
@@ -109,6 +111,7 @@ export const zh: Record<PluginLifecycleLocaleKey, string> = {
   empty: '没有匹配的插件。',
   host: 'Host',
   client: 'Client',
+  version: '版本',
   configuration: '配置',
   enabled: '已启用',
   disabled: '已禁用',

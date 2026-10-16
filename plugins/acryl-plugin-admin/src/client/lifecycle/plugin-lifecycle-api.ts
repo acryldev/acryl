@@ -78,7 +78,7 @@ function parseEntry(value: unknown): PluginLifecycleEntryView {
   if (!isRecord(value)
     || !hasExactKeys(value, [
       'entryId', 'moduleName', 'enabled', 'hostPhase', 'clientPackage',
-      'clientInBootGraph', 'mutable', 'protectedReason', 'dependents',
+      'clientInBootGraph', 'version', 'mutable', 'protectedReason', 'dependents',
     ])) {
     throw new Error('acryl-plugin-admin: invalid plugin lifecycle entry')
   }
@@ -107,6 +107,7 @@ function parseEntry(value: unknown): PluginLifecycleEntryView {
     hostPhase: parsePhase(value.hostPhase),
     clientPackage,
     clientInBootGraph: value.clientInBootGraph,
+    version: value.version === null ? null : parseString(value.version, 'version'),
     mutable: value.mutable,
     protectedReason: value.protectedReason,
     dependents: Object.freeze([...value.dependents as string[]]),

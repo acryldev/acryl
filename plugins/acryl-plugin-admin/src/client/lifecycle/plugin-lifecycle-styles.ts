@@ -124,10 +124,26 @@ const CSS = `
 }
 
 .dshPluginLifecycleCardHeader strong {
+  display: flex;
   flex: 1 1 100%;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/* The name gives way on a narrow card; the version is never cut. */
+.dshPluginLifecycleName {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.dshPluginLifecycleVersion {
+  flex: none;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--dsw-alias-label-tertiary);
 }
 
 .dshPluginLifecycleSummary {

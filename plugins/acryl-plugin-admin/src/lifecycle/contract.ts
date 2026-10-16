@@ -22,6 +22,8 @@ export interface PluginLifecycleEntryView {
   readonly hostPhase: PluginLifecycleFiberPhase
   readonly clientPackage: string | null
   readonly clientInBootGraph: boolean
+  /** The installed package's version (spec 044: shown wherever a plugin is shown); null for a row that is not a package. */
+  readonly version: string | null
   readonly mutable: boolean
   readonly protectedReason: string | null
   /**

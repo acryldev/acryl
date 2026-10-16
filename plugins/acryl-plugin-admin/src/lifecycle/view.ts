@@ -96,6 +96,7 @@ export class PluginLifecycleView implements PluginLifecycleRouteController {
         ...entry,
         clientPackage,
         clientInBootGraph: clientPackage !== null && clientGraph.has(clientPackage),
+        version: this.packageVersion(entry.moduleName),
       })
     })
     return Object.freeze({ entries: Object.freeze(entries), blend: this.blendView() })
@@ -125,6 +126,22 @@ export class PluginLifecycleView implements PluginLifecycleRouteController {
         rows: blend.rows.length,
       })
       : Object.freeze({ locked: false as const, id: blend.id, name: blend.name, rows: blend.rows.length })
+  }
+
+  /**
+   * The installed version of the package a row loads (`acryl-plugin-hub/manager` is the `acryl-plugin-hub` package). Read on every snapshot,
+   * not cached: a live reinstall changes it.
+   */
+  private packageVersion(moduleName: string): string | null {
+    if (moduleName.startsWith('cordis:') || this.resolvePackageJson === undefined) return null
+    const parts = moduleName.split('/')
+    const packageName = moduleName.startsWith('@') ? parts.slice(0, 2).join('/') : parts[0] ?? moduleName
+    try {
+      const manifest = JSON.parse(readFileSync(this.resolvePackageJson(packageName), 'utf8')) as { version?: unknown }
+      return typeof manifest.version === 'string' ? manifest.version : null
+    } catch {
+      return null
+    }
   }
 
   private clientPackage(moduleName: string, graph: ReadonlySet<string>): string | null {

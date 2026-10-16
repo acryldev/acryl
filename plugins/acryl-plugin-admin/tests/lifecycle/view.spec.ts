@@ -1,3 +1,7 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import type { Context } from '@deepseek-ai/cordis'
 import type { AcrPluginLifecycle } from 'acryl-control'
@@ -40,6 +44,23 @@ describe('PluginLifecycleView', () => {
     ])
     expect(blend).toBeNull()
     expect(entries[0]).toMatchObject({ enabled: true, mutable: true, hostPhase: 'active' })
+  })
+
+  it('carries each row\'s installed package version, read from its package.json (a subpath row reads its package), null when there is none', () => {
+    const root = mkdtempSync(join(tmpdir(), 'plugin-admin-version-'))
+    try {
+      for (const [name, version] of [['acryl-workspace', '0.4.1'], ['acryl-plugin-hub', '0.1.0']] as const) {
+        mkdirSync(join(root, 'node_modules', name), { recursive: true })
+        writeFileSync(join(root, 'node_modules', name, 'package.json'), JSON.stringify({ name, version }))
+      }
+      const ctx = { baseUrl: pathToFileURL(join(root, 'index.js')).href, get: () => undefined } as unknown as Context
+      const rows = [['include:acryl-workspace', 'acryl-workspace'], ['include:acryl-plugin-hub/manager', 'acryl-plugin-hub/manager'], ['include:host-only', 'host-only']]
+      const shared = { snapshot: () => ({ entries: rows.map(([entryId, moduleName]) => ({ entryId, moduleName, enabled: true, hostPhase: 'active', mutable: false, protectedReason: 'x', dependents: [] })) }) }
+      const view = new PluginLifecycleView(ctx, shared as never)
+      expect(view.snapshot().entries.map(e => [e.moduleName, e.version])).toEqual([['acryl-workspace', '0.4.1'], ['acryl-plugin-hub/manager', '0.1.0'], ['host-only', null]])
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
   })
 
   it('shows the composed locked Blend when the surface has one, and none otherwise', () => {

@@ -12,6 +12,7 @@ const ENTRY = {
   hostPhase: 'active',
   clientPackage: 'acryl-development-canvas',
   clientInBootGraph: true,
+  version: '0.3.0',
   mutable: true,
   protectedReason: null,
   dependents: [],

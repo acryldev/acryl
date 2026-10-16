@@ -174,7 +174,7 @@ export function PluginLifecycleSettingsTab({ api, t }: PluginLifecycleSettingsTa
                     aria-controls={detailId}
                     onClick={() => { setExpanded(current => current === entry.entryId ? null : entry.entryId) }}
                   >
-                    <strong title={entry.moduleName}>{title}</strong>
+                    <strong title={entry.version === null ? entry.moduleName : `${entry.moduleName} ${entry.version}`}><span className={css.name}>{title}</span>{entry.version === null ? null : <span className={css.version}>{entry.version}</span>}</strong>
                     <span className={css.summary}>
                       <span data-mounted={entry.hostPhase === 'active'}>{t('host')}: {phaseLabel(entry.hostPhase, t)}</span>
                       <span data-mounted={entry.clientMounted}>{t('client')}: {clientLabel(entry, t)}</span>
@@ -185,6 +185,7 @@ export function PluginLifecycleSettingsTab({ api, t }: PluginLifecycleSettingsTa
                     <div className={css.details} id={detailId}>
                       <code>{entry.entryId}</code>
                       <dl>
+                        {entry.version === null ? null : <div><dt>{t('version')}</dt><dd>{entry.version}</dd></div>}
                         <div><dt>{t('configuration')}</dt><dd>{t(entry.enabled ? 'enabled' : 'disabled')}</dd></div>
                         <div><dt>{t('host')}</dt><dd>{phaseLabel(entry.hostPhase, t)}</dd></div>
                         <div><dt>{t('client')}</dt><dd>{clientLabel(entry, t)}</dd></div>

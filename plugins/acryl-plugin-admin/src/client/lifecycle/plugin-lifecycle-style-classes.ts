@@ -5,6 +5,8 @@ export const pluginLifecycleClasses = Object.freeze({
   catalogHeading: 'dshPluginLifecycleCatalogHeading',
   cardHeader: 'dshPluginLifecycleCardHeader',
   summary: 'dshPluginLifecycleSummary',
+  name: 'dshPluginLifecycleName',
+  version: 'dshPluginLifecycleVersion',
   actions: 'dshPluginLifecycleActions',
   catalog: 'dshPluginLifecycleCatalog',
   search: 'dshPluginLifecycleSearch',
