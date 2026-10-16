@@ -27,6 +27,8 @@ import {
   type PluginLifecycleHost,
 } from 'acryl-control'
 import {
+  clearProfilePatchDisable,
+  entryPatchId,
   readUserMutableBundleNames,
   setPluginLifecycleEntryEnabled,
   type PluginLifecycleStatePersistence,
@@ -159,8 +161,10 @@ export function createDshPluginLifecycleHost(
     refresh(): void {
       userBundleNames = readUserMutableBundleNames(options.profileDir)
     },
-    setEnabled(entryId: string, enabled: boolean): Promise<void> {
-      return setPluginLifecycleEntryEnabled(persistence, entryId, enabled)
+    async setEnabled(entryId: string, enabled: boolean): Promise<void> {
+      await setPluginLifecycleEntryEnabled(persistence, entryId, enabled)
+      // One store per row (spec 001 T089): a disable DSH's page once wrote into the profile patch would keep the row off.
+      if (enabled) await clearProfilePatchDisable(options.profileDir, entryPatchId(entryId))
     },
     bundleRow(packageName: string) {
       if (!isBundlePackage(packageName)) {

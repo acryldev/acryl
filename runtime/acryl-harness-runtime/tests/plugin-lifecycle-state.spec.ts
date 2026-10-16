@@ -1,8 +1,9 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
+  clearProfilePatchDisable,
   pluginLifecyclePatches,
   readDisabledPluginLifecycleEntries,
   resolvePluginLifecycleStatePath,
@@ -149,5 +150,37 @@ describe('plugin lifecycle state', () => {
       'has spaces and slashes//',
       false,
     )).rejects.toThrow('malformed')
+  })
+
+  it('clears a disable the old DSH page wrote for one row, keeping comments and every other row and key (T089)', async () => {
+    const dir = dirname(statePath())
+    mkdirSync(dir, { recursive: true })
+    const patch = join(dir, 'cordis.patch.yml')
+    expect(await clearProfilePatchDisable(dir, 'probe')).toBe(false)
+    writeFileSync(patch, [
+      '# my profile',
+      '- insert:',
+      '    - id: probe',
+      '      name: probe',
+      '# switched off on the Plugins page',
+      '- id: probe',
+      '  disabled: true',
+      '- id: other',
+      '  disabled: true',
+      '- id: probe',
+      '  name: probe',
+      '  config: { limit: 3 }',
+      '  disabled: true',
+      '',
+    ].join('\n'))
+    expect(await clearProfilePatchDisable(dir, 'probe')).toBe(true)
+    const text = readFileSync(patch, 'utf8')
+    expect(text).toMatch(/# my profile/u)
+    expect(text).toMatch(/# switched off on the Plugins page\n- id: other/u)
+    expect(text).toMatch(/- id: other\n {2}disabled: true/u)
+    expect(text).toMatch(/- id: probe\n {2}name: probe\n {2}config: \{ limit: 3 \}\n/u)
+    expect(text.match(/disabled: true/gu)).toHaveLength(1)
+    expect(text).toMatch(/- insert:/u)
+    expect(await clearProfilePatchDisable(dir, 'probe')).toBe(false)
   })
 })

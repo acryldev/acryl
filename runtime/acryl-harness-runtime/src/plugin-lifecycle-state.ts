@@ -10,9 +10,10 @@
  */
 
 import { readFileSync } from 'node:fs'
-import { chmod, lstat, mkdir } from 'node:fs/promises'
+import { chmod, lstat, mkdir, readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { resolveProfileDir } from '@deepseek-ai/dsh-app-boot'
+import { PROFILE_PATCH_FILENAME, resolveProfileDir } from '@deepseek-ai/dsh-app-boot'
+import { isMap, isScalar, isSeq, parseDocument } from 'yaml'
 import { withFileLock, writeFileAtomic } from './engine-files.ts'
 import { resolveAcrylDshHome } from './acryl-home.ts'
 
@@ -266,6 +267,51 @@ export async function setPluginLifecycleEntryEnabled(
       mode: STATE_FILE_MODE,
       dirMode: STATE_DIRECTORY_MODE,
     })
+  })
+}
+
+/**
+ * Remove a disable DSH's own Plugins page wrote for one row into the profile's patch file (`{ id, disabled: true }`,
+ * `plugin-manager/src/patch.ts`), keeping every comment and every other key. Before spec 001 T089 both pages wrote, each
+ * to its own store, and a disable in either kept the row off however the other was set; now every toggle of a row ACRYL
+ * admits goes through this lifecycle (DSH's page too, through ACRYL's plugin manager), and an enable clears the old
+ * page's disable here, so the override file stays the row's only store. An entry left with only `id` (and `name`) is
+ * removed; one with other keys keeps them.
+ *
+ * @returns whether the patch file changed.
+ */
+export async function clearProfilePatchDisable(profileDir: string, patchId: string): Promise<boolean> {
+  const path = join(profileDir, PROFILE_PATCH_FILENAME)
+  return withFileLock(path, async () => {
+    let text: string
+    try {
+      text = await readFile(path, 'utf8')
+    } catch (cause) {
+      if ((cause as NodeJS.ErrnoException).code === 'ENOENT') return false
+      throw cause
+    }
+    const document = parseDocument(text, { customTags: [{ tag: 'tag:yaml.org,2002:js', resolve: (value: string) => value }] })
+    if (document.errors.length > 0 || !isSeq(document.contents)) return false
+    const items = document.contents.items
+    let changed = false
+    for (let index = items.length - 1; index >= 0; index -= 1) {
+      const item = items[index]
+      if (!isMap(item) || item.has('insert') || document.getIn([index, 'id']) !== patchId || document.getIn([index, 'disabled']) !== true) continue
+      item.delete('disabled')
+      if (item.items.every(pair => ['id', 'name'].includes(String(isScalar(pair.key) ? pair.key.value : pair.key)))) {
+        // A comment written above the removed entry stays, above whatever follows it.
+        const comment = item.commentBefore
+        items.splice(index, 1)
+        if (comment !== undefined && comment !== null) {
+          const next = items[index] as { commentBefore?: string | null } | undefined
+          if (next !== undefined && next !== null && typeof next === 'object') next.commentBefore = next.commentBefore ? `${comment}\n${next.commentBefore}` : comment
+          else document.comment = document.comment ? `${document.comment}\n${comment}` : comment
+        }
+      }
+      changed = true
+    }
+    if (changed) await writeFileAtomic(path, String(document), { mode: STATE_FILE_MODE })
+    return changed
   })
 }
 
