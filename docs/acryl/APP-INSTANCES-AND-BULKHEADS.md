@@ -43,9 +43,14 @@ project), `definitionFile` (`blend.yaml`), `runLockFile`.
 | `pinnedInstance` | a caller set ACRYL_HOME (or a legacy DSH_HOME) | as given | 3080 unless ACRYL_WEB_PORT | `ACRYL` unless ACRYL_LOCAL_PRODUCT_NAME |
 
 `select.ts` is the only code that reads the environment or the OS home. Precedence: ACRYL_HOME (an app when it has `blend.yaml`), then a legacy DSH_HOME, then
-a git-worktree checkout, then the development app when asked, then the default. ACRYL_WEB_PORT, ACRYL_INSTANCE and ACRYL_LOCAL_PRODUCT_NAME refine the chosen
-family; `instanceEnvironment(instance)` writes exactly those variables, so a family crosses a process boundary (launcher to app, app to pinned harness)
-unchanged. A test round-trips every kind.
+a git-worktree checkout, then the development app when asked, then the default. ACRYL_WEB_PORT, ACRYL_WEB_HOST, ACRYL_WEB_TRUSTED_HOSTS, ACRYL_INSTANCE and
+ACRYL_LOCAL_PRODUCT_NAME refine the chosen family; `instanceEnvironment(instance)` writes exactly those variables, so a family crosses a process boundary
+(launcher to app, app to pinned harness) unchanged. A test round-trips every kind.
+
+`webAccess` says who may reach the Web server. Every family listens on loopback with no extra names. ACRYL_WEB_HOST (`0.0.0.0`, `::`, or a loopback
+address) and ACRYL_WEB_TRUSTED_HOSTS (comma-separated `host[:port]` names, such as a proxy's public host) open it further: the web composition patches the
+`webserver` row's host and adds the names to `dsh-client-connection`'s `trustedHosts`, whose `/api` fence refuses any other non-loopback `Host`. This is for
+a container behind its own sign-in (`distribution/acryl-web-container/`); the launch token still guards the index.
 
 Where it is chosen (each is a composition root): the Web and CLI engine compositions (`engine-dsh.ts`), the direct boots (`bootAcrylHarnessProfile`,
 `bootAcrylWebProfile`), Desktop's `main.ts`, the dev launchers (`scripts/dev-local.mjs`, `scripts/blank.mjs`, the Web and CLI `bin/dev-run.mjs` through
@@ -71,7 +76,7 @@ Never test the guard, or anything that boots an app, with a command that can fal
 
 ## Rules for contributors
 
-- Never call `homedir()` or read ACRYL_HOME, DSH_HOME, ACRYL_WEB_PORT, ACRYL_INSTANCE or ACRYL_LOCAL_PRODUCT_NAME outside `instance/select.ts`. Take an
+- Never call `homedir()` or read ACRYL_HOME, DSH_HOME, ACRYL_WEB_PORT, ACRYL_WEB_HOST, ACRYL_WEB_TRUSTED_HOSTS, ACRYL_INSTANCE or ACRYL_LOCAL_PRODUCT_NAME outside `instance/select.ts`. Take an
   `AppInstance` as a parameter, or read the `appInstance` service. `tests/bulkhead.spec.ts` fails otherwise; its allow-list names the only exceptions and why.
 - A new kind of state an app keeps is a new member of the family (or a path under `home`), never a new lookup.
 - A new resource two apps could share (a port range, a socket, a cache) is either derived from the instance id or guarded by the offline lock.
