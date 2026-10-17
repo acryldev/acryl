@@ -603,6 +603,7 @@
     },
     "nsis": {
       "license": "THIRD_PARTY_NOTICES.md",
+      "include": "build/installer.nsh",
       "oneClick": false,
       "perMachine": false,
       "allowElevation": true,

@@ -613,6 +613,7 @@ describe('published package surface', () => {
     expect(manifest.build?.win?.artifactName).toBe('acryl-desktop-win-${arch}-v${version}.${ext}')
     expect(manifest.build?.nsis).toEqual({
       license: 'THIRD_PARTY_NOTICES.md',
+      include: 'build/installer.nsh',
       oneClick: false,
       perMachine: false,
       allowElevation: true,
@@ -624,6 +625,9 @@ describe('published package surface', () => {
       useZip: false,
       artifactName: 'acryl-desktop-win-${arch}-v${version}.${ext}',
     })
+    // An uninstall removes the installer copy electron-builder keeps for differential updates, and an update keeps it (spec 001 T090).
+    const nsisInclude = readFileSync(new URL('build/installer.nsh', packageRoot), 'utf8')
+    expect(nsisInclude).toMatch(/!macro customUnInstall[\s\S]*\$\{ifNot\} \$\{isUpdated\}[\s\S]*\$\{GetParent\} "\$LOCALAPPDATA\\\$\{APP_INSTALLER_STORE_FILE\}" \$R0\s+RMDir \/r "\$R0"[\s\S]*!macroend/u)
     expect(manifest.build?.linux?.icon).toBe('build/app-icon.png')
     expect(manifest.build?.linux?.artifactName).toBe('acryl-desktop-linux-${arch}-v${version}.${ext}')
   })
