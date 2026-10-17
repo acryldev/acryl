@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { ProjectRegistryView, WorkspaceSummary } from '../../src/projects/contract.ts'
 import { CONTEXT_PROMPT_BUDGET, renderContextPrompt } from '../../src/shared-context/render.ts'
-import { SharedContext, checkoutOf, isInside } from '../../src/shared-context/service.ts'
+import { SharedContext, checkoutOf, isInside, samePlaceOrInside } from '../../src/shared-context/service.ts'
 
 const dirs: string[] = []
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }) })
@@ -65,8 +65,10 @@ describe('isInside and checkoutOf', () => {
     const linked = join(temp('elsewhere'), 'feature')
     execFileSync('git', ['worktree', 'add', '-q', '-b', 'feature', linked], { cwd: main })
     mkdirSync(join(linked, 'src'))
-    expect(checkoutOf(join(linked, 'src'))).toBe(main)
+    // Git writes the pointer its own way (on Windows long names where the temp folder may be an 8.3 short name), so compare the folders, not the text.
+    expect(realpathSync.native(checkoutOf(join(linked, 'src')) ?? '')).toBe(realpathSync.native(main))
     expect(checkoutOf(join(main))).toBe(main)
+    expect(samePlaceOrInside(join(linked, 'src'), linked)).toBe(true)
   })
 })
 

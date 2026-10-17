@@ -4,7 +4,7 @@
  * Provided as the `acrylSharedContext` service, so another mechanism can replace it (FR-005).
  */
 
-import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, realpathSync, renameSync, statSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import type { ProjectRegistryView, WorkspaceSummary } from '../projects/contract.ts'
 import { contextLaunch, type ContextLaunch } from './launch.ts'
@@ -43,7 +43,8 @@ export function isInside(path: string, folder: string): boolean {
 
 /**
  * The checkout a folder belongs to: the nearest folder above it with `.git`; for a linked worktree (`.git` is a file pointing into
- * `<main>/.git/worktrees/<name>`), the main checkout. Synchronous and git-free, so a prompt provider can call it.
+ * `<main>/.git/worktrees/<name>`), the main checkout. Synchronous and git-free, so a prompt provider can call it. The main checkout is spelled
+ * the way git wrote it (on Windows long names and `/`, turned into native separators here), so compare it with `samePlaceOrInside`, not as text.
  */
 export function checkoutOf(folder: string): string | undefined {
   for (let current = resolve(folder); ; current = dirname(current)) {
@@ -53,7 +54,7 @@ export function checkoutOf(folder: string): string | undefined {
         if (statSync(marker).isFile()) {
           const pointer = /^gitdir:\s*(.+)$/mu.exec(readFileSync(marker, 'utf8'))?.[1]?.trim()
           const at = pointer?.search(/[\\/]\.git[\\/]worktrees[\\/]/u) ?? -1
-          if (pointer !== undefined && at > 0) return pointer.slice(0, at)
+          if (pointer !== undefined && at > 0) return resolve(pointer.slice(0, at))
         }
       } catch {
         // An unreadable marker: the folder itself is the checkout.
@@ -62,6 +63,20 @@ export function checkoutOf(folder: string): string | undefined {
     }
     if (dirname(current) === current) return undefined
   }
+}
+
+/** A path as the file system names it (Windows 8.3 short names, letter case and symlinks resolved); a missing path only resolved. */
+function canonical(path: string): string {
+  try {
+    return realpathSync.native(path)
+  } catch {
+    return resolve(path)
+  }
+}
+
+/** `path` is `folder` or below it, however each is spelled (see `canonical`). */
+export function samePlaceOrInside(path: string, folder: string): boolean {
+  return isInside(path, folder) || isInside(canonical(path), canonical(folder))
 }
 
 export class SharedContext {
@@ -88,7 +103,7 @@ export class SharedContext {
     const view = this.deps.registry.view()
     const checkout = checkoutOf(folder)
     const places = checkout === undefined ? [folder] : [folder, checkout]
-    const holds = (workspace: WorkspaceSummary): boolean => workspace.kind === 'shared' && workspace.projects.some(project => places.some(place => isInside(place, project)))
+    const holds = (workspace: WorkspaceSummary): boolean => workspace.kind === 'shared' && workspace.projects.some(project => places.some(place => samePlaceOrInside(place, project)))
     const shown = view.workspaces.find(workspace => workspace.id === view.current)
     if (shown !== undefined && holds(shown)) return shown
     return view.workspaces.find(holds)
@@ -104,7 +119,7 @@ export class SharedContext {
       documentPath: this.documentPath(workspace.id),
       otherProjects: (start: string) => {
         const checkout = checkoutOf(start) ?? start
-        return workspace.projects.filter(project => !isInside(start, project) && !isInside(checkout, project))
+        return workspace.projects.filter(project => !samePlaceOrInside(start, project) && !samePlaceOrInside(checkout, project))
       },
     }
   }
