@@ -61,7 +61,8 @@ describe('the secret check', () => {
   })
 })
 
-describe('saving', () => {
+// Each save runs a dozen real git processes; on a hosted Windows runner that took 1 s in one run and 7.8 s in the next, past vitest's 5 s default.
+describe('saving', { timeout: 30_000 }, () => {
   it('commits the app (not its runtime data) and pushes to a connected private remote', () => {
     const root = temp(); const dir = app(root); const host = hosting(root)
     expect(connectRemote({ manifestText: manifest(), name: 'books' }, gitCli(dir), host)).toMatchObject({ status: 'connected', visibility: 'private', created: true })
