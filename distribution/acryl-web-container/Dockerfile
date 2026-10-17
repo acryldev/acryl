@@ -13,7 +13,7 @@ ARG NODE_VERSION=24.19.0
 
 # --- the archive, from a published release ---------------------------------------------------------------------------------------------------------------
 FROM debian:bookworm-slim AS archive-release
-ARG ACRYL_VERSION=0.2.4
+ARG ACRYL_VERSION=0.2.5
 ARG TARGETARCH
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl && rm -rf /var/lib/apt/lists/*
 RUN set -eu; \

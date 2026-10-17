@@ -1,6 +1,6 @@
 {
   "name": "acryl-control",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "private": false,
   "description": "Host-neutral Cordis control plane for ACRYL",
   "license": "MIT",
