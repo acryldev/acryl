@@ -146,6 +146,9 @@ jobs:
       - name: Build what the tests import
         run: corepack pnpm --filter "acryl-desktop..." --workspace-concurrency=1 run build
 
+      - name: Typecheck, as the release does before its tests
+        run: corepack pnpm run typecheck
+
       - name: Every package's tests, all failures listed
         run: |
           packages=$(node -p "require('./package.json').scripts.test.split('&&').map(step => step.match(/--filter (\\S+)/)[1]).join(' ')")

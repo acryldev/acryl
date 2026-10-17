@@ -1,6 +1,6 @@
 {
   "name": "acryl-cli",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "private": true,
   "description": "Canonical ACRYL pi-tui coding-agent terminal client",
   "license": "MIT",
@@ -29,6 +29,7 @@
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "pretypecheck": "node scripts/generate-build-info.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "pretest": "node scripts/generate-build-info.mjs",
     "test": "vitest run",
     "tui": "node lib/bin.js tui",
     "check": "pnpm run build && pnpm run typecheck && pnpm run test",
