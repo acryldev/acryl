@@ -46,6 +46,14 @@ docker logs ws-1 | grep '^ACRYL web:'
 The launch token is a credential: whoever has it can open the workspace. Read it from the container log on the host that owns the container, never
 put it in a URL a third party sees, and do not log it.
 
+## Isolation
+
+The container is the security boundary: run each workspace in its own container with its own volume, network rules and resource limits (memory,
+CPU, pids), as the host decides. Inside it, DSH still confines the agent's shell commands, but with its Landlock rung, not bubblewrap: bubblewrap
+needs unprivileged user namespaces, which Docker's default seccomp and AppArmor profiles refuse (tested on Ubuntu 24.04, Docker 28), and loosening
+those to allow it would weaken the container itself. On a kernel with an older Landlock ABI (6.8 is one) every command prints
+`landlock-run: partial enforcement (older Landlock ABI)` on stderr; that line is informational.
+
 ## Verify
 
 ```sh
