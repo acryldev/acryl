@@ -9,7 +9,7 @@
  *   checkout is a git worktree       the worktree's own home
  *   development requested            ~/.acryl-dev (the main checkout's `pnpm run dev`)
  *   nothing                          the default ~/.acryl
- * then ACRYL_WEB_PORT (explicit start port), ACRYL_INSTANCE (explicit project scope) and ACRYL_LOCAL_PRODUCT_NAME (Electron user data) refine the
+ * then ACRYL_WEB_PORT (explicit start port), ACRYL_WEB_HOST and ACRYL_WEB_TRUSTED_HOSTS (reachable beyond loopback, comma-separated names), ACRYL_INSTANCE (explicit project scope) and ACRYL_LOCAL_PRODUCT_NAME (Electron user data) refine the
  * chosen family: they are how `instanceEnvironment` hands a family to a child process.
  *
  * @module acryl-harness-runtime/instance/select
@@ -28,6 +28,7 @@ import {
   appFolderInstance,
   appName,
   defaultInstance,
+  withWebAccess,
   developmentInstance,
   pinnedInstance,
   withProjectScope,
@@ -122,6 +123,10 @@ export function selectInstance(options: SelectInstanceOptions = {}): AppInstance
     chosen = defaultInstance(osHome)
   }
   if (set(env.ACRYL_WEB_PORT)) chosen = withWebPort(chosen, Number(env.ACRYL_WEB_PORT.trim()))
+  if (set(env.ACRYL_WEB_HOST) || set(env.ACRYL_WEB_TRUSTED_HOSTS)) {
+    const trusted = (env.ACRYL_WEB_TRUSTED_HOSTS ?? '').split(',').map(name => name.trim()).filter(name => name.length > 0)
+    chosen = withWebAccess(chosen, set(env.ACRYL_WEB_HOST) ? env.ACRYL_WEB_HOST.trim() : chosen.webAccess.host, trusted)
+  }
   if (set(env.ACRYL_INSTANCE) && chosen.kind === 'pinned') chosen = withProjectScope(chosen, env.ACRYL_INSTANCE.trim())
   if (set(env.ACRYL_LOCAL_PRODUCT_NAME)) chosen = withUserDataName(chosen, env.ACRYL_LOCAL_PRODUCT_NAME.trim())
   if (set(env[REQUIRE_ISOLATED_HOME_ENV])) assertIsolated(chosen, osHome)

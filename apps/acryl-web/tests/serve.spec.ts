@@ -15,13 +15,28 @@
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { request } from 'node:http'
+import { createServer } from 'node:net'
+import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
+import { createAcrylEngineHost, createWebEngineDefinition } from 'acryl-harness-runtime'
 import { afterEach, describe, expect, it } from 'vitest'
 import { serveWeb } from '../src/serve.ts'
+
+const WEB_ACCESS_KEYS = ['ACRYL_WEB_HOST', 'ACRYL_WEB_PORT', 'ACRYL_WEB_TRUSTED_HOSTS'] as const
+const freePort = (): Promise<number> => new Promise((resolve, reject) => {
+  const server = createServer()
+  server.once('error', reject)
+  server.listen({ host: '0.0.0.0', port: 0 }, () => {
+    const address = server.address()
+    server.close(() => resolve(typeof address === 'object' && address !== null ? address.port : 0))
+  })
+})
 
 const temporaryHomes: string[] = []
 const initialAcrylHome = process.env.ACRYL_HOME
 
 afterEach(async () => {
+  for (const key of WEB_ACCESS_KEYS) delete process.env[key]
   if (initialAcrylHome === undefined) delete process.env.ACRYL_HOME
   else process.env.ACRYL_HOME = initialAcrylHome
   await Promise.all(temporaryHomes.splice(0).map(home => rm(home, { force: true, recursive: true })))
@@ -39,4 +54,33 @@ describe('serveWeb', () => {
     const url = new URL(result.url)
     expect(url.searchParams.get('token')).toBeTruthy()
   }, 30000)
+
+  it('serves beyond loopback when the instance asks (a container behind a proxy): all interfaces, trusted proxy names, a printable URL', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-web-access-'))
+    temporaryHomes.push(home)
+    const port = await freePort()
+    Object.assign(process.env, { ACRYL_HOME: home, ACRYL_WEB_HOST: '0.0.0.0', ACRYL_WEB_PORT: String(port), ACRYL_WEB_TRUSTED_HOSTS: 'ws-test.example.com' })
+
+    const printed = await serveWeb({ cmdlineArgs: ['--no-open'], waitForSignal: false })
+    expect(new URL(printed.url).host).toBe(`127.0.0.1:${String(port)}`)
+
+    const host = await createAcrylEngineHost({
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      initialEngine: 'dsh',
+      prepare: ctx => { provideCmdline(ctx, { args: ['--no-open'], exit: () => {} }) },
+    })
+    try {
+      expect(host.ctx.get('webServer')).toMatchObject({ host: '0.0.0.0', port })
+      // node:http, not fetch: fetch forbids setting Host, and Host is exactly what a proxy changes.
+      const status = (path: string, name: string) => new Promise<number>((resolve, reject) => {
+        request({ host: '127.0.0.1', port, path, headers: { host: name } }, response => { response.resume(); resolve(response.statusCode ?? 0) }).once('error', reject).end()
+      })
+      // The /api fence: a listed proxy name passes it (and then needs a session), an unlisted one is refused before authentication.
+      expect(await status('/api/ping', 'evil.example.com')).toBe(403)
+      expect(await status('/api/ping', 'ws-test.example.com')).not.toBe(403)
+      expect(await status('/', 'ws-test.example.com')).toBe(401)
+    } finally {
+      await host.dispose()
+    }
+  }, 60000)
 })

@@ -2,7 +2,7 @@
  * Bulkheads (spec 036, "Self-containment"). Two guarantees, tested where they could break:
  *
  * 1. Architecture: no code outside the selector (`src/instance/select.ts`) decides where an app lives. Reading ACRYL_HOME, DSH_HOME, ACRYL_WEB_PORT,
- *    ACRYL_INSTANCE or ACRYL_LOCAL_PRODUCT_NAME, or calling `homedir()`, anywhere else is how a run fell back to a shared home and blanked another app.
+ *    ACRYL_WEB_HOST, ACRYL_WEB_TRUSTED_HOSTS, ACRYL_INSTANCE or ACRYL_LOCAL_PRODUCT_NAME, or calling `homedir()`, anywhere else is how a run fell back to a shared home and blanked another app.
  * 2. Behavior: two apps booted on real engines at the same time share no file, profile, port or service value.
  */
 import { readdirSync, readFileSync, realpathSync, statSync, writeFileSync, mkdirSync } from 'node:fs'
@@ -32,7 +32,7 @@ const ALLOWED: Readonly<Record<string, string>> = {
 
 const AMBIENT = [
   { name: 'homedir()', pattern: /\bhomedir\(\)/u },
-  { name: 'a placement variable read', pattern: /\benv(?:\.|\[['"])(ACRYL_HOME|DSH_HOME|ACRYL_WEB_PORT|ACRYL_INSTANCE|ACRYL_LOCAL_PRODUCT_NAME)\b(?!['"]?\]?\s*=(?!=))/u },
+  { name: 'a placement variable read', pattern: /\benv(?:\.|\[['"])(ACRYL_HOME|DSH_HOME|ACRYL_WEB_PORT|ACRYL_WEB_HOST|ACRYL_WEB_TRUSTED_HOSTS|ACRYL_INSTANCE|ACRYL_LOCAL_PRODUCT_NAME)\b(?!['"]?\]?\s*=(?!=))/u },
 ]
 
 function sources(dir: string): string[] {
@@ -78,7 +78,7 @@ afterEach(async () => {
 
 async function bootApp(folder: string) {
   // What `bin/acryl` hands an app: its folder as its home.
-  for (const key of ['DSH_HOME', 'ACRYL_WEB_PORT', 'ACRYL_INSTANCE', 'ACRYL_LOCAL_PRODUCT_NAME', 'ACRYL_BLUEPRINT']) delete process.env[key]
+  for (const key of ['DSH_HOME', 'ACRYL_WEB_PORT', 'ACRYL_WEB_HOST', 'ACRYL_WEB_TRUSTED_HOSTS', 'ACRYL_INSTANCE', 'ACRYL_LOCAL_PRODUCT_NAME', 'ACRYL_BLUEPRINT']) delete process.env[key]
   process.env.ACRYL_HOME = folder
   const host = await createAcrylEngineHost({
     engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],

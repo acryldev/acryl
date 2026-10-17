@@ -61,8 +61,8 @@ import {
 import type { AcrylEngineDefinition } from './engine-host.ts'
 import { installAcrylWorkspaceStatusTool } from './plugin-acryl-workspace-status.ts'
 import { blueprintFromEnvironment, composeBlueprintRows } from './blueprint/index.ts'
-import { findFreeWebPort, webPortPatch } from './web-port.ts'
-import { selectInstance, type AppInstance } from './instance/index.ts'
+import { findFreeWebPort, loopbackPortIsFree, webPortPatch } from './web-port.ts'
+import { LOOPBACK_WEB_HOST, selectInstance, type AppInstance } from './instance/index.ts'
 import { claimProfile } from './profile-owner.ts'
 import { pluginLifecyclePatches, resolvePluginLifecycleStatePath } from './plugin-lifecycle-state.ts'
 import { installSessionLogExporter } from './session-log-exporter.ts'
@@ -700,6 +700,9 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
       id: 'connection',
       name: connectionRow.name,
       inject: withDeclaredDependency(connectionRow.inject, 'webServer'),
+      // A patch replaces the row's whole config, so the trusted names (a proxy's public host, from the instance's web access) merge into what the
+      // profile already set rather than dropping its recovery or cookie settings.
+      ...(instance.webAccess.trustedHosts.length === 0 ? {} : { config: { ...connectionConfig(connectionRow.config), trustedHosts: [...instance.webAccess.trustedHosts] } }),
     })
   }
   // Every ACRYL-owned row (brand, Market, extension pack, prompt shaping, UI library, shortcuts, mount anchors) comes from
@@ -709,10 +712,14 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   patches.push(...rowsComposition.patches)
   // A second instance beside one on the default port (spec 036): ACRYL_WEB_PORT moves the server.
   // The port is part of the app's family: a stable start, and the next free one when it is taken (never a fight with another app).
+  // The listening address is part of it too: loopback, unless a container entry point asked for every interface (ACRYL_WEB_HOST).
+  const webHost = instance.webAccess.host
   if (instance.webPort.scan) {
-    const webPort = await findFreeWebPort(instance.webPort.start)
+    const webPort = await findFreeWebPort(instance.webPort.start, port => loopbackPortIsFree(port, webHost))
     if (webPort !== instance.webPort.start) process.stdout.write(`ACRYL: port ${String(instance.webPort.start)} is in use, using ${String(webPort)}\n`)
-    patches.push(webPortPatch(webPort))
+    patches.push(webPortPatch(webPort, webHost))
+  } else if (webHost !== LOOPBACK_WEB_HOST) {
+    patches.push(webPortPatch(instance.webPort.start, webHost))
   }
   // Last, so a user override beats every composition decision above it - the
   // same shared store the CLI and the Desktop panel write (spec 034).
@@ -721,6 +728,11 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
     statePath: resolvePluginLifecycleStatePath(),
   }))
   return { rootConfig, patches, surface: 'web', instance, installPackageUrl, runtimeResolution: await createProfileRuntimeResolution(profile), profileContext: createProfileContext(profile, { home: instance.dshHome, instance, overlays: acrylAdditions(patches, { layerPatches: profileLayerPatches.length, userPatches: profile.patches.length, composedBeforeLater }) }), productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL' }
+}
+
+/** A Loader row's config as a plain object to merge into, or an empty one when the profile set none. */
+function connectionConfig(config: unknown): Record<string, unknown> {
+  return typeof config === 'object' && config !== null && !Array.isArray(config) ? { ...(config as Record<string, unknown>) } : {}
 }
 
 /**

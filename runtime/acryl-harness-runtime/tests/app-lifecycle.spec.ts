@@ -27,7 +27,7 @@ afterEach(async () => {
 })
 
 async function start(app: string) {
-  for (const key of ['DSH_HOME', 'ACRYL_WEB_PORT', 'ACRYL_INSTANCE', 'ACRYL_LOCAL_PRODUCT_NAME', 'ACRYL_BLUEPRINT']) delete process.env[key]
+  for (const key of ['DSH_HOME', 'ACRYL_WEB_PORT', 'ACRYL_WEB_HOST', 'ACRYL_WEB_TRUSTED_HOSTS', 'ACRYL_INSTANCE', 'ACRYL_LOCAL_PRODUCT_NAME', 'ACRYL_BLUEPRINT']) delete process.env[key]
   process.env.ACRYL_HOME = app
   const host = await createAcrylEngineHost({
     engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],

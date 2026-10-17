@@ -53,7 +53,10 @@ export async function serveWeb(
   // The listening server is the source of truth: a profile that moves the `webserver` row to another port (a second instance beside
   // one on 3080) would otherwise print the startup default and hand the user a dead URL.
   const listening = ctx.get('webServer') as { host?: string; port?: number } | undefined
-  const startupHost = listening?.host ?? startup?.host ?? '127.0.0.1'
+  const boundHost = listening?.host ?? startup?.host ?? '127.0.0.1'
+  // An all-interface bind (a container, ACRYL_WEB_HOST=0.0.0.0) is not an address a browser can open: print loopback, which works from the same machine
+  // or container; whoever exposes the server (a proxy, a port mapping) swaps the origin and keeps the token.
+  const startupHost = boundHost === '0.0.0.0' ? '127.0.0.1' : boundHost === '::' ? '[::1]' : boundHost
   const port = listening?.port ?? startup?.port ?? 3080
   const baseUrl = `http://${startupHost}:${port}`
   // The served index requires this process's launch token as its sole

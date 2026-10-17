@@ -2,10 +2,12 @@ export {
   APP_DEFINITION_FILE,
   AppInstanceError,
   DEFAULT_WEB_PORT,
+  LOOPBACK_WEB_HOST,
   MANAGED_HOMES_DIR_NAME,
   PROJECT_SCOPE,
   PROJECT_SCOPE_MAX,
   RUN_LOCK_FILE,
+  WEB_HOSTS,
   WORKTREE_WEB_PORT,
   appFolderInstance,
   appName,
@@ -18,10 +20,12 @@ export {
   stablePort,
   withProjectScope,
   withUserDataName,
+  withWebAccess,
   withWebPort,
   worktreeInstance,
   type AppInstance,
   type AppInstanceKind,
+  type WebAccess,
 } from './app-instance.ts'
 export { LockHeldError, acquireLock, processIsAlive, readLock, releaseLock, type LockHolder } from './offline-lock.ts'
 export {

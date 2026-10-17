@@ -5,6 +5,7 @@ import { WEB_PORT_ATTEMPTS, findFreeWebPort, loopbackPortIsFree, webPortPatch } 
 describe('finding a free port', () => {
   it('moves the server on the loopback address only', () => {
     expect(webPortPatch(3081)).toEqual({ id: 'webserver', config: { host: '127.0.0.1', port: 3081 } })
+    expect(webPortPatch(3080, '0.0.0.0')).toEqual({ id: 'webserver', config: { host: '0.0.0.0', port: 3080 } })
   })
 
   it('starts at the preferred port and moves up one at a time', async () => {

@@ -31,6 +31,11 @@ export interface AppInstance {
   readonly dshHome: string
   /** First Web port to try, and whether to move to the next free one when it is taken. */
   readonly webPort: { readonly start: number, readonly scan: boolean }
+  /**
+   * Who may reach the Web server: the address it listens on (loopback unless a caller such as a container entry point asks for `0.0.0.0`) and the extra
+   * names a browser reaches it by (a proxy's public host). Non-loopback names must be listed, or DSH's connection refuses the request.
+   */
+  readonly webAccess: WebAccess
   /** Electron's product and user-data folder name: separates window state, storage and the single-instance lock. */
   readonly userDataName: string
   /** Namespace for folders this app writes inside a project it opens; undefined keeps the classic shared locations. */
@@ -47,6 +52,15 @@ export interface AppInstance {
   readonly runLockFile: string
 }
 
+/** See {@link AppInstance.webAccess}. */
+export interface WebAccess {
+  readonly host: string
+  readonly trustedHosts: readonly string[]
+}
+
+export const LOOPBACK_WEB_HOST = '127.0.0.1'
+/** Bind addresses a caller may choose: loopback, or every interface (a container, where the network boundary is the container's own). */
+export const WEB_HOSTS: readonly string[] = Object.freeze([LOOPBACK_WEB_HOST, '0.0.0.0', '::1', '::'])
 export const DEFAULT_WEB_PORT = 3080
 export const WORKTREE_WEB_PORT = 3081
 export const APP_PORT_BASE = 3100
@@ -63,6 +77,8 @@ const NAME = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u
 /** A project-scope id (the extension pack validates the same shape before building a path from it). */
 export const PROJECT_SCOPE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u
 export const PROJECT_SCOPE_MAX = 64
+const TRUSTED_HOST = /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?(?::\d{1,5})?$/u
+const LOOPBACK_ACCESS: WebAccess = Object.freeze({ host: LOOPBACK_WEB_HOST, trustedHosts: Object.freeze([]) })
 
 export class AppInstanceError extends Error {
   constructor(message: string) {
@@ -105,6 +121,7 @@ function family(input: {
     home: input.home,
     dshHome: input.dshHome ?? join(input.home, ENGINE_DIR_NAME),
     webPort: Object.freeze({ ...input.webPort }),
+    webAccess: LOOPBACK_ACCESS,
     userDataName: input.userDataName,
     ...(input.projectScope === undefined ? {} : { projectScope: input.projectScope }),
     ...(input.kind === 'default' ? {} : { documentsDirectory: join(input.home, 'documents') }),
@@ -152,6 +169,18 @@ export function withWebPort(instance: AppInstance, start: number): AppInstance {
   return Object.freeze({ ...instance, webPort: Object.freeze({ start, scan: true }) })
 }
 
+/**
+ * The same family reachable beyond loopback (ACRYL_WEB_HOST, ACRYL_WEB_TRUSTED_HOSTS). The trusted names are checked again, strictly, by DSH's connection
+ * plugin at load; this only refuses what is plainly not a host name so the mistake surfaces at selection, with the variable's name.
+ */
+export function withWebAccess(instance: AppInstance, host: string, trustedHosts: readonly string[]): AppInstance {
+  if (!WEB_HOSTS.includes(host)) throw new AppInstanceError(`the web host must be one of ${WEB_HOSTS.join(', ')}, got ${JSON.stringify(host)}`)
+  for (const name of trustedHosts) {
+    if (!TRUSTED_HOST.test(name)) throw new AppInstanceError(`a trusted web host is a host name with an optional port (such as ws-1.example.com or ws-1.example.com:443), got ${JSON.stringify(name)}`)
+  }
+  return Object.freeze({ ...instance, webAccess: Object.freeze({ host, trustedHosts: Object.freeze([...trustedHosts]) }) })
+}
+
 /** A project-scope override (ACRYL_INSTANCE) for a pinned home. */
 export function withProjectScope(instance: AppInstance, scope: string): AppInstance {
   if (!PROJECT_SCOPE.test(scope) || scope.length > PROJECT_SCOPE_MAX) throw new AppInstanceError(`a project scope is lowercase letters, digits and dashes (at most ${String(PROJECT_SCOPE_MAX)}), got ${JSON.stringify(scope)}`)
@@ -171,6 +200,8 @@ export function instanceEnvironment(instance: AppInstance): Record<string, strin
     ...(engineOnly ? {} : { ACRYL_HOME: instance.home }),
     DSH_HOME: instance.dshHome,
     ...(instance.webPort.scan ? { ACRYL_WEB_PORT: String(instance.webPort.start) } : {}),
+    ...(instance.webAccess.host === LOOPBACK_WEB_HOST ? {} : { ACRYL_WEB_HOST: instance.webAccess.host }),
+    ...(instance.webAccess.trustedHosts.length === 0 ? {} : { ACRYL_WEB_TRUSTED_HOSTS: instance.webAccess.trustedHosts.join(',') }),
     ACRYL_LOCAL_PRODUCT_NAME: instance.userDataName,
     ...(instance.projectScope === undefined ? {} : { ACRYL_INSTANCE: instance.projectScope }),
   }

@@ -10,20 +10,20 @@ import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 
 const HOST = '127.0.0.1'
 
-/** The Loader patch that moves the web server to `port`, on the loopback address only. */
-export function webPortPatch(port: number): PatchOptions {
-  return { id: 'webserver', config: { host: HOST, port } }
+/** The Loader patch that moves the web server to `port`, on `host` (loopback unless the instance's web access says otherwise). */
+export function webPortPatch(port: number, host: string = HOST): PatchOptions {
+  return { id: 'webserver', config: { host, port } }
 }
 
 /** How many consecutive ports are tried before giving up. */
 export const WEB_PORT_ATTEMPTS = 32
 
-/** Can something listen on this loopback port right now? A probe, so a race with another process is possible but narrow. */
-export function loopbackPortIsFree(port: number): Promise<boolean> {
+/** Can something listen on this port right now (on loopback, or on `host`)? A probe, so a race with another process is possible but narrow. */
+export function loopbackPortIsFree(port: number, host: string = HOST): Promise<boolean> {
   return new Promise(resolve => {
     const server = createServer()
     server.once('error', () => resolve(false))
-    server.listen({ host: HOST, port, exclusive: true }, () => server.close(() => resolve(true)))
+    server.listen({ host, port, exclusive: true }, () => server.close(() => resolve(true)))
   })
 }
 

@@ -106,6 +106,15 @@ describe('selectInstance precedence', () => {
     expect(selectInstance({ env: { ACRYL_WEB_PORT: '4000' }, osHome: '/h' }).webPort).toEqual({ start: 4000, scan: true })
     for (const bad of ['80', 'abc', '70000']) expect(() => selectInstance({ env: { ACRYL_WEB_PORT: bad }, osHome: '/h' }), bad).toThrow(AppInstanceError)
   })
+
+  it('ACRYL_WEB_HOST and ACRYL_WEB_TRUSTED_HOSTS open the Web server beyond loopback, and nothing else does', () => {
+    expect(selectInstance({ env: {}, osHome: '/h' }).webAccess).toEqual({ host: '127.0.0.1', trustedHosts: [] })
+    const container = selectInstance({ env: { ACRYL_HOME: '/data/acryl', ACRYL_WEB_HOST: '0.0.0.0', ACRYL_WEB_TRUSTED_HOSTS: ' ws-1.example.com , ws-1.example.com:8443,' }, osHome: '/h' })
+    expect(container.webAccess).toEqual({ host: '0.0.0.0', trustedHosts: ['ws-1.example.com', 'ws-1.example.com:8443'] })
+    expect(selectInstance({ env: { ACRYL_WEB_TRUSTED_HOSTS: 'proxy.local' }, osHome: '/h' }).webAccess).toEqual({ host: '127.0.0.1', trustedHosts: ['proxy.local'] })
+    for (const bad of ['192.168.1.5', 'localhost', 'all']) expect(() => selectInstance({ env: { ACRYL_WEB_HOST: bad }, osHome: '/h' }), bad).toThrow(AppInstanceError)
+    for (const bad of ['http://x.example.com', 'x.example.com/path', 'Upper.Example.com']) expect(() => selectInstance({ env: { ACRYL_WEB_TRUSTED_HOSTS: bad }, osHome: '/h' }), bad).toThrow(AppInstanceError)
+  })
 })
 
 describe('the isolation requirement (ACRYL_REQUIRE_ISOLATED_HOME)', () => {
@@ -152,10 +161,12 @@ describe('the environment contract', () => {
       selectInstance({ env: {}, osHome: root, checkout: worktree }),
       selectInstance({ env: { DSH_HOME: '/tmp/engine' }, osHome: root }),
       selectInstance({ env: { ACRYL_HOME: '/tmp/pinned' }, osHome: root }),
+      selectInstance({ env: { ACRYL_HOME: '/tmp/container', ACRYL_WEB_HOST: '0.0.0.0', ACRYL_WEB_TRUSTED_HOSTS: 'ws-1.example.com' }, osHome: root }),
     ]
     for (const parent of cases) {
       const child = selectInstance({ env: { DSH_HOME: '/ambient/should/lose', ...instanceEnvironment(parent) }, osHome: root })
       expect(footprint(child), parent.kind).toEqual(footprint(parent))
+      expect(child.webAccess, parent.kind).toEqual(parent.webAccess)
     }
     expect(instanceEnvironment(defaultInstance(root))).toEqual({})
   })
