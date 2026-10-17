@@ -1,21 +1,28 @@
 name: Windows
 
-# Native Windows proofs that cannot run on Linux: the ACL write-restriction sandbox (spec 001, T061) and the Windows-specific Desktop specs.
+# Native Windows proofs that cannot run on Linux: the ACL write-restriction sandbox (spec 001, T061), the Windows-specific Desktop specs, and the
+# whole test suite as the release's Windows build runs it.
 # Manual, and on changes that can affect them. The repository is public, so these runners cost nothing.
 on:
   workflow_dispatch:
   push:
     branches: [main, ci-windows]
     paths:
-      - 'apps/acryl-desktop/**'
+      - 'apps/**'
       - 'runtime/**'
+      - 'plugins/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
       - 'deepseek-harness'
       - '.github/workflows/windows.yml'
   pull_request:
     branches: [main]
     paths:
-      - 'apps/acryl-desktop/**'
+      - 'apps/**'
       - 'runtime/**'
+      - 'plugins/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
       - 'deepseek-harness'
       - '.github/workflows/windows.yml'
 
@@ -109,3 +116,43 @@ jobs:
       - name: Windows specs
         working-directory: apps/acryl-desktop
         run: corepack pnpm exec vitest run tests/windows tests/package-win.spec.ts tests/verify-win-installer.spec.ts tests/verify-win-portable.spec.ts --reporter=verbose
+
+  # The release's Windows Desktop build runs `corepack pnpm run test`, one `&&` chain that stops at the first failing package. This job runs the same
+  # packages from that same script but goes on past a failure and names every failing package, so a Windows-only failure shows on an ordinary push,
+  # not first in a release (0.2.5's dry run: Windows' own prompt-size ceilings had not been raised with the other platforms').
+  full-suite:
+    name: Whole test suite (native Windows)
+    runs-on: windows-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Enable Corepack and prepare pnpm version
+        run: |
+          corepack enable
+          corepack prepare pnpm@$(grep '"packageManager"' package.json | grep -o '[0-9.]*' | head -1) --activate
+
+      - name: Install dependencies
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Build what the tests import
+        run: corepack pnpm --filter "acryl-desktop..." --workspace-concurrency=1 run build
+
+      - name: Every package's tests, all failures listed
+        run: |
+          packages=$(node -p "require('./package.json').scripts.test.split('&&').map(step => step.match(/--filter (\\S+)/)[1]).join(' ')")
+          failed=''
+          for name in $packages; do
+            echo "::group::$name"
+            corepack pnpm --filter "$name" run test || failed="$failed $name"
+            echo "::endgroup::"
+          done
+          if [ -n "$failed" ]; then echo "::error::failing packages:$failed"; exit 1; fi
