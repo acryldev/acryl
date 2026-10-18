@@ -12,7 +12,7 @@
  *
  * @module scripts/lib/isolated-run
  */
-import { lstatSync, mkdirSync, mkdtempSync, readdirSync, realpathSync, rmSync } from 'node:fs'
+import { lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { osHomeDirectory } from './instance-module.mjs'
@@ -100,4 +100,37 @@ export function changedSince(before, after = snapshotRealHomes()) {
 export function assertRealHomesUntouched(before, label, after = snapshotRealHomes()) {
   const changed = changedSince(before, after)
   if (changed.length > 0) throw new Error(`${label} changed the real app data of this machine: ${changed.map(path => `~/${path} (newest: ${after[path].newestPath || 'removed'})`).join(', ')}`)
+}
+
+/** Text files of an app home that record absolute paths (workspaces, sessions, profile dependencies, settings). */
+const RELOCATED_FILE = /\.(json|jsonl|ya?ml)$/u
+const NOT_RELOCATED_DIR = new Set(['node_modules', '.git', '.store', 'logs'])
+const RELOCATE_MAX_BYTES = 8 * 1024 * 1024
+
+/**
+ * After copying an app home to `home`, point every absolute path the copy records into the source home (`from`) at the copy instead. Without
+ * it a run started from a copy reads and writes the source: its default workspace, its sessions and its pulled plugins' tarballs are recorded
+ * by absolute path (found 2026-10-19: `/blend snapshot` in a `--copy-home` run wrote into the source home's workspace). Paths outside the
+ * source home (the user's own projects) are left as they are. Returns the files changed.
+ */
+export function relocateHome(home, from) {
+  const spellings = [...new Set([from, safeRealpath(from)].filter(Boolean).map(path => path.replace(/\/+$/u, '')))].sort((a, b) => b.length - a.length)
+  const changed = []
+  const walk = dir => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name)
+      if (entry.isDirectory()) { if (!NOT_RELOCATED_DIR.has(entry.name)) walk(path); continue }
+      if (!entry.isFile() || !RELOCATED_FILE.test(entry.name) || lstatSync(path).size > RELOCATE_MAX_BYTES) continue
+      const text = readFileSync(path, 'utf8')
+      let next = text
+      for (const spelling of spellings) next = next.split(spelling).join(home)
+      if (next !== text) { writeFileSync(path, next); changed.push(path) }
+    }
+  }
+  walk(home)
+  return changed
+}
+
+function safeRealpath(path) {
+  try { return realpathSync(path) } catch { return undefined }
 }

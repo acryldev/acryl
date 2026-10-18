@@ -22,7 +22,7 @@ import { createConnection } from 'node:net'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { osHomeDirectory } from './lib/instance-module.mjs'
-import { assertRealHomesUntouched, isolatedEnvironment, snapshotRealHomes } from './lib/isolated-run.mjs'
+import { assertRealHomesUntouched, isolatedEnvironment, relocateHome, snapshotRealHomes } from './lib/isolated-run.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const [surface, ...rest] = process.argv.slice(2)
@@ -49,7 +49,9 @@ if (copyHome !== undefined) {
   cpSync(expand(copyHome), isolated.home, { recursive: true, verbatimSymlinks: true })
   // The user's chats and profile, never their accounts.
   rmSync(join(isolated.home, '.dsh', '.credentials.yaml'), { force: true })
-  console.log(`live-run: started from a copy of ${copyHome} without its stored sign-ins`)
+  // ...and the copy's own paths: what the home records about itself points at the copy, so the run never reaches back into the source.
+  const relocated = relocateHome(isolated.home, expand(copyHome))
+  console.log(`live-run: started from a copy of ${copyHome} without its stored sign-ins (${relocated.length} file(s) re-pointed at the copy)`)
 }
 // Desktop takes its port from its home's settings (`dsh-desktop.port`, default 43120, the dev app's), not from ACRYL_WEB_PORT: a run that left it
 // there took the owner's port when it started first, and the owner's app moved to the next one, with another origin's saved tabs.
