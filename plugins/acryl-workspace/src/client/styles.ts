@@ -346,6 +346,8 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceThreadActions button { appearance: none; padding: 2px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: 11px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceThreadActions button:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary) 30%, transparent); color: var(--dsw-alias-label-primary); }
 .dshWorkspaceComments { display: flex; flex-direction: column; min-height: 0; }
+/* DSH's right-panel Start page sits in a tab body that is overflow: hidden at the pane's height, so a page taller than the pane (seven entries in a short panel) was cut off with no way to reach its last entries. The page scrolls itself; safe centring keeps a short page centred and a tall one starting at its top. */
+body [data-sidebar-right-guide] { flex: 1 1 auto; min-height: 0; overflow-y: auto; justify-content: safe center; }
 .dshWorkspaceCommentsActions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .dshWorkspaceCommentsActions button, .dshWorkspaceSendMenu > button { appearance: none; padding: 2px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: 11px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceCommentsActions button:hover, .dshWorkspaceSendMenu > button:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary) 30%, transparent); color: var(--dsw-alias-label-primary); }
