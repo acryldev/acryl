@@ -21,6 +21,8 @@ describe('public surface (contracts/blends-core.api.md)', () => {
     expect(typeof blends.inspectDefinition).toBe('function')
     expect(typeof blends.planUpgrade).toBe('function')
     expect(typeof blends.applyUpgrade).toBe('function')
+    expect(typeof blends.generateBlendLock).toBe('function')
+    expect(typeof blends.digestFolder).toBe('function')
   })
 
   it('drives the full pipeline through the barrel alone', () => {

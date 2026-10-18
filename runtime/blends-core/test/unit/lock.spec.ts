@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 import { resolveDefinition } from '../../src/resolve.js'
-import { BLENDS_CORE_VERSION, generateLock } from '../../src/lock.js'
+import { BLENDS_CORE_VERSION, generateBlendLock, generateLock } from '../../src/lock.js'
 import { GOLDEN, loadValidDefinition } from '../helpers.js'
 
 const packageJson = JSON.parse(
@@ -128,5 +128,41 @@ describe('generateLock v2 (spec-004, FR-M4-1, FR-M4-2)', () => {
     ])
     expect(a.json).toBe(b.json)
     if (a.lock.formatVersion === 2) expect(a.lock.modules.map(m => m.name)).toEqual(['alpha', 'zeta'])
+  })
+})
+
+describe('generateBlendLock (formatVersion 3, spec 036)', () => {
+  const doc = loadValidDefinition(GOLDEN.crm)
+  const { definition } = resolveDefinition(doc)
+  const origin = { id: 'acme.gtd', kind: 'Blend' as const, version: '0.4.0', digest: 'sha256:aa' }
+  const local = { name: 'gtd-board', origin: 'local' as const, version: '0.2.0', digest: 'sha256:bb', source: 'src/plugins/gtd-board' }
+  const pulled = { name: 'acryl-quick-notes', origin: 'pulled' as const, version: '0.3.0', spec: 'github:inboxxobni/acryl-quick-notes@0.3.0', digest: 'sha512-cc' }
+
+  it('writes lineage, parameters, rows and modules in a fixed order', () => {
+    const { lock, json } = generateBlendLock({
+      resolved: definition!,
+      origin,
+      lineage: { blueprint: 'acryl.gtd', blueprintVersion: '0.1.0', digest: 'sha256:dd' },
+      parameters: { zeta: 1, accent: '#e8590c' },
+      modules: [local, pulled],
+    })
+    expect(lock.formatVersion).toBe(3)
+    expect(Object.keys(lock)).toEqual(['formatVersion', 'generator', 'origin', 'lineage', 'parameters', 'rows', 'modules'])
+    expect(lock).toMatchObject({
+      generator: { name: '@webboxes/blends-core', version: BLENDS_CORE_VERSION },
+      lineage: { blueprint: 'acryl.gtd', blueprintVersion: '0.1.0', digest: 'sha256:dd' },
+      rows: definition!.spec.rows,
+      modules: [pulled, local],
+    })
+    expect(Object.keys((lock as { parameters: object }).parameters)).toEqual(['accent', 'zeta'])
+    expect(json.endsWith('}\n')).toBe(true)
+  })
+
+  it('is byte-deterministic regardless of input order and leaves lineage out for a Blueprint', () => {
+    const one = generateBlendLock({ resolved: definition!, origin, modules: [local, pulled], parameters: { b: 1, a: 2 } })
+    const two = generateBlendLock({ resolved: definition!, origin, modules: [pulled, local], parameters: { a: 2, b: 1 } })
+    expect(one.json).toBe(two.json)
+    expect(one.lock).not.toHaveProperty('lineage')
+    expect(generateBlendLock({ resolved: definition!, origin, modules: [] }).lock).toMatchObject({ parameters: {}, modules: [] })
   })
 })

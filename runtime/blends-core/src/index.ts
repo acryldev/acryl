@@ -10,8 +10,9 @@ export { validateDefinition, type ValidationMode } from './validate.js'
 export { resolveDefinition, resolutionParentOf, type ResolveOptions, type ResolveResult } from './resolve.js'
 export { compileDefinition, type CompileResult } from './compile.js'
 export { inspectDefinition } from './inspect.js'
-export { generateLock, BLENDS_CORE_VERSION, type LockResult } from './lock.js'
+export { generateLock, generateBlendLock, BLENDS_CORE_VERSION, type BlendLockInput, type LockResult } from './lock.js'
 export { manifestDigest } from './digest.js'
+export { digestFolder, FOLDER_DIGEST_SKIPPED, FOLDER_DIGEST_SKIPPED_PREFIX } from './folder-digest.js'
 export { planUpgrade, applyUpgrade, type ApplyResult, type RowChange, type RowField, type UpgradeInput, type UpgradePlan, type UpgradeResult } from './upgrade.js'
 export { REGISTRY_INDEX_FORMAT, buildRegistryIndex, parseRegistryIndex, type RegistryEntry, type RegistryIndex, type RegistryProblem } from './registry.js'
 
@@ -28,6 +29,7 @@ export {
   type FormatApiVersion,
   type Lineage,
   type LockGenerator,
+  type LockLineage,
   type LockModule,
   type LockModuleOrigin,
   type LockOrigin,

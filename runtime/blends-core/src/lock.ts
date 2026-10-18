@@ -3,11 +3,11 @@
 // identity plus the resolved rows - so an owned Blend is reproducible and
 // diffable without re-resolution. JSON text is deterministic by construction
 // (SC-M2-1): fixed key order and 2-space indentation.
-import type { BlendLock, LockGenerator, LockModule, LockOrigin, ResolvedDefinition } from './document.js'
+import type { BlendLock, LockGenerator, LockLineage, LockModule, LockOrigin, ResolvedDefinition } from './document.js'
 
 // Version truth: kept in lockstep with packages/blends-core/package.json.
 // unit/lock.spec.ts asserts the two match so they cannot drift silently.
-export const BLENDS_CORE_VERSION = '0.2.0'
+export const BLENDS_CORE_VERSION = '0.3.0'
 
 export interface LockResult {
   lock: BlendLock
@@ -39,5 +39,37 @@ export function generateLock(
       rows: resolved.spec.rows,
       modules: [...modules].sort((left, right) => left.name.localeCompare(right.name)),
     }
+  return { lock, json: `${JSON.stringify(lock, null, 2)}\n` }
+}
+
+export interface BlendLockInput {
+  /** The resolved definition: its rows are the lock's rows. */
+  resolved: ResolvedDefinition
+  /** The manifest's identity and the `sha256:` digest of its file bytes (`manifestDigest`). */
+  origin: LockOrigin
+  /** Every module the rows load: local folders, packages, pulled plugins. Sorted by name here. */
+  modules: readonly LockModule[]
+  /** For a Blend: the Blueprint it was resolved over, with the Blueprint file's digest when known. */
+  lineage?: LockLineage
+  /** The parameter values the rows were resolved with; `{}` when the definition has none. */
+  parameters?: Readonly<Record<string, unknown>>
+  generator?: LockGenerator
+}
+
+/**
+ * Generate a formatVersion 3 lock: the one lock both ACRYL and the acrylblends framework write (`blend.lock.json`, next to `blend.yaml`).
+ * Deterministic like v1 and v2: fixed key order, `modules` sorted by name, `parameters` keys sorted, so the same state gives the same bytes.
+ */
+export function generateBlendLock(input: BlendLockInput): LockResult {
+  const parameters = Object.fromEntries(Object.entries(input.parameters ?? {}).sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0)))
+  const lock: BlendLock = {
+    formatVersion: 3,
+    generator: input.generator ?? DEFAULT_GENERATOR,
+    origin: input.origin,
+    ...(input.lineage ? { lineage: input.lineage } : {}),
+    parameters,
+    rows: input.resolved.spec.rows,
+    modules: [...input.modules].sort((left, right) => left.name.localeCompare(right.name)),
+  }
   return { lock, json: `${JSON.stringify(lock, null, 2)}\n` }
 }

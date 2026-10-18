@@ -1,6 +1,6 @@
-import { createHash } from 'node:crypto'
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
+import { digestFolder, FOLDER_DIGEST_SKIPPED } from '@webboxes/blends-core'
 import { currentSourcePath } from '@webboxes/plugin-hub'
 
 /**
@@ -18,25 +18,10 @@ import { currentSourcePath } from '@webboxes/plugin-hub'
  */
 export const VERSION_DIR_PREFIX = 'acryl-v-'
 export const SOURCE_FILE = 'acryl-source.json'
-const SKIP = new Set(['node_modules', '.git', SOURCE_FILE])
-
-function walk(dir, visit, rel = '') {
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (SKIP.has(entry.name) || entry.name.startsWith(VERSION_DIR_PREFIX)) continue
-    const path = join(dir, entry.name)
-    if (entry.isDirectory()) walk(path, visit, `${rel}${entry.name}/`)
-    else visit(path, `${rel}${entry.name}`)
-  }
-}
-
-/** A short content hash of the package's files (names and bytes), so an unchanged package keeps its version directory. */
+/** A short content hash of the package's files (names and bytes), so an unchanged package keeps its version directory. The same formula as a
+ * lock's `local` digest: `digestFolder` from blends-core, which skips `node_modules`, `.git`, `acryl-source.json` and the `acryl-v-*` copies. */
 export function hashPackage(dir, length = 10) {
-  const files = []
-  walk(dir, (path, rel) => files.push([rel, path]))
-  files.sort(([a], [b]) => (a < b ? -1 : 1))
-  const hash = createHash('sha256')
-  for (const [rel, path] of files) hash.update(rel).update('\0').update(readFileSync(path)).update('\0')
-  return hash.digest('hex').slice(0, length)
+  return digestFolder(dir, length)
 }
 
 /** The entry file the loader imports, relative to the package root, or undefined when there is no JavaScript ES-module entry to wrap. */
@@ -98,7 +83,7 @@ export function stagePackage(sourceDir, stageRoot) {
   // (measured), so the dependency specifier itself must change on every install.
   const dir = join(stageRoot, `${safeName}@${stamp}`)
   mkdirSync(dir, { recursive: true })
-  const copy = target => cpSync(sourceDir, target, { recursive: true, filter: source => !SKIP.has(basename(source)) && !basename(source).startsWith(VERSION_DIR_PREFIX) })
+  const copy = target => cpSync(sourceDir, target, { recursive: true, filter: source => !FOLDER_DIGEST_SKIPPED.has(basename(source)) && !basename(source).startsWith(VERSION_DIR_PREFIX) })
   copy(dir)
   // The timestamp prefix makes "newest" well defined even when the package manager leaves an older version directory behind.
   const versionDir = `${VERSION_DIR_PREFIX}${stamp}-${version}`
