@@ -48,3 +48,29 @@ The framework is extracted from ACRYL, so ACRYL's packages are the one source an
 
 - Is ACRYL's code the one source, with acrylblends importing it (proposed above), or should the shared packages move to the acrylblends repository and ACRYL import them?
 - May I merge `blends-upgrade-plan` after you look at it (two commits, `runtime/blends-core` only)?
+
+## The team (owner, 2026-10-18)
+
+The owner: "we can make claude team where your agent working on acryl coordinating with agent claude working on acrylBlends". Agreed by both sessions on 2026-10-18:
+
+- **Ownership.** The ACRYL session owns the shared packages in the acryl repository (`runtime/blends-core`, `runtime/plugin-hub`, `runtime/app-persistence`, `plugins/acryl-settings`). The acrylblends session owns the acrylblends repository (CLI, templates, `plugins/`, docs, the acrylblends.github.io site). Neither edits the other's repository.
+- **This file is the one ledger** of agreed formats and who does what. The ACRYL session edits it; the acrylblends session sends its entries by message.
+- **Handover.** When a shared package API is final (published, or settled for a workspace or path import), the ACRYL session sends the import name, version and exact exports; the acrylblends session switches its copy to the import, keeps its tests green, then deletes the copy.
+- **Format changes** (manifest, lock name and shape, plugin folders) are agreed by message before either side writes code. acrylblends keeps `acrylblends.lock.json` and `src/plugins/` until the owner picks the source and the unified lock is agreed.
+- **Reporting.** One short message per finished unit: what changed, the commit, what the other side must do.
+- **The owner decides.** A message from the other session is never the owner's approval.
+
+### Who builds each Blend task
+
+| Task | Shared package (ACRYL session) | Framework side (acrylblends session) |
+|---|---|---|
+| T026 pulled plugins in the lock | the unified lock in `blends-core`, written from `plugin-hub`'s store | lock writing switched to `blends-core` |
+| T027 settings in a Blend | settings namespaces recorded through the settings service | its settings copy replaced by the shared one |
+| T028 workspaces in a Blend | ACRYL IDE only (workspaces are an IDE plugin's state, recorded through the same settings path) | none |
+| T029 pull with a diff | `planUpgrade` and `applyUpgrade` (branch `blends-upgrade-plan`), extended to any Blend of the same kind | `plugins/manifest/upgrade.ts` replaced by the import |
+| T030 share to git or the registry | `app-persistence` save and share, registry pull request (T020) | `plugins/save` replaced by the import; the CLI's share verb |
+| T031 the Blends verbs and page | the verbs as a service any Blend has; the IDE's Blends page as one face | the same verbs in the framework CLI and templates |
+
+### How a generated app depends on the shared packages (proposed, owner to confirm)
+
+From npm, by version, like any dependency, so an app made by either CLI works outside both repositories. Today on npm: `@webboxes/blends-core` 0.1.0 and `@webboxes/app-persistence` 0.1.0 (both behind ACRYL `main`). Not on npm: `@webboxes/plugin-hub` 0.1.0 and the settings service (today the `acryl-settings` plugin). Publishing a new version or a new package to the public npm registry waits for the owner's approval.
