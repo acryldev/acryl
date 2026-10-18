@@ -19,8 +19,8 @@ import { digestFolder, generateBlendLock, manifestDigest } from '@webboxes/blend
 
 const { json } = generateBlendLock({
   resolved,
-  origin: { id, kind, version, digest: `sha256:${manifestDigest(manifestText)}` },
-  lineage: { blueprint: 'acryl.gtd', blueprintVersion: '0.1.0', digest: `sha256:${manifestDigest(blueprintText)}` },
+  origin: { id, kind, version, digest: manifestDigest(manifestText) },
+  lineage: { blueprint: 'acryl.gtd', blueprintVersion: '0.1.0', digest: manifestDigest(blueprintText) },
   parameters,
   modules: [
     { name: 'gtd-board', origin: 'local', version: '0.2.0', digest: `sha256:${digestFolder('src/plugins/gtd-board')}`, source: 'src/plugins/gtd-board' },
@@ -29,7 +29,8 @@ const { json } = generateBlendLock({
 })
 ```
 
-`digestFolder(dir)` is the one folder digest: sha256 over each file's relative path (always `/`) and bytes, in path order, skipping
+File digests (`origin.digest`, `lineage.digest`) are `manifestDigest`, bare sha256 hex. Module digests carry their algorithm: `sha256:` for a
+folder, `sha512-` for a tarball. `digestFolder(dir)` is the one folder digest: sha256 over each file's relative path (always `/`) and bytes, in path order, skipping
 `node_modules`, `.git`, `acryl-source.json` and `acryl-v-*` folders. `generateLock` still writes v1 and v2 for existing callers.
 
 ## Upgrading a Blend

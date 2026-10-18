@@ -160,8 +160,9 @@ export interface LockModule {
 
 /**
  * The Blueprint a Blend was resolved over, as a v3 lock records it: the
- * Blend's `spec.lineage` plus the `sha256:` digest of the Blueprint file's
- * bytes when the writer has the file, so an upgrade shows as a lock diff.
+ * Blend's `spec.lineage` plus the digest of the Blueprint file's bytes when
+ * the writer has the file (`manifestDigest`, bare sha256 hex like
+ * `LockOrigin.digest`), so an upgrade shows as a lock diff.
  */
 export interface LockLineage {
   blueprint: string

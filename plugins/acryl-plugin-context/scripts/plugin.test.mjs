@@ -719,6 +719,53 @@ test('blend apply: verifies first, installs local modules from the vendored sour
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
 
+test('blend: a plugin pulled through the plugin hub is recorded by its source and sha512, and restoring pulls it again (spec 036 T026)', async () => {
+  // The real shape, read from a live Web run: `/plugin pull github:...` stores the tarball and the profile installs it as `file:<store>/<name>/<version>.tgz`.
+  const root = mkdtempSync(join(tmpdir(), 'pulled-')); const profile = join(root, 'profile'); const store = join(root, 'home', 'plugins', '.store'); const ws = join(root, 'ws')
+  const nm = join(profile, 'node_modules', 'quick-notes')
+  mkdirSync(join(store, 'quick-notes'), { recursive: true }); mkdirSync(nm, { recursive: true }); mkdirSync(ws, { recursive: true })
+  try {
+    const tarball = join(store, 'quick-notes', '0.3.0.tgz')
+    writeFileSync(tarball, 'not read by the capture')
+    writeFileSync(join(store, 'index.json'), JSON.stringify({ formatVersion: 1, plugins: { 'quick-notes': { '0.3.0': { integrity: 'sha512-abc==', storedAt: '2026-10-19T00:00:00.000Z', from: 'github:someone/quick-notes@0.3.0' } } } }))
+    writeFileSync(join(nm, 'package.json'), JSON.stringify({ name: 'quick-notes', version: '0.3.0', dsh: { bundle: { patch: './cordis.patch.yml' } } }))
+    writeFileSync(join(nm, 'cordis.patch.yml'), '- insert:\n    - id: quick-notes\n      name: quick-notes\n')
+    writeFileSync(join(profile, 'package.json'), JSON.stringify({ dsh: { profile: { bundles: ['@deepseek-ai/dsh-base', 'quick-notes'] } }, dependencies: { 'quick-notes': `file:${tarball}`, 'not-stored': `file:${join(root, 'elsewhere', 'x.tgz')}` } }))
+
+    const byName = Object.fromEntries(listInstalledPlugins(profile).map(p => [p.name, p]))
+    assert.deepEqual(byName['quick-notes'], { name: 'quick-notes', origin: 'pulled', spec: `file:${tarball}`, version: '0.3.0', from: 'github:someone/quick-notes@0.3.0', integrity: 'sha512-abc==' })
+    assert.equal(byName['not-stored'].origin, 'local', 'a tarball outside the plugin store stays a local install')
+
+    const capture = captureBlend({ profileDir: profile, workspaceDir: ws })
+    assert.deepEqual(capture.notes, [])
+    assert.equal(capture.lock.formatVersion, 3); assert.deepEqual(capture.lock.parameters, {})
+    assert.deepEqual(Object.keys(capture.lock), ['formatVersion', 'generator', 'origin', 'parameters', 'rows', 'modules'])
+    assert.deepEqual(capture.lock.modules, [{ name: 'quick-notes', origin: 'pulled', version: '0.3.0', spec: 'github:someone/quick-notes@0.3.0', digest: 'sha512-abc==' }])
+    const out = join(ws, '.acryl', 'blend')
+    writeBlend(capture, out)
+    assert.deepEqual(verifyBlend(out), { ok: true, problems: [], checked: 1 })
+
+    // Restoring on a machine without it: pulled again from the locked source and refused unless the sha512 matches.
+    const fresh = join(root, 'fresh'); mkdirSync(fresh, { recursive: true }); writeFileSync(join(fresh, 'package.json'), JSON.stringify({ dependencies: {} }))
+    const pulls = []
+    const hub = { pull: async (source, options) => { pulls.push([source, options]); return { status: 'installed' } } }
+    const restored = await applyBlend(out, { ...fakes(), profileDir: fresh, pluginHub: hub }, { workspaceDir: ws })
+    assert.deepEqual(restored.results, [{ name: 'quick-notes', origin: 'pulled', status: 'installed' }]); assert.equal(restored.ok, true)
+    assert.deepEqual(pulls, [['github:someone/quick-notes@0.3.0', { expectIntegrity: 'sha512-abc==' }]])
+    // Already installed at the locked version and digest: left alone.
+    const again = await applyBlend(out, { ...fakes(), profileDir: profile, pluginHub: hub }, { workspaceDir: ws })
+    assert.equal(again.results[0].status, 'unchanged'); assert.equal(pulls.length, 1)
+    // A refused pull (a different tarball) and an app without the hub both fail the restore, with the reason.
+    const refused = await applyBlend(out, { ...fakes(), profileDir: fresh, pluginHub: { pull: async () => ({ status: 'refused', reason: 'integrity mismatch' }) } }, { workspaceDir: ws })
+    assert.deepEqual([refused.ok, refused.results[0].status, refused.results[0].detail], [false, 'failed', 'integrity mismatch'])
+    // DSH's installer often answers restart-required: installed, loading on the next start (what a live restore showed).
+    const later = await applyBlend(out, { ...fakes(), profileDir: fresh, pluginHub: { pull: async () => ({ status: 'restart-required' }) } }, { workspaceDir: ws })
+    assert.deepEqual([later.ok, later.results[0]], [true, { name: 'quick-notes', origin: 'pulled', status: 'installed', detail: 'restart the app to load it' }])
+    const noHub = await applyBlend(out, { ...fakes(), profileDir: fresh }, { workspaceDir: ws })
+    assert.match(noHub.results[0].detail, /no plugin hub/u)
+  } finally { rmSync(root, { recursive: true, force: true }) }
+})
+
 test('ledger: append-only JSONL with a hash chain; tampering is detected; nothing is written for a workspace that tracks no Blend', async () => {
   const root = mkdtempSync(join(tmpdir(), 'ledger-')); const ws = join(root, 'ws'); const dir = join(ws, '.acryl', 'blend')
   mkdirSync(ws, { recursive: true })

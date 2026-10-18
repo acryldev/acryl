@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, sep } from 'node:path'
 import { canonical, stagedInfo } from './reconcile.js'
 import { isProjectPluginPath } from './scopes.js'
 
@@ -11,11 +11,14 @@ import { isProjectPluginPath } from './scopes.js'
  *             the `contentHash` it was installed from. Reproducing it elsewhere needs its source folder.
  *   registry  installed from npm through the market (a version or range spec). Managed: do not edit; has the resolved `version` and the lockfile
  *             `integrity` digest. Reproducing it elsewhere needs only name and version.
+ *   pulled    pulled through the plugin hub (`/plugin pull github:...`, `npm:...`) and installed from the plugin store's tarball (a `file:` spec to
+ *             `<store>/<name>/<version>.tgz`). Managed like registry: has the `version`, the `from` source it was pulled from and the tarball's sha512
+ *             `integrity`, read from the store's index. Reproducing it elsewhere is pulling `from` again and checking `integrity`.
  *   git       installed from a git URL.
  *   linked    a workspace or link dependency (development checkout).
  *   unknown   anything else; reported, never guessed at.
  */
-export const ORIGINS = Object.freeze(['local', 'registry', 'git', 'linked', 'unknown'])
+export const ORIGINS = Object.freeze(['local', 'pulled', 'registry', 'git', 'linked', 'unknown'])
 
 /** The pnpm (lockfile v9) view of the root importer's dependencies and package integrity digests. */
 export function readLockfile(profileDir, fs = { existsSync, readFileSync }) {
@@ -46,6 +49,23 @@ export function readLockfile(profileDir, fs = { existsSync, readFileSync }) {
   return { resolved, integrity }
 }
 
+/**
+ * The plugin store's record for a `file:` install of one of its tarballs (`<store>/<name>/<version>.tgz`, the layout of plugin-hub's store), or
+ * undefined when the path is not a stored tarball of that plugin.
+ */
+export function storeRecordOf(name, installedPath, fs = { existsSync, readFileSync }) {
+  const normalized = installedPath.split(sep).join('/')
+  const match = new RegExp(`^(.*)/${name.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}/([^/]+)\\.tgz$`, 'u').exec(normalized)
+  if (match === null) return undefined
+  const [, root, version] = match
+  try {
+    const record = JSON.parse(fs.readFileSync(join(root, 'index.json'), 'utf8'))?.plugins?.[name]?.[version]
+    return typeof record?.from === 'string' && typeof record?.integrity === 'string' ? { version, from: record.from, integrity: record.integrity } : undefined
+  } catch {
+    return undefined
+  }
+}
+
 /** Origin of one dependency spec. */
 export function originOf(spec) {
   if (typeof spec !== 'string') return 'unknown'
@@ -72,6 +92,8 @@ export function listInstalledPlugins(profileDir, options = {}, fs = { existsSync
     const origin = originOf(spec)
     if (origin === 'local') {
       const installedDir = spec.slice('file:'.length)
+      const stored = storeRecordOf(name, installedDir, fs)
+      if (stored !== undefined) return { name, origin: 'pulled', spec, version: stored.version, from: stored.from, integrity: stored.integrity }
       const staged = stagedInfo(installedDir, fs)
       const source = staged?.source ?? installedDir
       const real = canonical(source)

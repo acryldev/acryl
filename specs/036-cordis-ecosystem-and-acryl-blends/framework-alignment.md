@@ -100,9 +100,9 @@ The owner picked ACRYL's packages as the one source (2026-10-19), so the lock bo
 {
   "formatVersion": 3,
   "generator": { "name": "@webboxes/blends-core", "version": "0.3.0" },
-  "origin": { "id": "acme.gtd", "kind": "Blend", "version": "0.4.0", "digest": "sha256:<blend.yaml bytes>" },
+  "origin": { "id": "acme.gtd", "kind": "Blend", "version": "0.4.0", "digest": "<manifestDigest(blend.yaml): bare sha256 hex>" },
   // new: the Blueprint the Blend was resolved over, with its file digest, so an upgrade is a lock diff (from acrylblends `lineage`)
-  "lineage": { "blueprint": "acryl.gtd", "blueprintVersion": "0.1.0", "digest": "sha256:<Blueprint file bytes>" },
+  "lineage": { "blueprint": "acryl.gtd", "blueprintVersion": "0.1.0", "digest": "<manifestDigest(Blueprint file): bare sha256 hex>" },
   // new: the parameter values the rows were resolved with (from acrylblends `values`)
   "parameters": { "accent": "#e8590c" },
   "rows": [ /* unchanged: id, name, config, disabled */ ],

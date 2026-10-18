@@ -4,7 +4,7 @@ import { currentSourcePath } from '@webboxes/plugin-hub'
 import { installLocalPlugin, listLocalPlugins, removeLocalPlugin } from './install.js'
 import { canonical, installState } from './reconcile.js'
 import { verifyBlend } from './blend-capture.js'
-import { readLockfile } from './provenance.js'
+import { listInstalledPlugins, readLockfile } from './provenance.js'
 import { hashPackage } from './stage.js'
 import { describePermissions, readManifest } from './manifest.js'
 import { appHomeDir, projectPluginsDir } from './scopes.js'
@@ -17,10 +17,11 @@ import { appHomeDir, projectPluginsDir } from './scopes.js'
  *  2. local modules: place the vendored source in the project plugin scope (`<workspace>/.acryl-plugins/<name>/`, never overwriting a folder that differs) and install it through
  *     the same pipeline as everything else, so `/reload`, the startup pass and provenance apply to it unchanged;
  *  3. registry modules: `dsh plugin add name@version`, then compare the lockfile integrity with the locked digest and undo the install on a mismatch;
+ *     pulled modules: pulled again through the plugin hub from the locked source, refused unless the tarball's sha512 is the locked digest;
  *  4. modules already installed at the locked state are left alone (idempotent).
  *
  * @param {string} blendDir the captured directory (`<workspace>/.acryl/blend`)
- * @param {{ pnpm: any, live: any, profileDir: string }} services
+ * @param {{ pnpm: any, live: any, profileDir: string, pluginHub?: { pull(source: string, options?: { expectIntegrity?: string }): Promise<{ status: string, reason?: string, missing?: string[] }> } }} services
  * @param {{ workspaceDir: string }} options
  * @returns {Promise<{ ok: boolean, results: Array<{ name: string, origin: string, status: string, detail?: string, permissions?: string }>, problems: string[] }>}
  */
@@ -77,6 +78,27 @@ export async function applyBlend(blendDir, services, options, fs = { existsSync,
         continue
       }
       results.push({ name: module.name, origin: 'registry', status: 'installed' })
+    } else if (module.origin === 'pulled') {
+      const current = listInstalledPlugins(services.profileDir, {}, fs).find(plugin => plugin.name === module.name)
+      if (current?.origin === 'pulled' && current.version === module.version && current.integrity === module.digest) {
+        results.push({ name: module.name, origin: 'pulled', status: 'unchanged' })
+        continue
+      }
+      if (services.pluginHub === undefined) {
+        results.push({ name: module.name, origin: 'pulled', status: 'failed', detail: `no plugin hub in this app to pull ${module.spec}` })
+        continue
+      }
+      try {
+        const pulled = await services.pluginHub.pull(module.spec, { expectIntegrity: module.digest })
+        // The hub installs through DSH's own installer: `restart-required` is installed, loading on the next start (found in a live restore).
+        results.push(pulled.status === 'installed'
+          ? { name: module.name, origin: 'pulled', status: 'installed' }
+          : pulled.status === 'restart-required'
+            ? { name: module.name, origin: 'pulled', status: 'installed', detail: 'restart the app to load it' }
+            : { name: module.name, origin: 'pulled', status: 'failed', detail: pulled.reason ?? (pulled.missing ? `needs ${pulled.missing.join(', ')}` : pulled.status) })
+      } catch (cause) {
+        results.push({ name: module.name, origin: 'pulled', status: 'failed', detail: cause instanceof Error ? cause.message : String(cause) })
+      }
     } else {
       results.push({ name: module.name, origin: module.origin, status: 'skipped', detail: `origin "${module.origin}" is recorded by spec only (${module.spec}); install it yourself` })
     }

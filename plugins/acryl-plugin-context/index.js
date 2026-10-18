@@ -82,7 +82,7 @@ export function apply(ctx) {
           const profileDir = scoped.get('desktopProfiles')?.current?.dir
           if (!profileDir) return
           const dshHome = scoped.get('dshHomePath')
-          const services = { pnpm: scoped.get('desktopPnpm'), live: scoped.get('livePluginActivation'), profileDir, acrylFrameworkPackages: ctx.get('acrylFrameworkPackages') }
+          const services = { pnpm: scoped.get('desktopPnpm'), live: scoped.get('livePluginActivation'), pluginHub: ctx.get('pluginHub'), profileDir, acrylFrameworkPackages: ctx.get('acrylFrameworkPackages') }
           // An app (`acryl new`) installs its own committed plugins at start: a fresh clone has them in plugins/ but nothing installed yet.
           const app = appHomeDir()
           const summary = await syncOnStartup(services, { globalDir: globalPluginsDir(typeof dshHome === 'function' ? dshHome() : undefined), installPending: app !== undefined })
@@ -90,11 +90,11 @@ export function apply(ctx) {
           let lockNote = ''
           if (app !== undefined && verifyBlend(app).ok) {
             const applied = await applyBlend(app, services, {})
-            const installed = applied.results.filter(r => r.origin === 'registry' && r.status === 'installed').map(r => r.name)
+            const installed = applied.results.filter(r => (r.origin === 'registry' || r.origin === 'pulled') && r.status === 'installed').map(r => r.name)
             const failed = applied.results.filter(r => ['failed', 'conflict'].includes(r.status)).map(r => `${r.name} (${r.detail ?? r.status})`)
             lockNote = [installed.length > 0 ? `installed from the app lock: ${installed.join(', ')}` : '', failed.length > 0 ? `FAILED from the app lock: ${failed.join(', ')}` : ''].filter(Boolean).join('; ')
           } else if (app !== undefined && existsSync(join(app, 'blend.lock.json'))) {
-            lockNote = 'the app lock no longer matches blend.yaml (type /blend snapshot to refresh it); marketplace plugins were not installed from it'
+            lockNote = 'the app lock no longer matches blend.yaml (type /blend snapshot to refresh it); marketplace and pulled plugins were not installed from it'
           }
           const parts = [
             summary.installed.length > 0 ? `installed the app's plugins ${summary.installed.join(', ')}` : '',
@@ -181,7 +181,7 @@ export function apply(ctx) {
           }
           if (verb === 'apply') {
             // Installs code that runs with the user's permissions: human-typed only, the summary shows what each module requests.
-            const result = await applyBlend(outDir, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), profileDir, acrylFrameworkPackages: ctx.get('acrylFrameworkPackages'), record: ledgerRecorder(workspaceDir, 'human') }, { workspaceDir })
+            const result = await applyBlend(outDir, { pnpm: ctx.get('desktopPnpm'), live: ctx.get('livePluginActivation'), pluginHub: ctx.get('pluginHub'), profileDir, acrylFrameworkPackages: ctx.get('acrylFrameworkPackages'), record: ledgerRecorder(workspaceDir, 'human') }, { workspaceDir })
             if (result.problems.length === 0) appendLedger(outDir, { actor: 'human', kind: 'applied', results: result.results.map(r => ({ module: r.name, origin: r.origin, status: r.status })) })
             if (result.problems.length > 0) return { kind: 'error', text: `Nothing was installed; the Blend in ${outDir} does not match its lock:\n${result.problems.map(p => `- ${p}`).join('\n')}` }
             const lines = result.results.map(r => `${r.name} [${r.origin}]: ${r.status}${r.permissions ? ` (${r.permissions})` : ''}${r.detail ? ` - ${r.detail}` : ''}`)
@@ -205,8 +205,9 @@ export function apply(ctx) {
           appendLedger(outDir, { actor: 'human', kind: 'captured', blend: `${capture.manifest.metadata.id}@${capture.manifest.metadata.version}`, modules: capture.lock.modules.length, digest: capture.lock.origin.digest })
           const local = capture.lock.modules.filter(m => m.origin === 'local').length
           const registry = capture.lock.modules.filter(m => m.origin === 'registry').length
+          const pulled = capture.lock.modules.filter(m => m.origin === 'pulled').length
           const notes = capture.notes.length > 0 ? `\nNot captured:\n${capture.notes.map(n => `- ${n}`).join('\n')}` : ''
-          return { kind: 'success', text: `Captured ${capture.manifest.kind} ${capture.manifest.metadata.id}@${capture.manifest.metadata.version}: ${registry} marketplace plugin(s), ${local} local plugin(s) vendored.\nWritten to ${outDir}: ${files.join(', ')}${notes}` }
+          return { kind: 'success', text: `Captured ${capture.manifest.kind} ${capture.manifest.metadata.id}@${capture.manifest.metadata.version}: ${registry} marketplace plugin(s), ${pulled} pulled plugin(s), ${local} local plugin(s) vendored.\nWritten to ${outDir}: ${files.join(', ')}${notes}` }
         },
       })
     }, 'plugin-context blend command')
@@ -230,7 +231,7 @@ export function apply(ctx) {
 
     scoped.tools.register(defineTool({
       name: LIST_TOOL_NAME,
-      description: 'List every plugin installed in the active ACRYL profile with its origin: "local" (built here; has a source folder you can edit, and a scope) or "registry" (installed from the marketplace/npm; managed, do not edit, has version and integrity digest).',
+      description: 'List every plugin installed in the active ACRYL profile with its origin: "local" (built here; has a source folder you can edit, and a scope), "pulled" (pulled with /plugin pull from GitHub or npm into the plugin store; managed, do not edit, has version, the source it came from and its sha512) or "registry" (installed from the marketplace/npm; managed, do not edit, has version and integrity digest).',
       parameters: {},
       output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
       async execute() {

@@ -45,7 +45,7 @@ export function generateLock(
 export interface BlendLockInput {
   /** The resolved definition: its rows are the lock's rows. */
   resolved: ResolvedDefinition
-  /** The manifest's identity and the `sha256:` digest of its file bytes (`manifestDigest`). */
+  /** The manifest's identity and the digest of its file bytes: `manifestDigest(text)`, bare sha256 hex (module digests carry their algorithm prefix). */
   origin: LockOrigin
   /** Every module the rows load: local folders, packages, pulled plugins. Sorted by name here. */
   modules: readonly LockModule[]

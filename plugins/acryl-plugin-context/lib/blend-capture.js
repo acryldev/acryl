@@ -14,9 +14,11 @@ import { listInstalledPlugins } from './provenance.js'
  *
  *   blend.yaml         the human-facing intent: a manifest (`Blend` with lineage, else `Blueprint`) that validates against blends-core's v1alpha1 schema (rows by id and package
  *                      name, overrides). Same vocabulary the Loader consumes; nothing invented.
- *   blend.lock.json    the machine state, `formatVersion: 2`: the v1 fields (generator, origin digest of blend.yaml, rows) plus `modules`, one entry per
- *                      installed package: registry -> version + integrity digest (reproduce from name and version); local -> version + sha256 of the
- *                      source tree + the vendored copy (reproduce from the copy, verify by digest). Deterministic: no timestamps, sorted keys.
+ *   blend.lock.json    the machine state, `formatVersion: 3` (blends-core's one lock): generator, origin digest of blend.yaml, the Blueprint
+ *                      `lineage` when there is one, `parameters`, rows, and `modules`, one entry per installed package: registry -> version +
+ *                      integrity digest (reproduce from name and version); pulled -> version + the source it was pulled from + the tarball's sha512
+ *                      (reproduce by pulling it again); local -> version + sha256 of the source tree + the vendored copy (reproduce from the copy,
+ *                      verify by digest). Deterministic: no timestamps, sorted keys.
  *   plugins/<name>/    the source of every local plugin, copied so the Blend is self-contained (a global plugin outside the project is
  *                      vendored here; the project's own `.acryl-plugins/` folders are copied verbatim).
  *
@@ -87,7 +89,9 @@ export function captureBlend(options, fs = { existsSync, readFileSync }) {
     const { rows: pluginRows, note } = readBundleRows(profileDir, name, fs)
     if (note) notes.push(note)
     rows.push(...pluginRows)
-    if (plugin.origin === 'registry') {
+    if (plugin.origin === 'pulled') {
+      modules.push({ name, origin: 'pulled', version: plugin.version, spec: plugin.from, digest: plugin.integrity })
+    } else if (plugin.origin === 'registry') {
       modules.push({ name, origin: 'registry', version: plugin.version ?? plugin.spec, ...(plugin.integrity ? { digest: plugin.integrity } : {}) })
       if (!plugin.integrity) notes.push(`${name}: no integrity digest in the lockfile, reproducing it will not be verified`)
     } else if (plugin.origin === 'local') {
@@ -119,10 +123,13 @@ export function captureBlend(options, fs = { existsSync, readFileSync }) {
   }
   const manifestText = `# ACRYL ${manifest.kind} captured from a live profile. Edit the intent here; blend.lock.json is machine-generated.\n${stringify(manifest)}`
   modules.sort((a, b) => (a.name < b.name ? -1 : 1))
+  // The v3 shape and key order of blends-core's generateBlendLock. A capture has no parameters: it records a live profile, not a template.
   const lock = {
-    formatVersion: 2,
+    formatVersion: 3,
     generator: { name: 'acryl-plugin-context', version: '0.1.0' },
     origin: { id: manifest.metadata.id, kind: manifest.kind, version: manifest.metadata.version, digest: sha256(manifestText) },
+    ...(options.lineage ? { lineage: options.lineage } : {}),
+    parameters: {},
     rows,
     modules,
   }
@@ -148,7 +155,7 @@ export function writeBlend(capture, outDir) {
 
 /**
  * Check a written Blend against its own lock, offline: the manifest still matches the digest the lock recorded, and every vendored local
- * extension still hashes to the digest recorded for it. Registry modules are verified when they are installed (their integrity is the lockfile's).
+ * extension still hashes to the digest recorded for it. Registry and pulled modules are verified when they are installed (against the lockfile's integrity and the tarball's sha512).
  * @returns {{ ok: boolean, problems: string[], checked: number }}
  */
 export function verifyBlend(outDir, fs = { existsSync, readFileSync }) {
@@ -159,7 +166,7 @@ export function verifyBlend(outDir, fs = { existsSync, readFileSync }) {
   if (!fs.existsSync(manifestPath) || !fs.existsSync(lockPath)) return { ok: false, problems: [`no blend.yaml and blend.lock.json in ${outDir}`], checked }
   let lock
   try { lock = JSON.parse(fs.readFileSync(lockPath, 'utf8')) } catch { return { ok: false, problems: ['blend.lock.json is not valid JSON'], checked } }
-  if (lock.formatVersion !== 2) problems.push(`blend.lock.json formatVersion ${lock.formatVersion} is not the one this build reads (2)`)
+  if (lock.formatVersion !== 2 && lock.formatVersion !== 3) problems.push(`blend.lock.json formatVersion ${lock.formatVersion} is not one this build reads (2 or 3)`)
   checked += 1
   if (lock.origin?.digest !== sha256(fs.readFileSync(manifestPath, 'utf8'))) problems.push('blend.yaml changed since the lock was generated (its digest no longer matches): re-capture, or regenerate the lock')
   for (const module of Array.isArray(lock.modules) ? lock.modules : []) {
