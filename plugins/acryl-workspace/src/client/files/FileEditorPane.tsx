@@ -1,19 +1,20 @@
 /** The editor tab for one real file of a worktree: load, edit, save, with drafts kept when you switch tabs. */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { WorkspaceState, WorkspaceTile } from '../canvas/state.ts'
 import { CodeEditor } from './CodeEditor.tsx'
 import { FileBreadcrumbs } from './FileBreadcrumbs.tsx'
 import { FileConflictError, type WorkspaceFilesApi } from './files-api.ts'
-import type { LineComment } from './line-comment.ts'
-import type { CommentResult } from './line-comments.ts'
+import type { CommentStore } from '../comments/comment-store.ts'
+import { editorComments } from '../comments/editor-comments.ts'
+import { browserClipboard } from '../comments/use-comments.ts'
 
 export interface FileEditorPaneProps {
   readonly tile: WorkspaceTile
   readonly workspace: WorkspaceState
   readonly filesApi: WorkspaceFilesApi
-  /** Where a line comment goes (the agent terminal the user worked in last); without it the editor offers no comments. */
-  readonly sendComment?: (comment: LineComment) => Promise<CommentResult>
+  /** Where line comments are kept (the workspace's comments); without it the editor offers no comments. */
+  readonly comments?: CommentStore
 }
 
 type Loaded =
@@ -26,7 +27,7 @@ type Loaded =
 /** How long typing pauses before the draft is copied to the tab state (kept across tab switches). */
 const DRAFT_DELAY_MS = 400
 
-export function FileEditorPane({ tile, workspace, filesApi, sendComment }: FileEditorPaneProps) {
+export function FileEditorPane({ tile, workspace, filesApi, comments }: FileEditorPaneProps) {
   const worktree = tile.fileWorktree
   const file = tile.fileRel
   const [loaded, setLoaded] = useState<Loaded>({ phase: 'loading' })
@@ -40,6 +41,10 @@ export function FileEditorPane({ tile, workspace, filesApi, sendComment }: FileE
   // The tile's saved draft at the moment of loading; later draft updates come from this pane itself.
   const initialDraft = useRef({ content: tile.content, mtimeMs: tile.fileMtimeMs })
   initialDraft.current = { content: tile.content, mtimeMs: tile.fileMtimeMs }
+  const fileComments = useMemo(
+    () => (comments === undefined || worktree === undefined || file === undefined ? undefined : editorComments(comments, worktree, file, browserClipboard())),
+    [comments, worktree, file],
+  )
 
   const flushDraft = useCallback((): void => {
     window.clearTimeout(timer.current)
@@ -143,7 +148,7 @@ export function FileEditorPane({ tile, workspace, filesApi, sendComment }: FileE
           filename={file}
           onChange={changed}
           onSave={() => { void save() }}
-          {...(sendComment === undefined ? {} : { onComment: async request => sendComment({ worktree, file, fromLine: request.fromLine, toLine: request.toLine, lines: request.lines, text: request.text }) })}
+          {...(fileComments === undefined ? {} : { comments: fileComments })}
         />
       )}
     </div>

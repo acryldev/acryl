@@ -345,6 +345,17 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceThreadActions { display: flex; gap: 6px; }
 .dshWorkspaceThreadActions button { appearance: none; padding: 2px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: 11px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceThreadActions button:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary) 30%, transparent); color: var(--dsw-alias-label-primary); }
+.dshWorkspaceComments { display: flex; flex-direction: column; min-height: 0; }
+.dshWorkspaceCommentsActions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.dshWorkspaceCommentsActions button, .dshWorkspaceSendMenu > button { appearance: none; padding: 2px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: 11px/1.4 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceCommentsActions button:hover, .dshWorkspaceSendMenu > button:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary) 30%, transparent); color: var(--dsw-alias-label-primary); }
+.dshWorkspaceSendMenu { position: relative; display: inline-flex; }
+.dshWorkspaceSendMenuList { position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; display: flex; flex-direction: column; min-width: 220px; max-width: 300px; max-height: 280px; overflow: auto; padding: 4px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; background: var(--dsw-alias-bg-l2, #1e2128); box-shadow: 0 10px 28px rgb(0 0 0 / 35%); }
+.dshWorkspaceSendMenuList button { appearance: none; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 5px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; text-align: left; font: 12px/1.35 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceSendMenuList button:hover, .dshWorkspaceSendMenuList button:focus-visible { background: color-mix(in srgb, var(--dsw-alias-label-primary) 8%, transparent); outline: none; }
+.dshWorkspaceSendMenuTitle { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshWorkspaceSendMenuWhere { color: var(--dsw-alias-label-secondary); font-size: 11px; }
+.dshWorkspaceSendMenuEmpty { margin: 4px 6px; color: var(--dsw-alias-label-secondary); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceCheckList { list-style: none; margin: 0; padding: 4px 8px 12px; display: flex; flex-direction: column; gap: 4px; }
 .dshWorkspaceCheck { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-label-primary); }
 .dshWorkspaceCheck[data-primary] { border-color: color-mix(in srgb, #4d6bfe 45%, transparent); }
@@ -440,12 +451,13 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .cm-acrylCommentButton[data-primary] { border-color: #4d6bfe; background: #4d6bfe; color: #fff; }
 .cm-acrylCommentButton:disabled { opacity: 0.5; cursor: default; }
 .cm-acrylCommentProblem { color: #f87171; font-size: 12px; }
-.cm-acrylCommentProblem:not(:empty) { margin-top: 6px; }
 .cm-acrylCommentNote { display: flex; align-items: flex-start; gap: 8px; border-left: 3px solid #4d6bfe; }
 .cm-acrylCommentNote > svg { flex: none; margin-top: 2px; color: #8fa5ff; }
 .cm-acrylCommentBody { flex: 1; min-width: 0; }
 .cm-acrylCommentText { white-space: pre-wrap; overflow-wrap: anywhere; }
-.cm-acrylCommentWhere { color: #8b919c; font-size: 11.5px; }
+.cm-acrylCommentActions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+.cm-acrylCommentAction { appearance: none; padding: 2px 9px; border: 1px solid #3a3f4b; border-radius: 999px; background: transparent; color: #c3c8d2; cursor: pointer; font: 11.5px/1.5 ui-sans-serif, system-ui, sans-serif; }
+.cm-acrylCommentAction:hover { border-color: #4d6bfe; color: #fff; }
 .cm-acrylCommentDismiss { appearance: none; flex: none; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: #8b919c; cursor: pointer; font: 14px/1 ui-sans-serif, system-ui, sans-serif; }
 .cm-acrylCommentDismiss:hover { background: rgb(255 255 255 / 8%); color: #d7dae0; }
 .dshWorkspaceEditorStatus { color: var(--dsw-alias-label-secondary); }

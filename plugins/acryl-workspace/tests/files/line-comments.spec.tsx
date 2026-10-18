@@ -5,9 +5,10 @@ import { EditorSelection } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CodeEditor } from '../../src/client/files/CodeEditor.tsx'
-import { commentForTerminal, QUOTED_LINES, type LineComment } from '../../src/client/files/line-comment.ts'
-import { commentOnLine, type CommentSend } from '../../src/client/files/line-comments.ts'
-import { sendCommentToTerminal } from '../../src/client/terminal/comment-target.ts'
+import { commentForTerminal, commentsForTerminal, QUOTED_LINES, type LineComment } from '../../src/client/files/line-comment.ts'
+import { commentOnLine } from '../../src/client/files/line-comments.ts'
+import { CommentStore } from '../../src/client/comments/comment-store.ts'
+import { editorComments } from '../../src/client/comments/editor-comments.ts'
 
 afterEach(cleanup)
 
@@ -45,17 +46,11 @@ describe('the comment an agent reads', () => {
   })
 })
 
-describe('sending it to the terminal the user worked in last', () => {
-  it('pastes it there, multi-line when the program takes that, and says which tab got it', () => {
-    const paste = vi.fn()
-    const result = sendCommentToTerminal({ lastActive: () => ({ id: 't1', paste, takesMultilinePaste: () => true }), nameOf: id => (id === 't1' ? 'Claude' : undefined) }, comment())
-    expect(result).toEqual({ ok: true, where: 'Claude' })
-    expect(paste).toHaveBeenCalledWith(commentForTerminal(comment(), true))
-  })
-
-  it('refuses, keeping the comment, when there is no running terminal', () => {
-    const result = sendCommentToTerminal({ lastActive: () => undefined, nameOf: () => undefined }, comment())
-    expect(result.ok).toBe(false)
+describe('several comments as one text', () => {
+  it('puts a blank line between them, or runs them on one line for a terminal that would run each line', () => {
+    const two = [comment(), comment({ file: 'b.ts', fromLine: 5, toLine: 5, lines: ['x'], text: 'and this' })]
+    expect(commentsForTerminal(two, true)).toBe(`${commentForTerminal(two[0]!, true)}\n${commentForTerminal(two[1]!, true)}`)
+    expect(commentsForTerminal(two, false)).not.toContain('\n')
   })
 })
 
@@ -69,68 +64,130 @@ function viewOf(container: HTMLElement): EditorView {
 
 const TEXT = 'line one\nline two\nline three\nline four\n'
 
-describe('commenting in the editor', () => {
-  it('opens a form under the line, sends the line and the text, then shows the comment as a note', async () => {
-    const send = vi.fn<CommentSend>(async () => ({ ok: true, where: 'Claude' }))
-    const { container } = render(<CodeEditor value={TEXT} filename="a.ts" onChange={() => {}} onSave={() => {}} onComment={send} />)
-    const view = viewOf(container)
-    commentOnLine(view, 2)
-    const input = await waitFor(() => { const node = container.querySelector('textarea.cm-acrylCommentInput'); if (!(node instanceof HTMLTextAreaElement)) throw new Error('no form'); return node })
-    const button = [...container.querySelectorAll('button')].find(candidate => candidate.textContent === 'Comment') as HTMLButtonElement
-    expect(button.disabled).toBe(true)
-    expect(container.querySelectorAll('.cm-acrylCommentLine')).toHaveLength(1)
+/** The editor with the workspace's real comment list for one file, and a clipboard that records what it got. */
+function setup(text = TEXT, refuse = false) {
+  const store = new CommentStore([], () => 1)
+  const copied: string[] = []
+  const writeText = vi.fn(async (value: string) => { if (refuse) throw new Error('denied'); copied.push(value) })
+  const list = editorComments(store, '/w', 'a.ts', writeText)
+  const rendered = render(<CodeEditor value={text} filename="a.ts" onChange={() => {}} onSave={() => {}} comments={list} />)
+  return { ...rendered, store, copied, view: viewOf(rendered.container) }
+}
 
-    fireEvent.input(input, { target: { value: 'why two?' } })
-    expect(button.disabled).toBe(false)
-    fireEvent.keyDown(input, { key: 'Enter', metaKey: true })
+async function write(container: HTMLElement, value: string, how: 'keys' | 'click' = 'keys'): Promise<void> {
+  const input = await waitFor(() => { const node = container.querySelector('textarea.cm-acrylCommentInput'); if (!(node instanceof HTMLTextAreaElement)) throw new Error('no form'); return node })
+  fireEvent.input(input, { target: { value } })
+  if (how === 'keys') fireEvent.keyDown(input, { key: 'Enter', metaKey: true })
+  else fireEvent.click(button(container, 'Comment'))
+}
+
+const button = (container: HTMLElement, text: string): HTMLButtonElement => {
+  const found = [...container.querySelectorAll('button')].find(candidate => candidate.textContent === text)
+  if (!(found instanceof HTMLButtonElement)) throw new Error(`no ${text} button`)
+  return found
+}
+
+describe('commenting in the editor', () => {
+  it('keeps the comment in the list and shows it as a note under the line; nothing is sent anywhere', async () => {
+    const { container, store, copied, view } = setup()
+    commentOnLine(view, 2)
+    await waitFor(() => { expect(container.querySelector('textarea.cm-acrylCommentInput')).not.toBeNull() })
+    expect(button(container, 'Comment').disabled).toBe(true)
+    expect(container.querySelectorAll('.cm-acrylCommentLine')).toHaveLength(1)
+    await write(container, 'why two?')
     await waitFor(() => { expect(container.querySelector('.cm-acrylCommentNote')).not.toBeNull() })
-    expect(send).toHaveBeenCalledWith({ fromLine: 2, toLine: 2, lines: ['line two'], text: 'why two?' })
+    expect(store.all()).toMatchObject([{ worktree: '/w', file: 'a.ts', fromLine: 2, toLine: 2, lines: ['line two'], text: 'why two?' }])
     expect(container.querySelector('.cm-acrylCommentForm')).toBeNull()
-    expect(container.querySelector('.cm-acrylCommentNote')?.textContent).toContain('Sent to Claude')
+    expect(container.querySelector('.cm-acrylCommentNote')?.textContent).toContain('why two?')
+    expect(copied).toEqual([])
   })
 
   it('comments on every selected line when the selection covers the line', async () => {
-    const send = vi.fn<CommentSend>(async () => ({ ok: true, where: 'Codex' }))
-    const { container } = render(<CodeEditor value={TEXT} filename="a.ts" onChange={() => {}} onSave={() => {}} onComment={send} />)
-    const view = viewOf(container)
+    const { container, store, view } = setup()
     // Lines 2 and 3, selected to the start of line 4 as a full-line selection ends.
     view.dispatch({ selection: EditorSelection.range(view.state.doc.line(2).from, view.state.doc.line(4).from) })
     commentOnLine(view, 3)
-    const input = await waitFor(() => container.querySelector('textarea.cm-acrylCommentInput') as HTMLTextAreaElement)
-    expect(container.querySelectorAll('.cm-acrylCommentLine')).toHaveLength(2)
-    fireEvent.input(input, { target: { value: 'these two' } })
-    fireEvent.click([...container.querySelectorAll('button')].find(candidate => candidate.textContent === 'Comment') as HTMLButtonElement)
-    await waitFor(() => { expect(send).toHaveBeenCalledWith({ fromLine: 2, toLine: 3, lines: ['line two', 'line three'], text: 'these two' }) })
+    await waitFor(() => { expect(container.querySelectorAll('.cm-acrylCommentLine')).toHaveLength(2) })
+    await write(container, 'these two', 'click')
+    await waitFor(() => { expect(store.all()).toMatchObject([{ fromLine: 2, toLine: 3, lines: ['line two', 'line three'], text: 'these two' }]) })
   })
 
-  it('keeps the form and the text, with the reason, when sending fails; Escape cancels', async () => {
-    const send = vi.fn<CommentSend>(async () => ({ ok: false, message: 'No terminal to send it to.' }))
-    const { container } = render(<CodeEditor value={TEXT} filename="a.ts" onChange={() => {}} onSave={() => {}} onComment={send} />)
-    commentOnLine(viewOf(container), 1)
-    const input = await waitFor(() => container.querySelector('textarea.cm-acrylCommentInput') as HTMLTextAreaElement)
-    fireEvent.input(input, { target: { value: 'hello' } })
-    fireEvent.keyDown(input, { key: 'Enter', ctrlKey: true })
-    await waitFor(() => { expect(container.querySelector('.cm-acrylCommentProblem')?.textContent).toBe('No terminal to send it to.') })
-    expect(input.value).toBe('hello')
+  it('Comment to clipboard copies that comment and closes its note', async () => {
+    const { container, store, copied, view } = setup()
+    commentOnLine(view, 1)
+    await write(container, 'first')
+    commentOnLine(view, 3)
+    await write(container, 'third')
+    await waitFor(() => { expect(container.querySelectorAll('.cm-acrylCommentNote')).toHaveLength(2) })
+    const [, second] = store.all()
+    fireEvent.click([...container.querySelectorAll('.cm-acrylCommentNote')].find(note => note.textContent?.includes('third'))!.querySelector('button.cm-acrylCommentAction')!)
+    await waitFor(() => { expect(container.querySelectorAll('.cm-acrylCommentNote')).toHaveLength(1) })
+    expect(copied).toEqual([commentForTerminal(second!, true)])
+    expect(store.all().map(c => c.text)).toEqual(['first'])
+  })
+
+  it('All comments to clipboard copies every comment of the worktree, other files too, and closes them all', async () => {
+    const { container, store, copied, view } = setup()
+    const other = store.add({ worktree: '/w', file: 'b.ts', fromLine: 1, toLine: 1, lines: ['b'], text: 'in b' })
+    commentOnLine(view, 2)
+    await write(container, 'in a')
+    await waitFor(() => { expect(container.querySelector('.cm-acrylCommentNote')).not.toBeNull() })
+    fireEvent.click(button(container, 'All comments to clipboard'))
+    await waitFor(() => { expect(store.all()).toEqual([]) })
     expect(container.querySelector('.cm-acrylCommentNote')).toBeNull()
+    expect(copied).toHaveLength(1)
+    expect(copied[0]).toContain('in a')
+    expect(copied[0]).toContain(commentForTerminal(other, true))
+  })
+
+  it('keeps the comment and says why when the clipboard refuses', async () => {
+    const { container, store, view } = setup(TEXT, true)
+    commentOnLine(view, 1)
+    await write(container, 'keep me')
+    await waitFor(() => { expect(container.querySelector('.cm-acrylCommentNote')).not.toBeNull() })
+    fireEvent.click(button(container, 'Comment to clipboard'))
+    await waitFor(() => { expect(container.querySelector('.cm-acrylCommentProblem')?.textContent).toMatch(/clipboard refused/u) })
+    expect(store.all()).toHaveLength(1)
+  })
+
+  it('× closes the comment without using it, and Escape cancels a form', async () => {
+    const { container, store, copied, view } = setup()
+    commentOnLine(view, 1)
+    await write(container, 'never mind')
+    await waitFor(() => { expect(container.querySelector('.cm-acrylCommentNote')).not.toBeNull() })
+    fireEvent.click(container.querySelector('button.cm-acrylCommentDismiss')!)
+    await waitFor(() => { expect(container.querySelector('.cm-acrylCommentNote')).toBeNull() })
+    expect(store.all()).toEqual([])
+    expect(copied).toEqual([])
+    commentOnLine(view, 2)
+    const input = await waitFor(() => container.querySelector('textarea.cm-acrylCommentInput') as HTMLTextAreaElement)
     fireEvent.keyDown(input, { key: 'Escape' })
     expect(container.querySelector('.cm-acrylCommentForm')).toBeNull()
   })
 
-  it('keeps a note under its line when lines are added above it', async () => {
-    const { container } = render(<CodeEditor value={TEXT} filename="a.ts" onChange={() => {}} onSave={() => {}} onComment={async () => ({ ok: true, where: 'Claude' })} />)
-    const view = viewOf(container)
+  it('shows the comments the list already has when the file opens, and closes one used elsewhere', async () => {
+    const store = new CommentStore([], () => 1)
+    const kept = store.add({ worktree: '/w', file: 'a.ts', fromLine: 3, toLine: 3, lines: ['line three'], text: 'from before' })
+    store.add({ worktree: '/w', file: 'other.ts', fromLine: 1, toLine: 1, lines: ['x'], text: 'not this file' })
+    const { container } = render(<CodeEditor value={TEXT} filename="a.ts" onChange={() => {}} onSave={() => {}} comments={editorComments(store, '/w', 'a.ts', undefined)} />)
+    await waitFor(() => { expect(container.querySelectorAll('.cm-acrylCommentNote')).toHaveLength(1) })
+    expect(container.querySelector('.cm-acrylCommentNote')?.previousElementSibling?.textContent).toBe('line three')
+    store.remove([kept.id])
+    await waitFor(() => { expect(container.querySelector('.cm-acrylCommentNote')).toBeNull() })
+  })
+
+  it('keeps a note under its line when lines are added above it, and tells the list where it moved', async () => {
+    const { container, store, view } = setup()
     commentOnLine(view, 3)
-    const input = await waitFor(() => container.querySelector('textarea.cm-acrylCommentInput') as HTMLTextAreaElement)
-    fireEvent.input(input, { target: { value: 'note' } })
-    fireEvent.keyDown(input, { key: 'Enter', metaKey: true })
+    await write(container, 'note')
     await waitFor(() => { expect(container.querySelector('.cm-acrylCommentNote')).not.toBeNull() })
     view.dispatch({ changes: { from: 0, insert: 'new first\nnew second\n' } })
     const note = container.querySelector('.cm-acrylCommentNote')
     expect(note?.previousElementSibling?.textContent).toBe('line three')
+    await waitFor(() => { expect(store.all()[0]).toMatchObject({ fromLine: 5, toLine: 5 }) })
   })
 
-  it('offers no comments without a destination', () => {
+  it('offers no comments without a list', () => {
     const { container } = render(<CodeEditor value={TEXT} filename="a.ts" onChange={() => {}} onSave={() => {}} />)
     expect(container.querySelector('.cm-acrylCommentGutter')).toBeNull()
   })

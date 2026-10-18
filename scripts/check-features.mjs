@@ -190,6 +190,42 @@ if (run !== undefined) {
   })
 }
 
+// Continues in the README the check above opened.
+if (run !== undefined) {
+  await check('a comment is kept as a note with clipboard buttons, sent nowhere, and listed on the Comments page', async () => {
+    const opened = await page.evaluate(`(() => { const plus = [...document.querySelectorAll('.cm-acrylCommentPlus')].find(p => getComputedStyle(p.parentElement).visibility !== 'hidden'); if (!plus) return false; plus.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true })); return true })()`)
+    expectTrue(opened === true, 'no "+" to press')
+    expectTrue(await until(`!!document.querySelector('textarea.cm-acrylCommentInput')`), 'the "+" opened no comment form')
+    await page.evaluate(`(() => { const i = document.querySelector('textarea.cm-acrylCommentInput'); Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(i, 'check-features comment'); i.dispatchEvent(new Event('input', { bubbles: true })); return true })()`)
+    expectTrue(await clickButton('Comment'), 'no Comment button')
+    const note = await until(`(() => { const n = document.querySelector('.cm-acrylCommentNote'); if (!n) return false; return [...n.querySelectorAll('button')].map(b => b.getAttribute('aria-label') || b.textContent.trim()) })()`)
+    expectTrue(Array.isArray(note) && note.includes('Comment to clipboard') && note.includes('All comments to clipboard') && note.includes('Close this comment'), `the note has ${JSON.stringify(note)}`)
+    const noteText = await page.evaluate(`document.querySelector('.cm-acrylCommentNote').textContent`)
+    expectTrue(!/Sent to/u.test(noteText), `the note says it was sent: ${noteText}`)
+    // The Start page lists Comments after Checks; open the right panel if it is closed, then the Comments tab.
+    await page.evaluate(`document.querySelector('button[aria-label="Show right panel"]')?.click()`)
+    await sleep(800)
+    // The right panel may show another of its tabs; the Start tab holds the entries.
+    await page.evaluate(`(() => { const tab = [...document.querySelectorAll('[role=tab], button, div')].find(e => e.offsetParent !== null && e.children.length <= 3 && e.textContent.trim() === 'Start'); tab?.click(); return tab !== undefined })()`)
+    const entries = await until(`(() => { const names = [...document.querySelectorAll('button, [role=button]')].filter(e => e.offsetParent !== null).map(e => e.textContent.trim()); return names.includes('Comments') ? names : false })()`)
+    if (!Array.isArray(entries)) {
+      const panel = await page.evaluate(`[...document.querySelectorAll('[role=tab], button')].filter(e => e.offsetParent !== null && e.getBoundingClientRect().left > window.innerWidth / 2).map(e => e.textContent.trim() || e.getAttribute('aria-label')).slice(0, 30)`)
+      throw new Error(`no Comments entry in the right panel; its controls: ${JSON.stringify(panel)}`)
+    }
+    await page.evaluate(`[...document.querySelectorAll('button, [role=button]')].find(e => e.offsetParent !== null && e.textContent.trim() === 'Comments').click()`)
+    const listed = await until(`(() => { const page = document.querySelector('.dshWorkspaceComments'); return page && page.textContent.includes('check-features comment') ? page.textContent : false })()`)
+    expectTrue(typeof listed === 'string', 'the Comments page does not list the comment')
+    const sendMenu = await page.evaluate(`(() => { const b = [...document.querySelectorAll('.dshWorkspaceComments button')].find(e => e.textContent.trim() === 'Send to ▾'); if (!b) return false; b.click(); return true })()`)
+    expectTrue(sendMenu === true, 'no Send to button on the Comments page')
+    const menu = await until(`(() => { const m = document.querySelector('.dshWorkspaceSendMenuList'); return m ? m.textContent : false })()`)
+    await page.press('Escape')
+    // Closing it from the page closes the note in the editor too.
+    await page.evaluate(`document.querySelector('.dshWorkspaceComments button[aria-label^="Close the comment"]').click()`)
+    expectTrue(await until(`!document.querySelector('.cm-acrylCommentNote')`), 'closing on the Comments page left the note in the editor')
+    return `note buttons ${note.join(', ')}; Comments page listed it; Send to offers: ${menu}`
+  })
+}
+
 // Creates a workspace: only in an isolated copy (--launch), never in a window someone is using.
 if (run !== undefined) {
   await check('a new workspace is created from the dialog, shown with its own tabs, and switched back from (spec 043)', async () => {

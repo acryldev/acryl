@@ -1,7 +1,9 @@
 /**
  * Line comments in the code editor: a "+" beside the line under the pointer opens a comment form under that line (or under the selected
- * lines, when the selection covers it); Comment hands the lines and the text to `send`, and a sent comment stays under its lines as a note
- * for as long as the editor is open. Positions follow edits to the document. Where a comment goes is the caller's (`send`).
+ * lines, when the selection covers it). Comment keeps it: it goes to the caller's list (`EditorComments`) and shows as a note under its
+ * lines, and nothing is sent anywhere. The note copies itself, or every comment, to the clipboard, or closes; each of these ends the
+ * comment. The notes are the list's, so a comment used from the Comments page closes here too. Positions follow edits to the document,
+ * and the list is told where its comments moved.
  */
 
 import { Facet, StateEffect, StateField, type EditorState, type Extension, type Range, type Text } from '@codemirror/state'
@@ -14,10 +16,32 @@ export interface CommentRequest {
   readonly text: string
 }
 
-export type CommentResult = { readonly ok: true, readonly where: string } | { readonly ok: false, readonly message: string }
+/** One kept comment of this file, as the list has it. */
+export interface CommentNote {
+  readonly id: string
+  readonly fromLine: number
+  readonly toLine: number
+  readonly text: string
+}
 
-/** @returns where the comment went (shown under the lines), or why it could not be sent (shown in the form, which keeps the text). */
-export type CommentSend = (request: CommentRequest) => Promise<CommentResult>
+export type CopyResult = { readonly ok: true } | { readonly ok: false, readonly message: string }
+
+/** The list the editor's comments live in (the workspace's comments, narrowed to this file). */
+export interface EditorComments {
+  /** This file's comments. */
+  readonly notes: () => readonly CommentNote[]
+  /** @returns disposer. */
+  readonly subscribe: (listener: () => void) => () => void
+  readonly add: (request: CommentRequest) => void
+  /** The commented lines moved while the file was edited. */
+  readonly move: (id: string, fromLine: number, toLine: number) => void
+  /** Close it without using it. */
+  readonly close: (id: string) => void
+  /** Copy this comment to the clipboard, which ends it. */
+  readonly copy: (id: string) => Promise<CopyResult>
+  /** Copy every comment of the worktree to the clipboard, which ends them all. */
+  readonly copyAll: () => Promise<CopyResult>
+}
 
 /** The lines a comment is about: the start of the first and of the last line, kept current through edits. */
 interface Lines {
@@ -25,33 +49,48 @@ interface Lines {
   readonly to: number
 }
 
-interface Sent extends Lines {
-  readonly id: number
+interface Note extends Lines {
+  readonly id: string
   readonly text: string
-  readonly where: string
 }
 
 interface CommentsState {
   /** The start of the line under the pointer. */
   readonly hover: number | null
   readonly draft: (Lines & { readonly id: number }) | null
-  readonly sent: readonly Sent[]
+  readonly notes: readonly Note[]
   readonly decorations: DecorationSet
 }
 
 const setHover = StateEffect.define<number | null>()
 const openDraft = StateEffect.define<Lines>()
 const closeDraft = StateEffect.define<null>()
-const addSent = StateEffect.define<Omit<Sent, 'id'>>()
-const removeSent = StateEffect.define<number>()
+/** The list changed: show its comments, keeping where the ones already shown have moved to. */
+const syncNotes = StateEffect.define<readonly CommentNote[]>()
 
-const sendFacet = Facet.define<CommentSend, CommentSend | undefined>({ combine: values => values[0] })
+const listFacet = Facet.define<EditorComments, EditorComments | undefined>({ combine: values => values[0] })
 
-let nextId = 1
+let nextDraftId = 1
 
-function decorationsFor(doc: Text, draft: CommentsState['draft'], sent: readonly Sent[]): DecorationSet {
+/** The list's comments placed in `doc`, a comment already placed keeping its place (it follows edits the list learns of later). */
+function placeNotes(doc: Text, listed: readonly CommentNote[], shown: readonly Note[]): Note[] {
+  const at = (line: number): number => doc.line(Math.min(Math.max(line, 1), doc.lines)).from
+  return listed.map((note) => {
+    const known = shown.find(candidate => candidate.id === note.id)
+    return known === undefined ? { id: note.id, text: note.text, from: at(note.fromLine), to: at(note.toLine) } : { ...known, text: note.text }
+  })
+}
+
+function sameNotes(a: readonly Note[], b: readonly Note[]): boolean {
+  return a.length === b.length && a.every((note, index) => {
+    const other = b[index]
+    return other !== undefined && other.id === note.id && other.text === note.text && other.from === note.from && other.to === note.to
+  })
+}
+
+function decorationsFor(doc: Text, draft: CommentsState['draft'], notes: readonly Note[]): DecorationSet {
   const ranges: Range<Decoration>[] = []
-  for (const note of sent) ranges.push(Decoration.widget({ widget: new SentWidget(note), block: true, side: 1 }).range(doc.lineAt(note.to).to))
+  for (const note of notes) ranges.push(Decoration.widget({ widget: new NoteWidget(note), block: true, side: 1 }).range(doc.lineAt(note.to).to))
   if (draft !== null) {
     const first = doc.lineAt(draft.from).number
     const last = doc.lineAt(draft.to)
@@ -62,25 +101,30 @@ function decorationsFor(doc: Text, draft: CommentsState['draft'], sent: readonly
 }
 
 const commentsField = StateField.define<CommentsState>({
-  create: () => ({ hover: null, draft: null, sent: [], decorations: Decoration.none }),
+  create: (state) => {
+    const notes = placeNotes(state.doc, state.facet(listFacet)?.notes() ?? [], [])
+    return { hover: null, draft: null, notes, decorations: decorationsFor(state.doc, null, notes) }
+  },
   update(value, tr) {
-    let { hover, draft, sent } = value
+    let { hover, draft, notes } = value
     if (tr.docChanged) {
       const map = (lines: Lines): Lines => ({ from: tr.changes.mapPos(lines.from, -1), to: tr.changes.mapPos(lines.to, -1) })
       hover = hover === null ? null : tr.changes.mapPos(hover, -1)
       draft = draft === null ? null : { ...draft, ...map(draft) }
-      sent = sent.map(note => ({ ...note, ...map(note) }))
+      notes = notes.map(note => ({ ...note, ...map(note) }))
     }
     for (const effect of tr.effects) {
       if (effect.is(setHover)) hover = effect.value
-      else if (effect.is(openDraft)) draft = { ...effect.value, id: nextId++ }
+      else if (effect.is(openDraft)) draft = { ...effect.value, id: nextDraftId++ }
       else if (effect.is(closeDraft)) draft = null
-      else if (effect.is(addSent)) sent = [...sent, { ...effect.value, id: nextId++ }]
-      else if (effect.is(removeSent)) sent = sent.filter(note => note.id !== effect.value)
+      else if (effect.is(syncNotes)) {
+        const placed = placeNotes(tr.newDoc, effect.value, notes)
+        if (!sameNotes(placed, notes)) notes = placed
+      }
     }
-    if (hover === value.hover && draft === value.draft && sent === value.sent && !tr.docChanged) return value
-    const decorations = draft === value.draft && sent === value.sent ? value.decorations.map(tr.changes) : decorationsFor(tr.newDoc, draft, sent)
-    return { hover, draft, sent, decorations }
+    if (hover === value.hover && draft === value.draft && notes === value.notes && !tr.docChanged) return value
+    const decorations = draft === value.draft && notes === value.notes ? value.decorations.map(tr.changes) : decorationsFor(tr.newDoc, draft, notes)
+    return { hover, draft, notes, decorations }
   },
   provide: field => EditorView.decorations.from(field, value => value.decorations),
 })
@@ -142,54 +186,41 @@ class DraftWidget extends WidgetType {
     box.setAttribute('role', 'group')
     box.setAttribute('aria-label', 'Comment on these lines')
     const input = element('textarea', 'cm-acrylCommentInput')
-    input.placeholder = 'Comment for the agent'
+    input.placeholder = 'Comment on these lines'
     input.rows = 3
     input.setAttribute('aria-label', 'Comment')
     const foot = element('div', 'cm-acrylCommentFoot')
-    const hint = element('span', 'cm-acrylCommentHint', /mac/iu.test(navigator.platform) ? '⌘↩ to send' : 'Ctrl+Enter to send')
+    const hint = element('span', 'cm-acrylCommentHint', /mac/iu.test(navigator.platform) ? '⌘↩ to comment' : 'Ctrl+Enter to comment')
     const cancel = element('button', 'cm-acrylCommentButton', 'Cancel')
     cancel.type = 'button'
     const send = element('button', 'cm-acrylCommentButton', 'Comment')
     send.type = 'button'
     send.dataset.primary = ''
     send.disabled = true
-    const problem = element('div', 'cm-acrylCommentProblem')
-    problem.setAttribute('role', 'alert')
     foot.append(hint, cancel, send)
-    box.append(input, foot, problem)
+    box.append(input, foot)
 
     const close = (): void => {
       view.dispatch({ effects: closeDraft.of(null) })
       view.focus()
     }
-    let sending = false
-    const submit = async (): Promise<void> => {
+    const submit = (): void => {
       const text = input.value.trim()
-      const handler = view.state.facet(sendFacet)
+      const list = view.state.facet(listFacet)
       const draft = view.state.field(commentsField).draft
-      if (text === '' || sending || handler === undefined || draft === null || draft.id !== this.id) return
-      sending = true
-      send.disabled = true
-      problem.textContent = ''
+      if (text === '' || list === undefined || draft === null || draft.id !== this.id) return
       const { fromLine, toLine, text: lines } = linesOf(view.state, draft)
-      const result = await handler({ fromLine, toLine, lines, text }).catch((cause: unknown): CommentResult => ({ ok: false, message: cause instanceof Error ? cause.message : 'Could not send the comment.' }))
-      sending = false
-      if (!result.ok) {
-        problem.textContent = result.message
-        send.disabled = false
-        return
-      }
-      const current = view.state.field(commentsField).draft
-      view.dispatch({ effects: [closeDraft.of(null), addSent.of({ from: current?.from ?? draft.from, to: current?.to ?? draft.to, text, where: result.where })] })
+      view.dispatch({ effects: closeDraft.of(null) })
+      list.add({ fromLine, toLine, lines, text })
       view.focus()
     }
-    input.addEventListener('input', () => { send.disabled = input.value.trim() === '' || sending })
+    input.addEventListener('input', () => { send.disabled = input.value.trim() === '' })
     input.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close() }
-      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); event.stopPropagation(); void submit() }
+      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); event.stopPropagation(); submit() }
     })
     cancel.addEventListener('click', close)
-    send.addEventListener('click', () => { void submit() })
+    send.addEventListener('click', submit)
     requestAnimationFrame(() => { input.focus({ preventScroll: true }) })
     return box
   }
@@ -198,23 +229,40 @@ class DraftWidget extends WidgetType {
   override ignoreEvent(): boolean { return true }
 }
 
-/** A sent comment, under its lines. */
-class SentWidget extends WidgetType {
-  constructor(private readonly note: Sent) { super() }
+/** A kept comment, under its lines: copy it, copy every comment, or close it. */
+class NoteWidget extends WidgetType {
+  constructor(private readonly note: Note) { super() }
 
-  override eq(other: SentWidget): boolean { return other.note.id === this.note.id }
+  override eq(other: NoteWidget): boolean { return other.note.id === this.note.id && other.note.text === this.note.text }
 
   override toDOM(view: EditorView): HTMLElement {
     const box = element('div', 'cm-acrylCommentNote')
     const text = element('div', 'cm-acrylCommentText', this.note.text)
-    const meta = element('span', 'cm-acrylCommentWhere', `Sent to ${this.note.where}`)
+    const actions = element('div', 'cm-acrylCommentActions')
+    const copyOne = element('button', 'cm-acrylCommentAction', 'Comment to clipboard')
+    copyOne.type = 'button'
+    const copyAll = element('button', 'cm-acrylCommentAction', 'All comments to clipboard')
+    copyAll.type = 'button'
+    const problem = element('span', 'cm-acrylCommentProblem')
+    problem.setAttribute('role', 'alert')
+    actions.append(copyOne, copyAll, problem)
     const dismiss = element('button', 'cm-acrylCommentDismiss', '×')
     dismiss.type = 'button'
-    dismiss.title = 'Hide this note'
-    dismiss.setAttribute('aria-label', 'Hide this note')
-    dismiss.addEventListener('click', () => { view.dispatch({ effects: removeSent.of(this.note.id) }) })
+    dismiss.title = 'Close this comment'
+    dismiss.setAttribute('aria-label', 'Close this comment')
+    const list = (): EditorComments | undefined => view.state.facet(listFacet)
+    // A failed copy says why and keeps the comment; a copied one closes through the list.
+    const run = async (copy: (() => Promise<CopyResult>) | undefined): Promise<void> => {
+      if (copy === undefined) return
+      problem.textContent = ''
+      const result = await copy().catch((): CopyResult => ({ ok: false, message: 'Could not copy.' }))
+      if (!result.ok) problem.textContent = result.message
+    }
+    copyOne.addEventListener('click', () => { const l = list(); void run(l === undefined ? undefined : () => l.copy(this.note.id)) })
+    copyAll.addEventListener('click', () => { const l = list(); void run(l === undefined ? undefined : () => l.copyAll()) })
+    dismiss.addEventListener('click', () => { list()?.close(this.note.id) })
     const body = element('div', 'cm-acrylCommentBody')
-    body.append(text, meta)
+    body.append(text, actions)
     box.append(icon(), body, dismiss)
     return box
   }
@@ -292,9 +340,37 @@ const commentGutter = gutter({
   },
 })
 
-/** The editor extension; `send` decides where a comment goes. */
-export function lineComments(send: CommentSend): Extension {
-  return [sendFacet.of(send), commentsField, hoverTracker, visibleWidth, commentGutter]
+/**
+ * Keeps the notes and the list together: the list's changes are shown, and where edits moved a comment's lines is told back to the list
+ * (after the update, since the list's change comes back as another update).
+ */
+const listSync = ViewPlugin.fromClass(class {
+  private readonly stop: () => void
+  private pending = false
+
+  constructor(private readonly view: EditorView) {
+    const list = view.state.facet(listFacet)
+    this.stop = list?.subscribe(() => { this.view.dispatch({ effects: syncNotes.of(list.notes()) }) }) ?? (() => {})
+  }
+
+  update(update: { readonly docChanged: boolean }): void {
+    if (!update.docChanged || this.pending) return
+    this.pending = true
+    queueMicrotask(() => {
+      this.pending = false
+      const list = this.view.state.facet(listFacet)
+      if (list === undefined) return
+      const { doc } = this.view.state
+      for (const note of this.view.state.field(commentsField).notes) list.move(note.id, doc.lineAt(note.from).number, doc.lineAt(note.to).number)
+    })
+  }
+
+  destroy(): void { this.stop() }
+})
+
+/** The editor extension; `list` keeps the comments. */
+export function lineComments(list: EditorComments): Extension {
+  return [listFacet.of(list), commentsField, hoverTracker, visibleWidth, commentGutter, listSync]
 }
 
 /** Test seam: open the comment form on a line, as the "+" does. @param line - 1-based. */

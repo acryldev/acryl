@@ -56,29 +56,13 @@ describe('TerminalRegistry', () => {
     registry.disposeAll()
   })
 
-  it('knows the terminal the user worked in last, skipping one whose process ended or whose tab closed', () => {
-    const sockets: FakeSocket[] = []
-    const registry = new TerminalRegistry({ createSocket: () => { const s = new FakeSocket(); sockets.push(s); return s }, urlFor: id => `ws://x/${id}` })
-    // The screen element each session puts in its pane, without opening xterm's renderer (jsdom has no canvas); focus inside it is the
-    // user working in that terminal.
-    const focus = (id: string): void => {
-      const screen = (registry.ensure(id) as unknown as { readonly element: HTMLElement }).element
-      if (!screen.isConnected) document.body.appendChild(screen)
-      screen.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
-    }
-    registry.ensure('pty_1')
-    registry.ensure('pty_2')
-    expect(registry.lastActive()).toBeUndefined()
-    focus('pty_1')
-    focus('pty_2')
-    expect(registry.lastActive()?.id).toBe('pty_2')
-    focus('pty_1')
-    expect(registry.lastActive()?.id).toBe('pty_1')
-    sockets[0]?.deliver({ t: 'exit', exitCode: 0, error: null })
-    expect(registry.lastActive()?.id).toBe('pty_2')
-    registry.release('pty_2')
-    expect(registry.lastActive()).toBeUndefined()
+  it('finds a session by its terminal id, and no longer once its tab closed', () => {
+    const registry = new TerminalRegistry({ createSocket: () => new FakeSocket(), urlFor: id => `ws://x/${id}` })
+    const session = registry.ensure('pty_1')
+    expect(registry.get('pty_1')).toBe(session)
+    expect(registry.get('pty_2')).toBeUndefined()
+    registry.release('pty_1')
+    expect(registry.get('pty_1')).toBeUndefined()
     registry.disposeAll()
-    document.body.replaceChildren()
   })
 })

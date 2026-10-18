@@ -12,7 +12,7 @@ import { LanguageDescription } from '@codemirror/language'
 import { languages } from '@codemirror/language-data'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { basicSetup } from 'codemirror'
-import { lineComments, type CommentSend } from './line-comments.ts'
+import { lineComments, type EditorComments } from './line-comments.ts'
 
 export interface CodeEditorProps {
   /** The initial text. */
@@ -22,8 +22,8 @@ export interface CodeEditorProps {
   readonly onChange: (text: string) => void
   readonly onSave: () => void
   readonly readOnly?: boolean
-  /** Turns on line comments (the "+" beside a line); where a comment goes is this function's. */
-  readonly onComment?: CommentSend
+  /** Turns on line comments (the "+" beside a line), kept in this list. */
+  readonly comments?: EditorComments
 }
 
 const fill = EditorView.theme({
@@ -31,16 +31,16 @@ const fill = EditorView.theme({
   '.cm-scroller': { overflow: 'auto', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' },
 })
 
-export function CodeEditor({ value, filename, onChange, onSave, readOnly = false, onComment }: CodeEditorProps) {
+export function CodeEditor({ value, filename, onChange, onSave, readOnly = false, comments }: CodeEditorProps) {
   const host = useRef<HTMLDivElement>(null)
   // The latest callbacks, so the editor is created once and never rebuilt when a parent re-renders.
   const changeRef = useRef(onChange)
   const saveRef = useRef(onSave)
-  const commentRef = useRef(onComment)
+  const commentsRef = useRef(comments)
   changeRef.current = onChange
   saveRef.current = onSave
-  commentRef.current = onComment
-  const commenting = onComment !== undefined
+  commentsRef.current = comments
+  const commenting = comments !== undefined
 
   useEffect(() => {
     const parent = host.current
@@ -60,7 +60,7 @@ export function CodeEditor({ value, filename, onChange, onSave, readOnly = false
           EditorView.updateListener.of((update) => {
             if (update.docChanged) changeRef.current(update.state.doc.toString())
           }),
-          commenting ? lineComments(request => commentRef.current?.(request) ?? Promise.resolve({ ok: false, message: 'Comments are off here.' })) : [],
+          commenting ? lineComments(latestComments(commentsRef)) : [],
         ],
       }),
     })
@@ -81,4 +81,19 @@ export function CodeEditor({ value, filename, onChange, onSave, readOnly = false
   }, [filename, readOnly, commenting])
 
   return <div ref={host} className="dshWorkspaceCodeEditor" />
+}
+
+const off = { ok: false, message: 'Comments are off here.' } as const
+
+/** The list the parent passes now, so the editor is never rebuilt for a new list object. */
+function latestComments(ref: { readonly current: EditorComments | undefined }): EditorComments {
+  return {
+    notes: () => ref.current?.notes() ?? [],
+    subscribe: listener => ref.current?.subscribe(listener) ?? (() => {}),
+    add: (request) => { ref.current?.add(request) },
+    move: (id, fromLine, toLine) => { ref.current?.move(id, fromLine, toLine) },
+    close: (id) => { ref.current?.close(id) },
+    copy: id => ref.current?.copy(id) ?? Promise.resolve(off),
+    copyAll: () => ref.current?.copyAll() ?? Promise.resolve(off),
+  }
 }

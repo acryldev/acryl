@@ -1,7 +1,7 @@
 /**
- * A comment on lines of a file, as an agent in a terminal reads it: which file (relative and absolute, so the agent finds it from any
- * folder), which lines with their text, then the comment. Typed into the agent's input as a paste and not submitted, so several comments
- * can be collected and sent with one Enter.
+ * A comment on lines of a file, as an agent reads it: which file (relative and absolute, so the agent finds it from any folder), which
+ * lines with their text, then the comment. The same text is copied to the clipboard and typed into a terminal, as a paste that is not
+ * submitted, so several comments can be collected and sent with one Enter.
  */
 
 export interface LineComment {
@@ -46,4 +46,9 @@ export function commentForTerminal(comment: LineComment, multiline: boolean): st
     text,
     '',
   ].join('\n')
+}
+
+/** Several comments as one text: a blank line between them, or one after another on one line for a terminal that would run each line. */
+export function commentsForTerminal(comments: readonly LineComment[], multiline: boolean): string {
+  return comments.map(comment => commentForTerminal(comment, multiline)).join(multiline ? '\n' : '')
 }

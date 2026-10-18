@@ -1,4 +1,4 @@
-/** The right panel's entries for this package's tabs (Code, Changes, Review, Checks), drawn like the panel's own glyphs: one stroke, current color. */
+/** The right panel's entries for this package's tabs (Code, Changes, Review, Checks, Comments), drawn like the panel's own glyphs: one stroke, current color. */
 
 import type { ReactElement, ReactNode } from 'react'
 
@@ -33,4 +33,9 @@ export function ReviewGlyph(props: PanelIconProps): ReactElement {
 /** Checks: a check mark in a circle. */
 export function ChecksGlyph(props: PanelIconProps): ReactElement {
   return <Glyph {...props}><circle cx="12" cy="12" r="8.5" /><path d="m8.5 12.2 2.4 2.4 4.6-4.9" /></Glyph>
+}
+
+/** Comments: two overlapping speech bubbles (a note on a line, kept until used). */
+export function CommentsGlyph(props: PanelIconProps): ReactElement {
+  return <Glyph {...props}><path d="M3.5 4.5h11v7.5H8L4.5 15v-3h-1z" /><path d="M17.5 8.5h3v8.5h-1v3l-3.5-3h-5.5v-2" /></Glyph>
 }

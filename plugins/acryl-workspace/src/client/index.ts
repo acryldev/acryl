@@ -21,6 +21,10 @@ import { changesTabPlugin } from './changes/changes-tab.ts'
 import { checksTabPlugin } from './checks/checks-tab.ts'
 import { parseSavedThreads, REVIEW_STORAGE_KEY, ReviewStore, startReviewPersistence } from './review/review-store.ts'
 import { reviewTabPlugin } from './review/review-tab.ts'
+import { COMMENTS_STORAGE_KEY, CommentStore, parseSavedComments, startCommentPersistence } from './comments/comment-store.ts'
+import { commentsTabPlugin } from './comments/comments-tab.ts'
+import { listTerminalTargets } from './comments/terminal-targets.ts'
+import { browserClipboard } from './comments/use-comments.ts'
 import { WorkspaceState } from './canvas/state.ts'
 import { WorkspaceGroups } from './canvas/groups.ts'
 import { browserStorage, parseSavedWorkspace, STORAGE_KEY } from './canvas/persistence.ts'
@@ -96,6 +100,8 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => startWorkspacePersistence({ groups, shell, storage }), 'acryl-workspace: save tabs and view')
   const review = new ReviewStore(parseSavedThreads(storage?.getItem(REVIEW_STORAGE_KEY) ?? null))
   ctx.effect(() => startReviewPersistence(review, storage), 'acryl-workspace: save review comments')
+  const comments = new CommentStore(parseSavedComments(storage?.getItem(COMMENTS_STORAGE_KEY) ?? null))
+  ctx.effect(() => startCommentPersistence(comments, storage), 'acryl-workspace: save line comments')
   const agent = createAgentBridge(() => ctx.get('sessions'))
   // DSH's session navigation (`dsh-client-ui-workspace`), looked up when a chat is opened: ACRYL does not import that package (the
   // frame facade stays as it is), so the service is read by name through the narrow port `main-session.ts` declares.
@@ -161,6 +167,18 @@ export function apply(ctx: ClientContext): void {
 
   if (advanced && terminalStack !== undefined) {
     const { ptyClient, terminals, dock } = terminalStack
+    // Line comments are kept until the user copies them or sends them into one of these terminals.
+    ctx.plugin(commentsTabPlugin(shell, comments, {
+      list: worktree => listTerminalTargets({ groups, dock, terminals, shell }, worktree),
+      pasteTarget: terminalId => terminals.get(terminalId),
+      reveal: (target) => {
+        if (target.place === 'tab' && target.tabId !== undefined) {
+          shell.select(target.worktree)
+          chats.selectTab(target.worktree, target.tabId)
+        }
+        requestAnimationFrame(() => { terminals.get(target.terminalId)?.focus() })
+      },
+    }, browserClipboard()))
     // What terminal agents report through their hooks: the attention queue reads it.
     const agentStatus = new AgentStatusState(createAgentStatusApi())
     ctx.effect(() => agentStatus.start(), 'acryl-workspace: agent status polling')
@@ -191,7 +209,7 @@ export function apply(ctx: ClientContext): void {
           removeSlot = ctx.slots.register({
             name: 'desktop.main',
             priority: WORKSPACE_MAIN_PRIORITY,
-            inject: () => ({ ptyApi: ptyClient, terminals, dock, agentStatus, agents, tabTypes, tabRegistry, paletteConfig, toasts, notices, shell, groups, gitApi, filesApi, agent, chats, review, rightPanel, projects }),
+            inject: () => ({ ptyApi: ptyClient, terminals, dock, agentStatus, agents, tabTypes, tabRegistry, paletteConfig, toasts, notices, shell, groups, gitApi, filesApi, agent, chats, review, comments, rightPanel, projects }),
           }, WorkspaceCanvas)
         } catch (cause) {
           // A registration conflict must not take the left pane and the Changes tab down with it.
