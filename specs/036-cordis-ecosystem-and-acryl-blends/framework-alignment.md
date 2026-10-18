@@ -53,6 +53,8 @@ The framework is extracted from ACRYL, so ACRYL's packages are the one source an
 
 The owner: "we can make claude team where your agent working on acryl coordinating with agent claude working on acrylBlends". Agreed by both sessions on 2026-10-18:
 
+Names (owner, 2026-10-19): the ACRYL session is **AcrylImplementer**, the acrylblends session is **BlendsImplementer**.
+
 - **Ownership.** The ACRYL session owns the shared packages in the acryl repository (`runtime/blends-core`, `runtime/plugin-hub`, `runtime/app-persistence`, `plugins/acryl-settings`). The acrylblends session owns the acrylblends repository (CLI, templates, `plugins/`, docs, the acrylblends.github.io site). Neither edits the other's repository.
 - **This file is the one ledger** of agreed formats and who does what. The ACRYL session edits it; the acrylblends session sends its entries by message.
 - **Handover.** When a shared package API is final (published, or settled for a workspace or path import), the ACRYL session sends the import name, version and exact exports; the acrylblends session switches its copy to the import, keeps its tests green, then deletes the copy.
@@ -70,6 +72,24 @@ The owner: "we can make claude team where your agent working on acryl coordinati
 | T029 pull with a diff | `planUpgrade` and `applyUpgrade` (branch `blends-upgrade-plan`), extended to any Blend of the same kind | `plugins/manifest/upgrade.ts` replaced by the import |
 | T030 share to git or the registry | `app-persistence` save and share, registry pull request (T020) | `plugins/save` replaced by the import; the CLI's share verb |
 | T031 the Blends verbs and page | the verbs as a service any Blend has; the IDE's Blends page as one face | the same verbs in the framework CLI and templates |
+
+### Registries and their mirrors on acryl.dev (owner, 2026-10-19)
+
+The owner told BlendsImplementer, and confirmed to AcrylImplementer:
+
+- Blends are pushed to the acrylblends registry (https://acrylblends.github.io/blends, org https://github.com/acrylblends). Cordis plugins are pushed to the cordisplugins registry (https://cordisplugins.github.io, org https://github.com/cordisplugins). The acrylblends session may create what it needs in both orgs.
+- acryl.dev mirrors both automatically: a new toolbar section, acryl.dev/blends mirroring everything in the acrylblends registry, and acryl.dev/packages mirroring the cordisplugins registry.
+- Where the plan lives: the owner asked whether it goes into ACRYL specs or the acrylblends repository. Both sessions recommend ACRYL spec 036 and this file as the one plan, with acrylblends docs pointing to it. Owner to confirm.
+- A second npm token without 2FA exists in the owner's storage. Neither session reads or uses it until the owner approves a specific publish.
+
+Split:
+
+| Part | Owner of the work |
+|---|---|
+| The two registries, their repositories and the `index.json` format | BlendsImplementer |
+| acryl.dev toolbar section, `/blends` and `/packages` pages reading those `index.json` files | AcrylImplementer |
+
+BlendsImplementer sends the exact `index.json` shape and URLs before AcrylImplementer writes code against them. The mirror pages read the index at view time, so a new registry entry appears without a site rebuild.
 
 ### How a generated app depends on the shared packages (proposed, owner to confirm)
 
