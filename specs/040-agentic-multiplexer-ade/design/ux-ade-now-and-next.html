@@ -245,7 +245,7 @@
 </head>
 <body>
 <main>
-  <div class="eyebrow">ACRYL ADE / specs 040, 043, 044 / one page: now and next / updated 2026-10-18</div>
+  <div class="eyebrow">ACRYL ADE / specs 036, 040, 043, 044 / one page: now and next / updated 2026-10-18</div>
   <h1>Where we are, and where we go</h1>
   <div class="legend">
     <span class="chip fresh">changed since 2026-09-27</span> outlined in violet
@@ -254,7 +254,7 @@
     <span class="chip bad">problem</span> outlined in red
     <span class="chip gap">decision</span> needs your call, answer with the forms at the end
   </div>
-  <p class="lede">Part 1 is the app as it runs today, rebuilt from the code and styles (the app was not started for this page, so these are drawings, not screenshots). Part 2 is the target, with the two design questions you raised: <b>where the plugin Save and Share buttons go</b>, and <b>which terminal or agent a comment goes to</b>. The mocks are interactive: click the right-panel tabs.</p>
+  <p class="lede">Part 1 is the app as it runs today, rebuilt from the code and styles (the app was not started for this page, so these are drawings, not screenshots). Part 2 is the target, with the two design questions you raised: <b>where the plugin Save and Share buttons go</b>, <b>which terminal or agent a comment goes to</b>, and <b>how the whole app is saved, shared and loaded as a Blend</b> (section C). The mocks are interactive: click the right-panel tabs.</p>
 
   <h3 style="margin:18px 0 4px">Where this page sits in the whole</h3>
   <div class="globe">
@@ -399,7 +399,7 @@
 
   <!-- ============================== PART 2 ============================== -->
   <h2>Part 2: where we go</h2>
-  <p class="lede">The target ADE. The two open questions get their own sections right after it.</p>
+  <p class="lede">The target ADE. The open questions get their own sections right after it (A plugins, B comments, C the whole app).</p>
   <div class="ade" aria-label="Planned ACRYL ADE mock">
     <div class="top">
       <span class="logo">ACRYL</span><span class="crumb">acryl / fix/workspace-sidebar-state</span>
@@ -599,20 +599,215 @@
     </div>
   </div>
 
+  <!-- ============================== C. THE WHOLE APP AS A BLEND ============================== -->
+  <h2>C. Saving the whole app: a Blend <span class="chip plan">spec 036</span></h2>
+  <p class="lede">Say you made 20 plugins, pulled 30, and set up your agents and workflows for a project. A <b>Blend</b> is that whole setup in one folder (<code>blend.yaml</code> plus <code>blend.lock.json</code>). You save it, share it to git or the Blend registry (private or public, like a plugin), and pull it back on another machine or into one project. Spec 036 (<code>specs/036-cordis-ecosystem-and-acryl-blends/</code>) owns it. Sharing reuses the plugin share from spec 044.</p>
+
+  <h3 style="margin:18px 0 4px">Now <span class="chip built">built</span>, commands only, with gaps</h3>
+  <div class="cols2">
+    <div class="page" aria-label="Blend commands today">
+      <div class="ph"><h4>Commands</h4><small>chat and terminal, built 2026-09</small></div>
+      <div class="pb cmdlist">
+        /blend snapshot <i>- write blend.yaml and the lock</i><br>
+        /blend verify <i>- check it offline</i><br>
+        /blend apply <i>- re-create it in another app</i><br>
+        /blend ledger <i>- what changed since</i><br>
+        acryl save · /app save <i>- commit the app folder, secret check</i><br>
+        acryl remote connect <i>- its own git repository, your gh</i><br>
+        acryl new my-app --from &lt;git URL&gt;<br>
+        <span style="color:var(--muted);font-family:var(--sans)">No button for any of this. No way to start or open a Blend from inside the app (T022).</span>
+      </div>
+    </div>
+    <div class="page" aria-label="What a snapshot holds today">
+      <div class="ph"><h4>What a snapshot holds today</h4><small>read from <code>lib/blend-capture.js</code>, not yet run for this page</small></div>
+      <div class="pb">
+        <div class="pcard"><div class="nm"><b>✓ Every installed plugin and its Loader rows</b><small>which parts of each are loaded</small></div></div>
+        <div class="pcard"><div class="nm"><b>✓ On and off per plugin</b></div></div>
+        <div class="pcard"><div class="nm"><b>✓ Plugins made here: their source, copied in</b><small>with a sha256</small></div></div>
+        <div class="pcard"><div class="nm"><b>✓ Marketplace plugins: name, version, checksum</b></div></div>
+        <div class="pcard prob"><div class="nm"><b>✗ Plugins pulled since 2026-10-16 (GitHub, npm, store)</b><small>probably dropped: DSH records them as a path to a .tgz, the capture reads it as a source folder, fails and skips it with a note. To prove first.</small></div></div>
+        <div class="pcard prob"><div class="nm"><b>✗ Settings</b><small>models chosen, agent presets, custom agents, skills, shortcuts (<code>acryl-settings.yaml</code>, <code>workspace/agent-settings.json</code>)</small></div></div>
+        <div class="pcard prob"><div class="nm"><b>✗ Workspaces and projects, tabs, comments</b><small>kept in the window's browser storage, not the app's home (T021)</small></div></div>
+        <div class="pcard prob"><div class="nm"><b>✗ A project's own setup</b><small>a project has <code>.acryl-plugins/</code>, but nothing records "this project uses these plugins, agents and workflows"</small></div></div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin:24px 0 4px">Where we go <span class="chip plan">plan</span></h3>
+  <p class="lede"><b>Blends</b> sits in the left panel next to <b>Plugins</b> (your design, 2026-10-18). It opens the Blends page: the current Blend with every action a plugin has (save, version, share, pull, update, roll back), the registry to browse, pull from and push to, and the git sources. DSH's <code>sidebar.panellist</code> slot adds the entry and its page, so DSH is not changed.</p>
+
+  <div style="display:grid;grid-template-columns:minmax(180px,230px) 1fr;gap:14px;align-items:start" class="blends-grid">
+    <div class="page" aria-label="Left panel with Blends">
+      <div class="pb" style="padding:10px 8px">
+        <h5 style="margin:2px 6px 6px">Projects</h5>
+        <div style="padding:4px 8px;color:var(--muted)">▸ _projects</div>
+        <div style="padding:4px 8px;color:var(--muted)">▾ acryl</div>
+        <div style="padding:4px 8px 4px 22px;color:var(--muted)">main</div>
+        <div style="padding:4px 8px 4px 22px;color:var(--muted)">verify</div>
+        <div style="height:1px;background:var(--border);margin:10px 4px"></div>
+        <div style="padding:6px 10px;border-radius:6px;color:var(--muted)">Plugins</div>
+        <div class="f" style="padding:6px 10px;border-radius:6px;background:var(--brand-soft);color:var(--foreground)"><b>Blends</b></div>
+        <div style="padding:6px 10px;border-radius:6px;color:var(--muted)">Settings</div>
+      </div>
+    </div>
+    <div class="page" aria-label="Blends page, target">
+      <div class="ph"><h4>Blends</h4><small>this app's setup: save, share, pull and restore it</small><span class="btn pri" style="margin-left:auto;display:inline-flex;align-items:center">Pull a Blend</span></div>
+      <div class="ptabs" data-tabs="blends" style="background:var(--panel)">
+        <span class="ptab" data-t="this" aria-selected="true" style="cursor:pointer">This Blend</span>
+        <span class="ptab" data-t="registry" aria-selected="false" style="cursor:pointer">Registry</span>
+        <span class="ptab" data-t="sources" aria-selected="false" style="cursor:pointer">Sources</span>
+        <span class="ptab" data-t="saved" aria-selected="false" style="cursor:pointer">Saved and history</span>
+      </div>
+
+      <div class="pv on" data-tabs-view="blends" data-v="this">
+        <div class="det-head"><h4>my-acryl-setup</h4><span class="tag">0.4.0</span><span class="tag">from acryl.ide 0.2.5</span><span class="tag">shared to github:musichen/my-acryl-setup, private</span><span class="tag" style="color:var(--warn)">changed since saved</span>
+          <div class="acts"><span class="btn pri" style="display:inline-flex;align-items:center">Save</span><span class="btn" style="display:inline-flex;align-items:center">Version ▾</span><span class="btn" style="display:inline-flex;align-items:center">Share ▾</span><span class="btn" style="display:inline-flex;align-items:center">Update from acryl.ide 0.2.6</span></div></div>
+        <div class="pb">
+          <h5>In this Blend</h5>
+          <label class="pcard"><input type="checkbox" checked disabled> <div class="nm"><b>Plugins 54</b><small>20 made here (source copied in), 30 pulled (source and sha512 locked), 4 official · each one on or off</small></div></label>
+          <label class="pcard"><input type="checkbox" checked> <div class="nm"><b>Settings</b><small>models chosen, agent presets, custom agents, skills, shortcuts</small></div></label>
+          <label class="pcard"><input type="checkbox" checked> <div class="nm"><b>Workspaces and projects</b><small>Default, Individual Projects, Shared Context and its brief; which projects, not their files</small></div></label>
+          <label class="pcard"><input type="checkbox"> <div class="nm"><b>Open tabs and comments</b><small>off by default, they are today's work</small></div></label>
+          <div class="absent"><b>Never in a Blend:</b> keys, tokens and logins, chat history, logs. A Blend that needs a key names it; you enter it after loading. The secret check runs on every save and share.</div>
+          <h5>Scope</h5>
+          <div class="pcard"><div class="nm"><b>This machine</b><small>the app's own folder, <code>blend.yaml</code> at its root</small></div><span class="tag" style="color:var(--ok)">saved</span></div>
+          <div class="pcard"><div class="nm"><b>Project acryl</b><small><code>.acryl/blend/</code> in the project, committed with it: only what this project adds</small></div><span class="btn" style="display:inline-flex;align-items:center">Save for this project</span></div>
+        </div>
+      </div>
+
+      <div class="pv" data-tabs-view="blends" data-v="registry">
+        <div class="pb">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="tag" style="padding:2px 8px;flex:1;min-width:160px">Search Blends…</span><span class="tag">acrylblends.github.io</span><span class="tag">IDE setups</span><span class="tag">Starters</span></div>
+          <div class="pcard"><div class="nm"><b>acryl.ide</b> <span class="tag">0.2.6</span><small>the ACRYL IDE itself · official · MIT</small></div><span class="tag" style="color:var(--ok)">yours is from this</span><span class="btn" style="display:inline-flex;align-items:center">Pull</span></div>
+          <div class="pcard"><div class="nm"><b>@someone/rust-agent-setup</b> <span class="tag">1.1.0</span><small>12 plugins, 3 agent presets for Rust work · public</small></div><span class="btn" style="display:inline-flex;align-items:center">Pull</span></div>
+          <div class="pcard"><div class="nm"><b>organizer.gtd</b> <span class="tag">0.3.0</span><small>a GTD app starter (not an IDE) · Blueprint</small></div><span class="btn" style="display:inline-flex;align-items:center">New app from it</span></div>
+          <div style="color:var(--muted);margin-top:6px">Push to the registry is Share ▾ › Blend registry on This Blend: a reviewed pull request, public only (T020).</div>
+        </div>
+      </div>
+
+      <div class="pv" data-tabs-view="blends" data-v="sources">
+        <div class="pb">
+          <div class="pcard"><div class="nm"><b>acrylblends.github.io</b><small>public Blend registry</small></div><span class="tag">registry</span></div>
+          <div class="pcard"><div class="nm"><b>github:musichen/*</b><small>your repositories, through your gh login, private ones too</small></div><span class="tag">git</span></div>
+          <div class="pcard"><div class="nm"><b>git.mycompany.dev/team/blends</b><small>a team's private registry, the same layout, your git login</small></div><span class="tag">registry</span><span class="btn" style="display:inline-flex;align-items:center">Remove</span></div>
+          <div class="pcard"><div class="nm"><b>~/Blends</b><small>a folder or .tgz files</small></div><span class="tag">file</span></div>
+          <span class="btn" style="display:inline-flex;align-items:center;margin-top:6px">Add a source…</span>
+        </div>
+      </div>
+
+      <div class="pv" data-tabs-view="blends" data-v="saved">
+        <div class="pb">
+          <table>
+            <thead><tr><th>Version</th><th>Saved</th><th>Shared to</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>0.4.0 <span class="tag">current</span></td><td>today, 54 plugins</td><td>github:musichen/my-acryl-setup</td><td></td></tr>
+              <tr><td>0.3.0</td><td>2026-10-12, 41 plugins</td><td>github:musichen/my-acryl-setup</td><td><span class="runbtn">Restore</span></td></tr>
+            </tbody>
+          </table>
+          <h5>Changed since 0.4.0</h5>
+          <div style="font:11.5px/1.7 var(--mono);color:var(--muted)">+ plugin accounting.sidebar.date-filter 0.1.3 (agent)<br>~ setting model: deepseek-v4 → claude-opus (you)<br>− plugin dsh-plugin-smooth-stream (you)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <style>@media (max-width: 700px) { .blends-grid { grid-template-columns: 1fr !important; } }</style>
+
+  <h3 style="margin:24px 0 4px">The Plugins page next to it</h3>
+  <p class="lede">Every plugin, grouped by where it came from, each with all its options on its own page (section A).</p>
+  <div class="page" aria-label="Plugins page, target">
+    <div class="ph"><h4>Plugins</h4><small>every plugin, by where it came from</small><span class="btn pri" style="margin-left:auto;display:inline-flex;align-items:center">Add plugin</span></div>
+    <div class="pb">
+      <h5>Official 4</h5>
+      <div class="pcard"><div class="nm"><b>Shell</b><small>DSH's own</small></div></div>
+      <h5>Made here 20</h5>
+      <div class="pcard"><div class="nm"><b>accounting.sidebar.date-filter</b> <span class="tag">0.1.3</span> <span class="tag" style="color:var(--fresh)">made by the agent</span><small>source in this project's .acryl-plugins/ · not shared</small></div><span class="sw"></span></div>
+      <div class="pcard"><div class="nm"><b>acryl-header-note</b> <span class="tag">0.2.0</span> <span class="tag" style="color:var(--fresh)">made by you</span><small>source in the app's plugins/ · shared to GitHub, private</small></div><span class="sw"></span></div>
+      <h5>Pulled 30</h5>
+      <div class="pcard"><div class="nm"><b>acryl-quick-notes</b> <span class="tag">0.3.0</span> <span class="tag" style="color:var(--brand)">0.4.0 available</span><small>from github:inboxxobni/acryl-quick-notes · read-only</small></div><span class="sw"></span></div>
+      <div class="pcard"><div class="nm"><b>dsh-plugin-smooth-stream</b> <span class="tag">1.2.0</span><small>from npm</small></div><span class="sw"></span></div>
+      <div style="color:var(--muted);margin-top:6px">Made here shows Save, Version, Share. Pulled shows Update, Roll back, Edit a copy.</div>
+    </div>
+  </div>
+
+  <div class="cols2">
+    <div>
+      <h3 style="margin:14px 0 4px">Share ▾ opens</h3>
+      <div class="menu" style="max-width:none">
+        <div class="h">Git</div>
+        <div class="on">My repository, private <small>default, your gh login</small></div>
+        <div>My repository, public <small>needs a license</small></div>
+        <div>Another git address… <small>GitLab, your server</small></div>
+        <div class="sep"></div><div class="h">Blend registry</div>
+        <div>acrylblends.github.io, public <small>a pull request, reviewed</small></div>
+        <div class="sep"></div><div class="h">File</div>
+        <div>Export as a .tgz <small>for a USB stick or mail</small></div>
+      </div>
+      <p class="why">Then the same confirmation as a plugin share: where to, private or public, secret check passed, the files that will be sent.</p>
+    </div>
+    <div>
+      <h3 style="margin:14px 0 4px">Load ▾, then always this before anything changes</h3>
+      <div class="dialog">
+        <h4>Load my-acryl-setup 0.4.0 here?</h4>
+        <p>From <b style="color:var(--foreground)">github.com/musichen/my-acryl-setup</b>, private</p>
+        <p>Installs <b style="color:var(--foreground)">27 plugins</b> (24 from the store, 3 downloaded, every sha512 checked), switches 2 off</p>
+        <p>Changes <b style="color:var(--foreground)">5 settings</b>: model, 2 agent presets, 2 shortcuts</p>
+        <p>Adds workspace <b style="color:var(--foreground)">Shared Context</b></p>
+        <p class="ok">✓ Your keys, logins and chats stay as they are</p>
+        <p>Needs a key for: Web search (DeepSeek). Asked after loading.</p>
+        <div class="row2"><span class="btn">Cancel</span><span class="btn">Load into a new app</span><span class="btn pri">Load here</span></div>
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>Control</th><th>Same as</th><th>State</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><b>Save</b></td><td><code>/blend snapshot</code> then <code>acryl save</code></td><td><span class="chip built">built</span> as commands</td><td>Writes the Blend into the app folder and commits it. Nothing leaves the machine.</td></tr>
+      <tr><td><b>Share ▾</b></td><td><code>acryl remote connect</code>, <code>acryl save</code></td><td><span class="chip built">built</span> git · <span class="chip plan">plan</span> registry (T020)</td><td>Private by default; public needs a license; a private app never goes to a public remote.</td></tr>
+      <tr><td><b>Load ▾</b> into a new app</td><td><code>acryl new my-app --from &lt;git URL&gt;</code></td><td><span class="chip built">built</span> as a command</td><td>A second app next to this one, sharing nothing.</td></tr>
+      <tr><td><b>Load ▾</b> here</td><td><code>/blend apply</code></td><td><span class="chip built">built</span> for plugins · <span class="chip plan">plan</span> settings</td><td>Restores this app to the Blend after the dialog above.</td></tr>
+      <tr><td><b>Save for this project</b></td><td><code>/blend snapshot</code> in a project</td><td><span class="chip built">partly</span></td><td>Writes <code>.acryl/blend/</code> in the project today, but only plugins. When you open a project with one, ACRYL says what is missing and offers Load.</td></tr>
+      <tr><td><b>Saved and history</b></td><td><code>/blend ledger</code></td><td><span class="chip built">built</span></td><td>What changed since the last save, and by whom (you or the agent).</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin:24px 0 4px">Steps, each with its gate</h3>
+  <table>
+    <thead><tr><th>#</th><th>Step</th><th>Gate (proven live, not only in unit tests)</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Pulled plugins in a snapshot: record GitHub, npm and store pulls by source and sha512</td><td>An isolated app with plugins made here and pulled ones: snapshot, then <code>acryl new --from</code> it in a fresh app: the same plugins, versions and on/off, offline from the store</td></tr>
+      <tr><td>2</td><td>Settings in the Blend: models chosen, agent presets, custom agents, skills, shortcuts; never keys</td><td>Load into a fresh app: the same settings; the secret check refuses a Blend with a key in it</td></tr>
+      <tr><td>3</td><td>Workspaces into the app's home (T021), then into the Blend</td><td>Workspaces and projects come back in a fresh app</td></tr>
+      <tr><td>4</td><td>Project Blend: what a project adds, and the offer to load it on open</td><td>Open a project with <code>.acryl/blend/</code> in a fresh app: the missing plugins are named and loaded on one click</td></tr>
+      <tr><td>5</td><td>The buttons: plugin pages (section A), Blends in the left panel and its page (This Blend, Registry, Sources, Saved and history), Share and Pull dialogs</td><td>Every control driven in an isolated Desktop by <code>check:features</code></td></tr>
+      <tr><td>6</td><td>Blend registry share (T020) and pull</td><td>A public Blend listed on acrylblends.github.io and loaded from there</td></tr>
+    </tbody>
+  </table>
+
   <!-- ============================== DECISIONS ============================== -->
   <h2>Your decisions</h2>
-  <p class="lede">Pick and press Queue on each, then Send to Agent. Nothing is built until you answer. The comment bubble and the Comments page are decided (your design above).</p>
+  <p class="lede">Pick and press Queue on each, then Send to Agent. Nothing is built until you answer. Decided: the comment bubble and the Comments page (built), the plugin buttons on each plugin's page with every plugin listed (your answer 2026-10-18), and a Blend that holds settings, plugins and their versions, shared to git or the registry, private or public, and loaded per machine or per project, from a Blends entry next to Plugins in the left panel (your words 2026-10-18).</p>
   <div class="grid2">
-    <form class="box" data-lavish-question="plugin-actions" onsubmit="event.preventDefault(); const v = new FormData(event.currentTarget).get('a'); const n = event.currentTarget.querySelector('textarea').value; if (v) { window.lavish && window.lavish.queuePrompt('Plugin buttons: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Plugin buttons: ' + v, element: event.currentTarget, queueKey: 'plugin-actions', data: { question: 'plugin-actions', answer: v } }); event.currentTarget.querySelector('.queued').textContent = 'queued'; }">
-      <h3>1. Where the plugin buttons go</h3>
-      <label class="opt"><input type="radio" name="a" value="On each plugin's page in DSH's Plugins page (section A)"><b>On each plugin's page</b> <span class="chip built rec">recommended</span><small>DSH's own spots; the Lifecycle tab stays as it is.</small></label>
-      <label class="opt"><input type="radio" name="a" value="In ACRYL's Lifecycle tab"><b>In ACRYL's Lifecycle tab</b><small>Our page, but it lists every internal row, not just the plugins you added.</small></label>
-      <label class="opt"><input type="radio" name="a" value="In both places"><b>Both</b><small>Two sets of the same buttons.</small></label>
+    <form class="box" data-lavish-question="project-blend" onsubmit="event.preventDefault(); const v = new FormData(event.currentTarget).get('a'); const n = event.currentTarget.querySelector('textarea').value; if (v) { window.lavish && window.lavish.queuePrompt('Project Blend: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Project Blend: ' + v, element: event.currentTarget, queueKey: 'project-blend', data: { question: 'project-blend', answer: v } }); event.currentTarget.querySelector('.queued').textContent = 'queued'; }">
+      <h3>1. A project with its own Blend</h3>
+      <p class="q">You open a project that has <code>.acryl/blend/</code> and this app lacks some of its plugins or settings.</p>
+      <label class="opt"><input type="radio" name="a" value="ACRYL names what is missing and offers Load; nothing changes until you click"><b>Offer, you click Load</b> <span class="chip built rec">recommended</span><small>Same dialog as Load here.</small></label>
+      <label class="opt"><input type="radio" name="a" value="Load it by itself when the project opens"><b>Load by itself</b><small>Fast, but a project could install plugins without asking.</small></label>
+      <label class="opt"><input type="radio" name="a" value="Nothing; load by hand from the Blend page"><b>By hand only</b><small></small></label>
+      <textarea placeholder="Anything to change (optional)"></textarea>
+      <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
+    </form>
+    <form class="box" data-lavish-question="blend-contents" onsubmit="event.preventDefault(); const v = new FormData(event.currentTarget).get('a'); const n = event.currentTarget.querySelector('textarea').value; if (v) { window.lavish && window.lavish.queuePrompt('Blend contents: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Blend contents: ' + v, element: event.currentTarget, queueKey: 'blend-contents', data: { question: 'blend-contents', answer: v } }); event.currentTarget.querySelector('.queued').textContent = 'queued'; }">
+      <h3>2. What a Blend holds by default</h3>
+      <p class="q">Keys, logins, chats and logs are never in it (not a choice).</p>
+      <label class="opt"><input type="radio" name="a" value="Plugins, settings, workspaces and projects; tabs and comments off"><b>Plugins, settings, workspaces</b> <span class="chip built rec">recommended</span><small>Tabs and comments can be ticked when saving.</small></label>
+      <label class="opt"><input type="radio" name="a" value="Plugins and settings only"><b>Plugins and settings</b><small>Workspaces stay per machine.</small></label>
+      <label class="opt"><input type="radio" name="a" value="Everything that is not a secret, tabs and comments too"><b>Everything but secrets</b><small></small></label>
       <textarea placeholder="Anything to change (optional)"></textarea>
       <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
     </form>
     <form class="box" data-lavish-question="review-vs-comments" onsubmit="event.preventDefault(); const v = new FormData(event.currentTarget).get('r'); const n = event.currentTarget.querySelector('textarea').value; if (v) { window.lavish && window.lavish.queuePrompt('Review and Comments: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Review and Comments: ' + v, element: event.currentTarget, queueKey: 'review-vs-comments', data: { question: 'review-vs-comments', answer: v } }); event.currentTarget.querySelector('.queued').textContent = 'queued'; }">
-      <h3>2. Diff comments: Review or Comments?</h3>
+      <h3>3. Diff comments: Review or Comments?</h3>
       <p class="q">Today a comment on a Diff tab goes straight to the chat and is listed in Review.</p>
       <label class="opt"><input type="radio" name="r" value="Diff comments work like file comments: bubble, listed in Comments; Review stays for the change review"><b>Same as file comments</b> <span class="chip built rec">recommended</span><small>Bubble, listed in Comments, copied or sent by you. One way for every comment.</small></label>
       <label class="opt"><input type="radio" name="r" value="Keep diff comments as they are (sent to the chat, listed in Review)"><b>Keep as today</b><small>Two different ways to comment.</small></label>
@@ -620,7 +815,7 @@
       <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
     </form>
     <form class="box" data-lavish-question="picker" onsubmit="event.preventDefault(); const v = new FormData(event.currentTarget).get('p'); const n = event.currentTarget.querySelector('textarea').value; if (v) { window.lavish && window.lavish.queuePrompt('Element picker: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Element picker: ' + v, element: event.currentTarget, queueKey: 'picker', data: { question: 'picker', answer: v } }); event.currentTarget.querySelector('.queued').textContent = 'queued'; }">
-      <h3>3. The element picker</h3>
+      <h3>4. The element picker</h3>
       <label class="opt"><input type="radio" name="p" value="A picked element becomes a comment in Comments, with a box for what to change"><b>A picked element becomes a comment</b> <span class="chip built rec">recommended</span><small>Pick, write what to change; it is listed in Comments with the others.</small></label>
       <label class="opt"><input type="radio" name="p" value="Keep clipboard only"><b>Keep clipboard only</b><small>As today.</small></label>
       <textarea placeholder="Anything to change (optional)"></textarea>
