@@ -1,14 +1,20 @@
 // digestFolder: the one folder digest for lock `local` modules and plugin staging (spec 036, agreed with the acrylblends framework).
 import { createHash } from 'node:crypto'
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import { digestFolder } from '../../src/folder-digest.js'
 
+const created: string[] = []
+afterEach(() => {
+  for (const root of created.splice(0)) rmSync(root, { recursive: true, force: true })
+})
+
 function folder(files: Record<string, string>): string {
   const root = mkdtempSync(join(tmpdir(), 'blends-digest-'))
+  created.push(root)
   for (const [relative, text] of Object.entries(files)) {
     mkdirSync(join(root, relative, '..'), { recursive: true })
     writeFileSync(join(root, relative), text)
