@@ -163,6 +163,8 @@ describe('generateBlendLock (formatVersion 3, spec 036)', () => {
     const two = generateBlendLock({ resolved: definition!, origin, modules: [pulled, local], parameters: { a: 2, b: 1 } })
     expect(one.json).toBe(two.json)
     expect(one.lock).not.toHaveProperty('lineage')
-    expect(generateBlendLock({ resolved: definition!, origin, modules: [] }).lock).toMatchObject({ parameters: {}, modules: [] })
+    expect(generateBlendLock({ resolved: definition!, origin, modules: [], parameters: {} }).lock).toMatchObject({ parameters: {}, modules: [] })
+    // Without explicit parameters the lock records the values resolution used.
+    expect(generateBlendLock({ resolved: definition!, origin, modules: [] }).lock).toMatchObject({ parameters: definition!.parameters })
   })
 })

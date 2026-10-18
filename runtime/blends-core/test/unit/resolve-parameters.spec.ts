@@ -122,4 +122,12 @@ spec:
     expect(diagnostics).toEqual([])
     expect(definition?.spec.rows[0]?.config?.greeting).toBe('Hi World')
   })
+
+  it('keeps the values it resolved with: defaults, then overrides (spec 036, for the lock)', () => {
+    const doc = loadValidDefinition(GOLDEN.crm)
+    const defaults = resolveDefinition(doc).definition?.parameters
+    expect(defaults).toMatchObject({ orgName: 'My Organization' })
+    const overridden = resolveDefinition(doc, { overrides: { orgName: 'Acme' } }).definition?.parameters
+    expect(overridden).toEqual({ ...defaults, orgName: 'Acme' })
+  })
 })

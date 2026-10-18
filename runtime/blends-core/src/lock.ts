@@ -7,7 +7,7 @@ import type { BlendLock, LockGenerator, LockLineage, LockModule, LockOrigin, Res
 
 // Version truth: kept in lockstep with packages/blends-core/package.json.
 // unit/lock.spec.ts asserts the two match so they cannot drift silently.
-export const BLENDS_CORE_VERSION = '0.3.0'
+export const BLENDS_CORE_VERSION = '0.4.0'
 
 export interface LockResult {
   lock: BlendLock
@@ -51,7 +51,7 @@ export interface BlendLockInput {
   modules: readonly LockModule[]
   /** For a Blend: the Blueprint it was resolved over, with the Blueprint file's digest when known. */
   lineage?: LockLineage
-  /** The parameter values the rows were resolved with; `{}` when the definition has none. */
+  /** The parameter values the rows were resolved with; defaults to `resolved.parameters`, the values resolution used. */
   parameters?: Readonly<Record<string, unknown>>
   generator?: LockGenerator
 }
@@ -61,7 +61,7 @@ export interface BlendLockInput {
  * Deterministic like v1 and v2: fixed key order, `modules` sorted by name, `parameters` keys sorted, so the same state gives the same bytes.
  */
 export function generateBlendLock(input: BlendLockInput): LockResult {
-  const parameters = Object.fromEntries(Object.entries(input.parameters ?? {}).sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0)))
+  const parameters = Object.fromEntries(Object.entries(input.parameters ?? input.resolved.parameters ?? {}).sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0)))
   const lock: BlendLock = {
     formatVersion: 3,
     generator: input.generator ?? DEFAULT_GENERATOR,

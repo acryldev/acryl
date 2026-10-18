@@ -92,6 +92,8 @@ export interface ResolvedDefinition {
   metadata: BlendMetadata
   spec: ResolvedSpec
   delta: ResolvedDelta
+  /** The root document's parameter values the rows were resolved with: its declared defaults, then the caller's overrides. */
+  parameters: Record<string, ParameterValue>
 }
 
 /**

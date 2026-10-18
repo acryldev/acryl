@@ -114,7 +114,7 @@ function resolveChain(
   if (parentRows === null) {
     // Root definition: every row is a new row; the delta is the full list.
     const delta: ResolvedDelta = { insert: insertRows, overrides: [] }
-    return { definition: assemble(doc, insertRows, delta), diagnostics: [] }
+    return { definition: assemble(doc, insertRows, delta, values), diagnostics: [] }
   }
 
   const overrideById = new Map(overrideEntries.map((entry) => [entry.id, entry]))
@@ -123,7 +123,7 @@ function resolveChain(
     return entry === undefined ? row : mergeOverride(row, entry)
   })
   const delta: ResolvedDelta = { insert: insertRows, overrides: overrideEntries }
-  return { definition: assemble(doc, [...inherited, ...insertRows], delta), diagnostics: [] }
+  return { definition: assemble(doc, [...inherited, ...insertRows], delta, values), diagnostics: [] }
 }
 
 // A definition's resolution parent: explicit extends, else - for a Blend -
@@ -229,7 +229,7 @@ function mergeOverride(row: Row, entry: OverrideEntry): Row {
   }
 }
 
-function assemble(doc: BlendDocument, rows: Row[], delta: ResolvedDelta): ResolvedDefinition {
+function assemble(doc: BlendDocument, rows: Row[], delta: ResolvedDelta, parameters: Record<string, ParameterValue>): ResolvedDefinition {
   return {
     apiVersion: doc.apiVersion,
     kind: doc.kind,
@@ -240,5 +240,6 @@ function assemble(doc: BlendDocument, rows: Row[], delta: ResolvedDelta): Resolv
       rows,
     },
     delta,
+    parameters,
   }
 }
