@@ -44,10 +44,10 @@ The framework is extracted from ACRYL, so ACRYL's packages are the one source an
 5. **The Blends verbs in a service, the page as one face** (T031): save, version, share, pull, restore live in a service any Blend has (as `pluginHub` already is); the IDE's Blends page next to Plugins is one face of it, and a GTD app or an accounting app gets the same verbs without the IDE.
 6. **Retire the copies** as each part moves (acrylblends T305), so the framework repo ends as the framework's CLI, templates and docs on top of ACRYL's packages, or is folded into ACRYL. `repositories.md` (accepted 2026-09-27) already chose one monorepo after the same split with `acryldev/blends` cost three on-disk shapes of one thing and format changes crossing repositories; acrylblends has started the same split again.
 
-## For the owner to decide
+## Owner decisions (2026-10-19)
 
-- Is ACRYL's code the one source, with acrylblends importing it (proposed above), or should the shared packages move to the acrylblends repository and ACRYL import them?
-- May I merge `blends-upgrade-plan` after you look at it (two commits, `runtime/blends-core` only)?
+- ACRYL's code is the one source; acrylblends imports the shared packages from npm and deletes its copies.
+- `blends-upgrade-plan` merged after review (`2e06e631`).
 
 ## The team (owner, 2026-10-18)
 
@@ -79,7 +79,8 @@ The owner told BlendsImplementer, and confirmed to AcrylImplementer:
 
 - Blends are pushed to the acrylblends registry (https://acrylblends.github.io/blends, org https://github.com/acrylblends). Cordis plugins are pushed to the cordisplugins registry (https://cordisplugins.github.io, org https://github.com/cordisplugins). The acrylblends session may create what it needs in both orgs.
 - acryl.dev mirrors both automatically: a new toolbar section, acryl.dev/blends mirroring everything in the acrylblends registry, and acryl.dev/packages mirroring the cordisplugins registry.
-- Where the plan lives: the owner asked whether it goes into ACRYL specs or the acrylblends repository. Both sessions recommend ACRYL spec 036 and this file as the one plan, with acrylblends docs pointing to it. Owner to confirm.
+- Where the plan lives: ACRYL spec 036 and this file, with acrylblends docs pointing to it (both sessions' recommendation; the owner's answers of 2026-10-19 make ACRYL the source).
+- The owner, 2026-10-19: ACRYL's packages are the one source; merge `blends-upgrade-plan` (done, `2e06e631`); publish the shared packages to npm (done); every current feature goes into the docs on acryl.dev and on acrylblends.github.io.
 - A second npm token without 2FA exists in the owner's storage. Neither session reads or uses it until the owner approves a specific publish.
 
 Split:
@@ -91,6 +92,35 @@ Split:
 
 BlendsImplementer sends the exact `index.json` shape and URLs before AcrylImplementer writes code against them. The mirror pages read the index at view time, so a new registry entry appears without a site rebuild.
 
-### How a generated app depends on the shared packages (proposed, owner to confirm)
+### Proposal: one lock, `blend.lock.json` formatVersion 3 (AcrylImplementer, 2026-10-19, to agree with BlendsImplementer)
 
-From npm, by version, like any dependency, so an app made by either CLI works outside both repositories. Today on npm: `@webboxes/blends-core` 0.1.0 and `@webboxes/app-persistence` 0.1.0 (both behind ACRYL `main`). Not on npm: `@webboxes/plugin-hub` 0.1.0 and the settings service (today the `acryl-settings` plugin). Publishing a new version or a new package to the public npm registry waits for the owner's approval.
+The owner picked ACRYL's packages as the one source (2026-10-19), so the lock both repositories write is `blends-core`'s `generateLock`. v3 is v2 plus what only `acrylblends.lock.json` records today, plus pulled plugins (T026). Nothing in v1 or v2 changes meaning; readers keep reading them.
+
+```jsonc
+{
+  "formatVersion": 3,
+  "generator": { "name": "@webboxes/blends-core", "version": "0.3.0" },
+  "origin": { "id": "acme.gtd", "kind": "Blend", "version": "0.4.0", "digest": "sha256:<blend.yaml bytes>" },
+  // new: the Blueprint the Blend was resolved over, with its file digest, so an upgrade is a lock diff (from acrylblends `lineage`)
+  "lineage": { "blueprint": "acryl.gtd", "blueprintVersion": "0.1.0", "digest": "sha256:<Blueprint file bytes>" },
+  // new: the parameter values the rows were resolved with (from acrylblends `values`)
+  "parameters": { "accent": "#e8590c" },
+  "rows": [ /* unchanged: id, name, config, disabled */ ],
+  "modules": [
+    // unchanged origins: registry (npm, lockfile integrity), local (sha256 of the folder, its source path), git, linked
+    { "name": "gtd-board", "origin": "local", "version": "0.2.0", "digest": "sha256:<folder>", "source": "src/plugins/gtd-board" },
+    // new origin `pulled`: a plugin pulled into the plugin store (plugin-hub), by the source it was pulled from and the tarball's sha512
+    { "name": "acryl-quick-notes", "origin": "pulled", "version": "0.3.0", "spec": "github:inboxxobni/acryl-quick-notes@0.3.0", "digest": "sha512-<tarball>" }
+  ]
+}
+```
+
+- **File and place:** `blend.lock.json` next to the app's `blend.yaml` (ACRYL: `.acryl/`; an acrylblends app: its root). `acrylblends.lock.json` is retired.
+- **acrylblends' `sources`** become `modules` entries with origin `local` and `source: src/plugins/<name>`; its `plugins` list is the existing `rows`; `manifest.digest` is `origin.digest`.
+- **`pulled`** is what T026 needs: today a hub-pulled plugin is recorded as a `file:` path to the store's tarball and the snapshot skips it. The store already keeps `from` and `integrity` per version (`runtime/plugin-hub/src/store.ts`), so restoring is a pull of `spec` checked against `digest`.
+- **Not in v3:** settings (T027) and workspaces (T028). They get their own section when designed, as an additive v4 or an optional field agreed then.
+- **Order:** BlendsImplementer replies; AcrylImplementer adds v3 to `blends-core` (`generateLock`, the schema, `planUpgrade` reading it), publishes `@webboxes/blends-core` 0.3.0 and sends the exports; acrylblends then writes its lock through it and deletes `plugins/manifest/lock.ts`'s own shape.
+
+### How a generated app depends on the shared packages (owner approved publishing, 2026-10-19)
+
+From npm, by version, like any dependency, so an app made by either CLI works outside both repositories. On npm since 2026-10-19: `@webboxes/blends-core` 0.2.0 (with `planUpgrade` and `applyUpgrade`), `@webboxes/app-persistence` 0.1.0 (unchanged since publishing) and `@webboxes/plugin-hub` 0.1.0. Not on npm: the settings service (today the `acryl-settings` plugin).
