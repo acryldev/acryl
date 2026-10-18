@@ -745,16 +745,25 @@
       <p class="why">Then the same confirmation as a plugin share: where to, private or public, secret check passed, the files that will be sent.</p>
     </div>
     <div>
-      <h3 style="margin:14px 0 4px">Load ▾, then always this before anything changes</h3>
+      <h3 style="margin:14px 0 4px">Pull works like git: fetch, show the diff, you pick, then apply</h3>
       <div class="dialog">
-        <h4>Load my-acryl-setup 0.4.0 here?</h4>
-        <p>From <b style="color:var(--foreground)">github.com/musichen/my-acryl-setup</b>, private</p>
-        <p>Installs <b style="color:var(--foreground)">27 plugins</b> (24 from the store, 3 downloaded, every sha512 checked), switches 2 off</p>
-        <p>Changes <b style="color:var(--foreground)">5 settings</b>: model, 2 agent presets, 2 shortcuts</p>
-        <p>Adds workspace <b style="color:var(--foreground)">Shared Context</b></p>
-        <p class="ok">✓ Your keys, logins and chats stay as they are</p>
-        <p>Needs a key for: Web search (DeepSeek). Asked after loading.</p>
-        <div class="row2"><span class="btn">Cancel</span><span class="btn">Load into a new app</span><span class="btn pri">Load here</span></div>
+        <h4>Pull @someone/acryl-ide-factory 1.2.0 into my-acryl-setup 0.4.0</h4>
+        <p>Both are the kind <b style="color:var(--foreground)">acryl.ide</b>. From the Blend registry, public.</p>
+        <table style="margin-top:6px">
+          <thead><tr><th></th><th>Item</th><th>Mine</th><th>Theirs</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox" checked></td><td><span style="color:var(--added)">+ add</span> plugin software-factory.pipeline</td><td></td><td>2.0.1</td></tr>
+            <tr><td><input type="checkbox" checked></td><td><span style="color:var(--added)">+ add</span> agent preset "reviewer"</td><td></td><td>new</td></tr>
+            <tr><td><input type="checkbox" checked></td><td><span style="color:var(--brand)">↑ update</span> plugin acryl-quick-notes</td><td>0.3.0</td><td>0.4.0</td></tr>
+            <tr><td><input type="checkbox"></td><td><span style="color:var(--warn)">⇄ replace</span> plugin dsh-plugin-smooth-stream with fast-stream</td><td>1.2.0</td><td>0.9.0</td></tr>
+            <tr><td><input type="checkbox"></td><td><span style="color:var(--warn)">↓ older</span> plugin acryl-header-note</td><td>0.2.0</td><td>0.1.4</td></tr>
+            <tr><td><input type="checkbox"></td><td><span style="color:var(--removed)">− remove</span> plugin accounting.sidebar.date-filter (they do not have it)</td><td>0.1.3</td><td></td></tr>
+            <tr><td><input type="checkbox"></td><td><span style="color:var(--warn)">~ change</span> setting model</td><td>claude-opus</td><td>deepseek-v4</td></tr>
+          </tbody>
+        </table>
+        <p>Pre-ticked: additions and newer versions. Not ticked: anything that removes, downgrades or replaces yours.</p>
+        <p class="ok">✓ Your keys, logins and chats are never touched. My state is saved as a version first, so Restore undoes the pull.</p>
+        <div class="row2"><span class="btn">Cancel</span><span class="btn">Into a new app</span><span class="btn pri">Apply 3 changes</span></div>
       </div>
     </div>
   </div>
@@ -764,8 +773,8 @@
     <tbody>
       <tr><td><b>Save</b></td><td><code>/blend snapshot</code> then <code>acryl save</code></td><td><span class="chip built">built</span> as commands</td><td>Writes the Blend into the app folder and commits it. Nothing leaves the machine.</td></tr>
       <tr><td><b>Share ▾</b></td><td><code>acryl remote connect</code>, <code>acryl save</code></td><td><span class="chip built">built</span> git · <span class="chip plan">plan</span> registry (T020)</td><td>Private by default; public needs a license; a private app never goes to a public remote.</td></tr>
-      <tr><td><b>Load ▾</b> into a new app</td><td><code>acryl new my-app --from &lt;git URL&gt;</code></td><td><span class="chip built">built</span> as a command</td><td>A second app next to this one, sharing nothing.</td></tr>
-      <tr><td><b>Load ▾</b> here</td><td><code>/blend apply</code></td><td><span class="chip built">built</span> for plugins · <span class="chip plan">plan</span> settings</td><td>Restores this app to the Blend after the dialog above.</td></tr>
+      <tr><td><b>Pull</b> into a new app</td><td><code>acryl new my-app --from &lt;git URL&gt;</code></td><td><span class="chip built">built</span> as a command</td><td>A second app next to this one, sharing nothing. Also how a first Blend of a new kind is copied.</td></tr>
+      <tr><td><b>Pull</b> into this app</td><td><code>/blend apply</code></td><td><span class="chip built">built</span> as a full apply · <span class="chip plan">plan</span> the diff and per-item pick, settings</td><td>Today it applies the whole Blend. Target: the diff above, item by item, after saving my state as a version.</td></tr>
       <tr><td><b>Save for this project</b></td><td><code>/blend snapshot</code> in a project</td><td><span class="chip built">partly</span></td><td>Writes <code>.acryl/blend/</code> in the project today, but only plugins. When you open a project with one, ACRYL says what is missing and offers Load.</td></tr>
       <tr><td><b>Saved and history</b></td><td><code>/blend ledger</code></td><td><span class="chip built">built</span></td><td>What changed since the last save, and by whom (you or the agent).</td></tr>
     </tbody>
@@ -778,7 +787,7 @@
       <tr><td>1</td><td>Pulled plugins in a snapshot: record GitHub, npm and store pulls by source and sha512</td><td>An isolated app with plugins made here and pulled ones: snapshot, then <code>acryl new --from</code> it in a fresh app: the same plugins, versions and on/off, offline from the store</td></tr>
       <tr><td>2</td><td>Settings in the Blend: models chosen, agent presets, custom agents, skills, shortcuts; never keys</td><td>Load into a fresh app: the same settings; the secret check refuses a Blend with a key in it</td></tr>
       <tr><td>3</td><td>Workspaces into the app's home (T021), then into the Blend</td><td>Workspaces and projects come back in a fresh app</td></tr>
-      <tr><td>4</td><td>Project Blend: what a project adds, and the offer to load it on open</td><td>Open a project with <code>.acryl/blend/</code> in a fresh app: the missing plugins are named and loaded on one click</td></tr>
+      <tr><td>4</td><td>Pull with a diff: add, update, replace, downgrade, remove and setting changes, picked item by item; my state saved first</td><td>Pull a Blend of the same kind with more plugins into an app: only the ticked items change; Restore brings the app back exactly</td></tr>
       <tr><td>5</td><td>The buttons: plugin pages (section A), Blends in the left panel and its page (This Blend, Registry, Sources, Saved and history), Share and Pull dialogs</td><td>Every control driven in an isolated Desktop by <code>check:features</code></td></tr>
       <tr><td>6</td><td>Blend registry share (T020) and pull</td><td>A public Blend listed on acrylblends.github.io and loaded from there</td></tr>
     </tbody>
@@ -786,28 +795,10 @@
 
   <!-- ============================== DECISIONS ============================== -->
   <h2>Your decisions</h2>
-  <p class="lede">Pick and press Queue on each, then Send to Agent. Nothing is built until you answer. Decided: the comment bubble and the Comments page (built), the plugin buttons on each plugin's page with every plugin listed (your answer 2026-10-18), and a Blend that holds settings, plugins and their versions, shared to git or the registry, private or public, and loaded per machine or per project, from a Blends entry next to Plugins in the left panel (your words 2026-10-18).</p>
+  <p class="lede">Pick and press Queue on each, then Send to Agent. Nothing is built until you answer. Decided: the comment bubble and the Comments page (built), the plugin buttons on each plugin's page with every plugin listed (your answer 2026-10-18), and a Blend that holds settings, plugins and their versions, shared to git or the registry, private or public, from a Blends entry next to Plugins in the left panel; pulling a Blend of the same kind works like git: show the diff, then add, update or replace plugins and settings (your words 2026-10-18).</p>
   <div class="grid2">
-    <form class="box" data-lavish-question="project-blend" onsubmit="event.preventDefault(); const v = new FormData(event.currentTarget).get('a'); const n = event.currentTarget.querySelector('textarea').value; if (v) { window.lavish && window.lavish.queuePrompt('Project Blend: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Project Blend: ' + v, element: event.currentTarget, queueKey: 'project-blend', data: { question: 'project-blend', answer: v } }); event.currentTarget.querySelector('.queued').textContent = 'queued'; }">
-      <h3>1. A project with its own Blend</h3>
-      <p class="q">You open a project that has <code>.acryl/blend/</code> and this app lacks some of its plugins or settings.</p>
-      <label class="opt"><input type="radio" name="a" value="ACRYL names what is missing and offers Load; nothing changes until you click"><b>Offer, you click Load</b> <span class="chip built rec">recommended</span><small>Same dialog as Load here.</small></label>
-      <label class="opt"><input type="radio" name="a" value="Load it by itself when the project opens"><b>Load by itself</b><small>Fast, but a project could install plugins without asking.</small></label>
-      <label class="opt"><input type="radio" name="a" value="Nothing; load by hand from the Blend page"><b>By hand only</b><small></small></label>
-      <textarea placeholder="Anything to change (optional)"></textarea>
-      <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
-    </form>
-    <form class="box" data-lavish-question="blend-contents" onsubmit="event.preventDefault(); const v = new FormData(event.currentTarget).get('a'); const n = event.currentTarget.querySelector('textarea').value; if (v) { window.lavish && window.lavish.queuePrompt('Blend contents: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Blend contents: ' + v, element: event.currentTarget, queueKey: 'blend-contents', data: { question: 'blend-contents', answer: v } }); event.currentTarget.querySelector('.queued').textContent = 'queued'; }">
-      <h3>2. What a Blend holds by default</h3>
-      <p class="q">Keys, logins, chats and logs are never in it (not a choice).</p>
-      <label class="opt"><input type="radio" name="a" value="Plugins, settings, workspaces and projects; tabs and comments off"><b>Plugins, settings, workspaces</b> <span class="chip built rec">recommended</span><small>Tabs and comments can be ticked when saving.</small></label>
-      <label class="opt"><input type="radio" name="a" value="Plugins and settings only"><b>Plugins and settings</b><small>Workspaces stay per machine.</small></label>
-      <label class="opt"><input type="radio" name="a" value="Everything that is not a secret, tabs and comments too"><b>Everything but secrets</b><small></small></label>
-      <textarea placeholder="Anything to change (optional)"></textarea>
-      <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
-    </form>
     <form class="box" data-lavish-question="review-vs-comments" onsubmit="event.preventDefault(); const v = new FormData(event.currentTarget).get('r'); const n = event.currentTarget.querySelector('textarea').value; if (v) { window.lavish && window.lavish.queuePrompt('Review and Comments: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Review and Comments: ' + v, element: event.currentTarget, queueKey: 'review-vs-comments', data: { question: 'review-vs-comments', answer: v } }); event.currentTarget.querySelector('.queued').textContent = 'queued'; }">
-      <h3>3. Diff comments: Review or Comments?</h3>
+      <h3>1. Diff comments: Review or Comments?</h3>
       <p class="q">Today a comment on a Diff tab goes straight to the chat and is listed in Review.</p>
       <label class="opt"><input type="radio" name="r" value="Diff comments work like file comments: bubble, listed in Comments; Review stays for the change review"><b>Same as file comments</b> <span class="chip built rec">recommended</span><small>Bubble, listed in Comments, copied or sent by you. One way for every comment.</small></label>
       <label class="opt"><input type="radio" name="r" value="Keep diff comments as they are (sent to the chat, listed in Review)"><b>Keep as today</b><small>Two different ways to comment.</small></label>
@@ -815,7 +806,7 @@
       <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
     </form>
     <form class="box" data-lavish-question="picker" onsubmit="event.preventDefault(); const v = new FormData(event.currentTarget).get('p'); const n = event.currentTarget.querySelector('textarea').value; if (v) { window.lavish && window.lavish.queuePrompt('Element picker: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Element picker: ' + v, element: event.currentTarget, queueKey: 'picker', data: { question: 'picker', answer: v } }); event.currentTarget.querySelector('.queued').textContent = 'queued'; }">
-      <h3>4. The element picker</h3>
+      <h3>2. The element picker</h3>
       <label class="opt"><input type="radio" name="p" value="A picked element becomes a comment in Comments, with a box for what to change"><b>A picked element becomes a comment</b> <span class="chip built rec">recommended</span><small>Pick, write what to change; it is listed in Comments with the others.</small></label>
       <label class="opt"><input type="radio" name="p" value="Keep clipboard only"><b>Keep clipboard only</b><small>As today.</small></label>
       <textarea placeholder="Anything to change (optional)"></textarea>
