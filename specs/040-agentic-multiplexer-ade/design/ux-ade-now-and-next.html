@@ -232,6 +232,15 @@
   .cmdlist i { color: var(--muted); font-style: normal; }
   .qform { margin-top: 8px; }
   .why { color: var(--muted); font-size: 12.5px; margin: 6px 0 0; }
+  .bubble { margin: 4px 10px 6px 42px; padding: 8px 10px; border-left: 3px solid hsl(230 80% 66%); background: var(--panel2); border-radius: 6px; font-family: var(--sans); }
+  .bubble .bt { display: flex; gap: 8px; align-items: flex-start; } .bubble .bt span.tx { flex: 1; color: var(--foreground); }
+  .bubble .bt .x { color: var(--muted); cursor: default; } .bubble small { display: block; color: var(--muted); margin-top: 2px; }
+  .bubble .acts2 { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .lbtn { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; border: 1px solid var(--border-strong); color: var(--foreground); font: 600 10.5px var(--sans); background: var(--panel3); }
+  .start { padding: 10px 12px; } .start .it { display: flex; align-items: center; gap: 10px; padding: 9px 12px; margin: 6px 0; border: 1px solid var(--border); border-radius: 10px; background: var(--panel2); color: var(--foreground); }
+  .start .it .k { margin-left: auto; color: var(--muted); font-size: 10.5px; } .start .it em { font-style: normal; padding: 0 6px; border-radius: 999px; background: var(--panel3); font-size: 10px; color: var(--muted); }
+  .citem { border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; margin: 6px 0; background: var(--panel2); }
+  .citem code { color: var(--muted); } .citem .acts2 { display: flex; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
 </style>
 </head>
 <body>
@@ -292,11 +301,8 @@
             <div class="dl"><span class="ln">41</span> export function select(id) {</div>
             <div class="dl"><span class="ln">42</span>   state.active = id</div>
             <div class="dl"><span class="ln">43</span><span class="gut">+</span>rescopeTiles(state, id)</div>
-            <div class="cform f">
-              <div class="ta">dispose the old PTY first</div>
-              <div class="bar"><span class="btn pri" style="display:inline-flex;align-items:center">Comment</span><span style="color:var(--muted);font-size:11px">⌘↩ to send</span></div>
-              <div class="prob" style="margin-top:6px;padding:4px 6px;font-size:11px;color:var(--muted)">Nothing says where it goes. After sending: <b style="color:var(--foreground)">"Pasted into zsh"</b><span class="pnote">problem 1</span></div>
-            </div>
+            <div class="bubble f prob"><div class="bt"><span>💬</span><span class="tx">dispose the old PTY first</span><span class="x">×</span></div><small>Sent to zsh</small></div>
+            <div style="margin:0 10px 6px 42px;font-size:11px;color:var(--muted)">Comment pastes into the terminal you typed in last, any worktree. The bubble says where only afterwards.<span class="pnote">problem 1</span></div>
             <div class="dl"><span class="ln">44</span> }</div>
           </div>
           <div class="divider" title="Drag to resize"></div>
@@ -308,35 +314,15 @@
       </section>
 
       <aside class="panel">
-        <div class="ptabs" role="tablist" data-tabs="now">
-          <button class="ptab f" role="tab" data-t="files" aria-selected="false">Files</button>
-          <button class="ptab" role="tab" data-t="changes" aria-selected="true">Changes<em>7</em></button>
-          <button class="ptab" role="tab" data-t="review" aria-selected="false">Review<em>2</em></button>
-          <button class="ptab" role="tab" data-t="checks" aria-selected="false">Checks</button>
-        </div>
-        <div class="pv" data-tabs-view="now" data-v="files">
-          <div class="row f"><span class="n">🔍 filter files</span></div>
-          <div class="row"><span class="n">▾ src</span></div>
-          <div class="row"><span class="n">&nbsp;&nbsp;▾ rail</span></div>
-          <div class="row"><span class="n">&nbsp;&nbsp;&nbsp;&nbsp;state.ts</span></div>
-          <div class="row"><span class="n">&nbsp;&nbsp;&nbsp;&nbsp;Rail.tsx</span></div>
-          <div class="row" style="opacity:.5"><span class="n">&nbsp;&nbsp;▸ dist</span></div>
-          <div style="color:var(--muted);padding:4px 6px">One Files tab, T3 Code style: icons, guides, ignored files dimmed, a row menu.<span class="fnote">new</span></div>
-        </div>
-        <div class="pv on" data-tabs-view="now" data-v="changes">
-          <div style="padding:2px 6px"><b>fix/workspace-sidebar-state</b></div>
-          <div class="row"><span class="st M">M</span><span class="n">src/rail/state.ts</span><span style="color:var(--added)">+38</span></div>
-          <div class="row"><span class="st A">A</span><span class="n">src/rail/Rail.tsx</span><span style="color:var(--added)">+212</span></div>
-          <div class="row"><span class="st D">D</span><span class="n">src/old-sidebar.tsx</span><span style="color:var(--removed)">-96</span></div>
-          <div class="commit f">Stage, unstage, commit (never pushes)<br><span style="color:var(--foreground)">feat(rail): re-scope tabs on switch</span><button class="btn pri">Commit</button></div>
-        </div>
-        <div class="pv" data-tabs-view="now" data-v="review">
-          <div class="card2"><code>state.ts:43</code><br>dispose the old PTY first<div style="margin-top:4px"><span class="runbtn">Resolve</span> <span class="runbtn">Remove</span></div></div>
-          <div class="card2 prob" style="font-size:11px">Lists only comments sent from a <b>diff</b>, to the chat. Comments from the editor are not listed, and no row says where a comment went.<span class="pnote">problem</span></div>
-        </div>
-        <div class="pv" data-tabs-view="now" data-v="checks">
-          <div class="card2" style="display:flex;align-items:center;gap:8px"><div style="flex:1"><b>check</b><br><code>vitest run</code></div><span class="runbtn">Run</span></div>
-          <div class="card2" style="display:flex;align-items:center;gap:8px"><div style="flex:1"><b>typecheck</b><br><code>tsc -p tsconfig.json</code></div><span class="runbtn">Run</span></div>
+        <div style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--foreground)">◎ Start</div>
+        <div class="start">
+          <div class="it">&lt;&gt; Files</div>
+          <div class="it">⑂ Changes</div>
+          <div class="it">❯ New terminal ▾<span class="k">⌃`</span></div>
+          <div class="it">▤ Review</div>
+          <div class="it">◍ Browser<span class="k">⌥⌘T</span></div>
+          <div class="it">✓ Checks</div>
+          <div class="absent prob" style="font-size:11px"><b>No list of comments.</b> Review shows only comments sent from a diff to the chat; comments in files live only as bubbles in their open editor.</div>
         </div>
       </aside>
     </div>
@@ -454,15 +440,15 @@
           <div class="tile">
             <div class="crumbs">acryl › <b>src</b> › <b>rail</b> › state.ts</div>
             <div class="dl"><span class="ln">43</span><span class="gut">+</span>rescopeTiles(state, id)</div>
-            <div class="cform">
-              <div class="ta">dispose the old PTY first</div>
-              <div class="bar"><span class="sendto">Send to ✦ Claude Code ▾</span><span class="btn pri" style="display:inline-flex;align-items:center">Comment</span></div>
-            </div>
-            <div class="thread"><b>You</b> on line 43: dispose the old PTY first.<small>Sent to ✦ Claude Code (this worktree). Listed in Review.</small></div>
+            <div class="bubble"><div class="bt"><span>💬</span><span class="tx">dispose the old PTY first</span><span class="x" title="Hide this note">×</span></div><small>state.ts:43 · saved, not sent</small>
+              <div class="acts2"><span class="lbtn">Comment to clipboard</span><span class="lbtn">All comments to clipboard</span></div></div>
+            <div class="dl"><span class="ln">51</span> function dispose(tab) {</div>
+            <div class="bubble"><div class="bt"><span>💬</span><span class="tx">why not await here?</span><span class="x">×</span></div><small>state.ts:51 · saved, not sent</small>
+              <div class="acts2"><span class="lbtn">Comment to clipboard</span><span class="lbtn">All comments to clipboard</span></div></div>
           </div>
           <div class="tile">
             <header><span class="dot run"></span><b>Claude Code</b> worktree fix/workspace-sidebar-state</header>
-            <div class="term"><span class="p">›</span> state.ts:43 - dispose the old PTY first<br>● edit src/rail/state.ts (+6 -1)</div>
+            <div class="term"><span class="p">›</span> (you sent 2 comments from Comments)<br>state.ts:43 dispose the old PTY first<br>state.ts:51 why not await here?<br>● edit src/rail/state.ts (+6 -1)</div>
             <div class="approve"><span>2 edits pending review</span><button class="btn">Reject</button><button class="btn pri">Approve all</button></div>
           </div>
         </div>
@@ -471,21 +457,13 @@
       </section>
       <aside class="panel">
         <span class="no" style="left:-10px;top:6px">6</span>
-        <div class="ptabs" role="tablist">
-          <button class="ptab" role="tab" data-t="files" aria-selected="false">Files</button>
-          <button class="ptab" role="tab" data-t="changes" aria-selected="false">Changes<em>7</em></button>
-          <button class="ptab" role="tab" data-t="review" aria-selected="true">Review<em>3</em></button>
-          <button class="ptab" role="tab" data-t="checks" aria-selected="false">Checks</button>
+        <div style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--foreground)">💬 Comments <span style="color:var(--muted)">· opened from Start</span></div>
+        <div class="start" style="padding:8px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px"><span class="lbtn">Copy all</span><span class="lbtn">Send all to ▾</span></div>
+          <div class="citem"><code>state.ts:43</code><br>dispose the old PTY first<div class="acts2"><span class="lbtn">Copy</span><span class="lbtn">Send to ▾</span><span class="lbtn">×</span></div></div>
+          <div class="citem"><code>state.ts:51</code><br>why not await here?<div class="acts2"><span class="lbtn">Copy</span><span class="lbtn">Send to ▾</span><span class="lbtn">×</span></div></div>
+          <div class="citem"><code>Rail.tsx:88</code><br>filter is case sensitive<div class="acts2"><span class="lbtn">Copy</span><span class="lbtn">Send to ▾</span><span class="lbtn">×</span></div></div>
         </div>
-        <div class="pv" data-v="files"><div class="row"><span class="n">▾ src</span></div><div class="row"><span class="n">&nbsp;&nbsp;state.ts</span></div></div>
-        <div class="pv" data-v="changes"><div class="row"><span class="st M">M</span><span class="n">src/rail/state.ts</span></div><div class="commit">feat(rail): re-scope tabs<button class="btn pri">Commit</button></div></div>
-        <div class="pv on" data-v="review">
-          <div class="card2"><code>state.ts:43</code> → ✦ Claude Code<br>dispose the old PTY first</div>
-          <div class="card2"><code>Rail.tsx:88</code> → ◎ Chat<br>filter is case sensitive</div>
-          <div class="card2"><code>button.save</code> (picked element) → ✦ Codex<br>make it secondary</div>
-          <div style="color:var(--muted);padding:4px 6px">Every comment, from a diff, a file, a picked element or a prototype, with where it went.</div>
-        </div>
-        <div class="pv" data-v="checks"><div class="row"><span class="dot clean"></span><span class="n">typecheck</span></div></div>
       </aside>
     </div>
     <div class="status"><span class="dot run"></span> Claude Code - Opus<span>context 64%</span><span>rate limit ok</span><span class="sp">fix/workspace-sidebar-state</span><span class="no" style="position:static;display:inline-block">7</span></div>
@@ -496,9 +474,9 @@
       <tr><td><span class="no2">1</span></td><td>Top bar: project and branch, the Blend this app is, fan-out, cost, palette</td><td><span class="chip plan">plan</span></td></tr>
       <tr><td><span class="no2">2</span></td><td>Workspaces and Projects tree</td><td><span class="chip built">built</span></td></tr>
       <tr><td><span class="no2">3</span></td><td>Attention queue: needs you, running, done</td><td><span class="chip built">Claude Code</span> <span class="chip plan">other agents, the chat</span></td></tr>
-      <tr><td><span class="no2">4</span></td><td>One <b>Send to</b> on every comment, from a file, a diff, a picked element or a prototype (section B)</td><td><span class="chip gap">decision</span></td></tr>
+      <tr><td><span class="no2">4</span></td><td>Comment bubbles with <b>Comment to clipboard</b> and <b>All comments to clipboard</b> (section B)</td><td><span class="chip plan">plan</span> <span class="chip fresh">your design</span></td></tr>
       <tr><td><span class="no2">5</span></td><td>Approve or reject an agent's edits</td><td><span class="chip plan">plan</span></td></tr>
-      <tr><td><span class="no2">6</span></td><td>Files, Changes with commit, Review, Checks</td><td><span class="chip built">built</span> <span class="chip plan">Review lists every comment and its target</span></td></tr>
+      <tr><td><span class="no2">6</span></td><td>Start menu: Files, Changes, New terminal, Review, Browser, Checks, and <b>Comments</b> (all comments from all files: copy or send one, or all)</td><td><span class="chip built">built</span> <span class="chip plan">Comments</span></td></tr>
       <tr><td><span class="no2">7</span></td><td>Status bar: agent, context use, rate limit, worktree</td><td><span class="chip plan">plan</span></td></tr>
       <tr><td></td><td>HTML prototype tab (Lavish inside ACRYL: you annotate, the agent gets it) and Compare (fan-out)</td><td><span class="chip plan">plan</span></td></tr>
     </tbody>
@@ -588,38 +566,42 @@
     </tbody>
   </table>
 
-  <h3 style="margin:22px 0 4px">Proposal: one Send to, the same on all four</h3>
+  <h3 style="margin:22px 0 4px">Your design (2026-10-18): comments are kept, and you choose where they go</h3>
+  <p class="lede">Comment no longer sends anything by itself. It leaves a bubble under the line. From the bubble, or from the new Comments page in the right panel, you copy a comment or send it to one of the open terminals or agents.</p>
   <div class="cols2">
     <div class="box">
-      <div class="cform" style="margin:0">
-        <div class="ta">dispose the old PTY first</div>
-        <div class="bar"><span class="sendto">Send to ✦ Claude Code ▾</span><span class="btn pri" style="display:inline-flex;align-items:center">Comment</span></div>
-        <div class="menu">
-          <div class="h">Agents in fix/workspace-sidebar-state</div>
-          <div class="on">✦ Claude Code <small>used last</small></div>
-          <div>✦ Codex</div>
-          <div>◎ Chat <small>DSH chat of this worktree</small></div>
-          <div class="sep"></div>
-          <div>Copy to clipboard</div>
-        </div>
-      </div>
+      <h3>The bubble, after Comment</h3>
+      <div class="bubble" style="margin:8px 0"><div class="bt"><span>💬</span><span class="tx">what is resolveProductName doing exactly?</span><span class="x" title="Hide this note">×</span></div><small>apps/acryl-desktop/src/main.ts:113</small>
+        <div class="acts2"><span class="lbtn">Comment to clipboard</span><span class="lbtn">All comments to clipboard</span></div></div>
+      <p class="q" style="margin:8px 0 0">
+        <b>×</b> hides this note.<br>
+        <b>Comment to clipboard</b> copies this one comment (file, line, the line's text, your words) and closes its bubble. Paste it into any agent or terminal.<br>
+        <b>All comments to clipboard</b> copies every open comment as one message and closes their bubbles.
+      </p>
     </div>
     <div class="box">
-      <h3>The rules</h3>
-      <p class="q" style="margin:0">
-        1. The target is <b>shown before you send</b>, in the form itself.<br>
-        2. Offered: only the <b>agents of this worktree</b> (agent tabs and this worktree's chat). A plain shell or test terminal is never a default.<br>
-        3. Default: the agent of this worktree you used last. Your pick is remembered per worktree.<br>
-        4. On send, the target tab blinks once, and the comment is listed in <b>Review</b> with where it went.<br>
-        5. No agent in this worktree: the form offers <b>Start Claude Code here</b>, <b>Send to Chat</b> or <b>Copy</b>.<br>
-        6. Agents in a terminal get it typed in without Enter, as today, so several comments go as one message. The chat gets it as a queued message.
-      </p>
+      <h3>Start menu gets Comments, below Checks</h3>
+      <div class="start" style="padding:6px 0">
+        <div class="it">✓ Checks</div>
+        <div class="it target">💬 Comments <em>3</em></div>
+      </div>
+      <div class="citem"><code>main.ts:113</code><br>what is resolveProductName doing exactly?<div class="acts2"><span class="lbtn">Copy</span><span class="lbtn">Send to ▾</span><span class="lbtn">×</span></div></div>
+      <div class="citem"><code>main.ts:119</code><br>here what does it do with resolveProductName()?<div class="acts2"><span class="lbtn">Copy</span><span class="lbtn">Send to ▾</span><span class="lbtn">×</span></div></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><span class="lbtn">Copy all</span><span class="lbtn">Send all to ▾</span></div>
+      <div class="menu">
+        <div class="h">Send to an open terminal or agent</div>
+        <div class="on">✦ Grok <small>main</small></div>
+        <div>✦ Claude Code <small>main</small></div>
+        <div>◎ Chat: this is a test please</div>
+        <div>❯ zsh <small>terminal panel</small></div>
+      </div>
+      <p class="q" style="margin:8px 0 0">Every comment from every file, newest first. Copy or Send consumes it: it leaves the list and its bubble closes. Sent text is typed into the terminal without Enter, so you can add to it before sending.</p>
     </div>
   </div>
 
   <!-- ============================== DECISIONS ============================== -->
   <h2>Your decisions</h2>
-  <p class="lede">Pick and press Queue on each, then Send to Agent. Nothing is built until you answer.</p>
+  <p class="lede">Pick and press Queue on each, then Send to Agent. Nothing is built until you answer. The comment bubble and the Comments page are decided (your design above).</p>
   <div class="grid2">
     <form class="box" data-lavish-question="plugin-actions" onsubmit="event.preventDefault(); const v = new FormData(event.currentTarget).get('a'); const n = event.currentTarget.querySelector('textarea').value; if (v) { window.lavish && window.lavish.queuePrompt('Plugin buttons: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Plugin buttons: ' + v, element: event.currentTarget, queueKey: 'plugin-actions', data: { question: 'plugin-actions', answer: v } }); event.currentTarget.querySelector('.queued').textContent = 'queued'; }">
       <h3>1. Where the plugin buttons go</h3>
@@ -629,17 +611,17 @@
       <textarea placeholder="Anything to change (optional)"></textarea>
       <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
     </form>
-    <form class="box" data-lavish-question="comment-target" onsubmit="event.preventDefault(); const v = new FormData(event.currentTarget).get('c'); const n = event.currentTarget.querySelector('textarea').value; if (v) { window.lavish && window.lavish.queuePrompt('Comment target: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Comment target: ' + v, element: event.currentTarget, queueKey: 'comment-target', data: { question: 'comment-target', answer: v } }); event.currentTarget.querySelector('.queued').textContent = 'queued'; }">
-      <h3>2. Default target of a comment</h3>
-      <label class="opt"><input type="radio" name="c" value="The agent of this worktree used last, shown in a Send to chip (section B)"><b>The agent of this worktree you used last</b> <span class="chip built rec">recommended</span><small>Shown in the form, changeable, remembered per worktree.</small></label>
-      <label class="opt"><input type="radio" name="c" value="Ask every time"><b>Ask every time</b><small>No default; one more click per comment.</small></label>
-      <label class="opt"><input type="radio" name="c" value="One pinned agent per worktree"><b>One pinned agent per worktree</b><small>You pin it once on the tab; comments always go there.</small></label>
+    <form class="box" data-lavish-question="review-vs-comments" onsubmit="event.preventDefault(); const v = new FormData(event.currentTarget).get('r'); const n = event.currentTarget.querySelector('textarea').value; if (v) { window.lavish && window.lavish.queuePrompt('Review and Comments: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Review and Comments: ' + v, element: event.currentTarget, queueKey: 'review-vs-comments', data: { question: 'review-vs-comments', answer: v } }); event.currentTarget.querySelector('.queued').textContent = 'queued'; }">
+      <h3>2. Diff comments: Review or Comments?</h3>
+      <p class="q">Today a comment on a Diff tab goes straight to the chat and is listed in Review.</p>
+      <label class="opt"><input type="radio" name="r" value="Diff comments work like file comments: bubble, listed in Comments; Review stays for the change review"><b>Same as file comments</b> <span class="chip built rec">recommended</span><small>Bubble, listed in Comments, copied or sent by you. One way for every comment.</small></label>
+      <label class="opt"><input type="radio" name="r" value="Keep diff comments as they are (sent to the chat, listed in Review)"><b>Keep as today</b><small>Two different ways to comment.</small></label>
       <textarea placeholder="Anything to change (optional)"></textarea>
       <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
     </form>
     <form class="box" data-lavish-question="picker" onsubmit="event.preventDefault(); const v = new FormData(event.currentTarget).get('p'); const n = event.currentTarget.querySelector('textarea').value; if (v) { window.lavish && window.lavish.queuePrompt('Element picker: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Element picker: ' + v, element: event.currentTarget, queueKey: 'picker', data: { question: 'picker', answer: v } }); event.currentTarget.querySelector('.queued').textContent = 'queued'; }">
       <h3>3. The element picker</h3>
-      <label class="opt"><input type="radio" name="p" value="Same Send to as comments, clipboard as one choice"><b>Same Send to, with a comment box</b> <span class="chip built rec">recommended</span><small>Pick, write what to change, send to an agent. Clipboard stays one choice.</small></label>
+      <label class="opt"><input type="radio" name="p" value="A picked element becomes a comment in Comments, with a box for what to change"><b>A picked element becomes a comment</b> <span class="chip built rec">recommended</span><small>Pick, write what to change; it is listed in Comments with the others.</small></label>
       <label class="opt"><input type="radio" name="p" value="Keep clipboard only"><b>Keep clipboard only</b><small>As today.</small></label>
       <textarea placeholder="Anything to change (optional)"></textarea>
       <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
