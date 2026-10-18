@@ -177,353 +177,474 @@
   .nav { display: flex; gap: 10px; margin-top: 40px; }
   .nav a { color: var(--foreground); text-decoration: none; border: 1px solid var(--border); background: var(--panel); padding: 10px 16px; border-radius: 8px; }
   .nav a:hover { border-color: var(--brand); }
+
+  /* 2026-10-18 additions */
+  .bad { color: var(--bad); border-color: hsl(0 72% 62% / .4); background: var(--bad-soft); }
+  .prob { box-shadow: inset 0 0 0 1.5px var(--bad) !important; border-radius: 6px; }
+  .pnote { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--bad-soft); color: var(--bad); border: 1px solid hsl(0 72% 62% / .45); font: 600 9.5px/16px var(--sans); text-transform: uppercase; letter-spacing: .06em; }
+  .target { box-shadow: inset 0 0 0 1.5px var(--brand) !important; border-radius: 6px; }
+  .tnote { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); border: 1px solid hsl(186 92% 52% / .45); font: 600 9.5px/16px var(--sans); text-transform: uppercase; letter-spacing: .06em; }
+  .globe { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; margin: 6px 0 4px; }
+  .globe .step { flex: 1 1 200px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); padding: 10px 12px; }
+  .globe .step b { display: block; } .globe .step small { color: var(--muted); }
+  .globe .step.here { border-color: var(--brand); background: var(--brand-soft); }
+  .globe .arrow { align-self: center; color: var(--muted); font-size: 18px; }
+  .wsstrip { display: flex; gap: 6px; align-items: center; margin: 0 4px 8px; flex-wrap: wrap; }
+  .wsstrip span { border: 1px solid var(--border); border-radius: 6px; padding: 1px 8px; background: var(--panel2); color: var(--foreground); font-size: 11px; }
+  .crumbs { display: flex; gap: 4px; padding: 5px 10px; border-bottom: 1px solid var(--border); font: 11px var(--mono); color: var(--muted); }
+  .crumbs b { color: var(--foreground); font-weight: 500; text-decoration: underline dotted; text-underline-offset: 3px; }
+  .gut { display: inline-block; width: 14px; color: var(--brand); font-weight: 700; }
+  .cform { margin: 4px 10px 6px 42px; padding: 8px; border: 1px solid var(--border-strong); background: var(--panel2); border-radius: 8px; font-family: var(--sans); }
+  .cform .ta { border: 1px solid var(--border); background: var(--background); border-radius: 6px; padding: 6px 8px; color: var(--foreground); min-height: 34px; }
+  .cform .bar { display: flex; gap: 8px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
+  .sendto { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: 6px; border: 1px solid hsl(186 92% 52% / .5); background: var(--brand-soft); color: var(--brand); font: 600 11px var(--sans); }
+  .menu { margin: 6px 0 0; width: 100%; max-width: 330px; padding: 6px; border: 1px solid var(--border-strong); background: hsl(222 18% 12%); border-radius: 8px; }
+  .menu div { padding: 4px 8px; border-radius: 6px; } .menu div small { color: var(--soft); margin-left: 6px; }
+  .menu .on { background: var(--panel3); } .menu .h { color: var(--soft); font: 600 10px var(--sans); text-transform: uppercase; letter-spacing: .08em; }
+  .menu .sep { height: 1px; padding: 0; margin: 4px 0; background: var(--border); }
+  .term { font: 11.5px/1.6 var(--mono); padding: 8px 12px; color: var(--muted); }
+  .term .p { color: var(--ok); }
+  .page { border: 1px solid var(--border); border-radius: 12px; background: var(--background); overflow: hidden; font-size: 12px; box-shadow: 0 24px 70px -30px #000; }
+  .page .ph { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--panel); flex-wrap: wrap; }
+  .page .ph h4 { margin: 0; font-size: 14px; } .page .ph small { color: var(--muted); }
+  .page .ptabs2 { display: flex; gap: 2px; padding: 0 10px; border-bottom: 1px solid var(--border); background: var(--panel); }
+  .page .ptabs2 span { padding: 7px 10px; color: var(--muted); } .page .ptabs2 span.on { color: var(--foreground); box-shadow: inset 0 -2px 0 var(--brand); }
+  .page .pb { padding: 10px 14px; }
+  .page h5 { margin: 8px 0 6px; font: 600 10px var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--soft); }
+  .pcard { display: flex; gap: 10px; align-items: center; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin: 6px 0; background: var(--panel2); flex-wrap: wrap; }
+  .pcard .nm { flex: 1; min-width: 140px; } .pcard .nm small { display: block; color: var(--muted); }
+  .sw { width: 28px; height: 16px; border-radius: 999px; background: var(--brand); position: relative; flex: none; }
+  .sw::after { content: ''; position: absolute; right: 2px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--brand-fg); }
+  .sw.off { background: var(--panel3); } .sw.off::after { left: 2px; right: auto; background: var(--muted); }
+  .tag { display: inline-block; padding: 0 6px; border-radius: 4px; border: 1px solid var(--border-strong); color: var(--muted); font: 10.5px/16px var(--mono); }
+  .det-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .det-head h4 { margin: 0; font-size: 15px; }
+  .det-head .acts { margin-left: auto; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .slotbox { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 4px; border-radius: 8px; box-shadow: inset 0 0 0 1.5px var(--fresh); }
+  .slotlabel { font: 600 9.5px/1 var(--mono); color: var(--fresh); letter-spacing: .02em; }
+  .sec { margin: 10px 14px 14px; border-radius: 10px; padding: 10px 12px; box-shadow: inset 0 0 0 1.5px var(--fresh); background: var(--panel); }
+  .sec table { margin-top: 4px; } .sec td, .sec th { padding: 6px 8px; }
+  .dialog { border: 1px solid var(--border-strong); border-radius: 12px; background: hsl(222 18% 11%); padding: 14px 16px; box-shadow: 0 18px 50px #000b; max-width: 520px; }
+  .dialog h4 { margin: 0 0 6px; font-size: 14px; } .dialog p { margin: 4px 0; color: var(--muted); }
+  .dialog .ok { color: var(--ok); } .dialog .row2 { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; flex-wrap: wrap; }
+  .cols2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; margin-top: 12px; }
+  .cmdlist { font: 11.5px/1.7 var(--mono); color: var(--foreground); }
+  .cmdlist i { color: var(--muted); font-style: normal; }
+  .qform { margin-top: 8px; }
+  .why { color: var(--muted); font-size: 12.5px; margin: 6px 0 0; }
 </style>
 </head>
 <body>
 <main>
-  <div class="eyebrow">ACRYL ADE / Spec 040 / one page: now and next / updated 2026-09-27</div>
+  <div class="eyebrow">ACRYL ADE / specs 040, 043, 044 / one page: now and next / updated 2026-10-18</div>
   <h1>Where we are, and where we go</h1>
   <div class="legend">
-    <span class="chip fresh">added since last review</span> outlined in violet in the mock below
+    <span class="chip fresh">changed since 2026-09-27</span> outlined in violet
     <span class="chip built">built</span> exists and is tested
-    <span class="chip plan">plan</span> in spec 040 stories A1-A5
-    <span class="chip new">new</span> proposed by the parity plan (A6-A11)
-    <span class="chip gap">decision</span> needs your call
+    <span class="chip plan">plan</span> not built yet
+    <span class="chip bad">problem</span> outlined in red
+    <span class="chip gap">decision</span> needs your call, answer with the forms at the end
   </div>
-  <p class="lede">Part 1 is the app as it runs today, rebuilt from the real code and styles. Part 2 is the target. Anything violet in part 1 was added since the last version of this page (2026-09-25 and 2026-09-26). The mock is interactive: click the right-panel tabs.</p>
+  <p class="lede">Part 1 is the app as it runs today, rebuilt from the code and styles (the app was not started for this page, so these are drawings, not screenshots). Part 2 is the target, with the two design questions you raised: <b>where the plugin Save and Share buttons go</b>, and <b>which terminal or agent a comment goes to</b>. The mocks are interactive: click the right-panel tabs.</p>
 
+  <h3 style="margin:18px 0 4px">Where this page sits in the whole</h3>
+  <div class="globe">
+    <div class="step here"><b>1. ACRYL IDE</b><small>One Blend, grown from the blank start. This page.</small></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>2. ACRYL Blends</b><small>Its core pulled out: the blank app with the builder agent, and plugins made, saved, shared and pulled. The plugin core is already its own package (<code>runtime/plugin-hub</code>), written to move.</small></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>3. WebBoxes.ai</b><small>Hosts Blends starter kits for teams. Later.</small></div>
+  </div>
+
+  <!-- ============================== PART 1 ============================== -->
   <h2>Part 1: where we are now</h2>
   <div class="ade now" aria-label="Current ACRYL ADE mock">
     <div class="body">
       <aside class="rail">
-        <div class="seg" role="tablist" aria-label="Side panel mode"><span class="f">Chats</span><span class="on f">Projects</span></div>
-        <div class="proj"><div class="p" style="display:flex;align-items:center">acryl<span style="margin-left:auto;color:var(--muted)" title="new branch">+</span></div>
+        <div class="seg" role="tablist" aria-label="Side panel mode"><span>Chats</span><span class="on">Projects</span></div>
+        <div class="wsstrip f"><span>Default ▾</span><span>+ project</span><span>New workspace</span></div>
+        <h6>Projects</h6>
+        <div class="proj"><div class="p">acryl</div>
           <div class="br"><span class="dot clean"></span><span class="n">main</span><span class="s">now</span></div>
           <div class="br sel"><span class="dot run"></span><span class="n">fix/workspace-sidebar-state</span><span class="s"><i>+140</i> <u>-49</u></span></div>
-          <div class="br"><span class="dot rev"></span><span class="n">feat/git-action-dropdown</span><span class="s"><i>+1136</i> <u>-184</u></span></div>
-          <div class="br"><span class="dot"></span><span class="n">fix/shared-context</span><span class="s">1h</span></div>
+          <div class="br"><span class="dot need"></span><span class="n">feat/plugin-buttons</span><span class="s">needs you</span></div>
+          <div class="tg f"><b>3 earlier chats</b></div>
         </div>
-        <div class="proj"><div class="p">acrylamide_project</div>
-          <div class="br"><span class="dot run"></span><span class="n">main</span><span class="s"><i>+848</i></span></div>
+        <div class="proj"><div class="p">acryl-quick-notes</div>
+          <div class="br"><span class="dot clean"></span><span class="n">main</span><span class="s">2h</span></div>
         </div>
-        <div style="margin:8px 6px;color:var(--muted)"><span class="f" style="padding:2px 8px;border-radius:999px;display:inline-block">+ Add git project</span> <span class="fnote">added</span></div>
-        <div class="absent"><b>Attention queue</b><br>needs you / running / done. Not built.</div>
+        <div style="margin:8px 6px;color:var(--muted);font-size:11px">Workspaces: Default, Individual Projects, Shared Context (with a brief every agent reads), Remote Machine. Each keeps its own tabs.<span class="fnote">043</span></div>
       </aside>
 
       <section class="canvas">
         <div class="strip">
           <div class="grp">worktree: fix/workspace-sidebar-state</div>
-          <div class="tab on">◎ Chat</div>
-          <div class="tab">± src/state.ts</div>
-          <div class="tab f">❯ pnpm run check</div>
-          <div class="tab f">▤ state.ts ●</div>
-          <div class="tab tog f" title="Show or hide the right panel"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.7" y="2.7" width="12.6" height="10.6" rx="2"/><path d="M10 2.9v10.2"/></svg></div>
+          <div class="tab">◎ Chat</div>
+          <div class="tab">✦ Claude Code</div>
+          <div class="tab">✦ Codex</div>
+          <div class="tab on f">▤ state.ts</div>
+          <div class="tab">❯ zsh</div>
+          <div class="tab tog" title="Show or hide the right panel"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.7" y="2.7" width="12.6" height="10.6" rx="2"/><path d="M10 2.9v10.2"/></svg></div>
         </div>
         <div class="stage">
           <div class="pane">
-            <div class="msg"><span class="who">You</span><p>Re-scope open tabs when I switch worktree.</p></div>
-            <div class="tool">edit  src/state.ts  (+38 -4)</div>
-            <div class="tool">bash  pnpm run typecheck  - pass</div>
-            <div class="msg"><span class="who">Agent</span><p>Done. Disposing the old PTY first, as you asked.</p></div>
-          </div>
-          <div class="divider" title="Drag to resize. Arrow keys work, double-click resets to half."></div>
-          <div class="pane">
-            <div class="file">src/state.ts</div>
+            <div class="crumbs f">acryl <span>›</span> <b>src</b> <span>›</span> <b>rail</b> <span>›</span> state.ts</div>
             <div class="dl"><span class="ln">41</span> export function select(id) {</div>
-            <div class="dl rm"><span class="ln">42</span> - state.active = id</div>
-            <div class="dl add"><span class="ln">42</span> + state.active = id</div>
-            <div class="dl add"><span class="ln">43</span> + rescopeTiles(state, id)</div>
-            <div class="thread"><b>You</b> on line 43: dispose the old PTY first.<small>Sent to the agent as a queued message.</small></div>
+            <div class="dl"><span class="ln">42</span>   state.active = id</div>
+            <div class="dl"><span class="ln">43</span><span class="gut">+</span>rescopeTiles(state, id)</div>
+            <div class="cform f">
+              <div class="ta">dispose the old PTY first</div>
+              <div class="bar"><span class="btn pri" style="display:inline-flex;align-items:center">Comment</span><span style="color:var(--muted);font-size:11px">⌘↩ to send</span></div>
+              <div class="prob" style="margin-top:6px;padding:4px 6px;font-size:11px;color:var(--muted)">Nothing says where it goes. After sending: <b style="color:var(--foreground)">"Pasted into zsh"</b><span class="pnote">problem 1</span></div>
+            </div>
             <div class="dl"><span class="ln">44</span> }</div>
+          </div>
+          <div class="divider" title="Drag to resize"></div>
+          <div class="pane">
+            <header style="padding:7px 10px;border-bottom:1px solid var(--border);color:var(--muted)"><b style="color:var(--foreground)">✦ Claude Code</b> in fix/workspace-sidebar-state</header>
+            <div class="term"><span class="p">›</span> re-scope open tabs when I switch worktree<br>● edit src/rail/state.ts (+38 -4)<br>● pnpm run typecheck - pass<br><span style="color:var(--foreground)">Done.</span><br><br><span style="color:var(--soft)">(the agent you were talking to never got the comment)</span></div>
           </div>
         </div>
       </section>
 
       <aside class="panel">
         <div class="ptabs" role="tablist" data-tabs="now">
+          <button class="ptab f" role="tab" data-t="files" aria-selected="false">Files</button>
           <button class="ptab" role="tab" data-t="changes" aria-selected="true">Changes<em>7</em></button>
-          <button class="ptab f" role="tab" data-t="review" aria-selected="false">Review<em>2</em></button>
-          <button class="ptab f" role="tab" data-t="checks" aria-selected="false">Checks</button>
-          <button class="ptab f" role="tab" data-t="files" aria-selected="false">Code</button>
-        </div>
-        <div class="pv on" data-tabs-view="now" data-v="changes">
-          <div style="padding:2px 6px"><b>fix/workspace-sidebar-state</b><span class="fnote">path shown</span></div>
-          <div class="pathline f" style="margin:0 2px 6px">/Users/you/code/acryl.worktrees/fix-workspace-sidebar-state</div>
-          <div class="row"><span class="st M">M</span><span class="n">src/state.ts</span><span style="color:var(--added)">+38</span></div>
-          <div class="row"><span class="st A">A</span><span class="n">src/Rail.tsx</span><span style="color:var(--added)">+212</span></div>
-          <div class="row"><span class="st D">D</span><span class="n">src/old-sidebar.tsx</span><span style="color:var(--removed)">-96</span></div>
-          <div class="absent"><b>Stage and commit box</b><br>Not built.</div>
-        </div>
-        <div class="pv" data-tabs-view="now" data-v="review">
-          <div class="card2 f"><code>state.ts:43 new</code><br>dispose the old PTY first<div style="margin-top:4px"><span class="runbtn">Resolve</span> <span class="runbtn">Remove</span></div></div>
-          <div class="card2 f"><code>Rail.tsx:88 new</code><br>filter is case sensitive<div style="margin-top:4px"><span class="runbtn">Resolve</span> <span class="runbtn">Remove</span></div></div>
-          <div class="card2 f" style="opacity:.6"><code>index.ts:12 new</code><br><s>unused import</s> resolved<div style="margin-top:4px"><span class="runbtn">Reopen</span></div></div>
-          <div style="color:var(--muted);padding:4px 6px">Comments you send from a diff are listed here. Click one to open its diff.</div>
-        </div>
-        <div class="pv" data-tabs-view="now" data-v="checks">
-          <div style="padding:2px 6px;color:var(--muted)">runs with pnpm</div>
-          <div class="card2 f" style="display:flex;align-items:center;gap:8px;border-color:var(--fresh)"><div style="flex:1"><b>check</b><br><code>vitest run</code></div><span class="runbtn">Run</span></div>
-          <div class="card2 f" style="display:flex;align-items:center;gap:8px"><div style="flex:1"><b>typecheck</b><br><code>tsc -p tsconfig.json</code></div><span class="runbtn">Run</span></div>
-          <div class="card2 f" style="display:flex;align-items:center;gap:8px"><div style="flex:1"><b>dev</b><br><code>vite</code></div><span class="runbtn">Run</span></div>
-          <div style="color:var(--muted);padding:4px 6px">Run opens a terminal tab in this worktree and types the command.</div>
+          <button class="ptab" role="tab" data-t="review" aria-selected="false">Review<em>2</em></button>
+          <button class="ptab" role="tab" data-t="checks" aria-selected="false">Checks</button>
         </div>
         <div class="pv" data-tabs-view="now" data-v="files">
-          <div style="padding:2px 6px;color:var(--muted)">worktree files (tab named Code) <span class="fnote">new</span></div>
-          <div class="row f"><span class="n">▾ src</span></div>
-          <div class="row f"><span class="n">&nbsp;&nbsp;&nbsp;&nbsp;state.ts</span></div>
-          <div class="row f"><span class="n">&nbsp;&nbsp;&nbsp;&nbsp;Rail.tsx</span></div>
-          <div class="row f"><span class="n">▸ docs</span></div>
-          <div class="row f"><span class="n">&nbsp;README.md</span></div>
-          <div style="color:var(--muted);padding:4px 6px">Click a file to edit it in a tab. Filter by name over opened folders.</div>
+          <div class="row f"><span class="n">🔍 filter files</span></div>
+          <div class="row"><span class="n">▾ src</span></div>
+          <div class="row"><span class="n">&nbsp;&nbsp;▾ rail</span></div>
+          <div class="row"><span class="n">&nbsp;&nbsp;&nbsp;&nbsp;state.ts</span></div>
+          <div class="row"><span class="n">&nbsp;&nbsp;&nbsp;&nbsp;Rail.tsx</span></div>
+          <div class="row" style="opacity:.5"><span class="n">&nbsp;&nbsp;▸ dist</span></div>
+          <div style="color:var(--muted);padding:4px 6px">One Files tab, T3 Code style: icons, guides, ignored files dimmed, a row menu.<span class="fnote">new</span></div>
+        </div>
+        <div class="pv on" data-tabs-view="now" data-v="changes">
+          <div style="padding:2px 6px"><b>fix/workspace-sidebar-state</b></div>
+          <div class="row"><span class="st M">M</span><span class="n">src/rail/state.ts</span><span style="color:var(--added)">+38</span></div>
+          <div class="row"><span class="st A">A</span><span class="n">src/rail/Rail.tsx</span><span style="color:var(--added)">+212</span></div>
+          <div class="row"><span class="st D">D</span><span class="n">src/old-sidebar.tsx</span><span style="color:var(--removed)">-96</span></div>
+          <div class="commit f">Stage, unstage, commit (never pushes)<br><span style="color:var(--foreground)">feat(rail): re-scope tabs on switch</span><button class="btn pri">Commit</button></div>
+        </div>
+        <div class="pv" data-tabs-view="now" data-v="review">
+          <div class="card2"><code>state.ts:43</code><br>dispose the old PTY first<div style="margin-top:4px"><span class="runbtn">Resolve</span> <span class="runbtn">Remove</span></div></div>
+          <div class="card2 prob" style="font-size:11px">Lists only comments sent from a <b>diff</b>, to the chat. Comments from the editor are not listed, and no row says where a comment went.<span class="pnote">problem</span></div>
+        </div>
+        <div class="pv" data-tabs-view="now" data-v="checks">
+          <div class="card2" style="display:flex;align-items:center;gap:8px"><div style="flex:1"><b>check</b><br><code>vitest run</code></div><span class="runbtn">Run</span></div>
+          <div class="card2" style="display:flex;align-items:center;gap:8px"><div style="flex:1"><b>typecheck</b><br><code>tsc -p tsconfig.json</code></div><span class="runbtn">Run</span></div>
         </div>
       </aside>
     </div>
-    <div class="absent" style="margin:8px 10px"><b>Not built yet:</b> top bar (BLEND, fan-out, cost), attention queue, approve or reject of agent edits.</div>
+    <div class="strip2" style="height:62px">
+      <div class="dock-tabs"><span class="dt on">❯ zsh <span class="x">×</span></span><span class="dt">❯ pnpm test <span class="x">×</span></span><span class="dt plus">+</span><span style="margin-left:auto;color:var(--muted)">terminal panel: stacked, bottom or side by side</span></div>
+      <span style="color:var(--ok)">$</span> <span class="prob" style="padding:0 4px">## state.ts:43 rescopeTiles(state, id) - dispose the old PTY first</span><span class="pnote">landed here</span>
+    </div>
+    <div class="absent" style="margin:8px 10px"><b>Not built yet:</b> top bar (Blend badge, fan-out, cost), status bar, approve or reject of agent edits, HTML prototype tab, compare (fan-out), attention for agents other than Claude Code.</div>
   </div>
 
-  <h3 style="margin:22px 0 4px">What each tile really does today</h3>
-  <table>
-    <thead><tr><th>Tile or pane</th><th>Data behind it</th><th>Gap versus a working ADE</th></tr></thead>
-    <tbody>
-      <tr><td><code>chat</code></td><td><span class="chip built">real</span></td><td>Upstream conversation, bound to a workspace (its worktree). A blank chat with no workspace cannot send.</td></tr>
-      <tr><td><code>pty</code></td><td><span class="chip built">real</span> <span class="chip fresh">run from Checks</span></td><td>Host PTY started in the worktree folder. Tabs are not restored after a restart.</td></tr>
-      <tr><td><code>diff</code></td><td><span class="chip built">real git</span></td><td>Unified diff with single-line comments to the agent. Multi-line ranges not built. The old "two pasted texts" mode remains for a plain New Diff tab.</td></tr>
-      <tr><td><code>file</code></td><td><span class="chip built">real editor</span> <span class="chip fresh">added</span></td><td>Files tab opens a real file in a CodeMirror editor: syntax highlighting for the major languages, in-file search, save with Cmd or Ctrl+S, a dot while unsaved, drafts kept when you switch tabs, and a warning if the file changed on disk. The plain New File tab is still a scratch box.</td></tr>
-      <tr><td><code>browser</code></td><td><span class="chip gap">partial</span></td><td>Address bar plus frame. No design or annotate mode.</td></tr>
-      <tr><td><code>kanban</code>, <code>doc</code></td><td><span class="chip" style="color:var(--bad);border-color:hsl(0 72% 62% / .4);background:var(--bad-soft)">shell only</span></td><td>Local cards and pasted text. Not tied to sessions or to real spec files.</td></tr>
-    </tbody>
-  </table>
+  <h3 style="margin:28px 0 4px">Plugins today: all the verbs work, but only as commands</h3>
+  <p class="lede">Save, share, pull, update and version work from the chat (<code>/plugin ...</code>), the terminal (<code>acryl plugin ...</code>) and the agent's tool. On screen there are two pages, and neither has a Save or Share button.</p>
+  <div class="cols2">
+    <div class="page" aria-label="DSH Plugins page today">
+      <div class="ph"><h4>Plugins</h4><small>Install, enable, and configure plugins</small><span class="btn pri f" style="margin-left:auto;display:inline-flex;align-items:center">Add plugin</span></div>
+      <div class="ptabs2"><span class="on">Plugins</span><span>Architecture</span><span>Lifecycle</span></div>
+      <div class="pb">
+        <h5>Official</h5>
+        <div class="pcard"><div class="nm"><b>Models</b><small>providers and keys</small></div></div>
+        <h5>Installed</h5>
+        <div class="pcard"><div class="nm"><b>acryl-quick-notes</b><small>0.3.0</small></div><span class="sw"></span></div>
+        <div class="pcard"><div class="nm"><b>dsh-plugin-smooth-stream</b><small>1.2.0</small></div><span class="sw"></span></div>
+        <div style="color:var(--muted);margin-top:6px">DSH's own page. <b class="f" style="padding:0 4px">Add plugin</b> takes <code>github:owner/repo</code> and installs its checked release through ACRYL's hub.<span class="fnote">D7</span></div>
+      </div>
+    </div>
+    <div class="page" aria-label="Plugin detail page today">
+      <div class="ph"><small>Plugins ›</small><h4>acryl-quick-notes</h4></div>
+      <div class="det-head"><h4>acryl-quick-notes</h4><span class="tag">0.3.0</span>
+        <div class="acts"><span class="sw"></span><span class="btn">Uninstall</span></div></div>
+      <div class="pb">
+        <p style="margin:0 0 8px;color:var(--muted)">Notes panel for the top bar.</p>
+        <h5>Rows</h5>
+        <div class="pcard"><div class="nm"><b>acryl-quick-notes</b><small>host and client</small></div></div>
+        <div class="absent prob"><b>No Save, Share, Update or Version here.</b> Nothing shows where the plugin came from, which versions are kept, or where it was shared.</div>
+      </div>
+    </div>
+    <div class="page" aria-label="Lifecycle tab today">
+      <div class="ph"><h4>Lifecycle</h4><small>ACRYL's tab: every Host and Client plugin row</small></div>
+      <div class="pb">
+        <div class="pcard"><div class="nm"><b>acryl-workspace</b> <span class="tag f">0.2.5</span><small>Host · Client · Mounted · Protected</small></div></div>
+        <div class="pcard"><div class="nm"><b>acryl-quick-notes</b> <span class="tag f">0.3.0</span><small>Host · Client · Mounted</small></div><span class="btn">Disable</span><span class="btn">Reload</span></div>
+        <div style="color:var(--muted)">On and off here and on DSH's page now share one store.<span class="fnote">T089</span></div>
+      </div>
+    </div>
+    <div class="page" aria-label="Plugin commands today">
+      <div class="ph"><h4>Commands</h4><small>chat, terminal, agent tool</small></div>
+      <div class="pb cmdlist">
+        /plugin list | saved<br>
+        /plugin save &lt;name&gt; <i>- keep a version in this app's store</i><br>
+        /plugin version patch &lt;name&gt;<br>
+        /plugin share &lt;name&gt; [public] [owner/repo] <i>- GitHub</i><br>
+        /plugin share &lt;name&gt; npm [public] [registry]<br>
+        /plugin pull github:… | npm:… | store:… | file<br>
+        /plugin update &lt;name&gt; <i>- newest release, older ones stay</i><br>
+        <span style="color:var(--muted);font-family:var(--sans)">The agent's tool asks you before it shares or pulls from outside.</span>
+      </div>
+    </div>
+  </div>
 
-
-
-  <div class="absent" style="border-color:hsl(268 92% 74% / .6);color:var(--foreground)"><b>Surfaces:</b> the workspace and the ACRYL shell are now <b>one implementation composed for both Web and Desktop</b> (2026-09-26). The real Web engine boots it and serves its git, files and terminal routes; a real browser rendering it is the remaining check (spec 040 T076). Desktop keeps only native parts (window chrome, folder drop, tray).</div>
-
-  <h2>What changed, in one table</h2>
-  <p class="lede">Everything below is in <code>acryl-workspace</code>, committed and pushed, with tests. "Built" means it exists and is covered by automated tests; the layout itself still needs your eyes in the running app.</p>
+  <h2>Built since the last version of this page (2026-09-27)</h2>
   <table>
     <thead><tr><th>Area</th><th>Status</th><th>What you can do now</th></tr></thead>
     <tbody>
-      <tr><td>Left pane: Chats | Projects</td><td><span class="chip built">built</span> <span class="chip fresh">restyled, add-project fixed</span></td><td>Switch between the classic chat list and a project tree. Bordered pill tabs. Each branch is a git worktree with a live status dot. Add a project (through the upstream folder chooser), create a branch and worktree with <b>+</b>, start an extra chat per branch.</td></tr>
-      <tr><td>Center: tabs per worktree</td><td><span class="chip built">built</span></td><td>Each worktree keeps its own tabs; other branches keep running when you switch. Terminal, file, browser, diff, board and doc tabs. Tabs and the Chats/Projects choice survive a restart.</td></tr>
-      <tr><td>Optional split</td><td><span class="chip built">built</span> <span class="chip fresh">draggable divider</span></td><td>Open any tab beside the current one. The divider is now <b>draggable</b> (also arrow keys, double-click to reset to half) and remembers its width.</td></tr>
-      <tr><td>Real diff tab</td><td><span class="chip built">built</span></td><td>Unified diff from real git data, with a line-comment composer that sends your comment to the agent as a queued message.</td></tr>
-      <tr><td>Right pane: Changes</td><td><span class="chip built">built</span> <span class="chip fresh">path, no forced open, toggle</span></td><td>Changed files of the selected worktree with status letters and +/- counts, plus the worktree's full path. Picking a branch no longer forces the pane open; the toggle icon is always visible.</td></tr>
-      <tr><td>Right pane: Review</td><td><span class="chip fresh">added</span></td><td>Every comment you send is listed per worktree with file:line. Click to jump to the diff; resolve, reopen or remove. Remembered across restarts.</td></tr>
-      <tr><td>Right pane: Code (file tree) and editor</td><td><span class="chip fresh">added</span></td><td>Lazy file tree of the worktree and a real CodeMirror editor tab with save, conflict handling and drafts. Files are read and written through a confined Host route (git worktree root only, atomic save).</td></tr>
-      <tr><td>Code organization</td><td><span class="chip fresh">added</span></td><td><code>acryl-workspace</code> is now organized by domain (git, pty, files, canvas, worktrees, projects, sessions, diff, review, checks) instead of one flat folder, with a README describing the layout. <code>apps/acryl-desktop</code> got the same treatment by bounded context (shell, profile, plugins, startup, diagnostics, updates, settings, terminal, workspaces, windows, runtime), with the layout-coupled files deliberately kept beside the entry points. One right-panel opener only.</td></tr>
-      <tr><td>Right pane: Checks</td><td><span class="chip fresh">added</span></td><td>Lists the worktree's package scripts (check, test, lint, build first) and a Run button that opens a terminal tab in that worktree and types the command with the project's own package manager.</td></tr>
-      <tr><td>Terminals and agent tabs</td><td><span class="chip built">built</span> <span class="chip fresh">rebuilt</span></td><td>A real terminal: ordered stream over a WebSocket, exact screen restore after a reload, WebGL rendering, full-pane size. Agent tabs get an icon, a running marker, rename in place, and a system notice when an agent finishes.</td></tr>
-      <tr><td>Settings &gt; Agents</td><td><span class="chip fresh">added</span></td><td>Default agent (Auto, blank terminal, or an installed agent), Yolo or Manual permissions (Manual by default), and per agent: enabled, command, extra arguments, install link, live "installed here" check. Two lists: installed, and "Try other agents that can be installed". Your own agents are added here. Shared by Web and Desktop; the + menu lists installed agents and + opens the default.</td></tr>
-      <tr><td>Command palette</td><td><span class="chip fresh">added</span></td><td>Cmd or Ctrl+Shift+K: fuzzy search over commands, agents, open tabs, worktrees, settings sections and files (names, or contents with Tab). Settings &gt; Command palette hides groups or single entries.</td></tr>
-      <tr><td>Settings &gt; Tabs and plugin tab types</td><td><span class="chip fresh">added</span></td><td>Turn each tab type on or off; the + menu, palette and Settings follow at once. A plugin can register a tab type of its own (a whiteboard is the worked example) that appears in all three; if the plugin is off its tabs keep their content. "Add your own tab type..." in the + menu opens the pane.</td></tr>
-      <tr><td>Terminal dock (three modes)</td><td><span class="chip fresh">added</span></td><td>A terminal panel with its own tabs (rename, close, +) per worktree. The button next to the right-pane toggle moves it: <b>stacked</b> under the right pane's tabs, <b>bottom</b> under the main area, or <b>side by side</b> (the right pane shows terminals or Files and Changes at full height, with a two-icon switcher). Layout and terminals survive a reload. Ideas from the Super Engineering screens.</td></tr>
-      <tr><td>Attention queue</td><td><span class="chip fresh">added</span></td><td>Claude Code reports through hooks when it is working, needs you, or is done. A worktree with an agent that needs you gets an amber pulsing dot in the Projects list, the agent's tab shows the same, and a notice leads to the tab. Other agents come later; there is a switch in Settings &gt; Agents.</td></tr>
-      <tr><td>Board</td><td><span class="chip fresh">fixed</span></td><td>Chats by what their agent is doing, plus notes you drag between To do, Doing and Done.</td></tr>
-      <tr><td>Agent Control (041)</td><td><span class="chip fresh">added</span></td><td>An agent can look at and operate the ACRYL window (snapshot, click, type, select, press, scroll, wait), each call asked first, with an audit log; plugin lifecycle tools; <code>acryl doctor</code> and <code>acryl repair</code> for a profile that will not start.</td></tr>
-      <tr><td>Web page identity</td><td><span class="chip fresh">added</span></td><td>Tab title "ACRYL" and the ACRYL favicon (black on white, smooth).</td></tr>
+      <tr><td>Workspaces (spec 043)</td><td><span class="chip built">built</span></td><td>Named sets of projects (Default, Individual Projects, Shared Context, Remote Machine), switched from the strip under the tree; one tab set per workspace; a Shared Context workspace has a brief every agent gets (the chat, Claude Code, Codex, Pi); the agent can list, switch, create and add to workspaces after asking.</td></tr>
+      <tr><td>Files</td><td><span class="chip built">built</span></td><td>One Files tab (ACRYL's tree replaces DSH's read-only one), clickable breadcrumbs, and a "+" beside a line for a comment. Where that comment goes is problem 1 below.</td></tr>
+      <tr><td>Element picker</td><td><span class="chip built">built</span></td><td>"Pick an element for the agent" (Cmd+Shift+. and the palette) outlines any element and copies its selector and text to the clipboard. You paste it yourself.</td></tr>
+      <tr><td>Commit box</td><td><span class="chip built">built</span></td><td>Stage, unstage and commit in the Changes tab (it never pushes). It existed on 2026-09-26; the old page still said "not built".</td></tr>
+      <tr><td>Sidebar and tabs</td><td><span class="chip built">built</span></td><td>A worktree lists only its open chats, the rest behind "N earlier chats" (97 became 8 on your home). The tree shows the workspace's projects only.</td></tr>
+      <tr><td>Settings</td><td><span class="chip built">built</span></td><td>Settings &gt; Shortcuts is back (record, clear, reset). Settings &gt; Models signs in with a Claude, ChatGPT or DeepSeek account.</td></tr>
+      <tr><td>Plugins (spec 044)</td><td><span class="chip built">built</span></td><td>Save, version, share (GitHub, npm), pull (GitHub, npm, store, file), update and roll back; the secret check runs on every share; acryl.dev and cordisplugins.github.io list shared plugins; DSH's Add plugin installs a GitHub release; versions in the Lifecycle tab; one on/off store. Proven in the installed apps on macOS, Windows and Linux. <b>Not proven:</b> asking the agent in chat to build a plugin, then a restart.</td></tr>
+      <tr><td>Blank Blends</td><td><span class="chip built">built</span></td><td>An app made with <code>acryl new</code> pulls and installs plugins with the same commands, with none of the IDE plugins loaded.</td></tr>
     </tbody>
   </table>
-  <div class="grid2" style="margin-top:12px">
-    <div class="box"><h3>Next in 040</h3><p class="q">Real-browser passes (T076, T096, T105); the attention queue for agents other than Claude Code and for the harness's own chats; Blends on the Web (T083, waits for the 036 branch to merge); auto tab titles for agents (T122); drawn icons for the agents that show a letter badge.</p></div>
-    <div class="box"><h3>New milestone: 041 Agent Control</h3><p class="q">Scope A is built for Web and Desktop (the agent drives the window, asked per call, audited) and Scope B offline (<code>acryl doctor</code>, <code>acryl repair</code>). Open: the authenticated online channel for the CLI, screenshot support, and a real-window run. On hold until 040 is done. See <code>specs/041-agent-control</code>.</p></div>
-  </div>
 
+  <!-- ============================== PART 2 ============================== -->
   <h2>Part 2: where we go</h2>
-  <p class="lede">The target ADE: a worktree-aware rail with an attention queue, tabs that can show an agent beside its diff, a Files / Changes / Review / Checks panel with a commit box, a persistent terminal dock and a status bar. Numbered markers refer to the build map below.</p>
+  <p class="lede">The target ADE. The two open questions get their own sections right after it.</p>
   <div class="ade" aria-label="Planned ACRYL ADE mock">
     <div class="top">
       <span class="logo">ACRYL</span><span class="crumb">acryl / fix/workspace-sidebar-state</span>
-      <span class="pill brand"><span class="dot run"></span> Active BLEND: acryl-demo</span>
+      <span class="pill brand"><span class="dot run"></span> Blend: acryl.ide</span>
       <div class="sp">
-        <span class="pill">Cmd+K</span>
+        <span class="pill">Cmd+Shift+P</span>
         <span class="pill">Fan-out</span>
         <span class="pill brand"><span class="dot run"></span> 3 agents running</span>
         <span class="pill mono">$ 4.72</span>
       </div>
       <span class="no" style="left:8px;top:12px">1</span>
     </div>
-
     <div class="body">
       <aside class="rail">
         <span class="no" style="right:6px;top:6px">2</span>
-        <div class="seg" role="tablist" aria-label="Side panel mode"><span>Chats</span><span class="on">Projects</span></div>
+        <div class="seg"><span>Chats</span><span class="on">Projects</span></div>
+        <div class="wsstrip"><span>Default ▾</span><span>+ project</span><span>New workspace</span></div>
         <div class="proj"><div class="p">acryl</div>
-          <div class="br"><span class="dot clean"></span><span class="n">master</span><span class="s">now</span></div>
-          <div class="tg"><b>tabs:</b> Browser, Claude Code, Codex</div>
+          <div class="br"><span class="dot clean"></span><span class="n">main</span><span class="s">now</span></div>
           <div class="br sel"><span class="dot run"></span><span class="n">fix/workspace-sidebar-state</span><span class="s"><i>+140</i> <u>-49</u></span></div>
-          <div class="tg"><b>tabs:</b> Claude Code, Diff, spec.md, Prototype</div>
-          <div class="br"><span class="dot rev"></span><span class="n">feat/git-action-dropdown</span><span class="s"><i>+1136</i> <u>-184</u></span></div>
-          <div class="br"><span class="dot run"></span><span class="n">feat/meta-chat</span><span class="s"><i>+5518</i> <u>-169</u></span></div>
-          <div class="tg"><b>tabs:</b> MD doc, Qwen, Pi</div>
-          <div class="br"><span class="dot"></span><span class="n">fix/shared-context-isolation</span><span class="s">1h</span></div>
+          <div class="br"><span class="dot need"></span><span class="n">feat/plugin-buttons</span><span class="s">needs you</span></div>
         </div>
-        <div class="proj"><div class="p">acrylamide_project</div>
-          <div class="br"><span class="dot run"></span><span class="n">main</span><span class="s"><i>+848</i></span></div>
-        </div>
-        <h6>Attention <span class="chip new" style="margin-left:4px">new</span></h6>
-        <div class="att"><span class="dot need"></span> <b>Needs you (2)</b><span>Codex: approve plan, Claude: commit proposal</span></div>
-        <div class="att"><span class="dot run"></span> <b>Running (3)</b><span>Claude Code, Codex, DSH Agent</span></div>
-        <div class="att"><span class="dot clean"></span> <b>Done, unread (1)</b><span>feat/rate-limit</span></div>
+        <h6>Attention</h6>
+        <div class="att"><span class="dot need"></span> <b>Needs you (2)</b><span>Codex: approve plan, Claude: commit</span></div>
+        <div class="att"><span class="dot run"></span> <b>Running (3)</b><span>Claude Code, Codex, Chat</span></div>
         <span class="no" style="right:6px;bottom:10px">3</span>
       </aside>
-
       <section class="canvas">
         <div class="strip">
-          <div class="grp">tab group: fix/workspace-sidebar-state</div>
-          <div class="tab on">◎ Claude Code</div>
+          <div class="grp">fix/workspace-sidebar-state</div>
+          <div class="tab target">✦ Claude Code</div>
+          <div class="tab on">▤ state.ts</div>
           <div class="tab">± Diff</div>
-          <div class="tab">▧ spec.md</div>
           <div class="tab">◍ Prototype</div>
           <div class="tab plus">+</div>
         </div>
-        <div class="add-menu" aria-label="Add to canvas picker">
-          <div>Chat<small>conversation</small></div><div>Coding agent<small>Claude, Codex, Qwen, Pi</small></div><div>Terminal<small>pty</small></div>
-          <div>Browser<small>design mode</small></div><div>File<small>editor</small></div><div>MD view</div>
-          <div>HTML prototype<small>Lavish loop</small></div><div>Diff</div><div>Kanban</div><div>Compare<small>fan-out</small></div>
-          <div class="sep"></div><div class="build">Build a card type<small>agent scaffolds a plugin</small></div>
-          <div class="sep"></div><div style="color:var(--muted)">Choose which appear<small>Settings &gt; Workspace</small></div>
-        </div>
         <div class="tiles">
           <div class="tile">
-            <header><span class="dot run"></span><b>Claude Code</b> Opus, worktree fix/workspace-sidebar-state</header>
-            <div class="msg"><span class="who">You</span><p>Make the branch rail re-scope open tiles when I switch worktree.</p></div>
-            <div class="tool">edit  src/rail/state.ts  (+38 -4)</div>
-            <div class="tool">bash  pnpm run typecheck  - pass</div>
-            <div class="approve"><span>2 edits pending review</span><button class="btn">Reject</button><button class="btn pri">Approve all</button></div>
+            <div class="crumbs">acryl › <b>src</b> › <b>rail</b> › state.ts</div>
+            <div class="dl"><span class="ln">43</span><span class="gut">+</span>rescopeTiles(state, id)</div>
+            <div class="cform">
+              <div class="ta">dispose the old PTY first</div>
+              <div class="bar"><span class="sendto">Send to ✦ Claude Code ▾</span><span class="btn pri" style="display:inline-flex;align-items:center">Comment</span></div>
+            </div>
+            <div class="thread"><b>You</b> on line 43: dispose the old PTY first.<small>Sent to ✦ Claude Code (this worktree). Listed in Review.</small></div>
           </div>
           <div class="tile">
-            <header><b>Diff</b> src/rail/state.ts <span class="chip new" style="margin-left:auto">line comments</span></header>
-            <div class="file">src/rail/state.ts</div>
-            <div class="dl"><span class="ln">41</span> export function select(id) {</div>
-            <div class="dl rm"><span class="ln">42</span> - state.active = id</div>
-            <div class="dl add"><span class="ln">42</span> + state.active = id</div>
-            <div class="dl add"><span class="ln">43</span> + rescopeTiles(state, id)</div>
-            <div class="thread"><b>You</b> on line 43: dispose the old PTY before re-scoping.<small>Sent to Claude Code as a structured message. Stored as a room event.</small></div>
-            <div class="dl"><span class="ln">44</span> }</div>
+            <header><span class="dot run"></span><b>Claude Code</b> worktree fix/workspace-sidebar-state</header>
+            <div class="term"><span class="p">›</span> state.ts:43 - dispose the old PTY first<br>● edit src/rail/state.ts (+6 -1)</div>
+            <div class="approve"><span>2 edits pending review</span><button class="btn">Reject</button><button class="btn pri">Approve all</button></div>
           </div>
         </div>
         <span class="no" style="left:8px;top:40px">4</span>
-        <span class="no" style="right:222px;top:40px">5</span>
-        <span class="no" style="left:8px;bottom:8px">6</span>
+        <span class="no" style="left:8px;bottom:8px">5</span>
       </section>
-
       <aside class="panel">
-        <span class="no" style="left:-10px;top:6px">7</span>
+        <span class="no" style="left:-10px;top:6px">6</span>
         <div class="ptabs" role="tablist">
-          <button class="ptab" role="tab" data-t="files" aria-selected="false">Code</button>
-          <button class="ptab" role="tab" data-t="changes" aria-selected="true">Changes<em>7</em></button>
-          <button class="ptab" role="tab" data-t="review" aria-selected="false">Review<em>3</em></button>
-          <button class="ptab" role="tab" data-t="checks" aria-selected="false">Checks<em>1</em></button>
+          <button class="ptab" role="tab" data-t="files" aria-selected="false">Files</button>
+          <button class="ptab" role="tab" data-t="changes" aria-selected="false">Changes<em>7</em></button>
+          <button class="ptab" role="tab" data-t="review" aria-selected="true">Review<em>3</em></button>
+          <button class="ptab" role="tab" data-t="checks" aria-selected="false">Checks</button>
         </div>
-        <div class="pv" data-v="files">
-          <div class="row"><span class="n">▾ src</span></div><div class="row"><span class="n">&nbsp;&nbsp;▾ rail</span></div>
-          <div class="row"><span class="n">&nbsp;&nbsp;&nbsp;&nbsp;state.ts</span></div><div class="row"><span class="n">&nbsp;&nbsp;&nbsp;&nbsp;Rail.tsx</span></div>
-          <div class="row"><span class="n">▸ docs</span></div><div class="row"><span class="n">▸ specs</span></div>
+        <div class="pv" data-v="files"><div class="row"><span class="n">▾ src</span></div><div class="row"><span class="n">&nbsp;&nbsp;state.ts</span></div></div>
+        <div class="pv" data-v="changes"><div class="row"><span class="st M">M</span><span class="n">src/rail/state.ts</span></div><div class="commit">feat(rail): re-scope tabs<button class="btn pri">Commit</button></div></div>
+        <div class="pv on" data-v="review">
+          <div class="card2"><code>state.ts:43</code> → ✦ Claude Code<br>dispose the old PTY first</div>
+          <div class="card2"><code>Rail.tsx:88</code> → ◎ Chat<br>filter is case sensitive</div>
+          <div class="card2"><code>button.save</code> (picked element) → ✦ Codex<br>make it secondary</div>
+          <div style="color:var(--muted);padding:4px 6px">Every comment, from a diff, a file, a picked element or a prototype, with where it went.</div>
         </div>
-        <div class="pv on" data-v="changes">
-          <div class="row"><span class="st M">M</span><span class="n">src/rail/state.ts</span><span class="added" style="color:var(--added)">+38</span></div>
-          <div class="row"><span class="st A">A</span><span class="n">src/rail/Rail.tsx</span><span style="color:var(--added)">+212</span></div>
-          <div class="row"><span class="st M">M</span><span class="n">src/index.ts</span><span style="color:var(--added)">+4</span></div>
-          <div class="row"><span class="st D">D</span><span class="n">src/old-sidebar.tsx</span><span style="color:var(--removed)">-96</span></div>
-          <div class="commit">Staged - 7 files<br><span style="color:var(--foreground)">feat(rail): re-scope tiles on worktree switch</span><button class="btn pri">Commit and push</button></div>
-        </div>
-        <div class="pv" data-v="review">
-          <div class="row"><span class="dot rev"></span><span class="n">state.ts:43 dispose PTY first</span></div>
-          <div class="row"><span class="dot rev"></span><span class="n">Rail.tsx:88 filter is case sensitive</span></div>
-          <div class="row"><span class="dot clean"></span><span class="n" style="text-decoration:line-through;color:var(--muted)">index.ts:12 unused import</span></div>
-        </div>
-        <div class="pv" data-v="checks">
-          <div class="row"><span class="dot clean"></span><span class="n">typecheck</span><span style="color:var(--muted)">41s</span></div>
-          <div class="row"><span class="dot clean"></span><span class="n">unit tests 14/14</span><span style="color:var(--muted)">1m</span></div>
-          <div class="row"><span class="dot run"></span><span class="n">build desktop</span><span style="color:var(--muted)">running</span></div>
-        </div>
+        <div class="pv" data-v="checks"><div class="row"><span class="dot clean"></span><span class="n">typecheck</span></div></div>
       </aside>
     </div>
+    <div class="status"><span class="dot run"></span> Claude Code - Opus<span>context 64%</span><span>rate limit ok</span><span class="sp">fix/workspace-sidebar-state</span><span class="no" style="position:static;display:inline-block">7</span></div>
+  </div>
+  <table>
+    <thead><tr><th>#</th><th>Area</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td><span class="no2">1</span></td><td>Top bar: project and branch, the Blend this app is, fan-out, cost, palette</td><td><span class="chip plan">plan</span></td></tr>
+      <tr><td><span class="no2">2</span></td><td>Workspaces and Projects tree</td><td><span class="chip built">built</span></td></tr>
+      <tr><td><span class="no2">3</span></td><td>Attention queue: needs you, running, done</td><td><span class="chip built">Claude Code</span> <span class="chip plan">other agents, the chat</span></td></tr>
+      <tr><td><span class="no2">4</span></td><td>One <b>Send to</b> on every comment, from a file, a diff, a picked element or a prototype (section B)</td><td><span class="chip gap">decision</span></td></tr>
+      <tr><td><span class="no2">5</span></td><td>Approve or reject an agent's edits</td><td><span class="chip plan">plan</span></td></tr>
+      <tr><td><span class="no2">6</span></td><td>Files, Changes with commit, Review, Checks</td><td><span class="chip built">built</span> <span class="chip plan">Review lists every comment and its target</span></td></tr>
+      <tr><td><span class="no2">7</span></td><td>Status bar: agent, context use, rate limit, worktree</td><td><span class="chip plan">plan</span></td></tr>
+      <tr><td></td><td>HTML prototype tab (Lavish inside ACRYL: you annotate, the agent gets it) and Compare (fan-out)</td><td><span class="chip plan">plan</span></td></tr>
+    </tbody>
+  </table>
 
-    <div class="strip2">
-      <div class="dock-tabs"><span class="dt on">❯ zsh <span class="x">×</span></span><span class="dt">❯ pnpm test <span class="x">×</span></span><span class="dt">❯ dev server <span class="x">×</span></span><span class="dt plus">+</span><span style="margin-left:auto;color:var(--muted)">worktree cwd - expand</span></div>
-      <span style="color:var(--ok)">$</span> pnpm run test<br>14 passed
-      <span class="no" style="right:10px;top:8px">8</span>
+  <!-- ============================== A. PLUGIN BUTTONS ============================== -->
+  <h2>A. Where Save and Share go</h2>
+  <p class="lede">On <b>each plugin's own page</b> in DSH's Plugins page, the page you reach by clicking a card. DSH already leaves three places for other plugins on that page, so ACRYL fills them and changes nothing of DSH's. Violet outlines below are those three places.</p>
+  <div class="page" aria-label="Plugin detail page, target">
+    <div class="ph"><small>Plugins ›</small><h4>acryl-quick-notes</h4></div>
+    <div class="det-head">
+      <h4>acryl-quick-notes</h4><span class="tag">0.3.0</span>
+      <span class="slotbox"><span class="slotlabel">plugins.detail.badge</span><span class="tag">from github:inboxxobni/acryl-quick-notes</span><span class="tag" style="color:var(--ok)">listed publicly</span><span class="tag" style="color:var(--brand)">0.4.0 available</span></span>
+      <div class="acts">
+        <span class="slotbox"><span class="slotlabel">plugins.detail.actions</span>
+          <span class="btn pri" style="display:inline-flex;align-items:center">Update to 0.4.0</span>
+          <span class="btn" style="display:inline-flex;align-items:center">Save</span>
+          <span class="btn" style="display:inline-flex;align-items:center">Share ▾</span>
+          <span class="btn" style="display:inline-flex;align-items:center">Version ▾</span>
+          <span class="btn" style="display:inline-flex;align-items:center">Edit a copy</span>
+        </span>
+        <span class="sw"></span><span class="btn">Uninstall</span>
+      </div>
     </div>
-    <div class="status"><span class="dot run"></span> Claude Code - Opus<span>context 64%</span><span>rate limit ok</span><span class="sp">worktree fix/workspace-sidebar-state</span><span>SSH dev-box connected</span><span class="no" style="position:static;display:inline-block">9</span></div>
-  </div>
-
-  <h2>Tab types and what a branch owns</h2>
-  <p class="lede">The canvas is the tabs pane. <b>Chat</b> is simply one tab type: the conversation DSH and ACRYL already have. Everything else is another tab type opened from <b>+</b>. Which types are offered is a setting; the default is all of them, and a developer can pick a minimal set.</p>
-  <div class="box">
-    <h3>Settings &gt; Workspace &gt; Tab types</h3>
-    <div class="tabset" role="group" aria-label="Enabled tab types (local preview only)">
-      <label><input type="checkbox" checked><span><b>Chat</b> <span class="chip built">built</span><small>The existing DSH conversation</small></span></label>
-      <label><input type="checkbox" checked><span><b>Coding agent</b> <span class="chip built">built</span><small>Claude, Codex, OpenCode, Gemini, Pi, Qwen...</small></span></label>
-      <label><input type="checkbox" checked><span><b>Terminal (PTY)</b> <span class="chip built">built</span><small>Also the dock's tab type</small></span></label>
-      <label><input type="checkbox" checked><span><b>Browser</b> <span class="chip built">built</span><small>Design mode later</small></span></label>
-      <label><input type="checkbox" checked><span><b>File</b> <span class="chip built">built</span><small>Editor</small></span></label>
-      <label><input type="checkbox" checked><span><b>MD view</b> <span class="chip built">built as Doc</span><small>Renders real spec and plan files</small></span></label>
-      <label><input type="checkbox" checked><span><b>HTML prototype</b> <span class="chip new">new</span><small>Lavish-style annotate and feedback loop</small></span></label>
-      <label><input type="checkbox" checked><span><b>Diff</b> <span class="chip built">shell</span><small>Real git diff and line comments planned</small></span></label>
-      <label><input type="checkbox" checked><span><b>Kanban</b> <span class="chip built">shell</span><small>Keyed to session phase</small></span></label>
-      <label><input type="checkbox" checked><span><b>Compare</b> <span class="chip new">new</span><small>Fan-out results, merge winner</small></span></label>
+    <div class="pb"><p style="margin:0;color:var(--muted)">Notes panel for the top bar.</p><h5>Rows</h5><div class="pcard"><div class="nm"><b>acryl-quick-notes</b><small>host and client</small></div></div></div>
+    <div class="sec">
+      <div class="slotlabel" style="margin-bottom:6px">plugins.detail.section</div>
+      <b>Versions and sharing</b>
+      <table>
+        <thead><tr><th>Version</th><th>Kept in</th><th>Shared to</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>0.3.0 <span class="tag">installed</span></td><td>this app's store</td><td>GitHub release v0.3.0, listed on acryl.dev and cordisplugins.github.io</td><td></td></tr>
+          <tr><td>0.2.2</td><td>this app's store</td><td>GitHub release v0.2.2</td><td><span class="runbtn">Roll back</span></td></tr>
+        </tbody>
+      </table>
+      <div style="color:var(--muted);margin-top:6px">Needs: <code>connection</code>, <code>slots</code> · Adds: top-bar button, notes routes</div>
     </div>
-    <div class="presets"><span class="chip plan">Preset: All (default)</span><span class="chip plan">Preset: Minimal - Chat, Agent, Terminal</span></div>
-    <p class="q" style="margin-top:12px">The checkboxes above are a local preview and do not save. Tab types come from plugins, so a type only appears here if its plugin is loaded.</p>
   </div>
+  <div class="cols2">
+    <div>
+      <h3 style="margin:4px 0">Share ▾ opens</h3>
+      <div class="menu" style="max-width:none">
+        <div class="h">GitHub</div>
+        <div class="on">My repository, private <small>default</small></div>
+        <div>My repository, public and listed <small>needs a license</small></div>
+        <div class="sep"></div><div class="h">npm</div>
+        <div>npm, private (scoped) <small>your npm login</small></div>
+        <div>npm, public</div>
+        <div>Another registry… <small>from your .npmrc</small></div>
+      </div>
+    </div>
+    <div>
+      <h3 style="margin:4px 0">then always this, before anything leaves</h3>
+      <div class="dialog">
+        <h4>Share acryl-quick-notes 0.3.1?</h4>
+        <p>To <b style="color:var(--foreground)">github.com/musichen/acryl-quick-notes</b>, private</p>
+        <p class="ok">✓ Secret check passed on the 6 files that will be sent</p>
+        <p>package.json, dsh.bundle.patch, lib/index.js, lib/client.js, README.md, LICENSE</p>
+        <p>Uses your own <code>gh</code> login. No token is read or kept.</p>
+        <div class="row2"><span class="btn">Cancel</span><span class="btn pri">Share</span></div>
+      </div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Control</th><th>Same as</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><b>Save</b></td><td><code>/plugin save</code></td><td>Keeps this version in the app's store. Nothing leaves the machine, so no confirmation.</td></tr>
+      <tr><td><b>Share ▾</b></td><td><code>/plugin share</code></td><td>Always the confirmation above. Private unless you choose public.</td></tr>
+      <tr><td><b>Update to x</b></td><td><code>/plugin update</code></td><td>Shown only when the source has a newer release. Older versions stay for Roll back.</td></tr>
+      <tr><td><b>Version ▾</b></td><td><code>/plugin version</code></td><td>patch, minor, major. For plugins whose source you have (yours or an edited copy).</td></tr>
+      <tr><td><b>Edit a copy</b></td><td>agent tool</td><td>Copies a pulled plugin into your source folder so you or the agent can change it.</td></tr>
+      <tr><td>Add plugin</td><td><code>/plugin pull</code></td><td>Stays where it is (top of the list). Takes github:, npm:, store: and a file or URL.</td></tr>
+    </tbody>
+  </table>
+  <p class="why"><b>Why there and not in the Lifecycle tab:</b> it is the page every DSH user already knows, any app built on DSH has it (a Blend made with <code>acryl new</code> too, not only the IDE), and DSH made these three spots for exactly this. The Lifecycle tab stays the engineer's view (rows, mounted state, reload) with no second set of buttons. <b>Limits:</b> DSH's list cards have no spot for extra tags, so "update available" shows on the plugin's page, not on its card, until DSH adds one. <b>To check live:</b> that a plugin the agent wrote in your project shows in Installed like a pulled one.</p>
+
+  <!-- ============================== B. ANNOTATION TARGET ============================== -->
+  <h2>B. Where a comment goes</h2>
+  <p class="lede">The problem you raised on 2026-10-13 ("passed to currently running node Pty tab currently active") was built with a hidden rule, and the other comment paths each use a different one. With several agents and terminals open, you cannot tell where a comment will land.</p>
+  <table>
+    <thead><tr><th>Where you comment</th><th>Where it goes today</th><th>What goes wrong</th></tr></thead>
+    <tbody>
+      <tr><td>"+" beside a line in a file</td><td>The terminal you typed in last, in <b>any</b> worktree (<code>comment-target.ts</code>)</td><td><span class="chip bad">problem 1</span> It can be a plain zsh, the dock's test terminal, or an agent on another branch. You learn the target only after it was sent.</td></tr>
+      <tr><td>A line in a Diff tab</td><td>The DSH chat currently shown (<code>sendToCurrentSession</code>)</td><td><span class="chip bad">problem 2</span> If Claude Code in a terminal works on that branch, it never hears about it.</td></tr>
+      <tr><td>Pick an element</td><td>The clipboard</td><td><span class="chip bad">problem 3</span> You paste it by hand, and nothing records it.</td></tr>
+      <tr><td>HTML prototype (Lavish)</td><td>Not built inside ACRYL</td><td><span class="chip plan">plan</span> Needs the same answer.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin:22px 0 4px">Proposal: one Send to, the same on all four</h3>
+  <div class="cols2">
+    <div class="box">
+      <div class="cform" style="margin:0">
+        <div class="ta">dispose the old PTY first</div>
+        <div class="bar"><span class="sendto">Send to ✦ Claude Code ▾</span><span class="btn pri" style="display:inline-flex;align-items:center">Comment</span></div>
+        <div class="menu">
+          <div class="h">Agents in fix/workspace-sidebar-state</div>
+          <div class="on">✦ Claude Code <small>used last</small></div>
+          <div>✦ Codex</div>
+          <div>◎ Chat <small>DSH chat of this worktree</small></div>
+          <div class="sep"></div>
+          <div>Copy to clipboard</div>
+        </div>
+      </div>
+    </div>
+    <div class="box">
+      <h3>The rules</h3>
+      <p class="q" style="margin:0">
+        1. The target is <b>shown before you send</b>, in the form itself.<br>
+        2. Offered: only the <b>agents of this worktree</b> (agent tabs and this worktree's chat). A plain shell or test terminal is never a default.<br>
+        3. Default: the agent of this worktree you used last. Your pick is remembered per worktree.<br>
+        4. On send, the target tab blinks once, and the comment is listed in <b>Review</b> with where it went.<br>
+        5. No agent in this worktree: the form offers <b>Start Claude Code here</b>, <b>Send to Chat</b> or <b>Copy</b>.<br>
+        6. Agents in a terminal get it typed in without Enter, as today, so several comments go as one message. The chat gets it as a queued message.
+      </p>
+    </div>
+  </div>
+
+  <!-- ============================== DECISIONS ============================== -->
+  <h2>Your decisions</h2>
+  <p class="lede">Pick and press Queue on each, then Send to Agent. Nothing is built until you answer.</p>
   <div class="grid2">
-    <div class="box"><h3>Model change this implies</h3><p class="q"><code>WorkspaceState</code> today holds one flat list of tiles for the whole shell. The new model is <b>project &gt; branch or worktree &gt; tab group</b>: each branch owns its own ordered tabs and active tab, and selecting a branch swaps the canvas to that group. The terminal dock follows the same rule. Tab groups must persist across restarts.</p></div>
-    <div class="box"><h3>Example</h3><p class="q">On <code>master</code> of the website: a Browser tab, Claude Code and Codex. Click <code>feat/meta-chat</code>: the canvas re-renders with its own MD doc, Qwen and Pi. Click back: the first group returns exactly as left.</p></div>
+    <form class="box" data-lavish-question="plugin-actions" onsubmit="event.preventDefault(); const v = new FormData(event.currentTarget).get('a'); const n = event.currentTarget.querySelector('textarea').value; if (v) { window.lavish && window.lavish.queuePrompt('Plugin buttons: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Plugin buttons: ' + v, element: event.currentTarget, queueKey: 'plugin-actions', data: { question: 'plugin-actions', answer: v } }); event.currentTarget.querySelector('.queued').textContent = 'queued'; }">
+      <h3>1. Where the plugin buttons go</h3>
+      <label class="opt"><input type="radio" name="a" value="On each plugin's page in DSH's Plugins page (section A)"><b>On each plugin's page</b> <span class="chip built rec">recommended</span><small>DSH's own spots; the Lifecycle tab stays as it is.</small></label>
+      <label class="opt"><input type="radio" name="a" value="In ACRYL's Lifecycle tab"><b>In ACRYL's Lifecycle tab</b><small>Our page, but it lists every internal row, not just the plugins you added.</small></label>
+      <label class="opt"><input type="radio" name="a" value="In both places"><b>Both</b><small>Two sets of the same buttons.</small></label>
+      <textarea placeholder="Anything to change (optional)"></textarea>
+      <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
+    </form>
+    <form class="box" data-lavish-question="comment-target" onsubmit="event.preventDefault(); const v = new FormData(event.currentTarget).get('c'); const n = event.currentTarget.querySelector('textarea').value; if (v) { window.lavish && window.lavish.queuePrompt('Comment target: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Comment target: ' + v, element: event.currentTarget, queueKey: 'comment-target', data: { question: 'comment-target', answer: v } }); event.currentTarget.querySelector('.queued').textContent = 'queued'; }">
+      <h3>2. Default target of a comment</h3>
+      <label class="opt"><input type="radio" name="c" value="The agent of this worktree used last, shown in a Send to chip (section B)"><b>The agent of this worktree you used last</b> <span class="chip built rec">recommended</span><small>Shown in the form, changeable, remembered per worktree.</small></label>
+      <label class="opt"><input type="radio" name="c" value="Ask every time"><b>Ask every time</b><small>No default; one more click per comment.</small></label>
+      <label class="opt"><input type="radio" name="c" value="One pinned agent per worktree"><b>One pinned agent per worktree</b><small>You pin it once on the tab; comments always go there.</small></label>
+      <textarea placeholder="Anything to change (optional)"></textarea>
+      <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
+    </form>
+    <form class="box" data-lavish-question="picker" onsubmit="event.preventDefault(); const v = new FormData(event.currentTarget).get('p'); const n = event.currentTarget.querySelector('textarea').value; if (v) { window.lavish && window.lavish.queuePrompt('Element picker: ' + v + (n ? '. Note: ' + n : ''), { tag: 'choice', text: 'Element picker: ' + v, element: event.currentTarget, queueKey: 'picker', data: { question: 'picker', answer: v } }); event.currentTarget.querySelector('.queued').textContent = 'queued'; }">
+      <h3>3. The element picker</h3>
+      <label class="opt"><input type="radio" name="p" value="Same Send to as comments, clipboard as one choice"><b>Same Send to, with a comment box</b> <span class="chip built rec">recommended</span><small>Pick, write what to change, send to an agent. Clipboard stays one choice.</small></label>
+      <label class="opt"><input type="radio" name="p" value="Keep clipboard only"><b>Keep clipboard only</b><small>As today.</small></label>
+      <textarea placeholder="Anything to change (optional)"></textarea>
+      <button class="queue" type="submit">Queue answer</button><span class="queued"></span>
+    </form>
   </div>
-
-  <h2>Architecture: every feature is a plugin you can turn off</h2>
-  <p class="lede">Each tab type, the rail, the panel, the dock, the top bar and the status bar is its own Cordis plugin with its own Loader row. Turning one off is a profile patch (<code>disabled: true</code>), the same mechanism <code>acryl-development-canvas</code> already documents. <code>acryl-workspace</code> stays small: it owns the shell layout, per-worktree tab groups, and one service that tab-type plugins register into. Names below are proposed; per repo rule the Loader row id equals the package name.</p>
-  <table>
-    <thead><tr><th>Plugin</th><th>Provides</th><th>Consumes (inject)</th><th>When turned off</th></tr></thead>
-    <tbody>
-      <tr><td><code>acryl-workspace</code></td><td>Shell layout, tab groups per worktree, the <code>workspaceTabs</code> registry service</td><td><code>slots</code></td><td>Advanced shell falls back to upstream's default main area</td></tr>
-      <tr><td><code>acryl-tab-chat</code></td><td>Tab type <code>chat</code> (the existing DSH conversation, incl. Trajectory)</td><td><code>workspaceTabs</code></td><td>No chat tab offered</td></tr>
-      <tr><td><code>acryl-tab-agent</code></td><td>Tab type <code>agent</code> (Claude, Codex, OpenCode, Pi, Qwen...)</td><td><code>workspaceTabs</code>, <code>acryl-control</code></td><td>Agents are not launchable from <b>+</b></td></tr>
-      <tr><td><code>acryl-tab-terminal</code></td><td>Tab type <code>terminal</code>, the PTY Host route, the dock's session type</td><td><code>workspaceTabs</code>, <code>webServer</code></td><td>No terminals, and the dock has nothing to host</td></tr>
-      <tr><td><code>acryl-tab-browser</code>, <code>-file</code>, <code>-md</code>, <code>-diff</code>, <code>-kanban</code>, <code>-compare</code>, <code>-prototype</code></td><td>One tab type each. <code>-prototype</code> is the Lavish-style annotate and feedback loop</td><td><code>workspaceTabs</code>; diff and compare also <code>acryl-git</code></td><td>That type disappears from <b>+</b>; existing tabs of it show a "plugin off" placeholder</td></tr>
-      <tr><td><code>acryl-git</code></td><td>Worktree, status and diff Host service</td><td><code>webServer</code></td><td>Rail loses branch data, panel loses Changes, diff and compare go PENDING</td></tr>
-      <tr><td><code>acryl-workspace-projects</code>, <code>-panel</code>, <code>-dock</code>, <code>-topbar</code>, <code>-statusbar</code></td><td>The five chrome areas</td><td><code>workspaceTabs</code>, <code>acryl-git</code> (optional)</td><td>That area is not rendered; the rest of the shell still works</td></tr>
-    </tbody>
-  </table>
-  <p class="lede" style="margin-top:10px">Consequence to design for: a consumer whose provider is missing is PENDING, not broken, and must reactivate when the provider returns. That is exactly what the Cordis lifecycle gives us, so tab-type plugins hard-inject <code>workspaceTabs</code> and treat <code>acryl-git</code> as optional.</p>
-
-  <h2>Build map</h2>
-  <p class="lede">Each marker is one area. "Copy from" points at the MIT-licensed reference clones under <code>acryldev/_reference_projects/</code>; rows marked verify still need the source read before a task is written. Component names were checked against <code>plugins/acryl-ui/registry-manifest.yml</code>.</p>
-  <table>
-    <thead><tr><th>#</th><th>Area</th><th>Status</th><th>Plugin</th><th>@acryl/ui</th><th>Copy from</th></tr></thead>
-    <tbody>
-      <tr><td><span class="no2">1</span></td><td>Top bar: project, branch, BLEND badge, fan-out, cost, palette</td><td><span class="chip new">new</span></td><td><code>acryl-workspace-topbar</code>; BLEND from desktop <code>desktop-blend.ts</code></td><td><code>Menubar</code> <code>Command</code> <code>Badge</code></td><td>Orca <code>cmd-j</code>; v2 <code>TopChrome</code></td></tr>
-      <tr><td><span class="no2">2</span></td><td>Side panel with a <b>Chats | Projects</b> switch. Chats is today's DSH view (workspaces, chats). Projects is the worktree and branch tree with live status dots and filter. Selecting a branch swaps the canvas to that branch's own tab group</td><td><span class="chip built">built</span> <span class="chip plan">attention queue A7</span></td><td><code>acryl-workspace-projects</code>, wraps the upstream sidebar row as the Chats mode</td><td><code>Sidebar</code> <code>Collapsible</code> <code>InputGroup</code></td><td>Orca <code>AgentStateDot.tsx</code>, <code>store/worktree-*</code> (verify)</td></tr>
-      <tr><td><span class="no2">3</span></td><td>Attention queue: needs you / running / done</td><td><span class="chip new">new A7</span></td><td><code>acryl-workspace-projects</code> (attention section)</td><td><code>Sidebar</code> <code>ScrollArea</code></td><td>Orca <code>components/dashboard/</code> bucket logic (verify)</td></tr>
-      <tr><td><span class="no2">4</span></td><td>Tabs pane of the Development canvas: the tab types below, each openable from <b>+</b>. Tab types are configurable in Settings (all by default, minimal set on request)</td><td><span class="chip built">built</span> <span class="chip plan">plan</span></td><td><code>acryl-workspace</code> (core, provides the tab-type registry)</td><td><code>Tabs</code> <code>Popover</code> <code>Command</code></td><td>v2 <code>CanvasAddPicker</code></td></tr>
-      <tr><td><span class="no2">5</span></td><td>Diff tile with line comments sent to the agent</td><td><span class="chip built">built</span> <span class="chip plan">multi-line, approve/reject</span></td><td><code>acryl-tab-diff</code>; comments as room events in <code>acryl-control</code></td><td><code>Table</code> <code>ScrollArea</code></td><td>Orca <code>components/diff-comments/</code> anchor and range math (code); Nimbalyst <code>PendingReviewBanner.tsx</code></td></tr>
-      <tr><td><span class="no2">6</span></td><td>Chat tile bound to a worktree, with approve or reject of agent edits</td><td><span class="chip built">built</span> <span class="chip new">new A8</span></td><td><code>acryl-tab-chat</code> plus upstream conversation</td><td><code>Message</code> <code>ToolCallCard</code></td><td>Nimbalyst <code>PendingReviewBanner.tsx</code>, <code>interactivePromptTools.ts</code></td></tr>
-      <tr><td><span class="no2">7</span></td><td>Side panel: Files, Changes, Review, Checks, commit box</td><td><span class="chip built">Changes, Review, Checks</span> <span class="chip plan">Files, commit box</span></td><td><code>acryl-workspace-panel</code>; <code>acryl-git</code> Host service</td><td><code>Tabs</code> <code>Table</code> <code>ScrollArea</code> <code>InputGroup</code></td><td>Orca <code>github-checks-tab-state.ts</code>; v2 <code>RightPanel</code></td></tr>
-      <tr><td><span class="no2">8</span></td><td>Persistent terminal dock (Codex App / OpenCode style) with its own <b>+</b> and tabs for multiple terminals, cwd bound to the selected worktree</td><td><span class="chip plan">plan</span></td><td><code>acryl-workspace-dock</code> and <code>acryl-tab-terminal</code>; one PTY session per dock tab</td><td><code>ResizablePanelGroup</code></td><td>v2 <code>TerminalStrip</code></td></tr>
-      <tr><td><span class="no2">9</span></td><td>Status bar: agent, context use, rate limit, worktree, remote</td><td><span class="chip new">new</span></td><td><code>acryl-workspace-statusbar</code>; usage from <code>acryl-control</code></td><td><code>Badge</code> <code>Kbd</code></td><td>Nimbalyst context-usage and rate-limit widgets; Orca <code>rate-limits</code> (verify)</td></tr>
-    </tbody>
-  </table>
-
-  <h2>Decisions (made 2026-09-24)</h2>
-  <p class="lede">Resolved through this page. They are now the working baseline for spec 040 Scope A.</p>
-  <table>
-    <thead><tr><th>#</th><th>Question</th><th>Decision</th><th>What it means</th></tr></thead>
-    <tbody>
-      <tr><td>1</td><td>Canvas layout</td><td><b>Tabs plus one optional split</b></td><td>Keep <code>WorkspaceState</code> close to today's shape; add a single split so an agent can sit next to its diff.</td></tr>
-      <tr><td>2</td><td>First build slice</td><td><b>Real diff tile with line comments sent to the agent</b></td><td>Needs the tab-type registry, an <code>acryl-git</code> Host service, then <code>acryl-tab-diff</code>. Comments become room events.</td></tr>
-      <tr><td>3</td><td>Switching branch</td><td><b>Keep other branches' tabs running in the background</b></td><td>Agents and terminals in an unselected branch keep working; the rail dot stays live. Process count needs a cap and a visible indicator.</td></tr>
-      <tr><td>4</td><td>Code basis</td><td><b>Evolve <code>acryl-workspace</code> in place</b></td><td>Split each tile into its own plugin, move to per-worktree tab groups, extract the PTY as it is into <code>acryl-tab-terminal</code>.</td></tr>
-      <tr><td>5</td><td>Surfaces</td><td><b>One shared implementation for Web and Desktop</b> <span class="chip fresh">decided 2026-09-26</span></td><td>Composed once through <code>coding-capabilities.ts</code> (<code>surfaces: [desktop, web]</code>), shared shell package, typed adapters only for native bits (folder chooser, drag-drop), and a parity gate. Done for composition and shell on 2026-09-26; browser evidence pending. Spec 041 Agent Control follows the same rule.</td></tr>
-    </tbody>
-  </table>
-  <h2>Open items</h2>
-  <div class="grid2">
-    <div class="box"><h3>Before code</h3><p class="q">Write the Cordis mini-design (capability boundary, provides and consumes, effects and disposal, config, events, verification) for <code>workspaceTabs</code>, <code>acryl-git</code> and <code>acryl-tab-diff</code>, then <code>tasks.md</code>.</p></div>
-    <div class="box"><h3>Still unverified</h3><p class="q">Which real session or agent-team state backs the rail dots and attention queue (spec 040 open question 2). The Web surface has no advanced shell, so this layout is Desktop-only for now.</p></div>
-  </div>
-
-
 </main>
 <script>
   (function () {
