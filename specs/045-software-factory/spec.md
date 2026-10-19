@@ -54,6 +54,19 @@ Limits: the handoff is written when the user asks for it (no button yet); Muse a
 `--agent-file` and `--add-dir`, Muse `--add-dir`; neither is wired); outside a Shared Context workspace there is no brief. A one-shot Codex
 run with the owner's skills stops for design confirmation unless the task says the design is approved; interactive runs are unaffected.
 
+## Next: assemble the context from the whole workspace (owner, 2026-10-19)
+
+> how we can better do it so that we assemble a context somehow from the whole project
+
+Today an agent is told the workspace's projects, which instruction files each has, and the brief. In order, cheapest first:
+
+1. **Facts ACRYL already knows, generated, no model call:** per project the branch, uncommitted files, the last commits, its worktrees, the open spec-kit tasks (`specs/*/tasks.md`), and which agent works in which worktree (the PTY tabs and chats ACRYL started). Written into `WORKSPACE.md` and a short summary into the prompt block.
+2. **A handoff section kept apart from the user's brief:** `HANDOFF.md` next to `BRIEF.md` (goal, done, files, open questions, next step), so agents write there and the brief stays the user's.
+3. **"Hand off to..." in an agent tab's menu:** asks the current agent to write the handoff, then starts the chosen agent in the same worktree.
+4. **Fresh context for long sessions:** the prompt is fixed at launch; the block tells the agent to re-read `WORKSPACE.md`, which ACRYL rewrites when the facts change (the DSH chat already gets it per turn).
+5. **Muse and Kimi:** wire their flags (Kimi `--agent-file`, both `--add-dir`).
+6. Later, T3 Code style: a budgeted selection of the previous agent's transcript, once ACRYL reads each agent's session files (capability 1).
+
 ## Not built
 
 - Detecting sessions started outside ACRYL; listing sessions of agents other than Claude Code with state.
