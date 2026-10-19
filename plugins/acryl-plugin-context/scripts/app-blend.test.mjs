@@ -65,6 +65,9 @@ test('snapshot inside an app records into the app folder and keeps the definitio
       assert.match(yaml, /id: setlist/u)
       const lock = JSON.parse(readFileSync(join(app, 'blend.lock.json'), 'utf8'))
       assert.equal(lock.origin.id, 'app.stage-sound')
+      assert.equal(lock.formatVersion, 3)
+      assert.deepEqual(Object.keys(lock), ['formatVersion', 'generator', 'origin', 'lineage', 'parameters', 'rows', 'modules'])
+      assert.deepEqual(lock.lineage, { blueprint: 'acryl.blank', blueprintVersion: '0.1.0' }, 'the app records the Blueprint it grew from')
       assert.deepEqual(lock.modules.map(m => [m.name, m.source]), [['setlist', 'plugins/setlist'], ['tuner', 'plugins/tuner']])
       assert.deepEqual(verifyBlend(app), { ok: true, problems: [], checked: 3 })
       // A second capture with nothing new changes nothing in the definition.

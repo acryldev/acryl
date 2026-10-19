@@ -216,9 +216,14 @@ export function captureApp(options, fs = { existsSync, readFileSync }) {
   }
   const manifestText = added.length === 0 ? original : String(document)
   const manifest = document.toJS()
+  // v3 key order; an app grown from a Blueprint records that lineage (the app's own blend.yaml names it).
+  const lineage = manifest.spec?.lineage
   const lock = {
-    ...base.lock,
+    formatVersion: base.lock.formatVersion,
+    generator: base.lock.generator,
     origin: { id: manifest.metadata?.id, kind: manifest.kind, version: manifest.metadata?.version, digest: sha256(manifestText) },
+    ...(lineage?.blueprint && lineage?.blueprintVersion ? { lineage: { blueprint: lineage.blueprint, blueprintVersion: lineage.blueprintVersion } } : {}),
+    parameters: base.lock.parameters,
     rows: manifest.spec.rows ?? [],
     modules,
   }
