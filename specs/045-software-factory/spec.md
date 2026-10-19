@@ -1,12 +1,14 @@
 # Spec 045: Software factory
 
-Status: requested by the owner on 2026-10-19, not started. Recorded the night before the Vienna talk; nothing here is built yet unless "Exists today" says so.
+Status: requested by the owner on 2026-10-19. Capability 2 (move a session between agents) works through the shared workspace brief, proven 2026-10-19; the rest is not started. Recorded the night before the Vienna talk; nothing here is built yet unless "Exists today" says so.
 
 ## The owner's words (2026-10-19)
 
 > how about software factory? meaning we have a way like https://herdr.dev to detect running agent sessions, to access sessions of any of them, to be able to grab session of any supported coding agent (codex, claude, muse, kimi etc..) and continue in another agent
 
 > or to create pre-configured CoC (convention over configuration) workflow of software factory. we for example we copy our current process into software factory: docs/workmethodology. so when users copy our blend with our own set of plugins (blend.yaml) it also brings our workflow. initiating Github's spec-kit, having one main agent and few secondary workers to whom agent asks to test, to branch out quick experiment in isolated worktree, etc
+
+> how hard is feature swapping agents ... we should go in the path of the least resistance where we don't of course need to reimplement in every agent. We just reuse the context file ... in T3 code we can extract ideas, they have shared context ... instead of adapting each agent to handoff from claude to codex, from codex to muse, from muse to pi, we create a shared context in the project - we already have it - just prove that it works
 
 ## Three capabilities
 
@@ -23,10 +25,39 @@ Status: requested by the owner on 2026-10-19, not started. Recorded the night be
 - The agent control plane has providers for ACP, Claude, Codex and ACRYL's own agent (`runtime/acryl-control/src/agent/providers/`).
 - Blends carry plugins and their versions, including pulled ones (spec 036 T026), so a workflow made of plugins can travel with a Blend once it exists.
 
+## Moving a session: the shared brief (proven 2026-10-19)
+
+The least-resistance path the owner chose: no agent is adapted to another. Every agent started in a Shared Context workspace (spec 043) is
+given the same context block (the workspace's projects and its brief) and the workspace folder. Agent A, asked to, writes a handoff into
+the brief (what it did, which files, the next step); agent B, of any kind, starts with that brief in its context and continues.
+
+T3 Code (`docs/user/portable-handoffs.md`, `docs/internals/context-handoffs.md`) does it the other way: the app owns a normalized
+transcript of every provider and injects a budgeted selection of it into the next provider, plus a tool to read the rest. That needs ACRYL
+to own each agent's transcript; the brief needs nothing per agent beyond a flag to pass a prompt, so it comes first.
+
+What it took (commit 79e76c97): Claude Code and Codex get the workspace folder (`--add-dir`), so they can read and write the brief without
+a permission stop; Codex gets the context block as `-c developer_instructions=...` (before, it got no context at all). Pi already had it.
+
+Proof: `proof/handoff-across-agents.mjs` uses ACRYL's own `SharedContext` and `contextLaunch` with the real CLIs (Claude Code 2.1.303,
+Codex 0.162.1, Pi 1.2.0). Two projects (shop-api, shop-web), brief "show prices in euros in the storefront". Agent A adds `toEuros` in
+shop-api and writes a handoff into the brief; agent B, started in shop-web with only "continue where the previous agent left off", names
+what A did and builds the storefront on it.
+
+| A to B | Result |
+|---|---|
+| Claude to Codex, before the fix | Claude could not reach the brief (permission); Codex got no context and stopped |
+| Claude to Codex | handoff written; Codex named `toEuros` in `shop-api/prices.js`, wrote `storefront.js` and a passing test |
+| Codex to Claude | handoff written; Claude named it and wrote `storefront.js` (prints `apple: 1.20 EUR`, `pear: 0.90 EUR`) |
+| Claude to Pi | handoff written; Pi named it, wrote `storefront.js`, ran it |
+
+Limits: the handoff is written when the user asks for it (no button yet); Muse and Kimi get only `ACRYL_WORKSPACE_CONTEXT` (Kimi has
+`--agent-file` and `--add-dir`, Muse `--add-dir`; neither is wired); outside a Shared Context workspace there is no brief. A one-shot Codex
+run with the owner's skills stops for design confirmation unless the task says the design is approved; interactive runs are unaffected.
+
 ## Not built
 
 - Detecting sessions started outside ACRYL; listing sessions of agents other than Claude Code with state.
-- Moving a session from one agent to another. acryl.dev's home page claims this today ("Swap agents. Keep working.", "Structured handoffs"; docs-coverage 6.6 "no (home page claims it)").
+- A "hand off" action in the UI (asks the current agent to write the handoff, then starts the chosen agent); Muse and Kimi launch flags.
 - The factory workflow as plugins: spec-kit start, main agent with workers, worker tasks in isolated worktrees, results back to the main agent.
 
 ## Next step
