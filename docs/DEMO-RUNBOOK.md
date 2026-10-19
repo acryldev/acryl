@@ -23,7 +23,7 @@ You install ACRYL from a download, with no dev server and no source checkout. Yo
 
 1. "Add an API key to get started": paste the DeepSeek key and click **Save and continue**. The model shown is DeepSeek-V41-Flash with High reasoning, which is what the timings below used.
 
-   ![API key dialog](demo/02-api-key-dialog.png)
+   ![API key dialog](demo-runbook/02-api-key-dialog.png)
 
 ## On stage
 
@@ -34,7 +34,7 @@ You install ACRYL from a download, with no dev server and no source checkout. Yo
 2. Narrate while it works (it took 2 minutes 50 seconds and 44 steps in the rehearsal): it works out how plugins fit the app, then writes `.acryl-extensions/pomodoro-timer/` (`package.json`, `cordis.patch.yml`, `index.js`, `client.js`), runs `acryl_verify_plugin` (no findings), then `acryl_install_plugin` (status `active`). The **Trajectory** tab next to **Chat** shows every step if someone asks how.
 3. The header gets a countdown button ("25:00") next to the session title. In the rehearsal it appeared without reloading the page; the agent's own message says to reload with Cmd+R or Ctrl+R if you do not see it, so keep that as the fallback.
 
-   ![The plugin live in the header](demo/03-pomodoro-live.png)
+   ![The plugin live in the header](demo-runbook/03-pomodoro-live.png)
 
 4. Click the button to open the timer panel (start, pause, reset, skip, focus length, auto-start).
 5. Change it live (verified with the model on 2026-10-09, v0.2.4 source): "Change the focus time to 30 minutes and update the plugin so the new time is live right now." About 70 seconds later the header button read "30:00" with no restart.
