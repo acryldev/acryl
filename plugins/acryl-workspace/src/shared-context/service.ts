@@ -128,7 +128,7 @@ export class SharedContext {
   launchFor(agentId: string, cwd: string): ContextLaunch | undefined {
     const context = this.contextFor(cwd)
     if (context === undefined) return undefined
-    return contextLaunch(agentId, { prompt: context.prompt, documentPath: context.documentPath, otherProjects: context.otherProjects(cwd) })
+    return contextLaunch(agentId, { prompt: context.prompt, documentPath: context.documentPath, otherProjects: context.otherProjects(cwd), workspaceFolder: this.folder(context.workspace.id) })
   }
 
   /** The prompt block for a workspace by id (the tool's answer), or `undefined` when it is not a shared workspace. */

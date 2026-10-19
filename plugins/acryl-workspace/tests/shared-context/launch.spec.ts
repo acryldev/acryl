@@ -6,18 +6,18 @@ import { WorkspacePtyRegistry, type WorkspacePtyProcess, type WorkspacePtySpawn 
 import { chatContextText } from '../../src/shared-context/chat.ts'
 import { WORKSPACE_CONTEXT_ENV, contextLaunch } from '../../src/shared-context/launch.ts'
 
-const context = { prompt: '<acryl_workspace>…</acryl_workspace>', documentPath: '/h/workspaces/s/WORKSPACE.md', otherProjects: ['/p/web', '/p/docs'] }
+const context = { prompt: '<acryl_workspace>…</acryl_workspace>', documentPath: '/h/workspaces/s/WORKSPACE.md', otherProjects: ['/p/web', '/p/docs'], workspaceFolder: '/h/workspaces/s' }
 
 describe('contextLaunch', () => {
-  it('gives Claude Code the other projects and the context, Pi the context, Codex the other projects, everyone the document path', () => {
-    expect(contextLaunch('claude', context)).toEqual({ args: ['--add-dir', '/p/web', '/p/docs', '--append-system-prompt', context.prompt], env: { [WORKSPACE_CONTEXT_ENV]: context.documentPath } })
+  it('gives Claude Code and Codex the other projects, the workspace folder and the context, Pi the context, everyone the document path', () => {
+    expect(contextLaunch('claude', context)).toEqual({ args: ['--add-dir', '/p/web', '/p/docs', '/h/workspaces/s', '--append-system-prompt', context.prompt], env: { [WORKSPACE_CONTEXT_ENV]: context.documentPath } })
     expect(contextLaunch('pi', context).args).toEqual(['--append-system-prompt', context.prompt])
-    expect(contextLaunch('codex', context).args).toEqual(['--add-dir', '/p/web', '--add-dir', '/p/docs'])
+    expect(contextLaunch('codex', context).args).toEqual(['--add-dir', '/p/web', '--add-dir', '/p/docs', '--add-dir', '/h/workspaces/s', '-c', `developer_instructions=${JSON.stringify(context.prompt)}`])
     expect(contextLaunch('aider', context)).toEqual({ args: [], env: { [WORKSPACE_CONTEXT_ENV]: context.documentPath } })
   })
 
-  it('adds no --add-dir when the workspace has no other project', () => {
-    expect(contextLaunch('claude', { ...context, otherProjects: [] }).args).toEqual(['--append-system-prompt', context.prompt])
+  it('still adds the workspace folder when the workspace has no other project', () => {
+    expect(contextLaunch('claude', { ...context, otherProjects: [] }).args).toEqual(['--add-dir', '/h/workspaces/s', '--append-system-prompt', context.prompt])
   })
 })
 
@@ -44,7 +44,7 @@ describe('WorkspacePtyRegistry with a launch context', () => {
   it('starts an agent with its context before its own arguments, and the document path in its environment', () => {
     const { spawned, asked } = start('claude')
     expect(asked).toEqual([`claude@${folder}`])
-    expect(spawned[0]?.args).toEqual(['--add-dir', '/p/web', '/p/docs', '--append-system-prompt', context.prompt, '--model', 'x'])
+    expect(spawned[0]?.args).toEqual(['--add-dir', '/p/web', '/p/docs', '/h/workspaces/s', '--append-system-prompt', context.prompt, '--model', 'x'])
     expect(spawned[0]?.env[WORKSPACE_CONTEXT_ENV]).toBe(context.documentPath)
   })
 
