@@ -40,7 +40,7 @@ export function apply(ctx: ClientContext): void {
   // Claim the main surface with your own UI - the same pattern acryl-workspace uses for the IDE.
   ctx.slots.inject('desktop.main', () => ctx.slots.register({
     name: 'desktop.main',
-    priority: 200, // higher than the shell's own fallback (100)
+    priority: 0, // lower renders: below the shell's own fallback (100)
   }, MyDomainMainSurface))
 }
 ```

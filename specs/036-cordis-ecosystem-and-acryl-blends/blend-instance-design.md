@@ -84,7 +84,7 @@ export function apply(ctx: ClientContext): void {
 
   ctx.slots.inject('desktop.main', () => ctx.slots.register({
     name: 'desktop.main',
-    priority: 200, // higher than the shell's own fallback (100), so this replaces the plain chat
+    priority: 0, // lower renders: below the shell's own fallback (100), so this replaces the plain chat
   }, MyDomainMainSurface))
 }
 ```
@@ -95,7 +95,20 @@ registers a terminal dock (the `wrapMain`/`wrapRightbar` hooks stay unset) and n
 `plugins/acryl-app-shell/README.md` for the extraction rationale and a packaging note (its client bundle is its own Loader row, resolved through the
 shared Module Loader registry at runtime like every other client package here - a consumer's bundler cannot bundle it in directly).
 
-**Not yet done:** `acryl-gtd` itself has not been rebuilt on this scaffold yet (both existing implementations still route-based at the time this section
+**How a Blend takes the frame (built 2026-10-19).** The Blend lists the frame as a row, before its domain plugin:
+
+```yaml
+    - id: acryl-app-shell
+      name: acryl-app-shell
+```
+
+That is the `app-shell` Blueprint row (`runtime/acryl-harness-runtime/src/blueprint/compose.ts`): on Web and Desktop it makes `acryl-app-shell`
+resolvable, mounts it, and turns the stock `ui-layout` off and `ui-sidebar`/`ui-conversation` on, the same switch the IDE's `advanced-shell`
+capability makes. The domain plugin's `client.js` then calls `applyAdvancedShell` and registers `desktop.main` at a priority below the shell's
+fallback (lower renders), and renders `props.renderConversation()` beside its own UI so the agent sits inside the product. `acryl-music` is the first
+domain Blend built this way: the app opens on the drum machine, with the conversation on the right.
+
+**Not yet done (2026-10-01 note):** `acryl-gtd` itself has not been rebuilt on this scaffold yet (both existing implementations still route-based at the time this section
 was written). Rebuilding it - and the next domain example after it - is the proof this pattern actually holds for something other than the IDE.
 
 ## The principle (from pi.dev, and already true in ACRYL)

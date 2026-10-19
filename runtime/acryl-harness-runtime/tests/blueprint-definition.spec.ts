@@ -12,6 +12,7 @@ import {
   parseBlueprint,
 } from '../src/index.ts'
 import { fileURLToPath } from 'node:url'
+import { blueprintRowForPackage } from '../src/blueprint/index.ts'
 
 const dirs: string[] = []
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { force: true, recursive: true }) })
@@ -65,6 +66,24 @@ describe('parseBlueprint', () => {
       const composed = (['tui', 'web', 'desktop'] as const).some(surface => composeBlueprintRows(probe, surface).packages.some(name => name !== 'dsh-client-ui-brand-acryl' && name !== 'acryl-brand'))
       expect(composed, id).toBe(true)
     }
+  })
+
+  it('a Blend with the app-shell row owns its frame on Web and Desktop: the frame package and row, the stock layout off, sidebar and conversation on', () => {
+    const blueprint = parseBlueprint({ id: 'acme.music', extends: 'acryl.blank', rows: [...BLANK_BLUEPRINT.rows, 'app-shell'] })
+    for (const surface of ['web', 'desktop'] as const) {
+      const { packages, patches } = composeBlueprintRows(blueprint, surface)
+      expect(packages).toContain('acryl-app-shell')
+      expect(patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toContain('acryl-app-shell')
+      expect(patches).toEqual(expect.arrayContaining([{ id: 'ui-layout', disabled: true }, { id: 'ui-sidebar', disabled: false }, { id: 'ui-conversation', disabled: false }]))
+    }
+    const tui = composeBlueprintRows(blueprint, 'tui')
+    expect(tui.packages).not.toContain('acryl-app-shell')
+    expect(tui.patches).not.toContainEqual({ id: 'ui-layout', disabled: true })
+    expect(blueprintRowForPackage('acryl-app-shell')).toBe('app-shell')
+  })
+
+  it('a Blend without it keeps the stock frame', () => {
+    expect(composeBlueprintRows(BLANK_BLUEPRINT, 'web').patches).not.toContainEqual({ id: 'ui-layout', disabled: true })
   })
 })
 

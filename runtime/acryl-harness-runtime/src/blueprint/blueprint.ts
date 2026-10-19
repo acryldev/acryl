@@ -25,9 +25,10 @@ export type BlueprintRowId =
   | 'mount-anchors'
   | 'app-save'
   | 'plugin-hub'
+  | 'app-shell'
 
 /** Every row id, as data: what a Blueprint file may name. Kept next to the type so the two cannot drift (a test asserts it). */
-export const BLUEPRINT_ROW_IDS: readonly BlueprintRowId[] = ['plugin-context', 'system-prompt', 'ui-library', 'app-save', 'plugin-hub', 'community-market', 'shortcuts', 'mount-anchors']
+export const BLUEPRINT_ROW_IDS: readonly BlueprintRowId[] = ['plugin-context', 'system-prompt', 'ui-library', 'app-save', 'plugin-hub', 'community-market', 'shortcuts', 'mount-anchors', 'app-shell']
 
 /** Row ids a Blueprint file once used, read as their current names (spec 044 step 1b); never written. */
 export const RENAMED_BLUEPRINT_ROW_IDS: Readonly<Record<string, BlueprintRowId>> = Object.freeze({ 'extension-context': 'plugin-context' })

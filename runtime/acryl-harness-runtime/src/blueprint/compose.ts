@@ -8,7 +8,7 @@
  */
 
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
-import type { AcrylSurface } from '../coding-capabilities.ts'
+import { ACRYL_CODING_CAPABILITIES, type AcrylSurface } from '../coding-capabilities.ts'
 import { identityLine } from './brand-identity.ts'
 import type { Blueprint, BlueprintRowId } from './blueprint.ts'
 
@@ -35,7 +35,13 @@ const ROWS: readonly RowDeclaration[] = [
   // editor, so this package no longer provides a service of its own (a second provider fails the client boot).
   { id: 'shortcuts', surfaces: ['web', 'desktop'], rowId: 'acryl-shortcuts', packageName: 'acryl-shortcuts' },
   { id: 'mount-anchors', surfaces: ['web', 'desktop'], rowId: 'acryl-mount-anchors', packageName: 'acryl-mount-anchors' },
+  // The three-column app frame a domain plugin claims for its own main UI (`desktop.main`), with the conversation beside it, instead of the stock
+  // chat frame (blend-instance-design.md 0a). The IDE composes the same frame through its coding capabilities.
+  { id: 'app-shell', surfaces: ['web', 'desktop'], rowId: 'acryl-app-shell', packageName: 'acryl-app-shell' },
 ]
+
+/** The stock rows the ACRYL frame replaces: the same switch the IDE's `advanced-shell` capability makes, declared once there. */
+const APP_FRAME_PATCHES: readonly PatchOptions[] = ACRYL_CODING_CAPABILITIES.find(capability => capability.id === 'advanced-shell')?.loaderPatches ?? []
 
 /**
  * The DSH rows that make it a chat: the agent, the model registry and the pi-ai provider. Disabling them leaves the web server, the session
@@ -120,6 +126,8 @@ export function composeBlueprintRows(
       : {}
     patches.push({ insert: [{ id: row.rowId, name: row.packageName, ...identityConfig }] })
   }
+  // A Blend that owns its frame turns the stock layout off and the sidebar and conversation rows on, for its domain plugin to render into.
+  if (blueprint.rows.includes('app-shell') && (surface === 'web' || surface === 'desktop')) patches.push(...APP_FRAME_PATCHES)
   // With the plugin hub, DSH's own plugin manager is replaced by the hub's subclass of it, so DSH's "Add plugin" box installs a git address as
   // that repository's released, checked version (spec 044 D7). Swapped, never doubled: Cordis refuses a second `pluginManager` provider.
   if (blueprint.rows.includes('plugin-hub') && !existingRowIds.has(PLUGIN_MANAGER_ROW_ID)) {
