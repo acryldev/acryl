@@ -1,3 +1,14 @@
+## 2026-10-19 (evening) - a session moves between coding agents through the shared workspace brief (spec 045)
+
+Commit: `79e76c978eaf57b6d81cd65320ebabe15f997302` (proof and record: `06037080c33aa843462cb390ba67489f0184bc64`)
+
+The owner asked how hard swapping agents is and chose the least-resistance path: reuse the shared context ACRYL already has (spec 043 Shared Context workspaces) instead of adapting each agent to every other.
+
+- **Gap found by running it:** Claude Code got the context but could not read or write the brief (the workspace folder was not an allowed directory); Codex got no context at all.
+- **Fix:** Claude Code and Codex get the workspace folder through `--add-dir`; Codex gets the context block as `-c developer_instructions=...`.
+- **Proof:** `specs/045-software-factory/proof/handoff-across-agents.mjs` with the real CLIs: Claude to Codex, Codex to Claude and Claude to Pi each continued the other's work from the handoff in the brief alone. `acryl-workspace` 790 tests pass, typecheck clean.
+- **Not covered:** a UI "hand off" action; Muse and Kimi launch flags.
+
 ## 2026-10-19 (later) - a Blend keeps the plugins you pulled (spec 036 T026); copied test homes no longer write into their source
 
 Owner, 2026-10-18: "lets say i create 20 plugins and i pull 30 plugins from registry ... how do we persist the state of entire ACRYL app". A snapshot dropped every pulled plugin.
