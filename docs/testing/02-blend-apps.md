@@ -34,7 +34,7 @@ Report: the time it took, whether it worked on the first try, and anything you h
 
 ## 2.2 From a starter (Blueprint)
 
-The public starters: `acryl.blank`, `acryl.gtd`, `acryl.accounting`, `acryl.music`, `acryl.organizer`
+The public starters: `acryl.blank`, `acryl.gtd`, `acryl.accounting`, `acryl.music`, `acryl.organizer`, `acryl.orderdesk`
 ([list](https://acrylblends.github.io)). Make one of each:
 
 ```bash
@@ -42,12 +42,13 @@ acryl new beats --from acryl.music
 acryl new books --from acryl.accounting
 acryl new planner --from acryl.gtd
 acryl new day --from acryl.organizer
+acryl new desk --from acryl.orderdesk
 ```
 
 Start one at a time (`beats/bin/acryl web`, or pick a port: `beats/bin/acryl web --port 3410`).
 
 Expected for each: **the app opens as its own window** (the drum machine, the books, the board, your day), with the agent's conversation on the
-right. If you see only a chat with "Into the Unknown", that is a bug: report it with a screenshot.
+right (the order desk opens empty: click "Load the sample business"). If you see only a chat with "Into the Unknown", that is a bug: report it with a screenshot.
 
 Try these prompts (times from our run with DeepSeek):
 
@@ -59,6 +60,11 @@ Try these prompts (times from our run with DeepSeek):
 | books | "Which invoices are overdue?" then "Summarize this quarter's VAT." | the overdue rows in red; the VAT tab shows the same figure |
 | planner | "Capture: call the dentist tomorrow, and plan a team offsite as a project with three next actions." | cards appear on the board without a reload |
 | day | "Book a 30 minute call with Sam today at 14:00 UTC." then "Book the team sync today at 14:15 UTC." | the first is booked; the second is refused (it overlaps) |
+| desk | "Process the inbox." | about 1 min: the four emails (one in German) become orders or a reply; two wait as backorders |
+| desk | "The supplier just delivered 40 kg espresso and 20 kg decaf. Tell the hotel that delivery by the end of October works. Then ship everything that is ready." | about 1 min: backorders released, two orders shipped; the hotel order is above the approval limit, so the agent asks you first |
+
+For the desk, also drop an email file into `desk/inbox/` (`From:`, `Subject:`, a blank line, the text): it appears in the Inbox within seconds;
+shipped orders write `desk/delivery-notes/DN-*.html`, and every message sent is an `.eml` in `desk/outbox/`.
 
 Also use each window yourself (buttons, forms) and check the agent sees what you changed: ask it "what is on the board now?".
 
