@@ -1,6 +1,7 @@
 # 2. Blend apps: from scratch, from a starter, change it, copy it
 
-About 45 minutes. Make a folder for your test apps first, outside the clone:
+About 45 minutes. You need the `acryl` command from your clone on your PATH ([guide 1, "Get the acryl command"](01-setup.md#get-the-acryl-command));
+check with `command -v acryl`. Then make a folder for your test apps, outside the clone:
 
 ```bash
 mkdir -p ~/acryl-test && cd ~/acryl-test
