@@ -231,7 +231,7 @@ export function apply(ctx) {
 
     scoped.tools.register(defineTool({
       name: LIST_TOOL_NAME,
-      description: 'List every plugin installed in the active ACRYL profile with its origin: "local" (built here; has a source folder you can edit, and a scope), "pulled" (pulled with /plugin pull from GitHub or npm into the plugin store; managed, do not edit, has version, the source it came from and its sha512) or "registry" (installed from the marketplace/npm; managed, do not edit, has version and integrity digest).',
+      description: 'List every plugin installed in the active ACRYL profile with its origin: "local" (built here; a source folder you can edit, a scope), or "pulled"/"registry" (from GitHub, npm or the marketplace; managed, do not edit; has version and digest).',
       parameters: {},
       output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
       async execute() {

@@ -286,7 +286,7 @@ describe('/reload on the web engine', () => {
       expect(snapshot?.text).toContain('1 local plugin(s) vendored')
       const out = join(workspace, '.acryl', 'blend')
       const lock = JSON.parse(readFileSync(join(out, 'blend.lock.json'), 'utf8'))
-      expect(lock.formatVersion).toBe(2)
+      expect(lock.formatVersion).toBe(3)
       expect(lock.modules).toEqual([expect.objectContaining({ name: 'acryl-example-tool', origin: 'local', source: 'plugins/acryl-example-tool' })])
       expect(existsSync(join(out, 'plugins', 'acryl-example-tool', 'index.js'))).toBe(true)
       expect(readFileSync(join(out, 'blend.yaml'), 'utf8')).toContain('name: acryl-example-tool')
