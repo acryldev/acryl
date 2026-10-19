@@ -177,9 +177,14 @@ Before contributing, read [`AGENTS.md`](AGENTS.md), the [ACRYL orientation](docs
 
 Thanks to everyone building ACRYL — every report, idea, and PR counts:
 
-<a href="https://github.com/acryldev/acryl/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=acryldev/acryl" alt="ACRYL contributors" />
-</a>
+<p>
+  <a href="https://github.com/musichen" title="musichen"><img src="https://github.com/musichen.png?size=120" width="60" height="60" alt="musichen" style="border-radius:50%" /></a>
+  <a href="https://github.com/levonk" title="levonk"><img src="https://github.com/levonk.png?size=120" width="60" height="60" alt="levonk" style="border-radius:50%" /></a>
+  <a href="https://github.com/kuishou68" title="kuishou68"><img src="https://github.com/kuishou68.png?size=120" width="60" height="60" alt="kuishou68" style="border-radius:50%" /></a>
+  <a href="https://github.com/smrifat1411" title="smrifat1411"><img src="https://github.com/smrifat1411.png?size=120" width="60" height="60" alt="smrifat1411" style="border-radius:50%" /></a>
+</p>
+
+[All contributors on GitHub](https://github.com/acryldev/acryl/graphs/contributors).
 
 Who did what, by name: [CONTRIBUTORS.md](CONTRIBUTORS.md) ([中文](CONTRIBUTORS.zh.md)). Your name belongs here — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
