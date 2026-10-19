@@ -1,3 +1,14 @@
+## 2026-10-19 (late) - Blend apps are standalone apps: the domain UI is the window, the agent sits beside it
+
+Commit: `1681b36cf1be95262880edd325068a54ac2384a3` (framework); registry `acrylblends.github.io` 38f40f6, d76e6d5, da1a753, 12c67be
+
+The owner opened the Music Blend from the registry and got the Blank chat with the drum machine at `/music`: "this is not ACRYL blend music app, this is just a default blank view". The rule already existed (blend-instance-design 0a: a domain plugin's UI is a `desktop.main` registration, never a Host route) but the published Blueprints never followed it, and no Blend could claim the app frame.
+
+- **Framework:** an `app-shell` Blueprint row. A Blend that lists `acryl-app-shell` gets the frame on Web and Desktop: the package resolvable and mounted, stock `ui-layout` off, sidebar and conversation on (the IDE's `advanced-shell` switch, reused). The documented `desktop.main` priority (200, "higher than the fallback") could never win: lower renders. Docs corrected.
+- **Registry:** `acryl.music`, `acryl.accounting`, `acryl.gtd` and `acryl.organizer` rebuilt: each plugin's `client.js` renders its own window (sequencer, books, board, the day) with `renderConversation()` beside it, over its existing data API; the page routes are gone. Organizer also keeps its data in the app home now, not the chat session's folder.
+- **Verified:** from the public registry, with the real model, isolated: music 5 s, accounting 4 to 5 s, GTD 45 s, organizer refuses an overlapping booking. A fresh clone of `main` builds and creates Blend apps on wbx24, aion (macOS), z370n (Ubuntu) and the Windows i9; the agent played the Music app on all four. Harness runtime 243 tests pass.
+- **Found, not fixed:** the published npm `acryl` 0.2.5 cannot run `acryl new` (spec 036 T013); the launcher refuses an x64 Node on Apple Silicon and has no Intel Mac target.
+
 ## 2026-10-19 (night) - the refined ACRYL logo everywhere
 
 Commit: `aa0a182fd1e695ec61fb79b23438b055e6446c5a`

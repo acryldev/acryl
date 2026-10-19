@@ -89,3 +89,11 @@ Before any of these changes Blend code: `framework-alignment.md` (this folder) c
       `acryl-app-shell`'s own tried to register `layout` and the Loader threw. Fixed in `resolveWebEngineComposition`: an extension requiring
       `acryl-app-shell` now also gets the same `ui-layout: disabled` patch the `workspace` capability already uses. See `docs/DEVELOPMENT-LOG.md`,
       2026-10-02, for the full trail
+- [x] T025b The public registry's domain Blueprints were still the rejected route shape (T025's rebuild lived in its own repo and never reached
+      `acrylblends.github.io`): the owner opened `acryl.music` on 2026-10-19 and got the Blank chat with a page at `/music`. Rebuilt all four on
+      `acryl-app-shell` the same day and published them: `acryl.music` (sequencer), `acryl.accounting` (books), `acryl.gtd` (board), `acryl.organizer`
+      (to-dos and the day's calendar; also moved its data from the chat session's folder to the app home and gave it a data API). Each plugin's
+      `client.js` claims `desktop.main` (priority below the shell's fallback; the documented 200 was wrong) and renders `renderConversation()` beside its
+      own UI. A Blend takes the frame with the `app-shell` Blueprint row (commit 1681b36c). Verified from the public registry with the real model in
+      isolated runs, screenshots on acryl.dev/demo/ownmyai. Follow-up: reconcile the row with T025a's dependency-based `ui-layout` switch (one
+      mechanism, not two)
