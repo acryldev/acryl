@@ -54,7 +54,7 @@
     "upstream:sync": "git submodule update --init --recursive",
     "upstream:update": "node scripts/update-upstream.mjs",
     "upstream:version": "cd deepseek-harness && corepack pnpm --version",
-    "upstream:install": "cd deepseek-harness && corepack pnpm install --frozen-lockfile",
+    "upstream:install": "node scripts/upstream-install.mjs",
     "upstream:build": "cd deepseek-harness && corepack pnpm run build",
     "graft:deepscan": "node scripts/graft-deepscan.mjs",
     "tui": "node apps/acryl-cli/bin/dev-run.mjs",
