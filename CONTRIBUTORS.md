@@ -36,6 +36,15 @@ stays visible in the commit history, release notes, and this file.
 ## Contributors by time
 
 <details open>
+<summary><strong>October 2026 — packaged Desktop fixes</strong></summary>
+
+**Merged or adapted contributions**
+
+- **[smrifat1411](https://github.com/smrifat1411)** (MD Rifat Hossain) — traced why every in-app settings save failed in installed Desktop builds with "profile reload requires the root Include entry": Loader imports resolved through the physical `app.asar.unpacked` path while the main process used the logical `app.asar` path, so profile plugins got a second copy of `dsh-app-boot`. Fixed the anchor and tightened the test so it can no longer pass by accident ([#58](https://github.com/acryldev/acryl/pull/58)).
+
+</details>
+
+<details open>
 <summary><strong>September 2026 — first community contributions</strong></summary>
 
 **Merged or adapted contributions**

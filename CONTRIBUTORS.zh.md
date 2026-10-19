@@ -33,6 +33,15 @@ ACRYL 以开放方式构建，社区贡献者正在不断加入。每一个 issu
 ## 按时间排列的贡献者
 
 <details open>
+<summary><strong>2026 年 10 月 —— 桌面端打包修复</strong></summary>
+
+**已合入或经改写的贡献**
+
+- **[smrifat1411](https://github.com/smrifat1411)**（MD Rifat Hossain）—— 定位了已安装桌面端中每次应用内设置保存都失败、提示"profile reload requires the root Include entry"的根因：Loader 导入走的是物理路径 `app.asar.unpacked`，而主进程使用逻辑路径 `app.asar`，导致 profile 插件拿到第二份 `dsh-app-boot`。修正了解析锚点，并加强测试使其不会再被偶然通过 ([#58](https://github.com/acryldev/acryl/pull/58))。
+
+</details>
+
+<details open>
 <summary><strong>2026 年 9 月 —— 首批社区贡献</strong></summary>
 
 **已合入或经改写的贡献**
