@@ -1,3 +1,13 @@
+## 2026-10-19 (night) - the refined ACRYL logo everywhere
+
+Commit: `aa0a182fd1e695ec61fb79b23438b055e6446c5a`
+
+The owner supplied a refined logo (press kit folder `acry-logo-refined-design-OCT-2026`): the same line wordmark, cleaner, with the L rising to the top.
+
+- **Sources:** cropped vectors `assets/acryl-logo.svg`, `assets/acryl-logo-white.svg` and `assets/acryl-logo-currentcolor.svg` from the transparent potrace file; the two 974 px source PNGs rendered from them at the old wordmark width (730 px), so every layout keeps its proportions.
+- **Generated from them with the existing scripts:** Desktop app icon (png, icns, ico, macOS variant), tray icons, web favicons (`assets/brand/favicon/`, `web-favicon-data.ts`), the brand plugin's and the workspace's logo data. The press kit's `white-on-black` files are in fact black on light grey; the dark variants here are derived, not copied.
+- **Verified:** `package.spec.ts` pins the application icon by checksum; the generator is deterministic and the pin was updated on purpose. Brand, workspace (790), Desktop (839) and harness runtime (241) tests pass.
+
 ## 2026-10-19 (evening) - a session moves between coding agents through the shared workspace brief (spec 045)
 
 Commit: `79e76c978eaf57b6d81cd65320ebabe15f997302` (proof and record: `06037080c33aa843462cb390ba67489f0184bc64`)
