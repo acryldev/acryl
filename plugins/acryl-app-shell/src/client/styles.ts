@@ -11,7 +11,7 @@ import { SIDEBAR_COLLAPSED } from './layout-state.ts'
 const ADVANCED_STYLES = `
 html, body, #root { width: 100%; height: 100%; }
 body[data-dsh-desktop-mode="advanced"] { margin: 0; background: transparent !important; }
-.dshDesktopFrame { position: relative; display: grid; grid-template-rows: 100%; width: 100%; height: 100%; overflow: hidden; background: transparent; transition: grid-template-columns var(--ds-transition-duration-slow) var(--ds-ease-in-out); }
+.dshDesktopFrame { position: relative; display: grid; grid-template-rows: 100%; width: 100%; height: 100%; overflow: hidden; overflow: clip; background: transparent; transition: grid-template-columns var(--ds-transition-duration-slow) var(--ds-ease-in-out); }
 .dshDesktopSidebarSurface { --dsw-specific-sidebar-fill: transparent; position: relative; grid-column: 1; grid-row: 1; min-width: 0; overflow: hidden; background: transparent; border-right: 1px solid var(--dsw-alias-border-l1); }
 .dshDesktopUpstreamSidebar { box-sizing: border-box; width: 100%; height: 100%; }
 .dshDesktopFrame[data-desktop-platform="darwin"] .dshDesktopUpstreamSidebar { padding-top: ${MACOS_TITLEBAR_HEIGHT}px; -webkit-app-region: no-drag; }
@@ -26,6 +26,9 @@ body[data-dsh-desktop-mode="advanced"] { margin: 0; background: transparent !imp
 .dshDesktopConversationSurface { grid-column: 2; grid-row: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--dsw-alias-bg-base); }
 .dshDesktopDetailsSurface { grid-column: 3; grid-row: 1; position: relative; min-width: 0; min-height: 0; overflow: visible; background: var(--dsw-alias-bg-base); border-left: 1px solid var(--dsw-alias-border-l2); }
 .dshDesktopFrame[data-details-collapsed] .dshDesktopDetailsSurface { border-left: none; }
+/* A closed right panel still renders its content into the zero-width column; clip it, or it widens the frame and a focus or
+   scrollIntoView scrolls the whole window sideways, pushing the left sidebar off screen. */
+.dshDesktopFrame[data-details-collapsed]:not([data-details-fullscreen]) .dshDesktopDetailsSurface { overflow: hidden; overflow: clip; }
 .dshDesktopFrame[data-desktop-platform="win32"] { grid-template-rows: ${WINDOWS_TITLEBAR_HEIGHT}px minmax(0, 1fr); }
 .dshDesktopFrame[data-desktop-platform="win32"] .dshDesktopSidebarSurface { grid-row: 1 / -1; }
 .dshDesktopFrame[data-desktop-platform="win32"] .dshDesktopConversationSurface,

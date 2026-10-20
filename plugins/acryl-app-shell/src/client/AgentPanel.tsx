@@ -15,15 +15,18 @@ export const AGENT_PANEL_RAIL = 44
 
 const STYLE_ID = 'acryl-agent-panel-style'
 const STYLES = `
-[data-acryl-agent-panel] { position: relative; }
+[data-acryl-agent-panel] { display: flex !important; flex-direction: column !important; min-height: 0; overflow: hidden; }
 [data-acryl-agent-panel][data-collapsed] { width: ${AGENT_PANEL_RAIL}px !important; min-width: ${AGENT_PANEL_RAIL}px !important; }
 *:has(> [data-acryl-agent-panel][data-collapsed]) { grid-template-columns: minmax(0, 1fr) ${AGENT_PANEL_RAIL}px !important; }
-[data-acryl-agent-panel][data-collapsed] > .acrylAgentPanelBody { display: none !important; }
-.acrylAgentPanelToggle { position: absolute; z-index: 5; top: 8px; left: 8px; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-text-l2, currentColor); cursor: pointer; opacity: .75; }
+.acrylAgentPanelHead { flex: 0 0 auto !important; display: flex; align-items: center; height: 36px; padding: 0 8px; }
+[data-acryl-agent-panel][data-collapsed] .acrylAgentPanelHead { justify-content: center; padding: 0; }
+.acrylAgentPanelToggle { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-text-l2, currentColor); cursor: pointer; opacity: .75; }
 .acrylAgentPanelToggle:hover { opacity: 1; background: var(--dsw-alias-bg-hover, rgba(127,127,127,.12)); }
 .acrylAgentPanelToggle:focus-visible { outline: 2px solid var(--dsw-alias-border-focus, #3b82f6); outline-offset: 1px; }
-[data-acryl-agent-panel][data-collapsed] .acrylAgentPanelToggle { left: 50%; transform: translateX(-50%); }
-.acrylAgentPanelRailLabel { position: absolute; top: 48px; left: 50%; transform: translateX(-50%); writing-mode: vertical-rl; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--dsw-alias-text-l3, currentColor); cursor: pointer; user-select: none; background: none; border: 0; padding: 4px 0; }
+.acrylAgentPanelBody { flex: 1 1 0 !important; min-height: 0 !important; display: flex; flex-direction: column; overflow: hidden; }
+.acrylAgentPanelBody > * { flex: 1 1 0; min-height: 0; }
+[data-acryl-agent-panel][data-collapsed] > .acrylAgentPanelBody { display: none !important; }
+.acrylAgentPanelRailLabel { flex: 0 0 auto !important; align-self: center; margin-top: 4px; writing-mode: vertical-rl; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--dsw-alias-text-l3, currentColor); cursor: pointer; user-select: none; background: none; border: 0; padding: 4px 0; }
 `
 
 function readCollapsed(key: string | undefined): boolean {
@@ -70,11 +73,13 @@ export function AgentPanel({ renderConversation, className, storageKey }: AgentP
   const label = collapsed ? 'Show agent panel' : 'Hide agent panel'
   return (
     <aside className={className} aria-label="Agent" data-acryl-agent-panel="" data-collapsed={collapsed || undefined}>
-      <button type="button" className="acrylAgentPanelToggle" onClick={toggle} title={label} aria-label={label} aria-expanded={!collapsed}>
-        <PanelIcon collapsed={collapsed} />
-      </button>
+      <div className="acrylAgentPanelHead">
+        <button type="button" className="acrylAgentPanelToggle" onClick={toggle} title={label} aria-label={label} aria-expanded={!collapsed}>
+          <PanelIcon collapsed={collapsed} />
+        </button>
+      </div>
       {collapsed && <button type="button" className="acrylAgentPanelRailLabel" onClick={toggle} tabIndex={-1}>Agent</button>}
-      <div className="acrylAgentPanelBody" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+      <div className="acrylAgentPanelBody">
         {renderConversation?.()}
       </div>
     </aside>

@@ -38,6 +38,9 @@ describe('the shared advanced shell layout', () => {
       expect(css).toMatch(/\.dshDesktopFrame \{[^}]*transition: grid-template-columns var\(--ds-transition-duration-slow\) var\(--ds-ease-in-out\);/)
       expect(css).toMatch(/\.dshDesktopFrame\[data-dragging\] \{ transition: none; \}/)
       expect(css).toMatch(/\.dshDesktopFrame\[data-details-collapsed\] \.dshDesktopDetailsSurface \{ border-left: none; \}/)
+      // The frame can never be scrolled sideways (a closed right panel's content once pushed the left sidebar off screen).
+      expect(css).toMatch(/\.dshDesktopFrame \{[^}]*overflow: clip;/)
+      expect(css).toMatch(/\.dshDesktopFrame\[data-details-collapsed\]:not\(\[data-details-fullscreen\]\) \.dshDesktopDetailsSurface \{ overflow: hidden; overflow: clip; \}/)
       expect(css).toMatch(/\.dshDesktopResizeHandle \{[^}]*transition: left var\(--ds-transition-duration-slow\) var\(--ds-ease-in-out\);/)
       expect(css).toMatch(/\.dshDesktopFrame\[data-dragging\] \.dshDesktopResizeHandle \{ transition: none; \}/)
       expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*\.dshDesktopFrame,[\s\S]*\.dshDesktopResizeHandle \{ transition: none !important; \}/)
