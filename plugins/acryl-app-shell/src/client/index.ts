@@ -47,6 +47,7 @@ export function apply(ctx: Context): void {
 
 export { applyAdvancedShell, type AdvancedShell, type AdvancedShellHooks } from './advanced-shell.ts'
 export { startUiHealth, type UiHealthIncident, type UiHealthOptions, type UiHealthPorts, type UiHealthRecord } from './ui-health.ts'
+export { AGENT_PANEL_RAIL, AgentPanel, type AgentPanelProps } from './AgentPanel.tsx'
 export { AdvancedFrame, type AdvancedFrameInjected, type AdvancedFrameProps } from './AdvancedFrame.tsx'
 export {
   type DesktopLayoutService,
