@@ -871,6 +871,10 @@ async function start(): Promise<void> {
           'acryl-desktop: profile package resolution',
         )
         hostCtx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, environment)
+        // The app instance chosen above, for plugins that keep their data in the app (a Blend app's own plugins inject it). Web and the
+        // terminal provide it in their engine boot; without it here such a plugin stays pending on Desktop, its client half is never
+        // served, and an app whose client claims the advanced shell boots without a `layout` service.
+        hostCtx.provide('appInstance', instance)
         hostCtx.provide('desktopRuntime', runtime)
         hostCtx.provide('desktopPnpmBootstrap', desktopPnpmBootstrap)
         hostCtx.provide('desktopPluginLifecycleBootstrap', {
