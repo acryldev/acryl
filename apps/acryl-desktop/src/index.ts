@@ -1,6 +1,7 @@
 /** ACRYL Host plugin: owns the selected native shell generation. */
 
 import { fileURLToPath } from 'node:url'
+import type { AppInstance } from 'acryl-harness-runtime'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import type {} from '@deepseek-ai/dsh-cmdline'
@@ -75,6 +76,7 @@ function toDesktopLocale(preference: string | undefined): DesktopLocale | undefi
   return LOCALE_IDS.includes(preference as (typeof LOCALE_IDS)[number]) ? (preference as DesktopLocale) : undefined
 }
 import { DESKTOP_DEFAULT_WEB_PORT } from './runtime/desktop-port.ts'
+import { appIconPath } from './shell/app-icon.ts'
 import { defaultDesktopShellMode } from './shell/default-mode.ts'
 
 /** Stable Cordis plugin name. */
@@ -191,7 +193,7 @@ export function apply(ctx: Context, config: Config): void {
   const iconFilename = runtime.platform === 'darwin'
     ? 'app-icon-mac.png'
     : 'app-icon.png'
-  const iconPath = fileURLToPath(new URL(`../build/${iconFilename}`, import.meta.url))
+  const iconPath = appIconPath(ctx.get('appInstance' as never) as AppInstance | undefined, fileURLToPath(new URL(`../build/${iconFilename}`, import.meta.url)))
   const trayIcons = {
     templatePath: fileURLToPath(new URL('../build/tray-iconTemplate.png', import.meta.url)),
     bluePath: fileURLToPath(new URL('../build/tray-icon-blue.png', import.meta.url)),
