@@ -40,6 +40,7 @@ import {
   type DesktopRun,
 } from './shell/crash-evidence.ts'
 import { exportDesktopDiagnostics } from './diagnostic-export.ts'
+import { APP_PLUGINS_SETTLE_LIMIT_MS, appPluginsSettled } from './startup/app-plugins-settled.ts'
 import { createDesktopLifecycleRecorder } from './startup/lifecycle-events.ts'
 import type {
   DesktopLifecycleFailureReason,
@@ -1054,6 +1055,9 @@ async function start(): Promise<void> {
       if (namespace !== DESKTOP_SETTINGS_NAMESPACE) return
       fileExporter?.setThreshold((next as DesktopSettings).logLevel)
     })
+    if (await appPluginsSettled(ctx) === 'timed-out') {
+      electronLogger.error(`${BIN_NAME}: the app's plugins were still installing after ${String(APP_PLUGINS_SETTLE_LIMIT_MS / 1000)} s; opening the window without waiting longer`)
+    }
     startupStage = 'renderer-startup'
     lifecycleRecorder.transitionStartupStage(startupStage)
     lifecycleRecorder.startRendererBoot()

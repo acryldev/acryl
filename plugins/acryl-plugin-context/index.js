@@ -46,8 +46,15 @@ export function apply(ctx) {
   const text = buildRouterText(root, manifest)
   if (!docsOff) ctx.effect(() => ctx.systemPrompt.section({ name: ROUTER_SECTION_NAME, order: ROUTER_SECTION_ORDER, text }))
 
+  // Settles when the startup pass below has finished (or cannot run): a surface waits on it before it serves its client, because the client
+  // composes once from the plugin list it loads and an app plugin installed after that leaves the page without it (no `layout` on Desktop).
+  let settleStartup = () => {}
+  const startupSettled = new Promise(resolve => { settleStartup = resolve })
+  ctx.effect(() => () => settleStartup(), 'plugin-context: settle startup on disposal')
+
   ctx.provide('pluginContext', {
     root,
+    startupSettled,
     manifest: () => manifest,
     resolveDoc(id) {
       for (const group of manifest.navigation) for (const item of group.items) if (item.id === id) return join(root, 'docs', item.path)
@@ -106,7 +113,7 @@ export function apply(ctx) {
             ...summary.failed.map(f => `FAILED ${f.name}: ${f.error}`),
           ].filter(Boolean)
           if (parts.length > 0) ctx.logger.info(`[plugin-context] startup: ${parts.join('; ')}`)
-        } catch (cause) { ctx.logger.warn(`[plugin-context] startup sync failed: ${cause instanceof Error ? cause.message : String(cause)}`) }
+        } catch (cause) { ctx.logger.warn(`[plugin-context] startup sync failed: ${cause instanceof Error ? cause.message : String(cause)}`) } finally { settleStartup() }
       }, 0)
       return () => { disposed = true; clearTimeout(timer) }
     }, 'plugin-context: startup sync')
