@@ -70,9 +70,20 @@ export function apply(ctx: Context): void {
 | Server-sent events work end to end and end cleanly | `acryl-router-http/tests/stream.spec.ts`, `acryl-state/tests/service.spec.ts` |
 | The inspector tells the truth | `acryl-inspect/tests/service.spec.ts` compares its "removes N registrations" with what the router really lost |
 
+## Where the docs are
+
+The Hono-shaped documentation tree is `docs/framework/` (getting started, concepts, API, guides, middleware and helpers, a Hono parity table).
+A copyable starter is `examples/acryl-framework-starter`. `node scripts/verify-framework.mjs` (in `check:layout`) enforces the shape of every framework package.
+
+## In every Blend
+
+The Blank Blueprint carries a `framework-kit` row (router, HTTP adapter, state, inspector) on the Web surface, so the IDE and everything grown from Blank
+start on the framework. A real isolated boot of the IDE Blueprint served `/api/inspect/plugins` (355 plugins listed) and `/api/state`, the Market routes
+through the router, and refused a foreign `Host` with 403.
+
 ## What is not done
 
-- A full application boot on Web or Desktop with the new rows (Loader smokes and unit tests pass; CI is the wider check).
+- Desktop and the terminal UI compose no `framework-kit` row yet (Web only); the Market is the Desktop consumer.
 - A terminal command that calls `router.fetch`; the in-process path is proved in tests, not wired into the TUI.
 - Other users of the DSH `webServer`: Desktop's own renderer routes, `acryl-agent-control` (through the `acrylWeb` carrier) and the
   sign-in callback. They keep working unchanged.

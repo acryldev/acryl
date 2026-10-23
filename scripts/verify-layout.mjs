@@ -40,6 +40,7 @@ const OWNED_WORKSPACE_POLICY = `nodeLinker: isolated
 
 packages:
   - examples/acryl-blend-demo
+  - examples/acryl-framework-starter
   - runtime/acryl-control
   - runtime/acryl-diagnostics
   - runtime/acryl-harness-runtime

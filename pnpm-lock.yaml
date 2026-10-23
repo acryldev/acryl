@@ -2207,6 +2207,28 @@ importers:
 
   distribution/acryl-npm-launcher: {}
 
+  examples/acryl-framework-starter:
+    dependencies:
+      acryl-router:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-router
+      acryl-state:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-state
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@8.2.1(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+
   examples/acryl-blend-demo: {}
 
   plugins/acryl-agent-control:

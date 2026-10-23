@@ -18,7 +18,7 @@ export function apply(ctx: Context): void {
 - **Web-standard types.** Handlers take a small `RouteContext` and return a `Response`. Nothing in the handler knows
   whether the caller is a browser, the Electron bridge or the terminal UI.
 - **In-process `fetch`.** `ctx.router.fetch(new Request('http://acryl.test/api/market/1'))` runs the same handler with no
-  socket. Web serves it behind HTTP through an adapter (milestone M2); Desktop and the TUI call `fetch` directly.
+  socket. Web serves it behind HTTP through `acryl-router-http`; Desktop and the TUI call `fetch` directly.
 - **Every registration is reversible.** A route registered from a plugin's context is removed when that plugin unloads.
   The `route`, `get`, `post`, `put`, `patch`, `delete` and `use` calls also return a remover.
 - **Cancellation.** `c.signal` is aborted when the caller aborts or when the router is disposed; disposal waits for
@@ -52,6 +52,11 @@ handler that must trust the peer (the Market does) refuses it.
 | Trailing slash | `strict` (default) keeps `/a` and `/a/` distinct; `ignore` joins them |
 | Middleware | `use('/api', mw)` covers `/api` and everything below, runs in registration order, `next()` once |
 | Errors | a throwing handler answers 500 and is logged; an aborted request answers 499 |
+
+## More
+
+Groups (`router.group('/x', ...mw)`), `onError`/`notFound`, `request(path)` for tests, built-in middleware (`acryl-router/middleware`) and helpers
+(`acryl-router/helpers`) are documented in `docs/framework/`.
 
 ## Layout
 
