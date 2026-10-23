@@ -173,6 +173,20 @@ describe('acryl-router lifecycle through Cordis', () => {
     expect(await (await get(ctx.router, '/c')).text()).toBe('A')
   })
 
+  it('serves the routes an app had when it was mounted, whatever else changes later', async () => {
+    const { ctx, router } = await mountRouter()
+    const app = new App().get('/early', c => c.text('early'))
+    router.route('/', app)
+    app.get('/late', c => c.text('late'))
+    expect((await get(router, '/early')).status).toBe(200)
+    expect((await get(router, '/late')).status).toBe(404)
+    // Another plugin's mount recomposes the router; the late route still is not served.
+    ctx.plugin(consumer('/other', 'other'))
+    await settle()
+    expect((await get(router, '/other')).status).toBe(200)
+    expect((await get(router, '/late')).status).toBe(404)
+  })
+
   it('serves two plugins on the same path in mount order, and hands the path to the other when the first unloads', async () => {
     const { ctx, router } = await mountRouter()
     const first = ctx.plugin(consumer('/same', 'first'))

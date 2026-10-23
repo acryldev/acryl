@@ -135,11 +135,11 @@ export class Router extends Service {
 
   /**
    * Serve `app` under `path` (`'/'` for its own paths as they are). The mount belongs to the calling plugin and goes away when it unloads;
-   * the returned function removes it sooner. Mounts are composed in the order they were made, and the app is read when the next request
-   * composes the router, so finish registering its routes before mounting it.
+   * the returned function removes it sooner. Mounts are composed in the order they were made. Like the core's own `app.route`, the routes
+   * are copied now: one the app registers after this call is not served (mount again, or finish the app first).
    */
   route(path: string, app: MountableApp): () => void {
-    const mount: Mount = { path, app }
+    const mount: Mount = { path, app: new App().route('/', app) }
     this.state.mounts.add(mount)
     this.state.composed = undefined
     const remove = (): void => {
