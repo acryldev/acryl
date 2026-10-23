@@ -129,3 +129,27 @@ fallback if parameter matching grows past what the market and sign-in routes nee
 2. Prototype `acryl-router` with the six verification checks above.
 3. Port the market routes. If that works, add `acryl-router-http` to the Web composition.
 4. Decide `state` (the DOM-free reactive core shared by the surfaces) and the optional DOM renderer in a second page.
+
+## Decision record: Hono or Vike as the base (2026-10-23)
+
+Input: the research file `ACRYL Microframework Recommendation` (an outside assistant's market survey; its claims about
+third-party releases are not verified here). Measured here, by shallow clone of each repository:
+
+| | Hono | Vike |
+| --- | --- | --- |
+| Layer | HTTP transport: router, middleware, Request/Response | page rendering: file-based routing, SSR, prerender, a Vite plugin |
+| Core source | about 3.4k lines in the files that matter (`compose` 73, `router` 103, linear router 152, `hono-base` 564, `context` 797, `request` 520) | about 45.9k lines in `packages/vike/src` |
+| Runtime dependencies | none | 20+ (`vite` >= 7.1, `rolldown`, `@babel/core`, `@universal-middleware/*`, `sirv`, and more) |
+| Can a person hold it in their head | yes | no |
+
+They are not alternatives: Vike runs on a server, and its own templates use Hono as that server. Choosing Hono now keeps
+Vike available later.
+
+Decision:
+
+1. The base we rewrite as Cordis plugins is **Hono's design**, not Vike. A rewrite of about 1k lines covers the part
+   ACRYL needs (route registry, middleware `compose`, a reduced `Context`, a linear then trie matcher).
+2. **Vike is not rewritten.** ACRYL's UI is a slot-based app, not a set of pages, and it is not SEO-sensitive. If ACRYL
+   later needs server-rendered public pages, depend on Vike unchanged behind a plugin (it needs Vite anyway) and serve it
+   through the `router`.
+3. React, Vite, typert and `pi-tui` stay as they are.
