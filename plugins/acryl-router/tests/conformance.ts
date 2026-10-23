@@ -51,7 +51,18 @@ export function conformance(label: string, make: () => Promise<Candidate> | Cand
       expect((await r.fetch(req('/nope'))).status).toBe(404)
       const refused = await r.fetch(req('/a', 'DELETE'))
       expect(refused.status).toBe(405)
-      expect(refused.headers.get('allow')).toBe('GET, POST')
+      expect(refused.headers.get('allow')).toBe('GET, HEAD, POST')
+    })
+
+    it('answers HEAD from the GET route with the same status and headers and no body, unless a HEAD route exists', async () => {
+      const r = await make()
+      r.route('GET', '/h', c => c.json({ big: 'body' }, 202))
+      const head = await r.fetch(req('/h', 'HEAD'))
+      expect(head.status).toBe(202)
+      expect(head.headers.get('content-type')).toContain('application/json')
+      expect(await body(head)).toBe('')
+      r.route('HEAD', '/h', c => c.text('', 204))
+      expect((await r.fetch(req('/h', 'HEAD'))).status).toBe(204)
     })
 
     it('lets a specific method beat the any-method route, and the any-method route catch the rest', async () => {

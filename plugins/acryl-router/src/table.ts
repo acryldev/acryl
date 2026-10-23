@@ -63,17 +63,28 @@ export class RouteTable {
     return () => { this.middleware.delete(id) }
   }
 
+  private hasMethod(method: RouteMethod, parts: readonly string[]): boolean {
+    for (const entry of this.routes.values()) {
+      if (entry.method === method && matchPattern(entry.pattern, parts) !== undefined) return true
+    }
+    return false
+  }
+
   async dispatch(req: Request, signal: AbortSignal): Promise<Response> {
     const parts = splitPath(new URL(req.url).pathname, this.options.trailingSlash)
     const method = req.method.toUpperCase()
 
     let best: { entry: RouteEntry, params: Record<string, string> } | undefined
     const allowed = new Set<string>()
+    // HEAD is answered by the GET route when no route claims HEAD itself, and the body is dropped below.
+    const headFromGet = method === 'HEAD' && !this.hasMethod('HEAD', parts)
     for (const entry of this.routes.values()) {
       const params = matchPattern(entry.pattern, parts)
       if (params === undefined) continue
       allowed.add(entry.method)
-      if (entry.method !== '*' && entry.method !== method) continue
+      if (entry.method === 'GET') allowed.add('HEAD')
+      const answers = entry.method === '*' || entry.method === method || (headFromGet && entry.method === 'GET')
+      if (!answers) continue
       if (best === undefined || isBetter(entry, best.entry)) best = { entry, params }
     }
 
@@ -90,7 +101,8 @@ export class RouteTable {
 
     const context = createContext(req, best?.params ?? {}, signal)
     try {
-      return await compose(chain, final)(context)
+      const response = await compose(chain, final)(context)
+      return method === 'HEAD' ? new Response(null, { status: response.status, statusText: response.statusText, headers: response.headers }) : response
     } catch (error) {
       if (signal.aborted) return new Response('Request aborted', { status: 499 })
       this.options.onError?.(error)

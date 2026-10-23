@@ -62,6 +62,7 @@ packages:
   - plugins/acryl-shortcuts
   - plugins/acryl-settings
   - plugins/acryl-router
+  - plugins/acryl-router-http
   - plugins/acryl-sign-in
   - plugins/acryl-brand
   - plugins/acryl-app-save

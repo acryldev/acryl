@@ -4,6 +4,7 @@
     "rootDir": ".",
     "noEmit": true,
     "declaration": false,
+    "declarationDir": null,
     "types": ["node"]
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"]
