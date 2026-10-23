@@ -24,6 +24,23 @@ export function apply(ctx: Context): void {
 - **Cancellation.** `c.signal` is aborted when the caller aborts or when the router is disposed; disposal waits for
   in-flight requests to settle. A disposed router answers 503.
 
+## One plugin on every surface
+
+Register routes in `apply`; ask for HTTP only if an adapter is there. The same plugin then runs behind HTTP on Web and
+Desktop and, on a terminal composition with no server, answers `router.fetch` in process:
+
+```ts
+export const inject = ['router']
+
+export function apply(ctx: Context): void {
+  ctx.router.get('/api/notes/:id', c => c.json({ id: c.params['id'] }))
+  ctx.inject(['routerHttp'], inner => { inner.routerHttp.mount('/api/notes') })   // only where HTTP exists
+}
+```
+
+A request's peer address is `c.connection.remoteAddress`, set by the adapter from the socket; an in-process call has none, so a
+handler that must trust the peer (the Market does) refuses it.
+
 ## Matching rules
 
 | Rule | Behavior |

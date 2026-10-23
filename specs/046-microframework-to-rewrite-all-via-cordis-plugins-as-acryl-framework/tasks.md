@@ -20,12 +20,12 @@ See `spec.md` for the milestones and `plan.md` for the principles. Reference tas
 - [x] T008 (`plugins/acryl-router-http`: `mount(prefix)` on the webServer, `serve()`, streamed bodies, set-cookie kept apart, HEAD, client abort reaches the handler signal, peer address as connection info; 9 tests against the real webServer) `acryl-router-http`: injects `router` and `webServer`, maps `IncomingMessage` to `Request` and `Response` to `ServerResponse`, aborts in-flight requests on disposal.
 - [x] T009 (first slice: state, sources and media routes ported; the catalog, installable, installations, operations and desktop routes still use `webServer` because their tests drive hand-built `req`/`res` emitters; every composition that mounts the Market now mounts the router rows first) Port the market routes (`plugins/cordis-plugin-market/src/host/routes.ts`) to the router; typert untouched.
 - [x] T010 (real stack, no fakes: `plugins/cordis-plugin-market/tests/router-stack.spec.ts`, 5 tests; the Market suite is 285 tests green; a full app boot was not run) Web run: market works as before; unload removes its routes; reload registers once. Record the output.
-- [ ] T011 Answer open question 1: typert versus router (decide, write it in `plan.md`).
+- [x] T011 (decision: typert stays RPC over its WebSocket and is not wrapped by the router; the TUI runs the engine in process and calls Host services directly, so it needs no typert socket; see plan.md "Decisions") Answer open question 1: typert versus router (decide, write it in `plan.md`).
 
 ## Phase 3 - Three surfaces (M3)
 
-- [ ] T012 Answer open question 2: find the Desktop IPC bridge and whether it can call `router.fetch`.
-- [ ] T013 One capability, three runs: HTTP on Web, the Desktop bridge, in-process in the TUI with no network server.
+- [x] T012 (answered: ACRYL Desktop runs its own loopback `webServer`, renderer origin `http://127.0.0.1:<port>`, so Desktop takes the same HTTP path as Web; the "IPC bridge" in the DSH webserver README describes upstream's separate desktop flavor) Answer open question 2: find the Desktop IPC bridge and whether it can call `router.fetch`.
+- [x] T013 (test-level proof: `plugins/acryl-router-http/tests/surfaces.spec.ts` runs one plugin in a webServer composition and in a router-only composition and gets identical status, headers and bodies; a real TUI command that calls `router.fetch` is not wired yet) One capability, three runs: HTTP on Web, the Desktop bridge, in-process in the TUI with no network server.
 
 ## Phase 4 - Plugin contract (M4)
 

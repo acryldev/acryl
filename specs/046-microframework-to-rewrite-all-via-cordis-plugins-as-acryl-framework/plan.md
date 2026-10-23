@@ -32,3 +32,20 @@ One test file driven by a small factory `makeRouter(): Router`, so a candidate i
 ## Mini-designs still to write (before each milestone starts)
 
 M3 surfaces, M4 plugin contract, M5 state service, M7 detach. Each needs the six points from `AGENTS.md`.
+
+## Decisions (2026-10-23)
+
+- **typert and the router (open question 1).** typert stays what it is: generated RPC over a WebSocket upgrade on the API
+  gateway. The router does not wrap it and an RPC method is not also a router route. Reason: the TUI runs the engine in
+  process (`startDirectHost()`) and calls Host services directly, so the one consumer that has no WebSocket does not need
+  one; adding a second way to reach the same method would add surface without a user.
+- **Desktop transport (open question 2).** ACRYL Desktop serves its renderer from its own loopback `webServer` row, so the
+  router reaches Desktop through the same adapter as Web. No IPC bridge is involved for router routes.
+- **Optional HTTP.** A capability's routes are registered in `apply` against `router`; serving them over HTTP is a separate,
+  optional step (`ctx.inject(['routerHttp'], c => c.routerHttp.mount(prefix))`). That is what lets one plugin run on a
+  terminal composition with no server (proved in `acryl-router-http/tests/surfaces.spec.ts`).
+- **The plugin contract is derived, not declared (M4).** Cordis already exposes a plugin's name, state, `inject` (what it
+  requires) and labeled effects (`ctx.provide("x")` for what it provides, `<plugin>: GET /a` for what it registers). A second
+  hand-written declaration would drift from the code. M4 therefore adds a label convention and an inspector that reads the
+  running system; the static `acryl.requires` and `acryl.provides` in `package.json` stay for catalogs that read a package
+  before loading it.
