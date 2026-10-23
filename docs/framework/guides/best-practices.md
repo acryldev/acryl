@@ -9,3 +9,6 @@
 7. Streams use `streamSSE`; do not hand-roll a `ReadableStream` that outlives the plugin.
 8. Keep the contract in labels, not prose; check it with `acryl-inspect`.
 9. Never import the DeepSeek Harness from a framework package; add a small port instead.
+10. A Service that mounts plugins after startup (an extension installer) must mount them from the context captured in its constructor, never from `this.ctx` inside a method.
+    Inside a service method `this.ctx` is Cordis's shadow context, which resolves services as the service's own fiber; a plugin mounted with it inherits the shadow, and its
+    `ctx.router` throws `cannot get property "router" without inject` even though its `inject` is right and `ctx.get('router')` works. The test `plugins/acryl-router/tests/live-install.spec.ts` shows both.

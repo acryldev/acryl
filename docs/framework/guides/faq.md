@@ -11,3 +11,5 @@
 **Why can an in-process call be refused?** A guard like `loopbackOnly` checks the socket peer; with no socket it cannot verify the peer, so it refuses unless told `inProcess: 'allow'`.
 
 **What is not built?** Page rendering and SSR (milestone M6, an owner decision), and the middleware listed as "not built" in [Hono parity](../hono-parity.md).
+
+**A plugin I installed live says `cannot get property "router" without inject`.** The installer mounted it with `this.ctx` from inside a service method. Mount from the context captured in the constructor instead; see best practice 10.
