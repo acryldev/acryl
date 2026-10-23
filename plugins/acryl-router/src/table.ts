@@ -1,7 +1,8 @@
 import { compose } from './compose.ts'
 import { createContext } from './context.ts'
 import { compareSpecificity, compilePattern, matchPattern, shapeOf, splitPath, type Pattern } from './pattern.ts'
-import type { ConnectionInfo, Handler, Middleware, RouteMethod, TrailingSlash } from './types.ts'
+import { HttpError } from './http-error.ts'
+import type { ConnectionInfo, ErrorHandler, Handler, Middleware, NotFoundHandler, RouteContext, RouteMethod, TrailingSlash } from './types.ts'
 
 interface RouteEntry {
   readonly method: RouteMethod
@@ -28,6 +29,8 @@ export interface RouteTableOptions {
 export class RouteTable {
   private readonly routes = new Map<string, RouteEntry>()
   private readonly middleware = new Map<symbol, MiddlewareEntry>()
+  private errorHandler: ErrorHandler | undefined
+  private notFoundHandler: NotFoundHandler | undefined
 
   private readonly options: RouteTableOptions
 
@@ -61,6 +64,37 @@ export class RouteTable {
     const id = Symbol(path)
     this.middleware.set(id, { pattern, middleware })
     return () => { this.middleware.delete(id) }
+  }
+
+  /** Register the one handler that turns errors into responses. A second registration throws: the app has one voice for its errors. */
+  setErrorHandler(handler: ErrorHandler): () => void {
+    if (this.errorHandler !== undefined) throw new Error('router: an error handler is already registered')
+    this.errorHandler = handler
+    return () => { if (this.errorHandler === handler) this.errorHandler = undefined }
+  }
+
+  /** Register the one handler that answers requests no route claimed. A second registration throws. */
+  setNotFoundHandler(handler: NotFoundHandler): () => void {
+    if (this.notFoundHandler !== undefined) throw new Error('router: a not-found handler is already registered')
+    this.notFoundHandler = handler
+    return () => { if (this.notFoundHandler === handler) this.notFoundHandler = undefined }
+  }
+
+  private readonly notFoundResponse = (c: RouteContext): Response | Promise<Response> =>
+    this.notFoundHandler === undefined ? new Response('Not Found', { status: 404 }) : this.notFoundHandler(c)
+
+  private async errorResponse(error: unknown, context: RouteContext): Promise<Response> {
+    if (this.errorHandler !== undefined) {
+      try {
+        return await this.errorHandler(error, context)
+      } catch (inner) {
+        this.options.onError?.(inner)
+        return new Response('Internal Server Error', { status: 500 })
+      }
+    }
+    if (error instanceof HttpError) return error.getResponse()
+    this.options.onError?.(error)
+    return new Response('Internal Server Error', { status: 500 })
   }
 
   private hasMethod(method: RouteMethod, parts: readonly string[]): boolean {
@@ -102,16 +136,15 @@ export class RouteTable {
       ? best.entry.handler
       : allowed.size > 0 && !allowed.has('*')
         ? () => new Response('Method Not Allowed', { status: 405, headers: { allow: [...allowed].sort().join(', ') } })
-        : () => new Response('Not Found', { status: 404 })
+        : this.notFoundResponse
 
-    const context = createContext(req, best?.params ?? {}, signal, connection, track)
+    const context = createContext(req, best?.params ?? {}, signal, connection, track, this.notFoundResponse)
     try {
       const response = await compose(chain, final)(context)
       return method === 'HEAD' ? new Response(null, { status: response.status, statusText: response.statusText, headers: response.headers }) : response
     } catch (error) {
       if (signal.aborted) return new Response('Request aborted', { status: 499 })
-      this.options.onError?.(error)
-      return new Response('Internal Server Error', { status: 500 })
+      return await this.errorResponse(error, context)
     }
   }
 }

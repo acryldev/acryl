@@ -1,3 +1,6 @@
+/** What a `Response` can be constructed from: bytes, a string, a stream, or nothing. */
+export type ResponseBody = ConstructorParameters<typeof Response>[0]
+
 /** HTTP methods a route can answer; `*` answers any method not claimed by a more specific route. */
 export type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS'
 export type RouteMethod = Method | '*'
@@ -37,11 +40,34 @@ export interface RouteContext {
    * `signal` and waits for it, so a stream never outlives the plugin that served it.
    */
   waitUntil(task: Promise<unknown>): void
+  /**
+   * Set a header that the response helpers below (`json`, `text`, `html`, `body`, `redirect`, `notFound`) carry. A response built
+   * by hand with `new Response` is the handler's own and is left alone; middleware that must change any response reads it from `next()`.
+   */
+  header(name: string, value: string): void
+  /** The status the response helpers use when they are not given one. */
+  status(code: number): void
+  /** One query parameter, or all of them as an object (repeated names keep the first). */
+  query(): Record<string, string>
+  query(name: string): string | undefined
+  /** One route parameter, or all of them. Same values as `params`. */
+  param(): Readonly<Record<string, string>>
+  param(name: string): string | undefined
   json(data: unknown, status?: number): Response
   text(body: string, status?: number): Response
+  html(body: string, status?: number): Response
+  /** A response with a raw body (bytes, a string, a stream, or nothing) and optional extra headers. */
+  body(data: ResponseBody, status?: number, headers?: Record<string, string>): Response
   redirect(location: string, status?: 301 | 302 | 303 | 307 | 308): Response
+  /** The router's not-found response (or the registered `notFound` handler's). */
+  notFound(): Response | Promise<Response>
 }
 
 export type Handler = (c: RouteContext) => Response | Promise<Response>
 export type Next = () => Promise<Response>
 export type Middleware = (c: RouteContext, next: Next) => Response | Promise<Response>
+
+/** Turns anything a handler or middleware threw into a response. Registered with `router.onError`. */
+export type ErrorHandler = (error: unknown, c: RouteContext) => Response | Promise<Response>
+/** Answers a request no route claimed. Registered with `router.notFound`. */
+export type NotFoundHandler = (c: RouteContext) => Response | Promise<Response>

@@ -9,8 +9,9 @@
 
 import { Context, Service } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
+import { createRegistrar, type Primitives, type Registrar, type RouteHandlers, type UseArguments } from './registrar.ts'
 import { RouteTable } from './table.ts'
-import type { ConnectionInfo, Handler, Middleware, RouteMethod, TrailingSlash } from './types.ts'
+import type { ConnectionInfo, ErrorHandler, Method, Middleware, NotFoundHandler, RouteMethod, TrailingSlash } from './types.ts'
 
 const DEFAULT_DISPOSE_GRACE_MS = 2000
 
@@ -72,24 +73,56 @@ export class Router extends Service {
     return this.table.size
   }
 
-  /** Register a route owned by the calling plugin. Returns a remover; the route also goes away when the caller unloads. */
-  route(method: RouteMethod, path: string, handler: Handler): () => void {
-    const remove = this.table.add(method, path, handler)
-    this.ctx.effect(() => () => { remove() }, `acryl-router: ${method} ${path}`)
+  private readonly primitives: Primitives = {
+    add: (owner, method, path, handler) => {
+      const remove = this.table.add(method, path, handler)
+      owner.effect(() => () => { remove() }, `acryl-router: ${method} ${path}`)
+      return remove
+    },
+    use: (owner, path, middleware) => {
+      const remove = this.table.use(path, middleware)
+      owner.effect(() => () => { remove() }, `acryl-router: use ${path}`)
+      return remove
+    },
+  }
+
+  /** The scope the calling plugin registers into; `this.ctx` is the caller's context for the duration of a call made through `ctx.router`. */
+  private scope(): Registrar {
+    return createRegistrar(this.ctx, '', this.primitives)
+  }
+
+  route(method: RouteMethod, path: string, ...handlers: RouteHandlers): () => void { return this.scope().route(method, path, ...handlers) }
+  get(path: string, ...handlers: RouteHandlers): () => void { return this.scope().get(path, ...handlers) }
+  post(path: string, ...handlers: RouteHandlers): () => void { return this.scope().post(path, ...handlers) }
+  put(path: string, ...handlers: RouteHandlers): () => void { return this.scope().put(path, ...handlers) }
+  patch(path: string, ...handlers: RouteHandlers): () => void { return this.scope().patch(path, ...handlers) }
+  delete(path: string, ...handlers: RouteHandlers): () => void { return this.scope().delete(path, ...handlers) }
+  all(path: string, ...handlers: RouteHandlers): () => void { return this.scope().all(path, ...handlers) }
+  on(methods: Method | readonly Method[], path: string, ...handlers: RouteHandlers): () => void { return this.scope().on(methods, path, ...handlers) }
+  use(...args: UseArguments): () => void { return this.scope().use(...args) }
+  group(prefix: string, ...middleware: Middleware[]): Registrar { return this.scope().group(prefix, ...middleware) }
+
+  /** Turn errors into responses. One handler per router; the calling plugin owns it. */
+  onError(handler: ErrorHandler): () => void {
+    const remove = this.table.setErrorHandler(handler)
+    this.ctx.effect(() => () => { remove() }, 'acryl-router: onError')
     return remove
   }
 
-  get(path: string, handler: Handler): () => void { return this.route('GET', path, handler) }
-  post(path: string, handler: Handler): () => void { return this.route('POST', path, handler) }
-  put(path: string, handler: Handler): () => void { return this.route('PUT', path, handler) }
-  patch(path: string, handler: Handler): () => void { return this.route('PATCH', path, handler) }
-  delete(path: string, handler: Handler): () => void { return this.route('DELETE', path, handler) }
-
-  /** Register middleware for `path` and everything below it, owned by the calling plugin. */
-  use(path: string, middleware: Middleware): () => void {
-    const remove = this.table.use(path, middleware)
-    this.ctx.effect(() => () => { remove() }, `acryl-router: use ${path}`)
+  /** Answer requests no route claimed. One handler per router; the calling plugin owns it. */
+  notFound(handler: NotFoundHandler): () => void {
+    const remove = this.table.setNotFoundHandler(handler)
+    this.ctx.effect(() => () => { remove() }, 'acryl-router: notFound')
     return remove
+  }
+
+  /**
+   * Call the router the way a test calls an app (Hono's `app.request`): a path or URL string, a `URL` or a `Request`, with the usual init.
+   * A relative path is resolved against `http://localhost`.
+   */
+  request(input: string | URL | Request, init?: RequestInit, connection?: ConnectionInfo): Promise<Response> {
+    const request = input instanceof Request ? input : new Request(new URL(String(input), 'http://localhost'), init)
+    return this.fetch(request, connection)
   }
 
   /**
