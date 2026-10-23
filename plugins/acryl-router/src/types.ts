@@ -12,6 +12,8 @@ export type TrailingSlash = 'strict' | 'ignore'
 export interface ConnectionInfo {
   /** The peer address of the socket, when the request came over one (for example `127.0.0.1`). */
   readonly remoteAddress?: string | undefined
+  /** The local port the socket is connected to, the real one a `Host` header should be checked against. */
+  readonly localPort?: number | undefined
 }
 
 /** What a handler or middleware sees. Deliberately small: the Web-standard request plus a few response helpers. */

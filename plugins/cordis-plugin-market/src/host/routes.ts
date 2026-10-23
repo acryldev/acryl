@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto'
-import type { IncomingMessage, ServerResponse } from 'node:http'
 import { BlockList, isIP } from 'node:net'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
@@ -83,7 +82,7 @@ const SETTINGS_SCHEMA = z.object({
   }).default(undefined as never),
 }) as unknown as z<MarketSettingsDocument>
 
-/** The prefix the router serves over HTTP; the routes ported to the router share it, the rest still use the webServer. */
+/** The prefix the router serves over HTTP; every Market route lives under it. */
 const MARKET_PREFIX = '/api/community-market'
 const ROUTE_STATE = '/api/community-market/state'
 const ROUTE_SOURCES = '/api/community-market/sources'
@@ -116,16 +115,7 @@ const dshfindHttpClient = createCachedCatalogHttpClient(
   }),
 )
 
-function sendJson(res: ServerResponse, status: number, value: unknown): void {
-  const body = JSON.stringify(value)
-  res.statusCode = status
-  res.setHeader('content-type', 'application/json; charset=utf-8')
-  res.setHeader('cache-control', 'no-store')
-  res.setHeader('x-content-type-options', 'nosniff')
-  res.end(body)
-}
-
-/** The same response `sendJson` writes, as a Web `Response` for a router handler. */
+/** A JSON response with the Market's no-store and nosniff headers. */
 function jsonResponse(status: number, value: unknown): Response {
   return new Response(JSON.stringify(value), {
     status,
@@ -142,23 +132,27 @@ function abortedResponse(): Response {
   return new Response(null, { status: 499 })
 }
 
-function routeContext(c: RouteContext, expectedPort: number): MarketRequestContext {
+/**
+ * The facts the loopback authority check reads. The peer address and the real local port come from the transport as connection
+ * info; an in-process caller has neither, so it is refused (the port falls to -1, which no `Host` header can match).
+ */
+function routeContext(c: RouteContext): MarketRequestContext {
   const secFetchSite = c.req.headers.get('sec-fetch-site')
   return {
     remoteAddress: c.connection.remoteAddress,
     origin: c.req.headers.get('origin') ?? undefined,
     host: c.req.headers.get('host') ?? undefined,
     ...(secFetchSite === null ? {} : { secFetchSite }),
-    expectedPort,
+    expectedPort: c.connection.localPort ?? -1,
   }
 }
 
-function routeAllowed(c: RouteContext, expectedPort: number): boolean {
-  return marketRequestAllowed(routeContext(c, expectedPort))
+function routeAllowed(c: RouteContext): boolean {
+  return marketRequestAllowed(routeContext(c))
 }
 
-function routeMutationAllowed(c: RouteContext, expectedPort: number): boolean {
-  return marketMutationAllowed(routeContext(c, expectedPort))
+function routeMutationAllowed(c: RouteContext): boolean {
+  return marketMutationAllowed(routeContext(c))
 }
 
 /** Read a bounded JSON body from a Web request: at most `MAX_BODY_BYTES`, rejecting on abort, oversize or bad JSON. */
@@ -193,10 +187,9 @@ async function readJsonBody(request: Request, signal: AbortSignal): Promise<unkn
   }
 }
 
-function sendInstallError(res: ServerResponse, cause: unknown): void {
+function installErrorResponse(cause: unknown): Response {
   if (!(cause instanceof MarketInstallError)) {
-    sendJson(res, 500, { error: 'market package operation failed', code: 'operation-failed' })
-    return
+    return jsonResponse(500, { error: 'market package operation failed', code: 'operation-failed' })
   }
   const status = cause.code === 'invalid-request' ? 400
     : cause.code === 'not-available' ? 404
@@ -205,10 +198,10 @@ function sendInstallError(res: ServerResponse, cause: unknown): void {
           : cause.code === 'verification-failed' ? 422
             : cause.code === 'operation-failed' ? 502
               : 500
-  sendJson(res, status, { error: cause.message, code: cause.code })
+  return jsonResponse(status, { error: cause.message, code: cause.code })
 }
 
-function sendCatalogFailure(res: ServerResponse, cause: unknown): void {
+function catalogFailureResponse(cause: unknown): Response {
   let code: MarketCatalogErrorCode = 'catalog-unavailable'
   if (cause instanceof CatalogNetworkError && cause.code === 'timeout') code = 'catalog-timeout'
   else if (
@@ -221,7 +214,7 @@ function sendCatalogFailure(res: ServerResponse, cause: unknown): void {
     : code === 'catalog-invalid-response'
       ? 'catalog response was invalid'
       : 'catalog source unavailable'
-  sendJson(res, status, { error, code })
+  return jsonResponse(status, { error, code })
 }
 
 function catalogMetadata(index: CatalogFullIndex): MarketCatalogMetadata {
@@ -322,71 +315,6 @@ function catalogCacheFromResponse(
   }
 }
 
-function abortOnDisconnect(req: IncomingMessage, res: ServerResponse, controller: AbortController): () => void {
-  const abort = () => controller.abort()
-  const abortIfUnfinished = () => {
-    if (!res.writableEnded) controller.abort()
-  }
-  req.once('aborted', abort)
-  res.once('close', abortIfUnfinished)
-  return () => {
-    req.off('aborted', abort)
-    res.off('close', abortIfUnfinished)
-  }
-}
-
-function readJson(req: IncomingMessage, signal: AbortSignal): Promise<unknown> {
-  const abortReason = () => signal.reason ?? new DOMException('The operation was aborted', 'AbortError')
-  if (signal.aborted) return Promise.reject(abortReason())
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = []
-    let size = 0
-    let settled = false
-    const cleanup = () => {
-      req.off('data', onData)
-      req.off('end', onEnd)
-      req.off('error', onError)
-      req.off('aborted', onRequestAbort)
-      signal.removeEventListener('abort', onSignalAbort)
-    }
-    const finish = (callback: () => void) => {
-      if (settled) return
-      settled = true
-      cleanup()
-      callback()
-    }
-    const onData = (chunk: Buffer | string) => {
-      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
-      size += buffer.length
-      if (size > MAX_BODY_BYTES) {
-        const cause = new Error('body too large')
-        finish(() => {
-          req.destroy(cause)
-          reject(cause)
-        })
-        return
-      }
-      chunks.push(buffer)
-    }
-    const onEnd = () => {
-      try {
-        const value = JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown
-        finish(() => resolve(value))
-      } catch {
-        finish(() => reject(new Error('invalid json')))
-      }
-    }
-    const onError = (cause: Error) => finish(() => reject(cause))
-    const onRequestAbort = () => finish(() => reject(new DOMException('The request was aborted', 'AbortError')))
-    const onSignalAbort = () => finish(() => reject(abortReason()))
-    req.on('data', onData)
-    req.once('end', onEnd)
-    req.once('error', onError)
-    req.once('aborted', onRequestAbort)
-    signal.addEventListener('abort', onSignalAbort, { once: true })
-  })
-}
-
 const loopbackAddresses = new BlockList()
 loopbackAddresses.addSubnet('127.0.0.0', 8, 'ipv4')
 loopbackAddresses.addSubnet('::1', 128, 'ipv6')
@@ -432,27 +360,6 @@ export function marketMutationAllowed(context: MarketRequestContext): boolean {
   } catch {
     return false
   }
-}
-
-function requestContext(req: IncomingMessage, expectedPort: number): MarketRequestContext {
-  const secFetchSite = req.headers['sec-fetch-site']
-  return {
-    remoteAddress: req.socket.remoteAddress,
-    origin: req.headers.origin,
-    host: req.headers.host,
-    ...(typeof secFetchSite === 'string' ? { secFetchSite } : {}),
-    expectedPort,
-  }
-}
-
-function requestAllowed(req: IncomingMessage, expectedPort: number): boolean {
-  return marketRequestAllowed(requestContext(req, expectedPort))
-}
-
-function mutationAllowed(req: IncomingMessage, expectedPort: number): boolean {
-  return marketMutationAllowed({
-    ...requestContext(req, expectedPort),
-  })
 }
 
 function asMutation(value: unknown): MarketSourceMutation {
@@ -546,9 +453,9 @@ function asRestartToken(value: unknown): string {
   return request.restartToken
 }
 
-async function readOperationJson(req: IncomingMessage, signal: AbortSignal): Promise<unknown> {
+async function readOperationJson(req: Request, signal: AbortSignal): Promise<unknown> {
   try {
-    return await readJson(req, signal)
+    return await readJsonBody(req, signal)
   } catch (cause) {
     if (signal.aborted) throw cause
     throw new MarketInstallError('invalid-request', 'The package operation request body was invalid.')
@@ -813,7 +720,6 @@ export function registerMarketRoutes(
   desktopActionsProvider?: MarketDesktopActionsProvider,
   desktopPluginsProvider?: MarketDesktopPluginsProvider,
 ): () => void {
-  const expectedPort = ctx.webServer.port
   const generationController = new AbortController()
   type DesktopPluginPreviewBinding = {
     readonly expiresAt: number
@@ -944,7 +850,7 @@ export function registerMarketRoutes(
     ctx.routerHttp.mount(MARKET_PREFIX),
     ctx.router.route('GET', ROUTE_STATE, async c => {
       if (generationController.signal.aborted) return abortedResponse()
-      if (!routeAllowed(c, expectedPort)) return jsonResponse(403, { error: 'market request authority rejected' })
+      if (!routeAllowed(c)) return jsonResponse(403, { error: 'market request authority rejected' })
       try {
         const desktopActions = desktopActionsProvider?.get()
         const response: MarketStateResponse = {
@@ -963,21 +869,17 @@ export function registerMarketRoutes(
         return jsonResponse(500, { error: 'market state unavailable' })
       }
     }),
-    ctx.webServer.register({ kind: 'exact', path: ROUTE_CATALOG, handler: async (req, res) => {
-      if (!requestAllowed(req, expectedPort)) {
-        sendJson(res, 403, { error: 'market request authority rejected' })
-        return
+    ctx.router.route('*', ROUTE_CATALOG, async c => {
+      if (!routeAllowed(c)) {
+        return jsonResponse(403, { error: 'market request authority rejected' })
       }
-      if (req.method !== 'GET') {
-        sendJson(res, 405, { error: 'market catalog requires GET' })
-        return
+      if (c.req.method !== 'GET') {
+        return jsonResponse(405, { error: 'market catalog requires GET' })
       }
-      const controller = new AbortController()
-      const signal = AbortSignal.any([controller.signal, generationController.signal])
-      const stopWatching = abortOnDisconnect(req, res, controller)
+      const signal = AbortSignal.any([c.signal, generationController.signal])
       let refreshPreviewKey: string | undefined
       try {
-        const requestUrl = new URL(req.url ?? '/', 'http://localhost')
+        const requestUrl = c.url
         const query: Record<string, unknown> = {}
         const q = requestUrl.searchParams.get('q')?.trim()
         if (q) query.q = q
@@ -1031,8 +933,7 @@ export function registerMarketRoutes(
             : cachedCatalogResponse(settingsScope.get().catalogCache, activeSource, localeKey)
           if (cached !== undefined) {
             servedCatalogPreviews.add(previewKey)
-            if (!signal.aborted && !res.destroyed) sendJson(res, 200, cached)
-            return
+            return signal.aborted ? abortedResponse() : jsonResponse(200, cached)
           }
         }
         let index: CatalogFullIndex | undefined
@@ -1043,26 +944,23 @@ export function registerMarketRoutes(
             ...(scope === undefined ? {} : { expectedSourceRecordId: scope.sourceRecordId }),
           })
         } catch (cause) {
-          if (!signal.aborted && !res.destroyed) sendCatalogFailure(res, cause)
-          return
+          return signal.aborted ? abortedResponse() : catalogFailureResponse(cause)
         }
         signal.throwIfAborted()
         const response = buildCatalogResponse(index, query, scope)
-        if (!signal.aborted && !res.destroyed) sendJson(res, 200, response)
         if (previewKey !== undefined && previewSourceRecordId !== undefined
           && index !== undefined && !generationController.signal.aborted) {
           servedCatalogPreviews.add(previewKey)
           void persistCatalogResponse(response, previewSourceRecordId, localeKey)
         }
+        return signal.aborted ? abortedResponse() : jsonResponse(200, response)
       } catch {
         if (refreshPreviewKey !== undefined) servedCatalogPreviews.delete(refreshPreviewKey)
-        if (!signal.aborted && !res.destroyed) sendJson(res, 400, { error: 'invalid catalog query' })
-      } finally {
-        stopWatching()
+        return signal.aborted ? abortedResponse() : jsonResponse(400, { error: 'invalid catalog query' })
       }
-    }}),
+    }),
     ctx.router.route('*', ROUTE_ASSETS, async c => {
-      if (!routeAllowed(c, expectedPort)) return jsonResponse(403, { error: 'market request authority rejected' })
+      if (!routeAllowed(c)) return jsonResponse(403, { error: 'market request authority rejected' })
       if (c.req.method !== 'GET') return jsonResponse(405, { error: 'market media requires GET' })
       const refs = c.url.searchParams.getAll('ref')
       const assetRef = refs.length === 1 ? refs[0] : undefined
@@ -1093,7 +991,7 @@ export function registerMarketRoutes(
       }
     }),
     ctx.router.route('*', ROUTE_SOURCES, async c => {
-      if (c.req.method !== 'POST' || !routeMutationAllowed(c, expectedPort)) {
+      if (c.req.method !== 'POST' || !routeMutationAllowed(c)) {
         return jsonResponse(405, { error: 'source changes require a local same-origin POST' })
       }
       const signal = AbortSignal.any([c.signal, generationController.signal])
@@ -1110,49 +1008,39 @@ export function registerMarketRoutes(
   ]
   if (desktopActionsProvider !== undefined) {
     routes.push(
-      ctx.webServer.register({ kind: 'exact', path: ROUTE_OPEN_TERMINAL, handler: async (req, res) => {
-        if (req.method !== 'POST' || !mutationAllowed(req, expectedPort)) {
-          sendJson(res, 405, { error: 'opening ACRYL Terminal requires a local same-origin POST' })
-          return
+      ctx.router.route('*', ROUTE_OPEN_TERMINAL, async c => {
+        if (c.req.method !== 'POST' || !routeMutationAllowed(c)) {
+          return jsonResponse(405, { error: 'opening ACRYL Terminal requires a local same-origin POST' })
         }
         const actions = desktopActionsProvider.get()
         if (actions === undefined) {
-          sendJson(res, 503, { error: 'desktop actions are unavailable' })
-          return
+          return jsonResponse(503, { error: 'desktop actions are unavailable' })
         }
-        const controller = new AbortController()
-        const signal = AbortSignal.any([controller.signal, generationController.signal])
-        const stopWatching = abortOnDisconnect(req, res, controller)
+        const signal = AbortSignal.any([c.signal, generationController.signal])
         try {
-          asEmptyDesktopAction(await readOperationJson(req, signal))
+          asEmptyDesktopAction(await readOperationJson(c.req, signal))
           signal.throwIfAborted()
           actions.openTerminal()
-          if (!signal.aborted && !res.destroyed) sendJson(res, 200, { ok: true })
+          return signal.aborted ? abortedResponse() : jsonResponse(200, { ok: true })
         } catch (cause) {
-          if (!signal.aborted && !res.destroyed) sendInstallError(res, cause)
-        } finally {
-          stopWatching()
+          return signal.aborted ? abortedResponse() : installErrorResponse(cause)
         }
-      }}),
+      }),
     )
   }
   if (installProvider !== undefined) {
     routes.push(
-      ctx.webServer.register({ kind: 'exact', path: ROUTE_INSTALLABLE, handler: async (req, res) => {
-        if (req.method !== 'GET' || !requestAllowed(req, expectedPort)) {
-          sendJson(res, 405, { error: 'market installable catalog requires a local GET' })
-          return
+      ctx.router.route('*', ROUTE_INSTALLABLE, async c => {
+        if (c.req.method !== 'GET' || !routeAllowed(c)) {
+          return jsonResponse(405, { error: 'market installable catalog requires a local GET' })
         }
         const install = installProvider.get()
         if (install === undefined) {
-          sendJson(res, 503, { error: 'market package operations are unavailable' })
-          return
+          return jsonResponse(503, { error: 'market package operations are unavailable' })
         }
-        const controller = new AbortController()
-        const signal = AbortSignal.any([controller.signal, generationController.signal])
-        const stopWatching = abortOnDisconnect(req, res, controller)
+        const signal = AbortSignal.any([c.signal, generationController.signal])
         try {
-          const requestUrl = new URL(req.url ?? '/', 'http://localhost')
+          const requestUrl = c.url
           const localeValues = requestUrl.searchParams.getAll('locale')
           const refreshValues = requestUrl.searchParams.getAll('refresh')
           if (
@@ -1170,7 +1058,6 @@ export function registerMarketRoutes(
             throw new MarketInstallError('not-available', 'No catalog source is active.')
           }
           const response = await install.listInstallable(index, signal)
-          if (!signal.aborted && !res.destroyed) sendJson(res, 200, response)
           if (!generationController.signal.aborted) {
             servedCatalogPreviews.add(catalogPreviewKey(index.source.sourceRecordId, localeKey))
             const preview = buildCatalogResponse(
@@ -1180,40 +1067,34 @@ export function registerMarketRoutes(
             )
             void persistCatalogResponse(preview, index.source.sourceRecordId, localeKey)
           }
+          return signal.aborted ? abortedResponse() : jsonResponse(200, response)
         } catch (cause) {
-          if (!signal.aborted && !res.destroyed) sendInstallError(res, cause)
-        } finally {
-          stopWatching()
+          return signal.aborted ? abortedResponse() : installErrorResponse(cause)
         }
-      }}),
-      ctx.webServer.register({ kind: 'exact', path: ROUTE_INSTALLATIONS, handler: async (req, res) => {
-        if (req.method !== 'GET' || !requestAllowed(req, expectedPort)) {
-          sendJson(res, 405, { error: 'market installations require a local GET' })
-          return
+      }),
+      ctx.router.route('*', ROUTE_INSTALLATIONS, async c => {
+        if (c.req.method !== 'GET' || !routeAllowed(c)) {
+          return jsonResponse(405, { error: 'market installations require a local GET' })
         }
         const install = installProvider.get()
         const desktopPlugins = desktopPluginsProvider?.get()
         if (install === undefined || desktopPlugins === undefined) {
-          sendJson(res, 503, { error: 'market package operations are unavailable' })
-          return
+          return jsonResponse(503, { error: 'market package operations are unavailable' })
         }
         try {
           const installations = reconcileInstallations(await install.listVerifiedReceipts(), desktopPlugins.list())
-          if (!generationController.signal.aborted && !res.destroyed) sendJson(res, 200, { installations })
+          return generationController.signal.aborted ? abortedResponse() : jsonResponse(200, { installations })
         } catch (cause) {
-          if (!generationController.signal.aborted && !res.destroyed) sendInstallError(res, cause)
+          return generationController.signal.aborted ? abortedResponse() : installErrorResponse(cause)
         }
-      }}),
-      ctx.webServer.register({ kind: 'exact', path: ROUTE_OPERATION_PREVIEW, handler: async (req, res) => {
-        if (req.method !== 'POST' || !mutationAllowed(req, expectedPort)) {
-          sendJson(res, 405, { error: 'market package previews require a local same-origin POST' })
-          return
+      }),
+      ctx.router.route('*', ROUTE_OPERATION_PREVIEW, async c => {
+        if (c.req.method !== 'POST' || !routeMutationAllowed(c)) {
+          return jsonResponse(405, { error: 'market package previews require a local same-origin POST' })
         }
-        const controller = new AbortController()
-        const signal = AbortSignal.any([controller.signal, generationController.signal])
-        const stopWatching = abortOnDisconnect(req, res, controller)
+        const signal = AbortSignal.any([c.signal, generationController.signal])
         try {
-          const request = asOperationPreview(await readOperationJson(req, signal))
+          const request = asOperationPreview(await readOperationJson(c.req, signal))
           if (request.action === 'disable' || request.action === 'enable') {
             const desktopPlugins = desktopPluginsProvider?.get()
             const install = installProvider.get()
@@ -1289,16 +1170,14 @@ export function registerMarketRoutes(
                 managedReceipt?.receiptId,
               )
             }
-            if (!signal.aborted && !res.destroyed) {
-              sendJson(res, 200, {
-                action: request.action,
-                profileName: preview.profileName,
-                packageName: preview.packageName,
-                displayName: preview.packageName,
-                expiresAt: preview.expiresAt,
-                previewId: preview.previewId,
-              })
-            }
+            return signal.aborted ? abortedResponse() : jsonResponse(200, {
+              action: request.action,
+              profileName: preview.profileName,
+              packageName: preview.packageName,
+              displayName: preview.packageName,
+              expiresAt: preview.expiresAt,
+              previewId: preview.previewId,
+            })
           } else {
             const install = installProvider.get()
             if (install === undefined) {
@@ -1308,24 +1187,19 @@ export function registerMarketRoutes(
               ? await install.previewInstall(request.sourceRecordId, request.itemId, signal)
               : await install.previewUninstall(request.receiptId, signal)
             const { intent, ...summary } = preview
-            if (!signal.aborted && !res.destroyed) sendJson(res, 200, { ...summary, previewId: intent })
+            return signal.aborted ? abortedResponse() : jsonResponse(200, { ...summary, previewId: intent })
           }
         } catch (cause) {
-          if (!signal.aborted && !res.destroyed) sendInstallError(res, cause)
-        } finally {
-          stopWatching()
+          return signal.aborted ? abortedResponse() : installErrorResponse(cause)
         }
-      }}),
-      ctx.webServer.register({ kind: 'exact', path: ROUTE_OPERATION_EXECUTE, handler: async (req, res) => {
-        if (req.method !== 'POST' || !mutationAllowed(req, expectedPort)) {
-          sendJson(res, 405, { error: 'market package execution requires a local same-origin POST' })
-          return
+      }),
+      ctx.router.route('*', ROUTE_OPERATION_EXECUTE, async c => {
+        if (c.req.method !== 'POST' || !routeMutationAllowed(c)) {
+          return jsonResponse(405, { error: 'market package execution requires a local same-origin POST' })
         }
-        const controller = new AbortController()
-        const signal = AbortSignal.any([controller.signal, generationController.signal])
-        const stopWatching = abortOnDisconnect(req, res, controller)
+        const signal = AbortSignal.any([c.signal, generationController.signal])
         try {
-          const previewId = asOperationExecute(await readOperationJson(req, signal))
+          const previewId = asOperationExecute(await readOperationJson(c.req, signal))
           // Once the Host accepts a confirmed mutation it owns the transaction.
           // Closing the Market surface may stop the HTTP response, but must not
           // interrupt profile writes between pnpm, post-checks, and the receipt.
@@ -1413,31 +1287,25 @@ export function registerMarketRoutes(
             }
             result = await install.executePreview(previewId, generationController.signal)
           }
-          if (!signal.aborted && !res.destroyed) sendJson(res, 200, result)
+          return signal.aborted ? abortedResponse() : jsonResponse(200, result)
         } catch (cause) {
-          if (!signal.aborted && !res.destroyed) sendInstallError(res, cause)
-        } finally {
-          stopWatching()
+          return signal.aborted ? abortedResponse() : installErrorResponse(cause)
         }
-      }}),
+      }),
     )
   }
   if (desktopActionsProvider !== undefined) {
-    routes.push(ctx.webServer.register({ kind: 'exact', path: ROUTE_REQUEST_RESTART, handler: async (req, res) => {
-      if (req.method !== 'POST' || !mutationAllowed(req, expectedPort)) {
-        sendJson(res, 405, { error: 'requesting a restart requires a local same-origin POST' })
-        return
+    routes.push(ctx.router.route('*', ROUTE_REQUEST_RESTART, async c => {
+      if (c.req.method !== 'POST' || !routeMutationAllowed(c)) {
+        return jsonResponse(405, { error: 'requesting a restart requires a local same-origin POST' })
       }
       const actions = desktopActionsProvider.get()
       if (actions === undefined) {
-        sendJson(res, 503, { error: 'desktop restart is unavailable' })
-        return
+        return jsonResponse(503, { error: 'desktop restart is unavailable' })
       }
-      const controller = new AbortController()
-      const signal = AbortSignal.any([controller.signal, generationController.signal])
-      const stopWatching = abortOnDisconnect(req, res, controller)
+      const signal = AbortSignal.any([c.signal, generationController.signal])
       try {
-        const restartToken = asRestartToken(await readOperationJson(req, signal))
+        const restartToken = asRestartToken(await readOperationJson(c.req, signal))
         signal.throwIfAborted()
         purgeDesktopTokens()
         if (!desktopPluginRestartTokens.delete(restartToken)) {
@@ -1450,20 +1318,25 @@ export function registerMarketRoutes(
         // Once the Host consumes the one-shot grant it owns the restart. A
         // renderer disconnect may drop the acknowledgement, but must not burn
         // the token without performing the accepted action.
-        if (!res.destroyed) sendJson(res, 200, { ok: true })
-        try {
-          void actions.requestRestart().catch(() => {
-            ctx.logger.error('cordis-plugin-market: desktop restart request failed')
-          })
-        } catch {
-          ctx.logger.error('cordis-plugin-market: desktop restart request failed')
-        }
+        // The restart runs after the response has been handed back, in a later turn, and whether or not the caller is still
+        // there: a dropped acknowledgement must not burn the token without performing the accepted action.
+        c.waitUntil(new Promise<void>(resolve => {
+          setTimeout(() => {
+            try {
+              void actions.requestRestart().catch(() => {
+                ctx.logger.error('cordis-plugin-market: desktop restart request failed')
+              })
+            } catch {
+              ctx.logger.error('cordis-plugin-market: desktop restart request failed')
+            }
+            resolve()
+          }, 0)
+        }))
+        return jsonResponse(200, { ok: true })
       } catch (cause) {
-        if (!signal.aborted && !res.destroyed) sendInstallError(res, cause)
-      } finally {
-        stopWatching()
+        return signal.aborted ? abortedResponse() : installErrorResponse(cause)
       }
-    }}))
+    }))
   }
   let disposed = false
   return () => {

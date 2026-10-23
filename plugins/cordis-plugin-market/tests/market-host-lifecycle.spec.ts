@@ -1,10 +1,7 @@
-import { EventEmitter } from 'node:events'
 import { describe, expect, it, vi } from 'vitest'
 import { apply } from '../src/index.js'
 import { marketRoutes } from '../src/host/routes.js'
-import { routerServices } from './router-harness.js'
-
-type Handler = (req: any, res: any) => void | Promise<void>
+import { callRoute, routerServices } from './router-harness.js'
 
 interface Injection {
   readonly names: readonly string[]
@@ -15,7 +12,6 @@ interface Injection {
 
 function createHarness() {
   const values = new Map<string, unknown>()
-  const handlers = new Map<string, Handler>()
   const injections: Injection[] = []
   const globalCleanups: (() => void)[] = []
   let activeInjection: Injection | undefined
@@ -39,13 +35,7 @@ function createHarness() {
     activeInjection = undefined
   }
 
-  const webServer = {
-    port: 43_120,
-    register: vi.fn((route: { path: string; handler: Handler }) => {
-      handlers.set(route.path, route.handler)
-      return () => { handlers.delete(route.path) }
-    }),
-  }
+  const webServer = { register: vi.fn(() => () => undefined) }
   const services = routerServices(webServer as never)
   const context = {
     logger: { error: vi.fn() },
@@ -69,38 +59,8 @@ function createHarness() {
   }
 
   const request = async (path: string) => {
-    const req = Object.assign(new EventEmitter(), {
-      method: 'GET',
-      url: path,
-      headers: {
-        host: '127.0.0.1:43120',
-        origin: 'http://127.0.0.1:43120',
-        'sec-fetch-site': 'same-origin',
-      },
-      socket: { remoteAddress: '127.0.0.1' },
-      destroy: vi.fn(),
-    })
-    let body: unknown
-    const response = Object.assign(new EventEmitter(), {
-      destroyed: false,
-      writableEnded: false,
-      statusCode: 0,
-      headers: new Map<string, string>(),
-      setHeader(name: string, value: string) { response.headers.set(name.toLowerCase(), value) },
-      removeHeader(name: string) { response.headers.delete(name.toLowerCase()) },
-      end(value?: string) {
-        response.writableEnded = true
-        body = value === undefined || value === '' ? undefined : JSON.parse(value)
-      },
-    })
-    const handler = handlers.get(path)
-    if (handler === undefined) {
-      // A route served by the router: call it the way an adapter would, with the loopback peer as connection info.
-      const routed = await services.router.fetch(new Request(`http://127.0.0.1:43120${path}`, { headers: req.headers }), { remoteAddress: '127.0.0.1' })
-      return { status: routed.status, body: await routed.json() as unknown }
-    }
-    await handler(req, response)
-    return { status: response.statusCode, body }
+    const result = await callRoute(services.router, path)
+    return { status: result.status, body: result.body }
   }
 
   return {

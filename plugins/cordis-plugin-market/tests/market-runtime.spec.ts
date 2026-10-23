@@ -23,7 +23,7 @@ import {
   readStandardSourceManifest,
   registerMarketRoutes,
 } from '../src/host/routes.js'
-import { routerServices, withRouter } from './router-harness.js'
+import { callRoute, routerServices } from './router-harness.js'
 import {
   CatalogNetworkError,
   createCachedCatalogHttpClient,
@@ -91,58 +91,24 @@ function contractFixture(name: string): unknown {
   return JSON.parse(readFileSync(new URL(`../docs/examples/${name}.json`, import.meta.url), 'utf8')) as unknown
 }
 
-type MarketRouteHandler = (
-  req: EventEmitter & Record<string, any>,
-  res: EventEmitter & Record<string, any>,
-) => Promise<void>
-
 async function requestMarketCatalog(
   records: readonly LocalSourceRecord[],
   url: string,
 ): Promise<{ readonly statusCode: number; readonly body: Record<string, any> }> {
-  const handlers = new Map<string, MarketRouteHandler>()
-  const ctx = {
-    webServer: {
-      port: 43_120,
-      register: vi.fn((route: { path: string; handler: MarketRouteHandler }) => {
-        handlers.set(route.path, route.handler)
-        return vi.fn()
-      }),
-    },
-  }
+  const webServer = { register: vi.fn(() => vi.fn()) }
+  const services = routerServices(webServer as never)
+  const ctx = { webServer, ...services }
   const scope = {
     get: () => ({ sources: records }),
     update: vi.fn(),
   } as unknown as SettingsScope<MarketSettingsDocument>
-  const dispose = registerMarketRoutes(withRouter(ctx) as never, scope)
-  const request = Object.assign(new EventEmitter(), {
-    method: 'GET',
-    url,
-    headers: { host: '127.0.0.1:43120' },
-    socket: { remoteAddress: '127.0.0.1' },
-  })
-  let bodyText: string | undefined
-  const response = Object.assign(new EventEmitter(), {
-    destroyed: false,
-    writableEnded: false,
-    statusCode: 0,
-    setHeader: vi.fn(),
-    removeHeader: vi.fn(),
-    end: vi.fn((body?: string) => {
-      bodyText = body
-      response.writableEnded = true
-    }),
-  })
-
+  const dispose = registerMarketRoutes(ctx as never, scope)
   try {
-    await handlers.get(marketRoutes.catalog)!(request, response)
+    const result = await callRoute(services.router, url, { headers: { origin: '' } })
+    if (result.body === undefined) throw new Error('catalog route did not return a JSON body')
+    return { statusCode: result.status, body: result.body as Record<string, any> }
   } finally {
     dispose()
-  }
-  if (bodyText === undefined) throw new Error('catalog route did not return a JSON body')
-  return {
-    statusCode: response.statusCode,
-    body: JSON.parse(bodyText) as Record<string, any>,
   }
 }
 
@@ -1505,7 +1471,7 @@ describe('source mutation boundary', () => {
       body: new ReadableStream({ start() { /* never closes */ } }),
       duplex: 'half',
     } as RequestInit)
-    const pending = services.router.fetch(request, { remoteAddress: '127.0.0.1' })
+    const pending = services.router.fetch(request, { remoteAddress: '127.0.0.1', localPort: 43_120 })
     await new Promise(resolve => setTimeout(resolve, 10))
 
     dispose()

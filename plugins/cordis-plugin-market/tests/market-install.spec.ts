@@ -1,5 +1,4 @@
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
-import { EventEmitter } from 'node:events'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { Readable } from 'node:stream'
@@ -19,7 +18,7 @@ import {
   type MarketInstallReceipt,
 } from '../src/install/service.js'
 import { marketRoutes, registerMarketRoutes, registerMarketSettings } from '../src/host/routes.js'
-import { withRouter } from './router-harness.js'
+import { callRoute, routerServices } from './router-harness.js'
 import { manualInstallHint } from '../src/install/manual.js'
 
 const packageName = 'dsh-plugin-safe'
@@ -1076,18 +1075,9 @@ describe('market install service', () => {
 
 describe('market install Host routes', () => {
   it('registers the optional routes and accepts only exact local operation bodies', async () => {
-    type Handler = (req: any, res: any) => Promise<void>
-    const handlers = new Map<string, Handler>()
-    const ctx = {
-      logger: { error: vi.fn() },
-      webServer: {
-        port: 43_120,
-        register: vi.fn((route: { path: string; handler: Handler }) => {
-          handlers.set(route.path, route.handler)
-          return vi.fn()
-        }),
-      },
-    }
+    const webServer = { register: vi.fn(() => vi.fn()) }
+    const services = routerServices(webServer as never)
+    const ctx = { logger: { error: vi.fn() }, webServer, ...services }
     const settings = memoryScope()
     const previewInstall = vi.fn(async () => ({
       intent: 'opaque-preview-id',
@@ -1147,53 +1137,22 @@ describe('market install Host routes', () => {
       }),
     }
     const dispose = registerMarketRoutes(
-      withRouter(ctx) as never,
+      ctx as never,
       settings.scope,
       { get: () => install },
       { get: () => actions },
       { get: () => desktopPlugins },
     )
-    expect(handlers.has(marketRoutes.installations)).toBe(true)
-    expect(handlers.has(marketRoutes.installable)).toBe(true)
-    expect(handlers.has(marketRoutes.operationPreview)).toBe(true)
-    expect(handlers.has(marketRoutes.operationExecute)).toBe(true)
-    expect(handlers.has(marketRoutes.openTerminal)).toBe(true)
-    expect(handlers.has(marketRoutes.requestRestart)).toBe(true)
+    // Every route the Market serves is on the router: state, catalog, assets, sources, open-terminal, installable,
+    // installations, preview, execute and request-restart.
+    expect(services.router.size).toBe(10)
 
     const request = async (path: string, method: string, body?: unknown) => {
-      const req = Object.assign(new EventEmitter(), {
-        method,
-        url: path,
-        headers: {
-          host: '127.0.0.1:43120',
-          origin: 'http://127.0.0.1:43120',
-          'sec-fetch-site': 'same-origin',
-        },
-        socket: { remoteAddress: '127.0.0.1' },
-        destroy: vi.fn(),
-      })
-      let responseBody = ''
-      const res = Object.assign(new EventEmitter(), {
-        destroyed: false,
-        writableEnded: false,
-        statusCode: 0,
-        setHeader: vi.fn(),
-        removeHeader: vi.fn(),
-        end: vi.fn((value?: string) => {
-          desktopEvents.push('response')
-          responseBody = value ?? ''
-          res.writableEnded = true
-        }),
-      })
-      const pending = handlers.get(path)!(req, res)
-      if (body !== undefined) {
-        queueMicrotask(() => {
-          req.emit('data', Buffer.from(JSON.stringify(body)))
-          req.emit('end')
-        })
-      }
-      await pending
-      return { status: res.statusCode, body: JSON.parse(responseBody) as Record<string, unknown> }
+      const result = await callRoute(services.router, path, { method, ...(body === undefined ? {} : { json: body }) })
+      desktopEvents.push('response')
+      // Let work the handler scheduled after its response (the restart) run before the caller looks at the effects.
+      await new Promise(resolve => setTimeout(resolve, 5))
+      return { status: result.status, body: result.body as Record<string, unknown> }
     }
 
     const preview = await request(marketRoutes.operationPreview, 'POST', {
@@ -1421,17 +1380,9 @@ describe('market install Host routes', () => {
   })
 
   it('reconciles verified receipts with direct bundles without starting catalog verification', async () => {
-    type Handler = (req: any, res: any) => Promise<void>
-    const handlers = new Map<string, Handler>()
-    const ctx = {
-      webServer: {
-        port: 43_120,
-        register: vi.fn((route: { path: string; handler: Handler }) => {
-          handlers.set(route.path, route.handler)
-          return vi.fn()
-        }),
-      },
-    }
+    const webServer = { register: vi.fn(() => vi.fn()) }
+    const services = routerServices(webServer as never)
+    const ctx = { webServer, ...services }
     const listInstallable = vi.fn()
     const install = {
       listReceipts: vi.fn(async () => []),
@@ -1453,51 +1404,24 @@ describe('market install Host routes', () => {
       executeEnable: vi.fn(),
     }
     const dispose = registerMarketRoutes(
-      withRouter(ctx) as never,
+      ctx as never,
       memoryScope().scope,
       { get: () => install },
       undefined,
       { get: () => desktopPlugins },
     )
-    const req = Object.assign(new EventEmitter(), {
-      method: 'GET',
-      url: marketRoutes.installations,
-      headers: {
-        host: '127.0.0.1:43120',
-        origin: 'http://127.0.0.1:43120',
-        'sec-fetch-site': 'same-origin',
-      },
-      socket: { remoteAddress: '127.0.0.1' },
-      destroy: vi.fn(),
-    })
-    const res = Object.assign(new EventEmitter(), {
-      destroyed: false,
-      writableEnded: false,
-      statusCode: 0,
-      setHeader: vi.fn(),
-      removeHeader: vi.fn(),
-      end: vi.fn(),
-    })
-    await handlers.get(marketRoutes.installations)!(req, res)
+    const result = await callRoute(services.router, marketRoutes.installations)
+    expect(result.status).toBe(200)
     expect(listInstallable).not.toHaveBeenCalled()
     expect(install.listVerifiedReceipts).toHaveBeenCalledOnce()
     expect(desktopPlugins.list).toHaveBeenCalledOnce()
-    expect(res.end).toHaveBeenCalledOnce()
     dispose()
   })
 
   it('keeps a confirmed Host operation alive after the Renderer connection closes', async () => {
-    type Handler = (req: any, res: any) => Promise<void>
-    const handlers = new Map<string, Handler>()
-    const ctx = {
-      webServer: {
-        port: 43_120,
-        register: vi.fn((route: { path: string; handler: Handler }) => {
-          handlers.set(route.path, route.handler)
-          return vi.fn()
-        }),
-      },
-    }
+    const webServer = { register: vi.fn(() => vi.fn()) }
+    const services = routerServices(webServer as never)
+    const ctx = { webServer, ...services }
     let finishOperation!: () => void
     let operationSignal: AbortSignal | undefined
     const executePreview = vi.fn(async (_previewId: string, signal: AbortSignal) => {
@@ -1513,37 +1437,21 @@ describe('market install Host routes', () => {
       observeCatalog: vi.fn(),
       invalidateSource: vi.fn(),
     } as unknown as MarketInstallService
-    const dispose = registerMarketRoutes(withRouter(ctx) as never, memoryScope().scope, { get: () => install })
-    const req = Object.assign(new EventEmitter(), {
+    const dispose = registerMarketRoutes(ctx as never, memoryScope().scope, { get: () => install })
+    // The Renderer asks for the execution and then goes away; the Host operation must carry on regardless.
+    const rendererConnection = new AbortController()
+    const pending = callRoute(services.router, marketRoutes.operationExecute, {
       method: 'POST',
-      url: marketRoutes.operationExecute,
-      headers: {
-        host: '127.0.0.1:43120',
-        origin: 'http://127.0.0.1:43120',
-        'sec-fetch-site': 'same-origin',
-      },
-      socket: { remoteAddress: '127.0.0.1' },
-      destroy: vi.fn(),
+      json: { previewId: 'opaque-preview-id' },
+      signal: rendererConnection.signal,
     })
-    const res = Object.assign(new EventEmitter(), {
-      destroyed: false,
-      writableEnded: false,
-      statusCode: 0,
-      setHeader: vi.fn(),
-      removeHeader: vi.fn(),
-      end: vi.fn(),
-    })
-
-    const pending = handlers.get(marketRoutes.operationExecute)!(req, res)
-    req.emit('data', Buffer.from(JSON.stringify({ previewId: 'opaque-preview-id' })))
-    req.emit('end')
     await vi.waitFor(() => expect(executePreview).toHaveBeenCalledOnce())
 
-    res.emit('close')
+    rendererConnection.abort()
     expect(operationSignal?.aborted).toBe(false)
     finishOperation()
-    await pending
-    expect(res.end).not.toHaveBeenCalled()
+    // Nobody is listening, so the response is the aborted marker, not a payload.
+    await expect(pending).resolves.toMatchObject({ status: 499 })
     dispose()
   })
 })

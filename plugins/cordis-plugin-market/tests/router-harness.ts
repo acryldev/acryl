@@ -47,7 +47,8 @@ export function routerServices(webServer: { register(route: FakeRoute): () => vo
     get: (path: string, handler: Handler) => table.add('GET', path, handler),
     post: (path: string, handler: Handler) => table.add('POST', path, handler),
     use: (path: string, middleware: Middleware) => table.use(path, middleware),
-    fetch: (request: Request, connection?: ConnectionInfo) => table.dispatch(request, new AbortController().signal, connection),
+    // The request's own signal is the abort signal, as the real router derives it from the caller's.
+    fetch: (request: Request, connection?: ConnectionInfo) => table.dispatch(request, request.signal, connection),
     get size() { return table.size },
   }
   const routerHttp = {
@@ -59,4 +60,54 @@ export function routerServices(webServer: { register(route: FakeRoute): () => vo
 /** A fake Host context with the router services added over the context's own `webServer`. */
 export function withRouter<T extends { readonly webServer: { register(route: never): () => void } }>(ctx: T) {
   return { ...ctx, ...routerServices(ctx.webServer as unknown as { register(route: FakeRoute): () => void }) }
+}
+
+export interface RouteCall {
+  readonly method?: string
+  /** A JSON-serializable body, sent with a JSON content type. */
+  readonly json?: unknown
+  /** A raw body, sent as given. */
+  readonly body?: string
+  readonly headers?: Readonly<Record<string, string>>
+  /** The transport facts; the defaults are a loopback peer on the port the tests put in their `Host` header. */
+  readonly connection?: ConnectionInfo
+  readonly signal?: AbortSignal
+}
+
+export interface RouteResult {
+  readonly status: number
+  readonly headers: Headers
+  /** The parsed JSON body, or undefined when the body is empty or not JSON. */
+  readonly body: unknown
+}
+
+export const TEST_PORT = 43_120
+export const loopbackHeaders = (extra: Readonly<Record<string, string>> = {}): Record<string, string> => ({
+  host: `127.0.0.1:${String(TEST_PORT)}`,
+  origin: `http://127.0.0.1:${String(TEST_PORT)}`,
+  'sec-fetch-site': 'same-origin',
+  ...extra,
+})
+
+/** Call a route the way the HTTP adapter would, in process, and read the response. */
+export async function callRoute(
+  router: { fetch(request: Request, connection?: ConnectionInfo): Promise<Response> },
+  path: string,
+  call: RouteCall = {},
+): Promise<RouteResult> {
+  const method = call.method ?? 'GET'
+  const headers = { ...loopbackHeaders(), ...call.headers, ...(call.json === undefined ? {} : { 'content-type': 'application/json' }) }
+  const hasBody = method !== 'GET' && method !== 'HEAD'
+  const body = !hasBody ? undefined : call.json !== undefined ? JSON.stringify(call.json) : call.body
+  const request = new Request(`http://127.0.0.1:${String(TEST_PORT)}${path}`, {
+    method,
+    headers,
+    ...(body === undefined ? {} : { body }),
+    ...(call.signal === undefined ? {} : { signal: call.signal }),
+  })
+  const response = await router.fetch(request, call.connection ?? { remoteAddress: '127.0.0.1', localPort: TEST_PORT })
+  const text = await response.text()
+  let parsed: unknown
+  try { parsed = text === '' ? undefined : JSON.parse(text) as unknown } catch { parsed = undefined }
+  return { status: response.status, headers: response.headers, body: parsed }
 }

@@ -3,12 +3,12 @@ import { sendResponse, toRequest } from './bridge.ts'
 
 /** The slice of the router this adapter needs; `acryl-router`'s `Router` satisfies it. */
 export interface FetchRouter {
-  fetch(request: Request, connection?: { readonly remoteAddress?: string | undefined }): Promise<Response>
+  fetch(request: Request, connection?: { readonly remoteAddress?: string | undefined, readonly localPort?: number | undefined }): Promise<Response>
 }
 
 /**
  * Serve one node request through the router and write the result. The request's abort signal fires when the client
- * disconnects before the response finished; the socket's peer address travels as connection info, never in the request.
+ * disconnects before the response finished; the socket's peer address and local port travel as connection info, never in the request.
  */
 export async function serve(router: FetchRouter, req: IncomingMessage, res: ServerResponse): Promise<void> {
   const controller = new AbortController()
@@ -16,7 +16,7 @@ export async function serve(router: FetchRouter, req: IncomingMessage, res: Serv
   const method = (req.method ?? 'GET').toUpperCase()
   let response: Response
   try {
-    response = await router.fetch(toRequest(req, controller.signal), { remoteAddress: req.socket.remoteAddress })
+    response = await router.fetch(toRequest(req, controller.signal), { remoteAddress: req.socket.remoteAddress, localPort: req.socket.localPort })
   } catch {
     response = new Response('Internal Server Error', { status: 500 })
   }

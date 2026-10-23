@@ -1,5 +1,4 @@
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-host-webserver'
 import type {} from '@deepseek-ai/dsh-settings'
 import {
   registerMarketRoutes,
@@ -15,7 +14,7 @@ import {
 } from './install/service.js'
 
 export const name = 'community-market'
-export const inject = ['webServer', 'acrylSettings', 'router', 'routerHttp']
+export const inject = ['acrylSettings', 'router', 'routerHttp']
 
 interface DesktopProfilesCapability {
   readonly current: MarketDesktopProfile

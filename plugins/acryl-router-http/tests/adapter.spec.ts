@@ -55,7 +55,7 @@ function demo(prefix: string, extra?: (ctx: Context) => void) {
       ctx.router.get(`${prefix}/stream`, () => new Response(new ReadableStream({
         start(controller) { controller.enqueue(new TextEncoder().encode('one,')); controller.enqueue(new TextEncoder().encode('two')); controller.close() },
       })))
-      ctx.router.get(`${prefix}/peer`, c => c.json({ remote: c.connection.remoteAddress ?? null }))
+      ctx.router.get(`${prefix}/peer`, c => c.json({ remote: c.connection.remoteAddress ?? null, localPort: c.connection.localPort ?? null }))
       extra?.(ctx)
     },
   }
@@ -76,8 +76,9 @@ describe('acryl-router-http against a real webServer', () => {
     const { ctx, base } = await stack()
     ctx.plugin(demo('/api/demo'))
     await settle(20)
-    const body = await (await fetch(`${base()}/api/demo/peer`)).json() as { remote: string | null }
+    const body = await (await fetch(`${base()}/api/demo/peer`)).json() as { remote: string | null, localPort: number | null }
     expect(['127.0.0.1', '::ffff:127.0.0.1']).toContain(body.remote)
+    expect(body.localPort).toBe(Number(new URL(base()).port))
   })
 
   it('streams a request body into the handler and keeps status and headers on the way out', async () => {
