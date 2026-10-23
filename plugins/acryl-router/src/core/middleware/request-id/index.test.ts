@@ -1,0 +1,168 @@
+import { requestId } from './index.ts'
+import type { Context } from '../../context.ts'
+import { App } from '../../app.ts'
+
+const regexUUIDv4 = /([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})/
+
+describe('Request ID Middleware', () => {
+  const app = new App()
+  app.use('*', requestId())
+  app.get('/requestId', (c) => c.text(c.get('requestId') ?? 'No Request ID'))
+
+  it('Should return random request id', async () => {
+    const res = await app.request('http://localhost/requestId')
+    expect(res).not.toBeNull()
+    expect(res.status).toBe(200)
+    expect(res.headers.get('X-Request-Id')).toMatch(regexUUIDv4)
+    expect(await res.text()).match(regexUUIDv4)
+  })
+
+  it('Should return custom request id', async () => {
+    const res = await app.request('http://localhost/requestId', {
+      headers: {
+        'X-Request-Id': 'acryl-is-hot',
+      },
+    })
+    expect(res).not.toBeNull()
+    expect(res.status).toBe(200)
+    expect(res.headers.get('X-Request-Id')).toBe('acryl-is-hot')
+    expect(await res.text()).toBe('acryl-is-hot')
+  })
+
+  it('Should return custom request id with all valid characters', async () => {
+    const validRequestId = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_='
+    const res = await app.request('http://localhost/requestId', {
+      headers: {
+        'X-Request-Id': validRequestId,
+      },
+    })
+    expect(res).not.toBeNull()
+    expect(res.status).toBe(200)
+    expect(res.headers.get('X-Request-Id')).toBe(validRequestId)
+    expect(await res.text()).toBe(validRequestId)
+  })
+
+  it('Should return random request id without using request header', async () => {
+    const res = await app.request('http://localhost/requestId', {
+      headers: {
+        'X-Request-Id': 'Hello!12345-@*^',
+      },
+    })
+    expect(res).not.toBeNull()
+    expect(res.status).toBe(200)
+    expect(res.headers.get('X-Request-Id')).toMatch(regexUUIDv4)
+    expect(await res.text()).toMatch(regexUUIDv4)
+  })
+})
+
+describe('Request ID Middleware with custom generator', () => {
+  function generateWord() {
+    return 'AppIsWebFramework'
+  }
+  function generateDoubleRequestId(c: Context) {
+    const appId = c.req.header('App-Request-Id')
+    const ohnoId = c.req.header('Ohno-Request-Id')
+    if (appId && ohnoId) {
+      return appId + ohnoId
+    }
+    return crypto.randomUUID()
+  }
+  const app = new App()
+  app.use('/word', requestId({ generator: generateWord }))
+  app.use('/doubleRequestId', requestId({ generator: generateDoubleRequestId }))
+  app.get('/word', (c) => c.text(c.get('requestId') ?? 'No Request ID'))
+  app.get('/doubleRequestId', (c) => c.text(c.get('requestId') ?? 'No Request ID'))
+  it('Should return custom request id', async () => {
+    const res = await app.request('http://localhost/word')
+    expect(res).not.toBeNull()
+    expect(res.status).toBe(200)
+    expect(res.headers.get('X-Request-Id')).toBe('AppIsWebFramework')
+    expect(await res.text()).toBe('AppIsWebFramework')
+  })
+
+  it('Should return complex request id', async () => {
+    const res = await app.request('http://localhost/doubleRequestId', {
+      headers: {
+        'App-Request-Id': 'Hello',
+        'Ohno-Request-Id': 'World',
+      },
+    })
+    expect(res).not.toBeNull()
+    expect(res.status).toBe(200)
+    expect(res.headers.get('X-Request-Id')).toBe('HelloWorld')
+    expect(await res.text()).toBe('HelloWorld')
+  })
+})
+
+describe('Request ID Middleware with limit length', () => {
+  const charactersOf255 = 'h'.repeat(255)
+  const charactersOf256 = 'h'.repeat(256)
+
+  const app = new App()
+  app.use('/requestId', requestId())
+  app.use('/limit256', requestId({ limitLength: 256 }))
+  app.get('/requestId', (c) => c.text(c.get('requestId') ?? 'No Request ID'))
+  app.get('/limit256', (c) => c.text(c.get('requestId') ?? 'No Request ID'))
+
+  it('Should return custom request id', async () => {
+    const res = await app.request('http://localhost/requestId', {
+      headers: {
+        'X-Request-Id': charactersOf255,
+      },
+    })
+    expect(res).not.toBeNull()
+    expect(res.status).toBe(200)
+    expect(res.headers.get('X-Request-Id')).toBe(charactersOf255)
+    expect(await res.text()).toBe(charactersOf255)
+  })
+  it('Should return random request id without using request header', async () => {
+    const res = await app.request('http://localhost/requestId', {
+      headers: {
+        'X-Request-Id': charactersOf256,
+      },
+    })
+    expect(res).not.toBeNull()
+    expect(res.status).toBe(200)
+    expect(res.headers.get('X-Request-Id')).toMatch(regexUUIDv4)
+    expect(await res.text()).toMatch(regexUUIDv4)
+  })
+  it('Should return custom request id with 256 characters', async () => {
+    const res = await app.request('http://localhost/limit256', {
+      headers: {
+        'X-Request-Id': charactersOf256,
+      },
+    })
+    expect(res).not.toBeNull()
+    expect(res.status).toBe(200)
+    expect(res.headers.get('X-Request-Id')).toBe(charactersOf256)
+    expect(await res.text()).toBe(charactersOf256)
+  })
+})
+
+describe('Request ID Middleware with custom header', () => {
+  const app = new App()
+  app.use('/requestId', requestId({ headerName: 'App-Request-Id' }))
+  app.get('/emptyId', requestId({ headerName: '' }))
+  app.get('/requestId', (c) => c.text(c.get('requestId') ?? 'No Request ID'))
+  app.get('/emptyId', (c) => c.text(c.get('requestId') ?? 'No Request ID'))
+
+  it('Should return custom request id', async () => {
+    const res = await app.request('http://localhost/requestId', {
+      headers: {
+        'App-Request-Id': 'acryl-is-hot',
+      },
+    })
+    expect(res).not.toBeNull()
+    expect(res.status).toBe(200)
+    expect(res.headers.get('App-Request-Id')).toBe('acryl-is-hot')
+    expect(await res.text()).toBe('acryl-is-hot')
+  })
+
+  it('Should not return request id', async () => {
+    const res = await app.request('http://localhost/emptyId')
+    expect(res).not.toBeNull()
+    expect(res.status).toBe(200)
+    expect(res.headers.get('X-Request-Id')).toBeNull()
+    expect(await res.text()).toMatch(regexUUIDv4)
+  })
+})

@@ -1,0 +1,58 @@
+/**
+ * @module
+ * Context Storage Middleware for App.
+ */
+
+import { AsyncLocalStorage } from 'node:async_hooks'
+import type { Context } from '../../context.ts'
+import type { Env, MiddlewareHandler } from '../../types.ts'
+
+const asyncLocalStorage = new AsyncLocalStorage<Context>()
+
+/**
+ * Context Storage Middleware for App.
+ *
+ *
+ * @returns {MiddlewareHandler} The middleware handler function.
+ *
+ * @example
+ * ```ts
+ * type Env = {
+ *   Variables: {
+ *     message: string
+ *   }
+ * }
+ *
+ * const app = new App<Env>()
+ *
+ * app.use(contextStorage())
+ *
+ * app.use(async (c, next) => {
+ *   c.set('message', 'App is hot!!')
+ *   await next()
+ * })
+ *
+ * app.get('/', async (c) => c.text(getMessage()))
+ *
+ * const getMessage = () => {
+ *   return getContext<Env>().var.message
+ * }
+ * ```
+ */
+export const contextStorage = (): MiddlewareHandler => {
+  return async function contextStorage(c, next) {
+    await asyncLocalStorage.run(c, next)
+  }
+}
+
+export const tryGetContext = <E extends Env = Env>(): Context<E> | undefined => {
+  return asyncLocalStorage.getStore() as Context<E> | undefined
+}
+
+export const getContext = <E extends Env = Env>(): Context<E> => {
+  const context = tryGetContext<E>()
+  if (!context) {
+    throw new Error('Context is not available')
+  }
+  return context
+}
