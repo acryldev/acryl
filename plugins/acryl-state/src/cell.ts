@@ -1,6 +1,6 @@
 /**
  * Observable cells: the reactive core of the state service, with no Cordis and no DOM. A cell holds one value, tells its
- * subscribers when it changes, and can be derived from other cells. The shape follows VanJS's `state` and `derive`
+ * subscribers when it changes, and can be derived from other cells. The shape is a writable cell and a derived cell
  * (spec 046, M5): small enough to read in one sitting, and the same cell serves a React hook, a terminal component and a
  * server-sent stream.
  */
