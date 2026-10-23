@@ -12,3 +12,4 @@
 10. A Service that mounts plugins after startup (an extension installer) must mount them from the context captured in its constructor, never from `this.ctx` inside a method.
     Inside a service method `this.ctx` is Cordis's shadow context, which resolves services as the service's own fiber; a plugin mounted with it inherits the shadow, and its
     `ctx.router` throws `cannot get property "router" without inject` even though its `inject` is right and `ctx.get('router')` works. The test `plugins/acryl-router/tests/live-install.spec.ts` shows both.
+11. No third-party code or text is copied into the framework; if any is, its license notice ships with it in the same commit.
