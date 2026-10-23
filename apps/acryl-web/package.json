@@ -205,8 +205,10 @@
     "acryl-support": "workspace:*",
     "acryl-system-prompt": "workspace:*",
     "acryl-workspace": "workspace:*",
+    "acryl-inspect": "workspace:*",
     "acryl-router": "workspace:*",
     "acryl-router-http": "workspace:*",
+    "acryl-state": "workspace:*",
     "cordis-plugin-market": "workspace:*",
     "diff": "^8.0.4",
     "dsh-client-ui-brand-acryl": "workspace:*"

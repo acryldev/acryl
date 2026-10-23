@@ -32,9 +32,13 @@ const ROUTER_ROWS = [
   { rowId: 'acryl-router-http', packageName: 'acryl-router-http' },
 ] as const
 
+/** The framework base kit (spec 046): routes, shared state and the inspector, served over HTTP on the Web surface. The inspector row pulls in the rest. */
+const FRAMEWORK_NEEDS = [...ROUTER_ROWS, { rowId: 'acryl-state', packageName: 'acryl-state' }] as const
+
 /** Declaration order is mount order. The Market is Web-only here: Desktop owns its own provider switch. */
 const ROWS: readonly RowDeclaration[] = [
   { id: 'community-market', surfaces: ['web'], rowId: 'community-market', packageName: 'cordis-plugin-market', needs: ROUTER_ROWS },
+  { id: 'framework-kit', surfaces: ['web'], rowId: 'acryl-inspect', packageName: 'acryl-inspect', needs: FRAMEWORK_NEEDS },
   { id: 'plugin-context', surfaces: ['tui', 'web', 'desktop'], rowId: 'acryl-plugin-context', packageName: 'acryl-plugin-context' },
   { id: 'system-prompt', surfaces: ['tui', 'web', 'desktop'], rowId: 'acryl-system-prompt', packageName: 'acryl-system-prompt' },
   { id: 'ui-library', surfaces: ['tui', 'web', 'desktop'], rowId: '@acryl/ui', packageName: '@acryl/ui', libraryOnly: ['tui'] },

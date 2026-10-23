@@ -69,7 +69,7 @@ describe('what each Blueprint composes', () => {
 
   it('full ACRYL keeps today\'s web rows in mount order', () => {
     const { patches, packages } = composeBlueprintRows(IDE_BLUEPRINT, 'web')
-    expect(insertedIds(patches)).toEqual(['ui-acryl', 'acryl-router', 'acryl-router-http', 'community-market', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-shortcuts', 'acryl-mount-anchors', 'acryl-plugin-hub/manager'])
+    expect(insertedIds(patches)).toEqual(['ui-acryl', 'acryl-router', 'acryl-router-http', 'community-market', 'acryl-state', 'acryl-inspect', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-shortcuts', 'acryl-mount-anchors', 'acryl-plugin-hub/manager'])
     expect(packages).toContain('dsh-client-ui-brand-acryl')
     // The Market injects `router` and `routerHttp`, so their rows come with it, once and just before it (spec 046).
     expect(packages).toEqual(expect.arrayContaining(['acryl-router', 'acryl-router-http', 'cordis-plugin-market']))
@@ -84,7 +84,7 @@ describe('what each Blueprint composes', () => {
 
   it('blank web: brand, extension pack, prompt shaping and UI library only', () => {
     const { patches } = composeBlueprintRows(BLANK_BLUEPRINT, 'web')
-    expect(insertedIds(patches)).toEqual(['brand', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
+    expect(insertedIds(patches)).toEqual(['brand', 'acryl-router', 'acryl-router-http', 'acryl-state', 'acryl-inspect', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
     const capabilities = new Set(BLANK_BLUEPRINT.capabilities)
     const capabilityIds = insertedIds(createAcrylCodingCapabilityPatches(new Set(['web']), new Set(), capabilities))
     expect(capabilityIds).toEqual(['authorization', 'acryl-settings'])

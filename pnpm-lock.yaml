@@ -545,6 +545,9 @@ importers:
       acryl-harness-runtime:
         specifier: workspace:*
         version: link:../../runtime/acryl-harness-runtime
+      acryl-inspect:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-inspect
       acryl-plugin-context:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-context
@@ -557,6 +560,9 @@ importers:
       acryl-settings:
         specifier: workspace:*
         version: link:../../plugins/acryl-settings
+      acryl-state:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-state
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
@@ -1440,6 +1446,9 @@ importers:
       acryl-harness-runtime:
         specifier: workspace:*
         version: link:../../runtime/acryl-harness-runtime
+      acryl-inspect:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-inspect
       acryl-loopback-http:
         specifier: workspace:*
         version: link:../../runtime/acryl-loopback-http
@@ -1470,6 +1479,9 @@ importers:
       acryl-sign-in:
         specifier: workspace:*
         version: link:../../plugins/acryl-sign-in
+      acryl-state:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-state
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
@@ -2122,6 +2134,9 @@ importers:
       acryl-brand:
         specifier: workspace:*
         version: link:../../plugins/acryl-brand
+      acryl-inspect:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-inspect
       acryl-mount-anchors:
         specifier: workspace:*
         version: link:../../plugins/acryl-mount-anchors
@@ -2149,6 +2164,9 @@ importers:
       acryl-sign-in:
         specifier: workspace:*
         version: link:../../plugins/acryl-sign-in
+      acryl-state:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-state
       acryl-support:
         specifier: workspace:*
         version: link:../../plugins/acryl-support
@@ -3740,6 +3758,9 @@ importers:
       acryl-control:
         specifier: workspace:*
         version: link:../acryl-control
+      acryl-inspect:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-inspect
       acryl-mount-anchors:
         specifier: workspace:*
         version: link:../../plugins/acryl-mount-anchors
@@ -3767,6 +3788,9 @@ importers:
       acryl-sign-in:
         specifier: workspace:*
         version: link:../../plugins/acryl-sign-in
+      acryl-state:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-state
       acryl-support:
         specifier: workspace:*
         version: link:../../plugins/acryl-support

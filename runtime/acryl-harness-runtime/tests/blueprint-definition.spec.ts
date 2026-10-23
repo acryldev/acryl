@@ -93,7 +93,7 @@ describe('a blueprint file selected from the environment', () => {
     const blueprint = blueprintFromEnvironment({ ACRYL_BLUEPRINT: sample })
     expect(blueprint.id).toBe('acme.notes')
     expect(blueprint.rows).not.toContain('acryl-workspace' as never)
-    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
+    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', 'acryl-router', 'acryl-router-http', 'acryl-state', 'acryl-inspect', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
   })
 
   it('is read, validated and rebranded like a built-in', () => {
