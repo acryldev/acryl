@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { BlockList, isIP } from 'node:net'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import type { RouteContext } from 'acryl-router'
+import { App, connectionOf, type Context as RequestContext } from 'acryl-router'
 import type { SettingsScope } from 'acryl-settings'
 import type { CatalogSourceManifest } from '../contracts/index.js'
 import { parseCatalogSnapshot, parseCatalogSource, validateLocalSourceRecords } from '../contracts/validate.js'
@@ -135,22 +135,22 @@ function abortedResponse(): Response {
  * The facts the loopback authority check reads. The peer address and the real local port come from the transport as connection
  * info; an in-process caller has neither, so it is refused (the port falls to -1, which no `Host` header can match).
  */
-function routeContext(c: RouteContext): MarketRequestContext {
-  const secFetchSite = c.req.headers.get('sec-fetch-site')
+function routeContext(c: RequestContext): MarketRequestContext {
+  const secFetchSite = c.req.raw.headers.get('sec-fetch-site')
   return {
-    remoteAddress: c.connection.remoteAddress,
-    origin: c.req.headers.get('origin') ?? undefined,
-    host: c.req.headers.get('host') ?? undefined,
+    remoteAddress: connectionOf(c).remoteAddress,
+    origin: c.req.raw.headers.get('origin') ?? undefined,
+    host: c.req.raw.headers.get('host') ?? undefined,
     ...(secFetchSite === null ? {} : { secFetchSite }),
-    expectedPort: c.connection.localPort ?? -1,
+    expectedPort: connectionOf(c).localPort ?? -1,
   }
 }
 
-function routeAllowed(c: RouteContext): boolean {
+function routeAllowed(c: RequestContext): boolean {
   return marketRequestAllowed(routeContext(c))
 }
 
-function routeMutationAllowed(c: RouteContext): boolean {
+function routeMutationAllowed(c: RequestContext): boolean {
   return marketMutationAllowed(routeContext(c))
 }
 
@@ -845,456 +845,450 @@ export function registerMarketRoutes(
     if (cache !== undefined) await scope.update({ catalogCache: cache })
   }
   const settingsScope = scope
-  const routes: Array<() => void> = [
-    ctx.routerHttp.mount(MARKET_PREFIX),
-    ctx.router.route('GET', ROUTE_STATE, async c => {
-      if (generationController.signal.aborted) return abortedResponse()
-      if (!routeAllowed(c)) return jsonResponse(403, { error: 'market request authority rejected' })
-      try {
-        const desktopActions = desktopActionsProvider?.get()
-        const response: MarketStateResponse = {
-          sources: await service.listSources(),
-          builtIns: viewBuiltIns(),
-          desktopActions: {
-            openTerminal: desktopActions !== undefined,
-            requestRestart: desktopActions !== undefined
-              && (installProvider?.get() !== undefined || desktopPluginsProvider?.get() !== undefined),
-          },
-        }
-        if (generationController.signal.aborted || c.signal.aborted) return abortedResponse()
-        return jsonResponse(200, response)
-      } catch {
-        if (generationController.signal.aborted || c.signal.aborted) return abortedResponse()
-        return jsonResponse(500, { error: 'market state unavailable' })
+  const app = new App()
+  app.get(ROUTE_STATE, async c => {
+    if (generationController.signal.aborted) return abortedResponse()
+    if (!routeAllowed(c)) return jsonResponse(403, { error: 'market request authority rejected' })
+    try {
+      const desktopActions = desktopActionsProvider?.get()
+      const response: MarketStateResponse = {
+        sources: await service.listSources(),
+        builtIns: viewBuiltIns(),
+        desktopActions: {
+          openTerminal: desktopActions !== undefined,
+          requestRestart: desktopActions !== undefined
+            && (installProvider?.get() !== undefined || desktopPluginsProvider?.get() !== undefined),
+        },
       }
-    }),
-    ctx.router.route('*', ROUTE_CATALOG, async c => {
-      if (!routeAllowed(c)) {
-        return jsonResponse(403, { error: 'market request authority rejected' })
+      if (generationController.signal.aborted || c.req.raw.signal.aborted) return abortedResponse()
+      return jsonResponse(200, response)
+    } catch {
+      if (generationController.signal.aborted || c.req.raw.signal.aborted) return abortedResponse()
+      return jsonResponse(500, { error: 'market state unavailable' })
+    }
+  })
+  app.all(ROUTE_CATALOG, async c => {
+    if (!routeAllowed(c)) {
+      return jsonResponse(403, { error: 'market request authority rejected' })
+    }
+    if (c.req.method !== 'GET') {
+      return jsonResponse(405, { error: 'market catalog requires GET' })
+    }
+    const signal = AbortSignal.any([c.req.raw.signal, generationController.signal])
+    let refreshPreviewKey: string | undefined
+    try {
+      const requestUrl = new URL(c.req.url)
+      const query: Record<string, unknown> = {}
+      const q = requestUrl.searchParams.get('q')?.trim()
+      if (q) query.q = q
+      const categories = requestUrl.searchParams.getAll('category')
+      if (categories.length) query.category = categories
+      const limit = Number(requestUrl.searchParams.get('limit') ?? 50)
+      if (Number.isInteger(limit)) query.limit = limit
+      const sort = requestUrl.searchParams.get('sort')
+      if (sort) query.sort = sort
+      const locale = requestUrl.searchParams.get('locale')
+      if (locale) query.locale = locale
+      const refreshValues = requestUrl.searchParams.getAll('refresh')
+      if (refreshValues.length > 1 || refreshValues.length === 1 && refreshValues[0] !== '1') {
+        throw new Error('invalid catalog refresh flag')
       }
-      if (c.req.method !== 'GET') {
-        return jsonResponse(405, { error: 'market catalog requires GET' })
-      }
-      const signal = AbortSignal.any([c.signal, generationController.signal])
-      let refreshPreviewKey: string | undefined
-      try {
-        const requestUrl = c.url
-        const query: Record<string, unknown> = {}
-        const q = requestUrl.searchParams.get('q')?.trim()
-        if (q) query.q = q
-        const categories = requestUrl.searchParams.getAll('category')
-        if (categories.length) query.category = categories
-        const limit = Number(requestUrl.searchParams.get('limit') ?? 50)
-        if (Number.isInteger(limit)) query.limit = limit
-        const sort = requestUrl.searchParams.get('sort')
-        if (sort) query.sort = sort
-        const locale = requestUrl.searchParams.get('locale')
-        if (locale) query.locale = locale
-        const refreshValues = requestUrl.searchParams.getAll('refresh')
-        if (refreshValues.length > 1 || refreshValues.length === 1 && refreshValues[0] !== '1') {
-          throw new Error('invalid catalog refresh flag')
-        }
-        const force = refreshValues.length === 1
+      const force = refreshValues.length === 1
 
-        const sourceRecordIds = requestUrl.searchParams.getAll('sourceRecordId')
-        const cursors = requestUrl.searchParams.getAll('cursor')
-        if (sourceRecordIds.length > 1 || cursors.length > 1 || cursors.length > sourceRecordIds.length) {
-          throw new Error('catalog cursor requires exactly one source record')
-        }
-        const scope: CatalogFetchScope | undefined = sourceRecordIds.length === 0
-          ? undefined
-          : {
-              sourceRecordId: sourceRecordIds[0]!,
-              ...(cursors.length === 0 ? {} : { cursor: cursors[0]! }),
-            }
-        const activeSource = scope === undefined
-          ? undefined
-          : (await service.listSources()).find(source => (
-              source.enabled && source.sourceRecordId === scope.sourceRecordId
-            ))
-        if (scope !== undefined && activeSource === undefined) throw new Error('catalog source is not active')
-        const localeKey = locale ?? ''
-        const previewSourceRecordId = q === undefined
-          && categories.length === 0
-          && sort === null
-          && limit === 50
-          && scope !== undefined
-          && scope.cursor === undefined
-          ? scope.sourceRecordId
-          : undefined
-        const previewKey = previewSourceRecordId === undefined
-          ? undefined
-          : catalogPreviewKey(previewSourceRecordId, localeKey)
-        if (force) refreshPreviewKey = previewKey
-        if (!force && previewKey !== undefined && !servedCatalogPreviews.has(previewKey)) {
-          const cached = activeSource === undefined
-            ? undefined
-            : cachedCatalogResponse(settingsScope.get().catalogCache, activeSource, localeKey)
-          if (cached !== undefined) {
-            servedCatalogPreviews.add(previewKey)
-            return signal.aborted ? abortedResponse() : jsonResponse(200, cached)
+      const sourceRecordIds = requestUrl.searchParams.getAll('sourceRecordId')
+      const cursors = requestUrl.searchParams.getAll('cursor')
+      if (sourceRecordIds.length > 1 || cursors.length > 1 || cursors.length > sourceRecordIds.length) {
+        throw new Error('catalog cursor requires exactly one source record')
+      }
+      const scope: CatalogFetchScope | undefined = sourceRecordIds.length === 0
+        ? undefined
+        : {
+            sourceRecordId: sourceRecordIds[0]!,
+            ...(cursors.length === 0 ? {} : { cursor: cursors[0]! }),
           }
-        }
-        let index: CatalogFullIndex | undefined
-        try {
-          index = await service.scanCatalog(signal, {
-            force,
-            ...(locale === null || locale === '' ? {} : { locale }),
-            ...(scope === undefined ? {} : { expectedSourceRecordId: scope.sourceRecordId }),
-          })
-        } catch (cause) {
-          return signal.aborted ? abortedResponse() : catalogFailureResponse(cause)
-        }
-        signal.throwIfAborted()
-        const response = buildCatalogResponse(index, query, scope)
-        if (previewKey !== undefined && previewSourceRecordId !== undefined
-          && index !== undefined && !generationController.signal.aborted) {
+      const activeSource = scope === undefined
+        ? undefined
+        : (await service.listSources()).find(source => (
+            source.enabled && source.sourceRecordId === scope.sourceRecordId
+          ))
+      if (scope !== undefined && activeSource === undefined) throw new Error('catalog source is not active')
+      const localeKey = locale ?? ''
+      const previewSourceRecordId = q === undefined
+        && categories.length === 0
+        && sort === null
+        && limit === 50
+        && scope !== undefined
+        && scope.cursor === undefined
+        ? scope.sourceRecordId
+        : undefined
+      const previewKey = previewSourceRecordId === undefined
+        ? undefined
+        : catalogPreviewKey(previewSourceRecordId, localeKey)
+      if (force) refreshPreviewKey = previewKey
+      if (!force && previewKey !== undefined && !servedCatalogPreviews.has(previewKey)) {
+        const cached = activeSource === undefined
+          ? undefined
+          : cachedCatalogResponse(settingsScope.get().catalogCache, activeSource, localeKey)
+        if (cached !== undefined) {
           servedCatalogPreviews.add(previewKey)
-          void persistCatalogResponse(response, previewSourceRecordId, localeKey)
+          return signal.aborted ? abortedResponse() : jsonResponse(200, cached)
         }
-        return signal.aborted ? abortedResponse() : jsonResponse(200, response)
-      } catch {
-        if (refreshPreviewKey !== undefined) servedCatalogPreviews.delete(refreshPreviewKey)
-        return signal.aborted ? abortedResponse() : jsonResponse(400, { error: 'invalid catalog query' })
       }
-    }),
-    ctx.router.route('*', ROUTE_ASSETS, async c => {
-      if (!routeAllowed(c)) return jsonResponse(403, { error: 'market request authority rejected' })
-      if (c.req.method !== 'GET') return jsonResponse(405, { error: 'market media requires GET' })
-      const refs = c.url.searchParams.getAll('ref')
-      const assetRef = refs.length === 1 ? refs[0] : undefined
-      if (assetRef === undefined || !MARKET_MEDIA_ASSET_REF_PATTERN.test(assetRef)) {
-        return jsonResponse(404, { error: 'market media unavailable' })
-      }
-      const signal = AbortSignal.any([c.signal, generationController.signal])
+      let index: CatalogFullIndex | undefined
       try {
-        const asset = await media.resolve(assetRef, signal)
-        if (signal.aborted) return abortedResponse()
-        if (asset === undefined) return jsonResponse(404, { error: 'market media unavailable' })
-        const headers = new Headers({
-          'cache-control': 'private, max-age=3600',
-          'content-type': asset.contentType,
-          'content-disposition': 'inline',
-          etag: asset.etag,
-          'x-content-type-options': 'nosniff',
-          'cross-origin-resource-policy': 'same-origin',
-          'content-security-policy': "default-src 'none'; sandbox",
-          'referrer-policy': 'no-referrer',
+        index = await service.scanCatalog(signal, {
+          force,
+          ...(locale === null || locale === '' ? {} : { locale }),
+          ...(scope === undefined ? {} : { expectedSourceRecordId: scope.sourceRecordId }),
         })
-        if (c.req.headers.get('if-none-match') === asset.etag) return new Response(null, { status: 304, headers })
-        headers.set('content-length', String(asset.body.byteLength))
-        return new Response(new Uint8Array(asset.body), { status: 200, headers })
-      } catch {
-        if (signal.aborted) return abortedResponse()
-        return jsonResponse(404, { error: 'market media unavailable' })
-      }
-    }),
-    ctx.router.route('*', ROUTE_SOURCES, async c => {
-      if (c.req.method !== 'POST' || !routeMutationAllowed(c)) {
-        return jsonResponse(405, { error: 'source changes require a local same-origin POST' })
-      }
-      const signal = AbortSignal.any([c.signal, generationController.signal])
-      try {
-        const mutation = asMutation(await readJsonBody(c.req, signal))
-        await mutateSource(mutation, signal)
-        if (signal.aborted) return abortedResponse()
-        return jsonResponse(200, { sources: await service.listSources() })
       } catch (cause) {
-        if (signal.aborted) return abortedResponse()
-        return jsonResponse(400, { error: cause instanceof Error ? cause.message : 'source change failed' })
+        return signal.aborted ? abortedResponse() : catalogFailureResponse(cause)
       }
-    }),
-  ]
+      signal.throwIfAborted()
+      const response = buildCatalogResponse(index, query, scope)
+      if (previewKey !== undefined && previewSourceRecordId !== undefined
+        && index !== undefined && !generationController.signal.aborted) {
+        servedCatalogPreviews.add(previewKey)
+        void persistCatalogResponse(response, previewSourceRecordId, localeKey)
+      }
+      return signal.aborted ? abortedResponse() : jsonResponse(200, response)
+    } catch {
+      if (refreshPreviewKey !== undefined) servedCatalogPreviews.delete(refreshPreviewKey)
+      return signal.aborted ? abortedResponse() : jsonResponse(400, { error: 'invalid catalog query' })
+    }
+  })
+  app.all(ROUTE_ASSETS, async c => {
+    if (!routeAllowed(c)) return jsonResponse(403, { error: 'market request authority rejected' })
+    if (c.req.method !== 'GET') return jsonResponse(405, { error: 'market media requires GET' })
+    const refs = new URL(c.req.url).searchParams.getAll('ref')
+    const assetRef = refs.length === 1 ? refs[0] : undefined
+    if (assetRef === undefined || !MARKET_MEDIA_ASSET_REF_PATTERN.test(assetRef)) {
+      return jsonResponse(404, { error: 'market media unavailable' })
+    }
+    const signal = AbortSignal.any([c.req.raw.signal, generationController.signal])
+    try {
+      const asset = await media.resolve(assetRef, signal)
+      if (signal.aborted) return abortedResponse()
+      if (asset === undefined) return jsonResponse(404, { error: 'market media unavailable' })
+      const headers = new Headers({
+        'cache-control': 'private, max-age=3600',
+        'content-type': asset.contentType,
+        'content-disposition': 'inline',
+        etag: asset.etag,
+        'x-content-type-options': 'nosniff',
+        'cross-origin-resource-policy': 'same-origin',
+        'content-security-policy': "default-src 'none'; sandbox",
+        'referrer-policy': 'no-referrer',
+      })
+      if (c.req.raw.headers.get('if-none-match') === asset.etag) return new Response(null, { status: 304, headers })
+      headers.set('content-length', String(asset.body.byteLength))
+      return new Response(new Uint8Array(asset.body), { status: 200, headers })
+    } catch {
+      if (signal.aborted) return abortedResponse()
+      return jsonResponse(404, { error: 'market media unavailable' })
+    }
+  })
+  app.all(ROUTE_SOURCES, async c => {
+    if (c.req.method !== 'POST' || !routeMutationAllowed(c)) {
+      return jsonResponse(405, { error: 'source changes require a local same-origin POST' })
+    }
+    const signal = AbortSignal.any([c.req.raw.signal, generationController.signal])
+    try {
+      const mutation = asMutation(await readJsonBody(c.req.raw, signal))
+      await mutateSource(mutation, signal)
+      if (signal.aborted) return abortedResponse()
+      return jsonResponse(200, { sources: await service.listSources() })
+    } catch (cause) {
+      if (signal.aborted) return abortedResponse()
+      return jsonResponse(400, { error: cause instanceof Error ? cause.message : 'source change failed' })
+    }
+  })
   if (desktopActionsProvider !== undefined) {
-    routes.push(
-      ctx.router.route('*', ROUTE_OPEN_TERMINAL, async c => {
-        if (c.req.method !== 'POST' || !routeMutationAllowed(c)) {
-          return jsonResponse(405, { error: 'opening ACRYL Terminal requires a local same-origin POST' })
-        }
-        const actions = desktopActionsProvider.get()
-        if (actions === undefined) {
-          return jsonResponse(503, { error: 'desktop actions are unavailable' })
-        }
-        const signal = AbortSignal.any([c.signal, generationController.signal])
-        try {
-          asEmptyDesktopAction(await readOperationJson(c.req, signal))
-          signal.throwIfAborted()
-          actions.openTerminal()
-          return signal.aborted ? abortedResponse() : jsonResponse(200, { ok: true })
-        } catch (cause) {
-          return signal.aborted ? abortedResponse() : installErrorResponse(cause)
-        }
-      }),
-    )
+    app.all(ROUTE_OPEN_TERMINAL, async c => {
+      if (c.req.method !== 'POST' || !routeMutationAllowed(c)) {
+        return jsonResponse(405, { error: 'opening ACRYL Terminal requires a local same-origin POST' })
+      }
+      const actions = desktopActionsProvider.get()
+      if (actions === undefined) {
+        return jsonResponse(503, { error: 'desktop actions are unavailable' })
+      }
+      const signal = AbortSignal.any([c.req.raw.signal, generationController.signal])
+      try {
+        asEmptyDesktopAction(await readOperationJson(c.req.raw, signal))
+        signal.throwIfAborted()
+        actions.openTerminal()
+        return signal.aborted ? abortedResponse() : jsonResponse(200, { ok: true })
+      } catch (cause) {
+        return signal.aborted ? abortedResponse() : installErrorResponse(cause)
+      }
+    })
   }
   if (installProvider !== undefined) {
-    routes.push(
-      ctx.router.route('*', ROUTE_INSTALLABLE, async c => {
-        if (c.req.method !== 'GET' || !routeAllowed(c)) {
-          return jsonResponse(405, { error: 'market installable catalog requires a local GET' })
+    app.all(ROUTE_INSTALLABLE, async c => {
+      if (c.req.method !== 'GET' || !routeAllowed(c)) {
+        return jsonResponse(405, { error: 'market installable catalog requires a local GET' })
+      }
+      const install = installProvider.get()
+      if (install === undefined) {
+        return jsonResponse(503, { error: 'market package operations are unavailable' })
+      }
+      const signal = AbortSignal.any([c.req.raw.signal, generationController.signal])
+      try {
+        const requestUrl = new URL(c.req.url)
+        const localeValues = requestUrl.searchParams.getAll('locale')
+        const refreshValues = requestUrl.searchParams.getAll('refresh')
+        if (
+          localeValues.length > 1
+          || refreshValues.length > 1
+          || refreshValues.length === 1 && refreshValues[0] !== '1'
+        ) throw new MarketInstallError('invalid-request', 'The installable catalog query was invalid.')
+        const force = refreshValues.length === 1
+        const localeKey = localeValues[0] ?? ''
+        const index = await service.scanCatalog(signal, {
+          force,
+          ...(localeKey === '' ? {} : { locale: localeKey }),
+        })
+        if (index === undefined) {
+          throw new MarketInstallError('not-available', 'No catalog source is active.')
         }
-        const install = installProvider.get()
-        if (install === undefined) {
-          return jsonResponse(503, { error: 'market package operations are unavailable' })
+        const response = await install.listInstallable(index, signal)
+        if (!generationController.signal.aborted) {
+          servedCatalogPreviews.add(catalogPreviewKey(index.source.sourceRecordId, localeKey))
+          const preview = buildCatalogResponse(
+            index,
+            { limit: 50, ...(localeKey === '' ? {} : { locale: localeKey }) },
+            { sourceRecordId: index.source.sourceRecordId },
+          )
+          void persistCatalogResponse(preview, index.source.sourceRecordId, localeKey)
         }
-        const signal = AbortSignal.any([c.signal, generationController.signal])
-        try {
-          const requestUrl = c.url
-          const localeValues = requestUrl.searchParams.getAll('locale')
-          const refreshValues = requestUrl.searchParams.getAll('refresh')
-          if (
-            localeValues.length > 1
-            || refreshValues.length > 1
-            || refreshValues.length === 1 && refreshValues[0] !== '1'
-          ) throw new MarketInstallError('invalid-request', 'The installable catalog query was invalid.')
-          const force = refreshValues.length === 1
-          const localeKey = localeValues[0] ?? ''
-          const index = await service.scanCatalog(signal, {
-            force,
-            ...(localeKey === '' ? {} : { locale: localeKey }),
-          })
-          if (index === undefined) {
-            throw new MarketInstallError('not-available', 'No catalog source is active.')
+        return signal.aborted ? abortedResponse() : jsonResponse(200, response)
+      } catch (cause) {
+        return signal.aborted ? abortedResponse() : installErrorResponse(cause)
+      }
+    })
+    app.all(ROUTE_INSTALLATIONS, async c => {
+      if (c.req.method !== 'GET' || !routeAllowed(c)) {
+        return jsonResponse(405, { error: 'market installations require a local GET' })
+      }
+      const install = installProvider.get()
+      const desktopPlugins = desktopPluginsProvider?.get()
+      if (install === undefined || desktopPlugins === undefined) {
+        return jsonResponse(503, { error: 'market package operations are unavailable' })
+      }
+      try {
+        const installations = reconcileInstallations(await install.listVerifiedReceipts(), desktopPlugins.list())
+        return generationController.signal.aborted ? abortedResponse() : jsonResponse(200, { installations })
+      } catch (cause) {
+        return generationController.signal.aborted ? abortedResponse() : installErrorResponse(cause)
+      }
+    })
+    app.all(ROUTE_OPERATION_PREVIEW, async c => {
+      if (c.req.method !== 'POST' || !routeMutationAllowed(c)) {
+        return jsonResponse(405, { error: 'market package previews require a local same-origin POST' })
+      }
+      const signal = AbortSignal.any([c.req.raw.signal, generationController.signal])
+      try {
+        const request = asOperationPreview(await readOperationJson(c.req.raw, signal))
+        if (request.action === 'disable' || request.action === 'enable') {
+          const desktopPlugins = desktopPluginsProvider?.get()
+          const install = installProvider.get()
+          if (desktopPlugins === undefined || install === undefined) {
+            throw new MarketInstallError('not-available', 'Desktop plugin management is unavailable.')
           }
-          const response = await install.listInstallable(index, signal)
-          if (!generationController.signal.aborted) {
-            servedCatalogPreviews.add(catalogPreviewKey(index.source.sourceRecordId, localeKey))
-            const preview = buildCatalogResponse(
-              index,
-              { limit: 50, ...(localeKey === '' ? {} : { locale: localeKey }) },
-              { sourceRecordId: index.source.sourceRecordId },
-            )
-            void persistCatalogResponse(preview, index.source.sourceRecordId, localeKey)
+          const inventory = desktopPlugins.list()
+          const target = inventory.find(bundle => bundle.bundleId === request.bundleId)
+          if (target === undefined) {
+            throw new MarketInstallError('not-available', 'The selected plugin bundle is no longer available.')
           }
-          return signal.aborted ? abortedResponse() : jsonResponse(200, response)
-        } catch (cause) {
-          return signal.aborted ? abortedResponse() : installErrorResponse(cause)
-        }
-      }),
-      ctx.router.route('*', ROUTE_INSTALLATIONS, async c => {
-        if (c.req.method !== 'GET' || !routeAllowed(c)) {
-          return jsonResponse(405, { error: 'market installations require a local GET' })
-        }
-        const install = installProvider.get()
-        const desktopPlugins = desktopPluginsProvider?.get()
-        if (install === undefined || desktopPlugins === undefined) {
-          return jsonResponse(503, { error: 'market package operations are unavailable' })
-        }
-        try {
-          const installations = reconcileInstallations(await install.listVerifiedReceipts(), desktopPlugins.list())
-          return generationController.signal.aborted ? abortedResponse() : jsonResponse(200, { installations })
-        } catch (cause) {
-          return generationController.signal.aborted ? abortedResponse() : installErrorResponse(cause)
-        }
-      }),
-      ctx.router.route('*', ROUTE_OPERATION_PREVIEW, async c => {
-        if (c.req.method !== 'POST' || !routeMutationAllowed(c)) {
-          return jsonResponse(405, { error: 'market package previews require a local same-origin POST' })
-        }
-        const signal = AbortSignal.any([c.signal, generationController.signal])
-        try {
-          const request = asOperationPreview(await readOperationJson(c.req, signal))
-          if (request.action === 'disable' || request.action === 'enable') {
-            const desktopPlugins = desktopPluginsProvider?.get()
-            const install = installProvider.get()
-            if (desktopPlugins === undefined || install === undefined) {
-              throw new MarketInstallError('not-available', 'Desktop plugin management is unavailable.')
-            }
-            const inventory = desktopPlugins.list()
-            const target = inventory.find(bundle => bundle.bundleId === request.bundleId)
-            if (target === undefined) {
-              throw new MarketInstallError('not-available', 'The selected plugin bundle is no longer available.')
-            }
-            const expectedStatus = request.action === 'disable' ? 'active' : 'disabled'
-            if (!target.mutable || target.status !== expectedStatus) {
-              throw new MarketInstallError(
-                'conflict',
-                request.action === 'disable'
-                  ? 'The selected plugin bundle can no longer be disabled.'
-                  : 'The selected plugin bundle can no longer be enabled.',
-              )
-            }
-            const matchingReceipts = (await install.listVerifiedReceipts(signal))
-              .filter(receipt => receipt.packageName === target.packageName)
-            const packageBundleCount = inventory.filter(bundle => bundle.packageName === target.packageName).length
-            const managedReceipt = matchingReceipts.length === 1 && packageBundleCount === 1
-              ? matchingReceipts[0]
-              : undefined
-            if (matchingReceipts.length > 0 && managedReceipt === undefined) {
-              throw new MarketInstallError('conflict', 'The selected plugin bundle ownership is ambiguous.')
-            }
-            let preview: MarketDesktopPluginDisablePreview | MarketDesktopPluginEnablePreview
-            try {
-              preview = request.action === 'disable'
-                ? desktopPlugins.previewDisable(request.bundleId)
-                : desktopPlugins.previewEnable(request.bundleId)
-            } catch {
-              throw new MarketInstallError(
-                'conflict',
-                request.action === 'disable'
-                  ? 'The selected plugin bundle can no longer be disabled.'
-                  : 'The selected plugin bundle can no longer be enabled.',
-              )
-            }
-            const expiresAt = Date.parse(preview.expiresAt)
-            if (
-              !boundedIdentifier(preview.previewId)
-              || !boundedIdentifier(preview.profileName)
-              || !boundedIdentifier(preview.packageName)
-              || !Number.isFinite(expiresAt)
-              || expiresAt <= Date.now()
-            ) throw new MarketInstallError(
-              'operation-failed',
+          const expectedStatus = request.action === 'disable' ? 'active' : 'disabled'
+          if (!target.mutable || target.status !== expectedStatus) {
+            throw new MarketInstallError(
+              'conflict',
               request.action === 'disable'
-                ? 'The desktop plugin disable preview was invalid.'
-                : 'The desktop plugin enable preview was invalid.',
+                ? 'The selected plugin bundle can no longer be disabled.'
+                : 'The selected plugin bundle can no longer be enabled.',
             )
-            if (preview.packageName !== target.packageName) {
-              throw new MarketInstallError('conflict', 'The selected plugin bundle changed during preview.')
-            }
-            if (request.action === 'disable') {
-              rememberDisablePreview(
-                preview.previewId,
-                expiresAt,
-                request.bundleId,
-                preview.packageName,
-                managedReceipt?.receiptId,
-              )
-            } else {
-              rememberEnablePreview(
-                preview.previewId,
-                expiresAt,
-                request.bundleId,
-                preview.packageName,
-                managedReceipt?.receiptId,
-              )
-            }
-            return signal.aborted ? abortedResponse() : jsonResponse(200, {
-              action: request.action,
-              profileName: preview.profileName,
-              packageName: preview.packageName,
-              displayName: preview.packageName,
-              expiresAt: preview.expiresAt,
-              previewId: preview.previewId,
-            })
-          } else {
-            const install = installProvider.get()
-            if (install === undefined) {
-              throw new MarketInstallError('not-available', 'Market package operations are unavailable.')
-            }
-            const preview = request.action === 'install'
-              ? await install.previewInstall(request.sourceRecordId, request.itemId, signal)
-              : await install.previewUninstall(request.receiptId, signal)
-            const { intent, ...summary } = preview
-            return signal.aborted ? abortedResponse() : jsonResponse(200, { ...summary, previewId: intent })
           }
-        } catch (cause) {
-          return signal.aborted ? abortedResponse() : installErrorResponse(cause)
-        }
-      }),
-      ctx.router.route('*', ROUTE_OPERATION_EXECUTE, async c => {
-        if (c.req.method !== 'POST' || !routeMutationAllowed(c)) {
-          return jsonResponse(405, { error: 'market package execution requires a local same-origin POST' })
-        }
-        const signal = AbortSignal.any([c.signal, generationController.signal])
-        try {
-          const previewId = asOperationExecute(await readOperationJson(c.req, signal))
-          // Once the Host accepts a confirmed mutation it owns the transaction.
-          // Closing the Market surface may stop the HTTP response, but must not
-          // interrupt profile writes between pnpm, post-checks, and the receipt.
-          purgeDesktopTokens()
-          let result: unknown
-          const disablePreview = disablePreviews.get(previewId)
-          const enablePreview = enablePreviews.get(previewId)
-          if (disablePreview !== undefined || enablePreview !== undefined) {
-            disablePreviews.delete(previewId)
-            enablePreviews.delete(previewId)
-            const desktopPreview = disablePreview ?? enablePreview!
-            const action = disablePreview === undefined ? 'enable' : 'disable'
-            const desktopPlugins = desktopPluginsProvider?.get()
-            const install = installProvider.get()
-            if (desktopPlugins === undefined || install === undefined) {
-              throw new MarketInstallError('not-available', 'Desktop plugin management is unavailable.')
-            }
-            const currentInventory = desktopPlugins.list()
-            const currentTarget = currentInventory
-              .find(bundle => bundle.bundleId === desktopPreview.bundleId)
-            const expectedStatus = action === 'disable' ? 'active' : 'disabled'
-            if (
-              currentTarget === undefined
-              || currentTarget.packageName !== desktopPreview.packageName
-              || !currentTarget.mutable
-              || currentTarget.status !== expectedStatus
-            ) {
-              throw new MarketInstallError(
-                'conflict',
-                action === 'disable'
-                  ? 'The selected plugin bundle changed before it could be disabled.'
-                  : 'The selected plugin bundle changed before it could be enabled.',
-              )
-            }
-            const matchingReceipts = (await install.listVerifiedReceipts(generationController.signal))
-              .filter(receipt => receipt.packageName === desktopPreview.packageName)
-            if (action === 'disable') {
-              const packageBundleCount = currentInventory
-                .filter(bundle => bundle.packageName === desktopPreview.packageName).length
-              const ownershipUnchanged = desktopPreview.receiptId === undefined
-                ? matchingReceipts.length === 0
-                : packageBundleCount === 1
-                  && matchingReceipts.length === 1
-                  && matchingReceipts[0]?.receiptId === desktopPreview.receiptId
-              if (!ownershipUnchanged) {
-                throw new MarketInstallError('conflict', 'The selected plugin ownership changed before it could be disabled.')
-              }
-            }
-            if (action === 'enable') {
-              const receiptUnchanged = desktopPreview.receiptId === undefined
-                ? matchingReceipts.length === 0
-                : matchingReceipts.length === 1 && matchingReceipts[0]?.receiptId === desktopPreview.receiptId
-              if (!receiptUnchanged) {
-                throw new MarketInstallError('conflict', 'The selected plugin ownership changed before it could be enabled.')
-              }
-            }
-            let changed: { readonly packageName: string; readonly live: boolean }
-            try {
-              changed = action === 'disable'
-                ? await desktopPlugins.executeDisable(previewId)
-                : await desktopPlugins.executeEnable(previewId)
-            } catch {
-              throw new MarketInstallError(
-                'conflict',
-                action === 'disable'
-                  ? 'The selected plugin bundle changed before it could be disabled.'
-                  : 'The selected plugin bundle changed before it could be enabled.',
-              )
-            }
-            if (!boundedIdentifier(changed.packageName) || changed.packageName !== desktopPreview.packageName) {
-              throw new MarketInstallError(
-                'operation-failed',
-                action === 'disable'
-                  ? 'The desktop plugin disable result was invalid.'
-                  : 'The desktop plugin enable result was invalid.',
-              )
-            }
-            const restartToken = randomUUID()
-            rememberDesktopToken(desktopPluginRestartTokens, restartToken, Date.now() + 5 * 60 * 1000)
-            result = { action, packageName: changed.packageName, restartToken, restartRequired: !changed.live }
-          } else {
-            const install = installProvider.get()
-            if (install === undefined) {
-              throw new MarketInstallError('not-available', 'Market package operations are unavailable.')
-            }
-            result = await install.executePreview(previewId, generationController.signal)
+          const matchingReceipts = (await install.listVerifiedReceipts(signal))
+            .filter(receipt => receipt.packageName === target.packageName)
+          const packageBundleCount = inventory.filter(bundle => bundle.packageName === target.packageName).length
+          const managedReceipt = matchingReceipts.length === 1 && packageBundleCount === 1
+            ? matchingReceipts[0]
+            : undefined
+          if (matchingReceipts.length > 0 && managedReceipt === undefined) {
+            throw new MarketInstallError('conflict', 'The selected plugin bundle ownership is ambiguous.')
           }
-          return signal.aborted ? abortedResponse() : jsonResponse(200, result)
-        } catch (cause) {
-          return signal.aborted ? abortedResponse() : installErrorResponse(cause)
+          let preview: MarketDesktopPluginDisablePreview | MarketDesktopPluginEnablePreview
+          try {
+            preview = request.action === 'disable'
+              ? desktopPlugins.previewDisable(request.bundleId)
+              : desktopPlugins.previewEnable(request.bundleId)
+          } catch {
+            throw new MarketInstallError(
+              'conflict',
+              request.action === 'disable'
+                ? 'The selected plugin bundle can no longer be disabled.'
+                : 'The selected plugin bundle can no longer be enabled.',
+            )
+          }
+          const expiresAt = Date.parse(preview.expiresAt)
+          if (
+            !boundedIdentifier(preview.previewId)
+            || !boundedIdentifier(preview.profileName)
+            || !boundedIdentifier(preview.packageName)
+            || !Number.isFinite(expiresAt)
+            || expiresAt <= Date.now()
+          ) throw new MarketInstallError(
+            'operation-failed',
+            request.action === 'disable'
+              ? 'The desktop plugin disable preview was invalid.'
+              : 'The desktop plugin enable preview was invalid.',
+          )
+          if (preview.packageName !== target.packageName) {
+            throw new MarketInstallError('conflict', 'The selected plugin bundle changed during preview.')
+          }
+          if (request.action === 'disable') {
+            rememberDisablePreview(
+              preview.previewId,
+              expiresAt,
+              request.bundleId,
+              preview.packageName,
+              managedReceipt?.receiptId,
+            )
+          } else {
+            rememberEnablePreview(
+              preview.previewId,
+              expiresAt,
+              request.bundleId,
+              preview.packageName,
+              managedReceipt?.receiptId,
+            )
+          }
+          return signal.aborted ? abortedResponse() : jsonResponse(200, {
+            action: request.action,
+            profileName: preview.profileName,
+            packageName: preview.packageName,
+            displayName: preview.packageName,
+            expiresAt: preview.expiresAt,
+            previewId: preview.previewId,
+          })
+        } else {
+          const install = installProvider.get()
+          if (install === undefined) {
+            throw new MarketInstallError('not-available', 'Market package operations are unavailable.')
+          }
+          const preview = request.action === 'install'
+            ? await install.previewInstall(request.sourceRecordId, request.itemId, signal)
+            : await install.previewUninstall(request.receiptId, signal)
+          const { intent, ...summary } = preview
+          return signal.aborted ? abortedResponse() : jsonResponse(200, { ...summary, previewId: intent })
         }
-      }),
-    )
+      } catch (cause) {
+        return signal.aborted ? abortedResponse() : installErrorResponse(cause)
+      }
+    })
+    app.all(ROUTE_OPERATION_EXECUTE, async c => {
+      if (c.req.method !== 'POST' || !routeMutationAllowed(c)) {
+        return jsonResponse(405, { error: 'market package execution requires a local same-origin POST' })
+      }
+      const signal = AbortSignal.any([c.req.raw.signal, generationController.signal])
+      try {
+        const previewId = asOperationExecute(await readOperationJson(c.req.raw, signal))
+        // Once the Host accepts a confirmed mutation it owns the transaction.
+        // Closing the Market surface may stop the HTTP response, but must not
+        // interrupt profile writes between pnpm, post-checks, and the receipt.
+        purgeDesktopTokens()
+        let result: unknown
+        const disablePreview = disablePreviews.get(previewId)
+        const enablePreview = enablePreviews.get(previewId)
+        if (disablePreview !== undefined || enablePreview !== undefined) {
+          disablePreviews.delete(previewId)
+          enablePreviews.delete(previewId)
+          const desktopPreview = disablePreview ?? enablePreview!
+          const action = disablePreview === undefined ? 'enable' : 'disable'
+          const desktopPlugins = desktopPluginsProvider?.get()
+          const install = installProvider.get()
+          if (desktopPlugins === undefined || install === undefined) {
+            throw new MarketInstallError('not-available', 'Desktop plugin management is unavailable.')
+          }
+          const currentInventory = desktopPlugins.list()
+          const currentTarget = currentInventory
+            .find(bundle => bundle.bundleId === desktopPreview.bundleId)
+          const expectedStatus = action === 'disable' ? 'active' : 'disabled'
+          if (
+            currentTarget === undefined
+            || currentTarget.packageName !== desktopPreview.packageName
+            || !currentTarget.mutable
+            || currentTarget.status !== expectedStatus
+          ) {
+            throw new MarketInstallError(
+              'conflict',
+              action === 'disable'
+                ? 'The selected plugin bundle changed before it could be disabled.'
+                : 'The selected plugin bundle changed before it could be enabled.',
+            )
+          }
+          const matchingReceipts = (await install.listVerifiedReceipts(generationController.signal))
+            .filter(receipt => receipt.packageName === desktopPreview.packageName)
+          if (action === 'disable') {
+            const packageBundleCount = currentInventory
+              .filter(bundle => bundle.packageName === desktopPreview.packageName).length
+            const ownershipUnchanged = desktopPreview.receiptId === undefined
+              ? matchingReceipts.length === 0
+              : packageBundleCount === 1
+                && matchingReceipts.length === 1
+                && matchingReceipts[0]?.receiptId === desktopPreview.receiptId
+            if (!ownershipUnchanged) {
+              throw new MarketInstallError('conflict', 'The selected plugin ownership changed before it could be disabled.')
+            }
+          }
+          if (action === 'enable') {
+            const receiptUnchanged = desktopPreview.receiptId === undefined
+              ? matchingReceipts.length === 0
+              : matchingReceipts.length === 1 && matchingReceipts[0]?.receiptId === desktopPreview.receiptId
+            if (!receiptUnchanged) {
+              throw new MarketInstallError('conflict', 'The selected plugin ownership changed before it could be enabled.')
+            }
+          }
+          let changed: { readonly packageName: string; readonly live: boolean }
+          try {
+            changed = action === 'disable'
+              ? await desktopPlugins.executeDisable(previewId)
+              : await desktopPlugins.executeEnable(previewId)
+          } catch {
+            throw new MarketInstallError(
+              'conflict',
+              action === 'disable'
+                ? 'The selected plugin bundle changed before it could be disabled.'
+                : 'The selected plugin bundle changed before it could be enabled.',
+            )
+          }
+          if (!boundedIdentifier(changed.packageName) || changed.packageName !== desktopPreview.packageName) {
+            throw new MarketInstallError(
+              'operation-failed',
+              action === 'disable'
+                ? 'The desktop plugin disable result was invalid.'
+                : 'The desktop plugin enable result was invalid.',
+            )
+          }
+          const restartToken = randomUUID()
+          rememberDesktopToken(desktopPluginRestartTokens, restartToken, Date.now() + 5 * 60 * 1000)
+          result = { action, packageName: changed.packageName, restartToken, restartRequired: !changed.live }
+        } else {
+          const install = installProvider.get()
+          if (install === undefined) {
+            throw new MarketInstallError('not-available', 'Market package operations are unavailable.')
+          }
+          result = await install.executePreview(previewId, generationController.signal)
+        }
+        return signal.aborted ? abortedResponse() : jsonResponse(200, result)
+      } catch (cause) {
+        return signal.aborted ? abortedResponse() : installErrorResponse(cause)
+      }
+    })
   }
   if (desktopActionsProvider !== undefined) {
-    routes.push(ctx.router.route('*', ROUTE_REQUEST_RESTART, async c => {
+    app.all(ROUTE_REQUEST_RESTART, async c => {
       if (c.req.method !== 'POST' || !routeMutationAllowed(c)) {
         return jsonResponse(405, { error: 'requesting a restart requires a local same-origin POST' })
       }
@@ -1302,9 +1296,9 @@ export function registerMarketRoutes(
       if (actions === undefined) {
         return jsonResponse(503, { error: 'desktop restart is unavailable' })
       }
-      const signal = AbortSignal.any([c.signal, generationController.signal])
+      const signal = AbortSignal.any([c.req.raw.signal, generationController.signal])
       try {
-        const restartToken = asRestartToken(await readOperationJson(c.req, signal))
+        const restartToken = asRestartToken(await readOperationJson(c.req.raw, signal))
         signal.throwIfAborted()
         purgeDesktopTokens()
         if (!desktopPluginRestartTokens.delete(restartToken)) {
@@ -1319,7 +1313,7 @@ export function registerMarketRoutes(
         // the token without performing the accepted action.
         // The restart runs after the response has been handed back, in a later turn, and whether or not the caller is still
         // there: a dropped acknowledgement must not burn the token without performing the accepted action.
-        c.waitUntil(new Promise<void>(resolve => {
+        c.executionCtx.waitUntil(new Promise<void>(resolve => {
           setTimeout(() => {
             try {
               void actions.requestRestart().catch(() => {
@@ -1335,8 +1329,10 @@ export function registerMarketRoutes(
       } catch (cause) {
         return signal.aborted ? abortedResponse() : installErrorResponse(cause)
       }
-    }))
+    })
   }
+  // Mounted once every route is registered: the router reads the app when it next composes, and the inspector reads the mount's label now.
+  const routes = [ctx.router.route('/', app), ctx.routerHttp.mount(MARKET_PREFIX)]
   let disposed = false
   return () => {
     if (disposed) return

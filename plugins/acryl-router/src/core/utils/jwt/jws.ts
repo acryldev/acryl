@@ -9,6 +9,7 @@ import { decodeBase64 } from '../encode.ts'
 import type { SignatureAlgorithm } from './jwa.ts'
 import { CryptoKeyUsage, JwtAlgorithmNotImplemented } from './types.ts'
 import { utf8Encoder } from './utf8.ts'
+import type { BufferSource } from '../types.ts'
 
 type KeyImporterAlgorithm = Parameters<typeof crypto.subtle.importKey>[2]
 type KeyAlgorithm =

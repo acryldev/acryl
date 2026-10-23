@@ -1145,7 +1145,7 @@ describe('market install Host routes', () => {
     )
     // Every route the Market serves is on the router: state, catalog, assets, sources, open-terminal, installable,
     // installations, preview, execute and request-restart.
-    expect(services.router.size).toBe(10)
+    expect(services.router.routeCount).toBe(10)
 
     const request = async (path: string, method: string, body?: unknown) => {
       const result = await callRoute(services.router, path, { method, ...(body === undefined ? {} : { json: body }) })

@@ -18,14 +18,14 @@ describe('Powered by Middleware', () => {
     const res = await app.request('http://localhost/poweredBy')
     expect(res).not.toBeNull()
     expect(res.status).toBe(200)
-    expect(res.headers.get('X-Powered-By')).toBe('App')
+    expect(res.headers.get('X-Powered-By')).toBe('ACRYL')
   })
 
   it('Should not return duplicate values', async () => {
     const res = await app.request('http://localhost/poweredBy2')
     expect(res).not.toBeNull()
     expect(res.status).toBe(200)
-    expect(res.headers.get('X-Powered-By')).toBe('App')
+    expect(res.headers.get('X-Powered-By')).toBe('ACRYL')
   })
 
   it('Should return custom serverName', async () => {

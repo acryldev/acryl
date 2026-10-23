@@ -8,7 +8,8 @@ import { Context, type FiberState } from '@deepseek-ai/cordis'
 import WebServer from '@deepseek-ai/dsh-host-webserver'
 import { apply as routerApply, name as routerName } from 'acryl-router'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { RouterHttpService } from 'acryl-router'
+import { App, connectionOf, type RouterHttpService } from 'acryl-router'
+import { methodNotAllowed } from 'acryl-router/middleware'
 import { apply, inject, name } from '../src/index.ts'
 
 const PENDING = 0 as FiberState.PENDING
@@ -39,25 +40,28 @@ async function stack(): Promise<{ ctx: Context, base: () => string }> {
   return { ctx, base: () => `http://127.0.0.1:${String((ctx as unknown as { webServer: { port: number } }).webServer.port)}` }
 }
 
-function demo(prefix: string, extra?: (ctx: Context) => void) {
+function demo(prefix: string, extra?: (app: App) => void) {
   return {
     name: `demo${prefix.replaceAll('/', '-')}`,
     inject: ['router', 'routerHttp'],
     apply(ctx: Context): void {
       ctx.routerHttp.mount(prefix)
-      ctx.router.get(`${prefix}/hello/:who`, c => c.json({ hello: c.params['who'], q: c.url.searchParams.get('q'), host: c.req.headers.get('host') !== null }))
-      ctx.router.post(`${prefix}/echo`, async c => c.json({ got: await c.req.text(), type: c.req.headers.get('content-type') }, 201))
-      ctx.router.get(`${prefix}/cookies`, () => {
+      const app = new App()
+      app.use(methodNotAllowed({ app }))
+      app.get('/hello/:who', c => c.json({ hello: c.req.param('who'), q: c.req.query('q') ?? null, host: c.req.header('host') !== undefined }))
+      app.post('/echo', async c => c.json({ got: await c.req.text(), type: c.req.header('content-type') ?? null }, 201))
+      app.get('/cookies', () => {
         const headers = new Headers()
         headers.append('set-cookie', 'a=1; Path=/')
         headers.append('set-cookie', 'b=2; Path=/')
         return new Response('ok', { headers })
       })
-      ctx.router.get(`${prefix}/stream`, () => new Response(new ReadableStream({
+      app.get('/stream', () => new Response(new ReadableStream({
         start(controller) { controller.enqueue(new TextEncoder().encode('one,')); controller.enqueue(new TextEncoder().encode('two')); controller.close() },
       })))
-      ctx.router.get(`${prefix}/peer`, c => c.json({ remote: c.connection.remoteAddress ?? null, localPort: c.connection.localPort ?? null }))
-      extra?.(ctx)
+      app.get('/peer', c => c.json({ remote: connectionOf(c).remoteAddress ?? null, localPort: connectionOf(c).localPort ?? null }))
+      extra?.(app)
+      ctx.router.route(prefix, app)
     },
   }
 }
@@ -106,7 +110,7 @@ describe('acryl-router-http against a real webServer', () => {
     await settle(20)
     const missing = await fetch(`${base()}/api/demo/none`)
     expect(missing.status).toBe(404)
-    expect(await missing.text()).toBe('Not Found')
+    expect(await missing.text()).toBe('404 Not Found')
     expect((await fetch(`${base()}/api/demo/echo`)).status).toBe(405)
     const head = await fetch(`${base()}/api/demo/hello/a`, { method: 'HEAD' })
     expect(head.status).toBe(200)
@@ -117,9 +121,9 @@ describe('acryl-router-http against a real webServer', () => {
   it('aborts the handler signal when the HTTP client disconnects', async () => {
     const { ctx, base } = await stack()
     let aborted = false
-    ctx.plugin(demo('/api/demo', c => {
-      c.router.get('/api/demo/slow', async r => {
-        await new Promise<void>((_resolve, reject) => { r.signal.addEventListener('abort', () => { aborted = true; reject(new Error('aborted')) }, { once: true }) })
+    ctx.plugin(demo('/api/demo', app => {
+      app.get('/slow', async r => {
+        await new Promise<void>((_resolve, reject) => { r.req.raw.signal.addEventListener('abort', () => { aborted = true; reject(new Error('aborted')) }, { once: true }) })
         return r.text('never')
       })
     }))

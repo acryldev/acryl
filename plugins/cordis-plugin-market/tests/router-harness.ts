@@ -1,11 +1,11 @@
 /**
- * Test-only stand-ins for the `router` and `routerHttp` services the market now injects (spec 046, M2). They are the real
- * routing core (`RouteTable`) and the real node bridge (`serve`), wired to a fake `webServer` the way the production
- * plugins are wired to the DSH one, so a test sees the same request path a browser does.
+ * Test-only stand-ins for the `router` and `routerHttp` services the market injects. They compose the real core `App` from
+ * the live mounts on every request, as the router service does, and serve through the real node bridge (`serve`), wired to a
+ * fake `webServer` the way the production plugins are wired to the DSH one, so a test sees the same request path a browser does.
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { RouteTable, type ConnectionInfo, type Handler, type Middleware, type RouteMethod } from 'acryl-router'
+import { App, type ConnectionInfo, type MountableApp } from 'acryl-router'
 import { serve } from 'acryl-router-http'
 
 export interface FakeRoute {
@@ -39,17 +39,24 @@ export class FakeWebServer {
   }
 }
 
-/** The router services over a table, mounting through `webServer.register` like the production adapter does. */
+/** The router services over a list of mounts, mounting through `webServer.register` like the production adapter does. */
 export function routerServices(webServer: { register(route: FakeRoute): () => void }) {
-  const table = new RouteTable({ trailingSlash: 'strict' })
+  const mounts = new Set<{ readonly path: string, readonly app: MountableApp }>()
   const router = {
-    route: (method: RouteMethod, path: string, handler: Handler) => table.add(method, path, handler),
-    get: (path: string, handler: Handler) => table.add('GET', path, handler),
-    post: (path: string, handler: Handler) => table.add('POST', path, handler),
-    use: (path: string, middleware: Middleware) => table.use(path, middleware),
+    route: (path: string, app: MountableApp): (() => void) => {
+      const mount = { path, app }
+      mounts.add(mount)
+      return () => { mounts.delete(mount) }
+    },
     // The request's own signal is the abort signal, as the real router derives it from the caller's.
-    fetch: (request: Request, connection?: ConnectionInfo) => table.dispatch(request, request.signal, connection),
-    get size() { return table.size },
+    fetch: async (request: Request, connection: ConnectionInfo = {}): Promise<Response> => {
+      const root = new App()
+      for (const mount of mounts) root.route(mount.path, mount.app)
+      return root.fetch(request, { connection }, { waitUntil: () => {}, passThroughOnException: () => {}, props: {} })
+    },
+    get size() { return mounts.size },
+    /** Routes across every mount, the way the core lists them. */
+    get routeCount() { let count = 0; for (const mount of mounts) count += mount.app.routes.length; return count },
   }
   const routerHttp = {
     mount: (prefix: string) => webServer.register({ kind: 'prefix', path: prefix, handler: (req, res) => serve(router, req, res) }),

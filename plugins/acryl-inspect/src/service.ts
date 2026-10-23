@@ -6,7 +6,7 @@
 
 import { Context, Service } from '@deepseek-ai/cordis'
 import { loopbackOnly } from 'acryl-router/middleware'
-import type {} from 'acryl-router'
+import { App } from 'acryl-router'
 import { explain, ownerOf, renderReports, reportFiber, type FiberView, type PluginReport } from './report.ts'
 
 declare module '@deepseek-ai/cordis' {
@@ -54,12 +54,14 @@ export function apply(ctx: Context): void {
   // The same facts on the router, for any surface; present only where a router is. A request over a socket must come from this machine to this app;
   // the terminal calls the router in process and is the host's own code.
   ctx.inject(['router'], inner => {
-    const api = inner.router.group('/api/inspect', loopbackOnly({ inProcess: 'allow' }))
-    api.get('/plugins', c => c.json(inspect.plugins()))
-    api.get('/plugins/:name', c => {
-      const text = inspect.explain(c.param('name') ?? '')
-      return text === undefined ? c.json({ error: 'no such plugin' }, 404) : c.text(text)
-    })
+    const api = new App()
+      .use(loopbackOnly({ inProcess: 'allow' }))
+      .get('/plugins', c => c.json(inspect.plugins()))
+      .get('/plugins/:name', c => {
+        const text = inspect.explain(c.req.param('name'))
+        return text === undefined ? c.json({ error: 'no such plugin' }, 404) : c.text(text)
+      })
+    inner.router.route('/api/inspect', api)
     // Over HTTP only where an adapter exists (Web and Desktop); the terminal needs none.
     inner.inject(['routerHttp'], http => { http.routerHttp.mount('/api/inspect') })
   })

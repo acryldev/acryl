@@ -6,9 +6,9 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
-import { HttpError } from 'acryl-router'
-import { loopbackOnly } from 'acryl-router/middleware'
-import { readJson, streamSSE, valid, validate, type StandardSchema } from 'acryl-router/helpers'
+import { App, HTTPException } from 'acryl-router'
+import { bodyLimit, loopbackOnly } from 'acryl-router/middleware'
+import { schemaValidator, streamSSE, type StandardSchema } from 'acryl-router/helpers'
 import type {} from 'acryl-state'
 import { PAGE } from './page.ts'
 
@@ -30,6 +30,19 @@ const NewTodo: StandardSchema<{ title: string }> = {
     },
   },
 }
+
+/** Standard Schema for a change to a todo. */
+const TodoChange: StandardSchema<{ done: boolean }> = {
+  '~standard': {
+    validate: value => {
+      const done = (value as { done?: unknown } | null)?.done
+      return typeof done === 'boolean' ? { value: { done } } : { issues: [{ message: 'done must be true or false', path: ['done'] }] }
+    },
+  },
+}
+
+/** A todo body is small; anything bigger is refused before it is read. */
+const MAX_BODY_BYTES = 16 * 1024
 
 /** A missing file is a new list. Any other failure (unreadable, corrupt, half-written) refuses to start: starting empty would overwrite the user's real list on the first save. */
 function load(file: string | undefined): Todo[] {
@@ -65,32 +78,46 @@ export function apply(ctx: Context, config: Config = {}): void {
   }
   const nextId = (): number => todos.get().reduce((max, todo) => Math.max(max, todo.id), 0) + 1
 
-  const api = ctx.router.group('/todo', loopbackOnly({ inProcess: 'allow' }))
-  api.get('/', c => c.html(PAGE))
-  api.get('/api', c => c.json(todos.get()))
-  api.post('/api', validate('json', NewTodo), c => {
-    const todo: Todo = { id: nextId(), title: valid<{ title: string }>(c, 'json').title, done: false }
-    todos.update(list => [...list, todo])
-    return c.json(todo, 201)
-  })
-  api.patch('/api/:id', async c => {
-    const id = Number(c.param('id'))
-    const change = await readJson(c) as { done?: unknown }
-    if (!todos.get().some(todo => todo.id === id)) throw new HttpError(404, { message: 'no such todo' })
-    if (typeof change.done !== 'boolean') throw new HttpError(400, { message: 'done must be true or false' })
-    todos.update(list => list.map(todo => todo.id === id ? { ...todo, done: change.done as boolean } : todo))
-    return c.json(todos.get().find(todo => todo.id === id))
-  })
-  api.delete('/api/:id', c => {
-    const id = Number(c.param('id'))
-    if (!todos.get().some(todo => todo.id === id)) throw new HttpError(404, { message: 'no such todo' })
-    todos.update(list => list.filter(todo => todo.id !== id))
-    return c.body(null, 204)
-  })
-  api.get('/events', c => streamSSE(c, stream => {
-    stream.send(todos.get())
-    return todos.subscribe(list => { stream.send(list) })
-  }))
+  const find = (id: number): Todo => {
+    const todo = todos.get().find(item => item.id === id)
+    if (todo === undefined) throw new HTTPException(404, { message: 'no such todo' })
+    return todo
+  }
+
+  const api = new App()
+    .use(loopbackOnly({ inProcess: 'allow' }), bodyLimit({ maxSize: MAX_BODY_BYTES }))
+    .get('/', c => c.html(PAGE))
+    .get('/api', c => c.json(todos.get()))
+    .post('/api', schemaValidator('json', NewTodo), c => {
+      const todo: Todo = { id: nextId(), title: c.req.valid('json').title, done: false }
+      todos.update(list => [...list, todo])
+      return c.json(todo, 201)
+    })
+    .patch('/api/:id', schemaValidator('json', TodoChange), c => {
+      const { id } = find(Number(c.req.param('id')))
+      const { done } = c.req.valid('json')
+      todos.update(list => list.map(todo => todo.id === id ? { ...todo, done } : todo))
+      return c.json(find(id))
+    })
+    .delete('/api/:id', c => {
+      const { id } = find(Number(c.req.param('id')))
+      todos.update(list => list.filter(todo => todo.id !== id))
+      return c.body(null, 204)
+    })
+    .get('/events', c => streamSSE(c, async stream => {
+      const ended = new Promise<void>(resolve => { stream.onAbort(resolve) })
+      // Writes are asynchronous; chaining them keeps events in the order the list changed.
+      let queue: Promise<unknown> = Promise.resolve()
+      const send = (list: readonly Todo[]): void => { queue = queue.then(() => stream.writeSSE({ data: JSON.stringify(list) })).catch(() => {}) }
+      send(todos.get())
+      const unsubscribe = todos.subscribe(send)
+      try {
+        await ended
+      } finally {
+        unsubscribe()
+      }
+    }))
+  ctx.router.route('/todo', api)
 
   ctx.inject(['routerHttp'], inner => { inner.routerHttp.mount('/todo') })
 }

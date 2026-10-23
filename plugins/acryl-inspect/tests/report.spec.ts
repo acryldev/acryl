@@ -7,14 +7,13 @@ function fiber(over: Partial<FiberView> & { effects?: FiberView['getEffects'] ex
 }
 
 describe('reportFiber', () => {
-  it('sorts effects into provides, routes, middleware and everything else, including nested ones', () => {
+  it('sorts effects into provides, mounts with their routes, and everything else, including nested ones', () => {
     const report = reportFiber(fiber({
       inject: { router: null, acrylSettings: null },
       effects: [
         { label: 'ctx.provide("things")', children: [] },
-        { label: 'acryl-router: GET /api/things/:id', children: [] },
-        { label: 'acryl-router: POST /api/things', children: [{ label: 'inner timer', children: [] }] },
-        { label: 'acryl-router: use /api', children: [] },
+        { label: 'acryl-router: route /api (ALL /api/*, GET /api/things/:id)', children: [] },
+        { label: 'acryl-router: route /api/things (POST /api/things)', children: [{ label: 'inner timer', children: [] }] },
         { label: 'ctx.on("internal/status")', children: [] },
       ],
     }))
@@ -23,10 +22,10 @@ describe('reportFiber', () => {
       state: 'ACTIVE',
       requires: ['acrylSettings', 'router'],
       provides: ['things'],
-      routes: [{ method: 'GET', path: '/api/things/:id' }, { method: 'POST', path: '/api/things' }],
-      middleware: ['/api'],
+      mounts: ['/api', '/api/things'],
+      routes: [{ method: 'ALL', path: '/api/*' }, { method: 'GET', path: '/api/things/:id' }, { method: 'POST', path: '/api/things' }],
       other: ['inner timer', 'ctx.on("internal/status")'],
-      removedOnUnload: 6,
+      removedOnUnload: 5,
     })
   })
 
@@ -42,7 +41,7 @@ describe('explain', () => {
   it('says what a plugin needs, adds and removes on unload', () => {
     const text = explain(reportFiber(fiber({
       inject: { router: null },
-      effects: [{ label: 'acryl-router: GET /a', children: [] }],
+      effects: [{ label: 'acryl-router: route / (GET /a)', children: [] }],
     })))
     expect(text).toContain('demo (ACTIVE)')
     expect(text).toContain('needs:     router')

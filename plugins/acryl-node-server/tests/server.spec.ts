@@ -2,7 +2,7 @@
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { Context } from '@deepseek-ai/cordis'
-import { apply as routerApply, name as routerName } from 'acryl-router'
+import { App, apply as routerApply, connectionOf, name as routerName } from 'acryl-router'
 import { streamSSE } from 'acryl-router/helpers'
 import { afterEach, describe, expect, it } from 'vitest'
 import * as nodeServer from '../src/index.ts'
@@ -42,7 +42,7 @@ const portIsFree = async (port: number): Promise<boolean> => {
 describe('acryl-node-server', () => {
   it('serves the router over a real socket with the peer and port as connection facts', async () => {
     const ctx = await boot()
-    ctx.router.get('/who', c => c.json({ peer: c.connection.remoteAddress, port: c.connection.localPort }))
+    ctx.router.route('/', new App().get('/who', c => c.json({ peer: connectionOf(c).remoteAddress, port: connectionOf(c).localPort })))
     const body = await (await fetch(`${ctx.nodeServer.url}/who`)).json() as { peer: string, port: number }
     expect(ctx.nodeServer.url).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/u)
     expect(body.port).toBe(ctx.nodeServer.port)
@@ -77,7 +77,10 @@ describe('acryl-node-server', () => {
 
   it('on dispose ends open event streams and frees the port', async () => {
     const ctx = await boot()
-    ctx.router.get('/events', c => streamSSE(c, stream => { stream.send('hello') }))
+    ctx.router.route('/', new App().get('/events', c => streamSSE(c, async stream => {
+      await stream.writeSSE({ data: 'hello' })
+      await new Promise<void>(resolve => { stream.onAbort(resolve) })
+    })))
     const port = ctx.nodeServer.port
     const response = await fetch(`${ctx.nodeServer.url}/events`)
     const reader = response.body!.getReader()

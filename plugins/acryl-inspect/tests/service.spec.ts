@@ -4,7 +4,7 @@
  */
 
 import { Context } from '@deepseek-ai/cordis'
-import { apply as routerApply, name as routerName } from 'acryl-router'
+import { App, apply as routerApply, name as routerName } from 'acryl-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { apply, name, type PluginReport } from '../src/index.ts'
 
@@ -18,9 +18,10 @@ const market = {
   name: 'demo-market',
   inject: ['router'],
   apply(ctx: Context): void {
-    ctx.router.use('/api/demo', async (_c, next) => next())
-    ctx.router.get('/api/demo/state', c => c.json({ ok: true }))
-    ctx.router.post('/api/demo/sources', c => c.json({ ok: true }, 201))
+    ctx.router.route('/api/demo', new App()
+      .use(async (_c, next) => { await next() })
+      .get('/state', c => c.json({ ok: true }))
+      .post('/sources', c => c.json({ ok: true }, 201)))
   },
 }
 
@@ -45,7 +46,7 @@ describe('acryl-inspect', () => {
     ctx.plugin({
       name: 'demo-inline',
       apply(inner: Context): void {
-        inner.inject(['router'], deeper => { deeper.router.get('/api/inline', c => c.json({ ok: true })) })
+        inner.inject(['router'], deeper => { deeper.router.route('/', new App().get('/api/inline', c => c.json({ ok: true }))) })
       },
     })
     await settle()
@@ -67,9 +68,9 @@ describe('acryl-inspect', () => {
       state: 'ACTIVE',
       requires: ['router'],
       provides: [],
-      routes: [{ method: 'GET', path: '/api/demo/state' }, { method: 'POST', path: '/api/demo/sources' }],
-      middleware: ['/api/demo'],
-      removedOnUnload: 3,
+      mounts: ['/api/demo'],
+      routes: [{ method: 'ALL', path: '/api/demo/*' }, { method: 'GET', path: '/api/demo/state' }, { method: 'POST', path: '/api/demo/sources' }],
+      removedOnUnload: 1,
     })
   })
 
@@ -102,10 +103,10 @@ describe('acryl-inspect', () => {
     const list = await ctx.router.fetch(new Request('http://acryl.test/api/inspect/plugins'))
     expect(list.status).toBe(200)
     const reports = await list.json() as PluginReport[]
-    expect(byName(reports, 'demo-market').routes).toHaveLength(2)
+    expect(byName(reports, 'demo-market').routes).toHaveLength(3)
 
     const one = await ctx.router.fetch(new Request('http://acryl.test/api/inspect/plugins/demo-market'))
-    expect(await one.text()).toContain('removes 3 registrations and nothing else')
+    expect(await one.text()).toContain('removes 1 registration and nothing else')
     expect((await ctx.router.fetch(new Request('http://acryl.test/api/inspect/plugins/nope'))).status).toBe(404)
   })
 

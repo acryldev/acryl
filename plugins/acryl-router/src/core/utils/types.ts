@@ -118,3 +118,6 @@ export type IsAny<T> = boolean extends (T extends never ? true : false) ? true :
  * @see https://github.com/Microsoft/TypeScript/issues/29729
  */
 export type StringLiteralUnion<T> = T | (string & Record<never, never>)
+
+/** Bytes a Web Crypto call accepts; declared here so the public types do not need the DOM library. */
+export type BufferSource = ArrayBufferView<ArrayBuffer> | ArrayBuffer

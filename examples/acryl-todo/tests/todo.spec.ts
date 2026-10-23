@@ -34,7 +34,7 @@ describe('acryl-todo', () => {
     const created = await post(ctx, ' buy milk ')
     expect(created.status).toBe(201)
     expect(await created.json()).toEqual({ id: 1, title: 'buy milk', done: false })
-    const patched = await ctx.router.request('/todo/api/1', { method: 'PATCH', body: JSON.stringify({ done: true }) })
+    const patched = await ctx.router.request('/todo/api/1', { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ done: true }) })
     expect(await patched.json()).toEqual({ id: 1, title: 'buy milk', done: true })
     expect(await (await ctx.router.request('/todo/api')).json()).toEqual([{ id: 1, title: 'buy milk', done: true }])
     expect((await ctx.router.request('/todo/api/1', { method: 'DELETE' })).status).toBe(204)
@@ -46,7 +46,7 @@ describe('acryl-todo', () => {
     expect((await post(ctx, '')).status).toBe(400)
     expect((await post(ctx, 42)).status).toBe(400)
     expect((await ctx.router.request('/todo/api/9', { method: 'DELETE' })).status).toBe(404)
-    expect((await ctx.router.request('/todo/api/9', { method: 'PATCH', body: '{"done":true}' })).status).toBe(404)
+    expect((await ctx.router.request('/todo/api/9', { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: '{"done":true}' })).status).toBe(404)
   })
 
   it('serves the page', async () => {

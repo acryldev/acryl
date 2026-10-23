@@ -124,7 +124,7 @@ describe('Secure Headers Middleware', () => {
     appAfter.use('*', secureHeaders())
 
     const resAfter = await appAfter.request('/')
-    expect(resAfter.headers.get('x-powered-by')).toBe('App')
+    expect(resAfter.headers.get('x-powered-by')).toBe('ACRYL')
   })
 
   it('should override Strict-Transport-Security header after middleware', async () => {
@@ -222,7 +222,7 @@ describe('Secure Headers Middleware', () => {
 
     const res2 = await app.request('/test2')
     const poweredby2 = res2.headers.get('X-Powered-By')
-    expect(poweredby2).toEqual('App')
+    expect(poweredby2).toEqual('ACRYL')
     expect(await res2.text()).toEqual('App is hot')
   })
 

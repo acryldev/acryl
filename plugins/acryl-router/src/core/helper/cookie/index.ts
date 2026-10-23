@@ -6,6 +6,7 @@
 import type { Context } from '../../context.ts'
 import { parse, parseSigned, serialize, serializeSigned } from '../../utils/cookie.ts'
 import type { Cookie, CookieOptions, CookiePrefixOptions, SignedCookie } from '../../utils/cookie.ts'
+import type { BufferSource } from '../../utils/types.ts'
 
 interface GetCookie {
   (c: Context, key: string): string | undefined

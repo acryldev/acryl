@@ -11,6 +11,7 @@ import { join } from 'node:path'
 import { Context, type FiberState } from '@deepseek-ai/cordis'
 import { Loader } from '@deepseek-ai/cordis-plugin-loader'
 import { afterEach, describe, expect, it } from 'vitest'
+import { App } from '../src/index.ts'
 
 const ACTIVE = 2 as FiberState.ACTIVE
 const DISPOSED = 4 as FiberState.DISPOSED
@@ -45,7 +46,7 @@ describe('acryl-router through a real Loader', () => {
   it('activates from the built entry and serves a request in process', async () => {
     const { ctx, entryId } = await mount()
     expect(entryOf(ctx, entryId).fiber?.state).toBe(ACTIVE)
-    ctx.router.get('/ping', c => c.json({ ok: true }))
+    ctx.router.route('/', new App().get('/ping', c => c.json({ ok: true })))
     const response = await ctx.router.fetch(new Request('http://acryl.test/ping'))
     expect(await response.json()).toEqual({ ok: true })
   })
@@ -65,7 +66,7 @@ describe('acryl-router through a real Loader', () => {
     expect(ctx.router).not.toBe(first)
     expect(ctx.router.size).toBe(0)
     expect((await first.fetch(new Request('http://acryl.test/x'))).status).toBe(503)
-    ctx.router.get('/again', c => c.text('ok'))
+    ctx.router.route('/', new App().get('/again', c => c.text('ok')))
     expect(await (await ctx.router.fetch(new Request('http://acryl.test/again'))).text()).toBe('ok')
   })
 })

@@ -4,6 +4,7 @@
  */
 
 import { tryDecodeURIComponent } from './url.ts'
+import type { BufferSource } from './types.ts'
 
 export type Cookie = Record<string, string>
 export type SignedCookie = Record<string, string | false>

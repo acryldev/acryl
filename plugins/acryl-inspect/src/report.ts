@@ -36,10 +36,10 @@ export interface PluginReport {
   readonly requires: readonly string[]
   /** Services it provides. */
   readonly provides: readonly string[]
-  /** Routes it registered on the router. */
+  /** Paths it mounted an app under on the router. */
+  readonly mounts: readonly string[]
+  /** What those mounts serve; middleware and `all` routes show as method `ALL`, the way the core keeps them. */
   readonly routes: readonly RouteReport[]
-  /** Router middleware paths it registered. */
-  readonly middleware: readonly string[]
   /** Every other labeled registration (event listeners, timers, commands, tools). */
   readonly other: readonly string[]
   /** How many registrations disappear when it unloads: all of them. */
@@ -47,8 +47,8 @@ export interface PluginReport {
 }
 
 const PROVIDE = /^ctx\.provide\("(.+)"\)$/
-const ROUTE = /^acryl-router: (GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|\*) (\/\S*)$/
-const USE = /^acryl-router: use (\/\S*)$/
+const MOUNT = /^acryl-router: route (\S+) \((.*)\)$/
+const SERVED = /^([A-Z]+) (\S+)$/
 
 function flatten(effects: readonly EffectLabel[]): string[] {
   return effects.flatMap(effect => [effect.label, ...flatten(effect.children)])
@@ -74,26 +74,29 @@ export function ownerOf(fiber: FiberView): FiberView {
 /** Describe one fiber, counting the registrations of the unnamed inline callbacks it owns (`adopted`) as its own. */
 export function reportFiber(fiber: FiberView, adopted: readonly FiberView[] = []): PluginReport {
   const provides: string[] = []
+  const mounts: string[] = []
   const routes: RouteReport[] = []
-  const middleware: string[] = []
   const other: string[] = []
   const labels = [fiber, ...adopted].flatMap(source => flatten(source.getEffects()))
   for (const label of labels) {
     const provided = PROVIDE.exec(label)
-    const route = ROUTE.exec(label)
-    const used = USE.exec(label)
+    const mount = MOUNT.exec(label)
     if (provided?.[1] !== undefined) provides.push(provided[1])
-    else if (route?.[1] !== undefined && route[2] !== undefined) routes.push({ method: route[1], path: route[2] })
-    else if (used?.[1] !== undefined) middleware.push(used[1])
-    else other.push(label)
+    else if (mount?.[1] !== undefined) {
+      mounts.push(mount[1])
+      for (const entry of (mount[2] ?? '').split(', ')) {
+        const served = SERVED.exec(entry)
+        if (served?.[1] !== undefined && served[2] !== undefined) routes.push({ method: served[1], path: served[2] })
+      }
+    } else other.push(label)
   }
   return {
     name: isNamed(fiber) ? fiber.runtime?.name ?? 'anonymous' : 'anonymous',
     state: stateName(fiber.state),
     requires: Object.keys(fiber.inject).sort(),
     provides: provides.sort(),
+    mounts,
     routes,
-    middleware,
     other,
     removedOnUnload: labels.length,
   }
@@ -108,7 +111,7 @@ export function explain(report: PluginReport): string {
     `  needs:     ${list(report.requires)}`,
     `  provides:  ${list(report.provides)}`,
     `  routes:    ${list(report.routes.map(route => `${route.method} ${route.path}`))}`,
-    `  middleware:${report.middleware.length === 0 ? ' nothing' : ` ${report.middleware.join(', ')}`}`,
+    `  mounts:    ${report.mounts.length === 0 ? 'nothing' : report.mounts.join(', ')}`,
   ]
   if (report.other.length > 0) lines.push(`  also:      ${report.other.join('; ')}`)
   lines.push(report.state === 'PENDING'

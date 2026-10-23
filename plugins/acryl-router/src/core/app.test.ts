@@ -1235,12 +1235,12 @@ describe('Builtin Middleware', () => {
 
   it('"powered-by" middleware', async () => {
     const res = await app.request('http://localhost/abc')
-    expect(res.headers.get('x-powered-by')).toBe('App')
+    expect(res.headers.get('x-powered-by')).toBe('ACRYL')
   })
 
   it('"powered-by" middleware in a handler', async () => {
     const res = await app.request('http://localhost/def')
-    expect(res.headers.get('x-powered-by')).toBe('App')
+    expect(res.headers.get('x-powered-by')).toBe('ACRYL')
   })
 })
 
@@ -1297,7 +1297,7 @@ describe('Middleware with app.HTTP_METHOD', () => {
       const res = await app.request('http://localhost/abc')
       expect(res.status).toBe(200)
       expect(await res.text()).toBe('GET /abc')
-      expect(res.headers.get('x-powered-by')).toBe('App')
+      expect(res.headers.get('x-powered-by')).toBe('ACRYL')
     })
   })
 })
