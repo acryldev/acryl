@@ -46,3 +46,21 @@ marked unverified.
 - Because the first candidate passed, H3 and Rou3 were not measured. The suite is framework-neutral (`Candidate`), so a
   comparison is one adapter and a test run if one is wanted later.
 - No dependency on `hono` was needed: the matcher, `compose` and context are ACRYL-owned.
+
+## M2 result (2026-10-23)
+
+- `acryl-router-http` serves a mounted prefix through `router.fetch`. A prefix route on the DSH webServer matches the path and
+  everything below it, so one `mount('/api/community-market')` covers all of the Market's routes, ported or not: exact routes
+  still registered on the webServer win over the prefix, so the unported routes keep working unchanged.
+- **Finding: connection facts need a seam.** The Market's loopback-only authority check reads `req.socket.remoteAddress`, which
+  a Web `Request` does not carry. The router now takes `connection` info as a second argument of `fetch` (the adapter fills it
+  from the socket); an in-process caller passes none, so the Market refuses it by default. Anything that must trust the peer
+  has to read `c.connection`, never a header.
+- **Finding: route methods.** The old state route answered any method; the router route is `GET` (and `HEAD`). Routes that
+  checked methods themselves (sources, assets) use the any-method route so their exact error bodies are unchanged.
+- **Finding: composition is where the cost is.** Porting a route is mechanical; making every surface mount the new services is
+  not: the Web blueprint, the Desktop profile, the Loader boot smoke, four package manifests and the lockfile. A row table `needs`
+  list in the Web blueprint and a required-rows constant in the Desktop market module now carry it.
+- **Not done in this slice:** seven Market routes (their tests build `req`/`res` emitters by hand), the Desktop IPC bridge,
+  the CLI/TUI call path, and a full application boot (Web or Desktop). The worktree's other packages lack `node_modules`, so
+  `acryl-plugin-context` and `extension-examples` specs cannot run here; CI is the check for those.
