@@ -31,9 +31,23 @@ const NewTodo: StandardSchema<{ title: string }> = {
   },
 }
 
+/** A missing file is a new list. Any other failure (unreadable, corrupt, half-written) refuses to start: starting empty would overwrite the user's real list on the first save. */
 function load(file: string | undefined): Todo[] {
   if (file === undefined) return []
-  try { return JSON.parse(readFileSync(file, 'utf8')) as Todo[] } catch { return [] }
+  let text: string
+  try {
+    text = readFileSync(file, 'utf8')
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []
+    throw new Error(`acryl-todo: cannot read ${file}: ${(error as Error).message}`, { cause: error })
+  }
+  try {
+    const parsed: unknown = JSON.parse(text)
+    if (!Array.isArray(parsed)) throw new Error('not a list')
+    return parsed as Todo[]
+  } catch (error) {
+    throw new Error(`acryl-todo: ${file} is not a valid todo list (${(error as Error).message}); fix or remove it, it was left untouched`, { cause: error })
+  }
 }
 
 function save(file: string, todos: readonly Todo[]): void {

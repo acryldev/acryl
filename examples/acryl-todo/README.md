@@ -13,5 +13,5 @@ export function apply(ctx: Context, config: { file?: string } = {}): void {
 ```
 
 - `GET /todo` the page, `GET/POST /todo/api`, `PATCH/DELETE /todo/api/:id`, `GET /todo/events` (server-sent events). Also `GET /api/state/todo.list` through `acryl-state`.
-- Pass `config.file` to keep the list across restarts (atomic write on every change); without it the list lives in memory.
+- Pass `config.file` to keep the list across restarts (atomic write on every change); without it the list lives in memory. A missing file is a new list; a corrupt or unreadable one stops the plugin with an error naming the file and is never overwritten.
 - Tests (`tests/todo.spec.ts`) run it with no socket and prove the restart: a second context on the same file sees the list.

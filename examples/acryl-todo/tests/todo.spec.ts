@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
@@ -74,6 +74,23 @@ describe('acryl-todo', () => {
     const second = await boot(file)
     expect(await (await second.router.request('/todo/api')).json()).toEqual([{ id: 1, title: 'persist me', done: false }])
     expect(await (await post(second, 'next')).json()).toMatchObject({ id: 2 })
+  })
+
+  it('refuses to start on a corrupt file and leaves its bytes untouched', async () => {
+    const folder = mkdtempSync(join(tmpdir(), 'acryl-todo-'))
+    folders.push(folder)
+    const file = join(folder, 'todos.json')
+    const original = '[{"id":1,"title":"precious","done":false},'
+    writeFileSync(file, original)
+    const ctx = new Context()
+    contexts.push(ctx)
+    ctx.plugin({ name: routerName, apply: routerApply })
+    ctx.plugin({ name: stateName, apply: stateApply })
+    const fiber = ctx.plugin(todo, { file })
+    await settle()
+    expect(fiber.state).toBe(3) // FAILED
+    expect((await ctx.router.request('/todo/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"title":"x"}' })).status).toBe(404)
+    expect(readFileSync(file, 'utf8')).toBe(original)
   })
 
   it('streams the list and ends the stream when the plugin unloads', async () => {
