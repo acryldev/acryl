@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { expectTypeOf } from 'vitest'
+import { hc } from './client/index.ts'
 import type { Context, ExecutionContext } from './context.ts'
 import { App } from './app.ts'
 import { HTTPException } from './http-exception.ts'
@@ -3718,7 +3719,10 @@ describe('c.var - with testing types', () => {
     app.use(mw())
     app.use('*', mw())
 
-    app.get('/posts', mw(), (c) => c.json(0))
+    const route = app.get('/posts', mw(), (c) => c.json(0))
+    const client = hc<typeof route>('/')
+    type key = keyof typeof client
+    type verify = Expect<Equal<'posts', key>>
   })
 
   it('Should throw type errors', (c) => {

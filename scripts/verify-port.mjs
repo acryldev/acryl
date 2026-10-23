@@ -11,8 +11,8 @@
  *                                                         record the current state; a new deviation is written with reason "TODO" and fails until explained
  *
  * Mechanical changes (applied by `normalize` below, so they need no reason): relative imports name the `.ts` file they resolve to; the upstream
- * name (read from the checkout's own package.json, never spelled here) becomes `App` in identifiers, `acryl` in words and `acryl-router` in import
- * paths; code examples in comments import from our entry points; `@see` links to the upstream site and upstream issue links are dropped; files named after the upstream project are named `app`.
+ * name (read from the checkout's own package.json, never spelled here) becomes `App` in identifiers (also inside one), `acryl` in words and `acryl-router` in import
+ * paths; code examples in comments import from our entry points; `@see` links to the upstream site and comment lines linking upstream issues are dropped; files named after the upstream project are named `app`.
  * Anything else is a deviation and carries a one-line reason.
  */
 
@@ -90,10 +90,11 @@ function normalize(text, theirPath, ourPath, ctx) {
   s = s.split('\n').filter(line => !(line.trim().startsWith('*') && new RegExp(`@see.*${brand}\\.dev`, 'iu').test(line))).join('\n')
   s = s.replace(new RegExp(`\\s*// https://github\\.com/${brand}js/\\S+`, 'gu'), '')
   s = s.replace(new RegExp(` and https://github\\.com/${brand}js/[^\\s)]+`, 'gu'), '')
+  s = s.split('\n').filter(line => !(/^\s*(?:\*|\/\/)/u.test(line) && line.includes(`github.com/${brand}js`))).join('\n')
   s = s.replaceAll(`${brand}.dev`, 'acryl.dev')
   s = s.replace(new RegExp(`(['"\`])${brand}/`, 'gu'), '$1acryl-router/').replace(new RegExp(`\\b${brand}/`, 'gu'), 'acryl-router/')
   s = s.replaceAll(`declare module '${brand}'`, "declare module 'acryl-router'")
-  s = s.replace(new RegExp(`\\b${Brand}`, 'gu'), 'App').replace(word, 'acryl')
+  s = s.replaceAll(Brand, 'App').replace(word, 'acryl')
   return s
 }
 

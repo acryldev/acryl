@@ -10,12 +10,47 @@
     },
     "src/core/app.test.ts": {
       "upstreamSha256": "386698eea91db32cd31f0e2ac39a632f246de6891bea88778d6c577c106b36ad",
-      "sha256": "a3ca7c3c1d7662b7f4a85eff2dc85b3f191f793bc6605f817e6d4e2e52463465",
-      "deviation": "the typed-client assertions are left out until the client is ported; test data and a test class renamed; the default X-Powered-By value is ACRYL"
+      "sha256": "c964aba28d2eaa1279ac53a990b78bdcda12fc89d9e219ea25f2493ffe542a59",
+      "deviation": "test data contained the original project name; the default X-Powered-By value is ACRYL"
     },
     "src/core/app.ts": {
       "upstreamSha256": "28317c8a40c83cc89a80f268bd4dad18cd423f4704b621dda272292a10f63e77",
       "sha256": "bceaae9b5ae77db4dd4641f6a9c75c5f68e116ac919a293fbf619e170c46a6d3"
+    },
+    "src/core/client/client.test.ts": {
+      "upstreamSha256": "ae13a1ba2a04b1d682ce8a48cc750674b23b5a6fa1eb84f99d69bf03f5b8650c",
+      "sha256": "63ad038da313ba1fda3ef88247736280ba9d1bffd95e6ca744ec18a42ab6b45f",
+      "deviation": "the Deno adapter is not part of ACRYL; these tests only build client URLs, so a websocket helper that never upgrades stands in for it"
+    },
+    "src/core/client/client.ts": {
+      "upstreamSha256": "26d97439abab0b78429f1897d4a9ce476cd6ced9a59480e20ab7fa9bfe572b49",
+      "sha256": "f50d087d1202f75f05e4237c85ad140c03bf9cc648352d6f5a0047760ce4a140"
+    },
+    "src/core/client/fetch-result-please.ts": {
+      "upstreamSha256": "34d33d96442efc6160089d6d7180c87adcc97334846b3ad6cb7138cca382c87c",
+      "sha256": "70899d4c0a134ae8521cd531953daa9446a1ccaf7c43c9d81e88d350f0a38932"
+    },
+    "src/core/client/index.ts": {
+      "upstreamSha256": "a9238fb010b9834c39f3350cfcec4cbc4941e363cee817d28182a5839c5a720d",
+      "sha256": "94aab32375243181e64f42492ea5d109bf4e75a863de6e7e9d18a162be2ef35f"
+    },
+    "src/core/client/types.test.ts": {
+      "upstreamSha256": "df0f3f093593742d41e6783e4d01b6077c869e1d31f00381e32e62fc8be2e6f4",
+      "sha256": "0ee6429efc40ff3904d6fddd733238f67c815ae3ff1ca0e3d8de7abbe0fdb527",
+      "deviation": "the Deno adapter is not part of ACRYL; these tests only build client URLs, so a websocket helper that never upgrades stands in for it"
+    },
+    "src/core/client/types.ts": {
+      "upstreamSha256": "bce2bd04e76b41c29060dfe2ce7e5baa3aeed3f14d65d14545021a73010c7944",
+      "sha256": "9f5d6daa92303c803a7055baf9d040ca66e04f441eca4a24ade04223d61df1ff",
+      "deviation": "a type parameter named App is renamed AppType, because App is the class here"
+    },
+    "src/core/client/utils.test.ts": {
+      "upstreamSha256": "c4e174b12748a73b6e7ad4b213e48c0a40907174955e68062e577427aefd52c3",
+      "sha256": "fa19aa946cd047c78d6233d4833818d8b9f1c4cb9a59fd7f93377ad7d9b5ecce"
+    },
+    "src/core/client/utils.ts": {
+      "upstreamSha256": "42bf056c2fa877d09172181cf4065c056c2725743cb4f44fbb0ca48d1ffade75",
+      "sha256": "60a73d4b0015a73a83b83befa4e72a0bf819b79f84a3c4a1aaca7f432f282756"
     },
     "src/core/compose.test.ts": {
       "upstreamSha256": "ca3b03f22fd534f16df27665954af9d879a94cf4555dbc9e91f1e2706efb69d2",
@@ -70,6 +105,14 @@
       "sha256": "005234b5cd904a32f5f012df0b1e81e5909f42ae4df4951f8623465528daf1b8",
       "deviation": "BufferSource comes from utils/types.ts so the public types do not need the DOM library"
     },
+    "src/core/helper/factory/index.test.ts": {
+      "upstreamSha256": "7de1451f50411df9317adeda46492a1bf6495b6aaea8faab215b2fd486de8165",
+      "sha256": "c91d30cd02966fb22a1e961680123410664fdb00602bb3081c993c73e72e5c92"
+    },
+    "src/core/helper/factory/index.ts": {
+      "upstreamSha256": "28edf68f832d7b65935dac1959417bc4778423488171d304b48b4414bc6886be",
+      "sha256": "b50b3cf0ebcdf7630f1f68f8b208cc6b6d1455c06ffe30760abac09bcea33466"
+    },
     "src/core/helper/html/index.test.ts": {
       "upstreamSha256": "bed250cc60e75c7d283840916d633a80a847c24182e3fdfc296ee5f4a8314337",
       "sha256": "5f9eab3a21c21a0e0d9b4c17435a7a36bda1f1fe7a029ca7131a109d25520fe4"
@@ -114,6 +157,22 @@
       "upstreamSha256": "52368d2d53097f5a78c75e5785046868ccd4edbd46ff002434417b2e6bfb3469",
       "sha256": "52368d2d53097f5a78c75e5785046868ccd4edbd46ff002434417b2e6bfb3469"
     },
+    "src/core/helper/testing/index.test.ts": {
+      "upstreamSha256": "fd1cd3ed546f4f9bda646dee1f7875577e64ff465285eac27d2aeca311d29c1a",
+      "sha256": "4f452f877683d59430b279756cce9ff221445a88a4d53251b25efe0e40310c69"
+    },
+    "src/core/helper/testing/index.ts": {
+      "upstreamSha256": "aa19c05e7192576b185ec0fda007ad8f0b9d9bf35663aa52626869c71507ce53",
+      "sha256": "c3f153f5b0914363273ae91caadc89187cc1a406c6fab7a76bdec51bdb3dd36d"
+    },
+    "src/core/helper/websocket/index.test.ts": {
+      "upstreamSha256": "8a10fd76fb929e81642ef0cf8bfe3d7a454aab6e15a76fa97befab4852c586a4",
+      "sha256": "744c415c975c56d8d6df7c040b1f9a6577cf29279874bc9de3c22bc49828ea2c"
+    },
+    "src/core/helper/websocket/index.ts": {
+      "upstreamSha256": "fbcd0f1bf3eeeca57f5952b86d91fa35055ab12b5569a2126bb358b00a007c62",
+      "sha256": "777cc964c8c48a893d70ea955a2158d8689bf1b23cfcf7718269b78516da6b61"
+    },
     "src/core/http-exception.test.ts": {
       "upstreamSha256": "b0eeb813fa540cb9eaf105ceb4b80b1aebf2160a2f6987dfb586bf1255fdf615",
       "sha256": "5fae8c35c724ac617f44e52b21d5df3b96133155c2128333ccee3985bcf2b9f0"
@@ -124,8 +183,7 @@
     },
     "src/core/index.ts": {
       "upstreamSha256": "7b6cf83beb39bc315f65824bd5720f93609e673d6959dff369d911effeb2167a",
-      "sha256": "d69cd05b6c6a7b334e92d38b70ef7f31fa3b6298f3ec7f1f17f8c42f6bef0d9d",
-      "deviation": "the typed-client type exports are left out until the client is ported"
+      "sha256": "8afb0f9491d33157740f1da3a232e91d0a7b2ea5ad92484ea5ced9d0a0bac3f7"
     },
     "src/core/middleware/basic-auth/index.test.ts": {
       "upstreamSha256": "bd43496df68c073b1033fdd77063edbfed090ee10f403de443c78cc4bc527964",
@@ -221,6 +279,35 @@
       "sha256": "ec0227884a65357cf18d8f9fef9230dad879a91931ec89cfbe355d9584bd4289",
       "deviation": "the example takes getConnInfo from acryl-router/helpers, the ACRYL adapter one"
     },
+    "src/core/middleware/jwk/index.test.ts": {
+      "upstreamSha256": "78bb59cfac159cb36173f64852cc1e6a74601e175b88342f67e81e67eb0ffc91",
+      "sha256": "7fc0ba10eeeac482b5e10f03bdf00ec1bad871093085854277b7a551c8a30af4",
+      "deviation": "imports the JSON key fixture with a type attribute, as NodeNext modules require"
+    },
+    "src/core/middleware/jwk/index.ts": {
+      "upstreamSha256": "e5817028df93f8d811ec42f8288758da25b169b5789edc8800763b34fb767e2c",
+      "sha256": "58701adb4e268d03b6f0d7c9e21a8151a49dd010a6a4305a6b8d7268f5829f4e"
+    },
+    "src/core/middleware/jwk/jwk.ts": {
+      "upstreamSha256": "eb00f4fb968dfa130a1b40957802a44dba853aec8f6a0a09e213e7c95ed8fff0",
+      "sha256": "eee9802d45ee68728c527b02fed934af02837f170ec4d45d697ad11626b8c72b"
+    },
+    "src/core/middleware/jwk/keys.test.json": {
+      "upstreamSha256": "591d18d31af3039d04388fe7b522bc73249f07a277cfd89a17833db7a7520ad1",
+      "sha256": "47e8186aac29e29baadc2aebef71517dfe3c4df47579f536174dd50577203129"
+    },
+    "src/core/middleware/jwt/index.test.ts": {
+      "upstreamSha256": "0e797ea7487546c130b24aec9797d68346b8900e1bf54f8d45e03533a31c73b4",
+      "sha256": "6d00ffff27b61e91b714944c29259c375e89fc389c84c39c515970870736205c"
+    },
+    "src/core/middleware/jwt/index.ts": {
+      "upstreamSha256": "5f5aa69c627e38a7f694d17c4dcaf548d80c2bc13ba87dbf89b004f833777136",
+      "sha256": "a5465381b7afa398d872dba8faeed772c6da4c1cb5d886000c9eb5666b57feff"
+    },
+    "src/core/middleware/jwt/jwt.ts": {
+      "upstreamSha256": "6ca249c522123bd6379eb2e04509f36f0be444f01ca33a7999d331a4b5940c6e",
+      "sha256": "0988dc2acbf3862ca26fcb91a9e275ff5091583051ff4e0b460632d3b8568f4a"
+    },
     "src/core/middleware/language/index.test.ts": {
       "upstreamSha256": "d9142998808316879406b463b8254d4b59cfe18452baaa9daacc58202eb99ba5",
       "sha256": "7fa2906a884c14b89f82b9e81a8074fad2b8ca0f985a238f42496b505e49d183"
@@ -305,6 +392,23 @@
     "src/core/middleware/secure-headers/secure-headers.ts": {
       "upstreamSha256": "90092c6ed6818ae8c5ffd0718db4a85348ab58ac40d17616f55073cf045c735b",
       "sha256": "2b3260fd7142787cc62f94462afad7b96fe5d607b24c0f043464e9731d4b1c5d"
+    },
+    "src/core/middleware/serve-static/index.test.ts": {
+      "upstreamSha256": "8da91701c2b79b14024bf4e0ef759e4973566ff07f59cb57131a2119f1d18552",
+      "sha256": "523741cd9ef4cdb4450b2dc111cf671ddbed12e48dded033267d81354a2466f3",
+      "deviation": "test data contained the original project name; renamed, and the expected values (lengths, hashes, encodings) recomputed for the new data"
+    },
+    "src/core/middleware/serve-static/index.ts": {
+      "upstreamSha256": "fbc808142fe8121e6887278d97e2e3edbf846743a3829becadda3fe674cab44e",
+      "sha256": "7a0ff375841da1aabdcd3dda162bf806123ff7b0b88631acfc4634f7353c4ab2"
+    },
+    "src/core/middleware/serve-static/path.test.ts": {
+      "upstreamSha256": "95a07b36f481a37172609509f1bba72f8266872aab57b567e20d634302ed004c",
+      "sha256": "563ff99017c942a0b601fd8073ba1d9b4abad0ccceb2cec5174923f98bffd4fc"
+    },
+    "src/core/middleware/serve-static/path.ts": {
+      "upstreamSha256": "0bff510a134272f57c0f09eb9dc842a99331240770065ea2f9bcc6000c095739",
+      "sha256": "0bff510a134272f57c0f09eb9dc842a99331240770065ea2f9bcc6000c095739"
     },
     "src/core/middleware/timeout/index.test.ts": {
       "upstreamSha256": "8471a681a3841f78bddeab8429345e0f347f834b4d129ff8dd99f2c5167caedf",
@@ -448,6 +552,10 @@
     "src/core/router/utils.ts": {
       "upstreamSha256": "457dd7ca0a9ae97ce028beabaeafd6fb48bbf5f548370dab7eba4e4b53a8304a",
       "sha256": "457dd7ca0a9ae97ce028beabaeafd6fb48bbf5f548370dab7eba4e4b53a8304a"
+    },
+    "src/core/types.test.ts": {
+      "upstreamSha256": "d7d03e6ab394fd923745c6ee3e42fd332f2770d9b5f71ff2285bcc5605633de3",
+      "sha256": "22533aa6788db4af06bff1a414385fe990d5b191b04a52d915fa61e8d93e1de1"
     },
     "src/core/types.ts": {
       "upstreamSha256": "0872319d2f7cc09035137c53c9974da3a90b7ee8ec4412a93848ede901a76fd0",
@@ -666,11 +774,11 @@
   },
   "omitted": {
     "reason": "not ported yet; spec 047 lists when each comes",
-    "src/client": "the typed client (after 0.4.0)",
     "src/jsx": "the JSX renderer (after 0.4.0)",
     "src/preset": "presets (after 0.4.0)",
-    "src/types.test.ts": "type-level tests of the client (with the client)",
     "src/helper/streaming/sse.test.tsx": "needs the JSX renderer (with it)",
-    "src/adapter": "runtime adapters for other hosts; ACRYL serves through its own adapters (acryl-router-http, acryl-node-server)"
+    "src/adapter": "runtime adapters for other hosts; ACRYL serves through its own adapters (acryl-router-http, acryl-node-server)",
+    "src/helper (css, dev, proxy, ssg)": "after 0.4.0",
+    "src/middleware (cache, jsx-renderer, mount)": "after 0.4.0"
   }
 }

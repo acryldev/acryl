@@ -42,6 +42,10 @@ export type { ContextVariableMap, ContextRenderer, ExecutionContext } from './co
  * Type for AppRequest.
  */
 export type { AppRequest } from './request.ts'
+/**
+ * Types for inferring request and response types and client request options.
+ */
+export type { InferRequestType, InferResponseType, ClientRequestOptions } from './client/index.ts'
 
 /**
  * App framework for building web applications.
