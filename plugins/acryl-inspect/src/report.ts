@@ -19,6 +19,8 @@ export interface FiberView {
   readonly state: number
   readonly inject: Readonly<Record<string, unknown>>
   readonly runtime: { readonly name?: string | undefined } | null
+  /** The context the fiber was loaded from; its own `fiber` is the owning plugin when this fiber is an inline `ctx.inject(...)` callback. */
+  readonly parent?: { readonly fiber?: FiberView | undefined } | undefined
   getEffects(): readonly EffectLabel[]
 }
 
@@ -56,13 +58,26 @@ export function stateName(state: number): FiberStateName {
   return STATE_NAMES[state] ?? 'FAILED'
 }
 
-/** Describe one fiber. */
-export function reportFiber(fiber: FiberView): PluginReport {
+const isNamed = (fiber: FiberView): boolean => (fiber.runtime?.name ?? '') !== ''
+
+/** The named plugin a fiber belongs to: itself, or for an unnamed inline callback (`ctx.inject([...], inner => ...)`) the nearest named ancestor. */
+export function ownerOf(fiber: FiberView): FiberView {
+  let current = fiber
+  while (!isNamed(current)) {
+    const parent = current.parent?.fiber
+    if (parent === undefined || parent === current) return fiber
+    current = parent
+  }
+  return current
+}
+
+/** Describe one fiber, counting the registrations of the unnamed inline callbacks it owns (`adopted`) as its own. */
+export function reportFiber(fiber: FiberView, adopted: readonly FiberView[] = []): PluginReport {
   const provides: string[] = []
   const routes: RouteReport[] = []
   const middleware: string[] = []
   const other: string[] = []
-  const labels = flatten(fiber.getEffects())
+  const labels = [fiber, ...adopted].flatMap(source => flatten(source.getEffects()))
   for (const label of labels) {
     const provided = PROVIDE.exec(label)
     const route = ROUTE.exec(label)
@@ -73,7 +88,7 @@ export function reportFiber(fiber: FiberView): PluginReport {
     else other.push(label)
   }
   return {
-    name: fiber.runtime?.name ?? 'anonymous',
+    name: isNamed(fiber) ? fiber.runtime?.name ?? 'anonymous' : 'anonymous',
     state: stateName(fiber.state),
     requires: Object.keys(fiber.inject).sort(),
     provides: provides.sort(),

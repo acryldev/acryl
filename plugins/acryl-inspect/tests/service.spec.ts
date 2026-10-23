@@ -40,6 +40,20 @@ const byName = (reports: readonly PluginReport[], pluginName: string): PluginRep
 }
 
 describe('acryl-inspect', () => {
+  it('counts what an inline ctx.inject callback registers as the owning plugin\'s', async () => {
+    const ctx = await system()
+    ctx.plugin({
+      name: 'demo-inline',
+      apply(inner: Context): void {
+        inner.inject(['router'], deeper => { deeper.router.get('/api/inline', c => c.json({ ok: true })) })
+      },
+    })
+    await settle()
+    const reports = ctx.inspect.plugins()
+    expect(byName(reports, 'demo-inline').routes).toEqual([{ method: 'GET', path: '/api/inline' }])
+    expect(reports.every(report => report.name !== 'anonymous')).toBe(true)
+  })
+
   it('reports what a plugin requires, provides and registers, from the running system', async () => {
     const ctx = await system()
     ctx.plugin(market)
