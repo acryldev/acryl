@@ -4,7 +4,7 @@
  * request under it is run through `router.fetch`. The TUI and Desktop do not need this: they call `router.fetch` directly.
  */
 
-import type {} from '@deepseek-ai/dsh-host-webserver'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 import type {} from 'acryl-router'
 import { Context, Service } from '@deepseek-ai/cordis'
 import { serve } from './serve.ts'
@@ -21,16 +21,28 @@ export const name = 'acryl-router-http'
 /** Hard requirements: both services must exist, otherwise this plugin stays PENDING. */
 export const inject = ['router', 'webServer']
 
+/**
+ * The slice of the DSH `webServer` this adapter uses, as its own port: a prefix claim that returns its remover. The service
+ * is read by name, so this package imports nothing from the DeepSeek Harness (the layout gate keeps that count falling).
+ */
+export interface WebServerPort {
+  register(route: {
+    readonly kind: 'prefix'
+    readonly path: string
+    readonly handler: (req: IncomingMessage, res: ServerResponse) => void | Promise<void>
+  }): () => void
+}
+
 const PREFIX_PATTERN = /^\/[A-Za-z0-9._~\-/]*[A-Za-z0-9._~-]$/
 
 export class RouterHttp extends Service {
   private readonly router: Context['router']
-  private readonly web: Context['webServer']
+  private readonly web: WebServerPort
 
   constructor(ctx: Context) {
     super(ctx, 'routerHttp')
     this.router = ctx.router
-    this.web = ctx.webServer
+    this.web = ctx.get('webServer') as WebServerPort
   }
 
   /**
