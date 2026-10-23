@@ -63,6 +63,7 @@ packages:
   - plugins/acryl-settings
   - plugins/acryl-router
   - plugins/acryl-router-http
+  - plugins/acryl-inspect
   - plugins/acryl-sign-in
   - plugins/acryl-brand
   - plugins/acryl-app-save
