@@ -31,7 +31,8 @@ export interface Config {
   scan: number
 }
 
-export const Config: z<Config> = z.object({
+/** Every field has a default, so a caller passes only what it changes: `ctx.plugin(plugin, { ... })` takes the partial shape. */
+export const Config: z<Partial<Config>, Config> = z.object({
   hostname: z.string().default('127.0.0.1').description('Address to bind. Loopback by default; binding elsewhere exposes the app to the network.'),
   port: z.number().min(0).max(65535).default(0).description('Port to listen on; 0 lets the system choose. A taken port is followed by the next free one.'),
   scan: z.number().min(0).default(20).description('How many further ports to try when the configured one is taken.'),

@@ -75,6 +75,14 @@ names, such as `CryptoKey` in jwt), `strict`, NodeNext, without this repository'
 `exactOptionalPropertyTypes`. `tsconfig.framework-app.json` at the root compiles the framework plugins and the todo example under it,
 mapping the package names to their sources so no build is needed; `check:layout` runs it (`pnpm run check:framework-app`).
 
+## Standalone (gate P6)
+
+`corepack pnpm run verify:framework-standalone` packs `acryl-router`, `acryl-state`, `acryl-inspect` and `acryl-node-server`, installs the
+tarballs in an empty folder beside nothing but Cordis, typechecks a 20-line app under `acryl-router/tsconfig.app.json`, runs it and requires
+a 200 from a real socket and a clean exit. It found that `ctx.plugin(nodeServer, { port: 0 })` did not typecheck: a schemastery schema is
+callable, so Cordis reads it as a config transform and takes its declared input, which was the full `Config`. The router's and the
+adapter's schemas now declare the partial input (`z<Partial<Config>, Config>`), and the adapter's spec loads the module itself.
+
 ## ACRYL additions kept
 
 - `loopbackOnly` middleware (Host must be loopback with the server's real port; a foreign or null Origin on a change is 403).

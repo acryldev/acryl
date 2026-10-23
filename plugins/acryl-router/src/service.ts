@@ -28,7 +28,8 @@ export interface Config {
   disposeGraceMs: number
 }
 
-export const Config: z<Config> = z.object({
+/** Every field has a default, so a caller passes only what it changes: `ctx.plugin(plugin, { ... })` takes the partial shape. */
+export const Config: z<Partial<Config>, Config> = z.object({
   trailingSlash: z.union(['strict', 'ignore']).default('strict').description('Whether `/a` and `/a/` are different paths.'),
   disposeGraceMs: z.number().min(0).default(DEFAULT_DISPOSE_GRACE_MS).description('How long disposal waits for aborted requests, their response bodies and their waitUntil tasks before it gives up on them.'),
 })

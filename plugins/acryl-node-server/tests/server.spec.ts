@@ -9,8 +9,6 @@ import { streamSSE } from 'acryl-router/helpers'
 import { afterEach, describe, expect, it } from 'vitest'
 import * as nodeServer from '../src/index.ts'
 
-/** The plugin as an object, so its config is the partial `apply` accepts rather than the Loader's validated shape. */
-const plugin = { name: nodeServer.name, inject: nodeServer.inject, apply: nodeServer.apply }
 const contexts: Context[] = []
 afterEach(async () => {
   while (contexts.length > 0) await contexts.pop()?.fiber.dispose()
@@ -21,7 +19,7 @@ async function boot(config: Partial<nodeServer.Config> = {}): Promise<Context> {
   const ctx = new Context()
   contexts.push(ctx)
   ctx.plugin({ name: routerName, apply: routerApply })
-  ctx.plugin(plugin, config)
+  ctx.plugin(nodeServer, config)
   await settle()
   return ctx
 }
@@ -102,7 +100,7 @@ describe('acryl-node-server', () => {
       const ctx = new Context()
       contexts.push(ctx)
       ctx.plugin({ name: routerName, apply: routerApply })
-      const fiber = ctx.plugin(plugin, { port: taken.port, scan: 0 })
+      const fiber = ctx.plugin(nodeServer, { port: taken.port, scan: 0 })
       await settle()
       expect(fiber.state).toBe(3) // FAILED
     } finally {
@@ -133,7 +131,7 @@ describe('acryl-node-server', () => {
     ctx.plugin({ name: routerName, apply: routerApply })
     const ports: number[] = []
     for (let round = 0; round < 5; round += 1) {
-      const fiber = ctx.plugin(plugin, {})
+      const fiber = ctx.plugin(nodeServer, {})
       await settle()
       ports.push(ctx.nodeServer.port)
       await fiber.dispose()
